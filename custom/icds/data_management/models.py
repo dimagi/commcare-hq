@@ -60,7 +60,6 @@ class DataManagementRequest(models.Model):
         self.status = self.STATUS_IN_PROGRESS
         self.started_on = datetime.utcnow()
         self.save()
-        self.refresh_from_db()
 
     def _note_error(self, message):
         self.error = message
