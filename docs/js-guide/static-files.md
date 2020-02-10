@@ -35,18 +35,9 @@ Best practice is to wrap all script tags and stylesheet links in compress blocks
 
 There are three ways of utilizing Django Compressor's features:
 
-### 1. Client side js-based `less` compilation.
+### 1. Dev Setup: Server-side on the fly `less` compilation
 
 This does not combine any files in compress blocks, and as no effect on `js` blocks. This is the default dev configuration.
-
-Pros:
-- Don't need to install anything / manage different less versions.
-
-Cons:
-- Slowest option, as caching isn't great and for pages with a lot of imports,
-things get REAL slow. Plus if you want to use any javascript compilers like
-`coffeescript` in the future, this option won't take care of compiling that.
-- Is the furthest away from the production environment possible.
 
 #### How is this enabled?
 
@@ -56,12 +47,7 @@ COMPRESS_ENABLED = False
 COMPRESS_OFFLINE = False
 ```
 
-
-#### How to install multiple LESS compilers to run compressor on `less` files
-
-NOTE: This is only relevant while we are running two versions of Bootstrap. See the main [Commcare-hq readme](https://github.com/dimagi/commcare-hq/blob/master/README.md#install-less) for instructions.
-
-### 3. Compress Offline
+### 2. Production-like Setup: Compress Offline
 
 Pros:
 - Closest mirror to production's setup.
