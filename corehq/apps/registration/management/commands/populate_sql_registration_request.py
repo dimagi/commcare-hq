@@ -7,10 +7,6 @@ class Command(PopulateSQLCommand):
         return 'RegistrationRequest'
 
     @classmethod
-    def couch_key(self):
-        return set(['activation_guid'])
-
-    @classmethod
     def sql_class(self):
         from corehq.apps.registration.models import SQLRegistrationRequest
         return SQLRegistrationRequest
