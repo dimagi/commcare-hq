@@ -3,7 +3,7 @@ from pillowtop.es_utils import ElasticsearchIndexInfo
 
 DOMAIN_INDEX = es_index("hqdomains_2020-02-10")
 DOMAIN_MAPPING = {
- '_all': {'enabled': false},
+ '_all': {'enabled': False},
  '_meta': {'comment': '', 'created': None},
  'date_detection': False,
  'date_formats': ['yyyy-MM-dd',
