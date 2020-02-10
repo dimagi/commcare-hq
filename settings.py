@@ -983,9 +983,11 @@ except ImportError as error:
     from dev_settings import *
 
 
-if hasattr(COMPRESS_ENABLED, '__call__'):
+# The defaults above are given as a function of (or rather a closure on) DEBUG,
+# so if not overridden they need to be evaluated after DEBUG is set
+if callable(COMPRESS_ENABLED):
     COMPRESS_ENABLED = COMPRESS_ENABLED()
-if hasattr(COMPRESS_OFFLINE, '__call__'):
+if callable(COMPRESS_OFFLINE):
     COMPRESS_OFFLINE = COMPRESS_OFFLINE()
 
 
