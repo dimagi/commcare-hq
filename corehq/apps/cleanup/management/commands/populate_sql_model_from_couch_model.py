@@ -105,7 +105,7 @@ class PopulateSQLCommand(BaseCommand):
                 log_prefix,
                 self.couch_doc_type(),
                 doc["_id"]
-            )
+            ))
             with transaction.atomic():
                 model, created = self.update_or_create_sql_object(doc)
                 if not dry_run:
