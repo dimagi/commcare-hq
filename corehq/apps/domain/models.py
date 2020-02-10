@@ -338,7 +338,6 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
     case_display = SchemaProperty(CaseDisplaySettings)
 
     # CommConnect settings
-    commconnect_enabled = BooleanProperty(default=False)
     survey_management_enabled = BooleanProperty(default=False)
     # Whether or not a case can register via sms
     sms_case_registration_enabled = BooleanProperty(default=False)
@@ -420,9 +419,6 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
 
     deployment = SchemaProperty(Deployment)
 
-    image_path = StringProperty()
-    image_type = StringProperty()
-
     cached_properties = DictProperty()
 
     internal = SchemaProperty(InternalProperties)
@@ -443,9 +439,6 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
     two_factor_auth = BooleanProperty(default=False)
     strong_mobile_passwords = BooleanProperty(default=False)
 
-    # There is no longer a way to request a report builder trial, so this property should be removed in the near
-    # future. (Keeping it for now in case a user has requested a trial and but has not yet been granted it)
-    requested_report_builder_trial = StringListProperty()
     requested_report_builder_subscription = StringListProperty()
 
     report_whitelist = StringListProperty()
@@ -590,11 +583,6 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
 
     def recent_submissions(self):
         return domain_has_submission_in_last_30_days(self.name)
-
-    @cached_property
-    def languages(self):
-        apps = self.applications()
-        return set(chain.from_iterable([a.langs for a in apps]))
 
     @classmethod
     @quickcache(['name'], skip_arg='strict', timeout=30*60,
