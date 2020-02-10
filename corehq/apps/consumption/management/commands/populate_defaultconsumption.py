@@ -7,10 +7,6 @@ class Command(PopulateSQLCommand):
         return 'DefaultConsumption'
 
     @classmethod
-    def couch_key(self):
-        return set(['couch_id'])
-
-    @classmethod
     def sql_class(self):
         from corehq.apps.consumption.models import SQLDefaultConsumption
         return SQLDefaultConsumption
