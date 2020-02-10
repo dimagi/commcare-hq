@@ -90,6 +90,27 @@ WELCOME_RECIPIENT_CHOICES = (
     (WELCOME_RECIPIENT_ALL, ugettext_lazy('Cases and Mobile Workers')),
 )
 
+LANGUAGE_FALLBACK_NONE = 'NONE'
+LANGUAGE_FALLBACK_SCHEDULE = 'SCHEDULE'
+LANGUAGE_FALLBACK_DOMAIN = 'DOMAIN'
+LANGUAGE_FALLBACK_UNTRANSLATED = 'UNTRANSLATED'
+
+LANGUAGE_FALLBACK_CHOICES = (
+    (LANGUAGE_FALLBACK_NONE, ugettext_lazy("""
+        Only send message if text is available in recipient's preferred language
+    """)),
+    (LANGUAGE_FALLBACK_SCHEDULE, ugettext_lazy("""
+        Use text from the alert or broadcast's default language as a backup
+    """)),
+    (LANGUAGE_FALLBACK_DOMAIN, ugettext_lazy("""
+        Use text from the project's default language as a backup
+        if the alert or broadcast's language is also unavailable
+    """)),
+    (LANGUAGE_FALLBACK_UNTRANSLATED, ugettext_lazy("""
+        Use all available text backups, including untranslated content
+    """)),
+)
+
 
 class LoadBalancingBackendFormMixin(Form):
     phone_numbers = CharField(required=False)
@@ -242,6 +263,10 @@ class SettingsForm(Form):
         choices=WELCOME_RECIPIENT_CHOICES,
         label=ugettext_lazy("Send registration welcome message to"),
     )
+    language_fallback = ChoiceField(
+        choices=LANGUAGE_FALLBACK_CHOICES,
+        label=ugettext_lazy("Backup behavior for missing translations"),
+    )
 
     # Internal settings
     override_daily_outbound_sms_limit = ChoiceField(
@@ -360,7 +385,19 @@ class SettingsForm(Form):
                     "configured in the SMS languages and translations page "
                     "(Messaging -> Languages -> Messaging Translations)."),
             ),
+            hqcrispy.FieldWithHelpBubble(
+                'language_fallback',
+                help_bubble_text=_("""
+                    Choose what should happen when a broadcast or alert should be sent to a recipient but no
+                    translations exists in the user's preferred language. You may choose not to send a message in
+                    that case, or to try one of several backups.<br><br>The first backup uses the broadcast or
+                    alert's default language. If that translation is also unavailable, the second backup is text in
+                    the project's default SMS language. If that translation is also unavailable, you may choose
+                    to use untranslated text, if there is any.
+                """),
+            ),
         ]
+
         return crispy.Fieldset(
             _("Registration Settings"),
             *fields
