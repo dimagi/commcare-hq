@@ -7,10 +7,6 @@ class Command(PopulateSQLCommand):
         return 'HqDeploy'
 
     @classmethod
-    def couch_key(cls):
-        return set(['_id'])
-
-    @classmethod
     def sql_class(cls):
         from corehq.apps.hqadmin.models import SQLHqDeploy
         return SQLHqDeploy
