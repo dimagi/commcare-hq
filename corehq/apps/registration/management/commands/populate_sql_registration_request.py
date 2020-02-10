@@ -12,7 +12,7 @@ class Command(PopulateSQLCommand):
         return SQLRegistrationRequest
 
     def update_or_create_sql_object(self, doc):
-        model, created = self.sql_class().objects.get_or_create(
+        model, created = self.sql_class().objects.update_or_create(
             activation_guid=doc['activation_guid'],
             defaults={
                 "tos_confirmed": doc.get("tos_confirmed"),
