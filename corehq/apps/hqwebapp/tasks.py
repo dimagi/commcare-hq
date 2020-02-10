@@ -7,7 +7,7 @@ from celery.task import task, periodic_task
 from corehq.util.bounced_email_manager import BouncedEmailManager
 from dimagi.utils.logging import notify_exception
 
-from corehq.util.datadog.gauges import datadog_gauge_task
+from corehq.util.datadog.gauges import datadog_gauge_task, datadog_track_errors
 from corehq.util.log import send_HTML_email
 
 
@@ -108,20 +108,11 @@ def mail_admins_async(self, subject, message, fail_silently=False, connection=No
 @periodic_task(run_every=crontab(minute=0, hour=0), queue='background_queue')
 def process_bounced_emails():
     if settings.RETURN_PATH_EMAIL and settings.RETURN_PATH_EMAIL_PASSWORD:
-        try:
-            with BouncedEmailManager(
-                delete_processed_messages=True
-            ) as bounced_manager:
-                bounced_manager.process_aws_notifications()
-                bounced_manager.process_daemon_messages()
-        except Exception as e:
-            notify_exception(
-                None,
-                message="Encountered error while processing bounced emails",
-                details={
-                    'error': e,
-                }
-            )
+        with BouncedEmailManager(
+            delete_processed_messages=True
+        ) as bounced_manager, datadog_track_errors('process_bounced_emails_task'):
+            bounced_manager.process_aws_notifications()
+            bounced_manager.process_daemon_messages()
 
 
 def get_maintenance_alert_active():
