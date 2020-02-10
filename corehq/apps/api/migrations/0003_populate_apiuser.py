@@ -8,7 +8,7 @@ from corehq.apps.api.management.commands.populate_apiuser import Command
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('api', '0001_initial'),
+        ('api', '0002_alter_permissions'),
     ]
 
     operations = [
