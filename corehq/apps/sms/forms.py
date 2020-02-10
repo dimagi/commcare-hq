@@ -34,7 +34,6 @@ from corehq.apps.sms.models import (
 )
 from corehq.apps.sms.util import (
     ALLOWED_SURVEY_DATE_FORMATS,
-    get_or_create_translation_doc,
     get_sms_backend_classes,
     strip_plus,
     validate_phone_number,
@@ -386,21 +385,18 @@ class SettingsForm(Form):
                     "configured in the SMS languages and translations page "
                     "(Messaging -> Languages -> Messaging Translations)."),
             ),
-        ]
-
-        tdoc = get_or_create_translation_doc(self.domain)
-        if len(tdoc.langs) > 1:
-            fields.append(hqcrispy.FieldWithHelpBubble(
+            hqcrispy.FieldWithHelpBubble(
                 'language_fallback',
                 help_bubble_text=_("""
                     Choose what should happen when a broadcast or alert should be sent to a recipient but no
                     translations exists in the user's preferred language. You may choose not to send a message in
-                    that case, or to try one of several backups. The first backup uses the broadcast or alert's
-                    default language. If that translation is also unavailable, the second backup is text in
+                    that case, or to try one of several backups.<br><br>The first backup uses the broadcast or
+                    alert's default language. If that translation is also unavailable, the second backup is text in
                     the project's default SMS language. If that translation is also unavailable, you may choose
                     to use untranslated text, if there is any.
                 """),
-            ))
+            ),
+        ]
 
         return crispy.Fieldset(
             _("Registration Settings"),
