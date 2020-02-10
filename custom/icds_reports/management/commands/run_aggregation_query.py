@@ -34,6 +34,7 @@ from custom.icds_reports.tasks import (
     create_all_mbt,
     setup_aggregation,
     update_agg_child_health,
+    update_child_health_monthly_table,
     _agg_adolescent_girls_registration_table,
     create_df_indices,
     drop_df_indices,
@@ -65,6 +66,7 @@ STATE_TASKS = {
 ALL_STATES_TASKS = {
     'child_health_monthly': (None, _child_health_monthly_aggregation, None),
     'create_mbt_for_month': (None, create_all_mbt, None),
+    'update_child_health_monthly_table': (None, update_child_health_monthly_table, None),
 }
 
 NORMAL_TASKS = {
@@ -121,7 +123,8 @@ def run_task(agg_record, query_name):
         for state in state_ids:
             greenlets.append(pool.spawn(agg_query, state, agg_date))
         logger.info('Joining greenlets')
-        pool.join(raise_error=True)
+        while not pool.join(timeout=120, raise_error=True):
+            logger.info('failed to join pool - greenlets remaining: {}'.format(len(pool)))
         logger.info('Getting greenlets')
         for g in greenlets:
             logger.info('getting {}'.format(g))

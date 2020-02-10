@@ -7,10 +7,6 @@ class Command(PopulateSQLCommand):
         return 'Dhis2Connection'
 
     @classmethod
-    def couch_key(cls):
-        return set(['domain'])
-
-    @classmethod
     def sql_class(cls):
         from corehq.motech.dhis2.models import Dhis2Connection
         return Dhis2Connection

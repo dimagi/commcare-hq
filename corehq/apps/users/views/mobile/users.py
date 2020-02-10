@@ -39,6 +39,7 @@ from corehq.apps.custom_data_fields.edit_entity import CustomDataEditor
 from corehq.apps.custom_data_fields.models import CUSTOM_DATA_FIELD_PREFIX
 from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.domain.views.base import DomainViewMixin
+from corehq.apps.es import FormES
 from corehq.apps.groups.models import Group
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.hqwebapp.crispy import make_form_readonly
@@ -59,7 +60,7 @@ from corehq.apps.user_importer.importer import (
 )
 from corehq.apps.user_importer.tasks import import_users_and_groups
 from corehq.apps.users.analytics import get_search_users_in_domain_es_query
-from corehq.apps.users.dbaccessors.all_commcare_users import user_exists
+from corehq.apps.users.dbaccessors.all_commcare_users import get_user_docs_by_username, user_exists
 from corehq.apps.users.decorators import (
     require_can_edit_commcare_users,
     require_can_edit_or_view_commcare_users,
@@ -85,6 +86,7 @@ from corehq.apps.users.tasks import (
 from corehq.apps.users.util import (
     can_add_extra_mobile_workers,
     format_username,
+    raw_username,
 )
 from corehq.apps.users.views import (
     BaseEditUserView,
@@ -1124,6 +1126,96 @@ class FilteredUserDownload(BaseManageCommCareUserView):
             "users/filter_and_download.html",
             context
         )
+
+
+class DeleteCommCareUsers(BaseManageCommCareUserView):
+    urlname = 'delete_commcare_users'
+    page_title = ugettext_noop('Bulk Delete')
+    template_name = 'users/bulk_delete.html'
+
+    @property
+    def page_context(self):
+        context = self.main_context
+        context.update({
+            'bulk_upload_form': get_bulk_upload_form(),
+        })
+        return context
+
+    def post(self, request, *args, **kwargs):
+        usernames = self._get_usernames(request)
+        if not usernames:
+            return self.get(request, *args, **kwargs)
+
+        user_docs_by_id = {doc['_id']: doc for doc in get_user_docs_by_username(usernames)}
+        user_ids_with_forms = self._get_user_ids_with_forms(request, user_docs_by_id)
+        self._handle_usernames_not_found(request, user_docs_by_id, usernames)
+        self._delete_users(request, user_docs_by_id, user_ids_with_forms)
+
+        return self.get(request, *args, **kwargs)
+
+    def _get_usernames(self, request):
+        """
+            Get username list from Excel supplied in request.FILES.
+            Adds any errors to request.messages.
+        """
+        try:
+            workbook = get_workbook(request.FILES.get('bulk_upload_file'))
+        except WorkbookJSONError as e:
+            messages.error(request, str(e))
+            return None
+
+        try:
+            sheet = workbook.get_worksheet()
+        except WorksheetNotFound:
+            messages.error(request, _("Workbook has no worksheets"))
+            return None
+
+        try:
+            usernames = {format_username(row['username'], request.domain) for row in sheet}
+        except KeyError:
+            messages.error(request, _("No users found. Please check your file contains a 'username' column."))
+            return None
+
+        return usernames
+
+    def _get_user_ids_with_forms(self, request, user_docs_by_id):
+        """
+            Find users who have ever submitted a form, and add to request.messages if so.
+        """
+        user_ids_with_forms = (
+            FormES()
+            .domain(request.domain)
+            .user_id(list(user_docs_by_id))
+            .terms_aggregation('form.meta.userID', 'user_id')
+        ).run().aggregations.user_id.keys
+
+        if user_ids_with_forms:
+            message = _("""
+                The following users have form submissions and must be deleted individually: {}.
+            """).format(", ".join([raw_username(user_docs_by_id[user_id]['username'])
+                                   for user_id in user_ids_with_forms]))
+            messages.error(request, message)
+
+        return user_ids_with_forms
+
+    def _handle_usernames_not_found(self, request, user_docs_by_id, usernames):
+        """
+            The only side effect of this is to possibly add to request.messages.
+        """
+        usernames_not_found = usernames - {doc['username'] for doc in user_docs_by_id.values()}
+        if usernames_not_found:
+            message = _("The following users were not found: {}.").format(
+                ", ".join(map(raw_username, usernames_not_found)))
+            messages.error(request, message)
+
+    def _delete_users(self, request, user_docs_by_id, user_ids_with_forms):
+        deleted_count = 0
+        for user_id, doc in user_docs_by_id.items():
+            if user_id not in user_ids_with_forms:
+                CommCareUser.wrap(doc).delete()
+                deleted_count += 1
+        if deleted_count:
+            messages.success(request, f"{deleted_count} user(s) deleted.")
 
 
 @require_can_edit_commcare_users

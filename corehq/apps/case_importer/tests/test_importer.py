@@ -13,7 +13,8 @@ from casexml.apps.case.tests.util import delete_all_cases
 from corehq.apps.case_importer import exceptions
 from corehq.apps.case_importer.do_import import do_import
 from corehq.apps.case_importer.tasks import bulk_import_async
-from corehq.apps.case_importer.util import ImporterConfig, WorksheetWrapper
+from corehq.apps.case_importer.util import ImporterConfig, WorksheetWrapper, \
+    get_interned_exception
 from corehq.apps.commtrack.tests.util import make_loc
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.groups.models import Group
@@ -72,7 +73,7 @@ class ImporterTest(TestCase):
         self.assertIsInstance(res.result, Ignore)
         update_state.assert_called_with(
             state=states.FAILURE,
-            meta={'errors': 'Sorry, your session has expired. Please start over and try again.'})
+            meta=get_interned_exception('Sorry, your session has expired. Please start over and try again.'))
         self.assertEqual(0, len(get_case_ids_in_domain(self.domain)))
 
     @run_with_all_backends

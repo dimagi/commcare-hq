@@ -1,6 +1,6 @@
 from custom.icds_reports.utils.aggregation_helpers import transform_day_to_month
 from custom.icds_reports.utils.aggregation_helpers.distributed.base import BaseICDSAggregationDistributedHelper
-
+from corehq.apps.userreports.util import get_table_name
 
 class AggAwcDailyAggregationDistributedHelper(BaseICDSAggregationDistributedHelper):
     helper_key = 'agg-awc-daily'
@@ -13,6 +13,7 @@ class AggAwcDailyAggregationDistributedHelper(BaseICDSAggregationDistributedHelp
     def aggregate(self, cursor):
         agg_query, agg_params = self.aggregation_query()
         update_query, update_params = self.update_query()
+        update_launched_query, update_launched_params = self.update_launched_query()
         rollup_queries = [self.rollup_query(i) for i in range(4, 0, -1)]
         index_queries = self.indexes()
 
@@ -20,6 +21,7 @@ class AggAwcDailyAggregationDistributedHelper(BaseICDSAggregationDistributedHelp
         cursor.execute(*self.create_table_query())
         cursor.execute(agg_query, agg_params)
         cursor.execute(update_query, update_params)
+        cursor.execute(update_launched_query, update_launched_params)
         for query in rollup_queries:
             cursor.execute(query)
         for query in index_queries:
@@ -28,6 +30,10 @@ class AggAwcDailyAggregationDistributedHelper(BaseICDSAggregationDistributedHelp
     @property
     def tablename(self):
         return "{}_{}".format(self.aggregate_parent_table, self.date.strftime("%Y-%m-%d"))
+
+    @property
+    def temporary_tablename(self):
+        return 'tmp_{}'.format(self.tablename)
 
     def drop_table_query(self):
         return 'DROP TABLE IF EXISTS "{}"'.format(self.tablename)
@@ -72,11 +78,11 @@ class AggAwcDailyAggregationDistributedHelper(BaseICDSAggregationDistributedHelp
             ('cases_person_adolescent_girls_15_18_all',),
             ('daily_attendance_open', '0'),
             ('num_awcs',),
-            ('num_launched_states',),
-            ('num_launched_districts',),
-            ('num_launched_blocks',),
-            ('num_launched_supervisors',),
-            ('num_launched_awcs',),
+            ('num_launched_states', '0'),
+            ('num_launched_districts', '0'),
+            ('num_launched_blocks', '0'),
+            ('num_launched_supervisors', '0'),
+            ('num_launched_awcs', '0'),
             ('cases_person_has_aadhaar_v2',),
             ('cases_person_beneficiary_v2',),
             ('state_is_test', "state_is_test"),
@@ -122,6 +128,33 @@ class AggAwcDailyAggregationDistributedHelper(BaseICDSAggregationDistributedHelp
         """.format(tablename=self.tablename, temp_table="temp_{}".format(self.tablename)), {
             'date': self.date
         }
+
+    def update_launched_query(self):
+        return """
+        CREATE TEMPORARY TABLE "{temp_table}" AS
+            SELECT
+                owner_id,
+                supervisor_id,
+                sum(open_count) AS cases_household,
+                count(*) AS all_cases_household
+            FROM "{household_cases}"
+            WHERE opened_on<= %(end_date)s
+            GROUP BY owner_id, supervisor_id;
+        UPDATE "{tablename}" agg_awc SET
+           cases_household = ut.cases_household,
+           num_launched_states = CASE WHEN ut.all_cases_household>0 THEN 1 ELSE 0 END,
+           num_launched_districts = CASE WHEN ut.all_cases_household>0 THEN 1 ELSE 0 END,
+           num_launched_blocks = CASE WHEN ut.all_cases_household>0 THEN 1 ELSE 0 END,
+           num_launched_supervisors = CASE WHEN ut.all_cases_household>0 THEN 1 ELSE 0 END,
+           num_launched_awcs = CASE WHEN ut.all_cases_household>0 THEN 1 ELSE 0 END
+        FROM (
+            SELECT * FROM "{temp_table}"
+        ) ut
+        WHERE ut.owner_id = agg_awc.awc_id and ut.supervisor_id=agg_awc.supervisor_id and aggregation_level=5;
+        """.format(
+            tablename=self.tablename, temp_table="temp_launched_{}".format(self.tablename),
+            household_cases=get_table_name(self.domain, 'static-household_cases'),
+        ), {'end_date': self.date}
 
     def rollup_query(self, aggregation_level):
         launched_cols = [

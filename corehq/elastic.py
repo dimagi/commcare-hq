@@ -78,7 +78,7 @@ def get_es_new():
     Returns an elasticsearch.Elasticsearch instance.
     """
     hosts = _es_hosts()
-    return Elasticsearch(hosts, timeout=30, serializer=ESJSONSerializer())
+    return Elasticsearch(hosts, timeout=settings.ES_SEARCH_TIMEOUT, serializer=ESJSONSerializer())
 
 
 @memoized

@@ -187,8 +187,9 @@ class TestCaseDiffQueue(SimpleTestCase):
         with self.queue() as queue:
             queue.update({"miss", "found"}, "form")
         self.assertDiffed("found")
-        missing = queue.statedb.get_missing_doc_ids("CommCareCase-couch")
-        self.assertEqual(missing, {"miss"})
+        missing = [(diff.doc_id, diff.json_diff.old_value)
+            for diff in queue.statedb.iter_diffs()]
+        self.assertEqual(missing, [("miss", mod.MISSING)])
 
     def test_case_action_with_null_xform_id(self):
         self.add_cases("a", actions=[FakeAction(None), FakeAction("f0")])
