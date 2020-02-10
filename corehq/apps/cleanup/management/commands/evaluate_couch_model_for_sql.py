@@ -29,7 +29,6 @@ class Command(BaseCommand):
         parser.add_argument(
             '-s',
             '--db',
-            action='store',
             dest='db',
             help='Slug for couch data base. Leave off if querying main commcarehq db.',
         )
