@@ -984,7 +984,7 @@ DASHBOARD_ICDS_REPORT = StaticToggle(
 
 ICDS_DASHBOARD_REPORT_FEATURES = StaticToggle(
     'features_in_dashboard_icds_reports',
-    'ICDS: Enable access to the features in the ICDS Dashboard reports',
+    'ICDS: Enable access to pre-release features in the ICDS Dashboard reports',
     TAG_CUSTOM,
     [NAMESPACE_USER]
 )
