@@ -418,9 +418,6 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
 
     deployment = SchemaProperty(Deployment)
 
-    image_path = StringProperty()
-    image_type = StringProperty()
-
     cached_properties = DictProperty()
 
     internal = SchemaProperty(InternalProperties)
