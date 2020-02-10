@@ -583,11 +583,6 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
     def recent_submissions(self):
         return domain_has_submission_in_last_30_days(self.name)
 
-    @cached_property
-    def languages(self):
-        apps = self.applications()
-        return set(chain.from_iterable([a.langs for a in apps]))
-
     @classmethod
     @quickcache(['name'], skip_arg='strict', timeout=30*60,
         session_function=icds_conditional_session_key())
