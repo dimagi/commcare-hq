@@ -936,7 +936,8 @@ def _iter_docs(domain, doc_type, resume_key, stopper):
         item_getter=None,
         event_handler=MigrationPaginationEventHandler(domain, stopper)
     )
-    log.info("iteration state: %r", rows.state.to_json())
+    if rows.state.is_resume():
+        log.info("iteration state: %r", rows.state.to_json())
     row = None
     try:
         for row in rows:
