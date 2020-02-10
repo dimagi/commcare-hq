@@ -353,6 +353,7 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
     use_default_sms_response = BooleanProperty(default=False)
     default_sms_response = StringProperty()
     chat_message_count_threshold = IntegerProperty()
+    sms_language_fallback = StringProperty()
     custom_chat_template = StringProperty()  # See settings.CUSTOM_CHAT_TEMPLATES
     custom_case_username = StringProperty()  # Case property to use when showing the case's name in a chat window
     # If empty, sms can be sent at any time. Otherwise, only send during
