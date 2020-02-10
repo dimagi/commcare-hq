@@ -97,12 +97,19 @@ LANGUAGE_FALLBACK_DOMAIN = 'DOMAIN'
 LANGUAGE_FALLBACK_UNTRANSLATED = 'UNTRANSLATED'
 
 LANGUAGE_FALLBACK_CHOICES = (
-    (LANGUAGE_FALLBACK_NONE, ugettext_lazy("Only send message if available in recipient's preferred language")),
-    (LANGUAGE_FALLBACK_SCHEDULE, ugettext_lazy("Use the alert or broadcast's default language as a backup")),
-    (LANGUAGE_FALLBACK_DOMAIN, ugettext_lazy("""
-        Use the project's default language as a backup if the alert or broadcast's language is also unavailable
+    (LANGUAGE_FALLBACK_NONE, ugettext_lazy("""
+        Only send message if text is available in recipient's preferred language
     """)),
-    (LANGUAGE_FALLBACK_UNTRANSLATED, ugettext_lazy("Use all available backups, including untranslated content")),
+    (LANGUAGE_FALLBACK_SCHEDULE, ugettext_lazy("""
+        Use text from the alert or broadcast's default language as a backup
+    """)),
+    (LANGUAGE_FALLBACK_DOMAIN, ugettext_lazy("""
+        Use text from the project's default language as a backup
+        if the alert or broadcast's language is also unavailable
+    """)),
+    (LANGUAGE_FALLBACK_UNTRANSLATED, ugettext_lazy("""
+        Use all available text backups, including untranslated content
+    """)),
 )
 
 
@@ -388,10 +395,10 @@ class SettingsForm(Form):
                 help_bubble_text=_("""
                     Choose what should happen when a broadcast or alert should be sent to a recipient but no
                     translations exists in the user's preferred language. You may choose not to send a message in
-                    that case, or to try one of several backups. The first backup is the broadcast or alert's
-                    default language. If that translation is also unavailable, the second backup is the project's
-                    default SMS language. If that translation is also unavailable, you may choose to use
-                    untranslated content, if there is any.
+                    that case, or to try one of several backups. The first backup uses the broadcast or alert's
+                    default language. If that translation is also unavailable, the second backup is text in
+                    the project's default SMS language. If that translation is also unavailable, you may choose
+                    to use untranslated text, if there is any.
                 """),
             ))
 
