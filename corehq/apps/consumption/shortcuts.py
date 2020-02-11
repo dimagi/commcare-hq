@@ -25,17 +25,25 @@ def get_default_monthly_consumption(domain, product_id, location_type, case_id):
         consumption = SQLDefaultConsumption.objects.filter(
             domain=domain,
             product_id=product_id,
-            supply_point_type=location_type
+            supply_point_type=location_type,
+            supply_point_id=None
         ).first()
 
     if not consumption:
         consumption = SQLDefaultConsumption.objects.filter(
             domain=domain,
-            product_id=product_id
+            product_id=product_id,
+            supply_point_type=None,
+            supply_point_id=None
         ).first()
 
     if not consumption:
-        consumption = SQLDefaultConsumption.objects.filter(domain=domain).first()
+        consumption = SQLDefaultConsumption.objects.filter(
+            domain=domain,
+            product_id=None,
+            supply_point_type=None,
+            supply_point_id=None
+        ).first()
 
     if consumption:
         return consumption.default_consumption
