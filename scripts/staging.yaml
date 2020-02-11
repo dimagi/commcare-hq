@@ -57,10 +57,11 @@ branches:
   - dm/select-toggle # Daniel Nov 19
   - bmb/update-requirejs  # Biyeun Nov 21
   - dmr/throttle-and-measure-case-imports  # Danny Dec 12
-  - bmb/SAASP-10149-v2  # Biyeun Dec 20
-  - MC/inddex-reports  # Ethan/Maciej Jan 15
   - es/enterprise-subscriptions  # Ethan Jan 15
-  - bmb/SAASP-10249 # Biyeun Jan 21
-  #- jls/migrate-HqDeploy-1 # Jenny Jan 21
   - dmr/smarter-wait  # Danny Jan 22
+  - jls/bulk-app-trans-format-fixes # Jenny Jan 27
+  - bmb/SAASP-10249  # Biyeun Feb 3
+  - jls/migrate-HqDeploy-3 # Jenny Feb 5
+  - jls/migrate-RegistrationRequest-2 # Jenny Feb 10
+  - dmr/use-npm-local-lessc  # Danny Feb 7
 submodules: {}

@@ -60,9 +60,8 @@ class FoodCodeData(FoodCodeDataSource):
 
     @property
     def rows(self):
-        food_codes = [int(x['food_code']) for x in self.get_data() if x['food_code'] is not None]
-
-        return sorted(set(food_codes))
+        food_codes = {int(x['food_code']) for x in self.get_data() if x['food_code']}
+        return sorted(food_codes)
 
 
 class FoodBaseTermDataSource(FoodConsumptionDataSourceMixin):

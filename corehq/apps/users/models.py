@@ -1448,14 +1448,6 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
         _get_domain_list.clear(self)
 
     @classmethod
-    def get_by_default_phone(cls, phone_number):
-        result = cls.get_db().view('users/by_default_phone', key=phone_number, include_docs=True).one()
-        if result:
-            return cls.wrap_correctly(result['doc'])
-        else:
-            return None
-
-    @classmethod
     @quickcache(['userID', 'domain'])
     def get_by_user_id(cls, userID, domain=None):
         """
@@ -2779,8 +2771,9 @@ class AnonymousCouchUser(object):
 class UserReportingMetadataStaging(models.Model):
     domain = models.TextField()
     user_id = models.TextField()
-    app_id = models.TextField()
+    app_id = models.TextField(null=True)  # not all form submissions include an app_id
     modified_on = models.DateTimeField(auto_now=True)
+    created_on = models.DateTimeField(auto_now=True)
 
     # should build_id actually be nullable?
     build_id = models.TextField(null=True)
@@ -2816,11 +2809,11 @@ class UserReportingMetadataStaging(models.Model):
         with connection.cursor() as cursor:
             cursor.execute(f"""
                 INSERT INTO {cls._meta.db_table} AS staging (
-                    domain, user_id, app_id, modified_on,
+                    domain, user_id, app_id, modified_on, created_on,
                     build_id,
                     xform_version, form_meta, received_on
                 ) VALUES (
-                    %(domain)s, %(user_id)s, %(app_id)s, CLOCK_TIMESTAMP(),
+                    %(domain)s, %(user_id)s, %(app_id)s, CLOCK_TIMESTAMP(), CLOCK_TIMESTAMP(),
                     %(build_id)s,
                     %(xform_version)s, %(form_meta)s, %(received_on)s
                 )
@@ -2847,11 +2840,11 @@ class UserReportingMetadataStaging(models.Model):
         with connection.cursor() as cursor:
             cursor.execute(f"""
                 INSERT INTO {cls._meta.db_table} AS staging (
-                    domain, user_id, app_id, modified_on,
+                    domain, user_id, app_id, modified_on, created_on,
                     build_id,
                     sync_date, device_id
                 ) VALUES (
-                    %(domain)s, %(user_id)s, %(app_id)s, CLOCK_TIMESTAMP(),
+                    %(domain)s, %(user_id)s, %(app_id)s, CLOCK_TIMESTAMP(), CLOCK_TIMESTAMP(),
                     %(build_id)s,
                     %(sync_date)s, %(device_id)s
                 )
@@ -2883,13 +2876,13 @@ class UserReportingMetadataStaging(models.Model):
         with connection.cursor() as cursor:
             cursor.execute(f"""
                 INSERT INTO {cls._meta.db_table} AS staging (
-                    domain, user_id, app_id, modified_on,
+                    domain, user_id, app_id, modified_on, created_on,
                     build_id,
                     sync_date, device_id,
                     app_version, num_unsent_forms, num_quarantined_forms,
                     commcare_version, build_profile_id, last_heartbeat
                 ) VALUES (
-                    %(domain)s, %(user_id)s, %(app_id)s, CLOCK_TIMESTAMP(),
+                    %(domain)s, %(user_id)s, %(app_id)s, CLOCK_TIMESTAMP(), CLOCK_TIMESTAMP(),
                     %(build_id)s,
                     %(sync_date)s, %(device_id)s,
                     %(app_version)s, %(num_unsent_forms)s, %(num_quarantined_forms)s,
@@ -2898,9 +2891,9 @@ class UserReportingMetadataStaging(models.Model):
                 ON CONFLICT (domain, user_id, app_id)
                 DO UPDATE SET
                     modified_on = CLOCK_TIMESTAMP(),
-                    build_id = EXCLUDED.build_id,
-                    sync_date = EXCLUDED.sync_date,
-                    device_id = EXCLUDED.device_id,
+                    build_id = COALESCE(EXCLUDED.build_id, staging.build_id),
+                    sync_date = COALESCE(EXCLUDED.sync_date, staging.sync_date),
+                    device_id = COALESCE(EXCLUDED.device_id, staging.device_id),
                     app_version = EXCLUDED.app_version,
                     num_unsent_forms = EXCLUDED.num_unsent_forms,
                     num_quarantined_forms = EXCLUDED.num_quarantined_forms,
@@ -2909,6 +2902,44 @@ class UserReportingMetadataStaging(models.Model):
                     last_heartbeat = CLOCK_TIMESTAMP()
                 WHERE staging.last_heartbeat is NULL or EXCLUDED.last_heartbeat > staging.last_heartbeat
                 """, params)
+
+    def process_record(self, user):
+        from corehq.pillows.synclog import mark_last_synclog
+        from pillowtop.processors.form import mark_latest_submission
+
+        save = False
+        if not user or user.is_deleted():
+            return
+
+        if self.received_on:
+            save = mark_latest_submission(
+                self.domain, user, self.app_id, self.build_id,
+                self.xform_version, self.form_meta, self.received_on, save_user=False
+            )
+        if self.device_id or self.sync_date or self.last_heartbeat:
+            device_app_meta = DeviceAppMeta(
+                app_id=self.app_id,
+                build_id=self.build_id,
+                build_version=self.app_version,
+                last_heartbeat=self.last_heartbeat,
+                last_sync=self.sync_date,
+                num_unsent_forms=self.num_unsent_forms,
+                num_quarantined_forms=self.num_quarantined_forms
+            )
+            if not self.last_heartbeat:
+                # coming from sync
+                latest_build_date = self.sync_date
+            else:
+                # coming from hearbeat
+                latest_build_date = self.modified_on
+            save |= mark_last_synclog(
+                self.domain, user, self.app_id, self.build_id,
+                self.sync_date, latest_build_date, self.device_id, device_app_meta,
+                commcare_version=self.commcare_version, build_profile_id=self.build_profile_id,
+                save_user=False
+            )
+        if save:
+            user.save(fire_signals=False)
 
     class Meta(object):
         unique_together = ('domain', 'user_id', 'app_id')

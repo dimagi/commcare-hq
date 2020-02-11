@@ -1,11 +1,19 @@
-import traceback
-
+import inspect
+import logging
 import re
+import traceback
+from types import TracebackType
+
 from django.conf import settings
+from django.db.backends.base.base import BaseDatabaseWrapper
+from django.db.backends.utils import CursorWrapper
 from django.db.utils import OperationalError
 
 from corehq.util.cache_utils import is_rate_limited
 from corehq.util.datadog.gauges import datadog_counter
+
+logger = logging.getLogger(__name__)
+
 
 RATE_LIMITED_EXCEPTIONS = {
     'dimagi.utils.couch.bulk.BulkFetchException': 'couchdb',
@@ -55,7 +63,7 @@ def _get_rate_limit_key(exc_info):
         package, key = RATE_LIMIT_BY_PACKAGE[exc_name]
         frame_summaries = traceback.extract_tb(tb)
         for frame in frame_summaries:
-            if frame[0].startswith(package): # filename
+            if frame.filename.startswith(package):
                 return key
 
 
@@ -92,11 +100,39 @@ class HQSanitzeSystemPasswords(object):
 sanitize_system_passwords = HQSanitzeSystemPasswords()
 
 
+def subtype_error(tb: TracebackType, rate_limit_key: str) -> str:
+    if rate_limit_key == 'postgres':
+        f_locals = inspect.getinnerframes(tb)[-1].frame.f_locals
+        dsn = None
+        if f_locals.get('dsn'):
+            dsn = f_locals['dsn']
+        elif f_locals.get('cursor'):
+            dsn = f_locals['cursor'].connection.dsn
+        elif f_locals.get('self'):
+            frame_self = f_locals['self']
+            if isinstance(frame_self, BaseDatabaseWrapper):
+                dsn = frame_self.connection.dsn
+            if isinstance(frame_self, CursorWrapper):
+                dsn = frame_self.db.connection.dsn
+
+        if not dsn:
+            return rate_limit_key
+
+        conf = dict([field.split('=') for field in dsn.split(' ')])
+        return f"{rate_limit_key}_{conf['dbname']}"
+    return rate_limit_key
+
+
 def _rate_limit_exc(exc_info):
     exc_type, exc_value, tb = exc_info
     rate_limit_key = _get_rate_limit_key(exc_info)
     if not rate_limit_key:
         return False
+
+    try:
+        rate_limit_key = subtype_error(tb, rate_limit_key)
+    except Exception:
+        logger.exception("Error while subtyping rate limited error")
 
     datadog_counter('commcare.sentry.errors.rate_limited', tags=[
         'service:{}'.format(rate_limit_key)

@@ -3,7 +3,7 @@ from decimal import Decimal
 
 from testil import eq
 
-from dateutil.tz import tzoffset
+from dateutil.tz import tzoffset, tzlocal
 from openpyxl.styles import numbers
 
 from corehq.apps.export.const import MISSING_VALUE, EMPTY_VALUE
@@ -48,10 +48,10 @@ def test_decimal_eur():
 
 
 def test_percentage():
-    yield check, '80%', 80, numbers.FORMAT_PERCENTAGE, int
-    yield check, '-50%', -50, numbers.FORMAT_PERCENTAGE, int
-    yield check, '3.45%', 3.45, numbers.FORMAT_PERCENTAGE_00, float
-    yield check, '-4.35%', -4.35, numbers.FORMAT_PERCENTAGE_00, float
+    yield check, '80%', 0.8, numbers.FORMAT_PERCENTAGE, float
+    yield check, '-50%', -0.5, numbers.FORMAT_PERCENTAGE, float
+    yield check, '3.45%', 0.0345, numbers.FORMAT_PERCENTAGE_00, float
+    yield check, '-4.35%', -0.0435, numbers.FORMAT_PERCENTAGE_00, float
 
 
 def test_comma_separated_us():
@@ -116,7 +116,10 @@ def test_datetime():
         numbers.FORMAT_DATE_DATETIME, datetime.datetime
     yield check, datetime.datetime(2020, 1, 20, 11, 11), \
         datetime.datetime(2020, 1, 20, 11, 11), \
-        numbers.FORMAT_DATE_YYYYMMDD2, datetime.datetime
+        numbers.FORMAT_DATE_DATETIME, datetime.datetime
+    yield check, '2020-01-17T15:45:37.268000Z', \
+        datetime.datetime(2020, 1, 17, 15, 45, 37, 268000, tzinfo=tzlocal()), \
+        numbers.FORMAT_DATE_DATETIME, datetime.datetime
 
 
 def test_time():

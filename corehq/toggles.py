@@ -984,11 +984,17 @@ DASHBOARD_ICDS_REPORT = StaticToggle(
 
 ICDS_DASHBOARD_REPORT_FEATURES = StaticToggle(
     'features_in_dashboard_icds_reports',
-    'ICDS: Enable access to the features in the ICDS Dashboard reports',
+    'ICDS: Enable access to pre-release features in the ICDS Dashboard reports',
     TAG_CUSTOM,
     [NAMESPACE_USER]
 )
 
+ICDS_DASHBOARD_SHOW_MOBILE_APK = DynamicallyPredictablyRandomToggle(
+    'icds_dashboard_show_mobile_apk',
+    'Show a "Mobile APK" download link on the ICDS Dashboard',
+    TAG_CUSTOM,
+    [NAMESPACE_USER],
+)
 
 ICDS_DASHBOARD_TEMPORARY_DOWNTIME = StaticToggle(
     'icds_dashboard_temporary_downtime',
@@ -1155,7 +1161,6 @@ MOBILE_USER_DEMO_MODE = StaticToggle(
     help_link='https://confluence.dimagi.com/display/internal/Demo+Mobile+Workers',
     namespaces=[NAMESPACE_DOMAIN]
 )
-
 
 SEND_UCR_REBUILD_INFO = StaticToggle(
     'send_ucr_rebuild_info',
@@ -1346,6 +1351,14 @@ FILTERED_BULK_USER_DOWNLOAD = StaticToggle(
     TAG_SOLUTIONS_OPEN,
     [NAMESPACE_DOMAIN],
     help_link='https://confluence.dimagi.com/display/ccinternal/Filter+Mobile+Workers+Download',
+)
+
+BULK_USER_DELETE = StaticToggle(
+    'bulk_user_delete',
+    "Allow bulk deletion of users based on a username upload.",
+    TAG_SOLUTIONS_LIMITED,
+    [NAMESPACE_DOMAIN],
+    help_link='https://confluence.dimagi.com/display/ccinternal/Bulk+Delete+Users',
 )
 
 FILTERED_LOCATION_DOWNLOAD = StaticToggle(
@@ -1695,17 +1708,6 @@ DISABLE_CASE_UPDATE_RULE_SCHEDULED_TASK = StaticToggle(
 )
 
 
-# todo: remove after Dec 25, 2019 if no one is using
-USER_API_USE_COUCH_BACKEND = StaticToggle(
-    'user_api_use_couch_backend',
-    'Use Old Couch backend for User API. '
-    'This is an escape hatch for support '
-    'to immediately revert a domain to old behavior.',
-    TAG_PRODUCT,
-    [NAMESPACE_DOMAIN, NAMESPACE_USER],
-)
-
-
 PHI_CAS_INTEGRATION = StaticToggle(
     'phi_cas_integration',
     'Integrate with PHI Api to search and validate beneficiaries',
@@ -1734,13 +1736,6 @@ ICDS_GOVERNANCE_DASHABOARD_API = StaticToggle(
     TAG_CUSTOM,
     namespaces=[NAMESPACE_USER],
     relevant_environments={'icds', 'india'},
-)
-
-MOBILE_UCR_TOTAL_ROW_ITERATIVE = DynamicallyPredictablyRandomToggle(
-    'mobile_ucr_total_row_iterative_calculation',
-    'Calculate total rows for mobile UCR during iteration instead of using a DB query',
-    TAG_CUSTOM,
-    [NAMESPACE_USER],
 )
 
 RATE_LIMIT_SUBMISSIONS = DynamicallyPredictablyRandomToggle(
@@ -1806,4 +1801,20 @@ LIVEQUERY_READ_FROM_STANDBYS = DynamicallyPredictablyRandomToggle(
     To allow a gradual rollout and testing of using the standby
     databases to generate restore payloads.
     """
+)
+
+
+RUN_CUSTOM_DATA_PULL_REQUESTS = StaticToggle(
+    'run_custom_data_pull_requests',
+    '[ICDS] Initiate custom data pull requests from UI',
+    TAG_CUSTOM,
+    [NAMESPACE_USER]
+)
+
+
+RUN_DATA_MANAGEMENT_TASKS = StaticToggle(
+    'run_data_management_tasks',
+    '[ICDS] Run data management tasks',
+    TAG_CUSTOM,
+    [NAMESPACE_USER]
 )

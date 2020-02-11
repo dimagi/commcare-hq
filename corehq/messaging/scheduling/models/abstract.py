@@ -5,6 +5,11 @@ from django.db import models, transaction
 from corehq.apps.data_interfaces.utils import property_references_parent
 from corehq.apps.reminders.util import get_one_way_number_for_recipient, get_two_way_number_for_recipient
 from corehq.apps.sms.api import MessageMetadata, send_sms, send_sms_to_verified_number
+from corehq.apps.sms.forms import (
+    LANGUAGE_FALLBACK_NONE,
+    LANGUAGE_FALLBACK_SCHEDULE,
+    LANGUAGE_FALLBACK_DOMAIN,
+)
 from corehq.apps.sms.models import (
     MessagingEvent,
     PhoneNumber,
@@ -415,20 +420,35 @@ class Content(models.Model):
     def get_lang_doc(self, domain):
         return StandaloneTranslationDoc.get_obj(domain, 'sms')
 
-    def get_translation_from_message_dict(self, domain, message_dict, preferred_language_code):
+    def get_translation_from_message_dict(self, domain_obj, message_dict, preferred_language_code):
         """
-        :param domain: the domain
+        Attempt to get translated content. If content is not available in the user's preferred language,
+        attempt to fall back to other languages, as allowed by domain setting sms_language_fallback.
+
+        By default, try all possible fallbacks before giving up (same as LANGUAGE_FALLBACK_UNTRANSLATED).
+
+        :param domain_obj: the domain object
         :param message_dict: a dictionary of {language code: message}
         :param preferred_language_code: the language code of the user's preferred language
         """
         result = Content.get_cleaned_message(message_dict, preferred_language_code)
 
+        if domain_obj.sms_language_fallback == LANGUAGE_FALLBACK_NONE:
+            return result
+
         if not result and self.schedule_instance:
             schedule = self.schedule_instance.memoized_schedule
             result = Content.get_cleaned_message(message_dict, schedule.default_language_code)
 
-        if not result and self.get_lang_doc(domain):
-            result = Content.get_cleaned_message(message_dict, self.get_lang_doc(domain).default_lang)
+        if domain_obj.sms_language_fallback == LANGUAGE_FALLBACK_SCHEDULE:
+            return result
+
+        if not result:
+            tdoc = self.get_lang_doc(domain_obj.name)
+            result = Content.get_cleaned_message(message_dict, tdoc.default_lang)
+
+        if domain_obj.sms_language_fallback == LANGUAGE_FALLBACK_DOMAIN:
+            return result
 
         if not result:
             result = Content.get_cleaned_message(message_dict, '*')

@@ -4,6 +4,8 @@ from pathlib import Path
 
 import attr
 
+from corehq.util.soft_assert import soft_assert
+
 
 @attr.s
 class TopojsonFile:
@@ -23,8 +25,13 @@ def _get_topojson_file(filename, truncate_before):
     path = os.path.join(get_topojson_directory(), filename)
     with open(path) as f:
         content = f.read()
-        # strip off e.g. 'var BLOCK_TOPOJSON = ' from the front of the file and '\n;' from the end
-        topojson_text = content[truncate_before:][:-2]
+        if not truncate_before:
+            # no truncation necessary if it's already a json file
+            topojson_text = content
+        else:
+            # strip off e.g. 'var BLOCK_TOPOJSON = ' from the front of the file and '\n;' from the end
+            topojson_text = content[truncate_before:][:-2]
+
         return TopojsonFile(path, topojson_text, json.loads(topojson_text))
 
 
@@ -36,12 +43,16 @@ def get_district_topojson_file():
     return _get_topojson_file('districts_v2.topojson.js', truncate_before=24)
 
 
+def get_district_v3_topojson_file():
+    return _get_topojson_file('districts_v3_small.topojson', truncate_before=0)
+
+
 def get_state_topojson_file():
     return _get_topojson_file('states_v2.topojson.js', truncate_before=21)
 
 
 def get_state_v3_topojson_file():
-    return _get_topojson_file('states_v3_small.topojson.js', truncate_before=21)
+    return _get_topojson_file('states_v3_small.topojson', truncate_before=0)
 
 
 def get_topojson_file_for_level(level):
@@ -63,13 +74,43 @@ def copy_custom_metadata(from_topojson, to_topojson):
         location_data['scale'] = from_topojson['objects'][location_name]['scale']
 
 
-def get_topojson_for_district(district):
+def get_topojson_for_district(state, district):
     path = get_topojson_directory()
+    district_topojson_data = get_district_topojson_data()
+    # if we have the state name already use that
+    filename = None
+    if state in district_topojson_data:
+        filename = district_topojson_data[state]['file_name']
+    else:
+        # legacy support - missing state name so look for the district by name across all states
+        _assert = soft_assert('@'.join(['czue', 'dimagi.com']), fail_if_debug=True)
+        _assert(
+            False,
+            f"State {state} not found in district topojosn file!"
+        )
+        for state, data in district_topojson_data.items():
+            if district in data['districts']:
+                filename = data['file_name']
+                break
+    if filename:
+        with open(os.path.join(path, 'blocks/' + filename), encoding='utf-8') as f:
+            return json.loads(f.read())
 
-    district_topojson_data_path = os.path.join(path, 'district_topojson_data.json')
-    district_topojson_data = json.loads(open(district_topojson_data_path, encoding='utf-8').read())
 
-    for state, data in district_topojson_data.items():
-        if district in data['districts']:
-            with open(os.path.join(path, 'blocks/' + data['file_name']), encoding='utf-8') as f:
-                return json.loads(f.read())
+def get_district_topojson_data():
+    district_topojson_data_path = os.path.join(get_topojson_directory(), 'district_topojson_data.json')
+    with open(district_topojson_data_path, encoding='utf-8') as f:
+        return json.loads(f.read())
+
+
+def get_map_name(location):
+    """
+    Gets the "map name" of a SQLLocation, defaulting to the location's name if not available.
+    """
+    if not location:
+        return
+
+    if 'map_location_name' in location.metadata and location.metadata['map_location_name']:
+        return location.metadata['map_location_name']
+    else:
+        return location.name

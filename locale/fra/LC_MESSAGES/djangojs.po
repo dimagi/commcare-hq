@@ -11,18 +11,18 @@
 # Claire_Cravero <ccravero@dimagi.com>, 2018
 # Ismaïla Diene <idiene@dimagi.com>, 2019
 # Sarah Sagan <ssagan@dimagi.com>, 2019
-# Tyler Wymer <twymer@dimagi.com>, 2019
-# Dimagi Dev <devops@dimagi.com>, 2019
-# Aissetou Sawadogo <ais107@hotmail.com>, 2019
+# Tyler Wymer <twymer@dimagi.com>, 2020
+# Dimagi Dev <devops@dimagi.com>, 2020
+# Aissetou Sawadogo <ais107@hotmail.com>, 2020
 #
 #, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-01-15 21:18+0000\n"
+"POT-Creation-Date: 2020-02-05 20:42+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
-"Last-Translator: Aissetou Sawadogo <ais107@hotmail.com>, 2019\n"
+"Last-Translator: Aissetou Sawadogo <ais107@hotmail.com>, 2020\n"
 "Language-Team: French (https://www.transifex.com/dimagi/teams/9388/fr/)\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
@@ -629,11 +629,11 @@ msgstr ""
 "'commcare-user' est un type de dossier réservé. Veuillez changer le type de "
 "dossier"
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:166
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:171
 msgid "Go back to case list"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:167
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:172
 msgid "Proceed with registered case"
 msgstr ""
 
@@ -645,13 +645,13 @@ msgstr "Afficher tous"
 msgid "Display text is required"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/report_module.js:341
+#: corehq/apps/app_manager/static/app_manager/js/modules/report_module.js:342
 msgid "You have unsaved changes in your report list module"
 msgstr ""
 "Vous avez des modifications non sauvegardées dans votre module de liste de "
 "rapports"
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/report_module.js:435
+#: corehq/apps/app_manager/static/app_manager/js/modules/report_module.js:438
 msgid "This code is used in multiple places."
 msgstr ""
 
@@ -2950,19 +2950,19 @@ msgid ""
 "<strong>Edit and Export</strong>: All users can edit and export."
 msgstr ""
 
-#: corehq/apps/export/static/export/js/models.js:671
+#: corehq/apps/export/static/export/js/models.js:672
 msgid "The table path should end with []"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/models.js:782
+#: corehq/apps/export/static/export/js/models.js:783
 msgid "Sensitive ID"
 msgstr "Identifiant sensible"
 
-#: corehq/apps/export/static/export/js/models.js:784
+#: corehq/apps/export/static/export/js/models.js:785
 msgid "Sensitive Date"
 msgstr "Date sensible"
 
-#: corehq/apps/export/static/export/js/models.js:786
+#: corehq/apps/export/static/export/js/models.js:787
 msgid "None"
 msgstr "Aucun"
 
@@ -3134,8 +3134,10 @@ msgid "Edit mapping for <%= property %>"
 msgstr ""
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/validators.ko.js:15
+#, fuzzy
+#| msgid "Please enter a valid email."
 msgid "Not a valid email"
-msgstr ""
+msgstr "Veuillez entrer une adresse e-mail valide"
 
 #: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:80
 msgid ""
@@ -3841,9 +3843,6 @@ msgstr ""
 #: custom/ilsgateway/static/ilsgateway/js/main.js:50
 msgid "Search Locations..."
 msgstr ""
-
-#~ msgid "Show previous versions"
-#~ msgstr "Afficher les versions précédentes"
 
 #~ msgid "show"
 #~ msgstr "afficher"

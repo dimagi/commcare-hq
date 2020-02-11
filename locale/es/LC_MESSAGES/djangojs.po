@@ -4,17 +4,17 @@
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
 # Translators:
-# Dimagi Dev <devops@dimagi.com>, 2019
-# Gladys Teos <info@enestranslations.com>, 2019
+# Dimagi Dev <devops@dimagi.com>, 2020
+# Gladys Teos <info@enestranslations.com>, 2020
 #
 #, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-01-15 21:18+0000\n"
+"POT-Creation-Date: 2020-02-05 20:42+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
-"Last-Translator: Gladys Teos <info@enestranslations.com>, 2019\n"
+"Last-Translator: Gladys Teos <info@enestranslations.com>, 2020\n"
 "Language-Team: Spanish (https://www.transifex.com/dimagi/teams/9388/es/)\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
@@ -622,11 +622,11 @@ msgstr ""
 "'usuario-commcare' es un tipo de caso reservado. Por favor cambie el tipo de "
 "caso"
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:166
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:171
 msgid "Go back to case list"
 msgstr "Regresar a la lista de casos"
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:167
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:172
 msgid "Proceed with registered case"
 msgstr "Continuar con el caso registrado"
 
@@ -638,11 +638,11 @@ msgstr "Mostrar Todo"
 msgid "Display text is required"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/report_module.js:341
+#: corehq/apps/app_manager/static/app_manager/js/modules/report_module.js:342
 msgid "You have unsaved changes in your report list module"
 msgstr "Tiene cambios sin guardar en la lista de caso de su módulo"
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/report_module.js:435
+#: corehq/apps/app_manager/static/app_manager/js/modules/report_module.js:438
 msgid "This code is used in multiple places."
 msgstr ""
 
@@ -3061,19 +3061,19 @@ msgid ""
 "<strong>Edit and Export</strong>: All users can edit and export."
 msgstr ""
 
-#: corehq/apps/export/static/export/js/models.js:671
+#: corehq/apps/export/static/export/js/models.js:672
 msgid "The table path should end with []"
 msgstr "La ruta de la tabla debe terminar con []"
 
-#: corehq/apps/export/static/export/js/models.js:782
+#: corehq/apps/export/static/export/js/models.js:783
 msgid "Sensitive ID"
 msgstr "ID Confidencial"
 
-#: corehq/apps/export/static/export/js/models.js:784
+#: corehq/apps/export/static/export/js/models.js:785
 msgid "Sensitive Date"
 msgstr "Fecha Confidencial"
 
-#: corehq/apps/export/static/export/js/models.js:786
+#: corehq/apps/export/static/export/js/models.js:787
 msgid "None"
 msgstr "Ninguna"
 
@@ -3249,8 +3249,10 @@ msgid "Edit mapping for <%= property %>"
 msgstr ""
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/validators.ko.js:15
+#, fuzzy
+#| msgid "Not a valid choice"
 msgid "Not a valid email"
-msgstr "No es un correo electrónico válido"
+msgstr "Opción no válida"
 
 #: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:80
 msgid ""
@@ -3993,12 +3995,6 @@ msgstr ""
 #: custom/ilsgateway/static/ilsgateway/js/main.js:50
 msgid "Search Locations..."
 msgstr ""
-
-#~ msgid "Hide previous versions"
-#~ msgstr "Ocultar versiones anteriores"
-
-#~ msgid "Show previous versions"
-#~ msgstr "Mostrar versiones anteriores"
 
 #~ msgid "show"
 #~ msgstr "mostrar"

@@ -3,8 +3,8 @@
 window.angular.module('icdsApp').factory('topojsonService', ['$http', function ($http) {
     var url = hqImport('hqwebapp/js/initial_page_data').reverse;
     // todo: is there a better way to generate this so it works with django?
-    var stateTopoJsonUrl = '/static/js/topojsons/states_v3_small.topojson';
-    var districtTopoJsonUrl = '/static/js/topojsons/districts_v3_small.topojson';
+    var stateTopoJsonUrl = '/static/js/topojsons/states_v4.topojson';
+    var districtTopoJsonUrl = '/static/js/topojsons/districts_v4.topojson';
     var CACHE = {
         blocks: {},
     };
@@ -28,16 +28,17 @@ window.angular.module('icdsApp').factory('topojsonService', ['$http', function (
         getDistrictTopoJson: function () {
             return getStaticTopojson(districtTopoJsonUrl, 'districts');
         },
-        getTopoJsonForDistrict: function (district) {
-            if (district in CACHE["blocks"]) {
+        getTopoJsonForDistrict: function (district, state) {
+            var cacheKey = state + district;
+            if (cacheKey in CACHE["blocks"]) {
                 // https://javascript.info/promise-api#promise-resolve-reject
-                return Promise.resolve(CACHE["blocks"][district]);
+                return Promise.resolve(CACHE["blocks"][cacheKey]);
             } else {
                 return $http.get(url('topojson'), {
-                    params: {district: district},
+                    params: {district: district, state: state},
                 }).then(
                     function (response) {
-                        CACHE['blocks'][district] = response.data;
+                        CACHE['blocks'][cacheKey] = response.data;
                         return response.data;
                     }
                 );

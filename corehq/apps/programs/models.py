@@ -39,7 +39,7 @@ class Program(Document):
         self.clear_caches(self.domain)
 
     @classmethod
-    def by_domain(cls, domain, wrap=True):
+    def by_domain(cls, domain):
         """
         Gets all programs in a domain.
         """
@@ -49,10 +49,7 @@ class Program(Document):
             endkey=[domain, {}],
             include_docs=True
         )
-        if wrap:
-            return Program.view(**kwargs)
-        else:
-            return [row["doc"] for row in Program.view(wrap_doc=False, **kwargs)]
+        return Program.view(**kwargs)
 
     @classmethod
     def default_for_domain(cls, domain):

@@ -186,17 +186,25 @@ to the most recent offset for its topic.
 Pillows
 =======
 
-.. autofunction:: corehq.apps.change_feed.pillow.get_change_feed_pillow_for_db
-
 .. autofunction:: corehq.pillows.case.get_case_pillow
 
 .. autofunction:: corehq.pillows.xform.get_xform_pillow
 
+.. autofunction:: corehq.pillows.case.get_case_to_elasticsearch_pillow
+
+.. autofunction:: corehq.pillows.xform.get_xform_to_elasticsearch_pillow
+
 .. autofunction:: corehq.pillows.user.get_user_pillow
+
+.. autofunction:: corehq.pillows.user.get_user_pillow_old
 
 .. autofunction:: corehq.apps.userreports.pillow.get_location_pillow
 
 .. autofunction:: corehq.pillows.groups_to_user.get_group_pillow
+
+.. autofunction:: corehq.pillows.group.get_group_pillow_old
+
+.. autofunction:: corehq.pillows.groups_to_user.get_group_to_user_pillow
 
 .. autofunction:: corehq.pillows.ledger.get_ledger_to_elasticsearch_pillow
 
@@ -204,13 +212,25 @@ Pillows
 
 .. autofunction:: corehq.pillows.sms.get_sql_sms_pillow
 
-.. autofunction:: corehq.pillows.cacheinvalidate._get_cache_invalidation_pillow
+.. autofunction:: corehq.apps.userreports.pillow.get_kafka_ucr_pillow
+
+.. autofunction:: corehq.apps.userreports.pillow.get_kafka_ucr_static_pillow
 
 .. autofunction:: corehq.pillows.synclog.get_user_sync_history_pillow
 
 .. autofunction:: corehq.pillows.application.get_app_to_elasticsearch_pillow
 
+.. autofunction:: corehq.pillows.app_submission_tracker.get_form_submission_metadata_tracker_pillow
 
+.. autofunction:: corehq.pillows.user.get_unknown_users_pillow
+
+.. autofunction:: corehq.messaging.pillow.get_case_messaging_sync_pillow
+
+.. autofunction:: corehq.pillows.case_search.get_case_search_to_elasticsearch_pillow
+
+.. autofunction:: corehq.pillows.cacheinvalidate._get_cache_invalidation_pillow
+
+.. autofunction:: corehq.apps.change_feed.pillow.get_change_feed_pillow_for_db
 
 Processors
 ==========
@@ -229,7 +249,7 @@ Processors
 
 .. autoclass:: corehq.pillows.synclog.UserSyncHistoryProcessor
 
-.. autoclass:: pillowtop.form.FormSubmissionMetadataTrackerProcessor
+.. autoclass:: pillowtop.processors.form.FormSubmissionMetadataTrackerProcessor
 
 .. autoclass:: corehq.apps.userreports.pillow.ConfigurableReportPillowProcessor
 

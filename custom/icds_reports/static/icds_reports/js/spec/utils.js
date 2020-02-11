@@ -1,5 +1,7 @@
 "use strict";
 
+var assertProperties = hqImport("hqwebapp/js/assert_properties");
+
 hqDefine('icds_reports/js/spec/utils', function () {
     var module = {};
     module.d = {
@@ -59,12 +61,13 @@ hqDefine('icds_reports/js/spec/utils', function () {
             {id: '72', name: '60-72 months'},
         ]);
     };
-    module.provideDefaultConstants = function ($provide, includeGenders, includeAges, overrides) {
+    module.provideDefaultConstants = function ($provide, options) {
+        assertProperties.assert(options, [], ['includeGenders', 'includeAges', 'overrides']);
         // overrides should be an object with values of any overrides keyed by the same
         // as the below strings
         function getOverrideOrDefault(key, defaultValue) {
-            if (overrides && overrides.hasOwnProperty(key)) {
-                return overrides[key];
+            if (options['overrides'] && options['overrides'].hasOwnProperty(key)) {
+                return options['overrides'][key];
             }
             return defaultValue;
         }
@@ -72,10 +75,10 @@ hqDefine('icds_reports/js/spec/utils', function () {
             $provide.constant(key, getOverrideOrDefault(key, defaultValue));
         }
 
-        if (includeGenders) {
+        if (options['includeGenders']) {
             module.provideGenders($provide);
         }
-        if (includeAges) {
+        if (options['includeAges']) {
             module.provideAges($provide);
         }
         provideOverrideOrDefault("userLocationId", null);

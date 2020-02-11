@@ -272,14 +272,19 @@ def get_export_writer(export_instances, temp_path, allow_pagination=True):
     Return a new _Writer
     """
     format = Format.XLS_2007
+    format_data_in_excel = False
+
     if len(export_instances) == 1:
         format = export_instances[0].export_format
+        format_data_in_excel = export_instances[0].format_data_in_excel
 
-    legacy_writer = get_writer(format)
+    legacy_writer = get_writer(format, use_formatted_cells=format_data_in_excel)
+
     if allow_pagination and PAGINATED_EXPORTS.enabled(export_instances[0].domain):
         writer = _PaginatedExportWriter(legacy_writer, temp_path)
     else:
         writer = _ExportWriter(legacy_writer, temp_path)
+
     return writer
 
 

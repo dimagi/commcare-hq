@@ -18,7 +18,7 @@ from corehq.motech.dhis2.const import (
     SEND_FREQUENCY_QUARTERLY,
 )
 from corehq.motech.dhis2.dbaccessors import get_dhis2_connection
-from corehq.motech.dhis2.models import SQLDhis2Connection
+from corehq.motech.dhis2.models import Dhis2Connection
 
 SEND_FREQUENCY_CHOICES = (
     (SEND_FREQUENCY_MONTHLY, 'Monthly'),
@@ -64,14 +64,15 @@ class Dhis2ConnectionForm(forms.Form):
         try:
             dhis2_conn = get_dhis2_connection(domain_name)
             if dhis2_conn is None:
-                dhis2_conn = SQLDhis2Connection(domain=domain_name)
+                dhis2_conn = Dhis2Connection(domain=domain_name)
             dhis2_conn.server_url = self.cleaned_data['server_url']
             dhis2_conn.username = self.cleaned_data['username']
             if self.cleaned_data['password']:
                 # Don't save it if it hasn't been changed. Use simple symmetric encryption. We don't need it to be
                 # strong, considering we'd have to store the algorithm and the key together anyway; it just
                 # shouldn't be plaintext.
-                dhis2_conn.password = b64encode(bz2.compress(self.cleaned_data['password']))
+                plaintext = self.cleaned_data['password'].encode('utf8')
+                dhis2_conn.password = b64encode(bz2.compress(plaintext))
             dhis2_conn.skip_cert_verify = self.cleaned_data['skip_cert_verify']
             dhis2_conn.save()
             return True

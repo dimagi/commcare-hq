@@ -111,16 +111,37 @@
 
         </div>
         <div class="form-group">
-          <div class="col-sm-offset-4 col-md-offset-3 col-lg-offset-2 col-sm-4">
+          <div class="col-sm-offset-4 col-md-offset-3 col-lg-offset-2 col-sm-6">
             {% if not export_instance.is_odata_config %}
               <div class="checkbox">
                 <label>
                   <input type="checkbox"
                          id="transform-dates-checkbox"
                          data-bind="checked: transform_dates" />
-                  {% trans "Automatically convert dates and links for Excel" %}
+                  <strong>{% trans "Automatically convert dates and multimedia links for Excel" %}</strong><br/>
+                  {% blocktrans %}
+                    Leaving this checked will ensure dates appear in excel format.
+                    Otherwise they will appear as a normal text format. This also allows for
+                    hyperlinks to the multimedia captured by your form submission.
+                  {% endblocktrans %}
                 </label>
               </div>
+
+              {% if export_instance.type == 'form' and export_instance.export_format != 'html' %}
+              <div class="checkbox">
+                <label>
+                  <input type="checkbox"
+                         id="format-data-in-excel-checkbox"
+                         data-bind="checked: format_data_in_excel" />
+                  <strong>{% trans "Automatically format cells for Excel 2007+" %}</strong><br/>
+                  {% blocktrans %}
+                    If this setting is not selected, your export will be in Excel’s general format.
+                    If you enable this setting, Excel will format dates, integers, decimals,
+                    Boolean values (True/False) and currencies.
+                  {% endblocktrans %}
+                </label>
+              </div>
+              {% endif %}
 
               <div class="checkbox">
                 <label>

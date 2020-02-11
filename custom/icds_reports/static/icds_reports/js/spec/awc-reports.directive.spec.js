@@ -15,8 +15,9 @@ describe('AWC Reports Directive', function () {
     pageData.registerUrl('awc_reports', 'beneficiary_details');
 
     beforeEach(module('icdsApp', function ($provide) {
-        utils.provideDefaultConstants($provide, false, false);
+        utils.provideDefaultConstants($provide, {});
         $provide.constant("haveAccessToFeatures", false);
+        $provide.constant("mapboxAccessToken", 'bosco');
     }));
 
     var mockBeneficiaryDetails = {
@@ -111,7 +112,6 @@ describe('AWC Reports Directive', function () {
         assert.notEqual(chart, null);
         assert.equal(chart.type, 'multiBarChart');
         assert.equal(chart.height, 450);
-        assert.equal(chart.width, 1100);
         assert.deepEqual(chart.margin, {
             top: 20,
             right: 20,

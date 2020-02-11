@@ -470,7 +470,7 @@ class FormAccessorSQL(AbstractFormAccessor):
 
     @staticmethod
     def get_form_operations(form_id):
-        return list(XFormOperationSQL.objects.plproxy_raw('SELECT * from get_form_operations(%s)', [form_id]))
+        return list(XFormOperationSQL.objects.partitioned_query(form_id).filter(form_id=form_id).order_by('date'))
 
     @staticmethod
     def get_forms_with_attachments_meta(form_ids, ordered=False):
@@ -506,10 +506,11 @@ class FormAccessorSQL(AbstractFormAccessor):
 
     @staticmethod
     def form_exists(form_id, domain=None):
-        with XFormInstanceSQL.get_plproxy_cursor() as cursor:
-            cursor.execute('SELECT * FROM check_form_exists(%s, %s)', [form_id, domain])
-            result = fetchone_as_namedtuple(cursor)
-            return result.form_exists
+        query = XFormInstanceSQL.objects.partitioned_query(form_id).filter(form_id=form_id)
+        if domain:
+            query = query.filter(domain=domain)
+
+        return query.exists()
 
     @staticmethod
     def hard_delete_forms(domain, form_ids, delete_attachments=True):
@@ -774,6 +775,14 @@ class CaseAccessorSQL(AbstractCaseAccessor):
 
     @staticmethod
     def get_cases(case_ids, ordered=False, prefetched_indices=None):
+        """
+        :param case_ids: List of case IDs to fetch
+        :param ordered: Return cases in the same order as ``case_ids``
+        :param prefetched_indices: If not None this must be a dict containing ALL the indices for ALL the
+                                    cases being fetched. If the list does not contain indices for a case
+                                    then an empty list will be attached to the case preventing further DB lookup.
+        :return: List of cases
+        """
         assert isinstance(case_ids, list)
         if not case_ids:
             return []
@@ -782,7 +791,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         if ordered:
             _sort_with_id_list(cases, case_ids, 'case_id')
 
-        if prefetched_indices:
+        if prefetched_indices is not None:
             cases_by_id = {case.case_id: case for case in cases}
             _attach_prefetch_models(
                 cases_by_id, prefetched_indices, 'case_id', 'cached_indices')
@@ -805,9 +814,8 @@ class CaseAccessorSQL(AbstractCaseAccessor):
 
     @staticmethod
     def get_indices(domain, case_id):
-        return list(CommCareCaseIndexSQL.objects.plproxy_raw(
-            'SELECT * FROM get_case_indices(%s, %s)', [domain, case_id]
-        ))
+        query = CommCareCaseIndexSQL.objects.partitioned_query(case_id)
+        return list(query.filter(case_id=case_id, domain=domain))
 
     @staticmethod
     def get_reverse_indices(domain, case_id):
@@ -920,11 +928,11 @@ class CaseAccessorSQL(AbstractCaseAccessor):
 
     @staticmethod
     def get_attachments(case_id):
-        return list(CaseAttachmentSQL.objects.plproxy_raw('SELECT * from get_case_attachments(%s)', [case_id]))
+        return list(CaseAttachmentSQL.objects.partitioned_query(case_id).filter(case_id=case_id))
 
     @staticmethod
     def get_transactions(case_id):
-        return list(CaseTransaction.objects.plproxy_raw('SELECT * from get_case_transactions(%s)', [case_id]))
+        return list(CaseTransaction.objects.partitioned_query(case_id).filter(case_id=case_id).order_by('server_date'))
 
     @staticmethod
     def get_transaction_by_form_id(case_id, form_id):
@@ -1486,6 +1494,13 @@ def _sort_with_id_list(object_list, id_list, id_property):
 
 def _attach_prefetch_models(objects_by_id, prefetched_models, link_field_name, cached_attrib_name):
     prefetched_groups = groupby(prefetched_models, lambda x: getattr(x, link_field_name))
+    seen = set()
     for obj_id, group in prefetched_groups:
+        seen.add(obj_id)
         obj = objects_by_id[obj_id]
         setattr(obj, cached_attrib_name, list(group))
+
+    unseen = set(objects_by_id) - seen
+    for obj_id in unseen:
+        obj = objects_by_id[obj_id]
+        setattr(obj, cached_attrib_name, [])

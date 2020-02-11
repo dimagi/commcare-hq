@@ -20,6 +20,24 @@ class ResourceOverride(models.Model):
         unique_together = ('domain', 'app_id', 'root_name', 'pre_id')
 
 
+def copy_xform_resource_overrides(domain, app_id, id_map):
+    """
+    Adds a new set of overrides that's a copy of existing overrides.
+    id_map has keys that are the existing ids and values that are the corresponding ids to add.
+    """
+    pre_to_post_map = {}
+    for pre_id, override in get_xform_resource_overrides(domain, app_id).items():
+        # If the app already has an override for a form unique id in the old app...
+        if pre_id in id_map.keys():
+            # ...then add the same override, for the same form in the new app
+            pre_to_post_map[id_map[pre_id]] = override.post_id
+
+    if pre_to_post_map:
+        return add_xform_resource_overrides(domain, app_id, pre_to_post_map)
+
+    return []
+
+
 def add_xform_resource_overrides(domain, app_id, pre_to_post_map):
     overrides_by_pre_id = get_xform_resource_overrides(domain, app_id)
     errors = []
@@ -50,6 +68,8 @@ def add_xform_resource_overrides(domain, app_id, pre_to_post_map):
         raise ResourceOverrideError("""
             Cannot update overrides for domain {}, app {}, errors:\n{}
         """.strip().format(domain, app_id, "\n".join(["\t{}".format(e) for e in errors])))
+
+    return new_overrides
 
 
 @quickcache(['domain', 'app_id'], timeout=1 * 60 * 60)

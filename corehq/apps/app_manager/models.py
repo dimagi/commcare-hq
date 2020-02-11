@@ -2024,6 +2024,12 @@ class Detail(IndexedSchema, CaseListLookupMixin):
             any(tab for tab in self.get_tabs() if tab.has_nodeset)
         )
 
+    def has_persistent_tile(self):
+        """
+        Return True if configured to persist a case tile on forms
+        """
+        return self.persist_tile_on_forms and (self.use_case_tiles or self.custom_xml)
+
 
 class CaseList(IndexedSchema, NavMenuItemMediaMixin):
 
@@ -2127,6 +2133,7 @@ class ModuleBase(IndexedSchema, ModuleMediaMixin, NavMenuItemMediaMixin, Comment
     put_in_root = BooleanProperty(default=False)
     root_module_id = StringProperty()
     fixture_select = SchemaProperty(FixtureSelect)
+    report_context_tile = BooleanProperty(default=False)
     auto_select_case = BooleanProperty(default=False)
     is_training_module = BooleanProperty(default=False)
 
@@ -4038,7 +4045,7 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
     @property
     @memoized
     def global_app_config(self):
-        return SQLGlobalAppConfig.for_app(self)
+        return GlobalAppConfig.for_app(self)
 
     def rename_lang(self, old_lang, new_lang):
         validate_lang(new_lang)
@@ -5703,7 +5710,7 @@ class DeleteFormRecord(DeleteRecord):
         app.save()
 
 
-class SQLGlobalAppConfig(models.Model):
+class GlobalAppConfig(models.Model):
     choices = [(c, c) for c in ("on", "off", "forced")]
 
     domain = models.CharField(max_length=255, null=False)
@@ -5731,10 +5738,6 @@ class SQLGlobalAppConfig(models.Model):
         super().save(
             force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields
         )
-
-
-class GlobalAppConfig(Document):
-    pass
 
 
 class AppReleaseByLocation(models.Model):

@@ -4,16 +4,16 @@
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
 # Translators:
-# Dimagi Dev <devops@dimagi.com>, 2019
+# Dimagi Dev <devops@dimagi.com>, 2020
 #
 #, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-01-15 21:18+0000\n"
+"POT-Creation-Date: 2020-02-05 20:42+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
-"Last-Translator: Dimagi Dev <devops@dimagi.com>, 2019\n"
+"Last-Translator: Dimagi Dev <devops@dimagi.com>, 2020\n"
 "Language-Team: Swahili (https://www.transifex.com/dimagi/teams/9388/sw/)\n"
 "Language: sw\n"
 "MIME-Version: 1.0\n"
@@ -609,11 +609,11 @@ msgstr ""
 msgid "'commcare-user' is a reserved case type. Please change the case type"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:166
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:171
 msgid "Go back to case list"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:167
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:172
 msgid "Proceed with registered case"
 msgstr ""
 
@@ -625,11 +625,11 @@ msgstr ""
 msgid "Display text is required"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/report_module.js:341
+#: corehq/apps/app_manager/static/app_manager/js/modules/report_module.js:342
 msgid "You have unsaved changes in your report list module"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/report_module.js:435
+#: corehq/apps/app_manager/static/app_manager/js/modules/report_module.js:438
 msgid "This code is used in multiple places."
 msgstr ""
 
@@ -2918,19 +2918,19 @@ msgid ""
 "<strong>Edit and Export</strong>: All users can edit and export."
 msgstr ""
 
-#: corehq/apps/export/static/export/js/models.js:671
+#: corehq/apps/export/static/export/js/models.js:672
 msgid "The table path should end with []"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/models.js:782
+#: corehq/apps/export/static/export/js/models.js:783
 msgid "Sensitive ID"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/models.js:784
+#: corehq/apps/export/static/export/js/models.js:785
 msgid "Sensitive Date"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/models.js:786
+#: corehq/apps/export/static/export/js/models.js:787
 msgid "None"
 msgstr ""
 

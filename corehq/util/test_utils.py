@@ -633,6 +633,7 @@ class CursorDebugWrapperWithTraceback(utils.CursorDebugWrapper):
             duration = stop - start
             sql = self.db.ops.last_executed_query(self.cursor, sql, params)
             self.db.queries_log.append({
+                'start': start,
                 'sql': sql,
                 'time': "%.3f" % duration,
                 'traceback': traceback.format_stack()
@@ -650,6 +651,7 @@ class CursorDebugWrapperWithTraceback(utils.CursorDebugWrapper):
             except TypeError:           # param_list could be an iterator
                 times = '?'
             self.db.queries_log.append({
+                'start': start,
                 'sql': '%s times: %s' % (times, sql),
                 'time': "%.3f" % duration,
                 'traceback': traceback.format_stack()
@@ -700,3 +702,15 @@ class capture_sql(ContextDecorator):
                 print('\n{}'.format(indent('\n'.join(wrap(out, width)), '\t')))
                 if with_traceback:
                     print('\n{}'.format(indent(''.join(q['traceback']), '\t\t')))
+
+    def print_sql_chronologically(self, with_traceback=False, width=150):
+        all_queries = sorted([
+            (db, query)
+            for db, queries in self.queries_by_db.items()
+            for query in queries
+        ], key=lambda q: q[1]['start'])
+        for db, query in all_queries:
+            out = f"({db}) {query['sql']} (took {query['time']})"
+            print('\n{}'.format(indent('\n'.join(wrap(out, width)), '\t')))
+            if with_traceback:
+                print('\n{}'.format(indent(''.join(query['traceback']), '\t\t')))

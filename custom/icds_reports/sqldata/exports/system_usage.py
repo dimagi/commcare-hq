@@ -8,7 +8,13 @@ from custom.icds_reports.utils import phone_number_function
 
 class SystemUsageExport(ExportableMixin, IcdsSqlData):
     title = 'System Usage'
-    table_name = 'agg_awc_monthly'
+
+    def __init__(self, config=None, loc_level=1, show_test=False, beta=False):
+        super(SystemUsageExport, self).__init__(config, loc_level, show_test, beta)
+        if beta:
+            self.table_name = 'system_usage_report_view'
+        else:
+            self.table_name = 'agg_awc_monthly'
 
     @property
     def get_columns_by_loc_level(self):
@@ -57,16 +63,6 @@ class SystemUsageExport(ExportableMixin, IcdsSqlData):
                 SumColumn('usage_num_add_pregnancy'),
                 slug='num_add_pregnancy_forms'
             ),
-            AggregateColumn(
-                'Number of birth preparedness forms',
-                lambda x, y, z: x + y + z,
-                [
-                    SumColumn('usage_num_bp_tri1'),
-                    SumColumn('usage_num_bp_tri2'),
-                    SumColumn('usage_num_bp_tri3')
-                ],
-                slug='num_bp_forms'
-            ),
             DatabaseColumn(
                 'Number of delivery forms',
                 SumColumn('usage_num_delivery'),
@@ -92,8 +88,37 @@ class SystemUsageExport(ExportableMixin, IcdsSqlData):
                 'Number of take home rations forms',
                 SumColumn('usage_num_thr'),
                 slug='num_thr_forms'
-            ),
-            AggregateColumn(
+            )
+        ]
+        if self.beta:
+            agg_columns.insert(4, DatabaseColumn(
+                'Number of birth preparedness forms',
+                SumColumn('usage_num_bp_tri'),
+                slug='usage_num_bp_tri')
+            )
+            agg_columns.insert(11, DatabaseColumn(
+                'Number of due list forms',
+                SumColumn('usage_num_due_list_ccs_and_child_health'),
+                slug='usage_num_due_list_ccs_and_child_health')
+            )
+            agg_columns.append(DatabaseColumn(
+                'Number of launched LSs',
+                SumColumn('num_supervisor_launched'),
+                format_fn=lambda x: (x or 0) if self.loc_level < 5 else "Not applicable at AWC level",
+                slug='num_supervisor_launched')
+            )
+        else:
+            agg_columns.insert(4, AggregateColumn(
+                'Number of birth preparedness forms',
+                lambda x, y, z: x + y + z,
+                [
+                    SumColumn('usage_num_bp_tri1'),
+                    SumColumn('usage_num_bp_tri2'),
+                    SumColumn('usage_num_bp_tri3')
+                ],
+                slug='num_bp_forms')
+            )
+            agg_columns.insert(11, AggregateColumn(
                 'Number of due list forms',
                 lambda x, y: x + y,
                 [
@@ -101,5 +126,5 @@ class SystemUsageExport(ExportableMixin, IcdsSqlData):
                     SumColumn('usage_num_due_list_child_health')
                 ],
                 slug='num_due_list_forms')
-        ]
+            )
         return columns + agg_columns
