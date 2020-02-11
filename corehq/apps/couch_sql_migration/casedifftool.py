@@ -1,8 +1,10 @@
+import csv
 import logging
 import os
 import pdb
 import signal
 from contextlib import contextmanager, suppress
+from io import StringIO
 
 from django.db import close_old_connections
 from django.db.utils import DatabaseError, InterfaceError
@@ -227,8 +229,8 @@ def iter_sql_cases_with_sorted_transactions(domain):
 
 def format_diffs(diff_dict):
     lines = []
-    for doc_id, diffs in sorted(diff_dict.items()):
-        lines.append(doc_id)
+    for (kind, doc_id), diffs in sorted(diff_dict.items()):
+        lines.append(f"{kind} {doc_id}")
         for diff in sorted(diffs, key=lambda d: (d.diff_type, d.path)):
             if len(repr(diff.old_value) + repr(diff.new_value)) > 60:
                 lines.append(f"  {diff.diff_type} {list(diff.path)}")
@@ -240,6 +242,24 @@ def format_diffs(diff_dict):
                     f" {diff.old_value!r} -> {diff.new_value!r}"
                 )
     return "\n".join(lines)
+
+
+def csv_diffs(diff_dict):
+    lines = []
+    for (kind, doc_id), diffs in sorted(diff_dict.items()):
+        for diff in sorted(diffs, key=lambda d: (d.diff_type, d.path)):
+            lines.append([
+                kind,
+                doc_id,
+                diff.diff_type,
+                "/".join(diff.path),
+                diff.old_value,
+                diff.new_value,
+            ])
+    buffer = StringIO()
+    writer = csv.writer(buffer)
+    writer.writerows(lines)
+    return buffer.getvalue()
 
 
 def init_worker(domain, *args):

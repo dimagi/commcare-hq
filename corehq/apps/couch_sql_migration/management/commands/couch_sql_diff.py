@@ -12,7 +12,7 @@ from dimagi.utils.chunked import chunked
 from corehq.apps.domain.models import Domain
 from corehq.form_processor.utils import should_use_sql_backend
 
-from ...casedifftool import do_case_diffs, format_diffs, get_migrator
+from ...casedifftool import csv_diffs, do_case_diffs, format_diffs, get_migrator
 from ...couchsqlmigration import setup_logging
 from ...rewind import IterationState
 from ...statedb import StateDB, open_state_db
@@ -57,6 +57,10 @@ class Command(BaseCommand):
         parser.add_argument('--changes',
             dest="changes", action='store_true', default=False,
             help="Show changes instead of diffs. Only valid with 'show' action")
+        parser.add_argument('--csv',
+            dest="csv", action='store_true', default=False,
+            help="Output diffs in CSV format.")
+        parser.add_argument('-o', '--output-file', help='Output file.')
         parser.add_argument('-x', '--stop',
             dest="stop", action='store_true', default=False,
             help='''
@@ -87,6 +91,8 @@ class Command(BaseCommand):
             "select",
             "stop",
             "changes",
+            "csv",
+            "output_file",
             "batch_size",
             "reset",
         ]:
@@ -96,6 +102,10 @@ class Command(BaseCommand):
             raise CommandError('--no-input only allowed for unit testing')
         if self.changes and action != SHOW:
             raise CommandError('--changes only allowed with "show" action')
+        if self.csv and action != SHOW:
+            raise CommandError('--csv only allowed with "show" action')
+        if self.output_file and action != SHOW:
+            raise CommandError('--output-file only allowed with "show" action')
 
         if self.reset:
             if action == SHOW:
@@ -120,16 +130,17 @@ class Command(BaseCommand):
         """Show diffs from state db"""
         def iter_json_diffs(doc_diffs):
             for doc_id, diffs in doc_diffs:
-                yield doc_id, [d.json_diff for d in diffs if d.kind != "stock state"]
+                dxx = [d.json_diff for d in diffs if d.kind != "stock state"]
+                yield (diffs[0].kind, doc_id), dxx
                 stock_diffs = [d for d in diffs if d.kind == "stock state"]
                 if stock_diffs:
                     yield from iter_stock_diffs(stock_diffs)
 
         def iter_stock_diffs(diffs):
             def key(diff):
-                return diff.doc_id
-            for doc_id, diffs in groupby(sorted(diffs, key=key), key=key):
-                yield doc_id, [d.json_diff for d in diffs]
+                return (diff.kind, diff.doc_id)
+            for (kind, doc_id), diffs in groupby(sorted(diffs, key=key), key=key):
+                yield (kind, doc_id), [d.json_diff for d in diffs]
 
         statedb = self.open_state_db(domain)
         print(f"showing diffs from {statedb}")
@@ -137,11 +148,19 @@ class Command(BaseCommand):
             items = statedb.iter_doc_changes(self.select)
         else:
             items = statedb.iter_doc_diffs(self.select)
+        prompt = self.output_file is None and not self.csv
+        output = self.output_file or sys.stdout
+        format = csv_diffs if self.csv else format_diffs
         json_diffs = iter_json_diffs(items)
-        for chunk in chunked(json_diffs, self.batch_size, list):
-            print(format_diffs(dict(chunk)))
-            if not confirm("show more?"):
-                break
+        try:
+            for chunk in chunked(json_diffs, self.batch_size, list):
+                print(format(dict(chunk)), file=output)
+                if len(chunk) < self.batch_size:
+                    continue
+                if prompt and not confirm("show more?"):
+                    break
+        except BrokenPipeError:
+            pass
 
     def do_reset(self, action, domain):
         itr_doc_type = {"cases": "CommCareCase.id"}[action]
