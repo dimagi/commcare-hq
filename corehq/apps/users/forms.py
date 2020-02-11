@@ -1137,9 +1137,10 @@ class CommCareUserFormSet(object):
 
 
 class CommCareUserFilterForm(forms.Form):
+    USERNAMES_COLUMN_OPTION = 'usernames'
     COLUMNS_CHOICES = (
         ('all', ugettext_noop('All')),
-        ('usernames', ugettext_noop('Only Usernames'))
+        (USERNAMES_COLUMN_OPTION, ugettext_noop('Only Usernames'))
     )
     role_id = forms.ChoiceField(label=ugettext_lazy('Role'), choices=(), required=False)
     search_string = forms.CharField(
