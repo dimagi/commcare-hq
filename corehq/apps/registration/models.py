@@ -8,11 +8,60 @@ from dimagi.ext.couchdbkit import (
     Document,
     StringProperty,
 )
+from django.db import DEFAULT_DB_ALIAS, models
 
 from corehq.apps.domain.models import Domain
 
 
-class RegistrationRequest(Document):
+class RegistrationRequestMixin():
+    @property
+    @memoized
+    def project(self):
+        return Domain.get_by_name(self.domain)
+
+
+class SQLRegistrationRequest(models.Model, RegistrationRequestMixin):
+    tos_confirmed = models.BooleanField(default=False)
+    request_time = models.DateTimeField()
+    request_ip = models.CharField(max_length=31)
+    activation_guid = models.CharField(max_length=126, unique=True)
+    confirm_time = models.DateTimeField(null=True)
+    confirm_ip = models.CharField(max_length=31, null=True)
+    domain = models.CharField(max_length=255, null=True)
+    new_user_username = models.CharField(max_length=255, null=True)
+    requesting_user_username = models.CharField(max_length=255, null=True)
+
+    class Meta:
+        db_table = "registration_registrationrequest"
+
+    def save(self, force_insert=False, force_update=False, using=DEFAULT_DB_ALIAS, update_fields=None):
+        # Update or create couch doc
+        doc = RegistrationRequest.view("registration/requests_by_guid",
+            key=self.activation_guid,
+            reduce=False,
+            include_docs=True).first()
+
+        doc = RegistrationRequest(
+            activation_guid=self.activation_guid,
+            tos_confirmed=self.tos_confirmed,
+            request_time=self.request_time,
+            request_ip=self.request_ip,
+            confirm_time=self.confirm_time,
+            confirm_ip=self.confirm_ip,
+            domain=self.domain,
+            new_user_username=self.new_user_username,
+            requesting_user_username=self.requesting_user_username,
+        )
+
+        doc.save(from_sql=True)
+
+        # Save to SQL
+        super().save(
+            force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields
+        )
+
+
+class RegistrationRequest(Document, RegistrationRequestMixin):
     tos_confirmed = BooleanProperty(default=False)
     request_time = DateTimeProperty()
     request_ip = StringProperty()
@@ -22,11 +71,6 @@ class RegistrationRequest(Document):
     domain = StringProperty()
     new_user_username = StringProperty()
     requesting_user_username = StringProperty()
-
-    @property
-    @memoized
-    def project(self):
-        return Domain.get_by_name(self.domain)
 
     @classmethod
     def get_by_guid(cls, guid):
@@ -73,3 +117,24 @@ class RegistrationRequest(Document):
             reduce=False,
             include_docs=True).first()
         return result
+
+    def save(self, *args, **kwargs):
+        # Save to couch
+        # This must happen first so the SQL save finds this doc and doesn't recreate it
+        super().save(*args, **kwargs)
+
+        if not kwargs.pop('from_sql', False):
+            # Save to SQL
+            model, created = SQLRegistrationRequest.objects.update_or_create(
+                activation_guid=self.activation_guid,
+                defaults={
+                    "tos_confirmed": self.tos_confirmed,
+                    "request_time": self.request_time,
+                    "request_ip": self.request_ip,
+                    "confirm_time": self.confirm_time,
+                    "confirm_ip": self.confirm_ip,
+                    "domain": self.domain,
+                    "new_user_username": self.new_user_username,
+                    "requesting_user_username": self.requesting_user_username,
+                }
+            )
