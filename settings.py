@@ -342,7 +342,6 @@ HQ_APPS = (
     'corehq.motech.repeaters',
     'corehq.util',
     'dimagi.ext',
-    'corehq.doctypemigrations',
     'corehq.blobs',
     'corehq.apps.case_search',
     'corehq.apps.zapier.apps.ZapierConfig',
