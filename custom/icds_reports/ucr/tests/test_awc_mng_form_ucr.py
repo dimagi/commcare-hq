@@ -16,6 +16,7 @@ class TestAWCMgtForms(BaseFormsTest):
             [{'count': 1,
               'awc_location_long': None,
               'awc_not_open_aww_not_available': 0,
+              'awc_not_open_aww_not_available_v2': 1,
               'user_id': 'cee18a35ce4fac591eba966c0d15d599',
               'doc_id': None,
               'awc_open': 1,
@@ -23,13 +24,17 @@ class TestAWCMgtForms(BaseFormsTest):
               'month': None,
               'submitted_on': None,
               'awc_not_open_other': 0,
+              'awc_not_open_other_v2': 0,
               'awc_location': None,
               'location_entered': 'center',
               'awc_not_open_holiday': 0,
+              'awc_not_open_holiday_v2': 0,
               'awc_location_lat': None,
               'awc_not_open_unknown': 0,
+              'awc_not_open_unknown_v2': 0,
               'location_id': 'qwe56poiuytr4xcvbnmkjfghwerffdaa',
-              'awc_not_open_closed_early': 0}])
+              'awc_not_open_closed_early': 0,
+              'awc_not_open_closed_early_v2': 0}])
 
     def test_awc_visit_form_without_location_entered(self):
         self._test_data_source_results(
@@ -37,6 +42,7 @@ class TestAWCMgtForms(BaseFormsTest):
             [{'count': 1,
               'awc_location_long': None,
               'awc_not_open_aww_not_available': 0,
+              'awc_not_open_aww_not_available_v2': 1,
               'user_id': 'cee18a35ce4fac591eba966c0d15d599',
               'doc_id': None,
               'awc_open': 1,
@@ -44,10 +50,14 @@ class TestAWCMgtForms(BaseFormsTest):
               'month': None,
               'submitted_on': None,
               'awc_not_open_other': 0,
+              'awc_not_open_other_v2': 0,
               'awc_location': None,
               'location_entered': '',
               'awc_not_open_holiday': 0,
+              'awc_not_open_holiday_v2': 0,
               'awc_location_lat': None,
               'awc_not_open_unknown': 0,
+              'awc_not_open_unknown_v2': 0,
               'location_id': 'qwe56poiuytr4xcvbnmkjfghwerffdaa',
-              'awc_not_open_closed_early': 0}])
+              'awc_not_open_closed_early': 0,
+              'awc_not_open_closed_early_v2': 0}])
