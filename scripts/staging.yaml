@@ -63,6 +63,6 @@ branches:
   - bmb/SAASP-10249  # Biyeun Feb 3
   - jls/migrate-HqDeploy-3 # Jenny Feb 5
   - jls/migrate-ApiUser-2 # Jenny Feb 8
-  - jls/migrate-RegistrationRequest-1 # Jenny Feb 10
+  - jls/migrate-RegistrationRequest-2 # Jenny Feb 10
   - dmr/use-npm-local-lessc  # Danny Feb 7
 submodules: {}
