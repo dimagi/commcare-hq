@@ -17,17 +17,17 @@ from corehq.motech.openmrs.const import (
 
 class OpenmrsConfigForm(forms.Form):
     openmrs_provider = forms.CharField(label=_("Provider UUID"), required=False)
-    case_config = JsonField(expected_type=dict)
-    form_configs = JsonField(expected_type=list)
+    patient_config = JsonField(expected_type=dict)
+    encounters_config = JsonField(expected_type=list)
 
     def __init__(self, *args, **kwargs):
         super(OpenmrsConfigForm, self).__init__(*args, **kwargs)
         self.helper = FormHelper()
         self.helper.add_input(Submit('submit', _('Save Changes')))
 
-    def clean_case_config(self):
+    def clean_patient_config(self):
 
-        for key in self.cleaned_data['case_config']['person_properties']:
+        for key in self.cleaned_data['patient_config']['person_properties']:
             if key not in PERSON_PROPERTIES:
                 raise ValidationError(
                     _('person property key "%(key)s" is not valid.'),
@@ -35,7 +35,7 @@ class OpenmrsConfigForm(forms.Form):
                     params={'key': key}
                 )
 
-        for key in self.cleaned_data['case_config']['person_preferred_name']:
+        for key in self.cleaned_data['patient_config']['person_preferred_name']:
             if key not in NAME_PROPERTIES:
                 raise ValidationError(
                     _('person preferred name key "%(key)s" is not valid.'),
@@ -43,7 +43,7 @@ class OpenmrsConfigForm(forms.Form):
                     params={'key': key}
                 )
 
-        for key in self.cleaned_data['case_config']['person_preferred_address']:
+        for key in self.cleaned_data['patient_config']['person_preferred_address']:
             if key not in ADDRESS_PROPERTIES:
                 raise ValidationError(
                     _('person preferred address key "%(key)s" is not valid.'),
@@ -51,15 +51,15 @@ class OpenmrsConfigForm(forms.Form):
                     params={'key': key}
                 )
 
-        for id_ in self.cleaned_data['case_config']['match_on_ids']:
-            if id_ not in self.cleaned_data['case_config']['patient_identifiers']:
+        for id_ in self.cleaned_data['patient_config']['match_on_ids']:
+            if id_ not in self.cleaned_data['patient_config']['patient_identifiers']:
                 raise ValidationError(
                     _('ID "%(id_)s" used in "match_on_ids" is missing from "patient_identifiers".'),
                     code='invalid',
                     params={'id_': id_}
                 )
 
-        return self.cleaned_data['case_config']
+        return self.cleaned_data['patient_config']
 
 
 _owner_id_label = _('Owner ID')
