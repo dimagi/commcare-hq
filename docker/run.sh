@@ -115,7 +115,7 @@ function _run_tests() {
         # Warning: PhantomJS timed out, possibly due to a missing Mocha run() call.
         curl http://localhost:8000/mocha/app_manager/ &> /dev/null
         echo "grunt mocha $@"
-        grunt mocha "$@"
+        ./node_modules/grunt-cli/bin/grunt mocha "$@"
     elif [ "$TEST" != "javascript" ]; then
         ./manage.py create_kafka_topics
         echo "coverage run manage.py test $@ $TESTS"
@@ -128,7 +128,7 @@ function _run_tests() {
         # Warning: PhantomJS timed out, possibly due to a missing Mocha run() call.
         curl http://localhost:8000/mocha/app_manager/ &> /dev/null
         echo "grunt mocha $@"
-        grunt mocha "$@"
+        ./node_modules/grunt-cli/bin/grunt mocha "$@"
     fi
 }
 
