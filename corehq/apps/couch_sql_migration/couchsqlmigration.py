@@ -361,7 +361,7 @@ class CouchSqlDomainMigrator:
             log.info("re-diffing form: %s", form_id)
             couch_form = XFormInstance.get(form_id)
             sql_form = FormAccessorSQL.get_form(form_id)
-            self._save_diffs(couch_form, sql_form, replace=True)
+            self._save_diffs(couch_form, sql_form)
 
     def _process_skipped_forms(self, cached=False):
         """process forms skipped by a previous migration
