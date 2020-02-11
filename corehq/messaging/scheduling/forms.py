@@ -2371,7 +2371,7 @@ class ScheduleForm(Form):
             schedule = AlertSchedule.create_simple_alert(self.domain, content,
                 extra_options=extra_scheduling_options)
 
-        return schedule
+        return (schedule, True) # TODO
 
     def save_daily_schedule(self):
         repeat_every = self.distill_repeat_every()
@@ -2401,7 +2401,7 @@ class ScheduleForm(Form):
                 repeat_every=repeat_every,
             )
 
-        return schedule
+        return (schedule, True) # TODO
 
     def save_weekly_schedule(self):
         form_data = self.cleaned_data
@@ -2434,7 +2434,7 @@ class ScheduleForm(Form):
                 repeat_every=repeat_every,
             )
 
-        return schedule
+        return (schedule, True) # TODO
 
     def save_monthly_schedule(self):
         form_data = self.cleaned_data
@@ -2469,7 +2469,7 @@ class ScheduleForm(Form):
                 repeat_every=repeat_every,
             )
 
-        return schedule
+        return (schedule, True) # TODO
 
     def save_custom_daily_schedule(self):
         event_and_content_objects = [
@@ -2506,7 +2506,7 @@ class ScheduleForm(Form):
                 repeat_every=repeat_every,
             )
 
-        return schedule
+        return (schedule, True) # TODO
 
     def save_custom_immediate_schedule(self):
         event_and_content_objects = [
@@ -2523,7 +2523,7 @@ class ScheduleForm(Form):
             schedule = AlertSchedule.create_custom_alert(self.domain, event_and_content_objects,
                 extra_options=extra_scheduling_options)
 
-        return schedule
+        return (schedule, True) # TODO
 
     def save_schedule(self):
         send_frequency = self.cleaned_data['send_frequency']
@@ -3550,8 +3550,10 @@ class ConditionalAlertScheduleForm(ScheduleForm):
 
     def save_rule_action_and_schedule(self, rule):
         with transaction.atomic():
-            schedule = self.save_schedule()
+            (schedule, should_run_rule) = self.save_schedule()
             self.save_rule_action(rule, schedule)
+
+        return (schedule, should_run_rule)
 
 
 class ConditionalAlertForm(Form):

@@ -868,9 +868,13 @@ class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
 
                 rule.name = self.basic_info_form.cleaned_data['name']
                 self.criteria_form.save_criteria(rule)
-                self.schedule_form.save_rule_action_and_schedule(rule)
+                (schedule, should_run_rule) = self.schedule_form.save_rule_action_and_schedule(rule)
 
-            initiate_messaging_rule_run(rule)
+
+            # Only run rule if the criteria or schedule has changed, not just the name or content
+            if self.criteria_form.has_changed() or should_run_rule:
+                initiate_messaging_rule_run(rule)
+
             return HttpResponseRedirect(reverse(ConditionalAlertListView.urlname, args=[self.domain]))
 
         return self.get(request, *args, **kwargs)
