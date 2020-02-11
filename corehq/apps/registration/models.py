@@ -41,20 +41,17 @@ class SQLRegistrationRequest(models.Model, RegistrationRequestMixin):
             reduce=False,
             include_docs=True).first()
 
-        if doc:
-            doc = RegistrationRequest.wrap(doc)
-        else:
-            doc = RegistrationRequest(
-                activation_guid=self.activation_guid,
-                tos_confirmed=self.tos_confirmed,
-                request_time=self.request_time,
-                request_ip=self.request_ip,
-                confirm_time=self.confirm_time,
-                confirm_ip=self.confirm_ip,
-                domain=self.domain,
-                new_user_username=self.new_user_username,
-                requesting_user_username=self.requesting_user_username,
-            )
+        doc = RegistrationRequest(
+            activation_guid=self.activation_guid,
+            tos_confirmed=self.tos_confirmed,
+            request_time=self.request_time,
+            request_ip=self.request_ip,
+            confirm_time=self.confirm_time,
+            confirm_ip=self.confirm_ip,
+            domain=self.domain,
+            new_user_username=self.new_user_username,
+            requesting_user_username=self.requesting_user_username,
+        )
 
         doc.save(from_sql=True)
 
