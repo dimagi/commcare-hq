@@ -57,7 +57,7 @@ describe('Indie Map Directive', function () {
 
         $httpBackend.expectGET('template').respond(200, '<div></div>');
         $httpBackend.expectGET('icds_locations').respond(200, mockLocation);
-        $httpBackend.expectGET('/static/js/topojsons/states_v3_small.topojson').respond(200, '');
+        $httpBackend.expectGET('/static/js/topojsons/states_v4.topojson').respond(200, '');
 
         var element = window.angular.element("<indie-map data='test'></indie-map>");
         var compiled = _$compile_(element)($scope);

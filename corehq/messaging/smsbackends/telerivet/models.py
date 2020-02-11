@@ -97,8 +97,16 @@ class SQLTelerivetBackend(SQLSMSBackend):
             # These are account-related errors, retrying won't help
             msg.set_system_error(SMS.ERROR_TOO_MANY_UNSUCCESSFUL_ATTEMPTS)
         else:
+            try:
+                data = response.text
+            except Exception:
+                data = repr(response.content)
             raise TelerivetException(
-                "Received HTTP response status code %s from backend %s" % (response.status_code, self.pk)
+                "Received HTTP response status code %s (%s) from backend %s" % (
+                    response.status_code,
+                    data,
+                    self.pk,
+                )
             )
 
     @classmethod

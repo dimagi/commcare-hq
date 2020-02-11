@@ -431,8 +431,8 @@ class AdminInvitesUserForm(RoleForm, _BaseForm, forms.Form):
                                                           widget=LocationSelectWidget(domain_obj.name),
                                                           initial=location.location_id if location else '')
             self.fields['program'] = forms.ChoiceField(label="Program", choices=(), required=False)
-            programs = Program.by_domain(domain_obj.name, wrap=False)
-            choices = list((prog['_id'], prog['name']) for prog in programs)
+            programs = Program.by_domain(domain_obj.name)
+            choices = list((prog.get_id, prog.name) for prog in programs)
             choices.insert(0, ('', ''))
             self.fields['program'].choices = choices
         self.excluded_emails = excluded_emails or []

@@ -177,7 +177,9 @@
             <div class="modal-body">
               <p class="alert alert-warning">
                 <i class="fa fa-exclamation-triangle"></i>
-                {% trans "Bad things will happen if you don't read this" %}
+                {% blocktrans %}
+                  It is important you read the entire message below thoroughly before completing this action.
+                {% endblocktrans %}
               </p>
               <p>
                 {% blocktrans with couch_user.human_friendly_name as friendly_name %}

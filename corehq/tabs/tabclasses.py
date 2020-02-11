@@ -1269,6 +1269,12 @@ class ProjectUsersTab(UITab):
                      'urlname': EditCommCareUserView.urlname},
                     {'title': _('Bulk Upload'),
                      'urlname': 'upload_commcare_users'},
+                    {'title': _('Bulk Delete'),
+                     'urlname': 'delete_commcare_users'},
+                    {'title': _('Edit User Fields'),
+                     'urlname': 'user_fields_view'},
+                    {'title': _('Filter and Download Users'),
+                     'urlname': 'filter_and_download_commcare_users'},
                     {'title': _(
                         ConfirmBillingAccountForExtraUsersView.page_title),
                         'urlname': ConfirmBillingAccountForExtraUsersView.urlname},

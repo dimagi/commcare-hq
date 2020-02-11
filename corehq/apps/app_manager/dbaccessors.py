@@ -1,7 +1,6 @@
 from collections import namedtuple
 from itertools import chain
 
-from django.core.cache import cache
 from django.http import Http404
 from django.utils.translation import ugettext_lazy as _
 
@@ -13,6 +12,8 @@ from corehq.apps.app_manager.exceptions import BuildNotFoundException
 from corehq.apps.es import AppES
 from corehq.apps.es.aggregations import NestedAggregation, TermsAggregation
 from corehq.util.quickcache import quickcache
+from quickcache.django_quickcache import tiered_django_cache
+
 
 AppBuildVersion = namedtuple('AppBuildVersion', ['app_id', 'build_id', 'version', 'comment'])
 
@@ -176,14 +177,20 @@ def get_app_cached(domain, app_id):
     """Cached version of ``get_app`` for use in phone
     api calls where most requests will be for app builds
     which are read-only.
-
     This only caches app builds."""
+    timeout = 24 * 3600
+    # cache to save in localmemory and then in default cache (redis)
+    #   Invalidation is not necessary as the builds don't get updated
+    cache = tiered_django_cache([
+        ('locmem', timeout, None),
+        ('default', timeout, None)]
+    )
     key = 'app_build_cache_{}_{}'.format(domain, app_id)
     app = cache.get(key)
     if not app:
         app = get_app(domain, app_id)
         if app.copy_of:
-            cache.set(key, app, 24 * 3600)
+            cache.set(key, app)
 
     return app
 

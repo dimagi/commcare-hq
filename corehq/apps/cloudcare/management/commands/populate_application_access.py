@@ -3,22 +3,14 @@ from corehq.apps.cloudcare.models import SQLAppGroup
 
 
 class Command(PopulateSQLCommand):
-    help = """
-        Adds a SQLApplicationAccess for any ApplicationAccess doc that doesn't yet have one.
-    """
-
     @classmethod
     def couch_doc_type(cls):
         return 'ApplicationAccess'
 
     @classmethod
-    def couch_key(cls):
-        return set(['domain'])
-
-    @classmethod
     def sql_class(cls):
-        from corehq.apps.cloudcare.models import SQLApplicationAccess
-        return SQLApplicationAccess
+        from corehq.apps.cloudcare.models import ApplicationAccess
+        return ApplicationAccess
 
     def update_or_create_sql_object(self, doc):
         model, created = self.sql_class().objects.update_or_create(
