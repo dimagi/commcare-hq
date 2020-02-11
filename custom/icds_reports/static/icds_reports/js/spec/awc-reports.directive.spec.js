@@ -111,7 +111,6 @@ describe('AWC Reports Directive', function () {
         assert.notEqual(chart, null);
         assert.equal(chart.type, 'multiBarChart');
         assert.equal(chart.height, 450);
-        assert.equal(chart.width, 1100);
         assert.deepEqual(chart.margin, {
             top: 20,
             right: 20,

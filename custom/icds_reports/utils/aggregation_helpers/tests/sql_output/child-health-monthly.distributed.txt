@@ -1,20 +1,13 @@
-DELETE FROM "child_health_monthly" WHERE month=%(month)s
-{"month": "2019-01-01T00:00:00"}
-DROP INDEX IF EXISTS chm_case_idx
+
+        CREATE TABLE "new_child_health_monthly_2019-01-01" (LIKE child_health_monthly);
+        SELECT create_distributed_table('new_child_health_monthly_2019-01-01', 'supervisor_id');
+        
 {}
-DROP INDEX IF EXISTS chm_awc_idx
+INSERT INTO "new_child_health_monthly_2019-01-01" (SELECT * FROM "tmp_child_health_monthly_2019-01-01")
 {}
-DROP INDEX IF EXISTS chm_mother_dob
+DROP TABLE IF EXISTS "child_health_monthly_2019-01-01"
 {}
-DROP INDEX IF EXISTS chm_month_supervisor_id
+ALTER TABLE "new_child_health_monthly_2019-01-01" RENAME TO "child_health_monthly_2019-01-01"
 {}
-INSERT INTO "child_health_monthly" (SELECT * FROM "tmp_child_health_monthly_2019-01-01")
-{}
-CREATE INDEX IF NOT EXISTS chm_case_idx ON "child_health_monthly" (case_id)
-{}
-CREATE INDEX IF NOT EXISTS chm_awc_idx ON "child_health_monthly" (awc_id)
-{}
-CREATE INDEX IF NOT EXISTS chm_mother_dob ON "child_health_monthly" (mother_case_id, dob)
-{}
-CREATE INDEX IF NOT EXISTS chm_month_supervisor_id ON "child_health_monthly" (month, supervisor_id)
+ALTER TABLE "child_health_monthly" ATTACH PARTITION "child_health_monthly_2019-01-01" FOR VALUES IN ('2019-01-01')
 {}

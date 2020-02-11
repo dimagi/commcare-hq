@@ -570,6 +570,7 @@ def _child_health_monthly_table(state_ids, day):
     update_child_health_monthly_table.delay(day, state_ids)
 
 
+
 def _child_health_monthly_data(state_ids, day):
     helper = ChildHealthMonthlyAggregationDistributedHelper(state_ids, force_to_date(day))
 
@@ -592,7 +593,6 @@ def _child_health_monthly_data(state_ids, day):
 
 @task(serializer='pickle', queue='icds_aggregation_queue', default_retry_delay=15 * 60, acks_late=True)
 def update_child_health_monthly_table(day, state_ids):
-    helper = ChildHealthMonthlyAggregationDistributedHelper(state_ids, force_to_date(day))
     celery_task_logger.info("Inserting into child_health_monthly_table")
     with transaction.atomic(using=router.db_for_write(ChildHealthMonthly)):
         ChildHealthMonthly.aggregate(state_ids, force_to_date(day))
@@ -825,7 +825,8 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
         excel_data = SystemUsageExport(
             config=config,
             loc_level=aggregation_level,
-            show_test=include_test
+            show_test=include_test,
+            beta=beta
         ).get_excel_data(
             location,
             system_usage_num_launched_awcs_formatting_at_awc_level=aggregation_level > 4 and beta,
@@ -1562,9 +1563,12 @@ def _child_health_monthly_aggregation(day, state_ids):
     helper = ChildHealthMonthlyAggregationDistributedHelper(state_ids, force_to_date(day))
 
     with get_cursor(ChildHealthMonthly) as cursor:
+        celery_task_logger.info('dropping old temp table')
         cursor.execute(helper.drop_temporary_table())
+        celery_task_logger.info('creating partition table')
         cursor.execute(helper.create_temporary_table())
         for state in state_ids:
+            celery_task_logger.info(f'create state partition for {state}')
             cursor.execute(helper.drop_partition(state))
             cursor.execute(helper.create_partition(state))
 
@@ -1572,7 +1576,8 @@ def _child_health_monthly_aggregation(day, state_ids):
     pool = Pool(20)
     for query, params in helper.pre_aggregation_queries():
         greenlets.append(pool.spawn(_child_health_helper, query, params))
-    pool.join(raise_error=True)
+    while not pool.join(timeout=120, raise_error=True):
+        celery_task_logger.info('failed to join pool - greenlets remaining: {}'.format(len(pool)))
     for g in greenlets:
         g.get()
 
@@ -1624,7 +1629,7 @@ def create_reconciliation_records():
         reconcile_data_not_in_ucr.delay(status.pk)
 
 
-@task(queue='background_queue')
+@task(queue='dashboard_comparison_queue')
 def reconcile_data_not_in_ucr(reconciliation_status_pk):
     status_record = UcrReconciliationStatus.objects.get(pk=reconciliation_status_pk)
     number_documents_missing = 0

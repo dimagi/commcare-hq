@@ -1,4 +1,9 @@
 from contextlib import contextmanager
+
+from django.core.cache import cache
+
+from corehq.const import DEFAULT_PARALLEL_EXECUTION_TIMEOUT
+from corehq.util.exceptions import ParallelExecutionError
 from corehq.util.soft_assert import soft_assert
 
 
@@ -40,3 +45,14 @@ def catch_signal(signal):
     signal.connect(handler)
     yield handler
     signal.disconnect(handler)
+
+
+@contextmanager
+def prevent_parallel_execution(cache_key, timeout=DEFAULT_PARALLEL_EXECUTION_TIMEOUT):
+    if cache.get(cache_key, False):
+        raise ParallelExecutionError
+    cache.set(cache_key, True, timeout)
+    try:
+        yield
+    finally:
+        cache.set(cache_key, False)

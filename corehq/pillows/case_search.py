@@ -187,6 +187,11 @@ class CaseSearchReindexerFactory(ReindexerFactory):
 
 def get_case_search_to_elasticsearch_pillow(pillow_id='CaseSearchToElasticsearchPillow', num_processes=1,
                                             process_num=0, **kwargs):
+    """Populates the `case search` Elasticsearch index.
+
+        Processors:
+          - :py:class:`corehq.pillows.case_search.CaseSearchPillowProcessor`
+    """
     # todo; To remove after full rollout of https://github.com/dimagi/commcare-hq/pull/21329/
     assert pillow_id == 'CaseSearchToElasticsearchPillow', 'Pillow ID is not allowed to change'
     checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, CASE_SEARCH_INDEX_INFO, topics.CASE_TOPICS)

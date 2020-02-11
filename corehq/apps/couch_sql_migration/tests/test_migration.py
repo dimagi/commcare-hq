@@ -296,22 +296,6 @@ def get_report_domain():
 
 class MigrationTestCase(BaseMigrationTestCase):
 
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-        # disable hard rebuild SQL case to prevent deadlock in
-        # publish_case_saved related to kafka threading and gipc locking??
-        cls.rebuild_sql_case_patch = mock.patch(
-            "corehq.apps.couch_sql_migration.casediff.was_rebuilt",
-            lambda *a: True,
-        )
-        cls.rebuild_sql_case_patch.start()
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.rebuild_sql_case_patch.stop()
-        super().tearDownClass()
-
     def test_migration_blacklist(self):
         COUCH_SQL_MIGRATION_BLACKLIST.set(self.domain_name, True, NAMESPACE_DOMAIN)
         with self.assertRaises(mod.MigrationRestricted):

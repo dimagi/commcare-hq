@@ -353,7 +353,12 @@ def update_user_reporting_data(app_build_id, app_id, build_profile_id, couch_use
             num_unsent_forms=num_unsent_forms, num_quarantined_forms=num_quarantined_forms,
             commcare_version=commcare_version, build_profile_id=build_profile_id,
             last_heartbeat=datetime.utcnow(), modified_on=datetime.utcnow())
-        record.process_record(couch_user)
+        try:
+            record.process_record(couch_user)
+        except ResourceConflict:
+            # https://sentry.io/dimagi/commcarehq/issues/521967014/
+            couch_user = CouchUser.get(couch_user.user_id)
+            record.process_record(couch_user)
 
 
 def _should_force_log_submission(request):

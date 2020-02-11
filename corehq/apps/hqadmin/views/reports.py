@@ -2,7 +2,7 @@ import csv
 from collections import defaultdict
 
 from django.contrib import messages
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy
@@ -35,7 +35,7 @@ def top_five_projects_by_country(request):
                     .sort('cp_n_active_cc_users', True).source(attributes).size(5).run().hits)
         data = {country: projects, 'internal': internalMode}
 
-    return json_response(data)
+    return JsonResponse(data)
 
 
 class DownloadMALTView(BaseAdminSectionView):

@@ -4,6 +4,7 @@ from copy import deepcopy
 from corehq.apps.accounting.utils import domain_is_on_trial
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.exceptions import FormNotFoundException
+from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.smsforms.app import start_session
 from corehq.apps.smsforms.util import form_requires_input, critical_section_for_smsforms_sessions
@@ -70,7 +71,7 @@ class SMSContent(Content):
             return
 
         message = self.get_translation_from_message_dict(
-            logged_event.domain,
+            Domain.get_by_name(logged_event.domain),
             self.message,
             recipient.get_language_code()
         )
@@ -102,6 +103,7 @@ class EmailContent(Content):
     def send(self, recipient, logged_event, phone_entry=None):
         email_usage = EmailUsage.get_or_create_usage_record(logged_event.domain)
         is_trial = domain_is_on_trial(logged_event.domain)
+        domain_obj = Domain.get_by_name(logged_event.domain)
 
         logged_subevent = logged_event.create_subevent_from_contact_and_content(
             recipient,
@@ -110,14 +112,14 @@ class EmailContent(Content):
         )
 
         subject = self.get_translation_from_message_dict(
-            logged_event.domain,
+            domain_obj,
             self.subject,
             recipient.get_language_code()
         )
 
         message = self.get_translation_from_message_dict(
             logged_event.domain,
-            self.message,
+            domain_obj,
             recipient.get_language_code()
         )
 
