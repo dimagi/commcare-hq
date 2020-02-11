@@ -97,12 +97,12 @@ def build_consumption_dict(domain):
     SQLDefaultConsumption.objects.filter(domain=domain)
 
     return dict(
-        (tuple([
+        (tuple((
             obj.domain,
             obj.product_id,
             obj.supply_point_type,
             obj.supply_point_id,
-        ]), obj.default_consumption)
+        )), obj.default_consumption)
         for obj in SQLDefaultConsumption.objects.filter(domain=domain) if obj.default_consumption
     )
 
