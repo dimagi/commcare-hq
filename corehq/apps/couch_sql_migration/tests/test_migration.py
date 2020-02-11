@@ -272,9 +272,11 @@ class BaseMigrationTestCase(TestCase, TestFileMixin):
 
     @contextmanager
     def diff_without_rebuild(self):
-        with mock.patch("corehq.form_processor.backends.couch.processor"
-                        ".FormProcessorCouch.hard_rebuild_case") as mock_:
-            mock_.side_effect = Exception("fail!")
+        couch_func = ("corehq.form_processor.backends.couch.processor"
+                      ".FormProcessorCouch.hard_rebuild_case")
+        sql_func = "corehq.apps.couch_sql_migration.casediff.rebuild_and_diff_cases"
+        with mock.patch(couch_func) as couch_mock, mock.patch(sql_func) as sql_mock:
+            couch_mock.side_effect = sql_mock.side_effect = Exception("fail!")
             yield
 
 
