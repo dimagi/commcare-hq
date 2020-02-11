@@ -15,8 +15,9 @@ class Command(PopulateSQLCommand):
 
     def update_or_create_sql_object(self, doc):
         model, created = self.sql_class().objects.update_or_create(
-            activation_guid=doc['activation_guid'],
+            couch_id=doc['_id'],
             defaults={
+                "activation_guid": doc.get('activation_guid'),
                 "tos_confirmed": doc.get("tos_confirmed"),
                 "request_time": force_to_datetime(doc.get("request_time")),
                 "request_ip": doc.get("request_ip"),

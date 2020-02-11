@@ -8,6 +8,7 @@ from dimagi.ext.couchdbkit import (
     Document,
     StringProperty,
 )
+from dimagi.utils.couch.migration import SyncCouchToSQLMixin, SyncSQLToCouchMixin
 from django.db import DEFAULT_DB_ALIAS, models
 
 from corehq.apps.domain.models import Domain
@@ -20,7 +21,7 @@ class RegistrationRequestMixin():
         return Domain.get_by_name(self.domain)
 
 
-class SQLRegistrationRequest(models.Model, RegistrationRequestMixin):
+class SQLRegistrationRequest(SyncSQLToCouchMixin, models.Model, RegistrationRequestMixin):
     tos_confirmed = models.BooleanField(default=False)
     request_time = models.DateTimeField()
     request_ip = models.CharField(max_length=31)
@@ -30,39 +31,31 @@ class SQLRegistrationRequest(models.Model, RegistrationRequestMixin):
     domain = models.CharField(max_length=255, null=True)
     new_user_username = models.CharField(max_length=255, null=True)
     requesting_user_username = models.CharField(max_length=255, null=True)
+    couch_id = models.CharField(max_length=126, null=True, db_index=True)
 
     class Meta:
         db_table = "registration_registrationrequest"
 
-    def save(self, force_insert=False, force_update=False, using=DEFAULT_DB_ALIAS, update_fields=None):
-        # Update or create couch doc
-        doc = RegistrationRequest.view("registration/requests_by_guid",
-            key=self.activation_guid,
-            reduce=False,
-            include_docs=True).first()
+    @classmethod
+    def _migration_get_fields(cls):
+        return [
+            "tos_confirmed",
+            "request_time",
+            "request_ip",
+            "activation_guid",
+            "confirm_time",
+            "confirm_ip",
+            "domain",
+            "new_user_username",
+            "requesting_user_username",
+        ]
 
-        if not doc:
-            doc = RegistrationRequest(
-                activation_guid=self.activation_guid,
-                tos_confirmed=self.tos_confirmed,
-                request_time=self.request_time,
-                request_ip=self.request_ip,
-                confirm_time=self.confirm_time,
-                confirm_ip=self.confirm_ip,
-                domain=self.domain,
-                new_user_username=self.new_user_username,
-                requesting_user_username=self.requesting_user_username,
-            )
-
-        doc.save(from_sql=True)
-
-        # Save to SQL
-        super().save(
-            force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields
-        )
+    @classmethod
+    def _migration_get_couch_model_class(cls):
+        return RegistrationRequest
 
 
-class RegistrationRequest(Document, RegistrationRequestMixin):
+class RegistrationRequest(SyncCouchToSQLMixin, Document, RegistrationRequestMixin):
     tos_confirmed = BooleanProperty(default=False)
     request_time = DateTimeProperty()
     request_ip = StringProperty()
@@ -119,23 +112,20 @@ class RegistrationRequest(Document, RegistrationRequestMixin):
             include_docs=True).first()
         return result
 
-    def save(self, *args, **kwargs):
-        # Save to couch
-        # This must happen first so the SQL save finds this doc and doesn't recreate it
-        super().save(*args, **kwargs)
+    @classmethod
+    def _migration_get_fields(cls):
+        return [
+            "tos_confirmed",
+            "request_time",
+            "request_ip",
+            "activation_guid",
+            "confirm_time",
+            "confirm_ip",
+            "domain",
+            "new_user_username",
+            "requesting_user_username",
+        ]
 
-        if not kwargs.pop('from_sql', False):
-            # Save to SQL
-            model, created = SQLRegistrationRequest.objects.update_or_create(
-                activation_guid=self.activation_guid,
-                defaults={
-                    "tos_confirmed": self.tos_confirmed,
-                    "request_time": self.request_time,
-                    "request_ip": self.request_ip,
-                    "confirm_time": self.confirm_time,
-                    "confirm_ip": self.confirm_ip,
-                    "domain": self.domain,
-                    "new_user_username": self.new_user_username,
-                    "requesting_user_username": self.requesting_user_username,
-                }
-            )
+    @classmethod
+    def _migration_get_sql_model_class(cls):
+        return SQLRegistrationRequest
