@@ -1,12 +1,17 @@
 SELECT
-     state_name,
-     SUM(num_launched_districts),
-     SUM(num_launched_blocks),
-     SUM(num_launched_awcs),
-     SUM(num_launched_supervisors)
- FROM "agg_awc_daily_view"
- WHERE date='2020-02-03' AND aggregation_level=1
- GROUP BY state_name;
+     awc_location_local.state_name,
+     SUM(num_launched_districts) as launched_districts,
+     SUM(num_launched_blocks) as launched_blocks,
+     SUM(num_launched_supervisors) as launched_supervisor,
+     SUM(num_launched_awcs) as launched_awcs
+ FROM awc_location_local left join "agg_awc_daily_2020-02-01" agg_awc_daily_view on awc_location_local.state_id = agg_awc_daily_view.state_id
+ AND awc_location_local.district_id = agg_awc_daily_view.district_id
+  AND awc_location_local.block_id = agg_awc_daily_view.block_id
+   AND awc_location_local.supervisor_id = agg_awc_daily_view.supervisor_id
+    AND awc_location_local.doc_id = agg_awc_daily_view.awc_id
+    AND awc_location_local.aggregation_level = agg_awc_daily_view.aggregation_level
+ WHERE date='2020-02-01' AND awc_location_local.aggregation_level=1 and awc_location_local.state_is_test<>1
+ GROUP BY awc_location_local.state_name;
                                                                                                                                    QUERY PLAN
 -- -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 --  GroupAggregate  (cost=33.76..33.79 rows=1 width=42)
