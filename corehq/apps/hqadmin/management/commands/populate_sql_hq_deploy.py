@@ -8,8 +8,8 @@ class Command(PopulateSQLCommand):
 
     @classmethod
     def sql_class(cls):
-        from corehq.apps.hqadmin.models import SQLHqDeploy
-        return SQLHqDeploy
+        from corehq.apps.hqadmin.models import HqDeploy
+        return HqDeploy
 
     def update_or_create_sql_object(self, doc):
         model, created = self.sql_class().objects.update_or_create(
