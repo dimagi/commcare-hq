@@ -45,8 +45,7 @@ def send_dhis2_entities(requests, repeater, case_trigger_infos):
             if tracked_entity:
                 update_tracked_entity_instance(requests, tracked_entity, etag, info, case_config)
             else:
-                tracked_entity = register_tracked_entity_instance(requests, info, case_config)
-                save_tracked_entity_instance_id(requests.domain_name, tracked_entity, info, case_config)
+                register_tracked_entity_instance(requests, info, case_config)
         except (Dhis2Exception, HTTPError) as err:
             errors.append(str(err))
 
@@ -173,6 +172,7 @@ def append_new_events_to_enrollments(
 
 
 def register_tracked_entity_instance(requests, case_trigger_info, case_config):
+    case_updates = {}
     tracked_entity = {
         "trackedEntityType": case_config.te_type_id,
         "orgUnit": get_value(case_config.org_unit_id, case_trigger_info),
@@ -189,6 +189,8 @@ def register_tracked_entity_instance(requests, case_trigger_info, case_config):
         value = get_value(value_source_config, case_trigger_info)
         if is_blank(value) and is_generated:
             value = generate_value(requests, attr_id, generator_params, case_trigger_info)
+            if "case_property" in value_source_config:
+                case_updates[value_source_config["case_property"]] = value
         set_te_attr(
             tracked_entity["attributes"],
             attr_id,
@@ -203,8 +205,12 @@ def register_tracked_entity_instance(requests, case_trigger_info, case_config):
     summaries = response.json()["response"]["importSummaries"]
     if len(summaries) != 1:
         raise Dhis2Exception(_(f'{len(summaries)} tracked entity instances registered from {case_trigger_info}.'))
-    tracked_entity["trackedEntityInstance"] = summaries[0]["reference"]
-    return tracked_entity
+    if case_config["tei_id"] and "case_property" in case_config["tei_id"]:
+        case_property = case_config["tei_id"]["case_property"]
+        tei_id = summaries[0]["reference"]
+        case_updates[case_property] = tei_id
+    if case_updates:
+        save_case_updates(requests.domain_name, case_trigger_info.case_id, case_updates)
 
 
 def is_blank(value):
@@ -284,23 +290,21 @@ def get_program_dates(form_config, case_trigger_info):
     return program
 
 
-def save_tracked_entity_instance_id(domain, tracked_entity, case_trigger_info, case_config):
-    if case_config["tei_id"] and "case_property" in case_config["tei_id"]:
-        tei_id = tracked_entity["trackedEntityInstance"]
-        case_property = case_config["tei_id"]["case_property"]
+def save_case_updates(domain, case_id, case_updates):
+    case_update = {}
+    kwargs = {}
+    for case_property, value in case_updates.items():
         if case_property == "external_id":
-            case_update = {}
-            kwargs = {case_property: tei_id}
+            kwargs[case_property] = value
         else:
-            case_update = {case_property: tei_id}
-            kwargs = {}
-        case_block = CaseBlock(
-            case_id=case_trigger_info.case_id,
-            create=False,
-            update=case_update,
-            **kwargs
-        )
-        submit_case_blocks([case_block.as_text()], domain, xmlns=XMLNS_DHIS2)
+            case_update[case_property] = value
+    case_block = CaseBlock(
+        case_id=case_id,
+        create=False,
+        update=case_update,
+        **kwargs
+    )
+    submit_case_blocks([case_block.as_text()], domain, xmlns=XMLNS_DHIS2)
 
 
 def set_te_attr(
