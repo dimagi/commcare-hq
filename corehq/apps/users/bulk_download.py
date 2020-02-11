@@ -9,12 +9,12 @@ from soil.util import expose_download, get_download_file_path
 from corehq import privileges
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition
-from corehq.apps.es import UserES
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.user_importer.importer import BulkCacheBase, GroupMemoizer
 from corehq.apps.users.dbaccessors.all_commcare_users import (
     get_commcare_users_by_filters,
+    get_mobile_usernames_by_filters,
 )
 from corehq.util.workbook_json.excel import (
     alphanumeric_sort_key,
@@ -169,21 +169,7 @@ def dump_usernames(domain, download_id, user_filters, task):
     users_count = get_commcare_users_by_filters(domain, user_filters, count_only=True)
     DownloadBase.set_progress(task, 0, users_count)
 
-    role_id = user_filters.get('role_id', None)
-    search_string = user_filters.get('search_string', None)
-    location_id = user_filters.get('location_id', None)
-
-    query = UserES().domain(domain).mobile_users()
-
-    if role_id:
-        query = query.role_id(role_id)
-    if search_string:
-        query = query.search_string_query(search_string, default_fields=['first_name', 'last_name', 'username'])
-    if location_id:
-        location_ids = SQLLocation.objects.get_locations_and_children_ids([location_id])
-        query = query.location(location_ids)
-
-    usernames = query.values_list('username', flat=True)
+    usernames = get_mobile_usernames_by_filters(domain, user_filters)
 
     use_transfer = settings.SHARED_DRIVE_CONF.transfer_enabled
     filename = "{}_users_{}.xlsx".format(domain, uuid.uuid4().hex)
