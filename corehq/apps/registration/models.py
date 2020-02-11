@@ -9,7 +9,7 @@ from dimagi.ext.couchdbkit import (
     StringProperty,
 )
 from dimagi.utils.couch.migration import SyncCouchToSQLMixin, SyncSQLToCouchMixin
-from django.db import DEFAULT_DB_ALIAS, models
+from django.db import models
 
 from corehq.apps.domain.models import Domain
 
