@@ -259,7 +259,7 @@ class Command(BaseCommand):
         if self.missing_docs != CACHED:
             resume = self.missing_docs == RESUME
             find_missing_docs(domain, self.state_dir, self.live_migrate, resume)
-        print("Couch to SQL migration status for {}: {}".format(domain, status))
+        print(f"Couch to SQL migration status for {domain}: {status}")
         statedb = open_state_db(domain, self.state_dir)
         doc_counts = statedb.get_doc_counts()
         has_diffs = False
@@ -276,6 +276,12 @@ class Command(BaseCommand):
                 short,
                 diffs_only,
             )
+
+        pending = statedb.count_undiffed_cases()
+        if pending:
+            print(shell_red(f"\nThere are {pending} case diffs pending."))
+            print(f"Resolution: couch_sql_diff cases {domain} --select=pending")
+            return True
 
         if diffs_only and not has_diffs:
             print(shell_green("No differences found between old and new docs!"))
