@@ -80,7 +80,7 @@ from corehq.util.pagination import (
 )
 from corehq.util.timer import TimingContext
 
-from .asyncforms import AsyncFormProcessor
+from .asyncforms import AsyncFormProcessor, get_case_ids
 from .casediffqueue import CaseDiffProcess, CaseDiffQueue, NoCaseDiff
 from .json2xml import convert_form_to_xml
 from .statedb import init_state_db
@@ -353,7 +353,7 @@ class CouchSqlDomainMigrator:
         for form_id in form_ids:
             log.info("migrating form: %s", form_id)
             form = XFormInstance.get(form_id)
-            self._migrate_form_and_associated_models(form)
+            self._migrate_form(form, get_case_ids(form))
         self._rediff_already_migrated_forms(migrated_ids)
 
     def _rediff_already_migrated_forms(self, form_ids):
@@ -377,7 +377,7 @@ class CouchSqlDomainMigrator:
                 except Exception:
                     log.exception("Error wrapping form %s", doc)
                 else:
-                    self._migrate_form_and_associated_models(form)
+                    self._migrate_form(form, get_case_ids(form))
                     if cached:
                         self.statedb.doc_not_missing(doc_type, form.form_id)
                     add_form()
