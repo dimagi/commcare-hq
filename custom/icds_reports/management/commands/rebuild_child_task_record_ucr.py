@@ -41,13 +41,14 @@ class Command(BaseCommand):
          ucr_child_tasks_table.child_health_case_id = child_health_monthly.case_id WHERE 
          child_health_monthly.open_in_month = 1 AND child_health_monthly.month IN {dates}
             """.format(
-            ucr_tablename = get_table_name(domain, 'static-child_tasks_cases'),
-            dates = dates
+            ucr_tablename=get_table_name(domain, 'static-child_tasks_cases'),
+            dates=dates
         )
         return sql
 
     def build_indicator(self, doc_ids, config, document_store):
-        config.asynchronous = True #build through async queue
+        # build through async queue
+        config.asynchronous = True
         relevant_ids = list()
         next_event = time.time() + 10
         for doc_id in doc_ids:
