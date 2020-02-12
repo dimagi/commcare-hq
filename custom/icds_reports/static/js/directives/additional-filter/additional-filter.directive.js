@@ -118,7 +118,9 @@ function AdditionalFilterController($scope, $location, $uibModal, storageService
 
     vm.selectedAgeGroupName = function () {
         for (var i = 0; i < vm.ages.length; i++) {
-            if (vm.ages[i].id === vm.selectedAge) return vm.ages[i].name;
+            if (vm.ages[i].id === vm.selectedAge) {
+                return vm.ages[i].name;
+            }
         }
     };
 
@@ -130,7 +132,7 @@ function AdditionalFilterController($scope, $location, $uibModal, storageService
         });
     });
 
-    $scope.$on('reset_filter_data', function() {
+    $scope.$on('reset_filter_data', function () {
         $scope.$broadcast('reset_date',{});
         vm.reset();
     });
