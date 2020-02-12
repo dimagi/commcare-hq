@@ -210,9 +210,10 @@ class FormProcessorSQL(object):
     def get_cases_from_forms(case_db, xforms):
         """Get all cases affected by the forms. Includes new cases, updated cases.
         """
-        touched_cases = {}
-        if len(xforms) > 1:
-            domain = xforms[0].domain
+        if len(xforms) == 1:
+            return FormProcessorSQL._process_form_normally(xforms[0], case_db)
+        else:
+            touched_cases = {}
             affected_cases = set()
             deprecated_form = None
             for xform in xforms:
@@ -242,9 +243,7 @@ class FormProcessorSQL(object):
                         case=case, is_creation=is_creation, previous_owner_id=previous_owner,
                         actions={const.CASE_ACTION_REBUILD}
                     )
-        else:
-            touched_cases = FormProcessorSQL._process_form_normally(xforms[0], case_db)
-        return touched_cases
+            return touched_cases
 
     @staticmethod
     def _process_form_normally(xform, case_db):
