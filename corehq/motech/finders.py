@@ -1,7 +1,15 @@
 from datetime import timedelta
+from operator import eq
 
+from Levenshtein._levenshtein import distance
+from couchdbkit.ext.django.schema import (
+    DecimalProperty,
+    ListProperty,
+    StringProperty,
+)
 from dateutil.parser import parse as parse_date
-from Levenshtein import distance
+
+from dimagi.ext.couchdbkit import DocumentSchema
 
 
 def le_days_diff(max_days, date1, date2):
@@ -46,3 +54,22 @@ def le_levenshtein_percent(percent, string1, string2):
     dist = distance(string1, string2)
     max_len = max(len(string1), len(string2))
     return dist / max_len <= percent
+
+
+MATCH_TYPE_EXACT = 'exact'
+MATCH_TYPE_LEVENSHTEIN = 'levenshtein'  # Useful for words translated across alphabets
+MATCH_TYPE_DAYS_DIFF = 'days_diff'  # Useful for estimated dates of birth
+MATCH_FUNCTIONS = {
+    MATCH_TYPE_EXACT: eq,
+    MATCH_TYPE_LEVENSHTEIN: le_levenshtein_percent,
+    MATCH_TYPE_DAYS_DIFF: le_days_diff,
+}
+MATCH_TYPES = tuple(MATCH_FUNCTIONS)
+MATCH_TYPE_DEFAULT = MATCH_TYPE_EXACT
+
+
+class PropertyWeight(DocumentSchema):
+    case_property = StringProperty()
+    weight = DecimalProperty()
+    match_type = StringProperty(required=False, choices=MATCH_TYPES, default=MATCH_TYPE_DEFAULT)
+    match_params = ListProperty(required=False)
