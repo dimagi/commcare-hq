@@ -216,15 +216,24 @@ class FormProcessorSQL(object):
             touched_cases = {}
             affected_cases = set()
             deprecated_form = None
+            normal_form = None
             for xform in xforms:
                 if xform.is_deprecated:
                     deprecated_form = xform
+                else:
+                    normal_form = xform
                 if not (xform.is_deprecated and xform.problem):
                     # don't process deprecated forms which have errors.
                     # see http://manage.dimagi.com/default.asp?243382 for context.
                     # note that we have to use .problem instead of .is_error because applying
                     # the state=DEPRECATED overrides state=ERROR
                     affected_cases.update(case_update.id for case_update in get_case_updates(xform))
+
+            transactions = CaseAccessorSQL.get_case_transactions_for_form(normal_form.form_id, list(affected_cases))
+            cases_to_rebuild = {trans.case_id for trans in transactions}
+            if not cases_to_rebuild:
+                # short circuit if there are no case transactions for this form
+                return FormProcessorSQL._process_form_normally(normal_form, case_db)
 
             rebuild_detail = FormEditRebuild(deprecated_form_id=deprecated_form.form_id)
             for case_id in affected_cases:
