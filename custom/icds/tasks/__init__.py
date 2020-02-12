@@ -12,8 +12,8 @@ from corehq.util.datadog.gauges import datadog_counter, datadog_gauge
 from custom.icds.tasks.sms import send_monthly_sms_report  # noqa imported for celery
 from custom.icds.tasks.hosted_ccz import setup_ccz_file_for_hosting  # noqa imported for celery
 
-
 MAX_RUNTIME = 6 * 3600
+
 
 @periodic_task_on_envs(settings.ICDS_ENVS, run_every=crontab(minute=30, hour=18))
 def delete_old_images(cutoff=None):
