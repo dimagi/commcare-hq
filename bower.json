@@ -65,7 +65,7 @@
     "font-awesome": "fontawesome#4.7.0",
     "moment": "2.12.0",
     "css-grid-polyfill-binaries": "1.1.1",
-    "requirejs": "~2.3.1",
+    "requirejs": "~2.3.6",
     "DOMPurify": "0.8.3",
     "markdown-it": "7.0.1",
     "At.js": "~1.5.2",
@@ -75,7 +75,7 @@
     "jsdiff": "~3.2.0",
     "datamaps": "^0.5.8",
     "topojson": "^3.0.0",
-    "r.js": "^2.3.5",
+    "r.js": "^2.3.6",
     "jquery-memoized-ajax": "^0.5.0",
     "autotrack": "^2.4.1"
   },
