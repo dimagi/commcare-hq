@@ -45,16 +45,13 @@ from .signals import location_edited
 
 
 class LocationSelectWidget(forms.Widget):
-    def __init__(self, domain, attrs=None, id='supply-point', multiselect=False, query_url=None, placeholder=None):
+    def __init__(self, domain, attrs=None, id='supply-point', multiselect=False, placeholder=None):
         super(LocationSelectWidget, self).__init__(attrs)
         self.domain = domain
         self.id = id
         self.multiselect = multiselect
         self.placeholder = placeholder
-        if query_url:
-            self.query_url = query_url
-        else:
-            self.query_url = reverse('child_locations_for_select2', args=[self.domain])
+        self.query_url = reverse('location_search', args=[self.domain])
         self.template = 'locations/manage/partials/autocomplete_select_widget.html'
 
     def render(self, name, value, attrs=None, renderer=None):

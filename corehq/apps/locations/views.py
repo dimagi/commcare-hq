@@ -253,6 +253,10 @@ class LocationOptionsController(EmwfOptionsController):
 
 class LocationsSearchView(EmwfOptionsView):
 
+    @method_decorator(locations_access_required)
+    def dispatch(self, request, *args, **kwargs):
+        return super(LocationFieldsView, self).dispatch(request, *args, **kwargs)
+
     @property
     @memoized
     def options_controller(self):

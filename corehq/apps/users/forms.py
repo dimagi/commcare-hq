@@ -1163,10 +1163,7 @@ class CommCareUserFilterForm(forms.Form):
         from corehq.apps.locations.forms import LocationSelectWidget
         self.domain = kwargs.pop('domain')
         super(CommCareUserFilterForm, self).__init__(*args, **kwargs)
-        self.fields['location_id'].widget = LocationSelectWidget(
-            self.domain,
-            query_url=reverse('location_search', args=[self.domain])
-        )
+        self.fields['location_id'].widget = LocationSelectWidget(self.domain)
 
         roles = UserRole.by_domain(self.domain)
         self.fields['role_id'].choices = [('', _('All Roles'))] + [
