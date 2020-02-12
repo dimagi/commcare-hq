@@ -23,7 +23,9 @@ class Command(BaseCommand):
         with connections[get_icds_ucr_citus_db_alias()].cursor() as cursor:
             cursor.execute(query)
             awc_ids = [row['awc_id'] for row in cursor.fetchall()]
-        _build_indicators(awc_ids, child_tasks_record_config, child_tasks_record_document_store)
+        print(query.query)
+        print(awc_ids)
+        # _build_indicators(awc_ids, child_tasks_record_config, child_tasks_record_document_store)
 
     def get_query(self, domain):
         dates = tuple('2019-11-01', '2019-12-01')
