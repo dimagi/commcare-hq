@@ -115,8 +115,9 @@ class BaseGroupedMobileWorkerFilter(BaseSingleOptionFilter):
 
 
 class EmwfUtils(object):
-    def __init__(self, domain):
+    def __init__(self, domain, include_suffixes=True):
         self.domain = domain
+        self.include_suffixes = include_suffixes
 
     def user_tuple(self, u):
         user = util._report_user_dict(u)
@@ -141,8 +142,10 @@ class EmwfUtils(object):
         )
 
     def location_tuple(self, location):
-        return ("l__%s" % location.location_id,
-                '%s [location]' % location.get_path_display())
+        text = location.get_path_display()
+        if self.include_suffixes:
+            text = f'{text} [location]'
+        return ("l__%s" % location.location_id, text)
 
     @property
     @memoized

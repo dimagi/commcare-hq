@@ -37,6 +37,7 @@ def paginate_options(data_sources, query, start, size):
 
 
 class EmwfOptionsController(object):
+    include_suffixes = True
 
     def __init__(self, request, domain, search):
         self.request = request
@@ -46,7 +47,7 @@ class EmwfOptionsController(object):
     @property
     @memoized
     def utils(self):
-        return EmwfUtils(self.domain)
+        return EmwfUtils(self.domain, include_suffixes=self.include_suffixes)
 
     def get_all_static_options(self, query):
         return [user_type for user_type in self.utils.static_options
