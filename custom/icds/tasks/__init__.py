@@ -6,7 +6,7 @@ from iso8601 import parse_date
 
 from corehq.blobs import CODES, get_blob_db
 from corehq.blobs.models import BlobMeta
-from corehq.sql_db.util import get_db_aliases_for_partitioned_query
+from corehq.sql_db.util import get_db_aliases_for_partitioned_query, estimate_row_count
 from corehq.util.celery_utils import periodic_task_on_envs
 from corehq.util.datadog.gauges import datadog_counter, datadog_gauge
 from custom.icds.tasks.sms import send_monthly_sms_report  # noqa imported for celery
@@ -32,15 +32,18 @@ def delete_old_images(cutoff=None):
     run_again = False
     for db_name in get_db_aliases_for_partitioned_query():
         bytes_deleted = 0
-        metas = list(_get_query(db_name)[:1000])
+        query = _get_query(db_name)
+        metas = list(query[:1000])
         if metas:
             for meta in metas:
                 bytes_deleted += meta.content_length or 0
             db.bulk_delete(metas=metas)
+
+            tags = [f'database:{db_name}']
             age = datetime.utcnow() - metas[-1].created_on
-            datadog_gauge('commcare.icds_images.max_age', value=age.total_seconds(), tags=[
-                f'database:{db_name}'
-            ])
+            datadog_gauge('commcare.icds_images.max_age', value=age.total_seconds(), tags=tags)
+            row_estimate = estimate_row_count(query, db_name)
+            datadog_gauge('commcare.icds_images.count_estimate', value=row_estimate, tags=tags)
             datadog_counter('commcare.icds_images.bytes_deleted', value=bytes_deleted)
             datadog_counter('commcare.icds_images.count_deleted', value=len(metas))
             run_again = True
