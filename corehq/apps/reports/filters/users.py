@@ -207,21 +207,23 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         user_types = emwf.selected_user_types(mobile_user_and_group_slugs)
         group_ids = emwf.selected_group_ids(mobile_user_and_group_slugs)
     """
+    location_search_help = ugettext_lazy(mark_safe(
+        '<i class="fa fa-info-circle"></i> To quick search for a '
+        '<a href="https://confluence.dimagi.com/display/commcarepublic/Exact+Search+for+Locations" '
+        'target="_blank">location</a>, write your query as "parent"/descendant.'
+    ))
+
     slug = "emw"
     label = ugettext_lazy("User(s)")
     default_options = None
     placeholder = ugettext_lazy("Add users and groups to filter this report.")
     is_cacheable = False
     options_url = 'emwf_options_all_users'
-    filter_help_inline = ugettext_lazy(mark_safe(
-        'See <a href="https://confluence.dimagi.com/display/commcarepublic/Report+and+Export+Filters"'
-        ' target="_blank"> Filter Definitions</a>.'
-    ))
-    search_help_inline = ugettext_lazy(mark_safe(
-        'To quick search for a '
-        '<a href="https://confluence.dimagi.com/display/commcarepublic/Exact+Search+for+Locations" '
-        'target="_blank">location</a>, write your query as "parent"/descendant.'
-    ))
+    filter_help_inline = ugettext_lazy(mark_safe("""
+        <i class="fa fa-info-circle"></i> See
+        <a href="https://confluence.dimagi.com/display/commcarepublic/Report+and+Export+Filters"'
+        ' target="_blank"> Filter Definitions</a>.
+    """))
 
     @property
     @memoized
@@ -327,7 +329,7 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         context.update({'endpoint': url})
         context.update({'filter_help_inline': self.filter_help_inline})
         if self.request.project.uses_locations:
-            context.update({'search_help_inline': self.search_help_inline})
+            context.update({'search_help_inline': self.location_search_help})
         return context
 
     @classmethod

@@ -39,6 +39,7 @@ from corehq.apps.locations.tasks import (
 from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.reports.filters.api import EmwfOptionsView
 from corehq.apps.reports.filters.controllers import EmwfOptionsController
+from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
 from corehq.apps.users.forms import MultipleSelectionForm
 from corehq.util import reverse
 from corehq.util.files import file_extention_from_filename
@@ -204,6 +205,7 @@ class LocationsListView(BaseLocationView):
             'show_inactive': self.show_inactive,
             'has_location_types': has_location_types,
             'can_edit_root': self.can_access_all_locations,
+            'location_search_help': ExpandedMobileWorkerFilter.location_search_help,
         }
 
     def get_visible_locations(self):
@@ -255,7 +257,7 @@ class LocationsSearchView(EmwfOptionsView):
 
     @method_decorator(locations_access_required)
     def dispatch(self, request, *args, **kwargs):
-        return super(LocationFieldsView, self).dispatch(request, *args, **kwargs)
+        return super().dispatch(request, *args, **kwargs)
 
     @property
     @memoized

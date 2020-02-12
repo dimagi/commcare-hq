@@ -42,6 +42,7 @@ from corehq.apps.hqwebapp.widgets import (
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import user_can_access_location_id
 from corehq.apps.programs.models import Program
+from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
 from corehq.apps.users.models import CouchUser, UserRole
 from corehq.apps.users.util import cc_user_domain, format_username
 from custom.nic_compliance.forms import EncodedPasswordChangeFormMixin
@@ -824,6 +825,7 @@ class CommtrackUserForm(forms.Form):
         self.fields['assigned_locations'].widget = LocationSelectWidget(
             self.domain, multiselect=True, id='id_assigned_locations'
         )
+        self.fields['assigned_locations'].help_text = ExpandedMobileWorkerFilter.location_search_help
         self.fields['primary_location'].widget = PrimaryLocationWidget(
             css_id='id_primary_location',
             source_css_id='id_assigned_locations',
@@ -1164,6 +1166,7 @@ class CommCareUserFilterForm(forms.Form):
         self.domain = kwargs.pop('domain')
         super(CommCareUserFilterForm, self).__init__(*args, **kwargs)
         self.fields['location_id'].widget = LocationSelectWidget(self.domain)
+        self.fields['location_id'].help_text = ExpandedMobileWorkerFilter.location_search_help
 
         roles = UserRole.by_domain(self.domain)
         self.fields['role_id'].choices = [('', _('All Roles'))] + [
