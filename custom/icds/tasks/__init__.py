@@ -20,7 +20,6 @@ def delete_old_images(cutoff=None):
 
     def _get_query(db_name, max_age=max_age):
         return BlobMeta.objects.using(db_name).filter(
-            content_type='image/jpeg',
             type_code=CODES.form_attachment,
             domain='icds-cas',
             created_on__lt=max_age
