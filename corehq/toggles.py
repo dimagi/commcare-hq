@@ -1646,15 +1646,6 @@ SHOW_RAW_DATA_SOURCES_IN_REPORT_BUILDER = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
-
-RELATED_LOCATIONS = StaticToggle(
-    'related_locations',
-    'REACH: Enable experimental location many-to-many mappings',
-    TAG_CUSTOM,
-    namespaces=[NAMESPACE_DOMAIN],
-    help_link='https://confluence.dimagi.com/display/RD/Related+Locations',
-)
-
 ALLOW_BLANK_CASE_TAGS = StaticToggle(
     'allow_blank_case_tags',
     'eCHIS/ICDS: Allow blank case tags',
