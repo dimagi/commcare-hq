@@ -23,7 +23,7 @@ def delete_old_images(cutoff=None):
             type_code=CODES.form_attachment,
             domain='icds-cas',
             created_on__lt=max_age
-        )
+        ).order_by('created_on')
 
     run_again = False
     for db_name in get_db_aliases_for_partitioned_query():
