@@ -91,19 +91,23 @@ def _update_or_create_default(domain, amount, default, type, **kwargs):
 
 def build_consumption_dict(domain):
     """
-    Takes raw rows from couch and builds a dict to
-    look up consumption values from.
+    Builds a dict to look up consumption values from.
     """
     SQLDefaultConsumption.objects.filter(domain=domain)
 
-    return dict(
-        (tuple((
-            obj.domain,
-            obj.product_id,
-            obj.supply_point_type,
-            obj.supply_point_id,
-        )), obj.default_consumption)
-        for obj in SQLDefaultConsumption.objects.filter(domain=domain) if obj.default_consumption
+    return {
+        _hash_key(obj): obj.default_consumption
+        for obj in SQLDefaultConsumption.objects.filter(domain=domain)
+        if obj.default_consumption
+    }
+
+
+def _hash_key(default_consumption):
+    return (
+        default_consumption.domain,
+        default_consumption.product_id,
+        default_consumption.supply_point_type,
+        default_consumption.supply_point_id,
     )
 
 
