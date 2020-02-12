@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 
 from celery.schedules import crontab
+from celery.task import task
 from django.conf import settings
 from iso8601 import parse_date
 
@@ -16,11 +17,16 @@ MAX_RUNTIME = 6 * 3600
 
 
 @periodic_task_on_envs(settings.ICDS_ENVS, run_every=crontab(minute=30, hour=18))
-def delete_old_images(cutoff=None):
-    if cutoff and isinstance(cutoff, str):
+def delete_old_images():
+    for db_name in get_db_aliases_for_partitioned_query():
+        delete_old_images_on_db.delay(db_name, datetime.utcnow())
+
+
+@task
+def delete_old_images_on_db(db_name, cutoff):
+    if isinstance(cutoff, str):
         cutoff = parse_date(cutoff)
 
-    cutoff = cutoff or datetime.utcnow()
     max_age = cutoff - timedelta(days=90)
     db = get_blob_db()
 
@@ -31,25 +37,23 @@ def delete_old_images(cutoff=None):
             created_on__lt=max_age
         ).order_by('created_on')
 
-    run_again = False
-    for db_name in get_db_aliases_for_partitioned_query():
-        bytes_deleted = 0
-        query = _get_query(db_name)
-        metas = list(query[:1000])
-        if metas:
-            for meta in metas:
-                bytes_deleted += meta.content_length or 0
-            db.bulk_delete(metas=metas)
+    bytes_deleted = 0
+    query = _get_query(db_name)
+    metas = list(query[:1000])
+    run_again = len(metas) == 1000
+    if metas:
+        for meta in metas:
+            bytes_deleted += meta.content_length or 0
+        db.bulk_delete(metas=metas)
 
-            tags = [f'database:{db_name}']
-            age = datetime.utcnow() - metas[-1].created_on
-            datadog_gauge('commcare.icds_images.max_age', value=age.total_seconds(), tags=tags)
-            row_estimate = estimate_row_count(query, db_name)
-            datadog_gauge('commcare.icds_images.count_estimate', value=row_estimate, tags=tags)
-            datadog_counter('commcare.icds_images.bytes_deleted', value=bytes_deleted)
-            datadog_counter('commcare.icds_images.count_deleted', value=len(metas))
-            run_again = True
+        tags = [f'database:{db_name}']
+        age = datetime.utcnow() - metas[-1].created_on
+        datadog_gauge('commcare.icds_images.max_age', value=age.total_seconds(), tags=tags)
+        row_estimate = estimate_row_count(query, db_name)
+        datadog_gauge('commcare.icds_images.count_estimate', value=row_estimate, tags=tags)
+        datadog_counter('commcare.icds_images.bytes_deleted', value=bytes_deleted)
+        datadog_counter('commcare.icds_images.count_deleted', value=len(metas))
 
     runtime = datetime.utcnow() - cutoff
     if run_again and runtime.total_seconds() < MAX_RUNTIME:
-        delete_old_images.delay(cutoff)
+        delete_old_images_on_db.delay(cutoff)
