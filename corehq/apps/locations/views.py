@@ -1060,31 +1060,6 @@ class DownloadLocationStatusView(BaseLocationView):
         return reverse(self.urlname, args=self.args, kwargs=self.kwargs)
 
 
-@locations_access_required
-@location_safe
-def child_locations_for_select2(request, domain):
-    from django.core.paginator import Paginator
-    query = request.GET.get('name', '').lower()
-    page = int(request.GET.get('page', 1))
-    user = request.couch_user
-
-    def loc_to_payload(loc):
-        return {'id': loc.location_id, 'name': loc.get_path_display()}
-
-    locs = (SQLLocation.objects
-            .accessible_to_user(domain, user)
-            .filter(domain=domain, is_archived=False))
-    if query:
-        locs = locs.filter(name__icontains=query)
-
-    # 10 results per page
-    paginator = Paginator(locs, 10)
-    return json_response({
-        'results': list(map(loc_to_payload, paginator.page(page))),
-        'total': paginator.count,
-    })
-
-
 class DowngradeLocationsView(BaseDomainView):
     """
     This page takes the place of the location pages if a domain gets
