@@ -170,9 +170,9 @@ def dump_usernames(domain, download_id, user_filters, task):
 
     usernames = get_mobile_usernames_by_filters(domain, user_filters)
 
-    filename = "{}_users.xlsx".format(domain)
     headers = [('users', [['username']])]
     rows = [('users', [[username] for username in usernames])]
+    filename = "{}_users.xlsx".format(domain)
     _dump_xlsx_and_expose_download(filename, headers, rows, download_id, task, users_count)
 
 
