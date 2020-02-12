@@ -38,8 +38,8 @@ class Command(BaseCommand):
         dates = ('2019-11-01', '2019-12-01')
         sql = """WITH ucr_child_tasks_table AS (SELECT child_health_case_id FROM "{ucr_tablename}") 
         SELECT DISTINCT child_health_monthly.awc_id FROM ucr_child_tasks_table INNER JOIN child_health_monthly on
-         ucr_child_tasks_table.child_health_case_id = child_health_monthly.case_id WHERE 
-         child_health_monthly.open_in_month = 1 AND child_health_monthly.month IN {dates}
+         ucr_child_tasks_table.child_health_case_id=child_health_monthly.case_id WHERE 
+         child_health_monthly.open_in_month=1 AND child_health_monthly.month IN {dates}
             """.format(
             ucr_tablename=get_table_name(domain, 'static-child_tasks_cases'),
             dates=dates
