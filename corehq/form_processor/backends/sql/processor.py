@@ -235,23 +235,26 @@ class FormProcessorSQL(object):
                 # short circuit if there are no case transactions for this form
                 return FormProcessorSQL._process_form_normally(normal_form, case_db)
 
+            case_updates = {update.id: update for update in get_case_updates(normal_form)}
             rebuild_detail = FormEditRebuild(deprecated_form_id=deprecated_form.form_id)
             for case_id in affected_cases:
                 case = case_db.get(case_id)
-                is_creation = False
-                if not case:
-                    case = CommCareCaseSQL(domain=domain, case_id=case_id)
-                    is_creation = True
-                    case_db.set(case_id, case)
-                previous_owner = case.owner_id
-                case, _ = FormProcessorSQL._rebuild_case_from_transactions(
-                    case, rebuild_detail, updated_xforms=xforms
-                )
-                if case:
-                    touched_cases[case.case_id] = CaseUpdateMetadata(
-                        case=case, is_creation=is_creation, previous_owner_id=previous_owner,
-                        actions={const.CASE_ACTION_REBUILD}
+                if not case or case_id not in cases_to_rebuild:
+                    # short circuit if the case does not exist or there is no transaction for the form
+                    FormProcessorSQL._update_case_and_merge_touched_cases(
+                        normal_form, case_updates[case_id], case_db, touched_cases
                     )
+                else:
+                    # only rebuild existing cases that already have a transaction for this form
+                    previous_owner = case.owner_id
+                    case, _ = FormProcessorSQL._rebuild_case_from_transactions(
+                        case, rebuild_detail, updated_xforms=xforms
+                    )
+                    if case:
+                        touched_cases[case.case_id] = CaseUpdateMetadata(
+                            case=case, is_creation=False, previous_owner_id=previous_owner,
+                            actions={const.CASE_ACTION_REBUILD}
+                        )
             return touched_cases
 
     @staticmethod
