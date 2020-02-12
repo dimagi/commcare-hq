@@ -39,21 +39,13 @@
 {% block stylesheets %}
   {{ block.super }}
 
-  {% if less_debug %}
+  {% compress css %}
     <link type="text/less"
           rel="stylesheet"
           media="all"
-          href="{% static 'reports/less/reports.debug.less' %}" />
-    {% include 'reports/partials/filters_css.html' %}
-  {% else %}
-    {% compress css %}
-      <link type="text/less"
-            rel="stylesheet"
-            media="all"
-            href="{% static 'reports/less/reports.less' %}" />
-    {% endcompress %}
-    {% include 'reports/partials/filters_css.html' %}
-  {% endif %}
+          href="{% static 'reports/less/reports.less' %}" />
+  {% endcompress %}
+  {% include 'reports/partials/filters_css.html' %}
 
   {% block reports-css %}{% endblock %}
 {% endblock %}

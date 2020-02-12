@@ -8,10 +8,6 @@ class Command(PopulateSQLCommand):
         return 'ApplicationAccess'
 
     @classmethod
-    def couch_key(cls):
-        return set(['domain'])
-
-    @classmethod
     def sql_class(cls):
         from corehq.apps.cloudcare.models import ApplicationAccess
         return ApplicationAccess

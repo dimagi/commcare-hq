@@ -23,7 +23,12 @@ from corehq.apps.analytics.tasks import track_workflow
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.data_interfaces.dispatcher import require_can_edit_data
 from corehq.apps.domain.decorators import login_and_domain_required
-from corehq.apps.export.const import CASE_EXPORT, FORM_EXPORT, SharingOption
+from corehq.apps.export.const import (
+    CASE_EXPORT,
+    FORM_EXPORT,
+    SharingOption,
+    PROPERTY_TAG_INFO,
+)
 from corehq.apps.export.dbaccessors import get_properly_wrapped_export_instance
 from corehq.apps.export.exceptions import (
     BadExportConfiguration,
@@ -153,8 +158,8 @@ class BaseExportView(BaseProjectDataView):
                     is_reserved_number = (
                         column.label == 'number' and table_id > 0 and table.selected
                     )
-                    if (column.label == 'formid'
-                            or column.label == 'caseid'
+                    if ((column.label in ['formid', 'caseid']
+                         and PROPERTY_TAG_INFO in column.tags)
                             or is_reserved_number):
                         column.selected = True
 
