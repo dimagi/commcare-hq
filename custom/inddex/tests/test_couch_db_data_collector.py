@@ -8,7 +8,7 @@ from custom.inddex.couch_db_data_collector import CouchDbDataCollector
 class CouchDbDataCollectorTest(TestCase):
 
     def setUp(self):
-        self.couch_db = CouchDbDataCollector('test-domain', )
+        self.couch_db = CouchDbDataCollector('test-domain')
         self.couch_db.tables = {'test_table': '0123456'}
 
     def test_get_data_from_table_with_no_table_name_returns_attribute_error(self):
