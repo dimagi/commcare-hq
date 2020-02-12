@@ -39,8 +39,10 @@ function AdditionalModalController($location, $uibModalInstance, filters, gender
     };
 }
 
-function AdditionalFilterController($scope, $location, $uibModal, storageService) {
+function AdditionalFilterController($scope, $location, $uibModal, storageService, genders, ages) {
     var vm = this;
+    vm.genders = genders;
+    vm.ages = ages;
 
     var page = $location.path().split('/')[1];
     if (storageService.getKey('last_page') !== page) {
@@ -99,12 +101,46 @@ function AdditionalFilterController($scope, $location, $uibModal, storageService
             $scope.$emit('filtersChange');
         });
     };
+
+    vm.reset = function () {
+        vm.selectedAge = '';
+        vm.selectedGender = '';
+    };
+
+    // used only in mobile dashboard
+    vm.selectedFilterType = '';
+
+    vm.selectedGenderName = function () {
+        for (var i = 0; i < vm.genders.length; i++) {
+            if (vm.genders[i].id === vm.selectedGender) return vm.genders[i].name;
+        }
+    };
+
+    vm.selectedAgeGroupName = function () {
+        for (var i = 0; i < vm.ages.length; i++) {
+            if (vm.ages[i].id === vm.selectedAge) return vm.ages[i].name;
+        }
+    };
+
+    $scope.$on('request_filter_data', function () {
+        $scope.$emit('filter_data', {
+            'hasAdditionalFilterData': true,
+            'gender': vm.selectedGender,
+            'age': vm.selectedAge,
+        });
+    });
+
+    $scope.$on('reset_filter_data', function() {
+        $scope.$broadcast('reset_date',{});
+        vm.reset();
+    });
+    // end mobile dashboard helpers
 }
 
-AdditionalFilterController.$inject = ['$scope', '$location', '$uibModal', 'storageService'];
+AdditionalFilterController.$inject = ['$scope', '$location', '$uibModal', 'storageService', 'genders', 'ages'];
 AdditionalModalController.$inject = ['$location', '$uibModalInstance', 'filters', 'genders', 'ages', 'agesServiceDeliveryDashboard', 'haveAccessToFeatures'];
 
-window.angular.module('icdsApp').directive("additionalFilter", function () {
+window.angular.module('icdsApp').directive("additionalFilter", ['templateProviderService', function (templateProviderService) {
     var url = hqImport('hqwebapp/js/initial_page_data').reverse;
     return {
         restrict: 'E',
@@ -113,8 +149,10 @@ window.angular.module('icdsApp').directive("additionalFilter", function () {
         },
         bindToController: true,
         require: 'ngModel',
-        templateUrl: url('icds-ng-template', 'additional-filter'),
+        templateUrl: function () {
+            return templateProviderService.getTemplate('additional-filter');
+        },
         controller: AdditionalFilterController,
         controllerAs: "$ctrl",
     };
-});
+}]);
