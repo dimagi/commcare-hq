@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 import signal
@@ -32,6 +33,9 @@ from corehq.apps.tzmigration.api import (
     force_phone_timezones_should_be_processed,
 )
 from corehq.blobs import CODES, get_blob_db
+from corehq.blobs.mixin import BlobMetaRef
+from corehq.form_processor.backends.couch.dbaccessors import CaseAccessorCouch
+from corehq.form_processor.backends.couch.processor import FormProcessorCouch
 from corehq.form_processor.backends.sql.dbaccessors import (
     CaseAccessorSQL,
     FormAccessorSQL,
@@ -68,6 +72,7 @@ from corehq.form_processor.utils.general import (
     clear_local_domain_sql_backend_override,
     set_local_domain_sql_backend_override,
 )
+from corehq.form_processor.utils.xform import convert_xform_to_json
 from corehq.toggles import COUCH_SQL_MIGRATION_BLACKLIST, NAMESPACE_DOMAIN
 from corehq.util.couch_helpers import NoSkipArgsProvider
 from corehq.util.datadog.gauges import datadog_counter
@@ -343,6 +348,11 @@ class CouchSqlDomainMigrator:
         if forms in ["skipped", "missing"]:
             self._process_skipped_forms(cached=forms == "missing")
             return
+        if forms == "missing-blob-present":
+            for form in _iter_missing_blob_present_forms(self.statedb, self.stopper):
+                log.info("migrating form %s received on %s", form.form_id, form.received_on)
+                self._migrate_form(form, get_case_ids(form))
+            return
         form_ids = get_ids_from_string_or_file(forms)
         orig_ids = set(form_ids)
         form_ids = list(_drop_sql_form_ids(form_ids, self.statedb))
@@ -363,11 +373,8 @@ class CouchSqlDomainMigrator:
             sql_form = FormAccessorSQL.get_form(form_id)
             self._save_diffs(couch_form, sql_form)
 
-    def _process_skipped_forms(self, cached=False):
-        """process forms skipped by a previous migration
-
-        note: does not diff cases
-        """
+    def _process_skipped_forms(self, cached):
+        """process forms skipped by a previous migration"""
         migrated = 0
         with self.counter('skipped_forms', 'XFormInstance.id') as add_form:
             skipped = _iter_skipped_forms(self.statedb, self.stopper, cached)
@@ -997,6 +1004,73 @@ def _iter_skipped_forms(statedb, stopper, cached):
                     yield doc_type, doc
                 if stopper.clean_break:
                     break
+
+
+def _iter_missing_blob_present_forms(statedb, stopper):
+    def get_blob_present_form_ids(diff):
+        if diff.kind == "CommCareCase":
+            case_id = diff.doc_id
+            data = json.loads(diff.old_value)["forms"]
+            form_ids = [form_id
+                for form_id, status in data.items()
+                if status == "missing, blob present"]
+            assert form_ids, diff.old_value
+        elif diff.kind == "stock state":
+            case_id = diff.doc_id.split("/", 1)[0]
+            data = json.loads(diff.old_value)
+            assert data["form_state"] == "missing, blob present", data
+            form_ids = [data["ledger"]["last_modified_form_id"]]
+        return form_ids, case_id
+
+    def iter_blob_metas(form_ids):
+        metas = metadb.get_for_parents(form_ids)
+        parents = set()
+        for meta in metas:
+            if meta.type_code == CODES.form_xml:
+                yield meta, [m for m in metas if m.parent_id == meta.parent_id]
+                assert meta.parent_id not in parents, metas
+                parents.add(meta.parent_id)
+        assert parents == set(form_ids), (form_ids, parents)
+
+    def xml_to_form(domain, xml_meta, case_id, all_metas):
+        form_id = xml_meta.parent_id
+        with xml_meta.open() as fh:
+            xml = fh.read()
+        form_data = convert_xform_to_json(xml)
+        form = FormProcessorCouch.new_xform(form_data)
+        form.domain = domain
+        form.received_on = get_received_on(case_id, form_id)
+        for meta in all_metas:
+            form.external_blobs[meta.name] = BlobMetaRef(
+                key=meta.key,
+                blobmeta_id=meta.id,
+                content_type=meta.content_type,
+                content_length=meta.content_length,
+            )
+        return form
+
+    def get_received_on(case_id, form_id):
+        case = CaseAccessorCouch.get_case(case_id)
+        for action in case.actions:
+            if action.xform_id == form_id:
+                return action.server_date
+        raise ValueError(f"case {case_id} has no actions for form {form_id}")
+
+    domain = statedb.domain
+    metadb = get_blob_db().metadb
+    seen = set()
+    for doc_id, diffs in statedb.iter_doc_diffs("CommCareCase"):
+        for diff in diffs:
+            if not diff.old_value or "missing, blob present" not in diff.old_value:
+                continue
+            form_ids, case_id = get_blob_present_form_ids(diff)
+            form_ids = [f for f in form_ids if f not in seen]
+            if not form_ids or ("case", case_id) in seen:
+                continue
+            seen.update(form_ids)
+            seen.add(("case", case_id))
+            for xml_meta, all_metas in iter_blob_metas(form_ids):
+                yield xml_to_form(domain, xml_meta, case_id, all_metas)
 
 
 def _drop_sql_form_ids(couch_ids, statedb):

@@ -136,7 +136,9 @@ class Command(BaseCommand):
                 a file having one form id per line OR 'skipped' to
                 migrate forms skipped by previous migration OR 'missing'
                 to migrate missing forms cached in the statedb by the
-                'stats' command. The file path must begin with / or ./
+                'stats' command OR 'missing-blob-present' to migrate
+                forms reference by a case that do not exist in Couch but
+                a blob does exit. The file path must begin with / or ./
             """)
         parser.add_argument('-x', '--stop-on-error',
             dest="stop_on_error", action='store_true', default=False,
