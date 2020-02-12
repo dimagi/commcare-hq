@@ -215,7 +215,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         return userLocationInSorted.length > 0;
     };
 
-    vm.showAllOption = function (locations) {
+    vm.preventShowingAllOption = function (locations) {
         return ((!vm.userLocationIdIsNull() && !vm.userHaveAccessToAllLocations(locations)) || vm.isUserLocationIn(locations)) && !haveAccessToAllLocations;
     };
 
@@ -235,10 +235,9 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
                         var sortedLocations = _.sortBy(locationsGrouppedByParent[parentId], function (o) {
                             return o.name;
                         });
-                        if (vm.showAllOption(sortedLocations)) {
+                        if (vm.preventShowingAllOption(sortedLocations)) {
                             locationsCache[parentId] = sortedLocations;
-                        }
-                        else if (selectedLocation.user_have_access) {
+                        } else if (selectedLocation.user_have_access) {
                             locationsCache[parentId] = [ALL_OPTION].concat(sortedLocations);
                         } else {
                             locationsCache[parentId] = sortedLocations;
