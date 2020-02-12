@@ -82,6 +82,7 @@ from corehq.apps.users.tasks import (
     bulk_download_users_async,
     reset_demo_user_restore_task,
     turn_on_demo_mode_task,
+    bulk_download_usernames_async,
 )
 from corehq.apps.users.util import (
     can_add_extra_mobile_workers,
@@ -1250,7 +1251,10 @@ def download_commcare_users(request, domain):
         return HttpResponseRedirect(
             reverse(FilteredUserDownload.urlname, args=[domain]) + "?" + request.GET.urlencode())
     download = DownloadBase()
-    res = bulk_download_users_async.delay(domain, download.download_id, user_filters)
+    if form.cleaned_data['columns'] == CommCareUserFilterForm.USERNAMES_COLUMN_OPTION:
+        res = bulk_download_usernames_async.delay(domain, download.download_id, user_filters)
+    else:
+        res = bulk_download_users_async.delay(domain, download.download_id, user_filters)
     download.set_task(res)
     return redirect(DownloadUsersStatusView.urlname, domain, download.download_id)
 
