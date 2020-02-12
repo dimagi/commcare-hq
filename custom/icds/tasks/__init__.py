@@ -15,7 +15,7 @@ from custom.icds.tasks.hosted_ccz import setup_ccz_file_for_hosting  # noqa impo
 
 MAX_RUNTIME = 6 * 3600
 
-@periodic_task_on_envs(settings.ICDS_ENVS, run_every=crontab(minute=0, hour='22'))
+@periodic_task_on_envs(settings.ICDS_ENVS, run_every=crontab(minute=30, hour=18))
 def delete_old_images(cutoff=None):
     if cutoff and isinstance(cutoff, str):
         cutoff = parse_date(cutoff)
