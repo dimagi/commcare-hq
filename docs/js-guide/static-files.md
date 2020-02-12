@@ -35,76 +35,19 @@ Best practice is to wrap all script tags and stylesheet links in compress blocks
 
 There are three ways of utilizing Django Compressor's features:
 
-### 1. Client side js-based `less` compilation.
+### 1. Dev Setup: Server-side on the fly `less` compilation
 
 This does not combine any files in compress blocks, and as no effect on `js` blocks. This is the default dev configuration.
-
-Pros:
-- Don't need to install anything / manage different less versions.
-
-Cons:
-- Slowest option, as caching isn't great and for pages with a lot of imports,
-things get REAL slow. Plus if you want to use any javascript compilers like
-`coffeescript` in the future, this option won't take care of compiling that.
-- Is the furthest away from the production environment possible.
 
 #### How is this enabled?
 
 Make sure your `localsettings.py` file has the following set:
 ```
-LESS_DEBUG = True
-LESS_WATCH = True  # if you want less.js to watch for changes and compile on the fly!
 COMPRESS_ENABLED = False
 COMPRESS_OFFLINE = False
 ```
 
-### 2. On-the-fly server-side compression, with the cache refreshed as changes are made.
-
-Pros:
-- Faster than client-side compilation
-- Closer to production setup (so you find compressor errors as they happen)
-- Can use other features of django compressor (for javascript!)
-
-Cons:
-- Have to install multiple less versions (will not apply once we are fully migrated to Bootstrap 3).
-
-#### How is this enabled?
-Make sure your `localsettings.py` file has the following set:
-```
-LESS_DEBUG = False
-LESS_WATCH = False
-COMPRESS_ENABLED = True
-COMPRESS_OFFLINE = False
-
-COMPRESS_MINT_DELAY = 30
-COMPRESS_MTIME_DELAY = 3  # set to higher or lower depending on how often you're editing static files
-COMPRESS_REBUILD_TIMEOUT = 6000
-```
-
-##### Compressor and Caching
-
-If you're doing a lot of front end work (CSS AND/OR Javascript in Bootstrap 3)
-and don't want to guess whether or not the cache picked up your changes, set the
-following in `localsettings.py`:
-```
-COMPRESS_MINT_DELAY = 0
-COMPRESS_MTIME_DELAY = 0
-COMPRESS_REBUILD_TIMEOUT = 0
-```
-
-#### Slow JS Compression
-
-If pageloads feel a bit sluggish on your development machine and you don't need to rely on a javascript map to debug something, add this to your `localsettings.py` to use the default JS compressor.
-
-```
-COMPRESS_JS_COMPRESSOR = 'compressor.js.JsCompressor'
-```
-
-#### How to install multiple LESS compilers to run compressor on `less` files
-
-NOTE: This is only relevant while we are running two versions of Bootstrap. See the main [Commcare-hq readme](https://github.com/dimagi/commcare-hq/blob/master/README.md#install-less) for instructions.
-
-### 3. Compress Offline
+### 2. Production-like Setup: Compress Offline
 
 Pros:
 - Closest mirror to production's setup.
@@ -121,8 +64,6 @@ Do everything from Option 2 for LESS compilers setup.
 
 Have the following set in `localsettings.py`:
 ```
-LESS_DEBUG = False
-LESS_WATCH = False
 COMPRESS_ENABLED = True
 COMPRESS_OFFLINE = True
 ```
