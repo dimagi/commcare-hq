@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 
 from celery.schedules import crontab
 from django.conf import settings
+from iso8601 import parse_date
 
 from corehq.blobs import CODES, get_blob_db
 from corehq.blobs.models import BlobMeta
@@ -14,6 +15,9 @@ from custom.icds.tasks.hosted_ccz import setup_ccz_file_for_hosting  # noqa impo
 
 @periodic_task_on_envs(settings.ICDS_ENVS, run_every=crontab(minute=0, hour='22'))
 def delete_old_images(cutoff=None):
+    if cutoff and isinstance(cutoff, str):
+        cutoff = parse_date(cutoff)
+
     cutoff = cutoff or datetime.utcnow()
     max_age = cutoff - timedelta(days=90)
     db = get_blob_db()
