@@ -166,7 +166,7 @@ def append_new_events_to_enrollments(
     for enrol in enrollments_with_new_events:
         program_id = enrol["program"]
         if program_id in enrollments_by_program_id:
-            enrollments_by_program_id[program_id]["events"].append(enrol["events"])
+            enrollments_by_program_id[program_id]["events"].extend(enrol["events"])
         else:
             enrollments_by_program_id[program_id] = enrol
     return list(enrollments_by_program_id.values())
