@@ -243,22 +243,30 @@ class FormProcessorSQL(object):
                         actions={const.CASE_ACTION_REBUILD}
                     )
         else:
-            xform = xforms[0]
-            for case_update in get_case_updates(xform):
-                case_update_meta = case_db.get_case_from_case_update(case_update, xform)
-                if case_update_meta.case:
-                    case_id = case_update_meta.case.case_id
-                    if case_id in touched_cases:
-                        touched_cases[case_id] = touched_cases[case_id].merge(case_update_meta)
-                    else:
-                        touched_cases[case_id] = case_update_meta
-                else:
-                    logging.error(
-                        "XForm %s had a case block that wasn't able to create a case! "
-                        "This usually means it had a missing ID" % xform.get_id
-                    )
-
+            touched_cases = FormProcessorSQL._process_form_normally(xforms[0], case_db)
         return touched_cases
+
+    @staticmethod
+    def _process_form_normally(xform, case_db):
+        touched_cases = {}
+        for case_update in get_case_updates(xform):
+            FormProcessorSQL._update_case_and_merge_touched_cases(xform, case_update, case_db, touched_cases)
+        return touched_cases
+
+    @staticmethod
+    def _update_case_and_merge_touched_cases(xform, case_update, case_db, touched_cases):
+        case_update_meta = case_db.get_case_from_case_update(case_update, xform)
+        if case_update_meta.case:
+            case_id = case_update_meta.case.case_id
+            if case_id in touched_cases:
+                touched_cases[case_id] = touched_cases[case_id].merge(case_update_meta)
+            else:
+                touched_cases[case_id] = case_update_meta
+        else:
+            logging.error(
+                "XForm %s had a case block that wasn't able to create a case! "
+                "This usually means it had a missing ID" % xform.get_id
+            )
 
     @staticmethod
     def hard_rebuild_case(domain, case_id, detail, lock=True, save=True):
