@@ -1148,8 +1148,14 @@ class DeleteCommCareUsers(BaseManageCommCareUserView):
 
         user_docs_by_id = {doc['_id']: doc for doc in get_user_docs_by_username(usernames)}
         user_ids_with_forms = self._get_user_ids_with_forms(request, user_docs_by_id)
-        self._handle_usernames_not_found(request, user_docs_by_id, usernames)
-        self._delete_users(request, user_docs_by_id, user_ids_with_forms)
+        usernames_not_found = self._get_usernames_not_found(request, user_docs_by_id, usernames)
+
+        if user_ids_with_forms or usernames_not_found:
+            messages.error(request, _("""
+                No users deleted. Please address the above issue(s) and re-upload your updated file.
+            """))
+        else:
+            self._delete_users(request, user_docs_by_id, user_ids_with_forms)
 
         return self.get(request, *args, **kwargs)
 
@@ -1198,7 +1204,7 @@ class DeleteCommCareUsers(BaseManageCommCareUserView):
 
         return user_ids_with_forms
 
-    def _handle_usernames_not_found(self, request, user_docs_by_id, usernames):
+    def _get_usernames_not_found(self, request, user_docs_by_id, usernames):
         """
             The only side effect of this is to possibly add to request.messages.
         """
@@ -1207,6 +1213,7 @@ class DeleteCommCareUsers(BaseManageCommCareUserView):
             message = _("The following users were not found: {}.").format(
                 ", ".join(map(raw_username, usernames_not_found)))
             messages.error(request, message)
+        return usernames_not_found
 
     def _delete_users(self, request, user_docs_by_id, user_ids_with_forms):
         deleted_count = 0
