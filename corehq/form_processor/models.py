@@ -1454,6 +1454,7 @@ class CaseTransaction(PartitionedModel, SaveStateMixin, models.Model):
 
     def __str__(self):
         return (
+            "{self.case_id}: "
             "{self.form_id}: "
             "{self.client_date} "
             "({self.server_date}) "
