@@ -108,11 +108,20 @@ def mail_admins_async(self, subject, message, fail_silently=False, connection=No
 @periodic_task(run_every=crontab(minute=0, hour=0), queue='background_queue')
 def process_bounced_emails():
     if settings.RETURN_PATH_EMAIL and settings.RETURN_PATH_EMAIL_PASSWORD:
-        with BouncedEmailManager(
-            delete_processed_messages=True
-        ) as bounced_manager, datadog_track_errors('process_bounced_emails_task'):
-            bounced_manager.process_aws_notifications()
-            bounced_manager.process_daemon_messages()
+        try:
+            with BouncedEmailManager(
+                delete_processed_messages=True
+            ) as bounced_manager, datadog_track_errors('process_bounced_emails_task'):
+                bounced_manager.process_aws_notifications()
+                bounced_manager.process_daemon_messages()
+        except Exception as e:
+            notify_exception(
+                None,
+                message="Encountered error while processing bounced emails",
+                details={
+                    'error': e,
+                }
+            )
 
 
 def get_maintenance_alert_active():
