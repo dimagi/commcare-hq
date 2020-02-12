@@ -1,7 +1,7 @@
 /* global moment */
 
 function DownloadController($rootScope, $location, locationHierarchy, locationsService, userLocationId, haveAccessToFeatures,
-    downloadService, isAlertActive, userLocationType) {
+    downloadService, isAlertActive, userLocationType, haveAccessToAllLocations, allUserLocationId) {
     var vm = this;
 
     vm.months = [];
@@ -194,6 +194,31 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         vm.selectedLocations = new Array(maxLevel);
     };
 
+    vm.userHaveAccessToAllLocations = function (locations) {
+        var haveAccessToAllLocationsForLevel = true;
+        window.angular.forEach(locations, function (location) {
+            if (!location.user_have_access) {
+                haveAccessToAllLocationsForLevel = false;
+            }
+        });
+        return haveAccessToAllLocationsForLevel;
+    };
+
+    vm.userLocationIdIsNull = function () {
+        return ["null", "undefined"].indexOf(vm.userLocationId) !== -1;
+    };
+
+    vm.isUserLocationIn = function (locations) {
+        var userLocationInSorted = _.filter(locations, function (location) {
+            return allUserLocationId.indexOf(location.location_id) !== -1;
+        });
+        return userLocationInSorted.length > 0;
+    };
+
+    vm.showAllOption = function (locations) {
+        return ((!vm.userLocationIdIsNull() && !vm.userHaveAccessToAllLocations(locations)) || vm.isUserLocationIn(locations)) && !haveAccessToAllLocations;
+    };
+
     var init = function() {
         if (vm.selectedLocationId) {
             vm.myPromise = locationsService.getAncestors(vm.selectedLocationId).then(function(data) {
@@ -207,13 +232,16 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
 
                 for (var parentId in locationsGrouppedByParent) {
                     if (locationsGrouppedByParent.hasOwnProperty(parentId)) {
-                        var sorted_locations = _.sortBy(locationsGrouppedByParent[parentId], function(o) {
+                        var sortedLocations = _.sortBy(locationsGrouppedByParent[parentId], function (o) {
                             return o.name;
                         });
-                        if (selectedLocation.user_have_access) {
-                            locationsCache[parentId] = [ALL_OPTION].concat(sorted_locations);
+                        if (vm.showAllOption(sortedLocations)) {
+                            locationsCache[parentId] = sortedLocations;
+                        }
+                        else if (selectedLocation.user_have_access) {
+                            locationsCache[parentId] = [ALL_OPTION].concat(sortedLocations);
                         } else {
-                            locationsCache[parentId] = sorted_locations;
+                            locationsCache[parentId] = sortedLocations;
                         }
                     }
                 }
@@ -651,7 +679,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
 }
 
 DownloadController.$inject = ['$rootScope', '$location', 'locationHierarchy', 'locationsService', 'userLocationId',
-    'haveAccessToFeatures', 'downloadService', 'isAlertActive', 'userLocationType'];
+    'haveAccessToFeatures', 'downloadService', 'isAlertActive', 'userLocationType','haveAccessToAllLocations','allUserLocationId'];
 
 window.angular.module('icdsApp').directive("download", function() {
     var url = hqImport('hqwebapp/js/initial_page_data').reverse;
