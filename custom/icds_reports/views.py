@@ -887,11 +887,11 @@ class ExportIndicatorView(View):
         if not location and not request.couch_user.has_permission(
                 self.kwargs['domain'], 'access_all_locations'
         ):
-            return HttpResponseBadRequest()
+            return HttpResponse(status_code=403)
         if location and not user_can_access_location_id(
                 self.kwargs['domain'], request.couch_user, location
         ):
-            return HttpResponseBadRequest()
+            return HttpResponse(status_code=403)
 
         sql_location = None
 
