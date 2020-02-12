@@ -1204,13 +1204,11 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         return owner_ids
 
     @staticmethod
-    def get_case_transactions_for_form(form_id, limit_to_cases):
-        for db_name, case_ids in split_list_by_db_partition(limit_to_cases):
-            resultset = CaseTransaction.objects.using(db_name).filter(
-                case_id__in=case_ids, form_id=form_id
-            )
-            for trans in resultset:
-                yield trans
+    def form_has_case_transactions(form_id):
+        for db_name in get_db_aliases_for_partitioned_query():
+            if CaseTransaction.objects.using(db_name).filter(form_id=form_id).exists():
+                return True
+        return False
 
     @staticmethod
     def get_case_transactions_by_case_id(case, updated_xforms=None):
