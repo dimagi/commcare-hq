@@ -59,7 +59,9 @@ hqDefine('export/js/download_export', [
         };
 
         // Cookie Related
-        self.savedDownloadCookieName = _.map(self.exportList, function (exportData) { return exportData.export_id; }).join('.') + '_download';
+        self.savedDownloadCookieName = _.map(self.exportList, function (exportData) {
+            return exportData.export_id;
+        }).join('.') + '_download';
         self.savedMultimediaDownloadCookieName = self.savedDownloadCookieName + '_multimedia';
         self.savedDownloadId = $.cookie(self.savedDownloadCookieName);
         self.savedMultimediaDownloadId = $.cookie(self.savedMultimediaDownloadCookieName);
