@@ -114,7 +114,7 @@ class FormProcessorInterface(object):
         return self.processor.get_case_forms(case_id)
 
     def form_has_case_transactions(self, form_id):
-        self.processor.form_has_case_transactions(form_id)
+        return self.processor.form_has_case_transactions(form_id)
 
     def store_attachments(self, xform, attachments):
         """
