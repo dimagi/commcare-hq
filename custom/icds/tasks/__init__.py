@@ -13,6 +13,8 @@ from custom.icds.tasks.sms import send_monthly_sms_report  # noqa imported for c
 from custom.icds.tasks.hosted_ccz import setup_ccz_file_for_hosting  # noqa imported for celery
 
 
+MAX_RUNTIME = 6 * 3600
+
 @periodic_task_on_envs(settings.ICDS_ENVS, run_every=crontab(minute=0, hour='22'))
 def delete_old_images(cutoff=None):
     if cutoff and isinstance(cutoff, str):
@@ -48,5 +50,6 @@ def delete_old_images(cutoff=None):
             datadog_counter('commcare.icds_images.count_deleted', value=len(metas))
             run_again = True
 
-    if run_again:
+    runtime = datetime.utcnow() - cutoff
+    if run_again and runtime.total_seconds() < MAX_RUNTIME:
         delete_old_images.delay(cutoff)
