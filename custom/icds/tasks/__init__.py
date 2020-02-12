@@ -7,7 +7,7 @@ from corehq.blobs import CODES, get_blob_db
 from corehq.blobs.models import BlobMeta
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 from corehq.util.celery_utils import periodic_task_on_envs
-from corehq.util.datadog.gauges import datadog_counter
+from corehq.util.datadog.gauges import datadog_counter, datadog_gauge
 from custom.icds.tasks.sms import send_monthly_sms_report  # noqa imported for celery
 from custom.icds.tasks.hosted_ccz import setup_ccz_file_for_hosting  # noqa imported for celery
 
@@ -33,6 +33,10 @@ def delete_old_images(cutoff=None):
             for meta in metas:
                 bytes_deleted += meta.content_length or 0
             db.bulk_delete(metas=metas)
+            age = datetime.utcnow() - metas[-1].created_on
+            datadog_gauge('commcare.icds_images.max_age', value=age.total_seconds(), tags=[
+                f'database:{db_name}'
+            ])
             datadog_counter('commcare.icds_images.bytes_deleted', value=bytes_deleted)
             datadog_counter('commcare.icds_images.count_deleted', value=len(metas))
             run_again = True
