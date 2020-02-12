@@ -56,4 +56,4 @@ def delete_old_images_on_db(db_name, cutoff):
 
     runtime = datetime.utcnow() - cutoff
     if run_again and runtime.total_seconds() < MAX_RUNTIME:
-        delete_old_images_on_db.delay(cutoff)
+        delete_old_images_on_db.delay(db_name, cutoff)
