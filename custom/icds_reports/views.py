@@ -884,6 +884,15 @@ class ExportIndicatorView(View):
 
         location = request.POST.get('location', '')
 
+        if not location and not request.couch_user.has_permission(
+                self.kwargs['domain'], 'access_all_locations'
+        ):
+            return HttpResponseBadRequest()
+        if location and not user_can_access_location_id(
+                self.kwargs['domain'], request.couch_user, location
+        ):
+            return HttpResponseBadRequest()
+
         sql_location = None
 
         if location and indicator != ISSNIP_MONTHLY_REGISTER_PDF:
