@@ -172,7 +172,7 @@ def dump_usernames(domain, download_id, user_filters, task):
     usernames = get_mobile_usernames_by_filters(domain, user_filters)
 
     use_transfer = settings.SHARED_DRIVE_CONF.transfer_enabled
-    filename = "{}_users_{}.xlsx".format(domain, uuid.uuid4().hex)
+    filename = "{}_users.xlsx".format(domain)
     file_path = get_download_file_path(use_transfer, filename)
     writer.open(
         header_table=[('users', [['username']])],
