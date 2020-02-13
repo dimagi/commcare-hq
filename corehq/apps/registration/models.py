@@ -24,7 +24,7 @@ class RegistrationRequestMixin():
 class SQLRegistrationRequest(SyncSQLToCouchMixin, models.Model, RegistrationRequestMixin):
     tos_confirmed = models.BooleanField(default=False)
     request_time = models.DateTimeField()
-    request_ip = models.CharField(max_length=31)
+    request_ip = models.CharField(max_length=31, null=True)
     activation_guid = models.CharField(max_length=126, unique=True)
     confirm_time = models.DateTimeField(null=True)
     confirm_ip = models.CharField(max_length=31, null=True)
