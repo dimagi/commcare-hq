@@ -698,7 +698,12 @@ class TestDeleteDomain(TestCase):
 
     def test_registration_delete(self):
         for domain_name in [self.domain.name, self.domain2.name]:
-            SQLRegistrationRequest.objects.create(domain=domain_name, activation_guid='123')
+            SQLRegistrationRequest.objects.create(
+                domain=domain_name,
+                activation_guid='123',
+                request_time=datetime.utcnow(),
+                request_ip='12.34.567.8'
+            )
             self._assert_registration_count(domain_name, 1)
 
         self.domain.delete()
