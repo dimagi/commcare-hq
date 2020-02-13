@@ -603,12 +603,6 @@ FORMPLAYER_URL = 'http://localhost:8080'
 
 ####### SMS Queue Settings #######
 
-CUSTOM_PROJECT_SMS_QUEUES = {
-    'ils-gateway': 'ils_gateway_sms_queue',
-    'ils-gateway-train': 'ils_gateway_sms_queue',
-    'ils-gateway-training': 'ils_gateway_sms_queue',
-}
-
 # Setting this to False will make the system process outgoing and incoming SMS
 # immediately rather than use the queue.
 # This should always be set to True in production environments, and the sms_queue
@@ -1488,10 +1482,6 @@ WEB_USER_TERM = "Web User"
 
 DEFAULT_CURRENCY = "USD"
 DEFAULT_CURRENCY_SYMBOL = "$"
-
-CUSTOM_SMS_HANDLERS = [
-    'custom.ilsgateway.tanzania.handler.handle',
-]
 
 SMS_HANDLERS = [
     'corehq.apps.commtrack.sms.handle',
