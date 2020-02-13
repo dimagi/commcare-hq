@@ -117,7 +117,7 @@ function AdditionalFilterController($scope, $location, $uibModal, storageService
     vm.selectedGenderName = function () {
         for (var i = 0; i < vm.genders.length; i++) {
             if (vm.genders[i].id === vm.selectedGender) {
-                 return vm.genders[i].name;
+                return vm.genders[i].name;
             }
         }
     };

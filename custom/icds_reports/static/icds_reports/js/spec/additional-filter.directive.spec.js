@@ -1,6 +1,7 @@
 /* global module, inject, chai, AdditionalFilterController, AdditionalModalController */
 "use strict";
 
+var utils = hqImport('icds_reports/js/spec/utils');
 var pageData = hqImport('hqwebapp/js/initial_page_data');
 
 
