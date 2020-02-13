@@ -621,10 +621,11 @@ class FormAccessorSQL(AbstractFormAccessor):
             operation.form_id = form.form_id
 
         try:
-            with form.attachment_writer() as write_attachments, \
+            with form.attachment_writer() as attachment_writer, \
                     transaction.atomic(using=form.db, savepoint=False):
+                transaction.on_commit(attachment_writer.commit, using=form.db)
                 form.save()
-                write_attachments()
+                attachment_writer.write()
                 for operation in operations:
                     operation.save()
         except InternalError as e:

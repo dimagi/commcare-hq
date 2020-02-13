@@ -251,18 +251,27 @@ class AttachmentMixin(SaveStateMixin):
 
             return noop_context()
 
-        def write_attachments(blob_db):
-            self._attachments_list = [
-                attachment.write(blob_db, self)
-                for attachment in self.attachments_list
-            ]
+        class Writer():
+            def __init__(self, form, blob_db):
+                self.form = form
+                self.blob_db = blob_db
+
+            def write(self):
+                self.saved_attachments = [
+                    attachment.write(self.blob_db, self.form)
+                    for attachment in self.form.attachments_list
+                ]
+
+            def commit(self):
+                self.form._attachments_list = self.saved_attachments
 
         @contextmanager
         def atomic_attachments():
             unsaved = self.attachments_list
             assert all(isinstance(a, Attachment) for a in unsaved), unsaved
             with AtomicBlobs(get_blob_db()) as blob_db:
-                yield lambda: write_attachments(blob_db)
+                writer = Writer(self, blob_db)
+                yield writer
 
         return atomic_attachments()
 
