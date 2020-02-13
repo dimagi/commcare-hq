@@ -59,6 +59,12 @@ class AggAwcDailyAggregationDistributedHelper(BaseICDSAggregationDistributedHelp
 
     def aggregation_query(self):
 
+        def use_agg_awc_data_or_zero(col_name):
+            if self.use_agg_awc:
+                return (col_name,)
+            else:
+                return (col_name, '0')
+
         columns = (
             ('state_id',),
             ('district_id',),
@@ -67,7 +73,7 @@ class AggAwcDailyAggregationDistributedHelper(BaseICDSAggregationDistributedHelp
             ('awc_id',),
             ('aggregation_level',),
             ('date', '%(date)s'),
-            ('cases_household',) if self.use_agg_awc else ('cases_household', '0'),
+            use_agg_awc_data_or_zero('cases_household'),
             ('cases_person',),
             ('cases_person_all',),
             ('cases_person_has_aadhaar',),
@@ -84,11 +90,11 @@ class AggAwcDailyAggregationDistributedHelper(BaseICDSAggregationDistributedHelp
             ('cases_person_adolescent_girls_15_18_all',),
             ('daily_attendance_open', '0'),
             ('num_awcs',),
-            ('num_launched_states', ) if self.use_agg_awc else ('num_launched_states', '0'),
-            ('num_launched_districts',) if self.use_agg_awc else ('num_launched_districts', '0'),
-            ('num_launched_blocks',) if self.use_agg_awc else ('num_launched_blocks', '0'),
-            ('num_launched_supervisors',) if self.use_agg_awc else ('num_launched_supervisors', '0'),
-            ('num_launched_awcs',) if self.use_agg_awc else ('num_launched_awcs', '0'),
+            use_agg_awc_data_or_zero('num_launched_states'),
+            use_agg_awc_data_or_zero('num_launched_districts'),
+            use_agg_awc_data_or_zero('num_launched_blocks'),
+            use_agg_awc_data_or_zero('num_launched_supervisors'),
+            use_agg_awc_data_or_zero('num_launched_awcs'),
             ('cases_person_has_aadhaar_v2',),
             ('cases_person_beneficiary_v2',),
             ('state_is_test', "state_is_test"),
@@ -144,7 +150,7 @@ class AggAwcDailyAggregationDistributedHelper(BaseICDSAggregationDistributedHelp
                 sum(open_count) AS cases_household,
                 count(*) AS all_cases_household
             FROM "{household_cases}"
-            WHERE opened_on< %(end_date)s
+            WHERE opened_on < %(end_date)s
             GROUP BY owner_id, supervisor_id;
         UPDATE "{tablename}" agg_awc SET
            cases_household = ut.cases_household,
