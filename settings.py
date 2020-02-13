@@ -1993,11 +1993,6 @@ CUSTOM_MODULES = [
     'custom.ilsgateway',
 ]
 
-CUSTOM_DASHBOARD_PAGE_URL_NAMES = {
-    'ews-ghana': 'dashboard_page',
-    'ils-gateway': 'ils_dashboard_report'
-}
-
 DOMAIN_MODULE_MAP = {
     'mc-inscale': 'custom.reports.mc',
     'pact': 'pact',
