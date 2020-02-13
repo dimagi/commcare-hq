@@ -376,7 +376,7 @@ describe('Download Directive', function () {
         }));
 
         it('tests that all users have access to ISSNIP monthly register', function () {
-            var expected = 11;
+            var expected = 12;
 
             var length = controller.indicators.length;
             assert.equal(expected, length);
@@ -536,7 +536,7 @@ describe('Download Directive', function () {
 
         it('tests that all users have access to ISSNIP monthly register', function () {
             var length = controller.indicators.length;
-            assert.equal(11, length);
+            assert.equal(12, length);
         });
     });
 
@@ -588,7 +588,7 @@ describe('Download Directive', function () {
 
         it('tests that block user does not have access to dashboard usage report', function () {
             var length = controller.indicators.length;
-            assert.equal(10, length);
+            assert.equal(11, length);
         });
     });
 
