@@ -3,6 +3,15 @@ function MobileFiltersController($scope) {
     const LOCATION = 'location';
     $scope.selectedTab = LOCATION;
     $scope.filterData = {};
+    var vm = this;
+    // eg:vm.filters = ['gender', 'age']
+    // this array has filters that are not to be shown. so if 'gender' is not in array, it can be shown.
+    if (vm.filters && vm.filters.indexOf('gender') === -1) {
+        vm.showGenderFilter = true;
+    }
+    if (vm.filters && vm.filters.indexOf('age') === -1) {
+        vm.showAgeFilter = true;
+    }
     $scope.closeFilters = function () {
         $scope.$emit('closeFilterMenu', {});
     };
@@ -15,8 +24,9 @@ function MobileFiltersController($scope) {
     $scope.applyFilters = function () {
         $scope.hasLocation = false;
         $scope.hasDate = false;
-        $scope.receivedAdditionalFilterData = !($scope.$ctrl.filters.indexOf('gender') === -1 ||
-            $scope.$ctrl.filters.indexOf('age') === -1 );
+        // if neither of the filters exist, we consider filter data is received. else we wait till data is received to
+        // emit 'mobile_filter_data_changed' event.
+        $scope.receivedAdditionalFilterData = !(vm.showAgeFilter || vm.showGenderFilter);
         $scope.filterData = {};
         $scope.$broadcast('request_filter_data',{});
     };

@@ -56,10 +56,14 @@ function AdditionalFilterController($scope, $location, $uibModal, storageService
     vm.selectedGender = $location.search()['gender'] !== void(0) ? $location.search()['gender'] : '';
     vm.selectedAge = $location.search()['age'] !== void(0) ? $location.search()['age'] : '';
     var filtersObjects = [];
+    // eg:vm.filters = ['gender', 'age']
+    // this array has filters that are not to be shown. so if 'gender' is not in array, it can be shown.
     if (vm.filters && vm.filters.indexOf('gender') === -1) {
+        vm.showGenderFilter = true;
         filtersObjects.push({ label: 'Gender', value: vm.selectedGender });
     }
     if (vm.filters && vm.filters.indexOf('age') === -1) {
+        vm.showAgeFilter = true;
         filtersObjects.push({ label: 'Age', value: vm.selectedAge });
     }
 
@@ -112,7 +116,9 @@ function AdditionalFilterController($scope, $location, $uibModal, storageService
 
     vm.selectedGenderName = function () {
         for (var i = 0; i < vm.genders.length; i++) {
-            if (vm.genders[i].id === vm.selectedGender) return vm.genders[i].name;
+            if (vm.genders[i].id === vm.selectedGender) {
+                 return vm.genders[i].name;
+            }
         }
     };
 
