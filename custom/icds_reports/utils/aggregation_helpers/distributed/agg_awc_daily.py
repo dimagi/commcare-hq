@@ -1,19 +1,22 @@
+from datetime import timedelta
 from custom.icds_reports.utils.aggregation_helpers import transform_day_to_month
 from custom.icds_reports.utils.aggregation_helpers.distributed.base import BaseICDSAggregationDistributedHelper
 from corehq.apps.userreports.util import get_table_name
+
 
 class AggAwcDailyAggregationDistributedHelper(BaseICDSAggregationDistributedHelper):
     helper_key = 'agg-awc-daily'
     aggregate_parent_table = 'agg_awc_daily'
 
-    def __init__(self, date):
+    def __init__(self, date, use_agg_awc=False):
         self.date = date
         self.month = transform_day_to_month(date)
+        self.use_agg_awc = use_agg_awc
 
     def aggregate(self, cursor):
         agg_query, agg_params = self.aggregation_query()
         update_query, update_params = self.update_query()
-        update_launched_query, update_launched_params = self.update_launched_query()
+
         rollup_queries = [self.rollup_query(i) for i in range(4, 0, -1)]
         index_queries = self.indexes()
 
@@ -21,7 +24,10 @@ class AggAwcDailyAggregationDistributedHelper(BaseICDSAggregationDistributedHelp
         cursor.execute(*self.create_table_query())
         cursor.execute(agg_query, agg_params)
         cursor.execute(update_query, update_params)
-        cursor.execute(update_launched_query, update_launched_params)
+
+        if not self.use_agg_awc:
+            update_launched_query, update_launched_params = self.update_launched_query()
+            cursor.execute(update_launched_query, update_launched_params)
         for query in rollup_queries:
             cursor.execute(query)
         for query in index_queries:
@@ -61,7 +67,7 @@ class AggAwcDailyAggregationDistributedHelper(BaseICDSAggregationDistributedHelp
             ('awc_id',),
             ('aggregation_level',),
             ('date', '%(date)s'),
-            ('cases_household',),
+            ('cases_household',) if self.use_agg_awc else ('cases_household', '0'),
             ('cases_person',),
             ('cases_person_all',),
             ('cases_person_has_aadhaar',),
@@ -78,11 +84,11 @@ class AggAwcDailyAggregationDistributedHelper(BaseICDSAggregationDistributedHelp
             ('cases_person_adolescent_girls_15_18_all',),
             ('daily_attendance_open', '0'),
             ('num_awcs',),
-            ('num_launched_states', '0'),
-            ('num_launched_districts', '0'),
-            ('num_launched_blocks', '0'),
-            ('num_launched_supervisors', '0'),
-            ('num_launched_awcs', '0'),
+            ('num_launched_states', ) if self.use_agg_awc else ('num_launched_states', '0'),
+            ('num_launched_districts',) if self.use_agg_awc else ('num_launched_districts', '0'),
+            ('num_launched_blocks',) if self.use_agg_awc else ('num_launched_blocks', '0'),
+            ('num_launched_supervisors',) if self.use_agg_awc else ('num_launched_supervisors', '0'),
+            ('num_launched_awcs',) if self.use_agg_awc else ('num_launched_awcs', '0'),
             ('cases_person_has_aadhaar_v2',),
             ('cases_person_beneficiary_v2',),
             ('state_is_test', "state_is_test"),
@@ -138,7 +144,7 @@ class AggAwcDailyAggregationDistributedHelper(BaseICDSAggregationDistributedHelp
                 sum(open_count) AS cases_household,
                 count(*) AS all_cases_household
             FROM "{household_cases}"
-            WHERE opened_on<= %(end_date)s
+            WHERE opened_on< %(end_date)s
             GROUP BY owner_id, supervisor_id;
         UPDATE "{tablename}" agg_awc SET
            cases_household = ut.cases_household,
@@ -154,7 +160,7 @@ class AggAwcDailyAggregationDistributedHelper(BaseICDSAggregationDistributedHelp
         """.format(
             tablename=self.tablename, temp_table="temp_launched_{}".format(self.tablename),
             household_cases=get_table_name(self.domain, 'static-household_cases'),
-        ), {'end_date': self.date}
+        ), {'end_date': self.date + timedelta(days=1)}
 
     def rollup_query(self, aggregation_level):
         launched_cols = [
