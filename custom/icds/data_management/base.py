@@ -4,6 +4,7 @@ from corehq.form_processor.backends.sql.dbaccessors import CaseReindexAccessor
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.doc_processor.interface import BulkDocProcessor
 from corehq.util.doc_processor.sql import SqlDocumentProvider
+from custom.icds.data_management.progress_loggers import SQLBasedProgressLogger
 
 
 class DataManagement(object):
@@ -43,7 +44,8 @@ class SQLBasedDataManagement(DataManagement):
         iterate sql records and update them as and when needed
         """
         record_provider = SqlDocumentProvider(iteration_key, self.case_accessor())
-        processor = BulkDocProcessor(record_provider, self.doc_processor(self.domain))
+        processor = BulkDocProcessor(record_provider, self.doc_processor(self.domain),
+                                     progress_logger=SQLBasedProgressLogger(iteration_key))
         return processor.run()
 
 

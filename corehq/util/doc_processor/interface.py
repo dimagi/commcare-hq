@@ -1,9 +1,8 @@
 import weakref
 from abc import ABCMeta, abstractmethod
 
-
-from .progress import ProgressManager, ProcessorProgressLogger
 from ..pagination import PaginationEventHandler, TooManyRetries
+from .progress import ProcessorProgressLogger, ProgressManager
 
 
 class BulkProcessingFailed(Exception):
@@ -130,6 +129,7 @@ class DocumentProcessorController(object):
 
         ok = self.doc_processor.process_doc(doc)
         if ok:
+            self.progress.logger.document_processed(doc)
             self.progress.add()
         else:
             try:
@@ -192,9 +192,10 @@ class BulkDocProcessor(DocumentProcessorController):
             self.changes.append(doc)
 
     def process_chunk(self):
-        """Called by the BulkDocProcessorLogHandler"""
+        """Called by the BulkDocProcessorEventHandler"""
         ok = self.doc_processor.process_bulk_docs(self.changes)
         if ok:
+            self.progress.logger.documents_processed(self.changes)
             self.progress.add(len(self.changes))
             self.changes = []
         else:
