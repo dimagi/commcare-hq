@@ -244,7 +244,7 @@ class FilteredLocationDownload(BaseLocationView):
 
 
 class LocationOptionsController(EmwfOptionsController):
-    include_suffixes = False
+    display_types = False
 
     @property
     def data_sources(self):
