@@ -25,7 +25,7 @@ def delete_old_images():
 @task
 def delete_old_images_on_db(db_name, cutoff):
     if isinstance(cutoff, str):
-        cutoff = parse_date(cutoff)
+        cutoff = parse_date(cutoff).replace(tzinfo=None)
 
     max_age = cutoff - timedelta(days=90)
     db = get_blob_db()
