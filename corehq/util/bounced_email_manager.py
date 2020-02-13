@@ -183,6 +183,7 @@ class BouncedEmailManager(object):
             )
         if self.delete_processed_messages:
             self._delete_message_with_uid(uid)
+        datadog_counter('commcare.bounced_email_manager.permanent_bounce_recorded')
 
     def _record_transient_bounce(self, aws_meta, uid):
         exists = TransientBounceEmail.objects.filter(
@@ -197,6 +198,7 @@ class BouncedEmailManager(object):
             )
         if self.delete_processed_messages:
             self._delete_message_with_uid(uid)
+        datadog_counter('commcare.bounced_email_manager.transient_bounce_recorded')
 
     def _handle_undetermined_bounce(self, aws_meta, uid):
         _bounced_email_soft_assert(
@@ -225,6 +227,7 @@ class BouncedEmailManager(object):
             )
         if self.delete_processed_messages:
             self._delete_message_with_uid(uid)
+        datadog_counter('commcare.bounced_email_manager.complaint_recorded')
 
     def process_aws_notifications(self):
         self.mail.select('inbox')
