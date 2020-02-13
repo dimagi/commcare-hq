@@ -266,6 +266,7 @@ class Command(BaseCommand):
         doc_counts = statedb.get_doc_counts()
         has_diffs = False
         ZERO = Counts()
+        print(f"{'':<22}      Docs    Diffs  Missing  Changes")
         for doc_type in (
             list(doc_types())
             + ["HQSubmission", "XFormInstance-Deleted"]
@@ -296,12 +297,10 @@ class Command(BaseCommand):
 
         if not short:
             print("_" * 40)
-        stats = [
-            f"{doc_type:<22} {counts.total:>9} docs",
-            shell_red(f"{counts.missing} missing from SQL") if counts.missing else "",
-            shell_red(f"{counts.diffs} have diffs") if counts.diffs else "",
-        ]
-        print(", ".join(x for x in stats if x))
+        ndiff = shell_red(f"{counts.diffs if counts.diffs else '':>8}")
+        miss = shell_red(f"{counts.missing if counts.missing else '':>8}")
+        chg = counts.changes if counts.changes else ""
+        print(f"{doc_type:<22} {counts.total:>9} {ndiff} {miss} {chg:>8}")
         if not short:
             # print ids found in Couch but not in SQL
             i = 0

@@ -458,10 +458,15 @@ class StateDB(DiffDB):
                 MissingDoc.kind,
                 func.count(MissingDoc.doc_id),
             ).group_by(MissingDoc.kind))
+            changes = dict(session.query(
+                DocChanges.kind,
+                func.count(DocChanges.doc_id),
+            ).group_by(DocChanges.kind))
         return {kind: Counts(
             total=totals.get(kind, 0),
             diffs=diffs.get(kind, 0),
             missing=missing.get(kind, 0),
+            changes=changes.get(kind, 0),
         ) for kind in set(totals) | set(missing) | set(diffs)}
 
     def iter_missing_doc_ids(self, kind):
@@ -739,6 +744,7 @@ class Counts:
     total = attr.ib(default=0)
     diffs = attr.ib(default=0)
     missing = attr.ib(default=0)
+    changes = attr.ib(default=0)
 
 
 def iter_large(query, pk_attr, maxrq=1000):
