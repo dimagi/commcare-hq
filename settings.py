@@ -351,8 +351,6 @@ HQ_APPS = (
 
     'custom.reports.mc',
     'custom.apps.crs_reports',
-    'custom.ilsgateway',
-    'custom.zipline',
     'custom.m4change',
     'custom.succeed',
     'custom.ucla',
@@ -572,7 +570,6 @@ CELERY_HEARTBEAT_THRESHOLDS = {
     "export_download_queue": 30,
     "icds_aggregation_queue": None,
     "icds_dashboard_reports_queue": None,
-    "ils_gateway_sms_queue": None,
     "logistics_background_queue": None,
     "logistics_reminder_queue": None,
     "reminder_case_update_queue": 15 * 60,
@@ -859,11 +856,6 @@ LOAD_BALANCED_APPS = {}
 # Override with the PEM export of an RSA private key, for use with any
 # encryption or signing workflows.
 HQ_PRIVATE_KEY = None
-
-# Settings for Zipline integration
-ZIPLINE_API_URL = ''
-ZIPLINE_API_USER = ''
-ZIPLINE_API_PASSWORD = ''
 
 # Set to the list of domain names for which we will run the ICDS SMS indicators
 ICDS_SMS_INDICATOR_DOMAINS = []
@@ -1392,7 +1384,6 @@ COUCHDB_APPS = [
     'pact',
     'accounting',
     'succeed',
-    'ilsgateway',
     ('auditcare', 'auditcare'),
     ('repeaters', 'receiverwrapper'),
     ('userreports', META_DB),
@@ -1990,7 +1981,6 @@ CUSTOM_UCR_REPORT_FILTER_VALUES = [
 
 CUSTOM_MODULES = [
     'custom.apps.crs_reports',
-    'custom.ilsgateway',
 ]
 
 DOMAIN_MODULE_MAP = {
