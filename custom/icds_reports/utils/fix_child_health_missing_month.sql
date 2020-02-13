@@ -1,57 +1,44 @@
-UPDATE child_health_monthly_2018_05_01
+UPDATE child_health_monthly child_health
  SET
- 	current_month_stunting = tmp.current_month_stunting,
- 	stunting_last_recorded = tmp.stunting_last_recorded,
- 	wasting_last_recorded = tmp.wasting_last_recorded,
- 	current_month_wasting = tmp.current_month_wasting,
- 	zscore_grading_wfh_recorded_in_month = tmp.zscore_grading_wfh_recorded_in_month
-FROM (
-		SELECT
-			child_health.case_id as case_id,
-			child_health.valid_in_month as valid_in_month,
-			child_health.age_tranche as age_tranche,
-			CASE
-				WHEN NOT (valid_in_month AND age_tranche::Integer <= 60) THEN NULL
-				WHEN date_trunc('MONTH', gm.zscore_grading_hfa_last_recorded) != %(start_date)s THEN 'unmeasured'
-				WHEN gm.zscore_grading_hfa = 1 THEN 'severe'
-				WHEN gm.zscore_grading_hfa = 2 THEN 'moderate'
-				WHEN gm.zscore_grading_hfa = 3 THEN 'normal'
-				ELSE 'unmeasured' 
-			END as current_month_stunting,
-			CASE
-				WHEN NOT (valid_in_month AND age_tranche::Integer <= 60) THEN NULL
-				WHEN gm.zscore_grading_hfa = 1 THEN 'severe'
-				WHEN gm.zscore_grading_hfa = 2 THEN 'moderate'
-				WHEN gm.zscore_grading_hfa = 3 THEN 'normal'
-				ELSE 'unknown'
-			END as stunting_last_recorded,
-			CASE
-				WHEN NOT ((valid_in_month AND age_tranche::Integer <= 60) THEN NULL
-				WHEN gm.zscore_grading_wfh = 1 THEN 'severe'
-				WHEN gm.zscore_grading_wfh = 2 THEN 'moderate'
-				WHEN gm.zscore_grading_wfh = 3 THEN 'normal'
-				ELSE 'unknown'
-			END as wasting_last_recorded,
-			CASE
-				WHEN NOT (valid_in_month AND age_tranche::Integer <= 60) THEN NULL
-				WHEN date_trunc('MONTH', gm.zscore_grading_wfh_last_recorded) != %(start_date)s THEN 'unmeasured'
-				WHEN gm.zscore_grading_wfh = 1 THEN 'severe'
-				WHEN gm.zscore_grading_wfh = 2 THEN 'moderate'
-				WHEN gm.zscore_grading_wfh = 3 THEN 'normal'
-				ELSE 'unmeasured'
-			END as current_month_wasting,
-			CASE
-				WHEN (date_trunc('MONTH', gm.zscore_grading_wfh_last_recorded) = %(start_date)s) THEN 1
-				ELSE 0
-			END as zscore_grading_wfh_recorded_in_month
-				FROM tmp_child_health_monthly_2018_05_01 child_health
-				LEFT OUTER JOIN "icds_dashboard_growth_monitoring_forms_2018_05_01" gm ON child_health.doc_id = gm.case_id
-              AND gm.month = %(start_date)s
-              AND child_health.state_id = gm.state_id
-              AND child_health.supervisor_id = gm.supervisor_id
-		    ORDER BY child_health.supervisor_id, child_health.awc_id
-) as tmp
-WHERE case_id = tmp.case_id;
+ 	current_month_stunting = CASE
+ 			WHEN NOT (valid_in_month=1 AND age_tranche::Integer <= 60) THEN NULL
+ 			WHEN NOT (gm.zscore_grading_hfa_last_recorded BETWEEN '2018-05-01' AND '2018-05-31') THEN 'unmeasured'
+ 			WHEN gm.zscore_grading_hfa = 1 THEN 'severe'
+ 			WHEN gm.zscore_grading_hfa = 2 THEN 'moderate'
+ 			WHEN gm.zscore_grading_hfa = 3 THEN 'normal'
+ 		END,
+ 	stunting_last_recorded = CASE
+			WHEN NOT (valid_in_month=1 AND age_tranche::Integer <= 60) THEN NULL
+			WHEN gm.zscore_grading_hfa = 1 THEN 'severe'
+			WHEN gm.zscore_grading_hfa = 2 THEN 'moderate'
+			WHEN gm.zscore_grading_hfa = 3 THEN 'normal'
+			ELSE 'unknown'
+	END,
+	wasting_last_recorded = CASE
+			WHEN NOT (valid_in_month=1 AND age_tranche::Integer <= 60) THEN NULL
+			WHEN gm.zscore_grading_wfh = 1 THEN 'severe'
+			WHEN gm.zscore_grading_wfh = 2 THEN 'moderate'
+			WHEN gm.zscore_grading_wfh = 3 THEN 'normal'
+			ELSE 'unknown'
+	END,
+	current_month_wasting = CASE
+			WHEN NOT (valid_in_month=1 AND age_tranche::Integer <= 60) THEN NULL
+			WHEN date_trunc('MONTH', gm.zscore_grading_wfh_last_recorded) != '2018-05-01' THEN 'unmeasured'
+			WHEN gm.zscore_grading_wfh = 1 THEN 'severe'
+			WHEN gm.zscore_grading_wfh = 2 THEN 'moderate'
+			WHEN gm.zscore_grading_wfh = 3 THEN 'normal'
+			ELSE 'unmeasured'
+	END,
+	zscore_grading_wfh_recorded_in_month = CASE
+			WHEN date_trunc('MONTH', gm.zscore_grading_wfh_last_recorded) = '2018-05-01' THEN 1
+			ELSE 0
+	END
+	FROM icds_dashboard_growth_monitoring_forms gm
+	WHERE child_health.month=gm.month
+		AND child_health.case_id=gm.case_id
+		AND child_health.month='2018-05-01'
+		AND gm.month='2018-05-01'
+		AND child_health.supervisor_id=gm.supervisor_id;
 
 -- Second query to update agg_child_table
 
