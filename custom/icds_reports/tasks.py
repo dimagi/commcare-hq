@@ -555,7 +555,7 @@ def aggregate_awc_daily(day):
 
     for daily_date in agg_daily_dates:
         with transaction.atomic(using=router.db_for_write(AggAwcDaily)):
-            AggAwcDaily.aggregate(daily_date['date'], daily_date['use_agg_awc'])
+            AggAwcDaily.aggregate(date=daily_date['date'], use_agg_awc=daily_date['use_agg_awc'])
 
 
 @track_time
