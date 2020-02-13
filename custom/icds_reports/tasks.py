@@ -831,6 +831,7 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
             location,
             system_usage_num_launched_awcs_formatting_at_awc_level=aggregation_level > 4 and beta,
             system_usage_num_of_days_awc_was_open_formatting=aggregation_level <= 4 and beta,
+            system_usage_num_of_lss_formatting=aggregation_level <= 4 and beta,
         )
     elif indicator == AWC_INFRASTRUCTURE_EXPORT:
         data_type = 'AWC_Infrastructure'

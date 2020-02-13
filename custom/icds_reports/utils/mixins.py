@@ -16,6 +16,7 @@ from custom.utils.utils import clean_IN_filter_value
 
 NUM_LAUNCHED_AWCS = 'Number of launched AWCs (ever submitted at least one HH reg form)'
 NUM_OF_DAYS_AWC_WAS_OPEN = 'Number of days AWC was open in the given month'
+NUM_LAUNCHED_LSS = 'Number of launched LSs'
 
 FILTER_BY_LIST = {
     'unweighed': 'Data not Entered for weight (Unweighed)',
@@ -94,7 +95,8 @@ class ExportableMixin(object):
         return export_response(export_file, format, self.title)
 
     def get_excel_data(self, location, system_usage_num_launched_awcs_formatting_at_awc_level=False,
-                       system_usage_num_of_days_awc_was_open_formatting=False):
+                       system_usage_num_of_days_awc_was_open_formatting=False,
+                       system_usage_num_of_lss_formatting=False):
         excel_rows = []
         headers = []
         for column in self.columns:
@@ -133,20 +135,25 @@ class ExportableMixin(object):
                 filter_values.append(FILTER_BY_LIST[filter_by])
             filters.append(['Filtered By', ', '.join(filter_values)])
         # as DatabaseColumn from corehq.apps.reports.sqlreport doesn't format None
-        if system_usage_num_launched_awcs_formatting_at_awc_level and NUM_LAUNCHED_AWCS in excel_rows[0]:
-            num_launched_awcs_column = excel_rows[0].index(NUM_LAUNCHED_AWCS)
+        if system_usage_num_launched_awcs_formatting_at_awc_level or\
+           system_usage_num_of_days_awc_was_open_formatting or system_usage_num_of_lss_formatting:
             for record in excel_rows[1:]:
-                if record[num_launched_awcs_column] == DATA_NOT_ENTERED:
-                    record[num_launched_awcs_column] = 'Not Launched'
-                else:
-                    record[num_launched_awcs_column] = \
-                        'Launched' if record[num_launched_awcs_column] else 'Not Launched'
-        if system_usage_num_of_days_awc_was_open_formatting and \
-                self.loc_level <= 4 and NUM_OF_DAYS_AWC_WAS_OPEN in excel_rows[0]:
-            num_of_days_awc_was_open_column = excel_rows[0].index(NUM_OF_DAYS_AWC_WAS_OPEN)
-            for record in excel_rows[1:]:
-                if record[num_of_days_awc_was_open_column] == DATA_NOT_ENTERED:
-                    record[num_of_days_awc_was_open_column] = 'Applicable at only AWC level'
+                if system_usage_num_launched_awcs_formatting_at_awc_level and NUM_LAUNCHED_AWCS in excel_rows[0]:
+                    num_launched_awcs_column = excel_rows[0].index(NUM_LAUNCHED_AWCS)
+                    if record[num_launched_awcs_column] == DATA_NOT_ENTERED:
+                        record[num_launched_awcs_column] = 'Not Launched'
+                    else:
+                        record[num_launched_awcs_column] = \
+                            'Launched' if record[num_launched_awcs_column] else 'Not Launched'
+                if system_usage_num_of_days_awc_was_open_formatting and \
+                        self.loc_level <= 4 and NUM_OF_DAYS_AWC_WAS_OPEN in excel_rows[0]:
+                    num_of_days_awc_was_open_column = excel_rows[0].index(NUM_OF_DAYS_AWC_WAS_OPEN)
+                    if record[num_of_days_awc_was_open_column] == DATA_NOT_ENTERED:
+                        record[num_of_days_awc_was_open_column] = 'Applicable at only AWC level'
+                if system_usage_num_of_lss_formatting and NUM_LAUNCHED_LSS in excel_rows[0]:
+                    num_lss_launched_column = excel_rows[0].index(NUM_LAUNCHED_LSS)
+                    if record[num_lss_launched_column] == DATA_NOT_ENTERED:
+                        record[num_lss_launched_column] = 'Not Launched'
         return [
             [
                 self.title,
