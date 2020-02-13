@@ -1,14 +1,13 @@
 from unittest import TestCase
 from unittest.mock import patch, Mock
 
-from corehq.apps.fixtures.models import FixtureDataItem, FixtureDataType
+from corehq.apps.fixtures.models import FixtureDataItem
 from custom.inddex.couch_db_data_collector import CouchDbDataCollector
 
 
 class CouchDbDataCollectorTest(TestCase):
 
     def setUp(self):
-        FixtureDataType._db = None  # Some other test seems to leave this as a Mock
         self.couch_db = CouchDbDataCollector('test-domain')
         self.couch_db.tables = {'test_table': '0123456'}
 
