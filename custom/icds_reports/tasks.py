@@ -66,6 +66,7 @@ from custom.icds_reports.const import (
     THR_REPORT_EXPORT,
     THREE_MONTHS,
     DASHBOARD_USAGE_EXPORT,
+    SERVICE_DELIVERY_REPORT
 )
 from custom.icds_reports.models import (
     AggAwc,
@@ -920,9 +921,15 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
             )
         else:
             cache_key = create_excel_file(excel_data, data_type, file_format)
-
+    elif indicator == SERVICE_DELIVERY_REPORT:
+        # CODE IN THIS SECTION WILL BE CHANGED WITH ACTUAL DATA PULLING
+        # WHEN THE BACKEND DATA WILL BE READY FOR THIS TABLE. MEANWHILE THIS
+        # REPORT IS NOT accessible to the USER BECAUSE ITS IN FF
+        cache_key = "DUMMY CAHE KEY"
+        formatted_timestamp = datetime.now().strftime("%d-%m-%Y__%H-%M-%S")
+        data_type = 'Service Delivery Report__{}'.format(formatted_timestamp)
     if indicator not in (AWW_INCENTIVE_REPORT, LS_REPORT_EXPORT, THR_REPORT_EXPORT, CHILDREN_EXPORT,
-                         DASHBOARD_USAGE_EXPORT):
+                         DASHBOARD_USAGE_EXPORT, SERVICE_DELIVERY_REPORT):
         if file_format == 'xlsx' and beta:
             cache_key = create_excel_file_in_openpyxl(excel_data, data_type)
         else:
