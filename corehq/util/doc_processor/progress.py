@@ -136,6 +136,13 @@ class ProcessorProgressLogger(object):
         for doc_dict in docs_dict:
             self.document_processed(doc_dict)
 
+    def documents_failed(self, docs_dict):
+        for doc_dict in docs_dict:
+            self.document_failed(doc_dict)
+
+    def document_failed(self, doc_dict):
+        pass
+
     def progress(self, processed, visited, total, time_elapsed, time_remaining):
         print("Processed {}/{} of {} documents in {} ({} remaining)"
               .format(processed, visited, total, time_elapsed, time_remaining))

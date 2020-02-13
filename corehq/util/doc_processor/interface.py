@@ -199,4 +199,5 @@ class BulkDocProcessor(DocumentProcessorController):
             self.progress.add(len(self.changes))
             self.changes = []
         else:
+            self.progress.logger.documents_failed(self.changes)
             raise BulkProcessingFailed("Processing batch failed")

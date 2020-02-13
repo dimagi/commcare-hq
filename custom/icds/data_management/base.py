@@ -4,7 +4,10 @@ from corehq.form_processor.backends.sql.dbaccessors import CaseReindexAccessor
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.doc_processor.interface import BulkDocProcessor
 from corehq.util.doc_processor.sql import SqlDocumentProvider
-from custom.icds.data_management.progress_loggers import SQLBasedProgressLogger
+from custom.icds.data_management.progress_loggers import (
+    ESBasedProgressLogger,
+    SQLBasedProgressLogger,
+)
 
 
 class DataManagement(object):
@@ -54,9 +57,11 @@ class ESBasedDataManagement(DataManagement):
         raise NotImplementedError
 
     def run(self, iteration_key):
+        logger = ESBasedProgressLogger(iteration_key)
         case_ids = self._get_case_ids()
         doc_processor = self.doc_processor(self.domain)
         for chunk in chunked(case_ids, 100):
             case_accessor = CaseAccessors(self.domain)
             doc_processor.process_bulk_docs(case_accessor.get_cases(list(chunk)))
+            logger.documents_processed(case_ids)
         return len(case_ids), 0
