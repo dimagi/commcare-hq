@@ -1,8 +1,6 @@
 from django.core.management import BaseCommand
 from datetime import datetime
 
-import pytz
-
 from custom.icds_reports.const import (
     DASHBOARD_DOMAIN
 )
@@ -18,7 +16,7 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument(
-            'date', type=int, help='Date of the month whose stunting and wasting data is missing yyyy-mm-dd')
+            'date', type=str, help='Date of the month whose stunting and wasting data is missing yyyy-mm-dd')
 
     def handle(self, *args, **kwargs):
         date = kwargs['date']
@@ -26,9 +24,7 @@ class Command(BaseCommand):
         run_task(date)
 
 
-def run_task(date=None):
-    state_time = datetime.now(pytz.utc)
-    date = date or state_time.date()
+def run_task(date):
     initial_date = datetime(2017, 1, 1, 0, 0)
     intervals = date.month - initial_date.month + 12 * (date.year - initial_date.year) + 1
     monthly_dates = _get_monthly_dates(date, total_intervals=intervals)
