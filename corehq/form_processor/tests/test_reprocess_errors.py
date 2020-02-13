@@ -492,6 +492,30 @@ class TestTransactionErrors(TransactionTestCase):
         self.assertTrue(form.is_error)
         self.assertIsNotNone(form.get_xml())
 
+    def test_error_saving_case_during_edit(self):
+        form_id = uuid.uuid4().hex
+        case_id = uuid.uuid4().hex
+        submit_case_blocks(
+            [CaseBlock(case_id=case_id, update={'a': "1"}).as_text()],
+            self.domain,
+            form_id=form_id
+        )
+
+        with patch(
+            'corehq.form_processor.backends.sql.dbaccessors.CaseAccessorSQL.save_case',
+            side_effect=IntegrityError
+        ), self.assertRaises(IntegrityError):
+            submit_case_blocks(
+                [CaseBlock(case_id=case_id, update={'a': "2"}).as_text()],
+                self.domain,
+                form_id=form_id
+            )
+
+        [error_form_id] = FormAccessorSQL.get_form_ids_in_domain_by_type(self.domain, 'XFormError')
+        self.assertNotEqual(error_form_id, form_id)
+        form = FormAccessorSQL.get_form(error_form_id)
+        self.assertTrue(form.is_error)
+        self.assertIsNotNone(form.get_xml())
 
 
 @contextlib.contextmanager
