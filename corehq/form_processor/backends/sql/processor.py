@@ -4,7 +4,7 @@ import uuid
 
 import redis
 from contextlib2 import ExitStack
-from django.db import transaction
+from django.db import transaction, DatabaseError
 from lxml import etree
 
 from casexml.apps.case import const
@@ -104,30 +104,38 @@ class FormProcessorSQL(object):
                 ledger_value.db for ledger_value in stock_result.models_to_save
             }
 
-        with ExitStack() as stack:
-            for db_name in db_names:
-                stack.enter_context(transaction.atomic(db_name))
+        all_models = filter(None, list(processed_forms) + cases + (stock_result.models_to_save if stock_result else []))
+        try:
+            with ExitStack() as stack:
+                for db_name in db_names:
+                    stack.enter_context(transaction.atomic(db_name))
 
-            # Save deprecated form first to avoid ID conflicts
-            if processed_forms.deprecated:
-                FormAccessorSQL.update_form(processed_forms.deprecated, publish_changes=False)
+                # Save deprecated form first to avoid ID conflicts
+                if processed_forms.deprecated:
+                    FormAccessorSQL.update_form(processed_forms.deprecated, publish_changes=False)
 
-            FormAccessorSQL.save_new_form(processed_forms.submitted)
-            if cases:
-                for case in cases:
-                    CaseAccessorSQL.save_case(case)
-
-            if stock_result:
-                ledgers_to_save = stock_result.models_to_save
-                LedgerAccessorSQL.save_ledger_values(ledgers_to_save, stock_result)
-
-        if cases:
-            sort_submissions = toggles.SORT_OUT_OF_ORDER_FORM_SUBMISSIONS_SQL.enabled(
-                processed_forms.submitted.domain, toggles.NAMESPACE_DOMAIN)
-            if sort_submissions:
-                for case in cases:
-                    if SqlCaseUpdateStrategy(case).reconcile_transactions_if_necessary():
+                FormAccessorSQL.save_new_form(processed_forms.submitted)
+                if cases:
+                    for case in cases:
                         CaseAccessorSQL.save_case(case)
+
+                if stock_result:
+                    ledgers_to_save = stock_result.models_to_save
+                    LedgerAccessorSQL.save_ledger_values(ledgers_to_save, stock_result)
+
+            if cases:
+                sort_submissions = toggles.SORT_OUT_OF_ORDER_FORM_SUBMISSIONS_SQL.enabled(
+                    processed_forms.submitted.domain, toggles.NAMESPACE_DOMAIN)
+                if sort_submissions:
+                    for case in cases:
+                        if SqlCaseUpdateStrategy(case).reconcile_transactions_if_necessary():
+                            CaseAccessorSQL.save_case(case)
+        except DatabaseError:
+            for model in all_models:
+                model.pk = None
+                for tracked in model.create_models:
+                    tracked.pk = None
+            raise
 
         if publish_to_kafka:
             try:
