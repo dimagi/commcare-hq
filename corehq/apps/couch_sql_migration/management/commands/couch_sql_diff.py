@@ -42,22 +42,17 @@ class Command(BaseCommand):
                 reside on an NFS volume for migration state consistency.
                 Can be set in environment: CCHQ_MIGRATION_STATE_DIR
             """)
-        parser.add_argument('--live',
-            dest="live", action='store_true', default=False,
+        parser.add_argument('--select',
             help='''
-                Do not diff cases modified after the most recently
-                migrated form.
-            ''')
-        parser.add_argument('--cases',
-            help='''
-                Diff specific cases. The value of this option may be
+                Diff specific items. The value of this option may be
                 'pending' to clear out in-process diffs OR 'with-diffs'
-                to re-diff cases that previously had diffs OR a
+                to re-diff items that previously had diffs OR a
                 space-delimited list of case ids OR a path to a file
                 containing a case id on each line. The path must begin
                 with / or ./
 
                 With the "show" action, this option should be a doc type.
+                All form and case doc types are supported.
             ''')
         parser.add_argument('--changes',
             dest="changes", action='store_true', default=False,
@@ -71,7 +66,7 @@ class Command(BaseCommand):
             ''')
         parser.add_argument('-b', '--batch-size',
             dest="batch_size", default=100, type=int,
-            help='''Diff cases in batches of this size.''')
+            help='''Diff batch size.''')
         parser.add_argument('--reset', choices=[PREPARE, DELETE],
             help='''
                 Reset state to start fresh. This is a two-phase
@@ -89,8 +84,7 @@ class Command(BaseCommand):
             "no_input",
             "debug",
             "state_path",
-            "live",
-            "cases",
+            "select",
             "stop",
             "changes",
             "batch_size",
@@ -119,8 +113,8 @@ class Command(BaseCommand):
     def do_cases(self, domain):
         """Diff cases"""
         setup_logging(self.state_path, "case_diff", self.debug)
-        migrator = get_migrator(domain, self.state_path, self.live)
-        return do_case_diffs(migrator, self.cases, self.stop, self.batch_size)
+        migrator = get_migrator(domain, self.state_path)
+        return do_case_diffs(migrator, self.select, self.stop, self.batch_size)
 
     def do_show(self, domain):
         """Show diffs from state db"""
@@ -140,9 +134,9 @@ class Command(BaseCommand):
         statedb = self.open_state_db(domain)
         print(f"showing diffs from {statedb}")
         if self.changes:
-            items = statedb.iter_doc_changes(self.cases)
+            items = statedb.iter_doc_changes(self.select)
         else:
-            items = statedb.iter_doc_diffs(self.cases)
+            items = statedb.iter_doc_diffs(self.select)
         json_diffs = iter_json_diffs(items)
         for chunk in chunked(json_diffs, self.batch_size, list):
             print(format_diffs(dict(chunk)))

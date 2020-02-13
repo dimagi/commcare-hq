@@ -21,7 +21,9 @@ describe('Download Directive', function () {
             ]);
             $provide.constant("haveAccessToFeatures", false);
             $provide.constant("userLocationType", 'state');
-        $provide.constant("isAlertActive", false);
+            $provide.constant("haveAccessToAllLocations", false);
+            $provide.constant("allUserLocationId", []);
+            $provide.constant("isAlertActive", false);
         }));
 
         beforeEach(inject(function ($rootScope, $compile, _$httpBackend_) {
@@ -343,6 +345,8 @@ describe('Download Directive', function () {
             $provide.constant("haveAccessToFeatures", true);
             $provide.constant("userLocationType", 'state');
             $provide.constant("isAlertActive", false);
+            $provide.constant("haveAccessToAllLocations", false);
+            $provide.constant("allUserLocationId", []);
         }));
 
         beforeEach(inject(function ($rootScope, $compile, _$httpBackend_) {
@@ -448,6 +452,8 @@ describe('Download Directive', function () {
             $provide.constant("haveAccessToFeatures", false);
             $provide.constant("userLocationType", 'state');
             $provide.constant("isAlertActive", false);
+            $provide.constant("haveAccessToAllLocations", false);
+            $provide.constant("allUserLocationId", []);
         }));
 
         beforeEach(inject(function ($rootScope, $compile, _$httpBackend_) {
@@ -498,6 +504,8 @@ describe('Download Directive', function () {
             $provide.constant("haveAccessToFeatures", true);
             $provide.constant("userLocationType", 'state');
             $provide.constant("isAlertActive", false);
+            $provide.constant("haveAccessToAllLocations", false);
+            $provide.constant("allUserLocationId", []);
         }));
 
         beforeEach(inject(function ($rootScope, $compile, _$httpBackend_) {
@@ -548,6 +556,8 @@ describe('Download Directive', function () {
             $provide.constant("haveAccessToFeatures", true);
             $provide.constant("userLocationType", 'block');
             $provide.constant("isAlertActive", false);
+            $provide.constant("haveAccessToAllLocations", false);
+            $provide.constant("allUserLocationId", []);
         }));
 
         beforeEach(inject(function ($rootScope, $compile, _$httpBackend_) {

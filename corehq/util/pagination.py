@@ -177,6 +177,9 @@ class ResumableIteratorState(JsonObject):
     progress = DictProperty()
     complete = BooleanProperty(default=False)
 
+    def is_resume(self):
+        return bool(getattr(self, '_rev', None))
+
 
 def unpack_jsonobject(json_object):
     if isinstance(json_object, JsonArray):
@@ -193,7 +196,7 @@ def unpack_jsonobject(json_object):
 class ResumableArgsProvider(ArgsProvider):
     def __init__(self, iterator_state, args_provider):
         self.args_provider = args_provider
-        self.resume = bool(getattr(iterator_state, '_rev', None))  # if there is a _rev then we're resuming
+        self.resume = iterator_state.is_resume()
         self.resume_args = iterator_state.to_json()['args']
         self.resume_kwargs = iterator_state.to_json()['kwargs']
 

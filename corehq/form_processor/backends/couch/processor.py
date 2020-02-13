@@ -240,6 +240,10 @@ class FormProcessorCouch(object):
         return [fetch_and_wrap_form(id) for id in form_ids]
 
     @staticmethod
+    def form_has_case_transactions(form_id):
+        raise NotImplementedError
+
+    @staticmethod
     def get_case_with_lock(case_id, lock=False, wrap=False):
 
         def _get_case():
