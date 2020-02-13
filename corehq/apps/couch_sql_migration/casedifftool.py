@@ -154,7 +154,7 @@ class CaseDiffTool:
             for batch in batches:
                 data = load_and_diff_cases(batch, log_cases=log_cases)
                 yield data
-                diffs = {case_id: diffs for x, case_id, diffs in data.diffs if diffs}
+                diffs = {(kind, case_id): diffs for kind, case_id, diffs in data.diffs if diffs}
                 if diffs:
                     log.info("found cases with diffs:\n%s", format_diffs(diffs))
                     if stop:
