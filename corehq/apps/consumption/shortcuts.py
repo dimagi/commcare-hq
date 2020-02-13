@@ -93,8 +93,6 @@ def build_consumption_dict(domain):
     """
     Builds a dict to look up consumption values from.
     """
-    SQLDefaultConsumption.objects.filter(domain=domain)
-
     return {
         _hash_key(obj): obj.default_consumption
         for obj in SQLDefaultConsumption.objects.filter(domain=domain)
