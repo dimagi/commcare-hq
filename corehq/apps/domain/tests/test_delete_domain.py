@@ -700,7 +700,7 @@ class TestDeleteDomain(TestCase):
         for domain_name in [self.domain.name, self.domain2.name]:
             SQLRegistrationRequest.objects.create(
                 domain=domain_name,
-                activation_guid='123',
+                activation_guid=uuid.uuid4().hex,
                 request_time=datetime.utcnow(),
                 request_ip='12.34.567.8'
             )
