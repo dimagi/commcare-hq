@@ -94,7 +94,7 @@ class MissingIds:
         self.doc_types = self._doc_types[self.entity]
         sql_params = self.sql_params[self.entity]
         self.sql = self.missing_docs_sql.format(**sql_params)
-        self._iteration_keys = set()
+        self._count_keys = set()
 
     def __call__(self, doc_type):
         """Create a missing ids generator for the given doc type
@@ -119,7 +119,7 @@ class MissingIds:
             for batch in chunked(couch_ids, self.chunk_size, list):
                 yield from self.drop_sql_ids(batch)
                 add_docs(len(batch))
-        self._iteration_keys.add((doc_type, count_key, resume_key))
+        self._count_keys.add((doc_type, count_key))
 
     def drop_sql_ids(self, couch_ids):
         """Filter the given couch ids, removing ids that are in SQL"""
@@ -148,14 +148,12 @@ class MissingIds:
         if self.stopper.live_migrate and hasattr(self.stopper, "stop_date"):
             # remove stop date so main forms iteration may continue
             del self.stopper.stop_date
+        self.counter.__exit__(*exc_info)
         if self.stopper.clean_break or exc_info[1] is not None:
             # incomplete iteration
             return
-        # discard iteration state so it is possible to do again later
-        for doc_type, count_key, resume_key in self._iteration_keys:
-            self.discard_iteration_state(resume_key)
+        for doc_type, count_key in self._count_keys:
             self.reset_doc_count(doc_type, count_key)
-        self.counter.__exit__(*exc_info)
 
     @staticmethod
     def discard_iteration_state(resume_key):
