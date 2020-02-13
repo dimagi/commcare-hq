@@ -20,6 +20,7 @@ class Command(PopulateSQLCommand):
                 "product_id": doc.get("product_id"),
                 "supply_point_type": doc.get("supply_point_type"),
                 "supply_point_id": doc.get("supply_point_id"),
-                "default_consumption": round(float(doc.get("default_consumption")), 8),
+                "default_consumption": round(float(doc["default_consumption"]), 8)
+                                       if "default_consumption" in doc else None,
             })
         return (model, created)
