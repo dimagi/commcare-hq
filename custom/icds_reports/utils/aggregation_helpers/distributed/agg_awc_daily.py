@@ -61,9 +61,9 @@ class AggAwcDailyAggregationDistributedHelper(BaseICDSAggregationDistributedHelp
 
         def use_agg_awc_data_or_zero(col_name):
             if self.use_agg_awc:
-                return (col_name,)
+                return col_name
             else:
-                return (col_name, '0')
+                return '0'
 
         columns = (
             ('state_id',),
@@ -73,7 +73,7 @@ class AggAwcDailyAggregationDistributedHelper(BaseICDSAggregationDistributedHelp
             ('awc_id',),
             ('aggregation_level',),
             ('date', '%(date)s'),
-            use_agg_awc_data_or_zero('cases_household'),
+            ('cases_household', use_agg_awc_data_or_zero('cases_household')),
             ('cases_person',),
             ('cases_person_all',),
             ('cases_person_has_aadhaar',),
@@ -90,11 +90,11 @@ class AggAwcDailyAggregationDistributedHelper(BaseICDSAggregationDistributedHelp
             ('cases_person_adolescent_girls_15_18_all',),
             ('daily_attendance_open', '0'),
             ('num_awcs',),
-            use_agg_awc_data_or_zero('num_launched_states'),
-            use_agg_awc_data_or_zero('num_launched_districts'),
-            use_agg_awc_data_or_zero('num_launched_blocks'),
-            use_agg_awc_data_or_zero('num_launched_supervisors'),
-            use_agg_awc_data_or_zero('num_launched_awcs'),
+            ('num_launched_states', use_agg_awc_data_or_zero('num_launched_states')),
+            ('num_launched_districts', use_agg_awc_data_or_zero('num_launched_districts')),
+            ('num_launched_blocks', use_agg_awc_data_or_zero('num_launched_blocks')),
+            ('num_launched_supervisors', use_agg_awc_data_or_zero('num_launched_supervisors')),
+            ('num_launched_awcs', use_agg_awc_data_or_zero('num_launched_awcs')),
             ('cases_person_has_aadhaar_v2',),
             ('cases_person_beneficiary_v2',),
             ('state_is_test', "state_is_test"),
