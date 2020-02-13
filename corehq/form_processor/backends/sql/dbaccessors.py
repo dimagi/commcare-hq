@@ -11,7 +11,7 @@ from itertools import groupby
 from uuid import UUID
 
 from django.conf import settings
-from django.db import InternalError, transaction, router
+from django.db import InternalError, transaction, router, DatabaseError
 from django.db.models import F, Q
 from django.db.models.expressions import Value
 from django.db.models.functions import Concat, Greatest
@@ -1026,7 +1026,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
                 CaseAttachmentSQL.objects.using(case.db).filter(id__in=attachment_ids_to_delete).delete()
 
                 case.clear_tracked_models()
-        except InternalError as e:
+        except DatabaseError as e:
             raise CaseSaveError(e)
 
     @staticmethod
