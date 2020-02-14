@@ -160,7 +160,7 @@ class BaseMigrationTestCase(TestCase, TestFileMixin):
         self.migration_success = success
 
     def _do_migration_and_assert_flags(self, domain, **options):
-        self._do_migration(domain, **options)
+        self._do_migration(domain, finish=True, **options)
         self.assert_backend("sql", domain)
 
     def _compare_diffs(self, expected_diffs=None, missing=None, ignore_fail=False):
@@ -1301,7 +1301,7 @@ class MigrationTestCase(BaseMigrationTestCase):
         FormAccessorSQL.hard_delete_forms(self.domain_name, ["test-form"])
         CaseAccessorSQL.hard_delete_cases(self.domain_name, ["test-case"])
         clear_local_domain_sql_backend_override(self.domain_name)
-        self._do_migration(self.domain_name, missing_docs=REBUILD)
+        self._do_migration(self.domain_name, missing_docs=REBUILD, finish=True)
         self._compare_diffs(
             missing={"XFormInstance": 1, "CommCareCase": 1},
             ignore_fail=True,

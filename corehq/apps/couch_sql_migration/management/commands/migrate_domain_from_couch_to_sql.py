@@ -108,6 +108,13 @@ class Command(BaseCommand):
                 a normal (non-live) migration, which will commit the
                 result if all goes well.
             ''')
+        parser.add_argument("--finish", action='store_true', default=False,
+            help="""
+                Finish live migration. All commands will operate in "live
+                migration" mode once a live migration has been started
+                unless this option is used to move beyond the live
+                migration.
+            """)
         parser.add_argument('--rebuild-state',
             dest="rebuild_state", action='store_true', default=False,
             help="""
@@ -166,6 +173,7 @@ class Command(BaseCommand):
             "verbose",
             "state_dir",
             "live_migrate",
+            "finish",
             "case_diff",
             "rebuild_state",
             "stop_on_error",
@@ -179,6 +187,8 @@ class Command(BaseCommand):
             raise CommandError('--no-input only allowed for unit testing')
         if action != MIGRATE and self.live_migrate:
             raise CommandError(f"{action} --live not allowed")
+        if action != MIGRATE and self.finish:
+            raise CommandError(f"{action} --finish not allowed")
         if action != MIGRATE and self.rebuild_state:
             raise CommandError("--rebuild-state only allowed with `MIGRATE`")
         if action != MIGRATE and self.forms:
@@ -198,6 +208,13 @@ class Command(BaseCommand):
         getattr(self, "do_" + action)(domain)
 
     def do_MIGRATE(self, domain):
+        if self.finish:
+            assert not self.live_migrate, "--live and --finish are mutually exclusive"
+        elif not self.live_migrate:
+            status = get_couch_sql_migration_status(domain)
+            if status == MigrationStatus.DRY_RUN:
+                log.info("Continuing live migration. Use --finish to complete.")
+                self.live_migrate = True
         set_couch_sql_migration_started(domain, self.live_migrate)
         do_couch_to_sql_migration(
             domain,
