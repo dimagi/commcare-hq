@@ -49,8 +49,6 @@ def get_demographics_data(domain, now_date, config, show_test=False, beta=False)
             queryset = apply_exclude(domain, queryset)
         return queryset
 
-    if 'date' in config:
-        del config['date']
     config['month'] = current_month
     data = get_data_for(AggAwcMonthly, config)
     config['month'] = previous_month

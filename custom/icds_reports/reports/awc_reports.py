@@ -733,8 +733,6 @@ def get_awc_report_demographics(domain, config, now_date, month, show_test=False
             queryset = apply_exclude(domain, queryset)
         return queryset
 
-    if 'date' in config:
-        del config['date']
     previous_month = selected_month - relativedelta(months=1)
     config['month'] = selected_month
     data = get_data_for(AggAwcMonthly, config)
