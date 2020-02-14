@@ -58,7 +58,8 @@ class UsersMiddleware(MiddlewareMixin):
 
 class SuperuserMiddleware(MiddlewareMixin):
     def process_request(self, request):
-        if request.user.is_superuser:  # is_superuser intentional (of course)
+        user_exists = getattr(request, 'user', None)
+        if user_exists and request.user.is_superuser:  # is_superuser intentional (of course)
             def invoke_superuser():
                 return True
         else:
@@ -66,9 +67,12 @@ class SuperuserMiddleware(MiddlewareMixin):
                 return False
 
         self.invoke_superuser = invoke_superuser
-        request.user.invoke_superuser = invoke_superuser
+        if user_exists:
+            request.user.invoke_superuser = invoke_superuser
 
     def process_view(self, request, view_func, view_args, view_kwargs):
-        # can't set jsonobject dynamic properties to a function directly
-        # so we're setting in this roundabout way through __dict__
-        request.couch_user.__dict__['invoke_superuser'] = self.invoke_superuser
+        couch_user_exists = getattr(request, 'couch_user', None)
+        if couch_user_exists:
+            # can't set jsonobject dynamic properties to a function directly
+            # so we're setting in this roundabout way through __dict__
+            request.couch_user.__dict__['invoke_superuser'] = self.invoke_superuser
