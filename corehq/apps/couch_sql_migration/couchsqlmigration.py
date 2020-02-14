@@ -181,10 +181,10 @@ class CouchSqlDomainMigrator:
             for doc in self._get_resumable_iterator(['XFormInstance']):
                 pool.process_xform(doc)
 
-    def _migrate_form(self, couch_form, case_ids):
+    def _migrate_form(self, couch_form, case_ids, **kw):
         set_local_domain_sql_backend_override(self.domain)
         form_id = couch_form.form_id
-        self._migrate_form_and_associated_models(couch_form)
+        self._migrate_form_and_associated_models(couch_form, **kw)
         self.case_diff_queue.update(case_ids, form_id)
 
     def _migrate_form_and_associated_models(self, couch_form, form_is_processed=True):
@@ -383,7 +383,8 @@ class CouchSqlDomainMigrator:
                 except Exception:
                     log.exception("Error wrapping form %s", doc)
                 else:
-                    self._migrate_form(form, get_case_ids(form))
+                    proc = doc_type not in UNPROCESSED_DOC_TYPES
+                    self._migrate_form(form, get_case_ids(form), form_is_processed=proc)
                     self.statedb.doc_not_missing(doc_type, form.form_id)
                     add_form()
                     migrated += 1
