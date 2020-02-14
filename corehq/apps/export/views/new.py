@@ -114,10 +114,15 @@ class BaseExportView(BaseProjectDataView):
             sharing_options = SharingOption.CHOICES
         else:
             sharing_options = [SharingOption.EDIT_AND_EXPORT]
+
+        allow_deid = has_privilege(self.request, privileges.DEIDENTIFIED_DATA)
+        if self.export_instance.is_odata_config:
+            allow_deid = allow_deid and toggles.ALLOW_DEID_ODATA_FEED.enabled(self.domain)
+
         return {
             'export_instance': self.export_instance,
             'export_home_url': self.export_home_url,
-            'allow_deid': has_privilege(self.request, privileges.DEIDENTIFIED_DATA),
+            'allow_deid': allow_deid,
             'has_excel_dashboard_access': domain_has_privilege(self.domain, EXCEL_DASHBOARD),
             'has_daily_saved_export_access': domain_has_privilege(self.domain, DAILY_SAVED_EXPORT),
             'can_edit': self.export_instance.can_edit(self.request.couch_user),

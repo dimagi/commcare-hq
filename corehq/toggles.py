@@ -1811,3 +1811,11 @@ RUN_DATA_MANAGEMENT_TASKS = StaticToggle(
     TAG_CUSTOM,
     [NAMESPACE_USER]
 )
+
+
+ALLOW_DEID_ODATA_FEED = StaticToggle(
+    'allow_deid_odata_feed',
+    'Allow De-Identification in OData feeds',
+    TAG_PRODUCT,
+    [NAMESPACE_DOMAIN]
+)
