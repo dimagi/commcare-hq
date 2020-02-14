@@ -104,7 +104,11 @@ class FormProcessorSQL(object):
                 ledger_value.db for ledger_value in stock_result.models_to_save
             }
 
-        all_models = filter(None, list(processed_forms) + cases + (stock_result.models_to_save if stock_result else []))
+        all_models = filter(None, (
+            list(processed_forms) +
+            (cases if cases else []) +
+            (stock_result.models_to_save if stock_result else [])
+        ))
         try:
             with ExitStack() as stack:
                 for db_name in db_names:
