@@ -733,7 +733,7 @@
             },
             {
                 "type": "expression",
-                "column_id": "nsr_post_cooking_conv_method_code",
+                "column_id": "nsr_conv_method_code_post_cooking",
                 "datatype": "string",
                 "expression": {
                     "type": "named",
@@ -742,7 +742,7 @@
             },
             {
                 "type": "expression",
-                "column_id": "nsr_post_cooking_conv_option_code",
+                "column_id": "nsr_conv_option_code_post_cooking",
                 "datatype": "string",
                 "expression": {
                     "type": "named",
@@ -751,7 +751,7 @@
             },
             {
                 "type": "expression",
-                "column_id": "nsr_post_cooking_conv_option_desc",
+                "column_id": "nsr_conv_option_desc_post_cooking",
                 "datatype": "string",
                 "expression": {
                     "type": "named",
@@ -760,7 +760,7 @@
             },
             {
                 "type": "expression",
-                "column_id": "nsr_post_cooking_conv_size",
+                "column_id": "nsr_conv_size_post_cooking",
                 "datatype": "string",
                 "expression": {
                     "type": "named",
@@ -774,6 +774,26 @@
                 "expression": {
                     "type": "named",
                     "name": "nsr_same_conv_method_named"
+                }
+            },
+            {
+                "type": "expression",
+                "column_id": "respondent_id",
+                "datatype": "string",
+                "display_name": "Respondent Id",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "respondent_id"
+                }
+            },
+            {
+                "type": "expression",
+                "column_id": "recipe_case_id",
+                "datatype": "string",
+                "display_name": "Recipe Case Id",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "recipe_case_id"
                 }
             }
         ],
