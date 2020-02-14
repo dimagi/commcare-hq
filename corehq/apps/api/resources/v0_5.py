@@ -19,6 +19,7 @@ from tastypie.utils import dict_strip_unicode_keys
 
 from casexml.apps.stock.models import StockTransaction
 from corehq.apps.export.views.utils import user_can_view_odata_feed
+from corehq.apps.locations.permissions import location_safe
 from phonelog.models import DeviceReportEntry
 
 from corehq import privileges, toggles
@@ -993,6 +994,7 @@ class BaseODataResource(HqBaseResource, DomainSpecificResourceMixin):
         return 'application/json'
 
 
+@location_safe
 class ODataCaseResource(BaseODataResource):
 
     def obj_get_list(self, bundle, domain, **kwargs):
@@ -1018,6 +1020,7 @@ class ODataCaseResource(BaseODataResource):
         ]
 
 
+@location_safe
 class ODataFormResource(BaseODataResource):
 
     def obj_get_list(self, bundle, domain, **kwargs):
