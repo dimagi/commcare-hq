@@ -83,8 +83,9 @@ class MissingIds:
         CASE: {"doc_id": "case_id", "table": "form_processor_commcarecasesql"},
     }
 
+    form_types = list(form_doc_types()) + ["HQSubmission", "XFormInstance-Deleted"]
     _doc_types = {
-        FORM: list(form_doc_types()) + ["HQSubmission", "XFormInstance-Deleted"],
+        FORM: form_types,
         CASE: ['CommCareCase', 'CommCareCase-Deleted'],
     }
 

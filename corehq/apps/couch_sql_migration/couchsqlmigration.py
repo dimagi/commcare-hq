@@ -345,8 +345,8 @@ class CouchSqlDomainMigrator:
             self.case_diff_queue.enqueue(couch_case.case_id)
 
     def _process_forms_subset(self, forms):
-        if forms in ["skipped", "missing"]:
-            self._process_skipped_forms(cached=forms == "missing")
+        if forms == "missing":
+            self._process_missing_forms()
             return
         if forms == "missing-blob-present":
             for form in _iter_missing_blob_present_forms(self.statedb, self.stopper):
@@ -373,25 +373,23 @@ class CouchSqlDomainMigrator:
             sql_form = FormAccessorSQL.get_form(form_id)
             self._save_diffs(couch_form, sql_form)
 
-    def _process_skipped_forms(self, cached):
-        """process forms skipped by a previous migration"""
+    def _process_missing_forms(self):
+        """process forms missed by a previous migration"""
         migrated = 0
-        with self.counter('skipped_forms', 'XFormInstance.id') as add_form:
-            skipped = _iter_skipped_forms(self.statedb, self.stopper, cached)
-            for doc_type, doc in skipped:
+        with self.counter('missing_forms', 'XFormInstance.id') as add_form:
+            for doc_type, doc in _iter_missing_forms(self.statedb, self.stopper):
                 try:
                     form = XFormInstance.wrap(doc)
                 except Exception:
                     log.exception("Error wrapping form %s", doc)
                 else:
                     self._migrate_form(form, get_case_ids(form))
-                    if cached:
-                        self.statedb.doc_not_missing(doc_type, form.form_id)
+                    self.statedb.doc_not_missing(doc_type, form.form_id)
                     add_form()
                     migrated += 1
                     if migrated % 100 == 0:
-                        log.info("migrated %s previously skipped forms", migrated)
-        log.info("finished migrating %s previously skipped forms", migrated)
+                        log.info("migrated %s previously missed forms", migrated)
+        log.info("finished migrating %s previously missed forms", migrated)
 
     def _check_for_migration_restrictions(self, domain_name):
         msgs = []
@@ -983,27 +981,19 @@ def _repr_bad_results(view, kwargs, results, domain):
     return f"bad results from {view} {kwargs}:\n{context}"
 
 
-def _iter_skipped_forms(statedb, stopper, cached):
-    # Datadog tag: type:find_skipped_forms
+def _iter_missing_forms(statedb, stopper):
     from dimagi.utils.couch.bulk import get_docs
     from .missingdocs import MissingIds
     couch = XFormInstance.get_db()
     domain = statedb.domain
-    with MissingIds.forms(statedb, stopper, tag="skipped") as skipped:
-        if cached:
-            doc_types = skipped.doc_types
-            iter_doc_ids = statedb.iter_missing_doc_ids
-        else:
-            doc_types = ["XFormInstance"]
-            iter_doc_ids = skipped
-        for doc_type in doc_types:
-            skipped_ids = iter_doc_ids(doc_type)
-            for form_ids in chunked(skipped_ids, _iter_docs.chunk_size, list):
-                for doc in get_docs(couch, form_ids):
-                    assert doc["domain"] == domain, doc
-                    yield doc_type, doc
-                if stopper.clean_break:
-                    break
+    for doc_type in MissingIds.form_types:
+        missing_ids = statedb.iter_missing_doc_ids(doc_type)
+        for form_ids in chunked(missing_ids, _iter_docs.chunk_size, list):
+            for doc in get_docs(couch, form_ids):
+                assert doc["domain"] == domain, doc
+                yield doc_type, doc
+            if stopper.clean_break:
+                break
 
 
 def _iter_missing_blob_present_forms(statedb, stopper):

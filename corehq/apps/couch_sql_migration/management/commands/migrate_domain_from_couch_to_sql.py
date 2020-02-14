@@ -140,11 +140,10 @@ class Command(BaseCommand):
             help="""
                 Migrate specific forms. The value of this option should
                 be a space-delimited list of form ids OR a file path to
-                a file having one form id per line OR 'skipped' to
-                migrate forms skipped by previous migration OR 'missing'
-                to migrate missing forms cached in the statedb by the
+                a file having one form id per line OR 'missing' to
+                migrate missing forms cached in the statedb by the
                 'stats' command OR 'missing-blob-present' to migrate
-                forms reference by a case that do not exist in Couch but
+                forms referenced by a case that do not exist in Couch but
                 a blob does exit. The file path must begin with / or ./
             """)
         parser.add_argument('-x', '--stop-on-error',

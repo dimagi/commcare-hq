@@ -1130,12 +1130,14 @@ class MigrationTestCase(BaseMigrationTestCase):
         clear_local_domain_sql_backend_override(self.domain_name)
 
         with self.patch_migration_chunk_size(1), skip_forms({"test-2"}):
-            self._do_migration(live=True, forms="skipped")
+            self._do_migration(action=STATS, missing_docs=REBUILD)
+            self._do_migration(live=True, forms="missing")
         self.assertEqual(self._get_form_ids(), {"test-1", "test-3"})
 
         clear_local_domain_sql_backend_override(self.domain_name)
         with self.patch_migration_chunk_size(1):
-            self._do_migration(live=True, forms="skipped")
+            self._do_migration(action=STATS, missing_docs=REBUILD)
+            self._do_migration(live=True, forms="missing")
         self.assertEqual(self._get_form_ids(), {"test-1", "test-2", "test-3"})
 
         clear_local_domain_sql_backend_override(self.domain_name)
