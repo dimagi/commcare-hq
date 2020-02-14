@@ -120,9 +120,13 @@ class BaseGapsSummaryReport(MultiTabularReport):
     @property
     def report_config(self):
         report_config = super().report_config
-        report_config.update(recall_status=self.recall_status)
+        report_config.update(gap_type=self.gap_type, recall_status=self.recall_status)
 
         return report_config
+
+    @property
+    def gap_type(self):
+        return self.request.GET.get('gap_type') or ''
 
     @property
     def recall_status(self):
