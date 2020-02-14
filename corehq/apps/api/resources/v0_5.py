@@ -963,13 +963,6 @@ class BaseODataResource(HqBaseResource, DomainSpecificResourceMixin):
             response = super(BaseODataResource, self).dispatch(
                 request_type, request, **kwargs
             )
-
-            # order REALLY matters for the following code. It should be called
-            # AFTER the super's dispatch or request.couch_user will not be present
-            if not user_can_view_odata_feed(request.domain, request.couch_user):
-                raise ImmediateHttpResponse(
-                    response=HttpResponseNotFound('No permission to view feed.')
-                )
         record_feed_access_in_datadog(request, self.config_id, timer.duration, response)
         return response
 
@@ -1005,7 +998,7 @@ class ODataCaseResource(BaseODataResource):
         return query
 
     class Meta(v0_4.CommCareCaseResource.Meta):
-        authentication = ODataAuthentication(Permissions.edit_data)
+        authentication = ODataAuthentication()
         resource_name = 'odata/cases'
         serializer = ODataCaseSerializer()
         limit = 2000
@@ -1031,7 +1024,7 @@ class ODataFormResource(BaseODataResource):
         return query
 
     class Meta(v0_4.XFormInstanceResource.Meta):
-        authentication = ODataAuthentication(Permissions.edit_data)
+        authentication = ODataAuthentication()
         resource_name = 'odata/forms'
         serializer = ODataFormSerializer()
         limit = 2000

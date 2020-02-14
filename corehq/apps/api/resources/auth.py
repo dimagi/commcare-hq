@@ -109,7 +109,7 @@ class RequirePermissionAuthentication(LoginAndDomainAuthentication):
         return self._auth_test(request, wrappers=wrappers, **kwargs)
 
 
-class ODataAuthentication(RequirePermissionAuthentication):
+class ODataAuthentication(LoginAndDomainAuthentication):
 
     def __init__(self, *args, **kwargs):
         super(ODataAuthentication, self).__init__(*args, **kwargs)
@@ -117,6 +117,21 @@ class ODataAuthentication(RequirePermissionAuthentication):
             'basic': basic_auth_or_try_api_key_auth,
             'api_key': api_key_auth,
         }
+
+    def is_authenticated(self, request, **kwargs):
+
+        def _check_odata_permission(_user, _domain):
+            from corehq.apps.export.views.utils import user_can_view_odata_feed
+            return user_can_view_odata_feed(_domain, _user)
+
+        wrappers = [
+            require_permission_raw(
+                _check_odata_permission,
+                self._get_auth_decorator(request)
+            ),
+            api_auth,
+        ]
+        return self._auth_test(request, wrappers=wrappers, **kwargs)
 
     def _get_auth_decorator(self, request):
         return self.decorator_map[determine_authtype_from_header(request, default=BASIC)]
