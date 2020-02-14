@@ -242,6 +242,7 @@ CACHES = {
 # on both a local and a distributed environment this should be localhost
 ELASTICSEARCH_HOST = 'localhost'
 ELASTICSEARCH_PORT = 9200
+ELASTICSEARCH_MAJOR_VERSION = 2
 
 LOCAL_PILLOWTOPS = {
 #    'my_pillows': ['some.pillow.Class', ],
