@@ -598,7 +598,7 @@ class ConditionalAlertListView(ConditionalAlertBaseView):
         # can restart a rule run. Also don't limit it if it's an environment
         # that is a standalone environment.
         return not (
-            self.request.couch_user.is_superuser or
+            self.request.couch_user.invoke_superuser() or
             settings.SERVER_ENVIRONMENT in settings.UNLIMITED_RULE_RESTART_ENVS
         )
 

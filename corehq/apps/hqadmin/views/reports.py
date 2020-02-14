@@ -22,7 +22,7 @@ from corehq.apps.hqadmin.views.utils import BaseAdminSectionView
 
 def top_five_projects_by_country(request):
     data = {}
-    internalMode = request.user.is_superuser
+    internalMode = request.user.invoke_superuser()
     attributes = ['internal.area', 'internal.sub_area', 'cp_n_active_cc_users', 'deployment.countries']
 
     if internalMode:

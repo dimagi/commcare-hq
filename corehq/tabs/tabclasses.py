@@ -913,7 +913,7 @@ class ApplicationsTab(UITab):
         couch_user = self.couch_user
         return (self.domain and couch_user
                 and (couch_user.is_web_user() or couch_user.can_edit_apps())
-                and (couch_user.is_member_of(self.domain) or couch_user.is_superuser)
+                and (couch_user.is_member_of(self.domain) or couch_user.invoke_superuser())
                 and has_privilege(self._request, privileges.PROJECT_ACCESS))
 
 
@@ -1130,7 +1130,7 @@ class MessagingTab(UITab):
                 ],
             })
 
-        if self.couch_user.is_superuser or self.couch_user.is_domain_admin(self.domain):
+        if self.couch_user.invoke_superuser() or self.couch_user.is_domain_admin(self.domain):
             settings_urls.extend([
                 {'title': ugettext_lazy("General Settings"),
                  'url': reverse('sms_settings', args=[self.domain])},
@@ -1624,7 +1624,7 @@ class ProjectSettingsTab(UITab):
 
         from corehq.apps.users.models import WebUser
         if isinstance(self.couch_user, WebUser):
-            if (user_is_billing_admin or self.couch_user.is_superuser) and not settings.ENTERPRISE_MODE:
+            if (user_is_billing_admin or self.couch_user.invoke_superuser()) and not settings.ENTERPRISE_MODE:
                 from corehq.apps.domain.views.accounting import (
                     DomainSubscriptionView, EditExistingBillingAccountView,
                     DomainBillingStatementsView, ConfirmSubscriptionRenewalView,
@@ -1664,7 +1664,7 @@ class ProjectSettingsTab(UITab):
                                            args=[self.domain]),
                         }
                     )
-                if self.couch_user.is_superuser:
+                if self.couch_user.invoke_superuser():
                     subscription.append({
                         'title': _('Internal Subscription Management (Dimagi Only)'),
                         'url': reverse(
@@ -1674,7 +1674,7 @@ class ProjectSettingsTab(UITab):
                     })
                 items.append((_('Subscription'), subscription))
 
-        if self.couch_user.is_superuser:
+        if self.couch_user.invoke_superuser():
             from corehq.apps.domain.views.internal import (
                 EditInternalDomainInfoView,
                 EditInternalCalculationsView,
@@ -1971,7 +1971,7 @@ class SMSAdminTab(UITab):
 
     @property
     def _is_viewable(self):
-        return self.couch_user and self.couch_user.is_superuser
+        return self.couch_user and self.couch_user.invoke_superuser()
 
 
 class AdminTab(UITab):
@@ -1982,7 +1982,7 @@ class AdminTab(UITab):
 
     @property
     def dropdown_items(self):
-        if (self.couch_user and not self.couch_user.is_superuser
+        if (self.couch_user and not self.couch_user.invoke_superuser()
                 and (toggles.IS_CONTRACTOR.enabled(self.couch_user.username))):
             return [
                 dropdown_dict(_("System Info"), url=reverse("system_info")),
@@ -2015,7 +2015,7 @@ class AdminTab(UITab):
     def sidebar_items(self):
         # todo: convert these to dispatcher-style like other reports
         if (self.couch_user and
-                (not self.couch_user.is_superuser and
+                (not self.couch_user.invoke_superuser() and
                  toggles.IS_CONTRACTOR.enabled(self.couch_user.username))):
             return [
                 (_('System Health'), [
@@ -2123,5 +2123,5 @@ class AdminTab(UITab):
     @property
     def _is_viewable(self):
         return (self.couch_user and
-                (self.couch_user.is_superuser or
+                (self.couch_user.invoke_superuser() or
                  toggles.IS_CONTRACTOR.enabled(self.couch_user.username)))

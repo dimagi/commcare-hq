@@ -12,7 +12,7 @@ from corehq.util.quickcache import quickcache
 
 class ProjectAccessMiddleware(MiddlewareMixin):
     def process_view(self, request, view_func, view_args, view_kwargs):
-        if getattr(request, 'couch_user', None) and request.couch_user.is_superuser \
+        if getattr(request, 'couch_user', None) and request.couch_user.invoke_superuser() \
                 and hasattr(request, 'domain'):
             self.record_superuser_entry(request.domain, request.couch_user.username)
         if getattr(request, 'couch_user', None) and request.couch_user.is_web_user() \

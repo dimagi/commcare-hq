@@ -1895,7 +1895,7 @@ class Subscription(models.Model):
             return False
 
     def user_can_change_subscription(self, user):
-        if user.is_superuser:
+        if user.invoke_superuser():
             return True
         elif self.account.is_customer_billing_account:
             return self.account.has_enterprise_admin(user.email)

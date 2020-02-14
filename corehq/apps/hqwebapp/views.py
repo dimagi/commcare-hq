@@ -209,7 +209,7 @@ def redirect_to_default(req, domain=None):
         else:
             domains = Domain.active_for_user(req.user)
 
-        if 0 == len(domains) and not req.user.is_superuser:
+        if 0 == len(domains) and not req.user.invoke_superuser():
             from corehq.apps.registration.views import track_domainless_new_user
             track_domainless_new_user(req)
             return redirect('registration_domain')
@@ -1093,14 +1093,14 @@ def quick_find(request):
         return HttpResponseBadRequest('GET param "q" must be provided')
 
     def deal_with_doc(doc, domain, doc_info_fn):
-        if request.couch_user.is_superuser or (domain and request.couch_user.is_member_of(domain)):
+        if request.couch_user.invoke_superuser() or (domain and request.couch_user.is_member_of(domain)):
             doc_info = doc_info_fn(doc)
         else:
             raise Http404()
         if redirect and doc_info.link:
             messages.info(request, _("We've redirected you to the %s matching your query") % doc_info.type_display)
             return HttpResponseRedirect(doc_info.link)
-        elif redirect and request.couch_user.is_superuser:
+        elif redirect and request.couch_user.invoke_superuser():
             return HttpResponseRedirect('{}?id={}'.format(reverse('raw_doc'), doc.get('_id')))
         else:
             return json_response(doc_info)

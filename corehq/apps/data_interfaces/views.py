@@ -765,7 +765,7 @@ class AddCaseRuleView(DataInterfaceSection):
     @property
     @memoized
     def is_system_admin(self):
-        return self.request.couch_user.is_superuser
+        return self.request.couch_user.invoke_superuser()
 
     @property
     @memoized

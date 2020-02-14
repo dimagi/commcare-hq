@@ -1339,7 +1339,7 @@ class EnterpriseBillingStatementsView(DomainAccountingSettings, CRUDPaginatedVie
 
     @property
     def show_hidden(self):
-        if not self.request.user.is_superuser:
+        if not self.request.user.invoke_superuser():
             return False
         return bool(self.request.POST.get('additionalData[show_hidden]'))
 

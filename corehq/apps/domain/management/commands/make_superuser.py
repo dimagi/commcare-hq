@@ -42,7 +42,7 @@ class Command(BaseCommand):
             couch_user = WebUser.create(None, username, password)
             logger.info("→ User {} created".format(couch_user.username))
 
-        is_superuser_changed = not couch_user.is_superuser
+        is_superuser_changed = not couch_user.is_superuser  # is_superuser intentional
         is_staff_changed = not couch_user.is_staff
         couch_user.is_superuser = True
         couch_user.is_staff = True

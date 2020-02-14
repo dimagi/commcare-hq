@@ -60,7 +60,7 @@ class BillingModalsMixin(object):
     def _should_display_billing_modals(self):
         return (
             self.request.couch_user
-            and not self.request.couch_user.is_superuser
+            and not self.request.couch_user.invoke_superuser()
             and self.request.couch_user.has_permission(
                 self.domain,
                 get_permission_name(Permissions.edit_billing)

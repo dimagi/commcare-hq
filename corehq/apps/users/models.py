@@ -844,7 +844,7 @@ class EulaMixin(DocumentSchema):
         return data
 
     def is_eula_signed(self, version=CURRENT_VERSION):
-        if self.is_superuser:
+        if self.is_superuser:  # is_superuser intentional (not really a permission escalation)
             return True
         for eula in self.eulas:
             if eula.version == version:
@@ -1329,7 +1329,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
 
     def is_previewer(self):
         from django.conf import settings
-        return (self.is_superuser or
+        return (self.invoke_superuser() or
                 bool(re.compile(settings.PREVIEWER_RE).match(self.username)))
 
     def sync_from_django_user(self, django_user):
@@ -2354,7 +2354,7 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
 
     def is_global_admin(self):
         # override this function to pass global admin rights off to django
-        return self.is_superuser
+        return self.invoke_superuser()
 
     @classmethod
     def create(cls, domain, username, password, email=None, uuid='', date='', **kwargs):

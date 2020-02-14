@@ -138,7 +138,7 @@ class AdminAuthentication(LoginAndDomainAuthentication):
     @staticmethod
     def _permission_check(couch_user, domain):
         return (
-            couch_user.is_superuser or
+            couch_user.invoke_superuser() or
             IS_CONTRACTOR.enabled(couch_user.username)
         )
 

@@ -104,7 +104,7 @@ class HqBaseResource(CorsResourceMixin, JsonResourceMixin, Resource):
                 json.dumps({"error": msg}),
                 content_type="application/json",
                 status=401))
-        if request.user.is_superuser or domain_has_privilege(request.domain, privileges.API_ACCESS):
+        if request.user.invoke_superuser() or domain_has_privilege(request.domain, privileges.API_ACCESS):
             if isinstance(self, DomainSpecificResourceMixin):
                 track_workflow(request.user.username, "API Request", properties={
                     'domain': request.domain,

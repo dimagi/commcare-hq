@@ -165,7 +165,7 @@ class BaseMessagingSectionView(BaseDomainView):
 
     @cached_property
     def is_system_admin(self):
-        return self.request.couch_user.is_superuser
+        return self.request.couch_user.invoke_superuser()
 
     @cached_property
     def is_granted_messaging_access(self):
@@ -1000,7 +1000,7 @@ class DomainSmsGatewayListView(CRUDPaginatedViewMixin, BaseMessagingSectionView)
 
         context = self.pagination_context
         context.update({
-            'initiate_new_form': InitiateAddSMSBackendForm(is_superuser=self.request.couch_user.is_superuser),
+            'initiate_new_form': InitiateAddSMSBackendForm(is_superuser=self.request.couch_user.invoke_superuser()),
             'extra_backend_mappings': extra_backend_mappings,
         })
         return context
@@ -1129,7 +1129,7 @@ class AddGatewayViewMixin(object):
 
     @property
     def is_superuser(self):
-        return self.request.couch_user.is_superuser
+        return self.request.couch_user.invoke_superuser()
 
     @property
     @memoized
@@ -1368,7 +1368,7 @@ class GlobalSmsGatewayListView(CRUDPaginatedViewMixin, BaseAdminSectionView):
     def page_context(self):
         context = self.pagination_context
         context.update({
-            'initiate_new_form': InitiateAddSMSBackendForm(is_superuser=self.request.couch_user.is_superuser),
+            'initiate_new_form': InitiateAddSMSBackendForm(is_superuser=self.request.couch_user.invoke_superuser()),
         })
         return context
 

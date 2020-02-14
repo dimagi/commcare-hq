@@ -8,7 +8,7 @@
   <div class="row">
     <div class="col-md-12">
       {% include "reports/project_health/partials/last_month_stats.html" %}
-      {% if request.user.is_superuser %}
+      {% if request.user.invoke_superuser %}
         <p>
           <a href="{% url 'domain_internal_settings' domain %}">
             {% trans "Set Performance Threshold" %}

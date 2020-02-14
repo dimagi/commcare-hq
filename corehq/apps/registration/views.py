@@ -74,7 +74,7 @@ def track_domainless_new_user(request):
         # don't trigger soft assert in a test
         return
     user = request.user
-    is_new_user = not (Domain.active_for_user(user) or user.is_superuser)
+    is_new_user = not (Domain.active_for_user(user) or user.invoke_superuser())
     if is_new_user:
         _domainless_new_user_soft_assert(
             False, ("A new user '{}' was redirected to "
@@ -303,7 +303,7 @@ class RegisterDomainView(TemplateView):
     @memoized
     def is_new_user(self):
         user = self.request.user
-        return not (Domain.active_for_user(user) or user.is_superuser)
+        return not (Domain.active_for_user(user) or user.invoke_superuser())
 
     def post(self, request, *args, **kwargs):
         referer_url = request.GET.get('referer', '')
@@ -313,7 +313,7 @@ class RegisterDomainView(TemplateView):
         if not form.is_valid():
             return self.render_to_response(context)
 
-        if settings.RESTRICT_DOMAIN_CREATION and not request.user.is_superuser:
+        if settings.RESTRICT_DOMAIN_CREATION and not request.user.invoke_superuser():
             context.update({
                 'current_page': {'page_name': _('Oops!')},
                 'error_msg': _('Your organization has requested that project creation be restricted. '

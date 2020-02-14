@@ -380,7 +380,7 @@ class ActivateTransferDomainView(BasePageView):
 
         if (self.active_transfer and
                 self.active_transfer.to_username != request.user.username and
-                not request.user.is_superuser):
+                not request.user.invoke_superuser()):
             return HttpResponseRedirect(reverse("no_permissions"))
 
         return super(ActivateTransferDomainView, self).get(request, *args, **kwargs)
@@ -391,7 +391,7 @@ class ActivateTransferDomainView(BasePageView):
         if not self.active_transfer:
             raise Http404()
 
-        if self.active_transfer.to_username != request.user.username and not request.user.is_superuser:
+        if self.active_transfer.to_username != request.user.username and not request.user.invoke_superuser():
             return HttpResponseRedirect(reverse("no_permissions"))
 
         self.active_transfer.transfer_domain(ip=get_ip(request))
@@ -416,7 +416,7 @@ class DeactivateTransferDomainView(View):
 
         if (transfer.to_username != request.user.username and
                 transfer.from_username != request.user.username and
-                not request.user.is_superuser):
+                not request.user.invoke_superuser()):
             return HttpResponseRedirect(reverse("no_permissions"))
 
         transfer.active = False

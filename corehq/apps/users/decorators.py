@@ -27,7 +27,7 @@ def require_permission_raw(permission_check,
         def _inner(request, domain, *args, **kwargs):
             if not hasattr(request, "couch_user"):
                 return redirect_for_login_or_domain(request)
-            elif request.user.is_superuser or permission_check(request.couch_user, domain):
+            elif request.user.invoke_superuser() or permission_check(request.couch_user, domain):
                 request.is_view_only = False
                 return view_func(request, domain, *args, **kwargs)
             elif (view_only_permission_check is not None
@@ -102,7 +102,7 @@ def require_permission_to_edit_user(view_func):
         go_ahead = False
         if hasattr(request, "couch_user"):
             user = request.couch_user
-            if user.is_superuser or user.user_id == couch_user_id or (hasattr(user, "is_domain_admin") and user.is_domain_admin()):
+            if user.invoke_superuser() or user.user_id == couch_user_id or (hasattr(user, "is_domain_admin") and user.is_domain_admin()):
                 go_ahead = True
             else:
                 couch_user = CouchUser.get_by_user_id(couch_user_id)

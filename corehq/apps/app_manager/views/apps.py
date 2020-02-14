@@ -222,7 +222,7 @@ def get_app_view_context(request, app):
 
     build_config = CommCareBuildConfig.fetch()
     options = build_config.get_menu()
-    if not request.user.is_superuser and not toggles.IS_CONTRACTOR.enabled(request.user.username):
+    if not request.user.invoke_superuser() and not toggles.IS_CONTRACTOR.enabled(request.user.username):
         options = [option for option in options if not option.superuser_only]
     options_map = defaultdict(lambda: {"values": [], "value_names": []})
     for option in options:
@@ -328,7 +328,7 @@ def _get_upstream_url(app, request_user, master_app_id=None):
     """Get the upstream url if the user has access"""
     if (
             app.domain_link and (
-                request_user.is_superuser or (
+                request_user.invoke_superuser() or (
                     not app.domain_link.is_remote
                     and request_user.is_member_of(app.domain_link.master_domain)
                 )

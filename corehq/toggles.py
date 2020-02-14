@@ -183,7 +183,7 @@ class StaticToggle(object):
                     or (hasattr(request, 'domain') and self.enabled(request.domain, namespace=NAMESPACE_DOMAIN))
                 ):
                     return view_func(request, *args, **kwargs)
-                if request.user.is_superuser:
+                if request.user.invoke_superuser():
                     from corehq.apps.toggle_ui.views import ToggleEditView
                     toggle_url = reverse(ToggleEditView.urlname, args=[self.slug])
                     messages.warning(

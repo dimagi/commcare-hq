@@ -58,7 +58,7 @@ class UsersMiddleware(MiddlewareMixin):
 
 class SuperuserMiddleware(MiddlewareMixin):
     def process_request(self, request):
-        if request.user.is_superuser:
+        if request.user.is_superuser:  # is_superuser intentional (of course)
             def invoke_superuser():
                 return True
         else:

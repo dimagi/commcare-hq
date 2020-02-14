@@ -104,7 +104,7 @@ def login_and_domain_required(view_func):
                 return _redirect_to_project_access_upgrade(req)
             else:
                 return call_view()
-        elif user.is_superuser:
+        elif user.invoke_superuser():
             if domain_obj.restrict_superusers and not _page_is_whitelisted(req.path, domain_obj.name):
                 from corehq.apps.hqwebapp.views import no_permissions
                 msg = "This project space restricts superuser access.  You must request an invite to access it."
@@ -464,7 +464,7 @@ def domain_admin_required_ex(redirect_page_name=None):
                 raise Http404()
 
             if not (
-                _page_is_whitelisted(request.path, domain_name) and request.user.is_superuser
+                _page_is_whitelisted(request.path, domain_name) and request.user.invoke_superuser()
             ) and not request.couch_user.is_domain_admin(domain_name):
                 return HttpResponseRedirect(reverse(redirect_page_name))
             return view_func(request, domain_name, *args, **kwargs)
@@ -477,7 +477,7 @@ def require_superuser_or_contractor(view_func):
     @wraps(view_func)
     def _inner(request, *args, **kwargs):
         user = request.user
-        if IS_CONTRACTOR.enabled(user.username) or user.is_superuser:
+        if IS_CONTRACTOR.enabled(user.username) or user.invoke_superuser():
             return view_func(request, *args, **kwargs)
         else:
             return HttpResponseRedirect(reverse("no_permissions"))

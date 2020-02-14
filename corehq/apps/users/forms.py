@@ -197,7 +197,7 @@ class UpdateUserPermissionForm(forms.Form):
 
     def update_user_permission(self, couch_user=None, editable_user=None, is_super_user=None):
         is_update_successful = False
-        if editable_user and couch_user.is_superuser:
+        if editable_user and couch_user.is_superuser:  # is_superuser intentional
             editable_user.is_superuser = is_super_user
             editable_user.save()
             is_update_successful = True

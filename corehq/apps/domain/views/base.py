@@ -47,7 +47,7 @@ def select(request, domain_select_template='domain/select.html', do_not_redirect
             # mirrors logic in login_and_domain_required
             if (
                 request.couch_user.is_member_of(domain_obj)
-                or (request.user.is_superuser and not domain_obj.restrict_superusers)
+                or (request.user.invoke_superuser() and not domain_obj.restrict_superusers)
                 or domain_obj.is_snapshot
             ):
                 try:

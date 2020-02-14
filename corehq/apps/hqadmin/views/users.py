@@ -131,7 +131,7 @@ class SuperuserManagement(UserAdministration):
             for user in users:
                 # save user object only if needed and just once
                 should_save = False
-                if user.is_superuser is not is_superuser:
+                if user.is_superuser is not is_superuser:  # is_superuser intentional
                     user.is_superuser = is_superuser
                     should_save = True
 
@@ -154,7 +154,7 @@ def superuser_table(request):
     csv_writer.writerow(['Username', 'Developer', 'Superuser', 'Two Factor Enabled'])
     for user in superusers:
         csv_writer.writerow([
-            user.username, user.is_staff, user.is_superuser, user.two_factor_enabled])
+            user.username, user.is_staff, user.is_superuser, user.two_factor_enabled])  # is_superuser intentional
     response = HttpResponse(content_type=Format.from_format('csv').mimetype)
     response['Content-Disposition'] = 'attachment; filename="superuser_table.csv"'
     response.write(f.getvalue())

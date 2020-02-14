@@ -107,5 +107,5 @@ def use_phone_entries():
 def show_messaging_dashboard(domain, couch_user):
     return (
         not toggles.HIDE_MESSAGING_DASHBOARD_FROM_NON_SUPERUSERS.enabled(domain) or
-        couch_user.is_superuser
+        couch_user.invoke_superuser()
     )

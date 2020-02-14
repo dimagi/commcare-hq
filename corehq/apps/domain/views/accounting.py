@@ -458,7 +458,7 @@ class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMix
 
     @property
     def show_hidden(self):
-        if not self.request.user.is_superuser:
+        if not self.request.user.invoke_superuser():
             return False
         return bool(self.request.POST.get('additionalData[show_hidden]'))
 
@@ -1408,7 +1408,7 @@ class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
             next_subscription = self.current_subscription.next_subscription
 
             if is_saved:
-                if not request.user.is_superuser:
+                if not request.user.invoke_superuser():
                     if self.billing_account_info_form.is_same_edition():
                         self.send_keep_subscription_email()
                     elif self.billing_account_info_form.is_downgrade_from_paid_plan():

@@ -31,7 +31,7 @@
           <tr>
             <td>{{ user.username }}</td>
             <td>{% if user.is_staff %}<i class="fa fa-check"></i>{% endif %}</td>
-            <td>{% if user.is_superuser %}<i class="fa fa-check"></i>{% endif %}</td>
+            <td>{% if user.is_superuser %}{# is_superuser intentional #}<i class="fa fa-check"></i>{% endif %}</td>
             <td>{% if user.two_factor_enabled %}<i class="fa fa-check"></i>{% endif %}</td>
           </tr>
         {% endfor %}

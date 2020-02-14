@@ -35,7 +35,7 @@
                   {{ section_display }}
                   for <em>{{ product_name }}</em>
                 {% endblocktrans %}
-                {% if request.user.is_superuser and request|toggle_enabled:'SUPPORT' %}
+                {% if request.user.invoke_superuser and request|toggle_enabled:'SUPPORT' %}
                   <form method="post" action="" class="pull-right">
                     {% csrf_token %}
                     <input type="hidden" name="case_id" value="{{ key.case_id }}">

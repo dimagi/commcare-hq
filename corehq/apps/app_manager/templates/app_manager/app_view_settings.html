@@ -34,7 +34,7 @@
   {% initial_page_data 'app_view_options' app_view_options %}
   {% initial_page_data 'domain_names' domain_names %}
   {% initial_page_data 'is_remote_app' app.is_remote_app %}
-  {% initial_page_data 'is_superuser' request.user.is_superuser %}
+  {% initial_page_data 'is_superuser' request.user.invoke_superuser %}
   {% initial_page_data 'langs' app.langs %}
   {% initial_page_data 'linked_whitelist' app.linked_whitelist %}
   {% initial_page_data 'media_refs' refs %}

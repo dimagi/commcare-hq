@@ -60,7 +60,7 @@ def audited_login(request, *args, **kwargs):
 
 
 @login_required
-@user_passes_test(lambda u: u.is_superuser)
+@user_passes_test(lambda u: u.invoke_superuser())
 def audited_views(request, *args, **kwargs):
     db = AccessAudit.get_db()
     views = db.view('auditcare/urlpath_by_user_date', reduce=False).all()
@@ -98,7 +98,7 @@ def audited_logout(request, *args, **kwargs):
 
 
 @login_required()
-@user_passes_test(lambda u: u.is_superuser)
+@user_passes_test(lambda u: u.invoke_superuser())
 def model_instance_history(request, model_name, model_uuid, *args, **kwargs):
     # it's for a particular model
     context = {}
@@ -117,7 +117,7 @@ def model_instance_history(request, model_name, model_uuid, *args, **kwargs):
 
 
 @login_required()
-@user_passes_test(lambda u: u.is_superuser)
+@user_passes_test(lambda u: u.invoke_superuser())
 def single_model_history(request, model_name, *args, **kwargs):
     # it's for a particular model
     context = {}
@@ -130,7 +130,7 @@ def single_model_history(request, model_name, *args, **kwargs):
 
 
 @login_required()
-@user_passes_test(lambda u: u.is_superuser)
+@user_passes_test(lambda u: u.invoke_superuser())
 def model_histories(request, *args, **kwargs):
     """
     Looks at all the audit model histories and shows for a given model

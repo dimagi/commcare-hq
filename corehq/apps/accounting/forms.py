@@ -2586,7 +2586,7 @@ class CreateAdminForm(forms.Form):
                 "User '%s' does not exist" % username
             )
         web_user = WebUser.get_by_username(username)
-        if not web_user or not web_user.is_superuser:
+        if not web_user or not web_user.is_superuser:  # is_superuser intentional
             raise CreateAccountingAdminError(
                 "The user '%s' is not a superuser." % username,
             )

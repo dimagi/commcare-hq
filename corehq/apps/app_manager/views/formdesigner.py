@@ -162,7 +162,7 @@ def _get_form_designer_view(request, domain, app, module, form):
     })
     context.update(_get_requirejs_context())
 
-    if request.user.is_superuser:
+    if request.user.invoke_superuser():
         context.update({'notification_options': _get_notification_options(request, domain, app, form)})
 
     notify_form_opened(domain, request.couch_user, app.id, form.unique_id)

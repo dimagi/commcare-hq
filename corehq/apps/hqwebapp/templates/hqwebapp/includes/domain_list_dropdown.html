@@ -7,7 +7,7 @@
         {% endfor %}
     {% endif %}
 
-    {% if not restrict_domain_creation or request.user.is_superuser %}
+    {% if not restrict_domain_creation or request.user.invoke_superuser %}
         <li class="divider" />
         <li>
             <a href="{% url 'registration_domain' %}">

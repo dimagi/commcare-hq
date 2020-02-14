@@ -226,7 +226,7 @@ def can_use_restore_as(request):
     if not hasattr(request, 'couch_user'):
         return False
 
-    if request.couch_user.is_superuser:
+    if request.couch_user.invoke_superuser():
         return True
 
     return (
