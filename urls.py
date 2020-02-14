@@ -68,7 +68,6 @@ domain_specific = [
     url(r'^cloudcare/', include('corehq.apps.cloudcare.urls')),
     url(r'^fixtures/', include('corehq.apps.fixtures.urls')),
     url(r'^importer/', include('corehq.apps.case_importer.urls')),
-    url(r'^ilsgateway/', include('custom.ilsgateway.urls')),
     url(r'^up_nrhm/', include('custom.up_nrhm.urls')),
     url(r'^', include('custom.m4change.urls')),
     url(r'^dashboard/', include('corehq.apps.dashboard.urls')),
@@ -85,7 +84,6 @@ domain_specific = [
         lambda request, domain: render(request, 'hqwebapp/base.html', {'domain': domain})
     )),
     url(r'^zapier/', include('corehq.apps.zapier.urls')),
-    url(r'^zipline/', include('custom.zipline.urls')),
     url(r'^remote_link/', include('corehq.apps.linked_domain.urls')),
     url(r'^translations/', include('corehq.apps.translations.urls')),
     url(r'^submit_feedback/$', submit_feedback, name='submit_feedback'),

@@ -1169,13 +1169,6 @@ SEND_UCR_REBUILD_INFO = StaticToggle(
     [NAMESPACE_USER]
 )
 
-EMG_AND_REC_SMS_HANDLERS = StaticToggle(
-    'emg_and_rec_sms_handlers',
-    'ILS: Enable emergency and receipt sms handlers used in ILSGateway',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN]
-)
-
 ALLOW_USER_DEFINED_EXPORT_COLUMNS = StaticToggle(
     'allow_user_defined_export_columns',
     'Add user defined columns to exports',
