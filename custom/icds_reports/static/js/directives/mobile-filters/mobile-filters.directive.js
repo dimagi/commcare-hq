@@ -4,6 +4,8 @@ function MobileFiltersController($scope) {
     $scope.selectedTab = LOCATION;
     $scope.filterData = {};
     var vm = this;
+    vm.showGenderFilter = false;
+    vm.showAgeFilter = false;
     // eg:vm.filters = ['gender', 'age']
     // this array has filters that are not to be shown. so if 'gender' is not in array, it can be shown.
     if (vm.filters && vm.filters.indexOf('gender') === -1) {

@@ -43,6 +43,8 @@ function AdditionalFilterController($scope, $location, $uibModal, storageService
     var vm = this;
     vm.genders = genders;
     vm.ages = ages;
+    vm.showGenderFilter = false;
+    vm.showAgeFilter = false;
 
     var page = $location.path().split('/')[1];
     if (storageService.getKey('last_page') !== page) {
