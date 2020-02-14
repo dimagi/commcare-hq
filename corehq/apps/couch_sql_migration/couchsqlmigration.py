@@ -586,18 +586,23 @@ def _migrate_form_attachments(sql_form, couch_form):
             return meta
         except MissingFormXml:
             pass
-        log.warning("Rebuilding missing form XML: %s", couch_form.form_id)
         metas = get_blob_metadata(couch_form.form_id)[(CODES.form_xml, "form.xml")]
         if len(metas) == 1:
             couch_meta = couch_form.blobs.get("form.xml")
             if couch_meta is None:
                 assert not metas[0].blob_exists(), metas
+            elif metas[0].key != couch_meta.key:
+                assert not blobdb.exists(couch_meta.key), couch_meta
+                if metas[0].blob_exists():
+                    return metas[0]
             else:
                 assert metas[0].key == couch_meta.key, (metas, couch_meta)
+                assert not metas[0].blob_exists(), metas
             blobdb.delete(metas[0].key)
             metas.remove(metas[0])
         else:
             assert not metas, metas  # protect against yet another duplicate
+        log.warning("Rebuilding missing form XML: %s", couch_form.form_id)
         xml = convert_form_to_xml(couch_form.to_json()["form"])
         att = Attachment("form.xml", xml.encode("utf-8"), content_type="text/xml")
         return att.write(blobdb, sql_form)
