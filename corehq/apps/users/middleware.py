@@ -54,3 +54,21 @@ class UsersMiddleware(MiddlewareMixin):
         elif is_public_reports(view_kwargs, request):
             request.couch_user = AnonymousCouchUser()
         return None
+
+
+class SuperuserMiddleware(MiddlewareMixin):
+    def process_request(self, request):
+        if request.user.is_superuser:
+            def invoke_superuser():
+                return True
+        else:
+            def invoke_superuser():
+                return False
+
+        self.invoke_superuser = invoke_superuser
+        request.user.invoke_superuser = invoke_superuser
+
+    def process_view(self, request, view_func, view_args, view_kwargs):
+        # can't set jsonobject dynamic properties to a function directly
+        # so we're setting in this roundabout way through __dict__
+        request.couch_user.__dict__['invoke_superuser'] = self.invoke_superuser
