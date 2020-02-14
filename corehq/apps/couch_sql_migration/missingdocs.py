@@ -15,6 +15,7 @@ from corehq.util.datadog.gauges import datadog_counter
 from corehq.util.log import with_progress_bar
 from corehq.util.pagination import ResumableFunctionIterator
 
+from .casediff import get_couch_cases
 from .couchsqlmigration import (
     DocCounter,
     Stopper,
@@ -116,9 +117,13 @@ class MissingIds:
             self.counter.pop(count_key)
         couch_ids = _iter_docs(self.domain, f"{doc_type}.id", resume_key, self.stopper)
         couch_ids = self.with_progress(doc_type, couch_ids, count_key)
+        if self.entity == self.CASE:
+            drop_if_not_missing = self.drop_not_missing_case_ids
+        else:
+            drop_if_not_missing = self.drop_sql_ids
         with self.counter(dd_type, count_key) as add_docs:
             for batch in chunked(couch_ids, self.chunk_size, list):
-                yield from self.drop_sql_ids(batch)
+                yield from drop_if_not_missing(batch)
                 add_docs(len(batch))
         self._count_keys.add((doc_type, count_key))
 
@@ -128,6 +133,19 @@ class MissingIds:
             with XFormInstanceSQL.get_cursor_for_partition_db(dbname, readonly=True) as cursor:
                 cursor.execute(self.sql, [form_ids])
                 yield from (form_id for form_id, in cursor.fetchall())
+
+    def drop_not_missing_case_ids(self, case_ids):
+        def modified_since_stop_date(case_id):
+            case = cases.get(case_id)
+            if case is None or not case.actions:
+                return False
+            return any(a.server_date > stop_date for a in case.actions if a.server_date)
+        missing_ids = list(self.drop_sql_ids(case_ids))
+        if not missing_ids or not hasattr(self.stopper, "stop_date"):
+            return missing_ids
+        stop_date = self.stopper.stop_date
+        cases = {c.case_id: c for c in get_couch_cases(missing_ids)}
+        return (x for x in missing_ids if not modified_since_stop_date(x))
 
     def with_progress(self, doc_type, iterable, count_key):
         couchdb = XFormInstance.get_db()
