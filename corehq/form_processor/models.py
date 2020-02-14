@@ -245,9 +245,16 @@ class AttachmentMixin(SaveStateMixin):
         """
         if all(isinstance(a, BlobMeta) for a in self.attachments_list):
             # do nothing if all attachments have already been written
+            class NoopWriter():
+                def write(self):
+                    pass
+
+                def commit(self):
+                    pass
+
             @contextmanager
             def noop_context():
-                yield lambda: None
+                yield NoopWriter()
 
             return noop_context()
 
