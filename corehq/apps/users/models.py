@@ -1324,6 +1324,9 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             include_docs=True,
         )
 
+    def invoke_superuser(self):
+        return False
+
     def is_previewer(self):
         from django.conf import settings
         return (self.is_superuser or
