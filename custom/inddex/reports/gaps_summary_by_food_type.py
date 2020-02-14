@@ -11,7 +11,6 @@ class GapsSummaryByFoodTypeSummaryReport(BaseGapsSummaryReport):
     title = 'Output 2a - Gaps Summary by Food Type'
     name = title
     slug = 'output_2a_gaps_summary_by_food_type'
-    export_only = False
     show_filters = True
     report_comment = 'This output includes summaries of the existing conversion factor gaps and FCT gaps in the ' \
                      'recall data.It provides researchers with an overview of the number of data gaps that must ' \
