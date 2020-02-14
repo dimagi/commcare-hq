@@ -60,8 +60,9 @@ branches:
   - es/enterprise-subscriptions  # Ethan Jan 15
   - dmr/smarter-wait  # Danny Jan 22
   - jls/bulk-app-trans-format-fixes # Jenny Jan 27
-  - bmb/SAASP-10249  # Biyeun Feb 3
   - jls/migrate-HqDeploy-3 # Jenny Feb 5
   - jls/migrate-RegistrationRequest-2 # Jenny Feb 10
   - dmr/use-npm-local-lessc  # Danny Feb 7
+  - bmb/SAASP-10281  # Biyeun Feb 12
+  - jls/reconcile-location-searches # Jenny Feb 12
 submodules: {}

@@ -4,7 +4,7 @@
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
 # Translators:
-# Dimagi Dev <devops@dimagi.com>, 2020
+# Dimagi Dev <devops@dimagi.com>, 2017
 # Gladys Teos <info@enestranslations.com>, 2020
 #
 #, fuzzy
@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-02-05 20:42+0000\n"
+"POT-Creation-Date: 2020-02-12 21:28+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
 "Last-Translator: Gladys Teos <info@enestranslations.com>, 2020\n"
 "Language-Team: Spanish (https://www.transifex.com/dimagi/teams/9388/es/)\n"
@@ -3249,10 +3249,8 @@ msgid "Edit mapping for <%= property %>"
 msgstr ""
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/validators.ko.js:15
-#, fuzzy
-#| msgid "Not a valid choice"
 msgid "Not a valid email"
-msgstr "Opción no válida"
+msgstr "No es un correo electrónico válido"
 
 #: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:80
 msgid ""
@@ -3358,7 +3356,7 @@ msgstr ""
 
 #: corehq/apps/reports/static/reports/js/config.dataTables.bootstrap.js:31
 #: corehq/apps/reports/static/reports/js/config.dataTables.bootstrap.js:34
-#: corehq/apps/reports/static/reports/js/config.dataTables.bootstrap.js:173
+#: corehq/apps/reports/static/reports/js/config.dataTables.bootstrap.js:176
 #: corehq/apps/reports/static/reports/js/tabular.js:44
 msgid "Sorry!"
 msgstr "¡Lo sentimos!"
@@ -3741,11 +3739,11 @@ msgstr "Buscar Grupo..."
 msgid "Group membership has changed."
 msgstr "La membresía del grupo ha cambiado."
 
-#: corehq/apps/users/static/users/js/filtered_download.js:31
+#: corehq/apps/users/static/users/js/filtered_download.js:32
 msgid "Download <%= count %> user"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/filtered_download.js:31
+#: corehq/apps/users/static/users/js/filtered_download.js:32
 msgid "Download <%= count %> users"
 msgstr ""
 
@@ -3995,18 +3993,3 @@ msgstr ""
 #: custom/ilsgateway/static/ilsgateway/js/main.js:50
 msgid "Search Locations..."
 msgstr ""
-
-#~ msgid "show"
-#~ msgstr "mostrar"
-
-#~ msgid "hide"
-#~ msgstr "ocultar"
-
-#~ msgid "toggle"
-#~ msgstr "alternar"
-
-#~ msgid "URL"
-#~ msgstr "URL"
-
-#~ msgid "Parameters"
-#~ msgstr "Manejo de Casos"

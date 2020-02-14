@@ -3,7 +3,7 @@ import json
 import uuid
 from collections import Counter
 from datetime import datetime
-from io import BytesIO
+from io import StringIO
 
 from django.contrib.admin.utils import NestedObjects
 from django.core import serializers
@@ -82,7 +82,7 @@ class BaseDumpLoadTest(TestCase):
         models = list(expected_object_counts)
         self._check_signals_handle_raw(models)
 
-        output_stream = BytesIO()
+        output_stream = StringIO()
         SqlDataDumper(self.domain_name, []).dump(output_stream)
 
         self.delete_sql_data()
@@ -93,8 +93,8 @@ class BaseDumpLoadTest(TestCase):
         counts = Counter(object_classes)
         self.assertEqual([], objects_remaining, 'Not all data deleted: {}'.format(counts))
 
-        dump_output = output_stream.getvalue()
-        dump_lines = [line.strip() for line in dump_output.split(b'\n') if line.strip()]
+        dump_output = output_stream.getvalue().split('\n')
+        dump_lines = [line.strip() for line in dump_output if line.strip()]
         total_object_count, loaded_model_counts = SqlDataLoader().load_objects(dump_lines)
 
         expected_model_counts = _normalize_object_counter(expected_object_counts)

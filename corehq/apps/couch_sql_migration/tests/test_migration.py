@@ -76,9 +76,12 @@ from .. import couchsqlmigration as mod
 from ..asyncforms import get_case_ids
 from ..diffrule import ANY
 from ..management.commands.migrate_domain_from_couch_to_sql import (
+    CACHED,
     COMMIT,
     MIGRATE,
+    REBUILD,
     RESET,
+    STATS,
 )
 from ..statedb import init_state_db, open_state_db
 from ..util import UnhandledError
@@ -140,6 +143,8 @@ class BaseMigrationTestCase(TestCase, TestFileMixin):
         self.migration_success = None
         options.setdefault("no_input", True)
         options.setdefault("case_diff", "local")
+        if action in [MIGRATE, STATS]:
+            options.setdefault("missing_docs", CACHED)
         assert "diff_process" not in options, options  # old/invalid option
         with mock.patch(
             "corehq.form_processor.backends.sql.dbaccessors.transaction.atomic",
@@ -1287,6 +1292,18 @@ class MigrationTestCase(BaseMigrationTestCase):
         with self.assertRaises(CaseNotFound):
             self._get_case("test-case")
         self._compare_diffs([])
+
+    def test_missing_docs(self):
+        self.submit_form(TEST_FORM, timedelta(minutes=-90))
+        self._do_migration(self.domain_name, live=True)
+        FormAccessorSQL.hard_delete_forms(self.domain_name, ["test-form"])
+        CaseAccessorSQL.hard_delete_cases(self.domain_name, ["test-case"])
+        clear_local_domain_sql_backend_override(self.domain_name)
+        self._do_migration(self.domain_name, missing_docs=REBUILD)
+        self._compare_diffs(
+            missing={"XFormInstance": 1, "CommCareCase": 1},
+            ignore_fail=True,
+        )
 
     def test_form_with_missing_xml(self):
         create_form_with_missing_xml(self.domain_name)

@@ -9,7 +9,6 @@ from django.contrib import messages
 import settingshelper as helper
 
 DEBUG = True
-LESS_DEBUG = DEBUG
 
 # clone http://github.com/dimagi/Vellum into submodules/formdesigner and use
 # this to select various versions of Vellum source on the form designer page.
@@ -342,7 +341,6 @@ HQ_APPS = (
     'corehq.motech.repeaters',
     'corehq.util',
     'dimagi.ext',
-    'corehq.doctypemigrations',
     'corehq.blobs',
     'corehq.apps.case_search',
     'corehq.apps.zapier.apps.ZapierConfig',
@@ -780,7 +778,10 @@ DIGEST_LOGIN_FACTORY = 'django_digest.NoEmailLoginFactory'
 COMPRESS_PRECOMPILERS = (
     ('text/less', 'corehq.apps.hqwebapp.precompilers.LessFilter'),
 )
-COMPRESS_ENABLED = True
+# if not overwritten in localsettings, these will be replaced by the value they return
+# using the local DEBUG value (which we don't have access to here yet)
+COMPRESS_ENABLED = lambda: not DEBUG
+COMPRESS_OFFLINE = lambda: not DEBUG
 COMPRESS_JS_COMPRESSOR = 'corehq.apps.hqwebapp.uglify.JsUglifySourcemapCompressor'
 # use 'compressor.js.JsCompressor' for faster local compressing (will get rid of source maps)
 COMPRESS_CSS_FILTERS = ['compressor.filters.css_default.CssAbsoluteFilter',
@@ -980,6 +981,14 @@ except ImportError as error:
         raise error
     # fallback in case nothing else is found - used for readthedocs
     from dev_settings import *
+
+
+# The defaults above are given as a function of (or rather a closure on) DEBUG,
+# so if not overridden they need to be evaluated after DEBUG is set
+if callable(COMPRESS_ENABLED):
+    COMPRESS_ENABLED = COMPRESS_ENABLED()
+if callable(COMPRESS_OFFLINE):
+    COMPRESS_OFFLINE = COMPRESS_OFFLINE()
 
 
 # Unless DISABLE_SERVER_SIDE_CURSORS has explicitly been set, default to True because Django >= 1.11.1 and our
@@ -2077,17 +2086,10 @@ DATADOG_DOMAINS = {
 
 #### Django Compressor Stuff after localsettings overrides ####
 
-# This makes sure that Django Compressor does not run at all
-# when LESS_DEBUG is set to True.
-if LESS_DEBUG:
-    COMPRESS_ENABLED = False
-    COMPRESS_PRECOMPILERS = ()
-
 COMPRESS_OFFLINE_CONTEXT = {
     'base_template': BASE_TEMPLATE,
     'login_template': LOGIN_TEMPLATE,
     'original_template': BASE_ASYNC_TEMPLATE,
-    'less_debug': LESS_DEBUG,
 }
 
 COMPRESS_CSS_HASHING_METHOD = 'content'

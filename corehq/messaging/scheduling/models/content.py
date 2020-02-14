@@ -118,8 +118,8 @@ class EmailContent(Content):
         )
 
         message = self.get_translation_from_message_dict(
-            logged_event.domain,
             domain_obj,
+            self.message,
             recipient.get_language_code()
         )
 
