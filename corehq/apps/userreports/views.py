@@ -66,7 +66,6 @@ from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.locations.permissions import conditionally_location_safe
 from corehq.apps.reports.daterange import get_simple_dateranges
-from corehq.apps.reports.dispatcher import cls_to_view_login_and_domain
 from corehq.apps.saved_reports.models import ReportConfig
 from corehq.apps.userreports.app_manager.data_source_meta import (
     DATA_SOURCE_TYPE_RAW,
@@ -297,7 +296,7 @@ class CreateConfigReportView(BaseEditConfigReportView):
 class ReportBuilderView(BaseDomainView):
 
     @method_decorator(require_permission(Permissions.edit_data))
-    @cls_to_view_login_and_domain
+    @method_decorator(login_and_domain_required)
     @use_daterangepicker
     @use_datatables
     def dispatch(self, request, *args, **kwargs):

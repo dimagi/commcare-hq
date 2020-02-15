@@ -15,7 +15,6 @@ from corehq import privileges
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.domain.decorators import (
-    cls_to_view,
     login_and_domain_required,
     track_domain_request,
 )
@@ -234,8 +233,6 @@ class ReportDispatcher(View):
         from django.conf.urls import url
         return url(cls.pattern(), cls.as_view(), name=cls.name())
 
-cls_to_view_login_and_domain = cls_to_view(additional_decorator=login_and_domain_required)
-
 
 class ProjectReportDispatcher(ReportDispatcher):
     prefix = 'project_report' # string. ex: project, custom, billing, interface, admin
@@ -249,7 +246,7 @@ class ProjectReportDispatcher(ReportDispatcher):
             'submit_time_punchcard': 'worker_activity_times',
         }
 
-    @cls_to_view_login_and_domain
+    @method_decorator(login_and_domain_required)
     @track_domain_request(calculated_prop='cp_n_viewed_non_ucr_reports')
     def dispatch(self, request, *args, **kwargs):
         return super(ProjectReportDispatcher, self).dispatch(request, *args, **kwargs)
@@ -291,13 +288,10 @@ class CustomProjectReportDispatcher(ProjectReportDispatcher):
         return super(CustomProjectReportDispatcher, self).permissions_check(report, request, domain)
 
 
+@method_decorator(login_and_domain_required, name='dispatch')
 class DomainReportDispatcher(ReportDispatcher):
     prefix = 'domain_report'
     map_name = 'DOMAIN_REPORTS'
-
-    @cls_to_view_login_and_domain
-    def dispatch(self, request, *args, **kwargs):
-        return super(DomainReportDispatcher, self).dispatch(request, *args, **kwargs)
 
     def permissions_check(self, report, request, domain=None, is_navigation_check=False):
         from corehq.motech.repeaters.views import DomainForwardingRepeatRecords

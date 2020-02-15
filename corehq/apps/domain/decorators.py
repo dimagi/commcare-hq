@@ -370,30 +370,6 @@ def _two_factor_required(view_func, domain, couch_user):
     )
 
 
-def cls_to_view(additional_decorator=None):
-    def decorator(func):
-        def __outer__(cls, request, *args, **kwargs):
-            domain = kwargs.get('domain')
-            new_kwargs = kwargs.copy()
-            if not domain:
-                try:
-                    domain = args[0]
-                except IndexError:
-                    pass
-            else:
-                del new_kwargs['domain']
-
-            def __inner__(request, domain, *args, **new_kwargs):
-                return func(cls, request, *args, **kwargs)
-
-            if additional_decorator:
-                return additional_decorator(__inner__)(request, domain, *args, **new_kwargs)
-            else:
-                return __inner__(request, domain, *args, **new_kwargs)
-        return __outer__
-    return decorator
-
-
 def api_domain_view(view):
     """
     Decorate this with any domain view that should be accessed via api only
@@ -487,16 +463,13 @@ def require_superuser_or_pass_check(view_func, check_func):
 
 
 require_superuser = functools.partial(require_superuser_or_pass_check, check_func=None)
-cls_require_superusers = cls_to_view(additional_decorator=require_superuser)
 require_superuser_or_contractor = functools.partial(
     require_superuser_or_pass_check,
     check_func=lambda user: IS_CONTRACTOR.enabled(user.username))
-cls_require_superuser_or_contractor = cls_to_view(additional_decorator=require_superuser_or_contractor)
 
 
 # Parallel to what we did with login_and_domain_required, above
 domain_admin_required = domain_admin_required_ex()
-cls_domain_admin_required = cls_to_view(additional_decorator=domain_admin_required)
 
 
 def check_domain_migration(view_func):

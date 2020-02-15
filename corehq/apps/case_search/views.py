@@ -2,6 +2,7 @@ import json
 import re
 
 from django.http import Http404
+from django.utils.decorators import method_decorator
 from django.views.generic import TemplateView
 
 from dimagi.utils.web import json_response
@@ -11,7 +12,7 @@ from corehq.apps.case_search.models import (
     case_search_enabled_for_domain,
     merge_queries,
 )
-from corehq.apps.domain.decorators import cls_require_superuser_or_contractor
+from corehq.apps.domain.decorators import require_superuser_or_contractor
 from corehq.apps.domain.views.base import DomainViewMixin
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_MAX_RESULTS
 from corehq.util.view_utils import BadRequest, json_error
@@ -21,7 +22,7 @@ class CaseSearchView(DomainViewMixin, TemplateView):
     template_name = 'case_search/case_search.html'
     urlname = 'case_search'
 
-    @cls_require_superuser_or_contractor
+    @method_decorator(require_superuser_or_contractor)
     def get(self, request, *args, **kwargs):
         if not case_search_enabled_for_domain(self.domain):
             raise Http404("Domain does not have case search enabled")
@@ -37,7 +38,7 @@ class CaseSearchView(DomainViewMixin, TemplateView):
         return context
 
     @json_error
-    @cls_require_superuser_or_contractor
+    @method_decorator(require_superuser_or_contractor)
     def post(self, request, *args, **kwargs):
         from corehq.apps.es.case_search import CaseSearchES
         if not case_search_enabled_for_domain(self.domain):
