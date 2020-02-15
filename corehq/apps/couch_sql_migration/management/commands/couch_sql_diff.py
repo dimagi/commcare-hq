@@ -30,8 +30,8 @@ class Command(BaseCommand):
     help = "Diff data in couch and SQL with parallel worker processes"
 
     def add_arguments(self, parser):
-        parser.add_argument('action', choices=[CASES, SHOW])
         parser.add_argument('domain')
+        parser.add_argument('action', choices=[CASES, SHOW])
         parser.add_argument('--no-input', action='store_true', default=False)
         parser.add_argument('--debug', action='store_true', default=False)
         parser.add_argument('--state-dir', dest='state_path',
@@ -80,7 +80,7 @@ class Command(BaseCommand):
                 progress information from the statedb.
             ''')
 
-    def handle(self, action, domain, **options):
+    def handle(self, domain, action, **options):
         if should_use_sql_backend(domain):
             raise CommandError(f'It looks like {domain} has already been migrated.')
 
