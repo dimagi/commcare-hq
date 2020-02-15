@@ -1,3 +1,4 @@
+import functools
 import logging
 from functools import wraps
 
@@ -473,11 +474,11 @@ def domain_admin_required_ex(redirect_page_name=None):
     return _outer
 
 
-def require_superuser_or_contractor(view_func):
+def require_superuser_or_pass_check(view_func, check_func):
     @wraps(view_func)
     def _inner(request, *args, **kwargs):
         user = request.user
-        if IS_CONTRACTOR.enabled(user.username) or user.invoke_superuser():
+        if (check_func and check_func(user)) or user.invoke_superuser():
             return view_func(request, *args, **kwargs)
         else:
             return HttpResponseRedirect(reverse("no_permissions"))
@@ -485,16 +486,17 @@ def require_superuser_or_contractor(view_func):
     return _inner
 
 
+require_superuser = functools.partial(require_superuser_or_pass_check, check_func=None)
+cls_require_superusers = cls_to_view(additional_decorator=require_superuser)
+require_superuser_or_contractor = functools.partial(
+    require_superuser_or_pass_check,
+    check_func=lambda user: IS_CONTRACTOR.enabled(user.username))
+cls_require_superuser_or_contractor = cls_to_view(additional_decorator=require_superuser_or_contractor)
+
+
 # Parallel to what we did with login_and_domain_required, above
 domain_admin_required = domain_admin_required_ex()
 cls_domain_admin_required = cls_to_view(additional_decorator=domain_admin_required)
-
-########################################################################################################
-# couldn't figure how to call reverse, so login_url is the actual url
-require_superuser = permission_required("is_superuser", login_url='/no_permissions/')
-cls_require_superusers = cls_to_view(additional_decorator=require_superuser)
-
-cls_require_superuser_or_contractor = cls_to_view(additional_decorator=require_superuser_or_contractor)
 
 
 def check_domain_migration(view_func):
