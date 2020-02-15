@@ -34,6 +34,7 @@ from lxml.builder import E
 
 from casexml.apps.phone.xml import SYNC_XMLNS
 from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
+from corehq.apps.users.middleware import SuperuserMiddleware
 from couchexport.models import Format
 from couchforms.openrosa_response import RESPONSE_XMLNS
 from dimagi.utils.django.email import send_HTML_email
@@ -86,6 +87,7 @@ class AuthenticateAs(UserAdministration):
         form = AuthenticateAsForm(self.request.POST)
         if form.is_valid():
             request.user = User.objects.get(username=form.full_username)
+            SuperuserMiddleware.reinit_request(request)
 
             # http://stackoverflow.com/a/2787747/835696
             # This allows us to bypass the authenticate call

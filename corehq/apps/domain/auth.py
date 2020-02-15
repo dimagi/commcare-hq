@@ -9,6 +9,7 @@ from django.views.decorators.debug import sensitive_variables
 
 from tastypie.authentication import ApiKeyAuthentication
 
+from corehq.apps.users.middleware import SuperuserMiddleware
 from dimagi.utils.django.request import mutable_querydict
 
 from corehq.apps.receiverwrapper.util import DEMO_SUBMIT_MODE
@@ -135,6 +136,7 @@ def basicauth(realm=''):
                 user = authenticate(username=uname, password=passwd)
                 if user is not None and user.is_active:
                     request.user = user
+                    SuperuserMiddleware.reinit_request(request)
                     return view(request, *args, **kwargs)
 
             # Either they did not provide an authorization header or
@@ -156,6 +158,7 @@ def basic_or_api_key(realm=''):
                 user = authenticate(username=username, password=password, request=request)
                 if user is not None and user.is_active:
                     request.user = user
+                    SuperuserMiddleware.reinit_request(request)
                     return view(request, *args, **kwargs)
             response = HttpResponse(status=401)
             response['WWW-Authenticate'] = 'Basic realm="%s"' % realm
@@ -190,6 +193,7 @@ def formplayer_as_user_auth(view):
 
         request.user = couch_user.get_django_user()
         request.couch_user = couch_user
+        SuperuserMiddleware.reinit_request(request)
 
         return view(request, *args, **kwargs)
 
