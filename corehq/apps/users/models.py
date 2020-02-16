@@ -6,7 +6,7 @@ from uuid import uuid4
 from xml.etree import cElementTree as ElementTree
 
 from django.conf import settings
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, AnonymousUser
 from django.contrib.postgres.fields import JSONField
 from django.db import connection, models, router
 from django.template.loader import render_to_string
@@ -830,6 +830,13 @@ class DjangoUserMixin(DocumentSchema):
         dummy.password = self.password
         return dummy.check_password(password)
 
+    def invoke_superuser(self):
+        return self.is_superuser
+
+
+# monkey patch
+User.invoke_superuser = lambda self: self.is_superuser
+
 
 class EulaMixin(DocumentSchema):
     CURRENT_VERSION = '3.0'  # Set this to the most up to date version of the eula
@@ -1323,9 +1330,6 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             endkey=[domain, {}],
             include_docs=True,
         )
-
-    def invoke_superuser(self):
-        return False
 
     def is_previewer(self):
         from django.conf import settings
@@ -2769,6 +2773,12 @@ class AnonymousCouchUser(object):
 
     def can_view_roles(self):
         return False
+
+    def invoke_superuser(self):
+        return False
+
+
+AnonymousUser.invoke_superuser = lambda self: False
 
 
 class UserReportingMetadataStaging(models.Model):
