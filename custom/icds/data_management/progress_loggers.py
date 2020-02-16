@@ -16,13 +16,11 @@ class DataManagementProgressLogger(ProcessorProgressLogger):
     def _doc_id(self, obj):
         raise NotImplementedError
 
-    def document_failed(self, obj):
-        super().document_failed(obj)
-        self.failure_logger.info(self._doc_id(obj))
+    def documents_failed(self, doc_processor):
 
-    def document_processed(self, obj):
-        super().document_processed(obj)
-        self.success_logger.info(self._doc_id(obj))
+    def documents_processed(self, doc_processor):
+        for case_id in doc_processor.updates:
+            self.failure_logger.info(case_id)
 
 
 class SQLBasedProgressLogger(DataManagementProgressLogger):

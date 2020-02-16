@@ -129,7 +129,7 @@ class DocumentProcessorController(object):
 
         ok = self.doc_processor.process_doc(doc)
         if ok:
-            self.progress.logger.document_processed(doc)
+            self._log_successful_update()
             self.progress.add()
         else:
             try:
@@ -139,6 +139,12 @@ class DocumentProcessorController(object):
                     raise
                 else:
                     self.progress.skip(doc)
+
+    def _log_successful_update(self):
+        self.progress.logger.documents_processed(self)
+
+    def _log_failed_update(self):
+        self.progress.logger.documents_failed(self)
 
 
 class BulkDocProcessorEventHandler(PaginationEventHandler):
@@ -191,13 +197,19 @@ class BulkDocProcessor(DocumentProcessorController):
         if self.doc_processor.should_process(doc):
             self.changes.append(doc)
 
+    def _log_successful_updates(self):
+        self.progress.logger.documents_processed(self)
+
+    def _log_failed_updates(self):
+        self.progress.logger.documents_failed(self)
+
     def process_chunk(self):
         """Called by the BulkDocProcessorEventHandler"""
         ok = self.doc_processor.process_bulk_docs(self.changes)
         if ok:
-            self.progress.logger.documents_processed(self.changes)
+            self._log_successful_updates()
             self.progress.add(len(self.changes))
             self.changes = []
         else:
-            self.progress.logger.documents_failed(self.changes)
+            self._log_failed_updates()
             raise BulkProcessingFailed("Processing batch failed")

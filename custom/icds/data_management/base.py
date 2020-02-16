@@ -63,5 +63,5 @@ class ESBasedDataManagement(DataManagement):
         for chunk in chunked(case_ids, 100):
             case_accessor = CaseAccessors(self.domain)
             doc_processor.process_bulk_docs(case_accessor.get_cases(list(chunk)))
-            logger.documents_processed(case_ids)
+            logger.documents_processed(doc_processor.case_ids_updated)
         return len(case_ids), 0

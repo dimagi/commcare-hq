@@ -26,6 +26,7 @@ HAS_MOBILE_PROPERTY_NO_VALUE = "no"
 class DataManagementDocProcessor(BaseDocProcessor):
     def __init__(self, domain):
         self.domain = domain
+        self.updates = {}  # cleared and repopulated on each bulk update
 
     @staticmethod
     def _create_case_blocks(updates, case_property):
@@ -52,7 +53,7 @@ class PopulateMissingMotherNameDocProcessor(DataManagementDocProcessor):
         self.case_accessor = CaseAccessors(self.domain)
 
     def process_bulk_docs(self, docs):
-        updates = {}
+        self.updates = {}
         for doc in docs:
             case_id = doc['_id']
             mother_case_ids = [i.referenced_id for i in CaseAccessorSQL.get_indices(self.domain, case_id)
@@ -63,9 +64,9 @@ class PopulateMissingMotherNameDocProcessor(DataManagementDocProcessor):
                 except CaseNotFound:
                     pass
                 else:
-                    updates[case_id] = mother_case.name
-        if updates:
-            submit_case_blocks(self._create_case_blocks(updates, MOTHER_NAME_PROPERTY),
+                    self.updates[case_id] = mother_case.name
+        if self.updates:
+            submit_case_blocks(self._create_case_blocks(self.updates, MOTHER_NAME_PROPERTY),
                                self.domain, user_id=SYSTEM_USER_ID)
         return True
 
@@ -85,9 +86,10 @@ class SanitizePhoneNumberDocProcessor(DataManagementDocProcessor):
         self.test_location_ids = find_test_awc_location_ids(self.domain)
 
     def process_bulk_docs(self, docs):
+        self.updates = {}
         if docs:
-            updates = {doc['_id']: '' for doc in docs}
-            submit_case_blocks(self._create_case_blocks(updates, PHONE_NUMBER_PROPERTY),
+            self.updates = {doc['_id']: '' for doc in docs}
+            submit_case_blocks(self._create_case_blocks(self.updates, PHONE_NUMBER_PROPERTY),
                                self.domain, user_id=SYSTEM_USER_ID)
         return True
 
@@ -106,13 +108,13 @@ class ResetMissingCaseNameDocProcessor(DataManagementDocProcessor):
         self.case_accessor = CaseAccessors(self.domain)
 
     def process_bulk_docs(self, cases):
-        updates = {}
+        self.updates = {}
         for case in cases:
             if self.should_process(case):
                 update_to_name = get_last_non_blank_value(case, 'name')
-                updates[case.case_id] = update_to_name
-        if updates:
-            submit_case_blocks(self._create_case_blocks(updates, 'name'), self.domain, user_id=SYSTEM_USER_ID)
+                self.updates[case.case_id] = update_to_name
+        if self.updates:
+            submit_case_blocks(self._create_case_blocks(self.updates, 'name'), self.domain, user_id=SYSTEM_USER_ID)
         return True
 
     def should_process(self, case):
