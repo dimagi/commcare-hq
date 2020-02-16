@@ -69,9 +69,6 @@ UPDATE agg_child_health
  		 stunting_normal = tmp.stunting_normal
  	FROM (
  		SELECT
- 			awc_loc.state_id as state_id,
- 			awc_loc.district_id as district_id,
- 			awc_loc.block_id as block_id,
  			chm.supervisor_id as supervisor_id,
  			chm.awc_id as awc_id,
  			chm.month as month,
@@ -85,23 +82,16 @@ UPDATE agg_child_health
  			SUM(CASE WHEN chm.zscore_grading_wfh_recorded_in_month = 1 AND chm.zscore_grading_wfh = 2 THEN 1 ELSE 0 END) as wasting_moderate_v2,
  			SUM(CASE WHEN chm.zscore_grading_wfh_recorded_in_month = 1 AND chm.zscore_grading_wfh = 1 THEN 1 ELSE 0 END) as wasting_severe_v2
  		FROM child_health_monthly chm
-      LEFT OUTER JOIN awc_location awc_loc ON (
-        awc_loc.supervisor_id = chm.supervisor_id AND awc_loc.doc_id = chm.awc_id
-      )
       WHERE chm.month = '2018-05-01'
-            AND awc_loc.state_id != ''
-            AND awc_loc.state_id IS NOT NULL
             AND chm.supervisor_id >= '0'
             AND chm.supervisor_id < '1'
-      GROUP BY awc_loc.state_id, awc_loc.district_id, awc_loc.block_id, chm.supervisor_id, chm.awc_id,
+      GROUP BY chm.supervisor_id, chm.awc_id,
                chm.month, chm.sex, chm.age_tranche, chm.caste 
  	) as tmp
- 	WHERE state_id = tmp.state_id
- 		AND district_id = tmp.district_id
- 		AND block_id = tmp.block_id
- 		AND supervisor_id = tmp.supervisor_id
+ 	WHERE supervisor_id = tmp.supervisor_id
  		AND awc_id = tmp.awc_id
  		AND month = tmp.month
+ 		AND aggregation_level = 5
 
 
 
