@@ -1554,6 +1554,7 @@ class AggregateAdolescentGirlsRegistrationForms(models.Model, AggregateMixin):
         unique_together = ('month', 'supervisor_id', 'person_case_id')  # pkey
 
     _agg_helper_cls = AggAdolescentGirlsRegistrationAggregate
+    _agg_atomic = False
 
 
 class AggregateMigrationForms(models.Model, AggregateMixin):
