@@ -31,15 +31,6 @@ class PopulateSQLCommand(BaseCommand):
         raise NotImplementedError()
 
     @classmethod
-    def couch_key(cls):
-        """
-            Set of doc keys to uniquely identify a couch document.
-        For most documents this is set(["id"]), but sometimes it's useful to use a more
-        human-readable key, typically for documents that have at most one doc per domain.
-        """
-        raise NotImplementedError()
-
-    @classmethod
     def sql_class(self):
         raise NotImplementedError()
 
@@ -90,9 +81,6 @@ class PopulateSQLCommand(BaseCommand):
     def couch_db(cls):
         return couch_config.get_db(cls.couch_db_slug())
 
-    def doc_key(self, doc):
-        return {key: doc[key] for key in doc if key in self.couch_key()}
-
     def add_arguments(self, parser):
         parser.add_argument(
             '--dry-run',
@@ -113,13 +101,17 @@ class PopulateSQLCommand(BaseCommand):
             self.sql_class().__name__,
         ))
         for doc in get_all_docs_with_doc_types(self.couch_db(), [self.couch_doc_type()]):
-            logger.info("{}Looking at doc with key {}".format(log_prefix, self.doc_key(doc)))
+            logger.info("{}Looking at {} doc with id {}".format(
+                log_prefix,
+                self.couch_doc_type(),
+                doc["_id"]
+            ))
             with transaction.atomic():
                 model, created = self.update_or_create_sql_object(doc)
                 if not dry_run:
-                    logger.info("{}{} model for doc with key {}".format(log_prefix,
+                    logger.info("{}{} model for doc with id {}".format(log_prefix,
                                                                         "Created" if created else "Updated",
-                                                                        self.doc_key(doc)))
+                                                                        doc["_id"]))
                     model.save()
                 elif created:
                     model.delete()

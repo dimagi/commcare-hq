@@ -884,6 +884,15 @@ class ExportIndicatorView(View):
 
         location = request.POST.get('location', '')
 
+        if not location and not request.couch_user.has_permission(
+                self.kwargs['domain'], 'access_all_locations'
+        ):
+            return HttpResponse(status_code=403)
+        if location and not user_can_access_location_id(
+                self.kwargs['domain'], request.couch_user, location
+        ):
+            return HttpResponse(status_code=403)
+
         sql_location = None
 
         if location and indicator != ISSNIP_MONTHLY_REGISTER_PDF:
@@ -2049,6 +2058,11 @@ class CasDataExport(View):
         year = int(request.POST.get('year', None))
         selected_date = date(year, month, 1).strftime('%Y-%m-%d')
 
+        if state_id and not user_can_access_location_id(
+                self.kwargs['domain'], request.couch_user, state_id
+        ):
+            return JsonResponse({"message": "Sorry, you do not have access to that location."})
+
         sync, _ = get_cas_data_blob_file(data_type, state_id, selected_date)
         if not sync:
             return JsonResponse({"message": "Sorry, the export you requested does not exist."})
@@ -2077,6 +2091,10 @@ class CasDataExport(View):
         year = int(request.GET.get('year', None))
         selected_date = date(year, month, 1).strftime('%Y-%m-%d')
 
+        if state_id and not user_can_access_location_id(
+                self.kwargs['domain'], request.couch_user, state_id
+        ):
+            return HttpResponse(status_code=403)
         sync, blob_id = get_cas_data_blob_file(data_type, state_id, selected_date)
 
         try:

@@ -216,9 +216,8 @@ class ContentForm(Form):
                 raise ValidationError(_("This field is required"))
             return cleaned_value
 
-        for expected_language_code in self.schedule_form.language_list:
-            if not cleaned_value.get(expected_language_code):
-                raise ValidationError(_("Please fill out all translations"))
+        if not any(cleaned_value.values()):
+            raise ValidationError(_("Please fill out at least one translation"))
 
         return cleaned_value
 

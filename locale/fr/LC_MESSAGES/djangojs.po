@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-02-05 20:42+0000\n"
+"POT-Creation-Date: 2020-02-12 21:28+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -3199,7 +3199,7 @@ msgstr ""
 
 #: corehq/apps/reports/static/reports/js/config.dataTables.bootstrap.js:31
 #: corehq/apps/reports/static/reports/js/config.dataTables.bootstrap.js:34
-#: corehq/apps/reports/static/reports/js/config.dataTables.bootstrap.js:173
+#: corehq/apps/reports/static/reports/js/config.dataTables.bootstrap.js:176
 #: corehq/apps/reports/static/reports/js/tabular.js:44
 msgid "Sorry!"
 msgstr ""
@@ -3544,11 +3544,11 @@ msgstr ""
 msgid "Group membership has changed."
 msgstr ""
 
-#: corehq/apps/users/static/users/js/filtered_download.js:31
+#: corehq/apps/users/static/users/js/filtered_download.js:32
 msgid "Download <%= count %> user"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/filtered_download.js:31
+#: corehq/apps/users/static/users/js/filtered_download.js:32
 msgid "Download <%= count %> users"
 msgstr ""
 

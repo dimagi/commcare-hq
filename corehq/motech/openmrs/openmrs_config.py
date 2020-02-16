@@ -8,8 +8,8 @@ from casexml.apps.case.models import (
     INDEX_RELATIONSHIP_CHILD,
     INDEX_RELATIONSHIP_EXTENSION,
 )
-from corehq.form_processor.abstract_models import DEFAULT_PARENT_IDENTIFIER
 from dimagi.ext.couchdbkit import (
+    BooleanProperty,
     DictProperty,
     DocumentSchema,
     ListProperty,
@@ -17,6 +17,7 @@ from dimagi.ext.couchdbkit import (
     StringProperty,
 )
 
+from corehq.form_processor.abstract_models import DEFAULT_PARENT_IDENTIFIER
 from corehq.motech.openmrs.const import OPENMRS_PROPERTIES
 from corehq.motech.openmrs.finders import PatientFinder
 from corehq.motech.openmrs.jsonpath import Cmp, WhereNot
@@ -124,6 +125,13 @@ class OpenmrsCaseConfig(DocumentSchema):
     #     }
     # }
     person_attributes = DictProperty()
+
+    # Create cases when importing via the Atom feed
+    import_creates_cases = BooleanProperty(default=True)
+    # If we ever need to disable updating cases, ``import_updates_cases``
+    # could be added here. Similarly, we could replace
+    # ``patient_finder.create_missing`` with ``export_creates_patients``
+    # and ``export_updates_patients``
 
     @classmethod
     def wrap(cls, data):
