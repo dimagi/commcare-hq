@@ -11,7 +11,6 @@ from django.views.decorators.http import require_POST
 
 from couchdbkit.exceptions import ResourceConflict
 
-from corehq.apps.users.middleware import SuperuserMiddleware
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 
 from corehq import toggles
@@ -98,7 +97,6 @@ def safe_cached_download(f):
         # make endpoints that call the user fail hard
         from django.contrib.auth.models import AnonymousUser
         request.user = AnonymousUser()
-        SuperuserMiddleware.reinit_request(request)
         username = request.GET.get('username')
         if request.GET.get('username'):
             request.GET = request.GET.copy()

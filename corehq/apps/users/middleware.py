@@ -54,37 +54,3 @@ class UsersMiddleware(MiddlewareMixin):
         elif is_public_reports(view_kwargs, request):
             request.couch_user = AnonymousCouchUser()
         return None
-
-
-class SuperuserMiddleware(MiddlewareMixin):
-    def process_request(self, request):
-        user_exists = getattr(request, 'user', None)
-        if user_exists and request.user.is_superuser:  # is_superuser intentional (of course)
-            def invoke_superuser():
-                return True
-        else:
-            def invoke_superuser():
-                return False
-
-        request.invoke_superuser = invoke_superuser
-        self.init_user(request)
-
-    def process_view(self, request, view_func, view_args, view_kwargs):
-        self.init_couch_user(request)
-
-    @staticmethod
-    def init_user(request):
-        if getattr(request, 'user', None):
-            request.user.invoke_superuser = request.invoke_superuser
-
-    @staticmethod
-    def init_couch_user(request):
-        if getattr(request, 'couch_user', None):
-            # can't set jsonobject dynamic properties to a function directly
-            # so we're setting in this roundabout way through __dict__
-            request.couch_user.__dict__['invoke_superuser'] = request.invoke_superuser
-
-    @classmethod
-    def reinit_request(cls, request):
-        cls.init_user(request)
-        cls.init_couch_user(request)

@@ -169,7 +169,6 @@ from .standard import ProjectReport, inspect
 from .standard.cases.basic import CaseListReport
 
 # Number of columns in case property history popup
-from ..users.middleware import SuperuserMiddleware
 
 DYNAMIC_CASE_PROPERTIES_COLUMNS = 4
 
@@ -846,7 +845,6 @@ def get_scheduled_report_response(couch_user, domain, scheduled_report_id,
         request.user = couch_user.get_django_user()
         request.domain = domain
         request.couch_user.current_domain = domain
-        SuperuserMiddleware.reinit_request(request)
     notification = ReportNotification.get(scheduled_report_id)
     return _render_report_configs(
         request,
