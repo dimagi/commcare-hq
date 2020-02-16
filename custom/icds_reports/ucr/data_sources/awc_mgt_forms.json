@@ -365,12 +365,22 @@
           "type": "boolean_expression",
           "operator": "eq",
           "expression": {
-            "type": "property_path",
-            "property_path": [
-              "form",
-              "center_questions",
-              "awc_open"
-            ]
+            "type": "coalesce",
+            "expression": {
+              "type": "property_path",
+              "property_path": [
+                "form",
+                "awc_open"
+              ]
+            },
+            "default_expression": {
+              "type": "property_path",
+              "property_path": [
+                "form",
+                "center_questions",
+                "awc_open"
+              ]
+            }
           },
           "property_value": "yes"
         }
