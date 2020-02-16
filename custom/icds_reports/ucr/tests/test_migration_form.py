@@ -19,7 +19,6 @@ class TestMigrationForms(BaseFormsTest):
                 "date_left": None,
                 "doc_id": None,
                 "timeend": None,
-                "migration_status": 'migrated',
                 "is_migrated": 1,
                 "person_case_id": "b08669b9-f8d5-4dfb-891f-8727a4486682"
             }])
@@ -31,7 +30,6 @@ class TestMigrationForms(BaseFormsTest):
                 "date_left": datetime.datetime(2020, 1, 29, 0, 0),
                 "doc_id": None,
                 "timeend": None,
-                "migration_status": "migrated",
                 "is_migrated": 1,
                 "person_case_id": "0b402471-c2e7-4cc5-b8c8-8cb0c4cdc4b1"
             }])
