@@ -62,10 +62,10 @@ class TestDemographics(TestCase):
         )
         expected = {
             "redirect": "demographics/adhaar",
-            "all": 1609,
+            "all": 1610,
             "format": "percent_and_div",
             "color": "green",
-            "percent": 10.045841136893584,
+            "percent": 10.049606069448492,
             "value": 346,
             "label": AADHAR_SEEDED_BENEFICIARIES,
             "frequency": "month",
@@ -86,11 +86,11 @@ class TestDemographics(TestCase):
         )
         expected = {
             "redirect": "demographics/enrolled_children",
-            "all": 1287,
+            "all": 1288,
             "format": "percent_and_div",
             "color": "red",
             "percent": 0.0,
-            "value": 1287,
+            "value": 1288,
             "label": CHILDREN_ENROLLED_FOR_ANGANWADI_SERVICES,
             "frequency": "month",
             "help_text": percent_children_enrolled_help_text()

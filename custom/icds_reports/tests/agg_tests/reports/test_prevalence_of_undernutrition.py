@@ -50,26 +50,26 @@ class TestPrevalenceOfUndernutrition(TestCase):
             data['data'],
             {
                 'st1': {'moderately_underweight': 320,
-                     'severely_underweight': 40,
-                     'normal': 1225,
-                     'weighed': 1585,
-                     'total': 2375,
-                     'original_name': ['st1'],
-                     'fillKey': '20%-35%'},
+                        'severely_underweight': 40,
+                        'normal': 1225,
+                        'weighed': 1585,
+                        'total': 2375,
+                        'original_name': ['st1'],
+                        'fillKey': '20%-35%'},
                 'st2': {'moderately_underweight': 325,
-                     'severely_underweight': 60,
-                     'normal': 1505,
-                     'weighed': 1890,
-                     'total': 2565,
-                     'original_name': ['st2'],
-                     'fillKey': '20%-35%'},
+                        'severely_underweight': 60,
+                        'normal': 1505,
+                        'weighed': 1890,
+                        'total': 2565,
+                        'original_name': ['st2'],
+                        'fillKey': '20%-35%'},
                 'st3': {'moderately_underweight': 0,
-                     'severely_underweight': 0,
-                     'normal': 0,
-                     'weighed': 0,
-                     'total': 1,
-                     'original_name': ['st3'],
-                     'fillKey': '0%-20%'},
+                        'severely_underweight': 0,
+                        'normal': 0,
+                        'weighed': 0,
+                        'total': 1,
+                        'original_name': ['st3'],
+                        'fillKey': '0%-20%'},
                 'st4': {'moderately_underweight': 0,
                         'severely_underweight': 0,
                         'normal': 0,
@@ -118,7 +118,7 @@ class TestPrevalenceOfUndernutrition(TestCase):
             },
             loc_level='state'
         )
-        self.assertEqual(data['rightLegend']['average'], '21.44')
+        self.assertEqual(data['rightLegend']['average'], '21.55')
 
     def test_map_data_right_legend_extended_info(self):
         data = get_prevalence_of_undernutrition_data_map(
@@ -131,7 +131,7 @@ class TestPrevalenceOfUndernutrition(TestCase):
         self.assertListEqual(
             data['rightLegend']['extended_info'],
             [
-                {'indicator': 'Total Children (0 - 5 years) weighed in given month:', 'value': '3,475'},
+                {'indicator': 'Total Children (0 - 5 years) weighed in given month:', 'value': '3,480'},
                 {'indicator': 'Number of children unweighed (0 - 5 years):', 'value': '1,480'},
                 {'indicator': '% Severely Underweight (0 - 5 years):', 'value': '2.88%'},
                 {'indicator': '% Moderately Underweight (0 - 5 years):', 'value': '18.56%'},
@@ -250,7 +250,7 @@ class TestPrevalenceOfUndernutrition(TestCase):
                 {'loc_name': 'st5', 'percent': 0.0},
                 {'loc_name': 'st6', 'percent': 0.0},
                 {'loc_name': 'st7', 'percent': 0.0},
-                {'loc_name': 'st2', 'percent': 20.37037037037037},
+                {'loc_name': 'st2', 'percent': 20.58047493403694},
                 {'loc_name': 'st1', 'percent': 22.71293375394322}
             ]
         )
@@ -432,7 +432,7 @@ class TestPrevalenceOfUndernutrition(TestCase):
                 {'loc_name': 'st5', 'percent': 0.0},
                 {'loc_name': 'st6', 'percent': 0.0},
                 {'loc_name': 'st7', 'percent': 0.0},
-                {'loc_name': 'st2', 'percent': 20.37037037037037},
+                {'loc_name': 'st2', 'percent': 20.58047493403694},
                 {'loc_name': 'st1', 'percent': 22.71293375394322}
             ]
         )

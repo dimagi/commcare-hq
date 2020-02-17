@@ -90,7 +90,7 @@ class TestImmunizationCoverage(TestCase):
             },
             loc_level='state'
         )
-        self.assertEqual(data['rightLegend']['average'], 10.79258010118044)
+        self.assertEqual(data['rightLegend']['average'], 10.783487784330244)
 
     def test_map_data_right_legend_extended_info(self):
         data = get_immunization_coverage_data_map(
@@ -106,7 +106,7 @@ class TestImmunizationCoverage(TestCase):
             [
                 {
                     'indicator': 'Total number of ICDS Child beneficiaries older than 1 year:',
-                    'value': "1,186"
+                    'value': "1,187"
                 },
                 {
                     'indicator': (
@@ -119,7 +119,7 @@ class TestImmunizationCoverage(TestCase):
                     'indicator': (
                         '% of children who have recieved complete immunizations required by age 1:'
                     ),
-                    'value': '10.79%'
+                    'value': '10.78%'
                 }
             ]
         )
