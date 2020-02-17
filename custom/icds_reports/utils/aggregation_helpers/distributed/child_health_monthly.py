@@ -365,9 +365,10 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
               AND pnc.month = %(start_date)s
               AND child_health.state_id = pnc.state_id
               AND child_health.supervisor_id = pnc.supervisor_id
-            LEFT OUTER JOIN "{agg_migration_table}" agg_migration ON case_list.person_case_id = agg_migration.person_case_id
-              AND agg_migration.month = %(start_date)s AND {valid_in_month}
-              AND case_list.supervisor_id = agg_migration.supervisor_id
+            LEFT OUTER JOIN "{agg_migration_table}" agg_migration ON child_health.mother_id = agg_migration.person_case_id
+              AND agg_migration.month = %(start_date)s
+              AND child_health.state_id = agg_migration.state_id
+              AND child_health.supervisor_id = agg_migration.supervisor_id
             LEFT OUTER JOIN "{agg_df_table}" df ON child_health.doc_id = df.case_id
               AND df.month = %(start_date)s
               AND child_health.state_id = df.state_id
