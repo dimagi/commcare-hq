@@ -475,7 +475,7 @@ class StateDB(DiffDB):
                 session.query(MissingDoc.doc_id)
                 .filter(MissingDoc.kind == kind)
             )
-            yield from iter_large(query, MissingDoc.doc_id)
+            yield from (x for x, in iter_large(query, MissingDoc.doc_id))
 
     def get_diff_stats(self):
         raise NotImplementedError("use get_doc_counts")

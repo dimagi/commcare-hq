@@ -54,6 +54,27 @@ def find_missing_docs(domain, state_dir, live_migrate=False, resume=True):
                     dd_count(f"commcare.couchsqlmigration.{entity}.has_diff")
 
 
+def recheck_missing_docs(domain, state_dir):
+    """Check if documents marked as missing are still missing"""
+    dd_count = partial(datadog_counter, tags=["domain:" + domain])
+    statedb = open_state_db(domain, state_dir, readonly=False)
+    counts = statedb.get_doc_counts()
+    with statedb:
+        for entity in ["form", "case"]:
+            missing_ids = MissingIds(entity, statedb, None)
+            for doc_type in missing_ids.doc_types:
+                if doc_type not in counts or not counts[doc_type].missing:
+                    continue
+                log.info("Re-checking %s (%s)", doc_type, counts[doc_type].missing)
+                were_missing_ids = statedb.iter_missing_doc_ids(doc_type)
+                for doc_ids in chunked(were_missing_ids, 1000, set):
+                    missed = set(missing_ids.drop_sql_ids(doc_ids))
+                    dd_count(f"commcare.couchsqlmigration.{entity}.has_diff",
+                             value=len(missed))
+                    for doc_id in doc_ids - missed:
+                        statedb.doc_not_missing(doc_type, doc_id)
+
+
 @attr.s
 class MissingIds:
     """Iterator of document ids found in Couch but not SQL"""

@@ -15,7 +15,10 @@ from corehq.apps.couch_sql_migration.couchsqlmigration import (
     do_couch_to_sql_migration,
     setup_logging,
 )
-from corehq.apps.couch_sql_migration.missingdocs import find_missing_docs
+from corehq.apps.couch_sql_migration.missingdocs import (
+    find_missing_docs,
+    recheck_missing_docs,
+)
 from corehq.apps.couch_sql_migration.progress import (
     MigrationStatus,
     couch_sql_migration_in_progress,
@@ -57,6 +60,7 @@ DIFF = "diff"
 CACHED = "cached"
 RESUME = "resume"
 REBUILD = "rebuild"
+RECHECK = "recheck"
 
 CASE_DIFF = {"process": True, "local": False, "none": None}
 
@@ -154,7 +158,7 @@ class Command(BaseCommand):
             """)
         parser.add_argument('--to', dest="rewind", help="Rewind iteration state.")
         parser.add_argument('--missing-docs',
-            choices=[RESUME, REBUILD, CACHED], default=RESUME,
+            choices=[RESUME, REBUILD, RECHECK, CACHED], default=RESUME,
             help="""
                 By default missing docs will be calculated before stats
                 are printed, resuming from the previous run if possible.
@@ -274,7 +278,9 @@ class Command(BaseCommand):
         status = get_couch_sql_migration_status(domain)
         if not self.live_migrate:
             self.live_migrate = status == MigrationStatus.DRY_RUN
-        if self.missing_docs != CACHED:
+        if self.missing_docs == RECHECK:
+            recheck_missing_docs(domain, self.state_dir)
+        elif self.missing_docs != CACHED:
             resume = self.missing_docs == RESUME
             find_missing_docs(domain, self.state_dir, self.live_migrate, resume)
         print(f"Couch to SQL migration status for {domain}: {status}")
