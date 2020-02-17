@@ -308,7 +308,7 @@ class TestPrevalenceOfSevere(TestCase):
                     {
                         "y": 0.6666666666666666,
                         "x": 1491004800000,
-                        "total_weighed": 690,
+                        "total_weighed": 691,
                         'total_measured': 9,
                         'total_height_eligible': 1022,
                     },
@@ -406,7 +406,7 @@ class TestPrevalenceOfSevere(TestCase):
                     {
                         "y": 0.2222222222222222,
                         "x": 1491004800000,
-                        "total_weighed": 690,
+                        "total_weighed": 691,
                         'total_measured': 9,
                         'total_height_eligible': 1022,
                     },

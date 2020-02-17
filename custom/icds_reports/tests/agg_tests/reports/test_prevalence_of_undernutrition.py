@@ -312,15 +312,15 @@ class TestPrevalenceOfUndernutrition(TestCase):
                         "unweighed": 0
                     },
                     {
-                        "y": 0.7478260869565218,
+                        "y": 0.7467438494934877,
                         "x": 1491004800000,
-                        "weighed": 3450,
+                        "weighed": 3455,
                         "unweighed": 1655
                     },
                     {
-                        "y": 0.7856115107913669,
+                        "y": 0.7844827586206896,
                         "x": 1493596800000,
-                        "weighed": 3475,
+                        "weighed": 3480,
                         "unweighed": 1480
                     }
                 ],
@@ -356,15 +356,15 @@ class TestPrevalenceOfUndernutrition(TestCase):
                         "unweighed": 0
                     },
                     {
-                        "y": 0.23043478260869565,
+                        "y": 0.23154848046309695,
                         "x": 1491004800000,
-                        "weighed": 3450,
+                        "weighed": 3455,
                         "unweighed": 1655
                     },
                     {
-                        "y": 0.1856115107913669,
+                        "y": 0.1867816091954023,
                         "x": 1493596800000,
-                        "weighed": 3475,
+                        "weighed": 3480,
                         "unweighed": 1480
                     }
                 ],
@@ -400,15 +400,15 @@ class TestPrevalenceOfUndernutrition(TestCase):
                         "unweighed": 0
                     },
                     {
-                        "y": 0.021739130434782608,
+                        "y": 0.02170767004341534,
                         "x": 1491004800000,
-                        "weighed": 3450,
+                        "weighed": 3455,
                         "unweighed": 1655
                     },
                     {
-                        "y": 0.02877697841726619,
+                        "y": 0.028735632183908046,
                         "x": 1493596800000,
-                        "weighed": 3475,
+                        "weighed": 3480,
                         "unweighed": 1480
                     }
                 ],
