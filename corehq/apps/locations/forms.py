@@ -372,13 +372,6 @@ class LocationForm(forms.Form):
         return location
 
 
-class LocationUserForm(NewMobileWorkerForm):
-    def clean_location_id(self):
-        # The user form class doesn't handle location. `LocationFormSet` adds
-        # the location to the user after.
-        return None
-
-
 class LocationFormSet(object):
     """Ties together the forms for location, location data, user, and user data."""
     _location_form_class = LocationForm
