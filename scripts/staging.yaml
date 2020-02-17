@@ -64,5 +64,4 @@ branches:
   - jls/migrate-RegistrationRequest-2 # Jenny Feb 10
   - dmr/use-npm-local-lessc  # Danny Feb 7
   - bmb/SAASP-10281  # Biyeun Feb 12
-  - jls/reconcile-location-searches # Jenny Feb 12
 submodules: {}
