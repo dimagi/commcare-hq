@@ -177,8 +177,8 @@ def dump_usernames(domain, download_id, user_filters, task):
     if location_id:
         location = SQLLocation.active_objects.get_or_None(location_id=location_id)
         location_name = location.name if location else ""
-    filename_suffix = "_".join([a for a in [domain, location_name] if bool(a)])
-    filename = "{}_users.xlsx".format(filename_suffix)
+    filename_prefix = "_".join([a for a in [domain, location_name] if bool(a)])
+    filename = "{}_users.xlsx".format(filename_prefix)
     _dump_xlsx_and_expose_download(filename, headers, rows, download_id, task, users_count)
 
 
