@@ -363,10 +363,10 @@ MOTECH sends case updates as changes to patient properties and
 attributes. Form submissions can also create Visits, Encounters and
 Observations in OpenMRS.
 
-Configure this in the "Form configs" section of the OpenMRS Forwarder
-configuration.
+Configure this in the "Encounters config" section of the OpenMRS
+Forwarder configuration.
 
-An example value of Form configs might look like this:
+An example value of "Encounters config" might look like this:
 
 .. code-block:: javascript
 
@@ -649,10 +649,10 @@ patient:
 
 3. The **case properties** to set. MOTECH uses the patient_identifiers,
    person_properties, person_preferred_name, person_preferred_address,
-   and person_attributes given in "Case config"
+   and person_attributes given in "Patient config"
    (OpenmrsRepeater.openmrs_config.case_config) to map the values of an
    OpenMRS patient to case properties. All and only the properties in
-   "Case config" are mapped.
+   "Patient config" are mapped.
 
 The **name of cases** updated from the Atom feed are set to the display
 name of the *person* (not the display name of patient because it often

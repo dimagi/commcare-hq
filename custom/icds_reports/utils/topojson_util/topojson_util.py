@@ -69,9 +69,12 @@ def get_topojson_file_for_level(level):
 
 def copy_custom_metadata(from_topojson, to_topojson):
     for location_name, location_data in to_topojson['objects'].items():
-        location_data['center'] = from_topojson['objects'][location_name]['center']
-        location_data['height'] = from_topojson['objects'][location_name]['height']
-        location_data['scale'] = from_topojson['objects'][location_name]['scale']
+        if location_name in from_topojson['objects']:
+            location_data['center'] = from_topojson['objects'][location_name]['center']
+            location_data['height'] = from_topojson['objects'][location_name]['height']
+            location_data['scale'] = from_topojson['objects'][location_name]['scale']
+        else:
+            raise ValueError(f'{location_name} was not found in source topojson!')
 
 
 def get_topojson_for_district(state, district):

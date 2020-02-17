@@ -84,6 +84,7 @@ from corehq.apps.sms.forms import (
     DISABLED,
     ENABLED,
     HIDE_ALL,
+    LANGUAGE_FALLBACK_UNTRANSLATED,
     SHOW_ALL,
     SHOW_INVALID,
     WELCOME_RECIPIENT_ALL,
@@ -587,7 +588,7 @@ class GlobalBackendMap(BaseAdminSectionView):
                         backend_id=new_catchall_backend_id
                     )
 
-            messages.success(request, _("Changes Saved."))
+            messages.success(request, _("Changes saved."))
             return HttpResponseRedirect(reverse(self.urlname))
         return self.get(request, *args, **kwargs)
 
@@ -1655,7 +1656,7 @@ def edit_sms_languages(request, domain):
             if lang not in tdoc.translations:
                 tdoc.translations[lang] = {}
 
-        for lang in tdoc.translations.keys():
+        for lang in set(tdoc.translations.keys()):
             if lang not in langs:
                 del tdoc.translations[lang]
 
@@ -1818,6 +1819,8 @@ class SMSSettingsView(BaseMessagingSectionView, AsyncHandlerMixin):
                     enabled_disabled(domain_obj.sms_mobile_worker_registration_enabled),
                 "registration_welcome_message":
                     self.get_welcome_message_recipient(domain_obj),
+                "language_fallback":
+                    domain_obj.sms_language_fallback or LANGUAGE_FALLBACK_UNTRANSLATED,
                 "override_daily_outbound_sms_limit":
                     ENABLED if domain_obj.custom_daily_outbound_sms_limit else DISABLED,
                 "custom_daily_outbound_sms_limit":
@@ -1854,6 +1857,8 @@ class SMSSettingsView(BaseMessagingSectionView, AsyncHandlerMixin):
                  "sms_survey_date_format"),
                 ("sms_conversation_length",
                  "sms_conversation_length"),
+                ("sms_language_fallback",
+                 "language_fallback"),
                 ("count_messages_as_read_by_anyone",
                  "count_messages_as_read_by_anyone"),
                 ("chat_message_count_threshold",
@@ -1905,7 +1910,7 @@ class SMSSettingsView(BaseMessagingSectionView, AsyncHandlerMixin):
                 form.enable_registration_welcome_sms_for_mobile_worker
 
             domain_obj.save()
-            messages.success(request, _("Changes Saved."))
+            messages.success(request, _("Changes saved."))
         return self.get(request, *args, **kwargs)
 
     @method_decorator(domain_admin_required)

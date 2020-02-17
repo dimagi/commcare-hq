@@ -17,7 +17,12 @@ class Migration(migrations.Migration):
             name='SQLDefaultConsumption',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('type', models.CharField(max_length=32, null=True)),
+                ('type', models.CharField(choices=[('domain', 'domain'),
+                                                   ('product', 'product'),
+                                                   ('supply-point-type', 'supply-point-type'),
+                                                   ('supply-point', 'supply-point')],
+                                          max_length=32,
+                                          null=True)),
                 ('domain', models.CharField(max_length=255, null=True)),
                 ('product_id', models.CharField(max_length=126, null=True)),
                 ('supply_point_type', models.CharField(max_length=126, null=True)),

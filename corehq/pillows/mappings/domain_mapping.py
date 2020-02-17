@@ -1,9 +1,10 @@
 from corehq.util.elastic import es_index
 from pillowtop.es_utils import ElasticsearchIndexInfo
 
-DOMAIN_INDEX = es_index("hqdomains_2016-08-08")
-DOMAIN_MAPPING = {'_meta': {'comment': '',
-                            'created': None},
+DOMAIN_INDEX = es_index("hqdomains_2020-02-10")
+DOMAIN_MAPPING = {
+ '_all': {'enabled': False},
+ '_meta': {'comment': '', 'created': None},
  'date_detection': False,
  'date_formats': ['yyyy-MM-dd',
                   "yyyy-MM-dd'T'HH:mm:ssZZ",
@@ -55,7 +56,6 @@ DOMAIN_MAPPING = {'_meta': {'comment': '',
                                        'user_ip': {'type': 'string'},
                                        'version': {'type': 'string'}},
                         'type': 'object'},
-                'commconnect_enabled': {'type': 'boolean'},
                 'commtrack_enabled': {'type': 'boolean'},
                 'copy_history': {'type': 'string'},
                 'cp_first_form': {'format': "yyyy-MM-dd||yyyy-MM-dd'T'HH:mm:ssZZ||yyyy-MM-dd'T'HH:mm:ss.SSSSSS||yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'||yyyy-MM-dd'T'HH:mm:ss'Z'||yyyy-MM-dd'T'HH:mm:ssZ||yyyy-MM-dd'T'HH:mm:ssZZ'Z'||yyyy-MM-dd'T'HH:mm:ss.SSSZZ||yyyy-MM-dd'T'HH:mm:ss||yyyy-MM-dd' 'HH:mm:ss||yyyy-MM-dd' 'HH:mm:ss.SSSSSS||mm/dd/yy' 'HH:mm:ss",
@@ -151,8 +151,6 @@ DOMAIN_MAPPING = {'_meta': {'comment': '',
                 'full_downloads': {'type': 'long'},
                 'hipaa_compliant': {'type': 'boolean'},
                 'hr_name': {'type': 'string'},
-                'image_path': {'type': 'string'},
-                'image_type': {'type': 'string'},
                 'internal': {'dynamic': False,
                              'properties': {'area': {'fields': {'area': {'index': 'analyzed',
                                                                          'type': 'string'},

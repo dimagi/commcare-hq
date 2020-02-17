@@ -1,3 +1,4 @@
+import datetime
 from sqlagg.columns import SumColumn, SimpleColumn
 
 from corehq.apps.reports.sqlreport import DatabaseColumn, AggregateColumn
@@ -101,12 +102,14 @@ class SystemUsageExport(ExportableMixin, IcdsSqlData):
                 SumColumn('usage_num_due_list_ccs_and_child_health'),
                 slug='usage_num_due_list_ccs_and_child_health')
             )
-            agg_columns.append(DatabaseColumn(
-                'Number of launched LSs',
-                SumColumn('num_supervisor_launched'),
-                format_fn=lambda x: (x or 0) if self.loc_level < 5 else "Not applicable at AWC level",
-                slug='num_supervisor_launched')
-            )
+            # adding this field to reports from jan 2020
+            if self.config['month'] >= datetime.date(2020, 1, 1):
+                agg_columns.append(DatabaseColumn(
+                    'Number of launched LSs',
+                    SumColumn('num_supervisor_launched'),
+                    format_fn=lambda x: (x or 0) if self.loc_level < 5 else "Not applicable at AWC level",
+                    slug='num_supervisor_launched')
+                )
         else:
             agg_columns.insert(4, AggregateColumn(
                 'Number of birth preparedness forms',

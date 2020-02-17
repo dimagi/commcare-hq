@@ -19,7 +19,7 @@ from corehq.apps.hqcase.dbaccessors import get_all_case_owner_ids
 from corehq.dbaccessors.couchapps.cases_by_server_date.by_owner_server_modified_on import (
     get_case_ids_modified_with_owner_since,
 )
-from corehq.doctypemigrations.continuous_migrate import bulk_get_revs
+from corehq.util.couch import bulk_get_revs
 from corehq.util.dates import iso_string_to_date
 from corehq.util.log import with_progress_bar
 
