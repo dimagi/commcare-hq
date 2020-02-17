@@ -261,8 +261,8 @@ class DashboardTab(UITab):
     @property
     @memoized
     def url(self):
-        from corehq.apps.dashboard.views import default_dashboard_url
-        return default_dashboard_url(self._request, self.domain)
+        from corehq.apps.dashboard.views import DomainDashboardView
+        return reverse(DomainDashboardView.urlname, args=[self.domain])
 
 
 class SetupTab(UITab):

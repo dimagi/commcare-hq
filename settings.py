@@ -351,8 +351,6 @@ HQ_APPS = (
 
     'custom.reports.mc',
     'custom.apps.crs_reports',
-    'custom.ilsgateway',
-    'custom.zipline',
     'custom.m4change',
     'custom.succeed',
     'custom.ucla',
@@ -572,7 +570,6 @@ CELERY_HEARTBEAT_THRESHOLDS = {
     "export_download_queue": 30,
     "icds_aggregation_queue": None,
     "icds_dashboard_reports_queue": None,
-    "ils_gateway_sms_queue": None,
     "logistics_background_queue": None,
     "logistics_reminder_queue": None,
     "reminder_case_update_queue": 15 * 60,
@@ -602,12 +599,6 @@ HQ_ACCOUNT_ROOT = "commcarehq.org"
 FORMPLAYER_URL = 'http://localhost:8080'
 
 ####### SMS Queue Settings #######
-
-CUSTOM_PROJECT_SMS_QUEUES = {
-    'ils-gateway': 'ils_gateway_sms_queue',
-    'ils-gateway-train': 'ils_gateway_sms_queue',
-    'ils-gateway-training': 'ils_gateway_sms_queue',
-}
 
 # Setting this to False will make the system process outgoing and incoming SMS
 # immediately rather than use the queue.
@@ -865,11 +856,6 @@ LOAD_BALANCED_APPS = {}
 # Override with the PEM export of an RSA private key, for use with any
 # encryption or signing workflows.
 HQ_PRIVATE_KEY = None
-
-# Settings for Zipline integration
-ZIPLINE_API_URL = ''
-ZIPLINE_API_USER = ''
-ZIPLINE_API_PASSWORD = ''
 
 # Set to the list of domain names for which we will run the ICDS SMS indicators
 ICDS_SMS_INDICATOR_DOMAINS = []
@@ -1398,7 +1384,6 @@ COUCHDB_APPS = [
     'pact',
     'accounting',
     'succeed',
-    'ilsgateway',
     ('auditcare', 'auditcare'),
     ('repeaters', 'receiverwrapper'),
     ('userreports', META_DB),
@@ -1488,10 +1473,6 @@ WEB_USER_TERM = "Web User"
 
 DEFAULT_CURRENCY = "USD"
 DEFAULT_CURRENCY_SYMBOL = "$"
-
-CUSTOM_SMS_HANDLERS = [
-    'custom.ilsgateway.tanzania.handler.handle',
-]
 
 SMS_HANDLERS = [
     'corehq.apps.commtrack.sms.handle',
@@ -2000,13 +1981,7 @@ CUSTOM_UCR_REPORT_FILTER_VALUES = [
 
 CUSTOM_MODULES = [
     'custom.apps.crs_reports',
-    'custom.ilsgateway',
 ]
-
-CUSTOM_DASHBOARD_PAGE_URL_NAMES = {
-    'ews-ghana': 'dashboard_page',
-    'ils-gateway': 'ils_dashboard_report'
-}
 
 DOMAIN_MODULE_MAP = {
     'mc-inscale': 'custom.reports.mc',
