@@ -51,8 +51,9 @@ class PopulateMissingMotherNameDocProcessor(DataManagementDocProcessor):
         self.test_location_ids = find_test_awc_location_ids(self.domain)
         self.case_accessor = CaseAccessors(self.domain)
 
-    def process_bulk_docs(self, docs):
+    def process_bulk_docs(self, docs, progress_logger):
         updates = {}
+        cases_updated = {}
         for doc in docs:
             case_id = doc['_id']
             mother_case_ids = [i.referenced_id for i in CaseAccessorSQL.get_indices(self.domain, case_id)
@@ -64,7 +65,10 @@ class PopulateMissingMotherNameDocProcessor(DataManagementDocProcessor):
                     pass
                 else:
                     updates[case_id] = {MOTHER_NAME_PROPERTY: mother_case.name}
+                    cases_updated[case_id] = doc
         if updates:
+            for case_id, case_doc in cases_updated.items():
+                progress_logger.document_processed(case_doc, updates[case_id])
             submit_case_blocks(self._create_case_blocks(updates),
                                self.domain, user_id=SYSTEM_USER_ID)
         return True
@@ -84,9 +88,11 @@ class SanitizePhoneNumberDocProcessor(DataManagementDocProcessor):
         super().__init__(domain)
         self.test_location_ids = find_test_awc_location_ids(self.domain)
 
-    def process_bulk_docs(self, docs):
+    def process_bulk_docs(self, docs, progress_logger):
         if docs:
             updates = {doc['_id']: {PHONE_NUMBER_PROPERTY: ''} for doc in docs}
+            for doc in docs:
+                progress_logger.document_processed(doc, updates[doc['_id']])
             submit_case_blocks(self._create_case_blocks(updates),
                                self.domain, user_id=SYSTEM_USER_ID)
         return True
@@ -105,13 +111,17 @@ class ResetMissingCaseNameDocProcessor(DataManagementDocProcessor):
         super().__init__(domain)
         self.case_accessor = CaseAccessors(self.domain)
 
-    def process_bulk_docs(self, cases):
+    def process_bulk_docs(self, cases, progress_logger):
         updates = {}
+        cases_updated = {}
         for case in cases:
             if self.should_process(case):
                 update_to_name = get_last_non_blank_value(case, 'name')
                 updates[case.case_id] = {'name': update_to_name}
+                cases_updated[case.case_id] = case
         if updates:
+            for case_id, case in cases_updated.items():
+                progress_logger.document_processed(case, updates[case_id])
             submit_case_blocks(self._create_case_blocks(updates), self.domain, user_id=SYSTEM_USER_ID)
         return True
 
