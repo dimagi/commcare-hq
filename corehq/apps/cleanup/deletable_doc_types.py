@@ -24,5 +24,6 @@ DELETABLE_COUCH_DOC_TYPES = {
     'ForwardingRule-Deleted': (MAIN_DB,),
     'GlobalAppConfig': (settings.NEW_APPS_DB,),
     'ILSGatewayConfig': (MAIN_DB,),
+    'RegistrationRequest': (MAIN_DB,),
     'WisePillDeviceEvent': (MAIN_DB,),
 }
