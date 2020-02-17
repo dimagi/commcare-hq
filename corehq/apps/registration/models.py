@@ -16,13 +16,14 @@ from corehq.apps.domain.models import Domain
 class RegistrationRequest(models.Model):
     tos_confirmed = models.BooleanField(default=False)
     request_time = models.DateTimeField()
-    request_ip = models.CharField(max_length=31)
+    request_ip = models.CharField(max_length=31, null=True)
     activation_guid = models.CharField(max_length=126, unique=True)
     confirm_time = models.DateTimeField(null=True)
     confirm_ip = models.CharField(max_length=31, null=True)
     domain = models.CharField(max_length=255, null=True)
     new_user_username = models.CharField(max_length=255, null=True)
     requesting_user_username = models.CharField(max_length=255, null=True)
+    couch_id = models.CharField(max_length=126, null=True, db_index=True)
 
     class Meta:
         db_table = "registration_registrationrequest"

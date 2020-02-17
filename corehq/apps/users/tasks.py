@@ -42,6 +42,12 @@ def bulk_upload_async(domain, user_specs, group_specs):
 
 
 @task(serializer='pickle')
+def bulk_download_usernames_async(domain, download_id, user_filters):
+    from corehq.apps.users.bulk_download import dump_usernames
+    dump_usernames(domain, download_id, user_filters, bulk_download_usernames_async)
+
+
+@task(serializer='pickle')
 def bulk_download_users_async(domain, download_id, user_filters):
     from corehq.apps.users.bulk_download import dump_users_and_groups, GroupNameError
     errors = []

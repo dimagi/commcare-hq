@@ -4,6 +4,7 @@
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
 # Translators:
+# Dimagi Dev <devops@dimagi.com>, 2017
 # esoergel, 2018
 # Saket Kanth <skanth@dimagi.com>, 2018
 # Abdel Nasser Iro <abdel.nasser.iro.gigo@millenniumpromise.org>, 2018
@@ -11,18 +12,17 @@
 # Claire_Cravero <ccravero@dimagi.com>, 2018
 # Ismaïla Diene <idiene@dimagi.com>, 2019
 # Sarah Sagan <ssagan@dimagi.com>, 2019
-# Tyler Wymer <twymer@dimagi.com>, 2020
-# Dimagi Dev <devops@dimagi.com>, 2020
-# Aissetou Sawadogo <ais107@hotmail.com>, 2020
+# Aissetou Sawadogo <ais107@hotmail.com>, 2019
+# Tyler Wymer <twymer@dimagi.com>, 2019
 #
 #, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-02-05 20:42+0000\n"
+"POT-Creation-Date: 2020-02-12 21:28+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
-"Last-Translator: Aissetou Sawadogo <ais107@hotmail.com>, 2020\n"
+"Last-Translator: Tyler Wymer <twymer@dimagi.com>, 2019\n"
 "Language-Team: French (https://www.transifex.com/dimagi/teams/9388/fr/)\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
@@ -3134,10 +3134,8 @@ msgid "Edit mapping for <%= property %>"
 msgstr ""
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/validators.ko.js:15
-#, fuzzy
-#| msgid "Please enter a valid email."
 msgid "Not a valid email"
-msgstr "Veuillez entrer une adresse e-mail valide"
+msgstr ""
 
 #: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:80
 msgid ""
@@ -3241,7 +3239,7 @@ msgstr ""
 
 #: corehq/apps/reports/static/reports/js/config.dataTables.bootstrap.js:31
 #: corehq/apps/reports/static/reports/js/config.dataTables.bootstrap.js:34
-#: corehq/apps/reports/static/reports/js/config.dataTables.bootstrap.js:173
+#: corehq/apps/reports/static/reports/js/config.dataTables.bootstrap.js:176
 #: corehq/apps/reports/static/reports/js/tabular.js:44
 msgid "Sorry!"
 msgstr "Désolé!"
@@ -3590,11 +3588,11 @@ msgstr ""
 msgid "Group membership has changed."
 msgstr "L'adhésion au groupe a été modifiée."
 
-#: corehq/apps/users/static/users/js/filtered_download.js:31
+#: corehq/apps/users/static/users/js/filtered_download.js:32
 msgid "Download <%= count %> user"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/filtered_download.js:31
+#: corehq/apps/users/static/users/js/filtered_download.js:32
 msgid "Download <%= count %> users"
 msgstr ""
 
@@ -3843,15 +3841,3 @@ msgstr ""
 #: custom/ilsgateway/static/ilsgateway/js/main.js:50
 msgid "Search Locations..."
 msgstr ""
-
-#~ msgid "show"
-#~ msgstr "afficher"
-
-#~ msgid "hide"
-#~ msgstr "masquer"
-
-#~ msgid "URL"
-#~ msgstr "URL"
-
-#~ msgid "Parameters"
-#~ msgstr "Manejo de Casos"

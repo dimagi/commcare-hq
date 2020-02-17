@@ -71,9 +71,8 @@ class CouchDataDumper(DataDumper):
         for doc in iter_docs(couch_db, doc_ids, chunksize=500):
             count += 1
             doc = _get_doc_with_attachments(couch_db, doc)
-            json_dump = json.dumps(doc).encode('utf-8')
-            output_stream.write(json_dump)
-            output_stream.write(b'\n')
+            output_stream.write(json.dumps(doc))
+            output_stream.write('\n')
         self.stdout.write('Dumped {} {}\n'.format(count, model_label))
         return Counter({model_label: count})
 
@@ -94,9 +93,8 @@ class ToggleDumper(DataDumper):
         count = 0
         for toggle in self._get_toggles_to_migrate():
             count += 1
-            json_dump = json.dumps(toggle).encode('utf-8')
-            output_stream.write(json_dump)
-            output_stream.write(b'\n')
+            output_stream.write(json.dumps(toggle))
+            output_stream.write('\n')
 
         self.stdout.write('Dumped {} Toggles\n'.format(count))
         return Counter({'Toggle': count})

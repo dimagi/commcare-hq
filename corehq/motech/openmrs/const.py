@@ -43,7 +43,7 @@ LOCATION_OPENMRS_UUID = 'openmrs_uuid'
 
 # To match cases against their OpenMRS Person UUID, in case config
 # (Project Settings > Data Forwarding > Forward to OpenMRS > Configure >
-# Case config) "patient_identifiers", set the identifier's key to the
+# Patient config) "patient_identifiers", set the identifier's key to the
 # value of PERSON_UUID_IDENTIFIER_TYPE_ID. e.g.::
 #
 #     "patient_identifiers": {
