@@ -1055,7 +1055,7 @@ def _iter_missing_blob_present_forms(statedb, stopper):
     domain = statedb.domain
     metadb = get_blob_db().metadb
     seen = set()
-    for doc_id, diffs in statedb.iter_doc_diffs("CommCareCase"):
+    for kind, doc_id, diffs in statedb.iter_doc_diffs("CommCareCase"):
         for diff in diffs:
             if not diff.old_value or "missing, blob present" not in diff.old_value:
                 continue

@@ -423,7 +423,7 @@ class StateDB(DiffDB):
             if kind is not None:
                 query = query.filter_by(kind=kind)
             for doc in iter_large(query, _model.doc_id):
-                yield doc.doc_id, [
+                yield doc.kind, doc.doc_id, [
                     _model.dict_to_diff(doc.kind, doc.doc_id, data)
                     for data in json.loads(doc.diffs)
                 ]

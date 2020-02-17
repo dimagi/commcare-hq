@@ -1,10 +1,8 @@
-import csv
 import logging
 import os
 import pdb
 import signal
 from contextlib import contextmanager, suppress
-from io import StringIO
 
 from django.db import close_old_connections
 from django.db.utils import DatabaseError, InterfaceError
@@ -154,7 +152,7 @@ class CaseDiffTool:
             for batch in batches:
                 data = load_and_diff_cases(batch, log_cases=log_cases)
                 yield data
-                diffs = {(kind, case_id): diffs for kind, case_id, diffs in data.diffs if diffs}
+                diffs = [(kind, case_id, diffs) for kind, case_id, diffs in data.diffs if diffs]
                 if diffs:
                     log.info("found cases with diffs:\n%s", format_diffs(diffs))
                     if stop:
@@ -227,10 +225,10 @@ def iter_sql_cases_with_sorted_transactions(domain):
             yield from iter(set(case_id for case_id, in cursor.fetchall()))
 
 
-def format_diffs(diff_dict):
+def format_diffs(json_diffs, changes=False):
     lines = []
-    for (kind, doc_id), diffs in sorted(diff_dict.items()):
-        lines.append(f"{kind} {doc_id}")
+    for kind, doc_id, diffs in sorted(json_diffs, key=lambda x: x[1]):
+        lines.append(f"{kind} {doc_id} {diffs[0].reason if changes else ''}")
         for diff in sorted(diffs, key=lambda d: (d.diff_type, d.path)):
             if len(repr(diff.old_value) + repr(diff.new_value)) > 60:
                 lines.append(f"  {diff.diff_type} {list(diff.path)}")
@@ -242,24 +240,6 @@ def format_diffs(diff_dict):
                     f" {diff.old_value!r} -> {diff.new_value!r}"
                 )
     return "\n".join(lines)
-
-
-def csv_diffs(diff_dict):
-    lines = []
-    for (kind, doc_id), diffs in sorted(diff_dict.items()):
-        for diff in sorted(diffs, key=lambda d: (d.diff_type, d.path)):
-            lines.append([
-                kind,
-                doc_id,
-                diff.diff_type,
-                "/".join(diff.path),
-                diff.old_value,
-                diff.new_value,
-            ])
-    buffer = StringIO()
-    writer = csv.writer(buffer)
-    writer.writerows(lines)
-    return buffer.getvalue()
 
 
 def init_worker(domain, *args):
