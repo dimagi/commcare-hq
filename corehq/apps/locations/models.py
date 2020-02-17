@@ -310,15 +310,21 @@ class LocationManager(LocationQueriesMixin, AdjListManager):
 
     def filter_path_by_user_input(self, domain, user_input):
         """
-        Returns a queryset including all locations matching the user input
-        and their children. This means "Middlesex" will match:
-            Massachusetts/Middlesex
-            Massachusetts/Middlesex/Boston
-            Massachusetts/Middlesex/Cambridge
-        It matches by name or site-code
+        Returns a queryset based on user input, filtering on the full path
+          - "middlesex" will return child locations in that county
+          - matching happens by name or site-code
+          - users can filter across multiple nodes by splitting with a slash
+          - a query segment can be wrapped in quotes, to require an exact name match
+        Refer to TestFilterPath for example usages.
         """
-        direct_matches = self._user_input_filter(domain, user_input)
-        return self.get_queryset_descendants(direct_matches, include_self=True)
+        query = self
+        for part in filter(None, user_input.split('/')):
+            if part.startswith('"') and part.endswith('"'):
+                direct_matches = query.filter(name__iexact=part[1:-1])
+            else:
+                direct_matches = query.filter_by_user_input(domain, part.lstrip('"'))
+            query = self.get_queryset_descendants(direct_matches, include_self=True)
+        return query
 
     def get_locations(self, location_ids):
         return self.filter(location_id__in=location_ids)

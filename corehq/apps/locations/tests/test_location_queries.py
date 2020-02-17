@@ -37,22 +37,6 @@ class TestLocationQuerysetMethods(BaseTestLocationQuerysetMethods):
             [loc.name for loc in middlesex_locs]
         )
 
-    def test_filter_path_by_user_input(self):
-        middlesex_locs = (SQLLocation.objects
-                          .filter_path_by_user_input(self.domain, "Middlesex"))
-        self.assertItemsEqual(
-            ['Middlesex', 'Cambridge', 'Somerville'],
-            [loc.name for loc in middlesex_locs]
-        )
-
-    def test_filter_by_partial_match(self):
-        middlesex_locs = (SQLLocation.objects
-                          .filter_path_by_user_input(self.domain, "Middle"))
-        self.assertItemsEqual(
-            ['Middlesex', 'Cambridge', 'Somerville'],
-            [loc.name for loc in middlesex_locs]
-        )
-
     def test_ancestors(self):
         boston_matches = (SQLLocation.objects
                           .filter_by_user_input(self.domain, "Boston"))
@@ -171,3 +155,47 @@ class TestLocationScopedQueryset(BaseTestLocationQuerysetMethods):
             .accessible_to_user(self.domain, self.web_user)
         )
         self.assertItemsEqual([], no_locs)
+
+
+class TestFilterPath(LocationHierarchyTestCase):
+    location_type_names = ['state', 'county', 'city']
+    location_structure = [
+        ('Massachusetts', [
+            ('Middlesex', [
+                ('Cambridge', []),
+                ('Somerville', []),
+                ('Evil Somerville', []),
+            ]),
+            ('Suffolk', [
+                ('Boston', []),
+                ('Brookline', []),
+            ])
+        ]),
+        ('Copycat State', [
+            ('Evil Middlesex', [
+                ('Cambridge', []),
+                ('Somerville', []),
+            ]),
+        ])
+    ]
+
+    def test_path_queries(self):
+        for querystring, expected in [
+            ('Suffolk', ['Suffolk', 'Boston', 'Brookline']),
+            ('Suff', ['Suffolk', 'Boston', 'Brookline']),
+            ('Cambridge', ['Cambridge', 'Cambridge']),
+            ('Massachusetts/Cambridge', ['Cambridge']),
+            ('"Copycat"/Cambridge', []),
+            ('Middlesex/Cambridge', ['Cambridge', 'Cambridge']),
+            ('"Middlesex"/Cambridge', ['Cambridge']),
+            ('"Middlesex/Cambridge', ['Cambridge', 'Cambridge']),
+            ('"Middlesex"/Somerville', ['Somerville', 'Evil Somerville']),
+            ('"Middlesex"/"Somer', ['Somerville', 'Evil Somerville']),
+            ('"Middlesex"/"Somerville"', ['Somerville']),
+            ('mass/mid/Som', ['Somerville', 'Evil Somerville']),
+        ]:
+            actual = list(SQLLocation.objects
+                          .filter_path_by_user_input(self.domain, querystring)
+                          .values_list('name', flat=True))
+            error_msg =  f"\nExpected '{querystring}' to yield\n{expected}\nbut got\n{actual}"
+            self.assertItemsEqual(actual, expected, error_msg)
