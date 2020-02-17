@@ -28,11 +28,11 @@ class DataManagementDocProcessor(BaseDocProcessor):
         self.domain = domain
 
     @staticmethod
-    def _create_case_blocks(updates, case_property):
+    def _create_case_blocks(updates):
         case_blocks = []
-        for case_id, new_value in updates.items():
+        for case_id, case_updates in updates.items():
             case_block = CaseBlock(case_id,
-                                   update={case_property: new_value},
+                                   update=case_updates,
                                    user_id=SYSTEM_USER_ID)
             case_block = ElementTree.tostring(case_block.as_xml()).decode('utf-8')
             case_blocks.append(case_block)
@@ -63,9 +63,9 @@ class PopulateMissingMotherNameDocProcessor(DataManagementDocProcessor):
                 except CaseNotFound:
                     pass
                 else:
-                    updates[case_id] = mother_case.name
+                    updates[case_id] = {MOTHER_NAME_PROPERTY: mother_case.name}
         if updates:
-            submit_case_blocks(self._create_case_blocks(updates, MOTHER_NAME_PROPERTY),
+            submit_case_blocks(self._create_case_blocks(updates),
                                self.domain, user_id=SYSTEM_USER_ID)
         return True
 
@@ -86,8 +86,8 @@ class SanitizePhoneNumberDocProcessor(DataManagementDocProcessor):
 
     def process_bulk_docs(self, docs):
         if docs:
-            updates = {doc['_id']: '' for doc in docs}
-            submit_case_blocks(self._create_case_blocks(updates, PHONE_NUMBER_PROPERTY),
+            updates = {doc['_id']: {PHONE_NUMBER_PROPERTY: ''} for doc in docs}
+            submit_case_blocks(self._create_case_blocks(updates),
                                self.domain, user_id=SYSTEM_USER_ID)
         return True
 
@@ -110,9 +110,9 @@ class ResetMissingCaseNameDocProcessor(DataManagementDocProcessor):
         for case in cases:
             if self.should_process(case):
                 update_to_name = get_last_non_blank_value(case, 'name')
-                updates[case.case_id] = update_to_name
+                updates[case.case_id] = {'name': update_to_name}
         if updates:
-            submit_case_blocks(self._create_case_blocks(updates, 'name'), self.domain, user_id=SYSTEM_USER_ID)
+            submit_case_blocks(self._create_case_blocks(updates), self.domain, user_id=SYSTEM_USER_ID)
         return True
 
     def should_process(self, case):
