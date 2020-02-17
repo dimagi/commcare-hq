@@ -1,7 +1,13 @@
 from testil import eq
 
-from corehq.motech.openmrs.openmrs_config import OpenmrsConfig, OpenmrsFormConfig
-from corehq.motech.openmrs.workflow_tasks import CreateVisitsEncountersObsTask
+from corehq.motech.openmrs.openmrs_config import (
+    OpenmrsConfig,
+    OpenmrsFormConfig,
+)
+from corehq.motech.openmrs.workflow_tasks import (
+    CreateVisitsEncountersObsTask,
+    get_values_for_concept,
+)
 from corehq.motech.value_source import CaseTriggerInfo
 
 
@@ -24,8 +30,8 @@ def test_concept_directions():
         }
     )
     task = get_task(info, form_json, form_config_dict)
-    values_for_concept = task._get_values_for_concept(form_config, task.info)
-    eq(values_for_concept, {
+    values_for_concepts = get_values_for_concept(form_config, task.info)
+    eq(values_for_concepts, {
         # "direction": "out"
         'e7fdcd25-6d11-4d85-a80a-8979785f0f4b': ['eea8e4e9-4a91-416c-b0f5-ef0acfbc51c0'],
         # "direction": null, or not specified
