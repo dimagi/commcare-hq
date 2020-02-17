@@ -28,8 +28,8 @@ hqDefine("users/js/mobile_workers",[
     'nic_compliance/js/encoder',
     'jquery.rmi/jquery.rmi',
     'zxcvbn/dist/zxcvbn',
+    'locations/js/widgets',
     'hqwebapp/js/components.ko', // for pagination
-    'select2/dist/js/select2.full.min',
 ], function (
     $,
     ko,
@@ -39,7 +39,8 @@ hqDefine("users/js/mobile_workers",[
     googleAnalytics,
     nicEncoder,
     RMI,
-    zxcvbn
+    zxcvbn,
+    locationsWidgets
 ) {
     'use strict';
     // These are used as css classes, so the values of success/warning/error need to be what they are.
@@ -346,31 +347,7 @@ hqDefine("users/js/mobile_workers",[
             self.usernameAvailabilityStatus(null);
             self.usernameStatusMessage(null);
 
-            $("#id_location_id").select2({
-                minimumInputLength: 0,
-                width: '100%',
-                placeholder: gettext("Select location"),
-                allowClear: 1,
-                ajax: {
-                    delay: 100,
-                    url: options.location_url,
-                    data: function (params) {
-                        return {
-                            q: params.term,
-                            page: params.page,
-                        };
-                    },
-                    dataType: 'json',
-                    processResults: function (data, params) {
-                        params.page = params.page || 1;
-                        var more = data.more || (params.page * 10) < data.total;
-                        return {
-                            results: data.results,
-                            pagination: { more: more },
-                        };
-                    },
-                },
-            });
+            locationsWidgets.initAutocomplete($("#id_location_id"));
 
             googleAnalytics.track.event('Manage Mobile Workers', 'New Mobile Worker', '');
         };
