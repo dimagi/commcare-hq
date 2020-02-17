@@ -356,8 +356,7 @@ hqDefine("users/js/mobile_workers",[
                     url: options.location_url,
                     data: function (params) {
                         return {
-                            name: params.term,
-                            page_limit: 10,
+                            q: params.term,
                             page: params.page,
                         };
                     },
@@ -366,12 +365,7 @@ hqDefine("users/js/mobile_workers",[
                         params.page = params.page || 1;
                         var more = data.more || (params.page * 10) < data.total;
                         return {
-                            results: _.map(data.results, function (r) {
-                                return {
-                                    text: r.name,
-                                    id: r.id,
-                                };
-                            }),
+                            results: data.results,
                             pagination: { more: more },
                         };
                     },
