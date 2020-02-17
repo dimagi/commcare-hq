@@ -325,6 +325,10 @@ def update_patient(repeater, patient_uuid):
         case_type=case_type,
     )
     if error == LookupErrors.NotFound:
+        if not repeater.openmrs_config.case_config.import_creates_cases:
+            # We can't create cases via the Atom feed, just update them.
+            # Nothing to do here.
+            return
         default_owner: Optional[CommCareUser] = repeater.first_user
         case_block = get_addpatient_caseblock(case_type, default_owner, patient, repeater)
     elif error == LookupErrors.MultipleResults:
@@ -365,6 +369,9 @@ def import_encounter(repeater, encounter_uuid):
     patient_case_id, default_owner_id, patient_case_block = get_case_id_owner_id_case_block(
         repeater, encounter['patientUuid'],
     )
+    if not patient_case_id:
+        # No patient to create or update. Ignore this encounter.
+        return
     if patient_case_block:
         case_blocks.append(patient_case_block)
 
@@ -448,7 +455,7 @@ def get_encounter(repeater, encounter_uuid):
 def get_case_id_owner_id_case_block(
     repeater: OpenmrsRepeater,
     patient_uuid: str,
-) -> Tuple[str, str, Optional[CaseBlock]]:
+) -> Tuple[Optional[str], Optional[str], Optional[CaseBlock]]:
     """
     If a case exists with external_id == patient_uuid, returns its
     case_id, owner_id, and None. Otherwise returns the case_id, owner_id
@@ -458,6 +465,9 @@ def get_case_id_owner_id_case_block(
     case = get_case(repeater, patient_uuid)
     if case:
         return case.case_id, case.owner_id, None
+    if not repeater.openmrs_config.case_config.import_creates_cases:
+        # We cannot create new cases for patients in the Atom feed.
+        return None, None, None
     case_block = create_case(repeater, patient_uuid)
     return case_block.case_id, case_block.owner_id, case_block
 

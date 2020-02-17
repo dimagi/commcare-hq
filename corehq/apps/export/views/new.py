@@ -23,7 +23,12 @@ from corehq.apps.analytics.tasks import track_workflow
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.data_interfaces.dispatcher import require_can_edit_data
 from corehq.apps.domain.decorators import login_and_domain_required
-from corehq.apps.export.const import CASE_EXPORT, FORM_EXPORT, SharingOption
+from corehq.apps.export.const import (
+    CASE_EXPORT,
+    FORM_EXPORT,
+    SharingOption,
+    PROPERTY_TAG_INFO,
+)
 from corehq.apps.export.dbaccessors import get_properly_wrapped_export_instance
 from corehq.apps.export.exceptions import (
     BadExportConfiguration,
@@ -109,10 +114,15 @@ class BaseExportView(BaseProjectDataView):
             sharing_options = SharingOption.CHOICES
         else:
             sharing_options = [SharingOption.EDIT_AND_EXPORT]
+
+        allow_deid = has_privilege(self.request, privileges.DEIDENTIFIED_DATA)
+        if self.export_instance.is_odata_config:
+            allow_deid = allow_deid and toggles.ALLOW_DEID_ODATA_FEED.enabled(self.domain)
+
         return {
             'export_instance': self.export_instance,
             'export_home_url': self.export_home_url,
-            'allow_deid': has_privilege(self.request, privileges.DEIDENTIFIED_DATA),
+            'allow_deid': allow_deid,
             'has_excel_dashboard_access': domain_has_privilege(self.domain, EXCEL_DASHBOARD),
             'has_daily_saved_export_access': domain_has_privilege(self.domain, DAILY_SAVED_EXPORT),
             'can_edit': self.export_instance.can_edit(self.request.couch_user),
@@ -153,8 +163,8 @@ class BaseExportView(BaseProjectDataView):
                     is_reserved_number = (
                         column.label == 'number' and table_id > 0 and table.selected
                     )
-                    if (column.label == 'formid'
-                            or column.label == 'caseid'
+                    if ((column.label in ['formid', 'caseid']
+                         and PROPERTY_TAG_INFO in column.tags)
                             or is_reserved_number):
                         column.selected = True
 

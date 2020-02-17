@@ -25,10 +25,7 @@ def get_valid_recipients(recipients):
     :return: list of recipient emails not marked as bounced
     """
     from corehq.util.models import BouncedEmail
-    bounced_emails = set(
-        BouncedEmail.objects.filter(email__in=recipients).values_list(
-            'email', flat=True)
-    )
+    bounced_emails = BouncedEmail.get_hard_bounced_emails(recipients)
     return [recipient for recipient in recipients if recipient not in bounced_emails]
 
 

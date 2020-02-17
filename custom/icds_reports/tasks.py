@@ -545,13 +545,17 @@ def _run_custom_sql_script(commands, day=None, db_alias=None):
 @track_time
 def aggregate_awc_daily(day):
 
-    agg_daily_dates = [force_to_date(day) - timedelta(days=2),
-                       force_to_date(day) - timedelta(days=1),
-                       force_to_date(day)]
+    agg_daily_dates = [{
+        'date': force_to_date(day) - timedelta(days=2),
+        'use_agg_awc': False},
+        {'date': force_to_date(day) - timedelta(days=1),
+        'use_agg_awc': False},
+        {'date': force_to_date(day),
+         'use_agg_awc': True}]
 
     for daily_date in agg_daily_dates:
         with transaction.atomic(using=router.db_for_write(AggAwcDaily)):
-            AggAwcDaily.aggregate(daily_date)
+            AggAwcDaily.aggregate(date=daily_date['date'], use_agg_awc=daily_date['use_agg_awc'])
 
 
 @track_time
@@ -831,6 +835,7 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
             location,
             system_usage_num_launched_awcs_formatting_at_awc_level=aggregation_level > 4 and beta,
             system_usage_num_of_days_awc_was_open_formatting=aggregation_level <= 4 and beta,
+            system_usage_num_of_lss_formatting=aggregation_level <= 4 and beta,
         )
     elif indicator == AWC_INFRASTRUCTURE_EXPORT:
         data_type = 'AWC_Infrastructure'

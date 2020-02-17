@@ -3,7 +3,7 @@ import os
 import random
 import uuid
 from collections import Counter
-from io import BytesIO
+from io import StringIO
 
 from django.test import SimpleTestCase, TestCase
 
@@ -57,7 +57,7 @@ class CouchDumpLoadTest(TestCase):
             self.assertEqual(0, len(get_docs(db, doc_ids)))
 
     def _dump_and_load(self, expected_objects, not_expected_objects=None, doc_to_doc_class=None):
-        output_stream = BytesIO()
+        output_stream = StringIO()
         CouchDataDumper(self.domain_name, []).dump(output_stream)
 
         self._delete_couch_data()
@@ -66,8 +66,8 @@ class CouchDumpLoadTest(TestCase):
         objects_remaining = _get_doc_counts_from_db(self.domain_name)
         self.assertEqual({}, objects_remaining, 'Not all data deleted: {}'.format(objects_remaining))
 
-        dump_output = output_stream.getvalue()
-        dump_lines = [line.strip() for line in dump_output.split(b'\n') if line.strip()]
+        dump_output = output_stream.getvalue().split('\n')
+        dump_lines = [line.strip() for line in dump_output if line.strip()]
 
         with mock_out_couch() as fake_db:
             total_object_count, loaded_object_count = CouchDataLoader().load_objects(dump_lines)
@@ -183,7 +183,7 @@ class TestDumpLoadToggles(SimpleTestCase):
         dumper = ToggleDumper(self.domain_name, [])
         dumper._user_ids_in_domain = Mock(return_value={'user1', 'user2', 'user3'})
 
-        output_stream = BytesIO()
+        output_stream = StringIO()
 
         with mock_out_couch(docs=[doc.to_json() for doc in self.mocked_toggles.values()]):
             dumper.dump(output_stream)

@@ -1169,13 +1169,6 @@ SEND_UCR_REBUILD_INFO = StaticToggle(
     [NAMESPACE_USER]
 )
 
-EMG_AND_REC_SMS_HANDLERS = StaticToggle(
-    'emg_and_rec_sms_handlers',
-    'ILS: Enable emergency and receipt sms handlers used in ILSGateway',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN]
-)
-
 ALLOW_USER_DEFINED_EXPORT_COLUMNS = StaticToggle(
     'allow_user_defined_export_columns',
     'Add user defined columns to exports',
@@ -1809,4 +1802,20 @@ RUN_CUSTOM_DATA_PULL_REQUESTS = StaticToggle(
     '[ICDS] Initiate custom data pull requests from UI',
     TAG_CUSTOM,
     [NAMESPACE_USER]
+)
+
+
+RUN_DATA_MANAGEMENT_TASKS = StaticToggle(
+    'run_data_management_tasks',
+    '[ICDS] Run data management tasks',
+    TAG_CUSTOM,
+    [NAMESPACE_USER]
+)
+
+
+ALLOW_DEID_ODATA_FEED = StaticToggle(
+    'allow_deid_odata_feed',
+    'Allow De-Identification in OData feeds',
+    TAG_PRODUCT,
+    [NAMESPACE_DOMAIN]
 )

@@ -1656,7 +1656,7 @@ def edit_sms_languages(request, domain):
             if lang not in tdoc.translations:
                 tdoc.translations[lang] = {}
 
-        for lang in tdoc.translations.keys():
+        for lang in set(tdoc.translations.keys()):
             if lang not in langs:
                 del tdoc.translations[lang]
 

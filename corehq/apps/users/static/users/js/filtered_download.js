@@ -4,6 +4,7 @@ hqDefine('users/js/filtered_download', [
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/widgets',      // role selection
     'locations/js/widgets',     // location search
+    'hqwebapp/js/components.ko',    // select toggle widget
 ], function (
     $,
     _,
