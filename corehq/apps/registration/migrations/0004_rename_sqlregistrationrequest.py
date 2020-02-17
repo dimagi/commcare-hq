@@ -8,7 +8,7 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('registration', '0002_populate_sqlregistrationrequest'),
+        ('registration', '0003_populate_sqlregistrationrequest'),
     ]
 
     operations = [
