@@ -1,6 +1,9 @@
+from django.test import SimpleTestCase
+
 from testil import eq
 
 from corehq.motech.openmrs.openmrs_config import (
+    ALL_CONCEPTS,
     OpenmrsConfig,
     OpenmrsFormConfig,
 )
@@ -91,6 +94,95 @@ def test_start_stop_datetime_import():
     )
     eq(start_datetime, "2019-12-16T12:36:00.000+0000")
     eq(stop_datetime, "2019-12-17T12:35:59.000+0000")
+
+
+class GetValuesForConceptTests(SimpleTestCase):
+
+    def test_get_values_for_all_concepts(self):
+        form_config = OpenmrsFormConfig.wrap({
+            "openmrs_observations": [{
+                "concept": ALL_CONCEPTS
+            }]
+        })
+        info = CaseTriggerInfo(domain="test-domain", case_id="c0ffee")
+        values_for_concept = get_values_for_concept(form_config, info)
+        self.assertEqual(values_for_concept, {})
+
+    def test_get_values_for_different_concepts(self):
+        form_config = OpenmrsFormConfig.wrap({
+            "openmrs_observations": [
+                {
+                    "concept": "123456",
+                    "value": {"form_question": "/data/symptoms/fever"}
+                },
+                {
+                    "concept": "789abc",
+                    "value": {"form_question": "/data/symptoms/vomiting"}
+                },
+                {
+                    "concept": "def012",
+                    "value": {"form_question": "/data/symptoms/diarrhea"}
+                },
+            ]
+        })
+        info = CaseTriggerInfo(
+            domain="test-domain",
+            case_id="c0ffee",
+            form_question_values={
+                "/data/symptoms/fever": True,
+                "/data/symptoms/vomiting": True,
+                "/data/symptoms/diarrhea": True,
+            }
+        )
+        values_for_concept = get_values_for_concept(form_config, info)
+        self.assertEqual(values_for_concept, {
+            "123456": [True],
+            "789abc": [True],
+            "def012": [True],
+        })
+
+    def test_get_values_for_the_same_concept(self):
+        form_config = OpenmrsFormConfig.wrap({
+            "openmrs_observations": [
+                {
+                    "concept": "123456",
+                    "value": {"form_question": "/data/symptoms/fever"}
+                },
+                {
+                    "concept": "123456",
+                    "value": {"form_question": "/data/symptoms/vomiting"}
+                },
+                {
+                    "concept": "123456",
+                    "value": {"form_question": "/data/symptoms/diarrhea"}
+                },
+            ]
+        })
+        info = CaseTriggerInfo(
+            domain="test-domain",
+            case_id="c0ffee",
+            form_question_values={
+                "/data/symptoms/fever": True,
+                "/data/symptoms/vomiting": True,
+                "/data/symptoms/diarrhea": True,
+            }
+        )
+        values_for_concept = get_values_for_concept(form_config, info)
+        self.assertEqual(values_for_concept, {"123456": [True, True, True]})
+
+    def test_get_values_for_import_concept(self):
+        form_config = OpenmrsFormConfig.wrap({
+            "openmrs_observations": [{
+                "concept": "123456",
+                "value": {
+                    "case_property": "has_fever",
+                    "direction": "in",
+                }
+            }]
+        })
+        info = CaseTriggerInfo(domain="test-domain", case_id="c0ffee")
+        values_for_concept = get_values_for_concept(form_config, info)
+        self.assertEqual(values_for_concept, {})
 
 
 def get_form_config_dict():
