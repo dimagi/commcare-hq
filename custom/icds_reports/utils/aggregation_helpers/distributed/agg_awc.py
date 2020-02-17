@@ -5,7 +5,7 @@ from dateutil.relativedelta import relativedelta
 from corehq.apps.userreports.models import StaticDataSourceConfiguration, get_datasource_config
 from corehq.apps.userreports.util import get_table_name
 
-from custom.icds_reports.utils.aggregation_helpers import get_child_health_tablename, transform_day_to_month, get_agg_child_temp_tablename
+from custom.icds_reports.utils.aggregation_helpers import get_child_health_temp_tablename, transform_day_to_month, get_agg_child_temp_tablename
 from custom.icds_reports.const import AGG_CCS_RECORD_CF_TABLE, AGG_THR_V2_TABLE, AGG_ADOLESCENT_GIRLS_REGISTRATION_TABLE
 from custom.icds_reports.utils.aggregation_helpers.distributed.base import BaseICDSAggregationDistributedHelper
 
@@ -29,7 +29,7 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
 
     @property
     def child_temp_tablename(self):
-        return get_child_health_tablename(self.month_start)
+        return get_child_health_temp_tablename(self.month_start)
 
     @property
     def agg_child_temp_tablename(self):
@@ -78,8 +78,8 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
         (
             state_id, district_id, block_id, supervisor_id, awc_id, month, num_awcs,
             is_launched, aggregation_level,  num_awcs_conducted_vhnd, num_awcs_conducted_cbe,
-            thr_distribution_image_count, num_launched_awcs, num_launched_supervisors, num_launched_blocks,
-            num_launched_districts, num_launched_states
+            cbe_conducted, vhnd_conducted, thr_distribution_image_count, num_launched_awcs,
+            num_launched_supervisors, num_launched_blocks, num_launched_districts, num_launched_states
         )
         (
             SELECT
@@ -94,6 +94,8 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
             5,
             CASE WHEN vhnd_conducted is not null and vhnd_conducted>0 THEN 1 ELSE 0 END,
             CASE WHEN cbe_conducted is not null and cbe_conducted>1 THEN 1 ELSE 0 END,
+            cbe_conducted,
+            vhnd_conducted,
             thr_v2.thr_distribution_image_count,
             0,
             0,
@@ -699,6 +701,8 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
             ('num_launched_awcs', lambda col: _launched_col(col)),
             ('num_awcs_conducted_vhnd',),
             ('num_awcs_conducted_cbe',),
+            ('cbe_conducted', 'NULL'),
+            ('vhnd_conducted', 'NULL'),
             ('cases_household',),
             ('cases_person',),
             ('cases_person_all',),

@@ -17,6 +17,7 @@ describe('AWC Reports Directive', function () {
     beforeEach(module('icdsApp', function ($provide) {
         utils.provideDefaultConstants($provide, {});
         $provide.constant("haveAccessToFeatures", false);
+        $provide.constant("mapboxAccessToken", 'bosco');
     }));
 
     var mockBeneficiaryDetails = {

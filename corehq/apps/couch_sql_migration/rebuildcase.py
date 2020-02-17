@@ -1,3 +1,4 @@
+import logging
 from contextlib import contextmanager
 from datetime import timedelta
 
@@ -10,8 +11,10 @@ from corehq.form_processor.models import CommCareCaseSQL
 from corehq.form_processor.backends.sql.processor import FormProcessorSQL
 from corehq.form_processor.models import RebuildWithReason
 
+log = logging.getLogger(__name__)
 
-def rebuild_and_diff_cases(sql_case, couch_case, diff, dd_count):
+
+def rebuild_and_diff_cases(sql_case, couch_case, original_couch_case, diff, dd_count):
     """Try rebuilding SQL case and save if rebuild resolves diffs
 
     :param sql_case: CommCareCaseSQL object.
@@ -29,14 +32,20 @@ def rebuild_and_diff_cases(sql_case, couch_case, diff, dd_count):
         else:
             new_case = rebuild_case(sql_case)
             dd_count("commcare.couchsqlmigration.case.rebuild.sql")
-        diffs = diff(couch_case, new_case.to_json())
+        sql_json = new_case.to_json()
+        diffs = diff(couch_case, sql_json)
+        if diffs:
+            original_diffs = diff(original_couch_case, sql_json)
+            if not original_diffs:
+                log.info("original Couch case matches rebuilt SQL case: %s", sql_case.case_id)
+                diffs = original_diffs
         if not diffs:
             # save case only if rebuild resolves diffs
             CaseAccessorSQL.save_case(new_case)
             publish_case_saved(new_case)
     finally:
         release_lock(lock, degrade_gracefully=True)
-    return diffs
+    return sql_json, diffs
 
 
 def should_sort_sql_transactions(sql_case, couch_json):

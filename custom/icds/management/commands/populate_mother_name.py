@@ -144,10 +144,10 @@ class Command(BaseCommand):
                     updates[row['Case ID']] = row['Mother Name']
                     counter += 1
                     if counter > 0 and counter % 100 == 0:
-                        case_ids_list = self._reassured_case_ids_to_update(updates.keys())
-                        for case_id in updates:
-                            if case_id not in case_ids_list:
-                                updates.pop(case_id)
+                        case_ids = self._reassured_case_ids_to_update(list(updates.keys()))
+                        skip_ids = updates.keys() - case_ids
+                        for case_id in skip_ids:
+                            updates.pop(case_id)
                         for case_id, mother_name in updates.items():
                             writer.writerow([case_id, mother_name])
                         exceptions_raised = self._submit_update_form(updates, exceptions_raised)
@@ -194,10 +194,10 @@ class Command(BaseCommand):
         # reconfirm the cases before updating to avoid removing updates in between
         # fetching case ids and updating
         invalid_cases = self.case_accessor.get_cases(case_ids)
-        case_ids_list = []
+        case_ids_list = set()
         for invalid_case in invalid_cases:
             if self._case_needs_to_be_updated(invalid_case):
-                case_ids_list.append(invalid_case.case_id)
+                case_ids_list.add(invalid_case.case_id)
         return case_ids_list
 
 

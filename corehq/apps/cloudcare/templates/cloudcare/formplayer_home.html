@@ -43,8 +43,7 @@
     <link rel="stylesheet" href="{% static 'cloudcare/css/webforms.css' %}">
     <link rel="stylesheet" href="{% static 'bootstrap-switch/dist/css/bootstrap3/bootstrap-switch.css' %}"/>
   {% endcompress %}
-
-  {% if less_debug %}
+  {% compress css %}
     <link type="text/less"
           rel="stylesheet"
           media="all"
@@ -52,27 +51,12 @@
     <link type="text/less"
           rel="stylesheet"
           media="all"
-          href="{% static 'cloudcare/less/formplayer-common.debug.less' %}" />
+          href="{% static 'cloudcare/less/formplayer-common.less' %}"/>
     <link type="text/less"
           rel="stylesheet"
           media="all"
-          href="{% static 'cloudcare/less/formplayer-webapp.debug.less' %}" />
-  {% else %}
-    {% compress css %}
-      <link type="text/less"
-            rel="stylesheet"
-            media="all"
-            href="{% static 'cloudcare/less/font-formplayer.less' %}" />
-      <link type="text/less"
-            rel="stylesheet"
-            media="all"
-            href="{% static 'cloudcare/less/formplayer-common.less' %}"/>
-      <link type="text/less"
-            rel="stylesheet"
-            media="all"
-            href="{% static 'cloudcare/less/formplayer-webapp.less' %}"/>
-    {% endcompress %}
-  {% endif %}
+          href="{% static 'cloudcare/less/formplayer-webapp.less' %}"/>
+  {% endcompress %}
 {% endblock %}
 
 {% block js %} {{ block.super }}
