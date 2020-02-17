@@ -192,7 +192,7 @@ class BulkDocProcessor(DocumentProcessorController):
             self.changes.append(doc)
 
     def process_chunk(self):
-        """Called by the BulkDocProcessorLogHandler"""
+        """Called by the BulkDocProcessorEventHandler"""
         ok = self.doc_processor.process_bulk_docs(self.changes)
         if ok:
             self.progress.add(len(self.changes))
