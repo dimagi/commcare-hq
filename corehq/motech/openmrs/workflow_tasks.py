@@ -1,3 +1,4 @@
+from collections import defaultdict
 from datetime import timedelta
 
 from dimagi.utils.parsing import string_to_utc_datetime
@@ -204,14 +205,14 @@ def get_values_for_concept(form_config, info):
     Returns a dictionary mapping OpenMRS concept UUIDs to lists of
     values. Each value will be exported as a separate Observation.
     """
-    values_for_concept = {}
+    values_for_concept = defaultdict(list)
     for obs in form_config.openmrs_observations:
         if not obs.concept:
             # Skip ObservationMappings for importing all observations.
             continue
         value_source = as_value_source(obs.value)
         if value_source.can_export and not is_blank(value_source.get_value(info)):
-            values_for_concept[obs.concept] = [value_source.get_value(info)]
+            values_for_concept[obs.concept].append(value_source.get_value(info))
     return values_for_concept
 
 
