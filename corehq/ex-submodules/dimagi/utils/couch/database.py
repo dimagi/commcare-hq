@@ -1,4 +1,3 @@
-from functools import wraps
 from time import sleep
 
 from django.conf import settings
@@ -12,6 +11,8 @@ from requests.exceptions import RequestException
 from dimagi.ext.couchdbkit import Document
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.bulk import BulkFetchException, get_docs
+
+from ..retry import retry_on
 
 
 class DocTypeMismatchException(Exception):
@@ -178,24 +179,6 @@ def apply_update(doc, update_fn, max_tries=5):
     raise ResourceConflict("Document update conflict. -- Max Retries Reached")
 
 
-def retry_on_couch_error(func):
-    """Decorator to retry function call on Couch error
-
-    Retry up to 5 times with exponential backoff. Raise the last
-    received error from Couch if all calls fail.
-    """
-    @wraps(func)
-    def retry(*args, **kw):
-        for delay in [0.1, 1, 2, 4, 8, None]:
-            try:
-                return func(*args, **kw)
-            except (BulkFetchException, RequestException) as err:
-                if delay is None or not _is_couch_error(err):
-                    raise
-                sleep(delay)
-    return retry
-
-
 def _is_couch_error(err):
     if isinstance(err, BulkFetchException):
         return True
@@ -203,6 +186,17 @@ def _is_couch_error(err):
     if request is None:
         request = _get_request_from_traceback(err.__traceback__)
     return request and request.url.startswith(_get_couch_base_urls())
+
+
+# Decorator to retry function call on Couch error
+#
+# Retry up to 5 times with exponential backoff. Raise the last
+# received error from Couch if all calls fail.
+retry_on_couch_error = retry_on(
+    BulkFetchException,
+    RequestException,
+    should_retry=_is_couch_error,
+)
 
 
 def _get_request_from_traceback(tb):

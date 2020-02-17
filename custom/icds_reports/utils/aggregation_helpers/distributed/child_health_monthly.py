@@ -1,3 +1,5 @@
+import logging
+
 from dateutil.relativedelta import relativedelta
 
 from corehq.apps.userreports.util import get_table_name
@@ -9,11 +11,14 @@ from custom.icds_reports.const import (
     AGG_GROWTH_MONITORING_TABLE,
 )
 from custom.icds_reports.utils.aggregation_helpers import (
+    get_child_health_tablename,
     get_child_health_temp_tablename,
     transform_day_to_month,
     month_formatter,
 )
 from custom.icds_reports.utils.aggregation_helpers.distributed.base import BaseICDSAggregationDistributedHelper
+
+logger = logging.getLogger(__name__)
 
 
 class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistributedHelper):
@@ -36,13 +41,9 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
         self.month = transform_day_to_month(month)
 
     def aggregate(self, cursor):
-        drop_query, drop_params = self.drop_table_query()
-
-        cursor.execute(drop_query, drop_params)
-        for query in self.drop_indices():
-            cursor.execute(query)
-        cursor.execute(self.aggregation_query())
-        for query in self.indexes():
+        cursor.execute(self.create_monthly_table())
+        for i, query in enumerate(self.aggregation_queries()):
+            logger.info(f'executing query {i}')
             cursor.execute(query)
 
     @property
@@ -64,6 +65,14 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
     @property
     def temporary_tablename(self):
         return get_child_health_temp_tablename(self.month)
+
+    @property
+    def monthly_tablename(self):
+        return get_child_health_tablename(self.month)
+
+    @property
+    def new_tablename(self):
+        return f"new_{self.monthly_tablename}"
 
     def drop_table_query(self):
         return 'DELETE FROM "{}" WHERE month=%(month)s'.format(self.tablename), {'month': self.month}
@@ -390,6 +399,12 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
         SELECT create_distributed_table('{table}', 'supervisor_id');
         """.format(table=self.temporary_tablename)
 
+    def create_monthly_table(self):
+        return """
+        CREATE TABLE \"{table}\" (LIKE child_health_monthly);
+        SELECT create_distributed_table('{table}', 'supervisor_id');
+        """.format(table=self.new_tablename)
+
     def drop_temporary_table(self):
         return "DROP TABLE IF EXISTS \"{}\"".format(self.temporary_tablename)
 
@@ -403,23 +418,10 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
             state_id=state_id
         )
 
-    def aggregation_query(self):
-        return "INSERT INTO \"{tablename}\" (SELECT * FROM \"{tmp_tablename}\")".format(
-            tablename=self.tablename, tmp_tablename=self.temporary_tablename)
-
-    def drop_indices(self):
+    def aggregation_queries(self):
         return [
-            'DROP INDEX IF EXISTS chm_case_idx',
-            'DROP INDEX IF EXISTS chm_awc_idx',
-            'DROP INDEX IF EXISTS chm_mother_dob',
-            'DROP INDEX IF EXISTS chm_month_supervisor_id',
-        ]
-
-    def indexes(self):
-        return [
-            'CREATE INDEX IF NOT EXISTS chm_case_idx ON "{}" (case_id)'.format(self.tablename),
-            'CREATE INDEX IF NOT EXISTS chm_awc_idx ON "{}" (awc_id)'.format(self.tablename),
-            'CREATE INDEX IF NOT EXISTS chm_mother_dob ON "{}" (mother_case_id, dob)'.format(self.tablename),
-            'CREATE INDEX IF NOT EXISTS chm_month_supervisor_id ON "{}" (month, supervisor_id)'.format(
-                self.tablename),
+            """INSERT INTO "{new_tablename}" (SELECT * FROM "{tmp_tablename}")""".format(new_tablename=self.new_tablename, tmp_tablename=self.temporary_tablename),
+            'DROP TABLE IF EXISTS "{monthly_tablename}"'.format(monthly_tablename=self.monthly_tablename),
+            """ALTER TABLE "{new_tablename}" RENAME TO \"{tablename}\"""".format(new_tablename=self.new_tablename, tablename=self.monthly_tablename),
+            """ALTER TABLE "{tablename}" ATTACH PARTITION "{monthly_tablename}" FOR VALUES IN ('{month}')""".format(monthly_tablename=self.monthly_tablename, month=self.month.strftime('%Y-%m-%d'), tablename=self.tablename),
         ]

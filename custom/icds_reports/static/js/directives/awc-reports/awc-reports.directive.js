@@ -1699,7 +1699,7 @@ var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOptionsBuilder, DTColumnBuilder,
         $compile, storageService, dateHelperService, baseControllersService, userLocationId,
-        haveAccessToAllLocations, haveAccessToFeatures, isAlertActive, isMobile) {
+        haveAccessToAllLocations, haveAccessToFeatures, isAlertActive, isMobile, mapboxAccessToken) {
     var vm = this;
     baseControllersService.BaseFilterController.call(
         this, $scope, $routeParams, $location, dateHelperService, storageService
@@ -2023,7 +2023,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
         chart: {
             type: 'multiBarChart',
             height: isMobile ? 350 : 450,
-            width: isMobile ? 600 : 1100,
+            wrapLabels: true,
             margin: {
                 top: 20,
                 right: 20,
@@ -2649,13 +2649,8 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
                 url: 'https://api.mapbox.com/styles/v1/dimagi/cj2rl1t0w001f2rnr0y8hfhho/tiles/{z}/{x}/{y}?access_token={apikey}',
                 type: 'xyz',
                 layerOptions: {
-                    apikey: 'pk.eyJ1IjoiZGltYWdpIiwiYSI6ImpZWWQ4dkUifQ.3FNy5rVvLolWLycXPxKVEA',
+                    apikey: mapboxAccessToken,
                 },
-            },
-            osm: {
-                name: 'OpenStreetMap',
-                url: 'http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-                type: 'xyz',
             },
         },
     };
@@ -2669,7 +2664,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
 AwcReportsController.$inject = [
     '$scope', '$http', '$location', '$routeParams', '$log', 'DTOptionsBuilder', 'DTColumnBuilder', '$compile',
     'storageService', 'dateHelperService', 'baseControllersService', 'userLocationId', 'haveAccessToAllLocations',
-    'haveAccessToFeatures', 'isAlertActive', 'isMobile',
+    'haveAccessToFeatures', 'isAlertActive', 'isMobile', 'mapboxAccessToken',
 ];
 
 window.angular.module('icdsApp').directive('awcReports', ['templateProviderService', function (templateProviderService) {

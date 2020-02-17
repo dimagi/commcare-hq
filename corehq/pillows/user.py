@@ -115,6 +115,11 @@ def get_user_es_processor():
 
 
 def get_user_pillow_old(pillow_id='UserPillow', num_processes=1, process_num=0, **kwargs):
+    """Processes users and sends them to ES.
+
+    Processors:
+      - :py:func:`pillowtop.processors.elastic.ElasticProcessor`
+    """
     # todo; To remove after full rollout of https://github.com/dimagi/commcare-hq/pull/21329/
     assert pillow_id == 'UserPillow', 'Pillow ID is not allowed to change'
     checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, USER_INDEX_INFO, topics.USER_TOPICS)
@@ -169,10 +174,12 @@ def get_user_pillow(pillow_id='user-pillow', num_processes=1, process_num=0,
 
 
 def get_unknown_users_pillow(pillow_id='unknown-users-pillow', num_processes=1, process_num=0, **kwargs):
+    """This pillow adds users from xform submissions that come in to the User Index if they don't exist in HQ
+
+        Processors:
+          - :py:class:`corehq.pillows.user.UnknownUsersProcessor`
     """
     # todo; To remove after full rollout of https://github.com/dimagi/commcare-hq/pull/21329/
-    This pillow adds users from xform submissions that come in to the User Index if they don't exist in HQ
-    """
     checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, USER_INDEX_INFO, topics.FORM_TOPICS)
     processor = UnknownUsersProcessor()
     change_feed = KafkaChangeFeed(

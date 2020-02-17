@@ -430,6 +430,14 @@ class ModuleDetailValidatorMixin(object):
                             'module': self.get_module_info(),
                             'reason': _('A case property must be assigned to the "{}" tile field.'.format(field))
                         })
+            if detail.has_persistent_tile() and self.module.report_context_tile:
+                errors.append({
+                    'type': "invalid tile configuration",
+                    'module': self.get_module_info(),
+                    'reason': _("""
+                        A menu may not use both a persistent case list tile and a persistent report tile.
+                    """),
+                })
         return errors
 
     def get_case_errors(self, needs_case_type, needs_case_detail, needs_referral_detail=False):

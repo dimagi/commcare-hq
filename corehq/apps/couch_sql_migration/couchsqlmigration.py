@@ -6,11 +6,11 @@ from collections import defaultdict
 from contextlib import contextmanager
 from datetime import datetime, timedelta
 from functools import partial
+from threading import Lock
 
 from django.conf import settings
 from django.db.utils import IntegrityError
 
-import gevent
 from gevent.pool import Pool
 from memoized import memoized
 
@@ -69,7 +69,6 @@ from corehq.form_processor.utils.general import (
     set_local_domain_sql_backend_override,
 )
 from corehq.toggles import COUCH_SQL_MIGRATION_BLACKLIST, NAMESPACE_DOMAIN
-from corehq.util import cache_utils
 from corehq.util.couch_helpers import NoSkipArgsProvider
 from corehq.util.datadog.gauges import datadog_counter
 from corehq.util.datadog.utils import bucket_value
@@ -82,7 +81,7 @@ from corehq.util.pagination import (
 from corehq.util.timer import TimingContext
 
 from .asyncforms import AsyncFormProcessor
-from .casediff import CaseDiffProcess, CaseDiffQueue, NoCaseDiff
+from .casediffqueue import CaseDiffProcess, CaseDiffQueue, NoCaseDiff
 from .json2xml import convert_form_to_xml
 from .statedb import init_state_db
 from .staterebuilder import iter_unmigrated_docs
@@ -341,12 +340,12 @@ class CouchSqlDomainMigrator:
             self.case_diff_queue.enqueue(couch_case.case_id)
 
     def _process_forms_subset(self, forms):
-        if forms == "skipped":
-            self._process_skipped_forms()
+        if forms in ["skipped", "missing"]:
+            self._process_skipped_forms(cached=forms == "missing")
             return
         form_ids = get_ids_from_string_or_file(forms)
         orig_ids = set(form_ids)
-        form_ids = list(_drop_sql_form_ids(form_ids, self.domain))
+        form_ids = list(_drop_sql_form_ids(form_ids, self.statedb))
         migrated_ids = orig_ids - set(form_ids)
         if migrated_ids:
             log.info("already migrated: %s",
@@ -364,26 +363,27 @@ class CouchSqlDomainMigrator:
             sql_form = FormAccessorSQL.get_form(form_id)
             self._save_diffs(couch_form, sql_form, replace=True)
 
-    def _process_skipped_forms(self):
+    def _process_skipped_forms(self, cached=False):
         """process forms skipped by a previous migration
 
         note: does not diff cases
         """
         migrated = 0
         with self.counter('skipped_forms', 'XFormInstance.id') as add_form:
-            for doc in self._iter_skipped_forms():
+            skipped = _iter_skipped_forms(self.statedb, self.stopper, cached)
+            for doc_type, doc in skipped:
                 try:
                     form = XFormInstance.wrap(doc)
                 except Exception:
                     log.exception("Error wrapping form %s", doc)
                 else:
                     self._migrate_form_and_associated_models(form)
+                    if cached:
+                        self.statedb.doc_not_missing(doc_type, form.form_id)
                     add_form()
                     migrated += 1
                     if migrated % 100 == 0:
                         log.info("migrated %s previously skipped forms", migrated)
-            if not self.stopper.clean_break:
-                self.counter.pop("XFormInstance.id")
         log.info("finished migrating %s previously skipped forms", migrated)
 
     def _check_for_migration_restrictions(self, domain_name):
@@ -415,11 +415,6 @@ class CouchSqlDomainMigrator:
         else:
             log.info("{} {} ({})".format(progress_name, doc_count, ', '.join(doc_types)))
             return iterable
-
-    def _iter_skipped_forms(self):
-        migration_id = self.statedb.unique_id
-        yield from _iter_skipped_forms(
-            self.domain, migration_id, self.stopper, self._with_progress)
 
     def _get_resumable_iterator(self, doc_types, **kw):
         # resumable iteration state is associated with statedb.unique_id,
@@ -820,16 +815,20 @@ class Stopper:
     # migration.
     MIN_AGE = timedelta(hours=1)
 
+    _lock = Lock()
+
     def __init__(self, live_migrate):
         self.live_migrate = live_migrate
         self.clean_break = False
-        self.parent_pid = os.getpid()
 
     def __enter__(self):
+        locked = self._lock.acquire(blocking=False)
+        assert locked, "illegal concurrent stopper"
         signal.signal(signal.SIGINT, self.on_break)
 
     def __exit__(self, exc_type, exc, tb):
         signal.signal(signal.SIGINT, signal.default_int_handler)
+        self._lock.release()
         # the case diff queue can safely be stopped with ^C at this
         # point, although proceed with care so as not to interrupt it at
         # a point where it is saving resume state. There will be a log
@@ -870,24 +869,15 @@ class Stopper:
 
 
 class MigrationPaginationEventHandler(PaginationEventHandler):
-    RETRIES = 5
 
     def __init__(self, domain, stopper):
         self.domain = domain
         self.stopper = stopper
         self.should_stop = stopper.get_stopper()
-        self.retries = self.RETRIES
 
     def page_start(self, *args, **kw):
         if self.stopper.clean_break:
             raise StopToResume
-
-    def page_exception(self, e):
-        if self.retries <= 0:
-            return False
-        self.retries -= 1
-        gevent.sleep(1)
-        return True
 
     def page(self, results):
         if self.should_stop is None or not results:
@@ -904,13 +894,6 @@ class MigrationPaginationEventHandler(PaginationEventHandler):
             return
         if self.should_stop(key_date):
             raise StopToResume
-
-    def page_end(self, total_emitted, duration, *args, **kwargs):
-        self.retries = self.RETRIES
-        cache_utils.clear_limit(self._cache_key())
-
-    def _cache_key(self):
-        return "couchsqlmigration.%s" % self.domain
 
     def stop(self):
         if self.should_stop is not None:
@@ -950,7 +933,8 @@ def _iter_docs(domain, doc_type, resume_key, stopper):
         item_getter=None,
         event_handler=MigrationPaginationEventHandler(domain, stopper)
     )
-    log.info("iteration state: %r", rows.state.to_json())
+    if rows.state.is_resume():
+        log.info("iteration state: %r", rows.state.to_json())
     row = None
     try:
         for row in rows:
@@ -992,61 +976,36 @@ def _repr_bad_results(view, kwargs, results, domain):
     return f"bad results from {view} {kwargs}:\n{context}"
 
 
-def _iter_skipped_forms(domain, migration_id, stopper, with_progress):
+def _iter_skipped_forms(statedb, stopper, cached):
+    # Datadog tag: type:find_skipped_forms
     from dimagi.utils.couch.bulk import get_docs
+    from .missingdocs import MissingIds
     couch = XFormInstance.get_db()
-    with stop_at_previous_migration(domain, migration_id, stopper):
-        skipped_form_ids = _iter_skipped_form_ids(
-            domain, migration_id, stopper, with_progress)
-        for form_ids in chunked(skipped_form_ids, _iter_docs.chunk_size, list):
-            for doc in get_docs(couch, form_ids):
-                assert doc["domain"] == domain, doc
-                yield doc
+    domain = statedb.domain
+    with MissingIds.forms(statedb, stopper, tag="skipped") as skipped:
+        if cached:
+            doc_types = skipped.doc_types
+            iter_doc_ids = statedb.iter_missing_doc_ids
+        else:
+            doc_types = ["XFormInstance"]
+            iter_doc_ids = skipped
+        for doc_type in doc_types:
+            skipped_ids = iter_doc_ids(doc_type)
+            for form_ids in chunked(skipped_ids, _iter_docs.chunk_size, list):
+                for doc in get_docs(couch, form_ids):
+                    assert doc["domain"] == domain, doc
+                    yield doc_type, doc
+                if stopper.clean_break:
+                    break
 
 
-def _iter_skipped_form_ids(domain, migration_id, stopper, with_progress):
-    resume_key = "%s.%s.%s" % (domain, "XFormInstance.id", migration_id)
-    couch_ids = _iter_docs(domain, "XFormInstance.id", resume_key, stopper)
-    couch_ids = with_progress(
-        ["XFormInstance"], couch_ids, "Scanning", offset_key="XFormInstance.id")
-    for batch in chunked(couch_ids, _iter_skipped_form_ids.chunk_size, list):
-        yield from _drop_sql_form_ids(batch, domain)
-    if not stopper.clean_break:
-        # discard iteration state on successful completion so it is possible
-        # to run another skipped forms iteration later
-        ResumableFunctionIterator(resume_key, None, None, None).discard_state()
+def _drop_sql_form_ids(couch_ids, statedb):
+    from .missingdocs import MissingIds
+    return MissingIds.forms(statedb, None).drop_sql_ids(couch_ids)
 
 
-_iter_skipped_form_ids.chunk_size = 5000
-
-
-def _drop_sql_form_ids(couch_ids, domain):
-    from corehq.sql_db.util import split_list_by_db_partition
-    get_missing_forms = """
-        SELECT couch.form_id
-        FROM (SELECT unnest(%s) AS form_id) AS couch
-        LEFT JOIN form_processor_xforminstancesql sql USING (form_id)
-        WHERE sql.form_id IS NULL
-    """
-    for dbname, form_ids in split_list_by_db_partition(couch_ids):
-        with XFormInstanceSQL.get_cursor_for_partition_db(dbname, readonly=True) as cursor:
-            cursor.execute(get_missing_forms, [form_ids])
-            yield from (form_id for form_id, in cursor.fetchall())
-
-
-@contextmanager
-def stop_at_previous_migration(domain, migration_id, stopper):
-    stop_date = get_main_forms_iteration_stop_date(domain, migration_id)
-    stopper.stop_date = stop_date
-    try:
-        yield
-    finally:
-        # remove stop date so main forms iteration will update it
-        del stopper.stop_date
-
-
-def get_main_forms_iteration_stop_date(domain_name, migration_id):
-    resume_key = "%s.%s.%s" % (domain_name, "XFormInstance", migration_id)
+def get_main_forms_iteration_stop_date(statedb):
+    resume_key = f"{statedb.domain}.XFormInstance.{statedb.unique_id}"
     itr = ResumableFunctionIterator(resume_key, None, None, None)
     kwargs = itr.state.kwargs
     assert kwargs, f"migration state not found: {resume_key}"

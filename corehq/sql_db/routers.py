@@ -169,7 +169,8 @@ def get_db_for_partitioned_model(model, hints):
         return plproxy_config.proxy_db
     if HINT_USING in hints:
         db = hints[HINT_USING]
-        assert db in get_db_aliases_for_partitioned_query()
+        assert db in get_db_aliases_for_partitioned_query(), "{} not in {}".format(
+            db, ", ".join(get_db_aliases_for_partitioned_query()))
         return db
     if HINT_PARTITION_VALUE in hints:
         return get_db_alias_for_partitioned_doc(hints[HINT_PARTITION_VALUE])

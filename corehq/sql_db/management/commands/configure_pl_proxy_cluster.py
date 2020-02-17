@@ -60,11 +60,13 @@ def create_or_update_cluster(cluster_config, verbose, create_only):
     existing_config = _get_existing_cluster_config(cluster_config)
     if existing_config:
         if create_only:
+            print("Aborting. Configuration already exists and command called with '--create-only'")
             return
         if _confirm(f"Cluster configuration already exists on '{cluster_config.proxy_db}'."
                     f" Are you sure you want to change it?"):
             _update_pl_proxy_cluster(cluster_config, existing_config, verbose)
     else:
+        print(f"Creating cluster config in DB {cluster_config.proxy_db}")
         create_pl_proxy_cluster(cluster_config, verbose)
 
 
