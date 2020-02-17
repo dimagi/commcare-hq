@@ -10,6 +10,7 @@ from corehq.motech.openmrs.const import (
     PERSON_PROPERTIES,
     PERSON_UUID_IDENTIFIER_TYPE_ID,
 )
+from corehq.motech.openmrs.openmrs_config import ALL_CONCEPTS
 from corehq.motech.openmrs.repeater_helpers import (
     get_ancestor_location_openmrs_uuid,
     get_export_data,
@@ -207,8 +208,9 @@ def get_values_for_concept(form_config, info):
     """
     values_for_concept = defaultdict(list)
     for obs in form_config.openmrs_observations:
-        if not obs.concept:
-            # Skip ObservationMappings for importing all observations.
+        if obs.concept == ALL_CONCEPTS:
+            # ALL_CONCEPTS is a special value for importing all
+            # Observations as extension cases. It's not applicable here.
             continue
         value_source = as_value_source(obs.value)
         if value_source.can_export and not is_blank(value_source.get_value(info)):
