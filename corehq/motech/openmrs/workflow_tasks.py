@@ -166,15 +166,15 @@ class CreateVisitsEncountersObsTask(WorkflowTask):
         stop_datetime = to_omrs_datetime(cc_stop_datetime)
         return start_datetime, stop_datetime
 
-    def _get_values_for_concept(self, form_config):
+    def _get_values_for_concept(self, form_config, info):
         values_for_concept = {}
         for obs in form_config.openmrs_observations:
             if not obs.concept:
                 # Skip ObservationMappings for importing all observations.
                 continue
             value_source = as_value_source(obs.value)
-            if value_source.can_export and not is_blank(value_source.get_value(self.info)):
-                values_for_concept[obs.concept] = [value_source.get_value(self.info)]
+            if value_source.can_export and not is_blank(value_source.get_value(info)):
+                values_for_concept[obs.concept] = [value_source.get_value(info)]
         return values_for_concept
 
     def run(self):
@@ -200,7 +200,7 @@ class CreateVisitsEncountersObsTask(WorkflowTask):
                         provider_uuid=provider_uuid,
                         start_datetime=start_datetime,
                         stop_datetime=stop_datetime,
-                        values_for_concept=self._get_values_for_concept(form_config),
+                        values_for_concept=self._get_values_for_concept(form_config, self.info),
                         encounter_type=form_config.openmrs_encounter_type,
                         openmrs_form=form_config.openmrs_form,
                         visit_type=form_config.openmrs_visit_type,
