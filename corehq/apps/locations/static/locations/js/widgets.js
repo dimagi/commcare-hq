@@ -30,7 +30,7 @@ hqDefine("locations/js/widgets", [
                     delay: 500,
                     data: function (params) {
                         return {
-                            name: params.term,
+                            q: params.term,
                             page: params.page,
                         };
                     },
