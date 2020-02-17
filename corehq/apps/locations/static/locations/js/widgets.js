@@ -15,7 +15,7 @@ hqDefine("locations/js/widgets", [
         });
     }
 
-    function initAutocomplete($select, url) {
+    function initAutocomplete($select) {
         var options = $select.data();
         $select.select2({
             multiple: options.multiselect,
