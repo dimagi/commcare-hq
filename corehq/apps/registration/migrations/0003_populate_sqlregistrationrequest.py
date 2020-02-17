@@ -8,7 +8,7 @@ from corehq.apps.registration.management.commands.populate_sql_registration_requ
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('registration', '0001_initial'),
+        ('registration', '0002_alter_request_ip'),
     ]
 
     operations = [
