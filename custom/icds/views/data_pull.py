@@ -6,6 +6,7 @@ from django.utils.translation import ugettext as _
 
 from corehq import toggles
 from corehq.apps.domain.decorators import login_and_domain_required
+from corehq.apps.hqwebapp.decorators import use_jquery_ui
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.settings.views import BaseProjectDataView
 from custom.icds.const import (
@@ -26,6 +27,10 @@ class CustomDataPull(BaseProjectDataView):
     urlname = 'icds_custom_data_pull'
     page_title = "ICDS Custom Data Pull"
     template_name = 'icds/custom_data_pull.html'
+
+    @use_jquery_ui  # for datepicker
+    def dispatch(self, request, *args, **kwargs):
+        return super().dispatch(request, *args, **kwargs)
 
     @cached_property
     def form(self):
@@ -48,7 +53,7 @@ class CustomDataPull(BaseProjectDataView):
         if not can_initiate_data_pull():
             messages.warning(request, _("Request Ignored."))
         elif not data_pull_is_in_progress() and self.form.is_valid():
-            self.form.submit(request.user.email)
+            self.form.submit(request.domain, request.user.email)
             messages.success(request, _("Request Initiated. You will receive an email on completion."))
             return redirect(self.urlname, self.domain)
         return self.get(request, *args, **kwargs)

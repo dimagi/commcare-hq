@@ -116,9 +116,9 @@
       {
         "display": "use_salt",
         "column_id": "use_salt",
-        "type": "field",
+        "type": "array_agg_last_value",
         "field": "use_salt",
-        "aggregation": "max"
+        "order_by_col": "inserted_at"
       }
     ],
     "sort_expression": [

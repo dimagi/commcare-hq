@@ -1,5 +1,5 @@
 DROP TABLE IF EXISTS temp_thr_data_pull;
-CREATE unlogged TABLE temp_thr_data_pull AS
+CREATE TEMPORARY TABLE temp_thr_data_pull AS
 SELECT   supervisor_id,
          Sum(
          CASE

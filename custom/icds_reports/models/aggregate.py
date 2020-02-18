@@ -23,7 +23,8 @@ from custom.icds_reports.const import (
     AGG_DASHBOARD_ACTIVITY,
     AGG_ADOLESCENT_GIRLS_REGISTRATION_TABLE,
     AGG_GOV_DASHBOARD_TABLE,
-    AGG_SDR_TABLE
+    AGG_SDR_TABLE,
+    AGG_MIGRATION_TABLE
 )
 from custom.icds_reports.utils.aggregation_helpers.distributed import (
     AggAwcDailyAggregationDistributedHelper,
@@ -55,7 +56,8 @@ from custom.icds_reports.utils.aggregation_helpers.distributed import (
     DashboardActivityReportAggregate,
     AggAdolescentGirlsRegistrationAggregate,
     AggGovDashboardHelper,
-    AggServiceDeliveryReportHelper
+    AggServiceDeliveryReportHelper,
+    MigrationFormsAggregationDistributedHelper
 )
 
 
@@ -478,7 +480,8 @@ class AggAwc(models.Model, AggregateMixin):
 
     num_awcs_conducted_cbe = models.IntegerField(null=True)
     num_awcs_conducted_vhnd = models.IntegerField(null=True)
-
+    cbe_conducted = models.IntegerField(null=True)
+    vhnd_conducted = models.IntegerField(null=True)
     cases_household = models.IntegerField(null=True)
     cases_person = models.IntegerField(null=True)
     cases_person_all = models.IntegerField(null=True)
@@ -740,6 +743,7 @@ class AggChildHealth(models.Model, AggregateMixin):
     zscore_grading_hfa_recorded_in_month = models.IntegerField(blank=True, null=True)
     zscore_grading_wfh_recorded_in_month = models.IntegerField(blank=True, null=True)
     lunch_count_21_days = models.IntegerField(blank=True, null=True)
+
     class Meta:
         managed = False
         db_table = 'agg_child_health'
@@ -1552,6 +1556,34 @@ class AggregateAdolescentGirlsRegistrationForms(models.Model, AggregateMixin):
         unique_together = ('month', 'supervisor_id', 'person_case_id')  # pkey
 
     _agg_helper_cls = AggAdolescentGirlsRegistrationAggregate
+    _agg_atomic = False
+
+
+class AggregateMigrationForms(models.Model, AggregateMixin):
+    """Aggregated data for migration
+
+    A migration table exists for each state_id and month.
+
+    A row exists for every person case that has had a record of migration
+    submitted against it this month.
+    """
+
+    # partitioned based on these fields
+    state_id = models.CharField(max_length=40)
+    supervisor_id = models.TextField(null=True)
+    month = models.DateField(help_text="Will always be YYYY-MM-01")
+
+    # not the real pkey - see unique_together
+    person_case_id = models.CharField(max_length=40, primary_key=True)
+
+    is_migrated = models.PositiveSmallIntegerField(blank=True, null=True, help_text="Status of the Migration")
+    migration_date = models.DateTimeField(help_text="Migration Date", null=True)
+
+    class Meta(object):
+        db_table = AGG_MIGRATION_TABLE
+        unique_together = ('month', 'supervisor_id', 'person_case_id')  # pkey
+
+    _agg_helper_cls = MigrationFormsAggregationDistributedHelper
     _agg_atomic = False
 
 

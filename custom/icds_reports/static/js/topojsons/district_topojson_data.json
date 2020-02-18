@@ -628,7 +628,6 @@
       "Rajouri",
       "Doda",
       "Samba",
-      "Kargil",
       "Reasi",
       "Shupiyan",
       "Srinagar",
@@ -643,11 +642,17 @@
       "Kulgam",
       "Bandipore",
       "Udhampur",
-      "Leh(Ladakh)",
       "Anantnag",
       "NA",
       "Badgam",
       "Kupwara"
+    ],
+    "file_name": "jk_blocks_v3.topojson"
+  },
+  "Ladakh": {
+    "districts": [
+      "Kargil",
+      "Leh(Ladakh)"
     ],
     "file_name": "jk_blocks_v3.topojson"
   },

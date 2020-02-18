@@ -10,7 +10,7 @@ from corehq.form_processor.utils import should_use_sql_backend
 from dimagi.utils.chunked import chunked
 
 from casexml.apps.case.models import CommCareCase
-from corehq.doctypemigrations.continuous_migrate import bulk_get_revs
+from corehq.util.couch import bulk_get_revs
 from corehq.apps.hqcase.management.commands.backfill_couch_forms_and_cases import (
     publish_change, create_case_change_meta
 )

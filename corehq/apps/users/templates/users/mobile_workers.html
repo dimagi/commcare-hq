@@ -13,7 +13,7 @@
   {% initial_page_data 'implement_password_obfuscation' implement_password_obfuscation %}
   {% initial_page_data 'pagination_limit_cookie_name' pagination_limit_cookie_name %}
   {% initial_page_data 'strong_mobile_passwords' strong_mobile_passwords %}
-  {% registerurl 'child_locations_for_select2' domain %}
+  {% registerurl 'location_search' domain %}
   {% registerurl 'mobile_workers' domain %}
   {% registerurl 'edit_commcare_user' domain '---' %}
   {% registerurl 'paginate_mobile_workers' domain %}
@@ -56,7 +56,14 @@
             {% endif %}
             {% if can_add_extra_users and can_access_all_locations %}
               <a class="btn btn-default" href="{% url "user_fields_view" domain %}" id="btn-edit_user_fields">
+                <i class="fa fa-edit"></i>
                 {% trans "Edit User Fields" %}
+              </a>
+            {% endif %}
+            {% if request|toggle_enabled:"BULK_USER_DELETE" %}
+              <a class="btn btn-danger" href="{% url "delete_commcare_users" domain %}">
+                <i class="fa fa-trash"></i>
+                {% trans "Bulk Delete Users" %}
               </a>
             {% endif %}
           {% endif %}

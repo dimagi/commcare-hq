@@ -307,6 +307,7 @@ hqDefine('app_manager/js/modules/report_module', function () {
         self.reportDescriptions = {};
         self.reportCharts = {};
         self.reportFilters = {};
+        self.reportContextTile = ko.observable(options.reportContextTile);
         self.reports = ko.observableArray([]);
         self.columnXpathTemplate = options.columnXpathTemplate || "";
         self.dataPathPlaceholders = options.dataPathPlaceholders || {};
@@ -355,6 +356,7 @@ hqDefine('app_manager/js/modules/report_module', function () {
                         name_enum: JSON.stringify(self.moduleNameEnum()),
                         module_filter: self.moduleFilter,
                         reports: JSON.stringify(_.map(self.reports(), function (r) { return r.toJSON(); })),
+                        report_context_tile: JSON.stringify(self.reportContextTile()),
                         multimedia: JSON.stringify(self.multimedia()),
                     },
                 });
@@ -367,6 +369,7 @@ hqDefine('app_manager/js/modules/report_module', function () {
 
         self.currentModuleName.subscribe(self.changeSaveButton);
         self.currentModuleFilter.subscribe(self.changeSaveButton);
+        self.reportContextTile.subscribe(self.changeSaveButton);
         $(options.containerId + ' input').on('textchange', self.changeSaveButton);
 
         var newReport = function (options) {

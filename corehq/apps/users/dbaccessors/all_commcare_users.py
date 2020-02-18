@@ -17,6 +17,28 @@ def get_all_commcare_users_by_domain(domain):
     return map(CommCareUser.wrap, iter_docs(CommCareUser.get_db(), ids))
 
 
+def get_mobile_usernames_by_filters(domain, user_filters):
+    query = _get_es_query(domain, user_filters)
+    return query.values_list('base_username', flat=True)
+
+
+def _get_es_query(domain, user_filters):
+    role_id = user_filters.get('role_id', None)
+    search_string = user_filters.get('search_string', None)
+    location_id = user_filters.get('location_id', None)
+
+    query = UserES().domain(domain).mobile_users()
+
+    if role_id:
+        query = query.role_id(role_id)
+    if search_string:
+        query = query.search_string_query(search_string, default_fields=['first_name', 'last_name', 'username'])
+    if location_id:
+        location_ids = SQLLocation.objects.get_locations_and_children_ids([location_id])
+        query = query.location(location_ids)
+    return query
+
+
 def get_commcare_users_by_filters(domain, user_filters, count_only=False):
     """
     Returns CommCareUsers in domain per given filters. If user_filters is empty
@@ -30,21 +52,11 @@ def get_commcare_users_by_filters(domain, user_filters, count_only=False):
     kwargs:
         count_only: If True, returns count of search results
     """
-    role_id = user_filters.get('role_id', None)
-    search_string = user_filters.get('search_string', None)
-    location_id = user_filters.get('location_id', None)
-    if not any([role_id, search_string, location_id, count_only]):
+    if not any([user_filters.get('role_id', None), user_filters.get('search_string', None),
+                user_filters.get('location_id', None), count_only]):
         return get_all_commcare_users_by_domain(domain)
 
-    query = UserES().domain(domain).mobile_users()
-
-    if role_id:
-        query = query.role_id(role_id)
-    if search_string:
-        query = query.search_string_query(search_string, default_fields=['first_name', 'last_name', 'username'])
-    if location_id:
-        location_ids = SQLLocation.objects.get_locations_and_children_ids([location_id])
-        query = query.location(location_ids)
+    query = _get_es_query(domain, user_filters)
 
     if count_only:
         return query.count()

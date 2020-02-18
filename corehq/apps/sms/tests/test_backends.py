@@ -14,7 +14,6 @@ from dimagi.utils.couch.cache.cache_core import get_redis_client
 from corehq.apps.accounting.models import SoftwarePlanEdition
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.accounting.utils import clear_plan_version_cache
-from corehq.apps.api.models import PERMISSION_POST_SMS, ApiUser
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqcase.utils import update_case
 from corehq.apps.sms.api import (

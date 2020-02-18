@@ -15,6 +15,10 @@ window.angular.module('icdsApp').factory('baseControllersService', function() {
                 $location.search('location_name', loc.name);
             }
         };
+        vm.addAdditionalFilters = function (gender, age) {
+            $location.search('gender', gender);
+            $location.search('age', age);
+        };
         vm.selectedLocationsCount = function() {
             // this method returns selectedLocationLevel
             // TODO: Need to check why selectedLocationLevel is undefined for all location levels except when awc is selected
@@ -45,6 +49,7 @@ window.angular.module('icdsApp').factory('baseControllersService', function() {
                 $location.path(navigationService.getAWCTabFromPagePath($location.path()));
             }
             dateHelperService.updateSelectedMonth(data['month'], data['year']);
+            vm.addAdditionalFilters(data.gender, data.age);
             storageService.setKey('search', $location.search());
             $scope.$emit('filtersChange');
         });

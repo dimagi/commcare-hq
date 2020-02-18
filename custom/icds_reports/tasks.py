@@ -103,7 +103,8 @@ from custom.icds_reports.models.aggregate import (
     DashboardUserActivityReport,
     AggregateAdolescentGirlsRegistrationForms,
     AggGovernanceDashboard,
-    AggServiceDeliveryReport
+    AggServiceDeliveryReport,
+    AggregateMigrationForms
 )
 from custom.icds_reports.models.helper import IcdsFile
 from custom.icds_reports.models.util import UcrReconciliationStatus
@@ -280,6 +281,12 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
                 for state_id in state_ids
             ])
 
+            stage_1_tasks.extend([
+                icds_state_aggregation_task.si(state_id=state_id, date=monthly_date,
+                                               func_name='_agg_migration_table')
+                for state_id in state_ids
+            ])
+
             stage_1_tasks.append(icds_aggregation_task.si(date=calculation_date, func_name='_update_months_table'))
 
             # https://github.com/celery/celery/issues/4274
@@ -445,7 +452,8 @@ def icds_state_aggregation_task(self, state_id, date, func_name):
         '_agg_ls_vhnd_form': _agg_ls_vhnd_form,
         '_agg_beneficiary_form': _agg_beneficiary_form,
         '_agg_thr_table': _agg_thr_table,
-        '_agg_adolescent_girls_registration_table': _agg_adolescent_girls_registration_table
+        '_agg_adolescent_girls_registration_table': _agg_adolescent_girls_registration_table,
+        '_agg_migration_table': _agg_migration_table
     }[func_name]
 
     db_alias = get_icds_ucr_citus_db_alias()
@@ -546,13 +554,17 @@ def _run_custom_sql_script(commands, day=None, db_alias=None):
 @track_time
 def aggregate_awc_daily(day):
 
-    agg_daily_dates = [force_to_date(day) - timedelta(days=2),
-                       force_to_date(day) - timedelta(days=1),
-                       force_to_date(day)]
+    agg_daily_dates = [{
+        'date': force_to_date(day) - timedelta(days=2),
+        'use_agg_awc': False},
+        {'date': force_to_date(day) - timedelta(days=1),
+        'use_agg_awc': False},
+        {'date': force_to_date(day),
+         'use_agg_awc': True}]
 
     for daily_date in agg_daily_dates:
         with transaction.atomic(using=router.db_for_write(AggAwcDaily)):
-            AggAwcDaily.aggregate(daily_date)
+            AggAwcDaily.aggregate(date=daily_date['date'], use_agg_awc=daily_date['use_agg_awc'])
 
 
 @track_time
@@ -568,6 +580,8 @@ def get_cursor(model, write=True):
 
 def _child_health_monthly_table(state_ids, day):
     _child_health_monthly_data(state_ids, day)
+    update_child_health_monthly_table.delay(day, state_ids)
+
 
 
 def _child_health_monthly_data(state_ids, day):
@@ -588,7 +602,11 @@ def _child_health_monthly_data(state_ids, day):
     ]
     for sub_aggregation in sub_aggregations:
         sub_aggregation.get(disable_sync_subtasks=False)
-    celery_task_logger.info("Attaching partition")
+
+
+@task(serializer='pickle', queue='icds_aggregation_queue', default_retry_delay=15 * 60, acks_late=True)
+def update_child_health_monthly_table(day, state_ids):
+    celery_task_logger.info("Inserting into child_health_monthly_table")
     with transaction.atomic(using=router.db_for_write(ChildHealthMonthly)):
         ChildHealthMonthly.aggregate(state_ids, force_to_date(day))
 
@@ -687,6 +705,13 @@ def _agg_adolescent_girls_registration_table(state_id, day):
     db_alias = router.db_for_write(AggregateAdolescentGirlsRegistrationForms)
     with transaction.atomic(using=db_alias):
         AggregateAdolescentGirlsRegistrationForms.aggregate(state_id, force_to_date(day))
+
+
+@track_time
+def _agg_migration_table(state_id, day):
+    db_alias = router.db_for_write(AggregateMigrationForms)
+    with transaction.atomic(using=db_alias):
+        AggregateMigrationForms.aggregate(state_id, force_to_date(day))
 
 
 @task(serializer='pickle', queue='icds_aggregation_queue')
@@ -826,6 +851,7 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
             location,
             system_usage_num_launched_awcs_formatting_at_awc_level=aggregation_level > 4 and beta,
             system_usage_num_of_days_awc_was_open_formatting=aggregation_level <= 4 and beta,
+            system_usage_num_of_lss_formatting=aggregation_level <= 4 and beta,
         )
     elif indicator == AWC_INFRASTRUCTURE_EXPORT:
         data_type = 'AWC_Infrastructure'
@@ -1558,9 +1584,12 @@ def _child_health_monthly_aggregation(day, state_ids):
     helper = ChildHealthMonthlyAggregationDistributedHelper(state_ids, force_to_date(day))
 
     with get_cursor(ChildHealthMonthly) as cursor:
+        celery_task_logger.info('dropping old temp table')
         cursor.execute(helper.drop_temporary_table())
+        celery_task_logger.info('creating partition table')
         cursor.execute(helper.create_temporary_table())
         for state in state_ids:
+            celery_task_logger.info(f'create state partition for {state}')
             cursor.execute(helper.drop_partition(state))
             cursor.execute(helper.create_partition(state))
 
@@ -1568,7 +1597,8 @@ def _child_health_monthly_aggregation(day, state_ids):
     pool = Pool(20)
     for query, params in helper.pre_aggregation_queries():
         greenlets.append(pool.spawn(_child_health_helper, query, params))
-    pool.join(raise_error=True)
+    while not pool.join(timeout=120, raise_error=True):
+        celery_task_logger.info('failed to join pool - greenlets remaining: {}'.format(len(pool)))
     for g in greenlets:
         g.get()
 

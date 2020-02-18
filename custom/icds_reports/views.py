@@ -533,6 +533,11 @@ class PrevalenceOfUndernutritionView(BaseReportView):
         config.update(get_location_filter(location, domain))
         loc_level = get_location_level(config.get('aggregation_level'))
 
+        # TODO Implement this change in other places if this works well
+        # Changing the aggregation level to the original convention which is 1 for state,
+        #  2 for district, 3 for block, 4 for sector and 5 for awc to optimise the db query
+        if config['aggregation_level'] > 1:
+            config['aggregation_level'] -= 1
         data = {}
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
@@ -883,6 +888,15 @@ class ExportIndicatorView(View):
             })
 
         location = request.POST.get('location', '')
+
+        if not location and not request.couch_user.has_permission(
+                self.kwargs['domain'], 'access_all_locations'
+        ):
+            return HttpResponse(status_code=403)
+        if location and not user_can_access_location_id(
+                self.kwargs['domain'], request.couch_user, location
+        ):
+            return HttpResponse(status_code=403)
 
         sql_location = None
 
@@ -2049,6 +2063,11 @@ class CasDataExport(View):
         year = int(request.POST.get('year', None))
         selected_date = date(year, month, 1).strftime('%Y-%m-%d')
 
+        if state_id and not user_can_access_location_id(
+                self.kwargs['domain'], request.couch_user, state_id
+        ):
+            return JsonResponse({"message": "Sorry, you do not have access to that location."})
+
         sync, _ = get_cas_data_blob_file(data_type, state_id, selected_date)
         if not sync:
             return JsonResponse({"message": "Sorry, the export you requested does not exist."})
@@ -2077,6 +2096,10 @@ class CasDataExport(View):
         year = int(request.GET.get('year', None))
         selected_date = date(year, month, 1).strftime('%Y-%m-%d')
 
+        if state_id and not user_can_access_location_id(
+                self.kwargs['domain'], request.couch_user, state_id
+        ):
+            return HttpResponse(status_code=403)
         sync, blob_id = get_cas_data_blob_file(data_type, state_id, selected_date)
 
         try:
@@ -2208,9 +2231,9 @@ class GovernanceAPIBaseView(View):
 
         is_valid = True
         error_message = ''
-        if not (date(2019, 12, 1) <= selected_month <= current_month):
+        if not (date(2019, 4, 1) <= selected_month <= current_month):
             is_valid = False
-            error_message = "Month should not be in future and can only be from Dec 2019"
+            error_message = "Month should not be in future and can only be from April 2019"
         if state_id is None:
             is_valid = False
             error_message = "Invalid State code"

@@ -18,6 +18,7 @@ hqDefine("js/icds_dashboard_utils", function () {
         angular.module(appName).constant('navMenuItems', initialPageData.get("nav_menu_items"));
         angular.module(appName).constant('userFullName', initialPageData.get("user_full_name"));
         angular.module(appName).constant('userUsername', initialPageData.get("user_username"));
+        angular.module(appName).constant('mapboxAccessToken', initialPageData.get("MAPBOX_ACCESS_TOKEN"));
         angular.module(appName).constant('genders', [
             {id: '', name: 'All'},
             {id: 'M', name: 'Male'},

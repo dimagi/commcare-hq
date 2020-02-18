@@ -46,18 +46,18 @@ def config_openmrs_repeater(request, domain, repeater_id):
         if form.is_valid():
             data = form.cleaned_data
             repeater.openmrs_config.openmrs_provider = data['openmrs_provider']
-            repeater.openmrs_config.case_config = OpenmrsCaseConfig.wrap(data['case_config'])
-            repeater.openmrs_config.form_configs = list(map(OpenmrsFormConfig.wrap, data['form_configs']))
+            repeater.openmrs_config.case_config = OpenmrsCaseConfig.wrap(data['patient_config'])
+            repeater.openmrs_config.form_configs = list(map(OpenmrsFormConfig.wrap, data['encounters_config']))
             repeater.save()
 
     else:
         form = OpenmrsConfigForm(
             data={
                 'openmrs_provider': repeater.openmrs_config.openmrs_provider,
-                'form_configs': json.dumps([
+                'encounters_config': json.dumps([
                     form_config.to_json()
                     for form_config in repeater.openmrs_config.form_configs]),
-                'case_config': json.dumps(repeater.openmrs_config.case_config.to_json()),
+                'patient_config': json.dumps(repeater.openmrs_config.case_config.to_json()),
             }
         )
     return render(request, 'openmrs/edit_config.html', {

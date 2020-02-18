@@ -12,6 +12,7 @@ META_DB = None
 # Doc types for classes we've removed from our code
 # but may still have docs lying around from
 DELETABLE_COUCH_DOC_TYPES = {
+    'ApplicationAccess': (MAIN_DB,),
     'SurveyKeyword': (MAIN_DB,),
     'SurveyKeywordAction': (MAIN_DB,),
     'CaseReminder': (MAIN_DB,),
@@ -22,5 +23,6 @@ DELETABLE_COUCH_DOC_TYPES = {
     'ForwardingRule': (MAIN_DB,),
     'ForwardingRule-Deleted': (MAIN_DB,),
     'GlobalAppConfig': (settings.NEW_APPS_DB,),
+    'ILSGatewayConfig': (MAIN_DB,),
     'WisePillDeviceEvent': (MAIN_DB,),
 }

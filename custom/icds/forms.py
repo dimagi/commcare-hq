@@ -170,8 +170,9 @@ class CustomDataPullForm(forms.Form):
         selected_ids = ExpandedMobileWorkerFilter.selected_location_ids([location_id_slug])
         return selected_ids[0] if selected_ids else None
 
-    def submit(self, email):
+    def submit(self, domain, email):
         run_data_pull.delay(self.cleaned_data['data_pull'],
+                            domain,
                             self.cleaned_data['month'],
                             self.cleaned_data['location_id'],
                             email)
