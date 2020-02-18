@@ -61,7 +61,7 @@ class CcsRecordMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribute
         ).format(end_month_string, start_month_string)
 
         alive_in_month = "(case_list.date_death is null OR case_list.date_death-{}>0)".format(start_month_string)
-        migration_status = "agg_migration.is_migrated=1 AND agg_migration.migration_date < {}".format(
+        migration_status = "(agg_migration.is_migrated=1 AND agg_migration.migration_date < {})::integer".format(
             start_month_string)
         seeking_services = "(person_cases.registered_status IS DISTINCT FROM 0 AND {} IS DISTINCT FROM 1)".format(
             migration_status)
