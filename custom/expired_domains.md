@@ -15,3 +15,7 @@ in which the custom code was deleted.
 * fri: e2f99f2ac06d3a8bc9e55415367dba4b404d0258
 * care-bihar (india server): 211e17615497b8689cc4590db28f87a0fc7454d0 and a947b323d6f2d886111a2b713ba75eb293d9fda8
 * pnlppgi 6da5142bc1ca3f4f532e6c36f9fad2f6eb568e95
+* zipline d1df43f1ef068d4555d6a710f5feeb5368825dc8
+* ilsgateway d1df43f1ef068d4555d6a710f5feeb5368825dc8
+* wisepill 90bf0f6f9bcaabdcb9ba6d7a70455a52ba312590
+* ews-ghana fa31f4d5f48388c64973a758d935c9f983b90c15, 65957fcc662812eee14ae62bb6fbc1c7018aef6c, caa56af005d7ec5a9cd9a1aa505d01e3fafd6cd8
