@@ -4,19 +4,12 @@
 {% load compress %}
 
 {% block stylesheets %}{{ block.super }}
-  {% if less_debug %}
+  {% compress css %}
     <link type="text/less"
           rel="stylesheet"
           media="all"
-          href="{% static 'accounting/less/pricing.debug.less' %}" />
-  {% else %}
-    {% compress css %}
-      <link type="text/less"
-            rel="stylesheet"
-            media="all"
-            href="{% static 'accounting/less/pricing.less' %}" />
-    {% endcompress %}
-  {% endif %}
+          href="{% static 'accounting/less/pricing.less' %}" />
+  {% endcompress %}
 {% endblock %}
 
 {% block page_content %}
