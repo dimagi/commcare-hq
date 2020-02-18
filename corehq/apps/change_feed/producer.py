@@ -50,7 +50,6 @@ class ChangeProducer(object):
                 _audit_log(CHANGE_SENT, change_meta)
         except Exception:
             _audit_log('ERROR', change_meta)
-            notify_exception(None, 'Problem sending change to Kafka', details=message)
             raise
 
         if not self.auto_flush:
