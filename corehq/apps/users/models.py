@@ -2593,6 +2593,23 @@ class DomainRequest(models.Model):
                                     email_from=settings.DEFAULT_FROM_EMAIL)
 
 
+class SQLInvitation(models.Model):
+    email = models.CharField(max_length=255, db_index=True)
+    invited_by = models.CharField(max_length=126)           # couch id of a WebUser
+    invited_on = models.DateTimeField()
+    is_accepted = models.BooleanField(default=False)
+    domain = models.CharField(max_length=255)
+    role = models.CharField(max_length=100, null=True)
+    program = models.CharField(max_length=126, null=True)   # couch id of a Program
+    supply_point = models.CharField(max_length=126, null=True)  # couch id of a Location
+    couch_id = models.CharField(max_length=126, null=True, db_index=True)
+
+    _inviter = None
+
+    class Meta:
+        db_table = "users_invitation"
+
+
 class Invitation(QuickCachedDocumentMixin, Document):
     email = StringProperty()
     invited_by = StringProperty()
