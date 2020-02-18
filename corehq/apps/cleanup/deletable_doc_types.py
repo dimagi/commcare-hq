@@ -22,7 +22,7 @@ DELETABLE_COUCH_DOC_TYPES = {
     'ExportMigrationMeta': (META_DB,),
     'ForwardingRule': (MAIN_DB,),
     'ForwardingRule-Deleted': (MAIN_DB,),
-    'GlobalAppConfig': (settings.NEW_APPS_DB,),
+    'GlobalAppConfig': (settings.APPS_DB,),
     'ILSGatewayConfig': (MAIN_DB,),
     'WisePillDeviceEvent': (MAIN_DB,),
 }
