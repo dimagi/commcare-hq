@@ -56,11 +56,11 @@ class TestPrevalenceOfUndernutrition(TestCase):
                         'total': 2375,
                         'original_name': ['st1'],
                         'fillKey': '20%-35%'},
-                'st2': {'moderately_underweight': 325,
+                'st2': {'moderately_underweight': 330,
                         'severely_underweight': 60,
                         'normal': 1505,
-                        'weighed': 1890,
-                        'total': 2565,
+                        'weighed': 1895,
+                        'total': 2570,
                         'original_name': ['st2'],
                         'fillKey': '20%-35%'},
                 'st3': {'moderately_underweight': 0,
@@ -133,9 +133,9 @@ class TestPrevalenceOfUndernutrition(TestCase):
             [
                 {'indicator': 'Total Children (0 - 5 years) weighed in given month:', 'value': '3,480'},
                 {'indicator': 'Number of children unweighed (0 - 5 years):', 'value': '1,480'},
-                {'indicator': '% Severely Underweight (0 - 5 years):', 'value': '2.88%'},
-                {'indicator': '% Moderately Underweight (0 - 5 years):', 'value': '18.56%'},
-                {'indicator': '% Normal (0 - 5 years):', 'value': '78.56%'}
+                {'indicator': '% Severely Underweight (0 - 5 years):', 'value': '2.87%'},
+                {'indicator': '% Moderately Underweight (0 - 5 years):', 'value': '18.68%'},
+                {'indicator': '% Normal (0 - 5 years):', 'value': '78.45%'}
             ]
         )
 
