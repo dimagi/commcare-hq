@@ -5,6 +5,8 @@ var pageData = hqImport('hqwebapp/js/initial_page_data');
 
 
 describe('Download Directive', function () {
+
+    var numberOfReports = 12;
     describe('Download Directive main functionalities', function() {
         var $scope, $httpBackend, controller;
 
@@ -376,10 +378,9 @@ describe('Download Directive', function () {
         }));
 
         it('tests that all users have access to ISSNIP monthly register', function () {
-            var expected = 12;
 
             var length = controller.indicators.length;
-            assert.equal(expected, length);
+            assert.equal(numberOfReports, length);
         });
 
         it('tests first possible data choice on THR raport', function () {
@@ -484,7 +485,7 @@ describe('Download Directive', function () {
 
         it('tests that all users have access to ISSNIP monthly register', function () {
             var length = controller.indicators.length;
-            assert.equal(11, length);
+            assert.equal(numberOfReports-1, length);
         });
     });
 
@@ -536,7 +537,7 @@ describe('Download Directive', function () {
 
         it('tests that all users have access to ISSNIP monthly register', function () {
             var length = controller.indicators.length;
-            assert.equal(12, length);
+            assert.equal(numberOfReports, length);
         });
     });
 
@@ -588,7 +589,7 @@ describe('Download Directive', function () {
 
         it('tests that block user does not have access to dashboard usage report', function () {
             var length = controller.indicators.length;
-            assert.equal(11, length);
+            assert.equal(numberOfReports - 1, length);
         });
     });
 
