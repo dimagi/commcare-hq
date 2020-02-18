@@ -33,4 +33,6 @@ class Command(BaseCommand):
             if input("Delete all the above attachments? [y/n]").lower() in ('y', 'yes'):
                 for form_id, name, blob_meta in attachments_to_delete:
                     print(f'Deleting {form_id}/{name} ({blob_meta.key})')
+                    # todo: if this is ever too slow, we can bulk delete instead
+                    # https://github.com/dimagi/commcare-hq/pull/26672#discussion_r380522955
                     get_blob_db().delete(blob_meta.key)
