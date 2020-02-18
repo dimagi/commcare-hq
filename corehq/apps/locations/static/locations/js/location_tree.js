@@ -86,7 +86,7 @@ hqDefine('locations/js/location_tree', [
             if (!self.l__selected_location_id()) {
                 return;
             }
-            return (self.l__selected_location_id().split("l__")[1]);
+            return self.l__selected_location_id();
         });
 
         self.selected_location = ko.computed(function () {
