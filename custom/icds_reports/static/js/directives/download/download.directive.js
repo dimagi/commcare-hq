@@ -152,6 +152,15 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         vm.indicators.push({id: 11, name: 'Dashboard Activity Report'});
     }
 
+    if (haveAccessToFeatures) {
+        vm.indicators.push({id: 12, name: 'Service Delivery Report'});
+        vm.beneficiaryCategories = [
+            {id: 'pw_lw_children', name: 'PW, LW & Children 0-3 years'},
+            {id: 'children_3_6', name: 'Children 3-6 years'},
+        ];
+        vm.selectedBeneficiaryCategory = 'pw_lw_children';
+    }
+
     var ALL_OPTION = {
         name: 'All',
         location_id: 'all',
@@ -524,6 +533,9 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
             'pdfformat': vm.selectedPDFFormat,
             'selected_awcs': awcs.join(','),
         };
+        if (haveAccessToFeatures) {
+            taskConfig['beneficiary_category'] = vm.selectedBeneficiaryCategory;
+        }
         var selectedFilters = vm.selectedFilterOptions();
         if (vm.isChildBeneficiaryListSelected()) {
             taskConfig['filter[]'] = [];
@@ -600,6 +612,10 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         return vm.selectedIndicator === 6;
     };
 
+    vm.isSDRSelected = function () {
+        return vm.selectedIndicator === 12;
+    };
+
     vm.isISSNIPMonthlyRegisterSelected = function () {
         return vm.selectedIndicator === 7;
     };
@@ -636,7 +652,6 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         return !(vm.isChildBeneficiaryListSelected() || vm.isIncentiveReportSelected() ||
             vm.isLadySupervisorSelected() || vm.isDashboardUsageSelected());
     };
-
 
     vm.showLocationFilter = function () {
         return !vm.isDashboardUsageSelected();
