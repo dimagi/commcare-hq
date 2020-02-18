@@ -105,9 +105,9 @@ class FormProcessorSQL(object):
             }
 
         all_models = filter(None, (
-            list(processed_forms) +
-            (cases if cases else []) +
-            (stock_result.models_to_save if stock_result else [])
+            list(processed_forms)
+            + (cases if cases else [])
+            + (stock_result.models_to_save if stock_result else [])
         ))
         try:
             with ExitStack() as stack:
