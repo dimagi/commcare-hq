@@ -3,7 +3,7 @@ from collections import defaultdict
 
 from django.contrib.postgres.fields.jsonb import KeyTextTransform
 from django.core.management.base import BaseCommand
-from django.db.models import Count, IntegerField
+from django.db.models import Count, IntegerField, TextField
 
 from dimagi.utils.chunked import chunked
 from django.db.models.functions import Cast
@@ -99,7 +99,7 @@ class Command(BaseCommand):
         records = list(ICDSAuditEntryRecord.objects.filter(url=f'/a/{domain}/cas_export',
                                                            time_of_use__gte=start_date,
                                                            time_of_use__lte=end_date)
-                       .annotate(indicator=Cast(KeyTextTransform('indicator', 'post_data'), IntegerField()))
+                       .annotate(indicator=Cast(KeyTextTransform('indicator', 'post_data'), TextField()))
                        .values('indicator')
                        .annotate(count=Count('indicator')).values('username', 'count').order_by('username'))
         for record in records:
