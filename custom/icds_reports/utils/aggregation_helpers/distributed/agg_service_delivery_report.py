@@ -1,6 +1,6 @@
 
 from custom.icds_reports.const import AGG_SDR_TABLE
-from custom.icds_reports.utils.aggregation_helpers import  month_formatter, get_child_health_tablename
+from custom.icds_reports.utils.aggregation_helpers import  month_formatter, get_child_health_temp_tablename
 from custom.icds_reports.utils.aggregation_helpers.distributed.base import AggregationPartitionedHelper
 
 
@@ -25,7 +25,7 @@ class AggServiceDeliveryReportHelper(AggregationPartitionedHelper):
 
     @property
     def child_temp_tablename(self):
-        return get_child_health_tablename(self.month)
+        return get_child_health_temp_tablename(self.month)
 
     @property
     def temporary_tablename(self):
