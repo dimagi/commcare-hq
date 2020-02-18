@@ -2,6 +2,7 @@ import abc
 
 from django.conf import settings
 
+from corehq.elastic import ESError
 from corehq.util.es.elasticsearch import bulk
 
 
@@ -29,6 +30,8 @@ class AbstractElasticsearchInterface(metaclass=abc.ABCMeta):
         results = self.es.mget(
             index=index, doc_type=doc_type, body={'ids': doc_ids}, _source=True)
         for doc_result in results['docs']:
+            if 'error' in doc_result:
+                raise ESError(doc_result['error'].get('reason', 'error doing bulk get'))
             if doc_result['found']:
                 self._fix_hit(doc_result)
                 docs.append(doc_result['_source'])
