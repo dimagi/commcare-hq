@@ -19,7 +19,7 @@ def get_all_commcare_users_by_domain(domain):
 
 def get_mobile_usernames_by_filters(domain, user_filters):
     query = _get_es_query(domain, user_filters)
-    return query.values_list('username', flat=True)
+    return query.values_list('base_username', flat=True)
 
 
 def _get_es_query(domain, user_filters):
