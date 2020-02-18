@@ -14,7 +14,7 @@ from corehq.apps.commtrack.models import (
     StockState,
 )
 from corehq.apps.commtrack.tests import util
-from corehq.apps.consumption.models import SQLDefaultConsumption
+from corehq.apps.consumption.models import DefaultConsumption
 from corehq.apps.consumption.shortcuts import (
     set_default_monthly_consumption_for_domain,
 )
@@ -177,7 +177,7 @@ class StockStateBehaviorTest(StockStateTest):
 class StockStateConsumptionTest(StockStateTest):
 
     def tearDown(self):
-        default = SQLDefaultConsumption.get_domain_default(self.domain)
+        default = DefaultConsumption.get_domain_default(self.domain)
         if default:
             default.delete()
         super(StockStateConsumptionTest, self).tearDown()

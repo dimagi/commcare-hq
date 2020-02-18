@@ -5,7 +5,7 @@ from corehq.apps.consumption.models import (
     TYPE_DOMAIN,
     TYPE_PRODUCT,
     TYPE_SUPPLY_POINT,
-    SQLDefaultConsumption,
+    DefaultConsumption,
 )
 
 
@@ -15,27 +15,27 @@ def get_default_monthly_consumption(domain, product_id, location_type, case_id):
     parameters.
     """
 
-    consumption = SQLDefaultConsumption.objects.filter(
+    consumption = DefaultConsumption.objects.filter(
         domain=domain,
         product_id=product_id,
         supply_point_id=case_id
     ).first()
 
     if not consumption:
-        consumption = SQLDefaultConsumption.objects.filter(
+        consumption = DefaultConsumption.objects.filter(
             domain=domain,
             product_id=product_id,
             supply_point_type=location_type
         ).first()
 
     if not consumption:
-        consumption = SQLDefaultConsumption.objects.filter(
+        consumption = DefaultConsumption.objects.filter(
             domain=domain,
             product_id=product_id
         ).first()
 
     if not consumption:
-        consumption = SQLDefaultConsumption.objects.filter(domain=domain).first()
+        consumption = DefaultConsumption.objects.filter(domain=domain).first()
 
     if consumption:
         return consumption.default_consumption
@@ -53,17 +53,17 @@ def get_default_consumption(domain, product_id, location_type, case_id):
 
 
 def set_default_monthly_consumption_for_domain(domain, amount):
-    default = SQLDefaultConsumption.get_domain_default(domain)
+    default = DefaultConsumption.get_domain_default(domain)
     return _update_or_create_default(domain, amount, default, TYPE_DOMAIN)
 
 
 def set_default_consumption_for_product(domain, product_id, amount):
-    default = SQLDefaultConsumption.get_product_default(domain, product_id)
+    default = DefaultConsumption.get_product_default(domain, product_id)
     return _update_or_create_default(domain, amount, default, TYPE_PRODUCT, product_id=product_id)
 
 
 def set_default_consumption_for_supply_point(domain, product_id, supply_point_id, amount):
-    default = SQLDefaultConsumption.get_supply_point_default(domain, product_id, supply_point_id)
+    default = DefaultConsumption.get_supply_point_default(domain, product_id, supply_point_id)
     return _update_or_create_default(domain, amount, default, TYPE_SUPPLY_POINT,
                                      product_id=product_id, supply_point_id=supply_point_id)
 
@@ -76,7 +76,7 @@ def _update_or_create_default(domain, amount, default, type, **kwargs):
         default.save()
         return default
     else:
-        default = SQLDefaultConsumption(domain=domain, default_consumption=amount, type=type, **kwargs)
+        default = DefaultConsumption(domain=domain, default_consumption=amount, type=type, **kwargs)
         default.save()
         return default
 
@@ -86,7 +86,7 @@ def build_consumption_dict(domain):
     Takes raw rows from couch and builds a dict to
     look up consumption values from.
     """
-    SQLDefaultConsumption.objects.filter(domain=domain)
+    DefaultConsumption.objects.filter(domain=domain)
 
     return dict(
         (tuple(
@@ -95,7 +95,7 @@ def build_consumption_dict(domain):
             obj.supply_point_type,
             obj.supply_point_id,
         ), obj.default_consumption)
-        for obj in SQLDefaultConsumption.objects.filter(domain=domain) if obj.default_consumption
+        for obj in DefaultConsumption.objects.filter(domain=domain) if obj.default_consumption
     )
 
 
