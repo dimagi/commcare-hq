@@ -492,7 +492,7 @@ class SubmissionPost(object):
 
     @staticmethod
     def get_exception_response_and_log(msg, error_instance, path):
-        logging.error(
+        logging.warning(
             msg,
             extra={
                 'submission_path': path,
