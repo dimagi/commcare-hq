@@ -42,7 +42,7 @@ from corehq.form_processor.exceptions import (
     AttachmentNotFound,
     MissingFormXml,
     XFormNotFound,
-)
+    CaseSaveError)
 from corehq.form_processor.interfaces.processor import (
     FormProcessorInterface,
     ProcessedForms,
@@ -328,7 +328,7 @@ class CouchSqlDomainMigrator:
         _migrate_case_attachments(couch_case, sql_case)
         try:
             CaseAccessorSQL.save_case(sql_case)
-        except IntegrityError:
+        except CaseSaveError:
             # case re-created by form processing so just mark the case as deleted
             CaseAccessorSQL.soft_delete_cases(
                 self.domain,
