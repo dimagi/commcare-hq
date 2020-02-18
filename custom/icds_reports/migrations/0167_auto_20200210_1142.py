@@ -4,7 +4,9 @@ from __future__ import unicode_literals
 
 import custom.icds_reports.models.aggregate
 from django.db import migrations, models
-
+from custom.icds_reports.utils.migrations import (
+    get_composite_primary_key_migrations,
+)
 
 class Migration(migrations.Migration):
 
@@ -20,7 +22,7 @@ class Migration(migrations.Migration):
                 ('district_id', models.TextField(null=True)),
                 ('block_id', models.TextField(null=True)),
                 ('supervisor_id', models.TextField(null=True)),
-                ('awc_id', models.TextField(null=False)),
+                ('awc_id', models.TextField(primary_key=True, serialize=False)),
                 ('lunch_eligible', models.IntegerField(null=True)),
                 ('lunch_0_days', models.IntegerField(null=True)),
                 ('lunch_1_7_days', models.IntegerField(null=True)),
@@ -57,3 +59,4 @@ class Migration(migrations.Migration):
             unique_together=set([('month', 'aggregation_level', 'state_id', 'district_id', 'block_id', 'supervisor_id', 'awc_id')]),
         ),
     ]
+    operations.extend(get_composite_primary_key_migrations(['aggservicedeliveryreport']))

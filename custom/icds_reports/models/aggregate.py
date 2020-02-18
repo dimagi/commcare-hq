@@ -1615,7 +1615,7 @@ class AggServiceDeliveryReport(models.Model, AggregateMixin):
     district_id = models.TextField(null=True)
     block_id = models.TextField(null=True)
     supervisor_id = models.TextField(null=True)
-    awc_id = models.TextField(null=True)
+    awc_id = models.TextField(primary_key=True)
     lunch_eligible = models.IntegerField(null=True)
     lunch_0_days = models.IntegerField(null=True)
     lunch_1_7_days = models.IntegerField(null=True)
@@ -1644,7 +1644,7 @@ class AggServiceDeliveryReport(models.Model, AggregateMixin):
 
     class Meta(object):
         db_table = AGG_SDR_TABLE
-        unique_together = ('month', 'aggregation_level','state_id', 'district_id', 'block_id',
-                           'supervisor_id', 'awc_id')
+        unique_together = ('month', 'aggregation_level', 'state_id', 'district_id', 'block_id',
+                           'supervisor_id', 'awc_id') #pkey
 
     _agg_helper_cls = AggServiceDeliveryReportHelper
