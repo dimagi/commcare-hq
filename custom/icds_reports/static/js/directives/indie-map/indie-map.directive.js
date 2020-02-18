@@ -69,9 +69,10 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
             }
             if (isMobile) {
                 // scale maps based on space available on device.
-                var headerHeight = $('#map-chart-header').height();
-                // take window height and subtract height of the header plus 44px of additional padding / margins
-                var availableHeight = window.innerHeight - headerHeight - 44;
+                var headerHeight = $('#map-chart-header').height() + $('#page-heading').innerHeight();
+                var legendHeight = 145; // fixed legend height to calculate available space for map
+                // take window height and subtract height of the header plus legend height plus 44px of additional padding / margins
+                var availableHeight = window.innerHeight - headerHeight - legendHeight - 44;
                 if (availableHeight < vm.mapHeight) {
                     vm.mapHeight = availableHeight;
                 }
@@ -161,7 +162,7 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
                     );
                     projection.scale(scaleCenter.scale)
                         .center(scaleCenter.center)
-                        .translate([element.offsetWidth / 2, element.offsetHeight / div]);
+                        .translate([element.offsetWidth / 2, element.offsetHeight / 2]); // sets map in center of canvas
 
                     //setting zoom out limit
                     //references: https://data-map-d3.readthedocs.io/en/latest/steps/step_06.html#step-06
@@ -175,6 +176,8 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
                                 "translate(" + d3.event.translate + ") scale(" + d3.event.scale + ")");
                         });
                         svg.call(zoom); //connects zoom event to map
+                        // overrides default overflow value (hidden) of svg, which allows map to zoom over legend
+                        svg.style("overflow", "inherit");
                     });
                 } else {
                     projection = d3.geo.equirectangular()

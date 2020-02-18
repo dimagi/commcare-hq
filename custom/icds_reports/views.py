@@ -64,7 +64,9 @@ from custom.icds_reports.const import (
     THR_REPORT_EXPORT,
     AggregationLevels,
     LocationTypes,
-    GOVERNANCE_API_PAGE_SIZE)
+    GOVERNANCE_API_PAGE_SIZE,
+    SERVICE_DELIVERY_REPORT
+)
 from custom.icds_reports.dashboard_utils import get_dashboard_template_context
 from custom.icds_reports.models.aggregate import AwcLocation
 from custom.icds_reports.models.helper import IcdsFile
@@ -951,9 +953,14 @@ class ExportIndicatorView(View):
                 return HttpResponseBadRequest()
         if indicator == DASHBOARD_USAGE_EXPORT:
             config['couch_user'] = self.request.couch_user
+
+        if indicator == SERVICE_DELIVERY_REPORT:
+            config['beneficiary_category'] = request.POST.get('beneficiary_category')
+
         if indicator in (CHILDREN_EXPORT, PREGNANT_WOMEN_EXPORT, DEMOGRAPHICS_EXPORT, SYSTEM_USAGE_EXPORT,
                          AWC_INFRASTRUCTURE_EXPORT, GROWTH_MONITORING_LIST_EXPORT, AWW_INCENTIVE_REPORT,
-                         LS_REPORT_EXPORT, THR_REPORT_EXPORT, DASHBOARD_USAGE_EXPORT):
+                         LS_REPORT_EXPORT, THR_REPORT_EXPORT, DASHBOARD_USAGE_EXPORT,
+                         SERVICE_DELIVERY_REPORT):
             task = prepare_excel_reports.delay(
                 config,
                 aggregation_level,
