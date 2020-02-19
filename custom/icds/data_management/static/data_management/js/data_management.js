@@ -9,7 +9,7 @@ hqDefine('data_management/js/data_management', [
 ], function ($, ko, _, initialPageData) {
     'use strict';
 
-    var dataManagementRequest = function(name, dbAlias, createdAt, initiatedBy, startedOn, endedOn, startDate,
+    var dataManagementRequest = function (name, dbAlias, createdAt, initiatedBy, startedOn, endedOn, startDate,
         endDate, status, statusText, error) {
         var self = {};
         self.name = name;
