@@ -137,9 +137,6 @@ class Command(BaseCommand):
 
     def _update_block_files(self):
         block_directory = os.path.join(self.input_dir, 'blocks')
-        current_block_filename = os.path.join(block_directory, 'jk_blocks_v3.topojson')
-        with open(current_block_filename) as f:
-            current_block_topojson = json.loads(f.read())
 
         # like other parts of this command, assumes these files are also in the input directory.
         # to create these files:
