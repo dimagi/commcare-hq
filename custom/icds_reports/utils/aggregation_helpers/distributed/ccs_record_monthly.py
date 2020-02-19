@@ -265,6 +265,9 @@ class CcsRecordMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribute
                 AND case_list.supervisor_id = person_cases.supervisor_id
             LEFT OUTER JOIN "{pregnant_tasks_case_ucr}" ut ON case_list.doc_id = ut.ccs_record_case_id
                 AND case_list.supervisor_id = ut.supervisor_id
+            LEFT OUTER JOIN "{agg_migration_table}" agg_migration ON case_list.person_case_id = agg_migration.person_case_id
+                AND agg_migration.month = %(start_date)s AND {valid_in_month}
+                AND case_list.supervisor_id = agg_migration.supervisor_id
             LEFT OUTER JOIN "{agg_thr_table}" agg_thr ON case_list.doc_id = agg_thr.case_id
                 AND agg_thr.month = %(start_date)s AND {valid_in_month}
                 AND case_list.supervisor_id = agg_thr.supervisor_id
@@ -280,9 +283,6 @@ class CcsRecordMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribute
             LEFT OUTER JOIN "{agg_delivery_table}" agg_delivery ON case_list.doc_id = agg_delivery.case_id
                 AND agg_delivery.month = %(start_date)s AND {valid_in_month}
                 AND case_list.supervisor_id = agg_delivery.supervisor_id
-            LEFT OUTER JOIN "{agg_migration_table}" agg_migration ON case_list.person_case_id = agg_migration.person_case_id
-                AND agg_migration.month = %(start_date)s AND {valid_in_month}
-                AND case_list.supervisor_id = agg_migration.supervisor_id
             WHERE {open_in_month} AND (case_list.add is NULL OR %(start_date)s-case_list.add<=183)
                 AND case_list.supervisor_id IS NOT NULL
             ORDER BY case_list.supervisor_id, case_list.awc_id, case_list.case_id, case_list.modified_on
