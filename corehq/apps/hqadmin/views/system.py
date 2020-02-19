@@ -27,7 +27,7 @@ from corehq.apps.domain.decorators import (
 )
 from corehq.apps.domain.views.internal import get_project_limits_context
 from corehq.apps.hqadmin import escheck, service_checks
-from corehq.apps.hqadmin.models import SQLHqDeploy
+from corehq.apps.hqadmin.models import HqDeploy
 from corehq.apps.hqadmin.service_checks import run_checks
 from corehq.apps.hqadmin.utils import get_celery_stats
 from corehq.apps.hqadmin.views.utils import (
@@ -66,7 +66,7 @@ class SystemInfoView(BaseAdminSectionView):
         context['rabbitmq_url'] = get_rabbitmq_management_url()
         context['hide_filters'] = True
         context['current_system'] = socket.gethostname()
-        context['deploy_history'] = SQLHqDeploy.get_latest(environment, limit=5)
+        context['deploy_history'] = HqDeploy.get_latest(environment, limit=5)
 
         context['user_is_support'] = hasattr(self.request, 'user') and SUPPORT.enabled(self.request.user.username)
 
