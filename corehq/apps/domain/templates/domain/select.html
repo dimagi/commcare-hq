@@ -18,7 +18,7 @@
         <ul class="list-unstyled">
           {% for invitation in open_invitations %}
             <li style="padding-bottom: 6px;">
-              <a href="{% url "domain_accept_invitation" invitation.domain invitation.get_id %}" class="btn btn-primary btn-xs">
+              <a href="{% url "domain_accept_invitation" invitation.domain invitation.id %}" class="btn btn-primary btn-xs">
                 Accept
               </a>
               {{  invitation.domain }}
