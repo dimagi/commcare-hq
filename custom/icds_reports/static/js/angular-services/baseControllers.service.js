@@ -248,13 +248,16 @@ window.angular.module('icdsApp').factory('baseControllersService', function() {
                     return Promise.resolve(true);
                 }
                 if (document.querySelector(selector) === null) {
-                    return vm.rafAsync().then(() => vm.checkElement(selector));
+                    return vm.rafAsync().then(function () {
+                        return vm.checkElement(selector);
+                    });
                 } else {
                     return Promise.resolve(true);
                 }
             };
 
-            vm.mapLoadingPromise = vm.checkElement('svg').then(() => {});
+            vm.mapLoadingPromise = vm.checkElement('svg').then(function () {
+            });
 
             vm.init = function() {
                 var locationId = vm.filtersData.location_id || vm.userLocationId;
