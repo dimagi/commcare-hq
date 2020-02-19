@@ -55,12 +55,12 @@ class TestLactatingEnrolledWomen(TestCase):
                             {
                                 "y": 160,
                                 "x": 1491004800000,
-                                "all": 160
+                                "all": 189
                             },
                             {
                                 "y": 167,
                                 "x": 1493596800000,
-                                "all": 167
+                                "all": 196
                             }
                         ],
                         "key": "Total number of lactating women who are enrolled for Anganwadi Services"
@@ -97,11 +97,11 @@ class TestLactatingEnrolledWomen(TestCase):
                 "tooltips_data": {
                     "s2": {
                         "valid": 24,
-                        "all": 24
+                        "all": 31
                     },
                     "s1": {
                         "valid": 19,
-                        "all": 19
+                        "all": 20
                     }
                 },
                 "chart_data": [
@@ -139,18 +139,18 @@ class TestLactatingEnrolledWomen(TestCase):
             {
                 "rightLegend": {
                     "info": percent_lactating_women_enrolled_help_text(),
-                    "average": '100.00',
+                    "average": '85.20',
                     'extended_info': [
                         {
                             'indicator': 'Number of lactating women who are enrolled for Anganwadi Services:',
                             'value': "167"
                         },
-                        {'indicator': 'Total number of lactating women who are registered:', 'value': "167"},
+                        {'indicator': 'Total number of lactating women who are registered:', 'value': "196"},
                         {
                             'indicator': (
                                 'Percentage of registered lactating women who are enrolled for Anganwadi Services:'
                             ),
-                            'value': '100.00%'
+                            'value': '85.20%'
                         }
                     ]
                 },
@@ -163,8 +163,8 @@ class TestLactatingEnrolledWomen(TestCase):
                     'st5': {'all': 0, 'valid': 0, 'original_name': ['st5'], 'fillKey': 'Women'},
                     'st6': {'all': 0, 'valid': 0, 'original_name': ['st6'], 'fillKey': 'Women'},
                     'st7': {'all': 1, 'valid': 1, 'original_name': ['st7'], 'fillKey': 'Women'},
-                    'st1': {'all': 87, 'valid': 87, 'original_name': ['st1'], 'fillKey': 'Women'},
-                    'st2': {'all': 79, 'valid': 79, 'original_name': ['st2'], 'fillKey': 'Women'},
+                    'st1': {'all': 102, 'valid': 87, 'original_name': ['st1'], 'fillKey': 'Women'},
+                    'st2': {'all': 93, 'valid': 79, 'original_name': ['st2'], 'fillKey': 'Women'},
                     'st3': {'all': 0, 'valid': 0, 'original_name': ['st3'], 'fillKey': 'Women'}
                 },
                 "slug": "lactating_enrolled_women",
@@ -187,18 +187,18 @@ class TestLactatingEnrolledWomen(TestCase):
             {
                 "rightLegend": {
                     "info": percent_lactating_women_enrolled_help_text(),
-                    "average": '100.00',
+                    "average": '85.29',
                     'extended_info': [
                         {
                             'indicator': 'Number of lactating women who are enrolled for Anganwadi Services:',
                             'value': "87"
                         },
-                        {'indicator': 'Total number of lactating women who are registered:', 'value': "87"},
+                        {'indicator': 'Total number of lactating women who are registered:', 'value': "102"},
                         {
                             'indicator': (
                                 'Percentage of registered lactating women who are enrolled for Anganwadi Services:'
                             ),
-                            'value': '100.00%'
+                            'value': '85.29%'
                         }
                     ]
                 },
@@ -209,7 +209,7 @@ class TestLactatingEnrolledWomen(TestCase):
                 "data": {
                     'block_map': {
                         'valid': 87,
-                        'all': 87,
+                        'all': 102,
                         'original_name': ['b1', 'b2'],
                         'fillKey': 'Women'
                     }
