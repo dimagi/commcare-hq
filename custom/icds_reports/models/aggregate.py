@@ -1673,6 +1673,10 @@ class AggServiceDeliveryReport(models.Model, AggregateMixin):
     awc_is_test = models.SmallIntegerField(null=True)
     month = models.DateField(null=True)
     aggregation_level = models.SmallIntegerField(null=True)
+    children_0_3 = models.IntegerField(null=True)
+    children_3_5 =  models.IntegerField(null=True)
+    gm_0_3 = models.IntegerField(null=True)
+    gm_3_5 = models.IntegerField(null=True)
 
     class Meta(object):
         db_table = AGG_SDR_TABLE

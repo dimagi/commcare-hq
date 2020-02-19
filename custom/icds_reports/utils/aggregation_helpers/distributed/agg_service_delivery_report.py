@@ -92,8 +92,11 @@ class AggServiceDeliveryReportHelper(AggregationPartitionedHelper):
             thr_1_7_days = ut.thr_1_7_days,
             thr_8_14_days = ut.thr_8_14_days,
             thr_15_20_days = ut.thr_15_20_days,
-            thr_21_days = ut.thr_21_days
-
+            thr_21_days = ut.thr_21_days,
+            children_0_3 = ut.children_0_3,
+            children_3_5 = ut.children_3_5,
+            gm_0_3 = ut.gm_0_3,
+            gm_3_5 = ut.gm_3_5
         FROM (
             SELECT
                 supervisor_id,
@@ -117,7 +120,11 @@ class AggServiceDeliveryReportHelper(AggregationPartitionedHelper):
                 SUM(CASE WHEN thr_eligible=1 AND num_rations_distributed BETWEEN 1 AND 7 THEN 1 ELSE 0 END) as thr_1_7_days,
                 SUM(CASE WHEN thr_eligible=1 AND num_rations_distributed BETWEEN 8 AND 14 THEN 1 ELSE 0 END) as thr_8_14_days,
                 SUM(CASE WHEN thr_eligible=1 AND num_rations_distributed BETWEEN 15 AND 20 THEN 1 ELSE 0 END) as thr_15_20_days,
-                SUM(CASE WHEN thr_eligible=1 AND num_rations_distributed>=21 THEN 1 ELSE 0 END) as thr_21_days
+                SUM(CASE WHEN thr_eligible=1 AND num_rations_distributed>=21 THEN 1 ELSE 0 END) as thr_21_days,
+                SUM(CASE WHEN age_tranche::integer <=36 THEN valid_in_month ELSE 0 END ) as children_0_3,
+                SUM(CASE WHEN age_tranche::integer BETWEEN 37 AND 60 THEN valid_in_month ELSE 0 END ) as children_3_5,
+                SUM(CASE WHEN age_tranche::integer <=36 THEN nutrition_status_weighed ELSE 0 END) as gm_0_3,
+                SUM(CASE WHEN age_tranche::integer BETWEEN 37 AND 60  THEN nutrition_status_weighed ELSE 0 END)AS gm_3_5
             FROM "{self.child_temp_tablename}"
             WHERE month=%(start_date)s
             GROUP BY supervisor_id, awc_id, month
@@ -204,6 +211,10 @@ class AggServiceDeliveryReportHelper(AggregationPartitionedHelper):
             ('lunch_8_14_days',),
             ('lunch_15_20_days',),
             ('lunch_21_days',),
+            ('children_0_3',),
+            ('children_3_5',),
+            ('gm_0_3',),
+            ('gm_3_5',),
             ('state_is_test', 'MAX(state_is_test)'),
             ('district_is_test', column_value_as_per_agg_level(aggregation_level, 1,'MAX(district_is_test)', "0")),
             ('block_is_test', column_value_as_per_agg_level(aggregation_level, 2,'MAX(block_is_test)', "0")),
