@@ -233,6 +233,29 @@ window.angular.module('icdsApp').factory('baseControllersService', function() {
                 }
             };
 
+            //Creating a promise, which resolves only after map is rendered (wait until canvas is rendered in dom)
+            // Reference: https://stackoverflow.com/a/47776379/12839195
+            vm.rafAsync = function () {
+                return new Promise(function (resolve) {
+                    requestAnimationFrame(resolve);
+                });
+            };
+
+            vm.checkElement = function (selector) {
+                // if it is not a page where map is displayed, resolve the promise immediately,
+                // else wait till canvas (svg in dom) is created
+                if (!navigationService.isMapDisplayed($location.path())) {
+                    return Promise.resolve(true);
+                }
+                if (document.querySelector(selector) === null) {
+                    return vm.rafAsync().then(() => vm.checkElement(selector));
+                } else {
+                    return Promise.resolve(true);
+                }
+            };
+
+            vm.mapLoadingPromise = vm.checkElement('svg').then(() => {});
+
             vm.init = function() {
                 var locationId = vm.filtersData.location_id || vm.userLocationId;
                 if (!locationId || ["all", "null", "undefined"].indexOf(locationId) >= 0) {
