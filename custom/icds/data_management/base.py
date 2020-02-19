@@ -49,7 +49,8 @@ class SQLBasedDataManagement(DataManagement):
         record_provider = SqlDocumentProvider(iteration_key, self.case_accessor())
         processor = BulkDocProcessor(record_provider, self.doc_processor(self.domain),
                                      progress_logger=SQLBasedProgressLogger(iteration_key))
-        return processor.run()
+        processed, skipped = processor.run()
+        return processed, skipped, logger.logs
 
 
 class ESBasedDataManagement(DataManagement):
@@ -63,4 +64,4 @@ class ESBasedDataManagement(DataManagement):
         for chunk in chunked(case_ids, 100):
             case_accessor = CaseAccessors(self.domain)
             doc_processor.process_bulk_docs(case_accessor.get_cases(list(chunk)), progress_logger)
-        return len(case_ids), 0
+        return len(case_ids), 0, progress_logger.logs
