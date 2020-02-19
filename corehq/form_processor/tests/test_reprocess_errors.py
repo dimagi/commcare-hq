@@ -474,6 +474,10 @@ class TestReprocessDuringSubmissionSQL(TestReprocessDuringSubmission):
 class TestTransactionErrors(TransactionTestCase):
     domain = uuid.uuid4().hex
 
+    def tearDown(self):
+        FormProcessorTestUtils.delete_all_cases_forms_ledgers(self.domain)
+        super().tearDown()
+
     def test_error_saving_case(self):
         form_id = uuid.uuid4().hex
         case_id = uuid.uuid4().hex
