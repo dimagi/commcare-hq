@@ -116,14 +116,6 @@ class Command(BaseCommand):
         # copy custom properties from old data to new for all other states
         copy_custom_metadata(district_topojson, new_districts)
 
-        # manually update root metadata for the new states
-        # these values were determined by inspecting the shape files manually (using the mobile dashboard
-        # auto-positioning front-end code)
-        j_k_obj['center'] = ['75', '33.75']
-        j_k_obj['scale'] = 5000
-        ladakh_obj['center'] = ['76.5', '34.75']
-        ladakh_obj['scale'] = 3500
-
         # set id and name properties and clear everything else out that was in the import file
         for state_obj in [j_k_obj, ladakh_obj]:
             for geometry in state_obj['geometries']:
