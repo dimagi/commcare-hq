@@ -115,6 +115,7 @@ from custom.icds_reports.reports.issnip_monthly_register import (
     ISSNIPMonthlyReport,
 )
 from custom.icds_reports.reports.take_home_ration import TakeHomeRationExport
+from custom.icds_reports.reports.service_delivery_report import ServiceDeliveryReport
 from custom.icds_reports.sqldata.exports.awc_infrastructure import (
     AWCInfrastructureExport,
 )
@@ -142,6 +143,7 @@ from custom.icds_reports.utils import (
     track_time,
     zip_folder,
     get_dashboard_usage_excel_file,
+    create_service_delivery_report
 )
 from custom.icds_reports.utils.aggregation_helpers.distributed import (
     ChildHealthMonthlyAggregationDistributedHelper,
@@ -946,7 +948,26 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
         # CODE IN THIS SECTION WILL BE CHANGED WITH ACTUAL DATA PULLING
         # WHEN THE BACKEND DATA WILL BE READY FOR THIS TABLE. MEANWHILE THIS
         # REPORT IS NOT accessible to the USER BECAUSE ITS IN FF
-        cache_key = "DUMMY CAHE KEY"
+
+        excel_data = ServiceDeliveryReport(
+            config=config,
+            location=location,
+            beta=beta
+        ).get_excel_data()
+        export_info = excel_data[1][1]
+        generated_timestamp = date_parser.parse(export_info[0][1])
+        formatted_timestamp = generated_timestamp.strftime("%d-%m-%Y__%H-%M-%S")
+        data_type = 'Service Delivery Report__{}'.format(formatted_timestamp)
+
+        if file_format == 'xlsx':
+            cache_key = create_service_delivery_report(
+                excel_data,
+                data_type,
+                config,
+            )
+        else:
+            cache_key = create_excel_file(excel_data, data_type, file_format)
+
         formatted_timestamp = datetime.now().strftime("%d-%m-%Y__%H-%M-%S")
         data_type = 'Service Delivery Report__{}'.format(formatted_timestamp)
     if indicator not in (AWW_INCENTIVE_REPORT, LS_REPORT_EXPORT, THR_REPORT_EXPORT, CHILDREN_EXPORT,
