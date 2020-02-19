@@ -7,6 +7,7 @@ from django.conf import settings
 
 from kafka import KafkaProducer
 
+from corehq.form_processor.exceptions import KafkaPublishingError
 from dimagi.utils.logging import notify_exception
 
 CHANGE_PRE_SEND = 'PRE-SEND'
@@ -48,10 +49,9 @@ class ChangeProducer(object):
             if self.auto_flush:
                 future.get()
                 _audit_log(CHANGE_SENT, change_meta)
-        except Exception:
+        except Exception as e:
             _audit_log('ERROR', change_meta)
-            notify_exception(None, 'Problem sending change to Kafka', details=message)
-            raise
+            raise KafkaPublishingError(e)
 
         if not self.auto_flush:
             on_success = partial(_on_success, change_meta)
