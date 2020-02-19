@@ -1,6 +1,7 @@
 import datetime
 import logging
 import uuid
+from itertools import chain
 
 import redis
 from contextlib2 import ExitStack
@@ -104,10 +105,10 @@ class FormProcessorSQL(object):
                 ledger_value.db for ledger_value in stock_result.models_to_save
             }
 
-        all_models = filter(None, (
-            list(processed_forms)
-            + (cases if cases else [])
-            + (stock_result.models_to_save if stock_result else [])
+        all_models = filter(None, chain(
+            processed_forms,
+            cases or [],
+            stock_result.models_to_save if stock_result else [],
         ))
         try:
             with ExitStack() as stack:
