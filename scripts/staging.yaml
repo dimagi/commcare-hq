@@ -63,4 +63,6 @@ branches:
   - jls/migrate-HqDeploy-3 # Jenny Feb 5
   - dmr/use-npm-local-lessc  # Danny Feb 7
   - bmb/SAASP-10281  # Biyeun Feb 12
+  - jls/disable-xform-validation # Jenny Feb 19
+  - jls/limit-mobile-ucr-dates # Jenny Feb 19
 submodules: {}
