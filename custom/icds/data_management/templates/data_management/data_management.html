@@ -7,32 +7,21 @@
 
 {% block page_content %}
 {% registerurl "paginate_data_management_requests" domain %}
-<div class="container">
-  <div class="row">
-    <div class="page-header">
-      <h1>
-        {% trans "Data Management" %}
-      </h1>
-    </div>
-  </div>
-  <div class="row">
-    <div>
-      <div class="panel panel-modern-gray panel-form-only">
-        <div class="panel-body">
-          {% crispy form %}
-        </div>
-      </div>
-    </div>
+
+<div class="page-header">
+  <h1>
+    {% trans "Data Management" %}
+  </h1>
+</div>
+<div class="panel panel-modern-gray panel-form-only">
+  <div class="panel-body">
+    {% crispy form %}
   </div>
 </div>
 
 <div class="panel panel-default ko-template" id="data-management-requests-panel">
     <div class="panel-heading">
-      <div class="row">
-        <div class="col-sm-6">
-          <h3 class="panel-title">{% trans 'Data Management Requests' %}</h3>
-        </div>
-      </div>
+      <h3 class="panel-title">{% trans 'Data Management Requests' %}</h3>
     </div>
     <div class="panel-body">
       <div class="alert alert-danger" data-bind="visible: error, text: error"></div>
