@@ -22,5 +22,19 @@
       href='https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/hqwebapp/static/hqwebapp/js/components/inline_edit.js' target='_blank'>inline_edit.js</a>
     for full documentation.
   </p>
+  <p>
+    For a real example, see the case import page's
+    <a target='_blank' href='https://github.com/dimagi/commcare-hq/blob/1953a99a7047205e665ee6903a880e91bf5892d0/corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html#L59-L66'>
+      HTML widget
+    </a>
+    and
+    <a target='_blank' href='https://github.com/dimagi/commcare-hq/blob/1953a99a7047205e665ee6903a880e91bf5892d0/corehq/apps/case_importer/static/case_importer/js/import_history.js#L15'>
+      javascript implementation
+    </a>.
+    A few app manager pages use the template tag
+    <a target='_blank' href='https://github.com/dimagi/commcare-hq/blob/1953a99a7047205e665ee6903a880e91bf5892d0/corehq/apps/app_manager/templatetags/xforms_extras.py#L85'>
+      inline_edit_trans
+    </a> to provide an inline edit widget that handles multiple languages.
+  </p>
   {% include 'styleguide/example_html.html' with slug='inline-edit' title='Inline Editing' content=examples.inline_edit %}
 </section>
