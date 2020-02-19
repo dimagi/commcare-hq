@@ -310,20 +310,20 @@ class LocationManager(LocationQueriesMixin, AdjListManager):
 
     def filter_path_by_user_input(self, domain, user_input):
         """
-        Returns a queryset based on user input, filtering on the full path
-          - "middlesex" will return child locations in that county
-          - matching happens by name or site-code
-          - users can filter across multiple nodes by splitting with a slash
-          - a query segment can be wrapped in quotes, to require an exact name match
+        Returns a queryset based on user input
+          - Matching happens by name or site-code
+          - Adding a slash to the input string starts a new search node among descendants
+          - Matching is partial unless the query node is wrapped in quotes
         Refer to TestFilterPath for example usages.
         """
-        query = self
-        for part in filter(None, user_input.split('/')):
-            if part.startswith('"') and part.endswith('"'):
-                direct_matches = query.filter(name__iexact=part[1:-1])
-            else:
-                direct_matches = query.filter_by_user_input(domain, part.lstrip('"'))
-            query = self.get_queryset_descendants(direct_matches, include_self=True)
+        query = None
+        for part in user_input.split('/'):
+            query = self.get_queryset_descendants(query) if query is not None else self
+            if part:
+                if part.startswith('"') and part.endswith('"'):
+                    query = query.filter(name__iexact=part[1:-1])
+                else:
+                    query = query.filter_by_user_input(domain, part.lstrip('"'))
         return query
 
     def get_locations(self, location_ids):

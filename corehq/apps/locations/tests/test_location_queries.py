@@ -181,21 +181,23 @@ class TestFilterPath(LocationHierarchyTestCase):
 
     def test_path_queries(self):
         for querystring, expected in [
-            ('Suffolk', ['Suffolk', 'Boston', 'Brookline']),
-            ('Suff', ['Suffolk', 'Boston', 'Brookline']),
+            ('Suff', ['Suffolk']),
+            ('Suffolk', ['Suffolk']),
             ('Cambridge', ['Cambridge', 'Cambridge']),
             ('Massachusetts/Cambridge', ['Cambridge']),
             ('"Copycat"/Cambridge', []),
-            ('Middlesex/Cambridge', ['Cambridge', 'Cambridge']),
             ('"Middlesex"/Cambridge', ['Cambridge']),
             ('"Middlesex/Cambridge', ['Cambridge', 'Cambridge']),
             ('"Middlesex"/Somerville', ['Somerville', 'Evil Somerville']),
             ('"Middlesex"/"Somer', ['Somerville', 'Evil Somerville']),
             ('"Middlesex"/"Somerville"', ['Somerville']),
             ('mass/mid/Som', ['Somerville', 'Evil Somerville']),
+            ('Middl', ['Middlesex', 'Evil Middlesex']),
+            ('Middl/', ['Cambridge', 'Somerville', 'Evil Somerville', 'Cambridge', 'Somerville']),
+            ('Middl/camb', ['Cambridge', 'Cambridge']),
         ]:
             actual = list(SQLLocation.objects
                           .filter_path_by_user_input(self.domain, querystring)
                           .values_list('name', flat=True))
-            error_msg =  f"\nExpected '{querystring}' to yield\n{expected}\nbut got\n{actual}"
+            error_msg = f"\nExpected '{querystring}' to yield\n{expected}\nbut got\n{actual}"
             self.assertItemsEqual(actual, expected, error_msg)
