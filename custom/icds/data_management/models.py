@@ -25,7 +25,7 @@ class DataManagementRequest(models.Model):
     initiated_by = models.CharField(max_length=255, blank=False, null=False)
 
     # timestamps of request runtime
-    started_on = models.DateTimeField()
+    started_on = models.DateTimeField(blank=True, null=True)
     ended_on = models.DateTimeField(blank=True, null=True)
 
     # to consider cases modified within range
