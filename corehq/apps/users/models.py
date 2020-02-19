@@ -2602,7 +2602,6 @@ class SQLInvitation(SyncSQLToCouchMixin, models.Model):
     role = models.CharField(max_length=100, null=True)
     program = models.CharField(max_length=126, null=True)   # couch id of a Program
     supply_point = models.CharField(max_length=126, null=True)  # couch id of a Location
-    couch_id = models.CharField(max_length=126, null=True, db_index=True)
 
     _inviter = None
 
