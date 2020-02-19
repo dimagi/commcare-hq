@@ -28,6 +28,7 @@ class Command(BaseCommand):
         self.input_dir = get_topojson_directory()
         self._update_state_file()
         self._update_district_file()
+        self._update_block_files()
 
     def _update_state_file(self):
         # loading state topojson object
@@ -141,3 +142,61 @@ class Command(BaseCommand):
             new_district_file.write(json.dumps(new_districts))
 
         print(f'new district topojson file written to {new_district_filename}')
+
+    def _update_block_files(self):
+        block_directory = os.path.join(self.input_dir, 'blocks')
+        current_block_filename = os.path.join(block_directory, 'jk_blocks_v3.topojson')
+        with open(current_block_filename) as f:
+            current_block_topojson = json.loads(f.read())
+
+        # like other parts of this command, assumes these files are also in the input directory.
+        # to create these files:
+        # 1. get the source data from https://app.asana.com/0/1160310200927866/1162209880990930
+        # 2. upload the .shp and .dbf files to https://mapshaper.org/
+        # 3. download the output as topojson
+        j_k_file_and_layer_name = 'Jammu_&_Kashmir_Sub_District'
+        j_k_file = os.path.join(self.input_dir, f'{j_k_file_and_layer_name}.json')
+        ladakh_file_and_layer_name = 'Ladakh_Sub_District'
+        ladakh_file = os.path.join(self.input_dir, f'{ladakh_file_and_layer_name}.json')
+
+        # now need to do postprocessing to match what the dashboard expects
+        jk_output_file = os.path.join(block_directory, 'jk_blocks_v4.topojson')
+        ladakh_output_file = os.path.join(block_directory, 'ladakh_blocks_v4.topojson')
+        output_files = {
+            j_k_file: jk_output_file,
+            ladakh_file: ladakh_output_file
+        }
+        for source_file in [j_k_file, ladakh_file]:
+            # 1. wipe base layer name
+            with open(source_file, 'r') as f:
+                tmp_topojson = json.loads(f.read())
+            assert len(tmp_topojson['objects']) == 1
+            # move the current layer to an empty layer key
+            tmp_topojson['objects'][''] = tmp_topojson['objects'].pop(list(tmp_topojson['objects'].keys())[0])
+            # save to a temporary file
+            tmp_filename = f'{source_file}.tmp'
+            with open(tmp_filename, 'w+') as f:
+                f.write(json.dumps(tmp_topojson))
+
+            # 2. split base layer into districts
+            split_layer_command = f'mapshaper "{tmp_filename}" -split DIST -o "{output_files[source_file]}" format=topojson'
+            subprocess.call(split_layer_command, shell=True)
+
+        # 3. Postprocess metadata on both files
+        for output_file in [jk_output_file, ladakh_output_file]:
+            with open(output_file, 'r') as f:
+                new_blocks = json.loads(f.read())
+
+            for district_name, district_geo in new_blocks['objects'].items():
+                for block_obj in district_geo['geometries']:
+                    imported_properties = block_obj.pop('properties')
+                    block_obj['properties'] = {
+                        'name': imported_properties['SUB_DIST_N']
+                    }
+                    block_obj['id'] = imported_properties['SUB_DIST_N']
+
+            # finally rewrite the file one last time
+            with open(output_file, 'w+') as new_block_file:
+                new_block_file.write(json.dumps(new_blocks))
+
+        print(f'new district topojson files written to {jk_output_file} and {ladakh_output_file}')

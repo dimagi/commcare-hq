@@ -647,14 +647,14 @@
       "Badgam",
       "Kupwara"
     ],
-    "file_name": "jk_blocks_v3.topojson"
+    "file_name": "jk_blocks_v4.topojson"
   },
   "Ladakh": {
     "districts": [
       "Kargil",
       "Leh(Ladakh)"
     ],
-    "file_name": "jk_blocks_v3.topojson"
+    "file_name": "ladakh_blocks_v4.topojson"
   },
   "Chhattisgarh": {
     "districts": [
