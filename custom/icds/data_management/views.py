@@ -14,7 +14,9 @@ from corehq.apps.locations.permissions import location_safe
 from corehq.apps.settings.views import BaseProjectDataView
 from custom.icds.data_management.forms import DataManagementForm
 from custom.icds.data_management.models import DataManagementRequest
-from custom.icds.data_management.serializers import DataManagementRequestSerializer
+from custom.icds.data_management.serializers import (
+    DataManagementRequestSerializer,
+)
 
 
 @location_safe
@@ -55,7 +57,7 @@ def paginate_data_management_requests(request, domain):
     limit = int(request.GET.get('limit', 10))
     page = int(request.GET.get('page', 1))
 
-    paginator = Paginator(DataManagementRequest.objects.filter(domain=domain), limit)
+    paginator = Paginator(DataManagementRequest.objects.filter(domain=domain).order_by('-created_at'), limit)
     result = DataManagementRequestSerializer(list(paginator.page(page)), many=True).data
 
     return JsonResponse({
