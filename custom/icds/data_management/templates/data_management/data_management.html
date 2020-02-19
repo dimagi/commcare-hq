@@ -51,19 +51,23 @@
         <thead>
           <tr>
             <th>{% trans "Task" %}</th>
-            <th>{% trans "DB Partition" %}</th>
-            <th>{% trans "Start Date" %}</th>
-            <th>{% trans "End Data" %}</th>
+            <th>{% trans "DB" %}</th>
+            <th>{% trans "Initiated By" %}</th>
+            <th>{% trans "Date Range" %}</th>
+            <th>{% trans "Started On" %}</th>
+            <th>{% trans "Ended On" %}</th>
             <th>{% trans "Status" %}</th>
           </tr>
         </thead>
         <tbody data-bind="foreach: requests">
           <tr>
             <td data-bind="text: name"></td>
-            <td data-bind="text: db_alias"></td>
-            <td data-bind="text: start_date"></td>
-            <td data-bind="text: end_date"></td>
-            <td data-bind="text: status"></td>
+            <td data-bind="text: dbAlias"></td>
+            <td data-bind="text: initiatedBy"></td>
+            <td data-bind="text: dateRange"></td>
+            <td data-bind="text: startedOn"></td>
+            <td data-bind="text: endedOn"></td>
+            <td data-bind="text: statusText"></td>
           </tr>
         </tbody>
       </table>

@@ -9,6 +9,26 @@ hqDefine('data_management/js/data_management', [
 ], function ($, ko, _, initialPageData) {
     'use strict';
 
+    var dataManagementRequest = function(name, dbAlias, createdAt, initiatedBy, startedOn, endedOn, startDate,
+        endDate, status, statusText, error) {
+        var self = {};
+        self.name = name;
+        self.dbAlias = dbAlias;
+        self.initiatedBy = initiatedBy + gettext(' On ') + createdAt;
+        self.startedOn = startedOn;
+        self.endedOn = endedOn;
+        if (startDate) {
+            self.dateRange = startDate + '-' + endDate;
+        } else {
+            self.dateRange = '';
+        }
+        self.statusText = statusText;
+        if (status === 3) {
+            self.statusText += '(' + error + ')';
+        }
+        return self;
+    };
+
     var requestsList = function () {
         var self = {};
         self.requests = ko.observableArray([]);
@@ -46,7 +66,10 @@ hqDefine('data_management/js/data_management', [
                     self.totalItems(data.total);
                     self.requests.removeAll();
                     _.each(data.requests, function (request) {
-                        self.requests.push(request);
+                        self.requests.push(dataManagementRequest(
+                            request.name, request.db_alias, request.created_at, request.initiated_by,
+                            request.started_on, request.ended_on, request.start_date,
+                            request.end_date, request.status, request.status_text, request.error));
                     });
                 },
                 error: function () {
