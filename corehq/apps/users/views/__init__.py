@@ -717,7 +717,6 @@ class UserInvitationView(object):
     template = "users/accept_invite.html"
 
     def __call__(self, request, invitation_id, **kwargs):
-        logging.info("Don't use this view in more apps until it gets cleaned up.")
         # add the correct parameters to this instance
         self.request = request
         self.inv_id = invitation_id
@@ -734,12 +733,10 @@ class UserInvitationView(object):
         try:
             invitation = SQLInvitation.objects.get(id=invitation_id)
         except SQLInvitation.DoesNotExist:
-            invitation = SQLInvitation.objects.filter(couch_id=invitation_id).first()
-            if not invitation:
-                messages.error(request, _("Sorry, it looks like your invitation has expired. "
-                                          "Please check the invitation link you received and try again, or "
-                                          "request a project administrator to send you the invitation again."))
-                return HttpResponseRedirect(reverse("login"))
+            messages.error(request, _("Sorry, it looks like your invitation has expired. "
+                                      "Please check the invitation link you received and try again, or "
+                                      "request a project administrator to send you the invitation again."))
+            return HttpResponseRedirect(reverse("login"))
         if invitation.is_accepted:
             messages.error(request, _("Sorry, that invitation has already been used up. "
                                       "If you feel this is a mistake please ask the inviter for "
