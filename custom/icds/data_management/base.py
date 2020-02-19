@@ -47,8 +47,9 @@ class SQLBasedDataManagement(DataManagement):
         iterate sql records and update them as and when needed
         """
         record_provider = SqlDocumentProvider(iteration_key, self.case_accessor())
+        logger = SQLBasedProgressLogger(iteration_key)
         processor = BulkDocProcessor(record_provider, self.doc_processor(self.domain),
-                                     progress_logger=SQLBasedProgressLogger(iteration_key))
+                                     progress_logger=logger)
         processed, skipped = processor.run()
         return processed, skipped, logger.logs
 
