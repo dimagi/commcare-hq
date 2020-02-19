@@ -2,7 +2,6 @@ import abc
 
 from django.conf import settings
 
-from corehq.elastic import ESError
 from corehq.util.es.elasticsearch import bulk
 
 
@@ -26,6 +25,7 @@ class AbstractElasticsearchInterface(metaclass=abc.ABCMeta):
         return doc
 
     def get_bulk_docs(self, index, doc_type, doc_ids):
+        from corehq.elastic import ESError
         docs = []
         results = self.es.mget(
             index=index, doc_type=doc_type, body={'ids': doc_ids}, _source=True)
