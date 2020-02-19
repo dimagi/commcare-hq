@@ -2604,8 +2604,6 @@ class SQLInvitation(SyncSQLToCouchMixin, models.Model):
     supply_point = models.CharField(max_length=126, null=True)  # couch id of a Location
     couch_id = models.CharField(max_length=126, null=True, db_index=True)
 
-    _inviter = None
-
     class Meta:
         db_table = "users_invitation"
 
@@ -2638,21 +2636,14 @@ class SQLInvitation(SyncSQLToCouchMixin, models.Model):
     def is_expired(self):
         return self.invited_on.date() + relativedelta(months=1) < datetime.utcnow().date()
 
-    def get_inviter(self):
-        if self._inviter is None:
-            self._inviter = CouchUser.get_by_user_id(self.invited_by)
-            if self._inviter.user_id != self.invited_by:
-                self.invited_by = self._inviter.user_id
-                self.save()
-        return self._inviter
-
     def send_activation_email(self, remaining_days=30):
+        inviter = CouchUser.get_by_user_id(self.invited_by)
         url = absolute_reverse("domain_accept_invitation", args=[self.domain, self.id])
         params = {
             "domain": self.domain,
             "url": url,
             'days': remaining_days,
-            "inviter": self.get_inviter().formatted_name,
+            "inviter": inviter.formatted_name,
             'url_prefix': '' if settings.STATIC_CDN else 'http://' + get_site_domain(),
         }
 
@@ -2662,14 +2653,14 @@ class SQLInvitation(SyncSQLToCouchMixin, models.Model):
             if domain_request is None:
                 text_content = render_to_string("domain/email/domain_invite.txt", params)
                 html_content = render_to_string("domain/email/domain_invite.html", params)
-                subject = _('Invitation from %s to join CommCareHQ') % self.get_inviter().formatted_name
+                subject = _('Invitation from %s to join CommCareHQ') % inviter.formatted_name
             else:
                 text_content = render_to_string("domain/email/domain_request_approval.txt", params)
                 html_content = render_to_string("domain/email/domain_request_approval.html", params)
                 subject = _('Request to join CommCareHQ approved')
         send_html_email_async.delay(subject, self.email, html_content,
                                     text_content=text_content,
-                                    cc=[self.get_inviter().get_email()],
+                                    cc=[inviter.get_email()],
                                     email_from=settings.DEFAULT_FROM_EMAIL)
 
 
@@ -2682,8 +2673,6 @@ class Invitation(SyncCouchToSQLMixin, QuickCachedDocumentMixin, Document):
     role = StringProperty()
     program = None
     supply_point = None
-
-    _inviter = None
 
     @classmethod
     def _migration_get_fields(cls):
