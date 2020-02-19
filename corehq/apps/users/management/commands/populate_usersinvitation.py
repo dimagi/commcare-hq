@@ -14,8 +14,8 @@ class Command(PopulateSQLCommand):
 
     @classmethod
     def sql_class(self):
-        from corehq.apps.users.models import SQLInvitation
-        return SQLInvitation
+        from corehq.apps.users.models import Invitation
+        return Invitation
 
     def update_or_create_sql_object(self, doc):
         model, created = self.sql_class().objects.update_or_create(

@@ -2589,7 +2589,7 @@ class DomainRequest(models.Model):
                                     email_from=settings.DEFAULT_FROM_EMAIL)
 
 
-class SQLInvitation(models.Model):
+class Invitation(models.Model):
     email = models.CharField(max_length=255, db_index=True)
     invited_by = models.CharField(max_length=126)           # couch id of a WebUser
     invited_on = models.DateTimeField()
@@ -2601,16 +2601,13 @@ class SQLInvitation(models.Model):
 
     _inviter = None
 
-    class Meta:
-        db_table = "users_invitation"
-
     @classmethod
     def by_domain(cls, domain):
-        return SQLInvitation.objects.filter(domain=domain, is_accepted=False)
+        return Invitation.objects.filter(domain=domain, is_accepted=False)
 
     @classmethod
     def by_email(cls, email):
-        return SQLInvitation.objects.filter(email=email, is_accepted=False)
+        return Invitation.objects.filter(email=email, is_accepted=False)
 
     @property
     def is_expired(self):

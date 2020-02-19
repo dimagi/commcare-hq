@@ -244,7 +244,7 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('smsforms', 'SQLXFormsSession', 'domain'),
     ModelDeletion('userreports', 'AsyncIndicator', 'domain'),
     ModelDeletion('users', 'DomainRequest', 'domain'),
-    ModelDeletion('users', 'SQLInvitation', 'domain'),
+    ModelDeletion('users', 'Invitation', 'domain'),
     ModelDeletion('zapier', 'ZapierSubscription', 'domain'),
     ModelDeletion('dhis2', 'Dhis2Connection', 'domain'),
     ModelDeletion('motech', 'RequestLog', 'domain'),
