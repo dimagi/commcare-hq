@@ -945,10 +945,6 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
         else:
             cache_key = create_excel_file(excel_data, data_type, file_format)
     elif indicator == SERVICE_DELIVERY_REPORT:
-        # CODE IN THIS SECTION WILL BE CHANGED WITH ACTUAL DATA PULLING
-        # WHEN THE BACKEND DATA WILL BE READY FOR THIS TABLE. MEANWHILE THIS
-        # REPORT IS NOT accessible to the USER BECAUSE ITS IN FF
-
         excel_data = ServiceDeliveryReport(
             config=config,
             location=location,
