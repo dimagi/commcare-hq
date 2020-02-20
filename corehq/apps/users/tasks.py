@@ -238,7 +238,7 @@ def _rebuild_case_with_retries(self, domain, case_id, detail):
 )
 def resend_pending_invitations():
     from corehq.apps.users.models import SQLInvitation
-    days_to_resend = (15, 29)
+    days_to_resend = (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 29)
     days_to_expire = 30
     domains = Domain.get_all()
     for domain_obj in domains:
