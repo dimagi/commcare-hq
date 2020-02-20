@@ -86,9 +86,10 @@ class IterationState:
         new_state = self.statedb.get(key)
         if new_state is None:
             return False
-        key = self.backup_resume_state(self.value)
-        if key is None:
-            return False
+        if "_rev" in self.value:
+            backup_key = self.backup_resume_state(self.value)
+            if backup_key is None:
+                return False
         log.info("restoring iteration state: %s", new_state)
         self.itr._save_state_json(new_state)
         return True
