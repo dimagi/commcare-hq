@@ -235,22 +235,22 @@ window.angular.module('icdsApp').factory('baseControllersService', ['$timeout', 
 
             //Creating a promise, which resolves only after map is rendered (wait until canvas is rendered in dom)
             // Reference: https://stackoverflow.com/a/47776379/12839195 (using timeout instead of rafAsync)
-            vm.checkElement = function (selector) {
+            vm.waitForMapIfNecessary = function () {
                 // if it is not a page where map is displayed, resolve the promise immediately,
                 // else wait till canvas (svg in dom) is created
                 if (!navigationService.isMapDisplayed($location.path()) && window.Promise) {
                     return window.Promise.resolve(true);
                 }
-                if (document.querySelector(selector) === null) {
+                if (document.querySelector('svg') === null) {
                     return $timeout().then(function () {
-                        return vm.checkElement(selector);
+                        return vm.waitForMapIfNecessary();
                     });
                 } else {
                     return window.Promise.resolve(true);
                 }
             };
 
-            vm.mapLoadingPromise = vm.checkElement('svg').then(function () {
+            vm.mapLoadingPromise = vm.waitForMapIfNecessary().then(function () {
             });
 
             vm.init = function() {
