@@ -90,7 +90,7 @@ class EmwfOptionsController(object):
             included_objects = SQLLocation.inactive_objects
         else:
             included_objects = SQLLocation.active_objects
-        locations = included_objects.filter_path_by_user_input(self.domain, query)
+        locations = included_objects.filter_by_user_input(self.domain, query)
         return locations.accessible_to_user(self.domain, self.request.couch_user)
 
     def get_locations_size(self, query):

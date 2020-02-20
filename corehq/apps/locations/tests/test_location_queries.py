@@ -122,14 +122,14 @@ class TestLocationScopedQueryset(BaseTestLocationQuerysetMethods):
             SQLLocation.objects.accessible_to_user(self.domain, unassigned_user)
         )
 
-    def test_filter_path_by_user_input(self):
+    def test_filter_by_user_input(self):
         self.restrict_user_to_assigned_locations(self.web_user)
 
         # User searching for higher in the hierarchy is only given the items
         # they are allowed to see
         middlesex_locs = (
             SQLLocation.objects
-            .filter_path_by_user_input(self.domain, "Massachusetts/")
+            .filter_by_user_input(self.domain, "Massachusetts/")
             .accessible_to_user(self.domain, self.web_user)
         )
         self.assertItemsEqual(
@@ -140,13 +140,13 @@ class TestLocationScopedQueryset(BaseTestLocationQuerysetMethods):
         # User searching for a branch they don't have access to get nothing
         no_locs = (
             SQLLocation.objects
-            .filter_path_by_user_input(self.domain, "Suffolk")
+            .filter_by_user_input(self.domain, "Suffolk")
             .accessible_to_user(self.domain, self.web_user)
         )
         self.assertItemsEqual([], no_locs)
 
 
-class TestFilterPath(LocationHierarchyTestCase):
+class TestFilterByUserInput(LocationHierarchyTestCase):
     location_type_names = ['state', 'county', 'city']
     location_structure = [
         ('Massachusetts', [
@@ -186,7 +186,7 @@ class TestFilterPath(LocationHierarchyTestCase):
             ('Middl/camb', ['Cambridge', 'Cambridge']),
         ]:
             actual = list(SQLLocation.objects
-                          .filter_path_by_user_input(self.domain, querystring)
+                          .filter_by_user_input(self.domain, querystring)
                           .values_list('name', flat=True))
             error_msg = f"\nExpected '{querystring}' to yield\n{expected}\nbut got\n{actual}"
             self.assertItemsEqual(actual, expected, error_msg)

@@ -293,13 +293,13 @@ class LocationManager(LocationQueriesMixin, AdjListManager):
         except self.model.DoesNotExist:
             return self.get(domain=domain, name__iexact=user_input)
 
-    def filter_path_by_user_input(self, domain, user_input):
+    def filter_by_user_input(self, domain, user_input):
         """
         Returns a queryset based on user input
           - Matching happens by name or site-code
           - Adding a slash to the input string starts a new search node among descendants
           - Matching is partial unless the query node is wrapped in quotes
-        Refer to TestFilterPath for example usages.
+        Refer to TestFilterByUserInput for example usages.
         """
         query = None
         for part in user_input.split('/'):
