@@ -1,3 +1,6 @@
+from collections import defaultdict, namedtuple
+from typing import List
+
 from django.db.models.aggregates import Count
 from django.utils.functional import cached_property
 from django.utils.translation import ugettext as _
@@ -7,6 +10,10 @@ from sqlagg.columns import SimpleColumn
 from sqlagg.filters import EQ
 from sqlagg.sorting import OrderBy
 
+from corehq.apps.fixtures.dbaccessors import (
+    get_fixture_data_types_in_domain,
+    get_fixture_items_for_data_type,
+)
 from corehq.apps.fixtures.models import FixtureDataItem
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.filters.dates import DatespanFilter
@@ -31,6 +38,16 @@ from custom.abt.reports.filters import (
     SubmissionStatusFilter,
     UsernameFilter,
 )
+
+LocationTuple = namedtuple('LocationTuple', [
+    'id',
+    'name',
+    'country',
+    'level_1_name',
+    'level_2_name',
+    'level_3_name',
+    'level_4_name',
+])
 
 
 class LatePMTUsers(SqlData):
@@ -231,6 +248,73 @@ class LatePmtReport(GenericTabularReport, CustomProjectReport, DatespanMixin):
                         continue
                     rows.append(_to_report_format(date, user, error_msg))
         return rows
+
+    @cached_property
+    def locations(self) -> List[LocationTuple]:
+        data_types_by_tag = {
+            dt.tag: dt
+            for dt in get_fixture_data_types_in_domain(self.domain)
+        }
+        level_1_items = get_fixture_items_for_data_type(
+            self.domain,
+            data_types_by_tag["level_1_dcv"]._id
+        )
+        level_1_dicts = [fixture_data_item_to_dict(di) for di in level_1_items]
+        level_2s_by_level_1 = get_fixture_dicts_by_key(
+            self.domain,
+            data_type_id=data_types_by_tag["level_2_dcv"]._id,
+            key='level_1_dcv'
+        )
+        level_3s_by_level_2 = get_fixture_dicts_by_key(
+            self.domain,
+            data_type_id=data_types_by_tag["level_3_dcv"]._id,
+            key='level_2_dcv'
+        )
+        level_4s_by_level_3 = get_fixture_dicts_by_key(
+            self.domain,
+            data_type_id=data_types_by_tag["level_4_dcv"]._id,
+            key='level_3_dcv'
+        )
+        country_has_level_4 = len(level_4s_by_level_3) > 1
+
+        locations = []
+        for level_1 in level_1_dicts:
+            for level_2 in level_2s_by_level_1[level_1['id']]:
+                for level_3 in level_3s_by_level_2[level_2['id']]:
+                    if country_has_level_4:
+                        for level_4 in level_4s_by_level_3[level_3['id']]:
+                            locations.append(LocationTuple(
+                                id=level_4['id'],
+                                name=level_4['name'],
+                                country=level_1['country'],
+                                level_1_name=level_1['name'],
+                                level_2_name=level_2['name'],
+                                level_3_name=level_3['name'],
+                                level_4_name=level_4['name'],
+                            ))
+                    else:
+                        locations.append(LocationTuple(
+                            id=level_3['id'],
+                            name=level_3['name'],
+                            country=level_1['country'],
+                            level_1_name=level_1['name'],
+                            level_2_name=level_2['name'],
+                            level_3_name=level_3['name'],
+                            level_4_name=None,
+                        ))
+        return locations
+
+
+def get_fixture_dicts_by_key(
+    domain: str,
+    data_type_id: str,
+    key: str,
+) -> dict:
+    dicts_by_key = defaultdict(list)
+    for data_item in get_fixture_items_for_data_type(domain, data_type_id):
+        dict_ = fixture_data_item_to_dict(data_item)
+        dicts_by_key[dict_[key]].append(dict_)
+    return dicts_by_key
 
 
 def fixture_data_item_to_dict(
