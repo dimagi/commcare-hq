@@ -211,7 +211,7 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
     """
     location_search_help = ugettext_lazy(mark_safe(
         '<i class="fa fa-info-circle"></i> '
-        '<a href="https://confluence.dimagi.com/display/commcarepublic/Exact+Search+for+Locations"'
+        '<a href="https://confluence.dimagi.com/display/commcarepublic/Search+for+Locations"'
         'target="_blank">Advanced Search:</a> '
         'Put your location name in quotes to show only exact matches. To more '
         'easily find a location, you may specify multiple levels by separating '
