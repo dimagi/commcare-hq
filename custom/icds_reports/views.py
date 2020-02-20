@@ -535,11 +535,6 @@ class PrevalenceOfUndernutritionView(BaseReportView):
         config.update(get_location_filter(location, domain))
         loc_level = get_location_level(config.get('aggregation_level'))
 
-        # TODO Implement this change in other places if this works well
-        # Changing the aggregation level to the original convention which is 1 for state,
-        #  2 for district, 3 for block, 4 for sector and 5 for awc to optimise the db query
-        if config['aggregation_level'] > 1:
-            config['aggregation_level'] -= 1
         data = {}
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:

@@ -37,6 +37,9 @@ RATE_LIMITED_EXCEPTIONS = {
     'celery.beat.SchedulingError': 'celery-beat',
 
     'corehq.form_processor.exceptions.KafkaPublishingError': 'kafka',
+    'kafka.errors.IllegalStateError': 'kafka',
+
+    'GreenletExit': 'greenletexit',
 }
 
 
