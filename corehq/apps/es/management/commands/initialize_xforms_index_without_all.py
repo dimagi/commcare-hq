@@ -1,6 +1,7 @@
 import copy
 
 from django.core.management.base import BaseCommand
+from django.conf import settings
 
 from corehq.elastic import get_es_new
 from corehq.pillows.mappings.xform_mapping import XFORM_ES_TYPE, XFORM_MAPPING, XFORM_INDEX
@@ -11,13 +12,24 @@ class Command(BaseCommand):
     help = ("Adhoc command for ICDS xforms reindex")
 
     def add_arguments(self, parser):
-        parser.add_argument(
-            'index_name',
-        )
+        parser.add_argument('index_name')
+        parser.add_argument('number_of_shards', type=int)
+        parser.add_argument('number_of_replicas', type=int)
 
-    def handle(self, index_name, **options):
+    def handle(self, index_name, number_of_shards, number_of_replicas, **options):
         mapping = copy.deepcopy(XFORM_MAPPING)
         mapping["_all"] = {"enabled": False}
+
+        shard_settings = {
+            'number_of_shards': number_of_shards, 'number_of_replicas': number_of_replicas
+        }
+        if settings.ES_SETTINGS and 'xforms' in settings.ES_SETTINGS:
+            settings.ES_SETTINGS['xforms'].update(shard_settings)
+        elif settings.ES_SETTINGS:
+            settings.ES_SETTINGS['xforms'] = shard_settings
+        else:
+            settings.ES_SETTINGS = {'xforms': shard_settings}
+
         es = get_es_new()
         index_info = ElasticsearchIndexInfo(
             index=index_name,
@@ -45,4 +57,5 @@ class Command(BaseCommand):
             },
             "dest": {"index": index_name}
         }, wait_for_completion=False, request_timeout=300)
-        print("Check for status ' curl -X GET "http://host:port/_tasks/?pretty&detailed=true&actions=*reindex"'")
+        print(result)
+        print("""Check for status 'curl -X GET "http://host:port/_tasks/?pretty&detailed=true&actions=*reindex"'""")
