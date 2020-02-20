@@ -170,6 +170,8 @@ class TestFilterByUserInput(LocationHierarchyTestCase):
 
     def test_path_queries(self):
         for querystring, expected in [
+            ('', SQLLocation.objects.filter(domain=self.domain)
+                                    .values_list('name', flat=True)),
             ('Suff', ['Suffolk']),
             ('Suffolk', ['Suffolk']),
             ('Cambridge', ['Cambridge', 'Cambridge']),
