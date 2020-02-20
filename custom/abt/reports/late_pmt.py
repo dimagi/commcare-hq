@@ -20,13 +20,7 @@ from corehq.apps.reports.filters.dates import DatespanFilter
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.sqlreport import DatabaseColumn, SqlData
 from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin
-from corehq.apps.sms.models import (
-    INCOMING,
-    OUTGOING,
-    SMS,
-    MessagingEvent,
-    MessagingSubEvent,
-)
+from corehq.apps.sms.models import INCOMING, OUTGOING, SMS
 from corehq.apps.userreports.util import get_table_name
 from corehq.sql_db.connections import DEFAULT_ENGINE_ID
 from custom.abt.reports.filters import (
@@ -185,22 +179,6 @@ class LatePmtReport(GenericTabularReport, CustomProjectReport, DatespanMixin):
             number_of_sms=Count('couch_recipient')
         )
         return {(sms['date'].date(), sms['couch_recipient']) for sms in data}
-
-    @cached_property
-    def valid_smss_received(self):
-        data = MessagingSubEvent.objects.filter(
-            parent__domain=self.domain,
-            parent__recipient_type=MessagingEvent.RECIPIENT_MOBILE_WORKER,
-            parent__source=MessagingEvent.SOURCE_KEYWORD,
-            xforms_session__isnull=False,
-            xforms_session__submission_id__isnull=False,
-            recipient_id__in=self.get_user_ids,
-            date__range=(
-                self.startdate,
-                self.enddate
-            )
-        ).values('date', 'recipient_id')
-        return {(subevent['date'].date(), subevent['recipient_id']) for subevent in data}
 
     @cached_property
     def get_user_ids(self):
