@@ -56,9 +56,6 @@ branches:
   - sr-session-audit  # Sravan Oct 15
   - dm/select-toggle # Daniel Nov 19
   - bmb/update-requirejs  # Biyeun Nov 21
-  - dmr/throttle-and-measure-case-imports  # Danny Dec 12
-  - es/enterprise-subscriptions  # Ethan Jan 15
-  - dmr/smarter-wait  # Danny Jan 22
   #- jls/bulk-app-trans-format-fixes # Jenny Jan 27
   - jls/migrate-HqDeploy-3 # Jenny Feb 5
   - dmr/use-npm-local-lessc  # Danny Feb 7
