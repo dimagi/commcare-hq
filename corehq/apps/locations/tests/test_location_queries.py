@@ -140,7 +140,7 @@ class TestLocationScopedQueryset(BaseTestLocationQuerysetMethods):
         # they are allowed to see
         middlesex_locs = (
             SQLLocation.objects
-            .filter_path_by_user_input(self.domain, "Massachusetts")
+            .filter_path_by_user_input(self.domain, "Massachusetts/")
             .accessible_to_user(self.domain, self.web_user)
         )
         self.assertItemsEqual(
