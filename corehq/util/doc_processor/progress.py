@@ -129,6 +129,9 @@ class ProcessorProgressLogger(object):
     def document_skipped(self, doc_dict):
         print("Skip: {doc_type} {_id}".format(**doc_dict))
 
+    def document_processed(self, doc_dict, doc_updates):
+        pass
+
     def progress(self, processed, visited, total, time_elapsed, time_remaining):
         print("Processed {}/{} of {} documents in {} ({} remaining)"
               .format(processed, visited, total, time_elapsed, time_remaining))

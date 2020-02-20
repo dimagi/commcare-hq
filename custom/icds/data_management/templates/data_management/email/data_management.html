@@ -1,0 +1,16 @@
+{% load i18n %}
+{% blocktrans %}
+  <p>
+    Hello,
+  </p>
+  <p>
+    Data management request {{name}} for {{domain}} was completed.
+    {{processed}} records were updated and {{skipped}} failed to update.
+    Time Window
+    Start Date: {{start_date}}
+    End Date: {{end_date}}
+    DB Partition: {{db_alias}}
+    RunTime: {{started_on}} - {{ended_on}}
+    PFA log files for details
+  </p>
+{% endblocktrans %}
