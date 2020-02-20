@@ -61,5 +61,5 @@ branches:
   - dmr/use-npm-local-lessc  # Danny Feb 7
   - bmb/SAASP-10281  # Biyeun Feb 12
   - mk/add-user-feedback-real # MK Feb 20
-  - jls/migrate-Invitation-3 # Jenny Feb 20
+  - jls/migrate-Invitation-2 # Jenny Feb 20
 submodules: {}
