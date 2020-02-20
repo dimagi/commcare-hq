@@ -31,6 +31,7 @@ from django.views.generic import FormView, TemplateView, View
 from couchdbkit.exceptions import ResourceNotFound
 from lxml import etree
 from lxml.builder import E
+from two_factor.utils import default_device
 
 from casexml.apps.phone.xml import SYNC_XMLNS
 from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
@@ -117,7 +118,7 @@ class SuperuserManagement(UserAdministration):
         args = [can_toggle_is_staff, self.request.POST] if self.request.POST else [can_toggle_is_staff]
         return {
             'form': SuperuserManagementForm(*args),
-            'users': annotated_superusers(),
+            'users': augmented_superusers(),
         }
 
     def post(self, request, *args, **kwargs):
@@ -148,7 +149,7 @@ class SuperuserManagement(UserAdministration):
 
 @require_superuser
 def superuser_table(request):
-    superusers = annotated_superusers()
+    superusers = augmented_superusers()
     f = StringIO()
     csv_writer = csv.writer(f)
     csv_writer.writerow(['Username', 'Developer', 'Superuser', 'Two Factor Enabled'])
@@ -161,24 +162,17 @@ def superuser_table(request):
     return response
 
 
-def annotated_superusers():
-    return _annotate_user_queryset_with_two_factor_enabled(User.objects.filter(
+def augmented_superusers():
+    return _augment_users_with_two_factor_enabled(User.objects.filter(
         Q(is_superuser=True) | Q(is_staff=True)
     ))
 
 
-def _annotate_user_queryset_with_two_factor_enabled(user_queryset):
+def _augment_users_with_two_factor_enabled(users):
     """Annotate a User queryset with a two_factor_enabled field"""
-    return user_queryset.annotate(
-        two_factor_enabled=Case(
-            When(
-                Q(totpdevice__isnull=True, phonedevice__isnull=True, staticdevice__isnull=True),
-                then=False
-            ),
-            default=True,
-            output_field=BooleanField(),
-        )
-    )
+    for user in users:
+        user.two_factor_enabled = bool(default_device(user))
+    return users
 
 
 class AdminRestoreView(TemplateView):

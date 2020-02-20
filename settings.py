@@ -946,6 +946,8 @@ RATE_LIMIT_SUBMISSIONS = False
 # This is useful for load-shedding in times of crisis.
 STALE_EXPORT_THRESHOLD = None
 
+REQUIRE_TWO_FACTOR_FOR_SUPERUSERS = False
+
 try:
     # try to see if there's an environmental variable set for local_settings
     custom_settings = os.environ.get('CUSTOMSETTINGS', None)
