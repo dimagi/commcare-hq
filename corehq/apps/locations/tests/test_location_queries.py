@@ -29,26 +29,15 @@ class BaseTestLocationQuerysetMethods(LocationHierarchyTestCase):
 
 class TestLocationQuerysetMethods(BaseTestLocationQuerysetMethods):
 
-    def test_filter_by_user_input(self):
-        middlesex_locs = (SQLLocation.objects
-                          .filter_by_user_input(self.domain, "Middlesex"))
-        self.assertItemsEqual(
-            ['Middlesex'],
-            [loc.name for loc in middlesex_locs]
-        )
-
     def test_ancestors(self):
-        boston_matches = (SQLLocation.objects
-                          .filter_by_user_input(self.domain, "Boston"))
-
+        boston = SQLLocation.objects.get(name="Boston")
         self.assertItemsEqual(
-            [loc.name for loc in boston_matches[0].get_ancestors()],
+            [loc.name for loc in boston.get_ancestors()],
             ['Suffolk', 'Massachusetts']
         )
 
     def test_ancestor_of_type(self):
-        boston = (SQLLocation.objects
-                  .filter_by_user_input(self.domain, "Boston"))[0]
+        boston = SQLLocation.objects.get(name="Boston")
         self.assertEqual(
             boston.get_ancestor_of_type('county').name,
             'Suffolk'

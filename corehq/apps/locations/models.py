@@ -264,21 +264,6 @@ class LocationQueriesMixin(object):
             publish_location_saved(domain, location_id, is_deletion=True)
         return super(LocationQueriesMixin, self).delete(*args, **kwargs)
 
-    def _user_input_filter(self, domain, user_input):
-        """Build a Q expression for filtering on user input
-
-        Accepts partial matches, matches against name and site_code.
-        """
-        return Q(domain=domain) & Q(
-            Q(name__icontains=user_input) | Q(site_code__icontains=user_input)
-        )
-
-    def filter_by_user_input(self, domain, user_input):
-        """
-        Accepts partial matches, matches against name and site_code.
-        """
-        return self.filter(self._user_input_filter(domain, user_input))
-
 
 class LocationQuerySet(LocationQueriesMixin, CTEQuerySet):
 
@@ -323,7 +308,10 @@ class LocationManager(LocationQueriesMixin, AdjListManager):
                 if part.startswith('"') and part.endswith('"'):
                     query = query.filter(name__iexact=part[1:-1])
                 else:
-                    query = query.filter_by_user_input(domain, part.lstrip('"'))
+                    part = part.lstrip('"')
+                    query = query.filter(
+                        Q(name__icontains=part) | Q(site_code__icontains=part)
+                    )
         return query
 
     def get_locations(self, location_ids):
