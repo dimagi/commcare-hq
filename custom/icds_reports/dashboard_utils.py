@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.utils.translation import ugettext_lazy as _
 
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import static
@@ -7,6 +8,7 @@ from custom.icds_reports.const import NavigationSections
 from custom.icds_reports.utils import icds_pre_release_features
 
 import attr
+
 
 def get_dashboard_template_context(domain, couch_user):
     context = {}
@@ -39,6 +41,7 @@ def get_dashboard_template_context(domain, couch_user):
 
     context['nav_metadata'] = _get_nav_metadatada()
     context['nav_menu_items'] = _get_nav_menu_items()
+    context['MAPBOX_ACCESS_TOKEN'] = settings.MAPBOX_ACCESS_TOKEN
     return context
 
 

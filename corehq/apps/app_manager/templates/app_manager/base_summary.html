@@ -9,19 +9,12 @@
 
   {% include 'app_manager/partials/apps_stylesheets.html' %}
 
-  {% if less_debug %}
+  {% compress css %}
     <link type="text/less"
           rel="stylesheet"
           media="all"
-          href="{% static 'app_manager/less/summary.debug.less' %}" />
-  {% else %}
-    {% compress css %}
-      <link type="text/less"
-            rel="stylesheet"
-            media="all"
-            href="{% static 'app_manager/less/summary.less' %}" />
-    {% endcompress %}
-  {% endif %}
+          href="{% static 'app_manager/less/summary.less' %}" />
+  {% endcompress %}
 
 {% endblock stylesheets %}
 

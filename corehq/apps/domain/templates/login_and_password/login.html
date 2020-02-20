@@ -21,19 +21,12 @@
         media="all"
         href="{% static 'intl-tel-input/build/css/intlTelInput.css' %}" />
 
-  {% if less_debug %}
+  {% compress css %}
     <link type="text/less"
           rel="stylesheet"
           media="all"
-          href="{% static 'registration/less/registration.debug.less' %}" />
-  {% else %}
-    {% compress css %}
-      <link type="text/less"
-            rel="stylesheet"
-            media="all"
-            href="{% static 'registration/less/registration.less' %}" />
-    {% endcompress %}
-  {% endif %}
+          href="{% static 'registration/less/registration.less' %}" />
+  {% endcompress %}
 {% endblock stylesheets %}
 
 {% block content %}

@@ -1,8 +1,0 @@
-{% extends 'hqwebapp/two_column.html' %}
-
-{% block page_content %}
-    <form action="" method="post">{% csrf_token %}
-        <p>Are you sure you want to delete "{{ object }}"?</p>
-        <input type="submit" class="btn btn-danger" value="Confirm" />
-    </form>
-{% endblock %}

@@ -984,7 +984,7 @@ DASHBOARD_ICDS_REPORT = StaticToggle(
 
 ICDS_DASHBOARD_REPORT_FEATURES = StaticToggle(
     'features_in_dashboard_icds_reports',
-    'ICDS: Enable access to the features in the ICDS Dashboard reports',
+    'ICDS: Enable access to pre-release features in the ICDS Dashboard reports',
     TAG_CUSTOM,
     [NAMESPACE_USER]
 )
@@ -1167,13 +1167,6 @@ SEND_UCR_REBUILD_INFO = StaticToggle(
     'Notify when UCR rebuilds finish or error.',
     TAG_SOLUTIONS_CONDITIONAL,
     [NAMESPACE_USER]
-)
-
-EMG_AND_REC_SMS_HANDLERS = StaticToggle(
-    'emg_and_rec_sms_handlers',
-    'ILS: Enable emergency and receipt sms handlers used in ILSGateway',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN]
 )
 
 ALLOW_USER_DEFINED_EXPORT_COLUMNS = StaticToggle(
@@ -1809,4 +1802,20 @@ RUN_CUSTOM_DATA_PULL_REQUESTS = StaticToggle(
     '[ICDS] Initiate custom data pull requests from UI',
     TAG_CUSTOM,
     [NAMESPACE_USER]
+)
+
+
+RUN_DATA_MANAGEMENT_TASKS = StaticToggle(
+    'run_data_management_tasks',
+    '[ICDS] Run data management tasks',
+    TAG_CUSTOM,
+    [NAMESPACE_USER]
+)
+
+
+ALLOW_DEID_ODATA_FEED = StaticToggle(
+    'allow_deid_odata_feed',
+    'Allow De-Identification in OData feeds',
+    TAG_PRODUCT,
+    [NAMESPACE_DOMAIN]
 )

@@ -19,6 +19,7 @@ hqDefine('export/js/download_export', [
     'reports/js/reports.util',
     'export/js/utils',
     'hqwebapp/js/daterangepicker.config',   // createDateRangePicker
+    'jquery.cookie/jquery.cookie',      // for resuming export downloads on refresh
 ], function (
     $,
     ko,
@@ -57,6 +58,16 @@ hqDefine('export/js/download_export', [
             return reportUtils.urlSerialize($('form[name="exportFiltersForm"]'));
         };
 
+        // Cookie Related
+        self.savedDownloadCookieName = _.map(self.exportList, function (exportData) {
+            return exportData.export_id;
+        }).join('.') + '_download';
+        self.savedMultimediaDownloadCookieName = self.savedDownloadCookieName + '_multimedia';
+        self.savedDownloadId = $.cookie(self.savedDownloadCookieName);
+        self.savedMultimediaDownloadId = $.cookie(self.savedMultimediaDownloadCookieName);
+        self.canResumeDownload = !!self.savedDownloadId;
+        self.canResumeMultimediaDownload = !!self.savedMultimediaDownloadId;
+
         // UI flags
         self.preparingExport = ko.observable(false);
         self.prepareExportError = ko.observable('');
@@ -66,7 +77,17 @@ hqDefine('export/js/download_export', [
         // Once the download starts, this (downloadFormModel) disables the form and displays a message.
         // When the download is complete, the downloadProgressModel gives the user the option to clear
         // filters and do another download. Listen for that signal.
-        self.downloadInProgress = ko.observable(false);
+        self.downloadInProgress = ko.observable(self.canResumeDownload || self.canResumeMultimediaDownload);
+
+        // This resumes any refreshed / aborted downloads if cookies are present
+        if (self.canResumeDownload) {
+            self.progressModel.downloadCookieName(self.savedDownloadCookieName);
+            self.progressModel.startDownload(self.savedDownloadId);
+        } else if (self.canResumeMultimediaDownload) {
+            self.progressModel.downloadCookieName(self.savedMultimediaDownloadCookieName);
+            self.progressModel.startMultimediaDownload(self.savedMultimediaDownloadId);
+        }
+
         self.progressModel.showDownloadStatus.subscribe(function (newValue) {
             self.downloadInProgress(newValue);
         });
@@ -150,6 +171,7 @@ hqDefine('export/js/download_export', [
                         self.sendAnalytics();
                         self.preparingExport(false);
                         self.downloadInProgress(true);
+                        self.progressModel.downloadCookieName(self.savedDownloadCookieName);
                         self.progressModel.startDownload(data.download_id);
                     } else {
                         self.handleError(data);
@@ -179,6 +201,7 @@ hqDefine('export/js/download_export', [
                         self.sendAnalytics();
                         self.preparingMultimediaExport(false);
                         self.downloadInProgress(true);
+                        self.progressModel.downloadCookieName(self.savedMultimediaDownloadCookieName);
                         self.progressModel.startMultimediaDownload(data.download_id);
                     } else {
                         self.handleError(data);
@@ -211,6 +234,17 @@ hqDefine('export/js/download_export', [
         self.formOrCase = options.formOrCase;
         self.downloadId = ko.observable();
         self.progress = ko.observable();
+        self.downloadCookieName = ko.observable();
+        self.storeDownloadCookie = function () {
+            if (self.downloadCookieName() && self.downloadId()) {
+                $.cookie(self.downloadCookieName(), self.downloadId(), { path: '/' });
+            }
+        };
+        self.clearDownloadCookie = function () {
+            if (self.downloadCookieName()) {
+                $.removeCookie(self.downloadCookieName(), { path: '/' });
+            }
+        };
 
         // URLs for user actions
         self.pollUrl = options.pollUrl;
@@ -257,6 +291,7 @@ hqDefine('export/js/download_export', [
         self.startDownload = function (downloadId) {
             self.showDownloadStatus(true);
             self.downloadId(downloadId);
+            self.storeDownloadCookie();
             self.interval = setInterval(self._checkDownloadProgress, 2000);
         };
 
@@ -268,6 +303,7 @@ hqDefine('export/js/download_export', [
         self.clickDownload = function () {
             self.isDownloaded(true);
             self.sendAnalytics();
+            self.clearDownloadCookie();
             return true;    // allow default click action
         };
 
@@ -295,6 +331,7 @@ hqDefine('export/js/download_export', [
                         if (data.progress && data.progress.error) {
                             clearInterval(self.interval);
                             self.progressError(data.progress.error_message);
+                            self.clearDownloadCookie();
                             return;
                         }
                         if (data.progress.current > self._lastProgress) {
@@ -322,6 +359,7 @@ hqDefine('export/js/download_export', [
             // started, so we have to try a few times.
             if (self._numCeleryRetries > 10) {
                 clearInterval(self.interval);
+                self.clearDownloadCookie();
                 self.celeryError(gettext("Server maintenance in progress. Please try again later."));
             }
             self._numCeleryRetries ++;
@@ -335,6 +373,7 @@ hqDefine('export/js/download_export', [
                     self.downloadError(gettext("There was an error downloading your export."));
                 }
                 clearInterval(self.interval);
+                self.clearDownloadCookie();
             }
             self._numErrors ++;
         };

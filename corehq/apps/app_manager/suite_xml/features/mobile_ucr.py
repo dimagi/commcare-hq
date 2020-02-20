@@ -275,43 +275,49 @@ def _get_summary_details(config, domain, module, new_mobile_ucr_restore=False):
             )
 
     detail_id = 'reports.{}.summary'.format(config.uuid)
+    fields = [
+        Field(
+            header=Header(
+                text=Text(
+                    locale=Locale(id=id_strings.report_name_header())
+                )
+            ),
+            template=Template(
+                text=Text(
+                    locale=Locale(id=id_strings.report_name(config.uuid))
+                )
+            ),
+        ),
+        Field(
+            header=Header(
+                text=Text(
+                    locale=Locale(id=id_strings.report_description_header()),
+                )
+            ),
+            template=Template(
+                text=_get_description_text(config)
+            ),
+        ),
+    ]
+
+    if not getattr(module, 'report_context_tile', False):
+        # Don't add "Last Sync" if the module already contains the similar-looking
+        # "Reports last updated on" tile
+        fields.append(Field(
+            header=Header(
+                text=Text(
+                    locale=Locale(id=id_strings.report_last_sync())
+                )
+            ),
+            template=Template(text=_get_last_sync(config))
+        ))
+    fields += list(_get_graph_fields())
+
     detail = Detail(
         title=Text(
             locale=Locale(id=id_strings.report_menu()),
         ),
-        fields=[
-            Field(
-                header=Header(
-                    text=Text(
-                        locale=Locale(id=id_strings.report_name_header())
-                    )
-                ),
-                template=Template(
-                    text=Text(
-                        locale=Locale(id=id_strings.report_name(config.uuid))
-                    )
-                ),
-            ),
-            Field(
-                header=Header(
-                    text=Text(
-                        locale=Locale(id=id_strings.report_description_header()),
-                    )
-                ),
-                template=Template(
-                    text=_get_description_text(config)
-                ),
-            ),
-        ] + [
-            Field(
-                header=Header(
-                    text=Text(
-                        locale=Locale(id=id_strings.report_last_sync())
-                    )
-                ),
-                template=Template(text=_get_last_sync(config))
-            ),
-        ] + list(_get_graph_fields()),
+        fields=fields,
     )
     if config.show_data_table:
         return models.Detail(custom_xml=Detail(

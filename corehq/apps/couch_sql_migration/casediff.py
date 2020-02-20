@@ -24,7 +24,7 @@ from corehq.form_processor.backends.sql.dbaccessors import (
     FormAccessorSQL,
     LedgerAccessorSQL,
 )
-from corehq.form_processor.exceptions import MissingFormXml
+from corehq.form_processor.exceptions import MissingFormXml, XFormNotFound
 from corehq.form_processor.parsers.ledgers.form import (
     get_all_stock_report_helpers_from_form,
 )
@@ -120,17 +120,17 @@ def diff_case(sql_case, couch_case, dd_count):
             log.warning(f"Case {case_id} rebuild -> {type(err).__name__}: {err}")
         else:
             diffs = diff(couch_case, sql_json)
-            if diffs:
-                try:
-                    sql_json, diffs = rebuild_and_diff_cases(
-                        sql_case, couch_case, original_couch_case, diff, dd_count)
-                except Exception as err:
-                    dd_count("commcare.couchsqlmigration.case.rebuild.error")
-                    log.warning(f"Case {case_id} rebuild SQL -> {type(err).__name__}: {err}")
-            if not diffs:
-                changes = diffs_to_changes(diff(original_couch_case, sql_json), "rebuild case")
+        if diffs:
+            try:
+                sql_json, diffs = rebuild_and_diff_cases(
+                    sql_case, couch_case, original_couch_case, diff, dd_count)
+            except Exception as err:
+                dd_count("commcare.couchsqlmigration.case.rebuild.error")
+                log.warning(f"Case {case_id} rebuild SQL -> {type(err).__name__}: {err}")
         if diffs:
             diffs.extend(diff_case_forms(couch_case, sql_json))
+        else:
+            changes = diffs_to_changes(diff(original_couch_case, sql_json), "rebuild case")
     return couch_case, diffs, changes
 
 
@@ -400,7 +400,10 @@ class WorkerState:
 
 def is_orphaned_case(couch_case):
     def references_case(form_id):
-        form = FormAccessorCouch.get_form(form_id)
+        try:
+            form = FormAccessorCouch.get_form(form_id)
+        except XFormNotFound:
+            return True  # assume case is referenced if form not found
         try:
             return case_id in get_case_ids_from_form(form)
         except MissingFormXml:
@@ -408,6 +411,10 @@ def is_orphaned_case(couch_case):
 
     case_id = couch_case["_id"]
     return not any(references_case(x) for x in couch_case["xform_ids"])
+
+
+def should_diff(case):
+    return _diff_state.should_diff(case)
 
 
 @retry_on_couch_error

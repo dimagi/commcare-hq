@@ -76,9 +76,12 @@ from .. import couchsqlmigration as mod
 from ..asyncforms import get_case_ids
 from ..diffrule import ANY
 from ..management.commands.migrate_domain_from_couch_to_sql import (
+    CACHED,
     COMMIT,
     MIGRATE,
+    REBUILD,
     RESET,
+    STATS,
 )
 from ..statedb import init_state_db, open_state_db
 from ..util import UnhandledError
@@ -140,6 +143,8 @@ class BaseMigrationTestCase(TestCase, TestFileMixin):
         self.migration_success = None
         options.setdefault("no_input", True)
         options.setdefault("case_diff", "local")
+        if action in [MIGRATE, STATS]:
+            options.setdefault("missing_docs", CACHED)
         assert "diff_process" not in options, options  # old/invalid option
         with mock.patch(
             "corehq.form_processor.backends.sql.dbaccessors.transaction.atomic",
@@ -155,7 +160,7 @@ class BaseMigrationTestCase(TestCase, TestFileMixin):
         self.migration_success = success
 
     def _do_migration_and_assert_flags(self, domain, **options):
-        self._do_migration(domain, **options)
+        self._do_migration(domain, finish=True, **options)
         self.assert_backend("sql", domain)
 
     def _compare_diffs(self, expected_diffs=None, missing=None, ignore_fail=False):
@@ -267,9 +272,11 @@ class BaseMigrationTestCase(TestCase, TestFileMixin):
 
     @contextmanager
     def diff_without_rebuild(self):
-        with mock.patch("corehq.form_processor.backends.couch.processor"
-                        ".FormProcessorCouch.hard_rebuild_case") as mock_:
-            mock_.side_effect = Exception("fail!")
+        couch_func = ("corehq.form_processor.backends.couch.processor"
+                      ".FormProcessorCouch.hard_rebuild_case")
+        sql_func = "corehq.apps.couch_sql_migration.casediff.rebuild_and_diff_cases"
+        with mock.patch(couch_func) as couch_mock, mock.patch(sql_func) as sql_mock:
+            couch_mock.side_effect = sql_mock.side_effect = Exception("fail!")
             yield
 
 
@@ -1123,12 +1130,14 @@ class MigrationTestCase(BaseMigrationTestCase):
         clear_local_domain_sql_backend_override(self.domain_name)
 
         with self.patch_migration_chunk_size(1), skip_forms({"test-2"}):
-            self._do_migration(live=True, forms="skipped")
+            self._do_migration(action=STATS, missing_docs=REBUILD)
+            self._do_migration(live=True, forms="missing")
         self.assertEqual(self._get_form_ids(), {"test-1", "test-3"})
 
         clear_local_domain_sql_backend_override(self.domain_name)
         with self.patch_migration_chunk_size(1):
-            self._do_migration(live=True, forms="skipped")
+            self._do_migration(action=STATS, missing_docs=REBUILD)
+            self._do_migration(live=True, forms="missing")
         self.assertEqual(self._get_form_ids(), {"test-1", "test-2", "test-3"})
 
         clear_local_domain_sql_backend_override(self.domain_name)
@@ -1287,6 +1296,18 @@ class MigrationTestCase(BaseMigrationTestCase):
         with self.assertRaises(CaseNotFound):
             self._get_case("test-case")
         self._compare_diffs([])
+
+    def test_missing_docs(self):
+        self.submit_form(TEST_FORM, timedelta(minutes=-90))
+        self._do_migration(self.domain_name, live=True)
+        FormAccessorSQL.hard_delete_forms(self.domain_name, ["test-form"])
+        CaseAccessorSQL.hard_delete_cases(self.domain_name, ["test-case"])
+        clear_local_domain_sql_backend_override(self.domain_name)
+        self._do_migration(self.domain_name, missing_docs=REBUILD, finish=True)
+        self._compare_diffs(
+            missing={"XFormInstance": 1, "CommCareCase": 1},
+            ignore_fail=True,
+        )
 
     def test_form_with_missing_xml(self):
         create_form_with_missing_xml(self.domain_name)
