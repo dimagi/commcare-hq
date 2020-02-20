@@ -12,6 +12,7 @@ from threading import Lock
 from django.conf import settings
 from django.db.utils import IntegrityError
 
+import attr
 from gevent.pool import Pool
 from memoized import memoized
 
@@ -86,6 +87,7 @@ from corehq.util.pagination import (
 from corehq.util.timer import TimingContext
 
 from .asyncforms import AsyncFormProcessor, get_case_ids
+from .casediff import diff_form_state
 from .casediffqueue import CaseDiffProcess, CaseDiffQueue, NoCaseDiff
 from .json2xml import convert_form_to_xml
 from .statedb import init_state_db
@@ -1003,6 +1005,30 @@ def _iter_missing_forms(statedb, stopper):
 
 
 def _iter_missing_blob_present_forms(statedb, stopper):
+    """Find missing Couch forms with XML in blob db
+
+    Scans case diffs and missing SQL cases.
+    """
+    @attr.s
+    class MissingCaseDiff:
+        kind = "CommCareCase"
+        doc_id = attr.ib()
+        form_states = attr.ib()
+
+        @property
+        def old_value(self):
+            return json.dumps({"forms": self.form_states})
+
+    def iter_case_diffs():
+        for kind, doc_id, diffs in statedb.iter_doc_diffs("CommCareCase"):
+            yield from diffs
+        for case_id in statedb.iter_missing_doc_ids("CommCareCase"):
+            case = CaseAccessorCouch.get_case(case_id)
+            yield MissingCaseDiff(case_id, form_states={
+                form_id: diff_form_state(form_id)[0]["form_state"]
+                for form_id in case.xform_ids
+            })
+
     def get_blob_present_form_ids(diff):
         if diff.kind == "CommCareCase":
             case_id = diff.doc_id
@@ -1055,18 +1081,17 @@ def _iter_missing_blob_present_forms(statedb, stopper):
     domain = statedb.domain
     metadb = get_blob_db().metadb
     seen = set()
-    for kind, doc_id, diffs in statedb.iter_doc_diffs("CommCareCase"):
-        for diff in diffs:
-            if not diff.old_value or "missing, blob present" not in diff.old_value:
-                continue
-            form_ids, case_id = get_blob_present_form_ids(diff)
-            form_ids = [f for f in form_ids if f not in seen]
-            if not form_ids or ("case", case_id) in seen:
-                continue
-            seen.update(form_ids)
-            seen.add(("case", case_id))
-            for xml_meta, all_metas in iter_blob_metas(form_ids):
-                yield xml_to_form(domain, xml_meta, case_id, all_metas)
+    for diff in iter_case_diffs():
+        if not diff.old_value or "missing, blob present" not in diff.old_value:
+            continue
+        form_ids, case_id = get_blob_present_form_ids(diff)
+        form_ids = [f for f in form_ids if f not in seen]
+        if not form_ids or ("case", case_id) in seen:
+            continue
+        seen.update(form_ids)
+        seen.add(("case", case_id))
+        for xml_meta, all_metas in iter_blob_metas(form_ids):
+            yield xml_to_form(domain, xml_meta, case_id, all_metas)
 
 
 def _drop_sql_form_ids(couch_ids, statedb):
