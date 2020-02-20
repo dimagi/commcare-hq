@@ -5,7 +5,10 @@ from django.conf import settings
 
 from corehq.elastic import get_es_new
 from corehq.pillows.mappings.xform_mapping import XFORM_ES_TYPE, XFORM_MAPPING, XFORM_INDEX
+from corehq.pillows.mappings.reportxform_mapping import REPORT_XFORM_INDEX_INFO
+from corehq.pillows.mappings.user_mapping import USER_INDEX
 from pillowtop.es_utils import ElasticsearchIndexInfo, initialize_index_and_mapping
+from pillowtop.models import KafkaCheckpoint
 
 
 class Command(BaseCommand):
@@ -34,7 +37,6 @@ class Command(BaseCommand):
         create_index = options.get('create_index')
         do_reindex = options.get('do_reindex')
 
-        print(create_index, do_reindex)
         if create_index:
             mapping = copy.deepcopy(XFORM_MAPPING)
             mapping["_all"] = {"enabled": False}
@@ -58,6 +60,14 @@ class Command(BaseCommand):
             initialize_index_and_mapping(es, index_info)
 
         if do_reindex:
+            # create checkpoints
+            pillow_name = "xform-pillow-non-dashboard"
+            for p in KafkaCheckpoint.objects.filter(checkpoint_id__startswith=pillow_name).all():
+                checkpoint_id = "{}-{}-{}-{}".format(
+                    pillow_name, index_name, REPORT_XFORM_INDEX_INFO.index, USER_INDEX)
+                p.pk = None
+                p.checkpoint_id = checkpoint_id
+                p.save()
             # tune settings for indexing speed
             es.indices.put_settings(
                 index=index_name,
