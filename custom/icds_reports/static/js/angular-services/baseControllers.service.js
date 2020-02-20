@@ -1,6 +1,6 @@
 /* global d3, moment */
 
-window.angular.module('icdsApp').factory('baseControllersService', function() {
+window.angular.module('icdsApp').factory('baseControllersService', ['$timeout', function($timeout) {
     var BaseFilterController = function ($scope, $routeParams, $location, dateHelperService, storageService,
                                          navigationService) {
         var vm = this;
@@ -234,25 +234,19 @@ window.angular.module('icdsApp').factory('baseControllersService', function() {
             };
 
             //Creating a promise, which resolves only after map is rendered (wait until canvas is rendered in dom)
-            // Reference: https://stackoverflow.com/a/47776379/12839195
-            vm.rafAsync = function () {
-                return new Promise(function (resolve) {
-                    requestAnimationFrame(resolve);
-                });
-            };
-
+            // Reference: https://stackoverflow.com/a/47776379/12839195 (using timeout instead of rafAsync)
             vm.checkElement = function (selector) {
                 // if it is not a page where map is displayed, resolve the promise immediately,
                 // else wait till canvas (svg in dom) is created
-                if (!navigationService.isMapDisplayed($location.path())) {
-                    return Promise.resolve(true);
+                if (!navigationService.isMapDisplayed($location.path()) && window.Promise) {
+                    return window.Promise.resolve(true);
                 }
                 if (document.querySelector(selector) === null) {
-                    return vm.rafAsync().then(function () {
+                    return $timeout().then(function () {
                         return vm.checkElement(selector);
                     });
                 } else {
-                    return Promise.resolve(true);
+                    return window.Promise.resolve(true);
                 }
             };
 
@@ -387,4 +381,4 @@ window.angular.module('icdsApp').factory('baseControllersService', function() {
         },
         BaseFilterController: BaseFilterController,
     };
-});
+}]);
