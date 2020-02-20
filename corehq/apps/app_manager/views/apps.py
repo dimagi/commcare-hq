@@ -315,7 +315,7 @@ def get_app_view_context(request, app):
         context.update({
             'master_briefs': master_briefs,
             'master_versions_by_id': master_versions_by_id,
-            'multiple_masters': len(master_briefs) > 1 and toggles.MULTI_MASTER_LINKED_DOMAINS.enabled(app.domain),
+            'multiple_masters': app.enable_multi_master and len(master_briefs) > 1,
             'upstream_version': app.upstream_version,
             'upstream_brief': upstream_brief,
             'upstream_url': _get_upstream_url(app, request.couch_user),
@@ -535,7 +535,7 @@ def load_app_from_slug(domain, username, slug):
 def _build_sample_app(app):
     errors = app.validate_app()
     if not errors:
-        comment = _("A sample application you can try out in Web Apps")
+        comment = _("A sample CommCare application for you to explore")
         copy = app.make_build(comment=comment)
         copy.is_released = True
         copy.save(increment_version=False)

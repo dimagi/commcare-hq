@@ -25,6 +25,10 @@ from .postnatal_care_forms_child_health import PostnatalCareFormsChildHealthAggr
 from .thr_forms_child_health import THRFormsChildHealthAggregationDistributedHelper
 from .thr_forms_ccs_record import THRFormsCcsRecordAggregationDistributedHelper
 from .thr_form_v2 import THRFormV2AggDistributedHelper
+from .agg_dashboard_activity import DashboardActivityReportAggregate
+from .adolescent_girls_registration import AggAdolescentGirlsRegistrationAggregate
+from .agg_gov_dashboard import AggGovDashboardHelper
+from .migration_forms import MigrationFormsAggregationDistributedHelper
 
 __all__ = (
     'AggAwcDistributedHelper',
@@ -55,5 +59,9 @@ __all__ = (
     'PostnatalCareFormsChildHealthAggregationDistributedHelper',
     'THRFormsCcsRecordAggregationDistributedHelper',
     'THRFormsChildHealthAggregationDistributedHelper',
-    'THRFormV2AggDistributedHelper'
+    'THRFormV2AggDistributedHelper',
+    'DashboardActivityReportAggregate',
+    'AggAdolescentGirlsRegistrationAggregate',
+    'AggGovDashboardHelper',
+    'MigrationFormsAggregationDistributedHelper'
 )

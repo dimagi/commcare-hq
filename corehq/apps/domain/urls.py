@@ -36,13 +36,9 @@ from corehq.apps.domain.views.accounting import (
     SelectPlanView,
     SubscriptionRenewalView,
     WireInvoiceView,
+    pause_subscription,
 )
 from corehq.apps.domain.views.base import select
-from corehq.apps.domain.views.exchange import (
-    CreateNewExchangeSnapshotView,
-    ExchangeSnapshotsView,
-    set_published_snapshot,
-)
 from corehq.apps.domain.views.fixtures import LocationFixtureConfigView
 from corehq.apps.domain.views.internal import (
     ActivateTransferDomainView,
@@ -72,7 +68,6 @@ from corehq.apps.domain.views.settings import (
     EditOpenClinicaSettingsView,
     EditPrivacySecurityView,
     FeaturePreviewsView,
-    ManageProjectMediaView,
     PasswordResetView,
     RecoveryMeasuresHistory,
 )
@@ -85,6 +80,19 @@ from corehq.motech.repeaters.views import (
     requeue_repeat_record,
 )
 
+PASSWORD_RESET_KWARGS = {
+    'template_name': 'login_and_password/password_reset_form.html',
+    'password_reset_form': ConfidentialPasswordResetForm,
+    'from_email': settings.DEFAULT_FROM_EMAIL,
+    'extra_context': {'current_page': {'page_name': _('Password Reset')}}
+}
+
+PASSWORD_RESET_DONE_KWARGS = {
+    'template_name': 'login_and_password/password_reset_done.html',
+    'extra_context': {'current_page': {'page_name': _('Reset My Password')}}
+}
+
+
 urlpatterns = [
     url(r'^domain/select/$', select, name='domain_select'),
     url(r'^domain/select_redirect/$', select, {'do_not_redirect': True}, name='domain_select_redirect'),
@@ -92,7 +100,6 @@ urlpatterns = [
         ActivateTransferDomainView.as_view(), name='activate_transfer_domain'),
     url(r'^domain/transfer/(?P<guid>\w+)/deactivate$',
         DeactivateTransferDomainView.as_view(), name='deactivate_transfer_domain'),
-
     url(r'^accounts/password_change/$', password_change,
         {'template_name': 'login_and_password/password_change_form.html'},
         name='password_change'),
@@ -101,16 +108,9 @@ urlpatterns = [
          'extra_context': {'current_page': {'page_name': _('Password Change Complete')}}},
         name='password_change_done'),
 
-    url(r'^accounts/password_reset_email/$', password_reset,
-        {'template_name': 'login_and_password/password_reset_form.html',
-         'password_reset_form': ConfidentialPasswordResetForm, 'from_email': settings.DEFAULT_FROM_EMAIL,
-         'extra_context': {'current_page': {'page_name': _('Password Reset')}}},
-        name='password_reset_email'),
-    url(r'^accounts/password_reset_email/done/$', password_reset_done,
-        {'template_name': 'login_and_password/password_reset_done.html',
-         'extra_context': {'current_page': {'page_name': _('Reset My Password')}}},
+    url(r'^accounts/password_reset_email/$', password_reset, PASSWORD_RESET_KWARGS, name='password_reset_email'),
+    url(r'^accounts/password_reset_email/done/$', password_reset_done, PASSWORD_RESET_DONE_KWARGS,
         name='password_reset_done'),
-
     url(r'^accounts/password_reset_confirm/(?P<uidb64>[0-9A-Za-z_\-]+)/(?P<token>.+)/$',
         PasswordResetView.as_view(),
         {'template_name': 'login_and_password/password_reset_confirm.html', 'set_password_form': HQSetPasswordForm,
@@ -139,6 +139,7 @@ domain_settings = [
         name=SelectedAnnualPlanView.urlname),
     url(r'^subscription/change/account/$', ConfirmBillingAccountInfoView.as_view(),
         name=ConfirmBillingAccountInfoView.urlname),
+    url(r'^subscription/change/pause/$', pause_subscription, name='pause_subscription'),
     url(r'^subscription/change/email/$', EmailOnDowngradeView.as_view(), name=EmailOnDowngradeView.urlname),
     url(r'^subscription/pro_bono/$', ProBonoView.as_view(), name=ProBonoView.urlname),
     url(r'^subscription/credits/make_payment/$', CreditsStripePaymentView.as_view(),
@@ -173,12 +174,7 @@ domain_settings = [
     url(r'^repeat_record_report/generate_repeater_payloads/', generate_repeater_payloads,
         name='generate_repeater_payloads'),
     url(r'^integration/', include('corehq.apps.integration.urls')),
-    url(r'^snapshots/set_published/(?P<snapshot_name>[\w-]+)/$', set_published_snapshot, name='domain_set_published'),
-    url(r'^snapshots/set_published/$', set_published_snapshot, name='domain_clear_published'),
-    url(r'^snapshots/$', ExchangeSnapshotsView.as_view(), name=ExchangeSnapshotsView.urlname),
     url(r'^transfer/$', TransferDomainView.as_view(), name=TransferDomainView.urlname),
-    url(r'^snapshots/new/$', CreateNewExchangeSnapshotView.as_view(), name=CreateNewExchangeSnapshotView.urlname),
-    url(r'^multimedia/$', ManageProjectMediaView.as_view(), name=ManageProjectMediaView.urlname),
     url(r'^case_search/$', CaseSearchConfigView.as_view(), name=CaseSearchConfigView.urlname),
     url(r'^domain_links/$', DomainLinkView.as_view(), name=DomainLinkView.urlname),
     url(r'^location_settings/$', LocationFixtureConfigView.as_view(), name=LocationFixtureConfigView.urlname),

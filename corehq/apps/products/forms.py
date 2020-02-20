@@ -45,8 +45,8 @@ class ProductForm(forms.Form):
         self.helper.label_class = 'col-sm-3 col-md-4 col-lg-2'
         self.helper.field_class = 'col-sm-4 col-md-5 col-lg-3'
 
-        programs = Program.by_domain(self.product.domain, wrap=False)
-        self.fields['program_id'].choices = tuple((prog['_id'], prog['name']) for prog in programs)
+        programs = Program.by_domain(self.product.domain)
+        self.fields['program_id'].choices = tuple((prog.get_id, prog.name) for prog in programs)
 
         # make sure to select default program if
         # this is a new product

@@ -12,8 +12,8 @@ COMPRESS_JS = ' compress js '
 COMPRESS_CSS = ' compress css '
 ENDCOMPRESS = ' endcompress '
 
-DISALLOWED_TAGS = [
-    ('{% if', 'You cannot use "if" tags in a compress block'),
+DISALLOWED_REGEXES = [
+    ('{% (?!static)', 'You cannot use django template tags other than static'),
     ('^</script>$', 'You cannot use inline JS in a compress block'),
 ]
 
@@ -28,7 +28,7 @@ class TestDjangoCompressOffline(SimpleTestCase):
     def _assert_valid_import(self, line, filename):
         if not line.strip():
             return
-        for tag in DISALLOWED_TAGS:
+        for tag in DISALLOWED_REGEXES:
             self.assertNotRegexpMatches(line.strip(), tag[0], '{}: {}'.format(tag[1], filename))
 
     @attr("slow")

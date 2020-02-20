@@ -1,29 +1,19 @@
-from collections import defaultdict
 from datetime import datetime, timedelta
 
 import pytz
-
 from django.conf import settings
-from django.db.models import Max
 from django.db import connections
+from django.db.models import Max
 from django.template import TemplateDoesNotExist
 from django.template.loader import render_to_string
+from lxml import etree
+from memoized import memoized
 
 from casexml.apps.phone.models import OTARestoreCommCareUser
-from dimagi.utils.dates import DateSpan
-from memoized import memoized
-from dimagi.utils.parsing import string_to_datetime
-
 from corehq.apps.app_manager.dbaccessors import get_app
-from corehq.apps.app_manager.fixtures.mobile_ucr import ReportFixturesProvider
-from corehq.apps.app_manager.models import ReportModule
+from corehq.apps.app_manager.fixtures.mobile_ucr import ReportFixturesProviderV1
 from corehq.apps.locations.dbaccessors import (
-    get_user_ids_from_primary_location_ids,
     get_users_by_location_id,
-)
-from corehq.apps.reports.analytics.esaccessors import (
-    get_last_submission_time_for_users,
-    get_last_form_submissions_by_user,
 )
 from corehq.apps.userreports.models import StaticDataSourceConfiguration
 from corehq.apps.userreports.util import get_table_name
@@ -36,13 +26,10 @@ from custom.icds.const import (
     HOME_VISIT_REPORT_ID,
     SUPERVISOR_APP_ID,
     THR_REPORT_ID,
-    VHND_SURVEY_XMLNS,
 )
 from custom.icds_reports.cache import icds_quickcache
 from custom.icds_reports.models.aggregate import AggregateInactiveAWW
 from dimagi.utils.couch import CriticalSection
-
-from lxml import etree
 
 DEFAULT_LANGUAGE = 'hin'
 
@@ -72,7 +59,7 @@ def _get_report_fixture_for_user(domain, report_id, ota_user):
     :param report_id: the index to the result from get_report_configs()
     :param ota_user: the OTARestoreCommCareUser for which to get the report fixture
     """
-    xml = ReportFixturesProvider.report_config_to_v1_fixture(
+    xml = ReportFixturesProviderV1().report_config_to_fixture(
         get_report_configs(domain)[report_id], ota_user
     )
     return etree.tostring(xml)
@@ -166,29 +153,6 @@ class LSIndicator(SMSIndicator):
     @memoized
     def awc_locations(self):
         return {l.location_id: l.name for l in self.child_locations}
-
-    @property
-    @memoized
-    def locations_by_user_id(self):
-        return get_user_ids_from_primary_location_ids(self.domain, set(self.awc_locations))
-
-    @property
-    @memoized
-    def aww_user_ids(self):
-        return set(self.locations_by_user_id.keys())
-
-    @property
-    @memoized
-    def user_ids_by_location_id(self):
-        user_ids_by_location_id = defaultdict(set)
-        for u_id, loc_id in self.locations_by_user_id.items():
-            user_ids_by_location_id[loc_id].add(u_id)
-
-        return user_ids_by_location_id
-
-    def location_names_from_user_id(self, user_ids):
-        loc_ids = {self.locations_by_user_id.get(u) for u in user_ids}
-        return {self.awc_locations[l] for l in loc_ids}
 
 
 class AWWAggregatePerformanceIndicator(AWWIndicator):
@@ -316,6 +280,14 @@ class AWWVHNDSurveyIndicator(AWWIndicator):
             return []
 
 
+def _get_last_submission_dates(awc_ids):
+    return {
+        row['awc_id']: row['last_submission']
+        for row in AggregateInactiveAWW.objects.filter(
+        awc_id__in=awc_ids).values('awc_id', 'last_submission').all()
+    }
+
+
 class LSSubmissionPerformanceIndicator(LSIndicator):
     template = 'ls_no_submissions.txt'
     slug = 'ls_6'
@@ -323,38 +295,30 @@ class LSSubmissionPerformanceIndicator(LSIndicator):
     def __init__(self, domain, user):
         super(LSSubmissionPerformanceIndicator, self).__init__(domain, user)
 
-        self.last_submission_dates = get_last_submission_time_for_users(
-            self.domain, self.aww_user_ids, self.get_datespan()
-        )
-
-    def get_datespan(self):
-        today = datetime(self.now.year, self.now.month, self.now.day)
-        end_date = today + timedelta(days=1)
-        start_date = today - timedelta(days=30)
-        return DateSpan(start_date, end_date, timezone=self.timezone)
+        self.last_submission_dates = _get_last_submission_dates(awc_ids=set(self.awc_locations))
 
     def get_messages(self, language_code=None):
         messages = []
-        one_week_user_ids = []
-        one_month_user_ids = []
+        one_week_loc_ids = []
+        one_month_loc_ids = []
 
         now_date = self.now.date()
-        for user_id in self.aww_user_ids:
-            last_sub_date = self.last_submission_dates.get(user_id)
+        for loc_id in self.awc_locations:
+            last_sub_date = self.last_submission_dates.get(loc_id)
             if not last_sub_date:
-                one_month_user_ids.append(user_id)
+                one_month_loc_ids.append(loc_id)
             else:
                 days_since_submission = (now_date - last_sub_date).days
                 if days_since_submission > 7:
-                    one_week_user_ids.append(user_id)
+                    one_week_loc_ids.append(loc_id)
 
-        if one_week_user_ids:
-            one_week_loc_names = self.location_names_from_user_id(one_week_user_ids)
+        if one_week_loc_ids:
+            one_week_loc_names = {self.awc_locations[loc_id] for loc_id in one_week_loc_ids}
             week_context = {'location_names': ', '.join(one_week_loc_names), 'timeframe': 'week'}
             messages.append(self.render_template(week_context, language_code=language_code))
 
-        if one_month_user_ids:
-            one_month_loc_names = self.location_names_from_user_id(one_month_user_ids)
+        if one_month_loc_ids:
+            one_month_loc_names = {self.awc_locations[loc_id] for loc_id in one_month_loc_ids}
             month_context = {'location_names': ','.join(one_month_loc_names), 'timeframe': 'month'}
             messages.append(self.render_template(month_context, language_code=language_code))
 
@@ -370,7 +334,7 @@ class LSVHNDSurveyIndicator(LSIndicator):
 
         self.awc_ids_not_in_timeframe = get_awcs_with_old_vhnd_date(
             domain,
-            self.user_ids_by_location_id.keys()
+            set(self.awc_locations)
         )
 
     def get_messages(self, language_code=None):
@@ -416,7 +380,8 @@ def compute_awws_in_vhnd_timeframe(domain):
     FROM "{table}"
     WHERE vhsnd_date_past_month > %(37_days_ago)s
     """.format(table=table)
-    query_params = {"37_days_ago": datetime.today().date() - timedelta(days=37)}
+    cutoff = datetime.now(tz=pytz.timezone('Asia/Kolkata')).date()
+    query_params = {"37_days_ago": cutoff - timedelta(days=37)}
 
     datasource_id = StaticDataSourceConfiguration.get_doc_id(domain, 'static-vhnd_form')
     data_source = StaticDataSourceConfiguration.by_id(datasource_id)

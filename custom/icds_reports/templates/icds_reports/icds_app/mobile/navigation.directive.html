@@ -1,40 +1,48 @@
 {% load staticfiles %}
 <div class="sideNavigation" id="nav-menu">
-    <img src="{% static "icds_reports/mobile/images/white-close-icon.png" %}" class="close-icon" ng-click="closeMenu()">
-    <p class="navigation-font" ng-bind="userFullName" ng-if="userFullName"></p>
-    <p class="navigation-font mb-5" ng-bind="userUsername"></p>
-    <a class="menu-options" href="{$ goToStep('', $location.search()) $}" ng-click="closeMenu()">
-        <img src="{% static "icds_reports/mobile/images/program-summary.png" %}" class="mr-3">
-        <p class="navigation-font mb-0">Program Summary</p>
-    </a>
-    <div class="menu-options">
-        <img src="{% static "icds_reports/mobile/images/mother.png" %}" class="mr-3">
-        <p class="navigation-font mb-0">Maternal and Child Nutrition</p>
-    </div>
-    <div class="menu-options">
-        <img src="{% static "icds_reports/mobile/images/stats-sidebar.png" %}" class="mr-3">
-        <p class="navigation-font mb-0">ICDS-CAS Reach</p>
-    </div>
-    <div class="menu-options">
-        <img src="{% static "icds_reports/mobile/images/threegroup-sidebar.png" %}" class="mr-3">
-        <p class="navigation-font mb-0">Demographics</p>
-    </div>
-    <div class="menu-options">
-        <img src="{% static "icds_reports/mobile/images/bulb-sidebar.png" %}" class="mr-3">
-        <p class="navigation-font mb-0">AWC Infrastructure</p>
-    </div>
-    <hr>
-    <div class="menu-options">
-        <img src="{% static "icds_reports/mobile/images/awc-reports.png" %}" class="mr-3">
-        <p class="navigation-font mb-0">AWC Reports</p>
-    </div>
-    <hr>
-    <div class="menu-options">
-        <img src="{% static "icds_reports/mobile/images/settings.png" %}" class="mr-3">
-        <p class="navigation-font mb-0">Settings</p>
-    </div>
-    <div class="menu-options">
-        <img src="{% static "icds_reports/mobile/images/logout.png" %}" class="mr-3">
-        <p class="navigation-font mb-0">Logout</p>
+    <img src="{% static 'icds_reports/mobile/images/white-close-icon.png' %}" class="close-icon" ng-click="closeMenu()">
+    <p class="navigation-font pl-3 pr-3 mb-0" ng-bind="userFullName" ng-if="userFullName"></p>
+    <p class="navigation-font pl-3 pr-3 mb-4" ng-bind="userUsername"></p>
+    <div class="navigation-menu-height">
+        <a class="menu-options" href="{$ goToStep('', $location.search()) $}" ng-click="closeMenu()">
+            <img src="{% static 'icds_reports/mobile/images/program-summary.png' %}" class="mr-3">
+            <p class="navigation-font mb-0">Program Summary</p>
+        </a>
+        <div ng-repeat="menuItem in navMenuItems['sections']">
+            <div class="menu-options" ng-click="expandedSectionId = (expandedSectionId=== menuItem['sectionId']) ? '' : menuItem['sectionId']">
+                <img ng-src="{% static 'icds_reports/mobile/images/' %}{$menuItem['image']$}" class="mr-3">
+                <div class="d-flex justify-content-between align-items-center w-100">
+                    <p class="navigation-font mb-0">{$ menuItem['name'] $}</p>
+                    <img src="{% static 'icds_reports/mobile/images/drop-down.png' %}">
+                </div>
+            </div>
+            <div>
+                <div ng-show="expandedSectionId===menuItem['sectionId']">
+                    <div ng-repeat="subPage in menuItem['sub_pages']"
+                         class="navigation-font pl-3 pr-3 mb-0" ng-show="subPage['showInMobile'] && !subPage['featureFlagOnly']"
+                         ng-class="{'active-mobile-link': $location.path().indexOf(subPage['route']) !== -1}">
+                        <a href="{$ goToStep(subPage['route'], $location.search()) $}" class="sub-links"
+                            ng-click="closeMenu()" ng-bind="subPage['name']"></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <hr>
+        <div class="menu-options navigation-font mb-0" ng-class="{'active-mobile-link': $location.path().indexOf('/awc_reports') !== -1}">
+            <img src="{% static 'icds_reports/mobile/images/awc-reports.png' %}" class="mr-3">
+            <a  href="{$ goToStep('awc_reports', $location.search()) $}" class="sub-links" ng-click="closeMenu()">AWC Report</a>
+        </div>
+        <hr>
+        {% comment %}
+        Mobile settings page has not been implemented yet so just hide the option
+        <div class="menu-options">
+            <img src="{% static 'icds_reports/mobile/images/settings.png' %}" class="mr-3">
+            <p class="navigation-font mb-0">Settings</p>
+        </div>
+        {% endcomment %}
+        <a class="menu-options" href="{% url 'cas_mobile_dashboard_logout' domain %}">
+            <img src="{% static 'icds_reports/mobile/images/logout.png' %}" class="mr-3">
+            <p class="navigation-font mb-0">Logout</p>
+        </a>
     </div>
 </div>

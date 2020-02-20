@@ -74,7 +74,7 @@ class BaseSMSTest(BaseAccountingTest, DomainSubscriptionMixin):
         cls.setup_subscription(domain_name, SoftwarePlanEdition.ADVANCED)
 
     def tearDown(self):
-        self.teardown_subscription()
+        self.teardown_subscriptions()
         clear_plan_version_cache()
         super(BaseSMSTest, self).tearDown()
 
@@ -333,7 +333,7 @@ class TouchformsTestCase(LiveServerTestCase, DomainSubscriptionMixin):
         self.site.delete()
         self.backend_mapping.delete()
         self.backend.delete()
-        self.teardown_subscription()
+        self.teardown_subscriptions()
         clear_plan_version_cache()
 
 

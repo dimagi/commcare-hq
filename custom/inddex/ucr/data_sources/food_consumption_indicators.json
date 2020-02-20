@@ -1,0 +1,901 @@
+{
+    "domains": [
+        "inddex-reports"
+    ],
+    "server_environment": [
+        "production",
+        "localdev"
+    ],
+    "config": {
+        "engine_id": "ucr",
+        "referenced_doc_type": "CommCareCase",
+        "table_id": "food_consumption_indicators",
+        "description": "",
+        "display_name": "Food Consumption",
+        "configured_filter": {
+            "type": "boolean_expression",
+            "operator": "eq",
+            "expression": {
+                "type": "property_name",
+                "property_name": "type",
+                "datatype": null
+            },
+            "property_value": "food",
+            "comment": null
+        },
+        "configured_indicators": [
+            {
+                "type": "expression",
+                "expression": {
+                    "type": "nested",
+                    "argument_expression": {
+                        "type": "array_index",
+                        "array_expression": {
+                            "type": "filter_items",
+                            "items_expression": {
+                                "type": "property_name",
+                                "property_name": "indices",
+                                "datatype": null
+                            },
+                            "filter_expression": {
+                                "type": "boolean_expression",
+                                "expression": {
+                                    "type": "property_name",
+                                    "property_name": "referenced_type",
+                                    "datatype": null
+                                },
+                                "operator": "eq",
+                                "property_value": "foodrecall",
+                                "comment": null
+                            }
+                        },
+                        "index_expression": {
+                            "type": "constant",
+                            "constant": 0
+                        }
+                    },
+                    "value_expression": {
+                        "type": "property_name",
+                        "property_name": "referenced_id",
+                        "datatype": null
+                    }
+                },
+                "column_id": "recall_case_id",
+                "datatype": "string",
+                "display_name": "recall_case_id"
+            },
+            {
+                "type": "expression",
+                "column_id": "owner_name",
+                "datatype": "string",
+                "display_name": "Owner",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "owner_id",
+                    "datatype": null
+                },
+                "transform": {
+                    "type": "custom",
+                    "custom_type": "owner_display"
+                }
+            },
+            {
+                "type": "expression",
+                "column_id": "opened_by_username",
+                "datatype": "string",
+                "display_name": "Opened By",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "opened_by",
+                    "datatype": null
+                },
+                "transform": {
+                    "type": "custom",
+                    "custom_type": "owner_display"
+                }
+            },
+            {
+                "type": "expression",
+                "column_id": "recall_status",
+                "datatype": "string",
+                "display_name": "recall_status",
+                "expression": {
+                    "type": "nested",
+                    "argument_expression": {
+                        "type": "indexed_case",
+                        "case_expression": {
+                            "type": "identity"
+                        },
+                        "index": "parent"
+                    },
+                    "value_expression": {
+                        "type": "property_name",
+                        "property_name": "recall_status"
+                    }
+                }
+            },
+            {
+                "type": "expression",
+                "column_id": "unique_respondent_id",
+                "datatype": "string",
+                "display_name": "Unique Respondent Id",
+                "expression": {
+                    "type": "nested",
+                    "argument_expression": {
+                        "type": "indexed_case",
+                        "case_expression": {
+                            "type": "identity"
+                        },
+                        "index": "parent"
+                    },
+                    "value_expression": {
+                        "type": "property_name",
+                        "property_name": "respondent_unique_id"
+                    }
+                }
+            },
+            {
+                "type": "expression",
+                "column_id": "gender",
+                "datatype": "string",
+                "display_name": "Gender",
+                "expression": {
+                    "type": "nested",
+                    "argument_expression": {
+                        "type": "indexed_case",
+                        "case_expression": {
+                            "type": "identity"
+                        },
+                        "index": "parent"
+                    },
+                    "value_expression": {
+                        "type": "property_name",
+                        "property_name": "gender"
+                    }
+                }
+
+            },
+            {
+                "type": "expression",
+                "column_id": "age",
+                "datatype": "string",
+                "display_name": "Age",
+                "expression": {
+                    "type": "nested",
+                    "argument_expression": {
+                        "type": "indexed_case",
+                        "case_expression": {
+                            "type": "identity"
+                        },
+                        "index": "parent"
+                    },
+                    "value_expression": {
+                        "type": "property_name",
+                        "property_name": "age_years"
+                    }
+                }
+
+            },
+            {
+                "type": "expression",
+                "column_id": "supplements",
+                "datatype": "string",
+                "display_name": "Supplements",
+                "expression": {
+                    "type": "nested",
+                    "argument_expression": {
+                        "type": "indexed_case",
+                        "case_expression": {
+                            "type": "identity"
+                        },
+                        "index": "parent"
+                    },
+                    "value_expression": {
+                        "type": "property_name",
+                        "property_name": "supplements"
+                    }
+                }
+            },
+            {
+                "type": "expression",
+                "column_id": "urban_rural",
+                "datatype": "string",
+                "display_name": "Urban Rural",
+                "expression": {
+                    "type": "nested",
+                    "argument_expression": {
+                        "type": "indexed_case",
+                        "case_expression": {
+                            "type": "identity"
+                        },
+                        "index": "parent"
+                    },
+                    "value_expression": {
+                        "type": "property_name",
+                        "property_name": "urban_rural"
+                    }
+                }
+            },
+            {
+                "type": "expression",
+                "column_id": "pregnant",
+                "datatype": "string",
+                "display_name": "Pregnant",
+                "expression": {
+                    "type": "nested",
+                    "argument_expression": {
+                        "type": "indexed_case",
+                        "case_expression": {
+                            "type": "identity"
+                        },
+                        "index": "parent"
+                    },
+                    "value_expression": {
+                        "type": "property_name",
+                        "property_name": "pregnant"
+                    }
+                }
+            },
+            {
+                "type": "expression",
+                "column_id": "breastfeeding",
+                "datatype": "string",
+                "display_name": "Breastfeeding",
+                "expression": {
+                    "type": "nested",
+                    "argument_expression": {
+                        "type": "indexed_case",
+                        "case_expression": {
+                            "type": "identity"
+                        },
+                        "index": "parent"
+                    },
+                    "value_expression": {
+                        "type": "property_name",
+                        "property_name": "breastfeeding"
+                    }
+                }
+            },
+            {
+                "type": "expression",
+                "column_id": "food_code",
+                "datatype": "string",
+                "display_name": "Food Code",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "food_code"
+                }
+            },
+            {
+                "type": "expression",
+                "column_id": "reference_food_code",
+                "datatype": "string",
+                "display_name": "Reference Food Code",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "parent_food_code"
+                }
+            },
+            {
+                "type": "expression",
+                "column_id": "food_type",
+                "datatype": "string",
+                "display_name": "Food Type",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "food_type"
+                }
+            },
+            {
+                "type": "expression",
+                "column_id": "include_in_analysis",
+                "datatype": "string",
+                "expression": {
+                    "type": "named",
+                    "name": "include_in_analysis"
+                }
+            },
+            {
+                "type": "expression",
+                "column_id": "food_status",
+                "datatype": "string",
+                "display_name": "Food Status",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "food_status"
+                }
+            },
+            {
+                "type": "expression",
+                "column_id": "recall_date",
+                "datatype": "string",
+                "display_name": "recall_date",
+                "expression": {
+                    "type": "nested",
+                    "argument_expression": {
+                        "type": "indexed_case",
+                        "case_expression": {
+                            "type": "identity"
+                        },
+                        "index": "parent"
+                    },
+                    "value_expression": {
+                        "type": "property_name",
+                        "property_name": "visit_date"
+                    }
+                }
+            },
+            {
+                "type": "expression",
+                "column_id": "opened_date",
+                "datatype": "string",
+                "display_name": "opened_date",
+                "expression": {
+                    "type": "nested",
+                    "argument_expression": {
+                        "type": "indexed_case",
+                        "case_expression": {
+                            "type": "identity"
+                        },
+                        "index": "parent"
+                    },
+                    "value_expression": {
+                        "type": "property_name",
+                        "property_name": "opened_date"
+                    }
+                }
+            },
+            {
+                "type": "expression",
+                "column_id": "eating_time",
+                "datatype": "string",
+                "display_name": "Eating Time",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "eating_time"
+                }
+            },
+            {
+                "type": "expression",
+                "column_id": "time_block",
+                "datatype": "string",
+                "display_name": "time_block",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "eating_occasion"
+                }
+            },
+            {
+                "type": "expression",
+                "column_id": "already_reported_food",
+                "datatype": "string",
+                "display_name": "Already Reported Food",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "already_reported_food"
+                }
+            },
+            {
+                "type": "expression",
+                "column_id": "already_reported_food_caseid",
+                "datatype": "string",
+                "display_name": "Already Reported Food Case Id",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "already_reported_food_caseid"
+                }
+            },
+            {
+                "type": "expression",
+                "column_id": "is_ingredient",
+                "datatype": "string",
+                "display_name": "Is Ingredient",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "is_ingredient"
+                }
+            },
+            {
+                "type": "expression",
+                "column_id": "ingr_recipe_case_id",
+                "datatype": "string",
+                "display_name": "Ingr Recipe Case Id",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "recipe_case_id"
+                }
+            },
+            {
+                "column_id": "ingr_recipe_code",
+                "type": "expression",
+                "datatype": "string",
+                "display_name": "Ingr Recipe Code",
+                "expression": {
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareCase",
+                    "doc_id_expression": {
+                        "type": "property_name",
+                        "property_name": "recipe_case_id"
+                    },
+                    "value_expression": {
+                        "type": "property_name",
+                        "property_name": "food_code"
+                    }
+                }
+            },
+            {
+                "type": "expression",
+                "column_id": "short_name",
+                "datatype": "string",
+                "display_name": "Short Name",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "short_name"
+                }
+            },
+            {
+                "type": "expression",
+                "column_id": "food_name",
+                "datatype": "string",
+                "display_name": "Food Name",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "name"
+                }
+            },
+            {
+                "type": "expression",
+                "column_id": "recipe_name",
+                "datatype": "string",
+                "expression": {
+                    "type": "named",
+                    "name": "recipe_name"
+                }
+            },
+            {
+                "type": "expression",
+                "column_id": "food_base_term",
+                "datatype": "string",
+                "display_name": "Food Base Term",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "food_base_term"
+                }
+            },
+            {
+                "type": "expression",
+                "column_id": "tag_1",
+                "datatype": "string",
+                "display_name": "Tag 1",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "tag_1"
+                }
+            },
+            {
+                "type": "expression",
+                "column_id": "other_tag_1",
+                "datatype": "string",
+                "display_name": "Other Tag 1",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "other_tag_1"
+                }
+            },
+            {
+                "type": "expression",
+                "column_id": "tag_2",
+                "datatype": "string",
+                "display_name": "Tag 2",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "tag_2"
+                }
+            },
+            {
+                "type": "expression",
+                "column_id": "other_tag_2",
+                "datatype": "string",
+                "display_name": "Other Tag 2",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "other_tag_2"
+                }
+            },
+            {
+                "type": "expression",
+                "column_id": "tag_3",
+                "datatype": "string",
+                "display_name": "Tag 3",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "tag_3"
+                }
+            },
+            {
+                "type": "expression",
+                "column_id": "other_tag_3",
+                "datatype": "string",
+                "display_name": "Other Tag 3",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "other_tag_3"
+                }
+            },
+            {
+                "type": "expression",
+                "column_id": "tag_4",
+                "datatype": "string",
+                "display_name": "Tag 4",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "tag_4"
+                }
+            },
+            {
+                "type": "expression",
+                "column_id": "other_tag_4",
+                "datatype": "string",
+                "display_name": "Other Tag 4",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "other_tag_4"
+                }
+            },
+            {
+                "type": "expression",
+                "column_id": "tag_5",
+                "datatype": "string",
+                "display_name": "Tag 5",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "tag_5"
+                }
+            },
+            {
+                "type": "expression",
+                "column_id": "other_tag_5",
+                "datatype": "string",
+                "display_name": "Other Tag 5",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "other_tag_5"
+                }
+            },
+            {
+                "type": "expression",
+                "column_id": "tag_6",
+                "datatype": "string",
+                "display_name": "Tag 6",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "tag_6"
+                }
+            },
+            {
+                "type": "expression",
+                "column_id": "other_tag_6",
+                "datatype": "string",
+                "display_name": "Other Tag 6",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "other_tag_6"
+                }
+            },
+            {
+                "type": "expression",
+                "column_id": "tag_7",
+                "datatype": "string",
+                "display_name": "Tag 7",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "tag_7"
+                }
+            },
+            {
+                "type": "expression",
+                "column_id": "other_tag_7",
+                "datatype": "string",
+                "display_name": "Other Tag 7",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "other_tag_7"
+                }
+            },
+            {
+                "type": "expression",
+                "column_id": "tag_8",
+                "datatype": "string",
+                "display_name": "Tag 8",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "tag_8"
+                }
+            },
+            {
+                "type": "expression",
+                "column_id": "other_tag_8",
+                "datatype": "string",
+                "display_name": "Other Tag 8",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "other_tag_8"
+                }
+            },
+            {
+                "type": "expression",
+                "column_id": "tag_9",
+                "datatype": "string",
+                "display_name": "Tag 9",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "tag_9"
+                }
+            },
+            {
+                "type": "expression",
+                "column_id": "other_tag_9",
+                "datatype": "string",
+                "display_name": "Other Tag 9",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "other_tag_9"
+                }
+            },
+            {
+                "type": "expression",
+                "column_id": "tag_10",
+                "datatype": "string",
+                "display_name": "Tag 10",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "tag_10"
+                }
+            },
+            {
+                "type": "expression",
+                "column_id": "other_tag_10",
+                "datatype": "string",
+                "display_name": "Other Tag 10",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "other_tag_10"
+                }
+            },
+            {
+                "type": "expression",
+                "column_id": "conv_method",
+                "datatype": "string",
+                "display_name": "Conversion Method",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "conv_method"
+                }
+            },
+            {
+                "type": "expression",
+                "column_id": "conv_method_desc",
+                "datatype": "string",
+                "display_name": "Conversion Method Description",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "conv_method_desc"
+                }
+            },
+            {
+                "type": "expression",
+                "column_id": "conv_option",
+                "datatype": "string",
+                "display_name": "Conversion Option",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "conv_option"
+                }
+            },
+            {
+                "type": "expression",
+                "column_id": "conv_option_desc",
+                "datatype": "string",
+                "display_name": "Conversion Option Description",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "conv_option_desc"
+                }
+            },            {
+                "type": "expression",
+                "column_id": "conv_size",
+                "datatype": "string",
+                "display_name": "Conversion Size",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "conv_size"
+                }
+            },
+            {
+                "type": "expression",
+                "column_id": "conv_units",
+                "datatype": "string",
+                "display_name": "Conversion Units",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "conv_units"
+                }
+            },
+            {
+                "type": "expression",
+                "column_id": "quantity",
+                "datatype": "string",
+                "display_name": "Quantity",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "quantity"
+                }
+            },
+            {
+                "type": "expression",
+                "column_id": "nsr_post_cooking_conv_method_code",
+                "datatype": "string",
+                "expression": {
+                    "type": "named",
+                    "name": "nsr_conv_method_post_cooking"
+                }
+            },
+            {
+                "type": "expression",
+                "column_id": "nsr_post_cooking_conv_option_code",
+                "datatype": "string",
+                "expression": {
+                    "type": "named",
+                    "name": "nsr_conv_option_post_cooking"
+                }
+            },
+            {
+                "type": "expression",
+                "column_id": "nsr_post_cooking_conv_option_desc",
+                "datatype": "string",
+                "expression": {
+                    "type": "named",
+                    "name": "nsr_conv_option_desc_post_cooking"
+                }
+            },
+            {
+                "type": "expression",
+                "column_id": "nsr_post_cooking_conv_size",
+                "datatype": "string",
+                "expression": {
+                    "type": "named",
+                    "name": "nsr_conv_size_post_cooking"
+                }
+            },
+            {
+                "type": "expression",
+                "column_id": "nsr_same_conv_method",
+                "datatype": "string",
+                "expression": {
+                    "type": "named",
+                    "name": "nsr_same_conv_method_named"
+                }
+            }
+        ],
+        "base_item_expression": {},
+        "named_expressions": {
+            "include_in_analysis": {
+                "type": "conditional",
+                "test": {
+                    "type": "boolean_expression",
+                    "expression": {
+                        "type": "property_name",
+                        "property_name": "food_type"
+                    },
+                    "operator": "not_eq",
+                    "property_value": "non_std_recipe"
+                },
+                "expression_if_true": "Yes",
+                "expression_if_false": "No"
+            },
+            "recipe_name": {
+                "type": "conditional",
+                "test": {
+                    "type": "boolean_expression",
+                    "expression": {
+                        "type": "property_name",
+                        "property_name": "food_type"
+                    },
+                    "operator": "in",
+                    "property_value": ["non_std_recipe", "std_recipe"]
+                },
+                "expression_if_true": {
+                    "type": "property_name",
+                    "property_name": "name"
+                },
+                "expression_if_false": ""
+            },
+            "nsr_conv_method_post_cooking": {
+                "type": "conditional",
+                "test": {
+                    "type": "boolean_expression",
+                    "expression": {
+                        "type": "property_name",
+                        "property_name": "food_type"
+                    },
+                    "operator": "eq",
+                    "property_value": "non_std_recipe"
+                },
+                "expression_if_true": {
+                    "type": "property_name",
+                    "property_name": "recipe_conv_method_post_cooking"
+                },
+                "expression_if_false": ""
+            },
+            "nsr_conv_option_post_cooking": {
+                "type": "conditional",
+                "test": {
+                    "type": "boolean_expression",
+                    "expression": {
+                        "type": "property_name",
+                        "property_name": "food_type"
+                    },
+                    "operator": "eq",
+                    "property_value": "non_std_recipe"
+                },
+                "expression_if_true": {
+                    "type": "property_name",
+                    "property_name": "recipe_conv_option_post_cooking"
+                },
+                "expression_if_false": ""
+            },
+            "nsr_conv_option_desc_post_cooking": {
+                "type": "conditional",
+                "test": {
+                    "type": "boolean_expression",
+                    "expression": {
+                        "type": "property_name",
+                        "property_name": "food_type"
+                    },
+                    "operator": "eq",
+                    "property_value": "non_std_recipe"
+                },
+                "expression_if_true": {
+                    "type": "property_name",
+                    "property_name": "recipe_conv_option_post_cooking"
+                },
+                "expression_if_false": ""
+            },
+            "nsr_conv_size_post_cooking": {
+                "type": "conditional",
+                "test": {
+                    "type": "boolean_expression",
+                    "expression": {
+                        "type": "property_name",
+                        "property_name": "food_type"
+                    },
+                    "operator": "eq",
+                    "property_value": "non_std_recipe"
+                },
+                "expression_if_true": {
+                    "type": "property_name",
+                    "property_name": "recipe_conv_size_post_cooking"
+                },
+                "expression_if_false": ""
+            },
+            "nsr_same_conv_method_named": {
+                "type": "conditional",
+                "test": {
+                    "type": "boolean_expression",
+                    "expression": {
+                        "type": "property_name",
+                        "property_name": "food_type"
+                    },
+                    "operator": "eq",
+                    "property_value": "non_std_recipe"
+                },
+                "expression_if_true": {
+                    "type": "property_name",
+                    "property_name": "recipe_same_method_used"
+                },
+                "expression_if_false": ""
+            }
+        },
+        "named_filters": {}
+    }
+}

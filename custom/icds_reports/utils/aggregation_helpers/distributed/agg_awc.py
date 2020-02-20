@@ -1,11 +1,15 @@
+import logging
+
 from dateutil.relativedelta import relativedelta
 
 from corehq.apps.userreports.models import StaticDataSourceConfiguration, get_datasource_config
 from corehq.apps.userreports.util import get_table_name
 
-from custom.icds_reports.utils.aggregation_helpers import get_child_health_temp_tablename, transform_day_to_month
-from custom.icds_reports.const import AGG_CCS_RECORD_CF_TABLE, AGG_THR_V2_TABLE
+from custom.icds_reports.utils.aggregation_helpers import get_child_health_temp_tablename, transform_day_to_month, get_agg_child_temp_tablename
+from custom.icds_reports.const import AGG_CCS_RECORD_CF_TABLE, AGG_THR_V2_TABLE, AGG_ADOLESCENT_GIRLS_REGISTRATION_TABLE
 from custom.icds_reports.utils.aggregation_helpers.distributed.base import BaseICDSAggregationDistributedHelper
+
+logger = logging.getLogger(__name__)
 
 
 class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
@@ -19,12 +23,17 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
         self.month_start_6m = self.month_start - relativedelta(months=6)
         self.month_end_11yr = self.month_end - relativedelta(years=11)
         self.month_start_15yr = self.month_start - relativedelta(years=15)
+        self.month_start_14yr = self.month_start - relativedelta(years=14)
         self.month_end_15yr = self.month_end - relativedelta(years=15)
         self.month_start_18yr = self.month_start - relativedelta(years=18)
 
     @property
     def child_temp_tablename(self):
         return get_child_health_temp_tablename(self.month_start)
+
+    @property
+    def agg_child_temp_tablename(self):
+        return get_agg_child_temp_tablename()
 
     def aggregate(self, cursor):
         agg_query, agg_params = self.aggregation_query()
@@ -35,12 +44,21 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
 
         cursor.execute(self.create_temporary_table())
         cursor.execute(agg_query, agg_params)
+        i = 0
         for query, params in update_queries:
+            logger.info(f"running update {i}")
             cursor.execute(query, params)
+            i += 1
+        i = 0
         for query in rollup_queries:
+            logger.info(f"running rollup {i}")
             cursor.execute(query)
+            i += 1
+        i = 0
         for query in index_queries:
+            logger.info(f"creating index {i}")
             cursor.execute(query)
+            i += 1
 
 
     def _tablename_func(self, agg_level):
@@ -60,8 +78,8 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
         (
             state_id, district_id, block_id, supervisor_id, awc_id, month, num_awcs,
             is_launched, aggregation_level,  num_awcs_conducted_vhnd, num_awcs_conducted_cbe,
-            thr_distribution_image_count, num_launched_awcs, num_launched_supervisors, num_launched_blocks,
-            num_launched_districts, num_launched_states
+            cbe_conducted, vhnd_conducted, thr_distribution_image_count, num_launched_awcs,
+            num_launched_supervisors, num_launched_blocks, num_launched_districts, num_launched_states
         )
         (
             SELECT
@@ -76,6 +94,8 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
             5,
             CASE WHEN vhnd_conducted is not null and vhnd_conducted>0 THEN 1 ELSE 0 END,
             CASE WHEN cbe_conducted is not null and cbe_conducted>1 THEN 1 ELSE 0 END,
+            cbe_conducted,
+            vhnd_conducted,
             thr_v2.thr_distribution_image_count,
             0,
             0,
@@ -189,11 +209,13 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
            cases_person_adolescent_girls_11_14_all = ut.cases_person_adolescent_girls_11_14_all,
            cases_person_adolescent_girls_15_18 = ut.cases_person_adolescent_girls_15_18,
            cases_person_adolescent_girls_15_18_all = ut.cases_person_adolescent_girls_15_18_all,
-           cases_person_referred = ut.cases_person_referred
+           cases_person_referred = ut.cases_person_referred,
+           cases_person_adolescent_girls_11_14_all_v2 = ut.cases_person_adolescent_girls_11_14_all_v2,
+           cases_person_adolescent_girls_11_14_out_of_school=0
         FROM (
         SELECT
-            awc_id,
-            supervisor_id,
+            ucr.awc_id,
+            ucr.supervisor_id,
             sum({seeking_services}) AS cases_person,
             count(*) AS cases_person_all,
             sum(CASE WHEN
@@ -204,6 +226,11 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
                 CASE WHEN %(month_end_11yr)s > dob AND %(month_start_15yr)s <= dob AND sex = 'F'
                 THEN 1 ELSE 0 END
             ) as cases_person_adolescent_girls_11_14_all,
+            sum(
+                CASE WHEN %(month_end_11yr)s > dob AND %(month_start_14yr)s <= dob AND sex = 'F'
+                    AND migration_status IS DISTINCT FROM 1
+                THEN 1 ELSE 0 END
+            ) as cases_person_adolescent_girls_11_14_all_v2,
             sum(
                 CASE WHEN %(month_end_15yr)s > dob AND %(month_start_18yr)s <= dob AND sex = 'F'
                 THEN ({seeking_services}) ELSE 0 END
@@ -216,9 +243,11 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
                 CASE WHEN last_referral_date BETWEEN %(start_date)s AND %(end_date)s
                 THEN 1 ELSE 0 END
             ) as cases_person_referred
-        FROM "{ucr_tablename}"
-        WHERE (opened_on <= %(end_date)s AND (closed_on IS NULL OR closed_on >= %(start_date)s ))
-        GROUP BY awc_id, supervisor_id) ut
+        FROM "{ucr_tablename}" ucr
+        WHERE (opened_on <= %(end_date)s AND
+              (closed_on IS NULL OR closed_on >= %(start_date)s ))
+
+        GROUP BY ucr.awc_id, ucr.supervisor_id) ut
         WHERE ut.awc_id = agg_awc.awc_id and ut.supervisor_id=agg_awc.supervisor_id;
         """.format(
             tablename=self.temporary_tablename,
@@ -233,9 +262,44 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
             'end_date': self.month_end,
             'month_end_11yr': self.month_end_11yr,
             'month_start_15yr': self.month_start_15yr,
+            'month_start_14yr': self.month_start_14yr,
             'month_end_15yr': self.month_end_15yr,
             'month_start_18yr': self.month_start_18yr,
         }
+
+
+        yield """
+        UPDATE "{tablename}" agg_awc SET
+        cases_person_adolescent_girls_11_14_out_of_school = ut.girls_out_of_schoool
+        FROM (
+        select
+            ucr.awc_id,
+            ucr.supervisor_id,
+            SUM(CASE WHEN ( (out_of_school or re_out_of_school) AND
+                        (not admitted_in_school )) THEN 1 ELSE 0 END ) as girls_out_of_schoool
+            from "{ucr_tablename}" ucr INNER JOIN
+                 "{adolescent_girls_table}" adolescent_girls_table ON (
+                    ucr.doc_id = adolescent_girls_table.person_case_id AND
+                    ucr.supervisor_id = adolescent_girls_table.supervisor_id AND
+                    adolescent_girls_table.month=%(start_date)s
+                    )
+            WHERE (opened_on <= %(end_date)s AND
+              (closed_on IS NULL OR closed_on >= %(start_date)s )) AND
+              migration_status IS DISTINCT FROM 1
+              GROUP BY ucr.awc_id, ucr.supervisor_id
+        )ut
+        where agg_awc.awc_id = ut.awc_id and ut.supervisor_id=agg_awc.supervisor_id;
+        """.format(
+            tablename=self.temporary_tablename,
+            ucr_tablename=get_table_name(self.domain, 'static-person_cases_v3'),
+            adolescent_girls_table=AGG_ADOLESCENT_GIRLS_REGISTRATION_TABLE
+        ), {
+            'start_date': self.month_start,
+            'end_date': self.month_end
+        }
+
+
+
 
         yield """
         UPDATE "{tablename}" agg_awc SET
@@ -400,7 +464,7 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
         yield """
          UPDATE "{tablename}" agg_awc SET num_awc_infra_last_update =
           CASE WHEN infra_last_update_date IS NOT NULL AND
-             %(month_start_6m)s < infra_last_update_date THEN 1 ELSE 0 END
+             %(month_start_6m)s <= infra_last_update_date THEN 1 ELSE 0 END
         """.format(
             tablename=self.temporary_tablename
         ), {
@@ -448,17 +512,6 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
         }
 
         yield """
-        DROP TABLE IF EXISTS "tmp_agg_awc_5";
-        CREATE UNLOGGED TABLE "tmp_agg_awc_5" AS SELECT * FROM "{temporary_tablename}";
-        INSERT INTO "{tablename}" (SELECT * FROM "tmp_agg_awc_5");
-        DROP TABLE "tmp_agg_awc_5";
-        """.format(
-            tablename=self.tablename,
-            temporary_tablename=self.temporary_tablename,
-        ), {
-        }
-
-        yield """
         UPDATE "{tablename}" agg_awc SET
             cases_child_health = ut.cases_child_health,
             cases_child_health_all = ut.cases_child_health_all,
@@ -482,14 +535,26 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
                 sum(CASE WHEN age_tranche in ('0','6','12','24') THEN nutrition_status_weighed ELSE 0 END) AS wer_weighed_0_2,
                 sum(thr_eligible) as thr_eligible,
                 sum(rations_21_plus_distributed) as rations_21_plus_distributed
-            FROM agg_child_health
+            FROM {agg_child_temp_tablename}
             WHERE month = %(start_date)s AND aggregation_level = 5 GROUP BY awc_id, month, supervisor_id
         ) ut
         WHERE ut.month = agg_awc.month AND ut.awc_id = agg_awc.awc_id and ut.supervisor_id=agg_awc.supervisor_id;
         """.format(
-            tablename=self.tablename,
+            tablename=self.temporary_tablename,
+            agg_child_temp_tablename=self.agg_child_temp_tablename,
         ), {
             'start_date': self.month_start
+        }
+
+        yield """
+        DROP TABLE IF EXISTS "tmp_agg_awc_5";
+        CREATE UNLOGGED TABLE "tmp_agg_awc_5" AS SELECT * FROM "{temporary_tablename}";
+        INSERT INTO "{tablename}" (SELECT * FROM "tmp_agg_awc_5");
+        DROP TABLE "tmp_agg_awc_5";
+        """.format(
+            tablename=self.tablename,
+            temporary_tablename=self.temporary_tablename,
+        ), {
         }
 
         yield """
@@ -519,6 +584,10 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
             cases_person_beneficiary_v2 = (
                 COALESCE(cases_person_beneficiary_v2, 0) + ut.cases_ccs_pregnant + ut.cases_ccs_lactating
             ),
+            cases_ccs_lactating_reg_in_month = ut.lactating_registered_in_month,
+            cases_ccs_pregnant_reg_in_month = ut.pregnant_registered_in_month,
+            cases_ccs_lactating_all_reg_in_month = ut.lactating_all_registered_in_month,
+            cases_ccs_pregnant_all_reg_in_month = ut.pregnant_all_registered_in_month,
             valid_visits = ut.valid_visits,
             expected_visits = CASE WHEN ut.valid_visits>ut.expected_visits
                 THEN ut.valid_visits ELSE ut.expected_visits END
@@ -530,6 +599,10 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
                 sum(agg_ccs_record_monthly.lactating) AS cases_ccs_lactating,
                 sum(agg_ccs_record_monthly.pregnant_all) AS cases_ccs_pregnant_all,
                 sum(agg_ccs_record_monthly.lactating_all) AS cases_ccs_lactating_all,
+                sum(agg_ccs_record_monthly.lactating_registered_in_month) as lactating_registered_in_month,
+                sum(agg_ccs_record_monthly.pregnant_registered_in_month) as pregnant_registered_in_month,
+                sum(agg_ccs_record_monthly.lactating_all_registered_in_month) as lactating_all_registered_in_month,
+                sum(agg_ccs_record_monthly.pregnant_all_registered_in_month) as pregnant_all_registered_in_month,
                 sum(agg_ccs_record_monthly.rations_21_plus_distributed) AS rations_21_plus_distributed,
                 sum(agg_ccs_record_monthly.thr_eligible) AS thr_eligible,
                 sum(agg_ccs_record_monthly.valid_visits) + COALESCE(home_visit.valid_visits, 0) AS valid_visits,
@@ -628,11 +701,17 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
             ('num_launched_awcs', lambda col: _launched_col(col)),
             ('num_awcs_conducted_vhnd',),
             ('num_awcs_conducted_cbe',),
+            ('cbe_conducted', 'NULL'),
+            ('vhnd_conducted', 'NULL'),
             ('cases_household',),
             ('cases_person',),
             ('cases_person_all',),
             ('cases_ccs_pregnant_all',),
             ('cases_ccs_lactating_all',),
+            ('cases_ccs_lactating_reg_in_month',),
+            ('cases_ccs_pregnant_reg_in_month',),
+            ('cases_ccs_lactating_all_reg_in_month',),
+            ('cases_ccs_pregnant_all_reg_in_month',),
             ('num_mother_thr_21_days',),
             ('num_mother_thr_eligible',),
             ('cases_child_health_all',),
@@ -640,6 +719,8 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
             ('cases_person_adolescent_girls_15_18',),
             ('cases_person_adolescent_girls_11_14_all',),
             ('cases_person_adolescent_girls_15_18_all',),
+            ('cases_person_adolescent_girls_11_14_out_of_school',),
+            ('cases_person_adolescent_girls_11_14_all_v2',),
             ('infra_infant_weighing_scale',),
             ('cases_person_referred', 'NULL'),
             ('awc_days_pse_conducted', 'NULL'),

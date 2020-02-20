@@ -41,6 +41,17 @@ MAX_RETRIES = 4  # exponential factor threshold for alerts
 
 
 class ElasticProcessor(PillowProcessor):
+    """Generic processor to transform documents and insert into ES.
+
+    Processes one document at a time.
+
+    Reads from:
+      - Usually Couch
+      - Sometimes SQL
+
+    Writes to:
+      - ES
+    """
 
     def __init__(self, elasticsearch, index_info, doc_prep_fn=None, doc_filter_fn=None):
         self.doc_filter_fn = doc_filter_fn or noop_filter
@@ -101,25 +112,40 @@ class ElasticProcessor(PillowProcessor):
 
 
 class BulkElasticProcessor(ElasticProcessor, BulkPillowProcessor):
+    """Generic processor to transform documents and insert into ES.
+
+    Processes one "chunk" of changes at a time (chunk size specified by pillow).
+
+    Reads from:
+      - Usually Couch
+      - Sometimes SQL
+
+    Writes to:
+      - ES
+    """
+
     def process_changes_chunk(self, changes_chunk):
-        bad_changes, docs = bulk_fetch_changes_docs(changes_chunk)
+        with self._datadog_timing('bulk_extract'):
+            bad_changes, docs = bulk_fetch_changes_docs(changes_chunk)
 
-        changes_to_process = {
-            change.id: change
-            for change in changes_chunk
-            if change.document and not self.doc_filter_fn(change.document)
-        }
-        retry_changes = list(bad_changes)
+        with self._datadog_timing('bulk_transform'):
+            changes_to_process = {
+                change.id: change
+                for change in changes_chunk
+                if change.document and not self.doc_filter_fn(change.document)
+            }
+            retry_changes = list(bad_changes)
 
-        error_collector = ErrorCollector()
-        es_actions = build_bulk_payload(
-            self.index_info, list(changes_to_process.values()), self.doc_transform_fn, error_collector
-        )
-        error_changes = error_collector.errors
+            error_collector = ErrorCollector()
+            es_actions = build_bulk_payload(
+                self.index_info, list(changes_to_process.values()), self.doc_transform_fn, error_collector
+            )
+            error_changes = error_collector.errors
 
         try:
-            _, errors = self.es_interface.bulk_ops(
-                es_actions, raise_on_error=False, raise_on_exception=False)
+            with self._datadog_timing('bulk_load'):
+                _, errors = self.es_interface.bulk_ops(
+                    es_actions, raise_on_error=False, raise_on_exception=False)
         except Exception as e:
             pillow_logging.exception("[%s] ES bulk load error")
             error_changes.extend([

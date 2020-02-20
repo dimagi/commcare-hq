@@ -427,11 +427,7 @@ def process_sms(queued_sms_pk):
 
 
 def send_to_sms_queue(queued_sms):
-    options = {}
-    if queued_sms.direction == OUTGOING and queued_sms.domain in settings.CUSTOM_PROJECT_SMS_QUEUES:
-        options['queue'] = settings.CUSTOM_PROJECT_SMS_QUEUES[queued_sms.domain]
-
-    process_sms.apply_async([queued_sms.pk], **options)
+    process_sms.apply_async([queued_sms.pk])
 
 
 @no_result_task(serializer='pickle', queue='background_queue', default_retry_delay=10 * 60,
@@ -455,11 +451,6 @@ def store_billable(self, msg):
             )
         except RetryBillableTaskException as e:
             self.retry(exc=e)
-        except DataError:
-            from corehq.util.soft_assert import soft_assert
-            _soft_assert = soft_assert(to='{}@{}'.format('jemord', 'dimagi.com'))
-            _soft_assert(len(msg.domain) < 25, "Domain name too long: " + msg.domain)
-            raise
 
 
 @no_result_task(serializer='pickle', queue='background_queue', acks_late=True)

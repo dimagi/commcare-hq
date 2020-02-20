@@ -12,6 +12,12 @@
             <th>{% trans "Timestamp" %}:</th>
             <td>{{ log.timestamp }}</td>
           </tr>
+          {% if log.payload_id %}
+          <tr>
+            <th>{% trans "Payload ID" %}:</th>
+            <td>{{ log.payload_id }}</td>
+          </tr>
+          {% endif %}
           <tr>
             <th>{% trans "Request" %}:</th>
             <td>{{ log.request_method }} {{ log.request_url }}</td>

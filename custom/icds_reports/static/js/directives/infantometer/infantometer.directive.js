@@ -2,21 +2,21 @@
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function InfantometerController($scope, $routeParams, $location, $filter, infrastructureService, locationsService,
-    userLocationId, storageService, haveAccessToAllLocations, baseControllersService, isAlertActive) {
+    dateHelperService, navigationService, userLocationId, storageService, haveAccessToAllLocations,
+    baseControllersService, isAlertActive, isMobile) {
     baseControllersService.BaseController.call(this, $scope, $routeParams, $location, locationsService,
-        userLocationId, storageService, haveAccessToAllLocations);
+        dateHelperService, navigationService, userLocationId, storageService, haveAccessToAllLocations,
+        false, isMobile);
     var vm = this;
     vm.isAlertActive = isAlertActive;
+    vm.serviceDataFunction = infrastructureService.getInfantometerData;
     if (Object.keys($location.search()).length === 0) {
         $location.search(storageService.getKey('search'));
     } else {
         storageService.setKey('search', $location.search());
     }
     vm.label = "AWCs that reported having an Infantometer";
-    vm.steps = {
-        'map': {route: '/awc_infrastructure/infantometer/map', label: 'Map View'},
-        'chart': {route: '/awc_infrastructure/infantometer/chart', label: 'Chart View'},
-    };
+    vm.steps = vm.getSteps('/awc_infrastructure/infantometer/');
     vm.data = {
         legendTitle: 'Percentage',
     };
@@ -25,29 +25,19 @@ function InfantometerController($scope, $routeParams, $location, $filter, infras
         info: 'Of the AWCs that have submitted an Infrastructure Details form, the percentage of AWCs that reported having an Infantometer. ',
     };
 
-    vm.templatePopup = function(loc, row) {
+    vm.getPopupData = function (row) {
         var total = row ? $filter('indiaNumbers')(row.in_month) : 'N/A';
         var percent = row ? d3.format('.2%')(row.in_month / (row.all || 1)) : "N/A";
-        return vm.createTemplatePopup(
-            loc.properties.name,
-            [{
+        return [
+            {
                 indicator_name: 'Number of AWCs that reported having an Infantometer: ',
                 indicator_value: total,
             },
             {
                 indicator_name: '% of AWCs that reported having an Infantometer: ',
                 indicator_value: percent,
-            }]
-        );
-    };
-
-    vm.loadData = function () {
-        vm.setStepsMapLabel();
-        var usePercentage = true;
-        var forceYAxisFromZero = false;
-        vm.myPromise = infrastructureService.getInfantometerData(vm.step, vm.filtersData).then(
-            vm.loadDataFromResponse(usePercentage, forceYAxisFromZero)
-        );
+            }
+        ];
     };
 
     vm.init();
@@ -75,12 +65,16 @@ function InfantometerController($scope, $routeParams, $location, $filter, infras
     };
 }
 
-InfantometerController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'infrastructureService', 'locationsService', 'userLocationId', 'storageService', 'haveAccessToAllLocations', 'baseControllersService', 'isAlertActive'];
+InfantometerController.$inject = [
+    '$scope', '$routeParams', '$location', '$filter',
+    'infrastructureService', 'locationsService', 'dateHelperService', 'navigationService', 'userLocationId',
+    'storageService', 'haveAccessToAllLocations', 'baseControllersService', 'isAlertActive', 'isMobile',
+];
 
-window.angular.module('icdsApp').directive('infantometer', function() {
+window.angular.module('icdsApp').directive('infantometer', ['templateProviderService', function (templateProviderService) {
     return {
         restrict: 'E',
-        templateUrl: url('icds-ng-template', 'map-chart'),
+        templateUrl: templateProviderService.getMapChartTemplate,
         bindToController: true,
         scope: {
             data: '=',
@@ -88,4 +82,4 @@ window.angular.module('icdsApp').directive('infantometer', function() {
         controller: InfantometerController,
         controllerAs: '$ctrl',
     };
-});
+}]);

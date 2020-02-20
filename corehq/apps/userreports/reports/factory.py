@@ -5,6 +5,7 @@ from django.utils.translation import ugettext as _
 
 from jsonobject.exceptions import BadValueError
 
+from corehq.apps.userreports.const import AGGGREGATION_TYPE_ARRAY_AGG_LAST_VALUE
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.reports.specs import (
     AgeInMonthsBucketsColumn,
@@ -21,6 +22,7 @@ from corehq.apps.userreports.reports.specs import (
     PieChartSpec,
     SumWhenColumn,
     SumWhenTemplateColumn,
+    ArrayAggLastValueReportColumn,
 )
 from corehq.apps.userreports.reports.sum_when_templates import (
     AdultFemaleMigrantDeathSpec,
@@ -71,6 +73,7 @@ class ReportColumnFactory(object):
         'percent': PercentageColumn,
         'sum_when': SumWhenColumn,
         'sum_when_template': SumWhenTemplateColumn,
+        AGGGREGATION_TYPE_ARRAY_AGG_LAST_VALUE: ArrayAggLastValueReportColumn,
     }
 
     @classmethod
@@ -183,6 +186,10 @@ class SumWhenTemplateFactory(object):
         expected = template.bind_count()
         actual = len(template.binds)
         if expected != actual:
-            raise BadSpecError(_('Expected {} binds in sum_when_template, found {}').format(expected, actual))
+            raise BadSpecError(_('Expected {} binds in sum_when_template {}, found {}').format(
+                expected,
+                spec['type'],
+                actual
+            ))
 
         return template

@@ -119,7 +119,7 @@ class FormProcessorTestUtils(object):
         for db in dbs:
             query = model_class.objects.using(db)
             if domain:
-                query.filter(domain=domain)
+                query = query.filter(domain=domain)
             query.delete()
 
     @staticmethod

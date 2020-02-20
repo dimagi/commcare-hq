@@ -30,7 +30,7 @@ from corehq.form_processor.interfaces.dbaccessors import (
     FormAccessors,
 )
 from corehq.form_processor.models import UserArchivedRebuild
-from corehq.util.celery_utils import deserialize_run_every_setting
+from corehq.util.celery_utils import deserialize_run_every_setting, run_periodic_task_again
 
 logger = get_task_logger(__name__)
 
@@ -39,6 +39,12 @@ logger = get_task_logger(__name__)
 def bulk_upload_async(domain, user_specs, group_specs):
     # remove this after deploying `import_users_and_groups`
     return import_users_and_groups(domain, user_specs, group_specs)
+
+
+@task(serializer='pickle')
+def bulk_download_usernames_async(domain, download_id, user_filters):
+    from corehq.apps.users.bulk_download import dump_usernames
+    dump_usernames(domain, download_id, user_filters, bulk_download_usernames_async)
 
 
 @task(serializer='pickle')
@@ -301,17 +307,21 @@ def update_domain_date(user_id, domain):
             pass
 
 
+process_reporting_metadata_staging_schedule = deserialize_run_every_setting(
+    settings.USER_REPORTING_METADATA_BATCH_SCHEDULE
+)
+
+
 @periodic_task(
-    run_every=deserialize_run_every_setting(settings.USER_REPORTING_METADATA_BATCH_SCHEDULE),
+    run_every=process_reporting_metadata_staging_schedule,
     queue='background_queue',
 )
 def process_reporting_metadata_staging():
     from corehq.apps.users.models import (
-        CouchUser,
-        UserReportingMetadataStaging,
+        CouchUser, UserReportingMetadataStaging
     )
-    from corehq.pillows.synclog import mark_last_synclog
-    from pillowtop.processors.form import mark_latest_submission
+
+    start = datetime.utcnow()
 
     with transaction.atomic():
         records = (
@@ -319,24 +329,10 @@ def process_reporting_metadata_staging():
         )[:100]
         for record in records:
             user = CouchUser.get_by_user_id(record.user_id, record.domain)
-            if not user or user.is_deleted():
-                continue
-
-            save = False
-            if record.received_on:
-                save = mark_latest_submission(
-                    record.domain, user, record.app_id, record.build_id,
-                    record.xform_version, record.form_meta, record.received_on, save=False
-                )
-            if record.device_id or record.sync_date:
-                save = mark_last_synclog(
-                    record.domain, user, record.app_id, record.build_id,
-                    record.sync_date, record.device_id, save=False
-                )
-            if save:
-                user.save(fire_signals=False)
-
+            record.process_record(user)
             record.delete()
 
-    if UserReportingMetadataStaging.objects.exists():
+    duration = datetime.utcnow() - start
+    run_again = run_periodic_task_again(process_reporting_metadata_staging_schedule, start, duration)
+    if run_again and UserReportingMetadataStaging.objects.exists():
         process_reporting_metadata_staging.delay()

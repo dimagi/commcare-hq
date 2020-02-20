@@ -457,6 +457,13 @@ class AggAwcMonthly(models.Model):
         blank=True, null=True,
         help_text="Number of cases_person_all that are female between 15 and 18 years"
     )
+    cases_person_adolescent_girls_11_14_out_of_school = models.IntegerField(
+        null=True,
+        help_text="Number of cases_person_all that are female between 11 and 14 years and are out of school"
+    )
+    cases_person_adolescent_girls_11_14_all_v2 = models.IntegerField(
+        null=True,
+        help_text="Number of cases_person_all that are female between 11 and 14 years and not migrated")
     cases_person_referred = models.IntegerField(
         blank=True, null=True,
         help_text="Number of person cases whose last_referral_date is in this month"
@@ -583,6 +590,14 @@ class AggAwcMonthly(models.Model):
     )
     infantometer = models.IntegerField(blank=True, null=True)
     stadiometer = models.IntegerField(blank=True, null=True)
+    valid_visits = models.ImageField(blank=True, null=True,
+                                     help_text="num of valid home visits")
+    expected_visits = models.ImageField(blank=True, null=True,
+                                        help_text="num of expected home visits")
+    electricity_awc = models.IntegerField(blank=True, null=True)
+    num_awcs_conducted_cbe = models.IntegerField(blank=True, null=True)
+    num_awcs_conducted_vhnd = models.IntegerField(blank=True, null=True)
+    state_is_test = models.SmallIntegerField(blank=True, null=True)
 
     class Meta(object):
         app_label = 'icds_reports'
@@ -778,6 +793,12 @@ class CcsRecordMonthlyView(models.Model):
     disabled = models.TextField(blank=True, null=True)
     minority = models.TextField(blank=True, null=True)
     resident = models.TextField(blank=True, null=True)
+    husband_name = models.TextField(blank=True, null=True)
+    lmp = models.DateField(blank=True, null=True)
+    migration_status = models.PositiveSmallIntegerField(blank=True, null=True)
+    where_born = models.PositiveSmallIntegerField(blank=True, null=True)
+    num_children_del = models.PositiveSmallIntegerField(blank=True, null=True)
+    still_live_birth = models.PositiveSmallIntegerField(blank=True, null=True)
 
     class Meta(object):
         app_label = 'icds_reports'
@@ -1110,3 +1131,73 @@ class MWCDReportView(models.Model):
         app_label = 'icds_reports'
         managed = False
         db_table = 'mwcd_report'
+
+
+class SystemUsageReportView(models.Model):
+    awc_id = models.TextField(primary_key=True)
+    awc_name = models.TextField(blank=True, null=True)
+    supervisor_id = models.TextField(blank=True, null=True)
+    supervisor_name = models.TextField(blank=True, null=True)
+    block_id = models.TextField(blank=True, null=True)
+    block_name = models.TextField(blank=True, null=True)
+    district_id = models.TextField(blank=True, null=True)
+    district_name = models.TextField(blank=True, null=True)
+    state_id = models.TextField(blank=True, null=True)
+    state_name = models.TextField(blank=True, null=True)
+    aggregation_level = models.IntegerField(blank=True, null=True)
+    contact_phone_number = models.TextField(blank=True, null=True)
+    awc_days_open = models.IntegerField(
+        blank=True, null=True,
+        help_text="Days an AWC has submitted an Daily Feeding Form in this month"
+    )
+    num_launched_awcs = models.IntegerField(
+        blank=True, null=True,
+        help_text="number of AWCs that have at least one Household registration form"
+    )
+    usage_num_hh_reg = models.IntegerField(
+        blank=True, null=True,
+        help_text="Number of Register Household forms submitted"
+    )
+    usage_num_add_pregnancy = models.IntegerField(
+        blank=True, null=True,
+        help_text="Number of Add Pregnancy forms submitted"
+    )
+    usage_num_bp_tri = models.IntegerField(
+        blank=True, null=True,
+        help_text="Number of Birth Preparedness forms submitted in the third trimester (from /form/new_edd)"
+    )
+    usage_num_delivery = models.IntegerField(
+        blank=True, null=True,
+        help_text="Number of Delivery forms submitted"
+    )
+    usage_num_pnc = models.IntegerField(
+        blank=True, null=True,
+        help_text="Number of Postnatal Care Forms submitted"
+    )
+    usage_num_ebf = models.IntegerField(
+        blank=True, null=True,
+        help_text="Number of Exclusive Breast Feeding forms submitted"
+    )
+    usage_num_cf = models.IntegerField(
+        blank=True, null=True,
+        help_text="Number of Complementary Feeding forms submitted"
+    )
+    usage_num_gmp = models.IntegerField(
+        blank=True, null=True,
+        help_text="Number of Growth Monitoring forms submitted"
+    )
+    usage_num_thr = models.IntegerField(
+        blank=True, null=True,
+        help_text="Number of THR forms submitted"
+    )
+    usage_num_due_list_ccs_and_child_health = models.IntegerField(
+        blank=True, null=True,
+        help_text="Number of due list forms submitted where tasks.type is pregnancy"
+    )
+    num_supervisor_launched = models.IntegerField(blank=True, null=True)
+    month = models.DateField(blank=True, null=True)
+
+    class Meta(object):
+        app_label = 'icds_reports'
+        managed = False
+        db_table = 'system_usage_report_view'

@@ -1,6 +1,7 @@
 import re
 
 from django import forms
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext as _
 
@@ -125,7 +126,7 @@ class SuperuserManagementForm(forms.Form):
 
         users = []
         for username in csv_email_list:
-            if "@dimagi.com" not in username:
+            if settings.IS_DIMAGI_ENVIRONMENT and "@dimagi.com" not in username:
                 raise forms.ValidationError("Email address '{}' is not a dimagi email address".format(username))
             try:
                 users.append(User.objects.get(username=username))

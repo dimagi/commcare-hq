@@ -15,6 +15,7 @@ from django.views.generic import View
 
 from memoized import memoized
 
+from corehq.apps.accounting.decorators import always_allow_project_access
 from corehq.apps.ota.rate_limiter import restore_rate_limiter
 from dimagi.utils.web import get_ip, json_request, json_response
 
@@ -49,6 +50,7 @@ from corehq.apps.users.models import CouchUser
 class BaseInternalDomainSettingsView(BaseProjectSettingsView):
     strict_domain_fetching = True
 
+    @method_decorator(always_allow_project_access)
     @method_decorator(login_and_domain_required)
     @method_decorator(require_superuser)
     def dispatch(self, request, *args, **kwargs):
@@ -73,6 +75,7 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
     template_name = 'domain/internal_settings.html'
     strict_domain_fetching = True
 
+    @method_decorator(always_allow_project_access)
     @method_decorator(login_and_domain_required)
     @method_decorator(require_superuser)
     @use_jquery_ui  # datepicker
@@ -203,6 +206,7 @@ class EditInternalCalculationsView(BaseInternalDomainSettingsView):
     page_title = ugettext_lazy("Calculated Properties")
     template_name = 'domain/internal_calculations.html'
 
+    @method_decorator(always_allow_project_access)
     @method_decorator(login_and_domain_required)
     @method_decorator(require_superuser)
     def dispatch(self, request, *args, **kwargs):
@@ -216,6 +220,7 @@ class EditInternalCalculationsView(BaseInternalDomainSettingsView):
         }
 
 
+@method_decorator(always_allow_project_access, name='dispatch')
 @method_decorator(require_superuser, name='dispatch')
 class FlagsAndPrivilegesView(BaseAdminProjectSettingsView):
     urlname = 'feature_flags_and_privileges'
@@ -262,6 +267,7 @@ class FlagsAndPrivilegesView(BaseAdminProjectSettingsView):
         }
 
 
+@method_decorator(always_allow_project_access, name='dispatch')
 @method_decorator(require_superuser, name='dispatch')
 class ProjectLimitsView(BaseAdminProjectSettingsView):
     urlname = 'internal_project_limits_summary'
@@ -270,19 +276,27 @@ class ProjectLimitsView(BaseAdminProjectSettingsView):
 
     @property
     def page_context(self):
-        return {
-            'project_limits': [
-                ('Submission Rate Limits', self._get_rate_limits(submission_rate_limiter)),
-                ('Restore Rate Limits', self._get_rate_limits(restore_rate_limiter)),
-            ]
-        }
+        return get_project_limits_context([
+            ('Submission Rate Limits', submission_rate_limiter),
+            ('Restore Rate Limits', restore_rate_limiter),
+        ], self.domain)
 
-    def _get_rate_limits(self, rate_limiter):
-        return [
-            {'key': key, 'current_usage': int(current_usage), 'limit': int(limit),
-             'percent_usage': round(100 * current_usage / limit, 1)}
-            for key, current_usage, limit in rate_limiter.iter_rates(self.domain)
+
+def get_project_limits_context(name_limiter_tuple_list, scope=None):
+    return {
+        'project_limits': [
+            (name, _get_rate_limits(scope, rate_limiter))
+            for (name, rate_limiter) in name_limiter_tuple_list
         ]
+    }
+
+
+def _get_rate_limits(scope, rate_limiter):
+    return [
+        {'key': key, 'current_usage': int(current_usage), 'limit': int(limit),
+         'percent_usage': round(100 * current_usage / limit, 1)}
+        for key, current_usage, limit in rate_limiter.iter_rates(scope)
+    ]
 
 
 class TransferDomainView(BaseAdminProjectSettingsView):

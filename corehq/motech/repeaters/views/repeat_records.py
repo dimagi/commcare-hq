@@ -15,10 +15,11 @@ import pytz
 from couchdbkit import ResourceNotFound
 from memoized import memoized
 
+from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.data_interfaces.tasks import task_operate_on_payloads, task_generate_ids_and_operate_on_payloads
 from dimagi.utils.web import json_response
 
-from corehq import toggles
+from corehq import toggles, privileges
 from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import static
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
@@ -276,6 +277,7 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
 
 
 @method_decorator(domain_admin_required, name='dispatch')
+@method_decorator(requires_privilege_with_fallback(privileges.DATA_FORWARDING), name='dispatch')
 class RepeatRecordView(View):
     urlname = 'repeat_record'
     http_method_names = ['get', 'post']
@@ -326,6 +328,7 @@ class RepeatRecordView(View):
 
 @require_POST
 @require_can_edit_web_users
+@requires_privilege_with_fallback(privileges.DATA_FORWARDING)
 def cancel_repeat_record(request, domain):
     flag = _get_flag(request)
     if flag == 'cancel_all':
@@ -338,6 +341,7 @@ def cancel_repeat_record(request, domain):
 
 @require_POST
 @require_can_edit_web_users
+@requires_privilege_with_fallback(privileges.DATA_FORWARDING)
 def requeue_repeat_record(request, domain):
     flag = _get_flag(request)
     if flag == 'requeue_all':

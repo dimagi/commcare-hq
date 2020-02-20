@@ -49,7 +49,12 @@ class Dhis2ConnectionView(BaseProjectSettingsView):
     @memoized
     def dhis2_connection_form(self):
         dhis2_conn = get_dhis2_connection(self.request.domain)
-        initial = dict(dhis2_conn) if dhis2_conn else {}
+        initial = {
+            'server_url': dhis2_conn.server_url,
+            'username': dhis2_conn.username,
+            'password': dhis2_conn.password,
+            'skip_cert_verify': dhis2_conn.skip_cert_verify,
+        } if dhis2_conn else {}
         if self.request.method == 'POST':
             return Dhis2ConnectionForm(self.request.POST, initial=initial)
         return Dhis2ConnectionForm(initial=initial)

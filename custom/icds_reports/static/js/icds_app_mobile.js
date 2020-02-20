@@ -2,7 +2,7 @@
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function MainMobileController($scope, $route, $routeParams, $location, $window, $http,
-                              isWebUser, userLocationId) {
+                              isWebUser, userLocationId, isMobile) {
     $scope.$route = $route;
     $scope.$location = $location;
     $scope.$routeParams = $routeParams;
@@ -10,6 +10,7 @@ function MainMobileController($scope, $route, $routeParams, $location, $window, 
     $scope.healthCollapsed = true;
     $scope.isWebUser = isWebUser;
     $scope.dateChanged = false;
+    $scope.isMobile = isMobile;
 
     $scope.checkAccessToLocation = function () {
         var locationId = $location.search()['location_id'];
@@ -34,6 +35,13 @@ function MainMobileController($scope, $route, $routeParams, $location, $window, 
         $window.ga('set', 'page', path);
         $window.ga('send', 'pageview', path);
     });
+
+    // used by mobile only
+    $scope.closeMenu = function () {
+        if (isMobile) {
+            document.getElementById('nav-menu').style.left = '-300px';
+        }
+    };
 }
 
 MainMobileController.$inject = [
@@ -45,10 +53,18 @@ MainMobileController.$inject = [
     '$http',
     'isWebUser',
     'userLocationId',
+    'isMobile',
 ];
 
-// ui.bootstrap not truly needed - but location directive depends on it to compile
-window.angular.module('icdsApp', ['ngRoute', 'cgBusy', 'ui.bootstrap'])
+window.angular.module('icdsApp', [
+    'ngRoute', 'ngSanitize', 'cgBusy', 'datamaps', 'nvd3',
+    // these libraries aren't truly needed but do to code sharing with the web dashboard,
+    // some directives depend on them to compile.
+    // in the future, ideally those directives would be refactored such that the web dependencies
+    // don't leak into mobile
+    'ui.bootstrap',  // location directive depends on this
+    'datatables', 'datatables.fixedheader', // awc reports depend on these (tabular views)
+])
     .controller('MainMobileController', MainMobileController)
     .config(['$interpolateProvider', '$routeProvider', function ($interpolateProvider, $routeProvider) {
         $interpolateProvider.startSymbol('{$');
@@ -59,4 +75,5 @@ window.angular.module('icdsApp', ['ngRoute', 'cgBusy', 'ui.bootstrap'])
             }).when("/program_summary/:step", {
                 template: "<program-summary></program-summary>",
             });
+        hqImport("js/icds_dashboard_utils").addSharedRoutes($routeProvider, 'map');
     }]);

@@ -19,7 +19,7 @@ hqDefine("cloudcare/js/formplayer/main", function () {
 
         var $menuToggle = $('#commcare-menu-toggle'),
             $navbar = $('#hq-navigation'),
-            $trialBanner = $('#cta-get-demo-banner');
+            $trialBanner = $('#cta-trial-banner');
         var hideMenu = function () {
             $menuToggle.data('minimized', 'yes');
             $navbar.hide();

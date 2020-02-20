@@ -19,6 +19,7 @@ from casexml.apps.phone.restore_caching import AsyncRestoreTaskIdCache, RestoreP
 import couchforms
 from casexml.apps.case.exceptions import PhoneDateValueError, IllegalCaseId, UsesReferrals, InvalidCaseIndex, \
     CaseValueError
+from corehq.apps.receiverwrapper.rate_limiter import report_submission_usage
 from corehq.const import OPENROSA_VERSION_3
 from corehq.middleware import OPENROSA_VERSION_HEADER
 from corehq.toggles import ASYNC_RESTORE, SUMOLOGIC_LOGS, NAMESPACE_OTHER
@@ -215,6 +216,7 @@ class SubmissionPost(object):
 
     def run(self):
         self.track_load()
+        report_submission_usage(self.domain)
         failure_response = self._handle_basic_failure_modes()
         if failure_response:
             return FormProcessingResult(failure_response, None, [], [], 'known_failures')
@@ -490,7 +492,7 @@ class SubmissionPost(object):
 
     @staticmethod
     def get_exception_response_and_log(msg, error_instance, path):
-        logging.error(
+        logging.warning(
             msg,
             extra={
                 'submission_path': path,

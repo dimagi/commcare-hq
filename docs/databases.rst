@@ -175,3 +175,78 @@ under `READ`:
 * There can only be one master database (not a standby database)
 * All standby databases must point to the same master database
 * If a master database is in this list, all standbys must point to this master
+
+Using standbys with the plproxy cluster
+.......................................
+The plproxy cluster needs some special attention since the queries are routed by plproxy and not by
+Django. In order to do this routing there are a number of additional pieces that are needed:
+
+1. Separate plproxy cluster configuration which points the shards to the appropriate standby node instead
+of the primary node.
+2. Duplicate SQL functions that make use of this new plproxy cluster.
+
+In order to maintain the SQL function naming the new plproxy cluster must be in a separate database.
+
+.. image:: images/django_db_sharded_standbys.png
+
+**Example usage**
+
+.. code-block:: python
+
+    # this will connect to the shard standby node directly
+    case = CommCareCaseSQL.objects.partitioned_get(case_id)
+
+    # this will call the `get_cases_by_id` function on the 'standby' proxy which in turn
+    # will query the shard standby nodes
+    cases = CaseAccessor(domain).get_cases(case_ids)
+
+These examples assume the standby routing is active as described in the `Routing queries to standbys`_
+section below.
+
+**Steps to setup**
+
+1. Add all the standby shard databases to the Django `DATABASES` setting as described above.
+
+2. Create a new database for the standby plproxy cluster configuration and SQL accessor functions
+and add it to `DATABASES` as shown below:
+
+.. code-block:: python
+
+    DATABASES = {
+        'proxy_standby': {
+            ...
+            'PLPROXY': {
+                'PROXY_FOR_STANDBYS': True
+            }
+        }
+    }
+
+3. Run the `configure_pl_proxy_cluster` management command to create the config on the 'standby' database.
+4. Run the Django migrations to create the tables and SQL functions in the new standby proxy database.
+
+Routing queries to standbys
+---------------------------
+The configuration above makes it possible to use the standby databases however in order to actually
+route queries to them the DB router must be told to do so. This can be done it one of two ways:
+
+1. Via an environment variable
+
+.. code-block::
+
+    export READ_FROM_PLPROXY_STANDBYS=1
+
+This will route ALL read queries to the shard standbys. This is mostly useful when running a process like
+pillowtop that does is asynchronous.
+
+2. Via a Django decorator / context manager
+
+.. code-block:: python
+
+    # context manager
+    with read_from_plproxy_standbys():
+        case = CommCareCaseSQL.objects.partitioned_get(case_id)
+
+    # decorator
+    @read_from_plproxy_standbys()
+    def get_case_from_standby(case_id)
+        return CommCareCaseSQL.objects.partitioned_get(case_id)

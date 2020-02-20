@@ -104,7 +104,7 @@ class AggAWCMonthlyDataSource(ProgressReportMixIn, IcdsSqlData):
             ),
             DatabaseColumn(
                 'Adolescent girls (11-14 years)',
-                SumColumn('cases_person_adolescent_girls_11_14_all')
+                SumColumn('cases_person_adolescent_girls_11_14_all_v2')
             ),
             DatabaseColumn(
                 'Adolescent girls (15-18 years)',
@@ -112,7 +112,7 @@ class AggAWCMonthlyDataSource(ProgressReportMixIn, IcdsSqlData):
             ),
             DatabaseColumn(
                 'Adolescent girls (11-14 years) Seeking Services',
-                SumColumn('cases_person_adolescent_girls_11_14')
+                SumColumn('cases_person_adolescent_girls_11_14_out_of_school')
             ),
             DatabaseColumn(
                 'Adolescent girls (15-18 years) Seeking Services',

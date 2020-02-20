@@ -1,8 +1,6 @@
-# Standard Library imports
 import logging
 from functools import wraps
 
-# Django imports
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import permission_required
@@ -17,18 +15,18 @@ from django.http import (
 from django.template.response import TemplateResponse
 from django.urls import reverse
 from django.utils.decorators import available_attrs, method_decorator
-from django.utils.http import urlquote
 from django.utils.translation import ugettext as _
 from django.views import View
 
 from django_otp import match_token
+from django_prbac.utils import has_privilege
 from tastypie.authentication import ApiKeyAuthentication
 from tastypie.http import HttpUnauthorized
 
-# External imports
 from dimagi.utils.django.request import mutable_querydict
 from dimagi.utils.web import json_response
 
+from corehq import privileges
 from corehq.apps.domain.auth import (
     API_KEY,
     BASIC,
@@ -41,12 +39,10 @@ from corehq.apps.domain.auth import (
     formplayer_auth,
     get_username_and_password_from_request,
 )
-# CCHQ imports
 from corehq.apps.domain.models import Domain, DomainAuditRecordEntry
 from corehq.apps.domain.utils import normalize_domain_name
 from corehq.apps.hqwebapp.signals import clear_login_attempts
 from corehq.apps.users.models import CouchUser
-########################################################################################################
 from corehq.toggles import (
     DATA_MIGRATION,
     IS_CONTRACTOR,
@@ -69,19 +65,10 @@ def load_domain(req, domain):
     req.project = domain_obj
     return domain_name, domain_obj
 
-########################################################################################################
-
 
 def redirect_for_login_or_domain(request, login_url=None):
     from django.contrib.auth.views import redirect_to_login
     return redirect_to_login(request.get_full_path(), login_url)
-
-
-def _page_is_whitelist(path, domain):
-    pages_not_restricted_for_dimagi = getattr(settings, "PAGES_NOT_RESTRICTED_FOR_DIMAGI", tuple())
-    return bool([
-        x for x in pages_not_restricted_for_dimagi if x % {'domain': domain} == path
-    ])
 
 
 def login_and_domain_required(view_func):
@@ -89,59 +76,90 @@ def login_and_domain_required(view_func):
     @wraps(view_func)
     def _inner(req, domain, *args, **kwargs):
         user = req.user
-        domain_name, domain = load_domain(req, domain)
-        if not domain:
+        domain_name, domain_obj = load_domain(req, domain)
+        def call_view(): return view_func(req, domain_name, *args, **kwargs)
+        if not domain_obj:
             msg = _('The domain "{domain}" was not found.').format(domain=domain_name)
             raise Http404(msg)
 
-        if user.is_authenticated and user.is_active:
-            if not domain.is_active:
-                msg = _(
-                    'The project space "{domain}" has not yet been activated. '
-                    'Please report an issue if you think this is a mistake.'
-                ).format(domain=domain_name)
-                messages.info(req, msg)
-                return HttpResponseRedirect(reverse("domain_select"))
-            couch_user = _ensure_request_couch_user(req)
-            if couch_user.is_member_of(domain):
-                # If the two factor toggle is on, require it for all users.
-                if (
-                    _two_factor_required(view_func, domain, couch_user)
-                    and not getattr(req, 'bypass_two_factor', False)
-                    and not user.is_verified()
-                ):
-                    return TemplateResponse(
-                        request=req,
-                        template='two_factor/core/otp_required.html',
-                        status=403,
-                    )
-                else:
-                    return view_func(req, domain_name, *args, **kwargs)
-
-            elif (
-                _page_is_whitelist(req.path, domain_name) or
-                not domain.restrict_superusers
-            ) and user.is_superuser:
-                # superusers can circumvent domain permissions.
-                return view_func(req, domain_name, *args, **kwargs)
-            elif domain.is_snapshot:
-                # snapshots are publicly viewable
-                return require_previewer(view_func)(req, domain_name, *args, **kwargs)
-            elif couch_user.is_web_user() and domain.allow_domain_requests:
-                from corehq.apps.users.views import DomainRequestView
-                return DomainRequestView.as_view()(req, *args, **kwargs)
+        if not (user.is_authenticated and user.is_active):
+            if _is_public_custom_report(req.path, domain_name):
+                return call_view()
             else:
-                raise Http404
-        elif (
-            req.path.startswith('/a/{}/reports/custom'.format(domain_name)) and
-            PUBLISH_CUSTOM_REPORTS.enabled(domain_name)
-        ):
-            return view_func(req, domain_name, *args, **kwargs)
+                login_url = reverse('domain_login', kwargs={'domain': domain_name})
+                return redirect_for_login_or_domain(req, login_url=login_url)
+
+        couch_user = _ensure_request_couch_user(req)
+        if not domain_obj.is_active:
+            return _inactive_domain_response(req, domain_name)
+        if domain_obj.is_snapshot:
+            if not hasattr(req, 'couch_user') or not req.couch_user.is_previewer():
+                raise Http404()
+            return call_view()
+
+        if couch_user.is_member_of(domain_obj):
+            if _is_missing_two_factor(view_func, req):
+                return TemplateResponse(request=req, template='two_factor/core/otp_required.html', status=403)
+            elif not _can_access_project_page(req):
+                return _redirect_to_project_access_upgrade(req)
+            else:
+                return call_view()
+        elif user.is_superuser:
+            if domain_obj.restrict_superusers and not _page_is_whitelisted(req.path, domain_obj.name):
+                from corehq.apps.hqwebapp.views import no_permissions
+                msg = "This project space restricts superuser access.  You must request an invite to access it."
+                return no_permissions(req, message=msg)
+            if not _can_access_project_page(req):
+                return _redirect_to_project_access_upgrade(req)
+            return call_view()
+        elif couch_user.is_web_user() and domain_obj.allow_domain_requests:
+            from corehq.apps.users.views import DomainRequestView
+            return DomainRequestView.as_view()(req, *args, **kwargs)
         else:
-            login_url = reverse('domain_login', kwargs={'domain': domain_name})
-            return redirect_for_login_or_domain(req, login_url=login_url)
+            raise Http404
 
     return _inner
+
+
+def _is_public_custom_report(request_path, domain_name):
+    return (request_path.startswith('/a/{}/reports/custom'.format(domain_name))
+            and PUBLISH_CUSTOM_REPORTS.enabled(domain_name))
+
+
+def _inactive_domain_response(request, domain_name):
+    msg = _(
+        'The project space "{domain}" has not yet been activated. '
+        'Please report an issue if you think this is a mistake.'
+    ).format(domain=domain_name)
+    messages.info(request, msg)
+    return HttpResponseRedirect(reverse("domain_select"))
+
+
+def _is_missing_two_factor(view_fn, request):
+    return (_two_factor_required(view_fn, request.project, request.couch_user)
+            and not getattr(request, 'bypass_two_factor', False)
+            and not request.user.is_verified())
+
+
+def _page_is_whitelisted(path, domain):
+    safe_paths = {page.format(domain=domain) for page in settings.PAGES_NOT_RESTRICTED_FOR_DIMAGI}
+    return path in safe_paths
+
+
+def _can_access_project_page(request):
+    # always allow for non-SaaS deployments
+    if not settings.IS_SAAS_ENVIRONMENT:
+        return True
+    return has_privilege(request, privileges.PROJECT_ACCESS) or (
+        hasattr(request, 'always_allow_project_access') and request.always_allow_project_access
+    )
+
+
+def _redirect_to_project_access_upgrade(request):
+    from corehq.apps.domain.views.accounting import SubscriptionUpgradeRequiredView
+    return SubscriptionUpgradeRequiredView().get(
+        request, request.domain, privileges.PROJECT_ACCESS
+    )
 
 
 def _ensure_request_couch_user(request):
@@ -346,6 +364,14 @@ def _two_factor_required(view_func, domain, couch_user):
     if exempt:
         return False
     return (
+        # If a user is a superuser, then there is no two_factor_disabled loophole allowed.
+        # If you lose your phone, you have to give up superuser privileges
+        # until you have two factor set up again.
+        settings.REQUIRE_TWO_FACTOR_FOR_SUPERUSERS and couch_user.is_superuser
+    ) or (
+        # For other policies requiring two factor auth,
+        # allow the two_factor_disabled loophole for people who have lost their phones
+        # and need time to set up two factor auth again.
         (domain.two_factor_auth or TWO_FACTOR_SUPERUSER_ROLLOUT.enabled(couch_user.username))
         and not couch_user.two_factor_disabled
     )
@@ -446,7 +472,7 @@ def domain_admin_required_ex(redirect_page_name=None):
                 raise Http404()
 
             if not (
-                _page_is_whitelist(request.path, domain_name) and request.user.is_superuser
+                _page_is_whitelisted(request.path, domain_name) and request.user.is_superuser
             ) and not request.couch_user.is_domain_admin(domain_name):
                 return HttpResponseRedirect(reverse(redirect_page_name))
             return view_func(request, domain_name, *args, **kwargs)
@@ -477,17 +503,6 @@ require_superuser = permission_required("is_superuser", login_url='/no_permissio
 cls_require_superusers = cls_to_view(additional_decorator=require_superuser)
 
 cls_require_superuser_or_contractor = cls_to_view(additional_decorator=require_superuser_or_contractor)
-
-
-def require_previewer(view_func):
-    def shim(request, *args, **kwargs):
-        if not hasattr(request, 'couch_user') or not request.couch_user.is_previewer():
-            raise Http404
-        else:
-            return view_func(request, *args, **kwargs)
-    return shim
-
-cls_require_previewer = cls_to_view(additional_decorator=require_previewer)
 
 
 def check_domain_migration(view_func):

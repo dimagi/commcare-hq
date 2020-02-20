@@ -22,6 +22,7 @@ from couchdbkit import (
 from memoized import memoized
 
 from casexml.apps.case.const import DEFAULT_CASE_INDEX_IDENTIFIERS
+from corehq.toggles import USE_NEW_GET_COLUMN
 from couchexport.models import Format
 from couchexport.transforms import couch_to_excel_datetime
 from dimagi.ext.couchdbkit import (
@@ -106,12 +107,14 @@ from corehq.blobs.mixin import BlobMixin
 from corehq.blobs.models import BlobMeta
 from corehq.blobs.util import random_url_id
 from corehq.form_processor.interfaces.dbaccessors import LedgerAccessors
-from corehq.sql_db.util import get_db_alias_for_partitioned_doc
 from corehq.util.global_request import get_request_domain
 from corehq.util.timezones.utils import get_timezone_for_domain
 from corehq.util.view_utils import absolute_reverse
 
 DAILY_SAVED_EXPORT_ATTACHMENT_NAME = "payload"
+
+
+ExcelFormatValue = namedtuple('ExcelFormatValue', 'format value')
 
 
 class PathNode(DocumentSchema):
@@ -143,7 +146,12 @@ class PathNode(DocumentSchema):
         return (type(self), self.doc_type, self.name, self.is_repeat)
 
     def __eq__(self, other):
-        return self.__key() == other.__key()
+        # First we try a least expensive comparison (name vs name) to rule the
+        # majority of failed comparisons. This improves performance by nearly
+        # a factor of 2 when __eq__ is used on large data sets.
+        if self.name == other.name:
+            return self.__key() == other.__key()
+        return False
 
     def __hash__(self):
         return hash(self.__key())
@@ -500,6 +508,8 @@ class TableConfiguration(DocumentSchema):
             doc, row_index = doc_row.doc, doc_row.row
 
             row_data = {} if as_json else []
+            col_index = 0
+            skip_excel_formatting = []
             for col in self.selected_columns:
                 val = col.get_value(
                     domain,
@@ -518,15 +528,76 @@ class TableConfiguration(DocumentSchema):
                             row_data[header] = "{}".format(val)
                 elif isinstance(val, list):
                     row_data.extend(val)
+
+                    # we never want to auto-format RowNumberColumn
+                    # (always treat as text)
+                    next_col_index = col_index + len(val)
+                    if isinstance(col, RowNumberColumn):
+                        skip_excel_formatting.extend(
+                            list(range(col_index, next_col_index))
+                        )
+                    col_index = next_col_index
                 else:
                     row_data.append(val)
+
+                    # we never want to auto-format RowNumberColumn
+                    # (always treat as text)
+                    if isinstance(col, RowNumberColumn):
+                        skip_excel_formatting.append(col_index)
+                    col_index += 1
             if as_json:
                 rows.append(row_data)
             else:
                 rows.append(ExportRow(
-                    data=row_data, hyperlink_column_indices=self.get_hyperlink_column_indices(split_columns)
+                    data=row_data,
+                    hyperlink_column_indices=self.get_hyperlink_column_indices(split_columns),
+                    skip_excel_formatting=skip_excel_formatting
                 ))
         return rows
+
+    def get_column_new(self, item_path, item_doc_type, column_transform):
+        """
+        Given a path and transform, will return the column and its index. If not found, will
+        return None, None.
+
+        NOTE: This method is in QA for accuracy to test against get_column
+        as a more efficient replacement.
+
+        :param item_path: A list of path nodes that identify a column
+        :param item_doc_type: The doc type of the item (often just ExportItem). If getting
+                UserDefinedExportColumn, set this to None
+        :param column_transform: A transform that is applied on the column
+        :returns index, column: The index of the column in the list and an ExportColumn
+        """
+        string_item_path = _path_nodes_to_string(item_path)
+
+        # Previously we iterated over self.columns with each call to return the
+        # index. Now we do an index lookup on the string-ified path names for
+        # self.columns and regenerate it only when the length of self.columns
+        # changes, which probably happens due to some couch db magic in the bg:
+        if (not hasattr(self, '_string_column_paths')
+                or len(self._string_column_paths) != len(self.columns)):
+            self._string_column_paths = [
+                _path_nodes_to_string(column.item.path) for column in
+                self.columns
+            ]
+
+        try:
+            index = self._string_column_paths.index(string_item_path)
+        except ValueError:
+            return None, None
+
+        column = self.columns[index]
+        if (column.item.path == item_path
+                and column.item.transform == column_transform
+                and column.item.doc_type == item_doc_type):
+            return index, column
+        # No item doc type searches for a UserDefinedExportColumn
+        elif (isinstance(column, UserDefinedExportColumn)
+                and column.custom_path == item_path
+                and item_doc_type is None):
+            return index, column
+        return None, None
 
     def get_column(self, item_path, item_doc_type, column_transform):
         """
@@ -687,6 +758,9 @@ class ExportInstance(BlobMixin, Document):
     # Whether to automatically convert dates to excel dates
     transform_dates = BooleanProperty(default=True)
 
+    # Whether to typset the cells in Excel 2007+ exports
+    format_data_in_excel = BooleanProperty(default=False)
+
     # Whether the export is de-identified
     is_deidentified = BooleanProperty(default=False)
 
@@ -794,10 +868,17 @@ class ExportInstance(BlobMixin, Document):
             ) and not group_schema.inferred
 
             prev_index = 0
+            use_get_column_new = (hasattr(instance, 'domain')
+                                  and USE_NEW_GET_COLUMN.enabled(instance.domain))
             for item in group_schema.items:
-                index, column = table.get_column(
-                    item.path, item.doc_type, None
-                )
+                if use_get_column_new:
+                    index, column = table.get_column_new(
+                        item.path, item.doc_type, None
+                    )
+                else:
+                    index, column = table.get_column(
+                        item.path, item.doc_type, None
+                    )
                 if not column:
                     column = ExportColumn.create_default_from_export_item(
                         table.path,
@@ -915,17 +996,26 @@ class ExportInstance(BlobMixin, Document):
 
         insert_fn = self._get_insert_fn(table, top)
 
+        domain = column_initialization_data.get('domain')
+        use_get_column_new = domain and USE_NEW_GET_COLUMN.enabled(domain)
         for static_column in properties:
-            index, existing_column = table.get_column(
-                static_column.item.path,
-                static_column.item.doc_type,
-                static_column.item.transform,
-            )
+            if use_get_column_new:
+                index, existing_column = table.get_column_new(
+                    static_column.item.path,
+                    static_column.item.doc_type,
+                    static_column.item.transform,
+                )
+            else:
+                index, existing_column = table.get_column(
+                    static_column.item.path,
+                    static_column.item.doc_type,
+                    static_column.item.transform,
+                )
             column = (existing_column or static_column)
             if isinstance(column, RowNumberColumn):
                 column.update_nested_repeat_count(column_initialization_data.get('repeat'))
             elif isinstance(column, StockExportColumn):
-                column.update_domain(column_initialization_data.get('domain'))
+                column.update_domain(domain)
 
             if not existing_column:
                 if static_column.label in ['case_link', 'form_link'] and self.get_id:
@@ -1254,9 +1344,11 @@ class SMSExportInstanceDefaults(ExportInstanceDefaults):
 
 class ExportRow(object):
 
-    def __init__(self, data, hyperlink_column_indices=()):
+    def __init__(self, data, hyperlink_column_indices=(),
+                 skip_excel_formatting=()):
         self.data = data
         self.hyperlink_column_indices = hyperlink_column_indices
+        self.skip_excel_formatting = skip_excel_formatting
 
 
 class ScalarItem(ExportItem):
@@ -2642,44 +2734,6 @@ class StockExportColumn(ExportColumn):
         return values
 
 
-class ConversionMeta(DocumentSchema):
-    path = StringProperty()
-    failure_reason = StringProperty()
-    info = ListProperty()
-
-    def pretty_print(self):
-        print('---' * 15)
-        print('{:<20}| {}'.format('Original Path', self.path))
-        print('{:<20}| {}'.format('Failure Reason', self.failure_reason))
-        for idx, line in enumerate(self.info):
-            prefix = 'Info' if idx == 0 else ''
-            print('{:<20}| {}'.format(prefix, line))
-
-
-class ExportMigrationMeta(Document):
-    saved_export_id = StringProperty()
-    domain = StringProperty()
-    export_type = StringProperty(choices=[FORM_EXPORT, CASE_EXPORT])
-
-    # The schema of the new export
-    generated_schema_id = StringProperty()
-
-    skipped_tables = SchemaListProperty(ConversionMeta)
-    skipped_columns = SchemaListProperty(ConversionMeta)
-
-    converted_tables = SchemaListProperty(ConversionMeta)
-    converted_columns = SchemaListProperty(ConversionMeta)
-
-    is_remote_app_migration = BooleanProperty(default=False)
-
-    has_case_history = BooleanProperty(default=False)
-
-    migration_date = DateTimeProperty()
-
-    class Meta(object):
-        app_label = 'export'
-
-
 def _meta_property(name):
     def fget(self):
         return getattr(self._meta, name)
@@ -2710,8 +2764,7 @@ class DataFile(object):
     @staticmethod
     def meta_query(domain):
         Q = models.Q
-        db = get_db_alias_for_partitioned_doc(domain)
-        return BlobMeta.objects.using(db).filter(
+        return BlobMeta.objects.partitioned_query(domain).filter(
             Q(expires_on__isnull=True) | Q(expires_on__gte=datetime.utcnow()),
             parent_id=domain,
             type_code=CODES.data_file,

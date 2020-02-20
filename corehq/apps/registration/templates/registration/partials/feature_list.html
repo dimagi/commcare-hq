@@ -1,0 +1,10 @@
+{% load i18n %}
+
+<ul class="check-list">
+  {% for feature in features %}
+    <li>
+      <i class="fa fa-check-square"></i>
+      {{ feature }}
+    </li>
+  {% endfor %}
+</ul>

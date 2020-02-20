@@ -16,7 +16,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrator.get_migration('agg_awc_daily.sql'),
         migrations.RunSQL("ALTER table agg_awc_daily DROP COLUMN total_eligible_pse"),
-        migrator.get_migration('daily_indicators.sql')
     ]

@@ -93,6 +93,14 @@ class DimagiUtilsTestCase(TestCase):
             (8, 9)
         ])
 
+    def test_chunked_stop(self):
+        def list_or_stop(items):
+            items = list(items)
+            if items[0] == 0:
+                return items
+            raise StopIteration
+        self.assertEqual(list(chunked(range(10), 2, list_or_stop)), [[0, 1]])
+
     def test_ReadOnlyObject(self):
 
         from couchdbkit import Document, StringListProperty

@@ -8,7 +8,7 @@ from ws4redis.context_processors import default
 
 from corehq import privileges, toggles
 from corehq.apps.analytics import ab_tests
-from corehq.apps.accounting.models import BillingAccount
+from corehq.apps.accounting.models import BillingAccount, SubscriptionType
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.hqwebapp.utils import get_environment_friendly_name
 
@@ -22,7 +22,6 @@ def base_template(request):
     return {
         'base_template': settings.BASE_TEMPLATE,
         'login_template': settings.LOGIN_TEMPLATE,
-        'less_debug': settings.LESS_DEBUG,
         'env': get_environment_friendly_name(),
     }
 
@@ -79,7 +78,9 @@ def domain(request):
 def domain_billing_context(request):
     is_domain_billing_admin = False
     restrict_domain_creation = settings.RESTRICT_DOMAIN_CREATION
-    if getattr(request, 'couch_user', None) and getattr(request, 'domain', None):
+    if (getattr(request, 'couch_user', None)
+            and getattr(request, 'domain', None)
+            and not settings.ENTERPRISE_MODE):
         account = BillingAccount.get_account_by_domain(request.domain)
         if account:
             if has_privilege(request, privileges.ACCOUNTING_ADMIN):
@@ -228,40 +229,39 @@ def mobile_experience_hidden_by_toggle(request):
     return False
 
 
-def get_demo(request):
-    is_demo_visible = False
-    is_demo_trial = False
+def banners(request):
+    is_logged_in_user = hasattr(request, 'user') and request.user.is_authenticated
+    has_subscription = hasattr(request, 'subscription')
+    if not (settings.IS_SAAS_ENVIRONMENT and is_logged_in_user and has_subscription):
+        return {}
 
     context = {}
-
-    if (settings.IS_SAAS_ENVIRONMENT
-            and settings.ANALYTICS_IDS.get('HUBSPOT_API_ID')):
-        if getattr(request, 'user', None) and not request.user.is_authenticated:
-            is_demo_visible = True
-        elif hasattr(request, 'subscription') and request.subscription.is_trial:
+    if request.subscription.is_trial or request.subscription.service_type in [
+        SubscriptionType.TRIAL,
+        SubscriptionType.EXTENDED_TRIAL,
+    ]:
+        context.update({
+            'show_trial_banner': True,
+            'trial_edition': request.subscription.plan_version.plan.edition,
+        })
+        if request.subscription.date_end:
             delta = request.subscription.date_end - datetime.date.today()
-            num_trial_days_remaining = max(0, delta.days)
-            is_demo_visible = True
-            is_demo_trial = True
-
-            # toggles are more reliable (and easier to implement site-wide)
-            # than a SessionAbTest, however we can't use toggles in pre-login
-            # as it requires the user namespace.
-            show_demo_variant = toggles.DEMO_WORKFLOW_V2_AB_VARIANT.enabled(
-                request.user, toggles.NAMESPACE_USER
-            )
             context.update({
-                'demo_workflow_ab_v2': {
-                    'name': ab_tests.DEMO_WORKFLOW_V2.name,
-                    'version': (ab_tests.DEMO_WORKFLOW_V2_VARIANT
-                                if show_demo_variant
-                                else ab_tests.DEMO_WORKFLOW_V2_CONTROL),
-                },
-                'num_trial_days_remaining': num_trial_days_remaining,
+                'num_trial_days_remaining': max(0, delta.days),
             })
+    elif request.subscription.is_community:
+        context.update({
+            'show_community_banner': True,
+        })
+    return context
 
-    context.update({
-        'is_demo_trial': is_demo_trial,
-        'is_demo_visible': is_demo_visible,
-    })
+
+def get_demo(request):
+    is_user_not_logged_in = getattr(request, 'user', None) and not request.user.is_authenticated
+    is_hubspot_enabled = settings.ANALYTICS_IDS.get('HUBSPOT_API_ID')
+    context = {}
+    if settings.IS_SAAS_ENVIRONMENT and is_hubspot_enabled and is_user_not_logged_in:
+        context.update({
+            'is_demo_visible': True,
+        })
     return context

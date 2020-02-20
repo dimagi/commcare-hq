@@ -2,10 +2,14 @@
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function ChildrenInitiatedController($scope, $routeParams, $location, $filter, maternalChildService,
-    locationsService, userLocationId, storageService, genders, haveAccessToAllLocations, baseControllersService, isAlertActive) {
+    locationsService, dateHelperService, navigationService, userLocationId, storageService, genders,
+    haveAccessToAllLocations, baseControllersService, isAlertActive, isMobile) {
     baseControllersService.BaseController.call(this, $scope, $routeParams, $location, locationsService,
-        userLocationId, storageService, haveAccessToAllLocations);
+        dateHelperService, navigationService, userLocationId, storageService, haveAccessToAllLocations,
+        false, isMobile);
     var vm = this;
+    vm.serviceDataFunction = maternalChildService.getChildrenInitiatedData;
+
     vm.isAlertActive = isAlertActive;
     var genderIndex = _.findIndex(genders, function (x) {
         return x.id === vm.filtersData.gender;
@@ -15,10 +19,7 @@ function ChildrenInitiatedController($scope, $routeParams, $location, $filter, m
     }
 
     vm.label = "Children initiated appropriate complementary feeding";
-    vm.steps = {
-        'map': {route: '/maternal_and_child/children_initiated/map', label: 'Map View'},
-        'chart': {route: '/maternal_and_child/children_initiated/chart', label: 'Chart View'},
-    };
+    vm.steps = vm.getSteps('/maternal_and_child/children_initiated/');
     vm.data = {
         legendTitle: 'Percentage Children',
     };
@@ -29,15 +30,14 @@ function ChildrenInitiatedController($scope, $routeParams, $location, $filter, m
         'Timely intiation of complementary feeding in addition to breastmilk at 6 months of age is a key feeding practice to reduce malnutrition',
     };
 
-    vm.templatePopup = function(loc, row) {
+    vm.getPopupData = function(row) {
         var gender = genderIndex > 0 ? genders[genderIndex].name : '';
         var chosenFilters = gender ? ' (' + gender + ') ' : '';
         var total = row ? $filter('indiaNumbers')(row.all) : 'N/A';
         var children = row ? $filter('indiaNumbers')(row.children) : 'N/A';
         var percent = row ? d3.format('.2%')(row.children / (row.all || 1)) : 'N/A';
-        return vm.createTemplatePopup(
-            loc.properties.name,
-            [{
+        return [
+            {
                 indicator_name: 'Total number of children between age 6 - 8 months' + chosenFilters + ': ',
                 indicator_value: total,
             },
@@ -48,17 +48,8 @@ function ChildrenInitiatedController($scope, $routeParams, $location, $filter, m
             {
                 indicator_name: '% children (6-8 months) given timely introduction to solid or semi-solid food in the given month' + chosenFilters + ': ',
                 indicator_value: percent,
-            }]
-        );
-    };
-
-    vm.loadData = function () {
-        vm.setStepsMapLabel();
-        var usePercentage = true;
-        var forceYAxisFromZero = false;
-        vm.myPromise = maternalChildService.getChildrenInitiatedData(vm.step, vm.filtersData).then(
-            vm.loadDataFromResponse(usePercentage, forceYAxisFromZero)
-        );
+            }
+        ];
     };
 
     vm.init();
@@ -97,12 +88,17 @@ function ChildrenInitiatedController($scope, $routeParams, $location, $filter, m
     };
 }
 
-ChildrenInitiatedController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'maternalChildService', 'locationsService', 'userLocationId', 'storageService', 'genders', 'haveAccessToAllLocations', 'baseControllersService', 'isAlertActive'];
+ChildrenInitiatedController.$inject = [
+    '$scope', '$routeParams', '$location', '$filter',
+    'maternalChildService', 'locationsService', 'dateHelperService', 'navigationService',
+    'userLocationId', 'storageService', 'genders', 'haveAccessToAllLocations', 'baseControllersService',
+    'isAlertActive', 'isMobile',
+];
 
-window.angular.module('icdsApp').directive('childrenInitiated', function() {
+window.angular.module('icdsApp').directive('childrenInitiated', ['templateProviderService', function (templateProviderService) {
     return {
         restrict: 'E',
-        templateUrl: url('icds-ng-template', 'map-chart'),
+        templateUrl: templateProviderService.getMapChartTemplate,
         bindToController: true,
         scope: {
             data: '=',
@@ -110,4 +106,4 @@ window.angular.module('icdsApp').directive('childrenInitiated', function() {
         controller: ChildrenInitiatedController,
         controllerAs: '$ctrl',
     };
-});
+}]);

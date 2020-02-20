@@ -1,4 +1,8 @@
 from corehq.apps.app_manager.const import USERCASE_TYPE
+from custom.icds.case_relationships import (
+    child_person_cases_from_mother_person_case,
+    mother_person_case_from_ccs_record_case,
+)
 from custom.icds.const import AWC_LOCATION_TYPE_CODE, SUPERVISOR_LOCATION_TYPE_CODE
 from custom.icds.messaging.custom_content import get_user_from_usercase
 from custom.icds.rules.util import get_date, todays_date
@@ -74,6 +78,26 @@ def ccs_record_case_has_future_edd(case, now):
         return False
 
     return todays_date(now) < edd
+
+
+def ccs_record_case_is_availing_services(case, now):
+    """
+    This filters to ccs record cases where the relevant child person case is both registered and not migrated.
+    """
+    mother = mother_person_case_from_ccs_record_case(case)
+    children = child_person_cases_from_mother_person_case(mother)
+
+    add = case.get_case_property('add')
+    children = [child for child in children if child.get_case_property('dob') == add]
+
+    if not children:
+        return False
+
+    return any([
+        child.get_case_property('migration_status') != 'migrated'
+        and child.get_case_property('registered_status') != 'not_registered'
+        for child in children
+    ])
 
 
 def check_user_location_type(usercase, location_type_code):

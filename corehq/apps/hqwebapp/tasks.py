@@ -2,11 +2,12 @@ from django.conf import settings
 from django.core.mail import mail_admins, send_mail
 
 from celery.schedules import crontab
-from celery.task import task
+from celery.task import task, periodic_task
 
+from corehq.util.bounced_email_manager import BouncedEmailManager
 from dimagi.utils.logging import notify_exception
 
-from corehq.util.datadog.gauges import datadog_gauge_task
+from corehq.util.datadog.gauges import datadog_gauge_task, datadog_track_errors
 from corehq.util.log import send_HTML_email
 
 
@@ -32,6 +33,11 @@ def send_mail_async(self, subject, message, from_email, recipient_list,
     )
 
     recipient_list = [_f for _f in recipient_list if _f]
+
+    # todo deal with recipients marked as bounced
+    from dimagi.utils.django.email import get_valid_recipients
+    recipient_list = get_valid_recipients(recipient_list)
+
     if not recipient_list:
         return
     try:
@@ -97,6 +103,25 @@ def mail_admins_async(self, subject, message, fail_silently=False, connection=No
             }
         )
         self.retry(exc=e)
+
+
+@periodic_task(run_every=crontab(minute=0, hour=0), queue='background_queue')
+def process_bounced_emails():
+    if settings.RETURN_PATH_EMAIL and settings.RETURN_PATH_EMAIL_PASSWORD:
+        try:
+            with BouncedEmailManager(
+                delete_processed_messages=True
+            ) as bounced_manager, datadog_track_errors('process_bounced_emails_task'):
+                bounced_manager.process_aws_notifications()
+                bounced_manager.process_daemon_messages()
+        except Exception as e:
+            notify_exception(
+                None,
+                message="Encountered error while processing bounced emails",
+                details={
+                    'error': e,
+                }
+            )
 
 
 def get_maintenance_alert_active():

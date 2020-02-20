@@ -1,7 +1,7 @@
 import attr
 
 
-class AnyType(object):
+class AnyType:
 
     def __eq__(self, other):
         return True
@@ -16,7 +16,7 @@ ANY = AnyType()
 
 
 @attr.s
-class Ignore(object):
+class Ignore:
     """Ignore rule
 
     The `MISSING` constant referenced here is defined in

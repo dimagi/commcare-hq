@@ -40,7 +40,7 @@
 
     <link href="https://fonts.googleapis.com/css?family=Nunito+Sans:100,300,400,500,700,800" rel="stylesheet">
 
-    {% include 'hqwebapp/includes/less.html' with debug=less_debug %}
+    {% include 'hqwebapp/includes/less.html' %}
 
     {% if CUSTOM_LOGO_URL %}
       <link rel="apple-touch-icon" href="{{ CUSTOM_LOGO_URL }}"/>
@@ -154,25 +154,6 @@
       // this fails for form designer, which currently uses RequireJS for vellum but not for the surrounding page.
       window.USE_REQUIREJS = {{ requirejs_main|BOOL }};
     </script>
-
-    {% if less_debug %}
-      {# This is fine as an inline script; it's independent of all HQ code and all third-party libraries #}
-      <script>
-        less = {
-          env: "development",
-          useFileCache: true,
-          logLevel: 2,
-          errorReporting: 'console',
-          async: false,
-          fileAsync: false,
-          poll: 1000,
-          functions: {},
-          dumpLineNumbers: "comments",
-          relativeUrls: false
-        };
-      </script>
-      <script src="{% static 'less/dist/less-1.7.3.min.js' %}"></script>
-    {% endif %}
   </head>
   <body>
     {% if ANALYTICS_IDS.GTM_ID %}
@@ -183,8 +164,11 @@
     {% endif %}
     {% block background_content %}{% endblock %}
     {% maintenance_alert request %}
-    {% if request.user.is_authenticated and is_demo_visible %}
-      {% include "hqwebapp/partials/get_demo_banner.html" %}
+    {% if show_trial_banner %}
+      {% include "hqwebapp/partials/trial_banner.html" %}
+    {% endif %}
+    {% if show_community_banner %}
+      {% include "hqwebapp/partials/community_banner.html" %}
     {% endif %}
     <div class="hq-container">
       {% block navigation %}

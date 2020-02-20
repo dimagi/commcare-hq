@@ -43,5 +43,8 @@ class ReportDataSource(object):
 
         return {}
 
+    def get_query_strings(self):
+        return NotImplemented
+
     def get_total_records(self):
         return 0

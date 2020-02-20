@@ -22,7 +22,7 @@ from django.contrib import messages
 from django.contrib.auth.hashers import make_password
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
-from django.db import models
+from django.db import models, DEFAULT_DB_ALIAS
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.safestring import SafeBytes
@@ -1202,11 +1202,6 @@ class FormBase(DocumentSchema):
             return key
         return format_key
 
-    def export_json(self, dump_json=True):
-        source = self.to_json()
-        del source['unique_id']
-        return json.dumps(source) if dump_json else source
-
     def rename_lang(self, old_lang, new_lang):
         _rename_key(self.name, old_lang, new_lang)
         try:
@@ -2029,6 +2024,12 @@ class Detail(IndexedSchema, CaseListLookupMixin):
             any(tab for tab in self.get_tabs() if tab.has_nodeset)
         )
 
+    def has_persistent_tile(self):
+        """
+        Return True if configured to persist a case tile on forms
+        """
+        return self.persist_tile_on_forms and (self.use_case_tiles or self.custom_xml)
+
 
 class CaseList(IndexedSchema, NavMenuItemMediaMixin):
 
@@ -2132,6 +2133,7 @@ class ModuleBase(IndexedSchema, ModuleMediaMixin, NavMenuItemMediaMixin, Comment
     put_in_root = BooleanProperty(default=False)
     root_module_id = StringProperty()
     fixture_select = SchemaProperty(FixtureSelect)
+    report_context_tile = BooleanProperty(default=False)
     auto_select_case = BooleanProperty(default=False)
     is_training_module = BooleanProperty(default=False)
 
@@ -2335,13 +2337,6 @@ class ModuleDetailsMixin(object):
         super(Module, self).rename_lang(old_lang, new_lang)
         for case_list in (self.case_list, self.referral_list):
             case_list.rename_lang(old_lang, new_lang)
-
-    def export_json(self, dump_json=True, keep_unique_id=False):
-        source = self.to_json()
-        if not keep_unique_id:
-            for form in source['forms']:
-                del form['unique_id']
-        return json.dumps(source) if dump_json else source
 
     def get_details(self):
         details = [
@@ -4133,8 +4128,11 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
     def key_server_url(self):
         return reverse('key_server_url', args=[self.domain])
 
+    def heartbeat_url(self, build_profile_id=None):
+        return self.base_heartbeat_url + '?build_profile_id=%s' % (build_profile_id or '')
+
     @absolute_url_property
-    def heartbeat_url(self):
+    def base_heartbeat_url(self):
         return reverse('phone_heartbeat', args=[self.domain, self.get_id])
 
     @absolute_url_property
@@ -4846,8 +4844,7 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
 
         if toggles.CUSTOM_PROPERTIES.enabled(self.domain) and "custom_properties" in self__profile:
             app_profile['custom_properties'].update(self__profile['custom_properties'])
-
-        apk_heartbeat_url = self.heartbeat_url
+        apk_heartbeat_url = self.heartbeat_url(build_profile_id)
         locale = self.get_build_langs(build_profile_id)[0]
         target_package_id = {
             TARGET_COMMCARE: 'org.commcare.dalvik',
@@ -5713,49 +5710,34 @@ class DeleteFormRecord(DeleteRecord):
         app.save()
 
 
-class GlobalAppConfig(Document):
+class GlobalAppConfig(models.Model):
+    choices = [(c, c) for c in ("on", "off", "forced")]
+
+    domain = models.CharField(max_length=255, null=False)
+
     # this should be the unique id of the app (not of a versioned copy)
-    app_id = StringProperty()
-    domain = StringProperty()
+    app_id = models.CharField(max_length=255, null=False)
+    app_prompt = models.CharField(max_length=32, choices=choices, default="off")
+    apk_prompt = models.CharField(max_length=32, choices=choices, default="off")
+    apk_version = models.CharField(max_length=32, null=True)
+    app_version = models.IntegerField(null=True)
 
-    # these let mobile prompt updates for application and APK
-    app_prompt = StringProperty(
-        choices=["off", "on", "forced"],
-        default="off"
-    )
-    apk_prompt = StringProperty(
-        choices=["off", "on", "forced"],
-        default="off"
-    )
-
-    # corresponding versions to which user should be prompted to update to
-    apk_version = StringProperty(default=LATEST_APK_VALUE)  # e.g. '2.38.0/latest'
-    app_version = IntegerProperty(default=LATEST_APP_VALUE)
+    class Meta(object):
+        unique_together = ('domain', 'app_id')
 
     @classmethod
     def for_app(cls, app):
-        """
-        Returns the actual config object for the app or an unsaved
-            default object
-        """
-        app_id = app.master_id
+        model, created = cls.objects.get_or_create(app_id=app.master_id, domain=app.domain, defaults={
+            'apk_version': LATEST_APK_VALUE,
+            'app_version': LATEST_APP_VALUE,
+        })
+        return model
 
-        res = cls.get_db().view(
-            "global_app_config_by_app_id/view",
-            key=[app_id, app.domain],
-            reduce=False,
-            include_docs=True,
-        ).one()
-
-        if res:
-            return cls(res['doc'])
-        else:
-            # return default config
-            return cls(app_id=app_id, domain=app.domain)
-
-    def save(self, *args, **kwargs):
+    def save(self, force_insert=False, force_update=False, using=DEFAULT_DB_ALIAS, update_fields=None):
         LatestAppInfo(self.app_id, self.domain).clear_caches()
-        super(GlobalAppConfig, self).save(*args, **kwargs)
+        super().save(
+            force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields
+        )
 
 
 class AppReleaseByLocation(models.Model):

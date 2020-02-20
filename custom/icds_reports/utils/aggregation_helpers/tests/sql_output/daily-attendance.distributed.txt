@@ -17,7 +17,8 @@ DELETE FROM "daily_attendance" WHERE month = %(month)s
                 form_location_long as form_location_long,
                 image_name as image_name,
                 pse_conducted as pse_conducted,
-                supervisor_id as supervisor_id
+                supervisor_id as supervisor_id,
+                state_id as state_id
               FROM "ucr_icds-cas_static-daily_feeding_forms_85b1167f"
               WHERE month = %(start_month)s and (awc_open_count=1 OR awc_not_open = 1)
               ORDER BY awc_id, submitted_on, inserted_at DESC

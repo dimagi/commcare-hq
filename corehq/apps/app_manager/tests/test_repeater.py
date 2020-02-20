@@ -5,22 +5,40 @@ from django.test.client import Client
 
 from mock import patch
 
+from corehq.apps.accounting.models import SoftwarePlanEdition
+from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
+from corehq.apps.accounting.utils import clear_plan_version_cache
 from corehq.apps.app_manager.models import Application
+from corehq.apps.domain.models import Domain
 from corehq.motech.repeaters.dbaccessors import delete_all_repeat_records
 from corehq.motech.repeaters.models import AppStructureRepeater, RepeatRecord
 
 
-class TestAppStructureRepeater(TestCase):
+class TestAppStructureRepeater(TestCase, DomainSubscriptionMixin):
 
     @classmethod
     def setUpClass(cls):
-        super(TestAppStructureRepeater, cls).setUpClass()
+        super().setUpClass()
         cls.client = Client()
-        cls.domain = 'bedazzled'
         cls.forwarding_url = 'http://not-a-real-url-at-all'
+
+        cls.domain = 'bedazzled'
+        cls.domain_obj = Domain(name=cls.domain)
+        cls.domain_obj.save()
+
+        # DATA_FORWARDING is on PRO and above
+        cls.setup_subscription(cls.domain, SoftwarePlanEdition.PRO)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.teardown_subscriptions()
+        cls.domain_obj.delete()
+        clear_plan_version_cache()
+        super().tearDownClass()
 
     def tearDown(self):
         delete_all_repeat_records()
+        super().tearDown()
 
     def test_repeat_record_not_created(self):
         """

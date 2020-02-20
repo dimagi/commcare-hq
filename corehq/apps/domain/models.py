@@ -36,7 +36,6 @@ from dimagi.ext.couchdbkit import (
 )
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.database import (
-    apply_update,
     get_safe_write_kwargs,
     iter_bulk_delete,
     iter_docs,
@@ -60,7 +59,7 @@ from corehq.blobs.mixin import BlobMixin
 from corehq.dbaccessors.couchapps.all_docs import (
     get_all_doc_ids_for_domain_grouped_by_db,
 )
-from corehq.util.quickcache import quickcache
+from corehq.util.quickcache import quickcache, get_session_key
 from corehq.util.soft_assert import soft_assert
 from langcodes import langs as all_langs
 
@@ -119,6 +118,15 @@ def cached_property(method):
             self.save()
             return self.cached_properties[method.__name__]
     return find_cached
+
+
+def icds_conditional_session_key():
+    if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS:
+        # memoize for process lifecycle
+        return None
+    else:
+        # memoize for request lifecycle
+        return get_session_key
 
 
 class UpdatableSchema(object):
@@ -330,7 +338,6 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
     case_display = SchemaProperty(CaseDisplaySettings)
 
     # CommConnect settings
-    commconnect_enabled = BooleanProperty(default=False)
     survey_management_enabled = BooleanProperty(default=False)
     # Whether or not a case can register via sms
     sms_case_registration_enabled = BooleanProperty(default=False)
@@ -345,6 +352,7 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
     use_default_sms_response = BooleanProperty(default=False)
     default_sms_response = StringProperty()
     chat_message_count_threshold = IntegerProperty()
+    sms_language_fallback = StringProperty()
     custom_chat_template = StringProperty()  # See settings.CUSTOM_CHAT_TEMPLATES
     custom_case_username = StringProperty()  # Case property to use when showing the case's name in a chat window
     # If empty, sms can be sent at any time. Otherwise, only send during
@@ -411,9 +419,6 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
 
     deployment = SchemaProperty(Deployment)
 
-    image_path = StringProperty()
-    image_type = StringProperty()
-
     cached_properties = DictProperty()
 
     internal = SchemaProperty(InternalProperties)
@@ -426,9 +431,6 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
     sub_area = StringProperty(choices=SUB_AREA_CHOICES)
     launch_date = DateTimeProperty
 
-    # to be eliminated from projects and related documents when they are copied for the exchange
-    _dirty_fields = ('admin_password', 'admin_password_charset', 'city', 'countries', 'region', 'customer_type')
-
     last_modified = DateTimeProperty(default=datetime(2015, 1, 1))
 
     # when turned on, use SECURE_TIMEOUT for sessions of users who are members of this domain
@@ -437,9 +439,6 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
     two_factor_auth = BooleanProperty(default=False)
     strong_mobile_passwords = BooleanProperty(default=False)
 
-    # There is no longer a way to request a report builder trial, so this property should be removed in the near
-    # future. (Keeping it for now in case a user has requested a trial and but has not yet been granted it)
-    requested_report_builder_trial = StringListProperty()
     requested_report_builder_subscription = StringListProperty()
 
     report_whitelist = StringListProperty()
@@ -585,16 +584,9 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
     def recent_submissions(self):
         return domain_has_submission_in_last_30_days(self.name)
 
-    @cached_property
-    def languages(self):
-        apps = self.applications()
-        return set(chain.from_iterable([a.langs for a in apps]))
-
-    def readable_languages(self):
-        return ', '.join(lang_lookup[lang] or lang for lang in self.languages())
-
     @classmethod
-    @quickcache(['name'], skip_arg='strict', timeout=30*60)
+    @quickcache(['name'], skip_arg='strict', timeout=30*60,
+        session_function=icds_conditional_session_key())
     def get_by_name(cls, name, strict=False):
         if not name:
             # get_by_name should never be called with name as None (or '', etc)
@@ -720,189 +712,6 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
         results = commcare_domain_post_save.send_robust(sender='domain', domain=self)
         log_signal_errors(results, "Error occurred during domain post_save (%s)", {'domain': self.name})
 
-    def save_copy(self, new_domain_name=None, new_hr_name=None, user=None,
-                  copy_by_id=None, share_reminders=True,
-                  share_user_roles=True):
-        from corehq.apps.app_manager.dbaccessors import get_app
-        from corehq.apps.data_interfaces.models import AutomaticUpdateRule
-        from corehq.apps.fixtures.models import FixtureDataItem
-        from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
-        from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_class
-        from corehq.apps.fixtures.models import FixtureDataType
-        from corehq.apps.users.models import UserRole
-
-        db = Domain.get_db()
-        new_id = db.copy_doc(self.get_id)['id']
-        if new_domain_name is None:
-            new_domain_name = new_id
-
-        with CriticalSection(['request_domain_name_{}'.format(new_domain_name)]):
-            new_domain_name = Domain.generate_name(new_domain_name)
-            new_domain = Domain.get(new_id)
-            new_domain.name = new_domain_name
-            new_domain.hr_name = new_hr_name
-            new_domain.copy_history = self.get_updated_history()
-            new_domain.is_snapshot = False
-            new_domain.snapshot_time = None
-            new_domain.organization = None  # TODO: use current user's organization (?)
-
-            # reset stuff
-            new_domain.cda.signed = False
-            new_domain.cda.date = None
-            new_domain.cda.type = None
-            new_domain.cda.user_id = None
-            new_domain.cda.user_ip = None
-            new_domain.is_test = "none"
-            new_domain.internal = InternalProperties()
-            new_domain.creating_user = user.username if user else None
-            new_domain.date_created = datetime.utcnow()
-            new_domain.use_sql_backend = True
-            new_domain.granted_messaging_access = False
-
-            for field in self._dirty_fields:
-                if hasattr(new_domain, field):
-                    delattr(new_domain, field)
-
-            # Saving the domain should happen before we import any apps since
-            # importing apps can update the domain object (for example, if user
-            # as a case needs to be enabled)
-            try:
-                new_domain.save()
-            except PreconditionFailed:
-                # This is a hack to resolve http://manage.dimagi.com/default.asp?241492
-                # Following solution in
-                # https://github.com/dimagi/commcare-hq/commit/d59b1e403060ade599cc4a03db0aabc4da62b668
-                time.sleep(0.5)
-                new_domain.save()
-
-            new_app_components = {}  # a mapping of component's id to its copy
-
-            def copy_data_items(old_type_id, new_type_id):
-                for item in FixtureDataItem.by_data_type(self.name, old_type_id):
-                    comp = self.copy_component(
-                        item.doc_type, item._id, new_domain_name, user=user)
-                    comp.data_type_id = new_type_id
-                    comp.save()
-
-            def get_latest_app_id(doc_id):
-                app = get_app(self.name, doc_id).get_latest_saved()
-                if app:
-                    return app._id, app.doc_type
-
-            for app in get_brief_apps_in_domain(self.name):
-                doc_id, doc_type = app.get_id, app.doc_type
-                original_doc_id = doc_id
-                if copy_by_id and doc_id not in copy_by_id:
-                    continue
-                if not self.is_snapshot:
-                    doc_id, doc_type = get_latest_app_id(doc_id) or (doc_id, doc_type)
-                component = self.copy_component(doc_type, doc_id, new_domain_name, user=user)
-                if component:
-                    new_app_components[original_doc_id] = component
-
-            for doc_id in get_doc_ids_in_domain_by_class(self.name, FixtureDataType):
-                if copy_by_id and doc_id not in copy_by_id:
-                    continue
-                component = self.copy_component(
-                    'FixtureDataType', doc_id, new_domain_name, user=user)
-                copy_data_items(doc_id, component._id)
-
-            def convert_form_unique_id_function(app_id, form_unique_id):
-                app = get_app(self.name, app_id)
-                form = app.get_form(form_unique_id)
-                m_index, f_index = app.get_form_location(form.unique_id)
-                app_copy = new_app_components[app._id]
-                form_copy = new_app_components[app._id].get_module(m_index).get_form(f_index)
-                return app_copy.get_id, form_copy.unique_id
-
-            if share_reminders:
-                for rule in AutomaticUpdateRule.by_domain(
-                    self.name,
-                    AutomaticUpdateRule.WORKFLOW_SCHEDULING,
-                    active_only=False,
-                ):
-                    rule.copy_conditional_alert(
-                        new_domain_name,
-                        convert_form_unique_id_function=convert_form_unique_id_function,
-                    )
-            if share_user_roles:
-                for doc_id in get_doc_ids_in_domain_by_class(self.name, UserRole):
-                    self.copy_component('UserRole', doc_id, new_domain_name, user=user)
-
-        if user:
-            def add_dom_to_user(user):
-                user.add_domain_membership(new_domain_name, is_admin=True)
-            apply_update(user, add_dom_to_user)
-
-        return new_domain
-
-    def copy_component(self, doc_type, id, new_domain_name, user=None):
-        from corehq.apps.app_manager.models import import_app
-        from corehq.apps.users.models import UserRole
-        from corehq.apps.fixtures.models import FixtureDataType, FixtureDataItem
-
-        str_to_cls = {
-            'UserRole': UserRole,
-            'FixtureDataType': FixtureDataType,
-            'FixtureDataItem': FixtureDataItem,
-        }
-        if doc_type in ('Application', 'RemoteApp'):
-            new_doc = import_app(id, new_domain_name)
-            new_doc.copy_history.append(id)
-            new_doc.case_sharing = False
-            # when copying from app-docs that don't have
-            # unique_id attribute on Modules
-            new_doc.ensure_module_unique_ids(should_save=False)
-        else:
-            cls = str_to_cls[doc_type]
-            db = cls.get_db()
-
-            new_id = db.copy_doc(id)['id']
-
-            new_doc = cls.get(new_id)
-
-            for field in self._dirty_fields:
-                if hasattr(new_doc, field):
-                    delattr(new_doc, field)
-
-            if hasattr(cls, '_meta_fields'):
-                for field in cls._meta_fields:
-                    if not field.startswith('_') and hasattr(new_doc, field):
-                        delattr(new_doc, field)
-
-            new_doc.domain = new_domain_name
-
-            if doc_type == 'FixtureDataType':
-                new_doc.copy_from = id
-                new_doc.is_global = True
-
-        if self.is_snapshot and doc_type == 'Application':
-            new_doc.prepare_multimedia_for_exchange()
-
-        new_doc.save()
-        return new_doc
-
-    def save_snapshot(self, share_reminders, copy_by_id=None):
-        if self.is_snapshot:
-            return self
-        else:
-            try:
-                copy = self.save_copy(
-                    copy_by_id=copy_by_id, share_reminders=share_reminders,
-                    share_user_roles=False)
-            except NameUnavailableException:
-                return None
-            copy.is_snapshot = True
-            head = self.snapshots(limit=1).first()
-            if head and head.snapshot_head:
-                head.snapshot_head = False
-                head.save()
-            copy.snapshot_head = True
-            copy.snapshot_time = datetime.utcnow()
-            del copy.deployment
-            copy.save()
-            return copy
-
     def snapshots(self, **view_kwargs):
         return Domain.view('domain/snapshots',
             startkey=[self._id, {}],
@@ -912,14 +721,6 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
             descending=True,
             **view_kwargs
         )
-
-    @memoized
-    def published_snapshot(self):
-        snapshots = self.snapshots().all()
-        for snapshot in snapshots:
-            if snapshot.published:
-                return snapshot
-        return None
 
     def update_deployment(self, **kwargs):
         self.deployment.update(kwargs)
@@ -984,37 +785,6 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
         for db, related_doc_ids in get_all_doc_ids_for_domain_grouped_by_db(self.name):
             iter_bulk_delete(db, related_doc_ids, chunksize=500)
 
-    def all_media(self, from_apps=None):
-        from corehq.apps.hqmedia.models import CommCareMultimedia
-        dom_with_media = self if not self.is_snapshot else self.copied_from
-
-        if self.is_snapshot:
-            app_ids = [app.copied_from.get_id for app in self.full_applications()]
-            if from_apps:
-                from_apps = set([a_id for a_id in app_ids if a_id in from_apps])
-            else:
-                from_apps = app_ids
-
-        if from_apps:
-            media = []
-            media_ids = set()
-            apps = [app for app in dom_with_media.full_applications() if app.get_id in from_apps]
-            for app in apps:
-                if app.doc_type != 'Application':
-                    continue
-                for _, m in app.get_media_objects(remove_unused=True):
-                    if m.get_id not in media_ids:
-                        media.append(m)
-                        media_ids.add(m.get_id)
-            return media
-
-        return CommCareMultimedia.view('hqmedia/by_domain', key=dom_with_media.name, include_docs=True).all()
-
-    def most_restrictive_licenses(self, apps_to_check=None):
-        from corehq.apps.hqmedia.utils import most_restrictive
-        licenses = [m.license['type'] for m in self.all_media(from_apps=apps_to_check) if m.license]
-        return most_restrictive(licenses)
-
     @classmethod
     def get_module_by_name(cls, domain_name):
         """
@@ -1061,35 +831,6 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
     def get_form_display(self, form):
         """Get the properties display definition for a given XFormInstance"""
         return self.case_display.form_details.get(form.xmlns)
-
-    @property
-    def total_downloads(self):
-        """
-            Returns the total number of downloads from every snapshot created from this domain
-        """
-        from corehq.apps.domain.dbaccessors import count_downloads_for_all_snapshots
-        return count_downloads_for_all_snapshots(self.get_id)
-
-    @property
-    @memoized
-    def download_count(self):
-        """
-            Updates and returns the total number of downloads from every sister snapshot.
-        """
-        if self.is_snapshot:
-            self.full_downloads = self.copied_from.total_downloads
-        return self.full_downloads
-
-    @property
-    @memoized
-    def published_by(self):
-        from corehq.apps.users.models import CouchUser
-        pb_id = self.cda.user_id
-        return CouchUser.get_by_user_id(pb_id) if pb_id else None
-
-    @property
-    def name_of_publisher(self):
-        return self.published_by.human_friendly_name if self.published_by else ""
 
     @property
     def location_types(self):
@@ -1147,7 +888,6 @@ class TransferDomainRequest(models.Model):
     TRANSFER_TO_EMAIL = 'domain/email/domain_transfer_to_request'
     TRANSFER_FROM_EMAIL = 'domain/email/domain_transfer_from_request'
     DIMAGI_CONFIRM_EMAIL = 'domain/email/domain_transfer_confirm'
-    DIMAGI_CONFIRM_ADDRESS = 'commcarehq-support@dimagi.com'
 
     class Meta(object):
         app_label = 'domain'
@@ -1265,9 +1005,8 @@ class TransferDomainRequest(models.Model):
             self.as_dict())
 
         send_html_email_async.delay(
-            _('There has been a transfer of ownership of {domain}').format(
-                domain=self.domain), self.DIMAGI_CONFIRM_ADDRESS,
-            html_content, text_content=text_content
+            _('There has been a transfer of ownership of {domain}').format(domain=self.domain),
+            settings.SUPPORT_EMAIL, html_content, text_content=text_content,
         )
 
     def as_dict(self):

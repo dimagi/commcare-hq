@@ -30,7 +30,7 @@ from corehq.form_processor.abstract_models import DEFAULT_PARENT_IDENTIFIER
 from corehq.form_processor.exceptions import UnknownActionType, MissingFormXml
 from corehq.form_processor.track_related import TrackRelatedChanges
 from corehq.apps.tzmigration.api import force_phone_timezones_should_be_processed
-from corehq.sql_db.models import PartitionedModel, RestrictedManager
+from corehq.sql_db.models import PartitionedModel
 from corehq.util.json import CommCareJSONEncoder
 from couchforms import const
 from couchforms.jsonobject_extensions import GeoPointProperty
@@ -309,7 +309,6 @@ class AttachmentMixin(SaveStateMixin):
 class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, AttachmentMixin,
                        AbstractXFormInstance, TrackRelatedChanges):
     partition_attr = 'form_id'
-    objects = RestrictedManager()
 
     # states should be powers of 2
     NORMAL = 1
@@ -612,7 +611,6 @@ class DeprecatedXFormAttachmentSQL(models.Model):
 
 class XFormOperationSQL(PartitionedModel, SaveStateMixin, models.Model):
     partition_attr = 'form_id'
-    objects = RestrictedManager()
 
     ARCHIVE = 'archive'
     UNARCHIVE = 'unarchive'
@@ -703,7 +701,6 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
                       AttachmentMixin, AbstractCommCareCase, TrackRelatedChanges,
                       SupplyPointCaseMixin, MessagingCaseContactMixin):
     partition_attr = 'case_id'
-    objects = RestrictedManager()
 
     case_id = models.CharField(max_length=255, unique=True, db_index=True)
     domain = models.CharField(max_length=255, default=None)
@@ -881,13 +878,16 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
         """For compatability with CommCareCase. Please use transactions when possible"""
         return self.non_revoked_transactions
 
-    def get_transaction_by_form_id(self, form_id):
-        from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
+    def _get_unsaved_transaction_for_form(self, form_id):
         transactions = [t for t in self.get_tracked_models_to_create(CaseTransaction) if t.form_id == form_id]
         assert len(transactions) <= 1
-        transaction = transactions[0] if transactions else None
+        return transactions[0] if transactions else None
 
-        if not transaction:
+    def get_transaction_by_form_id(self, form_id):
+        from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
+        transaction = self._get_unsaved_transaction_for_form(form_id)
+
+        if not transaction and self.is_saved():
             transaction = CaseAccessorSQL.get_transaction_by_form_id(self.case_id, form_id)
         return transaction
 
@@ -1039,7 +1039,6 @@ class CaseAttachmentSQL(PartitionedModel, models.Model, SaveStateMixin, IsImageM
     for sharding locality with other data from the same case.
     """
     partition_attr = 'case_id'
-    objects = RestrictedManager()
 
     case = models.ForeignKey(
         'CommCareCaseSQL', to_field='case_id', db_index=False,
@@ -1137,7 +1136,6 @@ class CaseAttachmentSQL(PartitionedModel, models.Model, SaveStateMixin, IsImageM
 
 class CommCareCaseIndexSQL(PartitionedModel, models.Model, SaveStateMixin):
     partition_attr = 'case_id'
-    objects = RestrictedManager()
 
     # relationship_ids should be powers of 2
     CHILD = 1
@@ -1221,7 +1219,6 @@ class CommCareCaseIndexSQL(PartitionedModel, models.Model, SaveStateMixin):
 
 class CaseTransaction(PartitionedModel, SaveStateMixin, models.Model):
     partition_attr = 'case_id'
-    objects = RestrictedManager()
 
     # types should be powers of 2
     TYPE_FORM = 1
@@ -1380,6 +1377,8 @@ class CaseTransaction(PartitionedModel, SaveStateMixin, models.Model):
 
     @classmethod
     def form_transaction(cls, case, xform, client_date, action_types=None):
+        """Get or create a form transaction for a the given form and case.
+        """
         action_types = action_types or []
 
         if any([not cls._valid_action_type(action_type) for action_type in action_types]):
@@ -1407,6 +1406,8 @@ class CaseTransaction(PartitionedModel, SaveStateMixin, models.Model):
 
     @classmethod
     def ledger_transaction(cls, case, xform):
+        """Get or create a ledger transaction for a the given form and case.
+        """
         return cls._from_form(
             case,
             xform,
@@ -1415,7 +1416,10 @@ class CaseTransaction(PartitionedModel, SaveStateMixin, models.Model):
 
     @classmethod
     def _from_form(cls, case, xform, transaction_type):
-        transaction = case.get_transaction_by_form_id(xform.form_id)
+        if xform.is_saved():
+            transaction = case.get_transaction_by_form_id(xform.form_id)
+        else:
+            transaction = case._get_unsaved_transaction_for_form(xform.form_id)
         if transaction:
             transaction.type |= transaction_type
             return transaction
@@ -1527,7 +1531,6 @@ class LedgerValue(PartitionedModel, SaveStateMixin, models.Model, TrackRelatedCh
     Represents the current state of a ledger. Supercedes StockState
     """
     partition_attr = 'case_id'
-    objects = RestrictedManager()
 
     domain = models.CharField(max_length=255, null=False, default=None)
     case = models.ForeignKey(
@@ -1600,7 +1603,6 @@ class LedgerValue(PartitionedModel, SaveStateMixin, models.Model, TrackRelatedCh
 
 class LedgerTransaction(PartitionedModel, SaveStateMixin, models.Model):
     partition_attr = 'case_id'
-    objects = RestrictedManager()
 
     TYPE_BALANCE = 1
     TYPE_TRANSFER = 2

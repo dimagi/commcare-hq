@@ -4,6 +4,7 @@ from .views import (
     DowngradeLocationsView,
     DownloadLocationStatusView,
     EditLocationView,
+    FilteredLocationDownload,
     LocationFieldsView,
     LocationImportStatusView,
     LocationImportView,
@@ -12,7 +13,6 @@ from .views import (
     LocationTypesView,
     NewLocationView,
     archive_location,
-    child_locations_for_select2,
     default,
     delete_location,
     location_descendants_count,
@@ -26,7 +26,6 @@ from .views import (
 
 settings_urls = [
     url(r'^$', default, name='default_locations_view'),
-    url(r'^child_locations/$', child_locations_for_select2, name='child_locations_for_select2'),
     url(r'^list/$', LocationsListView.as_view(), name=LocationsListView.urlname),
     url(r'^location_search/$', LocationsSearchView.as_view(), name='location_search'),
     url(r'^location_types/$', LocationTypesView.as_view(), name=LocationTypesView.urlname),
@@ -40,6 +39,8 @@ settings_urls = [
         DownloadLocationStatusView.as_view(), name=DownloadLocationStatusView.urlname),
     url(r'^export_job_poll/(?P<download_id>(?:dl-)?[0-9a-fA-Z]{25,32})/$',
         location_download_job_poll, name='org_download_job_poll'),
+    url(r'^filter_and_download/$', FilteredLocationDownload.as_view(),
+        name=FilteredLocationDownload.urlname),
     url(r'^new/$', NewLocationView.as_view(), name=NewLocationView.urlname),
     url(r'^fields/$', LocationFieldsView.as_view(), name=LocationFieldsView.urlname),
     url(r'^downgrade/$', DowngradeLocationsView.as_view(),

@@ -3,13 +3,15 @@
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function PrevalenceOfSevereReportController($scope, $routeParams, $location, $filter, maternalChildService,
-    locationsService, userLocationId, storageService, genders, ages, haveAccessToAllLocations,
-    baseControllersService, haveAccessToFeatures, isAlertActive) {
+    locationsService, dateHelperService, navigationService, userLocationId, storageService, genders, ages,
+    haveAccessToAllLocations, baseControllersService, haveAccessToFeatures, isAlertActive, isMobile) {
     baseControllersService.BaseController.call(this, $scope, $routeParams, $location, locationsService,
-        userLocationId, storageService, haveAccessToAllLocations, haveAccessToFeatures);
+        dateHelperService, navigationService, userLocationId, storageService, haveAccessToAllLocations,
+        haveAccessToFeatures, isMobile);
 
     var vm = this;
     vm.isAlertActive = isAlertActive;
+    vm.serviceDataFunction = maternalChildService.getPrevalenceOfSevereData;
 
     var ageIndex = _.findIndex(ages,function (x) {
         return x.id === vm.filtersData.age;
@@ -26,10 +28,7 @@ function PrevalenceOfSevereReportController($scope, $routeParams, $location, $fi
     }
 
     vm.label = "Prevalence of Wasting (Weight-for-Height)";
-    vm.steps = {
-        'map': {route: '/maternal_and_child/wasting/map', label: 'Map View'},
-        'chart': {route: '/maternal_and_child/wasting/chart', label: 'Chart View'},
-    };
+    vm.steps = vm.getSteps('/maternal_and_child/wasting/');
     vm.data = {
         legendTitle: 'Percentage Children',
     };
@@ -49,16 +48,15 @@ function PrevalenceOfSevereReportController($scope, $routeParams, $location, $fi
         'Severe Acute Malnutrition (SAM) or wasting in children is a symptom of acute undernutrition usually as a consequence of insufficient food intake or a high incidence of infectious diseases.',
     };
 
-    vm.templatePopup = function(loc, row) {
+    vm.getPopupData = function (row) {
         var total = row ? $filter('indiaNumbers')(row.total_weighed) : 'N/A';
         var totalMeasured = row ? $filter('indiaNumbers')(row.total_measured) : 'N/A';
         var sever = row ? d3.format(".2%")(row.severe / (row.total_measured || 1)) : 'N/A';
         var moderate = row ? d3.format(".2%")(row.moderate / (row.total_measured || 1)) : 'N/A';
         var normal = row ? d3.format(".2%")(row.normal / (row.total_measured || 1)) : 'N/A';
         var unmeasured = row ? $filter('indiaNumbers')(row.total_height_eligible - row.total_measured) : 'N/A';
-        return vm.createTemplatePopup(
-            loc.properties.name,
-            [{
+        return [
+            {
                 indicator_name: 'Total Children ' + vm.chosenFilters() + ' weighed in given month: ',
                 indicator_value: total,
             },
@@ -81,17 +79,8 @@ function PrevalenceOfSevereReportController($scope, $routeParams, $location, $fi
             {
                 indicator_name: '% Normal ' + vm.chosenFilters() + ': ',
                 indicator_value: normal,
-            }]
-        );
-    };
-
-    vm.loadData = function () {
-        vm.setStepsMapLabel();
-        var usePercentage = true;
-        var forceYAxisFromZero = false;
-        vm.myPromise = maternalChildService.getPrevalenceOfSevereData(vm.step, vm.filtersData).then(
-            vm.loadDataFromResponse(usePercentage, forceYAxisFromZero)
-        );
+            }
+        ];
     };
 
     vm.init();
@@ -169,12 +158,16 @@ function PrevalenceOfSevereReportController($scope, $routeParams, $location, $fi
     };
 }
 
-PrevalenceOfSevereReportController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'maternalChildService', 'locationsService', 'userLocationId', 'storageService', 'genders', 'ages', 'haveAccessToAllLocations', 'baseControllersService', 'haveAccessToFeatures', 'isAlertActive'];
+PrevalenceOfSevereReportController.$inject = [
+    '$scope', '$routeParams', '$location', '$filter',
+    'maternalChildService', 'locationsService', 'dateHelperService', 'navigationService',
+    'userLocationId', 'storageService', 'genders', 'ages', 'haveAccessToAllLocations',
+    'baseControllersService', 'haveAccessToFeatures', 'isAlertActive', 'isMobile'];
 
-window.angular.module('icdsApp').directive('prevalenceOfSevere', function() {
+window.angular.module('icdsApp').directive('prevalenceOfSevere', ['templateProviderService', function (templateProviderService) {
     return {
         restrict: 'E',
-        templateUrl: url('icds-ng-template', 'map-chart'),
+        templateUrl: templateProviderService.getMapChartTemplate,
         bindToController: true,
         scope: {
             data: '=',
@@ -182,4 +175,4 @@ window.angular.module('icdsApp').directive('prevalenceOfSevere', function() {
         controller: PrevalenceOfSevereReportController,
         controllerAs: '$ctrl',
     };
-});
+}]);

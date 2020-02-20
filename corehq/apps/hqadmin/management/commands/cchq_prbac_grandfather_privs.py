@@ -31,7 +31,7 @@ class Command(BaseCommand):
         )
 
         # make sure that these roles are not attached to SoftwarePlanEditions
-        # that they aren't meant to be attached to. e.g. thw pro_plan_v0 role
+        # that they aren't meant to be attached to. e.g. thw pro_plan_v1 role
         # attached to a SoftwarePlanVersion under the Advanced edition.
         # see https://dimagi-dev.atlassian.net/browse/SAASP-10124
         all_plan_slugs = [

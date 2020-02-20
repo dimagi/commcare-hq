@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 from django.test import TestCase
 from django.test.utils import override_settings
 
-from corehq.apps.userreports.tasks import reprocess_archive_stubs
+from corehq.form_processor.tasks import reprocess_archive_stubs
 from corehq.apps.change_feed import topics
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors

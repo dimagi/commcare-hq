@@ -2,11 +2,15 @@
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function ImmunizationCoverageController($scope, $routeParams, $location, $filter, maternalChildService,
-    locationsService, userLocationId, storageService, genders, haveAccessToAllLocations, baseControllersService, isAlertActive) {
+    locationsService, dateHelperService, navigationService, userLocationId, storageService, genders,
+    haveAccessToAllLocations, baseControllersService, isAlertActive, isMobile) {
     baseControllersService.BaseController.call(this, $scope, $routeParams, $location, locationsService,
-        userLocationId, storageService, haveAccessToAllLocations);
+        dateHelperService, navigationService, userLocationId, storageService, haveAccessToAllLocations,
+        false, isMobile);
     var vm = this;
     vm.isAlertActive = isAlertActive;
+    vm.serviceDataFunction = maternalChildService.getImmunizationCoverageData;
+
     var genderIndex = _.findIndex(genders, function (x) {
         return x.id === vm.filtersData.gender;
     });
@@ -15,10 +19,7 @@ function ImmunizationCoverageController($scope, $routeParams, $location, $filter
     }
 
     vm.label = "Immunization coverage (at age 1 year)";
-    vm.steps = {
-        'map': {route: '/maternal_and_child/immunization_coverage/map', label: 'Map View'},
-        'chart': {route: '/maternal_and_child/immunization_coverage/chart', label: 'Chart View'},
-    };
+    vm.steps = vm.getSteps('/maternal_and_child/immunization_coverage/');
     vm.data = {
         legendTitle: 'Percentage Children',
     };
@@ -27,15 +28,14 @@ function ImmunizationCoverageController($scope, $routeParams, $location, $filter
         info: 'Of the total number of children enrolled for Anganwadi Services who are over a year old, the percentage of children who have received the complete immunization as per the National Immunization Schedule of India that is required by age 1.<br/><br/>This includes the following immunizations:<br/>If Pentavalent path: Penta1/2/3, OPV1/2/3, BCG, Measles, VitA1<br/>If DPT/HepB path: DPT1/2/3, HepB1/2/3, OPV1/2/3, BCG, Measles, VitA1',
     };
 
-    vm.templatePopup = function(loc, row) {
+    vm.getPopupData = function(row) {
         var gender = genderIndex > 0 ? genders[genderIndex].name : '';
         var chosenFilters = gender ? ' (' + gender + ') ' : '';
         var total = row ? $filter('indiaNumbers')(row.all) : 'N/A';
         var children = row ? $filter('indiaNumbers')(row.children) : 'N/A';
         var percent = row ? d3.format('.2%')(row.children / (row.all || 1)) : 'N/A';
-        return vm.createTemplatePopup(
-            loc.properties.name,
-            [{
+        return [
+            {
                 indicator_name: 'Total number of ICDS Child beneficiaries older than 1 year' + chosenFilters + ': ',
                 indicator_value: total,
             },
@@ -46,17 +46,8 @@ function ImmunizationCoverageController($scope, $routeParams, $location, $filter
             {
                 indicator_name: '% of children who have recieved complete immunizations required by age 1' + chosenFilters + ': ',
                 indicator_value: percent,
-            }]
-        );
-    };
-
-    vm.loadData = function () {
-        vm.setStepsMapLabel();
-        var usePercentage = true;
-        var forceYAxisFromZero = false;
-        vm.myPromise = maternalChildService.getImmunizationCoverageData(vm.step, vm.filtersData).then(
-            vm.loadDataFromResponse(usePercentage, forceYAxisFromZero)
-        );
+            }
+        ];
     };
 
     vm.init();
@@ -93,12 +84,17 @@ function ImmunizationCoverageController($scope, $routeParams, $location, $filter
     };
 }
 
-ImmunizationCoverageController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'maternalChildService', 'locationsService', 'userLocationId', 'storageService', 'genders', 'haveAccessToAllLocations', 'baseControllersService', 'isAlertActive'];
+ImmunizationCoverageController.$inject = [
+    '$scope', '$routeParams', '$location', '$filter',
+    'maternalChildService', 'locationsService', 'dateHelperService', 'navigationService',
+    'userLocationId', 'storageService', 'genders', 'haveAccessToAllLocations', 'baseControllersService',
+    'isAlertActive', 'isMobile',
+];
 
-window.angular.module('icdsApp').directive('immunizationCoverage', function() {
+window.angular.module('icdsApp').directive('immunizationCoverage', ['templateProviderService', function (templateProviderService) {
     return {
         restrict: 'E',
-        templateUrl: url('icds-ng-template', 'map-chart'),
+        templateUrl: templateProviderService.getMapChartTemplate,
         bindToController: true,
         scope: {
             data: '=',
@@ -106,4 +102,4 @@ window.angular.module('icdsApp').directive('immunizationCoverage', function() {
         controller: ImmunizationCoverageController,
         controllerAs: '$ctrl',
     };
-});
+}]);

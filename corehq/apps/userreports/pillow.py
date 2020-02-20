@@ -199,11 +199,7 @@ class ConfigurableReportTableManagerMixin(object):
             else:
                 all_adapters.append(adapter)
         for adapter in all_adapters:
-            try:
-                tables_by_engine[adapter.engine_id][adapter.get_table().name] = adapter
-            except BadSpecError:
-                _soft_assert = soft_assert(to='{}@{}'.format('jemord', 'dimagi.com'))
-                _soft_assert(False, "Broken data source {}".format(adapter.config.get_id))
+            tables_by_engine[adapter.engine_id][adapter.get_table().name] = adapter
 
         _assert = soft_assert(notify_admins=True)
         _notify_rebuild = lambda msg, obj: _assert(False, msg, obj)
@@ -256,6 +252,16 @@ class ConfigurableReportTableManagerMixin(object):
 
 
 class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, BulkPillowProcessor):
+    """Generic processor for UCR.
+
+    Reads from:
+      - SQLLocation
+      - Form data source
+      - Case data source
+
+    Writes to:
+      - UCR database
+    """
 
     domain_timing_context = Counter()
 
@@ -474,6 +480,11 @@ def get_kafka_ucr_pillow(pillow_id='kafka-ucr-main', ucr_division=None,
                          include_ucrs=None, exclude_ucrs=None, topics=None,
                          num_processes=1, process_num=0,
                          processor_chunk_size=DEFAULT_PROCESSOR_CHUNK_SIZE, **kwargs):
+    """UCR pillow that reads from all Kafka topics and writes data into the UCR database tables.
+
+        Processors:
+          - :py:class:`corehq.apps.userreports.pillow.ConfigurableReportPillowProcessor`
+    """
     # todo; To remove after full rollout of https://github.com/dimagi/commcare-hq/pull/21329/
     topics = topics or KAFKA_TOPICS
     topics = [t for t in topics]
@@ -497,6 +508,13 @@ def get_kafka_ucr_static_pillow(pillow_id='kafka-ucr-static', ucr_division=None,
                                 include_ucrs=None, exclude_ucrs=None, topics=None,
                                 num_processes=1, process_num=0,
                                 processor_chunk_size=DEFAULT_PROCESSOR_CHUNK_SIZE, **kwargs):
+    """UCR pillow that reads from all Kafka topics and writes data into the UCR database tables.
+
+    Only processes `static` UCR datasources (configuration lives in the codebase instead of the database).
+
+        Processors:
+          - :py:class:`corehq.apps.userreports.pillow.ConfigurableReportPillowProcessor`
+    """
     # todo; To remove after full rollout of https://github.com/dimagi/commcare-hq/pull/21329/
     topics = topics or KAFKA_TOPICS
     topics = [t for t in topics]
@@ -520,7 +538,13 @@ def get_kafka_ucr_static_pillow(pillow_id='kafka-ucr-static', ucr_division=None,
 
 def get_location_pillow(pillow_id='location-ucr-pillow', include_ucrs=None,
                         num_processes=1, process_num=0, ucr_configs=None, **kwargs):
-    # Todo; is ucr_division needed?
+    """Processes updates to locations for UCR
+
+    Note this is only applicable if a domain on the environment has `LOCATIONS_IN_UCR` flag enabled.
+
+    Processors:
+      - :py:func:`corehq.apps.userreports.pillow.ConfigurableReportPillowProcessor`
+    """
     change_feed = KafkaChangeFeed(
         [LOCATION_TOPIC], client_id=pillow_id, num_processes=num_processes, process_num=process_num
     )

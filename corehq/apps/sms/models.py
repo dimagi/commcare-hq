@@ -46,10 +46,6 @@ CALLBACK_PENDING = "PENDING"
 CALLBACK_RECEIVED = "RECEIVED"
 CALLBACK_MISSED = "MISSED"
 
-FORWARD_ALL = "ALL"
-FORWARD_BY_KEYWORD = "KEYWORD"
-FORWARDING_CHOICES = [FORWARD_ALL, FORWARD_BY_KEYWORD]
-
 WORKFLOW_CALLBACK = "CALLBACK"
 WORKFLOW_REMINDER = "REMINDER"
 WORKFLOW_KEYWORD = "KEYWORD"
@@ -462,17 +458,6 @@ class ExpectedCallback(UUIDGeneratorMixin, models.Model):
             )
         except cls.DoesNotExist:
             return None
-
-
-class ForwardingRule(Document):
-    domain = StringProperty()
-    forward_type = StringProperty(choices=FORWARDING_CHOICES)
-    keyword = StringProperty()
-    backend_id = StringProperty() # id of MobileBackend which will be used to do the forwarding
-    
-    def retire(self):
-        self.doc_type += "-Deleted"
-        self.save()
 
 
 class PhoneBlacklist(models.Model):

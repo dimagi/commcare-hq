@@ -19,6 +19,7 @@ from couchexport.models import Format
 from openpyxl.styles import numbers
 from openpyxl.cell import WriteOnlyCell
 
+from couchexport.util import get_excel_format_value, get_legacy_excel_safe_value
 
 MAX_XLS_COLUMNS = 256
 
@@ -361,9 +362,10 @@ class Excel2007ExportWriter(ExportWriter):
     format = Format.XLS_2007
     max_table_name_size = 31
 
-    def __init__(self, format_as_text=False):
+    def __init__(self, format_as_text=False, use_formatted_cells=False):
         super(Excel2007ExportWriter, self).__init__()
         self.format_as_text = format_as_text
+        self.use_formatted_cells = use_formatted_cells
 
     def _init(self):
         # https://openpyxl.readthedocs.io/en/latest/optimized.html
@@ -382,31 +384,29 @@ class Excel2007ExportWriter(ExportWriter):
         from couchexport.export import FormattedRow
         sheet = self.tables[sheet_index]
 
-        # Source: http://stackoverflow.com/questions/1707890/fast-way-to-filter-illegal-xml-unicode-chars-in-python
-        dirty_chars = re.compile(
-            '[\x00-\x08\x0b-\x1f\x7f-\x84\x86-\x9f\ud800-\udfff\ufdd0-\ufddf\ufffe-\uffff]'
-        )
+        cells = []
+        for col_ind, val in enumerate(row):
+            skip_formatting_on_row = (isinstance(row, FormattedRow)
+                                      and col_ind in row.skip_excel_formatting)
 
-        def get_write_value(value):
-            if isinstance(value, (int, float)):
-                return value
-            if isinstance(value, bytes):
-                value = value.decode('utf-8')
-            elif value is not None:
-                value = str(value)
+            if (self.use_formatted_cells
+                    and not skip_formatting_on_row
+                    and not self.format_as_text):
+                excel_format, val_fmt = get_excel_format_value(val)
+                cell = WriteOnlyCell(sheet, val_fmt)
+                cell.number_format = excel_format
             else:
-                value = ''
-            return dirty_chars.sub('?', value)
+                cell = WriteOnlyCell(sheet, get_legacy_excel_safe_value(val))
+                if self.format_as_text:
+                    cell.number_format = numbers.FORMAT_TEXT
 
-        write_values = [get_write_value(val) for val in row]
-        cells = [WriteOnlyCell(sheet, val) for val in write_values]
-        if self.format_as_text:
-            for cell in cells:
-                cell.number_format = numbers.FORMAT_TEXT
+            cells.append(cell)
+
         if isinstance(row, FormattedRow):
             for hyperlink_column_index in row.hyperlink_column_indices:
                 cells[hyperlink_column_index].hyperlink = cells[hyperlink_column_index].value
                 cells[hyperlink_column_index].style = 'Hyperlink'
+
         sheet.append(cells)
 
     def _close(self):

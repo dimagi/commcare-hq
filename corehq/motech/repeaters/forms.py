@@ -19,6 +19,7 @@ from corehq.apps.reports.analytics.esaccessors import (
 from corehq.apps.users.util import raw_username
 from corehq.motech.repeaters.dbaccessors import get_repeaters_by_domain
 from corehq.motech.repeaters.repeater_generators import RegisterGenerator
+from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
 
 from .models import BASIC_AUTH, DIGEST_AUTH
 
@@ -242,6 +243,7 @@ class OpenmrsRepeaterForm(CaseRepeaterForm):
     def __init__(self, *args, **kwargs):
         super(OpenmrsRepeaterForm, self).__init__(*args, **kwargs)
         self.fields['location_id'].widget = LocationSelectWidget(self.domain, id='id_location_id')
+        self.fields['location_id'].help_text = ExpandedMobileWorkerFilter.location_search_help
 
     def get_ordered_crispy_form_fields(self):
         fields = super(OpenmrsRepeaterForm, self).get_ordered_crispy_form_fields()

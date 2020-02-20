@@ -55,3 +55,18 @@ to see how that works.
 .. _Read the Docs: https://commcare-hq.readthedocs.io/
 .. _reStructuredText: https://www.sphinx-doc.org/en/master/usage/restructuredtext/basics.html
 .. _autoclass: https://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html
+
+
+Updating requirements
+---------------------
+To update requirements edit
+``requirements/requirements.in`` for packages for all environments
+``requirements/prod-requirements.in`` for packages for production environments only
+``requirements/test-requirements.in`` for packages for test environment only
+``requirements/dev-requirements.in`` for packages for dev environment only
+
+and run ``make requirements``.
+
+To upgrade all requirements to their latest allowed version you can run
+``make upgrade-requirements``—this usually results in a large number of upgrades
+and is not something we can merge easily, but it is sometimes a useful exploratory first step.

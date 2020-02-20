@@ -1,8 +1,10 @@
+import inspect
 import re
 from collections import defaultdict
 
 from django.utils.translation import ugettext as _
 
+from jsonobject.containers import JsonDict
 from lxml import html
 from requests import RequestException
 from urllib3.exceptions import HTTPError
@@ -196,8 +198,8 @@ def create_patient(requests, info, case_config):
 
     def get_identifiers():
         identifiers = []
-        for patient_identifier_type, value_source_dict in case_config.patient_identifiers.items():
-            value_source = as_value_source(dict(value_source_dict))
+        for patient_identifier_type, value_source_config in case_config.patient_identifiers.items():
+            value_source = as_value_source(value_source_config)
             if (
                 patient_identifier_type != PERSON_UUID_IDENTIFIER_TYPE_ID
                 and value_source.can_export
@@ -245,11 +247,11 @@ def create_patient(requests, info, case_config):
         response = requests.post(
             '/ws/rest/v1/patient/',
             json=patient,
+            raise_for_status=True,
         )
-        if 200 <= response.status_code < 300:
-            # response.json() is not the full patient record. We need
-            # the patient's identifiers and attributes.
-            return get_patient_by_uuid(requests, response.json()['uuid'])
+        # response.json() is not the full patient record. We need
+        # the patient's identifiers and attributes.
+        return get_patient_by_uuid(requests, response.json()['uuid'])
 
 
 def authenticate_session(requests):
@@ -321,11 +323,15 @@ def generate_identifier(requests, identifier_type):
     """
     identifier = None
     source_id = None
-    with Requests(domain_name=requests.domain_name,
-                  base_url=requests.base_url,
-                  username=requests.username,
-                  password=requests.password,
-                  verify=requests.verify) as requests_session:
+    with Requests(
+        domain_name=requests.domain_name,
+        base_url=requests.base_url,
+        username=requests.username,
+        password=requests.password,
+        verify=requests.verify,
+        notify_addresses=requests.notify_addresses,
+        payload_id=requests.payload_id,
+    ) as requests_session:
         authenticate_session(requests_session)
         try:
             source_id = get_identifier_source_id(requests_session, identifier_type)
@@ -364,6 +370,12 @@ def find_or_create_patient(requests, domain, info, openmrs_config):
         patient, = patients
     elif not patients and get_value(patient_finder.create_missing, info):
         patient = create_patient(requests, info, openmrs_config.case_config)
+        if patient is None:
+            # ``create_patient()`` will return None without an error
+            # if the case has no basic data, not even a name. It
+            # seems unlikely that the case is meant to be forwarded.
+            # The user will get a warning, but not an error.
+            return None
     else:
         # If PatientFinder can't narrow down the number of candidate
         # patients, don't guess. Just admit that we don't know.
@@ -382,21 +394,44 @@ def find_or_create_patient(requests, domain, info, openmrs_config):
 
 
 def get_patient(requests, domain, info, openmrs_config):
-    patient = None
     for id_ in openmrs_config.case_config.match_on_ids:
-        identifier = openmrs_config.case_config.patient_identifiers[id_]
-        # identifier.case_property must be in info.extra_fields because OpenmrsRepeater put it there
-        assert identifier.case_property in info.extra_fields, 'identifier case_property missing from extra_fields'
-        patient = get_patient_by_id(requests, id_, info.extra_fields[identifier.case_property])
+        identifier_config: JsonDict = openmrs_config.case_config.patient_identifiers[id_]
+        identifier_case_property = identifier_config["case_property"]
+        # identifier_case_property must be in info.extra_fields because OpenmrsRepeater put it there
+        assert identifier_case_property in info.extra_fields, 'identifier case_property missing from extra_fields'
+        patient = get_patient_by_id(requests, id_, info.extra_fields[identifier_case_property])
         if patient:
-            break
-    else:
-        # Definitive IDs did not match a patient in OpenMRS.
-        if openmrs_config.case_config.patient_finder:
-            # Search for patients based on other case properties
-            patient = find_or_create_patient(requests, domain, info, openmrs_config)
+            if patient["voided"]:
+                # The patient associated with the case has been merged with
+                # another patient in OpenMRS, or deleted. Delete the OpenMRS
+                # identifier on the case, and try again.
+                delete_case_property(domain, info.case_id, identifier_case_property)
+                info.extra_fields[identifier_case_property] = None
+                return get_patient(requests, domain, info, openmrs_config)
+            return patient
 
-    return patient
+    # Definitive IDs did not match a patient in OpenMRS.
+    if openmrs_config.case_config.patient_finder:
+        # Search for patients based on other case properties
+        return find_or_create_patient(requests, domain, info, openmrs_config)
+
+
+def delete_case_property(
+    domain: str,
+    case_id: str,
+    case_property: str,
+):
+    """
+    Delete the OpenMRS identifier on the case.
+    """
+    members = dict(inspect.getmembers(CaseBlock.__init__.__code__))
+    case_block_args = members['co_varnames']
+    if case_property in case_block_args:
+        case_block_kwargs = {case_property: None}
+    else:
+        case_block_kwargs = {"update": {case_property: None}}
+    case_block = CaseBlock(case_id=case_id, create=False, **case_block_kwargs)
+    submit_case_blocks([case_block.as_text()], domain, xmlns=XMLNS_OPENMRS)
 
 
 def get_relevant_case_updates_from_form_json(domain, form_json, case_types, extra_fields,
@@ -429,8 +464,8 @@ def get_relevant_case_updates_from_form_json(domain, form_json, case_types, extr
 
 def get_export_data(config, properties, case_trigger_info):
     export_data = {}
-    for property_, value_source_dict in config.items():
-        value_source = as_value_source(dict(value_source_dict))
+    for property_, value_source_config in config.items():
+        value_source = as_value_source(value_source_config)
         if (
             property_ in properties
             and value_source.can_export

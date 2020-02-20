@@ -9,8 +9,8 @@ As a reminder, payments can be made via credit card, Electronic Fund Transfer (E
 You can also pre-pay for several months at any time by following the steps at https://confluence.dimagi.com/display/commcarepublic/CommCare+Pricing+FAQs#CommCarePricingFAQs-Pre-payment
 
 Please make a payment as soon as possible for the amount due.
-If you are not able to make a payment, your account will be downgraded to our free Community edition on {{ date_60 }}.
-As of this date, you will lose access to all paid features and direct email support from CommCare support team.
+If you are not able to make a payment, your subscription will be paused on {{ date_60 }}.
+As of this date, you will lose access to your project space until you re-subscribe to a paid plan.
 
 If you have any questions or if you think your recent payments haven’t been reflected in this balance, please don’t hesitate to contact {{ contact_email }}.
 

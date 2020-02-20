@@ -1,12 +1,11 @@
 from corehq.apps.styleguide.tabs import SGExampleTab, SimpleCrispyFormSGExample
-from corehq.tabs.tabclasses import DashboardTab, ProjectReportsTab, ProjectInfoTab, SetupTab, \
+from corehq.tabs.tabclasses import DashboardTab, ProjectReportsTab, SetupTab, \
     ProjectDataTab, ApplicationsTab, CloudcareTab, MessagingTab, ProjectUsersTab, \
     AdminTab, SMSAdminTab, AccountingTab, ProjectSettingsTab, \
     MySettingsTab, EnterpriseSettingsTab, TranslationsTab, HostedCCZTab
 
 MENU_TABS = (
     DashboardTab,
-    ProjectInfoTab,
     ProjectReportsTab,
     ProjectDataTab,
     SetupTab,

@@ -83,26 +83,22 @@ class TestSchedulingPartitionedDBAccessorsGetAndSave(BaseSchedulingPartitionedDB
         self.assertEqual(ShardAccessor.get_database_for_doc(self.p2_uuid), self.db2)
 
     def test_save_alert_schedule_instance(self):
-        self.assertEqual(AlertScheduleInstance.objects.using(plproxy_config.proxy_db).count(), 0)
         self.assertEqual(AlertScheduleInstance.objects.using(self.db1).count(), 0)
         self.assertEqual(AlertScheduleInstance.objects.using(self.db2).count(), 0)
 
         instance = self.make_alert_schedule_instance(self.p1_uuid)
         save_alert_schedule_instance(instance)
 
-        self.assertEqual(AlertScheduleInstance.objects.using(plproxy_config.proxy_db).count(), 0)
         self.assertEqual(AlertScheduleInstance.objects.using(self.db1).count(), 1)
         self.assertEqual(AlertScheduleInstance.objects.using(self.db2).count(), 0)
 
     def test_save_timed_schedule_instance(self):
-        self.assertEqual(TimedScheduleInstance.objects.using(plproxy_config.proxy_db).count(), 0)
         self.assertEqual(TimedScheduleInstance.objects.using(self.db1).count(), 0)
         self.assertEqual(TimedScheduleInstance.objects.using(self.db2).count(), 0)
 
         instance = self.make_timed_schedule_instance(self.p2_uuid)
         save_timed_schedule_instance(instance)
 
-        self.assertEqual(TimedScheduleInstance.objects.using(plproxy_config.proxy_db).count(), 0)
         self.assertEqual(TimedScheduleInstance.objects.using(self.db1).count(), 0)
         self.assertEqual(TimedScheduleInstance.objects.using(self.db2).count(), 1)
 

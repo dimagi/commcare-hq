@@ -7,6 +7,7 @@ import sys
 import traceback
 import uuid
 from datetime import datetime
+from urllib.parse import urlparse
 
 from django.conf import settings
 from django.contrib import messages
@@ -44,23 +45,22 @@ from django.views.generic.base import View
 import httpagentparser
 from couchdbkit import ResourceNotFound
 from memoized import memoized
-from urllib.parse import urlparse
-
 from sentry_sdk import last_event_id
 from two_factor.forms import AuthenticationTokenForm, BackupTokenForm
 from two_factor.views import LoginView
 
-from corehq.apps.hqwebapp.login_utils import get_custom_login_page
 from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.django.request import mutable_querydict
 from dimagi.utils.logging import notify_exception
-from dimagi.utils.parsing import string_to_datetime
 from dimagi.utils.web import get_site_domain, get_url_base, json_response
 from soil import DownloadBase
 from soil import views as soil_views
 
 from corehq.apps.accounting.models import Subscription
+from corehq.apps.accounting.decorators import (
+    always_allow_project_access,
+)
 from corehq.apps.analytics import ab_tests
 from corehq.apps.domain.decorators import (
     login_and_domain_required,
@@ -87,6 +87,7 @@ from corehq.apps.hqwebapp.forms import (
     CloudCareAuthenticationForm,
     EmailAuthenticationForm,
 )
+from corehq.apps.hqwebapp.login_utils import get_custom_login_page
 from corehq.apps.hqwebapp.utils import (
     get_environment_friendly_name,
     update_session_language,
@@ -188,6 +189,7 @@ def not_found(request, template_name='404.html'):
 
 @require_GET
 @location_safe
+@always_allow_project_access
 def redirect_to_default(req, domain=None):
     if not req.user.is_authenticated:
         if domain != None:
@@ -473,7 +475,7 @@ class CloudCareLoginView(HQLoginView):
 
 
 @two_factor_exempt
-def logout(req):
+def logout(req, default_domain_redirect='domain_login'):
     referer = req.META.get('HTTP_REFERER')
     domain = get_domain_from_url(urlparse(referer).path) if referer else None
 
@@ -481,7 +483,7 @@ def logout(req):
     django_logout(req, **{"template_name": settings.BASE_TEMPLATE})
 
     if referer and domain:
-        domain_login_url = reverse('domain_login', kwargs={'domain': domain})
+        domain_login_url = reverse(default_domain_redirect, kwargs={'domain': domain})
         return HttpResponseRedirect('%s' % domain_login_url)
     else:
         return HttpResponseRedirect(reverse('login'))
@@ -730,10 +732,6 @@ def render_static(request, template, page_name):
     """
     return render(request, "hqwebapp/blank.html",
                   {'tmpl': template, 'page_name': page_name})
-
-
-def cda(request):
-    return render_static(request, "cda.html", _("Content Distribution Agreement"))
 
 
 def apache_license(request):

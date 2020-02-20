@@ -96,7 +96,6 @@ EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 ADMINS = (('HQ Dev Team', 'commcarehq-dev+www-notifications@example.com'),)
 BUG_REPORT_RECIPIENTS = ['commcarehq-support@example.com']
 NEW_DOMAIN_RECIPIENTS = ['commcarehq-dev+newdomain@example.com']
-EXCHANGE_NOTIFICATION_RECIPIENTS = ['commcarehq-dev+exchange@example.com']
 
 SERVER_EMAIL = 'commcarehq-noreply@example.com'  # the physical server emailing - differentiate if needed
 DEFAULT_FROM_EMAIL = 'commcarehq-noreply@example.com'
@@ -118,7 +117,6 @@ CELERY_FLOWER_URL = 'http://127.0.0.1:5555'
 
 ####### Less/Django Compressor ########
 
-LESS_DEBUG = True
 COMPRESS_ENABLED = False
 COMPRESS_OFFLINE = False
 
@@ -244,6 +242,7 @@ CACHES = {
 # on both a local and a distributed environment this should be localhost
 ELASTICSEARCH_HOST = 'localhost'
 ELASTICSEARCH_PORT = 9200
+ELASTICSEARCH_MAJOR_VERSION = 2
 
 LOCAL_PILLOWTOPS = {
 #    'my_pillows': ['some.pillow.Class', ],

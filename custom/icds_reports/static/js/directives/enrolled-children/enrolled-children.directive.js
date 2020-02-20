@@ -2,12 +2,17 @@
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function EnrolledChildrenController($scope, $routeParams, $location, $filter, demographicsService,
-    locationsService, userLocationId, storageService, genders, ages, haveAccessToAllLocations,
-    baseControllersService, isAlertActive) {
+    locationsService, dateHelperService, navigationService, userLocationId, storageService, genders, ages,
+    haveAccessToAllLocations, baseControllersService, isAlertActive, isMobile) {
     baseControllersService.BaseController.call(this, $scope, $routeParams, $location, locationsService,
-        userLocationId, storageService, haveAccessToAllLocations);
+        dateHelperService, navigationService, userLocationId, storageService, haveAccessToAllLocations,
+        false, isMobile);
     var vm = this;
     vm.isAlertActive = isAlertActive;
+    vm.serviceDataFunction = demographicsService.getEnrolledChildrenData;
+    vm.usePercentage = false;
+    vm.forceYAxisFromZero = true;
+
 
     var ageIndex = _.findIndex(ages, function (x) {
         return x.id === vm.filtersData.age;
@@ -24,10 +29,7 @@ function EnrolledChildrenController($scope, $routeParams, $location, $filter, de
     }
 
     vm.label = "Children enrolled for Anganwadi Services";
-    vm.steps = {
-        'map': {route: '/demographics/enrolled_children/map', label: 'Map View'},
-        'chart': {route: '/demographics/enrolled_children/chart', label: 'Chart View'},
-    };
+    vm.steps = vm.getSteps('/demographics/enrolled_children/');
     vm.data = {
         legendTitle: 'Number of Children',
     };
@@ -42,7 +44,7 @@ function EnrolledChildrenController($scope, $routeParams, $location, $filter, de
     };
     vm.hideRanking = true;
 
-    vm.templatePopup = function(loc, row) {
+    vm.getPopupData = function (row) {
         var gender = genderIndex > 0 ? genders[genderIndex].name : '';
         var age = ageIndex > 0 ? ages[ageIndex].name : '0 - 6 years';
         var delimiter = gender && age ? ', ' : '';
@@ -50,9 +52,8 @@ function EnrolledChildrenController($scope, $routeParams, $location, $filter, de
         var valid = $filter('indiaNumbers')(row ? row.valid : 0);
         var all = $filter('indiaNumbers')(row ? row.all : 0);
         var percent = row ? d3.format('.2%')(row.valid / (row.all || 1)) : "N/A";
-        return vm.createTemplatePopup(
-            loc.properties.name,
-            [{
+        return [
+            {
                 indicator_name: 'Number of children ' + chosenFilters + ' who are enrolled for Anganwadi Services: ',
                 indicator_value: valid,
             },
@@ -63,17 +64,8 @@ function EnrolledChildrenController($scope, $routeParams, $location, $filter, de
             {
                 indicator_name: 'Percentage of registered children ' + chosenFilters + ' who are enrolled for Anganwadi Services: ',
                 indicator_value: percent,
-            }]
-        );
-    };
-
-    vm.loadData = function () {
-        vm.setStepsMapLabel();
-        var usePercentage = false;
-        var forceYAxisFromZero = true;
-        vm.myPromise = demographicsService.getEnrolledChildrenData(vm.step, vm.filtersData).then(
-            vm.loadDataFromResponse(usePercentage, forceYAxisFromZero)
-        );
+            }
+        ];
     };
 
     vm.init();
@@ -122,12 +114,17 @@ function EnrolledChildrenController($scope, $routeParams, $location, $filter, de
     };
 }
 
-EnrolledChildrenController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'demographicsService', 'locationsService', 'userLocationId', 'storageService', 'genders', 'ages', 'haveAccessToAllLocations', 'baseControllersService', 'isAlertActive'];
+EnrolledChildrenController.$inject = [
+    '$scope', '$routeParams', '$location', '$filter',
+    'demographicsService', 'locationsService', 'dateHelperService', 'navigationService', 'userLocationId',
+    'storageService', 'genders', 'ages', 'haveAccessToAllLocations', 'baseControllersService', 'isAlertActive',
+    'isMobile',
+];
 
-window.angular.module('icdsApp').directive('enrolledChildren', function() {
+window.angular.module('icdsApp').directive('enrolledChildren', ['templateProviderService', function (templateProviderService) {
     return {
         restrict: 'E',
-        templateUrl: url('icds-ng-template', 'map-chart'),
+        templateUrl: templateProviderService.getMapChartTemplate,
         bindToController: true,
         scope: {
             data: '=',
@@ -135,4 +132,4 @@ window.angular.module('icdsApp').directive('enrolledChildren', function() {
         controller: EnrolledChildrenController,
         controllerAs: '$ctrl',
     };
-});
+}]);

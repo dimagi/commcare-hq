@@ -1,25 +1,24 @@
-import copy
+
 import datetime
-import re
 from collections import defaultdict
 
-import dateutil
-from django.contrib.postgres.fields.jsonb import KeyTextTransform
-from django.db.models import Count
+from dateutil.relativedelta import relativedelta
 
-from corehq.apps.es import UserES
-from custom.icds_reports.models import AwcLocation, ICDSAuditEntryRecord, AggAwc
+from custom.icds_reports.const import INDIA_TIMEZONE
+from custom.icds_reports.models import AwcLocation
+from custom.icds_reports.models.aggregate import DashboardUserActivityReport
 from custom.icds_reports.utils import india_now
+from django.utils.functional import cached_property
 
 
 class DashBoardUsage:
 
-    title = 'Dashboard usage'
+    title = 'Dashboard Activity Report'
     required_fields = ['state_id', 'state_name', 'district_id', 'district_name', 'block_id', 'block_name']
     location_types = ['state_id', 'district_id', 'block_id']
-    agg_required_fields = ['state_id', 'district_id', 'block_id', 'is_launched']
     location_test_fields = ['state_is_test', 'district_is_test', 'block_is_test', 'supervisor_is_test',
                             'awc_is_test']
+    user_levels = [location_type.replace('_id', '') for location_type in location_types]
 
     roles = {
         '.nod': 'Nodal Officer',
@@ -39,15 +38,13 @@ class DashBoardUsage:
         '.bpa': 'Block Project Assistant',
         '.dpo': 'District Programme Officer (DPO)',
         '.cdpo': 'Child Development Project Officer (CDPO)',
-
+        '.sbp': 'Swasth Bharat Prerak'
     }
 
     def __init__(self, couch_user, domain):
         self.user = couch_user
         self.domain = domain
-        self.agg_list = None
-        self.sql_locations = None
-        self.national_user = False
+        self.location_id_name_dict = defaultdict(str)
 
     def get_role_from_username(self, username):
         for key, value in self.roles.items():
@@ -58,206 +55,142 @@ class DashBoardUsage:
     def convert_boolean_to_string(self, value):
         return 'yes' if value else 'no'
 
-    def get_users_by_location(self, user_supported_locations):
-        if not self.national_user:
-            user_query = UserES().mobile_users().domain(self.domain).location(
-                user_supported_locations
-            ).fields(['username', 'assigned_location_ids', 'last_login'])
-        else:
-            user_query = UserES().mobile_users().domain(self.domain
-                                                        ).fields(['username',
-                                                                  'assigned_location_ids',
-                                                                  'last_login'])
-        return [u for u in user_query.run().hits]
-
-    def get_names_from_ids(self, location_id):
-        return location_id.split('_')[0] + '_name'
-
-    def convert_rs_to_matrix(self, results_queryset, main_location_type=None):
+    def populate_location_id_vs_name_mapping(self, results_queryset, main_location_type=None):
         """
-
         :param results_queryset: AwcLocation values queryset
         :param main_location_type: parent location type to fetch only locations below that level
-        :return: location matrix similar to a dataframe and locations ids of all the locations below the given
-         location
         """
-        location_matrix = []
         location_ids = []
-        if main_location_type is not None:
-            sub_location_types = self.location_types[self.location_types.index(main_location_type) + 1:]
-        else:
-            sub_location_types = self.location_types
-
         for result in results_queryset:
-            row_data = [result['state_id'], result['state_name'], result['district_id'],
-                        result['district_name'], result['block_id'], result['block_name']]
-            location_matrix.append(row_data)
-            # adding only descendants to the main location
-            for sub_location in sub_location_types:
+            for sub_location in self.location_types:
                 if result[sub_location] not in location_ids:
                     location_ids.append(result[sub_location])
-        return location_matrix, location_ids
+                    # adding location id and name to the dict
+                    self.location_id_name_dict[result[sub_location]] = result[
+                        self.get_location_type_string_from_location_id(sub_location) + '_name']
 
     def get_location_id_string_from_location_type(self, location_type):
+        """
+        Appends location _id the location
+        :param location_type:
+        :return:
+        """
         return location_type + '_id'
 
     def get_location_type_string_from_location_id(self, location_id):
         return location_id.replace('_id', '')
 
     def check_if_date_in_last_week(self, date):
+        """
+        checks if the date is in last 7 days excluding today
+        :param date: user last activity date
+        :return: Returns if the user has an activity in dashboard in last 7 days
+        """
         if date is None:
             return 'N/A', False
-        date_formatted = dateutil.parser.parse(date).strftime("%d/%m/%Y, %I:%M %p")
-        d = datetime.datetime.strptime(date_formatted.split(',')[0], "%d/%m/%Y")
-        now = datetime.datetime.now()
-        return date_formatted, (now - d).days < 7
+        date = self.convert_utc_to_ist(date)
+        date_formatted = datetime.datetime.strftime(date, "%d/%m/%Y, %I:%M %p")
+        now = datetime.datetime.now(INDIA_TIMEZONE)
+        seven_days_before_date = (now - relativedelta(days=7)).date()
+        return date_formatted, seven_days_before_date <= date.date() < now.date()
 
-    def prepare_is_launched_agg_list(self, location_type=None, location_id=None):
+    def convert_utc_to_ist(self, utc_date):
         """
-        populates the location_id vs is_launched status and location_id vs location_type mappings for the
-         descendants of given location
-        :param location_type:
-        :param location_id:
-        :return: None
+        converts utc date to ist date
+        :param utc_date:
+        :return: ist date
         """
-        filter_dict = {'aggregation_level': 5,
-                       'month': datetime.date.today().replace(day=1)}
-        if location_type is not None:
-            location_type = self.get_location_id_string_from_location_type(location_type)
-            sub_location_types = self.agg_required_fields[self.location_types.index(location_type) + 1:]
-            filter_dict[location_type] = location_id
-        else:
-            sub_location_types = self.agg_required_fields
+        return utc_date.astimezone(INDIA_TIMEZONE)
 
-        aggregate_records = AggAwc.objects.filter(**filter_dict).values(*sub_location_types)
+    def get_location_name_from_id(self, location_id):
+        """
+        :param location_id: location_id
+        :return: Returns the name of the location
+        """
+        return self.location_id_name_dict[location_id]
 
-        aggregate_records_dict = defaultdict(str)
-        location_type_id_mapping = defaultdict(str)
+    def get_data_for_usage_report(self, date, filters):
+        """
+        :param date: Date for which the report is needed
+        :param filters: Filter for the DashboardUserActivityReport
+        :return:Returns a list of activity report records based on the filters
+        """
+        return list(DashboardUserActivityReport.objects.filter(date=date, **filters))
 
-        for aggregate_record in aggregate_records:
-            for sub_location_type in sub_location_types:
-                if sub_location_type != 'is_launched':
-                    if aggregate_record[sub_location_type] not in aggregate_records_dict or not\
-                            aggregate_records_dict[aggregate_record[sub_location_type]]:
-                        aggregate_records_dict[aggregate_record[sub_location_type]] =\
-                            aggregate_record['is_launched']
-                    if aggregate_record[sub_location_type] not in location_type_id_mapping:
-                        location_type_id_mapping[aggregate_record[sub_location_type]] = sub_location_type
-
-        self.agg_list = aggregate_records_dict
-        self.sql_locations = location_type_id_mapping
+    @cached_property
+    def is_national_user(self):
+        """
+        :return: Returns if the users has access to all locations or not
+        """
+        logged_in_user_locations = list(self.user.get_sql_locations(self.domain))
+        if not logged_in_user_locations or self.user.has_permission(self.domain, 'access_all_locations'):
+            return True
+        return False
 
     def get_excel_data(self):
         excel_rows = []
         filters = [['Generated at', india_now()]]
 
-        end_date = datetime.datetime.utcnow()
-        start_date = end_date - datetime.timedelta(days=7)
-
         headers = ['Sr.No', 'State/UT Name', 'District Name', 'Block Name', 'Username', 'Level', 'Role',
-                   'Launched?', 'Last Login', 'Logged in the last week?', 'Total', 'Child', 'Pregnant Women',
-                   'Demographics', 'System Usage', 'AWC infrastructure', 'Child Growth Monitoring List',
-                   'ICDS - CAS Monthly Register', 'AWW Performance Report', 'LS Performance Report',
-                   'Take Home Ration']
+                   'Launched?', 'Last Activity ', 'Activity in the last 7 days?']
         serial_count = 0
-        logged_in_user_locations = list(self.user.get_sql_locations(self.domain))
-        if not logged_in_user_locations:
-            self.national_user = True
 
-        loop_counter = 0
-        # Need to fetch all users for a national user
-        while (self.national_user and loop_counter < 1) or len(logged_in_user_locations) > loop_counter:
-            # getting the location types to retrieve for this user location
+        location_type_filter = {
+            'aggregation_level': 3
+        }
+        if not self.is_national_user:
+            user_location = self.user.get_sql_location(self.domain)
+            user_loc_id_key = \
+                self.get_location_id_string_from_location_type(user_location.location_type_name)
+            location_type_filter[user_loc_id_key] = user_location.get_id
+        else:
+            user_loc_id_key = None
+        for test_location in self.location_test_fields:
+            location_type_filter[test_location] = 0
 
-            location_type_filter = {
-                'aggregation_level': 5
-            }
-            if not self.national_user:
-                user_location = logged_in_user_locations[loop_counter]
-                user_location_type_name = \
-                    self.get_location_id_string_from_location_type(user_location.location_type_name)
-                location_type_filter[user_location_type_name] = user_location.get_id
-            else:
-                user_location_type_name = None
-            for test_location in self.location_test_fields:
-                location_type_filter[test_location] = 0
+        all_awc_locations = AwcLocation.objects.filter(**location_type_filter).values(*self.required_fields)
 
-            all_awc_locations = AwcLocation.objects.filter(**location_type_filter).values(*self.required_fields)
-            # converting the result set to matrix to fetch ancestors for a given location
-            location_matrix, location_ids =\
-                self.convert_rs_to_matrix(all_awc_locations, user_location_type_name)
+        self.populate_location_id_vs_name_mapping(all_awc_locations, user_loc_id_key)
 
-            users = self.get_users_by_location(location_ids)
+        date = datetime.datetime.now()
+        usage_data = []
 
-            dashboard_uname_rx = re.compile(r'^\d*\.[a-zA-Z]*@.*')
+        dashboard_filters = {}
 
-            usernames = [user['username'] for user in users if dashboard_uname_rx.match(user['username'])]
+        if not self.is_national_user:
+            # retrieving the user_level from logged in user location type
+            user_level = self.user_levels.index(user_loc_id_key.replace('_id', '')) + 1
+            dashboard_filters['user_level__gt'] = user_level
 
-            records = list(ICDSAuditEntryRecord.objects.filter(url='/a/{}/icds_export_indicator'
-                                                               .format(self.domain),
-                                                               username__in=usernames,
-                                                               time_of_use__gte=start_date,
-                                                               time_of_use__lt=end_date)
-                           .annotate(indicator=KeyTextTransform('indicator', 'post_data')).values('indicator',
-                                                                                                  'username')
-                           .annotate(count=Count('indicator')).order_by('username', 'indicator'))
+            dashboard_filters[user_loc_id_key] = user_location.get_id
 
-            if self.national_user:
-                self.prepare_is_launched_agg_list()
-            else:
-                self.prepare_is_launched_agg_list(user_location.location_type_name, user_location.get_id)
+        # keep the record in searched - current - month
+        while not usage_data:
+            usage_data = self.get_data_for_usage_report(date, dashboard_filters)
+            date -= relativedelta(days=1)
 
-            user_counts = defaultdict(int)
-            user_indicators = defaultdict(lambda: [0] * 10)
-            for record in records:
-                # ignoring the dashboard usage report
-                if int(record['indicator']) < 11:
-                    user_counts[record['username']] += record['count']
-                    # updating the counts as per the index which is the indicator number
-                    user_indicators[record['username']][int(record['indicator']) - 1] = record['count']
-            # accumulating the indicator counts
-            for user in users:
-                if not dashboard_uname_rx.match(user['username']):
-                    continue
-                indicator_count = user_indicators[user['username']]
-                user_sql_location_ids = user['assigned_location_ids']
-                if isinstance(user_sql_location_ids, str):
-                    user_sql_location_ids = [user_sql_location_ids]
+        for record in usage_data:
+            user_activity = record.last_activity if record.location_launched else None
+            last_activity, activity_in_last_week = self.check_if_date_in_last_week(user_activity)
 
-                for user_sql_location in user_sql_location_ids:
-                    # getting the location type to look up in matrix
-                    if user_sql_location not in self.sql_locations:
-                        continue
-                    location_type_id = self.sql_locations[user_sql_location]
-                    column_index = self.location_types.index(location_type_id)
-                    user_location_row = None
-                    # iterating and getting the db row from matrix
-                    for row in location_matrix:
-                        if row[2 * column_index] == user_sql_location:
-                            user_location_row = copy.deepcopy(row)
-                            break
-                    user_location_type = self.get_location_type_string_from_location_id(location_type_id)
+            state_name = self.get_location_name_from_id(record.state_id)
+            district_name = self.get_location_name_from_id(record.district_id)
+            block_name = self.get_location_name_from_id(record.block_id)
 
-                    if user_location_row is not None:
-                        if user_location_type == 'state':
-                            user_location_row[3] = ''
-                            user_location_row[5] = ''
-                        if user_location_type == 'district':
-                            user_location_row[5] = ''
+            excel = [serial_count, state_name,
+                     district_name, block_name, record.username.split('@')[0],
+                     self.user_levels[record.user_level - 1],
+                     self.get_role_from_username(record.username),
+                     self.convert_boolean_to_string(record.location_launched),
+                     last_activity,
+                     self.convert_boolean_to_string(activity_in_last_week)]
+            excel_rows.append(excel)
 
-                        last_login, logged_in_last_week = self.check_if_date_in_last_week(user['last_login'])
-
-                        excel = [serial_count, user_location_row[1], user_location_row[3],
-                                 user_location_row[5], user['username'].split('@')[0], user_location_type,
-                                 self.get_role_from_username(user['username']),
-                                 self.convert_boolean_to_string(self.agg_list[user_sql_location]),
-                                 last_login,
-                                 self.convert_boolean_to_string(logged_in_last_week),
-                                 user_counts[user['username']]]
-                        excel.extend(indicator_count)
-                        excel_rows.append(excel)
-            loop_counter += 1
         excel_rows = sorted(excel_rows, key=lambda x: (x[1], x[2], x[3]))
+        # appending serial numbers
+        for i in range(len(excel_rows)):
+            serial_count += 1
+            excel_rows[i][0] = serial_count
         excel_rows.insert(0, headers)
         return [
             [

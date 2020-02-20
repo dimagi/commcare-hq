@@ -136,16 +136,19 @@ class SoftwarePlanEdition(object):
     ENTERPRISE = "Enterprise"
     RESELLER = "Reseller"
     MANAGED_HOSTING = "Managed Hosting"
+    PAUSED = "Paused"
     CHOICES = (
         (COMMUNITY, COMMUNITY),
         (STANDARD, STANDARD),
         (PRO, PRO),
         (ADVANCED, ADVANCED),
         (ENTERPRISE, ENTERPRISE),
+        (PAUSED, PAUSED),
         (RESELLER, RESELLER),
         (MANAGED_HOSTING, MANAGED_HOSTING),
     )
     SELF_SERVICE_ORDER = [
+        PAUSED,
         COMMUNITY,
         STANDARD,
         PRO,
@@ -458,9 +461,9 @@ class BillingAccount(ValidateModelMixin, models.Model):
             return None
         except cls.MultipleObjectsReturned:
             log_accounting_error(
-                "Multiple billing accounts showed up for the domain '%s'. The "
-                "latest one was served, but you should reconcile very soon."
-                % domain
+                f"Multiple billing accounts showed up for the domain '{domain}'. The "
+                "latest one was served, but you should reconcile very soon.",
+                show_stack_trace=True,
             )
             return cls.objects.filter(created_by_domain=domain).latest('date_created')
         return None
@@ -782,9 +785,13 @@ class DefaultProductPlan(models.Model):
         unique_together = ('edition', 'is_trial', 'is_report_builder_enabled')
 
     @classmethod
+    @quickcache(['edition', 'is_trial', 'is_report_builder_enabled'],
+                skip_arg=lambda *args, **kwargs: not settings.ENTERPRISE_MODE or settings.UNIT_TESTING)
     def get_default_plan_version(cls, edition=None, is_trial=False,
                                  is_report_builder_enabled=False):
-        edition = edition or SoftwarePlanEdition.COMMUNITY
+        if not edition:
+            edition = (SoftwarePlanEdition.ENTERPRISE if settings.ENTERPRISE_MODE
+                       else SoftwarePlanEdition.COMMUNITY)
         try:
             default_product_plan = DefaultProductPlan.objects.select_related('plan').get(
                 edition=edition, is_trial=is_trial,
@@ -851,7 +858,7 @@ class SoftwarePlanVersion(models.Model):
                 SoftwarePlanEdition.PRO,
                 SoftwarePlanEdition.ADVANCED,
             ]:
-                return DESC_BY_EDITION[plan.edition]['description'] % monthly_limit
+                return DESC_BY_EDITION[plan.edition]['description'].format(monthly_limit)
             else:
                 return DESC_BY_EDITION[plan.edition]['description']
 
@@ -912,6 +919,10 @@ class SoftwarePlanVersion(models.Model):
                 if calc.get_usage() > feature_rate.monthly_limit:
                     return True
         return False
+
+    @property
+    def is_paused(self):
+        return self.plan.edition == SoftwarePlanEdition.PAUSED
 
 
 class SubscriberManager(models.Manager):
@@ -1135,6 +1146,10 @@ class Subscription(models.Model):
         Subscription._get_active_subscription_by_domain.clear(Subscription, self.subscriber.domain)
 
     @property
+    def is_community(self):
+        return self.plan_version.plan.edition == SoftwarePlanEdition.COMMUNITY
+
+    @property
     def allowed_attr_changes(self):
         """
         These are the attributes of a Subscription that can always be
@@ -1151,6 +1166,13 @@ class Subscription(models.Model):
                 filter(Q(date_end__isnull=True) | ~Q(date_start=F('date_end'))))
 
     @property
+    def previous_subscription_filter(self):
+        return Subscription.visible_objects.filter(
+            subscriber=self.subscriber,
+            date_start__lt=self.date_start - datetime.timedelta(days=1)
+        ).exclude(pk=self.pk)
+
+    @property
     def is_renewed(self):
         """
         Checks to see if there's another Subscription for this subscriber
@@ -1162,6 +1184,13 @@ class Subscription(models.Model):
     def next_subscription(self):
         try:
             return self.next_subscription_filter.order_by('date_start')[0]
+        except (Subscription.DoesNotExist, IndexError):
+            return None
+
+    @property
+    def previous_subscription(self):
+        try:
+            return self.previous_subscription_filter.order_by('-date_end')[0]
         except (Subscription.DoesNotExist, IndexError):
             return None
 
@@ -1698,6 +1727,9 @@ class Subscription(models.Model):
 
     @classmethod
     def get_active_subscription_by_domain(cls, domain_name_or_obj):
+        if settings.ENTERPRISE_MODE:
+            # Use the default plan, which is Enterprise when in ENTERPRISE_MODE
+            return None
         if isinstance(domain_name_or_obj, Domain):
             return cls._get_active_subscription_by_domain(domain_name_or_obj.name)
         return cls._get_active_subscription_by_domain(domain_name_or_obj)

@@ -2,16 +2,17 @@
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function RegisteredHouseholdController($scope, $routeParams, $location, $filter, demographicsService,
-    locationsService, userLocationId, storageService, haveAccessToAllLocations, baseControllersService, isAlertActive) {
+    locationsService, dateHelperService, navigationService, userLocationId, storageService,
+    haveAccessToAllLocations, baseControllersService, isAlertActive, isMobile) {
     baseControllersService.BaseController.call(this, $scope, $routeParams, $location, locationsService,
-        userLocationId, storageService, haveAccessToAllLocations);
+        dateHelperService, navigationService, userLocationId, storageService, haveAccessToAllLocations,
+        false, isMobile);
     var vm = this;
     vm.isAlertActive = isAlertActive;
     vm.label = "Registered Household";
-    vm.steps = {
-        'map': {route: '/demographics/registered_household/map', label: 'Map View'},
-        'chart': {route: '/demographics/registered_household/chart', label: 'Chart View'},
-    };
+    vm.usePercentage = false;
+    vm.serviceDataFunction = demographicsService.getRegisteredHouseholdData;
+    vm.steps = vm.getSteps('/demographics/registered_household/');
     vm.data = {
         legendTitle: 'Total AWCs that have launched ICDS CAS',
     };
@@ -20,24 +21,12 @@ function RegisteredHouseholdController($scope, $routeParams, $location, $filter,
         info: 'Total AWCs that have launched ICDS CAS',
     };
 
-    vm.templatePopup = function(loc, row) {
+    vm.getPopupData = function (row) {
         var household = row ? $filter('indiaNumbers')(row.household) : 'N/A';
-        return vm.createTemplatePopup(
-            loc.properties.name,
-            [{
-                indicator_name: 'Total number of household registered: ',
-                indicator_value: household,
-            }]
-        );
-    };
-
-    vm.loadData = function () {
-        vm.setStepsMapLabel();
-        var usePercentage = false;
-        var forceYAxisFromZero = false;
-        vm.myPromise = demographicsService.getRegisteredHouseholdData(vm.step, vm.filtersData).then(
-            vm.loadDataFromResponse(usePercentage, forceYAxisFromZero)
-        );
+        return [{
+            indicator_name: 'Total number of household registered: ',
+            indicator_value: household,
+        }];
     };
 
     vm.init();
@@ -74,12 +63,16 @@ function RegisteredHouseholdController($scope, $routeParams, $location, $filter,
     };
 }
 
-RegisteredHouseholdController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'demographicsService', 'locationsService', 'userLocationId', 'storageService', 'haveAccessToAllLocations', 'baseControllersService', 'isAlertActive'];
+RegisteredHouseholdController.$inject = [
+    '$scope', '$routeParams', '$location', '$filter',
+    'demographicsService', 'locationsService', 'dateHelperService', 'navigationService', 'userLocationId',
+    'storageService', 'haveAccessToAllLocations', 'baseControllersService', 'isAlertActive', 'isMobile',
+];
 
-window.angular.module('icdsApp').directive('registeredHousehold', function() {
+window.angular.module('icdsApp').directive('registeredHousehold', ['templateProviderService', function (templateProviderService) {
     return {
         restrict: 'E',
-        templateUrl: url('icds-ng-template', 'map-chart'),
+        templateUrl: templateProviderService.getMapChartTemplate,
         bindToController: true,
         scope: {
             data: '=',
@@ -87,4 +80,4 @@ window.angular.module('icdsApp').directive('registeredHousehold', function() {
         controller: RegisteredHouseholdController,
         controllerAs: '$ctrl',
     };
-});
+}]);

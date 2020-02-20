@@ -1,3 +1,4 @@
+from collections import defaultdict
 from datetime import timedelta
 
 from dimagi.utils.parsing import string_to_utc_datetime
@@ -9,6 +10,7 @@ from corehq.motech.openmrs.const import (
     PERSON_PROPERTIES,
     PERSON_UUID_IDENTIFIER_TYPE_ID,
 )
+from corehq.motech.openmrs.openmrs_config import ALL_CONCEPTS
 from corehq.motech.openmrs.repeater_helpers import (
     get_ancestor_location_openmrs_uuid,
     get_export_data,
@@ -137,41 +139,34 @@ class CreateVisitsEncountersObsTask(WorkflowTask):
         stop_datetime for the Visit
         """
         if form_config.openmrs_start_datetime:
-            value_source = as_value_source(dict(form_config.openmrs_start_datetime))
-            cc_start_datetime_str = value_source.get_commcare_value(self.info)
-            if cc_start_datetime_str is None:
-                raise ConfigurationError(
-                    'A form config for form XMLNS "{}" uses "openmrs_start_datetime" to get the start of '
-                    'the visit but no value was found in the form.'.format(form_config.xmlns)
-                )
-            try:
-                cc_start_datetime = string_to_utc_datetime(cc_start_datetime_str)
-            except ValueError:
-                raise ConfigurationError(
-                    'A form config for form XMLNS "{}" uses "openmrs_start_datetime" to get the start of '
-                    'the visit but an invalid value was found in the form.'.format(form_config.xmlns)
-                )
-            cc_stop_datetime = cc_start_datetime + timedelta(days=1) - timedelta(seconds=1)
-            # We need to serialize both values with the data type of
-            # openmrs_start_datetime because they could be either
-            # OpenMRS datetimes or OpenMRS dates, and their data
-            # types must match.
-            start_datetime = value_source.serialize(cc_start_datetime)
-            stop_datetime = value_source.serialize(cc_stop_datetime)
-        else:
-            cc_start_datetime = string_to_utc_datetime(self.form_json['form']['meta']['timeEnd'])
-            cc_stop_datetime = cc_start_datetime + timedelta(days=1) - timedelta(seconds=1)
-            start_datetime = to_omrs_datetime(cc_start_datetime)
-            stop_datetime = to_omrs_datetime(cc_stop_datetime)
+            value_source = as_value_source(form_config.openmrs_start_datetime)
+            if value_source.can_export:
+                cc_start_datetime_str = value_source.get_commcare_value(self.info)
+                if cc_start_datetime_str is None:
+                    raise ConfigurationError(
+                        'A form config for form XMLNS "{}" uses "openmrs_start_datetime" to get the start of '
+                        'the visit but no value was found in the form.'.format(form_config.xmlns)
+                    )
+                try:
+                    cc_start_datetime = string_to_utc_datetime(cc_start_datetime_str)
+                except ValueError:
+                    raise ConfigurationError(
+                        'A form config for form XMLNS "{}" uses "openmrs_start_datetime" to get the start of '
+                        'the visit but an invalid value was found in the form.'.format(form_config.xmlns)
+                    )
+                cc_stop_datetime = cc_start_datetime + timedelta(days=1) - timedelta(seconds=1)
+                # We need to serialize both values with the data type of
+                # openmrs_start_datetime because they could be either
+                # OpenMRS datetimes or OpenMRS dates, and their data
+                # types must match.
+                start_datetime = value_source.serialize(cc_start_datetime)
+                stop_datetime = value_source.serialize(cc_stop_datetime)
+                return start_datetime, stop_datetime
+        cc_start_datetime = string_to_utc_datetime(self.form_json['form']['meta']['timeEnd'])
+        cc_stop_datetime = cc_start_datetime + timedelta(days=1) - timedelta(seconds=1)
+        start_datetime = to_omrs_datetime(cc_start_datetime)
+        stop_datetime = to_omrs_datetime(cc_stop_datetime)
         return start_datetime, stop_datetime
-
-    def _get_values_for_concept(self, form_config):
-        values_for_concept = {}
-        for obs in form_config.openmrs_observations:
-            value_source = as_value_source(dict(obs.value))
-            if value_source.can_export and not is_blank(value_source.get_value(self.info)):
-                values_for_concept[obs.concept] = [value_source.get_value(self.info)]
-        return values_for_concept
 
     def run(self):
         """
@@ -196,7 +191,7 @@ class CreateVisitsEncountersObsTask(WorkflowTask):
                         provider_uuid=provider_uuid,
                         start_datetime=start_datetime,
                         stop_datetime=stop_datetime,
-                        values_for_concept=self._get_values_for_concept(form_config),
+                        values_for_concept=get_values_for_concept(form_config, self.info),
                         encounter_type=form_config.openmrs_encounter_type,
                         openmrs_form=form_config.openmrs_form,
                         visit_type=form_config.openmrs_visit_type,
@@ -204,6 +199,23 @@ class CreateVisitsEncountersObsTask(WorkflowTask):
                     )
                 )
         return subtasks
+
+
+def get_values_for_concept(form_config, info):
+    """
+    Returns a dictionary mapping OpenMRS concept UUIDs to lists of
+    values. Each value will be exported as a separate Observation.
+    """
+    values_for_concept = defaultdict(list)
+    for obs in form_config.openmrs_observations:
+        if obs.concept == ALL_CONCEPTS:
+            # ALL_CONCEPTS is a special value for importing all
+            # Observations as extension cases. It's not applicable here.
+            continue
+        value_source = as_value_source(obs.value)
+        if value_source.can_export and not is_blank(value_source.get_value(info)):
+            values_for_concept[obs.concept].append(value_source.get_value(info))
+    return values_for_concept
 
 
 class CreatePersonAttributeTask(WorkflowTask):

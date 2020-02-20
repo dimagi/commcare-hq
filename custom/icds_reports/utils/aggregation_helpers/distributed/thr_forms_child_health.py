@@ -11,6 +11,7 @@ class THRFormsChildHealthAggregationDistributedHelper(StateBasedAggregationDistr
     helper_key = 'thr-forms-child-health'
     ucr_data_source_id = 'static-dashboard_thr_forms'
     aggregate_parent_table = AGG_CHILD_HEALTH_THR_TABLE
+    months_required = 0
 
     def aggregation_query(self):
         month = self.month.replace(day=1)

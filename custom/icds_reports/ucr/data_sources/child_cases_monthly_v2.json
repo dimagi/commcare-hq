@@ -2216,7 +2216,7 @@
                   "related_doc_type": "CommCareCase",
                   "value_expression": {
                     "type": "property_name",
-                    "property_name": "migrated_status"
+                    "property_name": "migration_status"
                   }
                 },
                 "property_value": "yes"
@@ -3285,7 +3285,7 @@
                   "related_doc_type": "CommCareCase",
                   "value_expression": {
                     "type": "property_name",
-                    "property_name": "migrated_status"
+                    "property_name": "migration_status"
                   }
                 },
                 "property_value": "yes"

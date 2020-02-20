@@ -215,9 +215,6 @@
     },
     "sql_column_indexes": [
       {
-        "column_ids": ["doc_id"]
-      },
-      {
         "column_ids": ["state_id", "timeend"]
       }
     ],

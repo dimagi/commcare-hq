@@ -900,16 +900,16 @@ class ApplicationMediaMixin(Document, MediaMixin):
         if map_changed:
             self.save()
 
-    def create_mapping(self, multimedia, form_path, save=True):
+    def create_mapping(self, multimedia, path, save=True):
         """
             This creates the mapping of a path to the multimedia in an application to the media object stored in couch.
         """
-        form_path = form_path.strip()
+        path = path.strip()
         map_item = HQMediaMapItem()
         map_item.multimedia_id = multimedia._id
-        map_item.unique_id = HQMediaMapItem.gen_unique_id(map_item.multimedia_id, form_path)
+        map_item.unique_id = HQMediaMapItem.gen_unique_id(map_item.multimedia_id, path)
         map_item.media_type = multimedia.doc_type
-        self.multimedia_map[form_path] = map_item
+        self.multimedia_map[path] = map_item
 
         if save:
             try:
@@ -975,15 +975,6 @@ class ApplicationMediaMixin(Document, MediaMixin):
                     'paths': matched_paths,
                 })
         return totals
-
-    def prepare_multimedia_for_exchange(self):
-        """
-            Prepares the multimedia in the application for exchanging across domains.
-        """
-        self.remove_unused_mappings()
-        for path, media in self.get_media_objects(remove_unused=True):
-            if not media or (not media.is_shared and self.domain not in media.owners):
-                del self.multimedia_map[path]
 
     def check_media_state(self):
         has_missing_refs = False

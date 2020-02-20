@@ -562,6 +562,14 @@ def exclude_records_by_age_for_column(exclude_config, column):
     )
 
 
+def include_records_by_age_for_column(include_config, column):
+    return Case(
+        When(Q(**include_config), then=F(column)),
+        default=0,
+        output_field=IntegerField()
+    )
+
+
 def generate_data_for_map(data, loc_level, num_prop, denom_prop, fill_key_lower, fill_key_bigger, all_property=None):
     data_for_map = defaultdict(lambda: {
         num_prop: 0,
@@ -1481,14 +1489,13 @@ def create_lady_supervisor_excel_file(excel_data, data_type, month, aggregation_
 
 def get_dashboard_usage_excel_file(excel_data, data_type):
     export_info = excel_data[1][1]
-    primary_headers = ['', '', '', '', '', '', '', '', '', '', 'Tabular Report Download Frequency (Last 1 week)']
 
     workbook = Workbook()
     worksheet = workbook.active
-    worksheet.title = "Dashboard Usage"
-    bold_font = Font(size=14, color="FFFFFF")
-    cell_pattern_blue = PatternFill("solid", fgColor="4472C4")
-    text_alignment = Alignment(horizontal="center", vertical='top', wrap_text=True)
+    worksheet.title = "Dashboard Activity"
+    bold_font = Font(size=11, color="FFFFFF", bold=True)
+    cell_pattern_blue = PatternFill("solid", fgColor="3387E3")
+    text_alignment = Alignment(horizontal="left", vertical='center', wrap_text=True)
     thin_border_no_top = Border(
         left=Side(style='thin'),
         right=Side(style='thin'),
@@ -1512,33 +1519,27 @@ def get_dashboard_usage_excel_file(excel_data, data_type):
 
     )
 
-    # Primary Header
-    main_header = worksheet.row_dimensions[1]
-    main_header.height = 30
-    current_column_location = 1
-    for index, primary_header in enumerate(primary_headers):
-        cell_name = get_column_letter(current_column_location)
-        cell = worksheet['{}1'.format(cell_name)]
-        cell.alignment = text_alignment
-
-        cell.value = primary_header
-        cell.fill = cell_pattern_blue
-        cell.font = bold_font
-        cell.border = thin_border_no_bottom
-        if primary_header == 'Tabular Report Download Frequency (Last 1 week)':
-            worksheet.merge_cells('{}1:{}1'.format(get_column_letter(current_column_location),
-                                                   get_column_letter(current_column_location + 10)))
-            cell.border = thin_border_no_top
-        current_column_location += 1
+    # # Primary Header
+    # main_header = worksheet.row_dimensions[2]
+    # main_header.height = 30
+    # for index, primary_header in enumerate(primary_headers):
+    #     cell_name = get_column_letter(current_column_location)
+    #     cell = worksheet['{}1'.format(cell_name)]
+    #     cell.alignment = text_alignment
+    #
+    #     cell.value = primary_header
+    #     cell.fill = cell_pattern_blue
+    #     cell.font = bold_font
+    #     cell.border = thin_border_no_bottom
 
     # Secondary Header
-    secondary_header = worksheet.row_dimensions[2]
-    secondary_header.height = 30
+    secondary_header = worksheet.row_dimensions[1]
+    secondary_header.height = 40
     headers = excel_data[0][1][0]
     bold_font_black = Font(size=11)
     for index, header in enumerate(headers):
         location_column = get_column_letter(index + 1)
-        cell = worksheet['{}2'.format(location_column)]
+        cell = worksheet['{}1'.format(location_column)]
         cell.alignment = text_alignment
         worksheet.column_dimensions[location_column].width = 30
         cell.value = header
@@ -1548,14 +1549,11 @@ def get_dashboard_usage_excel_file(excel_data, data_type):
 
     # Fill data
     for row_index, row in enumerate(excel_data[0][1][1:]):
+        worksheet.row_dimensions[row_index + 2].height = 20
         for col_index, col_value in enumerate(row):
-            if col_index == 0:
-                col_value = row_index + 1
-            row_num = row_index + 3
+            row_num = row_index + 2
             column_name = get_column_letter(col_index + 1)
             cell = worksheet['{}{}'.format(column_name, row_num)]
-            if col_index > 6 and (col_value == '' or col_value == 0):
-                col_value = 'N/A'
             cell.value = col_value
             cell.border = thin_border
             cell.font = bold_font_black

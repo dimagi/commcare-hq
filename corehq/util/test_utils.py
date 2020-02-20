@@ -1,21 +1,26 @@
-import uuid
 import functools
 import json
 import logging
-from io import open, StringIO
+import os
+import traceback
+import uuid
+from collections import defaultdict, namedtuple
+from contextlib import ExitStack, contextmanager
+from datetime import datetime, timedelta
+from functools import wraps
+from io import StringIO, open
+from textwrap import wrap, indent
+from time import time
+from unittest import SkipTest, TestCase
+
+from django.conf import settings
+from django.db import connections
+from django.db.backends import utils
+from django.test.utils import CaptureQueriesContext
 
 import mock
-import os
-from unittest import TestCase, SkipTest
-from collections import defaultdict, namedtuple
-from contextlib import contextmanager
-
-from functools import wraps
-from django.conf import settings
-
 from corehq.util.context_managers import drop_connected_signals
 from corehq.util.decorators import ContextDecorator
-
 
 WrappedJsonFormPair = namedtuple('WrappedJsonFormPair', ['wrapped_form', 'json_form'])
 
@@ -366,6 +371,42 @@ def generate_cases(argsets, cls=None):
     return add_cases
 
 
+def timelimit(limit):
+    """Create a decorator that asserts a run time limit
+
+    An assertion error is raised if the decorated function returns
+    without raising an error and the elapsed run time is longer than
+    the allowed time limit.
+
+    Usage:
+
+        @timelimit
+        def lt_one_second():
+            ...
+
+        @timelimit(0.5)
+        def lt_half_second():
+            ...
+
+    :param limit: number of seconds or a callable to decorate. If
+    callable, the time limit defaults to one second.
+    """
+    if callable(limit):
+        return timelimit((limit, timedelta(seconds=1)))
+    if not isinstance(limit, tuple):
+        limit = timedelta(seconds=limit)
+        return lambda func: timelimit((func, limit))
+    func, limit = limit
+    @wraps(func)
+    def decorator(*args, **kw):
+        start = datetime.utcnow()
+        rval = func(*args, **kw)
+        elapsed = datetime.utcnow() - start
+        assert elapsed < limit, f"{func.__name__} took too long: {elapsed}"
+        return rval
+    return decorator
+
+
 def get_form_ready_to_save(metadata, is_db_test=False):
     from corehq.form_processor.parsers.form import process_xform_xml
     from corehq.form_processor.utils import get_simple_form_xml, convert_xform_to_json
@@ -580,3 +621,96 @@ class PatchMeta(type):
     def __init__(self, *args, **kwargs):
         super(PatchMeta, self).__init__(*args, **kwargs)
         self.patch(self)
+
+
+class CursorDebugWrapperWithTraceback(utils.CursorDebugWrapper):
+    def execute(self, sql, params=None):
+        start = time()
+        try:
+            return utils.CursorWrapper.execute(self, sql, params)
+        finally:
+            stop = time()
+            duration = stop - start
+            sql = self.db.ops.last_executed_query(self.cursor, sql, params)
+            self.db.queries_log.append({
+                'start': start,
+                'sql': sql,
+                'time': "%.3f" % duration,
+                'traceback': traceback.format_stack()
+            })
+
+    def executemany(self, sql, param_list):
+        start = time()
+        try:
+            return utils.CursorWrapper.executemany(self, sql, param_list)
+        finally:
+            stop = time()
+            duration = stop - start
+            try:
+                times = len(param_list)
+            except TypeError:           # param_list could be an iterator
+                times = '?'
+            self.db.queries_log.append({
+                'start': start,
+                'sql': '%s times: %s' % (times, sql),
+                'time': "%.3f" % duration,
+                'traceback': traceback.format_stack()
+            })
+
+
+class capture_sql(ContextDecorator):
+    """
+    Capture SQL executed on ALL databases listed in settings
+    ```
+    with capture_sql() as capture:
+        # do some quries
+
+    capture.print_sql(with_traceback=False)
+    ```
+    """
+    def __init__(self):
+        self.query_contexts = {}
+        self.wrapper = utils.CursorDebugWrapper
+
+    def __enter__(self):
+        utils.CursorDebugWrapper = CursorDebugWrapperWithTraceback
+        self._stack = ExitStack()
+        for db in settings.DATABASES:
+            context = CaptureQueriesContext(connections[db])
+            self.query_contexts[db] = context
+            self._stack.enter_context(context)
+        return self
+
+    def __exit__(self, *exc_details):
+        utils.CursorDebugWrapper = self.wrapper
+        self._stack.__exit__(*exc_details)
+
+    @property
+    def queries_by_db(self):
+        return {
+            db: context.captured_queries
+            for db, context in self.query_contexts.items()
+        }
+
+    def print_sql(self, with_traceback=False, width=150):
+        for db, queries in self.queries_by_db.items():
+            if not queries:
+                continue
+            print(f'\n------- Queries for Database "{db}" ({len(queries)}) ---------')
+            for q in queries:
+                out = f"{q['sql']} (took {q['time']})"
+                print('\n{}'.format(indent('\n'.join(wrap(out, width)), '\t')))
+                if with_traceback:
+                    print('\n{}'.format(indent(''.join(q['traceback']), '\t\t')))
+
+    def print_sql_chronologically(self, with_traceback=False, width=150):
+        all_queries = sorted([
+            (db, query)
+            for db, queries in self.queries_by_db.items()
+            for query in queries
+        ], key=lambda q: q[1]['start'])
+        for db, query in all_queries:
+            out = f"({db}) {query['sql']} (took {query['time']})"
+            print('\n{}'.format(indent('\n'.join(wrap(out, width)), '\t')))
+            if with_traceback:
+                print('\n{}'.format(indent(''.join(query['traceback']), '\t\t')))

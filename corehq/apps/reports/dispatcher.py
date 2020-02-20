@@ -299,6 +299,13 @@ class DomainReportDispatcher(ReportDispatcher):
     def dispatch(self, request, *args, **kwargs):
         return super(DomainReportDispatcher, self).dispatch(request, *args, **kwargs)
 
+    def permissions_check(self, report, request, domain=None, is_navigation_check=False):
+        from corehq.motech.repeaters.views import DomainForwardingRepeatRecords
+        if (report.endswith(DomainForwardingRepeatRecords.__name__)
+                and not domain_has_privilege(domain, privileges.DATA_FORWARDING)):
+            return False
+        return super(DomainReportDispatcher, self).permissions_check(report, request, domain, is_navigation_check)
+
 
 class AdminReportDispatcher(ReportDispatcher):
     prefix = 'admin_report'

@@ -4,10 +4,10 @@
     </div>
     <div class="modal-body" id="modal-body" cg-busy="[$ctrl.myPromise, $rootScope.locationPromise]">
         <div class="alert alert-info" ng-show="$ctrl.showMessage">
-            <strong>Info!</strong> You must choose AWC to see data!
+            You must choose AWC to see data.
         </div>
         <div class="alert alert-info" ng-show="$ctrl.showSectorMessage">
-            <strong>Info!</strong> You must choose Sector to see data!
+            You must choose Sector to see data.
         </div>
         <div style="margin: 20px 50px;" ng-repeat="locationTypes in $ctrl.hierarchy track by $index" ng-show="$ctrl.isVisible($index)">
             <ui-select ng-disabled="$ctrl.disabled($index)" ng-model="$ctrl.selectedLocations[$index]" theme="bootstrap" on-select="$ctrl.onSelect($item, $index)">

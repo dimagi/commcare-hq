@@ -109,6 +109,46 @@ class TestFilters(ElasticTestMixin, SimpleTestCase):
 
         self.checkQuery(query, json_output)
 
+    def test_not_and_rewrite(self):
+        json_output = {
+            "query": {
+                "filtered": {
+                    "filter": {
+                        "and": [
+                            {
+                                'or': (
+                                    {
+                                        "not": {
+                                            "term": {
+                                                "type": "A"
+                                            }
+                                        }
+                                    },
+                                    {
+                                        "not": {
+                                            "term": {
+                                                "type": "B"
+                                            }
+                                        }
+                                    },
+                                )
+                            },
+                            {"match_all": {}}
+                        ]
+                    },
+                    "query": {"match_all": {}}
+                }
+            },
+            "size": SIZE_LIMIT
+        }
+        query = HQESQuery('cases').filter(
+            filters.NOT(
+                filters.AND(filters.term('type', 'A'), filters.term('type', 'B'))
+            )
+        )
+
+        self.checkQuery(query, json_output)
+
 
 class TestSourceFiltering(ElasticTestMixin, SimpleTestCase):
 

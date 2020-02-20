@@ -80,6 +80,7 @@ class Dhis2Repeater(FormRepeater):
             self.plaintext_password,
             verify=self.verify,
             notify_addresses=self.notify_addresses,
+            payload_id=repeat_record.payload_id,
         )
         for form_config in self.dhis2_config.form_configs:
             if form_config.xmlns == payload['form']['@xmlns']:

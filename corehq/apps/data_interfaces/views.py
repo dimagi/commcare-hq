@@ -518,6 +518,7 @@ class XFormManagementView(DataInterfaceSection):
             _request.couch_user.current_domain = self.domain
             _request.can_access_all_locations = request.couch_user.has_permission(self.domain,
                                                                                   'access_all_locations')
+            _request.always_allow_project_access = True
             _request.session = request.session
 
             _request.GET = QueryDict(form_query_string)

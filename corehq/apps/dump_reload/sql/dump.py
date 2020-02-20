@@ -171,11 +171,10 @@ def get_model_iterator_builders_to_dump(domain, excludes):
 
 
 def get_all_model_iterators_builders_for_domain(model_class, domain, limit_to_db=None):
-    using = router.db_for_read(model_class)
-    if settings.USE_PARTITIONED_DATABASE and using == plproxy_config.proxy_db:
+    if settings.USE_PARTITIONED_DATABASE and hasattr(model_class, 'partition_attr'):
         using = plproxy_config.form_processing_dbs
     else:
-        using = [using]
+        using = [router.db_for_read(model_class)]
 
     if limit_to_db:
         if limit_to_db not in using:

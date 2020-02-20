@@ -16,6 +16,7 @@ from sqlagg import (
     SumColumn,
 )
 from sqlagg.columns import (
+    ArrayAggColumn,
     ConditionalAggregation,
     MonthColumn,
     NonzeroSumColumn,
@@ -483,6 +484,32 @@ class PercentageColumn(ReportColumn):
     def get_fields(self, data_source_config=None, lang=None):
         return self.numerator.get_fields() + self.denominator.get_fields()
 
+
+class ArrayAggLastValueReportColumn(ReportColumn):
+    type = TypeProperty('array_agg_last_value')
+    field = StringProperty(required=True)
+    order_by_col = StringProperty(required=False)
+    _agg_column_type = ArrayAggColumn
+
+    def get_column_config(self, data_source_config, lang):
+        def _last_value(array):
+            return array[-1] if array else None
+
+        return ColumnConfig(columns=[
+            DatabaseColumn(
+                header=self.get_header(lang),
+                agg_column=self._agg_column_type(
+                    key=self.field,
+                    order_by_col=self.order_by_col,
+                    alias=self.column_id,
+                ),
+                format_fn=_last_value,
+                data_slug=self.column_id,
+                help_text=self.description,
+                visible=self.visible,
+                sortable=False,
+            )
+        ])
 
 def _add_column_id_if_missing(obj):
     if obj.get('column_id') is None:

@@ -9,7 +9,6 @@ from django.contrib import messages
 import settingshelper as helper
 
 DEBUG = True
-LESS_DEBUG = DEBUG
 
 # clone http://github.com/dimagi/Vellum into submodules/formdesigner and use
 # this to select various versions of Vellum source on the form designer page.
@@ -26,6 +25,17 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_ENABLED = True
 UNIT_TESTING = helper.is_testing()
 DISABLE_RANDOM_TOGGLES = UNIT_TESTING
+
+# Setting to declare always_enabled/always_disabled toggle states for domains
+#   declaring toggles here avoids toggle lookups from cache for all requests.
+#   Example format
+#   STATIC_TOGGLES_STATES = {
+#     'toggle_slug': {
+#         'always_enabled': ['domain1', 'domain2],
+#         'always_disabled': ['domain4', 'domain3],
+#     }
+#   }
+STATIC_TOGGLE_STATES = {}
 
 ADMINS = ()
 MANAGERS = ADMINS
@@ -148,6 +158,7 @@ MIDDLEWARE = [
     'auditcare.middleware.AuditMiddleware',
     'no_exceptions.middleware.NoExceptionsMiddleware',
     'corehq.apps.locations.middleware.LocationAccessMiddleware',
+    'corehq.apps.cloudcare.middleware.CloudcareMiddleware',
 ]
 
 SESSION_ENGINE = "django.contrib.sessions.backends.cache"
@@ -236,14 +247,17 @@ HQ_APPS = (
     'corehq.apps.locations',
     'corehq.apps.products',
     'corehq.apps.programs',
+    'corehq.project_limits',
     'corehq.apps.commtrack',
     'corehq.apps.consumption',
     'corehq.apps.tzmigration',
     'corehq.celery_monitoring.app_config.CeleryMonitoringAppConfig',
     'corehq.form_processor.app_config.FormProcessorAppConfig',
-    'corehq.sql_db',
+    'corehq.sql_db.app_config.SqlDbAppConfig',
     'corehq.sql_accessors',
     'corehq.sql_proxy_accessors',
+    'corehq.sql_proxy_standby_accessors',
+    'corehq.pillows',
     'couchforms',
     'couchexport',
     'dimagi.utils',
@@ -310,7 +324,6 @@ HQ_APPS = (
     'corehq.couchapps',
     'corehq.preindex',
     'corehq.tabs',
-    'custom.apps.wisepill',
     'custom.openclinica',
     'fluff',
     'fluff.fluff_filter',
@@ -328,7 +341,6 @@ HQ_APPS = (
     'corehq.motech.repeaters',
     'corehq.util',
     'dimagi.ext',
-    'corehq.doctypemigrations',
     'corehq.blobs',
     'corehq.apps.case_search',
     'corehq.apps.zapier.apps.ZapierConfig',
@@ -339,8 +351,6 @@ HQ_APPS = (
 
     'custom.reports.mc',
     'custom.apps.crs_reports',
-    'custom.ilsgateway',
-    'custom.zipline',
     'custom.m4change',
     'custom.succeed',
     'custom.ucla',
@@ -351,11 +361,13 @@ HQ_APPS = (
     'custom.common',
 
     'custom.icds',
+    'custom.icds.data_management',
     'custom.icds_reports',
     'custom.nic_compliance',
     'custom.hki',
     'custom.champ',
     'custom.aaa',
+    'custom.inddex',
 
     'custom.ccqa',
 )
@@ -385,14 +397,14 @@ LOGIN_URL = "/accounts/login/"
 DOMAIN_NOT_ADMIN_REDIRECT_PAGE_NAME = "homepage"
 
 PAGES_NOT_RESTRICTED_FOR_DIMAGI = (
-    '/a/%(domain)s/settings/project/billing/statements/',
-    '/a/%(domain)s/settings/project/billing_information/',
-    '/a/%(domain)s/settings/project/flags/',
-    '/a/%(domain)s/settings/project/internal/calculations/',
-    '/a/%(domain)s/settings/project/internal/info/',
-    '/a/%(domain)s/settings/project/internal_subscription_management/',
-    '/a/%(domain)s/settings/project/project_limits/',
-    '/a/%(domain)s/settings/project/subscription/',
+    '/a/{domain}/settings/project/billing/statements/',
+    '/a/{domain}/settings/project/billing_information/',
+    '/a/{domain}/settings/project/flags/',
+    '/a/{domain}/settings/project/internal/calculations/',
+    '/a/{domain}/settings/project/internal/info/',
+    '/a/{domain}/settings/project/internal_subscription_management/',
+    '/a/{domain}/settings/project/project_limits/',
+    '/a/{domain}/settings/project/subscription/',
 )
 
 ####### Release Manager App settings  #######
@@ -424,7 +436,6 @@ EMAIL_USE_TLS = True
 
 # put email addresses here to have them receive bug reports
 BUG_REPORT_RECIPIENTS = ()
-EXCHANGE_NOTIFICATION_RECIPIENTS = []
 
 # the physical server emailing - differentiate if needed
 SERVER_EMAIL = 'commcarehq-noreply@example.com'
@@ -449,8 +460,19 @@ BOOKKEEPER_CONTACT_EMAILS = []
 SOFT_ASSERT_EMAIL = 'commcarehq-ops+soft_asserts@example.com'
 DAILY_DEPLOY_EMAIL = None
 EMAIL_SUBJECT_PREFIX = '[commcarehq] '
+SAAS_REPORTING_EMAIL = None
+
+# Return-Path is the email used to forward BOUNCE & COMPLAINT notifications
+# This email must be a REAL email address, not a mailing list, otherwise
+# the emails from mailer daemon will be swallowed up by spam filters.
+RETURN_PATH_EMAIL = None
+
+# This will trigger a periodic task to check the RETURN_PATH_EMAIL inbox for
+# SES bounce and complaint notifications.
+RETURN_PATH_EMAIL_PASSWORD = None
 
 ENABLE_SOFT_ASSERT_EMAILS = True
+IS_DIMAGI_ENVIRONMENT = True
 
 SERVER_ENVIRONMENT = 'localdev'
 ICDS_ENVS = ('icds',)
@@ -481,7 +503,6 @@ FIXTURE_GENERATORS = [
     "corehq.apps.products.fixtures.product_fixture_generator",
     "corehq.apps.programs.fixtures.program_fixture_generator",
     "corehq.apps.app_manager.fixtures.report_fixture_generator",
-    "corehq.apps.app_manager.fixtures.report_fixture_v2_generator",
     "corehq.apps.locations.fixtures.location_fixture_generator",
     "corehq.apps.locations.fixtures.flat_location_fixture_generator",
     "corehq.apps.locations.fixtures.related_locations_fixture_generator",
@@ -549,7 +570,6 @@ CELERY_HEARTBEAT_THRESHOLDS = {
     "export_download_queue": 30,
     "icds_aggregation_queue": None,
     "icds_dashboard_reports_queue": None,
-    "ils_gateway_sms_queue": None,
     "logistics_background_queue": None,
     "logistics_reminder_queue": None,
     "reminder_case_update_queue": 15 * 60,
@@ -579,12 +599,6 @@ HQ_ACCOUNT_ROOT = "commcarehq.org"
 FORMPLAYER_URL = 'http://localhost:8080'
 
 ####### SMS Queue Settings #######
-
-CUSTOM_PROJECT_SMS_QUEUES = {
-    'ils-gateway': 'ils_gateway_sms_queue',
-    'ils-gateway-train': 'ils_gateway_sms_queue',
-    'ils-gateway-training': 'ils_gateway_sms_queue',
-}
 
 # Setting this to False will make the system process outgoing and incoming SMS
 # immediately rather than use the queue.
@@ -728,6 +742,8 @@ SUMOLOGIC_URL = None
 ELASTICSEARCH_HOST = 'localhost'
 ELASTICSEARCH_PORT = 9200
 ELASTICSEARCH_MAJOR_VERSION = 1
+# If elasticsearch queries take more than this, they result in timeout errors
+ES_SEARCH_TIMEOUT = 30
 
 BITLY_LOGIN = ''
 BITLY_APIKEY = ''
@@ -753,7 +769,10 @@ DIGEST_LOGIN_FACTORY = 'django_digest.NoEmailLoginFactory'
 COMPRESS_PRECOMPILERS = (
     ('text/less', 'corehq.apps.hqwebapp.precompilers.LessFilter'),
 )
-COMPRESS_ENABLED = True
+# if not overwritten in localsettings, these will be replaced by the value they return
+# using the local DEBUG value (which we don't have access to here yet)
+COMPRESS_ENABLED = lambda: not DEBUG
+COMPRESS_OFFLINE = lambda: not DEBUG
 COMPRESS_JS_COMPRESSOR = 'corehq.apps.hqwebapp.uglify.JsUglifySourcemapCompressor'
 # use 'compressor.js.JsCompressor' for faster local compressing (will get rid of source maps)
 COMPRESS_CSS_FILTERS = ['compressor.filters.css_default.CssAbsoluteFilter',
@@ -838,11 +857,6 @@ LOAD_BALANCED_APPS = {}
 # encryption or signing workflows.
 HQ_PRIVATE_KEY = None
 
-# Settings for Zipline integration
-ZIPLINE_API_URL = ''
-ZIPLINE_API_USER = ''
-ZIPLINE_API_PASSWORD = ''
-
 # Set to the list of domain names for which we will run the ICDS SMS indicators
 ICDS_SMS_INDICATOR_DOMAINS = []
 
@@ -924,6 +938,16 @@ SESSION_BYPASS_URLS = [
     r'^/a/{domain}/apps/download/',
 ]
 
+ALLOW_PHONE_AS_DEFAULT_TWO_FACTOR_DEVICE = False
+RATE_LIMIT_SUBMISSIONS = False
+
+# If set to a positive number, exports requested more than this many seconds ago
+# without the email option will be quickly rejected.
+# This is useful for load-shedding in times of crisis.
+STALE_EXPORT_THRESHOLD = None
+
+REQUIRE_TWO_FACTOR_FOR_SUPERUSERS = False
+
 try:
     # try to see if there's an environmental variable set for local_settings
     custom_settings = os.environ.get('CUSTOMSETTINGS', None)
@@ -945,6 +969,14 @@ except ImportError as error:
         raise error
     # fallback in case nothing else is found - used for readthedocs
     from dev_settings import *
+
+
+# The defaults above are given as a function of (or rather a closure on) DEBUG,
+# so if not overridden they need to be evaluated after DEBUG is set
+if callable(COMPRESS_ENABLED):
+    COMPRESS_ENABLED = COMPRESS_ENABLED()
+if callable(COMPRESS_OFFLINE):
+    COMPRESS_OFFLINE = COMPRESS_OFFLINE()
 
 
 # Unless DISABLE_SERVER_SIDE_CURSORS has explicitly been set, default to True because Django >= 1.11.1 and our
@@ -997,6 +1029,7 @@ TEMPLATES = [
                 'corehq.util.context_processors.enterprise_mode',
                 'corehq.util.context_processors.mobile_experience',
                 'corehq.util.context_processors.get_demo',
+                'corehq.util.context_processors.banners',
                 'corehq.util.context_processors.js_api_keys',
                 'corehq.util.context_processors.js_toggles',
                 'corehq.util.context_processors.websockets_override',
@@ -1345,7 +1378,6 @@ COUCHDB_APPS = [
     'formplayer',
     'phonelog',
     'registration',
-    'wisepill',
     'crs_reports',
     'grapevine',
     'openclinica',
@@ -1354,7 +1386,6 @@ COUCHDB_APPS = [
     'pact',
     'accounting',
     'succeed',
-    'ilsgateway',
     ('auditcare', 'auditcare'),
     ('repeaters', 'receiverwrapper'),
     ('userreports', META_DB),
@@ -1445,12 +1476,7 @@ WEB_USER_TERM = "Web User"
 DEFAULT_CURRENCY = "USD"
 DEFAULT_CURRENCY_SYMBOL = "$"
 
-CUSTOM_SMS_HANDLERS = [
-    'custom.ilsgateway.tanzania.handler.handle',
-]
-
 SMS_HANDLERS = [
-    'corehq.apps.sms.handlers.forwarding.forwarding_handler',
     'corehq.apps.commtrack.sms.handle',
     'corehq.apps.sms.handlers.keyword.sms_keyword_handler',
     'corehq.apps.sms.handlers.form_session.form_session_handler',
@@ -1601,6 +1627,8 @@ AVAILABLE_CUSTOM_RULE_CRITERIA = {
         'custom.icds.rules.custom_criteria.person_case_is_under_19_years_old',
     'ICDS_CCS_RECORD_CASE_HAS_FUTURE_EDD':
         'custom.icds.rules.custom_criteria.ccs_record_case_has_future_edd',
+    'ICDS_CCS_RECORD_CASE_AVAILING_SERVICES':
+        'custom.icds.rules.custom_criteria.ccs_record_case_is_availing_services',
     'ICDS_IS_USERCASE_OF_AWW':
         'custom.icds.rules.custom_criteria.is_usercase_of_aww',
     'ICDS_IS_USERCASE_OF_LS':
@@ -1855,6 +1883,7 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'usage_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'vhnd_form.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'visitorbook_forms.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'adolescent_girl_register_form_ucr.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'complementary_feeding_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'dashboard_growth_monitoring.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'postnatal_care_forms.json'),
@@ -1865,6 +1894,7 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'thr_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'birth_preparedness_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'daily_feeding_forms.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'migrations_form.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'primary_private_school_form_ucr.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'cbe_form.json'),
     os.path.join('custom', 'champ', 'ucr_data_sources', 'champ_cameroon.json'),
@@ -1881,6 +1911,7 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'visite_de_l_operateur_per_program.json'),
     os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'visite_de_l_operateur_product_consumption.json'),
     os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'indicateurs_de_base.json'),
+    os.path.join('custom', 'inddex', 'ucr', 'data_sources', '*.json'),
 
     os.path.join('custom', 'echis_reports', 'ucr', 'data_sources', '*.json'),
     os.path.join('custom', 'aaa', 'ucr', 'data_sources', '*.json'),
@@ -1952,15 +1983,7 @@ CUSTOM_UCR_REPORT_FILTER_VALUES = [
 
 CUSTOM_MODULES = [
     'custom.apps.crs_reports',
-    'custom.ilsgateway',
 ]
-
-CUSTOM_DASHBOARD_PAGE_URL_NAMES = {
-    'ews-ghana': 'dashboard_page',
-    'ils-gateway': 'ils_dashboard_report'
-}
-
-REMOTE_APP_NAMESPACE = "%(domain)s.commcarehq.org"
 
 DOMAIN_MODULE_MAP = {
     'mc-inscale': 'custom.reports.mc',
@@ -2013,6 +2036,8 @@ DOMAIN_MODULE_MAP = {
     'vectorlink-zambia': 'custom.abt',
     'vectorlink-zimbabwe': 'custom.abt',
 
+    'inddex-reports': 'custom.inddex',
+
     'ccqa': 'custom.ccqa',
 }
 
@@ -2038,17 +2063,10 @@ DATADOG_DOMAINS = {
 
 #### Django Compressor Stuff after localsettings overrides ####
 
-# This makes sure that Django Compressor does not run at all
-# when LESS_DEBUG is set to True.
-if LESS_DEBUG:
-    COMPRESS_ENABLED = False
-    COMPRESS_PRECOMPILERS = ()
-
 COMPRESS_OFFLINE_CONTEXT = {
     'base_template': BASE_TEMPLATE,
     'login_template': LOGIN_TEMPLATE,
     'original_template': BASE_ASYNC_TEMPLATE,
-    'less_debug': LESS_DEBUG,
 }
 
 COMPRESS_CSS_HASHING_METHOD = 'content'

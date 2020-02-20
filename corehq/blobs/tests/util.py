@@ -12,7 +12,6 @@ from corehq.blobs.s3db import S3BlobDB
 from corehq.blobs.migratingdb import MigratingBlobDB
 from corehq.blobs.util import random_url_id
 from corehq.sql_db.util import (
-    get_db_alias_for_partitioned_doc,
     get_db_aliases_for_partitioned_query,
 )
 
@@ -30,10 +29,9 @@ def new_meta(**kw):
 
 def get_meta(meta, deleted=False):
     """Fetch a new copy of the given metadata from the database"""
-    db = get_db_alias_for_partitioned_doc(meta.parent_id)
     if deleted:
-        return DeletedBlobMeta.objects.using(db).get(id=meta.id)
-    return BlobMeta.objects.using(db).get(id=meta.id)
+        return DeletedBlobMeta.objects.partitioned_get(meta.parent_id, id=meta.id)
+    return BlobMeta.objects.partitioned_get(meta.parent_id, id=meta.id)
 
 
 @contextmanager
@@ -80,7 +78,7 @@ class TemporaryBlobDBMixin(object):
             # per-test transaction does not roll back changes there, so
             # blob metadata needs to be cleaned up here
             for dbname in get_db_aliases_for_partitioned_query():
-                BlobMeta.objects.using(dbname).all().delete()
+                BlobMeta.objects.partitioned_query(dbname).all().delete()
 
     def __enter__(self):
         return self

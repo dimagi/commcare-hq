@@ -3,10 +3,9 @@ import datetime
 from tastypie import fields
 from tastypie.exceptions import BadRequest
 
-from corehq import toggles
 from dimagi.utils.parsing import string_to_boolean
 
-from corehq.apps.api.query_adapters import UserQuerySetAdapterCouch, UserQuerySetAdapterES
+from corehq.apps.api.query_adapters import UserQuerySetAdapter
 from corehq.apps.api.resources import (
     CouchResourceMixin,
     DomainSpecificResourceMixin,
@@ -106,10 +105,7 @@ class CommCareUserResource(UserResource):
                 raise BadRequest('Project %s has no group with id=%s' % (domain, group_id))
             return list(group.get_users(only_commcare=True))
         else:
-            if toggles.USER_API_USE_COUCH_BACKEND.enabled_for_request(bundle.request):
-                return UserQuerySetAdapterCouch(domain, show_archived=show_archived)
-            else:
-                return UserQuerySetAdapterES(domain, show_archived=show_archived)
+            return UserQuerySetAdapter(domain, show_archived=show_archived)
 
 
 class WebUserResource(UserResource):

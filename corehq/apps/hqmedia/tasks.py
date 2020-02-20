@@ -170,7 +170,12 @@ def _build_ccz_files(build, build_profile_id, include_multimedia_files, include_
             'download_targeted_version': download_targeted_version,
             'app': build.to_json(),
         }, indent=4)
-        files = itertools.chain(files, [('manifest.json', manifest)])
+        manifest_filename = '{} - {} - v{} manifest.json'.format(
+            build.domain,
+            build.name,
+            build.version,
+        )
+        files = itertools.chain(files, [(manifest_filename, manifest)])
     return files, errors, file_count
 
 

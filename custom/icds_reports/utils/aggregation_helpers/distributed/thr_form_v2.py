@@ -11,6 +11,7 @@ class THRFormV2AggDistributedHelper(StateBasedAggregationDistributedHelper):
     helper_key = 'thr-form-v2'
     ucr_data_source_id = 'static-thr_forms_v2'
     aggregate_parent_table = AGG_THR_V2_TABLE
+    months_required = 0
 
     def aggregation_query(self):
         month = self.month.replace(day=1)

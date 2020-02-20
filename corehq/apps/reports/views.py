@@ -54,7 +54,6 @@ from casexml.apps.case.xml import V2
 from casexml.apps.stock.models import StockTransaction
 from couchexport.export import Format, export_from_tables
 from couchexport.shortcuts import export_response
-from dimagi.utils.couch.loosechange import parse_date
 from dimagi.utils.decorators.datespan import datespan_in_request
 from dimagi.utils.parsing import json_format_datetime
 from dimagi.utils.web import json_response
@@ -2035,22 +2034,6 @@ def resave_form_view(request, domain, instance_id):
     resave_form(domain, instance)
     messages.success(request, _("Form was successfully resaved. It should reappear in reports shortly."))
     return HttpResponseRedirect(reverse('render_form_data', args=[domain, instance_id]))
-
-
-# Weekly submissions by xmlns
-def mk_date_range(start=None, end=None, ago=timedelta(days=7), iso=False):
-    if isinstance(end, str):
-        end = parse_date(end)
-    if isinstance(start, str):
-        start = parse_date(start)
-    if not end:
-        end = datetime.utcnow()
-    if not start:
-        start = end - ago
-    if iso:
-        return json_format_datetime(start), json_format_datetime(end)
-    else:
-        return start, end
 
 
 def _is_location_safe_report_class(view_fn, request, domain, export_hash, format):

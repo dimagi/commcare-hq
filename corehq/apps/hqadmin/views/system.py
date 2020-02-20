@@ -3,7 +3,7 @@ import socket
 from collections import defaultdict, namedtuple
 
 from django.conf import settings
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_lazy
@@ -13,8 +13,7 @@ import requests
 from requests.exceptions import HTTPError
 
 from couchforms.models import XFormInstance
-from dimagi.utils.couch.database import get_db, is_bigcouch
-from dimagi.utils.web import json_response
+from dimagi.utils.couch.database import is_bigcouch
 from pillowtop.exceptions import PillowNotFoundError
 from pillowtop.utils import (
     get_all_pillows_json,
@@ -26,21 +25,20 @@ from corehq.apps.domain.decorators import (
     require_superuser,
     require_superuser_or_contractor,
 )
+from corehq.apps.domain.views.internal import get_project_limits_context
 from corehq.apps.hqadmin import escheck, service_checks
-from corehq.apps.hqadmin.history import download_changes, get_recent_changes
-from corehq.apps.hqadmin.models import HqDeploy
+from corehq.apps.hqadmin.models import SQLHqDeploy
 from corehq.apps.hqadmin.service_checks import run_checks
 from corehq.apps.hqadmin.utils import get_celery_stats
 from corehq.apps.hqadmin.views.utils import (
     BaseAdminSectionView,
     get_hqadmin_base_context,
 )
-from corehq.apps.hqwebapp.decorators import (
-    use_datatables,
-    use_jquery_ui,
-    use_nvd3_v3,
+from corehq.apps.hqwebapp.decorators import use_datatables, use_jquery_ui
+from corehq.apps.receiverwrapper.rate_limiter import (
+    global_submission_rate_limiter,
 )
-from corehq.toggles import SUPPORT, any_toggle_enabled
+from corehq.toggles import SUPPORT
 
 
 class SystemInfoView(BaseAdminSectionView):
@@ -68,7 +66,7 @@ class SystemInfoView(BaseAdminSectionView):
         context['rabbitmq_url'] = get_rabbitmq_management_url()
         context['hide_filters'] = True
         context['current_system'] = socket.gethostname()
-        context['deploy_history'] = HqDeploy.get_latest(environment, limit=5)
+        context['deploy_history'] = SQLHqDeploy.get_latest(environment, limit=5)
 
         context['user_is_support'] = hasattr(self.request, 'user') and SUPPORT.enabled(self.request.user.username)
 
@@ -96,12 +94,12 @@ def system_ajax(request):
             tasks = [x for x in db.server.active_tasks() if x['type'] == "indexer"]
         except HTTPError as e:
             if e.response.status_code == 403:
-                return json_response({'error': "Unable to access CouchDB Tasks (unauthorized)."}, status_code=500)
+                return JsonResponse({'error': "Unable to access CouchDB Tasks (unauthorized)."}, status_code=500)
             else:
-                return json_response({'error': "Unable to access CouchDB Tasks."}, status_code=500)
+                return JsonResponse({'error': "Unable to access CouchDB Tasks."}, status_code=500)
 
         if not is_bigcouch():
-            return json_response(tasks)
+            return JsonResponse(tasks)
         else:
             # group tasks by design doc
             task_map = defaultdict(dict)
@@ -119,14 +117,14 @@ def system_ajax(request):
                     task['progress_contribution'] = task['changes_done'] * 100 // total_changes
 
                 design_docs.append(meta)
-            return json_response(design_docs)
+            return JsonResponse(design_docs)
     elif type == "_stats":
-        return json_response({})
+        return JsonResponse({})
     elif type == "_logs":
         pass
     elif type == 'pillowtop':
         pillow_meta = get_all_pillows_json()
-        return json_response(sorted(pillow_meta, key=lambda m: m['name'].lower()))
+        return JsonResponse(sorted(pillow_meta, key=lambda m: m['name'].lower()))
     elif type == 'stale_pillows':
         es_index_status = [
             escheck.check_case_es_index(interval=3),
@@ -134,7 +132,7 @@ def system_ajax(request):
             escheck.check_reportcase_es_index(interval=3),
             escheck.check_reportxform_es_index(interval=3)
         ]
-        return json_response(es_index_status)
+        return JsonResponse(es_index_status)
 
     if celery_monitoring:
         if type == "flower_poll":
@@ -146,7 +144,7 @@ def system_ajax(request):
                     timeout=3,
                 ).json()
             except Exception as ex:
-                return json_response({'error': "Error with getting from celery_flower: %s" % ex}, status_code=500)
+                return JsonResponse({'error': "Error with getting from celery_flower: %s" % ex}, status_code=500)
 
             for task_id, traw in all_tasks.items():
                 # it's an array of arrays - looping through [<id>, {task_info_dict}]
@@ -200,7 +198,7 @@ def pillow_operation_api(request):
         }
         if pillow_config:
             response.update(get_pillow_json(pillow_config))
-        return json_response(response)
+        return JsonResponse(response)
 
     if pillow:
         try:
@@ -272,3 +270,16 @@ def _get_submodules():
         line.strip()[1:].split()[1]
         for line in git.submodule()
     ]
+
+
+@method_decorator(require_superuser, name='dispatch')
+class GlobalThresholds(BaseAdminSectionView):
+    urlname = 'global_thresholds'
+    page_title = ugettext_lazy("Global Usage Thresholds")
+    template_name = 'hqadmin/global_thresholds.html'
+
+    @property
+    def page_context(self):
+        return get_project_limits_context([
+            ('Submission Rate Limits', global_submission_rate_limiter),
+        ])

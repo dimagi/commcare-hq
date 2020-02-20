@@ -72,20 +72,24 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
 
     def apply_action_intents(self, primary_intent, deprecation_intent=None):
         # for now we only allow commtrack actions to be processed this way so just assert that's the case
+
         if primary_intent:
             if primary_intent.action_type != CASE_ACTION_COMMTRACK:
                 raise StockProcessingError('intent not of expected type: {}'.format(primary_intent.action_type))
-            transaction = CaseTransaction.ledger_transaction(self.case, primary_intent.form)
-            if deprecation_intent:
-                if not transaction.is_saved():
-                    raise StockProcessingError('Deprecated transaction not saved')
-            elif transaction not in self.case.get_tracked_models_to_create(CaseTransaction):
-                # hack: clear the sync log id so this modification always counts
-                # since consumption data could change server-side
-                transaction.sync_log_id = None
-                self.case.track_create(transaction)
+            if not deprecation_intent:
+                # don't create / update transaction if we're processing an edited form
+                transaction = CaseTransaction.ledger_transaction(self.case, primary_intent.form)
+                if transaction not in self.case.get_tracked_models_to_create(CaseTransaction):
+                    # hack: clear the sync log id so this modification always counts
+                    # since consumption data could change server-side
+                    transaction.sync_log_id = None
+                    self.case.track_create(transaction)
         elif deprecation_intent:
+            # edited form no longer has a ledger block to update existing transaction
+            # to remove leger type
             transaction = self.case.get_transaction_by_form_id(deprecation_intent.form.orig_id)
+            if not transaction.is_saved():
+                raise StockProcessingError('Deprecated transaction not saved')
             transaction.sync_log_id = None
             transaction.type -= CaseTransaction.TYPE_LEDGER
             self.case.track_update(transaction)
@@ -98,11 +102,7 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
     def add_transaction_for_form(case, case_update, form):
         types = [CaseTransaction.type_from_action_type_slug(a.action_type_slug) for a in case_update.actions]
         transaction = CaseTransaction.form_transaction(case, form, case_update.guess_modified_on(), types)
-        for trans in case.get_tracked_models_to_create(CaseTransaction):
-            if transaction == trans:
-                trans.type |= transaction.type
-                break
-        else:
+        if transaction not in case.get_tracked_models_to_create(CaseTransaction):
             case.track_create(transaction)
 
     def _apply_case_update(self, case_update, xformdoc):
@@ -176,7 +176,7 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
                 self.case.location_id = value
             elif key == 'name':
                 # replicate legacy behaviour
-                self.case.name = value
+                self.case.name = _convert_type_check_length(key, value)
             elif key not in const.RESTRICTED_PROPERTIES:
                 self.case.case_json[key] = value
 

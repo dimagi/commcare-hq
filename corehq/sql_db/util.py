@@ -1,24 +1,45 @@
+import random
 import re
 import uuid
 from collections import defaultdict
+from distutils.version import LooseVersion
 from functools import wraps
-from random import choices
 
-from django import db
 from django.conf import settings
-from django.db import OperationalError
-from django.db.utils import DEFAULT_DB_ALIAS
+from django.db import OperationalError, connections, transaction
+from django.db.utils import DEFAULT_DB_ALIAS, DatabaseError
 from django.db.utils import InterfaceError as DjangoInterfaceError
 
+from corehq.sql_db.config import plproxy_config, plproxy_standby_config
+from corehq.util.datadog.utils import load_counter_for_model
+from corehq.util.quickcache import quickcache
 from memoized import memoized
 from psycopg2._psycopg import InterfaceError as Psycopg2InterfaceError
 
-from corehq.sql_db.config import plproxy_config
-from corehq.util.datadog.utils import load_counter_for_model
-from corehq.util.quickcache import quickcache
-
 ACCEPTABLE_STANDBY_DELAY_SECONDS = 3
 STALE_CHECK_FREQUENCY = 30
+
+PG_V10 = LooseVersion('10.0.0')
+
+REPLICATION_SQL_10 = """
+    SELECT
+    CASE
+        WHEN NOT EXISTS (SELECT 1 FROM pg_stat_wal_receiver) THEN -1
+        WHEN pg_last_wal_receive_lsn() = pg_last_wal_replay_lsn() THEN 0
+        ELSE GREATEST(0, EXTRACT (EPOCH FROM now() - pg_last_xact_replay_timestamp()))
+    END
+    AS replication_lag;
+    """
+
+REPLICATION_SQL_9_6 = """
+    SELECT
+    CASE
+        WHEN NOT EXISTS (SELECT 1 FROM pg_stat_wal_receiver) THEN -1
+        WHEN pg_last_xlog_receive_location() = pg_last_xlog_replay_location() THEN 0
+        ELSE EXTRACT (EPOCH FROM now() - pg_last_xact_replay_timestamp())::INTEGER
+    END
+    AS replication_lag;
+    """
 
 
 def paginate_query_across_partitioned_databases(model_class, q_expression, annotate=None, query_size=5000,
@@ -120,7 +141,7 @@ def estimate_row_count(query, db_name="default"):
     to query. The sum of counts from all databases will be returned.
     """
     def count(db_name):
-        with db.connections[db_name].cursor() as cursor:
+        with connections[db_name].cursor() as cursor:
             cursor.execute(sql, params)
             lines = [line for line, in cursor.fetchall()]
             for line in lines:
@@ -201,11 +222,11 @@ def handle_connection_failure(get_db_aliases=get_default_db_aliases):
         def _inner(*args, **kwargs):
             try:
                 return fn(*args, **kwargs)
-            except db.utils.DatabaseError:
+            except DatabaseError:
                 # we have to do this manually to avoid issues with
                 # open transactions and already closed connections
                 for db_name in get_db_aliases():
-                    db.transaction.rollback(using=db_name)
+                    transaction.rollback(using=db_name)
 
                 # re raise the exception for additional error handling
                 raise
@@ -213,7 +234,7 @@ def handle_connection_failure(get_db_aliases=get_default_db_aliases):
                 # force closing the connection to prevent Django from trying to reuse it.
                 # http://www.tryolabs.com/Blog/2014/02/12/long-time-running-process-and-django-orm/
                 for db_name in get_db_aliases():
-                    db.connections[db_name].close()
+                    connections[db_name].close()
 
                 # re raise the exception for additional error handling
                 raise
@@ -247,7 +268,7 @@ def _get_all_nested_subclasses(cls):
 def get_standby_databases():
     standby_dbs = set()
     for db_alias in settings.DATABASES:
-        with db.connections[db_alias].cursor() as cursor:
+        with connections[db_alias].cursor() as cursor:
             cursor.execute("SELECT pg_is_in_recovery()")
             [(is_standby, )] = cursor.fetchall()
             if is_standby:
@@ -255,31 +276,52 @@ def get_standby_databases():
     return standby_dbs
 
 
+@memoized
+def get_db_version(db_alias):
+    with connections[db_alias].cursor() as cursor:
+        cursor.execute('SHOW SERVER_VERSION;')
+        raw_version = cursor.fetchone()[0]
+
+    return LooseVersion(raw_version.split(' ')[0])
+
+
 def get_replication_delay_for_standby(db_alias):
     """
     Finds the replication delay for given database by running a SQL query on standby database.
         See https://www.postgresql.org/message-id/CADKbJJWz9M0swPT3oqe8f9+tfD4-F54uE6Xtkh4nERpVsQnjnw@mail.gmail.com
 
-    If standby process (wal_receiver) is not running on standby a `VERY_LARGE_DELAY` is returned
+    If standby process (wal_receiver) is not running on standby -1 is returned
     """
     # used to indicate that the wal_receiver process on standby is not running
-    VERY_LARGE_DELAY = 100000
     try:
-        sql = """
-        SELECT
-        CASE
-            WHEN NOT EXISTS (SELECT 1 FROM pg_stat_wal_receiver) THEN %(delay)s
-            WHEN pg_last_xlog_receive_location() = pg_last_xlog_replay_location() THEN 0
-            ELSE EXTRACT (EPOCH FROM now() - pg_last_xact_replay_timestamp())::INTEGER
-        END
-        AS replication_lag;
-        """
-        with db.connections[db_alias].cursor() as cursor:
-            cursor.execute(sql, {'delay': VERY_LARGE_DELAY})
+        sql = REPLICATION_SQL_10 if get_db_version(db_alias) >= PG_V10 else REPLICATION_SQL_9_6
+        with connections[db_alias].cursor() as cursor:
+            cursor.execute(sql)
             [(delay, )] = cursor.fetchall()
             return delay
     except OperationalError:
-        return VERY_LARGE_DELAY
+        return -1
+
+
+def get_replication_delay_for_shard_standbys():
+    db_to_django_alias = {
+        settings.DATABASES[db_alias]['NAME']: db_alias
+        for db_alias in plproxy_standby_config.form_processing_dbs
+    }
+
+    return {
+        db_to_django_alias[row[0]]: row[1]
+        for row in _get_replication_delay_results_from_proxy()
+    }
+
+
+def _get_replication_delay_results_from_proxy():
+    try:
+        with connections[plproxy_standby_config.proxy_db].cursor() as cursor:
+            cursor.execute('select * from get_replication_delay()')
+            return cursor.fetchall()
+    except OperationalError:
+        return []
 
 
 @memoized
@@ -308,10 +350,22 @@ def get_standbys_with_acceptible_delay():
     """:returns: set of database aliases that are configured as standbys and have replication
                  delay below the configured threshold
     """
-    delays_by_db = get_acceptible_replication_delays()
+    acceptable_delays_by_db = get_acceptible_replication_delays()
+    standbys = get_standby_databases()
+
+    delays_by_db = {}
+    if plproxy_standby_config:
+        standbys -= set(plproxy_standby_config.form_processing_dbs)
+        delays_by_db = get_replication_delay_for_shard_standbys()
+
+    delays_by_db.update({
+        db_: get_replication_delay_for_standby(db_)
+        for db_ in standbys
+    })
+
     return {
-        db_ for db_ in get_standby_databases()
-        if get_replication_delay_for_standby(db_) <= delays_by_db[db_]
+        db_ for db_, delay in delays_by_db.items()
+        if 0 <= (-1 if delay is None else delay) <= acceptable_delays_by_db[db_]
     }
 
 
@@ -351,4 +405,35 @@ def select_db_for_read(weighted_dbs):
             weights.append(weight)
 
     if dbs:
-        return choices(dbs, weights=weights)[0]
+        return random.choices(dbs, weights=weights)[0]
+
+
+def select_plproxy_db_for_read(primary_db):
+    if not plproxy_standby_config:
+        return primary_db
+
+    if primary_db == plproxy_config.proxy_db:
+        plproxy_shard_standbys = set(plproxy_standby_config.form_processing_dbs)
+        ok_standbys = get_standbys_with_acceptible_delay() & plproxy_shard_standbys
+        if ok_standbys == plproxy_shard_standbys:
+            # require ALL standbys to be available
+            return plproxy_standby_config.proxy_db
+        else:
+            return primary_db
+    else:
+        standbys = primary_to_standbys_mapping()[primary_db]
+        ok_standbys = get_standbys_with_acceptible_delay() & standbys
+        if ok_standbys:
+            return random.choice(list(ok_standbys))
+        else:
+            return primary_db
+
+
+@memoized
+def primary_to_standbys_mapping():
+    mapping = defaultdict(set)
+    for db, config in settings.DATABASES.items():
+        master = config.get('STANDBY', {}).get('MASTER')
+        if master:
+            mapping[master].add(db)
+    return mapping

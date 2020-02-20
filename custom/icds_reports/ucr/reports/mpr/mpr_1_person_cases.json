@@ -36,6 +36,15 @@
     ],
     "filters": [
       {
+        "compare_as_string": false,
+        "display" : "Opened on",
+        "slug": "opened_on",
+        "type": "date",
+        "field": "opened_on",
+        "datatype": "date",
+        "required": false
+      },
+      {
         "display": "Filter by AWW",
         "slug": "awc_id",
         "type": "dynamic_choice_list",

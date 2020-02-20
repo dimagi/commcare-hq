@@ -30,8 +30,6 @@ from corehq.apps.hqwebapp.widgets import SelectToggle
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reminders.forms import validate_time
 from corehq.apps.sms.models import (
-    FORWARD_ALL,
-    FORWARD_BY_KEYWORD,
     SQLMobileBackend,
 )
 from corehq.apps.sms.util import (
@@ -41,11 +39,6 @@ from corehq.apps.sms.util import (
     validate_phone_number,
 )
 from corehq.apps.users.models import CommCareUser
-
-FORWARDING_CHOICES = (
-    (FORWARD_ALL, ugettext_noop("All messages")),
-    (FORWARD_BY_KEYWORD, ugettext_noop("All messages starting with a keyword")),
-)
 
 ENABLED = "ENABLED"
 DISABLED = "DISABLED"
@@ -97,45 +90,26 @@ WELCOME_RECIPIENT_CHOICES = (
     (WELCOME_RECIPIENT_ALL, ugettext_lazy('Cases and Mobile Workers')),
 )
 
+LANGUAGE_FALLBACK_NONE = 'NONE'
+LANGUAGE_FALLBACK_SCHEDULE = 'SCHEDULE'
+LANGUAGE_FALLBACK_DOMAIN = 'DOMAIN'
+LANGUAGE_FALLBACK_UNTRANSLATED = 'UNTRANSLATED'
 
-class ForwardingRuleForm(Form):
-    forward_type = ChoiceField(choices=FORWARDING_CHOICES)
-    keyword = CharField(required=False)
-    backend_id = CharField()
-
-    def __init__(self, *args, **kwargs):
-        super(ForwardingRuleForm, self).__init__(*args, **kwargs)
-
-        self.helper = HQFormHelper()
-        self.helper.layout = crispy.Layout(
-            crispy.Fieldset(
-                _('Forwarding Rule Options'),
-                'forward_type',
-                crispy.Div(
-                    'keyword',
-                    css_id="keyword_row",
-                    css_class='hide',
-                ),
-                'backend_id',
-                hqcrispy.FormActions(
-                    twbscrispy.StrictButton(
-                        _("Submit"),
-                        type="submit",
-                        css_class="btn btn-primary",
-                    ),
-                ),
-            )
-        )
-
-    def clean_keyword(self):
-        forward_type = self.cleaned_data.get("forward_type")
-        keyword = self.cleaned_data.get("keyword", "").strip()
-        if forward_type == FORWARD_BY_KEYWORD:
-            if keyword == "":
-                raise ValidationError(_("This field is required."))
-            return keyword
-        else:
-            return None
+LANGUAGE_FALLBACK_CHOICES = (
+    (LANGUAGE_FALLBACK_NONE, ugettext_lazy("""
+        Only send message if text is available in recipient's preferred language
+    """)),
+    (LANGUAGE_FALLBACK_SCHEDULE, ugettext_lazy("""
+        Use text from the alert or broadcast's default language as a backup
+    """)),
+    (LANGUAGE_FALLBACK_DOMAIN, ugettext_lazy("""
+        Use text from the project's default language as a backup
+        if the alert or broadcast's language is also unavailable
+    """)),
+    (LANGUAGE_FALLBACK_UNTRANSLATED, ugettext_lazy("""
+        Use all available text backups, including untranslated content
+    """)),
+)
 
 
 class LoadBalancingBackendFormMixin(Form):
@@ -289,6 +263,10 @@ class SettingsForm(Form):
         choices=WELCOME_RECIPIENT_CHOICES,
         label=ugettext_lazy("Send registration welcome message to"),
     )
+    language_fallback = ChoiceField(
+        choices=LANGUAGE_FALLBACK_CHOICES,
+        label=ugettext_lazy("Backup behavior for missing translations"),
+    )
 
     # Internal settings
     override_daily_outbound_sms_limit = ChoiceField(
@@ -407,7 +385,19 @@ class SettingsForm(Form):
                     "configured in the SMS languages and translations page "
                     "(Messaging -> Languages -> Messaging Translations)."),
             ),
+            hqcrispy.FieldWithHelpBubble(
+                'language_fallback',
+                help_bubble_text=_("""
+                    Choose what should happen when a broadcast or alert should be sent to a recipient but no
+                    translations exists in the user's preferred language. You may choose not to send a message in
+                    that case, or to try one of several backups.<br><br>The first backup uses the broadcast or
+                    alert's default language. If that translation is also unavailable, the second backup is text in
+                    the project's default SMS language. If that translation is also unavailable, you may choose
+                    to use untranslated text, if there is any.
+                """),
+            ),
         ]
+
         return crispy.Fieldset(
             _("Registration Settings"),
             *fields

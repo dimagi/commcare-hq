@@ -200,6 +200,7 @@ class NormalModeSubmissionTest(BaseSubmissionTest):
 
     @patch('corehq.apps.receiverwrapper.util.IGNORE_ALL_DEMO_USER_SUBMISSIONS', True)
     @patch('corehq.apps.users.models.CommCareUser.get_by_user_id')
+    @softer_assert()
     def test_ignore_all_practice_mobile_worker_submissions_in_normal_mode(self, user_stub, *_):
         user_stub.return_value = self.couch_user
         response = self._submit('simple_form.xml')

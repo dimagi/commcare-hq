@@ -6,7 +6,7 @@ from corehq.form_processor.tests.utils import (
 )
 from corehq.sql_db.config import plproxy_config
 from django.apps import apps
-from django.db import ProgrammingError, transaction, DEFAULT_DB_ALIAS
+from django.db import ProgrammingError, transaction, DEFAULT_DB_ALIAS, connections
 from django.test import TestCase
 
 from corehq.util.test_utils import generate_cases
@@ -19,7 +19,8 @@ class PartitionedModelsTestMixin(object):
             with transaction.atomic(using=db):
                 # We have to let Django rollback this nested transaction if an Exception
                 # is raised otherwise we won't be able to run any more queries.
-                model_class.objects.using(db).count()
+                with connections[db].cursor() as cursor:
+                    cursor.execute(f'select * from {model_class._meta.db_table}')
         except ProgrammingError:
             self.fail()
 
@@ -28,7 +29,8 @@ class PartitionedModelsTestMixin(object):
             with transaction.atomic(using=db):
                 # We have to let Django rollback this nested transaction if an Exception
                 # is raised otherwise we won't be able to run any more queries.
-                model_class.objects.using(db).count()
+                with connections[db].cursor() as cursor:
+                    cursor.execute(f'select * from {model_class._meta.db_table}')
         except ProgrammingError as e:
             self.assertIsNotNone(re.match('.*relation.*does not exist.*', str(e)))
         else:
@@ -57,7 +59,7 @@ def test_models_are_located_in_correct_dbs(self, app_label, is_partitioned):
             # models do not exist in main db
             self.assertModelDoesNotExist(model_class, DEFAULT_DB_ALIAS)
 
-            # models exist in paritioned dbs
+            # models exist in partitioned dbs
             for db in ([proxy_db] + partitioned_dbs):
                 self.assertModelExists(model_class, db)
         else:

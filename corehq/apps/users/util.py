@@ -41,7 +41,7 @@ def cc_user_domain(domain):
 
 
 def format_username(username, domain):
-    return "%s@%s" % (username.lower(), cc_user_domain(domain))
+    return "%s@%s" % (str(username or '').lower(), cc_user_domain(domain))
 
 
 def normalize_username(username, domain=None):
@@ -73,6 +73,7 @@ def raw_username(username):
     Strips the @domain.commcarehq.org from the username if it's there
     """
     sitewide_domain = settings.HQ_ACCOUNT_ROOT
+    username = str(username or '')
     username = username.lower()
     try:
         u, d = username.split("@")
@@ -190,11 +191,7 @@ def can_add_extra_mobile_workers(request):
     user_limit = request.plan.user_limit
     if user_limit == -1 or num_web_users < user_limit:
         return True
-    if not has_privilege(request, privileges.ALLOW_EXCESS_USERS):
-        current_subscription = Subscription.get_active_subscription_by_domain(request.domain)
-        if current_subscription is None or current_subscription.account.date_confirmed_extra_charges is None:
-            return False
-    return True
+    return has_privilege(request, privileges.ALLOW_EXCESS_USERS)
 
 
 def user_display_string(username, first_name="", last_name=""):
@@ -238,7 +235,7 @@ def _last_build_needs_update(last_build, build_date):
     return False
 
 
-def update_latest_builds(user, app_id, date, version):
+def update_latest_builds(user, app_id, date, version, build_profile_id=None):
     """
     determines whether to update the last build attributes in a user's reporting metadata
     """
@@ -251,6 +248,9 @@ def update_latest_builds(user, app_id, date, version):
             user.reporting_metadata.last_builds.append(last_build)
         last_build.build_version = version
         last_build.app_id = app_id
+        # update only when passed to avoid over writing set value
+        if build_profile_id is not None:
+            last_build.build_profile_id = build_profile_id
         last_build.build_version_date = date
         changed = True
 

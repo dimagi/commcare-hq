@@ -5,7 +5,6 @@ from corehq.apps.sms.models import PhoneNumber
 from corehq.apps.users.models import WebUser
 from dimagi.ext.couchdbkit import Document, BooleanProperty, StringProperty
 from casexml.apps.stock.models import DocDomainMapping
-from corehq.toggles import STOCK_AND_RECEIPT_SMS_HANDLER, NAMESPACE_DOMAIN
 from django.db import models
 
 
@@ -51,8 +50,6 @@ class EWSGhanaConfig(Document):
     def save(self, **params):
         super(EWSGhanaConfig, self).save(**params)
 
-        self.update_toggle()
-
         try:
             DocDomainMapping.objects.get(doc_id=self._id,
                                          domain_name=self.domain,
@@ -61,14 +58,6 @@ class EWSGhanaConfig(Document):
             DocDomainMapping.objects.create(doc_id=self._id,
                                             domain_name=self.domain,
                                             doc_type='EWSGhanaConfig')
-
-    def update_toggle(self):
-        """
-        This turns on the special stock handler when EWS is enabled.
-        """
-
-        if self.enabled:
-            STOCK_AND_RECEIPT_SMS_HANDLER.set(self.domain, True, NAMESPACE_DOMAIN)
 
     class Meta(object):
         app_label = 'ewsghana'

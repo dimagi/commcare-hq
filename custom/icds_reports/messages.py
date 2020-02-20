@@ -124,6 +124,12 @@ def percent_adolescent_girls_enrolled_help_text():
         "the percentage of girls enrolled for Anganwadi Services"
     )
 
+def percent_adolescent_girls_enrolled_help_text_v2():
+    return _(
+        "Of the total number of adolescent girls (aged 11-14 years), "
+        "the percentage of adolescent girls who are out of school"
+    )
+
 
 def awcs_reported_clean_drinking_water_help_text():
     return _(

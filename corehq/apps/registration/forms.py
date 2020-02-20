@@ -22,6 +22,7 @@ from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.utils import decode_password
 from corehq.apps.locations.forms import LocationSelectWidget
 from corehq.apps.programs.models import Program
+from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter as EMWF
 from corehq.apps.users.forms import RoleForm
 from corehq.apps.users.models import CouchUser
 
@@ -429,10 +430,11 @@ class AdminInvitesUserForm(RoleForm, _BaseForm, forms.Form):
         if domain_obj and domain_obj.commtrack_enabled:
             self.fields['supply_point'] = forms.CharField(label='Primary Location', required=False,
                                                           widget=LocationSelectWidget(domain_obj.name),
+                                                          help_text=EMWF.location_search_help,
                                                           initial=location.location_id if location else '')
             self.fields['program'] = forms.ChoiceField(label="Program", choices=(), required=False)
-            programs = Program.by_domain(domain_obj.name, wrap=False)
-            choices = list((prog['_id'], prog['name']) for prog in programs)
+            programs = Program.by_domain(domain_obj.name)
+            choices = list((prog.get_id, prog.name) for prog in programs)
             choices.insert(0, ('', ''))
             self.fields['program'].choices = choices
         self.excluded_emails = excluded_emails or []

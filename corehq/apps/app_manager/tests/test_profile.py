@@ -1,3 +1,4 @@
+import uuid
 import xml.etree.cElementTree as ET
 
 from django.test import SimpleTestCase
@@ -8,7 +9,7 @@ from corehq.apps.app_manager.commcare_settings import (
     get_commcare_settings_lookup,
     get_custom_commcare_settings,
 )
-from corehq.apps.app_manager.models import Application
+from corehq.apps.app_manager.models import Application, BuildProfile
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.builds.models import BuildSpec
 from corehq.util.test_utils import flag_enabled
@@ -19,12 +20,14 @@ class ProfileTest(SimpleTestCase, TestXmlMixin):
     file_path = ('data',)
 
     def setUp(self):
+        self.build_profile_id = uuid.uuid4().hex
         self.app = Application(build_spec=BuildSpec(
             version='2.7.0'
             ),
             name="TÉST ÁPP",
             domain="potter",
-            langs=['en']
+            langs=['en'],
+            build_profiles={self.build_profile_id: BuildProfile(langs=['en'], name='en-profile')}
         )
 
     def _test_profile(self, app):
@@ -107,7 +110,10 @@ class ProfileTest(SimpleTestCase, TestXmlMixin):
 
     def test_heartbeat_url_in_profile(self):
         profile = self.app.create_profile()
-        self._test_custom_property(ET.fromstring(profile), 'heartbeat-url', self.app.heartbeat_url)
+        self._test_custom_property(ET.fromstring(profile), 'heartbeat-url', self.app.heartbeat_url())
+        profile = self.app.create_profile(build_profile_id=self.build_profile_id)
+        self._test_custom_property(ET.fromstring(profile), 'heartbeat-url',
+                                   self.app.heartbeat_url(self.build_profile_id))
 
     def test_version(self):
         profile_xml = ET.fromstring(self.app.create_profile())

@@ -36,6 +36,15 @@ class FakeCheckpoint(PillowCheckpoint):
 
 
 class CacheInvalidateProcessor(PillowProcessor):
+    """Invalidates cached CouchDB documents
+
+    Reads from:
+      - CouchDB
+
+    Writes to:
+      - Redis
+    """
+
     def __init__(self):
         self.gen_caches = set(GenerationCache.doc_type_generation_map().values())
 
@@ -83,9 +92,10 @@ def get_user_groups_cache_invalidation_pillow(pillow_id, **kwargs):
 
 
 def _get_cache_invalidation_pillow(pillow_id, couch_db, couch_filter=None):
-    """
-    Pillow that listens to changes and invalidates the cache whether it's a
-    a single doc being cached, to a view.
+    """Pillow that listens to changes and invalidates the cache whether it's a single doc being cached or a view.
+
+    Processors:
+      - :py:class:`corehq.pillows.cache_invalidate_pillow.CacheInvalidateProcessor`
     """
     checkpoint = FakeCheckpoint(
         'cache_invalidate_pillow', couch_db

@@ -28,9 +28,21 @@ ONE_DAY = 24 * 60 * 60
 
 
 class FormSubmissionMetadataTrackerProcessor(PillowProcessor):
-    """
-    Processor used to process each form and mark the corresponding application as
-    having submissions (has_submissions = True).
+    """Updates the user document with reporting metadata when a user submits a form
+
+    Also marks the application as having submissions.
+
+    Note when USER_REPORTING_METADATA_BATCH_ENABLED is True that this is written to a postgres table.
+    Entries in that table are then batched and processed separately
+
+    Reads from:
+      - CouchDB (user and app)
+      - XForm data source
+
+    Writes to:
+      - CouchDB (app)
+      - CouchDB (user) (when batch processing disabled) (default)
+      - UserReportingMetadataStaging (SQL)  (when batch processing enabled)
     """
 
     def process_change(self, change):
@@ -120,7 +132,7 @@ def _last_submission_needs_update(last_submission, received_on_datetime, build_v
     return time_difference > update_frequency
 
 
-def mark_latest_submission(domain, user, app_id, build_id, version, metadata, received_on, save=True):
+def mark_latest_submission(domain, user, app_id, build_id, version, metadata, received_on, save_user=True):
     try:
         received_on_datetime = string_to_utc_datetime(received_on)
     except ValueError:
@@ -174,7 +186,7 @@ def mark_latest_submission(domain, user, app_id, build_id, version, metadata, re
         )
         update_device_meta(user, device_id, app_version_info.commcare_version, app_meta, save=False)
 
-        if save:
+        if save_user:
             user.save(fire_signals=False)
         return True
     return False

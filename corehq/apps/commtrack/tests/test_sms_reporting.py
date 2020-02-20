@@ -13,7 +13,6 @@ from corehq.apps.products.models import Product
 from corehq.apps.reminders.util import get_two_way_number_for_recipient
 from corehq.apps.sms.tests.util import setup_default_sms_test_backend
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
-from corehq.toggles import NAMESPACE_DOMAIN, STOCK_AND_RECEIPT_SMS_HANDLER
 
 
 class SMSTests(TestCase):
@@ -231,24 +230,6 @@ class StockReportTest(SMSTests):
         for code in original_amounts.keys():
             expected_amount = original_amounts[code] - lost_amounts[code]
             self.check_stock(code, expected_amount)
-
-
-class StockAndReceiptTest(SMSTests):
-    user_definitions = [util.FIXED_USER]
-
-    def setUp(self):
-        super(StockAndReceiptTest, self).setUp()
-        STOCK_AND_RECEIPT_SMS_HANDLER.set(self.domain.name, True, NAMESPACE_DOMAIN)
-
-    def test_soh_and_receipt(self):
-        handled = handle(get_two_way_number_for_recipient(self.users[0]), 'pp 20.30', None)
-        self.assertTrue(handled)
-
-        self.check_stock('pp', Decimal(20))
-
-    def tearDown(self):
-        STOCK_AND_RECEIPT_SMS_HANDLER.set(self.domain.name, False, NAMESPACE_DOMAIN)
-        super(StockAndReceiptTest, self).tearDown()
 
 
 def _get_location_from_form(form):

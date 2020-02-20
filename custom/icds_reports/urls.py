@@ -2,7 +2,7 @@ from django.conf.urls import url, include
 
 from . import mobile_views
 from custom.icds_reports.views import (
-    LegacyTableauRedirectView, DashboardView, IcdsDynamicTemplateView, ProgramSummaryView,
+    LegacyTableauRedirectView, DashboardView, IcdsDynamicTemplateView, ProgramSummaryView, TopoJsonView,
     PrevalenceOfUndernutritionView, LocationView, LocationAncestorsView, AwcReportsView,
     ExportIndicatorView, FactSheetsView, PrevalenceOfSevereView, PrevalenceOfStuntingView,
     ExclusiveBreastfeedingView, NewbornsWithLowBirthWeightView, EarlyInitiationBreastfeeding,
@@ -13,14 +13,17 @@ from custom.icds_reports.views import (
     ICDSBugReportView, AWCLocationView, DownloadPDFReport, CheckExportReportStatus, ICDSImagesAccessorAPI,
     HaveAccessToLocation, InactiveAWW, DownloadExportReport, DishaAPIView, NICIndicatorAPIView, LadySupervisorView,
     CasDataExport, CasDataExportAPIView, ServiceDeliveryDashboardView, InactiveDashboardUsers, APWebservice,
-    DailyIndicators, InfantometerView, StadiometerView, MWCDDataView, IcdsDynamicMobileTemplateView
-)
+    DailyIndicators, InfantometerView, StadiometerView, MWCDDataView, IcdsDynamicMobileTemplateView,
+    GovernanceHomeVisitAPI, GovernanceBeneficiaryAPI, GovernanceStateListAPI, GovernanceVHNDSAPI,
+    MobileDashboardDownloadView, GovernanceCBEAPI)
 
 
 dashboard_urls = [
+    url('^mobile_app/$', MobileDashboardDownloadView.as_view(), name='icds_mobile_dashboard_download'),
     url(r'^icds_image_accessor/(?P<form_id>[\w\-:]+)/(?P<attachment_id>.*)$',
         ICDSImagesAccessorAPI.as_view(), name='icds_image_accessor'),
     url('^', DashboardView.as_view(), name='icds_dashboard'),
+
 ]
 
 maternal_and_child_urls = [
@@ -134,6 +137,10 @@ awc_infrastructure_urls = [
 
 mobile_dashboard_urls = [
     url(r'^login/$', mobile_views.login, name="cas_mobile_dashboard_login"),
+    url(r'^logout/$', mobile_views.logout, name="cas_mobile_dashboard_logout"),
+    url(r'^password_reset/$', mobile_views.password_reset, name="cas_mobile_dashboard_password_reset"),
+    url(r'^password_reset/done$', mobile_views.password_reset_done,
+        name="cas_mobile_dashboard_password_reset_done"),
     url(r'^$', mobile_views.MobileDashboardView.as_view(), name="cas_mobile_dashboard"),
 ]
 
@@ -160,6 +167,7 @@ urlpatterns = [
     url(r'^awc_reports/(?P<step>[\w-]+)/', AwcReportsView.as_view(), name='awc_reports'),
     url(r'^locations$', LocationView.as_view(), name='icds_locations'),
     url(r'^locations/ancestors$', LocationAncestorsView.as_view(), name='icds_locations_ancestors'),
+    url(r'^topojson$', TopoJsonView.as_view(), name='topojson'),
     url(r'^icds_export_indicator$', ExportIndicatorView.as_view(), name='icds_export_indicator'),
     url(r'^fact_sheets$', FactSheetsView.as_view(), name='fact_sheets'),
     url(r'^aggregation_script/', AggregationScriptPage.as_view(), name=AggregationScriptPage.urlname),
@@ -178,7 +186,11 @@ urlpatterns = [
     url(r'^daily_indicators', DailyIndicators.as_view(), name='daily_indicators'),
     url(r'^mwcd_indicators', MWCDDataView.as_view(), name='mwcd_indicators'),
     url(r'^data_export', CasDataExportAPIView.as_view(), name='data_export_api'),
-
+    url(r'^governance_apis/home_visit/', GovernanceHomeVisitAPI.as_view(), name='governance_apis_home_visit'),
+    url(r'^governance_apis/beneficiary/', GovernanceBeneficiaryAPI.as_view(), name='governance_apis_beneficiary'),
+    url(r'^governance_apis/state_names/', GovernanceStateListAPI.as_view(), name='governance_apis_state_names'),
+    url(r'^governance_apis/cbe/', GovernanceCBEAPI.as_view(), name='governance_apis_cbe'),
+    url(r'^governance_apis/vhsnd/', GovernanceVHNDSAPI.as_view(), name='governance_apis_vhnds'),
 ]
 
 DASHBOARD_URL_GROUPS = urlpatterns + dashboard_urls + mobile_dashboard_urls + maternal_and_child_urls + cas_reach_urls + demographics_urls + awc_infrastructure_urls

@@ -4,11 +4,14 @@ from django.conf import settings
 from django.http import HttpResponseRedirect
 from django.http.response import Http404
 from django.urls import reverse
+from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
 
 from django_prbac.utils import has_privilege
 
+from corehq.apps.accounting.decorators import always_allow_project_access
+from corehq.apps.accounting.utils import get_paused_plan_context
 from dimagi.utils.web import json_response
 
 from corehq import privileges
@@ -28,7 +31,6 @@ from corehq.apps.domain.views.base import DomainViewMixin, LoginAndDomainMixin
 from corehq.apps.domain.views.settings import DefaultProjectSettingsView
 from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
 from corehq.apps.hqwebapp.views import BasePageView
-from corehq.apps.linked_domain.dbaccessors import get_domain_master_link
 from corehq.apps.locations.permissions import (
     location_safe,
     user_can_edit_location_types,
@@ -40,16 +42,7 @@ from corehq.util.context_processors import commcare_hq_names
 @login_and_domain_required
 @location_safe
 def dashboard_default(request, domain):
-    return HttpResponseRedirect(default_dashboard_url(request, domain))
-
-
-def default_dashboard_url(request, domain):
-    couch_user = getattr(request, 'couch_user', None)
-
-    if domain in settings.CUSTOM_DASHBOARD_PAGE_URL_NAMES:
-        return reverse(settings.CUSTOM_DASHBOARD_PAGE_URL_NAMES[domain], args=[domain])
-
-    return reverse(DomainDashboardView.urlname, args=[domain])
+    return HttpResponseRedirect(reverse(DomainDashboardView.urlname, args=[domain]))
 
 
 def _get_tile(request, slug):
@@ -78,6 +71,7 @@ def dashboard_tile_total(request, domain, slug):
     return json_response({'total': tile.paginator.total})
 
 
+@method_decorator(always_allow_project_access, name='dispatch')
 @location_safe
 class DomainDashboardView(LoginAndDomainMixin, BillingModalsMixin, BasePageView, DomainViewMixin):
     urlname = 'dashboard_domain'
@@ -114,22 +108,47 @@ class DomainDashboardView(LoginAndDomainMixin, BillingModalsMixin, BasePageView,
                     })
                 tile_contexts.append(tile_context)
         from corehq.apps.export.views.utils import user_can_view_odata_feed
-        return {
+        context = {
             'dashboard_tiles': tile_contexts,
             'user_can_view_odata_feed': user_can_view_odata_feed(
                 self.domain, self.request.couch_user
             ),
         }
+        context.update(get_paused_plan_context(self.request, self.domain))
+        return context
 
 
 def _get_default_tiles(request):
-    can_edit_data = lambda request: (request.couch_user.can_edit_data()
-                                     or request.couch_user.can_access_any_exports())
     can_edit_apps = lambda request: (request.couch_user.is_web_user()
                                      or request.couch_user.can_edit_apps())
-    can_view_reports = lambda request: user_can_view_reports(request.project, request.couch_user)
     can_edit_users = lambda request: (request.couch_user.can_edit_commcare_users()
                                       or request.couch_user.can_edit_web_users())
+
+    def can_view_apps(request):
+        return can_edit_apps(request) and has_privilege(request,
+                                                        privileges.PROJECT_ACCESS)
+
+    def can_view_users(request):
+        can_do_something = (
+            request.couch_user.can_edit_commcare_users()
+            or request.couch_user.can_view_commcare_users()
+            or request.couch_user.can_edit_groups()
+            or request.couch_user.can_view_groups()
+            or request.couch_user.can_view_roles()
+        ) and has_privilege(request, privileges.PROJECT_ACCESS)
+        return (
+            can_do_something
+            or request.couch_user.can_edit_web_users()
+            or request.couch_user.can_view_web_users()
+        )
+
+    def can_view_reports(request):
+        return (user_can_view_reports(request.project, request.couch_user)
+                and has_privilege(request, privileges.PROJECT_ACCESS))
+
+    def can_view_data(request):
+        return ((request.couch_user.can_edit_data() or request.couch_user.can_access_any_exports())
+                and has_privilege(request, privileges.PROJECT_ACCESS))
 
     def can_edit_locations_not_users(request):
         if not has_privilege(request, privileges.LOCATIONS):
@@ -140,13 +159,6 @@ def _get_default_tiles(request):
         )
 
     can_view_commtrack_setup = lambda request: (request.project.commtrack_enabled)
-
-    def can_view_exchange(request):
-        return (
-            can_edit_apps(request)
-            and not settings.ENTERPRISE_MODE
-            and not get_domain_master_link(request.domain)  # this isn't a linked domain
-        )
 
     def _can_access_sms(request):
         return has_privilege(request, privileges.OUTBOUND_SMS)
@@ -175,7 +187,7 @@ def _get_default_tiles(request):
             slug='applications',
             icon='fcc fcc-applications',
             paginator_class=AppsPaginator,
-            visibility_check=can_edit_apps,
+            visibility_check=can_view_apps,
             urlname='default_new_app',
             url_generator=apps_link,
             help_text=_('Build, update, and deploy applications'),
@@ -206,7 +218,7 @@ def _get_default_tiles(request):
             icon='fcc fcc-data',
             paginator_class=DataPaginator,
             urlname="data_interfaces_default",
-            visibility_check=can_edit_data,
+            visibility_check=can_view_data,
             help_text=_('Export and manage data'),
         ),
         Tile(
@@ -215,7 +227,7 @@ def _get_default_tiles(request):
             slug='users',
             icon='fcc fcc-users',
             urlname=DefaultProjectUserSettingsView.urlname,
-            visibility_check=can_edit_users,
+            visibility_check=can_view_users,
             help_text=_('Manage accounts for mobile workers and CommCareHQ users'),
         ),
         Tile(
@@ -235,16 +247,6 @@ def _get_default_tiles(request):
             urlname='sms_default',
             visibility_check=can_use_messaging,
             help_text=_('Configure and schedule SMS messages and keywords'),
-        ),
-        Tile(
-            request,
-            title=_('Exchange'),
-            slug='exchange',
-            icon='fcc fcc-exchange',
-            urlname='appstore',
-            visibility_check=can_view_exchange,
-            url_generator=lambda urlname, req: reverse(urlname),
-            help_text=_('Download and share CommCare applications with other users around the world'),
         ),
         Tile(
             request,

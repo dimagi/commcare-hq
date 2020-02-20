@@ -8,25 +8,26 @@ from casexml.apps.case.models import (
     INDEX_RELATIONSHIP_CHILD,
     INDEX_RELATIONSHIP_EXTENSION,
 )
-from corehq.form_processor.abstract_models import DEFAULT_PARENT_IDENTIFIER
 from dimagi.ext.couchdbkit import (
+    BooleanProperty,
     DictProperty,
     DocumentSchema,
     ListProperty,
-    SchemaDictProperty,
-    SchemaListProperty,
     SchemaProperty,
     StringProperty,
 )
 
+from corehq.form_processor.abstract_models import DEFAULT_PARENT_IDENTIFIER
 from corehq.motech.openmrs.const import OPENMRS_PROPERTIES
 from corehq.motech.openmrs.finders import PatientFinder
 from corehq.motech.openmrs.jsonpath import Cmp, WhereNot
 
+ALL_CONCEPTS = "all"
 INDEX_RELATIONSHIPS = (
     INDEX_RELATIONSHIP_CHILD,
     INDEX_RELATIONSHIP_EXTENSION,
 )
+
 
 class OpenmrsCaseConfig(DocumentSchema):
 
@@ -125,6 +126,13 @@ class OpenmrsCaseConfig(DocumentSchema):
     # }
     person_attributes = DictProperty()
 
+    # Create cases when importing via the Atom feed
+    import_creates_cases = BooleanProperty(default=True)
+    # If we ever need to disable updating cases, ``import_updates_cases``
+    # could be added here. Similarly, we could replace
+    # ``patient_finder.create_missing`` with ``export_creates_patients``
+    # and ``export_updates_patients``
+
     @classmethod
     def wrap(cls, data):
         if 'id_matchers' in data:
@@ -184,7 +192,10 @@ class ObservationMapping(DocumentSchema):
         }
 
     """
-    concept = StringProperty()
+    # If no concept is specified, this ObservationMapping is used for
+    # setting a case property or creating an extension case for any
+    # concept
+    concept = StringProperty(required=True, default=ALL_CONCEPTS)
     value = DictProperty()
 
     # Import Observations as case updates from Atom feed. (Case type is

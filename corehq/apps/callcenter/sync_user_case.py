@@ -1,5 +1,6 @@
 import uuid
 from collections import namedtuple
+from itertools import chain
 from xml.etree import cElementTree as ElementTree
 
 from django.core.cache import cache
@@ -19,14 +20,26 @@ class _UserCaseHelper(object):
 
     CASE_SOURCE_ID = __name__ + "._UserCaseHelper."
 
-    def __init__(self, domain, owner_id):
+    def __init__(self, domain, owner_id, user_id):
         self.domain = domain
         self.owner_id = owner_id
+        self.user_id = user_id
+        self.case_blocks = []
+        self.tasks = []
 
-    def _submit_case_block(self, caseblock, source):
-        device_id = self.CASE_SOURCE_ID + source
-        casexml = ElementTree.tostring(caseblock.as_xml()).decode('utf-8')
-        submit_case_blocks(casexml, self.domain, device_id=device_id)
+    @classmethod
+    def commit(cls, helpers):
+        case_blocks = list(chain.from_iterable([h.case_blocks for h in helpers]))
+        if not case_blocks:
+            assert not any(h.tasks for h in helpers), [h.tasks for h in helpers]
+            return
+        assert len({h.user_id for h in helpers}) == 1
+        assert len({h.domain for h in helpers}) == 1
+
+        case_blocks = [cb.as_text() for cb in case_blocks]
+        submit_case_blocks(case_blocks, helpers[0].domain, device_id=cls.CASE_SOURCE_ID)
+        for task, task_args in chain.from_iterable([h.tasks for h in helpers]):
+            task.delay(*task_args)
 
     @staticmethod
     def re_open_case(case):
@@ -35,7 +48,7 @@ class _UserCaseHelper(object):
             transaction.form.archive()
 
     def create_user_case(self, commcare_user, fields):
-        caseblock = CaseBlock(
+        self.case_blocks.append(CaseBlock(
             create=True,
             case_id=uuid.uuid4().hex,
             owner_id=fields.pop('owner_id'),
@@ -43,12 +56,11 @@ class _UserCaseHelper(object):
             case_type=fields.pop('case_type'),
             case_name=fields.pop('name', None),
             update=fields
-        )
-        self._submit_case_block(caseblock, "create_user_case")
+        ))
         self._user_case_changed(fields)
 
     def update_user_case(self, case, fields, close):
-        caseblock = CaseBlock(
+        self.case_blocks.append(CaseBlock(
             create=False,
             case_id=case.case_id,
             owner_id=fields.pop('owner_id', CaseBlock.undefined),
@@ -56,19 +68,18 @@ class _UserCaseHelper(object):
             case_name=fields.pop('name', CaseBlock.undefined),
             close=close,
             update=fields
-        )
-        self._submit_case_block(caseblock, "update_user_case")
+        ))
         self._user_case_changed(fields)
 
     def _user_case_changed(self, fields):
         field_names = list(fields)
         if _domain_has_new_fields(self.domain, field_names):
-            add_inferred_export_properties.delay(
+            self.tasks.append((add_inferred_export_properties, (
                 'UserSave',
                 self.domain,
                 USERCASE_TYPE,
                 field_names,
-            )
+            )))
 
 
 def _domain_has_new_fields(domain, field_names):
@@ -82,33 +93,26 @@ def _domain_has_new_fields(domain, field_names):
     return False
 
 
-def _sync_user_case(commcare_user, case_type, owner_id, case=None):
-    """
-    Each time a CommCareUser is saved this method gets called and creates or updates
-    a case associated with the user with the user's details.
+def _get_sync_user_case_helper(commcare_user, case_type, owner_id, case=None):
+    domain = commcare_user.domain
+    fields = _get_user_case_fields(commcare_user, case_type, owner_id)
+    case = case or CaseAccessors(domain).get_case_by_domain_hq_user_id(commcare_user._id, case_type)
+    close = commcare_user.to_be_deleted() or not commcare_user.is_active
+    user_case_helper = _UserCaseHelper(domain, owner_id, commcare_user._id)
 
-    This is also called to create user cases when the usercase is used for the
-    first time.
-    """
-    with CriticalSection(['user_case_%s_for_%s' % (case_type, commcare_user._id)]):
-        domain = commcare_user.domain
-        fields = _get_user_case_fields(commcare_user, case_type, owner_id)
-        case = case or CaseAccessors(domain).get_case_by_domain_hq_user_id(commcare_user._id, case_type)
-        close = commcare_user.to_be_deleted() or not commcare_user.is_active
-        user_case_helper = _UserCaseHelper(domain, owner_id)
+    def case_should_be_reopened(case, user_case_should_be_closed):
+        return case and case.closed and not user_case_should_be_closed
 
-        def case_should_be_reopened(case, user_case_should_be_closed):
-            return case and case.closed and not user_case_should_be_closed
-
-        if not case:
-            user_case_helper.create_user_case(commcare_user, fields)
-        else:
-            if case_should_be_reopened(case, close):
-                user_case_helper.re_open_case(case)
-            changed_fields = _get_changed_fields(case, fields)
-            close_case = close and not case.closed
-            if changed_fields or close_case:
-                user_case_helper.update_user_case(case, changed_fields, close_case)
+    if not case:
+        user_case_helper.create_user_case(commcare_user, fields)
+    else:
+        if case_should_be_reopened(case, close):
+            user_case_helper.re_open_case(case)
+        changed_fields = _get_changed_fields(case, fields)
+        close_case = close and not case.closed
+        if changed_fields or close_case:
+            user_case_helper.update_user_case(case, changed_fields, close_case)
+    return user_case_helper
 
 
 def _get_user_case_fields(commcare_user, case_type, owner_id):
@@ -171,12 +175,20 @@ def _get_changed_fields(case, fields):
     return changed_fields
 
 
+def get_sync_lock_key(user_id):
+    return ["sync_user_case_for_%s" % user_id]
+
+
 def sync_call_center_user_case(user):
+    with CriticalSection(get_sync_lock_key(user._id)):
+        _UserCaseHelper.commit(list(_iter_call_center_case_helpers(user)))
+
+
+def _iter_call_center_case_helpers(user):
     config = user.project.call_center_config
     if config.enabled and config.config_is_valid():
         case, owner_id = _get_call_center_case_and_owner(user)
-        _sync_user_case(user, config.case_type, owner_id, case)
-
+        yield _get_sync_user_case_helper(user, config.case_type, owner_id, case)
 
 CallCenterCaseAndOwner = namedtuple('CallCenterCaseAndOwner', 'case owner_id')
 
@@ -214,9 +226,31 @@ def _call_center_location_owner(user, ancestor_level):
 
 
 def sync_usercase(user):
+    with CriticalSection(get_sync_lock_key(user._id)):
+        _UserCaseHelper.commit(list(_iter_sync_usercase_helpers(user)))
+
+
+def _iter_sync_usercase_helpers(user):
     if user.project.usercase_enabled:
-        _sync_user_case(
+        yield _get_sync_user_case_helper(
             user,
             USERCASE_TYPE,
             user.get_id
         )
+
+
+def sync_user_cases(user):
+    """
+    Each time a CommCareUser is saved this method gets called and creates or updates
+    a case associated with the user with the user's details.
+
+    This is also called to create user cases when the usercase is used for the
+    first time.
+    """
+    with CriticalSection(get_sync_lock_key(user._id)):
+        helpers = list(chain(
+            _iter_sync_usercase_helpers(user),
+            _iter_call_center_case_helpers(user),
+        ))
+        if helpers:
+            _UserCaseHelper.commit(helpers)

@@ -2,16 +2,16 @@
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function AdhaarController($scope, $routeParams, $location, $filter, demographicsService, locationsService,
-    userLocationId, storageService, haveAccessToAllLocations, baseControllersService, isAlertActive) {
+    dateHelperService, navigationService, userLocationId, storageService, haveAccessToAllLocations,
+    baseControllersService, isAlertActive, isMobile) {
     baseControllersService.BaseController.call(this, $scope, $routeParams, $location, locationsService,
-        userLocationId, storageService, haveAccessToAllLocations);
+        dateHelperService, navigationService, userLocationId, storageService, haveAccessToAllLocations,
+        false, isMobile);
     var vm = this;
     vm.isAlertActive = isAlertActive;
     vm.label = "Aadhaar-seeded Beneficiaries";
-    vm.steps = {
-        'map': {route: '/demographics/adhaar/map', label: 'Map View'},
-        'chart': {route: '/demographics/adhaar/chart', label: 'Chart View'},
-    };
+    vm.serviceDataFunction = demographicsService.getAdhaarData;
+    vm.steps = vm.getSteps('/demographics/adhaar/');
     vm.data = {
         legendTitle: 'Percentage beneficiary',
     };
@@ -20,29 +20,19 @@ function AdhaarController($scope, $routeParams, $location, $filter, demographics
         info: 'Of the total number of ICDS beneficiaries, the percentage whose Aadhaar identification has been captured. ',
     };
 
-    vm.templatePopup = function(loc, row) {
+    vm.getPopupData = function (row) {
         var inMonth = row ? $filter('indiaNumbers')(row.in_month) : 'N/A';
         var percent = row ? d3.format('.2%')(row.in_month / (row.all || 1)) : "N/A";
-        return vm.createTemplatePopup(
-            loc.properties.name,
-            [{
+        return [
+            {
                 indicator_name: 'Total number of ICDS beneficiaries whose Aadhaar has been captured: ',
                 indicator_value: inMonth,
             },
             {
                 indicator_name: '% of ICDS beneficiaries whose Aadhaar has been captured: ',
                 indicator_value: percent,
-            }]
-        );
-    };
-
-    vm.loadData = function () {
-        vm.setStepsMapLabel();
-        var usePercentage = true;
-        var forceYAxisFromZero = false;
-        vm.myPromise = demographicsService.getAdhaarData(vm.step, vm.filtersData).then(
-            vm.loadDataFromResponse(usePercentage, forceYAxisFromZero)
-        );
+            }
+        ];
     };
 
     vm.init();
@@ -69,12 +59,16 @@ function AdhaarController($scope, $routeParams, $location, $filter, demographics
     };
 }
 
-AdhaarController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'demographicsService', 'locationsService', 'userLocationId', 'storageService', 'haveAccessToAllLocations', 'baseControllersService', 'isAlertActive'];
+AdhaarController.$inject = [
+    '$scope', '$routeParams', '$location', '$filter',
+    'demographicsService', 'locationsService', 'dateHelperService', 'navigationService', 'userLocationId',
+    'storageService', 'haveAccessToAllLocations', 'baseControllersService', 'isAlertActive', 'isMobile',
+];
 
-window.angular.module('icdsApp').directive('adhaarBeneficiary', function() {
+window.angular.module('icdsApp').directive('adhaarBeneficiary', ['templateProviderService', function (templateProviderService) {
     return {
         restrict: 'E',
-        templateUrl: url('icds-ng-template', 'map-chart'),
+        templateUrl: templateProviderService.getMapChartTemplate,
         bindToController: true,
         scope: {
             data: '=',
@@ -82,4 +76,4 @@ window.angular.module('icdsApp').directive('adhaarBeneficiary', function() {
         controller: AdhaarController,
         controllerAs: '$ctrl',
     };
-});
+}]);

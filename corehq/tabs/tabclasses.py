@@ -36,6 +36,7 @@ from corehq.apps.hqadmin.reports import (
     UserAuditReport,
     UserListReport,
 )
+from corehq.apps.hqadmin.views.system import GlobalThresholds
 from corehq.apps.hqwebapp.models import GaTracker
 from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
 from corehq.apps.linked_domain.dbaccessors import is_linked_domain
@@ -105,7 +106,8 @@ class ProjectReportsTab(UITab):
 
     @property
     def _is_viewable(self):
-        return user_can_view_reports(self.project, self.couch_user)
+        return (user_can_view_reports(self.project, self.couch_user)
+                and has_privilege(self._request, privileges.PROJECT_ACCESS))
 
     @property
     def view(self):
@@ -259,19 +261,8 @@ class DashboardTab(UITab):
     @property
     @memoized
     def url(self):
-        from corehq.apps.dashboard.views import default_dashboard_url
-        return default_dashboard_url(self._request, self.domain)
-
-
-class ProjectInfoTab(UITab):
-    title = ugettext_noop("Project Info")
-    view = "corehq.apps.appstore.views.project_info"
-
-    url_prefix_formats = ('/exchange/{domain}/info/',)
-
-    @property
-    def _is_viewable(self):
-        return self.project and self.project.is_snapshot
+        from corehq.apps.dashboard.views import DomainDashboardView
+        return reverse(DomainDashboardView.urlname, args=[self.domain])
 
 
 class SetupTab(UITab):
@@ -520,7 +511,7 @@ class ProjectDataTab(UITab):
             self.can_edit_commcare_data
             or self.can_export_data
             or can_download_data_files(self.domain, self.couch_user)
-        )
+        ) and has_privilege(self._request, privileges.PROJECT_ACCESS)
 
     @property
     def sidebar_items(self):
@@ -920,9 +911,10 @@ class ApplicationsTab(UITab):
     @property
     def _is_viewable(self):
         couch_user = self.couch_user
-        return (self.domain and couch_user and
-                (couch_user.is_web_user() or couch_user.can_edit_apps()) and
-                (couch_user.is_member_of(self.domain) or couch_user.is_superuser))
+        return (self.domain and couch_user
+                and (couch_user.is_web_user() or couch_user.can_edit_apps())
+                and (couch_user.is_member_of(self.domain) or couch_user.is_superuser)
+                and has_privilege(self._request, privileges.PROJECT_ACCESS))
 
 
 class CloudcareTab(UITab):
@@ -1221,23 +1213,34 @@ class ProjectUsersTab(UITab):
 
     @property
     def _is_viewable(self):
-        return self.domain and (self.couch_user.can_edit_commcare_users() or
-                                self.couch_user.can_view_commcare_users() or
-                                self.couch_user.can_edit_groups() or
-                                self.couch_user.can_view_groups() or
-                                self.couch_user.can_edit_locations() or
-                                self.couch_user.can_view_locations() or
-                                self.couch_user.can_edit_web_users() or
-                                self.couch_user.can_view_web_users() or
-                                self.couch_user.can_view_roles())
+        can_do_something = (
+            self.couch_user.can_edit_commcare_users()
+            or self.couch_user.can_view_commcare_users()
+            or self.couch_user.can_edit_groups()
+            or self.couch_user.can_view_groups()
+            or self.couch_user.can_edit_locations()
+            or self.couch_user.can_view_locations()
+            or self.couch_user.can_view_roles()
+        ) and self.has_project_access
+
+        return self.domain and (
+            can_do_something
+            or self.couch_user.can_edit_web_users()
+            or self.couch_user.can_view_web_users()
+        )
 
     @property
     def can_view_cloudcare(self):
         return has_privilege(self._request, privileges.CLOUDCARE) and self.couch_user.is_domain_admin()
 
+    @property
+    def has_project_access(self):
+        return has_privilege(self._request, privileges.PROJECT_ACCESS)
+
     def _get_mobile_users_menu(self):
         menu = []
-        if self.couch_user.can_edit_commcare_users() or self.couch_user.can_view_commcare_users():
+        if ((self.couch_user.can_edit_commcare_users() or self.couch_user.can_view_commcare_users())
+                and self.has_project_access):
             def _get_commcare_username(request=None, couch_user=None,
                                        **context):
                 if (couch_user.user_id != request.couch_user.user_id or
@@ -1266,6 +1269,12 @@ class ProjectUsersTab(UITab):
                      'urlname': EditCommCareUserView.urlname},
                     {'title': _('Bulk Upload'),
                      'urlname': 'upload_commcare_users'},
+                    {'title': _('Bulk Delete'),
+                     'urlname': 'delete_commcare_users'},
+                    {'title': _('Edit User Fields'),
+                     'urlname': 'user_fields_view'},
+                    {'title': _('Filter and Download Users'),
+                     'urlname': 'filter_and_download_commcare_users'},
                     {'title': _(
                         ConfirmBillingAccountForExtraUsersView.page_title),
                         'urlname': ConfirmBillingAccountForExtraUsersView.urlname},
@@ -1273,7 +1282,8 @@ class ProjectUsersTab(UITab):
                 'show_in_dropdown': True,
             })
 
-        if self.couch_user.can_edit_groups() or self.couch_user.can_view_groups():
+        if ((self.couch_user.can_edit_groups() or self.couch_user.can_view_groups())
+                and self.has_project_access):
             is_view_only_subpage = (hasattr(self._request, 'is_view_only')
                                     and self._request.is_view_only)
             menu.append({
@@ -1340,7 +1350,8 @@ class ProjectUsersTab(UITab):
                 'show_in_dropdown': True,
             })
 
-        if self.couch_user.is_domain_admin() or self.couch_user.can_view_roles():
+        if ((self.couch_user.is_domain_admin() or self.couch_user.can_view_roles())
+                and self.has_project_access):
             from corehq.apps.users.views import (
                 ListRolesView,
             )
@@ -1378,6 +1389,7 @@ class ProjectUsersTab(UITab):
                 LocationsListView,
                 NewLocationView,
                 EditLocationView,
+                FilteredLocationDownload,
                 LocationImportView,
                 LocationImportStatusView,
                 LocationFieldsView,
@@ -1409,6 +1421,10 @@ class ProjectUsersTab(UITab):
                     {
                         'title': _(LocationFieldsView.page_name()),
                         'urlname': LocationFieldsView.urlname,
+                    },
+                    {
+                        'title': _(FilteredLocationDownload.page_title),
+                        'urlname': FilteredLocationDownload.urlname,
                     },
                 ]
             })
@@ -1456,20 +1472,25 @@ class EnterpriseSettingsTab(UITab):
     @property
     def sidebar_items(self):
         items = super(EnterpriseSettingsTab, self).sidebar_items
-        items.append((_('Manage Enterprise'), [
-            {
-                'title': _('Enterprise Dashboard'),
-                'url': reverse('enterprise_dashboard', args=[self.domain]),
-            },
-            {
-                'title': _('Enterprise Settings'),
-                'url': reverse('enterprise_settings', args=[self.domain]),
-            },
-            {
-                'title': _('Billing Statements'),
-                'url': reverse('enterprise_billing_statements', args=[self.domain])
-            }
-        ]))
+        enterprise_views = []
+
+        if has_privilege(self._request, privileges.PROJECT_ACCESS):
+            enterprise_views.extend([
+                {
+                    'title': _('Enterprise Dashboard'),
+                    'url': reverse('enterprise_dashboard', args=[self.domain]),
+                },
+                {
+                    'title': _('Enterprise Settings'),
+                    'url': reverse('enterprise_settings', args=[self.domain]),
+                },
+            ])
+        enterprise_views.append({
+            'title': _('Billing Statements'),
+            'url': reverse('enterprise_billing_statements',
+                           args=[self.domain])
+        })
+        items.append((_('Manage Enterprise'), enterprise_views))
         return items
 
 
@@ -1556,10 +1577,11 @@ class ProjectSettingsTab(UITab):
         items = []
         user_is_admin = self.couch_user.is_domain_admin(self.domain)
         user_is_billing_admin = self.couch_user.can_edit_billing()
+        has_project_access = has_privilege(self._request, privileges.PROJECT_ACCESS)
 
         project_info = []
 
-        if user_is_admin:
+        if user_is_admin and has_project_access:
             from corehq.apps.domain.views.settings import EditBasicProjectInfoView, EditPrivacySecurityView
 
             project_info.extend([
@@ -1588,14 +1610,16 @@ class ProjectSettingsTab(UITab):
 
         items.append((_('Project Information'), project_info))
 
-        if user_is_admin:
+        if user_is_admin and has_project_access:
             items.append((_('Project Administration'), _get_administration_section(self.domain)))
 
-        if self.couch_user.can_edit_motech():
-            items.append((_('Integration'), _get_integration_section(self.domain)))
+        if self.couch_user.can_edit_motech() and has_project_access:
+            integration_nav = _get_integration_section(self.domain)
+            if integration_nav:
+                items.append((_('Integration'), integration_nav))
 
         feature_flag_items = _get_feature_flag_items(self.domain)
-        if feature_flag_items and user_is_admin:
+        if feature_flag_items and user_is_admin and has_project_access:
             items.append((_('Pre-release Features'), feature_flag_items))
 
         from corehq.apps.users.models import WebUser
@@ -1692,20 +1716,6 @@ def _get_administration_section(domain):
     from corehq.apps.ota.models import MobileRecoveryMeasure
 
     administration = []
-    if not settings.ENTERPRISE_MODE and not is_linked_domain(domain):
-        administration.extend([
-            {
-                'title': _('CommCare Exchange'),
-                'url': reverse('domain_snapshot_settings', args=[domain])
-            }])
-    if not settings.ENTERPRISE_MODE:
-        administration.extend([
-            {
-                'title': _('Multimedia Sharing'),
-                'url': reverse('domain_manage_multimedia', args=[domain])
-            }
-        ])
-
     if (toggles.MOBILE_RECOVERY_MEASURES.enabled(domain)
             and MobileRecoveryMeasure.objects.filter(domain=domain).exists()):
         administration.append({
@@ -1749,26 +1759,29 @@ def _get_integration_section(domain):
         elif repeater_type == 'CaseRepeater':
             return _("Forward Cases")
 
-    integration = [
-        {
-            'title': _('Data Forwarding'),
-            'url': reverse('domain_forwarding', args=[domain]),
-            'subpages': [
-                {
-                    'title': _get_forward_name,
-                    'urlname': 'add_repeater',
-                },
-                {
-                    'title': _get_forward_name,
-                    'urlname': 'add_form_repeater',
-                },
-            ]
-        },
-        {
-            'title': _('Data Forwarding Records'),
-            'url': reverse('domain_report_dispatcher', args=[domain, 'repeat_record_report'])
-        }
-    ]
+    integration = []
+
+    if domain_has_privilege(domain, privileges.DATA_FORWARDING):
+        integration.extend([
+            {
+                'title': _('Data Forwarding'),
+                'url': reverse('domain_forwarding', args=[domain]),
+                'subpages': [
+                    {
+                        'title': _get_forward_name,
+                        'urlname': 'add_repeater',
+                    },
+                    {
+                        'title': _get_forward_name,
+                        'urlname': 'add_form_repeater',
+                    },
+                ]
+            },
+            {
+                'title': _('Data Forwarding Records'),
+                'url': reverse('domain_report_dispatcher', args=[domain, 'repeat_record_report'])
+            }
+        ])
 
     if toggles.BIOMETRIC_INTEGRATION.enabled(domain):
         from corehq.apps.integration.views import BiometricIntegrationView
@@ -2040,6 +2053,9 @@ class AdminTab(UITab):
                 {'title': _('Branches on Staging'),
                  'url': reverse('branches_on_staging'),
                  'icon': 'fa fa-tree'},
+                {'title': GlobalThresholds.page_title,
+                 'url': reverse(GlobalThresholds.urlname),
+                 'icon': 'fa fa-fire'},
             ]
             user_operations = [
                 {'title': _('Login as another user'),

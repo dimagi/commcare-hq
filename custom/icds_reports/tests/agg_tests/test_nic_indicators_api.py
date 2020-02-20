@@ -10,7 +10,7 @@ from custom.icds_reports.reports.mwcd_indicators import get_mwcd_indicator_api_d
 class NICIndicatorTest(TestCase):
 
     def test_file_content(self):
-        get_inc_indicator_api_data.clear(use_citus=True)
+        get_inc_indicator_api_data.clear()
         data = get_inc_indicator_api_data()
         self.assertCountEqual(
             {'scheme_code': 'C002',

@@ -11,6 +11,7 @@ class PostnatalCareFormsChildHealthAggregationDistributedHelper(StateBasedAggreg
     helper_key = 'postnatal-care-forms-child-health'
     ucr_data_source_id = 'static-postnatal_care_forms'
     aggregate_parent_table = AGG_CHILD_HEALTH_PNC_TABLE
+    months_required = 3
 
     def data_from_ucr_query(self):
         current_month_start = month_formatter(self.month)

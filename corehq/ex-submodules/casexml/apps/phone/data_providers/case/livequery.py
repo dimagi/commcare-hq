@@ -23,20 +23,36 @@ Example case graphs with outcomes:
 """
 import logging
 from collections import defaultdict
+from functools import wraps
 from itertools import chain, islice
 
 from casexml.apps.case.const import CASE_INDEX_EXTENSION as EXTENSION
+from casexml.apps.phone.const import ASYNC_RETRY_AFTER
 from casexml.apps.phone.data_providers.case.load_testing import (
     get_xml_for_response,
 )
-from casexml.apps.phone.const import ASYNC_RETRY_AFTER
 from casexml.apps.phone.data_providers.case.stock import get_stock_payload
 from casexml.apps.phone.data_providers.case.utils import get_case_sync_updates
 from casexml.apps.phone.tasks import ASYNC_RESTORE_SENT
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.sql_db.routers import read_from_plproxy_standbys
+from corehq.toggles import LIVEQUERY_READ_FROM_STANDBYS, NAMESPACE_USER
 from corehq.util.datadog.utils import case_load_counter
 
 
+def livequery_read_from_standbys(func):
+    @wraps(func)
+    def _inner(timing_context, restore_state, response, async_task=None):
+        if LIVEQUERY_READ_FROM_STANDBYS.enabled(restore_state.restore_user.user_id, NAMESPACE_USER):
+            with read_from_plproxy_standbys():
+                return func(timing_context, restore_state, response, async_task)
+        else:
+            return func(timing_context, restore_state, response, async_task)
+
+    return _inner
+
+
+@livequery_read_from_standbys
 def do_livequery(timing_context, restore_state, response, async_task=None):
     """Get case sync restore response
 
@@ -164,7 +180,14 @@ def do_livequery(timing_context, restore_state, response, async_task=None):
             for index in related
             for case_id in [index.case_id, index.referenced_id]
             if case_id not in all_ids}
-        rows = accessor.get_closed_and_deleted_ids(list(case_ids))
+
+        # we know these are open since we filter by closed and deleted when fetching the indexes
+        open_cases = {
+            index.case_id for index in related
+            if index.relationship == 'extension'
+        }
+        check_cases = list(set(case_ids) - open_cases)
+        rows = accessor.get_closed_and_deleted_ids(check_cases)
         for case_id, closed, deleted in rows:
             if deleted:
                 deleted_ids.add(case_id)

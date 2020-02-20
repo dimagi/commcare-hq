@@ -1,0 +1,20 @@
+Delivered-To: commcarehq-bounces+production@dimagi.com
+Date: Tue, 28 Jan 2020 10:40:05 +0000
+From: SES Production Bounces <no-reply@sns.amazonaws.com>
+To: commcarehq-bounces+production@dimagi.com
+Subject: AWS Notification Message
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+{
+  "Type" : "Notification",
+  "MessageId" : "<redacted>",
+  "TopicArn" : "arn:aws:sns:<redacted>",
+  "Message" : "{\"notificationType\":\"Bounce\",\"bounce\":{\"bounceType\":\"Permanent\",\"bounceSubType\":\"Suppressed\",\"bouncedRecipients\":[{\"emailAddress\":\"fakejoe@gmail.com\",\"action\":\"failed\",\"status\":\"5.1.1\",\"diagnosticCode\":\"Amazon SES has suppressed sending to this address because it has a recent history of bouncing as an invalid address. For more information about how to remove an address from the suppression list, see the Amazon SES Developer Guide: http://docs.aws.amazon.com/ses/latest/DeveloperGuide/remove-from-suppressionlist.html \"}],\"timestamp\":\"2020-01-28T10:40:04.931Z\",\"feedbackId\":\"<redacted>\",\"reportingMTA\":\"dns; amazonses.com\"},\"mail\":{\"timestamp\":\"2020-01-28T10:40:04.000Z\",\"source\":\"commcarehq-noreply-production@dimagi.com\",\"sourceArn\":\"arn:aws:ses:<redacted>:identity/commcarehq-noreply-production@dimagi.com\",\"sourceIp\":\"<redacted>\",\"sendingAccountId\":\"<redacted>\",\"messageId\":\"<redacted>\",\"destination\":[\"fakejoe@gmail.com\"],\"headersTruncated\":false,\"headers\":[{\"name\":\"Received\",\"value\":\"from <redacted> for fakejoe@gmail.com; Tue, 28 Jan 2020 10:40:04 +0000 (UTC)\"},{\"name\":\"Content-Type\",\"value\":\"text/plain; charset=\\\"utf-8\\\"\"},{\"name\":\"MIME-Version\",\"value\":\"1.0\"},{\"name\":\"Content-Transfer-Encoding\",\"value\":\"7bit\"},{\"name\":\"Subject\",\"value\":\"Late\"},{\"name\":\"From\",\"value\":\"commcarehq-noreply-production@dimagi.com\"},{\"name\":\"To\",\"value\":\"fakejoe@gmail.com\"},{\"name\":\"Date\",\"value\":\"Tue, 28 Jan 2020 10:40:04 -0000\"},{\"name\":\"Message-ID\",\"value\":\"<redacted>\"}],\"commonHeaders\":{\"from\":[\"commcarehq-noreply-production@dimagi.com\"],\"date\":\"Tue, 28 Jan 2020 10:40:04 -0000\",\"to\":[\"fakejoe@gmail.com\"],\"messageId\":\"<redacted>\",\"subject\":\"Late\"}}}",
+  "Timestamp" : "2020-01-28T10:40:04.959Z",
+  "SignatureVersion" : "1",
+  "Signature" : "<redacted>",
+  "SigningCertURL" : "<redacted>",
+  "UnsubscribeURL" : "<redacted>"
+}

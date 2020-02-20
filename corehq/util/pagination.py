@@ -4,10 +4,9 @@ from datetime import datetime
 
 from couchdbkit import ResourceNotFound
 from jsonobject.properties import ListProperty, BooleanProperty, JsonArray, JsonSet, JsonDict
-from requests.exceptions import ConnectionError
 
 from dimagi.ext.jsonobject import JsonObject, StringProperty, DateTimeProperty, DictProperty
-from dimagi.utils.couch.database import get_db
+from dimagi.utils.couch.database import get_db, retry_on_couch_error
 
 
 class PaginationEventHandler(object):
@@ -178,6 +177,9 @@ class ResumableIteratorState(JsonObject):
     progress = DictProperty()
     complete = BooleanProperty(default=False)
 
+    def is_resume(self):
+        return bool(getattr(self, '_rev', None))
+
 
 def unpack_jsonobject(json_object):
     if isinstance(json_object, JsonArray):
@@ -194,7 +196,7 @@ def unpack_jsonobject(json_object):
 class ResumableArgsProvider(ArgsProvider):
     def __init__(self, iterator_state, args_provider):
         self.args_provider = args_provider
-        self.resume = bool(getattr(iterator_state, '_rev', None))  # if there is a _rev then we're resuming
+        self.resume = iterator_state.is_resume()
         self.resume_args = iterator_state.to_json()['args']
         self.resume_kwargs = iterator_state.to_json()['kwargs']
 
@@ -339,16 +341,9 @@ class ResumableFunctionIterator(object):
         self._save_state_json(state_json)
         self._state = ResumableIteratorState(state_json)
 
+    @retry_on_couch_error
     def _save_state_json(self, state_json):
-        for x in range(5):
-            try:
-                self.couch_db.save_doc(state_json)
-            except ConnectionError as err:
-                if x < 4 and "BadStatusLine(\"''\",)" in repr(err):
-                    time.sleep(2 ** x)
-                    continue
-                raise
-            break
+        self.couch_db.save_doc(state_json)
 
     def discard_state(self):
         try:

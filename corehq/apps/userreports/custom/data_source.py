@@ -4,6 +4,7 @@ from django.utils.decorators import method_decorator
 
 from memoized import memoized
 
+from corehq.sql_db.connections import connection_manager
 from dimagi.utils.modules import to_function
 
 from corehq.apps.reports.api import ReportDataSource
@@ -62,7 +63,7 @@ class ConfigurableReportCustomSQLDataSourceHelper(object):
         self.custom_table = None
 
     def session_helper(self):
-        return self.adapter.session_helper
+        return connection_manager.get_session_helper(self.adapter.engine_id, readonly=True)
 
     def get_table(self):
         if self.custom_table is not None:

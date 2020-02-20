@@ -5,19 +5,12 @@
 {% requirejs_main 'dashboard/js/dashboard' %}
 
 {% block stylesheets %}
-  {% if less_debug %}
+  {% compress css %}
     <link type="text/less"
           rel="stylesheet"
           media="all"
-          href="{% static 'dashboard/less/dashboard.debug.less' %}" />
-  {% else %}
-    {% compress css %}
-      <link type="text/less"
-            rel="stylesheet"
-            media="all"
-            href="{% static 'dashboard/less/dashboard.less' %}" />
-    {% endcompress %}
-  {% endif %}
+          href="{% static 'dashboard/less/dashboard.less' %}" />
+  {% endcompress %}
 {% endblock stylesheets %}
 
 {% block content %}
@@ -32,6 +25,9 @@
         {% endblocktrans %}
       </h1>
     </div>
+    {% if is_paused %}
+      {% include 'hqwebapp/partials/paused_plan_notice.html' %}
+    {% endif %}
     <div id="dashboard-tiles">
       <div class="row" data-bind="foreach: tiles">
         <div class="col-md-3">

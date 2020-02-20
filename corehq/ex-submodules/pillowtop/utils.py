@@ -153,8 +153,12 @@ def _get_consumer():
     ))
 
 
-def get_all_pillows_json():
+def get_all_pillows_json(active_only=True):
     pillow_configs = get_all_pillow_configs()
+    active_pillows = getattr(settings, 'ACTIVE_PILLOW_NAMES', None)
+    if active_only and active_pillows:
+        pillow_configs = [config for config in pillow_configs if config.name in active_pillows]
+
     consumer = _get_consumer()
     with consumer:
         return [get_pillow_json(pillow_config, consumer) for pillow_config in pillow_configs]
@@ -330,7 +334,7 @@ def bulk_fetch_changes_docs(changes, domain=None):
         doc_store = _changes[0].document_store
         doc_ids_to_query = [change.id for change in _changes if change.should_fetch_document()]
         new_docs = list(doc_store.iter_documents(doc_ids_to_query))
-        docs_queried_prior = [change.document for change in _changes if not change.should_fetch_document()]
+        docs_queried_prior = [change.document for change in _changes if change.document]
         docs.extend(new_docs + docs_queried_prior)
 
     # catch missing docs
@@ -354,8 +358,9 @@ def bulk_fetch_changes_docs(changes, domain=None):
 
 def get_errors_with_ids(es_action_errors):
     return [
-        (item['_id'], item['error'])
+        (item['_id'], item.get('error'))
         for op_type, item in _changes_to_list(es_action_errors)
+        if not (item.get('op_type') == 'delete' and item.get('status') == 404)
     ]
 
 

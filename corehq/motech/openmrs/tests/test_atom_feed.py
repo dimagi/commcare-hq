@@ -4,9 +4,9 @@ import os
 import re
 from datetime import datetime
 
-import attr
 from django.test import SimpleTestCase
 
+import attr
 from dateutil.tz import tzoffset, tzutc
 from lxml import etree
 from mock import Mock, patch
@@ -15,7 +15,9 @@ import corehq.motech.openmrs.atom_feed
 from corehq.motech.openmrs.atom_feed import (
     get_case_block_kwargs_from_bahmni_diagnoses,
     get_case_block_kwargs_from_observations,
+    get_diagnosis_mappings,
     get_encounter_uuid,
+    get_observation_mappings,
     get_patient_uuid,
     get_timestamp,
     import_encounter,
@@ -236,23 +238,28 @@ class ImportEncounterTest(SimpleTestCase, TestFileMixin):
                     },
                     "direction": "in",
                 },
+            },
+            {
+                "doc_type": "ObservationMapping",
+                "concept": "all",  # Import all diagnoses as extension cases
+                "value": {
+                    "direction": "in",
+                    "value": "[unused when direction='in' and ObservationMapping.case_property not set]",
+                },
                 "indexed_case_mapping": {
                     "identifier": "parent",
                     "case_type": "diagnosis",
                     "relationship": "extension",
                     "case_properties": [
                         {
-                            "doc_type": "JsonPathCaseProperty",
                             "jsonpath": "codedAnswer.name",
                             "case_property": "case_name",
                         },
                         {
-                            "doc_type": "JsonPathCaseProperty",
                             "jsonpath": "certainty",
                             "case_property": "certainty",
                         },
                         {
-                            "doc_type": "JsonPathCasePropertyMap",
                             "jsonpath": "order",
                             "case_property": "is_primary",
                             "value_map": {
@@ -261,9 +268,10 @@ class ImportEncounterTest(SimpleTestCase, TestFileMixin):
                             }
                         },
                         {
-                            "doc_type": "CasePropertyConstantValue",
-                            "case_property": "code",
-                            "value": "T68 (ICD 10 - WHO)"
+                            "jsonpath": "diagnosisDateTime",
+                            "case_property": "diagnosis_date",
+                            "external_data_type": "omrs_datetime",
+                            "commcare_data_type": "cc_date",
                         }
                     ]
                 }
@@ -284,6 +292,13 @@ class ImportEncounterTest(SimpleTestCase, TestFileMixin):
                     "xmlns": "http://openrosa.org/formdesigner/9481169B-0381-4B27-BA37-A46AB7B4692D",
                     "openmrs_visit_type": "c22a5000-3f10-11e4-adec-0800271c1b75",
                     "openmrs_encounter_type": "81852aee-3f10-11e4-adec-0800271c1b75",
+                    "openmrs_start_datetime": {
+                        "direction": "in",
+                        "case_property": "last_visit_date",
+                        "external_data_type": "omrs_datetime",
+                        "commcare_data_type": "cc_date",
+                        # "jsonpath": "encounterDateTime",  # get_encounter_datetime_value_sources() default value
+                    },
                     "openmrs_observations": observations,
                     "bahmni_diagnoses": diagnoses
                 }]
@@ -314,6 +329,7 @@ class ImportEncounterTest(SimpleTestCase, TestFileMixin):
                       xmlns="http://commcarehq.org/case/transaction/v2">
                   <update>
                     <height>105</height>
+                    <last_visit_date>2018-01-18</last_visit_date>
                   </update>
                 </case>"""
             case_block_re = ''.join((l.strip() for l in case_block_re.split('\n'))).replace('»', '')
@@ -329,8 +345,8 @@ class ImportEncounterTest(SimpleTestCase, TestFileMixin):
         observations = encounter['observations']
         case_block_kwargs, case_blocks = get_case_block_kwargs_from_observations(
             observations,
-            self.repeater.observation_mappings,
-            None, None, None
+            get_observation_mappings(self.repeater),
+            (None, None, None)
         )
         self.assertEqual(case_block_kwargs, {'update': {'height': 105}})
         self.assertEqual(case_blocks, [])
@@ -341,8 +357,8 @@ class ImportEncounterTest(SimpleTestCase, TestFileMixin):
         bahmni_diagnoses = encounter['bahmniDiagnoses']
         case_block_kwargs, case_blocks = get_case_block_kwargs_from_bahmni_diagnoses(
             bahmni_diagnoses,
-            self.repeater.diagnosis_mappings,
-            None, None, None
+            get_diagnosis_mappings(self.repeater),
+            (None, None, None)
         )
         self.assertEqual(case_block_kwargs, {
             'owner_id': 'emergency_room_user_id',
@@ -359,10 +375,8 @@ class ImportEncounterTest(SimpleTestCase, TestFileMixin):
         observations = encounter['observations']
         case_block_kwargs, case_blocks = get_case_block_kwargs_from_observations(
             observations,
-            self.repeater.observation_mappings,
-            'test-case-id',
-            'patient',
-            'default-owner-id'
+            get_observation_mappings(self.repeater),
+            ('test-case-id', 'patient', 'default-owner-id')
         )
         self.assertEqual(case_block_kwargs, {'update': {}})
         self.assertEqual(len(case_blocks), 1)
@@ -394,10 +408,8 @@ class ImportEncounterTest(SimpleTestCase, TestFileMixin):
         bahmni_diagnoses = encounter['bahmniDiagnoses']
         case_block_kwargs, case_blocks = get_case_block_kwargs_from_bahmni_diagnoses(
             bahmni_diagnoses,
-            self.repeater.diagnosis_mappings,
-            'test-case-id',
-            'patient',
-            'default-owner-id'
+            get_diagnosis_mappings(self.repeater),
+            ('test-case-id', 'patient', 'default-owner-id')
         )
         self.assertEqual(case_block_kwargs, {'update': {}})
         self.assertEqual(len(case_blocks), 1)
@@ -415,7 +427,7 @@ class ImportEncounterTest(SimpleTestCase, TestFileMixin):
               <update>
                 <date_opened>{date_opened}</date_opened>
                 <certainty>CONFIRMED</certainty>
-                <code>T68 (ICD 10 - WHO)</code>
+                <diagnosis_date>2019-10-18</diagnosis_date>
                 <is_primary>yes</is_primary>
               </update>
               <index>

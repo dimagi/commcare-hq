@@ -126,5 +126,15 @@
       {% endblock reporttable %}
     </div>
 
+    {% if queries %}
+      <div class="alert alert-info">
+        {% trans 'Base Query/Queries' %}
+          <ul>
+          {% for query in queries %}
+            <li>{{ query }}</li>
+          {% endfor %}
+          </ul>
+      </div>
+    {% endif %}
   {% endblock main_column_content %}
 {% endblock %}

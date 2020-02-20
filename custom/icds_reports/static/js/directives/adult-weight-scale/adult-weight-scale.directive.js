@@ -2,16 +2,16 @@
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function AdultWeightScaleController($scope, $routeParams, $location, $filter, infrastructureService,
-    locationsService, userLocationId, storageService, haveAccessToAllLocations, baseControllersService, isAlertActive) {
+    locationsService, dateHelperService, navigationService, userLocationId, storageService,
+    haveAccessToAllLocations, baseControllersService, isAlertActive, isMobile) {
     baseControllersService.BaseController.call(this, $scope, $routeParams, $location, locationsService,
-        userLocationId, storageService, haveAccessToAllLocations);
+        dateHelperService, navigationService, userLocationId, storageService, haveAccessToAllLocations,
+        false, isMobile);
     var vm = this;
     vm.isAlertActive = isAlertActive;
     vm.label = "AWCs Reported Weighing Scale: Mother and Child";
-    vm.steps = {
-        'map': {route: '/awc_infrastructure/adult_weight_scale/map', label: 'Map View'},
-        'chart': {route: '/awc_infrastructure/adult_weight_scale/chart', label: 'Chart View'},
-    };
+    vm.serviceDataFunction = infrastructureService.getAdultWeightScaleData;
+    vm.steps = vm.getSteps('/awc_infrastructure/adult_weight_scale/');
     vm.data = {
         legendTitle: 'Percentage',
     };
@@ -20,29 +20,19 @@ function AdultWeightScaleController($scope, $routeParams, $location, $filter, in
         info: 'Of the AWCs that have submitted an Infrastructure Details form, the percentage of AWCs that reported having a weighing scale for mother and child',
     };
 
-    vm.templatePopup = function(loc, row) {
+    vm.getPopupData = function (row) {
         var inMonth = row ? $filter('indiaNumbers')(row.in_month) : 'N/A';
         var percent = row ? d3.format('.2%')(row.in_month / (row.all || 1)) : "N/A";
-        return vm.createTemplatePopup(
-            loc.properties.name,
-            [{
+        return [
+            {
                 indicator_name: 'Total number of AWCs that reported having a weighing scale for mother and child: ',
                 indicator_value: inMonth,
             },
             {
                 indicator_name: '% of AWCs that reported having a weighing scale for mother and child: ',
                 indicator_value: percent,
-            }]
-        );
-    };
-
-    vm.loadData = function () {
-        vm.setStepsMapLabel();
-        var usePercentage = true;
-        var forceYAxisFromZero = false;
-        vm.myPromise = infrastructureService.getAdultWeightScaleData(vm.step, vm.filtersData).then(
-            vm.loadDataFromResponse(usePercentage, forceYAxisFromZero)
-        );
+            }
+        ];
     };
 
     vm.init();
@@ -70,12 +60,16 @@ function AdultWeightScaleController($scope, $routeParams, $location, $filter, in
     };
 }
 
-AdultWeightScaleController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'infrastructureService', 'locationsService', 'userLocationId', 'storageService', 'haveAccessToAllLocations', 'baseControllersService', 'isAlertActive'];
+AdultWeightScaleController.$inject = [
+    '$scope', '$routeParams', '$location', '$filter',
+    'infrastructureService', 'locationsService', 'dateHelperService', 'navigationService', 'userLocationId',
+    'storageService', 'haveAccessToAllLocations', 'baseControllersService', 'isAlertActive', 'isMobile',
+];
 
-window.angular.module('icdsApp').directive('adultWeightScale', function() {
+window.angular.module('icdsApp').directive('adultWeightScale', ['templateProviderService', function (templateProviderService) {
     return {
         restrict: 'E',
-        templateUrl: url('icds-ng-template', 'map-chart'),
+        templateUrl: templateProviderService.getMapChartTemplate,
         bindToController: true,
         scope: {
             data: '=',
@@ -83,4 +77,4 @@ window.angular.module('icdsApp').directive('adultWeightScale', function() {
         controller: AdultWeightScaleController,
         controllerAs: '$ctrl',
     };
-});
+}]);

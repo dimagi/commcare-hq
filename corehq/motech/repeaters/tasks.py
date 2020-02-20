@@ -9,6 +9,8 @@ from celery.utils.log import get_task_logger
 from dimagi.utils.couch import get_redis_lock
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 
+from corehq.apps.accounting.utils import domain_has_privilege
+from corehq.motech.models import RequestLog
 from corehq.motech.repeaters.const import (
     CHECK_REPEATERS_INTERVAL,
     CHECK_REPEATERS_KEY,
@@ -19,6 +21,7 @@ from corehq.motech.repeaters.dbaccessors import (
     get_overdue_repeat_record_count,
     iterate_repeat_records,
 )
+from corehq.privileges import DATA_FORWARDING, ZAPIER_INTEGRATION
 from corehq.util.datadog.gauges import (
     datadog_bucket_timer,
     datadog_counter,
@@ -37,6 +40,20 @@ _check_repeaters_buckets = make_buckets_from_timedeltas(
 )
 _soft_assert = soft_assert(to='@'.join(('nhooper', 'dimagi.com')))
 logging = get_task_logger(__name__)
+
+
+@periodic_task(
+    run_every=crontab(day_of_month=27),
+    queue=settings.CELERY_PERIODIC_QUEUE,
+)
+def clean_logs():
+    """
+    Drop MOTECH logs older than 90 days.
+
+    Runs on the 27th of every month.
+    """
+    ninety_days_ago = datetime.now() - timedelta(days=90)
+    RequestLog.objects.filter(timestamp__lt=ninety_days_ago).delete()
 
 
 @periodic_task(
@@ -76,6 +93,18 @@ def check_repeaters():
 
 @task(serializer='pickle', queue=settings.CELERY_REPEAT_RECORD_QUEUE)
 def process_repeat_record(repeat_record):
+
+    # A RepeatRecord should ideally never get into this state, as the
+    # domain_has_privilege check is also triggered in the create_repeat_records
+    # in signals.py. But if it gets here, forcefully cancel the RepeatRecord.
+    # todo reconcile ZAPIER_INTEGRATION and DATA_FORWARDING
+    #  they each do two separate things and are priced differently,
+    #  but use the same infrastructure
+    if not (domain_has_privilege(repeat_record.domain, ZAPIER_INTEGRATION)
+            or domain_has_privilege(repeat_record.domain, DATA_FORWARDING)):
+        repeat_record.cancel()
+        repeat_record.save()
+
     if (
         repeat_record.state == RECORD_FAILURE_STATE and
         repeat_record.overall_tries >= repeat_record.max_possible_tries

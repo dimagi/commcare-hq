@@ -2,7 +2,7 @@ import re
 
 from django.conf import settings
 from django.core.management.base import BaseCommand
-from django.db import connections
+from django.db import connections, transaction
 
 from corehq.form_processor.utils.sql import fetchall_as_namedtuple
 from corehq.sql_db.config import ShardMeta, plproxy_config, plproxy_standby_config
@@ -52,18 +52,21 @@ class Command(BaseCommand):
 
         verbose = options['verbose']
         create_or_update_cluster(plproxy_config, verbose, options['create_only'])
-        create_or_update_cluster(plproxy_standby_config, verbose, options['create_only'])
+        if plproxy_standby_config:
+            create_or_update_cluster(plproxy_standby_config, verbose, options['create_only'])
 
 
 def create_or_update_cluster(cluster_config, verbose, create_only):
     existing_config = _get_existing_cluster_config(cluster_config)
     if existing_config:
         if create_only:
+            print("Aborting. Configuration already exists and command called with '--create-only'")
             return
         if _confirm(f"Cluster configuration already exists on '{cluster_config.proxy_db}'."
                     f" Are you sure you want to change it?"):
             _update_pl_proxy_cluster(cluster_config, existing_config, verbose)
     else:
+        print(f"Creating cluster config in DB {cluster_config.proxy_db}")
         create_pl_proxy_cluster(cluster_config, verbose)
 
 
@@ -134,24 +137,23 @@ def _get_alter_server_sql(cluster_name, shards_to_update):
     )
 
 
-def create_pl_proxy_cluster(cluster_config, verbose=False, drop_existing=False):
+def create_pl_proxy_cluster(cluster_config, verbose=False):
     proxy_db = cluster_config.proxy_db
 
-    if drop_existing:
-        with connections[proxy_db].cursor() as cursor:
-            cursor.execute(get_drop_server_sql(cluster_config.cluster_name))
+    sql = get_sql_to_create_pl_proxy_cluster(cluster_config)
 
-    config_sql = get_pl_proxy_server_config_sql(cluster_config.cluster_name, cluster_config.get_shards())
-    user_mapping_sql = get_user_mapping_sql(cluster_config)
+    with transaction.atomic(proxy_db), connections[proxy_db].cursor() as cursor:
+        for command in sql:
+            if verbose:
+                print(f'\t{command}')
+            cursor.execute(command)
 
-    if verbose:
-        print('Running SQL')
-        print(config_sql)
-        print(user_mapping_sql)
 
-    with connections[proxy_db].cursor() as cursor:
-        cursor.execute(config_sql)
-        cursor.execute(user_mapping_sql)
+def get_sql_to_create_pl_proxy_cluster(cluster_config):
+    return [
+        get_pl_proxy_server_config_sql(cluster_config.cluster_name, cluster_config.get_shards()),
+        get_user_mapping_sql(cluster_config)
+    ]
 
 
 def get_drop_server_sql(cluster_name):

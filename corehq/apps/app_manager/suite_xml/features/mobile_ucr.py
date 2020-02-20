@@ -32,6 +32,7 @@ COLUMN_XPATH_TEMPLATE = "column[@id='{}']"
 COLUMN_XPATH_TEMPLATE_V2 = "{}"
 COLUMN_XPATH_CLIENT_TEMPLATE = "column[@id='<%= id %>']"
 COLUMN_XPATH_CLIENT_TEMPLATE_V2 = "<%= id %>"
+MOBILE_UCR_TILE_DETAIL_ID = "report_context_tile"
 
 
 def _get_column_xpath_template(new_mobile_ucr_restore):
@@ -40,6 +41,18 @@ def _get_column_xpath_template(new_mobile_ucr_restore):
 
 def get_column_xpath_client_template(new_mobile_ucr_restore):
     return COLUMN_XPATH_CLIENT_TEMPLATE_V2 if new_mobile_ucr_restore else COLUMN_XPATH_CLIENT_TEMPLATE
+
+
+# This datum, a persistent tile based on data in a fixture, should be the first datum in an entry
+# so it appears even on the screens where other datums are being selected.
+def get_report_context_tile_datum():
+    return SessionDatum(
+        id='tile_holder',
+        nodeset="instance('commcare-reports:index')/report_index/reports",
+        value='./@last_update',
+        detail_persistent=MOBILE_UCR_TILE_DETAIL_ID,
+        autoselect="true",
+    )
 
 
 @quickcache(['report_module.unique_id'])
@@ -90,30 +103,28 @@ class ReportModuleSuiteHelper(object):
     def get_custom_entries(self):
         _load_reports(self.report_module)
         for config in self.report_module.report_configs:
-            yield _get_config_entry(config, self.domain, self.new_mobile_ucr_restore)
+            yield self._get_config_entry(config)
 
+    def _get_config_entry(self, config):
+        if self.new_mobile_ucr_restore:
+            nodeset = "instance('commcare-reports:{}')/rows".format(config.instance_id)
+        else:
+            nodeset = "instance('reports')/reports/report[@id='{}']".format(config.uuid)
 
-def _get_config_entry(config, domain, new_mobile_ucr_restore=False):
-    if new_mobile_ucr_restore:
-        nodeset = "instance('commcare-reports:{}')/rows".format(config.instance_id)
-    else:
-        nodeset = "instance('reports')/reports/report[@id='{}']".format(config.uuid)
+        datums = []
 
-    return Entry(
-        command=Command(
-            id='reports.{}'.format(config.uuid),
-            text=Text(
-                locale=Locale(id=id_strings.report_name(config.uuid)),
-            ),
-        ),
-        datums=[
+        if self.report_module.report_context_tile:
+            datums.append(get_report_context_tile_datum())
+
+        datums += [
             SessionDatum(
                 detail_select=MobileSelectFilterHelpers.get_select_detail_id(config, filter_slug),
                 id=MobileSelectFilterHelpers.get_datum_id(config, filter_slug),
-                nodeset=MobileSelectFilterHelpers.get_options_nodeset(config, filter_slug, new_mobile_ucr_restore),
+                nodeset=MobileSelectFilterHelpers.get_options_nodeset(config, filter_slug,
+                                                                      self.new_mobile_ucr_restore),
                 value='./@value',
             )
-            for filter_slug, f in MobileSelectFilterHelpers.get_filters(config, domain)
+            for filter_slug, f in MobileSelectFilterHelpers.get_filters(config, self.domain)
         ] + [
             SessionDatum(
                 detail_confirm=_get_summary_detail_id(config),
@@ -124,7 +135,16 @@ def _get_config_entry(config, domain, new_mobile_ucr_restore=False):
                 autoselect="true"
             ),
         ]
-    )
+
+        return Entry(
+            command=Command(
+                id='reports.{}'.format(config.uuid),
+                text=Text(
+                    locale=Locale(id=id_strings.report_name(config.uuid)),
+                ),
+            ),
+            datums=datums,
+        )
 
 
 def _get_select_detail_id(config):

@@ -42,6 +42,7 @@ class UnpackRequestArgsTests(SimpleTestCase):
             create_mock.assert_called_with(
                 domain=TEST_DOMAIN,
                 log_level=logging.INFO,
+                payload_id=None,
                 request_body=request_body,
                 request_error=self.error_message,
                 request_headers=self.request_headers,

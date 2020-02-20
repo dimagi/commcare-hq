@@ -7,6 +7,7 @@ from contextlib2 import ExitStack
 from django.db import transaction
 from lxml import etree
 
+from casexml.apps.case import const
 from casexml.apps.case.xform import get_case_updates
 from corehq.form_processor.backends.sql.update_strategy import SqlCaseUpdateStrategy
 from corehq.form_processor.backends.sql.dbaccessors import (
@@ -239,13 +240,18 @@ class FormProcessorSQL(object):
                 if case:
                     touched_cases[case.case_id] = CaseUpdateMetadata(
                         case=case, is_creation=is_creation, previous_owner_id=previous_owner,
+                        actions={const.CASE_ACTION_REBUILD}
                     )
         else:
             xform = xforms[0]
             for case_update in get_case_updates(xform):
                 case_update_meta = case_db.get_case_from_case_update(case_update, xform)
                 if case_update_meta.case:
-                    touched_cases[case_update_meta.case.case_id] = case_update_meta
+                    case_id = case_update_meta.case.case_id
+                    if case_id in touched_cases:
+                        touched_cases[case_id] = touched_cases[case_id].merge(case_update_meta)
+                    else:
+                        touched_cases[case_id] = case_update_meta
                 else:
                     logging.error(
                         "XForm %s had a case block that wasn't able to create a case! "
@@ -255,7 +261,8 @@ class FormProcessorSQL(object):
         return touched_cases
 
     @staticmethod
-    def hard_rebuild_case(domain, case_id, detail, lock=True):
+    def hard_rebuild_case(domain, case_id, detail, lock=True, save=True):
+        assert save or not lock, f"refusing to lock when not saving"
         if lock:
             # only record metric if locking since otherwise it has been
             # (most likley) recorded elsewhere
@@ -275,8 +282,9 @@ class FormProcessorSQL(object):
                 return None
 
             case.server_modified_on = rebuild_transaction.server_date
-            CaseAccessorSQL.save_case(case)
-            publish_case_saved(case)
+            if save:
+                CaseAccessorSQL.save_case(case)
+                publish_case_saved(case)
             return case
         finally:
             release_lock(lock_obj, degrade_gracefully=True)
@@ -304,6 +312,10 @@ class FormProcessorSQL(object):
     def get_case_forms(case_id):
         xform_ids = CaseAccessorSQL.get_case_xform_ids(case_id)
         return FormAccessorSQL.get_forms_with_attachments_meta(xform_ids)
+
+    @staticmethod
+    def form_has_case_transactions(form_id):
+        return CaseAccessorSQL.form_has_case_transactions(form_id)
 
     @staticmethod
     def get_case_with_lock(case_id, lock=False, wrap=False):

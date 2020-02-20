@@ -14,7 +14,6 @@ from ..statedb import (
     StateDB,
     _get_state_db_filepath,
     delete_state_db,
-    diff_doc_id_idx,
     init_state_db,
     open_state_db,
 )
@@ -33,7 +32,7 @@ def teardown_module():
 
 def init_db(name="test", memory=True):
     if memory:
-        return StateDB.init(":memory:")
+        return StateDB.init(name, ":memory:")
     return init_state_db(name, state_dir)
 
 
@@ -57,21 +56,16 @@ def test_db_unique_id():
 
 @with_setup(teardown=delete_db)
 def test_open_state_db():
-    with open_state_db("test", state_dir) as db:
-        with assert_raises(OperationalError):
-            db.unique_id
-        with assert_raises(OperationalError):
-            db.get_diff_stats()
-        with assert_raises(OperationalError):
-            db.set("key", 1)
     assert not os.path.exists(_get_state_db_filepath("test", state_dir))
+    with assert_raises(mod.Error):
+        open_state_db("test", state_dir)
     with init_db(memory=False) as db:
         uid = db.unique_id
         eq(db.get("key"), None)
         db.set("key", 2)
     with open_state_db("test", state_dir) as db:
         eq(db.unique_id, uid)
-        eq(db.get_diff_stats(), {})
+        eq(db.get_doc_counts(), {})
         eq(db.get("key"), 2)
         with assert_raises(OperationalError):
             db.set("key", 3)
@@ -138,6 +132,20 @@ def test_get_forms_count():
         eq(db.get_forms_count("c"), 0)
 
 
+def test_case_diff_lifecycle():
+    with init_db() as db:
+        case_ids = ["a", "b", "c"]
+        db.add_cases_to_diff(case_ids)
+        db.add_cases_to_diff(["d"])
+        db.add_cases_to_diff(["d"])  # add again should not error
+        db.add_cases_to_diff([])  # no ids should not error
+        db.add_diffed_cases(case_ids)
+        eq(list(db.iter_undiffed_case_ids()), ["d"])
+        eq(db.count_undiffed_cases(), 1)
+        db.add_diffed_cases(case_ids)  # add again should not error
+        db.add_diffed_cases([])  # no ids should not error
+
+
 @with_setup(teardown=delete_db)
 def test_problem_forms():
     with init_db(memory=False) as db:
@@ -190,45 +198,82 @@ def test_resume_state():
                 pass
 
 
+def test_case_ids_with_diffs():
+    with init_db() as db:
+        db.replace_case_diffs([
+            ("CommCareCase", "case-1", [make_diff(0)]),
+            ("stock state", "case-1/x/y", [make_diff(1)]),
+            ("CommCareCase", "case-2", [make_diff(2)]),
+            ("stock state", "case-2/x/y", [make_diff(3)]),
+            ("stock state", "case-2/x/z", [make_diff(5)]),
+        ])
+        eq(db.count_case_ids_with_diffs(), 2)
+        eq(set(db.iter_case_ids_with_diffs()), {"case-1", "case-2"})
+
+
 def test_replace_case_diffs():
     with init_db() as db:
         case_id = "865413246874321"
         # add old diffs
-        db.replace_case_diffs("CommCareCase", case_id, [make_diff(0)])
-        db.replace_case_diffs("CommCareCase", "unaffected", [make_diff(1)])
-        db.add_diffs("stock state", case_id + "/x/y", [make_diff(2)])
-        db.add_diffs("stock state", "unaffected/x/y", [make_diff(3)])
+        db.replace_case_diffs([
+            ("CommCareCase", case_id, [make_diff(0)]),
+            ("stock state", case_id + "/x/y", [make_diff(1)]),
+            ("CommCareCase", "unaffected", [make_diff(2)]),
+            ("stock state", "unaffected/x/y", [make_diff(3)]),
+            ("CommCareCase", "stock-only", [make_diff(4)]),
+            ("stock state", "stock-only/x/y", [make_diff(5)]),
+            ("CommCareCase", "gone", [make_diff(4)]),
+            ("stock state", "gone/x/y", [make_diff(5)]),
+        ])
         # add new diffs
-        db.replace_case_diffs("CommCareCase", case_id, [make_diff(4)])
-        db.add_diffs("stock state", case_id + "/y/z", [make_diff(5)])
+        db.replace_case_diffs([
+            ("CommCareCase", case_id, [make_diff(6)]),
+            ("stock state", case_id + "/y/z", [make_diff(7)]),
+            ("stock state", "stock-only/y/z", [make_diff(8)]),
+            ("CommCareCase", "gone", []),
+            ("stock state", "gone/x/y", []),
+        ])
         eq(
-            {(d.kind, d.doc_id, d.json_diff) for d in db.get_diffs()},
-            {(kind, doc_id, make_diff(x)) for kind, doc_id, x in [
-                ("CommCareCase", "unaffected", 1),
+            {(d.kind, d.doc_id, hashable(d.json_diff)) for d in db.get_diffs()},
+            {(kind, doc_id, hashable(make_diff(x))) for kind, doc_id, x in [
+                ("CommCareCase", "unaffected", 2),
                 ("stock state", "unaffected/x/y", 3),
-                ("CommCareCase", case_id, 4),
-                ("stock state", case_id + "/y/z", 5),
+                ("CommCareCase", case_id, 6),
+                ("stock state", case_id + "/y/z", 7),
+                ("stock state", "stock-only/y/z", 8),
             ]},
         )
 
 
+def test_save_form_diffs():
+    def doc(name):
+        return {"doc_type": "XFormInstance", "_id": "test", "name": name}
+
+    def check_diffs(expect_count):
+        diffs = db.get_diffs()
+        eq(len(diffs), expect_count, [d.json_diff for d in diffs])
+
+    with init_db() as db:
+        db.save_form_diffs(doc("a"), doc("b"))
+        db.save_form_diffs(doc("a"), doc("c"))
+        check_diffs(1)
+        db.save_form_diffs(doc("a"), doc("d"))
+        check_diffs(1)
+        db.save_form_diffs(doc("a"), doc("a"))
+        check_diffs(0)
+
+
 def test_counters():
     with init_db() as db:
-        db.increment_counter("abc", 1)
         db.add_missing_docs("abc", ["doc1"])
-        db.increment_counter("def", 2)
-        db.increment_counter("abc", 3)
         db.add_missing_docs("abc", ["doc2", "doc4"])
+        db.replace_case_diffs([("abc", "doc5", [make_diff(5)])])
+        db.set_counter("abc", 4)
+        db.set_counter("def", 2)
         eq(db.get_doc_counts(), {
-            "abc": Counts(4, 3),
-            "def": Counts(2, 0),
+            "abc": Counts(total=4, diffs=1, missing=3),
+            "def": Counts(total=2),
         })
-
-
-def test_diff_doc_id_idx_exists():
-    msg = re.compile("index diff_doc_id_idx already exists")
-    with init_db() as db, assert_raises(OperationalError, msg=msg):
-        diff_doc_id_idx.create(db.engine)
 
 
 @with_setup(teardown=delete_db)
@@ -255,13 +300,14 @@ def test_clone_casediff_data_from():
                     Config(id="b", total_forms=2, processed_forms=1),
                     Config(id="c", total_forms=2, processed_forms=1),
                 ])
-                cddb.add_missing_docs("CommCareCase-couch", ["missing"])
-                cddb.replace_case_diffs("CommCareCase", "a", [diffs[0]])
-                cddb.replace_case_diffs("CommCareCase-Deleted", "b", [diffs[1]])
-                cddb.add_diffs("stock state", "c/ledger", [diffs[2]])
-                cddb.increment_counter("CommCareCase", 3)           # case, a, c
-                cddb.increment_counter("CommCareCase-Deleted", 1)   # b
-                cddb.increment_counter("CommCareCase-couch", 1)     # missing
+                cddb.add_missing_docs("CommCareCase", ["missing"])
+                cddb.replace_case_diffs([
+                    ("CommCareCase", "a", [diffs[0]]),
+                    ("CommCareCase-Deleted", "b", [diffs[1]]),
+                    ("stock state", "c/ledger", [diffs[2]]),
+                ])
+                cddb.set_counter("CommCareCase", 4)           # case, a, c, missing
+                cddb.set_counter("CommCareCase-Deleted", 1)   # b
                 main.add_no_action_case_form("no-action")
                 main.set_resume_state("FormState", ["form"])
                 cddb.set_resume_state("CaseState", ["case"])
@@ -269,7 +315,7 @@ def test_clone_casediff_data_from():
             main.clone_casediff_data_from(cddb.db_filepath)
         main.close()
 
-        with StateDB.open(main.db_filepath) as db:
+        with StateDB.open("test", main.db_filepath) as db:
             eq(list(db.iter_cases_with_unprocessed_forms()), [("a", 2), ("b", 2), ("c", 2)])
             eq(list(db.iter_problem_forms()), ["problem"])
             eq(db.get_no_action_case_forms(), {"no-action"})
@@ -295,9 +341,13 @@ def test_clone_casediff_data_from_tables():
     # to be updated.
     eq(set(mod.Base.metadata.tables), {m.__tablename__ for m in [
         mod.CaseForms,
+        mod.CaseToDiff,
         mod.Diff,
+        mod.DiffedCase,
         mod.KeyValue,
         mod.DocCount,
+        mod.DocDiffs,
+        mod.DocChanges,
         mod.MissingDoc,
         mod.NoActionCaseForm,
         mod.ProblemForm,
@@ -317,5 +367,34 @@ def test_get_set():
         eq(db.get("key"), True)
 
 
+@with_setup(teardown=delete_db)
+def test_migrate():
+    with init_db(memory=False) as db:
+        old_add_diffs = super(StateDB, db).add_diffs
+        old_add_diffs("Test", "test", [make_diff(0)])
+        old_add_diffs("Test", "test", [make_diff(1)])
+        old_add_diffs("CommCareCase", "abc", [make_diff(2)])
+        old_add_diffs("stock state", "abc/x/y", [make_diff(3)])
+        old_add_diffs("stock state", "def/x/y", [make_diff(4)])
+        eq(list(db.iter_diffs()), [])
+
+    with init_db(memory=False) as db:
+        eq(
+            {(d.kind, d.doc_id, hashable(d.json_diff)) for d in db.iter_diffs()},
+            {
+                ("Test", "test", hashable(make_diff(0))),
+                ("Test", "test", hashable(make_diff(1))),
+                ("CommCareCase", "abc", hashable(make_diff(2))),
+                ("stock state", "abc/x/y", hashable(make_diff(3))),
+                ("stock state", "def/x/y", hashable(make_diff(4))),
+            }
+        )
+        eq(len(super(StateDB, db).get_diffs()), 5)
+
+
 def make_diff(id):
-    return JsonDiff("type", "path/%s" % id, "old%s" % id, "new%s" % id)
+    return JsonDiff("type", ["data", id], "old%s" % id, "new%s" % id)
+
+
+def hashable(diff):
+    return diff._replace(path=tuple(diff.path))

@@ -51,6 +51,11 @@ def transform_case_for_elasticsearch(doc_dict):
 
 def get_case_to_elasticsearch_pillow(pillow_id='CaseToElasticsearchPillow', num_processes=1,
                                      process_num=0, **kwargs):
+    """Return a pillow that processes cases to Elasticsearch.
+
+    Processors:
+      - :py:class:`pillowtop.processors.elastic.ElasticProcessor`
+    """
     # todo; To remove after full rollout of https://github.com/dimagi/commcare-hq/pull/21329/
     assert pillow_id == 'CaseToElasticsearchPillow', 'Pillow ID is not allowed to change'
     checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, CASE_INDEX_INFO, CASE_TOPICS)
@@ -78,10 +83,13 @@ def get_case_pillow(
         include_ucrs=None, exclude_ucrs=None,
         num_processes=1, process_num=0, ucr_configs=None, skip_ucr=False,
         processor_chunk_size=DEFAULT_PROCESSOR_CHUNK_SIZE, topics=None, **kwargs):
-    """
-    Return a pillow that processes cases. The processors include, UCR and elastic processors
-        Args:
-            skip_ucr: Can be set to True to avoid passing UCR processor, useful for tests
+    """Return a pillow that processes cases. The processors include, UCR and elastic processors
+
+    Processors:
+      - :py:class:`corehq.apps.userreports.pillow.ConfigurableReportPillowProcessor` (disabled when skip_ucr=True)
+      - :py:class:`pillowtop.processors.elastic.BulkElasticProcessor`
+      - :py:function:`corehq.pillows.case_search.get_case_search_processor`
+      - :py:class:`corehq.messaging.pillow.CaseMessagingSyncProcessor`
     """
     if topics:
         assert set(topics).issubset(CASE_TOPICS), "This is a pillow to process cases only"

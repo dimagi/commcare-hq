@@ -158,73 +158,39 @@ def get_paged_forms_by_type(
 
 @quickcache(['domain', 'xmlns'], timeout=5 * 60)
 def guess_form_name_from_submissions_using_xmlns(domain, xmlns):
-    last_form = get_last_form_submission_for_xmlns(domain, xmlns)
-    return last_form['form'].get('@name') if last_form else None
+    return get_form_name_from_last_submission_for_xmlns(domain, xmlns)
 
 
-def get_last_form_submission_for_xmlns(domain, xmlns):
+def get_form_name_from_last_submission_for_xmlns(domain, xmlns):
     query = (
         FormES()
         .domain(domain)
         .xmlns(xmlns)
         .sort('received_on', desc=True)
+        .source(['form.@name'])
         .size(1)
+        .non_null('form.@name')
     )
 
-    if query.run().hits:
-        return query.run().hits[0]
+    results = query.run().hits
+    if results:
+        return results[0]['form']['@name']
     return None
 
 
-def get_last_form_submissions_by_user(domain, user_ids, app_id=None, xmlns=None):
-
-    missing_users = None in user_ids
-
+def get_username_in_last_form_user_id_submitted(domain, user_id):
     query = (
         FormES()
         .domain(domain)
-        .user_ids_handle_unknown(user_ids)
-        .remove_default_filter('has_user')
-        .aggregation(
-            TermsAggregation('user_id', 'form.meta.userID').aggregation(
-                TopHitsAggregation(
-                    'top_hits_last_form_submissions',
-                    'received_on',
-                    is_ascending=False,
-                )
-            )
-        )
-        .size(0)
+        .user_id(user_id)
+        .sort('received_on', desc=True)
+        .source(['form.meta.username'])
+        .size(1)
     )
 
-    if app_id:
-        query = query.app(app_id)
-
-    if xmlns:
-        query = query.xmlns(xmlns)
-
-    result = {}
-    if missing_users:
-        query = query.aggregation(
-            MissingAggregation('missing_user_id', 'form.meta.userID').aggregation(
-                TopHitsAggregation(
-                    'top_hits_last_form_submissions',
-                    'received_on',
-                    is_ascending=False,
-                )
-            )
-        )
-
-    aggregations = query.run().aggregations
-
-    if missing_users:
-        result[MISSING_KEY] = aggregations.missing_user_id.bucket.top_hits_last_form_submissions.hits
-
-    buckets_dict = aggregations.user_id.buckets_dict
-    for user_id, bucket in buckets_dict.items():
-        result[user_id] = bucket.top_hits_last_form_submissions.hits
-
-    return result
+    results = query.run().hits
+    if results:
+        return results[0]['form']['meta'].get('username', None)
 
 
 def get_last_forms_by_app(user_id):
@@ -559,13 +525,6 @@ def get_all_user_ids_submitted(domain, app_ids=None):
         query = query.app(app_ids)
 
     return list(query.run().aggregations.user_id.buckets_dict)
-
-
-def get_username_in_last_form_user_id_submitted(domain, user_id):
-    submissions = get_last_form_submissions_by_user(domain, [user_id])
-    user_submissions = submissions.get(user_id, None)
-    if user_submissions:
-        return user_submissions[0]['form']['meta'].get('username', None)
 
 
 def _forms_with_attachments(domain, app_id, xmlns, datespan, user_types):

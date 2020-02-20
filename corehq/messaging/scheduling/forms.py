@@ -19,7 +19,7 @@ from django.forms.fields import (
 )
 from django.forms.forms import Form
 from django.forms.formsets import BaseFormSet, formset_factory
-from django.forms.widgets import CheckboxSelectMultiple, HiddenInput, SelectMultiple
+from django.forms.widgets import CheckboxSelectMultiple, HiddenInput, Select, SelectMultiple
 from django.utils.functional import cached_property
 from memoized import memoized
 
@@ -216,9 +216,8 @@ class ContentForm(Form):
                 raise ValidationError(_("This field is required"))
             return cleaned_value
 
-        for expected_language_code in self.schedule_form.language_list:
-            if not cleaned_value.get(expected_language_code):
-                raise ValidationError(_("Please fill out all translations"))
+        if not any(cleaned_value.values()):
+            raise ValidationError(_("Please fill out at least one translation"))
 
         return cleaned_value
 
@@ -2763,6 +2762,7 @@ class ConditionalAlertScheduleForm(ScheduleForm):
     visit_scheduler_app_and_form_unique_id = CharField(
         label=ugettext_lazy("Scheduler: Form"),
         required=False,
+        widget=Select(choices=[]),
     )
 
     visit_number = IntegerField(
@@ -3635,6 +3635,16 @@ class ConditionalAlertCriteriaForm(CaseRuleCriteriaForm):
         # an existing conditional alert. Being allowed to assume that case_type
         # doesn't change makes it easier to run the rule for this alert.
         self.fields['case_type'].disabled = True
+
+    def set_case_type_choices(self, initial):
+        # If this is an edit form, case type won't be editable (see set_read_only_fields_during_editing),
+        # so don't bother fetching case types.
+        if self.initial_rule:
+            self.fields['case_type'].choices = (
+                (case_type, case_type) for case_type in [initial or '']
+            )
+        else:
+            super().set_case_type_choices(initial)
 
     def __init__(self, *args, **kwargs):
         super(ConditionalAlertCriteriaForm, self).__init__(*args, **kwargs)
