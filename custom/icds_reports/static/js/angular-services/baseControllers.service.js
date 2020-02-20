@@ -1,6 +1,6 @@
 /* global d3, moment */
 
-window.angular.module('icdsApp').factory('baseControllersService', ['$timeout', function($timeout) {
+window.angular.module('icdsApp').factory('baseControllersService', ['$timeout', function ($timeout) {
     var BaseFilterController = function ($scope, $routeParams, $location, dateHelperService, storageService,
                                          navigationService) {
         var vm = this;
