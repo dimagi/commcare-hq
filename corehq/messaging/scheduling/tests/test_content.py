@@ -1,3 +1,10 @@
+from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.sms.forms import (
+    LANGUAGE_FALLBACK_NONE,
+    LANGUAGE_FALLBACK_SCHEDULE,
+    LANGUAGE_FALLBACK_DOMAIN,
+    LANGUAGE_FALLBACK_UNTRANSLATED,
+)
 from corehq.apps.translations.models import StandaloneTranslationDoc
 from corehq.apps.users.models import CommCareUser
 from corehq.messaging.scheduling.models import Schedule, Content, CustomContent
@@ -26,8 +33,11 @@ class TestContent(TestCase):
     def setUpClass(cls):
         super(TestContent, cls).setUpClass()
         cls.domain = 'test-content'
+        cls.domain_obj = create_domain(cls.domain)
         cls.user = CommCareUser(phone_numbers=['9990000000000'], language='es')
-        cls.translation_doc = StandaloneTranslationDoc(domain=cls.domain, area='sms', langs=['en', 'es'])
+        from corehq.apps.sms.util import get_or_create_translation_doc
+        cls.translation_doc = get_or_create_translation_doc(cls.domain)
+        cls.translation_doc.set_translations('es', {})
         cls.translation_doc.save()
 
     @classmethod
@@ -54,7 +64,7 @@ class TestContent(TestCase):
 
         self.assertEqual(
             content.get_translation_from_message_dict(
-                self.domain,
+                self.domain_obj,
                 message_dict,
                 self.user.get_language_code()
             ),
@@ -70,7 +80,7 @@ class TestContent(TestCase):
 
         self.assertEqual(
             content.get_translation_from_message_dict(
-                self.domain,
+                self.domain_obj,
                 message_dict,
                 self.user.get_language_code()
             ),
@@ -87,7 +97,7 @@ class TestContent(TestCase):
 
         self.assertEqual(
             content.get_translation_from_message_dict(
-                self.domain,
+                self.domain_obj,
                 message_dict,
                 self.user.get_language_code()
             ),
@@ -107,7 +117,7 @@ class TestContent(TestCase):
 
         self.assertEqual(
             content.get_translation_from_message_dict(
-                self.domain,
+                self.domain_obj,
                 message_dict,
                 self.user.get_language_code()
             ),
@@ -128,9 +138,68 @@ class TestContent(TestCase):
 
         self.assertEqual(
             content.get_translation_from_message_dict(
-                self.domain,
+                self.domain_obj,
                 message_dict,
                 self.user.get_language_code()
             ),
             message_dict['es']
+        )
+
+    def test_sms_language_fallback(self):
+        message_dict = {
+            '*': 'non-translated message',
+            'en': 'english message',            # project default
+            'hin': 'hindi message',             # schedule default
+            'es': 'spanish message',            # user's preferred language
+        }
+        user_lang = self.user.get_language_code()
+        content = Content()
+        content.set_context(
+            schedule_instance=Mock(memoized_schedule=Schedule(domain=self.domain, default_language_code='hin'))
+        )
+
+        self.domain_obj.sms_language_fallback = LANGUAGE_FALLBACK_NONE
+        self.assertEqual(
+            content.get_translation_from_message_dict(self.domain_obj, message_dict, user_lang),
+            message_dict['es']
+        )
+        message_dict.pop('es')
+        self.assertEqual(
+            content.get_translation_from_message_dict(self.domain_obj, message_dict, user_lang),
+            ''
+        )
+
+        self.domain_obj.sms_language_fallback = LANGUAGE_FALLBACK_SCHEDULE
+        self.assertEqual(
+            content.get_translation_from_message_dict(self.domain_obj, message_dict, user_lang),
+            message_dict['hin']
+        )
+        message_dict.pop('hin')
+        self.assertEqual(
+            content.get_translation_from_message_dict(self.domain_obj, message_dict, user_lang),
+            ''
+        )
+
+        self.domain_obj.sms_language_fallback = LANGUAGE_FALLBACK_DOMAIN
+        self.assertEqual(
+            content.get_translation_from_message_dict(self.domain_obj, message_dict, user_lang),
+            message_dict['en']
+        )
+        message_dict.pop('en')
+        self.assertEqual(
+            content.get_translation_from_message_dict(self.domain_obj, message_dict, user_lang),
+            ''
+        )
+
+        self.domain_obj.sms_language_fallback = LANGUAGE_FALLBACK_UNTRANSLATED
+        self.assertEqual(
+            content.get_translation_from_message_dict(self.domain_obj, message_dict, user_lang),
+            message_dict['*']
+        )
+
+        # Default: same as LANGUAGE_FALLBACK_UNTRANSLATED
+        self.domain_obj.sms_language_fallback = None
+        self.assertEqual(
+            content.get_translation_from_message_dict(self.domain_obj, message_dict, user_lang),
+            message_dict['*']
         )

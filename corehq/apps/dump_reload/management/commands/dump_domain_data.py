@@ -49,7 +49,7 @@ class Command(BaseCommand):
 
         for dumper in dumpers:
             filename = _get_dump_stream_filename(dumper.slug, domain_name, utcnow)
-            stream = self.stdout if console else gzip.open(filename, 'wb')
+            stream = self.stdout if console else gzip.open(filename, 'wt')
             try:
                 stats += dumper(domain_name, excludes).dump(stream)
             except Exception as e:

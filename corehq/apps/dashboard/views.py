@@ -42,16 +42,7 @@ from corehq.util.context_processors import commcare_hq_names
 @login_and_domain_required
 @location_safe
 def dashboard_default(request, domain):
-    return HttpResponseRedirect(default_dashboard_url(request, domain))
-
-
-def default_dashboard_url(request, domain):
-    couch_user = getattr(request, 'couch_user', None)
-
-    if domain in settings.CUSTOM_DASHBOARD_PAGE_URL_NAMES:
-        return reverse(settings.CUSTOM_DASHBOARD_PAGE_URL_NAMES[domain], args=[domain])
-
-    return reverse(DomainDashboardView.urlname, args=[domain])
+    return HttpResponseRedirect(reverse(DomainDashboardView.urlname, args=[domain]))
 
 
 def _get_tile(request, slug):

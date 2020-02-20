@@ -306,7 +306,6 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
     def response_report_builder(project, new_plan_version):
         if not _has_report_builder_add_on(new_plan_version):
             # Clear paywall flags
-            project.requested_report_builder_trial = []
             project.requested_report_builder_subscription = []
             project.save()
 

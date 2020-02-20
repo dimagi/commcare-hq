@@ -41,7 +41,7 @@ def cc_user_domain(domain):
 
 
 def format_username(username, domain):
-    return "%s@%s" % (username.lower(), cc_user_domain(domain))
+    return "%s@%s" % (str(username or '').lower(), cc_user_domain(domain))
 
 
 def normalize_username(username, domain=None):
@@ -73,6 +73,7 @@ def raw_username(username):
     Strips the @domain.commcarehq.org from the username if it's there
     """
     sitewide_domain = settings.HQ_ACCOUNT_ROOT
+    username = str(username or '')
     username = username.lower()
     try:
         u, d = username.split("@")

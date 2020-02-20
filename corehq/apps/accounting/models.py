@@ -461,9 +461,9 @@ class BillingAccount(ValidateModelMixin, models.Model):
             return None
         except cls.MultipleObjectsReturned:
             log_accounting_error(
-                "Multiple billing accounts showed up for the domain '%s'. The "
-                "latest one was served, but you should reconcile very soon."
-                % domain
+                f"Multiple billing accounts showed up for the domain '{domain}'. The "
+                "latest one was served, but you should reconcile very soon.",
+                show_stack_trace=True,
             )
             return cls.objects.filter(created_by_domain=domain).latest('date_created')
         return None
@@ -785,9 +785,13 @@ class DefaultProductPlan(models.Model):
         unique_together = ('edition', 'is_trial', 'is_report_builder_enabled')
 
     @classmethod
+    @quickcache(['edition', 'is_trial', 'is_report_builder_enabled'],
+                skip_arg=lambda *args, **kwargs: not settings.ENTERPRISE_MODE or settings.UNIT_TESTING)
     def get_default_plan_version(cls, edition=None, is_trial=False,
                                  is_report_builder_enabled=False):
-        edition = edition or SoftwarePlanEdition.COMMUNITY
+        if not edition:
+            edition = (SoftwarePlanEdition.ENTERPRISE if settings.ENTERPRISE_MODE
+                       else SoftwarePlanEdition.COMMUNITY)
         try:
             default_product_plan = DefaultProductPlan.objects.select_related('plan').get(
                 edition=edition, is_trial=is_trial,
@@ -1723,6 +1727,9 @@ class Subscription(models.Model):
 
     @classmethod
     def get_active_subscription_by_domain(cls, domain_name_or_obj):
+        if settings.ENTERPRISE_MODE:
+            # Use the default plan, which is Enterprise when in ENTERPRISE_MODE
+            return None
         if isinstance(domain_name_or_obj, Domain):
             return cls._get_active_subscription_by_domain(domain_name_or_obj.name)
         return cls._get_active_subscription_by_domain(domain_name_or_obj)

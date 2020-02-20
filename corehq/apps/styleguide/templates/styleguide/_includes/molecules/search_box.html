@@ -17,5 +17,23 @@
     The <code>immediate</code> parameter controls whether the widget searches on every key press or only when
     the user clicks the search button or presses enter.
   </p>
+  <p>
+    Data sets that uses search are typically large enough to also need pagination. In these cases, the search box
+    implementation can piggyback on the pagination code; searching just sets a query value and sends the user back to the first page.
+    The
+    <a target='_blank' href='https://github.com/dimagi/commcare-hq/blob/1953a99a7047205e665ee6903a880e91bf5892d0/corehq/apps/users/templates/users/web_users.html#L83-L86'>
+      web users search box
+    </a> is an example of this.
+  </p>
+  <p>
+    For an example of client-side only search, see the data corrections
+    <a target='_blank' href='https://github.com/dimagi/commcare-hq/blob/1953a99a7047205e665ee6903a880e91bf5892d0/corehq/apps/reports/templates/reports/partials/data_corrections_modal.html#L29-L33'>
+      HTML widget
+    </a>
+    and
+    <a target='_blank' href='https://github.com/dimagi/commcare-hq/blob/1953a99a7047205e665ee6903a880e91bf5892d0/corehq/apps/reports/static/reports/js/data_corrections.js#L198-L214'>
+      javascript implementation
+    </a>.
+  </p>
   {% include 'styleguide/example_html.html' with slug='search_box' title='Searching and Filtering' content=examples.search_box %}
 </section>

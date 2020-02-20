@@ -10,11 +10,13 @@ from corehq.apps.users.dbaccessors.couch_users import (
 )
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_request
+from dimagi.utils.parsing import json_format_datetime
 
 
 class CaseUploadJSON(jsonobject.StrictJsonObject):
     domain = jsonobject.StringProperty(required=True)
     # In user display format, e.g. Dec 08, 2016 19:19 EST
+    created_display = jsonobject.StringProperty(required=True)
     created = jsonobject.StringProperty(required=True)
     upload_id = jsonobject.StringProperty(required=True)
     task_status = jsonobject.ObjectProperty(lambda: TaskStatus)
@@ -34,7 +36,8 @@ def case_upload_to_user_json(case_upload, request):
 
     return CaseUploadJSON(
         domain=case_upload.domain,
-        created=ServerTime(case_upload.created).user_time(tz).ui_string(),
+        created_display=ServerTime(case_upload.created).user_time(tz).ui_string(),
+        created=json_format_datetime(case_upload.created),
         upload_id=str(case_upload.upload_id),
         task_status=case_upload.get_task_status_json(),
         user_name=get_display_name_for_user_id(

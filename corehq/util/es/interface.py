@@ -25,10 +25,13 @@ class AbstractElasticsearchInterface(metaclass=abc.ABCMeta):
         return doc
 
     def get_bulk_docs(self, index, doc_type, doc_ids):
+        from corehq.elastic import ESError
         docs = []
         results = self.es.mget(
             index=index, doc_type=doc_type, body={'ids': doc_ids}, _source=True)
         for doc_result in results['docs']:
+            if 'error' in doc_result:
+                raise ESError(doc_result['error'].get('reason', 'error doing bulk get'))
             if doc_result['found']:
                 self._fix_hit(doc_result)
                 docs.append(doc_result['_source'])

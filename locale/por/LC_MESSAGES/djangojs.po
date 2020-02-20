@@ -4,19 +4,19 @@
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
 # Translators:
+# Dimagi Dev <devops@dimagi.com>, 2017
 # Jensen Daniel <jdaniel@dimagi.com>, 2019
 # Claire O'Grady <cogrady@dimagi.com>, 2019
 # Marco Horta <mhorta@dimagi.com>, 2019
-# Dimagi Dev <devops@dimagi.com>, 2020
 #
 #, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-02-05 20:42+0000\n"
+"POT-Creation-Date: 2020-02-19 20:38+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
-"Last-Translator: Dimagi Dev <devops@dimagi.com>, 2020\n"
+"Last-Translator: Marco Horta <mhorta@dimagi.com>, 2019\n"
 "Language-Team: Portuguese (https://www.transifex.com/dimagi/teams/9388/pt/)\n"
 "Language: pt\n"
 "MIME-Version: 1.0\n"
@@ -612,11 +612,11 @@ msgstr ""
 msgid "'commcare-user' is a reserved case type. Please change the case type"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:171
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:174
 msgid "Go back to case list"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:172
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:175
 msgid "Proceed with registered case"
 msgstr ""
 
@@ -2759,7 +2759,7 @@ msgid "Form submission found!"
 msgstr ""
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/list_automatic_update_rules.js:40
-#: corehq/apps/users/static/users/js/mobile_workers.js:100
+#: corehq/apps/users/static/users/js/mobile_workers.js:101
 msgid "Issue communicating with server. Try again."
 msgstr ""
 
@@ -3122,27 +3122,27 @@ msgstr ""
 msgid "Error saving user"
 msgstr ""
 
-#: corehq/apps/locations/static/locations/js/location_tree.js:301
+#: corehq/apps/locations/static/locations/js/location_tree.js:294
 msgid "You have successfully archived the location <%=name%>"
 msgstr ""
 
-#: corehq/apps/locations/static/locations/js/location_tree.js:304
+#: corehq/apps/locations/static/locations/js/location_tree.js:297
 msgid ""
 "You have successfully deleted the location <%=name%> and all of its child "
 "locations"
 msgstr ""
 
-#: corehq/apps/locations/static/locations/js/location_tree.js:307
+#: corehq/apps/locations/static/locations/js/location_tree.js:300
 msgid ""
 "An error occurred while deleting your location. If the problem persists, "
 "please report an issue"
 msgstr ""
 
-#: corehq/apps/locations/static/locations/js/widgets.js:25
+#: corehq/apps/locations/static/locations/js/widgets.js:23
 msgid "Select a Location"
 msgstr ""
 
-#: corehq/apps/locations/static/locations/js/widgets.js:70
+#: corehq/apps/locations/static/locations/js/widgets.js:73
 msgid "Choose a primary location"
 msgstr ""
 
@@ -3205,7 +3205,7 @@ msgstr ""
 
 #: corehq/apps/reports/static/reports/js/config.dataTables.bootstrap.js:31
 #: corehq/apps/reports/static/reports/js/config.dataTables.bootstrap.js:34
-#: corehq/apps/reports/static/reports/js/config.dataTables.bootstrap.js:173
+#: corehq/apps/reports/static/reports/js/config.dataTables.bootstrap.js:176
 #: corehq/apps/reports/static/reports/js/tabular.js:44
 msgid "Sorry!"
 msgstr ""
@@ -3550,24 +3550,20 @@ msgstr ""
 msgid "Group membership has changed."
 msgstr ""
 
-#: corehq/apps/users/static/users/js/filtered_download.js:31
+#: corehq/apps/users/static/users/js/filtered_download.js:32
 msgid "Download <%= count %> user"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/filtered_download.js:31
+#: corehq/apps/users/static/users/js/filtered_download.js:32
 msgid "Download <%= count %> users"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/mobile_workers.js:307
+#: corehq/apps/users/static/users/js/mobile_workers.js:308
 msgid "Checking availability..."
 msgstr ""
 
-#: corehq/apps/users/static/users/js/mobile_workers.js:328
+#: corehq/apps/users/static/users/js/mobile_workers.js:329
 msgid "Issue connecting to server. Check Internet connection."
-msgstr ""
-
-#: corehq/apps/users/static/users/js/mobile_workers.js:352
-msgid "Select location"
 msgstr ""
 
 #: corehq/apps/users/static/users/js/roles.js:136
@@ -3774,34 +3770,3 @@ msgstr ""
 #: corehq/motech/repeaters/static/repeaters/js/repeat_record_report.js:237
 msgid "Failed to cancel"
 msgstr ""
-
-#: custom/ilsgateway/static/ilsgateway/js/main.js:7
-msgid "Sync Successful"
-msgstr ""
-
-#: custom/ilsgateway/static/ilsgateway/js/main.js:8
-msgid "Error!"
-msgstr ""
-
-#: custom/ilsgateway/static/ilsgateway/js/main.js:9
-msgid "Syncing..."
-msgstr ""
-
-#: custom/ilsgateway/static/ilsgateway/js/main.js:27
-msgid "Sync started"
-msgstr ""
-
-#: custom/ilsgateway/static/ilsgateway/js/main.js:48
-msgid "Available Locations"
-msgstr ""
-
-#: custom/ilsgateway/static/ilsgateway/js/main.js:49
-msgid "Locations in Program"
-msgstr ""
-
-#: custom/ilsgateway/static/ilsgateway/js/main.js:50
-msgid "Search Locations..."
-msgstr ""
-
-#~ msgid "Parameters"
-#~ msgstr "Manejo de Casos"

@@ -37,9 +37,6 @@ class DomainES(HQESQuery):
             non_test_domains,
             incomplete_domains,
             real_domains,
-            commcare_domains,
-            commconnect_domains,
-            commtrack_domains,
             created,
             last_modified,
             in_domains,
@@ -65,19 +62,6 @@ def incomplete_domains():
 
 def real_domains():
     return filters.term("is_test", False)
-
-
-def commcare_domains():
-    return filters.AND(filters.term("commconnect_enabled", False),
-                       filters.term("commtrack_enabled", False))
-
-
-def commconnect_domains():
-    return filters.term("commconnect_enabled", True)
-
-
-def commtrack_domains():
-    return filters.term("commtrack_enabled", True)
 
 
 def created(gt=None, gte=None, lt=None, lte=None):

@@ -190,7 +190,7 @@ def get_app_cached(domain, app_id):
     if not app:
         app = get_app(domain, app_id)
         if app.copy_of:
-            cache.set(key, app, timeout)
+            cache.set(key, app)
 
     return app
 
