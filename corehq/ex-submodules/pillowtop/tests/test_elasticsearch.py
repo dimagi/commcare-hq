@@ -27,6 +27,7 @@ class ElasticPillowTest(SimpleTestCase):
 
     def setUp(self):
         self.index = TEST_INDEX_INFO.index
+        self.es_alias = TEST_INDEX_INFO.alias
         self.es = get_es_new()
         self.es_interface = ElasticsearchInterface(self.es)
         with trap_extra_setup(ConnectionError):
