@@ -7,6 +7,7 @@ from sqlagg.columns import SimpleColumn
 from sqlagg.filters import EQ
 from sqlagg.sorting import OrderBy
 
+from corehq.apps.fixtures.models import FixtureDataItem
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.filters.dates import DatespanFilter
 from corehq.apps.reports.generic import GenericTabularReport
@@ -230,3 +231,53 @@ class LatePmtReport(GenericTabularReport, CustomProjectReport, DatespanMixin):
                         continue
                     rows.append(_to_report_format(date, user, error_msg))
         return rows
+
+
+def fixture_data_item_to_dict(
+    data_item: FixtureDataItem,
+) -> dict:
+    """
+    Transforms a FixtureDataItem to a dict.
+
+    A ``FixtureDataItem.fields`` value looks like this::
+
+        {
+            'id': FieldList(
+                doc_type='FieldList',
+                field_list=[
+                    FixtureItemField(
+                        doc_type='FixtureItemField',
+                        field_value='migori_county',
+                        properties={}
+                    )
+                ]
+            ),
+            'name': FieldList(
+                doc_type='FieldList',
+                field_list=[
+                    FixtureItemField(
+                        doc_type='FixtureItemField',
+                        field_value='Migori',
+                        properties={'lang': 'en'}
+                    )
+                ]
+            ),
+            # ... etc. ...
+        }
+
+    Only the first value in each ``FieldList`` is selected.
+
+    .. WARNING:: THIS MEANS THAT TRANSLATIONS ARE NOT SUPPORTED.
+
+    The return value for the example above would be::
+
+        {
+            'id': 'migori_county',
+            'name': 'Migori'
+        }
+
+    """
+    return {
+        key: field_list.field_list[0].field_value
+        for key, field_list in data_item.fields.items()
+    }
