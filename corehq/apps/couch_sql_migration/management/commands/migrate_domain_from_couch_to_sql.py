@@ -15,7 +15,10 @@ from corehq.apps.couch_sql_migration.couchsqlmigration import (
     do_couch_to_sql_migration,
     setup_logging,
 )
-from corehq.apps.couch_sql_migration.missingdocs import find_missing_docs
+from corehq.apps.couch_sql_migration.missingdocs import (
+    find_missing_docs,
+    recheck_missing_docs,
+)
 from corehq.apps.couch_sql_migration.progress import (
     MigrationStatus,
     couch_sql_migration_in_progress,
@@ -57,6 +60,7 @@ DIFF = "diff"
 CACHED = "cached"
 RESUME = "resume"
 REBUILD = "rebuild"
+RECHECK = "recheck"
 
 CASE_DIFF = {"process": True, "local": False, "none": None}
 
@@ -108,6 +112,13 @@ class Command(BaseCommand):
                 a normal (non-live) migration, which will commit the
                 result if all goes well.
             ''')
+        parser.add_argument("--finish", action='store_true', default=False,
+            help="""
+                Finish live migration. All commands will operate in "live
+                migration" mode once a live migration has been started
+                unless this option is used to move beyond the live
+                migration.
+            """)
         parser.add_argument('--rebuild-state',
             dest="rebuild_state", action='store_true', default=False,
             help="""
@@ -133,10 +144,11 @@ class Command(BaseCommand):
             help="""
                 Migrate specific forms. The value of this option should
                 be a space-delimited list of form ids OR a file path to
-                a file having one form id per line OR 'skipped' to
-                migrate forms skipped by previous migration OR 'missing'
-                to migrate missing forms cached in the statedb by the
-                'stats' command. The file path must begin with / or ./
+                a file having one form id per line OR 'missing' to
+                migrate missing forms cached in the statedb by the
+                'stats' command OR 'missing-blob-present' to migrate
+                forms referenced by a case that do not exist in Couch but
+                a blob does exit. The file path must begin with / or ./
             """)
         parser.add_argument('-x', '--stop-on-error',
             dest="stop_on_error", action='store_true', default=False,
@@ -146,7 +158,7 @@ class Command(BaseCommand):
             """)
         parser.add_argument('--to', dest="rewind", help="Rewind iteration state.")
         parser.add_argument('--missing-docs',
-            choices=[RESUME, REBUILD, CACHED], default=RESUME,
+            choices=[RESUME, REBUILD, RECHECK, CACHED], default=RESUME,
             help="""
                 By default missing docs will be calculated before stats
                 are printed, resuming from the previous run if possible.
@@ -164,6 +176,7 @@ class Command(BaseCommand):
             "verbose",
             "state_dir",
             "live_migrate",
+            "finish",
             "case_diff",
             "rebuild_state",
             "stop_on_error",
@@ -177,6 +190,8 @@ class Command(BaseCommand):
             raise CommandError('--no-input only allowed for unit testing')
         if action != MIGRATE and self.live_migrate:
             raise CommandError(f"{action} --live not allowed")
+        if action != MIGRATE and self.finish:
+            raise CommandError(f"{action} --finish not allowed")
         if action != MIGRATE and self.rebuild_state:
             raise CommandError("--rebuild-state only allowed with `MIGRATE`")
         if action != MIGRATE and self.forms:
@@ -196,6 +211,13 @@ class Command(BaseCommand):
         getattr(self, "do_" + action)(domain)
 
     def do_MIGRATE(self, domain):
+        if self.finish:
+            assert not self.live_migrate, "--live and --finish are mutually exclusive"
+        elif not self.live_migrate:
+            status = get_couch_sql_migration_status(domain)
+            if status == MigrationStatus.DRY_RUN:
+                log.info("Continuing live migration. Use --finish to complete.")
+                self.live_migrate = True
         set_couch_sql_migration_started(domain, self.live_migrate)
         do_couch_to_sql_migration(
             domain,
@@ -256,14 +278,17 @@ class Command(BaseCommand):
         status = get_couch_sql_migration_status(domain)
         if not self.live_migrate:
             self.live_migrate = status == MigrationStatus.DRY_RUN
-        if self.missing_docs != CACHED:
+        if self.missing_docs == RECHECK:
+            recheck_missing_docs(domain, self.state_dir)
+        elif self.missing_docs != CACHED:
             resume = self.missing_docs == RESUME
             find_missing_docs(domain, self.state_dir, self.live_migrate, resume)
-        print("Couch to SQL migration status for {}: {}".format(domain, status))
+        print(f"Couch to SQL migration status for {domain}: {status}")
         statedb = open_state_db(domain, self.state_dir)
         doc_counts = statedb.get_doc_counts()
         has_diffs = False
         ZERO = Counts()
+        print(f"{'':<22}      Docs    Diffs  Missing  Changes")
         for doc_type in (
             list(doc_types())
             + ["HQSubmission", "XFormInstance-Deleted"]
@@ -277,6 +302,12 @@ class Command(BaseCommand):
                 diffs_only,
             )
 
+        pending = statedb.count_undiffed_cases()
+        if pending:
+            print(shell_red(f"\nThere are {pending} case diffs pending."))
+            print(f"Resolution: couch_sql_diff cases {domain} --select=pending")
+            return True
+
         if diffs_only and not has_diffs:
             print(shell_green("No differences found between old and new docs!"))
         return has_diffs
@@ -288,12 +319,10 @@ class Command(BaseCommand):
 
         if not short:
             print("_" * 40)
-        stats = [
-            f"{doc_type:<22} {counts.total:>9} docs",
-            shell_red(f"{counts.missing} missing from SQL") if counts.missing else "",
-            shell_red(f"{counts.diffs} have diffs") if counts.diffs else "",
-        ]
-        print(", ".join(x for x in stats if x))
+        ndiff = shell_red(f"{counts.diffs if counts.diffs else '':>8}")
+        miss = shell_red(f"{counts.missing if counts.missing else '':>8}")
+        chg = counts.changes if counts.changes else ""
+        print(f"{doc_type:<22} {counts.total:>9} {ndiff} {miss} {chg:>8}")
         if not short:
             # print ids found in Couch but not in SQL
             i = 0

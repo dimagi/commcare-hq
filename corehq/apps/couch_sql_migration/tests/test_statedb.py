@@ -268,11 +268,13 @@ def test_counters():
         db.add_missing_docs("abc", ["doc1"])
         db.add_missing_docs("abc", ["doc2", "doc4"])
         db.replace_case_diffs([("abc", "doc5", [make_diff(5)])])
+        chg = mod.Change(kind=None, doc_id=None, reason="because", **make_diff(6)._asdict())
+        db.replace_case_changes([("def", "doc5", [chg])])
         db.set_counter("abc", 4)
         db.set_counter("def", 2)
         eq(db.get_doc_counts(), {
             "abc": Counts(total=4, diffs=1, missing=3),
-            "def": Counts(total=2),
+            "def": Counts(total=2, changes=1),
         })
 
 
