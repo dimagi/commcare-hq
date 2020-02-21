@@ -45,18 +45,6 @@ class SMSTranslations(models.Model):
         else:
             return None
 
-    @classmethod
-    def _migration_get_fields(cls):
-        return [
-            "domain",
-            "langs",
-            "translations",
-        ]
-
-    @classmethod
-    def _migration_get_couch_model_class(cls):
-        return StandaloneTranslationDoc
-
 
 class Translation(object):
 
