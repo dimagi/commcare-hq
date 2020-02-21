@@ -4,6 +4,7 @@ import uuid
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
+from django.db.transaction import atomic
 from django.utils.translation import ugettext as _
 
 from couchdbkit import ResourceNotFound
@@ -13,7 +14,7 @@ from dimagi.utils.modules import to_function
 from dimagi.utils.parsing import json_format_datetime
 
 from corehq.apps.hqcase.utils import submit_case_block_from_template
-from corehq.apps.translations.models import StandaloneTranslationDoc
+from corehq.apps.translations.models import SMSTranslations
 from corehq.apps.users.models import CouchUser
 from corehq.util.quickcache import quickcache
 
@@ -308,14 +309,15 @@ def is_contact_active(domain, contact_doc_type, contact_id):
         return True
 
 
+@atomic
 def get_or_create_translation_doc(domain):
-    with StandaloneTranslationDoc.get_locked_obj(domain, 'sms', create=True) as tdoc:
-        if len(tdoc.langs) == 0:
-            tdoc.langs = ['en']
-            tdoc.translations['en'] = {}
-            tdoc.save()
-
-        return tdoc
+    (translations, created) = SMSTranslations.objects.get_or_create(domain=domain, defaults={
+        "langs": ["en"],
+        "translations": {
+            "en": {}
+        },
+    })
+    return translations
 
 
 def get_language_list(domain):
