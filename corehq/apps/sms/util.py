@@ -310,7 +310,7 @@ def is_contact_active(domain, contact_doc_type, contact_id):
 
 
 @atomic
-def get_or_create_sms_translations(domain):
+def get_or_create_translation_doc(domain):
     (translations, created) = SMSTranslations.objects.get_or_create(domain=domain, defaults={
         "langs": ["en"],
         "translations": {
