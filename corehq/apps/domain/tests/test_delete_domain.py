@@ -94,6 +94,7 @@ from corehq.apps.sms.models import (
     SQLMobileBackendMapping,
 )
 from corehq.apps.smsforms.models import SQLXFormsSession
+from corehq.apps.translations.models import SMSTranslations, TransifexBlacklist
 from corehq.apps.userreports.models import AsyncIndicator
 from corehq.apps.users.models import DomainRequest
 from corehq.apps.zapier.consts import EventTypes
@@ -785,6 +786,24 @@ class TestDeleteDomain(TestCase):
 
         self._assert_smsforms_counts(self.domain.name, 0)
         self._assert_smsforms_counts(self.domain2.name, 1)
+
+
+    def _assert_translations_count(self, domain_name, count):
+        self._assert_queryset_count([
+            SMSTranslations.objects.filter(domain=domain_name),
+            TransifexBlacklist.objects.filter(domain=domain_name),
+        ], count)
+
+    def test_translations_delete(self):
+        for domain_name in [self.domain.name, self.domain2.name]:
+            SMSTranslations.objects.create(domain=domain_name, langs=['en'], translations={'a': 'a'})
+            TransifexBlacklist.objects.create(domain=domain_name, app_id='123', field_name='xyz')
+            self._assert_translations_count(domain_name, 1)
+
+        self.domain.delete()
+
+        self._assert_translations_count(self.domain.name, 0)
+        self._assert_translations_count(self.domain2.name, 1)
 
     def _assert_userreports_counts(self, domain_name, count):
         self._assert_queryset_count([
