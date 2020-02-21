@@ -21,14 +21,6 @@ from corehq.util.quickcache import quickcache
 class TranslationMixin(Document):
     translations = DictProperty()
 
-    def set_translation(self, lang, key, value):
-        if lang not in self.translations:
-            self.translations[lang] = {}
-        if value is not None:
-            self.translations[lang][key] = value
-        else:
-            del self.translations[lang][key]
-
     def set_translations(self, lang, translations):
         self.translations[lang] = translations
 
