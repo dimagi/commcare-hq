@@ -4,7 +4,7 @@ import os
 import signal
 import sys
 from collections import defaultdict
-from contextlib import contextmanager
+from contextlib import ExitStack, contextmanager
 from datetime import datetime, timedelta
 from functools import partial
 from threading import Lock
@@ -17,6 +17,7 @@ from gevent.pool import Pool
 from memoized import memoized
 
 from casexml.apps.case.models import CommCareCase, CommCareCaseAction
+from casexml.apps.case.util import get_case_xform_ids
 from casexml.apps.case.xform import (
     CaseProcessingResult,
     get_case_updates,
@@ -347,6 +348,7 @@ class CouchSqlDomainMigrator:
             self.case_diff_queue.enqueue(couch_case.case_id)
 
     def _process_forms_subset(self, forms):
+        from .missingdocs import MissingIds
         if forms == "missing":
             self._process_missing_forms()
             return
@@ -357,8 +359,10 @@ class CouchSqlDomainMigrator:
             return
         form_ids = get_ids_from_string_or_file(forms)
         orig_ids = set(form_ids)
-        form_ids = list(_drop_sql_form_ids(form_ids, self.statedb))
+        form_ids = list(MissingIds.forms(self.statedb).drop_sql_ids(form_ids))
         migrated_ids = orig_ids - set(form_ids)
+        if migrated_ids:
+            migrated_ids -= self._migrate_cases(migrated_ids)
         if migrated_ids:
             log.info("already migrated: %s",
                 f"{len(migrated_ids)} forms" if len(migrated_ids) > 5 else migrated_ids)
@@ -393,6 +397,47 @@ class CouchSqlDomainMigrator:
                     if migrated % 100 == 0:
                         log.info("migrated %s previously missed forms", migrated)
         log.info("finished migrating %s previously missed forms", migrated)
+        for case_id in self.statedb.iter_missing_doc_ids("CommCareCase"):
+            self._migrate_cases(get_case_xform_ids(case_id))
+
+    def _migrate_cases(self, form_ids):
+        """Update cases for forms that have previously been migrated
+
+        :returns: a set of form ids that had cases or ledgers to migrate.
+        """
+        migrated_ids = set()
+        for form_id in form_ids:
+            saved = self._save_cases_for_form(form_id)
+            if saved:
+                migrated_ids.add(form_id)
+        return migrated_ids
+
+    def _save_cases_for_form(self, form_id):
+        from django.db import transaction
+        from .missingdocs import MissingIds
+        couch_form = XFormInstance.get(form_id)
+        sql_form = FormAccessorSQL.get_form(form_id)
+        case_stock_result = self._get_case_stock_result(sql_form, couch_form)
+        cases = case_stock_result and case_stock_result.case_models
+        stock_result = case_stock_result and case_stock_result.stock_result
+        assert not stock_result.models_to_save, (form_id, stock_result.models_to_save)
+        case_ids = [c.case_id for c in cases]
+        save_ids = set(MissingIds.cases(self.statedb).drop_sql_ids(case_ids))
+        if not save_ids:
+            return False
+        cases = [c for c in cases if c.case_id in save_ids]
+        saved = False
+        with ExitStack() as stack:
+            for db_name in {case.db for case in cases}:
+                stack.enter_context(transaction.atomic(db_name))
+            for case in cases:
+                log.info("migrating case %s for form %s", case.case_id, form_id)
+                try:
+                    CaseAccessorSQL.save_case(case)
+                    saved = True
+                except Exception:
+                    log.warn("error saving case %s", case.case_id, exc_info=True)
+        return saved
 
     def _check_for_migration_restrictions(self, domain_name):
         msgs = []
@@ -1092,11 +1137,6 @@ def _iter_missing_blob_present_forms(statedb, stopper):
         seen.add(("case", case_id))
         for xml_meta, all_metas in iter_blob_metas(form_ids):
             yield xml_to_form(domain, xml_meta, case_id, all_metas)
-
-
-def _drop_sql_form_ids(couch_ids, statedb):
-    from .missingdocs import MissingIds
-    return MissingIds.forms(statedb, None).drop_sql_ids(couch_ids)
 
 
 def get_main_forms_iteration_stop_date(statedb):
