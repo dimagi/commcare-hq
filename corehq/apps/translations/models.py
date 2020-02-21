@@ -31,7 +31,6 @@ class SMSTranslations(SyncSQLToCouchMixin, models.Model):
     domain = models.CharField(max_length=255, unique=True)
     langs = JSONField(default=list)
     translations = JSONField(default=dict)
-    couch_id = models.CharField(max_length=126, null=True, db_index=True)
 
     @property
     def default_lang(self):
