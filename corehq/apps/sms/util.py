@@ -310,7 +310,7 @@ def is_contact_active(domain, contact_doc_type, contact_id):
 
 
 @atomic
-def get_or_create_translation_doc(domain):
+def get_or_create_sms_translations(domain):
     (translations, created) = SMSTranslations.objects.get_or_create(domain=domain, defaults={
         "langs": ["en"],
         "translations": {
@@ -321,7 +321,7 @@ def get_or_create_translation_doc(domain):
 
 
 def get_language_list(domain):
-    tdoc = get_or_create_translation_doc(domain)
-    result = set(tdoc.langs)
+    sms_translations = get_or_create_sms_translations(domain)
+    result = set(sms_translations.langs)
     result.discard('*')
     return list(result)

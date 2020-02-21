@@ -116,7 +116,7 @@ from corehq.apps.sms.resources.v0_5 import SelfRegistrationUserInfo
 from corehq.apps.sms.util import (
     ContactNotFoundException,
     get_contact,
-    get_or_create_translation_doc,
+    get_or_create_sms_translations,
     get_sms_backend_classes,
 )
 from corehq.apps.smsbillables.utils import \
@@ -1615,10 +1615,10 @@ class SMSLanguagesView(BaseMessagingSectionView):
 
     @property
     def page_context(self):
-        tdoc = get_or_create_translation_doc(self.domain)
+        sms_translations = get_or_create_sms_translations(self.domain)
         context = {
             "domain": self.domain,
-            "sms_langs": tdoc.langs,
+            "sms_langs": sms_translations.langs,
             "bulk_upload": {
                 "action": reverse("upload_sms_translations", args=(self.domain,)),
                 "download_url": reverse("download_sms_translations", args=(self.domain,)),
