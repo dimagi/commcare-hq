@@ -13,6 +13,7 @@ from dimagi.ext.couchdbkit import (
     StringProperty,
 )
 from dimagi.utils.couch import CouchDocLockableMixIn
+from dimagi.utils.couch.migration import SyncCouchToSQLMixin, SyncSQLToCouchMixin
 
 from corehq.apps.app_manager.dbaccessors import get_app, get_app_ids_in_domain
 from corehq.motech.utils import b64_aes_decrypt
@@ -26,14 +27,26 @@ class TranslationMixin(Document):
         self.translations[lang] = translations
 
 
-class SMSTranslations(models.Model):
+class SMSTranslations(SyncSQLToCouchMixin, models.Model):
     domain = models.CharField(max_length=255, unique=True)
     langs = JSONField(default=list)
     translations = JSONField(default=dict)
     couch_id = models.CharField(max_length=126, null=True, db_index=True)
 
+    @classmethod
+    def _migration_get_fields(cls):
+        return [
+            "domain",
+            "langs",
+            "translations",
+        ]
 
-class StandaloneTranslationDoc(TranslationMixin, CouchDocLockableMixIn):
+    @classmethod
+    def _migration_get_couch_model_class(cls):
+        return StandaloneTranslationDoc
+
+
+class StandaloneTranslationDoc(SyncCouchToSQLMixin, TranslationMixin, CouchDocLockableMixIn):
     """
     There is either 0 or 1 StandaloneTranslationDoc doc for each (domain, area).
     """
@@ -41,6 +54,18 @@ class StandaloneTranslationDoc(TranslationMixin, CouchDocLockableMixIn):
     # For example, "sms"
     area = StringProperty()
     langs = ListProperty()
+
+    @classmethod
+    def _migration_get_fields(cls):
+        return [
+            "domain",
+            "langs",
+            "translations",
+        ]
+
+    @classmethod
+    def _migration_get_sql_model_class(cls):
+        return SMSTranslations
 
     @property
     def default_lang(self):
