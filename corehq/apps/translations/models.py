@@ -45,6 +45,18 @@ class SMSTranslations(SyncSQLToCouchMixin, models.Model):
     def _migration_get_couch_model_class(cls):
         return StandaloneTranslationDoc
 
+    @classmethod
+    def _migration_get_fields(cls):
+        return [
+            "domain",
+            "langs",
+            "translations",
+        ]
+
+    @classmethod
+    def _migration_get_couch_model_class(cls):
+        return StandaloneTranslationDoc
+
 
 class StandaloneTranslationDoc(SyncCouchToSQLMixin, TranslationMixin, CouchDocLockableMixIn):
     """
