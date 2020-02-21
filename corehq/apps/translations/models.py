@@ -1,6 +1,7 @@
 from collections import defaultdict
 
 from django.contrib import admin
+from django.contrib.postgres.fields import JSONField
 from django.db import models
 from django.urls import reverse
 from django.utils.functional import cached_property
@@ -23,6 +24,13 @@ class TranslationMixin(Document):
 
     def set_translations(self, lang, translations):
         self.translations[lang] = translations
+
+
+class SMSTranslations(models.Model):
+    domain = models.CharField(max_length=255, unique=True)
+    langs = JSONField(default=list)
+    translations = JSONField(default=dict)
+    couch_id = models.CharField(max_length=126, null=True, db_index=True)
 
 
 class StandaloneTranslationDoc(TranslationMixin, CouchDocLockableMixIn):
