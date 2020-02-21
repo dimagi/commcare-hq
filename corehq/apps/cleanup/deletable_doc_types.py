@@ -11,6 +11,7 @@ MAIN_DB = None
 # Doc types for classes we've removed from our code
 # but may still have docs lying around from
 DELETABLE_COUCH_DOC_TYPES = {
+    'ApiUser': (MAIN_DB,),
     'ApplicationAccess': (MAIN_DB,),
     'SurveyKeyword': (MAIN_DB,),
     'SurveyKeywordAction': (MAIN_DB,),
