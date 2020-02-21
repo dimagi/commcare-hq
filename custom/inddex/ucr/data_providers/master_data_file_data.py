@@ -36,25 +36,8 @@ class MasterDataFileData(GapsReportDataMixin):
         return super().obligatory_couch_names + ['nsr_same_conv_method']
 
     @property
-    def not_calculated_tables(self):
-        already_calculated = [
-            'age_years', 'age_months', 'age_range', 'fao_who_gift_food_group_code',
-            'fao_who_gift_food_group_description', 'conv_factor_gap_code', 'conv_factor_gap_desc',
-            'fct_gap_code', 'fct_gap_desc', 'nsr_consumed_cooked_fraction', 'recipe_num_ingredients',
-            'conv_factor_food_code', 'conv_factor_base_term_food_code', 'conv_factor_used', 'fct_food_code_exists',
-            'fct_base_term_food_code_exists', 'fct_reference_food_code_exists'
-        ]
-        couch_headers = []
-        for header in self.headers_in_order:
-            if header not in self.TABLE_NAMES and header not in already_calculated:
-                couch_headers.append(header)
-
-        return couch_headers
-
-    @property
     @memoized
     def rows(self):
-        print(self.not_calculated_tables)
         rows = super().rows
         self.append_age_information(rows)
         self._append_recipe_information(rows)

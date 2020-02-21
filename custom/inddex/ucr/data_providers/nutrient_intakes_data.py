@@ -1,5 +1,3 @@
-from random import randint
-
 from memoized import memoized
 
 from custom.inddex.ucr.data_providers.mixins import NutrientIntakesDataMixin
