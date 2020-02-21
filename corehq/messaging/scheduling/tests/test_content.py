@@ -5,7 +5,6 @@ from corehq.apps.sms.forms import (
     LANGUAGE_FALLBACK_DOMAIN,
     LANGUAGE_FALLBACK_UNTRANSLATED,
 )
-from corehq.apps.translations.models import StandaloneTranslationDoc
 from corehq.apps.users.models import CommCareUser
 from corehq.messaging.scheduling.models import Schedule, Content, CustomContent
 from corehq.messaging.scheduling.scheduling_partitioned.models import (
