@@ -597,8 +597,8 @@ def _child_health_monthly_data(state_ids, day):
 
     # https://github.com/celery/celery/issues/4274
     sub_aggregations = [
-        _child_health_helper.delay(query=query, params=params)
-        for query, params in helper.pre_aggregation_queries()
+        _child_health_helper.delay(queries)
+        for queries in helper.pre_aggregation_queries()
     ]
     for sub_aggregation in sub_aggregations:
         sub_aggregation.get(disable_sync_subtasks=False)
@@ -613,11 +613,12 @@ def update_child_health_monthly_table(day, state_ids):
 
 @task(serializer='pickle', queue='icds_aggregation_queue', default_retry_delay=15 * 60, acks_late=True)
 @track_time
-def _child_health_helper(query, params):
-    celery_task_logger.info("Running child_health_helper with %s", params)
+def _child_health_helper(queries):
     with get_cursor(ChildHealthMonthly) as cursor:
-        cursor.execute(query, params)
-    celery_task_logger.info("Completed child_health_helper with %s", params)
+        for query, params in queries:
+            celery_task_logger.info("Running child_health_helper with %s", params)
+            cursor.execute(query, params)
+        celery_task_logger.info("Completed child_health_helper with %s", params)
 
 
 @track_time
@@ -1601,8 +1602,8 @@ def _child_health_monthly_aggregation(day, state_ids):
 
     greenlets = []
     pool = Pool(20)
-    for query, params in helper.pre_aggregation_queries():
-        greenlets.append(pool.spawn(_child_health_helper, query, params))
+    for queries in helper.pre_aggregation_queries():
+        greenlets.append(pool.spawn(_child_health_helper, queries))
     while not pool.join(timeout=120, raise_error=True):
         celery_task_logger.info('failed to join pool - greenlets remaining: {}'.format(len(pool)))
     for g in greenlets:
