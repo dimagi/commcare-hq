@@ -110,9 +110,10 @@ class MissingIds:
     }
 
     form_types = list(form_doc_types()) + ["HQSubmission", "XFormInstance-Deleted"]
+    case_types = ['CommCareCase', 'CommCareCase-Deleted']
     _doc_types = {
         FORM: form_types,
-        CASE: ['CommCareCase', 'CommCareCase-Deleted'],
+        CASE: case_types,
     }
 
     def __attrs_post_init__(self):
