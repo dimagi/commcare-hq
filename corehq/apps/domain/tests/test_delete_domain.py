@@ -787,7 +787,6 @@ class TestDeleteDomain(TestCase):
         self._assert_smsforms_counts(self.domain.name, 0)
         self._assert_smsforms_counts(self.domain2.name, 1)
 
-
     def _assert_translations_count(self, domain_name, count):
         self._assert_queryset_count([
             SMSTranslations.objects.filter(domain=domain_name),
