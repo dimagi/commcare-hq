@@ -38,13 +38,6 @@ class SMSTranslations(models.Model):
         else:
             return None
 
-    @property
-    def default_lang(self):
-        if len(self.langs) > 0:
-            return self.langs[0]
-        else:
-            return None
-
 
 class Translation(object):
 
