@@ -97,16 +97,19 @@ class AggChildHealthAggregationDistributedHelper(AggregationPartitionedHelper):
             ('wasting_severe',
                 "SUM(CASE WHEN chm.current_month_wasting = 'severe' THEN 1 ELSE 0 END)"),
             ('stunting_moderate',
-                "SUM(CASE WHEN chm.current_month_stunting = 'moderate' THEN 1 ELSE 0 END)"),
+                "SUM(CASE WHEN chm.current_month_stunting = 'moderate' AND "
+                "chm.valid_in_month = 1  THEN 1 ELSE 0 END)"),
             ('stunting_severe',
-                "SUM(CASE WHEN chm.current_month_stunting = 'severe' THEN 1 ELSE 0 END)"),
+                "SUM(CASE WHEN chm.current_month_stunting = 'severe' AND "
+                "chm.valid_in_month = 1 THEN 1 ELSE 0 END)"),
             ('cf_initiation_in_month', "SUM(chm.cf_initiation_in_month)"),
             ('cf_initiation_eligible', "SUM(chm.cf_initiation_eligible)"),
             ('height_measured_in_month', "SUM(chm.height_measured_in_month)"),
             ('wasting_normal',
                 "SUM(CASE WHEN chm.current_month_wasting = 'normal' THEN 1 ELSE 0 END)"),
             ('stunting_normal',
-                "SUM(CASE WHEN chm.current_month_stunting = 'normal' THEN 1 ELSE 0 END)"),
+                "SUM(CASE WHEN chm.current_month_stunting = 'normal' AND "
+                "chm.valid_in_month = 1 THEN 1 ELSE 0 END)"),
             ('valid_all_registered_in_month', "SUM(chm.valid_all_registered_in_month)"),
             ('ebf_no_info_recorded', "SUM(chm.ebf_no_info_recorded)"),
             ('weighed_and_height_measured_in_month',
