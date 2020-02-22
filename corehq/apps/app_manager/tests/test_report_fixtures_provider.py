@@ -27,7 +27,7 @@ from mock import Mock, patch
 class ReportFixturesProviderTests(SimpleTestCase, TestXmlMixin):
 
     file_path = ('data', 'fixtures')
-
+    maxDiff = None
     @staticmethod
     def get_data_source_mock():
         data_source_mock = Mock()
