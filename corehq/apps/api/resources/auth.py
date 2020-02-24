@@ -6,6 +6,7 @@ from django.http import Http404, HttpResponse, HttpResponseForbidden
 
 from tastypie.authentication import Authentication
 
+from corehq.apps.api.odata.views import odata_permissions_check
 from corehq.apps.domain.auth import BASIC, determine_authtype_from_header
 from corehq.apps.domain.decorators import (
     api_key_auth,
@@ -119,14 +120,9 @@ class ODataAuthentication(LoginAndDomainAuthentication):
         }
 
     def is_authenticated(self, request, **kwargs):
-
-        def _check_odata_permission(_user, _domain):
-            from corehq.apps.export.views.utils import user_can_view_odata_feed
-            return user_can_view_odata_feed(_domain, _user)
-
         wrappers = [
             require_permission_raw(
-                _check_odata_permission,
+                odata_permissions_check,
                 self._get_auth_decorator(request)
             ),
             api_auth,
