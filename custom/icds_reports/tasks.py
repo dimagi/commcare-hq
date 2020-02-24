@@ -328,6 +328,11 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
 
             res_ls_tasks.append(icds_aggregation_task.si(date=calculation_date, func_name='_agg_ls_table'))
 
+            res_sdr = chain(icds_aggregation_task.si(date=calculation_date, func_name='update_service_delivery_report'),
+                            ).apply_async()
+
+            res_sdr.get(disable_sync_subtasks=False)
+
             res_awc = chain(icds_aggregation_task.si(date=calculation_date, func_name='_agg_awc_table'),
                             *res_ls_tasks
                             ).apply_async()
@@ -411,6 +416,7 @@ def icds_aggregation_task(self, date, func_name):
         '_agg_ccs_record_table': _agg_ccs_record_table,
         '_agg_awc_table': _agg_awc_table,
         'aggregate_awc_daily': aggregate_awc_daily,
+        'update_service_delivery_report': update_service_delivery_report
     }[func_name]
 
     db_alias = get_icds_ucr_citus_db_alias()
@@ -1829,7 +1835,5 @@ def _agg_governance_dashboard(current_month):
 
 
 def update_service_delivery_report(target_date):
-    current_month = target_date.replace(day=1)
-    db_alias = router.db_for_write(AggServiceDeliveryReport)
-    with transaction.atomic(using=db_alias):
-        AggServiceDeliveryReport().aggregate(current_month)
+    current_month = force_to_date(target_date).replace(day=1)
+    AggServiceDeliveryReport.aggregate(current_month)
