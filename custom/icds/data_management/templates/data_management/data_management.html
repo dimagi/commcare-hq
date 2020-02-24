@@ -6,22 +6,69 @@
 {% requirejs_main 'data_management/js/data_management' %}
 
 {% block page_content %}
-<div class="container">
-  <div class="row">
-    <div class="page-header">
-      <h1>
-        {% trans "Data Management" %}
-      </h1>
-    </div>
-  </div>
-  <div class="row">
-    <div>
-      <div class="panel panel-modern-gray panel-form-only">
-        <div class="panel-body">
-          {% crispy form %}
-        </div>
-      </div>
-    </div>
+{% registerurl "paginate_data_management_requests" domain %}
+
+<div class="page-header">
+  <h1>
+    {% trans "Data Management" %}
+  </h1>
+</div>
+<div class="panel panel-modern-gray panel-form-only">
+  <div class="panel-body">
+    {% crispy form %}
   </div>
 </div>
+
+<div class="panel panel-default ko-template" id="data-management-requests-panel">
+    <div class="panel-heading">
+      <h3 class="panel-title">{% trans 'Data Management Requests' %}</h3>
+    </div>
+    <div class="panel-body">
+      <div class="alert alert-danger" data-bind="visible: error, text: error"></div>
+      <div data-bind="visible: showLoadingSpinner">
+        <i class="fa fa-spin fa-spinner"></i>
+        {% trans "Loading requests..." %}
+      </div>
+      <div data-bind="visible: noRequestsMessage">
+        <p class="alert alert-info">
+          <i class="fa fa-info-circle"></i>
+          <!-- ko text: noRequestsMessage --><!-- /ko -->
+        </p>
+      </div>
+      <table class="table table-striped table-responsive"
+             data-bind="visible: showRequests">
+        <thead>
+          <tr>
+            <th>{% trans "Task" %}</th>
+            <th>{% trans "DB" %}</th>
+            <th>{% trans "Initiated By" %}</th>
+            <th>{% trans "Date Range" %}</th>
+            <th>{% trans "Started On" %}</th>
+            <th>{% trans "Ended On" %}</th>
+            <th>{% trans "Status" %}</th>
+          </tr>
+        </thead>
+        <tbody data-bind="foreach: requests">
+          <tr>
+            <td data-bind="text: name"></td>
+            <td data-bind="text: dbAlias"></td>
+            <td data-bind="text: initiatedBy"></td>
+            <td data-bind="text: dateRange"></td>
+            <td data-bind="text: startedOn"></td>
+            <td data-bind="text: endedOn"></td>
+            <td data-bind="text: statusText"></td>
+          </tr>
+        </tbody>
+      </table>
+      <pagination data-bind="visible: showRequests" data-apply-bindings="false"
+                  params="goToPage: goToPage,
+                          slug: 'data-management-requests',
+                          perPage: itemsPerPage,
+                          maxPagesShown: 10,
+                          totalItems: totalItems,
+                          onLoad: onPaginationLoad,
+                          showSpinner: showPaginationSpinner"></pagination>
+
+    </div>
+  </div>
 {% endblock %}
