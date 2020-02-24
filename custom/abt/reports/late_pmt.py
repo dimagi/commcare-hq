@@ -1,20 +1,18 @@
-from django.db.models.aggregates import Count
+from datetime import datetime
+from typing import Iterator, List
+
+from django.db.models import Q
 from django.utils.functional import cached_property
 from django.utils.translation import ugettext as _
 
 from dateutil.rrule import DAILY, FR, MO, SA, TH, TU, WE, rrule
-from sqlagg.columns import SimpleColumn
-from sqlagg.filters import EQ
-from sqlagg.sorting import OrderBy
 
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.filters.dates import DatespanFilter
 from corehq.apps.reports.generic import GenericTabularReport
-from corehq.apps.reports.sqlreport import DatabaseColumn, SqlData
 from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin
-from corehq.apps.sms.models import INCOMING, OUTGOING, SMS
-from corehq.apps.userreports.util import get_table_name
-from corehq.sql_db.connections import DEFAULT_ENGINE_ID
+from corehq.form_processor.interfaces.processor import FormProcessorInterface
+from corehq.form_processor.models import CommCareCaseSQL, XFormInstanceSQL
 from custom.abt.reports.filters import (
     LevelFourFilter,
     LevelOneFilter,
@@ -22,65 +20,9 @@ from custom.abt.reports.filters import (
     LevelTwoFilter,
     SubmissionStatusFilter,
 )
+from custom.abt.reports.fixture_utils import get_locations
 
-
-class LatePMTUsers(SqlData):
-    engine_id = DEFAULT_ENGINE_ID
-
-    @property
-    def table_name(self):
-        return get_table_name(self.domain, "static-late-pmt")
-
-    @property
-    def domain(self):
-        return self.config['domain']
-
-    @property
-    def filters(self):
-        filters = []
-        filter_fields = [
-            'country',
-            'level_1',
-            'level_2',
-            'level_3',
-            'level_4',
-        ]
-        for filter_field in filter_fields:
-            if filter_field in self.config and self.config[filter_field]:
-                filters.append(EQ(filter_field, filter_field))
-        if 'user_id' in self.config and self.config['user_id']:
-            filters.append(EQ('doc_id', 'user_id'))
-        return filters
-
-    @property
-    def group_by(self):
-        return [
-            'user_id',
-            'username',
-            'phone_number',
-            'country',
-            'level_1',
-            'level_2',
-            'level_3',
-            'level_4',
-        ]
-
-    @property
-    def order_by(self):
-        return [OrderBy('username')]
-
-    @property
-    def columns(self):
-        return [
-            DatabaseColumn('user_id', SimpleColumn('doc_id', alias='user_id')),
-            DatabaseColumn('username', SimpleColumn('username')),
-            DatabaseColumn('phone_number', SimpleColumn('phone_number')),
-            DatabaseColumn('country', SimpleColumn('country')),
-            DatabaseColumn('level_1', SimpleColumn('level_1')),
-            DatabaseColumn('level_2', SimpleColumn('level_2')),
-            DatabaseColumn('level_3', SimpleColumn('level_3')),
-            DatabaseColumn('level_4', SimpleColumn('level_4'))
-        ]
+INDICATORS_FORM_XMLNS = 'http://openrosa.org/formdesigner/00CEB41B-2967-4370-9EA3-BFD9BD7AF785'
 
 
 class LatePmtReport(GenericTabularReport, CustomProjectReport, DatespanMixin):
@@ -128,8 +70,7 @@ class LatePmtReport(GenericTabularReport, CustomProjectReport, DatespanMixin):
     def headers(self):
         return DataTablesHeader(
             DataTablesColumn(_("Missing Report Date")),
-            DataTablesColumn(_("Username")),
-            DataTablesColumn(_("Phone Number")),
+            DataTablesColumn(_("Name")),
             DataTablesColumn(_("Country")),
             DataTablesColumn(_("Level 1")),
             DataTablesColumn(_("Level 2")),
@@ -139,66 +80,85 @@ class LatePmtReport(GenericTabularReport, CustomProjectReport, DatespanMixin):
         )
 
     @cached_property
-    def smss_received(self):
-        data = SMS.objects.filter(
-            domain=self.domain,
-            couch_recipient_doc_type='CommCareUser',
-            direction=INCOMING,
-            couch_recipient__in=self.get_user_ids,
-            date__range=(
-                self.startdate,
-                self.enddate
-            )
-        ).exclude(
-            text="123"
-        ).values('date', 'couch_recipient').annotate(
-            number_of_sms=Count('couch_recipient')
-        )
-        return {(sms['date'].date(), sms['couch_recipient']) for sms in data}
-
-    @cached_property
-    def get_user_ids(self):
-        return [user['user_id'] for user in self.get_users]
-
-    @cached_property
-    def get_users(self):
-        return LatePMTUsers(config=self.report_config).get_data()
+    def pmts_submitted(self):
+        forms = list(iter_forms_by_xmlns_received_on(
+            self.domain, INDICATORS_FORM_XMLNS, self.startdate, self.enddate
+        ))
+        return {
+            (case.received_on, case.operation_site)
+            for case in get_cases_from_forms(self.domain, forms)
+        }
 
     @property
     def rows(self):
-        def _to_report_format(date, user, error_msg):
+        def _to_report_format(date, location, error_msg):
             return [
                 date.strftime("%Y-%m-%d"),
-                user['username'].split('@')[0],
-                user['phone_number'],
-                user['country'],
-                user['level_1'],
-                user['level_2'],
-                user['level_3'],
-                user['level_4'],
+                location.name,
+                location.country,
+                location.level_1,
+                location.level_2,
+                location.level_3,
+                location.level_4,
                 error_msg
             ]
 
-        users = self.get_users
+        include_missing_pmt_data = self.report_config['submission_status'] != 'group_b'
+        # include_incorrect_pmt_data is no longer applicable, because an
+        # invalid SMS will not result in a pmt_data case being created/updated
+        include_incorrect_pmt_data = self.report_config['submission_status'] != 'group_a'
+        error_msg = _('Incorrect or no PMT data submitted')
         dates = rrule(
             DAILY,
             dtstart=self.startdate,
             until=self.enddate,
             byweekday=(MO, TU, WE, TH, FR, SA)
         )
-        include_missing_pmt_data = self.report_config['submission_status'] != 'group_b'
-        include_incorrect_pmt_data = self.report_config['submission_status'] != 'group_a'
         rows = []
-        if users:
-            for date in dates:
-                for user in users:
-                    sms_received = (date.date(), user['user_id']) in self.smss_received
-                    valid_sms = (date.date(), user['user_id']) in self.valid_smss_received
-                    if not sms_received and include_missing_pmt_data:
-                        error_msg = _('No PMT data Submitted')
-                    elif sms_received and not valid_sms and include_incorrect_pmt_data:
-                        error_msg = _('Incorrect PMT data Submitted')
-                    else:
-                        continue
-                    rows.append(_to_report_format(date, user, error_msg))
+        for date in dates:
+            for location in get_locations(self.domain, self.report_config):
+                pmt_submitted = (date.date(), location.id) in self.pmts_submitted
+                if not pmt_submitted and (include_missing_pmt_data or include_incorrect_pmt_data):
+                    rows.append(_to_report_format(date, location, error_msg))
         return rows
+
+
+def iter_forms_by_xmlns_received_on(
+    domain: str,
+    xmlns: str,
+    start_datetime: datetime,
+    end_datetime: datetime,
+) -> Iterator[XFormInstanceSQL]:
+    """
+    Iterates form submissions of a given ``xmlns`` from
+    ``start_datetime`` (incl) to ``end_datetime`` (excl).
+    """
+    # ``start_datetime`` is inclusive and ``end_datetime`` is
+    # exclusive so that a form submitted at midnight will be
+    # returned for the day that is starting, not the day that is
+    # ending. That seems to be intuitive.
+    from corehq.sql_db.util import paginate_query_across_partitioned_databases
+
+    q_expr = (
+        Q(domain=domain)
+        & Q(state=XFormInstanceSQL.NORMAL)
+        & Q(xmlns=xmlns)
+        & Q(received_on__gte=start_datetime, received_on__lt=end_datetime)
+    )
+    return paginate_query_across_partitioned_databases(
+        XFormInstanceSQL, q_expr, load_source='forms_by_xmlns_received_on'
+    )
+
+
+def get_cases_from_forms(
+    domain: str,
+    forms: List[XFormInstanceSQL],
+) -> List[CommCareCaseSQL]:
+    if not forms:
+        return []
+    interface = FormProcessorInterface(domain)
+    case_ids_to_case_update_metadata = interface.get_cases_from_forms(
+        interface.casedb_cache, forms
+    )
+    cases = [meta.case for meta in case_ids_to_case_update_metadata.values()]
+    return cases
