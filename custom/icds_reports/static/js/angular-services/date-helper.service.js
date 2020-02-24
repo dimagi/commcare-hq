@@ -6,8 +6,8 @@ window.angular.module('icdsApp').factory('dateHelperService', ['$location', func
     };
 
     var isSDD =  $location.path().indexOf('service_delivery_dashboard') !== -1;
-    var startYear = 2017;
-    var startMonth = 3;
+    var defaultStartYear = 2017;
+    var defaultStartMonth = 3;
 
     function getSelectedMonth() {
         // gets the selected month from $location or defaults to the current month
@@ -71,13 +71,13 @@ window.angular.module('icdsApp').factory('dateHelperService', ['$location', func
         if (isSDD) {
             return reportStartDates['sdd'].getMonth() + 1;
         }
-        return startMonth;
+        return defaultStartMonth;
     }
     function getStartingYear(isSDD) {
         if (isSDD) {
             return reportStartDates['sdd'].getFullYear();
         }
-        return startYear;
+        return defaultStartYear;
     }
     function getReportStartDates() {
         return reportStartDates;
