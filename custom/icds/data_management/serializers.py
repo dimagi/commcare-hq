@@ -6,17 +6,18 @@ from custom.icds.data_management.models import DataManagementRequest
 
 
 class DataManagementRequestSerializer(serializers.ModelSerializer):
+    created_at = serializers.DateTimeField(format=USER_DATETIME_FORMAT)
+    started_on = serializers.DateTimeField(format=USER_DATETIME_FORMAT)
+    ended_on = serializers.DateTimeField(format=USER_DATETIME_FORMAT)
+
     class Meta(object):
         model = DataManagementRequest
-        fields = ['db_alias', 'start_date', 'end_date', 'domain',
+        fields = ['db_alias', 'start_date', 'end_date', 'domain', 'created_at', 'started_on', 'ended_on',
                   'initiated_by', 'error', 'status']
 
     def to_representation(self, instance):
         ret = super(DataManagementRequestSerializer, self).to_representation(instance)
         task = DATA_MANAGEMENT_TASKS.get(instance.slug)
         ret['name'] = task.name if task else instance.slug
-        ret['created_at'] = instance.created_at.strftime(USER_DATETIME_FORMAT)
-        ret['started_on'] = instance.started_on.strftime(USER_DATETIME_FORMAT) if instance.started_on else ''
-        ret['ended_on'] = instance.ended_on.strftime(USER_DATETIME_FORMAT) if instance.ended_on else ''
         ret['status_text'] = dict(DataManagementRequest.STATUS_CHOICES).get(instance.status)
         return ret
