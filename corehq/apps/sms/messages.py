@@ -112,9 +112,9 @@ def get_message(msg_id, verified_number=None, context=None, domain=None, languag
     default_msg = _MESSAGES.get(msg_id, "")
 
     if domain:
-        translations = SMSTranslations.filter(domain=domain).first()
+        translations = SMSTranslations.objects.filter(domain=domain).first()
     elif verified_number:
-        translations = SMSTranslations.filter(domain=verified_number.domain).first()
+        translations = SMSTranslations.objects.filter(domain=verified_number.domain).first()
     else:
         translations = None
 

@@ -418,7 +418,7 @@ class Content(models.Model):
 
     @memoized
     def get_default_lang(self, domain):
-        return SMSTranslations.filter(domain=domain).first().default_lang
+        return SMSTranslations.objects.filter(domain=domain).first().default_lang
 
     def get_translation_from_message_dict(self, domain_obj, message_dict, preferred_language_code):
         """
