@@ -261,8 +261,8 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
                 "ELSE 'unmeasured' END".format(height_eligible)),
             ("zscore_grading_hfa", "gm.zscore_grading_hfa"),
             ("zscore_grading_hfa_recorded_in_month",
-                "CASE WHEN (date_trunc('MONTH', gm.zscore_grading_hfa_last_recorded) = %(start_date)s) "
-                "THEN 1 ELSE 0 END"),
+                "CASE WHEN (date_trunc('MONTH', gm.zscore_grading_hfa_last_recorded) = %(start_date)s) AND {} "
+                "THEN 1 ELSE 0 END".format(valid_in_month)),
             ("zscore_grading_wfh", "gm.zscore_grading_wfh"),
             ("zscore_grading_wfh_recorded_in_month",
                 "CASE WHEN (date_trunc('MONTH', gm.zscore_grading_wfh_last_recorded) = %(start_date)s) "
@@ -420,8 +420,11 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
 
     def aggregation_queries(self):
         return [
-            """INSERT INTO "{new_tablename}" (SELECT * FROM "{tmp_tablename}")""".format(new_tablename=self.new_tablename, tmp_tablename=self.temporary_tablename),
+            """INSERT INTO "{new_tablename}" (SELECT * FROM "{tmp_tablename}")""".format(
+                new_tablename=self.new_tablename, tmp_tablename=self.temporary_tablename),
             'DROP TABLE IF EXISTS "{monthly_tablename}"'.format(monthly_tablename=self.monthly_tablename),
-            """ALTER TABLE "{new_tablename}" RENAME TO \"{tablename}\"""".format(new_tablename=self.new_tablename, tablename=self.monthly_tablename),
-            """ALTER TABLE "{tablename}" ATTACH PARTITION "{monthly_tablename}" FOR VALUES IN ('{month}')""".format(monthly_tablename=self.monthly_tablename, month=self.month.strftime('%Y-%m-%d'), tablename=self.tablename),
+            """ALTER TABLE "{new_tablename}" RENAME TO \"{tablename}\"""".format(
+                new_tablename=self.new_tablename, tablename=self.monthly_tablename),
+            """ALTER TABLE "{tablename}" ATTACH PARTITION "{monthly_tablename}" FOR VALUES IN ('{month}')""".format(
+                monthly_tablename=self.monthly_tablename, month=self.month.strftime('%Y-%m-%d'), tablename=self.tablename),
         ]
