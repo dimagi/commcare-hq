@@ -24,7 +24,7 @@ def get_app():
         "goodbye": "Goodbye",
         "all_yr_base": "ALL YOUR BASE ARE BELONG TO US",
     })
-    app.set_translation("rus", {
+    app.set_translations("rus", {
         "hello": "привет",
         "goodbye": "до свидания",
         "all_yr_base": "ВСЯ ВАША БАЗА ОТНОСИТСЯ К НАМ",  # Well, that's what Google says
