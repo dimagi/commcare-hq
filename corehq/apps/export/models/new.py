@@ -22,7 +22,6 @@ from couchdbkit import (
 from memoized import memoized
 
 from casexml.apps.case.const import DEFAULT_CASE_INDEX_IDENTIFIERS
-from corehq.toggles import USE_NEW_GET_COLUMN
 from couchexport.models import Format
 from couchexport.transforms import couch_to_excel_datetime
 from dimagi.ext.couchdbkit import (
@@ -868,17 +867,10 @@ class ExportInstance(BlobMixin, Document):
             ) and not group_schema.inferred
 
             prev_index = 0
-            use_get_column_new = (hasattr(instance, 'domain')
-                                  and USE_NEW_GET_COLUMN.enabled(instance.domain))
             for item in group_schema.items:
-                if use_get_column_new:
-                    index, column = table.get_column_new(
-                        item.path, item.doc_type, None
-                    )
-                else:
-                    index, column = table.get_column(
-                        item.path, item.doc_type, None
-                    )
+                index, column = table.get_column_new(
+                    item.path, item.doc_type, None
+                )
                 if not column:
                     column = ExportColumn.create_default_from_export_item(
                         table.path,
@@ -997,20 +989,12 @@ class ExportInstance(BlobMixin, Document):
         insert_fn = self._get_insert_fn(table, top)
 
         domain = column_initialization_data.get('domain')
-        use_get_column_new = domain and USE_NEW_GET_COLUMN.enabled(domain)
         for static_column in properties:
-            if use_get_column_new:
-                index, existing_column = table.get_column_new(
-                    static_column.item.path,
-                    static_column.item.doc_type,
-                    static_column.item.transform,
-                )
-            else:
-                index, existing_column = table.get_column(
-                    static_column.item.path,
-                    static_column.item.doc_type,
-                    static_column.item.transform,
-                )
+            index, existing_column = table.get_column_new(
+                static_column.item.path,
+                static_column.item.doc_type,
+                static_column.item.transform,
+            )
             column = (existing_column or static_column)
             if isinstance(column, RowNumberColumn):
                 column.update_nested_repeat_count(column_initialization_data.get('repeat'))
