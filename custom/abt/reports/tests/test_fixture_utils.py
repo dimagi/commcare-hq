@@ -1,11 +1,29 @@
-from nose.tools import assert_equal
+import doctest
+
+from nose.tools import assert_equal, assert_true
 
 from corehq.apps.fixtures.models import (
     FieldList,
     FixtureDataItem,
     FixtureItemField,
 )
-from custom.abt.reports.late_pmt import fixture_data_item_to_dict
+from custom.abt.reports import fixture_utils
+from custom.abt.reports.fixture_utils import (
+    dict_values_in,
+    fixture_data_item_to_dict,
+)
+
+
+def test_dict_values_in_param_none():
+    swallow = {'permutation': 'unladen'}
+    result = dict_values_in(swallow, None)
+    assert_true(result)
+
+
+def test_dict_values_in_value_none():
+    swallow = {'permutation': 'unladen'}
+    result = dict_values_in(swallow, {'permutation': None})
+    assert_true(result)
 
 
 def test_fixture_data_item_to_dict():
@@ -50,3 +68,8 @@ def test_fixture_data_item_to_dict():
         'id': '789abc',
         'name': 'John'
     })
+
+
+def test_doctests():
+    results = doctest.testmod(fixture_utils)
+    assert results.failed == 0
