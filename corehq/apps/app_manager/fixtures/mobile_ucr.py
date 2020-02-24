@@ -44,17 +44,27 @@ from corehq.util.xml_utils import serialize
 
 
 def _should_sync(restore_state):
-    last_sync_log = restore_state.last_sync_log
-    if not last_sync_log or restore_state.overwrite_cache:
+    # Sync if this is a forced refresh
+    if restore_state.overwrite_cache:
         return True
 
-    sync_interval = restore_state.project.default_mobile_ucr_sync_interval
-    sync_interval = sync_interval and sync_interval * 3600  # convert to seconds
-    return (
-        not last_sync_log or
-        not sync_interval or
-        (_utcnow() - last_sync_log.date).total_seconds() > sync_interval
-    )
+    # Sync if this is a non-incremental restore
+    last_sync_log = restore_state.last_sync_log
+    if not last_sync_log:
+        return True
+
+    # Sync if the build changed, since that might have changed report-related content
+    if restore_state.params.app and last_sync_log.build_id:
+        if restore_state.params.app.get_id != last_sync_log.build_id:
+            return True
+
+    # If the project is limiting UCR sync frequency, only sync if the specified interval has passed
+    if restore_state.project.default_mobile_ucr_sync_interval:
+        sync_interval = restore_state.project.default_mobile_ucr_sync_interval * 3600  # convert to seconds
+        return (_utcnow() - last_sync_log.date).total_seconds() > sync_interval
+
+    # Default to syncing
+    return True
 
 
 class ReportFixturesProvider(FixtureProvider):
