@@ -1684,3 +1684,4 @@ class AggServiceDeliveryReport(models.Model, AggregateMixin):
                            'supervisor_id', 'awc_id') #pkey
 
     _agg_helper_cls = AggServiceDeliveryReportHelper
+    _agg_atomic = False
