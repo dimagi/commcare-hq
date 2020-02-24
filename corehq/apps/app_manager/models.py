@@ -39,6 +39,7 @@ from memoized import memoized
 from urllib.parse import urljoin
 from urllib.request import urlopen
 
+from corehq.util.bitly import BITLY_CONFIGURED
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
     DateTimeProperty,
@@ -4302,7 +4303,7 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
 
     def generate_shortened_url(self, view_name, build_profile_id=None):
         try:
-            if settings.BITLY_LOGIN:
+            if BITLY_CONFIGURED:
                 if build_profile_id is not None:
                     long_url = "{}{}?profile={}".format(
                         self.url_base, reverse(view_name, args=[self.domain, self._id]), build_profile_id

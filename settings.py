@@ -745,8 +745,7 @@ ELASTICSEARCH_MAJOR_VERSION = 1
 # If elasticsearch queries take more than this, they result in timeout errors
 ES_SEARCH_TIMEOUT = 30
 
-BITLY_LOGIN = ''
-BITLY_APIKEY = ''
+BITLY_OAUTH_TOKEN = None
 
 # this should be overridden in localsettings
 INTERNAL_DATA = defaultdict(list)
