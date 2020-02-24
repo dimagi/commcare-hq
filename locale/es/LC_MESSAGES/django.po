@@ -23717,7 +23717,7 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/registration/templates/registration/partials/start_trial_modal.html:10
-msgid "Get a CommCare Professional trial"
+msgid "Request a CommCare Professional trial"
 msgstr ""
 
 #: corehq/apps/registration/templates/registration/partials/start_trial_modal.html:22
