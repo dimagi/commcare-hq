@@ -103,7 +103,7 @@ class LatePmtReport(GenericTabularReport, CustomProjectReport, DatespanMixin):
                 error_msg
             ]
 
-        include_missing_pmt_data = self.report_config['submission_status'] != 'group_b'
+        include_missing_pmt_data = self.report_config['submission_status'] != 'incorrect_pmt_data'
         # include_incorrect_pmt_data is no longer applicable, because an
         # invalid SMS will not result in a pmt_data case being created/updated
         include_incorrect_pmt_data = self.report_config['submission_status'] != 'missing_pmt_data'

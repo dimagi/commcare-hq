@@ -108,5 +108,5 @@ class SubmissionStatusFilter(BaseSingleOptionFilter):
     def options(self):
         return [
             ('missing_pmt_data', ugettext_lazy('No PMT Data Submitted')),
-            ('group_b', ugettext_lazy('Incorrect PMT Data Submitted')),
+            ('incorrect_pmt_data', ugettext_lazy('Incorrect PMT Data Submitted')),
         ]
