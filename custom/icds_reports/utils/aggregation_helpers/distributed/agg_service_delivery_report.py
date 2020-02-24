@@ -68,7 +68,7 @@ class AggServiceDeliveryReportHelper(AggregationPartitionedHelper):
                 SELECT
                 {calculations}
                 from awc_location
-                WHERE awc_location.aggregation_level=5 AND awc_location.state_is_test<>1);
+                WHERE awc_location.aggregation_level=5);
                 """,{
         }
 
@@ -166,11 +166,24 @@ class AggServiceDeliveryReportHelper(AggregationPartitionedHelper):
         }
 
     def update_queries(self):
+
         yield f"""
-                    CREATE TABLE "local_tmp_agg_sdr" AS SELECT * FROM "{self.temporary_tablename}";
-                    INSERT INTO "{self.staging_tablename}" SELECT * from "local_tmp_agg_sdr";
-                    DROP TABLE "local_tmp_agg_sdr";
-                """, {
+            DROP TABLE IF EXISTS "local_tmp_agg_sdr";
+            """, {
+        }
+
+        yield f"""
+            CREATE TABLE "local_tmp_agg_sdr" AS SELECT * FROM "{self.temporary_tablename}";
+            """, {
+        }
+
+        yield f"""
+            INSERT INTO "{self.staging_tablename}" SELECT * from "local_tmp_agg_sdr";
+            """, {
+        }
+        yield f"""
+            DROP TABLE "local_tmp_agg_sdr";
+            """, {
         }
 
     def rollup_query(self, aggregation_level):
