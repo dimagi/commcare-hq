@@ -1590,3 +1590,36 @@ def get_datatables_ordering_info(request):
 
 def phone_number_function(x):
     return "+{0}{1}".format('' if str(x).startswith('91') else '91', x) if x else x
+
+
+def prepare_rollup_query(columns_tuples):
+    def _columns_and_calculations(column_tuple):
+        column = column_tuple[0]
+
+        if len(column_tuple) == 2:
+            agg_col = column_tuple[1]
+            if isinstance(agg_col, str):
+                return column_tuple
+            elif callable(agg_col):
+                return column, agg_col(column)
+        return column, 'SUM({})'.format(column)
+
+    columns = list(map(_columns_and_calculations, columns_tuples))
+
+    column_names = ", ".join([col[0] for col in columns])
+    calculations = ", ".join([col[1] for col in columns])
+    return column_names, calculations
+
+
+def test_column_name(aggregation_level):
+    test_location_column_names = ['district_is_test', 'block_is_test', 'supervisor_is_test', 'awc_is_test']
+    return test_location_column_names[aggregation_level-1]
+
+
+def create_group_by(aggregation_level):
+    all_group_by_columns = ["state_id", "district_id", "block_id", "supervisor_id"]
+    return all_group_by_columns[:aggregation_level]
+
+
+def column_value_as_per_agg_level(aggregation_level, agg_level_threshold, true_value, false_value):
+    return true_value if aggregation_level > agg_level_threshold else false_value
