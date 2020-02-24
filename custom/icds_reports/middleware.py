@@ -16,6 +16,7 @@ exclude_urls = (
 AUDIT_URLS = frozenset(
     [url.name for url in DASHBOARD_URL_GROUPS if hasattr(url, 'name') and url.name not in exclude_urls] + [
         'icds_dashboard',
+        'icds_dashboard_mobile',
     ]
 )
 
