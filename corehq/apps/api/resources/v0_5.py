@@ -18,11 +18,14 @@ from tastypie.resources import ModelResource, Resource, convert_post_to_patch
 from tastypie.utils import dict_strip_unicode_keys
 
 from casexml.apps.stock.models import StockTransaction
-from corehq.apps.export.views.utils import user_can_view_odata_feed
 from corehq.apps.locations.permissions import location_safe
+from corehq.apps.reports.standard.cases.utils import (
+    query_location_restricted_cases,
+    query_location_restricted_forms,
+)
 from phonelog.models import DeviceReportEntry
 
-from corehq import privileges, toggles
+from corehq import privileges
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.api.odata.serializers import (
     ODataCaseSerializer,
@@ -995,6 +998,10 @@ class ODataCaseResource(BaseODataResource):
         query = get_case_export_base_query(domain, config.case_type)
         for filter in config.get_filters():
             query = query.filter(filter.to_es_filter())
+
+        if not bundle.request.can_access_all_locations:
+            query = query_location_restricted_cases(query, bundle.request)
+
         return query
 
     class Meta(v0_4.CommCareCaseResource.Meta):
@@ -1021,6 +1028,10 @@ class ODataFormResource(BaseODataResource):
         query = get_form_export_base_query(domain, config.app_id, config.xmlns, include_errors=False)
         for filter in config.get_filters():
             query = query.filter(filter.to_es_filter())
+
+        if not bundle.request.can_access_all_locations:
+            query = query_location_restricted_forms(query, bundle.request)
+
         return query
 
     class Meta(v0_4.XFormInstanceResource.Meta):
