@@ -137,9 +137,9 @@ class FormProcessorSQL(object):
                             CaseAccessorSQL.save_case(case)
         except DatabaseError:
             for model in all_models:
-                model.pk = None
+                setattr(model, model._meta.pk.attname, None)
                 for tracked in model.create_models:
-                    tracked.pk = None
+                    setattr(tracked, tracked._meta.pk.attname, None)
             raise
 
         if publish_to_kafka:
