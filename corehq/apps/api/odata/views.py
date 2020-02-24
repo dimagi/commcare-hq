@@ -14,6 +14,7 @@ from corehq.apps.export.models import CaseExportInstance, FormExportInstance
 from corehq.apps.export.views.utils import user_can_view_odata_feed
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
+from corehq.apps.locations.permissions import location_safe
 from corehq.util import get_document_or_404
 from corehq.util.view_utils import absolute_reverse
 
@@ -32,6 +33,7 @@ class BaseODataView(View):
         return super(BaseODataView, self).dispatch(request, *args, **kwargs)
 
 
+@location_safe
 @odata_auth
 class ODataCaseServiceView(BaseODataView):
 
@@ -56,6 +58,7 @@ class ODataCaseServiceView(BaseODataView):
         return add_odata_headers(JsonResponse(service_document_content))
 
 
+@location_safe
 @odata_auth
 class ODataCaseMetadataView(BaseODataView):
 
@@ -72,6 +75,7 @@ class ODataCaseMetadataView(BaseODataView):
         return add_odata_headers(HttpResponse(metadata, content_type='application/xml'))
 
 
+@location_safe
 @odata_auth
 class ODataFormServiceView(BaseODataView):
 
@@ -96,6 +100,7 @@ class ODataFormServiceView(BaseODataView):
         return add_odata_headers(JsonResponse(service_document_content))
 
 
+@location_safe
 @odata_auth
 class ODataFormMetadataView(BaseODataView):
 
