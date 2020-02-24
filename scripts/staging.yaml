@@ -59,4 +59,5 @@ branches:
   - jls/migrate-Invitation-2 # Jenny Feb 20
   - jls/expiry-emails # Jenny Feb 20
   - bmb/SAAS-10269  # Biyeun Feb 23
+  - jls/sync-ucrs-on-app-update # Jenny Feb 24
 submodules: {}
