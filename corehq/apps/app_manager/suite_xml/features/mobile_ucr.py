@@ -336,6 +336,15 @@ def _get_data_detail(config, domain, new_mobile_ucr_restore):
     """
     Adds a data table to the report
     """
+    def get_xpath(column_id):
+        if new_mobile_ucr_restore:
+            return Xpath(
+                function="{}".format(column_id),
+            )
+        else:
+            return Xpath(
+                function="column[@id='{}']".format(column_id),
+            )
     def _column_to_field(column):
         def _get_xpath(col):
             def _get_conditional(condition, if_true, if_false):
@@ -391,14 +400,7 @@ def _get_data_detail(config, domain, new_mobile_ucr_restore):
                     variables=[XpathVariable(name='lang', locale_id='lang.current')],
                 )
             else:
-                if new_mobile_ucr_restore:
-                    return Xpath(
-                        function="{}".format(col.column_id),
-                    )
-                else:
-                    return Xpath(
-                        function="column[@id='{}']".format(col.column_id),
-                    )
+                return get_xpath(col.column_id)
 
         return Field(
             header=Header(
@@ -416,6 +418,10 @@ def _get_data_detail(config, domain, new_mobile_ucr_restore):
         )
 
     nodeset_string = 'row{}' if new_mobile_ucr_restore else 'rows/row{}'
+    fields = [Field(
+        header=Header(text=Text(), width=0,),
+        template=Template(text=Text(xpath=get_xpath("row_index"),), width=0,),
+    )]
     return Detail(
         id='reports.{}.data'.format(config.uuid),
         nodeset=(
@@ -425,7 +431,7 @@ def _get_data_detail(config, domain, new_mobile_ucr_restore):
         title=Text(
             locale=Locale(id=id_strings.report_data_table()),
         ),
-        fields=[
+        fields=fields + [
             _column_to_field(c) for c in config.report(domain).report_columns
             if c.type != 'expanded' and c.visible
         ]
