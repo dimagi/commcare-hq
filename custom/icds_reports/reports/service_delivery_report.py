@@ -22,8 +22,15 @@ class ServiceDeliveryReport(object):
     @property
     def headers_and_calculation(self):
 
-        headers = [(loc_column.split('_')[0].title(), loc_column) for loc_column in
-                   self.location_columns]
+        def _location_name():
+            location_and_col_names = [('State', 'state_name'),
+                                      ('District','district_name'),
+                                      ('Block','block_name'),
+                                      ('Sector','supervisor_name'),
+                                      ('AWC', 'awc_name')]
+            return location_and_col_names[:self.config['aggregation_level']]
+
+        headers = _location_name()
 
         if self.config['beneficiary_category'] == 'pw_lw_children':
 
