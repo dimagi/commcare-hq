@@ -568,7 +568,7 @@ class TableConfiguration(DocumentSchema):
         :param column_transform: A transform that is applied on the column
         :returns index, column: The index of the column in the list and an ExportColumn
         """
-        string_item_path = _path_nodes_to_string(item_path)
+        string_item_path = f'{_path_nodes_to_string(item_path)}.{column_transform}'
 
         # Previously we iterated over self.columns with each call to return the
         # index. Now we do an index lookup on the string-ified path names for
@@ -577,8 +577,8 @@ class TableConfiguration(DocumentSchema):
         if (not hasattr(self, '_string_column_paths')
                 or len(self._string_column_paths) != len(self.columns)):
             self._string_column_paths = [
-                _path_nodes_to_string(column.item.path) for column in
-                self.columns
+                f'{_path_nodes_to_string(column.item.path)}.{column.item.transform}'
+                for column in self.columns
             ]
 
         try:
