@@ -554,7 +554,7 @@ class TableConfiguration(DocumentSchema):
                 ))
         return rows
 
-    def get_column_new(self, item_path, item_doc_type, column_transform):
+    def get_column(self, item_path, item_doc_type, column_transform):
         """
         Given a path and transform, will return the column and its index. If not found, will
         return None, None.
@@ -596,29 +596,6 @@ class TableConfiguration(DocumentSchema):
                 and column.custom_path == item_path
                 and item_doc_type is None):
             return index, column
-        return None, None
-
-    def get_column(self, item_path, item_doc_type, column_transform):
-        """
-        Given a path and transform, will return the column and its index. If not found, will
-        return None, None
-
-        :param item_path: A list of path nodes that identify a column
-        :param item_doc_type: The doc type of the item (often just ExportItem). If getting
-                UserDefinedExportColumn, set this to None
-        :param column_transform: A transform that is applied on the column
-        :returns index, column: The index of the column in the list and an ExportColumn
-        """
-        for index, column in enumerate(self.columns):
-            if (column.item.path == item_path and
-                    column.item.transform == column_transform and
-                    column.item.doc_type == item_doc_type):
-                return index, column
-            # No item doc type searches for a UserDefinedExportColumn
-            elif (isinstance(column, UserDefinedExportColumn) and
-                    column.custom_path == item_path and
-                    item_doc_type is None):
-                return index, column
         return None, None
 
     @memoized
@@ -868,7 +845,7 @@ class ExportInstance(BlobMixin, Document):
 
             prev_index = 0
             for item in group_schema.items:
-                index, column = table.get_column_new(
+                index, column = table.get_column(
                     item.path, item.doc_type, None
                 )
                 if not column:
@@ -990,7 +967,7 @@ class ExportInstance(BlobMixin, Document):
 
         domain = column_initialization_data.get('domain')
         for static_column in properties:
-            index, existing_column = table.get_column_new(
+            index, existing_column = table.get_column(
                 static_column.item.path,
                 static_column.item.doc_type,
                 static_column.item.transform,
