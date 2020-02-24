@@ -16,13 +16,11 @@ from corehq.apps.sms.models import INCOMING, OUTGOING, SMS
 from corehq.apps.userreports.util import get_table_name
 from corehq.sql_db.connections import DEFAULT_ENGINE_ID
 from custom.abt.reports.filters import (
-    CountryFilter,
     LevelFourFilter,
     LevelOneFilter,
     LevelThreeFilter,
     LevelTwoFilter,
     SubmissionStatusFilter,
-    UsernameFilter,
 )
 
 
@@ -98,8 +96,6 @@ class LatePmtReport(GenericTabularReport, CustomProjectReport, DatespanMixin):
 
     fields = [
         DatespanFilter,
-        UsernameFilter,
-        CountryFilter,
         LevelOneFilter,
         LevelTwoFilter,
         LevelThreeFilter,
@@ -113,8 +109,6 @@ class LatePmtReport(GenericTabularReport, CustomProjectReport, DatespanMixin):
             'domain': self.domain,
             'startdate': self.startdate,
             'enddate': self.enddate,
-            'user_id': self.request.GET.get('user_id', ''),
-            'country': self.request.GET.get('country', ''),
             'level_1': self.request.GET.get('level_1', ''),
             'level_2': self.request.GET.get('level_2', ''),
             'level_3': self.request.GET.get('level_3', ''),
