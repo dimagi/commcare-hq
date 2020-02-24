@@ -44,7 +44,8 @@ function MonthModalController($location, $uibModalInstance, dateHelperService) {
 
     var customMonths = dateHelperService.getCustomAvailableMonthsForReports(vm.selectedYear,
         vm.selectedMonth,
-        vm.monthsCopy);
+        vm.monthsCopy,
+        isSDD);
 
 
     vm.months = customMonths.months;
@@ -62,7 +63,8 @@ function MonthModalController($location, $uibModalInstance, dateHelperService) {
 
         var customMonths = dateHelperService.getCustomAvailableMonthsForReports(item.id,
             vm.selectedMonth,
-            vm.monthsCopy);
+            vm.monthsCopy,
+            isSDD);
 
         vm.months = customMonths.months;
         vm.selectedMonth = customMonths.selectedMonth;

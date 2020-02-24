@@ -5,7 +5,6 @@ window.angular.module('icdsApp').factory('dateHelperService', ['$location', func
         'sdd': new Date(2019, 1),
     };
 
-    var isSDD =  $location.path().indexOf('service_delivery_dashboard') !== -1;
     var defaultStartYear = 2017;
     var defaultStartMonth = 3;
 
@@ -30,7 +29,7 @@ window.angular.module('icdsApp').factory('dateHelperService', ['$location', func
         var formattedMonth = moment(getSelectedMonth(), 'MM').format('MMMM');
         return formattedMonth + ' ' + getSelectedYear();
     }
-    function getCustomAvailableMonthsForReports(selectedYear, selectedMonth, monthsCopy) {
+    function getCustomAvailableMonthsForReports(selectedYear, selectedMonth, monthsCopy, isSDD) {
         var months = monthsCopy;
 
         if (selectedYear === new Date().getFullYear()) {
