@@ -7,6 +7,7 @@
 
 {% block page_content %}
 {% registerurl "paginate_data_management_requests" domain %}
+{% initial_page_data "error_status_code" error_status_code %}
 
 <div class="page-header">
   <h1>
@@ -29,11 +30,9 @@
         <i class="fa fa-spin fa-spinner"></i>
         {% trans "Loading requests..." %}
       </div>
-      <div data-bind="visible: noRequestsMessage">
-        <p class="alert alert-info">
-          <i class="fa fa-info-circle"></i>
-          <!-- ko text: noRequestsMessage --><!-- /ko -->
-        </p>
+      <div class="alert alert-info" data-bind="visible: noRequestsMessage">
+        <i class="fa fa-info-circle"></i>
+        <!-- ko text: noRequestsMessage --><!-- /ko -->
       </div>
       <table class="table table-striped table-responsive"
              data-bind="visible: showRequests">

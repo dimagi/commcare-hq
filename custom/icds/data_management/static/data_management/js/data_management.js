@@ -3,28 +3,35 @@ hqDefine('data_management/js/data_management', [
     'knockout',
     'underscore',
     "hqwebapp/js/initial_page_data",
+    'hqwebapp/js/assert_properties',
     'hqwebapp/js/components.ko',    // pagination widget
     'hqwebapp/js/knockout_bindings.ko', // for modals
     'jquery-ui/ui/datepicker',
-], function ($, ko, _, initialPageData) {
+], function ($, ko, _, initialPageData, assertProperties) {
     'use strict';
-
-    var dataManagementRequest = function (name, dbAlias, createdAt, initiatedBy, startedOn, endedOn, startDate,
-        endDate, status, statusText, error) {
+    var errorStatusCode = initialPageData.get('error_status_code');
+    var dataManagementRequest = function (options) {
+        assertProperties.assert(options, [
+            'name', 'db_alias', 'created_at', 'initiated_by', 'started_on', 'ended_on', 'start_date', 'end_date',
+            'status', 'status_text', 'error',],
+            ['domain']);
         var self = {};
-        self.name = name;
-        self.dbAlias = dbAlias;
-        self.initiatedBy = initiatedBy + gettext(' On ') + createdAt;
-        self.startedOn = startedOn;
-        self.endedOn = endedOn;
-        if (startDate) {
-            self.dateRange = startDate + '-' + endDate;
+        self.name = options.name;
+        self.dbAlias = options.db_alias;
+        self.initiatedBy = _.template(gettext("<%= initiatedBy %> On <%= createdAt %>"))({
+            initiatedBy: options.initiated_by,
+            createdAt: options.created_at,
+        });
+        self.startedOn = options.started_on;
+        self.endedOn = options.ended_on;
+        if (options.start_date) {
+            self.dateRange = options.start_date + '-' + options.end_date;
         } else {
             self.dateRange = '';
         }
-        self.statusText = statusText;
-        if (status === 3) {
-            self.statusText += '(' + error + ')';
+        self.statusText = options.status_text;
+        if (options.status === errorStatusCode) {
+            self.statusText += '(' + options.error + ')';
         }
         return self;
     };
@@ -66,10 +73,7 @@ hqDefine('data_management/js/data_management', [
                     self.totalItems(data.total);
                     self.requests.removeAll();
                     _.each(data.requests, function (request) {
-                        self.requests.push(dataManagementRequest(
-                            request.name, request.db_alias, request.created_at, request.initiated_by,
-                            request.started_on, request.ended_on, request.start_date,
-                            request.end_date, request.status, request.status_text, request.error));
+                        self.requests.push(dataManagementRequest(request));
                     });
                 },
                 error: function () {

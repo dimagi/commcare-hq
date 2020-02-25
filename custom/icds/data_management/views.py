@@ -41,7 +41,7 @@ class DataManagementView(BaseProjectDataView):
 
     @property
     def page_context(self):
-        return {'form': self.form}
+        return {'form': self.form, 'error_status_code': DataManagementRequest.STATUS_FAILED}
 
     def post(self, request, *args, **kwargs):
         if self.form.is_valid():
