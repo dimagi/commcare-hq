@@ -7,7 +7,7 @@ from django.db import migrations, models
 from corehq.sql_db.operations import RawSQLMigration
 
 migrator = RawSQLMigration(('custom', 'icds_reports', 'migrations', 'sql_templates', 'database_views'))
-
+from custom.icds_reports.utils.migrations import get_view_migrations
 
 class Migration(migrations.Migration):
 
@@ -34,6 +34,6 @@ class Migration(migrations.Migration):
             model_name='aggservicedeliveryreport',
             name='gm_3_5',
             field=models.IntegerField(null=True),
-        ),
-        migrator.get_migration('service_delivery_report_view.sql')
+        )
     ]
+    operations.extend(get_view_migrations())
