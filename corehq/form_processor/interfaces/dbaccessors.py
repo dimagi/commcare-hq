@@ -542,7 +542,6 @@ def get_cached_case_attachment(domain, case_id, attachment_id, is_image=False):
 
 class AbstractLedgerAccessor(metaclass=ABCMeta):
 
-
     @staticmethod
     @abstractmethod
     def get_transactions_for_consumption(domain, case_id, product_id, section_id, window_start, window_end):
