@@ -13,8 +13,8 @@ hqDefine('data_management/js/data_management', [
     var dataManagementRequest = function (options) {
         assertProperties.assert(options, [
             'name', 'db_alias', 'created_at', 'initiated_by', 'started_on', 'ended_on', 'start_date', 'end_date',
-            'status', 'status_text', 'error',],
-            ['domain']);
+            'status', 'status_text', 'error',
+        ], ['domain']);
         var self = {};
         self.name = options.name;
         self.dbAlias = options.db_alias;
