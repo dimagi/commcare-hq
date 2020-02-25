@@ -27,7 +27,7 @@ from corehq.util.timer import TimingContext
 
 submission_rate_limiter = RateLimiter(
     feature_key='submissions',
-    get_rate_limits=PerUserRateDefinition(
+    get_rate_limits=lambda domain: PerUserRateDefinition(
         per_user_rate_definition=get_dynamic_rate_definition(
             'submissions_per_user',
             default=get_standard_ratio_rate_definition(events_per_day=46),
@@ -42,7 +42,7 @@ submission_rate_limiter = RateLimiter(
                 per_second=1,
             ),
         ),
-    ).get_rate_limits
+    ).get_rate_limits(domain)
 )
 
 global_submission_rate_limiter = RateLimiter(
