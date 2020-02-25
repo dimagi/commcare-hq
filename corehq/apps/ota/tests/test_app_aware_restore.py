@@ -1,7 +1,9 @@
 from django.test import TestCase
 
+from datetime import datetime, timedelta
 from mock import patch
 
+from casexml.apps.phone.models import SimplifiedSyncLog
 from casexml.apps.phone.tests.utils import (
     call_fixture_generator,
     create_restore_user,
@@ -115,6 +117,43 @@ class AppAwareSyncTests(TestCase):
 
         self.assertEqual(len(reports), 1)
         self.assertEqual(reports[0].attrib.get('id'), '123456')
+
+    def test_default_mobile_ucr_sync_interval(self):
+        """
+        When sync interval is set, ReportFixturesProvider should provide reports only if
+        the interval has passed since the last sync or a new build is being requested.
+        """
+        from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
+        with patch.object(ConfigurableReportDataSource, 'get_data') as get_data_mock:
+            get_data_mock.return_value = self.rows
+            with mock_datasource_config():
+                self.domain_obj.default_mobile_ucr_sync_interval = 4   # hours
+                two_hours_ago = datetime.utcnow() - timedelta(hours=2)
+                recent_sync = SimplifiedSyncLog(
+                    domain=self.domain_obj.name,
+                    date=two_hours_ago,
+                    user_id='456',
+                    build_id=self.app1.get_id,
+                )
+                recent_sync.save()
+                fixtures = call_fixture_generator(report_fixture_generator, self.user, app=self.app1,
+                                                  last_sync=recent_sync, project=self.domain_obj)
+                reports = self._get_fixture(fixtures, ReportFixturesProviderV1.id)
+                self.assertIsNone(reports)
+
+                recent_sync_new_build = SimplifiedSyncLog(
+                    domain=self.domain_obj.name,
+                    date=two_hours_ago,
+                    user_id='456',
+                    build_id='123',
+                )
+                recent_sync_new_build.save()
+                fixtures = call_fixture_generator(report_fixture_generator, self.user, app=self.app1,
+                                                  last_sync=recent_sync_new_build, project=self.domain_obj)
+                reports = self._get_fixture(fixtures, ReportFixturesProviderV1.id).findall('.//report')
+                self.assertEqual(len(reports), 1)
+                self.assertEqual(reports[0].attrib.get('id'), '123456')
+                self.domain_obj.default_mobile_ucr_sync_interval = None
 
     @flag_enabled('ROLE_WEBAPPS_PERMISSIONS')
     def test_report_fixtures_provider_with_cloudcare(self):
