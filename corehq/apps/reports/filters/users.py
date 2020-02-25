@@ -115,9 +115,9 @@ class BaseGroupedMobileWorkerFilter(BaseSingleOptionFilter):
 
 
 class EmwfUtils(object):
-    def __init__(self, domain, display_types=True):
+    def __init__(self, domain, namespace_locations=True):
         self.domain = domain
-        self.display_types = display_types
+        self.namespace_locations = namespace_locations
 
     def user_tuple(self, u):
         user = util._report_user_dict(u)
@@ -142,10 +142,12 @@ class EmwfUtils(object):
         )
 
     def location_tuple(self, location):
+        location_id = location.location_id
         text = location.get_path_display()
-        if self.display_types:
+        if self.namespace_locations:
+            location_id = f'l__{location_id}'
             text = f'{text} [location]'
-        return ("l__%s" % location.location_id, text)
+        return (location_id, text)
 
     @property
     @memoized
@@ -208,9 +210,12 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         group_ids = emwf.selected_group_ids(mobile_user_and_group_slugs)
     """
     location_search_help = ugettext_lazy(mark_safe(
-        '<i class="fa fa-info-circle"></i> To quick search for a '
-        '<a href="https://confluence.dimagi.com/display/commcarepublic/Exact+Search+for+Locations" '
-        'target="_blank">location</a>, write your query as "parent"/descendant.'
+        '<i class="fa fa-info-circle"></i> '
+        '<a href="https://confluence.dimagi.com/display/commcarepublic/Search+for+Locations"'
+        'target="_blank">Advanced Search:</a> '
+        'Put your location name in quotes to show only exact matches. To more '
+        'easily find a location, you may specify multiple levels by separating '
+        'with a "/". For example, "Massachusetts/Suffolk/Boston"'
     ))
 
     slug = "emw"

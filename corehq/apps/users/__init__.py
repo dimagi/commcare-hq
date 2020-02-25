@@ -11,7 +11,7 @@ class UsersAppConfig(AppConfig):
 
     def ready(self):
         """Code to run with Django starts"""
-        ExtraPreindexPlugin.register('users', __file__, settings.NEW_USERS_GROUPS_DB)
+        ExtraPreindexPlugin.register('users', __file__, settings.USERS_GROUPS_DB)
         connect_user_signals()
 
 

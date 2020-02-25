@@ -1,3 +1,4 @@
+import csv
 import json
 import logging
 import os
@@ -10,8 +11,11 @@ from django.core.management.base import BaseCommand, CommandError
 from dimagi.utils.chunked import chunked
 
 from corehq.apps.domain.models import Domain
+from corehq.form_processor.backends.couch.dbaccessors import FormAccessorCouch
 from corehq.form_processor.utils import should_use_sql_backend
+from corehq.util.log import with_progress_bar
 
+from ...casediff import get_couch_cases
 from ...casedifftool import do_case_diffs, format_diffs, get_migrator
 from ...couchsqlmigration import setup_logging
 from ...rewind import IterationState
@@ -30,8 +34,8 @@ class Command(BaseCommand):
     help = "Diff data in couch and SQL with parallel worker processes"
 
     def add_arguments(self, parser):
-        parser.add_argument('action', choices=[CASES, SHOW])
         parser.add_argument('domain')
+        parser.add_argument('action', choices=[CASES, SHOW])
         parser.add_argument('--no-input', action='store_true', default=False)
         parser.add_argument('--debug', action='store_true', default=False)
         parser.add_argument('--state-dir', dest='state_path',
@@ -57,6 +61,9 @@ class Command(BaseCommand):
         parser.add_argument('--changes',
             dest="changes", action='store_true', default=False,
             help="Show changes instead of diffs. Only valid with 'show' action")
+        parser.add_argument('--csv',
+            dest="csv", action='store_true', default=False,
+            help="Output diffs to stdout in CSV format.")
         parser.add_argument('-x', '--stop',
             dest="stop", action='store_true', default=False,
             help='''
@@ -76,7 +83,7 @@ class Command(BaseCommand):
                 progress information from the statedb.
             ''')
 
-    def handle(self, action, domain, **options):
+    def handle(self, domain, action, **options):
         if should_use_sql_backend(domain):
             raise CommandError(f'It looks like {domain} has already been migrated.')
 
@@ -87,6 +94,7 @@ class Command(BaseCommand):
             "select",
             "stop",
             "changes",
+            "csv",
             "batch_size",
             "reset",
         ]:
@@ -96,6 +104,8 @@ class Command(BaseCommand):
             raise CommandError('--no-input only allowed for unit testing')
         if self.changes and action != SHOW:
             raise CommandError('--changes only allowed with "show" action')
+        if self.csv and action != SHOW:
+            raise CommandError('--csv only allowed with "show" action')
 
         if self.reset:
             if action == SHOW:
@@ -118,30 +128,32 @@ class Command(BaseCommand):
 
     def do_show(self, domain):
         """Show diffs from state db"""
-        def iter_json_diffs(doc_diffs):
-            for doc_id, diffs in doc_diffs:
-                yield doc_id, [d.json_diff for d in diffs if d.kind != "stock state"]
-                stock_diffs = [d for d in diffs if d.kind == "stock state"]
-                if stock_diffs:
-                    yield from iter_stock_diffs(stock_diffs)
-
-        def iter_stock_diffs(diffs):
-            def key(diff):
-                return diff.doc_id
-            for doc_id, diffs in groupby(sorted(diffs, key=key), key=key):
-                yield doc_id, [d.json_diff for d in diffs]
-
         statedb = self.open_state_db(domain)
-        print(f"showing diffs from {statedb}")
+        print(f"showing diffs from {statedb}", file=sys.stderr)
         if self.changes:
             items = statedb.iter_doc_changes(self.select)
         else:
             items = statedb.iter_doc_diffs(self.select)
-        json_diffs = iter_json_diffs(items)
-        for chunk in chunked(json_diffs, self.batch_size, list):
-            print(format_diffs(dict(chunk)))
-            if not confirm("show more?"):
-                break
+        prompt = not self.csv
+        if self.csv:
+            counts = statedb.get_doc_counts()
+            if self.select:
+                count = counts.get(self.select, 0)
+            else:
+                count = sum(c.changes if self.changes else c.diffs
+                            for c in counts.values())
+            items = with_progress_bar(
+                items, count, "Docs", oneline=False, stream=sys.stderr)
+            print(CSV_HEADERS, file=sys.stdout)
+        try:
+            for doc_diffs in chunked(items, self.batch_size, list):
+                format_doc_diffs(doc_diffs, self.csv, self.changes, sys.stdout)
+                if len(doc_diffs) < self.batch_size:
+                    continue
+                if prompt and not confirm("show more?"):
+                    break
+        except (KeyboardInterrupt, BrokenPipeError):
+            pass
 
     def do_reset(self, action, domain):
         itr_doc_type = {"cases": "CommCareCase.id"}[action]
@@ -245,6 +257,113 @@ class Command(BaseCommand):
             delete(MissingDoc, "CommCareCase-couch")
             delete_all(CaseToDiff)
             delete_all(DiffedCase)
+
+
+def format_doc_diffs(doc_diffs, csv, changes, stream):
+    json_diffs = iter_json_diffs(doc_diffs)
+    if csv:
+        related = dict(iter_related(doc_diffs))
+        csv_diffs(json_diffs, related, changes, stream)
+    else:
+        print(format_diffs(json_diffs, changes), file=stream)
+
+
+CASE = "CommCareCase"
+STOCK = "stock state"
+CSV_HEADERS = ",".join([
+    "doc_type",
+    "doc_id",
+    "user_id",
+    "server_date",
+    "diff_type",
+    "path",
+    "old_value",
+    "new_value",
+    # "reason" is added to rows for --changes, but not here
+])
+
+
+def csv_diffs(json_diffs, related, changes, stream):
+    rows = []
+    for kind, doc_id, diffs in json_diffs:
+        user_id, server_date = related[kind].get(doc_id, ("", ""))
+        for diff in sorted(diffs, key=lambda d: (d.diff_type, d.path)):
+            row = [
+                kind,
+                doc_id,
+                user_id,
+                server_date,
+                diff.diff_type,
+                "/".join(diff.path),
+                diff.old_value,
+                diff.new_value,
+            ]
+            if changes:
+                row.append(diff.reason)
+            rows.append(row)
+    writer = csv.writer(stream)
+    writer.writerows(rows)
+
+
+def iter_json_diffs(doc_diffs):
+    def iter_stock_diffs(stock_diffs):
+        def key(diff):
+            return (diff.kind, diff.doc_id)
+        for (kind, doc_id), diffs in groupby(sorted(stock_diffs, key=key), key=key):
+            yield kind, doc_id, [d.json_diff for d in diffs]
+
+    for kind, doc_id, diffs in doc_diffs:
+        assert kind != STOCK
+        dxx = [d.json_diff for d in diffs if d.kind != STOCK]
+        yield kind, doc_id, dxx
+        stock_diffs = [d for d in diffs if d.kind == STOCK]
+        if stock_diffs:
+            yield from iter_stock_diffs(stock_diffs)
+
+
+def iter_related(doc_diffs):
+    """Get user_id and server_date for each item in doc_diffs
+
+    :yields: `kind, {doc_id: (user_id, server_date), ...}`
+    """
+    def key(item):
+        return item[1][0].kind
+
+    def get_related(kind, doc_ids):
+        if kind.startswith(CASE):
+            return get_case_related(doc_ids)
+        assert kind != STOCK
+        return get_form_related(doc_ids)
+
+    stock_related = {}
+    for kind, group in groupby(sorted(doc_diffs), key=lambda x: x[0]):
+        group = list(group)
+        doc_ids = [doc_id for x, doc_id, x in group]
+        related = get_related(kind, doc_ids)
+        assert len(related) == len(doc_ids), (kind, set(doc_ids) - set(related))
+        if kind == CASE:
+            for k, doc_id, diffs in group:
+                for diff in diffs:
+                    if diff.kind == STOCK:
+                        stock_related[diff.doc_id] = related[doc_id]
+        yield kind, related
+    yield STOCK, stock_related
+
+
+def get_case_related(case_ids):
+    def server_date(case):
+        return max(a.server_date for a in case.actions if a.server_date)
+    return {
+        case.case_id: (case.user_id, server_date(case))
+        for case in get_couch_cases(case_ids)
+    }
+
+
+def get_form_related(form_ids):
+    return {
+        form.form_id: (form.user_id, form.received_on)
+        for form in FormAccessorCouch.get_forms(form_ids)
+    }
 
 
 def confirm(msg):
