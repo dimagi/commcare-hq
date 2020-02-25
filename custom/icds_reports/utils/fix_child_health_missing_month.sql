@@ -1,5 +1,15 @@
 UPDATE child_health_monthly child_health
  SET
+  zscore_grading_hfa = gm.zscore_grading_hfa,
+  zscore_grading_hfa_recorded_in_month = CASE
+			WHEN gm.zscore_grading_hfa_last_recorded>='2018-05-01' AND gm.zscore_grading_hfa_last_recorded<'2018-06-01' THEN 1
+			ELSE 0
+	END,
+  zscore_grading_wfh = gm.zscore_grading_wfh,
+	zscore_grading_wfh_recorded_in_month = CASE
+			WHEN gm.zscore_grading_wfh_last_recorded>='2018-05-01' AND gm.zscore_grading_wfh_last_recorded<'2018-06-01' THEN 1
+			ELSE 0
+	END,
  	current_month_stunting = CASE
  			WHEN NOT (valid_in_month=1 AND age_tranche::Integer <= 60) THEN NULL
  			WHEN NOT (gm.zscore_grading_hfa_last_recorded BETWEEN '2018-05-01' AND '2018-05-31') THEN 'unmeasured'
@@ -28,10 +38,6 @@ UPDATE child_health_monthly child_health
 			WHEN gm.zscore_grading_wfh = 2 THEN 'moderate'
 			WHEN gm.zscore_grading_wfh = 3 THEN 'normal'
 			ELSE 'unmeasured'
-	END,
-	zscore_grading_wfh_recorded_in_month = CASE
-			WHEN gm.zscore_grading_wfh_last_recorded>='2018-05-01' AND gm.zscore_grading_wfh_last_recorded<'2018-06-01' THEN 1
-			ELSE 0
 	END
 	FROM icds_dashboard_growth_monitoring_forms gm
 	WHERE child_health.month=gm.month
@@ -73,6 +79,11 @@ SELECT
 	SUM(CASE WHEN chm.zscore_grading_wfh_recorded_in_month = 1 AND chm.zscore_grading_wfh = 3 THEN 1 ELSE 0 END) as wasting_normal_v2,
 	SUM(CASE WHEN chm.zscore_grading_wfh_recorded_in_month = 1 AND chm.zscore_grading_wfh = 2 THEN 1 ELSE 0 END) as wasting_moderate_v2,
 	SUM(CASE WHEN chm.zscore_grading_wfh_recorded_in_month = 1 AND chm.zscore_grading_wfh = 1 THEN 1 ELSE 0 END) as wasting_severe_v2,
+	SUM(CASE WHEN chm.zscore_grading_hfa_recorded_in_month = 1 AND chm.zscore_grading_hfa = 3 THEN 1 ELSE 0 END) as zscore_grading_hfa_normal,
+	SUM(CASE WHEN chm.zscore_grading_hfa_recorded_in_month = 1 AND chm.zscore_grading_hfa = 2 THEN 1 ELSE 0 END) as zscore_grading_hfa_moderate,
+	SUM(CASE WHEN chm.zscore_grading_hfa_recorded_in_month = 1 AND chm.zscore_grading_hfa = 1 THEN 1 ELSE 0 END) as zscore_grading_hfa_severe,
+	SUM(chm.zscore_grading_hfa_recorded_in_month) as zscore_grading_hfa_recorded_in_month,
+	SUM(chm.zscore_grading_wfh_recorded_in_month) as zscore_grading_wfh_recorded_in_month,
 	COALESCE(chm.disabled, 'no') as coalesce_disabled,
 	COALESCE(chm.minority, 'no') as coalesce_minority,
 	COALESCE(chm.resident, 'no') as coalesce_resident
@@ -96,7 +107,12 @@ UPDATE "agg_child_health_2018-05-01_5" agg_child_health
         stunting_normal = ut.stunting_normal,
         wasting_normal_v2 = ut.wasting_normal_v2,
         wasting_moderate_v2 = ut.wasting_moderate_v2,
-        wasting_severe_v2 = ut.wasting_severe_v2
+        wasting_severe_v2 = ut.wasting_severe_v2,
+        zscore_grading_hfa_normal = ut.zscore_grading_hfa_normal,
+				zscore_grading_hfa_moderate = ut.zscore_grading_hfa_moderate,
+				zscore_grading_hfa_severe = ut.zscore_grading_hfa_severe,
+				zscore_grading_hfa_recorded_in_month = ut.zscore_grading_hfa_recorded_in_month,
+				zscore_grading_wfh_recorded_in_month = ut.zscore_grading_wfh_recorded_in_month
     from (
         SELECT * from temp_agg_Child_my
     ) ut 
@@ -122,7 +138,12 @@ UPDATE "agg_child_health_2018-05-01_4" agg_child_health
         stunting_normal = ut.stunting_normal,
         wasting_normal_v2 = ut.wasting_normal_v2,
         wasting_moderate_v2 = ut.wasting_moderate_v2,
-        wasting_severe_v2 = ut.wasting_severe_v2
+        wasting_severe_v2 = ut.wasting_severe_v2,
+        zscore_grading_hfa_normal = ut.zscore_grading_hfa_normal,
+				zscore_grading_hfa_moderate = ut.zscore_grading_hfa_moderate,
+				zscore_grading_hfa_severe = ut.zscore_grading_hfa_severe,
+				zscore_grading_hfa_recorded_in_month = ut.zscore_grading_hfa_recorded_in_month,
+				zscore_grading_wfh_recorded_in_month = ut.zscore_grading_wfh_recorded_in_month
     from (
         SELECT
         supervisor_id,
@@ -136,7 +157,12 @@ UPDATE "agg_child_health_2018-05-01_4" agg_child_health
         SUM(stunting_normal) as stunting_normal,
         SUM(wasting_normal_v2) as wasting_normal_v2,
         SUM(wasting_moderate_v2) as wasting_moderate_v2,
-        SUM(wasting_severe_v2) as wasting_severe_v2
+        SUM(wasting_severe_v2) as wasting_severe_v2,
+        SUM(zscore_grading_hfa_normal) as zscore_grading_hfa_normal,
+				SUM(zscore_grading_hfa_moderate) as zscore_grading_hfa_moderate,
+				SUM(zscore_grading_hfa_severe) as zscore_grading_hfa_severe,
+				SUM(zscore_grading_hfa_recorded_in_month) as zscore_grading_hfa_recorded_in_month,
+				SUM(zscore_grading_wfh_recorded_in_month) as zscore_grading_wfh_recorded_in_month
 
         FROM "agg_child_health_2018-05-01_5" agg_child INNER JOIN (SELECT DISTINCT ucr.doc_id FROM "ucr_icds-cas_static-awc_location_88b3f9c3" ucr WHERE ucr.awc_is_test=0) tt ON tt.doc_id = agg_child.awc_id
         GROUP BY state_id, district_id,block_id,supervisor_id, gender, age_tranche
@@ -155,7 +181,12 @@ UPDATE "agg_child_health_2018-05-01_3" agg_child_health
         stunting_normal = ut.stunting_normal,
         wasting_normal_v2 = ut.wasting_normal_v2,
         wasting_moderate_v2 = ut.wasting_moderate_v2,
-        wasting_severe_v2 = ut.wasting_severe_v2
+        wasting_severe_v2 = ut.wasting_severe_v2,
+        zscore_grading_hfa_normal = ut.zscore_grading_hfa_normal,
+				zscore_grading_hfa_moderate = ut.zscore_grading_hfa_moderate,
+				zscore_grading_hfa_severe = ut.zscore_grading_hfa_severe,
+				zscore_grading_hfa_recorded_in_month = ut.zscore_grading_hfa_recorded_in_month,
+				zscore_grading_wfh_recorded_in_month = ut.zscore_grading_wfh_recorded_in_month
     from (
         SELECT
         block_id,
@@ -169,7 +200,12 @@ UPDATE "agg_child_health_2018-05-01_3" agg_child_health
         SUM(stunting_normal) as stunting_normal,
         SUM(wasting_normal_v2) as wasting_normal_v2,
         SUM(wasting_moderate_v2) as wasting_moderate_v2,
-        SUM(wasting_severe_v2) as wasting_severe_v2
+        SUM(wasting_severe_v2) as wasting_severe_v2,
+        SUM(zscore_grading_hfa_normal) as zscore_grading_hfa_normal,
+				SUM(zscore_grading_hfa_moderate) as zscore_grading_hfa_moderate,
+				SUM(zscore_grading_hfa_severe) as zscore_grading_hfa_severe,
+				SUM(zscore_grading_hfa_recorded_in_month) as zscore_grading_hfa_recorded_in_month,
+				SUM(zscore_grading_wfh_recorded_in_month) as zscore_grading_wfh_recorded_in_month
 
         FROM "agg_child_health_2018-05-01_4" agg_child INNER JOIN (SELECT DISTINCT ucr.supervisor_id FROM "ucr_icds-cas_static-awc_location_88b3f9c3" ucr WHERE ucr.supervisor_is_test=0) tt ON tt.supervisor_id = agg_child.supervisor_id
         GROUP BY state_id, district_id,block_id, gender, age_tranche
@@ -189,7 +225,12 @@ UPDATE "agg_child_health_2018-05-01_2" agg_child_health
         stunting_normal = ut.stunting_normal,
         wasting_normal_v2 = ut.wasting_normal_v2,
         wasting_moderate_v2 = ut.wasting_moderate_v2,
-        wasting_severe_v2 = ut.wasting_severe_v2
+        wasting_severe_v2 = ut.wasting_severe_v2,
+        zscore_grading_hfa_normal = ut.zscore_grading_hfa_normal,
+				zscore_grading_hfa_moderate = ut.zscore_grading_hfa_moderate,
+				zscore_grading_hfa_severe = ut.zscore_grading_hfa_severe,
+				zscore_grading_hfa_recorded_in_month = ut.zscore_grading_hfa_recorded_in_month,
+				zscore_grading_wfh_recorded_in_month = ut.zscore_grading_wfh_recorded_in_month
     from (
         SELECT
         district_id,
@@ -203,7 +244,12 @@ UPDATE "agg_child_health_2018-05-01_2" agg_child_health
         SUM(stunting_normal) as stunting_normal,
         SUM(wasting_normal_v2) as wasting_normal_v2,
         SUM(wasting_moderate_v2) as wasting_moderate_v2,
-        SUM(wasting_severe_v2) as wasting_severe_v2
+        SUM(wasting_severe_v2) as wasting_severe_v2,
+        SUM(zscore_grading_hfa_normal) as zscore_grading_hfa_normal,
+				SUM(zscore_grading_hfa_moderate) as zscore_grading_hfa_moderate,
+				SUM(zscore_grading_hfa_severe) as zscore_grading_hfa_severe,
+				SUM(zscore_grading_hfa_recorded_in_month) as zscore_grading_hfa_recorded_in_month,
+				SUM(zscore_grading_wfh_recorded_in_month) as zscore_grading_wfh_recorded_in_month
 
         FROM "agg_child_health_2018-05-01_3" agg_child INNER JOIN (SELECT DISTINCT ucr.block_id FROM "ucr_icds-cas_static-awc_location_88b3f9c3" ucr WHERE ucr.block_is_test=0) tt ON tt.block_id = agg_child.block_id
         GROUP BY state_id, district_id,gender, age_tranche
@@ -222,7 +268,12 @@ UPDATE "agg_child_health_2018-05-01_1" agg_child_health
         stunting_normal = ut.stunting_normal,
         wasting_normal_v2 = ut.wasting_normal_v2,
         wasting_moderate_v2 = ut.wasting_moderate_v2,
-        wasting_severe_v2 = ut.wasting_severe_v2
+        wasting_severe_v2 = ut.wasting_severe_v2,
+        zscore_grading_hfa_normal = ut.zscore_grading_hfa_normal,
+				zscore_grading_hfa_moderate = ut.zscore_grading_hfa_moderate,
+				zscore_grading_hfa_severe = ut.zscore_grading_hfa_severe,
+				zscore_grading_hfa_recorded_in_month = ut.zscore_grading_hfa_recorded_in_month,
+				zscore_grading_wfh_recorded_in_month = ut.zscore_grading_wfh_recorded_in_month
     from (
         SELECT
         state_id,
@@ -236,7 +287,12 @@ UPDATE "agg_child_health_2018-05-01_1" agg_child_health
         SUM(stunting_normal) as stunting_normal,
         SUM(wasting_normal_v2) as wasting_normal_v2,
         SUM(wasting_moderate_v2) as wasting_moderate_v2,
-        SUM(wasting_severe_v2) as wasting_severe_v2
+        SUM(wasting_severe_v2) as wasting_severe_v2,
+        SUM(zscore_grading_hfa_normal) as zscore_grading_hfa_normal,
+				SUM(zscore_grading_hfa_moderate) as zscore_grading_hfa_moderate,
+				SUM(zscore_grading_hfa_severe) as zscore_grading_hfa_severe,
+				SUM(zscore_grading_hfa_recorded_in_month) as zscore_grading_hfa_recorded_in_month,
+				SUM(zscore_grading_wfh_recorded_in_month) as zscore_grading_wfh_recorded_in_month
 
         FROM "agg_child_health_2018-05-01_2" agg_child INNER JOIN (SELECT DISTINCT ucr.district_id FROM "ucr_icds-cas_static-awc_location_88b3f9c3" ucr WHERE ucr.block_is_test=0) tt ON tt.district_id = agg_child.district_id
         GROUP BY state_id, district_id,gender, age_tranche
