@@ -98,8 +98,13 @@ class GetPatientUrlTests(SimpleTestCase):
         patient_url = get_entry_url(entry_elem)
         self.assertEqual(patient_url, '/ws/rest/v1/patient/e8aa08f6-86cd-42f9-8924-1b3ea021aeb4?v=full')
 
-    def test_mirebalais_cdata(self):
-        cdata = '<![CDATA[{"rest":"/ws/rest/v1/patient/43292c56-0a9a-4979-b711-f1ad8092a5d1?v=full","fhir":"/ws/fhir/Patient/43292c56-0a9a-4979-b711-f1ad8092a5d1"}]]>'
+    def test_mirebalais_patient(self):
+        cdata = (
+            '<![CDATA[{'
+            '"rest":"/ws/rest/v1/patient/43292c56-0a9a-4979-b711-f1ad8092a5d1?v=full",'
+            '"fhir":"/ws/fhir/Patient/43292c56-0a9a-4979-b711-f1ad8092a5d1"'
+            '}]]>'
+        )
         xml = re.sub(r'<!\[CDATA\[.*?\]\]>', cdata, self.feed_xml)
         feed_elem = etree.XML(xml.encode('utf-8'))
         entry_elem = next(e for e in feed_elem if e.tag.endswith('entry'))
@@ -109,13 +114,18 @@ class GetPatientUrlTests(SimpleTestCase):
 
 class GetEncounterUrlTests(SimpleTestCase):
 
-    def test_mirebalais_cdata(self):
-        element = etree.XML("""<entry>
-          <title>Encounter</title>
-          <content type="application/vnd.atomfeed+xml">
-            <![CDATA[{"rest":"/ws/rest/v1/encounter/187b6940-e25b-4160-9f19-59bb46e8f51b?v=full","fhir":"/ws/fhir/Encounter/187b6940-e25b-4160-9f19-59bb46e8f51b"}]]>
-          </content>
-        </entry>""")
+    def test_mirebalais_encounter(self):
+        element = etree.XML(
+            '<entry>'
+            '<title>Encounter</title>'
+            '<content type="application/vnd.atomfeed+xml">'
+            '<![CDATA[{'
+            '"rest":"/ws/rest/v1/encounter/187b6940-e25b-4160-9f19-59bb46e8f51b?v=full",'
+            '"fhir":"/ws/fhir/Encounter/187b6940-e25b-4160-9f19-59bb46e8f51b"'
+            '}]]>'
+            '</content>'
+            '</entry>'
+        )
         encounter_uuid = get_entry_url(element)
         self.assertEqual(encounter_uuid, "/ws/rest/v1/encounter/187b6940-e25b-4160-9f19-59bb46e8f51b?v=full")
 
