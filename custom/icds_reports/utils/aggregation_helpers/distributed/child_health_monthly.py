@@ -420,11 +420,8 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
 
     def aggregation_queries(self):
         return [
-            """INSERT INTO "{new_tablename}" (SELECT * FROM "{tmp_tablename}")""".format(
-                new_tablename=self.new_tablename, tmp_tablename=self.temporary_tablename),
+            """INSERT INTO "{new_tablename}" (SELECT * FROM "{tmp_tablename}")""".format(new_tablename=self.new_tablename, tmp_tablename=self.temporary_tablename),
             'DROP TABLE IF EXISTS "{monthly_tablename}"'.format(monthly_tablename=self.monthly_tablename),
-            """ALTER TABLE "{new_tablename}" RENAME TO \"{tablename}\"""".format(
-                new_tablename=self.new_tablename, tablename=self.monthly_tablename),
-            """ALTER TABLE "{tablename}" ATTACH PARTITION "{monthly_tablename}" FOR VALUES IN ('{month}')""".format(
-                monthly_tablename=self.monthly_tablename, month=self.month.strftime('%Y-%m-%d'), tablename=self.tablename),
+            """ALTER TABLE "{new_tablename}" RENAME TO \"{tablename}\"""".format(new_tablename=self.new_tablename, tablename=self.monthly_tablename),
+            """ALTER TABLE "{tablename}" ATTACH PARTITION "{monthly_tablename}" FOR VALUES IN ('{month}')""".format(monthly_tablename=self.monthly_tablename, month=self.month.strftime('%Y-%m-%d'), tablename=self.tablename),
         ]
