@@ -61,6 +61,11 @@ services:
       file: hq-compose-services.yml
       service: elasticsearch
 
+  zookeeper:
+    extends:
+      file: hq-compose-services.yml
+      service: zookeeper
+
   kafka:
     extends:
       file: hq-compose-services.yml
