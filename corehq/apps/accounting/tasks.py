@@ -767,8 +767,7 @@ def get_unpaid_invoices_over_threshold_by_domain(today, domain):
 
 def _get_unpaid_saas_invoices_in_downgrade_daterange(today):
     return _get_all_unpaid_saas_invoices().filter(
-        date_due__lte=today - datetime.timedelta(days=1),
-        date_due__gte=today - datetime.timedelta(days=61)
+        date_due__lte=today - datetime.timedelta(days=1)
     ).order_by('date_due').select_related('subscription__subscriber')
 
 
@@ -846,7 +845,7 @@ def _apply_downgrade_process(oldest_unpaid_invoice, total, today, subscription=N
         })
 
     days_ago = (today - oldest_unpaid_invoice.date_due).days
-    if days_ago == 61:
+    if days_ago >= 61:
         if not oldest_unpaid_invoice.is_customer_invoice:  # We do not automatically downgrade customer invoices
             _downgrade_domain(subscription)
             _send_downgrade_notice(oldest_unpaid_invoice, context)
