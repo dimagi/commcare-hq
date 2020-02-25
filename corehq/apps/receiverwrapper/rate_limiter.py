@@ -25,9 +25,15 @@ from corehq.util.timer import TimingContext
 # If we as a team end up regretting this decision, we'll have to reset expectations
 # with the Dimagi NDoH team.
 
+
 submission_rate_limiter = RateLimiter(
     feature_key='submissions',
-    get_rate_limits=lambda domain: PerUserRateDefinition(
+    get_rate_limits=lambda domain: _get_per_user_submission_rate_definition(domain)
+)
+
+
+def _get_per_user_submission_rate_definition(domain):
+    return PerUserRateDefinition(
         per_user_rate_definition=get_dynamic_rate_definition(
             'submissions_per_user',
             default=get_standard_ratio_rate_definition(events_per_day=46),
@@ -43,7 +49,7 @@ submission_rate_limiter = RateLimiter(
             ),
         ),
     ).get_rate_limits(domain)
-)
+
 
 global_submission_rate_limiter = RateLimiter(
     feature_key='global_submissions',
