@@ -220,6 +220,10 @@ def get_feed_updates(repeater, feed_name):
     except (RequestException, HTTPError):
         # Don't update repeater if OpenMRS is offline
         return
+    except ValueError as err:
+        repeater.requests.notify_error(str(err))
+        # Don't update repeater if parsing needs to be extended
+        return
     except OpenmrsFeedDoesNotExist:
         repeater.atom_feed_status[feed_name] = AtomFeedStatus()
         repeater.save()
