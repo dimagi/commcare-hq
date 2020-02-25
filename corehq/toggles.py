@@ -1819,3 +1819,11 @@ ALLOW_DEID_ODATA_FEED = StaticToggle(
     TAG_PRODUCT,
     [NAMESPACE_DOMAIN]
 )
+
+
+ADD_ROW_INDEX_TO_MOBILE_UCRS = StaticToggle(
+    'add_row_index_to_mobile_ucrs',
+    'Add row index to mobile UCRs as the first column to retain original order of data',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN]
+)

@@ -1,5 +1,6 @@
 from collections import defaultdict
 
+from corehq import toggles
 from corehq.apps.app_manager import id_strings, models
 from corehq.apps.app_manager.const import (
     MOBILE_UCR_MIGRATING_TO_2,
@@ -418,10 +419,13 @@ def _get_data_detail(config, domain, new_mobile_ucr_restore):
         )
 
     nodeset_string = 'row{}' if new_mobile_ucr_restore else 'rows/row{}'
-    fields = [Field(
-        header=Header(text=Text(), width=0,),
-        template=Template(text=Text(xpath=get_xpath("row_index"),), width=0,),
-    )]
+    if toggles.ADD_ROW_INDEX_TO_MOBILE_UCRS.enabled(domain):
+        fields = [Field(
+            header=Header(text=Text(), width=0,),
+            template=Template(text=Text(xpath=get_xpath("row_index"),), width=0,),
+        )]
+    else:
+        fields = []
     return Detail(
         id='reports.{}.data'.format(config.uuid),
         nodeset=(
