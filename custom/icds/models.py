@@ -1,6 +1,5 @@
 import uuid
 
-from django.contrib import admin
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models.signals import pre_delete
@@ -194,4 +193,3 @@ def delete_ccz_for_link(sender, instance, **kwargs):
 
 
 pre_delete.connect(delete_ccz_for_link, sender=HostedCCZLink)
-admin.site.register(HostedCCZCustomSupportingFile)
