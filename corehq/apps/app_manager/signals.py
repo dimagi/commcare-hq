@@ -7,7 +7,6 @@ from corehq.apps.app_manager.util import (
     get_latest_enabled_build_for_profile,
     get_latest_enabled_versions_per_profile,
 )
-from corehq.apps.app_manager.dbaccessors import get_app_languages
 from corehq.apps.callcenter.app_parser import get_call_center_config_from_app
 from corehq.apps.domain.models import Domain
 
