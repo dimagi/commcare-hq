@@ -140,7 +140,7 @@ def _process_form(request, domain, app_id, user_id, authenticated,
             )
 
     response = result.response
-    _record_metrics(metric_tags, result.submission_type, result.response, timer, result.xform)
+    _record_metrics(metric_tags, result.submission_type, result.response, timer, result.xform, result.cases)
 
     return response
 
@@ -169,25 +169,29 @@ def _submission_error(request, message, count_metric, metric_tags,
     return response
 
 
-def _record_metrics(tags, submission_type, response, timer=None, xform=None):
+def _record_metrics(tags, submission_type, response, timer=None, xform=None, cases=None):
+    case_tags = tags
+    form_tags = tags
     if xform and xform.metadata and xform.metadata.timeEnd and xform.received_on:
         lag = xform.received_on - xform.metadata.timeEnd
         lag_days = lag.total_seconds() / 86400
-        tags += [
+        form_tags += [
             'lag:%s' % bucket_value(lag_days, (1, 2, 4, 7, 14, 31, 90), 'd')
         ]
 
-    tags += [
+    form_tags += [
         'submission_type:{}'.format(submission_type),
         'status_code:{}'.format(response.status_code)
     ]
 
     if timer:
-        tags += [
+        form_tags += [
             'duration:%s' % bucket_value(timer.duration, (1, 5, 20, 60, 120, 300, 600), 's'),
         ]
 
-    datadog_counter('commcare.xform_submissions.count', tags=tags)
+    datadog_counter('commcare.xform_submissions.count', tags=form_tags)
+    if cases:
+        datadog_counter('commcare.xform_submissions.cases.count', len(cases), tags=case_tags)
 
 
 @location_safe
