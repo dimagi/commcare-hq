@@ -1,7 +1,7 @@
 from django.core.management import BaseCommand
 
 from corehq.apps.change_feed import topics
-from corehq.apps.change_feed.connection import get_simple_kafka_client
+from corehq.apps.change_feed.connection import get_kafka_admin_client
 
 
 class Command(BaseCommand):
@@ -11,11 +11,12 @@ class Command(BaseCommand):
 
 
 def create_kafka_topics():
-    with get_simple_kafka_client() as client:
-        for topic in topics.ALL:
-            if client.has_metadata_for_topic(topic):
-                status = "already exists"
-            else:
-                client.ensure_topic_exists(topic, timeout=10)
-                status = "created"
-            print("topic {}: {}".format(status, topic))
+    with get_kafka_admin_client() as client:
+        existing_topics = set(client.list_topics())
+        new_topics = set(topics.ALL) - existing_topics
+        if not new_topics:
+            print('All topics exists')
+            return
+
+        client.create_topics(list(new_topics), timeout_ms=10 * 1000)
+        print(f"Topics created: {','.join(new_topics)}")

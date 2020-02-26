@@ -6,8 +6,7 @@ from operator import methodcaller
 
 from django.conf import settings
 
-from kafka import KafkaConsumer
-
+from corehq.apps.change_feed.connection import get_kafka_consumer
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from dimagi.utils.modules import to_function
 from pillowtop.dao.exceptions import (
@@ -16,8 +15,6 @@ from pillowtop.dao.exceptions import (
 )
 from pillowtop.exceptions import PillowNotFoundError
 from pillowtop.logger import pillow_logging
-
-from corehq.util.io import ClosingContextProxy
 
 
 def _get_pillow_instance(full_class_str):
@@ -145,21 +142,13 @@ def safe_force_seq_int(seq, default=None):
         return default
 
 
-def _get_consumer():
-    return ClosingContextProxy(KafkaConsumer(
-        client_id='pillowtop_utils',
-        bootstrap_servers=settings.KAFKA_BROKERS,
-        request_timeout_ms=1000
-    ))
-
-
 def get_all_pillows_json(active_only=True):
     pillow_configs = get_all_pillow_configs()
     active_pillows = getattr(settings, 'ACTIVE_PILLOW_NAMES', None)
     if active_only and active_pillows:
         pillow_configs = [config for config in pillow_configs if config.name in active_pillows]
 
-    consumer = _get_consumer()
+    consumer = get_kafka_consumer()
     with consumer:
         return [get_pillow_json(pillow_config, consumer) for pillow_config in pillow_configs]
 
@@ -172,7 +161,7 @@ def get_pillow_json(pillow_config, consumer=None):
 
     pillow = pillow_config.get_instance()
     if consumer is None:
-        consumer = _get_consumer()
+        consumer = get_kafka_consumer()
 
     checkpoint = pillow.get_checkpoint()
     timestamp = checkpoint.timestamp

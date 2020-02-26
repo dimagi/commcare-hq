@@ -24,7 +24,7 @@ from celery import Celery
 from soil import heartbeat
 
 from corehq.apps.app_manager.models import Application
-from corehq.apps.change_feed.connection import get_kafka_client
+from corehq.apps.change_feed.connection import get_kafka_client, get_kafka_consumer
 from corehq.apps.es import GroupES
 from corehq.apps.formplayer_api.utils import get_formplayer_url
 from corehq.apps.hqadmin.escheck import check_es_cluster_health
@@ -105,12 +105,13 @@ def check_rabbitmq(broker_url):
 def check_kafka():
     try:
         client = get_kafka_client()
+        consumer = get_kafka_consumer()
     except Exception as e:
         return ServiceStatus(False, "Could not connect to Kafka: %s" % e)
 
     if len(client.cluster.brokers()) == 0:
         return ServiceStatus(False, "No Kafka brokers found")
-    elif len(client.cluster.topics()) == 0:
+    elif len(consumer.topics()) == 0:
         return ServiceStatus(False, "No Kafka topics found")
     else:
         return ServiceStatus(True, "Kafka seems to be in order")

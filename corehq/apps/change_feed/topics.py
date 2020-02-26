@@ -1,10 +1,9 @@
-from kafka.common import OffsetRequestPayload
-
-from couchforms.models import all_known_formlike_doc_types
+from kafka import TopicPartition
 
 from corehq.apps.app_manager.util import app_doc_types
-from corehq.apps.change_feed.connection import get_simple_kafka_client
+from corehq.apps.change_feed.connection import get_kafka_consumer
 from corehq.apps.change_feed.exceptions import UnavailableKafkaOffset
+from couchforms.models import all_known_formlike_doc_types
 
 CASE = 'case'
 FORM = 'form'
@@ -108,26 +107,17 @@ def _get_topic_offsets(topics, latest):
     # https://cwiki.apache.org/confluence/display/KAFKA/A+Guide+To+The+Kafka+Protocol#AGuideToTheKafkaProtocol-OffsetRequest
     # https://cfchou.github.io/blog/2015/04/23/a-closer-look-at-kafka-offsetrequest/
     assert set(topics) <= set(ALL)
-    with get_simple_kafka_client() as client:
-        partition_meta = client.topic_partitions
-
-        # only return the offset of the latest message in the partition
-        num_offsets = 1
-        time_value = -1 if latest else -2
-
-        offsets = {}
+    with get_kafka_consumer() as consumer:
         offset_requests = []
         for topic in topics:
-            partitions = list(partition_meta.get(topic, {}))
+            partitions = consumer.partitions_for_topic(topic)
             for partition in partitions:
-                offsets[(topic, partition)] = None
-                offset_requests.append(OffsetRequestPayload(topic, partition, time_value, num_offsets))
+                offset_requests.append(TopicPartition(topic, partition))
 
-        responses = client.send_offset_request(offset_requests)
-        for r in responses:
-            offsets[(r.topic, r.partition)] = r.offsets[0]
-
-        return offsets
+        if latest:
+            return consumer.end_offsets(offset_requests)
+        else:
+            return consumer.beginning_offsets(offset_requests)
 
 
 def validate_offsets(expected_offsets):
