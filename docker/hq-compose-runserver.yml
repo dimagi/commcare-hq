@@ -17,6 +17,7 @@ services:
       - redis
       - elasticsearch
       - kafka
+      - zookeeper
       - minio
     expose:
       - 8000
