@@ -277,8 +277,7 @@ class AttachmentMixin(SaveStateMixin):
             unsaved = self.attachments_list
             assert all(isinstance(a, Attachment) for a in unsaved), unsaved
             with AtomicBlobs(get_blob_db()) as blob_db:
-                writer = Writer(self, blob_db)
-                yield writer
+                yield Writer(self, blob_db)
 
         return atomic_attachments()
 
