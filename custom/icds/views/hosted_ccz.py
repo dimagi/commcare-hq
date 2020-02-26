@@ -177,10 +177,6 @@ class HostedCCZView(DomainViewMixin, TemplateView):
     page_title = ugettext_lazy("CCZ Hosting")
     template_name = 'icds/hosted_ccz.html'
 
-    @cached_property
-    def hosted_ccz_link(self):
-        return HostedCCZLink.objects.get(identifier=self.identifier)
-
     def get(self, request, *args, **kwargs):
         self.identifier = kwargs.get('identifier')
         try:
@@ -197,16 +193,24 @@ class HostedCCZView(DomainViewMixin, TemplateView):
         response['WWW-Authenticate'] = 'Basic realm="%s"' % ''
         return response
 
+    @cached_property
+    def hosted_ccz_link(self):
+        return HostedCCZLink.objects.get(identifier=self.identifier)
+
+    def get_context_data(self, **kwargs):
+        app_names = {app.id: app.name for app in get_brief_apps_in_domain(self.domain, include_remote=True)}
+        return {
+            'page_title': self._page_title,
+            'hosted_cczs': [h.to_json(app_names) for h in HostedCCZ.objects.filter(link=self.hosted_ccz_link)
+                            if h.utility.file_exists()],
+            'icds_env': settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS,
+            'supporting_list_files': self._get_supporting_list_files(),
+            'supporting_footer_files': self._get_files_for(DISPLAY_CHOICE_FOOTER),
+        }
+
     @property
     def _page_title(self):
         return self.hosted_ccz_link.page_title or _("%s CommCare Files" % self.identifier.capitalize())
-
-    def _get_files_for(self, display):
-        return {
-            supporting_file.file_name: reverse('hosted_ccz_download_supporting_files',
-                                               args=[supporting_file.domain, supporting_file.pk])
-            for supporting_file in HostedCCZSupportingFile.objects.filter(domain=self.domain, display=display)
-        }
 
     def _get_supporting_list_files(self):
         supporting_list_files = self._get_files_for(DISPLAY_CHOICE_LIST)
@@ -218,15 +222,11 @@ class HostedCCZView(DomainViewMixin, TemplateView):
         supporting_list_files.update(custom_supporting_files)
         return supporting_list_files
 
-    def get_context_data(self, **kwargs):
-        app_names = {app.id: app.name for app in get_brief_apps_in_domain(self.domain, include_remote=True)}
+    def _get_files_for(self, display):
         return {
-            'page_title': self._page_title,
-            'hosted_cczs': [h.to_json(app_names) for h in HostedCCZ.objects.filter(link=self.hosted_ccz_link)
-                            if h.utility.file_exists()],
-            'icds_env': settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS,
-            'supporting_list_files': self._get_supporting_list_files(),
-            'supporting_footer_files': self._get_files_for(DISPLAY_CHOICE_FOOTER),
+            supporting_file.file_name: reverse('hosted_ccz_download_supporting_files',
+                                               args=[supporting_file.domain, supporting_file.pk])
+            for supporting_file in HostedCCZSupportingFile.objects.filter(domain=self.domain, display=display)
         }
 
 
