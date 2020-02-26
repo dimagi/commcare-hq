@@ -23,6 +23,7 @@ from corehq.apps.domain.views import BaseDomainView, DomainViewMixin
 from corehq.apps.locations.permissions import location_safe
 from corehq.util.download import get_download_response
 from custom.icds.const import (
+    DISPLAY_CHOICE_CUSTOM,
     DISPLAY_CHOICE_FOOTER,
     DISPLAY_CHOICE_LIST,
     FILE_TYPE_CHOICE_ZIP,
@@ -30,6 +31,7 @@ from custom.icds.const import (
 from custom.icds.forms import HostedCCZForm, HostedCCZLinkForm
 from custom.icds.models import (
     HostedCCZ,
+    HostedCCZCustomSupportingFile,
     HostedCCZLink,
     HostedCCZSupportingFile,
 )
@@ -206,6 +208,16 @@ class HostedCCZView(DomainViewMixin, TemplateView):
             for supporting_file in HostedCCZSupportingFile.objects.filter(domain=self.domain, display=display)
         }
 
+    def _get_supporting_list_files(self):
+        supporting_list_files = self._get_files_for(DISPLAY_CHOICE_LIST)
+        custom_supporting_files = {
+            custom_file.file.file_name: reverse('hosted_ccz_download_supporting_files',
+                                                args=[self.hosted_ccz_link.domain, custom_file.file.pk])
+            for custom_file in HostedCCZCustomSupportingFile.objects.filter(link=self.hosted_ccz_link)
+        }
+        supporting_list_files.update(custom_supporting_files)
+        return supporting_list_files
+
     def get_context_data(self, **kwargs):
         app_names = {app.id: app.name for app in get_brief_apps_in_domain(self.domain, include_remote=True)}
         return {
@@ -213,7 +225,7 @@ class HostedCCZView(DomainViewMixin, TemplateView):
             'hosted_cczs': [h.to_json(app_names) for h in HostedCCZ.objects.filter(link=self.hosted_ccz_link)
                             if h.utility.file_exists()],
             'icds_env': settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS,
-            'supporting_list_files': self._get_files_for(DISPLAY_CHOICE_LIST),
+            'supporting_list_files': self._get_supporting_list_files(),
             'supporting_footer_files': self._get_files_for(DISPLAY_CHOICE_FOOTER),
         }
 
