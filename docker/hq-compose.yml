@@ -24,6 +24,7 @@ services:
       - redis
       - elasticsearch
       - kafka
+      - zookeeper
       - minio
     volumes:
       - ..:/mnt/commcare-hq-ro${RO}
