@@ -204,30 +204,32 @@ class HostedCCZView(DomainViewMixin, TemplateView):
             'hosted_cczs': [h.to_json(app_names) for h in HostedCCZ.objects.filter(link=self.hosted_ccz_link)
                             if h.utility.file_exists()],
             'icds_env': settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS,
-            'supporting_list_files': self._get_supporting_list_files(),
-            'supporting_footer_files': self._get_files_for(DISPLAY_CHOICE_FOOTER),
+            'supporting_files': self._get_supporting_files(),
+            'footer_files': self._get_files_for(DISPLAY_CHOICE_FOOTER),
         }
 
     @property
     def _page_title(self):
         return self.hosted_ccz_link.page_title or _("%s CommCare Files" % self.identifier.capitalize())
 
-    def _get_supporting_list_files(self):
-        supporting_list_files = self._get_files_for(DISPLAY_CHOICE_LIST)
+    def _get_supporting_files(self):
+        supporting_files = self._get_files_for(DISPLAY_CHOICE_LIST)
         custom_supporting_files = {
-            custom_file.file.file_name: reverse('hosted_ccz_download_supporting_files',
-                                                args=[self.hosted_ccz_link.domain, custom_file.file.pk])
+            custom_file.file.file_name: self._download_link(self.hosted_ccz_link.domain, custom_file.file.pk)
             for custom_file in HostedCCZCustomSupportingFile.objects.filter(link=self.hosted_ccz_link)
         }
-        supporting_list_files.update(custom_supporting_files)
-        return supporting_list_files
+        supporting_files.update(custom_supporting_files)
+        return supporting_files
 
     def _get_files_for(self, display):
         return {
-            supporting_file.file_name: reverse('hosted_ccz_download_supporting_files',
-                                               args=[supporting_file.domain, supporting_file.pk])
+            supporting_file.file_name: self._download_link(supporting_file.domain, supporting_file.pk)
             for supporting_file in HostedCCZSupportingFile.objects.filter(domain=self.domain, display=display)
         }
+
+    @staticmethod
+    def _download_link(domain, pk):
+        return reverse('hosted_ccz_download_supporting_files', args=[domain, pk])
 
 
 @login_and_domain_required
