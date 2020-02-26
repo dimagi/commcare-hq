@@ -324,10 +324,14 @@ def diff_form_state(form_id, *, in_couch=False):
     in_sql = FormAccessorSQL.form_exists(form_id)
     couch_miss = "missing"
     if not in_couch and get_blob_db().metadb.get_for_parent(form_id):
-        couch_miss = "missing, blob present"
-    old = {"form_state": "present" if in_couch else couch_miss}
-    new = {"form_state": "present" if in_sql else "missing"}
+        couch_miss = MISSING_BLOB_PRESENT
+    old = {"form_state": FORM_PRESENT if in_couch else couch_miss}
+    new = {"form_state": FORM_PRESENT if in_sql else "missing"}
     return old, new
+
+
+FORM_PRESENT = "present"
+MISSING_BLOB_PRESENT = "missing, blob present"
 
 
 def add_missing_docs(data, couch_cases, sql_case_ids, dd_count):
