@@ -18,7 +18,7 @@ If you're setting up HQ on a new computer, you may have an old, functional envir
 
 * PostgreSQL
   * Create a pg dump.  You'll need to verify the host IP address:
-    `pg_dump -h 0.0.0.0 -U commcarehq commcare_hq > /path/to/backup_hq_db.sql`
+    `pg_dump -h 0.0.0.0 -U commcarehq commcarehq > /path/to/backup_hq_db.sql`
 * Couchdb
   * From a non-docker install: Copy `/var/lib/couchdb2/`
   * From a docker install: Copy `~/.local/share/dockerhq/couchdb2`.
