@@ -8,7 +8,6 @@ from custom.icds_reports.messages import new_born_with_low_weight_help_text, und
 
 class TestMaternalChildData(TestCase):
     maxDiff = None
-
     def test_data_underweight_weight_for_age(self):
         self.assertDictEqual(
             get_maternal_child_data(
@@ -22,12 +21,12 @@ class TestMaternalChildData(TestCase):
             {
                 "redirect": "maternal_and_child/underweight_children",
                 "color": "green",
-                "all": 696,
+                "all": 695,
                 "frequency": "month",
                 "format": "percent_and_div",
                 "help_text": underweight_children_help_text(),
-                "percent": -14.901477832512326,
-                "value": 150,
+                "percent": -14.983874968990312,
+                "value": 149,
                 "label": "Underweight (Weight-for-Age)"
             }
         )

@@ -29,11 +29,11 @@ class TestEnrolledChildren(TestCase):
                         {
                             'indicator': 'Number of children (0 - 6 years) who are enrolled for Anganwadi '
                                          'Services:',
-                            'value': "1,288"
+                            'value': "1,287"
                         },
                         {
                             'indicator': 'Total number of children (0 - 6 years) who are registered: ',
-                            'value': "1,288"
+                            'value': "1,287"
                         },
                         {
                             'indicator': (
@@ -54,7 +54,7 @@ class TestEnrolledChildren(TestCase):
                     'st6': {'all': 0, 'valid': 0, 'original_name': ['st6'], 'fillKey': 'Children'},
                     'st7': {'all': 1, 'valid': 1, 'original_name': ['st7'], 'fillKey': 'Children'},
                     'st1': {'all': 618, 'valid': 618, 'original_name': ['st1'], 'fillKey': 'Children'},
-                    'st2': {'all': 669, 'valid': 669, 'original_name': ['st2'], 'fillKey': 'Children'},
+                    'st2': {'all': 668, 'valid': 668, 'original_name': ['st2'], 'fillKey': 'Children'},
                     'st3': {'all': 0, 'valid': 0, 'original_name': ['st3'], 'fillKey': 'Children'}
                 },
                 "slug": "enrolled_children",
@@ -134,27 +134,27 @@ class TestEnrolledChildren(TestCase):
                             {
                                 "y": 5,
                                 "x": "0-1 month",
-                                "all": 1288
+                                "all": 1287
                             },
                             {
                                 "y": 45,
                                 "x": "1-6 months",
-                                "all": 1288
+                                "all": 1287
                             },
                             {
                                 "y": 51,
                                 "x": "6-12 months",
-                                "all": 1288
+                                "all": 1287
                             },
                             {
                                 "y": 213,
                                 "x": "1-3 years",
-                                "all": 1288
+                                "all": 1287
                             },
                             {
-                                "y": 974,
+                                "y": 973,
                                 "x": "3-6 years",
-                                "all": 1288
+                                "all": 1287
                             }
                         ],
                         "key": "Children (0-6 years) who are enrolled"
