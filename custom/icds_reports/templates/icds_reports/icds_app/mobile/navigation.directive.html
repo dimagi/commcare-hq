@@ -28,8 +28,12 @@
             </div>
         </div>
         <hr>
+        <div class="menu-options navigation-font mb-0" ng-show="$ctrl.haveAccessToFeatures" ng-class="{'active-mobile-link': $location.path().indexOf('/service_delivery_dashboard') !== -1}">
+            <i class="fa fa-tasks mr-3" aria-hidden="true"></i>
+            <a  href="{$ goToStep('service_delivery_dashboard/', $location.search()) $}" class="sub-links" ng-click="closeMenu()">Service Delivery Dashboard</a>
+        </div>
         <div class="menu-options navigation-font mb-0" ng-class="{'active-mobile-link': $location.path().indexOf('/awc_reports') !== -1}">
-            <img src="{% static 'icds_reports/mobile/images/awc-reports.png' %}" class="mr-3">
+            <i class="fa fa-tasks mr-3" aria-hidden="true"></i>
             <a  href="{$ goToStep('awc_reports', $location.search()) $}" class="sub-links" ng-click="closeMenu()">AWC Report</a>
         </div>
         <hr>
