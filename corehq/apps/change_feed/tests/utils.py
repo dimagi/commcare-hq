@@ -3,7 +3,7 @@ import uuid
 from django.conf import settings
 
 from kafka import KafkaConsumer
-from kafka.common import KafkaUnavailableError
+from kafka.errors import KafkaUnavailableError
 from nose.tools import nottest
 
 from corehq.util.test_utils import trap_extra_setup

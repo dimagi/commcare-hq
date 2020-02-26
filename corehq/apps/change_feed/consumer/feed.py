@@ -4,7 +4,7 @@ from copy import copy
 from django.conf import settings
 
 from kafka import KafkaConsumer
-from kafka.common import TopicPartition
+from kafka.structs import TopicPartition
 
 from dimagi.utils.logging import notify_error
 from pillowtop.checkpoints.manager import PillowCheckpointEventHandler
