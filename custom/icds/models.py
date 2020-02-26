@@ -3,22 +3,20 @@ import uuid
 from django.contrib import admin
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.db.models.signals import pre_delete
 from django.utils.functional import cached_property
 from django.utils.translation import ugettext_lazy as _
-from django.db.models.signals import pre_delete
 
 from corehq.apps.app_manager.dbaccessors import get_build_doc_by_version
 from custom.icds.const import (
-    FILE_TYPE_CHOICE_ZIP,
-    FILE_TYPE_CHOICE_DOC,
-    DISPLAY_CHOICE_LIST,
     DISPLAY_CHOICE_CUSTOM,
     DISPLAY_CHOICE_FOOTER,
+    DISPLAY_CHOICE_LIST,
+    FILE_TYPE_CHOICE_DOC,
+    FILE_TYPE_CHOICE_ZIP,
 )
 from custom.icds.utils.hosted_ccz import HostedCCZUtility
-from custom.icds.validators import (
-    HostedCCZLinkIdentifierValidator,
-)
+from custom.icds.validators import HostedCCZLinkIdentifierValidator
 from custom.nic_compliance.utils import hash_password
 
 
