@@ -27,7 +27,8 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='hostedcczcustomsupportingfile',
             name='file',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='icds.HostedCCZSupportingFile'),
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE,
+                                    to='icds.HostedCCZSupportingFile'),
         ),
         migrations.AddField(
             model_name='hostedcczcustomsupportingfile',
