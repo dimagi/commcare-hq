@@ -169,7 +169,8 @@
             "type": "string"
         },
         "build_langs": {
-            "type": "string"
+            "type": "string",
+            "index": "not_analyzed"
         },
         "deployment_date": {
             "type": "date",
@@ -210,10 +211,12 @@
             "type": "string"
         },
         "short_odk_media_url": {
-            "type": "string"
+            "type": "string",
+            "index": "not_analyzed"
         },
         "langs": {
-            "type": "string"
+            "type": "string",
+            "index": "not_analyzed"
         },
         "use_custom_suite": {
             "type": "boolean"
