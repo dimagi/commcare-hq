@@ -745,8 +745,7 @@ ELASTICSEARCH_MAJOR_VERSION = 1
 # If elasticsearch queries take more than this, they result in timeout errors
 ES_SEARCH_TIMEOUT = 30
 
-BITLY_LOGIN = ''
-BITLY_APIKEY = ''
+BITLY_OAUTH_TOKEN = None
 
 # this should be overridden in localsettings
 INTERNAL_DATA = defaultdict(list)
@@ -1304,19 +1303,11 @@ INDICATOR_CONFIG = {
 
 COMPRESS_URL = STATIC_CDN + STATIC_URL
 
-####### Couch Forms & Couch DB Kit Settings #######
-NEW_USERS_GROUPS_DB = 'users'
-USERS_GROUPS_DB = NEW_USERS_GROUPS_DB
-
-NEW_FIXTURES_DB = 'fixtures'
-FIXTURES_DB = NEW_FIXTURES_DB
-
-NEW_DOMAINS_DB = 'domains'
-DOMAINS_DB = NEW_DOMAINS_DB
-
-NEW_APPS_DB = 'apps'
-APPS_DB = NEW_APPS_DB
-
+# Couch database name suffixes
+USERS_GROUPS_DB = 'users'
+FIXTURES_DB = 'fixtures'
+DOMAINS_DB = 'domains'
+APPS_DB = 'apps'
 META_DB = 'meta'
 
 _serializer = 'corehq.util.python_compatibility.Py3PickleSerializer'
@@ -1414,7 +1405,7 @@ COUCHDB_APPS = [
 COUCH_SETTINGS_HELPER = helper.CouchSettingsHelper(
     COUCH_DATABASES,
     COUCHDB_APPS,
-    [NEW_USERS_GROUPS_DB, NEW_FIXTURES_DB, NEW_DOMAINS_DB, NEW_APPS_DB],
+    [USERS_GROUPS_DB, FIXTURES_DB, DOMAINS_DB, APPS_DB],
     UNIT_TESTING
 )
 COUCH_DATABASE = COUCH_SETTINGS_HELPER.main_db_url

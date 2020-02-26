@@ -423,7 +423,7 @@ class StateDB(DiffDB):
             if kind is not None:
                 query = query.filter_by(kind=kind)
             for doc in iter_large(query, _model.doc_id):
-                yield doc.doc_id, [
+                yield doc.kind, doc.doc_id, [
                     _model.dict_to_diff(doc.kind, doc.doc_id, data)
                     for data in json.loads(doc.diffs)
                 ]
@@ -458,10 +458,15 @@ class StateDB(DiffDB):
                 MissingDoc.kind,
                 func.count(MissingDoc.doc_id),
             ).group_by(MissingDoc.kind))
+            changes = dict(session.query(
+                DocChanges.kind,
+                func.count(DocChanges.doc_id),
+            ).group_by(DocChanges.kind))
         return {kind: Counts(
             total=totals.get(kind, 0),
             diffs=diffs.get(kind, 0),
             missing=missing.get(kind, 0),
+            changes=changes.get(kind, 0),
         ) for kind in set(totals) | set(missing) | set(diffs)}
 
     def iter_missing_doc_ids(self, kind):
@@ -470,7 +475,7 @@ class StateDB(DiffDB):
                 session.query(MissingDoc.doc_id)
                 .filter(MissingDoc.kind == kind)
             )
-            yield from iter_large(query, MissingDoc.doc_id)
+            yield from (x for x, in iter_large(query, MissingDoc.doc_id))
 
     def get_diff_stats(self):
         raise NotImplementedError("use get_doc_counts")
@@ -739,6 +744,7 @@ class Counts:
     total = attr.ib(default=0)
     diffs = attr.ib(default=0)
     missing = attr.ib(default=0)
+    changes = attr.ib(default=0)
 
 
 def iter_large(query, pk_attr, maxrq=1000):
