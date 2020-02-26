@@ -420,25 +420,17 @@ class EditWebUserView(BaseEditUserView):
 
 
 def get_domain_languages(domain):
-    def _get_app_langs():
-        # unique terms aggregation is intentionally avoided
-        #   to reduce memory footprint of the query, as the number of
-        #   apps/builds in a domain should be low enough to agg in Python
-        result = (AppES()
-                .domain(domain)
-                .source('langs')
-                .run().hits)
-        langs = set()
-        for lang_list in result:
-            langs = langs.union(set(lang_list['langs']))
-        return langs
+    query = (AppES()
+             .domain(domain)
+             .terms_aggregation('langs', 'languages')
+             .size(0))
+    app_languages = query.run().aggregations.languages.keys
 
-    app_languages = _get_app_langs()
     translation_doc = StandaloneTranslationDoc.get_obj(domain, 'sms')
-    sms_languages = set(translation_doc.langs if translation_doc else [])
+    sms_languages = translation_doc.langs if translation_doc else []
 
     domain_languages = []
-    for lang_code in app_languages.union(sms_languages):
+    for lang_code in set(app_languages + sms_languages):
         name = langcodes.get_name(lang_code)
         label = "{} ({})".format(lang_code, name) if name else lang_code
         domain_languages.append((lang_code, label))
