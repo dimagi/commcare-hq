@@ -122,6 +122,7 @@ FORMPLAYER_TIMING_FILE = "%s/%s" % (FILEPATH, "formplayer.timing.log")
 FORMPLAYER_DIFF_FILE = "%s/%s" % (FILEPATH, "formplayer.diff.log")
 SOFT_ASSERTS_LOG_FILE = "%s/%s" % (FILEPATH, "soft_asserts.log")
 MAIN_COUCH_SQL_DATAMIGRATION = "%s/%s" % (FILEPATH, "main_couch_sql_datamigration.log")
+ES_INTERFACE_LOG_FILE = "%s/%s" % (FILEPATH, "es_interface.log")
 
 LOCAL_LOGGING_CONFIG = {}
 
@@ -927,6 +928,7 @@ CUSTOM_LANDING_TEMPLATE = {
     # "default": 'login_and_password/login.html',
 }
 
+ENABLE_ES_INTERFACE_LOGGING = False
 ES_SETTINGS = None
 PHI_API_KEY = None
 PHI_PASSWORD = None
@@ -1103,6 +1105,14 @@ LOGGING = {
             'maxBytes': 10 * 1024 * 1024,  # 10 MB
             'backupCount': 20  # Backup 200 MB of logs
         },
+        'es_interface-handler': {
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'formatter': 'verbose',
+            'filename': ES_INTERFACE_LOG_FILE,
+            'maxBytes': 10 * 1024 * 1024,  # 10 MB
+            'backupCount': 20  # Backup 200 MB of logs
+        },
         'couch-request-handler': {
             'level': 'DEBUG',
             'class': 'logging.handlers.RotatingFileHandler',
@@ -1260,6 +1270,11 @@ LOGGING = {
         'kafka': {
             'handlers': ['file'],
             'level': 'ERROR',
+            'propagate': False,
+        },
+        'es_interface': {
+            'handlers': ['es_interface-handler'],
+            'level': 'DEBUG',
             'propagate': False,
         },
     }
