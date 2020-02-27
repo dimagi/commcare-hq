@@ -14,8 +14,8 @@ from dimagi.utils.chunked import chunked
 from pillowtop.processors.elastic import send_to_elasticsearch as send_to_es
 
 from corehq.apps.es.utils import flatten_field_dict
-from corehq.pillows.mappings.app_mapping import APP_INDEX, APP_INDEX_INFO
-from corehq.pillows.mappings.case_mapping import CASE_INDEX, CASE_INDEX_INFO
+from corehq.pillows.mappings.app_mapping import APP_INDEX_INFO
+from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX_INFO
 from corehq.pillows.mappings.domain_mapping import DOMAIN_INDEX_INFO
 from corehq.pillows.mappings.group_mapping import GROUP_INDEX_INFO
