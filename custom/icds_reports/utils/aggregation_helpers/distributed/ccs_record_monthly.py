@@ -266,7 +266,7 @@ class CcsRecordMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribute
             LEFT OUTER JOIN "{pregnant_tasks_case_ucr}" ut ON case_list.doc_id = ut.ccs_record_case_id
                 AND case_list.supervisor_id = ut.supervisor_id
             LEFT OUTER JOIN "{agg_migration_table}" agg_migration ON case_list.person_case_id = agg_migration.person_case_id
-                AND agg_migration.month = %(start_date)s AND {valid_in_month}
+                AND agg_migration.month = %(start_date)s
                 AND case_list.supervisor_id = agg_migration.supervisor_id
             LEFT OUTER JOIN "{agg_thr_table}" agg_thr ON case_list.doc_id = agg_thr.case_id
                 AND agg_thr.month = %(start_date)s AND {valid_in_month}
