@@ -13,7 +13,7 @@ from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.models import CommCareCaseSQL, XFormInstanceSQL
-from custom.abt.reports.filters import (
+from custom.abt.reports.filters_2020 import (
     LevelFourFilter,
     LevelOneFilter,
     LevelThreeFilter,
@@ -25,10 +25,10 @@ from custom.abt.reports.fixture_utils import get_locations
 INDICATORS_FORM_XMLNS = 'http://openrosa.org/formdesigner/00CEB41B-2967-4370-9EA3-BFD9BD7AF785'
 
 
-class LatePmtReport(GenericTabularReport, CustomProjectReport, DatespanMixin):
+class LatePmt2020Report(GenericTabularReport, CustomProjectReport, DatespanMixin):
     report_title = "Late PMT"
-    slug = 'late_pmt'
-    name = "Late PMT"
+    slug = 'late_pmt_2020'
+    name = "Late PMT 2020"
 
     languages = (
         'en',
