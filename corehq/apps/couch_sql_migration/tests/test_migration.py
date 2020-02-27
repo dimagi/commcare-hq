@@ -139,17 +139,22 @@ class BaseMigrationTestCase(TestCase, TestFileMixin):
             patch_chunk_size = self.patch_migration_chunk_size(chunk_size)
         else:
             patch_chunk_size = suppress()  # until nullcontext with py3.7
+        if "missing_docs" not in options:
+            patch_find_missing_docs = mock.patch(
+                "corehq.apps.couch_sql_migration.management.commands"
+                ".migrate_domain_from_couch_to_sql.find_missing_docs"
+            )
+        else:
+            patch_find_missing_docs = suppress()
         self.assert_backend("couch", domain)
         self.migration_success = None
         options.setdefault("no_input", True)
         options.setdefault("case_diff", "local")
-        if action in [MIGRATE, STATS]:
-            options.setdefault("missing_docs", CACHED)
         assert "diff_process" not in options, options  # old/invalid option
         with mock.patch(
             "corehq.form_processor.backends.sql.dbaccessors.transaction.atomic",
             atomic_savepoint,
-        ), patch_chunk_size:
+        ), patch_chunk_size, patch_find_missing_docs:
             try:
                 call_command('migrate_domain_from_couch_to_sql', domain, action, **options)
                 success = True
