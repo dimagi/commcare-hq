@@ -112,12 +112,15 @@ def check_kafka():
     except Exception as e:
         return ServiceStatus(False, "Could not connect to Kafka: %s" % e)
 
-    if len(client.cluster.brokers()) == 0:
-        return ServiceStatus(False, "No Kafka brokers found")
-    elif len(consumer.topics()) == 0:
-        return ServiceStatus(False, "No Kafka topics found")
-    else:
-        return ServiceStatus(True, "Kafka seems to be in order")
+    with client:
+        if len(client.cluster.brokers()) == 0:
+            return ServiceStatus(False, "No Kafka brokers found")
+
+    with consumer:
+        if len(consumer.topics()) == 0:
+            return ServiceStatus(False, "No Kafka topics found")
+
+    return ServiceStatus(True, "Kafka seems to be in order")
 
 
 @change_log_level('urllib3.connectionpool', logging.WARNING)
