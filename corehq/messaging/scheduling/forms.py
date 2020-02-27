@@ -2366,12 +2366,14 @@ class ScheduleForm(Form):
         if self.initial_schedule:
             schedule = self.initial_schedule
             AlertSchedule.assert_is(schedule)
+            should_run_rule = schedule.get_extra_scheduling_options() != extra_scheduling_options
             schedule.set_simple_alert(content, extra_options=extra_scheduling_options)
         else:
             schedule = AlertSchedule.create_simple_alert(self.domain, content,
                 extra_options=extra_scheduling_options)
+            should_run_rule = True
 
-        return (schedule, True) # TODO
+        return (schedule, should_run_rule)
 
     def save_daily_schedule(self):
         repeat_every = self.distill_repeat_every()
