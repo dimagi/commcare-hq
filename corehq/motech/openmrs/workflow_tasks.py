@@ -9,6 +9,7 @@ from corehq.motech.openmrs.const import (
     NAME_PROPERTIES,
     PERSON_PROPERTIES,
     PERSON_UUID_IDENTIFIER_TYPE_ID,
+    VISIT_DURATION,
 )
 from corehq.motech.openmrs.openmrs_config import ALL_CONCEPTS
 from corehq.motech.openmrs.repeater_helpers import (
@@ -154,7 +155,7 @@ class CreateVisitsEncountersObsTask(WorkflowTask):
                         'A form config for form XMLNS "{}" uses "openmrs_start_datetime" to get the start of '
                         'the visit but an invalid value was found in the form.'.format(form_config.xmlns)
                     )
-                cc_stop_datetime = cc_start_datetime + timedelta(days=1) - timedelta(seconds=1)
+                cc_stop_datetime = cc_start_datetime + VISIT_DURATION
                 # We need to serialize both values with the data type of
                 # openmrs_start_datetime because they could be either
                 # OpenMRS datetimes or OpenMRS dates, and their data
@@ -163,7 +164,7 @@ class CreateVisitsEncountersObsTask(WorkflowTask):
                 stop_datetime = value_source.serialize(cc_stop_datetime)
                 return start_datetime, stop_datetime
         cc_start_datetime = string_to_utc_datetime(self.form_json['form']['meta']['timeEnd'])
-        cc_stop_datetime = cc_start_datetime + timedelta(days=1) - timedelta(seconds=1)
+        cc_stop_datetime = cc_start_datetime + VISIT_DURATION
         start_datetime = to_omrs_datetime(cc_start_datetime)
         stop_datetime = to_omrs_datetime(cc_stop_datetime)
         return start_datetime, stop_datetime

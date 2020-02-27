@@ -1,4 +1,5 @@
 import logging
+from datetime import timedelta
 from itertools import chain
 
 from django.utils.translation import ugettext_lazy as _
@@ -8,6 +9,8 @@ LOG_LEVEL_CHOICES = (
     (logging.ERROR, 'Error'),
     (logging.INFO, 'Info'),
 )
+
+VISIT_DURATION = timedelta(hours=12)
 
 IMPORT_FREQUENCY_DAILY = 'daily'
 IMPORT_FREQUENCY_WEEKLY = 'weekly'

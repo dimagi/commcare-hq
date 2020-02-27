@@ -69,7 +69,7 @@ def test_start_stop_datetime_export():
         OpenmrsFormConfig.wrap(form_config_dict)
     )
     eq(start_datetime, "2018-01-01T12:00:00.000+0000")
-    eq(stop_datetime, "2018-01-02T11:59:59.000+0000")
+    eq(stop_datetime, "2018-01-02T00:00:00.000+0000")
 
 
 def test_start_stop_datetime_import():
@@ -93,7 +93,7 @@ def test_start_stop_datetime_import():
         OpenmrsFormConfig.wrap(form_config_dict)
     )
     eq(start_datetime, "2019-12-16T12:36:00.000+0000")
-    eq(stop_datetime, "2019-12-17T12:35:59.000+0000")
+    eq(stop_datetime, "2019-12-17T00:36:00.000+0000")
 
 
 class GetValuesForConceptTests(SimpleTestCase):
