@@ -103,10 +103,10 @@ hqDefine("users/js/web_users",[
 
         $('.resend-invite').click(function (e) {
             $(this).addClass('disabled').prop('disabled', true);
-            var docId = this.getAttribute('data-invite');
+            var id = this.getAttribute('data-invite');
             var self = this;
             $.post(url("reinvite_web_user"), {
-                invite: docId,
+                invite: id,
             },
             function (data) {
                 $(self).parent().text(data.response);
