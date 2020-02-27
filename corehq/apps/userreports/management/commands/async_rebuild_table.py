@@ -102,7 +102,7 @@ class Command(BaseCommand):
                 .filter(domain=self.domain, type=self.case_type_or_xmlns)
             )
             if start_date:
-                cases = cases.filter(modified_on__gte=start_date)
+                cases = cases.filter(server_modified_on__gte=start_date)
             return cases.values_list('case_id', flat=True)
         elif self.referenced_type == XFORM_DOC_TYPE:
             forms = (
