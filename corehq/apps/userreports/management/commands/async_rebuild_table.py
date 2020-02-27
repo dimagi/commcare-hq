@@ -31,7 +31,8 @@ class Command(BaseCommand):
         parser.add_argument('--initiated-by', action='store', required=True, dest='initiated',
                             help='Who initiated the rebuild')
         parser.add_argument('--start_date', type=date_type,
-                            help='Rebuild on forms received or cases updated on or after this date')
+                            help='Rebuild on forms received or cases updated on or after this date (inclusive).'
+                                 'Format YYYY-MM-DD.')
 
     def handle(self, domain, type_, case_type_or_xmlns, data_source_ids, **options):
         assert type_ in ('xform', 'case')
