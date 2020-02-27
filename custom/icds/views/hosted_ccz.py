@@ -215,7 +215,7 @@ class HostedCCZView(DomainViewMixin, TemplateView):
     def _get_supporting_files(self):
         supporting_files = self._get_files_for(DISPLAY_CHOICE_LIST)
         custom_supporting_files = {
-            custom_file.file.file_name: self._download_link(self.hosted_ccz_link.domain, custom_file.file.pk)
+            custom_file.file.file_name: self._download_link(custom_file.file.pk)
             for custom_file in HostedCCZCustomSupportingFile.objects.filter(link=self.hosted_ccz_link)
         }
         supporting_files.update(custom_supporting_files)
@@ -223,13 +223,12 @@ class HostedCCZView(DomainViewMixin, TemplateView):
 
     def _get_files_for(self, display):
         return {
-            supporting_file.file_name: self._download_link(supporting_file.domain, supporting_file.pk)
+            supporting_file.file_name: self._download_link(supporting_file.pk)
             for supporting_file in HostedCCZSupportingFile.objects.filter(domain=self.domain, display=display)
         }
 
-    @staticmethod
-    def _download_link(domain, pk):
-        return reverse('hosted_ccz_download_supporting_files', args=[domain, pk])
+    def _download_link(self, pk):
+        return reverse('hosted_ccz_download_supporting_files', args=[self.domain, pk])
 
 
 @login_and_domain_required
