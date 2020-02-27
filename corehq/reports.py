@@ -1,5 +1,7 @@
 import datetime
 from django.urls import reverse
+from jsonobject.exceptions import BadValueError
+
 from corehq import privileges
 from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_class
 from corehq.apps.domain.models import Domain
@@ -191,7 +193,7 @@ def _make_dynamic_report(report_config, keyprefix):
 def _safely_get_report_configs(project_name):
     try:
         configs = ReportConfiguration.by_domain(project_name)
-    except BadSpecError as e:
+    except (BadSpecError, BadValueError) as e:
         logging.exception(e)
 
         # Pick out the UCRs that don't have spec errors
@@ -199,12 +201,12 @@ def _safely_get_report_configs(project_name):
         for config_id in get_doc_ids_in_domain_by_class(project_name, ReportConfiguration):
             try:
                 configs.append(ReportConfiguration.get(config_id))
-            except BadSpecError as e:
+            except (BadSpecError, BadValueError) as e:
                 logging.error("%s with report config %s" % (str(e), config_id))
 
     try:
         configs.extend(StaticReportConfiguration.by_domain(project_name))
-    except BadSpecError as e:
+    except (BadSpecError, BadValueError) as e:
         logging.exception(e)
 
     return configs

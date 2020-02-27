@@ -11,7 +11,7 @@ from itertools import groupby
 from uuid import UUID
 
 from django.conf import settings
-from django.db import InternalError, transaction, router
+from django.db import InternalError, transaction, router, DatabaseError
 from django.db.models import F, Q
 from django.db.models.expressions import Value
 from django.db.models.functions import Concat, Greatest
@@ -621,10 +621,11 @@ class FormAccessorSQL(AbstractFormAccessor):
             operation.form_id = form.form_id
 
         try:
-            with form.attachment_writer() as write_attachments, \
+            with form.attachment_writer() as attachment_writer, \
                     transaction.atomic(using=form.db, savepoint=False):
+                transaction.on_commit(attachment_writer.commit, using=form.db)
                 form.save()
-                write_attachments()
+                attachment_writer.write()
                 for operation in operations:
                     operation.save()
         except InternalError as e:
@@ -653,12 +654,11 @@ class FormAccessorSQL(AbstractFormAccessor):
         with transaction.atomic(using=db_name):
             if form.form_id_updated():
                 operations = form.original_operations + new_operations
-                with transaction.atomic(db_name):
-                    form.save()
-                    get_blob_db().metadb.reparent(form.orig_id, form.form_id)
-                    for model in operations:
-                        model.form = form
-                        model.save()
+                form.save()
+                get_blob_db().metadb.reparent(form.orig_id, form.form_id)
+                for model in operations:
+                    model.form = form
+                    model.save()
             else:
                 with transaction.atomic(db_name):
                     form.save()
@@ -1025,7 +1025,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
                 CaseAttachmentSQL.objects.using(case.db).filter(id__in=attachment_ids_to_delete).delete()
 
                 case.clear_tracked_models()
-        except InternalError as e:
+        except DatabaseError as e:
             raise CaseSaveError(e)
 
     @staticmethod
