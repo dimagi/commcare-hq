@@ -174,7 +174,7 @@ class TestSendToElasticsearch(SimpleTestCase):
     def _send_to_es_and_check(self, doc, update=False, es_merge_update=False,
                               delete=False, esgetter=None):
         if update and es_merge_update:
-            old_doc = self.es_interface.get_doc(self.index, TEST_INDEX_INFO.type, doc['_id'])
+            old_doc = self.es_interface.get_doc(self.es_alias, TEST_INDEX_INFO.type, doc['_id'])
 
         send_to_elasticsearch(
             alias=self.es_alias,
