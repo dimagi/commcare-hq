@@ -31,9 +31,8 @@ Save those backups to somewhere you'll be able to access from the new environmen
 
 - [Git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)
 - [Python 3.6](https://www.python.org/downloads/) and `python-dev`, `distutils` packages
-  - `sudo apt install python3-distutils python3-dev`
+  - `sudo apt install python3-distutils python3-dev python3-venv`
 - [Pip](https://pip.pypa.io/en/stable/installing/)
-- [Virtualenv](https://virtualenv.pypa.io/en/stable/)
 - [Virtualenvwrapper](https://virtualenvwrapper.readthedocs.io/en/latest/#introduction)
 - [Pango](https://pango.gnome.org/) 
   - `sudo apt install libpango1.0-0`
@@ -43,7 +42,6 @@ Save those backups to somewhere you'll be able to access from the new environmen
 - You may need to use `sudo` to for some of the above setup:
 ```
     $ sudo python get-pip.py
-    $ sudo pip install virtualenv
     $ sudo pip install virtualenvwrapper --ignore-installed six
 ```
 
@@ -57,7 +55,7 @@ Save those backups to somewhere you'll be able to access from the new environmen
 Run the following commands:
 
     $ source /usr/local/bin/virtualenvwrapper.sh
-    $ mkvirtualenv --no-site-packages commcare-hq -p python3.6
+    $ python3.6 -m venv ~/.virtualenvs/commcare-hq
 
 #### Clone and setup repo / requirements
 
@@ -66,7 +64,7 @@ Once all the dependencies are in order, please do the following:
     $ git clone https://github.com/dimagi/commcare-hq.git
     $ cd commcare-hq
     $ git submodule update --init --recursive
-    $ workon commcare-hq  # if your "commcare-hq" virtualenv is not already activated
+    $ workon commcare-hq
     $ setvirtualenvproject  # optional - sets this directory as the project root
 
 Next, install the appropriate requirements (only one is necessary).
