@@ -64,7 +64,9 @@ from custom.icds_reports.const import (
     THR_REPORT_EXPORT,
     AggregationLevels,
     LocationTypes,
-    GOVERNANCE_API_RECORDS_PAGINATION)
+    GOVERNANCE_API_PAGE_SIZE,
+    SERVICE_DELIVERY_REPORT
+)
 from custom.icds_reports.dashboard_utils import get_dashboard_template_context
 from custom.icds_reports.models.aggregate import AwcLocation
 from custom.icds_reports.models.helper import IcdsFile
@@ -235,7 +237,8 @@ from custom.icds_reports.reports.governance_apis import (
     get_home_visit_data,
     get_vhnd_data,
     get_beneficiary_data,
-    get_state_names)
+    get_state_names,
+    get_cbe_data)
 
 
 from . import const
@@ -883,6 +886,15 @@ class ExportIndicatorView(View):
 
         location = request.POST.get('location', '')
 
+        if not location and not request.couch_user.has_permission(
+                self.kwargs['domain'], 'access_all_locations'
+        ):
+            return HttpResponse(status_code=403)
+        if location and not user_can_access_location_id(
+                self.kwargs['domain'], request.couch_user, location
+        ):
+            return HttpResponse(status_code=403)
+
         sql_location = None
 
         if location and indicator != ISSNIP_MONTHLY_REGISTER_PDF:
@@ -936,9 +948,14 @@ class ExportIndicatorView(View):
                 return HttpResponseBadRequest()
         if indicator == DASHBOARD_USAGE_EXPORT:
             config['couch_user'] = self.request.couch_user
+
+        if indicator == SERVICE_DELIVERY_REPORT:
+            config['beneficiary_category'] = request.POST.get('beneficiary_category')
+
         if indicator in (CHILDREN_EXPORT, PREGNANT_WOMEN_EXPORT, DEMOGRAPHICS_EXPORT, SYSTEM_USAGE_EXPORT,
                          AWC_INFRASTRUCTURE_EXPORT, GROWTH_MONITORING_LIST_EXPORT, AWW_INCENTIVE_REPORT,
-                         LS_REPORT_EXPORT, THR_REPORT_EXPORT, DASHBOARD_USAGE_EXPORT):
+                         LS_REPORT_EXPORT, THR_REPORT_EXPORT, DASHBOARD_USAGE_EXPORT,
+                         SERVICE_DELIVERY_REPORT):
             task = prepare_excel_reports.delay(
                 config,
                 aggregation_level,
@@ -2048,6 +2065,11 @@ class CasDataExport(View):
         year = int(request.POST.get('year', None))
         selected_date = date(year, month, 1).strftime('%Y-%m-%d')
 
+        if state_id and not user_can_access_location_id(
+                self.kwargs['domain'], request.couch_user, state_id
+        ):
+            return JsonResponse({"message": "Sorry, you do not have access to that location."})
+
         sync, _ = get_cas_data_blob_file(data_type, state_id, selected_date)
         if not sync:
             return JsonResponse({"message": "Sorry, the export you requested does not exist."})
@@ -2076,6 +2098,10 @@ class CasDataExport(View):
         year = int(request.GET.get('year', None))
         selected_date = date(year, month, 1).strftime('%Y-%m-%d')
 
+        if state_id and not user_can_access_location_id(
+                self.kwargs['domain'], request.couch_user, state_id
+        ):
+            return HttpResponse(status_code=403)
         sync, blob_id = get_cas_data_blob_file(data_type, state_id, selected_date)
 
         try:
@@ -2207,9 +2233,9 @@ class GovernanceAPIBaseView(View):
 
         is_valid = True
         error_message = ''
-        if not (date(2019, 12, 1) <= selected_month <= current_month):
+        if not (date(2019, 4, 1) <= selected_month <= current_month):
             is_valid = False
-            error_message = "Month should not be in future and can only be from Dec 2019"
+            error_message = "Month should not be in future and can only be from April 2019"
         if state_id is None:
             is_valid = False
             error_message = "Invalid State code"
@@ -2234,7 +2260,7 @@ class GovernanceHomeVisitAPI(GovernanceAPIBaseView):
         order = ['awc_id']
 
         data, count = get_home_visit_data(
-            GOVERNANCE_API_RECORDS_PAGINATION,
+            GOVERNANCE_API_PAGE_SIZE,
             year,
             month,
             order,
@@ -2268,7 +2294,7 @@ class GovernanceBeneficiaryAPI(GovernanceAPIBaseView):
         order = ['awc_id']
 
         data, count = get_beneficiary_data(
-            GOVERNANCE_API_RECORDS_PAGINATION,
+            GOVERNANCE_API_PAGE_SIZE,
             year,
             month,
             order,
@@ -2306,8 +2332,43 @@ class GovernanceVHNDSAPI(GovernanceAPIBaseView):
         order = ['awc_id']
         if state_id is not None:
             query_filters['state_id'] = state_id
-        data, count = get_vhnd_data(GOVERNANCE_API_RECORDS_PAGINATION, year,
+        data, count = get_vhnd_data(GOVERNANCE_API_PAGE_SIZE, year,
                                     month, order, query_filters)
+        response_json = {
+            'data': data,
+            'metadata': {
+                'month': month,
+                'year': year,
+                'count': count,
+                'timestamp': india_now()
+            }
+        }
+        return JsonResponse(data=response_json)
+
+
+class GovernanceCBEAPI(GovernanceAPIBaseView):
+
+    def get(self, request, *args, **kwargs):
+        last_awc_id, month, year, state_id = self.get_gov_api_params(request)
+        is_valid, error_message = self.validate_param(state_id, month, year)
+
+        if not is_valid:
+            return HttpResponse(error_message, status=400)
+
+        query_filters = {
+            'state_id': state_id,
+            'awc_launched': True,
+            'awc_id__gt': last_awc_id}
+        order = ['awc_id']
+
+        data, count = get_cbe_data(
+            GOVERNANCE_API_PAGE_SIZE,
+            year,
+            month,
+            order,
+            query_filters
+        )
+
         response_json = {
             'data': data,
             'metadata': {

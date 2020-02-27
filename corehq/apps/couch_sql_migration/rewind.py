@@ -1,9 +1,11 @@
+import json
 import logging
 import re
 import sys
 from datetime import datetime, timedelta
 
 import attr
+from couchdbkit.exceptions import ResourceNotFound
 
 from couchforms.models import XFormInstance
 
@@ -43,16 +45,69 @@ def rewind_iteration_state(statedb, domain, move_to):
 
 
 @attr.s
-class Rewinder:
+class IterationState:
     statedb = attr.ib()
     domain = attr.ib()
     doc_type = attr.ib()
-    move_to = attr.ib()
 
     def __attrs_post_init__(self):
         migration_id = self.statedb.unique_id
         resume_key = "%s.%s.%s" % (self.domain, self.doc_type, migration_id)
         self.itr = ResumableFunctionIterator(resume_key, None, None, None)
+
+    @property
+    def value(self):
+        return self.itr.state.to_json()
+
+    def backup_resume_state(self, value):
+        """Attempt to save iteration state in state db
+
+        :param value: iteration state dict. See `self.value`
+        :returns: resume key if saved else `None`
+        """
+        assert isinstance(value, dict), value
+        key = f"resume-{value['timestamp']}"
+        pretty_value = json.dumps(value, indent=2)
+        log.info("saving resume state with key=%s : %s", key, pretty_value)
+        old = self.statedb.get(key)
+        if old is None:
+            self.statedb.set(key, value)
+            log.info("saved.")
+        elif old != value:
+            log.warn("NOT SAVED! refusing to overwrite:\n%s", old)
+            return None
+        return key
+
+    def restore_resume_state(self, key):
+        """Attempt to restore resume state represented by key
+
+        :returns: true if restored else false
+        """
+        new_state = self.statedb.get(key)
+        if new_state is None:
+            return False
+        if "_rev" in self.value:
+            backup_key = self.backup_resume_state(self.value)
+            if backup_key is None:
+                return False
+        log.info("restoring iteration state: %s", new_state)
+        self.itr._save_state_json(new_state)
+        return True
+
+    def drop_from_couch(self):
+        """Delete resume state from Couch"""
+        try:
+            self.itr.couch_db.delete_doc(self.itr.iteration_id)
+        except ResourceNotFound:
+            pass
+
+
+@attr.s
+class Rewinder(IterationState):
+    move_to = attr.ib()
+
+    def __attrs_post_init__(self):
+        super().__attrs_post_init__()
         for method, regex in [
             ("case_rewind", r"^case-(\d+)$"),
             ("resume_rewind", r"^resume-"),
@@ -66,13 +121,9 @@ class Rewinder:
 
     def resume_rewind(self, match):
         self.offset = None
-        new_state = self.statedb.get(self.move_to)
-        if new_state is None:
+        ok = self.restore_resume_state(self.move_to)
+        if not ok:
             sys.exit(1, "resume state not found")
-        old_state = self.itr.state
-        self._save_resume_state(old_state.to_json())
-        log.info("restoring iteration state: %s", new_state)
-        self.itr._save_state_json(new_state)
 
     def case_rewind(self, match):
         self.offset = int(match.group(1))
@@ -83,8 +134,9 @@ class Rewinder:
             return couch_db.view('by_domain_doc_type_date/view', **view_kwargs)
 
         log.info("preparing to rewind: %s", self.move_to)
-        state_json = self.itr.state.to_json()
-        self._save_resume_state(state_json)
+        state_json = self.value
+        if not self.backup_resume_state(state_json):
+            return
         couch_db = XFormInstance.get_db()
         args_provider = NoSkipArgsProvider({
             'startkey': state_json["kwargs"]["startkey"],
@@ -117,19 +169,9 @@ class Rewinder:
         assert state.kwargs["startkey"] is startkey, (state.kwargs, startkey)
         state.kwargs.pop("startkey_docid")
         state.timestamp = datetime.utcnow()
-        self._save_resume_state(state.to_json())
-
-    def _save_resume_state(self, state_json):
-        assert isinstance(state_json, dict), state_json
-        key = f"resume-{state_json['timestamp']}"
-        log.info("saving resume state. restore with: rewind --to=%s\n%s",
-                 key, state_json)
-        old = self.statedb.get(key)
-        if old is None:
-            log.info("saved.")
-            self.statedb.set(key, state_json)
-        elif old != state_json:
-            log.warn("NOT SAVED! refusing to overwrite:\n%s", old)
+        key = self.backup_resume_state(state.to_json())
+        if key:
+            log.info("restore with: rewind --to=%s", key)
 
 
 def get_received_on(doc, stats):

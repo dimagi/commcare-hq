@@ -4,6 +4,8 @@ from functools import wraps
 
 from django.conf import settings
 from django.contrib.auth.hashers import check_password, make_password
+from django.contrib.postgres.fields import ArrayField
+from django.db import models
 from django.http import HttpResponse
 
 from couchdbkit.exceptions import ResourceNotFound
@@ -22,14 +24,22 @@ PERMISSION_POST_SMS = "POST_SMS"
 PERMISSION_POST_WISEPILL = "POST_WISEPILL"
 
 
-class ApiUser(Document):
-    password = StringProperty()
-    permissions = ListProperty(StringProperty)
+class ApiUser(models.Model):
+    id = models.CharField(max_length=255, primary_key=True)
+    password = models.CharField(max_length=255, null=True)
+    permissions = ArrayField(
+        models.CharField(max_length=126, null=True, blank=True),
+        null=True,
+        default=list
+    )
+
+    class Meta:
+        db_table = "api_apiuser"
 
     @property
     def username(self):
-        if self['_id'].startswith("ApiUser-"):
-            return self['_id'][len("ApiUser-"):]
+        if self.id.startswith("ApiUser-"):
+            return self.id[len("ApiUser-"):]
         else:
             raise Exception("ApiUser _id has to be 'ApiUser-' + username")
 
@@ -54,14 +64,14 @@ class ApiUser(Document):
 
         """
         self = cls()
-        self['_id'] = "ApiUser-%s" % username
+        self.id = "ApiUser-%s" % username
         self.set_password(password)
         self.permissions = permissions or []
         return self
 
     @classmethod
     def get_user(cls, username):
-        return cls.get("ApiUser-%s" % username)
+        return cls.objects.get(id="ApiUser-%s" % username)
 
     @classmethod
     def auth(cls, username, password, permission=None):
@@ -74,7 +84,7 @@ class ApiUser(Document):
                     return True
             else:
                 return False
-        except ResourceNotFound:
+        except ApiUser.DoesNotExist:
             return False
 
 

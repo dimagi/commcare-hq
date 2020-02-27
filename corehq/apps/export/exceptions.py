@@ -20,3 +20,7 @@ class ExportAsyncException(Exception):
 
 class ExportODataDuplicateLabelException(Exception):
     pass
+
+
+class RejectedStaleExport(Exception):
+    pass

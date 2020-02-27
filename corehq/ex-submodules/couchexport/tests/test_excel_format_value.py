@@ -48,10 +48,10 @@ def test_decimal_eur():
 
 
 def test_percentage():
-    yield check, '80%', 80, numbers.FORMAT_PERCENTAGE, int
-    yield check, '-50%', -50, numbers.FORMAT_PERCENTAGE, int
-    yield check, '3.45%', 3.45, numbers.FORMAT_PERCENTAGE_00, float
-    yield check, '-4.35%', -4.35, numbers.FORMAT_PERCENTAGE_00, float
+    yield check, '80%', 0.8, numbers.FORMAT_PERCENTAGE, float
+    yield check, '-50%', -0.5, numbers.FORMAT_PERCENTAGE, float
+    yield check, '3.45%', 0.0345, numbers.FORMAT_PERCENTAGE_00, float
+    yield check, '-4.35%', -0.0435, numbers.FORMAT_PERCENTAGE_00, float
 
 
 def test_comma_separated_us():

@@ -1,5 +1,6 @@
 from collections import defaultdict
 
+from corehq import toggles
 from corehq.apps.app_manager import id_strings, models
 from corehq.apps.app_manager.const import (
     MOBILE_UCR_MIGRATING_TO_2,
@@ -32,6 +33,7 @@ COLUMN_XPATH_TEMPLATE = "column[@id='{}']"
 COLUMN_XPATH_TEMPLATE_V2 = "{}"
 COLUMN_XPATH_CLIENT_TEMPLATE = "column[@id='<%= id %>']"
 COLUMN_XPATH_CLIENT_TEMPLATE_V2 = "<%= id %>"
+MOBILE_UCR_TILE_DETAIL_ID = "report_context_tile"
 
 
 def _get_column_xpath_template(new_mobile_ucr_restore):
@@ -40,6 +42,18 @@ def _get_column_xpath_template(new_mobile_ucr_restore):
 
 def get_column_xpath_client_template(new_mobile_ucr_restore):
     return COLUMN_XPATH_CLIENT_TEMPLATE_V2 if new_mobile_ucr_restore else COLUMN_XPATH_CLIENT_TEMPLATE
+
+
+# This datum, a persistent tile based on data in a fixture, should be the first datum in an entry
+# so it appears even on the screens where other datums are being selected.
+def get_report_context_tile_datum():
+    return SessionDatum(
+        id='tile_holder',
+        nodeset="instance('commcare-reports:index')/report_index/reports",
+        value='./@last_update',
+        detail_persistent=MOBILE_UCR_TILE_DETAIL_ID,
+        autoselect="true",
+    )
 
 
 @quickcache(['report_module.unique_id'])
@@ -90,30 +104,28 @@ class ReportModuleSuiteHelper(object):
     def get_custom_entries(self):
         _load_reports(self.report_module)
         for config in self.report_module.report_configs:
-            yield _get_config_entry(config, self.domain, self.new_mobile_ucr_restore)
+            yield self._get_config_entry(config)
 
+    def _get_config_entry(self, config):
+        if self.new_mobile_ucr_restore:
+            nodeset = "instance('commcare-reports:{}')/rows".format(config.instance_id)
+        else:
+            nodeset = "instance('reports')/reports/report[@id='{}']".format(config.uuid)
 
-def _get_config_entry(config, domain, new_mobile_ucr_restore=False):
-    if new_mobile_ucr_restore:
-        nodeset = "instance('commcare-reports:{}')/rows".format(config.instance_id)
-    else:
-        nodeset = "instance('reports')/reports/report[@id='{}']".format(config.uuid)
+        datums = []
 
-    return Entry(
-        command=Command(
-            id='reports.{}'.format(config.uuid),
-            text=Text(
-                locale=Locale(id=id_strings.report_name(config.uuid)),
-            ),
-        ),
-        datums=[
+        if self.report_module.report_context_tile:
+            datums.append(get_report_context_tile_datum())
+
+        datums += [
             SessionDatum(
                 detail_select=MobileSelectFilterHelpers.get_select_detail_id(config, filter_slug),
                 id=MobileSelectFilterHelpers.get_datum_id(config, filter_slug),
-                nodeset=MobileSelectFilterHelpers.get_options_nodeset(config, filter_slug, new_mobile_ucr_restore),
+                nodeset=MobileSelectFilterHelpers.get_options_nodeset(config, filter_slug,
+                                                                      self.new_mobile_ucr_restore),
                 value='./@value',
             )
-            for filter_slug, f in MobileSelectFilterHelpers.get_filters(config, domain)
+            for filter_slug, f in MobileSelectFilterHelpers.get_filters(config, self.domain)
         ] + [
             SessionDatum(
                 detail_confirm=_get_summary_detail_id(config),
@@ -124,7 +136,16 @@ def _get_config_entry(config, domain, new_mobile_ucr_restore=False):
                 autoselect="true"
             ),
         ]
-    )
+
+        return Entry(
+            command=Command(
+                id='reports.{}'.format(config.uuid),
+                text=Text(
+                    locale=Locale(id=id_strings.report_name(config.uuid)),
+                ),
+            ),
+            datums=datums,
+        )
 
 
 def _get_select_detail_id(config):
@@ -255,43 +276,49 @@ def _get_summary_details(config, domain, module, new_mobile_ucr_restore=False):
             )
 
     detail_id = 'reports.{}.summary'.format(config.uuid)
+    fields = [
+        Field(
+            header=Header(
+                text=Text(
+                    locale=Locale(id=id_strings.report_name_header())
+                )
+            ),
+            template=Template(
+                text=Text(
+                    locale=Locale(id=id_strings.report_name(config.uuid))
+                )
+            ),
+        ),
+        Field(
+            header=Header(
+                text=Text(
+                    locale=Locale(id=id_strings.report_description_header()),
+                )
+            ),
+            template=Template(
+                text=_get_description_text(config)
+            ),
+        ),
+    ]
+
+    if not getattr(module, 'report_context_tile', False):
+        # Don't add "Last Sync" if the module already contains the similar-looking
+        # "Reports last updated on" tile
+        fields.append(Field(
+            header=Header(
+                text=Text(
+                    locale=Locale(id=id_strings.report_last_sync())
+                )
+            ),
+            template=Template(text=_get_last_sync(config))
+        ))
+    fields += list(_get_graph_fields())
+
     detail = Detail(
         title=Text(
             locale=Locale(id=id_strings.report_menu()),
         ),
-        fields=[
-            Field(
-                header=Header(
-                    text=Text(
-                        locale=Locale(id=id_strings.report_name_header())
-                    )
-                ),
-                template=Template(
-                    text=Text(
-                        locale=Locale(id=id_strings.report_name(config.uuid))
-                    )
-                ),
-            ),
-            Field(
-                header=Header(
-                    text=Text(
-                        locale=Locale(id=id_strings.report_description_header()),
-                    )
-                ),
-                template=Template(
-                    text=_get_description_text(config)
-                ),
-            ),
-        ] + [
-            Field(
-                header=Header(
-                    text=Text(
-                        locale=Locale(id=id_strings.report_last_sync())
-                    )
-                ),
-                template=Template(text=_get_last_sync(config))
-            ),
-        ] + list(_get_graph_fields()),
+        fields=fields,
     )
     if config.show_data_table:
         return models.Detail(custom_xml=Detail(
@@ -310,6 +337,15 @@ def _get_data_detail(config, domain, new_mobile_ucr_restore):
     """
     Adds a data table to the report
     """
+    def get_xpath(column_id):
+        if new_mobile_ucr_restore:
+            return Xpath(
+                function="{}".format(column_id),
+            )
+        else:
+            return Xpath(
+                function="column[@id='{}']".format(column_id),
+            )
     def _column_to_field(column):
         def _get_xpath(col):
             def _get_conditional(condition, if_true, if_false):
@@ -365,14 +401,7 @@ def _get_data_detail(config, domain, new_mobile_ucr_restore):
                     variables=[XpathVariable(name='lang', locale_id='lang.current')],
                 )
             else:
-                if new_mobile_ucr_restore:
-                    return Xpath(
-                        function="{}".format(col.column_id),
-                    )
-                else:
-                    return Xpath(
-                        function="column[@id='{}']".format(col.column_id),
-                    )
+                return get_xpath(col.column_id)
 
         return Field(
             header=Header(
@@ -390,6 +419,13 @@ def _get_data_detail(config, domain, new_mobile_ucr_restore):
         )
 
     nodeset_string = 'row{}' if new_mobile_ucr_restore else 'rows/row{}'
+    if toggles.ADD_ROW_INDEX_TO_MOBILE_UCRS.enabled(domain):
+        fields = [Field(
+            header=Header(text=Text(), width=0,),
+            template=Template(text=Text(xpath=get_xpath("row_index"),), width=0,),
+        )]
+    else:
+        fields = []
     return Detail(
         id='reports.{}.data'.format(config.uuid),
         nodeset=(
@@ -399,7 +435,7 @@ def _get_data_detail(config, domain, new_mobile_ucr_restore):
         title=Text(
             locale=Locale(id=id_strings.report_data_table()),
         ),
-        fields=[
+        fields=fields + [
             _column_to_field(c) for c in config.report(domain).report_columns
             if c.type != 'expanded' and c.visible
         ]

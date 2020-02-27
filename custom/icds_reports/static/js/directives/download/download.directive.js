@@ -1,7 +1,7 @@
 /* global moment */
 
 function DownloadController($rootScope, $location, locationHierarchy, locationsService, userLocationId, haveAccessToFeatures,
-    downloadService, isAlertActive, userLocationType) {
+    downloadService, isAlertActive, userLocationType, haveAccessToAllLocations, allUserLocationId) {
     var vm = this;
 
     vm.months = [];
@@ -152,6 +152,15 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         vm.indicators.push({id: 11, name: 'Dashboard Activity Report'});
     }
 
+    if (haveAccessToFeatures) {
+        vm.indicators.push({id: 12, name: 'Service Delivery Report'});
+        vm.beneficiaryCategories = [
+            {id: 'pw_lw_children', name: 'PW, LW & Children 0-3 years'},
+            {id: 'children_3_6', name: 'Children 3-6 years'},
+        ];
+        vm.selectedBeneficiaryCategory = 'pw_lw_children';
+    }
+
     var ALL_OPTION = {
         name: 'All',
         location_id: 'all',
@@ -194,6 +203,31 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         vm.selectedLocations = new Array(maxLevel);
     };
 
+    vm.userHaveAccessToAllLocations = function (locations) {
+        var haveAccessToAllLocationsForLevel = true;
+        window.angular.forEach(locations, function (location) {
+            if (!location.user_have_access) {
+                haveAccessToAllLocationsForLevel = false;
+            }
+        });
+        return haveAccessToAllLocationsForLevel;
+    };
+
+    vm.userLocationIdIsNull = function () {
+        return ["null", "undefined"].indexOf(vm.userLocationId) !== -1;
+    };
+
+    vm.isUserLocationIn = function (locations) {
+        var userLocationInSorted = _.filter(locations, function (location) {
+            return allUserLocationId.indexOf(location.location_id) !== -1;
+        });
+        return userLocationInSorted.length > 0;
+    };
+
+    vm.preventShowingAllOption = function (locations) {
+        return ((!vm.userLocationIdIsNull() && !vm.userHaveAccessToAllLocations(locations)) || vm.isUserLocationIn(locations)) && !haveAccessToAllLocations;
+    };
+
     var init = function() {
         if (vm.selectedLocationId) {
             vm.myPromise = locationsService.getAncestors(vm.selectedLocationId).then(function(data) {
@@ -207,13 +241,15 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
 
                 for (var parentId in locationsGrouppedByParent) {
                     if (locationsGrouppedByParent.hasOwnProperty(parentId)) {
-                        var sorted_locations = _.sortBy(locationsGrouppedByParent[parentId], function(o) {
+                        var sortedLocations = _.sortBy(locationsGrouppedByParent[parentId], function (o) {
                             return o.name;
                         });
-                        if (selectedLocation.user_have_access) {
-                            locationsCache[parentId] = [ALL_OPTION].concat(sorted_locations);
+                        if (vm.preventShowingAllOption(sortedLocations)) {
+                            locationsCache[parentId] = sortedLocations;
+                        } else if (selectedLocation.user_have_access) {
+                            locationsCache[parentId] = [ALL_OPTION].concat(sortedLocations);
                         } else {
-                            locationsCache[parentId] = sorted_locations;
+                            locationsCache[parentId] = sortedLocations;
                         }
                     }
                 }
@@ -497,6 +533,9 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
             'pdfformat': vm.selectedPDFFormat,
             'selected_awcs': awcs.join(','),
         };
+        if (haveAccessToFeatures) {
+            taskConfig['beneficiary_category'] = vm.selectedBeneficiaryCategory;
+        }
         var selectedFilters = vm.selectedFilterOptions();
         if (vm.isChildBeneficiaryListSelected()) {
             taskConfig['filter[]'] = [];
@@ -573,6 +612,10 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         return vm.selectedIndicator === 6;
     };
 
+    vm.isSDRSelected = function () {
+        return vm.selectedIndicator === 12;
+    };
+
     vm.isISSNIPMonthlyRegisterSelected = function () {
         return vm.selectedIndicator === 7;
     };
@@ -609,7 +652,6 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         return !(vm.isChildBeneficiaryListSelected() || vm.isIncentiveReportSelected() ||
             vm.isLadySupervisorSelected() || vm.isDashboardUsageSelected());
     };
-
 
     vm.showLocationFilter = function () {
         return !vm.isDashboardUsageSelected();
@@ -651,7 +693,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
 }
 
 DownloadController.$inject = ['$rootScope', '$location', 'locationHierarchy', 'locationsService', 'userLocationId',
-    'haveAccessToFeatures', 'downloadService', 'isAlertActive', 'userLocationType'];
+    'haveAccessToFeatures', 'downloadService', 'isAlertActive', 'userLocationType','haveAccessToAllLocations','allUserLocationId'];
 
 window.angular.module('icdsApp').directive("download", function() {
     var url = hqImport('hqwebapp/js/initial_page_data').reverse;

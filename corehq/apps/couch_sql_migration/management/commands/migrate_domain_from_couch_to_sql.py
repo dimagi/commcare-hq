@@ -1,17 +1,13 @@
 import logging
 import os
 import sys
-from itertools import groupby, zip_longest
 
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 from django.db.models import Q
 
-from sqlalchemy.exc import OperationalError
-
 from corehq.apps.domain.models import Domain
-from couchforms.dbaccessors import get_form_ids_by_type
-from couchforms.models import XFormInstance, doc_types
+from couchforms.models import doc_types
 from dimagi.utils.chunked import chunked
 
 from corehq.apps.couch_sql_migration.couchsqlmigration import (
@@ -19,7 +15,12 @@ from corehq.apps.couch_sql_migration.couchsqlmigration import (
     do_couch_to_sql_migration,
     setup_logging,
 )
+from corehq.apps.couch_sql_migration.missingdocs import (
+    find_missing_docs,
+    recheck_missing_docs,
+)
 from corehq.apps.couch_sql_migration.progress import (
+    MigrationStatus,
     couch_sql_migration_in_progress,
     get_couch_sql_migration_status,
     set_couch_sql_migration_complete,
@@ -33,8 +34,6 @@ from corehq.apps.couch_sql_migration.statedb import (
     init_state_db,
     open_state_db,
 )
-from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_type
-from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
 from corehq.form_processor.backends.sql.dbaccessors import (
     CaseAccessorSQL,
     FormAccessorSQL,
@@ -57,6 +56,11 @@ RESET = "reset"  # was --blow-away
 REWIND = "rewind"
 STATS = "stats"
 DIFF = "diff"
+
+CACHED = "cached"
+RESUME = "resume"
+REBUILD = "rebuild"
+RECHECK = "recheck"
 
 CASE_DIFF = {"process": True, "local": False, "none": None}
 
@@ -108,6 +112,13 @@ class Command(BaseCommand):
                 a normal (non-live) migration, which will commit the
                 result if all goes well.
             ''')
+        parser.add_argument("--finish", action='store_true', default=False,
+            help="""
+                Finish live migration. All commands will operate in "live
+                migration" mode once a live migration has been started
+                unless this option is used to move beyond the live
+                migration.
+            """)
         parser.add_argument('--rebuild-state',
             dest="rebuild_state", action='store_true', default=False,
             help="""
@@ -133,9 +144,11 @@ class Command(BaseCommand):
             help="""
                 Migrate specific forms. The value of this option should
                 be a space-delimited list of form ids OR a file path to
-                a file having one form id per line OR 'skipped' to
-                migrate forms skipped by previous migration. The file
-                path must begin with / or ./
+                a file having one form id per line OR 'missing' to
+                migrate missing forms cached in the statedb by the
+                'stats' command OR 'missing-blob-present' to migrate
+                forms referenced by a case that do not exist in Couch but
+                a blob does exit. The file path must begin with / or ./
             """)
         parser.add_argument('-x', '--stop-on-error',
             dest="stop_on_error", action='store_true', default=False,
@@ -144,6 +157,15 @@ class Command(BaseCommand):
                 and continuing with next form.
             """)
         parser.add_argument('--to', dest="rewind", help="Rewind iteration state.")
+        parser.add_argument('--missing-docs',
+            choices=[RESUME, REBUILD, RECHECK, CACHED], default=RESUME,
+            help="""
+                By default missing docs will be calculated before stats
+                are printed, resuming from the previous run if possible.
+                Use "rebuild" to discard previous results and
+                recalculate all missing docs that are in Couch but not
+                SQL. Use "cached" to use existing data from state db.
+            """)
 
     def handle(self, domain, action, **options):
         if should_use_sql_backend(domain):
@@ -154,18 +176,22 @@ class Command(BaseCommand):
             "verbose",
             "state_dir",
             "live_migrate",
+            "finish",
             "case_diff",
             "rebuild_state",
             "stop_on_error",
             "forms",
             "rewind",
+            "missing_docs",
         ]:
             setattr(self, opt, options[opt])
 
         if self.no_input and not settings.UNIT_TESTING:
             raise CommandError('--no-input only allowed for unit testing')
         if action != MIGRATE and self.live_migrate:
-            raise CommandError("--live only allowed with `MIGRATE`")
+            raise CommandError(f"{action} --live not allowed")
+        if action != MIGRATE and self.finish:
+            raise CommandError(f"{action} --finish not allowed")
         if action != MIGRATE and self.rebuild_state:
             raise CommandError("--rebuild-state only allowed with `MIGRATE`")
         if action != MIGRATE and self.forms:
@@ -174,6 +200,8 @@ class Command(BaseCommand):
             raise CommandError("--stop-on-error only allowed with `MIGRATE`")
         if action != STATS and self.verbose:
             raise CommandError("--verbose only allowed for `stats`")
+        if action not in [MIGRATE, STATS] and self.missing_docs != RESUME:
+            raise CommandError(f"{action} --missing-docs not allowed")
         if action != REWIND and self.rewind:
             raise CommandError("--to=... only allowed for `rewind`")
 
@@ -183,6 +211,13 @@ class Command(BaseCommand):
         getattr(self, "do_" + action)(domain)
 
     def do_MIGRATE(self, domain):
+        if self.finish:
+            assert not self.live_migrate, "--live and --finish are mutually exclusive"
+        elif not self.live_migrate:
+            status = get_couch_sql_migration_status(domain)
+            if status == MigrationStatus.DRY_RUN:
+                log.info("Continuing live migration. Use --finish to complete.")
+                self.live_migrate = True
         set_couch_sql_migration_started(domain, self.live_migrate)
         do_couch_to_sql_migration(
             domain,
@@ -231,12 +266,7 @@ class Command(BaseCommand):
         self.print_stats(domain, short=not self.verbose)
 
     def do_diff(self, domain):
-        db = open_state_db(domain, self.state_dir)
-        diffs = sorted(db.get_diffs(), key=lambda d: d.kind)
-        for doc_type, diffs in groupby(diffs, key=lambda d: d.kind):
-            print('-' * 50, "Diffs for {}".format(doc_type), '-' * 50)
-            for diff in diffs:
-                print('[{}({})] {}'.format(doc_type, diff.doc_id, diff.json_diff))
+        print(f"replaced by: couch_sql_diff show {domain} [--select=DOC_TYPE]")
 
     def do_rewind(self, domain):
         db = open_state_db(domain, self.state_dir)
@@ -246,120 +276,61 @@ class Command(BaseCommand):
 
     def print_stats(self, domain, short=True, diffs_only=False):
         status = get_couch_sql_migration_status(domain)
-        print("Couch to SQL migration status for {}: {}".format(domain, status))
-        db = open_state_db(domain, self.state_dir)
-        try:
-            diff_stats = db.get_diff_stats()
-        except OperationalError:
-            diff_stats = {}
-
+        if not self.live_migrate:
+            self.live_migrate = status == MigrationStatus.DRY_RUN
+        if self.missing_docs == RECHECK:
+            recheck_missing_docs(domain, self.state_dir)
+        elif self.missing_docs != CACHED:
+            resume = self.missing_docs == RESUME
+            find_missing_docs(domain, self.state_dir, self.live_migrate, resume)
+        print(f"Couch to SQL migration status for {domain}: {status}")
+        statedb = open_state_db(domain, self.state_dir)
+        doc_counts = statedb.get_doc_counts()
         has_diffs = False
-        for doc_type in doc_types():
-            form_ids_in_couch = set(get_form_ids_by_type(domain, doc_type))
-            if doc_type == "XFormInstance":
-                form_ids_in_couch.update(get_doc_ids_in_domain_by_type(
-                    domain, "HQSubmission", XFormInstance.get_db()))
-            form_ids_in_sql = set(FormAccessorSQL.get_form_ids_in_domain_by_type(domain, doc_type))
-            diff_count, num_docs_with_diffs = diff_stats.pop(doc_type, (0, 0))
-            has_diffs |= self._print_status(
-                doc_type, form_ids_in_couch, form_ids_in_sql, diff_count, num_docs_with_diffs, short, diffs_only
-            )
-
-        form_ids_in_couch = set(get_doc_ids_in_domain_by_type(
-            domain, "XFormInstance-Deleted", XFormInstance.get_db())
-        )
-        form_ids_in_sql = set(FormAccessorSQL.get_deleted_form_ids_in_domain(domain))
-        diff_count, num_docs_with_diffs = diff_stats.pop("XFormInstance-Deleted", (0, 0))
-        has_diffs |= self._print_status(
-            "XFormInstance-Deleted", form_ids_in_couch, form_ids_in_sql,
-            diff_count, num_docs_with_diffs, short, diffs_only
-        )
-
-        ZERO = Counts(0, 0)
-        if db.has_doc_counts():
-            doc_counts = db.get_doc_counts()
-            couch_missing_cases = doc_counts.get("CommCareCase-couch", ZERO).missing
-        else:
-            doc_counts = None
-            couch_missing_cases = 0
-        for doc_type in CASE_DOC_TYPES:
-            if doc_counts is not None:
-                counts = doc_counts.get(doc_type, ZERO)
-                case_ids_in_couch = db.get_missing_doc_ids(doc_type) if counts.missing else set()
-                case_ids_in_sql = counts
-            elif doc_type == "CommCareCase":
-                case_ids_in_couch = set(get_case_ids_in_domain(domain))
-                case_ids_in_sql = set(CaseAccessorSQL.get_case_ids_in_domain(domain))
-            elif doc_type == "CommCareCase-Deleted":
-                case_ids_in_couch = set(get_doc_ids_in_domain_by_type(
-                    domain, "CommCareCase-Deleted", XFormInstance.get_db())
-                )
-                case_ids_in_sql = set(CaseAccessorSQL.get_deleted_case_ids_in_domain(domain))
-            else:
-                raise NotImplementedError(doc_type)
-            diff_count, num_docs_with_diffs = diff_stats.pop(doc_type, (0, 0))
+        ZERO = Counts()
+        print(f"{'':<22}      Docs    Diffs  Missing  Changes")
+        for doc_type in (
+            list(doc_types())
+            + ["HQSubmission", "XFormInstance-Deleted"]
+            + CASE_DOC_TYPES
+        ):
             has_diffs |= self._print_status(
                 doc_type,
-                case_ids_in_couch,
-                case_ids_in_sql,
-                diff_count,
-                num_docs_with_diffs,
+                doc_counts.get(doc_type, ZERO),
+                statedb,
                 short,
                 diffs_only,
             )
-            if doc_type == "CommCareCase" and couch_missing_cases:
-                has_diffs = True
-                print(shell_red("%s cases could not be loaded from Couch" % couch_missing_cases))
-                if not short:
-                    for case_id in db.get_missing_doc_ids("CommCareCase-couch"):
-                        print(case_id)
 
-        if diff_stats:
-            for key, counts in diff_stats.items():
-                diff_count, num_docs_with_diffs = counts
-                has_diffs |= self._print_status(
-                    key, set(), set(), diff_count, num_docs_with_diffs, short, diffs_only
-                )
+        pending = statedb.count_undiffed_cases()
+        if pending:
+            print(shell_red(f"\nThere are {pending} case diffs pending."))
+            print(f"Resolution: couch_sql_diff cases {domain} --select=pending")
+            return True
 
         if diffs_only and not has_diffs:
             print(shell_green("No differences found between old and new docs!"))
         return has_diffs
 
-    def _print_status(self, name, ids_in_couch, ids_in_sql, diff_count, num_docs_with_diffs, short, diffs_only):
-        if isinstance(ids_in_sql, Counts):
-            counts, ids_in_sql = ids_in_sql, set()
-            assert len(ids_in_couch) == counts.missing, (len(ids_in_couch), counts.missing)
-            n_couch = counts.total
-            n_sql = counts.total - counts.missing
-        else:
-            n_couch = len(ids_in_couch)
-            n_sql = len(ids_in_sql)
-        has_diff = ids_in_couch != ids_in_sql or diff_count
-
-        if diffs_only and not has_diff:
+    def _print_status(self, doc_type, counts, statedb, short, diffs_only):
+        has_diffs = counts.missing or counts.diffs
+        if diffs_only and not has_diffs:
             return False
 
-        def _highlight(text):
-            return shell_red(text) if has_diff else text
-
-        row = "{:^38} {} {:^38}"
-        sep = "|" if ids_in_couch == ids_in_sql else "≠"
-        doc_count_row = row.format(n_couch, sep, n_sql)
-
-        print('\n{:_^79}'.format(" %s " % name))
-        print(row.format('Couch', '|', 'SQL'))
-        print(_highlight(doc_count_row))
-        if diff_count:
-            print(_highlight("{:^83}".format('{} diffs ({} docs)'.format(diff_count, num_docs_with_diffs))))
-
         if not short:
-            if ids_in_couch ^ ids_in_sql:
-                couch_only = list(ids_in_couch - ids_in_sql)
-                sql_only = list(ids_in_sql - ids_in_couch)
-                for couch, sql in zip_longest(couch_only, sql_only):
-                    print(row.format(couch or '', '|', sql or ''))
-
-        return True
+            print("_" * 40)
+        ndiff = shell_red(f"{counts.diffs if counts.diffs else '':>8}")
+        miss = shell_red(f"{counts.missing if counts.missing else '':>8}")
+        chg = counts.changes if counts.changes else ""
+        print(f"{doc_type:<22} {counts.total:>9} {ndiff} {miss} {chg:>8}")
+        if not short:
+            # print ids found in Couch but not in SQL
+            i = 0
+            missing_ids = statedb.iter_missing_doc_ids(doc_type)
+            for i, missing_id in enumerate(missing_ids, start=1):
+                print(missing_id)
+            assert i == counts.missing, (i, counts.missing)
+        return has_diffs
 
 
 def _confirm(message):

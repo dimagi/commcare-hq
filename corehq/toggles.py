@@ -984,7 +984,7 @@ DASHBOARD_ICDS_REPORT = StaticToggle(
 
 ICDS_DASHBOARD_REPORT_FEATURES = StaticToggle(
     'features_in_dashboard_icds_reports',
-    'ICDS: Enable access to the features in the ICDS Dashboard reports',
+    'ICDS: Enable access to pre-release features in the ICDS Dashboard reports',
     TAG_CUSTOM,
     [NAMESPACE_USER]
 )
@@ -1162,19 +1162,11 @@ MOBILE_USER_DEMO_MODE = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN]
 )
 
-
 SEND_UCR_REBUILD_INFO = StaticToggle(
     'send_ucr_rebuild_info',
     'Notify when UCR rebuilds finish or error.',
     TAG_SOLUTIONS_CONDITIONAL,
     [NAMESPACE_USER]
-)
-
-EMG_AND_REC_SMS_HANDLERS = StaticToggle(
-    'emg_and_rec_sms_handlers',
-    'ILS: Enable emergency and receipt sms handlers used in ILSGateway',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN]
 )
 
 ALLOW_USER_DEFINED_EXPORT_COLUMNS = StaticToggle(
@@ -1352,6 +1344,14 @@ FILTERED_BULK_USER_DOWNLOAD = StaticToggle(
     TAG_SOLUTIONS_OPEN,
     [NAMESPACE_DOMAIN],
     help_link='https://confluence.dimagi.com/display/ccinternal/Filter+Mobile+Workers+Download',
+)
+
+BULK_USER_DELETE = StaticToggle(
+    'bulk_user_delete',
+    "Allow bulk deletion of users based on a username upload.",
+    TAG_SOLUTIONS_LIMITED,
+    [NAMESPACE_DOMAIN],
+    help_link='https://confluence.dimagi.com/display/ccinternal/Bulk+Delete+Users',
 )
 
 FILTERED_LOCATION_DOWNLOAD = StaticToggle(
@@ -1731,18 +1731,15 @@ ICDS_GOVERNANCE_DASHABOARD_API = StaticToggle(
     relevant_environments={'icds', 'india'},
 )
 
-RATE_LIMIT_SUBMISSIONS = DynamicallyPredictablyRandomToggle(
-    'rate_limit_submissions',
-    'Rate limit submissions with a 429 TOO MANY REQUESTS response',
+DO_NOT_RATE_LIMIT_SUBMISSIONS = StaticToggle(
+    'do_not_rate_limit_submissions',
+    'Do not rate limit submissions for this project, on a temporary basis.',
     TAG_INTERNAL,
     [NAMESPACE_DOMAIN],
     description="""
-    While we are gaining an understanding of the effects of rate limiting,
-    we want to force rate limiting on certain domains, while also being to
-    toggle on and off global rate limiting quickly in response to issues.
-
-    To turn on global rate limiting, set Randomness Level to 1.
-    To turn it off, set to 0.
+    When an individual project is having problems with rate limiting,
+    use this toggle to lift the restriction for them on a temporary basis,
+    just to unblock them while we sort out the conversation with the client.
     """
 )
 
@@ -1797,10 +1794,33 @@ LIVEQUERY_READ_FROM_STANDBYS = DynamicallyPredictablyRandomToggle(
 )
 
 
-EXCEL_EXPORT_DATA_TYPING = StaticToggle(
-    'excel_export_data_typing',
-    'Enable the "Automatically format cells for Excel 2007+" checkbox in form '
-    'and case exports, so that excel export cells are correctly data-typed.',
+RUN_CUSTOM_DATA_PULL_REQUESTS = StaticToggle(
+    'run_custom_data_pull_requests',
+    '[ICDS] Initiate custom data pull requests from UI',
+    TAG_CUSTOM,
+    [NAMESPACE_USER]
+)
+
+
+RUN_DATA_MANAGEMENT_TASKS = StaticToggle(
+    'run_data_management_tasks',
+    '[ICDS] Run data management tasks',
+    TAG_CUSTOM,
+    [NAMESPACE_USER]
+)
+
+
+ALLOW_DEID_ODATA_FEED = StaticToggle(
+    'allow_deid_odata_feed',
+    'Allow De-Identification in OData feeds',
     TAG_PRODUCT,
-    [NAMESPACE_DOMAIN],
+    [NAMESPACE_DOMAIN]
+)
+
+
+ADD_ROW_INDEX_TO_MOBILE_UCRS = StaticToggle(
+    'add_row_index_to_mobile_ucrs',
+    'Add row index to mobile UCRs as the first column to retain original order of data',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN]
 )

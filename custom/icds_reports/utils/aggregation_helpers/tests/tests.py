@@ -94,6 +94,7 @@ ARGS = {
     'state_id': 'st1',
     'state_ids': ['st1', 'st2'],
     'last_sync': datetime(2019, 1, 5),
+    'use_agg_awc': True
 }
 
 

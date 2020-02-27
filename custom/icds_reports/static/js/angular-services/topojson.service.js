@@ -3,8 +3,8 @@
 window.angular.module('icdsApp').factory('topojsonService', ['$http', function ($http) {
     var url = hqImport('hqwebapp/js/initial_page_data').reverse;
     // todo: is there a better way to generate this so it works with django?
-    var stateTopoJsonUrl = '/static/js/topojsons/states_v3_small.topojson';
-    var districtTopoJsonUrl = '/static/js/topojsons/districts_v3_small.topojson';
+    var stateTopoJsonUrl = '/static/js/topojsons/states_v4.topojson';
+    var districtTopoJsonUrl = '/static/js/topojsons/districts_v4.topojson';
     var CACHE = {
         blocks: {},
     };

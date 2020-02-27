@@ -117,15 +117,12 @@ CELERY_FLOWER_URL = 'http://127.0.0.1:5555'
 
 ####### Less/Django Compressor ########
 
-LESS_DEBUG = True
 COMPRESS_ENABLED = False
 COMPRESS_OFFLINE = False
 
 ####### Bitly ########
 
-BITLY_LOGIN = None  # set to None to disable bitly app url shortening (useful offline) set to 'dimagi' if you are using the api key
-BITLY_APIKEY = '*******'
-
+BITLY_OAUTH_TOKEN = None
 
 ####### Jar signing config ########
 
@@ -243,6 +240,7 @@ CACHES = {
 # on both a local and a distributed environment this should be localhost
 ELASTICSEARCH_HOST = 'localhost'
 ELASTICSEARCH_PORT = 9200
+ELASTICSEARCH_MAJOR_VERSION = 2
 
 LOCAL_PILLOWTOPS = {
 #    'my_pillows': ['some.pillow.Class', ],

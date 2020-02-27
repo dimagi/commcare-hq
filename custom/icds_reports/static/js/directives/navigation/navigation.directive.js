@@ -3,8 +3,8 @@
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function NavigationController($window, $rootScope, $scope, $route, $routeParams, $location, navigationService,
-                              stateLevelAccess, haveAccessToAllLocations, haveAccessToFeatures,
-                              userFullName, userUsername, isMobile) {
+    stateLevelAccess, haveAccessToAllLocations, haveAccessToFeatures,
+    userFullName, userUsername, isMobile, navMenuItems) {
     $scope.$route = $route;
     $scope.$location = $location;
     $scope.$routeParams = $routeParams;
@@ -14,6 +14,7 @@ function NavigationController($window, $rootScope, $scope, $route, $routeParams,
     $scope.userFullName = userFullName;
     $scope.userUsername = userUsername;
     $scope.expandedSectionId = '';
+    $scope.navMenuItems = navMenuItems;
 
     var checkCollapse = function (reports) {
         var path = _.filter(reports, function(report) { return $location.path().indexOf(report) !== -1; });
@@ -35,6 +36,13 @@ function NavigationController($window, $rootScope, $scope, $route, $routeParams,
 
     };
 
+    $scope.toggleCollapse = function (sectionId) {
+        $scope.healthCollapsed = (sectionId === 'healthCollapsed') ? !$scope.healthCollapsed : true;
+        $scope.icdsCasReach = (sectionId === 'icdsCasReach') ? !$scope.icdsCasReach : true;
+        $scope.demographics = (sectionId === 'demographics') ? !$scope.demographics : true;
+        $scope.infrastructure = (sectionId === 'infrastructure') ? !$scope.infrastructure : true;
+    };
+
     // used by mobile only
     $scope.closeMenu = function () {
         if (isMobile) {
@@ -46,7 +54,7 @@ function NavigationController($window, $rootScope, $scope, $route, $routeParams,
 NavigationController.$inject = [
     '$window', '$rootScope', '$scope', '$route', '$routeParams', '$location', 'navigationService',
     'stateLevelAccess', 'haveAccessToAllLocations', 'haveAccessToFeatures',
-    'userFullName', 'userUsername', 'isMobile',
+    'userFullName', 'userUsername', 'isMobile', 'navMenuItems',
 ];
 
 window.angular.module('icdsApp').directive('navigation', ['templateProviderService', function (templateProviderService) {
