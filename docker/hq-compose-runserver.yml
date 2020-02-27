@@ -7,7 +7,7 @@ services:
       dockerfile: "${DOCKERFILE}"
     environment:
       COMMCAREHQ_BOOTSTRAP: "yes"
-      DEPENDENT_SERVICES: "couch:5984 postgres:5432 redis:6379 kafka:9092 elasticsearch:9200 minio:9980"
+      DEPENDENT_SERVICES: "couch:5984 postgres:5432 redis:6379 elasticsearch:9200 minio:9980 kafka:9092"
       DOCKER_HQ_OVERLAY: "${DOCKER_HQ_OVERLAY}"
     privileged: true  # allows mount inside container
     command: [runserver]
