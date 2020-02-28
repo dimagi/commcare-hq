@@ -48,7 +48,7 @@ def _get_odata_fields_from_columns(export_config, special_types, table_id):
         for header in column.get_headers(split_column=export_config.split_multiselects):
             metadata.append(FieldMetadata(
                 header,
-                special_types.get(_get_dot_path(column), 'Edm.String')
+                special_types.get(_get_dot_path(column), 'Edm.String') if not column.is_deidentifed else 'Edm.String'
             ))
 
     return metadata
