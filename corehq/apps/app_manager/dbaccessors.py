@@ -542,11 +542,17 @@ def get_case_types_from_apps(domain):
 
 @quickcache(['domain'])
 def get_app_languages(domain):
-    query = (AppES()
-             .domain(domain)
-             .terms_aggregation('langs', 'languages')
-             .size(0))
-    return query.run().aggregations.languages.keys
+    # unique terms aggregation is intentionally avoided
+    #   to reduce memory footprint of the query, as the number of
+    #   apps/builds in a domain should be low enough to agg in Python
+    result = (AppES()
+            .domain(domain)
+            .source('langs')
+            .run().hits)
+    langs = set()
+    for lang_list in result:
+        langs = langs.union(set(lang_list['langs']))
+    return langs
 
 
 def get_case_sharing_apps_in_domain(domain, exclude_app_id=None):

@@ -422,10 +422,10 @@ class EditWebUserView(BaseEditUserView):
 def get_domain_languages(domain):
     app_languages = get_app_languages(domain)
     translation_doc = StandaloneTranslationDoc.get_obj(domain, 'sms')
-    sms_languages = translation_doc.langs if translation_doc else []
+    sms_languages = set(translation_doc.langs if translation_doc else [])
 
     domain_languages = []
-    for lang_code in set(app_languages + sms_languages):
+    for lang_code in app_languages.union(sms_languages):
         name = langcodes.get_name(lang_code)
         label = "{} ({})".format(lang_code, name) if name else lang_code
         domain_languages.append((lang_code, label))
