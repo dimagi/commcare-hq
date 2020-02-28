@@ -221,3 +221,43 @@ class MultiValueStringTranslationTransform(SimpleTestCase):
         self.assertEqual(transform('#800080 #123456'), 'Purple #123456')
         self.assertEqual(transform('#123 #123456'), '#123 #123456')
         self.assertEqual(transform("#0000FF"), "Blue")
+
+
+class TestPrefixStringTransform(SimpleTestCase):
+
+    def test_basic(self):
+        transform = TransformFactory.get_transform({
+            "type": "prefix_string",
+            "prefix": "hello "
+        }).get_transform_function()
+
+        self.assertEqual(transform("world"), 'hello world')
+
+
+class TestHyperlinkTransform(SimpleTestCase):
+
+    def test_basic(self):
+        transform = TransformFactory.get_transform({
+            "type": "hyperlink",
+            "link_text": "View Form",
+        }).get_transform_function()
+
+        self.assertEqual(transform("http://my_hq_link"), "<a href='http://my_hq_link'>View Form</a>")
+
+
+class NestedTransform(SimpleTestCase):
+
+    def test_basic(self):
+        transform = TransformFactory.get_transform({
+            "type": "nested",
+            "inner_expression": {
+                "type": "prefix_string",
+                "prefix": "http://my_hq_link/"
+            },
+            "outer_expression": {
+                "type": "hyperlink",
+                "link_text": "View Form"
+            },
+        }).get_transform_function()
+
+        self.assertEqual(transform('my_doc_id'), "<a href='http://my_hq_link/my_doc_id'>View Form</a>")

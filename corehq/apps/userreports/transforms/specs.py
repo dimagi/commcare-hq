@@ -1,5 +1,6 @@
 from decimal import Decimal
 
+from django.utils.safestring import mark_safe
 from django.utils.translation import get_language
 
 from dimagi.ext.jsonobject import DictProperty, JsonObject, StringProperty
@@ -127,3 +128,57 @@ class MultipleValueStringTranslationTransform(TranslationTransform):
             return delimiter.join(translated_values_list)
 
         return transform_function
+
+
+class HyperLinkTransform(Transform):
+    type = TypeProperty("hyperlink")
+    link_text = StringProperty(required=True)
+
+    def get_transform_function(self):
+        link_text = mark_safe(self.link_text)
+        
+        def transform(value):
+            link_url = mark_safe(value)
+            return "<a href='{url}'>{text}</a>".format(url=link_url, text=link_text)
+
+        return transform
+
+
+class PrefixStringTransform(Transform):
+    type = TypeProperty('prefix_string')
+    prefix = StringProperty(required=True)
+
+    def get_transform_function(self):
+
+        def transform_function(value):
+            return mark_safe(self.prefix) + value
+
+        return transform_function
+
+
+class NestedTransform(Transform):
+    type = TypeProperty('nested')
+    inner_expression = DictProperty(required=True)
+    outer_expression = DictProperty(required=True)
+
+    def get_transform_function(self):
+
+        def transform(value):
+            from corehq.apps.userreports.transforms.factory import TransformFactory
+            inner_fn = TransformFactory.get_transform(self.inner_expression).get_transform_function()
+            outer_fn = TransformFactory.get_transform(self.outer_expression).get_transform_function()
+            return outer_fn(inner_fn(value))
+
+        return transform
+
+
+TRANSFORM_SPEC_MAP = {
+    'custom': CustomTransform,
+    'date_format': DateFormatTransform,
+    'number_format': NumberFormatTransform,
+    'translation': TranslationTransform,
+    'multiple_value_string_translation': MultipleValueStringTranslationTransform,
+    'hyperlink': HyperLinkTransform,
+    'prefix_string': PrefixStringTransform,
+    'nested': NestedTransform
+}

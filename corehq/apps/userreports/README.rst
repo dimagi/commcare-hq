@@ -1837,6 +1837,51 @@ Rounds decimal and floating point numbers to two decimal places.
        "custom_type": "short_decimal_display"
    }
 
+
+Prefix a string
+~~~~~~~~~~~~~~~
+
+Prefixes the column value with another string
+
+.. code:: json
+	{
+        "type": "prefix_string",
+        "prefix": "hello "
+    }
+
+Convert into a link
+~~~~~~~~~~~~~~~~~~~
+
+Display a text as a hyperlink
+
+.. code:: json
+
+   {
+       "type": "hyperlink",
+       "link_text": "View Form",
+   }
+
+
+Nesting Transforms
+~~~~~~~~~~~~~~~~~~
+
+Any of above transforms can be nested like below. For example to convert a doc_id
+column into a 'View Form' hyperlink
+
+.. code:: json
+	{
+        "type": "nested",
+        "inner_expression": {
+            "type": "prefix_string",
+            "prefix": "http://my_hq_link/"
+        },
+        "outer_expression": {
+            "type": "hyperlink",
+            "link_text": "View Form"
+        },
+    }
+
+
 Generic number formatting
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
