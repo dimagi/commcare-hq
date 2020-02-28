@@ -1,7 +1,6 @@
 import uuid
 
 from django.test import SimpleTestCase, override_settings
-from kafka import TopicPartition
 
 from corehq.util.test_utils import patch_datadog
 from pillowtop.feed.interface import Change, ChangeMeta
@@ -94,7 +93,7 @@ class TestPillowMetrics(SimpleTestCase):
             doc_id,
             'seq',
             topic=topic,
-            partition=TopicPartition(topic, 1),
+            partition=1,
             metadata=ChangeMeta(
                 data_source_type='couch',
                 data_source_name='test_commcarehq',
