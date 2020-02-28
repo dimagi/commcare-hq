@@ -104,6 +104,7 @@ from custom.icds_reports.models.aggregate import (
     DashboardUserActivityReport,
     AggregateAdolescentGirlsRegistrationForms,
     AggGovernanceDashboard,
+    AggServiceDeliveryReport,
     AggregateMigrationForms
 )
 from custom.icds_reports.models.helper import IcdsFile
@@ -114,6 +115,7 @@ from custom.icds_reports.reports.issnip_monthly_register import (
     ISSNIPMonthlyReport,
 )
 from custom.icds_reports.reports.take_home_ration import TakeHomeRationExport
+from custom.icds_reports.reports.service_delivery_report import ServiceDeliveryReport
 from custom.icds_reports.sqldata.exports.awc_infrastructure import (
     AWCInfrastructureExport,
 )
@@ -141,6 +143,7 @@ from custom.icds_reports.utils import (
     track_time,
     zip_folder,
     get_dashboard_usage_excel_file,
+    create_service_delivery_report
 )
 from custom.icds_reports.utils.aggregation_helpers.distributed import (
     ChildHealthMonthlyAggregationDistributedHelper,
@@ -325,6 +328,11 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
 
             res_ls_tasks.append(icds_aggregation_task.si(date=calculation_date, func_name='_agg_ls_table'))
 
+            res_sdr = chain(icds_aggregation_task.si(date=calculation_date, func_name='update_service_delivery_report'),
+                            ).apply_async()
+
+            res_sdr.get(disable_sync_subtasks=False)
+
             res_awc = chain(icds_aggregation_task.si(date=calculation_date, func_name='_agg_awc_table'),
                             *res_ls_tasks
                             ).apply_async()
@@ -408,6 +416,7 @@ def icds_aggregation_task(self, date, func_name):
         '_agg_ccs_record_table': _agg_ccs_record_table,
         '_agg_awc_table': _agg_awc_table,
         'aggregate_awc_daily': aggregate_awc_daily,
+        'update_service_delivery_report': update_service_delivery_report
     }[func_name]
 
     db_alias = get_icds_ucr_citus_db_alias()
@@ -597,8 +606,8 @@ def _child_health_monthly_data(state_ids, day):
 
     # https://github.com/celery/celery/issues/4274
     sub_aggregations = [
-        _child_health_helper.delay(query=query, params=params)
-        for query, params in helper.pre_aggregation_queries()
+        _child_health_helper.delay(queries)
+        for queries in helper.pre_aggregation_queries()
     ]
     for sub_aggregation in sub_aggregations:
         sub_aggregation.get(disable_sync_subtasks=False)
@@ -613,11 +622,12 @@ def update_child_health_monthly_table(day, state_ids):
 
 @task(serializer='pickle', queue='icds_aggregation_queue', default_retry_delay=15 * 60, acks_late=True)
 @track_time
-def _child_health_helper(query, params):
-    celery_task_logger.info("Running child_health_helper with %s", params)
+def _child_health_helper(queries):
     with get_cursor(ChildHealthMonthly) as cursor:
-        cursor.execute(query, params)
-    celery_task_logger.info("Completed child_health_helper with %s", params)
+        for query, params in queries:
+            celery_task_logger.info("Running child_health_helper with %s", params)
+            cursor.execute(query, params)
+        celery_task_logger.info("Completed child_health_helper with %s", params)
 
 
 @track_time
@@ -942,10 +952,25 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
         else:
             cache_key = create_excel_file(excel_data, data_type, file_format)
     elif indicator == SERVICE_DELIVERY_REPORT:
-        # CODE IN THIS SECTION WILL BE CHANGED WITH ACTUAL DATA PULLING
-        # WHEN THE BACKEND DATA WILL BE READY FOR THIS TABLE. MEANWHILE THIS
-        # REPORT IS NOT accessible to the USER BECAUSE ITS IN FF
-        cache_key = "DUMMY CAHE KEY"
+        excel_data = ServiceDeliveryReport(
+            config=config,
+            location=location,
+            beta=beta
+        ).get_excel_data()
+        export_info = excel_data[1][1]
+        generated_timestamp = date_parser.parse(export_info[0][1])
+        formatted_timestamp = generated_timestamp.strftime("%d-%m-%Y__%H-%M-%S")
+        data_type = 'Service Delivery Report__{}'.format(formatted_timestamp)
+
+        if file_format == 'xlsx':
+            cache_key = create_service_delivery_report(
+                excel_data,
+                data_type,
+                config,
+            )
+        else:
+            cache_key = create_excel_file(excel_data, data_type, file_format)
+
         formatted_timestamp = datetime.now().strftime("%d-%m-%Y__%H-%M-%S")
         data_type = 'Service Delivery Report__{}'.format(formatted_timestamp)
     if indicator not in (AWW_INCENTIVE_REPORT, LS_REPORT_EXPORT, THR_REPORT_EXPORT, CHILDREN_EXPORT,
@@ -1601,8 +1626,8 @@ def _child_health_monthly_aggregation(day, state_ids):
 
     greenlets = []
     pool = Pool(20)
-    for query, params in helper.pre_aggregation_queries():
-        greenlets.append(pool.spawn(_child_health_helper, query, params))
+    for queries in helper.pre_aggregation_queries():
+        greenlets.append(pool.spawn(_child_health_helper, queries))
     while not pool.join(timeout=120, raise_error=True):
         celery_task_logger.info('failed to join pool - greenlets remaining: {}'.format(len(pool)))
     for g in greenlets:
@@ -1808,3 +1833,8 @@ def _agg_governance_dashboard(current_month):
         db_alias = router.db_for_write(AggGovernanceDashboard)
         with transaction.atomic(using=db_alias):
             AggGovernanceDashboard().aggregate(month)
+
+
+def update_service_delivery_report(target_date):
+    current_month = force_to_date(target_date).replace(day=1)
+    AggServiceDeliveryReport.aggregate(current_month)

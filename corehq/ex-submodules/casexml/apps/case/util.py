@@ -1,3 +1,4 @@
+from __future__ import generator_stop
 from collections import defaultdict, namedtuple
 import uuid
 
@@ -225,7 +226,6 @@ def get_paged_changes_to_case_property(case, case_property_name, start=0, per_pa
             )
             if property_changed_info:
                 yield property_changed_info, i + start
-        raise StopIteration
 
     num_actions = len(case.actions)
     if start > num_actions:

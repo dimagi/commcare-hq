@@ -1731,18 +1731,15 @@ ICDS_GOVERNANCE_DASHABOARD_API = StaticToggle(
     relevant_environments={'icds', 'india'},
 )
 
-RATE_LIMIT_SUBMISSIONS = DynamicallyPredictablyRandomToggle(
-    'rate_limit_submissions',
-    'Rate limit submissions with a 429 TOO MANY REQUESTS response',
+DO_NOT_RATE_LIMIT_SUBMISSIONS = StaticToggle(
+    'do_not_rate_limit_submissions',
+    'Do not rate limit submissions for this project, on a temporary basis.',
     TAG_INTERNAL,
     [NAMESPACE_DOMAIN],
     description="""
-    While we are gaining an understanding of the effects of rate limiting,
-    we want to force rate limiting on certain domains, while also being to
-    toggle on and off global rate limiting quickly in response to issues.
-
-    To turn on global rate limiting, set Randomness Level to 1.
-    To turn it off, set to 0.
+    When an individual project is having problems with rate limiting,
+    use this toggle to lift the restriction for them on a temporary basis,
+    just to unblock them while we sort out the conversation with the client.
     """
 )
 
@@ -1809,5 +1806,13 @@ ALLOW_DEID_ODATA_FEED = StaticToggle(
     'allow_deid_odata_feed',
     'Allow De-Identification in OData feeds',
     TAG_PRODUCT,
+    [NAMESPACE_DOMAIN]
+)
+
+
+ADD_ROW_INDEX_TO_MOBILE_UCRS = StaticToggle(
+    'add_row_index_to_mobile_ucrs',
+    'Add row index to mobile UCRs as the first column to retain original order of data',
+    TAG_CUSTOM,
     [NAMESPACE_DOMAIN]
 )

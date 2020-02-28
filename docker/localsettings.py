@@ -154,7 +154,7 @@ EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 ####### Bitly ########
 
-BITLY_LOGIN = None
+BITLY_OAUTH_TOKEN = None
 
 ####### Jar signing config ########
 

@@ -43,6 +43,13 @@ function NavigationController($window, $rootScope, $scope, $route, $routeParams,
         $scope.infrastructure = (sectionId === 'infrastructure') ? !$scope.infrastructure : true;
     };
 
+    $scope.resetCollapseParameters = function () {
+        $scope.healthCollapsed = true;
+        $scope.icdsCasReach = true;
+        $scope.demographics = true;
+        $scope.infrastructure = true;
+    };
+
     // used by mobile only
     $scope.closeMenu = function () {
         if (isMobile) {

@@ -52,7 +52,7 @@ from corehq.apps.userreports.tests.utils import (
     mock_datasource_config,
 )
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
-from corehq.toggles import MOBILE_UCR, NAMESPACE_DOMAIN
+from corehq.toggles import MOBILE_UCR, NAMESPACE_DOMAIN, ADD_ROW_INDEX_TO_MOBILE_UCRS
 from corehq.util.test_utils import flag_enabled
 
 
@@ -156,6 +156,7 @@ class ReportFiltersSuiteTest(TestCase, TestXmlMixin):
             username='ralph',
         )
         MOBILE_UCR.set(cls.domain, True, NAMESPACE_DOMAIN)
+        ADD_ROW_INDEX_TO_MOBILE_UCRS.set(cls.domain, True, NAMESPACE_DOMAIN)
 
         report_configuration = cls.make_report_config(cls.domain, cls.report_id)
 
@@ -324,6 +325,16 @@ class ReportFiltersSuiteTest(TestCase, TestXmlMixin):
               </text>
             </title>
             <field>
+              <header width="0">
+                <text/>
+              </header>
+              <template width="0">
+                <text>
+                  <xpath function="column[@id='row_index']"/>
+                </text>
+              </template>
+            </field>
+            <field>
               <header>
                 <text>
                   <locale id="cchq.reports.a98c812873986df34fd1b4ceb45e6164ae9cc664.headers.color_94ec39e6"/>
@@ -360,18 +371,21 @@ class ReportFiltersSuiteTest(TestCase, TestXmlMixin):
         <partial>
           <rows>
             <row index="0" is_total_row="False">
+              <column id="row_index">0</column>
               <column id="color_94ec39e6">red</column>
               <column id="computed_owner_name_40cc88a0">cory</column>
               <column id="count">2</column>
               <column id="fav_fruit_abc123">c</column>
             </row>
             <row index="1" is_total_row="False">
+              <column id="row_index">1</column>
               <column id="color_94ec39e6">black</column>
               <column id="computed_owner_name_40cc88a0">ctsims</column>
               <column id="count">1</column>
               <column id="fav_fruit_abc123">b</column>
             </row>
             <row index="2" is_total_row="False">
+              <column id="row_index">2</column>
               <column id="color_94ec39e6">red</column>
               <column id="computed_owner_name_40cc88a0">daniel</column>
               <column id="count">3</column>
@@ -407,6 +421,16 @@ class ReportFiltersSuiteTest(TestCase, TestXmlMixin):
                 <locale id="cchq.report_data_table"/>
               </text>
             </title>
+            <field>
+              <header width="0">
+                <text/>
+              </header>
+              <template width="0">
+                <text>
+                  <xpath function="column[@id='row_index']"/>
+                </text>
+              </template>
+            </field>
             <field>
               <header>
                 <text>
