@@ -408,7 +408,7 @@ class ExportColumn(DocumentSchema):
 
     def get_headers(self, split_column=False):
         if self.is_deidentifed:
-            return ["{} {}".format(self.label, "[sensitive]")]
+            return ["{} {}".format(self.label, "*sensitive*")]
         else:
             return [self.label]
 
