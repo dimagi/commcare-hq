@@ -40,12 +40,18 @@ class ChangeProducer(object):
         return self._producer
 
     def send_change(self, topic, change_meta):
+        if settings.USE_KAFKA_SHORTEST_BACKLOG_PARTITIONER:
+            from corehq.apps.change_feed.partitioners import choose_best_partition_for_topic
+            partition = choose_best_partition_for_topic(topic)
+        else:
+            partition = None
+
         message = change_meta.to_json()
         message_json_dump = json.dumps(message).encode('utf-8')
         change_meta._transaction_id = uuid.uuid4().hex
         try:
             _audit_log(CHANGE_PRE_SEND, change_meta)
-            future = self.producer.send(topic, message_json_dump, key=change_meta.document_id)
+            future = self.producer.send(topic, message_json_dump, key=change_meta.document_id, partition=partition)
             if self.auto_flush:
                 future.get()
                 _audit_log(CHANGE_SENT, change_meta)
