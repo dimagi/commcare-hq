@@ -16,8 +16,8 @@ class AbstractElasticsearchInterface(metaclass=abc.ABCMeta):
             logger = logging.getLogger('es_interface')
             all_es_aliases = [index_info.alias for index_info in ES_META.values()]
             if index_or_alias not in all_es_aliases:
-                logger.info("Found a usecase where index is queries instead of alias")
-                logger.info(traceback.print_stack())
+                logger.info("Found a use case where an index is queried instead of alias")
+                logger.info(traceback.format_stack())
 
     def update_index_settings(self, index, settings_dict):
         assert set(settings_dict.keys()) == {'index'}, settings_dict.keys()
@@ -76,9 +76,9 @@ class AbstractElasticsearchInterface(metaclass=abc.ABCMeta):
                 action['_source'] = self._without_id_field(action['_source'])
         return bulk(self.es, actions, stats_only=stats_only, **kwargs)
 
-    def search(self, index=None, doc_type=None, body=None, params=None, **kwargs):
-        self._verify_is_alias(index)
-        results = self.es.search(index, doc_type, body=body, params=params or {}, **kwargs)
+    def search(self, index_alias=None, doc_type=None, body=None, params=None, **kwargs):
+        self._verify_is_alias(index_alias)
+        results = self.es.search(index_alias, doc_type, body=body, params=params or {}, **kwargs)
         self._fix_hits_in_results(results)
         return results
 
