@@ -1,10 +1,5 @@
 from datetime import timedelta
-from dimagi.ext.couchdbkit import Document
 import fluff
-
-
-class _(Document):
-    pass
 
 
 class SimpleCalculator(fluff.Calculator):
