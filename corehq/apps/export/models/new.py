@@ -587,10 +587,19 @@ class TableConfiguration(DocumentSchema):
 
         try:
             index = self._string_column_paths.index(string_item_path)
+            column = self.columns[index]
+            # on rare occasions, the paths may not match,
+            # and it's a sign to regenerate the cache
+            if column.item.path != item_path:
+                self._string_column_paths = [
+                    _create_index(column.item.path, column.item.transform)
+                    for column in self.columns
+                ]
+                index = self._string_column_paths.index(string_item_path)
+                column = self.columns[index]
         except ValueError:
             return None, None
 
-        column = self.columns[index]
         if (column.item.path == item_path
                 and column.item.transform == column_transform
                 and column.item.doc_type == item_doc_type):
