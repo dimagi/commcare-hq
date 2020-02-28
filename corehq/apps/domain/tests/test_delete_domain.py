@@ -95,7 +95,7 @@ from corehq.apps.sms.models import (
 )
 from corehq.apps.smsforms.models import SQLXFormsSession
 from corehq.apps.userreports.models import AsyncIndicator
-from corehq.apps.users.models import DomainRequest
+from corehq.apps.users.models import DomainRequest, SQLInvitation
 from corehq.apps.zapier.consts import EventTypes
 from corehq.apps.zapier.models import ZapierSubscription
 from corehq.blobs import NotFound, get_blob_db
@@ -809,11 +809,14 @@ class TestDeleteDomain(TestCase):
     def _assert_users_counts(self, domain_name, count):
         self._assert_queryset_count([
             DomainRequest.objects.filter(domain=domain_name),
+            SQLInvitation.objects.filter(domain=domain_name),
         ], count)
 
     def test_users_delete(self):
         for domain_name in [self.domain.name, self.domain2.name]:
             DomainRequest.objects.create(domain=domain_name, email='user@test.com', full_name='User')
+            SQLInvitation.objects.create(domain=domain_name, email='user@test.com',
+                                         invited_by='friend@test.com', invited_on=datetime.utcnow())
             self._assert_users_counts(domain_name, 1)
 
         self.domain.delete()
