@@ -113,4 +113,4 @@ class Command(BaseCommand):
             )
             if start_date:
                 forms = forms.filter(received_on__gte=start_date)
-            return forms.values_list('case_id', flat=True)
+            return forms.values_list('form_id', flat=True)
