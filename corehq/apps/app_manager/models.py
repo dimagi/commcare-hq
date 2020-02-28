@@ -168,7 +168,6 @@ from corehq.apps.reports.daterange import (
     get_daterange_start_end_dates,
     get_simple_dateranges,
 )
-from corehq.apps.translations.models import TranslationMixin
 from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
 from corehq.apps.userreports.util import get_static_report_mapping
 from corehq.apps.users.dbaccessors.couch_users import (
@@ -4556,8 +4555,7 @@ class SavedAppBuild(ApplicationBase):
         return data
 
 
-class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
-                  ApplicationIntegrationMixin):
+class Application(ApplicationBase, ApplicationMediaMixin, ApplicationIntegrationMixin):
     """
     An Application that can be created entirely through the online interface
 
@@ -4571,6 +4569,7 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
     custom_base_url = StringProperty()
     cloudcare_enabled = BooleanProperty(default=False)
 
+    translations = DictProperty()
     translation_strategy = StringProperty(default='select-known',
                                           choices=list(app_strings.CHOICES.keys()))
     auto_gps_capture = BooleanProperty(default=False)
@@ -4769,6 +4768,9 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
                 mod.get_or_create_unique_id()
             if should_save:
                 self.save()
+
+    def set_translations(self, lang, translations):
+        self.translations[lang] = translations
 
     def create_app_strings(self, lang, build_profile_id=None):
         gen = app_strings.CHOICES[self.translation_strategy]

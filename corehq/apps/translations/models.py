@@ -19,13 +19,6 @@ from corehq.motech.utils import b64_aes_decrypt
 from corehq.util.quickcache import quickcache
 
 
-class TranslationMixin(Document):
-    translations = DictProperty()
-
-    def set_translations(self, lang, translations):
-        self.translations[lang] = translations
-
-
 class SMSTranslations(models.Model):
     domain = models.CharField(max_length=255, unique=True)
     langs = JSONField(default=list)
