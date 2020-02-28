@@ -373,7 +373,7 @@ class PillowBase(metaclass=ABCMeta):
                 'pillow_name:{}'.format(self.get_name()),
                 _topic_for_ddog(
                     TopicPartition(change.topic, change.partition)
-                    if change.partition else change.topic
+                    if change.partition is not None else change.topic
                 ),
             ])
 
