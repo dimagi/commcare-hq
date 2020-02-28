@@ -559,9 +559,6 @@ class TableConfiguration(DocumentSchema):
         Given a path and transform, will return the column and its index. If not found, will
         return None, None.
 
-        NOTE: This method is in QA for accuracy to test against get_column
-        as a more efficient replacement.
-
         :param item_path: A list of path nodes that identify a column
         :param item_doc_type: The doc type of the item (often just ExportItem). If getting
                 UserDefinedExportColumn, set this to None
