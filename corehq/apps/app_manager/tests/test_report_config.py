@@ -52,7 +52,7 @@ from corehq.apps.userreports.tests.utils import (
     mock_datasource_config,
 )
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
-from corehq.toggles import MOBILE_UCR, NAMESPACE_DOMAIN
+from corehq.toggles import MOBILE_UCR, NAMESPACE_DOMAIN, ADD_ROW_INDEX_TO_MOBILE_UCRS
 from corehq.util.test_utils import flag_enabled
 
 
@@ -156,6 +156,7 @@ class ReportFiltersSuiteTest(TestCase, TestXmlMixin):
             username='ralph',
         )
         MOBILE_UCR.set(cls.domain, True, NAMESPACE_DOMAIN)
+        ADD_ROW_INDEX_TO_MOBILE_UCRS.set(cls.domain, True, NAMESPACE_DOMAIN)
 
         report_configuration = cls.make_report_config(cls.domain, cls.report_id)
 
@@ -188,8 +189,9 @@ class ReportFiltersSuiteTest(TestCase, TestXmlMixin):
             cls.hidden_column_report_id: report_configuration_with_hidden_column
         }
         cls.app = Application.new_app(cls.domain, "Report Filter Test App")
-        module = cls.app.add_module(ReportModule.new_module("Report Module", 'en'))
-        module.report_configs.append(
+        report_module = cls.app.add_module(ReportModule.new_module("Report Module", 'en'))
+        report_module.report_context_tile = True
+        report_module.report_configs.append(
             ReportAppConfig(
                 report_id=cls.report_id,
                 header={},
@@ -213,7 +215,7 @@ class ReportFiltersSuiteTest(TestCase, TestXmlMixin):
                 uuid=cls.report_config_mobile_id,
             )
         )
-        module.report_configs.append(
+        report_module.report_configs.append(
             ReportAppConfig(
                 report_id=cls.hidden_column_report_id,
                 header={},
@@ -223,6 +225,19 @@ class ReportFiltersSuiteTest(TestCase, TestXmlMixin):
                 uuid=cls.hidden_column_mobile_id,
             )
         )
+
+        case_module = cls.app.add_module(Module.new_module("Case Module", 'en'))
+        case_module.case_type = "fish"
+        case_module.report_context_tile = True
+        case_form = case_module.new_form("Update Fish", None)
+        case_form.requires = "case"
+        case_form.xmlns = "http://openrosa.org/formdesigner/2423EFB5-2E8C-4B8F-9DA0-23FFFD4391AF"
+
+        survey_module = cls.app.add_module(Module.new_module("Survey Module", 'en'))
+        survey_module.report_context_tile = True
+        survey_form = survey_module.new_form("Survey", None)
+        survey_form.xmlns = "http://openrosa.org/formdesigner/2423EFB5-2E8C-4B8F-9DA0-23FFFD4391AE"
+
         with mock_report_configurations(cls.report_configs_by_id):
             cls.suite = cls.app.create_suite()
         cls.data = [
@@ -248,27 +263,36 @@ class ReportFiltersSuiteTest(TestCase, TestXmlMixin):
                 <locale id="cchq.reports.a98c812873986df34fd1b4ceb45e6164ae9cc664.name"/>
               </text>
             </command>
+            <instance id="commcare-reports:index" src="jr://fixture/commcare-reports:index"/>
             <instance id="commcaresession" src="jr://instance/session"/>
             <instance id="reports" src="jr://fixture/commcare:reports"/>
             <session>
+              <datum autoselect="true" detail-persistent="report_context_tile" id="tile_holder" nodeset="instance('commcare-reports:index')/report_index/reports" value="./@last_update"/>
               <datum id="report_filter_a98c812873986df34fd1b4ceb45e6164ae9cc664_fav_fruit_abc123_1" nodeset="instance('reports')/reports/report[@id='a98c812873986df34fd1b4ceb45e6164ae9cc664']/filters/filter[@field='fav_fruit_abc123_1']/option" value="./@value" detail-select="reports.a98c812873986df34fd1b4ceb45e6164ae9cc664.filter.fav_fruit_abc123_1" />
               <datum id="report_filter_a98c812873986df34fd1b4ceb45e6164ae9cc664_computed_owner_name_40cc88a0_1" nodeset="instance('reports')/reports/report[@id='a98c812873986df34fd1b4ceb45e6164ae9cc664']/filters/filter[@field='computed_owner_name_40cc88a0_1']/option" value="./@value" detail-select="reports.a98c812873986df34fd1b4ceb45e6164ae9cc664.filter.computed_owner_name_40cc88a0_1"/>
               <datum id="report_id_a98c812873986df34fd1b4ceb45e6164ae9cc664" nodeset="instance('reports')/reports/report[@id='a98c812873986df34fd1b4ceb45e6164ae9cc664']" value="./@id" detail-select="reports.a98c812873986df34fd1b4ceb45e6164ae9cc664.select" detail-confirm="reports.a98c812873986df34fd1b4ceb45e6164ae9cc664.summary" autoselect="true"/>
             </session>
           </entry>
+        </partial>
+        """, self.suite, "entry[1]")
+
+        self.assertXmlPartialEqual("""
+        <partial>
           <entry>
             <command id="reports.45152061d8dc4d2a8d987a0568abe1ae">
               <text>
                 <locale id="cchq.reports.45152061d8dc4d2a8d987a0568abe1ae.name"/>
               </text>
             </command>
+            <instance id="commcare-reports:index" src="jr://fixture/commcare-reports:index"/>
             <instance id="reports" src="jr://fixture/commcare:reports"/>
             <session>
+              <datum autoselect="true" detail-persistent="report_context_tile" id="tile_holder" nodeset="instance('commcare-reports:index')/report_index/reports" value="./@last_update"/>
               <datum autoselect="true" detail-confirm="reports.45152061d8dc4d2a8d987a0568abe1ae.summary" detail-select="reports.45152061d8dc4d2a8d987a0568abe1ae.select" id="report_id_45152061d8dc4d2a8d987a0568abe1ae" nodeset="instance('reports')/reports/report[@id='45152061d8dc4d2a8d987a0568abe1ae']" value="./@id"/>
             </session>
           </entry>
         </partial>
-        """, self.suite, "entry")
+        """, self.suite, "entry[2]")
 
     def test_filter_detail(self):
         self.assertXmlPartialEqual("""
@@ -300,6 +324,16 @@ class ReportFiltersSuiteTest(TestCase, TestXmlMixin):
                 <locale id="cchq.report_data_table"/>
               </text>
             </title>
+            <field>
+              <header width="0">
+                <text/>
+              </header>
+              <template width="0">
+                <text>
+                  <xpath function="column[@id='row_index']"/>
+                </text>
+              </template>
+            </field>
             <field>
               <header>
                 <text>
@@ -337,18 +371,21 @@ class ReportFiltersSuiteTest(TestCase, TestXmlMixin):
         <partial>
           <rows>
             <row index="0" is_total_row="False">
+              <column id="row_index">0</column>
               <column id="color_94ec39e6">red</column>
               <column id="computed_owner_name_40cc88a0">cory</column>
               <column id="count">2</column>
               <column id="fav_fruit_abc123">c</column>
             </row>
             <row index="1" is_total_row="False">
+              <column id="row_index">1</column>
               <column id="color_94ec39e6">black</column>
               <column id="computed_owner_name_40cc88a0">ctsims</column>
               <column id="count">1</column>
               <column id="fav_fruit_abc123">b</column>
             </row>
             <row index="2" is_total_row="False">
+              <column id="row_index">2</column>
               <column id="color_94ec39e6">red</column>
               <column id="computed_owner_name_40cc88a0">daniel</column>
               <column id="count">3</column>
@@ -385,6 +422,16 @@ class ReportFiltersSuiteTest(TestCase, TestXmlMixin):
               </text>
             </title>
             <field>
+              <header width="0">
+                <text/>
+              </header>
+              <template width="0">
+                <text>
+                  <xpath function="column[@id='row_index']"/>
+                </text>
+              </template>
+            </field>
+            <field>
               <header>
                 <text>
                   <locale id="cchq.reports.45152061d8dc4d2a8d987a0568abe1ae.headers.color_94ec39e6"/>
@@ -399,6 +446,72 @@ class ReportFiltersSuiteTest(TestCase, TestXmlMixin):
           </detail>
         </partial>
         """, self.suite, "detail/detail[@id='reports.45152061d8dc4d2a8d987a0568abe1ae.data']")
+
+    def test_liveness_fixture(self):
+        self.assertXmlPartialEqual("""
+        <partial>
+          <detail id="report_context_tile">
+            <title>
+              <text/>
+            </title>
+            <field>
+              <style horz-align="left" font-size="small">
+                <grid grid-height="1" grid-width="12" grid-x="0" grid-y="0"/>
+              </style>
+              <header>
+                <text/>
+              </header>
+              <template>
+                <text>
+                  <xpath function="concat($message, ' ', format-date(date(instance('commcare-reports:index')/report_index/reports/@last_update), '%d/%m/%Y'))">
+                    <variable name="message">
+                      <locale id="cchq.reports_last_updated_on"/>
+                    </variable>
+                  </xpath>
+                </text>
+              </template>
+            </field>
+          </detail>
+        </partial>
+        """, self.suite, "detail[@id='report_context_tile']")
+
+        # Entry for form from case module
+        self.assertXmlPartialEqual("""
+        <partial>
+          <entry>
+            <form>http://openrosa.org/formdesigner/2423EFB5-2E8C-4B8F-9DA0-23FFFD4391AF</form>
+            <session>
+              <datum id="tile_holder" nodeset="instance('commcare-reports:index')/report_index/reports" value="./@last_update" detail-persistent="report_context_tile" autoselect="true"/>
+              <datum id="case_id" nodeset="instance('casedb')/casedb/case[@case_type='fish'][@status='open']" value="./@case_id" detail-select="m1_case_short" detail-confirm="m1_case_long"/>
+            </session>
+            <command id="m1-f0">
+              <text>
+                <locale id="forms.m1f0"/>
+              </text>
+            </command>
+            <instance id="casedb" src="jr://instance/casedb"/>
+            <instance id="commcare-reports:index" src="jr://fixture/commcare-reports:index"/>
+          </entry>
+        </partial>
+        """, self.suite, "entry[3]")
+
+        # Entry for form from survey module
+        self.assertXmlPartialEqual("""
+        <partial>
+          <entry>
+            <form>http://openrosa.org/formdesigner/2423EFB5-2E8C-4B8F-9DA0-23FFFD4391AE</form>
+            <session>
+              <datum id="tile_holder" nodeset="instance('commcare-reports:index')/report_index/reports" value="./@last_update" detail-persistent="report_context_tile" autoselect="true"/>
+            </session>
+            <command id="m2-f0">
+              <text>
+                <locale id="forms.m2f0"/>
+              </text>
+            </command>
+            <instance id="commcare-reports:index" src="jr://fixture/commcare-reports:index"/>
+          </entry>
+        </partial>
+        """, self.suite, "entry[4]")
 
 
 class TestReportAutoFilters(SimpleTestCase):

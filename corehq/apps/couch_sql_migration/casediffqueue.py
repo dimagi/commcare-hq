@@ -13,6 +13,8 @@ from gevent.pool import Group, Pool
 from casexml.apps.stock.models import StockReport
 from dimagi.utils.chunked import chunked
 
+from corehq.apps.tzmigration.timezonemigration import FormJsonDiff as Diff, MISSING
+
 from .casediff import (
     diff_cases_and_save_state,
     get_couch_cases,
@@ -184,7 +186,11 @@ class CaseDiffQueue:
         missing = set(case_ids) - loaded_case_ids
         if missing:
             log.error("Found %s missing Couch cases", len(missing))
-            self.statedb.add_missing_docs("CommCareCase-couch", missing)
+            self.statedb.replace_case_diffs([(
+                "CommCareCase",
+                case_id,
+                [Diff("missing", path=["*"], old_value=MISSING, new_value="?")],
+            ) for case_id in missing])
 
     def enqueue(self, case_id, num_forms=None):
         if num_forms is None:
@@ -624,7 +630,7 @@ class CasesReceivedCounter:
 class NoCaseDiff:
 
     def __init__(self, statedb):
-        pass
+        self.statedb = statedb
 
     def __enter__(self):
         return self
@@ -633,10 +639,10 @@ class NoCaseDiff:
         pass
 
     def update(self, case_ids, form_id):
-        pass
+        self.statedb.add_cases_to_diff(case_ids)
 
     def enqueue(self, case_id):
-        pass
+        self.statedb.add_cases_to_diff([case_id])
 
 
 def prune_premature_diffs(couch_cases, statedb):

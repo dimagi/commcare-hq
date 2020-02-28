@@ -137,7 +137,7 @@ class PillowChangeProviderReindexer(Reindexer):
             except Exception:
                 pillow_logging.exception("Unable to process change: %s", change.id)
 
-            if i % 1000:
+            if i % 1000 == 0:
                 pillow_logging.info("Processed %s docs", i)
 
 
@@ -199,7 +199,7 @@ class BulkPillowReindexProcessor(BaseDocProcessor):
             return not self.doc_filter(doc)
         return True
 
-    def process_bulk_docs(self, docs):
+    def process_bulk_docs(self, docs, progress_logger):
         if len(docs) == 0:
             return True
 

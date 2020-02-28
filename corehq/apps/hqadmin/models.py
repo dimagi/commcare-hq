@@ -1,9 +1,8 @@
-from datetime import date
+from datetime import date, datetime
 
-from django.db import models
+from django.db import DEFAULT_DB_ALIAS, models
 
 from dimagi.ext.couchdbkit import *
-from dimagi.utils.parsing import json_format_datetime
 from pillowtop.exceptions import PillowNotFoundError
 from pillowtop.utils import (
     get_all_pillow_instances,
@@ -12,36 +11,18 @@ from pillowtop.utils import (
 )
 
 
-class HqDeploy(Document):
-    date = DateTimeProperty()
-    user = StringProperty()
-    environment = StringProperty()
-    code_snapshot = DictProperty()
-    diff_url = StringProperty()
+class HqDeploy(models.Model):
+    date = models.DateTimeField(default=datetime.utcnow, db_index=True)
+    user = models.CharField(max_length=100)
+    environment = models.CharField(max_length=100, null=True)
+    diff_url = models.CharField(max_length=255, null=True)
 
     @classmethod
     def get_latest(cls, environment, limit=1):
-        result = HqDeploy.view(
-            'hqadmin/deploy_history',
-            startkey=[environment, {}],
-            endkey=[environment],
-            reduce=False,
-            limit=limit,
-            descending=True,
-            include_docs=True
-        )
-        return result.all()
-
-    @classmethod
-    def get_list(cls, environment, startdate, enddate, limit=50):
-        return HqDeploy.view(
-            'hqadmin/deploy_history',
-            startkey=[environment, json_format_datetime(startdate)],
-            endkey=[environment, json_format_datetime(enddate)],
-            reduce=False,
-            limit=limit,
-            include_docs=False
-        ).all()
+        query = cls.objects.filter(environment=environment).order_by("-date")
+        if limit:
+            return query[:limit]
+        return query
 
 
 class HistoricalPillowCheckpoint(models.Model):

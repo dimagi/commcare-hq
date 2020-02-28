@@ -34,5 +34,8 @@ window.angular.module('icdsApp').factory('navigationService', function () {
             }
             return awcReportPath;
         },
+        isMapDisplayed: function (path) {
+            return path.indexOf('/map') !== -1;
+        },
     };
 });

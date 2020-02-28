@@ -74,7 +74,12 @@ def _hard_delete_data(args_json):
     except CaseNotFound:
         # case has not been migrated yet
         raise IgnoreSystemAction
-    forms = [FormAccessorSQL.get_form(f) for f in form_ids]
+    forms = []
+    for form_id in form_ids:
+        try:
+            forms.append(FormAccessorSQL.get_form(form_id))
+        except XFormNotFound:
+            pass
     return case.domain, [case, forms], lambda: []
 
 

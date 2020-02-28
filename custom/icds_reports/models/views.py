@@ -1131,3 +1131,204 @@ class MWCDReportView(models.Model):
         app_label = 'icds_reports'
         managed = False
         db_table = 'mwcd_report'
+
+
+class SystemUsageReportView(models.Model):
+    awc_id = models.TextField(primary_key=True)
+    awc_name = models.TextField(blank=True, null=True)
+    supervisor_id = models.TextField(blank=True, null=True)
+    supervisor_name = models.TextField(blank=True, null=True)
+    block_id = models.TextField(blank=True, null=True)
+    block_name = models.TextField(blank=True, null=True)
+    district_id = models.TextField(blank=True, null=True)
+    district_name = models.TextField(blank=True, null=True)
+    state_id = models.TextField(blank=True, null=True)
+    state_name = models.TextField(blank=True, null=True)
+    aggregation_level = models.IntegerField(blank=True, null=True)
+    contact_phone_number = models.TextField(blank=True, null=True)
+    awc_days_open = models.IntegerField(
+        blank=True, null=True,
+        help_text="Days an AWC has submitted an Daily Feeding Form in this month"
+    )
+    num_launched_awcs = models.IntegerField(
+        blank=True, null=True,
+        help_text="number of AWCs that have at least one Household registration form"
+    )
+    usage_num_hh_reg = models.IntegerField(
+        blank=True, null=True,
+        help_text="Number of Register Household forms submitted"
+    )
+    usage_num_add_pregnancy = models.IntegerField(
+        blank=True, null=True,
+        help_text="Number of Add Pregnancy forms submitted"
+    )
+    usage_num_bp_tri = models.IntegerField(
+        blank=True, null=True,
+        help_text="Number of Birth Preparedness forms submitted in the third trimester (from /form/new_edd)"
+    )
+    usage_num_delivery = models.IntegerField(
+        blank=True, null=True,
+        help_text="Number of Delivery forms submitted"
+    )
+    usage_num_pnc = models.IntegerField(
+        blank=True, null=True,
+        help_text="Number of Postnatal Care Forms submitted"
+    )
+    usage_num_ebf = models.IntegerField(
+        blank=True, null=True,
+        help_text="Number of Exclusive Breast Feeding forms submitted"
+    )
+    usage_num_cf = models.IntegerField(
+        blank=True, null=True,
+        help_text="Number of Complementary Feeding forms submitted"
+    )
+    usage_num_gmp = models.IntegerField(
+        blank=True, null=True,
+        help_text="Number of Growth Monitoring forms submitted"
+    )
+    usage_num_thr = models.IntegerField(
+        blank=True, null=True,
+        help_text="Number of THR forms submitted"
+    )
+    usage_num_due_list_ccs_and_child_health = models.IntegerField(
+        blank=True, null=True,
+        help_text="Number of due list forms submitted where tasks.type is pregnancy"
+    )
+    num_supervisor_launched = models.IntegerField(blank=True, null=True)
+    month = models.DateField(blank=True, null=True)
+
+    class Meta(object):
+        app_label = 'icds_reports'
+        managed = False
+        db_table = 'system_usage_report_view'
+
+
+
+class ServiceDeliveryReportView(models.Model):
+    """
+    Contains rows for Tabular Service delivery report.
+    """
+    awc_id = models.TextField(primary_key=True)
+    awc_name = models.TextField(blank=True, null=True)
+    awc_site_code = models.TextField(blank=True, null=True)
+    supervisor_id = models.TextField(blank=True, null=True)
+    supervisor_name = models.TextField(blank=True, null=True)
+    supervisor_site_code = models.TextField(blank=True, null=True)
+    block_id = models.TextField(blank=True, null=True)
+    block_name = models.TextField(blank=True, null=True)
+    block_site_code = models.TextField(blank=True, null=True)
+    district_id = models.TextField(blank=True, null=True)
+    district_name = models.TextField(blank=True, null=True)
+    district_site_code = models.TextField(blank=True, null=True)
+    state_id = models.TextField(blank=True, null=True)
+    state_name = models.TextField(blank=True, null=True)
+    state_site_code = models.TextField(blank=True, null=True)
+    aggregation_level = models.IntegerField(
+        blank=True, null=True, help_text="1 for state rows, 2 for district rows, and so on"
+    )
+
+    block_map_location_name = models.TextField(blank=True, null=True)
+    district_map_location_name = models.TextField(blank=True, null=True)
+    state_map_location_name = models.TextField(blank=True, null=True)
+    month = models.DateField(blank=True, null=True)
+    num_launched_awcs = models.IntegerField(help_text='Number of AWC launched')
+    valid_visits = models.IntegerField(help_text='valid home visits')
+    expected_visits= models.IntegerField(help_text='expected home visits')
+    num_awcs_conducted_cbe = models.IntegerField(help_text='Number of AWC conducted atleast one CBE')
+    num_awcs_conducted_vhnd = models.IntegerField(help_text='Number of AWC conducted atleast one VHSND visits')
+    cbe_conducted = models.IntegerField(help_text='Number of CBE conducted by AWC')
+    vhnd_conducted = models.IntegerField(help_text='Number of VHND conducted by AWC')
+    gm_0_3 = models.IntegerField(
+        blank=True, null=True,
+        help_text="weighing efficiency for 0-3 years of children"
+    )
+    gm_3_5 = models.IntegerField(
+        blank=True, null=True,
+        help_text="weighing efficiency for 3-5 years of children"
+    )
+    children_0_3 = models.IntegerField(
+        blank=True, null=True,
+        help_text="Number of children age 0-3 years"
+    )
+    children_3_5 = models.IntegerField(
+        blank=True, null=True,
+        help_text="Number of children age 3-5 years"
+    )
+
+    pse_eligible= models.IntegerField(
+        blank=True, null=True,
+        help_text="Number of children eligible for pse"
+    )
+    pse_0_days= models.IntegerField(
+        blank=True, null=True,
+        help_text="Number of children who are eligible but attended 0 days of PSE"
+    )
+    pse_1_7_days= models.IntegerField(
+        blank=True, null=True,
+        help_text="Number of children attended 1-7 days of PSE"
+    )
+    pse_8_14_days= models.IntegerField(
+        blank=True, null=True,
+        help_text="Number of children attended 8-14 days of PSE"
+    )
+    pse_15_20_days= models.IntegerField(
+        blank=True, null=True,
+        help_text="Number of children attended 15-20 days of PSE"
+    )
+    pse_21_days= models.IntegerField(
+        blank=True, null=True,
+        help_text="Number of children attended >=21 days of PSE"
+    )
+    lunch_eligible= models.IntegerField(
+        blank=True, null=True,
+        help_text="Number of children eligible for lunch"
+    )
+    lunch_0_days= models.IntegerField(
+        blank=True, null=True,
+        help_text="Number of children who are eligible but got 0 days of lunch"
+    )
+    lunch_1_7_days= models.IntegerField(
+        blank=True, null=True,
+        help_text="Number of children got 1-7 days of lunch"
+    )
+    lunch_8_14_days= models.IntegerField(
+        blank=True, null=True,
+        help_text="Number of children got 8-14 days of lunch"
+    )
+    lunch_15_20_days= models.IntegerField(
+        blank=True, null=True,
+        help_text="Number of children got 15-20 days of lunch"
+    )
+    lunch_21_days= models.IntegerField(
+        blank=True, null=True,
+        help_text="Number of children got >=21 days of lunch"
+    )
+    thr_eligible= models.IntegerField(
+        blank=True, null=True,
+        help_text="Total number of beneficiaries eligible for THR"
+    )
+    thr_0_days= models.IntegerField(
+        blank=True, null=True,
+        help_text="beneficiarys who are eligible but got 0 days of THR"
+    )
+    thr_1_7_days= models.IntegerField(
+        blank=True, null=True,
+        help_text="beneficiaries who got 1-7 days of THR"
+    )
+    thr_8_14_days= models.IntegerField(
+        blank=True, null=True,
+        help_text="beneficiaries who got 8-14 days of THR"
+    )
+    thr_15_20_days= models.IntegerField(
+        blank=True, null=True,
+        help_text="beneficiaries who got 15-20 days of THR"
+    )
+    thr_21_days= models.IntegerField(
+        blank=True, null=True,
+        help_text="beneficiaries who got >=21 days of THR"
+    )
+
+    class Meta(object):
+        app_label = 'icds_reports'
+        managed = False
+        db_table = 'service_delivery_report'

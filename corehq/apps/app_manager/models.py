@@ -2024,6 +2024,12 @@ class Detail(IndexedSchema, CaseListLookupMixin):
             any(tab for tab in self.get_tabs() if tab.has_nodeset)
         )
 
+    def has_persistent_tile(self):
+        """
+        Return True if configured to persist a case tile on forms
+        """
+        return self.persist_tile_on_forms and (self.use_case_tiles or self.custom_xml)
+
 
 class CaseList(IndexedSchema, NavMenuItemMediaMixin):
 
@@ -2127,6 +2133,7 @@ class ModuleBase(IndexedSchema, ModuleMediaMixin, NavMenuItemMediaMixin, Comment
     put_in_root = BooleanProperty(default=False)
     root_module_id = StringProperty()
     fixture_select = SchemaProperty(FixtureSelect)
+    report_context_tile = BooleanProperty(default=False)
     auto_select_case = BooleanProperty(default=False)
     is_training_module = BooleanProperty(default=False)
 
@@ -4295,7 +4302,7 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
 
     def generate_shortened_url(self, view_name, build_profile_id=None):
         try:
-            if settings.BITLY_LOGIN:
+            if bitly.BITLY_CONFIGURED:
                 if build_profile_id is not None:
                     long_url = "{}{}?profile={}".format(
                         self.url_base, reverse(view_name, args=[self.domain, self._id]), build_profile_id

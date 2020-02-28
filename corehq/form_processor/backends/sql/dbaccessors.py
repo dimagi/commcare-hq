@@ -11,7 +11,7 @@ from itertools import groupby
 from uuid import UUID
 
 from django.conf import settings
-from django.db import InternalError, transaction, router
+from django.db import InternalError, transaction, router, DatabaseError
 from django.db.models import F, Q
 from django.db.models.expressions import Value
 from django.db.models.functions import Concat, Greatest
@@ -621,10 +621,11 @@ class FormAccessorSQL(AbstractFormAccessor):
             operation.form_id = form.form_id
 
         try:
-            with form.attachment_writer() as write_attachments, \
+            with form.attachment_writer() as attachment_writer, \
                     transaction.atomic(using=form.db, savepoint=False):
+                transaction.on_commit(attachment_writer.commit, using=form.db)
                 form.save()
-                write_attachments()
+                attachment_writer.write()
                 for operation in operations:
                     operation.save()
         except InternalError as e:
@@ -653,12 +654,11 @@ class FormAccessorSQL(AbstractFormAccessor):
         with transaction.atomic(using=db_name):
             if form.form_id_updated():
                 operations = form.original_operations + new_operations
-                with transaction.atomic(db_name):
-                    form.save()
-                    get_blob_db().metadb.reparent(form.orig_id, form.form_id)
-                    for model in operations:
-                        model.form = form
-                        model.save()
+                form.save()
+                get_blob_db().metadb.reparent(form.orig_id, form.form_id)
+                for model in operations:
+                    model.form = form
+                    model.save()
             else:
                 with transaction.atomic(db_name):
                     form.save()
@@ -775,6 +775,14 @@ class CaseAccessorSQL(AbstractCaseAccessor):
 
     @staticmethod
     def get_cases(case_ids, ordered=False, prefetched_indices=None):
+        """
+        :param case_ids: List of case IDs to fetch
+        :param ordered: Return cases in the same order as ``case_ids``
+        :param prefetched_indices: If not None this must be a dict containing ALL the indices for ALL the
+                                    cases being fetched. If the list does not contain indices for a case
+                                    then an empty list will be attached to the case preventing further DB lookup.
+        :return: List of cases
+        """
         assert isinstance(case_ids, list)
         if not case_ids:
             return []
@@ -783,7 +791,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         if ordered:
             _sort_with_id_list(cases, case_ids, 'case_id')
 
-        if prefetched_indices:
+        if prefetched_indices is not None:
             cases_by_id = {case.case_id: case for case in cases}
             _attach_prefetch_models(
                 cases_by_id, prefetched_indices, 'case_id', 'cached_indices')
@@ -1017,7 +1025,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
                 CaseAttachmentSQL.objects.using(case.db).filter(id__in=attachment_ids_to_delete).delete()
 
                 case.clear_tracked_models()
-        except InternalError as e:
+        except DatabaseError as e:
             raise CaseSaveError(e)
 
     @staticmethod
@@ -1196,13 +1204,11 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         return owner_ids
 
     @staticmethod
-    def get_case_transactions_for_form(form_id, limit_to_cases):
-        for db_name, case_ids in split_list_by_db_partition(limit_to_cases):
-            resultset = CaseTransaction.objects.using(db_name).filter(
-                case_id__in=case_ids, form_id=form_id
-            )
-            for trans in resultset:
-                yield trans
+    def form_has_case_transactions(form_id):
+        for db_name in get_db_aliases_for_partitioned_query():
+            if CaseTransaction.objects.using(db_name).filter(form_id=form_id).exists():
+                return True
+        return False
 
     @staticmethod
     def get_case_transactions_by_case_id(case, updated_xforms=None):
@@ -1486,6 +1492,13 @@ def _sort_with_id_list(object_list, id_list, id_property):
 
 def _attach_prefetch_models(objects_by_id, prefetched_models, link_field_name, cached_attrib_name):
     prefetched_groups = groupby(prefetched_models, lambda x: getattr(x, link_field_name))
+    seen = set()
     for obj_id, group in prefetched_groups:
+        seen.add(obj_id)
         obj = objects_by_id[obj_id]
         setattr(obj, cached_attrib_name, list(group))
+
+    unseen = set(objects_by_id) - seen
+    for obj_id in unseen:
+        obj = objects_by_id[obj_id]
+        setattr(obj, cached_attrib_name, [])

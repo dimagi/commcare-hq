@@ -72,7 +72,7 @@
     "KafkaDomainPillow": {
         "advertised_name": "KafkaDomainPillow",
         "change_feed_type": "KafkaChangeFeed",
-        "checkpoint_id": "KafkaDomainPillow-test_hqdomains_2016-08-08",
+        "checkpoint_id": "KafkaDomainPillow-test_hqdomains_2020-02-10",
         "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
         "name": "KafkaDomainPillow"
     },
@@ -114,7 +114,7 @@
     "SqlSMSPillow": {
         "advertised_name": "SqlSMSPillow",
         "change_feed_type": "KafkaChangeFeed",
-        "checkpoint_id": "SqlSMSPillow-test_smslogs_2017-02-09",
+        "checkpoint_id": "SqlSMSPillow-test_smslogs_2020-01-28",
         "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
         "name": "SqlSMSPillow"
     },

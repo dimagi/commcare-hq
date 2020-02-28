@@ -54,13 +54,12 @@ a:active, a:hover, a:focus {
   width: 95%;
   margin-left: auto;
   margin-right: auto;
-  margin-top: -250px; // make sure it shows on screen by moving up
 }
 
 .map-kpi {
-  padding: 20px;
+  padding: 10px;
   background-color: rgb(0, 98, 115) !important;
-  border-radius: 35px;
+  border-radius: 10px;
   color: #ffffff;
 }
 
@@ -118,12 +117,30 @@ a:active, a:hover, a:focus {
   font-size: 10px;
 }
 
-// reduce width of tooltip
-.nvtooltip .hoverinfo {
-  width: 160px !important;
+// reduce width of tooltip and wrap text if overflows
+.chartPopup .hoverinfo {
+  width: 150px !important;
+  white-space: normal;
+  word-break: break-all;
 }
 
-// move tooltip 40px to the left to accommodate margins
-.nvtooltip {
+.chartPopup {
+  color: black;
   margin-left: -40px;
+  background: rgba(255,255,255, 0.8);
+  border: 1px solid rgba(0,0,0,0.5);
+  border-radius: 4px;
+}
+
+//adjusting margin of tooltip to prevent it from going off screen
+.nvtooltip {
+  width: 135px !important;
+  white-space: normal;
+  word-break: break-all;
+}
+
+//by default labels and vertical lines opacity is made 0 instead of
+// wrapping when label is long to avoid overlap
+#mobile-bar-chart text, #mobile-bar-chart line {
+  opacity: 1 !important;
 }

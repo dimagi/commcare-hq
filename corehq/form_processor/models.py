@@ -245,24 +245,39 @@ class AttachmentMixin(SaveStateMixin):
         """
         if all(isinstance(a, BlobMeta) for a in self.attachments_list):
             # do nothing if all attachments have already been written
+            class NoopWriter():
+                def write(self):
+                    pass
+
+                def commit(self):
+                    pass
+
             @contextmanager
             def noop_context():
-                yield lambda: None
+                yield NoopWriter()
 
             return noop_context()
 
-        def write_attachments(blob_db):
-            self._attachments_list = [
-                attachment.write(blob_db, self)
-                for attachment in self.attachments_list
-            ]
+        class Writer():
+            def __init__(self, form, blob_db):
+                self.form = form
+                self.blob_db = blob_db
+
+            def write(self):
+                self.saved_attachments = [
+                    attachment.write(self.blob_db, self.form)
+                    for attachment in self.form.attachments_list
+                ]
+
+            def commit(self):
+                self.form._attachments_list = self.saved_attachments
 
         @contextmanager
         def atomic_attachments():
             unsaved = self.attachments_list
             assert all(isinstance(a, Attachment) for a in unsaved), unsaved
             with AtomicBlobs(get_blob_db()) as blob_db:
-                yield lambda: write_attachments(blob_db)
+                yield Writer(self, blob_db)
 
         return atomic_attachments()
 
@@ -1378,8 +1393,6 @@ class CaseTransaction(PartitionedModel, SaveStateMixin, models.Model):
     @classmethod
     def form_transaction(cls, case, xform, client_date, action_types=None):
         """Get or create a form transaction for a the given form and case.
-        This will not do a DB lookup for the transaction but will check for new
-        transactions being tracked on the case
         """
         action_types = action_types or []
 
@@ -1409,8 +1422,6 @@ class CaseTransaction(PartitionedModel, SaveStateMixin, models.Model):
     @classmethod
     def ledger_transaction(cls, case, xform):
         """Get or create a ledger transaction for a the given form and case.
-        This will not do a DB lookup for the transaction but will check for new
-        transactions being tracked on the case
         """
         return cls._from_form(
             case,
@@ -1420,7 +1431,10 @@ class CaseTransaction(PartitionedModel, SaveStateMixin, models.Model):
 
     @classmethod
     def _from_form(cls, case, xform, transaction_type):
-        transaction = case._get_unsaved_transaction_for_form(xform.form_id)
+        if xform.is_saved():
+            transaction = case.get_transaction_by_form_id(xform.form_id)
+        else:
+            transaction = case._get_unsaved_transaction_for_form(xform.form_id)
         if transaction:
             transaction.type |= transaction_type
             return transaction

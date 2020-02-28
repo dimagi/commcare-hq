@@ -40,7 +40,7 @@
 
     <link href="https://fonts.googleapis.com/css?family=Nunito+Sans:100,300,400,500,700,800" rel="stylesheet">
 
-    {% include 'hqwebapp/includes/less.html' with debug=less_debug %}
+    {% include 'hqwebapp/includes/less.html' %}
 
     {% if CUSTOM_LOGO_URL %}
       <link rel="apple-touch-icon" href="{{ CUSTOM_LOGO_URL }}"/>
@@ -154,8 +154,6 @@
       // this fails for form designer, which currently uses RequireJS for vellum but not for the surrounding page.
       window.USE_REQUIREJS = {{ requirejs_main|BOOL }};
     </script>
-
-    {% include "hqwebapp/partials/less_debug.html" %}
   </head>
   <body>
     {% if ANALYTICS_IDS.GTM_ID %}

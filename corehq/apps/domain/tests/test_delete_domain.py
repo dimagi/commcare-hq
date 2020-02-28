@@ -50,7 +50,8 @@ from corehq.apps.case_search.models import (
     IgnorePatterns,
 )
 from corehq.apps.cloudcare.dbaccessors import get_application_access_for_domain
-from corehq.apps.cloudcare.models import SQLApplicationAccess
+from corehq.apps.cloudcare.models import ApplicationAccess
+from corehq.apps.consumption.models import SQLDefaultConsumption
 from corehq.apps.commtrack.models import CommtrackConfig
 from corehq.apps.data_analytics.models import GIRRow, MALTRow
 from corehq.apps.data_dictionary.models import CaseProperty, CaseType
@@ -74,6 +75,7 @@ from corehq.apps.locations.models import (
 from corehq.apps.ota.models import MobileRecoveryMeasure, SerialIdBucket
 from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.reminders.models import EmailUsage
+from corehq.apps.registration.models import SQLRegistrationRequest
 from corehq.apps.reports.models import ReportsSidebarOrdering
 from corehq.apps.sms.models import (
     SMS,
@@ -473,7 +475,7 @@ class TestDeleteDomain(TestCase):
 
     def _assert_cloudcare_counts(self, domain_name, count):
         self._assert_queryset_count([
-            SQLApplicationAccess.objects.filter(domain=domain_name),
+            ApplicationAccess.objects.filter(domain=domain_name),
         ], count)
 
     def test_cloudcare(self):
@@ -484,6 +486,20 @@ class TestDeleteDomain(TestCase):
 
         self._assert_cloudcare_counts(self.domain.name, 0)
         self._assert_cloudcare_counts(self.domain2.name, 1)
+
+    def _assert_consumption_counts(self, domain_name, count):
+        self._assert_queryset_count([
+            SQLDefaultConsumption.objects.filter(domain=domain_name),
+        ], count)
+
+    def test_consumption(self):
+        for domain_name in [self.domain.name, self.domain2.name]:
+            SQLDefaultConsumption.objects.create(domain=domain_name)
+
+        self.domain.delete()
+
+        self._assert_consumption_counts(self.domain.name, 0)
+        self._assert_consumption_counts(self.domain2.name, 1)
 
     def _assert_data_analytics_counts(self, domain_name, count):
         self._assert_queryset_count([
@@ -689,6 +705,26 @@ class TestDeleteDomain(TestCase):
 
         self._assert_phone_counts(self.domain.name, 0)
         self._assert_phone_counts(self.domain2.name, 1)
+
+    def _assert_registration_count(self, domain_name, count):
+        self._assert_queryset_count([
+            SQLRegistrationRequest.objects.filter(domain=domain_name),
+        ], count)
+
+    def test_registration_delete(self):
+        for domain_name in [self.domain.name, self.domain2.name]:
+            SQLRegistrationRequest.objects.create(
+                domain=domain_name,
+                activation_guid=uuid.uuid4().hex,
+                request_time=datetime.utcnow(),
+                request_ip='12.34.567.8'
+            )
+            self._assert_registration_count(domain_name, 1)
+
+        self.domain.delete()
+
+        self._assert_registration_count(self.domain.name, 0)
+        self._assert_registration_count(self.domain2.name, 1)
 
     def _assert_reminders_counts(self, domain_name, count):
         self._assert_queryset_count([
