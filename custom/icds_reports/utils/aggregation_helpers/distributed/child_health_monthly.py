@@ -259,7 +259,7 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
                 "WHEN gm.zscore_grading_wfh = 2 THEN 'moderate' "
                 "WHEN gm.zscore_grading_wfh = 3 THEN 'normal' "
                 "ELSE 'unmeasured' END".format(height_eligible)),
-            ("zscore_grading_hfa", "CASE WHEN {} THEN gm.zscore_grading_hfa ELSE 0 END".format(valid_in_month)),
+            ("zscore_grading_hfa", "CASE WHEN {} THEN gm.zscore_grading_hfa ELSE NULL END".format(valid_in_month)),
             ("zscore_grading_hfa_recorded_in_month",
                 "CASE WHEN (date_trunc('MONTH', gm.zscore_grading_hfa_last_recorded) = %(start_date)s) AND {} "
                 "THEN 1 ELSE 0 END".format(valid_in_month)),
