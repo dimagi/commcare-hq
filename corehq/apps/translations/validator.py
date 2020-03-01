@@ -55,13 +55,11 @@ class UploadedTranslationsValidator(object):
 
     def _setup(self):
         self.single_sheet = is_single_sheet_workbook(self.uploaded_workbook)
-        if self.single_sheet:
-            self.lang_cols_to_compare = [self.lang_prefix + self.lang_to_compare]
-        else:
-            self.lang_cols_to_compare = [self.lang_prefix + self.app.default_language]
-            # compare lang to compare along with default language, if not same
-            if self.lang_to_compare != self.app.default_language:
-                self.lang_cols_to_compare.append(self.lang_prefix + self.lang_to_compare)
+        self.lang_cols_to_compare = [self.lang_prefix + self.lang_to_compare]
+        if self.lang_to_compare != self.app.default_language:
+            default_lang_col = self.lang_prefix + self.app.default_language
+            if default_lang_col in self.uploaded_workbook.worksheets[0].fieldnames:
+                self.lang_cols_to_compare.append(default_lang_col)
         self.app_translation_generator = AppTranslationsGenerator(
             self.app.domain, self.app.get_id, None, self.app.default_language, self.lang_to_compare,
             self.lang_prefix)
@@ -69,16 +67,18 @@ class UploadedTranslationsValidator(object):
         self.uploaded_sheet_name_to_module_or_form_type_and_id = dict()
 
     def _generate_current_headers_and_rows(self):
+        lang = self.lang_to_compare if len(self.lang_cols_to_compare) == 1 else None
         self.current_headers = {
             mod_or_form_id: headers
             for mod_or_form_id, headers in
             get_bulk_app_sheet_headers(
                 self.app,
-                lang=self.lang_to_compare,
+                lang=lang,
                 eligible_for_transifex_only=True,
                 single_sheet=self.single_sheet,
         )}
         if self.single_sheet:
+            # single sheet supports only single language
             self.current_rows = get_bulk_app_single_sheet_by_name(
                 self.app,
                 self.lang_to_compare,
@@ -87,6 +87,7 @@ class UploadedTranslationsValidator(object):
         else:
             self.current_rows = get_bulk_app_sheets_by_name(
                 self.app,
+                lang,
                 eligible_for_transifex_only=True
             )
             self._set_current_sheet_name_to_module_or_form_mapping()
