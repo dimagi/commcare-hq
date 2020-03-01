@@ -13,7 +13,6 @@ from corehq.apps.translations.app_translations.utils import (
     is_form_sheet,
     is_module_sheet,
     is_modules_and_forms_sheet,
-    is_single_sheet,
     is_single_sheet_workbook,
 )
 from corehq.apps.translations.const import (
@@ -54,6 +53,7 @@ class UploadedTranslationsValidator(object):
         self._setup()
 
     def _setup(self):
+        self._validate_sheet()
         self.single_sheet = is_single_sheet_workbook(self.uploaded_workbook)
         self.lang_cols_to_compare = [self.lang_prefix + self.lang_to_compare]
         if self.lang_to_compare != self.app.default_language:
@@ -65,6 +65,12 @@ class UploadedTranslationsValidator(object):
             self.lang_prefix)
         self.current_sheet_name_to_module_or_form_type_and_id = dict()
         self.uploaded_sheet_name_to_module_or_form_type_and_id = dict()
+
+    def _validate_sheet(self):
+        lang_col = self.lang_prefix + self.lang_to_compare
+        if lang_col not in self.uploaded_workbook.worksheets[0].fieldnames:
+            raise BulkAppTranslationsException(
+                _("Missing translations for {} in uploaded sheet").format(self.lang_to_compare))
 
     def _generate_current_headers_and_rows(self):
         lang = self.lang_to_compare if len(self.lang_cols_to_compare) == 1 else None
