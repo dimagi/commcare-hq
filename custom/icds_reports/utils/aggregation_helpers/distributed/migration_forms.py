@@ -1,5 +1,4 @@
 from dateutil.relativedelta import relativedelta
-from datetime import date
 
 from custom.icds_reports.const import AGG_MIGRATION_TABLE
 from custom.icds_reports.utils.aggregation_helpers import month_formatter
@@ -24,12 +23,6 @@ class MigrationFormsAggregationDistributedHelper(StateBasedAggregationDistribute
             "current_month_start": current_month_start,
             "next_month_start": next_month_start,
         }
-
-        if month <= date(2020, 1, 1):
-            time_constraint = "timeend::date < '{}'::date".format(next_month_start)
-        else:
-            time_constraint = "timeend::date >= '{}'::date AND timeend::date < '{}'::date".format(current_month_start, next_month_start)
-
         return """
         SELECT DISTINCT
             %(state_id)s AS state_id,
@@ -44,7 +37,7 @@ class MigrationFormsAggregationDistributedHelper(StateBasedAggregationDistribute
             END AS migration_date
           FROM "{ucr_tablename}"
           WHERE state_id = %(state_id)s AND
-                {time_constraint} AND
+                timeend >= %(current_month_start)s AND timeend < %(next_month_start)s AND
                 person_case_id IS NOT NULL
           WINDOW w AS (
             PARTITION BY supervisor_id, person_case_id
@@ -53,7 +46,6 @@ class MigrationFormsAggregationDistributedHelper(StateBasedAggregationDistribute
         """.format(
             ucr_tablename=self.ucr_tablename,
             tablename=self.aggregate_parent_table,
-            time_constraint=time_constraint
         ), query_params
 
     def aggregation_query(self):

@@ -15,10 +15,8 @@ class Command(BaseCommand):
                          .filter(domain=DASHBOARD_DOMAIN, location_type__name='state')
                          .values_list('location_id', flat=True))
 
-        current_date = datetime.date(2020, 1, 1)
+        current_date = datetime.date(2020, 2, 1)
 
-        while current_date <= datetime.date(2020, 2, 1):
-            for state_id in state_ids:
-                icds_state_aggregation_task(state_id=state_id, date=current_date,
-                                            func_name='_agg_migration_table')
-            current_date = current_date + relativedelta(months=1)
+        for state_id in state_ids:
+            icds_state_aggregation_task(state_id=state_id, date=current_date,
+                                        func_name='_agg_migration_table')
