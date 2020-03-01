@@ -169,7 +169,10 @@ class UploadedTranslationsValidator(object):
 
         if module_or_form_id not in self.current_rows:
             return self._missing_module_or_form_diff(for_type)
-        current_rows = self._filter_rows(for_type, self.current_rows[module_or_form_id], module_or_form_id)
+        if self.lang_prefix + self.app.default_language in self.lang_cols_to_compare:
+            current_rows = self._filter_rows(for_type, self.current_rows[module_or_form_id], module_or_form_id)
+        else:
+            current_rows = self.current_rows[module_or_form_id]
 
         parsed_current_rows = []
         parsed_uploaded_rows = []
