@@ -948,6 +948,10 @@ RATE_LIMIT_SUBMISSIONS = False
 STALE_EXPORT_THRESHOLD = None
 
 REQUIRE_TWO_FACTOR_FOR_SUPERUSERS = False
+# Use an experimental partitioning algorithm
+# that adds messages to the partition with the fewest unprocessed messages
+USE_KAFKA_SHORTEST_BACKLOG_PARTITIONER = False
+
 
 try:
     # try to see if there's an environmental variable set for local_settings
