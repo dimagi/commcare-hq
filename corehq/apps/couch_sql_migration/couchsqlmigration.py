@@ -545,7 +545,7 @@ NORMALIZED_TIMING_BUCKETS = (0.001, 0.01, 0.1, 0.25, 0.5, 0.75, 1, 2, 3, 5, 10, 
 
 @contextmanager
 def migration_patches():
-    with patch_case_property_validators(), patch_XFormInstance_get_xml():
+    with patch_case_property_validators(), patch_XFormInstance_get_xml(), patch_kafka():
         yield
 
 
@@ -593,6 +593,20 @@ def patch_XFormInstance_get_xml():
     finally:
         XFormInstance.get_xml = XFormInstance._unsafe_get_xml
         del XFormInstance._unsafe_get_xml
+
+
+@contextmanager
+def patch_kafka():
+    def drop_change(self, topic, change_meta):
+        log.debug("not publishing doc_id=%s to %s", change_meta.document_id, topic)
+
+    from corehq.apps.change_feed.producer import ChangeProducer
+    send_change = ChangeProducer.send_change
+    ChangeProducer.send_change = drop_change
+    try:
+        yield
+    finally:
+        ChangeProducer.send_change = send_change
 
 
 def _wrap_form(doc):
@@ -912,7 +926,6 @@ def _save_migrated_models(sql_form, case_stock_result):
         forms_tuple,
         cases=case_stock_result.case_models if case_stock_result else None,
         stock_result=stock_result,
-        publish_to_kafka=False
     )
 
 
