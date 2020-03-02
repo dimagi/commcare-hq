@@ -3,6 +3,7 @@ from memoized import memoized
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.connection import get_kafka_consumer
 from corehq.util.quickcache import quickcache
+from dimagi.utils.logging import notify_exception
 from pillowtop import get_pillow_by_name, get_all_pillow_configs
 
 
@@ -19,12 +20,19 @@ def choose_best_partition_for_topic(topic):
         # None means there's no best, use the default
         return None
 
-    backlog_lengths_by_partition = _get_backlog_lengths_by_partition(topic)
-    _, best_partition = min(
-        (backlog_length, partition)
-        for partition, backlog_length in backlog_lengths_by_partition.items()
-    )
-    return best_partition
+    try:
+        backlog_lengths_by_partition = _get_backlog_lengths_by_partition(topic)
+    except Exception:
+        # if there's any issue whatsoever fetching offsets
+        # fall back to the default partitioning algorithm
+        notify_exception(None, "Error measuring kafka partition backlog lengths")
+        return None
+    else:
+        _, best_partition = min(
+            (backlog_length, partition)
+            for partition, backlog_length in backlog_lengths_by_partition.items()
+        )
+        return best_partition
 
 
 @quickcache(['topic'], memoize_timeout=10, timeout=10)
