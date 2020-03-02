@@ -71,11 +71,9 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
                 // scale maps based on space available on device.
                 var headerHeight = $('#map-chart-header').height() + $('#page-heading').innerHeight();
                 var legendHeight = 145; // fixed legend height to calculate available space for map
-                // take window height and subtract height of the header plus legend height plus 44px of additional padding / margins
-                var availableHeight = window.innerHeight - headerHeight - legendHeight - 44;
-                if (availableHeight < vm.mapHeight) {
-                    vm.mapHeight = availableHeight;
-                }
+                // always set map height to available height, which is:
+                // widow height - height of the header - legend height - 44px of additional padding / margins
+                vm.mapHeight = window.innerHeight - headerHeight - legendHeight - 44;
             }
         }
     };
@@ -99,6 +97,10 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
                 (bboxFeature[1][0] + bboxFeature[0][0]) / 2,
                 (bboxFeature[1][1] + bboxFeature[0][1]) / 2];
 
+        if (!isMobile) {
+            // for web maps, downsize the scale a bit to avoid overwriting the legend
+            scale = scale * .75;
+        }
         return {
             'scale': scale,
             'center': center,
@@ -150,7 +152,7 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
                 var div = vm.scope === "ind" ? 3 : 4;
                 var options = vm.rawTopojson.objects[vm.scope];
                 var projection, path;
-                if (isMobile) {
+                if (isMobile || !options.center) {
                     // load a dummy projection so we can calculate the true size
                     // more here: https://data-map-d3.readthedocs.io/en/latest/steps/step_03.html#step-03
                     projection = d3.geo.equirectangular().scale(1);
@@ -164,21 +166,24 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
                         .center(scaleCenter.center)
                         .translate([element.offsetWidth / 2, element.offsetHeight / 2]); // sets map in center of canvas
 
-                    //setting zoom out limit
-                    //references: https://data-map-d3.readthedocs.io/en/latest/steps/step_06.html#step-06
-                    $(function () {
-                        // DOM Ready
-                        var svg = d3.select('#map svg'); //selects svg in datamap component
-                        var zoom = d3.behavior.zoom().scaleExtent([1, 10]).on('zoom', function () {
-                            // this function redraws the map rendered on zoom event
-                            // reference: bower_components/angular-datamaps/dist/angular-datamaps.js (line 27)
-                            svg.selectAll('g').attr("transform",
-                                "translate(" + d3.event.translate + ") scale(" + d3.event.scale + ")");
+                    if (isMobile) {
+                        // setting zoom out limit
+                        // references: https://data-map-d3.readthedocs.io/en/latest/steps/step_06.html#step-06
+                        $(function () {
+                            // DOM Ready
+                            var svg = d3.select('#map svg'); //selects svg in datamap component
+                            var zoom = d3.behavior.zoom().scaleExtent([1, 10]).on('zoom', function () {
+                                // this function redraws the map rendered on zoom event
+                                // reference: bower_components/angular-datamaps/dist/angular-datamaps.js (line 27)
+                                svg.selectAll('g').attr("transform",
+                                    "translate(" + d3.event.translate + ") scale(" + d3.event.scale + ")");
+                            });
+                            svg.call(zoom); //connects zoom event to map
+                            // overrides default overflow value (hidden) of svg, which allows map to zoom over legend
+                            svg.style("overflow", "inherit");
                         });
-                        svg.call(zoom); //connects zoom event to map
-                        // overrides default overflow value (hidden) of svg, which allows map to zoom over legend
-                        svg.style("overflow", "inherit");
-                    });
+                    }
+
                 } else {
                     projection = d3.geo.equirectangular()
                         .center(options.center)

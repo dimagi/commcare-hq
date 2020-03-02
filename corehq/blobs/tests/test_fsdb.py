@@ -33,8 +33,9 @@ class _BlobDBTests(object):
         with patch_datadog() as stats:
             meta = self.db.put(BytesIO(b"content"), meta=identifier)
         size = len(b'content')
-        self.assertEqual(sum(s for s in stats["commcare.blobs.added.count"]), 1)
-        self.assertEqual(sum(s for s in stats["commcare.blobs.added.bytes"]), size)
+        print(stats)
+        self.assertEqual(sum(s for s in stats["commcare.blobs.added.count.type:form_xml"]), 1)
+        self.assertEqual(sum(s for s in stats["commcare.blobs.added.bytes.type:form_xml"]), size)
         self.assertEqual(self.db.size(key=meta.key), size)
 
     def test_put_with_timeout(self):

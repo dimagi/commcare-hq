@@ -333,7 +333,7 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
             ("state_id", "child_health.state_id"),
             ("opened_on", "child_health.opened_on")
         )
-        return """
+        yield """
         INSERT INTO "{child_tablename}" (
             {columns}
         ) (SELECT
@@ -390,6 +390,13 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
             "state_id": state_id,
         }
 
+        yield """ALTER TABLE "{tablename}" ATTACH PARTITION "{child_tablename}" FOR VALUES IN (%(state_id)s)""".format(
+            tablename=self.temporary_tablename,
+            child_tablename='{}_{}'.format(self.temporary_tablename, state_id[-5:]),
+        ), {
+            "state_id": state_id,
+        }
+
     def pre_aggregation_queries(self):
         return [self._state_aggregation_query(state_id) for state_id in self.state_ids]
 
@@ -412,10 +419,12 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
         return "DROP TABLE IF EXISTS \"{}_{}\"".format(self.temporary_tablename, state_id[-5:])
 
     def create_partition(self, state_id):
-        return "CREATE TABLE \"{tmp_tablename}_{state_id_last_5}\" PARTITION OF \"{tmp_tablename}\" FOR VALUES IN ('{state_id}')".format(
+        return """
+        CREATE TABLE \"{tmp_tablename}_{state_id_last_5}\" (LIKE \"{tmp_tablename}\");
+        SELECT create_distributed_table('{tmp_tablename}_{state_id_last_5}', 'supervisor_id');
+        """.format(
             tmp_tablename=self.temporary_tablename,
             state_id_last_5=state_id[-5:],
-            state_id=state_id
         )
 
     def aggregation_queries(self):

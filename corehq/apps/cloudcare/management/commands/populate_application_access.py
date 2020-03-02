@@ -12,6 +12,10 @@ class Command(PopulateSQLCommand):
         from corehq.apps.cloudcare.models import ApplicationAccess
         return ApplicationAccess
 
+    @classmethod
+    def commit_adding_migration(cls):
+        return "1e099ff2f11cc6c3c7a0d647f1a67f32994ac01b"
+
     def update_or_create_sql_object(self, doc):
         model, created = self.sql_class().objects.update_or_create(
             domain=doc['domain'],

@@ -43,7 +43,7 @@ class InvitationTest(TestCase):
                           invited_on=datetime.utcnow()),
         ]
         for inv in cls.invitations:
-            inv.save()
+            inv.save(sync_to_sql=False)
 
     def test_by_domain(self):
         self.assertEqual(len(SQLInvitation.by_domain('domain_1')), 1)
@@ -58,5 +58,5 @@ class InvitationTest(TestCase):
     @classmethod
     def tearDownClass(cls):
         for inv in cls.invitations:
-            inv.delete()
+            inv.delete(sync_to_sql=False)
         super(InvitationTest, cls).tearDownClass()

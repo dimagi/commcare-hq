@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 import signal
@@ -32,6 +33,9 @@ from corehq.apps.tzmigration.api import (
     force_phone_timezones_should_be_processed,
 )
 from corehq.blobs import CODES, get_blob_db
+from corehq.blobs.mixin import BlobMetaRef
+from corehq.form_processor.backends.couch.dbaccessors import CaseAccessorCouch
+from corehq.form_processor.backends.couch.processor import FormProcessorCouch
 from corehq.form_processor.backends.sql.dbaccessors import (
     CaseAccessorSQL,
     FormAccessorSQL,
@@ -42,7 +46,7 @@ from corehq.form_processor.exceptions import (
     AttachmentNotFound,
     MissingFormXml,
     XFormNotFound,
-)
+    CaseSaveError)
 from corehq.form_processor.interfaces.processor import (
     FormProcessorInterface,
     ProcessedForms,
@@ -68,6 +72,7 @@ from corehq.form_processor.utils.general import (
     clear_local_domain_sql_backend_override,
     set_local_domain_sql_backend_override,
 )
+from corehq.form_processor.utils.xform import convert_xform_to_json
 from corehq.toggles import COUCH_SQL_MIGRATION_BLACKLIST, NAMESPACE_DOMAIN
 from corehq.util.couch_helpers import NoSkipArgsProvider
 from corehq.util.datadog.gauges import datadog_counter
@@ -80,7 +85,7 @@ from corehq.util.pagination import (
 )
 from corehq.util.timer import TimingContext
 
-from .asyncforms import AsyncFormProcessor
+from .asyncforms import AsyncFormProcessor, get_case_ids
 from .casediffqueue import CaseDiffProcess, CaseDiffQueue, NoCaseDiff
 from .json2xml import convert_form_to_xml
 from .statedb import init_state_db
@@ -176,10 +181,10 @@ class CouchSqlDomainMigrator:
             for doc in self._get_resumable_iterator(['XFormInstance']):
                 pool.process_xform(doc)
 
-    def _migrate_form(self, couch_form, case_ids):
+    def _migrate_form(self, couch_form, case_ids, **kw):
         set_local_domain_sql_backend_override(self.domain)
         form_id = couch_form.form_id
-        self._migrate_form_and_associated_models(couch_form)
+        self._migrate_form_and_associated_models(couch_form, **kw)
         self.case_diff_queue.update(case_ids, form_id)
 
     def _migrate_form_and_associated_models(self, couch_form, form_is_processed=True):
@@ -328,7 +333,7 @@ class CouchSqlDomainMigrator:
         _migrate_case_attachments(couch_case, sql_case)
         try:
             CaseAccessorSQL.save_case(sql_case)
-        except IntegrityError:
+        except CaseSaveError:
             # case re-created by form processing so just mark the case as deleted
             CaseAccessorSQL.soft_delete_cases(
                 self.domain,
@@ -340,8 +345,13 @@ class CouchSqlDomainMigrator:
             self.case_diff_queue.enqueue(couch_case.case_id)
 
     def _process_forms_subset(self, forms):
-        if forms in ["skipped", "missing"]:
-            self._process_skipped_forms(cached=forms == "missing")
+        if forms == "missing":
+            self._process_missing_forms()
+            return
+        if forms == "missing-blob-present":
+            for form in _iter_missing_blob_present_forms(self.statedb, self.stopper):
+                log.info("migrating form %s received on %s", form.form_id, form.received_on)
+                self._migrate_form(form, get_case_ids(form))
             return
         form_ids = get_ids_from_string_or_file(forms)
         orig_ids = set(form_ids)
@@ -353,7 +363,7 @@ class CouchSqlDomainMigrator:
         for form_id in form_ids:
             log.info("migrating form: %s", form_id)
             form = XFormInstance.get(form_id)
-            self._migrate_form_and_associated_models(form)
+            self._migrate_form(form, get_case_ids(form))
         self._rediff_already_migrated_forms(migrated_ids)
 
     def _rediff_already_migrated_forms(self, form_ids):
@@ -361,30 +371,26 @@ class CouchSqlDomainMigrator:
             log.info("re-diffing form: %s", form_id)
             couch_form = XFormInstance.get(form_id)
             sql_form = FormAccessorSQL.get_form(form_id)
-            self._save_diffs(couch_form, sql_form, replace=True)
+            self._save_diffs(couch_form, sql_form)
 
-    def _process_skipped_forms(self, cached=False):
-        """process forms skipped by a previous migration
-
-        note: does not diff cases
-        """
+    def _process_missing_forms(self):
+        """process forms missed by a previous migration"""
         migrated = 0
-        with self.counter('skipped_forms', 'XFormInstance.id') as add_form:
-            skipped = _iter_skipped_forms(self.statedb, self.stopper, cached)
-            for doc_type, doc in skipped:
+        with self.counter('missing_forms', 'XFormInstance.id') as add_form:
+            for doc_type, doc in _iter_missing_forms(self.statedb, self.stopper):
                 try:
                     form = XFormInstance.wrap(doc)
                 except Exception:
                     log.exception("Error wrapping form %s", doc)
                 else:
-                    self._migrate_form_and_associated_models(form)
-                    if cached:
-                        self.statedb.doc_not_missing(doc_type, form.form_id)
+                    proc = doc_type not in UNPROCESSED_DOC_TYPES
+                    self._migrate_form(form, get_case_ids(form), form_is_processed=proc)
+                    self.statedb.doc_not_missing(doc_type, form.form_id)
                     add_form()
                     migrated += 1
                     if migrated % 100 == 0:
-                        log.info("migrated %s previously skipped forms", migrated)
-        log.info("finished migrating %s previously skipped forms", migrated)
+                        log.info("migrated %s previously missed forms", migrated)
+        log.info("finished migrating %s previously missed forms", migrated)
 
     def _check_for_migration_restrictions(self, domain_name):
         msgs = []
@@ -580,18 +586,23 @@ def _migrate_form_attachments(sql_form, couch_form):
             return meta
         except MissingFormXml:
             pass
-        log.warning("Rebuilding missing form XML: %s", couch_form.form_id)
         metas = get_blob_metadata(couch_form.form_id)[(CODES.form_xml, "form.xml")]
         if len(metas) == 1:
             couch_meta = couch_form.blobs.get("form.xml")
             if couch_meta is None:
                 assert not metas[0].blob_exists(), metas
+            elif metas[0].key != couch_meta.key:
+                assert not blobdb.exists(couch_meta.key), couch_meta
+                if metas[0].blob_exists():
+                    return metas[0]
             else:
                 assert metas[0].key == couch_meta.key, (metas, couch_meta)
+                assert not metas[0].blob_exists(), metas
             blobdb.delete(metas[0].key)
             metas.remove(metas[0])
         else:
             assert not metas, metas  # protect against yet another duplicate
+        log.warning("Rebuilding missing form XML: %s", couch_form.form_id)
         xml = convert_form_to_xml(couch_form.to_json()["form"])
         att = Attachment("form.xml", xml.encode("utf-8"), content_type="text/xml")
         return att.write(blobdb, sql_form)
@@ -976,27 +987,86 @@ def _repr_bad_results(view, kwargs, results, domain):
     return f"bad results from {view} {kwargs}:\n{context}"
 
 
-def _iter_skipped_forms(statedb, stopper, cached):
-    # Datadog tag: type:find_skipped_forms
+def _iter_missing_forms(statedb, stopper):
     from dimagi.utils.couch.bulk import get_docs
     from .missingdocs import MissingIds
     couch = XFormInstance.get_db()
     domain = statedb.domain
-    with MissingIds.forms(statedb, stopper, tag="skipped") as skipped:
-        if cached:
-            doc_types = skipped.doc_types
-            iter_doc_ids = statedb.iter_missing_doc_ids
-        else:
-            doc_types = ["XFormInstance"]
-            iter_doc_ids = skipped
-        for doc_type in doc_types:
-            skipped_ids = iter_doc_ids(doc_type)
-            for form_ids in chunked(skipped_ids, _iter_docs.chunk_size, list):
-                for doc in get_docs(couch, form_ids):
-                    assert doc["domain"] == domain, doc
-                    yield doc_type, doc
-                if stopper.clean_break:
-                    break
+    for doc_type in MissingIds.form_types:
+        missing_ids = statedb.iter_missing_doc_ids(doc_type)
+        for form_ids in chunked(missing_ids, _iter_docs.chunk_size, list):
+            for doc in get_docs(couch, form_ids):
+                assert doc["domain"] == domain, doc
+                yield doc_type, doc
+            if stopper.clean_break:
+                break
+
+
+def _iter_missing_blob_present_forms(statedb, stopper):
+    def get_blob_present_form_ids(diff):
+        if diff.kind == "CommCareCase":
+            case_id = diff.doc_id
+            data = json.loads(diff.old_value)["forms"]
+            form_ids = [form_id
+                for form_id, status in data.items()
+                if status == "missing, blob present"]
+            assert form_ids, diff.old_value
+        elif diff.kind == "stock state":
+            case_id = diff.doc_id.split("/", 1)[0]
+            data = json.loads(diff.old_value)
+            assert data["form_state"] == "missing, blob present", data
+            form_ids = [data["ledger"]["last_modified_form_id"]]
+        return form_ids, case_id
+
+    def iter_blob_metas(form_ids):
+        metas = metadb.get_for_parents(form_ids)
+        parents = set()
+        for meta in metas:
+            if meta.type_code == CODES.form_xml:
+                yield meta, [m for m in metas if m.parent_id == meta.parent_id]
+                assert meta.parent_id not in parents, metas
+                parents.add(meta.parent_id)
+        assert parents == set(form_ids), (form_ids, parents)
+
+    def xml_to_form(domain, xml_meta, case_id, all_metas):
+        form_id = xml_meta.parent_id
+        with xml_meta.open() as fh:
+            xml = fh.read()
+        form_data = convert_xform_to_json(xml)
+        form = FormProcessorCouch.new_xform(form_data)
+        form.domain = domain
+        form.received_on = get_received_on(case_id, form_id)
+        for meta in all_metas:
+            form.external_blobs[meta.name] = BlobMetaRef(
+                key=meta.key,
+                blobmeta_id=meta.id,
+                content_type=meta.content_type,
+                content_length=meta.content_length,
+            )
+        return form
+
+    def get_received_on(case_id, form_id):
+        case = CaseAccessorCouch.get_case(case_id)
+        for action in case.actions:
+            if action.xform_id == form_id:
+                return action.server_date
+        raise ValueError(f"case {case_id} has no actions for form {form_id}")
+
+    domain = statedb.domain
+    metadb = get_blob_db().metadb
+    seen = set()
+    for kind, doc_id, diffs in statedb.iter_doc_diffs("CommCareCase"):
+        for diff in diffs:
+            if not diff.old_value or "missing, blob present" not in diff.old_value:
+                continue
+            form_ids, case_id = get_blob_present_form_ids(diff)
+            form_ids = [f for f in form_ids if f not in seen]
+            if not form_ids or ("case", case_id) in seen:
+                continue
+            seen.update(form_ids)
+            seen.add(("case", case_id))
+            for xml_meta, all_metas in iter_blob_metas(form_ids):
+                yield xml_to_form(domain, xml_meta, case_id, all_metas)
 
 
 def _drop_sql_form_ids(couch_ids, statedb):

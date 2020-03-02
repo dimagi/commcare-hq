@@ -1,5 +1,3 @@
-# Stub models file
-from dimagi.ext.couchdbkit import Document
 # ensure our signals get loaded at django bootstrap time
 from . import signals
 from casexml.apps.case.models import CommCareCase
@@ -13,10 +11,6 @@ LAST_VISIT = {
     'visit_name': 'last',
     'days': -1
 }
-
-
-class _(Document):
-    pass
 
 
 def get_randomization_date(case):
