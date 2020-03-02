@@ -205,7 +205,9 @@ function ServiceDeliveryDashboardController($rootScope, $scope, $http, $location
         ]
     };
 
-    vm.getSddTableData = function (isPwLwChildren, isAwc) {
+    vm.getSddTableData = function () {
+        var isPwLwChildren = vm.isPwLwChildrenTab();
+        var isAwc = vm.isAwcDataShown();
         return isPwLwChildren ?
             (isAwc ? vm.sddTableData['pw_lw_children']['awc'] : vm.sddTableData['pw_lw_children']['non-awc']) :
             vm.sddTableData['children'];
@@ -220,8 +222,8 @@ function ServiceDeliveryDashboardController($rootScope, $scope, $http, $location
         return (parseInt($location.search()['selectedLocationLevel'], 10) === 3);
     };
 
-    vm.buildDataTable = function (isPwLwChildren, isAwc) {
-        var tableData = vm.getSddTableData(isPwLwChildren, isAwc);
+    vm.buildDataTable = function () {
+        var tableData = vm.getSddTableData();
         var dataTableColumns = [];
         for (var i = 0; i < tableData.length; i++) {
             dataTableColumns.push(DTColumnBuilder.newColumn(tableData[i]['mData'])
@@ -241,7 +243,7 @@ function ServiceDeliveryDashboardController($rootScope, $scope, $http, $location
             locationLevelName
         ).renderWith(renderCellValue('raw', locationLevelNameField)
         ).withClass('medium-col')];
-        vm.dtColumns = vm.dtColumns.concat(vm.buildDataTable(vm.isPwLwChildrenTab(), vm.isAwcDataShown()));
+        vm.dtColumns = vm.dtColumns.concat(vm.buildDataTable());
     };
 
     vm.setDtColumns();
