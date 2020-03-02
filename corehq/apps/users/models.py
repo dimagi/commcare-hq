@@ -39,6 +39,7 @@ from dimagi.ext.couchdbkit import (
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.database import get_safe_write_kwargs, iter_docs
+from dimagi.utils.couch.migration import SyncCouchToSQLMixin, SyncSQLToCouchMixin
 from dimagi.utils.couch.undo import DELETED_SUFFIX, DeleteRecord
 from dimagi.utils.dates import force_to_datetime
 from dimagi.utils.logging import log_signal_errors, notify_exception
@@ -2593,7 +2594,41 @@ class DomainRequest(models.Model):
                                     email_from=settings.DEFAULT_FROM_EMAIL)
 
 
-class Invitation(QuickCachedDocumentMixin, Document):
+class SQLInvitation(SyncSQLToCouchMixin, models.Model):
+    email = models.CharField(max_length=255, db_index=True)
+    invited_by = models.CharField(max_length=126)           # couch id of a WebUser
+    invited_on = models.DateTimeField()
+    is_accepted = models.BooleanField(default=False)
+    domain = models.CharField(max_length=255)
+    role = models.CharField(max_length=100, null=True)
+    program = models.CharField(max_length=126, null=True)   # couch id of a Program
+    supply_point = models.CharField(max_length=126, null=True)  # couch id of a Location
+    couch_id = models.CharField(max_length=126, null=True, db_index=True)
+
+    _inviter = None
+
+    class Meta:
+        db_table = "users_invitation"
+
+    @classmethod
+    def _migration_get_fields(cls):
+        return [
+            "email",
+            "invited_by",
+            "invited_on",
+            "is_accepted",
+            "domain",
+            "role",
+            "program",
+            "supply_point",
+        ]
+
+    @classmethod
+    def _migration_get_couch_model_class(cls):
+        return Invitation
+
+
+class Invitation(SyncCouchToSQLMixin, QuickCachedDocumentMixin, Document):
     email = StringProperty()
     invited_by = StringProperty()
     invited_on = DateTimeProperty()
@@ -2604,6 +2639,23 @@ class Invitation(QuickCachedDocumentMixin, Document):
     supply_point = None
 
     _inviter = None
+
+    @classmethod
+    def _migration_get_fields(cls):
+        return [
+            "email",
+            "invited_by",
+            "invited_on",
+            "is_accepted",
+            "domain",
+            "role",
+            "program",
+            "supply_point",
+        ]
+
+    @classmethod
+    def _migration_get_sql_model_class(cls):
+        return SQLInvitation
 
     def get_inviter(self):
         if self._inviter is None:
