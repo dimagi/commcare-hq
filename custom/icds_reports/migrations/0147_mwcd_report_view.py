@@ -14,4 +14,4 @@ class Migration(migrations.Migration):
         ('icds_reports', '0146_auto_20191030_1120'),
     ]
 
-    operations = [migrator.get_migration('mwcd_dashboard.sql')]
+    operations = []

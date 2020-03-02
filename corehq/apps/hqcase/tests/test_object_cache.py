@@ -45,18 +45,17 @@ class CaseObjectCacheTest(BaseCaseMultimediaTest):
     """
 
     def setUp(self):
+        super(CaseObjectCacheTest, self).setUp()
         self.domain = Domain.get_or_create_with_name(TEST_DOMAIN_NAME, is_active=True)
         self.user = WebUser.create(TEST_DOMAIN_NAME, TEST_USER, TEST_PASSWORD)
         self.user.set_role(self.domain.name, 'admin')
         self.user.save()
         self.interface = FormProcessorInterface(TEST_DOMAIN_NAME)
-        delete_all_cases()
-        delete_all_xforms()
-        time.sleep(1)
 
     def tearDown(self):
         self.user.delete()
         self.domain.delete()
+        super(CaseObjectCacheTest, self).tearDown()
 
     def testCreateMultimediaCase(self):
         """

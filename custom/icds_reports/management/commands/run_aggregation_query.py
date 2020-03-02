@@ -36,10 +36,12 @@ from custom.icds_reports.tasks import (
     update_agg_child_health,
     update_child_health_monthly_table,
     _agg_adolescent_girls_registration_table,
+    _agg_migration_table,
     create_df_indices,
     drop_df_indices,
     drop_gm_indices,
-    update_governance_dashboard
+    update_governance_dashboard,
+    update_service_delivery_report
 )
 
 
@@ -61,6 +63,7 @@ STATE_TASKS = {
     'agg_beneficiary_form': (None, _agg_beneficiary_form, None),
     'aggregate_df_forms': (drop_df_indices, _aggregate_df_forms, create_df_indices),
     'aggregate_ag_forms': (None, _agg_adolescent_girls_registration_table, None),
+    'aggregate_migration_forms': (None, _agg_migration_table, None),
 }
 
 ALL_STATES_TASKS = {
@@ -80,7 +83,8 @@ NORMAL_TASKS = {
     'agg_awc_table': (None, _agg_awc_table, None),
     'aggregate_awc_daily': (None, aggregate_awc_daily, None),
     'update_agg_child_health': (None, update_agg_child_health, None),
-    'update_governance_dashboard': (None, update_governance_dashboard, None)
+    'update_governance_dashboard': (None, update_governance_dashboard, None),
+    'update_service_delivery_report': (None, update_service_delivery_report, None),
 }
 
 

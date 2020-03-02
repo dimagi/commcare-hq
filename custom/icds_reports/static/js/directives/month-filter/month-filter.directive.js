@@ -7,17 +7,11 @@ function MonthModalController($location, $uibModalInstance, dateHelperService) {
     vm.years = [];
     vm.monthsCopy = [];
     vm.showMessage = false;
-    var reportStartDates = {
-        'sdd': new Date(2019, 1),
-    };
+    var reportStartDates = dateHelperService.getReportStartDates();
 
     var isSDD =  $location.path().indexOf('service_delivery_dashboard') !== -1;
 
-    var startYear = 2017;
-
-    if (isSDD) {
-        startYear = reportStartDates['sdd'].getFullYear();
-    }
+    var startYear = dateHelperService.getStartingYear(isSDD);
 
 
 
@@ -50,7 +44,8 @@ function MonthModalController($location, $uibModalInstance, dateHelperService) {
 
     var customMonths = dateHelperService.getCustomAvailableMonthsForReports(vm.selectedYear,
         vm.selectedMonth,
-        vm.monthsCopy);
+        vm.monthsCopy,
+        isSDD);
 
 
     vm.months = customMonths.months;
@@ -68,7 +63,8 @@ function MonthModalController($location, $uibModalInstance, dateHelperService) {
 
         var customMonths = dateHelperService.getCustomAvailableMonthsForReports(item.id,
             vm.selectedMonth,
-            vm.monthsCopy);
+            vm.monthsCopy,
+            isSDD);
 
         vm.months = customMonths.months;
         vm.selectedMonth = customMonths.selectedMonth;
@@ -83,6 +79,10 @@ function MonthFilterController($scope, $location, $uibModal, storageService, dat
     var vm = this;
 
     // used by mobile dashboard
+    var isSDD =  $location.path().indexOf('service_delivery_dashboard') !== -1;
+    vm.startYear = dateHelperService.getStartingYear(isSDD);
+    vm.startMonth = dateHelperService.getStartingMonth(isSDD);
+
     vm.selectedDate = dateHelperService.getSelectedDate();
     vm.currentYear = new Date().getFullYear();
     vm.getPlaceholder = function() {

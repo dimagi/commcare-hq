@@ -427,11 +427,7 @@ def process_sms(queued_sms_pk):
 
 
 def send_to_sms_queue(queued_sms):
-    options = {}
-    if queued_sms.direction == OUTGOING and queued_sms.domain in settings.CUSTOM_PROJECT_SMS_QUEUES:
-        options['queue'] = settings.CUSTOM_PROJECT_SMS_QUEUES[queued_sms.domain]
-
-    process_sms.apply_async([queued_sms.pk], **options)
+    process_sms.apply_async([queued_sms.pk])
 
 
 @no_result_task(serializer='pickle', queue='background_queue', default_retry_delay=10 * 60,

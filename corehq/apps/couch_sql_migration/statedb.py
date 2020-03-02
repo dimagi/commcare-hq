@@ -317,12 +317,27 @@ class StateDB(DiffDB):
                 assert updated == 1, (key, updated)
 
     def add_missing_docs(self, kind, doc_ids):
-        """DEPRECATED use diffs instead"""
         with self.session() as session:
             session.bulk_save_objects([
                 MissingDoc(kind=kind, doc_id=doc_id)
                 for doc_id in doc_ids
             ])
+
+    def delete_missing_docs(self, kind):
+        with self.session() as session:
+            (
+                session.query(MissingDoc)
+                .filter_by(kind=kind)
+                .delete(synchronize_session=False)
+            )
+
+    def doc_not_missing(self, kind, doc_id):
+        with self.session() as session:
+            (
+                session.query(MissingDoc.doc_id)
+                .filter_by(kind=kind, doc_id=doc_id)
+                .delete(synchronize_session=False)
+            )
 
     def save_form_diffs(self, couch_json, sql_json):
         diffs = json_diff(couch_json, sql_json, track_list_indices=False)
@@ -333,7 +348,7 @@ class StateDB(DiffDB):
         doc_id = couch_json["_id"]
         self.add_diffs(doc_type, doc_id, diffs)
         if diffs:
-            dd_count("commcare.couchsqlmigration.form.has_diffs")
+            dd_count("commcare.couchsqlmigration.form.has_diff")
 
     def replace_case_diffs(self, case_diffs, **kw):
         diffs_by_doc = defaultdict(list)
@@ -408,7 +423,7 @@ class StateDB(DiffDB):
             if kind is not None:
                 query = query.filter_by(kind=kind)
             for doc in iter_large(query, _model.doc_id):
-                yield doc.doc_id, [
+                yield doc.kind, doc.doc_id, [
                     _model.dict_to_diff(doc.kind, doc.doc_id, data)
                     for data in json.loads(doc.diffs)
                 ]
@@ -420,8 +435,8 @@ class StateDB(DiffDB):
         """DEPRECATED use iter_diffs(); the result may be very large"""
         return list(self.iter_diffs())
 
-    def increment_counter(self, kind, value):
-        self._upsert(DocCount, DocCount.kind, kind, value, incr=True)
+    def set_counter(self, kind, value):
+        self._upsert(DocCount, DocCount.kind, kind, value)
 
     def get_doc_counts(self):
         """Returns a dict of counts by kind
@@ -430,30 +445,40 @@ class StateDB(DiffDB):
         fields:
 
         - total: number of items counted with `increment_counter`.
-        - missing: count of ids added with `add_missing_docs`.
+        - missing: count of ids found in Couch but not in SQL.
+        - diffs: count of docs with diffs.
         """
         with self.session() as session:
             totals = {dc.kind: dc.value for dc in session.query(DocCount)}
-            missing = {row[0]: row[1] for row in session.query(
+            diffs = dict(session.query(
+                DocDiffs.kind,
+                func.count(DocDiffs.doc_id),
+            ).group_by(DocDiffs.kind))
+            missing = dict(session.query(
                 MissingDoc.kind,
                 func.count(MissingDoc.doc_id),
-            ).group_by(MissingDoc.kind).all()}
+            ).group_by(MissingDoc.kind))
+            changes = dict(session.query(
+                DocChanges.kind,
+                func.count(DocChanges.doc_id),
+            ).group_by(DocChanges.kind))
         return {kind: Counts(
             total=totals.get(kind, 0),
+            diffs=diffs.get(kind, 0),
             missing=missing.get(kind, 0),
-        ) for kind in set(missing) | set(totals)}
+            changes=changes.get(kind, 0),
+        ) for kind in set(totals) | set(missing) | set(diffs)}
 
-    def has_doc_counts(self):
-        if not os.path.exists(self.db_filepath):
-            return False
-        return self.engine.dialect.has_table(self.engine, "doc_count")
+    def iter_missing_doc_ids(self, kind):
+        with self.session() as session:
+            query = (
+                session.query(MissingDoc.doc_id)
+                .filter(MissingDoc.kind == kind)
+            )
+            yield from (x for x, in iter_large(query, MissingDoc.doc_id))
 
-    def get_missing_doc_ids(self, doc_type):
-        return {
-            missing.doc_id for missing in self.Session()
-            .query(MissingDoc.doc_id)
-            .filter(MissingDoc.kind == doc_type)
-        }
+    def get_diff_stats(self):
+        raise NotImplementedError("use get_doc_counts")
 
     def clone_casediff_data_from(self, casediff_state_path):
         """Copy casediff state into this state db
@@ -698,9 +723,8 @@ class KeyValue(Base):
 class MissingDoc(Base):
     __tablename__ = 'missing_doc'
 
-    id = Column(Integer, primary_key=True)
-    kind = Column(String(50), nullable=False)
-    doc_id = Column(String(50), nullable=False)
+    kind = Column(String(50), nullable=False, primary_key=True)
+    doc_id = Column(String(50), nullable=False, primary_key=True)
 
 
 class NoActionCaseForm(Base):
@@ -715,7 +739,12 @@ class ProblemForm(Base):
     id = Column(String(50), nullable=False, primary_key=True)
 
 
-Counts = namedtuple('Counts', 'total missing')
+@attr.s
+class Counts:
+    total = attr.ib(default=0)
+    diffs = attr.ib(default=0)
+    missing = attr.ib(default=0)
+    changes = attr.ib(default=0)
 
 
 def iter_large(query, pk_attr, maxrq=1000):

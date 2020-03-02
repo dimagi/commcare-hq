@@ -64,7 +64,9 @@ from custom.icds_reports.const import (
     THR_REPORT_EXPORT,
     AggregationLevels,
     LocationTypes,
-    GOVERNANCE_API_PAGE_SIZE)
+    GOVERNANCE_API_PAGE_SIZE,
+    SERVICE_DELIVERY_REPORT
+)
 from custom.icds_reports.dashboard_utils import get_dashboard_template_context
 from custom.icds_reports.models.aggregate import AwcLocation
 from custom.icds_reports.models.helper import IcdsFile
@@ -783,13 +785,13 @@ class AwcReportsView(BaseReportView):
                 beta=icds_pre_release_features(request.couch_user)
             )
         elif step == 'beneficiary':
-            filters = {
-                'awc_id': config['awc_id'],
-            }
-            age = self.request.GET.get('age', None)
-            if age:
-                filters.update(get_age_filter_in_months(age))
             if 'awc_id' in config:
+                filters = {
+                    'awc_id': config['awc_id'],
+                }
+                age = self.request.GET.get('age', None)
+                if age:
+                    filters.update(get_age_filter_in_months(age))
                 draw = int(request.GET.get('draw', 0))
                 icds_features_flag = icds_pre_release_features(self.request.couch_user)
                 start, length, order_by_number_column, order_by_name_column, order_dir = \
@@ -884,6 +886,15 @@ class ExportIndicatorView(View):
 
         location = request.POST.get('location', '')
 
+        if not location and not request.couch_user.has_permission(
+                self.kwargs['domain'], 'access_all_locations'
+        ):
+            return HttpResponse(status_code=403)
+        if location and not user_can_access_location_id(
+                self.kwargs['domain'], request.couch_user, location
+        ):
+            return HttpResponse(status_code=403)
+
         sql_location = None
 
         if location and indicator != ISSNIP_MONTHLY_REGISTER_PDF:
@@ -937,9 +948,14 @@ class ExportIndicatorView(View):
                 return HttpResponseBadRequest()
         if indicator == DASHBOARD_USAGE_EXPORT:
             config['couch_user'] = self.request.couch_user
+
+        if indicator == SERVICE_DELIVERY_REPORT:
+            config['beneficiary_category'] = request.POST.get('beneficiary_category')
+
         if indicator in (CHILDREN_EXPORT, PREGNANT_WOMEN_EXPORT, DEMOGRAPHICS_EXPORT, SYSTEM_USAGE_EXPORT,
                          AWC_INFRASTRUCTURE_EXPORT, GROWTH_MONITORING_LIST_EXPORT, AWW_INCENTIVE_REPORT,
-                         LS_REPORT_EXPORT, THR_REPORT_EXPORT, DASHBOARD_USAGE_EXPORT):
+                         LS_REPORT_EXPORT, THR_REPORT_EXPORT, DASHBOARD_USAGE_EXPORT,
+                         SERVICE_DELIVERY_REPORT):
             task = prepare_excel_reports.delay(
                 config,
                 aggregation_level,
@@ -2049,6 +2065,11 @@ class CasDataExport(View):
         year = int(request.POST.get('year', None))
         selected_date = date(year, month, 1).strftime('%Y-%m-%d')
 
+        if state_id and not user_can_access_location_id(
+                self.kwargs['domain'], request.couch_user, state_id
+        ):
+            return JsonResponse({"message": "Sorry, you do not have access to that location."})
+
         sync, _ = get_cas_data_blob_file(data_type, state_id, selected_date)
         if not sync:
             return JsonResponse({"message": "Sorry, the export you requested does not exist."})
@@ -2077,6 +2098,10 @@ class CasDataExport(View):
         year = int(request.GET.get('year', None))
         selected_date = date(year, month, 1).strftime('%Y-%m-%d')
 
+        if state_id and not user_can_access_location_id(
+                self.kwargs['domain'], request.couch_user, state_id
+        ):
+            return HttpResponse(status_code=403)
         sync, blob_id = get_cas_data_blob_file(data_type, state_id, selected_date)
 
         try:

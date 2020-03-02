@@ -7,13 +7,13 @@ class Command(PopulateSQLCommand):
         return 'Dhis2Connection'
 
     @classmethod
-    def couch_key(cls):
-        return set(['domain'])
-
-    @classmethod
     def sql_class(cls):
         from corehq.motech.dhis2.models import Dhis2Connection
         return Dhis2Connection
+
+    @classmethod
+    def commit_adding_migration(cls):
+        return "d670f19bfda1ab4e842d7d47162c5691b9bef55d"
 
     def update_or_create_sql_object(self, doc):
         model, created = self.sql_class().objects.update_or_create(

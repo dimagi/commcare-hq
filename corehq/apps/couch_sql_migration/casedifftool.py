@@ -4,18 +4,29 @@ import pdb
 import signal
 from contextlib import contextmanager, suppress
 
+from django.db import close_old_connections
+from django.db.utils import DatabaseError, InterfaceError
+
 from dimagi.utils.chunked import chunked
+from dimagi.utils.retry import retry_on
 
 from corehq.form_processor.utils.general import set_local_domain_sql_backend_override
 from corehq.util.log import with_progress_bar
 
-from .casediff import global_diff_state, make_result_saver
+from .casediff import (
+    diff_cases,
+    get_couch_cases,
+    global_diff_state,
+    make_result_saver,
+    should_diff,
+)
 from .casediffqueue import ProcessNotAllowed, get_casediff_state_path
 from .couchsqlmigration import (
     CouchSqlDomainMigrator,
     get_main_forms_iteration_stop_date,
 )
 from .parallel import Pool
+from .progress import MigrationStatus, get_couch_sql_migration_status
 from .util import get_ids_from_string_or_file
 
 log = logging.getLogger(__name__)
@@ -23,11 +34,13 @@ log = logging.getLogger(__name__)
 PENDING_WARNING = "Diffs pending. Run again with --cases=pending"
 
 
-def get_migrator(domain, state_dir, live):
+def get_migrator(domain, state_dir):
     # Set backend for CouchSqlDomainMigrator._check_for_migration_restrictions
+    status = get_couch_sql_migration_status(domain)
+    live_migrate = status == MigrationStatus.DRY_RUN
     set_local_domain_sql_backend_override(domain)
     return CouchSqlDomainMigrator(
-        domain, state_dir, live_migrate=live, diff_process=None)
+        domain, state_dir, live_migrate=live_migrate, diff_process=None)
 
 
 def do_case_diffs(migrator, cases, stop, batch_size):
@@ -76,8 +89,7 @@ class CaseDiffTool:
         elif hasattr(migrator.stopper, "stop_date"):
             cutoff_date = migrator.stopper.stop_date
         else:
-            cutoff_date = get_main_forms_iteration_stop_date(
-                self.domain, self.statedb.unique_id)
+            cutoff_date = get_main_forms_iteration_stop_date(self.statedb)
             migrator.stopper.stop_date = cutoff_date
         self.cutoff_date = cutoff_date
         self.lock_out_casediff_process()
@@ -140,7 +152,7 @@ class CaseDiffTool:
             for batch in batches:
                 data = load_and_diff_cases(batch, log_cases=log_cases)
                 yield data
-                diffs = {case_id: diffs for x, case_id, diffs in data.diffs if diffs}
+                diffs = [(kind, case_id, diffs) for kind, case_id, diffs in data.diffs if diffs]
                 if diffs:
                     log.info("found cases with diffs:\n%s", format_diffs(diffs))
                     if stop:
@@ -174,15 +186,25 @@ class CaseDiffTool:
 
 
 def load_and_diff_cases(case_ids, log_cases=False):
-    from .casediff import _diff_state, get_couch_cases, diff_cases
-    should_diff = _diff_state.should_diff
     couch_cases = {c.case_id: c.to_json()
         for c in get_couch_cases(case_ids) if should_diff(c)}
     if log_cases:
         skipped = [id for id in case_ids if id not in couch_cases]
         if skipped:
             log.info("skipping cases modified since cutoff date: %s", skipped)
-    return diff_cases(couch_cases, log_cases=log_cases)
+    return diff_cases_with_retry(couch_cases, log_cases=log_cases)
+
+
+def _close_connections(err):
+    """Close old connections, then return true to retry"""
+    log.warning("retry diff cases on %s: %s", type(err).__name__, err)
+    close_old_connections()
+    return True
+
+
+@retry_on(DatabaseError, InterfaceError, should_retry=_close_connections)
+def diff_cases_with_retry(*args, **kw):
+    return diff_cases(*args, **kw)
 
 
 def iter_sql_cases_with_sorted_transactions(domain):
@@ -203,10 +225,10 @@ def iter_sql_cases_with_sorted_transactions(domain):
             yield from iter(set(case_id for case_id, in cursor.fetchall()))
 
 
-def format_diffs(diff_dict):
+def format_diffs(json_diffs, changes=False):
     lines = []
-    for doc_id, diffs in sorted(diff_dict.items()):
-        lines.append(doc_id)
+    for kind, doc_id, diffs in sorted(json_diffs, key=lambda x: x[1]):
+        lines.append(f"{kind} {doc_id} {diffs[0].reason if changes else ''}")
         for diff in sorted(diffs, key=lambda d: (d.diff_type, d.path)):
             if len(repr(diff.old_value) + repr(diff.new_value)) > 60:
                 lines.append(f"  {diff.diff_type} {list(diff.path)}")

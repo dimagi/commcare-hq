@@ -139,7 +139,7 @@ class SubmissionErrorTest(TestCase, TestFileMixin):
         with f:
             f.write(bad_data)
         with open(path, 'rb') as f:
-            with capture_log_output('', logging.ERROR) as logs:
+            with capture_log_output('', logging.WARNING) as logs:
                 res = self.client.post(self.url, {
                     "xml_submission_file": f
                 })
@@ -311,17 +311,18 @@ class SubmissionErrorTestSQL(SubmissionErrorTest):
         ).all()
         self.assertEqual(1, len(stubs))
 
-        form = FormAccessors(self.domain).get_form(FORM_WITH_CASE_ID)
-        self.assertTrue(form.is_error)
-        self.assertTrue(form.initial_processing_complete)
+        old_form = FormAccessors(self.domain).get_form(FORM_WITH_CASE_ID)
+        self.assertTrue(old_form.is_error)
+        self.assertTrue(old_form.initial_processing_complete)
         expected_problem_message = f'{type(error).__name__}: {error}'
-        self.assertEqual(form.problem, expected_problem_message)
+        self.assertEqual(old_form.problem, expected_problem_message)
 
         _, resp = self._submit('form_with_case.xml')
         self.assertEqual(resp.status_code, 201)
-        form = FormAccessors(self.domain).get_form(FORM_WITH_CASE_ID)
-        self.assertTrue(form.is_normal)
-        old_form = FormAccessors(self.domain).get_form(form.deprecated_form_id)
+        new_form = FormAccessors(self.domain).get_form(FORM_WITH_CASE_ID)
+        self.assertTrue(new_form.is_normal)
+
+        old_form.refresh_from_db()  # can't fetch by form_id since form_id changed
         self.assertEqual(old_form.orig_id, FORM_WITH_CASE_ID)
         self.assertEqual(old_form.problem, expected_problem_message)
 

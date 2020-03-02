@@ -1,6 +1,6 @@
 /* global d3, moment */
 
-window.angular.module('icdsApp').factory('baseControllersService', function() {
+window.angular.module('icdsApp').factory('baseControllersService', ['$timeout', function ($timeout) {
     var BaseFilterController = function ($scope, $routeParams, $location, dateHelperService, storageService,
                                          navigationService) {
         var vm = this;
@@ -14,6 +14,10 @@ window.angular.module('icdsApp').factory('baseControllersService', function() {
                 $location.search('selectedLocationLevel', index);
                 $location.search('location_name', loc.name);
             }
+        };
+        vm.addAdditionalFilters = function (gender, age) {
+            $location.search('gender', gender);
+            $location.search('age', age);
         };
         vm.selectedLocationsCount = function() {
             // this method returns selectedLocationLevel
@@ -45,6 +49,7 @@ window.angular.module('icdsApp').factory('baseControllersService', function() {
                 $location.path(navigationService.getAWCTabFromPagePath($location.path()));
             }
             dateHelperService.updateSelectedMonth(data['month'], data['year']);
+            vm.addAdditionalFilters(data.gender, data.age);
             storageService.setKey('search', $location.search());
             $scope.$emit('filtersChange');
         });
@@ -228,6 +233,26 @@ window.angular.module('icdsApp').factory('baseControllersService', function() {
                 }
             };
 
+            //Creating a promise, which resolves only after map is rendered (wait until canvas is rendered in dom)
+            // Reference: https://stackoverflow.com/a/47776379/12839195 (using timeout instead of rafAsync)
+            vm.waitForMapIfNecessary = function () {
+                // if it is not a page where map is displayed, resolve the promise immediately,
+                // else wait till canvas (svg in dom) is created
+                if (!navigationService.isMapDisplayed($location.path()) && window.Promise) {
+                    return window.Promise.resolve(true);
+                }
+                if (document.querySelector('svg') === null) {
+                    return $timeout().then(function () {
+                        return vm.waitForMapIfNecessary();
+                    });
+                } else {
+                    return window.Promise.resolve(true);
+                }
+            };
+
+            vm.mapLoadingPromise = vm.waitForMapIfNecessary().then(function () {
+            });
+
             vm.init = function() {
                 var locationId = vm.filtersData.location_id || vm.userLocationId;
                 if (!locationId || ["all", "null", "undefined"].indexOf(locationId) >= 0) {
@@ -356,4 +381,4 @@ window.angular.module('icdsApp').factory('baseControllersService', function() {
         },
         BaseFilterController: BaseFilterController,
     };
-});
+}]);

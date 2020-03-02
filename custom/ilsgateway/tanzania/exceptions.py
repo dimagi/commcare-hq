@@ -1,2 +1,0 @@
-class InvalidProductCodeException(Exception):
-    pass
