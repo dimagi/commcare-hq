@@ -6,15 +6,27 @@
     <div class="modal-content">
       <div class="modal-header">
         <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">{% trans 'Close' %}</span></button>
-        <h4 class="modal-title">
+        <h3 class="modal-title">
           {% trans "Request a CommCare Professional trial" %}
-        </h4>
+        </h3>
       </div>
       <div class="modal-body form-horizontal">
 
         {# Hubspot Form #}
         <div class="form form-horizontal"
              id="get-trial-cta-form-content"></div>
+        
+        {# Schedule Call Choices #}
+        <div id="callback-options" hidden>
+          <h1 class="text-center">Choose how to get started</h1>
+          <p>
+            Starting your trial requires a brief call with our team to set up your CommCare project space. Please choose if you prefer us to call you back ASAP, or if you would like to book a  time for the call?
+          </p>
+          <div class="text-center">
+            <button type="button" class="btn btn-primary">Book a call</button>
+            <button type="button" class="btn btn-primary">Get a callback</button>
+          </div>
+        </div>
 
         {# Schedule Once Demo #}
         <div id="get-trial-cta-calendar-content" style="display: none;">
