@@ -355,5 +355,5 @@ def get_errors_with_ids(es_action_errors):
 
 
 def _changes_to_list(change_items):
-    """Concert list of dict(key: value) in to a list of tuple(key, value)"""
+    """Convert list of dict(key: value) in to a list of tuple(key, value)"""
     return list(map(methodcaller("popitem"), change_items))
