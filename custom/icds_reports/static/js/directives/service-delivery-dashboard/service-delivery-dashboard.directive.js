@@ -1,6 +1,12 @@
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
-function ServiceDeliveryDashboardController($rootScope, $scope, $http, $location, $routeParams, $log, DTOptionsBuilder, DTColumnBuilder, $compile, storageService, userLocationId, haveAccessToAllLocations, isAlertActive) {
+function ServiceDeliveryDashboardController($rootScope, $scope, $http, $location, $routeParams, $log, DTOptionsBuilder,
+                                            DTColumnBuilder, $compile, storageService, userLocationId,
+                                            baseControllersService, haveAccessToAllLocations, isAlertActive,
+                                            sddMetadata, dateHelperService, navigationService, isMobile) {
+    baseControllersService.BaseFilterController.call(
+        this, $scope, $routeParams, $location, dateHelperService, storageService, navigationService
+    );
     var vm = this;
     vm.data = {};
     vm.label = "Service Delivery Dashboard";
@@ -15,12 +21,21 @@ function ServiceDeliveryDashboardController($rootScope, $scope, $http, $location
     vm.showMessage = $rootScope.dateChanged;
     $rootScope.dateChanged = false;
 
+    function _getStep(stepId) {
+        return {
+            "id": stepId,
+            "route": "/service_delivery_dashboard/" + stepId,
+            "label": sddMetadata[stepId]["label"],
+            "image": sddMetadata[stepId]["image"],
+        };
+    }
     vm.steps = {
-        'pw_lw_children': {route: '/service_delivery_dashboard/pw_lw_children', label: 'PW, LW & Children 0-3 years (0-1095 days)'},
-        'children': {route: '/service_delivery_dashboard/children', label: 'Children 3-6 years (1096-2190 days)'},
+        "pw_lw_children": _getStep("pw_lw_children"),
+        "children": _getStep("children"),
     };
 
     vm.step = $routeParams.step;
+    vm.currentStepMeta = vm.steps[vm.step];
 
     vm.dtOptions = DTOptionsBuilder.newOptions()
         .withOption('ajax', {
@@ -258,14 +273,18 @@ function ServiceDeliveryDashboardController($rootScope, $scope, $http, $location
     vm.getData();
 }
 
-ServiceDeliveryDashboardController.$inject = ['$rootScope', '$scope', '$http', '$location', '$routeParams', '$log', 'DTOptionsBuilder', 'DTColumnBuilder', '$compile', 'storageService', 'userLocationId', 'haveAccessToAllLocations', 'isAlertActive'];
+ServiceDeliveryDashboardController.$inject = ['$rootScope', '$scope', '$http', '$location', '$routeParams', '$log',
+    'DTOptionsBuilder', 'DTColumnBuilder', '$compile', 'storageService', 'userLocationId', 'baseControllersService',
+    'haveAccessToAllLocations', 'isAlertActive', 'sddMetadata', 'dateHelperService', 'navigationService', 'isMobile'];
 
-window.angular.module('icdsApp').directive('serviceDeliveryDashboard', function () {
+window.angular.module('icdsApp').directive('serviceDeliveryDashboard', ['templateProviderService', function (templateProviderService) {
     return {
         restrict: 'E',
-        templateUrl: url('icds-ng-template', 'service-delivery-dashboard'),
+        templateUrl: function () {
+            return templateProviderService.getTemplate('service-delivery-dashboard');
+        },
         bindToController: true,
         controller: ServiceDeliveryDashboardController,
         controllerAs: '$ctrl',
     };
-});
+}]);
