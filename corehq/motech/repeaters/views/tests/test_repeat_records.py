@@ -103,7 +103,7 @@ class TestUtilities(TestCase):
         mock__get_query.return_value = ''
         mock_domain = 'domain_1'
         mock_action = 'action_1'
-        mock_data = {}
+        mock_data = None
 
         repeat_records._schedule_task_with_flag(mock_request, mock_domain, mock_action)
         mock__get_query.assert_called_with(mock_request)
