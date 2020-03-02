@@ -249,7 +249,7 @@ class CcsRecordMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribute
             ('child_name', 'case_list.child_name'),
             ('husband_name', 'person_cases.husband_name'),
             ('lmp', 'case_list.lmp'),
-            ('migration_status', '{}'.format(migration_status)),
+            ('migration_status', 'COALESCE({},0)'.format(migration_status)),
             ('where_born', 'agg_delivery.where_born'),
             ('num_children_del', 'agg_delivery.num_children_del'),
             ('still_live_birth', 'agg_delivery.still_live_birth'),
