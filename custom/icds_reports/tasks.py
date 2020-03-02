@@ -385,7 +385,7 @@ def _create_aggregate_functions(cursor):
         raise
 
 
-def _update_aggregate_locations_tables():
+def _update_aggregate_locations_tables(agg_date):
     try:
         celery_task_logger.info("Starting icds reports update_location_tables")
         with transaction.atomic(using=router.db_for_write(AwcLocation)):
@@ -1607,8 +1607,6 @@ def setup_aggregation(agg_date):
     if db_alias:
         with connections[db_alias].cursor() as cursor:
             _create_aggregate_functions(cursor)
-
-        _update_aggregate_locations_tables()
 
 
 def _child_health_monthly_aggregation(day, state_ids):
