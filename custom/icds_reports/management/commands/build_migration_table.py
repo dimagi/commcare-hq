@@ -1,10 +1,6 @@
 
-import datetime
-from django.core.management.base import BaseCommand
-
 from corehq.apps.locations.models import SQLLocation
 from custom.icds_reports.tasks import icds_state_aggregation_task
-from dateutil.relativedelta import relativedelta
 import os
 import datetime
 
@@ -22,7 +18,6 @@ def _run_custom_sql_script(command, day=None):
         return
     with connections[db_alias].cursor() as cursor:
         cursor.execute(command, [day])
-
 
 
 class Command(BaseCommand):
