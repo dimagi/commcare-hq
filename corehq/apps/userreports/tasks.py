@@ -534,7 +534,7 @@ def _indicator_metrics(date_created=None):
         AsyncIndicator.objects
         .values('indicator_config_ids')
         .annotate(Count('indicator_config_ids'), Min('date_created'))
-        .order_by()  # needed to get rid of implict ordering by date_created
+        .order_by()  # needed to get rid of implicit ordering by date_created
     )
     now = datetime.utcnow()
     if date_created:
