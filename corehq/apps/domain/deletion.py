@@ -242,6 +242,8 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('reminders', 'EmailUsage', 'domain'),
     ModelDeletion('reports', 'ReportsSidebarOrdering', 'domain'),
     ModelDeletion('smsforms', 'SQLXFormsSession', 'domain'),
+    ModelDeletion('translations', 'SMSTranslations', 'domain'),
+    ModelDeletion('translations', 'TransifexBlacklist', 'domain'),
     ModelDeletion('userreports', 'AsyncIndicator', 'domain'),
     ModelDeletion('users', 'DomainRequest', 'domain'),
     ModelDeletion('users', 'SQLInvitation', 'domain'),
