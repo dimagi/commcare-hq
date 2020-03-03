@@ -1,6 +1,6 @@
 import json
 from copy import copy
-from typing import Dict, Optional
+from typing import Dict, Iterator, Optional
 
 from django.conf import settings
 
@@ -51,9 +51,13 @@ class KafkaChangeFeed(ChangeFeed):
             raise ValueError("This function requires a single topic but found {}!".format(self._topics))
         return self._topics[0]
 
-    def iter_changes(self, since, forever):
+    def iter_changes(
+        self,
+        since: Optional[Dict[TopicPartition, int]],
+        forever: bool,
+    ) -> Iterator[Change]:
         """
-        Since must be a dictionary of topic partition offsets.
+        ``since`` must be a dictionary of topic partition offsets, or None
         """
         timeout = float('inf') if forever else MIN_TIMEOUT
         start_from_latest = since is None
