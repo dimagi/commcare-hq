@@ -49,11 +49,12 @@ class Change(object):
     }
 
     def __init__(self, id, sequence_id, document=None, deleted=False, metadata=None,
-                 document_store=None, topic=None):
+                 document_store=None, topic=None, partition=None):
         self._dict = {}
         self.id = id
         self.sequence_id = sequence_id
         self.topic = topic
+        self.partition = partition
         self.document = document
         # on couch-based change feeds .deleted represents a hard deletion.
         # on kafka-based feeds, .deleted represents a soft deletion and is equivalent

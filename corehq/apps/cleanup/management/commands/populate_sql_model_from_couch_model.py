@@ -44,6 +44,15 @@ class PopulateSQLCommand(BaseCommand):
         return couch_count - sql_count
 
     @classmethod
+    def commit_adding_migration(cls):
+        """
+        This should be the merge commit of the pull request that adds the command to the commcare-hq repository.
+        If this is provided, the failure message in migrate_from_migration will instruct users to deploy this
+        commit before running the command.
+        """
+        return None
+
+    @classmethod
     def migrate_from_migration(cls, apps, schema_editor):
         """
             Should only be called from within a django migration.
@@ -75,6 +84,16 @@ class PopulateSQLCommand(BaseCommand):
                 A migration must be performed before this environment can be upgraded to the latest version
                 of CommCareHQ. This migration is run using the management command {command_name}.
             """)
+            if cls.commit_adding_migration():
+                print(f"""
+                Run the following commands to run the migration and get up to date:
+
+                    commcare-cloud <env> fab deploy commcare --commcare-rev={cls.commit_adding_migration()}
+
+                    commcare-cloud <env> django-manage {command_name}
+
+                    commcare-cloud <env> fab deploy commcare
+                """)
             sys.exit(1)
 
     @classmethod

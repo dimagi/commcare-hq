@@ -221,6 +221,8 @@ class ReportFixturesProviderV1(BaseReportFixtureProvider):
     def report_config_to_fixture(self, report_config, restore_user):
         def _row_to_row_elem(deferred_fields, filter_options_by_field, row, index, is_total_row=False):
             row_elem = E.row(index=str(index), is_total_row=str(is_total_row))
+            if toggles.ADD_ROW_INDEX_TO_MOBILE_UCRS.enabled(restore_user.domain):
+                row_elem.append(E.column(str(index), id='row_index'))
             for k in sorted(row.keys()):
                 value = serialize(row[k])
                 row_elem.append(E.column(value, id=k))
@@ -354,6 +356,8 @@ class ReportFixturesProviderV2(BaseReportFixtureProvider):
     def report_config_to_fixture(self, report_config, restore_user):
         def _row_to_row_elem(deferred_fields, filter_options_by_field, row, index, is_total_row=False):
             row_elem = E.row(index=str(index), is_total_row=str(is_total_row))
+            if toggles.ADD_ROW_INDEX_TO_MOBILE_UCRS.enabled(restore_user.domain):
+                row_elem.append(E('row_index', str(index)))
             for k in sorted(row.keys()):
                 value = serialize(row[k])
                 row_elem.append(E(k, value))

@@ -39,7 +39,7 @@ class InvitationTest(TestCase):
             {'domain': 'domain_2', 'email': 'email2@email.com'},
         ]:
             inv = Invitation(**kwargs)
-            inv.save()
+            inv.save(sync_to_sql=False)
             cls.invitations.append(inv)
 
     def test_by_domain(self):
@@ -55,5 +55,5 @@ class InvitationTest(TestCase):
     @classmethod
     def tearDownClass(cls):
         for inv in cls.invitations:
-            inv.delete()
+            inv.delete(sync_to_sql=False)
         super(InvitationTest, cls).tearDownClass()
