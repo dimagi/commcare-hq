@@ -254,7 +254,12 @@
         "display": "visitor_other"
       }
     ],
-    "sort_expression": [],
+    "sort_expression": [
+      {
+        "field": "month",
+        "order": "DESC"
+      }
+    ],
     "configured_charts": []
   }
 }

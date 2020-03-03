@@ -144,7 +144,12 @@
         "display": "use_salt"
       }
     ],
-    "sort_expression": [],
+    "sort_expression": [
+      {
+        "field": "month",
+        "order": "DESC"
+      }
+    ],
     "configured_charts": []
   }
 }
