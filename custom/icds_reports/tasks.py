@@ -211,7 +211,7 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
         with connections[db_alias].cursor() as cursor:
             _create_aggregate_functions(cursor)
 
-        _update_aggregate_locations_tables()
+        update_aggregate_locations_tables()
 
         state_ids = list(SQLLocation.objects
                      .filter(domain=DASHBOARD_DOMAIN, location_type__name='state')
@@ -385,7 +385,7 @@ def _create_aggregate_functions(cursor):
         raise
 
 
-def _update_aggregate_locations_tables(agg_date):
+def update_aggregate_locations_tables(agg_date):
     try:
         celery_task_logger.info("Starting icds reports update_location_tables")
         with transaction.atomic(using=router.db_for_write(AwcLocation)):
