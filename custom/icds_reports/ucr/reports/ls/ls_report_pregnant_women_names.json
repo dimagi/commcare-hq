@@ -28,137 +28,166 @@
   "report_id": "static-ls_report_pregnant_women_names",
   "data_source_table": "static-ccs_record_cases",
   "config": {
-    "title": "LS Report - Pregnant Women Names (Static)",
-    "description": "",
-    "visible": false,
+{
+    "_id": "5cacb1cd476859d3bd0730d7d97b9ec4",
+    "_rev": "5-fd32f54020e9e28a54feb4d476e43af6",
     "aggregation_columns": [
-      "doc_id",
-      "supervisor_id"
-    ],
-    "filters": [
-      {
-        "compare_as_string": true,
-        "datatype": "string",
-        "required": false,
-        "slug": "edd",
-        "field": "edd",
-        "type": "date",
-        "display": "Estimated Date of Delivery"
-      },
-      {
-        "compare_as_string": false,
-        "slug": "is_pregnant_count",
-        "datatype": "string",
-        "show_all": true,
-        "choices": [
-          {
-            "display": "Yes",
-            "value": "1"
-          }
-        ],
-        "field": "is_pregnant_count",
-        "type": "choice_list",
-        "display": "Pregnant"
-      },
-      {
-        "compare_as_string": true,
-        "datatype": "string",
-        "required": false,
-        "slug": "opened_on",
-        "field": "opened_on",
-        "type": "date",
-        "display": "Pregnancy Registered"
-      },
-      {
-        "compare_as_string": false,
-        "show_all": true,
-        "datatype": "string",
-        "choice_provider": {
-          "type": "location"
-        },
-        "required": false,
-        "display": "Filter by Supervisor",
-        "field": "supervisor_id",
-        "type": "dynamic_choice_list",
-        "slug": "supervisor_id"
-      },
-      {
-        "compare_as_string": false,
-        "show_all": true,
-        "datatype": "string",
-        "type": "dynamic_choice_list",
-        "required": false,
-        "slug": "owner_id",
-        "field": "owner_id",
-        "choice_provider": {
-          "type": "location"
-        },
-        "display": "Owner Name"
-      },
-	   {  
-        "required": false,
-		    "type": "numeric",
-        "slug": "is_migrated",
-        "field": "is_migrated",
-        "display": "Whether Migrated"
-        },
-        {
-        "required": false,
-		    "type": "numeric",
-        "slug": "is_availing",
-        "field": "is_availing",
-        "display": "Whether Availing Services"
-      }
+        "doc_id",
+        "supervisor_id"
     ],
     "columns": [
-      {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "simple",
-        "column_id": "person_name",
-        "field": "person_name",
-        "transform": { },
-        "calculate_total": false,
-        "type": "field",
-        "display": {
-          "mar": "स्त्री",
-          "tel": "స్త్రీ",
-          "hin": "महिलाये",
-          "en": "Woman",
-          "tam": "மகளிர்",
-          "guj": "મહિલા",
-          "asm": "মহিলা",
-          "pan": "ਔਰਤ",
-          "kan": "ಮಹಿಳೆ",
-          "urd": "عورت"
+        {
+            "aggregation": "simple",
+            "calculate_total": false,
+            "column_id": "person_name",
+            "description": null,
+            "display": {
+                "asm": "মহিলা",
+                "en": "Woman",
+                "guj": "મહિલા",
+                "hin": "महिलाये",
+                "kan": "ಮಹಿಳೆ",
+                "mar": "स्त्री",
+                "pan": "ਔਰਤ",
+                "tam": "மகளிர்",
+                "tel": "స్త్రీ",
+                "urd": "عورت"
+            },
+            "field": "person_name",
+            "format": "default",
+            "sortable": false,
+            "transform": {},
+            "type": "field"
+        },
+        {
+            "aggregation": "simple",
+            "calculate_total": false,
+            "column_id": "ccs_phase",
+            "description": null,
+            "display": {
+                "asm": "মহিলা",
+                "en": "CCS Phase",
+                "guj": "મહિલા",
+                "hin": "महिलाये",
+                "kan": "ಮಹಿಳೆ",
+                "mar": "स्त्री",
+                "pan": "ਔਰਤ",
+                "tam": "மகளிர்",
+                "tel": "స్త్రీ",
+                "urd": "عورت"
+            },
+            "field": "ccs_phase",
+            "format": "default",
+            "sortable": false,
+            "transform": {},
+            "type": "field"
+        },
+        {
+            "aggregation": "simple",
+            "calculate_total": false,
+            "column_id": "edd",
+            "description": null,
+            "display": {
+                "asm": "সাম্ভাব্য় প্ৰসৱৰ তাৰিখ",
+                "en": "Estimated Date of Delivery",
+                "guj": "પ્રસવની અંદાજીત તારીખ",
+                "hin": "प्रसब की अनुमानित तिथि",
+                "kan": "ಹೆರಿಗೆಯ ಅಂದಾಜು ದಿನಾಂಕ",
+                "mar": "प्रसूतिची संभाव्य तारीख",
+                "pan": "ਜਣੇਪੇ ਦੀ ਸੰਭਾਵਿਤ ਮਿਤੀ",
+                "tam": "கணக்கிடப்பட்டபிரசவ தேதி",
+                "tel": "అంచనావేయబడ్డ డెలివరీ  తేదీ",
+                "urd": "Delivery کی تخمینی تاریخ"
+            },
+            "field": "edd",
+            "format": "default",
+            "sortable": false,
+            "transform": {},
+            "type": "field"
         }
-      },
-      {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "aggregation": "simple",
-        "column_id": "edd",
-        "field": "edd",
-        "transform": { },
-        "calculate_total": false,
-        "type": "field",
-        "display": {
-          "mar": "प्रसूतिची संभाव्य तारीख",
-          "tel": "అంచనావేయబడ్డ డెలివరీ  తేదీ",
-          "hin": "प्रसब की अनुमानित तिथि",
-          "en": "Estimated Date of Delivery",
-          "tam": "கணக்கிடப்பட்டபிரசவ தேதி",
-          "guj": "પ્રસવની અંદાજીત તારીખ",
-          "asm": "সাম্ভাব্য় প্ৰসৱৰ তাৰিখ",
-          "pan": "ਜਣੇਪੇ ਦੀ ਸੰਭਾਵਿਤ ਮਿਤੀ",
-          "kan": "ಹೆರಿಗೆಯ ಅಂದಾಜು ದಿನಾಂಕ",
-          "urd": "Delivery کی تخمینی تاریخ"
-        }
-      }
     ],
-    "sort_expression": [ ],
-    "configured_charts": [ ]
+    "config_id": "9cd9d1fce26ba0bc2ff868dfbaed0125",
+    "configured_charts": [],
+    "custom_query_provider": null,
+    "data_source_type": "standard",
+    "description": "",
+    "doc_type": "ReportConfiguration",
+    "domain": "sunaina-sandbox",
+    "filters": [
+        {
+            "compare_as_string": true,
+            "datatype": "string",
+            "display": "Estimated Date of Delivery",
+            "field": "edd",
+            "required": false,
+            "slug": "edd",
+            "type": "date"
+        },
+        {
+            "compare_as_string": true,
+            "datatype": "string",
+            "display": "Pregnancy Registered",
+            "field": "opened_on",
+            "required": false,
+            "slug": "opened_on",
+            "type": "date"
+        },
+        {
+            "choice_provider": {
+                "type": "location"
+            },
+            "compare_as_string": false,
+            "datatype": "string",
+            "display": "Filter by Supervisor",
+            "field": "supervisor_id",
+            "required": false,
+            "show_all": true,
+            "slug": "supervisor_id",
+            "type": "dynamic_choice_list"
+        },
+        {
+            "choice_provider": {
+                "type": "location"
+            },
+            "compare_as_string": false,
+            "datatype": "string",
+            "display": "Owner Name",
+            "field": "owner_id",
+            "required": false,
+            "show_all": true,
+            "slug": "owner_id",
+            "type": "dynamic_choice_list"
+        },
+        {
+            "datatype": "string",
+            "display": "Whether Migrated",
+            "field": "is_migrated",
+            "required": false,
+            "slug": "is_migrated",
+            "type": "numeric"
+        },
+        {
+            "datatype": "string",
+            "display": "Whether Availing Services",
+            "field": "is_availing",
+            "required": false,
+            "slug": "is_availing",
+            "type": "numeric"
+        }
+    ],
+    "report_meta": {
+        "builder_report_type": null,
+        "builder_source_type": null,
+        "created_by_builder": false,
+        "doc_type": "ReportMeta",
+        "edited_manually": true,
+        "last_modified": "2020-03-03T09:50:48.617528Z",
+        "report_builder_version": ""
+    },
+    "soft_rollout": "0",
+    "sort_expression": [],
+    "title": "POC - LS Report - Pregnant Women Names (Static)",
+    "visible": true
+}
   }
 }
