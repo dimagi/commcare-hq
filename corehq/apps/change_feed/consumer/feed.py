@@ -62,8 +62,10 @@ class KafkaChangeFeed(ChangeFeed):
 
         since = self._filter_offsets(since)
         # a special value of since=None will start from the end of the change stream
-        if since is not None and (not isinstance(since, dict) or not since):
+        if not isinstance(since, (dict, type(None))):
             raise ValueError(f"Expected None or a topic offset dictionary. Got {since!r}")
+        if since == {}:
+            raise ValueError('No topic partition offsets found')
 
         if not start_from_latest:
             if self.strict:
