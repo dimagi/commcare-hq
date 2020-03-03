@@ -329,10 +329,13 @@ class ReportFiltersSuiteTest(TestCase, TestXmlMixin):
                 <text/>
               </header>
               <template width="0">
+                <text/>
+              </template>
+              <sort direction="ascending" order="1" type="int">
                 <text>
                   <xpath function="column[@id='row_index']"/>
                 </text>
-              </template>
+              </sort>
             </field>
             <field>
               <header>
@@ -426,10 +429,13 @@ class ReportFiltersSuiteTest(TestCase, TestXmlMixin):
                 <text/>
               </header>
               <template width="0">
+                <text/>
+              </template>
+              <sort direction="ascending" order="1" type="int">
                 <text>
                   <xpath function="column[@id='row_index']"/>
                 </text>
-              </template>
+              </sort>
             </field>
             <field>
               <header>
