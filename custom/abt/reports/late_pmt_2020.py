@@ -1,6 +1,6 @@
 from collections import defaultdict
 from datetime import datetime
-from typing import Dict, Iterator, List
+from typing import Dict, Iterator
 
 from django.db.models import Q
 from django.utils.functional import cached_property
@@ -12,8 +12,7 @@ from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.filters.dates import DatespanFilter
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin
-from corehq.form_processor.interfaces.processor import FormProcessorInterface
-from corehq.form_processor.models import CommCareCaseSQL, XFormInstanceSQL
+from corehq.form_processor.models import XFormInstanceSQL
 from custom.abt.reports.filters_2020 import (
     LevelFourFilter,
     LevelOneFilter,
@@ -87,9 +86,8 @@ class LatePmt2020Report(GenericTabularReport, CustomProjectReport, DatespanMixin
             self.domain, INDICATORS_FORM_XMLNS, self.startdate, self.enddate
         )
         for form in forms:
-            cases = get_cases_from_forms(self.domain, [form])
-            location_ids = {c.operation_site for c in cases}
-            pmts_submitted[form.received_on.date()].update(location_ids)
+            location_id = form.form_data['location_operation_site']
+            pmts_submitted[form.received_on.date()].add(location_id)
         return pmts_submitted
 
     @property
@@ -148,17 +146,3 @@ def iter_forms_by_xmlns_received_on(
     return paginate_query_across_partitioned_databases(
         XFormInstanceSQL, q_expr, load_source='forms_by_xmlns_received_on'
     )
-
-
-def get_cases_from_forms(
-    domain: str,
-    forms: List[XFormInstanceSQL],
-) -> List[CommCareCaseSQL]:
-    if not forms:
-        return []
-    interface = FormProcessorInterface(domain)
-    case_ids_to_case_update_metadata = interface.get_cases_from_forms(
-        interface.casedb_cache, forms
-    )
-    cases = [meta.case for meta in case_ids_to_case_update_metadata.values()]
-    return cases
