@@ -94,9 +94,9 @@ class LatePmt2020Report(GenericTabularReport, CustomProjectReport, DatespanMixin
 
     @property
     def rows(self):
-        def _to_report_format(date, location, error_msg):
+        def _to_report_format(date_, location, error_msg):
             return [
-                date.strftime("%Y-%m-%d"),
+                date_.strftime("%Y-%m-%d"),
                 location.name,
                 location.country,
                 location.level_1,
@@ -114,12 +114,12 @@ class LatePmt2020Report(GenericTabularReport, CustomProjectReport, DatespanMixin
             byweekday=(MO, TU, WE, TH, FR, SA)
         )
         rows = []
-        for date in dates:
+        for date_ in dates:
             for location in get_locations(self.domain, self.report_config):
-                pmt_submitted = location.id in self.pmts_submitted_by_date[date.date()]
+                pmt_submitted = location.id in self.pmts_submitted_by_date[date_.date()]
                 error_msg = '' if pmt_submitted else _('Incorrect or no PMT data submitted')
                 if show_all or not pmt_submitted:
-                    rows.append(_to_report_format(date, location, error_msg))
+                    rows.append(_to_report_format(date_, location, error_msg))
         return rows
 
 
