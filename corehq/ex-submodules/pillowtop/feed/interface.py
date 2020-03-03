@@ -1,5 +1,7 @@
 from datetime import datetime
 from abc import ABCMeta, abstractmethod
+
+from corehq.form_processor.exceptions import MissingFormXml
 from corehq.sql_db.util import handle_connection_failure, get_all_db_aliases
 from jsonobject import DefaultProperty
 from dimagi.ext import jsonobject
@@ -84,6 +86,11 @@ class Change(object):
                 self.document = None
                 self._document_checked = True  # set this flag to avoid multiple redundant lookups
                 self.error_raised = e
+            except Exception as err:
+                raise ValueError(
+                    f'Unable to get document with ID {self.id!r} '
+                    f'from document store {self.document_store!r}'
+                ) from err
         return self.document
 
     def should_fetch_document(self):
