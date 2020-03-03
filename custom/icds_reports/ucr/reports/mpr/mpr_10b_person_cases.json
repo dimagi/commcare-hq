@@ -32,7 +32,8 @@
     "description": "This is used in apps for report modules",
     "visible": false,
     "aggregation_columns": [
-      "owner_id"
+      "owner_id",
+      "month"
     ],
     "filters": [
       {
