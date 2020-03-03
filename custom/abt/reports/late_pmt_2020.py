@@ -106,11 +106,7 @@ class LatePmt2020Report(GenericTabularReport, CustomProjectReport, DatespanMixin
                 error_msg
             ]
 
-        include_missing_pmt_data = self.report_config['submission_status'] != 'incorrect_pmt_data'
-        # include_incorrect_pmt_data is no longer applicable, because an
-        # invalid SMS will not result in a pmt_data case being created/updated
-        include_incorrect_pmt_data = self.report_config['submission_status'] != 'missing_pmt_data'
-        error_msg = _('Incorrect or no PMT data submitted')
+        show_all = self.report_config['submission_status'] != 'missing_pmt_data'
         dates = rrule(
             DAILY,
             dtstart=self.startdate,
@@ -121,7 +117,8 @@ class LatePmt2020Report(GenericTabularReport, CustomProjectReport, DatespanMixin
         for date in dates:
             for location in get_locations(self.domain, self.report_config):
                 pmt_submitted = location.id in self.pmts_submitted_by_date[date.date()]
-                if not pmt_submitted and (include_missing_pmt_data or include_incorrect_pmt_data):
+                error_msg = '' if pmt_submitted else _('Incorrect or no PMT data submitted')
+                if show_all or not pmt_submitted:
                     rows.append(_to_report_format(date, location, error_msg))
         return rows
 
