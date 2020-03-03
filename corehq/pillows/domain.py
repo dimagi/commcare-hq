@@ -1,5 +1,5 @@
 import copy
-from corehq.apps.accounting.models import Subscription
+from corehq.apps.accounting.models import SoftwarePlan, Subscription
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
 from corehq.apps.change_feed import topics
 from corehq.apps.domain.models import Domain
@@ -20,7 +20,12 @@ def transform_domain_for_elasticsearch(doc_dict):
     countries = doc_ret['deployment'].get('countries', [])
     doc_ret['deployment']['countries'] = []
     if sub:
-        doc_ret['subscription'] = sub[0].plan_version.plan.edition
+        try:
+            doc_ret['subscription'] = sub.plan_version.plan.edition
+        except (SoftwarePlan.DoesNotExist, SoftwarePlan.MultipleObjectsReturned, AttributeError):
+            # AttributeError: 'Subscription' object has no attribute '_plan_version_cache'
+            # AttributeError: 'SoftwarePlanVersion' object has no attribute '_plan_cache'
+            pass
     for country in countries:
         doc_ret['deployment']['countries'].append(COUNTRIES[country].upper())
     return doc_ret
