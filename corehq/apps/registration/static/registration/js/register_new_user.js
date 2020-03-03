@@ -12,7 +12,7 @@ hqDefine('registration/js/register_new_user', [
     _,
     newUser,
     initialPageData,
-    kissmetrics
+    kissmetrics 
 ) {
     'use strict';
 
@@ -27,6 +27,47 @@ hqDefine('registration/js/register_new_user', [
     $('#back-to-start-btn').click(function () {
         $('#registration-form-container').hide();
         $('#registration-choose-plan-container').fadeIn();
+    });
+
+    $('#book-to-call-btn').click(function(){
+        $('#get-trial-cta-calendar-content').fadeIn();
+        $('#choose-callback-options').addClass('hide');
+
+        // Loading the Schedule visit form.    
+        $.getScript('//cdn.scheduleonce.com/mergedjs/so.js')
+            .done(function () {
+                kissmetrics.track.event("Get Trial Workflow - Loaded Booking Options");
+                setTimeout(function () {
+                    // This is a bit of a hack, but the only way to detect if
+                    // the Schedule Once Form was submitted on our side.
+                    // The style attribute changes when the form is successfully
+                    // submitted.
+                    var lastKnownHeight = 0,
+                        observer = new MutationObserver(function (mutations) {
+                            mutations.forEach(function () {
+                                var newHeight = $('#SOIDIV_CommCareTrial').height();
+                                if (newHeight < lastKnownHeight) {
+                                    var coreUrl = document.location.href.split('?')[0];
+                                    kissmetrics.track.event("Get Trial Workflow - Trial Scheduled");
+                                    $('#cta-form-get-trial ').off('hide.bs.modal');
+                                    window.history.pushState({}, document.title, coreUrl);
+                                }
+                                lastKnownHeight = newHeight;
+
+                            });
+                        });
+                    // target is the the iframe containing the schedule once form
+                    var target = document.getElementById('SOIDIV_CommCareTrial');
+                    observer.observe(target, { attributes: true, attributeFilter: ['style'] });
+                }, 3000);
+            });
+                
+    });
+
+    $('#get-callback-btn').click(function(){
+        $('#start-trial-modal-header').text("Got it! We’ll be in touch soon");
+        $('#will-be-in-touch-content').fadeIn();
+        $('#choose-callback-options').addClass('hide');
     });
 
     kissmetrics.whenReadyAlways(function () {
