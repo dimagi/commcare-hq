@@ -161,12 +161,6 @@ window.angular.module('icdsApp', [
             .when("/health_tabular_report", {
                 template: "health_tabular_report",
             })
-            .when("/service_delivery_dashboard", {
-                redirectTo: "/service_delivery_dashboard/pw_lw_children",
-            })
-            .when("/service_delivery_dashboard/:step", {
-                template: "<service-delivery-dashboard></service-delivery-dashboard>",
-            })
             .when("/lady_supervisor", {
                 template: "<lady-supervisor></lady-supervisor>",
             })
