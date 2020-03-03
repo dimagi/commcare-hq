@@ -86,7 +86,15 @@ class FormSubmissionMetadataTrackerProcessor(PillowProcessor):
                     domain, user_id, app_id, build_id, version, metadata, received_on
                 )
             else:
-                user = CouchUser.get_by_user_id(user_id, domain)
+                try:
+                    user = CouchUser.get_by_user_id(user_id, domain)
+                except ValueError:
+                    # Sometimes user_id is not the ID of a user. e.g.
+                    # ValueError: Unable to determine doc_type from {'last_seq': '31-g1AAAAI3eJyV0N0JwjAQB_DYFvxAc
+                    # ASdQJJrq-bJbqK5JqGWWp981k10E91EN6lpUlAoUvgApf8fxxXEEJGmS_JrDxJxRIG6yU1hxXmwRME51VV5ZkvJkfTGP
+                    # IUGVLd_t5J4MJU3DbKwCqUKqFB9FGSWtk1CrGKohhFUkkyPpdS6UOpZHd-X-cvTd6zeRDIFE97TFEGpKruQx0-04S6k0
+                    # Msf5rEmfcnfGojak1EEJIRZ_NOunppFctBVZiEoTCPtt10ttJPxviK6DAoZ3KP5e9j44', 'pending': 0}
+                    return
                 if not user or user.is_deleted():
                     return
 
