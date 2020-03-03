@@ -13,7 +13,9 @@ from casexml.apps.phone.tests.utils import (
 
 from corehq.apps.app_manager.const import MOBILE_UCR_VERSION_2
 from corehq.apps.app_manager.fixtures import report_fixture_generator
-from corehq.apps.app_manager.fixtures.mobile_ucr import ReportFixturesProviderV1
+from corehq.apps.app_manager.fixtures.mobile_ucr import (
+    ReportFixturesProviderV1,
+)
 from corehq.apps.app_manager.models import (
     Application,
     GraphConfiguration,
@@ -52,7 +54,11 @@ from corehq.apps.userreports.tests.utils import (
     mock_datasource_config,
 )
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
-from corehq.toggles import MOBILE_UCR, NAMESPACE_DOMAIN, ADD_ROW_INDEX_TO_MOBILE_UCRS
+from corehq.toggles import (
+    ADD_ROW_INDEX_TO_MOBILE_UCRS,
+    MOBILE_UCR,
+    NAMESPACE_DOMAIN,
+)
 from corehq.util.test_utils import flag_enabled
 
 
