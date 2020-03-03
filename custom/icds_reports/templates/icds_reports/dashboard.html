@@ -78,14 +78,12 @@ related to angular not being defined. But if we split it here it works fine.
   {% include 'icds_reports/partials/shared_component_directives.html' %}
 {% compress js %}
         <script src="{% static 'js/directives/filters/filters.directive.js' %}"></script>
-        <script src="{% static 'js/directives/additional-filter/additional-filter.directive.js' %}"></script>
 
 {% endcompress %}
   {% include 'icds_reports/partials/shared_report_directives.html' %}
 {% compress js %}
 
         <script src="{% static 'js/directives/awc-opened-yesterday/awc-opened-yesterday.directive.js' %}"></script>
-        <script src="{% static 'js/directives/service-delivery-dashboard/service-delivery-dashboard.directive.js' %}"></script>
         <script src="{% static 'js/directives/lady-supervisor/lady-supervisor.directive.js' %}"></script>
         <script src="{% static 'js/directives/indie-map/indie-map.directive.js' %}"></script>
         <script src="{% static 'js/directives/map-or-sector-view/map-or-sector-view.directive.js' %}"></script>

@@ -2,7 +2,7 @@ import base64
 
 from django.http import HttpResponse
 
-from corehq.apps.api.models import SQLApiUser
+from corehq.apps.api.models import ApiUser
 
 
 def api_user_basic_auth(permission, realm=''):
@@ -13,7 +13,7 @@ def api_user_basic_auth(permission, realm=''):
                 if len(auth) == 2:
                     if auth[0].lower() == 'basic':
                         username, password = base64.b64decode(auth[1]).split(':', 1)
-                        if SQLApiUser.auth(username, password, permission):
+                        if ApiUser.auth(username, password, permission):
                             return view(request, *args, **kwargs)
 
             response = HttpResponse(status=401)

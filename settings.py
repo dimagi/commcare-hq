@@ -745,8 +745,7 @@ ELASTICSEARCH_MAJOR_VERSION = 1
 # If elasticsearch queries take more than this, they result in timeout errors
 ES_SEARCH_TIMEOUT = 30
 
-BITLY_LOGIN = ''
-BITLY_APIKEY = ''
+BITLY_OAUTH_TOKEN = None
 
 # this should be overridden in localsettings
 INTERNAL_DATA = defaultdict(list)
@@ -918,6 +917,8 @@ CUSTOM_LANDING_TEMPLATE = {
 }
 
 ES_SETTINGS = None
+ES_XFORM_INDEX_NAME = "xforms_2016-07-07"
+ES_XFORM_DISABLE_ALL = False
 PHI_API_KEY = None
 PHI_PASSWORD = None
 
@@ -945,6 +946,12 @@ RATE_LIMIT_SUBMISSIONS = False
 # without the email option will be quickly rejected.
 # This is useful for load-shedding in times of crisis.
 STALE_EXPORT_THRESHOLD = None
+
+REQUIRE_TWO_FACTOR_FOR_SUPERUSERS = False
+# Use an experimental partitioning algorithm
+# that adds messages to the partition with the fewest unprocessed messages
+USE_KAFKA_SHORTEST_BACKLOG_PARTITIONER = False
+
 
 try:
     # try to see if there's an environmental variable set for local_settings
@@ -1302,19 +1309,11 @@ INDICATOR_CONFIG = {
 
 COMPRESS_URL = STATIC_CDN + STATIC_URL
 
-####### Couch Forms & Couch DB Kit Settings #######
-NEW_USERS_GROUPS_DB = 'users'
-USERS_GROUPS_DB = NEW_USERS_GROUPS_DB
-
-NEW_FIXTURES_DB = 'fixtures'
-FIXTURES_DB = NEW_FIXTURES_DB
-
-NEW_DOMAINS_DB = 'domains'
-DOMAINS_DB = NEW_DOMAINS_DB
-
-NEW_APPS_DB = 'apps'
-APPS_DB = NEW_APPS_DB
-
+# Couch database name suffixes
+USERS_GROUPS_DB = 'users'
+FIXTURES_DB = 'fixtures'
+DOMAINS_DB = 'domains'
+APPS_DB = 'apps'
 META_DB = 'meta'
 
 _serializer = 'corehq.util.python_compatibility.Py3PickleSerializer'
@@ -1412,7 +1411,7 @@ COUCHDB_APPS = [
 COUCH_SETTINGS_HELPER = helper.CouchSettingsHelper(
     COUCH_DATABASES,
     COUCHDB_APPS,
-    [NEW_USERS_GROUPS_DB, NEW_FIXTURES_DB, NEW_DOMAINS_DB, NEW_APPS_DB],
+    [USERS_GROUPS_DB, FIXTURES_DB, DOMAINS_DB, APPS_DB],
     UNIT_TESTING
 )
 COUCH_DATABASE = COUCH_SETTINGS_HELPER.main_db_url
@@ -1892,9 +1891,9 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'thr_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'birth_preparedness_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'daily_feeding_forms.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'migrations_form.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'primary_private_school_form_ucr.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'cbe_form.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'migrations_form.json'),
     os.path.join('custom', 'champ', 'ucr_data_sources', 'champ_cameroon.json'),
     os.path.join('custom', 'champ', 'ucr_data_sources', 'enhanced_peer_mobilization.json'),
     os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'commande_combined.json'),

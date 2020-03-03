@@ -19,21 +19,6 @@ from custom.icds_reports.utils import (
 )
 
 
-def get_adolescent_girls_data(domain, filters, show_test):
-    queryset = AggAwcMonthly.objects.filter(
-        **filters
-    ).values(
-        'aggregation_level'
-    ).annotate(
-        person_adolescent=Sum('cases_person_adolescent_girls_11_14_out_of_school'),
-        person_adolescent_all=Sum('cases_person_adolescent_girls_11_14_all_v2')
-    )
-    if not show_test:
-        queryset = apply_exclude(domain, queryset)
-
-    return queryset
-
-
 def get_demographics_data(domain, now_date, config, show_test=False, beta=False):
     now_date = datetime(*now_date)
     current_month = datetime(*config['month'])
@@ -54,8 +39,8 @@ def get_demographics_data(domain, now_date, config, show_test=False, beta=False)
             ccs_pregnant_all=Sum('cases_ccs_pregnant_all'),
             css_lactating=Sum('cases_ccs_lactating'),
             css_lactating_all=Sum('cases_ccs_lactating_all'),
-            person_adolescent=Sum('cases_person_adolescent_girls_11_14'),
-            person_adolescent_all=Sum('cases_person_adolescent_girls_11_14_all'),
+            person_adolescent=Sum('cases_person_adolescent_girls_11_14_out_of_school'),
+            person_adolescent_all=Sum('cases_person_adolescent_girls_11_14_all_v2'),
             person_aadhaar=Sum(person_has_aadhaar_column(beta)),
             all_persons=Sum(person_is_beneficiary_column(beta))
         )
@@ -64,38 +49,11 @@ def get_demographics_data(domain, now_date, config, show_test=False, beta=False)
             queryset = apply_exclude(domain, queryset)
         return queryset
 
-    if beta:
-        config['month'] = current_month
-        data = get_data_for(AggAwcMonthly, config)
-        config['month'] = previous_month
-        prev_data = get_data_for(AggAwcMonthly, config)
-        frequency = 'month'
-    else:
-        if current_month.month == now_date.month and current_month.year == now_date.year:
-            config['date'] = now_date.date()
-            data = None
-            # keep the record in searched - current - month
-            while data is None or (not data and config['date'].day != 1):
-                config['date'] -= relativedelta(days=1)
-                data = get_data_for(AggAwcDailyView, config)
-            prev_data = None
-            while prev_data is None or (not prev_data and config['date'].day != 1):
-                config['date'] -= relativedelta(days=1)
-                prev_data = get_data_for(AggAwcDailyView, config)
-            frequency = 'day'
-        else:
-            config['month'] = current_month
-            data = get_data_for(AggAwcMonthly, config)
-            config['month'] = previous_month
-            prev_data = get_data_for(AggAwcMonthly, config)
-            frequency = 'month'
-
-    if 'date' in config:
-        del config['date']
     config['month'] = current_month
-    ag_data = get_adolescent_girls_data(domain, config, show_test)
+    data = get_data_for(AggAwcMonthly, config)
     config['month'] = previous_month
-    ag_data_prev_data = get_adolescent_girls_data(domain, config, show_test)
+    prev_data = get_data_for(AggAwcMonthly, config)
+    frequency = 'month'
 
     demographics_data = {
         'records': [
@@ -190,18 +148,18 @@ def get_demographics_data(domain, now_date, config, show_test=False, beta=False)
                     'help_text': percent_adolescent_girls_enrolled_help_text_v2(),
                     'percent': percent_diff(
                         'person_adolescent',
-                        ag_data,
-                        ag_data_prev_data,
+                        data,
+                        prev_data,
                         'person_adolescent_all'
                     ),
                     'color': get_color_with_red_positive(percent_diff(
                         'person_adolescent',
-                        ag_data,
-                        ag_data_prev_data,
+                        data,
+                        prev_data,
                         'person_adolescent_all'
                     )),
-                    'value': get_value(ag_data, 'person_adolescent'),
-                    'all': get_value(ag_data, 'person_adolescent_all'),
+                    'value': get_value(data, 'person_adolescent'),
+                    'all': get_value(data, 'person_adolescent_all'),
                     'format': 'percent_and_div',
                     'frequency': frequency,
                     'redirect': 'demographics/adolescent_girls'

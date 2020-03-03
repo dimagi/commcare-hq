@@ -83,7 +83,8 @@ class CcsRecordMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribute
         valid_in_month = "( {} OR {})".format(pregnant_to_consider, lactating)
 
         add_in_month = "(case_list.add>= {} AND case_list.add<={})".format(start_month_string, end_month_string)
-        delivered_in_month = "({} AND {} AND agg_delivery.case_id IS NOT NULL)".format(seeking_services, add_in_month)
+        delivered_in_month = "({} AND {} AND agg_delivery.case_id IS NOT NULL)".format(
+            seeking_services, add_in_month)
         extra_meal = "(agg_bp.eating_extra=1 AND {})".format(pregnant_to_consider)
         b1_complete = "(case_list.bp1_date <= {})".format(end_month_string)
         b2_complete = "(case_list.bp2_date <= {})".format(end_month_string)

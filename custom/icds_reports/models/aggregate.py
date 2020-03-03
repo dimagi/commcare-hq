@@ -22,7 +22,9 @@ from custom.icds_reports.const import (
     AWW_INCENTIVE_TABLE,
     AGG_DASHBOARD_ACTIVITY,
     AGG_ADOLESCENT_GIRLS_REGISTRATION_TABLE,
-    AGG_GOV_DASHBOARD_TABLE
+    AGG_GOV_DASHBOARD_TABLE,
+    AGG_SDR_TABLE,
+    AGG_MIGRATION_TABLE
 )
 from custom.icds_reports.utils.aggregation_helpers.distributed import (
     AggAwcDailyAggregationDistributedHelper,
@@ -53,7 +55,9 @@ from custom.icds_reports.utils.aggregation_helpers.distributed import (
     THRFormV2AggDistributedHelper,
     DashboardActivityReportAggregate,
     AggAdolescentGirlsRegistrationAggregate,
-    AggGovDashboardHelper
+    AggGovDashboardHelper,
+    AggServiceDeliveryReportHelper,
+    MigrationFormsAggregationDistributedHelper
 )
 
 
@@ -232,7 +236,6 @@ class AwcLocation(models.Model, AggregateMixin):
     block_is_test = models.SmallIntegerField(blank=True, null=True)
     supervisor_is_test = models.SmallIntegerField(blank=True, null=True)
     awc_is_test = models.SmallIntegerField(blank=True, null=True)
-
     # from commcare-user case
     aww_name = models.TextField(blank=True, null=True)
     contact_phone_number = models.TextField(blank=True, null=True)
@@ -740,6 +743,7 @@ class AggChildHealth(models.Model, AggregateMixin):
     zscore_grading_hfa_recorded_in_month = models.IntegerField(blank=True, null=True)
     zscore_grading_wfh_recorded_in_month = models.IntegerField(blank=True, null=True)
     lunch_count_21_days = models.IntegerField(blank=True, null=True)
+
     class Meta:
         managed = False
         db_table = 'agg_child_health'
@@ -1555,6 +1559,34 @@ class AggregateAdolescentGirlsRegistrationForms(models.Model, AggregateMixin):
     _agg_atomic = False
 
 
+class AggregateMigrationForms(models.Model, AggregateMixin):
+    """Aggregated data for migration
+
+    A migration table exists for each state_id and month.
+
+    A row exists for every person case that has had a record of migration
+    submitted against it this month.
+    """
+
+    # partitioned based on these fields
+    state_id = models.CharField(max_length=40)
+    supervisor_id = models.TextField(null=True)
+    month = models.DateField(help_text="Will always be YYYY-MM-01")
+
+    # not the real pkey - see unique_together
+    person_case_id = models.CharField(max_length=40, primary_key=True)
+
+    is_migrated = models.PositiveSmallIntegerField(blank=True, null=True, help_text="Status of the Migration")
+    migration_date = models.DateTimeField(help_text="Migration Date", null=True)
+
+    class Meta(object):
+        db_table = AGG_MIGRATION_TABLE
+        unique_together = ('month', 'supervisor_id', 'person_case_id')  # pkey
+
+    _agg_helper_cls = MigrationFormsAggregationDistributedHelper
+    _agg_atomic = False
+
+
 class AggGovernanceDashboard(models.Model, AggregateMixin):
     state_id = models.TextField(null=True)
     district_id = models.TextField(null=True)
@@ -1607,4 +1639,49 @@ class AggGovernanceDashboard(models.Model, AggregateMixin):
         unique_together = ('month', 'state_id', 'awc_id')  # pkey
 
     _agg_helper_cls = AggGovDashboardHelper
+    _agg_atomic = False
+
+
+class AggServiceDeliveryReport(models.Model, AggregateMixin):
+    state_id = models.TextField(null=True)
+    district_id = models.TextField(null=True)
+    block_id = models.TextField(null=True)
+    supervisor_id = models.TextField(null=True)
+    awc_id = models.TextField(primary_key=True)
+    lunch_eligible = models.IntegerField(null=True)
+    lunch_0_days = models.IntegerField(null=True)
+    lunch_1_7_days = models.IntegerField(null=True)
+    lunch_8_14_days = models.IntegerField(null=True)
+    lunch_15_20_days = models.IntegerField(null=True)
+    lunch_21_days = models.IntegerField(null=True)
+    pse_eligible = models.IntegerField(null=True)
+    pse_0_days = models.IntegerField(null=True)
+    pse_1_7_days = models.IntegerField(null=True)
+    pse_8_14_days = models.IntegerField(null=True)
+    pse_15_20_days = models.IntegerField(null=True)
+    pse_21_days = models.IntegerField(null=True)
+    thr_eligible = models.IntegerField(null=True)
+    thr_0_days = models.IntegerField(null=True)
+    thr_1_7_days = models.IntegerField(null=True)
+    thr_8_14_days = models.IntegerField(null=True)
+    thr_15_20_days = models.IntegerField(null=True)
+    thr_21_days = models.IntegerField(null=True)
+    state_is_test = models.SmallIntegerField(null=True)
+    district_is_test = models.SmallIntegerField(null=True)
+    block_is_test = models.SmallIntegerField(null=True)
+    supervisor_is_test = models.SmallIntegerField(null=True)
+    awc_is_test = models.SmallIntegerField(null=True)
+    month = models.DateField(null=True)
+    aggregation_level = models.SmallIntegerField(null=True)
+    children_0_3 = models.IntegerField(null=True)
+    children_3_5 =  models.IntegerField(null=True)
+    gm_0_3 = models.IntegerField(null=True)
+    gm_3_5 = models.IntegerField(null=True)
+
+    class Meta(object):
+        db_table = AGG_SDR_TABLE
+        unique_together = ('month', 'aggregation_level', 'state_id', 'district_id', 'block_id',
+                           'supervisor_id', 'awc_id') #pkey
+
+    _agg_helper_cls = AggServiceDeliveryReportHelper
     _agg_atomic = False

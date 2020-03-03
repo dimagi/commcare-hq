@@ -365,12 +365,22 @@
           "type": "boolean_expression",
           "operator": "eq",
           "expression": {
-            "type": "property_path",
-            "property_path": [
-              "form",
-              "center_questions",
-              "awc_open"
-            ]
+            "type": "coalesce",
+            "expression": {
+              "type": "property_path",
+              "property_path": [
+                "form",
+                "awc_open"
+              ]
+            },
+            "default_expression": {
+              "type": "property_path",
+              "property_path": [
+                "form",
+                "center_questions",
+                "awc_open"
+              ]
+            }
           },
           "property_value": "yes"
         }
@@ -383,12 +393,24 @@
           "type": "boolean_expression",
           "operator": "eq",
           "expression": {
-            "type": "property_path",
-            "property_path": [
-              "form",
-              "center_questions",
-              "awc_closed_reason"
-            ]
+            "type": "coalesce",
+            "expression": {
+              "type": "property_path",
+              "property_path": [
+                "form",
+                "awc_details",
+                "center_questions",
+                "awc_closed_reason"
+              ]
+            },
+            "default_expression": {
+              "type": "property_path",
+              "property_path": [
+                "form",
+                "center_questions",
+                "awc_closed_reason"
+              ]
+            }
           },
           "property_value": "aww_helper_unavailable"
         }
@@ -401,12 +423,24 @@
           "type": "boolean_expression",
           "operator": "eq",
           "expression": {
-            "type": "property_path",
-            "property_path": [
-              "form",
-              "center_questions",
-              "awc_closed_reason"
-            ]
+            "type": "coalesce",
+            "expression": {
+              "type": "property_path",
+              "property_path": [
+                "form",
+                "awc_details",
+                "center_questions",
+                "awc_closed_reason"
+              ]
+            },
+            "default_expression": {
+              "type": "property_path",
+              "property_path": [
+                "form",
+                "center_questions",
+                "awc_closed_reason"
+              ]
+            }
           },
           "property_value": "closed_early"
         }
@@ -419,12 +453,24 @@
           "type": "boolean_expression",
           "operator": "eq",
           "expression": {
-            "type": "property_path",
-            "property_path": [
-              "form",
-              "center_questions",
-              "awc_closed_reason"
-            ]
+            "type": "coalesce",
+            "expression": {
+              "type": "property_path",
+              "property_path": [
+                "form",
+                "awc_details",
+                "center_questions",
+                "awc_closed_reason"
+              ]
+            },
+            "default_expression": {
+              "type": "property_path",
+              "property_path": [
+                "form",
+                "center_questions",
+                "awc_closed_reason"
+              ]
+            }
           },
           "property_value": "holiday"
         }
@@ -437,12 +483,24 @@
           "type": "boolean_expression",
           "operator": "eq",
           "expression": {
-            "type": "property_path",
-            "property_path": [
-              "form",
-              "center_questions",
-              "awc_closed_reason"
-            ]
+            "type": "coalesce",
+            "expression": {
+              "type": "property_path",
+              "property_path": [
+                "form",
+                "awc_details",
+                "center_questions",
+                "awc_closed_reason"
+              ]
+            },
+            "default_expression": {
+              "type": "property_path",
+              "property_path": [
+                "form",
+                "center_questions",
+                "awc_closed_reason"
+              ]
+            }
           },
           "property_value": "unknown"
         }
@@ -455,12 +513,24 @@
           "type": "boolean_expression",
           "operator": "eq",
           "expression": {
-            "type": "property_path",
-            "property_path": [
-              "form",
-              "center_questions",
-              "awc_closed_reason"
-            ]
+            "type": "coalesce",
+            "expression": {
+              "type": "property_path",
+              "property_path": [
+                "form",
+                "awc_details",
+                "center_questions",
+                "awc_closed_reason"
+              ]
+            },
+            "default_expression": {
+              "type": "property_path",
+              "property_path": [
+                "form",
+                "center_questions",
+                "awc_closed_reason"
+              ]
+            }
           },
           "property_value": "other"
         }
