@@ -85,7 +85,7 @@ class KafkaCheckpoint(models.Model):
             cls.objects
             .filter(checkpoint_id=checkpoint_id, topic__in=topics)
             .distinct('topic', 'partition')
-            .values_list('topic', 'partition').count()
+            .count()
         )
 
         if num_already_created == 0:
