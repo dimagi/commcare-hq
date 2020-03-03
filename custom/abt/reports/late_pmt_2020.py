@@ -1,5 +1,5 @@
 from collections import defaultdict
-from datetime import datetime
+from datetime import date, datetime, timedelta
 from typing import Dict, Iterator
 
 from django.db.models import Q
@@ -83,7 +83,9 @@ class LatePmt2020Report(GenericTabularReport, CustomProjectReport, DatespanMixin
     def pmts_submitted_by_date(self) -> Dict[datetime.date, set]:
         pmts_submitted = defaultdict(set)
         forms = iter_forms_by_xmlns_received_on(
-            self.domain, INDICATORS_FORM_XMLNS, self.startdate, self.enddate
+            self.domain, INDICATORS_FORM_XMLNS,
+            midnight_starting(self.startdate),
+            midnight_ending(self.enddate),
         )
         for form in forms:
             location_id = form.form_data['location_operation_site']
@@ -146,3 +148,33 @@ def iter_forms_by_xmlns_received_on(
     return paginate_query_across_partitioned_databases(
         XFormInstanceSQL, q_expr, load_source='forms_by_xmlns_received_on'
     )
+
+
+def midnight_starting(
+    date_: date
+) -> datetime:
+    """
+    Returns the start of the day
+
+    >>> jan_1 = date(2000, 1, 1)
+    >>> new_year = midnight_starting(jan_1)
+    >>> new_year.isoformat()
+    '2000-01-01T00:00:00'
+
+    """
+    return datetime(date_.year, date_.month, date_.day)
+
+
+def midnight_ending(
+    date_: date
+) -> datetime:
+    """
+    Returns the end of the day
+
+    >>> dec_31 = date(1999, 12, 31)
+    >>> party_like_its = midnight_ending(dec_31)
+    >>> party_like_its.isoformat()
+    '2000-01-01T00:00:00'
+
+    """
+    return midnight_starting(date_ + timedelta(days=1))
