@@ -91,6 +91,15 @@ Caveats
 * CloudCare is not currently part of this set up. It should probably be another docker image, different from CommCareHQ.
 * Celery, rabbitmq and other components not strictly necessary for a laptop install are not part of this setup.
 
+Your Data
+---------
+
+Your docker data gets mounted based on the `DOCKER_DATA_HOME` variable.
+
+By default on *nix systems this will be `~/.local/share/dockerhq/` - so if you need to
+manually manipulate data in your Docker volumes this is the place to do it.
+
+Note that you can destabilize your system if you manually edit data in this directory, so do so with care! 
 
 Travis
 ------

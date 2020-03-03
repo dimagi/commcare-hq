@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-02-19 20:38+0000\n"
+"POT-Creation-Date: 2020-02-26 20:17+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
 "Last-Translator: Gladys Teos <info@enestranslations.com>, 2020\n"
 "Language-Team: Spanish (https://www.transifex.com/dimagi/teams/9388/es/)\n"
@@ -2987,16 +2987,16 @@ msgstr "El archivo de datos URL fue copiado al portapapeles."
 msgid "Data file deleted."
 msgstr "Archivo de datos borrado."
 
-#: corehq/apps/export/static/export/js/download_export.js:196
+#: corehq/apps/export/static/export/js/download_export.js:219
 msgid "Sorry, there was a problem reaching the server. Please try again."
 msgstr ""
 
-#: corehq/apps/export/static/export/js/download_export.js:325
+#: corehq/apps/export/static/export/js/download_export.js:363
 msgid "Server maintenance in progress. Please try again later."
 msgstr ""
 "Servicio de mantenimiento en curso. Por favor intente de nuevo más tarde. "
 
-#: corehq/apps/export/static/export/js/download_export.js:335
+#: corehq/apps/export/static/export/js/download_export.js:373
 msgid "There was an error downloading your export."
 msgstr "Ocurrió un error al descargar su exportación."
 
@@ -3961,3 +3961,21 @@ msgstr ""
 #: corehq/motech/repeaters/static/repeaters/js/repeat_record_report.js:237
 msgid "Failed to cancel"
 msgstr ""
+
+#: custom/icds/data_management/static/data_management/js/data_management.js:21
+msgid "<%= initiatedBy %> On <%= createdAt %>"
+msgstr ""
+
+#: custom/icds/data_management/static/data_management/js/data_management.js:55
+msgid "This project has no data management requests."
+msgstr ""
+
+#: custom/icds/data_management/static/data_management/js/data_management.js:82
+#, fuzzy
+#| msgid "Could not clear user data. Please report an issue if this persists."
+msgid ""
+"Could not load requests. Please try again later or report an issue if this "
+"problem persists."
+msgstr ""
+"No es posible borrar los datos del usuario. Por favor reporte un problema si "
+"esto continúa."

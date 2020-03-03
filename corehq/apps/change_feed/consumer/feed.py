@@ -196,6 +196,7 @@ def change_from_kafka_message(message):
         metadata=change_meta,
         document_store=document_store,
         topic=message.topic,
+        partition=message.partition,
     )
 
 

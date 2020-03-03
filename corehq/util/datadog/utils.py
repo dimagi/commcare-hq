@@ -141,7 +141,7 @@ def load_counter(load_type, source, domain_name, extra_tags=None):
     tags = ["src:%s" % source]
     if extra_tags:
         tags.extend(extra_tags)
-    maybe_add_domain_tag(domain_name, tags)
+    tags.append('domain:{}'.format(domain_name))
     metric = "commcare.load.%s" % load_type
 
     def track_load(value=1):
