@@ -507,8 +507,8 @@ The following operators are currently supported:
 |                 |                   |                 | r"], "red" |
 |                 |                   |                 | )``        |
 +-----------------+-------------------+-----------------+------------+
-| ``any_in_multi` | one of a list of  | list            | ``selected |
-| `               | values in in a    |                 | (doc["colo |
+| ``any_in_multi``| one of a list of  | list            | ``selected |
+|                 | values in in a    |                 | (doc["colo |
 |                 | multiselect       |                 | r"], ["red |
 |                 |                   |                 | ", "blue"] |
 |                 |                   |                 | )``        |
