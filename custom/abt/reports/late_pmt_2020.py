@@ -18,7 +18,6 @@ from custom.abt.reports.filters_2020 import (
     LevelOneFilter,
     LevelThreeFilter,
     LevelTwoFilter,
-    SubmissionStatusFilter,
 )
 from custom.abt.reports.fixture_utils import get_locations
 
@@ -42,7 +41,6 @@ class LatePmt2020Report(GenericTabularReport, CustomProjectReport, DatespanMixin
         LevelTwoFilter,
         LevelThreeFilter,
         LevelFourFilter,
-        SubmissionStatusFilter,
     ]
 
     @property
@@ -55,7 +53,6 @@ class LatePmt2020Report(GenericTabularReport, CustomProjectReport, DatespanMixin
             'level_2': self.request.GET.get('level_2', ''),
             'level_3': self.request.GET.get('level_3', ''),
             'level_4': self.request.GET.get('level_4', ''),
-            'submission_status': self.request.GET.get('submission_status', '')
         }
 
     @property
@@ -106,7 +103,7 @@ class LatePmt2020Report(GenericTabularReport, CustomProjectReport, DatespanMixin
                 error_msg
             ]
 
-        show_all = self.report_config['submission_status'] != 'missing_pmt_data'
+        error_msg = _('Incorrect or no PMT data submitted')
         dates = rrule(
             DAILY,
             dtstart=self.startdate,
@@ -117,8 +114,7 @@ class LatePmt2020Report(GenericTabularReport, CustomProjectReport, DatespanMixin
         for date_ in dates:
             for location in get_locations(self.domain, self.report_config):
                 pmt_submitted = location.id in self.pmts_submitted_by_date[date_.date()]
-                error_msg = '' if pmt_submitted else _('Incorrect or no PMT data submitted')
-                if show_all or not pmt_submitted:
+                if not pmt_submitted:
                     rows.append(_to_report_format(date_, location, error_msg))
         return rows
 

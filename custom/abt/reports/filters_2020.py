@@ -97,15 +97,3 @@ class LevelFourFilter(VectorLinkLocFilter):
             filter_in={'level_3_dcv': l3_ids}
         )
         return [(loc['id'], loc['name']) for loc in level_4s]
-
-
-class SubmissionStatusFilter(BaseSingleOptionFilter):
-    slug = 'submission_status'
-    label = ugettext_lazy('Submission Status')
-    default_text = 'All'
-
-    @property
-    def options(self):
-        return [
-            ('missing_pmt_data', ugettext_lazy('No PMT Data Submitted')),
-        ]
