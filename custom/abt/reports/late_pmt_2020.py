@@ -1,5 +1,6 @@
+from collections import defaultdict
 from datetime import datetime
-from typing import Iterator, List
+from typing import Dict, Iterator, List
 
 from django.db.models import Q
 from django.utils.functional import cached_property
@@ -80,14 +81,16 @@ class LatePmt2020Report(GenericTabularReport, CustomProjectReport, DatespanMixin
         )
 
     @cached_property
-    def pmts_submitted(self):
-        forms = list(iter_forms_by_xmlns_received_on(
+    def pmts_submitted_by_date(self) -> Dict[datetime.date, set]:
+        pmts_submitted = defaultdict(set)
+        forms = iter_forms_by_xmlns_received_on(
             self.domain, INDICATORS_FORM_XMLNS, self.startdate, self.enddate
-        ))
-        return {
-            (case.received_on, case.operation_site)
-            for case in get_cases_from_forms(self.domain, forms)
-        }
+        )
+        for form in forms:
+            cases = get_cases_from_forms(self.domain, [form])
+            location_ids = {c.operation_site for c in cases}
+            pmts_submitted[form.received_on.date()].update(location_ids)
+        return pmts_submitted
 
     @property
     def rows(self):
@@ -117,7 +120,7 @@ class LatePmt2020Report(GenericTabularReport, CustomProjectReport, DatespanMixin
         rows = []
         for date in dates:
             for location in get_locations(self.domain, self.report_config):
-                pmt_submitted = (date.date(), location.id) in self.pmts_submitted
+                pmt_submitted = location.id in self.pmts_submitted_by_date[date.date()]
                 if not pmt_submitted and (include_missing_pmt_data or include_incorrect_pmt_data):
                     rows.append(_to_report_format(date, location, error_msg))
         return rows
