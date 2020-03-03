@@ -2,7 +2,6 @@ from decimal import Decimal
 
 from dimagi.utils.couch.cache import cache_core
 
-from corehq.apps.consumption.const import DAYS_IN_MONTH
 from corehq.apps.consumption.models import (
     TYPE_DOMAIN,
     TYPE_PRODUCT,
@@ -50,15 +49,6 @@ def get_domain_monthly_consumption_data(domain):
         reduce=False,
     )
     return results
-
-
-def get_default_consumption(domain, product_id, location_type, case_id):
-    consumption = get_default_monthly_consumption(domain, product_id, location_type, case_id)
-
-    if consumption:
-        return consumption / Decimal(DAYS_IN_MONTH)
-    else:
-        return None
 
 
 def set_default_monthly_consumption_for_domain(domain, amount):
