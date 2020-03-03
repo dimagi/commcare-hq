@@ -37,7 +37,7 @@ def get_default_monthly_consumption(domain, product_id, location_type, case_id):
         return None
 
 
-def get_domain_monthly_consumption_data(domain):
+def _get_domain_monthly_consumption_data(domain):
     """
     Get all default consumption rows for this domain.
     """
@@ -74,7 +74,7 @@ def _update_or_create_default(domain, amount, default, type, **kwargs):
         return default
 
 
-def hashable_key(key):
+def _hashable_key(key):
     """
     Convert the key from couch into something hasable.
     Mostly, just need to make it a tuple and remove the special
@@ -88,10 +88,10 @@ def build_consumption_dict(domain):
     Takes raw rows from couch and builds a dict to 
     look up consumption values from.
     """
-    raw_rows = get_domain_monthly_consumption_data(domain)
+    raw_rows = _get_domain_monthly_consumption_data(domain)
 
     return dict(
-        (hashable_key(row['key']), Decimal(row['value']))
+        (_hashable_key(row['key']), Decimal(row['value']))
         for row in raw_rows if row['value']
     )
 
