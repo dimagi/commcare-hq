@@ -90,48 +90,42 @@ function ServiceDeliveryDashboardController($rootScope, $scope, $http, $location
                     'heading' : 'Number of AWCs launched',
                     'tooltipValue' : 'Total Number of Anganwadi Centers launched in the selected location.',
                     'columnValueType' : 'raw',
-                    'columnValueIndicator' : 'num_launched_awcs',
-                    'stylingClass' : 'medium-col'
+                    'columnValueIndicator' : 'num_launched_awcs'
                 },
                 {
                     'mData' : 'home_visits',
                     'heading' : 'Home Visits',
                     'tooltipValue' : 'Of the total number of expected home visits, the percentage of home visits completed by AWW.',
                     'columnValueType' : 'percentage',
-                    'columnValueIndicator' : 'homeVisits',
-                    'stylingClass' : 'medium-col'
+                    'columnValueIndicator' : 'homeVisits'
                 },
                 {
                     'mData' : 'gm',
                     'heading' : 'Growth Monitoring',
                     'tooltipValue' : 'Of the total children between 0-3 years of age and enrolled for Anganwadi services, the percentage of children who were weighed in the current month.',
                     'columnValueType' : 'percentage',
-                    'columnValueIndicator' : 'gm03',
-                    'stylingClass' : 'medium-col'
+                    'columnValueIndicator' : 'gm03'
                 },
                 {
                     'mData' : 'num_awcs_conducted_cbe',
                     'heading' : 'Community Based Events',
                     'tooltipValue' : 'Of the total number of launched Anganwadi Centers, the percentage who have conducted at least 2 Community Based Events in the given month.',
                     'columnValueType' : 'percentage',
-                    'columnValueIndicator' : 'num_awcs_conducted_cbe',
-                    'stylingClass' : 'medium-col'
+                    'columnValueIndicator' : 'num_awcs_conducted_cbe'
                 },
                 {
                     'mData' : 'num_awcs_conducted_vhnd',
                     'heading' : 'VHSND',
                     'tooltipValue' : 'Total number of Anganwadi Centers who have conducted at least 1 Village, Health, Sanitation and Nutrition Day in the given month.',
                     'columnValueType' : 'raw',
-                    'columnValueIndicator' : 'num_awcs_conducted_vhnd',
-                    'stylingClass' : 'medium-col'
+                    'columnValueIndicator' : 'num_awcs_conducted_vhnd'
                 },
                 {
                     'mData' : 'thr',
                     'heading' : 'Take Home Ration (21+ days)',
                     'tooltipValue' : 'Of the total number of pregnant women, lactating women (0-6 months children) and 6-36 months children enrolled for Anganwadi services, the percentage of pregnant women, lactating women (0-6 months children) and 6-36 months children who were provided THR for at least 21 days in the current month.',
                     'columnValueType' : 'percentage',
-                    'columnValueIndicator' : 'thr',
-                    'stylingClass' : 'medium-col'
+                    'columnValueIndicator' : 'thr'
                 },
             ],
             'awc' : [
@@ -140,40 +134,35 @@ function ServiceDeliveryDashboardController($rootScope, $scope, $http, $location
                     'heading' : 'Home Visits',
                     'tooltipValue' : 'Of the total number of expected home visits, the percentage of home visits completed by AWW.',
                     'columnValueType' : 'percentage',
-                    'columnValueIndicator' : 'homeVisits',
-                    'stylingClass' : 'medium-col'
+                    'columnValueIndicator' : 'homeVisits'
                 },
                 {
                     'mData' : 'gm',
                     'heading' : 'Growth Monitoring',
                     'tooltipValue' : 'Of the total children between 0-3 years of age and enrolled for Anganwadi services, the percentage of children who were weighed in the current month.',
                     'columnValueType' : 'percentage',
-                    'columnValueIndicator' : 'gm03',
-                    'stylingClass' : 'medium-col'
+                    'columnValueIndicator' : 'gm03'
                 },
                 {
                     'mData' : 'num_awcs_conducted_cbe',
                     'heading' : 'Community Based Events',
                     'tooltipValue' : 'If the AWC conducted at least 2 CBE in the current month then Yes otherwise No.',
                     'columnValueType' : 'booleanRaw',
-                    'columnValueIndicator' : 'num_awcs_conducted_cbe',
-                    'stylingClass' : 'medium-col'
+                    'columnValueIndicator' : 'num_awcs_conducted_cbe'
                 },
                 {
                     'mData' : 'num_awcs_conducted_vhnd',
                     'heading' : 'VHSND',
                     'tooltipValue' : 'If the AWC conducted at least 1 VHSND in the current month then Yes otherwise No.',
                     'columnValueType' : 'booleanRaw',
-                    'columnValueIndicator' : 'num_awcs_conducted_vhnd',
-                    'stylingClass' : 'medium-col'
+                    'columnValueIndicator' : 'num_awcs_conducted_vhnd'
                 },
                 {
                     'mData' : 'thr',
                     'heading' : 'Take Home Ration (21+ days)',
                     'tooltipValue' : 'Of the total number of pregnant women, lactating women (0-6 months children) and 6-36 months children enrolled for Anganwadi services, the percentage of pregnant women, lactating women (0-6 months children) and 6-36 months children who were provided THR for at least 21 days in the current month.',
                     'columnValueType' : 'percentage',
-                    'columnValueIndicator' : 'thr',
-                    'stylingClass' : 'medium-col'
+                    'columnValueIndicator' : 'thr'
                 },
             ],
         },
@@ -183,24 +172,21 @@ function ServiceDeliveryDashboardController($rootScope, $scope, $http, $location
                 'heading' : 'Supplementary Nutrition (21+ days)',
                 'tooltipValue' : 'Of the total children between 3-6 years of age and enrolled for Anganwadi services, the percentage of children who were provided Hot Cooked Meal i.e. supplementary nutrition for at least 21 days in the current month.',
                 'columnValueType' : 'percentage',
-                'columnValueIndicator' : 'supNutrition',
-                'stylingClass' : 'medium-col'
+                'columnValueIndicator' : 'supNutrition'
             },
             {
                 'mData' : 'pse',
                 'heading' : 'Pre-school Education (21+ days)',
                 'tooltipValue' : 'Of the total children between 3-6 years of age and enrolled for Anganwadi services, the percentage of children who attended Pre-school education for at least 21 days in the current month.',
                 'columnValueType' : 'percentage',
-                'columnValueIndicator' : 'pse',
-                'stylingClass' : 'medium-col'
+                'columnValueIndicator' : 'pse'
             },
             {
                 'mData' : 'gm',
                 'heading' : 'Growth Monitoring',
                 'tooltipValue' : 'Of the total children between <b>3-5 years</b> of age and enrolled for Anganwadi services, the percentage of children who were weighed in the current month.<br><br><b>Growth Monitoring is done only for children till 5 years of age.</b>',
                 'columnValueType' : 'percentage',
-                'columnValueIndicator' : 'gm36',
-                'stylingClass' : 'medium-col'
+                'columnValueIndicator' : 'gm36'
             },
         ]
     };
@@ -229,7 +215,7 @@ function ServiceDeliveryDashboardController($rootScope, $scope, $http, $location
             dataTableColumns.push(DTColumnBuilder.newColumn(tableData[i]['mData'])
                 .withTitle(renderHeaderTooltip(tableData[i]['heading'], tableData[i]['tooltipValue']))
                 .renderWith(renderCellValue(tableData[i]['columnValueType'],tableData[i]['columnValueIndicator']))
-                .withClass(tableData[i]['stylingClass']));
+                .withClass('medium-col'));
         }
         return dataTableColumns;
     };
