@@ -47,8 +47,12 @@ class CouchChangeFeed(ChangeFeed):
 
 
 def change_from_couch_row(couch_change, document_store=None):
+    try:
+        change_id = couch_change['id']
+    except KeyError as err:
+        raise ValueError(f'ID not found in change {couch_change!r}') from err
     return Change(
-        id=couch_change['id'],
+        id=change_id,
         sequence_id=couch_change.get('seq', None),
         document=couch_change.get('doc', None),
         deleted=couch_change.get('deleted', False),
