@@ -3,7 +3,6 @@ from django.test import TestCase
 
 from corehq.apps.consumption.const import DAYS_IN_MONTH
 from corehq.apps.consumption.shortcuts import (
-    build_consumption_dict,
     get_default_monthly_consumption,
     set_default_consumption_for_product,
     set_default_monthly_consumption_for_domain,
