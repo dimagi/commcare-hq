@@ -4,7 +4,6 @@ from corehq.apps.consumption.const import DAYS_IN_MONTH
 from corehq.apps.consumption.shortcuts import (
     build_consumption_dict,
     get_default_consumption,
-    get_loaded_default_consumption,
     set_default_consumption_for_product,
     set_default_consumption_for_supply_point,
     set_default_monthly_consumption_for_domain,
@@ -114,17 +113,6 @@ class GetDefaultConsumptionTestCase(DefaultConsumptionBase, ConsumptionTestBase)
     def setUp(self):
         super(GetDefaultConsumptionTestCase, self).setUp()
         self.consumption_method = get_default_consumption
-
-
-class GetLoadedDefaultConsumptionTestCase(DefaultConsumptionBase, ConsumptionTestBase):
-
-    def wrapped_consumption_function(self, *args):
-        consumption_dict = build_consumption_dict(domain)
-        return get_loaded_default_consumption(consumption_dict, *args)
-
-    def setUp(self):
-        super(GetLoadedDefaultConsumptionTestCase, self).setUp()
-        self.consumption_method = self.wrapped_consumption_function
 
 
 class ConsumptionShortcutsTestCase(ConsumptionTestBase):
