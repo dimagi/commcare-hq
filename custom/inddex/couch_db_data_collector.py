@@ -42,9 +42,9 @@ class CouchDbDataCollector:
         if table_name is None and len(self.tables) == 1:
             table_name = list(self.tables.keys())[0]
         elif not table_name:
-            raise AttributeError('\'table_name\' must be specified')
+            raise AttributeError('table_name must be specified')
         elif table_name not in self.tables:
-            raise ValueError('Unknown \'table_name\'')
+            raise ValueError(f"table_name '{table_name}' not in {self.tables}")
         records = FixtureDataItem.by_data_type(self.domain, self.tables[table_name])
 
         if not fields_and_values:
@@ -60,7 +60,7 @@ class CouchDbDataCollector:
         form of a dictionary with values of :param key_field as keys
         """
         if key_field not in dict(fields_and_values):
-            raise ValueError('\'key_field\'s name must be in \'fields_and_values\'')
+            raise ValueError('key_fields name must be in fields_and_values')
 
         data = {}
         for record in self.get_data_from_table(table_name, fields_and_values):
