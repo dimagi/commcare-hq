@@ -358,68 +358,68 @@ Iterator Expression
 .. autoclass:: corehq.apps.userreports.expressions.specs.IteratorExpressionSpec
 
 Base iteration number expressions
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+'''''''''''''''''''''''''''''''''
 
 .. autoclass:: corehq.apps.userreports.expressions.specs.IterationNumberExpressionSpec
 
 Related document expressions
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+''''''''''''''''''''''''''''
 
 .. autoclass:: corehq.apps.userreports.expressions.specs.RelatedDocExpressionSpec
 
 Ancestor location expression
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+''''''''''''''''''''''''''''
 
 .. autoclass:: corehq.apps.locations.ucr_expressions.AncestorLocationExpression
 
 Nested expressions
-^^^^^^^^^^^^^^^^^^
+''''''''''''''''''''''''''''
 
 .. autoclass:: corehq.apps.userreports.expressions.specs.NestedExpressionSpec
 
 Dict expressions
-^^^^^^^^^^^^^^^^
+''''''''''''''''
 
 .. autoclass:: corehq.apps.userreports.expressions.specs.DictExpressionSpec
 
 "Add Days" expressions
-^^^^^^^^^^^^^^^^^^^^^^
+''''''''''''''''''''''
 
 .. autoclass:: corehq.apps.userreports.expressions.date_specs.AddDaysExpressionSpec
 
 
 "Add Months" expressions
-^^^^^^^^^^^^^^^^^^^^^^^^
+''''''''''''''''''''''''
 
 .. autoclass:: corehq.apps.userreports.expressions.date_specs.AddMonthsExpressionSpec
 
 "Diff Days" expressions
-^^^^^^^^^^^^^^^^^^^^^^^
+'''''''''''''''''''''''
 
 .. autoclass:: corehq.apps.userreports.expressions.date_specs.DiffDaysExpressionSpec
 
 "Month Start Date" and "Month End Date" expressions
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+'''''''''''''''''''''''''''''''''''''''''''''''''''
 
 .. autoclass:: corehq.apps.userreports.expressions.date_specs.MonthStartDateExpressionSpec
 
 "Evaluator" expression
-^^^^^^^^^^^^^^^^^^^^^^
+''''''''''''''''''''''
 
 .. autoclass:: corehq.apps.userreports.expressions.specs.EvalExpressionSpec
 
 ‘Get Case Sharing Groups' expression
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+''''''''''''''''''''''''''''''''''''
 
 .. autoclass:: corehq.apps.userreports.expressions.specs.CaseSharingGroupsExpressionSpec
 
 ‘Get Reporting Groups' expression
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+'''''''''''''''''''''''''''''''''
 
 .. autoclass:: corehq.apps.userreports.expressions.specs.ReportingGroupsExpressionSpec
 
 Filter, Sort, Map and Reduce Expressions
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+''''''''''''''''''''''''''''''''''''''''
 
 We have following expressions that act on a list of objects or list of
 lists. The list to operate on is specified by ``items_expression``. This
@@ -428,32 +428,32 @@ can be any valid expression that returns a list. If the
 fail or return one of empty list or ``None`` value.
 
 map_items Expression
-''''''''''''''''''''
+^^^^^^^^^^^^^^^^^^^^
 
 .. autoclass:: corehq.apps.userreports.expressions.list_specs.MapItemsExpressionSpec
 
 filter_items Expression
-'''''''''''''''''''''''
+^^^^^^^^^^^^^^^^^^^^^^^
 
 .. autoclass:: corehq.apps.userreports.expressions.list_specs.FilterItemsExpressionSpec
 
 sort_items Expression
-'''''''''''''''''''''
+^^^^^^^^^^^^^^^^^^^^^
 
 .. autoclass:: corehq.apps.userreports.expressions.list_specs.SortItemsExpressionSpec
 
 reduce_items Expression
-'''''''''''''''''''''''
+^^^^^^^^^^^^^^^^^^^^^^^
 
 .. autoclass:: corehq.apps.userreports.expressions.list_specs.ReduceItemsExpressionSpec
 
 flatten expression
-''''''''''''''''''
+^^^^^^^^^^^^^^^^^^
 
 .. autoclass:: corehq.apps.userreports.expressions.list_specs.FlattenExpressionSpec
 
 Named Expressions
-^^^^^^^^^^^^^^^^^
+'''''''''''''''''
 
 .. autoclass:: corehq.apps.userreports.expressions.specs.NamedExpressionSpec
 
