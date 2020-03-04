@@ -10,7 +10,7 @@ class MasterDataFileData(GapsReportDataMixin):
         'unique_respondent_id', 'location_id', 'respondent_id', 'recall_case_id', 'opened_date',
         'opened_by_username', 'owner_name', 'recalled_date', 'recall_status', 'gender', 'age_years_calculated', 'age_months_calculated',
         'age_range', 'pregnant', 'breastfeeding', 'supplements', 'urban_rural', 'food_code', 'food_name',
-        'recipe_name', 'caseid', 'reference_food_code', 'food_type', 'include_in_analysis', 'food_status',
+        'recipe_name', 'caseid', 'reference_food_code', 'base_term_food_code', 'food_type', 'include_in_analysis', 'food_status',
         'eating_time', 'time_block', 'fao_who_gift_food_group_code', 'fao_who_gift_food_group_description',
         'user_food_group', 'already_reported_food', 'already_reported_food_caseid', 'already_reported_recipe',
         'already_reported_recipe_case_id', 'already_reported_recipe_name', 'is_ingredient', 'recipe_case_id',
