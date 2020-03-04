@@ -9,6 +9,8 @@ from corehq.apps.fixtures.models import (
     FixtureDataType,
     FixtureTypeField,
 )
+from corehq.apps.userreports.models import StaticDataSourceConfiguration
+from corehq.apps.userreports.tasks import rebuild_indicators
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import format_username
 from corehq.util.couch import IterDB
@@ -25,6 +27,7 @@ def import_data():
     _import_cases(FOODRECALL_CASE_TYPE, 'foodrecall_cases.csv', user)
     _import_cases(FOOD_CASE_TYPE, 'food_cases.csv', user)
     _import_fixtures()
+    _rebuild_datasource()
 
 
 def _get_or_create_user():
@@ -107,3 +110,9 @@ def _mk_fixture_data_item(data_type_id, fields, vals):
         "item_attributes": {},
         "sort_key": 0,
     }
+
+
+def _rebuild_datasource():
+    config_id = StaticDataSourceConfiguration.get_doc_id(
+        INDDEX_DOMAIN, 'food_consumption_indicators')
+    rebuild_indicators(config_id, source='populate_inddex_test_domain')
