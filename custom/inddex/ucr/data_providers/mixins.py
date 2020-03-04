@@ -32,9 +32,9 @@ class ReportDataMixin(FoodConsumptionDataSourceMixin):
         'food_base_term', 'tag_1', 'other_tag_1', 'tag_2', 'other_tag_2', 'tag_3', 'other_tag_3', 'tag_4',
         'other_tag_4', 'tag_5', 'other_tag_5', 'tag_6', 'other_tag_6', 'tag_7', 'other_tag_7', 'tag_8',
         'other_tag_8', 'tag_9', 'other_tag_9', 'tag_10', 'other_tag_10', 'conv_method_code', 'conv_method_desc',
-        'conv_option_code', 'conv_option_desc', 'conv_size', 'conv_units', 'quantity',
+        'conv_option_code', 'conv_option_desc', 'measurement_amount', 'conv_units', 'portions',
         'nsr_conv_method_code_post_cooking', 'nsr_conv_option_code_post_cooking',
-        'nsr_conv_option_desc_post_cooking', 'nsr_conv_size_post_cooking', 'nsr_same_conv_method',
+        'nsr_conv_option_desc_post_cooking', 'nsr_measurement_amount_post_cooking', 'nsr_same_conv_method',
         'respondent_id', 'recipe_case_id'
     ]
     id_field = 'doc_id'
@@ -484,7 +484,7 @@ class GapsReportDataMixin(ReportDataMixin, AdditionalDataMixin, AdditionalFilter
             el_data = record['data']
             if el_data['nsr_same_conv_method'] == 'yes' and el_data['food_type'] == 'non_std_recipe':
                 el_data['nsr_consumed_cooked_fraction'] = \
-                    (el_data['conv_size'] * el_data['quantity']) / el_data['nsr_conv_size_post_cooking']
+                    (el_data['measurement_amount'] * el_data['portions']) / el_data['nsr_measurement_amount_post_cooking']
 
 
 class GapsByItemReportDataMixin(GapsReportDataMixin, AdditionalDataMixin, AdditionalFiltersMixin):

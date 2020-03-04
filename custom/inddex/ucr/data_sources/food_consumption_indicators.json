@@ -722,12 +722,12 @@
                 }
             },            {
                 "type": "expression",
-                "column_id": "conv_size",
+                "column_id": "measurement_amount",
                 "datatype": "string",
                 "display_name": "Conversion Size",
                 "expression": {
                     "type": "property_name",
-                    "property_name": "conv_size"
+                    "property_name": "measurement_amount"
                 }
             },
             {
@@ -742,12 +742,12 @@
             },
             {
                 "type": "expression",
-                "column_id": "quantity",
+                "column_id": "portions",
                 "datatype": "string",
-                "display_name": "Quantity",
+                "display_name": "Portions",
                 "expression": {
                     "type": "property_name",
-                    "property_name": "quantity"
+                    "property_name": "portions"
                 }
             },
             {
@@ -779,11 +779,11 @@
             },
             {
                 "type": "expression",
-                "column_id": "nsr_conv_size_post_cooking",
+                "column_id": "nsr_measurement_amount_post_cooking",
                 "datatype": "string",
                 "expression": {
                     "type": "named",
-                    "name": "nsr_conv_size_post_cooking"
+                    "name": "nsr_measurement_amount_post_cooking"
                 }
             },
             {
@@ -900,7 +900,7 @@
                 },
                 "expression_if_false": ""
             },
-            "nsr_conv_size_post_cooking": {
+            "nsr_measurement_amount_post_cooking": {
                 "type": "conditional",
                 "test": {
                     "type": "boolean_expression",
@@ -913,7 +913,7 @@
                 },
                 "expression_if_true": {
                     "type": "property_name",
-                    "property_name": "recipe_conv_size_post_cooking"
+                    "property_name": "nsr_measurement_amount_post_cooking"
                 },
                 "expression_if_false": ""
             },
