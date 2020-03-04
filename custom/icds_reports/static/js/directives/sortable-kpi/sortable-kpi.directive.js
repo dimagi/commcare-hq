@@ -1,15 +1,14 @@
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 
-function SortableKpiController($rootScope, $scope) {
-    this.expandedCard = -1;
+function SortableKpiController() {
     this.toggleCardExpansion = function (cardNumber) {
         // expand/collapse card
-        this.expandedCard = (this.expandedCard === cardNumber) ? -1 : cardNumber;
+        this.expandedCard = (this.expandedCard === cardNumber) ? null : cardNumber;
     }
 }
 
-SortableKpiController.$inject = ['$rootScope', '$scope'];
+SortableKpiController.$inject = [];
 
 window.angular.module('icdsApp').directive("sortableKpi", ['templateProviderService', function (templateProviderService) {
     return {
