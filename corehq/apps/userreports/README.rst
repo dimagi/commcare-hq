@@ -1785,6 +1785,19 @@ To use this in a mobile ucr, set the ``'mobile_or_web'`` property to
        }
    }
 
+Displaying Readable User Name
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+HQ's best guess at the user's display name, using their first and last name, if available,
+then falling back to their username.
+
+.. code:: json
+
+   {
+       "type": "custom",
+       "custom_type": "user_display_including_name"
+   }
+
 Displaying username instead of user ID
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
