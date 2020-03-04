@@ -64,6 +64,15 @@
         "display": "Pregnant"
       },
       {
+        "compare_as_string": true,
+        "datatype": "string",
+        "required": false,
+        "slug": "opened_on",
+        "field": "opened_on",
+        "type": "date",
+        "display": "Pregnancy Registered"
+      },
+      {
         "compare_as_string": false,
         "datatype": "string",
         "required": false,
@@ -72,16 +81,16 @@
         "type": "date",
         "slug": "edd"
       },
-	  {  
+      {
         "required": false,
-		"type": "numeric",
+        "type": "numeric",
         "slug": "is_migrated",
         "field": "is_migrated",
         "display": "Whether Migrated"
       },
       {
         "required": false,
-		"type": "numeric",
+        "type": "numeric",
         "slug": "is_availing",
         "field": "is_availing",
         "display": "Whether Availing Services"
