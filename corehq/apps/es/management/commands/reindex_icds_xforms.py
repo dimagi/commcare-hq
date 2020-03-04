@@ -10,8 +10,8 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('index_name')
-        parser.add_argument('start_date', type=int)
-        parser.add_argument('end_date', type=int)
+        parser.add_argument('start_date', help='in yyyy-MM-dd format')
+        parser.add_argument('end_date', help='in yyyy-MM-dd format')
 
     def handle(self, index_name, start_date, end_date, **options):
         es = get_es_new()
