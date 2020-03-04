@@ -1,18 +1,15 @@
-var url = hqImport('hqwebapp/js/initial_page_data').reverse;
-
-
 function SortableKpiController() {
     this.toggleCardExpansion = function (cardNumber) {
         // expand/collapse card
         this.expandedCard = (this.expandedCard === cardNumber) ? null : cardNumber;
-    }
+    };
 }
 
 SortableKpiController.$inject = [];
 
 window.angular.module('icdsApp').directive("sortableKpi", ['templateProviderService', function (templateProviderService) {
     return {
-        restrict:'E',
+        restrict: 'E',
         scope: {
             data: '=',
         },
