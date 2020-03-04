@@ -1,5 +1,5 @@
 import copy
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from django.core.management.base import BaseCommand
 
@@ -18,13 +18,28 @@ class Command(BaseCommand):
         parser.add_argument('--scroll_timeout', default='100m',
             help='Elasticsearch scroll timeout such as 5m, 10m or 100m etc')
         parser.add_argument('--chunk_size', default=100, type=int)
+        parser.add_argument(
+            '--print_counts',
+            action='store_true',
+            default=False,
+            help="Simply print doc counts and exit"
+        )
 
     def handle(self, index_name, start_date, end_date, **options):
+        es = get_es_new()
         scroll_timeout = options.get('scroll_timeout')
         chunk_size = options.get('chunk_size')
-        es = get_es_new()
+        print_counts = options.get('print_counts')
+        old_docs_count = self._get_doc_count(es, 'xforms', start_date, end_date)
+        if print_counts:
+            print("Number of docs in old index",
+                old_docs_count)
+            print("Number of docs in new index",
+                self._get_doc_count(es, index_name, start_date, end_date))
+            return
+
         print("Total number of docs in this date range in old index",
-            self._get_doc_count(es, 'xforms', start_date, end_date))
+            old_docs_count)
         start_date = self._get_last_start_date(es, index_name, start_date, end_date)
         query = self._base_query(start_date, end_date)
         query.update({
@@ -67,14 +82,18 @@ class Command(BaseCommand):
         result = es.search(index_name, body=query)
         hits = result['hits']['hits']
         if not hits:
+            print("Starting fresh! No docs in new index in this date range")
             return start_date
         else:
-            new_start_date = str(iso_string_to_datetime(hits[0]['_source']['received_on']).date())
+            new_start_date = str(iso_string_to_datetime(hits[0]['_source']['received_on']).date() - timedelta(1))
+            print("Trying to resume from ", new_start_date)
             already_index_count = self._get_doc_count(es, index_name, start_date, new_start_date)
             expected_count = self._get_doc_count(es, 'xforms', start_date, new_start_date)
+            print(already_index_count, " docs already reindexed. ", "Expected count ", expected_count)
             if already_index_count == expected_count:
                 print(already_index_count, " docs are already indexed ")
                 print("Resuming from date ", new_start_date)
                 return new_start_date
             else:
+                print("Doc counts don't match, starting for all range")
                 return start_date
