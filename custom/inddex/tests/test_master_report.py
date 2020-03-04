@@ -45,8 +45,11 @@ class TestMasterReport(TestCase):
     def assert_fixtures_created(self):
         # Note, this is actually quite slow - might want to drop
         data_types = get_fixture_data_types(self.domain)
-        self.assertEqual(len(data_types), 3)
+        self.assertEqual(len(data_types), 4)
         self.assertItemsEqual(
             [(dt.tag, count_fixture_items(self.domain, dt._id)) for dt in data_types],
-            [('recipes', 384), ('food_list', 1130), ('food_composition_table', 1042)]
+            [('recipes', 384),
+             ('food_list', 1130),
+             ('food_composition_table', 1042),
+             ('conv_factors', 2995)]
         )
