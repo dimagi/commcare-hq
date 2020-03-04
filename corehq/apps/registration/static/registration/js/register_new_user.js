@@ -30,6 +30,7 @@ hqDefine('registration/js/register_new_user', [
     });
 
     $('#book-to-call-btn').click(function(){
+        $('#start-trial-modal-header').text("Choose a time for your CommCare trial setup");
         $('#get-trial-cta-calendar-content').fadeIn();
         $('#choose-callback-options').addClass('hide');
 
