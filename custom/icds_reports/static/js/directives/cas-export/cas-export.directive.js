@@ -51,19 +51,6 @@ function CasExportController($window, $location, locationHierarchy, locationsSer
         });
     }
     vm.years = vm.yearsCopy;
-    vm.filterOptions = [
-        {label: 'Data not Entered for weight (Unweighed)', id: 'unweighed'},
-        {label: 'Data not Entered for height (Unmeasured)', id: 'umeasured'},
-        {label: 'Severely Underweight', id: 'severely_underweight'},
-        {label: 'Moderately Underweight', id: 'moderately_underweight'},
-        {label: 'Normal (weight-for-age)', id: 'normal_wfa'},
-        {label: 'Severely Stunted', id: 'severely_stunted'},
-        {label: 'Moderately Stunted', id: 'moderately_stunted'},
-        {label: 'Normal (height-for-age)', id: 'normal_hfa'},
-        {label: 'Severely Wasted', id: 'severely_wasted'},
-        {label: 'Moderately Wasted', id: 'moderately_wasted'},
-        {label: 'Normal (weight-for-height)', id: 'normal_wfh'},
-    ];
 
     vm.indicators = [
         {id: 'child_health_monthly', name: 'Child'},
