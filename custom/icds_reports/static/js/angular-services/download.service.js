@@ -1,8 +1,8 @@
-window.angular.module('icdsApp').factory('downloadService', ['$http', function($http) {
+window.angular.module('icdsApp').factory('downloadService', ['$http', function ($http) {
     var url = hqImport('hqwebapp/js/initial_page_data').reverse;
     var gtag = hqImport('analytix/js/google').track;
     return {
-        createTask: function(data) {
+        createTask: function (data) {
             gtag.event('ISSNIP Service', 'Fetching data started', 'Creating Task');
             return $http.post(url('icds_export_indicator'),
                 $.param(data),
@@ -10,25 +10,25 @@ window.angular.module('icdsApp').factory('downloadService', ['$http', function($
                     headers: {'Content-Type': 'application/x-www-form-urlencoded'},
                 }
             ).then(
-                function(response) {
+                function (response) {
                     gtag.event('ISSNIP Service', 'Fetching data succeeded', 'Creating Task');
                     return response.data;
                 },
-                function() {
+                function () {
                     gtag.event('ISSNIP Service', 'Fetching data failed', 'Creating Task');
                 }
             );
         },
-        getStatus: function(task_id) {
+        getStatus: function (task_id) {
             gtag.event('ISSNIP Service', 'Fetching data started', 'Checking Status');
             return $http.get(url('issnip_pdf_status'), {
                 params: {task_id: task_id},
             }).then(
-                function(response) {
+                function (response) {
                     gtag.event('ISSNIP Service', 'Fetching data succeeded', 'Checking Status');
                     return response.data;
                 },
-                function() {
+                function () {
                     gtag.event('ISSNIP Service', 'Fetching data failed', 'Checking Status');
                 }
             );

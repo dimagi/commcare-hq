@@ -49,7 +49,7 @@ function EarlyInitiationBreastfeedingController($scope, $routeParams, $location,
             {
                 indicator_name: '% children who were put to the breast within one hour of birth' + chosenFilters + ': ',
                 indicator_value: percent,
-            }
+            },
         ];
     };
 
@@ -84,7 +84,7 @@ function EarlyInitiationBreastfeedingController($scope, $routeParams, $location,
         );
     };
 
-    vm.resetAdditionalFilter = function() {
+    vm.resetAdditionalFilter = function () {
         vm.filtersData.gender = '';
         $location.search('gender', null);
     };

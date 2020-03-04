@@ -52,7 +52,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
     vm.selectedMonth = new Date().getMonth() + 1;
     vm.selectedYear = new Date().getFullYear();
 
-    window.angular.forEach(moment.months(), function(key, value) {
+    window.angular.forEach(moment.months(), function (key, value) {
         vm.monthsCopy.push({
             name: key,
             id: value + 1,
@@ -90,7 +90,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
 
     vm.excludeCurrentMonthIfInitialThreeDays();
 
-    for (var year=2017; year <= new Date().getFullYear(); year++ ) {
+    for (var year = 2017; year <= new Date().getFullYear(); year++) {
         vm.yearsCopy.push({
             name: year,
             id: year,
@@ -176,28 +176,28 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
 
     var maxLevel = 0;
 
-    var initHierarchy = function() {
-        var hierarchy = _.map(locationHierarchy, function(locationType) {
+    var initHierarchy = function () {
+        var hierarchy = _.map(locationHierarchy, function (locationType) {
             return {
                 name: locationType[0],
                 parents: locationType[1],
             };
         });
 
-        var assignLevels = function(currentLocationType, level) {
-            var children = _.filter(hierarchy, function(locationType) {
+        var assignLevels = function (currentLocationType, level) {
+            var children = _.filter(hierarchy, function (locationType) {
                 return _.contains(locationType.parents, currentLocationType);
             });
-            children.forEach(function(child) {
+            children.forEach(function (child) {
                 child.level = level;
                 assignLevels(child.name, level + 1);
             });
         };
         assignLevels(null, 0);
-        maxLevel = _.max(hierarchy, function(locationType) {
+        maxLevel = _.max(hierarchy, function (locationType) {
             return locationType.level;
         }).level;
-        vm.hierarchy = _.toArray(_.groupBy(hierarchy, function(locationType) {
+        vm.hierarchy = _.toArray(_.groupBy(hierarchy, function (locationType) {
             return locationType.level;
         }));
         vm.selectedLocations = new Array(maxLevel);
@@ -228,14 +228,14 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         return ((!vm.userLocationIdIsNull() && !vm.userHaveAccessToAllLocations(locations)) || vm.isUserLocationIn(locations)) && !haveAccessToAllLocations;
     };
 
-    var init = function() {
+    var init = function () {
         if (vm.selectedLocationId) {
-            vm.myPromise = locationsService.getAncestors(vm.selectedLocationId).then(function(data) {
+            vm.myPromise = locationsService.getAncestors(vm.selectedLocationId).then(function (data) {
                 var locations = data.locations;
 
                 var selectedLocation = data.selected_location;
 
-                var locationsGrouppedByParent = _.groupBy(locations, function(location) {
+                var locationsGrouppedByParent = _.groupBy(locations, function (location) {
                     return location.parent_id || 'root';
                 });
 
@@ -256,17 +256,19 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
 
                 initHierarchy();
 
-                var levelOfSelectedLocation = _.findIndex(vm.hierarchy, function(locationTypes) {
-                    return _.contains(locationTypes.map(function(x) { return x.name; }), selectedLocation.location_type_name);
+                var levelOfSelectedLocation = _.findIndex(vm.hierarchy, function (locationTypes) {
+                    return _.contains(locationTypes.map(function (x) {
+                        return x.name; 
+                    }), selectedLocation.location_type_name);
                 });
                 vm.selectedLocations[levelOfSelectedLocation] = vm.selectedLocationId;
                 vm.onSelect(selectedLocation, levelOfSelectedLocation);
 
                 levelOfSelectedLocation -= 1;
 
-                while(levelOfSelectedLocation >= 0) {
+                while (levelOfSelectedLocation >= 0) {
                     var childSelectedId = vm.selectedLocations[levelOfSelectedLocation + 1];
-                    var childSelected = _.find(locations, function(location) {
+                    var childSelected = _.find(locations, function (location) {
                         return location.location_id === childSelectedId;
                     });
                     vm.selectedLocations[levelOfSelectedLocation] = childSelected.parent_id;
@@ -284,7 +286,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
             });
         } else {
             initHierarchy();
-            vm.myPromise = locationsService.getRootLocations().then(function(data) {
+            vm.myPromise = locationsService.getRootLocations().then(function (data) {
                 locationsCache.root = [NATIONAL_OPTION].concat(data.locations);
             });
             vm.groupByLevels = vm.levels;
@@ -293,8 +295,8 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
 
     init();
 
-    vm.getPlaceholder = function(locationTypes) {
-        return _.map(locationTypes, function(locationType) {
+    vm.getPlaceholder = function (locationTypes) {
+        return _.map(locationTypes, function (locationType) {
             if (locationType.name === 'state') {
                 if (vm.isChildBeneficiaryListSelected()) {
                     return 'Select State';
@@ -310,7 +312,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         return vm.selectedIndicator === 6 && selectedLocationIndex() !== 4;
     };
 
-    vm.getLocationsForLevel = function(level) {
+    vm.getLocationsForLevel = function (level) {
         if (level === 0) {
             if (vm.isChildBeneficiaryListSelected()) {
                 return locationsCache.root.slice(1);
@@ -325,25 +327,25 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         }
     };
 
-    var resetLevelsBelow = function(level) {
+    var resetLevelsBelow = function (level) {
         for (var i = level + 1; i <= maxLevel; i++) {
             vm.hierarchy[i].selected = null;
             vm.selectedLocations[i] = null;
         }
     };
 
-    var selectedLocationIndex = function() {
-        return _.findLastIndex(vm.selectedLocations, function(locationId) {
+    var selectedLocationIndex = function () {
+        return _.findLastIndex(vm.selectedLocations, function (locationId) {
             return locationId && locationId !== ALL_OPTION.location_id;
         });
     };
 
-    vm.disabled = function(level) {
+    vm.disabled = function (level) {
         if (vm.userLocationId === null) {
             return false;
         }
         var notDisabledLocationsForLevel = 0;
-        window.angular.forEach(vm.getLocationsForLevel(level), function(location) {
+        window.angular.forEach(vm.getLocationsForLevel(level), function (location) {
             if (location.user_have_access || location.user_have_access_to_parent) {
                 notDisabledLocationsForLevel += 1;
             }
@@ -365,7 +367,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         vm.onSelect($item, level);
     };
 
-    vm.onSelect = function($item, level) {
+    vm.onSelect = function ($item, level) {
         resetLevelsBelow(level);
         if (level < 4) {
             vm.myPromise = locationsService.getChildren($item.location_id).then(function (data) {
@@ -394,7 +396,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         vm.groupByLevels = levels;
     };
 
-    vm.onSelectAWCs = function($item) {
+    vm.onSelectAWCs = function ($item) {
         if ($item.location_id === 'all') {
             vm.selectedAWCs = [$item.location_id];
         } else if (vm.selectedAWCs.indexOf('all') !== -1) {
@@ -484,7 +486,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         vm.myPromise = locationsService.getAncestors();
     };
 
-    vm.getFormats = function() {
+    vm.getFormats = function () {
         if (vm.isChildBeneficiaryListSelected()) {
             return [vm.formats[0]];
         } else {
@@ -492,7 +494,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         }
     };
 
-    vm.onIndicatorSelect = function() {
+    vm.onIndicatorSelect = function () {
         if (vm.isChildBeneficiaryListSelected()) {
             init();
             vm.selectedFormat = vm.formats[0].id;
@@ -519,7 +521,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         }
     };
 
-    vm.submitForm = function(csrfToken) {
+    vm.submitForm = function (csrfToken) {
         $rootScope.report_link = '';
         var awcs = vm.selectedPDFFormat === 'one' ? ['all'] : vm.selectedAWCs;
         var taskConfig = {
@@ -539,12 +541,12 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         var selectedFilters = vm.selectedFilterOptions();
         if (vm.isChildBeneficiaryListSelected()) {
             taskConfig['filter[]'] = [];
-            for (var i=0, len=selectedFilters.length; i < len; i++) {
+            for (var i = 0, len = selectedFilters.length; i < len; i++) {
                 taskConfig['filter[]'].push(selectedFilters[i].id);
             }
         }
 
-        downloadService.createTask(taskConfig).then(function(data) {
+        downloadService.createTask(taskConfig).then(function (data) {
             vm.task_id = data.task_id;
             if (vm.task_id) {
                 $rootScope.task_id = vm.task_id;
@@ -557,7 +559,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         vm.previousTaskFailed = null;
     };
 
-    vm.resetForm = function() {
+    vm.resetForm = function () {
         vm.hierarchy = [];
         vm.selectedLocations = [];
         vm.selectedLocationId = userLocationId;
@@ -570,14 +572,14 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         initHierarchy();
     };
 
-    vm.hasErrors = function() {
+    vm.hasErrors = function () {
         var beneficiaryListErrors = vm.isChildBeneficiaryListSelected() && (vm.selectedFilterOptions().length === 0 || !vm.isDistrictOrBelowSelected());
         var incentiveReportErrors = vm.isIncentiveReportSelected() && !vm.isStateSelected();
         var ladySupervisorReportErrors = vm.isLadySupervisorSelected() && !vm.isStateSelected();
         return beneficiaryListErrors || incentiveReportErrors || ladySupervisorReportErrors;
     };
 
-    vm.isCombinedPDFSelected = function() {
+    vm.isCombinedPDFSelected = function () {
         return vm.isISSNIPMonthlyRegisterSelected() && vm.selectedPDFFormat === 'one';
     };
 
@@ -589,26 +591,26 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         return vm.selectedLocations[0] && vm.selectedLocations[0] !== ALL_OPTION.location_id;
     };
 
-    vm.hasErrorsISSNIPExport = function() {
+    vm.hasErrorsISSNIPExport = function () {
         if (vm.selectedPDFFormat === 'one') {
             return vm.isISSNIPMonthlyRegisterSelected() && !vm.isBlockOrBelowSelected();
         }
         return vm.isISSNIPMonthlyRegisterSelected() && (!vm.isBlockOrBelowSelected() || !vm.isAWCsSelected());
     };
 
-    vm.isVisible = function(level) {
+    vm.isVisible = function (level) {
         return level === 0 || (vm.selectedLocations[level - 1] && vm.selectedLocations[level - 1] !== 'all') &&
             !(vm.isIncentiveReportSelected() && level > 2) && !(vm.isLadySupervisorSelected() && level > 2) &&
             !(vm.isTakeHomeRationReportSelected() && level > 3);
     };
 
-    vm.selectedFilterOptions = function() {
-        return vm.filterOptions.filter(function(el) {
+    vm.selectedFilterOptions = function () {
+        return vm.filterOptions.filter(function (el) {
             return el.selected;
         });
     };
 
-    vm.isChildBeneficiaryListSelected = function() {
+    vm.isChildBeneficiaryListSelected = function () {
         return vm.selectedIndicator === 6;
     };
 
@@ -666,11 +668,11 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
     };
 
 
-    vm.isDistrictOrBelowSelected = function() {
+    vm.isDistrictOrBelowSelected = function () {
         return vm.selectedLocations[1] && vm.selectedLocations[1] !== ALL_OPTION.location_id;
     };
 
-    vm.isAWCsSelected = function() {
+    vm.isAWCsSelected = function () {
         return vm.selectedAWCs.length > 0;
     };
 
@@ -695,10 +697,10 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
 DownloadController.$inject = ['$rootScope', '$location', 'locationHierarchy', 'locationsService', 'userLocationId',
     'haveAccessToFeatures', 'downloadService', 'isAlertActive', 'userLocationType','haveAccessToAllLocations','allUserLocationId'];
 
-window.angular.module('icdsApp').directive("download", function() {
+window.angular.module('icdsApp').directive("download", function () {
     var url = hqImport('hqwebapp/js/initial_page_data').reverse;
     return {
-        restrict:'E',
+        restrict: 'E',
         scope: {
         },
         bindToController: true,

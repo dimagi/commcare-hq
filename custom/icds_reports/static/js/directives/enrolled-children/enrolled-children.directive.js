@@ -64,7 +64,7 @@ function EnrolledChildrenController($scope, $routeParams, $location, $filter, de
             {
                 indicator_name: 'Percentage of registered children ' + chosenFilters + ' who are enrolled for Anganwadi Services: ',
                 indicator_value: percent,
-            }
+            },
         ];
     };
 
@@ -82,13 +82,15 @@ function EnrolledChildrenController($scope, $routeParams, $location, $filter, de
     delete vm.chartOptions.chart.tooltips;
     vm.chartOptions.chart.useInteractiveGuideline = false;
     vm.chartOptions.chart.tooltip = function (key, x) {
-        var data = _.find(vm.chartData[0].values, function(num) { return num.x === x;});
+        var data = _.find(vm.chartData[0].values, function (num) {
+            return num.x === x;
+        });
         return vm.tooltipContent(data, x);
     };
     vm.chartOptions.chart.xAxis = {
         axisLabel: '',
         showMaxMin: true,
-        tickValues: function() {
+        tickValues: function () {
             return ["0-1 month", "1-6 months", "6-12 months", "1-3 years", "3-6 years"];
         },
     };
@@ -101,14 +103,14 @@ function EnrolledChildrenController($scope, $routeParams, $location, $filter, de
             + "<div>% of children " + x + ": <strong>" + average + "</strong></div>";
     };
 
-    vm.resetAdditionalFilter = function() {
+    vm.resetAdditionalFilter = function () {
         vm.filtersData.gender = '';
         vm.filtersData.age = '';
         $location.search('gender', null);
         $location.search('age', null);
     };
 
-    vm.resetOnlyAgeAdditionalFilter = function() {
+    vm.resetOnlyAgeAdditionalFilter = function () {
         vm.filtersData.age = '';
         $location.search('age', null);
     };

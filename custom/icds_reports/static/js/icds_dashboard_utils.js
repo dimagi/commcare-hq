@@ -43,8 +43,8 @@ hqDefine("js/icds_dashboard_utils", function () {
 
     function addMaternalChildRoutes($routeProvider, defaultStep) {
         return $routeProvider.when("/maternal_and_child", {
-                redirectTo: "/maternal_and_child/underweight_children/" + defaultStep,
-            })
+            redirectTo: "/maternal_and_child/underweight_children/" + defaultStep,
+        })
             .when("/maternal_and_child/underweight_children", {
                 redirectTo: "/maternal_and_child/underweight_children/" + defaultStep,
             })
@@ -102,8 +102,8 @@ hqDefine("js/icds_dashboard_utils", function () {
     }
     function addCasReachRoutes($routeProvider, defaultStep) {
         return $routeProvider.when("/icds_cas_reach", {
-                redirectTo: "/icds_cas_reach/awc_daily_status/" + defaultStep,
-            })
+            redirectTo: "/icds_cas_reach/awc_daily_status/" + defaultStep,
+        })
             .when("/icds_cas_reach/awc_daily_status", {
                 redirectTo: "/icds_cas_reach/awc_daily_status/" + defaultStep,
             })
@@ -121,102 +121,102 @@ hqDefine("js/icds_dashboard_utils", function () {
         return $routeProvider.when("/demographics", {
             redirectTo: "/demographics/registered_household/" + defaultStep,
         })
-        .when("/demographics/registered_household", {
-            redirectTo: "/demographics/registered_household/" + defaultStep,
-        })
-        .when("/demographics/registered_household/:step", {
-            template: "<registered-household></registered-household>",
-        })
-        .when("/demographics/adhaar", {
-            redirectTo: "/demographics/adhaar/" + defaultStep,
-        })
-        .when("/demographics/adhaar/:step", {
-            template: "<adhaar-beneficiary></adhaar-beneficiary>",
-        })
-        .when("/demographics/enrolled_children", {
-            redirectTo: "/demographics/enrolled_children/" + defaultStep,
-        })
-        .when("/demographics/enrolled_children/:step", {
-            template: "<enrolled-children></enrolled-children>",
-        })
-        .when("/demographics/enrolled_women", {
-            redirectTo: "/demographics/enrolled_women/" + defaultStep,
-        })
-        .when("/demographics/enrolled_women/:step", {
-            template: "<enrolled-women></enrolled-women>",
-        })
-        .when("/demographics/lactating_enrolled_women", {
-            redirectTo: "/demographics/lactating_enrolled_women/" + defaultStep,
-        })
-        .when("/demographics/lactating_enrolled_women/:step", {
-            template: "<lactating-enrolled-women></lactating-enrolled-women>",
-        })
-        .when("/demographics/adolescent_girls", {
-            redirectTo: "/demographics/adolescent_girls/" + defaultStep,
-        })
-        .when("/demographics/adolescent_girls/:step", {
-            template: "<adolescent-girls></adolescent-girls>",
-        });
+            .when("/demographics/registered_household", {
+                redirectTo: "/demographics/registered_household/" + defaultStep,
+            })
+            .when("/demographics/registered_household/:step", {
+                template: "<registered-household></registered-household>",
+            })
+            .when("/demographics/adhaar", {
+                redirectTo: "/demographics/adhaar/" + defaultStep,
+            })
+            .when("/demographics/adhaar/:step", {
+                template: "<adhaar-beneficiary></adhaar-beneficiary>",
+            })
+            .when("/demographics/enrolled_children", {
+                redirectTo: "/demographics/enrolled_children/" + defaultStep,
+            })
+            .when("/demographics/enrolled_children/:step", {
+                template: "<enrolled-children></enrolled-children>",
+            })
+            .when("/demographics/enrolled_women", {
+                redirectTo: "/demographics/enrolled_women/" + defaultStep,
+            })
+            .when("/demographics/enrolled_women/:step", {
+                template: "<enrolled-women></enrolled-women>",
+            })
+            .when("/demographics/lactating_enrolled_women", {
+                redirectTo: "/demographics/lactating_enrolled_women/" + defaultStep,
+            })
+            .when("/demographics/lactating_enrolled_women/:step", {
+                template: "<lactating-enrolled-women></lactating-enrolled-women>",
+            })
+            .when("/demographics/adolescent_girls", {
+                redirectTo: "/demographics/adolescent_girls/" + defaultStep,
+            })
+            .when("/demographics/adolescent_girls/:step", {
+                template: "<adolescent-girls></adolescent-girls>",
+            });
     }
     function addAWCInfrastructureRoutes($routeProvider, defaultStep) {
         return $routeProvider.when("/awc_infrastructure", {
             redirectTo: "/awc_infrastructure/clean_water/" + defaultStep,
         })
-        .when("/awc_infrastructure/clean_water", {
-            redirectTo: "/awc_infrastructure/clean_water/" + defaultStep,
-        })
-        .when("/awc_infrastructure/clean_water/:step", {
-            template: "<clean-water></clean-water>",
-        })
-        .when("/awc_infrastructure/functional_toilet", {
-            redirectTo: "/awc_infrastructure/functional_toilet/" + defaultStep,
-        })
-        .when("/awc_infrastructure/functional_toilet/:step", {
-            template: "<functional-toilet></functional-toilet>",
-        })
-        .when("/awc_infrastructure/infants_weight_scale", {
-            redirectTo: "/awc_infrastructure/infants_weight_scale/" + defaultStep,
-        })
-        .when("/awc_infrastructure/infants_weight_scale/:step", {
-            template: "<infants-weight-scale></infants-weight-scale>",
-        })
-        .when("/awc_infrastructure/adult_weight_scale", {
-            redirectTo: "/awc_infrastructure/adult_weight_scale/" + defaultStep,
-        })
-        .when("/awc_infrastructure/adult_weight_scale/:step", {
-            template: "<adult-weight-scale></adult-weight-scale>",
-        })
-        .when("/awc_infrastructure/medicine_kit", {
-            redirectTo: "/awc_infrastructure/medicine_kit/" + defaultStep,
-        })
-        .when("/awc_infrastructure/medicine_kit/:step", {
-            template: "<medicine-kit></medicine-kit>",
-        })
-        .when("/awc_infrastructure/infantometer", {
-            redirectTo: "/awc_infrastructure/infantometer/" + defaultStep,
-        })
-        .when("/awc_infrastructure/infantometer/:step", {
-            template: "<infantometer></infantometer>",
-        })
-        .when("/awc_infrastructure/stadiometer", {
-            redirectTo: "/awc_infrastructure/stadiometer/" + defaultStep,
-        })
-        .when("/awc_infrastructure/stadiometer/:step", {
-            template: "<stadiometer></stadiometer>",
-        });
+            .when("/awc_infrastructure/clean_water", {
+                redirectTo: "/awc_infrastructure/clean_water/" + defaultStep,
+            })
+            .when("/awc_infrastructure/clean_water/:step", {
+                template: "<clean-water></clean-water>",
+            })
+            .when("/awc_infrastructure/functional_toilet", {
+                redirectTo: "/awc_infrastructure/functional_toilet/" + defaultStep,
+            })
+            .when("/awc_infrastructure/functional_toilet/:step", {
+                template: "<functional-toilet></functional-toilet>",
+            })
+            .when("/awc_infrastructure/infants_weight_scale", {
+                redirectTo: "/awc_infrastructure/infants_weight_scale/" + defaultStep,
+            })
+            .when("/awc_infrastructure/infants_weight_scale/:step", {
+                template: "<infants-weight-scale></infants-weight-scale>",
+            })
+            .when("/awc_infrastructure/adult_weight_scale", {
+                redirectTo: "/awc_infrastructure/adult_weight_scale/" + defaultStep,
+            })
+            .when("/awc_infrastructure/adult_weight_scale/:step", {
+                template: "<adult-weight-scale></adult-weight-scale>",
+            })
+            .when("/awc_infrastructure/medicine_kit", {
+                redirectTo: "/awc_infrastructure/medicine_kit/" + defaultStep,
+            })
+            .when("/awc_infrastructure/medicine_kit/:step", {
+                template: "<medicine-kit></medicine-kit>",
+            })
+            .when("/awc_infrastructure/infantometer", {
+                redirectTo: "/awc_infrastructure/infantometer/" + defaultStep,
+            })
+            .when("/awc_infrastructure/infantometer/:step", {
+                template: "<infantometer></infantometer>",
+            })
+            .when("/awc_infrastructure/stadiometer", {
+                redirectTo: "/awc_infrastructure/stadiometer/" + defaultStep,
+            })
+            .when("/awc_infrastructure/stadiometer/:step", {
+                template: "<stadiometer></stadiometer>",
+            });
     }
     function addAWCReportRoutes($routeProvider) {
         $routeProvider.when("/awc_reports", {
-                redirectTo: "/awc_reports/pse",
-            })
+            redirectTo: "/awc_reports/pse",
+        })
             .when("/awc_reports/:step", {
                 template: "<awc-reports></awc-reports>",
             });
     }
     function addSDDRoutes($routeProvider) {
         $routeProvider.when("/service_delivery_dashboard", {
-                redirectTo: "/service_delivery_dashboard/pw_lw_children",
-            })
+            redirectTo: "/service_delivery_dashboard/pw_lw_children",
+        })
             .when("/service_delivery_dashboard/:step", {
                 template: "<service-delivery-dashboard></service-delivery-dashboard>",
             });

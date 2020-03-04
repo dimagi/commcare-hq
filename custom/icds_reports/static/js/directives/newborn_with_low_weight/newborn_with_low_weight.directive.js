@@ -65,7 +65,7 @@ function NewbornWithLowBirthController($scope, $routeParams, $location, $filter,
             {
                 indicator_name: '% Unweighted' + chosenFilters + ': ',
                 indicator_value: unweighedPercent,
-            }
+            },
         ];
     };
 
@@ -118,7 +118,7 @@ function NewbornWithLowBirthController($scope, $routeParams, $location, $filter,
         );
     };
 
-    vm.resetAdditionalFilter = function() {
+    vm.resetAdditionalFilter = function () {
         vm.filtersData.gender = '';
         $location.search('gender', null);
     };

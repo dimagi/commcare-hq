@@ -31,7 +31,7 @@ function FunctionalToiletController($scope, $routeParams, $location, $filter, in
             {
                 indicator_name: '% of AWCs that reported having a functional toilet: ',
                 indicator_value: percent,
-            }
+            },
         ];
     };
 
