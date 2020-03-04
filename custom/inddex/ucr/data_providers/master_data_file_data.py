@@ -12,7 +12,7 @@ class MasterDataFileData(GapsReportDataMixin):
         'age_range', 'pregnant', 'breastfeeding', 'supplements', 'urban_rural', 'food_code', 'food_name',
         'recipe_name', 'caseid', 'reference_food_code', 'base_term_food_code', 'food_type', 'include_in_analysis', 'food_status',
         'eating_time', 'time_block', 'fao_who_gift_food_group_code', 'fao_who_gift_food_group_description',
-        'user_food_group', 'already_reported_food', 'already_reported_food_caseid', 'already_reported_recipe',
+        'user_food_group', 'already_reported_food', 'already_reported_food_case_id', 'already_reported_recipe',
         'already_reported_recipe_case_id', 'already_reported_recipe_name', 'is_ingredient', 'recipe_case_id',
         'ingr_recipe_code', 'ingr_fraction', 'ingr_recipe_total_grams_consumed', 'short_name', 'food_base_term',
         'tag_1', 'other_tag_1', 'tag_2', 'other_tag_2', 'tag_3', 'other_tag_3', 'tag_4',

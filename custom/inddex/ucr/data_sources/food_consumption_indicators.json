@@ -396,12 +396,12 @@
             },
             {
                 "type": "expression",
-                "column_id": "already_reported_food_caseid",
+                "column_id": "already_reported_food_case_id",
                 "datatype": "string",
                 "display_name": "Already Reported Food Case Id",
                 "expression": {
                     "type": "property_name",
-                    "property_name": "already_reported_food_caseid"
+                    "property_name": "already_reported_food_case_id"
                 }
             },
             {
