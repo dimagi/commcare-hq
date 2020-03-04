@@ -126,5 +126,5 @@ class PopulateSQLCommand(BaseCommand):
                 doc["_id"]
             ))
             with transaction.atomic():
-                logger.info("{} model for doc with id {}".format("Creating" if created else "Updated", doc["_id"]))
                 model, created = self.update_or_create_sql_object(doc)
+                logger.info("{} model for doc with id {}".format("Creating" if created else "Updated", doc["_id"]))
