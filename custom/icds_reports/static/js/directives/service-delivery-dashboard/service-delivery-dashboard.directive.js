@@ -407,6 +407,11 @@ function ServiceDeliveryDashboardController($rootScope, $scope, $http, $location
             default :
                 vm.dataAggregationLevel = 1;
         }
+        // This fn. spoofs the ajax request made by datatable on web for mobile requests.
+        // Datatable adds these params to the network request:
+        // field names of all the columns as "columns[i][data]" (Achieving this on mobile by traversing sddTableData),
+        // column which is being sorted as 'order[0][column]' (getting this based on the option clicked in sort popup)
+        // sorting direction as 'order[0][dir]' (when clicked on same column twice, switching direction, else default)
         var mobileCustomParams = {
             'columns[0][data]' : vm.getLocationLevelNameAndField()['locationLevelNameField'],
             'order[0][column]' : vm.sortingColumn,
