@@ -17,7 +17,7 @@ class MasterDataFileData(GapsReportDataMixin):
         'ingr_recipe_code', 'ingr_fraction', 'ingr_recipe_total_grams_consumed', 'short_name', 'food_base_term',
         'tag_1', 'other_tag_1', 'tag_2', 'other_tag_2', 'tag_3', 'other_tag_3', 'tag_4',
         'other_tag_4', 'tag_5', 'other_tag_5', 'tag_6', 'other_tag_6', 'tag_7', 'other_tag_7', 'tag_8',
-        'other_tag_8', 'tag_9', 'other_tag_9', 'tag_10', 'conv_method_code', 'conv_method_desc',
+        'other_tag_8', 'tag_9', 'other_tag_9', 'tag_10', 'other_tag_10', 'conv_method_code', 'conv_method_desc',
         'conv_option_code', 'conv_option_desc', 'measurement_amount', 'conv_units', 'portions',
         'nsr_conv_method_code_post_cooking', 'nsr_conv_method_desc_post_cooking',
         'nsr_conv_option_code_post_cooking', 'nsr_conv_option_desc_post_cooking', 'nsr_measurement_amount_post_cooking',
