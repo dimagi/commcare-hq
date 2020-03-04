@@ -251,24 +251,24 @@ function ServiceDeliveryDashboardController($rootScope, $scope, $http, $location
         return value === 0 || value === null || value === void(0) || value === vm.dataNotEntered;
     }
 
-    function renderPercentageAndPartials(percentage, nominator, denominator, indicator) {
+    function renderPercentageAndPartials(percentage, numerator, denominator, indicator) {
         if (isZeroNullUnassignedOrDataNotEntered(denominator)) {
             return isMobile ? ('No expected ' + indicator) : '<div> No expected ' + indicator + ' </div>';
         }
         else {
             if (denominator === vm.dataNotEntered) { return vm.dataNotEntered; }
             if (percentage === vm.dataNotEntered) {
-                if (nominator === 0 && denominator === 0) {
-                    return isMobile ? ('100% (' + nominator + ' / ' + denominator + ')') :
-                        '<div><span>100 %<br>(' + nominator + ' / ' + denominator + ')</span></div>';
+                if (numerator === 0 && denominator === 0) {
+                    return isMobile ? ('100% (' + numerator + ' / ' + denominator + ')') :
+                        '<div><span>100 %<br>(' + numerator + ' / ' + denominator + ')</span></div>';
                 }
-                return isMobile ? ('(' + nominator + ' / ' + denominator + ')') :
-                    '<div><span>(' + nominator + ' / ' + denominator + ')</span></div>';
+                return isMobile ? ('(' + numerator + ' / ' + denominator + ')') :
+                    '<div><span>(' + numerator + ' / ' + denominator + ')</span></div>';
             }
         }
 
-        return isMobile ? (percentage + '(' + nominator + ' / ' + denominator + ')') :
-            '<div><span>' + percentage + '<br>(' + nominator + ' / ' + denominator + ')</span></div>';
+        return isMobile ? (percentage + '(' + numerator + ' / ' + denominator + ')') :
+            '<div><span>' + percentage + '<br>(' + numerator + ' / ' + denominator + ')</span></div>';
     }
 
 
@@ -346,36 +346,44 @@ function ServiceDeliveryDashboardController($rootScope, $scope, $http, $location
     };
 
     // mobile helpers
+    const NO_TOOLTIP_DISPLAYED = -1;
+    const DEFAULT_SORTED_COLUMN = 0;
+    const DEFAULT_SORTING_DIRECTION = 0;
+    const DEFAULT_REQUEST_DATA_STARTING_FROM = 0;
     vm.showSortPopup = false;
-    vm.tooltipDisplayed = -1; // '-1' when none of the tooltips are displayed in sort popup
-    vm.requestDataStartingFrom = 0; // could be any multiple of 10
-    vm.dataSortingDirection = 0; // '0' -> asc, '1' -> desc
-    vm.sortingColumn = 0;
+    vm.tooltipDisplayed = NO_TOOLTIP_DISPLAYED; // '-1' when none of the tooltips are displayed in sort popup
+    vm.requestDataStartingFrom = DEFAULT_REQUEST_DATA_STARTING_FROM; // could be any multiple of 10
+    vm.dataSortingDirection = DEFAULT_SORTING_DIRECTION; // '0' -> asc, '1' -> desc
+    vm.sortingColumn = DEFAULT_SORTED_COLUMN;
     vm.sortableInputKpiData = [];
     vm.showSortingInfo = function (tooltipNumber) {
         // when clicked on 'i' icon, get the column number on which info is requested and show only corresponding info.
         vm.tooltipDisplayed = tooltipNumber;
     };
     vm.toggleSortPopup = function (event) {
-        vm.tooltipDisplayed = -1;
+        vm.tooltipDisplayed = NO_TOOLTIP_DISPLAYED;
         vm.showSortPopup = !vm.showSortPopup;
         event.stopPropagation();
     };
     vm.clearSorting = function (event) {
         // resets to sorting by location name and closes sort popup
-        vm.dataSortingDirection = 0;
-        vm.sortingColumn = 0;
+        vm.dataSortingDirection = DEFAULT_SORTING_DIRECTION;
+        vm.sortingColumn = DEFAULT_SORTED_COLUMN;
         vm.sortableInputKpiData = [];
-        vm.requestDataStartingFrom = 0;
+        vm.requestDataStartingFrom = DEFAULT_REQUEST_DATA_STARTING_FROM;
         vm.getData();
         vm.toggleSortPopup(event);
     };
     vm.getMobileData = function (index) {
         // triggers when clicked on any of the headings in sort popup
-        vm.dataSortingDirection = 1 - vm.dataSortingDirection;
+        if (vm.sortingColumn === index + 1) {
+            vm.dataSortingDirection = 1 - vm.dataSortingDirection;
+        } else {
+            vm.dataSortingDirection = DEFAULT_SORTING_DIRECTION;
+        }
         vm.sortingColumn = index + 1;
         vm.sortableInputKpiData = [];
-        vm.requestDataStartingFrom = 0;
+        vm.requestDataStartingFrom = DEFAULT_REQUEST_DATA_STARTING_FROM;
         vm.getData();
     };
     vm.getMobileCustomParams = function () {
