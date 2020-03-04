@@ -35,6 +35,11 @@ class PopulateSQLCommand(BaseCommand):
         raise NotImplementedError()
 
     def update_or_create_sql_object(self, doc):
+        """
+        This should find and update the sql object that corresponds to the given doc,
+        or create it if it doesn't yet exist. This method is responsible for saving
+        the sql object.
+        """
         raise NotImplementedError()
 
     @classmethod
@@ -123,4 +128,3 @@ class PopulateSQLCommand(BaseCommand):
             with transaction.atomic():
                 logger.info("{} model for doc with id {}".format("Creating" if created else "Updated", doc["_id"]))
                 model, created = self.update_or_create_sql_object(doc)
-                model.save()
