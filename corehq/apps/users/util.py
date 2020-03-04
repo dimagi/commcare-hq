@@ -113,11 +113,10 @@ def user_id_to_username(user_id):
     elif user_id == DEMO_USER_ID:
         return DEMO_USER_ID
     try:
-        login = CouchUser.get_db().get(user_id)
+        user_object = CouchUser.get_db().get(user_id)
     except ResourceNotFound:
         return None
-    return raw_username(login['username']) if "username" in login else None
-
+    return raw_username(user_object['username']) if "username" in user_object else None
 
 def cached_user_id_to_username(user_id):
     if not user_id:
