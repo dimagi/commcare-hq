@@ -683,12 +683,12 @@
             },
             {
                 "type": "expression",
-                "column_id": "conv_method",
+                "column_id": "conv_method_code",
                 "datatype": "string",
                 "display_name": "Conversion Method",
                 "expression": {
                     "type": "property_name",
-                    "property_name": "conv_method"
+                    "property_name": "conv_method_code"
                 }
             },
             {
@@ -703,12 +703,12 @@
             },
             {
                 "type": "expression",
-                "column_id": "conv_option",
+                "column_id": "conv_option_code",
                 "datatype": "string",
                 "display_name": "Conversion Option",
                 "expression": {
                     "type": "property_name",
-                    "property_name": "conv_option"
+                    "property_name": "conv_option_code"
                 }
             },
             {

@@ -31,8 +31,8 @@ class ReportDataMixin(FoodConsumptionDataSourceMixin):
         'is_ingredient', 'ingr_recipe_case_id', 'ingr_recipe_code', 'short_name', 'food_name', 'recipe_name',
         'food_base_term', 'tag_1', 'other_tag_1', 'tag_2', 'other_tag_2', 'tag_3', 'other_tag_3', 'tag_4',
         'other_tag_4', 'tag_5', 'other_tag_5', 'tag_6', 'other_tag_6', 'tag_7', 'other_tag_7', 'tag_8',
-        'other_tag_8', 'tag_9', 'other_tag_9', 'tag_10', 'other_tag_10', 'conv_method', 'conv_method_desc',
-        'conv_option', 'conv_option_desc', 'conv_size', 'conv_units', 'quantity',
+        'other_tag_8', 'tag_9', 'other_tag_9', 'tag_10', 'other_tag_10', 'conv_method_code', 'conv_method_desc',
+        'conv_option_code', 'conv_option_desc', 'conv_size', 'conv_units', 'quantity',
         'nsr_conv_method_code_post_cooking', 'nsr_conv_option_code_post_cooking',
         'nsr_conv_option_desc_post_cooking', 'nsr_conv_size_post_cooking', 'nsr_same_conv_method',
         'respondent_id', 'recipe_case_id'
@@ -44,7 +44,7 @@ class ReportDataMixin(FoodConsumptionDataSourceMixin):
     def obligatory_table_names(self):
         return [
             self.id_field, 'food_code', 'food_type', 'food_base_term',
-            'conv_method', 'conv_option', 'reference_food_code', 'age_months_calculated',
+            'conv_method_code', 'conv_option_code', 'reference_food_code', 'age_months_calculated',
         ]
 
     @property
