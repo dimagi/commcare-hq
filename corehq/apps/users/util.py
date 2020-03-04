@@ -137,6 +137,11 @@ def cached_user_id_to_username(user_id):
         return ret
 
 
+@quickcache(['user_id'])
+def cached_user_id_to_user_display(user_id):
+    return user_id_to_username(user_id, use_name_if_available=True)
+
+
 def cached_owner_id_to_display(owner_id):
     from corehq.apps.users.cases import get_wrapped_owner
     from corehq.apps.users.models import CouchUser

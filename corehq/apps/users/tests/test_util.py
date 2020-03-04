@@ -2,7 +2,7 @@ from django.core.cache import cache
 from django.test import TestCase
 
 from corehq.apps.users.models import CommCareUser
-from corehq.apps.users.util import username_to_user_id, user_id_to_username
+from corehq.apps.users.util import username_to_user_id, user_id_to_username, cached_user_id_to_user_display
 
 
 class TestUsernameToUserID(TestCase):
@@ -67,3 +67,16 @@ class TestUserIdToUsernameToUserName(TestCase):
                                                       use_name_if_available=True))
         self.assertEqual('Alice Jones', user_id_to_username(self.user_with_full_name.user_id,
                                                             use_name_if_available=True))
+
+    def test_cached_user_id_to_user_display(self):
+        self.assertEqual('Alice', cached_user_id_to_user_display(self.user_with_first_name.user_id))
+        self.assertEqual('Alice Jones', cached_user_id_to_user_display(self.user_with_full_name.user_id))
+        self.user_with_first_name.first_name = 'Betty'
+        self.user_with_first_name.save()
+        self.assertEqual('Betty', user_id_to_username(self.user_with_first_name.user_id,
+                                                      use_name_if_available=True))
+        self.assertEqual('Alice', cached_user_id_to_user_display(self.user_with_first_name.user_id))
+        self.assertEqual('Alice Jones', cached_user_id_to_user_display(self.user_with_full_name.user_id))
+        # set username back because other tests rely on it
+        self.user_with_first_name.first_name = 'Alice'
+        self.user_with_first_name.save()
