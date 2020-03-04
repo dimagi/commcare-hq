@@ -1,3 +1,5 @@
+@import "variables";
+
 @font-face {
   font-family: Montserrat;
   src: url("../fonts/Montserrat-Regular.otf");
@@ -335,10 +337,10 @@
 }
 
 .sort-popup {
-  width: 280px;
+  max-width: 280px;
   max-height: 350px;
   overflow: auto;
-  z-index: 1;
+  z-index: @zindexSortPopup;
   .position-absolute;
   right: 1.5rem;
   .shadow;
