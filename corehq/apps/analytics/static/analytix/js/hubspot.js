@@ -185,7 +185,7 @@ hqDefine('analytix/js/hubspot', [
                 // #SOIDIV_commcaretrialform as soon as it loads. Once it's
                 // loaded this does not leave the page.
             },
-            onFormSubmitted: function() {
+            onFormSubmitted: function () {
                 $('#choose-callback-options').fadeIn();
                 $('#get-trial-cta-form-content').addClass('hide');
                 $('#start-trial-modal-header').text("Choose how to get started");

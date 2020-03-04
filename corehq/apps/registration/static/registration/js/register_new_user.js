@@ -29,7 +29,7 @@ hqDefine('registration/js/register_new_user', [
         $('#registration-choose-plan-container').fadeIn();
     });
 
-    $('#book-to-call-btn').click(function(){
+    $('#book-to-call-btn').click(function () {
         $('#start-trial-modal-header').text("Choose a time for your CommCare trial setup");
         $('#get-trial-cta-calendar-content').fadeIn();
         $('#choose-callback-options').addClass('hide');
@@ -65,7 +65,7 @@ hqDefine('registration/js/register_new_user', [
                 
     });
 
-    $('#get-callback-btn').click(function(){
+    $('#get-callback-btn').click(function () {
         $('#start-trial-modal-header').text("Got it! We’ll be in touch soon");
         $('#will-be-in-touch-content').fadeIn();
         $('#choose-callback-options').addClass('hide');
