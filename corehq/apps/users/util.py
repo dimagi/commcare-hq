@@ -103,7 +103,7 @@ def username_to_user_id(username):
     return user._id
 
 
-def user_id_to_username(user_id):
+def user_id_to_username(user_id, use_name_if_available=False):
     from corehq.apps.users.models import CouchUser
     if not user_id:
         return None
@@ -116,7 +116,12 @@ def user_id_to_username(user_id):
         user_object = CouchUser.get_db().get(user_id)
     except ResourceNotFound:
         return None
-    return raw_username(user_object['username']) if "username" in user_object else None
+
+    if use_name_if_available and (user_object.get('first_name', '') or user_object.get('last_name', '')):
+        return ' '.join([user_object.get('first_name', ''), user_object.get('last_name', '')]).strip()
+    else:
+        return raw_username(user_object['username']) if "username" in user_object else None
+
 
 def cached_user_id_to_username(user_id):
     if not user_id:
