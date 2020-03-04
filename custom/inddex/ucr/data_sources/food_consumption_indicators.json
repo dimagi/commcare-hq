@@ -307,9 +307,9 @@
             },
             {
                 "type": "expression",
-                "column_id": "recall_date",
+                "column_id": "recalled_date",
                 "datatype": "string",
-                "display_name": "recall_date",
+                "display_name": "recalled_date",
                 "expression": {
                     "type": "nested",
                     "argument_expression": {
@@ -321,7 +321,7 @@
                     },
                     "value_expression": {
                         "type": "property_name",
-                        "property_name": "visit_date"
+                        "property_name": "recalled_date"
                     }
                 }
             },

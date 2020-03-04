@@ -26,7 +26,7 @@ class ReportDataMixin(FoodConsumptionDataSourceMixin):
     TABLE_NAMES = [
         'doc_id', 'inserted_at', 'recall_case_id', 'owner_name', 'opened_by_username', 'recall_status',
         'unique_respondent_id', 'gender', 'age', 'supplements', 'urban_rural', 'pregnant', 'breastfeeding',
-        'food_code', 'reference_food_code', 'food_type', 'include_in_analysis', 'food_status', 'recall_date',
+        'food_code', 'reference_food_code', 'food_type', 'include_in_analysis', 'food_status', 'recalled_date',
         'opened_date', 'eating_time', 'time_block', 'already_reported_food', 'already_reported_food_caseid',
         'is_ingredient', 'ingr_recipe_case_id', 'ingr_recipe_code', 'short_name', 'food_name', 'recipe_name',
         'food_base_term', 'tag_1', 'other_tag_1', 'tag_2', 'other_tag_2', 'tag_3', 'other_tag_3', 'tag_4',
@@ -56,7 +56,7 @@ class ReportDataMixin(FoodConsumptionDataSourceMixin):
 
     @property
     def filters(self):
-        filters = [GTE('recall_date', 'startdate'), LTE('recall_date', 'enddate')]
+        filters = [GTE('recalled_date', 'startdate'), LTE('recalled_date', 'enddate')]
         if self.config['case_owners']:
             filters.append(EQ('owner_name', 'case_owners'))
         if self.config['recall_status']:

@@ -8,7 +8,7 @@ class NutrientIntakesByFoodData(NutrientIntakesDataMixin):
     slug = 'disaggr_intake_data_by_food'
     headers_in_order = [
         'unique_respondent_id', 'location_id', 'respondent_id', 'recall_case_id', 'opened_by_username',
-        'owner_name', 'recall_date', 'recall_status', 'gender', 'age_years', 'age_months', 'age_range',
+        'owner_name', 'recalled_date', 'recall_status', 'gender', 'age_years', 'age_months', 'age_range',
         'supplements', 'urban_rural', 'pregnant', 'breastfeeding', 'food_code', 'base_term_food_code',
         'reference_food_code', 'caseid', 'food_name', 'recipe_name', 'fao_who_gift_food_group_code',
         'fao_who_gift_food_group_description', 'user_food_group', 'food_type', 'include_in_analysis',
@@ -202,7 +202,7 @@ class NutrientIntakesByRespondentData(NutrientIntakesDataMixin):
     slug = 'aggr_daily_intake_by_rspndnt'
     headers_in_order = [
         'unique_respondent_id', 'location_id', 'respondent_id', 'recall_case_id', 'opened_by_username',
-        'owner_name', 'recall_date', 'recall_status', 'gender', 'age_years', 'age_months', 'age_range',
+        'owner_name', 'recalled_date', 'recall_status', 'gender', 'age_years', 'age_months', 'age_range',
         'supplements', 'urban_rural', 'pregnant', 'breastfeeding', 'energy_kcal', 'water_g', 'protein_g',
         '<all other nutrients>'
     ]

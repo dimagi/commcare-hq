@@ -58,7 +58,7 @@ class GapsReportByItemDetailsData(GapsByItemReportDataMixin):
         'conv_factor_base_term_food_code', 'fct_data_used', 'fct_food_code_exists',
         'fct_base_term_food_code_exists', 'fct_reference_food_code_exists', 'base_term_food_code',
         'reference_food_code', 'unique_respondent_id', 'recall_case_id', 'opened_by_username',
-        'owner_name', 'recall_date'
+        'owner_name', 'recalled_date'
     ]
 
     def __init__(self, config):
