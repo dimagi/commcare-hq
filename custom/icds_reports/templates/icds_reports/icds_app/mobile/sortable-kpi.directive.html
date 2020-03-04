@@ -11,9 +11,9 @@
       <div class="mb-2">
         <span class="font-16 font-weight-500 font-montserrat text-grey" ng-bind="section.attributes[0]['heading']"></span>
         <i class="fa fa-arrow-down text-grey" aria-hidden="true"
-           ng-show="section.attributes[0]['sortingDirection']"></i>
+           ng-show="section.attributes[0]['sortingDirection'] && section.attributes[0]['isTheSortedColumn']"></i>
         <i class="fa fa-arrow-up text-grey" aria-hidden="true"
-           ng-show="!section.attributes[0]['sortingDirection']"></i>
+           ng-show="!section.attributes[0]['sortingDirection'] && section.attributes[0]['isTheSortedColumn']"></i>
       </div>
       <p class="font-16 font-weight-600 font-montserrat text-blue mb-0" ng-bind="section.attributes[0]['value']"></p>
     </div>
