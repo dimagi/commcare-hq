@@ -54,6 +54,16 @@ def iter_fixture_items_for_data_type(domain, data_type_id):
         yield FixtureDataItem.wrap(row['doc'])
 
 
+def count_fixture_items(domain, data_type_id):
+    from corehq.apps.fixtures.models import FixtureDataItem
+    return FixtureDataItem.view(
+        'fixtures/data_items_by_domain_type',
+        startkey=[domain, data_type_id],
+        endkey=[domain, data_type_id, {}],
+        reduce=True,
+    ).first()['value']
+
+
 def get_owner_ids_by_type(domain, owner_type, data_item_id):
     from corehq.apps.fixtures.models import FixtureOwnership
     assert owner_type in FixtureOwnership.owner_type.choices, \
