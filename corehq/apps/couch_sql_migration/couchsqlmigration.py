@@ -598,7 +598,8 @@ def patch_XFormInstance_get_xml():
 @contextmanager
 def patch_kafka():
     def drop_change(self, topic, change_meta):
-        log.debug("not publishing doc_id=%s to %s", change_meta.document_id, topic)
+        doc_id = change_meta.document_id
+        log.debug("kafka not publishing doc_id=%s to %s", doc_id, topic)
 
     from corehq.apps.change_feed.producer import ChangeProducer
     send_change = ChangeProducer.send_change
