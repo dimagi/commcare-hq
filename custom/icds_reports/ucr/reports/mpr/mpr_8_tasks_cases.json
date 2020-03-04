@@ -117,6 +117,13 @@
     ],
     "columns": [
       {
+        "display": "Month",
+        "column_id": "month",
+        "type": "aggregate_date",
+        "field": "date_turns_one_yr",
+        "format": "%Y-%m"
+      },
+      {
         "sortable": false,
         "description": null,
         "format": "default",
