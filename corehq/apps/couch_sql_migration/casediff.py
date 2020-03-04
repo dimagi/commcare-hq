@@ -85,6 +85,8 @@ def diff_cases(couch_cases, log_cases=False):
         couch_case, diffs, changes = diff_case(sql_case, couch_cases[case_id], dd_count)
         if diffs:
             dd_count("commcare.couchsqlmigration.case.has_diff")
+        if changes:
+            dd_count("commcare.couchsqlmigration.case.did_change")
         data.doc_ids.append(case_id)
         data.diffs.append((couch_case['doc_type'], case_id, diffs))
         data.changes.append((couch_case['doc_type'], case_id, changes))
@@ -109,9 +111,13 @@ def diff_case(sql_case, couch_case, dd_count):
     changes = []
     if diffs:
         return couch_case, diffs, changes
-    original_couch_case = couch_case
     diffs = diff(couch_case, sql_json)
     if diffs:
+        form_diffs = diff_case_forms(couch_case, sql_json)
+        if form_diffs:
+            diffs.extend(form_diffs)
+            return couch_case, diffs, changes
+        original_couch_case = couch_case
         dd_count("commcare.couchsqlmigration.case.rebuild.couch")
         try:
             couch_case = hard_rebuild(couch_case)
@@ -309,7 +315,7 @@ def diff_case_forms(couch_json, sql_json):
         old, new = diff_form_state(form_id)
         old_forms[form_id] = old["form_state"]
         new_forms[form_id] = new["form_state"]
-    if any(v.startswith("missing") for v in old_forms.values()):
+    if any(v != FORM_PRESENT for v in old_forms.values()):
         return [Diff(
             "diff",
             path=["?"],
