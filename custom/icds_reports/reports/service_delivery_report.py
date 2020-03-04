@@ -125,10 +125,10 @@ class ServiceDeliveryReport(object):
 
             for header in headers_with_columns:
                 if len(header) == 2:
-                    if header[0] in (
-                        'Anganwadi center conducted at least 2 CBEs?',
-                        'Anganwadi center conducted at least 1 VHSND?'
-                    ):
+                    if header[1] in (
+                        'num_awcs_conducted_cbe',
+                        'num_awcs_conducted_vhnd'
+                    ) and self.config['aggregation_level'] == 5:
                         row_data.append('Yes' if row[header[1]] == 1 else 'No')
                     else:
                         row_data.append(row[header[1]])
