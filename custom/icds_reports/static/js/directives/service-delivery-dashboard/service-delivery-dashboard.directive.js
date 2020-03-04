@@ -348,12 +348,12 @@ function ServiceDeliveryDashboardController($rootScope, $scope, $http, $location
     // mobile helpers
     const NO_TOOLTIP_DISPLAYED = -1;
     const DEFAULT_SORTED_COLUMN = 0;
-    const DEFAULT_SORTING_DIRECTION = 0;
+    const SORT_ASCENDING = 0;
     const DEFAULT_REQUEST_DATA_STARTING_FROM = 0;
     vm.showSortPopup = false;
     vm.tooltipDisplayed = NO_TOOLTIP_DISPLAYED; // '-1' when none of the tooltips are displayed in sort popup
     vm.requestDataStartingFrom = DEFAULT_REQUEST_DATA_STARTING_FROM; // could be any multiple of 10
-    vm.dataSortingDirection = DEFAULT_SORTING_DIRECTION; // '0' -> asc, '1' -> desc
+    vm.dataSortingDirection = SORT_ASCENDING;
     vm.sortingColumn = DEFAULT_SORTED_COLUMN;
     vm.sortableInputKpiData = [];
     vm.showSortingInfo = function (tooltipNumber) {
@@ -363,11 +363,15 @@ function ServiceDeliveryDashboardController($rootScope, $scope, $http, $location
     vm.toggleSortPopup = function (event) {
         vm.tooltipDisplayed = NO_TOOLTIP_DISPLAYED;
         vm.showSortPopup = !vm.showSortPopup;
+        // At the top level element, click event is added, which when triggered closes sort popup
+        // this is triggered when there is click action anywhere on the page.
+        // But we dont need the click event which triggers the popup opening, to bubble up to the top, which will close it.
+        // hence preventing any click event on the pop up and sort button.
         event.stopPropagation();
     };
     vm.clearSorting = function (event) {
         // resets to sorting by location name and closes sort popup
-        vm.dataSortingDirection = DEFAULT_SORTING_DIRECTION;
+        vm.dataSortingDirection = SORT_ASCENDING;
         vm.sortingColumn = DEFAULT_SORTED_COLUMN;
         vm.sortableInputKpiData = [];
         vm.requestDataStartingFrom = DEFAULT_REQUEST_DATA_STARTING_FROM;
@@ -379,7 +383,7 @@ function ServiceDeliveryDashboardController($rootScope, $scope, $http, $location
         if (vm.sortingColumn === index + 1) {
             vm.dataSortingDirection = 1 - vm.dataSortingDirection;
         } else {
-            vm.dataSortingDirection = DEFAULT_SORTING_DIRECTION;
+            vm.dataSortingDirection = SORT_ASCENDING;
         }
         vm.sortingColumn = index + 1;
         vm.sortableInputKpiData = [];
