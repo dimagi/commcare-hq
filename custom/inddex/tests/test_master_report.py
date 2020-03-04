@@ -1,8 +1,15 @@
+from datetime import date, timedelta
+
 from django.test import TestCase
 
+from mock import patch
+
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.fixtures.dbaccessors import (
+    count_fixture_items,
+    get_fixture_data_types,
+)
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.apps.fixtures.dbaccessors import get_fixture_data_types, count_fixture_items
 
 from ..example_data.data import (
     FOOD_CASE_TYPE,
@@ -11,10 +18,13 @@ from ..example_data.data import (
     get_expected_report,
     import_data,
 )
+from ..ucr.data_providers.master_data_file_data import MasterDataFileData
 
 
+@patch('corehq.apps.callcenter.data_source.get_call_center_domains', lambda: [])
 class TestMasterReport(TestCase):
     domain = INDDEX_DOMAIN
+    maxDiff = None
 
     @classmethod
     def setUpClass(cls):
@@ -30,6 +40,10 @@ class TestMasterReport(TestCase):
         import_data()
         self.assert_cases_created()
         self.assert_fixtures_created()
+        expected_headers, expected_rows = get_expected_report()
+        actual_headers, actual_rows = self.run_report()
+        self.assertEqual(expected_headers, actual_headers)
+        # TODO check bodies too
 
     def assert_cases_created(self):
         accessor = CaseAccessors(self.domain)
@@ -53,3 +67,17 @@ class TestMasterReport(TestCase):
              ('food_composition_table', 1042),
              ('conv_factors', 2995)]
         )
+
+    def run_report(self):
+        yesterday = date.today() - timedelta(days=1)
+        tomorrow = date.today() + timedelta(days=1)
+        report_data = MasterDataFileData({
+            'domain': self.domain,
+            'startdate': yesterday.isoformat(),
+            'enddate': tomorrow.isoformat(),
+            'case_owners': '',
+            'gap_type': '',
+            'recall_status': '',
+        })
+        headers = [h.html for h in report_data.headers]
+        return headers, report_data.rows

@@ -7,14 +7,14 @@ class MasterDataFileData(GapsReportDataMixin):
     title = 'Master Data'
     slug = 'master_data'
     headers_in_order = [
-        'unique_respondent_id', 'location_id', 'respondent_id', 'recall_case_id', 'opened_date', 
-        'opened_by_username', 'owner_name', 'recall_date', 'recall_status', 'gender', 'age_years', 'age_months', 
-        'age_range', 'pregnant', 'breastfeeding', 'supplements', 'urban_rural', 'food_code', 'food_name', 
-        'recipe_name', 'caseid', 'reference_food_code', 'food_type', 'include_in_analysis', 'food_status', 
-        'eating_time', 'time_block', 'fao_who_gift_food_group_code', 'fao_who_gift_food_group_description', 
+        'unique_respondent_id', 'location_id', 'respondent_id', 'recall_case_id', 'opened_date',
+        'opened_by_username', 'owner_name', 'recall_date', 'recall_status', 'gender', 'age_years', 'age_months',
+        'age_range', 'pregnant', 'breastfeeding', 'supplements', 'urban_rural', 'food_code', 'food_name',
+        'recipe_name', 'caseid', 'reference_food_code', 'food_type', 'include_in_analysis', 'food_status',
+        'eating_time', 'time_block', 'fao_who_gift_food_group_code', 'fao_who_gift_food_group_description',
         'user_food_group', 'already_reported_food', 'already_reported_food_caseid', 'already_reported_recipe',
-        'already_reported_recipe_case_id', 'already_reported_recipe_name', 'is_ingredient', 'recipe_case_id', 
-        'ingr_recipe_code', 'ingr_fraction', 'ingr_recipe_total_grams_consumed', 'short_name', 'food_base_term', 
+        'already_reported_recipe_case_id', 'already_reported_recipe_name', 'is_ingredient', 'recipe_case_id',
+        'ingr_recipe_code', 'ingr_fraction', 'ingr_recipe_total_grams_consumed', 'short_name', 'food_base_term',
         'tag_1', 'other_tag_1', 'tag_2', 'other_tag_2', 'tag_3', 'other_tag_3', 'tag_4',
         'other_tag_4', 'tag_5', 'other_tag_5', 'tag_6', 'other_tag_6', 'tag_7', 'other_tag_7', 'tag_8',
         'other_tag_8', 'tag_9', 'other_tag_9', 'tag_10', 'conv_method', 'conv_method_desc',

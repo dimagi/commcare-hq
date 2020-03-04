@@ -68,6 +68,10 @@ def _get_importer_config(case_type, headers, user_id):
     )
 
 
+def get_expected_report():
+    return _read_csv('expected_result.csv')
+
+
 def _import_fixtures():
     for fixture_name, filename in [
             ('recipes', 'recipes.csv'),
