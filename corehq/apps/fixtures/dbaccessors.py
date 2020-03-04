@@ -3,7 +3,7 @@ from corehq.util.quickcache import quickcache
 from corehq.util.test_utils import unit_testing_only
 
 
-def get_number_of_fixture_data_types_in_domain(domain):
+def count_fixture_data_types(domain):
     from corehq.apps.fixtures.models import FixtureDataType
     num_fixtures = FixtureDataType.get_db().view(
         'by_domain_doc_type_date/view',

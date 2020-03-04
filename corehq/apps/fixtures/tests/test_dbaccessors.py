@@ -2,7 +2,7 @@ from django.test import TestCase
 
 from corehq.apps.fixtures.dbaccessors import (
     get_fixture_data_types_in_domain,
-    get_number_of_fixture_data_types_in_domain,
+    count_fixture_data_types,
 )
 from corehq.apps.fixtures.models import FixtureDataType
 
@@ -28,9 +28,9 @@ class DBAccessorTest(TestCase):
         get_fixture_data_types_in_domain.clear(cls.domain)
         super(DBAccessorTest, cls).tearDownClass()
 
-    def test_get_number_of_fixture_data_types_in_domain(self):
+    def test_count_fixture_data_types(self):
         self.assertEqual(
-            get_number_of_fixture_data_types_in_domain(self.domain),
+            count_fixture_data_types(self.domain),
             len([data_type for data_type in self.data_types
                  if data_type.domain == self.domain])
         )

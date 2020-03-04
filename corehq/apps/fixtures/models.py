@@ -83,9 +83,8 @@ class FixtureDataType(QuickCachedDocumentMixin, Document):
 
     @classmethod
     def total_by_domain(cls, domain):
-        from corehq.apps.fixtures.dbaccessors import \
-            get_number_of_fixture_data_types_in_domain
-        return get_number_of_fixture_data_types_in_domain(domain)
+        from corehq.apps.fixtures.dbaccessors import count_fixture_data_types
+        return count_fixture_data_types(domain)
 
     @classmethod
     def by_domain(cls, domain):
