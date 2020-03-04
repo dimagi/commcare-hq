@@ -226,7 +226,9 @@ from custom.icds_reports.utils import (
     get_location_filter,
     get_location_level,
     icds_pre_release_features,
-    india_now)
+    india_now,
+    filter_cas_data_export,
+)
 from custom.icds_reports.utils.data_accessor import (
     get_awc_covered_data_with_retrying,
     get_inc_indicator_api_data,
@@ -2065,20 +2067,28 @@ class CasDataExport(View):
         year = int(request.POST.get('year', None))
         selected_date = date(year, month, 1).strftime('%Y-%m-%d')
 
-        if state_id and not user_can_access_location_id(
+        if location_id and not user_can_access_location_id(
                 self.kwargs['domain'], request.couch_user, state_id
         ):
             return JsonResponse({"message": "Sorry, you do not have access to that location."})
 
-        sync, _ = get_cas_data_blob_file(data_type, state_id, selected_date)
+        location = SQLLocation.objects.get(location_id=location_id)
+        state = location
+        while not state.location_type.name == 'state':
+            state = state.parent
+        sync, _ = get_cas_data_blob_file(data_type, state.location_id, selected_date)
         if not sync:
             return JsonResponse({"message": "Sorry, the export you requested does not exist."})
         else:
+            export_file = ''
+            if state != location:
+                export_file = filter_cas_data_export(sync, location)
             params = dict(
                 indicator=data_type,
                 location=state_id,
                 month=month,
-                year=year
+                year=year,
+                export_file=export_file
             )
             return JsonResponse(
                 {
@@ -2093,19 +2103,23 @@ class CasDataExport(View):
 
     def get(self, request, *args, **kwargs):
         data_type = request.GET.get('indicator', None)
-        state_id = request.GET.get('location', None)
+        location_id = request.GET.get('location', None)
         month = int(request.GET.get('month', None))
         year = int(request.GET.get('year', None))
         selected_date = date(year, month, 1).strftime('%Y-%m-%d')
+        export_file = request.GET.get('export_file', None)
 
-        if state_id and not user_can_access_location_id(
-                self.kwargs['domain'], request.couch_user, state_id
+        if location_id and not user_can_access_location_id(
+                self.kwargs['domain'], request.couch_user, location_id
         ):
             return HttpResponse(status_code=403)
-        sync, blob_id = get_cas_data_blob_file(data_type, state_id, selected_date)
-
+        if not export_file:
+            sync, blob_id = get_cas_data_blob_file(data_type, state_id, selected_date)
+            data = sync.get_file_from_blobdb()
+        else:
+            data = open(export_file, 'rb')
         try:
-            return export_response(sync.get_file_from_blobdb(), 'unzipped-csv', blob_id)
+            return export_response(data, 'unzipped-csv', blob_id)
         except NotFound:
             raise Http404
 
