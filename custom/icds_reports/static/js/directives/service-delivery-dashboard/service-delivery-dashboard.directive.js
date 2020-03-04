@@ -1,6 +1,12 @@
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
-function ServiceDeliveryDashboardController($rootScope, $scope, $http, $location, $routeParams, $log, DTOptionsBuilder, DTColumnBuilder, $compile, storageService, userLocationId, haveAccessToAllLocations, isAlertActive) {
+function ServiceDeliveryDashboardController($rootScope, $scope, $http, $location, $routeParams, $log, DTOptionsBuilder,
+                                            DTColumnBuilder, $compile, storageService, userLocationId,
+                                            baseControllersService, haveAccessToAllLocations, isAlertActive,
+                                            sddMetadata, dateHelperService, navigationService, isMobile) {
+    baseControllersService.BaseFilterController.call(
+        this, $scope, $routeParams, $location, dateHelperService, storageService, navigationService
+    );
     var vm = this;
     vm.data = {};
     vm.label = "Service Delivery Dashboard";
@@ -15,12 +21,21 @@ function ServiceDeliveryDashboardController($rootScope, $scope, $http, $location
     vm.showMessage = $rootScope.dateChanged;
     $rootScope.dateChanged = false;
 
+    function _getStep(stepId) {
+        return {
+            "id": stepId,
+            "route": "/service_delivery_dashboard/" + stepId,
+            "label": sddMetadata[stepId]["label"],
+            "image": sddMetadata[stepId]["image"],
+        };
+    }
     vm.steps = {
-        'pw_lw_children': {route: '/service_delivery_dashboard/pw_lw_children', label: 'PW, LW & Children 0-3 years (0-1095 days)'},
-        'children': {route: '/service_delivery_dashboard/children', label: 'Children 3-6 years (1096-2190 days)'},
+        "pw_lw_children": _getStep("pw_lw_children"),
+        "children": _getStep("children"),
     };
 
     vm.step = $routeParams.step;
+    vm.currentStepMeta = vm.steps[vm.step];
 
     vm.dtOptions = DTOptionsBuilder.newOptions()
         .withOption('ajax', {
@@ -42,7 +57,7 @@ function ServiceDeliveryDashboardController($rootScope, $scope, $http, $location
         .withOption('order', [[0, 'asc']])
         .withDOM('ltipr');
 
-    vm.setDtColumns = function () {
+    vm.getLocationLevelNameAndField = function () {
         var locationLevelName = 'State';
         var locationLevelNameField = 'state_name';
         if (vm.dataAggregationLevel === 1) {
@@ -61,38 +76,160 @@ function ServiceDeliveryDashboardController($rootScope, $scope, $http, $location
             locationLevelName = 'AWC';
             locationLevelNameField = 'awc_name';
         }
+        return {
+            'locationLevelName': locationLevelName,
+            'locationLevelNameField': locationLevelNameField
+        }
+    };
+
+    vm.sddTableData = {
+        'pw_lw_children': {
+            'non-awc' : [
+                {
+                    'mData' : 'num_launched_awcs',
+                    'heading' : 'Number of AWCs launched',
+                    'tooltipValue' : 'Total Number of Anganwadi Centers launched in the selected location.',
+                    'columnValueType' : 'raw',
+                    'columnValueIndicator' : 'num_launched_awcs'
+                },
+                {
+                    'mData' : 'home_visits',
+                    'heading' : 'Home Visits',
+                    'tooltipValue' : 'Of the total number of expected home visits, the percentage of home visits completed by AWW.',
+                    'columnValueType' : 'percentage',
+                    'columnValueIndicator' : 'homeVisits'
+                },
+                {
+                    'mData' : 'gm',
+                    'heading' : 'Growth Monitoring',
+                    'tooltipValue' : 'Of the total children between 0-3 years of age and enrolled for Anganwadi services, the percentage of children who were weighed in the current month.',
+                    'columnValueType' : 'percentage',
+                    'columnValueIndicator' : 'gm03'
+                },
+                {
+                    'mData' : 'num_awcs_conducted_cbe',
+                    'heading' : 'Community Based Events',
+                    'tooltipValue' : 'Of the total number of launched Anganwadi Centers, the percentage who have conducted at least 2 Community Based Events in the given month.',
+                    'columnValueType' : 'percentage',
+                    'columnValueIndicator' : 'num_awcs_conducted_cbe'
+                },
+                {
+                    'mData' : 'num_awcs_conducted_vhnd',
+                    'heading' : 'VHSND',
+                    'tooltipValue' : 'Total number of Anganwadi Centers who have conducted at least 1 Village, Health, Sanitation and Nutrition Day in the given month.',
+                    'columnValueType' : 'raw',
+                    'columnValueIndicator' : 'num_awcs_conducted_vhnd'
+                },
+                {
+                    'mData' : 'thr',
+                    'heading' : 'Take Home Ration (21+ days)',
+                    'tooltipValue' : 'Of the total number of pregnant women, lactating women (0-6 months children) and 6-36 months children enrolled for Anganwadi services, the percentage of pregnant women, lactating women (0-6 months children) and 6-36 months children who were provided THR for at least 21 days in the current month.',
+                    'columnValueType' : 'percentage',
+                    'columnValueIndicator' : 'thr'
+                },
+            ],
+            'awc' : [
+                {
+                    'mData' : 'home_visits',
+                    'heading' : 'Home Visits',
+                    'tooltipValue' : 'Of the total number of expected home visits, the percentage of home visits completed by AWW.',
+                    'columnValueType' : 'percentage',
+                    'columnValueIndicator' : 'homeVisits'
+                },
+                {
+                    'mData' : 'gm',
+                    'heading' : 'Growth Monitoring',
+                    'tooltipValue' : 'Of the total children between 0-3 years of age and enrolled for Anganwadi services, the percentage of children who were weighed in the current month.',
+                    'columnValueType' : 'percentage',
+                    'columnValueIndicator' : 'gm03'
+                },
+                {
+                    'mData' : 'num_awcs_conducted_cbe',
+                    'heading' : 'Community Based Events',
+                    'tooltipValue' : 'If the AWC conducted at least 2 CBE in the current month then Yes otherwise No.',
+                    'columnValueType' : 'booleanRaw',
+                    'columnValueIndicator' : 'num_awcs_conducted_cbe'
+                },
+                {
+                    'mData' : 'num_awcs_conducted_vhnd',
+                    'heading' : 'VHSND',
+                    'tooltipValue' : 'If the AWC conducted at least 1 VHSND in the current month then Yes otherwise No.',
+                    'columnValueType' : 'booleanRaw',
+                    'columnValueIndicator' : 'num_awcs_conducted_vhnd'
+                },
+                {
+                    'mData' : 'thr',
+                    'heading' : 'Take Home Ration (21+ days)',
+                    'tooltipValue' : 'Of the total number of pregnant women, lactating women (0-6 months children) and 6-36 months children enrolled for Anganwadi services, the percentage of pregnant women, lactating women (0-6 months children) and 6-36 months children who were provided THR for at least 21 days in the current month.',
+                    'columnValueType' : 'percentage',
+                    'columnValueIndicator' : 'thr'
+                },
+            ],
+        },
+        'children' : [
+            {
+                'mData' : 'sn',
+                'heading' : 'Supplementary Nutrition (21+ days)',
+                'tooltipValue' : 'Of the total children between 3-6 years of age and enrolled for Anganwadi services, the percentage of children who were provided Hot Cooked Meal i.e. supplementary nutrition for at least 21 days in the current month.',
+                'columnValueType' : 'percentage',
+                'columnValueIndicator' : 'supNutrition'
+            },
+            {
+                'mData' : 'pse',
+                'heading' : 'Pre-school Education (21+ days)',
+                'tooltipValue' : 'Of the total children between 3-6 years of age and enrolled for Anganwadi services, the percentage of children who attended Pre-school education for at least 21 days in the current month.',
+                'columnValueType' : 'percentage',
+                'columnValueIndicator' : 'pse'
+            },
+            {
+                'mData' : 'gm',
+                'heading' : 'Growth Monitoring',
+                'tooltipValue' : 'Of the total children between <b>3-5 years</b> of age and enrolled for Anganwadi services, the percentage of children who were weighed in the current month.<br><br><b>Growth Monitoring is done only for children till 5 years of age.</b>',
+                'columnValueType' : 'percentage',
+                'columnValueIndicator' : 'gm36'
+            },
+        ]
+    };
+
+    vm.getSddTableData = function () {
+        var isPwLwChildren = vm.isPwLwChildrenTab();
+        var isAwc = vm.isAwcDataShown();
+        return isPwLwChildren ?
+            (isAwc ? vm.sddTableData['pw_lw_children']['awc'] : vm.sddTableData['pw_lw_children']['non-awc']) :
+            vm.sddTableData['children'];
+    };
+
+    vm.isPwLwChildrenTab = function () {
+        return ($location.path().indexOf('/pw_lw_children') !== -1);
+    };
+
+    vm.isAwcDataShown = function () {
+        // if sector level is selected --> selectedLocationLevel is 3
+        return (parseInt($location.search()['selectedLocationLevel'], 10) === 3);
+    };
+
+    vm.buildDataTable = function () {
+        var tableData = vm.getSddTableData();
+        var dataTableColumns = [];
+        for (var i = 0; i < tableData.length; i++) {
+            dataTableColumns.push(DTColumnBuilder.newColumn(tableData[i]['mData'])
+                .withTitle(renderHeaderTooltip(tableData[i]['heading'], tableData[i]['tooltipValue']))
+                .renderWith(renderCellValue(tableData[i]['columnValueType'],tableData[i]['columnValueIndicator']))
+                .withClass('medium-col'));
+        }
+        return dataTableColumns;
+    };
+
+    vm.setDtColumns = function () {
+        var locationLevelName = vm.getLocationLevelNameAndField()['locationLevelName'];
+        var locationLevelNameField = vm.getLocationLevelNameAndField()['locationLevelNameField'];
         vm.dtColumns = [DTColumnBuilder.newColumn(
             locationLevelNameField
         ).withTitle(
             locationLevelName
         ).renderWith(renderCellValue('raw', locationLevelNameField)
         ).withClass('medium-col')];
-        if (vm.step === 'pw_lw_children') {
-            if (vm.dataAggregationLevel <= 4) {
-                vm.dtColumns = vm.dtColumns.concat([
-                    DTColumnBuilder.newColumn('num_launched_awcs').withTitle(renderNumLaunchedAwcsTooltip()).renderWith(renderCellValue('raw','num_launched_awcs')).withClass('medium-col'),
-                    DTColumnBuilder.newColumn('home_visits').withTitle(renderHomeVisitsTooltip()).renderWith(renderCellValue('percentage', 'homeVisits')).withClass('medium-col'),
-                    DTColumnBuilder.newColumn('gm').withTitle(renderGrowthMonitoringTooltip()).renderWith(renderCellValue('percentage', 'gm03')).withClass('medium-col'),
-                    DTColumnBuilder.newColumn('num_awcs_conducted_cbe').withTitle(renderCommunityBasedEventsTooltip()).renderWith(renderCellValue('percentage','num_awcs_conducted_cbe')).withClass('medium-col'),
-                    DTColumnBuilder.newColumn('num_awcs_conducted_vhnd').withTitle(renderVHSNDTooltip()).renderWith(renderCellValue('raw','num_awcs_conducted_vhnd')).withClass('medium-col'),
-                    DTColumnBuilder.newColumn('thr').withTitle(renderTakeHomeRationTooltip()).renderWith(renderCellValue('percentage','thr')).withClass('medium-col'),
-                ]);
-            } else {
-                vm.dtColumns = vm.dtColumns.concat([
-                    DTColumnBuilder.newColumn('home_visits').withTitle(renderHomeVisitsTooltip()).renderWith(renderCellValue('percentage', 'homeVisits')).withClass('medium-col'),
-                    DTColumnBuilder.newColumn('gm').withTitle(renderGrowthMonitoringTooltip()).renderWith(renderCellValue('percentage', 'gm03')).withClass('medium-col'),
-                    DTColumnBuilder.newColumn('num_awcs_conducted_cbe').withTitle(renderCommunityBasedEventsTooltipAWC()).renderWith(renderCellValue('booleanRaw','num_awcs_conducted_cbe')).withClass('medium-col'),
-                    DTColumnBuilder.newColumn('num_awcs_conducted_vhnd').withTitle(renderVHSNDTooltipAWC()).renderWith(renderCellValue('booleanRaw','num_awcs_conducted_vhnd')).withClass('medium-col'),
-                    DTColumnBuilder.newColumn('thr').withTitle(renderTakeHomeRationTooltip()).renderWith(renderCellValue('percentage','thr')).withClass('medium-col'),
-                ]);
-            }
-        } else {
-            vm.dtColumns = vm.dtColumns.concat([
-                DTColumnBuilder.newColumn('sn').withTitle(renderSupplementaryNutritionTooltip()).renderWith(renderCellValue('percentage','supNutrition')).withClass('medium-col'),
-                DTColumnBuilder.newColumn('pse').withTitle(renderPreSchoolEducationTooltip()).renderWith(renderCellValue('percentage','pse')).withClass('medium-col'),
-                DTColumnBuilder.newColumn('gm').withTitle(renderGrowthMonitoring36Tooltip()).renderWith(renderCellValue('percentage','gm36')).withClass('medium-col'),
-            ]);
-        }
+        vm.dtColumns = vm.dtColumns.concat(vm.buildDataTable());
     };
 
     vm.setDtColumns();
@@ -103,39 +240,6 @@ function ServiceDeliveryDashboardController($rootScope, $scope, $http, $location
 
     function renderHeaderTooltip(header, tooltipContent) {
         return '<i class="fa fa-info-circle headerTooltip" style="float: right;" ><div class="headerTooltipText">' + tooltipContent + '</div></i><span>' + header + '</span>';
-    }
-    function renderNumLaunchedAwcsTooltip() {
-        return renderHeaderTooltip('Number of AWCs launched', 'Total Number of Anganwadi Centers launched in the selected location.');
-    }
-    function renderHomeVisitsTooltip() {
-        return renderHeaderTooltip('Home Visits', 'Of the total number of expected home visits, the percentage of home visits completed by AWW.');
-    }
-    function renderGrowthMonitoringTooltip() {
-        return renderHeaderTooltip('Growth Monitoring', 'Of the total children between 0-3 years of age and enrolled for Anganwadi services, the percentage of children who were weighed in the current month.');
-    }
-    function renderCommunityBasedEventsTooltip() {
-        return renderHeaderTooltip('Community Based Events', 'Of the total number of launched Anganwadi Centers, the percentage who have conducted at least 2 Community Based Events in the given month.');
-    }
-    function renderVHSNDTooltip() {
-        return renderHeaderTooltip('VHSND', 'Total number of Anganwadi Centers who have conducted at least 1 Village, Health, Sanitation and Nutrition Day in the given month.');
-    }
-    function renderTakeHomeRationTooltip() {
-        return renderHeaderTooltip('Take Home Ration (21+ days)', 'Of the total number of pregnant women, lactating women (0-6 months children) and 6-36 months children enrolled for Anganwadi services, the percentage of pregnant women, lactating women (0-6 months children) and 6-36 months children who were provided THR for at least 21 days in the current month.');
-    }
-    function renderCommunityBasedEventsTooltipAWC() {
-        return renderHeaderTooltip('Community Based Events', 'If the AWC conducted at least 2 CBE in the current month then Yes otherwise No.');
-    }
-    function renderVHSNDTooltipAWC() {
-        return renderHeaderTooltip('VHSND', 'If the AWC conducted at least 1 VHSND in the current month then Yes otherwise No.');
-    }
-    function renderSupplementaryNutritionTooltip() {
-        return renderHeaderTooltip('Supplementary Nutrition (21+ days)', 'Of the total children between 3-6 years of age and enrolled for Anganwadi services, the percentage of children who were provided Hot Cooked Meal i.e. supplementary nutrition for at least 21 days in the current month.');
-    }
-    function renderPreSchoolEducationTooltip() {
-        return renderHeaderTooltip('Pre-school Education (21+ days)', 'Of the total children between 3-6 years of age and enrolled for Anganwadi services, the percentage of children who attended Pre-school education for at least 21 days in the current month.');
-    }
-    function renderGrowthMonitoring36Tooltip() {
-        return renderHeaderTooltip('Growth Monitoring', 'Of the total children between <b>3-5 years</b> of age and enrolled for Anganwadi services, the percentage of children who were weighed in the current month.<br><br><b>Growth Monitoring is done only for children till 5 years of age.</b>');
     }
 
     function isZeroNullUnassignedOrDataNotEntered(value) {
@@ -258,14 +362,18 @@ function ServiceDeliveryDashboardController($rootScope, $scope, $http, $location
     vm.getData();
 }
 
-ServiceDeliveryDashboardController.$inject = ['$rootScope', '$scope', '$http', '$location', '$routeParams', '$log', 'DTOptionsBuilder', 'DTColumnBuilder', '$compile', 'storageService', 'userLocationId', 'haveAccessToAllLocations', 'isAlertActive'];
+ServiceDeliveryDashboardController.$inject = ['$rootScope', '$scope', '$http', '$location', '$routeParams', '$log',
+    'DTOptionsBuilder', 'DTColumnBuilder', '$compile', 'storageService', 'userLocationId', 'baseControllersService',
+    'haveAccessToAllLocations', 'isAlertActive', 'sddMetadata', 'dateHelperService', 'navigationService', 'isMobile'];
 
-window.angular.module('icdsApp').directive('serviceDeliveryDashboard', function () {
+window.angular.module('icdsApp').directive('serviceDeliveryDashboard', ['templateProviderService', function (templateProviderService) {
     return {
         restrict: 'E',
-        templateUrl: url('icds-ng-template', 'service-delivery-dashboard'),
+        templateUrl: function () {
+            return templateProviderService.getTemplate('service-delivery-dashboard');
+        },
         bindToController: true,
         controller: ServiceDeliveryDashboardController,
         controllerAs: '$ctrl',
     };
-});
+}]);

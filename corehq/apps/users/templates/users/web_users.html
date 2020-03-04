@@ -237,12 +237,12 @@
               <td>
                 <div>
                   <button type="button" class="resend-invite btn btn-default"
-                          data-invite={{ invitation.get_id }}>
+                          data-invite={{ invitation.id }}>
                     <i class="fa fa-envelope-o"></i>
                     {% trans "Resend Invitation" %}
                   </button>
                   <button type="button" class="btn btn-danger delete-invitation"
-                          data-id={{ invitation.get_id }}>
+                          data-id={{ invitation.id }}>
                     <i class="fa fa-trash"></i>
                     {% trans "Delete Invitation" %}
                   </button>

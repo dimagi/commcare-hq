@@ -15,6 +15,7 @@ hqDefine("js/icds_dashboard_utils", function () {
         angular.module(appName).constant('haveAccessToAllLocations', initialPageData.get("have_access_to_all_locations"));
         angular.module(appName).constant('stateLevelAccess', initialPageData.get("state_level_access"));
         angular.module(appName).constant('navMetadata', initialPageData.get("nav_metadata"));
+        angular.module(appName).constant('sddMetadata', initialPageData.get("sdd_metadata"));
         angular.module(appName).constant('navMenuItems', initialPageData.get("nav_menu_items"));
         angular.module(appName).constant('userFullName', initialPageData.get("user_full_name"));
         angular.module(appName).constant('userUsername', initialPageData.get("user_username"));
@@ -212,12 +213,21 @@ hqDefine("js/icds_dashboard_utils", function () {
                 template: "<awc-reports></awc-reports>",
             });
     }
+    function addSDDRoutes($routeProvider) {
+        $routeProvider.when("/service_delivery_dashboard", {
+                redirectTo: "/service_delivery_dashboard/pw_lw_children",
+            })
+            .when("/service_delivery_dashboard/:step", {
+                template: "<service-delivery-dashboard></service-delivery-dashboard>",
+            });
+    }
     function addSharedRoutes($routeProvider, defaultStep) {
         addMaternalChildRoutes($routeProvider, defaultStep);
         addCasReachRoutes($routeProvider, defaultStep);
         addDemographicsRoutes($routeProvider, defaultStep);
         addAWCInfrastructureRoutes($routeProvider, defaultStep);
         addAWCReportRoutes($routeProvider);
+        addSDDRoutes($routeProvider);
     }
     return {
         populateDashboardConstants: populateDashboardConstants,

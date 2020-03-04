@@ -57,4 +57,5 @@ branches:
   - bmb/SAAS-10269  # Biyeun Feb 23
   - bmb/SAAS-10103  # Biyeun Feb 28
   - dmr/keep-partition-unprocessed-changes-even  # Danny Feb 28
+  - jls/migrate-StandaloneTranslationDoc-2 # Jenny March 3
 submodules: {}

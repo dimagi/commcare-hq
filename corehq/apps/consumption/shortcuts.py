@@ -1,6 +1,5 @@
 from decimal import Decimal
 
-from corehq.apps.consumption.const import DAYS_IN_MONTH
 from corehq.apps.consumption.models import (
     TYPE_DOMAIN,
     TYPE_PRODUCT,
@@ -51,15 +50,6 @@ def get_default_monthly_consumption(domain, product_id, location_type, case_id):
     return None
 
 
-def get_default_consumption(domain, product_id, location_type, case_id):
-    consumption = get_default_monthly_consumption(domain, product_id, location_type, case_id)
-
-    if consumption:
-        return consumption / Decimal(DAYS_IN_MONTH)
-    else:
-        return None
-
-
 def set_default_monthly_consumption_for_domain(domain, amount):
     default = SQLDefaultConsumption.get_domain_default(domain)
     return _update_or_create_default(domain, amount, default, TYPE_DOMAIN)
@@ -68,12 +58,6 @@ def set_default_monthly_consumption_for_domain(domain, amount):
 def set_default_consumption_for_product(domain, product_id, amount):
     default = SQLDefaultConsumption.get_product_default(domain, product_id)
     return _update_or_create_default(domain, amount, default, TYPE_PRODUCT, product_id=product_id)
-
-
-def set_default_consumption_for_supply_point(domain, product_id, supply_point_id, amount):
-    default = SQLDefaultConsumption.get_supply_point_default(domain, product_id, supply_point_id)
-    return _update_or_create_default(domain, amount, default, TYPE_SUPPLY_POINT,
-                                     product_id=product_id, supply_point_id=supply_point_id)
 
 
 def _update_or_create_default(domain, amount, default, type, **kwargs):
@@ -126,12 +110,3 @@ def get_loaded_default_monthly_consumption(consumption_dict, domain, product_id,
             return consumption_dict[key]
 
     return None
-
-
-def get_loaded_default_consumption(consumption_dict, domain, product_id, location_type, case_id):
-    consumption = get_loaded_default_monthly_consumption(consumption_dict, domain, product_id, location_type, case_id)
-
-    if consumption:
-        return consumption / Decimal(DAYS_IN_MONTH)
-    else:
-        return None
