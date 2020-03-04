@@ -15,7 +15,14 @@ from pillowtop.reindexer.reindexer import ElasticPillowReindexer, ReindexerFacto
 
 def transform_domain_for_elasticsearch(doc_dict):
     doc_ret = copy.deepcopy(doc_dict)
-    sub = Subscription.visible_objects.filter(subscriber__domain=doc_dict['name'], is_active=True)
+    sub = (
+        Subscription
+            .visible_and_suppressed_objects
+            .filter(subscriber__domain=doc_dict['name'])
+            .filter(is_hidden_to_ops=False)
+            .filter(is_active=True)
+            .first()
+    )
     doc_ret['deployment'] = doc_ret.get('deployment', None) or {}
     countries = doc_ret['deployment'].get('countries', [])
     doc_ret['deployment']['countries'] = []
