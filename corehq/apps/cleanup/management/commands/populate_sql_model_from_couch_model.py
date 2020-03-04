@@ -59,6 +59,8 @@ class PopulateSQLCommand(BaseCommand):
             Calls sys.exit on failure.
         """
         to_migrate = cls.count_items_to_be_migrated()
+        print(f"Found {to_migrate} {cls.couch_doc_type()} documents to migrate.")
+
         migrated = to_migrate == 0
         if migrated:
             return
@@ -112,17 +114,22 @@ class PopulateSQLCommand(BaseCommand):
     def handle(self, dry_run=False, **options):
         log_prefix = "[DRY RUN] " if dry_run else ""
 
+        doc_count = get_doc_count_by_type(self.couch_db(), self.couch_doc_type())
         logger.info("{}Found {} {} docs and {} {} models".format(
             log_prefix,
-            get_doc_count_by_type(self.couch_db(), self.couch_doc_type()),
+            doc_count,
             self.couch_doc_type(),
             self.sql_class().objects.count(),
             self.sql_class().__name__,
         ))
+        doc_index = 0
         for doc in get_all_docs_with_doc_types(self.couch_db(), [self.couch_doc_type()]):
-            logger.info("{}Looking at {} doc with id {}".format(
+            doc_index += 1
+            logger.info("{}Looking at {} doc #{} of {} with id {}".format(
                 log_prefix,
                 self.couch_doc_type(),
+                doc_index,
+                doc_count,
                 doc["_id"]
             ))
             with transaction.atomic():
