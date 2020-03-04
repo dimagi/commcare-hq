@@ -25,7 +25,7 @@ class ReportDataMixin(FoodConsumptionDataSourceMixin):
     headers_in_order = []
     TABLE_NAMES = [
         'doc_id', 'inserted_at', 'recall_case_id', 'owner_name', 'opened_by_username', 'recall_status',
-        'unique_respondent_id', 'gender', 'age', 'supplements', 'urban_rural', 'pregnant', 'breastfeeding',
+        'unique_respondent_id', 'gender', 'age_months_calculated', 'supplements', 'urban_rural', 'pregnant', 'breastfeeding',
         'food_code', 'reference_food_code', 'food_type', 'include_in_analysis', 'food_status', 'recalled_date',
         'opened_date', 'eating_time', 'time_block', 'already_reported_food', 'already_reported_food_caseid',
         'is_ingredient', 'ingr_recipe_case_id', 'ingr_recipe_code', 'short_name', 'food_name', 'recipe_name',
@@ -44,7 +44,7 @@ class ReportDataMixin(FoodConsumptionDataSourceMixin):
     def obligatory_table_names(self):
         return [
             self.id_field, 'food_code', 'food_type', 'food_base_term',
-            'conv_method', 'conv_option', 'reference_food_code', 'age'
+            'conv_method', 'conv_option', 'reference_food_code', 'age_months_calculated',
         ]
 
     @property
@@ -262,7 +262,7 @@ class AdditionalDataMixin:
     @staticmethod
     def append_age_information(data):
 
-        def _get_age_range():
+        def _get_age_range(months):
             if 0 <= months < 6:
                 return '0-5.9 months'
             elif 6 <= months < 60:
@@ -281,13 +281,8 @@ class AdditionalDataMixin:
                 return '65+ years'
 
         for record in data:
-            age = record['data']['age']
-            if age:
-                age = abs(int(age))
-                months = age * 12
-                record['data']['age_years'] = age
-                record['data']['age_months'] = months
-                record['data']['age_range'] = _get_age_range()
+            months = record['data']['age_months_calculated']
+            record['data']['age_range'] = _get_age_range(months)
 
     @staticmethod
     def _rearrange_data_for_gap_calculations(data, conv_factor=False):

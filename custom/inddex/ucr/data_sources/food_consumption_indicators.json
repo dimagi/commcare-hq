@@ -157,9 +157,9 @@
             },
             {
                 "type": "expression",
-                "column_id": "age",
+                "column_id": "age_years_calculated",
                 "datatype": "string",
-                "display_name": "Age",
+                "display_name": "Age in years",
                 "expression": {
                     "type": "nested",
                     "argument_expression": {
@@ -171,10 +171,29 @@
                     },
                     "value_expression": {
                         "type": "property_name",
-                        "property_name": "age_years"
+                        "property_name": "age_years_calculated"
                     }
                 }
-
+            },
+            {
+                "type": "expression",
+                "column_id": "age_months_calculated",
+                "datatype": "string",
+                "display_name": "Age in months",
+                "expression": {
+                    "type": "nested",
+                    "argument_expression": {
+                        "type": "indexed_case",
+                        "case_expression": {
+                            "type": "identity"
+                        },
+                        "index": "parent"
+                    },
+                    "value_expression": {
+                        "type": "property_name",
+                        "property_name": "age_months_calculated"
+                    }
+                }
             },
             {
                 "type": "expression",
