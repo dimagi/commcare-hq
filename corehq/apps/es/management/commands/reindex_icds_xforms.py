@@ -15,9 +15,13 @@ class Command(BaseCommand):
         parser.add_argument('index_name')
         parser.add_argument('start_date', help='in yyyy-MM-dd format')
         parser.add_argument('end_date', help='in yyyy-MM-dd format')
-        parser.add_argument('scroll_timeout', help='Elasticsearch scroll timeout such as 5m, 10m or 100m etc')
+        parser.add_argument('--scroll_timeout', default='100m',
+            help='Elasticsearch scroll timeout such as 5m, 10m or 100m etc')
+        parser.add_argument('--chunk_size', default=100, type=int)
 
-    def handle(self, index_name, start_date, end_date, scroll_timeout, **options):
+    def handle(self, index_name, start_date, end_date, **options):
+        scroll_timeout = options.get('scroll_timeout')
+        chunk_size = options.get('chunk_size')
         es = get_es_new()
         print("Total number of docs in this date range in old index",
             self._get_doc_count(es, 'xforms', start_date, end_date))
@@ -30,7 +34,7 @@ class Command(BaseCommand):
         print("Number of remaining docs to be reindexed to new index ",
             self._get_doc_count(es, 'xforms', start_date, end_date))
         print("Starting reindex ", datetime.now())
-        reindex(es, old_index, index_name, query=query, chunk_size=100, scroll=scroll_timeout)
+        reindex(es, old_index, index_name, query=query, chunk_size=chunk_size, scroll=scroll_timeout)
         print("Reindex finished ", datetime.now())
 
     def _base_query(self, start_date, end_date):
