@@ -22,10 +22,10 @@ class MasterDataFileData(GapsReportDataMixin):
         'nsr_conv_method_code_post_cooking', 'nsr_conv_method_desc_post_cooking',
         'nsr_conv_option_code_post_cooking', 'nsr_conv_option_desc_post_cooking', 'nsr_measurement_amount_post_cooking',
         'nsr_consumed_cooked_fraction', 'recipe_num_ingredients', 'conv_factor_food_code',
-        'conv_factor_base_term_food_code', 'conv_factor_used', 'fct_food_code_exists',
-        'fct_base_term_food_code_exists', 'fct_reference_food_code_exists', 'fct_data_used', 'total_grams',
-        'energy_per_100g', 'energy_kcal', 'water_per_100g', 'water_g', 'protein_per_100g', 'protein_g',
-        'conv_factor_gap_code', 'conv_factor_gap_desc', 'fct_gap_code', 'fct_gap_desc'
+        'conv_factor_base_term_food_code', 'conv_factor_used', 'conv_factor', 'fct_food_code_exists',
+        'fct_base_term_food_code_exists', 'fct_reference_food_code_exists', 'fct_data_used', 'fct_code', 'total_grams',
+        'energy_kcal_per_100g', 'energy_kcal', 'water_G_per_100g', 'water_g', 'protein_g_per_100g', 'protein_g',
+        '<all other nutrients>', 'conv_factor_gap_code', 'conv_factor_gap_desc', 'fct_gap_code', 'fct_gap_desc'
     ]
 
     def __init__(self, config):
