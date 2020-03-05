@@ -1127,7 +1127,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
         elif self.doc_type == 'CommCareUser':
             return 'commcare'
         else:
-            raise NotImplementedError()
+            raise NotImplementedError(f'Unrecognized user type {self.doc_type!r}')
 
     @property
     def projects(self):
@@ -1395,7 +1395,10 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
 
     @classmethod
     def wrap_correctly(cls, source, allow_deleted_doc_types=False):
-        doc_type = source['doc_type']
+        try:
+            doc_type = source['doc_type']
+        except KeyError as err:
+            raise KeyError(f"'doc_type' not found in {source!r}") from err
         if allow_deleted_doc_types:
             doc_type = doc_type.replace(DELETED_SUFFIX, '')
 
