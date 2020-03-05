@@ -1,7 +1,9 @@
+from django.conf import settings
+from kafka import KafkaConsumer
 from memoized import memoized
 
 from corehq.apps.change_feed import topics
-from corehq.apps.change_feed.connection import get_kafka_consumer
+from corehq.util.io import ClosingContextProxy
 from corehq.util.quickcache import quickcache
 from dimagi.utils.logging import notify_exception
 from pillowtop import get_pillow_by_name, get_all_pillow_configs
@@ -48,7 +50,7 @@ def _get_backlog_lengths_by_partition(topic):
     }
     backlog_length_by_partition = {}
 
-    with get_kafka_consumer() as consumer:
+    with get_kafka_consumer_for_partitioning() as consumer:
         offset_by_topic_partition = consumer.end_offsets(seq_by_topic_partition.keys())
 
     for key in set(seq_by_topic_partition) | set(offset_by_topic_partition):
@@ -66,3 +68,11 @@ def _get_topic_to_pillow_map():
         for topic, pillow_name in TOPIC_TO_PILLOW_NAME_MAP.items()
         if pillow_name in all_pillow_names
     }
+
+
+@memoized
+def get_kafka_consumer_for_partitioning():
+    return ClosingContextProxy(KafkaConsumer(
+        client_id='change_feed_partitioners',
+        bootstrap_servers=settings.KAFKA_BROKERS,
+    ))
