@@ -75,7 +75,7 @@ function MonthModalController($location, $uibModalInstance, dateHelperService) {
     };
 }
 
-function MonthFilterController($scope, $location, $uibModal, storageService, dateHelperService) {
+function MonthFilterController($scope, $location, $uibModal, storageService, dateHelperService, isMobile) {
     var vm = this;
 
     // used by mobile dashboard
@@ -84,6 +84,9 @@ function MonthFilterController($scope, $location, $uibModal, storageService, dat
     vm.startMonth = dateHelperService.getStartingMonth(isSDD);
 
     vm.selectedDate = dateHelperService.getSelectedDate();
+    if (isSDD && vm.selectedDate < dateHelperService.getReportStartDates()['sdd']) {
+        vm.selectedDate = new Date();
+    }
     vm.currentYear = new Date().getFullYear();
     vm.getPlaceholder = function() {
         return dateHelperService.getSelectedMonthDisplay();
@@ -136,7 +139,8 @@ function MonthFilterController($scope, $location, $uibModal, storageService, dat
 
         var selectedDate = new Date(selectedYear, selectedMonth - 1);
 
-        if ($location.path().indexOf('service_delivery_dashboard') !== -1 && selectedDate < new Date(2019, 1)) {
+        if ($location.path().indexOf('service_delivery_dashboard') !== -1 &&
+            selectedDate < new Date(2019, 1) && !isMobile) {
             vm.open();
         }
 
@@ -145,7 +149,7 @@ function MonthFilterController($scope, $location, $uibModal, storageService, dat
     vm.init();
 }
 
-MonthFilterController.$inject = ['$scope', '$location', '$uibModal', 'storageService', 'dateHelperService'];
+MonthFilterController.$inject = ['$scope', '$location', '$uibModal', 'storageService', 'dateHelperService', 'isMobile'];
 MonthModalController.$inject = ['$location', '$uibModalInstance', 'dateHelperService'];
 
 window.angular.module('icdsApp').directive("monthFilter",  ['templateProviderService', function (templateProviderService) {
@@ -154,6 +158,7 @@ window.angular.module('icdsApp').directive("monthFilter",  ['templateProviderSer
         restrict:'E',
         scope: {
             isOpenModal: '=?',
+            selectSddDate: '=?',
         },
         bindToController: true,
         require: 'ngModel',

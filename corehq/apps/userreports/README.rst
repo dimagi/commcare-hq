@@ -507,8 +507,8 @@ The following operators are currently supported:
 |                 |                   |                 | r"], "red" |
 |                 |                   |                 | )``        |
 +-----------------+-------------------+-----------------+------------+
-| ``any_in_multi` | one of a list of  | list            | ``selected |
-| `               | values in in a    |                 | (doc["colo |
+| ``any_in_multi``| one of a list of  | list            | ``selected |
+|                 | values in in a    |                 | (doc["colo |
 |                 | multiselect       |                 | r"], ["red |
 |                 |                   |                 | ", "blue"] |
 |                 |                   |                 | )``        |
@@ -1783,6 +1783,19 @@ To use this in a mobile ucr, set the ``'mobile_or_web'`` property to
            "lmp": "Last Menstrual Period",
            "edd": "Estimated Date of Delivery"
        }
+   }
+
+Displaying Readable User Name
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+HQ's best guess at the user's display name, using their first and last name, if available,
+then falling back to their username.
+
+.. code:: json
+
+   {
+       "type": "custom",
+       "custom_type": "user_display_including_name"
    }
 
 Displaying username instead of user ID
