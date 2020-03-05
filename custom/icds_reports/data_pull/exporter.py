@@ -1,4 +1,3 @@
-import io
 import zipfile
 
 from django.utils.functional import cached_property
