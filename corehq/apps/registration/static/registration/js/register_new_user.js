@@ -12,7 +12,7 @@ hqDefine('registration/js/register_new_user', [
     _,
     newUser,
     initialPageData,
-    kissmetrics 
+    kissmetrics
 ) {
     'use strict';
 
@@ -34,7 +34,9 @@ hqDefine('registration/js/register_new_user', [
         $('#get-trial-cta-calendar-content').fadeIn();
         $('#choose-callback-options').addClass('hide');
 
-        // Loading the Schedule visit form.    
+        // Causes the Schedule Once form to populate the element
+        // #SOIDIV_commcaretrialform as soon as it loads. Once it's
+        // loaded this does not leave the page. 
         $.getScript('//cdn.scheduleonce.com/mergedjs/so.js')
             .done(function () {
                 kissmetrics.track.event("Get Trial Workflow - Loaded Booking Options");
