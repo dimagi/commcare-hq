@@ -1,8 +1,6 @@
-from abc import abstractmethod
-
 from memoized import memoized
 from sqlagg.columns import SimpleColumn
-from sqlagg.filters import GTE, LTE, EQ
+from sqlagg.filters import EQ, GTE, LTE
 
 from corehq.apps.reports.datatables import DataTablesColumn
 from corehq.apps.reports.sqlreport import DatabaseColumn
