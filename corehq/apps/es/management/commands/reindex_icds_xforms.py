@@ -69,7 +69,7 @@ class Command(BaseCommand):
                 "by_hour": {
                     "date_histogram": {
                         "field": "received_on",
-                        "interval": "minute"
+                        "interval": "hour"
                     }
                 }
             }
