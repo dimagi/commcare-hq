@@ -135,10 +135,6 @@ class MasterReportData(FoodSqlData):
 
         return raw_data
 
-
-class AdditionalDataMixin:
-    couch_db = None
-
     def append_fct_gap_information(self, data):
         food_items, std_recipes, non_food_items, non_std_recipes = self._rearrange_data_for_gap_calculations(data)
 
@@ -431,10 +427,6 @@ class AdditionalDataMixin:
         elif data['food_type'] == 'std_recipe':
             data[f'fct_{key_fragment}_exists'] = 'yes'
 
-
-class AdditionalFiltersMixin:
-    additional_filters = {}
-
     def filter_fao_who_gift_food_group_description(self, data):
         if self.additional_filters['fao_who_gift_food_group_description']:
             for record in data.copy():
@@ -449,7 +441,7 @@ class AdditionalFiltersMixin:
                     data.pop(data.index(record))
 
 
-class GapsReportData(MasterReportData, AdditionalDataMixin, AdditionalFiltersMixin):
+class GapsReportData(MasterReportData):
 
     @property
     def couch_db(self):
@@ -487,7 +479,7 @@ class GapsReportData(MasterReportData, AdditionalDataMixin, AdditionalFiltersMix
                     (el_data['measurement_amount'] * el_data['portions']) / el_data['nsr_measurement_amount_post_cooking']
 
 
-class GapsReportByItemData(GapsReportData, AdditionalDataMixin, AdditionalFiltersMixin):
+class GapsReportByItemData(GapsReportData):
 
     @property
     def filters(self):
@@ -524,7 +516,7 @@ class GapsReportByItemData(GapsReportData, AdditionalDataMixin, AdditionalFilter
                     data.pop(data.index(record))
 
 
-class BaseNutrientData(MasterReportData, AdditionalDataMixin, AdditionalFiltersMixin):
+class BaseNutrientData(MasterReportData):
 
     @property
     def filters(self):
