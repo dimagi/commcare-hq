@@ -1,7 +1,9 @@
+import io
 import zipfile
 
 from django.utils.functional import cached_property
 
+from corehq.apps.translations.utils import get_file_content_from_workbook
 from corehq.util.context_managers import prevent_parallel_execution
 from custom.icds.const import DATA_PULL_CACHE_KEY
 from custom.icds_reports.const import CUSTOM_DATA_PULLS
@@ -30,9 +32,14 @@ class DataExporter(object):
     @prevent_parallel_execution(DATA_PULL_CACHE_KEY)
     def export(self):
         zip_file_name = "%s-DataPull.zip" % self.data_pull_obj.name
-        with zipfile.ZipFile(zip_file_name, mode='a') as z:
-            for filename, string_buffer in self.data_pull_obj.run().items():
-                z.writestr(filename, string_buffer.getvalue())
+        if self.data_pull_obj.file_format_required() == 'xlsx':
+            with zipfile.ZipFile(zip_file_name, "w") as zip_content:
+                for filename, workbook in self.data_pull_obj.run().items():
+                    zip_content.writestr(filename, get_file_content_from_workbook(workbook))
+        else:
+            with zipfile.ZipFile(zip_file_name, mode='a') as z:
+                for filename, string_buffer in self.data_pull_obj.run().items():
+                    z.writestr(filename, string_buffer.getvalue())
         return zip_file_name
 
     @cached_property

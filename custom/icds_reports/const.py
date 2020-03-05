@@ -7,7 +7,7 @@ import pytz
 from custom.icds_reports.data_pull.data_pulls import (
     AndhraPradeshMonthly,
     MonthlyPerformance,
-)
+    VHSNDMonthlyReport)
 
 ISSUE_TRACKER_APP_ID = '48cc1709b7f62ffea24cc6634a005734'
 
@@ -176,4 +176,5 @@ GOVERNANCE_API_PAGE_SIZE = 10000
 CUSTOM_DATA_PULLS = {
     AndhraPradeshMonthly.slug: AndhraPradeshMonthly,
     MonthlyPerformance.slug: MonthlyPerformance,
+    VHSNDMonthlyReport.slug: VHSNDMonthlyReport,
 }
