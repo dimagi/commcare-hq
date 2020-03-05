@@ -4,7 +4,6 @@ from datetime import datetime, timedelta
 from django.core.management.base import BaseCommand
 
 from corehq.elastic import get_es_new
-from corehq.util.dates import iso_string_to_datetime
 from elasticsearch.helpers import reindex
 
 
