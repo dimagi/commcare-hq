@@ -184,7 +184,7 @@ hqDefine('analytix/js/hubspot', [
             onFormSubmitted: function () {
                 $('#choose-callback-options').fadeIn();
                 $('#get-trial-cta-form-content').addClass('hide');
-                $('#start-trial-modal-header').text("Choose how to get started");
+                $('#start-trial-modal-header').text(gettext("Choose how to get started"));
             },
         });
     };
