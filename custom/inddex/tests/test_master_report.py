@@ -43,7 +43,9 @@ class TestMasterReport(TestCase):
         expected_headers, expected_rows = get_expected_report()
         actual_headers, actual_rows = self.run_report()
         self.assertEqual(expected_headers, actual_headers)
-        # TODO check bodies too
+        self.assertEqual(len(expected_rows), len(actual_rows))
+        for expected, actual in zip(expected_rows, actual_rows):
+            self.assert_rows_match(expected, actual, expected_headers)
 
     def assert_cases_created(self):
         accessor = CaseAccessors(self.domain)
@@ -81,3 +83,6 @@ class TestMasterReport(TestCase):
         })
         headers = [h.html for h in report_data.headers]
         return headers, report_data.rows
+
+    def assert_rows_match(self):
+        pass
