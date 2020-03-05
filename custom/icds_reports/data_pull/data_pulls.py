@@ -234,10 +234,8 @@ class VHSNDMonthlyReport(MonthBasedDataPull):
                 state_name = row[state_name_column]
                 vhsnd_date = parse_date(row[vhnsnd_date_column])
                 vhsnd_date = vhsnd_date.strftime('%d/%m/%Y')
-                data_key = (
-                            row['state_name'], row['district_name'], row['block_name'],
-                            row['supervisor_name'], row['awc_name']
-                )
+                data_key = (row['state_name'], row['district_name'], row['block_name'],
+                            row['supervisor_name'], row['awc_name'])
                 if data_key in result[state_name]:
                     result[state_name][data_key].append(vhsnd_date)
                 else:
