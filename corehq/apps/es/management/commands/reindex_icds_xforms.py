@@ -41,14 +41,19 @@ class Command(BaseCommand):
         print_counts = options.get('print_counts')
         use_native_api = options.get('native')
         old_docs_count = self._get_doc_count(self.old_index, start_date, end_date)
+        new_docs_count = self._get_doc_count(self.new_index, start_date, end_date)
         print("Number of docs in old index",
             old_docs_count)
         print("Number of docs in new index",
-            self._get_doc_count(self.new_index, start_date, end_date))
+            new_docs_count)
         if print_counts:
             return
 
-        for query in self._breakup_by_hours(start_date, end_date):
+        if old_docs_count == new_docs_count:
+            print("Doc counts same, nothing left to reindex. Exiting!")
+            return
+
+        for query in self._breakup_by_intervals(start_date, end_date):
             query.update({
                 "_source": {"exclude": ["_id"]}
             })
@@ -62,42 +67,49 @@ class Command(BaseCommand):
                     query=query, chunk_size=chunk_size, scroll=scroll_timeout)
             print("Reindex finished ", datetime.now())
 
-    def _breakup_by_hours(self, start_date, end_date):
-        query = self._base_query(start_date, end_date)
+    def _breakup_by_intervals(self, start_date, end_date, interval_format='hour'):
+        assert interval_format in ['hour', 'minute']
+        query = self._base_query(start_date, end_date, 'yyyy-MM-dd HH:mm:ss' if interval_format is 'minute' else "yyyy-MM-dd")
         query.update({
             "aggs": {
-                "by_hour": {
+                "by_interval": {
                     "date_histogram": {
                         "field": "received_on",
-                        "interval": "hour"
+                        "interval": interval_format
                     }
                 }
             }
         })
 
-        def get_counts_by_hour(index):
-            print("Getting doc counts by hourly from index", index)
-            counts_by_hour = {}
-            results = self.es.search(index, body=query)['aggregations']['by_hour']['buckets']
+        def get_counts_by_interval(index):
+            print("Getting doc counts from index", index, "for each", interval_format)
+            counts_by_interval = {}
+            results = self.es.search(index, body=query)['aggregations']['by_interval']['buckets']
             for result in results:
-                hour_epoch = result['key']
-                from_hour = datetime.utcfromtimestamp(hour_epoch / 1000)
+                interval_epoch = result['key']
+                interval_start = datetime.utcfromtimestamp(interval_epoch / 1000)
                 count = result['doc_count']
-                counts_by_hour[from_hour] = count
-            return counts_by_hour
+                counts_by_interval[interval_start] = count
+            return counts_by_interval
 
-        counts_by_hour_old_index = get_counts_by_hour(self.old_index)
-        counts_by_hour_new_index = get_counts_by_hour(self.new_index)
+        counts_by_interval_old_index = get_counts_by_interval(self.old_index)
+        counts_by_interval_new_index = get_counts_by_interval(self.new_index)
 
-        for hour, count in counts_by_hour_old_index.items():
-            start_time = hour.strftime('%Y-%m-%d %H:%M:%S')
-            end_time = (hour + timedelta(hours=1)).strftime('%Y-%m-%d %H:%M:%S')
-            if counts_by_hour_new_index[hour] != count:
-                yield self._base_query(
-                    start_time, end_time, 'yyyy-MM-dd HH:mm:ss'
-                )
+        for interval_start, count in counts_by_interval_old_index.items():
+            delta = timedelta(hours=1) if interval_format is 'hour' else timedelta(minutes=1)
+            start_time = interval_start.strftime('%Y-%m-%d %H:%M:%S')
+            end_time = (interval_start + delta).strftime('%Y-%m-%d %H:%M:%S')
+            count_in_new_index = counts_by_interval_new_index.get(interval_start, 0)
+            if count_in_new_index != count:
+                if interval_format == 'minute':
+                    yield self._base_query(
+                        start_time, end_time, 'yyyy-MM-dd HH:mm:ss'
+                    )
+                else:
+                    for query in self._breakup_by_intervals(start_time, end_time, 'minute'):
+                        yield query
             else:
-                print("Already reindexed. Skipping the hour of ", start_time)
+                print("Already reindexed. Docs count is ", count, count_in_new_index, "Skipping the interval of ", interval_format, start_time, end_time)
 
     def _base_query(self, start_date, end_date, format="yyyy-MM-dd"):
         return copy.deepcopy({
