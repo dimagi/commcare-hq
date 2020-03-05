@@ -221,6 +221,14 @@ hqDefine("js/icds_dashboard_utils", function () {
                 template: "<service-delivery-dashboard></service-delivery-dashboard>",
             });
     }
+    function addFactSheetRoutes($routeProvider) {
+        $routeProvider.when("/fact_sheets", {
+                template: "<progress-report></progress-report>",
+            })
+            .when("/fact_sheets/:report", {
+                template: "<progress-report></progress-report>",
+            });
+    }
     function addSharedRoutes($routeProvider, defaultStep) {
         addMaternalChildRoutes($routeProvider, defaultStep);
         addCasReachRoutes($routeProvider, defaultStep);
@@ -228,6 +236,7 @@ hqDefine("js/icds_dashboard_utils", function () {
         addAWCInfrastructureRoutes($routeProvider, defaultStep);
         addAWCReportRoutes($routeProvider);
         addSDDRoutes($routeProvider);
+        addFactSheetRoutes($routeProvider);
     }
     return {
         populateDashboardConstants: populateDashboardConstants,

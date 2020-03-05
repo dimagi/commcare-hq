@@ -167,12 +167,6 @@ window.angular.module('icdsApp', [
             .when("/download", {
                 template: "<download></download>",
             })
-            .when("/fact_sheets", {
-                template: "<progress-report></progress-report>",
-            })
-            .when("/fact_sheets/:report", {
-                template: "<progress-report></progress-report>",
-            })
             .when("/cas_export", {
                 template: "<cas-export></cas-export>",
             })
