@@ -3,7 +3,7 @@
 function PrintReportController() {
     var vm = this;
 
-    vm.print = function() {
+    vm.print = function () {
         var innerContents = document.getElementsByClassName('report-content')[0].innerHTML;
         var head_copy = document.head;
         var popupWindow = window.open('', '_blank', 'width=1100,height=700,scrollbars=no,menubar=no,toolbar=no,location=no,status=no,titlebar=no');
@@ -27,7 +27,7 @@ function PrintReportController() {
     };
 }
 
-window.angular.module('icdsApp').directive('printReport', function() {
+window.angular.module('icdsApp').directive('printReport', function () {
     return {
         restrict: 'E',
         template: '<i uib-popover-html="\'Print page\'" popover-placement="left" popover-trigger="\'mouseenter\'" class="fa fa-2x fa-print pointer light-grey" style="margin-top: 12px;" aria-hidden="true" ng-click="$ctrl.print()"></i>',

@@ -1,9 +1,9 @@
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function ServiceDeliveryDashboardController($rootScope, $scope, $http, $location, $routeParams, $log, DTOptionsBuilder,
-                                            DTColumnBuilder, $compile, storageService, userLocationId,
-                                            baseControllersService, haveAccessToAllLocations, isAlertActive,
-                                            sddMetadata, dateHelperService, navigationService, isMobile) {
+    DTColumnBuilder, $compile, storageService, userLocationId,
+    baseControllersService, haveAccessToAllLocations, isAlertActive,
+    sddMetadata, dateHelperService, navigationService, isMobile) {
     baseControllersService.BaseFilterController.call(
         this, $scope, $routeParams, $location, dateHelperService, storageService, navigationService
     );
@@ -83,117 +83,117 @@ function ServiceDeliveryDashboardController($rootScope, $scope, $http, $location
         }
         return {
             'locationLevelName': locationLevelName,
-            'locationLevelNameField': locationLevelNameField
-        }
+            'locationLevelNameField': locationLevelNameField,
+        };
     };
 
     vm.sddTableData = {
         'pw_lw_children': {
-            'non-awc' : [
+            'non-awc': [
                 {
-                    'mData' : 'num_launched_awcs',
-                    'heading' : 'Number of AWCs launched',
-                    'tooltipValue' : 'Total Number of Anganwadi Centers launched in the selected location.',
-                    'columnValueType' : 'raw',
-                    'columnValueIndicator' : 'num_launched_awcs'
+                    'mData': 'num_launched_awcs',
+                    'heading': 'Number of AWCs launched',
+                    'tooltipValue': 'Total Number of Anganwadi Centers launched in the selected location.',
+                    'columnValueType': 'raw',
+                    'columnValueIndicator': 'num_launched_awcs',
                 },
                 {
-                    'mData' : 'home_visits',
-                    'heading' : 'Home Visits',
-                    'tooltipValue' : 'Of the total number of expected home visits, the percentage of home visits completed by AWW.',
-                    'columnValueType' : 'percentage',
-                    'columnValueIndicator' : 'homeVisits'
+                    'mData': 'home_visits',
+                    'heading': 'Home Visits',
+                    'tooltipValue': 'Of the total number of expected home visits, the percentage of home visits completed by AWW.',
+                    'columnValueType': 'percentage',
+                    'columnValueIndicator': 'homeVisits',
                 },
                 {
-                    'mData' : 'gm',
-                    'heading' : 'Growth Monitoring',
-                    'tooltipValue' : 'Of the total children between 0-3 years of age and enrolled for Anganwadi services, the percentage of children who were weighed in the current month.',
-                    'columnValueType' : 'percentage',
-                    'columnValueIndicator' : 'gm03'
+                    'mData': 'gm',
+                    'heading': 'Growth Monitoring',
+                    'tooltipValue': 'Of the total children between 0-3 years of age and enrolled for Anganwadi services, the percentage of children who were weighed in the current month.',
+                    'columnValueType': 'percentage',
+                    'columnValueIndicator': 'gm03',
                 },
                 {
-                    'mData' : 'num_awcs_conducted_cbe',
-                    'heading' : 'Community Based Events',
-                    'tooltipValue' : 'Of the total number of launched Anganwadi Centers, the percentage who have conducted at least 2 Community Based Events in the given month.',
-                    'columnValueType' : 'percentage',
-                    'columnValueIndicator' : 'num_awcs_conducted_cbe'
+                    'mData': 'num_awcs_conducted_cbe',
+                    'heading': 'Community Based Events',
+                    'tooltipValue': 'Of the total number of launched Anganwadi Centers, the percentage who have conducted at least 2 Community Based Events in the given month.',
+                    'columnValueType': 'percentage',
+                    'columnValueIndicator': 'num_awcs_conducted_cbe',
                 },
                 {
-                    'mData' : 'num_awcs_conducted_vhnd',
-                    'heading' : 'VHSND',
-                    'tooltipValue' : 'Total number of Anganwadi Centers who have conducted at least 1 Village, Health, Sanitation and Nutrition Day in the given month.',
-                    'columnValueType' : 'raw',
-                    'columnValueIndicator' : 'num_awcs_conducted_vhnd'
+                    'mData': 'num_awcs_conducted_vhnd',
+                    'heading': 'VHSND',
+                    'tooltipValue': 'Total number of Anganwadi Centers who have conducted at least 1 Village, Health, Sanitation and Nutrition Day in the given month.',
+                    'columnValueType': 'raw',
+                    'columnValueIndicator': 'num_awcs_conducted_vhnd',
                 },
                 {
-                    'mData' : 'thr',
-                    'heading' : 'Take Home Ration (21+ days)',
-                    'tooltipValue' : 'Of the total number of pregnant women, lactating women (0-6 months children) and 6-36 months children enrolled for Anganwadi services, the percentage of pregnant women, lactating women (0-6 months children) and 6-36 months children who were provided THR for at least 21 days in the current month.',
-                    'columnValueType' : 'percentage',
-                    'columnValueIndicator' : 'thr'
+                    'mData': 'thr',
+                    'heading': 'Take Home Ration (21+ days)',
+                    'tooltipValue': 'Of the total number of pregnant women, lactating women (0-6 months children) and 6-36 months children enrolled for Anganwadi services, the percentage of pregnant women, lactating women (0-6 months children) and 6-36 months children who were provided THR for at least 21 days in the current month.',
+                    'columnValueType': 'percentage',
+                    'columnValueIndicator': 'thr',
                 },
             ],
-            'awc' : [
+            'awc': [
                 {
-                    'mData' : 'home_visits',
-                    'heading' : 'Home Visits',
-                    'tooltipValue' : 'Of the total number of expected home visits, the percentage of home visits completed by AWW.',
-                    'columnValueType' : 'percentage',
-                    'columnValueIndicator' : 'homeVisits'
+                    'mData': 'home_visits',
+                    'heading': 'Home Visits',
+                    'tooltipValue': 'Of the total number of expected home visits, the percentage of home visits completed by AWW.',
+                    'columnValueType': 'percentage',
+                    'columnValueIndicator': 'homeVisits',
                 },
                 {
-                    'mData' : 'gm',
-                    'heading' : 'Growth Monitoring',
-                    'tooltipValue' : 'Of the total children between 0-3 years of age and enrolled for Anganwadi services, the percentage of children who were weighed in the current month.',
-                    'columnValueType' : 'percentage',
-                    'columnValueIndicator' : 'gm03'
+                    'mData': 'gm',
+                    'heading': 'Growth Monitoring',
+                    'tooltipValue': 'Of the total children between 0-3 years of age and enrolled for Anganwadi services, the percentage of children who were weighed in the current month.',
+                    'columnValueType': 'percentage',
+                    'columnValueIndicator': 'gm03',
                 },
                 {
-                    'mData' : 'num_awcs_conducted_cbe',
-                    'heading' : 'Community Based Events',
-                    'tooltipValue' : 'If the AWC conducted at least 2 CBE in the current month then Yes otherwise No.',
-                    'columnValueType' : 'booleanRaw',
-                    'columnValueIndicator' : 'num_awcs_conducted_cbe'
+                    'mData': 'num_awcs_conducted_cbe',
+                    'heading': 'Community Based Events',
+                    'tooltipValue': 'If the AWC conducted at least 2 CBE in the current month then Yes otherwise No.',
+                    'columnValueType': 'booleanRaw',
+                    'columnValueIndicator': 'num_awcs_conducted_cbe',
                 },
                 {
-                    'mData' : 'num_awcs_conducted_vhnd',
-                    'heading' : 'VHSND',
-                    'tooltipValue' : 'If the AWC conducted at least 1 VHSND in the current month then Yes otherwise No.',
-                    'columnValueType' : 'booleanRaw',
-                    'columnValueIndicator' : 'num_awcs_conducted_vhnd'
+                    'mData': 'num_awcs_conducted_vhnd',
+                    'heading': 'VHSND',
+                    'tooltipValue': 'If the AWC conducted at least 1 VHSND in the current month then Yes otherwise No.',
+                    'columnValueType': 'booleanRaw',
+                    'columnValueIndicator': 'num_awcs_conducted_vhnd',
                 },
                 {
-                    'mData' : 'thr',
-                    'heading' : 'Take Home Ration (21+ days)',
-                    'tooltipValue' : 'Of the total number of pregnant women, lactating women (0-6 months children) and 6-36 months children enrolled for Anganwadi services, the percentage of pregnant women, lactating women (0-6 months children) and 6-36 months children who were provided THR for at least 21 days in the current month.',
-                    'columnValueType' : 'percentage',
-                    'columnValueIndicator' : 'thr'
+                    'mData': 'thr',
+                    'heading': 'Take Home Ration (21+ days)',
+                    'tooltipValue': 'Of the total number of pregnant women, lactating women (0-6 months children) and 6-36 months children enrolled for Anganwadi services, the percentage of pregnant women, lactating women (0-6 months children) and 6-36 months children who were provided THR for at least 21 days in the current month.',
+                    'columnValueType': 'percentage',
+                    'columnValueIndicator': 'thr',
                 },
             ],
         },
-        'children' : [
+        'children': [
             {
-                'mData' : 'sn',
-                'heading' : 'Supplementary Nutrition (21+ days)',
-                'tooltipValue' : 'Of the total children between 3-6 years of age and enrolled for Anganwadi services, the percentage of children who were provided Hot Cooked Meal i.e. supplementary nutrition for at least 21 days in the current month.',
-                'columnValueType' : 'percentage',
-                'columnValueIndicator' : 'supNutrition'
+                'mData': 'sn',
+                'heading': 'Supplementary Nutrition (21+ days)',
+                'tooltipValue': 'Of the total children between 3-6 years of age and enrolled for Anganwadi services, the percentage of children who were provided Hot Cooked Meal i.e. supplementary nutrition for at least 21 days in the current month.',
+                'columnValueType': 'percentage',
+                'columnValueIndicator': 'supNutrition',
             },
             {
-                'mData' : 'pse',
-                'heading' : 'Pre-school Education (21+ days)',
-                'tooltipValue' : 'Of the total children between 3-6 years of age and enrolled for Anganwadi services, the percentage of children who attended Pre-school education for at least 21 days in the current month.',
-                'columnValueType' : 'percentage',
-                'columnValueIndicator' : 'pse'
+                'mData': 'pse',
+                'heading': 'Pre-school Education (21+ days)',
+                'tooltipValue': 'Of the total children between 3-6 years of age and enrolled for Anganwadi services, the percentage of children who attended Pre-school education for at least 21 days in the current month.',
+                'columnValueType': 'percentage',
+                'columnValueIndicator': 'pse',
             },
             {
-                'mData' : 'gm',
-                'heading' : 'Growth Monitoring',
-                'tooltipValue' : 'Of the total children between <b>3-5 years</b> of age and enrolled for Anganwadi services, the percentage of children who were weighed in the current month.<br><br><b>Growth Monitoring is done only for children till 5 years of age.</b>',
-                'columnValueType' : 'percentage',
-                'columnValueIndicator' : 'gm36'
+                'mData': 'gm',
+                'heading': 'Growth Monitoring',
+                'tooltipValue': 'Of the total children between <b>3-5 years</b> of age and enrolled for Anganwadi services, the percentage of children who were weighed in the current month.<br><br><b>Growth Monitoring is done only for children till 5 years of age.</b>',
+                'columnValueType': 'percentage',
+                'columnValueIndicator': 'gm36',
             },
-        ]
+        ],
     };
 
     vm.getSddTableData = function () {
@@ -256,7 +256,9 @@ function ServiceDeliveryDashboardController($rootScope, $scope, $http, $location
             return isMobile ? ('No expected ' + indicator) : '<div> No expected ' + indicator + ' </div>';
         }
         else {
-            if (denominator === vm.dataNotEntered) { return vm.dataNotEntered; }
+            if (denominator === vm.dataNotEntered) {
+                return vm.dataNotEntered;
+            }
             if (percentage === vm.dataNotEntered) {
                 if (numerator === 0 && denominator === 0) {
                     return isMobile ? ('100% (' + numerator + ' / ' + denominator + ')') :
