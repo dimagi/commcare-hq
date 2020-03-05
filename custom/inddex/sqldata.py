@@ -8,34 +8,23 @@ from corehq.apps.userreports.util import get_table_name
 FOOD_CONSUMPTION = 'food_consumption_indicators'
 
 
-class DataSourceMixin(SqlData):
-
-    @property
-    def engine_id(self):
-        return 'ucr'
-
-    @property
-    def filters(self):
-        return []
-
-    @property
-    def group_by(self):
-        return []
-
-    @property
-    def columns(self):
-        return []
-
-
-class FoodConsumptionDataSourceMixin(DataSourceMixin):
+class FoodConsumptionDataSourceMixin(SqlData):
     total_row = None
 
     @property
     def table_name(self):
         return get_table_name(self.config['domain'], FOOD_CONSUMPTION)
 
+    @property
+    def engine_id(self):
+        return 'ucr'
+
 
 class FiltersData(FoodConsumptionDataSourceMixin):
+
+    @property
+    def filters(self):
+        return []
 
     @property
     def group_by(self):
