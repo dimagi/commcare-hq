@@ -1745,7 +1745,16 @@ def get_data_not_in_ucr(status_record):
         doc_ids = [val[0] for val in chunk]
         docs_in_ucr = _get_docs_in_ucr(domain, status_record.table_id, doc_ids)
         for doc_id, doc_subtype, sql_modified_on in chunk:
-            if doc_id not in docs_in_ucr:
+            in_ucr = False
+            for ucr_doc in docs_in_ucr:
+                if ucr_doc[0] == doc_id:
+                    in_ucr = True
+                    # For the cases which are outdated.  This condition also handles the time drift of 1 sec
+                    # between main db and ucr db. i.e  doc will even be included when inserted_at-sql_modified_on <= 1 sec
+                    if sql_modified_on - ucr_doc[1] >= timedelta(seconds=-1):
+                        yield (doc_id, doc_subtype, sql_modified_on.isoformat())
+                        break
+            if not in_ucr:
                 yield (doc_id, doc_subtype, sql_modified_on.isoformat())
 
 
@@ -1753,12 +1762,12 @@ def _get_docs_in_ucr(domain, table_id, doc_ids):
     table_name = get_table_name(domain, table_id)
     with connections[get_icds_ucr_citus_db_alias()].cursor() as cursor:
         query = f'''
-            SELECT doc_id
+            SELECT doc_id, inserted_at
             FROM "{table_name}"
             WHERE doc_id = ANY(%(doc_ids)s);
         '''
         cursor.execute(query, {'doc_ids': doc_ids})
-        return {row[0] for row in cursor.fetchall()}
+        return {row for row in cursor.fetchall()}
 
 
 def _get_primary_data_for_forms(db, domain, day, xmlns):
