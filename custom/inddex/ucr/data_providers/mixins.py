@@ -8,15 +8,6 @@ from custom.inddex.couch_db_data_collector import CouchDbDataCollector
 from custom.inddex.sqldata import FoodSqlData
 
 
-def get_slugs(slugs, config):
-    filters = []
-    for slug in slugs:
-        if config.get(slug):
-            filters.append(EQ(slug, slug))
-
-    return filters
-
-
 class MasterReportData(FoodSqlData):
     title = None
     table_names = []
@@ -518,11 +509,8 @@ class BaseNutrientData(MasterReportData):
 
     @property
     def filters(self):
-        filters = super().filters
         slugs = ['gender', 'pregnant', 'breastfeeding', 'urban_rural', 'supplements']
-        filters += get_slugs(slugs, self.config)
-
-        return filters
+        return super().filters + [EQ(s, s) for s in slugs if self.config.get(s)]
 
     @property
     def rows(self):
