@@ -8,7 +8,7 @@ from corehq.apps.userreports.util import get_table_name
 FOOD_CONSUMPTION = 'food_consumption_indicators'
 
 
-class FoodConsumptionDataSourceMixin(SqlData):
+class FoodSqlData(SqlData):
     total_row = None
 
     @property
@@ -20,7 +20,7 @@ class FoodConsumptionDataSourceMixin(SqlData):
         return 'ucr'
 
 
-class FiltersData(FoodConsumptionDataSourceMixin):
+class FiltersData(FoodSqlData):
 
     @property
     def filters(self):

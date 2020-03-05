@@ -1,6 +1,6 @@
 from memoized import memoized
 
-from custom.inddex.ucr.data_providers.mixins import GapsReportDataMixin
+from custom.inddex.ucr.data_providers.mixins import GapsReportData
 
 
 def get_filtered_data(data, conv=False):
@@ -50,7 +50,7 @@ def get_filtered_data(data, conv=False):
     return pattern
 
 
-class ConvFactorGapsSummaryData(GapsReportDataMixin):
+class ConvFactorGapsSummaryData(GapsReportData):
     title = 'Conv Factor Gaps Summary'
     slug = 'conv_factor_gaps_summary'
     headers_in_order = ['conv_factor_gap_code', 'conv_factor_gap_desc', 'food_type', 'conv_gap_food_type_total']
@@ -74,7 +74,7 @@ class ConvFactorGapsSummaryData(GapsReportDataMixin):
         return result
 
 
-class FCTGapsSummaryData(GapsReportDataMixin):
+class FCTGapsSummaryData(GapsReportData):
     title = 'FCT Gaps Summary'
     slug = 'fct_gaps_summary'
     headers_in_order = ['fct_gap_code', 'fct_gap_desc', 'food_type', 'fct_gap_food_type_total']

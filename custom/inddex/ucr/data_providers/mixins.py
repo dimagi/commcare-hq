@@ -7,7 +7,7 @@ from sqlagg.filters import GTE, LTE, EQ
 from corehq.apps.reports.datatables import DataTablesColumn
 from corehq.apps.reports.sqlreport import DatabaseColumn
 from custom.inddex.couch_db_data_collector import CouchDbDataCollector
-from custom.inddex.sqldata import FoodConsumptionDataSourceMixin
+from custom.inddex.sqldata import FoodSqlData
 
 
 def get_slugs(slugs, config):
@@ -19,7 +19,7 @@ def get_slugs(slugs, config):
     return filters
 
 
-class ReportDataMixin(FoodConsumptionDataSourceMixin):
+class MasterReportData(FoodSqlData):
     title = None
     table_names = []
     headers_in_order = []
@@ -449,7 +449,7 @@ class AdditionalFiltersMixin:
                     data.pop(data.index(record))
 
 
-class GapsReportDataMixin(ReportDataMixin, AdditionalDataMixin, AdditionalFiltersMixin):
+class GapsReportData(MasterReportData, AdditionalDataMixin, AdditionalFiltersMixin):
 
     @property
     def couch_db(self):
@@ -487,7 +487,7 @@ class GapsReportDataMixin(ReportDataMixin, AdditionalDataMixin, AdditionalFilter
                     (el_data['measurement_amount'] * el_data['portions']) / el_data['nsr_measurement_amount_post_cooking']
 
 
-class GapsByItemReportDataMixin(GapsReportDataMixin, AdditionalDataMixin, AdditionalFiltersMixin):
+class GapsReportByItemData(GapsReportData, AdditionalDataMixin, AdditionalFiltersMixin):
 
     @property
     def filters(self):
@@ -524,7 +524,7 @@ class GapsByItemReportDataMixin(GapsReportDataMixin, AdditionalDataMixin, Additi
                     data.pop(data.index(record))
 
 
-class BaseNutrientDataMixin(ReportDataMixin, AdditionalDataMixin, AdditionalFiltersMixin):
+class BaseNutrientData(MasterReportData, AdditionalDataMixin, AdditionalFiltersMixin):
 
     @property
     def filters(self):
@@ -543,7 +543,7 @@ class BaseNutrientDataMixin(ReportDataMixin, AdditionalDataMixin, AdditionalFilt
         return rows
 
 
-class NutrientIntakesDataMixin(BaseNutrientDataMixin):
+class NutrientIntakesData(BaseNutrientData):
 
     @property
     def additional_filters(self):

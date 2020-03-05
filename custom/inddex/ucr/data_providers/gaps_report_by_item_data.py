@@ -1,9 +1,9 @@
 from memoized import memoized
 
-from custom.inddex.ucr.data_providers.mixins import GapsByItemReportDataMixin
+from custom.inddex.ucr.data_providers.mixins import GapsReportByItemData
 
 
-class GapsReportByItemSummaryData(GapsByItemReportDataMixin):
+class GapsReportByItemSummaryData(GapsReportByItemData):
     total_row = None
     title = 'Gaps By Item Summary'
     slug = 'gaps_by_item_summary'
@@ -41,7 +41,7 @@ class GapsReportByItemSummaryData(GapsByItemReportDataMixin):
                 record['data']['number_of_occurrences'] = str(occurrences[food_code])
 
 
-class GapsReportByItemDetailsData(GapsByItemReportDataMixin):
+class GapsReportByItemDetailsData(GapsReportByItemData):
     total_row = None
     title = 'Gaps By Item Details'
     slug = 'gaps_by_item_details'

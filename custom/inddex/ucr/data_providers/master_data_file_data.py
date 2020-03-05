@@ -1,9 +1,9 @@
 from memoized import memoized
 
-from custom.inddex.ucr.data_providers.mixins import GapsReportDataMixin
+from custom.inddex.ucr.data_providers.mixins import GapsReportData
 
 
-class MasterDataFileData(GapsReportDataMixin):
+class MasterDataFileData(GapsReportData):
     title = 'Master Data'
     slug = 'master_data'
     headers_in_order = [

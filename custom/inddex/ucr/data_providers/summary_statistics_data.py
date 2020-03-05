@@ -1,9 +1,9 @@
 from memoized import memoized
 
-from custom.inddex.ucr.data_providers.mixins import BaseNutrientDataMixin
+from custom.inddex.ucr.data_providers.mixins import BaseNutrientData
 
 
-class SummaryStatsNutrientDataProvider(BaseNutrientDataMixin):
+class SummaryStatsNutrientDataProvider(BaseNutrientData):
     total_row = None
     title = 'Nutrient Intake Summary Stats'
     slug = 'nutr_intake_summary_stats'

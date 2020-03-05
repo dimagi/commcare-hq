@@ -1,9 +1,9 @@
 from memoized import memoized
 
-from custom.inddex.ucr.data_providers.mixins import NutrientIntakesDataMixin
+from custom.inddex.ucr.data_providers.mixins import NutrientIntakesData
 
 
-class NutrientIntakesByFoodData(NutrientIntakesDataMixin):
+class NutrientIntakesByFoodData(NutrientIntakesData):
     title = 'Disaggregated Intake Data By Food'
     slug = 'disaggr_intake_data_by_food'
     headers_in_order = [
@@ -197,7 +197,7 @@ class NutrientIntakesByFoodData(NutrientIntakesDataMixin):
         ]
 
 
-class NutrientIntakesByRespondentData(NutrientIntakesDataMixin):
+class NutrientIntakesByRespondentData(NutrientIntakesData):
     title = 'Aggregated Daily Intake By Respondent'
     slug = 'aggr_daily_intake_by_rspndnt'
     headers_in_order = [
