@@ -187,12 +187,14 @@ def diff_ledgers(case_ids, dd_count):
             if old_value["form_state"] == FORM_PRESENT and "ledger" not in old_value:
                 changes = diffs_to_changes(diffs, "missing couch stock transaction")
                 all_changes.append(("stock state", ref.as_id(), changes))
+                dd_count("commcare.couchsqlmigration.ledger.did_change")
                 diffs = []
         else:
             diffs = diff(couch_state, ledger_value)
             if diffs and stock_tx.has_duplicate_transactions(ref):
                 changes = diffs_to_changes(diffs, "duplicate stock transaction")
                 all_changes.append(("stock state", ref.as_id(), changes))
+                dd_count("commcare.couchsqlmigration.ledger.did_change")
                 diffs = []
         if diffs:
             dd_count("commcare.couchsqlmigration.ledger.has_diff")
