@@ -1432,21 +1432,17 @@ class LedgerMigrationTests(BaseMigrationTestCase):
 
         self._compare_diffs([])
 
-    def test_migrate_partially_migrated_form_with_ledger(self):
-        case_id = "test-case"
+    def test_migrate_partially_migrated_form1_with_ledger(self):
         self.submit_form(TEST_FORM, timedelta(days=-5))  # create test-case
-        form1 = self._set_balance(case_id, {
+        form1 = self._set_balance("test-case", {
             self.liquorice: 50,
             self.sherbert: 100,
         }, timedelta(days=-3))
-        form2 = self._set_balance(case_id, {self.liquorice: 75}, timedelta(days=-1))
+        form2 = self._set_balance("test-case", {self.liquorice: 75}, timedelta(days=-1))
         print("ledger forms:", form1, form2)
         with self.skip_case_and_ledger_updates(form1):
             self._do_migration(live=True)
-        self.assert_backend("sql")
-        self.assertEqual(self._get_form_ids(), {'test-form', form1, form2})
-        self.assertEqual(self._get_case_ids(), {case_id})
-        self._compare_diffs([
+        self.fix_missing_ledger_diffs(form1, form2, [
             ("CommCareCase", Diff("set_mismatch", ["xform_ids", "[*]"], old=form1, new="")),
             ("stock state", Diff("missing", ["*"],
                 old={'form_state': 'present', 'ledger': {
@@ -1464,10 +1460,33 @@ class LedgerMigrationTests(BaseMigrationTestCase):
                 new={'form_state': 'present'},
             )),
         ])
+
+    def test_migrate_partially_migrated_form2_with_ledger(self):
+        self.submit_form(TEST_FORM, timedelta(days=-5))  # create test-case
+        form1 = self._set_balance("test-case", {
+            self.liquorice: 50,
+            self.sherbert: 100,
+        }, timedelta(days=-3))
+        form2 = self._set_balance("test-case", {self.liquorice: 75}, timedelta(days=-1))
+        print("ledger forms:", form1, form2)
+        with self.skip_case_and_ledger_updates(form2):
+            self._do_migration(live=True)
+        self.fix_missing_ledger_diffs(form1, form2, [
+            ("CommCareCase", Diff("set_mismatch", ["xform_ids", "[*]"], old=form2, new="")),
+            ("stock state", Diff("diff", ["balance"], old=75, new=50)),
+            ('stock state', Diff('diff', ['last_modified'])),
+            ('stock state', Diff('diff', ['last_modified_form_id'], old=form2, new=form1)),
+        ])
+
+    def fix_missing_ledger_diffs(self, form1, form2, diffs):
+        self.assert_backend("sql")
+        self.assertEqual(self._get_form_ids(), {'test-form', form1, form2})
+        self.assertEqual(self._get_case_ids(), {"test-case"})
+        self._compare_diffs(diffs)
         clear_local_domain_sql_backend_override(self.domain_name)
         self._do_migration(forms="missing")
         self.assertEqual(self._get_form_ids(), {'test-form', form1, form2})
-        self.assertEqual(self._get_case_ids(), {case_id})
+        self.assertEqual(self._get_case_ids(), {"test-case"})
         self._compare_diffs([])
 
     def _validate_ledger_data(self, state_dict, expected):
@@ -1619,7 +1638,7 @@ def atomic_savepoint(*args, **kw):
 _real_atomic = transaction.atomic
 
 
-@attr.s(cmp=False)
+@attr.s(cmp=False, repr=False)
 class Diff:
 
     type = attr.ib(default=ANY)
@@ -1636,6 +1655,12 @@ class Diff:
                 and self.new == other.new_value
             )
         return NotImplemented
+
+    def __repr__(self):
+        return (
+            f"FormJsonDiff(diff_type={self.type!r}, path={self.path!r}, "
+            f"old_value={self.old!r}, new_value={self.new!r})"
+        )
 
     __hash__ = None
 

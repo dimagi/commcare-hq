@@ -6,6 +6,7 @@ from functools import partial
 import attr
 
 from casexml.apps.case.xform import get_case_ids_from_form
+from casexml.apps.stock.const import TRANSACTION_TYPE_STOCKONHAND
 from casexml.apps.stock.models import StockTransaction
 from dimagi.utils.couch.database import retry_on_couch_error
 
@@ -303,6 +304,8 @@ class StockTransactionLoader:
         for report in get_all_stock_report_helpers_from_form(xform):
             for tx in report.transactions:
                 yield report.report_type, tx
+                if tx.action == TRANSACTION_TYPE_STOCKONHAND:
+                    yield report.report_type, tx
 
 
 def diff_case_forms(couch_json, sql_json):

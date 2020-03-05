@@ -45,6 +45,7 @@ from corehq.form_processor.backends.sql.dbaccessors import (
     LedgerAccessorSQL,
     doc_type_to_state,
 )
+from corehq.form_processor.backends.sql.ledger import LedgerProcessorSQL
 from corehq.form_processor.backends.sql.processor import FormProcessorSQL
 from corehq.form_processor.exceptions import (
     AttachmentNotFound,
@@ -61,6 +62,7 @@ from corehq.form_processor.models import (
     CaseTransaction,
     CommCareCaseIndexSQL,
     CommCareCaseSQL,
+    LedgerTransaction,
     RebuildWithReason,
     XFormInstanceSQL,
     XFormOperationSQL,
@@ -452,13 +454,21 @@ class CouchSqlDomainMigrator:
         def iter_missing_ledgers(stock_result):
             assert not stock_result.models_to_delete, (form_id, stock_result)
             if not (stock_result and stock_result.models_to_save):
-                return []
+                return
             get_transactions = LedgerAccessorSQL.get_ledger_transactions_for_form
             case_ids = {v.case_id for v in stock_result.models_to_save}
             refs = {t.ledger_reference for t in get_transactions(form_id, case_ids)}
             for value in stock_result.models_to_save:
                 if value.ledger_reference not in refs:
                     yield value
+
+        def rebuild_ledger(value):
+            ledger_value = ledger_processor._rebuild_ledger(form_id, value)
+            txx = ledger_value.get_live_tracked_models(LedgerTransaction)
+            tx = max(txx, key=lambda tx: tx.server_date)
+            ledger_value.last_modified = tx.server_date
+            ledger_value.last_modified_form_id = tx.form_id
+            return ledger_value
 
         from django.db import transaction
         couch_form = XFormInstance.get(form_id)
@@ -467,7 +477,8 @@ class CouchSqlDomainMigrator:
         if not result:
             return False
         cases = [c for c in result.case_models if c.has_tracked_models()]
-        ledgers = list(iter_missing_ledgers(result.stock_result))
+        ledger_processor = LedgerProcessorSQL(self.domain)
+        ledgers = [rebuild_ledger(v) for v in iter_missing_ledgers(result.stock_result)]
         if not (cases or ledgers):
             return False
         case_ids = {c.case_id for c in cases} | {v.case_id for v in ledgers}
