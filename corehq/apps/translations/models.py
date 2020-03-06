@@ -37,6 +37,9 @@ class SMSTranslations(SyncSQLToCouchMixin, models.Model):
     def default_lang(self):
         return self.langs[0] if self.langs else None
 
+    def set_translations(self, lang, translations):
+        self.translations[lang] = translations
+
     @classmethod
     def _migration_get_fields(cls):
         return [
