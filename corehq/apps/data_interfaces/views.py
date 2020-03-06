@@ -19,7 +19,7 @@ from django.utils.translation import ugettext_lazy, ugettext_noop
 from django.views.decorators.http import require_GET
 
 from couchdbkit import ResourceNotFound
-from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
+from djng.views.mixins import JSONResponseMixin, allow_remote_invocation
 from memoized import memoized
 
 from soil.exceptions import TaskFailedError
