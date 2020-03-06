@@ -80,7 +80,16 @@ class MasterReportData(FoodSqlData):
     @property
     @memoized
     def rows(self):
-        return self._get_raw_data()
+        raw_data = []
+        for data in self.get_data():
+            id_ = data[self.id_field]
+            tmp = data.copy()
+            tmp.pop(self.id_field)
+            for name in set(self.obligatory_couch_names + self.headers_in_order):
+                if name not in self.group_by:
+                    tmp[name] = None
+            raw_data.append({'id': id_, 'data': tmp})
+        return raw_data
 
     def rearrange_data(self, rows):
         result = []
@@ -110,19 +119,6 @@ class MasterReportData(FoodSqlData):
                     records_dict[food_code]['fao_who_gift_food_group_code']
                 record['data']['fao_who_gift_food_group_description'] = \
                     records_dict[food_code]['fao_who_gift_food_group_description']
-
-    def _get_raw_data(self):
-        raw_data = []
-        for data in self.get_data():
-            id_ = data[self.id_field]
-            tmp = data.copy()
-            tmp.pop(self.id_field)
-            for name in set(self.obligatory_couch_names + self.headers_in_order):
-                if name not in self.group_by:
-                    tmp[name] = None
-            raw_data.append({'id': id_, 'data': tmp})
-
-        return raw_data
 
     def append_fct_gap_information(self, data):
         food_items, std_recipes, non_food_items, non_std_recipes = self._rearrange_data_for_gap_calculations(data)
