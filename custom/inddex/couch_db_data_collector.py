@@ -64,14 +64,14 @@ class CouchDbDataCollector:
 
         data = {}
         for record in self.get_data_from_table(table_name, fields_and_values):
-            rdict = self.records_data_as_dict(record)
+            rdict = self.record_to_dict(record)
             rdict_without_id = {k: v for k, v in rdict.items() if k != key_field}
             data[rdict[key_field]] = rdict_without_id
 
         return data
 
     @staticmethod
-    def records_data_as_dict(record, fields_to_filter=None):
+    def record_to_dict(record, fields_to_filter=None):
         """
         transforms FixtureDataItem object into a dictionary
         :param record FixtureDataItem object
@@ -92,7 +92,7 @@ class CouchDbDataCollector:
 
     def _is_record_valid(self, record, values):
         if values:
-            fields_values = self.records_data_as_dict(
+            fields_values = self.record_to_dict(
                 record, [x for x in values.keys()]
             )
             if fields_values and self._values_match(fields_values, values):

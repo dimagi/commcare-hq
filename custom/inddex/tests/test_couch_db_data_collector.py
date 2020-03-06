@@ -54,8 +54,8 @@ class CouchDbDataCollectorTest(TestCase):
         )
         self.assertEqual(res, {'test_key_value': {'test_field': 'test_value'}})
 
-    def test_records_data_as_dict_fields_to_filter_none_returns_record_as_dict(self):
-        res = self.couch_db.records_data_as_dict(Mock(fields={
+    def test_record_to_dict_fields_to_filter_none_returns_record_as_dict(self):
+        res = self.couch_db.record_to_dict(Mock(fields={
             'test_field_1': Mock(field_list=[Mock(field_value='test_value')]),
             'test_field_2': Mock(field_list=[]),
         }))
@@ -64,8 +64,8 @@ class CouchDbDataCollectorTest(TestCase):
             'test_field_2': None,
         })
 
-    def test_records_data_as_dict_fields_to_filter_not_none_returns_fields_as_dict(self):
-        res = self.couch_db.records_data_as_dict(Mock(fields={
+    def test_record_to_dict_fields_to_filter_not_none_returns_fields_as_dict(self):
+        res = self.couch_db.record_to_dict(Mock(fields={
             'test_field_1': Mock(field_list=[Mock(field_value='test_value')]),
             'test_field_2': Mock(field_list=[]),
         }), fields_to_filter=('test_field_1',))
