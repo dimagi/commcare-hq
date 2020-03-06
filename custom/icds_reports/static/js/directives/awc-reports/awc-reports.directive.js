@@ -2542,7 +2542,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
     };
 
     vm.toShowDataTables = function () {
-      return vm.showTable && vm.isAWCsSelected();
+        return vm.showTable && vm.isAWCsSelected();
     };
 
     vm.showBeneficiaryTable = function () {
