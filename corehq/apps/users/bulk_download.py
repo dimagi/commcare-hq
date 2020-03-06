@@ -172,7 +172,13 @@ def dump_usernames(domain, download_id, user_filters, task):
 
     headers = [('users', [['username']])]
     rows = [('users', [[username] for username in usernames])]
-    filename = "{}_users.xlsx".format(domain)
+    location_id = user_filters.get('location_id')
+    location_name = ""
+    if location_id:
+        location = SQLLocation.active_objects.get_or_None(location_id=location_id)
+        location_name = location.name if location else ""
+    filename_prefix = "_".join([a for a in [domain, location_name] if bool(a)])
+    filename = "{}_users.xlsx".format(filename_prefix)
     _dump_xlsx_and_expose_download(filename, headers, rows, download_id, task, users_count)
 
 

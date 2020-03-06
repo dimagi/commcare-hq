@@ -6,6 +6,7 @@ from functools import partial
 import attr
 
 from casexml.apps.case.xform import get_case_ids_from_form
+from casexml.apps.stock.const import TRANSACTION_TYPE_STOCKONHAND
 from casexml.apps.stock.models import StockTransaction
 from dimagi.utils.couch.database import retry_on_couch_error
 
@@ -85,6 +86,8 @@ def diff_cases(couch_cases, log_cases=False):
         couch_case, diffs, changes = diff_case(sql_case, couch_cases[case_id], dd_count)
         if diffs:
             dd_count("commcare.couchsqlmigration.case.has_diff")
+        if changes:
+            dd_count("commcare.couchsqlmigration.case.did_change")
         data.doc_ids.append(case_id)
         data.diffs.append((couch_case['doc_type'], case_id, diffs))
         data.changes.append((couch_case['doc_type'], case_id, changes))
@@ -109,9 +112,13 @@ def diff_case(sql_case, couch_case, dd_count):
     changes = []
     if diffs:
         return couch_case, diffs, changes
-    original_couch_case = couch_case
     diffs = diff(couch_case, sql_json)
     if diffs:
+        form_diffs = diff_case_forms(couch_case, sql_json)
+        if form_diffs:
+            diffs.extend(form_diffs)
+            return couch_case, diffs, changes
+        original_couch_case = couch_case
         dd_count("commcare.couchsqlmigration.case.rebuild.couch")
         try:
             couch_case = hard_rebuild(couch_case)
@@ -120,17 +127,17 @@ def diff_case(sql_case, couch_case, dd_count):
             log.warning(f"Case {case_id} rebuild -> {type(err).__name__}: {err}")
         else:
             diffs = diff(couch_case, sql_json)
-            if diffs:
-                try:
-                    sql_json, diffs = rebuild_and_diff_cases(
-                        sql_case, couch_case, original_couch_case, diff, dd_count)
-                except Exception as err:
-                    dd_count("commcare.couchsqlmigration.case.rebuild.error")
-                    log.warning(f"Case {case_id} rebuild SQL -> {type(err).__name__}: {err}")
-            if not diffs:
-                changes = diffs_to_changes(diff(original_couch_case, sql_json), "rebuild case")
+        if diffs:
+            try:
+                sql_json, diffs = rebuild_and_diff_cases(
+                    sql_case, couch_case, original_couch_case, diff, dd_count)
+            except Exception as err:
+                dd_count("commcare.couchsqlmigration.case.rebuild.error")
+                log.warning(f"Case {case_id} rebuild SQL -> {type(err).__name__}: {err}")
         if diffs:
             diffs.extend(diff_case_forms(couch_case, sql_json))
+        else:
+            changes = diffs_to_changes(diff(original_couch_case, sql_json), "rebuild case")
     return couch_case, diffs, changes
 
 
@@ -177,11 +184,18 @@ def diff_ledgers(case_ids, dd_count):
             dd_count("commcare.couchsqlmigration.ledger.rebuild")
         if couch_state is None:
             diffs = [stock_tx.diff_missing_ledger(ledger_value)]
+            old_value = diffs[0].old_value
+            if old_value["form_state"] == FORM_PRESENT and "ledger" not in old_value:
+                changes = diffs_to_changes(diffs, "missing couch stock transaction")
+                all_changes.append(("stock state", ref.as_id(), changes))
+                dd_count("commcare.couchsqlmigration.ledger.did_change")
+                diffs = []
         else:
             diffs = diff(couch_state, ledger_value)
             if diffs and stock_tx.has_duplicate_transactions(ref):
                 changes = diffs_to_changes(diffs, "duplicate stock transaction")
                 all_changes.append(("stock state", ref.as_id(), changes))
+                dd_count("commcare.couchsqlmigration.ledger.did_change")
                 diffs = []
         if diffs:
             dd_count("commcare.couchsqlmigration.ledger.has_diff")
@@ -290,6 +304,8 @@ class StockTransactionLoader:
         for report in get_all_stock_report_helpers_from_form(xform):
             for tx in report.transactions:
                 yield report.report_type, tx
+                if tx.action == TRANSACTION_TYPE_STOCKONHAND:
+                    yield report.report_type, tx
 
 
 def diff_case_forms(couch_json, sql_json):
@@ -304,7 +320,7 @@ def diff_case_forms(couch_json, sql_json):
         old, new = diff_form_state(form_id)
         old_forms[form_id] = old["form_state"]
         new_forms[form_id] = new["form_state"]
-    if any(v.startswith("missing") for v in old_forms.values()):
+    if any(v != FORM_PRESENT for v in old_forms.values()):
         return [Diff(
             "diff",
             path=["?"],
@@ -319,10 +335,14 @@ def diff_form_state(form_id, *, in_couch=False):
     in_sql = FormAccessorSQL.form_exists(form_id)
     couch_miss = "missing"
     if not in_couch and get_blob_db().metadb.get_for_parent(form_id):
-        couch_miss = "missing, blob present"
-    old = {"form_state": "present" if in_couch else couch_miss}
-    new = {"form_state": "present" if in_sql else "missing"}
+        couch_miss = MISSING_BLOB_PRESENT
+    old = {"form_state": FORM_PRESENT if in_couch else couch_miss}
+    new = {"form_state": FORM_PRESENT if in_sql else "missing"}
     return old, new
+
+
+FORM_PRESENT = "present"
+MISSING_BLOB_PRESENT = "missing, blob present"
 
 
 def add_missing_docs(data, couch_cases, sql_case_ids, dd_count):

@@ -13,6 +13,10 @@ class Command(PopulateSQLCommand):
         from corehq.apps.registration.models import RegistrationRequest
         return RegistrationRequest
 
+    @classmethod
+    def commit_adding_migration(cls):
+        return "61dc4670073baf7c51b7ab23cccbf16e3ecedbe9"
+
     def update_or_create_sql_object(self, doc):
         model, created = self.sql_class().objects.update_or_create(
             couch_id=doc['_id'],

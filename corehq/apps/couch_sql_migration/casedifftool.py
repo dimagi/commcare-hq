@@ -152,7 +152,7 @@ class CaseDiffTool:
             for batch in batches:
                 data = load_and_diff_cases(batch, log_cases=log_cases)
                 yield data
-                diffs = {case_id: diffs for x, case_id, diffs in data.diffs if diffs}
+                diffs = [(kind, case_id, diffs) for kind, case_id, diffs in data.diffs if diffs]
                 if diffs:
                     log.info("found cases with diffs:\n%s", format_diffs(diffs))
                     if stop:
@@ -225,10 +225,10 @@ def iter_sql_cases_with_sorted_transactions(domain):
             yield from iter(set(case_id for case_id, in cursor.fetchall()))
 
 
-def format_diffs(diff_dict):
+def format_diffs(json_diffs, changes=False):
     lines = []
-    for doc_id, diffs in sorted(diff_dict.items()):
-        lines.append(doc_id)
+    for kind, doc_id, diffs in sorted(json_diffs, key=lambda x: x[1]):
+        lines.append(f"{kind} {doc_id} {diffs[0].reason if changes else ''}")
         for diff in sorted(diffs, key=lambda d: (d.diff_type, d.path)):
             if len(repr(diff.old_value) + repr(diff.new_value)) > 60:
                 lines.append(f"  {diff.diff_type} {list(diff.path)}")

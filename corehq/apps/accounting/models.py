@@ -461,9 +461,9 @@ class BillingAccount(ValidateModelMixin, models.Model):
             return None
         except cls.MultipleObjectsReturned:
             log_accounting_error(
-                "Multiple billing accounts showed up for the domain '%s'. The "
-                "latest one was served, but you should reconcile very soon."
-                % domain
+                f"Multiple billing accounts showed up for the domain '{domain}'. The "
+                "latest one was served, but you should reconcile very soon.",
+                show_stack_trace=True,
             )
             return cls.objects.filter(created_by_domain=domain).latest('date_created')
         return None

@@ -18,7 +18,7 @@ from corehq.apps.userreports.transforms.custom.users import (
     get_owner_display,
     get_user_display,
     get_user_without_domain_display,
-)
+    get_user_display_use_names)
 from corehq.apps.userreports.util import localize
 
 
@@ -34,6 +34,7 @@ _CUSTOM_TRANSFORM_MAP = {
     'month_display': get_month_display,
     'days_elapsed_from_date': days_elapsed_from_date,
     'user_display': get_user_display,
+    'user_display_including_name': get_user_display_use_names,
     'owner_display': get_owner_display,
     'user_without_domain_display': get_user_without_domain_display,
     'short_decimal_display': get_short_decimal_display,

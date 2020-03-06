@@ -2,7 +2,6 @@ from decimal import Decimal
 
 from dimagi.utils.couch.cache import cache_core
 
-from corehq.apps.consumption.const import DAYS_IN_MONTH
 from corehq.apps.consumption.models import (
     TYPE_DOMAIN,
     TYPE_PRODUCT,
@@ -38,7 +37,7 @@ def get_default_monthly_consumption(domain, product_id, location_type, case_id):
         return None
 
 
-def get_domain_monthly_consumption_data(domain):
+def _get_domain_monthly_consumption_data(domain):
     """
     Get all default consumption rows for this domain.
     """
@@ -52,15 +51,6 @@ def get_domain_monthly_consumption_data(domain):
     return results
 
 
-def get_default_consumption(domain, product_id, location_type, case_id):
-    consumption = get_default_monthly_consumption(domain, product_id, location_type, case_id)
-
-    if consumption:
-        return consumption / Decimal(DAYS_IN_MONTH)
-    else:
-        return None
-
-
 def set_default_monthly_consumption_for_domain(domain, amount):
     default = DefaultConsumption.get_domain_default(domain)
     return _update_or_create_default(domain, amount, default, TYPE_DOMAIN)
@@ -69,12 +59,6 @@ def set_default_monthly_consumption_for_domain(domain, amount):
 def set_default_consumption_for_product(domain, product_id, amount):
     default = DefaultConsumption.get_product_default(domain, product_id)
     return _update_or_create_default(domain, amount, default, TYPE_PRODUCT, product_id=product_id)
-
-
-def set_default_consumption_for_supply_point(domain, product_id, supply_point_id, amount):
-    default = DefaultConsumption.get_supply_point_default(domain, product_id, supply_point_id)
-    return _update_or_create_default(domain, amount, default, TYPE_SUPPLY_POINT,
-                                     product_id=product_id, supply_point_id=supply_point_id)
 
 
 def _update_or_create_default(domain, amount, default, type, **kwargs):
@@ -90,7 +74,7 @@ def _update_or_create_default(domain, amount, default, type, **kwargs):
         return default
 
 
-def hashable_key(key):
+def _hashable_key(key):
     """
     Convert the key from couch into something hasable.
     Mostly, just need to make it a tuple and remove the special
@@ -104,10 +88,10 @@ def build_consumption_dict(domain):
     Takes raw rows from couch and builds a dict to 
     look up consumption values from.
     """
-    raw_rows = get_domain_monthly_consumption_data(domain)
+    raw_rows = _get_domain_monthly_consumption_data(domain)
 
     return dict(
-        (hashable_key(row['key']), Decimal(row['value']))
+        (_hashable_key(row['key']), Decimal(row['value']))
         for row in raw_rows if row['value']
     )
 
@@ -129,12 +113,3 @@ def get_loaded_default_monthly_consumption(consumption_dict, domain, product_id,
             return consumption_dict[key]
 
     return None
-
-
-def get_loaded_default_consumption(consumption_dict, domain, product_id, location_type, case_id):
-    consumption = get_loaded_default_monthly_consumption(consumption_dict, domain, product_id, location_type, case_id)
-
-    if consumption:
-        return consumption / Decimal(DAYS_IN_MONTH)
-    else:
-        return None

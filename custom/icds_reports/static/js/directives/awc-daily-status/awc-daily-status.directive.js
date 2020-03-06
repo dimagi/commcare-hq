@@ -23,7 +23,7 @@ function AWCDailyStatusController($scope, $routeParams, $location, $filter, icds
         info: 'Of the total number of AWCs, the percentage of AWCs that were open yesterday.',
     };
 
-    vm.getPopupData = function(row) {
+    vm.getPopupData = function (row) {
         var total = row ? $filter('indiaNumbers')(row.all) : 'N/A';
         var inDay = row ? $filter('indiaNumbers')(row.in_day) : 'N/A';
         var percent = row ? d3.format('.2%')(row.in_day / (row.all || 1)) : 'N/A';
@@ -39,7 +39,7 @@ function AWCDailyStatusController($scope, $routeParams, $location, $filter, icds
             {
                 indicator_name: '% of AWCs open yesterday: ',
                 indicator_value: percent,
-            }
+            },
         ];
     };
 
@@ -53,11 +53,13 @@ function AWCDailyStatusController($scope, $routeParams, $location, $filter, icds
     vm.chartOptions = vm.getChartOptions(options);
     vm.chartOptions.chart.color = d3.scale.category10().range();
     vm.chartOptions.chart.xAxis.rotateLabels = -45;
-    vm.chartOptions.chart.callback = function(chart) {
+    vm.chartOptions.chart.callback = function (chart) {
         var tooltip = chart.interactiveLayer.tooltip;
         tooltip.contentGenerator(function (d) {
             var findValue = function (values, date) {
-                var day = _.find(values, function(num) { return num.x === date; });
+                var day = _.find(values, function (num) {
+                    return num.x === date; 
+                });
                 return day.y;
             };
             var total = findValue(vm.chartData[0].values, d.value);
@@ -67,7 +69,7 @@ function AWCDailyStatusController($scope, $routeParams, $location, $filter, icds
         return chart;
     };
 
-    vm.tooltipContent = function(monthName, value, total) {
+    vm.tooltipContent = function (monthName, value, total) {
         return "<div>Total number of AWCs that were open on <strong>" + monthName + "</strong>: <strong>" + $filter('indiaNumbers')(value) + "</strong></div>"
         + "<div>Total number of AWCs that have been launched: <strong>" + $filter('indiaNumbers')(total) + "</strong></div>"
         + "<div>% of AWCs open on <strong>" + monthName + "</strong>: <strong>" + d3.format('.2%')(value / (total || 1)) + "</strong></div>";
