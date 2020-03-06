@@ -1,4 +1,4 @@
-from datetime import date, timedelta
+from datetime import date
 
 from django.test import TestCase
 
@@ -71,12 +71,10 @@ class TestMasterReport(TestCase):
         )
 
     def run_report(self):
-        yesterday = date.today() - timedelta(days=1)
-        tomorrow = date.today() + timedelta(days=1)
         report_data = MasterDataFileData({
             'domain': self.domain,
-            'startdate': yesterday.isoformat(),
-            'enddate': tomorrow.isoformat(),
+            'startdate': date(2020, 1, 1).isoformat(),
+            'enddate': date(2020, 4, 1).isoformat(),
             'case_owners': '',
             'gap_type': '',
             'recall_status': '',

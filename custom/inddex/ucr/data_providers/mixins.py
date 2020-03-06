@@ -50,7 +50,6 @@ class MasterReportData(FoodSqlData):
             filters.append(EQ('owner_name', 'case_owners'))
         if self.config['recall_status']:
             filters.append(EQ('recall_status', 'recall_status'))
-
         return filters
 
     @property
