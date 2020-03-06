@@ -1,7 +1,57 @@
+import re
+
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 
 import jsonfield
+
+from corehq.motech.const import ALGO_AES, PASSWORD_PLACEHOLDER
+from corehq.motech.repeaters.models import BASIC_AUTH, DIGEST_AUTH, OAUTH1
+from corehq.motech.utils import b64_aes_decrypt, b64_aes_encrypt
+
+
+class ConnectionSettings(models.Model):
+    """
+    Stores the connection details of a remote API.
+
+    Used for DHIS2 aggregated data / DataSet integration. Intended also
+    to be used for Repeaters and OpenMRS Importers.
+    """
+    domain = models.CharField(max_length=126, db_index=True)
+    name = models.CharField(max_length=255)
+    url = models.CharField(max_length=255)
+    auth_type = models.CharField(
+        max_length=7, null=True, blank=True,
+        choices=(
+            (None, "None"),
+            (BASIC_AUTH, "Basic"),
+            (DIGEST_AUTH, "Digest"),
+            (OAUTH1, "OAuth1"),
+        )
+    )
+    username = models.CharField(max_length=255)
+    password = models.CharField(max_length=255)
+    skip_cert_verify = models.BooleanField(default=False)
+    notify_addresses_str = models.CharField(max_length=255, default="")
+
+    @property
+    def plaintext_password(self):
+        if self.password.startswith('${algo}$'.format(algo=ALGO_AES)):
+            ciphertext = self.password.split('$', 2)[2]
+            return b64_aes_decrypt(ciphertext)
+        return self.password
+
+    @plaintext_password.setter
+    def plaintext_password(self, plaintext):
+        if plaintext != PASSWORD_PLACEHOLDER:
+            self.password = '${algo}${ciphertext}'.format(
+                algo=ALGO_AES,
+                ciphertext=b64_aes_encrypt(plaintext)
+            )
+
+    @property
+    def notify_addresses(self):
+        return [addr for addr in re.split('[, ]+', self.notify_addresses_str) if addr]
 
 
 class RequestLog(models.Model):
