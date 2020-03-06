@@ -43,6 +43,7 @@ services
 KEEP_UNTIL__*
 formplayer.properties
 formplayer.jar
+.vscode/*
 
 submodules/formdesigner
 submodules/vellum/Vellum
