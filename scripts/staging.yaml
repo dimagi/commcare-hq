@@ -56,4 +56,5 @@ branches:
   - bmb/SAAS-10103  # Biyeun Feb 28
   - patch-register # Amit March 4
   - jls/migrate-StandaloneTranslationDoc-2 # Jenny March 3
+  - dmr/update-django-angular  # Danny Mar 6
 submodules: {}
