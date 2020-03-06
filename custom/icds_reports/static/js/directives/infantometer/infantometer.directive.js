@@ -36,7 +36,7 @@ function InfantometerController($scope, $routeParams, $location, $filter, infras
             {
                 indicator_name: '% of AWCs that reported having an Infantometer: ',
                 indicator_value: percent,
-            }
+            },
         ];
     };
 

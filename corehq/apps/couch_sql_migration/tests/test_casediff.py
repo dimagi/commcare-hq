@@ -123,7 +123,7 @@ class TestDiffCases(SimpleTestCase):
             Diff(
                 doc_id="a",
                 path=["?"],
-                old={"forms": {"b": "missing, blob present"}},
+                old={"forms": {"b": mod.MISSING_BLOB_PRESENT}},
                 new={"forms": {"b": "missing"}},
             ),
         ])
@@ -147,7 +147,7 @@ class TestDiffCases(SimpleTestCase):
         self.assert_diffs([
             Diff(
                 "a/stock/a", "stock state", "missing", ["*"],
-                old={'form_state': 'missing, blob present'},
+                old={'form_state': mod.MISSING_BLOB_PRESENT},
                 new={'form_state': 'missing', 'ledger': self.sql_ledgers["a"].to_json()},
             ),
         ])
@@ -179,7 +179,7 @@ class TestDiffCases(SimpleTestCase):
         self.assert_diffs([
             Diff(
                 "a/stock/a", "stock state", "missing", ["*"],
-                old={'form_state': 'missing, blob present', 'ledger': stock.to_json()},
+                old={'form_state': mod.MISSING_BLOB_PRESENT, 'ledger': stock.to_json()},
                 new={'form_state': 'missing'},
             ),
         ])

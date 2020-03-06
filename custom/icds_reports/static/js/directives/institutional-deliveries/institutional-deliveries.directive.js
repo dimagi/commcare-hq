@@ -23,9 +23,9 @@ function InstitutionalDeliveriesController($scope, $routeParams, $location, $fil
         'Delivery in medical instituitions is associated with a decrease in maternal mortality rate',
     };
 
-    vm.getPopupData = function(row) {
+    vm.getPopupData = function (row) {
         var total = row ? $filter('indiaNumbers')(row.all) : 'N/A';
-        var children =row ? $filter('indiaNumbers')(row.children) : 'N/A';
+        var children = row ? $filter('indiaNumbers')(row.children) : 'N/A';
         var percent = row ? d3.format('.2%')(row.children / (row.all || 1)) : 'N/A';
         return [
             {
@@ -39,7 +39,7 @@ function InstitutionalDeliveriesController($scope, $routeParams, $location, $fil
             {
                 indicator_name: '% pregnant women who delivered in a public or private medical facility in the last month: ',
                 indicator_value: percent,
-            }
+            },
         ];
     };
 

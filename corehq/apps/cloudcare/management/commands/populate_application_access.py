@@ -28,4 +28,5 @@ class Command(PopulateSQLCommand):
             SQLAppGroup(app_id=group['app_id'], group_id=group['group_id'])
             for group in doc['app_groups']
         ], bulk=False)
+        model.save()
         return (model, created)
