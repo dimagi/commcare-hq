@@ -194,14 +194,11 @@ class SqlUpdateStrategyTest(TestCase):
         return CaseAccessorSQL.get_case(case_id)
 
     def _save(self, form, case, transaction):
-        case.track_create(transaction)
-        FormProcessorSQL.save_processed_models(
-            ProcessedForms(form, []),
-            [case],
-            # disable publish to Kafka to avoid intermittent errors caused by
-            # the nexus of kafka's consumer thread and freeze_time
-            publish_to_kafka=False,
-        )
+        # disable publish to Kafka to avoid intermittent errors caused by
+        # the nexus of kafka's consumer thread and freeze_time
+        with patch.object(FormProcessorSQL, "publish_changes_to_kafka"):
+            case.track_create(transaction)
+            FormProcessorSQL.save_processed_models(ProcessedForms(form, []), [case])
 
     def _check_for_reconciliation_error_soft_assert(self, soft_assert_mock):
         for call in soft_assert_mock.call_args_list:
