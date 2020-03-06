@@ -43,7 +43,7 @@ class TestMasterReport(TestCase):
         expected_headers, expected_rows = get_expected_report()
         actual_headers, actual_rows = self.run_report()
         self.assertEqual(expected_headers, actual_headers)
-        self.assertEqual(len(expected_rows), len(actual_rows))
+        self.assert_same_foods_present(expected_rows, actual_rows, expected_headers)
         for expected, actual in zip(expected_rows, actual_rows):
             self.assert_rows_match(expected, actual, expected_headers)
 
@@ -82,5 +82,12 @@ class TestMasterReport(TestCase):
         headers = [h.html for h in report_data.headers]
         return headers, report_data.rows
 
-    def assert_rows_match(self):
+    def assert_same_foods_present(self, expected_rows, actual_rows, expected_headers):
+        name_column = expected_headers.index('food_name')
+        self.assertItemsEqual(
+            [r[name_column] for r in expected_rows],
+            [r[name_column] for r in actual_rows],
+        )
+
+    def assert_rows_match(self, expected_row, actual_row, expected_headers):
         pass
