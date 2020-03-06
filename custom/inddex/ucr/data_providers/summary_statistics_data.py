@@ -4,7 +4,6 @@ from custom.inddex.ucr.data_providers.mixins import BaseNutrientData
 
 
 class SummaryStatsNutrientDataProvider(BaseNutrientData):
-    total_row = None
     title = 'Nutrient Intake Summary Stats'
     slug = 'nutr_intake_summary_stats'
     headers_in_order = [

@@ -9,7 +9,6 @@ FOOD_CONSUMPTION = 'food_consumption_indicators'
 
 
 class FoodSqlData(SqlData):
-    total_row = None
 
     @property
     def table_name(self):

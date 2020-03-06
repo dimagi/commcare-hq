@@ -4,7 +4,6 @@ from custom.inddex.ucr.data_providers.mixins import GapsReportByItemData
 
 
 class GapsReportByItemSummaryData(GapsReportByItemData):
-    total_row = None
     title = 'Gaps By Item Summary'
     slug = 'gaps_by_item_summary'
     headers_in_order = [
@@ -42,7 +41,6 @@ class GapsReportByItemSummaryData(GapsReportByItemData):
 
 
 class GapsReportByItemDetailsData(GapsReportByItemData):
-    total_row = None
     title = 'Gaps By Item Details'
     slug = 'gaps_by_item_details'
     headers_in_order = [
