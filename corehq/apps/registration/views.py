@@ -16,7 +16,7 @@ from django.utils.translation import ugettext as _
 from django.views.decorators.http import require_POST
 from django.views.generic.base import TemplateView, View
 
-from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
+from djng.views.mixins import JSONResponseMixin, allow_remote_invocation
 from memoized import memoized
 
 from dimagi.utils.couch import CriticalSection
