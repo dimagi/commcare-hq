@@ -40,7 +40,8 @@ function MapOrSectorController($scope, $compile, $location, storageService, loca
                 //any word more than 12 letters is going out of view (with the provided chart styling).
                 // So splitting words of size greater than 12 into smaller words
                 words = getWrappableText(text).reverse(),
-                word, line = [],
+                word, 
+                line = [],
                 lineNumber = 0,
                 lineHeight = 1.1, // ems
                 y = 2.5 * parseInt(words.length),

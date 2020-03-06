@@ -15,7 +15,7 @@ function MonthModalController($location, $uibModalInstance, dateHelperService) {
 
 
 
-    window.angular.forEach(moment.months(), function(key, value) {
+    window.angular.forEach(moment.months(), function (key, value) {
         vm.monthsCopy.push({
             name: key,
             id: value + 1,
@@ -51,7 +51,7 @@ function MonthModalController($location, $uibModalInstance, dateHelperService) {
     vm.months = customMonths.months;
     vm.selectedMonth = customMonths.selectedMonth;
 
-    vm.apply = function() {
+    vm.apply = function () {
         hqImport('analytix/js/google').track.event('Date Filter', 'Date Changed', '');
         $uibModalInstance.close({
             month: vm.selectedMonth,
@@ -88,7 +88,7 @@ function MonthFilterController($scope, $location, $uibModal, storageService, dat
         vm.selectedDate = new Date();
     }
     vm.currentYear = new Date().getFullYear();
-    vm.getPlaceholder = function() {
+    vm.getPlaceholder = function () {
         return dateHelperService.getSelectedMonthDisplay();
     };
 
@@ -127,7 +127,7 @@ function MonthFilterController($scope, $location, $uibModal, storageService, dat
         });
     });
 
-    $scope.$on('reset_filter_data', function() {
+    $scope.$on('reset_filter_data', function () {
         $scope.$broadcast('reset_date',{});
         vm.selectedDate = new Date();
     });
@@ -155,7 +155,7 @@ MonthModalController.$inject = ['$location', '$uibModalInstance', 'dateHelperSer
 window.angular.module('icdsApp').directive("monthFilter",  ['templateProviderService', function (templateProviderService) {
     var url = hqImport('hqwebapp/js/initial_page_data').reverse;
     return {
-        restrict:'E',
+        restrict: 'E',
         scope: {
             isOpenModal: '=?',
             selectSddDate: '=?',

@@ -58,7 +58,7 @@ function ProgressReportController($scope, $location, progressReportService,
     ];
     vm.showTable = true;
 
-    $scope.$on('filtersChange', function() {
+    $scope.$on('filtersChange', function () {
         vm.showPreviousMonthWarning = (
             (
                 vm.now === parseInt(storageService.getKey('search')['month']) &&
@@ -75,7 +75,7 @@ function ProgressReportController($scope, $location, progressReportService,
         vm.loadData();
     });
 
-    $scope.$watch(function() {
+    $scope.$watch(function () {
         return vm.selectedLocations;
     }, function (newValue, oldValue) {
         if (newValue === oldValue || !newValue || newValue.length === 0) {
@@ -87,7 +87,7 @@ function ProgressReportController($scope, $location, progressReportService,
             $location.search('selectedLocationLevel', 3);
             $location.search('location_name', parent.name);
             storageService.setKey('message', true);
-            setTimeout(function() {
+            setTimeout(function () {
                 storageService.setKey('message', false);
             }, 3000);
         }
@@ -100,18 +100,20 @@ function ProgressReportController($scope, $location, progressReportService,
         }
         var params = window.angular.copy(vm.filtersData);
         params.category = vm.report;
-        vm.myPromise = progressReportService.getData(params).then(function(response) {
+        vm.myPromise = progressReportService.getData(params).then(function (response) {
             vm.title = response.data.config.title;
             vm.data = response.data.config.sections;
         });
     };
 
-    vm.sumValues = function(values) {
-        var sum = _.reduce(values, function(memo, num) { return memo + num; }, 0);
+    vm.sumValues = function (values) {
+        var sum = _.reduce(values, function (memo, num) {
+            return memo + num; 
+        }, 0);
         return sum / values.length;
     };
 
-    vm.getCSS = function(data, index, reverse) {
+    vm.getCSS = function (data, index, reverse) {
         if (index === 0 || index === 1) {
             return 'black';
         }
@@ -143,7 +145,7 @@ function ProgressReportController($scope, $location, progressReportService,
     };
 
 
-    vm.moveToLocation = function(loc, index) {
+    vm.moveToLocation = function (loc, index) {
         if (loc === 'national') {
             $location.search('location_id', '');
             $location.search('selectedLocationLevel', -1);
@@ -155,11 +157,11 @@ function ProgressReportController($scope, $location, progressReportService,
         }
     };
 
-    vm.goToReport = function(reportName) {
+    vm.goToReport = function (reportName) {
         $location.path('fact_sheets/' + reportName);
     };
 
-    vm.goBack = function() {
+    vm.goBack = function () {
         vm.report = null;
         vm.title = null;
         $location.path('fact_sheets/');
@@ -172,7 +174,7 @@ ProgressReportController.$inject = [
     '$scope', '$location', 'progressReportService', 'storageService', '$routeParams', 'userLocationId', 'DTOptionsBuilder', 'DTColumnDefBuilder', 'haveAccessToAllLocations', 'isAlertActive',
 ];
 
-window.angular.module('icdsApp').directive('progressReport', function() {
+window.angular.module('icdsApp').directive('progressReport', function () {
     return {
         restrict: 'E',
         templateUrl: url('icds-ng-template', 'progress-report.directive'),

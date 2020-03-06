@@ -31,7 +31,7 @@ function MainController($scope, $route, $routeParams, $location, $uibModal, $win
     }
     fixEscapedURLAmpersands();
 
-    $scope.reportAnIssue = function() {
+    $scope.reportAnIssue = function () {
         if (reportAnIssueUrl) {
             $window.location.href = reportAnIssueUrl;
             return;
@@ -53,7 +53,7 @@ function MainController($scope, $route, $routeParams, $location, $uibModal, $win
         }
     };
 
-    $scope.checkAccessToLocation = function() {
+    $scope.checkAccessToLocation = function () {
         var locationId = $location.search()['location_id'];
         if (userLocationId !== void(0) && ['', 'undefinded', 'null', void(0)].indexOf(locationId) === -1) {
             $http.get(url('have_access_to_location'), {
@@ -70,7 +70,7 @@ function MainController($scope, $route, $routeParams, $location, $uibModal, $win
         }
     };
 
-    $scope.$on('$routeChangeStart', function() {
+    $scope.$on('$routeChangeStart', function () {
         $scope.checkAccessToLocation();
         var path = window.location.pathname + $location.path().substr(1);
         $window.ga('set', 'page', path);
@@ -79,10 +79,10 @@ function MainController($scope, $route, $routeParams, $location, $uibModal, $win
 
     // hack to have the same width between origin table and fixture headers,
     // without this fixture headers are bigger and not align to original columns
-    var observer = new MutationObserver(function(mutations) {
-        mutations.forEach(function(mutation) {
+    var observer = new MutationObserver(function (mutations) {
+        mutations.forEach(function (mutation) {
             if (mutation.addedNodes && mutation.addedNodes.length > 0) {
-                var hasClass = [].some.call(mutation.addedNodes, function(el) {
+                var hasClass = [].some.call(mutation.addedNodes, function (el) {
                     return el.classList !== void(0) && el.classList.contains('fixedHeader-floating');
                 });
                 if (hasClass) {
@@ -124,11 +124,11 @@ MainController.$inject = [
 ];
 
 window.angular.module('icdsApp', [
-        'ngRoute', 'ui.select', 'ngSanitize', 'datamaps', 'ui.bootstrap', 'nvd3',
-        'datatables', 'datatables.bootstrap', 'datatables.fixedcolumns', 'datatables.fixedheader',
-        'leaflet-directive', 'cgBusy', 'perfect_scrollbar'])
+    'ngRoute', 'ui.select', 'ngSanitize', 'datamaps', 'ui.bootstrap', 'nvd3',
+    'datatables', 'datatables.bootstrap', 'datatables.fixedcolumns', 'datatables.fixedheader',
+    'leaflet-directive', 'cgBusy', 'perfect_scrollbar'])
     .controller('MainController', MainController)
-    .config(['$interpolateProvider', '$routeProvider', function($interpolateProvider, $routeProvider) {
+    .config(['$interpolateProvider', '$routeProvider', function ($interpolateProvider, $routeProvider) {
         var utils = hqImport("js/icds_dashboard_utils");
         $interpolateProvider.startSymbol('{$');
         $interpolateProvider.endSymbol('$}');
