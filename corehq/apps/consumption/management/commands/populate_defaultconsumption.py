@@ -13,7 +13,7 @@ class Command(PopulateSQLCommand):
 
     @classmethod
     def commit_adding_migration(cls):
-        return "d38d08f8616b908f7d5f803f54bc5f775e49ca95"
+        return "16562e1eadf7ae3fa4c87da5de7a42550fcf6291"
 
     def update_or_create_sql_object(self, doc):
         model, created = self.sql_class().objects.update_or_create(
