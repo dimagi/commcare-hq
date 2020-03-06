@@ -35,6 +35,11 @@ class PopulateSQLCommand(BaseCommand):
         raise NotImplementedError()
 
     def update_or_create_sql_object(self, doc):
+        """
+        This should find and update the sql object that corresponds to the given doc,
+        or create it if it doesn't yet exist. This method is responsible for saving
+        the sql object.
+        """
         raise NotImplementedError()
 
     @classmethod
@@ -59,6 +64,8 @@ class PopulateSQLCommand(BaseCommand):
             Calls sys.exit on failure.
         """
         to_migrate = cls.count_items_to_be_migrated()
+        print(f"Found {to_migrate} {cls.couch_doc_type()} documents to migrate.")
+
         migrated = to_migrate == 0
         if migrated:
             return
@@ -100,37 +107,24 @@ class PopulateSQLCommand(BaseCommand):
     def couch_db(cls):
         return couch_config.get_db(cls.couch_db_slug())
 
-    def add_arguments(self, parser):
-        parser.add_argument(
-            '--dry-run',
-            action='store_true',
-            dest='dry_run',
-            default=False,
-            help='Do not actually modify the database, just verbosely log what will happen',
-        )
+    def handle(self, **options):
 
-    def handle(self, dry_run=False, **options):
-        log_prefix = "[DRY RUN] " if dry_run else ""
-
-        logger.info("{}Found {} {} docs and {} {} models".format(
-            log_prefix,
-            get_doc_count_by_type(self.couch_db(), self.couch_doc_type()),
+        doc_count = get_doc_count_by_type(self.couch_db(), self.couch_doc_type())
+        logger.info("Found {} {} docs and {} {} models".format(
+            doc_count,
             self.couch_doc_type(),
             self.sql_class().objects.count(),
             self.sql_class().__name__,
         ))
+        doc_index = 0
         for doc in get_all_docs_with_doc_types(self.couch_db(), [self.couch_doc_type()]):
-            logger.info("{}Looking at {} doc with id {}".format(
-                log_prefix,
+            doc_index += 1
+            logger.info("Looking at {} doc #{} of {} with id {}".format(
                 self.couch_doc_type(),
+                doc_index,
+                doc_count,
                 doc["_id"]
             ))
             with transaction.atomic():
                 model, created = self.update_or_create_sql_object(doc)
-                if not dry_run:
-                    logger.info("{}{} model for doc with id {}".format(log_prefix,
-                                                                        "Created" if created else "Updated",
-                                                                        doc["_id"]))
-                    model.save()
-                elif created:
-                    model.delete()
+                logger.info("{} model for doc with id {}".format("Creating" if created else "Updated", doc["_id"]))

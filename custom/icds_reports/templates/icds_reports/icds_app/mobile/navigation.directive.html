@@ -28,7 +28,7 @@
             </div>
         </div>
         <hr>
-        <div class="menu-options navigation-font mb-0" ng-show="$ctrl.haveAccessToFeatures" ng-class="{'active-mobile-link': $location.path().indexOf('/service_delivery_dashboard') !== -1}">
+        <div class="menu-options navigation-font mb-0" ng-show="haveAccessToFeatures" ng-class="{'active-mobile-link': $location.path().indexOf('/service_delivery_dashboard') !== -1}">
             <i class="fa fa-tasks mr-3" aria-hidden="true"></i>
             <a  href="{$ goToStep('service_delivery_dashboard/', $location.search()) $}" class="sub-links" ng-click="closeMenu()">Service Delivery Dashboard</a>
         </div>
