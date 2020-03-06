@@ -3,7 +3,6 @@ from kafka import KafkaConsumer
 from memoized import memoized
 
 from corehq.apps.change_feed import topics
-from corehq.util.io import ClosingContextProxy
 from corehq.util.quickcache import quickcache
 from dimagi.utils.logging import notify_exception
 from pillowtop import get_pillow_by_name, get_all_pillow_configs
@@ -50,8 +49,8 @@ def _get_backlog_lengths_by_partition(topic):
     }
     backlog_length_by_partition = {}
 
-    with get_kafka_consumer_for_partitioning() as consumer:
-        offset_by_topic_partition = consumer.end_offsets(seq_by_topic_partition.keys())
+    consumer = get_kafka_consumer_for_partitioning()
+    offset_by_topic_partition = consumer.end_offsets(seq_by_topic_partition.keys())
 
     for key in set(seq_by_topic_partition) | set(offset_by_topic_partition):
         topic, partition = key
@@ -72,7 +71,7 @@ def _get_topic_to_pillow_map():
 
 @memoized
 def get_kafka_consumer_for_partitioning():
-    return ClosingContextProxy(KafkaConsumer(
+    return KafkaConsumer(
         client_id='change_feed_partitioners',
         bootstrap_servers=settings.KAFKA_BROKERS,
-    ))
+    )
