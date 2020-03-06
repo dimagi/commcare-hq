@@ -94,16 +94,25 @@ class Command(BaseCommand):
         counts_by_interval_old_index = get_counts_by_interval(self.old_index)
         counts_by_interval_new_index = get_counts_by_interval(self.new_index)
 
+        collate_start_time = None
+        collate_end_time = None
         for interval_start, count in counts_by_interval_old_index.items():
             delta = timedelta(hours=1) if interval_format is 'hour' else timedelta(minutes=1)
             start_time = interval_start.strftime('%Y-%m-%d %H:%M:%S')
             end_time = (interval_start + delta).strftime('%Y-%m-%d %H:%M:%S')
+            collate_start_time = collate_start_time or start_time
+            collate_end_time = collate_end_time or end_time
             count_in_new_index = counts_by_interval_new_index.get(interval_start, 0)
             if count_in_new_index != count:
                 if interval_format == 'minute':
-                    yield self._base_query(
-                        start_time, end_time, 'yyyy-MM-dd HH:mm:ss'
-                    )
+                    if start_time == collate_end_time:
+                        collate_end_time = end_time
+                    else:
+                        yield self._base_query(
+                            collate_start_time, collate_end_time, 'yyyy-MM-dd HH:mm:ss'
+                        )
+                        collate_start_time = start_time
+                        collate_end_time = end_time
                 else:
                     for query in self._breakup_by_intervals(start_time, end_time, 'minute'):
                         yield query
