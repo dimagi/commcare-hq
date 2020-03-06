@@ -1,3 +1,5 @@
+from django.utils.functional import cached_property
+
 from memoized import memoized
 from sqlagg.columns import SimpleColumn
 from sqlagg.filters import EQ, GTE, LTE
@@ -428,7 +430,7 @@ class MasterReportData(FoodSqlData):
 
 class GapsReportData(MasterReportData):
 
-    @property
+    @cached_property
     def couch_db(self):
         return CouchDbDataCollector(
             domain='inddex-reports', tables=['conv_factors', 'food_list', 'food_composition_table', 'recipes']
