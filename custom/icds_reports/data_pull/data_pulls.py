@@ -5,8 +5,10 @@ import io
 from collections import defaultdict
 from copy import copy
 
-import openpyxl
 from django.utils.dateparse import parse_date
+
+import openpyxl
+
 from custom.icds.utils.location import find_test_state_locations
 from custom.icds_reports.data_pull.exceptions import UnboundDataPullException
 from custom.icds_reports.data_pull.queries import (
@@ -39,6 +41,7 @@ class BaseDataPull:
     slug = ""
     name = ""
     queries = None  # list of query classes
+    file_format_required = 'csv'
 
     def __init__(self, db_alias, *args, **kwargs):
         self.db_alias = db_alias
@@ -48,9 +51,6 @@ class BaseDataPull:
 
     def _get_data_files(self):
         raise NotImplementedError
-
-    def file_format_required(self):
-        return 'csv'
 
     def run(self):
         data_files = self._get_data_files()
@@ -209,19 +209,11 @@ class VHSNDMonthlyReport(MonthBasedDataPull):
     queries = [
         VHSNDMonthlyCount
     ]
-
-    def file_format_required(self):
-        return 'xlsx'
+    file_format_required = 'xlsx'
 
     def post_run(self, data_files):
-        result = self._consolidate_data(data_files)
-        state_results = self._format_consolidated_data(result)
-        output_files = defaultdict()
-        for state_name, output_file in state_results.items():
-            output_files[
-                "vhsnd_monthly_report_{}_{}_{}.xlsx".format(state_name, self.month_date.strftime('%b'),
-                                                           self.month_date.year)] = output_file
-        return output_files
+        state_results = self._consolidate_data(data_files)
+        return self._dump_consolidated_data(state_results)
 
     def _consolidate_data(self, data_files):
         result = defaultdict(dict)
@@ -240,7 +232,8 @@ class VHSNDMonthlyReport(MonthBasedDataPull):
                     result[state_name][data_key].append(vhsnd_date)
                 else:
                     result[state_name][data_key] = [vhsnd_date]
-        return result
+
+        return self._format_consolidated_data(result)
 
     def _format_consolidated_data(self, result):
         state_results = defaultdict(dict)
@@ -254,24 +247,31 @@ class VHSNDMonthlyReport(MonthBasedDataPull):
         headers = ['State', 'District', 'Block', 'Sector', 'AWC']
         headers.extend(dates)
         headers.append('Grand Total')
+        for state_name in result.keys():
+            # constructing and mapping writers to state names
+            wb = openpyxl.Workbook()
+            ws = wb.create_sheet(title=state_name, index=0)
+            ws.append(headers)
+            state_results[state_name] = ws
+            output_files[state_name] = wb
         for state_name, all_details in result.items():
-            if state_name not in state_results:
-                # constructing and mapping writers to state names
-                wb = openpyxl.Workbook()
-                ws = wb.create_sheet(title=state_name, index=0)
-                ws.append(headers)
-                state_results[state_name] = ws
-                output_files[state_name] = wb
-
             for details, vhsnd_dates in all_details.items():
-                awc_row = [details[0], details[1], details[2], details[3], details[4]]
-                counter = 0
+                awc_row = list(copy(details))
+                total_count = 0
                 for a_date in dates:
                     if a_date in vhsnd_dates:
                         awc_row.append(1)
-                        counter += 1
+                        total_count += 1
                     else:
                         awc_row.append('')
-                awc_row.append(counter)
+                awc_row.append(total_count)
                 state_results[state_name].append(awc_row)
+        return output_files
+
+    def _dump_consolidated_data(self, result):
+        output_files = defaultdict()
+        for state_name, output_file in result.items():
+            output_files[
+                "vhsnd_monthly_report_{}_{}_{}.xlsx".format(state_name, self.month_date.strftime('%b'),
+                                                            self.month_date.year)] = output_file
         return output_files

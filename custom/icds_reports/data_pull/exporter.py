@@ -31,15 +31,15 @@ class DataExporter(object):
     @prevent_parallel_execution(DATA_PULL_CACHE_KEY)
     def export(self):
         zip_file_name = "%s-DataPull.zip" % self.data_pull_obj.name
-        if self.data_pull_obj.file_format_required() == 'xlsx':
-            with zipfile.ZipFile(zip_file_name, "w") as zip_content:
-                for filename, workbook in self.data_pull_obj.run().items():
-                    zip_content.writestr(filename, get_file_content_from_workbook(workbook))
-        else:
-            with zipfile.ZipFile(zip_file_name, mode='a') as z:
-                for filename, string_buffer in self.data_pull_obj.run().items():
-                    z.writestr(filename, string_buffer.getvalue())
+        with zipfile.ZipFile(zip_file_name, mode='w') as z:
+            for filename, data in self.data_pull_obj.run().items():
+                z.writestr(filename, self.get_file_content(data))
         return zip_file_name
+
+    def get_file_content(self, content):
+        if self.data_pull_obj.file_format_required == 'xlsx':
+            return get_file_content_from_workbook(content)
+        return content.getvalue()
 
     @cached_property
     def queries(self):
