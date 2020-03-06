@@ -14,7 +14,7 @@ from custom.inddex.const import FOOD_CONSUMPTION
 class MasterReportData(SqlData):
     title = None
     headers_in_order = []
-    TABLE_NAMES = [
+    ucr_column_ids = [
         'doc_id', 'inserted_at', 'recall_case_id', 'owner_name', 'opened_by_username', 'recall_status',
         'unique_respondent_id', 'gender', 'age_months_calculated', 'supplements', 'urban_rural', 'pregnant', 'breastfeeding',
         'food_code', 'reference_food_code', 'food_type', 'include_in_analysis', 'food_status', 'recalled_date',
@@ -72,7 +72,7 @@ class MasterReportData(SqlData):
         return [
             DatabaseColumn(header, SimpleColumn(header))
             for header in set(self.headers_in_order + self.obligatory_table_names)
-            if header in self.TABLE_NAMES
+            if header in self.ucr_column_ids
         ]
 
     @property
@@ -80,7 +80,7 @@ class MasterReportData(SqlData):
         return [
             header
             for header in set(self.headers_in_order + self.obligatory_table_names)
-            if header in self.TABLE_NAMES
+            if header in self.ucr_column_ids
         ]
 
     @property
