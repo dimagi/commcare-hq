@@ -8,7 +8,7 @@ from corehq.apps.reports.datatables import DataTablesColumn
 from corehq.apps.reports.sqlreport import DatabaseColumn, SqlData
 from corehq.apps.userreports.util import get_table_name
 from custom.inddex.couch_db_data_collector import CouchDbDataCollector
-from custom.inddex.sqldata import FOOD_CONSUMPTION
+from custom.inddex.const import FOOD_CONSUMPTION
 
 
 class MasterReportData(SqlData):

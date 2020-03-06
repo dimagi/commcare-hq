@@ -1,8 +1,13 @@
 from django.utils.translation import ugettext_lazy as _
 
+from sqlagg.columns import SimpleColumn
+
+from corehq.apps.reports.datatables import DataTablesColumn
 from corehq.apps.reports.filters.base import BaseSingleOptionFilter
-from custom.inddex.sqldata import FiltersData
 from corehq.apps.reports.filters.dates import DatespanFilter
+from corehq.apps.reports.sqlreport import DatabaseColumn, SqlData
+from corehq.apps.userreports.util import get_table_name
+from custom.inddex.const import FOOD_CONSUMPTION
 
 
 class DateRangeFilter(DatespanFilter):
@@ -153,6 +158,18 @@ class FoodTypeFilter(BaseSingleOptionFilter):
         ]
 
 
+class CaseOwnerData(SqlData):
+    engine_id = 'ucr'
+    filters = []
+    group_by = ['owner_name']
+    headers = [DataTablesColumn('Case owner')]
+    columns = [DatabaseColumn('Case owner', SimpleColumn('owner_name'))]
+
+    @property
+    def table_name(self):
+        return get_table_name(self.config['domain'], FOOD_CONSUMPTION)
+
+
 class CaseOwnersFilter(BaseSingleOptionFilter):
     slug = 'case_owners'
     label = _('Case Owners')
@@ -160,9 +177,13 @@ class CaseOwnersFilter(BaseSingleOptionFilter):
 
     @property
     def options(self):
-        return [
-            (x, x) for x in FiltersData(config={'domain': self.domain}).rows[0]
-        ]
+        owner_data = CaseOwnerData(config={'domain': self.domain})
+        names = {
+            owner['owner_name']
+            for owner in owner_data.get_data()
+            if owner.get('owner_name')
+        }
+        return [(x, x) for x in names]
 
 
 class FaoWhoGiftFoodGroupDescriptionFilter(BaseSingleOptionFilter):
