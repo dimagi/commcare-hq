@@ -7,10 +7,7 @@ from django.contrib import messages
 from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import render
 from django.template.loader import render_to_string
-try:
-    from django.urls import URLResolver
-except ImportError:
-    from django.urls import RegexURLResolver as URLResolver
+from corehq.util.django2_shim.urls import URLResolver
 
 from django.urls import Resolver404
 from django.utils.translation import ugettext_lazy as _
