@@ -6,28 +6,28 @@
     <div class="modal-content">
       <div class="modal-header">
         <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">{% trans 'Close' %}</span></button>
-        <h2 class="text-center">
+        <h4 class="modal-title">
           <strong id="start-trial-modal-header">
           {% trans "Request a CommCare Professional trial" %}
           </strong>
-        </h2>
+        </h4>
       </div>
       <div class="modal-body form-horizontal">
 
         {# Hubspot Form #}
-        <div class="form form-horizontal"
+        <div class="form form-horizontal" 
              id="get-trial-cta-form-content" ></div>
         
         {# Schedule Call Choices #}
         <div id="choose-callback-options" style="display: none;">
-          <p class="margin-top-l text-center lead">
+          <p>
           {% blocktrans %}
             Starting your trial requires a brief call with our team to set up your CommCare project space. Please choose if you prefer us to call you back ASAP, or if you would like to book a  time for the call?
           {% endblocktrans %}
           </p>
-          <div class="text-center margin-top-xl margin-bottom-xl">
-            <button type="button" id="book-to-call-btn" class="btn btn-primary margin-md">Book a call</button>
-            <button type="button" id="get-callback-btn" class="btn btn-primary margin-md">Get a callback</button>
+          <div class="modal-footer">
+            <button type="button" id="book-to-call-btn" class="btn btn-primary">Book a call</button>
+            <button type="button" id="get-callback-btn" class="btn btn-primary">Get a callback</button>
           </div>
         </div>
 
@@ -39,14 +39,12 @@
                data-psz="11"></div>
         </div>
         {# Callback Feedback #}
-        <div id="will-be-in-touch-content" style="display: none;">
-          <h4 class="margin-bottom-xl text-center">
-            <strong>
+        <div id="will-be-in-touch-content" style="display:none;">
+          <p>
             {% blocktrans %}
               While we're preparing your free trial, check out the video below to see how people use CommCare for mobile data collection.
             {% endblocktrans %}
-            </strong>
-          </h4>
+          </p>
           <script src="//fast.wistia.com/embed/medias/jab3lo48kz.jsonp" async></script>
           <script src="//fast.wistia.com/assets/external/E-v1.js" async></script>
           <div class="wistia_embed
@@ -54,9 +52,8 @@
                        smallPlayButton=true
                        volumeControl=false
                        settingsControl=false
-                       margin-xl
-                       "  
-                style="height:28rem">
+                       wmode"  
+                style="height:28rem; margin:3rem;">
           </div>
         </div>
       </div>

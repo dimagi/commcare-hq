@@ -68,7 +68,7 @@ hqDefine('registration/js/register_new_user', [
     });
 
     $('#get-callback-btn').click(function () {
-        $('#start-trial-modal-header').text("Got it! We’ll be in touch soon");
+        $('#start-trial-modal-header').text(gettext("Got it! We’ll be in touch soon"));
         $('#will-be-in-touch-content').fadeIn();
         $('#choose-callback-options').addClass('hide');
     });
