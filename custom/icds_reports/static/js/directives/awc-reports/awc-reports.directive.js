@@ -2537,6 +2537,10 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
         $location.path(vm.steps.beneficiary.listRoute);
     };
 
+    vm.isAWCsSelected = function () {
+        return vm.selectedLocationLevel === 4;
+    };
+
     vm.showBeneficiaryTable = function () {
         vm.filters.pop();
         vm.beneficiary = null;
