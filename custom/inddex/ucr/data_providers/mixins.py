@@ -262,7 +262,8 @@ class MasterReportData(FoodSqlData):
 
         for record in data:
             months = record['data']['age_months_calculated']
-            record['data']['age_range'] = _get_age_range(months)
+            if months:
+                record['data']['age_range'] = _get_age_range(int(months))
 
     @staticmethod
     def _rearrange_data_for_gap_calculations(data, conv_factor=False):
