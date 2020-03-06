@@ -28,5 +28,4 @@ def get_kafka_consumer():
     return ClosingContextProxy(KafkaConsumer(
         client_id='pillowtop_utils',
         bootstrap_servers=settings.KAFKA_BROKERS,
-        request_timeout_ms=1000
     ))

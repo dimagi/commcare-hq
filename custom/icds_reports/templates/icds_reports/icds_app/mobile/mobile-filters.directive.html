@@ -19,7 +19,7 @@
         </div>
     </div>
     <location-filter ng-show="selectedTab == 'location'" select-awc="$ctrl.selectAwc" selected-locations="$ctrl.selectedLocations"></location-filter>
-    <month-filter ng-show="selectedTab == 'month'"></month-filter>
+    <month-filter ng-show="selectedTab == 'month'" select-sdd-date="$ctrl.selectSddDate"></month-filter>
     <hr ng-show="selectedTab == 'month' && ($ctrl.showGenderFilter || $ctrl.showAgeFilter)">
     <additional-filter filters="$ctrl.filters"
                        ng-show="selectedTab == 'month' && ($ctrl.showGenderFilter || $ctrl.showAgeFilter)"></additional-filter>

@@ -36,7 +36,7 @@ function CleanWaterController($scope, $routeParams, $location, $filter, infrastr
             {
                 indicator_name: '% of AWCs that reported having a source of clean drinking water: ',
                 indicator_value: percent,
-            }
+            },
         ];
     };
 
