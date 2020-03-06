@@ -5,14 +5,14 @@ from sqlagg.columns import SimpleColumn
 from sqlagg.filters import EQ, GTE, LTE
 
 from corehq.apps.reports.datatables import DataTablesColumn
-from corehq.apps.reports.sqlreport import DatabaseColumn
+from corehq.apps.reports.sqlreport import DatabaseColumn, SqlData
+from corehq.apps.userreports.util import get_table_name
 from custom.inddex.couch_db_data_collector import CouchDbDataCollector
-from custom.inddex.sqldata import FoodSqlData
+from custom.inddex.sqldata import FOOD_CONSUMPTION
 
 
-class MasterReportData(FoodSqlData):
+class MasterReportData(SqlData):
     title = None
-    table_names = []
     headers_in_order = []
     TABLE_NAMES = [
         'doc_id', 'inserted_at', 'recall_case_id', 'owner_name', 'opened_by_username', 'recall_status',
@@ -30,6 +30,11 @@ class MasterReportData(FoodSqlData):
     ]
     id_field = 'doc_id'
     couch_db = None
+    engine_id = 'ucr'
+
+    @property
+    def table_name(self):
+        return get_table_name(self.config['domain'], FOOD_CONSUMPTION)
 
     @property
     def obligatory_table_names(self):

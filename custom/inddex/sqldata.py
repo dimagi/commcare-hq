@@ -1,25 +1,19 @@
 from memoized import memoized
 from sqlagg.columns import SimpleColumn
 
-from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
-from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn
+from corehq.apps.reports.datatables import DataTablesColumn
+from corehq.apps.reports.sqlreport import DatabaseColumn, SqlData
 from corehq.apps.userreports.util import get_table_name
 
 FOOD_CONSUMPTION = 'food_consumption_indicators'
 
 
-class FoodSqlData(SqlData):
+class FiltersData(SqlData):
+    engine_id = 'ucr'
 
     @property
     def table_name(self):
         return get_table_name(self.config['domain'], FOOD_CONSUMPTION)
-
-    @property
-    def engine_id(self):
-        return 'ucr'
-
-
-class FiltersData(FoodSqlData):
 
     @property
     def filters(self):
