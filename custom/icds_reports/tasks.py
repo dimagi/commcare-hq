@@ -1743,18 +1743,14 @@ def get_data_not_in_ucr(status_record):
     chunk_size = 1000
     for chunk in chunked(matching_records_for_db, chunk_size):
         doc_ids = [val[0] for val in chunk]
-        docs_in_ucr = _get_docs_in_ucr(domain, status_record.table_id, doc_ids)
+        doc_id_and_inserted_in_ucr = _get_docs_in_ucr(domain, status_record.table_id, doc_ids)
         for doc_id, doc_subtype, sql_modified_on in chunk:
-            in_ucr = False
-            for ucr_doc in docs_in_ucr:
-                if ucr_doc[0] == doc_id:
-                    in_ucr = True
-                    # For the cases which are outdated.  This condition also handles the time drift of 1 sec
-                    # between main db and ucr db. i.e  doc will even be included when inserted_at-sql_modified_on <= 1 sec
-                    if sql_modified_on - ucr_doc[1] >= timedelta(seconds=-1):
-                        yield (doc_id, doc_subtype, sql_modified_on.isoformat())
-                        break
-            if not in_ucr:
+            if doc_id in doc_id_and_inserted_in_ucr:
+                # This is to handle the cases which are outdated. This condition also handles the time drift of 1 sec
+                # between main db and ucr db. i.e  doc will even be included when inserted_at-sql_modified_on <= 1 sec
+                if sql_modified_on - doc_id_and_inserted_in_ucr[doc_id] >= timedelta(seconds=-1):
+                    yield (doc_id, doc_subtype, sql_modified_on.isoformat())
+            else:
                 yield (doc_id, doc_subtype, sql_modified_on.isoformat())
 
 
@@ -1767,7 +1763,7 @@ def _get_docs_in_ucr(domain, table_id, doc_ids):
             WHERE doc_id = ANY(%(doc_ids)s);
         '''
         cursor.execute(query, {'doc_ids': doc_ids})
-        return {row for row in cursor.fetchall()}
+        return {row[0]: row[1] for row in cursor.fetchall()}
 
 
 def _get_primary_data_for_forms(db, domain, day, xmlns):
