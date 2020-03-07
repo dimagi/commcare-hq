@@ -221,8 +221,8 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
     };
 
     vm.preventShowingAllOption = function (locations) {
-        var locationUserFullAccess = !vm.userLocationIdIsNull() && !vm.userHaveAccessToAllLocations(locations);
-        return (locationUserFullAccess || vm.isUserLocationIn(locations)) && !haveAccessToAllLocations;
+        var locationUserWithoutFullAccess = !vm.userLocationIdIsNull() && !vm.userHaveAccessToAllLocations(locations);
+        return (locationUserWithoutFullAccess || vm.isUserLocationIn(locations)) && !haveAccessToAllLocations;
     };
 
     var init = function () {
