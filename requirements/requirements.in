@@ -1,7 +1,7 @@
 attrs~=18.1
 iso8601==0.1.12
 jsonobject==0.9.9
-jsonobject-couchdbkit~=0.9
+jsonobject-couchdbkit~=1.0.1
 # celery 4.1.1 forked to work around https://github.com/celery/celery/issues/4737
 # upgrade when https://github.com/celery/celery/issues/4980 is fixed
 # originally changes were made on nickpell/celery, but this was moved to dimagi/celery
