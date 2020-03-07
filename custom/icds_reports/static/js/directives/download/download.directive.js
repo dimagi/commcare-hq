@@ -204,28 +204,25 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
     };
 
     vm.userHaveAccessToAllLocations = function (locations) {
-        var haveAccessToAllLocationsForLevel = true;
-        window.angular.forEach(locations, function (location) {
-            if (!location.user_have_access) {
-                haveAccessToAllLocationsForLevel = false;
-            }
+        var locationWithoutAccess = _.find(locations, function (location) {
+            return !location.user_have_access;
         });
-        return haveAccessToAllLocationsForLevel;
+        return locationWithoutAccess === undefined;
     };
 
     vm.userLocationIdIsNull = function () {
-        return ["null", "undefined"].indexOf(vm.userLocationId) !== -1;
+        return ["null", "undefined", null, undefined].indexOf(vm.userLocationId) !== -1;
     };
 
     vm.isUserLocationIn = function (locations) {
-        var userLocationInSorted = _.filter(locations, function (location) {
-            return allUserLocationId.indexOf(location.location_id) !== -1;
+        return _.find(locations, function (location) {
+            return _.contains(allUserLocationId, location.location_id);
         });
-        return userLocationInSorted.length > 0;
     };
 
     vm.preventShowingAllOption = function (locations) {
-        return ((!vm.userLocationIdIsNull() && !vm.userHaveAccessToAllLocations(locations)) || vm.isUserLocationIn(locations)) && !haveAccessToAllLocations;
+        var locationUserFullAccess = !vm.userLocationIdIsNull() && !vm.userHaveAccessToAllLocations(locations);
+        return (locationUserFullAccess || vm.isUserLocationIn(locations)) && !haveAccessToAllLocations;
     };
 
     var init = function () {
