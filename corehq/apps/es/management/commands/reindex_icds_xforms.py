@@ -3,8 +3,9 @@ from datetime import datetime, timedelta
 
 from django.core.management.base import BaseCommand
 
-from corehq.elastic import get_es_new
+from corehq.elastic import get_es_export
 from elasticsearch.helpers import reindex
+from corehq.util.es.elasticsearch import ConnectionTimeout
 
 
 class Command(BaseCommand):
@@ -21,7 +22,7 @@ class Command(BaseCommand):
             help="""By default reindex is done via scan/bulk-insert helper. Use this
                  option to reindex using ES reindex api instead"""
         )
-        parser.add_argument('--scroll_timeout', default='10m',
+        parser.add_argument('--scroll_timeout', default='60m',
             help='Elasticsearch scroll timeout such as 5m, 10m or 100m etc')
         parser.add_argument('--chunk_size', default=100, type=int)
         parser.add_argument(
@@ -32,7 +33,7 @@ class Command(BaseCommand):
         )
 
     def handle(self, index_name, start_date, end_date, **options):
-        self.es = get_es_new()
+        self.es = get_es_export()
         self.new_index = index_name
         self.old_index = "xforms"  # alias
         scroll_timeout = options.get('scroll_timeout')
@@ -63,7 +64,8 @@ class Command(BaseCommand):
                 self.reindex_using_es_api(query)
             else:
                 reindex(self.es, self.old_index, self.new_index,
-                    query=query, chunk_size=chunk_size, scroll=scroll_timeout)
+                    query=query, chunk_size=chunk_size, scroll=scroll_timeout,
+                    scan_kwargs={'request_timeout': 600})
             print("Reindex finished ", datetime.now())
 
     def _breakup_by_intervals(self, start_date, end_date, interval_format='hour'):
