@@ -103,21 +103,32 @@ class Command(BaseCommand):
             collate_start_time = collate_start_time or start_time
             collate_end_time = collate_end_time or end_time
             count_in_new_index = counts_by_interval_new_index.get(interval_start, 0)
-            if count_in_new_index != count:
-                if interval_format == 'minute':
-                    if start_time == collate_end_time:
-                        collate_end_time = end_time
-                    else:
+
+            if interval_format == 'hour':
+                if count_in_new_index != count:
+                    for query in self._breakup_by_intervals(start_time, end_time, 'minute'):
+                        yield query
+                else:
+                    print("Skipping already reindexed hour ", interval_start)
+            else:
+                is_last_minute = interval_start.minute == 59
+
+                if count_in_new_index != count:
+                    collate_end_time = end_time
+                    if is_last_minute:
                         yield self._base_query(
                             collate_start_time, collate_end_time, 'yyyy-MM-dd HH:mm:ss'
                         )
-                        collate_start_time = start_time
-                        collate_end_time = end_time
+                    else:
+                        print("Collating to ", collate_start_time, collate_end_time)
                 else:
-                    for query in self._breakup_by_intervals(start_time, end_time, 'minute'):
-                        yield query
-            else:
-                print("Already reindexed. Docs count is ", count, count_in_new_index, "Skipping the interval of ", interval_format, start_time, end_time)
+                    print("Skipping already reindexed minute ", interval_start)
+                    if collate_end_time != end_time or is_last_minute:
+                        yield self._base_query(
+                            collate_start_time, collate_end_time, 'yyyy-MM-dd HH:mm:ss'
+                        )
+                    collate_start_time = None
+                    collate_end_time = None
 
     def _base_query(self, start_date, end_date, format="yyyy-MM-dd"):
         return copy.deepcopy({
