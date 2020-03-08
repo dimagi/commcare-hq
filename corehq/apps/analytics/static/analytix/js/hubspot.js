@@ -177,6 +177,7 @@ hqDefine('analytix/js/hubspot', [
                     newUrl = document.location.href + '?email=' + email + '&name=' + firstname + '%20' + lastname;
 
                 kissmetrics.track.event("Get Trial Workflow - Contact Info Received");
+                
                 // This nastiness is required for Schedule Once to auto-fill
                 // required fields. Sending snark++ the way of the S.O. devs...
                 window.history.pushState({}, document.title, newUrl);
