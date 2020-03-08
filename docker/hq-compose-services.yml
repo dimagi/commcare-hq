@@ -54,16 +54,10 @@ services:
       file: hq-compose.yml
       service: kafka
     environment:
-      KAFKA_ADVERTISED_HOST_NAME: ${KAFKA_ADVERTISED_HOST_NAME}
-    ports:
-      - "9092:9092"
-
-  zookeeper:
-    extends:
-      file: hq-compose.yml
-      service: zookeeper
+      ADVERTISED_HOST: ${KAFKA_ADVERTISED_HOST_NAME}
     ports:
       - "2181:2181"
+      - "9092:9092"
 
   minio:
     extends:
