@@ -232,7 +232,7 @@ class VHSNDMonthlyReport(MonthBasedDataPull):
 
     def _format_consolidated_data(self, result):
         # constructing headers
-        headers, dates = self._get_dates_and_headers()
+        headers, dates = self._get_headers_and_dates()
         # setting up workbooks for states
         state_results = self._setup_state_results_filestream(headers, result)
         # populating excel data
@@ -250,7 +250,7 @@ class VHSNDMonthlyReport(MonthBasedDataPull):
                 state_results[state_name].append(awc_row)
         return {state_name: state_ws.parent for state_name, state_ws in state_results.items()}
 
-    def _get_dates_and_headers(self):
+    def _get_headers_and_dates(self):
         self.month_date = datetime.datetime.strptime(self.month, '%Y-%m-%d')
         num_days = calendar.monthrange(self.month_date.year, self.month_date.month)[1]
         days = [datetime.date(self.month_date.year, self.month_date.month, day) for day in range(1, num_days + 1)]
