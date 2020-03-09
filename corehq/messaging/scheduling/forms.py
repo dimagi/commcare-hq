@@ -3331,7 +3331,7 @@ class ConditionalAlertScheduleForm(ScheduleForm):
         if isinstance(form, AdvancedForm) and form.schedule and form.schedule.enabled:
             return value
 
-        raise ValidationError(_("Please select a visit scheduler form"))
+        raise ValidationError(_("The selected form does not have a schedule enabled."))
 
     def validate_visit(self, form, visit_index):
         try:
