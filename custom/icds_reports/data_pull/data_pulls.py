@@ -231,24 +231,11 @@ class VHSNDMonthlyReport(MonthBasedDataPull):
         return self._format_consolidated_data(result)
 
     def _format_consolidated_data(self, result):
-        state_results = defaultdict(dict)
-        self.month_date = datetime.datetime.strptime(self.month, '%Y-%m-%d')
-        num_days = calendar.monthrange(self.month_date.year, self.month_date.month)[1]
-        days = [datetime.date(self.month_date.year, self.month_date.month, day) for day in range(1, num_days + 1)]
-
-        dates = [day.strftime('%d/%m/%Y') for day in days]
-
-        headers = ['State', 'District', 'Block', 'Sector', 'AWC']
-        headers.extend(dates)
-        headers.append('Grand Total')
-        for state_name in result.keys():
-            # constructing and mapping writers to state names
-            if state_name in state_results:
-                raise DuplicateStateResult("%s is twice in results" % state_name)
-            wb = openpyxl.Workbook()
-            ws = wb.create_sheet(title=state_name, index=0)
-            ws.append(headers)
-            state_results[state_name] = ws
+        # constructing headers
+        headers, dates = self._get_dates_and_headers()
+        # setting up workbooks for states
+        state_results = self._setup_state_results_filestream(headers, result)
+        # populating excel data
         for state_name, all_details in result.items():
             for details, vhsnd_dates in all_details.items():
                 awc_row = list(copy(details))
@@ -262,6 +249,30 @@ class VHSNDMonthlyReport(MonthBasedDataPull):
                 awc_row.append(total_count)
                 state_results[state_name].append(awc_row)
         return {state_name: state_ws.parent for state_name, state_ws in state_results.items()}
+
+    def _get_dates_and_headers(self):
+        self.month_date = datetime.datetime.strptime(self.month, '%Y-%m-%d')
+        num_days = calendar.monthrange(self.month_date.year, self.month_date.month)[1]
+        days = [datetime.date(self.month_date.year, self.month_date.month, day) for day in range(1, num_days + 1)]
+
+        dates = [day.strftime('%d/%m/%Y') for day in days]
+
+        headers = ['State', 'District', 'Block', 'Sector', 'AWC']
+        headers.extend(dates)
+        headers.append('Grand Total')
+        return headers, dates
+
+    def _setup_state_results_filestream(self, headers, result):
+        state_results = defaultdict(dict)
+        for state_name in result.keys():
+            # constructing and mapping writers to state names
+            if state_name in state_results:
+                raise DuplicateStateResult("%s is twice in results" % state_name)
+            wb = openpyxl.Workbook()
+            ws = wb.create_sheet(title=state_name, index=0)
+            ws.append(headers)
+            state_results[state_name] = ws
+        return state_results
 
     def _dump_consolidated_data(self, result):
         output_files = defaultdict()
