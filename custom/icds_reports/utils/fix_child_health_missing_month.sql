@@ -193,6 +193,25 @@ UPDATE "agg_child_health_2018-05-01_4" agg_child_health
       agg_child_health.gender = ut.gender AND
       agg_child_health.age_tranche = ut.age_tranche;
 
+-- ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+--  Update on "agg_child_health_2018-05-01_4" agg_child_health  (cost=2363343.53..2702061.45 rows=227 width=575)
+--    ->  Hash Join  (cost=2363343.53..2702061.45 rows=227 width=575)
+--          Hash Cond: ((ut.supervisor_id = agg_child_health.supervisor_id) AND (ut.gender = agg_child_health.gender) AND (ut.age_tranche = agg_child_health.age_tranche))
+--          ->  Subquery Scan on ut  (cost=2348476.78..2598036.25 rows=457907 width=304)
+--                ->  GroupAggregate  (cost=2348476.78..2593457.18 rows=457907 width=247)
+--                      Group Key: agg_child.state_id, agg_child.district_id, agg_child.block_id, agg_child.supervisor_id, agg_child.gender, agg_child.age_tranche
+--                      ->  Sort  (cost=2348476.78..2359924.46 rows=4579073 width=191)
+--                            Sort Key: agg_child.state_id, agg_child.district_id, agg_child.block_id, agg_child.supervisor_id, agg_child.gender, agg_child.age_tranche
+--                            ->  Hash Join  (cost=131129.17..851828.05 rows=4579073 width=191)
+--                                  Hash Cond: (agg_child.awc_id = ucr.doc_id)
+--                                  ->  Seq Scan on "agg_child_health_2018-05-01_5" agg_child  (cost=0.00..427238.73 rows=4579073 width=224)
+--                                  ->  Hash  (cost=119279.11..119279.11 rows=612805 width=31)
+--                                        ->  Unique  (cost=0.42..113151.06 rows=612805 width=31)
+--                                              ->  Index Scan using awc_location_local_doc_id_idx on awc_location_local ucr  (cost=0.42..111331.32 rows=727897 width=31)
+--                                                    Filter: ((awc_is_test = 0) AND (aggregation_level = 5))
+--          ->  Hash  (cost=8827.09..8827.09 rows=93809 width=355)
+--                ->  Seq Scan on "agg_child_health_2018-05-01_4" agg_child_health  (cost=0.00..8827.09 rows=93809 width=355)
+
 
 UPDATE "agg_child_health_2018-05-01_3" agg_child_health
     SET wasting_moderate = ut.wasting_moderate,
@@ -235,6 +254,28 @@ UPDATE "agg_child_health_2018-05-01_3" agg_child_health
     WHERE agg_child_health.block_id = ut.block_id and 
       agg_child_health.gender = ut.gender AND
       agg_child_health.age_tranche = ut.age_tranche;
+
+-- --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+--  Update on "agg_child_health_2018-05-01_3" agg_child_health  (cost=39211.48..46452.14 rows=5 width=546)
+--    ->  Hash Join  (cost=39211.48..46452.14 rows=5 width=546)
+--          Hash Cond: ((ut.block_id = agg_child_health.block_id) AND (ut.gender = agg_child_health.gender) AND (ut.age_tranche = agg_child_health.age_tranche))
+--          ->  Subquery Scan on ut  (cost=37314.73..42192.80 rows=9381 width=304)
+--                ->  GroupAggregate  (cost=37314.73..42098.99 rows=9381 width=214)
+--                      Group Key: agg_child.state_id, agg_child.district_id, agg_child.block_id, agg_child.gender, agg_child.age_tranche
+--                      ->  Sort  (cost=37314.73..37549.25 rows=93809 width=158)
+--                            Sort Key: agg_child.state_id, agg_child.district_id, agg_child.block_id, agg_child.gender, agg_child.age_tranche
+--                            ->  Hash Join  (cost=11851.10..20924.51 rows=93809 width=158)
+--                                  Hash Cond: (agg_child.supervisor_id = ucr.supervisor_id)
+--                                  ->  Seq Scan on "agg_child_health_2018-05-01_4" agg_child  (cost=0.00..8827.09 rows=93809 width=191)
+--                                  ->  Hash  (cost=11641.04..11641.04 rows=16805 width=32)
+--                                        ->  HashAggregate  (cost=11304.94..11472.99 rows=16805 width=32)
+--                                              Group Key: ucr.supervisor_id
+--                                              ->  Index Scan using awc_location_local_aggregation_level_idx on awc_location_local ucr  (cost=0.42..11239.43 rows=26204 width=32)
+--                                                    Index Cond: (aggregation_level = 4)
+--                                                    Filter: (supervisor_is_test = 0)
+--          ->  Hash  (cost=1116.00..1116.00 rows=12900 width=326)
+--                ->  Seq Scan on "agg_child_health_2018-05-01_3" agg_child_health  (cost=0.00..1116.00 rows=12900 width=326)
+-- (19 rows)
 
 
 
@@ -280,6 +321,26 @@ UPDATE "agg_child_health_2018-05-01_2" agg_child_health
       agg_child_health.gender = ut.gender AND
       agg_child_health.age_tranche = ut.age_tranche;
 
+
+-- ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+--  Update on "agg_child_health_2018-05-01_2" agg_child_health  (cost=3868.31..4019.93 rows=1 width=517)
+--    ->  Hash Join  (cost=3868.31..4019.93 rows=1 width=517)
+--          Hash Cond: ((ut.district_id = agg_child_health.district_id) AND (ut.gender = agg_child_health.gender) AND (ut.age_tranche = agg_child_health.age_tranche))
+--          ->  Subquery Scan on ut  (cost=3728.48..3754.28 rows=1290 width=304)
+--                ->  HashAggregate  (cost=3728.48..3741.38 rows=1290 width=181)
+--                      Group Key: agg_child.state_id, agg_child.district_id, agg_child.gender, agg_child.age_tranche
+--                      ->  Hash Join  (cost=1998.06..3147.98 rows=12900 width=125)
+--                            Hash Cond: (agg_child.block_id = ucr.block_id)
+--                            ->  Seq Scan on "agg_child_health_2018-05-01_3" agg_child  (cost=0.00..1116.00 rows=12900 width=158)
+--                            ->  Hash  (cost=1966.26..1966.26 rows=2544 width=32)
+--                                  ->  HashAggregate  (cost=1915.38..1940.82 rows=2544 width=32)
+--                                        Group Key: ucr.block_id
+--                                        ->  Index Scan using awc_location_local_aggregation_level_idx on awc_location_local ucr  (cost=0.42..1905.49 rows=3954 width=32)
+--                                              Index Cond: (aggregation_level = 3)
+--                                              Filter: (block_is_test = 0)
+--          ->  Hash  (cost=118.94..118.94 rows=1194 width=297)
+--                ->  Seq Scan on "agg_child_health_2018-05-01_2" agg_child_health  (cost=0.00..118.94 rows=1194 width=297)
+-- (17 rows)
 
 UPDATE "agg_child_health_2018-05-01_1" agg_child_health
     SET wasting_moderate = ut.wasting_moderate,
