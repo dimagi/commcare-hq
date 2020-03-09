@@ -46,7 +46,7 @@ def send_datasets(domain_name, send_now=False, send_date=None):
         domain_name,
         dhis2_conn.server_url,
         dhis2_conn.username,
-        bz2.decompress(b64decode(dhis2_conn.password)),
+        dhis2_conn.plaintext_password,
         verify=not dhis2_conn.skip_cert_verify,
     )
     endpoint = 'dataValueSets'

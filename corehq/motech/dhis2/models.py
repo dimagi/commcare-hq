@@ -1,8 +1,8 @@
 import bz2
-from base64 import b64encode
+from base64 import b64decode, b64encode
+from itertools import chain
 
 from django.db import models
-from itertools import chain
 
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
@@ -37,7 +37,8 @@ class Dhis2Connection(models.Model):
 
     @property
     def plaintext_password(self):
-        pass  # TODO: ...
+        plaintext_bytes = bz2.decompress(b64decode(self.password))
+        return plaintext_bytes.decode('utf8')
 
     @plaintext_password.setter
     def plaintext_password(self, plaintext):
