@@ -233,7 +233,7 @@ class ConditionalAlertUploader(object):
             new_messages.append(new_message)
 
         if message_dirty:
-            if any([True for message in new_messages for value in message.values() if not value]):
+            if any(True for message in new_messages for value in message.values() if not value):
                 raise RuleUpdateError(_("Missing message"))
 
         {
