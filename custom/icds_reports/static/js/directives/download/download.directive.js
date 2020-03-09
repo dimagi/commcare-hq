@@ -450,7 +450,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
                 vm.selectedMonth = vm.selectedMonth >= 7 ? vm.selectedMonth : 7;
             }
             vm.years = _.filter(vm.yearsCopy, function (y) {
-                    return y.id >= 2019;
+                return y.id >= 2019;
             });
         } else if (year.id === latest.getFullYear()) {
             vm.months = _.filter(vm.monthsCopy, function (month) {
