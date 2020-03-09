@@ -597,9 +597,9 @@ class TestBulkConditionalAlerts(TestCase):
 
         self.assertEqual(len(msgs), 5)
         self._assertPatternIn(r"Error updating rule with id \d+ in 'translated' sheet: "
-                              r"Missing content", msgs)
+                              r"Missing message", msgs)
         self.assertIn("Updated 0 rule(s) in 'translated' sheet", msgs)
-        self._assertPatternIn(r"Error updating rule with id \d+ in 'not translated' sheet: Missing content", msgs)
+        self._assertPatternIn(r"Error updating rule with id \d+ in 'not translated' sheet: Missing message", msgs)
         self.assertIn("Updated 0 rule(s) in 'not translated' sheet", msgs)
 
     @patch('corehq.messaging.scheduling.view_helpers.get_language_list')
