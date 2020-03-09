@@ -48,18 +48,18 @@ UPDATE child_health_monthly child_health
 
 
 
--- ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- -- ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 --  Custom Scan (Citus Router)  (cost=0.00..0.00 rows=0 width=0)
 --    Task Count: 64
 --    Tasks Shown: One of 64
 --    ->  Task
 --          Node: host=100.71.184.232 port=6432 dbname=icds_ucr
---          ->  Update on child_health_monthly_323196 child_health  (cost=1.11..5.12 rows=1 width=661)
+--          ->  Update on child_health_monthly_323196 child_health  (cost=1.12..5.64 rows=1 width=661)
 --                Update on child_health_monthly_default_102648 child_health_1
---                ->  Nested Loop  (cost=1.11..5.12 rows=1 width=661)
---                      ->  Index Scan using icds_dashboard_growth_mo_month_state_id_9dfbeda1_idx_102264 on icds_dashboard_growth_monitoring_forms_102264 gm  (cost=0.56..2.25 rows=1 width=100)
+--                ->  Nested Loop  (cost=1.12..5.64 rows=1 width=661)
+--                      ->  Index Scan using icds_dashboard_growth_mo_month_state_id_9dfbeda1_idx_102264 on icds_dashboard_growth_monitoring_forms_102264 gm  (cost=0.56..2.76 rows=1 width=100)
 --                            Index Cond: (month = '2018-05-01'::date)
---                      ->  Index Scan using child_health_monthly_default_102648_pkey on child_health_monthly_default_102648 child_health_1  (cost=0.56..2.78 rows=1 width=525)
+--                      ->  Index Scan using child_health_monthly_default_102648_pkey on child_health_monthly_default_102648 child_health_1  (cost=0.56..2.78 rows=1 width=519)
 --                            Index Cond: ((supervisor_id = gm.supervisor_id) AND (case_id = (gm.case_id)::text) AND (month = '2018-05-01'::date))
 
 DROP TABLE IF EXISTS temp_agg_child_my;
@@ -95,6 +95,28 @@ SELECT
 					 chm.month, chm.sex, chm.age_tranche, chm.caste,
 					 coalesce_disabled, coalesce_minority, coalesce_resident
 	ORDER BY chm.awc_id;
+
+-- -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+--  Sort  (cost=0.00..0.00 rows=0 width=0)
+--    Sort Key: remote_scan.awc_id
+--    ->  HashAggregate  (cost=0.00..0.00 rows=0 width=0)
+--          Group Key: remote_scan.awc_id, remote_scan.month, remote_scan.sex, remote_scan.age_tranche, remote_scan.caste, remote_scan.coalesce_disabled, remote_scan.coalesce_minority, remote_scan.coalesce_resident
+--          ->  Custom Scan (Citus Real-Time)  (cost=0.00..0.00 rows=0 width=0)
+--                Task Count: 64
+--                Tasks Shown: One of 64
+--                ->  Task
+--                      Node: host=100.71.184.232 port=6432 dbname=icds_ucr
+--                      ->  Finalize GroupAggregate  (cost=159199.46..174986.20 rows=16230 width=253)
+--                            Group Key: chm.awc_id, chm.month, chm.sex, chm.age_tranche, chm.caste, (COALESCE(chm.disabled, 'no'::text)), (COALESCE(chm.minority, 'no'::text)), (COALESCE(chm.resident, 'no'::text))
+--                            ->  Gather Merge  (cost=159199.46..171253.30 rows=64920 width=253)
+--                                  Workers Planned: 4
+--                                  ->  Partial GroupAggregate  (cost=158199.40..162520.64 rows=16230 width=253)
+--                                        Group Key: chm.awc_id, chm.month, chm.sex, chm.age_tranche, chm.caste, (COALESCE(chm.disabled, 'no'::text)), (COALESCE(chm.minority, 'no'::text)), (COALESCE(chm.resident, 'no'::text))
+--                                        ->  Sort  (cost=158199.40..158300.84 rows=40575 width=167)
+--                                              Sort Key: chm.awc_id, chm.sex, chm.age_tranche, chm.caste, (COALESCE(chm.disabled, 'no'::text)), (COALESCE(chm.minority, 'no'::text)), (COALESCE(chm.resident, 'no'::text))
+--                                              ->  Parallel Append  (cost=0.56..153144.18 rows=40575 width=167)
+--                                                    ->  Parallel Index Scan using chm_month_supervisor_id_default_102648 on child_health_monthly_default_102648 chm  (cost=0.56..152941.31 rows=40575 width=167)
+--                                                          Index Cond: (month = '2018-05-01'::date)
 
 
 
@@ -164,7 +186,7 @@ UPDATE "agg_child_health_2018-05-01_4" agg_child_health
 				SUM(zscore_grading_hfa_recorded_in_month) as zscore_grading_hfa_recorded_in_month,
 				SUM(zscore_grading_wfh_recorded_in_month) as zscore_grading_wfh_recorded_in_month
 
-        FROM "agg_child_health_2018-05-01_5" agg_child INNER JOIN (SELECT DISTINCT ucr.doc_id FROM "awc_location_local" ucr WHERE ucr.awc_is_test=0 AND aggregation_level=4) tt ON tt.doc_id = agg_child.awc_id
+        FROM "agg_child_health_2018-05-01_5" agg_child INNER JOIN (SELECT DISTINCT ucr.doc_id FROM "awc_location_local" ucr WHERE ucr.awc_is_test=0 AND aggregation_level=5) tt ON tt.doc_id = agg_child.awc_id
         GROUP BY state_id, district_id,block_id,supervisor_id, gender, age_tranche
     ) ut 
     WHERE agg_child_health.supervisor_id = ut.supervisor_id and 
@@ -207,7 +229,7 @@ UPDATE "agg_child_health_2018-05-01_3" agg_child_health
 				SUM(zscore_grading_hfa_recorded_in_month) as zscore_grading_hfa_recorded_in_month,
 				SUM(zscore_grading_wfh_recorded_in_month) as zscore_grading_wfh_recorded_in_month
 
-        FROM "agg_child_health_2018-05-01_4" agg_child INNER JOIN (SELECT DISTINCT ucr.supervisor_id FROM "awc_location_local" ucr WHERE ucr.supervisor_is_test=0 AND aggregation_level=3) tt ON tt.supervisor_id = agg_child.supervisor_id
+        FROM "agg_child_health_2018-05-01_4" agg_child INNER JOIN (SELECT DISTINCT ucr.supervisor_id FROM "awc_location_local" ucr WHERE ucr.supervisor_is_test=0 AND aggregation_level=4) tt ON tt.supervisor_id = agg_child.supervisor_id
         GROUP BY state_id, district_id,block_id, gender, age_tranche
     ) ut 
     WHERE agg_child_health.block_id = ut.block_id and 
@@ -251,7 +273,7 @@ UPDATE "agg_child_health_2018-05-01_2" agg_child_health
 				SUM(zscore_grading_hfa_recorded_in_month) as zscore_grading_hfa_recorded_in_month,
 				SUM(zscore_grading_wfh_recorded_in_month) as zscore_grading_wfh_recorded_in_month
 
-        FROM "agg_child_health_2018-05-01_3" agg_child INNER JOIN (SELECT DISTINCT ucr.block_id FROM "awc_location_local" ucr WHERE ucr.block_is_test=0 AND aggregation_level=2) tt ON tt.block_id = agg_child.block_id
+        FROM "agg_child_health_2018-05-01_3" agg_child INNER JOIN (SELECT DISTINCT ucr.block_id FROM "awc_location_local" ucr WHERE ucr.block_is_test=0 AND aggregation_level=3) tt ON tt.block_id = agg_child.block_id
         GROUP BY state_id, district_id,gender, age_tranche
     ) ut 
     WHERE agg_child_health.district_id = ut.district_id and 
@@ -294,7 +316,7 @@ UPDATE "agg_child_health_2018-05-01_1" agg_child_health
 				SUM(zscore_grading_hfa_recorded_in_month) as zscore_grading_hfa_recorded_in_month,
 				SUM(zscore_grading_wfh_recorded_in_month) as zscore_grading_wfh_recorded_in_month
 
-        FROM "agg_child_health_2018-05-01_2" agg_child INNER JOIN (SELECT DISTINCT ucr.district_id FROM "awc_location_local" ucr WHERE ucr.block_is_test=0 AND aggregation_level=1) tt ON tt.district_id = agg_child.district_id
+        FROM "agg_child_health_2018-05-01_2" agg_child INNER JOIN (SELECT DISTINCT ucr.district_id FROM "awc_location_local" ucr WHERE ucr.block_is_test=0 AND aggregation_level=2) tt ON tt.district_id = agg_child.district_id
         GROUP BY state_id, district_id,gender, age_tranche
     ) ut 
     WHERE agg_child_health.state_id = ut.state_id and 
