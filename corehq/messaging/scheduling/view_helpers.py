@@ -233,7 +233,9 @@ class ConditionalAlertUploader(object):
             new_messages.append(new_message)
 
         if message_dirty:
-            self.check_for_missing_content(new_messages)
+            missing = [lang for message in messages for value in message.values() if not value]
+            if missing:
+                raise RuleUpdateError(_("Missing content for {langs}").format(langs=", ".join(missing)))
 
         {
             ScheduleForm.SEND_IMMEDIATELY: self._save_immediate_schedule,
@@ -245,12 +247,6 @@ class ConditionalAlertUploader(object):
         }[send_frequency](schedule, new_messages)
 
         return message_dirty
-
-    def check_for_missing_content(self, messages):
-        """
-        Raise an exception if any of the given messages are missing content in any language.
-        """
-        raise NotImplementedError()
 
     def update_message(self, message, row):
         """
@@ -343,11 +339,6 @@ class TranslatedConditionalAlertUploader(ConditionalAlertUploader):
         message = event.content.message
         return len(message) and '*' not in message
 
-    def check_for_missing_content(self, messages):
-        missing = [lang for message in messages for lang, value in message.items() if not message[lang]]
-        if missing:
-            raise RuleUpdateError(_("Missing content for {langs}").format(langs=", ".join(missing)))
-
     def update_message(self, message, row):
         message.pop('*', None)
         for lang in self.langs:
@@ -367,11 +358,6 @@ class UntranslatedConditionalAlertUploader(ConditionalAlertUploader):
 
         message = event.content.message
         return (not len(message) or '*' in message)
-
-    def check_for_missing_content(self, messages):
-        missing = [m for m in messages if not m.get('*', '')]
-        if missing:
-            raise RuleUpdateError(_("Missing content"))
 
     def update_message(self, message, row):
         if 'message' in row:
