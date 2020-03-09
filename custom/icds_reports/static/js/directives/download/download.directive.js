@@ -436,17 +436,22 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
             });
         }
 
-        if (year.id === 2019 && vm.isTakeHomeRationReportSelected()) {
-            var currentMonth = latest.getMonth() + 1;
-            var currentYear = latest.getFullYear();
-            vm.months = _.filter(vm.monthsCopy, function (month) {
-                if (currentYear === 2019) {
-                    return month.id >= 7 && month.id <= currentMonth;
-                } else {
-                    return month.id >= 7;
-                }
+        if (vm.isTakeHomeRationReportSelected()) {
+            if (year.id === 2019) {
+                var currentMonth = latest.getMonth() + 1;
+                var currentYear = latest.getFullYear();
+                vm.months = _.filter(vm.monthsCopy, function (month) {
+                    if (currentYear === 2019) {
+                        return month.id >= 7 && month.id <= currentMonth;
+                    } else {
+                        return month.id >= 7;
+                    }
+                });
+                vm.selectedMonth = vm.selectedMonth >= 7 ? vm.selectedMonth : 7;
+            }
+            vm.years = _.filter(vm.yearsCopy, function (y) {
+                    return y.id >= 2019;
             });
-            vm.selectedMonth = vm.selectedMonth >= 7 ? vm.selectedMonth : 7;
         } else if (year.id === latest.getFullYear()) {
             vm.months = _.filter(vm.monthsCopy, function (month) {
                 return month.id <= latest.getMonth() + 1;
@@ -515,9 +520,6 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
             if (vm.isTakeHomeRationReportSelected()) {
                 var currentYear  = new Date().getFullYear();
                 vm.selectedYear = vm.selectedYear >= 2019 ? vm.selectedYear : currentYear;
-                vm.years = _.filter(vm.yearsCopy, function (y) {
-                    return y.id >= 2019;
-                });
                 resetLevelsBelow(3);
             } else if (vm.isSDRSelected()) {
                 if (vm.selectedYear < 2020) {
