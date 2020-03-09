@@ -228,7 +228,7 @@ class ConditionalAlertUploader(object):
             new_message = copy(old_message)
             if self.event_is_relevant(event) or allow_sheet_swap:
                 new_message = self.update_message(new_message, rows[row_index])
-                message_dirty = old_message != new_message
+                message_dirty = message_dirty or old_message != new_message
                 row_index += 1
             new_messages.append(new_message)
 
