@@ -435,8 +435,6 @@ class TestBulkConditionalAlerts(TestCase):
     def test_upload_custom_schedule_both_sheets(self, language_list_patch):
         """
         This tests a rule that has a custom schedule with a mix of translated and untranslated messages.
-        The translated messages should be updated correctly, but the untranslated messages will get blocked,
-        because the rule will already be running, updating the transalted ones.
         """
         language_list_patch.return_value = self.langs
         data = (
@@ -453,12 +451,9 @@ class TestBulkConditionalAlerts(TestCase):
         old_schedule = self._get_rule(self.CUSTOM_RULE_BOTH_SHEETS).get_schedule()
 
         msgs = self._upload(data)
-
-        self.assertEqual(len(msgs), 4)
+        self.assertEqual(len(msgs), 2)
         self.assertIn("Updated 1 rule(s) in 'translated' sheet", msgs)
-        self.assertIn("Updated 0 rule(s) in 'not translated' sheet", msgs)
-        self._assertPatternIn(r"Row 2 in 'not translated' sheet.* rule id \d+, .*currently processing", msgs)
-        self._assertPatternIn(r"Row 3 in 'not translated' sheet.* rule id \d+, .*currently processing", msgs)
+        self.assertIn("Updated 1 rule(s) in 'not translated' sheet", msgs)
 
         rule = self._get_rule(self.CUSTOM_RULE_BOTH_SHEETS)
         schedule = rule.get_schedule()
@@ -467,12 +462,12 @@ class TestBulkConditionalAlerts(TestCase):
             'en': "You're Lucky",
             'es': "Tienes Suerte",
         }, {
-            '*': 'Down to Zero',
+            '*': 'Down to One',
         }, {
             'en': "You Yourself You",
             'es': "Tú Tú Mismo Tú",
         }, {
-            '*': 'Rosie',
+            '*': 'Willow',
         }])
 
     @patch('corehq.messaging.scheduling.view_helpers.get_language_list')
