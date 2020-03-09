@@ -34,7 +34,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.tzmigration.api import (
     force_phone_timezones_should_be_processed,
 )
-from corehq.apps.tzmigration.timezonemigration import MISSING
+from corehq.apps.tzmigration.timezonemigration import FormJsonDiff, MISSING
 from corehq.blobs import CODES, get_blob_db
 from corehq.blobs.mixin import BlobMetaRef
 from corehq.form_processor.backends.couch.dbaccessors import (
@@ -1153,6 +1153,11 @@ def _iter_case_diffs(statedb, stopper):
         @property
         def old_value(self):
             return json.dumps({"forms": self.form_states})
+
+        @property
+        def json_diff(self):
+            old_value = {"forms": self.form_states}
+            return FormJsonDiff("diff", ["?"], old_value, MISSING)
 
     for kind, doc_id, diffs in statedb.iter_doc_diffs("CommCareCase"):
         yield from diffs
