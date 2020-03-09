@@ -9,6 +9,7 @@ from django.utils.translation import ugettext
 
 from celery import chord
 
+from corehq.util.soft_assert import soft_assert
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.database import get_safe_write_kwargs
 from dimagi.utils.name_to_url import name_to_url
@@ -40,6 +41,14 @@ from corehq.apps.users.models import CouchUser, UserRole, WebUser
 from corehq.util.view_utils import absolute_reverse
 
 APPCUES_APP_SLUGS = ['health', 'agriculture', 'wash']
+
+_soft_assert_registration_issues = soft_assert(
+    to=[
+        '{}@{}'.format(name, 'dimagi.com')
+        for name in ['biyeun']
+    ],
+    exponential_backoff=False,
+)
 
 
 def activate_new_user(form, is_domain_admin=True, domain=None, ip=None):
@@ -127,6 +136,11 @@ def request_new_domain(request, form, is_new_user=True):
         current_user.save()
         dom_req.requesting_user_username = request.user.username
         dom_req.new_user_username = request.user.username
+    elif is_new_user:
+        _soft_assert_registration_issues(
+            f"A new user {request.user.username} was not added to their domain "
+            f"{new_domain.name} during registration"
+        )
 
     if is_new_user:
         dom_req.save()

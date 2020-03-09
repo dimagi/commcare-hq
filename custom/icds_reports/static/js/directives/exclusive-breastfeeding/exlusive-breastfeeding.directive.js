@@ -31,7 +31,7 @@ function ExclusiveBreasfeedingController($scope, $routeParams, $location, $filte
         'An infant is exclusively breastfed if they receive only breastmilk with no additional food or liquids (even water), ensuring optimal nutrition and growth between 0 - 6 months',
     };
 
-    vm.getPopupData = function(row) {
+    vm.getPopupData = function (row) {
         var gender = genderIndex > 0 ? genders[genderIndex].name : '';
         var chosenFilters = gender ? ' (' + gender + ') ' : '';
         var children = row ? $filter('indiaNumbers')(row.children) : 'N/A';
@@ -49,7 +49,7 @@ function ExclusiveBreasfeedingController($scope, $routeParams, $location, $filte
             {
                 indicator_name: '% children (0-6 months) exclusively breastfed in the given month' + chosenFilters + ': ',
                 indicator_value: percent,
-            }
+            },
         ];
     };
 
@@ -83,7 +83,7 @@ function ExclusiveBreasfeedingController($scope, $routeParams, $location, $filte
         );
     };
 
-    vm.resetAdditionalFilter = function() {
+    vm.resetAdditionalFilter = function () {
         vm.filtersData.gender = '';
         $location.search('gender', null);
     };

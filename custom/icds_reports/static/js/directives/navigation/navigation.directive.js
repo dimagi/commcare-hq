@@ -17,7 +17,9 @@ function NavigationController($window, $rootScope, $scope, $route, $routeParams,
     $scope.navMenuItems = navMenuItems;
 
     var checkCollapse = function (reports) {
-        var path = _.filter(reports, function(report) { return $location.path().indexOf(report) !== -1; });
+        var path = _.filter(reports, function (report) {
+            return $location.path().indexOf(report) !== -1; 
+        });
         return !path.length > 0;
     };
 
@@ -27,11 +29,11 @@ function NavigationController($window, $rootScope, $scope, $route, $routeParams,
     $scope.demographics = checkCollapse(['registered_household', 'enrolled_children', 'enrolled_women', 'lactating_enrolled_women', 'adolescent_girls', 'adhaar']);
     $scope.infrastructure = checkCollapse(['clean_water', 'functional_toilet', 'medicine_kit', 'infants_weight_scale', 'adult_weight_scale', 'infantometer', 'stadiometer']);
 
-    $scope.goto = function(path) {
+    $scope.goto = function (path) {
         $window.location.href = path;
     };
 
-    $scope.goToStep = function(path, params) {
+    $scope.goToStep = function (path, params) {
         return navigationService.getPagePath(path, params);
 
     };

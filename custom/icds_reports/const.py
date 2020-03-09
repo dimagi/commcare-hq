@@ -34,6 +34,11 @@ class NavigationSections:
     AWC_INFRASTRUCTURE = 'awc_infrastructure'
 
 
+class SDDSections:
+    PW_LW_CHILDREN = 'pw_lw_children'
+    CHILDREN = 'children'
+
+
 class LocationTypes(object):
     STATE = 'state'
     DISTRICT = 'district'

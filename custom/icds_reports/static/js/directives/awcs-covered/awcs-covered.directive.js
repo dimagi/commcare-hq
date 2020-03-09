@@ -28,7 +28,7 @@ function AWCSCoveredController($scope, $routeParams, $location, $filter, icdsCas
         return vm.rightLegend.info;
     };
 
-    vm.getPopupData = function(row) {
+    vm.getPopupData = function (row) {
         var awcs = row ? $filter('indiaNumbers')(row.awcs) : 'N/A';
         return [
             {
@@ -52,7 +52,9 @@ function AWCSCoveredController($scope, $routeParams, $location, $filter, icdsCas
         var tooltip = chart.interactiveLayer.tooltip;
         tooltip.contentGenerator(function (d) {
             var findValue = function (values, date) {
-                var day = _.find(values, function(num) { return num['x'] === date; });
+                var day = _.find(values, function (num) {
+                    return num['x'] === date; 
+                });
                 return d3.format(",")(day['y']);
             };
 
@@ -61,7 +63,7 @@ function AWCSCoveredController($scope, $routeParams, $location, $filter, icdsCas
         return chart;
     };
 
-    vm.tooltipContent = function(monthName, value) {
+    vm.tooltipContent = function (monthName, value) {
         return vm.createTooltipContent(
             monthName,
             [{
