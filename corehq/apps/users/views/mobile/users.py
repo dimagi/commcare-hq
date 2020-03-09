@@ -1226,6 +1226,24 @@ class DeleteCommCareUsers(BaseManageCommCareUserView):
             messages.success(request, f"{deleted_count} user(s) deleted.")
 
 
+class CommCareUsersLookup(BaseManageCommCareUserView):
+    urlname = 'commcare_users_lookup'
+    page_title = ugettext_noop('Mobile Workers Bulk Lookup')
+    template_name = 'users/bulk_lookup.html'
+
+    @property
+    def page_context(self):
+        context = self.main_context
+        context.update({
+            'bulk_upload_form': get_bulk_upload_form(),
+        })
+        return context
+
+    def post(self, request, *args, **kwargs):
+        # TODO: download
+        return
+
+
 @require_can_edit_commcare_users
 def count_users(request, domain):
     from corehq.apps.users.dbaccessors.all_commcare_users import get_commcare_users_by_filters

@@ -1,0 +1,21 @@
+{% extends 'hqwebapp/base_section.html' %}
+
+{% load crispy_forms_tags %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% requirejs_main 'hqwebapp/js/bulk_upload_file' %}
+
+{% block page_content %}
+  {% blocktrans %}
+    <h2>
+      Mobile Workers Bulk Lookup
+    </h2>
+
+    <p class="help-block">
+      Please upload an Excel file with a single <strong>username</strong> column.
+    </p>
+
+  {% endblocktrans %}
+  {% crispy bulk_upload_form %}
+{% endblock page_content %}

@@ -66,6 +66,12 @@
                 {% trans "Bulk Delete Users" %}
               </a>
             {% endif %}
+            {% if request|toggle_enabled:"BULK_USER_LOOKUP" %}
+              <a class="btn btn-default" href="{% url "commcare_users_lookup" domain %}">
+                <i class="fa fa-search"></i>
+                {% trans "Bulk Lookup of Users" %}
+              </a>
+            {% endif %}
           {% endif %}
         </div>
       </div>

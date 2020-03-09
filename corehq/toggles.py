@@ -1354,6 +1354,15 @@ BULK_USER_DELETE = StaticToggle(
     help_link='https://confluence.dimagi.com/display/ccinternal/Bulk+Delete+Users',
 )
 
+BULK_USER_LOOKUP = StaticToggle(
+    'bulk_user_lookup',
+    "Bulk mobile worker lookup: upload a set of usernames and receive "
+    "a download noting which ones exist in the system.",
+    TAG_SOLUTIONS_LIMITED,
+    [NAMESPACE_DOMAIN],
+    help_link='TODO',
+)
+
 FILTERED_LOCATION_DOWNLOAD = StaticToggle(
     'filtered_location_download',
     "Ability to filter location download to include only a specified location and its descendants.",
