@@ -1,9 +1,9 @@
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function ServiceDeliveryDashboardController($rootScope, $scope, $http, $location, $routeParams, $log, DTOptionsBuilder,
-    DTColumnBuilder, $compile, storageService, userLocationId,
-    baseControllersService, haveAccessToAllLocations, isAlertActive,
-    sddMetadata, dateHelperService, navigationService, isMobile) {
+                                            DTColumnBuilder, $compile, storageService, userLocationId,
+                                            baseControllersService, haveAccessToAllLocations, isAlertActive,
+                                            sddMetadata, dateHelperService, navigationService, isMobile) {
     baseControllersService.BaseFilterController.call(
         this, $scope, $routeParams, $location, dateHelperService, storageService, navigationService
     );

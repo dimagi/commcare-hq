@@ -40,7 +40,7 @@ from corehq.apps.analytics.tasks import (
     send_hubspot_form,
     track_workflow,
 )
-from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
+from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain, get_app_languages
 from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps
 from corehq.apps.domain.decorators import (
     domain_admin_required,
@@ -420,17 +420,12 @@ class EditWebUserView(BaseEditUserView):
 
 
 def get_domain_languages(domain):
-    query = (AppES()
-             .domain(domain)
-             .terms_aggregation('langs', 'languages')
-             .size(0))
-    app_languages = query.run().aggregations.languages.keys
-
+    app_languages = get_app_languages(domain)
     translation_doc = StandaloneTranslationDoc.get_obj(domain, 'sms')
-    sms_languages = translation_doc.langs if translation_doc else []
+    sms_languages = set(translation_doc.langs if translation_doc else [])
 
     domain_languages = []
-    for lang_code in set(app_languages + sms_languages):
+    for lang_code in app_languages.union(sms_languages):
         name = langcodes.get_name(lang_code)
         label = "{} ({})".format(lang_code, name) if name else lang_code
         domain_languages.append((lang_code, label))
