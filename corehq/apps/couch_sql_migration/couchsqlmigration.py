@@ -367,9 +367,21 @@ class CouchSqlDomainMigrator:
                 f"{len(migrated_ids)} forms" if len(migrated_ids) > 5 else migrated_ids)
         for form_id in form_ids:
             log.info("migrating form: %s", form_id)
-            form = XFormInstance.get(form_id)
-            self._migrate_form(form, get_case_ids(form))
+            self._migrate_form_id(form_id)
         self._rediff_already_migrated_forms(migrated_ids)
+
+    def _migrate_form_id(self, form_id, case_id=None):
+        try:
+            form = XFormInstance.get(form_id)
+        except XFormNotFound:
+            form = MissingFormLoader(self.domain).load_form(form_id, case_id)
+        except Exception:
+            log.exception("Error migrating form %s", form_id)
+            form = None
+        if form is None:
+            self.statedb.add_missing_docs("XFormInstance", [form_id])
+        else:
+            self._migrate_form(form, get_case_ids(form))
 
     def _rediff_already_migrated_forms(self, form_ids):
         for form_id in form_ids:
@@ -420,11 +432,11 @@ class CouchSqlDomainMigrator:
                 yield old_value["ledger"]["last_modified_form_id"]
 
         from .missingdocs import MissingIds
-        iter_blob_forms = _get_missing_blob_present_form_loader(self.domain)
+        loader = MissingFormLoader(self.domain)
         drop_sql_ids = MissingIds.forms(self.statedb).drop_sql_ids
         for diff in _iter_case_diffs(self.statedb, self.stopper):
             case_id = diff.doc_id
-            for form in iter_blob_forms(diff):
+            for form in loader.iter_blob_forms(diff):
                 log.info("migrating form %s received on %s from case %s",
                     form.form_id, form.received_on, case_id)
                 self._migrate_form(form, get_case_ids(form))
@@ -433,9 +445,8 @@ class CouchSqlDomainMigrator:
                 continue
             missing_ids = set(drop_sql_ids(form_ids))
             for form_id in missing_ids:
-                form = XFormInstance.get(form_id)
-                self._migrate_form(form, get_case_ids(form))
-                log.info("migrated missing form %s from case %s", form_id, case_id)
+                log.info("migrating missing form %s from case %s", form_id, case_id)
+                self._migrate_form_id(form_id, case_id)
             self._migrate_missing_cases_and_ledgers(form_ids - missing_ids)
 
     def _migrate_missing_cases_and_ledgers(self, form_ids):
@@ -1152,21 +1163,32 @@ def _iter_case_diffs(statedb, stopper):
             return
 
 
-def _get_missing_blob_present_form_loader(domain):
+@attr.s
+class MissingFormLoader:
     """Reconstruct missing Couch forms with XML from blob db"""
-    seen = set()
 
-    def iter_blob_forms(diff):
+    domain = attr.ib()
+    seen = attr.ib(factory=set, init=False)
+
+    def iter_blob_forms(self, diff):
         if not diff.old_value or MISSING_BLOB_PRESENT not in diff.old_value:
             return
-        form_ids, case_id = get_blob_present_form_ids(diff)
-        form_ids = [f for f in form_ids if f not in seen]
+        form_ids, case_id = self.get_blob_present_form_ids(diff)
+        form_ids = [f for f in form_ids if f not in self.seen]
         if form_ids:
-            seen.update(form_ids)
-            for xml_meta, all_metas in iter_blob_metas(form_ids):
-                yield xml_to_form(domain, xml_meta, case_id, all_metas)
+            self.seen.update(form_ids)
+            for xml_meta, all_metas in self.iter_blob_metas(form_ids):
+                yield self.xml_to_form(xml_meta, case_id, all_metas)
 
-    def get_blob_present_form_ids(diff):
+    def load_form(self, form_id, case_id=None):
+        metas = next(self.iter_blob_metas([form_id]), None)
+        if metas is None:
+            return None
+        self.seen.add(form_id)
+        xml_meta, all_metas = metas
+        return self.xml_to_form(xml_meta, case_id, all_metas)
+
+    def get_blob_present_form_ids(self, diff):
         if diff.kind == "CommCareCase":
             case_id = diff.doc_id
             data = json.loads(diff.old_value)["forms"]
@@ -1181,7 +1203,7 @@ def _get_missing_blob_present_form_loader(domain):
             form_ids = [data["ledger"]["last_modified_form_id"]]
         return form_ids, case_id
 
-    def iter_blob_metas(form_ids):
+    def iter_blob_metas(self, form_ids):
         metas = get_blob_db().metadb.get_for_parents(form_ids)
         parents = set()
         for meta in metas:
@@ -1191,14 +1213,14 @@ def _get_missing_blob_present_form_loader(domain):
                 parents.add(meta.parent_id)
         assert parents == set(form_ids), (form_ids, parents)
 
-    def xml_to_form(domain, xml_meta, case_id, all_metas):
+    def xml_to_form(self, xml_meta, case_id, all_metas):
         form_id = xml_meta.parent_id
         with xml_meta.open() as fh:
             xml = fh.read()
         form_data = convert_xform_to_json(xml)
         form = FormProcessorCouch.new_xform(form_data)
-        form.domain = domain
-        form.received_on = get_received_on(case_id, form_id)
+        form.domain = self.domain
+        form.received_on = self.get_received_on(case_id, form_id, xml_meta)
         for meta in all_metas:
             form.external_blobs[meta.name] = BlobMetaRef(
                 key=meta.key,
@@ -1208,14 +1230,14 @@ def _get_missing_blob_present_form_loader(domain):
             )
         return form
 
-    def get_received_on(case_id, form_id):
+    def get_received_on(self, case_id, form_id, xml_meta):
+        if case_id is None:
+            return xml_meta.created_on
         case = CaseAccessorCouch.get_case(case_id)
         for action in case.actions:
             if action.xform_id == form_id:
                 return action.server_date
         raise ValueError(f"case {case_id} has no actions for form {form_id}")
-
-    return iter_blob_forms
 
 
 def get_main_forms_iteration_stop_date(statedb):
