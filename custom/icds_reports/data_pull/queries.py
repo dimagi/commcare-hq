@@ -201,9 +201,3 @@ class ChildrenCount(MonthBasedQuery):
 class VHSNDMonthlyCount(MonthBasedQuery):
     name = "VNSND monthly count"
     query_file_path = "custom/icds_reports/data_pull/sql_queries/vhsnd_monthly_report.sql"
-
-    @cached_property
-    def sql_query(self):
-        from_date = self.month
-        till_date = str(parse_date(from_date) + relativedelta(months=1))
-        return self._raw_sql_query.format(from_date=from_date, till_date=till_date)

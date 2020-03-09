@@ -10,7 +10,7 @@ from django.utils.dateparse import parse_date
 import openpyxl
 
 from custom.icds.utils.location import find_test_state_locations
-from custom.icds_reports.data_pull.exceptions import UnboundDataPullException
+from custom.icds_reports.data_pull.exceptions import UnboundDataPullException, DuplicateStateResult
 from custom.icds_reports.data_pull.queries import (
     AWCSElectricityAndCBECount,
     AWCSFacilitiesCount,
@@ -41,7 +41,6 @@ class BaseDataPull:
     slug = ""
     name = ""
     queries = None  # list of query classes
-    file_format_required = 'csv'
 
     def __init__(self, db_alias, *args, **kwargs):
         self.db_alias = db_alias
@@ -209,7 +208,6 @@ class VHSNDMonthlyReport(MonthBasedDataPull):
     queries = [
         VHSNDMonthlyCount
     ]
-    file_format_required = 'xlsx'
 
     def post_run(self, data_files):
         state_results = self._consolidate_data(data_files)
@@ -217,15 +215,12 @@ class VHSNDMonthlyReport(MonthBasedDataPull):
 
     def _consolidate_data(self, data_files):
         result = defaultdict(dict)
-        state_name_column = 'state_name'
-        vhnsnd_date_column = 'vhsnd_date_past_month'
         for filename, filestream in data_files.items():
             filestream.seek(0)
             reader = csv.DictReader(filestream)
             for row in reader:
-                state_name = row[state_name_column]
-                vhsnd_date = parse_date(row[vhnsnd_date_column])
-                vhsnd_date = vhsnd_date.strftime('%d/%m/%Y')
+                state_name = row['state_name']
+                vhsnd_date = parse_date(row['vhsnd_date_past_month']).strftime('%d/%m/%Y')
                 data_key = (row['state_name'], row['district_name'], row['block_name'],
                             row['supervisor_name'], row['awc_name'])
                 if data_key in result[state_name]:
@@ -249,11 +244,12 @@ class VHSNDMonthlyReport(MonthBasedDataPull):
         headers.append('Grand Total')
         for state_name in result.keys():
             # constructing and mapping writers to state names
+            if state_name in state_results:
+                raise DuplicateStateResult("%s is twice in results" % state_name)
             wb = openpyxl.Workbook()
             ws = wb.create_sheet(title=state_name, index=0)
             ws.append(headers)
             state_results[state_name] = ws
-            output_files[state_name] = wb
         for state_name, all_details in result.items():
             for details, vhsnd_dates in all_details.items():
                 awc_row = list(copy(details))
@@ -266,12 +262,14 @@ class VHSNDMonthlyReport(MonthBasedDataPull):
                         awc_row.append('')
                 awc_row.append(total_count)
                 state_results[state_name].append(awc_row)
-        return output_files
+        return {state_name: state_ws.parent for state_name, state_ws in state_results.items()}
 
     def _dump_consolidated_data(self, result):
         output_files = defaultdict()
         for state_name, output_file in result.items():
-            output_files[
-                "vhsnd_monthly_report_{}_{}_{}.xlsx".format(state_name, self.month_date.strftime('%b'),
-                                                            self.month_date.year)] = output_file
+            filename = "vhsnd_monthly_report_{}_{}_{}.xlsx".format(state_name, self.month_date.strftime('%b'),
+                                                                   self.month_date.year)
+            filestream = io.BytesIO()
+            output_file.save(filestream)
+            output_files[filename] = filestream
         return output_files
