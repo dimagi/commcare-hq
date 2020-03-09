@@ -4,6 +4,7 @@ from itertools import chain
 
 from django.db import models
 
+from corehq.motech.models import ConnectionSettings
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
     Document,
@@ -60,6 +61,7 @@ class DataValueMap(DocumentSchema):
 class DataSetMap(Document):
     # domain and UCR uniquely identify a DataSetMap
     domain = StringProperty()
+    connection_settings_id = IntegerProperty(required=False, default=None)
     ucr_id = StringProperty()  # UCR ReportConfig id
 
     description = StringProperty()
@@ -75,6 +77,11 @@ class DataSetMap(Document):
     complete_date = StringProperty()  # Optional
 
     datavalue_maps = SchemaListProperty(DataValueMap)
+
+    @property
+    def connection_settings(self):
+        if self.connection_settings_id:
+            return ConnectionSettings.objects.get(pk=self.connection_settings_id)
 
     @quickcache(['self.domain', 'self.ucr_id'])
     def get_datavalue_map_dict(self):
