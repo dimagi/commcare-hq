@@ -185,9 +185,10 @@ FROM
         SELECT 
           DISTINCT ucr.doc_id 
         FROM 
-          "ucr_icds-cas_static-awc_location_88b3f9c3" ucr 
+          "awc_location_local" ucr 
         WHERE 
           ucr.awc_is_test = 0
+          AND aggregation_level = 4
       ) tt ON tt.doc_id = agg_child.awc_id 
     GROUP BY 
       state_id, 
@@ -237,9 +238,10 @@ FROM
         SELECT 
           DISTINCT ucr.supervisor_id 
         FROM 
-          "ucr_icds-cas_static-awc_location_88b3f9c3" ucr 
+          "awc_location_local" ucr
         WHERE 
           ucr.supervisor_is_test = 0
+          AND aggregation_level = 3
       ) tt ON tt.supervisor_id = agg_child.supervisor_id 
     GROUP BY 
       state_id, 
@@ -288,9 +290,10 @@ FROM
         SELECT 
           DISTINCT ucr.supervisor_id 
         FROM 
-          "ucr_icds-cas_static-awc_location_88b3f9c3" ucr 
+          "awc_location_local" ucr 
         WHERE 
           ucr.block_is_test = 0
+          AND aggregation_level = 2
       ) tt ON tt.block_id = agg_child.block_id 
     GROUP BY 
       state_id, 
@@ -338,9 +341,10 @@ FROM
         SELECT 
           DISTINCT ucr.district_id 
         FROM 
-          "ucr_icds-cas_static-awc_location_88b3f9c3" ucr 
+          "awc_location_local" ucr 
         WHERE 
           ucr.district_is_test = 0
+          AND aggregation_level = 1
       ) tt ON tt.district_id = agg_child.district_id 
     GROUP BY 
       state_id, 
