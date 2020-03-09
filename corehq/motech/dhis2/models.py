@@ -1,3 +1,6 @@
+import bz2
+from base64 import b64encode
+
 from django.db import models
 from itertools import chain
 
@@ -31,6 +34,19 @@ class Dhis2Connection(models.Model):
     username = models.CharField(max_length=255)
     password = models.CharField(max_length=255, null=True)
     skip_cert_verify = models.BooleanField(default=False)
+
+    @property
+    def plaintext_password(self):
+        pass  # TODO: ...
+
+    @plaintext_password.setter
+    def plaintext_password(self, plaintext):
+        # Use simple symmetric encryption. We don't need it to be
+        # strong, considering we'd have to store the algorithm and the
+        # key together anyway; it just shouldn't be plaintext.
+        # (2020-03-09) Not true. The key is stored separately.
+        plaintext_bytes = plaintext.encode('utf8')
+        self.password = b64encode(bz2.compress(plaintext_bytes))
 
 
 class DataValueMap(DocumentSchema):
