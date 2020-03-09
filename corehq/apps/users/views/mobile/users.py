@@ -22,7 +22,7 @@ from django.views.decorators.http import require_GET, require_POST
 from django.views.generic import TemplateView, View
 from django_prbac.exceptions import PermissionDenied
 from django_prbac.utils import has_privilege
-from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
+from djng.views.mixins import JSONResponseMixin, allow_remote_invocation
 from memoized import memoized
 
 from casexml.apps.phone.models import SyncLogSQL
