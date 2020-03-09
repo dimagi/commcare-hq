@@ -233,9 +233,8 @@ class ConditionalAlertUploader(object):
             new_messages.append(new_message)
 
         if message_dirty:
-            missing = [lang for message in messages for value in message.values() if not value]
-            if missing:
-                raise RuleUpdateError(_("Missing content for {langs}").format(langs=", ".join(missing)))
+            if any([True for message in new_messages for value in message.values() if not value]):
+                raise RuleUpdateError(_("Missing message"))
 
         {
             ScheduleForm.SEND_IMMEDIATELY: self._save_immediate_schedule,
