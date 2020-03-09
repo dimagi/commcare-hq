@@ -33,6 +33,7 @@ from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.apps.reminders.util import get_form_list, get_combined_id, split_combined_id
+from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
 from corehq.apps.sms.util import get_or_create_translation_doc
 from corehq.apps.smsforms.models import SQLXFormsSession
 from corehq.apps.users.models import CommCareUser
@@ -1063,6 +1064,7 @@ class ScheduleForm(Form):
         required=False,
         label=ugettext_lazy("User Organization Recipient(s)"),
         widget=SelectMultiple(choices=[]),
+        help_text=ExpandedMobileWorkerFilter.location_search_help,
     )
     include_descendant_locations = BooleanField(
         required=False,
