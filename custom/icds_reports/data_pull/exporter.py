@@ -2,7 +2,6 @@ import zipfile
 
 from django.utils.functional import cached_property
 
-from corehq.apps.translations.utils import get_file_content_from_workbook
 from corehq.util.context_managers import prevent_parallel_execution
 from custom.icds.const import DATA_PULL_CACHE_KEY
 from custom.icds_reports.const import CUSTOM_DATA_PULLS

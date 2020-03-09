@@ -232,7 +232,6 @@ class VHSNDMonthlyReport(MonthBasedDataPull):
 
     def _format_consolidated_data(self, result):
         state_results = defaultdict(dict)
-        output_files = defaultdict()
         self.month_date = datetime.datetime.strptime(self.month, '%Y-%m-%d')
         num_days = calendar.monthrange(self.month_date.year, self.month_date.month)[1]
         days = [datetime.date(self.month_date.year, self.month_date.month, day) for day in range(1, num_days + 1)]
