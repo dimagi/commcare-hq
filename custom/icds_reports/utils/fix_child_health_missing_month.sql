@@ -33,7 +33,7 @@ UPDATE child_health_monthly child_health
 	END,
 	current_month_wasting = CASE
 			WHEN NOT (valid_in_month=1 AND age_tranche::Integer <= 60) THEN NULL
-			WHEN gm.zscore_grading_wfh_last_recorded>='2018-05-01' AND gm.zscore_grading_wfh_last_recorded<'2018-06-01' THEN 'unmeasured'
+			WHEN NOT (gm.zscore_grading_wfh_last_recorded>='2018-05-01' AND gm.zscore_grading_wfh_last_recorded<'2018-06-01') THEN 'unmeasured'
 			WHEN gm.zscore_grading_wfh = 1 THEN 'severe'
 			WHEN gm.zscore_grading_wfh = 2 THEN 'moderate'
 			WHEN gm.zscore_grading_wfh = 3 THEN 'normal'
@@ -164,7 +164,7 @@ UPDATE "agg_child_health_2018-05-01_4" agg_child_health
 				SUM(zscore_grading_hfa_recorded_in_month) as zscore_grading_hfa_recorded_in_month,
 				SUM(zscore_grading_wfh_recorded_in_month) as zscore_grading_wfh_recorded_in_month
 
-        FROM "agg_child_health_2018-05-01_5" agg_child INNER JOIN (SELECT DISTINCT ucr.doc_id FROM "ucr_icds-cas_static-awc_location_88b3f9c3" ucr WHERE ucr.awc_is_test=0) tt ON tt.doc_id = agg_child.awc_id
+        FROM "agg_child_health_2018-05-01_5" agg_child INNER JOIN (SELECT DISTINCT ucr.doc_id FROM "awc_location_local" ucr WHERE ucr.awc_is_test=0 AND aggregation_level=4) tt ON tt.doc_id = agg_child.awc_id
         GROUP BY state_id, district_id,block_id,supervisor_id, gender, age_tranche
     ) ut 
     WHERE agg_child_health.supervisor_id = ut.supervisor_id and 
@@ -207,7 +207,7 @@ UPDATE "agg_child_health_2018-05-01_3" agg_child_health
 				SUM(zscore_grading_hfa_recorded_in_month) as zscore_grading_hfa_recorded_in_month,
 				SUM(zscore_grading_wfh_recorded_in_month) as zscore_grading_wfh_recorded_in_month
 
-        FROM "agg_child_health_2018-05-01_4" agg_child INNER JOIN (SELECT DISTINCT ucr.supervisor_id FROM "ucr_icds-cas_static-awc_location_88b3f9c3" ucr WHERE ucr.supervisor_is_test=0) tt ON tt.supervisor_id = agg_child.supervisor_id
+        FROM "agg_child_health_2018-05-01_4" agg_child INNER JOIN (SELECT DISTINCT ucr.supervisor_id FROM "awc_location_local" ucr WHERE ucr.supervisor_is_test=0 AND aggregation_level=3) tt ON tt.supervisor_id = agg_child.supervisor_id
         GROUP BY state_id, district_id,block_id, gender, age_tranche
     ) ut 
     WHERE agg_child_health.block_id = ut.block_id and 
@@ -251,7 +251,7 @@ UPDATE "agg_child_health_2018-05-01_2" agg_child_health
 				SUM(zscore_grading_hfa_recorded_in_month) as zscore_grading_hfa_recorded_in_month,
 				SUM(zscore_grading_wfh_recorded_in_month) as zscore_grading_wfh_recorded_in_month
 
-        FROM "agg_child_health_2018-05-01_3" agg_child INNER JOIN (SELECT DISTINCT ucr.block_id FROM "ucr_icds-cas_static-awc_location_88b3f9c3" ucr WHERE ucr.block_is_test=0) tt ON tt.block_id = agg_child.block_id
+        FROM "agg_child_health_2018-05-01_3" agg_child INNER JOIN (SELECT DISTINCT ucr.block_id FROM "awc_location_local" ucr WHERE ucr.block_is_test=0 AND aggregation_level=2) tt ON tt.block_id = agg_child.block_id
         GROUP BY state_id, district_id,gender, age_tranche
     ) ut 
     WHERE agg_child_health.district_id = ut.district_id and 
@@ -294,7 +294,7 @@ UPDATE "agg_child_health_2018-05-01_1" agg_child_health
 				SUM(zscore_grading_hfa_recorded_in_month) as zscore_grading_hfa_recorded_in_month,
 				SUM(zscore_grading_wfh_recorded_in_month) as zscore_grading_wfh_recorded_in_month
 
-        FROM "agg_child_health_2018-05-01_2" agg_child INNER JOIN (SELECT DISTINCT ucr.district_id FROM "ucr_icds-cas_static-awc_location_88b3f9c3" ucr WHERE ucr.block_is_test=0) tt ON tt.district_id = agg_child.district_id
+        FROM "agg_child_health_2018-05-01_2" agg_child INNER JOIN (SELECT DISTINCT ucr.district_id FROM "awc_location_local" ucr WHERE ucr.block_is_test=0 AND aggregation_level=1) tt ON tt.district_id = agg_child.district_id
         GROUP BY state_id, district_id,gender, age_tranche
     ) ut 
     WHERE agg_child_health.state_id = ut.state_id and 
