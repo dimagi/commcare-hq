@@ -37,7 +37,10 @@ from corehq.apps.tzmigration.api import (
 from corehq.apps.tzmigration.timezonemigration import MISSING
 from corehq.blobs import CODES, get_blob_db
 from corehq.blobs.mixin import BlobMetaRef
-from corehq.form_processor.backends.couch.dbaccessors import CaseAccessorCouch
+from corehq.form_processor.backends.couch.dbaccessors import (
+    CaseAccessorCouch,
+    FormAccessorCouch,
+)
 from corehq.form_processor.backends.couch.processor import FormProcessorCouch
 from corehq.form_processor.backends.sql.dbaccessors import (
     CaseAccessorSQL,
@@ -440,14 +443,15 @@ class CouchSqlDomainMigrator:
                 log.info("migrating form %s received on %s from case %s",
                     form.form_id, form.received_on, case_id)
                 self._migrate_form(form, get_case_ids(form))
-            form_ids = set(iter_form_ids(diff.json_diff, diff.kind))
+            form_ids = list(iter_form_ids(diff.json_diff, diff.kind))
             if not form_ids:
                 continue
             missing_ids = set(drop_sql_ids(form_ids))
             for form_id in missing_ids:
                 log.info("migrating missing form %s from case %s", form_id, case_id)
                 self._migrate_form_id(form_id, case_id)
-            self._migrate_missing_cases_and_ledgers(form_ids - missing_ids)
+            couch_ids = {f for f in form_ids if FormAccessorCouch.form_exists(f)}
+            self._migrate_missing_cases_and_ledgers(couch_ids - missing_ids)
 
     def _migrate_missing_cases_and_ledgers(self, form_ids):
         """Update cases and ledgers for forms that have already been migrated
@@ -1171,6 +1175,11 @@ class MissingFormLoader:
     seen = attr.ib(factory=set, init=False)
 
     def iter_blob_forms(self, diff):
+        """Yield forms from blob XML that are missing in Couch and SQL
+
+        The "missing in Couch" condition is encoded in the diff record,
+        and therefore is not checked directly here.
+        """
         if not diff.old_value or MISSING_BLOB_PRESENT not in diff.old_value:
             return
         form_ids, case_id = self.get_blob_present_form_ids(diff)
@@ -1181,6 +1190,7 @@ class MissingFormLoader:
                 yield self.xml_to_form(xml_meta, case_id, all_metas)
 
     def load_form(self, form_id, case_id=None):
+        """Load a form from blob XML that is missing in Couch and SQL"""
         metas = next(self.iter_blob_metas([form_id]), None)
         if metas is None:
             return None
@@ -1204,6 +1214,9 @@ class MissingFormLoader:
         return form_ids, case_id
 
     def iter_blob_metas(self, form_ids):
+        form_ids = [f for f in form_ids if not FormAccessorSQL.form_exists(f)]
+        if not form_ids:
+            return
         metas = get_blob_db().metadb.get_for_parents(form_ids)
         parents = set()
         for meta in metas:
