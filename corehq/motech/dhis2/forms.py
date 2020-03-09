@@ -17,7 +17,6 @@ from corehq.motech.dhis2.const import (
     SEND_FREQUENCY_MONTHLY,
     SEND_FREQUENCY_QUARTERLY,
 )
-from corehq.motech.dhis2.dbaccessors import get_dhis2_connection
 from corehq.motech.dhis2.models import Dhis2Connection
 
 SEND_FREQUENCY_CHOICES = (
@@ -62,7 +61,7 @@ class Dhis2ConnectionForm(forms.Form):
 
     def save(self, domain_name):
         try:
-            dhis2_conn = get_dhis2_connection(domain_name)
+            dhis2_conn = Dhis2Connection.objects.filter(domain=domain_name).first()
             if dhis2_conn is None:
                 dhis2_conn = Dhis2Connection(domain=domain_name)
             dhis2_conn.server_url = self.cleaned_data['server_url']

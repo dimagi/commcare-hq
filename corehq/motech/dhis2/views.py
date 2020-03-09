@@ -17,16 +17,16 @@ from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views.settings import BaseProjectSettingsView
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
-from corehq.motech.dhis2.dbaccessors import (
-    get_dataset_maps,
-    get_dhis2_connection,
-)
+from corehq.motech.dhis2.dbaccessors import get_dataset_maps
 from corehq.motech.dhis2.dhis2_config import Dhis2FormConfig
 from corehq.motech.dhis2.forms import Dhis2ConfigForm, Dhis2ConnectionForm
-from corehq.motech.dhis2.models import DataSetMap, DataValueMap
+from corehq.motech.dhis2.models import (
+    DataSetMap,
+    DataValueMap,
+    Dhis2Connection,
+)
 from corehq.motech.dhis2.repeaters import Dhis2Repeater
 from corehq.motech.dhis2.tasks import send_datasets
-from corehq.motech.requests import Requests
 
 
 @method_decorator(require_permission(Permissions.edit_motech), name='dispatch')
@@ -40,7 +40,6 @@ class Dhis2ConnectionView(BaseProjectSettingsView):
         form = self.dhis2_connection_form
         if form.is_valid():
             form.save(self.domain)
-            get_dhis2_connection.clear(request.domain)
             return HttpResponseRedirect(self.page_url)
         context = self.get_context_data(**kwargs)
         return self.render_to_response(context)
@@ -48,7 +47,7 @@ class Dhis2ConnectionView(BaseProjectSettingsView):
     @property
     @memoized
     def dhis2_connection_form(self):
-        dhis2_conn = get_dhis2_connection(self.request.domain)
+        dhis2_conn = Dhis2Connection.objects.filter(domain=self.request.domain).first()
         initial = {
             'server_url': dhis2_conn.server_url,
             'username': dhis2_conn.username,

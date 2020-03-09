@@ -1,5 +1,3 @@
-import bz2
-from base64 import b64decode
 from datetime import datetime
 
 from celery.schedules import crontab
@@ -8,10 +6,8 @@ from celery.task import periodic_task, task
 from toggle.shortcuts import find_domains_with_toggle_enabled
 
 from corehq import toggles
-from corehq.motech.dhis2.dbaccessors import (
-    get_dataset_maps,
-    get_dhis2_connection,
-)
+from corehq.motech.dhis2.dbaccessors import get_dataset_maps
+from corehq.motech.dhis2.models import Dhis2Connection
 from corehq.motech.requests import Requests
 
 
@@ -38,7 +34,7 @@ def send_datasets(domain_name, send_now=False, send_date=None):
     """
     if not send_date:
         send_date = datetime.today()
-    dhis2_conn = get_dhis2_connection(domain_name)
+    dhis2_conn = Dhis2Connection.objects.filter(domain=domain_name).first()
     dataset_maps = get_dataset_maps(domain_name)
     if not dhis2_conn or not dataset_maps:
         return  # Nothing to do
