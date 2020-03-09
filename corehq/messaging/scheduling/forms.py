@@ -28,7 +28,7 @@ from dimagi.utils.django.fields import TrimmedCharField
 from django.utils.translation import ugettext as _, ugettext_lazy
 from corehq.apps.app_manager.dbaccessors import get_app, get_latest_released_app
 from corehq.apps.app_manager.exceptions import FormNotFoundException
-from corehq.apps.app_manager.models import Form as AdvancedForm
+from corehq.apps.app_manager.models import AdvancedForm
 from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.locations.models import SQLLocation, LocationType
