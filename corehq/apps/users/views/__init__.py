@@ -73,7 +73,7 @@ from corehq.apps.sms.verify import (
     VERIFICATION__WORKFLOW_STARTED,
     initiate_sms_verification_workflow,
 )
-from corehq.apps.translations.models import StandaloneTranslationDoc
+from corehq.apps.translations.models import SMSTranslations
 from corehq.apps.users.decorators import (
     require_can_edit_or_view_web_users,
     require_can_edit_web_users,
@@ -421,8 +421,8 @@ class EditWebUserView(BaseEditUserView):
 
 def get_domain_languages(domain):
     app_languages = get_app_languages(domain)
-    translation_doc = StandaloneTranslationDoc.get_obj(domain, 'sms')
-    sms_languages = set(translation_doc.langs if translation_doc else [])
+    translations = SMSTranslations.objects.filter(domain=domain).first()
+    sms_languages = translations.langs if translations else []
 
     domain_languages = []
     for lang_code in app_languages.union(sms_languages):

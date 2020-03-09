@@ -116,12 +116,11 @@ from corehq.apps.sms.resources.v0_5 import SelfRegistrationUserInfo
 from corehq.apps.sms.util import (
     ContactNotFoundException,
     get_contact,
-    get_or_create_translation_doc,
+    get_or_create_sms_translations,
     get_sms_backend_classes,
 )
 from corehq.apps.smsbillables.utils import \
     country_name_from_isd_code_or_empty as country_name_from_code
-from corehq.apps.translations.models import StandaloneTranslationDoc
 from corehq.apps.users import models as user_models
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import CommCareUser, CouchUser, Permissions
@@ -1615,10 +1614,10 @@ class SMSLanguagesView(BaseMessagingSectionView):
 
     @property
     def page_context(self):
-        tdoc = get_or_create_translation_doc(self.domain)
+        sms_translations = get_or_create_sms_translations(self.domain)
         context = {
             "domain": self.domain,
-            "sms_langs": tdoc.langs,
+            "sms_langs": sms_translations.langs,
             "bulk_upload": {
                 "action": reverse("upload_sms_translations", args=(self.domain,)),
                 "download_url": reverse("download_sms_translations", args=(self.domain,)),
@@ -1639,46 +1638,46 @@ def edit_sms_languages(request, domain):
     """
     Accepts same post body as corehq.apps.app_manager.views.edit_app_langs
     """
-    with StandaloneTranslationDoc.get_locked_obj(domain, "sms",
-        create=True) as tdoc:
+    with transaction.atomic():
+        sms_translations = get_or_create_sms_translations(domain)
         try:
             from corehq.apps.app_manager.views.utils import validate_langs
-            langs, rename = validate_langs(request, tdoc.langs)
+            langs, rename = validate_langs(request, sms_translations.langs)
         except AssertionError:
             return HttpResponse(status=400)
 
         for old, new in rename.items():
             if old != new:
-                tdoc.translations[new] = tdoc.translations[old]
-                del tdoc.translations[old]
+                sms_translations.translations[new] = sms_translations.translations[old]
+                del sms_translations.translations[old]
 
         for lang in langs:
-            if lang not in tdoc.translations:
-                tdoc.translations[lang] = {}
+            if lang not in sms_translations.translations:
+                sms_translations.translations[lang] = {}
 
-        for lang in set(tdoc.translations.keys()):
+        for lang in set(sms_translations.translations.keys()):
             if lang not in langs:
-                del tdoc.translations[lang]
+                del sms_translations.translations[lang]
 
-        tdoc.langs = langs
-        tdoc.save()
+        sms_translations.langs = langs
+        sms_translations.save()
         return json_response(langs)
 
 
 @domain_admin_required
 @requires_privilege_with_fallback(privileges.OUTBOUND_SMS)
 def download_sms_translations(request, domain):
-    tdoc = StandaloneTranslationDoc.get_obj(domain, "sms")
-    columns = ["property"] + tdoc.langs + ["default"]
+    sms_translations = get_or_create_sms_translations(domain)
+    columns = ["property"] + sms_translations.langs + ["default"]
 
     msg_ids = sorted(_MESSAGES.keys())
     rows = []
     for msg_id in msg_ids:
         rows.append([msg_id])
 
-    for lang in tdoc.langs:
+    for lang in sms_translations.langs:
         for row in rows:
-            row.append(tdoc.translations[lang].get(row[0], ""))
+            row.append(sms_translations.translations[lang].get(row[0], ""))
 
     for row in rows:
         row.append(_MESSAGES.get(row[0]))
@@ -1697,25 +1696,21 @@ def upload_sms_translations(request, domain):
     try:
         translations = get_single_worksheet(request.file, title='translations')
 
-        with StandaloneTranslationDoc.get_locked_obj(domain, "sms") as tdoc:
+        with transaction.atomic():
+            sms_translations = get_or_create_sms_translations(domain)
             msg_ids = sorted(_MESSAGES.keys())
-            result = {}
-            for lang in tdoc.langs:
-                result[lang] = {}
+            result = {lang: {} for lang in sms_translations.langs}
 
             for row in translations:
-                for lang in tdoc.langs:
-                    if row.get(lang):
-                        msg_id = row["property"]
-                        if msg_id in msg_ids:
-                            val = row[lang]
-                            if not isinstance(val, str):
-                                val = str(val)
-                            val = val.strip()
-                            result[lang][msg_id] = val
+                for lang in sms_translations.langs:
+                    msg_id = row["property"]
+                    if row.get(lang) and msg_id in msg_ids:
+                        val = str(row[lang])
+                        val = val.strip()
+                        result[lang][msg_id] = val
 
-            tdoc.translations = result
-            tdoc.save()
+            sms_translations.translations = result
+            sms_translations.save()
         messages.success(request, _("SMS Translations Updated."))
     except Exception:
         notify_exception(request, 'SMS Upload Translations Error')
