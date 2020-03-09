@@ -1360,7 +1360,7 @@ BULK_USER_LOOKUP = StaticToggle(
     "a download noting which ones exist in the system.",
     TAG_SOLUTIONS_LIMITED,
     [NAMESPACE_DOMAIN],
-    help_link='TODO',
+    help_link='https://confluence.dimagi.com/display/ccinternal/Bulk+Lookup+Users',
 )
 
 FILTERED_LOCATION_DOWNLOAD = StaticToggle(
