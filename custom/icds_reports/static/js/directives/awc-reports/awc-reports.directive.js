@@ -1698,8 +1698,8 @@ var weight_for_height = {
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOptionsBuilder, DTColumnBuilder,
-        $compile, storageService, dateHelperService, baseControllersService, userLocationId,
-        haveAccessToAllLocations, haveAccessToFeatures, isAlertActive, isMobile, mapboxAccessToken) {
+    $compile, storageService, dateHelperService, baseControllersService, userLocationId,
+    haveAccessToAllLocations, haveAccessToFeatures, isAlertActive, isMobile, mapboxAccessToken) {
     var vm = this;
     baseControllersService.BaseFilterController.call(
         this, $scope, $routeParams, $location, dateHelperService, storageService
@@ -2182,9 +2182,15 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
                 var tooltipData = void(0);
                 // lineChartData can not be provided during generation
                 var lineChartData = null;
-                if (lineChartDataName === 'lineChartTwoData') {lineChartData = vm.lineChartTwoData;}
-                if (lineChartDataName === 'lineChartOneData') {lineChartData = vm.lineChartOneData;}
-                if (lineChartDataName === 'lineChartThreeData') {lineChartData = vm.lineChartThreeData;}
+                if (lineChartDataName === 'lineChartTwoData') {
+                    lineChartData = vm.lineChartTwoData;
+                }
+                if (lineChartDataName === 'lineChartOneData') {
+                    lineChartData = vm.lineChartOneData;
+                }
+                if (lineChartDataName === 'lineChartThreeData') {
+                    lineChartData = vm.lineChartThreeData;
+                }
                 for (var i = 0; i < lineChartData.length; i++) {
                     if (lineChartData[i].x === d.value) {
                         tooltipData = lineChartData[i];
@@ -2214,7 +2220,9 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
                 return html;
             });
             window.angular.forEach(d3.selectAll('g.nv-series-3 > path')[0], function (key) {
-                if (key.__data__[0].y !== null) key.classList.add('chart-dot');
+                if (key.__data__[0].y !== null) {
+                    key.classList.add('chart-dot');
+                }
             });
             return chart;
         };
@@ -2535,6 +2543,14 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
 
     vm.goToBeneficiaryTable = function () {
         $location.path(vm.steps.beneficiary.listRoute);
+    };
+
+    vm.isAWCsSelected = function () {
+        return vm.selectedLocationLevel === 4;
+    };
+
+    vm.toShowDataTables = function () {
+        return vm.showTable && vm.isAWCsSelected();
     };
 
     vm.showBeneficiaryTable = function () {

@@ -72,7 +72,7 @@ window.angular.module('icdsApp').directive("infoMessage", function () {
         scope: {
             type: '@',
             start: '@',
-            end: '@'
+            end: '@',
         },
         bindToController: true,
         templateUrl: url('icds-ng-template', 'info-message.directive'),

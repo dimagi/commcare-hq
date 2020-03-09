@@ -86,9 +86,9 @@ describe('Institutional Deliveries Directive', function () {
         var result = controller.templatePopup({properties: {name: 'test'}}, {all: 10, children: 5});
         assert.equal(result, '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
             '<p>test</p>'
-            + '<div>Total number of pregnant women who delivered in the last month: <strong>10</strong></div>'
-            + '<div>Total number of pregnant women who delivered in a public/private medical facilitiy in the last month: <strong>5</strong></div>'
-            + '<div>% pregnant women who delivered in a public or private medical facility in the last month: <strong>50.00%</strong></div></div>');
+            + '<div>Total number of pregnant women who delivered in the current month: <strong>10</strong></div>'
+            + '<div>Total number of pregnant women who delivered in a public/private medical facilitiy in the current month: <strong>5</strong></div>'
+            + '<div>% pregnant women who delivered in a public or private medical facility in the current month: <strong>50.00%</strong></div></div>');
     });
 
     it('tests location change', function () {
@@ -158,7 +158,7 @@ describe('Institutional Deliveries Directive', function () {
         });
         assert.equal(controller.chartOptions.caption.html,
             '<i class="fa fa-info-circle"></i> ' +
-            'Of the total number of women enrolled for Anganwadi services who gave birth in the last month, the percentage who delivered in a public or private medical facility.\n' +
+            'Of the total number of women enrolled for Anganwadi services who gave birth in the given month, the percentage who delivered in a public or private medical facility.\n' +
             '\n' +
             'Delivery in medical instituitions is associated with a decrease in maternal mortality rate'
         );
@@ -169,9 +169,9 @@ describe('Institutional Deliveries Directive', function () {
         var month = {value: "Jul 2017", series: []};
 
         var expected = '<p><strong>Jul 2017</strong></p><br/>'
-            + '<div>Total number of pregnant women who delivered in the last month: <strong>10</strong></div>'
-            + '<div>Total number of pregnant women who delivered in a public/private medical facilitiy in the last month: <strong>5</strong></div>'
-            + '<div>% pregnant women who delivered in a public or private medical facility in the last month: <strong>72.00%</strong></div>';
+            + '<div>Total number of pregnant women who delivered in the given month: <strong>10</strong></div>'
+            + '<div>Total number of pregnant women who delivered in a public/private medical facilitiy in the given month: <strong>5</strong></div>'
+            + '<div>% pregnant women who delivered in a public or private medical facility in the given month: <strong>72.00%</strong></div>';
 
         var result = controller.tooltipContent(month.value, data);
         assert.equal(expected, result);
@@ -180,9 +180,9 @@ describe('Institutional Deliveries Directive', function () {
     it('tests horizontal chart tooltip content', function () {
         var expected = '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
             '<p>Ambah</p>' +
-            '<div>Total number of pregnant women who delivered in the last month: <strong>25</strong></div>' +
-            '<div>Total number of pregnant women who delivered in a public/private medical facilitiy in the last month: <strong>0</strong></div>' +
-            '<div>% pregnant women who delivered in a public or private medical facility in the last month: <strong>NaN%</strong></div></div>';
+            '<div>Total number of pregnant women who delivered in the current month: <strong>25</strong></div>' +
+            '<div>Total number of pregnant women who delivered in a public/private medical facilitiy in the current month: <strong>0</strong></div>' +
+            '<div>% pregnant women who delivered in a public or private medical facility in the current month: <strong>NaN%</strong></div></div>';
         controllermapOrSectorView.templatePopup = function (d) {
             return controller.templatePopup(d.loc, d.row);
         };

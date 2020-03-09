@@ -25,7 +25,8 @@ def get_view_migrations():
         'thr_report_view.sql',
         'mwcd_dashboard.sql',
         'daily_indicators.sql',
-        'system_usage_report_view.sql'
+        'system_usage_report_view.sql',
+        'service_delivery_report_view.sql'
     ]
     migrator = RawSQLMigration(('custom', 'icds_reports', 'migrations', 'sql_templates', 'database_views'))
     operations = []

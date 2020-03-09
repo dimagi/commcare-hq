@@ -23,7 +23,7 @@ function AwcOpenedYesterdayController($routeParams, $location, storageService, s
     };
     vm.mapData = {};
 
-    systemUsageService.getAwcOpenedData(vm.step, vm.filtersData).then(function(response) {
+    systemUsageService.getAwcOpenedData(vm.step, vm.filtersData).then(function (response) {
         vm.mapData = response.data.configs;
     });
 }
@@ -31,7 +31,7 @@ function AwcOpenedYesterdayController($routeParams, $location, storageService, s
 AwcOpenedYesterdayController.$inject = ['$routeParams', '$location', 'storageService', 'systemUsageService',
     'isAlertActive'];
 
-window.angular.module('icdsApp').directive('awcOpenedYesterday', function() {
+window.angular.module('icdsApp').directive('awcOpenedYesterday', function () {
     return {
         restrict: 'E',
         templateUrl: url('icds-ng-template', 'awc-opened-yesterday.directive'),

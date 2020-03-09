@@ -80,8 +80,12 @@ class MissingIds:
     """Iterator of document ids found in Couch but not SQL"""
 
     @classmethod
-    def forms(cls, *args, **kw):
-        return cls(cls.FORM, *args, **kw)
+    def forms(cls, statedb):
+        return cls(cls.FORM, statedb, None)
+
+    @classmethod
+    def cases(cls, statedb):
+        return cls(cls.CASE, statedb, None)
 
     entity = attr.ib()
     statedb = attr.ib()
@@ -106,9 +110,10 @@ class MissingIds:
     }
 
     form_types = list(form_doc_types()) + ["HQSubmission", "XFormInstance-Deleted"]
+    case_types = ['CommCareCase', 'CommCareCase-Deleted']
     _doc_types = {
         FORM: form_types,
-        CASE: ['CommCareCase', 'CommCareCase-Deleted'],
+        CASE: case_types,
     }
 
     def __attrs_post_init__(self):

@@ -5,6 +5,7 @@ from corehq.apps.hqwebapp.templatetags.hq_shared_tags import static
 from corehq.apps.locations.util import location_hierarchy_config
 from corehq.toggles import ICDS_DASHBOARD_SHOW_MOBILE_APK, NAMESPACE_USER
 from custom.icds_reports.const import NavigationSections
+from custom.icds_reports.const import SDDSections
 from custom.icds_reports.utils import icds_pre_release_features
 
 import attr
@@ -40,6 +41,7 @@ def get_dashboard_template_context(domain, couch_user):
         context['is_web_user'] = True
 
     context['nav_metadata'] = _get_nav_metadatada()
+    context['sdd_metadata'] = _get_sdd_metadata()
     context['nav_menu_items'] = _get_nav_menu_items()
     context['MAPBOX_ACCESS_TOKEN'] = settings.MAPBOX_ACCESS_TOKEN
     return context
@@ -69,6 +71,22 @@ def _get_nav_metadatada():
         },
     }
 
+
+def _get_sdd_metadata():
+    """
+    sdd metadata that is passed through to the Angular app.
+    See service-delivery-dashboard.directive.js for an example of using this.
+    """
+    return {
+        SDDSections.PW_LW_CHILDREN: {
+            'label': _('PW, LW & Children 0-3 years (0-1095 days)'),
+            'image': static('icds_reports/mobile/images/motherandchild.png')
+        },
+        SDDSections.CHILDREN: {
+            'label': _('Children 3-6 years (1096-2190 days)'),
+            'image': static('icds_reports/mobile/images/babyboy.png')
+        },
+    }
 
 @attr.s
 class NavMenuSectionsList (object):
