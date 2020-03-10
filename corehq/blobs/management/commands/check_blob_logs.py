@@ -6,7 +6,6 @@ from couchdbkit.exceptions import ResourceNotFound
 from django.core.management import BaseCommand, CommandError
 from gevent.pool import Pool
 
-import corehq.apps.accounting.models as acct
 import corehq.apps.app_manager.models as apps
 import corehq.apps.hqmedia.models as hqmedia
 from corehq.apps.export import models as exports
@@ -25,7 +24,6 @@ BLOB_MIXIN_MODELS = {
     CODES.form_xml: xform.XFormInstance,
     CODES.form_attachment: xform.XFormInstance,
     CODES.multimedia: hqmedia.CommCareMultimedia,
-    CODES.invoice: acct.InvoicePdf,
 }
 
 

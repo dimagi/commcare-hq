@@ -10,7 +10,6 @@ from corehq.blobs.models import BlobMigrationState, BlobMeta
 from corehq.form_processor.backends.sql.dbaccessors import ReindexAccessor
 from corehq.util.doc_processor.sql import SqlDocumentProvider
 
-import corehq.apps.accounting.models as acct
 import corehq.apps.app_manager.models as apps
 import corehq.apps.hqmedia.models as hqmedia
 from corehq.apps.builds.models import CommCareBuild
@@ -272,18 +271,7 @@ def get_shared_domain(doc):
     return SHARED_DOMAIN
 
 
-def get_invoice_domain(doc):
-    if doc.get("is_wire"):
-        try:
-            return acct.WireInvoice.objects.get(id=int(doc["invoice_id"])).domain
-        except acct.WireInvoice.DoesNotExist:
-            return None  # trigger "unknown-domain" error
-    # customer invoice has no domain
-    return UNKNOWN_DOMAIN
-
-
 DOMAIN_MAP = {
-    "InvoicePdf": get_invoice_domain,
     "CommCareBuild": get_shared_domain,
     "CommCareAudio": get_shared_domain,
     "CommCareImage": get_shared_domain,
@@ -302,7 +290,6 @@ migrate_metadata = lambda: MultiDbMigrator("migrate_metadata",
         apps.SavedAppBuild,
         CommCareBuild,
         Domain,
-        acct.InvoicePdf,
         hqmedia.CommCareAudio,
         hqmedia.CommCareImage,
         hqmedia.CommCareVideo,

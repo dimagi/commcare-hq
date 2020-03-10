@@ -27,7 +27,6 @@ class TestMigrateBackend(TestCase):
         "SavedAppBuild": mod.apps.SavedAppBuild,
         "CommCareBuild": mod.CommCareBuild,
         "Domain": mod.Domain,
-        "InvoicePdf": mod.acct.InvoicePdf,
         "CommCareAudio": mod.hqmedia.CommCareAudio,
         "CommCareImage": mod.hqmedia.CommCareImage,
         "CommCareVideo": mod.hqmedia.CommCareVideo,
