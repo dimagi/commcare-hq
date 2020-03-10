@@ -1166,19 +1166,6 @@ class UsernameUploadMixin(object):
 
         return usernames
 
-    def _get_usernames_not_found(self, request, user_docs_by_id, usernames, strict=True):
-        """
-            The only side effect of this is to possibly add to request.messages.
-
-            If strict is True, add errors to request.messages for users not found.
-        """
-        usernames_not_found = set(usernames) - {doc['username'] for doc in user_docs_by_id.values()}
-        if strict and usernames_not_found:
-            message = _("The following users were not found: {}.").format(
-                ", ".join(map(raw_username, usernames_not_found)))
-            messages.error(request, message)
-        return usernames_not_found
-
 
 class DeleteCommCareUsers(BaseManageCommCareUserView, UsernameUploadMixin):
     urlname = 'delete_commcare_users'
@@ -1231,6 +1218,17 @@ class DeleteCommCareUsers(BaseManageCommCareUserView, UsernameUploadMixin):
 
         return user_ids_with_forms
 
+    def _get_usernames_not_found(self, request, user_docs_by_id, usernames):
+        """
+            The only side effect of this is to possibly add to request.messages.
+        """
+        usernames_not_found = set(usernames) - {doc['username'] for doc in user_docs_by_id.values()}
+        if usernames_not_found:
+            message = _("The following users were not found: {}.").format(
+                ", ".join(map(raw_username, usernames_not_found)))
+            messages.error(request, message)
+        return usernames_not_found
+
     def _delete_users(self, request, user_docs_by_id, user_ids_with_forms):
         deleted_count = 0
         for user_id, doc in user_docs_by_id.items():
@@ -1259,12 +1257,10 @@ class CommCareUsersLookup(BaseManageCommCareUserView, UsernameUploadMixin):
         if not usernames:
             return self.get(request, *args, **kwargs)
 
-        user_docs_by_id = {doc['_id']: doc for doc in get_user_docs_by_username(usernames)}
-        usernames_not_found = self._get_usernames_not_found(request, user_docs_by_id, usernames, strict=False)
-
+        known_usernames = {doc['username'] for doc in get_user_docs_by_username(usernames)}
         rows = []
         for username in usernames:
-            rows.append([raw_username(username), _("no") if username in usernames_not_found else _("yes")])
+            rows.append([raw_username(username), _("yes") if username in known_usernames else _("no")])
 
         outfile = io.BytesIO()
         tab_name = "users"
