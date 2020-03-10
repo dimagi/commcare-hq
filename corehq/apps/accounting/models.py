@@ -3041,7 +3041,6 @@ class SQLInvoicePdf(models.Model):
     is_wire = models.BooleanField(default=False)
     is_customer = models.BooleanField(default=False)
     blob_key = models.CharField(max_length=255, null=True)
-    couch_id = models.CharField(max_length=126, null=True, db_index=True)
 
     class Meta:
         db_table = "accounting_invoicepdf"
