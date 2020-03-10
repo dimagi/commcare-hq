@@ -52,7 +52,7 @@ from corehq.apps.accounting.models import (
     DefaultProductPlan,
     EntryPoint,
     Invoice,
-    InvoicePdf,
+    SQLInvoicePdf,
     LastPayment,
     PaymentMethodType,
     SoftwarePlanEdition,
@@ -804,12 +804,9 @@ class BillingStatementPdfView(View):
         statement_id = kwargs.get('statement_id')
         if statement_id is None or domain is None:
             raise Http404()
-        try:
-            invoice_pdf = InvoicePdf.get(statement_id)
-        except ResourceNotFound:
-            raise Http404()
 
         try:
+            invoice_pdf = SQLInvoicePdf.objects.get(id=statement_id)
             if invoice_pdf.is_wire:
                 invoice = WireInvoice.objects.get(
                     pk=invoice_pdf.invoice_id,
@@ -824,14 +821,19 @@ class BillingStatementPdfView(View):
                     pk=invoice_pdf.invoice_id,
                     subscription__subscriber__domain=domain
                 )
-        except (Invoice.DoesNotExist, WireInvoice.DoesNotExist, CustomerInvoice.DoesNotExist):
+        except (
+            Invoice.DoesNotExist,
+            WireInvoice.DoesNotExist,
+            CustomerInvoice.DoesNotExist,
+            SQLInvoicePdf.DoesNotExist
+        ):
             raise Http404()
 
         if invoice.is_customer_invoice:
             from corehq.apps.accounting.views import _get_account_or_404
             account = _get_account_or_404(request, domain)
             filename = "%(pdf_id)s_%(account)s_%(filename)s" % {
-                'pdf_id': invoice_pdf._id,
+                'pdf_id': invoice_pdf.id,
                 'account': account,
                 'filename': invoice_pdf.get_filename(invoice)
             }
@@ -841,7 +843,7 @@ class BillingStatementPdfView(View):
             else:
                 edition = DESC_BY_EDITION[invoice.subscription.plan_version.plan.edition]['name']
             filename = "%(pdf_id)s_%(domain)s_%(edition)s_%(filename)s" % {
-                'pdf_id': invoice_pdf._id,
+                'pdf_id': invoice_pdf.id,
                 'domain': domain,
                 'edition': edition,
                 'filename': invoice_pdf.get_filename(invoice),

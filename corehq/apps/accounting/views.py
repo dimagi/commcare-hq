@@ -111,7 +111,7 @@ from corehq.apps.accounting.models import (
     CustomerInvoice,
     DefaultProductPlan,
     Invoice,
-    InvoicePdf,
+    SQLInvoicePdf,
     SoftwarePlan,
     SoftwarePlanVersion,
     StripePaymentMethod,
@@ -1074,21 +1074,23 @@ class CustomerInvoicePdfView(View):
         statement_id = kwargs.get('statement_id')
         if statement_id is None:
             raise Http404()
-        try:
-            invoice_pdf = InvoicePdf.get(statement_id)
-        except ResourceNotFound:
-            raise Http404()
 
         try:
+            invoice_pdf = SQLInvoicePdf.objects.get(id=statement_id)
             if not invoice_pdf.is_customer:
                 raise NotImplementedError
             else:
                 invoice = CustomerInvoice.objects.get(pk=invoice_pdf.invoice_id)
-        except (Invoice.DoesNotExist, WireInvoice.DoesNotExist, CustomerInvoice.DoesNotExist):
+        except (
+            Invoice.DoesNotExist,
+            WireInvoice.DoesNotExist,
+            CustomerInvoice.DoesNotExist,
+            SQLInvoicePdf.DoesNotExist
+        ):
             raise Http404()
 
         filename = "%(pdf_id)s_%(edition)s_%(filename)s" % {
-            'pdf_id': invoice_pdf._id,
+            'pdf_id': invoice_pdf.id,
             'edition': 'customer',
             'filename': invoice_pdf.get_filename(invoice),
         }

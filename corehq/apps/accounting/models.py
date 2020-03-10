@@ -65,6 +65,7 @@ from corehq.apps.domain import UNKNOWN_DOMAIN
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.users.models import WebUser
+from corehq.blobs import get_blob_db
 from corehq.blobs.mixin import CODES, BlobMixin
 from corehq.const import USER_DATE_FORMAT
 from corehq.privileges import REPORT_BUILDER_ADD_ON_PRIVS
@@ -2356,7 +2357,7 @@ class BillingRecordBase(models.Model):
     @property
     def pdf(self):
         if self._pdf is None:
-            return InvoicePdf.get(self.pdf_data_id)
+            return SQLInvoicePdf.objects.get(id=self.pdf_data_id)   # TODO: migrate pdf_data_id, in populate command
         return self._pdf
 
     @property
@@ -2374,9 +2375,9 @@ class BillingRecordBase(models.Model):
     @classmethod
     def generate_record(cls, invoice):
         record = cls(invoice=invoice)
-        invoice_pdf = InvoicePdf()
+        invoice_pdf = SQLInvoicePdf()       # TODO: also keep creating a couch InvoicePdf, though it won't be attached to the record
         invoice_pdf.generate_pdf(record.invoice)
-        record.pdf_data_id = invoice_pdf._id
+        record.pdf_data_id = invoice_pdf.id
         record._pdf = invoice_pdf
         record.save()
         return record
@@ -3045,13 +3046,17 @@ class SQLInvoicePdf(models.Model):
     class Meta:
         db_table = "accounting_invoicepdf"
 
+    @staticmethod
+    def get_filename(invoice):
+        return "statement_%(year)d_%(month)d.pdf" % {
+            'year': invoice.date_start.year,
+            'month': invoice.date_start.month,
+        }
 
-class InvoicePdf(BlobMixin, SafeSaveDocument):
-    invoice_id = StringProperty()
-    date_created = DateTimeProperty()
-    is_wire = BooleanProperty(default=False)
-    is_customer = BooleanProperty(default=False)
-    _blobdb_type_code = CODES.invoice
+    def get_data(self, invoice):
+        db = get_blob_db()
+        with db.get(self.blob_key) as fh:
+            return fh.read()
 
     def generate_pdf(self, invoice):
         self.save()
@@ -3118,13 +3123,14 @@ class InvoicePdf(BlobMixin, SafeSaveDocument):
 
         template.get_pdf()
         filename = self.get_filename(invoice)
-        blob_domain = domain or UNKNOWN_DOMAIN
-        # this is slow and not unit tested
-        # best to just skip during unit tests for speed
-        if not settings.UNIT_TESTING:
-            self.put_attachment(pdf_data, filename, 'application/pdf', domain=blob_domain)
-        else:
-            self.put_attachment('', filename, 'application/pdf', domain=blob_domain)
+        data_to_save = '' if settings.UNIT_TESTING else pdf_data    # skip during tests for speed
+        self.blob_key = get_blob_db().put(data_to_save, {
+            "domain": domain or UNKNOWN_DOMAIN,
+            "parent_id": self.id,
+            "type_code": CODES.invoice,
+            "name": filename,
+            "content_type": "application/pdf",
+        }).key
         pdf_data.close()
 
         self.invoice_id = str(invoice.id)
@@ -3133,16 +3139,13 @@ class InvoicePdf(BlobMixin, SafeSaveDocument):
         self.is_customer = invoice.is_customer_invoice
         self.save()
 
-    @staticmethod
-    def get_filename(invoice):
-        return "statement_%(year)d_%(month)d.pdf" % {
-            'year': invoice.date_start.year,
-            'month': invoice.date_start.month,
-        }
 
-    def get_data(self, invoice):
-        with self.fetch_attachment(self.get_filename(invoice), stream=True) as fh:
-            return fh.read()
+class InvoicePdf(BlobMixin, SafeSaveDocument):
+    invoice_id = StringProperty()
+    date_created = DateTimeProperty()
+    is_wire = BooleanProperty(default=False)
+    is_customer = BooleanProperty(default=False)
+    _blobdb_type_code = CODES.invoice
 
 
 class LineItemManager(models.Manager):
