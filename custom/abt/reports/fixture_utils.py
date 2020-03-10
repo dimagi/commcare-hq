@@ -1,5 +1,5 @@
 from collections import defaultdict, namedtuple
-from typing import Dict, Iterable, List, Optional
+from typing import Any, Dict, Iterable, List, Optional
 
 from corehq.apps.fixtures.dbaccessors import (
     get_fixture_data_types_in_domain,
@@ -36,7 +36,8 @@ def get_locations(domain, filters) -> List[LocationTuple]:
         data_types_by_tag["level_1_dcv"]._id,
         filter_in={
             'id': [filters['level_1']] if filters['level_1'] else None
-        }
+        },
+        filter_out={'name': 'Other'},
     )
     l2s_by_l1 = get_fixture_dicts_by_key(
         domain,
@@ -45,7 +46,8 @@ def get_locations(domain, filters) -> List[LocationTuple]:
         filter_in={
             'level_1_dcv': [l['id'] for l in level_1s],
             'id': [filters['level_2']] if filters['level_2'] else None
-        }
+        },
+        filter_out={'name': 'Other'},
     )
     l3s_by_l2 = get_fixture_dicts_by_key(
         domain,
@@ -54,7 +56,8 @@ def get_locations(domain, filters) -> List[LocationTuple]:
         filter_in={
             'level_2_dcv': [l2['id'] for l2s in l2s_by_l1.values() for l2 in l2s],
             'id': [filters['level_3']] if filters['level_3'] else None
-        }
+        },
+        filter_out={'name': 'Other'},
     )
     l4_data_items = get_fixture_items_for_data_type(domain, data_types_by_tag["level_4_dcv"]._id)
     country_has_level_4 = len(l4_data_items) > 1
@@ -66,7 +69,8 @@ def get_locations(domain, filters) -> List[LocationTuple]:
             filter_in={
                 'level_3_dcv': [l3['id'] for l3s in l3s_by_l2.values() for l3 in l3s],
                 'id': [filters['level_4']] if filters['level_4'] else None
-            }
+            },
+            filter_out={'name': 'Other'},
         )
     else:
         l4s_by_l3 = {}
@@ -115,6 +119,7 @@ def get_fixture_dicts(
     domain: str,
     data_type_id: str,
     filter_in: Optional[Dict[str, Optional[Iterable]]] = None,
+    filter_out: Optional[Dict[str, Any]] = None,
 ) -> List[Dict]:
     """
     Returns a list of fixture data items as dictionaries.
@@ -125,7 +130,9 @@ def get_fixture_dicts(
     """
     data_items = get_fixture_items_for_data_type(domain, data_type_id)
     dicts = (fixture_data_item_to_dict(di) for di in data_items)
-    return [d for d in dicts if dict_values_in(d, filter_in)]
+    return [d for d in dicts
+            if dict_values_in(d, filter_in)
+            and dict_value_not(d, filter_out)]
 
 
 def get_fixture_dicts_by_key(
@@ -133,6 +140,7 @@ def get_fixture_dicts_by_key(
     data_type_id: str,
     key: str,
     filter_in: Optional[Dict[str, list]] = None,
+    filter_out: Optional[Dict[str, Any]] = None,
 ) -> dict:
     """
     Returns a dictionary of fixture data items, keyed on ``key``, and
@@ -145,7 +153,10 @@ def get_fixture_dicts_by_key(
     dicts_by_key = defaultdict(list)
     for data_item in get_fixture_items_for_data_type(domain, data_type_id):
         dict_ = fixture_data_item_to_dict(data_item)
-        if dict_values_in(dict_, filter_in):
+        if (
+            dict_values_in(dict_, filter_in)
+            and dict_value_not(dict_, filter_out)
+        ):
             dicts_by_key[dict_[key]].append(dict_)
     return dicts_by_key
 
@@ -226,5 +237,29 @@ def dict_values_in(
         if values is None:
             continue
         if dict_[key] not in values:
+            return False
+    return True
+
+
+def dict_value_not(
+    dict_: dict,
+    key_value: Optional[Dict[str, Any]] = None,
+) -> bool:
+    """
+    Returns True if ``dict_[key]`` is not ``value`` for key-value pairs
+    in ``key_value``.
+
+    >>> swallow = {'mass': 'unladen', 'subspecies': 'European'}
+    >>> dict_value_not(swallow, {'subspecies': 'African'})
+    True
+    >>> swallow = {'mass': 'unladen', 'subspecies': 'African'}
+    >>> dict_value_not(swallow, {'subspecies': 'African'})
+    False
+
+    """
+    if not key_value:
+        return True
+    for key, value in key_value.items():
+        if key in dict_ and dict_[key] == value:
             return False
     return True
