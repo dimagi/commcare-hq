@@ -340,7 +340,7 @@ HQ_APPS = (
     'corehq.motech.openmrs',
     'corehq.motech.repeaters',
     'corehq.util',
-    'corehq.util.datadog.apps.DatadogConfig'
+    'corehq.util.datadog.apps.DatadogConfig',
     'dimagi.ext',
     'corehq.blobs',
     'corehq.apps.case_search',
@@ -838,6 +838,7 @@ SUBSCRIPTION_PASSWORD = None
 
 DATADOG_API_KEY = None
 DATADOG_APP_KEY = None
+ENABLE_PROMETHEUS_METRICS = False
 
 SYNCLOGS_SQL_DB_ALIAS = 'default'
 
