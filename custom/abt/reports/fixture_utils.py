@@ -123,8 +123,6 @@ def get_fixture_dicts(
     key that is in ``filter_in``, then the value of ``item[key]`` must
     be in the (set/tuple/list) value of ``filter_in[key]``.
     """
-    if filter_in is None:
-        filter_in = {}
     data_items = get_fixture_items_for_data_type(domain, data_type_id)
     dicts = (fixture_data_item_to_dict(di) for di in data_items)
     return [d for d in dicts if dict_values_in(d, filter_in)]
