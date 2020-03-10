@@ -1255,11 +1255,6 @@ class CommCareUsersLookup(BaseManageCommCareUserView, UsernameUploadMixin):
         return context
 
     def post(self, request, *args, **kwargs):
-        outfile = io.BytesIO()
-        writer = Excel2007ExportWriter()
-        tab_name = "users"
-        header_table = [(tab_name, [(_("username"), _("exists"))])]
-        writer.open(header_table=header_table, file=outfile)
         usernames = self._get_usernames(request)
         if not usernames:
             return self.get(request, *args, **kwargs)
@@ -1270,6 +1265,12 @@ class CommCareUsersLookup(BaseManageCommCareUserView, UsernameUploadMixin):
         rows = []
         for username in usernames:
             rows.append([raw_username(username), _("no") if username in usernames_not_found else _("yes")])
+
+        outfile = io.BytesIO()
+        tab_name = "users"
+        header_table = [(tab_name, [(_("username"), _("exists"))])]
+        writer = Excel2007ExportWriter()
+        writer.open(header_table=header_table, file=outfile)
         writer.write([(tab_name, rows)])
         writer.close()
         response = HttpResponse(content_type=Format.from_format('xlsx').mimetype)
