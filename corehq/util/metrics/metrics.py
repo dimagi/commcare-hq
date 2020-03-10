@@ -1,9 +1,10 @@
 import abc
 import re
 from abc import abstractmethod
-from typing import Iterable
+from typing import Iterable, List
 
 from corehq.util.soft_assert import soft_assert
+from prometheus_client.utils import INF
 
 METRIC_NAME_RE = re.compile(r'^[a-zA-Z_:.][a-zA-Z0-9_:.]*$')
 METRIC_TAG_NAME_RE = re.compile(r'^[a-zA-Z_][a-zA-Z0-9_]*$')
@@ -30,14 +31,19 @@ def _validate_tag_names(tag_names):
 
 
 class MetricBase:
-    def __init__(self, name: str, documentation: str, tag_names: Iterable=tuple(), tag_values=None):
+    def __init__(self, name: str, documentation: str, tag_names: Iterable=tuple(), **kwargs):
         self.name = name
         if not METRIC_NAME_RE.match(name):
             raise ValueError('Invalid metric name: ' + name)
         _enforce_prefix(name, 'commcare')
         self.documentation = documentation
         self.tag_names = _validate_tag_names(tag_names)
-        self.tag_values = tag_values
+        self.tag_values = kwargs.pop('tag_values', None)
+        self._kwargs = kwargs
+        self._init_metric()
+
+    def _init_metric(self):
+        pass
 
     def tag(self, **tag_kwargs):
         if sorted(tag_kwargs) != sorted(self.tag_names):
@@ -47,38 +53,54 @@ class MetricBase:
         return self._get_tagged_instance(tag_values)
 
     def _get_tagged_instance(self, tag_values):
-        return self.__class__(self.name, self.documentation, self.tag_names, tag_values)
+        return self.__class__(
+            self.name, self.documentation, tag_names=self.tag_names, tag_values=tag_values, **self._kwargs
+        )
 
     def _validate_tags(self):
         if self.tag_names and not self.tag_values:
             raise Exception('Metric has missing tag values.')
+
+    def _record(self, value: float):
+        pass
 
 
 class HqCounter(MetricBase):
     def inc(self, amount: float = 1):
         """Increment the counter by the given amount."""
         self._validate_tags()
-        self._inc(amount)
-
-    def _inc(self, amount: float = 1):
-        """Override this method to record the metric"""
-        pass
+        self._record(amount)
 
 
 class HqGauge(MetricBase):
     def set(self, value: float):
         """Set gauge to the given value."""
         self._validate_tags()
-        self._set(value)
+        self._record(value)
 
-    def _set(self, value: float):
-        """Override this method to record the metric"""
-        pass
+
+DEFAULT_BUCKETS = (.005, .01, .025, .05, .075, .1, .25, .5, .75, 1.0, 2.5, 5.0, 7.5, 10.0, INF)
+
+
+class HqHistogram(MetricBase):
+
+    def _init_metric(self):
+        self._buckets = self._kwargs.get('buckets') or DEFAULT_BUCKETS
+        self._bucket_unit = self._kwargs.get('bucket_unit', '')
+        self._bucket_tag = self._kwargs.get('bucket_tag')
+        if self._bucket_tag in self.tag_names:
+            self.tag_names = tuple([name for name in self.tag_names if name != self._bucket_tag])
+
+    def observe(self, value: float):
+        """Update histogram with the given value."""
+        self._validate_tags()
+        self._record(value)
 
 
 class HqMetrics(metaclass=abc.ABCMeta):
     _counter_class = None
     _gauge_class = None
+    _histogram_class = None
 
     @abstractmethod
     def enabled(self) -> bool:
@@ -89,6 +111,16 @@ class HqMetrics(metaclass=abc.ABCMeta):
 
     def gauge(self, name: str, documentation: str, tag_names: Iterable=tuple()) -> HqGauge:
         return self._gauge_class(name, documentation, tag_names)
+
+    def histogram(self, name: str, documentation: str,
+                  bucket_tag: str, buckets: List[int] = DEFAULT_BUCKETS, bucket_unit: str = '',
+                  tag_names: Iterable=tuple()) -> HqGauge:
+        """Create a histogram metric. Histogram implementations differ between provider. See provider
+        implementations for details.
+        """
+        return self._histogram_class(
+            name, documentation, tag_names, bucket_tag=bucket_tag, buckets=buckets, bucket_unit=bucket_unit
+        )
 
 
 class DummyMetrics(HqMetrics):
