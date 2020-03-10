@@ -2375,6 +2375,7 @@ class BillingRecordBase(models.Model):
     @classmethod
     def generate_record(cls, invoice):
         record = cls(invoice=invoice)
+        # TODO: stop creating InvoicePdf
         invoice_pdf = SQLInvoicePdf()       # TODO: also keep creating a couch InvoicePdf, though it won't be attached to the record
         invoice_pdf.generate_pdf(record.invoice)
         record.pdf_data_id = invoice_pdf.id
@@ -3137,14 +3138,6 @@ class SQLInvoicePdf(models.Model):
         self.is_wire = invoice.is_wire
         self.is_customer = invoice.is_customer_invoice
         self.save()
-
-
-class InvoicePdf(BlobMixin, SafeSaveDocument):
-    invoice_id = StringProperty()
-    date_created = DateTimeProperty()
-    is_wire = BooleanProperty(default=False)
-    is_customer = BooleanProperty(default=False)
-    _blobdb_type_code = CODES.invoice
 
 
 class LineItemManager(models.Manager):
