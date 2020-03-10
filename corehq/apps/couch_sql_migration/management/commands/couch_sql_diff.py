@@ -70,8 +70,9 @@ class Command(BaseCommand):
                 with / or ./
 
                 With the "show" or "filter" actions, this option should
-                be a doc type. All form and case doc types are
-                supported.
+                be a doc type, optionally followed by a colon and one or
+                more doc ids (e.g., CommCareCase:id1,id2,id3). All form
+                and case doc types are supported.
             ''')
         parser.add_argument('--changes',
             dest="changes", action='store_true', default=False,
@@ -152,13 +153,14 @@ class Command(BaseCommand):
         """Show diffs from state db"""
         statedb = self.open_state_db(domain)
         print(f"showing diffs from {statedb}", file=sys.stderr)
+        select = self.get_select_kwargs()
         if self.changes:
-            items = statedb.iter_doc_changes(self.select)
+            items = statedb.iter_doc_changes(**select)
         else:
-            items = statedb.iter_doc_diffs(self.select)
+            items = statedb.iter_doc_diffs(**select)
         prompt = not self.csv
         if self.csv:
-            items = self.with_progress(items, statedb)
+            items = self.with_progress(items, statedb, select)
             print(CSV_HEADERS, file=sys.stdout)
         try:
             for doc_diffs in chunked(items, self.batch_size, list):
@@ -169,6 +171,14 @@ class Command(BaseCommand):
                     break
         except (KeyboardInterrupt, BrokenPipeError):
             pass
+
+    def get_select_kwargs(self):
+        if not self.select:
+            return {}
+        if ":" in self.select:
+            kind, doc_ids = self.select.split(":", 1)
+            return {"kind": kind, "doc_ids": doc_ids.split(",")}
+        return {"kind": self.select}
 
     def do_filter(self, domain):
         def update_doc_diffs(doc_diffs):
@@ -197,7 +207,8 @@ class Command(BaseCommand):
         statedb = self.open_state_db(domain, readonly=self.dry_run)
         if self.changes:
             raise NotImplementedError("filter --changes")
-        if self.select in MissingIds.form_types:
+        select = self.get_select_kwargs()
+        if select and select["kind"] in MissingIds.form_types:
             def get_sql_docs(ids):
                 return {f.form_id: f for f in FormAccessorSQL.get_forms(ids)}
 
@@ -205,7 +216,7 @@ class Command(BaseCommand):
                 return {f.form_id: f for f in get_couch_forms(ids)}
 
             filter_diffs = filter_form_diffs
-        elif self.select in MissingIds.case_types:
+        elif select and select["kind"] in MissingIds.case_types:
             def get_sql_docs(ids):
                 return {c.case_id: c for c in CaseAccessorSQL.get_cases(ids)}
 
@@ -216,17 +227,19 @@ class Command(BaseCommand):
         else:
             raise NotImplementedError(f"--select={self.select}")
         prompt = self.dry_run and self.stop
-        doc_diffs = statedb.iter_doc_diffs(self.select)
-        doc_diffs = self.with_progress(doc_diffs, statedb)
+        doc_diffs = statedb.iter_doc_diffs(**select)
+        doc_diffs = self.with_progress(doc_diffs, statedb, select)
         for batch in chunked(doc_diffs, self.batch_size, list):
             update_doc_diffs(batch)
             if prompt and not confirm("show more?"):
                 break
 
-    def with_progress(self, doc_diffs, statedb):
+    def with_progress(self, doc_diffs, statedb, select):
         counts = statedb.get_doc_counts()
-        if self.select:
-            count = counts.get(self.select, Counts())
+        if "doc_ids" in select:
+            count = len(select["doc_ids"])
+        elif select:
+            count = counts.get(select["kind"], Counts())
             count = count.changes if self.changes else count.diffs
         else:
             count = sum(c.changes if self.changes else c.diffs
