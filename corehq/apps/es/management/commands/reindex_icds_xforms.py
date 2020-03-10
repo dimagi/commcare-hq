@@ -199,7 +199,6 @@ class Command(BaseCommand):
                 print("This could mean task finished succesfully")
             time.sleep(20)
 
-
     def _get_doc_count(self, index, start_date, end_date):
         query = self._base_query(start_date, end_date)
         ret = self.es.count(index, body=query)
