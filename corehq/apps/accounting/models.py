@@ -3034,6 +3034,18 @@ class CustomerBillingRecord(BillingRecordBase):
         return False
 
 
+class SQLInvoicePdf(models.Model):
+    invoice_id = models.PositiveIntegerField(null=True)
+    date_created = models.DateTimeField(null=True)
+    is_wire = models.BooleanField(default=False)
+    is_customer = models.BooleanField(default=False)
+    blob_key = models.CharField(max_length=255, null=True)
+    couch_id = models.CharField(max_length=126, null=True, db_index=True)
+
+    class Meta:
+        db_table = "accounting_invoicepdf"
+
+
 class InvoicePdf(BlobMixin, SafeSaveDocument):
     invoice_id = StringProperty()
     date_created = DateTimeProperty()
