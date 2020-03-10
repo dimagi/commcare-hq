@@ -199,7 +199,7 @@ class DeviceLogRequest(models.Model):
     """
     domain = models.CharField(max_length=255)
     username = models.CharField(max_length=255, help_text="raw_username, no @domain.commcarehq.org")
-    device_id = models.CharField(max_length=255)
+    device_id = models.CharField(max_length=255, null=True, default='')
     created_on = models.DateTimeField(auto_now_add=True)
 
     class Meta(object):
