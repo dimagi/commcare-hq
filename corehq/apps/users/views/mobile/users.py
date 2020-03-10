@@ -1262,6 +1262,12 @@ class CommCareUsersLookup(BaseManageCommCareUserView, UsernameUploadMixin):
         for username in usernames:
             rows.append([raw_username(username), _("yes") if username in known_usernames else _("no")])
 
+        response = HttpResponse(content_type=Format.from_format('xlsx').mimetype)
+        response['Content-Disposition'] = f'attachment; filename="{self.domain} users.xlsx"'
+        response.write(self._excel_data(rows))
+        return response
+
+    def _excel_data(self, rows):
         outfile = io.BytesIO()
         tab_name = "users"
         header_table = [(tab_name, [(_("username"), _("exists"))])]
@@ -1269,10 +1275,7 @@ class CommCareUsersLookup(BaseManageCommCareUserView, UsernameUploadMixin):
         writer.open(header_table=header_table, file=outfile)
         writer.write([(tab_name, rows)])
         writer.close()
-        response = HttpResponse(content_type=Format.from_format('xlsx').mimetype)
-        response['Content-Disposition'] = f'attachment; filename="{self.domain} users.xlsx"'
-        response.write(outfile.getvalue())
-        return response
+        return outfile.getvalue()
 
 
 @require_can_edit_commcare_users
