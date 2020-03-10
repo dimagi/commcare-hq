@@ -245,6 +245,7 @@ class FilteredLocationDownload(BaseLocationView):
 
 class LocationOptionsController(EmwfOptionsController):
     namespace_locations = False
+    case_sharing_only = False
 
     @property
     def data_sources(self):

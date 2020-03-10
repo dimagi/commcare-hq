@@ -1,7 +1,7 @@
 /* global d3, _, Datamap, STATES_TOPOJSON, DISTRICT_TOPOJSON, BLOCK_TOPOJSON */
 
 function IndieMapController($scope, $compile, $location, $filter, storageService, locationsService,
-                            topojsonService, haveAccessToFeatures, isMobile) {
+    topojsonService, haveAccessToFeatures, isMobile) {
     var vm = this;
 
     $scope.$watch(function () {
@@ -221,7 +221,9 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
                             '<div class="row no-margin map-legend-title"">' + this.options.label + '</div>',
                         ];
                         for (var fillKey in this.options.fills) {
-                            if (fillKey === 'defaultFill') continue;
+                            if (fillKey === 'defaultFill') {
+                                continue;
+                            }
                             html.push(
                                 '<div class="row no-margin map-legend-color-row">',
                                 '<div class="col-xs-1 map-legend-color" style="color: ' + this.options.fills[fillKey] + ' !important; background-color: ' + this.options.fills[fillKey] + ' !important;"></div>',

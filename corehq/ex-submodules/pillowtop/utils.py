@@ -350,10 +350,10 @@ def get_errors_with_ids(es_action_errors):
     return [
         (item['_id'], item.get('error'))
         for op_type, item in _changes_to_list(es_action_errors)
-        if not (item.get('op_type') == 'delete' and item.get('status') == 404)
+        if not (op_type == 'delete' and item.get('status') == 404)
     ]
 
 
 def _changes_to_list(change_items):
-    """Concert list of dict(key: value) in to a list of tuple(key, value)"""
+    """Convert list of dict(key: value) in to a list of tuple(key, value)"""
     return list(map(methodcaller("popitem"), change_items))

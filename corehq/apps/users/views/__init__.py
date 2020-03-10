@@ -40,7 +40,7 @@ from corehq.apps.analytics.tasks import (
     send_hubspot_form,
     track_workflow,
 )
-from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
+from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain, get_app_languages
 from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps
 from corehq.apps.domain.decorators import (
     domain_admin_required,
@@ -96,7 +96,7 @@ from corehq.apps.users.models import (
     DomainMembershipError,
     DomainRemovalRecord,
     DomainRequest,
-    Invitation,
+    SQLInvitation,
     UserRole,
     WebUser,
 )
@@ -420,17 +420,12 @@ class EditWebUserView(BaseEditUserView):
 
 
 def get_domain_languages(domain):
-    query = (AppES()
-             .domain(domain)
-             .terms_aggregation('langs', 'languages')
-             .size(0))
-    app_languages = query.run().aggregations.languages.keys
-
+    app_languages = get_app_languages(domain)
     translation_doc = StandaloneTranslationDoc.get_obj(domain, 'sms')
-    sms_languages = translation_doc.langs if translation_doc else []
+    sms_languages = set(translation_doc.langs if translation_doc else [])
 
     domain_languages = []
-    for lang_code in set(app_languages + sms_languages):
+    for lang_code in app_languages.union(sms_languages):
         name = langcodes.get_name(lang_code)
         label = "{} ({})".format(lang_code, name) if name else lang_code
         domain_languages.append((lang_code, label))
@@ -500,7 +495,7 @@ class ListWebUsersView(BaseRoleAccessView):
     @property
     @memoized
     def invitations(self):
-        invitations = Invitation.by_domain(self.domain)
+        invitations = SQLInvitation.by_domain(self.domain)
         for invitation in invitations:
             invitation.role_label = self.role_labels.get(invitation.role, "")
         return invitations
@@ -732,12 +727,14 @@ class UserInvitationView(object):
             return HttpResponseRedirect(request.path)
 
         try:
-            invitation = Invitation.get(invitation_id)
-        except ResourceNotFound:
-            messages.error(request, _("Sorry, it looks like your invitation has expired. "
-                                      "Please check the invitation link you received and try again, or request a "
-                                      "project administrator to send you the invitation again."))
-            return HttpResponseRedirect(reverse("login"))
+            invitation = SQLInvitation.objects.get(id=int(invitation_id))
+        except (ValueError, SQLInvitation.DoesNotExist):
+            invitation = SQLInvitation.objects.filter(couch_id=invitation_id).first()
+            if not invitation:
+                messages.error(request, _("Sorry, it looks like your invitation has expired. "
+                                          "Please check the invitation link you received and try again, or "
+                                          "request a project administrator to send you the invitation again."))
+                return HttpResponseRedirect(reverse("login"))
         if invitation.is_accepted:
             messages.error(request, _("Sorry, that invitation has already been used up. "
                                       "If you feel this is a mistake please ask the inviter for "
@@ -823,7 +820,7 @@ class UserInvitationView(object):
             else:
                 if CouchUser.get_by_username(invitation.email):
                     return HttpResponseRedirect(reverse("login") + '?next=' +
-                        reverse('domain_accept_invitation', args=[invitation.domain, invitation.get_id]))
+                        reverse('domain_accept_invitation', args=[invitation.domain, invitation.id]))
                 form = WebUserInvitationForm(initial={
                     'email': invitation.email,
                     'hr_name': invitation.domain,
@@ -876,7 +873,7 @@ def accept_invitation(request, domain, invitation_id):
 def reinvite_web_user(request, domain):
     invitation_id = request.POST['invite']
     try:
-        invitation = Invitation.get(invitation_id)
+        invitation = SQLInvitation.objects.get(id=invitation_id)
         invitation.invited_on = datetime.utcnow()
         invitation.save()
         invitation.send_activation_email()
@@ -890,7 +887,7 @@ def reinvite_web_user(request, domain):
 @require_can_edit_web_users
 def delete_invitation(request, domain):
     invitation_id = request.POST['id']
-    invitation = Invitation.get(invitation_id)
+    invitation = SQLInvitation.objects.get(id=invitation_id)
     invitation.delete()
     return json_response({'status': 'ok'})
 
@@ -937,7 +934,7 @@ class InviteWebUserView(BaseManageWebUserView):
             loc = SQLLocation.objects.get(location_id=self.request.GET.get('location_id'))
         if self.request.method == 'POST':
             current_users = [user.username for user in WebUser.by_domain(self.domain)]
-            pending_invites = [di.email for di in Invitation.by_domain(self.domain)]
+            pending_invites = [di.email for di in SQLInvitation.by_domain(self.domain)]
             return AdminInvitesUserForm(
                 self.request.POST,
                 excluded_emails=current_users + pending_invites,
@@ -989,7 +986,7 @@ class InviteWebUserView(BaseManageWebUserView):
                 data["invited_by"] = request.couch_user.user_id
                 data["invited_on"] = datetime.utcnow()
                 data["domain"] = self.domain
-                invite = Invitation(**data)
+                invite = SQLInvitation(**data)
                 invite.save()
                 invite.send_activation_email()
             return HttpResponseRedirect(reverse(

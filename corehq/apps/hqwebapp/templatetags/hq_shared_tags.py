@@ -7,8 +7,8 @@ from django import template
 from django.conf import settings
 from django.http import QueryDict
 from django.template import NodeList, TemplateSyntaxError, loader_tags
+from corehq.util.django2_shim.template.base import TokenType
 from django.template.base import (
-    TOKEN_TEXT,
     Token,
     Variable,
     VariableDoesNotExist,
@@ -566,7 +566,7 @@ def registerurl(parser, token):
 
     class FakeNode(template.Node):
         # must mock token or error handling code will fail and not reveal real error
-        token = Token(TOKEN_TEXT, '', (0, 0), 0)
+        token = Token(TokenType.TEXT, '', (0, 0), 0)
 
         def render(self, context):
             args = [expression.resolve(context) for expression in expressions]
