@@ -439,7 +439,7 @@ class CouchSqlDomainMigrator:
                 return False
             log.info("dropping duplicate ledgers for form %s", couch_form.form_id)
             sql_form = FormAccessorSQL.get_form(couch_form.form_id)
-            LedgerProcessorSQL(self.domain).process_form_archived(sql_form)
+            MigrationLedgerProcessor(self.domain).process_form_archived(sql_form)
             return True
 
         def iter_form_ids(jdiff, kind):
@@ -511,14 +511,6 @@ class CouchSqlDomainMigrator:
                 if value.ledger_reference not in refs:
                     yield value
 
-        def rebuild_ledger(value):
-            ledger_value = ledger_processor._rebuild_ledger(form_id, value)
-            txx = ledger_value.get_live_tracked_models(LedgerTransaction)
-            tx = max(txx, key=lambda tx: tx.server_date)
-            ledger_value.last_modified = tx.server_date
-            ledger_value.last_modified_form_id = tx.form_id
-            return ledger_value
-
         from django.db import transaction
         couch_form = XFormInstance.get(form_id)
         if couch_form.doc_type in UNPROCESSED_DOC_TYPES:
@@ -530,7 +522,8 @@ class CouchSqlDomainMigrator:
         if not result:
             return False
         cases = [c for c in result.case_models if c.has_tracked_models()]
-        ledger_processor = LedgerProcessorSQL(self.domain)
+        rebuild_ledger = partial(
+            MigrationLedgerProcessor(self.domain)._rebuild_ledger, form_id)
         ledgers = [rebuild_ledger(v) for v in iter_missing_ledgers(result.stock_result)]
         if not (cases or ledgers):
             return False
@@ -672,6 +665,18 @@ def patch_kafka():
         yield
     finally:
         ChangeProducer.send_change = send_change
+
+
+class MigrationLedgerProcessor(LedgerProcessorSQL):
+
+    @staticmethod
+    def _rebuild_ledger_value_from_transactions(ledger_value, transactions, domain):
+        ledger_value = LedgerProcessorSQL._rebuild_ledger_value_from_transactions(
+            ledger_value, transactions, domain)
+        tx = max(transactions, key=lambda tx: tx.server_date)
+        ledger_value.last_modified = tx.server_date
+        ledger_value.last_modified_form_id = tx.form_id
+        return ledger_value
 
 
 def _wrap_form(doc):
