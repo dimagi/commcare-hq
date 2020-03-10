@@ -436,7 +436,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
             });
         }
 
-        if(vm.isTakeHomeRationReportSelected()){
+        if (vm.isTakeHomeRationReportSelected()) {
             vm.years = _.filter(vm.yearsCopy, function (y) {
                 return y.id >= 2019;
             });
