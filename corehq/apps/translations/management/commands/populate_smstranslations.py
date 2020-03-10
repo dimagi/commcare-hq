@@ -10,7 +10,7 @@ class Command(PopulateSQLCommand):
     def sql_class(self):
         from corehq.apps.translations.models import SMSTranslations
         return SMSTranslations
-    
+
     @classmethod
     def commit_adding_migration(cls):
         return "85940ca17ce2f54437c2418fb5146fb0e2ec830a"
