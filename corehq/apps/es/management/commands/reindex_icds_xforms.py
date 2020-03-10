@@ -1,4 +1,5 @@
 import copy
+import time
 from datetime import datetime, timedelta
 
 from django.core.management.base import BaseCommand
@@ -31,6 +32,12 @@ class Command(BaseCommand):
             default=False,
             help="Simply print doc counts and exit"
         )
+        parser.add_argument(
+            '--hours_interval_only',
+            action='store_true',
+            default=False,
+            help="(Doesn't work) Skip checking doc counts before reindexing. Applicable with native only"
+        )
 
     def handle(self, index_name, start_date, end_date, **options):
         self.es = get_es_export()
@@ -40,8 +47,11 @@ class Command(BaseCommand):
         chunk_size = options.get('chunk_size')
         print_counts = options.get('print_counts')
         use_native_api = options.get('native')
+        hours_interval_only = False
         old_docs_count = self._get_doc_count(self.old_index, start_date, end_date)
         new_docs_count = self._get_doc_count(self.new_index, start_date, end_date)
+        if new_docs_count / old_docs_count < 0.3:
+            hours_interval_only = True
         print("Number of docs in old index",
             old_docs_count)
         print("Number of docs in new index",
@@ -53,7 +63,7 @@ class Command(BaseCommand):
             print("Doc counts same, nothing left to reindex. Exiting!")
             return
 
-        for query in self._breakup_by_intervals(start_date, end_date):
+        for query in self._breakup_by_intervals(start_date, end_date, 'hour', hours_interval_only):
             query.update({
                 "_source": {"exclude": ["_id"]}
             })
@@ -68,7 +78,7 @@ class Command(BaseCommand):
                     scan_kwargs={'request_timeout': 600})
             print("Reindex finished ", datetime.now())
 
-    def _breakup_by_intervals(self, start_date, end_date, interval_format='hour'):
+    def _breakup_by_intervals(self, start_date, end_date, interval_format='hour', hours_interval_only=False):
         assert interval_format in ['hour', 'minute']
         query = self._base_query(start_date, end_date, 'yyyy-MM-dd HH:mm:ss' if interval_format is 'minute' else "yyyy-MM-dd")
         query.update({
@@ -108,8 +118,11 @@ class Command(BaseCommand):
 
             if interval_format == 'hour':
                 if count_in_new_index != count:
-                    for query in self._breakup_by_intervals(start_time, end_time, 'minute'):
-                        yield query
+                    if hours_interval_only:
+                        yield self._base_query(start_time, end_time, 'yyyy-MM-dd HH:mm:ss')
+                    else:
+                        for query in self._breakup_by_intervals(start_time, end_time, 'minute'):
+                            yield query
                 else:
                     print("Skipping already reindexed hour ", interval_start)
             else:
@@ -155,8 +168,37 @@ class Command(BaseCommand):
             "conflicts": "proceed"
         }
         reindex_query['source'].update(query)
-        result = self.es.reindex(reindex_query, wait_for_completion=True, request_timeout=300)
+        result = self.es.reindex(reindex_query, wait_for_completion=False, request_timeout=300)
         print("Result task is ", result)
+        task_id = result['task']
+        node_id = task_id.split(":")[0]
+        task_finished = False
+        no_progress_loops = 0
+        last_updated_count = 0
+        last_create_count = 0
+        while not task_finished:
+            try:
+                task = self.es.tasks.list(task_id=task_id, params={'detailed': True})['nodes'][node_id]['tasks'][task_id]
+                status = task['status']
+                print("Updated/Created/Total: ", status['updated'], status['created'], status['total'])
+                if last_updated_count != status['updated'] or last_create_count != status['created']:
+                    last_updated_count = status['updated']
+                    last_create_count = status['created']
+                    # reset progress
+                    no_progress_loops = 0
+                else:
+                    no_progress_loops += 1
+                if no_progress_loops == 3:
+                    self.es.tasks.cancel(task_id=task_id)
+                    raise Exception("Cancelling task that didn't progress in last 1 min {}".format(str(query)))
+                running_time_in_mins = (task['running_time_in_nanos'] / 60000000000)
+                print("Running time total in mins ", running_time_in_mins)
+            except Exception as e:
+                task_finished = True
+                print(e)
+                print("This could mean task finished succesfully")
+            time.sleep(20)
+
 
     def _get_doc_count(self, index, start_date, end_date):
         query = self._base_query(start_date, end_date)
