@@ -39,14 +39,14 @@ class BaseModifySubscriptionHandler(object):
     def __init__(self, domain, new_plan_version, changed_privs, date_start=None):
 
         def get_domain(domain):
-            obj = Domain.get_by_name(domain)
+            obj = Domain.get_by_name(domain, strict=True)
             if obj:
                 return obj
             else:
                 # This could happen in when there is an issue with couch cluster
                 #   that makes the obj not available
                 time.sleep(5)
-                return Domain.get_by_name(domain)
+                return Domain.get_by_name(domain, strict=True)
 
         self.domain = domain if isinstance(domain, Domain) else get_domain(domain)
         if self.domain is None:
