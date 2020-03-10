@@ -60,13 +60,11 @@
                 {% trans "Edit User Fields" %}
               </a>
             {% endif %}
-            {% if request|toggle_enabled:"BULK_USER_DELETE" %}
+            {% if request|toggle_enabled:"FILTERED_BULK_USER_DOWNLOAD" %}
               <a class="btn btn-danger" href="{% url "delete_commcare_users" domain %}">
                 <i class="fa fa-trash"></i>
                 {% trans "Bulk Delete Users" %}
               </a>
-            {% endif %}
-            {% if request|toggle_enabled:"BULK_USER_LOOKUP" %}
               <a class="btn btn-default" href="{% url "commcare_users_lookup" domain %}">
                 <i class="fa fa-search"></i>
                 {% trans "Bulk Lookup of Users" %}
