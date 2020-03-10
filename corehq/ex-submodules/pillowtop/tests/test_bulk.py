@@ -116,7 +116,7 @@ class TestBulkDocOperations(TestCase):
         self.assertEqual([], errors)
 
         es_docs = self.es_interface.get_bulk_docs(
-            index=self.es_alias, doc_type=TEST_INDEX_INFO.type, doc_ids=self.case_ids)
+            self.es_alias, doc_type=TEST_INDEX_INFO.type, doc_ids=self.case_ids)
         ids_in_es = {
             doc['_id'] for doc in es_docs
         }
