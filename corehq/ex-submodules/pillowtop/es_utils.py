@@ -137,10 +137,10 @@ def completely_initialize_pillow_index(pillow):
     """
     This utility can be used to initialize the elastic index and mapping for a pillow
     """
-    return initialize_index_and_mapping(pillow.get_es_new(), get_index_info_from_pillow(pillow))
+    return initialize_index_and_mapping(pillow.get_es_new(), get_index_info_from_pillow(pillow), set_alias=False)
 
 
-def initialize_index_and_mapping(es, index_info, set_alias=False):
+def initialize_index_and_mapping(es, index_info, set_alias=True):
     index_exists = es.indices.exists(index_info.index)
     if not index_exists:
         initialize_index(es, index_info)
