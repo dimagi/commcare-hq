@@ -184,7 +184,7 @@ class CouchSqlDomainMigrator:
     def _process_main_forms(self):
         """process main forms (including cases and ledgers)"""
         def migrate_form(form, case_ids):
-            self._migrate_form(form, case_ids)
+            self._migrate_form(form, case_ids, form_is_processed=True)
             add_form()
         with self.counter('main_forms', 'XFormInstance') as add_form, \
                 AsyncFormProcessor(self.statedb, migrate_form) as pool:
@@ -197,12 +197,18 @@ class CouchSqlDomainMigrator:
         self._migrate_form_and_associated_models(couch_form, **kw)
         self.case_diff_queue.update(case_ids, form_id)
 
-    def _migrate_form_and_associated_models(self, couch_form, form_is_processed=True):
+    def _migrate_form_and_associated_models(self, couch_form, form_is_processed=None):
         """
         Copies `couch_form` into a new sql form
         """
         sql_form = None
         try:
+            should_process = couch_form.doc_type == 'XFormInstance'
+            if form_is_processed is None:
+                form_is_processed = should_process
+            else:
+                assert form_is_processed == should_process, \
+                    (couch_form.doc_type, couch_form.form_id, form_is_processed)
             if form_is_processed:
                 form_data = couch_form.form
                 with force_phone_timezones_should_be_processed():
@@ -451,21 +457,24 @@ class CouchSqlDomainMigrator:
                 log.info("migrating missing form %s from case %s", form_id, case_id)
                 self._migrate_form_id(form_id, case_id)
             couch_ids = {f for f in form_ids if FormAccessorCouch.form_exists(f)}
-            self._migrate_missing_cases_and_ledgers(couch_ids - missing_ids)
+            self._migrate_missing_cases_and_ledgers(couch_ids - missing_ids, case_id)
 
-    def _migrate_missing_cases_and_ledgers(self, form_ids):
+    def _migrate_missing_cases_and_ledgers(self, form_ids, case_id=None):
         """Update cases and ledgers for forms that have already been migrated
+
+        This operation should be idempotent for cases and ledgers that
+        have previously had the given forms applied to them.
 
         :returns: a set of form ids that had cases or ledgers to migrate.
         """
         migrated_ids = set()
         for form_id in form_ids:
-            saved = self._save_missing_cases_and_ledgers(form_id)
+            saved = self._save_missing_cases_and_ledgers(form_id, case_id)
             if saved:
                 migrated_ids.add(form_id)
         return migrated_ids
 
-    def _save_missing_cases_and_ledgers(self, form_id):
+    def _save_missing_cases_and_ledgers(self, form_id, case_id):
         def iter_missing_ledgers(stock_result):
             assert not stock_result.models_to_delete, (form_id, stock_result)
             if not (stock_result and stock_result.models_to_save):
@@ -487,6 +496,10 @@ class CouchSqlDomainMigrator:
 
         from django.db import transaction
         couch_form = XFormInstance.get(form_id)
+        if couch_form.doc_type in UNPROCESSED_DOC_TYPES:
+            if case_id is not None:
+                log.warning("unprocessed form %s referenced by case %s", form_id, case_id)
+            return False
         sql_form = FormAccessorSQL.get_form(form_id)
         result = self._get_case_stock_result(sql_form, couch_form)
         if not result:
