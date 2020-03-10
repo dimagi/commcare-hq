@@ -2357,7 +2357,7 @@ class BillingRecordBase(models.Model):
     @property
     def pdf(self):
         if self._pdf is None:
-            return SQLInvoicePdf.objects.get(id=self.pdf_data_id)   # TODO: migrate pdf_data_id, in populate command
+            return InvoicePdf.objects.get(id=self.pdf_data_id)   # TODO: migrate pdf_data_id, in populate command
         return self._pdf
 
     @property
@@ -2375,8 +2375,7 @@ class BillingRecordBase(models.Model):
     @classmethod
     def generate_record(cls, invoice):
         record = cls(invoice=invoice)
-        # TODO: stop creating InvoicePdf
-        invoice_pdf = SQLInvoicePdf()       # TODO: also keep creating a couch InvoicePdf, though it won't be attached to the record
+        invoice_pdf = InvoicePdf()
         invoice_pdf.generate_pdf(record.invoice)
         record.pdf_data_id = invoice_pdf.id
         record._pdf = invoice_pdf
@@ -3036,7 +3035,7 @@ class CustomerBillingRecord(BillingRecordBase):
         return False
 
 
-class SQLInvoicePdf(models.Model):
+class InvoicePdf(models.Model):
     invoice_id = models.PositiveIntegerField(null=True)
     date_created = models.DateTimeField(null=True)
     is_wire = models.BooleanField(default=False)

@@ -52,7 +52,7 @@ from corehq.apps.accounting.models import (
     DefaultProductPlan,
     EntryPoint,
     Invoice,
-    SQLInvoicePdf,
+    InvoicePdf,
     LastPayment,
     PaymentMethodType,
     SoftwarePlanEdition,
@@ -806,7 +806,7 @@ class BillingStatementPdfView(View):
             raise Http404()
 
         try:
-            invoice_pdf = SQLInvoicePdf.objects.get(id=statement_id)
+            invoice_pdf = InvoicePdf.objects.get(id=statement_id)
             if invoice_pdf.is_wire:
                 invoice = WireInvoice.objects.get(
                     pk=invoice_pdf.invoice_id,
@@ -825,7 +825,7 @@ class BillingStatementPdfView(View):
             Invoice.DoesNotExist,
             WireInvoice.DoesNotExist,
             CustomerInvoice.DoesNotExist,
-            SQLInvoicePdf.DoesNotExist
+            InvoicePdf.DoesNotExist
         ):
             raise Http404()
 

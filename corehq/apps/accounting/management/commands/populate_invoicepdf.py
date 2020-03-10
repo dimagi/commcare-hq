@@ -12,8 +12,8 @@ class Command(PopulateSQLCommand):
 
     @classmethod
     def sql_class(self):
-        from corehq.apps.accounting.models import SQLInvoicePdf
-        return SQLInvoicePdf
+        from corehq.apps.accounting.models import InvoicePdf
+        return InvoicePdf
 
     @classmethod
     def commit_adding_migration(cls):
