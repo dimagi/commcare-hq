@@ -84,7 +84,6 @@ from corehq.apps.app_manager.dbaccessors import (
     get_latest_build_doc,
     get_latest_released_app_doc,
     wrap_app,
-    get_app_languages
 )
 from corehq.apps.app_manager.detail_screen import PropertyXpathGenerator
 from corehq.apps.app_manager.exceptions import (
@@ -4440,7 +4439,6 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
 
     def delete_app(self):
         domain_has_apps.clear(self.domain)
-        get_app_languages.clear(self.domain)
         self.doc_type += '-Deleted'
         record = DeleteApplicationRecord(
             domain=self.domain,
@@ -4460,7 +4458,6 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
 
         get_all_case_properties.clear(self)
         get_usercase_properties.clear(self)
-        get_app_languages.clear(self.domain)
 
         request = view_utils.get_request()
         user = getattr(request, 'couch_user', None)

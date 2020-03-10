@@ -115,7 +115,7 @@
         "expression": {
           "type": "root_doc",
           "expression": {
-            "datatype": "datetime",
+            "datatype": "date",
             "type": "property_path",
             "property_path": [
               "form",

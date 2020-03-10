@@ -138,7 +138,7 @@ class Command(BaseCommand):
             help='''
                 process: diff cases in a separate process (default).
                 local: diff cases in the migration process.
-                none: save "pending" cases to be diffed at a later time.
+                none: do not diff cases.
             ''')
         parser.add_argument('--forms', default=None,
             help="""
@@ -158,16 +158,13 @@ class Command(BaseCommand):
             """)
         parser.add_argument('--to', dest="rewind", help="Rewind iteration state.")
         parser.add_argument('--missing-docs',
-            choices=[CACHED, RESUME, REBUILD, RECHECK], default=CACHED,
+            choices=[RESUME, REBUILD, RECHECK, CACHED], default=RESUME,
             help="""
-                How to calculate missing docs. With "stats", the default
-                is "cached", which is the least expensive option,
-                although may be inaccurate. When migrating (except with
-                --live), missing docs will be calculated before stats
+                By default missing docs will be calculated before stats
                 are printed, resuming from the previous run if possible.
                 Use "rebuild" to discard previous results and
                 recalculate all missing docs that are in Couch but not
-                SQL. Use "recheck" to re-check cached missing docs.
+                SQL. Use "cached" to use existing data from state db.
             """)
 
     def handle(self, domain, action, **options):
@@ -203,7 +200,7 @@ class Command(BaseCommand):
             raise CommandError("--stop-on-error only allowed with `MIGRATE`")
         if action != STATS and self.verbose:
             raise CommandError("--verbose only allowed for `stats`")
-        if action not in [MIGRATE, STATS] and self.missing_docs != CACHED:
+        if action not in [MIGRATE, STATS] and self.missing_docs != RESUME:
             raise CommandError(f"{action} --missing-docs not allowed")
         if action != REWIND and self.rewind:
             raise CommandError("--to=... only allowed for `rewind`")
@@ -221,8 +218,6 @@ class Command(BaseCommand):
             if status == MigrationStatus.DRY_RUN:
                 log.info("Continuing live migration. Use --finish to complete.")
                 self.live_migrate = True
-        if self.missing_docs == CACHED and (self.finish or not self.live_migrate):
-            self.missing_docs = RESUME
         set_couch_sql_migration_started(domain, self.live_migrate)
         do_couch_to_sql_migration(
             domain,

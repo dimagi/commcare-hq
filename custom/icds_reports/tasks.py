@@ -211,7 +211,7 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
         with connections[db_alias].cursor() as cursor:
             _create_aggregate_functions(cursor)
 
-        update_aggregate_locations_tables()
+        _update_aggregate_locations_tables()
 
         state_ids = list(SQLLocation.objects
                      .filter(domain=DASHBOARD_DOMAIN, location_type__name='state')
@@ -385,7 +385,7 @@ def _create_aggregate_functions(cursor):
         raise
 
 
-def update_aggregate_locations_tables(agg_date):
+def _update_aggregate_locations_tables():
     try:
         celery_task_logger.info("Starting icds reports update_location_tables")
         with transaction.atomic(using=router.db_for_write(AwcLocation)):
@@ -1608,6 +1608,8 @@ def setup_aggregation(agg_date):
         with connections[db_alias].cursor() as cursor:
             _create_aggregate_functions(cursor)
 
+        _update_aggregate_locations_tables()
+
 
 def _child_health_monthly_aggregation(day, state_ids):
     helper = ChildHealthMonthlyAggregationDistributedHelper(state_ids, force_to_date(day))
@@ -1741,14 +1743,9 @@ def get_data_not_in_ucr(status_record):
     chunk_size = 1000
     for chunk in chunked(matching_records_for_db, chunk_size):
         doc_ids = [val[0] for val in chunk]
-        doc_id_and_inserted_in_ucr = _get_docs_in_ucr(domain, status_record.table_id, doc_ids)
+        docs_in_ucr = _get_docs_in_ucr(domain, status_record.table_id, doc_ids)
         for doc_id, doc_subtype, sql_modified_on in chunk:
-            if doc_id in doc_id_and_inserted_in_ucr:
-                # This is to handle the cases which are outdated. This condition also handles the time drift of 1 sec
-                # between main db and ucr db. i.e  doc will even be included when inserted_at-sql_modified_on <= 1 sec
-                if sql_modified_on - doc_id_and_inserted_in_ucr[doc_id] >= timedelta(seconds=-1):
-                    yield (doc_id, doc_subtype, sql_modified_on.isoformat())
-            else:
+            if doc_id not in docs_in_ucr:
                 yield (doc_id, doc_subtype, sql_modified_on.isoformat())
 
 
@@ -1756,12 +1753,12 @@ def _get_docs_in_ucr(domain, table_id, doc_ids):
     table_name = get_table_name(domain, table_id)
     with connections[get_icds_ucr_citus_db_alias()].cursor() as cursor:
         query = f'''
-            SELECT doc_id, inserted_at
+            SELECT doc_id
             FROM "{table_name}"
             WHERE doc_id = ANY(%(doc_ids)s);
         '''
         cursor.execute(query, {'doc_ids': doc_ids})
-        return {row[0]: row[1] for row in cursor.fetchall()}
+        return {row[0] for row in cursor.fetchall()}
 
 
 def _get_primary_data_for_forms(db, domain, day, xmlns):

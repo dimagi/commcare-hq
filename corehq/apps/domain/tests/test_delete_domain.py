@@ -75,7 +75,7 @@ from corehq.apps.locations.models import (
 from corehq.apps.ota.models import MobileRecoveryMeasure, SerialIdBucket
 from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.reminders.models import EmailUsage
-from corehq.apps.registration.models import RegistrationRequest
+from corehq.apps.registration.models import SQLRegistrationRequest
 from corehq.apps.reports.models import ReportsSidebarOrdering
 from corehq.apps.sms.models import (
     SMS,
@@ -708,12 +708,12 @@ class TestDeleteDomain(TestCase):
 
     def _assert_registration_count(self, domain_name, count):
         self._assert_queryset_count([
-            RegistrationRequest.objects.filter(domain=domain_name),
+            SQLRegistrationRequest.objects.filter(domain=domain_name),
         ], count)
 
     def test_registration_delete(self):
         for domain_name in [self.domain.name, self.domain2.name]:
-            RegistrationRequest.objects.create(
+            SQLRegistrationRequest.objects.create(
                 domain=domain_name,
                 activation_guid=uuid.uuid4().hex,
                 request_time=datetime.utcnow(),

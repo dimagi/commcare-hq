@@ -139,22 +139,17 @@ class BaseMigrationTestCase(TestCase, TestFileMixin):
             patch_chunk_size = self.patch_migration_chunk_size(chunk_size)
         else:
             patch_chunk_size = suppress()  # until nullcontext with py3.7
-        if "missing_docs" not in options:
-            patch_find_missing_docs = mock.patch(
-                "corehq.apps.couch_sql_migration.management.commands"
-                ".migrate_domain_from_couch_to_sql.find_missing_docs"
-            )
-        else:
-            patch_find_missing_docs = suppress()
         self.assert_backend("couch", domain)
         self.migration_success = None
         options.setdefault("no_input", True)
         options.setdefault("case_diff", "local")
+        if action in [MIGRATE, STATS]:
+            options.setdefault("missing_docs", CACHED)
         assert "diff_process" not in options, options  # old/invalid option
         with mock.patch(
             "corehq.form_processor.backends.sql.dbaccessors.transaction.atomic",
             atomic_savepoint,
-        ), patch_chunk_size, patch_find_missing_docs:
+        ), patch_chunk_size:
             try:
                 call_command('migrate_domain_from_couch_to_sql', domain, action, **options)
                 success = True
@@ -230,15 +225,14 @@ class BaseMigrationTestCase(TestCase, TestFileMixin):
     def submit_form(self, xml, received_on=None, domain=None):
         # NOTE freezegun.freeze_time does not work with the blob db
         # boto3 and/or minio -> HeadBucket 403 Forbidden
-        kw = self._submit_kwargs(received_on)
-        return submit_form_locally(xml, domain or self.domain_name, **kw).xform
-
-    def _submit_kwargs(self, received_on):
+        form = submit_form_locally(xml, domain or self.domain_name).xform
         if received_on is not None:
             if isinstance(received_on, timedelta):
                 received_on = datetime.utcnow() + received_on
-            return {"received_on": received_on}
-        return {}
+            form.received_on = received_on
+            form.save()
+        log.debug("form %s received on %s", form.form_id, form.received_on)
+        return form
 
     @contextmanager
     def patch_migration_chunk_size(self, chunk_size):
@@ -275,19 +269,6 @@ class BaseMigrationTestCase(TestCase, TestFileMixin):
         path = "corehq.apps.couch_sql_migration.couchsqlmigration._iter_docs"
         with raise_context, mock.patch(path, iter_docs):
             yield
-
-    @staticmethod
-    def skip_case_and_ledger_updates(form_id):
-        def maybe_get_result(self, sql_form, couch_form):
-            if couch_form.form_id == form_id:
-                return None
-            return get_result(self, sql_form, couch_form)
-        get_result = mod.CouchSqlDomainMigrator._get_case_stock_result
-        return mock.patch.object(
-            mod.CouchSqlDomainMigrator,
-            "_get_case_stock_result",
-            maybe_get_result,
-        )
 
     @contextmanager
     def diff_without_rebuild(self):
@@ -1151,33 +1132,17 @@ class MigrationTestCase(BaseMigrationTestCase):
         with self.patch_migration_chunk_size(1), skip_forms({"test-2"}):
             self._do_migration(action=STATS, missing_docs=REBUILD)
             self._do_migration(live=True, forms="missing")
-        self.assertEqual(self._get_form_ids(), {"test-1", "test-3", "test-4"})
+        self.assertEqual(self._get_form_ids(), {"test-1", "test-3"})
 
         clear_local_domain_sql_backend_override(self.domain_name)
-        self._do_migration(action=STATS, missing_docs=REBUILD)
-        self._do_migration(forms="missing")
+        with self.patch_migration_chunk_size(1):
+            self._do_migration(action=STATS, missing_docs=REBUILD)
+            self._do_migration(live=True, forms="missing")
+        self.assertEqual(self._get_form_ids(), {"test-1", "test-2", "test-3"})
+
+        clear_local_domain_sql_backend_override(self.domain_name)
+        self._do_migration_and_assert_flags(self.domain_name)
         self.assertEqual(self._get_form_ids(), {"test-1", "test-2", "test-3", "test-4"})
-        self._compare_diffs([])
-
-    def test_migrate_partially_migrated_form_with_case(self):
-        # form      age     min     max
-        # test-1    30      0       --
-        # test-2    31      --      9
-        self.submit_form(make_test_form("test-1", age=30, min=0), timedelta(days=-90))
-        self.submit_form(make_test_form("test-2", age=31, max=9), timedelta(days=-1))
-        self.assert_backend("couch")
-        with self.skip_case_and_ledger_updates("test-1"):
-            self._do_migration(live=True)
-        self.assert_backend("sql")
-        self.assertEqual(self._get_form_ids(), {"test-1", "test-2"})
-        self.assertEqual(self._get_case_ids(), {"test-case"})
-        self._compare_diffs([
-            ('CommCareCase', Diff('missing', ['min'], old='0', new=MISSING)),
-            ('CommCareCase', Diff('set_mismatch', ['xform_ids', '[*]'], old='test-1', new='')),
-        ])
-        clear_local_domain_sql_backend_override(self.domain_name)
-        self._do_migration(forms="missing")
-        self.assertEqual(self._get_form_ids(), {"test-1", "test-2"})
         self.assertEqual(self._get_case_ids(), {"test-case"})
         self._compare_diffs([])
 
@@ -1402,21 +1367,21 @@ class LedgerMigrationTests(BaseMigrationTestCase):
             pass  # domain.delete() in parent class got there first
         super(LedgerMigrationTests, self).tearDown()
 
-    def _set_balance(self, case_id, balances, received_on=None, type=None):
+    def _submit_ledgers(self, ledger_blocks):
+        return submit_case_blocks(ledger_blocks, self.domain_name)[0].form_id
+
+    def _set_balance(self, balance, case_id, product_id, type=None):
         from corehq.apps.commtrack.tests.util import get_single_balance_block
-        ledger_blocks = [
-            get_single_balance_block(case_id, product._id, balance, type=type)
-            for product, balance in balances.items()
-        ]
-        kw = {"form_extras": self._submit_kwargs(received_on)}
-        return submit_case_blocks(ledger_blocks, self.domain_name, **kw)[0].form_id
+        return self._submit_ledgers([
+            get_single_balance_block(case_id, product_id, balance, type=type)
+        ])
 
     def test_migrate_ledgers(self):
         case_id = uuid.uuid4().hex
         create_and_save_a_case(self.domain_name, case_id=case_id, case_name="Simon's sweet shop")
-        self._set_balance(case_id, {self.liquorice: 100}, type="set_the_liquorice_balance")
-        self._set_balance(case_id, {self.sherbert: 50})
-        self._set_balance(case_id, {self.jelly_babies: 175})
+        self._set_balance(100, case_id, self.liquorice._id, type="set_the_liquorice_balance")
+        self._set_balance(50, case_id, self.sherbert._id)
+        self._set_balance(175, case_id, self.jelly_babies._id)
 
         expected_stock_state = {'stock': {
             self.liquorice._id: 100,
@@ -1430,63 +1395,6 @@ class LedgerMigrationTests(BaseMigrationTestCase):
         transactions = LedgerAccessorSQL.get_ledger_transactions_for_case(case_id)
         self.assertEqual(3, len(transactions))
 
-        self._compare_diffs([])
-
-    def test_migrate_partially_migrated_form1_with_ledger(self):
-        self.submit_form(TEST_FORM, timedelta(days=-5))  # create test-case
-        form1 = self._set_balance("test-case", {
-            self.liquorice: 50,
-            self.sherbert: 100,
-        }, timedelta(days=-3))
-        form2 = self._set_balance("test-case", {self.liquorice: 75}, timedelta(days=-1))
-        print("ledger forms:", form1, form2)
-        with self.skip_case_and_ledger_updates(form1):
-            self._do_migration(live=True)
-        self.fix_missing_ledger_diffs(form1, form2, [
-            ("CommCareCase", Diff("set_mismatch", ["xform_ids", "[*]"], old=form1, new="")),
-            ("stock state", Diff("missing", ["*"],
-                old={'form_state': 'present', 'ledger': {
-                    '_id': ANY,
-                    'entry_id': self.sherbert._id,
-                    'location_id': None,
-                    'balance': 100,
-                    'last_modified': ANY,
-                    'domain': self.domain_name,
-                    'section_id': 'stock',
-                    'case_id': 'test-case',
-                    'daily_consumption': None,
-                    'last_modified_form_id': form1,
-                }},
-                new={'form_state': 'present'},
-            )),
-        ])
-
-    def test_migrate_partially_migrated_form2_with_ledger(self):
-        self.submit_form(TEST_FORM, timedelta(days=-5))  # create test-case
-        form1 = self._set_balance("test-case", {
-            self.liquorice: 50,
-            self.sherbert: 100,
-        }, timedelta(days=-3))
-        form2 = self._set_balance("test-case", {self.liquorice: 75}, timedelta(days=-1))
-        print("ledger forms:", form1, form2)
-        with self.skip_case_and_ledger_updates(form2):
-            self._do_migration(live=True)
-        self.fix_missing_ledger_diffs(form1, form2, [
-            ("CommCareCase", Diff("set_mismatch", ["xform_ids", "[*]"], old=form2, new="")),
-            ("stock state", Diff("diff", ["balance"], old=75, new=50)),
-            ('stock state', Diff('diff', ['last_modified'])),
-            ('stock state', Diff('diff', ['last_modified_form_id'], old=form2, new=form1)),
-        ])
-
-    def fix_missing_ledger_diffs(self, form1, form2, diffs):
-        self.assert_backend("sql")
-        self.assertEqual(self._get_form_ids(), {'test-form', form1, form2})
-        self.assertEqual(self._get_case_ids(), {"test-case"})
-        self._compare_diffs(diffs)
-        clear_local_domain_sql_backend_override(self.domain_name)
-        self._do_migration(forms="missing")
-        self.assertEqual(self._get_form_ids(), {'test-form', form1, form2})
-        self.assertEqual(self._get_case_ids(), {"test-case"})
         self._compare_diffs([])
 
     def _validate_ledger_data(self, state_dict, expected):
@@ -1591,34 +1499,21 @@ def create_form_with_extra_xml_blob_metadata(domain_name):
 
 @nottest
 def make_test_form(form_id, **data):
-    def update(form, pairs, ns=""):
-        old = f"<{ns}age>27</{ns}age>"
-        new = "".join(
-            f"<{ns}{key}>{value}</{ns}{key}>"
-            for key, value in pairs.items()
-            if value is not None
-        )
-        assert form.count(old) == 1, (old, form.count(old))
-        return form.replace(old, new)
     fields = {
+        "age": (27, ">{}<", 2),
         "case_id": ("test-case", '"{}"', 1),
         "case_name": ("Xeenax", ">{}<", 2),
         "date": ("2015-08-04T18:25:56.656Z", "{}", 2),
     }
     form = TEST_FORM
-    updates = {}
     for name, value in data.items():
         if name not in fields:
-            updates[name] = value
-            continue
+            raise ValueError(f"unknown field: {name}")
         default_value, template, occurs = fields[name]
         old = template.format(default_value)
         new = template.format(value)
         assert form.count(old) == occurs, (name, old, new, occurs)
         form = form.replace(old, new)
-    if updates:
-        form = update(form, updates)
-        form = update(form, updates, "n0:")
     return form.replace(">test-form<", f">{form_id}<")
 
 
@@ -1638,7 +1533,7 @@ def atomic_savepoint(*args, **kw):
 _real_atomic = transaction.atomic
 
 
-@attr.s(cmp=False, repr=False)
+@attr.s(cmp=False)
 class Diff:
 
     type = attr.ib(default=ANY)
@@ -1655,12 +1550,6 @@ class Diff:
                 and self.new == other.new_value
             )
         return NotImplemented
-
-    def __repr__(self):
-        return (
-            f"FormJsonDiff(diff_type={self.type!r}, path={self.path!r}, "
-            f"old_value={self.old!r}, new_value={self.new!r})"
-        )
 
     __hash__ = None
 

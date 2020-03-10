@@ -54,16 +54,6 @@ class AgeAtDeathRangeResidentSpec(SumWhenTemplateSpec):
     expression = "sex = ? AND resident = 1 AND date_death - dob BETWEEN ? AND ?"
 
 
-class CCSPhaseNullTemplateSpec(SumWhenTemplateSpec):
-    type = TypeProperty("ccs_phase_null")
-    expression = "ccs_phase IS NULL"
-
-
-class CCSPhaseTemplateSpec(SumWhenTemplateSpec):
-    type = TypeProperty("ccs_phase")
-    expression = "ccs_phase = ?"
-
-
 class ClosedOnNullTemplateSpec(SumWhenTemplateSpec):
     type = TypeProperty("closed_on_null")
     expression = "closed_on IS NULL"

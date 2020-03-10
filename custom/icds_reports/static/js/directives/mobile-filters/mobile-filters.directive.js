@@ -2,9 +2,6 @@ function MobileFiltersController($scope) {
     const MONTH = 'month';
     const LOCATION = 'location';
     $scope.selectedTab = LOCATION;
-    if ($scope.$ctrl && $scope.$ctrl.selectSddDate) {
-        $scope.selectedTab = MONTH;
-    }
     $scope.filterData = {};
     var vm = this;
     vm.showGenderFilter = false;
@@ -70,7 +67,6 @@ window.angular.module('icdsApp').directive("mobileFilters", ['templateProviderSe
             selectedLocations: '=',
             selectAwc: '=?',
             filters: '=',
-            selectSddDate: '=?',
         },
         bindToController: true,
         templateUrl: function () {

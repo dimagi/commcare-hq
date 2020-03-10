@@ -17,7 +17,6 @@ from corehq.apps.app_manager.suite_xml.xml_models import (
     Header,
     Locale,
     SessionDatum,
-    Sort,
     Template,
     Text,
     Xpath,
@@ -423,9 +422,7 @@ def _get_data_detail(config, domain, new_mobile_ucr_restore):
     if toggles.ADD_ROW_INDEX_TO_MOBILE_UCRS.enabled(domain):
         fields = [Field(
             header=Header(text=Text(), width=0,),
-            template=Template(text=Text(), width=0,),
-            sort_node=Sort(type='int', direction='ascending', order='1',
-                           text=Text(xpath=get_xpath("row_index")),)
+            template=Template(text=Text(xpath=get_xpath("row_index"),), width=0,),
         )]
     else:
         fields = []

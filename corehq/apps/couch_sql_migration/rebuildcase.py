@@ -6,6 +6,7 @@ from dimagi.utils.couch import acquire_lock, release_lock
 from dimagi.ext.jsonobject import DictProperty, StringProperty
 
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
+from corehq.form_processor.change_publishers import publish_case_saved
 from corehq.form_processor.models import CommCareCaseSQL
 from corehq.form_processor.backends.sql.processor import FormProcessorSQL
 from corehq.form_processor.models import RebuildWithReason
@@ -41,6 +42,7 @@ def rebuild_and_diff_cases(sql_case, couch_case, original_couch_case, diff, dd_c
         if not diffs:
             # save case only if rebuild resolves diffs
             CaseAccessorSQL.save_case(new_case)
+            publish_case_saved(new_case)
     finally:
         release_lock(lock, degrade_gracefully=True)
     return sql_json, diffs

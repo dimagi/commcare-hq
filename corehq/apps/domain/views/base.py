@@ -14,7 +14,7 @@ from corehq.apps.domain.decorators import (
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.utils import normalize_domain_name
 from corehq.apps.hqwebapp.views import BaseSectionPageView
-from corehq.apps.users.models import SQLInvitation
+from corehq.apps.users.models import Invitation
 
 
 # Domain not required here - we could be selecting it for the first time. See notes domain.decorators
@@ -23,10 +23,12 @@ from corehq.apps.users.models import SQLInvitation
 def select(request, domain_select_template='domain/select.html', do_not_redirect=False):
     domains_for_user = Domain.active_for_user(request.user)
     if not domains_for_user:
+        from corehq.apps.registration.views import track_domainless_new_user
+        track_domainless_new_user(request)
         return redirect('registration_domain')
 
     email = request.couch_user.get_email()
-    open_invitations = [e for e in SQLInvitation.by_email(email) if not e.is_expired]
+    open_invitations = [e for e in Invitation.by_email(email) if not e.is_expired]
 
     additional_context = {
         'domains_for_user': domains_for_user,

@@ -4,7 +4,7 @@ import mock
 from custom.champ.tests.utils import ChampTestCase
 from custom.champ.views import PrevisionVsAchievementsView
 
-from django.urls import reverse
+from django.core.urlresolvers import reverse
 
 
 class TestPVAChart(ChampTestCase):

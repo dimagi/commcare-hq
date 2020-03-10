@@ -44,7 +44,7 @@ module.exports = {
         "curly": ["error"],
         "eqeqeq": ["error"],
         "func-call-spacing": ["error"],
-        "indent": ["warn", 4, {"SwitchCase":1, "FunctionDeclaration": {"parameters": "first"}}],
+        "indent": ["warn", 4, {"SwitchCase":1}],
         "linebreak-style": ["error", "unix"],
         "key-spacing": ["error"],
         "keyword-spacing": ["error"],

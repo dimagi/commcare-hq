@@ -1774,6 +1774,14 @@ SHOW_BUILD_PROFILE_IN_APPLICATION_STATUS = StaticToggle(
 )
 
 
+USE_NEW_GET_COLUMN = StaticToggle(
+    'use_new_get_column',
+    'Uses the new get_column method when loading edit exports '
+    '(strictly for QA right now).',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN],
+)
+
 LIVEQUERY_READ_FROM_STANDBYS = DynamicallyPredictablyRandomToggle(
     'livequery_read_from_standbys',
     'Allow livequery restore to read data from plproxy standbys if they are available',

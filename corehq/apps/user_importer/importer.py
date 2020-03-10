@@ -30,8 +30,7 @@ required_headers = set(['username'])
 allowed_headers = set([
     'data', 'email', 'group', 'language', 'name', 'password', 'phone-number',
     'uncategorized_data', 'user_id', 'is_active', 'location_code', 'role',
-    'User IMEIs (read only)', 'registered_on (read only)', 'last_submission (read only)',
-    'last_sync (read only)'
+    'User IMEIs (read only)', 'registered_on (read only)',
 ]) | required_headers
 old_headers = {
     # 'old_header_name': 'new_header_name'

@@ -10,8 +10,8 @@ class Command(PopulateSQLCommand):
 
     @classmethod
     def sql_class(self):
-        from corehq.apps.registration.models import RegistrationRequest
-        return RegistrationRequest
+        from corehq.apps.registration.models import SQLRegistrationRequest
+        return SQLRegistrationRequest
 
     @classmethod
     def commit_adding_migration(cls):

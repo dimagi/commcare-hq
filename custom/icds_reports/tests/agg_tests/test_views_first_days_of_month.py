@@ -1,6 +1,6 @@
 from django.test.testcases import TestCase
 from django.test.client import RequestFactory
-from django.urls import reverse
+from django.core.urlresolvers import reverse
 
 import json
 import mock

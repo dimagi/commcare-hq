@@ -22,6 +22,7 @@ from couchdbkit import (
 from memoized import memoized
 
 from casexml.apps.case.const import DEFAULT_CASE_INDEX_IDENTIFIERS
+from corehq.toggles import USE_NEW_GET_COLUMN
 from couchexport.models import Format
 from couchexport.transforms import couch_to_excel_datetime
 from dimagi.ext.couchdbkit import (
@@ -554,10 +555,13 @@ class TableConfiguration(DocumentSchema):
                 ))
         return rows
 
-    def get_column(self, item_path, item_doc_type, column_transform):
+    def get_column_new(self, item_path, item_doc_type, column_transform):
         """
         Given a path and transform, will return the column and its index. If not found, will
         return None, None.
+
+        NOTE: This method is in QA for accuracy to test against get_column
+        as a more efficient replacement.
 
         :param item_path: A list of path nodes that identify a column
         :param item_doc_type: The doc type of the item (often just ExportItem). If getting
@@ -565,11 +569,7 @@ class TableConfiguration(DocumentSchema):
         :param column_transform: A transform that is applied on the column
         :returns index, column: The index of the column in the list and an ExportColumn
         """
-
-        def _create_index(_path, _transform):
-            return f'{_path_nodes_to_string(_path)} t.{_transform}'
-
-        string_item_path = _create_index(item_path, column_transform)
+        string_item_path = _path_nodes_to_string(item_path)
 
         # Previously we iterated over self.columns with each call to return the
         # index. Now we do an index lookup on the string-ified path names for
@@ -578,25 +578,16 @@ class TableConfiguration(DocumentSchema):
         if (not hasattr(self, '_string_column_paths')
                 or len(self._string_column_paths) != len(self.columns)):
             self._string_column_paths = [
-                _create_index(column.item.path, column.item.transform)
-                for column in self.columns
+                _path_nodes_to_string(column.item.path) for column in
+                self.columns
             ]
 
         try:
             index = self._string_column_paths.index(string_item_path)
-            column = self.columns[index]
-            # on rare occasions, the paths may not match,
-            # and it's a sign to regenerate the cache
-            if column.item.path != item_path:
-                self._string_column_paths = [
-                    _create_index(column.item.path, column.item.transform)
-                    for column in self.columns
-                ]
-                index = self._string_column_paths.index(string_item_path)
-                column = self.columns[index]
         except ValueError:
             return None, None
 
+        column = self.columns[index]
         if (column.item.path == item_path
                 and column.item.transform == column_transform
                 and column.item.doc_type == item_doc_type):
@@ -606,6 +597,29 @@ class TableConfiguration(DocumentSchema):
                 and column.custom_path == item_path
                 and item_doc_type is None):
             return index, column
+        return None, None
+
+    def get_column(self, item_path, item_doc_type, column_transform):
+        """
+        Given a path and transform, will return the column and its index. If not found, will
+        return None, None
+
+        :param item_path: A list of path nodes that identify a column
+        :param item_doc_type: The doc type of the item (often just ExportItem). If getting
+                UserDefinedExportColumn, set this to None
+        :param column_transform: A transform that is applied on the column
+        :returns index, column: The index of the column in the list and an ExportColumn
+        """
+        for index, column in enumerate(self.columns):
+            if (column.item.path == item_path and
+                    column.item.transform == column_transform and
+                    column.item.doc_type == item_doc_type):
+                return index, column
+            # No item doc type searches for a UserDefinedExportColumn
+            elif (isinstance(column, UserDefinedExportColumn) and
+                    column.custom_path == item_path and
+                    item_doc_type is None):
+                return index, column
         return None, None
 
     @memoized
@@ -854,10 +868,17 @@ class ExportInstance(BlobMixin, Document):
             ) and not group_schema.inferred
 
             prev_index = 0
+            use_get_column_new = (hasattr(instance, 'domain')
+                                  and USE_NEW_GET_COLUMN.enabled(instance.domain))
             for item in group_schema.items:
-                index, column = table.get_column(
-                    item.path, item.doc_type, None
-                )
+                if use_get_column_new:
+                    index, column = table.get_column_new(
+                        item.path, item.doc_type, None
+                    )
+                else:
+                    index, column = table.get_column(
+                        item.path, item.doc_type, None
+                    )
                 if not column:
                     column = ExportColumn.create_default_from_export_item(
                         table.path,
@@ -976,12 +997,20 @@ class ExportInstance(BlobMixin, Document):
         insert_fn = self._get_insert_fn(table, top)
 
         domain = column_initialization_data.get('domain')
+        use_get_column_new = domain and USE_NEW_GET_COLUMN.enabled(domain)
         for static_column in properties:
-            index, existing_column = table.get_column(
-                static_column.item.path,
-                static_column.item.doc_type,
-                static_column.item.transform,
-            )
+            if use_get_column_new:
+                index, existing_column = table.get_column_new(
+                    static_column.item.path,
+                    static_column.item.doc_type,
+                    static_column.item.transform,
+                )
+            else:
+                index, existing_column = table.get_column(
+                    static_column.item.path,
+                    static_column.item.doc_type,
+                    static_column.item.transform,
+                )
             column = (existing_column or static_column)
             if isinstance(column, RowNumberColumn):
                 column.update_nested_repeat_count(column_initialization_data.get('repeat'))

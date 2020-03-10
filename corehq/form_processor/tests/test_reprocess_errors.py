@@ -3,11 +3,13 @@ import uuid
 
 from django.db.utils import IntegrityError, InternalError
 from django.test import TestCase, TransactionTestCase
-from mock import patch
 
 from casexml.apps.case.mock import CaseBlock, CaseFactory, CaseStructure
 from casexml.apps.case.signals import case_post_save
 from casexml.apps.case.util import post_case_blocks
+from couchforms.models import UnfinishedSubmissionStub
+from couchforms.signals import successful_form_received
+
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.receiverwrapper.util import submit_form_locally
@@ -29,8 +31,7 @@ from corehq.form_processor.tests.utils import (
 )
 from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.util.context_managers import catch_signal
-from couchforms.models import UnfinishedSubmissionStub
-from couchforms.signals import successful_form_received
+from mock import patch
 
 
 class ReprocessXFormErrorsTest(TestCase):
@@ -519,40 +520,6 @@ class TestTransactionErrors(TransactionTestCase):
         form = FormAccessorSQL.get_form(error_form_id)
         self.assertTrue(form.is_error)
         self.assertIsNotNone(form.get_xml())
-
-    def test_error_reprocessing_ledgers_after_borked_save(self):
-        from corehq.apps.commtrack.tests.util import get_single_balance_block
-        form_id, case_id, product_id = uuid.uuid4().hex, uuid.uuid4().hex, uuid.uuid4().hex
-
-        # setup by creating the case
-        submit_case_blocks([CaseBlock(case_id=case_id, create=True).as_text()], self.domain)
-
-        # submit a form that updates the case and ledger
-        submit_case_blocks(
-            [
-                CaseBlock(case_id=case_id, update={'a': "1"}).as_text(),
-                get_single_balance_block(case_id, product_id, 100),
-            ],
-            self.domain,
-            form_id=form_id
-        )
-
-        # simulate an error by deleting the form XML
-        form = FormAccessorSQL.get_form(form_id)
-        form.get_attachment_meta('form.xml').delete()
-
-        # re-submit the form again
-        submit_case_blocks(
-            [
-                CaseBlock(case_id=case_id, update={'a': "1"}).as_text(),
-                get_single_balance_block(case_id, product_id, 100),
-            ],
-            self.domain,
-            form_id=form_id
-        )
-
-        form = FormAccessorSQL.get_form(form_id)
-        self.assertTrue(form.is_normal)
 
 
 @contextlib.contextmanager
