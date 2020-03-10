@@ -188,7 +188,7 @@ FROM
           "awc_location_local" ucr 
         WHERE 
           ucr.awc_is_test = 0
-          AND aggregation_level = 4
+          AND aggregation_level = 5
       ) tt ON tt.doc_id = agg_child.awc_id 
     GROUP BY 
       state_id, 
@@ -241,7 +241,7 @@ FROM
           "awc_location_local" ucr
         WHERE 
           ucr.supervisor_is_test = 0
-          AND aggregation_level = 3
+          AND aggregation_level = 4
       ) tt ON tt.supervisor_id = agg_child.supervisor_id 
     GROUP BY 
       state_id, 
@@ -293,7 +293,7 @@ FROM
           "awc_location_local" ucr 
         WHERE 
           ucr.block_is_test = 0
-          AND aggregation_level = 2
+          AND aggregation_level = 3
       ) tt ON tt.block_id = agg_child.block_id 
     GROUP BY 
       state_id, 
@@ -344,7 +344,7 @@ FROM
           "awc_location_local" ucr 
         WHERE 
           ucr.district_is_test = 0
-          AND aggregation_level = 1
+          AND aggregation_level = 2
       ) tt ON tt.district_id = agg_child.district_id 
     GROUP BY 
       state_id, 
