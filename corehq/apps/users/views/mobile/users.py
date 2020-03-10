@@ -1142,16 +1142,8 @@ class UsernameUploadMixin(object):
             Get username list from Excel supplied in request.FILES.
             Adds any errors to request.messages.
         """
-        try:
-            workbook = get_workbook(request.FILES.get('bulk_upload_file'))
-        except WorkbookJSONError as e:
-            messages.error(request, str(e))
-            return None
-
-        try:
-            sheet = workbook.get_worksheet()
-        except WorksheetNotFound:
-            messages.error(request, _("Workbook has no worksheets"))
+        sheet = self._get_sheet(request)
+        if not sheet:
             return None
 
         try:
@@ -1165,6 +1157,21 @@ class UsernameUploadMixin(object):
             return None
 
         return usernames
+
+    def _get_sheet(self, request):
+        try:
+            workbook = get_workbook(request.FILES.get('bulk_upload_file'))
+        except WorkbookJSONError as e:
+            messages.error(request, str(e))
+            return None
+
+        try:
+            sheet = workbook.get_worksheet()
+        except WorksheetNotFound:
+            messages.error(request, _("Workbook has no worksheets"))
+            return None
+
+        return sheet
 
 
 class DeleteCommCareUsers(BaseManageCommCareUserView, UsernameUploadMixin):
