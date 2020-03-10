@@ -3584,7 +3584,7 @@ class ConditionalAlertForm(Form):
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 _("Basic Information"),
-                crispy.Field('name', data_bind="value: name, valueUpdate: 'afterkeydown'"),
+                crispy.Field('name', data_bind="textInput: name"),
             ),
         )
 
