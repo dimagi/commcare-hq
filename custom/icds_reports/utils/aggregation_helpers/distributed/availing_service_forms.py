@@ -58,25 +58,25 @@ class AvailingServiceFormsAggregationDistributedHelper(StateBasedAggregationDist
 
         return """
         INSERT INTO "{tablename}" (
-	      state_id, supervisor_id, awc_id, month, person_case_id, is_registered
-	    ) (
-	      SELECT
-	        %(state_id)s AS state_id,
-	        COALESCE(ucr.supervisor_id, prev_month.supervisor_id) AS supervisor_id,
-	        COALESCE(ucr.awc_id, prev_month.awc_id) AS awc_id,
-	        %(month)s::DATE AS month,
-	        COALESCE(ucr.person_case_id, prev_month.person_case_id) AS person_case_id,
-	        COALESCE(ucr.is_registered, prev_month.is_registered) as is_migrated
-	      FROM ({ucr_table_query}) ucr
-	      FULL OUTER JOIN (
-	         SELECT * FROM "{tablename}" WHERE month = %(previous_month)s AND state_id = %(state_id)s
-	         ) prev_month
-	        ON ucr.person_case_id = prev_month.person_case_id AND ucr.supervisor_id = prev_month.supervisor_id
-	        WHERE coalesce(ucr.month, %(month)s) = %(month)s
-	            AND coalesce(prev_month.month, %(previous_month)s) = %(previous_month)s
-	            AND coalesce(prev_month.state_id, %(state_id)s) = %(state_id)s
-	    )
-	    """.format(
+          state_id, supervisor_id, awc_id, month, person_case_id, is_registered
+        ) (
+          SELECT
+            %(state_id)s AS state_id,
+            COALESCE(ucr.supervisor_id, prev_month.supervisor_id) AS supervisor_id,
+            COALESCE(ucr.awc_id, prev_month.awc_id) AS awc_id,
+            %(month)s::DATE AS month,
+            COALESCE(ucr.person_case_id, prev_month.person_case_id) AS person_case_id,
+            COALESCE(ucr.is_registered, prev_month.is_registered) as is_migrated
+          FROM ({ucr_table_query}) ucr
+          FULL OUTER JOIN (
+             SELECT * FROM "{tablename}" WHERE month = %(previous_month)s AND state_id = %(state_id)s
+             ) prev_month
+            ON ucr.person_case_id = prev_month.person_case_id AND ucr.supervisor_id = prev_month.supervisor_id
+            WHERE coalesce(ucr.month, %(month)s) = %(month)s
+                AND coalesce(prev_month.month, %(previous_month)s) = %(previous_month)s
+                AND coalesce(prev_month.state_id, %(state_id)s) = %(state_id)s
+        )
+        """.format(
             ucr_tablename=self.ucr_tablename,
             tablename=self.aggregate_parent_table,
             ucr_table_query=ucr_query
