@@ -171,7 +171,7 @@ class Command(BaseCommand):
             """)
 
     def handle(self, domain, action, **options):
-        if should_use_sql_backend(domain):
+        if action != STATS and should_use_sql_backend(domain):
             raise CommandError('It looks like {} has already been migrated.'.format(domain))
 
         for opt in [
