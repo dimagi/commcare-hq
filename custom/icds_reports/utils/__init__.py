@@ -1733,7 +1733,6 @@ def phone_number_function(x):
 
 
 def filter_cas_data_export(export_file, location):
-    loc_type = location.location_type.name
     with TransientTempfile() as path:
         with open(path, 'wb') as temp_file:
             temp_file.write(export_file.get_file_from_blobdb().read())
@@ -1744,12 +1743,12 @@ def filter_cas_data_export(export_file, location):
             writer = csv.writer(csv_file)
             headers = next(reader)
             for i, header in enumerate(headers):
-                if header == f'{loc_type}_name':
-                    index = i
+                if header == f'{location.location_type.name}_name':
+                    index_of_location_type_name_column = i
                     break
             writer.writerow(headers)
             for row in reader:
-                if row[index] == location.name:
+                if row[index_of_location_type_name_column] == location.name:
                     writer.writerow(row)
         return export_file_path
 

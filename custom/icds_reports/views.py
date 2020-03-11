@@ -2072,11 +2072,11 @@ class CasDataExport(View):
         ):
             return JsonResponse({"message": "Sorry, you do not have access to that location."})
 
-        location = SQLLocation.objects.get(location_id=location_id)
+        location = SQLLocation.objects.get(location_id=location_id).select_related('location_type')
         state = location
         while not state.location_type.name == 'state':
             state = state.parent
-        sync, _ = get_cas_data_blob_file(data_type, state.location_id, selected_date)
+        sync, blob_id = get_cas_data_blob_file(data_type, state.location_id, selected_date)
         if not sync:
             return JsonResponse({"message": "Sorry, the export you requested does not exist."})
         else:

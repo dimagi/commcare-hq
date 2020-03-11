@@ -4,10 +4,11 @@ window.angular.module('icdsApp').factory('locationsService', ['$http', '$locatio
     var ALL_OPTION =  {
         name: 'All',
         location_id: 'all',
-        "user_have_access": 0,
-        "user_have_access_to_parent": 1,
+        user_have_access: 0,
+        user_have_access_to_parent: 1,
     };
     var NATIONAL_OPTION = {name: 'National', location_id: 'all'};
+    var sector_level = 4;
 
     function transformLocationTypeName(locationTypeName) {
         if (locationTypeName === 'awc') {
@@ -124,7 +125,7 @@ window.angular.module('icdsApp').factory('locationsService', ['$http', '$locatio
         locationTypeIsVisible: function (selectedLocations, level) {
             // whether a location type is visible (should be selectable) from locations service
             // hard code reports that disallow drilling past a certain level
-            if (($location.path().indexOf('lady_supervisor') !== -1 || $location.path().indexOf('service_delivery_dashboard') !== -1) && level === 4) {
+            if (($location.path().indexOf('lady_supervisor') !== -1 || $location.path().indexOf('service_delivery_dashboard') !== -1) && level === sector_level) {
                 return false;
             }
             // otherwise
@@ -183,13 +184,13 @@ window.angular.module('icdsApp').factory('locationsService', ['$http', '$locatio
 
                     var selectedLocation = data.selected_location;
 
-                    var locationsGrouppedByParent = _.groupBy(locations, function(location) {
+                    var locationsGroupedByParent = _.groupBy(locations, function(location) {
                         return location.parent_id || 'root';
                     });
 
-                    for (var parentId in locationsGrouppedByParent) {
-                        if (locationsGrouppedByParent.hasOwnProperty(parentId)) {
-                            var sortedLocations = _.sortBy(locationsGrouppedByParent[parentId], function (o) {
+                    for (var parentId in locationsGroupedByParent) {
+                        if (locationsGroupedByParent.hasOwnProperty(parentId)) {
+                            var sortedLocations = _.sortBy(locationsGroupedByParent[parentId], function (o) {
                                 return o.name;
                             });
                             if (vm.preventShowingAllOption(sortedLocations)) {
@@ -239,7 +240,7 @@ window.angular.module('icdsApp').factory('locationsService', ['$http', '$locatio
 
         onSelectLocation : function(item, level, locationsCache, vm) {
             this.resetLevelsBelow(level, vm);
-            if (level < 4) {
+            if (level < sector_level) {
                 vm.locationPromise = this.getChildren(item.location_id).then(function (data) {
                     if (item.user_have_access) {
                         locationsCache[item.location_id] = [ALL_OPTION].concat(data.locations);
@@ -280,14 +281,14 @@ window.angular.module('icdsApp').factory('locationsService', ['$http', '$locatio
             if (vm.userLocationId === null) {
                 return false;
             }
-            var notDisabledLocationsForLevel = 0;
+            var enabledLocationsForLevel = 0;
             window.angular.forEach(vm.getLocationsForLevel(level), function(location) {
                 if (location.user_have_access || location.user_have_access_to_parent) {
-                    notDisabledLocationsForLevel += 1;
+                    enabledLocationsForLevel += 1;
                 }
             });
 
-            return notDisabledLocationsForLevel <= 1;
+            return enabledLocationsForLevel <= 1;
         },
 
         selectedLocationIndex : function(selectedLocations) {
