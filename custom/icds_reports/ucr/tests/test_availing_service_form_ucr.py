@@ -14,10 +14,10 @@ class TestAvailingServiceForms(BaseFormsTest):
 
     def test_availing_service_form(self):
         self._test_data_source_results(
-            'migration_form_v31895',
+            'availing_service_form_v32409',
             [{
                 "doc_id": None,
                 "timeend": None,
-                "is_migrated": 1,
+                "is_registered": 1,
                 "person_case_id": "5e4447eb-6ec3-40d9-9c8d-9ca775dfc0bc"
             }])
