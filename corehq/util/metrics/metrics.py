@@ -134,6 +134,8 @@ class DummyMetrics(HqMetrics):
 
 
 class DelegatedMetrics:
+    """This class makes the metric class instantiation lazy and
+    also multiple metrics providers to be used."""
     def __init__(self, delegates):
         self.delegates = delegates
         self._types = {

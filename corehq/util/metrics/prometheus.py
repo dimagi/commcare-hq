@@ -50,6 +50,7 @@ class Histogram(PrometheusMetricBase, HqHistogram):
     https://prometheus.io/docs/concepts/metric_types/#histogram
     """
     def _init_metric(self):
+        """Overriding this so that we can pass in the buckets to the Prometheus class"""
         HqHistogram._init_metric(self)  # skip _init_metric on PrometheusMetricBase
         self.name = self.name.replace('.', '_')
         self._delegate = self._kwargs.get('delegate')
