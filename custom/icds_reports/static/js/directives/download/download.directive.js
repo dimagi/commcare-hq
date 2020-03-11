@@ -436,6 +436,12 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
             });
         }
 
+        if (vm.isTakeHomeRationReportSelected()) {
+            vm.years = _.filter(vm.yearsCopy, function (y) {
+                return y.id >= 2019;
+            });
+        }
+
         if (year.id === 2019 && vm.isTakeHomeRationReportSelected()) {
             var currentMonth = latest.getMonth() + 1;
             var currentYear = latest.getFullYear();
@@ -515,9 +521,6 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
             if (vm.isTakeHomeRationReportSelected()) {
                 var currentYear  = new Date().getFullYear();
                 vm.selectedYear = vm.selectedYear >= 2019 ? vm.selectedYear : currentYear;
-                vm.years = _.filter(vm.yearsCopy, function (y) {
-                    return y.id >= 2019;
-                });
                 resetLevelsBelow(3);
             } else if (vm.isSDRSelected()) {
                 if (vm.selectedYear < 2020) {

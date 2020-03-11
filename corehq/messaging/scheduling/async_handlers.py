@@ -84,23 +84,12 @@ class MessagingRecipientHandler(BaseAsyncHandler):
         return self._get_user_organization_response()
 
     def _get_user_organization_response(self, case_sharing_only=False):
-        domain = self.request.domain
-        query = self.data.get('searchString')
-        result = (
-            SQLLocation
-            .active_objects
-            .filter(domain=domain, name__icontains=query)
-            .order_by('name')
-            .values_list('location_id', 'name')
-        )
-
-        if case_sharing_only:
-            result = result.filter(location_type__shares_cases=True)
-
-        return [
-            {'id': row[0], 'text': row[1]}
-            for row in result[:10]
-        ]
+        from corehq.apps.locations.views import LocationOptionsController
+        controller = LocationOptionsController(self.request, self.request.domain,
+                                               self.data.get('searchString'),
+                                               case_sharing_only=case_sharing_only)
+        (count, results) = controller.get_options()
+        return results[:10]
 
     @property
     def schedule_location_types_response(self):
