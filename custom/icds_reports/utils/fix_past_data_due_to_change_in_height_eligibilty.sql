@@ -91,7 +91,8 @@ FROM
 WHERE 
   chm.month = '2018-05-01' 
 GROUP BY 
-  chm.awc_id, 
+  chm.awc_id,
+  chm.supervisor_id,
   chm.month, 
   chm.sex, 
   chm.age_tranche, 
@@ -136,9 +137,7 @@ UPDATE "agg_child_health_2018-05-01_5" agg_child_health
     stunting_normal = ut.stunting_normal,
     height_measured_in_month = ut.height_measured_in_month,
     weighed_and_height_measured_in_month = ut.weighed_and_height_measured_in_month
-  FROM (
-    SELECT * FROM temp_agg_child_my
-  ) ut
+  FROM temp_agg_child_my AS ut
   WHERE (
     agg_child_health.awc_id=ut.awc_id and 
     agg_child_health.month=ut.month and
@@ -206,7 +205,7 @@ WHERE
 
 
 UPDATE 
-  "agg_child_health_2019-01-01_3" agg_child_health 
+  "agg_child_health_2018-05-01_3" agg_child_health 
 SET 
   wasting_moderate = ut.wasting_moderate, 
   wasting_severe = ut.wasting_severe, 
@@ -233,7 +232,7 @@ FROM
         weighed_and_height_measured_in_month
       ) as weighed_and_height_measured_in_month 
     FROM 
-      "agg_child_health_2019-01-01_4" agg_child 
+      "agg_child_health_2018-05-01_4" agg_child 
       INNER JOIN (
         SELECT 
           DISTINCT ucr.supervisor_id 
@@ -258,7 +257,7 @@ WHERE
 
 
 UPDATE 
-  "agg_child_health_2019-01-01_2" agg_child_health 
+  "agg_child_health_2018-05-01_2" agg_child_health 
 SET 
   wasting_moderate = ut.wasting_moderate, 
   wasting_severe = ut.wasting_severe, 
@@ -285,7 +284,7 @@ FROM
         weighed_and_height_measured_in_month
       ) as weighed_and_height_measured_in_month 
     FROM 
-      "agg_child_health_2019-01-01_3" agg_child 
+      "agg_child_health_2018-05-01_3" agg_child 
       INNER JOIN (
         SELECT 
           DISTINCT ucr.supervisor_id 
@@ -309,7 +308,7 @@ WHERE
 
 
 UPDATE 
-  "agg_child_health_2019-01-01_1" agg_child_health 
+  "agg_child_health_2018-05-01_1" agg_child_health 
 SET 
   wasting_moderate = ut.wasting_moderate, 
   wasting_severe = ut.wasting_severe, 
@@ -336,7 +335,7 @@ FROM
         weighed_and_height_measured_in_month
       ) as weighed_and_height_measured_in_month 
     FROM 
-      "agg_child_health_2019-01-01_2" agg_child 
+      "agg_child_health_2018-05-01_2" agg_child 
       INNER JOIN (
         SELECT 
           DISTINCT ucr.district_id 
