@@ -66,6 +66,7 @@ class.
 import re
 import warnings
 from datetime import datetime, timedelta
+from typing import Optional
 from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
 from django.utils.translation import ugettext_lazy as _
@@ -109,6 +110,7 @@ from corehq.motech.repeaters.repeater_generators import (
     ShortFormRepeaterJsonPayloadGenerator,
     UserPayloadGenerator,
 )
+from corehq.motech.requests import Requests
 from corehq.motech.utils import b64_aes_decrypt
 from corehq.util.datadog.gauges import datadog_counter
 from corehq.util.datadog.metrics import (
@@ -908,6 +910,26 @@ def _is_response(duck):
     instance that this module uses, otherwise False.
     """
     return hasattr(duck, 'status_code') and hasattr(duck, 'reason')
+
+
+def get_requests(
+    repeater: Repeater,
+    payload_id: Optional[str] = None,
+) -> Requests:
+    """
+    Returns a Requests object instantiated with properties of the given
+    Repeater. ``payload_id`` specifies the payload that the object will
+    be used for sending, if applicable.
+    """
+    return Requests(
+        repeater.domain,
+        repeater.url,
+        repeater.username,
+        repeater.plaintext_password,
+        verify=repeater.verify,
+        notify_addresses=repeater.notify_addresses,
+        payload_id=payload_id,
+    )
 
 
 # import signals
