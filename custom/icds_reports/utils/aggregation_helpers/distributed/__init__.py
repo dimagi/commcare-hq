@@ -30,6 +30,7 @@ from .adolescent_girls_registration import AggAdolescentGirlsRegistrationAggrega
 from .agg_gov_dashboard import AggGovDashboardHelper
 from .agg_service_delivery_report import AggServiceDeliveryReportHelper
 from .migration_forms import MigrationFormsAggregationDistributedHelper
+from .availing_service_forms import AvailingServiceFormsAggregationDistributedHelper
 
 __all__ = (
     'AggAwcDistributedHelper',
@@ -37,6 +38,7 @@ __all__ = (
     'AggChildHealthAggregationDistributedHelper',
     'AggCcsRecordAggregationDistributedHelper',
     'AggLsHelper',
+    'AvailingServiceFormsAggregationDistributedHelper',
     'AwcMbtDistributedHelper',
     'AwwIncentiveAggregationDistributedHelper',
     'AwcInfrastructureAggregationHelper',
