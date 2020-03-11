@@ -787,13 +787,13 @@ class AwcReportsView(BaseReportView):
                 beta=icds_pre_release_features(request.couch_user)
             )
         elif step == 'beneficiary':
-            filters = {
-                'awc_id': config['awc_id'],
-            }
-            age = self.request.GET.get('age', None)
-            if age:
-                filters.update(get_age_filter_in_months(age))
             if 'awc_id' in config:
+                filters = {
+                    'awc_id': config['awc_id'],
+                }
+                age = self.request.GET.get('age', None)
+                if age:
+                    filters.update(get_age_filter_in_months(age))
                 draw = int(request.GET.get('draw', 0))
                 icds_features_flag = icds_pre_release_features(self.request.couch_user)
                 start, length, order_by_number_column, order_by_name_column, order_dir = \

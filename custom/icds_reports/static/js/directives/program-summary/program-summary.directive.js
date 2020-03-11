@@ -3,7 +3,7 @@
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function ProgramSummaryController($scope, $http, $log, $routeParams, $location, storageService, dateHelperService,
-          navigationService, baseControllersService, userLocationId, haveAccessToAllLocations, isAlertActive, navMetadata) {
+    navigationService, baseControllersService, userLocationId, haveAccessToAllLocations, isAlertActive, navMetadata) {
     baseControllersService.BaseFilterController.call(
         this, $scope, $routeParams, $location, dateHelperService, storageService, navigationService
     );
@@ -26,7 +26,7 @@ function ProgramSummaryController($scope, $http, $log, $routeParams, $location, 
     }
     vm.filtersData = $location.search();
 
-    vm.getDataForStep = function(step) {
+    vm.getDataForStep = function (step) {
         var get_url = url('program_summary', step);
         vm.myPromise = $http({
             method: "GET",
@@ -42,7 +42,7 @@ function ProgramSummaryController($scope, $http, $log, $routeParams, $location, 
         );
     };
 
-    $scope.$watch(function() {
+    $scope.$watch(function () {
         return vm.selectedLocations;
     }, function (newValue, oldValue) {
         if (newValue === oldValue || !newValue || newValue.length === 0) {
@@ -54,7 +54,7 @@ function ProgramSummaryController($scope, $http, $log, $routeParams, $location, 
             $location.search('selectedLocationLevel', 3);
             $location.search('location_name', parent.name);
             storageService.setKey('message', true);
-            setTimeout(function() {
+            setTimeout(function () {
                 storageService.setKey('message', false);
             }, 3000);
         }
@@ -88,7 +88,7 @@ function ProgramSummaryController($scope, $http, $log, $routeParams, $location, 
     };
 
     vm.showInfoMessage = function () {
-        var selected_month = parseInt($location.search()['month']) ||new Date().getMonth() + 1;
+        var selected_month = parseInt($location.search()['month']) || new Date().getMonth() + 1;
         var selected_year =  parseInt($location.search()['year']) || new Date().getFullYear();
         var current_month = new Date().getMonth() + 1;
         var current_year = new Date().getFullYear();

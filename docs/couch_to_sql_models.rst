@@ -74,7 +74,8 @@ This should contain:
   * `Sample command for RegistrationRequest <https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/registration/management/commands/populate_sql_registration_request.py>`_.
   * This command should ideally populate the sql models based on the json from couch alone, not the wrapped document (to avoid introducing another dependency on the couch model). You may need to convert data types that the default ``wrap`` implementation would handle; note that the sample command above uses ``force_to_datetime`` to cast datetimes.
   * Don't know which database your doc type is in? Run ``from corehq.util.couchdb_management import couch_config; couch_config.all_dbs_by_slug`` in a shell to list all of the couch databases and then ``MyModel.get_db()`` to see which one you need.
-  
+  * ``PopulateSQLCommand`` includes the method ``commit_adding_migration`` to let third parties know which commit to deploy if they need to run the migration manually. Note this means you need to update the migration **after** this PR is merged, to add the hash of the commit that merged this PR into master.
+
 * Adds code to keep the couch and sql items in sync.
 
   * The easiest way to do this is to use `SyncCouchToSQLMixin <https://github.com/dimagi/commcare-hq/blob/c2b93b627c830f3db7365172e9be2de0019c6421/corehq/ex-submodules/dimagi/utils/couch/migration.py#L4>`_ and `SyncSQLToCouchMixin <https://github.com/dimagi/commcare-hq/blob/c2b93b627c830f3db7365172e9be2de0019c6421/corehq/ex-submodules/dimagi/utils/couch/migration.py#L115>`_.

@@ -58,7 +58,7 @@ def get_early_initiation_breastfeeding_map(domain, config, loc_level, show_test=
             "info": early_initiation_breastfeeding_help_text(html=True),
             "extended_info": [
                 {
-                    'indicator': 'Total Number of Children born in the given month{}:'.format(chosen_filters),
+                    'indicator': 'Total Number of Children born in the current month{}:'.format(chosen_filters),
                     'value': indian_formatted_number(in_month_total)
                 },
                 {

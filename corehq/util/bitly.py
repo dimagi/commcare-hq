@@ -9,6 +9,9 @@ from requests import HTTPError
 from six.moves.urllib.request import urlopen
 
 
+BITLY_CONFIGURED = False
+
+
 class BitlyError(Exception):
 
     def __init__(self, status_code, status_txt):
@@ -43,11 +46,13 @@ def shorten_v4(url, oauth_token):
 
 if getattr(settings, 'BITLY_OAUTH_TOKEN', None):
     shorten = partial(shorten_v4, oauth_token=settings.BITLY_OAUTH_TOKEN)
+    BITLY_CONFIGURED = True
 elif getattr(settings, 'BITLY_LOGIN', None) and getattr(settings, 'BITLY_APIKEY', None):
     warnings.warn(
         "V3 Bitly API in use. Please upgrade to V4 by setting 'BITLY_OAUTH_TOKEN' in settings",
         DeprecationWarning
     )
     shorten = partial(shorten_v3, login=settings.BITLY_LOGIN, api_key=settings.BITLY_APIKEY)
+    BITLY_CONFIGURED = True
 else:
     shorten = lambda url: url

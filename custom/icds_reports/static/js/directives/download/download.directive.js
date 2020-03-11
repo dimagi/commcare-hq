@@ -52,7 +52,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
     vm.selectedMonth = new Date().getMonth() + 1;
     vm.selectedYear = new Date().getFullYear();
 
-    window.angular.forEach(moment.months(), function(key, value) {
+    window.angular.forEach(moment.months(), function (key, value) {
         vm.monthsCopy.push({
             name: key,
             id: value + 1,
@@ -90,7 +90,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
 
     vm.excludeCurrentMonthIfInitialThreeDays();
 
-    for (var year=2017; year <= new Date().getFullYear(); year++ ) {
+    for (var year = 2017; year <= new Date().getFullYear(); year++) {
         vm.yearsCopy.push({
             name: year,
             id: year,
@@ -171,7 +171,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
 
     vm.maxLevel = 0;
 
-    var initHierarchy = function() {
+    var initHierarchy = function () {
         hierarchyData = locationsService.initHierarchy(locationHierarchy);
         vm.maxLevel = hierarchyData['levels'];
         vm.selectedLocations = new Array(vm.maxLevel);
@@ -203,29 +203,29 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         return ((!vm.userLocationIdIsNull() && !vm.userHaveAccessToAllLocations(locations)) || vm.isUserLocationIn(locations)) && !haveAccessToAllLocations;
     };
 
-    var init = function() {
+    var init = function () {
         initHierarchy();
         locationsCache = locationsService.initLocations(vm, locationsCache);
     };
 
     init();
 
-    vm.getPlaceholder = function(locationTypes) {
+    vm.getPlaceholder = function (locationTypes) {
         return locationsService.getLocationPlaceholder(locationTypes, vm.isChildBeneficiaryListSelected())
     };
 
-    vm.getLocationsForLevel = function(level) {
+    vm.getLocationsForLevel = function (level) {
         disallowNational = !vm.isChildBeneficiaryListSelected();
         return locationsService.getLocations(level, locationsCache, vm.selectedLocations, disallowNational);
     };
 
-    var selectedLocationIndex = function() {
-        return _.findLastIndex(vm.selectedLocations, function(locationId) {
+    var selectedLocationIndex = function () {
+        return _.findLastIndex(vm.selectedLocations, function (locationId) {
             return locationId && locationId !== ALL_OPTION.location_id;
         });
     };
 
-    vm.disabled = function(level) {
+    vm.disabled = function (level) {
         return locationsService.isLocationDisabled(level, vm);
     };
 
@@ -242,11 +242,11 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         vm.onSelectLocation($item, level);
     };
 
-    vm.onSelectLocation = function($item, level) {
+    vm.onSelectLocation = function ($item, level) {
         locationsService.onSelectLocation($item, level, locationsCache, vm);
     };
 
-    vm.onSelectAWCs = function($item) {
+    vm.onSelectAWCs = function ($item) {
         if ($item.location_id === 'all') {
             vm.selectedAWCs = [$item.location_id];
         } else if (vm.selectedAWCs.indexOf('all') !== -1) {
@@ -277,6 +277,18 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         } else if (year.id < latest.getFullYear()) {
             vm.years =  _.filter(vm.yearsCopy, function (y) {
                 return y.id <= latest.getFullYear();
+            });
+        }
+
+        if (vm.isSDRSelected()) {
+            vm.years = _.filter(vm.yearsCopy, function (y) {
+                return y.id >= 2020;
+            });
+        }
+
+        if (vm.isTakeHomeRationReportSelected()) {
+            vm.years = _.filter(vm.yearsCopy, function (y) {
+                return y.id >= 2019;
             });
         }
 
@@ -336,7 +348,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         vm.locationPromise = locationsService.getAncestors();
     };
 
-    vm.getFormats = function() {
+    vm.getFormats = function () {
         if (vm.isChildBeneficiaryListSelected()) {
             return [vm.formats[0]];
         } else {
@@ -344,7 +356,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         }
     };
 
-    vm.onIndicatorSelect = function() {
+    vm.onIndicatorSelect = function () {
         if (vm.isChildBeneficiaryListSelected()) {
             init();
             vm.selectedFormat = vm.formats[0].id;
@@ -359,10 +371,11 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
             if (vm.isTakeHomeRationReportSelected()) {
                 var currentYear  = new Date().getFullYear();
                 vm.selectedYear = vm.selectedYear >= 2019 ? vm.selectedYear : currentYear;
-                vm.years = _.filter(vm.yearsCopy, function (y) {
-                    return y.id >= 2019;
-                });
                 locationsService.resetLevelsBelow(3, vm);
+            } else if (vm.isSDRSelected()) {
+                if (vm.selectedYear < 2020) {
+                    vm.selectedYear = new Date().getFullYear();
+                }
             } else {
                 vm.years = vm.yearsCopy;
             }
@@ -371,7 +384,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         }
     };
 
-    vm.submitForm = function(csrfToken) {
+    vm.submitForm = function (csrfToken) {
         $rootScope.report_link = '';
         var awcs = vm.selectedPDFFormat === 'one' ? ['all'] : vm.selectedAWCs;
         var taskConfig = {
@@ -391,12 +404,12 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         var selectedFilters = vm.selectedFilterOptions();
         if (vm.isChildBeneficiaryListSelected()) {
             taskConfig['filter[]'] = [];
-            for (var i=0, len=selectedFilters.length; i < len; i++) {
+            for (var i = 0, len = selectedFilters.length; i < len; i++) {
                 taskConfig['filter[]'].push(selectedFilters[i].id);
             }
         }
 
-        downloadService.createTask(taskConfig).then(function(data) {
+        downloadService.createTask(taskConfig).then(function (data) {
             vm.task_id = data.task_id;
             if (vm.task_id) {
                 $rootScope.task_id = vm.task_id;
@@ -409,7 +422,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         vm.previousTaskFailed = null;
     };
 
-    vm.resetForm = function() {
+    vm.resetForm = function () {
         vm.hierarchy = [];
         vm.selectedLocations = [];
         vm.selectedLocationId = userLocationId;
@@ -422,14 +435,14 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         initHierarchy();
     };
 
-    vm.hasErrors = function() {
+    vm.hasErrors = function () {
         var beneficiaryListErrors = vm.isChildBeneficiaryListSelected() && (vm.selectedFilterOptions().length === 0 || !vm.isDistrictOrBelowSelected());
         var incentiveReportErrors = vm.isIncentiveReportSelected() && !vm.isStateSelected();
         var ladySupervisorReportErrors = vm.isLadySupervisorSelected() && !vm.isStateSelected();
         return beneficiaryListErrors || incentiveReportErrors || ladySupervisorReportErrors;
     };
 
-    vm.isCombinedPDFSelected = function() {
+    vm.isCombinedPDFSelected = function () {
         return vm.isISSNIPMonthlyRegisterSelected() && vm.selectedPDFFormat === 'one';
     };
 
@@ -441,26 +454,26 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         return vm.selectedLocations[0] && vm.selectedLocations[0] !== ALL_OPTION.location_id;
     };
 
-    vm.hasErrorsISSNIPExport = function() {
+    vm.hasErrorsISSNIPExport = function () {
         if (vm.selectedPDFFormat === 'one') {
             return vm.isISSNIPMonthlyRegisterSelected() && !vm.isBlockOrBelowSelected();
         }
         return vm.isISSNIPMonthlyRegisterSelected() && (!vm.isBlockOrBelowSelected() || !vm.isAWCsSelected());
     };
 
-    vm.isVisible = function(level) {
+    vm.isVisible = function (level) {
         return level === 0 || (vm.selectedLocations[level - 1] && vm.selectedLocations[level - 1] !== 'all') &&
             !(vm.isIncentiveReportSelected() && level > 2) && !(vm.isLadySupervisorSelected() && level > 2) &&
             !(vm.isTakeHomeRationReportSelected() && level > 3);
     };
 
-    vm.selectedFilterOptions = function() {
-        return vm.filterOptions.filter(function(el) {
+    vm.selectedFilterOptions = function () {
+        return vm.filterOptions.filter(function (el) {
             return el.selected;
         });
     };
 
-    vm.isChildBeneficiaryListSelected = function() {
+    vm.isChildBeneficiaryListSelected = function () {
         return vm.selectedIndicator === 6;
     };
 
@@ -518,11 +531,11 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
     };
 
 
-    vm.isDistrictOrBelowSelected = function() {
+    vm.isDistrictOrBelowSelected = function () {
         return vm.selectedLocations[1] && vm.selectedLocations[1] !== ALL_OPTION.location_id;
     };
 
-    vm.isAWCsSelected = function() {
+    vm.isAWCsSelected = function () {
         return vm.selectedAWCs.length > 0;
     };
 
@@ -547,10 +560,10 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
 DownloadController.$inject = ['$rootScope', '$location', 'locationHierarchy', 'locationsService', 'userLocationId',
     'haveAccessToFeatures', 'downloadService', 'isAlertActive', 'userLocationType','haveAccessToAllLocations','allUserLocationId'];
 
-window.angular.module('icdsApp').directive("download", function() {
+window.angular.module('icdsApp').directive("download", function () {
     var url = hqImport('hqwebapp/js/initial_page_data').reverse;
     return {
-        restrict:'E',
+        restrict: 'E',
         scope: {
         },
         bindToController: true,

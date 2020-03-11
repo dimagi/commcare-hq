@@ -1355,6 +1355,143 @@ def create_child_report_excel_file(excel_data, data_type, month, aggregation_lev
 
     return file_hash
 
+
+def create_service_delivery_report(excel_data, data_type, config):
+
+    export_info = excel_data[1][1]
+    location_padding_columns = ([''] * config['aggregation_level'])
+
+    if config['beneficiary_category'] == 'pw_lw_children':
+        primary_headers = location_padding_columns + ['Home Visits',
+                                                      'Growth Monitoring',
+                                                      'Community Based Events',
+                                                      'VHSND',
+                                                      'Take Home Ration  (Pregnant women, lactating women and children 0-3 years)',
+                                                      ]
+        if config['aggregation_level'] < 5:
+            primary_headers = [''] + primary_headers
+    else:
+        primary_headers = location_padding_columns + ['Supplementary Nutrition (Children 3-6 years)',
+                                                      'Pre-school Education (Children 3-6 years)',
+                                                      'Growth Monitoring (Children 3-5 years)',
+                                                      ]
+
+    secondary_headers = ['Not provided',
+                         'Provided for 1-7 days',
+                         'Provided for 8-14 days',
+                         'Provided for 15-20 days',
+                         'Provided for at least 21 days (>=21 days)']
+
+    workbook = Workbook()
+    worksheet = workbook.active
+    worksheet.title = "SDR"
+
+    # Styling initialisation
+    bold_font = Font(size=14, color="FFFFFF")
+    bold_font_black = Font(size=14, color="000000")
+    cell_pattern = PatternFill("solid", fgColor="B3C5E5")
+    cell_pattern_blue = PatternFill("solid", fgColor="4472C4")
+    cell_pattern_grey = PatternFill("solid", fgColor="C3C3C3")
+    text_alignment = Alignment(horizontal="center", vertical='top', wrap_text=True)
+    thin_border = Border(
+        left=Side(style='thin'),
+        right=Side(style='thin'),
+        top=Side(style='thin'),
+        bottom=Side(style='thin')
+    )
+
+    current_column_location = 1
+    location_header_count = 0
+    for index, primary_header in enumerate(primary_headers):
+        cell_name = get_column_letter(current_column_location)
+        cell = worksheet['{}1'.format(cell_name)]
+        cell.alignment = text_alignment
+
+        cell.value = primary_header
+        cell.fill = cell_pattern_blue
+        cell.font = bold_font
+        cell.border = thin_border
+        if primary_header == '':
+            worksheet.merge_cells('{}1:{}3'.format(get_column_letter(current_column_location),
+                                                   get_column_letter(current_column_location)))
+            location_header_count += 1
+            current_column_location += 1
+        elif primary_header not in [
+            'Take Home Ration  (Pregnant women, lactating women and children 0-3 years)',
+            'Supplementary Nutrition (Children 3-6 years)',
+            'Pre-school Education (Children 3-6 years)'
+        ]:
+            merging_width = 2
+            if primary_header == 'Community Based Events' and config['aggregation_level'] == 5:
+                merging_width = 1
+
+            if primary_header == 'VHSND':
+                if config['aggregation_level'] == 5:
+                    merging_width = 1
+                else:
+                    merging_width = 0
+
+            worksheet.merge_cells('{}1:{}2'.format(get_column_letter(current_column_location),
+                                                   get_column_letter(current_column_location + merging_width)))
+            current_column_location += merging_width+1
+        else:
+            worksheet.merge_cells('{}1:{}1'.format(get_column_letter(current_column_location),
+                                                   get_column_letter(current_column_location + 14)))
+
+            current_column_location_sec_header = current_column_location
+            for sec_header in secondary_headers:
+                cell_name = get_column_letter(current_column_location_sec_header)
+                cell = worksheet['{}2'.format(cell_name)]
+                cell.alignment = text_alignment
+                cell.value = sec_header
+                cell.fill = cell_pattern_grey
+                cell.font = bold_font_black
+                cell.border = thin_border
+                worksheet.merge_cells('{}2:{}2'.format(get_column_letter(current_column_location_sec_header),
+                                                       get_column_letter(current_column_location_sec_header + 2)))
+                current_column_location_sec_header += 3
+
+            current_column_location += 15
+
+    # Secondary Header
+    headers = excel_data[0][1][0]
+    for index, header in enumerate(headers):
+        location_column = get_column_letter(index + 1)
+        cell = worksheet['{}{}'.format(location_column, 1 if index+1 <= location_header_count else 3)]
+        cell.alignment = text_alignment
+        worksheet.column_dimensions[location_column].width = 30
+        cell.value = header
+        cell.border = thin_border
+        if index + 1 > location_header_count:
+            cell.fill = cell_pattern
+
+    # Fill data
+    for row_index, row in enumerate(excel_data[0][1][1:]):
+        for col_index, col_value in enumerate(row):
+            row_num = row_index + 4
+            column_name = get_column_letter(col_index + 1)
+            cell = worksheet['{}{}'.format(column_name, row_num)]
+            cell.value = col_value
+            cell.border = thin_border
+
+    # Export info
+    worksheet2 = workbook.create_sheet("Export Info")
+    worksheet2.column_dimensions['A'].width = 14
+    for n, export_info_item in enumerate(export_info, start=1):
+        worksheet2['A{0}'.format(n)].value = export_info_item[0]
+        worksheet2['B{0}'.format(n)].value = export_info_item[1]
+
+    file_hash = uuid.uuid4().hex
+    export_file = BytesIO()
+    icds_file = IcdsFile(blob_id=file_hash, data_type=data_type)
+    workbook.save(export_file)
+    export_file.seek(0)
+    icds_file.store_file_in_blobdb(export_file, expired=ONE_DAY)
+    icds_file.save()
+
+    return file_hash
+
+
 def create_lady_supervisor_excel_file(excel_data, data_type, month, aggregation_level):
     export_info = excel_data[1][1]
     state = export_info[1][1] if aggregation_level > 0 else ''
@@ -1615,3 +1752,36 @@ def filter_cas_data_export(export_file, location):
                 if row[index] == location.name:
                     writer.writerow(row)
         return export_file_path
+
+
+def prepare_rollup_query(columns_tuples):
+    def _columns_and_calculations(column_tuple):
+        column = column_tuple[0]
+
+        if len(column_tuple) == 2:
+            agg_col = column_tuple[1]
+            if isinstance(agg_col, str):
+                return column_tuple
+            elif callable(agg_col):
+                return column, agg_col(column)
+        return column, 'SUM({})'.format(column)
+
+    columns = list(map(_columns_and_calculations, columns_tuples))
+
+    column_names = ", ".join([col[0] for col in columns])
+    calculations = ", ".join([col[1] for col in columns])
+    return column_names, calculations
+
+
+def test_column_name(aggregation_level):
+    test_location_column_names = ['district_is_test', 'block_is_test', 'supervisor_is_test', 'awc_is_test']
+    return test_location_column_names[aggregation_level-1]
+
+
+def create_group_by(aggregation_level):
+    all_group_by_columns = ["state_id", "district_id", "block_id", "supervisor_id"]
+    return all_group_by_columns[:aggregation_level]
+
+
+def column_value_as_per_agg_level(aggregation_level, agg_level_threshold, true_value, false_value):
+    return true_value if aggregation_level > agg_level_threshold else false_value
