@@ -91,8 +91,7 @@ FROM
 WHERE 
   chm.month = '2018-05-01' 
 GROUP BY 
-  chm.awc_id,
-  chm.supervisor_id,
+  chm.awc_id, 
   chm.month, 
   chm.sex, 
   chm.age_tranche, 
@@ -137,7 +136,9 @@ UPDATE "agg_child_health_2018-05-01_5" agg_child_health
     stunting_normal = ut.stunting_normal,
     height_measured_in_month = ut.height_measured_in_month,
     weighed_and_height_measured_in_month = ut.weighed_and_height_measured_in_month
-  FROM temp_agg_child_my AS ut
+  FROM (
+    SELECT * FROM temp_agg_child_my
+  ) ut
   WHERE (
     agg_child_health.awc_id=ut.awc_id and 
     agg_child_health.month=ut.month and
@@ -187,7 +188,7 @@ FROM
           "awc_location_local" ucr 
         WHERE 
           ucr.awc_is_test = 0
-          AND aggregation_level = 5
+          AND aggregation_level = 4
       ) tt ON tt.doc_id = agg_child.awc_id 
     GROUP BY 
       state_id, 
@@ -205,7 +206,7 @@ WHERE
 
 
 UPDATE 
-  "agg_child_health_2018-05-01_3" agg_child_health 
+  "agg_child_health_2019-01-01_3" agg_child_health 
 SET 
   wasting_moderate = ut.wasting_moderate, 
   wasting_severe = ut.wasting_severe, 
@@ -232,7 +233,7 @@ FROM
         weighed_and_height_measured_in_month
       ) as weighed_and_height_measured_in_month 
     FROM 
-      "agg_child_health_2018-05-01_4" agg_child 
+      "agg_child_health_2019-01-01_4" agg_child 
       INNER JOIN (
         SELECT 
           DISTINCT ucr.supervisor_id 
@@ -240,7 +241,7 @@ FROM
           "awc_location_local" ucr
         WHERE 
           ucr.supervisor_is_test = 0
-          AND aggregation_level = 4
+          AND aggregation_level = 3
       ) tt ON tt.supervisor_id = agg_child.supervisor_id 
     GROUP BY 
       state_id, 
@@ -257,7 +258,7 @@ WHERE
 
 
 UPDATE 
-  "agg_child_health_2018-05-01_2" agg_child_health 
+  "agg_child_health_2019-01-01_2" agg_child_health 
 SET 
   wasting_moderate = ut.wasting_moderate, 
   wasting_severe = ut.wasting_severe, 
@@ -284,7 +285,7 @@ FROM
         weighed_and_height_measured_in_month
       ) as weighed_and_height_measured_in_month 
     FROM 
-      "agg_child_health_2018-05-01_3" agg_child 
+      "agg_child_health_2019-01-01_3" agg_child 
       INNER JOIN (
         SELECT 
           DISTINCT ucr.supervisor_id 
@@ -292,7 +293,7 @@ FROM
           "awc_location_local" ucr 
         WHERE 
           ucr.block_is_test = 0
-          AND aggregation_level = 3
+          AND aggregation_level = 2
       ) tt ON tt.block_id = agg_child.block_id 
     GROUP BY 
       state_id, 
@@ -308,7 +309,7 @@ WHERE
 
 
 UPDATE 
-  "agg_child_health_2018-05-01_1" agg_child_health 
+  "agg_child_health_2019-01-01_1" agg_child_health 
 SET 
   wasting_moderate = ut.wasting_moderate, 
   wasting_severe = ut.wasting_severe, 
@@ -335,7 +336,7 @@ FROM
         weighed_and_height_measured_in_month
       ) as weighed_and_height_measured_in_month 
     FROM 
-      "agg_child_health_2018-05-01_2" agg_child 
+      "agg_child_health_2019-01-01_2" agg_child 
       INNER JOIN (
         SELECT 
           DISTINCT ucr.district_id 
@@ -343,7 +344,7 @@ FROM
           "awc_location_local" ucr 
         WHERE 
           ucr.district_is_test = 0
-          AND aggregation_level = 2
+          AND aggregation_level = 1
       ) tt ON tt.district_id = agg_child.district_id 
     GROUP BY 
       state_id, 
