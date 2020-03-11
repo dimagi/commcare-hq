@@ -91,8 +91,8 @@ hqDefine('analytix/js/hubspot', [
                 });
             },
             onFormSubmit: function ($form) {
-                $('#get-demo-cta-calendar-content').fadeIn();
-                $('#get-demo-cta-form-content').addClass('hide');
+                $('#get-demo-cta-calendar-content').toggleClass("hidden");
+                $('#get-demo-cta-form-content').addClass('hidden');
 
                 var email = $form.find('[name="email"]').val(),
                     firstname = $form.find('[name="firstname"]').val(),
@@ -182,8 +182,8 @@ hqDefine('analytix/js/hubspot', [
                 window.history.pushState({}, document.title, newUrl);
             },
             onFormSubmitted: function () {
-                $('#choose-callback-options').fadeIn();
-                $('#get-trial-cta-form-content').addClass('hide');
+                $('#choose-callback-options').toggleClass('hidden');
+                $('#get-trial-cta-form-content').addClass('hidden');
                 $('#start-trial-modal-header').text(gettext("Choose how to get started"));
             },
         });

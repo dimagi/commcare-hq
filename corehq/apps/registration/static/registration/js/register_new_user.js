@@ -31,8 +31,8 @@ hqDefine('registration/js/register_new_user', [
 
     $('#book-to-call-btn').click(function () {
         $('#start-trial-modal-header').text(gettext("Choose a time for your CommCare trial setup"));
-        $('#get-trial-cta-calendar-content').fadeIn();
-        $('#choose-callback-options').addClass('hide');
+        $('#choose-callback-options').addClass('hidden');
+        $('#get-trial-cta-calendar-content').toggleClass('hidden');
 
         // Causes the Schedule Once form to populate the element
         // #SOIDIV_commcaretrialform as soon as it loads. Once it's
@@ -69,8 +69,8 @@ hqDefine('registration/js/register_new_user', [
 
     $('#get-callback-btn').click(function () {
         $('#start-trial-modal-header').text(gettext("Got it! We’ll be in touch soon"));
-        $('#will-be-in-touch-content').fadeIn();
-        $('#choose-callback-options').addClass('hide');
+        $('#will-be-in-touch-content').toggleClass('hidden');
+        $('#choose-callback-options').addClass('hidden');
     });
 
     kissmetrics.whenReadyAlways(function () {

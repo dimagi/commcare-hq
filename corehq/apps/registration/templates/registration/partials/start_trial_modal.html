@@ -16,10 +16,10 @@
 
         {# Hubspot Form #}
         <div class="form form-horizontal"
-             id="get-trial-cta-form-content"></div>
+             id="get-trial-cta-form-content" ></div>
         
         {# Schedule Call Choices #}
-        <div id="choose-callback-options" style="display: none;">
+        <div id="choose-callback-options" class="fadeIn hidden">
           <p>
           {% blocktrans %}
             Starting your trial requires a brief call with our team to set up your CommCare project space. Please choose if you prefer us to call you back ASAP, or if you would like to book a  time for the call?
@@ -32,7 +32,7 @@
         </div>
 
         {# Schedule Once Demo #}
-        <div id="get-trial-cta-calendar-content" style="display: none;">
+        <div id="get-trial-cta-calendar-content" class="hidden fadeIn">
           <div id="SOIDIV_CommCareTrial"
                data-so-page="CommCareTrial"
                data-style="border: 1px solid #d8d8d8; min-width: 290px; max-width: 900px;"
@@ -40,7 +40,7 @@
         </div>
 
         {# Callback Feedback #}
-        <div id="will-be-in-touch-content" style="display:none;">
+        <div id="will-be-in-touch-content" class="hidden fadeIn">
           <p>
             {% blocktrans %}
               While we're preparing your free trial, check out the video below to see how people use CommCare for mobile data collection.
