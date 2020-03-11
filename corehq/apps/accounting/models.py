@@ -3308,10 +3308,29 @@ class CreditLine(models.Model):
 
     @classmethod
     def get_credits_for_invoice(cls, invoice):
-        return itertools.chain(
+        relevant_credits = [
             cls.get_credits_by_subscription_and_features(invoice.subscription),
             cls.get_credits_for_account(invoice.subscription.account)
-        )
+        ]
+        if invoice.subscription.next_subscription:
+            # check for a transfer of subscription credits due to upgrades by
+            # looking first at the active subscription or the "next" subscription
+            # if the accounts don't match with the active subscription.
+            active_sub = Subscription.get_active_subscription_by_domain(
+                invoice.subscription.subscriber.domain
+            )
+            if active_sub.account == invoice.subscription.account:
+                relevant_credits.append(
+                    cls.get_credits_by_subscription_and_features(active_sub)
+                )
+            elif (invoice.subscription.next_subscription.account
+                  == invoice.subscription.account):
+                relevant_credits.append(
+                    cls.get_credits_by_subscription_and_features(
+                        invoice.subscription.next_subscription
+                    )
+                )
+        return itertools.chain(*relevant_credits)
 
     @classmethod
     def get_credits_for_customer_invoice(cls, invoice):
