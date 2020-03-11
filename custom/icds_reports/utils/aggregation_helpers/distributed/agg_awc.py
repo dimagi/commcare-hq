@@ -6,7 +6,7 @@ from corehq.apps.userreports.models import StaticDataSourceConfiguration, get_da
 from corehq.apps.userreports.util import get_table_name
 
 from custom.icds_reports.utils.aggregation_helpers import get_child_health_temp_tablename, transform_day_to_month, get_agg_child_temp_tablename
-from custom.icds_reports.const import AGG_CCS_RECORD_CF_TABLE, AGG_THR_V2_TABLE, AGG_ADOLESCENT_GIRLS_REGISTRATION_TABLE
+from custom.icds_reports.const import AGG_CCS_RECORD_CF_TABLE, AGG_THR_V2_TABLE, AGG_ADOLESCENT_GIRLS_REGISTRATION_TABLE, AGG_MIGRATION_TABLE
 from custom.icds_reports.utils.aggregation_helpers.distributed.base import BaseICDSAggregationDistributedHelper
 
 logger = logging.getLogger(__name__)
@@ -59,7 +59,6 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
             logger.info(f"creating index {i}")
             cursor.execute(query)
             i += 1
-
 
     def _tablename_func(self, agg_level):
         return "{}_{}_{}".format(self.base_tablename, self.month_start.strftime("%Y-%m-%d"), agg_level)
@@ -228,7 +227,8 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
             ) as cases_person_adolescent_girls_11_14_all,
             sum(
                 CASE WHEN %(month_end_11yr)s > dob AND %(month_start_14yr)s <= dob AND sex = 'F'
-                    AND migration_status IS DISTINCT FROM 1
+                    AND ((agg_migration.is_migrated=1 AND
+                    agg_migration.migration_date < %(start_date)s)::integer IS DISTINCT FROM 1)
                 THEN 1 ELSE 0 END
             ) as cases_person_adolescent_girls_11_14_all_v2,
             sum(
@@ -243,7 +243,12 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
                 CASE WHEN last_referral_date BETWEEN %(start_date)s AND %(end_date)s
                 THEN 1 ELSE 0 END
             ) as cases_person_referred
-        FROM "{ucr_tablename}" ucr
+        FROM "{ucr_tablename}" ucr INNER JOIN
+             "{migration_table}" agg_migration ON (
+                ucr.doc_id = agg_migration.person_case_id AND
+                agg_migration.month = %(start_date)s AND
+                ucr.supervisor_id = agg_migration.supervisor_id
+             )
         WHERE (opened_on <= %(end_date)s AND
               (closed_on IS NULL OR closed_on >= %(start_date)s ))
 
@@ -252,9 +257,12 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
         """.format(
             tablename=self.temporary_tablename,
             ucr_tablename=get_table_name(self.domain, 'static-person_cases_v3'),
+            migration_table=AGG_MIGRATION_TABLE,
             seeking_services=(
                 "CASE WHEN "
-                "registered_status IS DISTINCT FROM 0 AND migration_status IS DISTINCT FROM 1 "
+                "registered_status IS DISTINCT FROM 0 AND "
+                "(agg_migration.is_migrated=1 AND "
+                "agg_migration.migration_date < %(start_date)s)::integer IS DISTINCT FROM 1 "
                 "THEN 1 ELSE 0 END"
             )
         ), {
@@ -266,7 +274,6 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
             'month_end_15yr': self.month_end_15yr,
             'month_start_18yr': self.month_start_18yr,
         }
-
 
         yield """
         UPDATE "{tablename}" agg_awc SET
@@ -283,23 +290,28 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
                     ucr.supervisor_id = adolescent_girls_table.supervisor_id AND
                     adolescent_girls_table.month=%(start_date)s
                     )
+                 INNER JOIN
+                 "{migration_table}" agg_migration ON (
+                    ucr.doc_id = agg_migration.person_case_id AND
+                    agg_migration.month = %(start_date)s AND
+                    ucr.supervisor_id = agg_migration.supervisor_id
+                 )
             WHERE (opened_on <= %(end_date)s AND
               (closed_on IS NULL OR closed_on >= %(start_date)s )) AND
-              migration_status IS DISTINCT FROM 1
+              ((agg_migration.is_migrated=1 AND
+              agg_migration.migration_date < %(start_date)s)::integer IS DISTINCT FROM 1)
               GROUP BY ucr.awc_id, ucr.supervisor_id
         )ut
         where agg_awc.awc_id = ut.awc_id and ut.supervisor_id=agg_awc.supervisor_id;
         """.format(
             tablename=self.temporary_tablename,
             ucr_tablename=get_table_name(self.domain, 'static-person_cases_v3'),
-            adolescent_girls_table=AGG_ADOLESCENT_GIRLS_REGISTRATION_TABLE
+            adolescent_girls_table=AGG_ADOLESCENT_GIRLS_REGISTRATION_TABLE,
+            migration_table=AGG_MIGRATION_TABLE
         ), {
             'start_date': self.month_start,
             'end_date': self.month_end
         }
-
-
-
 
         yield """
         UPDATE "{tablename}" agg_awc SET
