@@ -26,7 +26,7 @@ function EarlyInitiationBreastfeedingController($scope, $routeParams, $location,
     vm.filters = ['age'];
 
     vm.rightLegend = {
-        info: 'Of the children born in the last month and enrolled for Anganwadi services, the percentage whose breastfeeding was initiated within 1 hour of delivery.\n' +
+        info: 'Of the children born in the given month and enrolled for Anganwadi services, the percentage whose breastfeeding was initiated within 1 hour of delivery.\n' +
         '\n' +
         'Early initiation of breastfeeding ensure the newborn recieves the "first milk" rich in nutrients and encourages exclusive breastfeeding practice',
     };
@@ -39,7 +39,7 @@ function EarlyInitiationBreastfeedingController($scope, $routeParams, $location,
         var percent = row ? d3.format('.2%')(row.birth / (row.in_month || 1)) : 'N/A';
         return [
             {
-                indicator_name: 'Total Number of Children born in the given month' + chosenFilters + ': ',
+                indicator_name: 'Total Number of Children born in the current month' + chosenFilters + ': ',
                 indicator_value: total,
             },
             {
@@ -58,7 +58,7 @@ function EarlyInitiationBreastfeedingController($scope, $routeParams, $location,
     var options = {
         'xAxisTickFormat': '%b %Y',
         'yAxisTickFormat': ".2%",
-        'captionContent': ' Of the children born in the last month and enrolled for Anganwadi services, the percentage whose breastfeeding was initiated within 1 hour of delivery. \n' +
+        'captionContent': ' Of the children born in the given month and enrolled for Anganwadi services, the percentage whose breastfeeding was initiated within 1 hour of delivery. \n' +
         '\n' +
         'Early initiation of breastfeeding ensure the newborn recieves the "first milk" rich in nutrients and encourages exclusive breastfeeding practice',
     };
