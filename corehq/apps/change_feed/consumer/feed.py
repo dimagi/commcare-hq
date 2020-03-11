@@ -139,6 +139,7 @@ class KafkaChangeFeed(ChangeFeed):
             'auto_offset_reset': auto_offset_reset,
             'enable_auto_commit': False,
             'api_version': settings.KAFKA_API_VERSION,
+            'max_poll_records': 1,
         }
         self._consumer = KafkaConsumer(**config)
 
