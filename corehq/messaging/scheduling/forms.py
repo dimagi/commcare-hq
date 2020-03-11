@@ -2696,8 +2696,8 @@ class ConditionalAlertScheduleForm(ScheduleForm):
         required=False,
         choices=(
             (START_DATE_RULE_TRIGGER, ugettext_lazy("The first available time after the rule is satisfied")),
-            (START_DATE_CASE_PROPERTY, ugettext_lazy("The date from case property:")),
-            (START_DATE_SPECIFIC_DATE, ugettext_lazy("A specific date:")),
+            (START_DATE_CASE_PROPERTY, ugettext_lazy("The date from case property")),
+            (START_DATE_SPECIFIC_DATE, ugettext_lazy("A specific date")),
         )
     )
 
