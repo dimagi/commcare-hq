@@ -1,7 +1,7 @@
 from django.utils.functional import SimpleLazyObject
 
 from corehq.util.metrics.datadog import DatadogMetrics
-from corehq.util.metrics.metrics import DummyMetrics, DelegatedMetrics, HqMetrics
+from corehq.util.metrics.metrics import DummyMetrics, DelegatedMetrics
 from corehq.util.metrics.prometheus import PrometheusMetrics
 
 

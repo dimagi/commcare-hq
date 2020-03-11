@@ -108,15 +108,15 @@ class HqMetrics(metaclass=abc.ABCMeta):
     def enabled(self) -> bool:
         raise NotImplementedError
 
-    def counter(self, name: str, documentation: str, tag_names: Iterable=tuple()) -> HqCounter:
+    def counter(self, name: str, documentation: str, tag_names: Iterable = tuple()) -> HqCounter:
         return self._counter_class(name, documentation, tag_names)
 
-    def gauge(self, name: str, documentation: str, tag_names: Iterable=tuple()) -> HqGauge:
+    def gauge(self, name: str, documentation: str, tag_names: Iterable = tuple()) -> HqGauge:
         return self._gauge_class(name, documentation, tag_names)
 
     def histogram(self, name: str, documentation: str,
                   bucket_tag: str, buckets: List[int] = DEFAULT_BUCKETS, bucket_unit: str = '',
-                  tag_names: Iterable=tuple()) -> HqHistogram:
+                  tag_names: Iterable = tuple()) -> HqHistogram:
         """Create a histogram metric. Histogram implementations differ between provider. See provider
         implementations for details.
         """
