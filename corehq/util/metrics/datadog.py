@@ -69,6 +69,8 @@ class Histogram(HqHistogram):
     """
     def _record(self, value: float):
         tags = _format_tags(self.tag_names, self.tag_values)
+        if not tags:
+            tags = []
         bucket = bucket_value(value, self._buckets, self._bucket_unit)
         tags.append(f'{self._bucket_tag}:{bucket}')
         _datadog_record(statsd.increment, self.name, 1, tags)

@@ -1,12 +1,19 @@
 from typing import Dict, Tuple
 
 from django.test import SimpleTestCase
+from django.utils.functional import SimpleLazyObject
 
 from corehq.util.metrics import DatadogMetrics, PrometheusMetrics
-from corehq.util.metrics.metrics import HqCounter, HqGauge, HqHistogram
+from corehq.util.metrics.metrics import (
+    DelegatedMetrics,
+    HqCounter,
+    HqGauge,
+    HqHistogram,
+)
 from corehq.util.metrics.tests.utils import patch_datadog
 from prometheus_client.samples import Sample
 from prometheus_client.utils import INF
+from testil import eq
 
 
 class _TestMetrics(SimpleTestCase):
@@ -85,28 +92,28 @@ class TestDatadogMetrics(_TestMetrics):
     def setUp(self) -> None:
         super().setUp()
         self.patch = patch_datadog()
-        self.metrics = self.patch.__enter__()
+        self.recorded_metrics = self.patch.__enter__()
 
     def tearDown(self) -> None:
         self.patch.__exit__(None, None, None)
         super().tearDown()
 
     def assertCounterMetric(self, metric, expected):
-        self.assertEqual({key[0] for key in self.metrics}, {metric.name})
+        self.assertEqual({key[0] for key in self.recorded_metrics}, {metric.name})
         actual = {
-            key[1]: sum(val) for key, val in self.metrics.items()
+            key[1]: sum(val) for key, val in self.recorded_metrics.items()
         }
         self.assertDictEqual(actual, expected)
 
     def assertGaugeMetric(self, metric, expected):
-        self.assertEqual({key[0] for key in self.metrics}, {metric.name})
+        self.assertEqual({key[0] for key in self.recorded_metrics}, {metric.name})
         actual = {
-            key[1]: val[-1] for key, val in self.metrics.items()
+            key[1]: val[-1] for key, val in self.recorded_metrics.items()
         }
         self.assertDictEqual(actual, expected)
 
     def assertHistogramMetric(self, metric, expected):
-        self.assertEqual({key[0] for key in self.metrics}, {metric.name})
+        self.assertEqual({key[0] for key in self.recorded_metrics}, {metric.name})
         expected_samples = {}
         for tags, buckets in expected.items():
             for bucket, val in buckets.items():
@@ -118,7 +125,7 @@ class TestDatadogMetrics(_TestMetrics):
                 expected_samples[tags + (bucket_tag,)] = val
 
         actual = {
-            key[1]: sum(val) for key, val in self.metrics.items()
+            key[1]: sum(val) for key, val in self.recorded_metrics.items()
         }
         self.assertDictEqual(actual, expected_samples)
 
@@ -169,3 +176,40 @@ class TestPrometheusMetrics(_TestMetrics):
             if s.name.endswith('bucket')
         ]
         self.assertListEqual(actual, expected_samples)
+
+
+def test_delegate_lazy():
+    metrics = DelegatedMetrics([DatadogMetrics(), PrometheusMetrics()])
+
+    def _check(metric):
+        assert isinstance(metric, SimpleLazyObject), ''
+
+    test_cases = [
+        metrics.counter('commcare.name.1', ''),
+        metrics.gauge('commcare.name.2', ''),
+        metrics.histogram('commcare.name.3', '', 'duration'),
+    ]
+    for metric in test_cases:
+        yield _check, metric
+
+
+def test_lazy_recording():
+    metrics = DelegatedMetrics([DatadogMetrics(), PrometheusMetrics()])
+
+    def _check(metric, method_name):
+        with patch_datadog() as stats:
+            getattr(metric, method_name)(1)
+
+        dd_metric, prom_metric = metric._delegates
+        [collected] = prom_metric._delegate.collect()
+
+        eq(len(stats), 1, stats)
+        eq(len(collected.samples) >= 1, True, collected.samples)
+
+    test_cases = [
+        (metrics.counter('commcare.name.1', ''), 'inc'),
+        (metrics.gauge('commcare.name.2', ''), 'set'),
+        (metrics.histogram('commcare.name.3', '', 'duration'), 'observe'),
+    ]
+    for metric, method_name in test_cases:
+        yield _check, metric, method_name

@@ -3,6 +3,8 @@ import re
 from abc import abstractmethod
 from typing import Iterable, List
 
+from django.utils.functional import SimpleLazyObject
+
 from corehq.util.soft_assert import soft_assert
 from prometheus_client.utils import INF
 
@@ -31,7 +33,7 @@ def _validate_tag_names(tag_names):
 
 
 class MetricBase:
-    def __init__(self, name: str, documentation: str, tag_names: Iterable=tuple(), **kwargs):
+    def __init__(self, name: str, documentation: str, tag_names: Iterable = tuple(), **kwargs):
         self.name = name
         if not METRIC_NAME_RE.match(name):
             raise ValueError('Invalid metric name: ' + name)
@@ -62,7 +64,7 @@ class MetricBase:
             raise Exception('Metric has missing tag values.')
 
     def _record(self, value: float):
-        pass
+        raise NotImplementedError
 
 
 class HqCounter(MetricBase):
@@ -114,7 +116,7 @@ class HqMetrics(metaclass=abc.ABCMeta):
 
     def histogram(self, name: str, documentation: str,
                   bucket_tag: str, buckets: List[int] = DEFAULT_BUCKETS, bucket_unit: str = '',
-                  tag_names: Iterable=tuple()) -> HqGauge:
+                  tag_names: Iterable=tuple()) -> HqHistogram:
         """Create a histogram metric. Histogram implementations differ between provider. See provider
         implementations for details.
         """
@@ -131,41 +133,38 @@ class DummyMetrics(HqMetrics):
         return True
 
 
-class DelegatedMetrics(HqMetrics):
+class DelegatedMetrics:
     def __init__(self, delegates):
         self.delegates = delegates
+        self._types = {
+            'counter': 'inc',
+            'gauge': 'set',
+            'histogram': 'observe',
+        }
 
-    def enabled(self) -> bool:
-        return True
-
-    def counter(self, name: str, documentation: str, tag_names: Iterable=tuple()):
-        return DelegatingCounter([
-            d.counter(name, documentation, tag_names) for d in self.delegates
-        ])
-
-    def gauge(self, name: str, documentation: str, tag_names: Iterable=tuple()):
-        return DelegatingGauge([
-            d.gauge(name, documentation, tag_names) for d in self.delegates
-        ])
+    def __getattr__(self, item):
+        if item in self._types:
+            def _make_type(*args, **kwargs):
+                return SimpleLazyObject(lambda: DelegatingMetric([
+                    getattr(d, item)(*args, **kwargs) for d in self.delegates
+                ], self._types[item]))
+            return _make_type
+        raise AttributeError
 
 
 class DelegatingMetric:
-    def __init__(self, delegates):
+    def __init__(self, delegates, record_fn_name):
         self._delegates = delegates
+        self._record_fn_name = record_fn_name
 
-    def tag(self, **tag_kwargs):
-        return self.__class__([
-            d.tag(**tag_kwargs) for d in self._delegates
-        ])
+    def tag(self, *args, **kwargs):
+        return self.__class__([d.tag(*args, **kwargs) for d in self._delegates])
 
+    def __getattr__(self, item):
+        if item == self._record_fn_name:
+            def record(*args, **kwargs):
+                for metric in self._delegates:
+                    getattr(metric, item)(*args, **kwargs)
+            return record
 
-class DelegatingCounter(DelegatingMetric):
-    def inc(self, amount: float = 1):
-        for d in self._delegates:
-            d.inc(amount)
-
-
-class DelegatingGauge(DelegatingMetric):
-    def set(self, value: float):
-        for d in self._delegates:
-            d.set(value)
+        raise AttributeError
