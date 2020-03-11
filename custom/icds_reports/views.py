@@ -2062,13 +2062,13 @@ class DailyIndicators(View):
 class CasDataExport(View):
     def post(self, request, *args, **kwargs):
         data_type = request.POST.get('indicator', None)
-        state_id = request.POST.get('location', None)
+        location_id = request.POST.get('location', None)
         month = int(request.POST.get('month', None))
         year = int(request.POST.get('year', None))
         selected_date = date(year, month, 1).strftime('%Y-%m-%d')
 
         if location_id and not user_can_access_location_id(
-                self.kwargs['domain'], request.couch_user, state_id
+                self.kwargs['domain'], request.couch_user, location_id
         ):
             return JsonResponse({"message": "Sorry, you do not have access to that location."})
 
@@ -2085,7 +2085,7 @@ class CasDataExport(View):
                 export_file = filter_cas_data_export(sync, location)
             params = dict(
                 indicator=data_type,
-                location=state_id,
+                location=location_id,
                 month=month,
                 year=year,
                 export_file=export_file
@@ -2114,7 +2114,7 @@ class CasDataExport(View):
         ):
             return HttpResponse(status_code=403)
         if not export_file:
-            sync, blob_id = get_cas_data_blob_file(data_type, state_id, selected_date)
+            sync, blob_id = get_cas_data_blob_file(data_type, location_id, selected_date)
             data = sync.get_file_from_blobdb()
         else:
             data = open(export_file, 'rb')
