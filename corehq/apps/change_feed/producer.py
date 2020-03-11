@@ -42,7 +42,13 @@ class ChangeProducer(object):
     def send_change(self, topic, change_meta):
         if settings.USE_KAFKA_SHORTEST_BACKLOG_PARTITIONER:
             from corehq.apps.change_feed.partitioners import choose_best_partition_for_topic
-            partition = choose_best_partition_for_topic(topic)
+            try:
+                partition = choose_best_partition_for_topic(topic, change_meta.domain)
+            except Exception:
+                # if there's any issue whatsoever fetching offsets
+                # fall back to the default partitioning algorithm
+                notify_exception(None, "Error choosing best partition for topic")
+                partition = None
         else:
             partition = None
 
