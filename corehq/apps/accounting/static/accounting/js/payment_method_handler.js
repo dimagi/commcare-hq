@@ -45,7 +45,7 @@ hqDefine('accounting/js/payment_method_handler', [
                     $generalCredit.text('USD ' + newValue.toFixed(2));
                 }
 
-                // make sure we resent the credit amount to zero so that the next
+                // make sure we reset the credit amount to zero so that the next
                 // time the user opens the form (before a page refresh),
                 // the value isn't already set
                 self.costItem().general_credit().addAmount(0);
