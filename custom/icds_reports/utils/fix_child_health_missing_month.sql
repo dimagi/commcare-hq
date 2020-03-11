@@ -268,6 +268,7 @@ DROP TABLE IF EXISTS temp_agg_child_my;
 CREATE TABLE temp_agg_child_my AS
 SELECT
 	awc_id,
+	supervisor_id,
 	chm.month,
 	sex,
 	age_tranche,
@@ -293,7 +294,7 @@ SELECT
 	FROM
 	"child_health_monthly" chm
 	WHERE chm.month='2018-05-01'
-	GROUP BY chm.awc_id,
+	GROUP BY chm.awc_id, chm.supervisor_id,
 					 chm.month, chm.sex, chm.age_tranche, chm.caste,
 					 coalesce_disabled, coalesce_minority, coalesce_resident
 	ORDER BY chm.awc_id;
@@ -337,11 +338,10 @@ UPDATE "agg_child_health_2018-05-01_5" agg_child_health
 				zscore_grading_hfa_severe = ut.zscore_grading_hfa_severe,
 				zscore_grading_hfa_recorded_in_month = ut.zscore_grading_hfa_recorded_in_month,
 				zscore_grading_wfh_recorded_in_month = ut.zscore_grading_wfh_recorded_in_month
-    from (
-        SELECT * from temp_agg_Child_my
-    ) ut 
+    from temp_agg_Child_my ut 
     where (
-        agg_child_health.awc_id=ut.awc_id and 
+        agg_child_health.awc_id=ut.awc_id and
+        agg_child_health.supervisor_id=ut.supervisor_id and 
         agg_child_health.month=ut.month and
         agg_child_health.gender=ut.sex and
         agg_child_health.age_tranche=ut.age_tranche and
