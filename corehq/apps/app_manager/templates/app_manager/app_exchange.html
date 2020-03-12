@@ -1,0 +1,40 @@
+{% extends "hqwebapp/base.html" %}
+{% load i18n %}
+{% load hq_shared_tags %}
+{% load compress %}
+
+{% block content %}
+<div class="container" id="hq-content">
+  <div class="page-header">
+    <h1>
+      {% blocktrans %}
+        Application Exchange
+      {% endblocktrans %}
+    </h1>
+  </div>
+  <div class="appmanager-content-single-page">
+      <div class="row results">
+      {% for app in apps %}
+        {% if forloop.counter0|divisibleby:"4" and forloop.counter0 != 0 %}{# Force tiles to appear in aligned rows #}
+          </div><div class="row results">
+        {% endif %}
+        <form action="{% url "app_exchange" domain %}" method="POST">
+          {% csrf_token %}
+          <input type="hidden" name="from_domain" value="{{ app.domain }}" />
+          <input type="hidden" name="from_app_id" value="{{ app.get_id }}" />
+          <div class="col-sm-3">
+            <div class="well well-lg text-center">
+              <h3>{{ app.name }}</h3>
+              <p>{{ app.comment }}</p>
+              <br>
+              <button type="submit" class="btn btn-primary">
+                <i class="fa fa-cloud-download"></i>
+                {% trans "Import" %}
+              </button>
+            </div>
+          </div>
+        </form>
+      {% endfor %}
+  </div>
+</div>
+{% endblock %}

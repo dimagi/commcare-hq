@@ -545,6 +545,37 @@ def _build_sample_app(app):
 
 
 @require_can_edit_apps
+def app_exchange(request, domain):
+    template = "app_manager/app_exchange.html"
+    if request.method == "POST":
+        clear_app_cache(request, domain)
+        from_domain = request.POST.get('from_domain')
+        from_app_id = request.POST.get('from_app_id')
+        app = get_latest_released_app(from_domain, from_app_id)
+
+        if not app:
+            messages.error(request, _("Could not find app."))
+            return render(request, template)
+
+        app_copy = import_app_util(from_app_id, domain)
+        return back_to_main(request, domain, app_id=app_copy._id)
+
+    domains_and_app_ids = [
+        # TODO: Make a model with an admin interface
+        ("bosco", "424e88850fa007539596068f7034b4fd"),
+        ("bosco", "f6d2aa801557aaae7b2c1b180600484a"),
+        ("bosco", "424e88850fa007539596068f7034b4fd"),
+        ("bosco", "424e88850fa007539596068f7034b4fd"),
+        ("bosco", "424e88850fa007539596068f7034b4fd"),
+    ]
+    apps = [get_app(domain, app_id) for domain, app_id in domains_and_app_ids]
+    return render(request, template, {
+        "domain": domain,
+        "apps": apps,
+    })
+
+
+@require_can_edit_apps
 def import_app(request, domain):
     template = "app_manager/import_app.html"
     if request.method == "POST":
