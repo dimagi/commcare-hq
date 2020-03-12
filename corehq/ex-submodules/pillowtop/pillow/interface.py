@@ -158,6 +158,8 @@ class PillowBase(metaclass=ABCMeta):
         """
         context = PillowRuntimeContext(changes_seen=0)
         min_wait_seconds = 30
+        # Not sure why this is need, but I'm preserving the behavior
+        since = since or None
 
         def process_offset_chunk(chunk, context):
             if not chunk:
@@ -171,7 +173,7 @@ class PillowBase(metaclass=ABCMeta):
         last_process_time = datetime.utcnow()
 
         try:
-            for change in self.get_change_feed().iter_changes(since=since or None, forever=False):
+            for change in self.get_change_feed().iter_changes(since=since, forever=False):
                 context.changes_seen += 1
                 if change:
                     if self.batch_processors:
