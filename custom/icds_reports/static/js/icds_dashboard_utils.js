@@ -225,9 +225,9 @@ hqDefine("js/icds_dashboard_utils", function () {
         $routeProvider.when("/fact_sheets", {
             template: "<progress-report></progress-report>",
         })
-        .when("/fact_sheets/:report", {
-            template: "<progress-report></progress-report>",
-        });
+            .when("/fact_sheets/:report", {
+                template: "<progress-report></progress-report>",
+            });
     }
     function addSharedRoutes($routeProvider, defaultStep) {
         addMaternalChildRoutes($routeProvider, defaultStep);
