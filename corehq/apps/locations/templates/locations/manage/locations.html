@@ -260,7 +260,7 @@
                 <strong><span data-bind="text: count"></span></strong> in the box below.
               {% endblocktrans %}
             </p>
-            <input data-bind="value: signOff, valueUpdate: 'input'" />
+            <input data-bind="textInput: signOff" />
           </div>
           <div class="modal-footer">
             <button data-dismiss="modal" class="btn btn-default">{% trans "Cancel" %}</button>

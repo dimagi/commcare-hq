@@ -25,9 +25,8 @@
         <td><input type="text"
                    class="form-control"
                    placeholder="{% trans 'Name' %}"
-                   data-bind="value: name,
+                   data-bind="textInput: name,
                               attr: {name: ('named_args.' + $index() + '.name')},
-                              valueUpdate: 'afterkeydown',
                               event: {keyup : $parent.updateExampleStructuredSMS}
                               " /></td>
         <td><input type="text"
