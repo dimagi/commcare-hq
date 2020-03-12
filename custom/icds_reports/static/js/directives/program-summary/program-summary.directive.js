@@ -87,10 +87,6 @@ function ProgramSummaryController($scope, $http, $log, $routeParams, $location, 
         return i;
     };
 
-    vm.isNationalUser = function () {
-        return haveAccessToAllLocations;
-    };
-
     vm.showInfoMessage = function () {
         var selected_month = parseInt($location.search()['month']) || new Date().getMonth() + 1;
         var selected_year =  parseInt($location.search()['year']) || new Date().getFullYear();

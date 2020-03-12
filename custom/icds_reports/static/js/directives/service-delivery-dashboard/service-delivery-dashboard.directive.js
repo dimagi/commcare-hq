@@ -335,10 +335,6 @@ function ServiceDeliveryDashboardController($rootScope, $scope, $http, $location
         return i;
     };
 
-    vm.isNationalUser = function () {
-        return haveAccessToAllLocations;
-    };
-
     vm.moveToLocation = function (loc, index) {
         if (loc === 'national') {
             $location.search('location_id', '');
