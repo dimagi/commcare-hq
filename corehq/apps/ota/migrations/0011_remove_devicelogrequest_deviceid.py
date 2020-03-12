@@ -12,12 +12,12 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RemoveField(
-            model_name='devicelogrequest',
-            name='device_id',
-        ),
         migrations.AlterUniqueTogether(
             name='devicelogrequest',
             unique_together=set([('domain', 'username')]),
+        ),
+        migrations.RemoveField(
+            model_name='devicelogrequest',
+            name='device_id',
         ),
     ]
