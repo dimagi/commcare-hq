@@ -136,7 +136,7 @@
                 CASE WHEN last_referral_date BETWEEN %(start_date)s AND %(end_date)s
                 THEN 1 ELSE 0 END
             ) as cases_person_referred
-        FROM "ucr_icds-cas_static-person_cases_v3_2ae0879a" ucr INNER JOIN
+        FROM "ucr_icds-cas_static-person_cases_v3_2ae0879a" ucr LEFT JOIN
              "icds_dashboard_migration_forms" agg_migration ON (
                 ucr.doc_id = agg_migration.person_case_id AND
                 agg_migration.month = %(start_date)s AND
@@ -164,7 +164,7 @@
                     ucr.supervisor_id = adolescent_girls_table.supervisor_id AND
                     adolescent_girls_table.month=%(start_date)s
                     )
-                 INNER JOIN
+                 LEFT JOIN
                  "icds_dashboard_migration_forms" agg_migration ON (
                     ucr.doc_id = agg_migration.person_case_id AND
                     agg_migration.month = %(start_date)s AND
