@@ -110,7 +110,15 @@ class PillowBase(metaclass=ABCMeta):
         pillow_logging.info("Starting pillow %s" % self.__class__)
         with configure_scope() as scope:
             scope.set_tag("pillow_name", self.get_name())
-        self.process_changes(since=self.get_last_checkpoint_sequence(), forever=True)
+
+        since = self.get_last_checkpoint_sequence()
+        while True:
+            pillow_logging.info(f"Processing from change feed starting at {since}")
+            self.process_changes(since=since, forever=False)
+            since = self.get_last_checkpoint_sequence()
+            pillow_logging.info(f"Change feed ended at {since}. Pausing until next message.")
+            self.wait_for_change(since)
+            pillow_logging.info("Next message arrived.")
 
     def _update_checkpoint(self, change, context):
         if change and context:
@@ -135,6 +143,10 @@ class PillowBase(metaclass=ABCMeta):
             return [processor for processor in self.processors if not processor.supports_batch_processing]
         else:
             return self.processors
+
+    def wait_for_change(self, since):
+        """Hang until there is another change to process from the feed"""
+        next(self.get_change_feed().iter_changes(since=since or None, forever=True))
 
     def process_changes(self, since, forever=False):
         """
