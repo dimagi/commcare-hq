@@ -41,9 +41,7 @@ from custom.icds_reports.tasks import (
     drop_df_indices,
     drop_gm_indices,
     update_governance_dashboard,
-    update_service_delivery_report,
-    update_aggregate_locations_tables
-
+    update_service_delivery_report
 )
 
 
@@ -87,7 +85,6 @@ NORMAL_TASKS = {
     'update_agg_child_health': (None, update_agg_child_health, None),
     'update_governance_dashboard': (None, update_governance_dashboard, None),
     'update_service_delivery_report': (None, update_service_delivery_report, None),
-    'update_aggregate_locations_tables': (None, update_aggregate_locations_tables, None),
 }
 
 
