@@ -243,7 +243,7 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
                 CASE WHEN last_referral_date BETWEEN %(start_date)s AND %(end_date)s
                 THEN 1 ELSE 0 END
             ) as cases_person_referred
-        FROM "{ucr_tablename}" ucr INNER JOIN
+        FROM "{ucr_tablename}" ucr LEFT JOIN
              "{migration_table}" agg_migration ON (
                 ucr.doc_id = agg_migration.person_case_id AND
                 agg_migration.month = %(start_date)s AND
@@ -290,7 +290,7 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
                     ucr.supervisor_id = adolescent_girls_table.supervisor_id AND
                     adolescent_girls_table.month=%(start_date)s
                     )
-                 INNER JOIN
+                 LEFT JOIN
                  "{migration_table}" agg_migration ON (
                     ucr.doc_id = agg_migration.person_case_id AND
                     agg_migration.month = %(start_date)s AND
