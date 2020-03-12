@@ -19,12 +19,12 @@ COMMON_TAGS = ['environment:{}'.format(settings.SERVER_ENVIRONMENT)]
 statsd = DogStatsd(constant_tags=COMMON_TAGS)
 
 
-def _format_tags(tag_names, tag_values):
-    if not tag_names or not tag_values:
+def _format_tags(tag_values: dict):
+    if not tag_values:
         return None
 
     return [
-        f'{name}:{value}' for name, value in zip(tag_names, tag_values)
+        f'{name}:{value}' for name, value in tag_values.items()
     ]
 
 
@@ -37,13 +37,13 @@ def _datadog_record(fn, name, value, tags=None):
 
 class Counter(HqCounter):
     def _record(self, amount: float):
-        tags = _format_tags(self.tag_names, self.tag_values)
+        tags = _format_tags(self.tag_values)
         _datadog_record(statsd.increment, self.name, amount, tags)
 
 
 class Gauge(HqGauge):
     def _record(self, value):
-        tags = _format_tags(self.tag_names, self.tag_values)
+        tags = _format_tags(self.tag_values)
         _datadog_record(statsd.gauge, self.name, value, tags)
 
 
@@ -68,7 +68,7 @@ class Histogram(HqHistogram):
     More details: https://help.datadoghq.com/hc/en-us/articles/211545826
     """
     def _record(self, value: float):
-        tags = _format_tags(self.tag_names, self.tag_values)
+        tags = _format_tags(self.tag_values)
         if not tags:
             tags = []
         bucket = bucket_value(value, self._buckets, self._bucket_unit)

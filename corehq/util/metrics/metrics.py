@@ -21,7 +21,7 @@ def _enforce_prefix(name, prefix):
 
 
 def _validate_tag_names(tag_names):
-    tag_names = tuple(tag_names)
+    tag_names = set(tag_names)
     for l in tag_names:
         if not METRIC_TAG_NAME_RE.match(l):
             raise ValueError('Invalid metric tag name: ' + l)
@@ -41,6 +41,10 @@ class MetricBase:
         self.documentation = documentation
         self.tag_names = _validate_tag_names(tag_names)
         self.tag_values = kwargs.pop('tag_values', None)
+        if self.tag_values:
+            assert isinstance(self.tag_values, dict)
+            if self.tag_values.keys() != self.tag_names:
+                raise ValueError('Incorrect tag names')
         self._kwargs = kwargs
         self._init_metric()
 
@@ -48,13 +52,10 @@ class MetricBase:
         pass
 
     def tag(self, **tag_kwargs):
-        if sorted(tag_kwargs) != sorted(self.tag_names):
-            raise ValueError('Incorrect tag names')
+        tag_kwargs = {t: str(v) for t, v in tag_kwargs.items()}
+        return self._get_tagged_instance(tag_kwargs)
 
-        tag_values = tuple(str(tag_kwargs[t]) for t in self.tag_names)
-        return self._get_tagged_instance(tag_values)
-
-    def _get_tagged_instance(self, tag_values):
+    def _get_tagged_instance(self, tag_values: dict):
         return self.__class__(
             self.name, self.documentation, tag_names=self.tag_names, tag_values=tag_values, **self._kwargs
         )

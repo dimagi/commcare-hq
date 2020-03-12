@@ -20,8 +20,8 @@ class PrometheusMetricBase(MetricBase):
         delegate = self._kwargs.get('delegate')
         self._delegate = delegate or self._metric_class(self.name, self.documentation, self.tag_names)
 
-    def _get_tagged_instance(self, tag_values):
-        delegate = self._delegate.labels(**dict(zip(self.tag_names, tag_values)))
+    def _get_tagged_instance(self, tag_values: dict):
+        delegate = self._delegate.labels(**tag_values)
         return self.__class__(
             self.name, self.documentation,
             tag_names=self.tag_names, tag_values=tag_values, delegate=delegate, **self._kwargs

@@ -122,7 +122,7 @@ class TestDatadogMetrics(_TestMetrics):
                     bucket = metric._buckets[-1]
                     prefix = 'over'
                 bucket_tag = (metric._bucket_tag, f'{prefix}_{bucket:03d}{metric._bucket_unit}')
-                expected_samples[tags + (bucket_tag,)] = val
+                expected_samples[tuple(sorted(tags + (bucket_tag,)))] = val
 
         actual = {
             key[1]: sum(val) for key, val in self.recorded_metrics.items()

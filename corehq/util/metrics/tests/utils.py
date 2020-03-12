@@ -9,14 +9,10 @@ def patch_datadog():
     def record(fn, name, value, tags=None):
         key = tuple([
             name,
-            tuple([tuple(t.split(':')) for t in (tags or [])]),
+            tuple(sorted([tuple(t.split(':')) for t in (tags or [])])),
         ])
         stats[key].append(value)
 
     stats = defaultdict(list)
-    patch = mock.patch("corehq.util.metrics.datadog._datadog_record", new=record)
-    patch.start()
-    try:
+    with mock.patch("corehq.util.metrics.datadog._datadog_record", new=record):
         yield stats
-    finally:
-        patch.stop()
