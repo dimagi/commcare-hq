@@ -421,7 +421,7 @@ class CouchSqlDomainMigrator:
 
     def _process_missing_case_references(self):
         """Extract forms from case diffs and process missing elements"""
-        def maybe_drop_duplicate_ledgers(jdiff, seen=set()):
+        def maybe_drop_duplicate_ledgers(jdiff, stock_id, seen=set()):
             """Drop ledger transactions from duplicate forms
 
             Fix up ledgers affected by duplicate forms that had their
@@ -434,10 +434,15 @@ class CouchSqlDomainMigrator:
                     or jdiff.new_value in seen):
                 return False
             seen.add(jdiff.new_value)
+            case_id, section_id, entry_id = stock_id.split("/")
+            ledger_value = LedgerAccessorSQL.get_ledger_value(case_id, section_id, entry_id)
+            if ledger_value.last_modified_form_id != jdiff.new_value:
+                return False
             couch_form = XFormInstance.get(jdiff.new_value)
             if couch_form.doc_type != "XFormDuplicate":
                 return False
-            log.info("dropping duplicate ledgers for form %s", couch_form.form_id)
+            log.info("dropping duplicate ledgers for form %s case %s",
+                couch_form.form_id, case_id)
             sql_form = FormAccessorSQL.get_form(couch_form.form_id)
             MigrationLedgerProcessor(self.domain).process_form_archived(sql_form)
             return True
@@ -471,7 +476,7 @@ class CouchSqlDomainMigrator:
                     form.form_id, form.received_on, case_id)
                 self._migrate_form(form, get_case_ids(form))
             if diff.kind == "stock state":
-                dropped = maybe_drop_duplicate_ledgers(diff.json_diff)
+                dropped = maybe_drop_duplicate_ledgers(diff.json_diff, case_id)
                 if dropped:
                     continue
             form_ids = list(iter_form_ids(diff.json_diff, diff.kind))
