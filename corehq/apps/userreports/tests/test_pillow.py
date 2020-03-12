@@ -517,10 +517,7 @@ class ProcessRelatedDocTypePillowTest(TestCase):
         for i in range(3):
             since = pillow.get_change_feed().get_latest_offsets()
             form, cases = self._post_case_blocks(i)
-            skip_final_checkpoint_cm = mock.patch.object(
-                PillowRuntimeContext,
-                'flush_checkpoint_on_next_opportunity', lambda self: None)
-            with self.assertNumQueries(num_queries), skip_final_checkpoint_cm:
+            with self.assertNumQueries(num_queries), skip_final_checkpoint():
                 pillow.process_changes(since=since, forever=False)
             rows = self.adapter.get_query_object()
             self.assertEqual(rows.count(), 1)
@@ -599,8 +596,9 @@ class ReuseEvaluationContextTest(TestCase):
         since2 = pillow2.get_change_feed().get_latest_offsets()
         form, cases = self._post_case_blocks()
 
-        self._test_pillow(pillow1, since1, num_queries)
-        self._test_pillow(pillow2, since2, num_queries)
+        with skip_final_checkpoint():
+            self._test_pillow(pillow1, since1, num_queries)
+            self._test_pillow(pillow2, since2, num_queries)
 
         for a in self.adapters:
             rows = a.get_query_object()
@@ -829,3 +827,8 @@ def _save_sql_case(doc):
             ], domain=doc['domain']
         )
     return cases[0]
+
+
+def skip_final_checkpoint():
+    return mock.patch.object(
+        PillowRuntimeContext, 'flush_checkpoint_on_next_opportunity', lambda self: None)
