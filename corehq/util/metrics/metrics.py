@@ -92,7 +92,7 @@ class HqHistogram(MetricBase):
         self._bucket_unit = self._kwargs.get('bucket_unit', '')
         self._bucket_tag = self._kwargs.get('bucket_tag')
         if self._bucket_tag in self.tag_names:
-            self.tag_names = tuple([name for name in self.tag_names if name != self._bucket_tag])
+            self.tag_names = tuple(name for name in self.tag_names if name != self._bucket_tag)
 
     def observe(self, value: float):
         """Update histogram with the given value."""
