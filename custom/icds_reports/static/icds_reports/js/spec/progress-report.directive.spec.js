@@ -11,6 +11,7 @@ describe('Progress Report Directive', function () {
     pageData.registerUrl('icds_locations', 'icds_locations');
 
     beforeEach(module('icdsApp', function ($provide) {
+        utils.provideDefaultConstants($provide, {});
         $provide.constant("userLocationId", null);
         $provide.constant("haveAccessToAllLocations", false);
         $provide.constant("isAlertActive", false);
