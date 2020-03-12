@@ -144,6 +144,7 @@ function ProgressReportController($scope, $location, progressReportService,
         return i;
     };
 
+
     vm.moveToLocation = function (loc, index) {
         if (loc === 'national') {
             $location.search('location_id', '');
