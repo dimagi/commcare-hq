@@ -549,6 +549,12 @@ def _build_sample_app(app):
 @require_can_edit_apps
 def app_exchange(request, domain):
     template = "app_manager/app_exchange.html"
+    apps = [get_app(obj.domain, obj.app_id) for obj in ExchangeApplication.objects.all()]
+    context = {
+        "domain": domain,
+        "apps": apps,
+    }
+
     if request.method == "POST":
         clear_app_cache(request, domain)
         from_domain = request.POST.get('from_domain')
@@ -557,16 +563,12 @@ def app_exchange(request, domain):
 
         if not doc:
             messages.error(request, _("Could not find latest released version of app."))
-            return render(request, template)
+            return render(request, template, context)
 
         app_copy = import_app_util(doc, domain)
         return back_to_main(request, domain, app_id=app_copy._id)
 
-    apps = [get_app(obj.domain, obj.app_id) for obj in ExchangeApplication.objects.all()]
-    return render(request, template, {
-        "domain": domain,
-        "apps": apps,
-    })
+    return render(request, template, context)
 
 
 @require_can_edit_apps
