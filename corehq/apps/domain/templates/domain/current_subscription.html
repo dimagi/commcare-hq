@@ -184,7 +184,7 @@
                 {% endif %}
               </label>
               <div class="col-sm-10">
-                <p class="form-control-text">{{ plan.general_credit.amount }}</p>
+                <p class="form-control-text js-general-credit">{{ plan.general_credit.amount }}</p>
               </div>
             </div>
           {% endif %}
@@ -342,7 +342,7 @@
                      class="form-control"
                      data-bind="
                                    attr:{name: creditType},
-                                   value: addAmount" />
+                                   textInput: addAmount" />
             </div>
             <div class="alert alert-danger"
                  data-bind="visible: !addAmountValid()">
