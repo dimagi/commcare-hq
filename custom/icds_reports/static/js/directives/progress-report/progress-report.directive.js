@@ -3,8 +3,9 @@
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function ProgressReportController($scope, $location, progressReportService,
-    storageService, $routeParams, userLocationId, DTOptionsBuilder, DTColumnDefBuilder, haveAccessToAllLocations,
-    isAlertActive, dateHelperService, navigationService, baseControllersService, isMobile) {
+                                  storageService, $routeParams, userLocationId, DTOptionsBuilder, DTColumnDefBuilder,
+                                  haveAccessToAllLocations, isAlertActive, dateHelperService, navigationService,
+                                  baseControllersService) {
 
     baseControllersService.BaseFilterController.call(
         this, $scope, $routeParams, $location, dateHelperService, storageService, navigationService
@@ -187,10 +188,10 @@ function ProgressReportController($scope, $location, progressReportService,
 ProgressReportController.$inject = [
     '$scope', '$location', 'progressReportService', 'storageService', '$routeParams', 'userLocationId',
     'DTOptionsBuilder', 'DTColumnDefBuilder', 'haveAccessToAllLocations', 'isAlertActive', 'dateHelperService',
-    'navigationService', 'baseControllersService', 'isMobile',
+    'navigationService', 'baseControllersService',
 ];
 
-window.angular.module('icdsApp').directive('progressReport', ['templateProviderService', function(templateProviderService) {
+window.angular.module('icdsApp').directive('progressReport', ['templateProviderService', function (templateProviderService) {
     return {
         restrict: 'E',
         templateUrl: function () {
