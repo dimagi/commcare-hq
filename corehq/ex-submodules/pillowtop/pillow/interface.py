@@ -114,7 +114,7 @@ class PillowBase(metaclass=ABCMeta):
         since = self.get_last_checkpoint_sequence()
         while True:
             pillow_logging.info(f"Processing from change feed starting at {since}")
-            self.process_changes(since=since, forever=False)
+            self.process_changes(since=since)
             since = self.get_last_checkpoint_sequence()
             pillow_logging.info(f"Change feed ended at {since}. Pausing until next message.")
             self.wait_for_change(since)
@@ -148,7 +148,7 @@ class PillowBase(metaclass=ABCMeta):
         """Hang until there is another change to process from the feed"""
         next(self.get_change_feed().iter_changes(since=since or None, forever=True))
 
-    def process_changes(self, since, forever=False):
+    def process_changes(self, since):
         """
         Process changes on all the pillow processors.
 
@@ -171,7 +171,7 @@ class PillowBase(metaclass=ABCMeta):
         last_process_time = datetime.utcnow()
 
         try:
-            for change in self.get_change_feed().iter_changes(since=since or None, forever=forever):
+            for change in self.get_change_feed().iter_changes(since=since or None, forever=False):
                 context.changes_seen += 1
                 if change:
                     if self.batch_processors:
