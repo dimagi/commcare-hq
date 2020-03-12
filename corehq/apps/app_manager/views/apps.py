@@ -42,6 +42,7 @@ from corehq.apps.app_manager.dbaccessors import (
     get_app,
     get_current_app,
     get_latest_released_app,
+    get_latest_released_app_doc,
 )
 from corehq.apps.app_manager.decorators import (
     no_conflict_require_POST,
@@ -552,13 +553,13 @@ def app_exchange(request, domain):
         clear_app_cache(request, domain)
         from_domain = request.POST.get('from_domain')
         from_app_id = request.POST.get('from_app_id')
-        app = get_latest_released_app(from_domain, from_app_id)
+        doc = get_latest_released_app_doc(from_domain, from_app_id)
 
-        if not app:
+        if not doc:
             messages.error(request, _("Could not find latest released version of app."))
             return render(request, template)
 
-        app_copy = import_app_util(from_app_id, domain)
+        app_copy = import_app_util(doc, domain)
         return back_to_main(request, domain, app_id=app_copy._id)
 
     apps = [get_app(obj.domain, obj.app_id) for obj in ExchangeApplication.objects.all()]
