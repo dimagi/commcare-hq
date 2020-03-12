@@ -38,9 +38,14 @@ class PillowRuntimeContext(object):
 
     def __init__(self, changes_seen=0):
         self.changes_seen = changes_seen
+        self.should_flush = False
 
     def reset(self):
         self.changes_seen = 0
+        self.should_flush = False
+
+    def flush_checkpoint_on_next_opportunity(self):
+        self.should_flush = True
 
 
 class PillowBase(metaclass=ABCMeta):
@@ -131,7 +136,7 @@ class PillowBase(metaclass=ABCMeta):
         else:
             return self.processors
 
-    def process_changes(self, since, forever):
+    def process_changes(self, since, forever=False):
         """
         Process changes on all the pillow processors.
 
@@ -175,6 +180,7 @@ class PillowBase(metaclass=ABCMeta):
                         self._update_checkpoint(change, context)
                 else:
                     self._update_checkpoint(None, None)
+            context.flush_checkpoint_on_next_opportunity()
             process_offset_chunk(changes_chunk, context)
         except PillowtopCheckpointReset:
             process_offset_chunk(changes_chunk, context)
