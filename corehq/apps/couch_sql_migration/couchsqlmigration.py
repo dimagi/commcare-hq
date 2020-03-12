@@ -505,6 +505,14 @@ class CouchSqlDomainMigrator:
         return migrated_ids
 
     def _save_missing_cases_and_ledgers(self, form_id, case_id):
+        def did_update(case):
+            new_tx, = case.get_live_tracked_models(CaseTransaction)
+            if not new_tx.is_saved():
+                return True
+            old_tx = CaseAccessorSQL.get_transaction_by_form_id(case.case_id, form_id)
+            assert old_tx, (form_id, case_id)
+            return old_tx.type != new_tx.type
+
         def iter_missing_ledgers(stock_result):
             assert not stock_result.models_to_delete, (form_id, stock_result)
             if not (stock_result and stock_result.models_to_save):
@@ -526,7 +534,7 @@ class CouchSqlDomainMigrator:
         result = self._get_case_stock_result(sql_form, couch_form)
         if not result:
             return False
-        cases = [c for c in result.case_models if c.has_tracked_models()]
+        cases = [c for c in result.case_models if did_update(c)]
         rebuild_ledger = partial(
             MigrationLedgerProcessor(self.domain)._rebuild_ledger, form_id)
         ledgers = [rebuild_ledger(v) for v in iter_missing_ledgers(result.stock_result)]
