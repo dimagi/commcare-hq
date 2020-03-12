@@ -100,7 +100,7 @@ class KafkaChangeFeed(ChangeFeed):
         latest_offsets = self.get_latest_offsets()
         ret = {}
         for topic_partition, sequence in self.get_processed_offsets().items():
-            if sequence == latest_offsets[topic_partition]:
+            if sequence >= latest_offsets[topic_partition]:
                 # this topic and partition is totally up to date and if we add 1
                 # then kafka will give us an offset out of range error.
                 # not adding 1 to the partition means that we may process this
