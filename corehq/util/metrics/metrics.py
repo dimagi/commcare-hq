@@ -33,7 +33,7 @@ def _validate_tag_names(tag_names):
 
 
 class MetricBase:
-    def __init__(self, name: str, documentation: str, tag_names: Iterable = tuple(), **kwargs):
+    def __init__(self, name: str, documentation: str, tag_names: Iterable = (), **kwargs):
         self.name = name
         if not METRIC_NAME_RE.match(name):
             raise ValueError('Invalid metric name: ' + name)
@@ -109,15 +109,15 @@ class HqMetrics(metaclass=abc.ABCMeta):
     def enabled(self) -> bool:
         raise NotImplementedError
 
-    def counter(self, name: str, documentation: str, tag_names: Iterable = tuple()) -> HqCounter:
+    def counter(self, name: str, documentation: str, tag_names: Iterable = ()) -> HqCounter:
         return self._counter_class(name, documentation, tag_names)
 
-    def gauge(self, name: str, documentation: str, tag_names: Iterable = tuple()) -> HqGauge:
+    def gauge(self, name: str, documentation: str, tag_names: Iterable = ()) -> HqGauge:
         return self._gauge_class(name, documentation, tag_names)
 
     def histogram(self, name: str, documentation: str,
                   bucket_tag: str, buckets: List[int] = DEFAULT_BUCKETS, bucket_unit: str = '',
-                  tag_names: Iterable = tuple()) -> HqHistogram:
+                  tag_names: Iterable = ()) -> HqHistogram:
         """Create a histogram metric. Histogram implementations differ between provider. See provider
         implementations for details.
         """
