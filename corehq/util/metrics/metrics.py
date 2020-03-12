@@ -161,7 +161,7 @@ class DelegatingMetric:
         self._record_fn_name = record_fn_name
 
     def tag(self, *args, **kwargs):
-        return self.__class__([d.tag(*args, **kwargs) for d in self._delegates])
+        return self.__class__([d.tag(*args, **kwargs) for d in self._delegates], self._record_fn_name)
 
     def __getattr__(self, item):
         if item == self._record_fn_name:
