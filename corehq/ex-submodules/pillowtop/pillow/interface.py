@@ -146,6 +146,7 @@ class PillowBase(metaclass=ABCMeta):
             if not chunk:
                 return
             self._batch_process_with_error_handling(chunk)
+            # update checkpoint for just the latest change
             self._update_checkpoint(chunk[-1], context)
 
         # keep track of chunk for batch processors
@@ -164,9 +165,7 @@ class PillowBase(metaclass=ABCMeta):
                         time_elapsed = (datetime.utcnow() - last_process_time).seconds > min_wait_seconds
                         if chunk_full or time_elapsed:
                             last_process_time = datetime.utcnow()
-                            self._batch_process_with_error_handling(changes_chunk)
-                            # update checkpoint for just the latest change
-                            self._update_checkpoint(changes_chunk[-1], context)
+                            process_offset_chunk(changes_chunk, context)
                             # reset for next chunk
                             changes_chunk = []
                     else:
