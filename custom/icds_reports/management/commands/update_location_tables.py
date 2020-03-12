@@ -3,6 +3,7 @@ from django.core.management.base import BaseCommand
 from custom.icds_reports.models.util import AggregationRecord
 from custom.icds_reports.tasks import update_aggregate_locations_tables
 
+
 class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('agg_uuid')
