@@ -108,6 +108,7 @@ function ProgressReportController($scope, $location, progressReportService,
         vm.myPromise = progressReportService.getData(params).then(function (response) {
             vm.title = response.data.config.title;
             vm.data = response.data.config.sections;
+            vm.sectionData = vm.data[vm.activeSection];
         });
     };
 
@@ -161,6 +162,14 @@ function ProgressReportController($scope, $location, progressReportService,
             $location.search('location_name', loc.name);
         }
     };
+
+    // mobile helpers
+    vm.activeSection = 0;
+    vm.getSectionData = function (index) {
+        vm.activeSection = index;
+        vm.sectionData =  vm.data[index];
+    };
+    // end mobile helpers
 
     vm.goToReport = function (reportName) {
         $location.path('fact_sheets/' + reportName);

@@ -1,0 +1,70 @@
+{% load staticfiles %}
+<div cg-busy="[$ctrl.myPromise, $rootScope.locationPromise]">
+  <div class="app-bg h-100vh overflow-hidden" ng-show="!$ctrl.filtersOpen">
+      <div class="top-section p-3" ng-style="{ 'paddingBottom' : (!$ctrl.report) ? '25vh' : '1rem' }">
+          {% include 'icds_reports/icds_app/mobile/partials/mobile-heading.html' %}
+          <p class="font-weight-600 font-montserrat font-16 text-white mb-0" ng-bind="$ctrl.title"></p>
+      </div>
+      <div class="section-list" ng-if="!$ctrl.report">
+          <div class="fact-sheet-nav-nutrition fact-sheet-sections col-xs-11" ng-click="$ctrl.goToReport('maternal_and_child_nutrition')">
+              <img src="{% static 'icds_reports/mobile/images/motherchildnutrition.png'%}" class="pr-3 section-images">
+              <p class="mb-0 font-montserrat font-weight-600 font-16">Maternal And Child Nutrition</p>
+          </div>
+          <div class="fact-sheet-sections fact-sheet-nav-interventions col-xs-11" ng-click="$ctrl.goToReport('interventions')">
+              <img src="{% static 'icds_reports/mobile/images/interventions.png'%}" class="pr-3 section-images">
+              <p class="mb-0 font-montserrat font-weight-600 font-16">Interventions</p>
+          </div>
+          <div class="fact-sheet-sections fact-sheet-nav-behaviour-change col-xs-11" ng-click="$ctrl.goToReport('behavior_change')">
+              <img src="{% static 'icds_reports/mobile/images/behaviorchange.png'%}" class="pr-3 section-images">
+              <p class="mb-0 font-montserrat font-weight-600 font-16">Behavior change</p>
+          </div>
+          <div class="fact-sheet-sections fact-sheet-nav-water col-xs-11" ng-click="$ctrl.goToReport('water_sanitation_and_hygiene')">
+              <img src="{% static 'icds_reports/mobile/images/sanitation.png'%}" class="pr-3 section-images">
+              <p class="mb-0 font-montserrat font-weight-600 font-16">Water Sanitation and Hygiene</p>
+          </div>
+          <div class="fact-sheet-sections fact-sheet-nav-demographics col-xs-11 padding-25px" ng-click="$ctrl.goToReport('demographics')">
+              <img src="{% static 'icds_reports/mobile/images/demographics.png'%}" class="pr-3">
+              <p class="mb-0 font-montserrat font-weight-600 font-16">Demographics</p>
+          </div>
+          <div class="fact-sheet-sections fact-sheet-nav-all col-xs-11" ng-click="$ctrl.goToReport('all')">
+              <img src="{% static 'icds_reports/mobile/images/all.png'%}" class="pr-3 section-images">
+              <p class="mb-0 font-montserrat font-weight-600 font-16">All</p>
+          </div>
+      </div>
+      <div ng-if="$ctrl.report" class="d-flex align-items-flex-end pt-3 overflow-auto shadow">
+          <div ng-repeat="section in $ctrl.data" class="flex-shrink-0 pb-3" ng-init="numberOfSections = $ctrl.data.length"
+               ng-class="[{'col-xs-12' : (numberOfSections === 1)},{'col-xs-6' : (numberOfSections === 2)},
+               {'col-xs-5' : (numberOfSections > 2)}, {'activeSection' : $ctrl.activeSection==$index}]" ng-click="$ctrl.getSectionData($index)">
+              <div class="section-title" ng-bind-html="section.section_title"></div>
+          </div>
+      </div>
+      <div  ng-if="$ctrl.report" class="p-3 fact-sheet-rows">
+          <div class="shadow rounded-border p-3 bg-white mb-3" ng-repeat="row in $ctrl.sectionData.rows_config">
+              <div ng-if="!row.data || !row.data.length" class="d-flex justify-content-center">No data available</div>
+              <div ng-if="row.data">
+                  <p class="font-weight-600 font-montserrat font-14 mb-0" ng-bind="row.data[0].html"></p>
+                  <div class="d-flex align-items-center">
+                      <div class="col-xs-4 no-gutters text-left pt-3 pb-3" ng-repeat="cell in row.data | limitTo: (1 - row.data.length)">
+                          <p class="mb-0 font-montserrat font-14 font-weight-500">{$ $ctrl.sectionData.months[$index] | uppercase $}</p>
+                          <p class="mb-0 font-16 font-weight-600" ng-class="$ctrl.getCSS(row.data, $index+1, row.reverseColors)" ng-if="row.format === 'percent'">{$ cell.html | number:2 $} %</p>
+                          <p class="mb-0 font-16 font-weight-600" ng-class="$ctrl.getCSS(row.data, $index+1, row.reverseColors)" ng-if="row.format !== 'percent'">{$ cell.html | indiaNumbers $}</p>
+                      </div>
+                  </div>
+                  <div class="pt-3 pb-3">
+                      <p class="font-montserrat font-14 font-weight-500 mb-0"
+                               uib-popover="National average of ICDS-CAS data is calculated using the previous calendar month's data."
+                               popover-placement="top"
+                               popover-trigger="'mouseenter'">
+                          <span>CAS National Average </span>
+                          <i class="fa fa-info-circle"></i>
+                      </p>
+                      <span class="font-weight-600 font-montserrat font-16" ng-if="row.average.html !== void(0) && row.format === 'percent'">{$ row.average.html | number:2 $} %</span>
+                      <span class="font-weight-600 font-montserrat font-16" ng-if="row.average.html !== void(0) && row.format !== 'percent'">{$ row.average.html | indiaNumbers $}</span>
+                      <span class="font-weight-600 font-montserrat font-16" ng-if="row.average.html === void(0)">---</span>
+                  </div>
+              </div>
+          </div>
+      </div>
+  </div>
+  <mobile-filters selected-locations="$ctrl.selectedLocations" ng-show="$ctrl.filtersOpen"></mobile-filters>
+</div>
