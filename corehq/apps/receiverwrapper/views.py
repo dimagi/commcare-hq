@@ -193,10 +193,10 @@ def _submission_error(request, message, metric_tags,
 
 
 def _record_metrics(tags, submission_type, response, timer=None, xform=None):
-    tags += [
-        'submission_type:{}'.format(submission_type),
-        'status_code:{}'.format(response.status_code)
-    ]
+    tags.update({
+        'submission_type': submission_type,
+        'status_code': response.status_code
+    })
 
     if xform and xform.metadata and xform.metadata.timeEnd and xform.received_on:
         lag = xform.received_on - xform.metadata.timeEnd
