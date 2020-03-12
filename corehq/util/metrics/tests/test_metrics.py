@@ -44,24 +44,6 @@ class _TestMetrics(SimpleTestCase):
             (('t1', 'c'), ('t2', 'b')): 5,
         })
 
-    def test_histogram(self):
-        histogram = self.provider.histogram(
-            'commcare.test.histogram', 'Description', 'duration',
-            buckets=[1, 2, 3], bucket_unit='ms', tag_names=['t1', 't2']
-        )
-        tagged_1 = histogram.tag(t1='a', t2='b')
-        tagged_1.observe(0.2)
-        tagged_1.observe(0.7)
-        tagged_1.observe(2.5)
-
-        tagged_2 = histogram.tag(t1='c', t2='b')
-        tagged_2.observe(2)
-        tagged_2.observe(5)
-        self.assertHistogramMetric(histogram, {
-            (('t1', 'a'), ('t2', 'b')): {1: 2, 3: 1},
-            (('t1', 'c'), ('t2', 'b')): {2: 1, INF: 1}
-        })
-
     def assertCounterMetric(self, metric: HqCounter, expected: Dict[Tuple[Tuple[str, str], ...], float]):
         """
         :param metric: metric class
@@ -73,15 +55,6 @@ class _TestMetrics(SimpleTestCase):
         """
         :param metric: metric class
         :param expected: dict mapping tag tuples to metric values
-        """
-        raise NotImplementedError
-
-    def assertHistogramMetric(self,
-                              metric: HqHistogram,
-                              expected: Dict[Tuple[Tuple[str, str], ...], Dict[float, int]]):
-        """
-        :param metric: metric class
-        :param expected: dict mapping tag tuples to a dict of bucket values
         """
         raise NotImplementedError
 
@@ -97,6 +70,24 @@ class TestDatadogMetrics(_TestMetrics):
     def tearDown(self) -> None:
         self.patch.__exit__(None, None, None)
         super().tearDown()
+
+    def test_histogram(self):
+        histogram = self.provider.histogram(
+            'commcare.test.histogram', 'Description', 'duration',
+            buckets=[1, 2, 3], bucket_unit='ms', tag_names=['t1', 't2']
+        )
+        tagged_1 = histogram.tag(t1='a', t2='b')
+        tagged_1.observe(0.2)
+        tagged_1.observe(0.7)
+        tagged_1.observe(2.5)
+
+        tagged_2 = histogram.tag(t1='c', t2='b')
+        tagged_2.observe(2)
+        tagged_2.observe(5)
+        self.assertHistogramMetric(histogram, {
+            (('t1', 'a'), ('t2', 'b')): {1: 2, 3: 1},
+            (('t1', 'c'), ('t2', 'b')): {3: 1, INF: 1}
+        })
 
     def assertCounterMetric(self, metric, expected):
         self.assertEqual({key[0] for key in self.recorded_metrics}, {metric.name})
@@ -132,6 +123,24 @@ class TestDatadogMetrics(_TestMetrics):
 
 class TestPrometheusMetrics(_TestMetrics):
     provider_class = PrometheusMetrics
+
+    def test_histogram(self):
+        histogram = self.provider.histogram(
+            'commcare.test.histogram', 'Description', 'duration',
+            buckets=[1, 2, 3], bucket_unit='ms', tag_names=['t1', 't2']
+        )
+        tagged_1 = histogram.tag(t1='a', t2='b')
+        tagged_1.observe(0.2)
+        tagged_1.observe(0.7)
+        tagged_1.observe(2.5)
+
+        tagged_2 = histogram.tag(t1='c', t2='b')
+        tagged_2.observe(2)
+        tagged_2.observe(5)
+        self.assertHistogramMetric(histogram, {
+            (('t1', 'a'), ('t2', 'b')): {1: 2, 3: 1},
+            (('t1', 'c'), ('t2', 'b')): {2: 1, INF: 1}
+        })
 
     def _samples_to_dics(self, samples, filter_name=None):
         """Convert a Sample tuple into a dict((name, (labels tuple)) -> value)"""

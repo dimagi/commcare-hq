@@ -115,7 +115,7 @@ def bucket_value(value, buckets, unit=''):
     lt_template = "lt_{:0%s}{}" % number_length
     over_template = "over_{:0%s}{}" % number_length
     for bucket in buckets:
-        if value <= bucket:
+        if value < bucket:
             return lt_template.format(bucket, unit)
     return over_template.format(buckets[-1], unit)
 
