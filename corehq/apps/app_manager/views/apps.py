@@ -42,6 +42,7 @@ from corehq.apps.app_manager.dbaccessors import (
     get_app,
     get_current_app,
     get_latest_released_app,
+    get_latest_released_app_doc,
 )
 from corehq.apps.app_manager.decorators import (
     no_conflict_require_POST,
@@ -58,6 +59,7 @@ from corehq.apps.app_manager.models import (
     Application,
     ApplicationBase,
     DeleteApplicationRecord,
+    ExchangeApplication,
     Form,
     Module,
     ModuleNotFoundException,
@@ -542,6 +544,29 @@ def _build_sample_app(app):
         return copy
     else:
         notify_exception(None, 'Validation errors building sample app', details=errors)
+
+
+@require_can_edit_apps
+def app_exchange(request, domain):
+    template = "app_manager/app_exchange.html"
+    if request.method == "POST":
+        clear_app_cache(request, domain)
+        from_domain = request.POST.get('from_domain')
+        from_app_id = request.POST.get('from_app_id')
+        doc = get_latest_released_app_doc(from_domain, from_app_id)
+
+        if not doc:
+            messages.error(request, _("Could not find latest released version of app."))
+            return render(request, template)
+
+        app_copy = import_app_util(doc, domain)
+        return back_to_main(request, domain, app_id=app_copy._id)
+
+    apps = [get_app(obj.domain, obj.app_id) for obj in ExchangeApplication.objects.all()]
+    return render(request, template, {
+        "domain": domain,
+        "apps": apps,
+    })
 
 
 @require_can_edit_apps
