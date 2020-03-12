@@ -59,4 +59,5 @@ branches:
   - jls/migrate-DefaultConsumption-2 # Jenny March 6
   - dmr/update-django-angular  # Danny Mar 6
   - jls/use-textinput # Jenny March 10
+  - dmr/process-feeds-all-the-way-to-the-end  # Danny Mar 12
 submodules: {}
