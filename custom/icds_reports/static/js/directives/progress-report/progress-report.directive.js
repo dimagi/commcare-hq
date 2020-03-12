@@ -166,7 +166,7 @@ function ProgressReportController($scope, $location, progressReportService,
 
     // mobile helpers
     vm.activeSection = 0;
-    vm.getSectionData = function (index) {
+    vm.setActiveSection = function (index) {
         vm.activeSection = index;
         vm.sectionData =  vm.data[index];
     };

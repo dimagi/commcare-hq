@@ -34,7 +34,7 @@
       <div ng-if="$ctrl.report" class="d-flex align-items-flex-end pt-3 overflow-auto shadow">
           <div ng-repeat="section in $ctrl.data" class="flex-shrink-0 pb-3" ng-init="numberOfSections = $ctrl.data.length"
                ng-class="[{'col-xs-12' : (numberOfSections === 1)},{'col-xs-6' : (numberOfSections === 2)},
-               {'col-xs-5' : (numberOfSections > 2)}, {'activeSection' : $ctrl.activeSection==$index}]" ng-click="$ctrl.getSectionData($index)">
+               {'col-xs-5' : (numberOfSections > 2)}, {'activeSection' : $ctrl.activeSection==$index}]" ng-click="$ctrl.setActiveSection($index)">
               <div class="section-title" ng-bind-html="section.section_title"></div>
           </div>
       </div>
