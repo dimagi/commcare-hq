@@ -184,7 +184,7 @@ hqDefine('analytix/js/hubspot', [
             onFormSubmitted: function () {
                 $('#choose-callback-options').toggleClass('hidden');
                 $('#get-trial-cta-form-content').addClass('hidden');
-                $('#start-trial-modal-header').text(gettext("Choose how to get started"));
+                $('#start-trial-modal-header').text(gettext("Your trial request has been received!"));
             },
         });
     };
