@@ -135,7 +135,7 @@ class PropertyExpressionTest(SimpleTestCase):
             (None, "date", "09/30/2015"),
             (datetime(2015, 9, 30, 19, 4, 27), "datetime", "2015-09-30T19:04:27Z"),
             (datetime(2015, 9, 30, 19, 4, 27, 113609), "datetime", "2015-09-30T19:04:27.113609Z"),
-            (None, "datetime", "2015-09-30 19:04:27Z"),
+            (datetime(2015, 9, 30, 19, 4, 27), "datetime", "2015-09-30 19:04:27Z"),
             (date(2015, 9, 30), "date", "2015-09-30T19:04:27Z"),
             (date(2015, 9, 30), "date", datetime(2015, 9, 30)),
             ('2015-09-30', "string", date(2015, 9, 30)),
