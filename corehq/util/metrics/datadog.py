@@ -65,7 +65,9 @@ class Histogram(HqHistogram):
         # resulting Datadog metric
         #    commcare.request.duration:1|c|#duration:lt_2ms
 
-    More details: https://help.datadoghq.com/hc/en-us/articles/211545826
+    For more details see:
+    * https://github.com/dimagi/commcare-hq/pull/17080
+    * https://github.com/dimagi/commcare-hq/pull/17030#issuecomment-315794700
     """
     def _record(self, value: float):
         tags = _format_tags(self.tag_values)
