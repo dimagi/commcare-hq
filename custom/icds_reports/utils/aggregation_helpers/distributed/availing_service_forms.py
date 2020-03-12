@@ -59,7 +59,7 @@ class AvailingServiceFormsAggregationDistributedHelper(StateBasedAggregationDist
 
         return """
         INSERT INTO "{tablename}" (
-          state_id, supervisor_id, awc_id, month, person_case_id, is_registered
+          state_id, supervisor_id, awc_id, month, person_case_id, is_registered, registration_date
         ) (
           SELECT
             %(state_id)s AS state_id,
