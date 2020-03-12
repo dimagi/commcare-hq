@@ -58,6 +58,7 @@ from corehq.apps.app_manager.models import (
     Application,
     ApplicationBase,
     DeleteApplicationRecord,
+    ExchangeApplication,
     Form,
     Module,
     ModuleNotFoundException,
@@ -554,21 +555,13 @@ def app_exchange(request, domain):
         app = get_latest_released_app(from_domain, from_app_id)
 
         if not app:
-            messages.error(request, _("Could not find app."))
+            messages.error(request, _("Could not find latest released version of app."))
             return render(request, template)
 
         app_copy = import_app_util(from_app_id, domain)
         return back_to_main(request, domain, app_id=app_copy._id)
 
-    domains_and_app_ids = [
-        # TODO: Make a model with an admin interface
-        ("bosco", "424e88850fa007539596068f7034b4fd"),
-        ("bosco", "f6d2aa801557aaae7b2c1b180600484a"),
-        ("bosco", "424e88850fa007539596068f7034b4fd"),
-        ("bosco", "424e88850fa007539596068f7034b4fd"),
-        ("bosco", "424e88850fa007539596068f7034b4fd"),
-    ]
-    apps = [get_app(domain, app_id) for domain, app_id in domains_and_app_ids]
+    apps = [get_app(obj.domain, obj.app_id) for obj in ExchangeApplication.objects.all()]
     return render(request, template, {
         "domain": domain,
         "apps": apps,
