@@ -38,9 +38,14 @@ class PillowRuntimeContext(object):
 
     def __init__(self, changes_seen=0):
         self.changes_seen = changes_seen
+        self.should_flush = False
 
     def reset(self):
         self.changes_seen = 0
+        self.should_flush = False
+
+    def flush_checkpoint_on_next_opportunity(self):
+        self.should_flush = True
 
 
 class PillowBase(metaclass=ABCMeta):
@@ -105,7 +110,15 @@ class PillowBase(metaclass=ABCMeta):
         pillow_logging.info("Starting pillow %s" % self.__class__)
         with configure_scope() as scope:
             scope.set_tag("pillow_name", self.get_name())
-        self.process_changes(since=self.get_last_checkpoint_sequence(), forever=True)
+
+        since = self.get_last_checkpoint_sequence()
+        while True:
+            pillow_logging.info(f"Processing from change feed starting at {since}")
+            self.process_changes(since=since)
+            since = self.get_last_checkpoint_sequence()
+            pillow_logging.info(f"Change feed ended at {since}. Pausing until next message.")
+            self.wait_for_change(since)
+            pillow_logging.info("Next message arrived.")
 
     def _update_checkpoint(self, change, context):
         if change and context:
@@ -131,7 +144,11 @@ class PillowBase(metaclass=ABCMeta):
         else:
             return self.processors
 
-    def process_changes(self, since, forever):
+    def wait_for_change(self, since):
+        """Hang until there is another change to process from the feed"""
+        next(self.get_change_feed().iter_changes(since=since or None, forever=True))
+
+    def process_changes(self, since):
         """
         Process changes on all the pillow processors.
 
@@ -141,11 +158,14 @@ class PillowBase(metaclass=ABCMeta):
         """
         context = PillowRuntimeContext(changes_seen=0)
         min_wait_seconds = 30
+        # Not sure why this is need, but I'm preserving the behavior
+        since = since or None
 
         def process_offset_chunk(chunk, context):
             if not chunk:
                 return
             self._batch_process_with_error_handling(chunk)
+            # update checkpoint for just the latest change
             self._update_checkpoint(chunk[-1], context)
 
         # keep track of chunk for batch processors
@@ -153,7 +173,7 @@ class PillowBase(metaclass=ABCMeta):
         last_process_time = datetime.utcnow()
 
         try:
-            for change in self.get_change_feed().iter_changes(since=since or None, forever=forever):
+            for change in self.get_change_feed().iter_changes(since=since, forever=False):
                 context.changes_seen += 1
                 if change:
                     if self.batch_processors:
@@ -164,9 +184,7 @@ class PillowBase(metaclass=ABCMeta):
                         time_elapsed = (datetime.utcnow() - last_process_time).seconds > min_wait_seconds
                         if chunk_full or time_elapsed:
                             last_process_time = datetime.utcnow()
-                            self._batch_process_with_error_handling(changes_chunk)
-                            # update checkpoint for just the latest change
-                            self._update_checkpoint(changes_chunk[-1], context)
+                            process_offset_chunk(changes_chunk, context)
                             # reset for next chunk
                             changes_chunk = []
                     else:
@@ -176,10 +194,10 @@ class PillowBase(metaclass=ABCMeta):
                         self._update_checkpoint(change, context)
                 else:
                     self._update_checkpoint(None, None)
+            context.flush_checkpoint_on_next_opportunity()
             process_offset_chunk(changes_chunk, context)
         except PillowtopCheckpointReset:
             process_offset_chunk(changes_chunk, context)
-            self.process_changes(since=self.get_last_checkpoint_sequence(), forever=forever)
 
     def _batch_process_with_error_handling(self, changes_chunk):
         """
