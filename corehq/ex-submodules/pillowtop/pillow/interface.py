@@ -196,7 +196,6 @@ class PillowBase(metaclass=ABCMeta):
             process_offset_chunk(changes_chunk, context)
         except PillowtopCheckpointReset:
             process_offset_chunk(changes_chunk, context)
-            self.process_changes(since=self.get_last_checkpoint_sequence(), forever=forever)
 
     def _batch_process_with_error_handling(self, changes_chunk):
         """
