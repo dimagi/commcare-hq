@@ -33,6 +33,13 @@ class SMSTranslations(SyncSQLToCouchMixin, models.Model):
     translations = JSONField(default=dict)
     couch_id = models.CharField(max_length=126, null=True, db_index=True)
 
+    @property
+    def default_lang(self):
+        return self.langs[0] if self.langs else None
+
+    def set_translations(self, lang, translations):
+        self.translations[lang] = translations
+
     @classmethod
     def _migration_get_fields(cls):
         return [

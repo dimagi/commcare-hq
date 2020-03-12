@@ -20,6 +20,12 @@ def test_dict_values_in_param_none():
     assert_true(result)
 
 
+def test_dict_values_in_param_empty():
+    swallow = {'permutation': 'unladen'}
+    result = dict_values_in(swallow, {})
+    assert_true(result)
+
+
 def test_dict_values_in_value_none():
     swallow = {'permutation': 'unladen'}
     result = dict_values_in(swallow, {'permutation': None})

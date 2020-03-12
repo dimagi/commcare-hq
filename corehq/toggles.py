@@ -1340,18 +1340,10 @@ ENABLE_ALL_ADD_ONS = StaticToggle(
 
 FILTERED_BULK_USER_DOWNLOAD = StaticToggle(
     'filtered_bulk_user_download',
-    "Ability to filter mobile workers based on role, location, and username when doing bulk download",
+    "Bulk mobile worker management features: filtered download, bulk delete, and bulk lookup users.",
     TAG_SOLUTIONS_OPEN,
     [NAMESPACE_DOMAIN],
-    help_link='https://confluence.dimagi.com/display/ccinternal/Filter+Mobile+Workers+Download',
-)
-
-BULK_USER_DELETE = StaticToggle(
-    'bulk_user_delete',
-    "Allow bulk deletion of users based on a username upload.",
-    TAG_SOLUTIONS_LIMITED,
-    [NAMESPACE_DOMAIN],
-    help_link='https://confluence.dimagi.com/display/ccinternal/Bulk+Delete+Users',
+    help_link='https://confluence.dimagi.com/display/ccinternal/Bulk+Mobile+Workers+Management',
 )
 
 FILTERED_LOCATION_DOWNLOAD = StaticToggle(
