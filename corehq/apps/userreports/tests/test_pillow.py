@@ -46,6 +46,7 @@ from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from corehq.pillows.case import get_case_pillow
 from corehq.util.context_managers import drop_connected_signals
 from corehq.util.test_utils import softer_assert
+from pillowtop.pillow.interface import PillowRuntimeContext
 
 
 def setup_module():
@@ -516,7 +517,10 @@ class ProcessRelatedDocTypePillowTest(TestCase):
         for i in range(3):
             since = pillow.get_change_feed().get_latest_offsets()
             form, cases = self._post_case_blocks(i)
-            with self.assertNumQueries(num_queries):
+            skip_final_checkpoint_cm = mock.patch.object(
+                PillowRuntimeContext,
+                'flush_checkpoint_on_next_opportunity', lambda self: None)
+            with self.assertNumQueries(num_queries), skip_final_checkpoint_cm:
                 pillow.process_changes(since=since, forever=False)
             rows = self.adapter.get_query_object()
             self.assertEqual(rows.count(), 1)
