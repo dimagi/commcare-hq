@@ -1597,7 +1597,7 @@ class AggregateAvailingServiceForms(models.Model, AggregateMixin):
 
     A availing services exists for each state_id
 
-    A row exists for every person case that has had a record of migration
+    A row exists for every person case that has had a record of registration
     submitted against it this month
     """
     state_id = models.CharField(max_length=10)
@@ -1609,6 +1609,7 @@ class AggregateAvailingServiceForms(models.Model, AggregateMixin):
     person_case_id = models.CharField(max_length=40, primary_key=True)
 
     is_registered = models.PositiveSmallIntegerField(blank=True, null=True, help_text="Status of the Registration")
+    registration_date = models.DateTimeField(help_text="Registration Date", null=True)
 
     class Meta(object):
         db_table = AGG_AVAILING_SERVICES_TABLE
@@ -1705,14 +1706,14 @@ class AggServiceDeliveryReport(models.Model, AggregateMixin):
     month = models.DateField(null=True)
     aggregation_level = models.SmallIntegerField(null=True)
     children_0_3 = models.IntegerField(null=True)
-    children_3_5 =  models.IntegerField(null=True)
+    children_3_5 = models.IntegerField(null=True)
     gm_0_3 = models.IntegerField(null=True)
     gm_3_5 = models.IntegerField(null=True)
 
     class Meta(object):
         db_table = AGG_SDR_TABLE
         unique_together = ('month', 'aggregation_level', 'state_id', 'district_id', 'block_id',
-                           'supervisor_id', 'awc_id') #pkey
+                           'supervisor_id', 'awc_id')  # pkey
 
     _agg_helper_cls = AggServiceDeliveryReportHelper
     _agg_atomic = False
