@@ -95,11 +95,11 @@ class PopulateSQLCommand(BaseCommand):
                 print(f"""
                 Run the following commands to run the migration and get up to date:
 
-                    commcare-cloud <env> fab deploy commcare --commcare-rev={cls.commit_adding_migration()}
+                    commcare-cloud <env> deploy commcare --commcare-rev={cls.commit_adding_migration()}
 
                     commcare-cloud <env> django-manage {command_name}
 
-                    commcare-cloud <env> fab deploy commcare
+                    commcare-cloud <env> deploy commcare
                 """)
             sys.exit(1)
 

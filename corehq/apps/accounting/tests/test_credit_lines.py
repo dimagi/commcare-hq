@@ -16,6 +16,7 @@ from corehq.apps.accounting.models import (
     FeatureType,
     SoftwarePlanEdition,
     Subscription,
+    DomainUserHistory,
 )
 from corehq.apps.accounting.tasks import deactivate_subscriptions
 from corehq.apps.accounting.tests import generator
@@ -475,3 +476,81 @@ class TestCreditTransfers(BaseAccountingTest):
         for credit_line in account_credits:
             self.assertIsNone(credit_line.subscription)
             self.assertEqual(credit_line.account.pk, self.account.pk)
+
+
+class TestUserSubscriptionChangeTransfers(BaseAccountingTest):
+
+    @classmethod
+    def setUpClass(cls):
+        super(TestUserSubscriptionChangeTransfers, cls).setUpClass()
+
+        generator.bootstrap_test_software_plan_versions()
+        generator.init_default_currency()
+
+        cls.billing_contact = generator.create_arbitrary_web_user_name()
+        cls.domain = generator.arbitrary_domain()
+        cls.account = BillingAccount.get_or_create_account_by_domain(
+            cls.domain, created_by=cls.billing_contact,
+        )[0]
+        generator.arbitrary_contact_info(cls.account, cls.billing_contact)
+
+    def tearDown(self):
+        for user in self.domain.all_users():
+            user.delete()
+        super(BaseAccountingTest, self).tearDown()
+
+    @classmethod
+    def tearDownClass(cls):
+        utils.clear_plan_version_cache()
+        super(TestUserSubscriptionChangeTransfers, cls).tearDownClass()
+
+    def _get_credit_total(self, subscription):
+        credit_lines = CreditLine.get_credits_by_subscription_and_features(
+            subscription
+        )
+        return sum([c.balance for c in credit_lines])
+
+    def test_subscription_credits_transfer_in_invoice(self):
+        standard_plan = DefaultProductPlan.get_default_plan_version(
+            edition=SoftwarePlanEdition.STANDARD
+        )
+        pro_plan = DefaultProductPlan.get_default_plan_version(
+            edition=SoftwarePlanEdition.PRO
+        )
+
+        first_sub = Subscription.new_domain_subscription(
+            self.account, self.domain.name, standard_plan,
+            date_start=datetime.date(2019, 9, 1),
+        )
+        credit_amount = Decimal('5000.00')
+        CreditLine.add_credit(
+            credit_amount, subscription=first_sub,
+        )
+
+        # this is the key step where the expected transfer happens
+        second_sub = first_sub.change_plan(pro_plan)
+
+        first_sub = Subscription.visible_objects.get(id=first_sub.id)
+        first_sub.date_end = datetime.date(2019, 9, 10)
+        first_sub.save()
+        second_sub.date_start = first_sub.date_end
+        second_sub.save()
+
+        invoice_date = utils.months_from_date(first_sub.date_start, 1)
+        user_record_date = invoice_date - relativedelta(days=1)
+        DomainUserHistory.objects.create(
+            domain=self.domain,
+            num_users=0,
+            record_date=user_record_date
+        )
+        tasks.generate_invoices(utils.months_from_date(first_sub.date_start, 1))
+
+        self.assertEqual(first_sub.invoice_set.count(), 1)
+        self.assertEqual(second_sub.invoice_set.count(), 1)
+
+        first_invoice = first_sub.invoice_set.first()
+        second_invoice = second_sub.invoice_set.first()
+
+        self.assertEqual(first_invoice.balance, Decimal('0.0000'))
+        self.assertEqual(second_invoice.balance, Decimal('0.0000'))
+        self.assertEqual(self._get_credit_total(second_sub), Decimal('4490.0000'))
