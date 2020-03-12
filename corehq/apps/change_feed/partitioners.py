@@ -30,7 +30,7 @@ def choose_best_partition_for_topic(topic, key, shuffle_shards_per_key=5):
     A :key: value of None is assigned to all partitions, and is thus a way of disabling
     shuffle-sharding and going for the shortest of all partitions.
 
-    If :shuffle_shards_per_key: or is greater than the number of partitions
+    If :shuffle_shards_per_key: is greater than the number of partitions
     then the key is irrelevant and all keys are assigned to all partitions;
     this has the same effect as using key=None.
 
