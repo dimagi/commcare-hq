@@ -9,7 +9,7 @@ from dimagi.ext.jsonobject import JsonObject
 from corehq.apps.userreports.expressions.getters import (
     transform_date,
     transform_int,
-)
+    transform_datetime)
 from corehq.apps.userreports.specs import TypeProperty
 
 
@@ -44,6 +44,45 @@ class AddDaysExpressionSpec(JsonObject):
         int_val = transform_int(self._count_expression(item, context))
         if date_val is not None and int_val is not None:
             return date_val + datetime.timedelta(days=int_val)
+        return None
+
+    def __str__(self):
+        return "add_day({date}, {count})".format(
+            date=self._date_expression,
+            count=self._count_expression)
+
+
+class AddHoursExpressionSpec(JsonObject):
+    """
+    Below is a simple example that demonstrates the structure. The
+    expression below will add 12 hours to a property called "visit_date".
+    The date_expression and count_expression can be any valid expressions, or
+    simply constants.
+
+    .. code:: json
+
+       {
+           "type": "add_hours",
+           "date_expression": {
+               "type": "property_name",
+               "property_name": "visit_date",
+           },
+           "count_expression": 12
+       }
+    """
+    type = TypeProperty('add_hours')
+    date_expression = DefaultProperty(required=True)
+    count_expression = DefaultProperty(required=True)
+
+    def configure(self, date_expression, count_expression):
+        self._date_expression = date_expression
+        self._count_expression = count_expression
+
+    def __call__(self, item, context=None):
+        date_val = transform_datetime(self._date_expression(item, context))
+        int_val = transform_int(self._count_expression(item, context))
+        if date_val is not None and int_val is not None:
+            return date_val + datetime.timedelta(hours=int_val)
         return None
 
     def __str__(self):
