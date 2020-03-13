@@ -101,3 +101,53 @@ def test_diff_days_expression(self, source_doc, to_date_expression, expected_val
         'to_date_expression': to_date_expression
     }, context)
     self.assertEqual(expected_value, named_expression(source_doc))
+
+
+@generate_cases([
+    ({'dob': '2015-01-20'}, 3, date(2015, 1, 23)),
+    ({'dob': '2015-01-20'}, 5, date(2015, 1, 25)),
+    ({'dob': date(2015, 1, 20)}, 3, date(2015, 1, 23)),
+    ({'dob': datetime(2015, 1, 20)}, 3, date(2015, 1, 23)),
+    ({'dob': datetime(2015, 1, 20)}, 3.0, date(2015, 1, 23)),
+    ({'dob': datetime(2015, 1, 20)}, '3.0', date(2015, 1, 23)),
+    (
+        {'dob': datetime(2015, 1, 20), 'days': '3'},
+        {'type': 'property_name', 'property_name': 'days'},
+        date(2015, 1, 23)
+    ),
+])
+def test_add_days_to_date_expression(self, source_doc, count_expression, expected_value):
+    expression = ExpressionFactory.from_spec({
+        'type': 'add_days',
+        'date_expression': {
+            'type': 'property_name',
+            'property_name': 'dob',
+        },
+        'count_expression': count_expression
+    })
+    self.assertEqual(expected_value, expression(source_doc))
+
+
+@generate_cases([
+    ({'visit_date': '2020-03-12T20:33:49Z'}, 2, datetime(2020, 3, 12, 22, 33, 49)),
+    # 3 hours in UTC due to time zone change
+    ({'visit_date': '2020-03-12T20:33:49.134+02'}, 5, datetime(2020, 3, 12, 23, 33, 49, 134000)),
+    # 7 hours in UTC due to time zone change
+    ({'visit_date': '2020-03-12T20:33:49.134-02'}, 5, datetime(2020, 3, 13, 3, 33, 49, 134000)),
+    ({'visit_date': '2020-03-12T20:33:49.134000Z'}, 2, datetime(2020, 3, 12, 22, 33, 49, 134000)),
+    ({'visit_date': datetime(2020, 3, 12, 20, 33, 49)}, 2, datetime(2020, 3, 12, 22, 33, 49)),
+    (
+        {'visit_date': datetime(2020, 3, 12, 20, 33, 49), 'hours': '3'},
+        {'type': 'property_name', 'property_name': 'hours'},
+        datetime(2020, 3, 12, 23, 33, 49)),
+])
+def test_add_hours_to_datetime_expression(self, source_doc, count_expression, expected_value):
+    expression = ExpressionFactory.from_spec({
+        'type': 'add_hours',
+        'date_expression': {
+            'type': 'property_name',
+            'property_name': 'visit_date',
+        },
+        'count_expression': count_expression
+    })
+    self.assertEqual(expected_value, expression(source_doc))

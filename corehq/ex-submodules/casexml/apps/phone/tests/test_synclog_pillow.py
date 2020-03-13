@@ -73,7 +73,7 @@ class SyncLogPillowTest(TestCase):
 
         # make sure processor updates the user correctly
         pillow = get_user_sync_history_pillow()
-        pillow.process_changes(since=kafka_seq, forever=False)
+        pillow.process_changes(since=kafka_seq)
         ccuser = CommCareUser.get(self.ccuser._id)
         self.assertEqual(len(ccuser.reporting_metadata.last_syncs), 1)
         self.assertEqual(ccuser.reporting_metadata.last_syncs[0].sync_date, synclog.date)
@@ -105,7 +105,7 @@ class SyncLogPillowTest(TestCase):
 
         # make sure processor updates the user correctly
         pillow = get_user_sync_history_pillow()
-        pillow.process_changes(since=kafka_seq, forever=False)
+        pillow.process_changes(since=kafka_seq)
         process_reporting_metadata_staging()
         ccuser = CommCareUser.get(self.ccuser._id)
         self.assertEqual(len(ccuser.reporting_metadata.last_syncs), 1)
@@ -147,7 +147,7 @@ class SyncLogPillowTest(TestCase):
 
         # make sure processor updates the user correctly
         pillow = get_user_sync_history_pillow()
-        pillow.process_changes(since=kafka_seq, forever=False)
+        pillow.process_changes(since=kafka_seq)
         process_reporting_metadata_staging()
         ccuser = CommCareUser.get(self.ccuser._id)
         self.assertEqual(len(ccuser.reporting_metadata.last_syncs), 1)
