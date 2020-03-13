@@ -13,6 +13,7 @@ from memoized import memoized
 from corehq import toggles
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views.settings import BaseProjectSettingsView
+from corehq.apps.userreports.dbaccessors import get_report_configs_for_domain
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
 from corehq.motech.dhis2.dbaccessors import get_dataset_maps
@@ -118,6 +119,7 @@ class DataSetMapView(BaseProjectSettingsView):
         return {
             'dataset_maps': dataset_maps,
             'connection_settings': ConnectionSettings.objects.filter(domain=self.domain).all(),
+            'ucrs': get_report_configs_for_domain(self.domain),
             'send_data_url': reverse('send_dhis2_data', kwargs={'domain': self.domain}),
             'is_json_ui': int(self.request.GET.get('json', 0)),
         }
