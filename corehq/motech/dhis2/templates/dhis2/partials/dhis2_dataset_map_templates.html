@@ -85,6 +85,23 @@
 
         <div class="form-group">
             <label class="control-label col-sm-3 col-md-2 requiredField">
+                {% trans "DHIS2 Connection" %}<span class="asteriskField">*</span>
+            </label>
+            <div class="controls col-sm-9 col-md-8 col-lg-6">
+                <select class="textinput textInput form-control"
+                        required=""
+                        data-bind="value: connectionSettingsId">
+                  {% for connx in connection_settings %}
+                    <option value="{{ connx.id }}">{{ connx.name }}</option>
+                  {% empty %}
+                    <option value="">No connections defined</option>
+                  {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="control-label col-sm-3 col-md-2 requiredField">
                 {% trans "UCR Report ID" %}<span class="asteriskField">*</span>
             </label>
             <div class="controls col-sm-9 col-md-8 col-lg-6">

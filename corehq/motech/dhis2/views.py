@@ -27,6 +27,7 @@ from corehq.motech.dhis2.models import (
 )
 from corehq.motech.dhis2.repeaters import Dhis2Repeater
 from corehq.motech.dhis2.tasks import send_datasets
+from corehq.motech.models import ConnectionSettings
 
 
 @method_decorator(require_permission(Permissions.edit_motech), name='dispatch')
@@ -118,6 +119,7 @@ class DataSetMapView(BaseProjectSettingsView):
         dataset_maps = [to_json(d) for d in get_dataset_maps(self.request.domain)]
         return {
             'dataset_maps': dataset_maps,
+            'connection_settings': ConnectionSettings.objects.filter(domain=self.domain).all(),
             'send_data_url': reverse('send_dhis2_data', kwargs={'domain': self.domain}),
             'is_json_ui': int(self.request.GET.get('json', 0)),
         }
