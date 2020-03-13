@@ -606,7 +606,7 @@ def _child_health_monthly_data(state_ids, day):
 
     # https://github.com/celery/celery/issues/4274
     sub_aggregations = [
-        _child_health_helper.delay(queries)
+        _child_health_helper.delay(list(queries))
         for queries in helper.pre_aggregation_queries()
     ]
     for sub_aggregation in sub_aggregations:
