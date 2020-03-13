@@ -68,7 +68,7 @@ see.
 
 from functools import wraps
 
-from django.http import Http404
+from django.http import Http404, HttpResponse
 from django.utils.decorators import method_decorator
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy
@@ -321,3 +321,19 @@ def can_edit_or_view_location(view_fn):
         return location_restricted_response(request)
 
     return require_can_edit_or_view_locations(_inner)
+
+
+def can_access_location_data(view_fn):
+    """
+    Decorator controlling a user's access to VIEW data for a specific location.
+    The decorated function must be passed a loc_id arg (eg: from urls.py)
+    """
+    @wraps(view_fn)
+    def _inner(request, domain, *args, **kwargs):
+        loc_id = request.GET.get('location_id')
+        def call_view(): return view_fn(request, domain, *args, **kwargs)
+        if loc_id is not None and not user_can_access_location_id(domain, request.couch_user, loc_id):
+            return HttpResponse(status=403)
+        return call_view()
+
+    return _inner

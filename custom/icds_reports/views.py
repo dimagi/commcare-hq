@@ -36,6 +36,7 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import (
     location_safe,
     user_can_access_location_id,
+    can_access_location_data
 )
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions, UserRole
@@ -250,6 +251,7 @@ DASHBOARD_CHECKS = [
     require_permission(Permissions.view_report, 'custom.icds_reports.reports.reports.DashboardReport',
                        login_decorator=None),
     login_and_domain_required,
+    can_access_location_data
 ]
 
 
