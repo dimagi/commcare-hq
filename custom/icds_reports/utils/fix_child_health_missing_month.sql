@@ -298,7 +298,7 @@ SELECT
 	GROUP BY chm.awc_id, chm.supervisor_id,
 					 chm.month, chm.sex, chm.age_tranche, chm.caste,
 					 coalesce_disabled, coalesce_minority, coalesce_resident
-	ORDER BY chm.awc_id INCLUDING INDEXES;)
+	ORDER BY chm.awc_id INCLUDING INDEXES);
 SELECT create_distributed_table('temp_agg_child_my', 'supervisor_id');
 
 -- -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
