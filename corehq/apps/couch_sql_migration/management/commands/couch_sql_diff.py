@@ -442,16 +442,20 @@ def iter_related(doc_diffs):
 
     def get_related(kind, doc_ids):
         if kind.startswith(CASE):
-            return get_case_related(doc_ids)
-        assert kind != STOCK
-        return get_form_related(doc_ids)
+            related = get_case_related(doc_ids)
+        else:
+            assert kind != STOCK
+            related = get_form_related(doc_ids)
+        for doc_id in set(doc_ids) - related.keys():
+            related[doc_id] = ("", "")
+        assert len(related) == len(doc_ids), (kind, set(doc_ids) - related.keys())
+        return related
 
     stock_related = {}
     for kind, group in groupby(sorted(doc_diffs), key=lambda x: x[0]):
         group = list(group)
         doc_ids = [doc_id for x, doc_id, x in group]
         related = get_related(kind, doc_ids)
-        assert len(related) == len(doc_ids), (kind, set(doc_ids) - set(related))
         if kind == CASE:
             for k, doc_id, diffs in group:
                 for diff in diffs:
