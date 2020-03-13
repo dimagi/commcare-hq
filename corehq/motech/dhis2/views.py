@@ -1,6 +1,6 @@
 import json
 
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, JsonResponse
 from django.shortcuts import render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
@@ -9,8 +9,6 @@ from django.utils.translation import ugettext_lazy
 from django.views.decorators.http import require_http_methods, require_POST
 
 from memoized import memoized
-
-from dimagi.utils.web import json_response
 
 from corehq import toggles
 from corehq.apps.domain.decorators import login_and_domain_required
@@ -99,9 +97,9 @@ class DataSetMapView(BaseProjectSettingsView):
                     update_dataset_map(dataset_map, new_dataset_maps[j])
                     dataset_map.save()
             get_dataset_maps.clear(request.domain)
-            return json_response({'success': _('DHIS2 DataSet Maps saved')})
+            return JsonResponse({'success': _('DHIS2 DataSet Maps saved')})
         except Exception as err:
-            return json_response({'error': str(err)}, status_code=500)
+            return JsonResponse({'error': str(err)}, status=500)
 
     @property
     def page_context(self):
@@ -129,7 +127,7 @@ class DataSetMapView(BaseProjectSettingsView):
 @require_permission(Permissions.edit_motech)
 def send_dhis2_data(request, domain):
     send_datasets.delay(domain, send_now=True)
-    return json_response({'success': _('Data is being sent to DHIS2.')}, status_code=202)
+    return JsonResponse({'success': _('Data is being sent to DHIS2.')}, status=202)
 
 
 @login_and_domain_required
