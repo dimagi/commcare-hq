@@ -265,7 +265,8 @@ UPDATE child_health_monthly child_health
 --                            Index Cond: ((supervisor_id = gm.supervisor_id) AND (case_id = (gm.case_id)::text) AND (month = '2018-05-01'::date))
 
 DROP TABLE IF EXISTS temp_agg_child_my;
-CREATE TABLE temp_agg_child_my AS
+
+CREATE UNLOGGED TABLE temp_agg_child_my (
 SELECT
 	awc_id,
 	supervisor_id,
@@ -297,7 +298,8 @@ SELECT
 	GROUP BY chm.awc_id, chm.supervisor_id,
 					 chm.month, chm.sex, chm.age_tranche, chm.caste,
 					 coalesce_disabled, coalesce_minority, coalesce_resident
-	ORDER BY chm.awc_id;
+	ORDER BY chm.awc_id INCLUDING INDEXES;)
+SELECT create_distributed_table('temp_agg_child_my', 'supervisor_id');
 
 -- -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 --  Sort  (cost=0.00..0.00 rows=0 width=0)
