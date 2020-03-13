@@ -43,6 +43,7 @@ def get_dashboard_template_context(domain, couch_user):
     context['nav_metadata'] = _get_nav_metadatada()
     context['sdd_metadata'] = _get_sdd_metadata()
     context['nav_menu_items'] = _get_nav_menu_items()
+    context['fact_sheet_sections'] = _get_factsheet_sections()
     context['MAPBOX_ACCESS_TOKEN'] = settings.MAPBOX_ACCESS_TOKEN
     return context
 
@@ -109,6 +110,48 @@ class NavMenuSubPages (object):
     featureFlagOnly = attr.ib(default=False)
     showInWeb = attr.ib(default=True)
     showInMobile = attr.ib(default=True)
+
+
+@attr.s
+class FactSheetSectionsList (object):
+    sections = attr.ib()
+
+
+@attr.s
+class FactSheetSection (object):
+    name = attr.ib()
+    route = attr.ib()
+    image = attr.ib()
+    style = attr.ib()
+
+
+def _get_factsheet_sections():
+    return attr.asdict(FactSheetSectionsList([
+        FactSheetSection('Maternal And Child Nutrition',
+                         'maternal_and_child_nutrition',
+                         'maternal_and_child.png',
+                         'fact-sheet-nav-nutrition'),
+        FactSheetSection('Interventions',
+                         'interventions',
+                         'interventions.png',
+                         'fact-sheet-nav-interventions'),
+        FactSheetSection('Behavior change',
+                         'behavior_change',
+                         'behavior_change.png',
+                         'fact-sheet-nav-behaviour-change'),
+        FactSheetSection('Water Sanitation and Hygiene',
+                         'water_sanitation_and_hygiene',
+                         'water_sanitation_hygiene.png',
+                         'fact-sheet-nav-water'),
+        FactSheetSection('Demographics',
+                         'demographics',
+                         'demographics.png',
+                         'fact-sheet-nav-demographics'),
+        FactSheetSection('All',
+                         'all',
+                         'all.png',
+                         'fact-sheet-nav-all')
+    ]))
 
 
 def _get_nav_menu_items():

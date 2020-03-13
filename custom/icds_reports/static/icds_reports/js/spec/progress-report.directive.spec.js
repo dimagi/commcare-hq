@@ -16,6 +16,9 @@ describe('Progress Report Directive', function () {
         $provide.constant("userLocationId", null);
         $provide.constant("haveAccessToAllLocations", false);
         $provide.constant("isAlertActive", false);
+        $provide.constant("factSheetSections", {
+            sections: [],
+        });
     }));
 
     beforeEach(inject(function ($rootScope, $compile, _$httpBackend_, _$location_) {
