@@ -3,10 +3,17 @@
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function ProgressReportController($scope, $location, progressReportService,
-    storageService, $routeParams, userLocationId, DTOptionsBuilder, DTColumnDefBuilder, haveAccessToAllLocations, isAlertActive) {
+                                  storageService, $routeParams, userLocationId, DTOptionsBuilder, DTColumnDefBuilder,
+                                  haveAccessToAllLocations, isAlertActive, dateHelperService, navigationService,
+                                  baseControllersService, factSheetSections) {
+
+    baseControllersService.BaseFilterController.call(
+        this, $scope, $routeParams, $location, dateHelperService, storageService, navigationService
+    );
 
     var vm = this;
     vm.isAlertActive = isAlertActive;
+    vm.factSheetSections = factSheetSections.sections;
     if (Object.keys($location.search()).length === 0) {
         $location.search(storageService.getKey('search'));
     } else {
@@ -103,6 +110,7 @@ function ProgressReportController($scope, $location, progressReportService,
         vm.myPromise = progressReportService.getData(params).then(function (response) {
             vm.title = response.data.config.title;
             vm.data = response.data.config.sections;
+            vm.sectionData = vm.data[vm.activeSection];
         });
     };
 
@@ -157,6 +165,14 @@ function ProgressReportController($scope, $location, progressReportService,
         }
     };
 
+    // mobile helpers
+    vm.activeSection = 0;
+    vm.setActiveSection = function (index) {
+        vm.activeSection = index;
+        vm.sectionData =  vm.data[index];
+    };
+    // end mobile helpers
+
     vm.goToReport = function (reportName) {
         $location.path('fact_sheets/' + reportName);
     };
@@ -171,15 +187,19 @@ function ProgressReportController($scope, $location, progressReportService,
 }
 
 ProgressReportController.$inject = [
-    '$scope', '$location', 'progressReportService', 'storageService', '$routeParams', 'userLocationId', 'DTOptionsBuilder', 'DTColumnDefBuilder', 'haveAccessToAllLocations', 'isAlertActive',
+    '$scope', '$location', 'progressReportService', 'storageService', '$routeParams', 'userLocationId',
+    'DTOptionsBuilder', 'DTColumnDefBuilder', 'haveAccessToAllLocations', 'isAlertActive', 'dateHelperService',
+    'navigationService', 'baseControllersService', 'factSheetSections',
 ];
 
-window.angular.module('icdsApp').directive('progressReport', function () {
+window.angular.module('icdsApp').directive('progressReport', ['templateProviderService', function (templateProviderService) {
     return {
         restrict: 'E',
-        templateUrl: url('icds-ng-template', 'progress-report.directive'),
+        templateUrl: function () {
+            return templateProviderService.getTemplate('progress-report.directive');
+        },
         bindToController: true,
         controller: ProgressReportController,
         controllerAs: '$ctrl',
     };
-});
+}]);
