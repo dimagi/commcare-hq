@@ -31,7 +31,7 @@ class AvailingServiceFormsAggregationDistributedHelper(StateBasedAggregationDist
             %(month)s::DATE AS month,
             person_case_id AS person_case_id,
             LAST_VALUE(is_registered) OVER w AS is_registered,
-            registration_date AS registration_date
+            timeend AS registration_date
           FROM "{ucr_tablename}"
           WHERE state_id = %(state_id)s AND
                 timeend >= %(current_month_start)s AND timeend < %(next_month_start)s AND
@@ -68,7 +68,7 @@ class AvailingServiceFormsAggregationDistributedHelper(StateBasedAggregationDist
             %(month)s::DATE AS month,
             COALESCE(ucr.person_case_id, prev_month.person_case_id) AS person_case_id,
             COALESCE(ucr.is_registered, prev_month.is_registered) as is_registered,
-            COALESCE(ucr.timeend, prev_month.timeend) as registration_date
+            COALESCE(ucr.registration_date, prev_month.registration_date) as registration_date
           FROM ({ucr_table_query}) ucr
           FULL OUTER JOIN (
              SELECT * FROM "{tablename}" WHERE month = %(previous_month)s AND state_id = %(state_id)s
