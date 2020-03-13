@@ -3,6 +3,7 @@ import json
 import logging
 import os
 import sys
+from collections import defaultdict
 from itertools import groupby
 
 from django.conf import settings
@@ -72,7 +73,9 @@ class Command(BaseCommand):
                 With the "show" or "filter" actions, this option should
                 be a doc type, optionally followed by a colon and one or
                 more doc ids (e.g., CommCareCase:id1,id2,id3). All form
-                and case doc types are supported.
+                and case doc types are supported. Alternately, it may be
+                a csv file with the first two columns being doc type and
+                doc id. The path must begin with / or ./
             ''')
         parser.add_argument('--changes',
             dest="changes", action='store_true', default=False,
@@ -175,6 +178,20 @@ class Command(BaseCommand):
     def get_select_kwargs(self):
         if not self.select:
             return {}
+        if self.select.startswith(("./", "/")):
+            if not os.path.isfile(self.select):
+                raise CommandError(f"file not found: {self.select}")
+            by_kind = defaultdict(set)
+            with open(self.select) as fh:
+                count = 0
+                for row in csv.reader(fh):
+                    if len(row) > 1:
+                        by_kind[row[0]].add(row[1])
+                        count += 1
+            k = len(by_kind)
+            kinds = ", ".join(sorted(by_kind)) if k < 5 else f"{k} kinds"
+            print(f"selecting {count} docs of {kinds}", file=sys.stderr)
+            return {"by_kind": dict(by_kind)}
         if ":" in self.select:
             kind, doc_ids = self.select.split(":", 1)
             return {"kind": kind, "doc_ids": doc_ids.split(",")}
@@ -238,6 +255,8 @@ class Command(BaseCommand):
         counts = statedb.get_doc_counts()
         if "doc_ids" in select:
             count = len(select["doc_ids"])
+        elif "by_kind" in select:
+            count = sum(len(v) for v in select["by_kind"].values())
         elif select:
             count = counts.get(select["kind"], Counts())
             count = count.changes if self.changes else count.diffs
