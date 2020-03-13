@@ -9,7 +9,7 @@ from custom.icds_reports.utils.aggregation_helpers.distributed.base import (
 
 class AvailingServiceFormsAggregationDistributedHelper(StateBasedAggregationDistributedHelper):
     helper_key = 'availing_service-forms'
-    ucr_date_source_id = 'static-availing_service_form'
+    ucr_data_source_id = 'static-availing_service_form'
     aggregate_parent_table = AGG_AVAILING_SERVICES_TABLE
 
     def data_from_ucr_query(self):
