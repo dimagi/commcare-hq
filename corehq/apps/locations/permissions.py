@@ -326,7 +326,6 @@ def can_edit_or_view_location(view_fn):
 def can_access_location_data(view_fn):
     """
     Decorator controlling a user's access to VIEW data for a specific location.
-    The decorated function must be passed a loc_id arg (eg: from urls.py)
     """
     @wraps(view_fn)
     def _inner(request, domain, *args, **kwargs):
