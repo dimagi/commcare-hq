@@ -1808,3 +1808,11 @@ ADD_ROW_INDEX_TO_MOBILE_UCRS = StaticToggle(
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN]
 )
+
+
+TWO_STAGE_USER_PROVISIONING = StaticToggle(
+    'two_stage_user_provisioning',
+    'Enable two-stage user provisioning (users confirm and set their own passwords via email).',
+    TAG_SOLUTIONS_LIMITED,
+    [NAMESPACE_DOMAIN]
+)
