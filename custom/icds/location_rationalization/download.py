@@ -12,7 +12,7 @@ class RequestTemplateDownload(object):
     def __init__(self, domain, parent_location_id, leaf_location_type):
         self.domain = domain
         self.headers = []
-        location_types = list(LocationType.objects.filter(domain=self.domain).values_list('code', flat=True))
+        location_types = [t.code for t in LocationType.objects.by_domain(domain)]
         for location_type in location_types:
             self.headers.extend([f'old_{location_type}', f'new_{location_type}'])
         self.parent_location_id = parent_location_id
