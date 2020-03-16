@@ -44,16 +44,14 @@ class Dumper(object):
     def _get_rows_for_merge(details):
         rows = []
         for destination, sources in details.items():
-            rows.append([sources[0], MERGE_TRANSITION, destination])
-            for source in sources[1:]:
-                rows.append([source])
+            for source in sources:
+                rows.append([source, MERGE_TRANSITION, destination])
         return rows
 
     @staticmethod
     def _get_rows_for_split(details):
         rows = []
         for source, destinations in details.items():
-            rows.append([source, SPLIT_TRANSITION, destinations[0]])
-            for destination in destinations[1:]:
-                rows.append(['', '', destination])
+            for destination in destinations:
+                rows.append([source, SPLIT_TRANSITION, destination])
         return rows

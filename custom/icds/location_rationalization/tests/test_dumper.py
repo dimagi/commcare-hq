@@ -12,10 +12,10 @@ class TestDumper(BaseTest):
         self.assertEqual(
             rows,
             [{'from': '11111', 'transition': 'Merge', 'to': '11114'},
-             {'from': '11112', 'transition': '', 'to': ''},
-             {'from': '11113', 'transition': '', 'to': ''},
+             {'from': '11112', 'transition': 'Merge', 'to': '11114'},
+             {'from': '11113', 'transition': 'Merge', 'to': '11114'},
              {'from': '12211', 'transition': 'Split', 'to': '12111'},
-             {'from': '', 'transition': '', 'to': '12121'},
+             {'from': '12211', 'transition': 'Split', 'to': '12121'},
              {'from': '11311', 'transition': 'Rename', 'to': '11211'},
              {'from': '11312', 'transition': 'Rename', 'to': '11212'},
              {'from': '11321', 'transition': 'Rename', 'to': '11221'},
