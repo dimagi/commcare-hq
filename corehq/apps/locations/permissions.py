@@ -332,7 +332,8 @@ def can_access_location_data(view_fn):
         loc_id = request.GET.get('location_id')
         def call_view(): return view_fn(request, domain, *args, **kwargs)
         if loc_id is not None and not user_can_access_location_id(domain, request.couch_user, loc_id):
-            return HttpResponse(status=403)
+            return HttpResponse('No access to the location {} for the logged in user'.format(loc_id),
+                                status=403)
         return call_view()
 
     return _inner
