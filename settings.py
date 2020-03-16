@@ -196,7 +196,7 @@ DEFAULT_APPS = (
     'django.contrib.staticfiles',
     'django_celery_results',
     'django_prbac',
-    'djangular',
+    'djng',
     'captcha',
     'couchdbkit.ext.django',
     'crispy_forms',
@@ -948,6 +948,10 @@ RATE_LIMIT_SUBMISSIONS = False
 STALE_EXPORT_THRESHOLD = None
 
 REQUIRE_TWO_FACTOR_FOR_SUPERUSERS = False
+# Use an experimental partitioning algorithm
+# that adds messages to the partition with the fewest unprocessed messages
+USE_KAFKA_SHORTEST_BACKLOG_PARTITIONER = False
+
 
 try:
     # try to see if there's an environmental variable set for local_settings
@@ -1041,7 +1045,6 @@ TEMPLATES = [
             'loaders': [
                 'django.template.loaders.filesystem.Loader',
                 'django.template.loaders.app_directories.Loader',
-                'django.template.loaders.eggs.Loader',
             ],
         },
     },

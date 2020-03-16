@@ -92,7 +92,7 @@ class FormProcessorSQL(object):
         return (existing_form, new_form)
 
     @classmethod
-    def save_processed_models(cls, processed_forms, cases=None, stock_result=None, publish_to_kafka=True):
+    def save_processed_models(cls, processed_forms, cases=None, stock_result=None):
         db_names = {processed_forms.submitted.db}
         if processed_forms.deprecated:
             db_names |= {processed_forms.deprecated.db}
@@ -142,11 +142,10 @@ class FormProcessorSQL(object):
                     setattr(tracked, tracked._meta.pk.attname, None)
             raise
 
-        if publish_to_kafka:
-            try:
-                cls.publish_changes_to_kafka(processed_forms, cases, stock_result)
-            except Exception as e:
-                raise KafkaPublishingError(e)
+        try:
+            cls.publish_changes_to_kafka(processed_forms, cases, stock_result)
+        except Exception as e:
+            raise KafkaPublishingError(e)
 
     @staticmethod
     def publish_changes_to_kafka(processed_forms, cases, stock_result):

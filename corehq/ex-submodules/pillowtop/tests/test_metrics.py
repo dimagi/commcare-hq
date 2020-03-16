@@ -35,6 +35,21 @@ class TestPillowMetrics(SimpleTestCase):
             'commcare.change_feed.processing_time.processor:all_processors',
         })
 
+    def test_basic_metrics_with_partition(self):
+        stats = self._get_stats([self._get_change_with_partition()])
+        self.assertEqual(set(stats), {
+            'commcare.change_feed.changes.count.datasource:test_commcarehq',
+            'commcare.change_feed.changes.count.is_deletion:False',
+            'commcare.change_feed.changes.count.pillow_name:fake pillow',
+            'commcare.change_feed.changes.count.processor:all_processors',
+            'commcare.change_feed.change_lag.pillow_name:fake pillow',
+            'commcare.change_feed.change_lag.topic:case-1',
+            'commcare.change_feed.processing_time.datasource:test_commcarehq',
+            'commcare.change_feed.processing_time.is_deletion:False',
+            'commcare.change_feed.processing_time.pillow_name:fake pillow',
+            'commcare.change_feed.processing_time.processor:all_processors',
+        })
+
     @override_settings(ENTERPRISE_MODE=True)
     def test_case_type_metrics(self):
         stats = self._get_stats([self._get_change()])
@@ -61,6 +76,24 @@ class TestPillowMetrics(SimpleTestCase):
             doc_id,
             'seq',
             topic=topic,
+            metadata=ChangeMeta(
+                data_source_type='couch',
+                data_source_name='test_commcarehq',
+                document_id=doc_id,
+                document_type=doc_type,
+                document_subtype=doc_subtype,
+                is_deletion=False,
+
+            )
+        )
+
+    def _get_change_with_partition(self, topic='case', doc_type='CommCareCase', doc_subtype='person'):
+        doc_id = uuid.uuid4().hex
+        return Change(
+            doc_id,
+            'seq',
+            topic=topic,
+            partition=1,
             metadata=ChangeMeta(
                 data_source_type='couch',
                 data_source_name='test_commcarehq',

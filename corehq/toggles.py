@@ -1340,18 +1340,10 @@ ENABLE_ALL_ADD_ONS = StaticToggle(
 
 FILTERED_BULK_USER_DOWNLOAD = StaticToggle(
     'filtered_bulk_user_download',
-    "Ability to filter mobile workers based on role, location, and username when doing bulk download",
+    "Bulk mobile worker management features: filtered download, bulk delete, and bulk lookup users.",
     TAG_SOLUTIONS_OPEN,
     [NAMESPACE_DOMAIN],
-    help_link='https://confluence.dimagi.com/display/ccinternal/Filter+Mobile+Workers+Download',
-)
-
-BULK_USER_DELETE = StaticToggle(
-    'bulk_user_delete',
-    "Allow bulk deletion of users based on a username upload.",
-    TAG_SOLUTIONS_LIMITED,
-    [NAMESPACE_DOMAIN],
-    help_link='https://confluence.dimagi.com/display/ccinternal/Bulk+Delete+Users',
+    help_link='https://confluence.dimagi.com/display/ccinternal/Bulk+Mobile+Workers+Management',
 )
 
 FILTERED_LOCATION_DOWNLOAD = StaticToggle(
@@ -1773,14 +1765,6 @@ SHOW_BUILD_PROFILE_IN_APPLICATION_STATUS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-
-USE_NEW_GET_COLUMN = StaticToggle(
-    'use_new_get_column',
-    'Uses the new get_column method when loading edit exports '
-    '(strictly for QA right now).',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN],
-)
 
 LIVEQUERY_READ_FROM_STANDBYS = DynamicallyPredictablyRandomToggle(
     'livequery_read_from_standbys',

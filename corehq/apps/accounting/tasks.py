@@ -143,10 +143,14 @@ def _deactivate_subscription(subscription):
             account = subscription.account
         else:
             account = BillingAccount.create_account_for_domain(
-                domain, created_by='default_community_after_customer_level'
+                domain, created_by='deactivation_after_customer_level'
             )
         next_subscription = assign_explicit_unpaid_subscription(
-            domain, subscription.date_end, SubscriptionAdjustmentMethod.DEFAULT_COMMUNITY, account=account
+            domain,
+            subscription.date_end,
+            SubscriptionAdjustmentMethod.AUTOMATIC_DOWNGRADE,
+            account=account,
+            is_paused=True
         )
         new_plan_version = next_subscription.plan_version
     _, downgraded_privs, upgraded_privs = get_change_status(subscription.plan_version, new_plan_version)

@@ -16,7 +16,7 @@ from django.utils.translation import ugettext as _
 from django.views.decorators.http import require_POST
 from django.views.generic.base import TemplateView, View
 
-from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
+from djng.views.mixins import JSONResponseMixin, allow_remote_invocation
 from memoized import memoized
 
 from dimagi.utils.couch import CriticalSection
@@ -67,22 +67,6 @@ def get_domain_context():
 
 def registration_default(request):
     return redirect(UserRegistrationView.urlname)
-
-
-def track_domainless_new_user(request):
-    if settings.UNIT_TESTING:
-        # don't trigger soft assert in a test
-        return
-    user = request.user
-    is_new_user = not (Domain.active_for_user(user) or user.is_superuser)
-    if is_new_user:
-        _domainless_new_user_soft_assert(
-            False, ("A new user '{}' was redirected to "
-                    "RegisterDomainView on '{}', which shouldn't "
-                    "actually happen.").format(
-                user.username, settings.SERVER_ENVIRONMENT
-            )
-        )
 
 
 class ProcessRegistrationView(JSONResponseMixin, View):
@@ -216,7 +200,6 @@ class UserRegistrationView(BasePageView):
             # Redirect to a page which lets user choose whether or not to create a new account
             domains_for_user = Domain.active_for_user(request.user)
             if len(domains_for_user) == 0:
-                track_domainless_new_user(request)
                 return redirect("registration_domain")
             else:
                 return redirect("homepage")

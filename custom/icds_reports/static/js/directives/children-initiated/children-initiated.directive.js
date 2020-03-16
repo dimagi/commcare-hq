@@ -30,7 +30,7 @@ function ChildrenInitiatedController($scope, $routeParams, $location, $filter, m
         'Timely intiation of complementary feeding in addition to breastmilk at 6 months of age is a key feeding practice to reduce malnutrition',
     };
 
-    vm.getPopupData = function(row) {
+    vm.getPopupData = function (row) {
         var gender = genderIndex > 0 ? genders[genderIndex].name : '';
         var chosenFilters = gender ? ' (' + gender + ') ' : '';
         var total = row ? $filter('indiaNumbers')(row.all) : 'N/A';
@@ -48,13 +48,13 @@ function ChildrenInitiatedController($scope, $routeParams, $location, $filter, m
             {
                 indicator_name: '% children (6-8 months) given timely introduction to solid or semi-solid food in the given month' + chosenFilters + ': ',
                 indicator_value: percent,
-            }
+            },
         ];
     };
 
     vm.init();
 
-    vm.resetAdditionalFilter = function() {
+    vm.resetAdditionalFilter = function () {
         vm.filtersData.gender = '';
         $location.search('gender', null);
     };
