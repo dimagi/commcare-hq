@@ -92,6 +92,86 @@
       },
       {
         "display_name": null,
+        "property_path": [],
+        "datatype": "string",
+        "is_primary_key": false,
+        "column_id": "name",
+        "is_nullable": true,
+        "type": "raw",
+        "property_name": "name"
+      },
+      {
+        "display_name": null,
+        "property_path": [],
+        "datatype": "date",
+        "is_primary_key": false,
+        "column_id": "hh_reg_date",
+        "is_nullable": true,
+        "type": "raw",
+        "property_name": "hh_reg_date"
+      },
+      {
+        "display_name": null,
+        "property_path": [],
+        "datatype": "string",
+        "is_primary_key": false,
+        "column_id": "hh_num",
+        "is_nullable": true,
+        "type": "raw",
+        "property_name": "hh_num"
+      },
+      {
+        "display_name": null,
+        "property_path": [],
+        "datatype": "string",
+        "is_primary_key": false,
+        "column_id": "hh_gps_location",
+        "is_nullable": true,
+        "type": "raw",
+        "property_name": "hh_gps_location"
+      },
+      {
+        "display_name": null,
+        "property_path": [],
+        "datatype": "string",
+        "is_primary_key": false,
+        "column_id": "hh_caste",
+        "is_nullable": true,
+        "type": "raw",
+        "property_name": "hh_caste"
+      },
+      {
+        "display_name": null,
+        "property_path": [],
+        "datatype": "string",
+        "is_primary_key": false,
+        "column_id": "hh_bpl_apl",
+        "is_nullable": true,
+        "type": "raw",
+        "property_name": "hh_bpl_apl"
+      },
+      {
+        "display_name": null,
+        "property_path": [],
+        "datatype": "boolean",
+        "is_primary_key": false,
+        "column_id": "hh_minority",
+        "is_nullable": true,
+        "type": "raw",
+        "property_name": "hh_minority"
+      },
+      {
+        "display_name": null,
+        "property_path": [],
+        "datatype": "string",
+        "is_primary_key": false,
+        "column_id": "hh_religion",
+        "is_nullable": true,
+        "type": "raw",
+        "property_name": "hh_religion"
+      },
+      {
+        "display_name": null,
         "datatype": "string",
         "type": "expression",
         "transform": {},
