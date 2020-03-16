@@ -2,8 +2,6 @@ import json
 from collections import namedtuple
 
 from corehq.apps.export.models import ExportInstance
-from corehq.util.datadog.gauges import datadog_counter
-from corehq.util.datadog.utils import bucket_value
 from corehq.util.metrics import metrics
 
 FieldMetadata = namedtuple('FieldMetadata', ['name', 'odata_type'])
@@ -72,12 +70,13 @@ def record_feed_access_in_datadog(request, config_id, duration, response):
         column_count = len(rows[0])
     except IndexError:
         column_count = 0
-    odata_feed_access_histogram.tag(
+    odata_feed_access_histogram.observe(
+        duration,
         domain=request.domain,
         feed_id=config_id,
         feed_type=config.type,
         username=username,
         row_count=row_count,
         column_count=column_count,
-        size=len(response.content),
-    ).observe(duration)
+        size=len(response.content)
+    )

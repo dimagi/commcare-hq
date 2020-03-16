@@ -33,53 +33,43 @@ def _validate_tag_names(tag_names):
 
 
 class MetricBase:
-    def __init__(self, name: str, documentation: str, tag_names: Iterable = (), **kwargs):
+    def __init__(self, name: str, documentation: str, tag_names: Iterable = ()):
         self.name = name
         if not METRIC_NAME_RE.match(name):
             raise ValueError('Invalid metric name: ' + name)
         _enforce_prefix(name, 'commcare')
         self.documentation = documentation
         self.tag_names = _validate_tag_names(tag_names)
-        self.tag_values = kwargs.pop('tag_values', None)
-        if self.tag_values:
-            assert isinstance(self.tag_values, dict)
-            if self.tag_values.keys() != self.tag_names:
-                raise ValueError('Incorrect tag names')
-        self._kwargs = kwargs
         self._init_metric()
 
     def _init_metric(self):
         pass
 
-    def tag(self, **tag_kwargs):
-        tag_kwargs = {t: str(v) for t, v in tag_kwargs.items()}
-        return self._get_tagged_instance(tag_kwargs)
-
-    def _get_tagged_instance(self, tag_values: dict):
-        return self.__class__(
-            self.name, self.documentation, tag_names=self.tag_names, tag_values=tag_values, **self._kwargs
-        )
-
-    def _validate_tags(self):
-        if self.tag_names and not self.tag_values:
+    def _validate_tags(self, tag_values: dict):
+        if self.tag_names and not tag_values:
             raise Exception('Metric has missing tag values.')
 
-    def _record(self, value: float):
+        if tag_values:
+            assert isinstance(tag_values, dict)
+            if tag_values.keys() != self.tag_names:
+                raise ValueError('Incorrect tag names')
+
+    def _record(self, value: float, tags: dict):
         raise NotImplementedError
 
 
 class HqCounter(MetricBase):
-    def inc(self, amount: float = 1):
+    def inc(self, amount: float = 1, **tags):
         """Increment the counter by the given amount."""
-        self._validate_tags()
-        self._record(amount)
+        self._validate_tags(tags)
+        self._record(amount, tags)
 
 
 class HqGauge(MetricBase):
-    def set(self, value: float):
+    def set(self, value: float, **tags):
         """Set gauge to the given value."""
-        self._validate_tags()
-        self._record(value)
+        self._validate_tags(tags)
+        self._record(value, tags)
 
 
 DEFAULT_BUCKETS = (.005, .01, .025, .05, .075, .1, .25, .5, .75, 1.0, 2.5, 5.0, 7.5, 10.0, INF)
@@ -87,17 +77,20 @@ DEFAULT_BUCKETS = (.005, .01, .025, .05, .075, .1, .25, .5, .75, 1.0, 2.5, 5.0, 
 
 class HqHistogram(MetricBase):
 
-    def _init_metric(self):
-        self._buckets = self._kwargs.get('buckets') or DEFAULT_BUCKETS
-        self._bucket_unit = self._kwargs.get('bucket_unit', '')
-        self._bucket_tag = self._kwargs.get('bucket_tag')
-        if self._bucket_tag in self.tag_names:
-            self.tag_names = tuple(name for name in self.tag_names if name != self._bucket_tag)
+    def __init__(self, name: str, documentation: str,
+                  bucket_tag: str, buckets: List[int] = DEFAULT_BUCKETS, bucket_unit: str = '',
+                  tag_names: Iterable = ()):
+        self._bucket_tag = bucket_tag
+        self._buckets = buckets
+        self._bucket_unit = bucket_unit
+        if self._bucket_tag in tag_names:
+            tag_names = tuple(name for name in tag_names if name != bucket_tag)
+        super().__init__(name, documentation, tag_names)
 
-    def observe(self, value: float):
+    def observe(self, value: float, **tags):
         """Update histogram with the given value."""
-        self._validate_tags()
-        self._record(value)
+        self._validate_tags(tags)
+        self._record(value, tags)
 
 
 class HqMetrics(metaclass=abc.ABCMeta):
@@ -122,7 +115,7 @@ class HqMetrics(metaclass=abc.ABCMeta):
         implementations for details.
         """
         return self._histogram_class(
-            name, documentation, tag_names, bucket_tag=bucket_tag, buckets=buckets, bucket_unit=bucket_unit
+            name, documentation, bucket_tag, buckets=buckets, bucket_unit=bucket_unit, tag_names=tag_names
         )
 
 
@@ -159,9 +152,6 @@ class DelegatingMetric:
     def __init__(self, delegates, record_fn_name):
         self._delegates = delegates
         self._record_fn_name = record_fn_name
-
-    def tag(self, *args, **kwargs):
-        return self.__class__([d.tag(*args, **kwargs) for d in self._delegates], self._record_fn_name)
 
     def __getattr__(self, item):
         if item == self._record_fn_name:

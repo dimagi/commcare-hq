@@ -36,14 +36,14 @@ def _datadog_record(fn, name, value, tags=None):
 
 
 class Counter(HqCounter):
-    def _record(self, amount: float):
-        tags = _format_tags(self.tag_values)
+    def _record(self, amount: float, tag_values: dict):
+        tags = _format_tags(tag_values)
         _datadog_record(statsd.increment, self.name, amount, tags)
 
 
 class Gauge(HqGauge):
-    def _record(self, value):
-        tags = _format_tags(self.tag_values)
+    def _record(self, value: float, tag_values: dict):
+        tags = _format_tags(tag_values)
         _datadog_record(statsd.gauge, self.name, value, tags)
 
 
@@ -69,8 +69,8 @@ class Histogram(HqHistogram):
     * https://github.com/dimagi/commcare-hq/pull/17080
     * https://github.com/dimagi/commcare-hq/pull/17030#issuecomment-315794700
     """
-    def _record(self, value: float):
-        tags = _format_tags(self.tag_values)
+    def _record(self, value: float, tag_values: dict):
+        tags = _format_tags(tag_values)
         if not tags:
             tags = []
         bucket = bucket_value(value, self._buckets, self._bucket_unit)

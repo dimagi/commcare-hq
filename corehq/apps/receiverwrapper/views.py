@@ -106,7 +106,7 @@ def _process_form(request, domain, app_id, user_id, authenticated,
         except:
             meta = {}
 
-        corrupt_multimedia_counter.tag(domain=domain, authenticated=authenticated).inc()
+        corrupt_multimedia_counter.inc(domain=domain, authenticated=authenticated)
         return _submission_error(
             request, "Received a submission with POST.keys()", metric_tags,
             domain, app_id, user_id, authenticated, meta,
@@ -154,7 +154,7 @@ def _process_form(request, domain, app_id, user_id, authenticated,
         try:
             result = submission_post.run()
         except XFormLockError as err:
-            xform_locked_error_counter.tag(domain=domain, authenticated=authenticated).inc()
+            xform_locked_error_counter.inc(domain=domain, authenticated=authenticated)
             return _submission_error(
                 request, "XFormLockError: %s" % err,
                 metric_tags, domain, app_id, user_id, authenticated, status=423,
@@ -201,12 +201,12 @@ def _record_metrics(tags, submission_type, response, timer=None, xform=None):
     if xform and xform.metadata and xform.metadata.timeEnd and xform.received_on:
         lag = xform.received_on - xform.metadata.timeEnd
         lag_days = lag.total_seconds() / 86400
-        submission_lag_histogram.tag(**tags).observe(lag_days)
+        submission_lag_histogram.observe(lag_days, **tags)
 
     if timer:
-        submission_duration_histogram.tag(**tags).observe(timer.duration)
+        submission_duration_histogram.observe(timer.duration, **tags)
 
-    submission_counter.tag(**tags).inc()
+    submission_counter.inc(**tags)
 
 
 @location_safe

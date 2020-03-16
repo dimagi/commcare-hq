@@ -26,9 +26,9 @@ class _TestMetrics(SimpleTestCase):
 
     def test_counter(self):
         counter = self.provider.counter('commcare.test.counter', 'Description', tag_names=['t1', 't2'])
-        counter.tag(t1='a', t2='b').inc()
-        counter.tag(t1='c', t2='b').inc(2)
-        counter.tag(t1='c', t2='b').inc()
+        counter.inc(t1='a', t2='b')
+        counter.inc(2, t1='c', t2='b')
+        counter.inc(t1='c', t2='b')
         self.assertCounterMetric(counter, {
             (('t1', 'a'), ('t2', 'b')): 1,
             (('t1', 'c'), ('t2', 'b')): 3,
@@ -36,9 +36,9 @@ class _TestMetrics(SimpleTestCase):
 
     def test_gauge(self):
         gauge = self.provider.gauge('commcare.test.gauge', 'Description', tag_names=['t1', 't2'])
-        gauge.tag(t1='a', t2='b').set(4.2)
-        gauge.tag(t1='c', t2='b').set(2)
-        gauge.tag(t1='c', t2='b').set(5)
+        gauge.set(4.2, t1='a', t2='b')
+        gauge.set(2, t1='c', t2='b')
+        gauge.set(5, t1='c', t2='b')
         self.assertGaugeMetric(gauge, {
             (('t1', 'a'), ('t2', 'b')): 4.2,
             (('t1', 'c'), ('t2', 'b')): 5,
@@ -76,14 +76,12 @@ class TestDatadogMetrics(_TestMetrics):
             'commcare.test.histogram', 'Description', 'duration',
             buckets=[1, 2, 3], bucket_unit='ms', tag_names=['t1', 't2']
         )
-        tagged_1 = histogram.tag(t1='a', t2='b')
-        tagged_1.observe(0.2)
-        tagged_1.observe(0.7)
-        tagged_1.observe(2.5)
+        histogram.observe(0.2, t1='a', t2='b')
+        histogram.observe(0.7, t1='a', t2='b')
+        histogram.observe(2.5, t1='a', t2='b')
 
-        tagged_2 = histogram.tag(t1='c', t2='b')
-        tagged_2.observe(2)
-        tagged_2.observe(5)
+        histogram.observe(2, t1='c', t2='b')
+        histogram.observe(5, t1='c', t2='b')
         self.assertHistogramMetric(histogram, {
             (('t1', 'a'), ('t2', 'b')): {1: 2, 3: 1},
             (('t1', 'c'), ('t2', 'b')): {3: 1, INF: 1}
@@ -129,14 +127,12 @@ class TestPrometheusMetrics(_TestMetrics):
             'commcare.test.histogram', 'Description', 'duration',
             buckets=[1, 2, 3], bucket_unit='ms', tag_names=['t1', 't2']
         )
-        tagged_1 = histogram.tag(t1='a', t2='b')
-        tagged_1.observe(0.2)
-        tagged_1.observe(0.7)
-        tagged_1.observe(2.5)
+        histogram.observe(0.2, t1='a', t2='b')
+        histogram.observe(0.7, t1='a', t2='b')
+        histogram.observe(2.5, t1='a', t2='b')
 
-        tagged_2 = histogram.tag(t1='c', t2='b')
-        tagged_2.observe(2)
-        tagged_2.observe(5)
+        histogram.observe(2, t1='c', t2='b')
+        histogram.observe(5, t1='c', t2='b')
         self.assertHistogramMetric(histogram, {
             (('t1', 'a'), ('t2', 'b')): {1: 2, 3: 1},
             (('t1', 'c'), ('t2', 'b')): {2: 1, INF: 1}
@@ -145,7 +141,7 @@ class TestPrometheusMetrics(_TestMetrics):
     def _samples_to_dics(self, samples, filter_name=None):
         """Convert a Sample tuple into a dict((name, (labels tuple)) -> value)"""
         return {
-            tuple(sample.labels.items()): sample.value
+            tuple(sorted(sample.labels.items())): sample.value
             for sample in samples
             if not filter_name or sample.name == filter_name
         }

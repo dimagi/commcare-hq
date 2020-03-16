@@ -11,54 +11,43 @@ from prometheus_client import Gauge as PGauge
 from prometheus_client import Histogram as PHistogram
 
 
-class PrometheusMetricBase(MetricBase):
-    _metric_class = None
+class Counter(HqCounter):
+    """https://prometheus.io/docs/concepts/metric_types/#counter"""
 
     def _init_metric(self):
-        super()._init_metric()
         self.name = self.name.replace('.', '_')
-        delegate = self._kwargs.get('delegate')
-        self._delegate = delegate or self._metric_class(self.name, self.documentation, self.tag_names)
+        self._delegate = PCounter(self.name, self.documentation, self.tag_names)
 
-    def _get_tagged_instance(self, tag_values: dict):
-        delegate = self._delegate.labels(**tag_values)
-        return self.__class__(
-            self.name, self.documentation,
-            tag_names=self.tag_names, tag_values=tag_values, delegate=delegate, **self._kwargs
-        )
+    def _record(self, amount: float, tags):
+        _get_labeled(self._delegate, tags).inc(amount)
 
 
-class Counter(PrometheusMetricBase, HqCounter):
-    """https://prometheus.io/docs/concepts/metric_types/#counter"""
-    _metric_class = PCounter
-
-    def _record(self, amount: float):
-        self._delegate.inc(amount)
-
-
-class Gauge(PrometheusMetricBase, HqGauge):
+class Gauge(HqGauge):
     """https://prometheus.io/docs/concepts/metric_types/#gauge"""
-    _metric_class = PGauge
 
-    def _record(self, value: float):
-        self._delegate.set(value)
+    def _init_metric(self):
+        self.name = self.name.replace('.', '_')
+        self._delegate = PGauge(self.name, self.documentation, self.tag_names)
+
+    def _record(self, value: float, tags):
+        _get_labeled(self._delegate, tags).set(value)
 
 
-class Histogram(PrometheusMetricBase, HqHistogram):
+class Histogram(HqHistogram):
     """This metric class implements the native Prometheus Histogram type
 
     https://prometheus.io/docs/concepts/metric_types/#histogram
     """
     def _init_metric(self):
-        """Overriding this so that we can pass in the buckets to the Prometheus class"""
-        HqHistogram._init_metric(self)  # skip _init_metric on PrometheusMetricBase
         self.name = self.name.replace('.', '_')
-        self._delegate = self._kwargs.get('delegate')
-        if not self._delegate:
-            self._delegate = PHistogram(self.name, self.documentation, self.tag_names, buckets=self._buckets)
+        self._delegate = PHistogram(self.name, self.documentation, self.tag_names, buckets=self._buckets)
 
-    def _record(self, value: float):
-        self._delegate.observe(value)
+    def _record(self, value: float, tags: dict):
+        _get_labeled(self._delegate, tags).observe(value)
+
+
+def _get_labeled(metric, labels):
+    return metric.labels(**labels) if labels else metric
 
 
 class PrometheusMetrics(HqMetrics):
