@@ -1734,6 +1734,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
                phone_number=None,
                location=None,
                commit=True,
+               is_provisioned=True,
                **kwargs):
         """
         Main entry point into creating a CommCareUser (mobile worker).
@@ -1748,6 +1749,10 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         commcare_user.domain = domain
         commcare_user.device_ids = [device_id]
         commcare_user.registering_device_id = device_id
+        commcare_user.is_provisioned = is_provisioned
+        if not is_provisioned:
+            # if the user is not provisioned, also set is_active false so they can't login
+            commcare_user.is_active = False
 
         commcare_user.domain_membership = DomainMembership(domain=domain, **kwargs)
 

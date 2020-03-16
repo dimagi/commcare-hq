@@ -27,11 +27,24 @@ class TestCreateMobileWorkers(TestCase):
             first_name='Mobile',
             last_name='Worker',
         )
+        self.addCleanup(user.delete)
         self.assertEqual(self.domain, user.domain)
         self.assertEqual('mw1', user.username)
         self.assertEqual('mw1@example.com', user.email)
         self.assertEqual(['my-pixel'], user.device_ids)
         self.assertEqual('Mobile', user.first_name)
         self.assertEqual(True, user.is_active)
-        self.addCleanup(user.delete)
+        self.assertEqual(True, user.is_provisioned)
 
+    def test_create_unprovisioned(self):
+        user = CommCareUser.create(
+            self.domain,
+            'mw1',
+            's3cr4t',
+            email='mw1@example.com',
+            is_provisioned=False,
+        )
+        self.addCleanup(user.delete)
+        self.assertEqual(self.domain, user.domain)
+        self.assertEqual(False, user.is_active)
+        self.assertEqual(False, user.is_provisioned)
