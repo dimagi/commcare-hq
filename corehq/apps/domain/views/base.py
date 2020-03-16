@@ -35,7 +35,7 @@ def select(request, do_not_redirect=False, next_view=None):
     next_view = next_view or request.GET.get('next_view')
     additional_context = {
         'domains_for_user': domains_for_user,
-        'open_invitations': [] if bool(next_view) else open_invitations,
+        'open_invitations': [] if next_view else open_invitations,
         'current_page': {'page_name': _('Select A Project')},
         'next_view': next_view or 'domain_homepage',
         'hide_create_new_project': bool(next_view),
