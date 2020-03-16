@@ -44,9 +44,8 @@ class RequestTemplateDownload(object):
             loc_location_type = loc.location_type
             return {f'old_{loc_location_type}': loc.site_code,
                     f'new_{loc_location_type}': ''}
-        row = {}
         current_location = location
-        generate_row(current_location)
+        row = generate_row(current_location)
         while current_location.parent_id:
             parent = self._ancestors[current_location.parent_id]
             row.update(generate_row(parent))
