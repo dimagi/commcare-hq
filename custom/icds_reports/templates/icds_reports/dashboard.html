@@ -72,7 +72,6 @@ related to angular not being defined. But if we split it here it works fine.
   {% include 'icds_reports/partials/shared_report_services.html' %}
 {% compress js %}
         <script src="{% static 'js/angular-services/system-usage.service.js' %}"></script>
-        <script src="{% static 'js/angular-services/progress-report.service.js' %}"></script>
         <script src="{% static 'js/angular-services/download.service.js' %}"></script>
 {% endcompress %}
   {% include 'icds_reports/partials/shared_component_directives.html' %}
@@ -88,7 +87,6 @@ related to angular not being defined. But if we split it here it works fine.
         <script src="{% static 'js/directives/indie-map/indie-map.directive.js' %}"></script>
         <script src="{% static 'js/directives/map-or-sector-view/map-or-sector-view.directive.js' %}"></script>
         <script src="{% static 'js/directives/download/download.directive.js' %}"></script>
-        <script src="{% static 'js/directives/progress-report/progress-report.directive.js' %}"></script>
         <script src="{% static 'js/directives/print/print.directive.js' %}"></script>
         <script src="{% static 'js/directives/cas-export/cas-export.directive.js' %}"></script>
         <script src="{% static 'js/directives/access-denied/access-denied.directive.js' %}"></script>

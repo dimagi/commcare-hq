@@ -12,4 +12,4 @@ class Command(BaseCommand):
         agg_record = AggregationRecord.objects.get(agg_uuid=agg_uuid)
         if not agg_record.run_aggregation_queries:
             return
-        update_aggregate_locations_tables(agg_record.agg_date)
+        update_aggregate_locations_tables()
