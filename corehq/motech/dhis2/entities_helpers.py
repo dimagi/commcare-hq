@@ -261,10 +261,12 @@ def get_enrollments(case_trigger_info, case_config):
     for that. Cases/TEIs are enrolled in a program when the first event
     in that program occurs.
     """
+    case_org_unit = get_value(case_config.org_unit_id, case_trigger_info)
     programs_by_id = get_programs_by_id(case_trigger_info, case_config)
     enrollments = []
     for program_id, program in programs_by_id.items():
         enrollment = {
+            "orgUnit": program["orgUnit"] or case_org_unit,
             "program": program_id,
             "events": program["events"],
         }
@@ -283,6 +285,7 @@ def get_programs_by_id(case_trigger_info, case_config):
         if event:
             program = programs_by_id[event["program"]]
             program["events"].append(event)
+            program["orgUnit"] = get_value(form_config.org_unit_id, case_trigger_info)
             program.update(get_program_dates(form_config, case_trigger_info))
     return programs_by_id
 
