@@ -31,10 +31,12 @@
     </div>
     <div class="col-sm-4">
       {% if not restrict_domain_creation or request.user.is_superuser %}
-        <aside class="well">
-          <h3>{% trans "Have a new idea?" %}</h3>
-          <a class="btn btn-primary" href="{% url "registration_domain" %}">{% trans "Create a Blank Project" %}</a>
-        </aside>
+        {% if not hide_create_new_project %}
+          <aside class="well">
+            <h3>{% trans "Have a new idea?" %}</h3>
+            <a class="btn btn-primary" href="{% url "registration_domain" %}">{% trans "Create a Blank Project" %}</a>
+          </aside>
+        {% endif %}
       {% endif %}
     </div>
   </div>
