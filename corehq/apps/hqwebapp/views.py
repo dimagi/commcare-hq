@@ -212,7 +212,6 @@ def redirect_to_default(req, domain=None):
         if 0 == len(domains) and not req.user.is_superuser:
             return redirect('registration_domain')
         elif 1 == len(domains):
-            from corehq.apps.dashboard.views import dashboard_default
             from corehq.apps.users.models import DomainMembershipError
             if domains[0]:
                 domain = domains[0].name
@@ -227,14 +226,14 @@ def redirect_to_default(req, domain=None):
                         # web users without roles are redirected to the dashboard default
                         # view since some domains allow web users to request access if they
                         # don't have it
-                        return dashboard_default(req, domain)
+                        url = reverse("dashboard_default", args=[domain])
                 else:
                     if role and role.default_landing_page:
                         url = get_redirect_url(role.default_landing_page, domain)
                     elif couch_user.is_commcare_user():
                         url = reverse(get_cloudcare_urlname(domain), args=[domain])
                     else:
-                        return dashboard_default(req, domain)
+                        url = reverse("dashboard_default", args=[domain])
             else:
                 raise Http404()
         else:
