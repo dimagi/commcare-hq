@@ -466,19 +466,17 @@ class FeaturePreviewsView(BaseAdminProjectSettingsView):
                 feature.save_fn(self.domain, new_state)
 
 
-class CustomPasswordResetView(View):
+class CustomPasswordResetView(PasswordResetConfirmView):
     urlname = "password_reset_confirm"
 
     def get(self, request, *args, **kwargs):
-        extra_context = kwargs.setdefault('extra_context', {})
-        extra_context['hide_password_feedback'] = settings.ENABLE_DRACONIAN_SECURITY_FEATURES
-        extra_context['implement_password_obfuscation'] = settings.OBFUSCATE_PASSWORD_FOR_NIC_COMPLIANCE
-        return PasswordResetConfirmView.as_view()(request, *args, **kwargs)
+        self.extra_context['hide_password_feedback'] = settings.ENABLE_DRACONIAN_SECURITY_FEATURES
+        self.extra_context['implement_password_obfuscation'] = settings.OBFUSCATE_PASSWORD_FOR_NIC_COMPLIANCE
+        return super().get(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
-        extra_context = kwargs.setdefault('extra_context', {})
-        extra_context['hide_password_feedback'] = settings.ENABLE_DRACONIAN_SECURITY_FEATURES
-        response = PasswordResetConfirmView.as_view()(request, *args, **kwargs)
+        self.extra_context['hide_password_feedback'] = settings.ENABLE_DRACONIAN_SECURITY_FEATURES
+        response = super().post(request, *args, **kwargs)
         uidb64 = kwargs.get('uidb64')
         uid = urlsafe_base64_decode(uidb64)
         user = User.objects.get(pk=uid)
