@@ -1736,8 +1736,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
                commit=True,
                **kwargs):
         """
-        used to be a function called `create_hq_user_from_commcare_registration_info`
-
+        Main entry point into creating a CommCareUser (mobile worker).
         """
         uuid = uuid or uuid4().hex
         commcare_user = super(CommCareUser, cls).create(domain, username, password, email, uuid, date, **kwargs)
