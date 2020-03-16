@@ -10,7 +10,7 @@ from tastypie.http import HttpTooManyRequests
 
 import couchforms
 from casexml.apps.case.xform import get_case_updates, is_device_report
-from corehq.util.metrics import metrics
+from corehq.util.metrics import metrics, metrics_counter, metrics_histogram
 from couchforms import openrosa_response
 from couchforms.const import MAGIC_PROPERTY, BadRequest
 from couchforms.getters import MultimediaBug
@@ -57,32 +57,6 @@ PROFILE_PROBABILITY = float(os.getenv('COMMCARE_PROFILE_SUBMISSION_PROBABILITY',
 PROFILE_LIMIT = os.getenv('COMMCARE_PROFILE_SUBMISSION_LIMIT')
 PROFILE_LIMIT = int(PROFILE_LIMIT) if PROFILE_LIMIT is not None else 1
 
-corrupt_multimedia_counter = metrics.counter(
-    'commcare.corrupt_multimedia_submissions', 'Count of requests with corrupt multimedia',
-    tag_names=['domain', 'authenticated']
-)
-
-xform_locked_error_counter = metrics.counter(
-    'commcare.xformlocked.count', 'Count of locking errors',
-    tag_names=['domain', 'authenticated']
-)
-
-submission_counter = metrics.counter(
-    'commcare.xform_submissions.count', 'Count of form submissions',
-    tag_names=['domain', 'backend', 'submission_type', 'status_code']
-)
-
-submission_duration_histogram = metrics.histogram(
-    'commcare.xform_submissions.duration.seconds', 'Count of form submissions',
-    bucket_tag='duration', buckets=(1, 5, 20, 60, 120, 300, 600), bucket_unit='s',
-    tag_names=['domain', 'backend', 'submission_type', 'status_code']
-)
-
-submission_lag_histogram = metrics.histogram(
-    'commcare.xform_submissions.lag.days', 'Count of form submissions',
-    bucket_tag='lag', buckets=(1, 2, 4, 7, 14, 31, 90), bucket_unit='d',
-    tag_names=['domain', 'backend', 'submission_type', 'status_code']
-)
 
 @profile_prod('commcare_receiverwapper_process_form.prof', probability=PROFILE_PROBABILITY, limit=PROFILE_LIMIT)
 def _process_form(request, domain, app_id, user_id, authenticated,
@@ -106,7 +80,9 @@ def _process_form(request, domain, app_id, user_id, authenticated,
         except:
             meta = {}
 
-        corrupt_multimedia_counter.inc(domain=domain, authenticated=authenticated)
+        metrics_counter('commcare.corrupt_multimedia_submissions', tags={
+            'domain': domain, 'authenticated': authenticated
+        })
         return _submission_error(
             request, "Received a submission with POST.keys()", metric_tags,
             domain, app_id, user_id, authenticated, meta,
@@ -154,7 +130,9 @@ def _process_form(request, domain, app_id, user_id, authenticated,
         try:
             result = submission_post.run()
         except XFormLockError as err:
-            xform_locked_error_counter.inc(domain=domain, authenticated=authenticated)
+            metrics_counter('commcare.xformlocked.count', tags={
+                'domain': domain, 'authenticated': authenticated
+            })
             return _submission_error(
                 request, "XFormLockError: %s" % err,
                 metric_tags, domain, app_id, user_id, authenticated, status=423,
@@ -201,12 +179,20 @@ def _record_metrics(tags, submission_type, response, timer=None, xform=None):
     if xform and xform.metadata and xform.metadata.timeEnd and xform.received_on:
         lag = xform.received_on - xform.metadata.timeEnd
         lag_days = lag.total_seconds() / 86400
-        submission_lag_histogram.observe(lag_days, **tags)
+        metrics_histogram(
+            'commcare.xform_submissions.lag.days', lag_days,
+            bucket_tag='lag', buckets=(1, 2, 4, 7, 14, 31, 90), bucket_unit='d',
+            tags=tags
+        )
 
     if timer:
-        submission_duration_histogram.observe(timer.duration, **tags)
+        metrics_histogram(
+            'commcare.xform_submissions.duration.seconds', timer.duration,
+            bucket_tag='duration', buckets=(1, 5, 20, 60, 120, 300, 600), bucket_unit='s',
+            tags=tags
+        )
 
-    submission_counter.inc(**tags)
+    metrics_counter('commcare.xform_submissions.count', tags=tags)
 
 
 @location_safe

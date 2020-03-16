@@ -2,7 +2,7 @@ import json
 from collections import namedtuple
 
 from corehq.apps.export.models import ExportInstance
-from corehq.util.metrics import metrics
+from corehq.util.metrics import metrics_histogram
 
 FieldMetadata = namedtuple('FieldMetadata', ['name', 'odata_type'])
 
@@ -53,13 +53,6 @@ def _get_odata_fields_from_columns(export_config, special_types, table_id):
     return metadata
 
 
-odata_feed_access_histogram = metrics.histogram(
-    'commcare.odata_feed.test_v3', 'Odata Feed Access',
-    bucket_tag='duration_bucket', buckets=(1, 5, 20, 60, 120, 300, 600), bucket_unit='s',
-    tag_names=['domain', 'feed_id', 'feed_type', 'username', 'row_count', 'column_count', 'size']
-)
-
-
 def record_feed_access_in_datadog(request, config_id, duration, response):
     config = ExportInstance.get(config_id)
     username = request.couch_user.username
@@ -70,13 +63,16 @@ def record_feed_access_in_datadog(request, config_id, duration, response):
         column_count = len(rows[0])
     except IndexError:
         column_count = 0
-    odata_feed_access_histogram.observe(
-        duration,
-        domain=request.domain,
-        feed_id=config_id,
-        feed_type=config.type,
-        username=username,
-        row_count=row_count,
-        column_count=column_count,
-        size=len(response.content)
+    metrics_histogram(
+        'commcare.odata_feed.test_v3', duration,
+        bucket_tag='duration_bucket', buckets=(1, 5, 20, 60, 120, 300, 600), bucket_unit='s',
+        tags={
+            'domain': request.domain,
+            'feed_id': config_id,
+            'feed_type': config.type,
+            'username': username,
+            'row_count': row_count,
+            'column_count': column_count,
+            'size': len(response.content)
+        }
     )

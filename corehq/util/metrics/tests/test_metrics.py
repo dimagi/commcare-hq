@@ -6,9 +6,6 @@ from django.utils.functional import SimpleLazyObject
 from corehq.util.metrics import DatadogMetrics, PrometheusMetrics
 from corehq.util.metrics.metrics import (
     DelegatedMetrics,
-    HqCounter,
-    HqGauge,
-    HqHistogram,
 )
 from corehq.util.metrics.tests.utils import patch_datadog
 from prometheus_client.samples import Sample
@@ -25,33 +22,31 @@ class _TestMetrics(SimpleTestCase):
         cls.provider = cls.provider_class()
 
     def test_counter(self):
-        counter = self.provider.counter('commcare.test.counter', 'Description', tag_names=['t1', 't2'])
-        counter.inc(t1='a', t2='b')
-        counter.inc(2, t1='c', t2='b')
-        counter.inc(t1='c', t2='b')
-        self.assertCounterMetric(counter, {
+        self.provider.counter('commcare.test.counter', tags={'t1': 'a', 't2': 'b'})
+        self.provider.counter('commcare.test.counter', 2, tags={'t1': 'c', 't2': 'b'})
+        self.provider.counter('commcare.test.counter', tags={'t1': 'c', 't2': 'b'})
+        self.assertCounterMetric('commcare.test.counter', {
             (('t1', 'a'), ('t2', 'b')): 1,
             (('t1', 'c'), ('t2', 'b')): 3,
         })
 
     def test_gauge(self):
-        gauge = self.provider.gauge('commcare.test.gauge', 'Description', tag_names=['t1', 't2'])
-        gauge.set(4.2, t1='a', t2='b')
-        gauge.set(2, t1='c', t2='b')
-        gauge.set(5, t1='c', t2='b')
-        self.assertGaugeMetric(gauge, {
+        self.provider.gauge('commcare.test.gauge', 4.2, tags={'t1': 'a', 't2': 'b'})
+        self.provider.gauge('commcare.test.gauge', 2, tags={'t1': 'c', 't2': 'b'})
+        self.provider.gauge('commcare.test.gauge', 5, tags={'t1': 'c', 't2': 'b'})
+        self.assertGaugeMetric('commcare.test.gauge', {
             (('t1', 'a'), ('t2', 'b')): 4.2,
             (('t1', 'c'), ('t2', 'b')): 5,
         })
 
-    def assertCounterMetric(self, metric: HqCounter, expected: Dict[Tuple[Tuple[str, str], ...], float]):
+    def assertCounterMetric(self, metric: str, expected: Dict[Tuple[Tuple[str, str], ...], float]):
         """
         :param metric: metric class
         :param expected: dict mapping tag tuples to metric values
         """
         raise NotImplementedError
 
-    def assertGaugeMetric(self, metric: HqGauge, expected: Dict[Tuple[Tuple[str, str], ...], float]):
+    def assertGaugeMetric(self, metric: str, expected: Dict[Tuple[Tuple[str, str], ...], float]):
         """
         :param metric: metric class
         :param expected: dict mapping tag tuples to metric values
@@ -72,46 +67,46 @@ class TestDatadogMetrics(_TestMetrics):
         super().tearDown()
 
     def test_histogram(self):
-        histogram = self.provider.histogram(
-            'commcare.test.histogram', 'Description', 'duration',
-            buckets=[1, 2, 3], bucket_unit='ms', tag_names=['t1', 't2']
-        )
-        histogram.observe(0.2, t1='a', t2='b')
-        histogram.observe(0.7, t1='a', t2='b')
-        histogram.observe(2.5, t1='a', t2='b')
-
-        histogram.observe(2, t1='c', t2='b')
-        histogram.observe(5, t1='c', t2='b')
-        self.assertHistogramMetric(histogram, {
+        for value in (0.2, 0.7, 2.5):
+            self.provider.histogram(
+                'commcare.test.histogram', value, 'duration',
+                buckets=[1, 2, 3], bucket_unit='ms', tags={'t1': 'a', 't2': 'b'}
+            )
+        for value in (2, 5):
+            self.provider.histogram(
+                'commcare.test.histogram', value, 'duration',
+                buckets=[1, 2, 3], bucket_unit='ms', tags={'t1': 'c', 't2': 'b'}
+            )
+        self.assertHistogramMetric('commcare.test.histogram', {
             (('t1', 'a'), ('t2', 'b')): {1: 2, 3: 1},
             (('t1', 'c'), ('t2', 'b')): {3: 1, INF: 1}
-        })
+        }, 'duration', [1, 2, 3], 'ms')
 
-    def assertCounterMetric(self, metric, expected):
-        self.assertEqual({key[0] for key in self.recorded_metrics}, {metric.name})
+    def assertCounterMetric(self, metric_name, expected):
+        self.assertEqual({key[0] for key in self.recorded_metrics}, {metric_name})
         actual = {
             key[1]: sum(val) for key, val in self.recorded_metrics.items()
         }
         self.assertDictEqual(actual, expected)
 
-    def assertGaugeMetric(self, metric, expected):
-        self.assertEqual({key[0] for key in self.recorded_metrics}, {metric.name})
+    def assertGaugeMetric(self, metric_name, expected):
+        self.assertEqual({key[0] for key in self.recorded_metrics}, {metric_name})
         actual = {
             key[1]: val[-1] for key, val in self.recorded_metrics.items()
         }
         self.assertDictEqual(actual, expected)
 
-    def assertHistogramMetric(self, metric, expected):
-        self.assertEqual({key[0] for key in self.recorded_metrics}, {metric.name})
+    def assertHistogramMetric(self, metric_name, expected, bucket_tag, buckets, bucket_unit):
+        self.assertEqual({key[0] for key in self.recorded_metrics}, {metric_name})
         expected_samples = {}
-        for tags, buckets in expected.items():
-            for bucket, val in buckets.items():
+        for tags, expected_buckets in expected.items():
+            for bucket, val in expected_buckets.items():
                 prefix = 'lt'
                 if bucket == INF:
-                    bucket = metric._buckets[-1]
+                    bucket = buckets[-1]
                     prefix = 'over'
-                bucket_tag = (metric._bucket_tag, f'{prefix}_{bucket:03d}{metric._bucket_unit}')
-                expected_samples[tuple(sorted(tags + (bucket_tag,)))] = val
+                dd_bucket_tag = (bucket_tag, f'{prefix}_{bucket:03d}{bucket_unit}')
+                expected_samples[tuple(sorted(tags + (dd_bucket_tag,)))] = val
 
         actual = {
             key[1]: sum(val) for key, val in self.recorded_metrics.items()
@@ -123,20 +118,20 @@ class TestPrometheusMetrics(_TestMetrics):
     provider_class = PrometheusMetrics
 
     def test_histogram(self):
-        histogram = self.provider.histogram(
-            'commcare.test.histogram', 'Description', 'duration',
-            buckets=[1, 2, 3], bucket_unit='ms', tag_names=['t1', 't2']
-        )
-        histogram.observe(0.2, t1='a', t2='b')
-        histogram.observe(0.7, t1='a', t2='b')
-        histogram.observe(2.5, t1='a', t2='b')
-
-        histogram.observe(2, t1='c', t2='b')
-        histogram.observe(5, t1='c', t2='b')
-        self.assertHistogramMetric(histogram, {
+        for value in (0.2, 0.7, 2.5):
+            self.provider.histogram(
+                'commcare_test_histogram', value, 'duration',
+                buckets=[1, 2, 3], bucket_unit='ms', tags={'t1': 'a', 't2': 'b'}
+            )
+        for value in (2, 5):
+            self.provider.histogram(
+                'commcare_test_histogram', value, 'duration',
+                buckets=[1, 2, 3], bucket_unit='ms', tags={'t1': 'c', 't2': 'b'}
+            )
+        self.assertHistogramMetric('commcare_test_histogram', {
             (('t1', 'a'), ('t2', 'b')): {1: 2, 3: 1},
             (('t1', 'c'), ('t2', 'b')): {2: 1, INF: 1}
-        })
+        }, [1, 2, 3])
 
     def _samples_to_dics(self, samples, filter_name=None):
         """Convert a Sample tuple into a dict((name, (labels tuple)) -> value)"""
@@ -146,27 +141,32 @@ class TestPrometheusMetrics(_TestMetrics):
             if not filter_name or sample.name == filter_name
         }
 
-    def assertGaugeMetric(self, metric, expected):
-        [collected] = metric._delegate.collect()
+    def assertGaugeMetric(self, metric_name, expected):
+        metric_name = metric_name.replace('.', '_')
+        metric = self.provider._metrics[metric_name]
+        [collected] = metric.collect()
         actual = self._samples_to_dics(collected.samples)
         self.assertDictEqual(actual, expected)
 
-    def assertCounterMetric(self, metric, expected):
-        total_name = f'{metric.name}_total'
-        [collected] = metric._delegate.collect()
+    def assertCounterMetric(self, metric_name, expected):
+        metric_name = metric_name.replace('.', '_')
+        metric = self.provider._metrics[metric_name]
+        total_name = f'{metric_name}_total'
+        [collected] = metric.collect()
         actual = self._samples_to_dics(collected.samples, total_name)
         self.assertDictEqual(actual, expected)
 
-    def assertHistogramMetric(self, metric, expected):
+    def assertHistogramMetric(self, metric_name, expected, buckets):
         # Note that Prometheus histograms are cumulative so we must sum up the successive bucket values
         # https://en.wikipedia.org/wiki/Histogram#Cumulative_histogram
-        [collected] = metric._delegate.collect()
+        metric = self.provider._metrics[metric_name]
+        [collected] = metric.collect()
 
-        sample_name = f'{metric.name}_bucket'
+        sample_name = f'{metric_name}_bucket'
         expected_samples = []
         for key, value in expected.items():
             cumulative_value = 0
-            for bucket in metric._buckets:
+            for bucket in buckets:
                 val = value.get(bucket, 0)
                 cumulative_value += val
                 labels = dict(key + (('le', str(float(bucket))),))
@@ -181,40 +181,3 @@ class TestPrometheusMetrics(_TestMetrics):
             if s.name.endswith('bucket')
         ]
         self.assertListEqual(actual, expected_samples)
-
-
-def test_delegate_lazy():
-    metrics = DelegatedMetrics([DatadogMetrics(), PrometheusMetrics()])
-
-    def _check(metric):
-        assert isinstance(metric, SimpleLazyObject), ''
-
-    test_cases = [
-        metrics.counter('commcare.name.1', ''),
-        metrics.gauge('commcare.name.2', ''),
-        metrics.histogram('commcare.name.3', '', 'duration'),
-    ]
-    for metric in test_cases:
-        yield _check, metric
-
-
-def test_lazy_recording():
-    metrics = DelegatedMetrics([DatadogMetrics(), PrometheusMetrics()])
-
-    def _check(metric, method_name):
-        with patch_datadog() as stats:
-            getattr(metric, method_name)(1)
-
-        dd_metric, prom_metric = metric._delegates
-        [collected] = prom_metric._delegate.collect()
-
-        eq(len(stats), 1, stats)
-        eq(len(collected.samples) >= 1, True, collected.samples)
-
-    test_cases = [
-        (metrics.counter('commcare.name.1', ''), 'inc'),
-        (metrics.gauge('commcare.name.2', ''), 'set'),
-        (metrics.histogram('commcare.name.3', '', 'duration'), 'observe'),
-    ]
-    for metric, method_name in test_cases:
-        yield _check, metric, method_name
