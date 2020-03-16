@@ -47,7 +47,6 @@ class TestCreateMobileWorkers(TestCase):
             is_provisioned=False,
         )
         self.addCleanup(user.delete)
-        self.assertEqual(self.domain, user.domain)
         self.assertEqual(False, user.is_active)
         self.assertEqual(False, user.is_provisioned)
         # confirm user can't login
@@ -55,3 +54,20 @@ class TestCreateMobileWorkers(TestCase):
         django_user = user.get_django_user()
         self.assertEqual(False, django_user.is_active)
         self.assertEqual(False, self.client.login(username='mw1', password='s3cr4t'))
+
+    def test_is_active_overrides_is_provisioned(self):
+        user = CommCareUser.create(
+            self.domain,
+            'mw1',
+            's3cr4t',
+            email='mw1@example.com',
+            is_active=True,
+            is_provisioned=False,
+        )
+        self.addCleanup(user.delete)
+        self.assertEqual(True, user.is_active)
+        self.assertEqual(False, user.is_provisioned)
+        # confirm user can login
+        django_user = user.get_django_user()
+        self.assertEqual(True, django_user.is_active)
+        self.assertEqual(True, self.client.login(username='mw1', password='s3cr4t'))
