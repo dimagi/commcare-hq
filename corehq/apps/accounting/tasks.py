@@ -143,10 +143,14 @@ def _deactivate_subscription(subscription):
             account = subscription.account
         else:
             account = BillingAccount.create_account_for_domain(
-                domain, created_by='default_community_after_customer_level'
+                domain, created_by='deactivation_after_customer_level'
             )
         next_subscription = assign_explicit_unpaid_subscription(
-            domain, subscription.date_end, SubscriptionAdjustmentMethod.DEFAULT_COMMUNITY, account=account
+            domain,
+            subscription.date_end,
+            SubscriptionAdjustmentMethod.AUTOMATIC_DOWNGRADE,
+            account=account,
+            is_paused=True
         )
         new_plan_version = next_subscription.plan_version
     _, downgraded_privs, upgraded_privs = get_change_status(subscription.plan_version, new_plan_version)
@@ -767,8 +771,7 @@ def get_unpaid_invoices_over_threshold_by_domain(today, domain):
 
 def _get_unpaid_saas_invoices_in_downgrade_daterange(today):
     return _get_all_unpaid_saas_invoices().filter(
-        date_due__lte=today - datetime.timedelta(days=1),
-        date_due__gte=today - datetime.timedelta(days=61)
+        date_due__lte=today - datetime.timedelta(days=1)
     ).order_by('date_due').select_related('subscription__subscriber')
 
 
@@ -811,8 +814,10 @@ def get_accounts_with_customer_invoices_over_threshold(today):
 
 def is_subscription_eligible_for_downgrade_process(subscription):
     return (
-        subscription.plan_version.plan.edition != SoftwarePlanEdition.COMMUNITY
-        and not subscription.skip_auto_downgrade
+        subscription.plan_version.plan.edition not in [
+            SoftwarePlanEdition.COMMUNITY,
+            SoftwarePlanEdition.PAUSED,
+        ] and not subscription.skip_auto_downgrade
     )
 
 
@@ -844,7 +849,7 @@ def _apply_downgrade_process(oldest_unpaid_invoice, total, today, subscription=N
         })
 
     days_ago = (today - oldest_unpaid_invoice.date_due).days
-    if days_ago == 61:
+    if days_ago >= 61:
         if not oldest_unpaid_invoice.is_customer_invoice:  # We do not automatically downgrade customer invoices
             _downgrade_domain(subscription)
             _send_downgrade_notice(oldest_unpaid_invoice, context)

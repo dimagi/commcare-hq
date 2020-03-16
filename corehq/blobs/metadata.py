@@ -8,6 +8,7 @@ from corehq.sql_db.util import (
     split_list_by_db_partition,
 )
 from corehq.util.datadog.gauges import datadog_counter
+from . import CODES
 
 from .models import BlobMeta
 
@@ -48,11 +49,12 @@ class MetaDB(object):
         """Save `BlobMeta` in the metadata database"""
         meta.save()
         length = meta.content_length
-        datadog_counter('commcare.blobs.added.count')
-        datadog_counter('commcare.blobs.added.bytes', value=length)
+        tags = _meta_tags(meta)
+        datadog_counter('commcare.blobs.added.count', tags=tags)
+        datadog_counter('commcare.blobs.added.bytes', value=length, tags=tags)
         if meta.expires_on is not None:
-            datadog_counter('commcare.temp_blobs.count')
-            datadog_counter('commcare.temp_blobs.bytes_added', value=length)
+            datadog_counter('commcare.temp_blobs.count', tags=tags)
+            datadog_counter('commcare.temp_blobs.bytes_added', value=length, tags=tags)
 
     def delete(self, key, content_length):
         """Delete blob metadata
@@ -143,8 +145,9 @@ class MetaDB(object):
         except BlobMeta.DoesNotExist:
             return
         if meta.expires_on is None:
-            datadog_counter('commcare.temp_blobs.count')
-            datadog_counter('commcare.temp_blobs.bytes_added', value=meta.content_length)
+            tags = _meta_tags(meta)
+            datadog_counter('commcare.temp_blobs.count', tags=tags)
+            datadog_counter('commcare.temp_blobs.bytes_added', value=meta.content_length, tags=tags)
         meta.expires_on = _utcnow() + timedelta(minutes=minutes)
         meta.save()
 
@@ -221,3 +224,8 @@ class MetaDB(object):
 
 def _utcnow():
     return datetime.utcnow()
+
+
+def _meta_tags(meta):
+    type_ = CODES.name_of(meta.type_code, f'type_code_{meta.type_code}')
+    return [f'type:{type_}']

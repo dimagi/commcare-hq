@@ -1,6 +1,13 @@
 /* global moment */
 
 window.angular.module('icdsApp').factory('dateHelperService', ['$location', function ($location) {
+    var reportStartDates = {
+        'sdd': new Date(2019, 1),
+    };
+
+    var defaultStartYear = 2017;
+    var defaultStartMonth = 3;
+
     function getSelectedMonth() {
         // gets the selected month from $location or defaults to the current month
         // note that this is a 1-indexed month
@@ -22,13 +29,7 @@ window.angular.module('icdsApp').factory('dateHelperService', ['$location', func
         var formattedMonth = moment(getSelectedMonth(), 'MM').format('MMMM');
         return formattedMonth + ' ' + getSelectedYear();
     }
-    function getCustomAvailableMonthsForReports(selectedYear, selectedMonth, monthsCopy) {
-
-        var reportStartDates = {
-            'sdd': new Date(2019, 1),
-        };
-
-        var isSDD =  $location.path().indexOf('service_delivery_dashboard') !== -1;
+    function getCustomAvailableMonthsForReports(selectedYear, selectedMonth, monthsCopy, isSDD) {
         var months = monthsCopy;
 
         if (selectedYear === new Date().getFullYear()) {
@@ -65,6 +66,21 @@ window.angular.module('icdsApp').factory('dateHelperService', ['$location', func
         };
 
     }
+    function getStartingMonth(isSDD) {
+        if (isSDD) {
+            return reportStartDates['sdd'].getMonth() + 1;
+        }
+        return defaultStartMonth;
+    }
+    function getStartingYear(isSDD) {
+        if (isSDD) {
+            return reportStartDates['sdd'].getFullYear();
+        }
+        return defaultStartYear;
+    }
+    function getReportStartDates() {
+        return reportStartDates;
+    }
     return {
         getSelectedMonth: getSelectedMonth,
         getSelectedYear: getSelectedYear,
@@ -72,5 +88,8 @@ window.angular.module('icdsApp').factory('dateHelperService', ['$location', func
         getSelectedMonthDisplay: getSelectedMonthDisplay,
         updateSelectedMonth: updateSelectedMonth,
         getCustomAvailableMonthsForReports: getCustomAvailableMonthsForReports,
+        getStartingYear: getStartingYear,
+        getStartingMonth: getStartingMonth,
+        getReportStartDates: getReportStartDates,
     };
 }]);

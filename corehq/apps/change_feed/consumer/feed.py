@@ -1,5 +1,6 @@
 import json
 from copy import copy
+from typing import Dict, Iterator, Optional
 
 from django.conf import settings
 
@@ -50,9 +51,13 @@ class KafkaChangeFeed(ChangeFeed):
             raise ValueError("This function requires a single topic but found {}!".format(self._topics))
         return self._topics[0]
 
-    def iter_changes(self, since, forever):
+    def iter_changes(
+        self,
+        since: Optional[Dict[TopicPartition, int]],
+        forever: bool,
+    ) -> Iterator[Change]:
         """
-        Since must be a dictionary of topic partition offsets.
+        ``since`` must be a dictionary of topic partition offsets, or None
         """
         timeout = float('inf') if forever else MIN_TIMEOUT
         start_from_latest = since is None
@@ -61,8 +66,10 @@ class KafkaChangeFeed(ChangeFeed):
 
         since = self._filter_offsets(since)
         # a special value of since=None will start from the end of the change stream
-        if since is not None and (not isinstance(since, dict) or not since):
-            raise ValueError("'since' must be None or a topic offset dictionary")
+        if not isinstance(since, (dict, type(None))):
+            raise ValueError(f"Expected None or a topic offset dictionary. Got {since!r}")
+        if since == {}:
+            raise ValueError('Topic partition offsets not found')
 
         if not start_from_latest:
             if self.strict:
@@ -93,7 +100,13 @@ class KafkaChangeFeed(ChangeFeed):
         latest_offsets = self.get_latest_offsets()
         ret = {}
         for topic_partition, sequence in self.get_processed_offsets().items():
-            if sequence == latest_offsets[topic_partition]:
+            if sequence >= latest_offsets[topic_partition]:
+                # I'm not quite sure this analysis is correct,
+                # it mostly appears to be doing the right thing.
+                # I don't think we double process the last message,
+                # contrary to the comment below, because
+                # last_offsets appears to be the offset of the latest change + 1.
+                # > Previous comment from Emord in 2017:
                 # this topic and partition is totally up to date and if we add 1
                 # then kafka will give us an offset out of range error.
                 # not adding 1 to the partition means that we may process this
@@ -143,7 +156,7 @@ class KafkaChangeFeed(ChangeFeed):
         self._consumer.assign(self._filter_partitions(topic_partitions))
         return self._consumer
 
-    def _filter_offsets(self, offsets):
+    def _filter_offsets(self, offsets) -> Optional[Dict[TopicPartition, int]]:
         if offsets is None:
             return offsets
 
@@ -196,6 +209,7 @@ def change_from_kafka_message(message):
         metadata=change_meta,
         document_store=document_store,
         topic=message.topic,
+        partition=message.partition,
     )
 
 

@@ -11,6 +11,10 @@ class Command(PopulateSQLCommand):
         from corehq.apps.hqadmin.models import HqDeploy
         return HqDeploy
 
+    @classmethod
+    def commit_adding_migration(cls):
+        return "9f124faf85eb0880baceaffa7b1bcfb1dfaba6b5"
+
     def update_or_create_sql_object(self, doc):
         model, created = self.sql_class().objects.update_or_create(
             couch_id=doc['_id'],

@@ -38,11 +38,13 @@ def paginate_options(data_sources, query, start, size):
 
 class EmwfOptionsController(object):
     namespace_locations = True
+    case_sharing_only = False
 
-    def __init__(self, request, domain, search):
+    def __init__(self, request, domain, search, case_sharing_only=False):
         self.request = request
         self.domain = domain
         self.search = search
+        self.case_sharing_only = case_sharing_only
 
     @property
     @memoized
@@ -91,6 +93,8 @@ class EmwfOptionsController(object):
         else:
             included_objects = SQLLocation.active_objects
         locations = included_objects.filter_by_user_input(self.domain, query)
+        if self.case_sharing_only:
+            locations = locations.filter(location_type__shares_cases=True)
         return locations.accessible_to_user(self.domain, self.request.couch_user)
 
     def get_locations_size(self, query):

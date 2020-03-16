@@ -38,7 +38,7 @@ function EnrolledWomenController($scope, $routeParams, $location, $filter, demog
             {
                 indicator_name: 'Percentage of registered pregnant women who are enrolled for Anganwadi Services: ',
                 indicator_value: percent,
-            }
+            },
         ];
     };
 
@@ -65,7 +65,7 @@ function EnrolledWomenController($scope, $routeParams, $location, $filter, demog
         return i;
     };
 
-    vm.tooltipContent = function(monthName, day) {
+    vm.tooltipContent = function (monthName, day) {
         return vm.createTooltipContent(
             monthName,
             [{
