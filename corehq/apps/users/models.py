@@ -1643,6 +1643,9 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     loadtest_factor = IntegerProperty()
     is_demo_user = BooleanProperty(default=False)
     demo_restore_id = IntegerProperty()
+    # used by user provisioning workflow. defaults to true unless explicitly overridden during
+    # user creation
+    is_provisioned = BooleanProperty(default=True)
 
     # This means that this user represents a location, and has a 1-1 relationship
     # with a location where location.location_type.has_user == True
