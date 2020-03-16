@@ -20,7 +20,7 @@ from corehq.apps.users.models import SQLInvitation
 # Domain not required here - we could be selecting it for the first time. See notes domain.decorators
 # about why we need this custom login_required decorator
 @login_required
-def select(request, domain_select_template='domain/select.html', do_not_redirect=False):
+def select(request, do_not_redirect=False):
     domains_for_user = Domain.active_for_user(request.user)
     if not domains_for_user:
         return redirect('registration_domain')
@@ -34,6 +34,7 @@ def select(request, domain_select_template='domain/select.html', do_not_redirect
         'current_page': {'page_name': _('Select A Project')},
     }
 
+    domain_select_template = "domain/select.html"
     last_visited_domain = request.session.get('last_visited_domain')
     if open_invitations \
        or do_not_redirect \
