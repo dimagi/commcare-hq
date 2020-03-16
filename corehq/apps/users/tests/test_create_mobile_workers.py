@@ -35,6 +35,8 @@ class TestCreateMobileWorkers(TestCase):
         self.assertEqual('Mobile', user.first_name)
         self.assertEqual(True, user.is_active)
         self.assertEqual(True, user.is_provisioned)
+        # confirm user can login
+        self.assertEqual(True, self.client.login(username='mw1', password='s3cr4t'))
 
     def test_create_unprovisioned(self):
         user = CommCareUser.create(
@@ -48,3 +50,8 @@ class TestCreateMobileWorkers(TestCase):
         self.assertEqual(self.domain, user.domain)
         self.assertEqual(False, user.is_active)
         self.assertEqual(False, user.is_provisioned)
+        # confirm user can't login
+
+        django_user = user.get_django_user()
+        self.assertEqual(False, django_user.is_active)
+        self.assertEqual(False, self.client.login(username='mw1', password='s3cr4t'))

@@ -1740,7 +1740,11 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         Main entry point into creating a CommCareUser (mobile worker).
         """
         uuid = uuid or uuid4().hex
-        commcare_user = super(CommCareUser, cls).create(domain, username, password, email, uuid, date, **kwargs)
+        # if the user is not provisioned, also set is_active false so they can't login
+        # unless it was explicitly overridden in the method call
+        is_active = kwargs.pop('is_active', is_provisioned)
+        commcare_user = super(CommCareUser, cls).create(domain, username, password, email, uuid, date,
+                                                        is_active=is_active, **kwargs)
         if phone_number is not None:
             commcare_user.add_phone_number(phone_number)
 
@@ -1750,10 +1754,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         commcare_user.device_ids = [device_id]
         commcare_user.registering_device_id = device_id
         commcare_user.is_provisioned = is_provisioned
-        if not is_provisioned:
-            # if the user is not provisioned, also set is_active false so they can't login
-            commcare_user.is_active = False
-
         commcare_user.domain_membership = DomainMembership(domain=domain, **kwargs)
 
         if location:
