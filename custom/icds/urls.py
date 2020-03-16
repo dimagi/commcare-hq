@@ -1,6 +1,9 @@
 from django.conf.urls import url
 
-from custom.icds.location_rationalization.views import ValidateRequestView
+from custom.icds.location_rationalization.views import (
+    DownloadRequestTemplateView,
+    ValidateRequestView,
+)
 from custom.icds.views.data_pull import CustomDataPull
 from custom.icds.views.hosted_ccz import (
     EditHostedCCZLink,
@@ -32,4 +35,6 @@ urlpatterns = [
     url(r'^custom_data_pull/', CustomDataPull.as_view(), name=CustomDataPull.urlname),
     url(r'^location_rationalization/request', ValidateRequestView.as_view(),
         name=ValidateRequestView.urlname),
+    url(r'^location_rationalization/download', DownloadRequestTemplateView.as_view(),
+        name=DownloadRequestTemplateView.urlname),
 ]

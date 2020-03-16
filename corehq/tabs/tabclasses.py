@@ -95,7 +95,10 @@ from corehq.tabs.utils import (
     sidebar_to_dropdown,
 )
 from corehq.toggles import PUBLISH_CUSTOM_REPORTS
-from custom.icds.location_rationalization.views import ValidateRequestView
+from custom.icds.location_rationalization.views import (
+    DownloadRequestTemplateView,
+    ValidateRequestView,
+)
 from custom.icds.views.hosted_ccz import ManageHostedCCZ, ManageHostedCCZLink
 
 
@@ -2151,5 +2154,9 @@ class LocationRationalizationTab(UITab):
             {'url': reverse(ValidateRequestView.urlname, args=[self.domain]),
              'title': ValidateRequestView.page_title
              },
+            {
+                'url': reverse(DownloadRequestTemplateView.urlname, args=[self.domain]),
+                'title': DownloadRequestTemplateView.page_title
+            }
         ]))
         return items

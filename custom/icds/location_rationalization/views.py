@@ -12,9 +12,13 @@ from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.locations.models import LocationType
 from corehq.util.files import safe_filename_header
 from corehq.util.workbook_json.excel import get_workbook
+from custom.icds.location_rationalization.download import (
+    RequestTemplateDownload,
+)
 from custom.icds.location_rationalization.dumper import Dumper
 from custom.icds.location_rationalization.forms import (
     LocationRationalizationRequestForm,
+    LocationRationalizationRequestTemplateForm,
 )
 from custom.icds.location_rationalization.parser import Parser
 
@@ -74,5 +78,43 @@ class ValidateRequestView(BaseLocationRationalizationView):
         response_file.seek(0)
         response = HttpResponse(response_file, content_type="text/html; charset=utf-8")
         filename = self.form.cleaned_data['file'].name.split('.xlsx')[0] + '-Processed'
+        response['Content-Disposition'] = safe_filename_header(filename, 'xlsx')
+        return response
+
+
+class DownloadRequestTemplateView(BaseLocationRationalizationView):
+    page_title = _('Download')
+    urlname = 'download_location_rationalization_request_template'
+    template_name = 'location_rationalization/download.html'
+
+    def section_url(self):
+        return self.page_url
+
+    @property
+    def page_context(self):
+        context = super(DownloadRequestTemplateView, self).page_context
+        context['form'] = self.form
+        return context
+
+    @property
+    @memoized
+    def form(self):
+        if self.request.POST:
+            return LocationRationalizationRequestTemplateForm(self.domain, self.request.POST)
+        else:
+            return LocationRationalizationRequestTemplateForm(self.domain)
+
+    def post(self, request, *args, **kwargs):
+        if self.form.is_valid():
+            return self._generate_response()
+        return self.get(request, *args, **kwargs)
+
+    def _generate_response(self):
+        response_file = RequestTemplateDownload(
+            self.domain, self.form.cleaned_data['location_id'],
+            self.form.cleaned_data['location_type']).dump()
+        response_file.seek(0)
+        response = HttpResponse(response_file, content_type="text/html; charset=utf-8")
+        filename = '%s Location Ratioanlization Request Template' % self.domain
         response['Content-Disposition'] = safe_filename_header(filename, 'xlsx')
         return response
