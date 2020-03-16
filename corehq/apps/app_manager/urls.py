@@ -155,7 +155,7 @@ urlpatterns = [
     url(r'^browse/(?P<app_id>[\w-]+)/(?P<form_unique_id>[\w-]+)/source/$',
         get_xform_source, name='get_xform_source'),
     url(r'^source/(?P<app_id>[\w-]+)/$', app_source, name='app_source'),
-    url(r'^app_exchange/$', app_exchange, name='app_exchange'),     # TODO: make external-facing link
+    url(r'^app_exchange/$', app_exchange, name='app_exchange'),
     url(r'^import_app/$', import_app, name='import_app'),
     url(r'^app_from_template/(?P<slug>[\w-]+)/$', app_from_template, name='app_from_template'),
     url(r'^copy_app/$', copy_app, name='copy_app'),
