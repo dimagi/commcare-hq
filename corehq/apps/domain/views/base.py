@@ -17,10 +17,13 @@ from corehq.apps.hqwebapp.views import BaseSectionPageView
 from corehq.apps.users.models import SQLInvitation
 
 
+def covid19(request):
+    return select(request, next_view="app_exchange")
+
 # Domain not required here - we could be selecting it for the first time. See notes domain.decorators
 # about why we need this custom login_required decorator
 @login_required
-def select(request, do_not_redirect=False):
+def select(request, do_not_redirect=False, next_view=None):
     domains_for_user = Domain.active_for_user(request.user)
     if not domains_for_user:
         return redirect('registration_domain')
@@ -29,7 +32,7 @@ def select(request, do_not_redirect=False):
     open_invitations = [e for e in SQLInvitation.by_email(email) if not e.is_expired]
 
     # next_view must be a url that expects exactly one parameter, a domain name
-    next_view = request.GET.get('next_view')
+    next_view = next_view or request.GET.get('next_view')
     additional_context = {
         'domains_for_user': domains_for_user,
         'open_invitations': open_invitations,
