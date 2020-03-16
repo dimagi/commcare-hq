@@ -119,9 +119,20 @@ class HqMetrics(metaclass=abc.ABCMeta):
         )
 
 
+class DummyMetric:
+    def __init__(self, *args, **kwargs):
+        pass
+
+    def __getattr__(self, item):
+        if item in ('inc', 'set', 'observe'):
+            return lambda *args, **kwargs: None
+        raise AttributeError
+
+
 class DummyMetrics(HqMetrics):
-    _counter_class = HqCounter
-    _gauge_class = HqGauge
+    _counter_class = DummyMetric
+    _gauge_class = DummyMetric
+    _histogram_class = DummyMetric
 
     def enabled(self) -> bool:
         return True
