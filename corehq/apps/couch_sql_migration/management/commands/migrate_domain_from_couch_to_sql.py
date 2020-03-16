@@ -143,7 +143,7 @@ class Command(BaseCommand):
         parser.add_argument('--forms', default=None,
             help="""
                 Migrate specific forms. The value of this option should
-                be a space-delimited list of form ids OR a file path to
+                be a comma-delimited list of form ids OR a file path to
                 a file having one form id per line OR 'missing' to
                 migrate missing forms cached in the statedb by the
                 'stats' command OR 'missing-blob-present' to migrate

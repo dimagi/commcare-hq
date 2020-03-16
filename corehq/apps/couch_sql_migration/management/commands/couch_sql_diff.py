@@ -66,7 +66,7 @@ class Command(BaseCommand):
                 Diff specific items. The value of this option may be
                 'pending' to clear out in-process diffs OR 'with-diffs'
                 to re-diff items that previously had diffs OR a
-                space-delimited list of case ids OR a path to a file
+                comma-delimited list of case ids OR a path to a file
                 containing a case id on each line. The path must begin
                 with / or ./
 
