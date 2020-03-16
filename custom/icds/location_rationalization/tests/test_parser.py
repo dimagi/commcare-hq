@@ -58,5 +58,6 @@ class TestParser(BaseTest):
              'Multiple transitions for 12211, Split and Rename',
              'Multiple transitions for 12121, Split and Rename',
              'Multiple transitions for 1221, Split and Rename',
-             'Multiple transitions for 1212, Split and Rename']
+             'Multiple transitions for 1212, Split and Rename',
+             "Missing location code for Rename, got old: '12212' and new: ''"]
         )

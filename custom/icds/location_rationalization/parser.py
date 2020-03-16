@@ -39,6 +39,11 @@ class Parser(object):
             # ToDo: Ensure we already get string values so that 0s in beginning are not trimmed
             old_value = str(row.get(f'old_{location_type}'))
             new_value = str(row.get(f'new_{location_type}'))
+            if not old_value or not new_value:
+                self.errors.append("Missing location code for %s, got old: '%s' and new: '%s'" % (
+                    transition, old_value, new_value
+                ))
+                continue
             if self._skip_row(transition, old_value, new_value):
                 continue
             self._note_transition(transition, location_type, new_value, old_value)

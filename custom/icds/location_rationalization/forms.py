@@ -49,7 +49,7 @@ class LocationRationalizationRequestForm(forms.Form):
 
 class LocationRationalizationRequestTemplateForm(forms.Form):
     location_id = forms.CharField(label=ugettext_lazy("Location"), widget=forms.widgets.Select(choices=[]),
-                                   required=True)
+                                  required=True)
     location_type = forms.ChoiceField(label=ugettext_lazy("Location Type"), choices=(), required=True,
                                       help_text=_("the location type each row should represent in download"
                                                   " or ideally the smallest possible location type"))
