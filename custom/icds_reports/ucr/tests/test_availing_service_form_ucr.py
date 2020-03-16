@@ -17,7 +17,6 @@ class TestAvailingServiceForms(BaseFormsTest):
             'availing_service_form_v32409',
             [{
                 "doc_id": None,
-                "timeend": None,
                 "is_registered": 1,
                 "person_case_id": "5e4447eb-6ec3-40d9-9c8d-9ca775dfc0bc",
                 "timeend": datetime.datetime(2020, 2, 28, 7, 51, 16, 926000)
