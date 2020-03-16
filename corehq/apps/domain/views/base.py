@@ -1,4 +1,4 @@
-from django.http import Http404
+from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
@@ -28,10 +28,13 @@ def select(request, do_not_redirect=False):
     email = request.couch_user.get_email()
     open_invitations = [e for e in SQLInvitation.by_email(email) if not e.is_expired]
 
+    # next_view must be a url that expects exactly one parameter, a domain name
+    next_view = request.GET.get('next_view')
     additional_context = {
         'domains_for_user': domains_for_user,
         'open_invitations': open_invitations,
         'current_page': {'page_name': _('Select A Project')},
+        'next_view': next_view or 'domain_homepage',
     }
 
     domain_select_template = "domain/select.html"
@@ -50,8 +53,7 @@ def select(request, do_not_redirect=False):
                 or domain_obj.is_snapshot
             ):
                 try:
-                    from corehq.apps.dashboard.views import dashboard_default
-                    return dashboard_default(request, last_visited_domain)
+                    return HttpResponseRedirect(reverse(next_view or 'dashboard_default', args=[last_visited_domain]))
                 except Http404:
                     pass
 
