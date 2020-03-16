@@ -11,6 +11,24 @@ from custom.icds.location_rationalization.const import (
 
 
 class Parser(object):
+    """
+    Receives a worksheet and location types of the domain and generates an output on lines
+    {
+        location_type:
+            'Merge': {
+                'New location site code': ['Old location site code', 'Old location site code']
+            },
+            'Split': {
+                'Old location site code': ['New location site code', 'New location site code']
+            },
+            'Rename': {
+                'New location site code': 'Old location site code'
+            },
+            'Extract': {
+                'New location site code': 'Old location site code'
+            }
+    }
+    """
     def __init__(self, worksheet, location_types):
         self.worksheet = worksheet
         self.requested_transitions = {}
