@@ -61,7 +61,7 @@ class TestCreateMobileWorkers(TestCase):
         self.assertEqual(False, django_user.is_active)
         self.assertEqual(False, self.client.login(username='mw1', password='s3cr4t'))
 
-    def test_is_active_overrides_is_account_confirmed(self):
+    def test_disallow_unconfirmed_active(self):
         with self.assertRaises(AssertionError):
             CommCareUser.create(
                 self.domain,
