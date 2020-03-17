@@ -337,7 +337,7 @@ def create_or_update_users_and_groups(domain, user_specs, group_memoizer=None, u
 
                     # note: explicitly not including "None" here because that's the default value if not set.
                     # False means it was set explicitly to that value
-                    if is_account_confirmed is not False:
+                    if is_account_confirmed is False:
                         raise UserUploadError(_(
                             f"You can only set 'Is Account Confirmed' to 'False' on a new User."
                         ))
