@@ -1,21 +1,16 @@
-from celery import states
-from celery.exceptions import Ignore
 from celery.schedules import crontab
 from celery.task import task
-
-from soil.progress import update_task_state
 
 from corehq.apps.hqadmin.tasks import (
     AbnormalUsageAlert,
     send_abnormal_usage_alert,
 )
-from corehq.util.datadog.gauges import datadog_gauge_task
-
 from .do_import import do_import
 from .exceptions import ImporterError
 from .tracking.analytics import get_case_upload_files_total_bytes
 from .tracking.case_upload_tracker import CaseUpload
 from .util import get_importer_error_message, exit_celery_with_error_message
+from ...util.metrics.metrics import metrics_gauge_task
 
 
 @task(serializer='pickle', queue='case_import_queue')
@@ -64,7 +59,7 @@ def _alert_on_result(result, domain):
         send_abnormal_usage_alert.delay(alert)
 
 
-total_bytes = datadog_gauge_task(
+total_bytes = metrics_gauge_task(
     'commcare.case_importer.files.total_bytes',
     get_case_upload_files_total_bytes,
     run_every=crontab(minute=0)

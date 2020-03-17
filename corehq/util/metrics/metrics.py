@@ -1,8 +1,10 @@
 import abc
 import re
 from abc import abstractmethod
+from functools import wraps
 from typing import Iterable, List
 
+from celery.task import periodic_task
 from django.utils.functional import SimpleLazyObject
 
 from corehq.util.soft_assert import soft_assert
@@ -93,3 +95,26 @@ class DelegatedMetrics:
                     getattr(delegate, item)(*args, **kwargs)
             return _record_metric
         raise AttributeError
+
+
+def metrics_gauge_task(name, fn, run_every):
+    """
+    helper for easily registering gauges to run periodically
+
+    To update a gauge on a schedule based on the result of a function
+    just add to your app's tasks.py:
+
+        my_calculation = metrics_gauge_task('commcare.my.metric', my_calculation_function,
+                                            run_every=crontab(minute=0))
+
+    """
+    _enforce_prefix(name, 'commcare')
+
+    @periodic_task(serializer='pickle', queue='background_queue', run_every=run_every,
+                   acks_late=True, ignore_result=True)
+    @wraps(fn)
+    def inner(*args, **kwargs):
+        from corehq.util.metrics import metrics_gauge
+        metrics_gauge(name, fn(*args, **kwargs))
+
+    return inner

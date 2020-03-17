@@ -5,9 +5,10 @@ from celery.schedules import crontab
 from celery.task import task, periodic_task
 
 from corehq.util.bounced_email_manager import BouncedEmailManager
+from corehq.util.metrics.metrics import metrics_gauge_task
 from dimagi.utils.logging import notify_exception
 
-from corehq.util.datadog.gauges import datadog_gauge_task, datadog_track_errors
+from corehq.util.datadog.gauges import datadog_track_errors
 from corehq.util.log import send_HTML_email
 
 
@@ -129,5 +130,5 @@ def get_maintenance_alert_active():
     return 1 if MaintenanceAlert.get_latest_alert() else 0
 
 
-datadog_gauge_task('commcare.maintenance_alerts.active', get_maintenance_alert_active,
+metrics_gauge_task('commcare.maintenance_alerts.active', get_maintenance_alert_active,
                    run_every=crontab(minute=1))
