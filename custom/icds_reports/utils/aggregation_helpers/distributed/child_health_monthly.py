@@ -9,7 +9,8 @@ from custom.icds_reports.const import (
     AGG_CHILD_HEALTH_THR_TABLE,
     AGG_DAILY_FEEDING_TABLE,
     AGG_GROWTH_MONITORING_TABLE,
-    AGG_MIGRATION_TABLE
+    AGG_MIGRATION_TABLE,
+    AGG_AVAILING_SERVICES_TABLE
 )
 from custom.icds_reports.utils.aggregation_helpers import (
     get_child_health_tablename,
@@ -93,8 +94,12 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
         )
         migration_status = "(agg_migration.is_migrated=1 AND agg_migration.migration_date < {})::integer".format(
             start_month_string)
-        seeking_services = "(person_cases.registered_status IS DISTINCT FROM 0 AND {} IS DISTINCT FROM 1)".format(
-            migration_status)
+        availing_services = (
+            "CASE WHEN NOT (agg_as.is_registered=0 AND agg_as.registration_date < {})"
+            "THEN 1 ELSE 0 END"
+        ).format(start_month_string)
+        seeking_services = "(person_cases.registered_status IS DISTINCT FROM 0 AND {} IS DISTINCT FROM 1 AND {} IS DISTINCT FROM 0)".format(
+            migration_status, availing_services)
         born_in_month = "({} AND person_cases.dob BETWEEN {} AND {})".format(
             seeking_services, start_month_string, end_month_string
         )
@@ -369,6 +374,10 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
               AND agg_migration.month = %(start_date)s
               AND child_health.state_id = agg_migration.state_id
               AND child_health.supervisor_id = agg_migration.supervisor_id
+            LEFT OUTER JOIN "{agg_as_table}" agg_as_table ON child_health.mother_id = agg_as_table.person_case_id
+              AND agg_as_table.month = %(start_date)s
+              AND child_health.state_id = agg_as_table.state_id
+              AND child_health.supervisor_id = agg_as_table.supervisor_id
             LEFT OUTER JOIN "{agg_df_table}" df ON child_health.doc_id = df.case_id
               AND df.month = %(start_date)s
               AND child_health.state_id = df.state_id
@@ -390,6 +399,7 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
             agg_pnc_table=AGG_CHILD_HEALTH_PNC_TABLE,
             agg_df_table=AGG_DAILY_FEEDING_TABLE,
             agg_migration_table=AGG_MIGRATION_TABLE,
+            agg_as_table=AGG_AVAILING_SERVICES_TABLE, 
             child_tasks_case_ucr=self.child_tasks_case_ucr_tablename,
             person_cases_ucr=self.person_case_ucr_tablename,
             open_in_month=open_in_month
