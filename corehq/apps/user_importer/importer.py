@@ -10,6 +10,7 @@ from couchdbkit.exceptions import (
     ResourceNotFound,
 )
 
+from corehq.apps.user_importer.helpers import spec_value_to_boolean_or_none
 from dimagi.utils.parsing import string_to_boolean
 
 from corehq import privileges
@@ -319,13 +320,8 @@ def create_or_update_users_and_groups(domain, user_specs, group_memoizer=None, u
                 username = normalize_username(str(username), domain) if username else None
                 password = str(password) if password else None
 
-                is_active = row.get('is_active') or None
-                if is_active and isinstance(is_active, str):
-                    is_active = string_to_boolean(is_active)
-
-                is_account_confirmed = row.get('is_account_confirmed') or None
-                if is_account_confirmed and isinstance(is_account_confirmed, str):
-                    is_account_confirmed = string_to_boolean(is_account_confirmed)
+                is_active = spec_value_to_boolean_or_none(row, 'is_active')
+                is_account_confirmed = spec_value_to_boolean_or_none(row, 'is_account_confirmed')
 
                 if user_id:
                     user = CommCareUser.get_by_user_id(user_id, domain)
