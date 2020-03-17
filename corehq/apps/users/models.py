@@ -1741,10 +1741,12 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         """
         uuid = uuid or uuid4().hex
         # if the user is not provisioned, also set is_active false so they can't login
-        # unless it was explicitly overridden in the method call
-        is_active = kwargs.pop('is_active', is_provisioned)
-        commcare_user = super(CommCareUser, cls).create(domain, username, password, email, uuid, date,
-                                                        is_active=is_active, **kwargs)
+        if 'is_active' not in kwargs:
+            kwargs['is_active'] = is_provisioned
+        elif not is_provisioned:
+            assert not kwargs['is_active'], \
+                "it's illegal to create a user with is_active=True and is_provisioned=False"
+        commcare_user = super(CommCareUser, cls).create(domain, username, password, email, uuid, date, **kwargs)
         if phone_number is not None:
             commcare_user.add_phone_number(phone_number)
 

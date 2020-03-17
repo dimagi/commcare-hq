@@ -1,3 +1,4 @@
+from django.contrib.auth.models import User
 from django.test import TestCase
 
 from corehq.apps.domain.shortcuts import create_domain
@@ -35,6 +36,11 @@ class TestCreateMobileWorkers(TestCase):
         self.assertEqual('Mobile', user.first_name)
         self.assertEqual(True, user.is_active)
         self.assertEqual(True, user.is_provisioned)
+
+        # confirm user was created / can be accessed
+        self.assertIsNotNone(CommCareUser.get_by_username('mw1'))
+        self.assertEqual(1, User.objects.filter(username='mw1').count())
+
         # confirm user can login
         self.assertEqual(True, self.client.login(username='mw1', password='s3cr4t'))
 
@@ -56,18 +62,15 @@ class TestCreateMobileWorkers(TestCase):
         self.assertEqual(False, self.client.login(username='mw1', password='s3cr4t'))
 
     def test_is_active_overrides_is_provisioned(self):
-        user = CommCareUser.create(
-            self.domain,
-            'mw1',
-            's3cr4t',
-            email='mw1@example.com',
-            is_active=True,
-            is_provisioned=False,
-        )
-        self.addCleanup(user.delete)
-        self.assertEqual(True, user.is_active)
-        self.assertEqual(False, user.is_provisioned)
-        # confirm user can login
-        django_user = user.get_django_user()
-        self.assertEqual(True, django_user.is_active)
-        self.assertEqual(True, self.client.login(username='mw1', password='s3cr4t'))
+        with self.assertRaises(AssertionError):
+            CommCareUser.create(
+                self.domain,
+                'mw1',
+                's3cr4t',
+                email='mw1@example.com',
+                is_active=True,
+                is_provisioned=False,
+            )
+        # confirm no users were created
+        self.assertIsNone(CommCareUser.get_by_username('mw1'))
+        self.assertEqual(0, User.objects.filter(username='mw1').count())
