@@ -85,7 +85,7 @@ class ValidateView(BaseLocationRationalizationView):
 
 
 class DownloadTemplateView(BaseLocationRationalizationView):
-    page_title = _('Download Location Rationalization Template')
+    page_title = _('Download Template')
     urlname = 'download_location_rationalization_template'
     template_name = 'location_rationalization/download.html'
 
