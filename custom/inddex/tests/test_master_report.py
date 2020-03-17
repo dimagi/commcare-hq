@@ -40,6 +40,9 @@ class TestMasterReport(TestCase):
         self.assert_cases_created()
         self.assert_fixtures_created()
         expected_headers, expected_rows = get_expected_report()
+        case_id_column = expected_headers.index('caseid')
+        # exclude rows not pulled from cases for now
+        expected_rows = [r for r in expected_rows if r[case_id_column]]
         actual_headers, actual_rows = self.run_report()
         self.assertEqual(expected_headers, actual_headers)
         self.assert_same_foods_present(expected_rows, actual_rows, expected_headers)
