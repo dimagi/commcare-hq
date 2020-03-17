@@ -16,7 +16,7 @@ def get_ids_from_string_or_file(ids):
         log.info("loading ids from file: %s", ids)
         with open(ids, encoding="utf-8") as fh:
             return [x.rstrip("\n") for x in fh if x.strip()]
-    return [x for x in ids.split() if x]
+    return [x for x in ids.split(",") if x]
 
 
 def str_to_datetime(value):

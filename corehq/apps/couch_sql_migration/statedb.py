@@ -16,10 +16,14 @@ from sqlalchemy import (
     Integer,
     String,
     Text,
+    and_,
     bindparam,
     func,
+    or_,
 )
 from sqlalchemy.exc import IntegrityError
+
+from dimagi.utils.chunked import chunked
 
 from corehq.apps.hqwebapp.encoders import LazyEncoder
 from corehq.apps.tzmigration.planning import Base, DiffDB, PlanningDiff as Diff
@@ -405,7 +409,7 @@ class StateDB(DiffDB):
     def iter_changes(self):
         return self.iter_diffs(_model=DocChanges)
 
-    def iter_doc_diffs(self, kind=None, _model=None):
+    def iter_doc_diffs(self, kind=None, doc_ids=None, by_kind=None, _model=None):
         """Iterate over diffs of the given kind
 
         "stock state" diffs cannot be queried directly with this method.
@@ -418,18 +422,27 @@ class StateDB(DiffDB):
         """
         if _model is None:
             _model = DocDiffs
+        if by_kind is not None:
+            assert kind is None, kind
+            assert doc_ids is None, doc_ids
+            for kind, doc_ids in by_kind.items():
+                for chunk in chunked(doc_ids, 500, list):
+                    yield from self.iter_doc_diffs(kind, chunk, _model=_model)
+            return
         with self.session() as session:
             query = session.query(_model)
             if kind is not None:
                 query = query.filter_by(kind=kind)
+            if doc_ids is not None:
+                query = query.filter(_model.doc_id.in_(doc_ids))
             for doc in iter_large(query, _model.doc_id):
                 yield doc.kind, doc.doc_id, [
                     _model.dict_to_diff(doc.kind, doc.doc_id, data)
                     for data in json.loads(doc.diffs)
                 ]
 
-    def iter_doc_changes(self, kind=None):
-        return self.iter_doc_diffs(kind, _model=DocChanges)
+    def iter_doc_changes(self, kind=None, **kw):
+        return self.iter_doc_diffs(kind, _model=DocChanges, **kw)
 
     def get_diffs(self):
         """DEPRECATED use iter_diffs(); the result may be very large"""

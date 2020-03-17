@@ -53,12 +53,8 @@ branches:
   #- fr/case-templates      # FR May 15
   - nh/dhis2/te  # Norman Oct 2
   - bmb/SAAS-10269  # Biyeun Feb 23
-  - bmb/SAAS-10103  # Biyeun Feb 28
   - patch-register # Amit March 4
-  - jls/migrate-StandaloneTranslationDoc-2 # Jenny March 3
   - jls/migrate-DefaultConsumption-2 # Jenny March 6
-  - dmr/update-django-angular  # Danny Mar 6
   - jls/use-textinput # Jenny March 10
-  - dmr/process-feeds-all-the-way-to-the-end  # Danny Mar 12
-  - jls/mini-exchange # Jenny March 12
+  - mk/location-rationalization-1 # MK March 16
 submodules: {}
