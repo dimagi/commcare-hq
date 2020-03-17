@@ -9,7 +9,11 @@ from corehq.form_processor.utils.general import (
 )
 from corehq.util.markup import SimpleTableWriter, TableRowFormatter
 
-from ...couchsqlmigration import do_couch_to_sql_migration, setup_logging
+from ...couchsqlmigration import (
+    MigrationRestricted,
+    do_couch_to_sql_migration,
+    setup_logging,
+)
 from ...missingdocs import find_missing_docs
 from ...progress import (
     couch_sql_migration_in_progress,
@@ -57,7 +61,7 @@ class Command(BaseCommand):
                     failed.append((domain, reason))
             except Exception as err:
                 log.exception("Error migrating domain %s", domain)
-                self.abort(domain)
+                self.abort(domain, state_dir)
                 failed.append((domain, err))
 
         if failed:
@@ -76,8 +80,12 @@ class Command(BaseCommand):
             return False, "in progress"
 
         set_couch_sql_migration_started(domain)
-
-        do_couch_to_sql_migration(domain, state_dir, with_progress=False)
+        try:
+            do_couch_to_sql_migration(domain, state_dir, with_progress=False)
+        except MigrationRestricted as err:
+            log.error("migration restricted: %s", err)
+            set_couch_sql_migration_not_started(domain)
+            return False, str(err)
 
         stats = get_diff_stats(domain, state_dir, self.strict)
         if stats:
