@@ -10,14 +10,13 @@ from corehq.apps.locations.models import LocationType
 from corehq.util.workbook_json.excel import get_workbook
 
 
-class LocationRationalizationRequestForm(forms.Form):
+class LocationRationalizationValidateForm(forms.Form):
     file = forms.FileField(label="", required=True,
                            help_text=ugettext_lazy("Upload xlsx file"))
 
     def __init__(self, *args, **kwargs):
-        if 'location_types' in kwargs:
-            self.location_types = kwargs.pop('location_types')
-        super(LocationRationalizationRequestForm, self).__init__(*args, **kwargs)
+        self.location_types = kwargs.pop('location_types', None)
+        super(LocationRationalizationValidateForm, self).__init__(*args, **kwargs)
         self.helper = HQFormHelper()
         self.helper.form_method = 'post'
         self.helper.layout = crispy.Layout(
@@ -47,7 +46,7 @@ class LocationRationalizationRequestForm(forms.Form):
             ))
 
 
-class LocationRationalizationRequestTemplateForm(forms.Form):
+class LocationRationalizationTemplateForm(forms.Form):
     location_id = forms.CharField(label=ugettext_lazy("Location"), widget=forms.widgets.Select(choices=[]),
                                   required=True)
     location_type = forms.ChoiceField(label=ugettext_lazy("Location Type"), choices=(), required=True,
@@ -56,7 +55,7 @@ class LocationRationalizationRequestTemplateForm(forms.Form):
 
     def __init__(self, domain, *args, **kwargs):
         self.domain = domain
-        super(LocationRationalizationRequestTemplateForm, self).__init__(*args, **kwargs)
+        super(LocationRationalizationTemplateForm, self).__init__(*args, **kwargs)
         self.fields['location_type'].choices = self._location_type_choices()
         self.helper = HQFormHelper()
         self.helper.form_method = 'post'

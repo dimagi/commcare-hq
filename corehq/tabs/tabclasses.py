@@ -96,8 +96,8 @@ from corehq.tabs.utils import (
 )
 from corehq.toggles import PUBLISH_CUSTOM_REPORTS
 from custom.icds.location_rationalization.views import (
-    DownloadRequestTemplateView,
-    ValidateRequestView,
+    DownloadTemplateView,
+    ValidateView,
 )
 from custom.icds.views.hosted_ccz import ManageHostedCCZ, ManageHostedCCZLink
 
@@ -1448,7 +1448,7 @@ class ProjectUsersTab(UITab):
         if toggles.LOCATION_RATIONALIZATION.enabled(self.couch_user.username):
             menu.append({
                 'title': _("Location Rationalization"),
-                'url': reverse(ValidateRequestView.urlname, args=[self.domain]),
+                'url': reverse(ValidateView.urlname, args=[self.domain]),
                 'show_in_dropdown': True,
             })
 
@@ -2151,12 +2151,12 @@ class LocationRationalizationTab(UITab):
     def sidebar_items(self):
         items = super(LocationRationalizationTab, self).sidebar_items
         items.append((_('Location Rationalization'), [
-            {'url': reverse(ValidateRequestView.urlname, args=[self.domain]),
-             'title': ValidateRequestView.page_title
+            {'url': reverse(ValidateView.urlname, args=[self.domain]),
+             'title': ValidateView.page_title
              },
             {
-                'url': reverse(DownloadRequestTemplateView.urlname, args=[self.domain]),
-                'title': DownloadRequestTemplateView.page_title
+                'url': reverse(DownloadTemplateView.urlname, args=[self.domain]),
+                'title': DownloadTemplateView.page_title
             }
         ]))
         return items

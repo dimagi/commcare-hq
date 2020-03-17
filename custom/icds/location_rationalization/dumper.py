@@ -1,5 +1,4 @@
 import io
-from collections import OrderedDict
 
 from couchexport.export import export_raw
 
@@ -46,7 +45,7 @@ class Dumper(object):
         return new_site_codes
 
     def _rows(self, transitions):
-        rows = OrderedDict({location_type: [] for location_type in self.location_types})
+        rows = {location_type: [] for location_type in self.location_types}
         for location_type, operations in transitions.items():
             for operation, details in operations.items():
                 rows[location_type].extend(self._get_rows_for_operation(operation, details))

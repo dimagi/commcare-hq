@@ -17,8 +17,8 @@ from custom.icds.location_rationalization.download import (
 )
 from custom.icds.location_rationalization.dumper import Dumper
 from custom.icds.location_rationalization.forms import (
-    LocationRationalizationRequestForm,
-    LocationRationalizationRequestTemplateForm,
+    LocationRationalizationValidateForm,
+    LocationRationalizationTemplateForm,
 )
 from custom.icds.location_rationalization.parser import Parser
 
@@ -33,17 +33,17 @@ class BaseLocationRationalizationView(BaseDomainView):
         return context
 
 
-class ValidateRequestView(BaseLocationRationalizationView):
+class ValidateView(BaseLocationRationalizationView):
     page_title = _('Validate')
-    urlname = 'validate_location_rationalization_request'
-    template_name = 'location_rationalization/request.html'
+    urlname = 'validate_location_rationalization'
+    template_name = 'location_rationalization/validate.html'
 
     def section_url(self):
         return self.page_url
 
     @property
     def page_context(self):
-        context = super(ValidateRequestView, self).page_context
+        context = super().page_context
         context['form'] = self.form
         return context
 
@@ -51,10 +51,10 @@ class ValidateRequestView(BaseLocationRationalizationView):
     @memoized
     def form(self):
         if self.request.POST:
-            return LocationRationalizationRequestForm(self.request.POST, self.request.FILES,
+            return LocationRationalizationValidateForm(self.request.POST, self.request.FILES,
                                                       location_types=self._location_types)
         else:
-            return LocationRationalizationRequestForm()
+            return LocationRationalizationValidateForm()
 
     def post(self, request, *args, **kwargs):
         if self.form.is_valid():
@@ -66,8 +66,8 @@ class ValidateRequestView(BaseLocationRationalizationView):
 
     def _parse_upload(self):
         uploaded_file = self.form.cleaned_data.get('file')
-        ws = get_workbook(uploaded_file).worksheets[0]
-        return Parser(ws, self._location_types).parse()
+        worksheet = get_workbook(uploaded_file).worksheets[0]
+        return Parser(worksheet, self._location_types).parse()
 
     @cached_property
     def _location_types(self):
@@ -82,9 +82,9 @@ class ValidateRequestView(BaseLocationRationalizationView):
         return response
 
 
-class DownloadRequestTemplateView(BaseLocationRationalizationView):
-    page_title = _('Download')
-    urlname = 'download_location_rationalization_request_template'
+class DownloadTemplateView(BaseLocationRationalizationView):
+    page_title = _('Download Location Rationalization Template')
+    urlname = 'download_location_rationalization_template'
     template_name = 'location_rationalization/download.html'
 
     def section_url(self):
@@ -92,7 +92,7 @@ class DownloadRequestTemplateView(BaseLocationRationalizationView):
 
     @property
     def page_context(self):
-        context = super(DownloadRequestTemplateView, self).page_context
+        context = super(DownloadTemplateView, self).page_context
         context['form'] = self.form
         return context
 
@@ -100,9 +100,8 @@ class DownloadRequestTemplateView(BaseLocationRationalizationView):
     @memoized
     def form(self):
         if self.request.POST:
-            return LocationRationalizationRequestTemplateForm(self.domain, self.request.POST)
-        else:
-            return LocationRationalizationRequestTemplateForm(self.domain)
+            return LocationRationalizationTemplateForm(self.domain, self.request.POST)
+        return LocationRationalizationTemplateForm(self.domain)
 
     def post(self, request, *args, **kwargs):
         if self.form.is_valid():
