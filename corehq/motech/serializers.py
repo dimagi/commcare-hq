@@ -19,14 +19,14 @@ from typing import Any
 
 from dateutil import parser as dateutil_parser
 
+from dimagi.utils.parsing import FALSE_STRINGS
+
 from corehq.motech.const import (
     COMMCARE_DATA_TYPE_BOOLEAN,
     COMMCARE_DATA_TYPE_DECIMAL,
     COMMCARE_DATA_TYPE_INTEGER,
     COMMCARE_DATA_TYPE_TEXT,
 )
-
-FALSEY_STRINGS = ('0', 'false', 'no')
 
 
 def to_boolean(value: Any) -> bool:
@@ -40,7 +40,7 @@ def to_boolean(value: Any) -> bool:
     False
 
     """
-    if isinstance(value, str) and value.lower() in FALSEY_STRINGS:
+    if isinstance(value, str) and value.lower() in FALSE_STRINGS:
         return False
     return bool(value)
 
