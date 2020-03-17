@@ -836,9 +836,13 @@ SUPERVISOR_RPC_ENABLED = False
 SUBSCRIPTION_USERNAME = None
 SUBSCRIPTION_PASSWORD = None
 
+# List of metrics providers to use. Available providers:
+# * 'corehq.util.metrics.datadog.DatadogMetrics'
+# * 'corehq.util.metrics.prometheus.PrometheusMetrics'
+METRICS_PROVIDERS = []
+
 DATADOG_API_KEY = None
 DATADOG_APP_KEY = None
-ENABLE_PROMETHEUS_METRICS = False
 
 SYNCLOGS_SQL_DB_ALIAS = 'default'
 

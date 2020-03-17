@@ -1,8 +1,10 @@
 from typing import List, Iterable
 
+import settings
 from corehq.util.metrics.datadog import DatadogMetrics
 from corehq.util.metrics.metrics import DummyMetrics, DelegatedMetrics, DEFAULT_BUCKETS
 from corehq.util.metrics.prometheus import PrometheusMetrics
+from dimagi.utils.modules import to_function
 
 _metrics = None
 
@@ -10,13 +12,18 @@ _metrics = None
 def _get_metrics_provider():
     global _metrics
     if not _metrics:
-        enabled = list(filter(lambda m: m.enabled(), [DatadogMetrics(), PrometheusMetrics()]))
-        if not enabled:
+        providers = []
+        for provider_path in settings.METRICS_PROVIDERS:
+            provider = to_function(provider_path)
+            provider.validate()
+            providers.append(provider)
+
+        if not providers:
             _metrics = DummyMetrics()
-        elif len(enabled) > 1:
-            _metrics = DelegatedMetrics(enabled)
+        elif len(providers) > 1:
+            _metrics = DelegatedMetrics(providers)
         else:
-            _metrics = enabled[0]
+            _metrics = providers[0]
     return _metrics
 
 
