@@ -16,9 +16,23 @@ statsd = DogStatsd(constant_tags=COMMON_TAGS)
 
 
 class DatadogMetrics(HqMetrics):
-    def validate(self):
-        if not (api._api_key and api._application_key):
+    def initialize(self):
+        if not settings.DATADOG_API_KEY or not settings.DATADOG_APP_KEY:
             raise Exception("Datadog not configured. Set DATADOG_API_KEY and DATADOG_APP_KEY in settings.")
+
+        try:
+            from datadog import initialize
+        except ImportError:
+            pass
+        else:
+            initialize(settings.DATADOG_API_KEY, settings.DATADOG_APP_KEY)
+
+        if settings.UNIT_TESTING or settings.DEBUG or 'ddtrace.contrib.django' not in settings.INSTALLED_APPS:
+            try:
+                from ddtrace import tracer
+                tracer.enabled = False
+            except ImportError:
+                pass
 
     def _counter(self, name: str, value: float, tags: dict = None, documentation: str = ''):
         dd_tags = _format_tags(tags)

@@ -36,7 +36,7 @@ DEFAULT_BUCKETS = (.005, .01, .025, .05, .075, .1, .25, .5, .75, 1.0, 2.5, 5.0, 
 
 
 class HqMetrics(metaclass=abc.ABCMeta):
-    def validate(self):
+    def initialize(self):
         pass
 
     def counter(self, name: str, value: float = 1, tags: dict = None, documentation: str = ''):

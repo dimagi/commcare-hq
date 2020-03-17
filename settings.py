@@ -340,7 +340,6 @@ HQ_APPS = (
     'corehq.motech.openmrs',
     'corehq.motech.repeaters',
     'corehq.util',
-    'corehq.util.datadog.apps.DatadogConfig',
     'dimagi.ext',
     'corehq.blobs',
     'corehq.apps.case_search',
