@@ -141,7 +141,8 @@ urlpatterns = [
     url(r'^unsubscribe_report/(?P<scheduled_report_id>[\w-]+)/'
         r'(?P<user_email>[\w.%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,})/(?P<scheduled_report_secret>[\w-]+)/',
         ReportNotificationUnsubscribeView.as_view(), name=ReportNotificationUnsubscribeView.urlname),
-    url(r'^phone/list_apps', list_apps, name="list_accessible_apps")
+    url(r'^phone/list_apps', list_apps, name="list_accessible_apps"),
+    url(r'', include('corehq.util.metrics.urls')),
 ] + LOCAL_APP_URLS
 
 if settings.ENABLE_PRELOGIN_SITE:
