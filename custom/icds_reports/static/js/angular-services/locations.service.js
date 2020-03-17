@@ -204,7 +204,7 @@ window.angular.module('icdsApp').factory('locationsService', ['$http', '$locatio
                     }
 
                     var levelOfSelectedLocation = _.findIndex(vm.hierarchy, function(locationTypes) {
-                        return _.contains(locationTypes.map(function(x) { return x.name; }), selectedLocation.location_type_name);
+                        return _.contains(_.pluck(locationTypes, 'name'), selectedLocation.location_type_name);
                     });
                     vm.selectedLocations[levelOfSelectedLocation] = vm.selectedLocationId;
                     vm.onSelect(selectedLocation, levelOfSelectedLocation);
@@ -220,12 +220,7 @@ window.angular.module('icdsApp').factory('locationsService', ['$http', '$locatio
                         levelOfSelectedLocation -= 1;
                     }
 
-                    var levels = [];
-                    window.angular.forEach(vm.levels, function (value) {
-                        if (value.id > selectedLocationIndex()) {
-                            levels.push(value);
-                        }
-                    });
+                    var levels = _.filter(vm.levels, function (value){return value.id > selectedLocationIndex();});
                     vm.groupByLevels = levels;
                     vm.selectedLevel = selectedLocationIndex() + 1;
                 });
@@ -254,13 +249,8 @@ window.angular.module('icdsApp').factory('locationsService', ['$http', '$locatio
             }
             var selectedLocationIndex = this.selectedLocationIndex(vm.selectedLocations);
             vm.selectedLocationId = vm.selectedLocations[selectedLocationIndex];
-            var levels = [];
+            var levels = _.filter(vm.levels, function (value){return value.id > selectedLocationIndex;});
             vm.selectedLevel = selectedLocationIndex + 1;
-            window.angular.forEach(vm.levels, function (value) {
-                if (value.id > selectedLocationIndex) {
-                    levels.push(value);
-                }
-            });
             vm.groupByLevels = levels;
         },
 
