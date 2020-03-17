@@ -1808,3 +1808,11 @@ ADD_ROW_INDEX_TO_MOBILE_UCRS = StaticToggle(
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN]
 )
+
+
+LOCATION_RATIONALIZATION = StaticToggle(
+    'location_rationalization',
+    'Ability to reorder organization structure for location rationalization',
+    TAG_CUSTOM,
+    [NAMESPACE_USER]
+)
