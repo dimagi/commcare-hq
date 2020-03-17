@@ -40,14 +40,29 @@ class TestMasterReport(TestCase):
         self.assert_cases_created()
         self.assert_fixtures_created()
         expected_headers, expected_rows = get_expected_report()
-        case_id_column = expected_headers.index('caseid')
+
         # exclude rows not pulled from cases for now
+        case_id_column = expected_headers.index('caseid')
         expected_rows = [r for r in expected_rows if r[case_id_column]]
+
         actual_headers, actual_rows = self.run_report()
         self.assertEqual(expected_headers, actual_headers)
+
+        # sort uniformly for comparison
+        expected_rows = self.sort_rows(expected_rows, expected_headers)
+        actual_rows = self.sort_rows(actual_rows, expected_headers)
+
         self.assert_same_foods_present(expected_rows, actual_rows, expected_headers)
         for expected, actual in zip(expected_rows, actual_rows):
             self.assert_rows_match(expected, actual, expected_headers)
+
+    @staticmethod
+    def sort_rows(rows, headers):
+        def sort_key(row):
+            return tuple(row[headers.index(col)] for col in [
+                'food_name', 'measurement_amount',
+            ])
+        return sorted(rows, key=sort_key)
 
     def assert_cases_created(self):
         accessor = CaseAccessors(self.domain)
@@ -84,9 +99,9 @@ class TestMasterReport(TestCase):
         headers = [h.html for h in report_data.headers]
         return headers, report_data.rows
 
-    def assert_same_foods_present(self, expected_rows, actual_rows, expected_headers):
-        name_column = expected_headers.index('food_name')
-        self.assertItemsEqual(
+    def assert_same_foods_present(self, expected_rows, actual_rows, headers):
+        name_column = headers.index('food_name')
+        self.assertEqual(
             [r[name_column] for r in expected_rows],
             [r[name_column] for r in actual_rows],
         )
