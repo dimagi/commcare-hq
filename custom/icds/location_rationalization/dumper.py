@@ -13,6 +13,11 @@ from custom.icds.location_rationalization.const import (
 
 class Dumper(object):
     def __init__(self, location_types):
+        """
+        Dump all transitions in an excel sheet in a format easy to understand by users
+        There a tab per location type
+        See TestDumper.test_dump for example
+        """
         self.location_types = location_types
         self.new_site_codes = []
 
@@ -26,7 +31,8 @@ class Dumper(object):
         return stream
 
     def _find_missing_site_codes(self, transitions):
-        new_site_codes = self._get_all_new_site_codes(transitions)
+        # find sites codes that are not present in the system yet
+        new_site_codes = self._get_destination_site_codes(transitions)
         site_codes_present = (
             SQLLocation.active_objects.filter(site_code__in=new_site_codes).
             values_list('site_code', flat=True)
@@ -34,7 +40,8 @@ class Dumper(object):
         self.new_site_codes = set(new_site_codes) - set(site_codes_present)
 
     @staticmethod
-    def _get_all_new_site_codes(transitions):
+    def _get_destination_site_codes(transitions):
+        # find all sites codes of the destination/final locations
         new_site_codes = []
         for transition in transitions:
             for operation, details in transition.items():
