@@ -14,7 +14,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AdminPasswordChangeForm
 from django.contrib.auth.models import User
-from django.contrib.auth.views import logout as django_logout
+from django.contrib.auth.views import LogoutView
 from django.core import cache
 from django.core.mail.message import EmailMessage
 from django.http import (
@@ -477,7 +477,7 @@ def logout(req, default_domain_redirect='domain_login'):
     domain = get_domain_from_url(urlparse(referer).path) if referer else None
 
     # we don't actually do anything with the response here:
-    django_logout(req, **{"template_name": settings.BASE_TEMPLATE})
+    LogoutView.as_view(template_name=settings.BASE_TEMPLATE)(req)
 
     if referer and domain:
         domain_login_url = reverse(default_domain_redirect, kwargs={'domain': domain})
