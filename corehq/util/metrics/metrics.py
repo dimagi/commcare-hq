@@ -2,11 +2,9 @@ import abc
 import re
 from abc import abstractmethod
 from functools import wraps
-from typing import Iterable, List
+from typing import List
 
 from celery.task import periodic_task
-from django.utils.functional import SimpleLazyObject
-
 from corehq.util.soft_assert import soft_assert
 from prometheus_client.utils import INF
 

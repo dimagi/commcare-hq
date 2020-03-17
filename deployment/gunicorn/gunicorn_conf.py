@@ -22,7 +22,9 @@ def post_fork(server, worker):
     from django.urls import resolve
     resolve('/')
 
+
 def on_starting(server):
+    """Wipe hte metrics from previous processes"""
     path = os.environ.get('prometheus_multiproc_dir')
     for f in glob.glob(os.path.join(path, '*.db')):
         os.remove(f)

@@ -1,9 +1,7 @@
-from typing import List, Iterable
+from typing import Iterable
 
 import settings
-from corehq.util.metrics.datadog import DatadogMetrics
 from corehq.util.metrics.metrics import DummyMetrics, DelegatedMetrics, DEFAULT_BUCKETS
-from corehq.util.metrics.prometheus import PrometheusMetrics
 from dimagi.utils.modules import to_function
 
 _metrics = None
@@ -37,8 +35,9 @@ def metrics_gauge(name: str, value: float, tags: dict = None, documentation: str
     provider.gauge(name, value, tags, documentation)
 
 
-def metrics_histogram(name: str, value: float,
-                  bucket_tag: str, buckets: Iterable[int] = DEFAULT_BUCKETS, bucket_unit: str = '',
-                  tags: dict = None, documentation: str = ''):
+def metrics_histogram(
+        name: str, value: float,
+        bucket_tag: str, buckets: Iterable[int] = DEFAULT_BUCKETS, bucket_unit: str = '',
+        tags: dict = None, documentation: str = ''):
     provider = _get_metrics_provider()
     provider.histogram(name, value, bucket_tag, buckets, bucket_unit, tags, documentation)

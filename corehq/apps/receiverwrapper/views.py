@@ -1,16 +1,11 @@
-import logging
 import os
 
 from django.http import HttpResponseBadRequest, HttpResponseForbidden
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
-from couchdbkit import ResourceNotFound
-from tastypie.http import HttpTooManyRequests
-
 import couchforms
 from casexml.apps.case.xform import get_case_updates, is_device_report
-from corehq.util.metrics import metrics, metrics_counter, metrics_histogram
 from couchforms import openrosa_response
 from couchforms.const import MAGIC_PROPERTY, BadRequest
 from couchforms.getters import MultimediaBug
@@ -51,7 +46,10 @@ from corehq.form_processor.utils import (
     convert_xform_to_json,
     should_use_sql_backend,
 )
+from corehq.util.metrics import metrics_counter, metrics_histogram
 from corehq.util.timer import TimingContext
+from couchdbkit import ResourceNotFound
+from tastypie.http import HttpTooManyRequests
 
 PROFILE_PROBABILITY = float(os.getenv('COMMCARE_PROFILE_SUBMISSION_PROBABILITY', 0))
 PROFILE_LIMIT = os.getenv('COMMCARE_PROFILE_SUBMISSION_LIMIT')

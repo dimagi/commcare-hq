@@ -1,16 +1,11 @@
 from typing import Dict, Tuple
 
 from django.test import SimpleTestCase
-from django.utils.functional import SimpleLazyObject
 
 from corehq.util.metrics import DatadogMetrics, PrometheusMetrics
-from corehq.util.metrics.metrics import (
-    DelegatedMetrics,
-)
 from corehq.util.metrics.tests.utils import patch_datadog
 from prometheus_client.samples import Sample
 from prometheus_client.utils import INF
-from testil import eq
 
 
 class _TestMetrics(SimpleTestCase):

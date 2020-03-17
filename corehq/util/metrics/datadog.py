@@ -5,7 +5,6 @@ from django.conf import settings
 
 from corehq.util.datadog.utils import bucket_value
 from corehq.util.metrics.metrics import HqMetrics
-from datadog import api
 from datadog.dogstatsd.base import DogStatsd
 
 datadog_logger = logging.getLogger('datadog')
