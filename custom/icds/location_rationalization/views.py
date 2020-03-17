@@ -71,7 +71,9 @@ class ValidateView(BaseLocationRationalizationView):
 
     @cached_property
     def _location_types(self):
-        return list(LocationType.objects.filter(domain=self.domain).values_list('code', flat=True))
+        location_types = LocationType.objects.by_domain(self.domain)
+        location_types.reverse()
+        return location_types
 
     def _generate_response(self, transitions):
         response_file = Dumper(self._location_types).dump(transitions)
