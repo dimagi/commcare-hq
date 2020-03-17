@@ -270,9 +270,6 @@ class SlowApiVersionTest(TestCase):
             "password": "district",
         })
 
-    def tearDown(self):
-        self.repeater.delete()
-
     def test_none_fetches_metadata(self):
         self.assertIsNone(self.repeater.dhis2_version)
         with patch('corehq.motech.dhis2.repeaters.fetch_metadata') as mock_fetch:
@@ -285,10 +282,10 @@ class SlowApiVersionTest(TestCase):
         bigly_api_version = max_api_ver + 1
         bigly_dhis2_version = f"{major_ver}.{bigly_api_version}.{patch_ver}"
         with patch('corehq.motech.dhis2.repeaters.fetch_metadata') as mock_fetch, \
-                patch('corehq.motech.dhis2.repeaters.Requests') as MockRequests:
+                patch('corehq.motech.dhis2.repeaters.get_requests') as mock_get_requests:
             mock_fetch.return_value = {"system": {"version": bigly_dhis2_version}}
             mock_requests = Mock()
-            MockRequests.return_value = mock_requests
+            mock_get_requests.return_value = mock_requests
 
             self.assertEqual(self.repeater.api_version, bigly_api_version)
             mock_requests.notify_error.assert_called()
