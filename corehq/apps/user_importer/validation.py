@@ -184,7 +184,7 @@ class NewUserPasswordValidator(ImportValidator):
         is_account_confirmed = spec_value_to_boolean_or_none(spec, 'is_account_confirmed')
 
         # explicitly check is_account_confirmed against False because None is the default
-        if not user_id and not is_password(password) and is_account_confirmed != False:
+        if not user_id and not is_password(password) and is_account_confirmed is not False:
             return self.error_message
 
 
