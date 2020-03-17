@@ -106,7 +106,7 @@ class Command(BaseCommand):
 
 
 def get_diff_stats(domain, state_dir, strict=True):
-    find_missing_docs(domain, state_dir, resume=False)
+    find_missing_docs(domain, state_dir, resume=False, progress=False)
     statedb = open_state_db(domain, state_dir)
     stats = {}
     for doc_type, counts in sorted(statedb.get_doc_counts().items()):
