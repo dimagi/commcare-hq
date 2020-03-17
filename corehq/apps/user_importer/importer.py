@@ -323,6 +323,10 @@ def create_or_update_users_and_groups(domain, user_specs, group_memoizer=None, u
                 if is_active and isinstance(is_active, str):
                     is_active = string_to_boolean(is_active)
 
+                is_account_confirmed = row.get('is_account_confirmed') or None
+                if is_account_confirmed and isinstance(is_account_confirmed, str):
+                    is_account_confirmed = string_to_boolean(is_account_confirmed)
+
                 if user_id:
                     user = CommCareUser.get_by_user_id(user_id, domain)
                     if not user:
@@ -335,11 +339,21 @@ def create_or_update_users_and_groups(domain, user_specs, group_memoizer=None, u
                             'Changing usernames is not supported: %(username)r to %(new_username)r'
                         ) % {'username': user.username, 'new_username': username})
 
+                    # note: explicitly not including "None" here because that's the default value if not set.
+                    # False means it was set explicitly to that value
+                    if is_account_confirmed == False:
+                        raise UserUploadError(_(
+                            f"You can only set 'Is Account Confirmed' on a new User (user '{user.username}'"
+                        ))
+
                     if is_password(password):
                         user.set_password(password)
                     status_row['flag'] = 'updated'
                 else:
-                    user = CommCareUser.create(domain, username, password, commit=False)
+                    kwargs = {}
+                    if is_account_confirmed is not None:
+                        kwargs['is_account_confirmed'] = is_account_confirmed
+                    user = CommCareUser.create(domain, username, password, commit=False, **kwargs)
                     status_row['flag'] = 'created'
 
                 if phone_number:
