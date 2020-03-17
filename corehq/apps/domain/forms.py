@@ -289,7 +289,7 @@ class CallCenterOwnerWidget(Select2Ajax):
 
     def render(self, name, value, attrs=None, renderer=None):
         value_to_render = CallCenterOptionsController.convert_owner_id_to_select_choice(value, self.domain)
-        return super(CallCenterOwnerWidget, self).render(name, value_to_render, attrs=attrs, renderer=renderer )
+        return super(CallCenterOwnerWidget, self).render(name, value_to_render, attrs=attrs, renderer=renderer)
 
 
 class DomainGlobalSettingsForm(forms.Form):
