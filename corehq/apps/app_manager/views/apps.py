@@ -553,12 +553,12 @@ def app_exchange(request, domain):
     for obj in ExchangeApplication.objects.all():
         app = get_app(obj.domain, obj.app_id)
         records.append({
-           "id": app.get_id,
-           "domain": app.domain,
-           "name": app.name,
-           "comment": app.comment,
-           "last_released": obj.last_released.date() if obj.last_released else None,
-           "help_link": obj.help_link,
+            "id": app.get_id,
+            "domain": app.domain,
+            "name": app.name,
+            "comment": app.comment,
+            "last_released": obj.last_released.date() if obj.last_released else None,
+            "help_link": obj.help_link,
         })
 
     context = {
