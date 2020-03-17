@@ -7,7 +7,6 @@ from corehq.tabs.tabclasses import (
     DashboardTab,
     EnterpriseSettingsTab,
     HostedCCZTab,
-    LocationRationalizationTab,
     MessagingTab,
     MySettingsTab,
     ProjectDataTab,
@@ -34,7 +33,6 @@ MENU_TABS = (
     MySettingsTab,
     TranslationsTab,
     HostedCCZTab,
-    LocationRationalizationTab,
     # Admin
     AdminTab,
     SMSAdminTab,

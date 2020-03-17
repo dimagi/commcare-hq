@@ -1,15 +1,20 @@
 from django.contrib import messages
 from django.http import HttpResponse
+from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
 from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_noop
+from django.utils.translation import ugettext_lazy, ugettext_noop
+from django.views.decorators.http import require_GET
 
 from memoized import memoized
 
 from corehq import toggles
 from corehq.apps.domain.views.base import BaseDomainView
+from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.locations.models import LocationType
+from corehq.apps.locations.permissions import require_can_edit_locations
+from corehq.apps.locations.views import LocationsListView
 from corehq.util.files import safe_filename_header
 from corehq.util.workbook_json.excel import get_workbook
 from custom.icds.location_rationalization.download import (
@@ -24,15 +29,42 @@ from custom.icds.location_rationalization.parser import Parser
 
 
 @method_decorator([toggles.LOCATION_RATIONALIZATION.required_decorator()], name='dispatch')
-class BaseLocationRationalizationView(BaseDomainView):
-    section_name = ugettext_noop("Location Rationalization")
+@method_decorator(require_can_edit_locations, name='dispatch')
+class LocationRationalizationView(BaseDomainView):
+    section_name = ugettext_lazy("Locations")
+
+    page_title = _('Location Rationalization')
+    urlname = 'location_rationalization'
+    template_name = 'icds/location_rationalization.html'
+
+    def section_url(self):
+        return reverse(LocationsListView.urlname, args=[self.domain])
 
     @property
     def page_context(self):
-        context = {}
+        context = super().page_context
+        context.update({
+            'bulk_upload': {
+                "download_url": reverse('download_location_rationalization', args=[self.domain]),
+                "adjective": _("locations"),
+                "plural_noun": _("location operations"),
+                "help_link": "TODO",
+            },
+        })
+        context.update({
+            'bulk_upload_form': get_bulk_upload_form(context),
+        })
         return context
 
 
+@toggles.LOCATION_RATIONALIZATION.required_decorator()
+@require_can_edit_locations
+@require_GET
+def download_location_rationalization(request, domain):
+    pass
+
+
+'''
 class ValidateView(BaseLocationRationalizationView):
     page_title = _('Validate')
     urlname = 'validate_location_rationalization'
@@ -118,3 +150,4 @@ class DownloadTemplateView(BaseLocationRationalizationView):
         filename = '%s Location Rationalization Request Template' % self.domain
         response['Content-Disposition'] = safe_filename_header(filename, 'xlsx')
         return response
+'''
