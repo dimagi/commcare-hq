@@ -1735,6 +1735,16 @@ DO_NOT_RATE_LIMIT_SUBMISSIONS = StaticToggle(
     """
 )
 
+TEST_FORM_SUBMISSION_RATE_LIMIT_RESPONSE = StaticToggle(
+    'TEST_FORM_SUBMISSION_RATE_LIMIT_RESPONSE',
+    ("Respond to all form submissions with a 429 response. For use on test domains only. "
+     "Without this, there's no sane way to test the UI for being rate limited on "
+     "Mobile and Web Apps. Never use this on a real domain."),
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_DOMAIN],
+    description="",
+)
+
 RATE_LIMIT_RESTORES = DynamicallyPredictablyRandomToggle(
     'rate_limit_restores',
     'Rate limit restores with a 429 TOO MANY REQUESTS response',
