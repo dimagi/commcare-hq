@@ -26,10 +26,10 @@ class SMSTranslations(models.Model):
 
     @property
     def default_lang(self):
-        if len(self.langs) > 0:
-            return self.langs[0]
-        else:
-            return None
+        return self.langs[0] if self.langs else None
+
+    def set_translations(self, lang, translations):
+        self.translations[lang] = translations
 
 
 class Translation(object):

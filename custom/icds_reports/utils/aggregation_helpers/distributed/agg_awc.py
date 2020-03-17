@@ -406,7 +406,7 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
             type_toilet = ut.type_toilet,
             preschool_kit_available = ut.preschool_kit_available,
             preschool_kit_usable = ut.preschool_kit_usable,
-            infra_functional_toilet = ut.infra_functional_toilet,
+            infra_functional_toilet = CASE WHEN ut.toilet_facility=1 THEN ut.infra_functional_toilet ELSE 0 END,
             infra_baby_weighing_scale = ut.infra_baby_weighing_scale,
             infra_adult_weighing_scale = ut.infra_adult_weighing_scale,
             infra_infant_weighing_scale = ut.infra_infant_weighing_scale,

@@ -1340,18 +1340,10 @@ ENABLE_ALL_ADD_ONS = StaticToggle(
 
 FILTERED_BULK_USER_DOWNLOAD = StaticToggle(
     'filtered_bulk_user_download',
-    "Ability to filter mobile workers based on role, location, and username when doing bulk download",
+    "Bulk mobile worker management features: filtered download, bulk delete, and bulk lookup users.",
     TAG_SOLUTIONS_OPEN,
     [NAMESPACE_DOMAIN],
-    help_link='https://confluence.dimagi.com/display/ccinternal/Filter+Mobile+Workers+Download',
-)
-
-BULK_USER_DELETE = StaticToggle(
-    'bulk_user_delete',
-    "Allow bulk deletion of users based on a username upload.",
-    TAG_SOLUTIONS_LIMITED,
-    [NAMESPACE_DOMAIN],
-    help_link='https://confluence.dimagi.com/display/ccinternal/Bulk+Delete+Users',
+    help_link='https://confluence.dimagi.com/display/ccinternal/Bulk+Mobile+Workers+Management',
 )
 
 FILTERED_LOCATION_DOWNLOAD = StaticToggle(
@@ -1731,18 +1723,15 @@ ICDS_GOVERNANCE_DASHABOARD_API = StaticToggle(
     relevant_environments={'icds', 'india'},
 )
 
-RATE_LIMIT_SUBMISSIONS = DynamicallyPredictablyRandomToggle(
-    'rate_limit_submissions',
-    'Rate limit submissions with a 429 TOO MANY REQUESTS response',
+DO_NOT_RATE_LIMIT_SUBMISSIONS = StaticToggle(
+    'do_not_rate_limit_submissions',
+    'Do not rate limit submissions for this project, on a temporary basis.',
     TAG_INTERNAL,
     [NAMESPACE_DOMAIN],
     description="""
-    While we are gaining an understanding of the effects of rate limiting,
-    we want to force rate limiting on certain domains, while also being to
-    toggle on and off global rate limiting quickly in response to issues.
-
-    To turn on global rate limiting, set Randomness Level to 1.
-    To turn it off, set to 0.
+    When an individual project is having problems with rate limiting,
+    use this toggle to lift the restriction for them on a temporary basis,
+    just to unblock them while we sort out the conversation with the client.
     """
 )
 
@@ -1777,14 +1766,6 @@ SHOW_BUILD_PROFILE_IN_APPLICATION_STATUS = StaticToggle(
 )
 
 
-USE_NEW_GET_COLUMN = StaticToggle(
-    'use_new_get_column',
-    'Uses the new get_column method when loading edit exports '
-    '(strictly for QA right now).',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN],
-)
-
 LIVEQUERY_READ_FROM_STANDBYS = DynamicallyPredictablyRandomToggle(
     'livequery_read_from_standbys',
     'Allow livequery restore to read data from plproxy standbys if they are available',
@@ -1817,5 +1798,13 @@ ALLOW_DEID_ODATA_FEED = StaticToggle(
     'allow_deid_odata_feed',
     'Allow De-Identification in OData feeds',
     TAG_PRODUCT,
+    [NAMESPACE_DOMAIN]
+)
+
+
+ADD_ROW_INDEX_TO_MOBILE_UCRS = StaticToggle(
+    'add_row_index_to_mobile_ucrs',
+    'Add row index to mobile UCRs as the first column to retain original order of data',
+    TAG_CUSTOM,
     [NAMESPACE_DOMAIN]
 )

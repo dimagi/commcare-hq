@@ -27,6 +27,11 @@
 		<hot_meal_served/>
 		<infrastructure_update/>
 	</center_questions>
+    <awc_details>
+        <center_questions>
+            <awc_closed_reason>aww_helper_unavailable</awc_closed_reason>
+        </center_questions>
+    </awc_details>
 	<low_usage_reason/>
 	<supportive_supervision_daily_feeding>
 		<info_daily_feeding_red>OK</info_daily_feeding_red>

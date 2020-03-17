@@ -155,13 +155,15 @@ def _submission_error(request, message, count_metric, metric_tags,
     """
     details = [
         "domain:{}".format(domain),
-        "app_id:{}".format(app_id),
-        "user_id:{}".format(user_id),
         "authenticated:{}".format(authenticated),
-        "form_meta:{}".format(meta or {}),
     ]
     datadog_counter(count_metric, tags=details)
     if notify:
+        details.extend([
+            "user_id:{}".format(user_id),
+            "form_meta:{}".format(meta or {}),
+            "app_id:{}".format(app_id),
+        ])
         notify_exception(request, message, details)
     response = HttpResponseBadRequest(
         message, status=status, content_type="text/plain")

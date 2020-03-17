@@ -2243,20 +2243,18 @@ class AdjustBalanceForm(forms.Form):
                 'adjust',
                 css_class='modal-body ko-adjust-balance-form',
             ),
-            hqcrispy.FormActions(
-                crispy.ButtonHolder(
-                    crispy.Submit(
-                        'adjust_balance',
-                        'Apply',
-                        css_class='disable-on-submit',
-                        data_loading_text='Submitting...',
-                    ),
-                    crispy.Button(
-                        'close',
-                        'Close',
-                        css_class='disable-on-submit btn-default',
-                        data_dismiss='modal',
-                    ),
+            crispy.Div(
+                crispy.Submit(
+                    'adjust_balance',
+                    'Apply',
+                    css_class='disable-on-submit',
+                    data_loading_text='Submitting...',
+                ),
+                crispy.Button(
+                    'close',
+                    'Close',
+                    css_class='disable-on-submit btn-default',
+                    data_dismiss='modal',
                 ),
                 css_class='modal-footer',
             ),
@@ -2441,20 +2439,18 @@ class ResendEmailForm(forms.Form):
                 'resend',
                 css_class='modal-body',
             ),
-            hqcrispy.FormActions(
-                crispy.ButtonHolder(
-                    crispy.Submit(
-                        'resend_email',
-                        'Send Email',
-                        css_class='disable-on-submit',
-                        data_loading_text='Submitting...',
-                    ),
-                    crispy.Button(
-                        'close',
-                        'Close',
-                        css_class='disable-on-submit',
-                        data_dismiss='modal',
-                    ),
+            crispy.Div(
+                crispy.Submit(
+                    'resend_email',
+                    'Send Email',
+                    css_class='disable-on-submit',
+                    data_loading_text='Submitting...',
+                ),
+                crispy.Button(
+                    'close',
+                    'Close',
+                    css_class='disable-on-submit btn-default',
+                    data_dismiss='modal',
                 ),
                 css_class='modal-footer',
             ),

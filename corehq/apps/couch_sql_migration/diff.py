@@ -320,7 +320,7 @@ def sql_number_has_leading_zero(old_obj, new_obj, rule, diff):
     processor stripped off the leading zero(s), but the SQL form
     processor does not do that.
     """
-    if diff.new_value.startswith("0"):
+    if isinstance(diff.new_value, str) and diff.new_value.startswith("0"):
         try:
             return float(diff.old_value) == float(diff.new_value)
         except (TypeError, ValueError):

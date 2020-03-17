@@ -12,7 +12,7 @@ from corehq.util.es.elasticsearch import (
 )
 from corehq.util.es.interface import ElasticsearchInterface
 
-from pillowtop.exceptions import BulkDocExeption, PillowtopIndexingError
+from pillowtop.exceptions import BulkDocException, PillowtopIndexingError
 from pillowtop.logger import pillow_logging
 from pillowtop.utils import (
     ErrorCollector,
@@ -153,7 +153,7 @@ class BulkElasticProcessor(ElasticProcessor, BulkPillowProcessor):
             ])
         else:
             for change_id, error_msg in get_errors_with_ids(errors):
-                error_changes.append((changes_to_process[change_id], BulkDocExeption(error_msg)))
+                error_changes.append((changes_to_process[change_id], BulkDocException(error_msg)))
         return retry_changes, error_changes
 
 

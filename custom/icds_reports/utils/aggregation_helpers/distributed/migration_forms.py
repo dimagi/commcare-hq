@@ -15,7 +15,7 @@ class MigrationFormsAggregationDistributedHelper(StateBasedAggregationDistribute
     def data_from_ucr_query(self):
         month = self.month.replace(day=1)
         current_month_start = month_formatter(self.month)
-        next_month_start = month_formatter(self.month + relativedelta(month=1))
+        next_month_start = month_formatter(self.month + relativedelta(months=1))
 
         query_params = {
             "month": month_formatter(month),

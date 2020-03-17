@@ -1699,20 +1699,15 @@ def upload_sms_translations(request, domain):
         with transaction.atomic():
             sms_translations = get_or_create_sms_translations(domain)
             msg_ids = sorted(_MESSAGES.keys())
-            result = {}
-            for lang in sms_translations.langs:
-                result[lang] = {}
+            result = {lang: {} for lang in sms_translations.langs}
 
             for row in translations:
                 for lang in sms_translations.langs:
-                    if row.get(lang):
-                        msg_id = row["property"]
-                        if msg_id in msg_ids:
-                            val = row[lang]
-                            if not isinstance(val, str):
-                                val = str(val)
-                            val = val.strip()
-                            result[lang][msg_id] = val
+                    msg_id = row["property"]
+                    if row.get(lang) and msg_id in msg_ids:
+                        val = str(row[lang])
+                        val = val.strip()
+                        result[lang][msg_id] = val
 
             sms_translations.translations = result
             sms_translations.save()

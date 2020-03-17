@@ -18,7 +18,7 @@ from itertools import chain
 from mimetypes import guess_type
 
 from django.conf import settings
-from django.contrib import messages
+from django.contrib import admin, messages
 from django.contrib.auth.hashers import make_password
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
@@ -84,6 +84,7 @@ from corehq.apps.app_manager.dbaccessors import (
     get_latest_build_doc,
     get_latest_released_app_doc,
     wrap_app,
+    get_app_languages
 )
 from corehq.apps.app_manager.detail_screen import PropertyXpathGenerator
 from corehq.apps.app_manager.exceptions import (
@@ -4301,7 +4302,7 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
 
     def generate_shortened_url(self, view_name, build_profile_id=None):
         try:
-            if settings.BITLY_LOGIN:
+            if bitly.BITLY_CONFIGURED:
                 if build_profile_id is not None:
                     long_url = "{}{}?profile={}".format(
                         self.url_base, reverse(view_name, args=[self.domain, self._id]), build_profile_id
@@ -4438,6 +4439,7 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
 
     def delete_app(self):
         domain_has_apps.clear(self.domain)
+        get_app_languages.clear(self.domain)
         self.doc_type += '-Deleted'
         record = DeleteApplicationRecord(
             domain=self.domain,
@@ -4457,6 +4459,7 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
 
         get_all_case_properties.clear(self)
         get_usercase_properties.clear(self)
+        get_app_languages.clear(self.domain)
 
         request = view_utils.get_request()
         user = getattr(request, 'couch_user', None)
@@ -5710,6 +5713,25 @@ class DeleteFormRecord(DeleteRecord):
         forms.insert(self.form_id, self.form)
         module.forms = forms
         app.save()
+
+
+class ExchangeApplication(models.Model):
+    domain = models.CharField(max_length=255, null=False)
+    app_id = models.CharField(max_length=255, null=False)
+    last_released = models.DateTimeField(null=True)  # manual value unrelated to HQ's definition of last released
+    help_link = models.CharField(max_length=255, null=True)
+
+    class Meta(object):
+        unique_together = ('domain', 'app_id')
+
+
+class ExchangeApplicationAdmin(admin.ModelAdmin):
+    model = ExchangeApplication
+    list_display = ['domain', 'app_id']
+    list_filter = ['domain', 'app_id']
+
+
+admin.site.register(ExchangeApplication, ExchangeApplicationAdmin)
 
 
 class GlobalAppConfig(models.Model):
