@@ -116,6 +116,10 @@ def get_diff_stats(domain, state_dir, strict=True):
             couch_count = counts.total
             sql_count = counts.total - counts.missing
             stats[doc_type] = (couch_count, sql_count, counts.diffs)
+    if "CommCareCase" not in stats:
+        pending = statedb.count_undiffed_cases()
+        if pending:
+            stats["CommCareCase"] = ("?", "?", f"{pending} diffs pending")
     return stats
 
 
