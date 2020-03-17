@@ -115,6 +115,7 @@ def metrics_gauge_task(name, fn, run_every):
     @wraps(fn)
     def inner(*args, **kwargs):
         from corehq.util.metrics import metrics_gauge
+        # TODO: make this use prometheus push gateway
         metrics_gauge(name, fn(*args, **kwargs))
 
     return inner
