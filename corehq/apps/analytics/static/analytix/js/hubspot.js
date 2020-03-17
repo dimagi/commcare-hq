@@ -174,7 +174,7 @@ hqDefine('analytix/js/hubspot', [
                 var email = $form.find('[name="email"]').val(),
                     firstname = $form.find('[name="firstname"]').val(),
                     lastname = $form.find('[name="lastname"]').val(),
-                    newUrl = document.location.href + '?email=' + email + '&name=' + firstname + '%20' + lastname;
+                    newUrl = document.location.origin + document.location.pathname + '?email=' + email + '&name=' + firstname + '%20' + lastname;
 
                 kissmetrics.track.event("Get Trial Workflow - Contact Info Received");
                 // This nastiness is required for Schedule Once to auto-fill
