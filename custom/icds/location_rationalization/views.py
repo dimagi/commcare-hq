@@ -116,6 +116,6 @@ class DownloadTemplateView(BaseLocationRationalizationView):
             self.form.cleaned_data['location_type']).dump()
         response_file.seek(0)
         response = HttpResponse(response_file, content_type="text/html; charset=utf-8")
-        filename = '%s Location Ratioanlization Request Template' % self.domain
+        filename = '%s Location Rationalization Request Template' % self.domain
         response['Content-Disposition'] = safe_filename_header(filename, 'xlsx')
         return response
