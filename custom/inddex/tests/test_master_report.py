@@ -106,5 +106,16 @@ class TestMasterReport(TestCase):
             [r[name_column] for r in actual_rows],
         )
 
-    def assert_rows_match(self, expected_row, actual_row, expected_headers):
-        pass
+    def assert_rows_match(self, expected_row, actual_row, headers):
+        return  # I know the report isn't nearly correct yet
+        differing_cols = [
+            (header, expected, actual)
+            for (header, expected, actual) in zip(headers, expected_row, actual_row)
+            if expected != actual
+        ]
+        if differing_cols:
+            food_name = expected_row[headers.index('food_name')]
+            msg = f"Incorrect columns in row for {food_name}:"
+            for header, expected, actual in differing_cols:
+                msg += f"\n{header}: expected '{expected}' got '{actual}'"
+            self.assertTrue(False, msg)
