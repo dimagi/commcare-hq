@@ -1,6 +1,7 @@
 {
     "domains": [
-        "inddex-reports"
+        "inddex-reports",
+        "inddex-reports-test"
     ],
     "server_environment": [
         "production",

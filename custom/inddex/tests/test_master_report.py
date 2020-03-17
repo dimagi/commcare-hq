@@ -14,17 +14,16 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from ..example_data.data import (
     FOOD_CASE_TYPE,
     FOODRECALL_CASE_TYPE,
-    INDDEX_DOMAIN,
     get_expected_report,
-    import_data,
+    populate_inddex_domain,
 )
 from ..ucr.data_providers.master_data_file_data import MasterDataFileData
 
 
 @patch('corehq.apps.callcenter.data_source.get_call_center_domains', lambda: [])
 class TestMasterReport(TestCase):
-    domain = INDDEX_DOMAIN
     maxDiff = None
+    domain = 'inddex-reports-test'
 
     @classmethod
     def setUpClass(cls):
@@ -37,7 +36,7 @@ class TestMasterReport(TestCase):
         super().tearDownClass()
 
     def test(self):
-        import_data()
+        populate_inddex_domain(self.domain)
         self.assert_cases_created()
         self.assert_fixtures_created()
         expected_headers, expected_rows = get_expected_report()

@@ -437,7 +437,7 @@ class GapsReportData(MasterReportData):
     @cached_property
     def couch_db(self):
         return CouchDbDataCollector(
-            domain='inddex-reports', tables=['conv_factors', 'food_list', 'food_composition_table', 'recipes']
+            domain=self.config['domain'], tables=['conv_factors', 'food_list', 'food_composition_table', 'recipes']
         )
 
     @property

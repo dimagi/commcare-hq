@@ -17,32 +17,31 @@ from corehq.util.couch import IterDB
 from corehq.util.workbook_reading import make_worksheet
 
 PATH = os.path.dirname(__file__)
-INDDEX_DOMAIN = 'inddex-reports'
 FOOD_CASE_TYPE = 'food'
 FOODRECALL_CASE_TYPE = 'foodrecall'
 
 
-def import_data():
-    user = _get_or_create_user()
-    _import_cases(FOODRECALL_CASE_TYPE, 'foodrecall_cases.csv', user)
-    _import_cases(FOOD_CASE_TYPE, 'food_cases.csv', user)
-    _import_fixtures()
-    _rebuild_datasource()
+def populate_inddex_domain(domain):
+    user = _get_or_create_user(domain)
+    _import_cases(domain, FOODRECALL_CASE_TYPE, 'foodrecall_cases.csv', user)
+    _import_cases(domain, FOOD_CASE_TYPE, 'food_cases.csv', user)
+    _import_fixtures(domain)
+    _rebuild_datasource(domain)
 
 
-def _get_or_create_user():
-    username = format_username('nick', INDDEX_DOMAIN)
+def _get_or_create_user(domain):
+    username = format_username('nick', domain)
     user = CommCareUser.get_by_username(username)
     if not user:
-        user = CommCareUser.create(INDDEX_DOMAIN, username, 'secret')
+        user = CommCareUser.create(domain, username, 'secret')
     return user
 
 
-def _import_cases(case_type, csv_filename, user):
+def _import_cases(domain, case_type, csv_filename, user):
     headers, rows = _read_csv(csv_filename)
     worksheet = WorksheetWrapper(make_worksheet([headers] + rows))
     config = _get_importer_config(case_type, headers, user._id)
-    res = do_import(worksheet, config, INDDEX_DOMAIN)
+    res = do_import(worksheet, config, domain)
     if res['errors']:
         raise Exception(res)
 
@@ -72,7 +71,7 @@ def get_expected_report():
     return _read_csv('expected_result.csv')
 
 
-def _import_fixtures():
+def _import_fixtures(domain):
     for fixture_name, filename in [
             ('recipes', 'recipes.csv'),
             ('conv_factors', 'conv_factors.csv'),
@@ -81,7 +80,7 @@ def _import_fixtures():
     ]:
         fields, rows = _read_csv(filename)
         data_type = FixtureDataType(
-            domain=INDDEX_DOMAIN,
+            domain=domain,
             tag=fixture_name,
             fields=[FixtureTypeField(field_name=field) for field in fields],
         )
@@ -89,16 +88,16 @@ def _import_fixtures():
 
         with IterDB(FixtureDataItem.get_db(), chunksize=1000) as iter_db:
             for vals in rows:
-                fixture_data_item = _mk_fixture_data_item(data_type._id, fields, vals)
+                fixture_data_item = _mk_fixture_data_item(domain, data_type._id, fields, vals)
                 iter_db.save(fixture_data_item)
 
 
-def _mk_fixture_data_item(data_type_id, fields, vals):
+def _mk_fixture_data_item(domain, data_type_id, fields, vals):
     """Fixtures are wicked slow, so just do it in JSON"""
     return {
         "_id": uuid.uuid4().hex,
         "doc_type": "FixtureDataItem",
-        "domain": INDDEX_DOMAIN,
+        "domain": domain,
         "data_type_id": data_type_id,
         "fields": {
             field_name: {
@@ -116,7 +115,7 @@ def _mk_fixture_data_item(data_type_id, fields, vals):
     }
 
 
-def _rebuild_datasource():
+def _rebuild_datasource(domain):
     config_id = StaticDataSourceConfiguration.get_doc_id(
-        INDDEX_DOMAIN, 'food_consumption_indicators')
+        domain, 'food_consumption_indicators')
     rebuild_indicators(config_id, source='populate_inddex_test_domain')
