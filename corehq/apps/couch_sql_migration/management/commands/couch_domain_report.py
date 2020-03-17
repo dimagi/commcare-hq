@@ -1,11 +1,15 @@
+import csv
 import logging
 import os
 from datetime import datetime, timezone
 
+import attr
 from dateutil.parser import parse as to_datetime
 
+import django.db.models as models
 from django.core.management.base import BaseCommand
 
+from corehq.apps.accounting.models import Subscription
 from corehq.apps.es.domains import DomainES
 
 from ...tinypanda import TinyPanda
@@ -31,6 +35,7 @@ def main(output_dir):
     data = TinyPanda(get_couch_domains())
 
     categories = {}
+    domain_sets = []
     all_domains = len(data)
     total_domains = 0
 
@@ -67,6 +72,7 @@ def main(output_dir):
             forms = subset['cp_n_forms'].apply(int).sum()
             time_to_complete = get_time_to_complete(forms)
         total_domains += len(subset)
+        domain_sets.append((name, subset))
 
         print("{:<15} {:>6} {:>12}   {}".format(
             name,
@@ -83,6 +89,10 @@ def main(output_dir):
     assert total_domains == all_domains, (total_domains, all_domains)
     print("--")
     print("total {:>16}".format(total_domains))
+
+    if output_dir is not None:
+        print("writing domain.csv ...")
+        write_domain_csv(output_dir, domain_sets)
 
 
 def get_weird(data):
@@ -144,9 +154,84 @@ def get_couch_domains():
             "cp_n_active_cc_users",
             "cp_n_forms",
             "cp_last_form",
-            "sf_account_id",
         )
     )
 
 
 DOMAIN_COUNT_UPPER_BOUND = 1000
+
+
+def write_domain_csv(output_dir, domain_sets):
+    path = os.path.join(output_dir, "domains.csv")
+    with open(path, "w", encoding="utf-8") as fh:
+        csvfile = csv.writer(fh)
+        csvfile.writerow(Account.csv_headers)
+        for name, domain_set in domain_sets:
+            for acct in iter_accounts(domain_set, name):
+                csvfile.writerow(acct.csv_row)
+
+
+def iter_accounts(domain_set, category):
+    subs = Subscription.visible_objects.filter(
+        is_active=True,
+        subscriber__domain__in=list(domain_set["name"]),
+    ).annotate(
+        domain_name=models.F("subscriber__domain"),
+        plan_edition=models.F("plan_version__plan__edition"),
+        is_enterprise=models.F("plan_version__plan__is_customer_software_plan"),
+    ).values(
+        "domain_name",
+        "plan_edition",
+        "is_enterprise",
+    )
+    subs = {s["domain_name"]: s for s in subs}
+    for item in domain_set:
+        name = item["name"]
+        args = dict(item)
+        args.pop("_id", None)
+        if name in subs:
+            args["plan_edition"] = subs[name]["plan_edition"]
+            args["is_enterprise"] = subs[name]["is_enterprise"]
+        yield Account(category=category, **args)
+
+
+@attr.s
+class Account:
+    name = attr.ib()
+    category = attr.ib()
+    cp_n_active_cc_users = attr.ib(default=None)
+    cp_n_forms = attr.ib(default=None)
+    cp_last_form = attr.ib(default=None)
+    plan_edition = attr.ib(default=None)
+    is_enterprise = attr.ib(default=None)
+
+    @property
+    def time_to_complete(self):
+        if self.cp_n_forms is None:
+            return None
+        return get_time_to_complete(self.cp_n_forms)
+
+    csv_headers = [
+        "Category",
+        "Domain",
+        "# forms",
+        "Last submission",
+        "Forms migration time",
+        "Plan edition",
+        "Enterprise",
+    ]
+
+    @property
+    def csv_row(self):
+        def get(prop):
+            value = getattr(self, prop)
+            return value if value is not None else ""
+        return [get(prop) for prop in [
+            "category",
+            "name",
+            "cp_n_forms",
+            "cp_last_form",
+            "time_to_complete",
+            "plan_edition",
+            "is_enterprise",
+        ]]
