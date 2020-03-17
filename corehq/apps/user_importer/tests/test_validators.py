@@ -78,10 +78,15 @@ TEST_CASES = [
             {'username': factory.user_name()},
             {'username': factory.user_name(), 'user_id': factory.uuid4()},
             {'username': factory.user_name(), 'password': factory.password()},
-            {'username': factory.user_name(), 'password': 123}
+            {'username': factory.user_name(), 'password': 123},
+            {'username': factory.user_name(), 'is_account_confirmed': 'False'},
+            {'username': factory.user_name(), 'is_account_confirmed': 'True'},
         ],
         NewUserPasswordValidator('domain'),
-        {0: NewUserPasswordValidator.error_message}
+        {
+            0: NewUserPasswordValidator.error_message,
+            5: NewUserPasswordValidator.error_message,
+        }
     ),
     (
         [

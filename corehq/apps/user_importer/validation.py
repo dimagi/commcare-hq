@@ -5,6 +5,7 @@ from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 from django.utils.translation import ugettext as _
 
+from corehq.apps.user_importer.helpers import spec_value_to_boolean_or_none
 from corehq.apps.users.dbaccessors.all_commcare_users import get_existing_usernames
 from dimagi.utils.chunked import chunked
 from dimagi.utils.parsing import string_to_boolean
@@ -180,7 +181,10 @@ class NewUserPasswordValidator(ImportValidator):
     def validate_spec(self, spec):
         user_id = spec.get('user_id')
         password = spec.get('password')
-        if not user_id and not is_password(password):
+        is_account_confirmed = spec_value_to_boolean_or_none(spec, 'is_account_confirmed')
+
+        # explicitly check is_account_confirmed against False because None is the default
+        if not user_id and not is_password(password) and is_account_confirmed != False:
             return self.error_message
 
 
