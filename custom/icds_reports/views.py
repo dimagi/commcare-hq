@@ -244,7 +244,7 @@ from custom.icds_reports.reports.governance_apis import (
 
 
 from . import const
-from .exceptions import TableauTokenException
+from .exceptions import InvalidLocationTypeException, TableauTokenException
 
 # checks required to view the dashboard
 DASHBOARD_CHECKS = [
@@ -2082,7 +2082,10 @@ class CasDataExport(View):
         else:
             export_file = ''
             if state != location:
-                export_file = filter_cas_data_export(sync, location)
+                try:
+                    export_file = filter_cas_data_export(sync, location)
+                except InvalidLocationTypeException as e:
+                    return JsonResponse({"message": e})
             params = dict(
                 indicator=data_type,
                 location=location_id,
