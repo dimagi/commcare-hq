@@ -1645,7 +1645,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     demo_restore_id = IntegerProperty()
     # used by user provisioning workflow. defaults to true unless explicitly overridden during
     # user creation
-    is_provisioned = BooleanProperty(default=True)
+    is_account_confirmed = BooleanProperty(default=True)
 
     # This means that this user represents a location, and has a 1-1 relationship
     # with a location where location.location_type.has_user == True
@@ -1734,18 +1734,18 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
                phone_number=None,
                location=None,
                commit=True,
-               is_provisioned=True,
+               is_account_confirmed=True,
                **kwargs):
         """
         Main entry point into creating a CommCareUser (mobile worker).
         """
         uuid = uuid or uuid4().hex
-        # if the user is not provisioned, also set is_active false so they can't login
+        # if the account is not confirmed, also set is_active false so they can't login
         if 'is_active' not in kwargs:
-            kwargs['is_active'] = is_provisioned
-        elif not is_provisioned:
+            kwargs['is_active'] = is_account_confirmed
+        elif not is_account_confirmed:
             assert not kwargs['is_active'], \
-                "it's illegal to create a user with is_active=True and is_provisioned=False"
+                "it's illegal to create a user with is_active=True and is_account_confirmed=False"
         commcare_user = super(CommCareUser, cls).create(domain, username, password, email, uuid, date, **kwargs)
         if phone_number is not None:
             commcare_user.add_phone_number(phone_number)
@@ -1755,7 +1755,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         commcare_user.domain = domain
         commcare_user.device_ids = [device_id]
         commcare_user.registering_device_id = device_id
-        commcare_user.is_provisioned = is_provisioned
+        commcare_user.is_account_confirmed = is_account_confirmed
         commcare_user.domain_membership = DomainMembership(domain=domain, **kwargs)
 
         if location:

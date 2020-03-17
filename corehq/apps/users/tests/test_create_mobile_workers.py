@@ -35,7 +35,7 @@ class TestCreateMobileWorkers(TestCase):
         self.assertEqual(['my-pixel'], user.device_ids)
         self.assertEqual('Mobile', user.first_name)
         self.assertEqual(True, user.is_active)
-        self.assertEqual(True, user.is_provisioned)
+        self.assertEqual(True, user.is_account_confirmed)
 
         # confirm user was created / can be accessed
         self.assertIsNotNone(CommCareUser.get_by_username('mw1'))
@@ -44,24 +44,24 @@ class TestCreateMobileWorkers(TestCase):
         # confirm user can login
         self.assertEqual(True, self.client.login(username='mw1', password='s3cr4t'))
 
-    def test_create_unprovisioned(self):
+    def test_create_unconfirmed(self):
         user = CommCareUser.create(
             self.domain,
             'mw1',
             's3cr4t',
             email='mw1@example.com',
-            is_provisioned=False,
+            is_account_confirmed=False,
         )
         self.addCleanup(user.delete)
         self.assertEqual(False, user.is_active)
-        self.assertEqual(False, user.is_provisioned)
+        self.assertEqual(False, user.is_account_confirmed)
         # confirm user can't login
 
         django_user = user.get_django_user()
         self.assertEqual(False, django_user.is_active)
         self.assertEqual(False, self.client.login(username='mw1', password='s3cr4t'))
 
-    def test_is_active_overrides_is_provisioned(self):
+    def test_is_active_overrides_is_account_confirmed(self):
         with self.assertRaises(AssertionError):
             CommCareUser.create(
                 self.domain,
@@ -69,7 +69,7 @@ class TestCreateMobileWorkers(TestCase):
                 's3cr4t',
                 email='mw1@example.com',
                 is_active=True,
-                is_provisioned=False,
+                is_account_confirmed=False,
             )
         # confirm no users were created
         self.assertIsNone(CommCareUser.get_by_username('mw1'))
