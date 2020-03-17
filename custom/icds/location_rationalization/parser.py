@@ -31,8 +31,10 @@ class Parser(object):
     """
     def __init__(self, worksheet, location_types):
         self.worksheet = worksheet
+        # mapping each location code to the type of transition requested for it
         self.requested_transitions = {}
         self.errors = []
+        # location types should be in reverse order of hierarchy
         self.location_types = location_types
         self.transitions = {location_type: {
             MERGE_TRANSITION: defaultdict(list),
@@ -62,27 +64,26 @@ class Parser(object):
                     transition, old_value, new_value
                 ))
                 continue
-            if self._skip_row(transition, old_value, new_value):
+            # if no change in a lower level location, assume none above it
+            if old_value == new_value:
+                continue
+            if self._invalid_row(transition, old_value, new_value):
                 continue
             self._note_transition(transition, location_type, new_value, old_value)
 
-    def _skip_row(self, transition, old_value, new_value):
-        skip = False
-        # if no change in a lower level location, assume none above it
-        if old_value == new_value:
-            skip = True
-        else:
-            if old_value in self.requested_transitions:
-                if self.requested_transitions.get(old_value) != transition:
-                    self.errors.append("Multiple transitions for %s, %s and %s" % (
-                        old_value, self.requested_transitions.get(old_value), transition))
-                    skip = True
-            if new_value in self.requested_transitions:
-                if self.requested_transitions.get(new_value) != transition:
-                    self.errors.append("Multiple transitions for %s, %s and %s" % (
-                        new_value, self.requested_transitions.get(new_value), transition))
-                    skip = True
-        return skip
+    def _invalid_row(self, transition, old_value, new_value):
+        invalid = False
+        if old_value in self.requested_transitions:
+            if self.requested_transitions.get(old_value) != transition:
+                self.errors.append("Multiple transitions for %s, %s and %s" % (
+                    old_value, self.requested_transitions.get(old_value), transition))
+                invalid = True
+        if new_value in self.requested_transitions:
+            if self.requested_transitions.get(new_value) != transition:
+                self.errors.append("Multiple transitions for %s, %s and %s" % (
+                    new_value, self.requested_transitions.get(new_value), transition))
+                invalid = True
+        return invalid
 
     def _note_transition(self, transition, location_type, new_value, old_value):
         if transition == MERGE_TRANSITION:
