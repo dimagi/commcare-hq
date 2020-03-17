@@ -30,7 +30,7 @@ from corehq.apps.users.util import normalize_username
 required_headers = set(['username'])
 allowed_headers = set([
     'data', 'email', 'group', 'language', 'name', 'password', 'phone-number',
-    'uncategorized_data', 'user_id', 'is_active', 'location_code', 'role',
+    'uncategorized_data', 'user_id', 'is_active', 'is_account_confirmed', 'location_code', 'role',
     'User IMEIs (read only)', 'registered_on (read only)', 'last_submission (read only)',
     'last_sync (read only)'
 ]) | required_headers
@@ -339,7 +339,7 @@ def create_or_update_users_and_groups(domain, user_specs, group_memoizer=None, u
                     # False means it was set explicitly to that value
                     if is_account_confirmed == False:
                         raise UserUploadError(_(
-                            f"You can only set 'Is Account Confirmed' on a new User (user '{user.username}'"
+                            f"You can only set 'Is Account Confirmed' to 'False' on a new User."
                         ))
 
                     if is_password(password):
