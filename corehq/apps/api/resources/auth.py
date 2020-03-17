@@ -6,6 +6,7 @@ from django.http import Http404, HttpResponse, HttpResponseForbidden
 
 from tastypie.authentication import Authentication
 
+from corehq.apps.api.odata.views import odata_permissions_check
 from corehq.apps.domain.auth import BASIC, determine_authtype_from_header
 from corehq.apps.domain.decorators import (
     api_key_auth,
@@ -109,7 +110,7 @@ class RequirePermissionAuthentication(LoginAndDomainAuthentication):
         return self._auth_test(request, wrappers=wrappers, **kwargs)
 
 
-class ODataAuthentication(RequirePermissionAuthentication):
+class ODataAuthentication(LoginAndDomainAuthentication):
 
     def __init__(self, *args, **kwargs):
         super(ODataAuthentication, self).__init__(*args, **kwargs)
@@ -117,6 +118,16 @@ class ODataAuthentication(RequirePermissionAuthentication):
             'basic': basic_auth_or_try_api_key_auth,
             'api_key': api_key_auth,
         }
+
+    def is_authenticated(self, request, **kwargs):
+        wrappers = [
+            require_permission_raw(
+                odata_permissions_check,
+                self._get_auth_decorator(request)
+            ),
+            api_auth,
+        ]
+        return self._auth_test(request, wrappers=wrappers, **kwargs)
 
     def _get_auth_decorator(self, request):
         return self.decorator_map[determine_authtype_from_header(request, default=BASIC)]
