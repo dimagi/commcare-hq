@@ -26,7 +26,8 @@ def get_user_import_validators(domain_obj, all_specs, allowed_groups=None, allow
     return [
         UsernameTypeValidator(domain),
         UsernameValidator(domain),
-        IsActiveValidator(domain),
+        BooleanColumnValidator(domain, 'is_active'),
+        BooleanColumnValidator(domain, 'is_account_confirmed'),
         RequiredFieldsValidator(domain),
         DuplicateValidator(domain, 'username', all_specs),
         DuplicateValidator(domain, 'user_id', all_specs),
@@ -77,16 +78,24 @@ class UsernameValidator(ImportValidator):
                 return self.error_message
 
 
-class IsActiveValidator(ImportValidator):
-    error_message = _("'is_active' column can only contain 'true' or 'false'")
+class BooleanColumnValidator(ImportValidator):
+    _error_message = _("'{column_id}' column can only contain 'true' or 'false'")
+
+    def __init__(self, domain, column_id):
+        self.column_id = column_id
+        super().__init__(domain)
 
     def validate_spec(self, spec):
-        is_active = spec.get('is_active')
-        if isinstance(is_active, str):
+        value = spec.get(self.column_id)
+        if isinstance(value, str):
             try:
-                string_to_boolean(is_active) if is_active else None
+                string_to_boolean(value) if value else None
             except ValueError:
                 return self.error_message
+
+    @property
+    def error_message(self):
+        return self._error_message.format(column_id=self.column_id)
 
 
 class RequiredFieldsValidator(ImportValidator):
