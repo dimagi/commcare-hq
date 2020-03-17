@@ -57,42 +57,42 @@ class Parser(object):
         transition = row.get(TRANSITION_COLUMN_NAME)
         for location_type in self.location_types:
             # ToDo: Ensure we already get string values so that 0s in beginning are not trimmed
-            old_value = str(row.get(f'old_{location_type}'))
-            new_value = str(row.get(f'new_{location_type}'))
-            if not old_value or not new_value:
+            old_site_code = str(row.get(f'old_{location_type}'))
+            new_site_code = str(row.get(f'new_{location_type}'))
+            if not old_site_code or not new_site_code:
                 self.errors.append("Missing location code for %s, got old: '%s' and new: '%s'" % (
-                    transition, old_value, new_value
+                    transition, old_site_code, new_site_code
                 ))
                 continue
             # if no change in a lower level location, assume none above it
-            if old_value == new_value:
+            if old_site_code == new_site_code:
                 continue
-            if self._invalid_row(transition, old_value, new_value):
+            if self._invalid_row(transition, old_site_code, new_site_code):
                 continue
-            self._note_transition(transition, location_type, new_value, old_value)
+            self._note_transition(transition, location_type, new_site_code, old_site_code)
 
-    def _invalid_row(self, transition, old_value, new_value):
+    def _invalid_row(self, transition, old_site_code, new_site_code):
         invalid = False
-        if old_value in self.requested_transitions:
-            if self.requested_transitions.get(old_value) != transition:
+        if old_site_code in self.requested_transitions:
+            if self.requested_transitions.get(old_site_code) != transition:
                 self.errors.append("Multiple transitions for %s, %s and %s" % (
-                    old_value, self.requested_transitions.get(old_value), transition))
+                    old_site_code, self.requested_transitions.get(old_site_code), transition))
                 invalid = True
-        if new_value in self.requested_transitions:
-            if self.requested_transitions.get(new_value) != transition:
+        if new_site_code in self.requested_transitions:
+            if self.requested_transitions.get(new_site_code) != transition:
                 self.errors.append("Multiple transitions for %s, %s and %s" % (
-                    new_value, self.requested_transitions.get(new_value), transition))
+                    new_site_code, self.requested_transitions.get(new_site_code), transition))
                 invalid = True
         return invalid
 
-    def _note_transition(self, transition, location_type, new_value, old_value):
+    def _note_transition(self, transition, location_type, new_site_code, old_site_code):
         if transition == MERGE_TRANSITION:
-            self.transitions[location_type][transition][new_value].append(old_value)
+            self.transitions[location_type][transition][new_site_code].append(old_site_code)
         elif transition == SPLIT_TRANSITION:
-            self.transitions[location_type][transition][old_value].append(new_value)
+            self.transitions[location_type][transition][old_site_code].append(new_site_code)
         elif transition == MOVE_TRANSITION:
-            self.transitions[location_type][transition][new_value] = old_value
+            self.transitions[location_type][transition][new_site_code] = old_site_code
         elif transition == EXTRACT_TRANSITION:
-            self.transitions[location_type][transition][new_value] = old_value
-        self.requested_transitions[old_value] = transition
-        self.requested_transitions[new_value] = transition
+            self.transitions[location_type][transition][new_site_code] = old_site_code
+        self.requested_transitions[old_site_code] = transition
+        self.requested_transitions[new_site_code] = transition
