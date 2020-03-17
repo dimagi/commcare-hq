@@ -10,6 +10,7 @@ function ProgramSummaryController($scope, $http, $log, $routeParams, $location, 
     var vm = this;
     vm.data = {};
     vm.label = "Program Summary";
+    vm.haveAccessToAllLocations = haveAccessToAllLocations;
     vm.filters = ['gender', 'age'];
     vm.step = $routeParams.step;
     vm.userLocationId = userLocationId;

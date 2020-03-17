@@ -10,6 +10,7 @@ function ServiceDeliveryDashboardController($rootScope, $scope, $http, $location
     var vm = this;
     vm.data = {};
     vm.label = "Service Delivery Dashboard";
+    vm.haveAccessToAllLocations = haveAccessToAllLocations;
     vm.tooltipPlacement = "right";
     vm.filters = ['gender', 'age'];
     vm.userLocationId = userLocationId;

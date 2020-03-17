@@ -18,7 +18,7 @@ from itertools import chain
 from mimetypes import guess_type
 
 from django.conf import settings
-from django.contrib import messages
+from django.contrib import admin, messages
 from django.contrib.auth.hashers import make_password
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
@@ -5711,6 +5711,23 @@ class DeleteFormRecord(DeleteRecord):
         forms.insert(self.form_id, self.form)
         module.forms = forms
         app.save()
+
+
+class ExchangeApplication(models.Model):
+    domain = models.CharField(max_length=255, null=False)
+    app_id = models.CharField(max_length=255, null=False)
+
+    class Meta(object):
+        unique_together = ('domain', 'app_id')
+
+
+class ExchangeApplicationAdmin(admin.ModelAdmin):
+    model = ExchangeApplication
+    list_display = ['domain', 'app_id']
+    list_filter = ['domain', 'app_id']
+
+
+admin.site.register(ExchangeApplication, ExchangeApplicationAdmin)
 
 
 class GlobalAppConfig(models.Model):

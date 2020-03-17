@@ -1,4 +1,5 @@
 {% load staticfiles %}
+{% load i18n %}
 <div class="sideNavigation" id="nav-menu">
     <img src="{% static 'icds_reports/mobile/images/white-close-icon.png' %}" class="close-icon" ng-click="closeMenu()">
     <p class="navigation-font pl-3 pr-3 mb-0" ng-bind="userFullName" ng-if="userFullName"></p>
@@ -30,11 +31,15 @@
         <hr>
         <div class="menu-options navigation-font mb-0" ng-show="haveAccessToFeatures" ng-class="{'active-mobile-link': $location.path().indexOf('/service_delivery_dashboard') !== -1}">
             <i class="fa fa-tasks mr-3" aria-hidden="true"></i>
-            <a  href="{$ goToStep('service_delivery_dashboard/', $location.search()) $}" class="sub-links" ng-click="closeMenu()">Service Delivery Dashboard</a>
+            <a  href="{$ goToStep('service_delivery_dashboard/', $location.search()) $}" class="sub-links" ng-click="closeMenu()">{% trans "Service Delivery Dashboard" %}</a>
         </div>
         <div class="menu-options navigation-font mb-0" ng-class="{'active-mobile-link': $location.path().indexOf('/awc_reports') !== -1}">
             <i class="fa fa-tasks mr-3" aria-hidden="true"></i>
-            <a  href="{$ goToStep('awc_reports', $location.search()) $}" class="sub-links" ng-click="closeMenu()">AWC Report</a>
+            <a  href="{$ goToStep('awc_reports', $location.search()) $}" class="sub-links" ng-click="closeMenu()">{% trans "AWC Report" %}</a>
+        </div>
+        <div class="menu-options navigation-font mb-0" ng-show="haveAccessToFeatures" ng-class="{'active-mobile-link': $location.path().indexOf('/fact_sheets') !== -1}">
+            <i class="fa fa-file-text-o mr-3" aria-hidden="true"></i>
+            <a  href="{$ goToStep('fact_sheets', $location.search()) $}" class="sub-links" ng-click="closeMenu()">{% trans "ICDS-CAS Fact Sheets" %}</a>
         </div>
         <hr>
         {% comment %}
