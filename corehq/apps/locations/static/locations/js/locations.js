@@ -27,7 +27,5 @@ hqDefine('locations/js/locations', [
 
         var model = locationModels.locationSearchViewModel(treeModel, options);
         $('#location_search').koApplyBindings(model);
-
-        locationUtils.enableLocationSearchSelect();
     });
 });

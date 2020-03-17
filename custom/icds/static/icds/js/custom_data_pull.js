@@ -9,7 +9,6 @@ hqDefine('icds/js/custom_data_pull', [
 ) {
     'use strict';
     $(function () {
-        locationUtils.enableLocationSearchSelect();
         $('#month_select').datepicker({
             dateFormat: "yy-mm-dd",
             beforeShowDay: function (date) {

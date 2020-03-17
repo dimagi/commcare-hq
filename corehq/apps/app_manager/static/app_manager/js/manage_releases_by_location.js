@@ -106,6 +106,5 @@ hqDefine('app_manager/js/manage_releases_by_location', [
         }
         var searchViewModel = manageReleaseSearchViewModel();
         $("#manage-app-releases").koApplyBindings(searchViewModel);
-        locationUtils.enableLocationSearchSelect();
     });
 });
