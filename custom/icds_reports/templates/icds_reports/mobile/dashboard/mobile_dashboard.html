@@ -89,6 +89,8 @@ Split up compression due to a weird js dependency bug that makes it not work wit
             <div class="ng-view"></div>
           </div>
         </div>
+        <img src="{% static 'icds_reports/mobile/images/share-icon.png' %}"
+             ng-if="isMobile && !filtersOpen && isWebView && haveAccessToFeatures" class="share-icon" ng-click="shareViaWhatsapp()">
       </div>
   </div>
 </div>

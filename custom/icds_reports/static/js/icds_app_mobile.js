@@ -2,7 +2,7 @@
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function MainMobileController($scope, $route, $routeParams, $location, $window, $http,
-    isWebUser, userLocationId, isMobile) {
+                              isWebUser, userLocationId, isMobile, haveAccessToFeatures) {
     $scope.$route = $route;
     $scope.$location = $location;
     $scope.$routeParams = $routeParams;
@@ -11,6 +11,7 @@ function MainMobileController($scope, $route, $routeParams, $location, $window, 
     $scope.isWebUser = isWebUser;
     $scope.dateChanged = false;
     $scope.isMobile = isMobile;
+    $scope.haveAccessToFeatures = haveAccessToFeatures;
 
     $scope.checkAccessToLocation = function () {
         var locationId = $location.search()['location_id'];
@@ -42,6 +43,25 @@ function MainMobileController($scope, $route, $routeParams, $location, $window, 
             document.getElementById('nav-menu').style.left = '-300px';
         }
     };
+
+    $scope.filtersOpen = false;
+    $scope.$on('openFilterMenu', function () {
+        $scope.filtersOpen = true;
+    });
+    $scope.$on('closeFilterMenu', function () {
+        $scope.filtersOpen = false;
+    });
+    $scope.$on('mobile_filter_data_changed', function () {
+        $scope.filtersOpen = false;
+    });
+
+    // Reference: https://developer.chrome.com/multidevice/user-agent#webview_user_agent
+    $scope.isWebView = navigator.userAgent.includes('wv') ||
+        (navigator.userAgent.includes("Version/") && navigator.userAgent.includes("Chrome/"));
+
+    $scope.shareViaWhatsapp = function () {
+        Android.shareViaWhatsapp();
+    };
 }
 
 MainMobileController.$inject = [
@@ -54,6 +74,7 @@ MainMobileController.$inject = [
     'isWebUser',
     'userLocationId',
     'isMobile',
+    'haveAccessToFeatures',
 ];
 
 window.angular.module('icdsApp', [

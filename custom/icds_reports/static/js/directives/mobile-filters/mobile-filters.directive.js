@@ -1,4 +1,4 @@
-function MobileFiltersController($scope) {
+function MobileFiltersController($scope, $rootScope) {
     const MONTH = 'month';
     const LOCATION = 'location';
     $scope.selectedTab = LOCATION;
@@ -18,7 +18,7 @@ function MobileFiltersController($scope) {
         vm.showAgeFilter = true;
     }
     $scope.closeFilters = function () {
-        $scope.$emit('closeFilterMenu', {});
+        $rootScope.$broadcast('closeFilterMenu', {});
     };
     $scope.selectMonthTab = function () {
         $scope.selectedTab = MONTH;
@@ -55,13 +55,13 @@ function MobileFiltersController($scope) {
         }
         if ($scope.hasLocation && $scope.hasDate && $scope.receivedAdditionalFilterData ) {
             // if we have all the data then pass it along to other places
-            $scope.$emit('mobile_filter_data_changed', $scope.filterData);
+            $rootScope.$broadcast('mobile_filter_data_changed', $scope.filterData);
         }
     });
 }
 
 
-MobileFiltersController.$inject = ['$scope'];
+MobileFiltersController.$inject = ['$scope', '$rootScope'];
 
 window.angular.module('icdsApp').directive("mobileFilters", ['templateProviderService', function (templateProviderService) {
     return {
