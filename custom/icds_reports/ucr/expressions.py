@@ -17,7 +17,6 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAcce
 from corehq.toggles import ICDS_UCR_ELASTICSEARCH_DOC_LOADING, NAMESPACE_OTHER
 from dimagi.ext.jsonobject import JsonObject, ListProperty, StringProperty, DictProperty, BooleanProperty
 from corehq.apps.app_manager.dbaccessors import get_app
-from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from django.conf import settings
 from django.http import Http404
 from corehq.apps.app_manager.util import is_linked_app
