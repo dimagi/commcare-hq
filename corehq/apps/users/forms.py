@@ -404,7 +404,7 @@ class SetUserPasswordForm(EncodedPasswordChangeFormMixin, SetPasswordForm):
                 _("Reset Password for Mobile Worker"),
                 crispy.Field(
                     'new_password1',
-                    data_bind="initializeValue: password, value: password, valueUpdate: 'input'",
+                    data_bind="initializeValue: password, textInput: password",
                     value=initial_password,
                 ),
                 crispy.Field(
@@ -580,7 +580,7 @@ class NewMobileWorkerForm(forms.Form):
                 crispy.Div(
                     crispy.Field(
                         'username',
-                        data_bind="value: username, valueUpdate: 'keyup'",
+                        data_bind="textInput: username",
                         maxlength=max_chars_username,
                     ),
                     data_bind='''
@@ -606,7 +606,7 @@ class NewMobileWorkerForm(forms.Form):
                         _("Password"),
                         InlineField(
                             'new_password',
-                            data_bind="value: password, valueUpdate: 'input'",
+                            data_bind="textInput: password",
                         ),
                         crispy.HTML('''
                             <p class="help-block" data-bind="if: $root.isSuggestedPassword">

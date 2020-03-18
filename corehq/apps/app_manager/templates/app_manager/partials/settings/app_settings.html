@@ -106,8 +106,7 @@
 <script type="text/html" id="CommcareSettings.widgets.text">
   <span>
         <input type="text" class="col-sm-6 form-control" autocomplete="off" data-bind="
-            value: visibleValue,
-            valueUpdate: 'textchange',
+            textInput: visibleValue,
             attr: {disabled: !enabled(), id: inputId}
         " />
     </span>
@@ -116,8 +115,7 @@
 <script type="text/html" id="CommcareSettings.widgets.number">
   <span>
         <input type="number" class="col-sm-3 form-control" data-bind="
-            value: visibleValue,
-            valueUpdate: 'textchange',
+            textInput: visibleValue,
             attr: {disabled: !enabled(), id: inputId}
         " />
     </span>
