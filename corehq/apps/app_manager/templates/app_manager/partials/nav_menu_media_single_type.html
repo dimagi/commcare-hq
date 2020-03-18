@@ -82,9 +82,7 @@
     <label class="control-label col-sm-2">{% trans "Path" %}</label>
     <div class="col-sm-4">
       <input type="text" class="form-control"
-             data-bind="value: customPath,
-                         enable: enabled,
-                         valueUpdate: 'textchange'" />
+             data-bind="textInput: customPath, enable: enabled" />
       <input type="hidden" class="jr-resource-field"
              name="{{ qualifier|default_if_none:"" }}media_{{ type }}"
              data-bind="value: savedPath" />

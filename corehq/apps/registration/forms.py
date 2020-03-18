@@ -118,8 +118,7 @@ class RegisterWebUserForm(forms.Form):
                     hqcrispy.InlineField(
                         'full_name',
                         css_class="input-lg",
-                        data_bind="value: fullName, "
-                                  "valueUpdate: 'keyup', "
+                        data_bind="textInput: fullName, "
                                   "koValidationStateFeedback: { "
                                   "   validator: fullName "
                                   "}"
@@ -128,8 +127,7 @@ class RegisterWebUserForm(forms.Form):
                         hqcrispy.InlineField(
                             'email',
                             css_class="input-lg",
-                            data_bind="value: email, "
-                                      "valueUpdate: 'keyup', "
+                            data_bind="textInput: email, "
                                       "koValidationStateFeedback: { "
                                       "  validator: email, "
                                       "  delayedValidator: emailDelayed "
@@ -145,8 +143,7 @@ class RegisterWebUserForm(forms.Form):
                         'password',
                         css_class="input-lg",
                         autocomplete="new-password",
-                        data_bind="value: password, "
-                                  "valueUpdate: 'keyup', "
+                        data_bind="textInput: password, "
                                   "koValidationStateFeedback: { "
                                   "   validator: password, "
                                   "   delayedValidator: passwordDelayed "
@@ -156,8 +153,7 @@ class RegisterWebUserForm(forms.Form):
                     hqcrispy.InlineField(
                         'phone_number',
                         css_class="input-lg",
-                        data_bind="value: phoneNumber, "
-                                  "valueUpdate: 'keyup'"
+                        data_bind="textInput: phoneNumber, "
                     ),
                     hqcrispy.InlineField('atypical_user'),
                     twbscrispy.StrictButton(
@@ -183,8 +179,7 @@ class RegisterWebUserForm(forms.Form):
                     hqcrispy.InlineField(
                         'project_name',
                         css_class="input-lg",
-                        data_bind="value: projectName, "
-                                  "valueUpdate: 'keyup', "
+                        data_bind="textInput: projectName, "
                                   "koValidationStateFeedback: { "
                                   "   validator: projectName "
                                   "}",
@@ -329,7 +324,7 @@ class WebUserInvitationForm(NoAutocompleteMixin, DomainRegistrationForm):
     password = forms.CharField(label=_('Create Password'),
                                widget=forms.PasswordInput(render_value=False,
                                                           attrs={
-                                                            'data-bind': "value: password, valueUpdate: 'input'",
+                                                            'data-bind': "textInput: password",
                                                             'class': 'form-control',
                                                           }),
                                help_text=mark_safe("""

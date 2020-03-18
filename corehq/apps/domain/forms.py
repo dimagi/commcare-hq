@@ -1254,7 +1254,7 @@ class ConfidentialPasswordResetForm(HQPasswordResetForm):
 class HQSetPasswordForm(EncodedPasswordChangeFormMixin, SetPasswordForm):
     new_password1 = forms.CharField(label=ugettext_lazy("New password"),
                                     widget=forms.PasswordInput(
-                                        attrs={'data-bind': "value: password, valueUpdate: 'input'"}),
+                                        attrs={'data-bind': "textInput: password"}),
                                     help_text=mark_safe("""
                                     <span data-bind="text: passwordHelp, css: color">
                                     """))
