@@ -53,7 +53,7 @@ class TestParser(BaseTest):
             errors,
             ['Multiple transitions for 11114, Merge and Rename',
              'Multiple transitions for 11111, Merge and Rename',
-             'Invalid Transition Unknown',
+             'Invalid Operation Unknown',
              'Multiple transitions for 11311, Extract and Rename',
              'Multiple transitions for 12211, Split and Rename',
              'Multiple transitions for 12121, Split and Rename',
