@@ -2,7 +2,7 @@
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function MainMobileController($scope, $route, $routeParams, $location, $window, $http,
-    isWebUser, userLocationId, isMobile) {
+    isWebUser, userLocationId, isMobile, haveAccessToFeatures) {
     $scope.$route = $route;
     $scope.$location = $location;
     $scope.$routeParams = $routeParams;
@@ -11,6 +11,7 @@ function MainMobileController($scope, $route, $routeParams, $location, $window, 
     $scope.isWebUser = isWebUser;
     $scope.dateChanged = false;
     $scope.isMobile = isMobile;
+    $scope.haveAccessToFeatures = haveAccessToFeatures;
 
     $scope.checkAccessToLocation = function () {
         var locationId = $location.search()['location_id'];
@@ -53,6 +54,8 @@ function MainMobileController($scope, $route, $routeParams, $location, $window, 
     $scope.$on('mobile_filter_data_changed', function () {
         $scope.filtersOpen = false;
     });
+
+    // Reference: https://developer.chrome.com/multidevice/user-agent#webview_user_agent (works only on android 5 and above)
     $scope.isWebView = navigator.userAgent.includes('wv');
 
     $scope.shareViaWhatsapp = function () {
@@ -70,6 +73,7 @@ MainMobileController.$inject = [
     'isWebUser',
     'userLocationId',
     'isMobile',
+    'haveAccessToFeatures'
 ];
 
 window.angular.module('icdsApp', [
