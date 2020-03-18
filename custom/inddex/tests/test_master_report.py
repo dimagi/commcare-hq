@@ -39,30 +39,25 @@ class TestMasterReport(TestCase):
         populate_inddex_domain(self.domain)
         self.assert_cases_created()
         self.assert_fixtures_created()
-        expected_headers, expected_rows = get_expected_report()
 
+        expected = get_expected_report()
         # exclude rows not pulled from cases for now
-        case_id_column = expected_headers.index('caseid')
-        expected_rows = [r for r in expected_rows if r[case_id_column]]
+        expected = [r for r in get_expected_report() if r['caseid']]
 
-        actual_headers, actual_rows = self.run_report()
-        self.assertEqual(expected_headers, actual_headers)
+        actual = self.run_report()
+        self.assertItemsEqual(expected[0].keys(), actual[0].keys())  # compare headers
 
         # sort uniformly for comparison
-        expected_rows = self.sort_rows(expected_rows, expected_headers)
-        actual_rows = self.sort_rows(actual_rows, expected_headers)
+        expected = self.sort_rows(expected)
+        actual = self.sort_rows(actual)
 
-        self.assert_same_foods_present(expected_rows, actual_rows, expected_headers)
-        for expected, actual in zip(expected_rows, actual_rows):
-            self.assert_rows_match(expected, actual, expected_headers)
+        self.assert_same_foods_present(expected, actual)
+        for expected_row, actual_row in zip(expected, actual):
+            self.assert_rows_match(expected_row, actual_row)
 
     @staticmethod
-    def sort_rows(rows, headers):
-        def sort_key(row):
-            return tuple(row[headers.index(col)] for col in [
-                'food_name', 'measurement_amount',
-            ])
-        return sorted(rows, key=sort_key)
+    def sort_rows(rows):
+        return sorted(rows, key=lambda row: (row['food_name'], row['measurement_amount']))
 
     def assert_cases_created(self):
         accessor = CaseAccessors(self.domain)
@@ -97,24 +92,28 @@ class TestMasterReport(TestCase):
             'recall_status': '',
         })
         headers = [h.html for h in report_data.headers]
-        return headers, report_data.rows
+        return [dict(zip(headers, row)) for row in report_data.rows]
 
-    def assert_same_foods_present(self, expected_rows, actual_rows, headers):
-        name_column = headers.index('food_name')
+    def assert_same_foods_present(self, expected, actual):
         self.assertEqual(
-            [r[name_column] for r in expected_rows],
-            [r[name_column] for r in actual_rows],
+            [r['food_name'] for r in expected],
+            [r['food_name'] for r in actual],
         )
 
-    def assert_rows_match(self, expected_row, actual_row, headers):
+    def assert_rows_match(self, expected_row, actual_row):
         return  # I know the report isn't nearly correct yet
-        differing_cols = [
-            (header, expected, actual)
-            for (header, expected, actual) in zip(headers, expected_row, actual_row)
-            if expected != actual
-        ]
+
+        def get_differing_columns(expected_row, actual_row):
+            ordered_expected = sorted(expected_row.items())
+            ordered_actual = sorted(actual_row.items())
+            for ((h1, expected), (h2, actual)) in zip(ordered_expected, ordered_actual):
+                assert h1 == h2, "Somehow the headers differ"
+                if expected != actual:
+                    yield (h1, expected, actual)
+
+        differing_cols = list(get_differing_columns(expected_row, actual_row))
         if differing_cols:
-            food_name = expected_row[headers.index('food_name')]
+            food_name = expected_row['food_name']
             msg = f"Incorrect columns in row for {food_name}:"
             for header, expected, actual in differing_cols:
                 msg += f"\n{header}: expected '{expected}' got '{actual}'"
