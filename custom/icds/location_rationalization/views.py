@@ -7,8 +7,6 @@ from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy
 from django.views.decorators.http import require_GET
 
-from memoized import memoized
-
 from corehq import toggles
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
