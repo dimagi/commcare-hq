@@ -25,6 +25,9 @@
 {% endblock %}
 
 {% block reporttable %}
+{% if report_comment %}
+  <h3 style="text-align: left">{{ report_comment }}<br/></h3>
+{% endif %}
 {% if report.needs_filters %}
     {% include 'reports/partials/description.html' %}
 {% else %}
