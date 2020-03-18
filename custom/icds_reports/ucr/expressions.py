@@ -18,8 +18,7 @@ from corehq.toggles import ICDS_UCR_ELASTICSEARCH_DOC_LOADING, NAMESPACE_OTHER
 from dimagi.ext.jsonobject import JsonObject, ListProperty, StringProperty, DictProperty, BooleanProperty
 from corehq.apps.app_manager.dbaccessors import get_build_by_version
 from django.conf import settings
-from django.http import Http404
-from corehq.apps.app_manager.util import is_linked_app
+
 
 CUSTOM_UCR_EXPRESSIONS = [
     ('icds_parent_id', 'custom.icds_reports.ucr.expressions.parent_id'),
