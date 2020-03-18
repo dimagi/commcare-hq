@@ -1,15 +1,16 @@
 from unittest import TestCase
 from unittest.mock import patch, Mock
 
-from corehq.apps.fixtures.models import FixtureDataItem
+from corehq.apps.fixtures.models import FixtureDataItem, FixtureDataType
 from custom.inddex.couch_db_data_collector import CouchDbDataCollector
 
 
 class CouchDbDataCollectorTest(TestCase):
 
     def setUp(self):
-        self.couch_db = CouchDbDataCollector('test-domain', )
-        self.couch_db.tables = {'test_table': '0123456'}
+        with patch.object(FixtureDataType, 'by_domain', lambda **kw: []):
+            self.couch_db = CouchDbDataCollector('test-domain', )
+            self.couch_db.tables = {'test_table': '0123456'}
 
     def test_get_data_from_table_with_no_table_name_returns_attribute_error(self):
         self.couch_db.tables['other_test_table'] = '6543210'
