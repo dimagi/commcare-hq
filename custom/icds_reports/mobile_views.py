@@ -46,7 +46,7 @@ def password_reset(request, domain):
     kwargs['extra_context']['login_url'] = reverse('cas_mobile_dashboard_login', args=[domain])
     # so that we can redirect to a custom "done" page
     kwargs['post_reset_redirect'] = reverse('cas_mobile_dashboard_password_reset_done', args=[domain])
-    return auth_views.password_reset(request, **kwargs)
+    return auth_views.PasswordResetView.as_view(**kwargs)(request)
 
 
 @xframe_options_exempt
@@ -54,7 +54,7 @@ def password_reset_done(request, domain):
     kwargs = copy.deepcopy(PASSWORD_RESET_DONE_KWARGS)
     kwargs['template_name'] = 'icds_reports/mobile/mobile_password_reset_done.html'
     kwargs['extra_context']['domain'] = domain
-    return auth_views.password_reset_done(request, **kwargs)
+    return auth_views.PasswordResetDoneView.as_view(**kwargs)(request)
 
 
 @location_safe

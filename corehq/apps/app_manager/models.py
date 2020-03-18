@@ -5716,6 +5716,8 @@ class DeleteFormRecord(DeleteRecord):
 class ExchangeApplication(models.Model):
     domain = models.CharField(max_length=255, null=False)
     app_id = models.CharField(max_length=255, null=False)
+    last_released = models.DateTimeField(null=True)  # manual value unrelated to HQ's definition of last released
+    help_link = models.CharField(max_length=255, null=True)
 
     class Meta(object):
         unique_together = ('domain', 'app_id')

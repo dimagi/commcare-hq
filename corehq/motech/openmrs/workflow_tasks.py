@@ -185,7 +185,7 @@ class CreateVisitsEncountersObsTask(WorkflowTask):
             if form_config.xmlns == self.form_json['form']['@xmlns']:
                 start_datetime, stop_datetime = self._get_start_stop_datetime(form_config)
                 subtasks.append(
-                    CreateVisitTask(
+                    CreateOptionalVisitTask(
                         self.requests,
                         person_uuid=self.person_uuid,
                         provider_uuid=provider_uuid,
@@ -369,7 +369,11 @@ class UpdatePatientIdentifierTask(WorkflowTask):
         )
 
 
-class CreateVisitTask(WorkflowTask):
+class CreateOptionalVisitTask(WorkflowTask):
+    """
+    If ``visit_type`` is given, creates a Visit and an Encounter for
+    that Visit. Otherwise just creates the Encounter.
+    """
 
     def __init__(self, requests, person_uuid, provider_uuid, start_datetime, stop_datetime, values_for_concept,
                  encounter_type, openmrs_form, visit_type, location_uuid=None):
