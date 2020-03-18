@@ -7,7 +7,7 @@ from corehq.apps.fixtures.models import FixtureDataItem, FixtureDataType
 
 class CouchDbDataCollector:
     """
-    This class simplifies getting and filtering data from CouchDB for a specific domain
+    This class simplifies getting and filtering fixture data from CouchDB for a specific domain
     """
 
     def __init__(self, domain, tables=None):
