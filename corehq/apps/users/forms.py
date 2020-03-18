@@ -12,7 +12,7 @@ from django.template.loader import get_template
 from django.urls import reverse
 from django.utils.functional import lazy
 from django.utils.safestring import mark_safe
-from django.utils.translation import string_concat
+from django.utils.text import format_lazy
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy, ugettext_noop
 
@@ -380,10 +380,15 @@ class SetUserPasswordForm(EncodedPasswordChangeFormMixin, SetPasswordForm):
 
         if self.project.strong_mobile_passwords:
             self.fields['new_password1'].widget = forms.TextInput()
-            self.fields['new_password1'].help_text = mark_safe_lazy(string_concat('<i class="fa fa-warning"></i>',
-                 ugettext_lazy("This password is automatically generated. Please copy it or create your own. It will not be shown again."),
-                 '<br /><span data-bind="text: passwordHelp, css: color">'
-            ))
+            self.fields['new_password1'].help_text = mark_safe_lazy(
+                format_lazy(
+                    ('<i class="fa fa-warning"></i>{}<br />'
+                     '<span data-bind="text: passwordHelp, css: color">'),
+                    ugettext_lazy(
+                        "This password is automatically generated. "
+                        "Please copy it or create your own. It will not be shown again."),
+                )
+            )
             initial_password = generate_strong_password()
 
         self.helper = FormHelper()
@@ -544,10 +549,14 @@ class NewMobileWorkerForm(forms.Form):
         if self.project.strong_mobile_passwords:
             # Use normal text input so auto-generated strong password is visible
             self.fields['new_password'].widget = forms.TextInput()
-            self.fields['new_password'].help_text = mark_safe_lazy(string_concat('<i class="fa fa-warning"></i>',
-                ugettext_lazy('This password is automatically generated. Please copy it or create your own. It will not be shown again.'),
-                '<br />'
-            ))
+            self.fields['new_password'].help_text = mark_safe_lazy(
+                format_lazy(
+                    '<i class="fa fa-warning"></i>{}<br />',
+                    ugettext_lazy(
+                        'This password is automatically generated. '
+                        'Please copy it or create your own. It will not be shown again.'),
+                )
+            )
 
         if project.uses_locations:
             self.fields['location_id'].widget = forms.Select()

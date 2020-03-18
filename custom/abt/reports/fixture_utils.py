@@ -37,7 +37,7 @@ def get_locations(domain, filters) -> List[LocationTuple]:
         filter_in={
             'id': [filters['level_1']] if filters['level_1'] else None
         },
-        filter_out={'name': 'Other'},
+        filter_out={'other': '1'},
     )
     l2s_by_l1 = get_fixture_dicts_by_key(
         domain,
@@ -47,7 +47,7 @@ def get_locations(domain, filters) -> List[LocationTuple]:
             'level_1_dcv': [l['id'] for l in level_1s],
             'id': [filters['level_2']] if filters['level_2'] else None
         },
-        filter_out={'name': 'Other'},
+        filter_out={'other': '1'},
     )
     l3s_by_l2 = get_fixture_dicts_by_key(
         domain,
@@ -57,7 +57,7 @@ def get_locations(domain, filters) -> List[LocationTuple]:
             'level_2_dcv': [l2['id'] for l2s in l2s_by_l1.values() for l2 in l2s],
             'id': [filters['level_3']] if filters['level_3'] else None
         },
-        filter_out={'name': 'Other'},
+        filter_out={'other': '1'},
     )
     l4_data_items = get_fixture_items_for_data_type(domain, data_types_by_tag["level_4_dcv"]._id)
     country_has_level_4 = len(l4_data_items) > 1
@@ -70,7 +70,7 @@ def get_locations(domain, filters) -> List[LocationTuple]:
                 'level_3_dcv': [l3['id'] for l3s in l3s_by_l2.values() for l3 in l3s],
                 'id': [filters['level_4']] if filters['level_4'] else None
             },
-            filter_out={'name': 'Other'},
+            filter_out={'other': '1'},
         )
     else:
         l4s_by_l3 = {}

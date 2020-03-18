@@ -388,6 +388,12 @@ Dict expressions
 .. autoclass:: corehq.apps.userreports.expressions.date_specs.AddDaysExpressionSpec
 
 
+"Add Hours" expressions
+''''''''''''''''''''''
+
+.. autoclass:: corehq.apps.userreports.expressions.date_specs.AddHoursExpressionSpec
+
+
 "Add Months" expressions
 ''''''''''''''''''''''''
 

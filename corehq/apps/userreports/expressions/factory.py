@@ -16,7 +16,7 @@ from corehq.apps.userreports.expressions.date_specs import (
     DiffDaysExpressionSpec,
     MonthEndDateExpressionSpec,
     MonthStartDateExpressionSpec,
-)
+    AddHoursExpressionSpec)
 from corehq.apps.userreports.expressions.list_specs import (
     FilterItemsExpressionSpec,
     FlattenExpressionSpec,
@@ -154,6 +154,15 @@ def _dict_expression(spec, context):
 
 def _add_days_expression(spec, context):
     wrapped = AddDaysExpressionSpec.wrap(spec)
+    wrapped.configure(
+        date_expression=ExpressionFactory.from_spec(wrapped.date_expression, context),
+        count_expression=ExpressionFactory.from_spec(wrapped.count_expression, context),
+    )
+    return wrapped
+
+
+def _add_hours_expression(spec, context):
+    wrapped = AddHoursExpressionSpec.wrap(spec)
     wrapped.configure(
         date_expression=ExpressionFactory.from_spec(wrapped.date_expression, context),
         count_expression=ExpressionFactory.from_spec(wrapped.count_expression, context),
@@ -314,6 +323,7 @@ class ExpressionFactory(object):
         'nested': _nested_expression,
         'dict': _dict_expression,
         'add_days': _add_days_expression,
+        'add_hours': _add_hours_expression,
         'add_months': _add_months_expression,
         'month_start_date': _month_start_date_expression,
         'month_end_date': _month_end_date_expression,

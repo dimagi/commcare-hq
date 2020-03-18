@@ -17,6 +17,7 @@ hqDefine("js/icds_dashboard_utils", function () {
         angular.module(appName).constant('navMetadata', initialPageData.get("nav_metadata"));
         angular.module(appName).constant('sddMetadata', initialPageData.get("sdd_metadata"));
         angular.module(appName).constant('navMenuItems', initialPageData.get("nav_menu_items"));
+        angular.module(appName).constant('factSheetSections', initialPageData.get("fact_sheet_sections"));
         angular.module(appName).constant('userFullName', initialPageData.get("user_full_name"));
         angular.module(appName).constant('userUsername', initialPageData.get("user_username"));
         angular.module(appName).constant('mapboxAccessToken', initialPageData.get("MAPBOX_ACCESS_TOKEN"));
@@ -221,6 +222,14 @@ hqDefine("js/icds_dashboard_utils", function () {
                 template: "<service-delivery-dashboard></service-delivery-dashboard>",
             });
     }
+    function addFactSheetRoutes($routeProvider) {
+        $routeProvider.when("/fact_sheets", {
+            template: "<progress-report></progress-report>",
+        })
+            .when("/fact_sheets/:report", {
+                template: "<progress-report></progress-report>",
+            });
+    }
     function addSharedRoutes($routeProvider, defaultStep) {
         addMaternalChildRoutes($routeProvider, defaultStep);
         addCasReachRoutes($routeProvider, defaultStep);
@@ -228,6 +237,7 @@ hqDefine("js/icds_dashboard_utils", function () {
         addAWCInfrastructureRoutes($routeProvider, defaultStep);
         addAWCReportRoutes($routeProvider);
         addSDDRoutes($routeProvider);
+        addFactSheetRoutes($routeProvider);
     }
     return {
         populateDashboardConstants: populateDashboardConstants,
