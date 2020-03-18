@@ -15,7 +15,7 @@ class Dumper(object):
     def __init__(self, location_types):
         """
         Dump all transitions in an excel sheet in a format easy to understand by users
-        There a tab per location type
+        One tab per location type, which changes specific to the location type
         See TestDumper.test_dump for example
         """
         self.location_types = location_types

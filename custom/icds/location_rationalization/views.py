@@ -53,8 +53,7 @@ class ValidateView(BaseLocationRationalizationView):
         if self.request.POST:
             return LocationRationalizationValidateForm(self.request.POST, self.request.FILES,
                                                       location_types=self._location_types)
-        else:
-            return LocationRationalizationValidateForm()
+        return LocationRationalizationValidateForm()
 
     def post(self, request, *args, **kwargs):
         if self.form.is_valid():
