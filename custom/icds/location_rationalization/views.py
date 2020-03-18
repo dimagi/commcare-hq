@@ -4,7 +4,7 @@ from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
 from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy, ugettext_noop
+from django.utils.translation import ugettext_lazy
 from django.views.decorators.http import require_GET
 
 from memoized import memoized
@@ -59,14 +59,14 @@ class LocationRationalizationView(BaseDomainView):
         except WorkbookJSONError as e:
             messages.error(request, str(e))
         else:
-            if self._workbook_is_valid(workbook):
+            if self._workbook_is_valid(request, workbook):
                 transitions, errors = Parser(workbook.worksheets[0], self._location_types).parse()
                 [messages.error(request, error) for error in errors]
                 if not errors:
                     return self._generate_response(transitions)
         return self.get(request, *args, **kwargs)
 
-    def _workbook_is_valid(self, workbook):
+    def _workbook_is_valid(self, request, workbook):
         # ensure mandatory columns in the excel sheet
         worksheet = workbook.worksheets[0]
         headers = worksheet.fieldnames

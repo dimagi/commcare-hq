@@ -29,7 +29,7 @@ hqDefine("icds/js/location_rationalization", [
             return self;
         };
 
-        var $content = $("#hq-content")
+        var $content = $("#hq-content");
         $content.koApplyBindings(LocationRationalizationModel({
             baseUrl: $content.find("#download_link").attr("href"),
         }));
