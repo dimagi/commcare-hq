@@ -18,10 +18,9 @@ from corehq.toggles import ICDS_UCR_ELASTICSEARCH_DOC_LOADING, NAMESPACE_OTHER
 from dimagi.ext.jsonobject import JsonObject, ListProperty, StringProperty, DictProperty, BooleanProperty
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
-from corehq.apps.app_manager.models import LinkedApplication
 from django.conf import settings
 from django.http import Http404
-
+from corehq.apps.app_manager.util import is_linked_app
 
 CUSTOM_UCR_EXPRESSIONS = [
     ('icds_parent_id', 'custom.icds_reports.ucr.expressions.parent_id'),
@@ -300,14 +299,15 @@ class GetAppVersion(JsonObject):
         form = form_accessor.get_form(form_id)
 
         app = get_app(domain_name, form.app_id)
-        if isinstance(app, LinkedApplication):
+
+        if is_linked_app(app):
             app_version = app.upstream_version
         else:
             app_version = app.version
 
         return app_version
 
-    def get_version_from_appverision_string(self, item, context):
+    def get_version_from_appversion_string(self, item, context):
         app_version_string = self._app_version_string(item, context)
         return get_version_from_appversion_text(app_version_string)
 
@@ -316,10 +316,10 @@ class GetAppVersion(JsonObject):
             try:
                 app_version = self.get_version_from_app_object(item)
             except Http404:
-                app_version = self.get_version_from_appverision_string(item, context)
+                app_version = self.get_version_from_appversion_string(item, context)
 
         else:
-            app_version = self.get_version_from_appverision_string(item, context)
+            app_version = self.get_version_from_appversion_string(item, context)
 
         return app_version
 
