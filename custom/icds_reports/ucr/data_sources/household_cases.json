@@ -107,7 +107,7 @@
         "property_name": "hh_reg_date"
       },
       {
-        "datatype": "int",
+        "datatype": "integer",
         "is_primary_key": false,
         "column_id": "hh_num",
         "is_nullable": true,
