@@ -1,4 +1,4 @@
-OPERATION_COLUMN_NAME = 'transition'
+OPERATION_COLUMN_NAME = 'operation'
 MERGE_OPERATION = 'Merge'
 SPLIT_OPERATION = 'Split'
 MOVE_OPERATION = 'Rename'
