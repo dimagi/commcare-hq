@@ -95,10 +95,6 @@ from corehq.tabs.utils import (
     sidebar_to_dropdown,
 )
 from corehq.toggles import PUBLISH_CUSTOM_REPORTS
-from custom.icds.location_rationalization.views import (
-    DownloadTemplateView,
-    ValidateView,
-)
 from custom.icds.views.hosted_ccz import ManageHostedCCZ, ManageHostedCCZLink
 
 
@@ -1213,6 +1209,7 @@ class ProjectUsersTab(UITab):
         '/a/{domain}/settings/users/',
         '/a/{domain}/settings/cloudcare/',
         '/a/{domain}/settings/locations/',
+        '/a/{domain}/location_rationalization/',
     )
 
     @property
@@ -1446,10 +1443,10 @@ class ProjectUsersTab(UITab):
             })
 
         if toggles.LOCATION_RATIONALIZATION.enabled(self.couch_user.username):
+            from custom.icds.location_rationalization.views import LocationRationalizationView
             menu.append({
                 'title': _("Location Rationalization"),
-                'url': reverse(ValidateView.urlname, args=[self.domain]),
-                'show_in_dropdown': True,
+                'url': reverse(LocationRationalizationView.urlname, args=[self.domain]),
             })
 
         return menu
@@ -2138,25 +2135,3 @@ class AdminTab(UITab):
         return (self.couch_user and
                 (self.couch_user.is_superuser or
                  toggles.IS_CONTRACTOR.enabled(self.couch_user.username)))
-
-
-class LocationRationalizationTab(UITab):
-    title = ugettext_noop('Location Rationalization')
-    url_prefix_formats = (
-        '/a/{domain}/location_rationalization/',
-    )
-    _is_viewable = False
-
-    @property
-    def sidebar_items(self):
-        items = super(LocationRationalizationTab, self).sidebar_items
-        items.append((_('Location Rationalization'), [
-            {'url': reverse(ValidateView.urlname, args=[self.domain]),
-             'title': ValidateView.page_title
-             },
-            {
-                'url': reverse(DownloadTemplateView.urlname, args=[self.domain]),
-                'title': DownloadTemplateView.page_title
-            }
-        ]))
-        return items
