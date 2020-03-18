@@ -1,8 +1,8 @@
 from mock import patch
 
 from custom.icds_reports.ucr.tests.test_base_form_ucr import BaseFormsTest
-from django.conf import settings
 from decimal import Decimal
+from django.test import TestCase, override_settings
 
 
 @patch('custom.icds_reports.ucr.expressions._get_user_location_id',
@@ -10,12 +10,12 @@ from decimal import Decimal
 @patch('corehq.apps.locations.ucr_expressions._get_location_type_name',
        lambda loc_id, context: 'awc')
 @patch('custom.icds_reports.ucr.expressions.GetAppVersion.get_version_from_app_object',
-       lambda self, item: 20000)
+       lambda self, item, app_version: 20000)
 class TestDailyFeedingForms(BaseFormsTest):
     ucr_name = "static-icds-cas-static-daily_feeding_forms"
 
+    @override_settings(SERVER_ENVIRONMENT='icds-cas')
     def test_daily_feeding_form_when_fetching_app_version_from_string(self):
-        settings.SERVER_ENVIRONMENT = 'icds'
         self._test_data_source_results(
             'daily_feeding_attendence', [
                 {
@@ -49,8 +49,8 @@ class TestDailyFeedingForms(BaseFormsTest):
                     'submitted_on': None
                 }])
 
+    @override_settings(SERVER_ENVIRONMENT='india')
     def test_daily_feeding_form_when_fetching_app_version_from_app(self):
-        settings.SERVER_ENVIRONMENT = 'india'
         self._test_data_source_results(
             'daily_feeding_attendence', [
                 {
