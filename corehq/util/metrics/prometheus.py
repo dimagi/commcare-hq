@@ -10,7 +10,7 @@ from corehq.util.metrics.metrics import HqMetrics
 class PrometheusMetrics(HqMetrics):
     """Prometheus Metrics Provider"""
 
-    def initialize(self):
+    def __init__(self):
         self._metrics = {}
 
     def _counter(self, name: str, value: float = 1, tags: dict = None, documentation: str = ''):

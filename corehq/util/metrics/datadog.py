@@ -22,7 +22,17 @@ class DatadogMetrics(HqMetrics):
     * DATADOG_APP_KEY
     """
 
-    def initialize(self):
+    def __init__(self):
+        if settings.UNIT_TESTING or settings.DEBUG or 'ddtrace.contrib.django' not in settings.INSTALLED_APPS:
+            try:
+                from ddtrace import tracer
+                tracer.enabled = False
+            except ImportError:
+                pass
+
+        if settings.UNIT_TESTING:
+            return
+
         if not settings.DATADOG_API_KEY or not settings.DATADOG_APP_KEY:
             raise Exception(
                 "Datadog not configured."
@@ -36,13 +46,6 @@ class DatadogMetrics(HqMetrics):
             pass
         else:
             initialize(settings.DATADOG_API_KEY, settings.DATADOG_APP_KEY)
-
-        if settings.UNIT_TESTING or settings.DEBUG or 'ddtrace.contrib.django' not in settings.INSTALLED_APPS:
-            try:
-                from ddtrace import tracer
-                tracer.enabled = False
-            except ImportError:
-                pass
 
     def _counter(self, name: str, value: float, tags: dict = None, documentation: str = ''):
         """Although this is submitted as a COUNT the Datadog app represents these as a RATE.

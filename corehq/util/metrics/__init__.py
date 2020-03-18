@@ -122,7 +122,6 @@ def _get_metrics_provider():
         providers = []
         for provider_path in settings.METRICS_PROVIDERS:
             provider = to_function(provider_path)()
-            provider.initialize()
             providers.append(provider)
 
         if not providers:
