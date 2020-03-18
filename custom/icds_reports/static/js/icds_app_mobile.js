@@ -40,8 +40,24 @@ function MainMobileController($scope, $route, $routeParams, $location, $window, 
     $scope.closeMenu = function () {
         if (isMobile) {
             document.getElementById('nav-menu').style.left = '-300px';
-        }
+        };
     };
+
+    $scope.filtersOpen = false;
+    $scope.$on('openFilterMenu', function () {
+        $scope.filtersOpen = true;
+    });
+    $scope.$on('closeFilterMenu', function () {
+        $scope.filtersOpen = false;
+    });
+    $scope.$on('mobile_filter_data_changed', function () {
+        $scope.filtersOpen = false;
+    });
+    $scope.isWebView = navigator.userAgent.includes('wv');
+
+    $scope.shareViaWhatsapp = function () {
+        Android.shareViaWhatsapp();
+    }
 }
 
 MainMobileController.$inject = [
