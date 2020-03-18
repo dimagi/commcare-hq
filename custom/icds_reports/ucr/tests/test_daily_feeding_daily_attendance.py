@@ -2,7 +2,7 @@ from mock import patch
 
 from custom.icds_reports.ucr.tests.test_base_form_ucr import BaseFormsTest
 from decimal import Decimal
-from django.test import TestCase, override_settings
+from django.test import override_settings
 
 
 @patch('custom.icds_reports.ucr.expressions._get_user_location_id',
