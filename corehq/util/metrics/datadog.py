@@ -52,16 +52,16 @@ class DatadogMetrics(HqMetrics):
         This implementation of histogram uses tagging to record the buckets.
         It does not use the Datadog Histogram metric type.
 
-        The metric itself will be incremented by 1 on each call to `observe`. The value
-        passed to `observe` will be used to create the bucket tag.
+        The metric itself will be incremented by 1 on each call. The value
+        passed to `metrics_histogram` will be used to create the bucket tag.
 
         For example:
 
-            h = Histogram(
-                'commcare.request.duration', 'description',
-                bucket_tag='duration', buckets=[1,2,3], bucket_units='ms'
+            h = metrics_histogram(
+                'commcare.request.duration', 1.4,
+                bucket_tag='duration', buckets=[1,2,3], bucket_units='ms',
+                tags=tags
             )
-            h.observe(1.4)
 
             # resulting Datadog metric
             #    commcare.request.duration:1|c|#duration:lt_2ms

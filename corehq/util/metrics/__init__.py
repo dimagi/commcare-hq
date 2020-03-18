@@ -11,6 +11,7 @@ __all__ = [
     'metrics_counter',
     'metrics_gauge',
     'metrics_histogram',
+    'metrics_gauge_task',
 ]
 
 _metrics = None
