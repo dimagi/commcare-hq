@@ -91,8 +91,6 @@
         "property_name": "closed_on"
       },
       {
-        "display_name": null,
-        "property_path": [],
         "datatype": "string",
         "is_primary_key": false,
         "column_id": "name",
@@ -101,8 +99,6 @@
         "property_name": "name"
       },
       {
-        "display_name": null,
-        "property_path": [],
         "datatype": "date",
         "is_primary_key": false,
         "column_id": "hh_reg_date",
@@ -111,9 +107,7 @@
         "property_name": "hh_reg_date"
       },
       {
-        "display_name": null,
-        "property_path": [],
-        "datatype": "string",
+        "datatype": "int",
         "is_primary_key": false,
         "column_id": "hh_num",
         "is_nullable": true,
@@ -121,8 +115,6 @@
         "property_name": "hh_num"
       },
       {
-        "display_name": null,
-        "property_path": [],
         "datatype": "string",
         "is_primary_key": false,
         "column_id": "hh_gps_location",
@@ -131,8 +123,6 @@
         "property_name": "hh_gps_location"
       },
       {
-        "display_name": null,
-        "property_path": [],
         "datatype": "string",
         "is_primary_key": false,
         "column_id": "hh_caste",
@@ -141,8 +131,6 @@
         "property_name": "hh_caste"
       },
       {
-        "display_name": null,
-        "property_path": [],
         "datatype": "string",
         "is_primary_key": false,
         "column_id": "hh_bpl_apl",
@@ -151,18 +139,32 @@
         "property_name": "hh_bpl_apl"
       },
       {
-        "display_name": null,
-        "property_path": [],
-        "datatype": "boolean",
-        "is_primary_key": false,
         "column_id": "hh_minority",
-        "is_nullable": true,
-        "type": "raw",
-        "property_name": "hh_minority"
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "switch",
+          "switch_on": {
+            "type": "property_name",
+            "property_name": "hh_minority"
+          },
+          "cases": {
+            "no": {
+              "type": "constant",
+              "constant": 0
+            },
+            "yes": {
+              "type": "constant",
+              "constant": 1
+            }
+          },
+          "default": {
+            "type": "constant",
+            "constant": null
+          }
+        }
       },
       {
-        "display_name": null,
-        "property_path": [],
         "datatype": "string",
         "is_primary_key": false,
         "column_id": "hh_religion",
