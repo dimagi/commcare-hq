@@ -83,7 +83,7 @@ class LocationRationalizationView(BaseDomainView):
 
     @cached_property
     def _location_types(self):
-        location_types = LocationType.objects.by_domain(self.domain)
+        location_types = [lt.code for lt in LocationType.objects.by_domain(self.domain)]
         location_types.reverse()
         return location_types
 
