@@ -1,0 +1,35 @@
+{% extends "hqwebapp/partials/bulk_upload.html" %}
+
+{% load i18n %}
+
+{% block prerequisites %}
+  <li>
+    <p>
+      {% trans "Select a location." %}
+    </p>
+    <div class="row">
+      <div class="col-sm-4">
+        <select class="form-control" data-bind="value: location_id" id="location_search_select"></select>
+        <br><br>
+      </div>
+    </div>
+  </li>
+  <li>
+    <p>
+      {% blocktrans %}
+        Select a location type. The downloaded file will include all locations at the selected
+        level and all higher levels.
+      {% endblocktrans %}
+    </p>
+    <div class="row">
+      <div class="col-sm-4">
+        <select class="form-control hqwebapp-select2" data-bind="value: location_type">
+          {% for loc_type in loc_types %}
+            <option value="{{ loc_type.code }}">{{ loc_type.name }}</option>
+          {% endfor %}
+        </select>
+        <br><br>
+      </div>
+    </div>
+  </li>
+{% endblock %}

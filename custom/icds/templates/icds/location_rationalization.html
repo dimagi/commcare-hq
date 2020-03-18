@@ -1,5 +1,10 @@
 {% extends "hqwebapp/bulk_upload.html" %}
 
-{% block page_content%}
-    {% include "hqwebapp/partials/bulk_upload.html" %}
-{% endblock %}
+{% load hq_shared_tags %}
+
+{% requirejs_main 'icds/js/location_rationalization' %}
+
+{% block page_content %}
+  {% registerurl 'location_search' domain %}
+  {% include "icds/partials/location_rationalization.html" %}
+{% endblock page_content %}
