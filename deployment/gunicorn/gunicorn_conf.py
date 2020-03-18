@@ -24,7 +24,7 @@ def post_fork(server, worker):
 
 
 def on_starting(server):
-    """Wipe hte metrics from previous processes"""
+    """Wipe the metrics from previous processes"""
     path = os.environ.get('prometheus_multiproc_dir')
     for f in glob.glob(os.path.join(path, '*.db')):
         os.remove(f)
