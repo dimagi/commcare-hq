@@ -92,49 +92,37 @@
       },
       {
         "datatype": "string",
-        "is_primary_key": false,
         "column_id": "name",
-        "is_nullable": true,
         "type": "raw",
         "property_name": "name"
       },
       {
         "datatype": "date",
-        "is_primary_key": false,
         "column_id": "hh_reg_date",
-        "is_nullable": true,
         "type": "raw",
         "property_name": "hh_reg_date"
       },
       {
         "datatype": "integer",
-        "is_primary_key": false,
         "column_id": "hh_num",
-        "is_nullable": true,
         "type": "raw",
         "property_name": "hh_num"
       },
       {
         "datatype": "string",
-        "is_primary_key": false,
         "column_id": "hh_gps_location",
-        "is_nullable": true,
         "type": "raw",
         "property_name": "hh_gps_location"
       },
       {
         "datatype": "string",
-        "is_primary_key": false,
         "column_id": "hh_caste",
-        "is_nullable": true,
         "type": "raw",
         "property_name": "hh_caste"
       },
       {
         "datatype": "string",
-        "is_primary_key": false,
         "column_id": "hh_bpl_apl",
-        "is_nullable": true,
         "type": "raw",
         "property_name": "hh_bpl_apl"
       },
@@ -166,9 +154,7 @@
       },
       {
         "datatype": "string",
-        "is_primary_key": false,
         "column_id": "hh_religion",
-        "is_nullable": true,
         "type": "raw",
         "property_name": "hh_religion"
       },
