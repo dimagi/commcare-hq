@@ -15,6 +15,13 @@ statsd = DogStatsd(constant_tags=COMMON_TAGS)
 
 
 class DatadogMetrics(HqMetrics):
+    """Datadog Metrics Provider
+
+    Settings:
+    * DATADOG_API_KEY
+    * DATADOG_APP_KEY
+    """
+
     def initialize(self):
         if not settings.DATADOG_API_KEY or not settings.DATADOG_APP_KEY:
             raise Exception(
@@ -38,10 +45,13 @@ class DatadogMetrics(HqMetrics):
                 pass
 
     def _counter(self, name: str, value: float, tags: dict = None, documentation: str = ''):
+        """Although this is submitted as a COUNT the Datadog app represents these as a RATE.
+        See https://docs.datadoghq.com/developers/metrics/types/?tab=rate#definition"""
         dd_tags = _format_tags(tags)
         _datadog_record(statsd.increment, name, value, dd_tags)
 
     def _gauge(self, name: str, value: float, tags: dict = None, documentation: str = ''):
+        """See https://docs.datadoghq.com/developers/metrics/types/?tab=gauge#definition"""
         dd_tags = _format_tags(tags)
         _datadog_record(statsd.gauge, name, value, dd_tags)
 
@@ -57,16 +67,19 @@ class DatadogMetrics(HqMetrics):
 
         For example:
 
+        ::
+
             h = metrics_histogram(
                 'commcare.request.duration', 1.4,
                 bucket_tag='duration', buckets=[1,2,3], bucket_units='ms',
                 tags=tags
             )
 
-            # resulting Datadog metric
-            #    commcare.request.duration:1|c|#duration:lt_2ms
+            # resulting metrics
+            # commcare.request.duration:1|c|#duration:lt_2ms
 
-        For more details see:
+        For more explanation about why this implementation was chosen see:
+
         * https://github.com/dimagi/commcare-hq/pull/17080
         * https://github.com/dimagi/commcare-hq/pull/17030#issuecomment-315794700
         """

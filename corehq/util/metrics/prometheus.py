@@ -8,17 +8,49 @@ from corehq.util.metrics.metrics import HqMetrics
 
 
 class PrometheusMetrics(HqMetrics):
-    def __init__(self):
+    """Prometheus Metrics Provider"""
+
+    def initialize(self):
         self._metrics = {}
 
     def _counter(self, name: str, value: float = 1, tags: dict = None, documentation: str = ''):
+        """See https://prometheus.io/docs/concepts/metric_types/#counter"""
         self._get_metric(PCounter, name, tags, documentation).inc(value)
 
     def _gauge(self, name: str, value: float, tags: dict = None, documentation: str = ''):
+        """See https://prometheus.io/docs/concepts/metric_types/#histogram"""
         self._get_metric(PGauge, name, tags, documentation).set(value)
 
     def _histogram(self, name: str, value: float, bucket_tag: str, buckets: List[int], bucket_unit: str = '',
                   tags: dict = None, documentation: str = ''):
+        """
+        A cumulative histogram with a base metric name of <basename> exposes multiple time series
+        during a scrape:
+
+        * cumulative counters for the observation buckets, exposed as
+          `<basename>_bucket{le="<upper inclusive bound>"}`
+        * the total sum of all observed values, exposed as `<basename>_sum`
+        * the count of events that have been observed, exposed as `<basename>_count`
+          (identical to `<basename>_bucket{le="+Inf"}` above)
+
+        For example
+        ::
+
+            h = metrics_histogram(
+                'commcare.request_duration', 1.4,
+                bucket_tag='duration', buckets=[1,2,3], bucket_units='ms',
+                tags=tags
+            )
+
+            # resulting metrics
+            # commcare_request_duration_bucket{...tags..., le="1.0"} 0.0
+            # commcare_request_duration_bucket{...tags..., le="2.0"} 1.0
+            # commcare_request_duration_bucket{...tags..., le="3.0"} 1.0
+            # commcare_request_duration_bucket{...tags..., le="+Inf"} 1.0
+            # commcare_request_duration_sum{...tags...} 1.4
+            # commcare_request_duration_count{...tags...} 1.0
+
+        See https://prometheus.io/docs/concepts/metric_types/#histogram"""
         self._get_metric(PHistogram, name, tags, documentation, buckets=buckets).observe(value)
 
     def _get_metric(self, metric_type, name, tags, documentation, **kwargs):
