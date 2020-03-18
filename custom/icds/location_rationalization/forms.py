@@ -68,4 +68,4 @@ class LocationRationalizationTemplateForm(forms.Form):
 
     def _location_type_choices(self):
         return [(loc_type.code, loc_type.name)
-                for loc_type in LocationType.objects.filter(domain=self.domain).all()]
+                for loc_type in LocationType.objects.by_domain(self.domain)]
