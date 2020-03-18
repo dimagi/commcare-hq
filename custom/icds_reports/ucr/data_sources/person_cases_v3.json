@@ -376,65 +376,171 @@
       },
       {
         "column_id": "last_preg_tt",
-        "datatype": "string",
-        "type": "raw",
-        "property_name": "last_preg_tt"
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "switch",
+          "switch_on": {
+            "type": "property_name",
+            "property_name": "last_preg_tt"
+          },
+          "cases": {
+            "no": {
+              "type": "constant",
+              "constant": 0
+            },
+            "yes": {
+              "type": "constant",
+              "constant": 1
+            }
+          },
+          "default": {
+            "type": "constant",
+            "constant": null
+          }
+        }
       },
-        {
+      {
         "column_id": "child_alive",
-        "datatype": "string",
-        "type": "raw",
-        "property_name": "child_alive"
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "switch",
+          "switch_on": {
+            "type": "property_name",
+            "property_name": "child_alive"
+          },
+          "cases": {
+            "no": {
+              "type": "constant",
+              "constant": 0
+            },
+            "yes": {
+              "type": "constant",
+              "constant": 1
+            }
+          },
+          "default": {
+            "type": "constant",
+            "constant": null
+          }
+        }
       },
-        {
+      {
         "column_id": "time_birth",
         "datatype": "string",
         "type": "raw",
         "property_name": "time_birth"
-      },{
+      },
+      {
         "column_id": "father_name",
         "datatype": "string",
         "type": "raw",
         "property_name": "father_name"
-      },{
+      },
+      {
         "column_id": "mother_name",
         "datatype": "string",
         "type": "raw",
         "property_name": "mother_name"
-      },{
-        "column_id": "private_admit",
-        "datatype": "string",
-        "type": "raw",
-        "property_name": "private_admit"
       },
-        {
+      {
+        "column_id": "private_admit",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "switch",
+          "switch_on": {
+            "type": "property_name",
+            "property_name": "private_admit"
+          },
+          "cases": {
+            "no": {
+              "type": "constant",
+              "constant": 0
+            },
+            "yes": {
+              "type": "constant",
+              "constant": 1
+            }
+          },
+          "default": {
+            "type": "constant",
+            "constant": null
+          }
+        }
+      },
+      {
         "column_id": "date_last_private_admit",
         "datatype": "date",
         "type": "raw",
         "property_name": "date_last_private_admit"
-      },{
+      },
+      {
         "column_id": "date_return_private",
         "datatype": "date",
         "type": "raw",
         "property_name": "date_return_private"
-      },{
-        "column_id": "primary_admit",
-        "datatype": "string",
-        "type": "raw",
-        "property_name": "primary_admit"
       },
-        {
+      {
+        "column_id": "primary_admit",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "switch",
+          "switch_on": {
+            "type": "property_name",
+            "property_name": "primary_admit"
+          },
+          "cases": {
+            "no": {
+              "type": "constant",
+              "constant": 0
+            },
+            "yes": {
+              "type": "constant",
+              "constant": 1
+            }
+          },
+          "default": {
+            "type": "constant",
+            "constant": null
+          }
+        }
+      },
+      {
         "column_id": "is_oos",
-        "datatype": "string",
-        "type": "raw",
-        "property_name": "is_oos"
-      },{
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "switch",
+          "switch_on": {
+            "type": "property_name",
+            "property_name": "is_oos"
+          },
+          "cases": {
+            "no": {
+              "type": "constant",
+              "constant": 0
+            },
+            "yes": {
+              "type": "constant",
+              "constant": 1
+            }
+          },
+          "default": {
+            "type": "constant",
+            "constant": null
+          }
+        }
+      },
+      {
         "column_id": "last_class_attended_ever",
         "datatype": "integer",
         "type": "raw",
         "property_name": "last_class_attended_ever"
       },
-        {
+      {
         "column_id": "preg_order",
         "datatype": "integer",
         "type": "raw",
