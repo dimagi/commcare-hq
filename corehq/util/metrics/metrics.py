@@ -65,11 +65,11 @@ class HqMetrics(metaclass=abc.ABCMeta):
 
     @abstractmethod
     def _gauge(self, name, value, tags, documentation):
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def _histogram(self, name, value, bucket_tag, buckets, bucket_unit, tags, documentation):
-        pass
+        raise NotImplementedError
 
 
 class DummyMetrics:
@@ -92,7 +92,7 @@ class DelegatedMetrics:
                 for delegate in self.delegates:
                     getattr(delegate, item)(*args, **kwargs)
             return _record_metric
-        raise AttributeError
+        raise AttributeError(item)
 
 
 def metrics_gauge_task(name, fn, run_every):

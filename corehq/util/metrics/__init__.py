@@ -4,6 +4,12 @@ import settings
 from corehq.util.metrics.metrics import DummyMetrics, DelegatedMetrics, DEFAULT_BUCKETS
 from dimagi.utils.modules import to_function
 
+__all__ = [
+    'metrics_counter',
+    'metrics_gauge',
+    'metrics_histogram',
+]
+
 _metrics = None
 
 

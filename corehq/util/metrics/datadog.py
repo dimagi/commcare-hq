@@ -17,7 +17,11 @@ statsd = DogStatsd(constant_tags=COMMON_TAGS)
 class DatadogMetrics(HqMetrics):
     def initialize(self):
         if not settings.DATADOG_API_KEY or not settings.DATADOG_APP_KEY:
-            raise Exception("Datadog not configured. Set DATADOG_API_KEY and DATADOG_APP_KEY in settings.")
+            raise Exception(
+                "Datadog not configured."
+                "Set DATADOG_API_KEY and DATADOG_APP_KEY in settings or update METRICS_PROVIDERS"
+                "to remove the Datadog provider."
+            )
 
         try:
             from datadog import initialize
