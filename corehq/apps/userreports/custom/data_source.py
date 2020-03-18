@@ -3,15 +3,17 @@ from abc import ABCMeta, abstractmethod
 from django.utils.decorators import method_decorator
 
 from memoized import memoized
+from sqlagg.sorting import OrderBy
 
-from corehq.sql_db.connections import connection_manager
 from dimagi.utils.modules import to_function
 
 from corehq.apps.reports.api import ReportDataSource
 from corehq.apps.reports.sqlreport import DataFormatter, DictDataFormat
 from corehq.apps.userreports.decorators import catch_and_raise_exceptions
 from corehq.apps.userreports.mixins import ConfigurableReportDataSourceMixin
+from corehq.apps.userreports.reports.sorting import ASCENDING
 from corehq.apps.userreports.util import get_indicator_adapter
+from corehq.sql_db.connections import connection_manager
 
 
 class ConfigurableReportCustomDataSource(ConfigurableReportDataSourceMixin, ReportDataSource):
@@ -58,6 +60,15 @@ class ConfigurableReportCustomDataSource(ConfigurableReportDataSourceMixin, Repo
     @method_decorator(catch_and_raise_exceptions)
     def get_total_row(self):
         return self._provider.get_total_row()
+
+    @property
+    def order_by(self):
+        if self._order_by:
+            return [
+                OrderBy(order_by, is_ascending=(order == ASCENDING))
+                for sort_column_id, order in self._order_by
+                for order_by in self.get_db_column_ids(sort_column_id)
+            ]
 
 
 class ConfigurableReportCustomSQLDataSourceHelper(object):

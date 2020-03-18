@@ -549,10 +549,21 @@ def _build_sample_app(app):
 @require_can_edit_apps
 def app_exchange(request, domain):
     template = "app_manager/app_exchange.html"
-    apps = [get_app(obj.domain, obj.app_id) for obj in ExchangeApplication.objects.all()]
+    records = []
+    for obj in ExchangeApplication.objects.all():
+        app = get_app(obj.domain, obj.app_id)
+        records.append({
+            "id": app.get_id,
+            "domain": app.domain,
+            "name": app.name,
+            "comment": app.comment,
+            "last_released": obj.last_released.date() if obj.last_released else None,
+            "help_link": obj.help_link,
+        })
+
     context = {
         "domain": domain,
-        "apps": apps,
+        "records": records,
     }
 
     if request.method == "POST":

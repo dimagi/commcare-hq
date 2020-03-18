@@ -1,4 +1,4 @@
-from django.http import Http404
+from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
@@ -17,10 +17,13 @@ from corehq.apps.hqwebapp.views import BaseSectionPageView
 from corehq.apps.users.models import SQLInvitation
 
 
+def covid19(request):
+    return select(request, next_view="app_exchange")
+
 # Domain not required here - we could be selecting it for the first time. See notes domain.decorators
 # about why we need this custom login_required decorator
 @login_required
-def select(request, domain_select_template='domain/select.html', do_not_redirect=False):
+def select(request, do_not_redirect=False, next_view=None):
     domains_for_user = Domain.active_for_user(request.user)
     if not domains_for_user:
         return redirect('registration_domain')
@@ -28,12 +31,17 @@ def select(request, domain_select_template='domain/select.html', do_not_redirect
     email = request.couch_user.get_email()
     open_invitations = [e for e in SQLInvitation.by_email(email) if not e.is_expired]
 
+    # next_view must be a url that expects exactly one parameter, a domain name
+    next_view = next_view or request.GET.get('next_view')
     additional_context = {
         'domains_for_user': domains_for_user,
-        'open_invitations': open_invitations,
+        'open_invitations': [] if next_view else open_invitations,
         'current_page': {'page_name': _('Select A Project')},
+        'next_view': next_view or 'domain_homepage',
+        'hide_create_new_project': bool(next_view),
     }
 
+    domain_select_template = "domain/select.html"
     last_visited_domain = request.session.get('last_visited_domain')
     if open_invitations \
        or do_not_redirect \
@@ -49,8 +57,8 @@ def select(request, domain_select_template='domain/select.html', do_not_redirect
                 or domain_obj.is_snapshot
             ):
                 try:
-                    from corehq.apps.dashboard.views import dashboard_default
-                    return dashboard_default(request, last_visited_domain)
+                    return HttpResponseRedirect(reverse(next_view or 'dashboard_default',
+                                                args=[last_visited_domain]))
                 except Http404:
                     pass
 

@@ -1181,6 +1181,22 @@ class MigrationTestCase(BaseMigrationTestCase):
         self.assertEqual(self._get_case_ids(), {"test-case"})
         self._compare_diffs([])
 
+    def test_migrate_should_not_update_case_when_not_missing(self):
+        self.submit_form(make_test_form("test-1", age=30, min=0), timedelta(days=-90))
+        self.submit_form(make_test_form("test-2", age=31, max=9), timedelta(days=-1))
+        self.assert_backend("couch")
+        self._do_migration(live=True)
+        self.assert_backend("sql")
+        self.assertEqual(self._get_form_ids(), {"test-1", "test-2"})
+        self.assertEqual(self._get_case_ids(), {"test-case"})
+        diff = FormJsonDiff('set_mismatch', ['xform_ids', '[*]'], 'test-1', '')
+        statedb = open_state_db(self.domain_name, self.state_dir, readonly=False)
+        statedb.replace_case_diffs([("CommCareCase", "test-case", [diff])])
+        clear_local_domain_sql_backend_override(self.domain_name)
+        with mock.patch.object(CaseAccessorSQL, "save_case") as save_case:
+            save_case.side_effect = BaseException("unexpected save")
+            self._do_migration(forms="missing")
+
     def test_reset_migration(self):
         now = datetime.utcnow()
         self.submit_form(make_test_form("test-1"), now - timedelta(minutes=95))
