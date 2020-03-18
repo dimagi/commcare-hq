@@ -7,7 +7,7 @@ from django.db import DataError, transaction
 
 from celery.schedules import crontab
 
-from corehq.util.metrics.metrics import metrics_gauge_task
+from corehq.util.metrics import metrics_gauge_task
 from dimagi.utils.couch import (
     CriticalSection,
     get_redis_client,

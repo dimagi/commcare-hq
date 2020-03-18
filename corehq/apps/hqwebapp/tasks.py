@@ -5,7 +5,7 @@ from celery.schedules import crontab
 from celery.task import task, periodic_task
 
 from corehq.util.bounced_email_manager import BouncedEmailManager
-from corehq.util.metrics.metrics import metrics_gauge_task
+from corehq.util.metrics import metrics_gauge_task
 from dimagi.utils.logging import notify_exception
 
 from corehq.util.datadog.gauges import datadog_track_errors

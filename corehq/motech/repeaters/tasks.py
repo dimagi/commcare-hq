@@ -6,7 +6,7 @@ from celery.schedules import crontab
 from celery.task import periodic_task, task
 from celery.utils.log import get_task_logger
 
-from corehq.util.metrics.metrics import metrics_gauge_task
+from corehq.util.metrics import metrics_gauge_task
 from dimagi.utils.couch import get_redis_lock
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 

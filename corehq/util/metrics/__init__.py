@@ -1,7 +1,10 @@
+from functools import wraps
 from typing import Iterable
 
+from celery.task import periodic_task
+
 import settings
-from corehq.util.metrics.metrics import DebugMetrics, DelegatedMetrics, DEFAULT_BUCKETS
+from corehq.util.metrics.metrics import DebugMetrics, DelegatedMetrics, DEFAULT_BUCKETS, _enforce_prefix
 from dimagi.utils.modules import to_function
 
 __all__ = [
@@ -47,3 +50,27 @@ def metrics_histogram(
         tags: dict = None, documentation: str = ''):
     provider = _get_metrics_provider()
     provider.histogram(name, value, bucket_tag, buckets, bucket_unit, tags, documentation)
+
+
+def metrics_gauge_task(name, fn, run_every):
+    """
+    helper for easily registering gauges to run periodically
+
+    To update a gauge on a schedule based on the result of a function
+    just add to your app's tasks.py:
+
+        my_calculation = metrics_gauge_task('commcare.my.metric', my_calculation_function,
+                                            run_every=crontab(minute=0))
+
+    """
+    _enforce_prefix(name, 'commcare')
+
+    @periodic_task(serializer='pickle', queue='background_queue', run_every=run_every,
+                   acks_late=True, ignore_result=True)
+    @wraps(fn)
+    def inner(*args, **kwargs):
+        from corehq.util.metrics import metrics_gauge
+        # TODO: make this use prometheus push gateway
+        metrics_gauge(name, fn(*args, **kwargs))
+
+    return inner

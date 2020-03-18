@@ -10,7 +10,7 @@ from .exceptions import ImporterError
 from .tracking.analytics import get_case_upload_files_total_bytes
 from .tracking.case_upload_tracker import CaseUpload
 from .util import get_importer_error_message, exit_celery_with_error_message
-from ...util.metrics.metrics import metrics_gauge_task
+from ...util.metrics import metrics_gauge_task
 
 
 @task(serializer='pickle', queue='case_import_queue')
