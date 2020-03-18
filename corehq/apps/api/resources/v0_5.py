@@ -999,7 +999,9 @@ class ODataCaseResource(BaseODataResource):
         for filter in config.get_filters():
             query = query.filter(filter.to_es_filter())
 
-        if not bundle.request.can_access_all_locations:
+        if not bundle.request.couch_user.has_permission(
+            domain, 'access_all_locations'
+        ):
             query = query_location_restricted_cases(query, bundle.request)
 
         return query
@@ -1029,7 +1031,9 @@ class ODataFormResource(BaseODataResource):
         for filter in config.get_filters():
             query = query.filter(filter.to_es_filter())
 
-        if not bundle.request.can_access_all_locations:
+        if not bundle.request.couch_user.has_permission(
+            domain, 'access_all_locations'
+        ):
             query = query_location_restricted_forms(query, bundle.request)
 
         return query
