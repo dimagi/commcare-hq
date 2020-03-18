@@ -14,7 +14,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AdminPasswordChangeForm
 from django.contrib.auth.models import User
-from django.contrib.auth.views import logout as django_logout
+from django.contrib.auth.views import LogoutView
 from django.core import cache
 from django.core.mail.message import EmailMessage
 from django.http import (
@@ -226,14 +226,14 @@ def redirect_to_default(req, domain=None):
                         # web users without roles are redirected to the dashboard default
                         # view since some domains allow web users to request access if they
                         # don't have it
-                        url = reverse("dashboard_default", args=[domain])
+                        url = reverse("dashboard_domain", args=[domain])
                 else:
                     if role and role.default_landing_page:
                         url = get_redirect_url(role.default_landing_page, domain)
                     elif couch_user.is_commcare_user():
                         url = reverse(get_cloudcare_urlname(domain), args=[domain])
                     else:
-                        url = reverse("dashboard_default", args=[domain])
+                        url = reverse("dashboard_domain", args=[domain])
             else:
                 raise Http404()
         else:
@@ -477,7 +477,7 @@ def logout(req, default_domain_redirect='domain_login'):
     domain = get_domain_from_url(urlparse(referer).path) if referer else None
 
     # we don't actually do anything with the response here:
-    django_logout(req, **{"template_name": settings.BASE_TEMPLATE})
+    LogoutView.as_view(template_name=settings.BASE_TEMPLATE)(req)
 
     if referer and domain:
         domain_login_url = reverse(default_domain_redirect, kwargs={'domain': domain})

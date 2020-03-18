@@ -108,17 +108,17 @@ class LedgerProcessorSQL(LedgerProcessorInterface):
         return ledger_value
 
     def rebuild_ledger_state(self, case_id, section_id, entry_id):
-        LedgerProcessorSQL.hard_rebuild_ledgers(self.domain, case_id, section_id, entry_id)
+        self.hard_rebuild_ledgers(self.domain, case_id, section_id, entry_id)
 
-    @staticmethod
-    def hard_rebuild_ledgers(domain, case_id, section_id, entry_id):
+    @classmethod
+    def hard_rebuild_ledgers(cls, domain, case_id, section_id, entry_id):
         transactions = LedgerAccessorSQL.get_ledger_transactions_for_case(case_id, section_id, entry_id)
         if not transactions:
             LedgerAccessorSQL.delete_ledger_values(case_id, section_id, entry_id)
             publish_ledger_v2_deleted(domain, case_id, section_id, entry_id)
             return
         ledger_value = LedgerAccessorSQL.get_ledger_value(case_id, section_id, entry_id)
-        ledger_value = LedgerProcessorSQL._rebuild_ledger_value_from_transactions(
+        ledger_value = cls._rebuild_ledger_value_from_transactions(
             ledger_value, transactions, domain)
         LedgerAccessorSQL.save_ledger_values([ledger_value])
         publish_ledger_v2_saved(ledger_value)
