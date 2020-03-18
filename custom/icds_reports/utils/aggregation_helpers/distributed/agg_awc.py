@@ -283,9 +283,13 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
                     ucr.supervisor_id = adolescent_girls_table.supervisor_id AND
                     adolescent_girls_table.month=%(start_date)s
                     )
-            WHERE (opened_on <= %(end_date)s AND
-              (closed_on IS NULL OR closed_on >= %(start_date)s )) AND
-              migration_status IS DISTINCT FROM 1
+            WHERE (
+                    (opened_on <= %(end_date)s) AND
+                    (closed_on IS NULL OR closed_on >= %(start_date)s) AND
+                    (migration_status IS DISTINCT FROM 1) AND
+                    (%(month_end_11yr)s > dob AND %(month_start_14yr)s <= dob) AND
+                    (sex = 'F')
+              )
               GROUP BY ucr.awc_id, ucr.supervisor_id
         )ut
         where agg_awc.awc_id = ut.awc_id and ut.supervisor_id=agg_awc.supervisor_id;
@@ -295,7 +299,9 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
             adolescent_girls_table=AGG_ADOLESCENT_GIRLS_REGISTRATION_TABLE
         ), {
             'start_date': self.month_start,
-            'end_date': self.month_end
+            'end_date': self.month_end,
+            'month_end_11yr': self.month_end_11yr,
+            'month_start_14yr': self.month_start_14yr,
         }
 
 
