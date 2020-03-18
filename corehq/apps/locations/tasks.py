@@ -172,3 +172,11 @@ def update_users_at_locations(domain, location_ids, supply_point_ids, ancestor_i
     # update fixtures for users at ancestor locations
     user_ids = user_ids_at_locations(ancestor_ids)
     update_fixture_status_for_users(user_ids, UserFixtureType.LOCATION)
+
+
+def deactivate_users_at_location(location_id):
+    user_ids = update_users_at_locations([location_id])
+    for doc in iter_docs(CouchUser.get_db(), user_ids):
+        user = CouchUser.wrap_correctly(doc)
+        user.is_active = False
+        user.save(spawn_task=True)
