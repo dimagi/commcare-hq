@@ -16,6 +16,11 @@ from corehq.elastic import mget_query
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 from corehq.toggles import ICDS_UCR_ELASTICSEARCH_DOC_LOADING, NAMESPACE_OTHER
 from dimagi.ext.jsonobject import JsonObject, ListProperty, StringProperty, DictProperty, BooleanProperty
+from corehq.apps.app_manager.dbaccessors import get_app
+from corehq.form_processor.interfaces.dbaccessors import FormAccessors
+from corehq.apps.app_manager.models import LinkedApplication
+from django.conf import settings
+from django.http import Http404
 
 
 CUSTOM_UCR_EXPRESSIONS = [
@@ -288,9 +293,35 @@ class GetAppVersion(JsonObject):
     def configure(self, app_version_string):
         self._app_version_string = app_version_string
 
-    def __call__(self, item, context=None):
+    def get_version_from_app_object(self, item):
+        domain_name = item.get('domain')
+        form_accessor = FormAccessors(domain_name)
+        form_id = item.get('form').get('meta').get('instanceID')
+        form = form_accessor.get_form(form_id)
+
+        app = get_app(domain_name, form.app_id)
+        if isinstance(app, LinkedApplication):
+            app_version = app.upstream_version
+        else:
+            app_version = app.version
+
+        return app_version
+
+    def get_version_from_appverision_string(self, item, context):
         app_version_string = self._app_version_string(item, context)
         return get_version_from_appversion_text(app_version_string)
+
+    def __call__(self, item, context=None):
+        if settings.SERVER_ENVIRONMENT == 'india':
+            try:
+                app_version = self.get_version_from_app_object(item)
+            except Http404:
+                app_version = self.get_version_from_appverision_string(item, context)
+
+        else:
+            app_version = self.get_version_from_appverision_string(item, context)
+
+        return app_version
 
     def __str__(self):
         return "Application Version"
