@@ -4,10 +4,10 @@ from couchexport.export import export_raw
 
 from corehq.apps.locations.models import SQLLocation
 from custom.icds.location_rationalization.const import (
-    EXTRACT_TRANSITION,
-    MERGE_TRANSITION,
-    MOVE_TRANSITION,
-    SPLIT_TRANSITION,
+    EXTRACT_OPERATION,
+    MERGE_OPERATION,
+    MOVE_OPERATION,
+    SPLIT_OPERATION,
 )
 
 
@@ -21,23 +21,28 @@ class Dumper(object):
         self.location_types = location_types
         self.new_site_codes = []
 
-    def dump(self, transitions):
+    def dump(self, transitions_per_location_type):
+        """
+        :param transitions_per_location_type: each transition is a dict with an operation
+        like merge or split mapped to details for the operation
+        Check Parser for the expected format for each operation
+        """
         headers = [[location_type, ['from', 'transition', 'to', 'Missing']]
                    for location_type in self.location_types]
         stream = io.BytesIO()
-        self._find_missing_site_codes(list(transitions.values()))
-        rows = [(k, v) for k, v in self._rows(transitions).items()]
+        self._find_missing_site_codes(list(transitions_per_location_type.values()))
+        rows = [(k, v) for k, v in self._rows(transitions_per_location_type).items()]
         export_raw(headers, rows, stream)
         return stream
 
     def _find_missing_site_codes(self, transitions):
         # find sites codes that are not present in the system yet
-        new_site_codes = self._get_destination_site_codes(transitions)
+        destination_site_codes = self._get_destination_site_codes(transitions)
         site_codes_present = (
-            SQLLocation.active_objects.filter(site_code__in=new_site_codes).
+            SQLLocation.active_objects.filter(site_code__in=destination_site_codes).
             values_list('site_code', flat=True)
         )
-        self.new_site_codes = set(new_site_codes) - set(site_codes_present)
+        self.new_site_codes = set(destination_site_codes) - set(site_codes_present)
 
     @staticmethod
     def _get_destination_site_codes(transitions):
@@ -45,26 +50,26 @@ class Dumper(object):
         new_site_codes = []
         for transition in transitions:
             for operation, details in transition.items():
-                if operation == SPLIT_TRANSITION:
+                if operation == SPLIT_OPERATION:
                     [new_site_codes.extend(to_site_codes) for to_site_codes in list(details.values())]
                 else:
                     new_site_codes.extend(list(details.keys()))
         return new_site_codes
 
-    def _rows(self, transitions):
+    def _rows(self, transitions_per_location_type):
         rows = {location_type: [] for location_type in self.location_types}
-        for location_type, operations in transitions.items():
-            for operation, details in operations.items():
+        for location_type, transitions in transitions_per_location_type.items():
+            for operation, details in transitions.items():
                 rows[location_type].extend(self._get_rows_for_operation(operation, details))
         return rows
 
     def _get_rows_for_operation(self, operation, details):
         rows = []
-        if operation == MERGE_TRANSITION:
+        if operation == MERGE_OPERATION:
             rows.extend(self._get_rows_for_merge(details))
-        elif operation == SPLIT_TRANSITION:
+        elif operation == SPLIT_OPERATION:
             rows.extend(self._get_rows_for_split(details))
-        elif operation in [MOVE_TRANSITION, EXTRACT_TRANSITION]:
+        elif operation in [MOVE_OPERATION, EXTRACT_OPERATION]:
             for destination, source in details.items():
                 rows.append([source, operation, destination, destination in self.new_site_codes])
         return rows
@@ -73,12 +78,12 @@ class Dumper(object):
         rows = []
         for destination, sources in details.items():
             for source in sources:
-                rows.append([source, MERGE_TRANSITION, destination, destination in self.new_site_codes])
+                rows.append([source, MERGE_OPERATION, destination, destination in self.new_site_codes])
         return rows
 
     def _get_rows_for_split(self, details):
         rows = []
         for source, destinations in details.items():
             for destination in destinations:
-                rows.append([source, SPLIT_TRANSITION, destination, destination in self.new_site_codes])
+                rows.append([source, SPLIT_OPERATION, destination, destination in self.new_site_codes])
         return rows

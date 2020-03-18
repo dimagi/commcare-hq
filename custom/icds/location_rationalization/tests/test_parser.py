@@ -1,8 +1,8 @@
 from custom.icds.location_rationalization.const import (
-    EXTRACT_TRANSITION,
-    MERGE_TRANSITION,
-    MOVE_TRANSITION,
-    SPLIT_TRANSITION,
+    EXTRACT_OPERATION,
+    MERGE_OPERATION,
+    MOVE_OPERATION,
+    SPLIT_OPERATION,
 )
 from custom.icds.location_rationalization.tests.base import BaseTest
 
@@ -15,34 +15,34 @@ class TestParser(BaseTest):
             transitions,
             {
                 'awc': {
-                    MERGE_TRANSITION: {'11114': ['11111', '11112', '11113']},
-                    SPLIT_TRANSITION: {'12211': ['12111', '12121']},
-                    MOVE_TRANSITION: {'11211': '11311', '11212': '11312', '11221': '11321'},
-                    EXTRACT_TRANSITION: {'11131': '11122'}
+                    MERGE_OPERATION: {'11114': ['11111', '11112', '11113']},
+                    SPLIT_OPERATION: {'12211': ['12111', '12121']},
+                    MOVE_OPERATION: {'11211': '11311', '11212': '11312', '11221': '11321'},
+                    EXTRACT_OPERATION: {'11131': '11122'}
                 },
                 'supervisor': {
-                    MERGE_TRANSITION: {},
-                    SPLIT_TRANSITION: {'1221': ['1211', '1212']},
-                    MOVE_TRANSITION: {'1121': '1131', '1122': '1132'},
-                    EXTRACT_TRANSITION: {}
+                    MERGE_OPERATION: {},
+                    SPLIT_OPERATION: {'1221': ['1211', '1212']},
+                    MOVE_OPERATION: {'1121': '1131', '1122': '1132'},
+                    EXTRACT_OPERATION: {}
                 },
                 'block': {
-                    MERGE_TRANSITION: {},
-                    SPLIT_TRANSITION: {},
-                    MOVE_TRANSITION: {'112': '113'},
-                    EXTRACT_TRANSITION: {}
+                    MERGE_OPERATION: {},
+                    SPLIT_OPERATION: {},
+                    MOVE_OPERATION: {'112': '113'},
+                    EXTRACT_OPERATION: {}
                 },
                 'district': {
-                    MERGE_TRANSITION: {},
-                    SPLIT_TRANSITION: {},
-                    MOVE_TRANSITION: {},
-                    EXTRACT_TRANSITION: {}
+                    MERGE_OPERATION: {},
+                    SPLIT_OPERATION: {},
+                    MOVE_OPERATION: {},
+                    EXTRACT_OPERATION: {}
                 },
                 'state': {
-                    MERGE_TRANSITION: {},
-                    SPLIT_TRANSITION: {},
-                    MOVE_TRANSITION: {},
-                    EXTRACT_TRANSITION: {}
+                    MERGE_OPERATION: {},
+                    SPLIT_OPERATION: {},
+                    MOVE_OPERATION: {},
+                    EXTRACT_OPERATION: {}
                 },
             }
         )
