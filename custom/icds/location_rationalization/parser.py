@@ -50,6 +50,7 @@ class Parser(object):
                 continue
             if operation not in VALID_OPERATIONS:
                 self.errors.append("Invalid Operation %s" % operation)
+                continue
             self._parse_row(row)
         return self.transitions, self.errors
 
