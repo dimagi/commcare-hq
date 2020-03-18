@@ -308,6 +308,73 @@
         }
       },
       {
+        "column_id": "household_case_id",
+        "datatype": "string",
+        "display_name": null,
+        "expression": {
+          "name": "icds_parent_id",
+          "type": "named"
+        },
+        "is_nullable": true,
+        "is_primary_key": false,
+        "transform": {},
+        "type": "expression"
+      },
+      {
+        "column_id": "hh_member_number",
+        "datatype": "integer",
+        "type": "raw",
+        "property_name": "hh_member_number"
+      },
+      {
+        "column_id": "bank_account_number",
+        "datatype": "string",
+        "type": "raw",
+        "property_name": "bank_account_number"
+      },
+      {
+        "column_id": "ifsc_code",
+        "datatype": "string",
+        "type": "raw",
+        "property_name": "ifsc_code"
+      },
+      {
+        "column_id": "blood_group",
+        "datatype": "string",
+        "type": "raw",
+        "property_name": "blood_group"
+      },
+      {
+        "column_id": "referral_status",
+        "datatype": "string",
+        "type": "raw",
+        "property_name": "referral_status"
+      },
+      {
+        "column_id": "rch_id",
+        "datatype": "string",
+        "type": "raw",
+        "property_name": "rch_id"
+      },
+      {
+        "column_id": "mcts_id",
+        "datatype": "string",
+        "type": "raw",
+        "property_name": "mcts_id"
+      },
+      {
+        "column_id": "site_death",
+        "datatype": "string",
+        "type": "raw",
+        "property_name": "site_death"
+      },
+        {
+        "column_id": "reason_closure",
+        "datatype": "string",
+        "type": "raw",
+        "property_name": "reason_closure"
+      },
+      {
         "column_id": "disabled",
         "datatype": "small_integer",
         "type": "expression",
