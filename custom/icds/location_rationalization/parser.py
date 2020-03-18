@@ -1,5 +1,6 @@
 from collections import defaultdict
 
+from corehq.apps.locations.models import SQLLocation
 from custom.icds.location_rationalization.const import (
     EXTRACT_OPERATION,
     MERGE_OPERATION,
@@ -33,6 +34,7 @@ class Parser(object):
         self.worksheet = worksheet
         # mapping each location code to the type of operation requested for it
         self.requested_transitions = {}
+        self.site_codes_to_be_archived = []
         self.errors = []
         # location types should be in reverse order of hierarchy
         self.location_types = location_types
@@ -52,6 +54,7 @@ class Parser(object):
                 self.errors.append("Invalid Operation %s" % operation)
                 continue
             self._parse_row(row)
+        self.validate()
         return self.transitions, self.errors
 
     def _parse_row(self, row):
@@ -95,5 +98,21 @@ class Parser(object):
             self.transitions[location_type][operation][new_site_code] = old_site_code
         elif operation == EXTRACT_OPERATION:
             self.transitions[location_type][operation][new_site_code] = old_site_code
+        self.site_codes_to_be_archived.append(old_site_code)
         self.requested_transitions[old_site_code] = operation
         self.requested_transitions[new_site_code] = operation
+
+    def validate(self):
+        """
+        ensure all locations getting archived, also have their descendants getting archived
+        """
+        site_codes_to_be_archived = set(self.site_codes_to_be_archived)
+        locations_to_be_archived = SQLLocation.active_objects.filter(site_code__in=self.site_codes_to_be_archived)
+        for location in locations_to_be_archived:
+            descendants_sites_codes = location.get_descendants().values_list('site_code', flat=True)
+            missing_site_codes = set(descendants_sites_codes) - site_codes_to_be_archived
+            if missing_site_codes:
+                self.errors.append("Location %s is getting archived but the following descendants are not %s" % (
+                    location.location_id, ",".join(missing_site_codes)
+                ))
+
