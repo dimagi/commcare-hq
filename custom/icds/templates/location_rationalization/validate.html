@@ -1,0 +1,10 @@
+{% extends 'hqwebapp/base_section.html' %}
+{% load crispy_forms_tags %}
+{% load i18n %}
+
+{% block page_content %}
+  <form class="form form-horizontal" method="post" enctype="multipart/form-data">
+    <legend>{% trans "Validate" %}</legend>
+    {% crispy form %}
+  </form>
+{% endblock %}

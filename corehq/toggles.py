@@ -1826,3 +1826,11 @@ TWO_STAGE_USER_PROVISIONING = StaticToggle(
     TAG_SOLUTIONS_LIMITED,
     [NAMESPACE_DOMAIN]
 )
+
+
+LOCATION_RATIONALIZATION = StaticToggle(
+    'location_rationalization',
+    'Ability to reorder organization structure for location rationalization',
+    TAG_CUSTOM,
+    [NAMESPACE_USER]
+)

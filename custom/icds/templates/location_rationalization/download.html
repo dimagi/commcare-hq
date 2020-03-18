@@ -1,0 +1,23 @@
+{% extends "hqwebapp/base_section.html" %}
+{% load hq_shared_tags %}
+{% load crispy_forms_tags %}
+{% load i18n %}
+
+{% requirejs_main 'locations/js/search' %}
+
+{% block page_content %}
+  {% registerurl 'location_search' domain %}
+
+  <div class="row">
+    <div class="col-sm-12">
+      <div class="panel panel-modern-gray panel-form-only">
+        <div class="panel-body">
+          <form class="form-horizontal disable-on-submit" method='post'>
+            <legend>{% trans "Download" %}</legend>
+            {% crispy form %}
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}
