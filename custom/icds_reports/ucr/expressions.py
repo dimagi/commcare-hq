@@ -301,8 +301,10 @@ class GetAppVersion(JsonObject):
         if app_build is None:
             return app_version_from_app_string
 
-        else:
+        elif app_build.get('value').get('doc_type') == 'LinkedApplication':
             return app_build.get('value').get('upstream_version')
+        else:
+            return app_build.get('value').get('version')
 
     def get_version_from_appversion_string(self, item, context):
         app_version_string = self._app_version_string(item, context)
