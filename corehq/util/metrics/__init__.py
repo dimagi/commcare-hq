@@ -1,7 +1,7 @@
 from typing import Iterable
 
 import settings
-from corehq.util.metrics.metrics import DummyMetrics, DelegatedMetrics, DEFAULT_BUCKETS
+from corehq.util.metrics.metrics import DebugMetrics, DelegatedMetrics, DEFAULT_BUCKETS
 from dimagi.utils.modules import to_function
 
 __all__ = [
@@ -23,7 +23,7 @@ def _get_metrics_provider():
             providers.append(provider)
 
         if not providers:
-            _metrics = DummyMetrics()
+            _metrics = DebugMetrics()
         elif len(providers) > 1:
             _metrics = DelegatedMetrics(providers)
         else:

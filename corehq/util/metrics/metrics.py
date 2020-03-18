@@ -1,4 +1,5 @@
 import abc
+import logging
 import re
 from abc import abstractmethod
 from functools import wraps
@@ -12,6 +13,9 @@ METRIC_NAME_RE = re.compile(r'^[a-zA-Z_:.][a-zA-Z0-9_:.]*$')
 METRIC_TAG_NAME_RE = re.compile(r'^[a-zA-Z_][a-zA-Z0-9_]*$')
 RESERVED_METRIC_TAG_NAME_RE = re.compile(r'^__.*$')
 RESERVED_METRIC_TAG_NAMES = ['quantile', 'le']
+
+
+logger = logging.getLogger('commcare.metrics')
 
 
 def _enforce_prefix(name, prefix):
@@ -72,14 +76,16 @@ class HqMetrics(metaclass=abc.ABCMeta):
         raise NotImplementedError
 
 
-class DummyMetrics:
+class DebugMetrics:
     def __getattr__(self, item):
         if item in ('counter', 'gauge', 'histogram'):
-            def _check(name, documentation, tags, *args, **kwargs):
+            def _check(name, value, *args, **kwargs):
+                tags = kwargs.get('tags', {})
                 _enforce_prefix(name, 'commcare')
                 _validate_tag_names(tags)
+                logger.debug("[%s] %s %s %s", item, name, tags, value)
             return _check
-        raise AttributeError
+        raise AttributeError(item)
 
 
 class DelegatedMetrics:
