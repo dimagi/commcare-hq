@@ -9,20 +9,19 @@ from corehq.apps.locations.models import LocationType, SQLLocation
 
 
 class RequestTemplateDownload(object):
-    def __init__(self, domain, parent_location_id, leaf_location_type):
+    def __init__(self, domain, parent_location_location_id, leaf_location_type):
         self.domain = domain
         self.headers = []
-        location_types = [t.code for t in LocationType.objects.by_domain(domain)]
-        for location_type in location_types:
-            self.headers.extend([f'old_{location_type}', f'new_{location_type}'])
-        self.parent_location_id = parent_location_id
-        self.parent_location = SQLLocation.active_objects.get(location_id=self.parent_location_id)
+        for location_type in LocationType.objects.by_domain(domain):
+            self.headers.extend([f'old_{location_type.code}', f'new_{location_type.code}'])
+        self.parent_location_id = SQLLocation.active_objects.get(location_id=parent_location_location_id).id
         self.leaf_location_type = leaf_location_type
 
     @cached_property
     def _locations(self):
         return (
-            SQLLocation.active_objects.get_descendants(Q(domain=self.domain, id=self.parent_location.id)).
+            SQLLocation.active_objects.
+            get_descendants(Q(domain=self.domain, id=self.parent_location_id)).
             filter(location_type__code=self.leaf_location_type)
         )
 
@@ -34,12 +33,10 @@ class RequestTemplateDownload(object):
         return stream
 
     def _generate_rows(self):
-        rows = []
-        for location in self._locations:
-            rows.append(self._generate_row(location))
-        return rows
+        return [self._generate_row(location) for location in self._locations]
 
     def _generate_row(self, location):
+        # iterate ancestors of a location and populate data for columns
         def generate_row(loc):
             loc_location_type = loc.location_type
             return {f'old_{loc_location_type}': loc.site_code,
@@ -54,6 +51,7 @@ class RequestTemplateDownload(object):
 
     @cached_property
     def _ancestors(self):
+        # all ancestors for locations being iterated
         location_ids = [loc.id for loc in self._locations]
         return {
             loc.id: loc for loc in

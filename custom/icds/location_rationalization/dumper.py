@@ -81,11 +81,11 @@ class Dumper(object):
         return rows
 
     def _get_rows_for_merge(self, details):
-        rows = []
-        for destination, sources in details.items():
-            for source in sources:
-                rows.append(self._build_row(source, MERGE_OPERATION, destination))
-        return rows
+        return [
+            self._build_row(source, MERGE_OPERATION, destination)
+            for destination, sources in details.items()
+            for source in sources
+        ]
 
     def _build_row(self, source, operation, destination):
         return [source, operation, destination,
@@ -93,8 +93,8 @@ class Dumper(object):
                 destination in self.archived_sites_codes]
 
     def _get_rows_for_split(self, details):
-        rows = []
-        for source, destinations in details.items():
-            for destination in destinations:
-                rows.append(self._build_row(source, SPLIT_OPERATION, destination))
-        return rows
+        return [
+            self._build_row(source, SPLIT_OPERATION, destination)
+            for source, destinations in details.items()
+            for destination in destinations
+        ]
