@@ -368,11 +368,77 @@
         "type": "raw",
         "property_name": "site_death"
       },
-        {
+      {
         "column_id": "reason_closure",
         "datatype": "string",
         "type": "raw",
         "property_name": "reason_closure"
+      },
+      {
+        "column_id": "last_preg_tt",
+        "datatype": "string",
+        "type": "raw",
+        "property_name": "last_preg_tt"
+      },
+        {
+        "column_id": "child_alive",
+        "datatype": "string",
+        "type": "raw",
+        "property_name": "child_alive"
+      },
+        {
+        "column_id": "time_birth",
+        "datatype": "string",
+        "type": "raw",
+        "property_name": "time_birth"
+      },{
+        "column_id": "father_name",
+        "datatype": "string",
+        "type": "raw",
+        "property_name": "father_name"
+      },{
+        "column_id": "mother_name",
+        "datatype": "string",
+        "type": "raw",
+        "property_name": "mother_name"
+      },{
+        "column_id": "private_admit",
+        "datatype": "string",
+        "type": "raw",
+        "property_name": "private_admit"
+      },
+        {
+        "column_id": "date_last_private_admit",
+        "datatype": "date",
+        "type": "raw",
+        "property_name": "date_last_private_admit"
+      },{
+        "column_id": "date_return_private",
+        "datatype": "date",
+        "type": "raw",
+        "property_name": "date_return_private"
+      },{
+        "column_id": "primary_admit",
+        "datatype": "string",
+        "type": "raw",
+        "property_name": "primary_admit"
+      },
+        {
+        "column_id": "is_oos",
+        "datatype": "string",
+        "type": "raw",
+        "property_name": "is_oos"
+      },{
+        "column_id": "last_class_attended_ever",
+        "datatype": "integer",
+        "type": "raw",
+        "property_name": "last_class_attended_ever"
+      },
+        {
+        "column_id": "preg_order",
+        "datatype": "integer",
+        "type": "raw",
+        "property_name": "preg_order"
       },
       {
         "column_id": "disabled",
