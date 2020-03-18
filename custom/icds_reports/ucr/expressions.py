@@ -304,17 +304,14 @@ class GetAppVersion(JsonObject):
         else:
             return app_build.get('value').get('upstream_version')
 
-        return app_version
-
     def get_version_from_appversion_string(self, item, context):
         app_version_string = self._app_version_string(item, context)
         return get_version_from_appversion_text(app_version_string)
 
     def __call__(self, item, context=None):
-        app_version_from_app_string = self.get_version_from_appversion_string(item, context)
-
+        app_version = self.get_version_from_appversion_string(item, context)
         if settings.SERVER_ENVIRONMENT == 'india':
-            app_version = self.get_version_from_app_object(item, app_version_from_app_string)
+            app_version = self.get_version_from_app_object(item, app_version)
 
         return app_version
 
