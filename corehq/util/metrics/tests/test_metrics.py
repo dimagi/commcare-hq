@@ -2,7 +2,8 @@ from typing import Dict, Tuple
 
 from django.test import SimpleTestCase
 
-from corehq.util.metrics import DatadogMetrics, PrometheusMetrics
+from corehq.util.metrics.datadog import DatadogMetrics
+from corehq.util.metrics.prometheus import PrometheusMetrics
 from corehq.util.metrics.tests.utils import patch_datadog
 from prometheus_client.samples import Sample
 from prometheus_client.utils import INF
