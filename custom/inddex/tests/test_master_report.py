@@ -20,7 +20,6 @@ from ..example_data.data import (
 from ..ucr.data_providers.master_data_file_data import MasterDataFileData
 
 
-@patch('corehq.apps.callcenter.data_source.get_call_center_domains', lambda: [])
 class TestMasterReport(TestCase):
     maxDiff = None
     domain = 'inddex-reports-test'
@@ -29,17 +28,38 @@ class TestMasterReport(TestCase):
     def setUpClass(cls):
         super().setUpClass()
         cls.domain_obj = create_domain(name=cls.domain)
+        with patch('corehq.apps.callcenter.data_source.get_call_center_domains', lambda: []):
+            populate_inddex_domain(cls.domain)
 
     @classmethod
     def tearDownClass(cls):
         cls.domain_obj.delete()
         super().tearDownClass()
 
-    def test(self):
-        populate_inddex_domain(self.domain)
-        self.assert_cases_created()
-        self.assert_fixtures_created()
+    def test_cases_created(self):
+        accessor = CaseAccessors(self.domain)
+        case_ids = accessor.get_case_ids_in_domain()
+        cases = list(accessor.get_cases(case_ids))
 
+        self.assertEqual(len(cases), 18)
+        self.assertTrue(all(
+            case.parent.type == FOODRECALL_CASE_TYPE
+            for case in cases if case.type == FOOD_CASE_TYPE
+        ))
+
+    def test_fixtures_created(self):
+        # Note, this is actually quite slow - might want to drop
+        data_types = get_fixture_data_types(self.domain)
+        self.assertEqual(len(data_types), 4)
+        self.assertItemsEqual(
+            [(dt.tag, count_fixture_items(self.domain, dt._id)) for dt in data_types],
+            [('recipes', 384),
+             ('food_list', 1130),
+             ('food_composition_table', 1042),
+             ('conv_factors', 2995)]
+        )
+
+    def test_old_report(self):
         expected = get_expected_report()
         # exclude rows not pulled from cases for now
         expected = [r for r in get_expected_report() if r['caseid']]
@@ -58,29 +78,6 @@ class TestMasterReport(TestCase):
     @staticmethod
     def sort_rows(rows):
         return sorted(rows, key=lambda row: (row['food_name'], row['measurement_amount']))
-
-    def assert_cases_created(self):
-        accessor = CaseAccessors(self.domain)
-        case_ids = accessor.get_case_ids_in_domain()
-        cases = list(accessor.get_cases(case_ids))
-
-        self.assertEqual(len(cases), 18)
-        self.assertTrue(all(
-            case.parent.type == FOODRECALL_CASE_TYPE
-            for case in cases if case.type == FOOD_CASE_TYPE
-        ))
-
-    def assert_fixtures_created(self):
-        # Note, this is actually quite slow - might want to drop
-        data_types = get_fixture_data_types(self.domain)
-        self.assertEqual(len(data_types), 4)
-        self.assertItemsEqual(
-            [(dt.tag, count_fixture_items(self.domain, dt._id)) for dt in data_types],
-            [('recipes', 384),
-             ('food_list', 1130),
-             ('food_composition_table', 1042),
-             ('conv_factors', 2995)]
-        )
 
     def run_report(self):
         report_data = MasterDataFileData({
