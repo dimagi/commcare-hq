@@ -35,8 +35,7 @@ from corehq.apps.hqwebapp.views import BugReportView
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import (
     location_safe,
-    user_can_access_location_id,
-    can_access_location_data
+    user_can_access_location_id
 )
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions, UserRole
@@ -72,6 +71,7 @@ from custom.icds_reports.dashboard_utils import get_dashboard_template_context
 from custom.icds_reports.models.aggregate import AwcLocation
 from custom.icds_reports.models.helper import IcdsFile
 from custom.icds_reports.models.views import AggAwcDailyView, NICIndicatorsView
+from custom.icds_reports.permissions import can_access_location_data
 from custom.icds_reports.queries import get_cas_data_blob_file
 from custom.icds_reports.reports.adhaar import (
     get_adhaar_data_chart,
@@ -254,6 +254,8 @@ DASHBOARD_CHECKS = [
     can_access_location_data
 ]
 
+DASHBOARD_CHECKS_FOR_TEMPLATE = DASHBOARD_CHECKS[:-1]
+
 
 @location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
@@ -337,7 +339,7 @@ def get_tableau_access_token(tableau_user, client_ip):
 
 
 @location_safe
-@method_decorator(DASHBOARD_CHECKS, name='dispatch')
+@method_decorator(DASHBOARD_CHECKS_FOR_TEMPLATE, name='dispatch')
 class DashboardView(TemplateView):
     template_name = 'icds_reports/dashboard.html'
     downtime_template_name = 'icds_reports/dashboard_down.html'
@@ -385,7 +387,7 @@ class DashboardView(TemplateView):
 
 
 @location_safe
-@method_decorator(DASHBOARD_CHECKS, name='dispatch')
+@method_decorator(DASHBOARD_CHECKS_FOR_TEMPLATE, name='dispatch')
 class MobileDashboardDownloadView(TemplateView):
     template_name = 'icds_reports/mobile_dashboard_download.html'
 
