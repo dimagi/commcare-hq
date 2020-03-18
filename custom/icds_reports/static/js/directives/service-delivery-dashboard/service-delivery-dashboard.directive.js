@@ -481,12 +481,22 @@ function ServiceDeliveryDashboardController($rootScope, $scope, $http, $location
                 vm.setDtColumns();
                 if (isMobile) {
                     vm.generateSortableKpiData();
+                    vm.resetUrl(mobileCustomParams);
                 }
             },
             function (error) {
                 $log.error(error);
             }
         );
+    };
+
+    vm.resetUrl = function (mobileCustomParams) {
+        // resets all the params added in url to make network request for mobile
+        for(var k in mobileCustomParams) {
+            if (mobileCustomParams.hasOwnProperty(k)) {
+                $location.search(k, null);
+            }
+        }
     };
 
     $scope.$on('filtersChange', function () {
