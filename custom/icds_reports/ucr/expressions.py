@@ -16,7 +16,7 @@ from corehq.elastic import mget_query
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 from corehq.toggles import ICDS_UCR_ELASTICSEARCH_DOC_LOADING, NAMESPACE_OTHER
 from dimagi.ext.jsonobject import JsonObject, ListProperty, StringProperty, DictProperty, BooleanProperty
-from corehq.apps.app_manager.dbaccessors import get_app
+from corehq.apps.app_manager.dbaccessors import get_build_by_version
 from django.conf import settings
 from django.http import Http404
 from corehq.apps.app_manager.util import is_linked_app
@@ -291,18 +291,19 @@ class GetAppVersion(JsonObject):
     def configure(self, app_version_string):
         self._app_version_string = app_version_string
 
-    def get_version_from_app_object(self, item):
+    def get_version_from_app_object(self, item, app_version_from_app_string):
         domain_name = item.get('domain')
         form_accessor = FormAccessors(domain_name)
         form_id = item.get('form').get('meta').get('instanceID')
         form = form_accessor.get_form(form_id)
 
-        app = get_app(domain_name, form.app_id)
+        app_build = get_build_by_version(domain_name, form.app_id, app_version_from_app_string)
 
-        if is_linked_app(app):
-            app_version = app.upstream_version
+        if app_build is None:
+            return app_version_from_app_string
+
         else:
-            app_version = app.version
+            return app_build.get('value').get('upstream_version')
 
         return app_version
 
@@ -311,14 +312,10 @@ class GetAppVersion(JsonObject):
         return get_version_from_appversion_text(app_version_string)
 
     def __call__(self, item, context=None):
-        if settings.SERVER_ENVIRONMENT == 'india':
-            try:
-                app_version = self.get_version_from_app_object(item)
-            except Http404:
-                app_version = self.get_version_from_appversion_string(item, context)
+        app_version_from_app_string = self.get_version_from_appversion_string(item, context)
 
-        else:
-            app_version = self.get_version_from_appversion_string(item, context)
+        if settings.SERVER_ENVIRONMENT == 'india':
+            app_version = self.get_version_from_app_object(item, app_version_from_app_string)
 
         return app_version
 
