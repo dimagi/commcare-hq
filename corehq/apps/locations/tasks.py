@@ -175,7 +175,8 @@ def update_users_at_locations(domain, location_ids, supply_point_ids, ancestor_i
 
 
 def deactivate_users_at_location(location_id):
-    user_ids = update_users_at_locations([location_id])
+    from corehq.apps.locations.dbaccessors import user_ids_at_locations
+    user_ids = user_ids_at_locations([location_id])
     for doc in iter_docs(CouchUser.get_db(), user_ids):
         user = CouchUser.wrap_correctly(doc)
         user.is_active = False
