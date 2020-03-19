@@ -712,7 +712,6 @@ class UserInvitationView(object):
     template = "users/accept_invite.html"
 
     def __call__(self, request, invitation_id, **kwargs):
-        logging.info("Don't use this view in more apps until it gets cleaned up.")
         # add the correct parameters to this instance
         self.request = request
         self.inv_id = invitation_id
