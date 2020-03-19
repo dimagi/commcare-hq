@@ -11,6 +11,7 @@ from custom.icds.location_rationalization.const import (
     SPLIT_OPERATION,
     VALID_OPERATIONS,
 )
+from custom.icds.location_rationalization.utils import deprecate_locations
 
 
 class Parser(object):
@@ -37,7 +38,6 @@ class Parser(object):
         # mapping each location code to the type of operation requested for it
         self.requested_transitions = {}
         self.site_codes_to_be_archived = []
-        self.locations_by_site_code = {}
         self.errors = []
         # location types should be in reverse order of hierarchy
         self.location_types = location_types
@@ -122,7 +122,7 @@ class Parser(object):
     def process(self):
         for location_type in list(reversed(self.location_types)):
             for operation, transitions in self.transitions[location_type].items():
-                self._perform_operation(operation, transitions)
+                self._perform_transitions(operation, transitions)
 
     @cached_property
     def locations_by_site_code(self):
@@ -131,28 +131,13 @@ class Parser(object):
             for loc in SQLLocation.active_objects.filter(site_code__in=self.requested_transitions.keys())
         }
 
-    def _perform_operation(self, operation, transitions):
-        if operation == MERGE_OPERATION:
-            for new_site_code, old_site_codes in transitions.items():
-                for old_site_code in old_site_codes:
-                    self._deprecate_location(old_site_code, new_site_code, operation)
-        elif operation == SPLIT_OPERATION:
-            for old_site_code, new_site_codes in transitions.items():
-                for new_site_code in new_site_codes:
-                    self._deprecate_location(old_site_code, new_site_code, operation)
-        elif operation == MOVE_OPERATION:
-            for new_site_code, old_site_code in transitions.items():
-                self._deprecate_location(old_site_code, new_site_code, operation)
-        elif operation == EXTRACT_OPERATION:
-            for new_site_code, old_site_code in transitions.items():
-                self._deprecate_location(old_site_code, new_site_code, operation, False)
+    def _perform_transitions(self, operation, transitions):
+        for old_site_codes, new_site_codes in transitions.items():
+            deprecate_locations(operation, self._get_locations(old_site_codes),
+                                self._get_locations(new_site_codes))
 
-    def _deprecate_location(self, old_site_code, new_site_code, operation, archive=True):
-        old_location = self.locations_by_site_code[old_site_code]
-        if new_site_code in self.locations_by_site_code:
-            new_location = self.locations_by_site_code[new_site_code]
-        else:
-            # ToDo: Create new location if not already present and remove return
-            new_location = None
-            return
-        old_location.deprecate_by(new_location, operation, archive=archive)
+    def _get_locations(self, site_codes):
+        site_codes = site_codes if isinstance(site_codes, list) else [site_codes]
+        locations = [self.locations_by_site_code[site_code] for site_code in site_codes]
+        assert len(locations), len(site_codes)
+        return locations
