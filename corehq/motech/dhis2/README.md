@@ -357,24 +357,19 @@ Paste the following into "Case config":
   "case_type": "case",
   "te_type_id": "nEenWmSyUEp",
   "tei_id": {
-    "doc_type": "CaseProperty",
     "case_property": "dhis2_tei_id"
   },
   "org_unit_id": {
-    "doc_type": "CaseOwnerAncestorLocationField",
-    "location_field": "dhis_id"
+    "case_owner_ancestor_location_field": "dhis_id"
   },
   "attributes": {
     "w75KJ2mc4zz": {
-      "doc_type": "CaseProperty",
       "case_property": "given_name"
     },
     "zDhUuAYrxNC": {
-      "doc_type": "CaseProperty",
       "case_property": "family_name"
     },
     "iESIqZ0R0R0": {
-      "doc_type": "CaseProperty",
       "case_property": "date_of_birth"
     }
   },
@@ -401,15 +396,12 @@ Paste the following into "Case config":
       "xmlns": "http://openrosa.org/formdesigner/F850C145-D805-4B35-925B-A7D35141FD13",
       "program_id": "uy2gU8kT1jF",
       "program_stage_id": {
-        "doc_type": "ConstantString",
         "value": "eaDHS084uMp"
       },
       "org_unit_id": {
-        "doc_type": "FormUserAncestorLocationField",
-        "location_field": "dhis_id"
+        "form_user_ancestor_location_field": "dhis_id"
       },
       "event_date": {
-        "doc_type": "FormQuestion",
         "form_question": "/data/lmp_date"
       },
       "event_status": "ACTIVE",
@@ -417,7 +409,6 @@ Paste the following into "Case config":
         {
           "data_element_id": "OuJ6sgPyAbC",
           "value": {
-            "doc_type": "FormQuestion",
             "form_question": "/data/visit_comment"
           }
         }
@@ -507,19 +498,17 @@ configuration".
 #### Set up locations
 
 In the configuration, "org_unit_id" is mentioned twice. For the tracked
-entity, its value is found using `CaseOwnerAncestorLocationField`:
+entity, its value is found using `case_owner_ancestor_location_field`:
 
     "org_unit_id": {
-      "doc_type": "CaseOwnerAncestorLocationField",
-      "location_field": "dhis_id"
+      "case_owner_ancestor_location_field": "dhis_id"
     },
 
 For the tracked entity's events, its value is found using
-`FormUserAncestorLocationField`:
+`form_user_ancestor_location_field`:
 
     "org_unit_id": {
-      "doc_type": "FormUserAncestorLocationField"
-      "location_field": "dhis_id",
+      "form_user_ancestor_location_field": "dhis_id",
     },
 
 These do similar things. They both search up the location hierarchy, of
