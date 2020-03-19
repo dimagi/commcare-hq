@@ -17,8 +17,6 @@ class TestMobileWorkerConfirmAccountView(TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.project.delete()
-        from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
-        delete_all_users()
         super().tearDownClass()
 
     def setUp(self):
