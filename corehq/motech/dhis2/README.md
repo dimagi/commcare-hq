@@ -271,6 +271,10 @@ Take a look at the URL in your browser. It ends with
 browser URL is a simple way of finding the ID of just about anything in
 DHIS2. We will need IDs to configure the integration.
 
+You can also find the ID of a program (and other things) from the list.
+Click the **⁝** Actions symbol in the right-most column, and choose
+**▽ Show details**. Among other details, you will find its ID.
+
 Click "Enrollment details" at the top. Note that the "incident date" is
 given as "LMP Date". Our app will need to collect this date in a form.
 
