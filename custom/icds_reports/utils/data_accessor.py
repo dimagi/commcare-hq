@@ -2,7 +2,8 @@ from copy import deepcopy
 
 from time import sleep
 from datetime import datetime, timedelta
-from corehq.util.datadog.utils import create_datadog_event
+
+from corehq.util.metrics import create_metrics_event
 from custom.icds_reports.cache import icds_quickcache
 from custom.icds_reports.const import LocationTypes
 from custom.icds_reports.reports.awc_infrastracture import get_awc_infrastructure_data
@@ -26,7 +27,7 @@ def _all_zeros(data, agg_level):
     else:
         retry = all(values)
     if retry:
-        create_datadog_event('ICDS 0s', 'All indicators in program summary equals 0', aggregation_key='icds_0')
+        create_metrics_event('ICDS 0s', 'All indicators in program summary equals 0', aggregation_key='icds_0')
     return retry
 
 
@@ -116,7 +117,7 @@ def _all_zeros_graph(step, data, agg_level):
 
     retry = all(values)
     if retry:
-        create_datadog_event('ICDS 0s', 'All indicators in awc_covered equals 0', aggregation_key='icds_0')
+        create_metrics_event('ICDS 0s', 'All indicators in awc_covered equals 0', aggregation_key='icds_0')
     return retry
 
 

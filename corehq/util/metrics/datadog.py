@@ -1,17 +1,27 @@
 import logging
 from typing import List
 
+from datadog import api
 from django.conf import settings
 
 from corehq.util.datadog.utils import bucket_value
+from corehq.util.metrics.const import COMMON_TAGS, ALERT_INFO
 from corehq.util.metrics.metrics import HqMetrics
 from datadog.dogstatsd.base import DogStatsd
 
 datadog_logger = logging.getLogger('datadog')
 
-COMMON_TAGS = ['environment:{}'.format(settings.SERVER_ENVIRONMENT)]
 
-statsd = DogStatsd(constant_tags=COMMON_TAGS)
+def _format_tags(tag_values: dict):
+    if not tag_values:
+        return None
+
+    return [
+        f'{name}:{value}' for name, value in tag_values.items()
+    ]
+
+
+statsd = DogStatsd(constant_tags=_format_tags(COMMON_TAGS))
 
 
 class DatadogMetrics(HqMetrics):
@@ -93,14 +103,15 @@ class DatadogMetrics(HqMetrics):
         tags.append(f'{bucket_tag}:{bucket}')
         _datadog_record(statsd.increment, name, 1, tags)
 
-
-def _format_tags(tag_values: dict):
-    if not tag_values:
-        return None
-
-    return [
-        f'{name}:{value}' for name, value in tag_values.items()
-    ]
+    def _create_event(self, title: str, text: str, alert_type: str = ALERT_INFO,
+                      tags: dict = None, aggregation_key: str = None):
+        if datadog_initialized():
+            api.Event.create(
+                title=title, text=text, tags=tags,
+                alert_type=alert_type, aggregation_key=aggregation_key,
+            )
+        else:
+            datadog_logger.debug('Metrics event: (%s) %s\n%s\n%s', alert_type, title, text, tags)
 
 
 def _datadog_record(fn, name, value, tags=None):
@@ -108,3 +119,7 @@ def _datadog_record(fn, name, value, tags=None):
         fn(name, value, tags=tags)
     except Exception:
         datadog_logger.exception('Unable to record Datadog stats')
+
+
+def datadog_initialized():
+    return api._api_key and api._application_key
