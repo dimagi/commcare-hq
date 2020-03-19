@@ -4,3 +4,9 @@ SPLIT_OPERATION = 'Split'
 MOVE_OPERATION = 'Rename'
 EXTRACT_OPERATION = 'Extract'
 VALID_OPERATIONS = [MERGE_OPERATION, SPLIT_OPERATION, MOVE_OPERATION, EXTRACT_OPERATION]
+
+# metadata fields on locations
+DEPRECATED_TO = "deprecated_to"
+DEPRECATION_OPERATION = "deprecation_operation"
+DEPRECATED_AT = "deprecated_at"
+DEPRECATES = "deprecates"

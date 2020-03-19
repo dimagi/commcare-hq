@@ -13,7 +13,6 @@ from memoized import memoized
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.adjacencylist import AdjListManager, AdjListModel
-from corehq.apps.locations.tasks import deactivate_users_at_location
 from corehq.apps.products.models import SQLProduct
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.supply import SupplyInterface
@@ -549,43 +548,6 @@ class SQLLocation(AdjListModel):
             user = CommCareUser.get(self.user_id)
             user.active = False
             user.save()
-
-    def deprecate_by(self, other_location, operation, archive=True):
-        """
-        add metadata on locations
-        for this/self location
-        1. deprecated_to: this can be a single location or a list like in case of a split
-        2. deprecation_operation: this location was deprecated by a merge/split/extract/move operation
-        3. deprecated_at: In case of split, since multiple locations will deprecate it, this would be a dict
-        with new location id mapped to the timestamp of deprecation performed
-        for other location
-        1. deprecates: note this location id on it. This can hold multiple values like in case of a merge a new
-        location would come from multiple locations
-        :param other_location: the location that deprecates this location
-        :param operation: the operation being performed, split/merge/move/extract
-        :param archive: to archive this location or not
-        :return: True for success, False in case of failure
-        """
-        other_location_id = other_location.location_id
-        if 'deprecated_to' in self.metadata:
-            self.metadata['deprecated_to'].append(other_location_id)
-        else:
-            self.metadata['deprecated_to'] = [other_location_id]
-        if 'deprecation_operation' in self.metadata and self.metadata['deprecation_operation'] != operation:
-            # ToDo: raise an error
-            return False
-        self.metadata['deprecation_operation'] = operation
-        self.metadata['deprecated_at'] = {other_location_id: datetime.utcnow()}
-        if archive:
-            self.is_archived = True
-        if 'deprecated' in other_location.metadata:
-            other_location.metadata['deprecated'].append(self.location_id)
-        else:
-            other_location.metadata['deprecated'] = self.location_id
-        with transaction.atomic():
-            self.save()
-            other_location.save()
-        deactivate_users_at_location(self.location_id)
 
     def archive(self):
         """
