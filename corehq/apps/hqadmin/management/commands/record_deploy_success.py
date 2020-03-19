@@ -94,7 +94,6 @@ class Command(BaseCommand):
         deploy_notification_text += "Find the diff {diff_link}"
 
         if settings.DATADOG_API_KEY:
-            tags = ['environment:{}'.format(options['environment'])]
             link = diff_link(compare_url)
             create_metrics_event(
                 title="Deploy Success",
@@ -103,7 +102,7 @@ class Command(BaseCommand):
                     diff_link=link,
                     integration_tests_link=integration_tests_link(INTEGRATION_TEST_URL)
                 ),
-                tags=tags,
+                tags={'environment': options['environment']},
                 alert_type="success"
             )
 
