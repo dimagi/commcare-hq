@@ -26,11 +26,11 @@ from corehq.apps.users.util import format_username
 from corehq.toggles import BULK_UPLOAD_DATE_OPENED
 from corehq.util.datadog.utils import case_load_counter, bucket_value
 from corehq.util.soft_assert import soft_assert
+from corehq.util.metrics import metrics_counter, metrics_histogram
 
 from . import exceptions
 from .const import LookupErrors
 from .util import EXTERNAL_ID, RESERVED_FIELDS, lookup_case
-from ...util.metrics import metrics_counter, metrics_histogram
 
 CASEBLOCK_CHUNKSIZE = 100
 RowAndCase = namedtuple('RowAndCase', ['row', 'case'])

@@ -5,12 +5,13 @@ from corehq.apps.hqadmin.tasks import (
     AbnormalUsageAlert,
     send_abnormal_usage_alert,
 )
+from corehq.util.metrics import metrics_gauge_task
+
 from .do_import import do_import
 from .exceptions import ImporterError
 from .tracking.analytics import get_case_upload_files_total_bytes
 from .tracking.case_upload_tracker import CaseUpload
 from .util import get_importer_error_message, exit_celery_with_error_message
-from ...util.metrics import metrics_gauge_task
 
 
 @task(serializer='pickle', queue='case_import_queue')
