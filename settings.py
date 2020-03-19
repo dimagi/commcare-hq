@@ -835,6 +835,11 @@ SUPERVISOR_RPC_ENABLED = False
 SUBSCRIPTION_USERNAME = None
 SUBSCRIPTION_PASSWORD = None
 
+# List of metrics providers to use. Available providers:
+# * 'corehq.util.metrics.datadog.DatadogMetrics'
+# * 'corehq.util.metrics.prometheus.PrometheusMetrics'
+METRICS_PROVIDERS = []
+
 DATADOG_API_KEY = None
 DATADOG_APP_KEY = None
 
@@ -2073,19 +2078,6 @@ if 'locmem' not in CACHES:
 if 'dummy' not in CACHES:
     CACHES['dummy'] = {'BACKEND': 'django.core.cache.backends.dummy.DummyCache'}
 
-try:
-    from datadog import initialize
-except ImportError:
-    pass
-else:
-    initialize(DATADOG_API_KEY, DATADOG_APP_KEY)
-
-if UNIT_TESTING or DEBUG or 'ddtrace.contrib.django' not in INSTALLED_APPS:
-    try:
-        from ddtrace import tracer
-        tracer.enabled = False
-    except ImportError:
-        pass
 
 REST_FRAMEWORK = {
     'DATETIME_FORMAT': '%Y-%m-%dT%H:%M:%S.%fZ',
