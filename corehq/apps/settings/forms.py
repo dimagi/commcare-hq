@@ -46,7 +46,7 @@ class HQPasswordChangeForm(EncodedPasswordChangeFormMixin, PasswordChangeForm):
                 'old_password',
                 crispy.Field(
                     'new_password1',
-                    data_bind="value: password, valueUpdate: 'input'",
+                    data_bind="textInput: password",
                 ),
                 'new_password2',
                 css_class='check-password',

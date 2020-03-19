@@ -238,8 +238,7 @@ class KeywordForm(Form):
                 _('Basic Information'),
                 crispy.Field(
                     'keyword',
-                    data_bind="value: keyword, "
-                              "valueUpdate: 'afterkeydown', "
+                    data_bind="textInput: keyword, "
                               "event: {keyup: updateExampleStructuredSMS}",
                 ),
                 crispy.Field(
@@ -273,8 +272,7 @@ class KeywordForm(Form):
                             crispy.Div(
                                 InlineField(
                                     'delimiter',
-                                    data_bind="value: delimiter, "
-                                              "valueUpdate: 'afterkeydown', "
+                                    data_bind="textInput: delimiter, "
                                               "event: {keyup: updateExampleStructuredSMS},"
                                               "visible: useCustomDelimiter",
                                     block_css_class="span4",
@@ -322,8 +320,7 @@ class KeywordForm(Form):
                             crispy.Div(
                                 InlineField(
                                     'named_args_separator',
-                                    data_bind="value: namedArgsSeparator, "
-                                              "valueUpdate: 'afterkeydown', "
+                                    data_bind="textInput: namedArgsSeparator, "
                                               "event: {keyup: updateExampleStructuredSMS},"
                                               "visible: useJoiningCharacter",
                                 ),
