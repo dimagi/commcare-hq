@@ -16,6 +16,17 @@ describe('Navigation Directive', function () {
         $provide.constant("stateLevelAccess", false);
         $provide.constant("haveAccessToAllLocations", false);
         $provide.constant("haveAccessToFeatures", false);
+        $provide.constant("isMobile", false);
+        $provide.constant("userFullName", 'A User');
+        $provide.constant("userUsername", 'user');
+        $provide.constant("navMenuItems", {
+            sections: [
+                {'name': 'Maternal and Child Nutrition'},
+                {'name': 'ICDS-CAS Reach'},
+                {'name': 'Demographics'},
+                {'name': 'AWC Infrastructure'},
+            ],
+        });
     }));
 
     beforeEach(inject(function (_$rootScope_, _$compile_, _$httpBackend_) {

@@ -24,7 +24,7 @@ BOOTSTRAP_CONFIG_TESTING = {
         }
     },
     (SoftwarePlanEdition.PRO, False, False): {
-        'role': 'pro_plan_v0',
+        'role': 'pro_plan_v1',
         'product_rate_monthly_fee': Decimal('600.00'),
         'feature_rates': {
             FeatureType.USER: dict(monthly_limit=6, per_excess_fee=Decimal('1.00')),

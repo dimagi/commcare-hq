@@ -45,11 +45,11 @@ class PregnantWomenExport(ExportableMixin, IcdsSqlData):
                 lambda x, y, z: '%.2f%%' % (((x or 0) + (y or 0)) * 100 / float(z or 1)),
                 [
                     SumWhen(
-                        whens={"ccs_status = 'pregnant'": 'anemic_moderate'},
+                        whens=[["ccs_status = 'pregnant'", 'anemic_moderate']],
                         alias='anemic_moderate'
                     ),
                     SumWhen(
-                        whens={"ccs_status = 'pregnant'": 'anemic_severe'},
+                        whens=[["ccs_status = 'pregnant'", 'anemic_severe']],
                         alias='anemic_severe'
                     ),
                     AliasColumn('pregnant')

@@ -2,11 +2,16 @@
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function UnderweightChildrenReportController($scope, $routeParams, $location, $filter, maternalChildService,
-    locationsService, userLocationId, storageService, genders, ages, haveAccessToAllLocations,
-    baseControllersService, isAlertActive) {
+    locationsService, dateHelperService, navigationService, userLocationId, storageService, genders, ages, haveAccessToAllLocations,
+    baseControllersService, isAlertActive, isMobile) {
     baseControllersService.BaseController.call(this, $scope, $routeParams, $location, locationsService,
-        userLocationId, storageService, haveAccessToAllLocations);
+        dateHelperService, navigationService, userLocationId, storageService, haveAccessToAllLocations,
+        null, isMobile);
     var vm = this;
+
+    // where the data for this report comes from
+    vm.serviceDataFunction = maternalChildService.getUnderweightChildrenData;
+
     vm.isAlertActive = isAlertActive;
 
     var ageIndex = _.findIndex(ages, function (x) {
@@ -24,10 +29,7 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
     }
 
     vm.label = "Prevalence of Underweight (Weight-for-Age)";
-    vm.steps = {
-        'map': {route: '/maternal_and_child/underweight_children/map', label: 'Map View'},
-        'chart': {route: '/maternal_and_child/underweight_children/chart', label: 'Chart View'},
-    };
+    vm.steps = vm.getSteps('/maternal_and_child/underweight_children/');
     vm.data = {
         legendTitle: 'Percentage Children',
     };
@@ -38,22 +40,21 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
         'Children who are moderately or severely underweight have a higher risk of mortality. ',
     };
 
-    vm.chosenFilters = function() {
+    vm.chosenFilters = function () {
         var gender = genderIndex > 0 ? genders[genderIndex].name : '';
         var age = ageIndex > 0 ? ages[ageIndex].name : '0 - 5 years';
         var delimiter = gender && age ? ', ' : '';
         return gender || age ? '(' + gender + delimiter + age + ')' : '';
     };
 
-    vm.templatePopup = function(loc, row) {
+    vm.getPopupData = function (row) {
         var total = row ? $filter('indiaNumbers')(row.weighed) : 'N/A';
         var unweighed = row ? $filter('indiaNumbers')(row.total - row.weighed) : "N/A";
         var severelyUnderweight = row ? d3.format(".2%")(row.severely_underweight / (row.weighed || 1)) : 'N/A';
         var moderatelyUnderweight = row ? d3.format(".2%")(row.moderately_underweight / (row.weighed || 1)) : 'N/A';
         var normal = row ? d3.format(".2%")(row.normal / (row.weighed || 1)) : 'N/A';
-        return vm.createTemplatePopup(
-            loc.properties.name,
-            [{
+        return [
+            {
                 indicator_name: 'Total Children ' + vm.chosenFilters() + ' weighed in given month: ',
                 indicator_value: total,
             },
@@ -62,39 +63,30 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
                 indicator_value: unweighed,
             },
             {
-                indicator_name: '% Severely Underweight '+ vm.chosenFilters() +': ',
+                indicator_name: '% Severely Underweight ' + vm.chosenFilters() + ': ',
                 indicator_value: severelyUnderweight,
             },
             {
-                indicator_name: '% Moderately Underweight '+ vm.chosenFilters() +': ',
+                indicator_name: '% Moderately Underweight ' + vm.chosenFilters() + ': ',
                 indicator_value: moderatelyUnderweight,
             },
             {
-                indicator_name: '% Normal '+ vm.chosenFilters() +': ',
+                indicator_name: '% Normal ' + vm.chosenFilters() + ': ',
                 indicator_value: normal,
-            }]
-        );
-    };
-
-    vm.loadData = function () {
-        vm.setStepsMapLabel();
-        var usePercentage = true;
-        var forceYAxisFromZero = false;
-        vm.myPromise = maternalChildService.getUnderweightChildrenData(vm.step, vm.filtersData).then(
-            vm.loadDataFromResponse(usePercentage, forceYAxisFromZero)
-        );
+            },
+        ];
     };
 
     vm.init();
 
-    vm.resetAdditionalFilter = function() {
+    vm.resetAdditionalFilter = function () {
         vm.filtersData.gender = '';
         vm.filtersData.age = '';
         $location.search('gender', null);
         $location.search('age', null);
     };
 
-    vm.resetOnlyAgeAdditionalFilter = function() {
+    vm.resetOnlyAgeAdditionalFilter = function () {
         vm.filtersData.age = '';
         $location.search('age', null);
     };
@@ -109,12 +101,14 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
     vm.chartOptions = vm.getChartOptions(options);
     vm.chartOptions.chart.width = 1100;
     vm.chartOptions.chart.color = d3.scale.category10().range();
-    vm.chartOptions.chart.callback = function(chart) {
+    vm.chartOptions.chart.callback = function (chart) {
         var tooltip = chart.interactiveLayer.tooltip;
         tooltip.contentGenerator(function (d) {
 
-            var findValue = function(values, date) {
-                return _.find(values, function(num) { return num['x'] === date; });
+            var findValue = function (values, date) {
+                return _.find(values, function (num) {
+                    return num['x'] === date; 
+                });
             };
 
             var normal = findValue(vm.chartData[0].values, d.value).y;
@@ -154,12 +148,17 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
     };
 }
 
-UnderweightChildrenReportController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'maternalChildService', 'locationsService', 'userLocationId', 'storageService', 'genders', 'ages', 'haveAccessToAllLocations', 'baseControllersService', 'isAlertActive'];
+UnderweightChildrenReportController.$inject = [
+    '$scope', '$routeParams', '$location', '$filter', 'maternalChildService', 'locationsService',
+    'dateHelperService', 'navigationService', 'userLocationId', 'storageService', 'genders', 'ages', 'haveAccessToAllLocations',
+    'baseControllersService', 'isAlertActive', 'isMobile',
+];
 
-window.angular.module('icdsApp').directive('underweightChildrenReport', function() {
+
+window.angular.module('icdsApp').directive('underweightChildrenReport', ['templateProviderService', function (templateProviderService) {
     return {
         restrict: 'E',
-        templateUrl: url('icds-ng-template', 'map-chart'),
+        templateUrl: templateProviderService.getMapChartTemplate,
         bindToController: true,
         scope: {
             data: '=',
@@ -167,4 +166,4 @@ window.angular.module('icdsApp').directive('underweightChildrenReport', function
         controller: UnderweightChildrenReportController,
         controllerAs: '$ctrl',
     };
-});
+}]);

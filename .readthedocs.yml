@@ -7,3 +7,5 @@ formats: all
 python:
   install:
     - requirements: requirements/dev-requirements.txt
+submodules:
+  include: all

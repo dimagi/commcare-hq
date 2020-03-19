@@ -18,7 +18,10 @@ def chunked(it, n, collection=tuple):
     """
     itr = iter(it)
     while True:
-        items = take(n, itr, collection)
+        try:
+            items = take(n, itr, collection)
+        except StopIteration:
+            break
         if not items:
             break
         yield items

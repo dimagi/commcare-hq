@@ -30,7 +30,7 @@
       <li><a href="#user-password" data-toggle="tab">{% trans "Password" %}</a></li>
     {% endif %}
     {% if not is_currently_logged_in_user and not request.is_view_only %}
-      <li><a href="#user-permanent" data-toggle="tab">{% trans "Permanent Actions" %}</a></li>
+      <li><a href="#user-permanent" data-toggle="tab">{% trans "Actions" %}</a></li>
     {% endif %}
   </ul>
   <div class="tab-content" id="settings">
@@ -68,6 +68,28 @@
       <div class="tab-pane" id="user-permanent">
         <div class="panel-body">
           <div class="form form-horizontal">
+            <fieldset>
+              <legend>{% trans 'Force Full Refresh on next Mobile Sync' %}</legend>
+              <form action="{% url "force_user_412" domain couch_user.user_id %}" method="post">
+                <p>
+                  See <a target="_blank" href="https://confluence.dimagi.com/display/commcarepublic/CommCare+Android+Troubleshooting#CommCareAndroidTroubleshooting-ForceFullRefresh">{% trans "Force Full Refresh" %}</a> for more information.
+                </p>
+                {% csrf_token %}
+                <p>
+                  <button type="submit" class="btn btn-primary disable-on-submit-no-spinner{% if not has_any_sync_logs %} disabled{% endif %}" {% if not has_any_sync_logs %}disabled{% endif %}>
+                    <i class="fa fa-refresh"></i> {% trans "Force Full Refresh on next Mobile Sync" %}
+                  </button>
+                </p>
+                {% if not has_any_sync_logs %}
+                  <p class="help-block">
+                    {% blocktrans with couch_user.human_friendly_name as friendly_name %}
+                      Mobile Worker {{ friendly_name }} is already set to do a full refresh
+                      the next time they sync.
+                    {% endblocktrans %}
+                  </p>
+                {% endif %}
+              </form>
+            </fieldset>
             <fieldset>
               <legend>{% trans 'Delete Mobile Worker' %}</legend>
               <div class="alert alert-danger">
@@ -155,7 +177,9 @@
             <div class="modal-body">
               <p class="alert alert-warning">
                 <i class="fa fa-exclamation-triangle"></i>
-                {% trans "Bad things will happen if you don't read this" %}
+                {% blocktrans %}
+                  It is important you read the entire message below thoroughly before completing this action.
+                {% endblocktrans %}
               </p>
               <p>
                 {% blocktrans with couch_user.human_friendly_name as friendly_name %}

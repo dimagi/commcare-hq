@@ -147,7 +147,9 @@ def get_task_status(task, is_multiple_download_task=False):
             context_error = "%s: %s" % (type(task.result).__name__, task.result)
     elif is_ready:
         state = STATES.success
-    elif task and _is_task_pending(task):
+    elif not _is_real_task(task):
+        state = STATES.missing
+    elif _is_task_pending(task):
         state = STATES.not_started
     elif progress.percent is None:
         state = STATES.missing
@@ -160,6 +162,12 @@ def get_task_status(task, is_multiple_download_task=False):
         error=context_error,
         progress=progress,
     )
+
+
+def _is_real_task(task):
+    # You can look up a task with a made-up ID and it'll give you a meaningless task object
+    # Make sure the task object you have corresponds to an actual celery task
+    return task and task._get_task_meta().get('task_name') is not None
 
 
 def _is_task_pending(task):

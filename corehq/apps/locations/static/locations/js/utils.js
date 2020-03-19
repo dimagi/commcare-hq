@@ -25,7 +25,7 @@ hqDefine('locations/js/utils', [
                 processResults: function (data, params) {
                     params.page = params.page || 1;
                     var more = data.more || (params.page * 10) < data.total;
-                    return { results: data.results, more: more };
+                    return { results: data.results, pagination: { more: more } };
                 },
             },
         });

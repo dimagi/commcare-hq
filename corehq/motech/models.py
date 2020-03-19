@@ -9,10 +9,16 @@ class RequestLog(models.Model):
     Store API requests and responses to analyse errors and keep an audit trail
     """
     domain = models.CharField(max_length=126, db_index=True)  # 126 seems to be a popular length
-    timestamp = models.DateTimeField(auto_now_add=True)
+    timestamp = models.DateTimeField(auto_now_add=True, db_index=True)
     log_level = models.IntegerField(null=True)
+    # payload_id is set for requests that are caused by a payload (e.g.
+    # a form submission -- in which case payload_id will have the value
+    # of XFormInstanceSQL.form_id). It also uniquely identifies a Repeat
+    # Record, so it can be used to link a Repeat Record with the
+    # requests to send its payload.
+    payload_id = models.CharField(max_length=126, blank=True, null=True, db_index=True)
     request_method = models.CharField(max_length=12)
-    request_url = models.CharField(max_length=255)
+    request_url = models.CharField(max_length=255, db_index=True)
     request_headers = jsonfield.JSONField(blank=True)
     request_params = jsonfield.JSONField(blank=True)
     request_body = jsonfield.JSONField(
@@ -20,7 +26,7 @@ class RequestLog(models.Model):
         dump_kwargs={'cls': DjangoJSONEncoder, 'separators': (',', ':')}  # Use DjangoJSONEncoder for dates, etc.
     )
     request_error = models.TextField(null=True)
-    response_status = models.IntegerField(null=True)
+    response_status = models.IntegerField(null=True, db_index=True)
     response_body = models.TextField(blank=True, null=True)
 
     class Meta:
@@ -46,8 +52,18 @@ class RequestLog(models.Model):
         return params, data, headers
 
     @staticmethod
-    def log(log_level, domain_name, request_error, response_status, response_body,
-            request_method, request_url, *args, **kwargs):
+    def log(
+        log_level,
+        domain_name,
+        payload_id,
+        request_error,
+        response_status,
+        response_body,
+        request_method,
+        request_url,
+        *args,
+        **kwargs,
+    ):
         # The order of arguments is important: `request_method`,
         # `request_url` and `*args` are the positional arguments of
         # `Requests.send_request()`. Having these at the end of this
@@ -56,6 +72,7 @@ class RequestLog(models.Model):
         RequestLog.objects.create(
             domain=domain_name,
             log_level=log_level,
+            payload_id=payload_id,
             request_method=request_method,
             request_url=request_url,
             request_headers=headers,

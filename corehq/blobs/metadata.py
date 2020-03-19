@@ -3,12 +3,12 @@ from datetime import datetime, timedelta
 
 from django.db import connections
 
-from corehq.sql_db.routers import get_cursor
 from corehq.sql_db.util import (
     get_db_alias_for_partitioned_doc,
     split_list_by_db_partition,
 )
 from corehq.util.datadog.gauges import datadog_counter
+from . import CODES
 
 from .models import BlobMeta
 
@@ -49,11 +49,12 @@ class MetaDB(object):
         """Save `BlobMeta` in the metadata database"""
         meta.save()
         length = meta.content_length
-        datadog_counter('commcare.blobs.added.count')
-        datadog_counter('commcare.blobs.added.bytes', value=length)
+        tags = _meta_tags(meta)
+        datadog_counter('commcare.blobs.added.count', tags=tags)
+        datadog_counter('commcare.blobs.added.bytes', value=length, tags=tags)
         if meta.expires_on is not None:
-            datadog_counter('commcare.temp_blobs.count')
-            datadog_counter('commcare.temp_blobs.bytes_added', value=length)
+            datadog_counter('commcare.temp_blobs.count', tags=tags)
+            datadog_counter('commcare.temp_blobs.bytes_added', value=length, tags=tags)
 
     def delete(self, key, content_length):
         """Delete blob metadata
@@ -64,7 +65,7 @@ class MetaDB(object):
         :param key: Blob key string.
         :returns: The number of metadata rows deleted.
         """
-        with get_cursor(BlobMeta) as cursor:
+        with BlobMeta.get_plproxy_cursor() as cursor:
             cursor.execute('SELECT 1 FROM delete_blob_meta(%s)', [key])
         datadog_counter('commcare.blobs.deleted.count')
         datadog_counter('commcare.blobs.deleted.bytes', value=content_length)
@@ -91,18 +92,25 @@ class MetaDB(object):
                 "type_code",
                 "created_on",
                 "deleted_on"
-            )
-            SELECT
-                "id",
-                "domain",
-                "parent_id",
-                "name",
-                "key",
-                "type_code",
-                "created_on",
-                %s AS "deleted_on"
-            FROM deleted
-            WHERE expires_on IS NULL
+            ) (
+                SELECT
+                    "id",
+                    "domain",
+                    "parent_id",
+                    "name",
+                    "key",
+                    "type_code",
+                    "created_on",
+                    %s AS "deleted_on"
+                FROM deleted
+                WHERE expires_on IS NULL
+            ) ON CONFLICT (id) DO UPDATE SET
+                name = EXCLUDED.name,
+                key = EXCLUDED.key,
+                type_code = EXCLUDED.type_code,
+                created_on = EXCLUDED.created_on,
+                deleted_on = CLOCK_TIMESTAMP()
+            WHERE blobs_deletedblobmeta.parent_id = EXCLUDED.parent_id and blobs_deletedblobmeta.key = EXCLUDED.key
         ) SELECT COUNT(*) FROM deleted;
         """
         now = _utcnow()
@@ -111,9 +119,9 @@ class MetaDB(object):
             parents[meta.parent_id].append(meta.id)
         for dbname, split_parent_ids in split_list_by_db_partition(parents):
             ids = tuple(m for p in split_parent_ids for m in parents[p])
-            with connections[dbname].cursor() as cursor:
+            with BlobMeta.get_cursor_for_partition_db(dbname) as cursor:
                 cursor.execute(delete_blobs_sql, [ids, now])
-        deleted_bytes = sum(meta.content_length for m in metas)
+        deleted_bytes = sum(m.content_length for m in metas)
         datadog_counter('commcare.blobs.deleted.count', value=len(metas))
         datadog_counter('commcare.blobs.deleted.bytes', value=deleted_bytes)
 
@@ -137,8 +145,9 @@ class MetaDB(object):
         except BlobMeta.DoesNotExist:
             return
         if meta.expires_on is None:
-            datadog_counter('commcare.temp_blobs.count')
-            datadog_counter('commcare.temp_blobs.bytes_added', value=meta.content_length)
+            tags = _meta_tags(meta)
+            datadog_counter('commcare.temp_blobs.count', tags=tags)
+            datadog_counter('commcare.temp_blobs.bytes_added', value=meta.content_length, tags=tags)
         meta.expires_on = _utcnow() + timedelta(minutes=minutes)
         meta.save()
 
@@ -170,8 +179,7 @@ class MetaDB(object):
             if not kw:
                 raise TypeError("Missing argument 'parent_id', 'type_code' and/or 'name'")
             raise TypeError("Unexpected arguments: {}".format(", ".join(kw)))
-        dbname = get_db_alias_for_partitioned_doc(kw["parent_id"])
-        meta = BlobMeta.objects.using(dbname).filter(**kw).first()
+        meta = BlobMeta.objects.partitioned_query(kw["parent_id"]).filter(**kw).first()
         if meta is None:
             raise BlobMeta.DoesNotExist(repr(kw))
         return meta
@@ -183,11 +191,10 @@ class MetaDB(object):
         :param type_code: `BlobMeta.type_code` (optional).
         :returns: A list of `BlobMeta` objects.
         """
-        dbname = get_db_alias_for_partitioned_doc(parent_id)
         kw = {"parent_id": parent_id}
         if type_code is not None:
             kw["type_code"] = type_code
-        return list(BlobMeta.objects.using(dbname).filter(**kw))
+        return list(BlobMeta.objects.partitioned_query(parent_id).filter(**kw))
 
     def get_for_parents(self, parent_ids, type_code=None):
         """Get a list of `BlobMeta` objects for the given parent(s)
@@ -196,7 +203,7 @@ class MetaDB(object):
         :param type_code: `BlobMeta.type_code` (optional).
         :returns: A list of `BlobMeta` objects sorted by `parent_id`.
         """
-        return list(BlobMeta.objects.raw(
+        return list(BlobMeta.objects.plproxy_raw(
             'SELECT * FROM get_blobmetas(%s, %s::SMALLINT)',
             [parent_ids, type_code],
         ))
@@ -211,12 +218,14 @@ class MetaDB(object):
         new_db = get_db_alias_for_partitioned_doc(new_parent_id)
         assert dbname == new_db, ("Cannot reparent to new partition: %s -> %s" %
             (old_parent_id, new_parent_id))
-        with connections[dbname].cursor() as cursor:
-            cursor.execute(
-                "UPDATE blobs_blobmeta SET parent_id = %s WHERE parent_id = %s",
-                [new_parent_id, old_parent_id],
-            )
+        query = BlobMeta.objects.partitioned_query(old_parent_id)
+        query.filter(parent_id=old_parent_id).update(parent_id=new_parent_id)
 
 
 def _utcnow():
     return datetime.utcnow()
+
+
+def _meta_tags(meta):
+    type_ = CODES.name_of(meta.type_code, f'type_code_{meta.type_code}')
+    return [f'type:{type_}']

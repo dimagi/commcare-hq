@@ -21,6 +21,7 @@ from couchdbkit import ResourceConflict
 from dateutil.relativedelta import relativedelta
 from six.moves.urllib.parse import urlencode
 
+from corehq.apps.accounting.automated_reports import CreditsAutomatedReport
 from couchexport.export import export_from_tables
 from couchexport.models import Format
 from dimagi.utils.couch.cache.cache_core import get_redis_client
@@ -142,10 +143,14 @@ def _deactivate_subscription(subscription):
             account = subscription.account
         else:
             account = BillingAccount.create_account_for_domain(
-                domain, created_by='default_community_after_customer_level'
+                domain, created_by='deactivation_after_customer_level'
             )
-        next_subscription = assign_explicit_community_subscription(
-            domain, subscription.date_end, SubscriptionAdjustmentMethod.DEFAULT_COMMUNITY, account=account
+        next_subscription = assign_explicit_unpaid_subscription(
+            domain,
+            subscription.date_end,
+            SubscriptionAdjustmentMethod.AUTOMATIC_DOWNGRADE,
+            account=account,
+            is_paused=True
         )
         new_plan_version = next_subscription.plan_version
     _, downgraded_privs, upgraded_privs = get_change_status(subscription.plan_version, new_plan_version)
@@ -660,16 +665,40 @@ def update_exchange_rates():
             )
 
 
-def ensure_explicit_community_subscription(domain_name, from_date, method, web_user=None):
-    if not Subscription.visible_objects.filter(
+# Email this out on the first day and first hour of each month
+@periodic_task(run_every=crontab(minute=0, hour=0, day_of_month=1), acks_late=True)
+def send_credits_on_hq_report():
+    if settings.SAAS_REPORTING_EMAIL and settings.IS_SAAS_ENVIRONMENT:
+        yesterday = datetime.date.today() - datetime.timedelta(days=1)
+        credits_report = CreditsAutomatedReport()
+        credits_report.send_report(settings.SAAS_REPORTING_EMAIL)
+        log_accounting_info("Sent credits on hq report as of {}".format(
+            yesterday.isoformat()))
+
+
+def ensure_community_or_paused_subscription(domain_name, from_date, method, web_user=None):
+    if Subscription.visible_objects.filter(
         Q(date_end__gt=from_date) | Q(date_end__isnull=True),
         date_start__lte=from_date,
         subscriber__domain=domain_name,
     ).exists():
-        assign_explicit_community_subscription(domain_name, from_date, method, web_user=web_user)
+        return
+
+    # if there are any subscriptions present that are not the community edition,
+    # then the ensured plan must be PAUSED
+    is_paused = Subscription.visible_objects.filter(
+        subscriber__domain=domain_name,
+    ).exclude(
+        plan_version__plan__edition=SoftwarePlanEdition.COMMUNITY
+    ).exists()
+
+    assign_explicit_unpaid_subscription(domain_name, from_date, method,
+                                        web_user=web_user, is_paused=is_paused)
 
 
-def assign_explicit_community_subscription(domain_name, start_date, method, account=None, web_user=None):
+def assign_explicit_unpaid_subscription(domain_name, start_date, method, account=None,
+                                        web_user=None, is_paused=False):
+    plan_edition = SoftwarePlanEdition.PAUSED if is_paused else SoftwarePlanEdition.COMMUNITY
     future_subscriptions = Subscription.visible_objects.filter(
         date_start__gt=start_date,
         subscriber__domain=domain_name,
@@ -682,14 +711,16 @@ def assign_explicit_community_subscription(domain_name, start_date, method, acco
     if account is None:
         account = BillingAccount.get_or_create_account_by_domain(
             domain_name,
-            created_by='assign_explicit_community_subscriptions',
+            created_by='assign_explicit_unpaid_subscription',
             entry_point=EntryPoint.SELF_STARTED,
         )[0]
 
     return Subscription.new_domain_subscription(
         account=account,
         domain=domain_name,
-        plan_version=DefaultProductPlan.get_default_plan_version(),
+        plan_version=DefaultProductPlan.get_default_plan_version(
+            edition=plan_edition
+        ),
         date_start=start_date,
         date_end=end_date,
         skip_invoicing_if_no_feature_charges=True,
@@ -740,8 +771,7 @@ def get_unpaid_invoices_over_threshold_by_domain(today, domain):
 
 def _get_unpaid_saas_invoices_in_downgrade_daterange(today):
     return _get_all_unpaid_saas_invoices().filter(
-        date_due__lte=today - datetime.timedelta(days=1),
-        date_due__gte=today - datetime.timedelta(days=61)
+        date_due__lte=today - datetime.timedelta(days=1)
     ).order_by('date_due').select_related('subscription__subscriber')
 
 
@@ -784,8 +814,10 @@ def get_accounts_with_customer_invoices_over_threshold(today):
 
 def is_subscription_eligible_for_downgrade_process(subscription):
     return (
-        subscription.plan_version.plan.edition != SoftwarePlanEdition.COMMUNITY
-        and not subscription.skip_auto_downgrade
+        subscription.plan_version.plan.edition not in [
+            SoftwarePlanEdition.COMMUNITY,
+            SoftwarePlanEdition.PAUSED,
+        ] and not subscription.skip_auto_downgrade
     )
 
 
@@ -817,7 +849,7 @@ def _apply_downgrade_process(oldest_unpaid_invoice, total, today, subscription=N
         })
 
     days_ago = (today - oldest_unpaid_invoice.date_due).days
-    if days_ago == 61:
+    if days_ago >= 61:
         if not oldest_unpaid_invoice.is_customer_invoice:  # We do not automatically downgrade customer invoices
             _downgrade_domain(subscription)
             _send_downgrade_notice(oldest_unpaid_invoice, context)
@@ -829,7 +861,7 @@ def _apply_downgrade_process(oldest_unpaid_invoice, total, today, subscription=N
 
 def _send_downgrade_notice(invoice, context):
     send_html_email_async.delay(
-        _('Oh no! Your CommCare subscription for {} has been downgraded'.format(invoice.get_domain())),
+        _('Oh no! Your CommCare subscription for {} has been paused'.format(invoice.get_domain())),
         invoice.contact_emails,
         render_to_string('accounting/email/downgrade.html', context),
         render_to_string('accounting/email/downgrade.txt', context),
@@ -842,10 +874,10 @@ def _send_downgrade_notice(invoice, context):
 def _downgrade_domain(subscription):
     subscription.change_plan(
         DefaultProductPlan.get_default_plan_version(
-            SoftwarePlanEdition.COMMUNITY
+            SoftwarePlanEdition.PAUSED
         ),
         adjustment_method=SubscriptionAdjustmentMethod.AUTOMATIC_DOWNGRADE,
-        note='Automatic downgrade to community for invoice 60 days late',
+        note='Automatic pausing of subscription for invoice 60 days late',
         internal_change=True
     )
 
@@ -853,7 +885,7 @@ def _downgrade_domain(subscription):
 def _send_downgrade_warning(invoice, context):
     if invoice.is_customer_invoice:
         subject = _(
-            "CommCare Alert: {}'s subscriptions will be downgraded to Community Plan after tomorrow!".format(
+            "CommCare Alert: {}'s subscriptions will be paused after tomorrow!".format(
                 invoice.account.name
             ))
         subscriptions_to_downgrade = _(
@@ -862,7 +894,7 @@ def _send_downgrade_warning(invoice, context):
         bcc = None
     else:
         subject = _(
-            "CommCare Alert: {}'s subscription will be downgraded to Community Plan after tomorrow!".format(
+            "CommCare Alert: {}'s subscription will be paused after tomorrow!".format(
                 invoice.get_domain()
             ))
         subscriptions_to_downgrade = _(

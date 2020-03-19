@@ -85,8 +85,6 @@ CREATE INDEX ON "agg_awc_daily_2019-01-01" (aggregation_level)
 {}
 CREATE INDEX ON "agg_awc_daily_2019-01-01" (state_id, district_id, block_id, supervisor_id, awc_id)
 {}
-CREATE INDEX ON "agg_awc_daily_2019-01-01" (state_id)
-{}
 CREATE INDEX ON "agg_awc_daily_2019-01-01" (district_id)
 {}
 CREATE INDEX ON "agg_awc_daily_2019-01-01" (block_id)

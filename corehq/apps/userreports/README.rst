@@ -358,68 +358,74 @@ Iterator Expression
 .. autoclass:: corehq.apps.userreports.expressions.specs.IteratorExpressionSpec
 
 Base iteration number expressions
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+'''''''''''''''''''''''''''''''''
 
 .. autoclass:: corehq.apps.userreports.expressions.specs.IterationNumberExpressionSpec
 
 Related document expressions
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+''''''''''''''''''''''''''''
 
 .. autoclass:: corehq.apps.userreports.expressions.specs.RelatedDocExpressionSpec
 
 Ancestor location expression
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+''''''''''''''''''''''''''''
 
 .. autoclass:: corehq.apps.locations.ucr_expressions.AncestorLocationExpression
 
 Nested expressions
-^^^^^^^^^^^^^^^^^^
+''''''''''''''''''''''''''''
 
 .. autoclass:: corehq.apps.userreports.expressions.specs.NestedExpressionSpec
 
 Dict expressions
-^^^^^^^^^^^^^^^^
+''''''''''''''''
 
 .. autoclass:: corehq.apps.userreports.expressions.specs.DictExpressionSpec
 
 "Add Days" expressions
-^^^^^^^^^^^^^^^^^^^^^^
+''''''''''''''''''''''
 
 .. autoclass:: corehq.apps.userreports.expressions.date_specs.AddDaysExpressionSpec
 
 
+"Add Hours" expressions
+''''''''''''''''''''''
+
+.. autoclass:: corehq.apps.userreports.expressions.date_specs.AddHoursExpressionSpec
+
+
 "Add Months" expressions
-^^^^^^^^^^^^^^^^^^^^^^^^
+''''''''''''''''''''''''
 
 .. autoclass:: corehq.apps.userreports.expressions.date_specs.AddMonthsExpressionSpec
 
 "Diff Days" expressions
-^^^^^^^^^^^^^^^^^^^^^^^
+'''''''''''''''''''''''
 
 .. autoclass:: corehq.apps.userreports.expressions.date_specs.DiffDaysExpressionSpec
 
 "Month Start Date" and "Month End Date" expressions
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+'''''''''''''''''''''''''''''''''''''''''''''''''''
 
 .. autoclass:: corehq.apps.userreports.expressions.date_specs.MonthStartDateExpressionSpec
 
 "Evaluator" expression
-^^^^^^^^^^^^^^^^^^^^^^
+''''''''''''''''''''''
 
 .. autoclass:: corehq.apps.userreports.expressions.specs.EvalExpressionSpec
 
 ‘Get Case Sharing Groups' expression
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+''''''''''''''''''''''''''''''''''''
 
 .. autoclass:: corehq.apps.userreports.expressions.specs.CaseSharingGroupsExpressionSpec
 
 ‘Get Reporting Groups' expression
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+'''''''''''''''''''''''''''''''''
 
 .. autoclass:: corehq.apps.userreports.expressions.specs.ReportingGroupsExpressionSpec
 
 Filter, Sort, Map and Reduce Expressions
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+''''''''''''''''''''''''''''''''''''''''
 
 We have following expressions that act on a list of objects or list of
 lists. The list to operate on is specified by ``items_expression``. This
@@ -428,32 +434,32 @@ can be any valid expression that returns a list. If the
 fail or return one of empty list or ``None`` value.
 
 map_items Expression
-''''''''''''''''''''
+^^^^^^^^^^^^^^^^^^^^
 
 .. autoclass:: corehq.apps.userreports.expressions.list_specs.MapItemsExpressionSpec
 
 filter_items Expression
-'''''''''''''''''''''''
+^^^^^^^^^^^^^^^^^^^^^^^
 
 .. autoclass:: corehq.apps.userreports.expressions.list_specs.FilterItemsExpressionSpec
 
 sort_items Expression
-'''''''''''''''''''''
+^^^^^^^^^^^^^^^^^^^^^
 
 .. autoclass:: corehq.apps.userreports.expressions.list_specs.SortItemsExpressionSpec
 
 reduce_items Expression
-'''''''''''''''''''''''
+^^^^^^^^^^^^^^^^^^^^^^^
 
 .. autoclass:: corehq.apps.userreports.expressions.list_specs.ReduceItemsExpressionSpec
 
 flatten expression
-''''''''''''''''''
+^^^^^^^^^^^^^^^^^^
 
 .. autoclass:: corehq.apps.userreports.expressions.list_specs.FlattenExpressionSpec
 
 Named Expressions
-^^^^^^^^^^^^^^^^^
+'''''''''''''''''
 
 .. autoclass:: corehq.apps.userreports.expressions.specs.NamedExpressionSpec
 
@@ -507,8 +513,8 @@ The following operators are currently supported:
 |                 |                   |                 | r"], "red" |
 |                 |                   |                 | )``        |
 +-----------------+-------------------+-----------------+------------+
-| ``any_in_multi` | one of a list of  | list            | ``selected |
-| `               | values in in a    |                 | (doc["colo |
+| ``any_in_multi``| one of a list of  | list            | ``selected |
+|                 | values in in a    |                 | (doc["colo |
 |                 | multiselect       |                 | r"], ["red |
 |                 |                   |                 | ", "blue"] |
 |                 |                   |                 | )``        |
@@ -870,7 +876,7 @@ This spec would produce the following columns in the data source:
 
 If the ledger you're using is a due list and you wish to save the dates
 instead of integers, you can change the "type" from "ledger_balances" to
-"due_list_dates".
+"due_list_date".
 
 Practical notes for creating indicators
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1455,6 +1461,53 @@ Here's an example using ``age_in_months_buckets``:
        }
    }
 
+SumWhenColumn and SumWhenTemplateColumn
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Note: ``SumWhenColumn`` usage is limited to static reports, and ``SumWhenTemplateColumn``
+usage is behind a feature flag.
+
+Sum When columns allow you to aggregate data based on arbitrary conditions.
+
+The ``SumWhenColumn`` allows any expression.
+
+The ``SumWhenTemplateColumn`` is used in conjunction with a subclass of ``SumWhenTemplateSpec``.
+The template defines an expression and typically accepts binds. An example:
+
+Example using ``sum_when``:
+
+.. code:: json
+
+   {
+       "display": "under_six_month_olds",
+       "column_id": "under_six_month_olds",
+       "type": "sum_when",
+       "field": "age_at_registration",
+       "whens": [
+            ["age_at_registration < 6", 1],
+       ],
+       "else_": 0
+   }
+
+Equivalent example using ``sum_when_template``:
+
+.. code:: json
+
+   {
+       "display": "under_x_month_olds",
+       "column_id": "under_x_month_olds",
+       "type": "sum_when_template",
+       "field": "age_at_registration",
+       "whens": [
+            {
+                "type": "under_x_months",
+                "binds": [6],
+                "then": 1
+            }
+       ],
+       "else_": 0
+   }
+
 Expanded Columns
 ~~~~~~~~~~~~~~~~
 
@@ -1736,6 +1789,19 @@ To use this in a mobile ucr, set the ``'mobile_or_web'`` property to
            "lmp": "Last Menstrual Period",
            "edd": "Estimated Date of Delivery"
        }
+   }
+
+Displaying Readable User Name (instead of user ID)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This takes a `user_id` value and changes it to HQ's best guess at the user's display name,
+using their first and last name, if available, then falling back to their username.
+
+.. code:: json
+
+   {
+       "type": "custom",
+       "custom_type": "user_display_including_name"
    }
 
 Displaying username instead of user ID

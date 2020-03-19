@@ -137,221 +137,241 @@
       {
         "display": "dead_F_resident_neo_count",
         "column_id": "dead_F_resident_neo_count",
-        "type": "sum_when",
-        "aggregation": "sum",
+        "type": "sum_when_template",
         "calculate_total": true,
-        "whens": {
-          "sex = 'F' AND resident = 1 AND date_death - dob <= 28": 1
-        },
+        "whens": [{
+          "type": "age_at_death_range_resident",
+          "binds": ["F", 0, 28],
+          "then": 1
+        }],
         "else_": 0
       },
       {
         "display": "dead_M_resident_neo_count",
         "column_id": "dead_M_resident_neo_count",
-        "type": "sum_when",
-        "aggregation": "sum",
+        "type": "sum_when_template",
         "calculate_total": true,
-        "whens": {
-          "sex = 'M' AND resident = 1 AND date_death - dob <= 28": 1
-        },
+        "whens": [{
+          "type": "age_at_death_range_resident",
+          "binds": ["M", 0, 28],
+          "then": 1
+        }],
         "else_": 0
       },
       {
         "display": "dead_F_migrant_neo_count",
         "column_id": "dead_F_migrant_neo_count",
-        "type": "sum_when",
-        "aggregation": "sum",
+        "type": "sum_when_template",
         "calculate_total": true,
-        "whens": {
-          "sex = 'F' AND resident IS DISTINCT FROM 1 AND date_death - dob <= 28": 1
-        },
+        "whens": [{
+          "type": "age_at_death_range_migrant",
+          "binds": ["F", 0, 28],
+          "then": 1
+        }],
         "else_": 0
       },
       {
         "display": "dead_M_migrant_neo_count",
         "column_id": "dead_M_migrant_neo_count",
-        "type": "sum_when",
-        "aggregation": "sum",
+        "type": "sum_when_template",
         "calculate_total": true,
-        "whens": {
-          "sex = 'M' AND resident IS DISTINCT FROM 1 AND date_death - dob <= 28": 1
-        },
+        "whens": [{
+          "type": "age_at_death_range_migrant",
+          "binds": ["M", 0, 28],
+          "then": 1
+        }],
         "else_": 0
       },
       {
         "display": "dead_F_resident_postneo_count",
         "column_id": "dead_F_resident_postneo_count",
-        "type": "sum_when",
-        "aggregation": "sum",
+        "type": "sum_when_template",
         "calculate_total": true,
-        "whens": {
-          "sex = 'F' AND resident = 1 AND date_death - dob BETWEEN 29 AND 364": 1
-        },
+        "whens": [{
+          "type": "age_at_death_range_resident",
+          "binds": ["F", 29, 364],
+          "then": 1
+        }],
         "else_": 0
       },
       {
         "display": "dead_M_resident_postneo_count",
         "column_id": "dead_M_resident_postneo_count",
-        "type": "sum_when",
-        "aggregation": "sum",
+        "type": "sum_when_template",
         "calculate_total": true,
-        "whens": {
-          "sex = 'M' AND resident = 1 AND date_death - dob BETWEEN 29 AND 364": 1
-        },
+        "whens": [{
+          "type": "age_at_death_range_resident",
+          "binds": ["M", 29, 364],
+          "then": 1
+        }],
         "else_": 0
       },
       {
         "display": "dead_F_migrant_postneo_count",
         "column_id": "dead_F_migrant_postneo_count",
-        "type": "sum_when",
-        "aggregation": "sum",
+        "type": "sum_when_template",
         "calculate_total": true,
-        "whens": {
-          "sex = 'F' AND resident IS DISTINCT FROM 1 AND date_death - dob BETWEEN 29 AND 364": 1
-        },
+        "whens": [{
+          "type": "age_at_death_range_migrant",
+          "binds": ["F", 29, 364],
+          "then": 1
+        }],
         "else_": 0
       },
       {
         "display": "dead_M_migrant_postneo_count",
         "column_id": "dead_M_migrant_postneo_count",
-        "type": "sum_when",
-        "aggregation": "sum",
+        "type": "sum_when_template",
         "calculate_total": true,
-        "whens": {
-          "sex = 'M' AND resident IS DISTINCT FROM 1 AND date_death - dob BETWEEN 29 AND 364": 1
-        },
+        "whens": [{
+          "type": "age_at_death_range_migrant",
+          "binds": ["M", 29, 364],
+          "then": 1
+        }],
         "else_": 0
       },
       {
         "display": "dead_F_resident_child_count",
         "column_id": "dead_F_resident_child_count",
-        "type": "sum_when",
-        "aggregation": "sum",
+        "type": "sum_when_template",
         "calculate_total": true,
-        "whens": {
-          "sex = 'F' AND resident = 1 AND date_death - dob BETWEEN 365 AND 1826": 1
-        },
+        "whens": [{
+          "type": "age_at_death_range_resident",
+          "binds": ["F", 365, 1826],
+          "then": 1
+        }],
         "else_": 0
       },
       {
         "display": "dead_M_resident_child_count",
         "column_id": "dead_M_resident_child_count",
-        "type": "sum_when",
-        "aggregation": "sum",
+        "type": "sum_when_template",
         "calculate_total": true,
-        "whens": {
-          "sex = 'M' AND resident = 1 AND date_death - dob BETWEEN 365 AND 1826": 1
-        },
+        "whens": [{
+          "type": "age_at_death_range_resident",
+          "binds": ["M", 365, 1826],
+          "then": 1
+        }],
         "else_": 0
       },
       {
         "display": "dead_F_migrant_child_count",
         "column_id": "dead_F_migrant_child_count",
-        "type": "sum_when",
-        "aggregation": "sum",
+        "type": "sum_when_template",
         "calculate_total": true,
-        "whens": {
-          "sex = 'F' AND resident IS DISTINCT FROM 1 AND date_death - dob BETWEEN 365 AND 1826": 1
-        },
+        "whens": [{
+          "type": "age_at_death_range_migrant",
+          "binds": ["F", 365, 1826],
+          "then": 1
+        }],
         "else_": 0
       },
       {
         "display": "dead_M_migrant_child_count",
         "column_id": "dead_M_migrant_child_count",
-        "type": "sum_when",
-        "aggregation": "sum",
+        "type": "sum_when_template",
         "calculate_total": true,
-        "whens": {
-          "sex = 'M' AND resident IS DISTINCT FROM 1 AND date_death - dob BETWEEN 365 AND 1826": 1
-        },
+        "whens": [{
+          "type": "age_at_death_range_migrant",
+          "binds": ["M", 365, 1826],
+          "then": 1
+        }],
         "else_": 0
       },
       {
         "display": "dead_F_migrant_adult_count",
         "column_id": "dead_F_migrant_adult_count",
-        "type": "sum_when",
-        "aggregation": "sum",
+        "type": "sum_when_template",
         "calculate_total": true,
-        "whens": {
-          "sex = 'F' AND resident IS DISTINCT FROM 1 AND age_at_death_yrs >= 11": 1
-        },
+        "whens": [{
+          "type": "adult_female_migrant_death",
+          "binds": [],
+          "then": 1
+        }],
         "else_": 0
       },
       {
         "display": "dead_F_resident_adult_count",
         "column_id": "dead_F_resident_adult_count",
-        "type": "sum_when",
-        "aggregation": "sum",
+        "type": "sum_when_template",
         "calculate_total": true,
-        "whens": {
-          "sex = 'F' AND resident = 1 AND age_at_death_yrs >= 11": 1
-        },
+        "whens": [{
+          "type": "adult_female_resident_death",
+          "binds": [],
+          "then": 1
+        }],
         "else_": 0
       },
       {
         "display": "dead_preg_resident_count",
         "column_id": "dead_preg_resident_count",
-        "type": "sum_when",
-        "aggregation": "sum",
+        "type": "sum_when_template",
         "calculate_total": true,
-        "whens": {
-          "female_death_type = 'pregnant' AND resident = 1": 1
-        },
+        "whens": [{
+          "type": "female_death_type_resident",
+          "binds": ["pregnant"],
+          "then": 1
+        }],
         "else_": 0
       },
       {
         "display": "dead_preg_migrant_count",
         "column_id": "dead_preg_migrant_count",
-        "type": "sum_when",
-        "aggregation": "sum",
+        "type": "sum_when_template",
         "calculate_total": true,
-        "whens": {
-          "female_death_type = 'pregnant' AND resident IS DISTINCT FROM 1": 1
-        },
+        "whens": [{
+          "type": "female_death_type_migrant",
+          "binds": ["pregnant"],
+          "then": 1
+        }],
         "else_": 0
       },
       {
         "display": "dead_del_resident_count",
         "column_id": "dead_del_resident_count",
-        "type": "sum_when",
-        "aggregation": "sum",
+        "type": "sum_when_template",
         "calculate_total": true,
-        "whens": {
-          "female_death_type = 'delivery' AND resident = 1": 1
-        },
+        "whens": [{
+          "type": "female_death_type_resident",
+          "binds": ["delivery"],
+          "then": 1
+        }],
         "else_": 0
       },
       {
         "display": "dead_del_migrant_count",
         "column_id": "dead_del_migrant_count",
-        "type": "sum_when",
-        "aggregation": "sum",
+        "type": "sum_when_template",
         "calculate_total": true,
-        "whens": {
-          "female_death_type = 'delivery' AND resident IS DISTINCT FROM 1": 1
-        },
+        "whens": [{
+          "type": "female_death_type_migrant",
+          "binds": ["delivery"],
+          "then": 1
+        }],
         "else_": 0
       },
       {
         "display": "dead_pnc_resident_count",
         "column_id": "dead_pnc_resident_count",
-        "type": "sum_when",
-        "aggregation": "sum",
+        "type": "sum_when_template",
         "calculate_total": true,
-        "whens": {
-          "female_death_type = 'pnc' AND resident = 1": 1
-        },
+        "whens": [{
+          "type": "female_death_type_resident",
+          "binds": ["pnc"],
+          "then": 1
+        }],
         "else_": 0
       },
       {
         "display": "dead_pnc_migrant_count",
         "column_id": "dead_pnc_migrant_count",
-        "type": "sum_when",
-        "aggregation": "sum",
+        "type": "sum_when_template",
         "calculate_total": true,
-        "whens": {
-          "female_death_type = 'pnc' AND resident IS DISTINCT FROM 1": 1
-        },
+        "whens": [{
+          "type": "female_death_type_migrant",
+          "binds": ["pnc"],
+          "then": 1
+        }],
         "else_": 0
       }
     ],

@@ -8,6 +8,7 @@ from django.urls.base import reverse
 from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.tasks import process_reporting_metadata_staging
 
 from ..models import DeviceLogRequest
 
@@ -56,6 +57,7 @@ class HeartbeatTests(TestCase):
             'cc_version': cc_version
         }, **self._auth_headers(user))
         self.assertEqual(resp.status_code, response_code)
+        process_reporting_metadata_staging()
         return resp
 
     def test_heartbeat(self):
@@ -109,7 +111,6 @@ class HeartbeatTests(TestCase):
         device_log_request = DeviceLogRequest.objects.create(
             domain=self.domain_obj.name,
             username=self.user.username,
-            device_id='need-logs',
         )
         self.assertTrue(heartbeat_contains_force_logs())
 

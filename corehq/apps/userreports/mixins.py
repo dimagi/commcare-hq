@@ -1,5 +1,6 @@
 from collections import OrderedDict
 
+from django.utils.functional import cached_property
 from sqlagg.columns import SimpleColumn
 
 from corehq.apps.reports.sqlreport import DatabaseColumn
@@ -137,6 +138,29 @@ class ConfigurableReportDataSourceMixin(object):
         else:
             # if the column isn't found just treat it as a normal field
             return [column_id]
+
+    @cached_property
+    def final_column_ids(self):
+        from corehq.apps.userreports.reports.util import get_expanded_columns
+
+        def _get_relevant_column_ids(col, column_id_to_expanded_column_ids):
+            return column_id_to_expanded_column_ids.get(col.column_id, [col.column_id])
+
+        expanded_columns = get_expanded_columns(self.top_level_columns, self.config)
+
+        return OrderedDict([
+            (column_id, col)
+            for col in self.top_level_columns
+            for column_id in _get_relevant_column_ids(col, expanded_columns)
+        ])
+
+    @cached_property
+    def total_column_ids(self):
+        return [
+            column_id
+            for column_id, col in self.final_column_ids.items()
+            if col.calculate_total
+        ]
 
 
 class NoPropertyTypeCoercionMixIn(object):

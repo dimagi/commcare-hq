@@ -43,9 +43,10 @@ When a linked/downstream app is pulled from its master/upstream app:
 - The two apps will have **different** ids.
 - Corresponding modules in the master and linked app will have the **same** unique ids.
 - Corresponding forms in the master and linked app will have the **same** XMLNS.
-- Corresponding forms in the master and linked app will have **different** unique ids.
-   - In order to keep these ids consistent from one pull to another, particularly when using multiple master apps (see below), part of the pull process maps the forms in the new linked app to the forms in the most recent version of the linked app. This overwrites the form ids copied from the master app with the form ids that are being used in the linked app. Any new forms (added to the master since the last time the linked app was pulled) will be assigned brand-new ids.
-   - Note on shadow forms: The mapping described above is based on XMLNS. Since a shadow form inherits its parent's XMLNS, shadow forms cannot be mapped. The result of this is that any shadow forms in the linked app are unstable: their unique ids change on **every** pull. This means that workflows that store a form's unique id, such as UCRs based on a form data source, will not work with shadow forms on linked apps.
+- Corresponding forms in the master and linked app may have either the same or different unique ids, depending on how old the linked app is.
+   - Older linked apps will have differing ids, while linked apps created after the deploy of [#25998](https://github.com/dimagi/commcare-hq/pull/25998) in December 2019 will use the same ids in both the linked and master apps.
+   - Linked apps that do not have form ids that match their master app have a mapping of master app form unique id => linked app form unique id, stored as [ResourceOverride](https://github.com/dimagi/commcare-hq/blob/15ceabdccf0ed49ed306462b3a154fe14886bf27/corehq/apps/app_manager/suite_xml/post_process/resources.py#L11) objects.
+   - See [#25718](https://github.com/dimagi/commcare-hq/issues/25718) for context around why this change was made.
 
 ## Exclusions
 A few fields are **not** copied from the master app to the linked app. They include basic metadata (doc type, name, date created, comment, etc) and some build-related fields (build profiles and practice mobile workers). For the full list, see [excluded_fields in overwrite_app](https://github.com/dimagi/commcare-hq/blob/47b197378fc196ff25a88dc5b2c56a389aaec85f/corehq/apps/app_manager/views/utils.py#L165-L169).
@@ -59,4 +60,3 @@ The `MULTI_MASTER_LINKED_DOMAINS` feature flag allows a linked app to pull chang
 A linked app may pull from all multiple upstream apps within a single "family." Families are created by copying apps; when an app is copied, its `family_id` is set to the id of the app it was copied from.
 
 When this flag is on, different builds of the same linked app may have different values for `upstream_app_id`. This id reflects the app that specific build was pulled from.
-

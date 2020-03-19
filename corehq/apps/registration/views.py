@@ -16,7 +16,7 @@ from django.utils.translation import ugettext as _
 from django.views.decorators.http import require_POST
 from django.views.generic.base import TemplateView, View
 
-from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
+from djng.views.mixins import JSONResponseMixin, allow_remote_invocation
 from memoized import memoized
 
 from dimagi.utils.couch import CriticalSection
@@ -52,7 +52,6 @@ from corehq.apps.registration.utils import (
     send_mobile_experience_reminder,
     send_new_request_update_email,
 )
-from corehq.apps.users.landing_pages import get_cloudcare_urlname
 from corehq.apps.users.models import CouchUser, WebUser
 from corehq.util.context_processors import get_per_domain_context
 from corehq.util.soft_assert import soft_assert
@@ -68,22 +67,6 @@ def get_domain_context():
 
 def registration_default(request):
     return redirect(UserRegistrationView.urlname)
-
-
-def track_domainless_new_user(request):
-    if settings.UNIT_TESTING:
-        # don't trigger soft assert in a test
-        return
-    user = request.user
-    is_new_user = not (Domain.active_for_user(user) or user.is_superuser)
-    if is_new_user:
-        _domainless_new_user_soft_assert(
-            False, ("A new user '{}' was redirected to "
-                    "RegisterDomainView on '{}', which shouldn't "
-                    "actually happen.").format(
-                user.username, settings.SERVER_ENVIRONMENT
-            )
-        )
 
 
 class ProcessRegistrationView(JSONResponseMixin, View):
@@ -217,7 +200,6 @@ class UserRegistrationView(BasePageView):
             # Redirect to a page which lets user choose whether or not to create a new account
             domains_for_user = Domain.active_for_user(request.user)
             if len(domains_for_user) == 0:
-                track_domainless_new_user(request)
                 return redirect("registration_domain")
             else:
                 return redirect("homepage")
@@ -252,6 +234,23 @@ class UserRegistrationView(BasePageView):
             'reg_form_defaults': prefills,
             'hide_password_feedback': settings.ENABLE_DRACONIAN_SECURITY_FEATURES,
             'implement_password_obfuscation': settings.OBFUSCATE_PASSWORD_FOR_NIC_COMPLIANCE,
+            'professional_features': [
+                _("Custom mobile app builder"),
+                _("Powerful case management"),
+                _("Field staff reports"),
+                _("Unlimited mobile users"),
+                _("Full suite of data tools"),
+                _("3rd party integrations"),
+                _("2-way SMS workflows"),
+                _("Guaranteed tech support"),
+                _("Access to Dimagi's Customer Success team"),
+            ],
+            'community_features': [
+                _("Custom mobile app builder"),
+                _("Basic case management"),
+                _("Field staff reports"),
+                _("5 mobile users"),
+            ],
         }
         if settings.IS_SAAS_ENVIRONMENT:
             context['demo_workflow_ab_v2'] = ab_tests.SessionAbTest(
@@ -429,12 +428,6 @@ def confirm_domain(request, guid=''):
         requested_domain = Domain.get_by_name(req.domain)
         view_name = "dashboard_default"
         view_args = [requested_domain.name]
-        if not domain_has_apps(req.domain):
-            if False and settings.IS_SAAS_ENVIRONMENT and domain_is_on_trial(req.domain):
-                view_name = "app_from_template"
-                view_args.append("appcues")
-            else:
-                view_name = "default_new_app"
 
         # Has guid already been confirmed?
         if requested_domain.is_active:
@@ -461,9 +454,6 @@ def confirm_domain(request, guid=''):
         track_confirmed_account_on_hubspot.delay(requesting_user)
         request.session['CONFIRM'] = True
 
-        if settings.IS_SAAS_ENVIRONMENT:
-            # For AppCues v3, land new user in Web Apps
-            view_name = get_cloudcare_urlname(requested_domain.name)
         return HttpResponseRedirect(reverse(view_name, args=view_args))
 
 

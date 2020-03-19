@@ -1,7 +1,7 @@
-MOTECH's DHIS2 Module
-=====================
+The MOTECH DHIS2 Module
+=======================
 
-See the [MOTECH README](../README.md#dhis2-module) for a brief
+See the [MOTECH README](../README.md#the-dhis2-module) for a brief
 introduction to DHIS2 in the context of MOTECH.
 
 MOTECH supports three ways of integrating with DHIS2:
@@ -121,20 +121,17 @@ definitions. The following is an example:
         "xmlns": "http://openrosa.org/formdesigner/C3156B64-C380-4A38-B00E-C8E4D81EDCF9",
         "program_id": "WomWTaHk5mx",
         "event_date": {
-          "doc_type": "FormQuestion",
           "form_question": "/data/event_date"
         },
         "event_status": "COMPLETED",
         "org_unit_id": {
-          "doc_type": "FormUserAncestorLocationField",
-          "location_field": "dhis_id",
+          "form_user_ancestor_location_field": "dhis_id",
         },
         "datavalue_maps": [
           {
             "doc_type": "FormDataValueMap",
             "data_element_id": "M8yQ1rWomWT",
             "value": {
-              "doc_type": "FormQuestionMap",
               "form_question": "/data/home_delivery",
               "value_map": {
                 "yes": 1,
@@ -146,7 +143,6 @@ definitions. The following is an example:
             "doc_type": "FormDataValueMap",
             "data_element_id": "Hk5mxrWomWT",
             "value": {
-              "doc_type": "FormQuestion",
               "form_question": "/data/birth_outcome"
             }
           }
@@ -168,22 +164,22 @@ prompt the user for the event date.)
 
 "datavalue_maps" map form data to DHIS2 DataValues. They are
 [`FormDataValueMap`](./dhis2_config.py) definitions. In each one a DHIS2
-DataElement ID is given, and a CommCare ValueSource. The value source
-can be a ConstantString if the value of the data element is always the
-same; or a FormQuestion; or a FormQuestionMap if CommCare values map to
-DHIS2 values.
+DataElement ID is given, and a CommCare value source. Use
+"form_question" if the value is the answer to a form question. Use
+"form_question" with "value_map" to map a set of answers (e.g. an answer
+to a multiple-choice question) to corresponding DHIS2 values. Or use
+"value" if the value of the data element is always the same.
 
 There are several ways to set the DHIS2 organisation unit ID:
 
 * It could be set to a constant for all submissions of this form. This
-  is the case in the example given above. The ValueSource is set to a
-  "ConstantString", and a constant value is given. This is unlikely
-  though, because usually forms will be submitted for many locations or
-  organisation units.
+  is the case in the example given above. "value" is set to a constant.
+  This is unlikely though, because usually forms will be submitted for
+  many locations or organisation units.
 * It could be that the organisation unit is selected by the user from a
   lookup table. In this scenario, the org_unit_id would be saved to a
-  hidden value in the form, and the ValueSource would be a FormQuestion
-  where "form_question" is set to the hidden value.
+  hidden value in the form, and "form_question" is set to the path to
+  the hidden value question.
 * It could be that locations in the project space have equivalent
   organisation units in DHIS2. If "org_unit_id" is not specified in the
   Dhis2FormConfig definition, then the MOTECH uses the CommCare location

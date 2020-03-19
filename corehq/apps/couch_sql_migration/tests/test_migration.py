@@ -2,7 +2,7 @@ import json
 import logging
 import os
 import uuid
-from contextlib import contextmanager
+from contextlib import contextmanager, suppress
 from datetime import datetime, timedelta
 from functools import wraps
 from signal import SIGINT
@@ -56,7 +56,7 @@ from corehq.form_processor.interfaces.dbaccessors import (
 )
 from corehq.form_processor.system_action import SYSTEM_ACTION_XMLNS
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
-from corehq.form_processor.utils import should_use_sql_backend
+from corehq.form_processor.utils import convert_xform_to_json, should_use_sql_backend
 from corehq.form_processor.utils.general import (
     clear_local_domain_sql_backend_override,
 )
@@ -72,15 +72,20 @@ from corehq.util.test_utils import (
     trap_extra_setup,
 )
 
+from .. import couchsqlmigration as mod
 from ..asyncforms import get_case_ids
-from ..couchsqlmigration import MigrationRestricted, sql_form_to_json
 from ..diffrule import ANY
 from ..management.commands.migrate_domain_from_couch_to_sql import (
+    CACHED,
     COMMIT,
     MIGRATE,
+    REBUILD,
     RESET,
+    STATS,
 )
 from ..statedb import init_state_db, open_state_db
+from ..util import UnhandledError
+
 
 log = logging.getLogger(__name__)
 
@@ -127,26 +132,40 @@ class BaseMigrationTestCase(TestCase, TestFileMixin):
         FormProcessorTestUtils.delete_all_cases_forms_ledgers()
         self.domain.delete()
 
-    def _do_migration(self, domain=None, action=MIGRATE, **options):
+    def _do_migration(self, domain=None, action=MIGRATE, chunk_size=0, **options):
         if domain is None:
             domain = self.domain_name
+        if chunk_size:
+            patch_chunk_size = self.patch_migration_chunk_size(chunk_size)
+        else:
+            patch_chunk_size = suppress()  # until nullcontext with py3.7
+        if "missing_docs" not in options:
+            patch_find_missing_docs = mock.patch(
+                "corehq.apps.couch_sql_migration.management.commands"
+                ".migrate_domain_from_couch_to_sql.find_missing_docs"
+            )
+        else:
+            patch_find_missing_docs = suppress()
         self.assert_backend("couch", domain)
         self.migration_success = None
         options.setdefault("no_input", True)
-        options.setdefault("diff_process", False)
+        options.setdefault("case_diff", "local")
+        assert "diff_process" not in options, options  # old/invalid option
         with mock.patch(
             "corehq.form_processor.backends.sql.dbaccessors.transaction.atomic",
             atomic_savepoint,
-        ):
+        ), patch_chunk_size, patch_find_missing_docs:
             try:
                 call_command('migrate_domain_from_couch_to_sql', domain, action, **options)
                 success = True
+            except UnhandledError:
+                raise
             except SystemExit:
                 success = False
         self.migration_success = success
 
     def _do_migration_and_assert_flags(self, domain, **options):
-        self._do_migration(domain, **options)
+        self._do_migration(domain, finish=True, **options)
         self.assert_backend("sql", domain)
 
     def _compare_diffs(self, expected_diffs=None, missing=None, ignore_fail=False):
@@ -208,17 +227,18 @@ class BaseMigrationTestCase(TestCase, TestFileMixin):
             assert backend == "couch", "typo? unknown backend: %s" % backend
             self.assertFalse(is_sql, "sql backend is active")
 
-    def submit_form(self, xml, received_on=None):
+    def submit_form(self, xml, received_on=None, domain=None):
         # NOTE freezegun.freeze_time does not work with the blob db
         # boto3 and/or minio -> HeadBucket 403 Forbidden
-        form = submit_form_locally(xml, self.domain_name).xform
+        kw = self._submit_kwargs(received_on)
+        return submit_form_locally(xml, domain or self.domain_name, **kw).xform
+
+    def _submit_kwargs(self, received_on):
         if received_on is not None:
             if isinstance(received_on, timedelta):
                 received_on = datetime.utcnow() + received_on
-            form.received_on = received_on
-            form.save()
-        log.debug("form %s received on %s", form.form_id, form.received_on)
-        return form
+            return {"received_on": received_on}
+        return {}
 
     @contextmanager
     def patch_migration_chunk_size(self, chunk_size):
@@ -256,6 +276,28 @@ class BaseMigrationTestCase(TestCase, TestFileMixin):
         with raise_context, mock.patch(path, iter_docs):
             yield
 
+    @staticmethod
+    def skip_case_and_ledger_updates(form_id):
+        def maybe_get_result(self, sql_form, couch_form):
+            if couch_form.form_id == form_id:
+                return None
+            return get_result(self, sql_form, couch_form)
+        get_result = mod.CouchSqlDomainMigrator._get_case_stock_result
+        return mock.patch.object(
+            mod.CouchSqlDomainMigrator,
+            "_get_case_stock_result",
+            maybe_get_result,
+        )
+
+    @contextmanager
+    def diff_without_rebuild(self):
+        couch_func = ("corehq.form_processor.backends.couch.processor"
+                      ".FormProcessorCouch.hard_rebuild_case")
+        sql_func = "corehq.apps.couch_sql_migration.casediff.rebuild_and_diff_cases"
+        with mock.patch(couch_func) as couch_mock, mock.patch(sql_func) as sql_mock:
+            couch_mock.side_effect = sql_mock.side_effect = Exception("fail!")
+            yield
+
 
 @contextmanager
 def null_context():
@@ -282,13 +324,13 @@ class MigrationTestCase(BaseMigrationTestCase):
 
     def test_migration_blacklist(self):
         COUCH_SQL_MIGRATION_BLACKLIST.set(self.domain_name, True, NAMESPACE_DOMAIN)
-        with self.assertRaises(MigrationRestricted):
+        with self.assertRaises(mod.MigrationRestricted):
             self._do_migration(self.domain_name)
         COUCH_SQL_MIGRATION_BLACKLIST.set(self.domain_name, False, NAMESPACE_DOMAIN)
 
     def test_migration_custom_report(self):
         with get_report_domain() as domain:
-            with self.assertRaises(MigrationRestricted):
+            with self.assertRaises(mod.MigrationRestricted):
                 self._do_migration(domain.name)
 
     def test_basic_form_migration(self):
@@ -866,7 +908,8 @@ class MigrationTestCase(BaseMigrationTestCase):
         case.save()
 
         # migration should re-diff previously migrated form-1
-        self._do_migration_and_assert_flags(self.domain_name)
+        with self.diff_without_rebuild():
+            self._do_migration_and_assert_flags(self.domain_name)
         self.assertEqual(self._get_case_ids("CommCareCase-Deleted"), {"case-1", "case-2"})
         self._compare_diffs([
             ('CommCareCase-Deleted', Diff('diff', ['age'], old='35', new='27')),
@@ -1077,6 +1120,83 @@ class MigrationTestCase(BaseMigrationTestCase):
         self._do_migration_and_assert_flags(self.domain_name)
         self._compare_diffs([])
 
+    def test_migrate_skipped_forms(self):
+        def skip_forms(form_ids):
+            def maybe_migrate_form(self, form, **kw):
+                if form.form_id in form_ids:
+                    log.info("skipping %s", form.form_id)
+                else:
+                    migrate(self, form, **kw)
+
+            migrate = mod.CouchSqlDomainMigrator._migrate_form_and_associated_models
+            return mock.patch.object(
+                mod.CouchSqlDomainMigrator,
+                "_migrate_form_and_associated_models",
+                maybe_migrate_form,
+            )
+
+        self.submit_form(make_test_form("test-1"), timedelta(minutes=-95))
+        self.submit_form(make_test_form("test-2"), timedelta(minutes=-90))
+        self.submit_form(make_test_form("test-3"), timedelta(minutes=-85))
+        self.submit_form(make_test_form("test-4"))
+        self.assert_backend("couch")
+
+        with self.patch_migration_chunk_size(1), skip_forms({"test-1", "test-2"}):
+            self._do_migration(live=True)
+        self.assert_backend("sql")
+        self.assertEqual(self._get_form_ids(), {"test-3"})
+        self.assertEqual(self._get_case_ids(), {"test-case"})
+        clear_local_domain_sql_backend_override(self.domain_name)
+
+        with self.patch_migration_chunk_size(1), skip_forms({"test-2"}):
+            self._do_migration(action=STATS, missing_docs=REBUILD)
+            self._do_migration(live=True, forms="missing")
+        self.assertEqual(self._get_form_ids(), {"test-1", "test-3", "test-4"})
+
+        clear_local_domain_sql_backend_override(self.domain_name)
+        self._do_migration(action=STATS, missing_docs=REBUILD)
+        self._do_migration(forms="missing")
+        self.assertEqual(self._get_form_ids(), {"test-1", "test-2", "test-3", "test-4"})
+        self._compare_diffs([])
+
+    def test_migrate_partially_migrated_form_with_case(self):
+        # form      age     min     max
+        # test-1    30      0       --
+        # test-2    31      --      9
+        self.submit_form(make_test_form("test-1", age=30, min=0), timedelta(days=-90))
+        self.submit_form(make_test_form("test-2", age=31, max=9), timedelta(days=-1))
+        self.assert_backend("couch")
+        with self.skip_case_and_ledger_updates("test-1"):
+            self._do_migration(live=True)
+        self.assert_backend("sql")
+        self.assertEqual(self._get_form_ids(), {"test-1", "test-2"})
+        self.assertEqual(self._get_case_ids(), {"test-case"})
+        self._compare_diffs([
+            ('CommCareCase', Diff('missing', ['min'], old='0', new=MISSING)),
+            ('CommCareCase', Diff('set_mismatch', ['xform_ids', '[*]'], old='test-1', new='')),
+        ])
+        clear_local_domain_sql_backend_override(self.domain_name)
+        self._do_migration(forms="missing")
+        self.assertEqual(self._get_form_ids(), {"test-1", "test-2"})
+        self.assertEqual(self._get_case_ids(), {"test-case"})
+        self._compare_diffs([])
+
+    def test_migrate_should_not_update_case_when_not_missing(self):
+        self.submit_form(make_test_form("test-1", age=30, min=0), timedelta(days=-90))
+        self.submit_form(make_test_form("test-2", age=31, max=9), timedelta(days=-1))
+        self.assert_backend("couch")
+        self._do_migration(live=True)
+        self.assert_backend("sql")
+        self.assertEqual(self._get_form_ids(), {"test-1", "test-2"})
+        self.assertEqual(self._get_case_ids(), {"test-case"})
+        diff = FormJsonDiff('set_mismatch', ['xform_ids', '[*]'], 'test-1', '')
+        statedb = open_state_db(self.domain_name, self.state_dir, readonly=False)
+        statedb.replace_case_diffs([("CommCareCase", "test-case", [diff])])
+        clear_local_domain_sql_backend_override(self.domain_name)
+        with mock.patch.object(CaseAccessorSQL, "save_case") as save_case:
+            save_case.side_effect = BaseException("unexpected save")
+            self._do_migration(forms="missing")
+
     def test_reset_migration(self):
         now = datetime.utcnow()
         self.submit_form(make_test_form("test-1"), now - timedelta(minutes=95))
@@ -1117,7 +1237,7 @@ class MigrationTestCase(BaseMigrationTestCase):
         self.submit_form(make_test_form("arch"), timedelta(minutes=-93)).archive()
         with self.patch_migration_chunk_size(1), \
                 self.on_doc("XFormInstance", "one", interrupt, **kw):
-            self._do_migration(live=True, diff_process=True)
+            self._do_migration(live=True, case_diff="process")
         self.assert_backend("sql")
         self.assertFalse(self._get_form_ids("XFormArchived"))
 
@@ -1228,28 +1348,32 @@ class MigrationTestCase(BaseMigrationTestCase):
             self._get_case("test-case")
         self._compare_diffs([])
 
+    def test_missing_docs(self):
+        self.submit_form(TEST_FORM, timedelta(minutes=-90))
+        self._do_migration(self.domain_name, live=True)
+        FormAccessorSQL.hard_delete_forms(self.domain_name, ["test-form"])
+        CaseAccessorSQL.hard_delete_cases(self.domain_name, ["test-case"])
+        clear_local_domain_sql_backend_override(self.domain_name)
+        self._do_migration(self.domain_name, missing_docs=REBUILD, finish=True)
+        self._compare_diffs(
+            missing={"XFormInstance": 1, "CommCareCase": 1},
+            ignore_fail=True,
+        )
+
     def test_form_with_missing_xml(self):
         create_form_with_missing_xml(self.domain_name)
-        self._do_migration_and_assert_flags(self.domain_name, diff_process=True)
+        self._do_migration_and_assert_flags(self.domain_name)
+        self.assertEqual(self._get_case_ids(), {"test-case"})
+        self._compare_diffs([])
 
-        # This may change in the future: it may be possible to rebuild the
-        # XML using parsed form JSON from couch.
-        with self.assertRaises(CaseNotFound):
-            self._get_case("test-case")
-        self._compare_diffs([
-            ('XFormInstance', Diff('missing', ['_id'], new=MISSING)),
-            ('XFormInstance', Diff('missing', ['auth_context'], new=MISSING)),
-            ('XFormInstance', Diff('missing', ['doc_type'], new=MISSING)),
-            ('XFormInstance', Diff('missing', ['domain'], new=MISSING)),
-            ('XFormInstance', Diff('missing', ['form'], new=MISSING)),
-            ('XFormInstance', Diff('missing', ['history'], new=MISSING)),
-            ('XFormInstance', Diff('missing', ['initial_processing_complete'], new=MISSING)),
-            ('XFormInstance', Diff('missing', ['openrosa_headers'], new=MISSING)),
-            ('XFormInstance', Diff('missing', ['partial_submission'], new=MISSING)),
-            ('XFormInstance', Diff('missing', ['received_on'], new=MISSING)),
-            ('XFormInstance', Diff('missing', ['server_modified_on'], new=MISSING)),
-            ('XFormInstance', Diff('missing', ['xmlns'], new=MISSING)),
-        ], missing={'CommCareCase': 1})
+    def test_form_with_extra_xml_blob_metadata(self):
+        form = create_form_with_extra_xml_blob_metadata(self.domain_name)
+        self._do_migration_and_assert_flags(self.domain_name)
+        self._compare_diffs([])
+        self.assertEqual(
+            [m.name for m in get_blob_db().metadb.get_for_parent(form.form_id)],
+            ["form.xml"],
+        )
 
     def test_unwrappable_form(self):
         def bad_wrap(doc):
@@ -1294,21 +1418,21 @@ class LedgerMigrationTests(BaseMigrationTestCase):
             pass  # domain.delete() in parent class got there first
         super(LedgerMigrationTests, self).tearDown()
 
-    def _submit_ledgers(self, ledger_blocks):
-        return submit_case_blocks(ledger_blocks, self.domain_name)[0].form_id
-
-    def _set_balance(self, balance, case_id, product_id, type=None):
+    def _set_balance(self, case_id, balances, received_on=None, type=None):
         from corehq.apps.commtrack.tests.util import get_single_balance_block
-        return self._submit_ledgers([
-            get_single_balance_block(case_id, product_id, balance, type=type)
-        ])
+        ledger_blocks = [
+            get_single_balance_block(case_id, product._id, balance, type=type)
+            for product, balance in balances.items()
+        ]
+        kw = {"form_extras": self._submit_kwargs(received_on)}
+        return submit_case_blocks(ledger_blocks, self.domain_name, **kw)[0].form_id
 
     def test_migrate_ledgers(self):
         case_id = uuid.uuid4().hex
         create_and_save_a_case(self.domain_name, case_id=case_id, case_name="Simon's sweet shop")
-        self._set_balance(100, case_id, self.liquorice._id, type="set_the_liquorice_balance")
-        self._set_balance(50, case_id, self.sherbert._id)
-        self._set_balance(175, case_id, self.jelly_babies._id)
+        self._set_balance(case_id, {self.liquorice: 100}, type="set_the_liquorice_balance")
+        self._set_balance(case_id, {self.sherbert: 50})
+        self._set_balance(case_id, {self.jelly_babies: 175})
 
         expected_stock_state = {'stock': {
             self.liquorice._id: 100,
@@ -1322,6 +1446,63 @@ class LedgerMigrationTests(BaseMigrationTestCase):
         transactions = LedgerAccessorSQL.get_ledger_transactions_for_case(case_id)
         self.assertEqual(3, len(transactions))
 
+        self._compare_diffs([])
+
+    def test_migrate_partially_migrated_form1_with_ledger(self):
+        self.submit_form(TEST_FORM, timedelta(days=-5))  # create test-case
+        form1 = self._set_balance("test-case", {
+            self.liquorice: 50,
+            self.sherbert: 100,
+        }, timedelta(days=-3))
+        form2 = self._set_balance("test-case", {self.liquorice: 75}, timedelta(days=-1))
+        print("ledger forms:", form1, form2)
+        with self.skip_case_and_ledger_updates(form1):
+            self._do_migration(live=True)
+        self.fix_missing_ledger_diffs(form1, form2, [
+            ("CommCareCase", Diff("set_mismatch", ["xform_ids", "[*]"], old=form1, new="")),
+            ("stock state", Diff("missing", ["*"],
+                old={'form_state': 'present', 'ledger': {
+                    '_id': ANY,
+                    'entry_id': self.sherbert._id,
+                    'location_id': None,
+                    'balance': 100,
+                    'last_modified': ANY,
+                    'domain': self.domain_name,
+                    'section_id': 'stock',
+                    'case_id': 'test-case',
+                    'daily_consumption': None,
+                    'last_modified_form_id': form1,
+                }},
+                new={'form_state': 'present'},
+            )),
+        ])
+
+    def test_migrate_partially_migrated_form2_with_ledger(self):
+        self.submit_form(TEST_FORM, timedelta(days=-5))  # create test-case
+        form1 = self._set_balance("test-case", {
+            self.liquorice: 50,
+            self.sherbert: 100,
+        }, timedelta(days=-3))
+        form2 = self._set_balance("test-case", {self.liquorice: 75}, timedelta(days=-1))
+        print("ledger forms:", form1, form2)
+        with self.skip_case_and_ledger_updates(form2):
+            self._do_migration(live=True)
+        self.fix_missing_ledger_diffs(form1, form2, [
+            ("CommCareCase", Diff("set_mismatch", ["xform_ids", "[*]"], old=form2, new="")),
+            ("stock state", Diff("diff", ["balance"], old=75, new=50)),
+            ('stock state', Diff('diff', ['last_modified'])),
+            ('stock state', Diff('diff', ['last_modified_form_id'], old=form2, new=form1)),
+        ])
+
+    def fix_missing_ledger_diffs(self, form1, form2, diffs):
+        self.assert_backend("sql")
+        self.assertEqual(self._get_form_ids(), {'test-form', form1, form2})
+        self.assertEqual(self._get_case_ids(), {"test-case"})
+        self._compare_diffs(diffs)
+        clear_local_domain_sql_backend_override(self.domain_name)
+        self._do_migration(forms="missing")
+        self.assertEqual(self._get_form_ids(), {'test-form', form1, form2})
+        self.assertEqual(self._get_case_ids(), {"test-case"})
         self._compare_diffs([])
 
     def _validate_ledger_data(self, state_dict, expected):
@@ -1347,31 +1528,56 @@ class TestHelperFunctions(TestCase):
         FormProcessorTestUtils.delete_all_cases_forms_ledgers()
         self.domain.delete()
 
-    def get_form_with_missing_xml(self):
-        return create_form_with_missing_xml(self.domain_name)
+    def get_form_with_missing_xml(self, **kw):
+        return create_form_with_missing_xml(self.domain_name, **kw)
 
     def test_sql_form_to_json_with_missing_xml(self):
         self.domain.use_sql_backend = True
         self.domain.save()
         form = self.get_form_with_missing_xml()
-        data = sql_form_to_json(form)
+        data = mod.sql_form_to_json(form)
         self.assertEqual(data["form"], {})
 
     def test_get_case_ids_with_missing_xml(self):
         form = self.get_form_with_missing_xml()
         self.assertEqual(get_case_ids(form), {"test-case"})
 
+    def test_migrate_form_attachments_missing_xml(self, couch_meta=True):
+        def delete_blob():
+            meta = sql_form.get_attachment_meta('form.xml')
+            get_blob_db().delete(meta.key)
+        couch_form = self.get_form_with_missing_xml(couch_meta=couch_meta)
+        sql_form = mod.XFormInstanceSQL(
+            form_id=couch_form.form_id,
+            domain=couch_form.domain,
+            xmlns=couch_form.xmlns,
+            user_id=couch_form.user_id,
+        )
+        self.addCleanup(delete_blob)
+        with mod.patch_XFormInstance_get_xml():
+            mod._migrate_form_attachments(sql_form, couch_form)
+        self.assertEqual(sql_form.form_data, couch_form.form_data)
+        xml = sql_form.get_xml()
+        self.assertEqual(convert_xform_to_json(xml), couch_form.form_data)
 
-def create_form_with_missing_xml(domain_name):
+    def test_migrate_form_attachments_missing_xml_meta(self):
+        self.test_migrate_form_attachments_missing_xml(couch_meta=False)
+
+
+def create_form_with_missing_xml(domain_name, couch_meta=False):
     form = submit_form_locally(TEST_FORM, domain_name).xform
     form = FormAccessors(domain_name).get_form(form.form_id)
     blobs = get_blob_db()
     with mock.patch.object(blobs.metadb, "delete"):
         if isinstance(form, XFormInstance):
             # couch
+            metaref = form.blobs["form.xml"]
             form.delete_attachment("form.xml")
+            if couch_meta:
+                form.blobs["form.xml"] = metaref
         else:
             # sql
+            assert not couch_meta, "couch_meta=True not valid with SQL form"
             blobs.delete(form.get_attachment_meta("form.xml").key)
         try:
             form.get_xml()
@@ -1381,16 +1587,54 @@ def create_form_with_missing_xml(domain_name):
     return form
 
 
+def create_form_with_extra_xml_blob_metadata(domain_name):
+    form = submit_form_locally(TEST_FORM, domain_name).xform
+    form = FormAccessors(domain_name).get_form(form.form_id)
+    meta = get_blob_db().metadb.get(
+        parent_id=form.form_id, key=form.blobs["form.xml"].key)
+    args = {n: getattr(meta, n) for n in [
+        "domain",
+        "parent_id",
+        "type_code",
+        "name",
+        "content_length",
+        "content_type",
+        "properties",
+    ]}
+    get_blob_db().metadb.new(key=uuid.uuid4().hex, **args).save()
+    return form
+
+
 @nottest
-def make_test_form(form_id, age=27, case_id="test-case", case_name="Xeenax"):
+def make_test_form(form_id, **data):
+    def update(form, pairs, ns=""):
+        old = f"<{ns}age>27</{ns}age>"
+        new = "".join(
+            f"<{ns}{key}>{value}</{ns}{key}>"
+            for key, value in pairs.items()
+            if value is not None
+        )
+        assert form.count(old) == 1, (old, form.count(old))
+        return form.replace(old, new)
+    fields = {
+        "case_id": ("test-case", '"{}"', 1),
+        "case_name": ("Xeenax", ">{}<", 2),
+        "date": ("2015-08-04T18:25:56.656Z", "{}", 2),
+    }
     form = TEST_FORM
-    assert form.count(">test-form<") == 1
-    assert form.count(">27<") == 2
-    assert form.count('"test-case"') == 1
-    assert form.count('>Xeenax<') == 2
-    form = form.replace(">27<", f">{age}<")
-    form = form.replace('"test-case"', f'"{case_id}"')
-    form = form.replace('>Xeenax<', f'>{case_name}<')
+    updates = {}
+    for name, value in data.items():
+        if name not in fields:
+            updates[name] = value
+            continue
+        default_value, template, occurs = fields[name]
+        old = template.format(default_value)
+        new = template.format(value)
+        assert form.count(old) == occurs, (name, old, new, occurs)
+        form = form.replace(old, new)
+    if updates:
+        form = update(form, updates)
+        form = update(form, updates, "n0:")
     return form.replace(">test-form<", f">{form_id}<")
 
 
@@ -1410,8 +1654,8 @@ def atomic_savepoint(*args, **kw):
 _real_atomic = transaction.atomic
 
 
-@attr.s(cmp=False)
-class Diff(object):
+@attr.s(cmp=False, repr=False)
+class Diff:
 
     type = attr.ib(default=ANY)
     path = attr.ib(default=ANY)
@@ -1427,6 +1671,12 @@ class Diff(object):
                 and self.new == other.new_value
             )
         return NotImplemented
+
+    def __repr__(self):
+        return (
+            f"FormJsonDiff(diff_type={self.type!r}, path={self.path!r}, "
+            f"old_value={self.old!r}, new_value={self.new!r})"
+        )
 
     __hash__ = None
 

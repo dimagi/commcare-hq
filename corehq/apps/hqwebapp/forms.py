@@ -67,10 +67,11 @@ class BulkUploadForm(forms.Form):
     bulk_upload_file = forms.FileField(label="")
     action = forms.CharField(widget=forms.HiddenInput(), initial='bulk_upload')
 
-    def __init__(self, plural_noun, action, form_id, context, *args, **kwargs):
+    def __init__(self, plural_noun="", action=None, form_id=None, context=None, *args, **kwargs):
         super(BulkUploadForm, self).__init__(*args, **kwargs)
         self.helper = FormHelper()
-        self.helper.form_id = form_id
+        if form_id:
+            self.helper.form_id = form_id
         self.helper.form_method = 'post'
         if action:
             self.helper.form_action = action
@@ -81,9 +82,8 @@ class BulkUploadForm(forms.Form):
             ),
             StrictButton(
                 ('<i class="fa fa-cloud-upload"></i> Upload %s' % plural_noun),
-                css_class='btn-primary',
+                css_class='btn-primary disable-on-submit',
                 data_bind='disable: !file()',
-                onclick='this.disabled=true;this.form.submit();',
                 type='submit',
             ),
         )

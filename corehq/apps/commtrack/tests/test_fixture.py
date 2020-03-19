@@ -1,9 +1,14 @@
 import datetime
+import doctest
 import random
 import string
+from contextlib import contextmanager
 from xml.etree import cElementTree as ElementTree
+from xml.etree.ElementTree import tostring
 
 from django.test import TestCase
+
+import attr
 
 from casexml.apps.phone.models import SyncLogSQL, properly_wrap_sync_log
 from casexml.apps.phone.tests.utils import (
@@ -13,9 +18,10 @@ from casexml.apps.phone.tests.utils import (
 )
 
 from corehq.apps.app_manager.tests.util import TestXmlMixin
+from corehq.apps.commtrack.fixtures import simple_fixture_generator
 from corehq.apps.commtrack.tests import util
 from corehq.apps.products.fixtures import product_fixture_generator
-from corehq.apps.products.models import Product
+from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.programs.fixtures import program_fixture_generator
 from corehq.apps.programs.models import Program
 
@@ -314,3 +320,120 @@ class FixtureTest(TestCase, TestXmlMixin):
             program_xml,
             ElementTree.tostring(fixture_post_change[0])
         )
+
+
+@attr.s(auto_attribs=True)
+class MockUser:
+    user_id: str
+
+
+class SimpleFixtureGeneratorTests(TestCase):
+
+    def test_product_decimal_value(self):
+        products = [
+            Product(
+                _id="1",
+                domain="test-domain",
+                name="Foo",
+                code_="foo",
+                cost=10,
+            ),
+            Product(
+                _id="2",
+                domain="test-domain",
+                name="Bar",
+                code_="bar",
+                cost=9.99,
+            ),
+            Product(
+                _id="3",
+                domain="test-domain",
+                name="Baz",
+                code_="baz",
+                cost=10.0,
+            ),
+        ]
+        fixtures = simple_fixture_generator(
+            restore_user=MockUser(user_id="123456"),
+            id="7890ab",
+            name="test-fixture",
+            fields=("name", "code", "cost"),
+            data=products,
+        )
+        xml = tostring(fixtures[0])
+        self.assertEqual(xml, self.get_expected_xml())
+
+    def test_sqlproduct_decimal_value(self):
+        with get_sql_products() as products:
+            fixtures = simple_fixture_generator(
+                restore_user=MockUser(user_id="123456"),
+                id="7890ab",
+                name="test-fixture",
+                fields=("name", "code", "cost"),
+                data=products,
+            )
+        xml = tostring(fixtures[0])
+        self.assertEqual(xml, self.get_expected_xml())
+
+    @staticmethod
+    def get_expected_xml():
+        _expected_xml = b"""
+            <fixture id="7890ab" user_id="123456">
+                <test-fixtures>
+                    <test-fixture id="1">
+                        <name>Foo</name>
+                        <code>foo</code>
+                        <cost>10</cost>
+                    </test-fixture>
+                    <test-fixture id="2">
+                        <name>Bar</name>
+                        <code>bar</code>
+                        <cost>9.99</cost>
+                    </test-fixture>
+                    <test-fixture id="3">
+                        <name>Baz</name>
+                        <code>baz</code>
+                        <cost>10</cost>
+                    </test-fixture>
+                </test-fixtures>
+            </fixture>"""
+        return b"".join([line.strip() for line in _expected_xml.split(b"\n")])
+
+
+@contextmanager
+def get_sql_products():
+    products = [
+        SQLProduct.objects.create(
+            product_id="1",
+            domain="test-domain",
+            name="Foo",
+            code="foo",
+            cost=10,
+        ),
+        SQLProduct.objects.create(
+            product_id="2",
+            domain="test-domain",
+            name="Bar",
+            code="bar",
+            cost=9.99,
+        ),
+        SQLProduct.objects.create(
+            product_id="3",
+            domain="test-domain",
+            name="Baz",
+            code="baz",
+            cost=10.0,
+        ),
+    ]
+    try:
+        # We have to save and fetch them to ensure that ``cost`` is cast as Decimal
+        yield SQLProduct.objects.filter(domain="test-domain").order_by("product_id")
+    finally:
+        for p in products:
+            p.delete()
+
+
+def test_doctests():
+    import corehq.apps.commtrack.fixtures
+    results = doctest.testmod(corehq.apps.commtrack.fixtures)
+    assert results.failed == 0

@@ -44,7 +44,7 @@ def underweight_children_help_text(age_label="0-5 years", html=False):
 
 def early_initiation_breastfeeding_help_text(html=False):
     return _(
-        "Of the children born in the last month and enrolled for Anganwadi services, the percentage "
+        "Of the children born in the current month and enrolled for Anganwadi services, the percentage "
         "whose breastfeeding was initiated within 1 hour of delivery. {}"
         "Early initiation of breastfeeding ensure the newborn recieves the \"first milk\" rich in "
         "nutrients and encourages exclusive breastfeeding practice".format("<br/><br/>" if html else "")
@@ -75,7 +75,7 @@ def children_initiated_appropriate_complementary_feeding_help_text(html=False):
 
 def institutional_deliveries_help_text(html=False):
     return _(
-        "Of the total number of women enrolled for Anganwadi services who gave birth in the last month, the "
+        "Of the total number of women enrolled for Anganwadi services who gave birth in the current month, the "
         "percentage who delivered in a public or private medical facility. {}"
         "Delivery in medical instituitions is associated with a decrease in maternal mortality rate".format(
             "<br/><br/>" if html else ""
@@ -122,6 +122,12 @@ def percent_adolescent_girls_enrolled_help_text():
     return _(
         "Of the total number of adolescent girls (aged 11-14 years), "
         "the percentage of girls enrolled for Anganwadi Services"
+    )
+
+def percent_adolescent_girls_enrolled_help_text_v2():
+    return _(
+        "Of the total number of adolescent girls (aged 11-14 years), "
+        "the percentage of adolescent girls who are out of school"
     )
 
 
@@ -175,4 +181,18 @@ def lady_supervisor_number_of_beneficiaries_visited_help_text():
 def lady_supervisor_number_of_vhnds_observed_help_text():
     return _(
         'Number of VHSND observed: Number of VHSND observed by LS in the current month'
+    )
+
+
+def awcs_reported_infantometer_text():
+    return _(
+        'Of the AWCs that have submitted an Infrastructure Details form, the percentage of '
+        'AWCs that reported having an Infantometer. '
+    )
+
+
+def awcs_reported_stadiometer_text():
+    return _(
+        'Of the AWCs that have submitted an Infrastructure Details form, the percentage of '
+        'AWCs that reported having a Stadiometer. '
     )

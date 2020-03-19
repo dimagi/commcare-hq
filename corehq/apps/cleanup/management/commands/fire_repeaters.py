@@ -15,7 +15,7 @@ class Command(BaseCommand):
 
     def handle(self, domain, **options):
         next_year = datetime.datetime.utcnow() + datetime.timedelta(days=365)
-        records = RepeatRecord.all(domain=domain, due_before=next_year)
+        records = RepeatRecord.all(domain=domain, due_before=next_year)  # Excludes succeeded and cancelled
         for record in records:
-            record.fire(post_fn=simple_post)
+            record.fire(force_send=True)
             print('{} {}'.format(record._id, 'successful' if record.succeeded else 'failed'))

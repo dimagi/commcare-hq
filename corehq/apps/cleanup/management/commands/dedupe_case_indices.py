@@ -86,14 +86,14 @@ def _add_temp_index(db):
         case_index_table=CommCareCaseIndexSQL._meta.db_table,
         identifier_index_name=IDENTIFIER_INDEX_NAME
     )
-    with connections[db].cursor() as cursor:
+    with CommCareCaseIndexSQL.get_cursor_for_partition_db(db) as cursor:
         if not _index_exists(db, IDENTIFIER_INDEX_NAME):
             log_sql(add_identifier_index)
             cursor.execute(add_identifier_index)
 
 
 def _index_exists(db, index_name):
-    with connections[db].cursor() as cursor:
+    with CommCareCaseIndexSQL.get_cursor_for_partition_db(db).cursor() as cursor:
         sql = "SELECT to_regclass('{}') IS NOT NULL as index_exists".format(index_name)
         log_sql(sql)
         cursor.execute(sql)
@@ -105,7 +105,7 @@ def _drop_index(db, index_name):
     drop_identifier_index = """
             DROP INDEX CONCURRENTLY IF EXISTS {index_name}
         """.format(index_name=index_name)
-    with connections[db].cursor() as cursor:
+    with CommCareCaseIndexSQL.get_cursor_for_partition_db(db) as cursor:
         log_sql(drop_identifier_index)
         cursor.execute(drop_identifier_index)
 
@@ -129,7 +129,7 @@ def _add_unique_constraint_to_case_index_table(db):
     )
 
     try:
-        with connections[db].cursor() as cursor:
+        with CommCareCaseIndexSQL.get_cursor_for_partition_db(db) as cursor:
             log_sql(create_index_sql)
             cursor.execute(create_index_sql)
             log_sql(add_constraint_sql)
@@ -154,7 +154,7 @@ def _delete_duplicate_indices(case_ids, db):
     """.format(case_index_table=CommCareCaseIndexSQL._meta.db_table)
 
     for chunk in chunked(case_ids, 100):
-        with connections[db].cursor() as cursor:
+        with CommCareCaseIndexSQL.get_cursor_for_partition_db(db) as cursor:
             delete_sql = delete_dupes_sql.format(case_ids="','".join(chunk))
             log_sql(delete_sql)
             cursor.execute(delete_sql)
@@ -170,7 +170,7 @@ def _get_case_ids_with_dupe_indices(db):
         HAVING count(*) > 1
     """.format(case_index_table=CommCareCaseIndexSQL._meta.db_table)
 
-    with connections[db].cursor() as cursor:
+    with CommCareCaseIndexSQL.get_cursor_for_partition_db(db) as cursor:
         log_sql(case_id_with_dupes_sql)
         cursor.execute(case_id_with_dupes_sql)
         rows_with_dupes = fetchall_as_namedtuple(cursor)

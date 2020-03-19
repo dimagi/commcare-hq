@@ -2,11 +2,13 @@ import copy
 import doctest
 import json
 import os
+import re
 import uuid
 
 from django.test import SimpleTestCase, TestCase
 
 import mock
+from requests import RequestException
 from testil import eq
 
 from casexml.apps.case.models import CommCareCase
@@ -19,6 +21,7 @@ from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import XFormInstanceSQL
 from corehq.motech.const import DIRECTION_EXPORT, DIRECTION_IMPORT
+from corehq.motech.openmrs.atom_feed import get_observation_mappings
 from corehq.motech.openmrs.const import (
     LOCATION_OPENMRS_UUID,
     OPENMRS_DATA_TYPE_BOOLEAN,
@@ -32,21 +35,19 @@ from corehq.motech.openmrs.openmrs_config import (
 )
 from corehq.motech.openmrs.repeater_helpers import (
     create_patient,
+    delete_case_property,
     find_or_create_patient,
     get_ancestor_location_openmrs_uuid,
     get_case_location_ancestor_repeaters,
+    get_patient,
     get_patient_by_identifier,
     get_patient_by_uuid,
     get_relevant_case_updates_from_form_json,
     save_match_ids,
 )
 from corehq.motech.openmrs.repeaters import OpenmrsRepeater
-from corehq.motech.value_source import (
-    CaseTriggerInfo,
-    ConstantString,
-    FormQuestionMap,
-    get_case_location,
-)
+from corehq.motech.openmrs.tests.utils import DATETIME_PATTERN, strip_xml
+from corehq.motech.value_source import CaseTriggerInfo, get_case_location
 from corehq.util.test_utils import TestFileMixin, _create_case
 
 DOMAIN = 'openmrs-repeater-tests'
@@ -267,7 +268,7 @@ class ExportOnlyTests(SimpleTestCase):
         should not be exported.
         """
         requests = mock.Mock()
-        requests.post.return_value.status_code = 500
+        requests.post.side_effect = RequestException()
         info = mock.Mock(
             updates={'sex': 'M', 'dob': '1918-07-18'},
             extra_fields={},
@@ -282,10 +283,12 @@ class ExportOnlyTests(SimpleTestCase):
         case_config['person_properties']['birthdate']['direction'] = DIRECTION_EXPORT
         case_config = OpenmrsCaseConfig(case_config)
 
-        create_patient(requests, info, case_config)
+        with self.assertRaises(RequestException):
+            create_patient(requests, info, case_config)
         requests.post.assert_called_with(
             '/ws/rest/v1/patient/',
-            json={'person': {'birthdate': '1918-07-18'}}
+            json={'person': {'birthdate': '1918-07-18'}},
+            raise_for_status=True,
         )
 
 
@@ -609,6 +612,121 @@ class SaveMatchIdsTests(SimpleTestCase):
             save_match_ids(self.case, self.case_config, self.patient)
 
 
+class DeleteCasePropertyTests(SimpleTestCase):
+
+    def test_delete_case_block_arg(self):
+        case_property = "external_id"
+        case_block_re = strip_xml(f"""
+            <case case_id="CASE_ID" »
+                  date_modified="{DATETIME_PATTERN}" »
+                  xmlns="http://commcarehq.org/case/transaction/v2">
+              <update>
+                <external_id />
+              </update>
+            </case>
+        """)
+        self.assert_expected_case_block(case_property, case_block_re)
+
+    def test_delete_case_block_update_key(self):
+        case_property = "openmrs_uuid"
+        case_block_re = strip_xml(f"""
+            <case case_id="CASE_ID" »
+                  date_modified="{DATETIME_PATTERN}" »
+                  xmlns="http://commcarehq.org/case/transaction/v2">
+              <update>
+                <openmrs_uuid />
+              </update>
+            </case>
+        """)
+        self.assert_expected_case_block(case_property, case_block_re)
+
+    def test_too_much_rope_error(self):
+        case_property = "case_id"
+        with self.assertRaises(TypeError):
+            delete_case_property(DOMAIN, "CASE_ID", case_property)
+
+    def test_too_much_rope_no_error(self):
+        case_property = "update"
+        case_block_re = strip_xml(f"""
+            <case case_id="CASE_ID" »
+                  date_modified="{DATETIME_PATTERN}" »
+                  xmlns="http://commcarehq.org/case/transaction/v2" />
+        """)
+        self.assert_expected_case_block(case_property, case_block_re)
+
+    def assert_expected_case_block(self, case_property, case_block_re):
+        with mock.patch("corehq.motech.openmrs.repeater_helpers.submit_case_blocks") as mock_submit:
+            delete_case_property(DOMAIN, "CASE_ID", case_property)
+            case_block = mock_submit.call_args[0][0][0]
+            self.assertIsNotNone(re.match(case_block_re, case_block))
+
+
+class VoidedPatientTests(TestCase, TestFileMixin):
+    file_path = ('data',)
+    root = os.path.dirname(__file__)
+
+    def setUp(self):
+        self.case = CommCareCase.wrap({
+            "domain": DOMAIN,
+            "case_id": "123456",
+            "type": "person",
+            "name": "Eric Idle",
+            "external_id": "94d60c79-59b5-4a2c-90a5-325d6e32b3db",
+        })
+        self.case.save()
+
+    def tearDown(self):
+        self.case.delete()
+
+    @mock.patch("corehq.motech.openmrs.repeater_helpers.submit_case_blocks")
+    @mock.patch("corehq.motech.openmrs.repeater_helpers.get_patient_by_uuid")
+    def test_identifier_case_property_deleted(self, get_patient_mock, case_blocks_mock):
+        """
+        CommCare should drop the case's patient ID when an OpenMRS patient is voided
+        """
+        requests = None
+        info = CaseTriggerInfo(
+            domain=self.case.domain,
+            case_id=self.case.case_id,
+            type=self.case.type,
+            name=self.case.name,
+            extra_fields={
+                "external_id": self.case.external_id,
+            },
+        )
+        openmrs_config = OpenmrsConfig.wrap({
+            "case_config": {
+                "patient_finder": {},
+                "patient_identifiers": {
+                    "uuid": {"case_property": "external_id"},
+                },
+                "match_on_ids": ["uuid"],
+                "person_properties": {},
+                "person_preferred_address": {},
+                "person_preferred_name": {},
+            },
+            "form_configs": [],
+        })
+        voided_patient = self.get_json("voided_patient")
+        get_patient_mock.return_value = voided_patient
+
+        patient = get_patient(requests, DOMAIN, info, openmrs_config)
+
+        self.assertEqual(info.extra_fields, {"external_id": None})
+        case_block_re = strip_xml(f"""
+            <case case_id="123456" »
+                  date_modified="{DATETIME_PATTERN}" »
+                  xmlns="http://commcarehq.org/case/transaction/v2">
+              <update>
+                <external_id />
+              </update>
+            </case>
+        """)
+        case_block = case_blocks_mock.call_args[0][0][0]
+        self.assertIsNotNone(re.match(case_block_re, case_block))
+        self.assertIsNone(patient)
+
+
 def test_observation_mappings():
     repeater = OpenmrsRepeater.wrap({
         "openmrs_config": {
@@ -644,28 +762,29 @@ def test_observation_mappings():
             }]
         }
     })
-    observation_mappings = repeater.observation_mappings
+    observation_mappings = get_observation_mappings(repeater)
     eq(observation_mappings, {
         '397b9631-2911-435a-bf8a-ae4468b9c1d4': [
             ObservationMapping(
                 concept='397b9631-2911-435a-bf8a-ae4468b9c1d4',
                 case_property='abnormal_temperature',
-                value=FormQuestionMap(
-                    form_question='/data/abnormal_temperature',
-                    value_map={
+                value={
+                    "doc_type": "FormQuestionMap",
+                    "form_question": '/data/abnormal_temperature',
+                    "value_map": {
                         'yes': '05ced69b-0790-4aad-852f-ba31fe82fbd9',
                         'no': 'eea8e4e9-4a91-416c-b0f5-ef0acfbc51c0'
                     }
-                )
+                }
             ),
             ObservationMapping(
                 concept='397b9631-2911-435a-bf8a-ae4468b9c1d4',
                 case_property='bahmni_abnormal_temperature',
-                value=ConstantString(
-                    direction='in',
-                    doc_type='ConstantString',
-                    value=''
-                )
+                value={
+                    "direction": 'in',
+                    "doc_type": "ConstantString",
+                    "value": ''
+                }
             )
         ]
     })

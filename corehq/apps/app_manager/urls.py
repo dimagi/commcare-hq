@@ -13,10 +13,12 @@ from corehq.apps.app_manager.views import (
     FormSummaryDiffView,
     LanguageProfilesView,
     PromptSettingsUpdateView,
+    app_exchange,
     app_from_template,
     app_settings,
     app_source,
     commcare_profile,
+    compare_multimedia_sizes,
     copy_app,
     copy_form,
     current_app_version,
@@ -50,6 +52,7 @@ from corehq.apps.app_manager.views import (
     get_form_data_schema,
     get_form_datums,
     get_form_questions,
+    get_multimedia_sizes,
     get_xform_source,
     import_app,
     list_apps,
@@ -86,6 +89,7 @@ from corehq.apps.app_manager.views import (
 )
 from corehq.apps.app_manager.views.apps import move_child_modules_after_parents
 from corehq.apps.app_manager.views.modules import ExistingCaseTypesView
+from corehq.apps.hqmedia.views import copy_multimedia
 from corehq.apps.hqmedia.urls import application_urls as hqmedia_urls
 from corehq.apps.hqmedia.urls import download_urls as media_download_urls
 from corehq.apps.linked_domain.views import pull_missing_multimedia
@@ -103,6 +107,13 @@ app_urls = [
     url(r'^languages/bulk_app_translations/download/$', download_bulk_app_translations, name='download_bulk_app_translations'),
     url(r'^languages/bulk_app_translations/upload/$', upload_bulk_app_translations, name='upload_bulk_app_translations'),
     url(r'^multimedia_ajax/$', multimedia_ajax, name='app_multimedia_ajax'),
+    url(r'^multimedia_sizes/$', get_multimedia_sizes, name='get_multimedia_sizes'),
+    url(r'^multimedia_sizes/(?P<build_profile_id>[\w-]+)/$', get_multimedia_sizes,
+        name='get_multimedia_sizes_for_build_profile'),
+    url(r'^compare_multimedia_sizes/(?P<other_build_id>[\w-]+)/$',
+        compare_multimedia_sizes, name='compare_multimedia_sizes'),
+    url(r'^compare_multimedia_sizes/(?P<other_build_id>[\w-]+)/(?P<build_profile_id>[\w-]+)/$',
+        compare_multimedia_sizes, name='compare_multimedia_sizes_for_build_profile'),
     url(r'^$', view_app, name='view_app'),
     url(r'^releases/$', view_app, name='release_manager'),
     url(r'^settings/$', app_settings, name='app_settings'),
@@ -144,6 +155,7 @@ urlpatterns = [
     url(r'^browse/(?P<app_id>[\w-]+)/(?P<form_unique_id>[\w-]+)/source/$',
         get_xform_source, name='get_xform_source'),
     url(r'^source/(?P<app_id>[\w-]+)/$', app_source, name='app_source'),
+    url(r'^app_exchange/$', app_exchange, name='app_exchange'),
     url(r'^import_app/$', import_app, name='import_app'),
     url(r'^app_from_template/(?P<slug>[\w-]+)/$', app_from_template, name='app_from_template'),
     url(r'^copy_app/$', copy_app, name='copy_app'),
@@ -202,6 +214,7 @@ urlpatterns = [
 
     # multimedia stuff
     url(r'^(?P<app_id>[\w-]+)/multimedia/', include(hqmedia_urls)),
+    url(r'^copy_multimedia/(?P<app_id>[\w-]+)/$', copy_multimedia, name='copy_multimedia'),
     url(r'^edit_module_detail_screens/(?P<app_id>[\w-]+)/(?P<module_unique_id>[\w-]+)/$',
         edit_module_detail_screens, name='edit_module_detail_screens'),
     url(r'^edit_module_attr/(?P<app_id>[\w-]+)/(?P<module_unique_id>[\w-]+)/(?P<attr>[\w-]+)/$',

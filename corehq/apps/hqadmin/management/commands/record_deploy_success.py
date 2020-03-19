@@ -37,7 +37,7 @@ def make_link(label, url):
 
 
 class Command(BaseCommand):
-    help = "Creates an HqDeploy document to record a successful deployment."
+    help = "Creates an HqDeploy object to record a successful deployment."
 
     def add_arguments(self, parser):
         parser.add_argument('--user', help='User', default=False)
@@ -120,10 +120,11 @@ class Command(BaseCommand):
 
         if options['mail_admins']:
             message_body = get_deploy_email_message_body(user=options['user'], compare_url=compare_url)
-            call_command('mail_admins', message_body, **{'subject': 'Deploy successful', 'html': True})
+            subject = 'Deploy Successful - {}'.format(options['environment'])
+            call_command('mail_admins', message_body, **{'subject': subject, 'html': True})
             if settings.DAILY_DEPLOY_EMAIL:
                 recipient = settings.DAILY_DEPLOY_EMAIL
-                subject = 'Deploy Successful - {}'.format(options['environment'])
+
                 send_HTML_email(subject=subject,
                                 recipient=recipient,
                                 html_content=message_body)

@@ -660,16 +660,8 @@ def process_incoming(msg):
         is_two_way = v is not None and v.is_two_way
 
         if msg.domain and domain_has_privilege(msg.domain, privileges.INBOUND_SMS):
-            handled = load_and_call(settings.CUSTOM_SMS_HANDLERS, v, msg.text, msg)
-
-            if not handled and v and v.pending_verification:
-                from . import verify
-                handled = verify.process_verification(v, msg,
-                    create_subevent_for_inbound=not has_domain_two_way_scope)
-
             if (
-                not handled
-                and (is_two_way or has_domain_two_way_scope)
+                (is_two_way or has_domain_two_way_scope)
                 and is_contact_active(v.domain, v.owner_doc_type, v.owner_id)
             ):
                 handled = load_and_call(settings.SMS_HANDLERS, v, msg.text, msg)
@@ -693,7 +685,7 @@ def create_billable_for_sms(msg, delay=True):
     if not isinstance(msg, SMS):
         raise Exception("Expected msg to be an SMS")
 
-    if not msg.domain:
+    if settings.ENTERPRISE_MODE or not msg.domain:
         return
 
     try:

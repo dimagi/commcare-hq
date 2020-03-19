@@ -7,13 +7,14 @@ import sys
 import traceback
 import uuid
 from datetime import datetime
+from urllib.parse import urlparse
 
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AdminPasswordChangeForm
 from django.contrib.auth.models import User
-from django.contrib.auth.views import logout as django_logout
+from django.contrib.auth.views import LogoutView
 from django.core import cache
 from django.core.mail.message import EmailMessage
 from django.http import (
@@ -44,8 +45,6 @@ from django.views.generic.base import View
 import httpagentparser
 from couchdbkit import ResourceNotFound
 from memoized import memoized
-from urllib.parse import urlparse
-
 from sentry_sdk import last_event_id
 from two_factor.forms import AuthenticationTokenForm, BackupTokenForm
 from two_factor.views import LoginView
@@ -54,12 +53,14 @@ from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.django.request import mutable_querydict
 from dimagi.utils.logging import notify_exception
-from dimagi.utils.parsing import string_to_datetime
 from dimagi.utils.web import get_site_domain, get_url_base, json_response
 from soil import DownloadBase
 from soil import views as soil_views
 
 from corehq.apps.accounting.models import Subscription
+from corehq.apps.accounting.decorators import (
+    always_allow_project_access,
+)
 from corehq.apps.analytics import ab_tests
 from corehq.apps.domain.decorators import (
     login_and_domain_required,
@@ -86,6 +87,7 @@ from corehq.apps.hqwebapp.forms import (
     CloudCareAuthenticationForm,
     EmailAuthenticationForm,
 )
+from corehq.apps.hqwebapp.login_utils import get_custom_login_page
 from corehq.apps.hqwebapp.utils import (
     get_environment_friendly_name,
     update_session_language,
@@ -153,6 +155,12 @@ def server_error(request, template_name='500.html'):
     traceback_key = uuid.uuid4().hex
     cache.cache.set(traceback_key, traceback_text, 60*60)
 
+    if settings.UNIT_TESTING:
+        # Explicitly don't render the 500 page during unit tests to prevent
+        # obfuscating errors in templatetags / context processor. More context here:
+        # https://github.com/dimagi/commcare-hq/pull/25835#discussion_r343997006
+        return HttpResponse(status=500)
+
     return HttpResponseServerError(t.render(
         context={
             'MEDIA_URL': settings.MEDIA_URL,
@@ -181,6 +189,7 @@ def not_found(request, template_name='404.html'):
 
 @require_GET
 @location_safe
+@always_allow_project_access
 def redirect_to_default(req, domain=None):
     if not req.user.is_authenticated:
         if domain != None:
@@ -201,11 +210,8 @@ def redirect_to_default(req, domain=None):
             domains = Domain.active_for_user(req.user)
 
         if 0 == len(domains) and not req.user.is_superuser:
-            from corehq.apps.registration.views import track_domainless_new_user
-            track_domainless_new_user(req)
             return redirect('registration_domain')
         elif 1 == len(domains):
-            from corehq.apps.dashboard.views import dashboard_default
             from corehq.apps.users.models import DomainMembershipError
             if domains[0]:
                 domain = domains[0].name
@@ -220,14 +226,14 @@ def redirect_to_default(req, domain=None):
                         # web users without roles are redirected to the dashboard default
                         # view since some domains allow web users to request access if they
                         # don't have it
-                        return dashboard_default(req, domain)
+                        url = reverse("dashboard_domain", args=[domain])
                 else:
                     if role and role.default_landing_page:
                         url = get_redirect_url(role.default_landing_page, domain)
                     elif couch_user.is_commcare_user():
                         url = reverse(get_cloudcare_urlname(domain), args=[domain])
                     else:
-                        return dashboard_default(req, domain)
+                        url = reverse("dashboard_domain", args=[domain])
             else:
                 raise Http404()
         else:
@@ -353,8 +359,8 @@ def csrf_failure(request, reason=None, template_name="csrf_failure.html"):
 
 
 @sensitive_post_parameters('auth-password')
-def _login(req, domain_name):
-
+def _login(req, domain_name, custom_login_page, extra_context=None):
+    extra_context = extra_context or {}
     if req.user.is_authenticated and req.method == "GET":
         redirect_to = req.GET.get('next', '')
         if redirect_to:
@@ -378,16 +384,9 @@ def _login(req, domain_name):
     req.base_template = settings.BASE_TEMPLATE
 
     context = {}
-    template_name = 'login_and_password/login.html'
-    custom_landing_page = settings.CUSTOM_LANDING_TEMPLATE
-    if custom_landing_page:
-        if isinstance(custom_landing_page, str):
-            template_name = custom_landing_page
-        else:
-            template_name = custom_landing_page.get(req.get_host())
-            if template_name is None:
-                template_name = custom_landing_page.get('default', template_name)
-    elif domain_name:
+    context.update(extra_context)
+    template_name = custom_login_page if custom_login_page else 'login_and_password/login.html'
+    if not custom_login_page and domain_name:
         domain_obj = Domain.get_by_name(domain_name)
         req_params = req.GET if req.method == 'GET' else req.POST
         context.update({
@@ -431,11 +430,11 @@ def login(req):
 
     req_params = req.GET if req.method == 'GET' else req.POST
     domain = req_params.get('domain', None)
-    return _login(req, domain)
+    return _login(req, domain, get_custom_login_page(req.get_host()))
 
 
 @location_safe
-def domain_login(req, domain):
+def domain_login(req, domain, custom_template_name=None, extra_context=None):
     # This is a wrapper around the _login view which sets a different template
     project = Domain.get_by_name(domain)
     if not project:
@@ -444,8 +443,9 @@ def domain_login(req, domain):
     # FYI, the domain context_processor will pick this up and apply the
     # necessary domain contexts:
     req.project = project
-
-    return _login(req, domain)
+    if custom_template_name is None:
+        custom_template_name = get_custom_login_page(req.get_host())
+    return _login(req, domain, custom_template_name, extra_context)
 
 
 class HQLoginView(LoginView):
@@ -472,15 +472,15 @@ class CloudCareLoginView(HQLoginView):
 
 
 @two_factor_exempt
-def logout(req):
+def logout(req, default_domain_redirect='domain_login'):
     referer = req.META.get('HTTP_REFERER')
     domain = get_domain_from_url(urlparse(referer).path) if referer else None
 
     # we don't actually do anything with the response here:
-    django_logout(req, **{"template_name": settings.BASE_TEMPLATE})
+    LogoutView.as_view(template_name=settings.BASE_TEMPLATE)(req)
 
     if referer and domain:
-        domain_login_url = reverse('domain_login', kwargs={'domain': domain})
+        domain_login_url = reverse(default_domain_redirect, kwargs={'domain': domain})
         return HttpResponseRedirect('%s' % domain_login_url)
     else:
         return HttpResponseRedirect(reverse('login'))
@@ -729,10 +729,6 @@ def render_static(request, template, page_name):
     """
     return render(request, "hqwebapp/blank.html",
                   {'tmpl': template, 'page_name': page_name})
-
-
-def cda(request):
-    return render_static(request, "cda.html", _("Content Distribution Agreement"))
 
 
 def apache_license(request):

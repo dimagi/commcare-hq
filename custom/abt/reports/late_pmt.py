@@ -1,22 +1,34 @@
-from dateutil.rrule import rrule, DAILY, MO, TU, WE, TH, FR, SA
-from sqlagg.columns import SimpleColumn
-from sqlagg.filters import EQ
-from sqlagg.sorting import OrderBy
 from django.db.models.aggregates import Count
-
-from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
-from corehq.apps.reports.generic import GenericTabularReport
-from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn
-from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin
 from django.utils.functional import cached_property
 from django.utils.translation import ugettext as _
 
+from dateutil.rrule import DAILY, FR, MO, SA, TH, TU, WE, rrule
+from sqlagg.columns import SimpleColumn
+from sqlagg.filters import EQ
+from sqlagg.sorting import OrderBy
+
+from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.filters.dates import DatespanFilter
-from corehq.apps.sms.models import SMS, INCOMING, MessagingSubEvent, MessagingEvent, OUTGOING
+from corehq.apps.reports.generic import GenericTabularReport
+from corehq.apps.reports.sqlreport import DatabaseColumn, SqlData
+from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin
+from corehq.apps.sms.models import (
+    INCOMING,
+    SMS,
+    MessagingEvent,
+    MessagingSubEvent,
+)
 from corehq.apps.userreports.util import get_table_name
 from corehq.sql_db.connections import DEFAULT_ENGINE_ID
-from custom.abt.reports.filters import UsernameFilter, CountryFilter, LevelOneFilter, LevelTwoFilter, \
-    LevelThreeFilter, LevelFourFilter, SubmissionStatusFilter
+from custom.abt.reports.filters import (
+    CountryFilter,
+    LevelFourFilter,
+    LevelOneFilter,
+    LevelThreeFilter,
+    LevelTwoFilter,
+    SubmissionStatusFilter,
+    UsernameFilter,
+)
 
 
 class LatePMTUsers(SqlData):
@@ -138,7 +150,7 @@ class LatePmtReport(GenericTabularReport, CustomProjectReport, DatespanMixin):
         )
 
     @cached_property
-    def get_users_in_group_a(self):
+    def smss_received(self):
         data = SMS.objects.filter(
             domain=self.domain,
             couch_recipient_doc_type='CommCareUser',
@@ -153,10 +165,10 @@ class LatePmtReport(GenericTabularReport, CustomProjectReport, DatespanMixin):
         ).values('date', 'couch_recipient').annotate(
             number_of_sms=Count('couch_recipient')
         )
-        return [(user['date'].date(), user['couch_recipient']) for user in data]
+        return {(sms['date'].date(), sms['couch_recipient']) for sms in data}
 
     @cached_property
-    def get_users_in_group_b(self):
+    def valid_smss_received(self):
         data = MessagingSubEvent.objects.filter(
             parent__domain=self.domain,
             parent__recipient_type=MessagingEvent.RECIPIENT_MOBILE_WORKER,
@@ -169,7 +181,7 @@ class LatePmtReport(GenericTabularReport, CustomProjectReport, DatespanMixin):
                 self.enddate
             )
         ).values('date', 'recipient_id')
-        return [(user['date'].date(), user['recipient_id']) for user in data]
+        return {(subevent['date'].date(), subevent['recipient_id']) for subevent in data}
 
     @cached_property
     def get_user_ids(self):
@@ -181,7 +193,7 @@ class LatePmtReport(GenericTabularReport, CustomProjectReport, DatespanMixin):
 
     @property
     def rows(self):
-        def _to_report_format(date, user, group):
+        def _to_report_format(date, user, error_msg):
             return [
                 date.strftime("%Y-%m-%d"),
                 user['username'].split('@')[0],
@@ -191,11 +203,8 @@ class LatePmtReport(GenericTabularReport, CustomProjectReport, DatespanMixin):
                 user['level_2'],
                 user['level_3'],
                 user['level_4'],
-                group
+                error_msg
             ]
-
-        def not_in_group(key, group):
-            return key not in group
 
         users = self.get_users
         dates = rrule(
@@ -204,20 +213,19 @@ class LatePmtReport(GenericTabularReport, CustomProjectReport, DatespanMixin):
             until=self.enddate,
             byweekday=(MO, TU, WE, TH, FR, SA)
         )
+        include_missing_pmt_data = self.report_config['submission_status'] != 'group_b'
+        include_incorrect_pmt_data = self.report_config['submission_status'] != 'group_a'
         rows = []
-        sub_status = self.report_config['submission_status']
         if users:
-            group_a = self.get_users_in_group_a
-            group_b = self.get_users_in_group_b
-
             for date in dates:
                 for user in users:
-                    key = (date.date(), user['user_id'])
-                    if not_in_group(key, group_a) and sub_status != 'group_b':
-                        group = _('No PMT data Submitted')
-                    elif not_in_group(key, group_b) and not not_in_group(key, group_a) and sub_status != 'group_a':
-                        group = _('Incorrect PMT data Submitted')
+                    sms_received = (date.date(), user['user_id']) in self.smss_received
+                    valid_sms = (date.date(), user['user_id']) in self.valid_smss_received
+                    if not sms_received and include_missing_pmt_data:
+                        error_msg = _('No PMT data Submitted')
+                    elif sms_received and not valid_sms and include_incorrect_pmt_data:
+                        error_msg = _('Incorrect PMT data Submitted')
                     else:
                         continue
-                    rows.append(_to_report_format(date, user, group))
+                    rows.append(_to_report_format(date, user, error_msg))
         return rows

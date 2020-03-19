@@ -42,7 +42,7 @@
           </div>
 
           {# BEGIN web_users permissions #}
-          <div class="form-group" data-bind="visible: permissions.access_all_locations || $root.isLocationSafetyExempt">
+          <div class="form-group" data-bind="visible: permissions.access_all_locations">
 
             <div class="col-sm-2 controls">
               <div class="form-check">
@@ -323,7 +323,7 @@
           </div> {# END Applications permissions #}
 
           {# BEGIN Roles & Permissions permissions #}
-          <div class="form-group" data-bind="visible: permissions.access_all_locations || $root.isLocationSafetyExempt">
+          <div class="form-group" data-bind="visible: permissions.access_all_locations">
             <div class="col-sm-2 controls">
               <div class="form-check-placeholder">
                 <label></label>

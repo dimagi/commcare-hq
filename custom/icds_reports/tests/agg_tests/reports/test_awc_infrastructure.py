@@ -132,7 +132,7 @@ class TestAWCInfrastructure(TestCase):
                     'aggregation_level': 1
                 }
             )['records']),
-            3
+            4
         )
 
     def test_data_records_total_length(self):
@@ -147,7 +147,7 @@ class TestAWCInfrastructure(TestCase):
 
         self.assertEqual(
             sum([len(record_row) for record_row in data]),
-            5
+            7
         )
 
     def test_data_keys(self):

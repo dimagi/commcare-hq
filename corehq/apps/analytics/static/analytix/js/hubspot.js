@@ -52,6 +52,7 @@ hqDefine('analytix/js/hubspot', [
                         }
 
                         _utils.loadDemoForm(apiId, formId);
+                        _utils.loadTrialForm(apiId, '9c8ecc33-b088-474e-8f4c-1b10fae50c2f');
                     });
             });
         }
@@ -90,8 +91,8 @@ hqDefine('analytix/js/hubspot', [
                 });
             },
             onFormSubmit: function ($form) {
-                $('#get-demo-cta-calendar-content').fadeIn();
-                $('#get-demo-cta-form-content').addClass('hide');
+                $('#get-demo-cta-calendar-content').toggleClass("hidden");
+                $('#get-demo-cta-form-content').addClass('hidden');
 
                 var email = $form.find('[name="email"]').val(),
                     firstname = $form.find('[name="firstname"]').val(),
@@ -134,6 +135,56 @@ hqDefine('analytix/js/hubspot', [
                             observer.observe(target, { attributes: true, attributeFilter: ['style'] });
                         }, 3000);
                     });
+            },
+        });
+    };
+
+    /**
+     * Loads the Hubspot Request Trial form and loads a Schedule Once Calendar
+     * Widget for auto-booking an appointment as soon as the form is submitted.
+     * @param {string} apiId
+     * @param {string} formId
+     */
+    _utils.loadTrialForm = function (apiId, formId) {
+        hbspt.forms.create({
+            portalId: apiId,
+            formId: formId,
+            target: "#get-trial-cta-form-content",
+            css: "",
+            onFormReady: function () {
+                var $hubspotFormModal = $('#cta-form-start-trial'),
+                    hasInteractedWithForm = false;
+
+                $hubspotFormModal.on('shown.bs.modal', function () {
+                    kissmetrics.track.event("Get Trial Workflow - Viewed Form");
+                });
+
+                $hubspotFormModal.on('hide.bs.modal', function () {
+                    kissmetrics.track.event("Get Trial Workflow - Dismissed Form");
+                });
+
+                $('#get-trial-cta-form-content').find('input').click(function () {
+                    if (!hasInteractedWithForm) {
+                        kissmetrics.track.event("Get Trial Workflow - Interacted With Form");
+                        hasInteractedWithForm = true;
+                    }
+                });
+            },
+            onFormSubmit: function ($form) {
+                var email = $form.find('[name="email"]').val(),
+                    firstname = $form.find('[name="firstname"]').val(),
+                    lastname = $form.find('[name="lastname"]').val(),
+                    newUrl = document.location.origin + document.location.pathname + '?email=' + email + '&name=' + firstname + '%20' + lastname;
+
+                kissmetrics.track.event("Get Trial Workflow - Contact Info Received");
+                // This nastiness is required for Schedule Once to auto-fill
+                // required fields. Sending snark++ the way of the S.O. devs...
+                window.history.pushState({}, document.title, newUrl);
+            },
+            onFormSubmitted: function () {
+                $('#choose-callback-options').toggleClass('hidden');
+                $('#get-trial-cta-form-content').addClass('hidden');
+                $('#start-trial-modal-header').text(gettext("Your trial request has been received!"));
             },
         });
     };

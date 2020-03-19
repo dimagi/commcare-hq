@@ -28,9 +28,8 @@ class MarkLatestSubmissionTest(TestCase):
         )
 
     def tearDown(self):
-        user = CouchUser.get_by_user_id(self.user._id, self.domain)
-        user.reporting_metadata.last_submissions = []
-        user.save()
+        self.user.reporting_metadata.last_submissions = []
+        self.user.save()
 
     @classmethod
     def tearDownClass(cls):
@@ -41,7 +40,7 @@ class MarkLatestSubmissionTest(TestCase):
         submission_date = "2017-02-05T00:00:00.000000Z"
         mark_latest_submission(
             self.domain,
-            self.user._id,
+            self.user,
             self.app_id,
             self.build_id,
             self.version,
@@ -80,7 +79,7 @@ class MarkLatestSubmissionTest(TestCase):
 
         mark_latest_submission(
             self.domain,
-            self.user._id,
+            self.user,
             self.app_id,
             self.build_id,
             self.version,
@@ -92,7 +91,7 @@ class MarkLatestSubmissionTest(TestCase):
 
         mark_latest_submission(
             self.domain,
-            self.user._id,
+            self.user,
             self.app_id,
             self.build_id,
             self.version,
@@ -109,30 +108,7 @@ class MarkLatestSubmissionTest(TestCase):
         submission_date = "bad-date"
         mark_latest_submission(
             self.domain,
-            self.user._id,
-            self.app_id,
-            self.build_id,
-            self.version,
-            self.metadata,
-            submission_date,
-        )
-        self.assertListEqual(self.user.reporting_metadata.last_submissions, [])
-
-        submission_date = "2017-02-05T00:00:00.000000Z"
-        mark_latest_submission(
-            'bad-domain',
-            self.user._id,
-            self.app_id,
-            self.build_id,
-            self.version,
-            self.metadata,
-            submission_date,
-        )
-        self.assertListEqual(self.user.reporting_metadata.last_submissions, [])
-
-        mark_latest_submission(
-            self.domain,
-            'bad-user',
+            self.user,
             self.app_id,
             self.build_id,
             self.version,
@@ -145,7 +121,7 @@ class MarkLatestSubmissionTest(TestCase):
         submission_date = "2017-02-05T00:00:00.000000Z"
         mark_latest_submission(
             self.domain,
-            self.user._id,
+            self.user,
             self.app_id,
             self.build_id,
             self.version,
@@ -154,7 +130,7 @@ class MarkLatestSubmissionTest(TestCase):
         )
         mark_latest_submission(
             self.domain,
-            self.user._id,
+            self.user,
             'other-app-id',
             self.build_id,
             self.version,

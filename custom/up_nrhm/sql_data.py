@@ -157,45 +157,45 @@ class ASHAFacilitatorsData(SqlData):
             ),
             DatabaseColumn(
                 _("Newborn visits within first day of birth in case of home deliveries"),
-                FunctionalityChecklistColumn('hv_fx_home_birth_visits', whens={1: 1}),
+                FunctionalityChecklistColumn('hv_fx_home_birth_visits', whens=[[1, 1]]),
             ),
             DatabaseColumn(
                 _("Set of home visits for newborn care as specified in the HBNC guidelines<br/>"
                   "(six visits in case of Institutional delivery and seven in case of a home delivery)"),
-                FunctionalityChecklistColumn('hv_fx_newborns_visited', whens={1: 1}),
+                FunctionalityChecklistColumn('hv_fx_newborns_visited', whens=[[1, 1]]),
             ),
             DatabaseColumn(
                 _("Attending VHNDs/Promoting immunization"),
-                FunctionalityChecklistColumn('hv_fx_vhnd', whens={1: 1}),
+                FunctionalityChecklistColumn('hv_fx_vhnd', whens=[[1, 1]]),
             ),
             DatabaseColumn(
                 _("Supporting institutional delivery"),
-                FunctionalityChecklistColumn('hv_fx_support_inst_delivery', whens={1: 1}),
+                FunctionalityChecklistColumn('hv_fx_support_inst_delivery', whens=[[1, 1]]),
             ),
             DatabaseColumn(
                 _("Management of childhood illness - especially diarrhea and pneumonia"),
-                FunctionalityChecklistColumn('hv_fx_child_illness_mgmt', whens={1: 1}),
+                FunctionalityChecklistColumn('hv_fx_child_illness_mgmt', whens=[[1, 1]]),
             ),
             DatabaseColumn(
                 _("Household visits with nutrition counseling"),
-                FunctionalityChecklistColumn('hv_fx_nut_counseling', whens={1: 1}),
+                FunctionalityChecklistColumn('hv_fx_nut_counseling', whens=[[1, 1]]),
             ),
             DatabaseColumn(
                 _("Fever cases seen/malaria slides made in malaria endemic area"),
-                FunctionalityChecklistColumn('hv_fx_malaria', whens={1: 1}),
+                FunctionalityChecklistColumn('hv_fx_malaria', whens=[[1, 1]]),
             ),
             DatabaseColumn(
                 _("Acting as DOTS provider"),
-                FunctionalityChecklistColumn('hv_fx_dots', whens={1: 1}),
+                FunctionalityChecklistColumn('hv_fx_dots', whens=[[1, 1]]),
             ),
             DatabaseColumn(
                 _("Holding or attending village/VHSNC meeting"),
-                FunctionalityChecklistColumn('hv_fx_vhsnc', whens={1: 1}),
+                FunctionalityChecklistColumn('hv_fx_vhsnc', whens=[[1, 1]]),
             ),
             DatabaseColumn(
                 _("Successful referral of the IUD, "
                   "female sterilization or male sterilization cases and/or providing OCPs/Condoms"),
-                FunctionalityChecklistColumn('hv_fx_fp', whens={1: 1}),
+                FunctionalityChecklistColumn('hv_fx_fp', whens=[[1, 1]]),
             ),
             AggregateColumn(
                 _("<b>Total number of ASHAs who are functional on at least %s of the tasks</b>") % "60%",
@@ -205,7 +205,7 @@ class ASHAFacilitatorsData(SqlData):
                 },
                 columns=[
                     FunctionalityChecklistColumn(
-                        whens={'hv_percent_functionality >= 60': 1},
+                        whens=[['hv_percent_functionality >= 60', 1]],
                         alias='percent_functionality'),
                     AliasColumn('total_ashas_checklist')
                 ],

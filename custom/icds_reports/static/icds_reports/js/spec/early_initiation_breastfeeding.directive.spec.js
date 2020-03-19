@@ -14,14 +14,7 @@ describe('Early Initiation Breastfeeding Directive', function () {
     pageData.registerUrl('icds_locations', 'icds_locations');
 
     beforeEach(module('icdsApp', function ($provide) {
-        $provide.constant("genders", [
-            {id: '', name: 'All'},
-            {id: 'M', name: 'Male'},
-            {id: 'F', name: 'Female'},
-        ]);
-        $provide.constant("userLocationId", null);
-        $provide.constant("haveAccessToAllLocations", false);
-        $provide.constant("isAlertActive", false);
+        utils.provideDefaultConstants($provide, {includeGenders: true});
     }));
 
     beforeEach(inject(function ($rootScope, $compile, _$httpBackend_, _$location_) {
@@ -93,7 +86,7 @@ describe('Early Initiation Breastfeeding Directive', function () {
         var result = controller.templatePopup({properties: {name: 'test'}}, {in_month: 10, birth: 5});
         assert.equal(result, '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">'
             + '<p>test</p>'
-            + '<div>Total Number of Children born in the given month: <strong>10</strong></div>'
+            + '<div>Total Number of Children born in the current month: <strong>10</strong></div>'
             + '<div>Total Number of Children who were put to the breast within one hour of birth: <strong>5</strong></div>'
             + '<div>% children who were put to the breast within one hour of birth: <strong>50.00%</strong></div></div>');
     });
@@ -164,7 +157,7 @@ describe('Early Initiation Breastfeeding Directive', function () {
         });
         assert.equal(controller.chartOptions.caption.html,
             '<i class="fa fa-info-circle"></i> ' +
-            'Of the children born in the last month and enrolled for Anganwadi services, the percentage whose breastfeeding was initiated within 1 hour of delivery. \n' +
+            'Of the children born in the given month and enrolled for Anganwadi services, the percentage whose breastfeeding was initiated within 1 hour of delivery. \n' +
             '\n' +
             'Early initiation of breastfeeding ensure the newborn recieves the "first milk" rich in nutrients and encourages exclusive breastfeeding practice'
         );
@@ -186,7 +179,7 @@ describe('Early Initiation Breastfeeding Directive', function () {
     it('tests horizontal chart tooltip content', function () {
         var expected = '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
             '<p>Ambah</p>' +
-            '<div>Total Number of Children born in the given month: <strong>0</strong></div>' +
+            '<div>Total Number of Children born in the current month: <strong>0</strong></div>' +
             '<div>Total Number of Children who were put to the breast within one hour of birth: <strong>0</strong></div>' +
             '<div>% children who were put to the breast within one hour of birth: <strong>NaN%</strong></div></div>';
         controllermapOrSectorView.templatePopup = function (d) {

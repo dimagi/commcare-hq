@@ -18,7 +18,7 @@ from custom.icds_reports.models.aggregate import (
     AggregateInactiveAWW,
     AwcLocation,
     get_cursor,
-    maybe_atomic,
+    maybe_atomic
 )
 from custom.icds_reports.tests.agg_tests import OUTPUT_PATH, CSVTestCase
 from custom.icds_reports.utils.aggregation_helpers.distributed import (

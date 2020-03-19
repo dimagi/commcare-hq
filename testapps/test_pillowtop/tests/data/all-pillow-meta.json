@@ -9,7 +9,7 @@
     "ApplicationToElasticsearchPillow": {
         "advertised_name": "ApplicationToElasticsearchPillow",
         "change_feed_type": "KafkaChangeFeed",
-        "checkpoint_id": "ApplicationToElasticsearchPillow-test_hqapps_2019-08-14",
+        "checkpoint_id": "ApplicationToElasticsearchPillow-test_hqapps_2020-02-26",
         "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
         "name": "ApplicationToElasticsearchPillow"
     },
@@ -48,20 +48,6 @@
         "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
         "name": "DomainDbKafkaPillow"
     },
-    "FarmerRecordFluffPillow": {
-        "advertised_name": "FarmerRecordFluffPillow",
-        "change_feed_type": "KafkaChangeFeed",
-        "checkpoint_id": "fluff.FarmerRecordFluffPillow.testhq",
-        "full_class_name": "custom.care_pathways.models.FarmerRecordFluffPillow",
-        "name": "FarmerRecordFluffPillow"
-    },
-    "GeographyFluffPillow": {
-        "advertised_name": "GeographyFluffPillow",
-        "change_feed_type": "KafkaChangeFeed",
-        "checkpoint_id": "fluff.GeographyFluffPillow.testhq",
-        "full_class_name": "custom.care_pathways.models.GeographyFluffPillow",
-        "name": "GeographyFluffPillow"
-    },
     "GroupPillow": {
         "advertised_name": "GroupPillow",
         "change_feed_type": "KafkaChangeFeed",
@@ -86,7 +72,7 @@
     "KafkaDomainPillow": {
         "advertised_name": "KafkaDomainPillow",
         "change_feed_type": "KafkaChangeFeed",
-        "checkpoint_id": "KafkaDomainPillow-test_hqdomains_2016-08-08",
+        "checkpoint_id": "KafkaDomainPillow-test_hqdomains_2020-02-10",
         "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
         "name": "KafkaDomainPillow"
     },
@@ -128,7 +114,7 @@
     "SqlSMSPillow": {
         "advertised_name": "SqlSMSPillow",
         "change_feed_type": "KafkaChangeFeed",
-        "checkpoint_id": "SqlSMSPillow-test_smslogs_2017-02-09",
+        "checkpoint_id": "SqlSMSPillow-test_smslogs_2020-01-28",
         "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
         "name": "SqlSMSPillow"
     },

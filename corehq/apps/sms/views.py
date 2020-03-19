@@ -78,13 +78,13 @@ from corehq.apps.sms.api import (
     send_sms_to_verified_number,
     send_sms_with_backend_name,
 )
-from corehq.apps.sms.dbaccessors import get_forwarding_rules_for_domain
 from corehq.apps.sms.forms import (
     CUSTOM,
     DEFAULT,
     DISABLED,
     ENABLED,
     HIDE_ALL,
+    LANGUAGE_FALLBACK_UNTRANSLATED,
     SHOW_ALL,
     SHOW_INVALID,
     WELCOME_RECIPIENT_ALL,
@@ -93,7 +93,6 @@ from corehq.apps.sms.forms import (
     WELCOME_RECIPIENT_NONE,
     BackendMapForm,
     ComposeMessageForm,
-    ForwardingRuleForm,
     InitiateAddSMSBackendForm,
     SendRegistrationInvitationsForm,
     SettingsForm,
@@ -105,7 +104,6 @@ from corehq.apps.sms.models import (
     INCOMING,
     OUTGOING,
     SMS,
-    ForwardingRule,
     MessagingEvent,
     PhoneLoadBalancingMixin,
     PhoneNumber,
@@ -118,12 +116,11 @@ from corehq.apps.sms.resources.v0_5 import SelfRegistrationUserInfo
 from corehq.apps.sms.util import (
     ContactNotFoundException,
     get_contact,
-    get_or_create_translation_doc,
+    get_or_create_sms_translations,
     get_sms_backend_classes,
 )
 from corehq.apps.smsbillables.utils import \
     country_name_from_isd_code_or_empty as country_name_from_code
-from corehq.apps.translations.models import StandaloneTranslationDoc
 from corehq.apps.users import models as user_models
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import CommCareUser, CouchUser, Permissions
@@ -518,128 +515,6 @@ def api_send_sms(request, domain):
         return HttpResponseBadRequest("POST Expected.")
 
 
-class BaseForwardingRuleView(BaseDomainView):
-    section_name = ugettext_noop("Messaging")
-
-    @method_decorator(login_and_domain_required)
-    @method_decorator(require_superuser)
-    def dispatch(self, request, *args, **kwargs):
-        return super(BaseForwardingRuleView, self).dispatch(request, *args, **kwargs)
-
-    @property
-    def section_url(self):
-        return reverse("sms_default", args=(self.domain,))
-
-
-class ListForwardingRulesView(BaseForwardingRuleView):
-    urlname = 'list_forwarding_rules'
-    template_name = 'sms/list_forwarding_rules.html'
-    page_title = ugettext_lazy("Forwarding Rules")
-
-    @property
-    def page_context(self):
-        forwarding_rules = get_forwarding_rules_for_domain(self.domain)
-        return {
-            'forwarding_rules': forwarding_rules,
-        }
-
-
-class BaseEditForwardingRuleView(BaseForwardingRuleView):
-    template_name = 'sms/add_forwarding_rule.html'
-
-    @property
-    def forwarding_rule_id(self):
-        return self.kwargs.get('forwarding_rule_id')
-
-    @property
-    def forwarding_rule(self):
-        raise NotImplementedError("must return ForwardingRule")
-
-    @property
-    @memoized
-    def rule_form(self):
-        if self.request.method == 'POST':
-            return ForwardingRuleForm(self.request.POST)
-        initial = {}
-        if self.forwarding_rule_id:
-            initial["forward_type"] = self.forwarding_rule.forward_type
-            initial["keyword"] = self.forwarding_rule.keyword
-            initial["backend_id"] = self.forwarding_rule.backend_id
-        return ForwardingRuleForm(initial=initial)
-
-    @property
-    def page_url(self):
-        if self.forwarding_rule_id:
-            return reverse(self.urlname, args=(self.domain, self.forwarding_rule_id,))
-        return super(BaseEditForwardingRuleView, self).page_url
-
-    def post(self, request, *args, **kwargs):
-        if self.rule_form.is_valid():
-            self.forwarding_rule.forward_type = self.rule_form.cleaned_data.get(
-                'forward_type'
-            )
-            self.forwarding_rule.keyword = self.rule_form.cleaned_data.get(
-                'keyword'
-            )
-            self.forwarding_rule.backend_id = self.rule_form.cleaned_data.get(
-                'backend_id'
-            )
-            self.forwarding_rule.save()
-            return HttpResponseRedirect(reverse(
-                ListForwardingRulesView.urlname, args=(self.domain,)))
-
-        return self.get(request, *args, **kwargs)
-
-    @property
-    def page_context(self):
-        return {
-            'form': self.rule_form,
-            'forwarding_rule_id': self.forwarding_rule_id,
-        }
-
-    @property
-    def parent_pages(self):
-        return [
-            {
-                'url': reverse(ListForwardingRulesView.urlname, args=(self.domain,)),
-                'title': ListForwardingRulesView.page_title,
-            }
-        ]
-
-
-class AddForwardingRuleView(BaseEditForwardingRuleView):
-    urlname = 'add_forwarding_rule'
-    page_title = ugettext_lazy("Add Forwarding Rule")
-
-    @property
-    @memoized
-    def forwarding_rule(self):
-        return ForwardingRule(domain=self.domain)
-
-
-class EditForwardingRuleView(BaseEditForwardingRuleView):
-    urlname = 'edit_forwarding_rule'
-    page_title = ugettext_lazy("Edit Forwarding Rule")
-
-    @property
-    @memoized
-    def forwarding_rule(self):
-        forwarding_rule = ForwardingRule.get(self.forwarding_rule_id)
-        if forwarding_rule.domain != self.domain:
-            raise Http404()
-        return forwarding_rule
-
-
-@login_and_domain_required
-@require_superuser
-def delete_forwarding_rule(request, domain, forwarding_rule_id):
-    forwarding_rule = ForwardingRule.get(forwarding_rule_id)
-    if forwarding_rule.domain != domain or forwarding_rule.doc_type != "ForwardingRule":
-        raise Http404
-    forwarding_rule.retire()
-    return HttpResponseRedirect(reverse("list_forwarding_rules", args=[domain]))
-
-
 class GlobalBackendMap(BaseAdminSectionView):
     urlname = 'global_backend_map'
     template_name = 'sms/backend_map.html'
@@ -712,7 +587,7 @@ class GlobalBackendMap(BaseAdminSectionView):
                         backend_id=new_catchall_backend_id
                     )
 
-            messages.success(request, _("Changes Saved."))
+            messages.success(request, _("Changes saved."))
             return HttpResponseRedirect(reverse(self.urlname))
         return self.get(request, *args, **kwargs)
 
@@ -1739,10 +1614,10 @@ class SMSLanguagesView(BaseMessagingSectionView):
 
     @property
     def page_context(self):
-        tdoc = get_or_create_translation_doc(self.domain)
+        sms_translations = get_or_create_sms_translations(self.domain)
         context = {
             "domain": self.domain,
-            "sms_langs": tdoc.langs,
+            "sms_langs": sms_translations.langs,
             "bulk_upload": {
                 "action": reverse("upload_sms_translations", args=(self.domain,)),
                 "download_url": reverse("download_sms_translations", args=(self.domain,)),
@@ -1763,46 +1638,46 @@ def edit_sms_languages(request, domain):
     """
     Accepts same post body as corehq.apps.app_manager.views.edit_app_langs
     """
-    with StandaloneTranslationDoc.get_locked_obj(domain, "sms",
-        create=True) as tdoc:
+    with transaction.atomic():
+        sms_translations = get_or_create_sms_translations(domain)
         try:
             from corehq.apps.app_manager.views.utils import validate_langs
-            langs, rename = validate_langs(request, tdoc.langs)
+            langs, rename = validate_langs(request, sms_translations.langs)
         except AssertionError:
             return HttpResponse(status=400)
 
         for old, new in rename.items():
             if old != new:
-                tdoc.translations[new] = tdoc.translations[old]
-                del tdoc.translations[old]
+                sms_translations.translations[new] = sms_translations.translations[old]
+                del sms_translations.translations[old]
 
         for lang in langs:
-            if lang not in tdoc.translations:
-                tdoc.translations[lang] = {}
+            if lang not in sms_translations.translations:
+                sms_translations.translations[lang] = {}
 
-        for lang in tdoc.translations.keys():
+        for lang in set(sms_translations.translations.keys()):
             if lang not in langs:
-                del tdoc.translations[lang]
+                del sms_translations.translations[lang]
 
-        tdoc.langs = langs
-        tdoc.save()
+        sms_translations.langs = langs
+        sms_translations.save()
         return json_response(langs)
 
 
 @domain_admin_required
 @requires_privilege_with_fallback(privileges.OUTBOUND_SMS)
 def download_sms_translations(request, domain):
-    tdoc = StandaloneTranslationDoc.get_obj(domain, "sms")
-    columns = ["property"] + tdoc.langs + ["default"]
+    sms_translations = get_or_create_sms_translations(domain)
+    columns = ["property"] + sms_translations.langs + ["default"]
 
     msg_ids = sorted(_MESSAGES.keys())
     rows = []
     for msg_id in msg_ids:
         rows.append([msg_id])
 
-    for lang in tdoc.langs:
+    for lang in sms_translations.langs:
         for row in rows:
-            row.append(tdoc.translations[lang].get(row[0], ""))
+            row.append(sms_translations.translations[lang].get(row[0], ""))
 
     for row in rows:
         row.append(_MESSAGES.get(row[0]))
@@ -1821,25 +1696,21 @@ def upload_sms_translations(request, domain):
     try:
         translations = get_single_worksheet(request.file, title='translations')
 
-        with StandaloneTranslationDoc.get_locked_obj(domain, "sms") as tdoc:
+        with transaction.atomic():
+            sms_translations = get_or_create_sms_translations(domain)
             msg_ids = sorted(_MESSAGES.keys())
-            result = {}
-            for lang in tdoc.langs:
-                result[lang] = {}
+            result = {lang: {} for lang in sms_translations.langs}
 
             for row in translations:
-                for lang in tdoc.langs:
-                    if row.get(lang):
-                        msg_id = row["property"]
-                        if msg_id in msg_ids:
-                            val = row[lang]
-                            if not isinstance(val, str):
-                                val = str(val)
-                            val = val.strip()
-                            result[lang][msg_id] = val
+                for lang in sms_translations.langs:
+                    msg_id = row["property"]
+                    if row.get(lang) and msg_id in msg_ids:
+                        val = str(row[lang])
+                        val = val.strip()
+                        result[lang][msg_id] = val
 
-            tdoc.translations = result
-            tdoc.save()
+            sms_translations.translations = result
+            sms_translations.save()
         messages.success(request, _("SMS Translations Updated."))
     except Exception:
         notify_exception(request, 'SMS Upload Translations Error')
@@ -1943,6 +1814,8 @@ class SMSSettingsView(BaseMessagingSectionView, AsyncHandlerMixin):
                     enabled_disabled(domain_obj.sms_mobile_worker_registration_enabled),
                 "registration_welcome_message":
                     self.get_welcome_message_recipient(domain_obj),
+                "language_fallback":
+                    domain_obj.sms_language_fallback or LANGUAGE_FALLBACK_UNTRANSLATED,
                 "override_daily_outbound_sms_limit":
                     ENABLED if domain_obj.custom_daily_outbound_sms_limit else DISABLED,
                 "custom_daily_outbound_sms_limit":
@@ -1979,6 +1852,8 @@ class SMSSettingsView(BaseMessagingSectionView, AsyncHandlerMixin):
                  "sms_survey_date_format"),
                 ("sms_conversation_length",
                  "sms_conversation_length"),
+                ("sms_language_fallback",
+                 "language_fallback"),
                 ("count_messages_as_read_by_anyone",
                  "count_messages_as_read_by_anyone"),
                 ("chat_message_count_threshold",
@@ -2030,7 +1905,7 @@ class SMSSettingsView(BaseMessagingSectionView, AsyncHandlerMixin):
                 form.enable_registration_welcome_sms_for_mobile_worker
 
             domain_obj.save()
-            messages.success(request, _("Changes Saved."))
+            messages.success(request, _("Changes saved."))
         return self.get(request, *args, **kwargs)
 
     @method_decorator(domain_admin_required)

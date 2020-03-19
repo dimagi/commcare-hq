@@ -38,6 +38,7 @@ class SqlSMSPillowTest(TestCase):
             source=MessagingEvent.SOURCE_OTHER,
             source_id=None,
             content_type=MessagingEvent.CONTENT_SMS,
+            app_id=None,
             form_unique_id=None,
             form_name=None,
             status=MessagingEvent.STATUS_COMPLETED,
@@ -52,6 +53,7 @@ class SqlSMSPillowTest(TestCase):
             recipient_type=MessagingEvent.RECIPIENT_CASE,
             recipient_id=None,
             content_type=MessagingEvent.CONTENT_SMS,
+            app_id=None,
             form_unique_id=None,
             form_name=None,
             xforms_session=None,
@@ -134,7 +136,7 @@ class SqlSMSPillowTest(TestCase):
 
         # send to elasticsearch
         sms_pillow = get_sql_sms_pillow('SqlSMSPillow')
-        sms_pillow.process_changes(since=kafka_seq, forever=False)
+        sms_pillow.process_changes(since=kafka_seq)
         self.elasticsearch.indices.refresh(SMS_INDEX_INFO.index)
 
         # confirm change made it to elasticserach

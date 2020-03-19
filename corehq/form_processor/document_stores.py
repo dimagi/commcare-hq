@@ -1,5 +1,9 @@
 from collections import defaultdict
 
+from pillowtop.dao.django import DjangoDocumentStore
+from pillowtop.dao.exceptions import DocumentNotFoundError
+from pillowtop.dao.interface import DocumentStore
+
 from corehq.blobs import Error as BlobError
 from corehq.form_processor.backends.sql.dbaccessors import (
     CaseReindexAccessor,
@@ -10,6 +14,7 @@ from corehq.form_processor.backends.sql.dbaccessors import (
 from corehq.form_processor.exceptions import (
     CaseNotFound,
     LedgerValueNotFound,
+    MissingFormXml,
     XFormNotFound,
 )
 from corehq.form_processor.interfaces.dbaccessors import (
@@ -19,9 +24,6 @@ from corehq.form_processor.interfaces.dbaccessors import (
 from corehq.form_processor.models import XFormInstanceSQL
 from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.util.quickcache import quickcache
-from pillowtop.dao.django import DjangoDocumentStore
-from pillowtop.dao.exceptions import DocumentNotFoundError
-from pillowtop.dao.interface import DocumentStore
 
 
 class FormDocumentStore(DocumentStore):
@@ -50,7 +52,10 @@ class FormDocumentStore(DocumentStore):
 
     def iter_documents(self, ids):
         for wrapped_form in self.form_accessors.iter_forms(ids):
-            yield self._to_json(wrapped_form)
+            try:
+                yield self._to_json(wrapped_form)
+            except (DocumentNotFoundError, MissingFormXml):
+                pass
 
 
 class CaseDocumentStore(DocumentStore):

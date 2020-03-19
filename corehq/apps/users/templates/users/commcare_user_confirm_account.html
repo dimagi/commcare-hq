@@ -1,0 +1,39 @@
+{% extends "hqwebapp/base_page.html" %}
+{% load hq_shared_tags %}
+{% load crispy_forms_tags %}
+{% load i18n %}
+
+{% block title %}{% trans "Confirm Account" %}{% endblock %}
+
+{% block header %}
+  <div class="page-header container">
+    <h1>{% blocktrans %}{{ hr_name }} Registration{% endblocktrans %}</h1>
+  </div>
+{% endblock %}
+
+{% block content %}
+  {% if user.is_account_confirmed and user.is_active %}
+    <div>
+      <p>
+        {% blocktrans %}
+          Your account is already confirmed! Go sign in.
+        {% endblocktrans %}
+      </p>
+    </div>
+  {% elif user.is_account_confirmed %}
+    <div class="alert-alert-danger">
+      <p>
+        {% blocktrans %}
+          It looks like your account has been deactivated.
+          Contact your administrator if you think this is a mistake.
+        {% endblocktrans %}
+      </p>
+    </div>
+  {% else %}
+    <div id="confirm-account-form">
+      <p>Confirm your account here!</p>
+      {#  todo    {% crispy form %}#}
+    </div>
+  {% endif %}
+{% endblock %}
+{% block mobile-logout %}{% endblock %}

@@ -1,7 +1,16 @@
 Setting up CommCare HQ for Developers
 -------------------------------------
 
-Please note that these instructions are targeted toward UNIX-based systems. For Windows, consider using Cygwin or WUBI. Common issues and their solutions can be found at the end of this document.
+This document describes setting up a development environment for working on
+CommCareHQ. Such an environment is not suitable for real projects. Production
+environments should be deployed and managed [using
+commcare-cloud](https://dimagi.github.io/commcare-cloud/)
+
+These instructions are for Mac or Linux computers. For Windows, consider using
+an Ubuntu virtual machine.
+
+Common issues and their solutions can be found at the end
+of this document.
 
 ### (Optional) Copying data from an existing HQ install
 
@@ -9,7 +18,7 @@ If you're setting up HQ on a new computer, you may have an old, functional envir
 
 * PostgreSQL
   * Create a pg dump.  You'll need to verify the host IP address:
-    `pg_dump -h 0.0.0.0 -U commcarehq commcare_hq > /path/to/backup_hq_db.sql`
+    `pg_dump -h 0.0.0.0 -U commcarehq commcarehq > /path/to/backup_hq_db.sql`
 * Couchdb
   * From a non-docker install: Copy `/var/lib/couchdb2/`
   * From a docker install: Copy `~/.local/share/dockerhq/couchdb2`.
@@ -176,49 +185,19 @@ npm install dimagi/js-xpath#v0.0.2-rc1
 
 #### Option 1: Let Client Side Javascript (less.js) handle it for you
 
-This is the setup most developers use. If you don't know which option to use, use this one. It's the simplest to set up and the least painful way to develop: just make sure your `localsettings.py` file has the following set:
+This is the setup most developers use. If you don't know which option to use, use this one. It's the simplest to set up and the least painful way to develop: just make sure your `localsettings.py` does not contain `COMPRESS_ENABLED` or `COMPRESS_OFFLINE` settings (or has them both set to `False`).
 
-```
-LESS_DEBUG = True
-COMPRESS_ENABLED = False
-COMPRESS_OFFLINE = False
-```
+The disadvantage is that this is a different setup than production, where LESS files are compressed.
 
-The disadvantage is that this is a different setup than production, where LESS files are compressed. It also slows down page load times, compared to compressing offline.
-
-
-#### Option 2: Compress in Django, caching results in Redis
-
-This is a good option if your local environment is running slowly and you're not doing development in LESS files. Set the following in your `localsettings.py`:
-
-```
-COMPRESS_ENABLED = True
-COMPRESS_OFFLINE = False
-
-COMPRESS_MINT_DELAY = 30
-COMPRESS_MTIME_DELAY = 3
-COMPRESS_REBUILD_TIMEOUT = 6000
-```
-
-The three later settings control how often files are re-compressed; read more about them [here](http://django-compressor.readthedocs.io/en/latest/settings/). In practice, getting files to re-compress whenever you make a change can be tricky; if doing LESS work it's often easier to switch back to option 1 above, compiling client-side.
-
-#### Option 3: Compress OFFLINE, just like production
+#### Option 2: Compress OFFLINE, just like production
 
 This mirrors production's setup, but it's really only useful if you're trying to debug issues that mirror production that's related to staticfiles and compressor. For all practical uses, please use Option 1 to save yourself the headache.
 
 Make sure your `localsettings.py` file has the following set:
 ```
-LESS_DEBUG = False
 COMPRESS_ENABLED = True
 COMPRESS_OFFLINE = True
 ```
-
-Install LESS and UglifyJS:
-
-1. Install [npm](https://www.npmjs.com/)
-2. Install less by running `npm install -g less`
-3. Install UglifyJS by running `npm install -g uglify-js@2.6.1`
-
 
 For all STATICFILES changes (primarily LESS and JavaScript), run:
 

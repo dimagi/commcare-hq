@@ -89,7 +89,6 @@ from corehq.apps.app_manager.exceptions import BuildNotFoundException
 from corehq.apps.app_manager.models import (
     Application,
     AppReleaseByLocation,
-    FormBase,
     LatestEnabledBuildProfiles,
     RemoteApp,
 )
@@ -102,7 +101,6 @@ from corehq.apps.domain.models import (
     AREA_CHOICES,
     BUSINESS_UNITS,
     DATA_DICT,
-    LICENSES,
     LOGO_ATTACHMENT,
     SUB_AREA_CHOICES,
     TransferDomainRequest,
@@ -201,244 +199,6 @@ class ProjectSettingsForm(forms.Form):
         dm.override_global_tz = override
         user.save()
         return True
-
-
-class SnapshotApplicationForm(forms.Form):
-    publish = BooleanField(label=ugettext_noop("Publish?"), required=False)
-    name = CharField(label=ugettext_noop("Name"), required=True)
-    description = CharField(label=ugettext_noop("Description"), required=False, widget=forms.Textarea,
-        help_text=ugettext_noop("A detailed technical description of the application"))
-    deployment_date = CharField(label=ugettext_noop("Deployment date"), required=False)
-    phone_model = CharField(label=ugettext_noop("Phone model"), required=False)
-    user_type = CharField(label=ugettext_noop("User type"), required=False,
-        help_text=ugettext_noop("e.g. CHW, ASHA, RA, etc"))
-    attribution_notes = CharField(label=ugettext_noop("Attribution notes"), required=False,
-        help_text=ugettext_noop(
-            "Enter any special instructions to users here. "
-            "This will be shown just before users copy your project."),
-        widget=forms.Textarea)
-
-    def __init__(self, *args, **kwargs):
-        super(SnapshotApplicationForm, self).__init__(*args, **kwargs)
-        self.helper = hqcrispy.HQFormHelper(self)
-        self.helper.form_tag = False
-        self.helper.layout = crispy.Layout(
-            twbscrispy.PrependedText('publish', ''),
-            crispy.Div(
-                'name',
-                'description',
-                'deployment_date',
-                'phone_model',
-                'user_type',
-                'attribution_notes'
-            )
-        )
-
-
-class SnapshotFixtureForm(forms.Form):
-    publish = BooleanField(label=ugettext_noop("Publish?"), required=False)
-    description = CharField(label=ugettext_noop("Description"), required=False, widget=forms.Textarea,
-        help_text=ugettext_noop("A detailed technical description of the table"))
-
-    def __init__(self, *args, **kwargs):
-        super(SnapshotFixtureForm, self).__init__(*args, **kwargs)
-        self.helper = hqcrispy.HQFormHelper()
-        self.helper.form_tag = False
-        self.helper.layout = crispy.Layout(
-            twbscrispy.PrependedText('publish', ''),
-            'description',
-        )
-
-
-class SnapshotSettingsForm(forms.Form):
-    title = CharField(label=ugettext_noop("Title"), required=True, max_length=100)
-    project_type = CharField(
-        label=ugettext_noop("Project Category"),
-        required=True,
-        help_text=ugettext_noop("e.g. MCH, HIV, etc.")
-    )
-    license = ChoiceField(label=ugettext_noop("License"), required=True, choices=list(LICENSES.items()),
-                          widget=Select(attrs={'class': 'input-xxlarge'}))
-    description = CharField(
-        label=ugettext_noop("Long Description"), required=False, widget=forms.Textarea,
-        help_text=ugettext_noop("A high-level overview of your project as a whole"))
-    short_description = CharField(
-        label=ugettext_noop("Short Description"), required=False,
-        widget=forms.Textarea(attrs={'maxlength': 200}),
-        help_text=ugettext_noop("A brief description of your project (max. 200 characters)"))
-    share_multimedia = BooleanField(label=ugettext_noop("Share all multimedia?"), required=False,
-        help_text=ugettext_noop("This will allow any user to see and use all multimedia in this project"))
-    share_reminders = BooleanField(label=ugettext_noop("Share Conditional Alerts?"), required=False)
-    image = forms.ImageField(label=ugettext_noop("Exchange image"), required=False,
-        help_text=ugettext_noop("An optional image to show other users your logo or what your app looks like"))
-    old_image = forms.BooleanField(required=False)
-
-    video = CharField(label=ugettext_noop("Youtube Video"), required=False,
-        help_text=ugettext_noop("An optional YouTube clip to tell users about your app. Please copy and paste a "
-                                "URL to a YouTube video"))
-    documentation_file = forms.FileField(label=ugettext_noop("Documentation File"), required=False,
-        help_text=ugettext_noop("An optional file to tell users more about your app."))
-    old_documentation_file = forms.BooleanField(required=False)
-    cda_confirmed = BooleanField(required=False, label=ugettext_noop("Content Distribution Agreement"))
-    is_starter_app = BooleanField(required=False, label=ugettext_noop("This is a starter application"))
-
-    def __init__(self, *args, **kw):
-        self.dom = kw.pop("domain", None)
-        self.is_superuser = kw.pop("is_superuser", None)
-        super(SnapshotSettingsForm, self).__init__(*args, **kw)
-
-        self.helper = hqcrispy.HQFormHelper()
-        self.helper.form_tag = False
-        self.helper.layout = crispy.Layout(
-            crispy.Fieldset(
-                'Project Description',
-                'title',
-                'short_description',
-                'description',
-                'project_type',
-                'image',
-                crispy.Field(
-                    'old_image',
-                    template='domain/partials/old_snapshot_image.html'
-                )
-            ),
-            crispy.Fieldset(
-                'Documentation',
-                'video',
-                'documentation_file',
-                crispy.Field(
-                    'old_documentation_file',
-                    template='domain/partials/old_snapshot_documentation_file.html'
-                )
-            ),
-            crispy.Fieldset(
-                'Content',
-                twbscrispy.PrependedText('share_multimedia', ''),
-                twbscrispy.PrependedText('share_reminders', '')
-            ),
-            crispy.Fieldset(
-                'Licensing',
-                'license',
-                twbscrispy.PrependedText('cda_confirmed', ''),
-            ),
-        )
-
-        if self.is_superuser:
-            self.helper.layout.append(
-                crispy.Fieldset('Starter App', twbscrispy.PrependedText('is_starter_app', ''))
-            )
-
-        self.fields['license'].help_text = \
-            render_to_string('domain/partials/license_explanations.html', {
-                'extra': _("All un-licensed multimedia files in "
-                           "your project will be given this license")
-            })
-        self.fields['cda_confirmed'].help_text = \
-            render_to_string('domain/partials/cda_modal.html')
-
-        self.fields['share_reminders'].help_text = render_to_string(
-            'domain/partials/share_reminders_help.html',
-            context={
-                'alerts_that_cannot_be_copied': self.get_conditional_alerts_that_cannot_be_copied(),
-            }
-        )
-
-    def get_conditional_alerts_that_cannot_be_copied(self):
-        result = []
-        for rule in AutomaticUpdateRule.by_domain(
-            self.dom.name,
-            AutomaticUpdateRule.WORKFLOW_SCHEDULING,
-            active_only=False,
-        ):
-            if not rule.conditional_alert_can_be_copied(allow_sms_surveys=True):
-                result.append(rule.name)
-
-        return result
-
-    def clean_cda_confirmed(self):
-        data_cda = self.cleaned_data['cda_confirmed']
-        data_publish = self.data.get('publish_on_submit', "no") == "yes"
-        if data_publish and data_cda is False:
-            raise forms.ValidationError(_('You must agree to our Content Distribution Agreement to publish your '
-                                          'project.'))
-        return data_cda
-
-    def clean_video(self):
-        video = self.cleaned_data['video']
-        if not video:
-            return video
-
-        def video_id(value):
-            # http://stackoverflow.com/questions/4356538/how-can-i-extract-video-id-from-youtubes-link-in-python#answer-7936523
-            """
-            Examples:
-            - http://youtu.be/SA2iWivDJiE
-            - http://www.youtube.com/watch?v=_oPAwA_Udwc&feature=feedu
-            - http://www.youtube.com/embed/SA2iWivDJiE
-            - http://www.youtube.com/v/SA2iWivDJiE?version=3&amp;hl=en_US
-            """
-            query = urlparse(value)
-            if query.hostname == 'youtu.be':
-                return query.path[1:]
-            if query.hostname in ('www.youtube.com', 'youtube.com'):
-                if query.path == '/watch':
-                    p = parse_qs(query.query)
-                    return p['v'][0]
-                if query.path[:7] == '/embed/':
-                    return query.path.split('/')[2]
-                if query.path[:3] == '/v/':
-                    return query.path.split('/')[2]
-                    # fail?
-            return None
-
-        v_id = video_id(video)
-        if not v_id:
-            raise forms.ValidationError(_('This is not a correctly formatted YouTube URL. Please use a different '
-                                          'URL.'))
-        return v_id
-
-    def clean(self):
-        cleaned_data = self.cleaned_data
-        sm = cleaned_data["share_multimedia"]
-        license = cleaned_data["license"]
-        app_ids = self._get_apps_to_publish()
-
-        if sm and license not in self.dom.most_restrictive_licenses(apps_to_check=app_ids):
-            license_choices = [LICENSES[l] for l in self.dom.most_restrictive_licenses(apps_to_check=app_ids)]
-            msg = render_to_string('domain/partials/restrictive_license.html', {'licenses': license_choices})
-            self._errors["license"] = self.error_class([msg])
-
-            del cleaned_data["license"]
-
-        sr = cleaned_data["share_reminders"]
-        if sr:  # check that the forms referenced by the events in each reminders exist in the project
-            referenced_forms = AutomaticUpdateRule.get_referenced_form_unique_ids_from_sms_surveys(
-                self.dom.name)
-            if referenced_forms:
-                apps = [Application.get(app_id) for app_id in app_ids]
-                app_forms = [f.unique_id for forms in [app.get_forms() for app in apps] for f in forms]
-                nonexistent_forms = [f for f in referenced_forms if f not in app_forms]
-                nonexistent_forms = [FormBase.get_form(f) for f in nonexistent_forms]
-                if nonexistent_forms:
-                    forms_str = str([f.default_name() for f in nonexistent_forms]).strip('[]')
-                    msg = _("Your reminders reference forms that are not being published. Make sure the following "
-                            "forms are being published: %s") % forms_str
-                    self._errors["share_reminders"] = self.error_class([msg])
-
-        return cleaned_data
-
-    def _get_apps_to_publish(self):
-        app_ids = []
-        for d, val in self.data.items():
-            d = d.split('-')
-            if len(d) < 2:
-                continue
-            if d[1] == 'publish' and val == 'on':
-                app_ids.append(d[0])
-
-        return app_ids
-
-########################################################################################################
 
 
 class TransferDomainFormErrors(object):
@@ -1704,7 +1464,12 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
 
                 cancel_future_subscriptions(self.domain, datetime.date.today(), self.creating_user)
                 if self.current_subscription is not None:
-                    if self.is_downgrade_from_paid_plan() and \
+                    if self.is_same_edition():
+                        self.current_subscription.update_subscription(
+                            date_start=self.current_subscription.date_start,
+                            date_end=None
+                        )
+                    elif self.is_downgrade_from_paid_plan() and \
                             self.current_subscription.is_below_minimum_subscription:
                         self.current_subscription.update_subscription(
                             date_start=self.current_subscription.date_start,
@@ -1748,6 +1513,9 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                 show_stack_trace=True,
             )
             return False
+
+    def is_same_edition(self):
+        return self.current_subscription.plan_version.plan.edition == self.plan_version.plan.edition
 
     def is_downgrade_from_paid_plan(self):
         if self.current_subscription is None:
@@ -2035,12 +1803,13 @@ class DimagiOnlyEnterpriseForm(InternalSubscriptionManagementForm):
 
         self.helper = hqcrispy.HQFormHelper()
         self.helper.layout = crispy.Layout(
-            crispy.HTML(ugettext_noop(
+            crispy.HTML('<div class="alert alert-info">' + ugettext_noop(
                 '<i class="fa fa-info-circle"></i> You will have access to all '
                 'features for free as soon as you hit "Update".  Please make '
                 'sure this is an internal Dimagi test space, not in use by a '
-                'partner.'
-            )),
+                'partner.<br>Test projects belong to Dimagi and are not subject to '
+                'Dimagi\'s external terms of service.'
+            ) + '</div>'),
             *self.form_actions
         )
 
@@ -2112,8 +1881,7 @@ class AdvancedExtendedTrialForm(InternalSubscriptionManagementForm):
                         '<p><i class="fa fa-info-circle"></i> The trial will begin as soon '
                         'as you hit "Update" and end on <span data-bind="text: end_date"></span>.  '
                         'On <span data-bind="text: end_date"></span> '
-                        'the project space will automatically be subscribed to the '
-                        'Community plan.</p>'
+                        'the project space will be automatically paused.</p>'
                     )),
                     css_class='col-sm-offset-3 col-md-offset-2'
                 ),

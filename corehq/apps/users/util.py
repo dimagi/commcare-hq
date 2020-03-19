@@ -17,6 +17,8 @@ from casexml.apps.case.const import (
 from corehq import privileges, toggles
 from corehq.apps.callcenter.const import CALLCENTER_USER
 from corehq.util.quickcache import quickcache
+from django.core.exceptions import ValidationError
+
 
 # SYSTEM_USER_ID is used when submitting xml to make system-generated case updates
 SYSTEM_USER_ID = 'system'
@@ -39,7 +41,7 @@ def cc_user_domain(domain):
 
 
 def format_username(username, domain):
-    return "%s@%s" % (username.lower(), cc_user_domain(domain))
+    return "%s@%s" % (str(username or '').lower(), cc_user_domain(domain))
 
 
 def normalize_username(username, domain=None):
@@ -51,6 +53,10 @@ def normalize_username(username, domain=None):
     """
     from django.core.validators import validate_email
 
+    if not username:
+        raise ValidationError("Invalid username: {}".format(username))
+
+    username = str(username)
     username = re.sub(r'\s+', '.', username).lower()
     if domain:
         username = format_username(username, domain)
@@ -67,6 +73,7 @@ def raw_username(username):
     Strips the @domain.commcarehq.org from the username if it's there
     """
     sitewide_domain = settings.HQ_ACCOUNT_ROOT
+    username = str(username or '')
     username = username.lower()
     try:
         u, d = username.split("@")
@@ -96,7 +103,7 @@ def username_to_user_id(username):
     return user._id
 
 
-def user_id_to_username(user_id):
+def user_id_to_username(user_id, use_name_if_available=False):
     from corehq.apps.users.models import CouchUser
     if not user_id:
         return None
@@ -106,10 +113,14 @@ def user_id_to_username(user_id):
     elif user_id == DEMO_USER_ID:
         return DEMO_USER_ID
     try:
-        login = CouchUser.get_db().get(user_id)
+        user_object = CouchUser.get_db().get(user_id)
     except ResourceNotFound:
         return None
-    return raw_username(login['username']) if "username" in login else None
+
+    if use_name_if_available and (user_object.get('first_name', '') or user_object.get('last_name', '')):
+        return ' '.join([user_object.get('first_name', ''), user_object.get('last_name', '')]).strip()
+    else:
+        return raw_username(user_object['username']) if "username" in user_object else None
 
 
 def cached_user_id_to_username(user_id):
@@ -124,6 +135,11 @@ def cached_user_id_to_username(user_id):
         ret = user_id_to_username(user_id)
         cache.set(key, ret)
         return ret
+
+
+@quickcache(['user_id'])
+def cached_user_id_to_user_display(user_id):
+    return user_id_to_username(user_id, use_name_if_available=True)
 
 
 def cached_owner_id_to_display(owner_id):
@@ -184,11 +200,7 @@ def can_add_extra_mobile_workers(request):
     user_limit = request.plan.user_limit
     if user_limit == -1 or num_web_users < user_limit:
         return True
-    if not has_privilege(request, privileges.ALLOW_EXCESS_USERS):
-        current_subscription = Subscription.get_active_subscription_by_domain(request.domain)
-        if current_subscription is None or current_subscription.account.date_confirmed_extra_charges is None:
-            return False
-    return True
+    return has_privilege(request, privileges.ALLOW_EXCESS_USERS)
 
 
 def user_display_string(username, first_name="", last_name=""):
@@ -232,7 +244,7 @@ def _last_build_needs_update(last_build, build_date):
     return False
 
 
-def update_latest_builds(user, app_id, date, version):
+def update_latest_builds(user, app_id, date, version, build_profile_id=None):
     """
     determines whether to update the last build attributes in a user's reporting metadata
     """
@@ -245,6 +257,9 @@ def update_latest_builds(user, app_id, date, version):
             user.reporting_metadata.last_builds.append(last_build)
         last_build.build_version = version
         last_build.app_id = app_id
+        # update only when passed to avoid over writing set value
+        if build_profile_id is not None:
+            last_build.build_profile_id = build_profile_id
         last_build.build_version_date = date
         changed = True
 

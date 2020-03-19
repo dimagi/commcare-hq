@@ -9,8 +9,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="HandheldFriendly" content="True">
 
-  {% include 'hqwebapp/includes/less.html' with debug=less_debug %}
-  {% if less_debug %}
+  {% include 'hqwebapp/includes/less.html' %}
+  {% compress css %}
     <link type="text/less"
           rel="stylesheet"
           media="all"
@@ -22,25 +22,10 @@
     <link type="text/less"
           rel="stylesheet"
           media="all"
-          href="{% static 'cloudcare/less/formplayer-common.debug.less' %}" />
-  {% else %}
-    {% compress css %}
-      <link type="text/less"
-            rel="stylesheet"
-            media="all"
-            href="{% static 'cloudcare/less/font-formplayer.less' %}" />
-      <link type="text/css"
-            rel="stylesheet"
-            media="all"
-            href="{% static 'cloudcare/css/webforms.css' %}">
-      <link type="text/less"
-            rel="stylesheet"
-            media="all"
-            href="{% static 'cloudcare/less/formplayer-common.less' %}"/>
-      <link rel="stylesheet"
-            href="{% static 'datetimepicker/build/jquery.datetimepicker.min.css' %}" />
-    {% endcompress %}
-  {% endif %}
+          href="{% static 'cloudcare/less/formplayer-common.less' %}"/>
+    <link rel="stylesheet"
+          href="{% static 'datetimepicker/build/jquery.datetimepicker.min.css' %}" />
+  {% endcompress %}
   {% block css %}{% endblock %}
 
   <link rel="stylesheet"
@@ -57,25 +42,6 @@
         rel="stylesheet"
         media="all"
         href="{% static 'datatables/media/css/jquery.dataTables.min.css' %}"/>
-
-  {% if less_debug %}
-    {# This is fine as an inline script; it's independent of all HQ code and all third-party libraries #}
-    <script>
-      less = {
-        env: "development",
-        useFileCache: true,
-        logLevel: 2,
-        errorReporting: 'console',
-        async: false,
-        fileAsync: false,
-        poll: 1000,
-        functions: {},
-        dumpLineNumbers: "comments",
-        relativeUrls: false
-      };
-    </script>
-    <script src="{% static 'less/dist/less-1.7.3.min.js' %}"></script>
-  {% endif %}
 
   {% javascript_libraries underscore=True jquery_ui=True ko=True hq=True analytics=True %}
   <script src="{% statici18n LANGUAGE_CODE %}"></script> {# DO NOT COMPRESS #}

@@ -17,7 +17,6 @@ from dimagi.ext.couchdbkit import (
 )
 from dimagi.utils.couch.database import iter_docs
 
-# move these too
 from corehq.apps.commtrack.exceptions import (
     DuplicateProductCodeException,
     InvalidProductException,
@@ -31,7 +30,7 @@ class Product(Document):
     domain = StringProperty()
     name = StringProperty()
     unit = StringProperty()
-    code_ = StringProperty()  # todo: why the hell is this code_ and not code
+    code_ = StringProperty()
     description = StringProperty()
     category = StringProperty()
     program_id = StringProperty()
@@ -150,17 +149,6 @@ class Product(Document):
         from corehq.apps.products.fixtures import ALL_CACHE_PREFIXES
         for prefix in ALL_CACHE_PREFIXES:
             clear_fixture_cache(domain, prefix)
-
-    @classmethod
-    def get_by_code(cls, domain, code):
-        if not code:
-            return None
-        try:
-            sql_product = SQLProduct.objects.get(domain=domain, code__iexact=code)
-        except SQLProduct.DoesNotExist:
-            return None
-        else:
-            return cls.get(sql_product.product_id)
 
     @classmethod
     def by_domain(cls, domain, wrap=True, include_archived=False):

@@ -1,3 +1,4 @@
+import json
 import logging
 import re
 from datetime import datetime, timedelta
@@ -7,7 +8,7 @@ from xml.etree import cElementTree as ElementTree
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.postgres.fields import JSONField
-from django.db import models
+from django.db import connection, models, router
 from django.template.loader import render_to_string
 from django.utils.translation import override as override_language
 from django.utils.translation import ugettext as _
@@ -38,6 +39,7 @@ from dimagi.ext.couchdbkit import (
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.database import get_safe_write_kwargs, iter_docs
+from dimagi.utils.couch.migration import SyncCouchToSQLMixin, SyncSQLToCouchMixin
 from dimagi.utils.couch.undo import DELETED_SUFFIX, DeleteRecord
 from dimagi.utils.dates import force_to_datetime
 from dimagi.utils.logging import log_signal_errors, notify_exception
@@ -48,7 +50,6 @@ from corehq import toggles
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
 from corehq.apps.commtrack.const import USER_LOCATION_OWNER_MAP_TYPE
-from corehq.apps.domain.dbaccessors import get_docs_in_domain_by_class
 from corehq.apps.domain.models import Domain, LicenseAgreement
 from corehq.apps.domain.shortcuts import create_user
 from corehq.apps.domain.utils import (
@@ -78,7 +79,6 @@ from corehq.form_processor.interfaces.dbaccessors import (
     FormAccessors,
 )
 from corehq.form_processor.interfaces.supply import SupplyInterface
-from corehq.sql_db.routers import db_for_read_write
 from corehq.util.dates import get_timestamp
 from corehq.util.quickcache import quickcache
 from corehq.util.view_utils import absolute_reverse
@@ -961,9 +961,10 @@ class LastSync(DocumentSchema):
 class LastBuild(DocumentSchema):
     """
     Build info for the app on the user's phone
-    when they last synced or submitted
+    when they last synced or submitted or sent heartbeat request
     """
     app_id = StringProperty()
+    build_profile_id = StringProperty()
     build_version = IntegerProperty()
     build_version_date = DateTimeProperty()
 
@@ -1126,7 +1127,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
         elif self.doc_type == 'CommCareUser':
             return 'commcare'
         else:
-            raise NotImplementedError()
+            raise NotImplementedError(f'Unrecognized user type {self.doc_type!r}')
 
     @property
     def projects(self):
@@ -1204,7 +1205,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
     def get_django_user(self, use_primary_db=False):
         queryset = User.objects
         if use_primary_db:
-            queryset = queryset.using(db_for_read_write(User, write=True))
+            queryset = queryset.using(router.db_for_write(User))
         return queryset.get(username__iexact=self.username)
 
     def add_phone_number(self, phone_number, default=False, **kwargs):
@@ -1394,7 +1395,10 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
 
     @classmethod
     def wrap_correctly(cls, source, allow_deleted_doc_types=False):
-        doc_type = source['doc_type']
+        try:
+            doc_type = source['doc_type']
+        except KeyError as err:
+            raise KeyError(f"'doc_type' not found in {source!r}") from err
         if allow_deleted_doc_types:
             doc_type = doc_type.replace(DELETED_SUFFIX, '')
 
@@ -1445,14 +1449,6 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             is_user_contact_active.clear(domain, self.user_id)
         Domain.active_for_couch_user.clear(self)
         _get_domain_list.clear(self)
-
-    @classmethod
-    def get_by_default_phone(cls, phone_number):
-        result = cls.get_db().view('users/by_default_phone', key=phone_number, include_docs=True).one()
-        if result:
-            return cls.wrap_correctly(result['doc'])
-        else:
-            return None
 
     @classmethod
     @quickcache(['userID', 'domain'])
@@ -1647,6 +1643,9 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     loadtest_factor = IntegerProperty()
     is_demo_user = BooleanProperty(default=False)
     demo_restore_id = IntegerProperty()
+    # used by user provisioning workflow. defaults to true unless explicitly overridden during
+    # user creation
+    is_account_confirmed = BooleanProperty(default=True)
 
     # This means that this user represents a location, and has a 1-1 relationship
     # with a location where location.location_type.has_user == True
@@ -1735,12 +1734,18 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
                phone_number=None,
                location=None,
                commit=True,
+               is_account_confirmed=True,
                **kwargs):
         """
-        used to be a function called `create_hq_user_from_commcare_registration_info`
-
+        Main entry point into creating a CommCareUser (mobile worker).
         """
         uuid = uuid or uuid4().hex
+        # if the account is not confirmed, also set is_active false so they can't login
+        if 'is_active' not in kwargs:
+            kwargs['is_active'] = is_account_confirmed
+        elif not is_account_confirmed:
+            assert not kwargs['is_active'], \
+                "it's illegal to create a user with is_active=True and is_account_confirmed=False"
         commcare_user = super(CommCareUser, cls).create(domain, username, password, email, uuid, date, **kwargs)
         if phone_number is not None:
             commcare_user.add_phone_number(phone_number)
@@ -1750,7 +1755,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         commcare_user.domain = domain
         commcare_user.device_ids = [device_id]
         commcare_user.registering_device_id = device_id
-
+        commcare_user.is_account_confirmed = is_account_confirmed
         commcare_user.domain_membership = DomainMembership(domain=domain, **kwargs)
 
         if location:
@@ -2600,34 +2605,57 @@ class DomainRequest(models.Model):
                                     email_from=settings.DEFAULT_FROM_EMAIL)
 
 
-class Invitation(QuickCachedDocumentMixin, Document):
-    email = StringProperty()
-    invited_by = StringProperty()
-    invited_on = DateTimeProperty()
-    is_accepted = BooleanProperty(default=False)
-    domain = StringProperty()
-    role = StringProperty()
-    program = None
-    supply_point = None
+class SQLInvitation(SyncSQLToCouchMixin, models.Model):
+    email = models.CharField(max_length=255, db_index=True)
+    invited_by = models.CharField(max_length=126)           # couch id of a WebUser
+    invited_on = models.DateTimeField()
+    is_accepted = models.BooleanField(default=False)
+    domain = models.CharField(max_length=255)
+    role = models.CharField(max_length=100, null=True)
+    program = models.CharField(max_length=126, null=True)   # couch id of a Program
+    supply_point = models.CharField(max_length=126, null=True)  # couch id of a Location
+    couch_id = models.CharField(max_length=126, null=True, db_index=True)
 
-    _inviter = None
+    class Meta:
+        db_table = "users_invitation"
 
-    def get_inviter(self):
-        if self._inviter is None:
-            self._inviter = CouchUser.get_by_user_id(self.invited_by)
-            if self._inviter.user_id != self.invited_by:
-                self.invited_by = self._inviter.user_id
-                self.save()
-        return self._inviter
+    @classmethod
+    def _migration_get_fields(cls):
+        return [
+            "email",
+            "invited_by",
+            "invited_on",
+            "is_accepted",
+            "domain",
+            "role",
+            "program",
+            "supply_point",
+        ]
+
+    @classmethod
+    def _migration_get_couch_model_class(cls):
+        return Invitation
+
+    @classmethod
+    def by_domain(cls, domain):
+        return SQLInvitation.objects.filter(domain=domain, is_accepted=False)
+
+    @classmethod
+    def by_email(cls, email):
+        return SQLInvitation.objects.filter(email=email, is_accepted=False)
+
+    @property
+    def is_expired(self):
+        return self.invited_on.date() + relativedelta(months=1) < datetime.utcnow().date()
 
     def send_activation_email(self, remaining_days=30):
-        url = absolute_reverse("domain_accept_invitation",
-                               args=[self.domain, self.get_id])
+        inviter = CouchUser.get_by_user_id(self.invited_by)
+        url = absolute_reverse("domain_accept_invitation", args=[self.domain, self.id])
         params = {
             "domain": self.domain,
             "url": url,
             'days': remaining_days,
-            "inviter": self.get_inviter().formatted_name,
+            "inviter": inviter.formatted_name,
             'url_prefix': '' if settings.STATIC_CDN else 'http://' + get_site_domain(),
         }
 
@@ -2637,31 +2665,43 @@ class Invitation(QuickCachedDocumentMixin, Document):
             if domain_request is None:
                 text_content = render_to_string("domain/email/domain_invite.txt", params)
                 html_content = render_to_string("domain/email/domain_invite.html", params)
-                subject = _('Invitation from %s to join CommCareHQ') % self.get_inviter().formatted_name
+                subject = _('Invitation from %s to join CommCareHQ') % inviter.formatted_name
             else:
                 text_content = render_to_string("domain/email/domain_request_approval.txt", params)
                 html_content = render_to_string("domain/email/domain_request_approval.html", params)
                 subject = _('Request to join CommCareHQ approved')
         send_html_email_async.delay(subject, self.email, html_content,
                                     text_content=text_content,
-                                    cc=[self.get_inviter().get_email()],
+                                    cc=[inviter.get_email()],
                                     email_from=settings.DEFAULT_FROM_EMAIL)
 
-    @classmethod
-    def by_domain(cls, domain, is_active=True):
-        return [domain_invitation for domain_invitation in get_docs_in_domain_by_class(domain, cls) if not domain_invitation.is_accepted]
+
+class Invitation(SyncCouchToSQLMixin, QuickCachedDocumentMixin, Document):
+    email = StringProperty()
+    invited_by = StringProperty()
+    invited_on = DateTimeProperty()
+    is_accepted = BooleanProperty(default=False)
+    domain = StringProperty()
+    role = StringProperty()
+    program = None
+    supply_point = None
 
     @classmethod
-    def by_email(cls, email, is_active=True):
-        return cls.view("users/open_invitations_by_email",
-                        reduce=False,
-                        key=[email],
-                        include_docs=True,
-                        ).all()
+    def _migration_get_fields(cls):
+        return [
+            "email",
+            "invited_by",
+            "invited_on",
+            "is_accepted",
+            "domain",
+            "role",
+            "program",
+            "supply_point",
+        ]
 
-    @property
-    def is_expired(self):
-        return self.invited_on.date() + relativedelta(months=1) < datetime.utcnow().date()
+    @classmethod
+    def _migration_get_sql_model_class(cls):
+        return SQLInvitation
 
 
 class DomainRemovalRecord(DeleteRecord):
@@ -2775,14 +2815,12 @@ class AnonymousCouchUser(object):
         return False
 
 
-reporting_update_freq = timedelta(minutes=settings.USER_REPORTING_METADATA_UPDATE_FREQUENCY)
-
-
 class UserReportingMetadataStaging(models.Model):
     domain = models.TextField()
     user_id = models.TextField()
-    app_id = models.TextField()
+    app_id = models.TextField(null=True)  # not all form submissions include an app_id
     modified_on = models.DateTimeField(auto_now=True)
+    created_on = models.DateTimeField(auto_now=True)
 
     # should build_id actually be nullable?
     build_id = models.TextField(null=True)
@@ -2796,54 +2834,159 @@ class UserReportingMetadataStaging(models.Model):
     device_id = models.TextField(null=True)
     sync_date = models.DateTimeField(null=True)
 
+    # The following properties are set when a mobile heartbeat occurs
+    app_version = models.IntegerField(null=True)
+    num_unsent_forms = models.IntegerField(null=True)
+    num_quarantined_forms = models.IntegerField(null=True)
+    commcare_version = models.TextField(null=True)
+    build_profile_id = models.TextField(null=True)
+    last_heartbeat = models.DateTimeField(null=True)
+
     @classmethod
     def add_submission(cls, domain, user_id, app_id, build_id, version, metadata, received_on):
-        obj, created = cls.objects.get_or_create(
-            domain=domain, user_id=user_id, app_id=app_id,
-            defaults={
-                'build_id': build_id,
-                'xform_version': version,
-                'form_meta': metadata,
-                'received_on': received_on,
-            }
-        )
-
-        if created:
-            return
-
-        save = False
-
-        if not obj.received_on or (received_on - obj.received_on) > reporting_update_freq:
-            obj.received_on = received_on
-            save = True
-        if build_id != obj.build_id:
-            obj.build_id = build_id
-            save = True
-
-        if save:
-            obj.form_meta = metadata
-            obj.xform_version = version
-            obj.save()
+        params = {
+            'domain': domain,
+            'user_id': user_id,
+            'app_id': app_id,
+            'build_id': build_id,
+            'xform_version': version,
+            'form_meta': json.dumps(metadata),
+            'received_on': received_on,
+        }
+        with connection.cursor() as cursor:
+            cursor.execute(f"""
+                INSERT INTO {cls._meta.db_table} AS staging (
+                    domain, user_id, app_id, modified_on, created_on,
+                    build_id,
+                    xform_version, form_meta, received_on
+                ) VALUES (
+                    %(domain)s, %(user_id)s, %(app_id)s, CLOCK_TIMESTAMP(), CLOCK_TIMESTAMP(),
+                    %(build_id)s,
+                    %(xform_version)s, %(form_meta)s, %(received_on)s
+                )
+                ON CONFLICT (domain, user_id, app_id)
+                DO UPDATE SET
+                    modified_on = CLOCK_TIMESTAMP(),
+                    build_id = EXCLUDED.build_id,
+                    xform_version = EXCLUDED.xform_version,
+                    form_meta = EXCLUDED.form_meta,
+                    received_on = EXCLUDED.received_on
+                WHERE staging.received_on IS NULL OR EXCLUDED.received_on > staging.received_on
+                """, params)
 
     @classmethod
     def add_sync(cls, domain, user_id, app_id, build_id, sync_date, device_id):
-        obj, created = cls.objects.get_or_create(
-            domain=domain, user_id=user_id, app_id=app_id,
-            defaults={
-                'build_id': build_id,
-                'sync_date': sync_date,
-                'device_id': device_id,
-            }
-        )
+        params = {
+            'domain': domain,
+            'user_id': user_id,
+            'app_id': app_id,
+            'build_id': build_id,
+            'sync_date': sync_date,
+            'device_id': device_id,
+        }
+        with connection.cursor() as cursor:
+            cursor.execute(f"""
+                INSERT INTO {cls._meta.db_table} AS staging (
+                    domain, user_id, app_id, modified_on, created_on,
+                    build_id,
+                    sync_date, device_id
+                ) VALUES (
+                    %(domain)s, %(user_id)s, %(app_id)s, CLOCK_TIMESTAMP(), CLOCK_TIMESTAMP(),
+                    %(build_id)s,
+                    %(sync_date)s, %(device_id)s
+                )
+                ON CONFLICT (domain, user_id, app_id)
+                DO UPDATE SET
+                    modified_on = CLOCK_TIMESTAMP(),
+                    build_id = EXCLUDED.build_id,
+                    sync_date = EXCLUDED.sync_date,
+                    device_id = EXCLUDED.device_id
+                WHERE staging.sync_date IS NULL OR EXCLUDED.sync_date > staging.sync_date
+                """, params)
 
-        if created:
+    @classmethod
+    def add_heartbeat(cls, domain, user_id, app_id, build_id, sync_date, device_id,
+        app_version, num_unsent_forms, num_quarantined_forms, commcare_version, build_profile_id):
+        params = {
+            'domain': domain,
+            'user_id': user_id,
+            'app_id': app_id,
+            'build_id': build_id,
+            'sync_date': sync_date,
+            'device_id': device_id,
+            'app_version': app_version,
+            'num_unsent_forms': num_unsent_forms,
+            'num_quarantined_forms': num_quarantined_forms,
+            'commcare_version': commcare_version,
+            'build_profile_id': build_profile_id,
+        }
+        with connection.cursor() as cursor:
+            cursor.execute(f"""
+                INSERT INTO {cls._meta.db_table} AS staging (
+                    domain, user_id, app_id, modified_on, created_on,
+                    build_id,
+                    sync_date, device_id,
+                    app_version, num_unsent_forms, num_quarantined_forms,
+                    commcare_version, build_profile_id, last_heartbeat
+                ) VALUES (
+                    %(domain)s, %(user_id)s, %(app_id)s, CLOCK_TIMESTAMP(), CLOCK_TIMESTAMP(),
+                    %(build_id)s,
+                    %(sync_date)s, %(device_id)s,
+                    %(app_version)s, %(num_unsent_forms)s, %(num_quarantined_forms)s,
+                    %(commcare_version)s, %(build_profile_id)s, CLOCK_TIMESTAMP()
+                )
+                ON CONFLICT (domain, user_id, app_id)
+                DO UPDATE SET
+                    modified_on = CLOCK_TIMESTAMP(),
+                    build_id = COALESCE(EXCLUDED.build_id, staging.build_id),
+                    sync_date = COALESCE(EXCLUDED.sync_date, staging.sync_date),
+                    device_id = COALESCE(EXCLUDED.device_id, staging.device_id),
+                    app_version = EXCLUDED.app_version,
+                    num_unsent_forms = EXCLUDED.num_unsent_forms,
+                    num_quarantined_forms = EXCLUDED.num_quarantined_forms,
+                    commcare_version = EXCLUDED.commcare_version,
+                    build_profile_id = EXCLUDED.build_profile_id,
+                    last_heartbeat = CLOCK_TIMESTAMP()
+                WHERE staging.last_heartbeat is NULL or EXCLUDED.last_heartbeat > staging.last_heartbeat
+                """, params)
+
+    def process_record(self, user):
+        from corehq.pillows.synclog import mark_last_synclog
+        from pillowtop.processors.form import mark_latest_submission
+
+        save = False
+        if not user or user.is_deleted():
             return
 
-        if not obj.sync_date or sync_date > obj.sync_date:
-            obj.sync_date = sync_date
-            obj.build_id = build_id
-            obj.device_id = device_id
-            obj.save()
+        if self.received_on:
+            save = mark_latest_submission(
+                self.domain, user, self.app_id, self.build_id,
+                self.xform_version, self.form_meta, self.received_on, save_user=False
+            )
+        if self.device_id or self.sync_date or self.last_heartbeat:
+            device_app_meta = DeviceAppMeta(
+                app_id=self.app_id,
+                build_id=self.build_id,
+                build_version=self.app_version,
+                last_heartbeat=self.last_heartbeat,
+                last_sync=self.sync_date,
+                num_unsent_forms=self.num_unsent_forms,
+                num_quarantined_forms=self.num_quarantined_forms
+            )
+            if not self.last_heartbeat:
+                # coming from sync
+                latest_build_date = self.sync_date
+            else:
+                # coming from hearbeat
+                latest_build_date = self.modified_on
+            save |= mark_last_synclog(
+                self.domain, user, self.app_id, self.build_id,
+                self.sync_date, latest_build_date, self.device_id, device_app_meta,
+                commcare_version=self.commcare_version, build_profile_id=self.build_profile_id,
+                save_user=False
+            )
+        if save:
+            user.save(fire_signals=False)
 
     class Meta(object):
         unique_together = ('domain', 'user_id', 'app_id')

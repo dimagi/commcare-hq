@@ -1,6 +1,6 @@
 from django.test.testcases import TestCase
 from django.test.client import RequestFactory
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.locations.models import LocationType, SQLLocation
@@ -247,7 +247,9 @@ class TestLocationView(TestCase):
             'map_location_name': 'Test State 3',
             'location_type_name': 'state',
             'user_have_access': True,
-            'location_type': 'state'
+            'location_type': 'state',
+            'parent_map_name': None,
+            'parent_name': None,
         }
         self.assertDictEqual(expected, json.loads(response.content))
 
@@ -268,7 +270,9 @@ class TestLocationView(TestCase):
             'map_location_name': 'Test Block 3',
             'location_type_name': 'block',
             'user_have_access': False,
-            'location_type': 'block'
+            'location_type': 'block',
+            'parent_name': 'Test District 3_1',
+            'parent_map_name': 'Test District 3_1',
         }
         with mock.patch('corehq.apps.users.models.WebUser.has_permission', return_value=False):
             response = view(request, domain='icds-test')

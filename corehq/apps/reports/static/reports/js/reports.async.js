@@ -172,7 +172,7 @@ var HQAsyncReport = function (o) {
         });
     };
 
-    self.loadingIssueModal.on('reloadHQReport', function () {
+    self.loadingIssueModal.on('click', '.try-again', function () {
         self.loadingIssueModal.find('.btn-primary').button('loading');
         self.updateReport(true, window.location.search.substr(1));
     });

@@ -505,17 +505,18 @@ class UnfinishedSubmissionStub(models.Model):
     class Meta(object):
         app_label = 'couchforms'
         indexes = (
-            models.Index(['xform_id']),
+            models.Index(fields=['xform_id']),
         )
 
 
 class UnfinishedArchiveStub(models.Model):
-    xform_id = models.CharField(max_length=200)
+    xform_id = models.CharField(max_length=200, unique=True)
     user_id = models.CharField(max_length=200, default=None, blank=True, null=True)
     timestamp = models.DateTimeField(db_index=True)
     archive = models.BooleanField(default=False)
     history_updated = models.BooleanField(default=False)
     domain = models.CharField(max_length=256)
+    attempts = models.IntegerField(default=0)
 
     def __str__(self):
         return str(

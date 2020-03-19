@@ -30,7 +30,7 @@ SUM( CASE WHEN agg_child_health.age_tranche::integer <=36 THEN agg_child_health.
 SUM( CASE WHEN agg_child_health.age_tranche::integer >36 AND agg_child_health.age_tranche::integer <=60  THEN agg_child_health.nutrition_status_weighed ELSE 0 END)AS gm_3_5,
 SUM( CASE WHEN agg_child_health.age_tranche::integer <=36 THEN agg_child_health.valid_in_month ELSE 0 END ) as children_0_3,
 SUM( CASE WHEN agg_child_health.age_tranche::integer BETWEEN 37 AND 60 THEN agg_child_health.valid_in_month ELSE 0 END ) as children_3_5,
-SUM( CASE WHEN agg_child_health.age_tranche::integer BETWEEN 37 AND 72 THEN agg_child_health.valid_in_month ELSE 0 END ) as children_3_6,
+COALESCE(SUM(agg_child_health.pse_eligible),0) as children_3_6,
 COALESCE(SUM(agg_child_health.pse_attended_21_days),0) as pse_attended_21_days,
 COALESCE(SUM(agg_child_health.lunch_count_21_days),0) as lunch_count_21_days,
 COALESCE(SUM(agg_child_health.rations_21_plus_distributed),0) + COALESCE(ccr.mother_thr,0) as thr_given_21_days,

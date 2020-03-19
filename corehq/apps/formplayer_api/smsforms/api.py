@@ -1,4 +1,9 @@
-import copy
+"""
+A set of wrappers that return the JSON bodies you use to interact with the formplayer
+backend for various sets of tasks.
+
+This API is currently highly beta and could use some hardening.
+"""
 import json
 import socket
 
@@ -6,114 +11,57 @@ from django.conf import settings
 from django.http import Http404
 
 import requests
-import six.moves.http_client
 from requests import HTTPError
-from six.moves.urllib.parse import urlparse
-
-from dimagi.utils.couch.cache.cache_core import get_redis_client
-
-from corehq.apps.formplayer_api.smsforms.exceptions import BadDataError
 from corehq.apps.formplayer_api.utils import get_formplayer_url
-from corehq.form_processor.utils.general import use_sqlite_backend
-from corehq.util.hmac_request import (
-    convert_to_bytestring_if_unicode,
-    get_hmac_digest,
-)
-
-
-"""
-A set of wrappers that return the JSON bodies you use to interact with the formplayer
-backend for various sets of tasks.
-
-This API is currently highly beta and could use some hardening. 
-"""
-
-
-class TouchformsAuth(object):
-    """
-    Used to authenticate with touchforms
-    """
-    def __init__(self, type, key):
-        self.type = type
-        self.key = key
-        
-    def to_dict(self):
-        return {'type': self.type, 'key': self.key}
-
-
-class DjangoAuth(TouchformsAuth):
-    
-    def __init__(self, key):
-        super(DjangoAuth, self).__init__("django-session", key)
-            
-
-class DigestAuth(TouchformsAuth):
-    
-    def __init__(self, username, password):
-        self.username = username
-        super(DigestAuth, self).__init__("http-digest", password)
-        
-    def to_dict(self):
-        return {'type': self.type, 'key': self.key, 'username': self.username}
+from corehq.util.hmac_request import get_hmac_digest
+from dimagi.utils.logging import notify_exception
 
 
 class TouchformsError(ValueError):
 
     def __init__(self, *args, **kwargs):
         self.response_data = kwargs.pop('response_data', {})
-        super(TouchformsError, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
 
 class InvalidSessionIdException(TouchformsError):
     pass
 
 
-class XFormsConfigException(ValueError):
-    pass
-
-
 class XFormsConfig(object):
-    
-    def __init__(self, form_path=None, form_content=None, language="", 
-                 session_data=None, preloader_data={}, instance_content=None,
-                 touchforms_url=None, auth=None, domain=None, restore_as=None, restore_as_case_id=None):
-        
-        if bool(form_path) == bool(form_content):
-            raise XFormsConfigException\
-                ("Can specify file path or content but not both!\n" 
-                 "File Path: %s, Form Content: %s" % (form_path, form_content))
-        
-        self.form_path = form_path
+
+    def __init__(self, form_content, language="", session_data=None,
+                 domain=None, restore_as=None, restore_as_case_id=None):
+
         self.form_content = form_content
         self.language = language
         self.session_data = session_data
-        self.preloader_data = preloader_data        
-        self.instance_content = instance_content
-        self.auth = auth
         self.restore_as = restore_as
         self.restore_as_case_id = restore_as_case_id
         self.domain = domain
-        
-    def get_touchforms_dict(self):
+
+    def start_session(self):
         """
-        Translates this config into something touchforms wants to 
-        work with
+        Start a new session based on this configuration
         """
-        
-        vals = (("action", "new-form"),
-                ("form-name", self.form_path),
-                ("form-content", self.form_content),
-                ("instance-content", self.instance_content),
-                ("preloader-data", self.preloader_data),
-                ("session-data", self.session_data),
-                ("lang", self.language),
-                ("form-url", self.form_path))
-        
-        # only include anything with a value, or touchforms gets mad
-        ret = dict([x for x in vals if x[1]])
-        self.add_key_helper('username', ret)
-        self.add_key_helper('domain', ret)
-        self.add_key_helper('app_id', ret)
+
+        return _get_response(self._get_start_session_data(),
+                             user_id=self.session_data.get('user_id'))
+
+    def _get_start_session_data(self):
+        """
+        Translates this config into something formplayer wants to work with
+        """
+
+        ret = {
+            "action": "new-form",
+            "form-content": self.form_content,
+            "session-data": self.session_data,
+            "lang": self.language,
+            'username': self.session_data.get('username'),
+            'domain': self.session_data.get('domain'),
+            'app_id': self.session_data.get('app_id'),
+        }
 
         if self.restore_as_case_id:
             # The contact starting the survey is a case who will be
@@ -125,25 +73,15 @@ class XFormsConfig(object):
         else:
             raise ValueError("Unable to determine 'restore as' contact for formplayer")
 
-        return ret
+        # only include anything with a value, or touchforms gets mad
+        return {key: value for key, value in ret.items() if value}
 
-    def add_key_helper(self, key, ret):
-        if key in self.session_data:
-            ret[key] = self.session_data[key]
-        
-    def start_session(self):
-        """
-        Start a new session based on this configuration
-        """
-
-        return get_response(json.dumps(self.get_touchforms_dict()), auth=self.auth)
-    
 
 class XformsEvent(object):
     """
-    A wrapper for the json event object that comes back from touchforms, which 
+    A wrapper for the json event object that comes back from touchforms, which
     looks approximately like this:n
-    
+
     { "datatype":"select",
       "style":{},
       "choices":["red","green","blue"],
@@ -162,28 +100,23 @@ class XformsEvent(object):
         self.datatype = datadict.get("datatype", "")
         self.output = datadict.get("output", "")
         self.choices = datadict.get("choices", None)
-            
+
     @property
     def text_prompt(self):
         """
         A text-only prompt for this. Used in pure text (or sms) mode.
-        
+
         Kept for backwards compatibility. Should use get_text_prompt, below.
         """
-        return self.get_text_prompt(None)
-    
-    def get_text_prompt(self, select_display_func=None):
+        return self.get_text_prompt()
+
+    def get_text_prompt(self):
         """
         Get a text-only prompt for this. Used in pure text (or sms) mode.
-        
-        Allows you to pass in a function to override how selects are displayed.
-        
-        The signature of that function should take in the prompt and choice list
-        and return a string. The default is select_to_text_compact
+
         """
-        display_func = select_display_func or select_to_text_compact
         if self.datatype == "select" or self.datatype == "multiselect":
-            return display_func(self.caption, self._dict["choices"])
+            return select_to_text_compact(self.caption, self._dict["choices"])
         else:
             return self.caption
 
@@ -192,50 +125,18 @@ def select_to_text_compact(caption, choices):
     """
     A function to convert a select item to text in a compact format.
     Format is:
-    
+
     [question] 1:[choice1], 2:[choice2]...
     """
-    return "%s %s." % (caption,
-                      ", ".join(["%s:%s" % (i+1, val) for i, val in \
-                                 enumerate(choices)])) 
-
-
-def select_to_text_vals_only(caption, choices):
-    """
-    A function to convert a select item to text in a compact format.
-    Format is:
-    
-    [question], choices: [choice1], [choice2]...
-    """
-    return "%s, choices: %s" % (caption, ", ".join(choices)) 
-                  
-
-def select_to_text_readable(caption, choices):
-    """
-    A function to convert a select item to text in a more verbose, readable 
-    format.
-    Format is:
-    
-    [question] Send 1 for [choice1], 2 for [choice2]...
-    """
-    return "%s Send %s" % (caption,
-                      ", ".join(["%s for %s" % (i+1, val) for i, val in \
-                                 enumerate(choices)])) 
-
-
-def select_to_text_caption_only(caption, choices):
-    """
-    A select choices => text function that ignores choice captions entirely.
-    All presentation of choices must be included in the main question caption.
-    A DRY violation, for sure, but gives the maximum flexibility
-    """
-    return caption
+    return "{} {}.".format(
+        caption, ", ".join(["{}:{}".format(i + 1, val) for i, val in enumerate(choices)]))
 
 
 class XformsResponse(object):
     """
-    A wrapper for the json that comes back from touchforms, which 
-    looks approximately like this:
+    A wrapper for the json that comes back from touchforms,
+    which looks approximately like this:
+
     {"event":
         { "datatype":"select",
           "style":{},
@@ -244,15 +145,15 @@ class XformsResponse(object):
      "session_id": 'd0addaa40dbcefefc6a687472a4e65d2',
      "status":"accepted",
      "seq_id":1}
-     
+
     Although errors come back more like this:
-    {'status': 'validation-error', 
-     'seq_id': 2, 
-     'reason': 'some message about constraint', 
+    {'status': 'validation-error',
+     'seq_id': 2,
+     'reason': 'some message about constraint',
      'type': 'constraint'}
-    
+
     """
-    
+
     def __init__(self, datadict):
         self._dict = datadict
         self.is_error = False
@@ -262,17 +163,17 @@ class XformsResponse(object):
             self.text_prompt = self.event.text_prompt
         else:
             self.event = None
-        
-        self.seq_id = datadict.get("seq_id","")
+
+        self.seq_id = datadict.get("seq_id", "")
         self.session_id = datadict.get("session_id", "")
         self.status = datadict.get("status", "")
-        
+
         # custom logic to handle errors
         if self.status == "validation-error":
             assert self.event is None, "There should be no touchforms event for errors"
             self.is_error = True
             self.text_prompt = datadict.get("reason", "that is not a legal answer")
-            
+
         # custom logic to handle http related errors
         elif self.status == "http-error":
             assert self.event is None, "There should be no touchforms event for errors"
@@ -282,8 +183,9 @@ class XformsResponse(object):
             self.args = datadict.get("args")
             self.url = datadict.get("url")
         elif self.event is None:
-            raise TouchformsError("unhandleable response: %s" % json.dumps(datadict),
-                response_data=datadict)
+            raise TouchformsError(
+                "unhandleable response: {}"
+                .format(json.dumps(datadict), response_data=datadict))
 
     @classmethod
     def server_down(cls):
@@ -293,43 +195,50 @@ class XformsResponse(object):
                                         "contact your administrator for help."})
 
 
-def formplayer_post_data_helper(d, content_type, url):
-    session_id = d.get('session-id')
-    data = json.dumps(d).encode('utf-8')
-    headers = {}
-    headers["Content-Type"] = content_type
-    headers["content-length"] = str(len(data))
-    headers["X-MAC-DIGEST"] = get_hmac_digest(settings.FORMPLAYER_INTERNAL_AUTH_KEY, data)
-    headers["X-FORMPLAYER-SESSION"] = session_id
+def _get_response(data, user_id):
+    try:
+        response_json = _post_data(data, user_id)
+    except socket.error:
+        return XformsResponse.server_down()
+    else:
+        return XformsResponse(response_json)
+
+
+def _post_data(data, user_id):
+    if not data.get("domain"):
+        raise ValueError("Expected domain")
+
+    if not user_id:
+        notify_exception(
+            None,
+            "Making smsforms request w/o user_id. Will result in non-sticky session.",
+            details={
+                'session-id': data.get('session-id'),
+            }
+        )
+
+    data = _get_formplayer_session_data(data)
+    data_bytes = json.dumps(data).encode('utf-8')
     response = requests.post(
-        url,
-        data=data,
-        headers=headers
+        url="{}/{}".format(get_formplayer_url(), data["action"]),
+        data=data_bytes,
+        headers={
+            "Content-Type": "application/json",
+            "content-length": str(len(data_bytes)),
+            "X-MAC-DIGEST": get_hmac_digest(settings.FORMPLAYER_INTERNAL_AUTH_KEY, data_bytes),
+            "X-FORMPLAYER-SESSION": user_id,
+        },
     )
     if response.status_code == 404:
         raise Http404(response.reason)
     if 500 <= response.status_code < 600:
-        http_error_msg = '%s Server Error: %s for url: %s' % (response.status_code, response.reason, response.url)
+        http_error_msg = '{} Server Error: {} for url: {}'.format(
+            response.status_code, response.reason, response.url)
         raise HTTPError(http_error_msg, response=response)
     return response.json()
 
 
-def post_data(data, auth=None, content_type="application/json"):
-    try:
-        d = json.loads(data)
-    except TypeError:
-        raise BadDataError('unhandleable touchforms query: %s' % data)
-
-    domain = d.get("domain")
-
-    if not domain:
-        raise ValueError("Expected domain")
-
-    d = get_formplayer_session_data(d)
-    return formplayer_post_data_helper(d, content_type, get_formplayer_url() + "/" + d["action"])
-
-
-def get_formplayer_session_data(data):
+def _get_formplayer_session_data(data):
     data['oneQuestionPerScreen'] = True
     data['nav_mode'] = 'prompt'
     if "session_id" in data:
@@ -344,77 +253,70 @@ def get_formplayer_session_data(data):
     return data
 
 
-def get_response(data, auth=None):
-    try:
-        response_json = post_data(data, auth=auth)
-    except socket.error as e:
-        return XformsResponse.server_down()
-    try:
-        return XformsResponse(response_json)
-    except Exception as e:
-        raise e
+class FormplayerInterface:
+    def __init__(self, session_id, domain, user_id=Ellipsis):
+        self.session_id = session_id
+        self.domain = domain
+        self._user_id = user_id
 
+    @property
+    def user_id(self):
+        from corehq.apps.smsforms.models import SQLXFormsSession
 
-def get_raw_instance(session_id, domain=None, auth=None):
-    """
-    Gets the raw xml instance of the current session regardless of the state that we're in (used for logging partially complete
-    forms to couch when errors happen).
-    """
+        if self._user_id is Ellipsis:
+            session = SQLXFormsSession.by_session_id(self.session_id)
+            if session:
+                self._user_id = session.user_id
+            else:
+                self._user_id = None
 
-    data = {
-        "action":"get-instance",
-        "session-id": session_id,
-        "domain": domain
-    }
+        return self._user_id
 
-    response = post_data(json.dumps(data), auth)
-    if "error" in response:
-        error = response["error"]
-        if error == "Form session not found":
-            raise InvalidSessionIdException("Invalid Session Id")
-        else:
-            raise TouchformsError(error)
-    return response
+    def get_raw_instance(self):
+        """
+        Gets the raw xml instance of the current session regardless of the state that we're in
+        (used for logging partially complete forms to couch when errors happen).
+        """
 
+        data = {
+            "action": "get-instance",
+            "session-id": self.session_id,
+            "domain": self.domain
+        }
 
-def start_form_session(form_path, content=None, language="", session_data={}):
-    """
-    Start a new form session
-    """
-    # TODO: this method has been deprecated and the config object
-    # should just be used directly. Temporarily left to support legacy code.
-    return XFormsConfig(form_path=form_path,
-                        instance_content=content,
-                        session_data=session_data,
-                        language=language).start_session()
+        response = _post_data(data, self.user_id)
+        if "error" in response:
+            error = response["error"]
+            if error == "Form session not found":
+                raise InvalidSessionIdException("Invalid Session Id")
+            else:
+                raise TouchformsError(error)
+        return response
 
+    def answer_question(self, answer):
+        """
+        Answer a question.
+        """
+        data = {"action": "answer",
+                "session-id": self.session_id,
+                "answer": answer,
+                "domain": self.domain}
+        return _get_response(data, self.user_id)
 
-def answer_question(session_id, answer, domain, auth=None):
-    """
-    Answer a question. 
-    """
-    data = {"action": "answer",
-            "session-id": session_id,
-            "answer": answer,
-            "domain": domain}
-    return get_response(json.dumps(data), auth)
+    def current_question(self):
+        """
+        Retrieves information about the current question.
+        """
+        data = {"action": "current",
+                "session-id": self.session_id,
+                "domain": self.domain}
+        return _get_response(data, self.user_id)
 
-
-def current_question(session_id, domain, auth=None):
-    """
-    Retrieves information about the current question.
-    """
-    data = {"action": "current",
-            "session-id": session_id,
-            "domain": domain}
-    return get_response(json.dumps(data), auth)
-
-
-def next(session_id, domain, auth=None):
-    """
-    Moves to the next question.
-    """
-    data = {"action": "next",
-            "session-id": session_id,
-            "domain": domain}
-    return get_response(json.dumps(data), auth)
+    def next(self):
+        """
+        Moves to the next question.
+        """
+        data = {"action": "next",
+                "session-id": self.session_id,
+                "domain": self.domain}
+        return _get_response(data, self.user_id)

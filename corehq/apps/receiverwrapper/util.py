@@ -1,3 +1,4 @@
+import json
 import re
 from collections import namedtuple
 
@@ -11,12 +12,12 @@ from couchforms.models import DefaultAuthContext
 
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.models import ApplicationBase
-from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.receiverwrapper.exceptions import LocalSubmissionError
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.submission_post import SubmissionPost
 from corehq.form_processor.utils import convert_xform_to_json
 from corehq.util.quickcache import quickcache
+from corehq.util.soft_assert import soft_assert
 
 
 def get_submit_url(domain, app_id=None):
@@ -207,34 +208,25 @@ DEMO_SUBMIT_MODE = 'demo'
 IGNORE_ALL_DEMO_USER_SUBMISSIONS = settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS
 
 
-def _submitted_by_demo_user(form_json, domain):
+def _submitted_by_demo_user(form_meta, domain):
     from corehq.apps.users.util import DEMO_USER_ID
-    try:
-        user_id = form_json['meta']['userID']
-    except (KeyError, ValueError):
-        pass
-    else:
-        if user_id and user_id != DEMO_USER_ID:
-            user = CommCareUser.get_by_user_id(user_id, domain)
-            if user and user.is_demo_user:
-                return True
+    user_id = form_meta.get('userID')
+    if user_id and user_id != DEMO_USER_ID:
+        user = CommCareUser.get_by_user_id(user_id, domain)
+        if user and user.is_demo_user:
+            return True
     return False
 
 
-def _notify_ignored_form_submission(request, user_id):
-    message = """
-        Details:
-        Method: {}
-        URL: {}
-        GET Params: {}
-        User ID: {}
-    """.format(request.method, request.get_raw_uri(), request.GET, user_id)
-    send_mail_async.delay(
-        "[%s] Unexpected practice mobile user submission received" % settings.SERVER_ENVIRONMENT,
-        message,
-        settings.DEFAULT_FROM_EMAIL,
-        ['mkangia@dimagi.com']
-    )
+def _notify_ignored_form_submission(request, form_meta):
+    _assert = soft_assert(['mkangia@dimagi.com', 'sgoyal@dimagi.com'],
+                          exponential_backoff=False, send_to_ops=False)
+    _assert(False, "Unexpected practice mobile user submission received", {
+        'Method': request.method,
+        'URL': request.get_raw_uri(),
+        'GET Params': json.dumps(request.GET),
+        'Form Meta': json.dumps(form_meta),
+    })
 
 
 def should_ignore_submission(request):
@@ -253,8 +245,9 @@ def should_ignore_submission(request):
             # let the usual workflow handle response for invalid xml
             return False
         else:
-            if _submitted_by_demo_user(form_json, request.domain):
-                _notify_ignored_form_submission(request, form_json['meta']['userID'])
+            form_meta = form_json.get('meta')
+            if form_meta and _submitted_by_demo_user(form_meta, request.domain):
+                _notify_submission_if_applicable(request, form_meta)
                 return True
 
     if not request.GET.get('submit_mode') == DEMO_SUBMIT_MODE:
@@ -264,3 +257,13 @@ def should_ignore_submission(request):
         instance, _ = couchforms.get_instance_and_attachment(request)
         form_json = convert_xform_to_json(instance)
     return False if from_demo_user(form_json) else True
+
+
+def _notify_submission_if_applicable(request, form_meta):
+    # notify the submission if form would have gotten processed due to missing param
+    if not request.GET.get('submit_mode') == DEMO_SUBMIT_MODE:
+        app_version_text = form_meta.get('appVersion')
+        if app_version_text:
+            commcare_version = get_commcare_version_from_appversion_text(app_version_text)
+            if commcare_version and commcare_version >= '2.44.0':
+                _notify_ignored_form_submission(request, form_meta)

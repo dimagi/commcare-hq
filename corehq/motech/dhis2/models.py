@@ -1,3 +1,4 @@
+from django.db import models
 from itertools import chain
 
 from dimagi.ext.couchdbkit import (
@@ -24,17 +25,12 @@ from corehq.motech.dhis2.utils import (
 from corehq.util.quickcache import quickcache
 
 
-class Dhis2Connection(Document):
-    domain = StringProperty()
-    server_url = StringProperty()
-    username = StringProperty()
-    password = StringProperty()
-    skip_cert_verify = BooleanProperty(default=False)
-
-    @classmethod
-    def wrap(cls, data):
-        data.pop('log_level', None)
-        return super(Dhis2Connection, cls).wrap(data)
+class Dhis2Connection(models.Model):
+    domain = models.CharField(max_length=255, unique=True)
+    server_url = models.CharField(max_length=255, null=True)
+    username = models.CharField(max_length=255)
+    password = models.CharField(max_length=255, null=True)
+    skip_cert_verify = models.BooleanField(default=False)
 
 
 class DataValueMap(DocumentSchema):

@@ -110,162 +110,178 @@
       {
         "display": "open_count",
         "column_id": "open_count",
-        "type": "sum_when",
-        "aggregation": "sum",
+        "type": "sum_when_template",
         "calculate_total": true,
-        "whens": {
-          "closed_on IS NULL": 1
-        }
+        "whens": [{
+          "type": "closed_on_null",
+          "binds": [],
+          "then": 1
+        }]
       },
       {
         "display": "F_st_count",
         "column_id": "F_st_count",
-        "type": "sum_when",
-        "aggregation": "sum",
+        "type": "sum_when_template",
         "calculate_total": true,
-        "whens": {
-          "closed_on IS NULL AND sex = 'F' and hh_caste = 'st'": 1
-        }
+        "whens": [{
+          "type": "open_female_hh_caste",
+          "binds": ["st"],
+          "then": 1
+        }]
       },
       {
         "display": "F_sc_count",
         "column_id": "F_sc_count",
-        "type": "sum_when",
-        "aggregation": "sum",
+        "type": "sum_when_template",
         "calculate_total": true,
-        "whens": {
-          "closed_on IS NULL AND sex = 'F' and hh_caste = 'sc'": 1
-        }
+        "whens": [{
+          "type": "open_female_hh_caste",
+          "binds": ["sc"],
+          "then": 1
+        }]
       },
       {
         "display": "F_other_count",
         "column_id": "F_other_count",
-        "type": "sum_when",
-        "aggregation": "sum",
+        "type": "sum_when_template",
         "calculate_total": true,
-        "whens": {
-          "closed_on IS NULL AND sex = 'F' and hh_caste NOT IN ('st', 'sc')": 1
-        }
+        "whens": [{
+          "type": "open_female_hh_caste_not",
+          "binds": ["st", "sc"],
+          "then": 1
+        }]
       },
       {
         "display": "F_minority_count",
         "column_id": "F_minority_count",
-        "type": "sum_when",
-        "aggregation": "sum",
+        "type": "sum_when_template",
         "calculate_total": true,
-        "whens": {
-          "closed_on IS NULL AND sex = 'F' and hh_minority = 1": 1
-        }
+        "whens": [{
+          "type": "open_female_hh_minority",
+          "binds": [],
+          "then": 1
+        }]
       },
       {
         "display": "F_disabled_count",
         "column_id": "F_disabled_count",
-        "type": "sum_when",
-        "aggregation": "sum",
+        "type": "sum_when_template",
         "calculate_total": true,
-        "whens": {
-          "closed_on IS NULL AND sex = 'F' and disabled = 1": 1
-        }
+        "whens": [{
+          "type": "open_female_disabled",
+          "binds": [],
+          "then": 1
+        }]
       },
       {
         "display": "M_st_count",
         "column_id": "M_st_count",
-        "type": "sum_when",
-        "aggregation": "sum",
+        "type": "sum_when_template",
         "calculate_total": true,
-        "whens": {
-          "closed_on IS NULL AND sex IN ('M', 'O') and hh_caste = 'st'": 1
-        }
+        "whens": [{
+          "type": "open_male_hh_caste",
+          "binds": ["st"],
+          "then": 1
+        }]
       },
       {
         "display": "M_sc_count",
         "column_id": "M_sc_count",
-        "type": "sum_when",
-        "aggregation": "sum",
+        "type": "sum_when_template",
         "calculate_total": true,
-        "whens": {
-          "closed_on IS NULL AND sex IN ('M', 'O') and hh_caste = 'sc'": 1
-        }
+        "whens": [{
+          "type": "open_male_hh_caste",
+          "binds": ["sc"],
+          "then": 1
+        }]
       },
       {
         "display": "M_other_count",
         "column_id": "M_other_count",
-        "type": "sum_when",
-        "aggregation": "sum",
+        "type": "sum_when_template",
         "calculate_total": true,
-        "whens": {
-          "closed_on IS NULL AND sex IN ('M', 'O') and hh_caste NOT IN ('st', 'sc')": 1
-        }
+        "whens": [{
+          "type": "open_male_hh_caste_not",
+          "binds": ["st", "sc"],
+          "then": 1
+        }]
       },
       {
         "display": "M_minority_count",
         "column_id": "M_minority_count",
-        "type": "sum_when",
-        "aggregation": "sum",
+        "type": "sum_when_template",
         "calculate_total": true,
-        "whens": {
-          "closed_on IS NULL AND sex IN ('M', '0') and hh_minority = 1": 1
-        }
+        "whens": [{
+          "type": "open_male_hh_minority",
+          "binds": [],
+          "then": 1
+        }]
       },
       {
         "display": "M_disabled_count",
         "column_id": "M_disabled_count",
-        "type": "sum_when",
-        "aggregation": "sum",
+        "type": "sum_when_template",
         "calculate_total": true,
-        "whens": {
-          "closed_on IS NULL AND sex IN ('M', '0') and disabled = 1": 1
-        }
+        "whens": [{
+          "type": "open_male_disabled",
+          "binds": [],
+          "then": 1
+        }]
       },
       {
         "display": "disabled_movement_count",
         "column_id": "disabled_movement_count",
-        "type": "sum_when",
-        "aggregation": "sum",
+        "type": "sum_when_template",
         "calculate_total": true,
-        "whens": {
-          "closed_on IS NULL AND disability_type ~ '\\y1\\y'": 1
-        }
+        "whens": [{
+          "type": "open_disability_type",
+          "binds": ["\\y1\\y"],
+          "then": 1
+        }]
       },
       {
         "display": "disabled_mental_count",
         "column_id": "disabled_mental_count",
-        "type": "sum_when",
-        "aggregation": "sum",
+        "type": "sum_when_template",
         "calculate_total": true,
-        "whens": {
-          "closed_on IS NULL AND disability_type ~ '\\y2\\y'": 1
-        }
+        "whens": [{
+          "type": "open_disability_type",
+          "binds": ["\\y2\\y"],
+          "then": 1
+        }]
       },
       {
         "display": "disabled_seeing_count",
         "column_id": "disabled_seeing_count",
-        "type": "sum_when",
-        "aggregation": "sum",
+        "type": "sum_when_template",
         "calculate_total": true,
-        "whens": {
-          "closed_on IS NULL AND disability_type ~ '\\y3\\y'": 1
-        }
+        "whens": [{
+          "type": "open_disability_type",
+          "binds": ["\\y3\\y"],
+          "then": 1
+        }]
       },
       {
         "display": "disabled_hearing_count",
         "column_id": "disabled_hearing_count",
-        "type": "sum_when",
-        "aggregation": "sum",
+        "type": "sum_when_template",
         "calculate_total": true,
-        "whens": {
-          "closed_on IS NULL AND disability_type ~ '\\y4\\y'": 1
-        }
+        "whens": [{
+          "type": "open_disability_type",
+          "binds": ["\\y4\\y"],
+          "then": 1
+        }]
       },
       {
         "display": "disabled_speaking_count",
         "column_id": "disabled_speaking_count",
-        "type": "sum_when",
-        "aggregation": "sum",
+        "type": "sum_when_template",
         "calculate_total": true,
-        "whens": {
-          "closed_on IS NULL AND disability_type ~ '\\y5\\y'": 1
-        }
+        "whens": [{
+          "type": "open_disability_type",
+          "binds": ["\\y5\\y"],
+          "then": 1
+        }]
       },
       {
         "sortable": false,

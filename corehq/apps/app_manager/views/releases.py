@@ -567,6 +567,10 @@ class AppDiffView(LoginAndDomainMixin, BasePageView, DomainViewMixin):
             "app": self.first_app,
             "other_app": self.second_app,
             "files": {None: self.app_diffs},
+            "build_profiles": [
+                {'id': build_profile_id, 'name': build_profile.name}
+                for build_profile_id, build_profile in self.second_app.build_profiles.items()
+            ]
         }
 
     @property

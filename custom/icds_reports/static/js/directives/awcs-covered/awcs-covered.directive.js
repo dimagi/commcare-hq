@@ -2,16 +2,18 @@
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function AWCSCoveredController($scope, $routeParams, $location, $filter, icdsCasReachService, locationsService,
-    userLocationId, storageService, haveAccessToAllLocations, baseControllersService, isAlertActive) {
+    dateHelperService, navigationService, userLocationId, storageService, haveAccessToAllLocations,
+    baseControllersService, isAlertActive, isMobile) {
     baseControllersService.BaseController.call(this, $scope, $routeParams, $location, locationsService,
-        userLocationId, storageService, haveAccessToAllLocations);
+        dateHelperService, navigationService, userLocationId, storageService, haveAccessToAllLocations,
+        false, isMobile);
     var vm = this;
     vm.isAlertActive = isAlertActive;
+    vm.usePercentage = false;
+    vm.serviceDataFunction = icdsCasReachService.getAwcsCoveredData;
+
     vm.label = "AWCs Launched";
-    vm.steps = {
-        'map': {route: '/icds_cas_reach/awcs_covered/map', label: 'Map View'},
-        'chart': {route: '/icds_cas_reach/awcs_covered/chart', label: 'Chart View'},
-    };
+    vm.steps = vm.getSteps('/icds_cas_reach/awcs_covered/');
     vm.data = {
         legendTitle: 'Total AWCs that have launched ICDS-CAS. ' +
         'AWCs are considered launched after submitting at least one Household Registration form.',
@@ -22,21 +24,18 @@ function AWCSCoveredController($scope, $routeParams, $location, $filter, icdsCas
     };
     vm.filters = ['age', 'gender'];
 
-    vm.templatePopup = function(loc, row) {
-        var awcs = row ? $filter('indiaNumbers')(row.awcs) : 'N/A';
-        return '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
-            '<p>' + loc.properties.name + '</p>' +
-            '<p>' + vm.rightLegend.info + '</p>' +
-            '<div>Number of AWCs Launched: <strong>' + awcs + '</strong></div></div>';
+    vm.getPopupSubheading = function () {
+        return vm.rightLegend.info;
     };
 
-    vm.loadData = function () {
-        vm.setStepsMapLabel();
-        var usePercentage = false;
-        var forceYAxisFromZero = false;
-        vm.myPromise = icdsCasReachService.getAwcsCoveredData(vm.step, vm.filtersData).then(
-            vm.loadDataFromResponse(usePercentage, forceYAxisFromZero)
-        );
+    vm.getPopupData = function (row) {
+        var awcs = row ? $filter('indiaNumbers')(row.awcs) : 'N/A';
+        return [
+            {
+                indicator_name: 'Number of AWCs Launched: ',
+                indicator_value: awcs,
+            },
+        ];
     };
 
     vm.init();
@@ -53,7 +52,9 @@ function AWCSCoveredController($scope, $routeParams, $location, $filter, icdsCas
         var tooltip = chart.interactiveLayer.tooltip;
         tooltip.contentGenerator(function (d) {
             var findValue = function (values, date) {
-                var day = _.find(values, function(num) { return num['x'] === date; });
+                var day = _.find(values, function (num) {
+                    return num['x'] === date; 
+                });
                 return d3.format(",")(day['y']);
             };
 
@@ -62,7 +63,7 @@ function AWCSCoveredController($scope, $routeParams, $location, $filter, icdsCas
         return chart;
     };
 
-    vm.tooltipContent = function(monthName, value) {
+    vm.tooltipContent = function (monthName, value) {
         return vm.createTooltipContent(
             monthName,
             [{
@@ -77,12 +78,16 @@ function AWCSCoveredController($scope, $routeParams, $location, $filter, icdsCas
     };
 }
 
-AWCSCoveredController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'icdsCasReachService', 'locationsService', 'userLocationId', 'storageService', 'haveAccessToAllLocations', 'baseControllersService', 'isAlertActive'];
+AWCSCoveredController.$inject = [
+    '$scope', '$routeParams', '$location', '$filter',
+    'icdsCasReachService', 'locationsService', 'dateHelperService', 'navigationService', 'userLocationId',
+    'storageService', 'haveAccessToAllLocations', 'baseControllersService', 'isAlertActive', 'isMobile',
+];
 
-window.angular.module('icdsApp').directive('awcsCovered', function() {
+window.angular.module('icdsApp').directive('awcsCovered', ['templateProviderService', function (templateProviderService) {
     return {
         restrict: 'E',
-        templateUrl: url('icds-ng-template', 'map-chart'),
+        templateUrl: templateProviderService.getMapChartTemplate,
         bindToController: true,
         scope: {
             data: '=',
@@ -90,4 +95,4 @@ window.angular.module('icdsApp').directive('awcsCovered', function() {
         controller: AWCSCoveredController,
         controllerAs: '$ctrl',
     };
-});
+}]);

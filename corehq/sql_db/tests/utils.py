@@ -1,6 +1,6 @@
 from sqlalchemy.exc import ProgrammingError
 
-from corehq.sql_db.config import partition_config
+from corehq.sql_db.config import plproxy_config
 from corehq.sql_db.connections import connection_manager, DEFAULT_ENGINE_ID
 from corehq.util.decorators import ContextDecorator
 
@@ -46,9 +46,9 @@ class DefaultShardingTestConfigMixIn(object):
         partitioning is working properly, so this test makes sure those assumptions
         are valid.
         """
-        self.assertEqual(len(partition_config.shard_map), 2)
-        self.assertIn(self.db1, partition_config.shard_map)
-        self.assertIn(self.db2, partition_config.shard_map)
-        self.assertEqual(partition_config.shard_map[self.db1], [0, 1])
-        self.assertEqual(partition_config.shard_map[self.db2], [2, 3])
-        self.assertEqual(set(partition_config.form_processing_dbs), set([self.db1, self.db2]))
+        self.assertEqual(len(plproxy_config.shard_map), 2)
+        self.assertIn(self.db1, plproxy_config.shard_map)
+        self.assertIn(self.db2, plproxy_config.shard_map)
+        self.assertEqual(plproxy_config.shard_map[self.db1], [0, 1])
+        self.assertEqual(plproxy_config.shard_map[self.db2], [2, 3])
+        self.assertEqual(set(plproxy_config.form_processing_dbs), set([self.db1, self.db2]))

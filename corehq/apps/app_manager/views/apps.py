@@ -42,6 +42,7 @@ from corehq.apps.app_manager.dbaccessors import (
     get_app,
     get_current_app,
     get_latest_released_app,
+    get_latest_released_app_doc,
 )
 from corehq.apps.app_manager.decorators import (
     no_conflict_require_POST,
@@ -58,6 +59,7 @@ from corehq.apps.app_manager.models import (
     Application,
     ApplicationBase,
     DeleteApplicationRecord,
+    ExchangeApplication,
     Form,
     Module,
     ModuleNotFoundException,
@@ -315,7 +317,7 @@ def get_app_view_context(request, app):
         context.update({
             'master_briefs': master_briefs,
             'master_versions_by_id': master_versions_by_id,
-            'multiple_masters': len(master_briefs) > 1 and toggles.MULTI_MASTER_LINKED_DOMAINS.enabled(app.domain),
+            'multiple_masters': app.enable_multi_master and len(master_briefs) > 1,
             'upstream_version': app.upstream_version,
             'upstream_brief': upstream_brief,
             'upstream_url': _get_upstream_url(app, request.couch_user),
@@ -535,13 +537,49 @@ def load_app_from_slug(domain, username, slug):
 def _build_sample_app(app):
     errors = app.validate_app()
     if not errors:
-        comment = _("A sample application you can try out in Web Apps")
+        comment = _("A sample CommCare application for you to explore")
         copy = app.make_build(comment=comment)
         copy.is_released = True
         copy.save(increment_version=False)
         return copy
     else:
         notify_exception(None, 'Validation errors building sample app', details=errors)
+
+
+@require_can_edit_apps
+def app_exchange(request, domain):
+    template = "app_manager/app_exchange.html"
+    records = []
+    for obj in ExchangeApplication.objects.all():
+        app = get_app(obj.domain, obj.app_id)
+        records.append({
+            "id": app.get_id,
+            "domain": app.domain,
+            "name": app.name,
+            "comment": app.comment,
+            "last_released": obj.last_released.date() if obj.last_released else None,
+            "help_link": obj.help_link,
+        })
+
+    context = {
+        "domain": domain,
+        "records": records,
+    }
+
+    if request.method == "POST":
+        clear_app_cache(request, domain)
+        from_domain = request.POST.get('from_domain')
+        from_app_id = request.POST.get('from_app_id')
+        doc = get_latest_released_app_doc(from_domain, from_app_id)
+
+        if not doc:
+            messages.error(request, _("Could not find latest released version of app."))
+            return render(request, template, context)
+
+        app_copy = import_app_util(doc, domain)
+        return back_to_main(request, domain, app_id=app_copy._id)
+
+    return render(request, template, context)
 
 
 @require_can_edit_apps

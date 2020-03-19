@@ -93,20 +93,12 @@ class CustomDataEditor(object):
             return forms.CharField(label=field.label, required=field.is_required,
                                    validators=[validator])
         elif field.choices:
-            if not field.is_multiple_choice:
-                choice_field = forms.ChoiceField(
-                    label=field.label,
-                    required=field.is_required,
-                    choices=[('', _('Select one'))] + [(c, c) for c in field.choices],
-                    widget=forms.Select(attrs={'class': 'hqwebapp-select2'}),
-                )
-            else:
-                choice_field = forms.MultipleChoiceField(
-                    label=field.label,
-                    required=field.is_required,
-                    choices=[(c, c) for c in field.choices],
-                    widget=forms.SelectMultiple(attrs={'class': 'hqwebapp-select2'}),
-                )
+            return forms.ChoiceField(
+                label=field.label,
+                required=field.is_required,
+                choices=[('', _('Select one'))] + [(c, c) for c in field.choices],
+                widget=forms.Select(attrs={'class': 'hqwebapp-select2'}),
+            )
             return choice_field
         else:
             return forms.CharField(label=field.label, required=field.is_required)

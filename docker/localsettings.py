@@ -63,20 +63,7 @@ if USE_PARTITIONED_DATABASE:
                 'SHARDS': [2, 3],
             }
         },
-        'warehouse': {
-             'ENGINE': 'django.db.backends.postgresql_psycopg2',
-             'NAME': 'commcarehq_warehouse',
-             'USER': 'commcarehq',
-             'PASSWORD': 'commcarehq',
-             'HOST': 'postgres',
-             'PORT': '5432',
-             'TEST': {
-                 'SERIALIZE': False,
-             },
-         },
     })
-
-    WAREHOUSE_DATABASE_ALIAS = 'warehouse'
 
 # See CITUSDB_SETUP.md for explanation
 DATABASES.update({
@@ -128,6 +115,7 @@ WS4REDIS_CONNECTION = {
 
 ELASTICSEARCH_HOST = 'elasticsearch'
 ELASTICSEARCH_PORT = 9200
+ELASTICSEARCH_MAJOR_VERSION = 2
 
 S3_BLOB_DB_SETTINGS = {
     "url": "http://minio:9980/",
@@ -166,7 +154,7 @@ EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 ####### Bitly ########
 
-BITLY_LOGIN = None
+BITLY_OAUTH_TOKEN = None
 
 ####### Jar signing config ########
 
@@ -234,7 +222,6 @@ if os.environ.get("COMMCAREHQ_BOOTSTRAP") == "yes":
     UNIT_TESTING = False
     ADMINS = (('Admin', 'admin@example.com'),)
 
-    LESS_DEBUG = True
     COMPRESS_OFFLINE = False
 
     FORMPLAYER_URL = 'http://formplayer:8010'

@@ -6,32 +6,25 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    {% include 'hqwebapp/includes/less.html' with debug=less_debug %}
-    {% if less_debug %}
+    {% include 'hqwebapp/includes/less.html' %}
+    {% compress css %}
       <link type="text/less"
             rel="stylesheet"
             media="all"
-            href="{% static 'hqwebapp/less/docs-style.debug.less' %}" />
-    {% else %}
-      {% compress css %}
-        <link type="text/less"
-              rel="stylesheet"
-              media="all"
-              href="{% static 'hqwebapp/less/docs-style.less' %}" />
-        <link type="text/css"
-              rel="stylesheet"
-              media="all"
-              href="{% static 'select2/dist/css/select2.min.css' %}" />
-        <link type="text/css"
-              rel="stylesheet"
-              media="screen"
-              href="{% static "multiselect/css/multi-select.css" %}" />
-        <link type="text/less"
-              rel="stylesheet"
-              media="screen"
-              href="{% static "hqwebapp/less/components/multiselect/multiselect.less" %}" />
-      {% endcompress %}
-    {% endif %}
+            href="{% static 'hqwebapp/less/docs-style.less' %}" />
+      <link type="text/css"
+            rel="stylesheet"
+            media="all"
+            href="{% static 'select2/dist/css/select2.min.css' %}" />
+      <link type="text/css"
+            rel="stylesheet"
+            media="screen"
+            href="{% static "multiselect/css/multi-select.css" %}" />
+      <link type="text/less"
+            rel="stylesheet"
+            media="screen"
+            href="{% static "hqwebapp/less/components/multiselect/multiselect.less" %}" />
+    {% endcompress %}
 
     <link href="https://fonts.googleapis.com/css?family=Nunito+Sans:100,300,400,500,700,800" rel="stylesheet">
 
@@ -45,24 +38,6 @@
       <script src="{% static 'quicksearch/dist/jquery.quicksearch.min.js' %}"></script>
       <script src="{% static 'hqwebapp/js/multiselect_utils.js' %}"></script>
     {% endcompress %}
-
-    {% if less_debug %}
-      <script>
-        less = {
-          env: "development",
-          useFileCache: true,
-          logLevel: 2,
-          errorReporting: 'console',
-          async: false,
-          fileAsync: false,
-          poll: 1000,
-          functions: {},
-          dumpLineNumbers: "comments",
-          relativeUrls: false
-        };
-      </script>
-      <script src="{% static 'less/dist/less-1.7.3.min.js' %}"></script>
-    {% endif %}
   </head>
   <body data-spy="scroll" data-target=".docs-nav">
     <div class="navbar navbar-inverse navbar-static-top navbar-docs">

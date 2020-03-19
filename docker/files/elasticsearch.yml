@@ -7,3 +7,4 @@ http.port: 9200
 # dev-only setting to allow client-side ES front-ends
 http.cors.allow-origin: "*"
 http.cors.enabled: true
+index.max_result_window: 1000000

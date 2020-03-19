@@ -93,8 +93,7 @@ ALL_TAGS = [TAG_SOLUTIONS_OPEN, TAG_SOLUTIONS_CONDITIONAL, TAG_SOLUTIONS_LIMITED
 class StaticToggle(object):
 
     def __init__(self, slug, label, tag, namespaces=None, help_link=None,
-                 description=None, save_fn=None, always_enabled=None,
-                 always_disabled=None, enabled_for_new_domains_after=None,
+                 description=None, save_fn=None, enabled_for_new_domains_after=None,
                  enabled_for_new_users_after=None, relevant_environments=None,
                  notification_emails=None):
         self.slug = slug
@@ -106,8 +105,12 @@ class StaticToggle(object):
         # updated.  This is only applicable to domain toggles.  It must accept
         # two parameters, `domain_name` and `toggle_is_enabled`
         self.save_fn = save_fn
-        self.always_enabled = always_enabled or set()
-        self.always_disabled = always_disabled or set()
+        # Toggles can be delcared in localsettings statically
+        #   to avoid cache lookups
+        self.always_enabled = set(
+            settings.STATIC_TOGGLE_STATES.get(self.slug, {}).get('always_enabled', []))
+        self.always_disabled = set(
+            settings.STATIC_TOGGLE_STATES.get(self.slug, {}).get('always_disabled', []))
         self.enabled_for_new_domains_after = enabled_for_new_domains_after
         self.enabled_for_new_users_after = enabled_for_new_users_after
         # pass in a set of environments where this toggle applies
@@ -268,11 +271,9 @@ class PredictablyRandomToggle(StaticToggle):
         randomness,
         help_link=None,
         description=None,
-        always_disabled=None
     ):
         super(PredictablyRandomToggle, self).__init__(slug, label, tag, list(namespaces),
-                                                      help_link=help_link, description=description,
-                                                      always_disabled=always_disabled)
+                                                      help_link=help_link, description=description)
         _ensure_valid_namespaces(namespaces)
         _ensure_valid_randomness(randomness)
         self.randomness = randomness
@@ -323,14 +324,12 @@ class DynamicallyPredictablyRandomToggle(PredictablyRandomToggle):
         label,
         tag,
         namespaces,
-        default_randomness=0,
+        default_randomness=0.0,
         help_link=None,
-        description=None,
-        always_disabled=None
+        description=None
     ):
         super(PredictablyRandomToggle, self).__init__(slug, label, tag, list(namespaces),
-                                                      help_link=help_link, description=description,
-                                                      always_disabled=always_disabled)
+                                                      help_link=help_link, description=description)
         _ensure_valid_namespaces(namespaces)
         _ensure_valid_randomness(default_randomness)
         self.default_randomness = default_randomness
@@ -567,7 +566,6 @@ MM_CASE_PROPERTIES = StaticToggle(
     TAG_DEPRECATED,
     help_link='https://confluence.dimagi.com/display/ccinternal/Multimedia+Case+Properties+Feature+Flag',
     namespaces=[NAMESPACE_DOMAIN],
-    always_disabled={'icds-cas'}
 )
 
 NEW_MULTIMEDIA_UPLOADER = StaticToggle(
@@ -584,7 +582,6 @@ VISIT_SCHEDULER = StaticToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
-
 USER_CONFIGURABLE_REPORTS = StaticToggle(
     'user_reports',
     'User configurable reports UI',
@@ -594,7 +591,6 @@ USER_CONFIGURABLE_REPORTS = StaticToggle(
         "A feature which will allow your domain to create User Configurable Reports."
     ),
     help_link='https://confluence.dimagi.com/display/RD/User+Configurable+Reporting',
-    notification_emails=['jemord']
 )
 
 LOCATIONS_IN_UCR = StaticToggle(
@@ -611,12 +607,22 @@ REPORT_BUILDER = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
+UCR_SUM_WHEN_TEMPLATES = StaticToggle(
+    'ucr_sum_when_templates',
+    'Allow sum when template columns in dynamic UCRs',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN],
+    description=(
+        "Enables use of SumWhenTemplateColumn with custom expressions in dynamic UCRS."
+    ),
+    help_link='https://commcare-hq.readthedocs.io/ucr.html#sumwhencolumn-and-sumwhentemplatecolumn',
+)
+
 ASYNC_RESTORE = StaticToggle(
     'async_restore',
     'Generate restore response in an asynchronous task to prevent timeouts',
     TAG_INTERNAL,
     [NAMESPACE_DOMAIN],
-    always_disabled={'icds-cas'}
 )
 
 REPORT_BUILDER_BETA_GROUP = StaticToggle(
@@ -634,7 +640,6 @@ SYNC_ALL_LOCATIONS = StaticToggle(
     description="Do not turn this feature flag. It is only used for providing compatability for old projects. "
     "We are actively trying to remove projects from this list. This functionality is now possible by using the "
     "Advanced Settings on the Organization Levels page and setting the Level to Expand From option.",
-    always_disabled={'icds-cas'}
 )
 
 HIERARCHICAL_LOCATION_FIXTURE = StaticToggle(
@@ -647,7 +652,6 @@ HIERARCHICAL_LOCATION_FIXTURE = StaticToggle(
         "compatability for old projects.  We are actively trying to remove "
         "projects from this list."
     ),
-    always_enabled={'icds-cas'}
 )
 
 EXTENSION_CASES_SYNC_ENABLED = StaticToggle(
@@ -656,7 +660,6 @@ EXTENSION_CASES_SYNC_ENABLED = StaticToggle(
     TAG_SOLUTIONS_CONDITIONAL,
     help_link='https://confluence.dimagi.com/display/ccinternal/Extension+Cases',
     namespaces=[NAMESPACE_DOMAIN],
-    always_enabled={'icds-cas'}
 )
 
 
@@ -729,7 +732,6 @@ LIVEQUERY_SYNC = StaticToggle(
     'Enable livequery sync algorithm',
     TAG_INTERNAL,
     namespaces=[NAMESPACE_DOMAIN],
-    always_enabled={'icds-cas'}
 )
 
 NO_VELLUM = StaticToggle(
@@ -754,14 +756,6 @@ CAN_EDIT_EULA = StaticToggle(
     TAG_INTERNAL,
 )
 
-STOCK_AND_RECEIPT_SMS_HANDLER = StaticToggle(
-    'stock_and_sms_handler',
-    "Enable the stock report handler to accept both stock and receipt values "
-    "in the format 'soh abc 100.20'",
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN]
-)
-
 # This toggle offers the "multiple_apps_unlimited" mobile flag to non-Dimagi users
 MOBILE_PRIVILEGES_FLAG = StaticToggle(
     'mobile_privileges_flag',
@@ -783,13 +777,6 @@ ALLOW_CASE_ATTACHMENTS_VIEW = StaticToggle(
     "Explicitly allow user to access case attachments, even if they can't view the case list report.",
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
-)
-
-LOCATION_TYPE_STOCK_RATES = StaticToggle(
-    'location_type_stock_rates',
-    "Specify stock rates per location type.",
-    TAG_SOLUTIONS_LIMITED,
-    [NAMESPACE_DOMAIN]
 )
 
 TRANSFER_DOMAIN = StaticToggle(
@@ -875,7 +862,6 @@ MOBILE_UCR = StaticToggle(
      'through the app builder'),
     TAG_SOLUTIONS_LIMITED,
     namespaces=[NAMESPACE_DOMAIN],
-    always_enabled={'icds-cas'}
 )
 
 MOBILE_UCR_LINKED_DOMAIN = StaticToggle(
@@ -884,7 +870,6 @@ MOBILE_UCR_LINKED_DOMAIN = StaticToggle(
      'NOTE: This won\'t work without developer intervention'),
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
-    always_enabled={'icds-cas', 'fmoh-echis-staging'}
 )
 
 API_THROTTLE_WHITELIST = StaticToggle(
@@ -913,7 +898,6 @@ FORM_SUBMISSION_BLACKLIST = StaticToggle(
     description="This is a temporary solution to an unusually high volume of "
     "form submissions from a domain.  We have some projects that automatically "
     "send forms. If that ever causes problems, we can use this to cut them off.",
-    always_disabled={'icds-cas'}
 )
 
 
@@ -991,14 +975,6 @@ OPENCLINICA = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
-CUSTOM_MENU_BAR = StaticToggle(
-    'custom_menu_bar',
-    "Hide Dashboard and Applications from top menu bar "
-    "for non-admin users",
-    TAG_CUSTOM,
-    namespaces=[NAMESPACE_DOMAIN],
-)
-
 DASHBOARD_ICDS_REPORT = StaticToggle(
     'dashboard_icds_reports',
     'ICDS: Enable access to the dashboard reports for ICDS',
@@ -1008,24 +984,32 @@ DASHBOARD_ICDS_REPORT = StaticToggle(
 
 ICDS_DASHBOARD_REPORT_FEATURES = StaticToggle(
     'features_in_dashboard_icds_reports',
-    'ICDS: Enable access to the features in the ICDS Dashboard reports',
+    'ICDS: Enable access to pre-release features in the ICDS Dashboard reports',
     TAG_CUSTOM,
     [NAMESPACE_USER]
 )
+
+ICDS_DASHBOARD_SHOW_MOBILE_APK = DynamicallyPredictablyRandomToggle(
+    'icds_dashboard_show_mobile_apk',
+    'Show a "Mobile APK" download link on the ICDS Dashboard',
+    TAG_CUSTOM,
+    [NAMESPACE_USER],
+)
+
+ICDS_DASHBOARD_TEMPORARY_DOWNTIME = StaticToggle(
+    'icds_dashboard_temporary_downtime',
+    'ICDS: Temporarily disable the ICDS dashboard by showing a downtime page. '
+    'This can be cicurmvented by adding "?bypass-downtime=True" to the end of the url.',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN]
+)
+
 
 OPENMRS_INTEGRATION = StaticToggle(
     'openmrs_integration',
     'Enable OpenMRS integration',
     TAG_SOLUTIONS_LIMITED,
     [NAMESPACE_DOMAIN],
-)
-
-MULTIPLE_CHOICE_CUSTOM_FIELD = StaticToggle(
-    'multiple_choice_custom_field',
-    'EWS: Allow project to use multiple choice field in custom fields',
-    TAG_CUSTOM,
-    namespaces=[NAMESPACE_DOMAIN],
-    description='This flag allows multiple choice fields in custom user data, location data and product data',
 )
 
 SUPPORT = StaticToggle(
@@ -1070,20 +1054,6 @@ FIXTURE_CASE_SELECTION = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
-EWS_INVALID_REPORT_RESPONSE = StaticToggle(
-    'ews_invalid_report_response',
-    'EWS: Send response about invalid stock on hand',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN]
-)
-
-USE_SMS_WITH_INACTIVE_CONTACTS = StaticToggle(
-    'use_sms_with_inactive_contacts',
-    'Use SMS with inactive contacts',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN]
-)
-
 SMS_LOG_CHANGES = StaticToggle(
     'sms_log_changes',
     'Message Log Report v2',
@@ -1102,8 +1072,8 @@ ENABLE_INCLUDE_SMS_GATEWAY_CHARGING = StaticToggle(
 
 MOBILE_WORKER_SELF_REGISTRATION = StaticToggle(
     'mobile_worker_self_registration',
-    'UW: Allow mobile workers to self register',
-    TAG_CUSTOM,
+    'UW: Allow mobile workers to self register. Only works in CommCare 2.44 and lower.',
+    TAG_DEPRECATED,
     help_link='https://confluence.dimagi.com/display/commcarepublic/SMS+Self+Registration',
     namespaces=[NAMESPACE_DOMAIN],
 )
@@ -1120,27 +1090,12 @@ RUN_AUTO_CASE_UPDATES_ON_SAVE = StaticToggle(
     'Run Auto Case Update rules on each case save.',
     TAG_INTERNAL,
     [NAMESPACE_DOMAIN],
-    always_disabled={'icds-cas'}
-)
-
-EWS_BROADCAST_BY_ROLE = StaticToggle(
-    'ews_broadcast_by_role',
-    'EWS: Filter broadcast recipients by role',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN],
 )
 
 LEGACY_SYNC_SUPPORT = StaticToggle(
     'legacy_sync_support',
     "Support mobile sync bugs in older projects (2.9 and below).",
     TAG_DEPRECATED,
-    [NAMESPACE_DOMAIN]
-)
-
-EWS_WEB_USER_EXTENSION = StaticToggle(
-    'ews_web_user_extension',
-    'EWS: Enable EWSGhana web user extension',
-    TAG_CUSTOM,
     [NAMESPACE_DOMAIN]
 )
 
@@ -1160,9 +1115,9 @@ TF_DOES_NOT_USE_SQLITE_BACKEND = StaticToggle(
 
 CUSTOM_APP_BASE_URL = StaticToggle(
     'custom_app_base_url',
-    'ICDS: Allow specifying a custom base URL for an application. Main use case is '
-    'to allow migrating ICDS to a new cluster.',
-    TAG_CUSTOM,
+    'Allow specifying a custom base URL for an application. Main use case is '
+    'to allow migrating projects to a new cluster.',
+    TAG_SOLUTIONS_LIMITED,
     [NAMESPACE_DOMAIN]
 )
 
@@ -1207,19 +1162,11 @@ MOBILE_USER_DEMO_MODE = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN]
 )
 
-
 SEND_UCR_REBUILD_INFO = StaticToggle(
     'send_ucr_rebuild_info',
     'Notify when UCR rebuilds finish or error.',
     TAG_SOLUTIONS_CONDITIONAL,
     [NAMESPACE_USER]
-)
-
-EMG_AND_REC_SMS_HANDLERS = StaticToggle(
-    'emg_and_rec_sms_handlers',
-    'ILS: Enable emergency and receipt sms handlers used in ILSGateway',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN]
 )
 
 ALLOW_USER_DEFINED_EXPORT_COLUMNS = StaticToggle(
@@ -1249,7 +1196,6 @@ CAUTIOUS_MULTIMEDIA = StaticToggle(
     'More cautious handling of multimedia: do not delete multimedia files, add logging, etc.',
     TAG_INTERNAL,
     [NAMESPACE_DOMAIN],
-    always_enabled={'icds', 'icds-cas'},
 )
 
 LOCALE_ID_INTEGRITY = StaticToggle(
@@ -1278,7 +1224,7 @@ USER_TESTING_SIMPLIFY = StaticToggle(
 # when enabled this should prevent any changes to a domains data
 DATA_MIGRATION = StaticToggle(
     'data_migration',
-    'Disable submissions and restores during a data migration',
+    'Disable submissions, restores, and web user access during a data migration',
     TAG_INTERNAL,
     [NAMESPACE_DOMAIN]
 )
@@ -1301,14 +1247,6 @@ ICDS = StaticToggle(
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
     relevant_environments={'icds', 'india', 'staging'},
-    always_enabled={
-        "icds-dashboard-qa",
-        "reach-test",
-        "icds-sql",
-        "icds-test",
-        "icds-cas",
-        "icds-cas-sandbox"
-    },
 )
 
 DATA_DICTIONARY = StaticToggle(
@@ -1317,22 +1255,6 @@ DATA_DICTIONARY = StaticToggle(
     TAG_SOLUTIONS_OPEN,
     [NAMESPACE_DOMAIN],
     description='Available in the Data section, shows the names of all properties of each case type.',
-)
-
-LOCATION_SAFETY_EXEMPTION = StaticToggle(
-    'location_safety_exemption',
-    'Exemption from location restrictions for EWS and ILS',
-    TAG_DEPRECATED,
-    [NAMESPACE_DOMAIN],
-    description=(
-        "ewsghana and ilsgateway do some custom location permissions stuff. "
-        "This feature flag grants them access to the web user pages, but it does "
-        "not actually restrict their access at all. This is implemented strictly "
-        "for backwards compatibility and should not be enabled for any other "
-        "project."
-    ),
-    relevant_environments={'production'},
-    always_enabled={'ews-ghana', 'ils-gateway'},
 )
 
 SORT_CALCULATION_IN_CASE_LIST = StaticToggle(
@@ -1355,22 +1277,12 @@ COUCH_SQL_MIGRATION_BLACKLIST = StaticToggle(
     "Includes the following by default: 'ews-ghana', 'ils-gateway', 'ils-gateway-train'",
     TAG_INTERNAL,
     [NAMESPACE_DOMAIN],
-    always_enabled={
-        'ews-ghana', 'ils-gateway', 'ils-gateway-train'
-    }
 )
 
 PAGINATED_EXPORTS = StaticToggle(
     'paginated_exports',
     'Allows for pagination of exports for very large exports',
     TAG_SOLUTIONS_LIMITED,
-    [NAMESPACE_DOMAIN]
-)
-
-LOGIN_AS_ALWAYS_OFF = StaticToggle(
-    'always_turn_login_as_off',
-    'Always turn login as off',
-    TAG_CUSTOM,
     [NAMESPACE_DOMAIN]
 )
 
@@ -1428,10 +1340,18 @@ ENABLE_ALL_ADD_ONS = StaticToggle(
 
 FILTERED_BULK_USER_DOWNLOAD = StaticToggle(
     'filtered_bulk_user_download',
-    "Ability to filter mobile workers based on role, location, and username when doing bulk download",
+    "Bulk mobile worker management features: filtered download, bulk delete, and bulk lookup users.",
     TAG_SOLUTIONS_OPEN,
     [NAMESPACE_DOMAIN],
-    help_link='https://confluence.dimagi.com/display/ccinternal/Filter+Mobile+Workers+Download',
+    help_link='https://confluence.dimagi.com/display/ccinternal/Bulk+Mobile+Workers+Management',
+)
+
+FILTERED_LOCATION_DOWNLOAD = StaticToggle(
+    'filtered_location_download',
+    "Ability to filter location download to include only a specified location and its descendants.",
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN],
+    help_link='https://confluence.dimagi.com/display/ccinternal/Filtered+Locations+Download',
 )
 
 BULK_UPLOAD_DATE_OPENED = StaticToggle(
@@ -1487,7 +1407,6 @@ MOBILE_LOGIN_LOCKOUT = StaticToggle(
     "On too many wrong password attempts, lock out mobile users",
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN],
-    always_disabled={'icds-cas'}
 )
 
 LINKED_DOMAINS = StaticToggle(
@@ -1509,6 +1428,13 @@ MULTI_MASTER_LINKED_DOMAINS = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
+MULTI_MASTER_BYPASS_VERSION_CHECK = StaticToggle(
+    'MULTI_MASTER_BYPASS_VERSION_CHECK',
+    "Bypass minimum CommCare version check for multi master usage. For use only by ICDS.",
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN],
+)
+
 SUMOLOGIC_LOGS = DynamicallyPredictablyRandomToggle(
     'sumologic_logs',
     'Send logs to sumologic',
@@ -1521,13 +1447,6 @@ TARGET_COMMCARE_FLAVOR = StaticToggle(
     'Target CommCare Flavor.',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
-)
-
-WAREHOUSE_APP_STATUS = StaticToggle(
-    'warehouse_app_status',
-    "User warehouse backend for the app status report. Currently only for sql domains",
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN, NAMESPACE_USER],
 )
 
 TRAINING_MODULE = StaticToggle(
@@ -1592,7 +1511,6 @@ RELATED_LOCATIONS = StaticToggle(
     'REACH: Enable experimental location many-to-many mappings',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
-    notification_emails=['jemord'],
     help_link='https://confluence.dimagi.com/display/RD/Related+Locations',
 )
 
@@ -1655,7 +1573,6 @@ SORT_OUT_OF_ORDER_FORM_SUBMISSIONS_SQL = DynamicallyPredictablyRandomToggle(
     'Sort out of order form submissions in the SQL update strategy',
     TAG_INTERNAL,
     namespaces=[NAMESPACE_DOMAIN],
-    always_disabled={'icds-cas'}
 )
 
 
@@ -1679,7 +1596,6 @@ MANAGE_RELEASES_PER_LOCATION = StaticToggle(
     'Manage releases per location',
     TAG_SOLUTIONS_LIMITED,
     namespaces=[NAMESPACE_DOMAIN],
-    always_disabled={'icds-cas'},
     help_link='https://confluence.dimagi.com/display/ccinternal/Manage+Releases+per+Location',
 )
 
@@ -1715,13 +1631,6 @@ PARTIAL_UI_TRANSLATIONS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-
-DEMO_WORKFLOW_V2_AB_VARIANT = DynamicallyPredictablyRandomToggle(
-    'demo_workflow_v2_ab_variant',
-    'Enables the "variant" version of the Demo Workflow A/B test after login',
-    TAG_INTERNAL,
-    namespaces=[NAMESPACE_USER],
-)
 
 PARALLEL_MPR_ASR_REPORT = StaticToggle(
     'parallel_mpr_asr_report',
@@ -1784,17 +1693,6 @@ DISABLE_CASE_UPDATE_RULE_SCHEDULED_TASK = StaticToggle(
 )
 
 
-# todo: remove after Nov 15, 2019 if no one is using
-GROUP_API_USE_COUCH_BACKEND = StaticToggle(
-    'group_api_use_couch_backend',
-    'Use Old Couch backend for Group API. '
-    'This is an escape hatch for support '
-    'to immediately revert a domain to old behavior.',
-    TAG_PRODUCT,
-    [NAMESPACE_DOMAIN, NAMESPACE_USER],
-)
-
-
 PHI_CAS_INTEGRATION = StaticToggle(
     'phi_cas_integration',
     'Integrate with PHI Api to search and validate beneficiaries',
@@ -1803,23 +1701,128 @@ PHI_CAS_INTEGRATION = StaticToggle(
 )
 
 
-SESSION_MIDDLEWARE_LOGGING = StaticToggle(
-    'session_middleware_logging',
-    'Log all session object method calls on this domain',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN]
-)
-
-BYPASS_SESSIONS = StaticToggle(
-    'bypass_sessions',
-    'Bypass sessions for select mobile URLS',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN]
-)
-
 DAILY_INDICATORS = StaticToggle(
     'daily_indicators',
     'Enable daily indicators api',
     TAG_CUSTOM,
     [NAMESPACE_USER],
+)
+
+mwcd_indicators = StaticToggle(
+    'mwcd_indicators',
+    'Enable MWCD indicators API',
+    TAG_CUSTOM,
+    [NAMESPACE_USER],
+)
+
+ICDS_GOVERNANCE_DASHABOARD_API = StaticToggle(
+    'governance_apis',
+    'ICDS: Dashboard Governance dashboard API',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_USER],
+    relevant_environments={'icds', 'india'},
+)
+
+DO_NOT_RATE_LIMIT_SUBMISSIONS = StaticToggle(
+    'do_not_rate_limit_submissions',
+    'Do not rate limit submissions for this project, on a temporary basis.',
+    TAG_INTERNAL,
+    [NAMESPACE_DOMAIN],
+    description="""
+    When an individual project is having problems with rate limiting,
+    use this toggle to lift the restriction for them on a temporary basis,
+    just to unblock them while we sort out the conversation with the client.
+    """
+)
+
+TEST_FORM_SUBMISSION_RATE_LIMIT_RESPONSE = StaticToggle(
+    'TEST_FORM_SUBMISSION_RATE_LIMIT_RESPONSE',
+    ("Respond to all form submissions with a 429 response. For use on test domains only. "
+     "Without this, there's no sane way to test the UI for being rate limited on "
+     "Mobile and Web Apps. Never use this on a real domain."),
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_DOMAIN],
+    description="",
+)
+
+RATE_LIMIT_RESTORES = DynamicallyPredictablyRandomToggle(
+    'rate_limit_restores',
+    'Rate limit restores with a 429 TOO MANY REQUESTS response',
+    TAG_INTERNAL,
+    [NAMESPACE_DOMAIN],
+    description="""
+    While we are gaining an understanding of the effects of rate limiting,
+    we want to force rate limiting on certain domains, while also being to
+    toggle on and off global rate limiting quickly in response to issues.
+
+    To turn on global rate limiting, set Randomness Level to 1.
+    To turn it off, set to 0.
+    """
+)
+
+SKIP_UPDATING_USER_REPORTING_METADATA = StaticToggle(
+    'skip_updating_user_reporting_metadata',
+    'ICDS: Skip updates to user reporting metadata to avoid expected load on couch',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN],
+)
+
+
+SHOW_BUILD_PROFILE_IN_APPLICATION_STATUS = StaticToggle(
+    'show_build_profile_in_app_status',
+    'Show build profile installed on phone tracked via heartbeat request in App Status Report',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN]
+)
+
+
+LIVEQUERY_READ_FROM_STANDBYS = DynamicallyPredictablyRandomToggle(
+    'livequery_read_from_standbys',
+    'Allow livequery restore to read data from plproxy standbys if they are available',
+    TAG_INTERNAL,
+    [NAMESPACE_USER],
+    description="""
+    To allow a gradual rollout and testing of using the standby
+    databases to generate restore payloads.
+    """
+)
+
+
+RUN_CUSTOM_DATA_PULL_REQUESTS = StaticToggle(
+    'run_custom_data_pull_requests',
+    '[ICDS] Initiate custom data pull requests from UI',
+    TAG_CUSTOM,
+    [NAMESPACE_USER]
+)
+
+
+RUN_DATA_MANAGEMENT_TASKS = StaticToggle(
+    'run_data_management_tasks',
+    '[ICDS] Run data management tasks',
+    TAG_CUSTOM,
+    [NAMESPACE_USER]
+)
+
+
+ALLOW_DEID_ODATA_FEED = StaticToggle(
+    'allow_deid_odata_feed',
+    'Allow De-Identification in OData feeds',
+    TAG_PRODUCT,
+    [NAMESPACE_DOMAIN]
+)
+
+
+ADD_ROW_INDEX_TO_MOBILE_UCRS = StaticToggle(
+    'add_row_index_to_mobile_ucrs',
+    'Add row index to mobile UCRs as the first column to retain original order of data',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN]
+)
+
+
+TWO_STAGE_USER_PROVISIONING = StaticToggle(
+    'two_stage_user_provisioning',
+    'Enable two-stage user provisioning (users confirm and set their own passwords via email).',
+    TAG_SOLUTIONS_LIMITED,
+    [NAMESPACE_DOMAIN]
 )

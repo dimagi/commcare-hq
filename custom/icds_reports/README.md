@@ -289,3 +289,119 @@ Useful references
 
 Postgres documentation: https://www.postgresql.org/docs/11/index.html
 Citus documentation: https://docs.citusdata.com/en/v8.3/index.html
+
+
+Front End
+---------
+
+The front end is a legacy AngularJS application (version 1.4.4).
+
+## Directives
+
+Directives are heavily used. A few important gotchas about directives and non-standard Angular usage:
+
+- The templates are served by a Django view (see `IcdsDynamicTemplateView`), and therefore are *rendered by Django*.
+- What this means is that normal `{{ variable.binding }}` in Angular can't be used because it would be rendered
+  by Django. Because of this we override `interpolateProvider.startSymbol` and `interpolateProvider.endSymbol` in
+  `icds_app.js`. Which means that Angular variables can be referenced in the directive templates like: 
+  `{$ variable.binding $}`.
+
+## Mobile Dashboard
+
+The mobile version of the dashboard should share all directive *javascript* and swap out functionality at the
+*template / HTML level*.
+
+This can be done by:
+
+1. Adding a new template to `icds_reports/icds_app/mobile/` with the *same name* as the web directive template.
+1. Updating the `templateUrl` in the directive's javascript file to use the `templateProviderService`, which will
+   return the mobile template for the mobile version of the page. (This is done using an Angular constant `isMobile`).
+
+See `program-summary.directive.js` for an example of this.
+
+Change Management
+-----------------
+
+## Overall Process
+
+There are two common ways development is done on Dashboard.
+
+**For small features and fixes, changes are generally tested locally, merged and deployed.**
+This would include text / style changes, indicator calculation changes, and often the addition of new indicators
+to existing reports.
+
+
+**For larger features, development is generally done behind a feature flag, tested on production, and then
+released to all users (by removing the flag)**.
+
+Typically, the same feature flag is used for all pre-release features.
+The ID for this feature flag is "features_in_dashboard_icds_reports", and it can be accessed by any superuser
+by going to \[server_root\]/hq/flags/edit/features_in_dashboard_icds_reports/.
+
+This flag is available in backend code, by calling `icds_pre_release_features(user)` and in the dashboard front-end
+code by passing the angular constant `haveAccessToFeatures` to any directive.
+In both cases a value of `true` indicates the user has access to the pre-release features.
+
+## Change Management between Web and Mobile
+
+Generally, moving forwards the goal should be that any change made on the web dashboard *to a piece of functionality
+that exists on mobile* should also be made to mobile.
+Eventually, the goal is to get to ~feature parity on mobile, at which point *all changes made to web dashboard should
+also be made on mobile*.
+
+Because web and mobile dashboard share a lot of code, much of this will happen automatically.
+Here is an approximate guide to the types of changes that can be made and how they are impacted on mobile.
+
+It is expected this section will evolve over time as the scope of mobile dashboard increases
+and as new types of changes are better understood.
+
+### Current Mobile Dashboard Scope
+
+Currently the mobile dashboard includes:
+
+1. Program Summary
+1. All Map views across four major areas of Program Summary, drilling down to block level.
+1. In the above reports, instead of charts, a "rankings" page is displayed on mobile.
+1. KPIs on AWC reports.
+
+An internal document of the scope can be found [here](https://docs.google.com/spreadsheets/d/1W_RvyK2sMg0No5h7495Cg77Hjmz7fWtf7YrQHMaLycU/edit#gid=0)
+and a more detailed version can be found [on Trello](https://trello.com/b/eLO8b8tA/cas-mobile-dashboard).
+
+### Changes to Indicators
+
+**Almost any change to indicators should automatically update on web and mobile.**
+This includes changes to indicator calculations as well as the addition and removal of indicators.
+
+### Addition of New Reports in Four Program Summary Areas
+
+The addition of a new report in one of the four main program summary areas (Maternal and Child Nutrition,
+ICDS-CAS Reach, Demographics, and AWC Infrastructure) should require very little additional work.
+
+The report should be coded as per the above standards and it should work out-of-the-box on mobile.
+
+The only additional piece of work will be adding the report to the mobile navigation menu, in addition
+to the web navigation menu.
+It is expected that this step will be unnecessary soon as we reconcile those two items.
+
+### Addition of New Reports outside the Four Program Summary Areas
+
+Since mobile dashboard does not currently include any additional reports (e.g. Service Delivery Dashboard,
+AWC Report, etc.) it is not necessary to do anything when working with these reports.
+
+This section will be updated once those reports are added to mobile dashboard.
+
+### Addition of new *Features* to existing reports
+
+If the report is not on mobile dashboard as per above, then nothing needs to be done.
+If the report is already on mobile dashboard then *by default, the feature should be added to the mobile dashboard as well.*
+
+For features that have UI components, they should be ported to mobile-friendly versions and added
+to the mobile versions of the report templates in addition to the web versions.
+
+If for some reason the feature is difficult to implement for mobile, or doesn't make sense to add to mobile,
+then a discussion should be raised with the product owner as to why it doesn't make sense to add to mobile,
+and they should sign off on the decision.
+
+### Other types of changes
+
+For any other type of change please follow up with product and technical owners to get them documented here.

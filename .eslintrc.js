@@ -38,11 +38,13 @@ module.exports = {
     // http://eslint.org/docs/user-guide/configuring#configuring-rules
     "rules": {
         // First option can be off, warn, or error
+        "brace-style": ["error", "1tbs"],
         "camelcase": ["error", {"properties": "never"}],
         "comma-dangle": ["warn", "always-multiline"],
+        "curly": ["error"],
         "eqeqeq": ["error"],
         "func-call-spacing": ["error"],
-        "indent": ["warn", 4, {"SwitchCase":1}],
+        "indent": ["warn", 4, {"SwitchCase":1, "FunctionDeclaration": {"parameters": "first"}}],
         "linebreak-style": ["error", "unix"],
         "key-spacing": ["error"],
         "keyword-spacing": ["error"],
@@ -53,6 +55,7 @@ module.exports = {
         "no-throw-literal": ["error"],
         "no-unneeded-ternary": ["error"],
         "no-whitespace-before-property": ["error"], // match flake8 E201 and E211
+        "one-var-declaration-per-line": ["error"],
         "semi": ["error", "always"],
         "space-before-function-paren": ["error", {"anonymous": "always", "named": "never", "asyncArrow": "always"}],
         "space-before-blocks": ["error"],

@@ -5,6 +5,8 @@ var pageData = hqImport('hqwebapp/js/initial_page_data');
 
 
 describe('Download Directive', function () {
+
+    var numberOfReports = 12;
     describe('Download Directive main functionalities', function() {
         var $scope, $httpBackend, controller;
 
@@ -20,7 +22,10 @@ describe('Download Directive', function () {
                 ['awc', ['supervisor']],
             ]);
             $provide.constant("haveAccessToFeatures", false);
-        $provide.constant("isAlertActive", false);
+            $provide.constant("userLocationType", 'state');
+            $provide.constant("haveAccessToAllLocations", false);
+            $provide.constant("allUserLocationId", []);
+            $provide.constant("isAlertActive", false);
         }));
 
         beforeEach(inject(function ($rootScope, $compile, _$httpBackend_) {
@@ -340,7 +345,10 @@ describe('Download Directive', function () {
                 ['state', [null]],
                 ['supervisor', ['block']]]);
             $provide.constant("haveAccessToFeatures", true);
+            $provide.constant("userLocationType", 'state');
             $provide.constant("isAlertActive", false);
+            $provide.constant("haveAccessToAllLocations", false);
+            $provide.constant("allUserLocationId", []);
         }));
 
         beforeEach(inject(function ($rootScope, $compile, _$httpBackend_) {
@@ -370,10 +378,9 @@ describe('Download Directive', function () {
         }));
 
         it('tests that all users have access to ISSNIP monthly register', function () {
-            var expected = 11;
 
             var length = controller.indicators.length;
-            assert.equal(expected, length);
+            assert.equal(numberOfReports, length);
         });
 
         it('tests first possible data choice on THR raport', function () {
@@ -444,7 +451,10 @@ describe('Download Directive', function () {
                 ['state', [null]],
                 ['supervisor', ['block']]]);
             $provide.constant("haveAccessToFeatures", false);
+            $provide.constant("userLocationType", 'state');
             $provide.constant("isAlertActive", false);
+            $provide.constant("haveAccessToAllLocations", false);
+            $provide.constant("allUserLocationId", []);
         }));
 
         beforeEach(inject(function ($rootScope, $compile, _$httpBackend_) {
@@ -475,7 +485,7 @@ describe('Download Directive', function () {
 
         it('tests that all users have access to ISSNIP monthly register', function () {
             var length = controller.indicators.length;
-            assert.equal(10, length);
+            assert.equal(numberOfReports - 1, length);
         });
     });
 
@@ -493,7 +503,10 @@ describe('Download Directive', function () {
                 ['state', [null]],
                 ['supervisor', ['block']]]);
             $provide.constant("haveAccessToFeatures", true);
+            $provide.constant("userLocationType", 'state');
             $provide.constant("isAlertActive", false);
+            $provide.constant("haveAccessToAllLocations", false);
+            $provide.constant("allUserLocationId", []);
         }));
 
         beforeEach(inject(function ($rootScope, $compile, _$httpBackend_) {
@@ -524,7 +537,59 @@ describe('Download Directive', function () {
 
         it('tests that all users have access to ISSNIP monthly register', function () {
             var length = controller.indicators.length;
-            assert.equal(11, length);
+            assert.equal(numberOfReports, length);
+        });
+    });
+
+    describe('Download Directive have access to features', function () {
+        var $scope, $httpBackend, controller;
+
+        pageData.registerUrl('icds-ng-template', 'template');
+        pageData.registerUrl('icds_locations', 'icds_locations');
+        beforeEach(module('icdsApp', function ($provide) {
+            $provide.constant("userLocationId", null);
+            $provide.constant("locationHierarchy", [
+                ['awc', ['supervisor']],
+                ['block', ['district']],
+                ['district', ['state']],
+                ['state', [null]],
+                ['supervisor', ['block']]]);
+            $provide.constant("haveAccessToFeatures", true);
+            $provide.constant("userLocationType", 'block');
+            $provide.constant("isAlertActive", false);
+            $provide.constant("haveAccessToAllLocations", false);
+            $provide.constant("allUserLocationId", []);
+        }));
+
+        beforeEach(inject(function ($rootScope, $compile, _$httpBackend_) {
+            $scope = $rootScope.$new();
+            $httpBackend = _$httpBackend_;
+
+            var mockLocation = {
+                "locations": [{
+                    "location_type_name": "state", "parent_id": null,
+                    "location_id": "9951736acfe54c68948225cc05fbbd63", "name": "Chhattisgarh",
+                }],
+            };
+
+            $httpBackend.expectGET('template').respond(200, '<div></div>');
+            $httpBackend.expectGET('icds_locations').respond(200, mockLocation);
+
+            var fakeDate = new Date(2016, 9, 1);
+            var clock = sinon.useFakeTimers(fakeDate.getTime());
+
+            var element = window.angular.element("<download data='test'></download>");
+            var compiled = $compile(element)($scope);
+
+            $httpBackend.flush();
+            $scope.$digest();
+            controller = compiled.controller('download');
+            clock.restore();
+        }));
+
+        it('tests that block user does not have access to dashboard usage report', function () {
+            var length = controller.indicators.length;
+            assert.equal(numberOfReports - 1, length);
         });
     });
 

@@ -11,8 +11,69 @@
         <script src="{% static 'ace-builds/src-min-noconflict/mode-xml.js' %}"></script>
         <script src="{% static 'ace-builds/src-min-noconflict/ext-searchbox.js' %}"></script>
         <script src="{% static 'repeaters/js/repeat_record_report.js' %}"></script>
+        <script src="{% static 'repeaters/js/repeat_record_report_selects.js' %}"></script>
     {% endcompress %}
 {% endblock js %}
+
+{% block filter_panel %} {{ block.super }}
+  <div>
+      {% if total > 0 %}
+        <div id="form_options" class="well form-inline">
+          <div>
+            <button id="resend-all-button" class="btn btn-default" data-target="#are-you-sure">
+                {% blocktrans %}Resend selected{% endblocktrans %}
+            </button>
+            <button id="cancel-all-button" class="btn btn-default" data-target="#are-you-sure">
+                {% blocktrans %}Cancel selected{% endblocktrans %}
+            </button>
+            <button id="requeue-all-button" class="btn btn-default" data-target="#are-you-sure">
+                {% blocktrans %}Requeue selected{% endblocktrans %}
+            </button>
+            <label class="checkbox" >
+              <input type="checkbox" id="select-all" data-id="{{ form_query_string|urlencode }}">
+                {% blocktrans %}Select all {{ total }} payloads{% endblocktrans %}
+            </label>
+            <label class="checkbox" >
+              <input type="checkbox" id="cancel-all" data-id="{{ form_query_string_cancellable|urlencode }}">
+                {% blocktrans %}Select {{ total_cancel }} cancellable payloads{% endblocktrans %}
+            </label>
+            <label class="checkbox" >
+              <input type="checkbox" id="requeue-all" data-id="{{ form_query_string_requeue|urlencode }}">
+                {% blocktrans %}Select {{ total_requeue }} requeue payloads{% endblocktrans %}
+            </label>
+          </div>
+        </div>
+      {% endif %}
+  </div>
+  <div id="warning" class="alert alert-warning hide">
+    {% blocktrans %}You need to select at least one payload!{% endblocktrans %}
+  </div>
+  <div id="not-allowed" class="alert alert-warning hide">
+    {% blocktrans %}This action is not allowed for some of selected payloads!{% endblocktrans %}
+  </div>
+  <div class="modal fade" id="are-you-sure">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span>
+            <span class="sr-only">{% blocktrans %}Close{% endblocktrans %}</span></button>
+          <h4 class="modal-title">{% blocktrans %}Confirmation{% endblocktrans %}</h4>
+        </div>
+        <div class="modal-body">
+          {% blocktrans %}Are you sure?{% endblocktrans %}
+        </div>
+        <div class="modal-footer">
+          <button type="button" data-dismiss="modal" class="btn btn-default">
+            {% blocktrans %}No{% endblocktrans %}
+          </button>
+          <button type="button" id="confirm-button" data-action="" data-flag="" class="btn btn-primary">
+            {% blocktrans %}Yes{% endblocktrans %}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}
 
 {% block additional_initial_page_data %} {{ block.super }}
     {% registerurl 'repeat_record' domain %}

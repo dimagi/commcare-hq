@@ -9,7 +9,9 @@ from datetime import datetime
 
 from celery.schedules import crontab
 from celery.task import periodic_task, task
+from django.conf import settings
 from jinja2 import Template
+from requests import RequestException
 
 from casexml.apps.case.mock import CaseBlock
 from toggle.shortcuts import find_domains_with_toggle_enabled
@@ -37,7 +39,8 @@ from corehq.motech.openmrs.const import (
     XMLNS_OPENMRS,
 )
 from corehq.motech.openmrs.dbaccessors import get_openmrs_importers_by_domain
-from corehq.motech.openmrs.models import OpenmrsImporter
+from corehq.motech.openmrs.exceptions import OpenmrsException
+from corehq.motech.openmrs.models import OpenmrsImporter, deserialize
 from corehq.motech.openmrs.repeaters import OpenmrsRepeater
 from corehq.motech.requests import Requests
 from corehq.motech.utils import b64_aes_decrypt
@@ -68,6 +71,10 @@ def parse_params(params, location=None):
 def get_openmrs_patients(requests, importer, location=None):
     """
     Send request to OpenMRS Reporting API and return results
+
+    raises RequestException on request error
+    raises ValueError if response is not JSON
+    raises IndexError, KeyError, TypeError on unexpected JSON format
     """
     endpoint = f'/ws/rest/v1/reportingrest/reportdata/{importer.report_uuid}'
     params = parse_params(importer.report_params, location)
@@ -94,7 +101,7 @@ def get_case_properties(patient, importer):
     for mapping in importer.column_map:
         value = patient[mapping.column]
         try:
-            fields_to_update[mapping.property] = mapping.deserialize(value, tz)
+            fields_to_update[mapping.property] = deserialize(mapping, value, tz)
         except (TypeError, ValueError) as err:
             errors.append(
                 f'Unable to deserialize value {repr(value)} '
@@ -141,7 +148,20 @@ def get_updatepatient_caseblock(case, patient, importer):
 
 
 def import_patients_of_owner(requests, importer, domain_name, owner_id, location=None):
-    openmrs_patients = get_openmrs_patients(requests, importer, location)
+    try:
+        openmrs_patients = get_openmrs_patients(requests, importer, location)
+    except RequestException as err:
+        requests.notify_exception(
+            f'Unable to import patients for project space "{domain_name}" '
+            f'using {importer}: Error calling API: {err}'
+        )
+        return
+    except (KeyError, IndexError, TypeError, ValueError) as err:
+        requests.notify_exception(
+            f'Unable to import patients for project space "{domain_name}" '
+            f'using {importer}: Unexpected response format: {err}'
+        )
+        return
     case_blocks = []
     for i, patient in enumerate(openmrs_patients):
         case, error = importer_util.lookup_case(
@@ -286,13 +306,26 @@ def import_patients():
 @task(queue='background_queue')
 def poll_openmrs_atom_feeds(domain_name):
     for repeater in OpenmrsRepeater.by_domain(domain_name):
+        errors = []
         if repeater.atom_feed_enabled and not repeater.paused:
             patient_uuids = get_feed_updates(repeater, ATOM_FEED_NAME_PATIENT)
             encounter_uuids = get_feed_updates(repeater, ATOM_FEED_NAME_ENCOUNTER)
             for patient_uuid in patient_uuids:
-                update_patient(repeater, patient_uuid)
+                try:
+                    update_patient(repeater, patient_uuid)
+                except (ConfigurationError, OpenmrsException) as err:
+                    errors.append(str(err))
             for encounter_uuid in encounter_uuids:
-                import_encounter(repeater, encounter_uuid)
+                try:
+                    import_encounter(repeater, encounter_uuid)
+                except (ConfigurationError, OpenmrsException) as err:
+                    errors.append(str(err))
+        if errors:
+            repeater.requests.notify_error(
+                'Errors importing from Atom feed:\n' + '\n'.join(errors)
+            )
+            if settings.UNIT_TESTING:
+                assert False, errors
 
 
 @periodic_task(

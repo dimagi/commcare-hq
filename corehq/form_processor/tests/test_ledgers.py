@@ -248,6 +248,39 @@ class LedgerTestsSQL(LedgerTests):
 
         self._assert_transactions([])
 
+    def test_edit_form_with_ledgers(self):
+        from corehq.apps.commtrack.tests.util import get_single_balance_block
+        form_id = uuid.uuid4().hex
+        submit_case_blocks([
+            get_single_balance_block(self.case.case_id, self.product_a._id, 100)],
+            DOMAIN,
+            form_id=form_id
+        )
+
+        self._assert_ledger_state(100)
+
+        transactions = CaseAccessorSQL.get_transactions(self.case.case_id)
+        self.assertEqual(2, len(transactions))
+        self.assertTrue(transactions[0].is_form_transaction)
+        self.assertTrue(transactions[1].is_form_transaction)
+        self.assertTrue(transactions[1].is_ledger_transaction)
+
+        submit_case_blocks([
+            get_single_balance_block(self.case.case_id, self.product_a._id, 50)],
+            DOMAIN,
+            form_id=form_id
+        )
+
+        self._assert_ledger_state(50)
+
+        transactions = CaseAccessorSQL.get_transactions(self.case.case_id)
+        self.assertEqual(2, len(transactions))
+        self.assertTrue(transactions[0].is_form_transaction)
+        self.assertTrue(transactions[1].is_form_transaction)
+        self.assertTrue(transactions[1].is_ledger_transaction)
+
+        self._assert_transactions([self._expected_val(50, 50)])
+
 
 class TestLedgerDocumentStore(TestCase):
 

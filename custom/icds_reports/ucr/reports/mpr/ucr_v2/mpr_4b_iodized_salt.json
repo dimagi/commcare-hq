@@ -116,12 +116,17 @@
       {
         "display": "use_salt",
         "column_id": "use_salt",
-        "type": "field",
+        "type": "array_agg_last_value",
         "field": "use_salt",
-        "aggregation": "sum"
+        "order_by_col": "inserted_at"
       }
     ],
-    "sort_expression": [],
+    "sort_expression": [
+      {
+        "field": "month",
+        "order": "DESC"
+      }
+    ],
     "configured_charts": []
   }
 }

@@ -28,8 +28,8 @@ hqDefine("users/js/mobile_workers",[
     'nic_compliance/js/encoder',
     'jquery.rmi/jquery.rmi',
     'zxcvbn/dist/zxcvbn',
+    'locations/js/widgets',
     'hqwebapp/js/components.ko', // for pagination
-    'select2/dist/js/select2.full.min',
 ], function (
     $,
     ko,
@@ -39,7 +39,8 @@ hqDefine("users/js/mobile_workers",[
     googleAnalytics,
     nicEncoder,
     RMI,
-    zxcvbn
+    zxcvbn,
+    locationsWidgets
 ) {
     'use strict';
     // These are used as css classes, so the values of success/warning/error need to be what they are.
@@ -346,32 +347,7 @@ hqDefine("users/js/mobile_workers",[
             self.usernameAvailabilityStatus(null);
             self.usernameStatusMessage(null);
 
-            $("#id_location_id").select2({
-                minimumInputLength: 0,
-                width: '100%',
-                placeholder: gettext("Select location"),
-                allowClear: 1,
-                ajax: {
-                    delay: 100,
-                    url: options.location_url,
-                    data: function (params) {
-                        return {
-                            name: params.term,
-                        };
-                    },
-                    dataType: 'json',
-                    processResults: function (data) {
-                        return {
-                            results: _.map(data.results, function (r) {
-                                return {
-                                    text: r.name,
-                                    id: r.id,
-                                };
-                            }),
-                        };
-                    },
-                },
-            });
+            locationsWidgets.initAutocomplete($("#id_location_id"));
 
             googleAnalytics.track.event('Manage Mobile Workers', 'New Mobile Worker', '');
         };
@@ -442,7 +418,7 @@ hqDefine("users/js/mobile_workers",[
             custom_field_slugs: initialPageData.get('custom_field_slugs'),
             draconian_security: initialPageData.get('draconian_security'),
             implement_password_obfuscation: initialPageData.get('implement_password_obfuscation'),
-            location_url: initialPageData.reverse('child_locations_for_select2'),
+            location_url: initialPageData.reverse('location_search'),
             require_location_id: !initialPageData.get('can_access_all_locations'),
             strong_mobile_passwords: initialPageData.get('strong_mobile_passwords'),
         });

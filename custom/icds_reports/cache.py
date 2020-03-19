@@ -21,11 +21,12 @@ class ICDSQuickCache(namedtuple('ICDSQuickCache', [
     'skip_arg',
     'timeout',
     'memoize_timeout',
+    'session_function',
 ]), ConfigMixin):
 
     def call(self):
         cache = tiered_django_cache([
-            ('locmem', self.memoize_timeout, get_locmem_prefix),
+            ('locmem', self.memoize_timeout, self.session_function),
             ('default', self.timeout, get_default_prefix)
         ])
 
@@ -42,4 +43,5 @@ icds_quickcache = ICDSQuickCache(
     skip_arg=None,
     timeout=5 * 60,
     memoize_timeout=10,
+    session_function=get_locmem_prefix
 )

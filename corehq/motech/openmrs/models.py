@@ -47,23 +47,26 @@ class ColumnMapping(DocumentSchema):
         default=DATA_TYPE_UNKNOWN, exclude_if_none=True
     )
 
-    def deserialize(self, external_value, timezone=None):
-        """
-        Returns ``external_value`` as its CommCare data type.
-        """
-        # Update serializers with timezone
-        to_datetime_tz = partial(omrs_timestamp_to_datetime, tz=timezone)
-        to_date_tz = partial(omrs_timestamp_to_date, tz=timezone)
-        local_serializers = serializers.copy()
-        local_serializers.update({
-            (OPENMRS_DATA_TYPE_MILLISECONDS, None): to_datetime_tz,
-            (OPENMRS_DATA_TYPE_MILLISECONDS, COMMCARE_DATA_TYPE_DATETIME): to_datetime_tz,
-            (OPENMRS_DATA_TYPE_MILLISECONDS, COMMCARE_DATA_TYPE_DATE): to_date_tz,
-        })
 
-        serializer = (local_serializers.get((self.data_type, self.commcare_data_type))
-                      or local_serializers.get((None, self.commcare_data_type)))
-        return serializer(external_value) if serializer else external_value
+def deserialize(mapping, external_value, timezone=None):
+    """
+    Returns ``external_value`` as its CommCare data type.
+    """
+    # Update serializers with timezone
+    to_datetime_tz = partial(omrs_timestamp_to_datetime, tz=timezone)
+    to_date_tz = partial(omrs_timestamp_to_date, tz=timezone)
+    local_serializers = serializers.copy()
+    local_serializers.update({
+        (OPENMRS_DATA_TYPE_MILLISECONDS, None): to_datetime_tz,
+        (OPENMRS_DATA_TYPE_MILLISECONDS, COMMCARE_DATA_TYPE_DATETIME): to_datetime_tz,
+        (OPENMRS_DATA_TYPE_MILLISECONDS, COMMCARE_DATA_TYPE_DATE): to_date_tz,
+    })
+
+    serializer = (
+        local_serializers.get((mapping.data_type, mapping.commcare_data_type))
+        or local_serializers.get((None, mapping.commcare_data_type))
+    )
+    return serializer(external_value) if serializer else external_value
 
 
 class OpenmrsImporter(Document):

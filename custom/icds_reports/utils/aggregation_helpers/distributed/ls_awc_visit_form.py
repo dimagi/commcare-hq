@@ -26,18 +26,17 @@ class LSAwcMgtFormAggDistributedHelper(StateBasedAggregationPartitionedHelper):
         return """
         CREATE TEMPORARY TABLE "{temp_table}" AS (
             SELECT
-            state_id,
-            location_id as supervisor_id,
-            %(start_date)s::DATE AS month,
-            count(*) as form_count,
-            count(*) FILTER (WHERE location_entered is not null and location_entered <> '') as awc_visits
-                FROM "{ucr_tablename}"
-                WHERE state_id=%(state_id)s AND submitted_on >= %(start_date)s AND
-                      submitted_on < %(end_date)s
-                GROUP BY state_id, location_id
+                state_id,
+                location_id as supervisor_id,
+                %(start_date)s::DATE AS month,
+                count(*) as awc_visits
+            FROM "{ucr_tablename}"
+            WHERE state_id=%(state_id)s AND submitted_on >= %(start_date)s AND
+                  submitted_on < %(end_date)s AND location_entered IS NOT NULL AND location_entered <> ''
+            GROUP BY state_id, location_id
         );
         INSERT INTO "{tablename}" (
-        state_id, supervisor_id, month, form_count, awc_visits
+        state_id, supervisor_id, month,  awc_visits
         ) (
             SELECT * FROM "{temp_table}"
         )

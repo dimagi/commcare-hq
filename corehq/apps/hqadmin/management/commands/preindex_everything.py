@@ -56,10 +56,17 @@ class Command(BaseCommand):
         head = git_snapshot['commits'][0]
 
         if options['check']:
-            exit(0 if get_preindex_complete(head) else 1)
+            if get_preindex_complete(head):
+                print("Preindex is complete")
+                exit(0)
+            print("Preindex is not yet complete.")
+            print("")
+            print("  It could either still be running (most common),")
+            print("  or it could have died without completing (less common).")
+            exit(1)
 
         if get_preindex_complete(head) and email:
-            mail_admins('Already preindexed', "Skipping this step")
+            self.mail_admins('Already preindexed', "Skipping this step")
             return
         else:
             clear_preindex_complete()
@@ -72,7 +79,7 @@ class Command(BaseCommand):
         pre_message.append(commit_info)
 
         if email:
-            mail_admins(
+            self.mail_admins(
                 " HQAdmin preindex_everything started", '\n'.join(pre_message)
             )
 
@@ -104,9 +111,16 @@ class Command(BaseCommand):
             set_preindex_complete(head)
 
         if email:
-            mail_admins(subject, message)
+            self.mail_admins(subject, message)
         else:
             print('{}\n\n{}'.format(subject, message))
+
+    @staticmethod
+    def mail_admins(subject, message):
+        subject += " on {}".format(settings.SERVER_ENVIRONMENT)
+        message = "Environment: {}\n".format(settings.SERVER_ENVIRONMENT) + message
+        mail_admins(subject, message)
+
 
 rcache = cache.caches['redis']
 PREINDEX_COMPLETE_COMMIT = '#preindex_complete_commit'

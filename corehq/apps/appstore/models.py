@@ -27,6 +27,3 @@ class SnapshotMixin(DocumentSchema):
                     'The missing doc ID is: {}'.format(doc_id)
                 )
         return None
-
-    def get_updated_history(self):
-        return self.copy_history + [self._id]

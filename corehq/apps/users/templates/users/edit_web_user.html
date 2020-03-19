@@ -87,9 +87,4 @@
       {% endif %}
     </form>
   {% endif %}
-  {% if request|toggle_enabled:"EWS_WEB_USER_EXTENSION" and not request.is_view_only %}
-    <a class="btn btn-primary" href="{% url 'ews_user_settings' domain=domain user_id=couch_user.get_id %}">
-      {% trans 'Edit EWS settings' %}
-    </a>
-  {% endif %}
 {% endblock %}

@@ -92,9 +92,10 @@ def _get_unique_username(domain, base, suffix=0, tries_left=3):
 
 
 @task(serializer='pickle')
-def download_locations_async(domain, download_id, include_consumption, headers_only):
+def download_locations_async(domain, download_id, include_consumption, headers_only, root_location_id=None):
     DownloadBase.set_progress(download_locations_async, 0, 100)
     dump_locations(domain, download_id, include_consumption=include_consumption,
+                   root_location_id=root_location_id,
                    headers_only=headers_only, task=download_locations_async)
     DownloadBase.set_progress(download_locations_async, 100, 100)
 

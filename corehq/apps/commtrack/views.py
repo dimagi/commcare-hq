@@ -27,7 +27,7 @@ from corehq.form_processor.exceptions import XFormNotFound
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.util.timezones.conversions import ServerTime
 
-from .forms import CommTrackSettingsForm, ConsumptionForm, StockLevelsForm
+from .forms import CommTrackSettingsForm, ConsumptionForm
 from .models import CommtrackActionConfig, StockRestoreConfig
 from .tasks import recalculate_domain_consumption_task
 from .util import all_sms_codes
@@ -236,70 +236,6 @@ class SMSSettingsView(BaseCommTrackManageView):
     @use_jquery_ui
     def dispatch(self, request, *args, **kwargs):
         return super(SMSSettingsView, self).dispatch(request, *args, **kwargs)
-
-
-class StockLevelsView(BaseCommTrackManageView):
-    urlname = 'stock_levels'
-    page_title = ugettext_noop("Stock Levels")
-    template_name = 'commtrack/manage/stock_levels.html'
-
-    @method_decorator(toggles.LOCATION_TYPE_STOCK_RATES.required_decorator())
-    def dispatch(self, *args, **kwargs):
-        return super(StockLevelsView, self).dispatch(*args, **kwargs)
-
-    def get_existing_stock_levels(self):
-        loc_types = LocationType.objects.by_domain(self.domain)
-        return [{
-            'loc_type': loc_type.name,
-            'emergency_level': loc_type.emergency_level,
-            'understock_threshold': loc_type.understock_threshold,
-            'overstock_threshold': loc_type.overstock_threshold,
-        } for loc_type in loc_types]
-
-    def save_stock_levels(self, levels):
-        """
-        Accepts a list of dicts of the form returned by
-        get_existing_stock_levels and writes to the appropriate LocationType
-        """
-        levels = {level['loc_type']: level for level in levels}
-        for loc_type in LocationType.objects.filter(domain=self.domain).all():
-            if loc_type.name not in levels:
-                continue
-
-            stock_levels = levels[loc_type.name]
-            changed = False
-            for threshold in [
-                'emergency_level',
-                'understock_threshold',
-                'overstock_threshold'
-            ]:
-                if getattr(loc_type, threshold) != stock_levels[threshold]:
-                    setattr(loc_type, threshold, stock_levels[threshold])
-                    changed = True
-            if changed:
-                loc_type.save()
-
-    @property
-    def page_context(self):
-        return {
-            'stock_levels_form': self.stock_levels_form
-        }
-
-    @property
-    @memoized
-    def stock_levels_form(self):
-        if self.request.method == "POST":
-            data = self.request.POST
-        else:
-            data = self.get_existing_stock_levels()
-        return StockLevelsForm(data, request=self.request)
-
-    def post(self, request, *args, **kwargs):
-        if self.stock_levels_form.is_valid():
-            self.save_stock_levels(self.stock_levels_form.cleaned_data)
-            return HttpResponseRedirect(self.page_url)
-        # TODO display error messages to the user...
-        return self.get(request, *args, **kwargs)
 
 
 class RebuildStockStateView(BaseCommTrackManageView):

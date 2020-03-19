@@ -312,7 +312,7 @@ class TestExpandedColumn(TestCase):
 
         self.assertEqual(len(cols), 2)
         self.assertEqual(type(cols[0].view), SumWhen)
-        self.assertEqual(cols[1].view.whens, {'negative': 1})
+        self.assertEqual(cols[1].view.whens, [['negative', 1]])
 
     def test_none_in_values(self):
         """

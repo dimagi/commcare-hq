@@ -1778,15 +1778,15 @@ class EnterprisePlanContactForm(forms.Form):
             'company_name',
             'message',
             hqcrispy.FormActions(
-                StrictButton(
-                    _("Request Quote"),
-                    type="submit",
-                    css_class="btn-primary",
-                ),
                 hqcrispy.LinkButton(
                     _("Select different plan"),
                     reverse(SelectPlanView.urlname, args=[self.domain]),
                     css_class="btn btn-default"
+                ),
+                StrictButton(
+                    _("Request Quote"),
+                    type="submit",
+                    css_class="btn-primary",
                 ),
             )
         )
@@ -1848,15 +1848,15 @@ class AnnualPlanContactForm(forms.Form):
             'company_name',
             'message',
             hqcrispy.FormActions(
-                StrictButton(
-                    _("Submit"),
-                    type="submit",
-                    css_class="btn-primary",
-                ),
                 hqcrispy.LinkButton(
                     _(back_button_text),
                     reverse(urlname, args=[self.domain]),
                     css_class="btn btn-default"
+                ),
+                StrictButton(
+                    _("Submit"),
+                    type="submit",
+                    css_class="btn-primary",
                 ),
             )
         )
@@ -2243,20 +2243,18 @@ class AdjustBalanceForm(forms.Form):
                 'adjust',
                 css_class='modal-body ko-adjust-balance-form',
             ),
-            hqcrispy.FormActions(
-                crispy.ButtonHolder(
-                    crispy.Submit(
-                        'adjust_balance',
-                        'Apply',
-                        css_class='disable-on-submit',
-                        data_loading_text='Submitting...',
-                    ),
-                    crispy.Button(
-                        'close',
-                        'Close',
-                        css_class='disable-on-submit btn-default',
-                        data_dismiss='modal',
-                    ),
+            crispy.Div(
+                crispy.Submit(
+                    'adjust_balance',
+                    'Apply',
+                    css_class='disable-on-submit',
+                    data_loading_text='Submitting...',
+                ),
+                crispy.Button(
+                    'close',
+                    'Close',
+                    css_class='disable-on-submit btn-default',
+                    data_dismiss='modal',
                 ),
                 css_class='modal-footer',
             ),
@@ -2441,20 +2439,18 @@ class ResendEmailForm(forms.Form):
                 'resend',
                 css_class='modal-body',
             ),
-            hqcrispy.FormActions(
-                crispy.ButtonHolder(
-                    crispy.Submit(
-                        'resend_email',
-                        'Send Email',
-                        css_class='disable-on-submit',
-                        data_loading_text='Submitting...',
-                    ),
-                    crispy.Button(
-                        'close',
-                        'Close',
-                        css_class='disable-on-submit',
-                        data_dismiss='modal',
-                    ),
+            crispy.Div(
+                crispy.Submit(
+                    'resend_email',
+                    'Send Email',
+                    css_class='disable-on-submit',
+                    data_loading_text='Submitting...',
+                ),
+                crispy.Button(
+                    'close',
+                    'Close',
+                    css_class='disable-on-submit btn-default',
+                    data_dismiss='modal',
                 ),
                 css_class='modal-footer',
             ),

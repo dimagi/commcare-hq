@@ -143,7 +143,7 @@ class ApplicationBaseValidator(object):
     def _validate_practice_users(self):
         # validate practice_mobile_worker of app and all app profiles
         # raises PracticeUserException in case of misconfiguration
-        if not self.app.enable_practice_users:
+        if not hasattr(self.app, 'enable_practice_users') or not self.app.enable_practice_users:
             return []
         try:
             build_profile_id = None
@@ -430,6 +430,14 @@ class ModuleDetailValidatorMixin(object):
                             'module': self.get_module_info(),
                             'reason': _('A case property must be assigned to the "{}" tile field.'.format(field))
                         })
+            if detail.has_persistent_tile() and self.module.report_context_tile:
+                errors.append({
+                    'type': "invalid tile configuration",
+                    'module': self.get_module_info(),
+                    'reason': _("""
+                        A menu may not use both a persistent case list tile and a persistent report tile.
+                    """),
+                })
         return errors
 
     def get_case_errors(self, needs_case_type, needs_case_detail, needs_referral_detail=False):

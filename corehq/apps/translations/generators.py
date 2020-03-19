@@ -71,7 +71,7 @@ class EligibleForTransifexChecker(object):
         labels_to_skip = defaultdict(set)
         necessary_labels = defaultdict(set)
 
-        for module in self.app.modules:
+        for module in self.app.get_modules():
             for form in module.get_forms():
                 questions = form.get_questions(self.app.langs, include_triggers=True,
                                                include_groups=True, include_translations=True)
@@ -187,7 +187,7 @@ class AppTranslationsGenerator(object):
         :param module_index: index of module in the app
         :return: name like module_moduleUniqueId
         """
-        _module = self.app.modules[module_index]
+        _module = self.app.get_module(module_index)
         sheet_name = "_".join(["module", _module.unique_id])
         self.slug_to_name[_module.unique_id] = _module.name
         return sheet_name
@@ -200,8 +200,8 @@ class AppTranslationsGenerator(object):
         :param form_index: index of form in the module
         :return: name like form_formUniqueId
         """
-        _module = self.app.modules[module_index]
-        form = _module.forms[form_index]
+        _module = self.app.get_module(module_index)
+        form = _module.get_form(form_index)
         sheet_name = "_".join(["form", form.unique_id])
         self.slug_to_name[form.unique_id][self.source_lang] = "%s > %s" % (
             _module.name.get(self.source_lang, _module.default_name()),

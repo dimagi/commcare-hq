@@ -4,7 +4,7 @@ from custom.champ.views import PrevisionVsAchievementsTableView
 import json
 import mock
 
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 
 
 class TestPVATable(ChampTestCase):
@@ -24,7 +24,7 @@ class TestPVATable(ChampTestCase):
             data=json.dumps({}),
             content_type='application/json'
         )
-        request.user = self.user
+        self.add_request_attrs(request)
         response = self.view(request, domain=self.domain.name)
         content = json.loads(response.content)
         expected_data = {
@@ -57,7 +57,7 @@ class TestPVATable(ChampTestCase):
             data=json.dumps(filters),
             content_type='application/json'
         )
-        request.user = self.user
+        self.add_request_attrs(request)
         response = self.view(request, domain=self.domain.name)
         content = json.loads(response.content)
         expected_data = {
@@ -91,7 +91,7 @@ class TestPVATable(ChampTestCase):
             data=json.dumps(filters),
             content_type='application/json'
         )
-        request.user = self.user
+        self.add_request_attrs(request)
         response = self.view(request, domain=self.domain.name)
         content = json.loads(response.content)
         expected_data = {
@@ -124,7 +124,7 @@ class TestPVATable(ChampTestCase):
             data=json.dumps(filters),
             content_type='application/json'
         )
-        request.user = self.user
+        self.add_request_attrs(request)
         response = self.view(request, domain=self.domain.name)
         content = json.loads(response.content)
         expected_data = {
@@ -158,7 +158,7 @@ class TestPVATable(ChampTestCase):
             data=json.dumps(filters),
             content_type='application/json'
         )
-        request.user = self.user
+        self.add_request_attrs(request)
         response = self.view(request, domain=self.domain.name)
         content = json.loads(response.content)
         expected_data = {
@@ -192,7 +192,7 @@ class TestPVATable(ChampTestCase):
             data=json.dumps(filters),
             content_type='application/json'
         )
-        request.user = self.user
+        self.add_request_attrs(request)
         response = self.view(request, domain=self.domain.name)
         content = json.loads(response.content)
         expected_data = {
@@ -226,7 +226,7 @@ class TestPVATable(ChampTestCase):
             data=json.dumps(filters),
             content_type='application/json'
         )
-        request.user = self.user
+        self.add_request_attrs(request)
         with mock.patch(
                 'custom.champ.views.get_user_ids_for_group',
                 return_value=['cc3f2de870bb43229d188904127e1923', 'c8c65f9a814f4f5f99ee8a4cbad9f17e']
@@ -263,7 +263,7 @@ class TestPVATable(ChampTestCase):
             data=json.dumps(filters),
             content_type='application/json'
         )
-        request.user = self.user
+        self.add_request_attrs(request)
         response = self.view(request, domain=self.domain.name)
         content = json.loads(response.content)
         expected_data = {
@@ -297,7 +297,7 @@ class TestPVATable(ChampTestCase):
             data=json.dumps(filters),
             content_type='application/json'
         )
-        request.user = self.user
+        self.add_request_attrs(request)
         response = self.view(request, domain=self.domain.name)
         content = json.loads(response.content)
         expected_data = {
@@ -330,7 +330,7 @@ class TestPVATable(ChampTestCase):
             data=json.dumps(filters),
             content_type='application/json'
         )
-        request.user = self.user
+        self.add_request_attrs(request)
         response = self.view(request, domain=self.domain.name)
         content = json.loads(response.content)
         expected_data = {
@@ -364,7 +364,7 @@ class TestPVATable(ChampTestCase):
             data=json.dumps(filters),
             content_type='application/json'
         )
-        request.user = self.user
+        self.add_request_attrs(request)
         response = self.view(request, domain=self.domain.name)
         content = json.loads(response.content)
         expected_data = {
@@ -398,7 +398,7 @@ class TestPVATable(ChampTestCase):
             data=json.dumps(filters),
             content_type='application/json'
         )
-        request.user = self.user
+        self.add_request_attrs(request)
         response = self.view(request, domain=self.domain.name)
         content = json.loads(response.content)
         expected_data = {
@@ -432,7 +432,7 @@ class TestPVATable(ChampTestCase):
             data=json.dumps(filters),
             content_type='application/json'
         )
-        request.user = self.user
+        self.add_request_attrs(request)
         response = self.view(request, domain=self.domain.name)
         content = json.loads(response.content)
         expected_data = {

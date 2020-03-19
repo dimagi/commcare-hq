@@ -1,6 +1,7 @@
 /* global module, inject, chai */
 "use strict";
 
+var utils = hqImport('icds_reports/js/spec/utils');
 var pageData = hqImport('hqwebapp/js/initial_page_data');
 
 
@@ -14,10 +15,9 @@ describe('AWC Reports Directive', function () {
     pageData.registerUrl('awc_reports', 'beneficiary_details');
 
     beforeEach(module('icdsApp', function ($provide) {
-        $provide.constant("userLocationId", null);
-        $provide.constant("haveAccessToAllLocations", false);
+        utils.provideDefaultConstants($provide, {});
         $provide.constant("haveAccessToFeatures", false);
-        $provide.constant("isAlertActive", false);
+        $provide.constant("mapboxAccessToken", 'bosco');
     }));
 
     var mockBeneficiaryDetails = {
@@ -112,7 +112,6 @@ describe('AWC Reports Directive', function () {
         assert.notEqual(chart, null);
         assert.equal(chart.type, 'multiBarChart');
         assert.equal(chart.height, 450);
-        assert.equal(chart.width, 1100);
         assert.deepEqual(chart.margin, {
             top: 20,
             right: 20,

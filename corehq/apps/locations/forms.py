@@ -5,7 +5,7 @@ from django.db.models import Q
 from django.template.loader import get_template
 from django.urls import reverse
 from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import ugettext_lazy, ugettext_noop
 
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import StrictButton
@@ -45,15 +45,13 @@ from .signals import location_edited
 
 
 class LocationSelectWidget(forms.Widget):
-    def __init__(self, domain, attrs=None, id='supply-point', multiselect=False, query_url=None):
+    def __init__(self, domain, attrs=None, id='supply-point', multiselect=False, placeholder=None):
         super(LocationSelectWidget, self).__init__(attrs)
         self.domain = domain
         self.id = id
         self.multiselect = multiselect
-        if query_url:
-            self.query_url = query_url
-        else:
-            self.query_url = reverse('child_locations_for_select2', args=[self.domain])
+        self.placeholder = placeholder
+        self.query_url = reverse('location_search', args=[self.domain])
         self.template = 'locations/manage/partials/autocomplete_select_widget.html'
 
     def render(self, name, value, attrs=None, renderer=None):
@@ -71,6 +69,7 @@ class LocationSelectWidget(forms.Widget):
             'value': [loc.location_id for loc in locations],
             'query_url': self.query_url,
             'multiselect': self.multiselect,
+            'placeholder': self.placeholder,
             'initial_data': initial_data,
             'attrs': self.build_attrs(self.attrs, attrs),
         })
@@ -216,12 +215,6 @@ class LocationForm(forms.Form):
             if parent and self.location.location_id in parent.path:
                 raise forms.ValidationError(_("Location's parent is itself or a descendant"))
 
-            if self.location.get_descendants().exists():
-                raise forms.ValidationError(_(
-                    'only locations that have no child locations can be '
-                    'moved to a different parent'
-                ))
-
             self.cleaned_data['orig_parent_id'] = self.location.parent_location_id
 
         return parent_id
@@ -258,10 +251,11 @@ class LocationForm(forms.Form):
                 raise forms.ValidationError(_(
                     'The site code cannot contain spaces or special characters.'
                 ))
-            if (SQLLocation.objects.filter(domain=self.domain,
-                                        site_code__iexact=site_code)
-                                   .exclude(location_id=self.location.location_id)
-                                   .exists()):
+            if (SQLLocation.objects
+                    .filter(domain=self.domain,
+                            site_code__iexact=site_code)
+                    .exclude(location_id=self.location.location_id)
+                    .exists()):
                 raise forms.ValidationError(_(
                     'another location already uses this site code'
                 ))
@@ -306,6 +300,13 @@ class LocationForm(forms.Form):
             else:
                 if loc_type_obj not in allowed_types:
                     raise forms.ValidationError(_('Location type not valid for the selected parent.'))
+
+        _can_change_location_type = (self.is_new_location
+                                     or not self.location.get_descendants().exists())
+        if not _can_change_location_type and loc_type_obj.pk != self.location.location_type.pk:
+            raise forms.ValidationError(_(
+                'You cannot change the location type of a location with children'
+            ))
 
         self.cleaned_data['location_type_object'] = loc_type_obj
         return loc_type_obj.name
@@ -369,13 +370,6 @@ class LocationForm(forms.Form):
                                  moved=reparented, previous_parent=orig_parent_id)
 
         return location
-
-
-class LocationUserForm(NewMobileWorkerForm):
-    def clean_location_id(self):
-        # The user form class doesn't handle location. `LocationFormSet` adds
-        # the location to the user after.
-        return None
 
 
 class LocationFormSet(object):
@@ -634,6 +628,36 @@ class RelatedLocationForm(forms.Form):
                 for name, value in self.cleaned_data.items()
                 if name.startswith('relation_distance_')
             }
+        )
+
+
+class LocationFilterForm(forms.Form):
+    root_location_id = forms.CharField(
+        label=ugettext_noop("Root Location"),
+        required=False,
+    )
+
+    def __init__(self, *args, **kwargs):
+        self.domain = kwargs.pop('domain')
+        super().__init__(*args, **kwargs)
+        self.fields['root_location_id'].widget = LocationSelectWidget(self.domain, placeholder=_("All Locations"))
+
+        self.helper = hqcrispy.HQFormHelper()
+        self.helper.form_method = 'GET'
+        self.helper.form_action = reverse('location_export', args=[self.domain])
+
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+                _("Filter and Download Locations"),
+                crispy.Field('root_location_id'),
+            ),
+            hqcrispy.FormActions(
+                StrictButton(
+                    _("Download Locations"),
+                    type="submit",
+                    css_class="btn btn-primary",
+                )
+            ),
         )
 
 

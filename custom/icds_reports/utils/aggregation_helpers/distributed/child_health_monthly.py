@@ -1,3 +1,5 @@
+import logging
+
 from dateutil.relativedelta import relativedelta
 
 from corehq.apps.userreports.util import get_table_name
@@ -7,9 +9,17 @@ from custom.icds_reports.const import (
     AGG_CHILD_HEALTH_THR_TABLE,
     AGG_DAILY_FEEDING_TABLE,
     AGG_GROWTH_MONITORING_TABLE,
+    AGG_MIGRATION_TABLE
 )
-from custom.icds_reports.utils.aggregation_helpers import transform_day_to_month, month_formatter
+from custom.icds_reports.utils.aggregation_helpers import (
+    get_child_health_tablename,
+    get_child_health_temp_tablename,
+    transform_day_to_month,
+    month_formatter,
+)
 from custom.icds_reports.utils.aggregation_helpers.distributed.base import BaseICDSAggregationDistributedHelper
+
+logger = logging.getLogger(__name__)
 
 
 class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistributedHelper):
@@ -32,11 +42,9 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
         self.month = transform_day_to_month(month)
 
     def aggregate(self, cursor):
-        drop_query, drop_params = self.drop_table_query()
-
-        cursor.execute(drop_query, drop_params)
-        cursor.execute(self.aggregation_query())
-        for query in self.indexes():
+        cursor.execute(self.create_monthly_table())
+        for i, query in enumerate(self.aggregation_queries()):
+            logger.info(f'executing query {i}')
             cursor.execute(query)
 
     @property
@@ -57,7 +65,15 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
 
     @property
     def temporary_tablename(self):
-        return "tmp_{}_{}".format(self.base_tablename, self.month.strftime("%Y-%m-%d"))
+        return get_child_health_temp_tablename(self.month)
+
+    @property
+    def monthly_tablename(self):
+        return get_child_health_tablename(self.month)
+
+    @property
+    def new_tablename(self):
+        return f"new_{self.monthly_tablename}"
 
     def drop_table_query(self):
         return 'DELETE FROM "{}" WHERE month=%(month)s'.format(self.tablename), {'month': self.month}
@@ -75,7 +91,10 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
         alive_in_month = "(child_health.date_death IS NULL OR child_health.date_death - {} >= 0)".format(
             start_month_string
         )
-        seeking_services = "(child_health.is_availing = 1 AND child_health.is_migrated = 0)"
+        migration_status = "(agg_migration.is_migrated=1 AND agg_migration.migration_date < {})::integer".format(
+            start_month_string)
+        seeking_services = "(person_cases.registered_status IS DISTINCT FROM 0 AND {} IS DISTINCT FROM 1)".format(
+            migration_status)
         born_in_month = "({} AND person_cases.dob BETWEEN {} AND {})".format(
             seeking_services, start_month_string, end_month_string
         )
@@ -93,7 +112,7 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
         pnc_eligible = "({} AND {} - person_cases.dob > 0 AND {} - person_cases.dob <= 20)".format(
             valid_in_month, end_month_string, start_month_string
         )
-        height_eligible = "({} AND {} > 6 AND {} <= 60)".format(valid_in_month, age_in_months_end, age_in_months)
+        height_eligible = "({} AND {} <= 60)".format(valid_in_month, age_in_months)
         fully_immunized_eligible = "({} AND {} > 12)".format(valid_in_month, age_in_months)
         immunized_age_in_days = "(child_tasks.immun_one_year_date - person_cases.dob)"
         fully_immun_before_month = "(child_tasks.immun_one_year_date < {})".format(end_month_string)
@@ -138,9 +157,9 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
                 "CASE WHEN person_cases.aadhar_date < {} THEN  1 ELSE 0 END".format(end_month_string)),
             ("valid_in_month", "CASE WHEN {} THEN 1 ELSE 0 END".format(valid_in_month)),
             ("valid_all_registered_in_month",
-                "CASE WHEN {} AND {} AND {} <= 72 AND child_health.is_migrated = 0 THEN 1 ELSE 0 END".format(
-                    open_in_month, alive_in_month, age_in_months
-            )),
+                "CASE WHEN {} AND {} AND {} <= 72 AND {} IS DISTINCT FROM 1 THEN 1 ELSE 0 END".format(
+                    open_in_month, alive_in_month, age_in_months, migration_status
+                )),
             ("person_name", "child_health.person_name"),
             ("mother_name", "child_health.mother_name"),
             # PSE/DF Indicators
@@ -314,10 +333,12 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
             """),
             ("mother_phone_number", "child_health.mother_phone_number"),
             ("date_death", "child_health.date_death"),
-            ("mother_case_id", "child_health.mother_case_id")
+            ("mother_case_id", "child_health.mother_case_id"),
+            ("state_id", "child_health.state_id"),
+            ("opened_on", "child_health.opened_on")
         )
-        return """
-        INSERT INTO "{tablename}" (
+        yield """
+        INSERT INTO "{child_tablename}" (
             {columns}
         ) (SELECT
             {calculations}
@@ -344,6 +365,10 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
               AND pnc.month = %(start_date)s
               AND child_health.state_id = pnc.state_id
               AND child_health.supervisor_id = pnc.supervisor_id
+            LEFT OUTER JOIN "{agg_migration_table}" agg_migration ON child_health.mother_id = agg_migration.person_case_id
+              AND agg_migration.month = %(start_date)s
+              AND child_health.state_id = agg_migration.state_id
+              AND child_health.supervisor_id = agg_migration.supervisor_id
             LEFT OUTER JOIN "{agg_df_table}" df ON child_health.doc_id = df.case_id
               AND df.month = %(start_date)s
               AND child_health.state_id = df.state_id
@@ -354,6 +379,7 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
             ORDER BY child_health.supervisor_id, child_health.awc_id
         )
         """.format(
+            child_tablename='{}_{}'.format(self.temporary_tablename, state_id[-5:]),
             tablename=self.temporary_tablename,
             columns=", ".join([col[0] for col in columns]),
             calculations=", ".join([col[1] for col in columns]),
@@ -363,6 +389,7 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
             agg_gm_table=AGG_GROWTH_MONITORING_TABLE,
             agg_pnc_table=AGG_CHILD_HEALTH_PNC_TABLE,
             agg_df_table=AGG_DAILY_FEEDING_TABLE,
+            agg_migration_table=AGG_MIGRATION_TABLE,
             child_tasks_case_ucr=self.child_tasks_case_ucr_tablename,
             person_cases_ucr=self.person_case_ucr_tablename,
             open_in_month=open_in_month
@@ -372,26 +399,47 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
             "state_id": state_id,
         }
 
+        yield """ALTER TABLE "{tablename}" ATTACH PARTITION "{child_tablename}" FOR VALUES IN (%(state_id)s)""".format(
+            tablename=self.temporary_tablename,
+            child_tablename='{}_{}'.format(self.temporary_tablename, state_id[-5:]),
+        ), {
+            "state_id": state_id,
+        }
+
     def pre_aggregation_queries(self):
         return [self._state_aggregation_query(state_id) for state_id in self.state_ids]
 
     def create_temporary_table(self):
         return """
-        CREATE UNLOGGED TABLE \"{table}\" (LIKE child_health_monthly INCLUDING INDEXES);
+        CREATE UNLOGGED TABLE \"{table}\" (LIKE child_health_monthly) PARTITION BY LIST (state_id);
         SELECT create_distributed_table('{table}', 'supervisor_id');
         """.format(table=self.temporary_tablename)
+
+    def create_monthly_table(self):
+        return """
+        CREATE TABLE \"{table}\" (LIKE child_health_monthly);
+        SELECT create_distributed_table('{table}', 'supervisor_id');
+        """.format(table=self.new_tablename)
 
     def drop_temporary_table(self):
         return "DROP TABLE IF EXISTS \"{}\"".format(self.temporary_tablename)
 
-    def aggregation_query(self):
-        return "INSERT INTO \"{tablename}\" (SELECT * FROM \"{tmp_tablename}\")".format(
-            tablename=self.tablename, tmp_tablename=self.temporary_tablename)
+    def drop_partition(self, state_id):
+        return "DROP TABLE IF EXISTS \"{}_{}\"".format(self.temporary_tablename, state_id[-5:])
 
-    def indexes(self):
+    def create_partition(self, state_id):
+        return """
+        CREATE TABLE \"{tmp_tablename}_{state_id_last_5}\" (LIKE \"{tmp_tablename}\");
+        SELECT create_distributed_table('{tmp_tablename}_{state_id_last_5}', 'supervisor_id');
+        """.format(
+            tmp_tablename=self.temporary_tablename,
+            state_id_last_5=state_id[-5:],
+        )
+
+    def aggregation_queries(self):
         return [
-            'CREATE INDEX IF NOT EXISTS chm_case_idx ON "{}" (case_id)'.format(self.tablename),
-            'CREATE INDEX IF NOT EXISTS chm_awc_idx ON "{}" (awc_id)'.format(self.tablename),
-            'CREATE INDEX IF NOT EXISTS chm_mother_dob ON "{}" (mother_case_id, dob)'.format(self.tablename),
-            'CREATE INDEX IF NOT EXISTS chm_month_supervisor_id ON "{}" (month, supervisor_id)'.format(self.tablename),
+            """INSERT INTO "{new_tablename}" (SELECT * FROM "{tmp_tablename}")""".format(new_tablename=self.new_tablename, tmp_tablename=self.temporary_tablename),
+            'DROP TABLE IF EXISTS "{monthly_tablename}"'.format(monthly_tablename=self.monthly_tablename),
+            """ALTER TABLE "{new_tablename}" RENAME TO \"{tablename}\"""".format(new_tablename=self.new_tablename, tablename=self.monthly_tablename),
+            """ALTER TABLE "{tablename}" ATTACH PARTITION "{monthly_tablename}" FOR VALUES IN ('{month}')""".format(monthly_tablename=self.monthly_tablename, month=self.month.strftime('%Y-%m-%d'), tablename=self.tablename),
         ]

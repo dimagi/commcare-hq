@@ -16,16 +16,19 @@ from corehq.apps.export.models import (
     FormExportInstance,
     TableConfiguration,
 )
+from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO
+from corehq.util.elastic import reset_es_index
 
 
 class TestODataCaseFeed(TestCase, OdataTestMixin):
 
     @classmethod
     def setUpClass(cls):
+        setup_es_case_index()
+        reset_es_index(USER_INDEX_INFO)
         super(TestODataCaseFeed, cls).setUpClass()
         cls._set_up_class()
         cls._setup_accounting()
-        setup_es_case_index()
 
     @classmethod
     def tearDownClass(cls):
@@ -107,10 +110,11 @@ class TestODataFormFeed(TestCase, OdataTestMixin):
 
     @classmethod
     def setUpClass(cls):
+        setup_es_form_index()
+        reset_es_index(USER_INDEX_INFO)
         super(TestODataFormFeed, cls).setUpClass()
         cls._set_up_class()
         cls._setup_accounting()
-        setup_es_form_index()
 
     @classmethod
     def tearDownClass(cls):

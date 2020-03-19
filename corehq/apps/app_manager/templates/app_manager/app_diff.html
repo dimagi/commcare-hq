@@ -1,6 +1,7 @@
 {% extends "app_manager/source_files.html" %}
 {% load hq_shared_tags %}
 {% load compress %}
+{% load i18n %}
 {% requirejs_main 'app_manager/js/source_files' %}
 {% block stylesheets %}{{ block.super }}
   {% compress css %}
@@ -11,6 +12,32 @@
 {% block page_title %}
   {{ app.name }}: Build #{{ app.version }} vs #{{ other_app.version }}
 {% endblock page_title %}
+
+{% block mm_block %}
+  {% initial_page_data 'first_app_id' app.id %}
+  {% initial_page_data 'second_app_id' other_app.id %}
+  {% initial_page_data 'build_profiles' build_profiles %}
+  {% registerurl 'compare_multimedia_sizes' app.domain app.id other_app.id %}
+  {% registerurl 'compare_multimedia_sizes_for_build_profile' app.domain app.id other_app.id '---' %}
+  <div id="multimedia-sizes-diff-container">
+    <h2>{% trans 'Multimedia Sizes' %}</h2>
+    {% include 'app_manager/partials/build_profiles_select.html' %}
+    <div id="multimedia-sizes-container-1" class="ko-template">
+      {% include 'app_manager/partials/multimedia_sizes.html' with version=app.version %}
+    </div>
+    <div id="multimedia-sizes-container-2" class="ko-template">
+      {% include 'app_manager/partials/multimedia_sizes.html' with version=other_app.version %}
+    </div>
+    <div id="multimedia-sizes-diff">
+      <h3>
+      {% blocktrans with from_version=other_app.version to_version=app.version %}
+        Multimedia download needed to update from {{ from_version }} to {{ to_version }}
+      {% endblocktrans %}
+      </h3>
+      {% include 'app_manager/partials/multimedia_sizes.html' %}
+    </div>
+  </div>
+{% endblock %}
 
 {% block file_description %}
   <span class="diff"><span class="insert">+{{ file.add_count }}</span></span>

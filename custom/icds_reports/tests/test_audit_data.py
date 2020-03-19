@@ -59,6 +59,9 @@ class TestICDSAuditData(TestCase):
 
 @generate_cases([
     (DASHBOARD_DOMAIN, '/a/{domain}/login/', 200, True),
+    (DASHBOARD_DOMAIN, '/a/{domain}/icds_dashboard/', 200, True),
+    (DASHBOARD_DOMAIN, '/a/{domain}/icds_dashboard_mobile/', 200, True),
+    (DASHBOARD_DOMAIN, '/a/{domain}/icds_dashboard_mobile/login/', 200, True),
     (DASHBOARD_DOMAIN, '/a/{domain}/icds_download_pdf/', 401, True),
     ('other', '/a/{domain}/icds_download_pdf/', 200, False),
 ], TestICDSAuditData)

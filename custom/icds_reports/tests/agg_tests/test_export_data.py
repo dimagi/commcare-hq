@@ -1,6 +1,6 @@
 from datetime import date, datetime
 import json
-from custom.icds_reports.utils import india_now
+
 from django.core.serializers.json import DjangoJSONEncoder
 from django.test.testcases import TestCase
 import mock
@@ -24,7 +24,7 @@ class TestExportData(TestCase):
         super(TestExportData, cls).setUpClass()
         now = '16:21:11 15 November 2017'
         cls.india_now_mock = mock.patch(
-            'custom.icds_reports.utils.india_now',
+            'custom.icds_reports.reports.take_home_ration.india_now',
             new=mock.Mock(return_value=now)
         )
         cls.india_now_mock.start()
@@ -168,7 +168,7 @@ class TestExportData(TestCase):
             [
                 'st1',
                 655, 972, '67.39 %',
-                13, 929, '1.40 %',
+                14, 972, '1.44 %',
                 317,
                 17, 655, '2.60 %',
                 152, 655, '23.21 %',
@@ -202,7 +202,7 @@ class TestExportData(TestCase):
             [
                 'st1',
                 655, 972, '67.39 %',
-                13, 929, '1.40 %',
+                14, 972, '1.44 %',
                 317,
                 17, 655, '2.60 %',
                 152, 655, '23.21 %',
@@ -236,7 +236,7 @@ class TestExportData(TestCase):
             [
                 'st1',
                 655, 972, '67.39 %',
-                13, 929, '1.40 %',
+                14, 972, '1.44 %',
                 317,
                 17, 655, '2.60 %',
                 152, 655, '23.21 %',
@@ -271,7 +271,7 @@ class TestExportData(TestCase):
             [
                 'st1',
                 655, 972, '67.39 %',
-                13, 929, '1.40 %',
+                14, 972, '1.44 %',
                 317,
                 17, 655, '2.60 %',
                 152, 655, '23.21 %',
@@ -304,7 +304,7 @@ class TestExportData(TestCase):
             [
                 'st1',
                 655, 972, '67.39 %',
-                13, 929, '1.40 %',
+                14, 972, '1.44 %',
                 317,
                 17, 655, '2.60 %',
                 152, 655, '23.21 %',
@@ -337,7 +337,7 @@ class TestExportData(TestCase):
             [
                 'st2',
                 730, 1037, '70.40 %',
-                30, 1001, '3.00 %',
+                30, 1037, '2.89 %',
                 307,
                 18, 730, '2.47 %',
                 136, 730, '18.63 %',
@@ -370,7 +370,7 @@ class TestExportData(TestCase):
             [
                 'st2',
                 730, 1037, '70.40 %',
-                30, 1001, '3.00 %',
+                30, 1037, '2.89 %',
                 307,
                 18, 730, '2.47 %',
                 136, 730, '18.63 %',
@@ -403,7 +403,7 @@ class TestExportData(TestCase):
             [
                 'st2',
                 730, 1037, '70.40 %',
-                30, 1001, '3.00 %',
+                30, 1037, '2.89 %',
                 307,
                 18, 730, '2.47 %',
                 136, 730, '18.63 %',
@@ -436,7 +436,7 @@ class TestExportData(TestCase):
             [
                 'st2',
                 730, 1037, '70.40 %',
-                30, 1001, '3.00 %',
+                30, 1037, '2.89 %',
                 307,
                 18, 730, '2.47 %',
                 136, 730, '18.63 %',
@@ -469,7 +469,7 @@ class TestExportData(TestCase):
             [
                 'st2',
                 730, 1037, '70.40 %',
-                30, 1001, '3.00 %',
+                30, 1037, '2.89 %',
                 307,
                 18, 730, '2.47 %',
                 136, 730, '18.63 %',
@@ -578,46 +578,45 @@ class TestExportData(TestCase):
                     'Number of children 0-6 months old enrolled for services',
                     'Number of children 6 months to 3 years old enrolled for services',
                     'Number of children 3 to 6 years old enrolled for services',
-                    'Number of adolescent girls 11 to 14 years old',
-                    'Number of adolescent girls 15 to 18 years old',
-                    'Number of adolescent girls 11 to 14 years old that are enrolled for services',
-                    'Number of adolescent girls 15 to 18 years old that are enrolled for services'
+                    'Number of adolescent girls (11-14 years)',
+                    'Number of out of school adolescent girls (11-14 years)',
+                    'Number of adolescent girls 15 to 18 years old'
                 ],
-                ['st1', 2637, 369, 1518, '24.31 %', 120, 120, 171, 171, 1227, 1227, 56, 244, 927, 36, 12, 36, 12],
-                ['st1', 2637, 369, 1518, '24.31 %', 120, 120, 171, 171, 1227, 1227, 56, 244, 927, 36, 12, 36, 12],
-                ['st1', 2637, 369, 1518, '24.31 %', 120, 120, 171, 171, 1227, 1227, 56, 244, 927, 36, 12, 36, 12],
-                ['st1', 2637, 369, 1518, '24.31 %', 120, 120, 171, 171, 1227, 1227, 56, 244, 927, 36, 12, 36, 12],
-                ['st1', 2637, 369, 1518, '24.31 %', 120, 120, 171, 171, 1227, 1227, 56, 244, 927, 36, 12, 36, 12],
-                ['st2', 2952, 275, 1613, '17.05 %', 139, 139, 154, 154, 1320, 1320, 52, 301, 967, 36, 20, 36, 20],
-                ['st2', 2952, 275, 1613, '17.05 %', 139, 139, 154, 154, 1320, 1320, 52, 301, 967, 36, 20, 36, 20],
-                ['st2', 2952, 275, 1613, '17.05 %', 139, 139, 154, 154, 1320, 1320, 52, 301, 967, 36, 20, 36, 20],
-                ['st2', 2952, 275, 1613, '17.05 %', 139, 139, 154, 154, 1320, 1320, 52, 301, 967, 36, 20, 36, 20],
-                ['st2', 2952, 275, 1613, '17.05 %', 139, 139, 154, 154, 1320, 1320, 52, 301, 967, 36, 20, 36, 20],
-                ['st3', 0, 0, 0, '0.00 %', 0, 0, 0, 0, 0, 0, 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 0, 0, 0, 0],
-                ['st3', 0, 0, 0, '0.00 %', 0, 0, 0, 0, 0, 0, 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 0, 0, 0, 0],
-                ['st3', 0, 0, 0, '0.00 %', 0, 0, 0, 0, 0, 0, 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 0, 0, 0, 0],
-                ['st3', 0, 0, 0, '0.00 %', 0, 0, 0, 0, 0, 0, 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 0, 0, 0, 0],
-                ['st3', 2, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 0, 0, 0, 0],
-                ['st4', 0, 0, 0, '0.00 %', 0, 0, 0, 0, 0, 0, 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 0, 0, 0, 0],
-                ['st4', 0, 0, 0, '0.00 %', 0, 0, 0, 0, 0, 0, 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 0, 0, 0, 0],
-                ['st4', 0, 0, 0, '0.00 %', 0, 0, 0, 0, 0, 0, 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 0, 0, 0, 0],
-                ['st4', 2, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 0, 0, 0, 0],
-                ['st4', 2, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 0, 0, 0, 0],
-                ['st5', 0, 0, 0, '0.00 %', 0, 0, 0, 0, 0, 0, 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 0, 0, 0, 0],
-                ['st5', 0, 0, 0, '0.00 %', 0, 0, 0, 0, 0, 0, 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 0, 0, 0, 0],
-                ['st5', 2, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 0, 0, 0, 0],
-                ['st5', 2, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 0, 0, 0, 0],
-                ['st5', 2, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 0, 0, 0, 0],
-                ['st6', 0, 0, 0, '0.00 %', 0, 0, 0, 0, 0, 0, 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 0, 0, 0, 0],
-                ['st6', 2, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 0, 0, 0, 0],
-                ['st6', 2, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 0, 0, 0, 0],
-                ['st6', 2, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 0, 0, 0, 0],
-                ['st6', 2, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 0, 0, 0, 0],
-                ['st7', 2, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 1, 0, 0, 0, 0],
-                ['st7', 2, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 1, 0, 0, 0, 0],
-                ['st7', 2, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 1, 0, 0, 0, 0],
-                ['st7', 2, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 1, 0, 0, 0, 0],
-                ['st7', 2, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 1, 0, 0, 0, 0]
+                ['st1', 2637, 369, 1518, '24.31 %', 120, 120, 171, 171, 1227, 1227, 56, 244, 927, 26, 0, 12],
+                ['st1', 2637, 369, 1518, '24.31 %', 120, 120, 171, 171, 1227, 1227, 56, 244, 927, 26, 0, 12],
+                ['st1', 2637, 369, 1518, '24.31 %', 120, 120, 171, 171, 1227, 1227, 56, 244, 927, 26, 0, 12],
+                ['st1', 2637, 369, 1518, '24.31 %', 120, 120, 171, 171, 1227, 1227, 56, 244, 927, 26, 0, 12],
+                ['st1', 2637, 369, 1518, '24.31 %', 120, 120, 171, 171, 1227, 1227, 56, 244, 927, 26, 0, 12],
+                ['st2', 2952, 275, 1613, '17.05 %', 139, 139, 154, 154, 1320, 1320, 52, 301, 967, 25, 0, 20],
+                ['st2', 2952, 275, 1613, '17.05 %', 139, 139, 154, 154, 1320, 1320, 52, 301, 967, 25, 0, 20],
+                ['st2', 2952, 275, 1613, '17.05 %', 139, 139, 154, 154, 1320, 1320, 52, 301, 967, 25, 0, 20],
+                ['st2', 2952, 275, 1613, '17.05 %', 139, 139, 154, 154, 1320, 1320, 52, 301, 967, 25, 0, 20],
+                ['st2', 2952, 275, 1613, '17.05 %', 139, 139, 154, 154, 1320, 1320, 52, 301, 967, 25, 0, 20],
+                ['st3', 0, 0, 0, '0.00 %', 0, 0, 0, 0, 0, 0, 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 0,0, 0],
+                ['st3', 0, 0, 0, '0.00 %', 0, 0, 0, 0, 0, 0, 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 0,0, 0],
+                ['st3', 0, 0, 0, '0.00 %', 0, 0, 0, 0, 0, 0, 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 0,0, 0],
+                ['st3', 0, 0, 0, '0.00 %', 0, 0, 0, 0, 0, 0, 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 0,0, 0],
+                ['st3', 2, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 0,0, 0],
+                ['st4', 0, 0, 0, '0.00 %', 0, 0, 0, 0, 0, 0, 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 0,0, 0],
+                ['st4', 0, 0, 0, '0.00 %', 0, 0, 0, 0, 0, 0, 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 0,0, 0],
+                ['st4', 0, 0, 0, '0.00 %', 0, 0, 0, 0, 0, 0, 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 0,0, 0],
+                ['st4', 2, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 0,0, 0],
+                ['st4', 2, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 0,0, 0],
+                ['st5', 0, 0, 0, '0.00 %', 0, 0, 0, 0, 0, 0, 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 0,0, 0],
+                ['st5', 0, 0, 0, '0.00 %', 0, 0, 0, 0, 0, 0, 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 0,0, 0],
+                ['st5', 2, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 0,0, 0],
+                ['st5', 2, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 0,0, 0],
+                ['st5', 2, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 0,0, 0],
+                ['st6', 0, 0, 0, '0.00 %', 0, 0, 0, 0, 0, 0, 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 0,0, 0],
+                ['st6', 2, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 0,0, 0],
+                ['st6', 2, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 0,0, 0],
+                ['st6', 2, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 0,0, 0],
+                ['st6', 2, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 0,0, 0],
+                ['st7', 2, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 1, 6, 4,0],
+                ['st7', 2, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 1, 6, 4,0],
+                ['st7', 2, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 1, 6, 4,0],
+                ['st7', 2, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 1, 6, 4,0],
+                ['st7', 2, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 1, 6, 4,0]
                 ]],
                 [
                     'Export Info',
@@ -634,7 +633,7 @@ class TestExportData(TestCase):
             SystemUsageExport(
                 config={
                     'domain': 'icds-cas',
-                    'month': datetime(2017, 5, 1)
+                    'month': date(2017, 5, 1)
                 }
             ).get_excel_data('b1', False, True),
             [
@@ -703,7 +702,7 @@ class TestExportData(TestCase):
                     'domain': 'icds-cas',
                     'block_id': 'b1',
                     'aggregation_level': 5,
-                    'month': datetime(2017, 5, 1)
+                    'month': date(2017, 5, 1)
                 },
                 loc_level=5,
             ).get_excel_data('b1', system_usage_num_launched_awcs_formatting_at_awc_level=True),
@@ -790,6 +789,203 @@ class TestExportData(TestCase):
                     ['Month', 'May'],
                     ['Year', 2017]
                 ]],
+            ]
+        )
+
+    def test_system_usage_export_with_beta_before_jan_2020(self):
+        self.assertListEqual(
+            SystemUsageExport(
+                config={
+                    'domain': 'icds-cas',
+                    'month': date(2017, 5, 1)
+                }, beta=True
+            ).get_excel_data('b1', False, True),
+            [
+                ['System Usage', [
+                    [
+                        'State',
+                        'Number of days AWC was open in the given month',
+                        'Number of launched AWCs (ever submitted at least one HH reg form)',
+                        'Number of household registration forms', 'Number of add pregnancy forms',
+                        'Number of birth preparedness forms', 'Number of delivery forms',
+                        'Number of PNC forms', 'Number of exclusive breastfeeding forms',
+                        'Number of complementary feeding forms', 'Number of growth monitoring forms',
+                        'Number of take home rations forms', 'Number of due list forms'
+                    ],
+                    ['st1', 'Applicable at only AWC level', 10, 0, 1, 4, 1, 0, 5, 12, 3, 46, 5],
+                    ['st1', 'Applicable at only AWC level', 10, 0, 1, 4, 1, 0, 5, 12, 3, 46, 5],
+                    ['st1', 'Applicable at only AWC level', 10, 0, 1, 4, 1, 0, 5, 12, 3, 46, 5],
+                    ['st1', 'Applicable at only AWC level', 10, 0, 1, 4, 1, 0, 5, 12, 3, 46, 5],
+                    ['st1', 'Applicable at only AWC level', 10, 0, 1, 4, 1, 0, 5, 12, 3, 46, 5],
+                    ['st2', 'Applicable at only AWC level', 11, 0, 4, 4, 1, 1, 4, 4, 20, 65, 17],
+                    ['st2', 'Applicable at only AWC level', 11, 0, 4, 4, 1, 1, 4, 4, 20, 65, 17],
+                    ['st2', 'Applicable at only AWC level', 11, 0, 4, 4, 1, 1, 4, 4, 20, 65, 17],
+                    ['st2', 'Applicable at only AWC level', 11, 0, 4, 4, 1, 1, 4, 4, 20, 65, 17],
+                    ['st2', 'Applicable at only AWC level', 11, 0, 4, 4, 1, 1, 4, 4, 20, 65, 17],
+                    ['st3', 'Applicable at only AWC level', 'Data Not Entered', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st3', 'Applicable at only AWC level', 'Data Not Entered', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st3', 'Applicable at only AWC level', 'Data Not Entered', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st3', 'Applicable at only AWC level', 'Data Not Entered', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st3', 'Applicable at only AWC level', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st4', 'Applicable at only AWC level', 'Data Not Entered', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st4', 'Applicable at only AWC level', 'Data Not Entered', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st4', 'Applicable at only AWC level', 'Data Not Entered', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st4', 'Applicable at only AWC level', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st4', 'Applicable at only AWC level', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st5', 'Applicable at only AWC level', 'Data Not Entered', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st5', 'Applicable at only AWC level', 'Data Not Entered', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st5', 'Applicable at only AWC level', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st5', 'Applicable at only AWC level', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st5', 'Applicable at only AWC level', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st6', 'Applicable at only AWC level', 'Data Not Entered', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st6', 'Applicable at only AWC level', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st6', 'Applicable at only AWC level', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st6', 'Applicable at only AWC level', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st6', 'Applicable at only AWC level', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st7', 'Applicable at only AWC level', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st7', 'Applicable at only AWC level', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st7', 'Applicable at only AWC level', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st7', 'Applicable at only AWC level', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st7', 'Applicable at only AWC level', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+                ]],
+                ['Export Info', [
+                    ['Generated at', '16:21:11 15 November 2017'],
+                    ['State', 'st1'],
+                    ['District', 'd1'],
+                    ['Block', 'b1'],
+                    ['Month', 'May'],
+                    ['Year', 2017]
+                ]]
+            ]
+        )
+
+    def test_system_usage_export_for_awc_level_with_beta_before_jan_2020(self):
+        self.assertListEqual(
+            SystemUsageExport(
+                config={
+                    'domain': 'icds-cas',
+                    'block_id': 'b1',
+                    'aggregation_level': 5,
+                    'month': date(2017, 5, 1)
+                },
+                loc_level=5, beta=True
+            ).get_excel_data('b1', system_usage_num_launched_awcs_formatting_at_awc_level=True),
+            [
+                ['System Usage', [
+                    [
+                        'State',
+                        'District',
+                        'Block',
+                        'Supervisor',
+                        'AWC',
+                        'AWW Phone Number',
+                        'Number of days AWC was open in the given month',
+                        'Number of launched AWCs (ever submitted at least one HH reg form)',
+                        'Number of household registration forms', 'Number of add pregnancy forms',
+                        'Number of birth preparedness forms', 'Number of delivery forms',
+                        'Number of PNC forms', 'Number of exclusive breastfeeding forms',
+                        'Number of complementary feeding forms', 'Number of growth monitoring forms',
+                        'Number of take home rations forms', 'Number of due list forms'
+                    ],
+                    [
+                        'st1', 'd1', 'b1', 's1', 'a1', '+91555555',
+                        18, 'Not Launched', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+                    ],
+                    [
+                        'st1', 'd1', 'b1', 's1', 'a17', 'Data Not Entered',
+                        11, 'Not Launched', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+                    ],
+                    [
+                        'st1', 'd1', 'b1', 's1', 'a25', 'Data Not Entered',
+                        13, 'Not Launched', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+                    ],
+                    [
+                        'st1', 'd1', 'b1', 's1', 'a33', 'Data Not Entered',
+                        12, 'Not Launched', 0, 0, 0, 1, 0, 0, 0, 0, 0, 1
+                    ],
+                    [
+                        'st1', 'd1', 'b1', 's1', 'a41', 'Data Not Entered',
+                        16, 'Launched', 0, 0, 0, 0, 0, 0, 0, 0, 0, 2
+                    ],
+                    [
+                        'st1', 'd1', 'b1', 's1', 'a49', 'Data Not Entered',
+                        14, 'Launched', 0, 0, 0, 0, 0, 0, 1, 0, 0, 0
+                    ],
+                    [
+                        'st1', 'd1', 'b1', 's1', 'a9', 'Data Not Entered',
+                        18, 'Not Launched', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+                    ],
+                    [
+                        'st1', 'd1', 'b1', 's2', 'a10', 'Data Not Entered',
+                        8, 'Launched', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+                    ],
+                    [
+                        'st1', 'd1', 'b1', 's2', 'a18', 'Data Not Entered',
+                        17, 'Launched', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+                    ],
+                    [
+                        'st1', 'd1', 'b1', 's2', 'a2', 'Data Not Entered',
+                        10, 'Not Launched', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+                    ],
+                    [
+                        'st1', 'd1', 'b1', 's2', 'a26', 'Data Not Entered',
+                        12, 'Not Launched', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+                    ],
+                    [
+                        'st1', 'd1', 'b1', 's2', 'a34', 'Data Not Entered',
+                        4, 'Launched', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+                    ],
+                    [
+                        'st1', 'd1', 'b1', 's2', 'a42', 'Data Not Entered',
+                        7, 'Not Launched', 0, 0, 1, 0, 0, 0, 1, 0, 0, 0
+                    ],
+                    [
+                        'st1', 'd1', 'b1', 's2', 'a50', 'Data Not Entered',
+                        19, 'Not Launched', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+                    ]
+                ]],
+                ['Export Info', [
+                    ['Generated at', '16:21:11 15 November 2017'],
+                    ['State', 'st1'],
+                    ['District', 'd1'],
+                    ['Block', 'b1'],
+                    ['Grouped By', 'AWC'],
+                    ['Month', 'May'],
+                    ['Year', 2017]
+                ]],
+            ]
+        )
+
+    def test_system_usage_export_with_beta_after_jan_2020(self):
+        self.assertListEqual(
+            SystemUsageExport(
+                config={
+                    'domain': 'icds-cas',
+                    'month': date(2020, 1, 1)
+                }, beta=True
+            ).get_excel_data('b1', False, True),
+            [
+                ['System Usage', [
+                    [
+                        'State',
+                        'Number of days AWC was open in the given month',
+                        'Number of launched AWCs (ever submitted at least one HH reg form)',
+                        'Number of household registration forms', 'Number of add pregnancy forms',
+                        'Number of birth preparedness forms', 'Number of delivery forms',
+                        'Number of PNC forms', 'Number of exclusive breastfeeding forms',
+                        'Number of complementary feeding forms', 'Number of growth monitoring forms',
+                        'Number of take home rations forms', 'Number of due list forms',
+                        'Number of launched LSs'
+                    ]
+                ]],
+                ['Export Info', [
+                    ['Generated at', '16:21:11 15 November 2017'],
+                    ['State', 'st1'],
+                    ['District', 'd1'],
+                    ['Block', 'b1'],
+                    ['Month', 'January'],
+                    ['Year', 2020]
+                ]]
             ]
         )
 
@@ -2241,7 +2437,7 @@ class TestExportData(TestCase):
                     ['Disclaimer',
                      'The information in the report is based on the self-reported '
                      'data entered by the Anganwadi Worker in ICDS-CAS mobile application'
-                     ' and is subject to timely data syncs.']
+                     ' and is subject to timely data submissions.']
                 ]
              ]
         ]
@@ -2293,7 +2489,7 @@ class TestExportData(TestCase):
                                    ['st1', 'd1', 'b1', 's2', 'a50', 'AWC Not Launched', 'AWC Not Launched',
                                     'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched']]],
              ['Export Info', [
-                 ['Generated at', india_now()],
+                 ['Generated at', '16:21:11 15 November 2017'],
                  ['State', 'st1'],
                  ['District', 'd1'],
                  ['Block', 'b1'],
@@ -2404,7 +2600,7 @@ class TestExportData(TestCase):
                 ['st6', 'd7', 'b8', 's23', 'a104', 'Data Not Entered', 'Data Not Entered', 1, 0, 0],
                 ['st7', 'd8', 'b9', 's24', 'a105', 'Data Not Entered', 'Data Not Entered', 1, 0, 0]]],
              ['Export Info', [
-                 ['Generated at', india_now()],
+                 ['Generated at', '16:21:11 15 November 2017'],
                  ['Location', 'National'],
                  ['Month', 'May'],
                  ['Year', 2017]]

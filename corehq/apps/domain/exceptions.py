@@ -6,9 +6,5 @@ class NameUnavailableException(Exception):
     pass
 
 
-class DomainDeleteException(Exception):
-    pass
-
-
 class DomainDoesNotExist(Exception):
     pass

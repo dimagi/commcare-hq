@@ -6,19 +6,10 @@ from corehq.apps.es import GroupES
 from corehq.apps.hqwebapp.async_handler import BaseAsyncHandler
 from corehq.apps.hqwebapp.encoders import LazyEncoder
 from corehq.apps.locations.models import SQLLocation, LocationType
+from corehq.apps.reminders.util import get_combined_id
 from corehq.apps.users.analytics import get_search_users_in_domain_es_query
 from corehq.util.quickcache import quickcache
 from django.utils.translation import ugettext as _
-
-
-def get_combined_id(app_id, form_unique_id):
-    if '|' in app_id:
-        raise ValueError("Unexpected token '|' in app_id '%s'" % app_id)
-
-    if '|' in form_unique_id:
-        raise ValueError("Unexpected token '|' in form_unique_id '%s'" % form_unique_id)
-
-    return '%s|%s' % (app_id, form_unique_id)
 
 
 @quickcache(['domain', 'timestamp'], timeout=10 * 60)
@@ -31,7 +22,7 @@ def get_visit_scheduler_forms(domain, timestamp):
     result = []
     for app_id in get_app_ids_in_domain(domain):
         app = get_latest_released_app(domain, app_id)
-        if app and app.doc_type == 'Application':
+        if app and not app.is_deleted() and not app.is_remote_app():
             for module in app.get_modules():
                 for form in module.get_forms():
                     if isinstance(form, AdvancedForm) and form.schedule and form.schedule.enabled:
@@ -93,23 +84,12 @@ class MessagingRecipientHandler(BaseAsyncHandler):
         return self._get_user_organization_response()
 
     def _get_user_organization_response(self, case_sharing_only=False):
-        domain = self.request.domain
-        query = self.data.get('searchString')
-        result = (
-            SQLLocation
-            .active_objects
-            .filter(domain=domain, name__icontains=query)
-            .order_by('name')
-            .values_list('location_id', 'name')
-        )
-
-        if case_sharing_only:
-            result = result.filter(location_type__shares_cases=True)
-
-        return [
-            {'id': row[0], 'text': row[1]}
-            for row in result[:10]
-        ]
+        from corehq.apps.locations.views import LocationOptionsController
+        controller = LocationOptionsController(self.request, self.request.domain,
+                                               self.data.get('searchString'),
+                                               case_sharing_only=case_sharing_only)
+        (count, results) = controller.get_options()
+        return results[:10]
 
     @property
     def schedule_location_types_response(self):

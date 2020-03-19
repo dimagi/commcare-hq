@@ -89,7 +89,7 @@ hqDefine('hqwebapp/js/initial_page_data', ['jquery', 'underscore'], function ($,
         var args = arguments;
         var index = 1;
         if (!urls[name]) {
-            urls = gather(url_selector, urls);
+            _.extend(urls, gather(url_selector, urls));
             if (!urls[name]) {
                 throw new Error("URL '" + name + "' not found in registry");
             }
@@ -101,7 +101,7 @@ hqDefine('hqwebapp/js/initial_page_data', ['jquery', 'underscore'], function ($,
 
     $(function () {
         _initData = gather(data_selector, _initData);
-        urls = gather(url_selector, urls);
+        _.extend(urls, gather(url_selector, urls));
     });
 
     return {

@@ -1,13 +1,6 @@
-from corehq.apps.domain.dbaccessors import get_doc_count_in_domain_by_class, \
-    get_docs_in_domain_by_class
 from corehq.apps.es import GroupES, UserES
 from corehq.apps.groups.models import Group
-from corehq.apps.users.analytics import (
-    get_active_commcare_users_in_domain,
-    get_count_of_active_commcare_users_in_domain,
-    get_count_of_inactive_commcare_users_in_domain,
-    get_inactive_commcare_users_in_domain,
-)
+from corehq.apps.users.models import CommCareUser
 from dimagi.utils.chunked import chunked
 
 
@@ -18,47 +11,39 @@ class UserQuerySetAdapter(object):
         self.show_archived = show_archived
 
     def count(self):
+        return self._query.count()
+
+    __len__ = count
+
+    @property
+    def _query(self):
         if self.show_archived:
-            return get_count_of_inactive_commcare_users_in_domain(self.domain)
+            return UserES().mobile_users().domain(self.domain).show_only_inactive().sort('username.exact')
         else:
-            return get_count_of_active_commcare_users_in_domain(self.domain)
+            return UserES().mobile_users().domain(self.domain).sort('username.exact')
 
     def __getitem__(self, item):
         if isinstance(item, slice):
             limit = item.stop - item.start
-            if self.show_archived:
-                return get_inactive_commcare_users_in_domain(self.domain, start_at=item.start, limit=limit)
-            else:
-                return get_active_commcare_users_in_domain(self.domain, start_at=item.start, limit=limit)
+            result = self._query.size(limit).start(item.start).run()
+            return [WrappedUser.wrap(user) for user in result.hits]
         raise ValueError(
             'Invalid type of argument. Item should be an instance of slice class.')
 
 
-class GroupQuerySetAdapterCouch(object):
-    def __init__(self, domain):
-        self.domain = domain
+class WrappedUser(CommCareUser):
 
-    def count(self):
-        return get_doc_count_in_domain_by_class(self.domain, Group)
+    @classmethod
+    def wrap(cls, data):
+        self = super().wrap(data)
+        self._group_ids = sorted(data['__group_ids'])
+        return self
 
-    def __getitem__(self, item):
-        if isinstance(item, slice):
-            limit = item.stop - item.start
-            groups = get_docs_in_domain_by_class(self.domain, Group, limit=limit, skip=item.start)
-        else:
-            raise ValueError(
-                'Invalid type of argument. Item should be an instance of slice class.')
-
-        for group in groups:
-            # precompute the return value of get_users_ids here
-            # so that all the work happens here instead of in an external hidden step
-            # Not any faster, but brings it more under our direct control for optimization
-            group._precomputed_active_users = group.get_user_ids()
-            group.__class__ = WrappedGroup
-        return groups
+    def get_group_ids(self):
+        return self._group_ids
 
 
-class GroupQuerySetAdapterES(object):
+class GroupQuerySetAdapter(object):
     def __init__(self, domain):
         self.domain = domain
 

@@ -30,7 +30,7 @@ from corehq.form_processor.abstract_models import DEFAULT_PARENT_IDENTIFIER
 from corehq.form_processor.exceptions import UnknownActionType, MissingFormXml
 from corehq.form_processor.track_related import TrackRelatedChanges
 from corehq.apps.tzmigration.api import force_phone_timezones_should_be_processed
-from corehq.sql_db.models import PartitionedModel, RestrictedManager
+from corehq.sql_db.models import PartitionedModel
 from corehq.util.json import CommCareJSONEncoder
 from couchforms import const
 from couchforms.jsonobject_extensions import GeoPointProperty
@@ -245,24 +245,39 @@ class AttachmentMixin(SaveStateMixin):
         """
         if all(isinstance(a, BlobMeta) for a in self.attachments_list):
             # do nothing if all attachments have already been written
+            class NoopWriter():
+                def write(self):
+                    pass
+
+                def commit(self):
+                    pass
+
             @contextmanager
             def noop_context():
-                yield lambda: None
+                yield NoopWriter()
 
             return noop_context()
 
-        def write_attachments(blob_db):
-            self._attachments_list = [
-                attachment.write(blob_db, self)
-                for attachment in self.attachments_list
-            ]
+        class Writer():
+            def __init__(self, form, blob_db):
+                self.form = form
+                self.blob_db = blob_db
+
+            def write(self):
+                self.saved_attachments = [
+                    attachment.write(self.blob_db, self.form)
+                    for attachment in self.form.attachments_list
+                ]
+
+            def commit(self):
+                self.form._attachments_list = self.saved_attachments
 
         @contextmanager
         def atomic_attachments():
             unsaved = self.attachments_list
             assert all(isinstance(a, Attachment) for a in unsaved), unsaved
             with AtomicBlobs(get_blob_db()) as blob_db:
-                yield lambda: write_attachments(blob_db)
+                yield Writer(self, blob_db)
 
         return atomic_attachments()
 
@@ -309,7 +324,6 @@ class AttachmentMixin(SaveStateMixin):
 class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, AttachmentMixin,
                        AbstractXFormInstance, TrackRelatedChanges):
     partition_attr = 'form_id'
-    objects = RestrictedManager()
 
     # states should be powers of 2
     NORMAL = 1
@@ -582,7 +596,7 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
             ('domain', 'user_id'),
         ]
         indexes = [
-            models.Index(['xmlns'])
+            models.Index(fields=['xmlns'])
         ]
 
 
@@ -612,7 +626,6 @@ class DeprecatedXFormAttachmentSQL(models.Model):
 
 class XFormOperationSQL(PartitionedModel, SaveStateMixin, models.Model):
     partition_attr = 'form_id'
-    objects = RestrictedManager()
 
     ARCHIVE = 'archive'
     UNARCHIVE = 'unarchive'
@@ -703,7 +716,6 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
                       AttachmentMixin, AbstractCommCareCase, TrackRelatedChanges,
                       SupplyPointCaseMixin, MessagingCaseContactMixin):
     partition_attr = 'case_id'
-    objects = RestrictedManager()
 
     case_id = models.CharField(max_length=255, unique=True, db_index=True)
     domain = models.CharField(max_length=255, default=None)
@@ -881,13 +893,16 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
         """For compatability with CommCareCase. Please use transactions when possible"""
         return self.non_revoked_transactions
 
-    def get_transaction_by_form_id(self, form_id):
-        from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
+    def _get_unsaved_transaction_for_form(self, form_id):
         transactions = [t for t in self.get_tracked_models_to_create(CaseTransaction) if t.form_id == form_id]
         assert len(transactions) <= 1
-        transaction = transactions[0] if transactions else None
+        return transactions[0] if transactions else None
 
-        if not transaction:
+    def get_transaction_by_form_id(self, form_id):
+        from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
+        transaction = self._get_unsaved_transaction_for_form(form_id)
+
+        if not transaction and self.is_saved():
             transaction = CaseAccessorSQL.get_transaction_by_form_id(self.case_id, form_id)
         return transaction
 
@@ -1039,7 +1054,6 @@ class CaseAttachmentSQL(PartitionedModel, models.Model, SaveStateMixin, IsImageM
     for sharding locality with other data from the same case.
     """
     partition_attr = 'case_id'
-    objects = RestrictedManager()
 
     case = models.ForeignKey(
         'CommCareCaseSQL', to_field='case_id', db_index=False,
@@ -1137,7 +1151,6 @@ class CaseAttachmentSQL(PartitionedModel, models.Model, SaveStateMixin, IsImageM
 
 class CommCareCaseIndexSQL(PartitionedModel, models.Model, SaveStateMixin):
     partition_attr = 'case_id'
-    objects = RestrictedManager()
 
     # relationship_ids should be powers of 2
     CHILD = 1
@@ -1221,7 +1234,6 @@ class CommCareCaseIndexSQL(PartitionedModel, models.Model, SaveStateMixin):
 
 class CaseTransaction(PartitionedModel, SaveStateMixin, models.Model):
     partition_attr = 'case_id'
-    objects = RestrictedManager()
 
     # types should be powers of 2
     TYPE_FORM = 1
@@ -1380,6 +1392,8 @@ class CaseTransaction(PartitionedModel, SaveStateMixin, models.Model):
 
     @classmethod
     def form_transaction(cls, case, xform, client_date, action_types=None):
+        """Get or create a form transaction for a the given form and case.
+        """
         action_types = action_types or []
 
         if any([not cls._valid_action_type(action_type) for action_type in action_types]):
@@ -1407,6 +1421,8 @@ class CaseTransaction(PartitionedModel, SaveStateMixin, models.Model):
 
     @classmethod
     def ledger_transaction(cls, case, xform):
+        """Get or create a ledger transaction for a the given form and case.
+        """
         return cls._from_form(
             case,
             xform,
@@ -1415,7 +1431,10 @@ class CaseTransaction(PartitionedModel, SaveStateMixin, models.Model):
 
     @classmethod
     def _from_form(cls, case, xform, transaction_type):
-        transaction = case.get_transaction_by_form_id(xform.form_id)
+        if xform.is_saved():
+            transaction = case.get_transaction_by_form_id(xform.form_id)
+        else:
+            transaction = case._get_unsaved_transaction_for_form(xform.form_id)
         if transaction:
             transaction.type |= transaction_type
             return transaction
@@ -1475,7 +1494,7 @@ class CaseTransaction(PartitionedModel, SaveStateMixin, models.Model):
         index_together = [
             ('case', 'server_date', 'sync_log_id'),
         ]
-        indexes = [models.Index(['form_id'])]
+        indexes = [models.Index(fields=['form_id'])]
 
 
 class CaseTransactionDetail(JsonObject):
@@ -1518,7 +1537,7 @@ class FormEditRebuild(CaseTransactionDetail):
 
 
 class FormReprocessRebuild(CaseTransactionDetail):
-    _type = CaseTransaction.TYPE_REBUILD_FORM_EDIT
+    _type = CaseTransaction.TYPE_REBUILD_FORM_REPROCESS
     form_id = StringProperty()
 
 
@@ -1527,7 +1546,6 @@ class LedgerValue(PartitionedModel, SaveStateMixin, models.Model, TrackRelatedCh
     Represents the current state of a ledger. Supercedes StockState
     """
     partition_attr = 'case_id'
-    objects = RestrictedManager()
 
     domain = models.CharField(max_length=255, null=False, default=None)
     case = models.ForeignKey(
@@ -1600,7 +1618,6 @@ class LedgerValue(PartitionedModel, SaveStateMixin, models.Model, TrackRelatedCh
 
 class LedgerTransaction(PartitionedModel, SaveStateMixin, models.Model):
     partition_attr = 'case_id'
-    objects = RestrictedManager()
 
     TYPE_BALANCE = 1
     TYPE_TRANSFER = 2
@@ -1702,7 +1719,7 @@ class LedgerTransaction(PartitionedModel, SaveStateMixin, models.Model):
         index_together = [
             ["case", "section_id", "entry_id"],
         ]
-        indexes = [models.Index(['form_id'])]
+        indexes = [models.Index(fields=['form_id'])]
 
 
 class ConsumptionTransaction(namedtuple('ConsumptionTransaction', ['type', 'normalized_value', 'received_on'])):

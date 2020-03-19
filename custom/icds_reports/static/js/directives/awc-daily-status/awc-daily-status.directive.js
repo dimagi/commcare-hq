@@ -2,16 +2,19 @@
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function AWCDailyStatusController($scope, $routeParams, $location, $filter, icdsCasReachService, locationsService,
-    userLocationId, storageService, haveAccessToAllLocations, baseControllersService, isAlertActive) {
+    dateHelperService, navigationService, userLocationId, storageService, haveAccessToAllLocations,
+    baseControllersService, isAlertActive, isMobile) {
     baseControllersService.BaseController.call(this, $scope, $routeParams, $location, locationsService,
-        userLocationId, storageService, haveAccessToAllLocations);
+        dateHelperService, navigationService, userLocationId, storageService, haveAccessToAllLocations,
+        false, isMobile);
     var vm = this;
     vm.isAlertActive = isAlertActive;
+    vm.usePercentage = false;
+    vm.forceYAxisFromZero = true;
+    vm.serviceDataFunction = icdsCasReachService.getAwcDailyStatusData;
+
     vm.label = "AWC Daily Status";
-    vm.steps = {
-        'map': {route: '/icds_cas_reach/awc_daily_status/map', label: 'Map View'},
-        'chart': {route: '/icds_cas_reach/awc_daily_status/chart', label: 'Chart View'},
-    };
+    vm.steps = vm.getSteps('/icds_cas_reach/awc_daily_status/');
     vm.data = {
         legendTitle: 'Percentage AWCs',
     };
@@ -20,13 +23,12 @@ function AWCDailyStatusController($scope, $routeParams, $location, $filter, icds
         info: 'Of the total number of AWCs, the percentage of AWCs that were open yesterday.',
     };
 
-    vm.templatePopup = function(loc, row) {
+    vm.getPopupData = function (row) {
         var total = row ? $filter('indiaNumbers')(row.all) : 'N/A';
         var inDay = row ? $filter('indiaNumbers')(row.in_day) : 'N/A';
         var percent = row ? d3.format('.2%')(row.in_day / (row.all || 1)) : 'N/A';
-        return vm.createTemplatePopup(
-            loc.properties.name,
-            [{
+        return [
+            {
                 indicator_name: 'Total number of AWCs that were open yesterday: ',
                 indicator_value: inDay,
             },
@@ -37,17 +39,8 @@ function AWCDailyStatusController($scope, $routeParams, $location, $filter, icds
             {
                 indicator_name: '% of AWCs open yesterday: ',
                 indicator_value: percent,
-            }]
-        );
-    };
-
-    vm.loadData = function () {
-        vm.setStepsMapLabel();
-        var usePercentage = false;
-        var forceYAxisFromZero = true;
-        vm.myPromise = icdsCasReachService.getAwcDailyStatusData(vm.step, vm.filtersData).then(
-            vm.loadDataFromResponse(usePercentage, forceYAxisFromZero)
-        );
+            },
+        ];
     };
 
     vm.init();
@@ -60,11 +53,13 @@ function AWCDailyStatusController($scope, $routeParams, $location, $filter, icds
     vm.chartOptions = vm.getChartOptions(options);
     vm.chartOptions.chart.color = d3.scale.category10().range();
     vm.chartOptions.chart.xAxis.rotateLabels = -45;
-    vm.chartOptions.chart.callback = function(chart) {
+    vm.chartOptions.chart.callback = function (chart) {
         var tooltip = chart.interactiveLayer.tooltip;
         tooltip.contentGenerator(function (d) {
             var findValue = function (values, date) {
-                var day = _.find(values, function(num) { return num.x === date; });
+                var day = _.find(values, function (num) {
+                    return num.x === date; 
+                });
                 return day.y;
             };
             var total = findValue(vm.chartData[0].values, d.value);
@@ -74,19 +69,23 @@ function AWCDailyStatusController($scope, $routeParams, $location, $filter, icds
         return chart;
     };
 
-    vm.tooltipContent = function(monthName, value, total) {
+    vm.tooltipContent = function (monthName, value, total) {
         return "<div>Total number of AWCs that were open on <strong>" + monthName + "</strong>: <strong>" + $filter('indiaNumbers')(value) + "</strong></div>"
         + "<div>Total number of AWCs that have been launched: <strong>" + $filter('indiaNumbers')(total) + "</strong></div>"
         + "<div>% of AWCs open on <strong>" + monthName + "</strong>: <strong>" + d3.format('.2%')(value / (total || 1)) + "</strong></div>";
     };
 }
 
-AWCDailyStatusController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'icdsCasReachService', 'locationsService', 'userLocationId', 'storageService', 'haveAccessToAllLocations', 'baseControllersService', 'isAlertActive'];
+AWCDailyStatusController.$inject = [
+    '$scope', '$routeParams', '$location', '$filter',
+    'icdsCasReachService', 'locationsService', 'dateHelperService', 'navigationService', 'userLocationId',
+    'storageService', 'haveAccessToAllLocations', 'baseControllersService', 'isAlertActive', 'isMobile',
+];
 
-window.angular.module('icdsApp').directive('awcDailyStatus', function() {
+window.angular.module('icdsApp').directive('awcDailyStatus', ['templateProviderService', function (templateProviderService) {
     return {
         restrict: 'E',
-        templateUrl: url('icds-ng-template', 'map-chart'),
+        templateUrl: templateProviderService.getMapChartTemplate,
         bindToController: true,
         scope: {
             data: '=',
@@ -94,4 +93,4 @@ window.angular.module('icdsApp').directive('awcDailyStatus', function() {
         controller: AWCDailyStatusController,
         controllerAs: '$ctrl',
     };
-});
+}]);

@@ -1,5 +1,7 @@
 import datetime
 from django.urls import reverse
+from jsonobject.exceptions import BadValueError
+
 from corehq import privileges
 from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_class
 from corehq.apps.domain.models import Domain
@@ -12,7 +14,7 @@ from corehq.apps.hqadmin.reports import (
 from corehq.apps.linked_domain.views import DomainLinkHistoryReport
 from corehq.apps.reports.standard import (
     monitoring, inspect,
-    deployments, sms, ivr
+    deployments, sms
 )
 from corehq.apps.reports.standard.forms import reports as receiverwrapper
 from corehq.apps.reports.standard.project_health import ProjectHealthDashboard
@@ -133,8 +135,6 @@ def REPORTS(project):
         sms.SurveyDetailReport,
         sms.MessageLogReport,
         sms.SMSOptOutReport,
-        ivr.CallReport,
-        ivr.ExpectedCallbackReport,
         sms.PhoneNumberReport,
         sms.ScheduleInstanceReport,
     ])
@@ -193,7 +193,7 @@ def _make_dynamic_report(report_config, keyprefix):
 def _safely_get_report_configs(project_name):
     try:
         configs = ReportConfiguration.by_domain(project_name)
-    except BadSpecError as e:
+    except (BadSpecError, BadValueError) as e:
         logging.exception(e)
 
         # Pick out the UCRs that don't have spec errors
@@ -201,12 +201,12 @@ def _safely_get_report_configs(project_name):
         for config_id in get_doc_ids_in_domain_by_class(project_name, ReportConfiguration):
             try:
                 configs.append(ReportConfiguration.get(config_id))
-            except BadSpecError as e:
+            except (BadSpecError, BadValueError) as e:
                 logging.error("%s with report config %s" % (str(e), config_id))
 
     try:
         configs.extend(StaticReportConfiguration.by_domain(project_name))
-    except BadSpecError as e:
+    except (BadSpecError, BadValueError) as e:
         logging.exception(e)
 
     return configs

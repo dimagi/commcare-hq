@@ -42,7 +42,7 @@ A "form" in HQ may refer to either a form *definition* within an application or 
 
 A module contains one or more form definitions. Forms, at their most basic, are collections of questions. Forms also trigger case changes and can be configured in a variety of ways.
 
-Each form has a `unique_id` which is guaranteed unique only within the application.
+Each form has a `unique_id` which is guaranteed unique only within the domain. For the most part, being unique within an application is sufficient, but uniqueness across the domain is required for the sake of multimaster linked applications. See [this commit](https://github.com/dimagi/commcare-hq/commit/6e2f38653377d167fdbef247f02eaec4159ce2e2#diff-535390eb5c83a4cd3449f82afd1fa9fb) for detail.
 
 Forms also have an xml namespace, abbreviated `xmlns`, which is part of the form's XML definition.
 Reports match form submissions to form definitions using the xmlns plus the app id, which most apps pass along to

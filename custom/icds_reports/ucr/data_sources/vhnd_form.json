@@ -595,6 +595,13 @@
     },
     "named_filters": {},
     "engine_id": "icds-ucr-citus",
+    "sql_column_indexes": [
+      {
+        "column_ids": [
+          "vhsnd_date_past_month"
+        ]
+      }
+    ],
     "disable_destructive_rebuild": true
   }
 }

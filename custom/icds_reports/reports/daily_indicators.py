@@ -66,14 +66,17 @@ def get_daily_indicators():
         total_pse_eligible += data['pse_eligible']
         total_pse_attended += data['total_attended_pse']
 
+    total_percent_open = round(total_open / total_launched * 100, 2) if total_launched else 0
+    total_percent_pse = round(total_pse_attended / total_pse_eligible * 100, 2) if total_pse_eligible else 0
+
     rows.append([
         'Total',
         total_launched,
         total_open,
-        round(total_open / total_launched * 100, 2) if total_launched else 0,
+        '{}%'.format(total_percent_open),
         total_pse_eligible,
         total_pse_attended,
-        round(total_pse_attended / total_pse_eligible * 100, 2) if total_pse_eligible else 0,
+        '{}%'.format(total_percent_pse),
 
     ])
 

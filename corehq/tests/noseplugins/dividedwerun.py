@@ -4,8 +4,11 @@ from hashlib import md5
 from unittest import SkipTest
 
 from nose.case import Test, FunctionTestCase
+from nose.failure import Failure
 from nose.plugins import Plugin
 from nose.suite import ContextSuite
+from nose.tools import nottest
+
 
 log = logging.getLogger(__name__)
 
@@ -72,17 +75,11 @@ class DividedWeRunPlugin(Plugin):
                 raise SkipTest("divided-we-run: {} not in range {}".format(
                                bucket, self.divided_we_run))
             if isinstance(test, ContextSuite):
-                if hasattr(test.context, "__module__"):
-                    desc = test.context
-                else:
-                    # FunctionTestCase expects descriptor to be a function
-                    desc = skip
-                    name = test.context.__name__
-                    if "." in name:
-                        name, skip.__name__ = name.rsplit(".", 1)
-                    else:
-                        skip.__name__ = "*"
-                    skip.__module__ = name
+                desc = get_descriptor(test)
+            elif isinstance(test.test, Failure):
+                return get_descriptive_failing_test(test.test)
+            elif test.test.descriptor is None:
+                desc = get_descriptor(test)
             else:
                 desc = test.test.descriptor
             return Test(
@@ -109,3 +106,44 @@ def get_score(test):
     if isinstance(name, str):
         name = name.encode('utf-8')
     return md5(name).hexdigest()[0]
+
+
+def get_descriptor(test):
+    def descriptor():
+        raise Exception("unexpected call")
+    if hasattr(test.context, "__module__"):
+        return test.context
+    name = test.context.__name__
+    if "." in name:
+        name, descriptor.__name__ = name.rsplit(".", 1)
+    else:
+        descriptor.__name__ = "*"
+    descriptor.__module__ = name
+    return descriptor
+
+
+@nottest
+def get_descriptive_failing_test(failure_obj):
+    """Get descriptive test from failure object
+
+    Useful for extracting descriptive details from a test failure that
+    occurs during test collection. This can happen when test generator
+    function raises an exception such as SkipTest, for example.
+    """
+    def fail():
+        raise failure_obj.exc_val
+    tb = failure_obj.tb
+    while tb.tb_next is not None:
+        tb = tb.tb_next
+    frame = tb.tb_frame
+    try:
+        descriptor = frame.f_globals[frame.f_code.co_name]
+    except KeyError:
+        def descriptor():
+            raise Exception("unexpected call")
+        descriptor.__name__ = str(frame)
+    return Test(
+        FunctionTestCase(fail, descriptor=descriptor),
+        getattr(failure_obj, 'config', None),
+        getattr(failure_obj, 'resultProxy', None),
+    )

@@ -8,7 +8,7 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext, ugettext_lazy
 from django.views import View
 
-from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
+from djng.views.mixins import JSONResponseMixin, allow_remote_invocation
 from memoized import memoized
 
 from corehq.apps.analytics.tasks import track_workflow
@@ -16,6 +16,7 @@ from corehq.apps.app_manager.dbaccessors import (
     get_app,
     get_brief_app_docs_in_domain,
     get_brief_apps_in_domain,
+    get_build_doc_by_version,
     get_latest_released_app,
     get_latest_released_app_versions_by_app_id,
 )
@@ -88,6 +89,12 @@ def user_roles(request, domain):
 @require_linked_domain
 def brief_apps(request, domain):
     return JsonResponse({'brief_apps': get_brief_app_docs_in_domain(domain, include_remote=False)})
+
+
+@login_or_api_key
+@require_linked_domain
+def app_by_version(request, domain, app_id, version):
+    return JsonResponse({'app': get_build_doc_by_version(domain, app_id, version)})
 
 
 @login_or_api_key

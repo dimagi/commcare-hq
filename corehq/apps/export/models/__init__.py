@@ -1,4 +1,3 @@
-from .deprecated import FormQuestionSchema, QuestionMeta
 from .new import (
     CASE_HISTORY_TABLE,
     MAIN_TABLE,
@@ -9,14 +8,12 @@ from .new import (
     CaseIndexExportColumn,
     CaseIndexItem,
     CaseInferredSchema,
-    ConversionMeta,
     DocRow,
     ExportColumn,
     ExportDataSchema,
     ExportGroupSchema,
     ExportInstance,
     ExportItem,
-    ExportMigrationMeta,
     ExportRow,
     FormExportDataSchema,
     FormExportInstance,

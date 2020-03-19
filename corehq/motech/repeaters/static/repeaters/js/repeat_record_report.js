@@ -1,6 +1,11 @@
 /* globals ace */
 hqDefine('repeaters/js/repeat_record_report', function () {
-    var initialPageData = hqImport("hqwebapp/js/initial_page_data");
+    var initialPageData = hqImport("hqwebapp/js/initial_page_data"),
+        selectAll = document.getElementById('select-all'),
+        cancelAll = document.getElementById('cancel-all'),
+        requeueAll = document.getElementById('requeue-all'),
+        $popUp = $('#are-you-sure');
+        $confirmButton = $('#confirm-button');
 
     $(function () {
         $('#report-content').on('click', '.toggle-next-attempt', function (e) {
@@ -60,27 +65,12 @@ hqDefine('repeaters/js/repeat_record_report', function () {
                 recordId = $btn.data().recordId;
             $btn.disableButton();
 
-            $.post({
-                url: initialPageData.reverse("repeat_record"),
-                data: { record_id: recordId },
-                success: function (data) {
-                    $btn.removeSpinnerFromButton();
-                    if (data.success) {
-                        $btn.text(gettext('Success!'));
-                        $btn.addClass('btn-success');
-                    } else {
-                        $btn.text(gettext('Failed'));
-                        $btn.addClass('btn-danger');
-                        $('#payload-error-modal').modal('show');
-                        $('#payload-error-modal .error-message').text(data.failure_reason);
-                    }
-                },
-                error: function () {
-                    $btn.removeSpinnerFromButton();
-                    $btn.text(gettext('Failed to send'));
-                    $btn.addClass('btn-danger');
-                },
-            });
+            postResend($btn, recordId);
+        });
+
+        $('#resend-all-button').on('click', function () {
+            setAction('resend');
+            performAction('resend');
         });
 
         $('#report-content').on('click', '.cancel-record-payload', function () {
@@ -88,20 +78,12 @@ hqDefine('repeaters/js/repeat_record_report', function () {
                 recordId = $btn.data().recordId;
             $btn.disableButton();
 
-            $.post({
-                url: initialPageData.reverse('cancel_repeat_record'),
-                data: { record_id: recordId },
-                success: function () {
-                    $btn.removeSpinnerFromButton();
-                    $btn.text(gettext('Success!'));
-                    $btn.addClass('btn-success');
-                },
-                error: function () {
-                    $btn.removeSpinnerFromButton();
-                    $btn.text(gettext('Failed to cancel'));
-                    $btn.addClass('btn-danger');
-                },
-            });
+            postOther($btn, recordId, 'cancel');
+        });
+
+        $('#cancel-all-button').on('click', function () {
+            setAction('cancel');
+            performAction('cancel');
         });
 
         $('#report-content').on('click', '.requeue-record-payload', function () {
@@ -109,20 +91,169 @@ hqDefine('repeaters/js/repeat_record_report', function () {
                 recordId = $btn.data().recordId;
             $btn.disableButton();
 
+            postOther($btn, recordId, 'requeue');
+        });
+
+        $('#requeue-all-button').on('click', function () {
+            setAction('requeue');
+            performAction('requeue');
+        });
+
+        $('#confirm-button').on('click', function () {
+            var itemsToSend = getCheckboxes(), action = getAction(), $btn;
+
+            $popUp.modal('hide');
+            if (action == 'resend') {
+                $btn = $('#resend-all-button');
+                $btn.disableButton();
+                postResend($btn, itemsToSend);
+            } else if (action == 'cancel') {
+                $btn = $('#cancel-all-button');
+                $btn.disableButton();
+                postOther($btn, itemsToSend, action);
+            } else if (action == 'requeue') {
+                $btn = $('#requeue-all-button');
+                $btn.disableButton();
+                postOther($btn, itemsToSend, action);
+            }
+        });
+
+        function performAction(action) {
+            if (isAnythingChecked()) {
+                if (isActionPossibleForCheckedItems(action)) {
+                    $('#warning').addClass('hide');
+                    $('#not-allowed').addClass('hide');
+                    $popUp.modal('show');
+                } else {
+                    $('#warning').addClass('hide');
+                    $('#not-allowed').removeClass('hide');
+                }
+            } else {
+                $('#warning').removeClass('hide');
+                $('#not-allowed').addClass('hide');
+            }
+        }
+
+        function isAnythingChecked() {
+            var items = document.getElementsByName('xform_ids');
+
+            if (selectAll.checked) {
+                setFlag('select_all');
+                return true;
+            } else if (cancelAll.checked) {
+                setFlag('cancel_all');
+                return true;
+            } else if (requeueAll.checked) {
+                setFlag('requeue_all');
+                return true;
+            }
+
+            for (var i = 0; i < items.length; i++) {
+                if (items[i].checked) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        function isActionPossibleForCheckedItems(action) {
+            var items = document.getElementsByName('xform_ids');
+            for (var i = 0; i < items.length; i++) {
+                if (items[i].checked) {
+                    var id = items[i].getAttribute('data-id');
+                    var query = '[data-record-id="' + id + '"][class="btn btn-default ' + action + '-record-payload"]';
+                    var button = document.querySelector(query);
+                    if (button == null) {
+                        return false;
+                    }
+                }
+            }
+
+            return true;
+        }
+
+        function getCheckboxes() {
+            if (selectAll.checked) {
+                return selectAll.getAttribute('data-id');
+            } else if (cancelAll.checked) {
+                return cancelAll.getAttribute('data-id');
+            } else if (requeueAll.checked) {
+                return requeueAll.getAttribute('data-id');
+            } else {
+                var items = document.getElementsByName('xform_ids'),
+                    itemsToSend = '';
+                for (var i = 0; i < items.length; i++) {
+                    if (items[i].type == 'checkbox' && items[i].checked == true) {
+                        itemsToSend += items[i].getAttribute('data-id') + ' '
+                    }
+                }
+
+                return itemsToSend;
+            }
+        }
+
+        function postResend(btn, arg) {
             $.post({
-                url: initialPageData.reverse("requeue_repeat_record"),
-                data: { record_id: recordId },
-                success: function () {
-                    $btn.removeSpinnerFromButton();
-                    $btn.text(gettext('Success!'));
-                    $btn.addClass('btn-success');
+                url: initialPageData.reverse("repeat_record"),
+                data: {
+                    record_id: arg,
+                    flag: getFlag(),
+                },
+                success: function (data) {
+                    btn.removeSpinnerFromButton();
+                    if (data.success) {
+                        btn.text(gettext('Success!'));
+                        btn.addClass('btn-success');
+                    } else {
+                        btn.text(gettext('Failed'));
+                        btn.addClass('btn-danger');
+                        $('#payload-error-modal').modal('show');
+                        $('#payload-error-modal .error-message').text(data.failure_reason);
+                    }
                 },
                 error: function () {
-                    $btn.removeSpinnerFromButton();
-                    $btn.text(gettext('Failed to cancel'));
-                    $btn.addClass('btn-danger');
+                    btn.removeSpinnerFromButton();
+                    btn.text(gettext('Failed to send'));
+                    btn.addClass('btn-danger');
                 },
             });
-        });
+        }
+
+        function postOther(btn, arg, action) {
+            $.post({
+                url: initialPageData.reverse(action + '_repeat_record'),
+                data: {
+                    record_id: arg,
+                    flag: getFlag(),
+                },
+                success: function () {
+                    btn.removeSpinnerFromButton();
+                    btn.text(gettext('Success!'));
+                    btn.addClass('btn-success');
+                },
+                error: function () {
+                    btn.removeSpinnerFromButton();
+                    btn.text(gettext('Failed to cancel'));
+                    btn.addClass('btn-danger');
+                },
+            });
+        }
+
+        function setAction(action) {
+            $confirmButton.attr('data-action', action);
+        }
+
+        function getAction() {
+            return $confirmButton.attr('data-action');
+        }
+
+        function setFlag(flag) {
+            $confirmButton.attr('data-flag', flag);
+        }
+
+        function getFlag() {
+            return $confirmButton.attr('data-flag');
+        }
     });
 });

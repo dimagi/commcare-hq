@@ -1,4 +1,5 @@
 import uuid
+from contextlib import ExitStack
 
 from django.db import DEFAULT_DB_ALIAS
 from django.test import TestCase
@@ -13,7 +14,6 @@ from corehq.apps.userreports.reports.data_source import (
     ConfigurableReportDataSource,
 )
 from corehq.apps.userreports.sql.adapter import MultiDBSqlAdapter
-from corehq.apps.userreports.sql.connection import get_engine_id
 from corehq.apps.userreports.tests.utils import (
     doc_to_change,
     get_sample_data_source,
@@ -35,12 +35,14 @@ class UCRMultiDBTest(TestCase):
     def setUpClass(cls):
         super(UCRMultiDBTest, cls).setUpClass()
         cls.db2_name = 'cchq_ucr_tests'
-        db_conn_parts = connections.connection_manager.get_connection_string(DEFAULT_DB_ALIAS).split('/')
+        default_db_url = connections.connection_manager.get_connection_string(DEFAULT_DB_ALIAS)
+        db_conn_parts = default_db_url.split('/')
         db_conn_parts[-1] = cls.db2_name
         cls.db2_url = '/'.join(db_conn_parts)
 
-        cls.context_manager = connections.override_engine('engine-2', cls.db2_url, cls.db2_name)
-        cls.context_manager.__enter__()
+        cls.context_managers = ExitStack()
+        cls.context_managers.enter_context(connections.override_engine('engine-1', default_db_url, 'default'))
+        cls.context_managers.enter_context(connections.override_engine('engine-2', cls.db2_url, cls.db2_name))
 
         # setup data sources
         data_source_template = get_sample_data_source()
@@ -51,8 +53,7 @@ class UCRMultiDBTest(TestCase):
         cls.ds_2.engine_id = 'engine-2'
         cls.ds_2.save()
 
-        cls.db_context = temporary_database(cls.db2_name)
-        cls.db_context.__enter__()
+        cls.context_managers.enter_context(temporary_database(cls.db2_name))
 
         cls.ds1_adapter = get_indicator_adapter(cls.ds_1)
         cls.ds2_adapter = get_indicator_adapter(cls.ds_2)
@@ -66,8 +67,6 @@ class UCRMultiDBTest(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.context_manager.__exit__(None, None, None)
-
         # delete data sources
         cls.ds_1.delete()
         cls.ds_2.delete()
@@ -75,8 +74,7 @@ class UCRMultiDBTest(TestCase):
         # dispose secondary engine
         cls.ds2_adapter.session_helper.engine.dispose()
 
-        # drop the secondary database
-        cls.db_context.__exit__(None, None, None)
+        cls.context_managers.__exit__(None, None, None)
         super(UCRMultiDBTest, cls).tearDownClass()
 
     def tearDown(self):
@@ -86,9 +84,6 @@ class UCRMultiDBTest(TestCase):
         self.ds2_adapter.drop_table()
 
     def test_patches_and_setup(self):
-        self.assertEqual('engine-1', get_engine_id(self.ds_1))
-        self.assertEqual('engine-2', get_engine_id(self.ds_2))
-
         self.assertEqual(connections.connection_manager.get_connection_string(DEFAULT_DB_ALIAS),
                          connections.connection_manager.get_connection_string('engine-1'))
         self.assertEqual(self.db2_url,
@@ -148,7 +143,7 @@ class UCRMultiDBTest(TestCase):
         self.assertEqual(1, len(ds1_rows))
         self.assertEqual(num_docs, ds1_rows[0]['count'])
         ds2_rows = ConfigurableReportDataSource.from_spec(report_config_2).get_data()
-        self.assertEqual(0, len(ds2_rows))
+        self.assertEqual(0, len(ds2_rows), ds2_rows)
 
         # save one doc to ds 2
         sample_doc['_id'] = uuid.uuid4().hex

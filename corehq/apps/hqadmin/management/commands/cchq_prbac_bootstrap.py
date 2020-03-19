@@ -7,6 +7,7 @@ from django_prbac.models import Grant, Role
 
 from corehq import privileges
 from corehq.apps.accounting.utils import ensure_grants, log_removed_grants
+from corehq.apps.accounting.bootstrap import features
 
 logger = logging.getLogger(__name__)
 
@@ -155,13 +156,23 @@ class Command(BaseCommand):
         Role(slug=privileges.ODATA_FEED,
              name='OData Feed - Tableau / BI Integration',
              description='Allows usage of Tableau / BI Integration (OData Feeds)'),
+        Role(slug=privileges.DATA_FORWARDING,
+             name='Data Forwarding',
+             description='Allows use of Data Forwarding'),
+        Role(slug=privileges.PROJECT_ACCESS,
+             name='Project Access',
+             description='Allows access to core project functionality.'),
     ]
 
     BOOTSTRAP_PLANS = [
+        Role(slug='paused_plan_v0', name='Paused Plan', description=''),
         Role(slug='community_plan_v0', name='Community Plan', description=''),
         Role(slug='community_plan_v1', name='Community Plan', description=''),
+        Role(slug='community_plan_v2', name='Community Plan', description=''),
         Role(slug='standard_plan_v0', name='Standard Plan', description=''),
+        Role(slug='standard_plan_v1', name='Standard Plan', description=''),
         Role(slug='pro_plan_v0', name='Pro Plan', description=''),
+        Role(slug='pro_plan_v1', name='Pro Plan', description=''),
         Role(slug='advanced_plan_v0', name='Advanced Plan', description=''),
         Role(slug='enterprise_plan_v0', name='Enterprise Plan', description=''),
     ] + [
@@ -170,70 +181,20 @@ class Command(BaseCommand):
         Role(slug='advanced_plan_report_builder_v0', name='Advanced Plan - 5 Reports', description=''),
     ]
 
-    community_plan_v0_features = [
-        privileges.EXCEL_DASHBOARD,
-        privileges.DAILY_SAVED_EXPORT,
-        privileges.CASE_SHARING_GROUPS,
-        privileges.CHILD_CASES,
-    ]
-
-    community_plan_v1_features = [
-        privileges.CASE_SHARING_GROUPS,
-        privileges.CHILD_CASES,
-    ]
-
-    standard_plan_features = community_plan_v0_features + [
-        privileges.API_ACCESS,
-        privileges.LOOKUP_TABLES,
-        privileges.OUTBOUND_SMS,
-        privileges.REMINDERS_FRAMEWORK,
-        privileges.CUSTOM_SMS_GATEWAY,
-        privileges.ROLE_BASED_ACCESS,
-        privileges.BULK_USER_MANAGEMENT,
-        privileges.BULK_CASE_MANAGEMENT,
-        privileges.ALLOW_EXCESS_USERS,
-        privileges.LOCATIONS,
-        privileges.USER_CASE,
-        privileges.ZAPIER_INTEGRATION,
-        privileges.LOGIN_AS,
-        privileges.PRACTICE_MOBILE_WORKERS,
-    ]
-
-    pro_plan_features = standard_plan_features + [
-        privileges.CLOUDCARE,
-        privileges.CUSTOM_REPORTS,
-        privileges.INBOUND_SMS,
-        privileges.HIPAA_COMPLIANCE_ASSURANCE,
-        privileges.DEIDENTIFIED_DATA,
-        privileges.REPORT_BUILDER,
-        privileges.DATA_CLEANUP,
-        privileges.TEMPLATED_INTENTS,
-        privileges.RESTRICT_ACCESS_BY_LOCATION,
-        privileges.REPORT_BUILDER_5,
-    ]
-
-    advanced_plan_features = pro_plan_features + [
-        privileges.CUSTOM_BRANDING,
-        privileges.ACTIVE_DATA_MANAGEMENT,
-        privileges.COMMCARE_LOGO_UPLOADER,
-        privileges.CUSTOM_INTENTS,
-        privileges.ADVANCED_DOMAIN_SECURITY,
-        privileges.BUILD_PROFILES,
-        privileges.ODATA_FEED,
-    ]
-
-    enterprise_plan_features = advanced_plan_features + []
-
     OLD_PRIVILEGES = [
         BULK_CASE_AND_USER_MANAGEMENT,
         CROSS_PROJECT_REPORTS,
     ]
 
     BOOTSTRAP_GRANTS = {
-        'community_plan_v0': community_plan_v0_features,
-        'community_plan_v1': community_plan_v1_features,
-        'standard_plan_v0': standard_plan_features,
-        'pro_plan_v0': pro_plan_features,
-        'advanced_plan_v0': advanced_plan_features,
-        'enterprise_plan_v0': enterprise_plan_features,
+        'paused_plan_v0': features.paused_v0,
+        'community_plan_v0': features.community_v0,
+        'community_plan_v1': features.community_v1,
+        'community_plan_v2': features.community_v2,
+        'standard_plan_v0': features.standard_v0,
+        'standard_plan_v1': features.standard_v1,
+        'pro_plan_v0': features.pro_v0,
+        'pro_plan_v1': features.pro_v1,
+        'advanced_plan_v0': features.advanced_v0,
+        'enterprise_plan_v0': features.enterprise_v0,
     }

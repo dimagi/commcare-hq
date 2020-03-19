@@ -16,7 +16,9 @@
         <link type="text/css" rel="stylesheet" media="all" href="{% static 'leaflet/dist/leaflet.css' %}">
         <link type="text/css" rel="stylesheet" media="all" href="{% static 'angular-busy/dist/angular-busy.min.css' %}"/>
         <link type="text/css" rel="stylesheet" media="all" href="{% static 'perfect-scrollbar/css/perfect-scrollbar.min.css' %}"/>
-        <link type="text/css" rel="stylesheet" media="all" href="{% static 'css/icds_dashboard.css' %}"/>
+        <link type="text/less" rel="stylesheet" media="all" href="{% static 'css/icds_dashboard.less' %}"/>
+        <link type="text/less" rel="stylesheet" media="all" href="{% static 'css/fact_sheets.less' %}"/>
+        <link type="text/less" rel="stylesheet" media="all" href="{% static 'css/navbar.less' %}"/>
 {% endcompress %}
 
         {% include 'analytics/google.html' %}
@@ -52,15 +54,6 @@
         <script src="{% static 'datamaps/dist/datamaps.ind.js' %}"></script>
 {% endcompress %}
 {% comment %}
-These topojson files are excluded from compression because:
- 1. They are large and cause out of memory errors on some environments
- 2. They are likely already sufficiently compressed
-{% endcomment %}
-        <script src="{% static 'js/topojsons/states_v2.topojson.js' %}"></script>
-        <script src="{% static 'js/topojsons/districts_v2.topojson.js' %}"></script>
-        <script src="{% static 'js/topojsons/blocks_v3.topojson.js' %}"></script>
-
-{% comment %}
 For some odd reason if we include the entire block in a single compress tag we get javascript errors
 related to angular not being defined. But if we split it here it works fine.
 {% endcomment %}
@@ -69,66 +62,38 @@ related to angular not being defined. But if we split it here it works fine.
         <script src="{% static 'angular-bootstrap/ui-bootstrap-tpls.min.js' %}"></script>
 
         <script src="{% static 'js/icds_app.js' %}"></script>
+        <script src="{% static "js/icds_dashboard_utils.js" %}"></script>
         <script src="{% static 'js/filters/property-filter/property.filter.js' %}"></script>
         <script src="{% static 'js/filters/india-numbers/india-numbers.filter.js' %}"></script>
 
-        <script src="{% static 'js/angular-services/maternal-child.service.js' %}"></script>
-        <script src="{% static 'js/angular-services/system-usage.service.js' %}"></script>
-        <script src="{% static 'js/angular-services/locations.service.js' %}"></script>
-        <script src="{% static 'js/angular-services/progress-report.service.js' %}"></script>
-        <script src="{% static 'js/angular-services/storage.service.js' %}"></script>
-        <script src="{% static 'js/angular-services/icds-cas-reach.service.js' %}"></script>
-        <script src="{% static 'js/angular-services/demographics.service.js' %}"></script>
-        <script src="{% static 'js/angular-services/infrastructure.service.js' %}"></script>
-        <script src="{% static 'js/angular-services/download.service.js' %}"></script>
-        <script src="{% static 'js/angular-services/baseControllers.service.js' %}"></script>
+{% endcompress %}
+  {% include 'icds_reports/partials/shared_utility_services.html' %}
 
+  {% include 'icds_reports/partials/shared_report_services.html' %}
+{% compress js %}
+        <script src="{% static 'js/angular-services/system-usage.service.js' %}"></script>
+        <script src="{% static 'js/angular-services/download.service.js' %}"></script>
+{% endcompress %}
+  {% include 'icds_reports/partials/shared_component_directives.html' %}
+{% compress js %}
         <script src="{% static 'js/directives/filters/filters.directive.js' %}"></script>
-        <script src="{% static 'js/directives/kpi/kpi.directive.js' %}"></script>
-        <script src="{% static 'js/directives/location-filter/location-filter.directive.js' %}"></script>
-        <script src="{% static 'js/directives/month-filter/month-filter.directive.js' %}"></script>
-        <script src="{% static 'js/directives/additional-filter/additional-filter.directive.js' %}"></script>
-        <script src="{% static 'js/directives/system-usage/system-usage.directive.js' %}"></script>
-        <script src="{% static 'js/directives/navigation/navigation.directive.js' %}"></script>
-        <script src="{% static 'js/directives/dot-link/dot-link.directive.js' %}"></script>
+
+{% endcompress %}
+  {% include 'icds_reports/partials/shared_report_directives.html' %}
+{% compress js %}
+
         <script src="{% static 'js/directives/awc-opened-yesterday/awc-opened-yesterday.directive.js' %}"></script>
-        <script src="{% static 'js/directives/underweight-children-report/underweight-children-report.directive.js' %}"></script>
-        <script src="{% static 'js/directives/prevalence-of-severe-report/prevalence-of-severe-report.directive.js' %}"></script>
-        <script src="{% static 'js/directives/prevalence-of-stunting-report/prevalence-of-stunting-report.directive.js' %}"></script>
-        <script src="{% static 'js/directives/newborn_with_low_weight/newborn_with_low_weight.directive.js' %}"></script>
-        <script src="{% static 'js/directives/early_initiation_breastfeeding/early_initiation_breastfeeding.directive.js' %}"></script>
-        <script src="{% static 'js/directives/service-delivery-dashboard/service-delivery-dashboard.directive.js' %}"></script>
-        <script src="{% static 'js/directives/awc-reports/awc-reports.directive.js' %}"></script>
         <script src="{% static 'js/directives/lady-supervisor/lady-supervisor.directive.js' %}"></script>
         <script src="{% static 'js/directives/indie-map/indie-map.directive.js' %}"></script>
         <script src="{% static 'js/directives/map-or-sector-view/map-or-sector-view.directive.js' %}"></script>
         <script src="{% static 'js/directives/download/download.directive.js' %}"></script>
-        <script src="{% static 'js/directives/progress-report/progress-report.directive.js' %}"></script>
         <script src="{% static 'js/directives/print/print.directive.js' %}"></script>
-        <script src="{% static 'js/directives/exclusive-breastfeeding/exlusive-breastfeeding.directive.js' %}"></script>
-        <script src="{% static 'js/directives/children-initiated/children-initiated.directive.js' %}"></script>
-        <script src="{% static 'js/directives/institutional-deliveries/institutional-deliveries.directive.js' %}"></script>
-        <script src="{% static 'js/directives/immunization_coverage/immunization_coverage.directive.js' %}"></script>
-        <script src="{% static 'js/directives/awc-daily-status/awc-daily-status.directive.js' %}"></script>
-        <script src="{% static 'js/directives/awcs-covered/awcs-covered.directive.js' %}"></script>
-        <script src="{% static 'js/directives/registered-household/registered-household.directive.js' %}"></script>
-        <script src="{% static 'js/directives/enrolled-children/enrolled-children.directive.js' %}"></script>
-        <script src="{% static 'js/directives/enrolled-women/enrolled-women.directive.js' %}"></script>
-        <script src="{% static 'js/directives/lactating-enrolled-women/lactating-enrolled-women.directive.js' %}"></script>
-        <script src="{% static 'js/directives/adolescent-girls/adolescent-girls.directive.js' %}"></script>
-        <script src="{% static 'js/directives/adhaar-beneficiary/adhaar-beneficiary.directive.js' %}"></script>
-        <script src="{% static 'js/directives/clean-water/clean-water.directive.js' %}"></script>
-        <script src="{% static 'js/directives/functional-toilet/functional-toilet.directive.js' %}"></script>
-        <script src="{% static 'js/directives/medicine-kit/medicine-kit.directive.js' %}"></script>
-        <script src="{% static 'js/directives/infants-weight-scale/infants-weight-scale.directive.js' %}"></script>
-        <script src="{% static 'js/directives/adult-weight-scale/adult-weight-scale.directive.js' %}"></script>
         <script src="{% static 'js/directives/cas-export/cas-export.directive.js' %}"></script>
         <script src="{% static 'js/directives/access-denied/access-denied.directive.js' %}"></script>
         <script src="{% static 'js/directives/info-message/info-message.directive.js' %}"></script>
 {% endcompress %}
 </head>
 <body>
-
 <div id="app" ng-cloak>
     <div ng-controller="MainController" class="container-fluid">
 
@@ -153,29 +118,41 @@ related to angular not being defined. But if we split it here it works fine.
                               <nav class="navbar-menus fullmenu" id="hq-full-menu" role="navigation">
                                   <div class="nav-settings-bar pull-right">
                                       <ul class="nav navbar-nav" role="menu">
-                                          <li class="dropdown">
+                                          <li class="nav-menu-icon">
                                               <span class="pointer">
                                                   <a href="{% static 'media/Dashboard_Training_Manual.pdf' %}" download>
                                                       <i class="fa fa-question-circle nav-main-icon fa-2x light-grey"
                                                           uib-popover-html="'Download user manual'"
                                                           popover-placement="left"
-                                                          popover-trigger="'mouseenter'" style="margin-top: 11px;"></i>
+                                                          popover-trigger="'mouseenter'" ></i>
                                                   </a>
                                               </span>
                                           </li>
-                                          <li class="dropdown" ng-hide="$location.path().indexOf('download') !== -1">
+                                      {% if show_mobile_apk %}
+                                          <li class="nav-menu-icon mobile-phone">
+                                              <span class="pointer">
+                                                  <a href="{% url 'icds_mobile_dashboard_download' domain %}" >
+                                                      <i class="fa fa-mobile-phone nav-main-icon fa-2x light-grey"
+                                                          uib-popover-html="'Get Mobile Application'"
+                                                          popover-placement="left"
+                                                          popover-trigger="'mouseenter'"></i>
+                                                  </a>
+                                              </span>
+                                          </li>
+                                      {% endif %}
+                                          <li class="nav-menu-icon" ng-hide="$location.path().indexOf('download') !== -1">
                                               <span>
                                                   <print-report></print-report>
                                               </span>
                                           </li>
-                                          <li class="dropdown">
+                                          <li class="nav-menu-icon">
                                               <span ng-if="!isWebUser" id="settingsmenu-projectSettings"
                                                     ng-click="reportAnIssue()"
                                                     class="dropdown-toggle dropdown-toggle-with-icon pointer"
                                                     data-toggle="dropdown">
                                                   <i class="fa fa-exclamation-triangle nav-main-icon fa-2x light-grey" uib-popover-html="'Report an Issue'"
                                                      popover-placement="left"
-                                                     popover-trigger="'mouseenter'" style="margin-top: 11px;"></i>
+                                                     popover-trigger="'mouseenter'" ></i>
                                               </span>
                                               <span ng-if="isWebUser" id="settingsmenu-projectSettings"
                                                     class="dropdown-toggle dropdown-toggle-with-icon pointer"
@@ -183,20 +160,17 @@ related to angular not being defined. But if we split it here it works fine.
                                                     <a data-target="#modalReportIssue" data-toggle="modal">
                                                      <i class="fa fa-exclamation-triangle nav-main-icon fa-2x light-grey" uib-popover-html="'Report an Issue'"
                                                         popover-placement="left"
-                                                        popover-trigger="'mouseenter'"
-                                                        style="margin-top: 11px;"></i>
-
+                                                        popover-trigger="'mouseenter'"></i>
                                                     </a>
-
                                               </span>
                                           </li>
-                                          <li class="dropdown">
+                                          <li class="nav-menu-icon">
                                               <span id="settingsmenu-projectSettings"
                                                  class="dropdown-toggle dropdown-toggle-with-icon pointer"
                                                  data-toggle="dropdown">
                                                   <i class="fa fa-cog nav-main-icon fa-2x light-grey" uib-popover-html="'Settings'"
                                                      popover-placement="left"
-                                                     popover-trigger="'mouseenter'" style="margin-top: 10px;"></i>
+                                                     popover-trigger="'mouseenter'"></i>
                                               </span>
                                               <ul class="dropdown-menu dropdown-menu-right" role="menu">
                                                   <li class="dropdown-header nav-header">{% trans 'Logged in As' %}</li>
@@ -242,42 +216,9 @@ related to angular not being defined. But if we split it here it works fine.
                       </nav>
                   </div>
                   <div class="row no-margin">
-                      {% registerurl 'icds-ng-template' domain '---' %}
-                      {% registerurl 'program_summary' domain '---' %}
-                      {% registerurl 'awc_reports' domain '---' %}
-                      {% registerurl 'underweight_children' domain '---' %}
-                      {% registerurl 'prevalence_of_severe' domain '---' %}
-                      {% registerurl 'prevalence_of_stunting' domain '---' %}
-                      {% registerurl 'low_birth' domain '---' %}
-                      {% registerurl 'early_initiation' domain '---' %}
-                      {% registerurl 'icds_locations' domain %}
-                      {% registerurl 'icds_locations_ancestors' domain %}
-                      {% registerurl 'fact_sheets' domain %}
-                      {% registerurl 'exclusive-breastfeeding' domain '---' %}
-                      {% registerurl 'children_initiated' domain '---' %}
-                      {% registerurl 'institutional_deliveries' domain '---' %}
-                      {% registerurl 'immunization_coverage' domain '---' %}
-                      {% registerurl 'awc_daily_status' domain '---' %}
-                      {% registerurl 'awcs_covered' domain '---' %}
-                      {% registerurl 'registered_household' domain '---' %}
-                      {% registerurl 'enrolled_children' domain '---' %}
-                      {% registerurl 'enrolled_women' domain '---' %}
-                      {% registerurl 'lactating_enrolled_women' domain '---' %}
-                      {% registerurl 'adolescent_girls' domain '---' %}
-                      {% registerurl 'adhaar' domain '---' %}
-                      {% registerurl 'clean_water' domain '---' %}
-                      {% registerurl 'functional_toilet' domain '---' %}
-                      {% registerurl 'medicine_kit' domain '---' %}
-                      {% registerurl 'infants_weight_scale' domain '---' %}
-                      {% registerurl 'adult_weight_scale' domain '---' %}
-                      {% registerurl 'awc_locations' domain %}
-                      {% registerurl 'issnip_pdf_status' domain %}
-                      {% registerurl 'icds_export_indicator' domain %}
-                      {% registerurl 'have_access_to_location' domain %}
-                      {% registerurl 'lady_supervisor' domain %}
-                      {% registerurl 'cas_export' domain %}
-                      {% registerurl 'service_delivery_dashboard' domain  '---'%}
-                      <div class="ng-view"></div>
+                    {% include 'icds_reports/partials/register_dashboard_urls.html' %}
+                    {% include 'icds_reports/partials/dashboard_initial_page_data.html' %}
+                    <div class="ng-view"></div>
                   </div>
               </div>
             </div>
@@ -314,41 +255,19 @@ related to angular not being defined. But if we split it here it works fine.
 {% include 'analytics/initial/google.html' %}
 <div class="initial-analytics-data hide">
 {% block initial_analytics_data %}
-     do not override this block, use initial_analytics_data template tag to populate
+  {# do not override this block, use initial_analytics_data template tag to populate #}
 {% endblock %}
+  <div class="initial-page-data hide">
+    {% block initial_page_data %}
+      {# do not override this block, use initial_page_data template tag to populate #}
+    {% endblock %}
+  </div>
 </div>
-
 {% block js-inline %}{% endblock js-inline %}
 <script>
-    angular.module('icdsApp').constant('isAlertActive', window.angular.element('.alert-maintenance').children().length === 1);
-    angular.module('icdsApp').constant('locationHierarchy', {{ location_hierarchy | JSON }});
-    angular.module('icdsApp').constant('userLocationId', {{ user_location_id | JSON }});
-    angular.module('icdsApp').constant('allUserLocationId', {{ all_user_location_id | JSON }});
-    angular.module('icdsApp').constant('reportAnIssueUrl', {{ report_an_issue_url | JSON }});
-    angular.module('icdsApp').constant('isWebUser', {{ is_web_user | JSON }});
-    angular.module('icdsApp').constant('haveAccessToFeatures', {{ have_access_to_features | JSON }});
-    angular.module('icdsApp').constant('haveAccessToAllLocations', {{ have_access_to_all_locations | JSON }});
-    angular.module('icdsApp').constant('stateLevelAccess', {{ state_level_access | JSON }});
-    angular.module('icdsApp').constant('genders', [
-        {id: '', name: 'All'},
-        {id: 'M', name: 'Male'},
-        {id: 'F', name: 'Female'},
-    ]);
-    angular.module('icdsApp').constant('ages', [
-        {id: '', name: 'All'},
-        {id: '6', name: '0-6 months (0-180 days)'},
-        {id: '12', name: '6-12 months (181-365 days)'},
-        {id: '24', name: '12-24 months (366-730 days)'},
-        {id: '36', name: '24-36 months (731-1095 days)'},
-        {id: '48', name: '36-48 months (1096-1460 days)'},
-        {id: '60', name: '48-60 months (1461-1825 days)'},
-        {id: '72', name: '60-72 months (1826-2190 days)'},
-    ]);
-    angular.module('icdsApp').constant('agesServiceDeliveryDashboard', [
-        {id: '0_3', name: 'PW, LW & Children 0-3 years (0-1095 days)'},
-        {id: '3_6', name: 'Children 3-6 years (1096-2190 days)'},
-    ]);
-    angular.module('icdsApp').value('cgBusyDefaults', {
+    var appName = 'icdsApp';
+    hqImport("js/icds_dashboard_utils").populateDashboardConstants(appName);
+    angular.module(appName).value('cgBusyDefaults', {
       message:'Loading data',
       backdrop: true,
       templateUrl: url('icds-ng-template', 'busy'),

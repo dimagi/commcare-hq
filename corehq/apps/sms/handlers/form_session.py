@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from corehq.apps.domain.models import Domain
-from corehq.apps.formplayer_api.smsforms.api import current_question
+from corehq.apps.formplayer_api.smsforms.api import FormplayerInterface
 from corehq.apps.sms.api import (
     MessageMetadata,
     add_msg_tags,
@@ -75,7 +75,7 @@ def get_single_open_session_or_close_multiple(domain, contact_id):
 
 
 def answer_next_question(v, text, msg, session):
-    resp = current_question(session.session_id, domain=v.domain)
+    resp = FormplayerInterface(session.session_id, v.domain).current_question()
     event = resp.event
     valid, text, error_msg = validate_answer(event, text, v)
 

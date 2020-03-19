@@ -56,11 +56,11 @@ class ChildrenExport(ExportableMixin, IcdsSqlData):
                 percent,
                 [
                     SumWhen(
-                        whens={"age_tranche != :age_72": 'nutrition_status_weighed'}, else_=0,
+                        whens=[["age_tranche != :age_72", 'nutrition_status_weighed']], else_=0,
                         alias='nutrition_status_weighed'
                     ),
                     SumWhen(
-                        whens={"age_tranche != :age_72": 'wer_eligible'}, else_=0,
+                        whens=[["age_tranche != :age_72", 'wer_eligible']], else_=0,
                         alias='wer_eligible'
                     )
                 ],
@@ -71,11 +71,11 @@ class ChildrenExport(ExportableMixin, IcdsSqlData):
                 percent,
                 [
                     SumWhen(
-                        whens={"age_tranche != :age_72": 'height_measured_in_month'}, else_=0,
+                        whens=[["age_tranche != :age_72", 'height_measured_in_month']], else_=0,
                         alias='height_measured_in_month_efficiency'
                     ),
                     SumWhen(
-                        whens={"age_tranche != :age_72": 'height_eligible'}, else_=0,
+                        whens=[["age_tranche != :age_72", 'height_eligible']], else_=0,
                         alias='height_eligible',
                     )
                 ],
@@ -84,7 +84,7 @@ class ChildrenExport(ExportableMixin, IcdsSqlData):
             DatabaseColumn(
                 'Total number of unweighed children (0-5 Years)',
                 SumWhen(
-                    whens={"age_tranche != :age_72": 'nutrition_status_unweighed'}, else_=0,
+                    whens=[["age_tranche != :age_72", 'nutrition_status_unweighed']], else_=0,
                     alias='nutrition_status_unweighed'
                 ),
                 slug='total_number_unweighed'
@@ -94,7 +94,7 @@ class ChildrenExport(ExportableMixin, IcdsSqlData):
                 percent,
                 [
                     SumWhen(
-                        whens={"age_tranche != :age_72": 'nutrition_status_severely_underweight'}, else_=0,
+                        whens=[["age_tranche != :age_72", 'nutrition_status_severely_underweight']], else_=0,
                         alias='nutrition_status_severely_underweight'
                     ),
                     AliasColumn('nutrition_status_weighed'),
@@ -106,7 +106,7 @@ class ChildrenExport(ExportableMixin, IcdsSqlData):
                 percent,
                 [
                     SumWhen(
-                        whens={"age_tranche != :age_72": 'nutrition_status_moderately_underweight'}, else_=0,
+                        whens=[["age_tranche != :age_72", 'nutrition_status_moderately_underweight']], else_=0,
                         alias='nutrition_status_moderately_underweight'
                     ),
                     AliasColumn('nutrition_status_weighed'),
@@ -118,7 +118,7 @@ class ChildrenExport(ExportableMixin, IcdsSqlData):
                 percent,
                 [
                     SumWhen(
-                        whens={"age_tranche != :age_72": 'nutrition_status_normal'}, else_=0,
+                        whens=[["age_tranche != :age_72", 'nutrition_status_normal']], else_=0,
                         alias='nutrition_status_normal'
                     ),
                     AliasColumn('nutrition_status_weighed'),
@@ -130,11 +130,11 @@ class ChildrenExport(ExportableMixin, IcdsSqlData):
                 percent,
                 [
                     SumWhen(
-                        whens={get_age_condition(self.beta): wasting_severe_column(self.beta)},
+                        whens=[[get_age_condition(self.beta), wasting_severe_column(self.beta)]],
                         alias='wasting_severe'
                     ),
                     SumWhen(
-                        whens={get_age_condition(self.beta): wfh_recorded_in_month_column(self.beta)},
+                        whens=[[get_age_condition(self.beta), wfh_recorded_in_month_column(self.beta)]],
                         alias='weighed_and_height_measured_in_month'
                     ),
                 ],
@@ -145,7 +145,7 @@ class ChildrenExport(ExportableMixin, IcdsSqlData):
                 percent,
                 [
                     SumWhen(
-                        whens={get_age_condition(self.beta): wasting_moderate_column(self.beta)},
+                        whens=[[get_age_condition(self.beta), wasting_moderate_column(self.beta)]],
                         alias='wasting_moderate'
                     ),
                     AliasColumn('weighed_and_height_measured_in_month')
@@ -158,7 +158,7 @@ class ChildrenExport(ExportableMixin, IcdsSqlData):
                 percent,
                 [
                     SumWhen(
-                        whens={get_age_condition(self.beta): wasting_normal_column(self.beta)},
+                        whens=[[get_age_condition(self.beta), wasting_normal_column(self.beta)]],
                         alias='wasting_normal'
                     ),
                     AliasColumn('weighed_and_height_measured_in_month')
@@ -170,11 +170,11 @@ class ChildrenExport(ExportableMixin, IcdsSqlData):
                 percent,
                 [
                     SumWhen(
-                        whens={get_age_condition(self.beta): stunting_severe_column(self.beta)},
+                        whens=[[get_age_condition(self.beta), stunting_severe_column(self.beta)]],
                         alias='stunting_severe'
                     ),
                     SumWhen(
-                        whens={get_age_condition(self.beta): hfa_recorded_in_month_column(self.beta)},
+                        whens=[[get_age_condition(self.beta), hfa_recorded_in_month_column(self.beta)]],
                         alias='height_measured_in_month'
                     ),
                 ],
@@ -185,7 +185,7 @@ class ChildrenExport(ExportableMixin, IcdsSqlData):
                 percent,
                 [
                     SumWhen(
-                        whens={get_age_condition(self.beta): stunting_moderate_column(self.beta)},
+                        whens=[[get_age_condition(self.beta), stunting_moderate_column(self.beta)]],
                         alias='stunting_moderate'
                     ),
                     AliasColumn('height_measured_in_month')
@@ -197,7 +197,7 @@ class ChildrenExport(ExportableMixin, IcdsSqlData):
                 percent,
                 [
                     SumWhen(
-                        whens={get_age_condition(self.beta): stunting_normal_column(self.beta)},
+                        whens=[[get_age_condition(self.beta), stunting_normal_column(self.beta)]],
                         alias='stunting_normal'
                     ),
                     AliasColumn('height_measured_in_month')

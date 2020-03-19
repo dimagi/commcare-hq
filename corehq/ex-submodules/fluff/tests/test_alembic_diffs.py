@@ -5,7 +5,7 @@ from alembic.autogenerate import compare_metadata
 from django.test.testcases import TestCase, SimpleTestCase
 from nose.tools import assert_list_equal
 
-from corehq.sql_db.connections import connection_manager
+from corehq.sql_db.connections import connection_manager, DEFAULT_ENGINE_ID
 from fluff.signals import (
     get_migration_context, reformat_alembic_diffs,
     SimpleDiff, DiffTypes, get_tables_to_rebuild
@@ -45,7 +45,7 @@ class TestAlembicDiffs(TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.metadata.drop_all(cls.engine)
-        connection_manager.dispose_engine()
+        connection_manager.dispose_engine(DEFAULT_ENGINE_ID)
         super(TestAlembicDiffs, cls).tearDownClass()
 
     def setUp(self):

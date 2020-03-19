@@ -1,0 +1,82 @@
+{
+  "httpStatus": "OK",
+  "httpStatusCode": 200,
+  "message": "Import was successful.",
+  "response": {
+    "enrollments": {
+      "deleted": 0,
+      "ignored": 0,
+      "importSummaries": [
+        {
+          "events": {
+            "deleted": 0,
+            "ignored": 0,
+            "imported": 0,
+            "responseType": "ImportSummaries",
+            "status": "SUCCESS",
+            "total": 0,
+            "updated": 0
+          },
+          "importCount": {
+            "deleted": 0,
+            "ignored": 0,
+            "imported": 1,
+            "updated": 0
+          },
+          "reference": "UjIps1Tvpns",
+          "responseType": "ImportSummary",
+          "status": "SUCCESS"
+        }
+      ],
+      "imported": 1,
+      "responseType": "ImportSummaries",
+      "status": "SUCCESS",
+      "total": 1,
+      "updated": 0
+    },
+    "importCount": {
+      "deleted": 0,
+      "ignored": 0,
+      "imported": 0,
+      "updated": 1
+    },
+    "importOptions": {
+      "async": false,
+      "datasetAllowsPeriods": false,
+      "dryRun": false,
+      "firstRowIsHeader": true,
+      "force": false,
+      "idSchemes": {},
+      "ignoreEmptyCollection": false,
+      "importStrategy": "CREATE_AND_UPDATE",
+      "mergeMode": "REPLACE",
+      "reportMode": "FULL",
+      "requireAttributeOptionCombo": false,
+      "requireCategoryOptionCombo": false,
+      "sharing": false,
+      "skipAudit": false,
+      "skipExistingCheck": false,
+      "skipLastUpdated": false,
+      "skipNotifications": false,
+      "skipPatternValidation": false,
+      "strictAttributeOptionCombos": false,
+      "strictCategoryOptionCombos": false,
+      "strictDataElements": false,
+      "strictOrganisationUnits": false,
+      "strictPeriods": false
+    },
+    "reference": "kCArjBkgA5M",
+    "relationships": {
+      "deleted": 0,
+      "ignored": 0,
+      "imported": 0,
+      "responseType": "ImportSummaries",
+      "status": "SUCCESS",
+      "total": 0,
+      "updated": 0
+    },
+    "responseType": "ImportSummary",
+    "status": "SUCCESS"
+  },
+  "status": "OK"
+}

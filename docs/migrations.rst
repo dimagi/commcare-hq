@@ -47,13 +47,18 @@ Removing columns, fields, SQL functions, or views should always be done in multi
 2. Wait until this code has been deployed to all relevant environments.
 3. Remove the column/field/function/view from the database.
 
+Step #2 isn't reasonable to expect of external parties locally hosting HQ. For more on making
+migrations manageable for all users of HQ, see the "Auto-Managed Migration Pattern" link below.
+
 
 It's generally not enough to remove these at the same time because any old processes could
 still reference the to be deleted entity.
 
 Couch
 '''''
-A separate prune_couch_views will need to be run to remove the view from couch
+When removing a view, procedure depends on whether or not you're removing an entire design doc
+(an entire `_design` directory). If the removed view is the last one in the design doc, run
+`prune_couch_views` to remove it. If other views are left in the design doc, a reindex is required.
 
 ElasticSearch
 '''''''''''''
@@ -87,3 +92,4 @@ Migration Patterns and Best Practices
 -------------------------------------
 
 - :ref:`auto-managed-migration-pattern`
+- :ref:`couch-to-sql-model-migration`

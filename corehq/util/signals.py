@@ -1,7 +1,12 @@
-from dimagi.utils.logging import notify_exception
-from celery.signals import task_failure
-import signal
 import collections
+import signal
+from functools import wraps
+
+from django.dispatch import Signal
+
+from celery.signals import task_failure
+
+from dimagi.utils.logging import notify_exception
 
 
 @task_failure.connect
@@ -35,3 +40,24 @@ class SignalHandlerContext(object):
     def __exit__(self, *args, **kwargs):
         for sig in self.signals:
             signal.signal(sig, self.default_handler)
+
+
+pre_command = Signal(providing_args=["args", "kwargs"])
+post_command = Signal(providing_args=["args", "kwargs", "outcome"])
+
+
+def signalcommand(func):
+    """Python decorator for management command handle defs that sends out a pre/post signal."""
+
+    @wraps(func)
+    def inner(self, *args, **kwargs):
+        pre_command.send(self.__class__, args=args, kwargs=kwargs)
+        try:
+            ret = func(self, *args, **kwargs)
+        except BaseException as e:
+            post_command.send(self.__class__, args=args, kwargs=kwargs, outcome=e)
+            raise
+
+        post_command.send(self.__class__, args=args, kwargs=kwargs, outcome=ret)
+        return ret
+    return inner

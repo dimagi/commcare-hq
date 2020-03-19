@@ -529,15 +529,66 @@ class LineItemFactory(object):
 
     @property
     @memoized
-    def is_prorated(self):
+    def _subscription_ends_before_invoice(self):
+        return (
+            self.subscription.date_end
+            and self.subscription.date_end < self.invoice.date_end
+        )
+
+    @property
+    @memoized
+    def _subscription_starts_after_invoice(self):
+        return (
+            self.subscription.date_start > self.invoice.date_start
+        )
+
+    @property
+    @memoized
+    def subscription_date_range(self):
+        if self._subscription_ends_before_invoice or self._subscription_starts_after_invoice:
+            date_start = (
+                self.subscription.date_start
+                if self._subscription_starts_after_invoice
+                else self.invoice.date_start
+            )
+            date_end = (
+                self.subscription.date_end - datetime.timedelta(days=1)
+                if self._subscription_ends_before_invoice
+                else self.invoice.date_end
+            )
+            return "{} - {}".format(
+                date_start.strftime("%b %-d"),
+                date_end.strftime("%b %-d")
+            )
+
+    @property
+    def _is_partial_invoice(self):
         return not (
             self.invoice.date_end.day == self._days_in_billing_period
             and self.invoice.date_start.day == 1
         )
 
     @property
+    @memoized
+    def is_prorated(self):
+        return (
+            self._subscription_ends_before_invoice
+            or self._subscription_starts_after_invoice
+            or self._is_partial_invoice
+        )
+
+    @property
     def num_prorated_days(self):
-        return self.invoice.date_end.day - self.invoice.date_start.day + 1
+        day_start = self.invoice.date_start.day
+        day_end = self.invoice.date_end.day
+
+        if self._subscription_starts_after_invoice:
+            day_start = self.subscription.date_start.day
+
+        if self._subscription_ends_before_invoice:
+            day_end = self.subscription.date_end.day - 1
+
+        return day_end - day_start + 1
 
     @property
     def _days_in_billing_period(self):
@@ -569,13 +620,19 @@ class ProductLineItemFactory(LineItemFactory):
     def unit_description(self):
         if self.is_prorated:
             return ungettext(
-                "%(num_days)s day of %(plan_name)s Software Plan.",
-                "%(num_days)s days of %(plan_name)s Software Plan.",
+                "{num_days} day of {plan_name} Software Plan."
+                "{subscription_date_range}",
+                "{num_days} days of {plan_name} Software Plan."
+                "{subscription_date_range}",
                 self.num_prorated_days
-            ) % {
-                'num_days': self.num_prorated_days,
-                'plan_name': self.plan_name,
-            }
+            ).format(
+                num_days=self.num_prorated_days,
+                plan_name=self.plan_name,
+                subscription_date_range=(
+                    " ({})".format(self.subscription_date_range)
+                    if self.subscription_date_range else ""
+                ),
+            )
 
     @property
     def unit_cost(self):
@@ -675,17 +732,54 @@ class UserLineItemFactory(FeatureLineItemFactory):
 
     @property
     def unit_description(self):
+        prorated_notice = ""
+        if self.is_prorated:
+            prorated_notice = _(" (Prorated for {date_range})").format(
+                date_range=(
+                    self.subscription_date_range
+                    if self.subscription_date_range else ""
+                )
+            )
         if self.quantity > 0:
             return ungettext(
-                "Per User fee exceeding limit of %(monthly_limit)s user.",
-                "Per User fee exceeding limit of %(monthly_limit)s users.",
+                "Per-user fee exceeding limit of {monthly_limit} user "
+                "with plan above.{prorated_notice}",
+                "Per-user fee exceeding limit of {monthly_limit} users "
+                "with plan above.{prorated_notice}",
                 self.rate.monthly_limit
-            ) % {
-                'monthly_limit': self.rate.monthly_limit,
-            }
+            ).format(
+                monthly_limit=self.rate.monthly_limit,
+                prorated_notice=prorated_notice,
+            )
 
 
 class SmsLineItemFactory(FeatureLineItemFactory):
+
+    @property
+    @memoized
+    def _start_date_count_sms(self):
+        """If there are multiple subscriptions in this invoice, only count the
+        sms billables that occur AFTER this date for this line item.
+        Otherwise, excess billables will be counted counted twice in both
+        subscription timeframes.
+        """
+        return (
+            self.subscription.date_start if self._subscription_starts_after_invoice
+            else None
+        )
+
+    @property
+    @memoized
+    def _end_date_count_sms(self):
+        """If there are multiple subscriptions in this invoice, only count the
+        sms billables that occur BEFORE this date for this line item.
+        Otherwise, excess billables will be counted counted twice in both
+        subscription timeframes.
+        """
+        return (
+            self.subscription.date_end if self._subscription_ends_before_invoice
+            else None
+        )
 
     @property
     @memoized
@@ -699,6 +793,14 @@ class SmsLineItemFactory(FeatureLineItemFactory):
             sms_count += billable.multipart_count
             if sms_count <= self.rate.monthly_limit:
                 # don't count fees until the free monthly limit is exceeded
+                continue
+            elif self._start_date_count_sms and (
+                billable.date_sent.date() < self._start_date_count_sms
+            ):
+                # count the SMS billables sent before the start date toward
+                # the monthly total & limit for the line item, but don't include
+                # the usage charge in the total_excess for this line item
+                # (otherwise it will be counted twice)
                 continue
             else:
                 total_message_charge = billable.gateway_charge + billable.usage_charge
@@ -720,32 +822,42 @@ class SmsLineItemFactory(FeatureLineItemFactory):
     def unit_description(self):
         if self.rate.monthly_limit == UNLIMITED_FEATURE_USAGE:
             return ungettext(
-                "%(num_sms)d SMS Message",
-                "%(num_sms)d SMS Messages",
+                "{num_sms} SMS Message",
+                "{num_sms} SMS Messages",
                 self.num_sms
-            ) % {
-                'num_sms': self.num_sms,
-            }
+            ).format(
+                num_sms=self.num_sms,
+            )
         elif self.is_within_monthly_limit:
             return _(
-                "%(num_sms)d of %(monthly_limit)d included SMS messages"
-            ) % {
-                'num_sms': self.num_sms,
-                'monthly_limit': self.rate.monthly_limit,
-            }
+                "{num_sms} of {monthly_limit} included SMS{date_range}."
+            ).format(
+                num_sms=self.num_sms,
+                monthly_limit=self.rate.monthly_limit,
+                date_range=(
+                    _(" from {}").format(self.subscription_date_range)
+                    if self.subscription_date_range else ""
+                )
+            )
         else:
             assert self.rate.monthly_limit != UNLIMITED_FEATURE_USAGE
             assert self.rate.monthly_limit < self.num_sms
             num_extra = self.num_sms - self.rate.monthly_limit
             assert num_extra > 0
             return ungettext(
-                "%(num_extra_sms)d SMS Message beyond %(monthly_limit)d messages included.",
-                "%(num_extra_sms)d SMS Messages beyond %(monthly_limit)d messages included.",
+                "{num_extra_sms} SMS message beyond {monthly_limit} "
+                "messages included{date_range}.",
+                "{num_extra_sms} SMS messages beyond {monthly_limit} "
+                "messages included{date_range}.",
                 num_extra
-            ) % {
-                'num_extra_sms': num_extra,
-                'monthly_limit': self.rate.monthly_limit,
-            }
+            ).format(
+                num_extra_sms=num_extra,
+                monthly_limit=self.rate.monthly_limit,
+                date_range=(
+                    _(" from {}").format(self.subscription_date_range)
+                    if self.subscription_date_range else ""
+                )
+            )
 
     @property
     @memoized
@@ -754,8 +866,17 @@ class SmsLineItemFactory(FeatureLineItemFactory):
             domain__in=self.subscribed_domains,
             is_valid=True,
             date_sent__gte=self.invoice.date_start,
-            date_sent__lt=self.invoice.date_end + datetime.timedelta(days=1),
-        ).order_by('-date_sent')
+
+            # Don't count any SMS billables towards the monthly total &
+            # limit if they were sent AFTER the end date of the current
+            # subscription related to this line item. Save it for the
+            # next subscription in the invoice.
+            date_sent__lt=(
+                self._end_date_count_sms if self._end_date_count_sms
+                else self.invoice.date_end + datetime.timedelta(days=1)
+            ),
+
+        ).order_by('date_sent')
 
     @property
     @memoized

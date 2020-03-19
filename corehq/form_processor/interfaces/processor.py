@@ -7,6 +7,7 @@ from django.conf import settings
 from lxml import etree
 from redis.exceptions import RedisError
 
+from casexml.apps.case import const
 from casexml.apps.case.exceptions import IllegalCaseId
 from corehq.form_processor.exceptions import (
     KafkaPublishingError,
@@ -18,7 +19,21 @@ from memoized import memoized
 from ..system_action import system_action
 from ..utils import should_use_sql_backend
 
-CaseUpdateMetadata = namedtuple('CaseUpdateMetadata', ['case', 'is_creation', 'previous_owner_id'])
+
+class CaseUpdateMetadata(namedtuple('CaseUpdateMetadata', ['case', 'is_creation', 'previous_owner_id', 'actions'])):
+    def merge(self, other):
+        return CaseUpdateMetadata(
+            case=self.case,
+            is_creation=self.is_creation or other.is_creation,
+            previous_owner_id=self.previous_owner_id,
+            actions=self.actions | other.actions
+        )
+
+    @property
+    def index_change(self):
+        return const.CASE_ACTION_INDEX in self.actions or const.CASE_ACTION_REBUILD in self.actions
+
+
 ProcessedForms = namedtuple('ProcessedForms', ['submitted', 'deprecated'])
 HARD_DELETE_CASE_AND_FORMS = "hard_delete_case_and_forms"
 
@@ -97,6 +112,9 @@ class FormProcessorInterface(object):
 
     def get_case_forms(self, case_id):
         return self.processor.get_case_forms(case_id)
+
+    def form_has_case_transactions(self, form_id):
+        return self.processor.form_has_case_transactions(form_id)
 
     def store_attachments(self, xform, attachments):
         """

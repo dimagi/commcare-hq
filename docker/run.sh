@@ -14,6 +14,7 @@ function setup() {
 
     scripts/uninstall-requirements.sh
     pip install -r requirements/test-requirements.txt
+    pip check  # make sure there are no incompatibilities in test-requirements.txt
 
     # compile pyc files
     python -m compileall -q corehq custom submodules testapps *.py
@@ -70,6 +71,9 @@ function send_counter_metric_to_datadog() {
 }
 
 function send_metric_to_datadog() {
+    if [ -z "$DATADOG_API_KEY" ]; then
+        return
+    fi
 
     currenttime=$(date +%s)
     curl  -X POST -H "Content-type: application/json" \

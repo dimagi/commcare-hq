@@ -16,9 +16,9 @@ hqDefine('registration/js/register_new_user', [
 ) {
     'use strict';
 
-    $('#js-start-trial').click(function (e) {
+    $('#js-create-account').click(function (e) {
         e.preventDefault();
-        $('#registration-start-container').hide();
+        $('#registration-choose-plan-container').hide();
         $('#registration-form-container').fadeIn();
 
         $('#back-to-start-btn').removeClass('hide');
@@ -26,13 +26,21 @@ hqDefine('registration/js/register_new_user', [
 
     $('#back-to-start-btn').click(function () {
         $('#registration-form-container').hide();
-        $('#registration-start-container').fadeIn();
+        $('#registration-choose-plan-container').fadeIn();
     });
 
-    $('.view-features').click(function (e) {
-        e.preventDefault();
+    $('#book-a-time-btn').click(function () {
+        $('#start-trial-modal-header').text(gettext("Choose a time for your CommCare trial setup"));
+        $('#choose-callback-options').addClass('hidden');
+        $('#get-trial-cta-calendar-content').toggleClass('hidden');
 
-        $('.tile-wrapper').addClass('show-features');
+        // Causes the Schedule Once form to populate the element
+        // #SOIDIV_commcaretrialform as soon as it loads. Once it's
+        // loaded this does not leave the page. 
+        $.getScript('//cdn.scheduleonce.com/mergedjs/so.js')
+            .done(function () {
+                kissmetrics.track.event("Get Trial Workflow - Loaded Booking Options");
+            });
     });
 
     kissmetrics.whenReadyAlways(function () {

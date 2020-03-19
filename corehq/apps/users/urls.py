@@ -34,11 +34,13 @@ from .views.mobile.groups import (
     GroupsListView,
 )
 from .views.mobile.users import (
+    CommCareUsersLookup,
     CommCareUserSelfRegistrationView,
     ConfirmBillingAccountForExtraUsersView,
     ConfirmTurnOffDemoModeView,
     CreateCommCareUserModal,
     DemoRestoreStatusView,
+    DeleteCommCareUsers,
     DownloadUsersStatusView,
     EditCommCareUserView,
     FilteredUserDownload,
@@ -51,6 +53,7 @@ from .views.mobile.users import (
     delete_commcare_user,
     demo_restore_job_poll,
     download_commcare_users,
+    force_user_412,
     paginate_mobile_workers,
     reset_demo_user_restore,
     restore_commcare_user,
@@ -59,7 +62,7 @@ from .views.mobile.users import (
     update_user_groups,
     user_download_job_poll,
     user_upload_job_poll,
-)
+    CommCareUserConfirmAccountView)
 
 urlpatterns = [
     url(r'^$', DefaultProjectUserSettingsView.as_view(), name=DefaultProjectUserSettingsView.urlname),
@@ -107,10 +110,13 @@ urlpatterns = [
     url(r'^commcare/activate/(?P<user_id>[ \w-]+)/$', activate_commcare_user, name='activate_commcare_user'),
     url(r'^commcare/deactivate/(?P<user_id>[ \w-]+)/$', deactivate_commcare_user, name='deactivate_commcare_user'),
     url(r'^commcare/delete/(?P<user_id>[ \w-]+)/$', delete_commcare_user, name='delete_commcare_user'),
+    url(r'^commcare/force_412/(?P<user_id>[ \w-]+)/$', force_user_412, name='force_user_412'),
     url(r'^commcare/restore/(?P<user_id>[ \w-]+)/$', restore_commcare_user, name='restore_commcare_user'),
     url(r'^commcare/toggle_demo_mode/(?P<user_id>[ \w-]+)/$', toggle_demo_mode, name='toggle_demo_mode'),
     url(r'^commcare/confirm_turn_off_demo_mode/(?P<couch_user_id>[ \w-]+)/$', ConfirmTurnOffDemoModeView.as_view(),
         name=ConfirmTurnOffDemoModeView.urlname),
+    url(r'^commcare/delete/$', DeleteCommCareUsers.as_view(), name=DeleteCommCareUsers.urlname),
+    url(r'^commcare/lookup/$', CommCareUsersLookup.as_view(), name=CommCareUsersLookup.urlname),
     url(r'^commcare/reset_demo_user_restore/(?P<user_id>[ \w-]+)/$', reset_demo_user_restore,
         name='reset_demo_user_restore'),
     url(r'^commcare/demo_restore/status/(?P<download_id>(?:dl-)?[0-9a-fA-Z]{25,32})/(?P<user_id>[ \w-]+)/$',
@@ -139,6 +145,8 @@ urlpatterns = [
         name=ConfirmBillingAccountForExtraUsersView.urlname),
     url(r'^commcare/register/(?P<token>[\w-]+)/$', CommCareUserSelfRegistrationView.as_view(),
         name=CommCareUserSelfRegistrationView.urlname),
+    url(r'^commcare/confirm_account/(?P<user_id>[\w-]+)/$', CommCareUserConfirmAccountView.as_view(),
+        name=CommCareUserConfirmAccountView.urlname),
 ] + [
     url(r'^groups/$', GroupsListView.as_view(), name=GroupsListView.urlname),
     url(r'^groups/(?P<group_id>[ \w-]+)/$', EditGroupMembersView.as_view(), name=EditGroupMembersView.urlname),

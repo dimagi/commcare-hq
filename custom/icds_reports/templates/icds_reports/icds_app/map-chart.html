@@ -15,7 +15,7 @@
                 </span>
             </div>
             <div class="row">
-                <span class="location-breadcump" ng-click="$ctrl.getDisableIndex() < 0 && $ctrl.moveToLocation('national', -1)">National </span>
+                <span class="location-breadcump" ng-click="$ctrl.haveAccessToAllLocations && $ctrl.moveToLocation('national', -1)">National </span>
                 <span class="location-breadcump" ng-click="$ctrl.getDisableIndex() < $index && $ctrl.moveToLocation(loc, $index)" ng-repeat="loc in $ctrl.selectedLocations | filter: { location_id: '!all'} track by $index">
                     <i class="fa fa-chevron-right" aria-hidden="true"></i>
                     <span id="locationName">{$ loc.name $}</span>
@@ -30,7 +30,7 @@
     <info-message></info-message>
     <div class="report-content report-content-without-message" >
         <div ng-if="$ctrl.message" class="alert alert-info">
-            <strong>Info!</strong> Data for this report is shown at the sector level. For AWC-level information, please use the AWC Report.
+            Data for this report is shown at the sector level. For AWC-level information, please use the AWC Report.
         </div>
         <div class="row black" ng-if="$ctrl.step === 'map'">
             <div class="col-md-12" ng-if="$ctrl.loaded && $ctrl.mode">
@@ -46,9 +46,6 @@
                     <div class="small-table">
                         <div class="small-table-title">
                             <span>{$ $ctrl.location_type === 'Awc' ? $ctrl.location_type.toUpperCase() : $ctrl.location_type $}s Ranking</span>
-                            <i class="fa fa-info-circle" uib-popover="Ranking based on previous month's data"
-                                popover-placement="top"
-                                popover-trigger="'mouseenter'"></i>
                         </div>
                         <div class="small-table-record" ng-repeat="loc in $ctrl.all_locations">
                             <span class="circle-blue" ng-bind="$index + 1"></span>

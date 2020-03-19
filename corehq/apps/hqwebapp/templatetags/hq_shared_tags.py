@@ -7,8 +7,8 @@ from django import template
 from django.conf import settings
 from django.http import QueryDict
 from django.template import NodeList, TemplateSyntaxError, loader_tags
+from corehq.util.django2_shim.template.base import TokenType
 from django.template.base import (
-    TOKEN_TEXT,
     Token,
     Variable,
     VariableDoesNotExist,
@@ -72,19 +72,6 @@ def dict_lookup(dict, key):
 
 
 @register.filter
-def array_lookup(array, index):
-    '''Get an item from an array.'''
-    if index < len(array):
-        return array[index]
-
-
-@register.simple_tag
-def dict_as_query_string(dict, prefix=""):
-    '''Convert a dictionary to a query string, minus the initial ?'''
-    return "&".join(["%s%s=%s" % (prefix, key, value) for key, value in dict.items()])
-
-
-@register.filter
 def add_days(date, days=1):
     '''Return a date with some days added'''
     span = timedelta(days=days)
@@ -93,11 +80,6 @@ def add_days(date, days=1):
     except:
         return datetime.strptime(date, '%m/%d/%Y').date() + span
 
-
-@register.filter
-def concat(str1, str2):
-    """Concatenate two strings"""
-    return "%s%s" % (str1, str2)
 
 try:
     from get_resource_versions import get_resource_versions
@@ -152,12 +134,6 @@ def domains_for_user(context, request, selected_domain=None):
     ctxt = {
         'domain_list': sorted(domain_list, key=lambda domain: domain['name'].lower()),
         'current_domain': selected_domain,
-        'can_publish_to_exchange': (
-            selected_domain is not None and selected_domain != 'public' and
-            request.couch_user and request.couch_user.can_edit_apps() and
-            (request.couch_user.is_member_of(selected_domain) or
-             request.couch_user.is_superuser)
-        ),
     }
     return mark_safe(render_to_string('hqwebapp/includes/domain_list_dropdown.html', ctxt, request))
 
@@ -165,16 +141,6 @@ def domains_for_user(context, request, selected_domain=None):
 @register.simple_tag
 def commcare_user():
     return _(settings.COMMCARE_USER_TERM)
-
-
-@register.simple_tag
-def hq_web_user():
-    return _(settings.WEB_USER_TERM)
-
-
-@register.filter
-def mod(value, arg):
-    return value % arg
 
 
 # This is taken from https://code.djangoproject.com/ticket/15583
@@ -263,9 +229,6 @@ def can_use_restore_as(request):
     if request.couch_user.is_superuser:
         return True
 
-    if toggles.LOGIN_AS_ALWAYS_OFF.enabled(request.domain):
-        return False
-
     return (
         request.couch_user.can_edit_commcare_users() and
         has_privilege(request, privileges.LOGIN_AS)
@@ -288,15 +251,6 @@ def css_field_class():
 def css_action_class():
     from corehq.apps.hqwebapp.crispy import CSS_ACTION_CLASS
     return CSS_ACTION_CLASS
-
-
-def _get_py_filename(module):
-    """
-    return the full path to the .py file of a module
-    (not the .pyc file)
-
-    """
-    return module.__file__.rstrip('c')
 
 
 @register.filter
@@ -456,7 +410,7 @@ def maintenance_alert(request, dismissable=True):
             ' hide' if dismissable else '',
             alert.id,
             mark_safe('''
-                <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+                <button class="close" data-dismiss="alert" aria-label="close">&times;</button>
             ''') if dismissable else '',
             mark_safe(alert.html),
         )
@@ -612,7 +566,7 @@ def registerurl(parser, token):
 
     class FakeNode(template.Node):
         # must mock token or error handling code will fail and not reveal real error
-        token = Token(TOKEN_TEXT, '', (0, 0), 0)
+        token = Token(TokenType.TEXT, '', (0, 0), 0)
 
         def render(self, context):
             args = [expression.resolve(context) for expression in expressions]

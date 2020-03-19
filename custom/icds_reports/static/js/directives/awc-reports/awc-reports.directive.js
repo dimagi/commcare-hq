@@ -1697,10 +1697,16 @@ var weight_for_height = {
 
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
-function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOptionsBuilder, DTColumnBuilder, $compile, storageService, userLocationId, haveAccessToAllLocations, haveAccessToFeatures, isAlertActive) {
+function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOptionsBuilder, DTColumnBuilder,
+    $compile, storageService, dateHelperService, baseControllersService, userLocationId,
+    haveAccessToAllLocations, haveAccessToFeatures, isAlertActive, isMobile, mapboxAccessToken) {
     var vm = this;
+    baseControllersService.BaseFilterController.call(
+        this, $scope, $routeParams, $location, dateHelperService, storageService
+    );
     vm.data = {};
     vm.label = "AWC Report";
+    vm.haveAccessToAllLocations = haveAccessToAllLocations;
     vm.tooltipPlacement = "right";
     vm.step = $routeParams.step;
     vm.filters = ['gender', 'age'];
@@ -2017,13 +2023,13 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
     vm.chartOptions = {
         chart: {
             type: 'multiBarChart',
-            height: 450,
-            width: 1100,
+            height: isMobile ? 350 : 450,
+            wrapLabels: true,
             margin: {
                 top: 20,
                 right: 20,
                 bottom: 50,
-                left: 80,
+                left: isMobile ? 40 : 80,
             },
             x: function (d) {
                 return d[0];
@@ -2177,9 +2183,15 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
                 var tooltipData = void(0);
                 // lineChartData can not be provided during generation
                 var lineChartData = null;
-                if (lineChartDataName === 'lineChartTwoData') {lineChartData = vm.lineChartTwoData;}
-                if (lineChartDataName === 'lineChartOneData') {lineChartData = vm.lineChartOneData;}
-                if (lineChartDataName === 'lineChartThreeData') {lineChartData = vm.lineChartThreeData;}
+                if (lineChartDataName === 'lineChartTwoData') {
+                    lineChartData = vm.lineChartTwoData;
+                }
+                if (lineChartDataName === 'lineChartOneData') {
+                    lineChartData = vm.lineChartOneData;
+                }
+                if (lineChartDataName === 'lineChartThreeData') {
+                    lineChartData = vm.lineChartThreeData;
+                }
                 for (var i = 0; i < lineChartData.length; i++) {
                     if (lineChartData[i].x === d.value) {
                         tooltipData = lineChartData[i];
@@ -2209,7 +2221,9 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
                 return html;
             });
             window.angular.forEach(d3.selectAll('g.nv-series-3 > path')[0], function (key) {
-                if (key.__data__[0].y !== null) key.classList.add('chart-dot');
+                if (key.__data__[0].y !== null) {
+                    key.classList.add('chart-dot');
+                }
             });
             return chart;
         };
@@ -2532,6 +2546,14 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
         $location.path(vm.steps.beneficiary.listRoute);
     };
 
+    vm.isAWCsSelected = function () {
+        return vm.selectedLocationLevel === 4;
+    };
+
+    vm.toShowDataTables = function () {
+        return vm.showTable && vm.isAWCsSelected();
+    };
+
     vm.showBeneficiaryTable = function () {
         vm.filters.pop();
         vm.beneficiary = null;
@@ -2557,18 +2579,60 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
         vm.showLactating = false;
         vm.showTable = true;
     };
+    var steps = [
+        {
+            id: 'pse',
+            route: "/awc_reports/pse",
+            label: "Pre School Education",
+            image: "/static/icds_reports/mobile/images/statistics.png",
+            isMobile: true,
+        },
+        {
+            id: 'maternal_child',
+            route: "/awc_reports/maternal_child",
+            label: "Maternal and Child Nutrition",
+            image: "/static/icds_reports/mobile/images/motherandchild.png",
+            isMobile: true,
+        },
+        {
+            id: 'demographics',
+            route: "/awc_reports/demographics",
+            label: "Demographics",
+            image: "/static/icds_reports/mobile/images/threegroup.png",
+            isMobile: true,
+        },
+        {
+            id: 'awc_infrastructure',
+            route: "/awc_reports/awc_infrastructure",
+            label: "AWC Infrastructure",
+            image: "/static/icds_reports/mobile/images/bulb.png",
+            isMobile: true,
+        },
+        {
+            id: 'beneficiary',
+            route: "/awc_reports/beneficiary",
+            label: "Child Beneficiaries List",
+        },
+        {
+            id: 'pregnant',
+            route: "/awc_reports/pregnant",
+            label: "Pregnant Women",
+        },
+        {
+            id: 'lactating',
+            route: "/awc_reports/lactating",
+            label: "Lactating Women",
+        },
+    ];
+    vm.mobileSteps = _.filter(steps, function (step) {
+        return step.isMobile;
+    });
 
-    vm.steps = {
-        // system_usage: { route: "/awc_reports/system_usage", label: "System Usage"},
-        pse: {route: "/awc_reports/pse", label: "Pre School Education"},
-        maternal_child: {route: "/awc_reports/maternal_child", label: "Maternal and Child Nutrition"},
-        demographics: {route: "/awc_reports/demographics", label: "Demographics"},
-        awc_infrastructure: {route: "/awc_reports/awc_infrastructure", label: "AWC Infrastructure"},
-        beneficiary: {route: "/awc_reports/beneficiary", label: "Child Beneficiaries List"},
-        pregnant: {route: "/awc_reports/pregnant", label: "Pregnant Women"},
-        lactating: {route: "/awc_reports/lactating", label: "Lactating Women"},
-    };
+    // create a hash with the keys being the ids and values being the complete step data
+    // https://stackoverflow.com/a/23994851/8207
+    vm.steps = _.indexBy(steps, 'id');
 
+    // overwrite beneficiary / pregnant step if on the details view.
     if (vm.step === 'beneficiary_details') {
         vm.steps.beneficiary = {
             route: '/awc_reports/beneficiary_details',
@@ -2595,18 +2659,6 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
         return i;
     };
 
-    vm.moveToLocation = function (loc, index) {
-        if (loc === 'national') {
-            $location.search('location_id', '');
-            $location.search('selectedLocationLevel', -1);
-            $location.search('location_name', '');
-        } else {
-            $location.search('location_id', loc.location_id);
-            $location.search('selectedLocationLevel', index);
-            $location.search('location_name', loc.name);
-        }
-    };
-
     vm.layers = {
         baselayers: {
             mapbox_light: {
@@ -2614,28 +2666,32 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
                 url: 'https://api.mapbox.com/styles/v1/dimagi/cj2rl1t0w001f2rnr0y8hfhho/tiles/{z}/{x}/{y}?access_token={apikey}',
                 type: 'xyz',
                 layerOptions: {
-                    apikey: 'pk.eyJ1IjoiZGltYWdpIiwiYSI6ImpZWWQ4dkUifQ.3FNy5rVvLolWLycXPxKVEA',
+                    apikey: mapboxAccessToken,
                 },
-            },
-            osm: {
-                name: 'OpenStreetMap',
-                url: 'http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-                type: 'xyz',
             },
         },
     };
 
+    vm.currentStepMeta = vm.steps[vm.step];
+
     vm.getDataForStep(vm.step);
+
 }
 
-AwcReportsController.$inject = ['$scope', '$http', '$location', '$routeParams', '$log', 'DTOptionsBuilder', 'DTColumnBuilder', '$compile', 'storageService', 'userLocationId', 'haveAccessToAllLocations', 'haveAccessToFeatures', 'isAlertActive'];
+AwcReportsController.$inject = [
+    '$scope', '$http', '$location', '$routeParams', '$log', 'DTOptionsBuilder', 'DTColumnBuilder', '$compile',
+    'storageService', 'dateHelperService', 'baseControllersService', 'userLocationId', 'haveAccessToAllLocations',
+    'haveAccessToFeatures', 'isAlertActive', 'isMobile', 'mapboxAccessToken',
+];
 
-window.angular.module('icdsApp').directive('awcReports', function () {
+window.angular.module('icdsApp').directive('awcReports', ['templateProviderService', function (templateProviderService) {
     return {
         restrict: 'E',
-        templateUrl: url('icds-ng-template', 'awc-reports'),
+        templateUrl: function () {
+            return templateProviderService.getTemplate('awc-reports');
+        },
         bindToController: true,
         controller: AwcReportsController,
         controllerAs: '$ctrl',
     };
-});
+}]);

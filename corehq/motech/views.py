@@ -24,6 +24,7 @@ class MotechLogListView(BaseProjectSettingsView, ListView):
     def get_queryset(self):
         filter_from_date = self.request.GET.get("filter_from_date")
         filter_to_date = self.request.GET.get("filter_to_date")
+        filter_payload = self.request.GET.get("filter_payload")
         filter_url = self.request.GET.get("filter_url")
         filter_status = self.request.GET.get("filter_status")
 
@@ -32,6 +33,8 @@ class MotechLogListView(BaseProjectSettingsView, ListView):
             queryset = queryset.filter(timestamp__gte=filter_from_date)
         if filter_to_date:
             queryset = queryset.filter(timestamp__lte=filter_to_date)
+        if filter_payload:
+            queryset = queryset.filter(payload_id=filter_payload)
         if filter_url:
             queryset = queryset.filter(request_url__istartswith=filter_url)
         if filter_status:
@@ -49,6 +52,7 @@ class MotechLogListView(BaseProjectSettingsView, ListView):
 
         return queryset.order_by('-timestamp').only(
             'timestamp',
+            'payload_id',
             'request_method',
             'request_url',
             'response_status',
@@ -59,6 +63,7 @@ class MotechLogListView(BaseProjectSettingsView, ListView):
         context.update({
             "filter_from_date": self.request.GET.get("filter_from_date", ""),
             "filter_to_date": self.request.GET.get("filter_to_date", ""),
+            "filter_payload": self.request.GET.get("filter_payload", ""),
             "filter_url": self.request.GET.get("filter_url", ""),
             "filter_status": self.request.GET.get("filter_status", ""),
         })

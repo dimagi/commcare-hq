@@ -12,7 +12,7 @@ from django.template.loader import get_template
 from django.urls import reverse
 from django.utils.functional import lazy
 from django.utils.safestring import mark_safe
-from django.utils.translation import string_concat
+from django.utils.text import format_lazy
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy, ugettext_noop
 
@@ -35,10 +35,14 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.crispy import HQModalFormHelper
 from corehq.apps.hqwebapp.utils import decode_password
-from corehq.apps.hqwebapp.widgets import Select2Ajax
+from corehq.apps.hqwebapp.widgets import (
+    Select2Ajax,
+    SelectToggle,
+)
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import user_can_access_location_id
 from corehq.apps.programs.models import Program
+from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
 from corehq.apps.users.models import CouchUser, UserRole
 from corehq.apps.users.util import cc_user_domain, format_username
 from custom.nic_compliance.forms import EncodedPasswordChangeFormMixin
@@ -376,10 +380,15 @@ class SetUserPasswordForm(EncodedPasswordChangeFormMixin, SetPasswordForm):
 
         if self.project.strong_mobile_passwords:
             self.fields['new_password1'].widget = forms.TextInput()
-            self.fields['new_password1'].help_text = mark_safe_lazy(string_concat('<i class="fa fa-warning"></i>',
-                 ugettext_lazy("This password is automatically generated. Please copy it or create your own. It will not be shown again."),
-                 '<br /><span data-bind="text: passwordHelp, css: color">'
-            ))
+            self.fields['new_password1'].help_text = mark_safe_lazy(
+                format_lazy(
+                    ('<i class="fa fa-warning"></i>{}<br />'
+                     '<span data-bind="text: passwordHelp, css: color">'),
+                    ugettext_lazy(
+                        "This password is automatically generated. "
+                        "Please copy it or create your own. It will not be shown again."),
+                )
+            )
             initial_password = generate_strong_password()
 
         self.helper = FormHelper()
@@ -540,16 +549,21 @@ class NewMobileWorkerForm(forms.Form):
         if self.project.strong_mobile_passwords:
             # Use normal text input so auto-generated strong password is visible
             self.fields['new_password'].widget = forms.TextInput()
-            self.fields['new_password'].help_text = mark_safe_lazy(string_concat('<i class="fa fa-warning"></i>',
-                ugettext_lazy('This password is automatically generated. Please copy it or create your own. It will not be shown again.'),
-                '<br />'
-            ))
+            self.fields['new_password'].help_text = mark_safe_lazy(
+                format_lazy(
+                    '<i class="fa fa-warning"></i>{}<br />',
+                    ugettext_lazy(
+                        'This password is automatically generated. '
+                        'Please copy it or create your own. It will not be shown again.'),
+                )
+            )
 
         if project.uses_locations:
             self.fields['location_id'].widget = forms.Select()
             location_field = crispy.Field(
                 'location_id',
                 data_bind='value: location_id',
+                data_query_url=reverse('location_search', args=[self.domain]),
             )
         else:
             location_field = crispy.Hidden(
@@ -821,13 +835,14 @@ class CommtrackUserForm(forms.Form):
         self.fields['assigned_locations'].widget = LocationSelectWidget(
             self.domain, multiselect=True, id='id_assigned_locations'
         )
+        self.fields['assigned_locations'].help_text = ExpandedMobileWorkerFilter.location_search_help
         self.fields['primary_location'].widget = PrimaryLocationWidget(
             css_id='id_primary_location',
             source_css_id='id_assigned_locations',
         )
         if self.commtrack_enabled:
-            programs = Program.by_domain(self.domain, wrap=False)
-            choices = list((prog['_id'], prog['name']) for prog in programs)
+            programs = Program.by_domain(self.domain)
+            choices = list((prog.get_id, prog.name) for prog in programs)
             choices.insert(0, ('', ''))
             self.fields['program_id'].choices = choices
         else:
@@ -1134,6 +1149,11 @@ class CommCareUserFormSet(object):
 
 
 class CommCareUserFilterForm(forms.Form):
+    USERNAMES_COLUMN_OPTION = 'usernames'
+    COLUMNS_CHOICES = (
+        ('all', ugettext_noop('All')),
+        (USERNAMES_COLUMN_OPTION, ugettext_noop('Only Usernames'))
+    )
     role_id = forms.ChoiceField(label=ugettext_lazy('Role'), choices=(), required=False)
     search_string = forms.CharField(
         label=ugettext_lazy('Search by username'),
@@ -1144,12 +1164,19 @@ class CommCareUserFilterForm(forms.Form):
         label=ugettext_noop("Location"),
         required=False,
     )
+    columns = forms.ChoiceField(
+        required=False,
+        label=ugettext_noop("Columns"),
+        choices=COLUMNS_CHOICES,
+        widget=SelectToggle(choices=COLUMNS_CHOICES, apply_bindings=True),
+    )
 
     def __init__(self, *args, **kwargs):
         from corehq.apps.locations.forms import LocationSelectWidget
         self.domain = kwargs.pop('domain')
         super(CommCareUserFilterForm, self).__init__(*args, **kwargs)
         self.fields['location_id'].widget = LocationSelectWidget(self.domain)
+        self.fields['location_id'].help_text = ExpandedMobileWorkerFilter.location_search_help
 
         roles = UserRole.by_domain(self.domain)
         self.fields['role_id'].choices = [('', _('All Roles'))] + [
@@ -1171,6 +1198,7 @@ class CommCareUserFilterForm(forms.Form):
                 crispy.Field('role_id', css_class="hqwebapp-select2"),
                 crispy.Field('search_string'),
                 crispy.Field('location_id'),
+                crispy.Field('columns'),
             ),
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(

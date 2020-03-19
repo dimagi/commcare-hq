@@ -95,11 +95,13 @@ hqDefine("hqwebapp/js/hq.helpers", [
     };
 
     $.fn.addSpinnerToButton = function () {
+        $(this).find("i").addClass("hide");
         $(this).prepend('<i class="fa fa-refresh fa-spin icon-refresh icon-spin"></i> ');
     };
 
 
     $.fn.removeSpinnerFromButton = function () {
+        $(this).find("i.hide").removeClass("hide");
         $(this).find('i.fa-spin').remove();
     };
 

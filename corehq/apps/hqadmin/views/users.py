@@ -1,5 +1,7 @@
+import csv
 import itertools
 import uuid
+from io import StringIO
 from collections import Counter
 from datetime import datetime, timedelta
 
@@ -8,6 +10,7 @@ from django.contrib import messages
 from django.contrib.auth import login
 from django.contrib.auth.models import User
 from django.core.mail import mail_admins
+from django.db.models import Q, Case, When, BooleanField
 from django.http import (
     HttpResponse,
     HttpResponseBadRequest,
@@ -28,9 +31,11 @@ from django.views.generic import FormView, TemplateView, View
 from couchdbkit.exceptions import ResourceNotFound
 from lxml import etree
 from lxml.builder import E
+from two_factor.utils import default_device
 
 from casexml.apps.phone.xml import SYNC_XMLNS
 from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
+from couchexport.models import Format
 from couchforms.openrosa_response import RESPONSE_XMLNS
 from dimagi.utils.django.email import send_HTML_email
 
@@ -112,7 +117,8 @@ class SuperuserManagement(UserAdministration):
         # render validation errors if rendered after POST
         args = [can_toggle_is_staff, self.request.POST] if self.request.POST else [can_toggle_is_staff]
         return {
-            'form': SuperuserManagementForm(*args)
+            'form': SuperuserManagementForm(*args),
+            'users': augmented_superusers(),
         }
 
     def post(self, request, *args, **kwargs):
@@ -139,6 +145,34 @@ class SuperuserManagement(UserAdministration):
             messages.success(request, _("Successfully updated superuser permissions"))
 
         return self.get(request, *args, **kwargs)
+
+
+@require_superuser
+def superuser_table(request):
+    superusers = augmented_superusers()
+    f = StringIO()
+    csv_writer = csv.writer(f)
+    csv_writer.writerow(['Username', 'Developer', 'Superuser', 'Two Factor Enabled'])
+    for user in superusers:
+        csv_writer.writerow([
+            user.username, user.is_staff, user.is_superuser, user.two_factor_enabled])
+    response = HttpResponse(content_type=Format.from_format('csv').mimetype)
+    response['Content-Disposition'] = 'attachment; filename="superuser_table.csv"'
+    response.write(f.getvalue())
+    return response
+
+
+def augmented_superusers():
+    return _augment_users_with_two_factor_enabled(User.objects.filter(
+        Q(is_superuser=True) | Q(is_staff=True)
+    ))
+
+
+def _augment_users_with_two_factor_enabled(users):
+    """Annotate a User queryset with a two_factor_enabled field"""
+    for user in users:
+        user.two_factor_enabled = bool(default_device(user))
+    return users
 
 
 class AdminRestoreView(TemplateView):

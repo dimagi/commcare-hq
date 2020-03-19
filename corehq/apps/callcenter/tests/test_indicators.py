@@ -35,7 +35,7 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.tests.utils import run_with_all_backends
+from corehq.form_processor.tests.utils import run_with_all_backends, use_sql_backend
 from corehq.sql_db.connections import connection_manager, override_engine
 from corehq.sql_db.tests.utils import temporary_database
 
@@ -622,7 +622,6 @@ class TestSavingToUCRDatabase(BaseCCTests):
         connection_manager.dispose_engine('ucr')
         self.db_context.__exit__(None, None, None)
 
-    @run_with_all_backends
     @patch('corehq.apps.callcenter.indicator_sets.get_case_types_for_domain_es',
            return_value={'person', 'dog', CASE_TYPE})
     def test_standard_indicators(self, mock):
@@ -637,3 +636,8 @@ class TestSavingToUCRDatabase(BaseCCTests):
                 custom_cache=locmem_cache
             )
             self._test_indicators(self.cc_user, indicator_set.get_data(), expected_standard_indicators())
+
+
+@use_sql_backend
+class TestSavingToUCRDatabaseSQL(TestSavingToUCRDatabase):
+    pass

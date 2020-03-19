@@ -8,6 +8,7 @@ from corehq.apps.app_manager.views.app_summary import (
     FormSummaryDiffView,
 )
 from corehq.apps.app_manager.views.apps import (
+    app_exchange,
     app_from_template,
     app_settings,
     app_source,
@@ -81,7 +82,11 @@ from corehq.apps.app_manager.views.modules import (
     view_module,
     view_module_legacy,
 )
-from corehq.apps.app_manager.views.multimedia import multimedia_ajax
+from corehq.apps.app_manager.views.multimedia import (
+    compare_multimedia_sizes,
+    get_multimedia_sizes,
+    multimedia_ajax,
+)
 from corehq.apps.app_manager.views.releases import (
     AppDiffView,
     LanguageProfilesView,

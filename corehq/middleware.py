@@ -4,23 +4,20 @@ import mimetypes
 import os
 import datetime
 import re
-import traceback
 from django.conf import settings
-from django.contrib.sessions.backends.cache import SessionStore
 from django.contrib.sessions.middleware import SessionMiddleware
 from django.core.exceptions import MiddlewareNotUsed
 from django.http import HttpResponseRedirect
 from django.urls import reverse
-from django.contrib.auth.views import logout as django_logout
+from django.contrib.auth.views import LogoutView
 from django.utils.deprecation import MiddlewareMixin
 
-from corehq import toggles
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.utils import legacy_domain_re
 from corehq.const import OPENROSA_DEFAULT_VERSION
 from dimagi.utils.logging import notify_exception
 
-from dimagi.utils.parsing import json_format_datetime, string_to_utc_datetime
+from dimagi.utils.parsing import string_to_utc_datetime
 
 try:
     import psutil
@@ -149,7 +146,7 @@ class TimeoutMiddleware(MiddlewareMixin):
             timeout = settings.SECURE_TIMEOUT
             # force re-authentication if the user has been logged in longer than the secure timeout
             if self._session_expired(timeout, request.user.last_login, now):
-                django_logout(request, template_name=settings.BASE_TEMPLATE)
+                LogoutView.as_view(template_name=settings.BASE_TEMPLATE)(request)
                 # this must be after logout so it is attached to the new session
                 request.session['secure_session'] = True
                 request.session.set_expiry(timeout * 60)
@@ -218,37 +215,7 @@ class SentryContextMiddleware(MiddlewareMixin):
                 scope.set_tag('domain', request.domain)
 
 
-session_logger = logging.getLogger('session_access_log')
-
-
-def log_call(func):
-    def with_logging(*args, **kwargs):
-        session_logger.info("\n\n\n")
-        session_logger.info(func.__name__ + " was called")
-        session_logger.info("\n\n\n")
-        for line in traceback.format_stack():
-            white_list = ['corehq/', 'custom/', func.__name__]
-            if any([c in line for c in white_list]):
-                session_logger.info(line.strip())
-        return func(*args, **kwargs)
-    return with_logging
-
-
-def decorate_all_methods(decorator):
-    def decorate(cls):
-        for attr in dir(cls):
-            if "__" not in attr and callable(getattr(cls, attr)):
-                setattr(cls, attr, decorator(getattr(cls, attr)))
-        return cls
-    return decorate
-
-
-@decorate_all_methods(log_call)
-class LoggingSessionStore(SessionStore):
-    pass
-
-
-class LoggingSessionMiddleware(SessionMiddleware):
+class SelectiveSessionMiddleware(SessionMiddleware):
 
     def __init__(self, get_response=None):
         super().__init__(get_response)
@@ -257,28 +224,11 @@ class LoggingSessionMiddleware(SessionMiddleware):
             re.compile(regex.format(domain=legacy_domain_re)) for regex in regexes
         ]
 
-    def _bypass_sessions(self, request, domain):
-        return (toggles.BYPASS_SESSIONS.enabled(domain) and
+    def _bypass_sessions(self, request):
+        return (settings.BYPASS_SESSIONS_FOR_MOBILE and
             any(rx.match(request.path_info) for rx in self.bypass_re))
 
     def process_request(self, request):
-        try:
-            match = re.search(r'/a/[0-9a-z-]+', request.path)
-            if match:
-                domain = match.group(0).split('/')[-1]
-                if self._bypass_sessions(request, domain):
-                    session_key = request.COOKIES.get(settings.SESSION_COOKIE_NAME)
-                    request.session = self.SessionStore(session_key)
-                    request.session.save = lambda *x: None
-                    return
-                elif toggles.SESSION_MIDDLEWARE_LOGGING.enabled(domain):
-                    session_logger.info(
-                        "Logging session access for URL {}".format(request.path))
-                    self.SessionStore = LoggingSessionStore
-        except Exception as e:
-            session_logger.error(
-                "Exception {} in LoggingSessionMiddleware for url {}".format(
-                    str(e), request.path)
-            )
-            pass
         super().process_request(request)
+        if self._bypass_sessions(request):
+            request.session.save = lambda *x: None

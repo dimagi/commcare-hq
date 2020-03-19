@@ -66,9 +66,9 @@ function CasExportController($window, $location, locationHierarchy, locationsSer
     ];
 
     vm.indicators = [
-        {id: 1, name: 'Child'},
-        {id: 2, name: 'Pregnant and Lactating Women'},
-        {id: 3, name: 'AWC'},
+        {id: 'child_health_monthly', name: 'Child'},
+        {id: 'ccs_record_monthly', name: 'Pregnant and Lactating Women'},
+        {id: 'agg_awc', name: 'AWC'},
     ];
 
     vm.allFiltersSelected = function () {

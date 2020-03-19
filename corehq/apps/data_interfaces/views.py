@@ -1,5 +1,3 @@
-import io
-import json
 import uuid
 
 from django.contrib import messages
@@ -19,13 +17,12 @@ from django.utils.translation import ugettext_lazy, ugettext_noop
 from django.views.decorators.http import require_GET
 
 from couchdbkit import ResourceNotFound
-from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
 from memoized import memoized
 
 from soil.exceptions import TaskFailedError
 from soil.util import expose_cached_download, get_download_context
 
-from corehq import privileges, toggles
+from corehq import privileges
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.casegroups.dbaccessors import (
     get_case_groups_in_domain,
@@ -518,6 +515,7 @@ class XFormManagementView(DataInterfaceSection):
             _request.couch_user.current_domain = self.domain
             _request.can_access_all_locations = request.couch_user.has_permission(self.domain,
                                                                                   'access_all_locations')
+            _request.always_allow_project_access = True
             _request.session = request.session
 
             _request.GET = QueryDict(form_query_string)

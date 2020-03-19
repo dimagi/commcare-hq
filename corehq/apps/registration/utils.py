@@ -9,6 +9,7 @@ from django.utils.translation import ugettext
 
 from celery import chord
 
+from corehq.util.soft_assert import soft_assert
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.database import get_safe_write_kwargs
 from dimagi.utils.name_to_url import name_to_url
@@ -27,7 +28,7 @@ from corehq.apps.accounting.models import (
     SubscriptionAdjustmentMethod,
     SubscriptionType,
 )
-from corehq.apps.accounting.tasks import ensure_explicit_community_subscription
+from corehq.apps.accounting.tasks import ensure_community_or_paused_subscription
 from corehq.apps.analytics.tasks import (
     HUBSPOT_CREATED_NEW_PROJECT_SPACE_FORM_ID,
     send_hubspot_form,
@@ -40,6 +41,14 @@ from corehq.apps.users.models import CouchUser, UserRole, WebUser
 from corehq.util.view_utils import absolute_reverse
 
 APPCUES_APP_SLUGS = ['health', 'agriculture', 'wash']
+
+_soft_assert_registration_issues = soft_assert(
+    to=[
+        '{}@{}'.format(name, 'dimagi.com')
+        for name in ['biyeun']
+    ],
+    exponential_backoff=False,
+)
 
 
 def activate_new_user(form, is_domain_admin=True, domain=None, ip=None):
@@ -111,27 +120,12 @@ def request_new_domain(request, form, is_new_user=True):
     if not new_domain.name:
         new_domain.name = new_domain._id
         new_domain.save()  # we need to get the name from the _id
+    dom_req.domain = new_domain.name
 
-    with transaction.atomic():
-        if is_new_user:
-            # Only new-user domains are eligible for Advanced trial
-            # domains with no subscription are equivalent to be on free Community plan
-            create_30_day_advanced_trial(new_domain, current_user.username)
-        else:
-            ensure_explicit_community_subscription(
-                new_domain.name, date.today(), SubscriptionAdjustmentMethod.USER,
-                web_user=current_user.username,
-            )
+    if not settings.ENTERPRISE_MODE:
+        _setup_subscription(new_domain.name, current_user)
 
     UserRole.init_domain_with_presets(new_domain.name)
-
-    # add user's email as contact email for billing account for the domain
-    account = BillingAccount.get_account_by_domain(new_domain.name)
-    billing_contact, _ = BillingContactInfo.objects.get_or_create(account=account)
-    billing_contact.email_list = [current_user.email]
-    billing_contact.save()
-
-    dom_req.domain = new_domain.name
 
     if request.user.is_authenticated:
         if not current_user:
@@ -142,6 +136,11 @@ def request_new_domain(request, form, is_new_user=True):
         current_user.save()
         dom_req.requesting_user_username = request.user.username
         dom_req.new_user_username = request.user.username
+    elif is_new_user:
+        _soft_assert_registration_issues(
+            f"A new user {request.user.username} was not added to their domain "
+            f"{new_domain.name} during registration"
+        )
 
     if is_new_user:
         dom_req.save()
@@ -170,6 +169,20 @@ def request_new_domain(request, form, is_new_user=True):
 
     send_hubspot_form(HUBSPOT_CREATED_NEW_PROJECT_SPACE_FORM_ID, request)
     return new_domain.name
+
+
+def _setup_subscription(domain_name, user):
+    with transaction.atomic():
+        ensure_community_or_paused_subscription(
+            domain_name, date.today(), SubscriptionAdjustmentMethod.USER,
+            web_user=user.username,
+        )
+
+    # add user's email as contact email for billing account for the domain
+    account = BillingAccount.get_account_by_domain(domain_name)
+    billing_contact, _ = BillingContactInfo.objects.get_or_create(account=account)
+    billing_contact.email_list = [user.email]
+    billing_contact.save()
 
 
 def send_new_request_update_email(user, requesting_ip, entity_name, entity_type="domain", is_new_user=False, is_confirming=False):
@@ -227,29 +240,3 @@ def send_mobile_experience_reminder(recipient, full_name):
         logging.warning(
             "Can't send email, but the message was:\n%s" % message_plaintext)
         raise
-
-
-# Only new-users are eligible for advanced trial
-def create_30_day_advanced_trial(domain_obj, creating_username):
-    # Create a 30 Day Trial subscription to the Advanced Plan
-    advanced_plan_version = DefaultProductPlan.get_default_plan_version(
-        edition=SoftwarePlanEdition.ADVANCED, is_trial=True
-    )
-    expiration_date = date.today() + timedelta(days=30)
-    trial_account = BillingAccount.objects.get_or_create(
-        name=DEFAULT_ACCOUNT_FORMAT % domain_obj.name,
-        currency=Currency.get_default(),
-        created_by=creating_username,
-        created_by_domain=domain_obj.name,
-        account_type=BillingAccountType.USER_CREATED,
-        pre_or_post_pay=PreOrPostPay.POSTPAY,
-    )[0]
-    trial_subscription = Subscription.new_domain_subscription(
-        trial_account, domain_obj.name, advanced_plan_version,
-        date_end=expiration_date,
-        adjustment_method=SubscriptionAdjustmentMethod.TRIAL,
-        is_trial=True,
-        service_type=SubscriptionType.TRIAL
-    )
-    trial_subscription.is_active = True
-    trial_subscription.save()

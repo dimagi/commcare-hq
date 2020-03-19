@@ -139,6 +139,11 @@ def transform_xform_for_elasticsearch(doc_dict):
 
 def get_xform_to_elasticsearch_pillow(pillow_id='XFormToElasticsearchPillow', num_processes=1,
                                       process_num=0, **kwargs):
+    """XForm change processor that sends form data to Elasticsearch
+
+    Processors:
+      - :py:class:`pillowtop.processors.elastic.ElasticProcessor`
+    """
     # todo; To remove after full rollout of https://github.com/dimagi/commcare-hq/pull/21329/
     assert pillow_id == 'XFormToElasticsearchPillow', 'Pillow ID is not allowed to change'
     checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, XFORM_INDEX_INFO, FORM_TOPICS)
@@ -166,6 +171,14 @@ def get_xform_pillow(pillow_id='xform-pillow', ucr_division=None,
                      include_ucrs=None, exclude_ucrs=None,
                      num_processes=1, process_num=0, ucr_configs=None, skip_ucr=False,
                      processor_chunk_size=DEFAULT_PROCESSOR_CHUNK_SIZE, topics=None, **kwargs):
+    """Generic XForm change processor
+
+    Processors:
+      - :py:class:`corehq.apps.userreports.pillow.ConfigurableReportPillowProcessor` (disabled when skip_ucr=True)
+      - :py:class:`pillowtop.processors.elastic.BulkElasticProcessor`
+      - :py:class:`corehq.pillows.user.UnknownUsersProcessor` (disabled when RUN_UNKNOWN_USER_PILLOW=False)
+      - :py:class:`pillowtop.form.FormSubmissionMetadataTrackerProcessor` (disabled when RUN_FORM_META_PILLOW=False)
+    """
     # avoid circular dependency
     from corehq.pillows.reportxform import transform_xform_for_report_forms_index, report_xform_filter
     from corehq.pillows.mappings.user_mapping import USER_INDEX

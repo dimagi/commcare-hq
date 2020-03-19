@@ -16,7 +16,6 @@ from corehq.apps.locations.adjacencylist import AdjListManager, AdjListModel
 from corehq.apps.products.models import SQLProduct
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.supply import SupplyInterface
-from corehq.toggles import LOCATION_TYPE_STOCK_RATES
 
 
 class LocationTypeManager(models.Manager):
@@ -73,11 +72,7 @@ StockLevelField = partial(models.DecimalField, max_digits=10, decimal_places=1)
 def stock_level_config_for_domain(domain, commtrack_enabled):
     from corehq.apps.commtrack.models import CommtrackConfig
     ct_config = CommtrackConfig.for_domain(domain)
-    if (
-        (ct_config is None) or
-        (not commtrack_enabled) or
-        LOCATION_TYPE_STOCK_RATES.enabled(domain)
-    ):
+    if ct_config is None or not commtrack_enabled:
         return None
     else:
         return ct_config.stock_levels_config
@@ -269,21 +264,6 @@ class LocationQueriesMixin(object):
             publish_location_saved(domain, location_id, is_deletion=True)
         return super(LocationQueriesMixin, self).delete(*args, **kwargs)
 
-    def _user_input_filter(self, domain, user_input):
-        """Build a Q expression for filtering on user input
-
-        Accepts partial matches, matches against name and site_code.
-        """
-        return Q(domain=domain) & Q(
-            Q(name__icontains=user_input) | Q(site_code__icontains=user_input)
-        )
-
-    def filter_by_user_input(self, domain, user_input):
-        """
-        Accepts partial matches, matches against name and site_code.
-        """
-        return self.filter(self._user_input_filter(domain, user_input))
-
 
 class LocationQuerySet(LocationQueriesMixin, CTEQuerySet):
 
@@ -313,17 +293,26 @@ class LocationManager(LocationQueriesMixin, AdjListManager):
         except self.model.DoesNotExist:
             return self.get(domain=domain, name__iexact=user_input)
 
-    def filter_path_by_user_input(self, domain, user_input):
+    def filter_by_user_input(self, domain, user_input):
         """
-        Returns a queryset including all locations matching the user input
-        and their children. This means "Middlesex" will match:
-            Massachusetts/Middlesex
-            Massachusetts/Middlesex/Boston
-            Massachusetts/Middlesex/Cambridge
-        It matches by name or site-code
+        Returns a queryset based on user input
+          - Matching happens by name or site-code
+          - Adding a slash to the input string starts a new search node among descendants
+          - Matching is partial unless the query node is wrapped in quotes
+        Refer to TestFilterByUserInput for example usages.
         """
-        direct_matches = self._user_input_filter(domain, user_input)
-        return self.get_queryset_descendants(direct_matches, include_self=True)
+        query = None
+        for part in user_input.split('/'):
+            query = self.get_queryset_descendants(query) if query is not None else self
+            if part:
+                if part.startswith('"') and part.endswith('"'):
+                    query = query.filter(name__iexact=part[1:-1])
+                else:
+                    part = part.lstrip('"')
+                    query = query.filter(
+                        Q(name__icontains=part) | Q(site_code__icontains=part)
+                    )
+        return query
 
     def get_locations(self, location_ids):
         return self.filter(location_id__in=location_ids)

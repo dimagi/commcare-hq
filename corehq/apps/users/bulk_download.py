@@ -14,6 +14,7 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.user_importer.importer import BulkCacheBase, GroupMemoizer
 from corehq.apps.users.dbaccessors.all_commcare_users import (
     get_commcare_users_by_filters,
+    get_mobile_usernames_by_filters,
 )
 from corehq.util.workbook_json.excel import (
     alphanumeric_sort_key,
@@ -57,6 +58,8 @@ def parse_users(group_memoizer, domain, user_data_model, location_cache, user_fi
             user_data_model.get_model_and_uncategorized(user.user_data)
         )
         role = user.get_role(domain)
+        activity = user.reporting_metadata
+
         location_codes = []
         try:
             location_codes.append(location_cache.get(user.location_id))
@@ -69,6 +72,10 @@ def parse_users(group_memoizer, domain, user_data_model, location_cache, user_fi
                     location_codes.append(location_cache.get(location_id))
                 except SQLLocation.DoesNotExist:
                     pass
+
+        def _format_date(date):
+            return date.strftime('%Y-%m-%d %H:%M:%S') if date else ''
+
         return {
             'data': model_data,
             'uncategorized_data': uncategorized_data,
@@ -84,7 +91,9 @@ def parse_users(group_memoizer, domain, user_data_model, location_cache, user_fi
             'User IMEIs (read only)': _get_devices(user),
             'location_code': location_codes,
             'role': role.name if role else '',
-            'registered_on (read only)': user.created_on.strftime('%Y-%m-%d %H:%M:%S') if user.created_on else ''
+            'registered_on (read only)': _format_date(user.created_on),
+            'last_submission (read only)': _format_date(activity.last_submission_for_user.submission_date),
+            'last_sync (read only)': activity.last_sync_for_user.sync_date,
         }
 
     unrecognized_user_data_keys = set()
@@ -103,7 +112,7 @@ def parse_users(group_memoizer, domain, user_data_model, location_cache, user_fi
     user_headers = [
         'username', 'password', 'name', 'phone-number', 'email',
         'language', 'role', 'user_id', 'is_active', 'User IMEIs (read only)',
-        'registered_on (read only)']
+        'registered_on (read only)', 'last_submission (read only)', 'last_sync (read only)']
 
     user_data_fields = [f.slug for f in user_data_model.get_fields(include_system=False)]
     user_headers.extend(build_data_headers(user_data_fields))
@@ -163,6 +172,39 @@ def count_users_and_groups(domain, user_filters, group_memoizer):
     return users_count + groups_count
 
 
+def dump_usernames(domain, download_id, user_filters, task):
+    users_count = get_commcare_users_by_filters(domain, user_filters, count_only=True)
+    DownloadBase.set_progress(task, 0, users_count)
+
+    usernames = get_mobile_usernames_by_filters(domain, user_filters)
+
+    headers = [('users', [['username']])]
+    rows = [('users', [[username] for username in usernames])]
+    location_id = user_filters.get('location_id')
+    location_name = ""
+    if location_id:
+        location = SQLLocation.active_objects.get_or_None(location_id=location_id)
+        location_name = location.name if location else ""
+    filename_prefix = "_".join([a for a in [domain, location_name] if bool(a)])
+    filename = "{}_users.xlsx".format(filename_prefix)
+    _dump_xlsx_and_expose_download(filename, headers, rows, download_id, task, users_count)
+
+
+def _dump_xlsx_and_expose_download(filename, headers, rows, download_id, task, total_count):
+    writer = Excel2007ExportWriter(format_as_text=True)
+    use_transfer = settings.SHARED_DRIVE_CONF.transfer_enabled
+    file_path = get_download_file_path(use_transfer, filename)
+    writer.open(
+        header_table=headers,
+        file=file_path,
+    )
+    writer.write(rows)
+    writer.close()
+
+    expose_download(use_transfer, file_path, filename, download_id, 'xlsx')
+    DownloadBase.set_progress(task, total_count, total_count)
+
+
 def dump_users_and_groups(domain, download_id, user_filters, task):
     from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
 
@@ -181,7 +223,6 @@ def dump_users_and_groups(domain, download_id, user_filters, task):
 
         return group_memoizer
 
-    writer = Excel2007ExportWriter(format_as_text=True)
     group_memoizer = _load_memoizer(domain)
     location_cache = LocationIdToSiteCodeCache(domain)
 
@@ -213,18 +254,8 @@ def dump_users_and_groups(domain, download_id, user_filters, task):
         ('groups', group_rows),
     ]
 
-    use_transfer = settings.SHARED_DRIVE_CONF.transfer_enabled
     filename = "{}_users_{}.xlsx".format(domain, uuid.uuid4().hex)
-    file_path = get_download_file_path(use_transfer, filename)
-    writer.open(
-        header_table=headers,
-        file=file_path,
-    )
-    writer.write(rows)
-    writer.close()
-
-    expose_download(use_transfer, file_path, filename, download_id, 'xlsx')
-    DownloadBase.set_progress(task, users_groups_count, users_groups_count)
+    _dump_xlsx_and_expose_download(filename, headers, rows, download_id, task, users_groups_count)
 
 
 class GroupNameError(Exception):

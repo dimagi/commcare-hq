@@ -238,7 +238,7 @@ IntEntry.prototype.onPreProcess = function (newValue) {
 function PhoneEntry(question, options) {
     FreeTextEntry.call(this, question, options);
     this.templateType = 'str';
-    this.lengthLimit = options.lengthLimit || 15;
+    this.lengthLimit = options.lengthLimit;
 
     this.getErrorMessage = function (rawAnswer) {
         if (rawAnswer === '') {
