@@ -461,7 +461,10 @@ function ServiceDeliveryDashboardController($rootScope, $scope, $http, $location
     // end mobile helpers
 
     vm.getData = function () {
-        var requestParams = $location.search();
+        // If $location.search() is directly assigned to requestParams variable, It is assigned along with reference.
+        // So, any change made to requestParams will be reflected in $location also (affecting the url). To avoid this,
+        // we are deep cloning the object ($location.search()) before assigning it to request params
+        var requestParams = JSON.parse(JSON.stringify($location.search()));
         if (isMobile) {
             var mobileCustomParams = vm.getMobileCustomParams();
             for(var k in mobileCustomParams) {
@@ -481,22 +484,12 @@ function ServiceDeliveryDashboardController($rootScope, $scope, $http, $location
                 vm.setDtColumns();
                 if (isMobile) {
                     vm.generateSortableKpiData();
-                    vm.resetUrl(mobileCustomParams);
                 }
             },
             function (error) {
                 $log.error(error);
             }
         );
-    };
-
-    vm.resetUrl = function (mobileCustomParams) {
-        // resets all the params added in url to make network request for mobile
-        for(var k in mobileCustomParams) {
-            if (mobileCustomParams.hasOwnProperty(k)) {
-                $location.search(k, null);
-            }
-        }
     };
 
     $scope.$on('filtersChange', function () {
