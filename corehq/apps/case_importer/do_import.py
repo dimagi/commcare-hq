@@ -10,7 +10,6 @@ from couchdbkit import NoResultFound
 from casexml.apps.case.const import CASE_TAG_DATE_OPENED
 from casexml.apps.case.mock import CaseBlock, CaseBlockError
 from corehq.apps.receiverwrapper.rate_limiter import rate_limit_submission
-from corehq.util.datadog.gauges import datadog_counter
 from corehq.util.timer import TimingContext
 from couchexport.export import SCALAR_NEVER_WAS
 from dimagi.utils.logging import notify_exception
@@ -31,6 +30,7 @@ from corehq.util.soft_assert import soft_assert
 from . import exceptions
 from .const import LookupErrors
 from .util import EXTERNAL_ID, RESERVED_FIELDS, lookup_case
+from ...util.metrics import metrics_counter, metrics_histogram
 
 CASEBLOCK_CHUNKSIZE = 100
 RowAndCase = namedtuple('RowAndCase', ['row', 'case'])
@@ -186,18 +186,20 @@ class _TimedAndThrottledImporter(_Importer):
         rows_created = results['created_count']
         rows_updated = results['match_count']
         rows_failed = results['failed_count']
+
         # Add 1 to smooth / prevent denominator from ever being zero
         active_duration_per_case = active_duration / (rows_created + rows_updated + rows_failed + 1)
-        active_duration_per_case_bucket = bucket_value(
-            active_duration_per_case * 1000, [50, 70, 100, 150, 250, 350, 500], unit='ms')
+        metrics_histogram(
+            'commcare.case_importer.duration_per_case', active_duration_per_case,
+            buckets=[50, 70, 100, 150, 250, 350, 500], bucket_tag='duration', bucket_unit='ms',
+        )
 
         for rows, status in ((rows_created, 'created'),
                              (rows_updated, 'updated'),
                              (rows_failed, 'error')):
-            datadog_counter('commcare.case_importer.cases', rows, tags=[
-                'active_duration_per_case:{}'.format(active_duration_per_case_bucket),
-                'status:{}'.format(status),
-            ])
+            metrics_counter('commcare.case_importer.cases', rows, tags={
+                'status': status,
+            })
 
     def pre_submit_hook(self):
         if rate_limit_submission(self.domain):
@@ -209,12 +211,10 @@ class _TimedAndThrottledImporter(_Importer):
             # should be proportional to this heuristic.
             # For a fully throttled domain, this will up to double
             # the amount of time the case import takes
-            datadog_counter(
-                'commcare.case_importer.import_delays', tags=[
-                    'domain:{}'.format(self.domain),
-                    'duration:{}'.format(bucket_value(
-                        self._last_submission_duration, [5, 7, 10, 15, 25, 35, 50], unit='s'))
-                ]
+            metrics_histogram(
+                'commcare.case_importer.import_delays', self._last_submission_duration,
+                buckets=[5, 7, 10, 15, 25, 35, 50], bucket_tag='duration', bucket_unit='s',
+                tags={'domain': self.domain}
             )
             self._total_delayed_duration += self._last_submission_duration
             time.sleep(self._last_submission_duration)
