@@ -9,8 +9,8 @@ from django.conf import settings
 
 from memoized import memoized
 
+from corehq.util.datadog.gauges import datadog_counter
 from corehq.util.es.interface import ElasticsearchInterface
-from corehq.util.metrics import metrics_counter
 from dimagi.utils.chunked import chunked
 from pillowtop.processors.elastic import send_to_elasticsearch as send_to_es
 

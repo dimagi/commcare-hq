@@ -22,7 +22,7 @@ from testil import tempdir
 
 from casexml.apps.case.mock import CaseBlock
 from corehq.apps.domain.models import Domain
-from corehq.util.metrics.tests.utils import patch_datadog, capture_metrics
+from corehq.util.metrics.tests.utils import capture_metrics
 from couchforms.models import XFormInstance
 from dimagi.utils.parsing import ISO_DATETIME_FORMAT
 
