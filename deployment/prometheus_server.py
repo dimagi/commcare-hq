@@ -5,7 +5,6 @@ Environment variable `prometheus_multiproc_dir` must be set and match
 the value used by Django.
 """
 import os
-import threading
 from wsgiref.simple_server import make_server
 
 from prometheus_client import CollectorRegistry, make_wsgi_app, multiprocess
@@ -22,5 +21,4 @@ multiprocess.MultiProcessCollector(registry)
 
 app = make_wsgi_app(registry)
 httpd = make_server('', 9011, app, handler_class=_SilentHandler)
-t = threading.Thread(target=httpd.serve_forever)
-t.start()
+httpd.serve_forever()
