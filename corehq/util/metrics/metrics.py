@@ -4,6 +4,7 @@ import re
 from abc import abstractmethod
 from typing import List
 
+from corehq.util.metrics.const import ALERT_INFO
 from corehq.util.soft_assert import soft_assert
 from prometheus_client.utils import INF
 
@@ -13,7 +14,7 @@ RESERVED_METRIC_TAG_NAME_RE = re.compile(r'^__.*$')
 RESERVED_METRIC_TAG_NAMES = ['quantile', 'le']
 
 
-logger = logging.getLogger('commcare.metrics')
+metrics_logger = logging.getLogger('commcare.metrics')
 
 
 def _enforce_prefix(name, prefix):
@@ -61,6 +62,11 @@ class HqMetrics(metaclass=abc.ABCMeta):
         _validate_tag_names(tags)
         self._histogram(name, value, bucket_tag, buckets, bucket_unit, tags, documentation)
 
+    def create_event(self, title: str, text: str, alert_type: str = ALERT_INFO,
+                     tags: dict = None, aggregation_key: str = None):
+        _validate_tag_names(tags)
+        self._create_event(title, text, alert_type, tags, aggregation_key)
+
     @abstractmethod
     def _counter(self, name, value, tags, documentation):
         raise NotImplementedError
@@ -73,6 +79,11 @@ class HqMetrics(metaclass=abc.ABCMeta):
     def _histogram(self, name, value, bucket_tag, buckets, bucket_unit, tags, documentation):
         raise NotImplementedError
 
+    def _create_event(self, title: str, text: str, alert_type: str = ALERT_INFO,
+                     tags: dict = None, aggregation_key: str = None):
+        """Optional API to implement"""
+        pass
+
 
 class DebugMetrics:
     def __getattr__(self, item):
@@ -81,9 +92,14 @@ class DebugMetrics:
                 tags = kwargs.get('tags', {})
                 _enforce_prefix(name, 'commcare')
                 _validate_tag_names(tags)
-                logger.debug("[%s] %s %s %s", item, name, tags, value)
+                metrics_logger.debug("[%s] %s %s %s", item, name, tags, value)
             return _check
         raise AttributeError(item)
+
+    def create_event(self, title: str, text: str, alert_type: str = ALERT_INFO,
+                     tags: dict = None, aggregation_key: str = None):
+        _validate_tag_names(tags)
+        metrics_logger.debug('Metrics event: (%s) %s\n%s\n%s', alert_type, title, text, tags)
 
 
 class DelegatedMetrics:
@@ -91,7 +107,7 @@ class DelegatedMetrics:
         self.delegates = delegates
 
     def __getattr__(self, item):
-        if item in ('counter', 'gauge', 'histogram'):
+        if item in ('counter', 'gauge', 'histogram', 'create_event'):
             def _record_metric(*args, **kwargs):
                 for delegate in self.delegates:
                     getattr(delegate, item)(*args, **kwargs)
