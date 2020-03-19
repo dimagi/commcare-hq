@@ -279,7 +279,7 @@ class DemographicsExport(ExportableMixin):
 
     @property
     def columns(self):
-        return self.get_columns_by_loc_level + [
+        final_columns = self.get_columns_by_loc_level + [
             {
                 'header': 'Number of households',
                 'slug': 'num_households'
@@ -349,3 +349,9 @@ class DemographicsExport(ExportableMixin):
                 'slug': 'num_adolescent_girls_15yr18yr'
             }
         ]
+        if self.beta:
+            final_columns.append({
+                'header': 'Toal number of households members',
+                'slug': 'num_people'
+            })
+        return final_columns
