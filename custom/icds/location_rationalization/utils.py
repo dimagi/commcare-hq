@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from django.db import transaction
 
 from corehq.apps.locations.tasks import deactivate_users_at_location
