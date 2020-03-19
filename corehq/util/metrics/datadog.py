@@ -105,10 +105,13 @@ class DatadogMetrics(HqMetrics):
 
     def _create_event(self, title: str, text: str, alert_type: str = ALERT_INFO,
                       tags: dict = None, aggregation_key: str = None):
-        api.Event.create(
-            title=title, text=text, tags=tags,
-            alert_type=alert_type, aggregation_key=aggregation_key,
-        )
+        if datadog_initialized():
+            api.Event.create(
+                title=title, text=text, tags=tags,
+                alert_type=alert_type, aggregation_key=aggregation_key,
+            )
+        else:
+            datadog_logger.debug('Metrics event: (%s) %s\n%s\n%s', alert_type, title, text, tags)
 
 
 def _datadog_record(fn, name, value, tags=None):
@@ -116,3 +119,7 @@ def _datadog_record(fn, name, value, tags=None):
         fn(name, value, tags=tags)
     except Exception:
         datadog_logger.exception('Unable to record Datadog stats')
+
+
+def datadog_initialized():
+    return api._api_key and api._application_key
