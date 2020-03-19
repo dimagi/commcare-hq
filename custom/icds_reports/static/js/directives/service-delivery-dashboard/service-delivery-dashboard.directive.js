@@ -461,7 +461,10 @@ function ServiceDeliveryDashboardController($rootScope, $scope, $http, $location
     // end mobile helpers
 
     vm.getData = function () {
-        var requestParams = $location.search();
+        // If $location.search() is directly assigned to requestParams variable, It is assigned along with reference.
+        // So, any change made to requestParams will be reflected in $location also (affecting the url). To avoid this,
+        // we are deep cloning the object ($location.search()) before assigning it to request params
+        var requestParams = JSON.parse(JSON.stringify($location.search()));
         if (isMobile) {
             var mobileCustomParams = vm.getMobileCustomParams();
             for(var k in mobileCustomParams) {

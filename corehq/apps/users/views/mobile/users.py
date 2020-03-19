@@ -6,6 +6,8 @@ from datetime import datetime
 
 from braces.views import JsonRequestResponseMixin
 from couchdbkit import ResourceNotFound
+
+from corehq.util import get_document_or_404
 from couchexport.models import Format
 from couchexport.writers import Excel2007ExportWriter
 from django.conf import settings
@@ -98,7 +100,7 @@ from corehq.apps.users.views import (
     get_domain_languages,
 )
 from corehq.const import GOOGLE_PLAY_STORE_COMMCARE_URL, USER_DATE_FORMAT
-from corehq.toggles import FILTERED_BULK_USER_DOWNLOAD
+from corehq.toggles import FILTERED_BULK_USER_DOWNLOAD, TWO_STAGE_USER_PROVISIONING
 from corehq.util.datadog.gauges import datadog_counter
 from corehq.util.dates import iso_string_to_datetime
 from corehq.util.workbook_json.excel import (
@@ -1395,4 +1397,34 @@ class CommCareUserSelfRegistrationView(TemplateView, DomainViewMixin):
 
             self.invitation.registered_date = datetime.utcnow()
             self.invitation.save()
+        return self.get(request, *args, **kwargs)
+
+
+@method_decorator(TWO_STAGE_USER_PROVISIONING.required_decorator(), name='dispatch')
+class CommCareUserConfirmAccountView(TemplateView, DomainViewMixin):
+    template_name = "users/commcare_user_confirm_account.html"
+    urlname = "commcare_user_confirm_account"
+    strict_domain_fetching = True
+
+    @property
+    @memoized
+    def user_id(self):
+        return self.kwargs.get('user_id')
+
+    @property
+    @memoized
+    def user(self):
+        return get_document_or_404(CommCareUser, self.domain, self.user_id)
+
+    def get_context_data(self, **kwargs):
+        context = super(CommCareUserConfirmAccountView, self).get_context_data(**kwargs)
+        context.update({
+            'hr_name': self.domain_object.display_name(),
+            'user': self.user,
+        })
+        return context
+
+    def post(self, request, *args, **kwargs):
+        self.validate_request()
+        # todo: process form data and activate the account
         return self.get(request, *args, **kwargs)

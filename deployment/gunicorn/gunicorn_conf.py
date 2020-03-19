@@ -1,3 +1,6 @@
+import glob
+import os
+
 preload_app = True
 worker_class = 'gevent'
 keepalive = 60
@@ -18,3 +21,15 @@ def post_fork(server, worker):
     # see: https://github.com/benoitc/gunicorn/issues/527#issuecomment-19601046
     from django.urls import resolve
     resolve('/')
+
+
+def on_starting(server):
+    """Wipe the metrics from previous processes"""
+    path = os.environ.get('prometheus_multiproc_dir')
+    for f in glob.glob(os.path.join(path, '*.db')):
+        os.remove(f)
+
+
+def child_exit(server, worker):
+    from prometheus_client import multiprocess
+    multiprocess.mark_process_dead(worker.pid)

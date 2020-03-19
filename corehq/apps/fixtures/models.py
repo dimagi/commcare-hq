@@ -21,7 +21,7 @@ from dimagi.utils.couch.bulk import CouchTransaction
 
 from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
 from corehq.apps.fixtures.dbaccessors import (
-    get_fixture_data_types_in_domain,
+    get_fixture_data_types,
     get_fixture_items_for_data_type,
     get_owner_ids_by_type,
 )
@@ -83,15 +83,13 @@ class FixtureDataType(QuickCachedDocumentMixin, Document):
 
     @classmethod
     def total_by_domain(cls, domain):
-        from corehq.apps.fixtures.dbaccessors import \
-            get_number_of_fixture_data_types_in_domain
-        return get_number_of_fixture_data_types_in_domain(domain)
+        from corehq.apps.fixtures.dbaccessors import count_fixture_data_types
+        return count_fixture_data_types(domain)
 
     @classmethod
     def by_domain(cls, domain):
-        from corehq.apps.fixtures.dbaccessors import \
-            get_fixture_data_types_in_domain
-        return get_fixture_data_types_in_domain(domain)
+        from corehq.apps.fixtures.dbaccessors import get_fixture_data_types
+        return get_fixture_data_types(domain)
 
     @classmethod
     def by_domain_tag(cls, domain, tag):
@@ -121,7 +119,7 @@ class FixtureDataType(QuickCachedDocumentMixin, Document):
 
     def clear_caches(self):
         super(FixtureDataType, self).clear_caches()
-        get_fixture_data_types_in_domain.clear(self.domain)
+        get_fixture_data_types.clear(self.domain)
 
 
 class FixtureItemField(DocumentSchema):
