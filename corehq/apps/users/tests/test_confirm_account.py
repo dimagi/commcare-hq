@@ -2,6 +2,7 @@ from django.contrib.auth.models import User
 from django.test import TestCase
 
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.users.exceptions import IllegalAccountConfirmation
 from corehq.apps.users.models import CommCareUser
 
 
@@ -48,3 +49,8 @@ class TestAccountConfirmation(TestCase):
         self.assertEqual(False, self.client.login(username=self.username, password=self.password))
         # but can with new password
         self.assertEqual(True, self.client.login(username=self.username, password=new_password))
+
+    def test_cant_confirm_twice(self):
+        self.user.confirm_account('abc')
+        with self.assertRaises(IllegalAccountConfirmation):
+            self.user.confirm_account('def')
