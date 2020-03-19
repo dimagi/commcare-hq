@@ -36,7 +36,7 @@ class TestMobileWorkerConfirmAccountView(TestCase):
     def test_expected_workflow(self):
         response = self.client.get(self.url)
         self.assertEqual(200, response.status_code)
-        self.assertContains(response, 'Confirm your account here')
+        self.assertContains(response, 'Confirm your account')
 
     def test_feature_flag_not_enabled(self):
         response = self.client.get(self.url)
