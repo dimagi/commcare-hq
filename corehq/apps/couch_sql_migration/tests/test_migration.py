@@ -22,6 +22,7 @@ from testil import tempdir
 
 from casexml.apps.case.mock import CaseBlock
 from corehq.apps.domain.models import Domain
+from corehq.util.metrics.tests.utils import patch_datadog, capture_metrics
 from couchforms.models import XFormInstance
 from dimagi.utils.parsing import ISO_DATETIME_FORMAT
 
@@ -66,7 +67,6 @@ from corehq.util.test_utils import (
     create_and_save_a_case,
     create_and_save_a_form,
     flag_enabled,
-    patch_datadog,
     set_parent_case,
     softer_assert,
     trap_extra_setup,
@@ -781,17 +781,17 @@ class MigrationTestCase(BaseMigrationTestCase):
         self._compare_diffs([])
 
     def test_timings(self):
-        with patch_datadog() as received_stats:
+        with capture_metrics() as received_stats:
             self._do_migration_and_assert_flags(self.domain_name)
         tracked_stats = [
-            'commcare.couch_sql_migration.unprocessed_cases.count.duration:',
-            'commcare.couch_sql_migration.main_forms.count.duration:',
-            'commcare.couch_sql_migration.unprocessed_forms.count.duration:',
-            'commcare.couch_sql_migration.count.duration:',
+            'commcare.couch_sql_migration.unprocessed_cases.count',
+            'commcare.couch_sql_migration.main_forms.count',
+            'commcare.couch_sql_migration.unprocessed_forms.count',
+            'commcare.couch_sql_migration.count',
         ]
         for t_stat in tracked_stats:
             self.assertTrue(
-                any(r_stat.startswith(t_stat) for r_stat in received_stats),
+                any(r_stat.name == t_stat for r_stat in received_stats),
                 "missing stat %r" % t_stat,
             )
 

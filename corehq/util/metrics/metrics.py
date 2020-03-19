@@ -2,6 +2,7 @@ import abc
 import logging
 import re
 from abc import abstractmethod
+from collections import namedtuple
 from typing import List
 
 from corehq.util.soft_assert import soft_assert
@@ -23,7 +24,7 @@ def _enforce_prefix(name, prefix):
 
 
 def _validate_tag_names(tag_names):
-    tag_names = set(tag_names)
+    tag_names = set(tag_names or [])
     for l in tag_names:
         if not METRIC_TAG_NAME_RE.match(l):
             raise ValueError('Invalid metric tag name: ' + l)
@@ -74,7 +75,14 @@ class HqMetrics(metaclass=abc.ABCMeta):
         raise NotImplementedError
 
 
+Sample = namedtuple('Sample', ['type', 'name', 'tags', 'value'])
+
+
 class DebugMetrics:
+    def __init__(self, capture=False):
+        self._capture = capture
+        self.metrics = []
+
     def __getattr__(self, item):
         if item in ('counter', 'gauge', 'histogram'):
             def _check(name, value, *args, **kwargs):
@@ -82,6 +90,8 @@ class DebugMetrics:
                 _enforce_prefix(name, 'commcare')
                 _validate_tag_names(tags)
                 logger.debug("[%s] %s %s %s", item, name, tags, value)
+                if self._capture:
+                    self.metrics.append(Sample(item, name, tags, value))
             return _check
         raise AttributeError(item)
 

@@ -113,11 +113,10 @@ __all__ = [
     'metrics_gauge_task',
 ]
 
-_metrics = None
+_metrics = []
 
 
 def _get_metrics_provider():
-    global _metrics
     if not _metrics:
         providers = []
         for provider_path in settings.METRICS_PROVIDERS:
@@ -125,12 +124,13 @@ def _get_metrics_provider():
             providers.append(provider)
 
         if not providers:
-            _metrics = DebugMetrics()
+            metrics = DebugMetrics()
         elif len(providers) > 1:
-            _metrics = DelegatedMetrics(providers)
+            metrics = DelegatedMetrics(providers)
         else:
-            _metrics = providers[0]
-    return _metrics
+            metrics = providers[0]
+        _metrics.append(metrics)
+    return _metrics[-1]
 
 
 def metrics_counter(name: str, value: float = 1, tags: dict = None, documentation: str = ''):
