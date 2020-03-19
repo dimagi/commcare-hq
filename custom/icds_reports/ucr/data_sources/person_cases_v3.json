@@ -310,15 +310,18 @@
       {
         "column_id": "household_case_id",
         "datatype": "string",
-        "display_name": null,
+        "type": "expression",
         "expression": {
-          "name": "icds_parent_id",
-          "type": "named"
-        },
-        "is_nullable": true,
-        "is_primary_key": false,
-        "transform": {},
-        "type": "expression"
+          "type": "related_doc",
+          "related_doc_type": "CommCareCase",
+          "doc_id_expression": {
+            "type": "icds_parent_id"
+          },
+          "value_expression": {
+            "type": "property_name",
+            "property_name": "case_id"
+          }
+        }
       },
       {
         "column_id": "hh_member_number",
