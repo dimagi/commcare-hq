@@ -27,7 +27,7 @@ at the DEBUG level.
 Metric tagging
 ==============
 Metrics may be tagged by passing a dictionary of tag names and values. Tags should be used
-add dimensions to a metric e.g. request type, response status.
+to add dimensions to a metric e.g. request type, response status.
 
 Tags should not originate from unbounded sources or sources with high dimensionality such as
 timestamps, user IDs, request IDs etc. Ideally a tag should not have more than 10 possible values.

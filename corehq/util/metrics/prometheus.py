@@ -28,10 +28,10 @@ class PrometheusMetrics(HqMetrics):
         during a scrape:
 
         * cumulative counters for the observation buckets, exposed as
-          `<basename>_bucket{le="<upper inclusive bound>"}`
-        * the total sum of all observed values, exposed as `<basename>_sum`
-        * the count of events that have been observed, exposed as `<basename>_count`
-          (identical to `<basename>_bucket{le="+Inf"}` above)
+          `<name>_bucket{le="<upper inclusive bound>"}`
+        * the total sum of all observed values, exposed as `<name>_sum`
+        * the count of events that have been observed, exposed as `<name>_count`
+          (identical to `<name>_bucket{le="+Inf"}` above)
 
         For example
         ::
