@@ -21,7 +21,7 @@
       </p>
     </div>
   {% elif user.is_account_confirmed %}
-    <div class="alert-alert-danger">
+    <div class="alert alert-danger">
       <p>
         {% blocktrans %}
           It looks like your account has been deactivated.
@@ -36,4 +36,3 @@
     </div>
   {% endif %}
 {% endblock %}
-{% block mobile-logout %}{% endblock %}
