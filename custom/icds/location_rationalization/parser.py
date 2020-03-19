@@ -1,5 +1,7 @@
 from collections import defaultdict
 
+from django.utils.functional import cached_property
+
 from corehq.apps.locations.models import SQLLocation
 from custom.icds.location_rationalization.const import (
     EXTRACT_OPERATION,
@@ -118,13 +120,13 @@ class Parser(object):
                 ))
 
     def process(self):
-        self._load_locations()
         for location_type in list(reversed(self.location_types)):
             for operation, transitions in self.transitions[location_type].items():
                 self._perform_operation(operation, transitions)
 
-    def _load_locations(self):
-        self.locations_by_site_code = {
+    @cached_property
+    def locations_by_site_code(self):
+        return {
             loc.site_code: loc
             for loc in SQLLocation.active_objects.filter(site_code__in=self.requested_transitions.keys())
         }
