@@ -1873,10 +1873,8 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         assert not self.is_active, 'Active account should not be unconfirmed!'
         self.is_active = True
         self.is_account_confirmed = True
+        self.set_password(password)
         self.save()
-        django_user = self.get_django_user()
-        django_user.set_password(password)
-        django_user.save()
 
     def get_case_sharing_groups(self):
         from corehq.apps.groups.models import Group
