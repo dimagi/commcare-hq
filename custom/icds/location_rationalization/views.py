@@ -14,7 +14,7 @@ from corehq.apps.locations.models import LocationType
 from corehq.apps.locations.permissions import require_can_edit_locations
 from corehq.apps.locations.views import LocationsListView
 from corehq.util.files import safe_filename_header
-from corehq.util.workbook_json.excel import get_workbook, WorkbookJSONError
+from corehq.util.workbook_json.excel import WorkbookJSONError, get_workbook
 from custom.icds.location_rationalization.download import (
     RequestTemplateDownload,
 )

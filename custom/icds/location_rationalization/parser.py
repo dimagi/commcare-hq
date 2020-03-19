@@ -7,8 +7,8 @@ from custom.icds.location_rationalization.const import (
     EXTRACT_OPERATION,
     MERGE_OPERATION,
     MOVE_OPERATION,
-    SPLIT_OPERATION,
     OPERATION_COLUMN_NAME,
+    SPLIT_OPERATION,
     VALID_OPERATIONS,
 )
 
