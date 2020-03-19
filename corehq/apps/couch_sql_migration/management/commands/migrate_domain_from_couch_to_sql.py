@@ -222,7 +222,7 @@ class Command(BaseCommand):
             if status == MigrationStatus.DRY_RUN:
                 log.info("Continuing live migration. Use --finish to complete.")
                 self.live_migrate = True
-        if self.missing_docs == CACHED and (self.finish or not self.live_migrate):
+        if self.missing_docs == CACHED:
             self.missing_docs = RESUME
         set_couch_sql_migration_started(domain, self.live_migrate)
         do_couch_to_sql_migration(
@@ -236,17 +236,12 @@ class Command(BaseCommand):
             forms=self.forms,
         )
 
-        return_code = 0
+        has_diffs = self.print_stats(domain, short=True, diffs_only=True)
         if self.live_migrate:
             print("Live migration completed.")
-            has_diffs = True
-        else:
-            has_diffs = self.print_stats(domain, short=True, diffs_only=True)
-            return_code = int(has_diffs)
         if has_diffs:
             print("\nRun `diff` or `stats [--verbose]` for more details.\n")
-        if return_code:
-            sys.exit(return_code)
+            sys.exit(1)
 
     def do_reset(self, domain):
         if not self.no_input:
