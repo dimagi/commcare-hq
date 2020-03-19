@@ -260,9 +260,7 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
             migration_table=AGG_MIGRATION_TABLE,
             seeking_services=(
                 "CASE WHEN "
-                "registered_status IS DISTINCT FROM 0 AND "
-                "(agg_migration.is_migrated=1 AND "
-                "agg_migration.migration_date < %(start_date)s)::integer IS DISTINCT FROM 1 "
+                "registered_status IS DISTINCT FROM 0 AND (agg_migration.is_migrated IS DISTINCT FROM 1 OR agg_migration.migration_date >= %(start_date)s) "
                 "THEN 1 ELSE 0 END"
             )
         ), {
@@ -298,8 +296,7 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
                  )
             WHERE (opened_on <= %(end_date)s AND
               (closed_on IS NULL OR closed_on >= %(start_date)s )) AND
-              ((agg_migration.is_migrated=1 AND
-              agg_migration.migration_date < %(start_date)s)::integer IS DISTINCT FROM 1)
+              ((agg_migration.is_migrated IS DISTINCT FROM 1 OR agg_migration.migration_date >= %(start_date)s))
               GROUP BY ucr.awc_id, ucr.supervisor_id
         )ut
         where agg_awc.awc_id = ut.awc_id and ut.supervisor_id=agg_awc.supervisor_id;
