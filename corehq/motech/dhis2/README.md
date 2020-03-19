@@ -371,6 +371,10 @@ Paste the following into "Case config":
     },
     "iESIqZ0R0R0": {
       "case_property": "date_of_birth"
+    },
+    "lZGmxYbs97q": {
+      "case_property": "unique_id",
+      "is_generated": true
     }
   },
   "finder_config": {
@@ -458,6 +462,17 @@ properties or constants, but it is not recommended to use form
 questions because if the case is updated by a form that is missing that
 question, DHIS2 will remove the value of the attribute from the tracked
 entity instance instead of leaving it the same.
+
+"unique_id" is different from the other attributes. It has an additional
+option, `"is_generated": true`. This is to tell MOTECH that CommCare
+does not assign this attribute its value; DHIS2 does. MOTECH will
+request DHIS2 to generate a value for this attribute, and it will update
+the CommCare case with the value that DHIS2 generates. (Features in
+CommCare HQ that list case properties, like the form builder, case
+exports and report builder, will not be able to find this case property.
+Using the Data Dictionary to manage case properties is recommended, and
+also offers the advantage of providing case property descriptions and
+data types.)
 
 "finder_config" manages the configuration of how MOTECH searches DHIS2
 to find a matching tracked entity instance for a case.
