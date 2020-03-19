@@ -414,7 +414,7 @@ class WorkerState:
     def should_diff(self, case):
         return (
             case.server_modified_on is None
-            or case.server_modified_on < self.cutoff_date
+            or case.server_modified_on <= self.cutoff_date
         )
 
 

@@ -27,7 +27,7 @@ from .statedb import open_state_db
 log = logging.getLogger(__name__)
 
 
-def find_missing_docs(domain, state_dir, live_migrate=False, resume=True):
+def find_missing_docs(domain, state_dir, live_migrate=False, resume=True, progress=True):
     """Update missing documents in state db
 
     Find each entity (form or case) that is in Couch but not in SQL.
@@ -45,7 +45,8 @@ def find_missing_docs(domain, state_dir, live_migrate=False, resume=True):
         log.info(f"stopping at {get_main_forms_iteration_stop_date(statedb)}")
     with statedb, stopper, ExitStack() as stop_it:
         for entity in ["form", "case"]:
-            missing_ids = MissingIds(entity, statedb, stopper, resume=resume)
+            missing_ids = MissingIds(
+                entity, statedb, stopper, resume=resume, progress=progress)
             stop_it.enter_context(missing_ids)
             for doc_type in missing_ids.doc_types:
                 statedb.delete_missing_docs(doc_type)
@@ -91,6 +92,7 @@ class MissingIds:
     statedb = attr.ib()
     stopper = attr.ib()
     resume = attr.ib(default=True, kw_only=True)
+    progress = attr.ib(default=True, kw_only=True)
     tag = attr.ib(default="missing", kw_only=True)
     chunk_size = attr.ib(default=5000, kw_only=True)
 
@@ -174,6 +176,8 @@ class MissingIds:
         return (x for x in missing_ids if not modified_since_stop_date(x))
 
     def with_progress(self, doc_type, iterable, count_key):
+        if not self.progress:
+            return iterable
         couchdb = XFormInstance.get_db()
         return with_progress_bar(
             iterable,
