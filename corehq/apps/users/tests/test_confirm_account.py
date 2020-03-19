@@ -1,0 +1,50 @@
+from django.contrib.auth.models import User
+from django.test import TestCase
+
+from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.users.models import CommCareUser
+
+
+class TestAccountConfirmation(TestCase):
+    domain = 'test_account_confirmation'
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.project = create_domain(cls.domain)
+
+    def setUp(self):
+        self.username = 'mw1'
+        self.password = 's3cr3t'
+        self.user = CommCareUser.create(
+            self.domain,
+            self.username,
+            self.password,
+            email='mw1@example.com',
+            is_account_confirmed=False,
+        )
+        # confirm user can't login
+        self.assertEqual(False, self.client.login(username=self.username, password=self.password))
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.project.delete()
+        from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
+        delete_all_users()
+        super().tearDownClass()
+
+    def tearDown(self):
+        self.user.delete()
+
+    def test_confirm_account(self):
+
+        # confirm user can't login
+        self.assertEqual(False, self.client.login(username=self.username, password=self.password))
+
+        new_password = 'm0r3s3cr3t!'
+        self.user.confirm_account(password=new_password)
+
+        # confirm user can't login with old password
+        self.assertEqual(False, self.client.login(username=self.username, password=self.password))
+        # but can with new password
+        self.assertEqual(True, self.client.login(username=self.username, password=new_password))
