@@ -302,13 +302,13 @@ class Command(BaseCommand):
                 short,
                 diffs_only,
             )
-
+        if any(x.missing for x in doc_counts.values()):
+            print("\nRun again with --forms=missing to migrate missing docs")
         pending = statedb.count_undiffed_cases()
         if pending:
             print(shell_red(f"\nThere are {pending} case diffs pending."))
             print(f"Resolution: couch_sql_diff {domain} cases --select=pending")
             return True
-
         if diffs_only and not has_diffs:
             print(shell_green("No differences found between old and new docs!"))
         return has_diffs
