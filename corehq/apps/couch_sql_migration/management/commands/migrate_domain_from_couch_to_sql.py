@@ -267,7 +267,7 @@ class Command(BaseCommand):
         self.print_stats(domain, short=not self.verbose)
 
     def do_diff(self, domain):
-        print(f"replaced by: couch_sql_diff show {domain} [--select=DOC_TYPE]")
+        print(f"replaced by: couch_sql_diff {domain} show [--select=DOC_TYPE]")
 
     def do_rewind(self, domain):
         db = open_state_db(domain, self.state_dir)
@@ -306,7 +306,7 @@ class Command(BaseCommand):
         pending = statedb.count_undiffed_cases()
         if pending:
             print(shell_red(f"\nThere are {pending} case diffs pending."))
-            print(f"Resolution: couch_sql_diff cases {domain} --select=pending")
+            print(f"Resolution: couch_sql_diff {domain} cases --select=pending")
             return True
 
         if diffs_only and not has_diffs:
