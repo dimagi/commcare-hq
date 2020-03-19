@@ -81,7 +81,7 @@ from corehq.apps.users.forms import (
     NewMobileWorkerForm,
     SelfRegistrationForm,
     SetUserPasswordForm,
-)
+    MobileWorkerAccountConfirmationForm)
 from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.apps.users.tasks import (
     bulk_download_users_async,
@@ -1416,15 +1416,35 @@ class CommCareUserConfirmAccountView(TemplateView, DomainViewMixin):
     def user(self):
         return get_document_or_404(CommCareUser, self.domain, self.user_id)
 
+    @property
+    @memoized
+    def form(self):
+        if self.request.method == 'POST':
+            return MobileWorkerAccountConfirmationForm(self.request.POST)
+        else:
+            return MobileWorkerAccountConfirmationForm(initial={
+                'username': self.user.raw_username,
+                'email': self.user.email,
+            })
+
     def get_context_data(self, **kwargs):
         context = super(CommCareUserConfirmAccountView, self).get_context_data(**kwargs)
         context.update({
-            'hr_name': self.domain_object.display_name(),
+            'domain_name': self.domain_object.display_name(),
             'user': self.user,
+            'form': self.form,
         })
         return context
 
     def post(self, request, *args, **kwargs):
-        self.validate_request()
+        if self.form.is_valid():
+            # todo set email and name too
+            self.user.confirm_account(password=self.form.cleaned_data['password'])
+            messages.success(request, _(
+                f'You have successfully confirmed the {self.user.raw_username} account. '
+                'You can now login'
+            ))
+            return HttpResponseRedirect(reverse('domain_login', args=[self.domain]))
+
         # todo: process form data and activate the account
         return self.get(request, *args, **kwargs)
