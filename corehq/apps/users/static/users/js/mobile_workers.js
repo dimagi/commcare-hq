@@ -213,12 +213,11 @@ hqDefine("users/js/mobile_workers",[
         self.twoStageProvisioningEnabled = ko.observable(options.two_stage_provisioning_enabled);
 
         self.passwordStatus = ko.computed(function () {
-            if (!self.useStrongPasswords()) {
-                // No validation
+            if (!self.stagedUser()) {
                 return self.STATUS.NONE;
             }
-
-            if (!self.stagedUser()) {
+            if (!self.useStrongPasswords()) {
+                // No validation
                 return self.STATUS.NONE;
             }
 
