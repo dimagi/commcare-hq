@@ -17,6 +17,7 @@ from ..example_data.data import (
     get_expected_report,
     populate_inddex_domain,
 )
+from ..food import FoodData, FoodRow
 from ..ucr.adapters import FoodCaseData
 from ..ucr.data_providers.master_data_file_data import MasterDataFileData
 
@@ -116,17 +117,46 @@ class TestMasterReport(TestCase):
             self.assertTrue(False, msg)
 
     def test_data_source(self):
-        expected = self.sort_rows(self.get_expected_ucr_rows())
+        # Only the rows with case IDs will appear in the UCR
+        expected = self.sort_rows(r for r in get_expected_report() if r['caseid'])
         ucr_data = self.sort_rows(self.get_ucr_data())
         self.assert_same_foods_present(expected, ucr_data)
-        columns_in_both = list(set(FoodCaseData.UCR_COLUMN_IDS)
-                               & set(expected[0].keys()))
-        for expected_row, actual_row in zip(expected, ucr_data):
-            pass
-            # self.assert_same_column_vals(expected_row, actual_row, columns_in_both)
 
-    def get_expected_ucr_rows(self):
-        # Only the rows with case IDs come from food cases
+    def get_ucr_data(self):
+        return FoodCaseData({
+            'domain': self.domain,
+            'startdate': date(2020, 1, 1).isoformat(),
+            'enddate': date(2020, 4, 1).isoformat(),
+            'case_owners': '',
+            'recall_status': '',
+        }).get_data()
+
+    def test_new_report(self):
+        expected = self.sort_rows(self.get_expected_rows())
+        actual = self.sort_rows(self.run_new_report())
+        self.assert_same_foods_present(expected, actual)
+        columns_known_to_fail = {  # TODO address these columns
+            'unique_respondent_id',
+            'respondent_id',
+            'opened_date',
+            'recipe_name',
+            'reference_food_code',
+            'include_in_analysis',
+            'time_block',
+            'ingr_recipe_code',
+            'nsr_conv_method_code_post_cooking',
+            'nsr_conv_option_code_post_cooking',
+            'nsr_conv_option_desc_post_cooking',
+            'already_reported_food',
+        }
+        columns = [c for c in FoodRow._indicators_in_ucr  # for now, only ucr columns are correct
+                   if c not in columns_known_to_fail]
+        for expected_row, actual_row in zip(expected, actual):
+            self.assert_same_column_vals(expected_row, actual_row, columns)
+
+    def get_expected_rows(self):
+        # Only the rows with case IDs currently appear
+        # TODO insert remaining rows
         expected = [r for r in get_expected_report() if r['caseid']]
 
         # Swap out the external IDs in the test fixture for the real IDs
@@ -142,11 +172,7 @@ class TestMasterReport(TestCase):
 
         return map(substitute_real_ids, expected)
 
-    def get_ucr_data(self):
-        return FoodCaseData({
-            'domain': self.domain,
-            'startdate': date(2020, 1, 1).isoformat(),
-            'enddate': date(2020, 4, 1).isoformat(),
-            'case_owners': '',
-            'recall_status': '',
-        }).get_data()
+    def run_new_report(self):
+        ucr_data = self.get_ucr_data()
+        report = FoodData(ucr_data)
+        return [dict(zip(report.headers, row)) for row in report.rows]
