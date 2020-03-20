@@ -544,12 +544,6 @@
         "property_name": "last_class_attended_ever"
       },
       {
-        "column_id": "preg_order",
-        "datatype": "integer",
-        "type": "raw",
-        "property_name": "preg_order"
-      },
-      {
         "column_id": "disabled",
         "datatype": "small_integer",
         "type": "expression",
