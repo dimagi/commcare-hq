@@ -421,6 +421,7 @@ hqDefine("users/js/mobile_workers",[
             location_url: initialPageData.reverse('location_search'),
             require_location_id: !initialPageData.get('can_access_all_locations'),
             strong_mobile_passwords: initialPageData.get('strong_mobile_passwords'),
+            two_stage_provisioning_enabled: initialPageData.get('two_stage_provisioning_enabled'),
         });
         $("#new-user-modal-trigger").koApplyBindings(newUserCreation);
         $("#new-user-modal").koApplyBindings(newUserCreation);
