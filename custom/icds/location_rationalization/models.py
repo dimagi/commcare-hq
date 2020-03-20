@@ -49,9 +49,9 @@ class BaseOperation(metaclass=ABCMeta):
         if not self.old_locations or not self.new_locations:
             return False
         for old_location in self.old_locations:
-            if (DEPRECATED_TO in old_location.metadata or
-                    DEPRECATED_AT in old_location.metadata or
-                    DEPRECATION_OPERATION in old_location.metadata):
+            if (DEPRECATED_TO in old_location.metadata
+                    or DEPRECATED_AT in old_location.metadata
+                    or DEPRECATION_OPERATION in old_location.metadata):
                 return False
         for new_location in self.new_locations:
             if DEPRECATES in new_location.metadata:
