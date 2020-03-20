@@ -314,10 +314,7 @@ class DomainRegistrationForm(forms.Form):
         return self.cleaned_data
 
 
-class WebUserInvitationForm(NoAutocompleteMixin, forms.Form):
-    """
-    Form for a brand new user, before they've created a domain or done anything on CommCare HQ.
-    """
+class BaseUserInvitationForm(NoAutocompleteMixin, forms.Form):
     full_name = forms.CharField(label=_('Full Name'),
                                 max_length=User._meta.get_field('first_name').max_length +
                                            User._meta.get_field('last_name').max_length + 1,
@@ -353,7 +350,7 @@ class WebUserInvitationForm(NoAutocompleteMixin, forms.Form):
                                                """)))
 
     def __init__(self, *args, **kwargs):
-        super(WebUserInvitationForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def clean_full_name(self):
         data = self.cleaned_data['full_name'].split()
@@ -362,12 +359,6 @@ class WebUserInvitationForm(NoAutocompleteMixin, forms.Form):
     def clean_email(self):
         data = self.cleaned_data['email'].strip().lower()
         validate_email(data)
-        duplicate = CouchUser.get_by_username(data)
-        if duplicate:
-            # sync django user
-            duplicate.save()
-        if User.objects.filter(username__iexact=data).count() > 0 or duplicate:
-            raise forms.ValidationError('Username already taken; please try another')
         return data
 
     def clean_password(self):
@@ -390,6 +381,21 @@ class WebUserInvitationForm(NoAutocompleteMixin, forms.Form):
                 'You must agree to our Terms of Service and Business Agreement '
                 'in order to register an account.'
             ))
+        return data
+
+
+class WebUserInvitationForm(BaseUserInvitationForm):
+    """
+    Form for a brand new user, before they've created a domain or done anything on CommCare HQ.
+    """
+    def clean_email(self):
+        data = super().clean_email()
+        duplicate = CouchUser.get_by_username(data)
+        if duplicate:
+            # sync django user
+            duplicate.save()
+        if User.objects.filter(username__iexact=data).count() > 0 or duplicate:
+            raise forms.ValidationError('Username already taken; please try another')
         return data
 
 
