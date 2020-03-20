@@ -196,3 +196,8 @@ class HotCookedMealStats(MonthBasedQuery):
 class ChildrenCount(MonthBasedQuery):
     name = "Children Count"
     query_file_path = "custom/icds_reports/data_pull/sql_queries/children_count.sql"
+
+
+class VHSNDMonthlyCount(MonthBasedQuery):
+    name = "VNSND monthly count"
+    query_file_path = "custom/icds_reports/data_pull/sql_queries/vhsnd_monthly_report.sql"

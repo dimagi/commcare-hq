@@ -199,11 +199,10 @@ class DeviceLogRequest(models.Model):
     """
     domain = models.CharField(max_length=255)
     username = models.CharField(max_length=255, help_text="raw_username, no @domain.commcarehq.org")
-    device_id = models.CharField(max_length=255, null=True, default='')
     created_on = models.DateTimeField(auto_now_add=True)
 
     class Meta(object):
-        unique_together = ('domain', 'username', 'device_id')
+        unique_together = ('domain', 'username')
 
     def delete(self, *args, **kwargs):
         super().delete(*args, **kwargs)
@@ -214,13 +213,13 @@ class DeviceLogRequest(models.Model):
         _all_device_log_requests.reset_cache()
 
     @classmethod
-    def is_pending(cls, domain, username, device_id):
+    def is_pending(cls, domain, username):
         """Is there a pending device log request matching these params?"""
-        return (domain, raw_username(username), device_id) in _all_device_log_requests()
+        return (domain, raw_username(username)) in _all_device_log_requests()
 
 
 @memoized
 def _all_device_log_requests():
     # This is expected to be very small, usually empty, but it's accessed
     # every heartbeat request, so it's memoized to the Django process
-    return set(DeviceLogRequest.objects.values_list('domain', 'username', 'device_id'))
+    return set(DeviceLogRequest.objects.values_list('domain', 'username'))

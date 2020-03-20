@@ -72,6 +72,7 @@ window.angular.module('icdsApp').factory('baseControllersService', ['$timeout', 
             vm.userLocationId = userLocationId;
             vm.filtersData = $location.search();
             vm.step = $routeParams.step;
+            vm.haveAccessToAllLocations = haveAccessToAllLocations;
             vm.chartData = null;
             vm.top_five = [];
             vm.bottom_five = [];

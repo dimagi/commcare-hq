@@ -48,6 +48,10 @@ class ConfigurableReportCustomDataSource(ConfigurableReportDataSourceMixin, Repo
         return formatted_data
 
     @method_decorator(catch_and_raise_exceptions)
+    def get_query_strings(self):
+        return str(self._provider.get_select_query())
+
+    @method_decorator(catch_and_raise_exceptions)
     def get_total_records(self):
         return self._provider.get_total_records()
 

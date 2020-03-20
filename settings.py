@@ -197,7 +197,7 @@ DEFAULT_APPS = (
     'django.contrib.staticfiles',
     'django_celery_results',
     'django_prbac',
-    'djangular',
+    'djng',
     'captcha',
     'couchdbkit.ext.django',
     'crispy_forms',

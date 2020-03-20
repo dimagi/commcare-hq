@@ -15,7 +15,8 @@ class VectorLinkLocFilter(BaseSingleOptionFilter):
         return get_fixture_dicts(
             self.domain,
             data_types_by_tag["level_2_dcv"]._id,
-            filter_in={'level_1_dcv': level_1_ids}
+            filter_in={'level_1_dcv': level_1_ids},
+            filter_out={'other': '1'},
         )
 
     def get_level_3s(self, level_2_ids):
@@ -23,7 +24,8 @@ class VectorLinkLocFilter(BaseSingleOptionFilter):
         return get_fixture_dicts(
             self.domain,
             data_types_by_tag["level_3_dcv"]._id,
-            filter_in={'level_2_dcv': level_2_ids}
+            filter_in={'level_2_dcv': level_2_ids},
+            filter_out={'other': '1'},
         )
 
 
@@ -37,6 +39,7 @@ class LevelOneFilter(VectorLinkLocFilter):
         level_1s = get_fixture_dicts(
             self.domain,
             data_types_by_tag["level_1_dcv"]._id,
+            filter_out={'other': '1'},
         )
         return [(loc['id'], loc['name']) for loc in level_1s]
 
@@ -94,6 +97,7 @@ class LevelFourFilter(VectorLinkLocFilter):
         level_4s = get_fixture_dicts(
             self.domain,
             data_types_by_tag["level_4_dcv"]._id,
-            filter_in={'level_3_dcv': l3_ids}
+            filter_in={'level_3_dcv': l3_ids},
+            filter_out={'other': '1'},
         )
         return [(loc['id'], loc['name']) for loc in level_4s]

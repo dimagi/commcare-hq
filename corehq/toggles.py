@@ -1340,18 +1340,10 @@ ENABLE_ALL_ADD_ONS = StaticToggle(
 
 FILTERED_BULK_USER_DOWNLOAD = StaticToggle(
     'filtered_bulk_user_download',
-    "Ability to filter mobile workers based on role, location, and username when doing bulk download",
+    "Bulk mobile worker management features: filtered download, bulk delete, and bulk lookup users.",
     TAG_SOLUTIONS_OPEN,
     [NAMESPACE_DOMAIN],
-    help_link='https://confluence.dimagi.com/display/ccinternal/Filter+Mobile+Workers+Download',
-)
-
-BULK_USER_DELETE = StaticToggle(
-    'bulk_user_delete',
-    "Allow bulk deletion of users based on a username upload.",
-    TAG_SOLUTIONS_LIMITED,
-    [NAMESPACE_DOMAIN],
-    help_link='https://confluence.dimagi.com/display/ccinternal/Bulk+Delete+Users',
+    help_link='https://confluence.dimagi.com/display/ccinternal/Bulk+Mobile+Workers+Management',
 )
 
 FILTERED_LOCATION_DOWNLOAD = StaticToggle(
@@ -1741,6 +1733,16 @@ DO_NOT_RATE_LIMIT_SUBMISSIONS = StaticToggle(
     use this toggle to lift the restriction for them on a temporary basis,
     just to unblock them while we sort out the conversation with the client.
     """
+)
+
+TEST_FORM_SUBMISSION_RATE_LIMIT_RESPONSE = StaticToggle(
+    'TEST_FORM_SUBMISSION_RATE_LIMIT_RESPONSE',
+    ("Respond to all form submissions with a 429 response. For use on test domains only. "
+     "Without this, there's no sane way to test the UI for being rate limited on "
+     "Mobile and Web Apps. Never use this on a real domain."),
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_DOMAIN],
+    description="",
 )
 
 RATE_LIMIT_RESTORES = DynamicallyPredictablyRandomToggle(

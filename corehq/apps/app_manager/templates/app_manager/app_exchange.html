@@ -1,0 +1,64 @@
+{% extends "hqwebapp/base.html" %}
+{% load i18n %}
+{% load hq_shared_tags %}
+{% load compress %}
+
+{% block title %}{% trans "COVID-19 CommCare Applications" %}{% endblock title %}
+
+{% block content %}
+<div class="container" id="hq-content">
+  <div class="page-header">
+    <h1>
+      {% blocktrans %}
+        COVID-19 CommCare Applications
+      {% endblocktrans %}
+    </h1>
+  </div>
+  <p class="help-block">
+    {% blocktrans %}
+      These application templates can be imported into your project space as licensed by Dimagi under the
+      <a target="_blank" href="https://creativecommons.org/licenses/by-nc-sa/4.0/">
+        Creative Commons NonCommercial ShareAlike License (CC BY-NC-SA 4.0)
+      </a>.
+    {% endblocktrans %}
+  </p>
+  <div class="appmanager-content-single-page">
+      <div class="row results">
+      {% for app in records %}
+        {% if forloop.counter0|divisibleby:"4" and forloop.counter0 != 0 %}{# Force tiles to appear in aligned rows #}
+          </div><div class="row results">
+        {% endif %}
+        <form action="{% url "app_exchange" domain %}" method="POST">
+          {% csrf_token %}
+          <input type="hidden" name="from_domain" value="{{ app.domain }}" />
+          <input type="hidden" name="from_app_id" value="{{ app.id }}" />
+          <div class="col-sm-3">
+            <div class="well well-lg text-center">
+              <h3>{{ app.name }}</h3>
+              {% if app.comment %}
+                <p>{{ app.comment }}</p>
+              {% endif %}
+              {% if app.last_released %}
+                <p>
+                  {% blocktrans with app.last_released as last_released %}
+                    Last released {{ last_released }}
+                  {% endblocktrans %}
+                </p>
+              {% endif %}
+              {% if app.help_link %}
+                <p>
+                  <a target="_blank" href="{{ app.help_link }}">{% trans "Read more" %}</a>
+                </p>
+              {% endif %}
+              <br>
+              <button type="submit" class="btn btn-primary">
+                <i class="fa fa-cloud-download"></i>
+                {% trans "Import" %}
+              </button>
+            </div>
+          </div>
+        </form>
+      {% endfor %}
+  </div>
+</div>
+{% endblock %}
