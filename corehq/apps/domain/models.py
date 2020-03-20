@@ -332,7 +332,7 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
     location_restriction_for_users = BooleanProperty(default=False)
     usercase_enabled = BooleanProperty(default=False)
     hipaa_compliant = BooleanProperty(default=False)
-    use_sql_backend = BooleanProperty(default=False)
+    use_sql_backend = BooleanProperty(default=True)
     first_domain_for_user = BooleanProperty(default=False)
 
     case_display = SchemaProperty(CaseDisplaySettings)
@@ -619,7 +619,7 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
         return domain
 
     @classmethod
-    def get_or_create_with_name(cls, name, is_active=False, secure_submissions=True, use_sql_backend=False):
+    def get_or_create_with_name(cls, name, is_active=False, secure_submissions=True):
         result = cls.view("domain/domains", key=name, reduce=False, include_docs=True).first()
         if result:
             return result
@@ -629,7 +629,6 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
                 is_active=is_active,
                 date_created=datetime.utcnow(),
                 secure_submissions=secure_submissions,
-                use_sql_backend=use_sql_backend,
             )
             new_domain.save(**get_safe_write_kwargs())
             return new_domain
