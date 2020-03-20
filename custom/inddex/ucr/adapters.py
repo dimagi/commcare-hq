@@ -12,7 +12,7 @@ class FoodCaseData(SqlData):
     group_by = ['doc_id']
     UCR_COLUMN_IDS = [
         'doc_id', 'inserted_at', 'recall_case_id', 'owner_name', 'opened_by_username', 'recall_status',
-        'unique_respondent_id', 'gender', 'age_months_calculated', 'supplements', 'urban_rural', 'pregnant', 'breastfeeding',
+        'unique_respondent_id', 'gender', 'age_years_calculated', 'age_months_calculated', 'supplements', 'urban_rural', 'pregnant', 'breastfeeding',
         'food_code', 'reference_food_code', 'food_type', 'include_in_analysis', 'food_status', 'recalled_date',
         'opened_date', 'eating_time', 'time_block', 'already_reported_food', 'already_reported_food_case_id',
         'is_ingredient', 'recipe_case_id', 'ingr_recipe_code', 'short_name', 'food_name', 'recipe_name',
