@@ -29,7 +29,7 @@ from corehq.form_processor.exceptions import MissingFormXml, XFormNotFound
 from corehq.form_processor.parsers.ledgers.form import (
     get_all_stock_report_helpers_from_form,
 )
-from corehq.util.datadog.gauges import datadog_counter
+from corehq.util.metrics import metrics_counter
 
 from .diff import filter_case_diffs, filter_ledger_diffs
 from .rebuildcase import rebuild_and_diff_cases
@@ -77,7 +77,7 @@ def diff_cases(couch_cases, log_cases=False):
     assert isinstance(couch_cases, dict), repr(couch_cases)[:100]
     assert "_diff_state" in globals()
     data = DiffData()
-    dd_count = partial(datadog_counter, tags=["domain:" + _diff_state.domain])
+    dd_count = partial(metrics_counter, tags={"domain": _diff_state.domain})
     case_ids = list(couch_cases)
     sql_case_ids = set()
     for sql_case in CaseAccessorSQL.get_cases(case_ids):

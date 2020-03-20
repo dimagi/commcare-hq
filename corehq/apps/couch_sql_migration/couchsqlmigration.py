@@ -82,7 +82,6 @@ from corehq.form_processor.utils.general import (
 from corehq.form_processor.utils.xform import convert_xform_to_json
 from corehq.toggles import COUCH_SQL_MIGRATION_BLACKLIST, NAMESPACE_DOMAIN
 from corehq.util.couch_helpers import NoSkipArgsProvider
-from corehq.util.datadog.gauges import datadog_counter
 from corehq.util.datadog.utils import bucket_value
 from corehq.util.log import with_progress_bar
 from corehq.util.pagination import (
@@ -91,6 +90,7 @@ from corehq.util.pagination import (
     StopToResume,
 )
 from corehq.util.timer import TimingContext
+from corehq.util.metrics import metrics_counter, metrics_histogram
 
 from .asyncforms import AsyncFormProcessor, get_case_ids
 from .casediff import MISSING_BLOB_PRESENT, diff_form_state
@@ -1364,7 +1364,7 @@ class DocCounter:
         be passed if it is provided here.
         :yields: counter function.
         """
-        tags = [f"type:{dd_type}"]
+        tags = {"type": dd_type}
         args = (doc_type,) if doc_type else ()
         with self.timing(dd_type):
             try:
@@ -1388,7 +1388,7 @@ class DocCounter:
             log.debug("saved doc counts: %s", counts)
             self.state_session = 0
         if tags is not None:
-            datadog_counter(self.DD_KEY, value=self.dd_session, tags=tags)
+            metrics_counter(self.DD_KEY, value=self.dd_session, tags=tags)
             self.dd_session = 0
 
     def get(self, doc_type):
@@ -1404,16 +1404,15 @@ class DocCounter:
         metric_name_template = "commcare.%s.count"
         metric_name_template_normalized = "commcare.%s.count.normalized"
         for timing in self.timing.to_list():
-            datadog_counter(
-                metric_name_template % timing.full_name,
-                tags=['duration:%s' % bucket_value(timing.duration, TIMING_BUCKETS)])
+            metrics_histogram(
+                metric_name_template % timing.full_name, timing.duration,
+                buckets=TIMING_BUCKETS, bucket_tag='duration'
+            )
             if getattr(timing, "normalize_denominator", 0):
-                datadog_counter(
-                    metric_name_template_normalized % timing.full_name,
-                    tags=['duration:%s' % bucket_value(
-                        timing.duration / timing.normalize_denominator,
-                        NORMALIZED_TIMING_BUCKETS,
-                    )]
+                normalized_value = timing.duration / timing.normalize_denominator
+                metrics_histogram(
+                    metric_name_template_normalized % timing.full_name, normalized_value,
+                    buckets=NORMALIZED_TIMING_BUCKETS, bucket_tag='duration'
                 )
 
 
@@ -1426,7 +1425,7 @@ def commit_migration(domain_name):
         Domain.get_by_name.clear(Domain, domain_name)
         assert should_use_sql_backend(domain_name), \
             "could not set use_sql_backend for domain %s (try again)" % domain_name
-    datadog_counter("commcare.couch_sql_migration.total_committed")
+    metrics_counter("commcare.couch_sql_migration.total_committed")
     log.info("committed migration for {}".format(domain_name))
 
 
