@@ -754,17 +754,21 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
         username = self.new_mobile_worker_form.cleaned_data['username']
         password = self.new_mobile_worker_form.cleaned_data['new_password']
         first_name = self.new_mobile_worker_form.cleaned_data['first_name']
+        email = self.new_mobile_worker_form.cleaned_data['email']
         last_name = self.new_mobile_worker_form.cleaned_data['last_name']
         location_id = self.new_mobile_worker_form.cleaned_data['location_id']
+        is_account_confirmed = not self.new_mobile_worker_form.cleaned_data['force_account_confirmation']
 
         return CommCareUser.create(
             self.domain,
             username,
             password,
+            email=email,
             device_id="Generated from HQ",
             first_name=first_name,
             last_name=last_name,
             user_data=self.custom_data.get_data_to_save(),
+            is_account_confirmed=is_account_confirmed,
             location=SQLLocation.objects.get(location_id=location_id) if location_id else None,
         )
 
@@ -786,6 +790,8 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
                 'first_name': user_data.get('first_name'),
                 'last_name': user_data.get('last_name'),
                 'location_id': user_data.get('location_id'),
+                'email': user_data.get('email'),
+                'force_account_confirmation': user_data.get('force_account_confirmation'),
                 'domain': self.domain,
             }
             for k, v in user_data.get('custom_fields', {}).items():
