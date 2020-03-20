@@ -274,4 +274,33 @@ def reset_couchdb_connections():
     dbs = CouchdbkitHandler.__shared_state__["_databases"]
     for db in dbs.values():
         server = db[0] if isinstance(db, tuple) else db.server
-        server.cloudant_client.r_session.close()
+        with safe_socket_close():
+            server.cloudant_client.r_session.close()
+
+
+@contextmanager
+def safe_socket_close():
+    from functools import partial
+    from gevent._socket3 import socket
+
+    def safe_cancel_wait(hub_cancel_wait, *args):
+        try:
+            hub_cancel_wait(*args)
+        except ValueError as err:
+            if str(err) != "operation on destroyed loop":
+                raise
+
+    def drop_events(self):
+        self.hub.cancel_wait = partial(safe_cancel_wait, self.hub.cancel_wait)
+        try:
+            return _drop_events(self)
+        finally:
+            del self.hub.cancel_wait
+            assert self.hub.cancel_wait, "unexpected method removal"
+
+    _drop_events = socket._drop_events
+    socket._drop_events = drop_events
+    try:
+        yield
+    finally:
+        socket._drop_events = _drop_events
