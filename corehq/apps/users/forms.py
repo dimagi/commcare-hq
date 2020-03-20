@@ -539,6 +539,13 @@ class NewMobileWorkerForm(forms.Form):
     email = forms.EmailField(
         label=ugettext_noop("Email"),
         required=False,
+        help_text="""
+            <span data-bind="visible: $root.emailStatus() !== $root.STATUS.NONE">
+                <i class="fa fa-exclamation-triangle"
+                   data-bind="visible: $root.emailStatus() === $root.STATUS.ERROR"></i>
+                <!-- ko text: $root.emailStatusMessage --><!-- /ko -->
+            </span>
+        """
     )
     new_password = forms.CharField(
         widget=forms.PasswordInput(),
@@ -590,9 +597,16 @@ class NewMobileWorkerForm(forms.Form):
                 'force_account_confirmation',
                 data_bind='checked: force_account_confirmation',
             )
-            email_field = crispy.Field(
-                'email',
-                data_bind='value: email',
+            email_field = crispy.Div(
+                crispy.Field(
+                    'email',
+                    data_bind="value: email, valueUpdate: 'keyup'",
+                ),
+                data_bind='''
+                    css: {
+                        'has-error': $root.emailStatus() === $root.STATUS.ERROR,
+                    },
+                '''
             )
         else:
             confirm_account_field = crispy.Hidden(

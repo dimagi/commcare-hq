@@ -78,6 +78,7 @@ hqDefine("users/js/mobile_workers",[
         var self = ko.mapping.fromJS(options);
 
         // used by two-stage provisioning
+        self.emailRequired = ko.observable(false);
         self.passwordEnabled = ko.observable(true);
 
         self.action_error = ko.observable('');  // error when activating/deactivating a user
@@ -264,6 +265,26 @@ hqDefine("users/js/mobile_workers",[
             return self.STATUS.WARNING;
         });
 
+        self.emailStatus = ko.computed(function () {
+
+            if (!self.stagedUser()) {
+                return self.STATUS.NONE;
+            }
+
+            // todo: add email validation eventually
+            if (self.stagedUser().emailRequired() && !self.stagedUser().email()) {
+                return self.STATUS.ERROR;
+            }
+        });
+
+        self.emailStatusMessage = ko.computed(function () {
+            // todo: add email validation eventually
+            if (self.emailStatus() === self.STATUS.ERROR) {
+                return gettext('Email address is required when users confirm their own accounts.')
+            }
+            return "";
+        });
+
         self.generateStrongPassword = function () {
             function pick(possible, min, max) {
                 var n, chars = '';
@@ -350,13 +371,16 @@ hqDefine("users/js/mobile_workers",[
             user.force_account_confirmation.subscribe(function (enabled) {
                 console.log('account confirmation', enabled);
                 if (enabled) {
-                    // todo: make email required
+                    // make email required
+                    user.emailRequired(true);
                     // clear and disable password input
                     user.password('');
                     user.passwordEnabled(false);
 
                 } else {
-                    // todo: make email optional
+                    // make email optional
+                    user.emailRequired(false);
+
                     // enable password input
                     user.passwordEnabled(true);
                 }
