@@ -1,6 +1,7 @@
 from datetime import date
 
 from django.test import TestCase
+from django.utils.functional import cached_property
 
 from mock import patch
 
@@ -18,6 +19,7 @@ from ..example_data.data import (
     get_expected_report,
     populate_inddex_domain,
 )
+from ..fixtures import FixtureAccessor
 from ..food import FoodData, FoodRow
 from ..ucr.adapters import FoodCaseData
 from ..ucr.data_providers.master_data_file_data import MasterDataFileData
@@ -137,6 +139,21 @@ def get_ucr_data():
         'case_owners': '',
         'recall_status': '',
     }).get_data()
+
+
+class TestFixtures(TestCase):
+    @cached_property
+    def accessor(self):
+        return FixtureAccessor(DOMAIN)
+
+    def test_recipes(self):
+        recipes = self.accessor.get_recipes()
+        for recipe in recipes:
+            if recipe.recipe_code == "10001" and recipe.iso_code == "en":
+                self.assertIn("Pearl millet", recipe.recipe_descr)
+                self.assertEqual('11', recipe.ingr_code)
+                self.assertIn("Millet flour", recipe.ingr_descr)
+                self.assertEqual(0.15, recipe.ingr_fraction)
 
 
 class TestNewReport(TestCase):
