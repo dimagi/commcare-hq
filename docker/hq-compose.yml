@@ -81,14 +81,17 @@ services:
       - ${VOLUME_PREFIX}${BLANK_IF_TESTS-elasticsearch:}/usr/share/elasticsearch/data
 
   zookeeper:
-    image: wurstmeister/zookeeper
+    image: bitnami/zookeeper:3.6.0
     ports:
       - "2181:2181"
+    environment:
+      - ALLOW_ANONYMOUS_LOGIN=yes
+    
     volumes:
-      - ${VOLUME_PREFIX}${BLANK_IF_TESTS-zookeeper:}/opt/zookeeper-3.4.13/data
+      - ${VOLUME_PREFIX}${BLANK_IF_TESTS-zookeeper:}/opt/zookeeper-3.6.0/data
 
   kafka:
-      image: wurstmeister/kafka:0.8.2.2-1
+      image: wurstmeister/kafka:2.12-2.4.1
       ports:
         - "9092:9092"
       environment:
