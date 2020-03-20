@@ -1,8 +1,6 @@
 from contextlib import contextmanager
 from datetime import timedelta
 
-import attr
-from gevent.pool import Pool
 from mock import patch
 
 from corehq.apps.domain.shortcuts import create_domain
@@ -19,17 +17,6 @@ from ..statedb import Change, open_state_db
 
 
 class TestCouchSqlDiff(BaseMigrationTestCase):
-
-    @classmethod
-    def setUpClass(cls):
-        cls.pool_mock = patch.object(mod, "Pool", MockPool)
-        cls.pool_mock.start()
-        super().setUpClass()
-
-    @classmethod
-    def tearDownClass(cls):
-        super().tearDownClass()
-        cls.pool_mock.stop()
 
     def test_diff(self):
         self.submit_form(make_test_form("form-1", case_id="case-1"))
@@ -111,12 +98,12 @@ class TestCouchSqlDiff(BaseMigrationTestCase):
         self.submit_form(form2)
         self.assertEqual(self._get_case("test-case").age, "33")
         with self.diff_without_rebuild():
-            self._do_migration(case_diff="local")
+            self._do_migration()
         self._compare_diffs([
             ('CommCareCase', Diff('diff', ['age'], old='33', new='32')),
         ])
         clear_local_domain_sql_backend_override(self.domain_name)
-        self.do_case_diffs()
+        self.do_case_diffs(cases="with-diffs")
         sql_case = self._get_case("test-case")
         self.assertEqual(sql_case.dynamic_case_properties()["age"], "33")
         self._compare_diffs([])
@@ -140,13 +127,13 @@ class TestCouchSqlDiff(BaseMigrationTestCase):
         with self.assertRaises(AttributeError):
             self._get_case("test-case").thing
         with self.diff_without_rebuild():
-            self._do_migration(case_diff="local")
+            self._do_migration()
         self._compare_diffs([
             ('CommCareCase', Diff('diff', ['age'], old='33', new='32')),
             ('CommCareCase', Diff('missing', ['thing'], old=MISSING, new='1')),
         ])
         clear_local_domain_sql_backend_override(self.domain_name)
-        self.do_case_diffs()
+        self.do_case_diffs(cases="with-diffs")
         sql_case = self._get_case("test-case")
         self.assertEqual(sql_case.dynamic_case_properties()["age"], "33")
         self._compare_diffs([])
@@ -213,20 +200,6 @@ class TestCouchSqlDiff(BaseMigrationTestCase):
         case = self._get_case(case_id)
         with self.diff_without_rebuild():
             yield case
-
-
-@attr.s
-class MockPool:
-    """Pool that uses greenlets rather than processes"""
-    initializer = attr.ib()  # not used
-    initargs = attr.ib()
-    processes = attr.ib(default=None)
-    maxtasksperchild = attr.ib(default=None)
-    pool = attr.ib(factory=Pool, init=False)
-
-    def imap_unordered(self, *args, **kw):
-        with mod.global_diff_state(*self.initargs):
-            yield from self.pool.imap_unordered(*args, **kw)
 
 
 THING_FORM = """

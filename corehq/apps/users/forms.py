@@ -789,7 +789,7 @@ class PrimaryLocationWidget(forms.Widget):
         self.source_css_id = source_css_id
         self.template = 'locations/manage/partials/drilldown_location_widget.html'
 
-    def render(self, name, value, attrs=None):
+    def render(self, name, value, attrs=None, renderer=None):
         initial_data = {}
         if value:
             try:

@@ -1,13 +1,18 @@
 import os
 
+from django.http import HttpResponse, HttpResponseNotFound
+
 import prometheus_client
-from django.http import HttpResponse
+import settings
 from prometheus_client import multiprocess
 
 
 def prometheus_metrics(request):
-    """Exports /metrics as a Django view.
+    """Exports /metrics as a Django view. Only available in DEBUG mode.
     """
+    if not settings.DEBUG:
+        return HttpResponseNotFound()
+
     if "prometheus_multiproc_dir" in os.environ:
         registry = prometheus_client.CollectorRegistry()
         multiprocess.MultiProcessCollector(registry)

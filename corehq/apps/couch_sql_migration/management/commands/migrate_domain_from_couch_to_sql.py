@@ -62,8 +62,6 @@ RESUME = "resume"
 REBUILD = "rebuild"
 RECHECK = "recheck"
 
-CASE_DIFF = {"process": True, "local": False, "none": None}
-
 
 class Command(BaseCommand):
     help = """
@@ -133,12 +131,15 @@ class Command(BaseCommand):
                 queued to diff may not be diffed.
             """)
         parser.add_argument('--case-diff',
-            dest='case_diff', default="process",
-            choices=["process", "local", "none"],
+            dest='case_diff', default="after",
+            choices=["after", "none", "asap"],
             help='''
-                process: diff cases in a separate process (default).
-                local: diff cases in the migration process.
+                after: (default) diff cases after migrating forms. Uses
+                multiple parallel processes.
                 none: save "pending" cases to be diffed at a later time.
+                asap: (experimental) attempt to diff cases as soon as
+                all related forms have been migrated. Uses a single
+                parallel process for case diffs.
             ''')
         parser.add_argument('--forms', default=None,
             help="""
@@ -229,7 +230,7 @@ class Command(BaseCommand):
             self.state_dir,
             with_progress=not self.no_input,
             live_migrate=self.live_migrate,
-            diff_process=CASE_DIFF[self.case_diff],
+            case_diff=self.case_diff,
             rebuild_state=self.rebuild_state,
             stop_on_error=self.stop_on_error,
             forms=self.forms,
