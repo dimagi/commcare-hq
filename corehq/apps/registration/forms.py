@@ -321,7 +321,6 @@ class BaseUserInvitationForm(NoAutocompleteMixin, forms.Form):
                                 widget=forms.TextInput(attrs={'class': 'form-control'}))
     email = forms.EmailField(label=_('Email Address'),
                              max_length=User._meta.get_field('email').max_length,
-                             help_text=_('You will use this email to log in.'),
                              widget=forms.TextInput(attrs={'class': 'form-control'}))
     password = forms.CharField(label=_('Create Password'),
                                widget=forms.PasswordInput(render_value=False,
@@ -388,8 +387,14 @@ class WebUserInvitationForm(BaseUserInvitationForm):
     """
     Form for a brand new user, before they've created a domain or done anything on CommCare HQ.
     """
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # web users login with their emails
+        self.fields['email'].help_text = _('You will use this email to log in.')
+
     def clean_email(self):
         data = super().clean_email()
+        # web user login emails should be globally unique
         duplicate = CouchUser.get_by_username(data)
         if duplicate:
             # sync django user
