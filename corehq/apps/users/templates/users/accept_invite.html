@@ -102,7 +102,7 @@
                   </div>
                 {% endfor %}
                 <fieldset class="check-password">
-                  {% for field in form.visible_fields %}
+                  {% for field in form %}
                     <div class="form-group has-feedback{% if field.errors %} has-error{% endif %}">
                       <label class="control-label" for="{{ field.id }}">{{ field.label }}</label>
                       <div id="div_id_{{ field.name }}">
@@ -117,9 +117,6 @@
                         {% endif %}
                       </div>
                     </div>
-                  {% endfor %}
-                  {% for hidden in form.hidden_fields %}
-                    {{ hidden }}
                   {% endfor %}
                   <div class="hide">
                     {{ form.errors }}
