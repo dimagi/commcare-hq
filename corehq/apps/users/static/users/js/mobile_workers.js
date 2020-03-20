@@ -279,7 +279,7 @@ hqDefine("users/js/mobile_workers",[
         self.emailStatusMessage = ko.computed(function () {
             // todo: add email validation eventually
             if (self.emailStatus() === self.STATUS.ERROR) {
-                return gettext('Email address is required when users confirm their own accounts.')
+                return gettext('Email address is required when users confirm their own accounts.');
             }
             return "";
         });
