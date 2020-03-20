@@ -404,6 +404,13 @@ class WebUserInvitationForm(BaseUserInvitationForm):
         return data
 
 
+class MobileWorkerAccountConfirmationForm(BaseUserInvitationForm):
+    """
+    For Mobile Workers to confirm their accounts.
+    """
+    pass
+
+
 # From http://www.peterbe.com/plog/automatically-strip-whitespace-in-django-app_manager
 #
 # I'll put this in each app, so they can be standalone, but it should really go in some centralized

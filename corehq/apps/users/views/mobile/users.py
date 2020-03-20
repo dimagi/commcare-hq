@@ -7,6 +7,7 @@ from datetime import datetime
 from braces.views import JsonRequestResponseMixin
 from couchdbkit import ResourceNotFound
 
+from corehq.apps.registration.forms import MobileWorkerAccountConfirmationForm
 from corehq.util import get_document_or_404
 from couchexport.models import Format
 from couchexport.writers import Excel2007ExportWriter
@@ -81,7 +82,7 @@ from corehq.apps.users.forms import (
     NewMobileWorkerForm,
     SelfRegistrationForm,
     SetUserPasswordForm,
-    MobileWorkerAccountConfirmationForm)
+)
 from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.apps.users.tasks import (
     bulk_download_users_async,
