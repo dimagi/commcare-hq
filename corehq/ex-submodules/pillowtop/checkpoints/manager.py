@@ -141,8 +141,10 @@ class PillowCheckpointEventHandler(ChangeEventHandler):
     def get_new_seq(self, change):
         return change['seq']
 
-    def update_checkpoint(self, change, context):
+    def update_checkpoint(self, change, context, prevent_rewind=False):
         if self.should_update_checkpoint(context):
+            if prevent_rewind and self.get_new_seq(change) < self.checkpoint.get_current_sequence_id():
+                return False
             context.reset()
             self.checkpoint.update_to(self.get_new_seq(change))
             self.last_update = datetime.utcnow()

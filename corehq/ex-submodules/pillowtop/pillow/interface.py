@@ -120,9 +120,9 @@ class PillowBase(metaclass=ABCMeta):
             self.wait_for_change(since)
             pillow_logging.info("Next message arrived.")
 
-    def _update_checkpoint(self, change, context):
+    def _update_checkpoint(self, change, context, prevent_rewind=False):
         if change and context:
-            updated = self.update_checkpoint(change, context)
+            updated = self.update_checkpoint(change, context, prevent_rewind)
         else:
             updated = self.checkpoint.touch(min_interval=CHECKPOINT_MIN_WAIT)
         if updated:
@@ -166,7 +166,7 @@ class PillowBase(metaclass=ABCMeta):
                 self._batch_process_with_error_handling(chunk)
             # only attempt to update checkpoint if there is a latest change
             if last_change:
-                self._update_checkpoint(last_change, context)
+                self._update_checkpoint(last_change, context, prevent_rewind=True)
 
         # keep track of chunk for batch processors
         changes_chunk = []
