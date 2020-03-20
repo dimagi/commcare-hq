@@ -2,11 +2,9 @@ import datetime
 import json
 import re
 
-from captcha.fields import CaptchaField
 from django import forms
 from django.conf import settings
 from django.contrib.auth.forms import SetPasswordForm
-from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.core.validators import EmailValidator, validate_email
 from django.forms.widgets import PasswordInput
@@ -32,7 +30,7 @@ from corehq import toggles
 from corehq.apps.analytics.tasks import set_analytics_opt_out
 from corehq.apps.app_manager.models import validate_lang
 from corehq.apps.custom_data_fields.edit_entity import CustomDataEditor
-from corehq.apps.domain.forms import EditBillingAccountInfoForm, clean_password, NoAutocompleteMixin
+from corehq.apps.domain.forms import EditBillingAccountInfoForm, clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.crispy import HQModalFormHelper
