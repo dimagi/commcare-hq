@@ -588,7 +588,7 @@ class NewMobileWorkerForm(forms.Form):
         if self.two_stage_provisioning_enabled:
             confirm_account_field = crispy.Field(
                 'force_account_confirmation',
-                data_bind='value: force_account_confirmation',
+                data_bind='checked: force_account_confirmation',
             )
             email_field = crispy.Field(
                 'email',
@@ -642,7 +642,7 @@ class NewMobileWorkerForm(forms.Form):
                         _("Password"),
                         InlineField(
                             'new_password',
-                            data_bind="value: password, valueUpdate: 'input'",
+                            data_bind="value: password, valueUpdate: 'input', enable: passwordEnabled",
                         ),
                         crispy.HTML('''
                             <p class="help-block" data-bind="if: $root.isSuggestedPassword">
@@ -666,6 +666,9 @@ class NewMobileWorkerForm(forms.Form):
                                         <i class="fa fa-warning"></i> {rules}
                                     <!-- /ko -->
                                 <!-- /ko -->
+                                <!-- ko if: $root.passwordStatus() === $root.STATUS.DISABLED -->
+                                    <i class="fa fa-warning"></i> {disabled}
+                                <!-- /ko -->
                             </p>
                         '''.format(
                             suggested=_("This password is automatically generated. Please copy it or create "
@@ -675,6 +678,8 @@ class NewMobileWorkerForm(forms.Form):
                             weak=_("Your password is too weak! Try adding numbers or symbols!"),
                             rules=_("Password Requirements: 1 special character, 1 number, 1 capital letter, "
                                 "minimum length of 8 characters."),
+                            disabled=_("Setting a password is disabled. "
+                                       "The user will set their own password on confirming their account email."),
                         )),
                         required=True,
                     ),

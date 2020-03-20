@@ -50,6 +50,7 @@ hqDefine("users/js/mobile_workers",[
         SUCCESS: 'success',
         WARNING: 'warning',
         ERROR: 'danger',
+        DISABLED: 'disabled',
     };
 
     var rmi = function () {};
@@ -75,6 +76,9 @@ hqDefine("users/js/mobile_workers",[
             return ko.observable(value);
         });
         var self = ko.mapping.fromJS(options);
+
+        // used by two-stage provisioning
+        self.passwordEnabled = ko.observable(true);
 
         self.action_error = ko.observable('');  // error when activating/deactivating a user
 
@@ -212,10 +216,19 @@ hqDefine("users/js/mobile_workers",[
         self.implementPasswordObfuscation = ko.observable(options.implement_password_obfuscation);
         self.twoStageProvisioningEnabled = ko.observable(options.two_stage_provisioning_enabled);
 
+        // Two Stage Provisioning Handling
+        self.twoStageProvisioningEnabled = ko.observable(options.two_stage_provisioning_enabled);
+
         self.passwordStatus = ko.computed(function () {
             if (!self.stagedUser()) {
                 return self.STATUS.NONE;
             }
+
+            console.log('password status', self.stagedUser().force_account_confirmation());
+            if (self.stagedUser().force_account_confirmation()) {
+                return self.STATUS.DISABLED;
+            }
+
             if (!self.useStrongPasswords()) {
                 // No validation
                 return self.STATUS.NONE;
@@ -333,6 +346,20 @@ hqDefine("users/js/mobile_workers",[
             }, 100));
             user.password.subscribe(function () {
                 self.isSuggestedPassword(false);
+            });
+            user.force_account_confirmation.subscribe(function (enabled) {
+                console.log('account confirmation', enabled);
+                if (enabled) {
+                    // todo: make email required
+                    // clear and disable password input
+                    user.password('');
+                    user.passwordEnabled(false);
+
+                } else {
+                    // todo: make email optional
+                    // enable password input
+                    user.passwordEnabled(true);
+                }
             });
         });
 
