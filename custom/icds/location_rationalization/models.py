@@ -73,7 +73,7 @@ class MergeOperation(BaseOperation):
 
     def perform(self):
         with transaction.atomic():
-            new_location = self.new_locations[1]
+            new_location = self.new_locations[0]
             for old_location in self.old_locations:
                 old_location.metadata[DEPRECATED_TO] = [new_location.location_id]
                 old_location.metadata[DEPRECATED_AT] = datetime.utcnow()
@@ -96,7 +96,7 @@ class SplitOperation(BaseOperation):
 
     def perform(self):
         with transaction.atomic():
-            old_location = self.old_locations[1]
+            old_location = self.old_locations[0]
             old_location.metadata[DEPRECATED_TO] = [l.location_id for l in self.new_locations]
             old_location.metadata[DEPRECATED_AT] = datetime.utcnow()
             old_location.metadata[DEPRECATION_OPERATION] = self.type
@@ -119,8 +119,8 @@ class ExtractOperation(BaseOperation):
 
     def perform(self):
         with transaction.atomic():
-            old_location = self.old_locations[1]
-            new_location = self.new_locations[1]
+            old_location = self.old_locations[0]
+            new_location = self.new_locations[0]
             old_location.metadata[DEPRECATED_TO] = [new_location.location_id]
             old_location.metadata[DEPRECATED_AT] = datetime.utcnow()
             old_location.metadata[DEPRECATION_OPERATION] = self.type
@@ -141,8 +141,8 @@ class MoveOperation(BaseOperation):
 
     def perform(self):
         with transaction.atomic():
-            old_location = self.old_locations[1]
-            new_location = self.new_locations[1]
+            old_location = self.old_locations[0]
+            new_location = self.new_locations[0]
             old_location.metadata[DEPRECATED_TO] = [new_location.location_id]
             old_location.metadata[DEPRECATED_AT] = datetime.utcnow()
             old_location.metadata[DEPRECATION_OPERATION] = self.type
