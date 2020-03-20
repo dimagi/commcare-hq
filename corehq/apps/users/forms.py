@@ -24,6 +24,7 @@ from crispy_forms.layout import Fieldset, Layout, Submit
 from django_countries.data import COUNTRIES
 from memoized import memoized
 
+from corehq.toggles import TWO_STAGE_USER_PROVISIONING
 from dimagi.utils.django.fields import TrimmedCharField
 
 from corehq import toggles
@@ -528,6 +529,17 @@ class NewMobileWorkerForm(forms.Form):
         label=ugettext_noop("Location"),
         required=False,
     )
+    force_account_confirmation = forms.BooleanField(
+        label=ugettext_noop("Require Account Confirmation?"),
+        help_text=ugettext_noop(
+            "If checked, the user will be sent a confirmation email and asked to set their password."
+        ),
+        required=False,
+    )
+    email = forms.EmailField(
+        label=ugettext_noop("Email"),
+        required=False,
+    )
     new_password = forms.CharField(
         widget=forms.PasswordInput(),
         required=True,
@@ -572,6 +584,28 @@ class NewMobileWorkerForm(forms.Form):
                 data_bind='value: location_id',
             )
 
+        self.two_stage_provisioning_enabled = TWO_STAGE_USER_PROVISIONING.enabled(self.domain)
+        if self.two_stage_provisioning_enabled:
+            confirm_account_field = crispy.Field(
+                'force_account_confirmation',
+                # data_bind='value: force_account_confirmation',
+            )
+            email_field = crispy.Field(
+                'email',
+                # data_bind='value: email',
+            )
+        else:
+            confirm_account_field = crispy.Hidden(
+                'force_account_confirmation',
+                '',
+                # data_bind='value: force_account_confirmation',
+            )
+            email_field = crispy.Hidden(
+                'email',
+                '',
+                # data_bind='value: email',
+            )
+
         self.helper = HQModalFormHelper()
         self.helper.form_tag = False
         self.helper.layout = Layout(
@@ -601,6 +635,8 @@ class NewMobileWorkerForm(forms.Form):
                     data_bind='value: last_name',
                 ),
                 location_field,
+                confirm_account_field,
+                email_field,
                 crispy.Div(
                     hqcrispy.B3MultiField(
                         _("Password"),
