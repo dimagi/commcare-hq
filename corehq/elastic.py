@@ -19,8 +19,8 @@ from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX_INFO
 from corehq.pillows.mappings.domain_mapping import DOMAIN_INDEX_INFO
 from corehq.pillows.mappings.group_mapping import GROUP_INDEX_INFO
-from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_INDEX
-from corehq.pillows.mappings.reportxform_mapping import REPORT_XFORM_INDEX
+from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_INDEX_INFO
+from corehq.pillows.mappings.reportxform_mapping import REPORT_XFORM_INDEX_INFO
 from corehq.pillows.mappings.sms_mapping import SMS_INDEX_INFO
 from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
@@ -165,8 +165,8 @@ ES_META = {
     "apps": APP_INDEX_INFO,
     "groups": GROUP_INDEX_INFO,
     "sms": SMS_INDEX_INFO,
-    "report_cases": REPORT_CASE_INDEX,
-    "report_xforms": REPORT_XFORM_INDEX,
+    "report_cases": REPORT_CASE_INDEX_INFO,
+    "report_xforms": REPORT_XFORM_INDEX_INFO,
     "case_search": CASE_SEARCH_INDEX_INFO,
 }
 
@@ -249,7 +249,7 @@ def scroll_query(index_name, q, es_instance_alias=ES_DEFAULT_INSTANCE):
     try:
         return scan(
             get_es_instance(es_instance_alias),
-            index=es_meta.alias,
+            index_alias=es_meta.alias,
             doc_type=es_meta.type,
             query=q,
         )
