@@ -588,22 +588,22 @@ class NewMobileWorkerForm(forms.Form):
         if self.two_stage_provisioning_enabled:
             confirm_account_field = crispy.Field(
                 'force_account_confirmation',
-                # data_bind='value: force_account_confirmation',
+                data_bind='value: force_account_confirmation',
             )
             email_field = crispy.Field(
                 'email',
-                # data_bind='value: email',
+                data_bind='value: email',
             )
         else:
             confirm_account_field = crispy.Hidden(
                 'force_account_confirmation',
                 '',
-                # data_bind='value: force_account_confirmation',
+                data_bind='value: force_account_confirmation',
             )
             email_field = crispy.Hidden(
                 'email',
                 '',
-                # data_bind='value: email',
+                data_bind='value: email',
             )
 
         self.helper = HQModalFormHelper()

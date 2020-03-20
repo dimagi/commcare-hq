@@ -64,6 +64,8 @@ hqDefine("users/js/mobile_workers",[
             location_id: '',
             password: '',
             user_id: '',
+            force_account_confirmation: '',
+            email: '',
             is_active: true,
             custom_fields: {},
         });
