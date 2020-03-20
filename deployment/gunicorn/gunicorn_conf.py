@@ -26,10 +26,12 @@ def post_fork(server, worker):
 def on_starting(server):
     """Wipe the metrics from previous processes"""
     path = os.environ.get('prometheus_multiproc_dir')
-    for f in glob.glob(os.path.join(path, '*.db')):
-        os.remove(f)
+    if path:
+        for f in glob.glob(os.path.join(path, '*.db')):
+            os.remove(f)
 
 
 def child_exit(server, worker):
-    from prometheus_client import multiprocess
-    multiprocess.mark_process_dead(worker.pid)
+    if os.environ.get('prometheus_multiproc_dir'):
+        from prometheus_client import multiprocess
+        multiprocess.mark_process_dead(worker.pid)
