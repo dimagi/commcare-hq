@@ -314,7 +314,7 @@ class DomainRegistrationForm(forms.Form):
         return self.cleaned_data
 
 
-class WebUserInvitationForm(NoAutocompleteMixin, DomainRegistrationForm):
+class WebUserInvitationForm(NoAutocompleteMixin, forms.Form):
     """
     Form for a brand new user, before they've created a domain or done anything on CommCare HQ.
     """
@@ -337,7 +337,6 @@ class WebUserInvitationForm(NoAutocompleteMixin, DomainRegistrationForm):
                                """))
     if settings.ENABLE_DRACONIAN_SECURITY_FEATURES:
         captcha = CaptchaField(_("Type the letters in the box"))
-    create_domain = forms.BooleanField(widget=forms.HiddenInput(), required=False, initial=False)
     # Must be set to False to have the clean_*() routine called
     eula_confirmed = forms.BooleanField(required=False,
                                         label="",
@@ -355,10 +354,6 @@ class WebUserInvitationForm(NoAutocompleteMixin, DomainRegistrationForm):
 
     def __init__(self, *args, **kwargs):
         super(WebUserInvitationForm, self).__init__(*args, **kwargs)
-        initial_create_domain = kwargs.get('initial', {}).get('create_domain', True)
-        data_create_domain = self.data.get('create_domain', "True")
-        if not initial_create_domain or data_create_domain == "False":
-            self.fields['hr_name'].widget = forms.HiddenInput()
 
     def clean_full_name(self):
         data = self.cleaned_data['full_name'].split()
