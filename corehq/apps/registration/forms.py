@@ -391,8 +391,10 @@ class WebUserInvitationForm(NoAutocompleteMixin, DomainRegistrationForm):
     def clean_eula_confirmed(self):
         data = self.cleaned_data['eula_confirmed']
         if data is not True:
-            raise forms.ValidationError('You must agree to our Terms of Service and Business Agreement '
-                                        'in order to register an account.')
+            raise forms.ValidationError(_(
+                'You must agree to our Terms of Service and Business Agreement '
+                'in order to register an account.'
+            ))
         return data
 
 

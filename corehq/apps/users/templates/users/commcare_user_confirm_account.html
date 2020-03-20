@@ -1,39 +1,106 @@
-{% extends "hqwebapp/base_page.html" %}
-{% load hq_shared_tags %}
-{% load crispy_forms_tags %}
+{% extends login_template %}
 {% load i18n %}
+{% load field_tags %}
+{% load hq_shared_tags %}
 
-{% block title %}{% trans "Confirm Account" %}{% endblock %}
+{% requirejs_main 'users/js/accept_invite' %}
 
-{% block header %}
-  <div class="page-header container">
-    <h1>{% blocktrans %}{{ hr_name }} Registration{% endblocktrans %}</h1>
+{% block title %}{% blocktrans %}Confirm your account to join the {{ domain_name }} project{% endblocktrans %}{% endblock title %}
+{% block tabs %}{% endblock %}
+
+{% block login-content %}
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-xs-12">
+        <div class="reg-form-container sign-in-container">
+          <div class="form-bubble form-bubble-lg">
+            {% if request.user.is_authenticated %}
+              <h3>
+                {% trans "You are already signed in." %}
+              </h3>
+              <h4>
+                {% url 'logout' as sign_out_url %}
+                {% blocktrans %}
+                  To accept this invitation, you must first <a href="{{ sign_out_url }}">sign out</a>.
+                {% endblocktrans %}
+              </h4>
+            {% elif user.is_account_confirmed and user.is_active %}
+              <h3>
+                {% trans "Your account is already confirmed!" %}
+              </h3>
+              <h4>
+                {% url 'login' as login_url %}
+                {% blocktrans %}
+                  <a href="{{ login_url }}">Login</a> to access your account.
+                {% endblocktrans %}
+              </h4>
+            {% elif user.is_account_confirmed %}
+              <h3>
+                {% blocktrans %}
+                  It looks like your account has been deactivated.
+                  Contact your administrator if you think this is a mistake.
+                {% endblocktrans %}
+              </h3>
+            {% else %}
+              <h2>
+                {% blocktrans %}Confirm Your Account{% endblocktrans %}
+              </h2>
+              <div class="help-block">
+                {% blocktrans %}
+                  Fill in the details below to confirm your account.
+                {% endblocktrans %}
+              </div>
+              <form name="form" method="post" action="">
+                <h4>
+                  {% with user.raw_username as username %}
+                  {% blocktrans %}
+                    Your username <strong>{{ username }}</strong> was chosen by your project administrator.
+                  {% endblocktrans %}
+                  {% endwith %}
+                </h4>
+                {% csrf_token %}
+                {% for global_error in form.non_field_errors %}
+                  <div class="alert alert-danger">
+                    {{ global_error }}
+                  </div>
+                {% endfor %}
+                <fieldset class="check-password">
+                  {% for field in form.visible_fields %}
+                    <div class="form-group has-feedback{% if field.errors %} has-error{% endif %}">
+                      <label class="control-label" for="{{ field.id }}">{{ field.label }}</label>
+                      <div id="div_id_{{ field.name }}">
+                        {{ field }}
+                        {% for error in field.errors %}
+                          <p class="help-block">{{ error }}</p>
+                        {% endfor %}
+                        {% if field.help_text %}
+                          <p class="help-block">
+                            {{ field.help_text }}
+                          </p>
+                        {% endif %}
+                      </div>
+                    </div>
+                  {% endfor %}
+                  {% for hidden in form.hidden_fields %}
+                    {{ hidden }}
+                  {% endfor %}
+                  <div class="hide">
+                    {{ form.errors }}
+                  </div>
+
+                  <div class="form-bubble-actions">
+                    <button type="submit"
+                            class="btn btn-lg btn-primary"
+                            data-bind="enable: passwordSufficient">
+                      {% trans "Confirm Account" %}
+                    </button>
+                  </div>
+                </fieldset>
+              </form>
+          {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 {% endblock %}
-
-{% block content %}
-  {% if user.is_account_confirmed and user.is_active %}
-    <div>
-      <p>
-        {% blocktrans %}
-          Your account is already confirmed! Go sign in.
-        {% endblocktrans %}
-      </p>
-    </div>
-  {% elif user.is_account_confirmed %}
-    <div class="alert-alert-danger">
-      <p>
-        {% blocktrans %}
-          It looks like your account has been deactivated.
-          Contact your administrator if you think this is a mistake.
-        {% endblocktrans %}
-      </p>
-    </div>
-  {% else %}
-    <div id="confirm-account-form">
-      <p>Confirm your account here!</p>
-      {#  todo    {% crispy form %}#}
-    </div>
-  {% endif %}
-{% endblock %}
-{% block mobile-logout %}{% endblock %}
