@@ -1439,9 +1439,14 @@ class CommCareUserConfirmAccountView(TemplateView, DomainViewMixin):
         return context
 
     def post(self, request, *args, **kwargs):
-        if self.form.is_valid():
-            # todo set email and name too
-            self.user.confirm_account(password=self.form.cleaned_data['password'])
+        form = self.form
+        if form.is_valid():
+            user = self.user
+            user.email = form.cleaned_data['email']
+            full_name = form.cleaned_data['full_name']
+            user.first_name = full_name[0]
+            user.last_name = full_name[1]
+            user.confirm_account(password=self.form.cleaned_data['password'])
             messages.success(request, _(
                 f'You have successfully confirmed the {self.user.raw_username} account. '
                 'You can now login'
