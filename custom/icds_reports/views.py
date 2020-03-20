@@ -2072,7 +2072,7 @@ class CasDataExport(View):
         ):
             return JsonResponse({"message": "Sorry, you do not have access to that location."})
 
-        location = SQLLocation.objects.get(location_id=location_id).select_related('location_type')
+        location = SQLLocation.objects.select_related('location_type').get(location_id=location_id)
         state = location
         while not state.location_type.name == 'state':
             state = state.parent
