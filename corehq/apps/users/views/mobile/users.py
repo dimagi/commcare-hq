@@ -1425,6 +1425,7 @@ class CommCareUserConfirmAccountView(TemplateView, DomainViewMixin):
         else:
             return MobileWorkerAccountConfirmationForm(initial={
                 'username': self.user.raw_username,
+                'full_name': self.user.full_name,
                 'email': self.user.email,
             })
 
