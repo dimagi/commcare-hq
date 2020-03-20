@@ -539,7 +539,7 @@ class NewMobileWorkerForm(forms.Form):
 
     def __init__(self, project, request_user, *args, **kwargs):
         super(NewMobileWorkerForm, self).__init__(*args, **kwargs)
-        email_string = "@{}.commcarehq.org".format(project.name)
+        email_string = "@{}.{}".format(project.name, settings.HQ_ACCOUNT_ROOT)
         max_chars_username = 80 - len(email_string)
         self.project = project
         self.domain = self.project.name
