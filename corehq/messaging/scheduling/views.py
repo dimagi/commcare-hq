@@ -752,7 +752,9 @@ class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
     def help_text(self):
         return _("""
             For information on Conditional Alerts, see the
-            <a target="_blank" href="https://confluence.dimagi.com/display/commcarepublic/Conditional+Alerts">Conditional Alerts</a>
+            <a target="_blank" href="https://confluence.dimagi.com/display/commcarepublic/Conditional+Alerts">
+                Conditional Alerts
+            </a>
             help page.
         """)
 
