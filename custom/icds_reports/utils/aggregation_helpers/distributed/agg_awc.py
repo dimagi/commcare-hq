@@ -227,8 +227,7 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
             ) as cases_person_adolescent_girls_11_14_all,
             sum(
                 CASE WHEN %(month_end_11yr)s > dob AND %(month_start_14yr)s <= dob AND sex = 'F'
-                    AND ((agg_migration.is_migrated=1 AND
-                    agg_migration.migration_date < %(start_date)s)::integer IS DISTINCT FROM 1)
+                    AND (agg_migration.is_migrated IS DISTINCT FROM 1 OR agg_migration.migration_date >= %(start_date)s)
                 THEN 1 ELSE 0 END
             ) as cases_person_adolescent_girls_11_14_all_v2,
             sum(
@@ -296,7 +295,7 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
                  )
             WHERE (opened_on <= %(end_date)s AND
               (closed_on IS NULL OR closed_on >= %(start_date)s )) AND
-              ((agg_migration.is_migrated IS DISTINCT FROM 1 OR agg_migration.migration_date >= %(start_date)s))
+              (agg_migration.is_migrated IS DISTINCT FROM 1 OR agg_migration.migration_date >= %(start_date)s)
               GROUP BY ucr.awc_id, ucr.supervisor_id
         )ut
         where agg_awc.awc_id = ut.awc_id and ut.supervisor_id=agg_awc.supervisor_id;
