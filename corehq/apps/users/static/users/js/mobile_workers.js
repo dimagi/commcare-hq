@@ -65,7 +65,7 @@ hqDefine("users/js/mobile_workers",[
             location_id: '',
             password: '',
             user_id: '',
-            force_account_confirmation: '',
+            force_account_confirmation: false,
             email: '',
             is_active: true,
             custom_fields: {},
@@ -78,8 +78,8 @@ hqDefine("users/js/mobile_workers",[
         var self = ko.mapping.fromJS(options);
 
         // used by two-stage provisioning
-        self.emailRequired = ko.observable(false);
-        self.passwordEnabled = ko.observable(true);
+        self.emailRequired = ko.observable(self.force_account_confirmation());
+        self.passwordEnabled = ko.observable(!self.force_account_confirmation());
 
         self.action_error = ko.observable('');  // error when activating/deactivating a user
 
@@ -225,7 +225,6 @@ hqDefine("users/js/mobile_workers",[
                 return self.STATUS.NONE;
             }
 
-            console.log('password status', self.stagedUser().force_account_confirmation());
             if (self.stagedUser().force_account_confirmation()) {
                 return self.STATUS.DISABLED;
             }
@@ -369,18 +368,15 @@ hqDefine("users/js/mobile_workers",[
                 self.isSuggestedPassword(false);
             });
             user.force_account_confirmation.subscribe(function (enabled) {
-                console.log('account confirmation', enabled);
                 if (enabled) {
                     // make email required
                     user.emailRequired(true);
                     // clear and disable password input
                     user.password('');
                     user.passwordEnabled(false);
-
                 } else {
                     // make email optional
                     user.emailRequired(false);
-
                     // enable password input
                     user.passwordEnabled(true);
                 }
@@ -412,7 +408,17 @@ hqDefine("users/js/mobile_workers",[
             if (!self.stagedUser().username()) {
                 return false;
             }
-            if (!self.stagedUser().password()) {
+            if (self.stagedUser().passwordEnabled()) {
+                if  (!self.stagedUser().password()) {
+                    return false;
+                }
+                if (self.useStrongPasswords()) {
+                    if (!self.isSuggestedPassword() && self.passwordStatus() !== self.STATUS.SUCCESS) {
+                        return false;
+                    }
+                }
+            }
+            if (self.stagedUser().emailRequired() && !self.stagedUser().email()) {
                 return false;
             }
             if (options.require_location_id && !self.stagedUser().location_id()) {
@@ -420,11 +426,6 @@ hqDefine("users/js/mobile_workers",[
             }
             if (self.usernameAvailabilityStatus() !== self.STATUS.SUCCESS) {
                 return false;
-            }
-            if (self.useStrongPasswords()) {
-                if (!self.isSuggestedPassword() && self.passwordStatus() !== self.STATUS.SUCCESS) {
-                    return false;
-                }
             }
             var fieldData = self.stagedUser().custom_fields;
             if (_.isObject(fieldData) && !_.isArray(fieldData)) {
@@ -440,6 +441,10 @@ hqDefine("users/js/mobile_workers",[
             var newUser = userModel(ko.mapping.toJS(self.stagedUser));
             self.newUsers.push(newUser);
             newUser.creation_status(STATUS.PENDING);
+            // if we disabled the password, set it just in time before going to the server
+            if (!newUser.passwordEnabled()) {
+                newUser.password(self.generateStrongPassword());
+            }
             if (self.implementPasswordObfuscation()) {
                 newUser.password(nicEncoder().encode(newUser.password()));
             }
