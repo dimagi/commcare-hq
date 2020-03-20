@@ -23,22 +23,30 @@ def post_fork(server, worker):
     resolve('/')
 
 
-def on_starting(server):
+def on_starting(server, path=None):
     """Wipe the metrics from previous processes"""
-    path = os.environ.get('prometheus_multiproc_dir')
-    if path:
-        try:
-            for f in glob.glob(os.path.join(path, '*.db')):
-                os.remove(f)
-        except Exception:
-            server.log.exception("Error clearing Prometheus metrics")
+    try:
+        _remove_prometheus_metric_files(path)
+    except Exception:
+        server.log.exception("Error clearing Prometheus metrics")
 
 
-def child_exit(server, worker):
-    path = os.environ.get('prometheus_multiproc_dir')
-    if path:
-        try:
-            from prometheus_client import multiprocess
-            multiprocess.mark_process_dead(worker.pid, path)
-        except Exception:
-            server.log.exception("Error clearing Prometheus live metrics")
+def _remove_prometheus_metric_files(path, worker=None):
+    if path is None:
+        path = os.environ.get('prometheus_multiproc_dir')
+    if not path:
+        return
+
+    if worker:
+        from prometheus_client import multiprocess
+        multiprocess.mark_process_dead(worker.pid, path)
+    else:
+        for f in glob.glob(os.path.join(path, '*.db')):
+            os.remove(f)
+
+
+def child_exit(server, worker, path=None):
+    try:
+        _remove_prometheus_metric_files(path, worker)
+    except Exception:
+        server.log.exception("Error clearing Prometheus live metrics")
