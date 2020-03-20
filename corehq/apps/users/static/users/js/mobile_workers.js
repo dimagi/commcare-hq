@@ -208,6 +208,7 @@ hqDefine("users/js/mobile_workers",[
         self.useStrongPasswords = ko.observable(options.strong_mobile_passwords);
         self.useDraconianSecurity = ko.observable(options.draconian_security);
         self.implementPasswordObfuscation = ko.observable(options.implement_password_obfuscation);
+        self.twoStageProvisioningEnabled = ko.observable(options.two_stage_provisioning_enabled);
 
         self.passwordStatus = ko.computed(function () {
             if (!self.useStrongPasswords()) {
