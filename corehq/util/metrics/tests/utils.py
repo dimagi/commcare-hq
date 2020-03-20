@@ -24,5 +24,8 @@ def capture_metrics():
     from corehq.util.metrics import _metrics
     capture = DebugMetrics(capture=True)
     _metrics.append(capture)
-    yield capture.metrics
-    _metrics.pop()
+    try:
+        yield capture.metrics
+    finally:
+        assert _metrics[-1] is capture, _metrics
+        _metrics.pop()
