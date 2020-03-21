@@ -250,6 +250,7 @@ def init_worker(domain, *args):
     reset_django_db_connections()
     reset_couchdb_connections()
     reset_blobdb_connections()
+    reset_redis_connections()
     signal.signal(signal.SIGINT, on_break)
     set_local_domain_sql_backend_override(domain)
     return global_diff_state(domain, *args)
@@ -286,6 +287,12 @@ def reset_blobdb_connections():
         old_blob_db = get_blob_db()
         _db.pop()
         assert get_blob_db() is not old_blob_db
+
+
+def reset_redis_connections():
+    from django_redis.pool import ConnectionFactory
+    for pool in ConnectionFactory._pools.values():
+        pool.reset()
 
 
 @contextmanager
