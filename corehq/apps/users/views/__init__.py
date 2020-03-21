@@ -748,7 +748,6 @@ class UserInvitationView(object):
         # Add zero-width space to username for better line breaking
         username = self.request.user.username.replace("@", "&#x200b;@")
         context = {
-            'create_domain': False,
             'formatted_username': username,
             'domain': self.domain,
             'invite_to': self.domain,
@@ -822,8 +821,6 @@ class UserInvitationView(object):
                         reverse('domain_accept_invitation', args=[invitation.domain, invitation.id]))
                 form = WebUserInvitationForm(initial={
                     'email': invitation.email,
-                    'hr_name': invitation.domain,
-                    'create_domain': False,
                 })
 
         context.update({"form": form})
