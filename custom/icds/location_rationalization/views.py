@@ -70,7 +70,8 @@ class LocationRationalizationView(BaseDomainView):
         headers = worksheet.fieldnames
         expected_headers = []
         for location_type in self._location_types:
-            expected_headers.extend([f'old_{location_type}', f'new_{location_type}'])
+            expected_headers.extend([f'old_{location_type.code}',
+                                     f'new_{location_type.code}'])
         missing_headers = set(expected_headers) - set(headers)
         if missing_headers:
             messages.error(request, _("Missing following columns in sheet: {columns}").format(
@@ -81,7 +82,7 @@ class LocationRationalizationView(BaseDomainView):
 
     @cached_property
     def _location_types(self):
-        location_types = [lt.code for lt in LocationType.objects.by_domain(self.domain)]
+        location_types = LocationType.objects.by_domain(self.domain)
         location_types.reverse()
         return location_types
 

@@ -18,7 +18,7 @@ class Dumper(object):
         One tab per location type, which changes specific to the location type
         See TestDumper.test_dump for example
         """
-        self.location_types = location_types
+        self.location_types = [t.code for t in location_types]
         self.new_site_codes = []
 
     def dump(self, transitions_per_location_type):
