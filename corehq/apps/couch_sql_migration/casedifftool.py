@@ -249,6 +249,7 @@ def init_worker(domain, *args):
     clean_break = False
     reset_django_db_connections()
     reset_couchdb_connections()
+    reset_blobdb_connections()
     signal.signal(signal.SIGINT, on_break)
     set_local_domain_sql_backend_override(domain)
     return global_diff_state(domain, *args)
@@ -276,6 +277,15 @@ def reset_couchdb_connections():
         server = db[0] if isinstance(db, tuple) else db.server
         with safe_socket_close():
             server.cloudant_client.r_session.close()
+
+
+def reset_blobdb_connections():
+    from corehq.blobs import _db, get_blob_db
+    if _db:
+        assert len(_db) == 1, _db
+        old_blob_db = get_blob_db()
+        _db.pop()
+        assert get_blob_db() is not old_blob_db
 
 
 @contextmanager
