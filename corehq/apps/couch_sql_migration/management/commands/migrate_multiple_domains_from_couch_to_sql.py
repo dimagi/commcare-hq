@@ -72,11 +72,11 @@ class Command(BaseCommand):
 
     def migrate_domain(self, domain, state_dir):
         if should_use_sql_backend(domain):
-            log.error("{} already on the SQL backend\n".format(domain))
+            log.info("{} already on the SQL backend\n".format(domain))
             return True, None
 
         if couch_sql_migration_in_progress(domain, include_dry_runs=True):
-            log.error("{} migration is already in progress\n".format(domain))
+            log.error("{} migration is in progress\n".format(domain))
             return False, "in progress"
 
         set_couch_sql_migration_started(domain)

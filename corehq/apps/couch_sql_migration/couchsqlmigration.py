@@ -1150,10 +1150,6 @@ def _iter_docs(domain, doc_type, resume_key, stopper):
         for row in rows:
             yield row[row_key]
     finally:
-        if row is not None:
-            row_copy = dict(row)
-            row_copy.pop("doc", None)
-            log.info("last item: %r", row_copy)
         final_state = rows.state.to_json().get("kwargs")
         if final_state:
             log.info("final iteration state: %r", final_state)
