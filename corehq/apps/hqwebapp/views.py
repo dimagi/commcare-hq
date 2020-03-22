@@ -580,14 +580,13 @@ def jserror(request):
 
 @method_decorator([login_required], name='dispatch')
 class BugReportView(View):
-
     @property
     def recipients(self):
         """
             Returns:
                 list
         """
-        return settings.BUG_REPORT_RECIPIENTS
+        return [settings.SUPPORT_EMAIL]
 
     def post(self, req, *args, **kwargs):
         report = dict([(key, req.POST.get(key, '')) for key in (

@@ -434,9 +434,6 @@ EMAIL_SMTP_PORT = 587
 # These are the normal Django settings
 EMAIL_USE_TLS = True
 
-# put email addresses here to have them receive bug reports
-BUG_REPORT_RECIPIENTS = ()
-
 # the physical server emailing - differentiate if needed
 SERVER_EMAIL = 'commcarehq-noreply@example.com'
 DEFAULT_FROM_EMAIL = 'commcarehq-noreply@example.com'
