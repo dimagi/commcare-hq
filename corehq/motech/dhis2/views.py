@@ -1,14 +1,12 @@
 import json
 
-from django.http import HttpResponseRedirect, JsonResponse
+from django.http import JsonResponse
 from django.shortcuts import render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy
 from django.views.decorators.http import require_http_methods, require_POST
-
-from memoized import memoized
 
 from corehq import toggles
 from corehq.apps.domain.decorators import login_and_domain_required
@@ -18,49 +16,11 @@ from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
 from corehq.motech.dhis2.dbaccessors import get_dataset_maps
 from corehq.motech.dhis2.dhis2_config import Dhis2FormConfig
-from corehq.motech.dhis2.forms import Dhis2ConfigForm, Dhis2ConnectionForm
-from corehq.motech.dhis2.models import (
-    DataSetMap,
-    DataValueMap,
-    Dhis2Connection,
-)
+from corehq.motech.dhis2.forms import Dhis2ConfigForm
+from corehq.motech.dhis2.models import DataSetMap, DataValueMap
 from corehq.motech.dhis2.repeaters import Dhis2Repeater
 from corehq.motech.dhis2.tasks import send_datasets
 from corehq.motech.models import ConnectionSettings
-
-
-@method_decorator(require_permission(Permissions.edit_motech), name='dispatch')
-@method_decorator(toggles.DHIS2_INTEGRATION.required_decorator(), name='dispatch')
-class Dhis2ConnectionView(BaseProjectSettingsView):
-    urlname = 'dhis2_connection_view'
-    page_title = ugettext_lazy("DHIS2 Connection Settings")
-    template_name = 'dhis2/connection_settings.html'
-
-    def post(self, request, *args, **kwargs):
-        form = self.dhis2_connection_form
-        if form.is_valid():
-            form.save(self.domain)
-            return HttpResponseRedirect(self.page_url)
-        context = self.get_context_data(**kwargs)
-        return self.render_to_response(context)
-
-    @property
-    @memoized
-    def dhis2_connection_form(self):
-        dhis2_conn = Dhis2Connection.objects.filter(domain=self.request.domain).first()
-        initial = {
-            'server_url': dhis2_conn.server_url,
-            'username': dhis2_conn.username,
-            'password': dhis2_conn.password,
-            'skip_cert_verify': dhis2_conn.skip_cert_verify,
-        } if dhis2_conn else {}
-        if self.request.method == 'POST':
-            return Dhis2ConnectionForm(self.request.POST, initial=initial)
-        return Dhis2ConnectionForm(initial=initial)
-
-    @property
-    def page_context(self):
-        return {'dhis2_connection_form': self.dhis2_connection_form}
 
 
 @method_decorator(require_permission(Permissions.edit_motech), name='dispatch')
