@@ -512,7 +512,8 @@ class BillingAccount(ValidateModelMixin, models.Model):
             'old_user_name': old_user_name,
             'billing_account_name': self.name,
             'billing_info_url': absolute_reverse(EditExistingBillingAccountView.urlname,
-                                                 args=[domain])
+                                                 args=[domain]),
+            'invoicing_contact_email': settings.INVOICING_CONTACT_EMAIL,
         }
 
         send_html_email_async(
@@ -541,7 +542,8 @@ class BillingAccount(ValidateModelMixin, models.Model):
             'last_4': last_4,
             'billing_account_name': self.name,
             'billing_info_url': absolute_reverse(EditExistingBillingAccountView.urlname,
-                                                 args=[domain])
+                                                 args=[domain]),
+            'invoicing_contact_email': settings.INVOICING_CONTACT_EMAIL,
         }
 
         send_html_email_async(
