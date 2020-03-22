@@ -35,7 +35,7 @@ class Parser(object):
         self.requested_transitions = {}
         self.errors = []
         # location types should be in reverse order of hierarchy
-        self.location_types = location_types
+        self.location_types = [t.code for t in location_types]
         self.transitions = {location_type: {
             MERGE_OPERATION: defaultdict(list),
             SPLIT_OPERATION: defaultdict(list),

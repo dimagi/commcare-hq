@@ -25,7 +25,7 @@
       <div class="col-sm-4">
         <select class="form-control hqwebapp-select2" data-bind="value: location_type">
           {% for loc_type in loc_types %}
-            <option value="{{ loc_type }}">{{ loc_type }}</option>
+            <option value="{{ loc_type.code }}">{{ loc_type.name }}</option>
           {% endfor %}
         </select>
         <br><br>
