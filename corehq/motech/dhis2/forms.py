@@ -1,80 +1,20 @@
-import bz2
-import logging
-from base64 import b64encode
-
 from django import forms
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext_lazy as _
 
-from crispy_forms import bootstrap as twbscrispy
-from crispy_forms import layout as crispy
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit
 
-from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.userreports.ui.fields import JsonField
 from corehq.motech.dhis2.const import (
     SEND_FREQUENCY_MONTHLY,
     SEND_FREQUENCY_QUARTERLY,
 )
-from corehq.motech.dhis2.models import Dhis2Connection
 
 SEND_FREQUENCY_CHOICES = (
     (SEND_FREQUENCY_MONTHLY, 'Monthly'),
     (SEND_FREQUENCY_QUARTERLY, 'Quarterly'),
 )
-
-
-class Dhis2ConnectionForm(forms.Form):
-    server_url = forms.CharField(label=_('DHIS2 API URL'), required=True,
-                                 help_text=_('e.g. "https://play.dhis2.org/demo/api/"'))
-    username = forms.CharField(label=_('Username'), required=True)
-    password = forms.CharField(label=_('Password'), widget=forms.PasswordInput, required=False)
-    skip_cert_verify = forms.BooleanField(
-        label=_('Skip SSL certificate verification'),
-        required=False,
-        help_text=_('FOR TESTING ONLY: DO NOT ENABLE THIS FOR PRODUCTION INTEGRATIONS'),
-    )
-
-    def __init__(self, *args, **kwargs):
-        super(Dhis2ConnectionForm, self).__init__(*args, **kwargs)
-        self.helper = FormHelper()
-        self.helper.form_class = 'form-horizontal'
-        self.helper.label_class = 'col-sm-3 col-md-2'
-        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
-        self.helper.layout = crispy.Layout(
-            crispy.Fieldset(
-                _('Edit DHIS2 connection'),
-                crispy.Field('server_url'),
-                crispy.Field('username'),
-                crispy.Field('password'),
-                twbscrispy.PrependedText('skip_cert_verify', ''),
-            ),
-            hqcrispy.FormActions(
-                twbscrispy.StrictButton(
-                    _("Update DHIS2 connection"),
-                    type="submit",
-                    css_class='btn-primary',
-                )
-            ),
-        )
-
-    def save(self, domain_name):
-        try:
-            dhis2_conn = Dhis2Connection.objects.filter(domain=domain_name).first()
-            if dhis2_conn is None:
-                dhis2_conn = Dhis2Connection(domain=domain_name)
-            dhis2_conn.server_url = self.cleaned_data['server_url']
-            dhis2_conn.username = self.cleaned_data['username']
-            if self.cleaned_data['password']:
-                # Don't save it if it hasn't been changed.
-                dhis2_conn.plaintext_password = self.cleaned_data['password']
-            dhis2_conn.skip_cert_verify = self.cleaned_data['skip_cert_verify']
-            dhis2_conn.save()
-            return True
-        except Exception as err:
-            logging.error('Unable to save DHIS2 connection: %s' % err)
-            return False
 
 
 class Dhis2ConfigForm(forms.Form):
