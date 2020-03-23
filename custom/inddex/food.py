@@ -1,7 +1,3 @@
-from collections import defaultdict
-
-from django.utils.functional import cached_property
-
 from .fixtures import FixtureAccessor
 
 ORDERED_INDICATORS = [
@@ -179,7 +175,7 @@ class RecipeIngredientRow(FoodRow):
 class FoodData:
     def __init__(self, domain, ucr_rows):
         self.ucr_rows = ucr_rows
-        self.fixture_accessor = FixtureAccessor(domain)
+        self.fixtures = FixtureAccessor(domain)
 
     @property
     def headers(self):
@@ -193,15 +189,8 @@ class FoodData:
                 getattr(food, column) for column in ORDERED_INDICATORS
             ]
             if food.food_type == 'std_recipe':
-                for ingredient_data in self._recipes[food.food_code]:
+                for ingredient_data in self.fixtures.recipes[food.food_code]:
                     ingr_row = RecipeIngredientRow(ucr_row, ingredient_data)
                     yield [
                         getattr(ingr_row, column) for column in ORDERED_INDICATORS
                     ]
-
-    @cached_property
-    def _recipes(self):
-        recipes = defaultdict(list)
-        for ingredient in self.fixture_accessor.get_recipes():
-            recipes[ingredient.recipe_code].append(ingredient)
-        return recipes

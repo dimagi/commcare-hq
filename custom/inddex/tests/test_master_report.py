@@ -144,22 +144,22 @@ def get_ucr_data():
 
 class TestFixtures(TestCase):
     @cached_property
-    def accessor(self):
+    def fixtures_accessor(self):  # `fixtures` is a reserved property on TestCase
         return FixtureAccessor(DOMAIN)
 
     def test_recipes(self):
-        for recipe in self.accessor.get_recipes():
-            if recipe.recipe_code == "10001":
-                self.assertIn("Pearl millet", recipe.recipe_descr)
-                self.assertEqual('11', recipe.ingr_code)
-                self.assertIn("Millet flour", recipe.ingr_descr)
-                self.assertEqual(0.15, recipe.ingr_fraction)
+        ingredients = self.fixtures_accessor.recipes['10089']
+        self.assertEqual(7, len(ingredients))
+        for ingredient in ingredients:
+            if ingredient.ingr_code == '450':
+                self.assertEqual("Okra sauce", ingredient.recipe_descr)
+                self.assertEqual("Potash,solid", ingredient.ingr_descr)
+                self.assertEqual(0.01, ingredient.ingr_fraction)
 
     def test_food_list(self):
-        for food in self.accessor.get_foods():
-            if food.food_code == "10":
-                self.assertEqual("Millet flour", food.food_name)
-                self.assertEqual("Millet flour", food.food_base_term)
+        food = self.fixtures_accessor.foods['10']
+        self.assertEqual("Millet flour", food.food_name)
+        self.assertEqual("Millet flour", food.food_base_term)
 
 
 class TestNewReport(TestCase):

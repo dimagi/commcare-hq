@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 from django.utils.functional import cached_property
 
 from attr import attrib, attrs
@@ -52,14 +54,24 @@ class FixtureAccessor:
             yield {field_name: field_list.field_list[0].field_value
                    for field_name, field_list in item.fields.items()}
 
-    def get_recipes(self):
+    @cached_property
+    def recipes(self):
+        """Lists of recipe ingredients by recipe_code"""
+        recipes = defaultdict(list)
         for item_dict in self._get_fixture_dicts('recipes'):
             # The fixture contains duplicate entries for each language.
             if item_dict.pop('iso_code') == 'en':
-                yield RecipeIngredient(**item_dict)
+                ingredient = RecipeIngredient(**item_dict)
+                recipes[ingredient.recipe_code].append(ingredient)
+        return recipes
 
-    def get_foods(self):
+    @cached_property
+    def foods(self):
+        """Food items by food_code"""
+        foods = {}
         for item_dict in self._get_fixture_dicts('food_list'):
             # A bunch of columns are duplicated - like food_name_lang_3
             item_dict = {k: v for k, v in item_dict.items() if '_lang_' not in k}
-            yield Food(**item_dict)
+            food = Food(**item_dict)
+            foods[food.food_code] = food
+        return foods
