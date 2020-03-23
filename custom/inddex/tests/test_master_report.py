@@ -20,7 +20,7 @@ from ..example_data.data import (
     populate_inddex_domain,
 )
 from ..fixtures import FixtureAccessor
-from ..food import FoodData, FoodRow
+from ..food import FoodData, INDICATORS
 from ..ucr.adapters import FoodCaseData
 from ..ucr.data_providers.master_data_file_data import MasterDataFileData
 
@@ -184,8 +184,9 @@ class TestNewReport(TestCase):
             'nsr_conv_option_desc_post_cooking',
             'already_reported_food',
         }
-        columns = [c for c in FoodRow._indicators_in_ucr  # for now, only ucr columns are correct
-                   if c not in columns_known_to_fail]
+        columns = [c.slug for c in INDICATORS
+                   # for now, only ucr columns are correct
+                   if c.in_ucr and c not in columns_known_to_fail]
         for expected_row, actual_row in zip(expected, actual):
             pass
             # assert_same_column_vals(expected_row, actual_row, columns)
