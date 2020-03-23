@@ -8,6 +8,7 @@ from braces.views import JsonRequestResponseMixin
 from couchdbkit import ResourceNotFound
 
 from corehq.apps.registration.forms import MobileWorkerAccountConfirmationForm
+from corehq.apps.users.account_confirmation import send_account_confirmation_if_necessary
 from corehq.util import get_document_or_404
 from couchexport.models import Format
 from couchexport.writers import Excel2007ExportWriter
@@ -744,6 +745,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
             return {'error': _("Forms did not validate")}
 
         couch_user = self._build_commcare_user()
+        send_account_confirmation_if_necessary(couch_user)
 
         return {
             'success': True,
