@@ -102,9 +102,7 @@ class LocationAggregationDistributedHelper(BaseICDSAggregationDistributedHelper)
 
     @property
     def ucr_aww_tablename(self):
-        doc_id = StaticDataSourceConfiguration.get_doc_id(self.domain, self.ucr_aww_table)
-        config, _ = get_datasource_config(doc_id, self.domain)
-        return get_table_name(self.domain, config.table_id)
+        return get_table_name(self.domain, self.ucr_aww_table)
 
     def delete_old_locations(self):
         return "DELETE FROM \"{local_tablename}\"".format(local_tablename=self.local_tablename)
