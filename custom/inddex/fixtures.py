@@ -18,7 +18,6 @@ class RecipeIngredient:
     ingr_descr = attrib()
     ingr_fraction = attrib(converter=float)
     ingr_fraction_type = attrib()
-    iso_code = attrib()
 
 
 class FixtureAccessor:
@@ -34,4 +33,6 @@ class FixtureAccessor:
         for item in iter_fixture_items_for_data_type(self.domain, recipes_data_type.get_id):
             item_dict = {field_name: field_list.field_list[0].field_value
                          for field_name, field_list in item.fields.items()}
-            yield RecipeIngredient(**item_dict)
+            # The fixture contains duplicate entries for each language.
+            if item_dict.pop('iso_code') == 'en':
+                yield RecipeIngredient(**item_dict)

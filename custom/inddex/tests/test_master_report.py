@@ -149,7 +149,7 @@ class TestFixtures(TestCase):
     def test_recipes(self):
         recipes = self.accessor.get_recipes()
         for recipe in recipes:
-            if recipe.recipe_code == "10001" and recipe.iso_code == "en":
+            if recipe.recipe_code == "10001":
                 self.assertIn("Pearl millet", recipe.recipe_descr)
                 self.assertEqual('11', recipe.ingr_code)
                 self.assertIn("Millet flour", recipe.ingr_descr)
