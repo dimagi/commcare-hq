@@ -8,6 +8,7 @@ description here: https://github.com/dimagi/commcare-hq/pull/22477
 """
 
 import sys
+from collections import namedtuple
 
 from django.core.management.base import BaseCommand
 from django.db.models import F, Q
@@ -21,7 +22,7 @@ from corehq.form_processor.models import XFormInstanceSQL
 
 
 class Command(BaseCommand):
-    help = "Print IDs of sql forms that are in the primary DB but not in ES."
+    help = "Print IDs and info of sql forms that are in the primary DB but not in ES."
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -43,15 +44,19 @@ class Command(BaseCommand):
         startdate = options.get('start')
         enddate = options.get('end')
         print("Fetching all form ids...", file=sys.stderr)
-        all_ids = list(form[0] for form in iter_form_ids_by_last_modified(startdate, enddate))
         print("Woo! Done fetching. Here we go", file=sys.stderr)
-        for doc_ids in chunked(all_ids, 100):
+        print('Form ID\tLast Modified\tDomain')
+        for chunk in chunked(iter_form_ids_by_last_modified(startdate, enddate), 100):
+            info_by_id = {f.form_id: f for f in chunk}
+            doc_ids = list(info_by_id.keys())
+
             es_ids = (FormES()
                       .remove_default_filter('is_xform_instance')
                       .doc_id(doc_ids).values_list('_id', flat=True))
             missing_ids = set(doc_ids) - set(es_ids)
             for form_id in missing_ids:
-                print(form_id)
+                info = info_by_id[form_id]
+                print(f'{info.form_id}\t{info.last_modified}\t{info.domain}')
 
 
 def iter_form_ids_by_last_modified(start_datetime, end_datetime):
@@ -61,7 +66,7 @@ def iter_form_ids_by_last_modified(start_datetime, end_datetime):
         'last_modified': Greatest('received_on', 'edited_on', 'deleted_on'),
     }
 
-    return paginate_query_across_partitioned_databases(
+    for row in paginate_query_across_partitioned_databases(
         XFormInstanceSQL,
         (Q(last_modified__gt=start_datetime, last_modified__lt=end_datetime) &
          Q(state=F('state').bitand(XFormInstanceSQL.DELETED) +
@@ -71,6 +76,10 @@ def iter_form_ids_by_last_modified(start_datetime, end_datetime):
             F('state').bitand(XFormInstanceSQL.SUBMISSION_ERROR_LOG) +
             F('state'))),
         annotate=annotate,
-        values=['form_id'],
+        values=['form_id', 'last_modified', 'domain'],
         load_source='find_sql_forms_not_in_es'
-    )
+    ):
+        yield FormResult(*row)
+
+
+FormResult = namedtuple('FormResult', 'form_id, last_modified, domain')
