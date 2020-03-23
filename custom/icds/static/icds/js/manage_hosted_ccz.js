@@ -2,36 +2,49 @@ hqDefine('icds/js/manage_hosted_ccz', [
     'jquery',
     'knockout',
     'underscore',
+    'hqwebapp/js/assert_properties',
     'hqwebapp/js/initial_page_data',
     'translations/js/app_translations',
 ], function (
     $,
     ko,
     _,
+    assertProperties,
     initialPageData
 ) {
     'use strict';
     $(function () {
-        var hostedCCZ = function (id, link, appName, version, profileName, fileName, note, status) {
-            var self = {};
-            self.link = link;
-            self.appName = appName;
-            self.version = version;
-            self.profileName = profileName;
-            self.fileName = fileName;
-            self.note = note;
-            self.status = status;
-            self.removeUrl = initialPageData.reverse("remove_hosted_ccz", id);
-            self.recreateUrl = initialPageData.reverse("recreate_hosted_ccz", id);
-            self.viewUrl = initialPageData.reverse("hosted_ccz", link);
+        var hostedCCZ = function (options) {
+            assertProperties.assertRequired(options, [
+                'id',
+                'link',
+                'app_name',
+                'version',
+                'app_version_tag',
+                'profile_name',
+                'file_name',
+                'note',
+                'status',
+            ]);
+            var self = {
+                id: options.id,
+                link: options.link,
+                appName: options.app_name,
+                version: options.version,
+                appVersionTag: options.app_version_tag,
+                profileName: options.profile_name,
+                fileName: options.file_name,
+                note: options.note,
+                status: options.status,
+            };
+            self.removeUrl = initialPageData.reverse("remove_hosted_ccz", self.id);
+            self.recreateUrl = initialPageData.reverse("recreate_hosted_ccz", self.id);
+            self.viewUrl = initialPageData.reverse("hosted_ccz", self.link);
             return self;
         };
         var hostedCCZsView = function (hostings) {
             var self = {};
-            self.hostings = _.map(hostings, function (hosting) {
-                return hostedCCZ(hosting.id, hosting.link_name, hosting.app_name, hosting.version,
-                    hosting.profile_name, hosting.file_name, hosting.note, hosting.status);
-            });
+            self.hostings = _.map(hostings, hostedCCZ);
             self.search = function () {
                 var linkId = $("#link-id-select").val();
                 var appId = $("#app-id-search-select").val();

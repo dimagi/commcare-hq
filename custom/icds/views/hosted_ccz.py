@@ -139,7 +139,6 @@ class ManageHostedCCZ(BaseDomainView):
                 } for _id, details in build_doc['build_profiles'].items()]
 
     def get_context_data(self, **kwargs):
-        app_names = {app.id: app.name for app in get_brief_apps_in_domain(self.domain, include_remote=True)}
         if self.request.GET.get('link_id'):
             hosted_cczs = HostedCCZ.objects.filter(link_id=self.request.GET.get('link_id'))
         else:
@@ -153,7 +152,7 @@ class ManageHostedCCZ(BaseDomainView):
             hosted_cczs = hosted_cczs.filter(profile_id=self.request.GET.get('profile_id'))
         if self.request.GET.get('status'):
             hosted_cczs = hosted_cczs.filter(status=self.request.GET.get('status'))
-        hosted_cczs = [h.to_json(app_names) for h in hosted_cczs]
+        hosted_cczs = [h.to_json() for h in hosted_cczs]
         return {
             'form': self.form,
             'domain': self.domain,

@@ -19,7 +19,10 @@ class HostedCCZSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         ret = super(HostedCCZSerializer, self).to_representation(instance)
-        ret['app_name'] = self.context['app_names'][ret['app_id']]
+        if instance.build_doc:
+            ret['app_name'] = instance.build_doc['name']
+            custom_properties = instance.build_doc['profile'].get('custom_properties', {})
+            ret['app_version_tag'] = custom_properties.get('cc-app-version-tag')
         ret['link_name'] = self.instance.link.identifier
         ret['profile_name'] = self.instance.build_profile['name'] if self.instance.profile_id else ''
         ret['file_name'] = self.instance.file_name

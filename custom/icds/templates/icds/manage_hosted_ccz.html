@@ -45,6 +45,9 @@
             <th>
               {% trans 'Version' %}
             </th>
+            <th>
+              {% trans 'Tag' %}
+            </th>
             <th class="col-sm-2">
               {% trans 'CCZ Name' %}
             </th>
@@ -71,15 +74,19 @@
             </td>
             <td data-bind="text: version">
             </td>
+            <td data-bind="text: appVersionTag">
+            </td>
             <td data-bind="text: fileName">
             </td>
             <td data-bind="text: note">
             </td>
             <td>
               <a data-bind="attr: { href: removeUrl}" class="btn btn-danger">
+                <i class="fa fa-trash"></i>
                 {% trans 'Remove' %}
               </a>
               <a data-bind="attr: { href: recreateUrl}" class="btn btn-danger">
+                <i class="fa fa-recycle"></i>
                 {% trans 'Recreate' %}
               </a>
             </td>
