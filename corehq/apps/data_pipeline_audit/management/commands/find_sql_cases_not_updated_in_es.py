@@ -67,7 +67,7 @@ def get_es_id_modified_list(domain, case_ids):
     return {
         CaseResult(case_id, iso_string_to_datetime(server_modified_on), domain_)
         for case_id, server_modified_on, domain_ in (
-            es_query.case_ids(case_ids).values_list('case_id', 'server_modified_on', 'domain'))
+            es_query.case_ids(case_ids).values_list('_id', 'server_modified_on', 'domain'))
     }
 
 
