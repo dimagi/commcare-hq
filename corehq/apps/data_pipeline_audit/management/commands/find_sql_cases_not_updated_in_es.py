@@ -3,7 +3,8 @@ from collections import namedtuple
 from django.core.management.base import BaseCommand
 
 from corehq.form_processor.backends.sql.dbaccessors import CaseReindexAccessor, \
-    iter_all_ids_chunked
+    iter_all_ids_chunked, CaseAccessorSQL
+from corehq.form_processor.change_publishers import publish_case_saved
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 from corehq.util.argparse_types import date_type
 
@@ -36,11 +37,19 @@ class Command(BaseCommand):
             type=date_type,
             help="The end date. Only applicable to case on SQL domains. - format YYYY-MM-DD",
         )
+        parser.add_argument(
+            '--fix',
+            dest='fix',
+            action='store_true',
+            help="Whether to fix by republishing to kafka.",
+            default=False,
+        )
 
     def handle(self, **options):
         domain = options.get('domain')
         startdate = options.get('start')
         enddate = options.get('end')
+        fix = options.get('fix')
 
         chunked_case_ids = get_case_ids_chunked(
             domain=domain, start_date=startdate, end_date=enddate)
@@ -50,8 +59,12 @@ class Command(BaseCommand):
             es_modified_set = get_es_id_modified_list(domain, case_ids_chunk)
 
             sql_modified_set = get_sql_id_modified_list(domain, case_ids_chunk)
-            for info in sql_modified_set - es_modified_set:
+            bad_set = sql_modified_set - es_modified_set
+            for info in bad_set:
                 print(f'{info.case_id}\t{info.server_modified_on}\t{info.domain}')
+            if fix:
+                for case in CaseAccessorSQL.get_cases([info.case_id for info in bad_set]):
+                    publish_case_saved(case, send_post_save_signal=False)
 
 
 def get_case_ids_chunked(domain=None, start_date=None, end_date=None):
