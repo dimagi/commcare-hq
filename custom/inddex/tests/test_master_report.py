@@ -148,13 +148,18 @@ class TestFixtures(TestCase):
         return FixtureAccessor(DOMAIN)
 
     def test_recipes(self):
-        recipes = self.accessor.get_recipes()
-        for recipe in recipes:
+        for recipe in self.accessor.get_recipes():
             if recipe.recipe_code == "10001":
                 self.assertIn("Pearl millet", recipe.recipe_descr)
                 self.assertEqual('11', recipe.ingr_code)
                 self.assertIn("Millet flour", recipe.ingr_descr)
                 self.assertEqual(0.15, recipe.ingr_fraction)
+
+    def test_food_list(self):
+        for food in self.accessor.get_foods():
+            if food.food_code == "10":
+                self.assertEqual("Millet flour", food.food_name)
+                self.assertEqual("Millet flour", food.food_base_term)
 
 
 class TestNewReport(TestCase):
