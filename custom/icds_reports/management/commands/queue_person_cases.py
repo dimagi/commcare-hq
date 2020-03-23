@@ -3,8 +3,7 @@ from django.core.management.base import BaseCommand
 from corehq.apps.userreports.tasks import _get_config_by_id
 from corehq.apps.userreports.util import get_table_name
 from corehq.apps.userreports.models import AsyncIndicator
-from django.db import connections, models, transaction, router
-from pillowtop.dao.couch import ID_CHUNK_SIZE
+from django.db import connections
 
 from dimagi.utils.chunked import chunked
 
