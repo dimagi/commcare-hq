@@ -186,6 +186,14 @@ class SqlData(ReportDataSource):
         raise NotImplementedError()
 
     @property
+    def distinct_on(self):
+        """
+        Returns a list of column names to create the
+        DISTINCT ON portion of the SQL query
+        """
+        return []
+
+    @property
     def order_by(self):
         """
         Returns a list of OrderBy objects.
@@ -246,7 +254,7 @@ class SqlData(ReportDataSource):
 
     def query_context(self, start=None, limit=None):
         qc = sqlagg.QueryContext(
-            self.table_name, self.wrapped_filters, self.group_by, self.order_by,
+            self.table_name, self.wrapped_filters, self.group_by, self.distinct_on, self.order_by,
             start=start, limit=limit
         )
         for c in self.columns:
