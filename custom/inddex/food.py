@@ -3,6 +3,7 @@ from .fixtures import FixtureAccessor
 MISSING = ''
 
 IN_UCR = 'in_ucr'
+IN_FOOD_FIXTURE = 'in_food_fixture'
 IS_RECALL_META = 'is_recall_meta'
 
 
@@ -34,12 +35,12 @@ INDICATORS = [
     I('supplements', IN_UCR, IS_RECALL_META),
     I('urban_rural', IN_UCR, IS_RECALL_META),
     I('food_code', IN_UCR),
-    I('food_name', IN_UCR),
+    I('food_name', IN_UCR, IN_FOOD_FIXTURE),
     I('recipe_name', IN_UCR),
     I('caseid'),
     I('reference_food_code', IN_UCR),
-    I('base_term_food_code', IN_UCR),
-    I('food_type', IN_UCR),
+    I('base_term_food_code'),
+    I('food_type', IN_UCR, IN_FOOD_FIXTURE),
     I('include_in_analysis', IN_UCR),
     I('food_status', IN_UCR),
     I('eating_time', IN_UCR),
@@ -58,26 +59,26 @@ INDICATORS = [
     I('ingr_fraction'),
     I('ingr_recipe_total_grams_consumed'),
     I('short_name', IN_UCR),
-    I('food_base_term', IN_UCR),
-    I('tag_1', IN_UCR),
+    I('food_base_term', IN_UCR, IN_FOOD_FIXTURE),
+    I('tag_1', IN_UCR, IN_FOOD_FIXTURE),
     I('other_tag_1', IN_UCR),
-    I('tag_2', IN_UCR),
+    I('tag_2', IN_UCR, IN_FOOD_FIXTURE),
     I('other_tag_2', IN_UCR),
-    I('tag_3', IN_UCR),
+    I('tag_3', IN_UCR, IN_FOOD_FIXTURE),
     I('other_tag_3', IN_UCR),
-    I('tag_4', IN_UCR),
+    I('tag_4', IN_UCR, IN_FOOD_FIXTURE),
     I('other_tag_4', IN_UCR),
-    I('tag_5', IN_UCR),
+    I('tag_5', IN_UCR, IN_FOOD_FIXTURE),
     I('other_tag_5', IN_UCR),
-    I('tag_6', IN_UCR),
+    I('tag_6', IN_UCR, IN_FOOD_FIXTURE),
     I('other_tag_6', IN_UCR),
-    I('tag_7', IN_UCR),
+    I('tag_7', IN_UCR, IN_FOOD_FIXTURE),
     I('other_tag_7', IN_UCR),
-    I('tag_8', IN_UCR),
+    I('tag_8', IN_UCR, IN_FOOD_FIXTURE),
     I('other_tag_8', IN_UCR),
-    I('tag_9', IN_UCR),
+    I('tag_9', IN_UCR, IN_FOOD_FIXTURE),
     I('other_tag_9', IN_UCR),
-    I('tag_10', IN_UCR),
+    I('tag_10', IN_UCR, IN_FOOD_FIXTURE),
     I('other_tag_10', IN_UCR),
     I('conv_method_code', IN_UCR),
     I('conv_method_desc', IN_UCR),
@@ -178,11 +179,16 @@ class FoodCaseRow(FoodRow):
 class RecipeIngredientRow(FoodRow):
     """A food item inferred from a recipe"""
 
-    def __init__(self, ucr_row, ingredient):
-        # ucr_row is data from the parent food case, ingredient is for this ingredient
+    def __init__(self, ucr_row, food_data, ingredient):
+        # ucr_row is data from the parent food case
+        # food_data is static info from the fixture,
+        # ingredient is static info for this ingredient
         super().__init__(ucr_row)
         self.ingredient = ingredient
         self.food_code = ingredient.ingr_code
+        for indicator in INDICATORS:
+            if indicator.in_food_fixture:
+                setattr(self, indicator.slug, getattr(food_data, indicator.slug))
 
 
 class FoodData:
@@ -201,5 +207,6 @@ class FoodData:
             yield food.as_list()
             if food.food_type == 'std_recipe':
                 for ingredient_data in self.fixtures.recipes[food.food_code]:
-                    ingr_row = RecipeIngredientRow(ucr_row, ingredient_data)
+                    food_data = self.fixtures.foods[ingredient_data.ingr_code]
+                    ingr_row = RecipeIngredientRow(ucr_row, food_data, ingredient_data)
                     yield ingr_row.as_list()
