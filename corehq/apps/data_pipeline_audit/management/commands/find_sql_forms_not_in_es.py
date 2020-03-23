@@ -26,6 +26,12 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument(
+            '-d',
+            '--domain',
+            dest='domain',
+            help="Filter by this domain (optional)",
+        )
+        parser.add_argument(
             '-s',
             '--startdate',
             dest='start',
@@ -41,12 +47,13 @@ class Command(BaseCommand):
         )
 
     def handle(self, **options):
+        domain = options.get('domain')
         startdate = options.get('start')
         enddate = options.get('end')
         print("Fetching all form ids...", file=sys.stderr)
         print("Woo! Done fetching. Here we go", file=sys.stderr)
         print('Form ID\tLast Modified\tDomain')
-        for chunk in chunked(iter_form_ids_by_last_modified(startdate, enddate), 100):
+        for chunk in chunked(iter_form_ids_by_last_modified(domain, startdate, enddate), 100):
             info_by_id = {f.form_id: f for f in chunk}
             doc_ids = list(info_by_id.keys())
 
@@ -59,16 +66,24 @@ class Command(BaseCommand):
                 print(f'{info.form_id}\t{info.last_modified}\t{info.domain}')
 
 
-def iter_form_ids_by_last_modified(start_datetime, end_datetime):
+def iter_form_ids_by_last_modified(domain, start_datetime, end_datetime):
     from corehq.sql_db.util import paginate_query_across_partitioned_databases
 
     annotate = {
         'last_modified': Greatest('received_on', 'edited_on', 'deleted_on'),
     }
 
+    q_kwargs = {}
+    if domain:
+        q_kwargs['domain'] = domain
+    if start_datetime:
+        q_kwargs['last_modified__gt'] = start_datetime
+    if end_datetime:
+        q_kwargs['last_modified__lt'] = end_datetime
+
     for row in paginate_query_across_partitioned_databases(
         XFormInstanceSQL,
-        (Q(last_modified__gt=start_datetime, last_modified__lt=end_datetime) &
+        (Q(**q_kwargs) &
          Q(state=F('state').bitand(XFormInstanceSQL.DELETED) +
             F('state').bitand(XFormInstanceSQL.DEPRECATED) +
             F('state').bitand(XFormInstanceSQL.DUPLICATE) +
