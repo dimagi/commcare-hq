@@ -1,3 +1,9 @@
+from collections import defaultdict
+
+from django.utils.functional import cached_property
+
+from .fixtures import FixtureAccessor
+
 ORDERED_INDICATORS = [
     'unique_respondent_id',
     'location_id',
@@ -162,9 +168,18 @@ class FoodRow:
             setattr(self, indicator, ucr_row[indicator])
 
 
+class RecipeIngredientRow(FoodRow):
+    def __init__(self, ucr_row, ingredient):
+        # ucr_row is data from the parent food case, ingredient is for this ingredient
+        super().__init__(ucr_row)
+        self.ingredient = ingredient
+        self.food_name = ingredient.ingr_descr
+
+
 class FoodData:
-    def __init__(self, ucr_rows):
+    def __init__(self, domain, ucr_rows):
         self.ucr_rows = ucr_rows
+        self.fixture_accessor = FixtureAccessor(domain)
 
     @property
     def headers(self):
@@ -172,8 +187,21 @@ class FoodData:
 
     @property
     def rows(self):
-        for row in self.ucr_rows:
-            food = FoodRow(row)
+        for ucr_row in self.ucr_rows:
+            food = FoodRow(ucr_row)
             yield [
                 getattr(food, column) for column in ORDERED_INDICATORS
             ]
+            if food.food_type == 'std_recipe':
+                for ingredient_data in self._recipes[food.food_code]:
+                    ingr_row = RecipeIngredientRow(ucr_row, ingredient_data)
+                    yield [
+                        getattr(ingr_row, column) for column in ORDERED_INDICATORS
+                    ]
+
+    @cached_property
+    def _recipes(self):
+        recipes = defaultdict(list)
+        for ingredient in self.fixture_accessor.get_recipes():
+            recipes[ingredient.recipe_code].append(ingredient)
+        return recipes
