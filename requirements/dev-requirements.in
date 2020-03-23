@@ -20,3 +20,7 @@ docutils==0.15.2
 sphinxcontrib-django~=0.5
 recommonmark
 graphviz==0.13.1
+
+
+# linting
+flake8

@@ -1736,7 +1736,7 @@ DO_NOT_RATE_LIMIT_SUBMISSIONS = StaticToggle(
 )
 
 TEST_FORM_SUBMISSION_RATE_LIMIT_RESPONSE = StaticToggle(
-    'TEST_FORM_SUBMISSION_RATE_LIMIT_RESPONSE',
+    'test_form_submission_rate_limit_response',
     ("Respond to all form submissions with a 429 response. For use on test domains only. "
      "Without this, there's no sane way to test the UI for being rate limited on "
      "Mobile and Web Apps. Never use this on a real domain."),

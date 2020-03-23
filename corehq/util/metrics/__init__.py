@@ -103,7 +103,9 @@ from typing import Iterable
 from celery.task import periodic_task
 
 import settings
-from corehq.util.metrics.metrics import DebugMetrics, DelegatedMetrics, DEFAULT_BUCKETS, _enforce_prefix
+from corehq.util.metrics.const import COMMON_TAGS, ALERT_INFO
+from corehq.util.metrics.metrics import DebugMetrics, DelegatedMetrics, DEFAULT_BUCKETS, _enforce_prefix, \
+    metrics_logger
 from dimagi.utils.modules import to_function
 
 __all__ = [
@@ -111,13 +113,13 @@ __all__ = [
     'metrics_gauge',
     'metrics_histogram',
     'metrics_gauge_task',
+    'create_metrics_event',
 ]
 
-_metrics = None
+_metrics = []
 
 
 def _get_metrics_provider():
-    global _metrics
     if not _metrics:
         providers = []
         for provider_path in settings.METRICS_PROVIDERS:
@@ -125,12 +127,13 @@ def _get_metrics_provider():
             providers.append(provider)
 
         if not providers:
-            _metrics = DebugMetrics()
+            metrics = DebugMetrics()
         elif len(providers) > 1:
-            _metrics = DelegatedMetrics(providers)
+            metrics = DelegatedMetrics(providers)
         else:
-            _metrics = providers[0]
-    return _metrics
+            metrics = providers[0]
+        _metrics.append(metrics)
+    return _metrics[-1]
 
 
 def metrics_counter(name: str, value: float = 1, tags: dict = None, documentation: str = ''):
@@ -176,3 +179,11 @@ def metrics_gauge_task(name, fn, run_every):
         metrics_gauge(name, fn(*args, **kwargs))
 
     return inner
+
+
+def create_metrics_event(title, text, alert_type=ALERT_INFO, tags=None, aggregation_key=None):
+    tags = COMMON_TAGS.update(tags or {})
+    try:
+        _get_metrics_provider().create_event(title, text, tags, alert_type, aggregation_key)
+    except Exception as e:
+        metrics_logger.exception('Error creating metrics event', e)

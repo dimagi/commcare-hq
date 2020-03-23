@@ -3,6 +3,8 @@ from contextlib import contextmanager
 
 import mock
 
+from corehq.util.metrics import DebugMetrics
+
 
 @contextmanager
 def patch_datadog():
@@ -15,3 +17,15 @@ def patch_datadog():
     stats = defaultdict(list)
     with mock.patch("corehq.util.metrics.datadog._datadog_record", new=record):
         yield stats
+
+
+@contextmanager
+def capture_metrics():
+    from corehq.util.metrics import _metrics
+    capture = DebugMetrics(capture=True)
+    _metrics.append(capture)
+    try:
+        yield capture.metrics
+    finally:
+        assert _metrics[-1] is capture, _metrics
+        _metrics.pop()

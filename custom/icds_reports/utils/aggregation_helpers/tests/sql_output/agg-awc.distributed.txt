@@ -139,7 +139,7 @@
         WHERE (opened_on <= %(end_date)s AND
               (closed_on IS NULL OR closed_on >= %(start_date)s ))
 
-        GROUP BY ucr.awc_id, ucr.supervisor_id) ut
+        GROUP BY ucr.supervisor_id, ucr.awc_id) ut
         WHERE ut.awc_id = agg_awc.awc_id and ut.supervisor_id=agg_awc.supervisor_id;
         
 {"end_date": "2019-01-31T23:59:59", "month_end_11yr": "2008-01-31T23:59:59", "month_end_15yr": "2004-01-31T23:59:59", "month_start_14yr": "2005-01-01T00:00:00", "month_start_15yr": "2004-01-01T00:00:00", "month_start_18yr": "2001-01-01T00:00:00", "start_date": "2019-01-01T00:00:00"}

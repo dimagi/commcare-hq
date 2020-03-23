@@ -24,7 +24,7 @@ class PrometheusMetrics(HqMetrics):
     def _histogram(self, name: str, value: float, bucket_tag: str, buckets: List[int], bucket_unit: str = '',
                   tags: dict = None, documentation: str = ''):
         """
-        A cumulative histogram with a base metric name of <basename> exposes multiple time series
+        A cumulative histogram with a base metric name of <name> exposes multiple time series
         during a scrape:
 
         * cumulative counters for the observation buckets, exposed as
