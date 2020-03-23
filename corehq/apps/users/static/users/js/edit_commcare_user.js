@@ -11,6 +11,7 @@ hqDefine('users/js/edit_commcare_user', [
     'registration/js/password',
     'nic_compliance/js/encoder',
     'select2/dist/js/select2.full.min',
+    'hqwebapp/js/knockout_bindings.ko', // password initializeValue binding
 ], function (
     $,
     ko,
