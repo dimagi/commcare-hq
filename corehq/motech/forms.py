@@ -56,7 +56,30 @@ class BaseConnectionSettingsFormSet(forms.BaseModelFormSet):
 
     def __init__(self, *args, domain, **kwargs):
         super().__init__(*args, **kwargs)
+        self.domain = domain
         self.form_kwargs['domain'] = domain  # Passed by ``FormView.get_form_kwargs()``
+
+    @property
+    def deleted_forms(self):
+        """
+        Returns a list of forms that have been marked for deletion.
+
+        Excludes forms of ConnectionSettings that are in use.
+        """
+        deleted_forms = super().deleted_forms
+        ids_in_use = get_connection_ids_in_use(self.domain)
+        return [f for f in deleted_forms
+                if not (f.is_bound and f.instance.id in ids_in_use)]
+
+
+def get_connection_ids_in_use(domain):
+    from corehq.motech.dhis2.dbaccessors import get_dataset_maps
+
+    dataset_maps = get_dataset_maps(domain)
+    # So far only DataSetMaps use ConnectionSettings. When more things
+    # do (like Repeaters), this must check those too.
+    return {m.connection_settings_id for m in dataset_maps
+            if m.connection_settings_id}
 
 
 ConnectionSettingsFormSet = forms.modelformset_factory(
@@ -64,7 +87,7 @@ ConnectionSettingsFormSet = forms.modelformset_factory(
     form=ConnectionSettingsForm,
     formset=BaseConnectionSettingsFormSet,
     extra=1,
-    can_delete=True,  # TODO: Use a function to check it's unused
+    can_delete=True,
 )
 
 
