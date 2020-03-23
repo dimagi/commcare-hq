@@ -676,7 +676,8 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
             'can_edit_billing_info': self.request.couch_user.is_domain_admin(self.domain),
             'strong_mobile_passwords': self.request.project.strong_mobile_passwords,
             'implement_password_obfuscation': settings.OBFUSCATE_PASSWORD_FOR_NIC_COMPLIANCE,
-            'bulk_download_url': bulk_download_url
+            'bulk_download_url': bulk_download_url,
+            'two_stage_provisioning_enabled': TWO_STAGE_USER_PROVISIONING.enabled(self.domain),
         }
 
     @property
@@ -753,17 +754,21 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
         username = self.new_mobile_worker_form.cleaned_data['username']
         password = self.new_mobile_worker_form.cleaned_data['new_password']
         first_name = self.new_mobile_worker_form.cleaned_data['first_name']
+        email = self.new_mobile_worker_form.cleaned_data['email']
         last_name = self.new_mobile_worker_form.cleaned_data['last_name']
         location_id = self.new_mobile_worker_form.cleaned_data['location_id']
+        is_account_confirmed = not self.new_mobile_worker_form.cleaned_data['force_account_confirmation']
 
         return CommCareUser.create(
             self.domain,
             username,
             password,
+            email=email,
             device_id="Generated from HQ",
             first_name=first_name,
             last_name=last_name,
             user_data=self.custom_data.get_data_to_save(),
+            is_account_confirmed=is_account_confirmed,
             location=SQLLocation.objects.get(location_id=location_id) if location_id else None,
         )
 
@@ -785,6 +790,8 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
                 'first_name': user_data.get('first_name'),
                 'last_name': user_data.get('last_name'),
                 'location_id': user_data.get('location_id'),
+                'email': user_data.get('email'),
+                'force_account_confirmation': user_data.get('force_account_confirmation'),
                 'domain': self.domain,
             }
             for k, v in user_data.get('custom_fields', {}).items():
@@ -1430,6 +1437,7 @@ class CommCareUserConfirmAccountView(TemplateView, DomainViewMixin):
         else:
             return MobileWorkerAccountConfirmationForm(initial={
                 'username': self.user.raw_username,
+                'full_name': self.user.full_name,
                 'email': self.user.email,
             })
 
@@ -1443,9 +1451,14 @@ class CommCareUserConfirmAccountView(TemplateView, DomainViewMixin):
         return context
 
     def post(self, request, *args, **kwargs):
-        if self.form.is_valid():
-            # todo set email and name too
-            self.user.confirm_account(password=self.form.cleaned_data['password'])
+        form = self.form
+        if form.is_valid():
+            user = self.user
+            user.email = form.cleaned_data['email']
+            full_name = form.cleaned_data['full_name']
+            user.first_name = full_name[0]
+            user.last_name = full_name[1]
+            user.confirm_account(password=self.form.cleaned_data['password'])
             messages.success(request, _(
                 f'You have successfully confirmed the {self.user.raw_username} account. '
                 'You can now login'
