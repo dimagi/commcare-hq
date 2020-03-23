@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('icds_reports', '0067_ccsrecordmonthly_dob'),
+        ('icds_reports', '0067_ccsrecordmonthly_do'),
     ]
 
     operations = [

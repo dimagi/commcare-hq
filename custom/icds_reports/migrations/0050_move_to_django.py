@@ -453,7 +453,7 @@ class Migration(migrations.Migration):
                 ('valid_in_month', models.IntegerField(blank=True, null=True)),
                 ('valid_all_registered_in_month', models.IntegerField(blank=True, null=True)),
                 ('ebf_no_info_recorded', models.IntegerField(blank=True, null=True)),
-                ('dob', models.DateField(blank=True, null=True)),
+                ('do', models.DateField(blank=True, null=True)),
                 ('sex', models.TextField(blank=True, null=True)),
                 ('age_tranche', models.TextField(blank=True, null=True)),
                 ('caste', models.TextField(blank=True, null=True)),

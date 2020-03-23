@@ -11,12 +11,12 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.AddField(
-            model_name='unfinishedsubmissionstub',
+            model_name='unfinishedsubmissionstu',
             name='attempts',
             field=models.IntegerField(default=0),
         ),
         migrations.AddField(
-            model_name='unfinishedsubmissionstub',
+            model_name='unfinishedsubmissionstu',
             name='date_queued',
             field=models.DateTimeField(db_index=True, null=True),
         ),

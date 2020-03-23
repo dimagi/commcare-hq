@@ -11,7 +11,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='automaticupdaterulecriteria',
             name='match_type',
-            field=models.CharField(max_length=10, choices=[(b'DAYS', b'DAYS'), (b'EQUAL', b'EQUAL'), (b'NOT_EQUAL', b'NOT_EQUAL'), (b'HAS_VALUE', b'HAS_VALUE')]),
+            field=models.CharField(max_length=10, choices=[('DAYS', 'DAYS'), ('EQUAL', 'EQUAL'), ('NOT_EQUAL', 'NOT_EQUAL'), ('HAS_VALUE', 'HAS_VALUE')]),
             preserve_default=True,
         ),
     ]

@@ -13,7 +13,7 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.AlterField(
-            model_name='unfinishedarchivestub',
+            model_name='unfinishedarchivestu',
             name='xform_id',
             field=models.CharField(max_length=200, unique=True),
         ),

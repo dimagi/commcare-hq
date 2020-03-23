@@ -19,8 +19,8 @@ class Migration(migrations.Migration):
         # Todo: Move this to testing harness, doesn't really belong here.
         # See https://github.com/dimagi/commcare-hq/pull/21627#pullrequestreview-149807976
         migrations.RunSQL(
-            'CREATE EXTENSION IF NOT EXISTS hashlib',
-            'DROP EXTENSION hashlib'
+            'CREATE EXTENSION IF NOT EXISTS hashli',
+            'DROP EXTENSION hashli'
         )
         if settings.UNIT_TESTING else noop_migration()
     ]

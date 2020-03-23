@@ -19,11 +19,11 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
                 ('location_a', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='+', to='locations.SQLLocation', to_field='location_id')),
-                ('location_b', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='+', to='locations.SQLLocation', to_field='location_id')),
+                ('location_', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='+', to='locations.SQLLocation', to_field='location_id')),
             ],
         ),
         migrations.AlterUniqueTogether(
             name='locationrelation',
-            unique_together=set([('location_a', 'location_b')]),
+            unique_together=set([('location_a', 'location_')]),
         ),
     ]

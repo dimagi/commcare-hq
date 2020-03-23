@@ -137,7 +137,7 @@ class Migration(migrations.Migration):
                 ('state_id', models.TextField(blank=True, null=True)),
                 ('person_name', models.TextField(blank=True, null=True)),
                 ('mother_name', models.TextField(blank=True, null=True)),
-                ('dob', models.DateField(blank=True, null=True)),
+                ('do', models.DateField(blank=True, null=True)),
                 ('sex', models.TextField(blank=True, null=True)),
                 ('month', models.DateField(blank=True, null=True)),
                 ('age_in_months', models.IntegerField(blank=True, help_text='age in months at the end of the month', null=True)),

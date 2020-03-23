@@ -13,7 +13,7 @@ class Migration(migrations.Migration):
 
     operations = [
         AlterFieldCreateIndexIfNotExists(
-            model_name='unfinishedsubmissionstub',
+            model_name='unfinishedsubmissionstu',
             name='timestamp',
             field=models.DateTimeField(db_index=True),
         ),
