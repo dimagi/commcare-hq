@@ -9,6 +9,7 @@ from custom.icds_reports.const import (
     AGG_CHILD_HEALTH_THR_TABLE,
     AGG_DAILY_FEEDING_TABLE,
     AGG_GROWTH_MONITORING_TABLE,
+    AGG_MIGRATION_TABLE
 )
 from custom.icds_reports.utils.aggregation_helpers import (
     get_child_health_tablename,
@@ -90,7 +91,10 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
         alive_in_month = "(child_health.date_death IS NULL OR child_health.date_death - {} >= 0)".format(
             start_month_string
         )
-        seeking_services = "(person_cases.registered_status IS DISTINCT FROM 0 AND person_cases.migration_status IS DISTINCT FROM 1)"
+        migration_status = "(agg_migration.is_migrated=1 AND agg_migration.migration_date < {})::integer".format(
+            start_month_string)
+        seeking_services = "(person_cases.registered_status IS DISTINCT FROM 0 AND {} IS DISTINCT FROM 1)".format(
+            migration_status)
         born_in_month = "({} AND person_cases.dob BETWEEN {} AND {})".format(
             seeking_services, start_month_string, end_month_string
         )
@@ -153,8 +157,8 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
                 "CASE WHEN person_cases.aadhar_date < {} THEN  1 ELSE 0 END".format(end_month_string)),
             ("valid_in_month", "CASE WHEN {} THEN 1 ELSE 0 END".format(valid_in_month)),
             ("valid_all_registered_in_month",
-                "CASE WHEN {} AND {} AND {} <= 72 AND person_cases.migration_status IS DISTINCT FROM 1 THEN 1 ELSE 0 END".format(
-                    open_in_month, alive_in_month, age_in_months
+                "CASE WHEN {} AND {} AND {} <= 72 AND {} IS DISTINCT FROM 1 THEN 1 ELSE 0 END".format(
+                    open_in_month, alive_in_month, age_in_months, migration_status
                 )),
             ("person_name", "child_health.person_name"),
             ("mother_name", "child_health.mother_name"),
@@ -376,7 +380,7 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
             ("due_list_date_tt_booster", "child_tasks.due_list_date_tt_booster"),
             ("due_list_date_1g_bcg", "child_tasks.due_list_date_1g_bcg")
         )
-        return """
+        yield """
         INSERT INTO "{child_tablename}" (
             {columns}
         ) (SELECT
@@ -404,6 +408,10 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
               AND pnc.month = %(start_date)s
               AND child_health.state_id = pnc.state_id
               AND child_health.supervisor_id = pnc.supervisor_id
+            LEFT OUTER JOIN "{agg_migration_table}" agg_migration ON child_health.mother_id = agg_migration.person_case_id
+              AND agg_migration.month = %(start_date)s
+              AND child_health.state_id = agg_migration.state_id
+              AND child_health.supervisor_id = agg_migration.supervisor_id
             LEFT OUTER JOIN "{agg_df_table}" df ON child_health.doc_id = df.case_id
               AND df.month = %(start_date)s
               AND child_health.state_id = df.state_id
@@ -424,12 +432,20 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
             agg_gm_table=AGG_GROWTH_MONITORING_TABLE,
             agg_pnc_table=AGG_CHILD_HEALTH_PNC_TABLE,
             agg_df_table=AGG_DAILY_FEEDING_TABLE,
+            agg_migration_table=AGG_MIGRATION_TABLE,
             child_tasks_case_ucr=self.child_tasks_case_ucr_tablename,
             person_cases_ucr=self.person_case_ucr_tablename,
             open_in_month=open_in_month
         ), {
             "start_date": self.month,
             "next_month": month_formatter(self.month + relativedelta(months=1)),
+            "state_id": state_id,
+        }
+
+        yield """ALTER TABLE "{tablename}" ATTACH PARTITION "{child_tablename}" FOR VALUES IN (%(state_id)s)""".format(
+            tablename=self.temporary_tablename,
+            child_tablename='{}_{}'.format(self.temporary_tablename, state_id[-5:]),
+        ), {
             "state_id": state_id,
         }
 
@@ -455,10 +471,12 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
         return "DROP TABLE IF EXISTS \"{}_{}\"".format(self.temporary_tablename, state_id[-5:])
 
     def create_partition(self, state_id):
-        return "CREATE TABLE \"{tmp_tablename}_{state_id_last_5}\" PARTITION OF \"{tmp_tablename}\" FOR VALUES IN ('{state_id}')".format(
+        return """
+        CREATE TABLE \"{tmp_tablename}_{state_id_last_5}\" (LIKE \"{tmp_tablename}\");
+        SELECT create_distributed_table('{tmp_tablename}_{state_id_last_5}', 'supervisor_id');
+        """.format(
             tmp_tablename=self.temporary_tablename,
             state_id_last_5=state_id[-5:],
-            state_id=state_id
         )
 
     def aggregation_queries(self):

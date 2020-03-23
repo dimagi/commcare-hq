@@ -40,7 +40,7 @@ def get_migrator(domain, state_dir):
     live_migrate = status == MigrationStatus.DRY_RUN
     set_local_domain_sql_backend_override(domain)
     return CouchSqlDomainMigrator(
-        domain, state_dir, live_migrate=live_migrate, diff_process=None)
+        domain, state_dir, live_migrate=live_migrate, case_diff="none")
 
 
 def do_case_diffs(migrator, cases, stop, batch_size):
@@ -60,13 +60,10 @@ def do_case_diffs(migrator, cases, stop, batch_size):
     If true perform diffs in the main process and drop into a pdb
     session when the first batch of cases with diffs is encountered.
     """
-    casediff = CaseDiffTool(migrator, cases, stop, batch_size)
-    log.info("cutoff_date = %s", casediff.cutoff_date)
-    with casediff.context() as add_cases:
-        save_result = make_result_saver(casediff.statedb, add_cases)
-        for data in casediff.iter_case_diff_results():
-            save_result(data)
-    if casediff.should_diff_pending():
+    casediff = CaseDiffTool(migrator, stop, batch_size)
+    with migrator.counter, migrator.stopper:
+        casediff.diff_cases(cases)
+    if cases is None and casediff.should_diff_pending():
         return PENDING_WARNING
 
 
@@ -77,11 +74,10 @@ class CaseDiffTool:
     See also `do_case_diffs`.
     """
 
-    def __init__(self, migrator, cases, stop, batch_size):
+    def __init__(self, migrator, stop=False, batch_size=100):
         self.migrator = migrator
         self.domain = migrator.domain
         self.statedb = migrator.statedb
-        self.cases = cases
         self.stop = stop
         self.batch_size = batch_size
         if not migrator.live_migrate:
@@ -101,20 +97,21 @@ class CaseDiffTool:
                 self.statedb.clone_casediff_data_from(state_path)
             self.statedb.set(ProcessNotAllowed.__name__, True)
 
-    @contextmanager
-    def context(self):
-        with self.migrator.counter as counter, self.migrator.stopper:
-            with counter('diff_cases', 'CommCareCase.id') as add_cases:
-                yield add_cases
+    def diff_cases(self, cases=None):
+        log.info("case diff cutoff date = %s", self.cutoff_date)
+        with self.migrator.counter('diff_cases', 'CommCareCase.id') as add_cases:
+            save_result = make_result_saver(self.statedb, add_cases)
+            for data in self.iter_case_diff_results(cases):
+                save_result(data)
 
-    def iter_case_diff_results(self):
-        if self.cases is None:
+    def iter_case_diff_results(self, cases):
+        if cases is None:
             return self.resumable_iter_diff_cases()
-        if self.cases == "pending":
+        if cases == "pending":
             return self.iter_diff_cases(self.get_pending_cases())
-        if self.cases == "with-diffs":
+        if cases == "with-diffs":
             return self.iter_diff_cases_with_diffs()
-        case_ids = get_ids_from_string_or_file(self.cases)
+        case_ids = get_ids_from_string_or_file(cases)
         return self.iter_diff_cases(case_ids, log_cases=True)
 
     def resumable_iter_diff_cases(self):
@@ -152,7 +149,7 @@ class CaseDiffTool:
             for batch in batches:
                 data = load_and_diff_cases(batch, log_cases=log_cases)
                 yield data
-                diffs = {case_id: diffs for x, case_id, diffs in data.diffs if diffs}
+                diffs = [(kind, case_id, diffs) for kind, case_id, diffs in data.diffs if diffs]
                 if diffs:
                     log.info("found cases with diffs:\n%s", format_diffs(diffs))
                     if stop:
@@ -169,8 +166,7 @@ class CaseDiffTool:
         return with_progress_bar(
             pending, count, prefix="Pending case diffs", oneline=False)
 
-    def should_diff_pending(self):
-        return self.cases is None and self.get_pending_cases()
+    should_diff_pending = get_pending_cases
 
     @property
     def pool(self):
@@ -225,10 +221,10 @@ def iter_sql_cases_with_sorted_transactions(domain):
             yield from iter(set(case_id for case_id, in cursor.fetchall()))
 
 
-def format_diffs(diff_dict):
+def format_diffs(json_diffs, changes=False):
     lines = []
-    for doc_id, diffs in sorted(diff_dict.items()):
-        lines.append(doc_id)
+    for kind, doc_id, diffs in sorted(json_diffs, key=lambda x: x[1]):
+        lines.append(f"{kind} {doc_id} {diffs[0].reason if changes else ''}")
         for diff in sorted(diffs, key=lambda d: (d.diff_type, d.path)):
             if len(repr(diff.old_value) + repr(diff.new_value)) > 60:
                 lines.append(f"  {diff.diff_type} {list(diff.path)}")

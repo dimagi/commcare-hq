@@ -54,8 +54,6 @@ from django_digest.decorators import httpdigest
 
 logger = logging.getLogger(__name__)
 
-REDIRECT_FIELD_NAME = 'next'
-
 OTP_AUTH_FAIL_RESPONSE = {"error": "must send X-COMMCAREHQ-OTP header or 'otp' URL parameter"}
 
 

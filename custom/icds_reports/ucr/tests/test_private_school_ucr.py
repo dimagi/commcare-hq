@@ -20,7 +20,7 @@ class TestPrivateSchoolUcr(BaseFormsTest):
                 'person_case_id': '8076f5f1-f77c-444b-a956-e5dd1d01b678',
                 'date_return_private_school': None,
                 'returned_private_school': None,
-                'timeend': None,
+                'timeend': datetime.datetime(2019, 11, 21, 6, 47, 12, 148000),
                 'doc_id': None
             }
             ])
@@ -35,7 +35,7 @@ class TestPrivateSchoolUcr(BaseFormsTest):
                 'person_case_id': 'df2aa0ce-f6f8-4850-a0af-2be87b0717ca',
                 'date_return_private_school': datetime.date(2019, 10, 18),
                 'returned_private_school': 'yes',
-                'timeend': None,
+                'timeend': datetime.datetime(2019, 10, 18, 11, 20, 10, 718000),
                 'doc_id': None
             }
             ])

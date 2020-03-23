@@ -1,3 +1,4 @@
+import io
 import json
 import re
 from collections import defaultdict
@@ -5,12 +6,17 @@ from datetime import datetime
 
 from braces.views import JsonRequestResponseMixin
 from couchdbkit import ResourceNotFound
+
+from corehq.apps.registration.forms import MobileWorkerAccountConfirmationForm
+from corehq.util import get_document_or_404
+from couchexport.models import Format
+from couchexport.writers import Excel2007ExportWriter
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
-from django.http import Http404, HttpResponseBadRequest, HttpResponseRedirect
+from django.http import Http404, HttpResponse, HttpResponseBadRequest, HttpResponseRedirect
 from django.http.response import HttpResponseServerError
 from django.shortcuts import redirect, render
 from django.template.loader import render_to_string
@@ -22,7 +28,7 @@ from django.views.decorators.http import require_GET, require_POST
 from django.views.generic import TemplateView, View
 from django_prbac.exceptions import PermissionDenied
 from django_prbac.utils import has_privilege
-from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
+from djng.views.mixins import JSONResponseMixin, allow_remote_invocation
 from memoized import memoized
 
 from casexml.apps.phone.models import SyncLogSQL
@@ -95,7 +101,7 @@ from corehq.apps.users.views import (
     get_domain_languages,
 )
 from corehq.const import GOOGLE_PLAY_STORE_COMMCARE_URL, USER_DATE_FORMAT
-from corehq.toggles import FILTERED_BULK_USER_DOWNLOAD
+from corehq.toggles import FILTERED_BULK_USER_DOWNLOAD, TWO_STAGE_USER_PROVISIONING
 from corehq.util.datadog.gauges import datadog_counter
 from corehq.util.dates import iso_string_to_datetime
 from corehq.util.workbook_json.excel import (
@@ -1129,7 +1135,49 @@ class FilteredUserDownload(BaseManageCommCareUserView):
         )
 
 
-class DeleteCommCareUsers(BaseManageCommCareUserView):
+class UsernameUploadMixin(object):
+    """
+    Contains helper functions for working with a file that consists of a single column of usernames.
+    """
+
+    def _get_usernames(self, request):
+        """
+            Get username list from Excel supplied in request.FILES.
+            Adds any errors to request.messages.
+        """
+        sheet = self._get_sheet(request)
+        if not sheet:
+            return None
+
+        try:
+            usernames = [format_username(row['username'], request.domain) for row in sheet]
+        except KeyError:
+            messages.error(request, _("No users found. Please check your file contains a 'username' column."))
+            return None
+
+        if not len(usernames):
+            messages.error(request, _("No users found. Please check file is not empty."))
+            return None
+
+        return usernames
+
+    def _get_sheet(self, request):
+        try:
+            workbook = get_workbook(request.FILES.get('bulk_upload_file'))
+        except WorkbookJSONError as e:
+            messages.error(request, str(e))
+            return None
+
+        try:
+            sheet = workbook.get_worksheet()
+        except WorksheetNotFound:
+            messages.error(request, _("Workbook has no worksheets"))
+            return None
+
+        return sheet
+
+
+class DeleteCommCareUsers(BaseManageCommCareUserView, UsernameUploadMixin):
     urlname = 'delete_commcare_users'
     page_title = ugettext_noop('Bulk Delete')
     template_name = 'users/bulk_delete.html'
@@ -1160,31 +1208,6 @@ class DeleteCommCareUsers(BaseManageCommCareUserView):
 
         return self.get(request, *args, **kwargs)
 
-    def _get_usernames(self, request):
-        """
-            Get username list from Excel supplied in request.FILES.
-            Adds any errors to request.messages.
-        """
-        try:
-            workbook = get_workbook(request.FILES.get('bulk_upload_file'))
-        except WorkbookJSONError as e:
-            messages.error(request, str(e))
-            return None
-
-        try:
-            sheet = workbook.get_worksheet()
-        except WorksheetNotFound:
-            messages.error(request, _("Workbook has no worksheets"))
-            return None
-
-        try:
-            usernames = {format_username(row['username'], request.domain) for row in sheet}
-        except KeyError:
-            messages.error(request, _("No users found. Please check your file contains a 'username' column."))
-            return None
-
-        return usernames
-
     def _get_user_ids_with_forms(self, request, user_docs_by_id):
         """
             Find users who have ever submitted a form, and add to request.messages if so.
@@ -1209,7 +1232,7 @@ class DeleteCommCareUsers(BaseManageCommCareUserView):
         """
             The only side effect of this is to possibly add to request.messages.
         """
-        usernames_not_found = usernames - {doc['username'] for doc in user_docs_by_id.values()}
+        usernames_not_found = set(usernames) - {doc['username'] for doc in user_docs_by_id.values()}
         if usernames_not_found:
             message = _("The following users were not found: {}.").format(
                 ", ".join(map(raw_username, usernames_not_found)))
@@ -1224,6 +1247,45 @@ class DeleteCommCareUsers(BaseManageCommCareUserView):
                 deleted_count += 1
         if deleted_count:
             messages.success(request, f"{deleted_count} user(s) deleted.")
+
+
+class CommCareUsersLookup(BaseManageCommCareUserView, UsernameUploadMixin):
+    urlname = 'commcare_users_lookup'
+    page_title = ugettext_noop('Mobile Workers Bulk Lookup')
+    template_name = 'users/bulk_lookup.html'
+
+    @property
+    def page_context(self):
+        context = self.main_context
+        context.update({
+            'bulk_upload_form': get_bulk_upload_form(),
+        })
+        return context
+
+    def post(self, request, *args, **kwargs):
+        usernames = self._get_usernames(request)
+        if not usernames:
+            return self.get(request, *args, **kwargs)
+
+        known_usernames = {doc['username'] for doc in get_user_docs_by_username(usernames)}
+        rows = []
+        for username in usernames:
+            rows.append([raw_username(username), _("yes") if username in known_usernames else _("no")])
+
+        response = HttpResponse(content_type=Format.from_format('xlsx').mimetype)
+        response['Content-Disposition'] = f'attachment; filename="{self.domain} users.xlsx"'
+        response.write(self._excel_data(rows))
+        return response
+
+    def _excel_data(self, rows):
+        outfile = io.BytesIO()
+        tab_name = "users"
+        header_table = [(tab_name, [(_("username"), _("exists"))])]
+        writer = Excel2007ExportWriter()
+        writer.open(header_table=header_table, file=outfile)
+        writer.write([(tab_name, rows)])
+        writer.close()
+        return outfile.getvalue()
 
 
 @require_can_edit_commcare_users
@@ -1336,4 +1398,54 @@ class CommCareUserSelfRegistrationView(TemplateView, DomainViewMixin):
 
             self.invitation.registered_date = datetime.utcnow()
             self.invitation.save()
+        return self.get(request, *args, **kwargs)
+
+
+@method_decorator(TWO_STAGE_USER_PROVISIONING.required_decorator(), name='dispatch')
+class CommCareUserConfirmAccountView(TemplateView, DomainViewMixin):
+    template_name = "users/commcare_user_confirm_account.html"
+    urlname = "commcare_user_confirm_account"
+    strict_domain_fetching = True
+
+    @property
+    @memoized
+    def user_id(self):
+        return self.kwargs.get('user_id')
+
+    @property
+    @memoized
+    def user(self):
+        return get_document_or_404(CommCareUser, self.domain, self.user_id)
+
+    @property
+    @memoized
+    def form(self):
+        if self.request.method == 'POST':
+            return MobileWorkerAccountConfirmationForm(self.request.POST)
+        else:
+            return MobileWorkerAccountConfirmationForm(initial={
+                'username': self.user.raw_username,
+                'email': self.user.email,
+            })
+
+    def get_context_data(self, **kwargs):
+        context = super(CommCareUserConfirmAccountView, self).get_context_data(**kwargs)
+        context.update({
+            'domain_name': self.domain_object.display_name(),
+            'user': self.user,
+            'form': self.form,
+        })
+        return context
+
+    def post(self, request, *args, **kwargs):
+        if self.form.is_valid():
+            # todo set email and name too
+            self.user.confirm_account(password=self.form.cleaned_data['password'])
+            messages.success(request, _(
+                f'You have successfully confirmed the {self.user.raw_username} account. '
+                'You can now login'
+            ))
+            return HttpResponseRedirect(reverse('domain_login', args=[self.domain]))
+
+        # todo: process form data and activate the account
         return self.get(request, *args, **kwargs)

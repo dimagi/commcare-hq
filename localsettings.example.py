@@ -122,9 +122,7 @@ COMPRESS_OFFLINE = False
 
 ####### Bitly ########
 
-BITLY_LOGIN = None  # set to None to disable bitly app url shortening (useful offline) set to 'dimagi' if you are using the api key
-BITLY_APIKEY = '*******'
-
+BITLY_OAUTH_TOKEN = None
 
 ####### Jar signing config ########
 

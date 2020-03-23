@@ -4,6 +4,7 @@ from datetime import datetime
 from functools import wraps
 
 import gevent
+from gevent.pool import Pool
 from greenlet import GreenletExit
 
 from dimagi.utils.parsing import ISO_DATETIME_FORMAT
@@ -16,7 +17,7 @@ def get_ids_from_string_or_file(ids):
         log.info("loading ids from file: %s", ids)
         with open(ids, encoding="utf-8") as fh:
             return [x.rstrip("\n") for x in fh if x.strip()]
-    return [x for x in ids.split() if x]
+    return [x for x in ids.split(",") if x]
 
 
 def str_to_datetime(value):
@@ -25,6 +26,16 @@ def str_to_datetime(value):
     except ValueError:
         sans_micros = ISO_DATETIME_FORMAT.replace(".%f", "")
         return datetime.strptime(value, sans_micros)
+
+
+@contextmanager
+def worker_pool(size=10):
+    pool = Pool(size)
+    try:
+        yield pool
+    finally:
+        while not pool.join(timeout=10):
+            log.info('Waiting on {} docs'.format(len(pool)))
 
 
 def exit_on_error(func):

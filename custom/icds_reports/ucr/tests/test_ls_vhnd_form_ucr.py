@@ -14,7 +14,7 @@ class TestLsVhndForms(BaseFormsTest):
     def test_vhnd_form_with_vhnd_date(self):
         self._test_data_source_results(
             'ls_vhnd_observation_form', [{
-                'submitted_on': None,
+                'submitted_on': datetime.datetime(2018, 8, 24, 8, 6, 40, 712000),
                 'doc_id': None,
                 'location_id': 'qwe56poiuytr4xcvbnmkjfghwerffdaa',
                 'vhnd_date': datetime.date(2018, 8, 24)

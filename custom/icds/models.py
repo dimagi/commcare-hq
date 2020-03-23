@@ -1,21 +1,21 @@
 import uuid
+
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.db.models.signals import pre_delete
 from django.utils.functional import cached_property
 from django.utils.translation import ugettext_lazy as _
-from django.db.models.signals import pre_delete
 
 from corehq.apps.app_manager.dbaccessors import get_build_doc_by_version
 from custom.icds.const import (
-    FILE_TYPE_CHOICE_ZIP,
-    FILE_TYPE_CHOICE_DOC,
-    DISPLAY_CHOICE_LIST,
+    DISPLAY_CHOICE_CUSTOM,
     DISPLAY_CHOICE_FOOTER,
+    DISPLAY_CHOICE_LIST,
+    FILE_TYPE_CHOICE_DOC,
+    FILE_TYPE_CHOICE_ZIP,
 )
 from custom.icds.utils.hosted_ccz import HostedCCZUtility
-from custom.icds.validators import (
-    HostedCCZLinkIdentifierValidator,
-)
+from custom.icds.validators import HostedCCZLinkIdentifierValidator
 from custom.nic_compliance.utils import hash_password
 
 
@@ -26,6 +26,9 @@ class HostedCCZLink(models.Model):
     password = models.CharField(null=False, max_length=255)
     domain = models.CharField(null=False, max_length=255)
     page_title = models.CharField(blank=True, max_length=255)
+
+    def __str__(self):
+        return self.identifier
 
     def to_json(self):
         from custom.icds.serializers import HostedCCZLinkSerializer
@@ -46,6 +49,7 @@ class HostedCCZSupportingFile(models.Model):
     DISPLAY_CHOICES = (
         (DISPLAY_CHOICE_LIST, 'list'),
         (DISPLAY_CHOICE_FOOTER, 'footer'),
+        (DISPLAY_CHOICE_CUSTOM, 'custom'),
     )
     domain = models.CharField(null=False, max_length=255, db_index=True)
     blob_id = models.CharField(null=False, max_length=255, db_index=True)
@@ -55,6 +59,9 @@ class HostedCCZSupportingFile(models.Model):
 
     class Meta:
         unique_together = ('domain', 'blob_id')
+
+    def __str__(self):
+        return self.file_name
 
     @cached_property
     def utility(self):
@@ -170,6 +177,14 @@ class HostedCCZ(models.Model):
     def update_status(self, new_status):
         assert new_status in self.STATUSES
         HostedCCZ.objects.filter(id=self.pk).update(status=new_status)
+
+
+class HostedCCZCustomSupportingFile(models.Model):
+    link = models.ForeignKey(HostedCCZLink, on_delete=models.PROTECT)
+    file = models.ForeignKey(HostedCCZSupportingFile, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return str(self.file) + "@" + str(self.link)
 
 
 def delete_ccz_for_link(sender, instance, **kwargs):

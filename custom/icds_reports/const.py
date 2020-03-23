@@ -7,6 +7,7 @@ import pytz
 from custom.icds_reports.data_pull.data_pulls import (
     AndhraPradeshMonthly,
     MonthlyPerformance,
+    VHSNDMonthlyReport,
 )
 
 ISSUE_TRACKER_APP_ID = '48cc1709b7f62ffea24cc6634a005734'
@@ -31,6 +32,11 @@ class NavigationSections:
     ICDS_CAS_REACH = 'icds_cas_reach'
     DEMOGRAPHICS = 'demographics'
     AWC_INFRASTRUCTURE = 'awc_infrastructure'
+
+
+class SDDSections:
+    PW_LW_CHILDREN = 'pw_lw_children'
+    CHILDREN = 'children'
 
 
 class LocationTypes(object):
@@ -127,7 +133,7 @@ USAGE_TABLE_ID = 'static-usage_forms'
 HOUSEHOLD_TABLE_ID = 'static-household_cases'
 AWW_USER_TABLE_ID = 'static-commcare_user_cases'
 DAILY_FEEDING_TABLE_ID = 'static-daily_feeding_forms'
-
+AGG_SDR_TABLE = 'agg_service_delivery_report'
 
 DASHBOARD_DOMAIN = 'icds-dashboard-qa' if settings.SERVER_ENVIRONMENT == 'india' else 'icds-cas'
 
@@ -176,4 +182,5 @@ GOVERNANCE_API_PAGE_SIZE = 10000
 CUSTOM_DATA_PULLS = {
     AndhraPradeshMonthly.slug: AndhraPradeshMonthly,
     MonthlyPerformance.slug: MonthlyPerformance,
+    VHSNDMonthlyReport.slug: VHSNDMonthlyReport,
 }

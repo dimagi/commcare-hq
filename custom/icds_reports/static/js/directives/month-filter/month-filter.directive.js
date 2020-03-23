@@ -7,21 +7,15 @@ function MonthModalController($location, $uibModalInstance, dateHelperService) {
     vm.years = [];
     vm.monthsCopy = [];
     vm.showMessage = false;
-    var reportStartDates = {
-        'sdd': new Date(2019, 1),
-    };
+    var reportStartDates = dateHelperService.getReportStartDates();
 
     var isSDD =  $location.path().indexOf('service_delivery_dashboard') !== -1;
 
-    var startYear = 2017;
-
-    if (isSDD) {
-        startYear = reportStartDates['sdd'].getFullYear();
-    }
+    var startYear = dateHelperService.getStartingYear(isSDD);
 
 
 
-    window.angular.forEach(moment.months(), function(key, value) {
+    window.angular.forEach(moment.months(), function (key, value) {
         vm.monthsCopy.push({
             name: key,
             id: value + 1,
@@ -50,13 +44,14 @@ function MonthModalController($location, $uibModalInstance, dateHelperService) {
 
     var customMonths = dateHelperService.getCustomAvailableMonthsForReports(vm.selectedYear,
         vm.selectedMonth,
-        vm.monthsCopy);
+        vm.monthsCopy,
+        isSDD);
 
 
     vm.months = customMonths.months;
     vm.selectedMonth = customMonths.selectedMonth;
 
-    vm.apply = function() {
+    vm.apply = function () {
         hqImport('analytix/js/google').track.event('Date Filter', 'Date Changed', '');
         $uibModalInstance.close({
             month: vm.selectedMonth,
@@ -68,7 +63,8 @@ function MonthModalController($location, $uibModalInstance, dateHelperService) {
 
         var customMonths = dateHelperService.getCustomAvailableMonthsForReports(item.id,
             vm.selectedMonth,
-            vm.monthsCopy);
+            vm.monthsCopy,
+            isSDD);
 
         vm.months = customMonths.months;
         vm.selectedMonth = customMonths.selectedMonth;
@@ -79,13 +75,20 @@ function MonthModalController($location, $uibModalInstance, dateHelperService) {
     };
 }
 
-function MonthFilterController($scope, $location, $uibModal, storageService, dateHelperService) {
+function MonthFilterController($scope, $location, $uibModal, storageService, dateHelperService, isMobile) {
     var vm = this;
 
     // used by mobile dashboard
+    var isSDD =  $location.path().indexOf('service_delivery_dashboard') !== -1;
+    vm.startYear = dateHelperService.getStartingYear(isSDD);
+    vm.startMonth = dateHelperService.getStartingMonth(isSDD);
+
     vm.selectedDate = dateHelperService.getSelectedDate();
+    if (isSDD && vm.selectedDate < dateHelperService.getReportStartDates()['sdd']) {
+        vm.selectedDate = new Date();
+    }
     vm.currentYear = new Date().getFullYear();
-    vm.getPlaceholder = function() {
+    vm.getPlaceholder = function () {
         return dateHelperService.getSelectedMonthDisplay();
     };
 
@@ -124,7 +127,7 @@ function MonthFilterController($scope, $location, $uibModal, storageService, dat
         });
     });
 
-    $scope.$on('reset_filter_data', function() {
+    $scope.$on('reset_filter_data', function () {
         $scope.$broadcast('reset_date',{});
         vm.selectedDate = new Date();
     });
@@ -136,7 +139,8 @@ function MonthFilterController($scope, $location, $uibModal, storageService, dat
 
         var selectedDate = new Date(selectedYear, selectedMonth - 1);
 
-        if ($location.path().indexOf('service_delivery_dashboard') !== -1 && selectedDate < new Date(2019, 1)) {
+        if ($location.path().indexOf('service_delivery_dashboard') !== -1 &&
+            selectedDate < new Date(2019, 1) && !isMobile) {
             vm.open();
         }
 
@@ -145,15 +149,16 @@ function MonthFilterController($scope, $location, $uibModal, storageService, dat
     vm.init();
 }
 
-MonthFilterController.$inject = ['$scope', '$location', '$uibModal', 'storageService', 'dateHelperService'];
+MonthFilterController.$inject = ['$scope', '$location', '$uibModal', 'storageService', 'dateHelperService', 'isMobile'];
 MonthModalController.$inject = ['$location', '$uibModalInstance', 'dateHelperService'];
 
 window.angular.module('icdsApp').directive("monthFilter",  ['templateProviderService', function (templateProviderService) {
     var url = hqImport('hqwebapp/js/initial_page_data').reverse;
     return {
-        restrict:'E',
+        restrict: 'E',
         scope: {
             isOpenModal: '=?',
+            selectSddDate: '=?',
         },
         bindToController: true,
         require: 'ngModel',

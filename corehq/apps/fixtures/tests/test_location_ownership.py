@@ -1,4 +1,4 @@
-from corehq.apps.fixtures.dbaccessors import get_fixture_data_types_in_domain
+from corehq.apps.fixtures.dbaccessors import get_fixture_data_types
 from corehq.apps.fixtures.models import (
     FieldList,
     FixtureDataItem,
@@ -77,7 +77,7 @@ class TestLocationOwnership(LocationHierarchyTestCase):
         make_data_item('Suffolk', '8')
         make_data_item('Boston', '10')
         make_data_item('Somerville', '7')
-        get_fixture_data_types_in_domain.clear(cls.domain)
+        get_fixture_data_types.clear(cls.domain)
 
         cls.no_location_user = CommCareUser.create(cls.domain, 'no_location', '***')
         cls.suffolk_user = CommCareUser.create(cls.domain, 'guy-from-suffolk', '***')

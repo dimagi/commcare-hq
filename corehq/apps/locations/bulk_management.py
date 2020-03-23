@@ -12,7 +12,7 @@ from decimal import Decimal, InvalidOperation
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils.functional import cached_property
-from django.utils.translation import string_concat
+from django.utils.text import format_lazy
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy
 
@@ -318,7 +318,7 @@ class LocationExcelValidator(object):
             message = ugettext_lazy("'types' sheet should contain exactly '{expected}' as the sheet headers. "
                                     "'{missing}' are missing")
             if actual - expected:
-                message = string_concat(message, ugettext_lazy(" '{extra}' are not recognized"))
+                message = format_lazy('{}{}', message, ugettext_lazy(" '{extra}' are not recognized"))
             raise LocationExcelSheetError(message.format(
                 expected=", ".join(expected),
                 missing=", ".join(expected - actual),

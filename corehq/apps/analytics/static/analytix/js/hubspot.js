@@ -91,8 +91,8 @@ hqDefine('analytix/js/hubspot', [
                 });
             },
             onFormSubmit: function ($form) {
-                $('#get-demo-cta-calendar-content').fadeIn();
-                $('#get-demo-cta-form-content').addClass('hide');
+                $('#get-demo-cta-calendar-content').toggleClass("hidden");
+                $('#get-demo-cta-form-content').addClass('hidden');
 
                 var email = $form.find('[name="email"]').val(),
                     firstname = $form.find('[name="firstname"]').val(),
@@ -171,50 +171,20 @@ hqDefine('analytix/js/hubspot', [
                 });
             },
             onFormSubmit: function ($form) {
-                $('#get-trial-cta-calendar-content').fadeIn();
-                $('#get-trial-cta-form-content').addClass('hide');
-
                 var email = $form.find('[name="email"]').val(),
                     firstname = $form.find('[name="firstname"]').val(),
                     lastname = $form.find('[name="lastname"]').val(),
-                    newUrl = document.location.href + '?email=' + email + '&name=' + firstname + '%20' + lastname;
+                    newUrl = document.location.origin + document.location.pathname + '?email=' + email + '&name=' + firstname + '%20' + lastname;
 
                 kissmetrics.track.event("Get Trial Workflow - Contact Info Received");
-
                 // This nastiness is required for Schedule Once to auto-fill
-                // required fields. Sending snark the way of the S.O. devs...
+                // required fields. Sending snark++ the way of the S.O. devs...
                 window.history.pushState({}, document.title, newUrl);
-
-                // Causes the Schedule Once form to populate the element
-                // #SOIDIV_commcaretrialform as soon as it loads. Once it's
-                // loaded this does not leave the page.
-                $.getScript('//cdn.scheduleonce.com/mergedjs/so.js')
-                    .done(function () {
-                        kissmetrics.track.event("Get Trial Workflow - Loaded Booking Options");
-                        setTimeout(function () {
-                            // This is a bit of a hack, but the only way to detect if
-                            // the Schedule Once Form was submitted on our side.
-                            // The style attribute changes when the form is successfully
-                            // submitted.
-                            var lastKnownHeight = 0,
-                                observer = new MutationObserver(function (mutations) {
-                                    mutations.forEach(function () {
-                                        var newHeight = $('#SOIDIV_CommCareTrial').height();
-                                        if (newHeight < lastKnownHeight) {
-                                            var coreUrl = document.location.href.split('?')[0];
-                                            kissmetrics.track.event("Get Trial Workflow - Trial Scheduled");
-                                            $('#cta-form-get-trial ').off('hide.bs.modal');
-                                            window.history.pushState({}, document.title, coreUrl);
-                                        }
-                                        lastKnownHeight = newHeight;
-
-                                    });
-                                });
-                            // target is the the iframe containing the schedule once form
-                            var target = document.getElementById('SOIDIV_CommCareTrial');
-                            observer.observe(target, { attributes: true, attributeFilter: ['style'] });
-                        }, 3000);
-                    });
+            },
+            onFormSubmitted: function () {
+                $('#choose-callback-options').toggleClass('hidden');
+                $('#get-trial-cta-form-content').addClass('hidden');
+                $('#start-trial-modal-header').text(gettext("Your trial request has been received!"));
             },
         });
     };

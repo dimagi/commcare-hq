@@ -245,24 +245,39 @@ class AttachmentMixin(SaveStateMixin):
         """
         if all(isinstance(a, BlobMeta) for a in self.attachments_list):
             # do nothing if all attachments have already been written
+            class NoopWriter():
+                def write(self):
+                    pass
+
+                def commit(self):
+                    pass
+
             @contextmanager
             def noop_context():
-                yield lambda: None
+                yield NoopWriter()
 
             return noop_context()
 
-        def write_attachments(blob_db):
-            self._attachments_list = [
-                attachment.write(blob_db, self)
-                for attachment in self.attachments_list
-            ]
+        class Writer():
+            def __init__(self, form, blob_db):
+                self.form = form
+                self.blob_db = blob_db
+
+            def write(self):
+                self.saved_attachments = [
+                    attachment.write(self.blob_db, self.form)
+                    for attachment in self.form.attachments_list
+                ]
+
+            def commit(self):
+                self.form._attachments_list = self.saved_attachments
 
         @contextmanager
         def atomic_attachments():
             unsaved = self.attachments_list
             assert all(isinstance(a, Attachment) for a in unsaved), unsaved
             with AtomicBlobs(get_blob_db()) as blob_db:
-                yield lambda: write_attachments(blob_db)
+                yield Writer(self, blob_db)
 
         return atomic_attachments()
 
@@ -581,7 +596,7 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
             ('domain', 'user_id'),
         ]
         indexes = [
-            models.Index(['xmlns'])
+            models.Index(fields=['xmlns'])
         ]
 
 
@@ -1479,7 +1494,7 @@ class CaseTransaction(PartitionedModel, SaveStateMixin, models.Model):
         index_together = [
             ('case', 'server_date', 'sync_log_id'),
         ]
-        indexes = [models.Index(['form_id'])]
+        indexes = [models.Index(fields=['form_id'])]
 
 
 class CaseTransactionDetail(JsonObject):
@@ -1704,7 +1719,7 @@ class LedgerTransaction(PartitionedModel, SaveStateMixin, models.Model):
         index_together = [
             ["case", "section_id", "entry_id"],
         ]
-        indexes = [models.Index(['form_id'])]
+        indexes = [models.Index(fields=['form_id'])]
 
 
 class ConsumptionTransaction(namedtuple('ConsumptionTransaction', ['type', 'normalized_value', 'received_on'])):

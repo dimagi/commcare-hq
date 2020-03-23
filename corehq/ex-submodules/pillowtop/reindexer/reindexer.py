@@ -199,7 +199,7 @@ class BulkPillowReindexProcessor(BaseDocProcessor):
             return not self.doc_filter(doc)
         return True
 
-    def process_bulk_docs(self, docs):
+    def process_bulk_docs(self, docs, progress_logger):
         if len(docs) == 0:
             return True
 

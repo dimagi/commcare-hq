@@ -34,6 +34,7 @@ from .views.mobile.groups import (
     GroupsListView,
 )
 from .views.mobile.users import (
+    CommCareUsersLookup,
     CommCareUserSelfRegistrationView,
     ConfirmBillingAccountForExtraUsersView,
     ConfirmTurnOffDemoModeView,
@@ -61,7 +62,7 @@ from .views.mobile.users import (
     update_user_groups,
     user_download_job_poll,
     user_upload_job_poll,
-)
+    CommCareUserConfirmAccountView)
 
 urlpatterns = [
     url(r'^$', DefaultProjectUserSettingsView.as_view(), name=DefaultProjectUserSettingsView.urlname),
@@ -115,6 +116,7 @@ urlpatterns = [
     url(r'^commcare/confirm_turn_off_demo_mode/(?P<couch_user_id>[ \w-]+)/$', ConfirmTurnOffDemoModeView.as_view(),
         name=ConfirmTurnOffDemoModeView.urlname),
     url(r'^commcare/delete/$', DeleteCommCareUsers.as_view(), name=DeleteCommCareUsers.urlname),
+    url(r'^commcare/lookup/$', CommCareUsersLookup.as_view(), name=CommCareUsersLookup.urlname),
     url(r'^commcare/reset_demo_user_restore/(?P<user_id>[ \w-]+)/$', reset_demo_user_restore,
         name='reset_demo_user_restore'),
     url(r'^commcare/demo_restore/status/(?P<download_id>(?:dl-)?[0-9a-fA-Z]{25,32})/(?P<user_id>[ \w-]+)/$',
@@ -143,6 +145,8 @@ urlpatterns = [
         name=ConfirmBillingAccountForExtraUsersView.urlname),
     url(r'^commcare/register/(?P<token>[\w-]+)/$', CommCareUserSelfRegistrationView.as_view(),
         name=CommCareUserSelfRegistrationView.urlname),
+    url(r'^commcare/confirm_account/(?P<user_id>[\w-]+)/$', CommCareUserConfirmAccountView.as_view(),
+        name=CommCareUserConfirmAccountView.urlname),
 ] + [
     url(r'^groups/$', GroupsListView.as_view(), name=GroupsListView.urlname),
     url(r'^groups/(?P<group_id>[ \w-]+)/$', EditGroupMembersView.as_view(), name=EditGroupMembersView.urlname),

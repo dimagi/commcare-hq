@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-02-19 20:38+0000\n"
+"POT-Creation-Date: 2020-03-18 20:45+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -2841,15 +2841,15 @@ msgstr ""
 msgid "Data file deleted."
 msgstr ""
 
-#: corehq/apps/export/static/export/js/download_export.js:196
+#: corehq/apps/export/static/export/js/download_export.js:219
 msgid "Sorry, there was a problem reaching the server. Please try again."
 msgstr ""
 
-#: corehq/apps/export/static/export/js/download_export.js:325
+#: corehq/apps/export/static/export/js/download_export.js:363
 msgid "Server maintenance in progress. Please try again later."
 msgstr ""
 
-#: corehq/apps/export/static/export/js/download_export.js:335
+#: corehq/apps/export/static/export/js/download_export.js:373
 msgid "There was an error downloading your export."
 msgstr ""
 
@@ -3762,4 +3762,18 @@ msgstr ""
 
 #: corehq/motech/repeaters/static/repeaters/js/repeat_record_report.js:237
 msgid "Failed to cancel"
+msgstr ""
+
+#: custom/icds/data_management/static/data_management/js/data_management.js:21
+msgid "<%= initiatedBy %> On <%= createdAt %>"
+msgstr ""
+
+#: custom/icds/data_management/static/data_management/js/data_management.js:55
+msgid "This project has no data management requests."
+msgstr ""
+
+#: custom/icds/data_management/static/data_management/js/data_management.js:82
+msgid ""
+"Could not load requests. Please try again later or report an issue if this "
+"problem persists."
 msgstr ""
