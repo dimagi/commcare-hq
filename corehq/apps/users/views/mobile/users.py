@@ -1266,10 +1266,15 @@ class CommCareUsersLookup(BaseManageCommCareUserView, UsernameUploadMixin):
         if not usernames:
             return self.get(request, *args, **kwargs)
 
-        known_usernames = {doc['username'] for doc in get_user_docs_by_username(usernames)}
+        docs_by_username = {doc['username']: doc for doc in get_user_docs_by_username(usernames)}
         rows = []
         for username in usernames:
-            rows.append([raw_username(username), _("yes") if username in known_usernames else _("no")])
+            row = [raw_username(username)]
+            if username in docs_by_username:
+                row.extend([_("yes"), docs_by_username[username].get("is_active")])
+            else:
+                row.extend([_("no"), ""])
+            rows.append(row)
 
         response = HttpResponse(content_type=Format.from_format('xlsx').mimetype)
         response['Content-Disposition'] = f'attachment; filename="{self.domain} users.xlsx"'
@@ -1279,7 +1284,7 @@ class CommCareUsersLookup(BaseManageCommCareUserView, UsernameUploadMixin):
     def _excel_data(self, rows):
         outfile = io.BytesIO()
         tab_name = "users"
-        header_table = [(tab_name, [(_("username"), _("exists"))])]
+        header_table = [(tab_name, [(_("username"), _("exists"), _("is_active"))])]
         writer = Excel2007ExportWriter()
         writer.open(header_table=header_table, file=outfile)
         writer.write([(tab_name, rows)])
