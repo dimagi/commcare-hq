@@ -51,7 +51,7 @@ class Command(BaseCommand):
             doc_ids = list(info_by_id.keys())
 
             es_ids = (FormES()
-                      .remove_default_filter('is_xform_instance')
+                      .remove_default_filters()
                       .doc_id(doc_ids).values_list('_id', flat=True))
             missing_ids = set(doc_ids) - set(es_ids)
             for form_id in missing_ids:
