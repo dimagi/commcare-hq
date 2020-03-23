@@ -11,7 +11,7 @@ from dimagi.utils.chunked import chunked
 class Command(BaseCommand):
     help = "Rebuild Bihar person cases "
 
-    def handle(self):
+    def handle(self, *args,**kwargs):
         person_config = _get_config_by_id('static-icds-cas-static-person_cases_v3')
         table_name = get_table_name('icds-cas', 'static-person_cases_v3')
         query = """select doc_id from "{}" where state_id='f9b47ea2ee2d8a02acddeeb491d3e175' order by doc_id""".format(table_name)
