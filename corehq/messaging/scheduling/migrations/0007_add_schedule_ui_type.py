@@ -13,11 +13,11 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='alertschedule',
             name='ui_type',
-            field=models.CharField(default=b'X', max_length=1),
+            field=models.CharField(default='X', max_length=1),
         ),
         migrations.AddField(
             model_name='timedschedule',
             name='ui_type',
-            field=models.CharField(default=b'X', max_length=1),
+            field=models.CharField(default='X', max_length=1),
         ),
     ]
