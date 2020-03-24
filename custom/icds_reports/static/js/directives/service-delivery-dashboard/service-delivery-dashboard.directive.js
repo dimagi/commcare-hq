@@ -440,7 +440,7 @@ function ServiceDeliveryDashboardController($rootScope, $scope, $http, $location
         var existingDataLength = vm.sortableInputKpiData.length;
         for (var i = existingDataLength; i < (vm.data.length + existingDataLength); i++) {
             vm.sortableInputKpiData[i] = {};
-            vm.sortableInputKpiData[i]['locationName'] = vm.data[i - existingDataLength][locationLevelNameField];
+            vm.sortableInputKpiData[i]['cardHeading'] = vm.data[i - existingDataLength][locationLevelNameField];
             vm.sortableInputKpiData[i]['attributes'] = [];
             for (var j = 0; j < tableData.length; j++) {
                 var kpiObject = {
