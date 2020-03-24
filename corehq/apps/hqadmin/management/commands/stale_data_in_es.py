@@ -21,8 +21,18 @@ from corehq.util.dates import iso_string_to_datetime
 from corehq.util.log import with_progress_bar
 
 RunConfig = namedtuple('RunConfig', ['domain', 'start_date', 'end_date', 'case_type'])
+DataRow = namedtuple('DataRow', ['doc_id', 'doc_type', 'doc_subtype', 'domain', 'es_date', 'primary_date'])
+
 
 ALL_SQL_DOMAINS = object()
+HEADER_ROW = DataRow(
+    doc_id='Doc ID',
+    doc_type='Doc Type',
+    doc_subtype='Doc Subtype',
+    domain='Domain',
+    es_date='ES Date',
+    primary_date='Correct Date',
+)
 
 
 class Command(BaseCommand):
@@ -73,6 +83,8 @@ class Command(BaseCommand):
         if run_config.domain is ALL_SQL_DOMAINS:
             print('Running for all SQL domains (and excluding Couch domains!)', file=sys.stderr)
 
+        self.print_data_row(HEADER_ROW)
+
         for data_model in data_models:
             try:
                 process_data_model_fn = DATA_MODEL_BACKENDS[data_model.lower()]()
@@ -80,7 +92,14 @@ class Command(BaseCommand):
                 raise CommandError('Only valid options for data model are "{}"'.format(
                     '", "'.join(DATA_MODEL_BACKENDS.keys())
                 ))
-            process_data_model_fn(run_config)
+            data_rows = process_data_model_fn(run_config)
+
+            for data_row in data_rows:
+                self.print_data_row(data_row)
+
+    @staticmethod
+    def print_data_row(data_row):
+        print(','.join(data_row))
 
 
 DATA_MODEL_BACKENDS = {
@@ -94,7 +113,8 @@ class CaseBackend:
     def run(run_config):
         rows = CaseBackend._get_server_modified_on_for_domain(run_config)
         for case_id, case_type, es_date, primary_date, domain in rows:
-            print(f"{case_id},CommCareCase,{case_type},{domain},{es_date},{primary_date}")
+            yield DataRow(doc_id=case_id, doc_type='CommCareCase', doc_subtype=case_type, domain=domain,
+                          es_date=es_date or 'None', primary_date=primary_date)
 
     @staticmethod
     def _get_server_modified_on_for_domain(run_config):
@@ -176,7 +196,8 @@ class FormBackend:
     def run(run_config):
         rows = FormBackend._get_stale_form_data(run_config)
         for form_id, doc_type, xmlns, es_date, primary_date, domain in rows:
-            print(f"{form_id},{doc_type},{xmlns},{domain},{es_date},{primary_date}")
+            yield DataRow(doc_id=form_id, doc_type=doc_type, doc_subtype=xmlns, domain=domain,
+                          es_date=es_date or 'None', primary_date=primary_date)
 
     @staticmethod
     def _get_stale_form_data(run_config):

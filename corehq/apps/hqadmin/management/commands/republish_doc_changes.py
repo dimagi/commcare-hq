@@ -5,6 +5,7 @@ from django.core.management import BaseCommand, CommandError
 
 from corehq.apps.change_feed import data_sources, topics
 from corehq.apps.change_feed.producer import producer
+from corehq.apps.hqadmin.management.commands.stale_data_in_es import DataRow, HEADER_ROW
 from corehq.form_processor.backends.sql.dbaccessors import ShardAccessor, doc_type_to_state
 from corehq.form_processor.models import CommCareCaseSQL
 from corehq.form_processor.utils import should_use_sql_backend
@@ -33,10 +34,11 @@ class Command(BaseCommand):
     """
 
     def add_arguments(self, parser):
-        parser.add_argument('doc_ids_file')
+        parser.add_argument('stale_data_in_es_file')
 
-    def handle(self, doc_ids_file, *args, **options):
-        document_records = _get_document_records(doc_ids_file)
+    def handle(self, stale_data_in_es_file, *args, **options):
+        data_rows = _get_data_rows(stale_data_in_es_file)
+        document_records = _get_document_records(data_rows)
         form_records = []
         case_records = []
         for record in document_records:
@@ -50,15 +52,25 @@ class Command(BaseCommand):
         _publish_forms(form_records)
 
 
-def _get_document_records(doc_ids_file):
-    with open(doc_ids_file, 'r') as f:
-        lines = f.readlines()
-        for l in lines:
-            doc_id, doc_type, doc_subtype, domain = [val.strip() for val in l.split(',')[0:4]]
-            if doc_type not in set.union(CASE_DOC_TYPES, FORM_DOC_TYPES):
-                raise CommandError(f"Found bad doc type {doc_type}. "
-                                   "Did you use the right command to create the data?")
-            yield DocumentRecord(doc_id, doc_type, doc_subtype, domain)
+def _get_data_rows(stale_data_in_es_file):
+    with open(stale_data_in_es_file, 'r') as f:
+        for line in f.readlines():
+            data_row = DataRow(*line.rstrip('\n').split(','))
+            # Skip the header row anywhere in the file.
+            # The "anywhere in the file" part is useful
+            # if you cat multiple stale_data_in_es_file files together.
+            if data_row != HEADER_ROW:
+                yield data_row
+
+
+def _get_document_records(data_rows):
+    for data_row in data_rows:
+        doc_id, doc_type, doc_subtype, domain = \
+            data_row.doc_id, data_row.doc_type, data_row.doc_subtype, data_row.domain
+        if doc_type not in set.union(CASE_DOC_TYPES, FORM_DOC_TYPES):
+            raise CommandError(f"Found bad doc type {doc_type}. "
+                               "Did you use the right command to create the data?")
+        yield DocumentRecord(doc_id, doc_type, doc_subtype, domain)
 
 
 def _publish_cases(case_records):
