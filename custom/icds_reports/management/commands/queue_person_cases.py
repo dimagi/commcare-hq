@@ -14,7 +14,7 @@ class Command(BaseCommand):
     def handle(self, *args,**kwargs):
         person_config = _get_config_by_id('static-icds-cas-static-person_cases_v3')
         table_name = get_table_name('icds-cas', 'static-person_cases_v3')
-        query = """select doc_id from "{}" where state_id='f9b47ea2ee2d8a02acddeeb491d3e175' order by doc_id""".format(table_name)
+        query = """select supervisor, doc_id from "{}" where state_id='f9b47ea2ee2d8a02acddeeb491d3e175' order by supervisor, doc_id""".format(table_name)
 
         with connections['icds-ucr-citus'].cursor() as cursor:
             cursor.execute(query)
@@ -23,8 +23,8 @@ class Command(BaseCommand):
         total_doc_ids = len(doc_ids)
         count = 0
         for ids_chunk in chunked(doc_ids, 10000):
-            ids_list = [item[0] for item in ids_chunk]
-            AsyncIndicator.bulk_creation(ids_list, 'case', 'icds-cas', [person_config._id])
+            ids_list = [item for item in ids_chunk]
+            AsyncIndicator.bulk_creation([elem[1] for elem in ids_list], 'case', 'icds-cas', [person_config._id])
             count += 10000
             print("Success till doc_id: {}".format(ids_list[-1]))
             print("progress: {}/{}".format(count, total_doc_ids ))
