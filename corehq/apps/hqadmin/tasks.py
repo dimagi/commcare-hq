@@ -1,5 +1,4 @@
 import io
-import json
 from datetime import date, timedelta
 
 from django.conf import settings
@@ -10,14 +9,13 @@ from django.template.loader import render_to_string
 
 import attr
 import csv
-import requests
 from celery.schedules import crontab
 from celery.task import task
 from celery.task.base import periodic_task
 
 from dimagi.utils.django.email import send_HTML_email
 from dimagi.utils.logging import notify_error
-from dimagi.utils.web import get_site_domain
+from dimagi.utils.web import get_static_url_prefix
 from pillowtop.utils import get_couch_pillow_instances
 
 from corehq.apps.es.users import UserES
@@ -84,7 +82,7 @@ def send_mass_emails(username, real_email, subject, html, text):
     for recipient in recipients:
         context = recipient
         context.update({
-            'url_prefix': '' if settings.STATIC_CDN else 'http://' + get_site_domain(),
+            'url_prefix': get_static_url_prefix()
         })
 
         html_template = Template(html)

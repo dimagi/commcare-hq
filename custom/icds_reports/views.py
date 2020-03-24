@@ -371,7 +371,10 @@ class DashboardView(TemplateView):
     def get_context_data(self, **kwargs):
         kwargs.update(self.kwargs)
         kwargs.update(get_dashboard_template_context(self.domain, self.couch_user))
-        kwargs['is_mobile'] = False
+        kwargs.update({
+            'is_mobile': False,
+            'support_email': ICDS_SUPPORT_EMAIL,
+        })
         if self.couch_user.is_commcare_user() and self._has_helpdesk_role():
             build_id = get_latest_issue_tracker_build_id()
             kwargs['report_an_issue_url'] = webapps_module(

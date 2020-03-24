@@ -1072,8 +1072,8 @@ ENABLE_INCLUDE_SMS_GATEWAY_CHARGING = StaticToggle(
 
 MOBILE_WORKER_SELF_REGISTRATION = StaticToggle(
     'mobile_worker_self_registration',
-    'UW: Allow mobile workers to self register',
-    TAG_CUSTOM,
+    'UW: Allow mobile workers to self register. Only works in CommCare 2.44 and lower.',
+    TAG_DEPRECATED,
     help_link='https://confluence.dimagi.com/display/commcarepublic/SMS+Self+Registration',
     namespaces=[NAMESPACE_DOMAIN],
 )
@@ -1735,6 +1735,16 @@ DO_NOT_RATE_LIMIT_SUBMISSIONS = StaticToggle(
     """
 )
 
+TEST_FORM_SUBMISSION_RATE_LIMIT_RESPONSE = StaticToggle(
+    'test_form_submission_rate_limit_response',
+    ("Respond to all form submissions with a 429 response. For use on test domains only. "
+     "Without this, there's no sane way to test the UI for being rate limited on "
+     "Mobile and Web Apps. Never use this on a real domain."),
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_DOMAIN],
+    description="",
+)
+
 RATE_LIMIT_RESTORES = DynamicallyPredictablyRandomToggle(
     'rate_limit_restores',
     'Rate limit restores with a 429 TOO MANY REQUESTS response',
@@ -1806,5 +1816,13 @@ ADD_ROW_INDEX_TO_MOBILE_UCRS = StaticToggle(
     'add_row_index_to_mobile_ucrs',
     'Add row index to mobile UCRs as the first column to retain original order of data',
     TAG_CUSTOM,
+    [NAMESPACE_DOMAIN]
+)
+
+
+TWO_STAGE_USER_PROVISIONING = StaticToggle(
+    'two_stage_user_provisioning',
+    'Enable two-stage user provisioning (users confirm and set their own passwords via email).',
+    TAG_SOLUTIONS_LIMITED,
     [NAMESPACE_DOMAIN]
 )

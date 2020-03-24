@@ -1,12 +1,10 @@
 import re
 from datetime import timedelta
-from functools import wraps, partial
+from functools import partial, wraps
 
-from datadog import api
 from django.conf import settings
 
-from corehq.util.datadog import statsd, COMMON_TAGS, datadog_logger
-from corehq.util.datadog.const import ALERT_INFO
+from corehq.util.datadog import datadog_logger, statsd
 
 WILDCARD = '*'
 DATADOG_WEB_USERS_GAUGE = 'commcare.hubspot.web_users_processed'
@@ -35,24 +33,6 @@ def count_by_response_code(metric_name):
         return _inner
 
     return _wrapper
-
-
-def datadog_initialized():
-    return api._api_key and api._application_key
-
-
-def create_datadog_event(title, text, alert_type=ALERT_INFO, tags=None, aggregation_key=None):
-    tags = COMMON_TAGS + (tags or [])
-    if datadog_initialized():
-        try:
-            api.Event.create(
-                title=title, text=text, tags=tags,
-                alert_type=alert_type, aggregation_key=aggregation_key,
-            )
-        except Exception as e:
-            datadog_logger.exception('Error creating Datadog event', e)
-    else:
-        datadog_logger.debug('Datadog event: (%s) %s\n%s', alert_type, title, text)
 
 
 def sanitize_url(url):

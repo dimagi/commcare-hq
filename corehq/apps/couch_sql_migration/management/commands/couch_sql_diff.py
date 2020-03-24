@@ -3,6 +3,7 @@ import json
 import logging
 import os
 import sys
+from collections import defaultdict
 from itertools import groupby
 
 from django.conf import settings
@@ -65,13 +66,16 @@ class Command(BaseCommand):
                 Diff specific items. The value of this option may be
                 'pending' to clear out in-process diffs OR 'with-diffs'
                 to re-diff items that previously had diffs OR a
-                space-delimited list of case ids OR a path to a file
+                comma-delimited list of case ids OR a path to a file
                 containing a case id on each line. The path must begin
                 with / or ./
 
                 With the "show" or "filter" actions, this option should
-                be a doc type. All form and case doc types are
-                supported.
+                be a doc type, optionally followed by a colon and one or
+                more doc ids (e.g., CommCareCase:id1,id2,id3). All form
+                and case doc types are supported. Alternately, it may be
+                a csv file with the first two columns being doc type and
+                doc id. The path must begin with / or ./
             ''')
         parser.add_argument('--changes',
             dest="changes", action='store_true', default=False,
@@ -152,13 +156,14 @@ class Command(BaseCommand):
         """Show diffs from state db"""
         statedb = self.open_state_db(domain)
         print(f"showing diffs from {statedb}", file=sys.stderr)
+        select = self.get_select_kwargs()
         if self.changes:
-            items = statedb.iter_doc_changes(self.select)
+            items = statedb.iter_doc_changes(**select)
         else:
-            items = statedb.iter_doc_diffs(self.select)
+            items = statedb.iter_doc_diffs(**select)
         prompt = not self.csv
         if self.csv:
-            items = self.with_progress(items, statedb)
+            items = self.with_progress(items, statedb, select)
             print(CSV_HEADERS, file=sys.stdout)
         try:
             for doc_diffs in chunked(items, self.batch_size, list):
@@ -169,6 +174,28 @@ class Command(BaseCommand):
                     break
         except (KeyboardInterrupt, BrokenPipeError):
             pass
+
+    def get_select_kwargs(self):
+        if not self.select:
+            return {}
+        if self.select.startswith(("./", "/")):
+            if not os.path.isfile(self.select):
+                raise CommandError(f"file not found: {self.select}")
+            by_kind = defaultdict(set)
+            with open(self.select) as fh:
+                count = 0
+                for row in csv.reader(fh):
+                    if len(row) > 1:
+                        by_kind[row[0]].add(row[1])
+                        count += 1
+            k = len(by_kind)
+            kinds = ", ".join(sorted(by_kind)) if k < 5 else f"{k} kinds"
+            print(f"selecting {count} docs of {kinds}", file=sys.stderr)
+            return {"by_kind": dict(by_kind)}
+        if ":" in self.select:
+            kind, doc_ids = self.select.split(":", 1)
+            return {"kind": kind, "doc_ids": doc_ids.split(",")}
+        return {"kind": self.select}
 
     def do_filter(self, domain):
         def update_doc_diffs(doc_diffs):
@@ -197,7 +224,8 @@ class Command(BaseCommand):
         statedb = self.open_state_db(domain, readonly=self.dry_run)
         if self.changes:
             raise NotImplementedError("filter --changes")
-        if self.select in MissingIds.form_types:
+        select = self.get_select_kwargs()
+        if select and select["kind"] in MissingIds.form_types:
             def get_sql_docs(ids):
                 return {f.form_id: f for f in FormAccessorSQL.get_forms(ids)}
 
@@ -205,7 +233,7 @@ class Command(BaseCommand):
                 return {f.form_id: f for f in get_couch_forms(ids)}
 
             filter_diffs = filter_form_diffs
-        elif self.select in MissingIds.case_types:
+        elif select and select["kind"] in MissingIds.case_types:
             def get_sql_docs(ids):
                 return {c.case_id: c for c in CaseAccessorSQL.get_cases(ids)}
 
@@ -216,17 +244,21 @@ class Command(BaseCommand):
         else:
             raise NotImplementedError(f"--select={self.select}")
         prompt = self.dry_run and self.stop
-        doc_diffs = statedb.iter_doc_diffs(self.select)
-        doc_diffs = self.with_progress(doc_diffs, statedb)
+        doc_diffs = statedb.iter_doc_diffs(**select)
+        doc_diffs = self.with_progress(doc_diffs, statedb, select)
         for batch in chunked(doc_diffs, self.batch_size, list):
             update_doc_diffs(batch)
             if prompt and not confirm("show more?"):
                 break
 
-    def with_progress(self, doc_diffs, statedb):
+    def with_progress(self, doc_diffs, statedb, select):
         counts = statedb.get_doc_counts()
-        if self.select:
-            count = counts.get(self.select, Counts())
+        if "doc_ids" in select:
+            count = len(select["doc_ids"])
+        elif "by_kind" in select:
+            count = sum(len(v) for v in select["by_kind"].values())
+        elif select:
+            count = counts.get(select["kind"], Counts())
             count = count.changes if self.changes else count.diffs
         else:
             count = sum(c.changes if self.changes else c.diffs
@@ -410,16 +442,20 @@ def iter_related(doc_diffs):
 
     def get_related(kind, doc_ids):
         if kind.startswith(CASE):
-            return get_case_related(doc_ids)
-        assert kind != STOCK
-        return get_form_related(doc_ids)
+            related = get_case_related(doc_ids)
+        else:
+            assert kind != STOCK
+            related = get_form_related(doc_ids)
+        for doc_id in set(doc_ids) - related.keys():
+            related[doc_id] = ("", "")
+        assert len(related) == len(doc_ids), (kind, set(doc_ids) - related.keys())
+        return related
 
     stock_related = {}
     for kind, group in groupby(sorted(doc_diffs), key=lambda x: x[0]):
         group = list(group)
         doc_ids = [doc_id for x, doc_id, x in group]
         related = get_related(kind, doc_ids)
-        assert len(related) == len(doc_ids), (kind, set(doc_ids) - set(related))
         if kind == CASE:
             for k, doc_id, diffs in group:
                 for diff in diffs:
