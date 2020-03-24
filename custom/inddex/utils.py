@@ -1,12 +1,11 @@
-import datetime
-
 from memoized import memoized
 
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin
 from corehq.apps.userreports.reports.util import ReportExport
 from custom.inddex.filters import DateRangeFilter, GenderFilter, AgeRangeFilter, PregnancyFilter, \
-    BreastFeedingFilter, SettlementAreaFilter, RecallStatusFilter
+    BreastFeedingFilter, SettlementAreaFilter, RecallStatusFilter, CaseOwnersFilter, \
+    FaoWhoGiftFoodGroupDescriptionFilter, SupplementsFilter, GapTypeFilter
 
 
 class MultiSheetReportExport(ReportExport):
@@ -15,7 +14,6 @@ class MultiSheetReportExport(ReportExport):
         """
         Allows to export multitabular reports in one xmlns file, different report tables are
         presented as different sheets in document
-
         :param title: Exported file title
         :param table_data: list of tuples, first element of tuple is sheet title, second is list of rows
         """
@@ -39,21 +37,28 @@ class MultiTabularReport(DatespanMixin, CustomProjectReport, GenericTabularRepor
     name = 'Multi Report'
     slug = 'multi_report'
     report_template_path = 'inddex/multi_report.html'
+    report_comment = ''
     flush_layout = True
     default_rows = 10
     exportable = True
+    export_only = False
 
     @property
     def fields(self):
-        return [DateRangeFilter]
+        return [CaseOwnersFilter, DateRangeFilter]
 
     @property
     def report_config(self):
         return {
             'domain': self.domain,
-            'startdate': self.datespan.startdate,
-            'enddate': self.datespan.enddate,
+            'startdate': str(self.datespan.startdate),
+            'enddate': str(self.datespan.enddate),
+            'case_owners': self.case_owner
         }
+
+    @property
+    def case_owner(self):
+        return self.request.GET.get('case_owners') or ''
 
     @property
     def data_providers(self):
@@ -63,7 +68,9 @@ class MultiTabularReport(DatespanMixin, CustomProjectReport, GenericTabularRepor
     def report_context(self):
         return {
             'reports': [self.get_report_context(dp) for dp in self.data_providers],
-            'title': self.title
+            'title': self.title,
+            'report_comment': self.report_comment,
+            'export_only': self.export_only
         }
 
     @property
@@ -104,17 +111,39 @@ class MultiTabularReport(DatespanMixin, CustomProjectReport, GenericTabularRepor
         return title, exported_rows
 
 
+class BaseGapsSummaryReport(MultiTabularReport):
+
+    @property
+    def fields(self):
+        return super().fields + [GapTypeFilter, RecallStatusFilter]
+
+    @property
+    def report_config(self):
+        report_config = super().report_config
+        report_config.update(gap_type=self.gap_type, recall_status=self.recall_status)
+
+        return report_config
+
+    @property
+    def gap_type(self):
+        return self.request.GET.get('gap_type') or ''
+
+    @property
+    def recall_status(self):
+        return self.request.GET.get('recall_status') or ''
+
+
 class BaseNutrientReport(MultiTabularReport):
 
     @property
     def fields(self):
-        return [
-            DateRangeFilter,
+        return super().fields + [
             GenderFilter,
             AgeRangeFilter,
             PregnancyFilter,
             BreastFeedingFilter,
             SettlementAreaFilter,
+            SupplementsFilter,
             RecallStatusFilter
         ]
 
@@ -129,4 +158,7 @@ class BaseNutrientReport(MultiTabularReport):
             'supplements',
             'recall_status',
         ]
-        return {slug: self.request.GET.get(slug, '') for slug in request_slugs}
+        filters_config = super().report_config
+        filters_config.update({slug: self.request.GET.get(slug, '') for slug in request_slugs})
+
+        return filters_config

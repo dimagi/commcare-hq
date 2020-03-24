@@ -91,6 +91,74 @@
         "property_name": "closed_on"
       },
       {
+        "datatype": "string",
+        "column_id": "name",
+        "type": "raw",
+        "property_name": "name"
+      },
+      {
+        "datatype": "date",
+        "column_id": "hh_reg_date",
+        "type": "raw",
+        "property_name": "hh_reg_date"
+      },
+      {
+        "datatype": "integer",
+        "column_id": "hh_num",
+        "type": "raw",
+        "property_name": "hh_num"
+      },
+      {
+        "datatype": "string",
+        "column_id": "hh_gps_location",
+        "type": "raw",
+        "property_name": "hh_gps_location"
+      },
+      {
+        "datatype": "string",
+        "column_id": "hh_caste",
+        "type": "raw",
+        "property_name": "hh_caste"
+      },
+      {
+        "datatype": "string",
+        "column_id": "hh_bpl_apl",
+        "type": "raw",
+        "property_name": "hh_bpl_apl"
+      },
+      {
+        "column_id": "hh_minority",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "switch",
+          "switch_on": {
+            "type": "property_name",
+            "property_name": "hh_minority"
+          },
+          "cases": {
+            "no": {
+              "type": "constant",
+              "constant": 0
+            },
+            "yes": {
+              "type": "constant",
+              "constant": 1
+            }
+          },
+          "default": {
+            "type": "constant",
+            "constant": null
+          }
+        }
+      },
+      {
+        "datatype": "string",
+        "column_id": "hh_religion",
+        "type": "raw",
+        "property_name": "hh_religion"
+      },
+      {
         "display_name": null,
         "datatype": "string",
         "type": "expression",

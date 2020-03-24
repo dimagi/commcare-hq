@@ -6,8 +6,8 @@ from django.core.management import call_command
 from django.core.management.base import BaseCommand
 
 import requests
-from datadog import api as datadog_api
 
+from corehq.util.metrics import create_metrics_event
 from dimagi.utils.parsing import json_format_datetime
 from pillow_retry.models import PillowError
 
@@ -94,16 +94,15 @@ class Command(BaseCommand):
         deploy_notification_text += "Find the diff {diff_link}"
 
         if settings.DATADOG_API_KEY:
-            tags = ['environment:{}'.format(options['environment'])]
             link = diff_link(compare_url)
-            datadog_api.Event.create(
+            create_metrics_event(
                 title="Deploy Success",
                 text=deploy_notification_text.format(
                     dashboard_link=dashboard_link(DASHBOARD_URL),
                     diff_link=link,
                     integration_tests_link=integration_tests_link(INTEGRATION_TEST_URL)
                 ),
-                tags=tags,
+                tags={'environment': options['environment']},
                 alert_type="success"
             )
 

@@ -28,8 +28,8 @@ from dimagi.utils.chunked import chunked
 from corehq.apps.hqwebapp.encoders import LazyEncoder
 from corehq.apps.tzmigration.planning import Base, DiffDB, PlanningDiff as Diff
 from corehq.apps.tzmigration.timezonemigration import MISSING, json_diff
-from corehq.util.datadog.gauges import datadog_counter
 from corehq.util.log import with_progress_bar
+from corehq.util.metrics import metrics_counter
 
 from .diff import filter_form_diffs
 
@@ -346,7 +346,7 @@ class StateDB(DiffDB):
     def save_form_diffs(self, couch_json, sql_json):
         diffs = json_diff(couch_json, sql_json, track_list_indices=False)
         diffs = filter_form_diffs(couch_json, sql_json, diffs)
-        dd_count = partial(datadog_counter, tags=["domain:" + self.domain])
+        dd_count = partial(metrics_counter, tags={"domain": self.domain})
         dd_count("commcare.couchsqlmigration.form.diffed")
         doc_type = couch_json["doc_type"]
         doc_id = couch_json["_id"]

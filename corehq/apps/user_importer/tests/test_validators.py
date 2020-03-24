@@ -8,17 +8,19 @@ from corehq.apps.user_importer.validation import (
     EmailValidator,
     ExistingUserValidator,
     GroupValidator,
-    IsActiveValidator,
     UsernameLengthValidator,
     NewUserPasswordValidator,
     RoleValidator,
     UsernameTypeValidator,
     RequiredFieldsValidator,
     UsernameValidator,
-)
+    BooleanColumnValidator)
 
 factory = Faker()
 factory.seed(1571040848)
+
+IsActiveValidator = BooleanColumnValidator('domain', 'is_active')
+IsAccountConfirmedValidator = BooleanColumnValidator('domain', 'is_account_confirmed')
 
 # tuple(specs, validator class, errors dict(row_index: message)
 TEST_CASES = [
@@ -40,8 +42,19 @@ TEST_CASES = [
             {'is_active': ''},
             {},
         ],
-        IsActiveValidator('domain'),
+        IsActiveValidator,
         {2: IsActiveValidator.error_message}
+    ),
+    (
+        [
+            {'is_account_confirmed': 'true'},
+            {'is_account_confirmed': 'false'},
+            {'is_account_confirmed': 'confirmed'},
+            {'is_account_confirmed': ''},
+            {},
+        ],
+        IsAccountConfirmedValidator,
+        {2: IsAccountConfirmedValidator.error_message}
     ),
     (
         [
@@ -65,10 +78,17 @@ TEST_CASES = [
             {'username': factory.user_name()},
             {'username': factory.user_name(), 'user_id': factory.uuid4()},
             {'username': factory.user_name(), 'password': factory.password()},
-            {'username': factory.user_name(), 'password': 123}
+            {'username': factory.user_name(), 'password': 123},
+            {'username': factory.user_name(), 'is_account_confirmed': 'False'},
+            {'username': factory.user_name(), 'is_account_confirmed': 'True'},
+            {'username': factory.user_name(), 'is_account_confirmed': ''},
         ],
         NewUserPasswordValidator('domain'),
-        {0: NewUserPasswordValidator.error_message}
+        {
+            0: NewUserPasswordValidator.error_message,
+            5: NewUserPasswordValidator.error_message,
+            6: NewUserPasswordValidator.error_message,
+        }
     ),
     (
         [

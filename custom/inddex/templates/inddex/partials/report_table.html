@@ -37,15 +37,6 @@
     {% endfor %}
     {% endblock %}
     </tbody>
-    {% if report_table.total_row and report_table.rows %}
-        <tfoot>
-        <tr>
-            {% for col in report_table.total_row %}
-                <td>{% if col.html != None %}{{ col.html|safe }}{% else %}{{ col|safe }}{% endif %}</td>
-            {% endfor %}
-        </tr>
-        </tfoot>
-    {% endif %}
 </table>
 
 <script>

@@ -402,15 +402,6 @@ class DictDataFormat(BaseDataFormat):
         return ret
 
 
-class SummingSqlTabularReport(SqlTabularReport):
-
-    @property
-    def rows(self):
-        ret = list(super(SummingSqlTabularReport, self).rows)
-        self.total_row = calculate_total_row(ret)
-        return ret
-
-
 def calculate_total_row(rows):
     total_row = []
     if len(rows) > 0:
