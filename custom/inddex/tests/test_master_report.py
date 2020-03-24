@@ -21,7 +21,7 @@ from ..example_data.data import (
 )
 from ..fixtures import FixtureAccessor
 from ..food import FoodData, INDICATORS
-from ..ucr.adapters import FoodCaseData
+from ..ucr_data import FoodCaseData
 from ..ucr.data_providers.master_data_file_data import MasterDataFileData
 
 DOMAIN = 'inddex-reports-test'
