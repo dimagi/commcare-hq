@@ -43,6 +43,7 @@ class Command(BaseCommand):
         self.es = get_es_export()
         self.new_index = index_name
         self.old_index = "xforms"  # alias
+        self.cancelled_queries = []
         scroll_timeout = options.get('scroll_timeout')
         chunk_size = options.get('chunk_size')
         print_counts = options.get('print_counts')
@@ -77,6 +78,14 @@ class Command(BaseCommand):
                     query=query, chunk_size=chunk_size, scroll=scroll_timeout,
                     scan_kwargs={'request_timeout': 600})
             print("Reindex finished ", datetime.now())
+        if self.cancelled_queries:
+            print("There are some cancelled queries")
+            print(self.cancelled_queries)
+            retry = input("Enter yes to retry")
+            if retry in ['yes', 'y']:
+                for query in self.cancelled_queries:
+                    print("Retrying ", query)
+                    self.reindex_using_es_api(query)
 
     def _breakup_by_intervals(self, start_date, end_date, interval_format='hour', hours_interval_only=False):
         assert interval_format in ['hour', 'minute']
@@ -144,6 +153,10 @@ class Command(BaseCommand):
                         )
                     collate_start_time = None
                     collate_end_time = None
+        if collate_start_time and collate_end_time and interval_format == 'minute':
+            yield self._base_query(
+                collate_start_time, collate_end_time, 'yyyy-MM-dd HH:mm:ss'
+            )
 
     def _base_query(self, start_date, end_date, format="yyyy-MM-dd"):
         return copy.deepcopy({
@@ -188,15 +201,17 @@ class Command(BaseCommand):
                     no_progress_loops = 0
                 else:
                     no_progress_loops += 1
-                if no_progress_loops == 3:
+                if no_progress_loops == 10:
                     self.es.tasks.cancel(task_id=task_id)
-                    raise Exception("Cancelling task that didn't progress in last 1 min {}".format(str(query)))
+                    self.cancelled_queries.append(query)
+                    raise Exception("Cancelling task that didn't progress in last 1.6mins {}".format(str(query)))
                 running_time_in_mins = (task['running_time_in_nanos'] / 60000000000)
                 print("Running time total in mins ", running_time_in_mins)
             except Exception as e:
                 task_finished = True
                 print(e)
                 print("This could mean task finished succesfully")
+                return
             time.sleep(20)
 
     def _get_doc_count(self, index, start_date, end_date):
