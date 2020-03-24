@@ -108,7 +108,7 @@ def ccz_hostings_json(request, domain):
     if request.GET.get('status'):
         hosted_cczs = hosted_cczs.filter(status=request.GET.get('status'))
 
-    total = len(hosted_cczs)
+    total = hosted_cczs.count()
     skip = (page - 1) * limit
     hosted_cczs = hosted_cczs[skip:skip + limit]
     hosted_cczs = [h.to_json() for h in hosted_cczs]
