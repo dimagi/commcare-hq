@@ -327,8 +327,8 @@ class Command(BaseCommand):
 
     def setup_reset_logging(self):
         path = self.state_path
-        log_dir = os.path.dirname(path) if os.path.isfile(path) else path
-        setup_logging(log_dir, "couch_sql_diff", self.debug)
+        state_dir = os.path.dirname(path) if os.path.isfile(path) else path
+        setup_logging(state_dir, "couch_sql_diff", self.debug)
 
     def delete_resumable_iteration_state(self, itr_state):
         pretty_value = json.dumps(itr_state.value, indent=2)
