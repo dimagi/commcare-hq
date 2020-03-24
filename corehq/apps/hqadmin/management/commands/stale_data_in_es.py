@@ -43,12 +43,12 @@ class Command(BaseCommand):
     Can be used in conjunction with republish_doc_changes
 
         1. Generate tuples not updated in ES with extra debug columns
-        $ ./manage.py stale_data_in_es case form --domain DOMAIN > stale_ids.csv
+        $ ./manage.py stale_data_in_es case form --domain DOMAIN > stale_ids.tsv
 
         (Can call with just "case" or "form" if only want to use one data model type)
 
         2. Republish doc changes
-        $ ./manage.py republish_doc_changes <DOMAIN> stale_ids.csv
+        $ ./manage.py republish_doc_changes stale_ids.tsv
     """
     help = inspect.cleandoc(__doc__).split('\n')[0]
 
@@ -71,8 +71,9 @@ class Command(BaseCommand):
             action='store',
             help='Only run for the specified case type',
         )
+        parser.add_argument('--delimiter', default='\t', choices=('\t', ','))
 
-    def handle(self, domain, data_models, **options):
+    def handle(self, domain, data_models, delimiter, **options):
         data_models = set(data_models)
 
         start = dateutil.parser.parse(options['start']) if options['start'] else datetime(2010, 1, 1)
@@ -83,7 +84,10 @@ class Command(BaseCommand):
         if run_config.domain is ALL_SQL_DOMAINS:
             print('Running for all SQL domains (and excluding Couch domains!)', file=sys.stderr)
 
-        self.print_data_row(HEADER_ROW)
+        def print_data_row(data_row):
+            print(delimiter.join(data_row))
+
+        print_data_row(HEADER_ROW)
 
         for data_model in data_models:
             try:
@@ -95,11 +99,7 @@ class Command(BaseCommand):
             data_rows = process_data_model_fn(run_config)
 
             for data_row in data_rows:
-                self.print_data_row(data_row)
-
-    @staticmethod
-    def print_data_row(data_row):
-        print(','.join(data_row))
+                print_data_row(data_row)
 
 
 DATA_MODEL_BACKENDS = {

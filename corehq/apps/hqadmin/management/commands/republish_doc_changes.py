@@ -30,14 +30,15 @@ class Command(BaseCommand):
     """
     Republish doc changes. Meant to be used in conjunction with stale_data_in_es command
 
-        $ ./manage.py republish_doc_changes changes.csv
+        $ ./manage.py republish_doc_changes changes.tsv
     """
 
     def add_arguments(self, parser):
         parser.add_argument('stale_data_in_es_file')
+        parser.add_argument('--delimiter', default='\t', choices=('\t', ','))
 
-    def handle(self, stale_data_in_es_file, *args, **options):
-        data_rows = _get_data_rows(stale_data_in_es_file)
+    def handle(self, stale_data_in_es_file, delimiter, *args, **options):
+        data_rows = _get_data_rows(stale_data_in_es_file, delimiter=delimiter)
         document_records = _get_document_records(data_rows)
         form_records = []
         case_records = []
@@ -52,10 +53,10 @@ class Command(BaseCommand):
         _publish_forms(form_records)
 
 
-def _get_data_rows(stale_data_in_es_file):
+def _get_data_rows(stale_data_in_es_file, delimiter):
     with open(stale_data_in_es_file, 'r') as f:
         for line in f.readlines():
-            data_row = DataRow(*line.rstrip('\n').split(','))
+            data_row = DataRow(*line.rstrip('\n').split(delimiter))
             # Skip the header row anywhere in the file.
             # The "anywhere in the file" part is useful
             # if you cat multiple stale_data_in_es_file files together.
