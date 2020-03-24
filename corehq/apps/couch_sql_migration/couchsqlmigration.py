@@ -392,6 +392,7 @@ class CouchSqlDomainMigrator:
             form = XFormInstance.get(form_id)
         except XFormNotFound:
             form = MissingFormLoader(self.domain).load_form(form_id, case_id)
+            log.warning("couch form missing, blob present: %s", form_id)
         except Exception:
             log.exception("Error migrating form %s", form_id)
             form = None

@@ -336,6 +336,7 @@ def diff_form_state(form_id, *, in_couch=False):
     couch_miss = "missing"
     if not in_couch and get_blob_db().metadb.get_for_parent(form_id):
         couch_miss = MISSING_BLOB_PRESENT
+        log.warning("couch form missing, blob present: %s", form_id)
     old = {"form_state": FORM_PRESENT if in_couch else couch_miss}
     new = {"form_state": FORM_PRESENT if in_sql else "missing"}
     return old, new
