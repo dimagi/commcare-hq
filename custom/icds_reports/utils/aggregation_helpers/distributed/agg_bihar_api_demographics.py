@@ -106,4 +106,3 @@ class AggBiharApiDemographicsHelper(BaseICDSAggregationDistributedHelper):
         return [
             'CREATE INDEX IF NOT EXISTS demographics_state_person_case_idx ON "{}" (month, state_id, person_id)'.format(self.tablename)
         ]
-
