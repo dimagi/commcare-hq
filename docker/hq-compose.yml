@@ -88,7 +88,6 @@ services:
       - ALLOW_ANONYMOUS_LOGIN=yes
     volumes:
       - ${VOLUME_PREFIX}${BLANK_IF_TESTS-zookeeper:}/opt/zookeeper-3.5.7/data
-
   kafka:
       image: bitnami/kafka:2.4.1
       ports:
