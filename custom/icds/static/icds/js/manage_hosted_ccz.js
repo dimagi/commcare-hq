@@ -90,7 +90,7 @@ hqDefine('icds/js/manage_hosted_ccz', [
             self.clear = function () {
                 self.linkId('');
                 self.appId('');
-                self.version('')
+                self.version('');
                 self.profileId('');
                 self.status('');
 
