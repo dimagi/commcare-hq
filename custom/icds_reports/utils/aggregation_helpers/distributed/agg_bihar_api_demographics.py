@@ -45,12 +45,12 @@ class AggBiharApiDemographicsHelper(BaseICDSAggregationDistributedHelper):
             ('month', f"'{month_start_string}'"),
             ('person_id', 'person_list.doc_id'),
             ('person_name', 'person_list.name'),
-            ('has_adhaar','CASE WHEN person_list.aadhar_date is not null THEN 1 ELSE 0 END'),
-            ('bank_account_number','person_list.bank_account_number'),
-            ('ifsc_code','person_list.ifsc_code'),
-            ('age_at_reg','person_list.age_at_reg'),
-            ('dob','person_list.dob'),
-            ('gender','person_list.sex'),
+            ('has_adhaar', 'CASE WHEN person_list.aadhar_date is not null THEN 1 ELSE 0 END'),
+            ('bank_account_number', 'person_list.bank_account_number'),
+            ('ifsc_code', 'person_list.ifsc_code'),
+            ('age_at_reg', 'person_list.age_at_reg'),
+            ('dob', 'person_list.dob'),
+            ('gender', 'person_list.sex'),
             ('blood_group', 'person_list.blood_group'),
             ('disabled', 'person_list.disabled'),
             ('disability_type', 'person_list.disability_type'),
@@ -87,19 +87,21 @@ class AggBiharApiDemographicsHelper(BaseICDSAggregationDistributedHelper):
                 SELECT
                 {calculations}
                 from "{person_case_ucr}" person_list
-                LEFT JOIN "{AGG_MIGRATION_TABLE}" migration_tab ON ( 
+                LEFT JOIN "{AGG_MIGRATION_TABLE}" migration_tab ON (
                     person_list.doc_id = migration_tab.person_case_id AND
                     person_list.supervisor_id = migration_tab.supervisor_id AND
                     migration_tab.month='{month_start_string}'
                 )
                 LEFT JOIN "{household_ucr}" hh_list ON (
-                    person_list.household_case_id = hh_list.doc_id AND 
+                    person_list.household_case_id = hh_list.doc_id AND
                     person_list.supervisor_id = hh_list.supervisor_id
                 )
                 WHERE (person_list.opened_on <= '{month_end_string}' AND
-              (person_list.closed_on IS NULL OR person_list.closed_on >= '{month_start_string}' )) AND 
-              (migration_tab.is_migrated is distinct from 1 or migration_tab.migration_date>='{month_start_string}')
-                );
+              (person_list.closed_on IS NULL OR person_list.closed_on >= '{month_start_string}' )) AND
+              (
+                migration_tab.is_migrated is distinct from 1 OR
+                migration_tab.migration_date>='{month_start_string}')
+              );
                 """
 
     def indexes(self):

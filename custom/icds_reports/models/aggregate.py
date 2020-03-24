@@ -1734,7 +1734,7 @@ class AggBiharAPIDemographics(models.Model, AggregateMixin):
 
     class Meta(object):
         db_table = AGG_BIHAR_API_DEMOGRAPHICS
-        unique_together = ('month', 'state_id', 'district_id', 'block_id', 'supervisor_id', 'person_id') #pkey
+        unique_together = ('month', 'state_id', 'district_id', 'block_id', 'supervisor_id', 'person_id')  # pkey
 
     _agg_helper_cls = AggBiharApiDemographicsHelper
     _agg_atomic = False
