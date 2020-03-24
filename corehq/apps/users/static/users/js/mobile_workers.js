@@ -379,6 +379,8 @@ hqDefine("users/js/mobile_workers",[
                     // enable password input
                     user.passwordEnabled(true);
                     user.sendConfirmationEmailEnabled(false);
+                    // uncheck email confirmation box if it was checked
+                    user.send_account_confirmation_email(false);
                 }
             });
         });
