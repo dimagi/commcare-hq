@@ -158,6 +158,7 @@ def get_sql_case_data_for_db(db, run_config):
     matching_cases = CommCareCaseSQL.objects.using(db).filter(
         server_modified_on__gte=run_config.start_date,
         server_modified_on__lte=run_config.end_date,
+        deleted=False,
     )
     if run_config.domain is not ALL_SQL_DOMAINS:
         matching_cases = matching_cases.filter(
