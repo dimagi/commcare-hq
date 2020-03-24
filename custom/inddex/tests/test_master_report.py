@@ -127,9 +127,9 @@ class TestOldReport(TestCase):
 class TestUcrAdapter(TestCase):
     def test_data_source(self):
         # Only the rows with case IDs will appear in the UCR
-        expected = sort_rows(r for r in get_expected_report() if r['caseid'])
-        ucr_data = sort_rows(get_ucr_data())
-        self.assertEqual(food_names(expected), food_names(ucr_data))
+        expected = [r for r in get_expected_report() if r['caseid']]
+        ucr_data = get_ucr_data()
+        self.assertItemsEqual(food_names(expected), food_names(ucr_data))
 
 
 def get_ucr_data():
