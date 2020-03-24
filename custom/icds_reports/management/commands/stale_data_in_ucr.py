@@ -95,7 +95,7 @@ def _get_stale_data(run_config):
         for chunk in chunked(matching_records_for_db, chunk_size):
             doc_ids = [val[0] for val in chunk]
             ucr_insertion_dates = _get_ucr_insertion_dates(run_config.domain, run_config.table_id, doc_ids)
-            for doc_id, doc_type, sql_modified_on in chunk:
+            for doc_id, doc_type, sql_modified_on, _ in chunk:
                 ucr_insert_date = ucr_insertion_dates.get(doc_id)
                 if (not ucr_insert_date
                         # Handle small time drift between databases

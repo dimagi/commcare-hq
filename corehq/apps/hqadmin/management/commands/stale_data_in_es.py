@@ -93,8 +93,8 @@ class CaseBackend:
     @staticmethod
     def run(run_config):
         rows = CaseBackend._get_server_modified_on_for_domain(run_config)
-        for case_id, case_type, es_date, primary_date in rows:
-            print(f"{case_id},CommCareCase,{case_type},{es_date},{primary_date}")
+        for case_id, case_type, es_date, primary_date, domain in rows:
+            print(f"{case_id},CommCareCase,{case_type},{domain},{es_date},{primary_date}")
 
     @staticmethod
     def _get_server_modified_on_for_domain(run_config):
@@ -111,11 +111,11 @@ class CaseBackend:
             for chunk in chunked(matching_records_for_db, chunk_size):
                 case_ids = [val[0] for val in chunk]
                 es_modified_on_by_ids = CaseBackend._get_es_modified_dates(run_config.domain, case_ids)
-                for case_id, case_type, sql_modified_on in chunk:
+                for case_id, case_type, sql_modified_on, domain in chunk:
                     sql_modified_on_str = f'{sql_modified_on.isoformat()}Z'
                     es_modified_on = es_modified_on_by_ids.get(case_id)
                     if not es_modified_on or (es_modified_on < sql_modified_on_str):
-                        yield case_id, case_type, es_modified_on, sql_modified_on_str
+                        yield case_id, case_type, es_modified_on, sql_modified_on_str, domain
 
     @staticmethod
     def _get_data_for_couch_backend(run_config):
@@ -143,7 +143,7 @@ class CaseBackend:
                     continue
                 es_modified_on = es_modified_on_by_ids.get(case_id)
                 if not es_modified_on or (es_modified_on != couch_modified_on):
-                    yield case_id, 'COUCH_TYPE_NOT_SUPPORTED', es_modified_on, couch_modified_on
+                    yield case_id, 'COUCH_TYPE_NOT_SUPPORTED', es_modified_on, couch_modified_on, run_config.domain
 
     @staticmethod
     def _get_es_modified_dates(domain, case_ids):
@@ -167,14 +167,15 @@ def get_sql_case_data_for_db(db, run_config):
         matching_cases = matching_cases.filter(
             type=run_config.case_type
         )
-    return matching_cases.values_list('case_id', 'type', 'server_modified_on')
+    return matching_cases.values_list('case_id', 'type', 'server_modified_on', 'domain')
 
 
 class FormBackend:
     @staticmethod
     def run(run_config):
-        for form_id, doc_type, xmlns, es_date, primary_date in FormBackend._get_stale_form_data(run_config):
-            print(f"{form_id},{doc_type},{xmlns},{es_date},{primary_date}")
+        rows = FormBackend._get_stale_form_data(run_config)
+        for form_id, doc_type, xmlns, es_date, primary_date, domain in rows:
+            print(f"{form_id},{doc_type},{xmlns},{domain},{es_date},{primary_date}")
 
     @staticmethod
     def _get_stale_form_data(run_config):
@@ -194,12 +195,12 @@ class FormBackend:
                                            length=length, stream=sys.stderr):
                 form_ids = [val[0] for val in chunk]
                 es_modified_on_by_ids = FormBackend._get_es_modified_dates_for_forms(run_config.domain, form_ids)
-                for form_id, state, xmlns, sql_modified_on in chunk:
+                for form_id, state, xmlns, sql_modified_on, domain in chunk:
                     doc_type = state_to_doc_type.get(state, 'XFormInstance')
                     sql_modified_on_str = f'{sql_modified_on.isoformat()}Z'
                     es_modified_on = es_modified_on_by_ids.get(form_id)
                     if not es_modified_on or (es_modified_on < sql_modified_on_str):
-                        yield form_id, doc_type, xmlns, es_modified_on, sql_modified_on_str
+                        yield form_id, doc_type, xmlns, es_modified_on, sql_modified_on_str, domain
 
     @staticmethod
     def _get_sql_form_data_for_db(db, run_config):
@@ -211,7 +212,7 @@ class FormBackend:
             matching_forms = matching_forms.filter(
                 domain=run_config.domain
             )
-        return matching_forms.values_list('form_id', 'state', 'xmlns', 'received_on')
+        return matching_forms.values_list('form_id', 'state', 'xmlns', 'received_on', 'domain')
 
     @staticmethod
     def _get_es_modified_dates_for_forms(domain, form_ids):
