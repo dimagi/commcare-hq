@@ -5,7 +5,7 @@ from django.core.management import BaseCommand, CommandError
 
 from corehq.apps.change_feed import data_sources, topics
 from corehq.apps.change_feed.producer import producer
-from corehq.form_processor.backends.sql.dbaccessors import ShardAccessor
+from corehq.form_processor.backends.sql.dbaccessors import ShardAccessor, doc_type_to_state
 from corehq.form_processor.models import CommCareCaseSQL
 from corehq.form_processor.utils import should_use_sql_backend
 from dimagi.utils.chunked import chunked
@@ -21,8 +21,8 @@ from pillowtop.feed.interface import ChangeMeta
 DocumentRecord = namedtuple('DocumentRecord', ['doc_id', 'doc_type', 'doc_subtype', 'domain'])
 
 
-CASE_DOC_TYPE = "CommCareCase"
-FORM_DOC_TYPE = "XFormInstance"
+CASE_DOC_TYPES = {'CommCareCase'}
+FORM_DOC_TYPES = set(doc_type_to_state.keys())
 
 
 class Command(BaseCommand):
@@ -40,11 +40,12 @@ class Command(BaseCommand):
         form_records = []
         case_records = []
         for record in document_records:
-            if record.doc_type == CASE_DOC_TYPE:
+            if record.doc_type in CASE_DOC_TYPES:
                 case_records.append(record)
-            else:
-                assert record.doc_type == FORM_DOC_TYPE
+            elif record.doc_type in FORM_DOC_TYPES:
                 form_records.append(record)
+            else:
+                assert False, f'Bad doc type {record.doc_type} should have been caught already below.'
         _publish_cases(case_records)
         _publish_forms(form_records)
 
@@ -54,7 +55,7 @@ def _get_document_records(doc_ids_file):
         lines = f.readlines()
         for l in lines:
             doc_id, doc_type, doc_subtype, domain = [val.strip() for val in l.split(',')[0:4]]
-            if doc_type not in [CASE_DOC_TYPE, FORM_DOC_TYPE]:
+            if doc_type not in set.union(CASE_DOC_TYPES, FORM_DOC_TYPES):
                 raise CommandError(f"Found bad doc type {doc_type}. "
                                    "Did you use the right command to create the data?")
             yield DocumentRecord(doc_id, doc_type, doc_subtype, domain)
@@ -114,11 +115,12 @@ def _publish_cases_for_sql(domain, case_records):
 
 
 def _change_meta_for_sql_case(domain, case_id, case_type):
+    doc_type, = CASE_DOC_TYPES
     return ChangeMeta(
         document_id=case_id,
         data_source_type=data_sources.SOURCE_SQL,
         data_source_name=data_sources.CASE_SQL,
-        document_type=CASE_DOC_TYPE,
+        document_type=doc_type,
         document_subtype=case_type,
         domain=domain,
         is_deletion=False,
@@ -138,7 +140,7 @@ def _change_meta_for_sql_form_record(domain, form_record):
         document_id=form_record.doc_id,
         data_source_type=data_sources.SOURCE_SQL,
         data_source_name=data_sources.FORM_SQL,
-        document_type=FORM_DOC_TYPE,
+        document_type=form_record.doc_type,
         document_subtype=form_record.doc_subtype,
         domain=domain,
         is_deletion=False,
