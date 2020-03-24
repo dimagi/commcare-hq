@@ -13,7 +13,7 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.AddField(
-            model_name='unfinishedarchivestu',
+            model_name='unfinishedarchivestub',
             name='attempts',
             field=models.IntegerField(default=0),
         ),

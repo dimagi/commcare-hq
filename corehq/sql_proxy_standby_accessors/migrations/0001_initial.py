@@ -34,8 +34,8 @@ class Migration(migrations.Migration):
             'DROP EXTENSION plproxy'
         ),
         migrations.RunSQL(
-            'CREATE EXTENSION IF NOT EXISTS hashli',
-            'DROP EXTENSION hashli'
+            'CREATE EXTENSION IF NOT EXISTS hashlib',
+            'DROP EXTENSION hashlib'
         ),
         create_update_pl_proxy_config(),
         migrator.get_migration('get_replication_delay.sql'),
