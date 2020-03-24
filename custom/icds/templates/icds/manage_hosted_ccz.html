@@ -6,8 +6,6 @@
 {% requirejs_main "icds/js/manage_hosted_ccz" %}
 
 {% block page_content %}
-{% initial_page_data 'appVersionSelectInitialValue' selected_build_details %}
-{% initial_page_data 'appProfileInitialValues' initial_app_profile_details %}
 {% initial_page_data 'appVersionOnlyShowReleased' True %}
 {% registerurl "ccz_hostings_json" domain %}
 {% registerurl "paginate_releases" domain '---' %}

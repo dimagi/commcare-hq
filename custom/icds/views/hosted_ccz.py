@@ -157,26 +157,10 @@ class ManageHostedCCZ(BaseDomainView):
             data=self.request.POST if self.request.method == "POST" else None
         )
 
-    def _get_initial_app_profile_details(self, version):
-        app_id = self.request.GET.get('app_id')
-        selected_profile_id = self.request.GET.get('profile_id', '')
-        # only when performing search populate these initial values
-        if app_id and version:
-            build_doc = get_build_doc_by_version(self.domain, self.request.GET.get('app_id'), version)
-            if build_doc:
-                return [{
-                    'id': _id,
-                    'text': details['name'],
-                    'selected': selected_profile_id == _id
-                } for _id, details in build_doc['build_profiles'].items()]
-
     def get_context_data(self, **kwargs):
-        version = None      # TODO: handle search from js
         return {
             'form': self.form,
             'domain': self.domain,
-            'selected_build_details': ({'id': version, 'text': version} if version else None),
-            'initial_app_profile_details': self._get_initial_app_profile_details(version),
         }
 
     def post(self, request, *args, **kwargs):
