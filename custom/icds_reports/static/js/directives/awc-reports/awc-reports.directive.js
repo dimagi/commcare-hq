@@ -2084,6 +2084,102 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
 
     var caseId = $location.search().case_id;
 
+    // mobile helpers
+    const DEFAULT_SORTED_COLUMN = 0;
+    const SORT_ASCENDING = 0;
+    const DEFAULT_REQUEST_DATA_STARTING_FROM = 0;
+    vm.showSortPopup = false;
+    vm.requestDataStartingFrom = DEFAULT_REQUEST_DATA_STARTING_FROM; // could be any multiple of 10
+    vm.dataSortingDirection = SORT_ASCENDING;
+    vm.sortingColumn = DEFAULT_SORTED_COLUMN;
+    vm.sortableInputKpiData = [];
+    vm.toggleSortPopup = function (event) {
+        vm.showSortPopup = !vm.showSortPopup;
+        // At the top level element, click event is added, which when triggered closes sort popup
+        // this is triggered when there is click action anywhere on the page.
+        // But we dont need the click event which triggers the popup opening, to bubble up to the top, which will close it.
+        // hence preventing any click event on the pop up and sort button.
+        event.stopPropagation();
+    };
+    vm.clearSorting = function (event) {
+        // resets to sorting by location name and closes sort popup
+        vm.dataSortingDirection = SORT_ASCENDING;
+        vm.sortingColumn = DEFAULT_SORTED_COLUMN;
+        vm.sortableInputKpiData = [];
+        vm.requestDataStartingFrom = DEFAULT_REQUEST_DATA_STARTING_FROM;
+        vm.toggleSortPopup(event);
+        vm.getDataForStep(vm.step);
+    };
+    vm.getMobileData = function (index) {
+        // triggers when clicked on any of the headings in sort popup
+        if (vm.sortingColumn === index + 1) {
+            vm.dataSortingDirection = 1 - vm.dataSortingDirection;
+        } else {
+            vm.dataSortingDirection = SORT_ASCENDING;
+        }
+        vm.sortingColumn = index + 1;
+        vm.sortableInputKpiData = [];
+        vm.requestDataStartingFrom = DEFAULT_REQUEST_DATA_STARTING_FROM;
+        vm.getDataForStep(vm.step);
+    };
+    vm.isTabularDataDisplayed = (vm.step === 'beneficiary' || vm.step === 'pregnant' || vm.step === 'lactating');
+
+    vm.getMobileRequestParams = function (step) {
+        var requestParams = JSON.parse(JSON.stringify($location.search()));
+        for (var i = 0; i < vm.awcReportTableData[step].length; i++) {
+            var entry = vm.awcReportTableData[step][i];
+            requestParams['columns[' + i + '][data]'] = entry['mData'];
+        }
+        requestParams['order[0][column]'] = vm.sortingColumn;
+        requestParams['order[0][dir]'] = vm.dataSortingDirection;
+        requestParams['start'] = vm.requestDataStartingFrom;
+        requestParams['length'] = 10;
+
+        return requestParams;
+    };
+
+    vm.generateSortableKpiData = function (data) {
+        var tableData = vm.awcReportTableData[vm.step];
+        var existingDataLength = vm.sortableInputKpiData.length;
+        for (var i = existingDataLength; i < (data.length + existingDataLength); i++) {
+            vm.sortableInputKpiData[i] = {};
+            vm.sortableInputKpiData[i]['cardHeading'] = tableData[0]['value']('', '', data[i - existingDataLength]);
+            vm.sortableInputKpiData[i]['attributes'] = [];
+            var cardData = data[i - existingDataLength];
+            for (var j = 1; j < tableData.length; j++) {
+                var kpiObject = {
+                    'heading' : tableData[j]['title'],
+                    'value' : tableData[j]['value']('', '', cardData),
+                    'isTheSortedColumn' : j === vm.sortingColumn,
+                    'sortingDirection' : vm.dataSortingDirection,
+                    'tooltip' : tableData[j]['tooltipType'] ?
+                        vm.getPopoverContent(cardData['recorded_weight'], cardData['recorded_height'],
+                            cardData['age_in_months'], tableData[j]['tooltipType']) : null,
+                };
+                // adding the sorted column as first element (unshift adds elements to array at beginning, push at end)
+                if (kpiObject['isTheSortedColumn']) {
+                    vm.sortableInputKpiData[i]['attributes'].unshift(kpiObject);
+                } else {
+                    vm.sortableInputKpiData[i]['attributes'].push(kpiObject);
+                }
+            }
+        }
+    };
+
+    jQuery(function($) {
+        $('#summaryList').bind('scroll', function () {
+            // this function runs when end of summary list is reached and if totalRecords are not yet requested
+            // Also requests are prevented for initial requests
+            // Reference: http://jsfiddle.net/doktormolle/w7X9N/
+            if (isMobile && ($(this).scrollTop() + $(this).innerHeight() >= $(this)[0].scrollHeight) &&
+                ((vm.requestDataStartingFrom + 10) < vm.totalNumberOfEntries) && vm.sortableInputKpiData.length) {
+                vm.requestDataStartingFrom += 10;
+                vm.getDataForStep(vm.step);
+            }
+        })
+    });
+    // end mobile helpers
+
     vm.getDataForStep = function (step) {
 
         if (step === 'beneficiary_details') {
@@ -2137,6 +2233,20 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
                             ];
                         }
                     }
+                },
+                function (error) {
+                    $log.error(error);
+                }
+            );
+        } else if (parseInt(vm.selectedLocationLevel) === 4 && vm.isTabularDataDisplayed && isMobile) {
+            vm.myPromise = $http({
+                method: "GET",
+                url: get_url,
+                params: vm.getMobileRequestParams(step)
+            }).then(
+                function (response) {
+                    vm.generateSortableKpiData(response.data.data);
+                    vm.totalNumberOfEntries = response.data.recordsTotal;
                 },
                 function (error) {
                     $log.error(error);
@@ -2772,16 +2882,22 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
             id: 'beneficiary',
             route: "/awc_reports/beneficiary",
             label: "Child Beneficiaries List",
+            image: "/static/icds_reports/mobile/images/babyboy.png",
+            isMobile: haveAccessToFeatures,
         },
         {
             id: 'pregnant',
             route: "/awc_reports/pregnant",
             label: "Pregnant Women",
+            image: "/static/icds_reports/mobile/images/pregnant.png",
+            isMobile: haveAccessToFeatures,
         },
         {
             id: 'lactating',
             route: "/awc_reports/lactating",
             label: "Lactating Women",
+            image: "/static/icds_reports/mobile/images/lactatingwoman.png",
+            isMobile: haveAccessToFeatures,
         },
     ];
     vm.mobileSteps = _.filter(steps, function (step) {
