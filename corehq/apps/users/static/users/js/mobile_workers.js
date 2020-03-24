@@ -50,6 +50,7 @@ hqDefine("users/js/mobile_workers",[
         SUCCESS: 'success',
         WARNING: 'warning',
         ERROR: 'danger',
+        DISABLED: 'disabled',
     };
 
     var rmi = function () {};
@@ -64,6 +65,8 @@ hqDefine("users/js/mobile_workers",[
             location_id: '',
             password: '',
             user_id: '',
+            force_account_confirmation: false,
+            email: '',
             is_active: true,
             custom_fields: {},
         });
@@ -73,6 +76,10 @@ hqDefine("users/js/mobile_workers",[
             return ko.observable(value);
         });
         var self = ko.mapping.fromJS(options);
+
+        // used by two-stage provisioning
+        self.emailRequired = ko.observable(self.force_account_confirmation());
+        self.passwordEnabled = ko.observable(!self.force_account_confirmation());
 
         self.action_error = ko.observable('');  // error when activating/deactivating a user
 
@@ -210,12 +217,16 @@ hqDefine("users/js/mobile_workers",[
         self.implementPasswordObfuscation = ko.observable(options.implement_password_obfuscation);
 
         self.passwordStatus = ko.computed(function () {
-            if (!self.useStrongPasswords()) {
-                // No validation
+            if (!self.stagedUser()) {
                 return self.STATUS.NONE;
             }
 
-            if (!self.stagedUser()) {
+            if (self.stagedUser().force_account_confirmation()) {
+                return self.STATUS.DISABLED;
+            }
+
+            if (!self.useStrongPasswords()) {
+                // No validation
                 return self.STATUS.NONE;
             }
 
@@ -247,6 +258,26 @@ hqDefine("users/js/mobile_workers",[
                 return self.STATUS.ERROR;
             }
             return self.STATUS.WARNING;
+        });
+
+        self.emailStatus = ko.computed(function () {
+
+            if (!self.stagedUser()) {
+                return self.STATUS.NONE;
+            }
+
+            // todo: add email validation eventually
+            if (self.stagedUser().emailRequired() && !self.stagedUser().email()) {
+                return self.STATUS.ERROR;
+            }
+        });
+
+        self.emailStatusMessage = ko.computed(function () {
+            // todo: add email validation eventually
+            if (self.emailStatus() === self.STATUS.ERROR) {
+                return gettext('Email address is required when users confirm their own accounts.');
+            }
+            return "";
         });
 
         self.generateStrongPassword = function () {
@@ -332,6 +363,20 @@ hqDefine("users/js/mobile_workers",[
             user.password.subscribe(function () {
                 self.isSuggestedPassword(false);
             });
+            user.force_account_confirmation.subscribe(function (enabled) {
+                if (enabled) {
+                    // make email required
+                    user.emailRequired(true);
+                    // clear and disable password input
+                    user.password('');
+                    user.passwordEnabled(false);
+                } else {
+                    // make email optional
+                    user.emailRequired(false);
+                    // enable password input
+                    user.passwordEnabled(true);
+                }
+            });
         });
 
         self.initializeUser = function () {
@@ -359,7 +404,17 @@ hqDefine("users/js/mobile_workers",[
             if (!self.stagedUser().username()) {
                 return false;
             }
-            if (!self.stagedUser().password()) {
+            if (self.stagedUser().passwordEnabled()) {
+                if  (!self.stagedUser().password()) {
+                    return false;
+                }
+                if (self.useStrongPasswords()) {
+                    if (!self.isSuggestedPassword() && self.passwordStatus() !== self.STATUS.SUCCESS) {
+                        return false;
+                    }
+                }
+            }
+            if (self.stagedUser().emailRequired() && !self.stagedUser().email()) {
                 return false;
             }
             if (options.require_location_id && !self.stagedUser().location_id()) {
@@ -367,11 +422,6 @@ hqDefine("users/js/mobile_workers",[
             }
             if (self.usernameAvailabilityStatus() !== self.STATUS.SUCCESS) {
                 return false;
-            }
-            if (self.useStrongPasswords()) {
-                if (!self.isSuggestedPassword() && self.passwordStatus() !== self.STATUS.SUCCESS) {
-                    return false;
-                }
             }
             var fieldData = self.stagedUser().custom_fields;
             if (_.isObject(fieldData) && !_.isArray(fieldData)) {
@@ -387,6 +437,10 @@ hqDefine("users/js/mobile_workers",[
             var newUser = userModel(ko.mapping.toJS(self.stagedUser));
             self.newUsers.push(newUser);
             newUser.creation_status(STATUS.PENDING);
+            // if we disabled the password, set it just in time before going to the server
+            if (!newUser.passwordEnabled()) {
+                newUser.password(self.generateStrongPassword());
+            }
             if (self.implementPasswordObfuscation()) {
                 newUser.password(nicEncoder().encode(newUser.password()));
             }

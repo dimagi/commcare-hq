@@ -13,7 +13,6 @@ from django.conf import settings
 from django.db.utils import IntegrityError
 
 import attr
-from gevent.pool import Pool
 from memoized import memoized
 
 from casexml.apps.case.models import CommCareCase, CommCareCaseAction
@@ -65,7 +64,6 @@ from corehq.form_processor.models import (
     CaseTransaction,
     CommCareCaseIndexSQL,
     CommCareCaseSQL,
-    LedgerTransaction,
     RebuildWithReason,
     XFormInstanceSQL,
     XFormOperationSQL,
@@ -84,7 +82,6 @@ from corehq.form_processor.utils.general import (
 from corehq.form_processor.utils.xform import convert_xform_to_json
 from corehq.toggles import COUCH_SQL_MIGRATION_BLACKLIST, NAMESPACE_DOMAIN
 from corehq.util.couch_helpers import NoSkipArgsProvider
-from corehq.util.datadog.gauges import datadog_counter
 from corehq.util.datadog.utils import bucket_value
 from corehq.util.log import with_progress_bar
 from corehq.util.pagination import (
@@ -93,15 +90,21 @@ from corehq.util.pagination import (
     StopToResume,
 )
 from corehq.util.timer import TimingContext
+from corehq.util.metrics import metrics_counter, metrics_histogram
 
 from .asyncforms import AsyncFormProcessor, get_case_ids
 from .casediff import MISSING_BLOB_PRESENT, diff_form_state
-from .casediffqueue import CaseDiffProcess, CaseDiffQueue, NoCaseDiff
+from .casediffqueue import CaseDiffProcess, CaseDiffPending
 from .json2xml import convert_form_to_xml
 from .statedb import init_state_db
 from .staterebuilder import iter_unmigrated_docs
 from .system_action import do_system_action
-from .util import get_ids_from_string_or_file, exit_on_error, str_to_datetime
+from .util import (
+    exit_on_error,
+    get_ids_from_string_or_file,
+    str_to_datetime,
+    worker_pool,
+)
 
 log = logging.getLogger(__name__)
 
@@ -140,7 +143,7 @@ class CouchSqlDomainMigrator:
         state_dir,
         with_progress=True,
         live_migrate=False,
-        diff_process=True,
+        case_diff="after",
         rebuild_state=False,
         stop_on_error=False,
         forms=None,
@@ -154,12 +157,12 @@ class CouchSqlDomainMigrator:
         self.counter = DocCounter(self.statedb)
         if rebuild_state:
             self.statedb.is_rebuild = True
-        if diff_process is None:
-            diff_queue = NoCaseDiff
-        elif diff_process:
+        assert case_diff in {"after", "asap", "none"}, case_diff
+        self.diff_cases_after_forms = case_diff == "after"
+        if case_diff == "asap":
             diff_queue = CaseDiffProcess
         else:
-            diff_queue = CaseDiffQueue
+            diff_queue = CaseDiffPending
         self.stop_on_error = stop_on_error
         self.forms = forms
         self.case_diff_queue = diff_queue(self.statedb)
@@ -174,10 +177,12 @@ class CouchSqlDomainMigrator:
         with self.counter, patch, self.case_diff_queue, self.stopper:
             if self.forms:
                 self._process_forms_subset(self.forms)
-                return
-            self._process_main_forms()
-            self._copy_unprocessed_forms()
-            self._copy_unprocessed_cases()
+            else:
+                self._process_main_forms()
+                self._copy_unprocessed_forms()
+                self._copy_unprocessed_cases()
+            if self.diff_cases_after_forms:
+                self._diff_cases()
 
         log.info('migrated domain {}'.format(self.domain))
 
@@ -281,8 +286,7 @@ class CouchSqlDomainMigrator:
         def copy_form(doc):
             self._migrate_unprocessed_form(doc)
             add_form(doc['doc_type'])
-        pool = Pool(10)
-        with self.counter("unprocessed_forms") as add_form:
+        with self.counter("unprocessed_forms") as add_form, worker_pool() as pool:
             problems = self.statedb.iter_problem_forms()
             for couch_form_json in iter_docs(XFormInstance.get_db(), problems, chunksize=1000):
                 assert couch_form_json['problem']
@@ -292,9 +296,6 @@ class CouchSqlDomainMigrator:
             doc_types = sorted(UNPROCESSED_DOC_TYPES)
             for couch_form_json in self._get_resumable_iterator(doc_types):
                 pool.spawn(copy_form, couch_form_json)
-
-            while not pool.join(timeout=10):
-                log.info('Waiting on {} docs'.format(len(pool)))
 
     def _migrate_unprocessed_form(self, couch_form_json):
         log.debug('Processing doc: {}({})'.format(couch_form_json['doc_type'], couch_form_json['_id']))
@@ -307,13 +308,10 @@ class CouchSqlDomainMigrator:
             self._copy_unprocessed_case(doc)
             add_case()
         doc_types = ['CommCareCase-Deleted']
-        pool = Pool(10)
-        with self.counter("unprocessed_cases", 'CommCareCase-Deleted') as add_case:
+        with self.counter("unprocessed_cases", 'CommCareCase-Deleted') as add_case, \
+                worker_pool() as pool:
             for doc in self._get_resumable_iterator(doc_types):
                 pool.spawn(copy_case, doc)
-
-            while not pool.join(timeout=10):
-                log.info('Waiting on {} docs'.format(len(pool)))
 
     def _copy_unprocessed_case(self, doc):
         couch_case = CommCareCase.wrap(doc)
@@ -359,6 +357,13 @@ class CouchSqlDomainMigrator:
             )
         finally:
             self.case_diff_queue.enqueue(couch_case.case_id)
+
+    def _diff_cases(self):
+        from .casedifftool import CaseDiffTool
+        casediff = CaseDiffTool(self)
+        casediff.diff_cases()
+        if casediff.should_diff_pending():
+            casediff.diff_cases("pending")
 
     def _process_forms_subset(self, forms):
         from .missingdocs import MissingIds
@@ -445,6 +450,7 @@ class CouchSqlDomainMigrator:
                 couch_form.form_id, case_id)
             sql_form = FormAccessorSQL.get_form(couch_form.form_id)
             MigrationLedgerProcessor(self.domain).process_form_archived(sql_form)
+            self.case_diff_queue.update([case_id], couch_form.form_id)
             return True
 
         def iter_form_ids(jdiff, kind):
@@ -554,7 +560,7 @@ class CouchSqlDomainMigrator:
                 except Exception:
                     log.warn("error saving case %s", case.case_id, exc_info=True)
             if ledgers:
-                log.info("migrating missing %s ledgers for form %s", len(ledgers), form_id)
+                log.info("migrating %s ledgers for form %s", len(ledgers), form_id)
                 LedgerAccessorSQL.save_ledger_values(ledgers, result.stock_result)
                 saved = True
         return saved
@@ -1137,18 +1143,16 @@ def _iter_docs(domain, doc_type, resume_key, stopper):
         item_getter=None,
         event_handler=MigrationPaginationEventHandler(domain, stopper)
     )
-    if rows.state.is_resume():
-        log.info("iteration state: %r", rows.state.to_json())
+    if rows.state.is_resume() and rows.state.to_json().get("kwargs"):
+        log.info("iteration state: %r", rows.state.to_json()["kwargs"])
     row = None
     try:
         for row in rows:
             yield row[row_key]
     finally:
-        if row is not None:
-            row_copy = dict(row)
-            row_copy.pop("doc", None)
-            log.info("last item: %r", row_copy)
-        log.info("final iteration state: %r", rows.state.to_json())
+        final_state = rows.state.to_json().get("kwargs")
+        if final_state:
+            log.info("final iteration state: %r", final_state)
 
 
 _iter_docs.chunk_size = 1000
@@ -1356,7 +1360,7 @@ class DocCounter:
         be passed if it is provided here.
         :yields: counter function.
         """
-        tags = [f"type:{dd_type}"]
+        tags = {"type": dd_type}
         args = (doc_type,) if doc_type else ()
         with self.timing(dd_type):
             try:
@@ -1380,7 +1384,7 @@ class DocCounter:
             log.debug("saved doc counts: %s", counts)
             self.state_session = 0
         if tags is not None:
-            datadog_counter(self.DD_KEY, value=self.dd_session, tags=tags)
+            metrics_counter(self.DD_KEY, value=self.dd_session, tags=tags)
             self.dd_session = 0
 
     def get(self, doc_type):
@@ -1396,16 +1400,15 @@ class DocCounter:
         metric_name_template = "commcare.%s.count"
         metric_name_template_normalized = "commcare.%s.count.normalized"
         for timing in self.timing.to_list():
-            datadog_counter(
-                metric_name_template % timing.full_name,
-                tags=['duration:%s' % bucket_value(timing.duration, TIMING_BUCKETS)])
+            metrics_histogram(
+                metric_name_template % timing.full_name, timing.duration,
+                buckets=TIMING_BUCKETS, bucket_tag='duration'
+            )
             if getattr(timing, "normalize_denominator", 0):
-                datadog_counter(
-                    metric_name_template_normalized % timing.full_name,
-                    tags=['duration:%s' % bucket_value(
-                        timing.duration / timing.normalize_denominator,
-                        NORMALIZED_TIMING_BUCKETS,
-                    )]
+                normalized_value = timing.duration / timing.normalize_denominator
+                metrics_histogram(
+                    metric_name_template_normalized % timing.full_name, normalized_value,
+                    buckets=NORMALIZED_TIMING_BUCKETS, bucket_tag='duration'
                 )
 
 
@@ -1418,7 +1421,7 @@ def commit_migration(domain_name):
         Domain.get_by_name.clear(Domain, domain_name)
         assert should_use_sql_backend(domain_name), \
             "could not set use_sql_backend for domain %s (try again)" % domain_name
-    datadog_counter("commcare.couch_sql_migration.total_committed")
+    metrics_counter("commcare.couch_sql_migration.total_committed")
     log.info("committed migration for {}".format(domain_name))
 
 

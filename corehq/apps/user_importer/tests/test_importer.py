@@ -41,7 +41,7 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             'hello',
             self.domain.name))
 
-    def _get_spec(self, **kwargs):
+    def _get_spec(self, delete_keys=None, **kwargs):
         spec = {
             'username': 'hello',
             'name': 'Another One',
@@ -51,6 +51,9 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             'password': 123,
             'email': None
         }
+        if delete_keys:
+            for key in delete_keys:
+                spec.pop(key)
         spec.update(kwargs)
         return spec
 
@@ -254,6 +257,17 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
         self.assertIsNotNone(
             CommCareUser.get_by_username('{}@{}.commcarehq.org'.format('123', self.domain.name))
         )
+
+    def test_upload_with_unconfirmed_account(self):
+        import_users_and_groups(
+            self.domain.name,
+            [self._get_spec(delete_keys=['is_active'], is_account_confirmed='False')],
+            [],
+        )
+        user = self.user
+        self.assertIsNotNone(user)
+        self.assertEqual(False, user.is_active)
+        self.assertEqual(False, user.is_account_confirmed)
 
 
 class TestUserBulkUploadStrongPassword(TestCase, DomainSubscriptionMixin):

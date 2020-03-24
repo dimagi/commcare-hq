@@ -2,7 +2,7 @@ from collections import defaultdict, namedtuple
 from typing import Any, Dict, Iterable, List, Optional
 
 from corehq.apps.fixtures.dbaccessors import (
-    get_fixture_data_types_in_domain,
+    get_fixture_data_types,
     get_fixture_items_for_data_type,
 )
 from corehq.apps.fixtures.models import FixtureDataItem
@@ -104,10 +104,10 @@ def get_locations(domain, filters) -> List[LocationTuple]:
 
 
 def get_data_types_by_tag(domain):
-    # Not cached, because get_fixture_data_types_in_domain() is already cached
+    # Not cached, because get_fixture_data_types() is already cached
     data_types_by_tag = {
         dt.tag: dt
-        for dt in get_fixture_data_types_in_domain(domain)
+        for dt in get_fixture_data_types(domain)
     }
     for data_type in REQUIRED_FIXTURE_DATA_TYPES:
         assert data_type in data_types_by_tag, \

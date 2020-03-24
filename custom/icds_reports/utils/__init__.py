@@ -837,13 +837,6 @@ def track_time(func):
     """A decorator to track the duration an aggregation script takes to execute"""
     from custom.icds_reports.models import AggregateSQLProfile
 
-    def get_async_indicator_time():
-        try:
-            return AsyncIndicator.objects.exclude(date_queued__isnull=True)\
-                .aggregate(Max('date_created'))['date_created__max'] or datetime.now()
-        except OperationalError:
-            return None
-
     def get_sync_datasource_time():
         return KafkaCheckpoint.objects.filter(checkpoint_id__in=const.UCR_PILLOWS) \
             .exclude(doc_modification_time__isnull=True)\
@@ -857,17 +850,11 @@ def track_time(func):
         end = time.time()
 
         sync_latest_ds_update = get_sync_datasource_time()
-        async_latest_ds_update = get_async_indicator_time()
-
-        if sync_latest_ds_update and async_latest_ds_update:
-            last_included_doc_time = min(sync_latest_ds_update, async_latest_ds_update)
-        else:
-            last_included_doc_time = sync_latest_ds_update or async_latest_ds_update
 
         AggregateSQLProfile.objects.create(
             name=func.__name__,
             duration=int(end - start),
-            last_included_doc_time=last_included_doc_time
+            last_included_doc_time=sync_latest_ds_update
         )
         return result
 

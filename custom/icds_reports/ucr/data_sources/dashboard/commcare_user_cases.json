@@ -93,6 +93,33 @@
           "type": "property_name",
           "property_name": "ls_name"
         }
+      },
+      {
+        "column_id": "awc_ward_1",
+        "datatype": "string",
+        "type": "expression",
+        "expression": {
+          "type": "property_name",
+          "property_name": "awc_ward_1"
+        }
+      },
+      {
+        "column_id": "awc_ward_2",
+        "datatype": "string",
+        "type": "expression",
+        "expression": {
+          "type": "property_name",
+          "property_name": "awc_ward_2"
+        }
+      },
+      {
+        "column_id": "awc_ward_3",
+        "datatype": "string",
+        "type": "expression",
+        "expression": {
+          "type": "property_name",
+          "property_name": "awc_ward_3"
+        }
       }
     ],
     "engine_id": "icds-ucr-citus",

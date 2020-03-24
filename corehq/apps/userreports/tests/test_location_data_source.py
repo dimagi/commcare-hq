@@ -88,11 +88,11 @@ class TestLocationDataSource(TestCase):
         sweetwater.save()
 
         # Process both changes together and verify that they went through
-        self.pillow.process_changes(since=since)
+        self.pillow.process_changes(since=since, forever=False)
         self.assertDataSourceAccurate(["Westworld", "Pariah", "Las Mudas", "Blood Arroyo"])
 
         # Delete a location
         since = self.pillow.get_change_feed().get_latest_offsets()
         las_mudas.delete()
-        self.pillow.process_changes(since=since)
+        self.pillow.process_changes(since=since, forever=False)
         self.assertDataSourceAccurate(["Westworld", "Pariah", "Blood Arroyo"])

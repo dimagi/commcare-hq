@@ -9,6 +9,7 @@ from django.conf import settings
 
 from memoized import memoized
 
+from corehq.util.datadog.gauges import datadog_counter
 from corehq.util.es.interface import ElasticsearchInterface
 from dimagi.utils.chunked import chunked
 from pillowtop.processors.elastic import send_to_elasticsearch as send_to_es
@@ -24,7 +25,6 @@ from corehq.pillows.mappings.reportxform_mapping import REPORT_XFORM_INDEX
 from corehq.pillows.mappings.sms_mapping import SMS_INDEX_INFO
 from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
-from corehq.util.datadog.gauges import datadog_counter
 from corehq.util.es.elasticsearch import (
     Elasticsearch,
     ElasticsearchException,

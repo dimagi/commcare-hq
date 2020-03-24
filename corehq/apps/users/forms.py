@@ -24,6 +24,7 @@ from crispy_forms.layout import Fieldset, Layout, Submit
 from django_countries.data import COUNTRIES
 from memoized import memoized
 
+from corehq.toggles import TWO_STAGE_USER_PROVISIONING
 from dimagi.utils.django.fields import TrimmedCharField
 
 from corehq import toggles
@@ -528,6 +529,24 @@ class NewMobileWorkerForm(forms.Form):
         label=ugettext_noop("Location"),
         required=False,
     )
+    force_account_confirmation = forms.BooleanField(
+        label=ugettext_noop("Require Account Confirmation?"),
+        help_text=ugettext_noop(
+            "If checked, the user will be sent a confirmation email and asked to set their password."
+        ),
+        required=False,
+    )
+    email = forms.EmailField(
+        label=ugettext_noop("Email"),
+        required=False,
+        help_text="""
+            <span data-bind="visible: $root.emailStatus() !== $root.STATUS.NONE">
+                <i class="fa fa-exclamation-triangle"
+                   data-bind="visible: $root.emailStatus() === $root.STATUS.ERROR"></i>
+                <!-- ko text: $root.emailStatusMessage --><!-- /ko -->
+            </span>
+        """
+    )
     new_password = forms.CharField(
         widget=forms.PasswordInput(),
         required=True,
@@ -537,7 +556,7 @@ class NewMobileWorkerForm(forms.Form):
 
     def __init__(self, project, request_user, *args, **kwargs):
         super(NewMobileWorkerForm, self).__init__(*args, **kwargs)
-        email_string = "@{}.commcarehq.org".format(project.name)
+        email_string = "@{}.{}".format(project.name, settings.HQ_ACCOUNT_ROOT)
         max_chars_username = 80 - len(email_string)
         self.project = project
         self.domain = self.project.name
@@ -572,6 +591,35 @@ class NewMobileWorkerForm(forms.Form):
                 data_bind='value: location_id',
             )
 
+        self.two_stage_provisioning_enabled = TWO_STAGE_USER_PROVISIONING.enabled(self.domain)
+        if self.two_stage_provisioning_enabled:
+            confirm_account_field = crispy.Field(
+                'force_account_confirmation',
+                data_bind='checked: force_account_confirmation',
+            )
+            email_field = crispy.Div(
+                crispy.Field(
+                    'email',
+                    data_bind="value: email, valueUpdate: 'keyup'",
+                ),
+                data_bind='''
+                    css: {
+                        'has-error': $root.emailStatus() === $root.STATUS.ERROR,
+                    },
+                '''
+            )
+        else:
+            confirm_account_field = crispy.Hidden(
+                'force_account_confirmation',
+                '',
+                data_bind='value: force_account_confirmation',
+            )
+            email_field = crispy.Hidden(
+                'email',
+                '',
+                data_bind='value: email',
+            )
+
         self.helper = HQModalFormHelper()
         self.helper.form_tag = False
         self.helper.layout = Layout(
@@ -601,12 +649,14 @@ class NewMobileWorkerForm(forms.Form):
                     data_bind='value: last_name',
                 ),
                 location_field,
+                confirm_account_field,
+                email_field,
                 crispy.Div(
                     hqcrispy.B3MultiField(
                         _("Password"),
                         InlineField(
                             'new_password',
-                            data_bind="value: password, valueUpdate: 'input'",
+                            data_bind="value: password, valueUpdate: 'input', enable: passwordEnabled",
                         ),
                         crispy.HTML('''
                             <p class="help-block" data-bind="if: $root.isSuggestedPassword">
@@ -630,6 +680,9 @@ class NewMobileWorkerForm(forms.Form):
                                         <i class="fa fa-warning"></i> {rules}
                                     <!-- /ko -->
                                 <!-- /ko -->
+                                <!-- ko if: $root.passwordStatus() === $root.STATUS.DISABLED -->
+                                    <i class="fa fa-warning"></i> {disabled}
+                                <!-- /ko -->
                             </p>
                         '''.format(
                             suggested=_("This password is automatically generated. Please copy it or create "
@@ -639,6 +692,8 @@ class NewMobileWorkerForm(forms.Form):
                             weak=_("Your password is too weak! Try adding numbers or symbols!"),
                             rules=_("Password Requirements: 1 special character, 1 number, 1 capital letter, "
                                 "minimum length of 8 characters."),
+                            disabled=_("Setting a password is disabled. "
+                                       "The user will set their own password on confirming their account email."),
                         )),
                         required=True,
                     ),
@@ -789,7 +844,7 @@ class PrimaryLocationWidget(forms.Widget):
         self.source_css_id = source_css_id
         self.template = 'locations/manage/partials/drilldown_location_widget.html'
 
-    def render(self, name, value, attrs=None):
+    def render(self, name, value, attrs=None, renderer=None):
         initial_data = {}
         if value:
             try:
