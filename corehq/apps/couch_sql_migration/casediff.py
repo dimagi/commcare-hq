@@ -364,6 +364,18 @@ def add_missing_docs(data, couch_cases, sql_case_ids, dd_count):
             ))
 
 
+def add_cases_missing_from_couch(data, case_ids):
+    sql_ids = {c.case_id for c in CaseAccessorSQL.get_cases(list(case_ids))}
+    data.doc_ids.extend(case_ids)
+    for case_id in case_ids:
+        new = "present" if case_id in sql_ids else MISSING
+        data.diffs.append((
+            "CommCareCase",
+            case_id,
+            [Diff("missing", path=["*"], old_value=MISSING, new_value=new)],
+        ))
+
+
 @contextmanager
 def global_diff_state(domain, no_action_case_forms, cutoff_date=None):
     from .couchsqlmigration import migration_patches
