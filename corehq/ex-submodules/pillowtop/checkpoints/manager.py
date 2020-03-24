@@ -128,15 +128,12 @@ class PillowCheckpointEventHandler(ChangeEventHandler):
         self.checkpoint_callback = checkpoint_callback
 
     def should_update_checkpoint(self, context):
-        if context.should_flush:
-            return True
-        if context.changes_seen >= self.checkpoint_frequency:
-            return True
-        elif self.max_checkpoint_delay:
+        frequency_hit = context.changes_seen >= self.checkpoint_frequency
+        time_hit = False
+        if self.max_checkpoint_delay:
             seconds_since_last_update = (datetime.utcnow() - self.last_update).total_seconds()
-            return seconds_since_last_update >= self.max_checkpoint_delay
-        else:
-            return False
+            time_hit = seconds_since_last_update >= self.max_checkpoint_delay
+        return frequency_hit or time_hit
 
     def get_new_seq(self, change):
         return change['seq']
