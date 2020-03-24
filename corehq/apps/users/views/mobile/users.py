@@ -644,10 +644,6 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
         return NewMobileWorkerForm(self.request.project, self.couch_user)
 
     @property
-    def _mobile_worker_form(self):
-        return self.new_mobile_worker_form
-
-    @property
     @memoized
     def custom_data(self):
         return CustomDataEditor(
@@ -739,7 +735,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
 
         self.request.POST = form_data
 
-        is_valid = lambda: self._mobile_worker_form.is_valid() and self.custom_data.is_valid()
+        is_valid = lambda: self.new_mobile_worker_form.is_valid() and self.custom_data.is_valid()
         if not is_valid():
             return {'error': _("Forms did not validate")}
 
