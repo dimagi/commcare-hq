@@ -67,6 +67,7 @@ hqDefine("users/js/mobile_workers",[
             user_id: '',
             force_account_confirmation: false,
             email: '',
+            send_account_confirmation_email: false,
             is_active: true,
             custom_fields: {},
         });
@@ -80,6 +81,7 @@ hqDefine("users/js/mobile_workers",[
         // used by two-stage provisioning
         self.emailRequired = ko.observable(self.force_account_confirmation());
         self.passwordEnabled = ko.observable(!self.force_account_confirmation());
+        self.sendConfirmationEmailEnabled = ko.observable(self.force_account_confirmation());
 
         self.action_error = ko.observable('');  // error when activating/deactivating a user
 
@@ -370,11 +372,13 @@ hqDefine("users/js/mobile_workers",[
                     // clear and disable password input
                     user.password('');
                     user.passwordEnabled(false);
+                    user.sendConfirmationEmailEnabled(true);
                 } else {
                     // make email optional
                     user.emailRequired(false);
                     // enable password input
                     user.passwordEnabled(true);
+                    user.sendConfirmationEmailEnabled(false);
                 }
             });
         });

@@ -740,8 +740,8 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
             return {'error': _("Forms did not validate")}
 
         couch_user = self._build_commcare_user()
-        send_account_confirmation_if_necessary(couch_user)
-
+        if self.new_mobile_worker_form.cleaned_data['send_account_confirmation_email']:
+            send_account_confirmation_if_necessary(couch_user)
         return {
             'success': True,
             'user_id': couch_user.userID,
@@ -789,6 +789,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
                 'location_id': user_data.get('location_id'),
                 'email': user_data.get('email'),
                 'force_account_confirmation': user_data.get('force_account_confirmation'),
+                'send_account_confirmation_email': user_data.get('send_account_confirmation_email'),
                 'domain': self.domain,
             }
             for k, v in user_data.get('custom_fields', {}).items():
