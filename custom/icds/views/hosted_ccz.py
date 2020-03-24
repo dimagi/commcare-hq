@@ -1,6 +1,6 @@
 from django.conf import settings
 from django.contrib import messages
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, JsonResponse
 from django.http.response import HttpResponse
 from django.shortcuts import redirect
 from django.urls import reverse
@@ -8,6 +8,7 @@ from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy, ugettext_noop
+from django.views.decorators.http import require_GET
 from django.views.generic import TemplateView
 
 from couchexport.models import Format
@@ -87,6 +88,37 @@ class ManageHostedCCZLink(BaseDomainView):
         return self.get(request, *args, **kwargs)
 
 
+@require_GET
+@toggles.MANAGE_CCZ_HOSTING.required_decorator()
+def ccz_hostings_json(request, domain):
+    limit = int(request.GET.get('limit', 10))
+    page = int(request.GET.get('page', 1))
+
+    if request.GET.get('link_id'):
+        hosted_cczs = HostedCCZ.objects.filter(link_id=request.GET.get('link_id'))
+    else:
+        hosted_cczs = HostedCCZ.objects.filter(link__domain=domain)
+    if request.GET.get('app_id'):
+        hosted_cczs = hosted_cczs.filter(app_id=request.GET.get('app_id'))
+    version = request.GET.get('version')
+    if version:
+        hosted_cczs = hosted_cczs.filter(version=request.GET.get('version'))
+    if request.GET.get('profile_id'):
+        hosted_cczs = hosted_cczs.filter(profile_id=request.GET.get('profile_id'))
+    if request.GET.get('status'):
+        hosted_cczs = hosted_cczs.filter(status=request.GET.get('status'))
+
+    total = len(hosted_cczs)
+    skip = (page - 1) * limit
+    hosted_cczs = hosted_cczs[skip:skip + limit]
+    hosted_cczs = [h.to_json() for h in hosted_cczs]
+
+    return JsonResponse({
+        'hostings': hosted_cczs,
+        'total': total,
+    })
+
+
 class EditHostedCCZLink(ManageHostedCCZLink):
     urlname = "edit_hosted_ccz_link"
 
@@ -139,24 +171,10 @@ class ManageHostedCCZ(BaseDomainView):
                 } for _id, details in build_doc['build_profiles'].items()]
 
     def get_context_data(self, **kwargs):
-        if self.request.GET.get('link_id'):
-            hosted_cczs = HostedCCZ.objects.filter(link_id=self.request.GET.get('link_id'))
-        else:
-            hosted_cczs = HostedCCZ.objects.filter(link__domain=self.domain)
-        if self.request.GET.get('app_id'):
-            hosted_cczs = hosted_cczs.filter(app_id=self.request.GET.get('app_id'))
-        version = self.request.GET.get('version')
-        if version:
-            hosted_cczs = hosted_cczs.filter(version=self.request.GET.get('version'))
-        if self.request.GET.get('profile_id'):
-            hosted_cczs = hosted_cczs.filter(profile_id=self.request.GET.get('profile_id'))
-        if self.request.GET.get('status'):
-            hosted_cczs = hosted_cczs.filter(status=self.request.GET.get('status'))
-        hosted_cczs = [h.to_json() for h in hosted_cczs]
+        version = None      # TODO: handle search from js
         return {
             'form': self.form,
             'domain': self.domain,
-            'hosted_cczs': hosted_cczs,
             'selected_build_details': ({'id': version, 'text': version} if version else None),
             'initial_app_profile_details': self._get_initial_app_profile_details(version),
         }

@@ -4,6 +4,7 @@ hqDefine('icds/js/manage_hosted_ccz', [
     'underscore',
     'hqwebapp/js/assert_properties',
     'hqwebapp/js/initial_page_data',
+    'hqwebapp/js/components.ko',    // pagination widget
     'translations/js/app_translations',
 ], function (
     $,
@@ -42,9 +43,33 @@ hqDefine('icds/js/manage_hosted_ccz', [
             self.viewUrl = initialPageData.reverse("hosted_ccz", self.link);
             return self;
         };
-        var hostedCCZsView = function (hostings) {
+        var hostedCCZsView = function (options) {
+            assertProperties.assertRequired(['url']);
+
             var self = {};
-            self.hostings = _.map(hostings, hostedCCZ);
+
+            self.hostings = ko.observableArray();
+            self.itemsPerPage = ko.observable(5);
+            self.totalItems = ko.observable();
+            self.showPaginationSpinner = ko.observable(false);
+            self.currentPage = ko.observable(1);
+            self.goToPage = function (page) {
+                self.showPaginationSpinner(true);
+                self.currentPage(page);
+                $.ajax({
+                    url: options.url,
+                    data: {
+                        page: page,
+                        limit: self.itemsPerPage(),
+                    },
+                    success: function (data) {
+                        self.showPaginationSpinner(false);
+                        self.hostings(_.map(data.hostings, hostedCCZ));
+                        self.totalItems(data.total);
+                    },
+                });
+            };
+
             self.search = function () {
                 var linkId = $("#link-id-select").val();
                 var appId = $("#app-id-search-select").val();
@@ -54,11 +79,18 @@ hqDefine('icds/js/manage_hosted_ccz', [
                 window.location.search = ("link_id=" + linkId + "&app_id=" + appId + "&version=" +
                     version + "&profile_id=" + profileId + "&status=" + status);
             };
+
             self.clear = function () {
                 window.location.search = "";
             };
+
+            self.goToPage(1);
+
             return self;
         };
-        $("#manage-ccz-hostings").koApplyBindings(hostedCCZsView(initialPageData.get("hosted_cczs")));
+
+        $("#manage-ccz-hostings").koApplyBindings(hostedCCZsView({
+            url: initialPageData.reverse('ccz_hostings_json'),
+        }));
     });
 });
