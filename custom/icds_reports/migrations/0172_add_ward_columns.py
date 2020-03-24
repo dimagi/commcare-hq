@@ -12,12 +12,12 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunSQL('ALTER TABLE awc_location ADD COLUMN awc_ward_1 VARCHAR'),
-        migrations.RunSQL('ALTER TABLE awc_location ADD COLUMN awc_ward_2 VARCHAR'),
-        migrations.RunSQL('ALTER TABLE awc_location ADD COLUMN awc_ward_3 VARCHAR'),
-        migrations.RunSQL('ALTER TABLE awc_location_local ADD COLUMN awc_ward_1 VARCHAR'),
-        migrations.RunSQL('ALTER TABLE awc_location_local ADD COLUMN awc_ward_2 VARCHAR'),
-        migrations.RunSQL('ALTER TABLE awc_location_local ADD COLUMN awc_ward_3 VARCHAR'),
+        migrations.RunSQL('ALTER TABLE awc_location ADD COLUMN awc_ward_1 text'),
+        migrations.RunSQL('ALTER TABLE awc_location ADD COLUMN awc_ward_2 text'),
+        migrations.RunSQL('ALTER TABLE awc_location ADD COLUMN awc_ward_3 text'),
+        migrations.RunSQL('ALTER TABLE awc_location_local ADD COLUMN awc_ward_1 text'),
+        migrations.RunSQL('ALTER TABLE awc_location_local ADD COLUMN awc_ward_2 text'),
+        migrations.RunSQL('ALTER TABLE awc_location_local ADD COLUMN awc_ward_3 text'),
     ]
     # rebuild views because its required to build dependent views after alter distributed table
     operations.extend(get_view_migrations())
