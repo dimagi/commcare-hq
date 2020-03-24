@@ -3,6 +3,7 @@ from django.template.loader import render_to_string
 from django.utils.translation import override, ugettext_lazy as _
 
 from corehq.apps.domain.utils import guess_domain_language
+from corehq.util.context_processors import commcare_hq_names
 from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.web import get_static_url_prefix
 
@@ -41,6 +42,7 @@ def send_account_confirmation(commcare_user):
         'domain': commcare_user.domain,
         'url': url,
         'url_prefix': get_static_url_prefix(),
+        'hq_name': commcare_hq_names()['commcare_hq_names']['COMMCARE_HQ_NAME']
     }
 
     lang = guess_domain_language(commcare_user.domain)

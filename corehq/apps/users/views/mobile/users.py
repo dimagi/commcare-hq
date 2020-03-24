@@ -678,7 +678,6 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
             'strong_mobile_passwords': self.request.project.strong_mobile_passwords,
             'implement_password_obfuscation': settings.OBFUSCATE_PASSWORD_FOR_NIC_COMPLIANCE,
             'bulk_download_url': bulk_download_url,
-            'two_stage_provisioning_enabled': TWO_STAGE_USER_PROVISIONING.enabled(self.domain),
         }
 
     @property
