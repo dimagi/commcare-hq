@@ -1,0 +1,18 @@
+{% load i18n %}
+{% blocktrans %}Hey there,{% endblocktrans %}
+
+{% blocktrans %}
+You have been added to the "{{ domain }}" project on CommCare HQ.
+{% endblocktrans %}
+
+{% blocktrans %}
+To confirm your account, please open the following link in your browser: {{ url}}
+{% endblocktrans %}
+
+{% blocktrans %}
+Once you confirm your account you will be able to access and submit data in the "{{ domain }}" project on CommCare HQ.
+{% endblocktrans %}
+
+{% blocktrans %}Thanks,{% endblocktrans %}
+
+{% blocktrans %}-The CommCare HQ team{% endblocktrans %}

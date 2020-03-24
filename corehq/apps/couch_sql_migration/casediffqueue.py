@@ -627,7 +627,7 @@ class CasesReceivedCounter:
         self.queue.clean_break = value
 
 
-class NoCaseDiff:
+class CaseDiffPending:
 
     def __init__(self, statedb):
         self.statedb = statedb

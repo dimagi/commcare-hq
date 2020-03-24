@@ -13,6 +13,7 @@
   {% initial_page_data 'implement_password_obfuscation' implement_password_obfuscation %}
   {% initial_page_data 'pagination_limit_cookie_name' pagination_limit_cookie_name %}
   {% initial_page_data 'strong_mobile_passwords' strong_mobile_passwords %}
+  {% initial_page_data 'two_stage_provisioning_enabled' two_stage_provisioning_enabled %}
   {% registerurl 'location_search' domain %}
   {% registerurl 'mobile_workers' domain %}
   {% registerurl 'edit_commcare_user' domain '---' %}
@@ -60,10 +61,14 @@
                 {% trans "Edit User Fields" %}
               </a>
             {% endif %}
-            {% if request|toggle_enabled:"BULK_USER_DELETE" %}
+            {% if request|toggle_enabled:"FILTERED_BULK_USER_DOWNLOAD" %}
               <a class="btn btn-danger" href="{% url "delete_commcare_users" domain %}">
                 <i class="fa fa-trash"></i>
                 {% trans "Bulk Delete Users" %}
+              </a>
+              <a class="btn btn-default" href="{% url "commcare_users_lookup" domain %}">
+                <i class="fa fa-search"></i>
+                {% trans "Bulk Lookup of Users" %}
               </a>
             {% endif %}
           {% endif %}

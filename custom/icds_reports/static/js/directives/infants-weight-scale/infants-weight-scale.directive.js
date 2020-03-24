@@ -31,7 +31,7 @@ function InfantsWeightScaleController($scope, $routeParams, $location, $filter, 
             {
                 indicator_name: 'Percentage of AWCs that reported having a weighing scale for infants: ',
                 indicator_value: percent,
-            }
+            },
         ];
     };
 

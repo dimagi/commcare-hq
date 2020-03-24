@@ -91,7 +91,8 @@ def get_stock_actions(xform):
     if not transaction_helpers:
         return _empty_actions()
 
-    case_action_intents = _get_case_action_intents(xform, transaction_helpers)
+    case_ids = {transaction_helper.case_id for transaction_helper in transaction_helpers}
+    case_action_intents = get_ledger_case_action_intents(xform, case_ids)
     return StockFormActions(stock_report_helpers, case_action_intents)
 
 
@@ -99,10 +100,7 @@ def _empty_actions():
     return StockFormActions([], [])
 
 
-def _get_case_action_intents(xform, transaction_helpers):
-    # list of cases that had stock reports in the form
-    case_ids = list(set(transaction_helper.case_id
-                        for transaction_helper in transaction_helpers))
+def get_ledger_case_action_intents(xform, case_ids):
     case_action_intents = []
     for case_id in case_ids:
         if xform.is_deprecated:

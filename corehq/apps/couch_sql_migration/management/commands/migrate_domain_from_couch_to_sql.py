@@ -62,8 +62,6 @@ RESUME = "resume"
 REBUILD = "rebuild"
 RECHECK = "recheck"
 
-CASE_DIFF = {"process": True, "local": False, "none": None}
-
 
 class Command(BaseCommand):
     help = """
@@ -133,17 +131,20 @@ class Command(BaseCommand):
                 queued to diff may not be diffed.
             """)
         parser.add_argument('--case-diff',
-            dest='case_diff', default="process",
-            choices=["process", "local", "none"],
+            dest='case_diff', default="after",
+            choices=["after", "none", "asap"],
             help='''
-                process: diff cases in a separate process (default).
-                local: diff cases in the migration process.
-                none: do not diff cases.
+                after: (default) diff cases after migrating forms. Uses
+                multiple parallel processes.
+                none: save "pending" cases to be diffed at a later time.
+                asap: (experimental) attempt to diff cases as soon as
+                all related forms have been migrated. Uses a single
+                parallel process for case diffs.
             ''')
         parser.add_argument('--forms', default=None,
             help="""
                 Migrate specific forms. The value of this option should
-                be a space-delimited list of form ids OR a file path to
+                be a comma-delimited list of form ids OR a file path to
                 a file having one form id per line OR 'missing' to
                 migrate missing forms cached in the statedb by the
                 'stats' command OR 'missing-blob-present' to migrate
@@ -158,17 +159,20 @@ class Command(BaseCommand):
             """)
         parser.add_argument('--to', dest="rewind", help="Rewind iteration state.")
         parser.add_argument('--missing-docs',
-            choices=[RESUME, REBUILD, RECHECK, CACHED], default=RESUME,
+            choices=[CACHED, RESUME, REBUILD, RECHECK], default=CACHED,
             help="""
-                By default missing docs will be calculated before stats
+                How to calculate missing docs. With "stats", the default
+                is "cached", which is the least expensive option,
+                although may be inaccurate. When migrating (except with
+                --live), missing docs will be calculated before stats
                 are printed, resuming from the previous run if possible.
                 Use "rebuild" to discard previous results and
                 recalculate all missing docs that are in Couch but not
-                SQL. Use "cached" to use existing data from state db.
+                SQL. Use "recheck" to re-check cached missing docs.
             """)
 
     def handle(self, domain, action, **options):
-        if should_use_sql_backend(domain):
+        if action != STATS and should_use_sql_backend(domain):
             raise CommandError('It looks like {} has already been migrated.'.format(domain))
 
         for opt in [
@@ -200,7 +204,7 @@ class Command(BaseCommand):
             raise CommandError("--stop-on-error only allowed with `MIGRATE`")
         if action != STATS and self.verbose:
             raise CommandError("--verbose only allowed for `stats`")
-        if action not in [MIGRATE, STATS] and self.missing_docs != RESUME:
+        if action not in [MIGRATE, STATS] and self.missing_docs != CACHED:
             raise CommandError(f"{action} --missing-docs not allowed")
         if action != REWIND and self.rewind:
             raise CommandError("--to=... only allowed for `rewind`")
@@ -218,13 +222,15 @@ class Command(BaseCommand):
             if status == MigrationStatus.DRY_RUN:
                 log.info("Continuing live migration. Use --finish to complete.")
                 self.live_migrate = True
+        if self.missing_docs == CACHED and (self.finish or not self.live_migrate):
+            self.missing_docs = RESUME
         set_couch_sql_migration_started(domain, self.live_migrate)
         do_couch_to_sql_migration(
             domain,
             self.state_dir,
             with_progress=not self.no_input,
             live_migrate=self.live_migrate,
-            diff_process=CASE_DIFF[self.case_diff],
+            case_diff=self.case_diff,
             rebuild_state=self.rebuild_state,
             stop_on_error=self.stop_on_error,
             forms=self.forms,

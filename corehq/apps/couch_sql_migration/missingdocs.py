@@ -11,8 +11,8 @@ from dimagi.utils.chunked import chunked
 from corehq.apps.domain.dbaccessors import get_doc_count_in_domain_by_type
 from corehq.form_processor.models import XFormInstanceSQL
 from corehq.sql_db.util import split_list_by_db_partition
-from corehq.util.datadog.gauges import datadog_counter
 from corehq.util.log import with_progress_bar
+from corehq.util.metrics import metrics_counter
 from corehq.util.pagination import ResumableFunctionIterator
 
 from .casediff import get_couch_cases
@@ -27,7 +27,7 @@ from .statedb import open_state_db
 log = logging.getLogger(__name__)
 
 
-def find_missing_docs(domain, state_dir, live_migrate=False, resume=True):
+def find_missing_docs(domain, state_dir, live_migrate=False, resume=True, progress=True):
     """Update missing documents in state db
 
     Find each entity (form or case) that is in Couch but not in SQL.
@@ -39,13 +39,14 @@ def find_missing_docs(domain, state_dir, live_migrate=False, resume=True):
     - commcare.couchsqlmigration.case.has_diff
     """
     stopper = Stopper(live_migrate)
-    dd_count = partial(datadog_counter, tags=["domain:" + domain])
+    dd_count = partial(metrics_counter, tags={"domain": domain})
     statedb = open_state_db(domain, state_dir, readonly=False)
     if live_migrate:
         log.info(f"stopping at {get_main_forms_iteration_stop_date(statedb)}")
     with statedb, stopper, ExitStack() as stop_it:
         for entity in ["form", "case"]:
-            missing_ids = MissingIds(entity, statedb, stopper, resume=resume)
+            missing_ids = MissingIds(
+                entity, statedb, stopper, resume=resume, progress=progress)
             stop_it.enter_context(missing_ids)
             for doc_type in missing_ids.doc_types:
                 statedb.delete_missing_docs(doc_type)
@@ -56,7 +57,7 @@ def find_missing_docs(domain, state_dir, live_migrate=False, resume=True):
 
 def recheck_missing_docs(domain, state_dir):
     """Check if documents marked as missing are still missing"""
-    dd_count = partial(datadog_counter, tags=["domain:" + domain])
+    dd_count = partial(metrics_counter, tags={"domain": domain})
     statedb = open_state_db(domain, state_dir, readonly=False)
     counts = statedb.get_doc_counts()
     with statedb:
@@ -80,13 +81,18 @@ class MissingIds:
     """Iterator of document ids found in Couch but not SQL"""
 
     @classmethod
-    def forms(cls, *args, **kw):
-        return cls(cls.FORM, *args, **kw)
+    def forms(cls, statedb):
+        return cls(cls.FORM, statedb, None)
+
+    @classmethod
+    def cases(cls, statedb):
+        return cls(cls.CASE, statedb, None)
 
     entity = attr.ib()
     statedb = attr.ib()
     stopper = attr.ib()
     resume = attr.ib(default=True, kw_only=True)
+    progress = attr.ib(default=True, kw_only=True)
     tag = attr.ib(default="missing", kw_only=True)
     chunk_size = attr.ib(default=5000, kw_only=True)
 
@@ -106,9 +112,10 @@ class MissingIds:
     }
 
     form_types = list(form_doc_types()) + ["HQSubmission", "XFormInstance-Deleted"]
+    case_types = ['CommCareCase', 'CommCareCase-Deleted']
     _doc_types = {
         FORM: form_types,
-        CASE: ['CommCareCase', 'CommCareCase-Deleted'],
+        CASE: case_types,
     }
 
     def __attrs_post_init__(self):
@@ -169,6 +176,8 @@ class MissingIds:
         return (x for x in missing_ids if not modified_since_stop_date(x))
 
     def with_progress(self, doc_type, iterable, count_key):
+        if not self.progress:
+            return iterable
         couchdb = XFormInstance.get_db()
         return with_progress_bar(
             iterable,

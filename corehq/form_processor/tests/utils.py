@@ -16,7 +16,7 @@ from corehq.blobs import CODES
 from corehq.blobs.models import BlobMeta
 from corehq.form_processor.backends.sql.dbaccessors import (
     CaseAccessorSQL, LedgerAccessorSQL, LedgerReindexAccessor,
-    iter_all_rows)
+    iter_all_rows, FormAccessorSQL)
 from corehq.form_processor.backends.sql.processor import FormProcessorSQL
 from corehq.form_processor.interfaces.processor import ProcessedForms
 from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL, CaseTransaction, Attachment
@@ -261,6 +261,8 @@ def create_form_for_test(
 
     if save:
         FormProcessorSQL.save_processed_models(ProcessedForms(form, None), cases)
+        form = FormAccessorSQL.get_form(form.form_id)
+
     return form
 
 

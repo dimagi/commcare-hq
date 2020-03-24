@@ -4,7 +4,6 @@
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
 # Translators:
-# Dimagi Dev <devops@dimagi.com>, 2017
 # esoergel, 2018
 # Saket Kanth <skanth@dimagi.com>, 2018
 # Abdel Nasser Iro <abdel.nasser.iro.gigo@millenniumpromise.org>, 2018
@@ -12,17 +11,18 @@
 # Claire_Cravero <ccravero@dimagi.com>, 2018
 # Ismaïla Diene <idiene@dimagi.com>, 2019
 # Sarah Sagan <ssagan@dimagi.com>, 2019
-# Aissetou Sawadogo <ais107@hotmail.com>, 2019
-# Tyler Wymer <twymer@dimagi.com>, 2019
+# Tyler Wymer <twymer@dimagi.com>, 2020
+# Dimagi Dev <devops@dimagi.com>, 2020
+# Aissetou Sawadogo <ais107@hotmail.com>, 2020
 #
 #, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-02-19 20:38+0000\n"
+"POT-Creation-Date: 2020-03-18 20:45+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
-"Last-Translator: Tyler Wymer <twymer@dimagi.com>, 2019\n"
+"Last-Translator: Aissetou Sawadogo <ais107@hotmail.com>, 2020\n"
 "Language-Team: French (https://www.transifex.com/dimagi/teams/9388/fr/)\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
@@ -2877,15 +2877,15 @@ msgstr ""
 msgid "Data file deleted."
 msgstr ""
 
-#: corehq/apps/export/static/export/js/download_export.js:196
+#: corehq/apps/export/static/export/js/download_export.js:219
 msgid "Sorry, there was a problem reaching the server. Please try again."
 msgstr ""
 
-#: corehq/apps/export/static/export/js/download_export.js:325
+#: corehq/apps/export/static/export/js/download_export.js:363
 msgid "Server maintenance in progress. Please try again later."
 msgstr "Maintenance du serveur en cours. Veuillez réessayer plus tard."
 
-#: corehq/apps/export/static/export/js/download_export.js:335
+#: corehq/apps/export/static/export/js/download_export.js:373
 msgid "There was an error downloading your export."
 msgstr "Il y avait une erreur avec votre téléchargement"
 
@@ -3134,8 +3134,10 @@ msgid "Edit mapping for <%= property %>"
 msgstr ""
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/validators.ko.js:15
+#, fuzzy
+#| msgid "Please enter a valid email."
 msgid "Not a valid email"
-msgstr ""
+msgstr "Veuillez entrer une adresse e-mail valide"
 
 #: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:80
 msgid ""
@@ -3810,14 +3812,28 @@ msgstr ""
 msgid "Failed to cancel"
 msgstr ""
 
-#~ msgid "Sync Successful"
-#~ msgstr "Synchronisation réussie"
+#: custom/icds/data_management/static/data_management/js/data_management.js:21
+msgid "<%= initiatedBy %> On <%= createdAt %>"
+msgstr ""
 
-#~ msgid "Error!"
-#~ msgstr "Erreur !"
+#: custom/icds/data_management/static/data_management/js/data_management.js:55
+msgid "This project has no data management requests."
+msgstr ""
 
-#~ msgid "Syncing..."
-#~ msgstr "Synchronisation en cours..."
+#: custom/icds/data_management/static/data_management/js/data_management.js:82
+msgid ""
+"Could not load requests. Please try again later or report an issue if this "
+"problem persists."
+msgstr ""
 
-#~ msgid "Sync started"
-#~ msgstr "Synchronisation démarrée"
+#~ msgid "show"
+#~ msgstr "afficher"
+
+#~ msgid "hide"
+#~ msgstr "masquer"
+
+#~ msgid "URL"
+#~ msgstr "URL"
+
+#~ msgid "Parameters"
+#~ msgstr "Manejo de Casos"

@@ -1,6 +1,7 @@
 {
     "domains": [
-        "inddex-reports"
+        "inddex-reports",
+        "inddex-reports-test"
     ],
     "server_environment": [
         "production",
@@ -157,9 +158,9 @@
             },
             {
                 "type": "expression",
-                "column_id": "age",
+                "column_id": "age_years_calculated",
                 "datatype": "string",
-                "display_name": "Age",
+                "display_name": "Age in years",
                 "expression": {
                     "type": "nested",
                     "argument_expression": {
@@ -171,10 +172,29 @@
                     },
                     "value_expression": {
                         "type": "property_name",
-                        "property_name": "age_years"
+                        "property_name": "age_years_calculated"
                     }
                 }
-
+            },
+            {
+                "type": "expression",
+                "column_id": "age_months_calculated",
+                "datatype": "string",
+                "display_name": "Age in months",
+                "expression": {
+                    "type": "nested",
+                    "argument_expression": {
+                        "type": "indexed_case",
+                        "case_expression": {
+                            "type": "identity"
+                        },
+                        "index": "parent"
+                    },
+                    "value_expression": {
+                        "type": "property_name",
+                        "property_name": "age_months_calculated"
+                    }
+                }
             },
             {
                 "type": "expression",
@@ -307,9 +327,9 @@
             },
             {
                 "type": "expression",
-                "column_id": "recall_date",
+                "column_id": "recalled_date",
                 "datatype": "string",
-                "display_name": "recall_date",
+                "display_name": "recalled_date",
                 "expression": {
                     "type": "nested",
                     "argument_expression": {
@@ -321,7 +341,7 @@
                     },
                     "value_expression": {
                         "type": "property_name",
-                        "property_name": "visit_date"
+                        "property_name": "recalled_date"
                     }
                 }
             },
@@ -377,12 +397,12 @@
             },
             {
                 "type": "expression",
-                "column_id": "already_reported_food_caseid",
+                "column_id": "already_reported_food_case_id",
                 "datatype": "string",
                 "display_name": "Already Reported Food Case Id",
                 "expression": {
                     "type": "property_name",
-                    "property_name": "already_reported_food_caseid"
+                    "property_name": "already_reported_food_case_id"
                 }
             },
             {
@@ -664,12 +684,12 @@
             },
             {
                 "type": "expression",
-                "column_id": "conv_method",
+                "column_id": "conv_method_code",
                 "datatype": "string",
                 "display_name": "Conversion Method",
                 "expression": {
                     "type": "property_name",
-                    "property_name": "conv_method"
+                    "property_name": "conv_method_code"
                 }
             },
             {
@@ -684,12 +704,12 @@
             },
             {
                 "type": "expression",
-                "column_id": "conv_option",
+                "column_id": "conv_option_code",
                 "datatype": "string",
                 "display_name": "Conversion Option",
                 "expression": {
                     "type": "property_name",
-                    "property_name": "conv_option"
+                    "property_name": "conv_option_code"
                 }
             },
             {
@@ -703,12 +723,12 @@
                 }
             },            {
                 "type": "expression",
-                "column_id": "conv_size",
+                "column_id": "measurement_amount",
                 "datatype": "string",
                 "display_name": "Conversion Size",
                 "expression": {
                     "type": "property_name",
-                    "property_name": "conv_size"
+                    "property_name": "measurement_amount"
                 }
             },
             {
@@ -723,17 +743,17 @@
             },
             {
                 "type": "expression",
-                "column_id": "quantity",
+                "column_id": "portions",
                 "datatype": "string",
-                "display_name": "Quantity",
+                "display_name": "Portions",
                 "expression": {
                     "type": "property_name",
-                    "property_name": "quantity"
+                    "property_name": "portions"
                 }
             },
             {
                 "type": "expression",
-                "column_id": "nsr_post_cooking_conv_method_code",
+                "column_id": "nsr_conv_method_code_post_cooking",
                 "datatype": "string",
                 "expression": {
                     "type": "named",
@@ -742,7 +762,7 @@
             },
             {
                 "type": "expression",
-                "column_id": "nsr_post_cooking_conv_option_code",
+                "column_id": "nsr_conv_option_code_post_cooking",
                 "datatype": "string",
                 "expression": {
                     "type": "named",
@@ -751,7 +771,7 @@
             },
             {
                 "type": "expression",
-                "column_id": "nsr_post_cooking_conv_option_desc",
+                "column_id": "nsr_conv_option_desc_post_cooking",
                 "datatype": "string",
                 "expression": {
                     "type": "named",
@@ -760,11 +780,11 @@
             },
             {
                 "type": "expression",
-                "column_id": "nsr_post_cooking_conv_size",
+                "column_id": "nsr_measurement_amount_post_cooking",
                 "datatype": "string",
                 "expression": {
                     "type": "named",
-                    "name": "nsr_conv_size_post_cooking"
+                    "name": "nsr_measurement_amount_post_cooking"
                 }
             },
             {
@@ -774,6 +794,26 @@
                 "expression": {
                     "type": "named",
                     "name": "nsr_same_conv_method_named"
+                }
+            },
+            {
+                "type": "expression",
+                "column_id": "respondent_id",
+                "datatype": "string",
+                "display_name": "Respondent Id",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "respondent_id"
+                }
+            },
+            {
+                "type": "expression",
+                "column_id": "recipe_case_id",
+                "datatype": "string",
+                "display_name": "Recipe Case Id",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "recipe_case_id"
                 }
             }
         ],
@@ -861,7 +901,7 @@
                 },
                 "expression_if_false": ""
             },
-            "nsr_conv_size_post_cooking": {
+            "nsr_measurement_amount_post_cooking": {
                 "type": "conditional",
                 "test": {
                     "type": "boolean_expression",
@@ -874,7 +914,7 @@
                 },
                 "expression_if_true": {
                     "type": "property_name",
-                    "property_name": "recipe_conv_size_post_cooking"
+                    "property_name": "nsr_measurement_amount_post_cooking"
                 },
                 "expression_if_false": ""
             },

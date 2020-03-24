@@ -1271,6 +1271,8 @@ class ProjectUsersTab(UITab):
                      'urlname': 'upload_commcare_users'},
                     {'title': _('Bulk Delete'),
                      'urlname': 'delete_commcare_users'},
+                    {'title': _('Bulk Lookup'),
+                     'urlname': 'commcare_users_lookup'},
                     {'title': _('Edit User Fields'),
                      'urlname': 'user_fields_view'},
                     {'title': _('Filter and Download Users'),

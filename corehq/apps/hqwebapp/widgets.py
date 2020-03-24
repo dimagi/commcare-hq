@@ -21,7 +21,7 @@ class BootstrapCheckboxInput(CheckboxInput):
         super(BootstrapCheckboxInput, self).__init__(attrs, check_test)
         self.inline_label = inline_label
 
-    def render(self, name, value, attrs=None):
+    def render(self, name, value, attrs=None, renderer=None):
         extra_attrs = {'type': 'checkbox', 'name': name}
         extra_attrs.update(self.attrs)
         final_attrs = self.build_attrs(attrs, extra_attrs=extra_attrs)
@@ -111,7 +111,7 @@ class DateRangePickerWidget(Input):
         self.default_datespan = default_datespan
         super(DateRangePickerWidget, self).__init__(attrs=attrs)
 
-    def render(self, name, value, attrs=None):
+    def render(self, name, value, attrs=None, renderer=None):
         startdate = ''
         enddate = ''
         if isinstance(self.default_datespan, DateSpan):
@@ -128,7 +128,7 @@ class DateRangePickerWidget(Input):
         })
         final_attrs = self.build_attrs(attrs)
 
-        output = super(DateRangePickerWidget, self).render(name, value, attrs)
+        output = super(DateRangePickerWidget, self).render(name, value, attrs, renderer)
         return mark_safe("""
             <div class="input-group hqwebapp-datespan">
                 <span class="input-group-addon"><i class="fa fa-calendar"></i></span>

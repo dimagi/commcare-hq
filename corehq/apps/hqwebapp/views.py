@@ -14,7 +14,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AdminPasswordChangeForm
 from django.contrib.auth.models import User
-from django.contrib.auth.views import logout as django_logout
+from django.contrib.auth.views import LogoutView
 from django.core import cache
 from django.core.mail.message import EmailMessage
 from django.http import (
@@ -49,6 +49,7 @@ from sentry_sdk import last_event_id
 from two_factor.forms import AuthenticationTokenForm, BackupTokenForm
 from two_factor.views import LoginView
 
+from corehq.util.metrics import create_metrics_event
 from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.django.request import mutable_querydict
@@ -110,7 +111,7 @@ from corehq.util.context_processors import commcare_hq_names
 from corehq.util.datadog.const import DATADOG_UNKNOWN
 from corehq.util.datadog.gauges import datadog_counter, datadog_gauge
 from corehq.util.datadog.metrics import JSERROR_COUNT
-from corehq.util.datadog.utils import create_datadog_event, sanitize_url
+from corehq.util.datadog.utils import sanitize_url
 from corehq.util.view_utils import reverse
 from no_exceptions.exceptions import Http403
 
@@ -210,11 +211,8 @@ def redirect_to_default(req, domain=None):
             domains = Domain.active_for_user(req.user)
 
         if 0 == len(domains) and not req.user.is_superuser:
-            from corehq.apps.registration.views import track_domainless_new_user
-            track_domainless_new_user(req)
             return redirect('registration_domain')
         elif 1 == len(domains):
-            from corehq.apps.dashboard.views import dashboard_default
             from corehq.apps.users.models import DomainMembershipError
             if domains[0]:
                 domain = domains[0].name
@@ -229,14 +227,14 @@ def redirect_to_default(req, domain=None):
                         # web users without roles are redirected to the dashboard default
                         # view since some domains allow web users to request access if they
                         # don't have it
-                        return dashboard_default(req, domain)
+                        url = reverse("dashboard_domain", args=[domain])
                 else:
                     if role and role.default_landing_page:
                         url = get_redirect_url(role.default_landing_page, domain)
                     elif couch_user.is_commcare_user():
                         url = reverse(get_cloudcare_urlname(domain), args=[domain])
                     else:
-                        return dashboard_default(req, domain)
+                        url = reverse("dashboard_domain", args=[domain])
             else:
                 raise Http404()
         else:
@@ -317,7 +315,7 @@ def server_up(req):
             html.linebreaks('<strong>{}</strong>: {}'.format(check, html.escape(status.msg)).strip())
             for check, status in failed_checks
         ]
-        create_datadog_event(
+        create_metrics_event(
             'Serverup check failed', '\n'.join(status_messages),
             alert_type='error', aggregation_key='serverup',
         )
@@ -480,7 +478,7 @@ def logout(req, default_domain_redirect='domain_login'):
     domain = get_domain_from_url(urlparse(referer).path) if referer else None
 
     # we don't actually do anything with the response here:
-    django_logout(req, **{"template_name": settings.BASE_TEMPLATE})
+    LogoutView.as_view(template_name=settings.BASE_TEMPLATE)(req)
 
     if referer and domain:
         domain_login_url = reverse(default_domain_redirect, kwargs={'domain': domain})
@@ -582,14 +580,13 @@ def jserror(request):
 
 @method_decorator([login_required], name='dispatch')
 class BugReportView(View):
-
     @property
     def recipients(self):
         """
             Returns:
                 list
         """
-        return settings.BUG_REPORT_RECIPIENTS
+        return [settings.SUPPORT_EMAIL]
 
     def post(self, req, *args, **kwargs):
         report = dict([(key, req.POST.get(key, '')) for key in (
@@ -712,7 +709,7 @@ class BugReportView(View):
         if re.search(r'@dimagi\.com$', report['username']) and not is_icds_env:
             email.from_email = report['username']
         else:
-            email.from_email = settings.CCHQ_BUG_REPORT_EMAIL
+            email.from_email = settings.SUPPORT_EMAIL
 
         email.send(fail_silently=False)
 

@@ -1,3 +1,7 @@
+import json
+
+from collections import defaultdict
+
 from datetime import date, datetime
 
 from django.db import DEFAULT_DB_ALIAS, models
@@ -65,11 +69,23 @@ class HistoricalPillowCheckpoint(models.Model):
             return None
 
     @classmethod
-    def get_historical_max(cls, checkpoint_id):
-        try:
-            return cls.objects.filter(checkpoint_id=checkpoint_id).order_by('-seq_int')[0]
-        except IndexError:
-            return None
+    def get_historical_max(cls, checkpoint_id, by_partition=False):
+        if by_partition:
+            # limit to last 10 days
+            checkpoints = cls.objects.filter(checkpoint_id=checkpoint_id)[:10]
+            max_offsets = defaultdict(int)
+            for checkpoint in checkpoints:
+                offset_info = json.loads(checkpoint.seq)
+                for partition, offset in offset_info.items():
+                    if offset > max_offsets[partition]:
+                        max_offsets[partition] = offset
+            return max_offsets
+        else:
+            try:
+                return cls.objects.filter(checkpoint_id=checkpoint_id).order_by('-seq_int')[0]
+            except IndexError:
+                return None
+
 
     class Meta(object):
         ordering = ['-date_updated']

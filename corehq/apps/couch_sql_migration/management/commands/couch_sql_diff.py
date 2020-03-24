@@ -3,28 +3,37 @@ import json
 import logging
 import os
 import sys
+from collections import defaultdict
 from itertools import groupby
 
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 
 from dimagi.utils.chunked import chunked
+from dimagi.utils.couch.database import retry_on_couch_error
 
 from corehq.apps.domain.models import Domain
 from corehq.form_processor.backends.couch.dbaccessors import FormAccessorCouch
+from corehq.form_processor.backends.sql.dbaccessors import (
+    CaseAccessorSQL,
+    FormAccessorSQL,
+)
 from corehq.form_processor.utils import should_use_sql_backend
 from corehq.util.log import with_progress_bar
 
 from ...casediff import get_couch_cases
 from ...casedifftool import do_case_diffs, format_diffs, get_migrator
 from ...couchsqlmigration import setup_logging
+from ...diff import filter_case_diffs, filter_form_diffs
+from ...missingdocs import MissingIds
 from ...rewind import IterationState
-from ...statedb import StateDB, open_state_db
+from ...statedb import Counts, StateDB, open_state_db
 
 log = logging.getLogger(__name__)
 
 CASES = "cases"
 SHOW = "show"
+FILTER = "filter"
 
 PREPARE = "prepare"
 DELETE = "delete"
@@ -35,7 +44,13 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('domain')
-        parser.add_argument('action', choices=[CASES, SHOW])
+        parser.add_argument('action', choices=[CASES, SHOW, FILTER], help="""
+            "cases": diff cases.
+            "show": print diffs.
+            "filter": filter diffs, removing ones that would normally be
+            filtered out. This is useful when new diff ignore rules have
+            been added that apply to existing diff records.
+        """)
         parser.add_argument('--no-input', action='store_true', default=False)
         parser.add_argument('--debug', action='store_true', default=False)
         parser.add_argument('--state-dir', dest='state_path',
@@ -51,12 +66,16 @@ class Command(BaseCommand):
                 Diff specific items. The value of this option may be
                 'pending' to clear out in-process diffs OR 'with-diffs'
                 to re-diff items that previously had diffs OR a
-                space-delimited list of case ids OR a path to a file
+                comma-delimited list of case ids OR a path to a file
                 containing a case id on each line. The path must begin
                 with / or ./
 
-                With the "show" action, this option should be a doc type.
-                All form and case doc types are supported.
+                With the "show" or "filter" actions, this option should
+                be a doc type, optionally followed by a colon and one or
+                more doc ids (e.g., CommCareCase:id1,id2,id3). All form
+                and case doc types are supported. Alternately, it may be
+                a csv file with the first two columns being doc type and
+                doc id. The path must begin with / or ./
             ''')
         parser.add_argument('--changes',
             dest="changes", action='store_true', default=False,
@@ -69,7 +88,8 @@ class Command(BaseCommand):
             help='''
                 Stop and drop into debugger on first diff. A
                 non-parallel iteration algorithm is used when this
-                option is set.
+                option is set. For "filter --dry-run" propmt to stop
+                after each batch.
             ''')
         parser.add_argument('-b', '--batch-size',
             dest="batch_size", default=100, type=int,
@@ -82,9 +102,12 @@ class Command(BaseCommand):
                 --reset=delete to permanently delete diffs, changes, and
                 progress information from the statedb.
             ''')
+        parser.add_argument('-n', '--dry-run',
+            dest="dry_run", action='store_true', default=False,
+            help="show what would happen, but do not commit changes")
 
     def handle(self, domain, action, **options):
-        if should_use_sql_backend(domain):
+        if action == CASES and should_use_sql_backend(domain):
             raise CommandError(f'It looks like {domain} has already been migrated.')
 
         for opt in [
@@ -97,23 +120,26 @@ class Command(BaseCommand):
             "csv",
             "batch_size",
             "reset",
+            "dry_run",
         ]:
             setattr(self, opt, options[opt])
 
         if self.no_input and not settings.UNIT_TESTING:
             raise CommandError('--no-input only allowed for unit testing')
         if self.changes and action != SHOW:
-            raise CommandError('--changes only allowed with "show" action')
+            raise CommandError(f'{action} --changes not allowed')
         if self.csv and action != SHOW:
-            raise CommandError('--csv only allowed with "show" action')
+            raise CommandError(f'{action} --csv not allowed')
+        if self.dry_run and action != FILTER:
+            raise CommandError(f'{action} --dry-run not allowed')
 
         if self.reset:
-            if action == SHOW:
-                raise CommandError(f'invalid action for --reset: {action}')
+            if action != CASES:
+                raise CommandError(f'{action} --reset not allowed')
             self.do_reset(action, domain)
             return
 
-        if action != SHOW:
+        if action not in [SHOW, FILTER]:
             assert Domain.get_by_name(domain), f'Unknown domain "{domain}"'
         do_action = getattr(self, "do_" + action)
         msg = do_action(domain)
@@ -130,20 +156,14 @@ class Command(BaseCommand):
         """Show diffs from state db"""
         statedb = self.open_state_db(domain)
         print(f"showing diffs from {statedb}", file=sys.stderr)
+        select = self.get_select_kwargs()
         if self.changes:
-            items = statedb.iter_doc_changes(self.select)
+            items = statedb.iter_doc_changes(**select)
         else:
-            items = statedb.iter_doc_diffs(self.select)
+            items = statedb.iter_doc_diffs(**select)
         prompt = not self.csv
         if self.csv:
-            counts = statedb.get_doc_counts()
-            if self.select:
-                count = counts.get(self.select, 0)
-            else:
-                count = sum(c.changes if self.changes else c.diffs
-                            for c in counts.values())
-            items = with_progress_bar(
-                items, count, "Docs", oneline=False, stream=sys.stderr)
+            items = self.with_progress(items, statedb, select)
             print(CSV_HEADERS, file=sys.stdout)
         try:
             for doc_diffs in chunked(items, self.batch_size, list):
@@ -154,6 +174,97 @@ class Command(BaseCommand):
                     break
         except (KeyboardInterrupt, BrokenPipeError):
             pass
+
+    def get_select_kwargs(self):
+        if not self.select:
+            return {}
+        if self.select.startswith(("./", "/")):
+            if not os.path.isfile(self.select):
+                raise CommandError(f"file not found: {self.select}")
+            by_kind = defaultdict(set)
+            with open(self.select) as fh:
+                count = 0
+                for row in csv.reader(fh):
+                    if len(row) > 1:
+                        by_kind[row[0]].add(row[1])
+                        count += 1
+            k = len(by_kind)
+            kinds = ", ".join(sorted(by_kind)) if k < 5 else f"{k} kinds"
+            print(f"selecting {count} docs of {kinds}", file=sys.stderr)
+            return {"by_kind": dict(by_kind)}
+        if ":" in self.select:
+            kind, doc_ids = self.select.split(":", 1)
+            return {"kind": kind, "doc_ids": doc_ids.split(",")}
+        return {"kind": self.select}
+
+    def do_filter(self, domain):
+        def update_doc_diffs(doc_diffs):
+            ids = [d[1] for d in doc_diffs]
+            sql_docs = get_sql_docs(ids)
+            couch_docs = get_couch_docs(ids)
+            new_diffs = []
+            for kind, doc_id, diffs in doc_diffs:
+                couch_json = get_json(kind, doc_id, couch_docs)
+                sql_json = get_json(kind, doc_id, sql_docs)
+                json_diffs = [json_diff(d) for d in diffs]
+                new_diffs = filter_diffs(couch_json, sql_json, json_diffs)
+                if self.dry_run:
+                    print(f"{kind} {doc_id}: {len(diffs)} -> {len(new_diffs)} diffs")
+                else:
+                    statedb.add_diffs(kind, doc_id, new_diffs)
+
+        def get_json(kind, doc_id, docs):
+            doc = docs.get(doc_id)
+            return doc.to_json() if doc is not None else {"doc_type": kind}
+
+        def json_diff(diff):
+            jd = diff.json_diff
+            return jd._replace(path=tuple(jd.path))
+
+        statedb = self.open_state_db(domain, readonly=self.dry_run)
+        if self.changes:
+            raise NotImplementedError("filter --changes")
+        select = self.get_select_kwargs()
+        if select and select["kind"] in MissingIds.form_types:
+            def get_sql_docs(ids):
+                return {f.form_id: f for f in FormAccessorSQL.get_forms(ids)}
+
+            def get_couch_docs(ids):
+                return {f.form_id: f for f in get_couch_forms(ids)}
+
+            filter_diffs = filter_form_diffs
+        elif select and select["kind"] in MissingIds.case_types:
+            def get_sql_docs(ids):
+                return {c.case_id: c for c in CaseAccessorSQL.get_cases(ids)}
+
+            def get_couch_docs(ids):
+                return {c.case_id: c for c in get_couch_cases(ids)}
+
+            filter_diffs = filter_case_diffs
+        else:
+            raise NotImplementedError(f"--select={self.select}")
+        prompt = self.dry_run and self.stop
+        doc_diffs = statedb.iter_doc_diffs(**select)
+        doc_diffs = self.with_progress(doc_diffs, statedb, select)
+        for batch in chunked(doc_diffs, self.batch_size, list):
+            update_doc_diffs(batch)
+            if prompt and not confirm("show more?"):
+                break
+
+    def with_progress(self, doc_diffs, statedb, select):
+        counts = statedb.get_doc_counts()
+        if "doc_ids" in select:
+            count = len(select["doc_ids"])
+        elif "by_kind" in select:
+            count = sum(len(v) for v in select["by_kind"].values())
+        elif select:
+            count = counts.get(select["kind"], Counts())
+            count = count.changes if self.changes else count.diffs
+        else:
+            count = sum(c.changes if self.changes else c.diffs
+                        for c in counts.values())
+        return with_progress_bar(
+            doc_diffs, count, "Docs", oneline=False, stream=sys.stderr)
 
     def do_reset(self, action, domain):
         itr_doc_type = {"cases": "CommCareCase.id"}[action]
@@ -331,16 +442,20 @@ def iter_related(doc_diffs):
 
     def get_related(kind, doc_ids):
         if kind.startswith(CASE):
-            return get_case_related(doc_ids)
-        assert kind != STOCK
-        return get_form_related(doc_ids)
+            related = get_case_related(doc_ids)
+        else:
+            assert kind != STOCK
+            related = get_form_related(doc_ids)
+        for doc_id in set(doc_ids) - related.keys():
+            related[doc_id] = ("", "")
+        assert len(related) == len(doc_ids), (kind, set(doc_ids) - related.keys())
+        return related
 
     stock_related = {}
     for kind, group in groupby(sorted(doc_diffs), key=lambda x: x[0]):
         group = list(group)
         doc_ids = [doc_id for x, doc_id, x in group]
         related = get_related(kind, doc_ids)
-        assert len(related) == len(doc_ids), (kind, set(doc_ids) - set(related))
         if kind == CASE:
             for k, doc_id, diffs in group:
                 for diff in diffs:
@@ -362,8 +477,13 @@ def get_case_related(case_ids):
 def get_form_related(form_ids):
     return {
         form.form_id: (form.user_id, form.received_on)
-        for form in FormAccessorCouch.get_forms(form_ids)
+        for form in get_couch_forms(form_ids)
     }
+
+
+@retry_on_couch_error
+def get_couch_forms(form_ids):
+    return FormAccessorCouch.get_forms(form_ids)
 
 
 def confirm(msg):

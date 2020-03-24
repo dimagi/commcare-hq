@@ -13,6 +13,7 @@
         <link type="text/less" rel="stylesheet" media="all" href="{% static 'icds_reports/mobile/css/app.less' %}" />
         <link type="text/less" rel="stylesheet" media="all" href="{% static 'icds_reports/mobile/css/navigation-menu.less' %}" />
         <link type="text/less" rel="stylesheet" media="all" href="{% static 'icds_reports/mobile/css/filters.less' %}" />
+        <link type="text/less" rel="stylesheet" media="all" href="{% static 'icds_reports/mobile/css/fact-sheets.less' %}" />
         <link type="text/less" rel="stylesheet" media="all" href="{% static 'icds_reports/mobile/css/map-chart.less' %}" />
   {% endcompress %}
 
@@ -63,6 +64,7 @@ Split up compression due to a weird js dependency bug that makes it not work wit
   <script src="{% static 'js/directives/mobile-filters/mobile-filters.directive.js' %}"></script>
   <script src="{% static 'js/directives/mobile-datepicker/mobile-datepicker.directive.js' %}"></script>
   <script src="{% static 'js/directives/help-popup/help-popup.directive.js' %}"></script>
+  <script src="{% static 'js/directives/sortable-kpi/sortable-kpi.directive.js' %}"></script>
 
   {# maps #}
   <script src="{% static 'js/directives/map-or-sector-view/map-or-sector-view.directive.js' %}"></script>
@@ -87,6 +89,8 @@ Split up compression due to a weird js dependency bug that makes it not work wit
             <div class="ng-view"></div>
           </div>
         </div>
+        <img src="{% static 'icds_reports/mobile/images/share-icon.png' %}"
+             ng-if="isMobile && !filtersOpen && isWebView && haveAccessToFeatures" class="share-icon" ng-click="shareViaWhatsapp()">
       </div>
   </div>
 </div>
