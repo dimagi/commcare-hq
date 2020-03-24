@@ -1734,45 +1734,205 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
         .withOption('order', [[4, 'asc']])
         .withDOM('ltipr');
 
-    if (vm.step === 'beneficiary') {
-        vm.dtColumns = [
-            DTColumnBuilder.newColumn('person_name').withTitle('Name').renderWith(renderPersonName).withClass('big-col'),
-            DTColumnBuilder.newColumn('dob').withTitle('Date of Birth').renderWith(renderDateOfBirth).withClass('medium-col'),
-            DTColumnBuilder.newColumn('age').withTitle('Current Age').renderWith(renderAge).withClass('medium-col'),
-            DTColumnBuilder.newColumn('fully_immunized').withTitle('1 Year Immunizations Complete').renderWith(renderFullyImmunizedDate).withClass('medium-col'),
-            DTColumnBuilder.newColumn('current_month_nutrition_status').withTitle('Weight-for-Age Status (in Month)').renderWith(renderWeightForAgeStatus).withClass('medium-col'),
-            DTColumnBuilder.newColumn('current_month_wasting').withTitle('Weight-for-Height Status (in Month)').renderWith(renderWeightForHeightStatus).withClass('medium-col'),
-            DTColumnBuilder.newColumn('current_month_stunting').withTitle('Height-for-Age Status (in Month)').renderWith(renderHeightForAgeStatus).withClass('medium-col'),
-            DTColumnBuilder.newColumn('pse_days_attended').withTitle('PSE Attendance (Days)').renderWith(renderPseDaysAttended).withClass('medium-col'),
-            DTColumnBuilder.newColumn('aww_phone_number').withTitle('AWW Phone Number').renderWith(renderAwwPhoneNumber).withClass('medium-col'),
-            DTColumnBuilder.newColumn('mother_phone_number').withTitle('Mother Phone Number').renderWith(renderMotherPhoneNumber).withClass('medium-col'),
-        ];
-    } else if (vm.step === 'pregnant') {
-        vm.dtColumns = [
-            DTColumnBuilder.newColumn('person_name').withTitle('Name').renderWith(renderPersonNamePregnant).withClass('big-col'),
-            DTColumnBuilder.newColumn('age').withTitle('Age').renderWith(renderAge).withClass('medium-col'),
-            DTColumnBuilder.newColumn('closed').withTitle('Status').renderWith(renderClosed).withClass('medium-col'),
-            DTColumnBuilder.newColumn('opened_on').withTitle('Pregnancy registration').renderWith(renderOpenedOn).withClass('medium-col'),
-            DTColumnBuilder.newColumn('edd').withTitle('EDD').renderWith(renderEdd).withClass('medium-col'),
-            DTColumnBuilder.newColumn('trimester').withTitle('Trimester').renderWith(renderTrimester).withClass('medium-col'),
-            DTColumnBuilder.newColumn('anemic').withTitle('Anemia during last ANC (Y/N)').renderWith(renderAnemic).withClass('medium-col'),
-            DTColumnBuilder.newColumn('num_anc_complete').withTitle('Number of ANC visits').renderWith(renderNumAncComplete).withClass('medium-col'),
-            DTColumnBuilder.newColumn('beneficiary').withTitle('Beneficiary Status').renderWith(renderBeneficiary).withClass('medium-col'),
-            DTColumnBuilder.newColumn('number_of_thrs_given').withTitle('Number of THRs given in current month').renderWith(renderNumberOfThrsGiven).withClass('medium-col'),
-            DTColumnBuilder.newColumn('last_date_thr').withTitle('Date of last THR').renderWith(renderLastDateThr).withClass('medium-col'),
-        ];
-    } else if (vm.step === 'lactating') {
-        vm.dtColumns = [
-            DTColumnBuilder.newColumn('person_name').withTitle('Name').renderWith(renderPersonNameLactating).withClass('big-col'),
-            DTColumnBuilder.newColumn('age').withTitle('Age').renderWith(renderAge).withClass('medium-col'),
-            DTColumnBuilder.newColumn('add').withTitle('Date of Delivery').renderWith(renderAdd).withClass('medium-col'),
-            DTColumnBuilder.newColumn('delivery_nature').withTitle('Type of Delivery').renderWith(renderDeliveryNature).withClass('medium-col'),
-            DTColumnBuilder.newColumn('institutional_delivery').withTitle('Institutional Delivery (Y/N)').renderWith(renderInstitutionalDeliveryInMonth).withClass('medium-col'),
-            DTColumnBuilder.newColumn('num_pnc_visits').withTitle('Number of PNC visits').renderWith(renderNumPncVisits).withClass('medium-col'),
-            DTColumnBuilder.newColumn('breastfed_at_birth').withTitle('Breastfed within hour of birth').renderWith(renderBreastfedAtBirth).withClass('medium-col'),
-            DTColumnBuilder.newColumn('is_ebf').withTitle('Exclusively breastfeeding at last home visit').renderWith(renderIsEbf).withClass('medium-col'),
-            DTColumnBuilder.newColumn('num_rations_distributed').withTitle('Number of THRs given in current month').renderWith(renderNumRationsDistributed).withClass('medium-col'),
-        ];
+    vm.awcReportTableData = {
+        'beneficiary': [
+            {
+                'mData': 'person_name',
+                'title': 'Name',
+                'class': 'big-col',
+                'value': renderPersonName
+            },
+            {
+                'mData': 'dob',
+                'title': 'Date of Birth',
+                'class': 'medium-col',
+                'value': renderDateOfBirth
+            },
+            {
+                'mData': 'age',
+                'title': 'Current Age',
+                'class': 'medium-col',
+                'value': renderAge
+            },
+            {
+                'mData': 'fully_immunized',
+                'title': '1 Year Immunizations Complete',
+                'class': 'medium-col',
+                'value': renderFullyImmunizedDate
+            },
+            {
+                'mData': 'current_month_nutrition_status',
+                'title': 'Weight-for-Age Status (in Month)',
+                'class': 'medium-col',
+                'value': renderWeightForAgeStatus,
+                'tooltipType': 'weight'
+            },
+            {
+                'mData': 'current_month_wasting',
+                'title': 'Weight-for-Height Status (in Month)',
+                'class': 'medium-col',
+                'value': renderWeightForHeightStatus,
+                'tooltipType': 'both'
+            },
+            {
+                'mData': 'current_month_stunting',
+                'title': 'Height-for-Age Status (in Month)',
+                'class': 'medium-col',
+                'value': renderHeightForAgeStatus,
+                'tooltipType': 'height'
+            },
+            {
+                'mData': 'pse_days_attended',
+                'title': 'PSE Attendance (Days)',
+                'class': 'medium-col',
+                'value': renderPseDaysAttended
+            },
+            {
+                'mData': 'aww_phone_number',
+                'title': 'AWW Phone Number',
+                'class': 'medium-col',
+                'value': renderAwwPhoneNumber
+            },
+            {
+                'mData': 'mother_phone_number',
+                'title': 'Mother Phone Number',
+                'class': 'medium-col',
+                'value': renderMotherPhoneNumber
+            },
+        ],
+        'pregnant': [
+            {
+                'mData': 'person_name',
+                'title': 'Name',
+                'class': 'big-col',
+                'value': renderPersonNamePregnant
+            },
+            {
+                'mData': 'age',
+                'title': 'Age',
+                'class': 'medium-col',
+                'value': renderAge
+            },
+            {
+                'mData': 'closed',
+                'title': 'Status',
+                'class': 'medium-col',
+                'value': renderClosed
+            },
+            {
+                'mData': 'opened_on',
+                'title': 'Pregnancy registration',
+                'class': 'medium-col',
+                'value': renderOpenedOn
+            },
+            {
+                'mData': 'edd',
+                'title': 'EDD',
+                'class': 'medium-col',
+                'value': renderEdd
+            },
+            {
+                'mData': 'trimester',
+                'title': 'Trimester',
+                'class': 'medium-col',
+                'value': renderTrimester
+            },
+            {
+                'mData': 'anemic',
+                'title': 'Anemia during last ANC (Y/N)',
+                'class': 'medium-col',
+                'value': renderAnemic
+            },
+            {
+                'mData': 'num_anc_complete',
+                'title': 'Number of ANC visits',
+                'class': 'medium-col',
+                'value': renderNumAncComplete
+            },
+            {
+                'mData': 'beneficiary',
+                'title': 'Beneficiary Status',
+                'class': 'medium-col',
+                'value': renderBeneficiary
+            },
+            {
+                'mData': 'number_of_thrs_given',
+                'title': 'Number of THRs given in current month',
+                'class': 'medium-col',
+                'value': renderNumberOfThrsGiven
+            },
+            {
+                'mData': 'last_date_thr',
+                'title': 'Date of last THR',
+                'class': 'medium-col',
+                'value': renderLastDateThr
+            },
+        ],
+        'lactating': [
+            {
+                'mData': 'person_name',
+                'title': 'Name',
+                'class': 'big-col',
+                'value': renderPersonNameLactating
+            },
+            {
+                'mData': 'age',
+                'title': 'Age',
+                'class': 'medium-col',
+                'value': renderAge
+            },
+            {
+                'mData': 'add',
+                'title': 'Date of Delivery',
+                'class': 'medium-col',
+                'value': renderAdd
+            },
+            {
+                'mData': 'delivery_nature',
+                'title': 'Type of Delivery',
+                'class': 'medium-col',
+                'value': renderDeliveryNature
+            },
+            {
+                'mData': 'institutional_delivery',
+                'title': 'Institutional Delivery (Y/N)',
+                'class': 'medium-col',
+                'value': renderInstitutionalDeliveryInMonth
+            },
+            {
+                'mData': 'num_pnc_visits',
+                'title': 'Number of PNC visits',
+                'class': 'medium-col',
+                'value': renderNumPncVisits
+            },
+            {
+                'mData': 'breastfed_at_birth',
+                'title': 'Breastfed within hour of birth',
+                'class': 'medium-col',
+                'value': renderBreastfedAtBirth
+            },
+            {
+                'mData': 'is_ebf',
+                'title': 'Exclusively breastfeeding at last home visit',
+                'class': 'medium-col',
+                'value': renderIsEbf
+            },
+            {
+                'mData': 'num_rations_distributed',
+                'title': 'Number of THRs given in current month',
+                'class': 'medium-col',
+                'value': renderNumRationsDistributed
+            }
+        ],
+    };
+
+    vm.dtColumns = [];
+    if (vm.awcReportTableData[vm.step] && !isMobile) {
+        for (var i = 0; i < vm.awcReportTableData[vm.step].length; i++) {
+            var entry = vm.awcReportTableData[vm.step][i];
+            vm.dtColumns.push(DTColumnBuilder.newColumn(entry['mData']).withTitle(entry['title'])
+                .renderWith(entry['value']).withClass(entry['class']));
+        }
     }
 
     function compile(row) {
@@ -2378,7 +2538,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
     };
 
     vm.showBeneficiaryDetails = function () {
-        var params = $location.search();
+        var params = JSON.parse(JSON.stringify($location.search()));
         var get_url = url('awc_reports', 'beneficiary_details');
         var highest_age = 0;
 
