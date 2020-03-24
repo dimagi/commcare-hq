@@ -17,9 +17,9 @@ class Command(BaseCommand):
         # sort by supervisor_id and doc_id to improve the performance, sorting is needed to resume the queueing
         # if it fails in between.
         query = """
-            select supervisor, doc_id from "{}"
+            select supervisor_id, doc_id from "{}"
             where state_id='f9b47ea2ee2d8a02acddeeb491d3e175'
-            order by supervisor, doc_id
+            order by supervisor_id, doc_id
         """.format(table_name)
 
         with connections['icds-ucr-citus'].cursor() as cursor:
