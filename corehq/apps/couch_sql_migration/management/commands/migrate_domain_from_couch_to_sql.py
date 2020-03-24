@@ -7,7 +7,7 @@ from django.core.management.base import BaseCommand, CommandError
 from django.db.models import Q
 
 from corehq.apps.domain.models import Domain
-from couchforms.models import doc_types
+from couchforms.models import XFormInstance, doc_types
 from dimagi.utils.chunked import chunked
 
 from corehq.apps.couch_sql_migration.couchsqlmigration import (
@@ -363,7 +363,7 @@ def blow_away_migration(domain, state_dir):
 
 def iter_chunks(model_class, field, domain, chunk_size=5000):
     where = Q(domain=domain)
-    row_count = estimate_partitioned_row_count(model_class, where)
+    row_count = get_doc_count(model_class, where, field.split("_")[0], domain)
     rows = paginate_query_across_partitioned_databases(
         model_class,
         where,
@@ -374,3 +374,15 @@ def iter_chunks(model_class, field, domain, chunk_size=5000):
     values = (r[0] for r in rows)
     values = with_progress_bar(values, row_count, oneline="concise")
     yield from chunked(values, chunk_size, list)
+
+
+def get_doc_count(model_class, where, entity, domain):
+    from corehq.apps.domain.dbaccessors import get_doc_count_in_domain_by_type
+    from ...missingdocs import MissingIds
+    sql_estimate = estimate_partitioned_row_count(model_class, where)
+    couchdb = XFormInstance.get_db()
+    couch_count = sum(
+        get_doc_count_in_domain_by_type(domain, doc_type, couchdb)
+        for doc_type in MissingIds.DOC_TYPES[entity]
+    )
+    return min(sql_estimate, couch_count)

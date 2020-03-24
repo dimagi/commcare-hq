@@ -463,6 +463,7 @@ class StateDB(DiffDB):
         - total: number of items counted with `increment_counter`.
         - missing: count of ids found in Couch but not in SQL.
         - diffs: count of docs with diffs.
+        - changes: count of docs with expected changes.
         """
         with self.session() as session:
             totals = {dc.kind: dc.value for dc in session.query(DocCount)}
