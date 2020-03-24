@@ -22,6 +22,8 @@ from corehq.util.log import with_progress_bar
 
 RunConfig = namedtuple('RunConfig', ['domain', 'start_date', 'end_date', 'case_type'])
 
+ALL_SQL_DOMAINS = object()
+
 
 class Command(BaseCommand):
     """
@@ -31,19 +33,19 @@ class Command(BaseCommand):
     Can be used in conjunction with republish_doc_changes
 
         1. Generate tuples not updated in ES with extra debug columns
-        $ ./manage.py stale_data_in_es <DOMAIN> case form > stale_ids.txt
+        $ ./manage.py stale_data_in_es case form --domain DOMAIN > stale_ids.csv
 
         (Can call with just "case" or "form" if only want to use one data model type)
 
-        2. Republish case changes
-        $ ./manage.py republish_doc_changes <DOMAIN> stale_ids.txt
+        2. Republish doc changes
+        $ ./manage.py republish_doc_changes <DOMAIN> stale_ids.csv
     """
     help = inspect.cleandoc(__doc__).split('\n')[0]
 
     def add_arguments(self, parser):
-        parser.add_argument('domain')
         parser.add_argument('data_models', nargs='+',
                             help='A list of data models to check. Valid options are "case" and "form".')
+        parser.add_argument('--domain', default=ALL_SQL_DOMAINS)
         parser.add_argument(
             '--start',
             action='store',
@@ -67,6 +69,9 @@ class Command(BaseCommand):
         end = dateutil.parser.parse(options['end']) if options['end'] else datetime.utcnow()
         case_type = options['case_type']
         run_config = RunConfig(domain, start, end, case_type)
+
+        if run_config.domain is ALL_SQL_DOMAINS:
+            print('Running for all SQL domains (and excluding Couch domains!)', file=sys.stderr)
 
         for data_model in data_models:
             try:
@@ -93,7 +98,7 @@ class CaseBackend:
 
     @staticmethod
     def _get_server_modified_on_for_domain(run_config):
-        if should_use_sql_backend(run_config.domain):
+        if run_config.domain is ALL_SQL_DOMAINS or should_use_sql_backend(run_config.domain):
             return CaseBackend._get_data_for_sql_backend(run_config)
         else:
             return CaseBackend._get_data_for_couch_backend(run_config)
@@ -142,21 +147,22 @@ class CaseBackend:
 
     @staticmethod
     def _get_es_modified_dates(domain, case_ids):
-        results = (
-            CaseES(es_instance_alias=ES_EXPORT_INSTANCE)
-            .domain(domain)
-            .case_ids(case_ids)
-            .values_list('_id', 'server_modified_on')
-        )
+        es_query = CaseES(es_instance_alias=ES_EXPORT_INSTANCE)
+        if domain is not ALL_SQL_DOMAINS:
+            es_query = es_query.domain(domain)
+        results = es_query.case_ids(case_ids).values_list('_id', 'server_modified_on')
         return dict(results)
 
 
 def get_sql_case_data_for_db(db, run_config):
     matching_cases = CommCareCaseSQL.objects.using(db).filter(
-        domain=run_config.domain,
         server_modified_on__gte=run_config.start_date,
         server_modified_on__lte=run_config.end_date,
     )
+    if run_config.domain is not ALL_SQL_DOMAINS:
+        matching_cases = matching_cases.filter(
+            domain=run_config.domain,
+        )
     if run_config.case_type:
         matching_cases = matching_cases.filter(
             type=run_config.case_type
@@ -172,7 +178,7 @@ class FormBackend:
 
     @staticmethod
     def _get_stale_form_data(run_config):
-        if should_use_sql_backend(run_config.domain):
+        if run_config.domain is ALL_SQL_DOMAINS or should_use_sql_backend(run_config.domain):
             return FormBackend._get_stale_form_data_for_sql_backend(run_config)
         else:
             raise CommandError('Form data for couch domains is not supported!')
@@ -197,19 +203,20 @@ class FormBackend:
 
     @staticmethod
     def _get_sql_form_data_for_db(db, run_config):
-        return XFormInstanceSQL.objects.using(db).filter(
-            domain=run_config.domain,
+        matching_forms = XFormInstanceSQL.objects.using(db).filter(
             received_on__gte=run_config.start_date,
             received_on__lte=run_config.end_date,
-        ).values_list('form_id', 'state', 'xmlns', 'received_on')
+        )
+        if run_config.domain is not ALL_SQL_DOMAINS:
+            matching_forms = matching_forms.filter(
+                domain=run_config.domain
+            )
+        return matching_forms.values_list('form_id', 'state', 'xmlns', 'received_on')
 
     @staticmethod
     def _get_es_modified_dates_for_forms(domain, form_ids):
-        results = (
-            FormES(es_instance_alias=ES_EXPORT_INSTANCE)
-            .remove_default_filters()
-            .domain(domain)
-            .form_ids(form_ids)
-            .values_list('_id', 'received_on')
-        )
+        es_query = FormES(es_instance_alias=ES_EXPORT_INSTANCE).remove_default_filters()
+        if domain is not ALL_SQL_DOMAINS:
+            es_query = es_query.domain(domain)
+        results = es_query.form_ids(form_ids).values_list('_id', 'received_on')
         return dict(results)
