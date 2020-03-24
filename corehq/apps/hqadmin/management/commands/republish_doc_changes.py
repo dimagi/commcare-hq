@@ -1,3 +1,4 @@
+import itertools
 from collections import namedtuple
 
 from django.core.management import BaseCommand, CommandError
@@ -17,7 +18,7 @@ from corehq.apps.hqcase.management.commands.backfill_couch_forms_and_cases impor
 from pillowtop.feed.interface import ChangeMeta
 
 
-DocumentRecord = namedtuple('DocumentRecord', ['doc_id', 'doc_type', 'doc_subtype'])
+DocumentRecord = namedtuple('DocumentRecord', ['doc_id', 'doc_type', 'doc_subtype', 'domain'])
 
 
 CASE_DOC_TYPE = "CommCareCase"
@@ -28,14 +29,13 @@ class Command(BaseCommand):
     """
     Republish doc changes. Meant to be used in conjunction with stale_data_in_es command
 
-        $ ./manage.py republish_doc_changes <DOMAIN> <doc_ids.txt>
+        $ ./manage.py republish_doc_changes changes.csv
     """
 
     def add_arguments(self, parser):
-        parser.add_argument('domain')
         parser.add_argument('doc_ids_file')
 
-    def handle(self, domain, doc_ids_file, *args, **options):
+    def handle(self, doc_ids_file, *args, **options):
         document_records = _get_document_records(doc_ids_file)
         form_records = []
         case_records = []
@@ -45,34 +45,35 @@ class Command(BaseCommand):
             else:
                 assert record.doc_type == FORM_DOC_TYPE
                 form_records.append(record)
-
-        _publish_cases(domain, case_records)
-        _publish_forms(domain, form_records)
+        _publish_cases(case_records)
+        _publish_forms(form_records)
 
 
 def _get_document_records(doc_ids_file):
     with open(doc_ids_file, 'r') as f:
         lines = f.readlines()
         for l in lines:
-            doc_id, doc_type, doc_subtype = [val.strip() for val in l.split(',')[0:3]]
+            doc_id, doc_type, doc_subtype, domain = [val.strip() for val in l.split(',')[0:4]]
             if doc_type not in [CASE_DOC_TYPE, FORM_DOC_TYPE]:
                 raise CommandError(f"Found bad doc type {doc_type}. "
                                    "Did you use the right command to create the data?")
-            yield DocumentRecord(doc_id, doc_type, doc_subtype)
+            yield DocumentRecord(doc_id, doc_type, doc_subtype, domain)
 
 
-def _publish_cases(domain, case_records):
-    if should_use_sql_backend(domain):
-        _publish_cases_for_sql(domain, case_records)
-    else:
-        _publish_cases_for_couch(domain, [c.doc_id for c in case_records])
+def _publish_cases(case_records):
+    for domain, records in itertools.groupby(case_records, lambda r: r.domain):
+        if should_use_sql_backend(domain):
+            _publish_cases_for_sql(domain, records)
+        else:
+            _publish_cases_for_couch(domain, [c.doc_id for c in records])
 
 
-def _publish_forms(domain, form_records):
-    if should_use_sql_backend(domain):
-        _publish_forms_for_sql(domain, form_records)
-    else:
-        raise CommandError("Republishing forms for couch domains is not supported yet!")
+def _publish_forms(form_records):
+    for domain, records in itertools.groupby(form_records, lambda r: r.domain):
+        if should_use_sql_backend(domain):
+            _publish_forms_for_sql(domain, records)
+        else:
+            raise CommandError("Republishing forms for couch domains is not supported yet!")
 
 
 def _publish_cases_for_couch(domain, case_ids):
