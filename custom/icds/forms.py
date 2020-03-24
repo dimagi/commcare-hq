@@ -73,17 +73,27 @@ class HostedCCZForm(forms.Form):
         if request.GET.get('status'):
             self.fields['status'].initial = request.GET.get('status')
         self.helper.layout = crispy.Layout(
-            crispy.Field('link_id', css_class="hqwebapp-select2", id="link-id-select"),
-            crispy.Field('app_id', css_class="hqwebapp-select2", id='app-id-search-select'),
-            crispy.Field('version', id='version-input'),
-            crispy.Field('profile_id', id='build-profile-id-input'),
+            crispy.Field('link_id', css_class="hqwebapp-select2", data_bind="value: linkId"),
+            crispy.Field('app_id', css_class="hqwebapp-select2", data_bind="value: appId"),
+            crispy.Field('version', data_bind="value: version"),
+            crispy.Field('profile_id', data_bind="value: profileId"),
             crispy.Field('file_name'),
             crispy.Field('note'),
-            crispy.Field('status'),
+            crispy.Field('status', data_bind="value: status"),
             hqcrispy.FormActions(
                 crispy.ButtonHolder(
-                    crispy.Button('search', ugettext_lazy("Search"), data_bind="click: search"),
-                    crispy.Button('clear', ugettext_lazy("Clear"), data_bind="click: clear"),
+                    crispy.Button(
+                        'search',
+                        ugettext_lazy("Search"),
+                        css_class="btn-default",
+                        data_bind="click: search"
+                    ),
+                    crispy.Button(
+                        'clear',
+                        ugettext_lazy("Clear"),
+                        css_class="btn-default",
+                        data_bind="click: clear"
+                    ),
                     Submit('submit', ugettext_lazy("Create"))
                 )
             )

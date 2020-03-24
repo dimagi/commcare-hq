@@ -47,8 +47,16 @@ hqDefine('icds/js/manage_hosted_ccz', [
             assertProperties.assertRequired(['url']);
 
             var self = {};
-
             self.hostings = ko.observableArray();
+
+            // Search options
+            self.linkId = ko.observable();
+            self.appId = ko.observable();
+            self.version = ko.observable();
+            self.profileId = ko.observable();
+            self.status = ko.observable();
+
+            // Pagination
             self.itemsPerPage = ko.observable(5);
             self.totalItems = ko.observable();
             self.showPaginationSpinner = ko.observable(false);
@@ -61,6 +69,11 @@ hqDefine('icds/js/manage_hosted_ccz', [
                     data: {
                         page: page,
                         limit: self.itemsPerPage(),
+                        link_id: self.linkId(),
+                        app_id: self.appId(),
+                        version: self.version(),
+                        profile_id: self.profileId(),
+                        status: self.status(),
                     },
                     success: function (data) {
                         self.showPaginationSpinner(false);
@@ -71,17 +84,20 @@ hqDefine('icds/js/manage_hosted_ccz', [
             };
 
             self.search = function () {
-                var linkId = $("#link-id-select").val();
-                var appId = $("#app-id-search-select").val();
-                var version = $("#version-input").val() || '';
-                var profileId = $("#app-profile-id-input").val() || '';
-                var status = $("#id_status").val();
-                window.location.search = ("link_id=" + linkId + "&app_id=" + appId + "&version=" +
-                    version + "&profile_id=" + profileId + "&status=" + status);
+                self.goToPage(1);
             };
 
             self.clear = function () {
-                window.location.search = "";
+                self.linkId('');
+                self.appId('');
+                self.version('')
+                self.profileId('');
+                self.status('');
+
+                // select2s need to have a change triggered to reflect value in UI
+                $("#id_link_id, #id_app_id, #id_version").trigger("change.select2");
+
+                self.goToPage(1);
             };
 
             self.goToPage(1);
