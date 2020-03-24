@@ -224,7 +224,13 @@ class Command(BaseCommand):
                 self.live_migrate = True
         if self.missing_docs == CACHED:
             self.missing_docs = RESUME
-        set_couch_sql_migration_started(domain, self.live_migrate)
+        if self.forms:
+            if not couch_sql_migration_in_progress(domain):
+                log.error("cannot migrate specific forms: migration is %s",
+                    get_couch_sql_migration_status(domain))
+                sys.exit(1)
+        else:
+            set_couch_sql_migration_started(domain, self.live_migrate)
         do_couch_to_sql_migration(
             domain,
             self.state_dir,
