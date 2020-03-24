@@ -64,7 +64,7 @@ from custom.icds_reports.const import (
     THR_REPORT_EXPORT,
     AggregationLevels,
     LocationTypes,
-    GOVERNANCE_API_PAGE_SIZE,
+    STANDARD_API_PAGE_SIZE,
     SERVICE_DELIVERY_REPORT
 )
 from custom.icds_reports.dashboard_utils import get_dashboard_template_context
@@ -240,6 +240,7 @@ from custom.icds_reports.reports.governance_apis import (
     get_state_names,
     get_cbe_data)
 
+from custom.icds_reports.reports.bihar_api import get_api_demographics_data
 
 from . import const
 from .exceptions import TableauTokenException
@@ -2260,7 +2261,7 @@ class GovernanceHomeVisitAPI(GovernanceAPIBaseView):
         order = ['awc_id']
 
         data, count = get_home_visit_data(
-            GOVERNANCE_API_PAGE_SIZE,
+            STANDARD_API_PAGE_SIZE,
             year,
             month,
             order,
@@ -2294,7 +2295,7 @@ class GovernanceBeneficiaryAPI(GovernanceAPIBaseView):
         order = ['awc_id']
 
         data, count = get_beneficiary_data(
-            GOVERNANCE_API_PAGE_SIZE,
+            STANDARD_API_PAGE_SIZE,
             year,
             month,
             order,
@@ -2332,7 +2333,7 @@ class GovernanceVHNDSAPI(GovernanceAPIBaseView):
         order = ['awc_id']
         if state_id is not None:
             query_filters['state_id'] = state_id
-        data, count = get_vhnd_data(GOVERNANCE_API_PAGE_SIZE, year,
+        data, count = get_vhnd_data(STANDARD_API_PAGE_SIZE, year,
                                     month, order, query_filters)
         response_json = {
             'data': data,
@@ -2362,7 +2363,7 @@ class GovernanceCBEAPI(GovernanceAPIBaseView):
         order = ['awc_id']
 
         data, count = get_cbe_data(
-            GOVERNANCE_API_PAGE_SIZE,
+            STANDARD_API_PAGE_SIZE,
             year,
             month,
             order,
@@ -2378,4 +2379,52 @@ class GovernanceCBEAPI(GovernanceAPIBaseView):
                 'timestamp': india_now()
             }
         }
+        return JsonResponse(data=response_json)
+
+
+@location_safe
+@method_decorator([api_auth, toggles.ICDS_DEMOGRAPHICS_API.required_decorator()], name='dispatch')
+class DemographicsAPI(View):
+    def message(self, message_name):
+        error_messages = {
+            "missing_date": "Please specify valid month and year",
+            "invalid_month": "Please specify a valid month. month can't be in future and before Jan 2020",
+            "access_denied": "You are not authorised to access this location"
+        }
+        return {"message": error_messages[message_name]}
+    def get(self, request, *args, **kwargs):
+        state_id = request.GET.get('state_id', '')
+        last_person_case_id = request.GET.get('last_person_case_id', '')
+        try:
+            month = int(request.GET.get('month'))
+            year = int(request.GET.get('year'))
+        except (ValueError, TypeError):
+            return JsonResponse(self.message('missing_date'), status=400)
+
+        query_month = date(year, month, 1)
+        today = date.today()
+        current_month = today - relativedelta(months=1) if today.day <= 2 else today
+        if query_month > current_month or query_month < date(2017, 1, 1):
+            return JsonResponse(self.message('invalid_month'), status=400)
+
+        if not state_id and not request.couch_user.has_permission(
+            self.kwargs['domain'], 'access_all_locations'
+        ):
+            return JsonResponse(self.message('access_denied'), status=400)
+        if state_id and not user_can_access_location_id(
+            self.kwargs['domain'], request.couch_user, state_id
+        ):
+            return JsonResponse(self.message('access_denied'), status=400)
+
+        demographics_data, total_count = get_api_demographics_data(query_month, state_id, last_person_case_id)
+        response_json = {
+            'data': demographics_data,
+            'metadata': {
+                'month': month,
+                'year': year,
+                'total_count': total_count,
+                'timestamp': india_now()
+            }
+        }
+
         return JsonResponse(data=response_json)

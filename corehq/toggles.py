@@ -1826,3 +1826,11 @@ TWO_STAGE_USER_PROVISIONING = StaticToggle(
     TAG_SOLUTIONS_LIMITED,
     [NAMESPACE_DOMAIN]
 )
+
+ICDS_DEMOGRAPHICS_API = StaticToggle(
+    'demographics_api',
+    'ICDS: Demographics API',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_USER],
+    relevant_environments={'icds', 'india'},
+)
