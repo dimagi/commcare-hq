@@ -26,7 +26,7 @@ for service in $SERVICES; do
       echo -n .
       sleep 1
       let counter=counter+1
-      if [ $counter -gt 200 ]; then
+      if [ $counter -gt 90 ]; then
         echo "TIMEOUT"
         exit 1
       fi
