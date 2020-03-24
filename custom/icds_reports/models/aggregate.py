@@ -58,7 +58,8 @@ from custom.icds_reports.utils.aggregation_helpers.distributed import (
     AggAdolescentGirlsRegistrationAggregate,
     AggGovDashboardHelper,
     AggServiceDeliveryReportHelper,
-    MigrationFormsAggregationDistributedHelper
+    MigrationFormsAggregationDistributedHelper,
+    AggBiharApiDemographicsHelper
 )
 
 
