@@ -1,34 +1,48 @@
 
-from custom.icds_reports.const import AGG_BIHAR_API_DEMOGRAPHICS, AGG_MIGRATION_TABLE
+from custom.icds_reports.const import BIHAR_API_DEMOGRAPHICS_TABLE, AGG_MIGRATION_TABLE
 from custom.icds_reports.utils.aggregation_helpers.distributed.base import BaseICDSAggregationDistributedHelper
 from corehq.apps.userreports.util import get_table_name
 from dateutil.relativedelta import relativedelta
 from custom.icds_reports.utils.aggregation_helpers import transform_day_to_month, month_formatter
 
 
-class AggBiharApiDemographicsHelper(BaseICDSAggregationDistributedHelper):
+class BiharApiDemographicsHelper(BaseICDSAggregationDistributedHelper):
     helper_key = 'agg-bihar_api_demographics'
-    tablename = AGG_BIHAR_API_DEMOGRAPHICS
+    tablename = BIHAR_API_DEMOGRAPHICS_TABLE
 
     def __init__(self, month):
         self.month = transform_day_to_month(month)
         self.end_date = transform_day_to_month(month + relativedelta(months=1, seconds=-1))
 
     def aggregate(self, cursor):
-        drop_query, drop_params = self.drop_table_query()
+        drop_query= self.drop_table_query()
+        create_query = self.create_table_query()
         agg_query = self.aggregation_query()
         index_queries = self.indexes()
+        add_partition_query = self.add_partition_table__query()
 
-        cursor.execute(drop_query, drop_params)
+        cursor.execute(drop_query)
+        cursor.execute(create_query)
         cursor.execute(agg_query)
         for query in index_queries:
             cursor.execute(query)
 
+        cursor.execute(add_partition_query)
+
     def drop_table_query(self):
-        return (
-            'DELETE FROM "{}" WHERE month=%(month)s'.format(self.tablename),
-            {'month': month_formatter(self.month)}
-        )
+        return f"""
+                DROP TABLE IF EXISTS "{self.monthly_tablename}"
+            """
+
+    def create_table_query(self):
+        return f"""
+            CREATE TABLE "{self.monthly_tablename}" (LIKE {self.tablename});
+            SELECT create_distributed_table('{self.monthly_tablename}', 'supervisor_id');
+        """
+    @property
+    def monthly_tablename(self):
+        return f"{self.tablename}_{month_formatter(self.month)}"
+
 
     def aggregation_query(self):
         month_start_string = month_formatter(self.month)
@@ -80,7 +94,7 @@ class AggBiharApiDemographicsHelper(BaseICDSAggregationDistributedHelper):
         calculations = ", ".join([col[1] for col in columns])
 
         return f"""
-                INSERT INTO "{self.tablename}" (
+                INSERT INTO "{self.monthly_tablename}" (
                     {column_names}
                 )
                 (
@@ -106,5 +120,13 @@ class AggBiharApiDemographicsHelper(BaseICDSAggregationDistributedHelper):
 
     def indexes(self):
         return [
-            'CREATE INDEX IF NOT EXISTS demographics_state_person_case_idx ON "{}" (month, state_id, person_id)'.format(self.tablename)
+            f"""CREATE INDEX IF NOT EXISTS demographics_state_person_case_idx
+                ON "{self.monthly_tablename}" (month, state_id, person_id)
+            """
         ]
+
+    def add_partition_table__query(self):
+        return f"""
+            ALTER TABLE "{self.tablename}" ATTACH PARTITION "{self.monthly_tablename}"
+            FOR VALUES IN ('{month_formatter(self.month)}')
+        """

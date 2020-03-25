@@ -25,7 +25,7 @@ from custom.icds_reports.const import (
     AGG_GOV_DASHBOARD_TABLE,
     AGG_SDR_TABLE,
     AGG_MIGRATION_TABLE,
-    AGG_BIHAR_API_DEMOGRAPHICS
+    BIHAR_API_DEMOGRAPHICS_TABLE
 )
 from custom.icds_reports.utils.aggregation_helpers.distributed import (
     AggAwcDailyAggregationDistributedHelper,
@@ -59,7 +59,7 @@ from custom.icds_reports.utils.aggregation_helpers.distributed import (
     AggGovDashboardHelper,
     AggServiceDeliveryReportHelper,
     MigrationFormsAggregationDistributedHelper,
-    AggBiharApiDemographicsHelper
+    BiharApiDemographicsHelper
 )
 
 
@@ -1692,7 +1692,7 @@ class AggServiceDeliveryReport(models.Model, AggregateMixin):
     _agg_atomic = False
 
 
-class AggBiharAPIDemographics(models.Model, AggregateMixin):
+class BiharAPIDemographics(models.Model, AggregateMixin):
     state_id = models.TextField(null=True)
     district_id = models.TextField(null=True)
     block_id = models.TextField(null=True)
@@ -1733,8 +1733,8 @@ class AggBiharAPIDemographics(models.Model, AggregateMixin):
     reason_closure = models.TextField(null=True)
 
     class Meta(object):
-        db_table = AGG_BIHAR_API_DEMOGRAPHICS
+        db_table = BIHAR_API_DEMOGRAPHICS_TABLE
         unique_together = ('month', 'state_id', 'district_id', 'block_id', 'supervisor_id', 'person_id')  # pkey
 
-    _agg_helper_cls = AggBiharApiDemographicsHelper
+    _agg_helper_cls = BiharApiDemographicsHelper
     _agg_atomic = False
