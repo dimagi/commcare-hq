@@ -193,10 +193,9 @@ class TestNewReport(TestCase):
         }
         columns = [c.slug for c in INDICATORS
                    # for now, only ucr columns are correct
-                   if c.in_ucr and c not in columns_known_to_fail]
-        for expected_row, actual_row in zip(expected, actual):
-            pass
-            # assert_same_column_vals(expected_row, actual_row, columns)
+                   if c.in_ucr and c.slug not in columns_known_to_fail]
+        for column in columns:
+            self.assert_columns_equal(expected, actual, column)
 
     def get_expected_rows(self):
         expected = [r for r in get_expected_report()]
@@ -219,3 +218,17 @@ class TestNewReport(TestCase):
         ucr_data = get_ucr_data()
         report = FoodData(DOMAIN, ucr_data)
         return [dict(zip(report.headers, row)) for row in report.rows]
+
+    def assert_columns_equal(self, expected_rows, actual_rows, column):
+        differences = []
+        # it's already been confirmed that rows line up
+        for expected_row, actual_row in zip(expected_rows, actual_rows):
+            if expected_row[column] != actual_row[column]:
+                differences.append(
+                    (expected_row['food_name'], expected_row[column], actual_row[column])
+                )
+        if differences:
+            msg = f"Column '{column}' has errors:\n"
+            for food, expected_val, actual_val in differences:
+                msg += f"{food}: expected '{expected_val}', got '{actual_val}'\n"
+            raise AssertionError(msg)
