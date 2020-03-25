@@ -159,11 +159,11 @@ class FoodRow:
         self.ucr_row = ucr_row
         self.fixtures = fixtures
         for indicator in INDICATORS:
-            if indicator.in_ucr and self._include_ucr_indicator(indicator):
-                setattr(self, indicator.slug, ucr_row[indicator.slug])
-            else:
-                setattr(self, indicator.slug, MISSING)
-        self.reference_food_code = self._get_reference_food_code()
+            if not hasattr(self, indicator.slug):
+                if indicator.in_ucr and self._include_ucr_indicator(indicator):
+                    setattr(self, indicator.slug, ucr_row[indicator.slug])
+                else:
+                    setattr(self, indicator.slug, MISSING)
 
     def _include_ucr_indicator(self, indicator):
         return indicator.is_recall_meta
@@ -177,7 +177,8 @@ class FoodRow:
 
         return [_format(getattr(self, column.slug)) for column in INDICATORS]
 
-    def _get_reference_food_code(self):
+    @property
+    def reference_food_code(self):
         composition = self.fixtures.food_compositions.get(self.food_code)
         if composition:
             return composition.reference_food_code_for_food_composition
