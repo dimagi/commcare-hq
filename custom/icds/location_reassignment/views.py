@@ -76,7 +76,7 @@ class LocationReassignmentView(BaseDomainView):
         return location_types
 
     def _generate_response(self, transitions):
-        response_file = Dumper(self._location_types).dump(transitions)
+        response_file = Dumper().dump(transitions)
         response_file.seek(0)
         response = HttpResponse(response_file, content_type="text/html; charset=utf-8")
         filename = '%s Location Reassignment Expected' % self.domain
