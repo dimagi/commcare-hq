@@ -9,23 +9,8 @@ from django.db import migrations, models
 from custom.icds_reports.utils.migrations import (
     get_composite_primary_key_migrations,
 )
-from corehq.sql_db.operations import RawSQLMigration
-from corehq.sql_db.connections import is_citus_db
-from custom.icds_reports.const import AGG_BIHAR_API_DEMOGRAPHICS
-from custom.icds_reports.utils.migrations import (
-    create_citus_distributed_table
-)
 
-migrator = RawSQLMigration(('custom', 'icds_reports', 'migrations', 'sql_templates', 'database_views'))
-
-
-def _distribute_citus_tables(apps, schema_editor):
-    with schema_editor.connection.cursor() as cursor:
-        if not is_citus_db(cursor):
-            return
-
-        for table, col in [(AGG_BIHAR_API_DEMOGRAPHICS, 'supervisor_id')]:
-            create_citus_distributed_table(cursor, table, col)
+from custom.icds_reports.const import BIHAR_API_DEMOGRAPHICS_TABLE
 
 
 class Migration(migrations.Migration):
@@ -36,7 +21,7 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name='AggBiharAPIDemographics',
+            name='BiharAPIDemographics',
             fields=[
                 ('state_id', models.TextField(null=True)),
                 ('district_id', models.TextField(null=True)),
@@ -78,15 +63,21 @@ class Migration(migrations.Migration):
                 ('reason_closure', models.TextField(null=True)),
             ],
             options={
-                'db_table': 'agg_bihar_api_demographics',
+                'db_table': 'bihar_api_demographics',
             },
             bases=(models.Model, custom.icds_reports.models.aggregate.AggregateMixin),
         ),
         migrations.AlterUniqueTogether(
-            name='aggbiharapidemographics',
+            name='biharapidemographics',
             unique_together=set([('month', 'state_id', 'district_id', 'block_id', 'supervisor_id', 'person_id')]),
         ),
     ]
 
-    operations.extend(get_composite_primary_key_migrations(['aggbiharapidemographics']))
-    operations.append(migrations.RunPython(_distribute_citus_tables, migrations.RunPython.noop))
+    operations.extend(get_composite_primary_key_migrations(['biharapidemographics']))
+
+    operations += [
+        migrations.RunSQL(f"ALTER TABLE {BIHAR_API_DEMOGRAPHICS_TABLE} RENAME TO {BIHAR_API_DEMOGRAPHICS_TABLE}_old"),
+        migrations.RunSQL(f"CREATE TABLE {BIHAR_API_DEMOGRAPHICS_TABLE} (LIKE {BIHAR_API_DEMOGRAPHICS_TABLE}_old INCLUDING DEFAULTS INCLUDING CONSTRAINTS INCLUDING INDEXES) PARTITION BY LIST (month)"),
+        migrations.RunSQL(f"SELECT create_distributed_table('{BIHAR_API_DEMOGRAPHICS_TABLE}', 'supervisor_id')"),
+        migrations.RunSQL(f"DROP TABLE {BIHAR_API_DEMOGRAPHICS_TABLE}_old"),
+        ]

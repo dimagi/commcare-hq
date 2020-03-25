@@ -30,7 +30,7 @@ from .adolescent_girls_registration import AggAdolescentGirlsRegistrationAggrega
 from .agg_gov_dashboard import AggGovDashboardHelper
 from .agg_service_delivery_report import AggServiceDeliveryReportHelper
 from .migration_forms import MigrationFormsAggregationDistributedHelper
-from .agg_bihar_api_demographics import AggBiharApiDemographicsHelper
+from .agg_bihar_api_demographics import BiharApiDemographicsHelper
 
 __all__ = (
     'AggAwcDistributedHelper',
@@ -67,5 +67,5 @@ __all__ = (
     'AggGovDashboardHelper',
     'AggServiceDeliveryReportHelper',
     'MigrationFormsAggregationDistributedHelper',
-    'AggBiharApiDemographicsHelper'
+    'BiharApiDemographicsHelper'
 )
