@@ -417,9 +417,9 @@
             },
             {
                 "type": "expression",
-                "column_id": "recipe_case_id",
+                "column_id": "ingr_recipe_case_id",
                 "datatype": "string",
-                "display_name": "Recipe Case Id",
+                "display_name": "Ingr Recipe Case Id",
                 "expression": {
                     "type": "property_name",
                     "property_name": "recipe_case_id"
@@ -804,6 +804,16 @@
                 "expression": {
                     "type": "property_name",
                     "property_name": "respondent_id"
+                }
+            },
+            {
+                "type": "expression",
+                "column_id": "recipe_case_id",
+                "datatype": "string",
+                "display_name": "Recipe Case Id",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "recipe_case_id"
                 }
             }
         ],

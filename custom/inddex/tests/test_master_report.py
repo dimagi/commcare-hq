@@ -1,18 +1,15 @@
 from datetime import date
 
 from django.test import TestCase
-from django.utils.functional import cached_property
 
 from mock import patch
 
-from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.fixtures.dbaccessors import (
     count_fixture_items,
     get_fixture_data_types,
 )
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.util.test_utils import db_tests_only
 
 from ..example_data.data import (
     FOOD_CASE_TYPE,
@@ -20,59 +17,55 @@ from ..example_data.data import (
     get_expected_report,
     populate_inddex_domain,
 )
-from ..fixtures import FixtureAccessor
-from ..food import FoodData, INDICATORS
-from ..ucr_data import FoodCaseData
 from ..ucr.data_providers.master_data_file_data import MasterDataFileData
 
-DOMAIN = 'inddex-reports-test'
 
+@patch('corehq.apps.callcenter.data_source.get_call_center_domains', lambda: [])
+class TestMasterReport(TestCase):
+    maxDiff = None
+    domain = 'inddex-reports-test'
 
-@db_tests_only
-def setUpModule():
-    create_domain(name=DOMAIN)
-    try:
-        with patch('corehq.apps.callcenter.data_source.get_call_center_domains', lambda: []):
-            populate_inddex_domain(DOMAIN)
-    except Exception:
-        tearDownModule()
-        raise
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain_obj = create_domain(name=cls.domain)
 
+    @classmethod
+    def tearDownClass(cls):
+        cls.domain_obj.delete()
+        super().tearDownClass()
 
-@db_tests_only
-def tearDownModule():
-    Domain.get_by_name(DOMAIN).delete()
+    def test(self):
+        populate_inddex_domain(self.domain)
+        self.assert_cases_created()
+        self.assert_fixtures_created()
+        expected_headers, expected_rows = get_expected_report()
 
+        # exclude rows not pulled from cases for now
+        case_id_column = expected_headers.index('caseid')
+        expected_rows = [r for r in expected_rows if r[case_id_column]]
 
-def sort_rows(rows):
-    keys = ['recall_case_id', 'food_name', 'measurement_amount']
-    return sorted(rows, key=lambda row: [row[k] for k in keys])
+        actual_headers, actual_rows = self.run_report()
+        self.assertEqual(expected_headers, actual_headers)
 
+        # sort uniformly for comparison
+        expected_rows = self.sort_rows(expected_rows, expected_headers)
+        actual_rows = self.sort_rows(actual_rows, expected_headers)
 
-def food_names(rows):
-    return [r['food_name'] for r in rows]
+        self.assert_same_foods_present(expected_rows, actual_rows, expected_headers)
+        for expected, actual in zip(expected_rows, actual_rows):
+            self.assert_rows_match(expected, actual, expected_headers)
 
+    @staticmethod
+    def sort_rows(rows, headers):
+        def sort_key(row):
+            return tuple(row[headers.index(col)] for col in [
+                'food_name', 'measurement_amount',
+            ])
+        return sorted(rows, key=sort_key)
 
-def assert_same_column_vals(expected_row, actual_row, columns):
-    def get_differing_columns(expected_row, actual_row):
-        for header in columns:
-            expected = expected_row[header]
-            actual = actual_row.get(header, 'MISSING')
-            if expected != actual:
-                yield (header, expected, actual)
-
-    differing_cols = list(get_differing_columns(expected_row, actual_row))
-    if differing_cols:
-        food_name = expected_row['food_name']
-        msg = f"Incorrect columns in row for {food_name}:"
-        for header, expected, actual in differing_cols:
-            msg += f"\n{header}: expected '{expected}' got '{actual}'"
-        raise AssertionError(msg)
-
-
-class TestSetupUtils(TestCase):
-    def test_cases_created(self):
-        accessor = CaseAccessors(DOMAIN)
+    def assert_cases_created(self):
+        accessor = CaseAccessors(self.domain)
         case_ids = accessor.get_case_ids_in_domain()
         cases = list(accessor.get_cases(case_ids))
 
@@ -82,42 +75,21 @@ class TestSetupUtils(TestCase):
             for case in cases if case.type == FOOD_CASE_TYPE
         ))
 
-    def test_fixtures_created(self):
+    def assert_fixtures_created(self):
         # Note, this is actually quite slow - might want to drop
-        data_types = get_fixture_data_types(DOMAIN)
+        data_types = get_fixture_data_types(self.domain)
         self.assertEqual(len(data_types), 4)
         self.assertItemsEqual(
-            [(dt.tag, count_fixture_items(DOMAIN, dt._id)) for dt in data_types],
+            [(dt.tag, count_fixture_items(self.domain, dt._id)) for dt in data_types],
             [('recipes', 384),
              ('food_list', 1130),
              ('food_composition_table', 1042),
              ('conv_factors', 2995)]
         )
 
-
-# I plan to remove this eventually, but it's useful to be able to run while I
-# extract components
-class TestOldReport(TestCase):
-    def test_old_report(self):
-        expected = get_expected_report()
-        # exclude rows not pulled from cases for now
-        expected = [r for r in get_expected_report() if r['caseid']]
-
-        actual = self.run_report()
-        self.assertEqual(expected[0].keys(), actual[0].keys())  # compare headers
-
-        # sort uniformly for comparison
-        expected = sort_rows(expected)
-        actual = sort_rows(actual)
-
-        self.assertItemsEqual(food_names(expected), food_names(actual))
-        for expected_row, actual_row in zip(expected, actual):
-            pass
-            # assert_same_column_vals(expected_row, actual_row, expected_row.keys())
-
     def run_report(self):
         report_data = MasterDataFileData({
-            'domain': DOMAIN,
+            'domain': self.domain,
             'startdate': date(2020, 1, 1).isoformat(),
             'enddate': date(2020, 4, 1).isoformat(),
             'case_owners': '',
@@ -125,94 +97,25 @@ class TestOldReport(TestCase):
             'recall_status': '',
         })
         headers = [h.html for h in report_data.headers]
-        return [dict(zip(headers, row)) for row in report_data.rows]
+        return headers, report_data.rows
 
+    def assert_same_foods_present(self, expected_rows, actual_rows, headers):
+        name_column = headers.index('food_name')
+        self.assertEqual(
+            [r[name_column] for r in expected_rows],
+            [r[name_column] for r in actual_rows],
+        )
 
-class TestUcrAdapter(TestCase):
-    def test_data_source(self):
-        # Only the rows with case IDs will appear in the UCR
-        expected = [r for r in get_expected_report() if r['caseid']]
-        ucr_data = get_ucr_data()
-        self.assertItemsEqual(food_names(expected), food_names(ucr_data))
-
-
-def get_ucr_data():
-    return FoodCaseData({
-        'domain': DOMAIN,
-        'startdate': date(2020, 1, 1).isoformat(),
-        'enddate': date(2020, 4, 1).isoformat(),
-        'case_owners': '',
-        'recall_status': '',
-    }).get_data()
-
-
-class TestFixtures(TestCase):
-    @cached_property
-    def fixtures_accessor(self):  # `fixtures` is a reserved property on TestCase
-        return FixtureAccessor(DOMAIN)
-
-    def test_recipes(self):
-        ingredients = self.fixtures_accessor.recipes['10089']
-        self.assertEqual(7, len(ingredients))
-        for ingredient in ingredients:
-            if ingredient.ingr_code == '450':
-                self.assertEqual("Okra sauce", ingredient.recipe_descr)
-                self.assertEqual("Potash,solid", ingredient.ingr_descr)
-                self.assertEqual(0.01, ingredient.ingr_fraction)
-
-    def test_food_list(self):
-        food = self.fixtures_accessor.foods['10']
-        self.assertEqual("Millet flour", food.food_name)
-        self.assertEqual("Millet flour", food.food_base_term)
-
-
-class TestNewReport(TestCase):
-    maxDiff = None
-
-    def test_new_report(self):
-        expected = sort_rows(self.get_expected_rows())
-        actual = sort_rows(self.run_new_report())
-        self.assertEqual(food_names(expected), food_names(actual))
-
-        columns_known_to_fail = {  # TODO address these columns
-            'unique_respondent_id',
-            'respondent_id',
-            'opened_date',
-            'recipe_name',
-            'reference_food_code',
-            'include_in_analysis',
-            'time_block',
-            'ingr_recipe_code',
-            'nsr_conv_method_code_post_cooking',
-            'nsr_conv_option_code_post_cooking',
-            'nsr_conv_option_desc_post_cooking',
-            'already_reported_food',
-        }
-        columns = [c.slug for c in INDICATORS
-                   # for now, only ucr columns are correct
-                   if c.in_ucr and c not in columns_known_to_fail]
-        for expected_row, actual_row in zip(expected, actual):
-            pass
-            # assert_same_column_vals(expected_row, actual_row, columns)
-
-    def get_expected_rows(self):
-        expected = [r for r in get_expected_report()]
-
-        # Swap out the external IDs in the test fixture for the real IDs
-        accessor = CaseAccessors(DOMAIN)
-        case_ids = accessor.get_case_ids_in_domain()
-        case_ids_by_external_id = {c.external_id: c.case_id
-                                   for c in accessor.get_cases(case_ids)}
-
-        def substitute_real_ids(row):
-            for id_col in ['recall_case_id', 'caseid']:
-                if row[id_col]:
-                    row[id_col] = case_ids_by_external_id[row[id_col]]
-            return row
-
-        return map(substitute_real_ids, expected)
-
-    def run_new_report(self):
-        ucr_data = get_ucr_data()
-        report = FoodData(DOMAIN, ucr_data)
-        return [dict(zip(report.headers, row)) for row in report.rows]
+    def assert_rows_match(self, expected_row, actual_row, headers):
+        return  # I know the report isn't nearly correct yet
+        differing_cols = [
+            (header, expected, actual)
+            for (header, expected, actual) in zip(headers, expected_row, actual_row)
+            if expected != actual
+        ]
+        if differing_cols:
+            food_name = expected_row[headers.index('food_name')]
+            msg = f"Incorrect columns in row for {food_name}:"
+            for header, expected, actual in differing_cols:
+                msg += f"\n{header}: expected '{expected}' got '{actual}'"
+            self.assertTrue(False, msg)
