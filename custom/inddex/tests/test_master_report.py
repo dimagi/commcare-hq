@@ -165,6 +165,12 @@ class TestFixtures(TestCase):
         self.assertEqual("Millet flour", food.food_name)
         self.assertEqual("Millet flour", food.food_base_term)
 
+    def test_food_compositions(self):
+        composition = self.fixtures_accessor.food_compositions['10']
+        self.assertEqual("Millet flour", composition.survey_base_terms_and_food_items)
+        self.assertEqual(367, composition.nutrients['1'])
+        self.assertEqual(9.1, composition.nutrients['2'])
+
 
 class TestNewReport(TestCase):
     maxDiff = None
