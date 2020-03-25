@@ -2,7 +2,6 @@ from django.contrib import messages
 from django.http import HttpResponse, HttpResponseRedirect
 from django.urls import reverse
 from django.utils.decorators import method_decorator
-from django.utils.functional import cached_property
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy
 from django.views.decorators.http import require_GET
@@ -10,7 +9,6 @@ from django.views.decorators.http import require_GET
 from corehq import toggles
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
-from corehq.apps.locations.models import LocationType
 from corehq.apps.locations.permissions import require_can_edit_locations
 from corehq.apps.locations.views import LocationsListView
 from corehq.util.files import safe_filename_header
@@ -45,7 +43,6 @@ class LocationReassignmentView(BaseDomainView):
         })
         context.update({
             'bulk_upload_form': get_bulk_upload_form(context),
-            'loc_types': self._location_types,
         })
         return context
 
@@ -68,12 +65,6 @@ class LocationReassignmentView(BaseDomainView):
     def _workbook_is_valid(self, workbook):
         # ToDo: Add necessary checks for workbook
         return []
-
-    @cached_property
-    def _location_types(self):
-        location_types = LocationType.objects.by_domain(self.domain)
-        location_types.reverse()
-        return location_types
 
     def _generate_response(self, transitions):
         response_file = Dumper().dump(transitions)

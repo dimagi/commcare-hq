@@ -18,9 +18,8 @@ hqDefine("icds/js/location_reassignment", [
 
             // Download
             self.location_id = ko.observable('');
-            self.location_type = ko.observable('');
             self.url = ko.computed(function () {
-                return self.baseUrl + "?location_id=" + (self.location_id() || '') + "&location_type=" + (self.location_type() || '');
+                return self.baseUrl + "?location_id=" + (self.location_id() || '');
             });
 
             // Upload
