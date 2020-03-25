@@ -105,15 +105,24 @@
                 {% trans "User Configurable Report" %}<span class="asteriskField">*</span>
             </label>
             <div class="controls col-sm-9 col-md-8 col-lg-6">
+              {% if ucrs %}
                 <select class="textinput textInput form-control"
                         required=""
                         data-bind="value: ucrId">
                   {% for ucr in ucrs %}
                     <option value="{{ ucr.get_id }}">{{ ucr.title }}</option>
-                  {% empty %}
-                    <option value="">No UCRs defined</option>
                   {% endfor %}
                 </select>
+              {% else %}
+              <div class="alert alert-warning">
+                DataSet Maps map UCRs in CommCare to DataSets in DHIS2.
+                <a href="https://github.com/dimagi/commcare-hq/blob/master/corehq/motech/dhis2/README.md#datasets"
+                   target="_new">You can find documentation on integrating with
+                  DataSets here</a>.
+                Go to <a href="{% url 'configurable_reports_home' domain %}">Configurable
+                  Reports</a> to define a UCR.
+              </div>
+              {% endif %}
             </div>
         </div>
 
