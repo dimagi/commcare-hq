@@ -457,8 +457,9 @@ class BaseCasAPIView(View):
         today = date.today()
         current_month = today - relativedelta(months=1) if today.day <= 2 else today
         if query_month > current_month or query_month < start_month:
-            in_range=False
+            in_range = False
         return in_range
+
 
 @method_decorator(DASHBOARD_CHECKS, name='dispatch')
 class ProgramSummaryView(BaseReportView):
@@ -2423,7 +2424,6 @@ class BiharDemographicsAPI(BaseCasAPIView):
         }
         return {"message": error_messages[message_name]}
 
-
     def get(self, request, *args, **kwargs):
         state_id = request.GET.get('state_id', '')
         last_person_case_id = request.GET.get('last_person_case_id', '')
@@ -2442,8 +2442,9 @@ class BiharDemographicsAPI(BaseCasAPIView):
         if not self.has_access(state_id, request.couch_user):
             return JsonResponse(self.message('access_denied'), status=403)
 
-
-        demographics_data, total_count = get_api_demographics_data(valid_query_month, state_id, last_person_case_id)
+        demographics_data, total_count = get_api_demographics_data(valid_query_month,
+                                                                   state_id,
+                                                                   last_person_case_id)
         response_json = {
             'data': demographics_data,
             'metadata': {
