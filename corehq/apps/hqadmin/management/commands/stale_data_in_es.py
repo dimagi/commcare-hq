@@ -7,6 +7,7 @@ from django.core.management.base import BaseCommand, CommandError
 
 import dateutil
 from django.db.models import F
+from memoized import memoized
 
 from casexml.apps.case.models import CommCareCase
 from dimagi.utils.chunked import chunked
@@ -190,7 +191,11 @@ def get_sql_case_data_for_db(db, run_config):
         matching_cases = matching_cases.filter(
             type=run_config.case_type
         )
-    return matching_cases.values_list('case_id', 'type', 'server_modified_on', 'domain')
+    return [
+        (*rest, domain)
+        for *rest, domain in matching_cases.values_list('case_id', 'type', 'server_modified_on', 'domain')
+        if _should_use_sql_backend(domain)
+    ]
 
 
 class FormBackend:
@@ -235,7 +240,11 @@ class FormBackend:
             matching_forms = matching_forms.filter(
                 domain=run_config.domain
             )
-        return matching_forms.values_list('form_id', 'state', 'xmlns', 'received_on', 'domain')
+        return [
+            (*rest, domain)
+            for *rest, domain in matching_forms.values_list('form_id', 'state', 'xmlns', 'received_on', 'domain')
+            if _should_use_sql_backend(domain)
+        ]
 
     @staticmethod
     def _get_es_modified_dates_for_forms(domain, form_ids):
@@ -248,3 +257,8 @@ class FormBackend:
 
 def _chunked_with_progress_bar(collection, n, prefix):
     return chunked(with_progress_bar(collection, prefix=prefix, stream=sys.stderr), n)
+
+
+@memoized
+def _should_use_sql_backend(domain):
+    return should_use_sql_backend(domain)
