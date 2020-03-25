@@ -1,6 +1,5 @@
 from collections import defaultdict
 
-from corehq.util.workbook_json.excel import get_workbook
 from custom.icds.location_reassignment.const import (
     EXTRACT_OPERATION,
     MERGE_OPERATION,
