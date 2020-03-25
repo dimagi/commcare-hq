@@ -155,8 +155,9 @@ class FoodRow:
     # fct_gap_code = ''
     # fct_gap_desc = ''
 
-    def __init__(self, ucr_row):
+    def __init__(self, ucr_row, fixtures):
         self.ucr_row = ucr_row
+        self.fixtures = fixtures
         for indicator in INDICATORS:
             if indicator.in_ucr and self._include_ucr_indicator(indicator):
                 setattr(self, indicator.slug, ucr_row[indicator.slug])
@@ -186,14 +187,16 @@ class FoodCaseRow(FoodRow):
 class RecipeIngredientRow(FoodRow):
     """A food item inferred from a recipe"""
 
-    def __init__(self, ucr_row, food_data, ingredient):
+    def __init__(self, ucr_row, fixtures, ingredient):
         # ucr_row is data from the parent food case
-        # food_data is static info from the fixture,
         # ingredient is static info for this ingredient from the recipes fixture
-        super().__init__(ucr_row)
+        super().__init__(ucr_row, fixtures)
+
         self.ingredient = ingredient
         self.food_code = ingredient.ingr_code
         self.recipe_name = ucr_row['recipe_name']
+
+        food_data = self.fixtures.foods[self.food_code]
         for indicator in INDICATORS:
             if indicator.in_food_fixture:
                 setattr(self, indicator.slug, getattr(food_data, indicator.slug))
@@ -211,10 +214,9 @@ class FoodData:
     @property
     def rows(self):
         for ucr_row in self.ucr_rows:
-            food = FoodCaseRow(ucr_row)
+            food = FoodCaseRow(ucr_row, self.fixtures)
             yield food.as_list()
             if food.food_type == 'std_recipe':
                 for ingredient_data in self.fixtures.recipes[food.food_code]:
-                    food_data = self.fixtures.foods[ingredient_data.ingr_code]
-                    ingr_row = RecipeIngredientRow(ucr_row, food_data, ingredient_data)
+                    ingr_row = RecipeIngredientRow(ucr_row, self.fixtures, ingredient_data)
                     yield ingr_row.as_list()
