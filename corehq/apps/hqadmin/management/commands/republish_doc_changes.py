@@ -1,3 +1,4 @@
+import csv
 import itertools
 from collections import namedtuple
 
@@ -5,7 +6,7 @@ from django.core.management import BaseCommand, CommandError
 
 from corehq.apps.change_feed import data_sources, topics
 from corehq.apps.change_feed.producer import producer
-from corehq.apps.hqadmin.management.commands.stale_data_in_es import DataRow, HEADER_ROW
+from corehq.apps.hqadmin.management.commands.stale_data_in_es import DataRow, HEADER_ROW, get_csv_args
 from corehq.form_processor.backends.sql.dbaccessors import ShardAccessor
 from corehq.form_processor.models import CommCareCaseSQL
 from corehq.form_processor.utils import should_use_sql_backend
@@ -57,8 +58,9 @@ class Command(BaseCommand):
 
 def _get_data_rows(stale_data_in_es_file, delimiter):
     with open(stale_data_in_es_file, 'r') as f:
-        for line in f.readlines():
-            data_row = DataRow(*line.rstrip('\n').split(delimiter))
+        csv_reader = csv.reader(f, **get_csv_args(delimiter))
+        for csv_row in csv_reader:
+            data_row = DataRow(*csv_row)
             # Skip the header row anywhere in the file.
             # The "anywhere in the file" part is useful
             # if you cat multiple stale_data_in_es_file files together.

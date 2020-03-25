@@ -1,3 +1,4 @@
+import csv
 import inspect
 import sys
 from collections import namedtuple
@@ -35,6 +36,13 @@ HEADER_ROW = DataRow(
     es_date='ES Date',
     primary_date='Correct Date',
 )
+
+
+def get_csv_args(delimiter):
+    return {
+        'delimiter': delimiter,
+        'lineterminator': '\n',
+    }
 
 
 class Command(BaseCommand):
@@ -86,9 +94,11 @@ class Command(BaseCommand):
         if run_config.domain is ALL_SQL_DOMAINS:
             print('Running for all SQL domains (and excluding Couch domains!)', file=sys.stderr)
 
+        csv_writer = csv.writer(sys.stdout, **get_csv_args(delimiter))
+
         def print_data_row(data_row):
-            # Casting as str print `None` as 'None' and datetimes as 'YYYY-MM-DD hh-mm-ss'
-            print(delimiter.join(map(str, data_row)))
+            # Casting as str print `None` as 'None'
+            csv_writer.writerow(map(str, data_row))
 
         print_data_row(HEADER_ROW)
 
