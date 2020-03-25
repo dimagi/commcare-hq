@@ -56,7 +56,7 @@ def get_meta_appversion_text(form_metadata):
         return None
 
 
-@quickcache(['domain', 'build_id'], timeout=24*60*60)
+@quickcache(['domain', 'build_id'], timeout=24 * 60 * 60)
 def get_version_from_build_id(domain, build_id):
     """
     fast lookup of app version number given build_id
@@ -74,6 +74,23 @@ def get_version_from_build_id(domain, build_id):
         return None
     else:
         return build.version
+
+
+@quickcache(['domain', 'build_id', 'property_name'], timeout=24 * 60 * 60)
+def get_profile_property_from_build_id(domain, build_id, property_name):
+    if not build_id:
+        return None
+
+    try:
+        build = get_app(domain, build_id)
+    except (ResourceNotFound, Http404):
+        return None
+    if not build.copy_of:
+        return None
+    elif build.domain != domain:
+        return None
+    else:
+        return build.profile.get('custom_properties', {}).get(property_name)
 
 
 def get_version_from_appversion_text(appversion_text):
