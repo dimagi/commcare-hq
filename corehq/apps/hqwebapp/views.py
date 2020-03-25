@@ -335,7 +335,7 @@ def _no_permissions_message(request, template_name="403.html", message=None):
     )
 
 
-def no_permissions(request, redirect_to=None, template_name="403.html", message=None):
+def no_permissions(request, redirect_to=None, template_name="403.html", message=None, exception=None):
     """
     403 error handler.
     """
