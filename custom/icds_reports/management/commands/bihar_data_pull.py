@@ -4,42 +4,43 @@ import csv
 from custom.icds_reports.models.aggregate import AwcLocation
 
 headers = [
-	'StateID',
-	'StateName'
-	'DistrictID',
-	'DistrictName',
-	'ProjectID',
-	'ProjectName',
-	'SectorID',
-	'SectorName',
-	'AWCID',
-	'AWCName',
-	'Name',
-	'Phone_Number'
-	'Has Bank Account?',
-	'Bank IFSC Code',
-	'Bank Account Number',
-	'Bank Name',
-	'Bank branch name']
+    'StateID',
+    'StateName'
+    'DistrictID',
+    'DistrictName',
+    'ProjectID',
+    'ProjectName',
+    'SectorID',
+    'SectorName',
+    'AWCID',
+    'AWCName',
+    'Name',
+    'Phone_Number',
+    'Has Bank Account?',
+    'Bank IFSC Code',
+    'Bank Account Number',
+    'Bank Name',
+    'Bank branch name']
 
 data_rows = [headers]
 
+
 def get_person_case(case):
-	for parent in case.get_parent():
-		if parent.get_case_property('person')=='person':
-			return parent
+    for parent in case.get_parent():
+        if parent.get_case_property('person') == 'person':
+            return parent
 
 
 def fetch_case_properties(case, awc):
-	return [
-    	awc['state_site_code'],
-    	awc['state_name'],
-    	awc['district_site_code'],
-    	awc['district_name'],
-    	awc['block_site_code'],
-    	awc['block_name']
+    return [
+        awc['state_site_code'],
+        awc['state_name'],
+        awc['district_site_code'],
+        awc['district_name'],
+        awc['block_site_code'],
+        awc['block_name'],
         awc['supervisor_site_code'],
-    	awc['supervisor_name'],
+        awc['supervisor_name'],
         awc['awc_site_code'],
         awc['awc_name'],
         get_person_case.get_case_property('name'),
@@ -76,5 +77,3 @@ class Command(BaseCommand):
 
         writer = csv.writer(fout)
         writer.writerows(data_rows)
-
-
