@@ -16,6 +16,8 @@ from corehq.elastic import mget_query
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 from corehq.toggles import ICDS_UCR_ELASTICSEARCH_DOC_LOADING, NAMESPACE_OTHER
 from dimagi.ext.jsonobject import JsonObject, ListProperty, StringProperty, DictProperty, BooleanProperty
+from corehq.apps.app_manager.dbaccessors import get_build_by_version
+from django.conf import settings
 
 
 CUSTOM_UCR_EXPRESSIONS = [
@@ -288,9 +290,32 @@ class GetAppVersion(JsonObject):
     def configure(self, app_version_string):
         self._app_version_string = app_version_string
 
-    def __call__(self, item, context=None):
+    def get_version_from_app_object(self, item, app_version_from_app_string):
+        domain_name = item.get('domain')
+        form_accessor = FormAccessors(domain_name)
+        form_id = item.get('form').get('meta').get('instanceID')
+        form = form_accessor.get_form(form_id)
+
+        app_build = get_build_by_version(domain_name, form.app_id, app_version_from_app_string)
+
+        if app_build is None:
+            return app_version_from_app_string
+
+        elif app_build.get('value').get('doc_type') == 'LinkedApplication':
+            return app_build.get('value').get('upstream_version')
+        else:
+            return app_build.get('value').get('version')
+
+    def get_version_from_appversion_string(self, item, context):
         app_version_string = self._app_version_string(item, context)
         return get_version_from_appversion_text(app_version_string)
+
+    def __call__(self, item, context=None):
+        app_version = self.get_version_from_appversion_string(item, context)
+        if settings.SERVER_ENVIRONMENT == 'india':
+            app_version = self.get_version_from_app_object(item, app_version)
+
+        return app_version
 
     def __str__(self):
         return "Application Version"

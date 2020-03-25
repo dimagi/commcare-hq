@@ -62,7 +62,7 @@ from .views.mobile.users import (
     update_user_groups,
     user_download_job_poll,
     user_upload_job_poll,
-)
+    CommCareUserConfirmAccountView)
 
 urlpatterns = [
     url(r'^$', DefaultProjectUserSettingsView.as_view(), name=DefaultProjectUserSettingsView.urlname),
@@ -145,6 +145,8 @@ urlpatterns = [
         name=ConfirmBillingAccountForExtraUsersView.urlname),
     url(r'^commcare/register/(?P<token>[\w-]+)/$', CommCareUserSelfRegistrationView.as_view(),
         name=CommCareUserSelfRegistrationView.urlname),
+    url(r'^commcare/confirm_account/(?P<user_id>[\w-]+)/$', CommCareUserConfirmAccountView.as_view(),
+        name=CommCareUserConfirmAccountView.urlname),
 ] + [
     url(r'^groups/$', GroupsListView.as_view(), name=GroupsListView.urlname),
     url(r'^groups/(?P<group_id>[ \w-]+)/$', EditGroupMembersView.as_view(), name=EditGroupMembersView.urlname),

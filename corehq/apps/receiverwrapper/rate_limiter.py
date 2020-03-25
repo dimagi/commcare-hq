@@ -7,7 +7,8 @@ from corehq.project_limits.rate_limiter import (
     get_dynamic_rate_definition,
 )
 from corehq.project_limits.shortcuts import get_standard_ratio_rate_definition
-from corehq.toggles import DO_NOT_RATE_LIMIT_SUBMISSIONS, NAMESPACE_DOMAIN
+from corehq.toggles import DO_NOT_RATE_LIMIT_SUBMISSIONS, \
+    TEST_FORM_SUBMISSION_RATE_LIMIT_RESPONSE
 from corehq.util.datadog.gauges import datadog_counter, datadog_gauge
 from corehq.util.datadog.utils import bucket_value
 from corehq.util.decorators import run_only_when, silence_and_report_error
@@ -72,13 +73,15 @@ SHOULD_RATE_LIMIT_SUBMISSIONS = settings.RATE_LIMIT_SUBMISSIONS and not settings
 @silence_and_report_error("Exception raised in the submission rate limiter",
                           'commcare.xform_submissions.rate_limiter_errors')
 def rate_limit_submission(domain):
+    if TEST_FORM_SUBMISSION_RATE_LIMIT_RESPONSE.enabled(domain):
+        return True
     should_allow_usage = (
         global_submission_rate_limiter.allow_usage()
         or submission_rate_limiter.allow_usage(domain))
 
     if should_allow_usage:
         allow_usage = True
-    elif DO_NOT_RATE_LIMIT_SUBMISSIONS.enabled(domain, namespace=NAMESPACE_DOMAIN):
+    elif DO_NOT_RATE_LIMIT_SUBMISSIONS.enabled(domain):
         # If we're disabling rate limiting on a domain then allow it
         # but still delay and record whether they'd be rate limited under the 'test' metric
         allow_usage = True
