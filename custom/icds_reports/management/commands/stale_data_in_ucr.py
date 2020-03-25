@@ -95,7 +95,7 @@ def _get_stale_data(run_config):
         for chunk in chunked(matching_records_for_db, chunk_size):
             doc_ids = [val[0] for val in chunk]
             ucr_insertion_dates = _get_ucr_insertion_dates(run_config.domain, run_config.table_id, doc_ids)
-            for doc_id, doc_type, sql_modified_on, _ in chunk:
+            for doc_id, doc_type, sql_modified_on in chunk:
                 ucr_insert_date = ucr_insertion_dates.get(doc_id)
                 if (not ucr_insert_date
                         # Handle small time drift between databases
@@ -130,4 +130,5 @@ def _get_primary_data_for_db(db, run_config):
             matching_xforms = matching_xforms.filter(xmlns=run_config.xmlns)
         return matching_xforms.values_list('form_id', 'xmlns', 'received_on')
     else:
-        return get_sql_case_data_for_db(db, run_config)
+        for case_id, case_type, server_date_modified, _ in get_sql_case_data_for_db(db, run_config):
+            yield case_id, case_type, server_date_modified
