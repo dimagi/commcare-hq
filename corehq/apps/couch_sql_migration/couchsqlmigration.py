@@ -377,7 +377,8 @@ class CouchSqlDomainMigrator:
     def _diff_cases(self):
         from .casedifftool import CaseDiffTool
         casediff = CaseDiffTool(self)
-        casediff.diff_cases()
+        if not self.forms:
+            casediff.diff_cases()
         if casediff.should_diff_pending():
             casediff.diff_cases("pending")
 
