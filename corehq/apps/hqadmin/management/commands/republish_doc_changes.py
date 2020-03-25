@@ -6,7 +6,7 @@ from django.core.management import BaseCommand, CommandError
 from corehq.apps.change_feed import data_sources, topics
 from corehq.apps.change_feed.producer import producer
 from corehq.apps.hqadmin.management.commands.stale_data_in_es import DataRow, HEADER_ROW
-from corehq.form_processor.backends.sql.dbaccessors import ShardAccessor, doc_type_to_state
+from corehq.form_processor.backends.sql.dbaccessors import ShardAccessor
 from corehq.form_processor.models import CommCareCaseSQL
 from corehq.form_processor.utils import should_use_sql_backend
 from dimagi.utils.chunked import chunked
@@ -23,7 +23,7 @@ DocumentRecord = namedtuple('DocumentRecord', ['doc_id', 'doc_type', 'doc_subtyp
 
 
 CASE_DOC_TYPES = {'CommCareCase'}
-FORM_DOC_TYPES = set(doc_type_to_state.keys())
+FORM_DOC_TYPES = {'XFormInstance', 'XFormArchived'}
 
 ALL_DOC_TYPES = set.union(CASE_DOC_TYPES, FORM_DOC_TYPES)
 
