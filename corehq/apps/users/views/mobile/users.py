@@ -18,7 +18,7 @@ from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 from django.http import Http404, HttpResponse, HttpResponseBadRequest, HttpResponseRedirect
-from django.http.response import HttpResponseServerError
+from django.http.response import HttpResponseServerError, JsonResponse
 from django.shortcuts import redirect, render
 from django.template.loader import render_to_string
 from django.urls import reverse
@@ -830,6 +830,15 @@ def _modify_user_status(request, domain, user_id, is_active):
     return json_response({
         'success': True,
     })
+
+
+@require_can_edit_commcare_users
+@require_POST
+@location_safe
+def send_confirmation_email(request, domain, user_id):
+    user = CommCareUser.get_by_user_id(user_id, domain)
+    send_account_confirmation_if_necessary(user)
+    return JsonResponse(data={'success': True})
 
 
 @require_can_edit_or_view_commcare_users
