@@ -38,7 +38,7 @@ def strip_api(server_url):
 
     """
     if server_url.rstrip('/').endswith('api'):
-        i = server_url.index('api')
+        i = len(server_url.rstrip('/')) - 3
         return server_url[:i]
     return server_url
 
