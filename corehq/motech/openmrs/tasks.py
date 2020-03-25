@@ -7,9 +7,10 @@ import uuid
 from collections import namedtuple
 from datetime import datetime
 
+from django.conf import settings
+
 from celery.schedules import crontab
 from celery.task import periodic_task, task
-from django.conf import settings
 from jinja2 import Template
 from requests import RequestException
 
@@ -25,7 +26,7 @@ from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.locations.dbaccessors import get_one_commcare_user_at_location
 from corehq.apps.locations.models import LocationType, SQLLocation
 from corehq.apps.users.cases import get_wrapped_owner
-from corehq.motech.exceptions import ConfigurationError
+from corehq.motech.exceptions import ConfigurationError, ParseError
 from corehq.motech.openmrs.atom_feed import (
     get_feed_updates,
     import_encounter,
@@ -313,12 +314,12 @@ def poll_openmrs_atom_feeds(domain_name):
             for patient_url in patient_urls:
                 try:
                     update_patient(repeater, patient_url)
-                except (ConfigurationError, OpenmrsException, ValueError) as err:
+                except (ConfigurationError, OpenmrsException, ParseError) as err:
                     errors.append(str(err))
             for encounter_url in encounter_urls:
                 try:
                     import_encounter(repeater, encounter_url)
-                except (ConfigurationError, OpenmrsException, ValueError) as err:
+                except (ConfigurationError, OpenmrsException, ParseError) as err:
                     errors.append(str(err))
         if errors:
             repeater.requests.notify_error(

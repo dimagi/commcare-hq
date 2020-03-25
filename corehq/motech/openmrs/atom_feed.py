@@ -34,7 +34,11 @@ from corehq.apps.case_importer.util import EXTERNAL_ID
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.models import CommCareCaseSQL
-from corehq.motech.exceptions import ConfigurationError, JsonpathError
+from corehq.motech.exceptions import (
+    ConfigurationError,
+    JsonpathError,
+    ParseError,
+)
 from corehq.motech.openmrs.const import (
     ATOM_FEED_NAMES,
     ENCOUNTER_URL_UUID_RE,
@@ -146,7 +150,7 @@ def get_entry_url(element):
         except json.JSONDecodeError:
             index = cdata.index('/ws/rest/v1/')  # Raises ValueError if not found
             return cdata[index:]
-    raise ValueError('Unable to parse Atom feed content')
+    raise ParseError('Unable to parse Atom feed content')
 
 
 def get_feed_updates(repeater, feed_name):
@@ -383,7 +387,7 @@ def get_uuid_from_url(pattern, url):
     try:
         return re.search(pattern, url).group(1)
     except AttributeError:
-        raise ValueError(f'UUID not found in URL {url!r}')
+        raise ParseError(f'UUID not found in URL {url!r}')
 
 
 def get_case_block_kwargs_from_encounter(
