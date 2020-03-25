@@ -69,6 +69,7 @@ hqDefine("users/js/mobile_workers",[
             email: '',
             send_account_confirmation_email: false,
             is_active: true,
+            is_account_confirmed: true,
             custom_fields: {},
         });
 
@@ -111,6 +112,30 @@ hqDefine("users/js/mobile_workers",[
                 },
             });
         });
+
+        self.sendConfirmationEmail = function () {
+            var urlName = 'send_confirmation_email';
+            var $modal = $('#confirm_' + self.user_id());
+
+            $modal.find(".btn").addSpinnerToButton();
+            $.ajax({
+                method: 'POST',
+                url: initialPageData.reverse(urlName, self.user_id()),
+                success: function (data) {
+                    $modal.modal('hide');
+                    if (data.success) {
+                        self.action_error('');
+                    } else {
+                        self.action_error(data.error);
+                    }
+
+                },
+                error: function () {
+                    $modal.modal('hide');
+                    self.action_error(gettext("Issue communicating with server. Try again."));
+                },
+            });
+        };
 
         return self;
     };
