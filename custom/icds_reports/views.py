@@ -64,7 +64,7 @@ from custom.icds_reports.const import (
     THR_REPORT_EXPORT,
     AggregationLevels,
     LocationTypes,
-    STANDARD_API_PAGE_SIZE,
+    CAS_API_PAGE_SIZE,
     SERVICE_DELIVERY_REPORT
 )
 from custom.icds_reports.dashboard_utils import get_dashboard_template_context
@@ -2261,7 +2261,7 @@ class GovernanceHomeVisitAPI(GovernanceAPIBaseView):
         order = ['awc_id']
 
         data, count = get_home_visit_data(
-            STANDARD_API_PAGE_SIZE,
+            CAS_API_PAGE_SIZE,
             year,
             month,
             order,
@@ -2295,7 +2295,7 @@ class GovernanceBeneficiaryAPI(GovernanceAPIBaseView):
         order = ['awc_id']
 
         data, count = get_beneficiary_data(
-            STANDARD_API_PAGE_SIZE,
+            CAS_API_PAGE_SIZE,
             year,
             month,
             order,
@@ -2333,7 +2333,7 @@ class GovernanceVHNDSAPI(GovernanceAPIBaseView):
         order = ['awc_id']
         if state_id is not None:
             query_filters['state_id'] = state_id
-        data, count = get_vhnd_data(STANDARD_API_PAGE_SIZE, year,
+        data, count = get_vhnd_data(CAS_API_PAGE_SIZE, year,
                                     month, order, query_filters)
         response_json = {
             'data': data,
@@ -2363,7 +2363,7 @@ class GovernanceCBEAPI(GovernanceAPIBaseView):
         order = ['awc_id']
 
         data, count = get_cbe_data(
-            STANDARD_API_PAGE_SIZE,
+            CAS_API_PAGE_SIZE,
             year,
             month,
             order,

@@ -1,9 +1,8 @@
 from custom.icds_reports.models.views import BiharDemographicsView
-from custom.icds_reports.const import STANDARD_API_PAGE_SIZE
+from custom.icds_reports.const import CAS_API_PAGE_SIZE
 
 
 def get_api_demographics_data(month, state_id, last_person_case_id):
-    print(type(last_person_case_id))
     demographics_data_query = BiharDemographicsView.objects.filter(
         month=month,
         state_id=state_id,
@@ -55,5 +54,5 @@ def get_api_demographics_data(month, state_id, last_person_case_id):
     )
 
     # To apply pagination on database query with data size length
-    limited_demographics_data = list(demographics_data_query[:STANDARD_API_PAGE_SIZE])
+    limited_demographics_data = list(demographics_data_query[:CAS_API_PAGE_SIZE])
     return limited_demographics_data,  demographics_data_query.count()
