@@ -57,7 +57,7 @@ class LocationReassignmentView(BaseDomainView):
         else:
             errors = self._workbook_is_valid(workbook)
             if not errors:
-                transitions, errors = Parser(workbook.worksheets[0], self._location_types).parse()
+                transitions, errors = Parser(workbook).parse()
                 [messages.error(request, error) for error in errors]
                 if not errors:
                     return self._generate_response(transitions)
