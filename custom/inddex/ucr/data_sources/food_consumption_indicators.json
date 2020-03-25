@@ -131,7 +131,27 @@
                     },
                     "value_expression": {
                         "type": "property_name",
-                        "property_name": "respondent_unique_id"
+                        "property_name": "unique_respondent_id"
+                    }
+                }
+            },
+            {
+                "type": "expression",
+                "column_id": "respondent_id",
+                "datatype": "string",
+                "display_name": "Respondent Id",
+                "expression": {
+                    "type": "nested",
+                    "argument_expression": {
+                        "type": "indexed_case",
+                        "case_expression": {
+                            "type": "identity"
+                        },
+                        "index": "parent"
+                    },
+                    "value_expression": {
+                        "type": "property_name",
+                        "property_name": "respondent_id"
                     }
                 }
             },
@@ -794,16 +814,6 @@
                 "expression": {
                     "type": "named",
                     "name": "nsr_same_conv_method_named"
-                }
-            },
-            {
-                "type": "expression",
-                "column_id": "respondent_id",
-                "datatype": "string",
-                "display_name": "Respondent Id",
-                "expression": {
-                    "type": "property_name",
-                    "property_name": "respondent_id"
                 }
             }
         ],
