@@ -187,6 +187,9 @@ class TestNewReport(TestCase):
             'nsr_conv_option_code_post_cooking',
             'nsr_conv_option_desc_post_cooking',
             'already_reported_food',
+            'food_status',
+            'is_ingredient',
+            'recipe_case_id',
         }
         columns = [c.slug for c in INDICATORS
                    # for now, only ucr columns are correct
