@@ -68,7 +68,8 @@ def _get_importer_config(case_type, headers, user_id):
 
 
 def get_expected_report():
-    return _read_csv('expected_result.csv')
+    headers, rows = _read_csv('expected_result.csv')
+    return [dict(zip(headers, row)) for row in rows]
 
 
 def _import_fixtures(domain):

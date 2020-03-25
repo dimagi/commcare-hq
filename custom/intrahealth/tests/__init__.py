@@ -1,25 +1,23 @@
-import mock
-import postgres_copy
-import sqlalchemy
 import os
 
 from django.test.utils import override_settings
-from mock.mock import Mock
+
+import mock
+import postgres_copy
+import sqlalchemy
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.locations.models import LocationType, SQLLocation
 from corehq.apps.products.models import SQLProduct
-from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.apps.userreports.models import StaticDataSourceConfiguration
 from corehq.apps.userreports.util import get_indicator_adapter, get_table_name
-from corehq.sql_db.connections import connection_manager, UCR_ENGINE_ID
+from corehq.sql_db.connections import UCR_ENGINE_ID, connection_manager
+from corehq.util.test_utils import require_db_context
 
 
+@require_db_context
 def setUpModule():
-    if isinstance(Domain.get_db(), Mock):
-        # needed to skip setUp for javascript tests thread on Travis
-        return
-
     _call_center_domain_mock = mock.patch(
         'corehq.apps.callcenter.data_source.call_center_data_source_configuration_provider'
     )
@@ -210,11 +208,8 @@ def setUpModule():
     _call_center_domain_mock.stop()
 
 
+@require_db_context
 def tearDownModule():
-    if isinstance(Domain.get_db(), Mock):
-        # needed to skip setUp for javascript tests thread on Travis
-        return
-
     _call_center_domain_mock = mock.patch(
         'corehq.apps.callcenter.data_source.call_center_data_source_configuration_provider'
     )
