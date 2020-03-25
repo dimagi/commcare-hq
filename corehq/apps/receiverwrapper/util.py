@@ -60,9 +60,6 @@ def get_meta_appversion_text(form_metadata):
 def get_version_from_build_id(domain, build_id):
     """
     fast lookup of app version number given build_id
-
-    implemented as simple caching around _get_version_from_build_id
-
     """
     if not build_id:
         return None
