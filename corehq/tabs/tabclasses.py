@@ -1209,6 +1209,7 @@ class ProjectUsersTab(UITab):
         '/a/{domain}/settings/users/',
         '/a/{domain}/settings/cloudcare/',
         '/a/{domain}/settings/locations/',
+        '/a/{domain}/location_reassignment/',
     )
 
     @property
@@ -1439,6 +1440,13 @@ class ProjectUsersTab(UITab):
                 'title': _(LocationTypesView.page_title),
                 'url': reverse(LocationTypesView.urlname, args=[self.domain]),
                 'show_in_dropdown': True,
+            })
+
+        if toggles.LOCATION_REASSIGNMENT.enabled(self.couch_user.username):
+            from custom.icds.location_reassignment.views import LocationReassignmentView
+            menu.append({
+                'title': _("Location Reassignment"),
+                'url': reverse(LocationReassignmentView.urlname, args=[self.domain])
             })
 
         return menu
