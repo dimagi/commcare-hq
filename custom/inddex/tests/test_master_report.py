@@ -181,6 +181,9 @@ class TestNewReport(TestCase):
         self.assertEqual(food_names(expected), food_names(actual))
 
         columns_known_to_fail = {  # TODO address these columns
+            'age_range',
+            'caseid',
+            'location_id',
             'time_block',
             'ingr_recipe_code',
             'nsr_conv_method_code_post_cooking',
@@ -190,10 +193,40 @@ class TestNewReport(TestCase):
             'food_status',
             'is_ingredient',
             'recipe_case_id',
+            'base_term_food_code',
+            'fao_who_gift_food_group_code',
+            'fao_who_gift_food_group_description',
+            'user_food_group',
+            'already_reported_recipe',
+            'already_reported_recipe_case_id',
+            'already_reported_recipe_name',
+            'ingr_fraction',
+            'ingr_recipe_total_grams_consumed',
+            'nsr_conv_method_desc_post_cooking',  # TODO this one should be added to the UCR
+            'nsr_consumed_cooked_fraction',  # TODO this one should be added to the UCR
+            'recipe_num_ingredients',
+            'conv_factor_food_code',
+            'conv_factor_base_term_food_code',
+            'conv_factor_used',
+            'conv_factor',
+            'fct_food_code_exists',
+            'fct_base_term_food_code_exists',
+            'fct_reference_food_code_exists',
+            'fct_data_used',
+            'fct_code',
+            'total_grams',
+            'energy_kcal_per_100g',
+            'energy_kcal',
+            'water_G_per_100g',
+            'water_g',
+            'protein_g_per_100g',
+            'protein_g',
+            'conv_factor_gap_code',
+            'conv_factor_gap_desc',
+            'fct_gap_code',
+            'fct_gap_desc',
         }
-        columns = [c.slug for c in INDICATORS
-                   # for now, only ucr columns are correct
-                   if c.in_ucr and c.slug not in columns_known_to_fail]
+        columns = [c.slug for c in INDICATORS if c.slug not in columns_known_to_fail]
         for column in columns:
             self.assert_columns_equal(expected, actual, column)
 
