@@ -179,7 +179,7 @@
             {
                 "type": "expression",
                 "column_id": "age_years_calculated",
-                "datatype": "string",
+                "datatype": "integer",
                 "display_name": "Age in years",
                 "expression": {
                     "type": "nested",
@@ -199,7 +199,7 @@
             {
                 "type": "expression",
                 "column_id": "age_months_calculated",
-                "datatype": "string",
+                "datatype": "integer",
                 "display_name": "Age in months",
                 "expression": {
                     "type": "nested",

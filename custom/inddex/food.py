@@ -120,7 +120,6 @@ INDICATORS = [
 
 class FoodRow:
     location_id = 'report'
-    age_range = ''
     caseid = ''  # should just return doc_id
 
     def __init__(self, food_code, ucr_row, fixtures):
@@ -148,6 +147,24 @@ class FoodRow:
     def include_in_analysis(self):
         return self.food_type not in ('std_recipe', 'non_std_recipe')  # recipes are excluded
 
+    @property
+    def age_range(self):
+        if self.age_months_calculated < 6:
+            return "0-5.9 months"
+        elif self.age_months_calculated < 60:
+            return "06-59 months"
+        elif self.age_years_calculated < 7:
+            return "5-6 years"
+        elif self.age_years_calculated < 11:
+            return "7-10 years"
+        elif self.age_years_calculated < 15:
+            return "7-14 years"
+        elif self.age_years_calculated < 50:
+            return "15-49 years"
+        elif self.age_years_calculated < 65:
+            return "50-64 years"
+        return "65+ years"
+
     def as_list(self):
 
         def _format(val):
@@ -155,6 +172,8 @@ class FoodRow:
                 return val.strftime('%Y-%m-%d %H:%M:%S')
             if isinstance(val, bool):
                 return "yes" if val else "no"
+            if isinstance(val, int):
+                return str(val)
             return val
 
         return [_format(getattr(self, column.slug)) for column in INDICATORS]
