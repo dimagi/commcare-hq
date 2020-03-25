@@ -108,7 +108,6 @@ class ConnectionSettingsFormSetHelper(FormHelper):
         self.layout = crispy.Layout(
             crispy.Fieldset(
                 _('Remote Connection'),
-                twbscrispy.PrependedText('DELETE', ''),
                 crispy.Field('name'),
                 crispy.Field('url'),
                 crispy.Field('auth_type'),
@@ -116,6 +115,10 @@ class ConnectionSettingsFormSetHelper(FormHelper):
                 crispy.Field('plaintext_password'),
                 twbscrispy.PrependedText('skip_cert_verify', ''),
                 crispy.Field('notify_addresses_str'),
+                twbscrispy.PrependedText(
+                    'DELETE', '',
+                    wrapper_class='alert alert-warning'
+                ),
             ),
         )
         self.add_input(
