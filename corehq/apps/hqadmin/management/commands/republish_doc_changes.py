@@ -77,7 +77,7 @@ def _get_document_records(data_rows):
 def _publish_cases(case_records):
     for domain, records in itertools.groupby(case_records, lambda r: r.domain):
         if should_use_sql_backend(domain):
-            _publish_cases_for_sql(domain, records)
+            _publish_cases_for_sql(domain, list(records))
         else:
             _publish_cases_for_couch(domain, [c.doc_id for c in records])
 
