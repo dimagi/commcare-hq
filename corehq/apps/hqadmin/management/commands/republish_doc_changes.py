@@ -25,6 +25,8 @@ DocumentRecord = namedtuple('DocumentRecord', ['doc_id', 'doc_type', 'doc_subtyp
 CASE_DOC_TYPES = {'CommCareCase'}
 FORM_DOC_TYPES = set(doc_type_to_state.keys())
 
+ALL_DOC_TYPES = set.union(CASE_DOC_TYPES, FORM_DOC_TYPES)
+
 
 class Command(BaseCommand):
     """
@@ -68,7 +70,7 @@ def _get_document_records(data_rows):
     for data_row in data_rows:
         doc_id, doc_type, doc_subtype, domain = \
             data_row.doc_id, data_row.doc_type, data_row.doc_subtype, data_row.domain
-        if doc_type not in set.union(CASE_DOC_TYPES, FORM_DOC_TYPES):
+        if doc_type not in ALL_DOC_TYPES:
             raise CommandError(f"Found bad doc type {doc_type}. "
                                "Did you use the right command to create the data?")
         yield DocumentRecord(doc_id, doc_type, doc_subtype, domain)
