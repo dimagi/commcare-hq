@@ -270,6 +270,9 @@
             <th class="col-xs-3">{% trans "First Name" %}</th>
             <th class="col-xs-2">{% trans "Last Name" %}</th>
             <th class="col-xs-2">{% trans 'Date Registered' %}</th>
+            {% if request|toggle_enabled:"TWO_STAGE_USER_PROVISIONING" %}
+            <th class="col-xs-2" data-bind="visible: deactivatedOnly()">{% trans 'Status' %}</th>
+            {% endif %}
             {% if not request.is_view_only %}<th class="col-xs-2">{% trans 'Action' %}</th>{% endif %}
           </tr>
           </thead>
@@ -284,6 +287,9 @@
             <td data-bind="text: first_name"></td>
             <td data-bind="text: last_name"></td>
             <td data-bind="text: date_registered"></td>
+            {% if request|toggle_enabled:"TWO_STAGE_USER_PROVISIONING" %}
+            <td data-bind="text: status, visible: $root.deactivatedOnly()"></td>
+            {% endif %}
             {% if not request.is_view_only %}
               <td>
                 <div data-bind="visible: !is_active()">

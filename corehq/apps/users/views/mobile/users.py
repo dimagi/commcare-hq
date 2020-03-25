@@ -863,17 +863,28 @@ def paginate_mobile_workers(request, domain):
         'base_username',
         'created_on',
         'is_active',
+        'is_account_confirmed',
     ]).run()
     users = users_data.hits
 
+    def _status_string(user_data):
+        if user_data.get('is_active', True):
+            return _('Active')
+        elif user_data.get('is_account_confirmed', True):
+            return _('Deactivated')
+        else:
+            return _('Pending Confirmation')
+
     for user in users:
         date_registered = user.pop('created_on', '')
+
         if date_registered:
             date_registered = iso_string_to_datetime(date_registered).strftime(USER_DATE_FORMAT)
         user.update({
             'username': user.pop('base_username', ''),
             'user_id': user.pop('_id'),
             'date_registered': date_registered,
+            'status': _status_string(user)
         })
 
     return json_response({
