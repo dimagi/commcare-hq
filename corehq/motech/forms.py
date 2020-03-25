@@ -1,4 +1,5 @@
 from django import forms
+from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext_lazy as _
 
 from crispy_forms import bootstrap as twbscrispy
@@ -59,17 +60,23 @@ class BaseConnectionSettingsFormSet(forms.BaseModelFormSet):
         self.domain = domain
         self.form_kwargs['domain'] = domain  # Passed by ``FormView.get_form_kwargs()``
 
-    @property
-    def deleted_forms(self):
-        """
-        Returns a list of forms that have been marked for deletion.
+    def clean(self):
+        super().clean()
+        errors = [f'Unable to delete connection "{f.instance}": It is in use.'
+                  for f in self.not_deleted_forms]
+        if errors:
+            raise ValidationError(errors)
 
-        Excludes forms of ConnectionSettings that are in use.
+    @property
+    def not_deleted_forms(self):
+        """
+        Returns a list of forms marked for deletion but whose
+        ConnectionSettings are in use.
         """
         deleted_forms = super().deleted_forms
         ids_in_use = get_connection_ids_in_use(self.domain)
         return [f for f in deleted_forms
-                if not (f.is_bound and f.instance.id in ids_in_use)]
+                if f.is_bound and f.instance.id in ids_in_use]
 
 
 def get_connection_ids_in_use(domain):

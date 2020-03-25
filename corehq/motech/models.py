@@ -34,6 +34,9 @@ class ConnectionSettings(models.Model):
     skip_cert_verify = models.BooleanField(default=False)
     notify_addresses_str = models.CharField(max_length=255, default="")
 
+    def __str__(self):
+        return self.name
+
     @property
     def plaintext_password(self):
         if self.password.startswith('${algo}$'.format(algo=ALGO_AES)):
