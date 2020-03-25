@@ -9,21 +9,8 @@ from django.db import migrations, models
 from custom.icds_reports.utils.migrations import (
     get_composite_primary_key_migrations,
 )
-from corehq.sql_db.operations import RawSQLMigration
-from corehq.sql_db.connections import is_citus_db
+
 from custom.icds_reports.const import BIHAR_API_DEMOGRAPHICS_TABLE
-from custom.icds_reports.utils.migrations import (
-    create_citus_distributed_table
-)
-from django.db import migrations
-migrator = RawSQLMigration(('custom', 'icds_reports', 'migrations', 'sql_templates', 'database_views'))
-
-
-def _distribute_citus_tables(apps, schema_editor):
-    with schema_editor.connection.cursor() as cursor:
-        if not is_citus_db(cursor):
-            return
-    create_citus_distributed_table(cursor, BIHAR_API_DEMOGRAPHICS_TABLE, 'supervisor_id')
 
 
 class Migration(migrations.Migration):

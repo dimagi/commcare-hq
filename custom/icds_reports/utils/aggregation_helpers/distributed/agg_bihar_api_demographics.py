@@ -15,7 +15,7 @@ class BiharApiDemographicsHelper(BaseICDSAggregationDistributedHelper):
         self.end_date = transform_day_to_month(month + relativedelta(months=1, seconds=-1))
 
     def aggregate(self, cursor):
-        drop_query= self.drop_table_query()
+        drop_query = self.drop_table_query()
         create_query = self.create_table_query()
         agg_query = self.aggregation_query()
         index_queries = self.indexes()
@@ -39,10 +39,10 @@ class BiharApiDemographicsHelper(BaseICDSAggregationDistributedHelper):
             CREATE TABLE "{self.monthly_tablename}" (LIKE {self.tablename});
             SELECT create_distributed_table('{self.monthly_tablename}', 'supervisor_id');
         """
+
     @property
     def monthly_tablename(self):
         return f"{self.tablename}_{month_formatter(self.month)}"
-
 
     def aggregation_query(self):
         month_start_string = month_formatter(self.month)
