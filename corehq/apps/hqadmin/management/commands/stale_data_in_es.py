@@ -92,9 +92,9 @@ class Command(BaseCommand):
         run_config = RunConfig(domain, start, end, case_type)
 
         if run_config.domain is ALL_SQL_DOMAINS:
-            print('Running for all SQL domains (and excluding Couch domains!)', file=sys.stderr)
+            print('Running for all SQL domains (and excluding Couch domains!)', file=self.stderr)
 
-        csv_writer = csv.writer(sys.stdout, **get_csv_args(delimiter))
+        csv_writer = csv.writer(self.stdout, **get_csv_args(delimiter))
 
         def print_data_row(data_row):
             # Casting as str print `None` as 'None'
