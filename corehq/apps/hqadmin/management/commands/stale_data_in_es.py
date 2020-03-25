@@ -85,7 +85,8 @@ class Command(BaseCommand):
             print('Running for all SQL domains (and excluding Couch domains!)', file=sys.stderr)
 
         def print_data_row(data_row):
-            print(delimiter.join(data_row))
+            # Casting as str print `None` as 'None' and datetimes as 'YYYY-MM-DD hh-mm-ss'
+            print(delimiter.join(map(str, data_row)))
 
         print_data_row(HEADER_ROW)
 
@@ -114,7 +115,7 @@ class CaseBackend:
         rows = CaseBackend._get_server_modified_on_for_domain(run_config)
         for case_id, case_type, es_date, primary_date, domain in rows:
             yield DataRow(doc_id=case_id, doc_type='CommCareCase', doc_subtype=case_type, domain=domain,
-                          es_date=es_date or 'None', primary_date=primary_date)
+                          es_date=es_date, primary_date=primary_date)
 
     @staticmethod
     def _get_server_modified_on_for_domain(run_config):
@@ -133,10 +134,9 @@ class CaseBackend:
                 case_ids = [val[0] for val in chunk]
                 es_modified_on_by_ids = CaseBackend._get_es_modified_dates(run_config.domain, case_ids)
                 for case_id, case_type, sql_modified_on, domain in chunk:
-                    sql_modified_on_str = f'{sql_modified_on.isoformat()}Z'
                     es_modified_on = es_modified_on_by_ids.get(case_id)
-                    if not es_modified_on or (es_modified_on < sql_modified_on_str):
-                        yield case_id, case_type, es_modified_on, sql_modified_on_str, domain
+                    if not es_modified_on or (es_modified_on < sql_modified_on):
+                        yield case_id, case_type, es_modified_on, sql_modified_on, domain
 
     @staticmethod
     def _get_data_for_couch_backend(run_config):
@@ -158,8 +158,8 @@ class CaseBackend:
             case_ids = [row['id'] for row in chunk]
             es_modified_on_by_ids = CaseBackend._get_es_modified_dates(domain, case_ids)
             for row in chunk:
-                case_id, couch_modified_on = row['id'], row['value']
-                if iso_string_to_datetime(couch_modified_on) > start_time:
+                case_id, couch_modified_on = row['id'], iso_string_to_datetime(row['value'])
+                if couch_modified_on > start_time:
                     # skip cases modified after the script started
                     continue
                 es_modified_on = es_modified_on_by_ids.get(case_id)
@@ -172,7 +172,7 @@ class CaseBackend:
         if domain is not ALL_SQL_DOMAINS:
             es_query = es_query.domain(domain)
         results = es_query.case_ids(case_ids).values_list('_id', 'server_modified_on')
-        return dict(results)
+        return {_id: iso_string_to_datetime(server_modified_on) for _id, server_modified_on in results}
 
 
 def get_sql_case_data_for_db(db, run_config):
@@ -198,7 +198,7 @@ class FormBackend:
         rows = FormBackend._get_stale_form_data(run_config)
         for form_id, doc_type, xmlns, es_date, primary_date, domain in rows:
             yield DataRow(doc_id=form_id, doc_type=doc_type, doc_subtype=xmlns, domain=domain,
-                          es_date=es_date or 'None', primary_date=primary_date)
+                          es_date=es_date, primary_date=primary_date)
 
     @staticmethod
     def _get_stale_form_data(run_config):
@@ -218,10 +218,9 @@ class FormBackend:
                 es_modified_on_by_ids = FormBackend._get_es_modified_dates_for_forms(run_config.domain, form_ids)
                 for form_id, state, xmlns, sql_modified_on, domain in chunk:
                     doc_type = state_to_doc_type.get(state, 'XFormInstance')
-                    sql_modified_on_str = f'{sql_modified_on.isoformat()}Z'
                     es_modified_on = es_modified_on_by_ids.get(form_id)
-                    if not es_modified_on or (es_modified_on < sql_modified_on_str):
-                        yield form_id, doc_type, xmlns, es_modified_on, sql_modified_on_str, domain
+                    if not es_modified_on or (es_modified_on < sql_modified_on):
+                        yield form_id, doc_type, xmlns, es_modified_on, sql_modified_on, domain
 
     @staticmethod
     def _get_sql_form_data_for_db(db, run_config):
@@ -241,7 +240,7 @@ class FormBackend:
         if domain is not ALL_SQL_DOMAINS:
             es_query = es_query.domain(domain)
         results = es_query.form_ids(form_ids).values_list('_id', 'received_on')
-        return dict(results)
+        return {_id: iso_string_to_datetime(received_on) for _id, received_on in results}
 
 
 def _chunked_with_progress_bar(collection, n, prefix):
