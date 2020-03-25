@@ -37,6 +37,7 @@ from custom.icds_reports.tasks import (
     update_child_health_monthly_table,
     _agg_adolescent_girls_registration_table,
     _agg_migration_table,
+    _agg_availing_services_table,
     create_df_indices,
     drop_df_indices,
     drop_gm_indices,
