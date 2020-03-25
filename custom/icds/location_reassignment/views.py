@@ -9,6 +9,7 @@ from django.views.decorators.http import require_GET
 from corehq import toggles
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
+from corehq.apps.locations.models import LocationType
 from corehq.apps.locations.permissions import require_can_edit_locations
 from corehq.apps.locations.views import LocationsListView
 from corehq.util.files import safe_filename_header
@@ -63,8 +64,17 @@ class LocationReassignmentView(BaseDomainView):
         return self.get(request, *args, **kwargs)
 
     def _workbook_is_valid(self, workbook):
-        # ToDo: Add necessary checks for workbook
-        return []
+        # ensure worksheets present and with titles as the location type codes
+        errors = []
+        if not workbook.worksheets:
+            errors.append(_("No worksheets in workbook"))
+            return errors
+        worksheet_titles = [ws.title for ws in workbook.worksheets]
+        location_type_codes = [lt.code for lt in LocationType.objects.by_domain(self.domain)]
+        for worksheet_title in worksheet_titles:
+            if worksheet_title not in location_type_codes:
+                errors.append(_("Unexpected sheet {sheet_title}").format(sheet_title=worksheet_title))
+        return errors
 
     def _generate_response(self, transitions):
         response_file = Dumper().dump(transitions)
