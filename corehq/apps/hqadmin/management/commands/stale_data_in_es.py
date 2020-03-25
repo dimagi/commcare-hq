@@ -6,6 +6,7 @@ from datetime import datetime
 from django.core.management.base import BaseCommand, CommandError
 
 import dateutil
+from django.db.models import F
 
 from casexml.apps.case.models import CommCareCase
 from dimagi.utils.chunked import chunked
@@ -227,8 +228,8 @@ class FormBackend:
         matching_forms = XFormInstanceSQL.objects.using(db).filter(
             received_on__gte=run_config.start_date,
             received_on__lte=run_config.end_date,
-            # Only check for "normal" forms
-            state=XFormInstanceSQL.NORMAL
+            # Only check for "normal" and "archived" forms
+            state=F('state').bitand(XFormInstanceSQL.NORMAL) + F('state').bitand(XFormInstanceSQL.ARCHIVED)
         )
         if run_config.domain is not ALL_SQL_DOMAINS:
             matching_forms = matching_forms.filter(
