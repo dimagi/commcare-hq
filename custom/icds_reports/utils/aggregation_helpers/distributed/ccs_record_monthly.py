@@ -8,7 +8,8 @@ from custom.icds_reports.const import (
     AGG_CCS_RECORD_THR_TABLE,
     AGG_CCS_RECORD_DELIVERY_TABLE,
     AGG_CCS_RECORD_CF_TABLE,
-    AGG_MIGRATION_TABLE)
+    AGG_MIGRATION_TABLE,
+    AGG_AVAILING_SERVICES_TABLE)
 from custom.icds_reports.utils.aggregation_helpers import transform_day_to_month, month_formatter
 from custom.icds_reports.utils.aggregation_helpers.distributed.base import BaseICDSAggregationDistributedHelper
 
@@ -63,8 +64,11 @@ class CcsRecordMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribute
         alive_in_month = "(case_list.date_death is null OR case_list.date_death-{}>0)".format(start_month_string)
         migration_status = "(agg_migration.is_migrated=1 AND agg_migration.migration_date < {})::integer".format(
             start_month_string)
-        seeking_services = "(person_cases.registered_status IS DISTINCT FROM 0 AND {} IS DISTINCT FROM 1)".format(
-            migration_status)
+        registered_status = (
+            "CASE WHEN NOT (agg_as.is_registered=0 AND agg_as.registration_date::date < {start_month_string}"
+            "THEN 1 ELSE 0 END"
+        ).format(start_month_string=start_month_string)
+        seeking_services = "({registered_status} IS DISTINCT FROM 0 AND {migration_status} IS DISTINCT FROM 1)".format(registered_status=registered_status, migration_status=migration_status)
         ccs_lactating = (
             "({} AND {} AND case_list.add is not null AND {}-case_list.add>=0"
             " AND {}-case_list.add<=183)"
@@ -268,6 +272,9 @@ class CcsRecordMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribute
             LEFT OUTER JOIN "{agg_migration_table}" agg_migration ON case_list.person_case_id = agg_migration.person_case_id
                 AND agg_migration.month = %(start_date)s
                 AND case_list.supervisor_id = agg_migration.supervisor_id
+            LEFT OUTER JOIN "{agg_as_table}" agg_as_table ON case_list.person_case_id = agg_as_table.person_case_id
+                AND agg_as_table.month = %(start_date)s
+                AND case_list.supervisor_id = agg_as_table.supervisor_id
             LEFT OUTER JOIN "{agg_thr_table}" agg_thr ON case_list.doc_id = agg_thr.case_id
                 AND agg_thr.month = %(start_date)s AND {valid_in_month}
                 AND case_list.supervisor_id = agg_thr.supervisor_id
@@ -299,6 +306,7 @@ class CcsRecordMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribute
             pregnant_tasks_case_ucr=self.pregnant_tasks_cases_ucr_tablename,
             agg_cf_table=AGG_CCS_RECORD_CF_TABLE,
             agg_migration_table=AGG_MIGRATION_TABLE,
+            agg_as_table=AGG_AVAILING_SERVICES_TABLE,
             person_cases_ucr=self.person_case_ucr_tablename,
             valid_in_month=valid_in_month,
             open_in_month=open_in_month
