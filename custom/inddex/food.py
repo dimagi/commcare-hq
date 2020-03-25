@@ -120,7 +120,6 @@ INDICATORS = [
 
 class FoodRow:
     location_id = 'report'
-    caseid = ''  # should just return doc_id
 
     def __init__(self, food_code, ucr_row, fixtures):
         self.food_code = food_code
@@ -184,6 +183,7 @@ class FoodCaseRow(FoodRow):
 
     def __init__(self, ucr_row, fixtures):
         super().__init__(ucr_row['food_code'], ucr_row, fixtures)
+        self.caseid = ucr_row['doc_id']
 
     def _include_ucr_indicator(self, indicator):
         return True
