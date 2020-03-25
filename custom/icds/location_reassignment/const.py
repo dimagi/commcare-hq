@@ -1,4 +1,6 @@
-OPERATION_COLUMN_NAME = 'operation'
+OPERATION_COLUMN = 'operation'
+OLD_SITE_CODE_COLUMN = 'site_code'
+NEW_SITE_CODE_COLUMN = 'new_site_code'
 MERGE_OPERATION = 'Merge'
 SPLIT_OPERATION = 'Split'
 MOVE_OPERATION = 'Move'

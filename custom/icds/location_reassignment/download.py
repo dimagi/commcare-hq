@@ -8,6 +8,11 @@ from openpyxl import Workbook
 
 from corehq.apps.es import UserES
 from corehq.apps.locations.models import SQLLocation
+from custom.icds.location_reassignment.const import (
+    NEW_SITE_CODE_COLUMN,
+    OLD_SITE_CODE_COLUMN,
+    OPERATION_COLUMN,
+)
 
 
 class Download(object):
@@ -80,7 +85,7 @@ class Download(object):
             row = deepcopy(location_content)
             row['username'] = username
             row['new_username'] = ''
-            row['request'] = ''
+            row[OPERATION_COLUMN] = ''
             rows[location_type].append(row)
 
         # location type code mapped to rows which is a list of dictionaries to pull headers later using keys
@@ -104,8 +109,8 @@ class Download(object):
         location_content = {
             'name': location_details['name'],
             'new_name': '',
-            'site_code': location_details['site_code'],
-            'new_site_code': '',
+            OLD_SITE_CODE_COLUMN: location_details['site_code'],
+            NEW_SITE_CODE_COLUMN: '',
             'lgd_code': location_details['lgd_code'],
             'new_lgd_code': '',
         }
