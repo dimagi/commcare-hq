@@ -532,7 +532,8 @@ class NewMobileWorkerForm(forms.Form):
     force_account_confirmation = forms.BooleanField(
         label=ugettext_noop("Require Account Confirmation?"),
         help_text=ugettext_noop(
-            "If checked, the user will be sent a confirmation email and asked to set their password."
+            "The user's account will not be active until "
+            "they have confirmed their email and set a password."
         ),
         required=False,
     )
@@ -546,6 +547,14 @@ class NewMobileWorkerForm(forms.Form):
                 <!-- ko text: $root.emailStatusMessage --><!-- /ko -->
             </span>
         """
+    )
+    send_account_confirmation_email = forms.BooleanField(
+        label=ugettext_noop("Send Account Confirmation Email Now?"),
+        help_text=ugettext_noop(
+            "The user will be sent their account confirmation email now. "
+            "Otherwise it must be sent manually at a later time."
+        ),
+        required=False,
     )
     new_password = forms.CharField(
         widget=forms.PasswordInput(),
@@ -608,6 +617,10 @@ class NewMobileWorkerForm(forms.Form):
                     },
                 '''
             )
+            send_email_field = crispy.Field(
+                'send_account_confirmation_email',
+                data_bind='checked: send_account_confirmation_email, enable: sendConfirmationEmailEnabled',
+            )
         else:
             confirm_account_field = crispy.Hidden(
                 'force_account_confirmation',
@@ -619,6 +632,12 @@ class NewMobileWorkerForm(forms.Form):
                 '',
                 data_bind='value: email',
             )
+            send_email_field = crispy.Hidden(
+                'send_account_confirmation_email',
+                '',
+                data_bind='value: send_account_confirmation_email',
+            )
+
 
         self.helper = HQModalFormHelper()
         self.helper.form_tag = False
@@ -651,6 +670,7 @@ class NewMobileWorkerForm(forms.Form):
                 location_field,
                 confirm_account_field,
                 email_field,
+                send_email_field,
                 crispy.Div(
                     hqcrispy.B3MultiField(
                         _("Password"),

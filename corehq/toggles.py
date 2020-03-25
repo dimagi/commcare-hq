@@ -454,7 +454,7 @@ APP_BUILDER_SHADOW_MODULES = StaticToggle(
     'Shadow Modules',
     TAG_SOLUTIONS_CONDITIONAL,
     [NAMESPACE_DOMAIN],
-    help_link='https://confluence.dimagi.com/display/ccinternal/Shadow+Modules',
+    help_link='https://confluence.dimagi.com/display/ccinternal/Shadow+Modules+and+Forms',
 )
 
 CASE_LIST_CUSTOM_XML = StaticToggle(
@@ -1824,7 +1824,8 @@ TWO_STAGE_USER_PROVISIONING = StaticToggle(
     'two_stage_user_provisioning',
     'Enable two-stage user provisioning (users confirm and set their own passwords via email).',
     TAG_SOLUTIONS_LIMITED,
-    [NAMESPACE_DOMAIN]
+    [NAMESPACE_DOMAIN],
+    help_link='https://confluence.dimagi.com/display/ccinternal/Two-Stage+Mobile+Worker+Account+Creation',
 )
 
 LOCATION_REASSIGNMENT = StaticToggle(

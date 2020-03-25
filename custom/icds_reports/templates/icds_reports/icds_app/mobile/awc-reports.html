@@ -1,5 +1,5 @@
 {% load staticfiles %}
-<div cg-busy="[$ctrl.myPromise, $rootScope.locationPromise]">
+<div cg-busy="[$ctrl.myPromise]">
   <div class="app-bg h-100vh overflow-hidden" ng-show="!$ctrl.filtersOpen && $ctrl.selectedLocationLevel==4">
     <div class="top-section p-3" style="padding-bottom: 25vh">
       {% include 'icds_reports/icds_app/mobile/partials/mobile-heading.html' %}

@@ -28,7 +28,7 @@ def get_site_domain():
 
 
 def get_static_url_prefix():
-    return '' if settings.STATIC_CDN else 'http://' + get_site_domain(),
+    return '' if settings.STATIC_CDN else 'http://' + get_site_domain()
 
 
 def render_to_response(req, template_name, dictionary=None, **kwargs):

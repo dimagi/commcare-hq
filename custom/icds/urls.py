@@ -4,6 +4,7 @@ from custom.icds.location_reassignment.views import (
     LocationReassignmentView,
     download_location_reassignment_template,
 )
+
 from custom.icds.views.data_pull import CustomDataPull
 from custom.icds.views.hosted_ccz import (
     EditHostedCCZLink,
@@ -14,10 +15,12 @@ from custom.icds.views.hosted_ccz import (
     download_ccz_supporting_files,
     recreate_hosted_ccz,
     remove_hosted_ccz,
+    ccz_hostings_json,
 )
 
 urlpatterns = [
     url(r'^ccz/hostings/manage', ManageHostedCCZ.as_view(), name=ManageHostedCCZ.urlname),
+    url(r'^ccz/hostings/json', ccz_hostings_json, name='ccz_hostings_json'),
     url(r'^ccz/hostings/links', ManageHostedCCZLink.as_view(), name=ManageHostedCCZLink.urlname),
     url(r'^ccz/hostings/link/(?P<link_id>[\d-]+)/edit/', EditHostedCCZLink.as_view(),
         name=EditHostedCCZLink.urlname),
