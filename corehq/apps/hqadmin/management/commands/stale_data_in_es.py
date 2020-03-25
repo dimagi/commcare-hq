@@ -127,8 +127,9 @@ class CaseBackend:
     def _get_data_for_sql_backend(run_config):
         for db in get_db_aliases_for_partitioned_query():
             matching_records_for_db = get_sql_case_data_for_db(db, run_config)
-            chunk_size = 1000
-            for chunk in chunked(matching_records_for_db, chunk_size):
+
+            for chunk in _chunked_with_progress_bar(matching_records_for_db, 1000,
+                                                    prefix=f'Processing cases in DB {db}'):
                 case_ids = [val[0] for val in chunk]
                 es_modified_on_by_ids = CaseBackend._get_es_modified_dates(run_config.domain, case_ids)
                 for case_id, case_type, sql_modified_on, domain in chunk:
@@ -210,11 +211,9 @@ class FormBackend:
     def _get_stale_form_data_for_sql_backend(run_config):
         for db in get_db_aliases_for_partitioned_query():
             matching_records_for_db = FormBackend._get_sql_form_data_for_db(db, run_config)
-            chunk_size = 1000
-            length = len(matching_records_for_db) // chunk_size
-            chunk_iter = chunked(matching_records_for_db, chunk_size)
-            for chunk in with_progress_bar(chunk_iter, prefix=f'Processing DB {db}',
-                                           length=length, stream=sys.stderr):
+
+            for chunk in _chunked_with_progress_bar(matching_records_for_db, 1000,
+                                                    prefix=f'Processing forms in DB {db}'):
                 form_ids = [val[0] for val in chunk]
                 es_modified_on_by_ids = FormBackend._get_es_modified_dates_for_forms(run_config.domain, form_ids)
                 for form_id, state, xmlns, sql_modified_on, domain in chunk:
@@ -243,3 +242,7 @@ class FormBackend:
             es_query = es_query.domain(domain)
         results = es_query.form_ids(form_ids).values_list('_id', 'received_on')
         return dict(results)
+
+
+def _chunked_with_progress_bar(collection, n, prefix):
+    return chunked(with_progress_bar(collection, prefix=prefix, stream=sys.stderr), n)
