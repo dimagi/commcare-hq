@@ -430,6 +430,36 @@ class BaseReportView(View):
         return step, now, month, year, include_test, domain, current_month, prev_month, location, selected_month
 
 
+@location_safe
+class BaseCasAPIView(View):
+
+    def get_valid_query_month(self, month, year):
+        error_message = None
+        try:
+            int_month = int(month)
+            int_year = int(year)
+            valid_query_month = date(int_year, int_month, 1)
+        except (ValueError, TypeError):
+            valid_query_month = None
+            error_message = "Please specify valid month and year"
+
+        return valid_query_month, error_message
+
+    def has_access(self, location_id, user):
+        if user.has_permission(self.kwargs['domain'], 'access_all_locations'):
+            return True
+        if location_id and user_can_access_location_id(self.kwargs['domain'], user, location_id):
+            return True
+        return False
+
+    def query_month_in_range(self, query_month, start_month):
+        in_range = True
+        today = date.today()
+        current_month = today - relativedelta(months=1) if today.day <= 2 else today
+        if query_month > current_month or query_month < start_month:
+            in_range=False
+        return in_range
+
 @method_decorator(DASHBOARD_CHECKS, name='dispatch')
 class ProgramSummaryView(BaseReportView):
 
@@ -1959,7 +1989,7 @@ class InactiveDashboardUsers(View):
 
 
 @location_safe
-class DishaAPIView(View):
+class DishaAPIView(BaseCasAPIView):
 
     def message(self, message_name):
         state_names = ", ".join(self.valid_state_names)
@@ -1972,25 +2002,25 @@ class DishaAPIView(View):
 
     @method_decorator([api_auth, toggles.ICDS_DISHA_API.required_decorator()])
     def get(self, request, *args, **kwargs):
-        try:
-            month = int(request.GET.get('month'))
-            year = int(request.GET.get('year'))
-        except (ValueError, TypeError):
+
+        valid_query_month, error_message = self.get_valid_query_month(request.GET.get('month'),
+                                                                      request.GET.get('year'))
+
+        if error_message:
             return JsonResponse(self.message('missing_date'), status=400)
 
         # Can return only one month old data if today is after 5th, otherwise
         #   can return two month's old data
-        query_month = date(year, month, 1)
         today = date.today()
         current_month = today - relativedelta(months=1) if today.day <= 5 else today
-        if query_month > current_month or query_month < date(2018, 6, 1):
+        if valid_query_month > current_month or valid_query_month < date(2017, 1, 1):
             return JsonResponse(self.message('invalid_month'), status=400)
 
         state_name = self.request.GET.get('state_name')
         if state_name not in self.valid_state_names:
             return JsonResponse(self.message('invalid_state'), status=400)
 
-        dump = DishaDump(state_name, query_month)
+        dump = DishaDump(state_name, valid_query_month)
         return dump.get_export_as_http_response(request)
 
     @property
@@ -2384,44 +2414,41 @@ class GovernanceCBEAPI(GovernanceAPIBaseView):
 
 @location_safe
 @method_decorator([api_auth, toggles.ICDS_DEMOGRAPHICS_API.required_decorator()], name='dispatch')
-class DemographicsAPI(View):
+class BiharDemographicsAPI(BaseCasAPIView):
     def message(self, message_name):
         error_messages = {
-            "missing_date": "Please specify valid month and year",
-            "invalid_month": "Please specify a valid month. month can't be in future and before Jan 2020",
-            "access_denied": "You are not authorised to access this location"
+            "invalid_month": "Please specify a valid month. Month can't be in future and before Jan 2020",
+            "access_denied": "You are not authorised to access this location",
+            "invalid_state": "Invalid State Id"
         }
         return {"message": error_messages[message_name]}
+
+
     def get(self, request, *args, **kwargs):
         state_id = request.GET.get('state_id', '')
         last_person_case_id = request.GET.get('last_person_case_id', '')
-        try:
-            month = int(request.GET.get('month'))
-            year = int(request.GET.get('year'))
-        except (ValueError, TypeError):
-            return JsonResponse(self.message('missing_date'), status=400)
 
-        query_month = date(year, month, 1)
-        today = date.today()
-        current_month = today - relativedelta(months=1) if today.day <= 2 else today
-        if query_month > current_month or query_month < date(2017, 1, 1):
+        valid_query_month, error_message = self.get_valid_query_month(request.GET.get('month'),
+                                                                      request.GET.get('year'))
+
+        if error_message:
+            return JsonResponse({"message": error_message}, status=400)
+
+        if not self.query_month_in_range(valid_query_month, start_month=date(2017, 1, 1)):
             return JsonResponse(self.message('invalid_month'), status=400)
 
-        if not state_id and not request.couch_user.has_permission(
-            self.kwargs['domain'], 'access_all_locations'
-        ):
-            return JsonResponse(self.message('access_denied'), status=400)
-        if state_id and not user_can_access_location_id(
-            self.kwargs['domain'], request.couch_user, state_id
-        ):
-            return JsonResponse(self.message('access_denied'), status=400)
+        if not state_id:
+            return JsonResponse(self.message('invalid_state'), status=400)
+        if not self.has_access(state_id, request.couch_user):
+            return JsonResponse(self.message('access_denied'), status=403)
 
-        demographics_data, total_count = get_api_demographics_data(query_month, state_id, last_person_case_id)
+
+        demographics_data, total_count = get_api_demographics_data(valid_query_month, state_id, last_person_case_id)
         response_json = {
             'data': demographics_data,
             'metadata': {
-                'month': month,
-                'year': year,
+                'month': valid_query_month.month,
+                'year': valid_query_month.year,
                 'total_count': total_count,
                 'timestamp': india_now()
             }
