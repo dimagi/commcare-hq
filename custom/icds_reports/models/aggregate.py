@@ -239,6 +239,9 @@ class AwcLocation(models.Model, AggregateMixin):
     # from commcare-user case
     aww_name = models.TextField(blank=True, null=True)
     contact_phone_number = models.TextField(blank=True, null=True)
+    awc_ward_1 = models.TextField(blank=True, null=True)
+    awc_ward_2 = models.TextField(blank=True, null=True)
+    awc_ward_3 = models.TextField(blank=True, null=True)
 
     class Meta(object):
         managed = False
