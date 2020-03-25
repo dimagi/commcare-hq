@@ -54,7 +54,7 @@ CREATE VIEW bihar_demographics_view AS
         "bihar_demographics"."site_death" AS "site_death",
         "bihar_demographics"."closed_on" AS "closed_on",
         "bihar_demographics"."reason_closure" AS "reason_closure"
-    FROM "public"."agg_bihar_api_demographics" "bihar_demographics"
+    FROM "public"."bihar_api_demographics" "bihar_demographics"
     LEFT JOIN "public"."awc_location" "awc_location"
     ON (
         ("awc_location"."supervisor_id" = "bihar_demographics"."supervisor_id") AND
