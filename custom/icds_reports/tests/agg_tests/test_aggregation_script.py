@@ -531,7 +531,7 @@ class LocationAggregationTest(TestCase):
                             'block_is_test', 'block_name', 'block_site_code', 'block_map_location_name',
                             'district_is_test', 'district_name', 'district_site_code', 'district_map_location_name',
                             'state_is_test', 'state_name', 'state_site_code', 'state_map_location_name',
-                            'awc_ward_1','awc_ward_2','awc_ward_3'
+                            'awc_ward_1', 'awc_ward_2', 'awc_ward_3'
                         ).order_by(
                             '-aggregation_level', 'awc_name', 'supervisor_name',
                             'block_name', 'district_name', 'state_name'
@@ -556,7 +556,7 @@ class LocationAggregationTest(TestCase):
                 'district_name': 'District1', 'district_site_code': 'district1',
                 'state_is_test': 0, 'state_map_location_name': None,
                 'state_name': 'State1', 'state_site_code': 'state1',
-                'awc_ward_1':'ward_1',
+                'awc_ward_1': 'ward_1',
                 'awc_ward_2': 'ward_2',
                 'awc_ward_3': 'ward_3',
             },
