@@ -308,16 +308,6 @@
             },
             {
                 "type": "expression",
-                "column_id": "reference_food_code",
-                "datatype": "string",
-                "display_name": "Reference Food Code",
-                "expression": {
-                    "type": "property_name",
-                    "property_name": "parent_food_code"
-                }
-            },
-            {
-                "type": "expression",
                 "column_id": "food_type",
                 "datatype": "string",
                 "display_name": "Food Type",

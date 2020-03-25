@@ -39,7 +39,7 @@ INDICATORS = [
     I('food_name', IN_UCR, IN_FOOD_FIXTURE),
     I('recipe_name', IN_UCR),
     I('caseid'),
-    I('reference_food_code', IN_UCR),
+    I('reference_food_code'),
     I('base_term_food_code'),
     I('food_type', IN_UCR, IN_FOOD_FIXTURE),
     I('include_in_analysis', IN_UCR),
@@ -163,6 +163,7 @@ class FoodRow:
                 setattr(self, indicator.slug, ucr_row[indicator.slug])
             else:
                 setattr(self, indicator.slug, MISSING)
+        self.reference_food_code = self._get_reference_food_code()
 
     def _include_ucr_indicator(self, indicator):
         return indicator.is_recall_meta
@@ -175,6 +176,12 @@ class FoodRow:
             return val
 
         return [_format(getattr(self, column.slug)) for column in INDICATORS]
+
+    def _get_reference_food_code(self):
+        composition = self.fixtures.food_compositions.get(self.food_code)
+        if composition:
+            return composition.reference_food_code_for_food_composition
+        return MISSING
 
 
 class FoodCaseRow(FoodRow):
