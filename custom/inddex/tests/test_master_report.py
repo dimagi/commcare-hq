@@ -12,7 +12,7 @@ from corehq.apps.fixtures.dbaccessors import (
     get_fixture_data_types,
 )
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.util.test_utils import db_tests_only
+from corehq.util.test_utils import require_db_context
 
 from ..example_data.data import (
     FOOD_CASE_TYPE,
@@ -28,7 +28,7 @@ from ..ucr.data_providers.master_data_file_data import MasterDataFileData
 DOMAIN = 'inddex-reports-test'
 
 
-@db_tests_only
+@require_db_context
 def setUpModule():
     create_domain(name=DOMAIN)
     try:
@@ -39,7 +39,7 @@ def setUpModule():
         raise
 
 
-@db_tests_only
+@require_db_context
 def tearDownModule():
     Domain.get_by_name(DOMAIN).delete()
 

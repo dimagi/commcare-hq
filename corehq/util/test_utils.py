@@ -717,11 +717,14 @@ class capture_sql(ContextDecorator):
                 print('\n{}'.format(indent(''.join(query['traceback']), '\t\t')))
 
 
-def db_tests_only(fn):
-    """Skip setUpModule and tearDownModule in non-DB contexts"""
+def require_db_context(fn):
+    """
+    Only run 'fn' in DB tests
+    :param fn: a setUpModule or tearDownModule function
+    """
     @wraps(fn)
     def inner(*args, **kwargs):
         from corehq.apps.domain.models import Domain
         if not isinstance(Domain.get_db(), mock.Mock):
-            fn()
+            return fn(*args, **kwargs)
     return inner

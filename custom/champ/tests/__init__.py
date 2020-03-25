@@ -11,10 +11,10 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.userreports.models import StaticDataSourceConfiguration
 from corehq.apps.userreports.util import get_indicator_adapter, get_table_name
 from corehq.sql_db.connections import UCR_ENGINE_ID, connection_manager
-from corehq.util.test_utils import db_tests_only
+from corehq.util.test_utils import require_db_context
 
 
-@db_tests_only
+@require_db_context
 def setUpModule():
     _call_center_domain_mock = mock.patch(
         'corehq.apps.callcenter.data_source.call_center_data_source_configuration_provider'
@@ -46,7 +46,7 @@ def setUpModule():
     _call_center_domain_mock.stop()
 
 
-@db_tests_only
+@require_db_context
 def tearDownModule():
     _call_center_domain_mock = mock.patch(
         'corehq.apps.callcenter.data_source.call_center_data_source_configuration_provider'
