@@ -2,7 +2,7 @@
 {% blocktrans %}Hey there,{% endblocktrans %}
 
 {% blocktrans %}
-You have been added to the "{{ domain }}" project on CommCare HQ.
+You have been added to the "{{ domain }}" project on {{ hq_name }}.
 {% endblocktrans %}
 
 {% blocktrans %}
@@ -10,9 +10,9 @@ To confirm your account, please open the following link in your browser: {{ url}
 {% endblocktrans %}
 
 {% blocktrans %}
-Once you confirm your account you will be able to access and submit data in the "{{ domain }}" project on CommCare HQ.
+Once you confirm your account you will be able to access and submit data in the "{{ domain }}" project on {{ hq_name }}.
 {% endblocktrans %}
 
 {% blocktrans %}Thanks,{% endblocktrans %}
 
-{% blocktrans %}-The CommCare HQ team{% endblocktrans %}
+{% blocktrans %}-The {{ hq_name }} team{% endblocktrans %}

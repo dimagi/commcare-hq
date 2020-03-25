@@ -11,7 +11,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='xforminstancesql',
             name='state',
-            field=models.PositiveSmallIntegerField(default=0, choices=[(0, b'normal'), (1, b'archived'), (2, b'deprecated'), (4, b'duplicate'), (8, b'error'), (16, b'submission_error'), (32, b'deleted')]),
+            field=models.PositiveSmallIntegerField(default=0, choices=[(0, 'normal'), (1, 'archived'), (2, 'deprecated'), (4, 'duplicate'), (8, 'error'), (16, 'submission_error'), (32, 'deleted')]),
             preserve_default=True,
         ),
     ]

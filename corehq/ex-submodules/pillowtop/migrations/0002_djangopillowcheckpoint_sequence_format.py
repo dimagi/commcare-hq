@@ -11,7 +11,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='djangopillowcheckpoint',
             name='sequence_format',
-            field=models.CharField(default=b'text', max_length=20, choices=[(b'text', b'text'), (b'json', b'json')]),
+            field=models.CharField(default='text', max_length=20, choices=[('text', 'text'), ('json', 'json')]),
             preserve_default=True,
         ),
     ]
