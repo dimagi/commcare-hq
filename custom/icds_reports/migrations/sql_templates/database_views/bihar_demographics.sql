@@ -17,8 +17,8 @@ CREATE VIEW bihar_demographics_view AS
         "awc_location"."state_name" AS "state_name",
         "awc_location"."state_site_code" AS "state_site_code",
         CONCAT(
-            COALESCE("awc_location"."awc_ward_1", ''),
-            COALESCE("awc_location"."awc_ward_2", ''),
+            COALESCE("awc_location"."awc_ward_1", ''), ' ',
+            COALESCE("awc_location"."awc_ward_2", ''), ' ',
             COALESCE("awc_location"."awc_ward_3", '')
             ) AS ward_number,
         "bihar_demographics"."month" AS "month",
