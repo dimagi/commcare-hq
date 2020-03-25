@@ -14,10 +14,8 @@ from corehq.apps.locations.models import LocationType
 from corehq.apps.locations.permissions import require_can_edit_locations
 from corehq.apps.locations.views import LocationsListView
 from corehq.util.files import safe_filename_header
-from corehq.util.workbook_json.excel import get_workbook, WorkbookJSONError
-from custom.icds.location_reassignment.download import (
-    Download,
-)
+from corehq.util.workbook_json.excel import WorkbookJSONError, get_workbook
+from custom.icds.location_reassignment.download import Download
 from custom.icds.location_reassignment.dumper import Dumper
 from custom.icds.location_reassignment.parser import Parser
 
@@ -90,14 +88,13 @@ class LocationReassignmentView(BaseDomainView):
 @require_can_edit_locations
 @require_GET
 def download_location_reassignment_template(request, domain):
-    location_type = request.GET.get('location_type')
     location_id = request.GET.get('location_id')
 
-    if not location_type or not location_id:
-        messages.error(request, _("Please select a location  and a location type."))
+    if not location_id:
+        messages.error(request, _("Please select a location."))
         return HttpResponseRedirect(reverse(LocationReassignmentView.urlname, args=[domain]))
 
-    response_file = Download(domain, location_id, location_type).dump()
+    response_file = Download(location_id).dump()
     response_file.seek(0)
     response = HttpResponse(response_file, content_type="text/html; charset=utf-8")
     filename = '%s Location Reassignment Request Template' % domain
