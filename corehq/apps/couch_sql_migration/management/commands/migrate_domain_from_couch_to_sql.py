@@ -222,7 +222,7 @@ class Command(BaseCommand):
             if status == MigrationStatus.DRY_RUN:
                 log.info("Continuing live migration. Use --finish to complete.")
                 self.live_migrate = True
-        if self.missing_docs == CACHED and (self.finish or not self.live_migrate):
+        if self.missing_docs == CACHED:
             self.missing_docs = RESUME
         set_couch_sql_migration_started(domain, self.live_migrate)
         do_couch_to_sql_migration(
@@ -236,17 +236,12 @@ class Command(BaseCommand):
             forms=self.forms,
         )
 
-        return_code = 0
+        has_diffs = self.print_stats(domain, short=True, diffs_only=True)
         if self.live_migrate:
             print("Live migration completed.")
-            has_diffs = True
-        else:
-            has_diffs = self.print_stats(domain, short=True, diffs_only=True)
-            return_code = int(has_diffs)
         if has_diffs:
             print("\nRun `diff` or `stats [--verbose]` for more details.\n")
-        if return_code:
-            sys.exit(return_code)
+            sys.exit(1)
 
     def do_reset(self, domain):
         if not self.no_input:
@@ -272,7 +267,7 @@ class Command(BaseCommand):
         self.print_stats(domain, short=not self.verbose)
 
     def do_diff(self, domain):
-        print(f"replaced by: couch_sql_diff show {domain} [--select=DOC_TYPE]")
+        print(f"replaced by: couch_sql_diff {domain} show [--select=DOC_TYPE]")
 
     def do_rewind(self, domain):
         db = open_state_db(domain, self.state_dir)
@@ -307,13 +302,13 @@ class Command(BaseCommand):
                 short,
                 diffs_only,
             )
-
+        if any(x.missing for x in doc_counts.values()):
+            print("\nRun again with --forms=missing to migrate missing docs")
         pending = statedb.count_undiffed_cases()
         if pending:
             print(shell_red(f"\nThere are {pending} case diffs pending."))
-            print(f"Resolution: couch_sql_diff cases {domain} --select=pending")
+            print(f"Resolution: couch_sql_diff {domain} cases --select=pending")
             return True
-
         if diffs_only and not has_diffs:
             print(shell_green("No differences found between old and new docs!"))
         return has_diffs
