@@ -488,8 +488,8 @@
                 "column_id": "recipe_name",
                 "datatype": "string",
                 "expression": {
-                    "type": "named",
-                    "name": "recipe_name"
+                    "type": "property_name",
+                    "property_name": "recipe_name"
                 }
             },
             {
@@ -832,23 +832,6 @@
                 },
                 "expression_if_true": "Yes",
                 "expression_if_false": "No"
-            },
-            "recipe_name": {
-                "type": "conditional",
-                "test": {
-                    "type": "boolean_expression",
-                    "expression": {
-                        "type": "property_name",
-                        "property_name": "food_type"
-                    },
-                    "operator": "in",
-                    "property_value": ["non_std_recipe", "std_recipe"]
-                },
-                "expression_if_true": {
-                    "type": "property_name",
-                    "property_name": "name"
-                },
-                "expression_if_false": ""
             },
             "nsr_conv_method_post_cooking": {
                 "type": "conditional",

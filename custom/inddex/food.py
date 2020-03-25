@@ -189,10 +189,11 @@ class RecipeIngredientRow(FoodRow):
     def __init__(self, ucr_row, food_data, ingredient):
         # ucr_row is data from the parent food case
         # food_data is static info from the fixture,
-        # ingredient is static info for this ingredient
+        # ingredient is static info for this ingredient from the recipes fixture
         super().__init__(ucr_row)
         self.ingredient = ingredient
         self.food_code = ingredient.ingr_code
+        self.recipe_name = ucr_row['recipe_name']
         for indicator in INDICATORS:
             if indicator.in_food_fixture:
                 setattr(self, indicator.slug, getattr(food_data, indicator.slug))
