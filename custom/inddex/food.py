@@ -1,3 +1,4 @@
+from datetime import datetime
 from .fixtures import FixtureAccessor
 
 MISSING = ''
@@ -166,7 +167,13 @@ class FoodRow:
         return indicator.is_recall_meta
 
     def as_list(self):
-        return [getattr(self, column.slug) for column in INDICATORS]
+
+        def _format(val):
+            if isinstance(val, datetime):
+                return val.strftime('%Y-%m-%d %H:%M:%S')
+            return val
+
+        return [_format(getattr(self, column.slug)) for column in INDICATORS]
 
 
 class FoodCaseRow(FoodRow):

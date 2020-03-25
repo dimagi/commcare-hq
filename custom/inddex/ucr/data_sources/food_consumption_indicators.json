@@ -368,7 +368,7 @@
             {
                 "type": "expression",
                 "column_id": "opened_date",
-                "datatype": "string",
+                "datatype": "datetime",
                 "display_name": "opened_date",
                 "expression": {
                     "type": "nested",
