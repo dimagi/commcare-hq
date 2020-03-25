@@ -42,7 +42,7 @@ INDICATORS = [
     I('reference_food_code'),
     I('base_term_food_code'),
     I('food_type', IN_UCR, IN_FOOD_FIXTURE),
-    I('include_in_analysis', IN_UCR),
+    I('include_in_analysis'),
     I('food_status', IN_UCR),
     I('eating_time', IN_UCR),
     I('time_block', IN_UCR),
@@ -169,21 +169,27 @@ class FoodRow:
     def _include_ucr_indicator(self, indicator):
         return indicator.is_recall_meta
 
-    def as_list(self):
-
-        def _format(val):
-            if isinstance(val, datetime):
-                return val.strftime('%Y-%m-%d %H:%M:%S')
-            return val
-
-        return [_format(getattr(self, column.slug)) for column in INDICATORS]
-
     @property
     def reference_food_code(self):
         composition = self.fixtures.food_compositions.get(self.food_code)
         if composition:
             return composition.reference_food_code_for_food_composition
         return MISSING
+
+    @property
+    def include_in_analysis(self):
+        return self.food_type not in ('std_recipe', 'non_std_recipe')  # recipes are excluded
+
+    def as_list(self):
+
+        def _format(val):
+            if isinstance(val, datetime):
+                return val.strftime('%Y-%m-%d %H:%M:%S')
+            if isinstance(val, bool):
+                return "yes" if val else "no"
+            return val
+
+        return [_format(getattr(self, column.slug)) for column in INDICATORS]
 
 
 class FoodCaseRow(FoodRow):
