@@ -215,7 +215,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
     };
 
     vm.getLocationsForLevel = function (level) {
-        disallowNational = !vm.isChildBeneficiaryListSelected();
+        disallowNational = vm.isChildBeneficiaryListSelected();
         return locationsService.getLocations(level, locationsCache, vm.selectedLocations, disallowNational);
     };
 
