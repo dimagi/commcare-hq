@@ -31,7 +31,7 @@ def get_person_case(case):
             return parent
 
 
-def fetch_case_properties(case, awc):
+def fetch_case_properties(case, awc, person_case):
     return [
         awc['state_site_code'],
         awc['state_name'],
@@ -43,8 +43,8 @@ def fetch_case_properties(case, awc):
         awc['supervisor_name'],
         awc['awc_site_code'],
         awc['awc_name'],
-        get_person_case.get_case_property('name'),
-        get_person_case.get_case_property('contact_phone_number'),
+        person_case.get_case_property('name'),
+        person_case.get_case_property('contact_phone_number'),
         case.get_case_property('has_bank_account'),
         case.get_case_property('bank_ifsc_code'),
         case.get_case_property('bank_account_number'),
@@ -69,8 +69,9 @@ class Command(BaseCommand):
             cases = case_accessor.get_cases(case_ids)
 
             for case in cases:
-                if get_person_case(case).get_case_property('migration_status') != 'migrated':
-                    row = fetch_case_properties(case, awc)
+                person_case = get_person_case(case)
+                if person_case.get_case_property('migration_status') != 'migrated':
+                    row = fetch_case_properties(case, awc, person_case)
                     data_rows.append(row)
 
         fout = open('/home/cchq/Bihar_bank_account_data.csv', 'w')
