@@ -2120,12 +2120,13 @@ class CasDataExport(View):
         ):
             return HttpResponse(status_code=403)
         if not export_file:
-            sync, blob_id = get_cas_data_blob_file(data_type, location_id, selected_date)
+            sync, zip_name = get_cas_data_blob_file(data_type, location_id, selected_date)
             data = sync.get_file_from_blobdb()
         else:
             data = open(export_file, 'rb')
+            zip_name = f'{data_type}-{location_id}-{selected_date}'
         try:
-            return export_response(data, 'unzipped-csv', blob_id)
+            return export_response(data, 'unzipped-csv', zip_name)
         except NotFound:
             raise Http404
 
