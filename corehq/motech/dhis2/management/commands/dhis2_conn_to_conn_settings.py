@@ -26,7 +26,7 @@ def conn_settings_exists(dhis2_conn: Dhis2Connection) -> bool:
     return ConnectionSettings.objects\
         .filter(domain=dhis2_conn.domain)\
         .filter(url=strip_api(dhis2_conn.server_url))\
-        .count()
+        .exists()
 
 
 def strip_api(server_url):
