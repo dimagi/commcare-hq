@@ -1,3 +1,4 @@
+from django.core.management.base import BaseCommand
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 import csv
 
