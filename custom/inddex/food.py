@@ -155,7 +155,8 @@ class FoodRow:
     # fct_gap_code = ''
     # fct_gap_desc = ''
 
-    def __init__(self, ucr_row, fixtures):
+    def __init__(self, food_code, ucr_row, fixtures):
+        self.food_code = food_code
         self.ucr_row = ucr_row
         self.fixtures = fixtures
         for indicator in INDICATORS:
@@ -188,6 +189,9 @@ class FoodRow:
 class FoodCaseRow(FoodRow):
     """A food item directly corresponding to a case in the UCR"""
 
+    def __init__(self, ucr_row, fixtures):
+        super().__init__(ucr_row['food_code'], ucr_row, fixtures)
+
     def _include_ucr_indicator(self, indicator):
         return True
 
@@ -198,12 +202,9 @@ class RecipeIngredientRow(FoodRow):
     def __init__(self, ucr_row, fixtures, ingredient):
         # ucr_row is data from the parent food case
         # ingredient is static info for this ingredient from the recipes fixture
-        super().__init__(ucr_row, fixtures)
+        super().__init__(ingredient.ingr_code, ucr_row, fixtures)
 
-        self.ingredient = ingredient
-        self.food_code = ingredient.ingr_code
         self.recipe_name = ucr_row['recipe_name']
-
         food_data = self.fixtures.foods[self.food_code]
         for indicator in INDICATORS:
             if indicator.in_food_fixture:
