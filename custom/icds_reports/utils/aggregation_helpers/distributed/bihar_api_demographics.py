@@ -44,6 +44,13 @@ class BiharApiDemographicsHelper(BaseICDSAggregationDistributedHelper):
     def monthly_tablename(self):
         return f"{self.tablename}_{month_formatter(self.month)}"
 
+    @property
+    def bihar_state_id(self):
+        from custom.icds_reports.models.aggregate import AwcLocation
+        bihar_state_id = AwcLocation.objects.filter(aggregation_level=1, state_name='Bihar').values_list('state_id',
+                                                                                                         flat=True)
+        return bihar_state_id[0]
+
     def aggregation_query(self):
         month_start_string = month_formatter(self.month)
         month_end_string = month_formatter(self.month + relativedelta(months=1, seconds=-1))
@@ -110,11 +117,16 @@ class BiharApiDemographicsHelper(BaseICDSAggregationDistributedHelper):
                     person_list.household_case_id = hh_list.doc_id AND
                     person_list.supervisor_id = hh_list.supervisor_id
                 )
-                WHERE (person_list.opened_on <= '{month_end_string}' AND
-              (person_list.closed_on IS NULL OR person_list.closed_on >= '{month_start_string}' )) AND
-              (
-                migration_tab.is_migrated is distinct from 1 OR
-                migration_tab.migration_date>='{month_start_string}')
+                WHERE 
+                (
+                    person_list.opened_on <= '{month_end_string}' AND
+                    (person_list.closed_on IS NULL OR person_list.closed_on >= '{month_start_string}' )
+                ) AND
+                (
+                    migration_tab.is_migrated is distinct from 1 OR
+                    migration_tab.migration_date>='{month_start_string}'
+                ) AND person_list.state_id='{self.bihar_state_id}'
+                
               );
                 """
 

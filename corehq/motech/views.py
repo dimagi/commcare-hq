@@ -3,13 +3,18 @@ import re
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_lazy
-from django.views.generic import DetailView, ListView
+from django.views.generic import DetailView, FormView, ListView
 
 from memoized import memoized
 
+from corehq import toggles
 from corehq.apps.domain.views.settings import BaseProjectSettingsView
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
+from corehq.motech.forms import (
+    ConnectionSettingsFormSet,
+    ConnectionSettingsFormSetHelper,
+)
 from corehq.motech.models import RequestLog
 
 
@@ -93,3 +98,33 @@ class MotechLogDetailView(BaseProjectSettingsView, DetailView):
     def page_url(self):
         pk = self.kwargs['pk']
         return reverse(self.urlname, args=[self.domain, pk])
+
+
+@method_decorator(require_permission(Permissions.edit_motech), name='dispatch')
+@method_decorator(toggles.DHIS2_INTEGRATION.required_decorator(), name='dispatch')
+class ConnectionSettingsView(BaseProjectSettingsView, FormView):
+    urlname = 'connection_settings_view'
+    page_title = ugettext_lazy('Connection Settings')
+    template_name = 'motech/connection_settings.html'
+    form_class = ConnectionSettingsFormSet  # NOTE: form_class is a formset
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        # BaseConnectionSettingsFormSet needs domain param to add to its
+        # form_kwargs. ConnectionSettingsForm needs it to set
+        # ConnectionSettings.domain when model instance is saved.
+        kwargs['domain'] = self.domain
+        return kwargs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['helper'] = ConnectionSettingsFormSetHelper()
+        return context
+
+    def get_success_url(self):
+        # On save, stay on the same page
+        return reverse(self.urlname, kwargs={'domain': self.domain})
+
+    def form_valid(self, form):
+        self.object = form.save()  # Saves the forms in the formset
+        return super().form_valid(form)

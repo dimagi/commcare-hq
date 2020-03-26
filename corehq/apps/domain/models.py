@@ -971,9 +971,11 @@ class TransferDomainRequest(models.Model):
 
     def email_from_request(self):
         context = self.as_dict()
-        context['settings_url'] = "{url_base}{path}".format(
-            url_base=get_url_base(),
-            path=reverse('transfer_domain_view', args=[self.domain]))
+        context.update({
+            'settings_url': "{url_base}{path}".format(url_base=get_url_base(),
+                                                      path=reverse('transfer_domain_view', args=[self.domain])),
+            'support_email': settings.SUPPORT_EMAIL,
+        })
 
         html_content = render_to_string("{template}.html".format(template=self.TRANSFER_FROM_EMAIL), context)
         text_content = render_to_string("{template}.txt".format(template=self.TRANSFER_FROM_EMAIL), context)

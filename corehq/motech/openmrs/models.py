@@ -74,11 +74,13 @@ class OpenmrsImporter(Document):
     Import cases from an OpenMRS instance using a report
     """
     domain = StringProperty()
+
+    # TODO: (2020-03-06) Migrate to ConnectionSettings
     server_url = StringProperty()  # e.g. "http://www.example.com/openmrs"
     username = StringProperty()
     password = StringProperty()
 
-    notify_addresses_str = StringProperty(default="")
+    notify_addresses_str = StringProperty(default="")  # See also notify_addresses()
 
     # If a domain has multiple OpenmrsImporter instances, for which CommCare location is this one authoritative?
     location_id = StringProperty()

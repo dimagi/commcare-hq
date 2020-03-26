@@ -1,8 +1,10 @@
 from django.test import TestCase
 
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.users.account_confirmation import should_send_account_confirmation
 from corehq.apps.users.exceptions import IllegalAccountConfirmation
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.models import CommCareUser, WebUser
+from corehq.util.test_utils import generate_cases
 
 
 class TestAccountConfirmation(TestCase):
@@ -53,3 +55,12 @@ class TestAccountConfirmation(TestCase):
         self.user.confirm_account('abc')
         with self.assertRaises(IllegalAccountConfirmation):
             self.user.confirm_account('def')
+
+
+@generate_cases([
+    (CommCareUser(username='normal', is_account_confirmed=False), True),
+    (CommCareUser(username='already_confirmed', is_account_confirmed=True), False),
+    (WebUser(is_account_confirmed=False), False),
+])
+def test_should_send_account_confirmation(self, user, result):
+    self.assertEqual(result, should_send_account_confirmation(user))

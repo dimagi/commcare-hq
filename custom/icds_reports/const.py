@@ -127,6 +127,7 @@ AGG_DASHBOARD_ACTIVITY = 'icds_dashboard_user_activity'
 AGG_ADOLESCENT_GIRLS_REGISTRATION_TABLE = 'icds_dashboard_adolescent_girls_registration'
 AGG_GOV_DASHBOARD_TABLE = 'agg_gov_dashboard'
 AGG_MIGRATION_TABLE = 'icds_dashboard_migration_forms'
+AGG_AVAILING_SERVICES_TABLE = 'icds_dashboard_availing_service_forms'
 
 AWC_LOCATION_TABLE_ID = 'static-awc_location'
 USAGE_TABLE_ID = 'static-usage_forms'

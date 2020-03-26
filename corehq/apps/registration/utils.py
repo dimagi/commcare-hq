@@ -13,7 +13,7 @@ from corehq.util.soft_assert import soft_assert
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.database import get_safe_write_kwargs
 from dimagi.utils.name_to_url import name_to_url
-from dimagi.utils.web import get_ip, get_site_domain, get_url_base
+from dimagi.utils.web import get_ip, get_url_base, get_static_url_prefix
 
 from corehq.apps.accounting.models import (
     DEFAULT_ACCOUNT_FORMAT,
@@ -223,7 +223,7 @@ def send_mobile_experience_reminder(recipient, full_name):
     params = {
         "full_name": full_name,
         "url": url,
-        'url_prefix': '' if settings.STATIC_CDN else 'http://' + get_site_domain(),
+        'url_prefix': get_static_url_prefix(),
     }
     message_plaintext = render_to_string(
         'registration/email/mobile_signup_reminder.txt', params)
