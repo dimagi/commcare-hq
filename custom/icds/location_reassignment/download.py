@@ -46,7 +46,6 @@ class Download(object):
                 'location_type': location.location_type.code,
                 'assigned_users': [],
             }
-        return self._location_details_by_location_id
 
     def _locations(self):
         # fetch all locations necessary for this download request
