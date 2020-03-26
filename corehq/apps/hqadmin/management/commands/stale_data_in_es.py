@@ -234,8 +234,8 @@ class FormBackend:
                 es_modified_on_by_ids = FormBackend._get_es_modified_dates_for_forms(run_config.domain, form_ids)
                 for form_id, state, xmlns, sql_modified_on, domain in chunk:
                     doc_type = state_to_doc_type.get(state, 'XFormInstance')
-                    es_modified_on = es_modified_on_by_ids.get(form_id)
-                    if not es_modified_on or (es_modified_on < sql_modified_on):
+                    es_modified_on, es_doc_type = es_modified_on_by_ids.get(form_id, (None, None))
+                    if (es_modified_on, es_doc_type) != (sql_modified_on, doc_type):
                         yield form_id, doc_type, xmlns, es_modified_on, sql_modified_on, domain
 
     @staticmethod
@@ -261,8 +261,8 @@ class FormBackend:
         es_query = FormES(es_instance_alias=ES_EXPORT_INSTANCE).remove_default_filters()
         if domain is not ALL_SQL_DOMAINS:
             es_query = es_query.domain(domain)
-        results = es_query.form_ids(form_ids).values_list('_id', 'received_on')
-        return {_id: iso_string_to_datetime(received_on) for _id, received_on in results}
+        results = es_query.form_ids(form_ids).values_list('_id', 'received_on', 'doc_type')
+        return {_id: (iso_string_to_datetime(received_on), doc_type) for _id, received_on, doc_type in results}
 
 
 def _chunked_with_progress_bar(collection, n, prefix):
