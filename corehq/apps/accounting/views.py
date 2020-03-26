@@ -33,6 +33,7 @@ from memoized import memoized
 from six.moves.urllib.parse import urlencode
 
 from corehq.apps.accounting.decorators import always_allow_project_access
+from corehq.toggles import ACCOUNTING_TESTING_TOOLS
 from couchexport.export import Format
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 
@@ -709,10 +710,18 @@ class TriggerInvoiceView(AccountingSectionView, AsyncHandlerMixin):
 
     @property
     @memoized
+    def is_testing_enabled(self):
+        return ACCOUNTING_TESTING_TOOLS.enabled_for_request(self.request)
+
+    @property
+    @memoized
     def trigger_form(self):
         if self.request.method == 'POST':
-            return TriggerInvoiceForm(self.request.POST)
-        return TriggerInvoiceForm()
+            return TriggerInvoiceForm(
+                self.request.POST,
+                show_testing_options=self.is_testing_enabled
+            )
+        return TriggerInvoiceForm(show_testing_options=self.is_testing_enabled)
 
     @property
     def page_url(self):
