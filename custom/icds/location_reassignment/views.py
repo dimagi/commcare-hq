@@ -24,7 +24,7 @@ from custom.icds.location_reassignment.parser import Parser
 class LocationReassignmentView(BaseDomainView):
     section_name = ugettext_lazy("Locations")
 
-    page_title = _('Location Reassignment')
+    page_title = ugettext_lazy('Location Reassignment')
     urlname = 'location_reassignment'
     template_name = 'icds/location_reassignment.html'
 
