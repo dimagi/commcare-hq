@@ -1,3 +1,4 @@
+import csv
 import json
 import os
 import string
@@ -8,6 +9,7 @@ from collections import defaultdict
 from datetime import datetime, timedelta, date
 from functools import wraps
 from memoized import memoized
+from tempfile import mkstemp
 
 import operator
 
@@ -33,10 +35,12 @@ from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSo
 from corehq.blobs.mixin import safe_id
 from corehq.const import ONE_DAY
 from corehq.util.datadog.gauges import datadog_histogram
+from corehq.util.files import TransientTempfile
 from corehq.util.quickcache import quickcache
 from corehq.util.timer import TimingContext
 from custom.icds_reports import const
 from custom.icds_reports.const import ISSUE_TRACKER_APP_ID, LOCATION_TYPES
+from custom.icds_reports.exceptions import InvalidLocationTypeException
 from custom.icds_reports.models.helper import IcdsFile
 from custom.icds_reports.queries import get_test_state_locations_id, get_test_district_locations_id
 from couchexport.export import export_from_tables
@@ -1714,6 +1718,29 @@ def get_datatables_ordering_info(request):
 
 def phone_number_function(x):
     return "+{0}{1}".format('' if str(x).startswith('91') else '91', x) if x else x
+
+
+def filter_cas_data_export(export_file, location):
+    with TransientTempfile() as path:
+        with open(path, 'wb') as temp_file:
+            temp_file.write(export_file.get_file_from_blobdb().read())
+        with open(path, 'r') as temp_file:
+            fd, export_file_path = mkstemp()
+            csv_file = os.fdopen(fd, 'w')
+            reader = csv.reader(temp_file)
+            writer = csv.writer(csv_file)
+            headers = next(reader)
+            for i, header in enumerate(headers):
+                if header == f'{location.location_type.name}_name':
+                    index_of_location_type_name_column = i
+                    break
+            else:
+                raise InvalidLocationType(f'{location.location_type.name} is not a valid location option for cas data exports')
+            writer.writerow(headers)
+            for row in reader:
+                if row[index_of_location_type_name_column] == location.name:
+                    writer.writerow(row)
+        return export_file_path
 
 
 def prepare_rollup_query(columns_tuples):
