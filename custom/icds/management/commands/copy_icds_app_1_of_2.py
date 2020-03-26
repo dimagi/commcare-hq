@@ -28,7 +28,7 @@ class Command(BaseCommand):
         if options['skip_dynamic_report_check']:
             message = """
                 WARNING: You are skipping report-related safety checks.
-                If your app uses mobile UCR and contains references to dynamic reports, it wwill break
+                If your app uses mobile UCR and contains references to dynamic reports, it will break
                 if those references do not use aliases to reference the correct report ids.
                 Do you wish to proceed?
             """
