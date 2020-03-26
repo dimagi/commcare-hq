@@ -58,7 +58,7 @@ INDICATORS = [
     I('already_reported_recipe_name'),
     I('is_ingredient', IN_UCR),
     I('recipe_case_id', IN_UCR),
-    I('ingr_recipe_code', IN_UCR),
+    I('ingr_recipe_code'),
     I('ingr_fraction'),
     I('ingr_recipe_total_grams_consumed'),
     I('short_name', IN_UCR),
@@ -199,6 +199,7 @@ class RecipeIngredientRow(FoodRow):
         super().__init__(ingredient.ingr_code, ucr_row, fixtures)
 
         self.recipe_name = ucr_row['recipe_name']
+        self.ingr_recipe_code = ingredient.recipe_code
         food_data = self.fixtures.foods[self.food_code]
         for indicator in INDICATORS:
             if indicator.in_food_fixture:

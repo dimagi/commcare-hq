@@ -446,24 +446,6 @@
                 }
             },
             {
-                "column_id": "ingr_recipe_code",
-                "type": "expression",
-                "datatype": "string",
-                "display_name": "Ingr Recipe Code",
-                "expression": {
-                    "type": "related_doc",
-                    "related_doc_type": "CommCareCase",
-                    "doc_id_expression": {
-                        "type": "property_name",
-                        "property_name": "recipe_case_id"
-                    },
-                    "value_expression": {
-                        "type": "property_name",
-                        "property_name": "food_code"
-                    }
-                }
-            },
-            {
                 "type": "expression",
                 "column_id": "short_name",
                 "datatype": "string",
