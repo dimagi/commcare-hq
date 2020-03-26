@@ -24,6 +24,7 @@ from six.moves.urllib.parse import urlencode
 from corehq.apps.accounting.automated_reports import CreditsAutomatedReport
 from corehq.apps.accounting.utils.downgrade import (
     is_subscription_eligible_for_downgrade_process,
+    send_downgrade_notice,
 )
 from corehq.apps.accounting.utils.subscription import (
     assign_explicit_unpaid_subscription,
@@ -728,23 +729,12 @@ def _apply_downgrade_process(oldest_unpaid_invoice, total, today, subscription=N
     if days_ago >= 61:
         if not oldest_unpaid_invoice.is_customer_invoice:  # We do not automatically downgrade customer invoices
             _downgrade_domain(subscription)
-            _send_downgrade_notice(oldest_unpaid_invoice, context)
+            send_downgrade_notice(oldest_unpaid_invoice, context)
     elif days_ago == 58:
         _send_downgrade_warning(oldest_unpaid_invoice, context)
     elif days_ago == 30:
         _send_overdue_notice(oldest_unpaid_invoice, context)
 
-
-def _send_downgrade_notice(invoice, context):
-    send_html_email_async.delay(
-        _('Oh no! Your CommCare subscription for {} has been paused'.format(invoice.get_domain())),
-        invoice.contact_emails,
-        render_to_string('accounting/email/downgrade.html', context),
-        render_to_string('accounting/email/downgrade.txt', context),
-        cc=[settings.ACCOUNTS_EMAIL],
-        bcc=[settings.GROWTH_EMAIL],
-        email_from=get_dimagi_from_email()
-    )
 
 
 def _downgrade_domain(subscription):
