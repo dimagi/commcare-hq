@@ -2625,6 +2625,7 @@ class SQLInvitation(SyncSQLToCouchMixin, models.Model):
     program = models.CharField(max_length=126, null=True)   # couch id of a Program
     supply_point = models.CharField(max_length=126, null=True)  # couch id of a Location
     couch_id = models.CharField(max_length=126, null=True, db_index=True)
+    uuid = models.UUIDField(unique=True, db_index=True, default=uuid4)
 
     class Meta:
         db_table = "users_invitation"
