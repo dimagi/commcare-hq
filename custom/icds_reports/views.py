@@ -2085,8 +2085,8 @@ class CasDataExport(View):
         else:
             if state != location:
                 # check for cached version
-                sync, blob_id = get_cas_data_blob_file(data_type, location_id, selected_date)
-                if not sync:
+                cached_sync, blob_id = get_cas_data_blob_file(data_type, location_id, selected_date)
+                if not cached_sync:
                     try:
                         export_file = filter_cas_data_export(sync, location)
                     except InvalidLocationTypeException as e:
