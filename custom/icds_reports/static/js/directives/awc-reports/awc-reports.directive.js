@@ -1738,64 +1738,64 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
         'beneficiary': [
             {
                 'mData': 'person_name',
-                'title': 'Name',
+                'heading': 'Name',
                 'class': 'big-col',
                 'value': renderPersonName
             },
             {
                 'mData': 'dob',
-                'title': 'Date of Birth',
+                'heading': 'Date of Birth',
                 'class': 'medium-col',
                 'value': renderDateOfBirth
             },
             {
                 'mData': 'age',
-                'title': 'Current Age',
+                'heading': 'Current Age',
                 'class': 'medium-col',
                 'value': renderAge
             },
             {
                 'mData': 'fully_immunized',
-                'title': '1 Year Immunizations Complete',
+                'heading': '1 Year Immunizations Complete',
                 'class': 'medium-col',
                 'value': renderFullyImmunizedDate
             },
             {
                 'mData': 'current_month_nutrition_status',
-                'title': 'Weight-for-Age Status (in Month)',
+                'heading': 'Weight-for-Age Status (in Month)',
                 'class': 'medium-col',
                 'value': renderWeightForAgeStatus,
                 'tooltipType': 'weight'
             },
             {
                 'mData': 'current_month_wasting',
-                'title': 'Weight-for-Height Status (in Month)',
+                'heading': 'Weight-for-Height Status (in Month)',
                 'class': 'medium-col',
                 'value': renderWeightForHeightStatus,
                 'tooltipType': 'both'
             },
             {
                 'mData': 'current_month_stunting',
-                'title': 'Height-for-Age Status (in Month)',
+                'heading': 'Height-for-Age Status (in Month)',
                 'class': 'medium-col',
                 'value': renderHeightForAgeStatus,
                 'tooltipType': 'height'
             },
             {
                 'mData': 'pse_days_attended',
-                'title': 'PSE Attendance (Days)',
+                'heading': 'PSE Attendance (Days)',
                 'class': 'medium-col',
                 'value': renderPseDaysAttended
             },
             {
                 'mData': 'aww_phone_number',
-                'title': 'AWW Phone Number',
+                'heading': 'AWW Phone Number',
                 'class': 'medium-col',
                 'value': renderAwwPhoneNumber
             },
             {
                 'mData': 'mother_phone_number',
-                'title': 'Mother Phone Number',
+                'heading': 'Mother Phone Number',
                 'class': 'medium-col',
                 'value': renderMotherPhoneNumber
             },
@@ -1803,67 +1803,67 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
         'pregnant': [
             {
                 'mData': 'person_name',
-                'title': 'Name',
+                'heading': 'Name',
                 'class': 'big-col',
                 'value': renderPersonNamePregnant
             },
             {
                 'mData': 'age',
-                'title': 'Age',
+                'heading': 'Age',
                 'class': 'medium-col',
                 'value': renderAge
             },
             {
                 'mData': 'closed',
-                'title': 'Status',
+                'heading': 'Status',
                 'class': 'medium-col',
                 'value': renderClosed
             },
             {
                 'mData': 'opened_on',
-                'title': 'Pregnancy registration',
+                'heading': 'Pregnancy registration',
                 'class': 'medium-col',
                 'value': renderOpenedOn
             },
             {
                 'mData': 'edd',
-                'title': 'EDD',
+                'heading': 'EDD',
                 'class': 'medium-col',
                 'value': renderEdd
             },
             {
                 'mData': 'trimester',
-                'title': 'Trimester',
+                'heading': 'Trimester',
                 'class': 'medium-col',
                 'value': renderTrimester
             },
             {
                 'mData': 'anemic',
-                'title': 'Anemia during last ANC (Y/N)',
+                'heading': 'Anemia during last ANC (Y/N)',
                 'class': 'medium-col',
                 'value': renderAnemic
             },
             {
                 'mData': 'num_anc_complete',
-                'title': 'Number of ANC visits',
+                'heading': 'Number of ANC visits',
                 'class': 'medium-col',
                 'value': renderNumAncComplete
             },
             {
                 'mData': 'beneficiary',
-                'title': 'Beneficiary Status',
+                'heading': 'Beneficiary Status',
                 'class': 'medium-col',
                 'value': renderBeneficiary
             },
             {
                 'mData': 'number_of_thrs_given',
-                'title': 'Number of THRs given in current month',
+                'heading': 'Number of THRs given in current month',
                 'class': 'medium-col',
                 'value': renderNumberOfThrsGiven
             },
             {
                 'mData': 'last_date_thr',
-                'title': 'Date of last THR',
+                'heading': 'Date of last THR',
                 'class': 'medium-col',
                 'value': renderLastDateThr
             },
@@ -1871,55 +1871,55 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
         'lactating': [
             {
                 'mData': 'person_name',
-                'title': 'Name',
+                'heading': 'Name',
                 'class': 'big-col',
                 'value': renderPersonNameLactating
             },
             {
                 'mData': 'age',
-                'title': 'Age',
+                'heading': 'Age',
                 'class': 'medium-col',
                 'value': renderAge
             },
             {
                 'mData': 'add',
-                'title': 'Date of Delivery',
+                'heading': 'Date of Delivery',
                 'class': 'medium-col',
                 'value': renderAdd
             },
             {
                 'mData': 'delivery_nature',
-                'title': 'Type of Delivery',
+                'heading': 'Type of Delivery',
                 'class': 'medium-col',
                 'value': renderDeliveryNature
             },
             {
                 'mData': 'institutional_delivery',
-                'title': 'Institutional Delivery (Y/N)',
+                'heading': 'Institutional Delivery (Y/N)',
                 'class': 'medium-col',
                 'value': renderInstitutionalDeliveryInMonth
             },
             {
                 'mData': 'num_pnc_visits',
-                'title': 'Number of PNC visits',
+                'heading': 'Number of PNC visits',
                 'class': 'medium-col',
                 'value': renderNumPncVisits
             },
             {
                 'mData': 'breastfed_at_birth',
-                'title': 'Breastfed within hour of birth',
+                'heading': 'Breastfed within hour of birth',
                 'class': 'medium-col',
                 'value': renderBreastfedAtBirth
             },
             {
                 'mData': 'is_ebf',
-                'title': 'Exclusively breastfeeding at last home visit',
+                'heading': 'Exclusively breastfeeding at last home visit',
                 'class': 'medium-col',
                 'value': renderIsEbf
             },
             {
                 'mData': 'num_rations_distributed',
-                'title': 'Number of THRs given in current month',
+                'heading': 'Number of THRs given in current month',
                 'class': 'medium-col',
                 'value': renderNumRationsDistributed
             }
@@ -1930,7 +1930,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
     if (vm.awcReportTableData[vm.step] && !isMobile) {
         for (var i = 0; i < vm.awcReportTableData[vm.step].length; i++) {
             var entry = vm.awcReportTableData[vm.step][i];
-            vm.dtColumns.push(DTColumnBuilder.newColumn(entry['mData']).withTitle(entry['title'])
+            vm.dtColumns.push(DTColumnBuilder.newColumn(entry['mData']).withTitle(entry['heading'])
                 .renderWith(entry['value']).withClass(entry['class']));
         }
     }
@@ -2089,10 +2089,14 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
     const SORT_ASCENDING = 0;
     const DEFAULT_REQUEST_DATA_STARTING_FROM = 0;
     vm.showSortPopup = false;
+    vm.hasHeaderTooltips = false; // used to decide whether to show 'i' in sort popup
     vm.requestDataStartingFrom = DEFAULT_REQUEST_DATA_STARTING_FROM; // could be any multiple of 10
     vm.dataSortingDirection = SORT_ASCENDING;
     vm.sortingColumn = DEFAULT_SORTED_COLUMN;
     vm.sortableInputKpiData = [];
+    vm.getTableData = function () {
+        return vm.awcReportTableData[vm.step].slice(1);
+    };
     vm.toggleSortPopup = function (event) {
         vm.showSortPopup = !vm.showSortPopup;
         // At the top level element, click event is added, which when triggered closes sort popup
@@ -2148,7 +2152,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
             var cardData = data[i - existingDataLength];
             for (var j = 1; j < tableData.length; j++) {
                 var kpiObject = {
-                    'heading' : tableData[j]['title'],
+                    'heading' : tableData[j]['heading'],
                     'value' : tableData[j]['value']('', '', cardData),
                     'isTheSortedColumn' : j === vm.sortingColumn,
                     'sortingDirection' : vm.dataSortingDirection,
