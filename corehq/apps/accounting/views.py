@@ -87,6 +87,7 @@ from corehq.apps.accounting.forms import (
     TriggerBookkeeperEmailForm,
     TriggerCustomerInvoiceForm,
     TriggerInvoiceForm,
+    TriggerDowngradeForm,
 )
 from corehq.apps.accounting.interface import (
     AccountingInterface,
@@ -1489,3 +1490,38 @@ class EnterpriseBillingStatementsView(DomainAccountingSettings, CRUDPaginatedVie
 
     def post(self, *args, **kwargs):
         return self.paginate_crud_response
+
+
+class TriggerDowngradeView(AccountingSectionView, AsyncHandlerMixin):
+    urlname = 'accounting_test_downgrade'
+    page_title = "Trigger Downgrade"
+    template_name = 'accounting/trigger_downgrade.html'
+
+    @property
+    @memoized
+    def trigger_form(self):
+        if self.request.method == 'POST':
+            return TriggerDowngradeForm(self.request.POST)
+        return TriggerDowngradeForm()
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname)
+
+    @property
+    def page_context(self):
+        return {
+            'trigger_form': self.trigger_form,
+        }
+
+    def post(self, request, *args, **kwargs):
+        if self.async_response is not None:
+            return self.async_response
+        if self.trigger_form.is_valid():
+            self.trigger_form.trigger_downgrade()
+            messages.success(
+                request, "Successfully triggered the downgrade "
+                         "process for domain %s."
+                         % self.trigger_form.cleaned_data['domain'])
+            return HttpResponseRedirect(reverse(self.urlname))
+        return self.get(request, *args, **kwargs)

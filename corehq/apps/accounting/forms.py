@@ -2708,3 +2708,39 @@ class EnterpriseSettingsForm(forms.Form):
         account.restrict_signup_message = self.cleaned_data.get('restrict_signup_message', '')
         account.save()
         return True
+
+
+class TriggerDowngradeForm(forms.Form):
+    domain = forms.CharField(label="Project Space", widget=forms.Select(choices=[]))
+
+    def __init__(self, *args, **kwargs):
+        super(TriggerDowngradeForm, self).__init__(*args, **kwargs)
+
+        self.helper = FormHelper()
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+        self.helper.form_class = 'form form-horizontal'
+
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+                'Trigger Downgrade Details',
+                crispy.Field(
+                    'domain',
+                    css_class="input-xxlarge accounting-async-select2",
+                    placeholder="Search for Project"
+                ),
+            ),
+            hqcrispy.FormActions(
+                StrictButton(
+                    "Trigger Downgrade",
+                    css_class="btn-primary disable-on-submit",
+                    type="submit",
+                ),
+            )
+        )
+
+    @transaction.atomic
+    def trigger_downgrade(self):
+        domain = self.cleaned_data['domain']
+        print(f'trigger downgrade for {domain}')
+
