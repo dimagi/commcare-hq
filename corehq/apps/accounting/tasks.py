@@ -63,6 +63,7 @@ from corehq.apps.accounting.utils import (
     get_dimagi_from_email,
     log_accounting_error,
     log_accounting_info,
+    get_all_unpaid_saas_invoices,
 )
 from corehq.apps.app_manager.dbaccessors import get_all_apps
 from corehq.apps.domain.models import Domain
@@ -759,7 +760,7 @@ def get_unpaid_invoices_over_threshold_by_domain(today, domain):
     for overdue_invoice in _get_unpaid_saas_invoices_in_downgrade_daterange(today).filter(
         subscription__subscriber__domain=domain
     ):
-        total_overdue_by_domain_and_invoice_date = _get_all_unpaid_saas_invoices().filter(
+        total_overdue_by_domain_and_invoice_date = get_all_unpaid_saas_invoices().filter(
             Q(date_due__lte=overdue_invoice.date_due)
             | (Q(date_due__isnull=True) & Q(date_end__lte=overdue_invoice.date_end)),
             subscription__subscriber__domain=domain,
@@ -770,17 +771,9 @@ def get_unpaid_invoices_over_threshold_by_domain(today, domain):
 
 
 def _get_unpaid_saas_invoices_in_downgrade_daterange(today):
-    return _get_all_unpaid_saas_invoices().filter(
+    return get_all_unpaid_saas_invoices().filter(
         date_due__lte=today - datetime.timedelta(days=1)
     ).order_by('date_due').select_related('subscription__subscriber')
-
-
-def _get_all_unpaid_saas_invoices():
-    return Invoice.objects.filter(
-        is_hidden=False,
-        subscription__service_type=SubscriptionType.PRODUCT,
-        date_paid__isnull=True,
-    )
 
 
 def get_accounts_with_customer_invoices_over_threshold(today):

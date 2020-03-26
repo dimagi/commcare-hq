@@ -46,6 +46,16 @@ def ensure_domain_instance(domain):
     return domain
 
 
+def get_all_unpaid_saas_invoices():
+    from corehq.apps.accounting.models import Invoice
+    from corehq.apps.accounting.models import SubscriptionType
+    return Invoice.objects.filter(
+        is_hidden=False,
+        subscription__service_type=SubscriptionType.PRODUCT,
+        date_paid__isnull=True,
+    )
+
+
 def fmt_feature_rate_dict(feature, feature_rate=None):
     """
     This will be turned into a JSON representation of this Feature and its FeatureRate
