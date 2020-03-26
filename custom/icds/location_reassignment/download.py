@@ -56,8 +56,7 @@ class Download(object):
 
     def _populate_assigned_users(self):
         # allot assign user details to each location
-        for user_detail in self._get_users():
-            username, assigned_location_ids = user_detail
+        for username, assigned_location_ids in self._get_users():
             if not isinstance(assigned_location_ids, list):
                 assigned_location_ids = [assigned_location_ids]
             for location_id in assigned_location_ids:
