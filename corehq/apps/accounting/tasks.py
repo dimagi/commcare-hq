@@ -63,6 +63,8 @@ from corehq.apps.accounting.utils import (
     get_dimagi_from_email,
     log_accounting_error,
     log_accounting_info,
+)
+from corehq.apps.accounting.utils.invoicing import (
     get_domains_with_subscription_invoices_over_threshold,
     UNPAID_INVOICE_THRESHOLD,
 )
