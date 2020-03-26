@@ -763,9 +763,9 @@ class RecouvrementDesCouts(BaseSqlData):
 
 class IntraHealthQueryMeta(QueryMeta):
 
-    def __init__(self, table_name, filters, group_by, key):
+    def __init__(self, table_name, filters, group_by, distinct, key):
         self.key = key
-        super(IntraHealthQueryMeta, self).__init__(table_name, filters, group_by, [])
+        super(IntraHealthQueryMeta, self).__init__(table_name, filters, group_by, distinct, [])
         assert len(filters) > 0
         self.filter = AND(self.filters) if len(self.filters) > 1 else self.filters[0]
 
