@@ -11,6 +11,7 @@ from django.db.models import F
 from memoized import memoized
 
 from casexml.apps.case.models import CommCareCase
+from couchforms.models import XFormInstance
 from dimagi.utils.chunked import chunked
 
 from corehq.apps.es import CaseES, FormES
@@ -22,6 +23,7 @@ from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 from corehq.util.couch_helpers import paginate_view
 from corehq.util.dates import iso_string_to_datetime
 from corehq.util.log import with_progress_bar
+from dimagi.utils.parsing import json_format_datetime
 
 RunConfig = namedtuple('RunConfig', ['domain', 'start_date', 'end_date', 'case_type'])
 DataRow = namedtuple('DataRow', ['doc_id', 'doc_type', 'doc_subtype', 'domain', 'es_date', 'primary_date'])
@@ -218,25 +220,32 @@ class FormBackend:
 
     @staticmethod
     def _get_stale_form_data(run_config):
-        if run_config.domain is ALL_SQL_DOMAINS or should_use_sql_backend(run_config.domain):
-            return FormBackend._get_stale_form_data_for_sql_backend(run_config)
-        else:
-            raise CommandError('Form data for couch domains is not supported!')
+        yield from FormBackend._get_stale_form_data_for_sql_backend(run_config)
+        yield from FormBackend._get_stale_form_data_for_couch_backend(run_config)
 
     @staticmethod
     def _get_stale_form_data_for_sql_backend(run_config):
         for db in get_db_aliases_for_partitioned_query():
             matching_records_for_db = FormBackend._get_sql_form_data_for_db(db, run_config)
-
             for chunk in _chunked_with_progress_bar(matching_records_for_db, 1000,
                                                     prefix=f'Processing forms in DB {db}'):
-                form_ids = [val[0] for val in chunk]
-                es_modified_on_by_ids = FormBackend._get_es_modified_dates_for_forms(run_config.domain, form_ids)
-                for form_id, state, xmlns, sql_modified_on, domain in chunk:
-                    doc_type = state_to_doc_type.get(state, 'XFormInstance')
-                    es_modified_on, es_doc_type = es_modified_on_by_ids.get(form_id, (None, None))
-                    if (es_modified_on, es_doc_type) != (sql_modified_on, doc_type):
-                        yield form_id, doc_type, xmlns, es_modified_on, sql_modified_on, domain
+                yield from FormBackend._yield_missing_in_es(chunk)
+
+    @staticmethod
+    def _get_stale_form_data_for_couch_backend(run_config):
+        length, matching_records = FormBackend._get_couch_form_data(run_config)
+        for chunk in _chunked_with_progress_bar(matching_records, 1000, length=length,
+                                                prefix=f'Processing forms in Couch'):
+            yield from FormBackend._yield_missing_in_es(chunk)
+
+    @staticmethod
+    def _yield_missing_in_es(chunk):
+        form_ids = [val[0] for val in chunk]
+        es_modified_on_by_ids = FormBackend._get_es_modified_dates_for_forms(form_ids)
+        for form_id, doc_type, xmlns, modified_on, domain in chunk:
+            es_modified_on, es_doc_type, es_domain = es_modified_on_by_ids.get(form_id, (None, None, None))
+            if (es_modified_on, es_doc_type, es_domain) != (modified_on, doc_type, domain):
+                yield form_id, doc_type, xmlns, es_modified_on, modified_on, domain
 
     @staticmethod
     def _get_sql_form_data_for_db(db, run_config):
@@ -251,24 +260,76 @@ class FormBackend:
                 domain=run_config.domain
             )
         return [
-            (*rest, domain)
-            for *rest, domain in matching_forms.values_list('form_id', 'state', 'xmlns', 'received_on', 'domain')
+            (form_id, state_to_doc_type.get(state, 'XFormInstance'), xmlns, received_on, domain)
+            for form_id, state, xmlns, received_on, domain in matching_forms.values_list(
+                'form_id', 'state', 'xmlns', 'received_on', 'domain')
             if _should_use_sql_backend(domain)
         ]
 
     @staticmethod
-    def _get_es_modified_dates_for_forms(domain, form_ids):
-        es_query = FormES(es_instance_alias=ES_EXPORT_INSTANCE).remove_default_filters()
-        if domain is not ALL_SQL_DOMAINS:
-            es_query = es_query.domain(domain)
-        results = es_query.form_ids(form_ids).values_list('_id', 'received_on', 'doc_type')
-        return {_id: (iso_string_to_datetime(received_on), doc_type) for _id, received_on, doc_type in results}
+    def _get_couch_form_data(run_config):
+        db = XFormInstance.get_db()
+        view = 'by_domain_doc_type_date/view'
+
+        def get_kwargs(couch_domain, doc_type):
+            return dict(
+                startkey=[couch_domain, doc_type, json_format_datetime(run_config.start_date)],
+                endkey=[couch_domain, doc_type, json_format_datetime(run_config.end_date)],
+            )
+
+        def _get_length():
+            length = 0
+            for couch_domain in _get_matching_couch_domains(run_config):
+                for doc_type in ['XFormArchived', 'XFormInstance']:
+                    result = db.view(view, reduce=True, **get_kwargs(couch_domain, doc_type)).one()
+                    if result:
+                        length += result['value']
+            return length
+
+        def _yield_records():
+            for couch_domain in _get_matching_couch_domains(run_config):
+                chunk_size = 1000
+                for doc_type in ['XFormArchived', 'XFormInstance']:
+                    iterator = paginate_view(
+                        db,
+                        view,
+                        reduce=False,
+                        include_docs=False,
+                        chunk_size=chunk_size,
+                        **get_kwargs(couch_domain, doc_type)
+                    )
+                    for row in iterator:
+                        form_id = row['id']
+                        domain, doc_type, received_on = row['key']
+                        received_on = iso_string_to_datetime(received_on)
+                        assert domain == run_config.domain
+                        yield (form_id, doc_type, 'COUCH_XMLNS_NOT_SUPPORTED',
+                               received_on, domain)
+        return _get_length(), _yield_records()
+
+    @staticmethod
+    def _get_es_modified_dates_for_forms(form_ids):
+        results = (
+            FormES(es_instance_alias=ES_EXPORT_INSTANCE).remove_default_filters()
+            .form_ids(form_ids)
+            .values_list('_id', 'received_on', 'doc_type', 'domain')
+        )
+        return {_id: (iso_string_to_datetime(received_on), doc_type, domain)
+                for _id, received_on, doc_type, domain in results}
 
 
-def _chunked_with_progress_bar(collection, n, prefix):
-    return chunked(with_progress_bar(collection, prefix=prefix, stream=sys.stderr), n)
+def _chunked_with_progress_bar(collection, n, prefix, **kwargs):
+    return chunked(with_progress_bar(collection, prefix=prefix, stream=sys.stderr, **kwargs), n)
 
 
 @memoized
 def _should_use_sql_backend(domain):
     return should_use_sql_backend(domain)
+
+
+@memoized
+def _get_matching_couch_domains(run_config):
+    if run_config.domain is ALL_SQL_DOMAINS or _should_use_sql_backend(run_config.domain):
+        return []
+    else:
+        return [run_config.domain]
