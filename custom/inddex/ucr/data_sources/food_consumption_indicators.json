@@ -806,37 +806,9 @@
                     "type": "property_name",
                     "property_name": "nsr_consumed_cooked_fraction"
                 }
-            },
-            {
-                "type": "expression",
-                "column_id": "nsr_same_conv_method",
-                "datatype": "string",
-                "expression": {
-                    "type": "named",
-                    "name": "nsr_same_conv_method_named"
-                }
             }
         ],
         "base_item_expression": {},
-        "named_expressions": {
-            "nsr_same_conv_method_named": {
-                "type": "conditional",
-                "test": {
-                    "type": "boolean_expression",
-                    "expression": {
-                        "type": "property_name",
-                        "property_name": "food_type"
-                    },
-                    "operator": "eq",
-                    "property_value": "non_std_recipe"
-                },
-                "expression_if_true": {
-                    "type": "property_name",
-                    "property_name": "recipe_same_method_used"
-                },
-                "expression_if_false": ""
-            }
-        },
         "named_filters": {}
     }
 }
