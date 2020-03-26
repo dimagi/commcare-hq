@@ -17,6 +17,8 @@ class I:
         self.is_recall_meta = IS_RECALL_META in tags
 
 
+# Indicator descriptions can be found here:
+# https://docs.google.com/spreadsheets/d/1znPjfQSFEUFP_R_G8VYE-Bd5dg72k5sP-hZPuy-3RZo/edit
 INDICATORS = [
     I('unique_respondent_id', IN_UCR, IS_RECALL_META),
     I('location_id', IN_UCR, IS_RECALL_META),

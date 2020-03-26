@@ -403,7 +403,7 @@
                 "display_name": "time_block",
                 "expression": {
                     "type": "property_name",
-                    "property_name": "eating_occasion"
+                    "property_name": "time_block_name"
                 }
             },
             {
