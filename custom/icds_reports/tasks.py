@@ -341,11 +341,6 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
 
             res_sdr.get(disable_sync_subtasks=False)
 
-            res_bihar_api = chain(icds_aggregation_task.si(date=calculation_date, func_name='update_bihar_api_table'),
-                            ).apply_async()
-
-            res_bihar_api.get(disable_sync_subtasks=False)
-
             res_awc = chain(icds_aggregation_task.si(date=calculation_date, func_name='_agg_awc_table'),
                             *res_ls_tasks
                             ).apply_async()
@@ -429,8 +424,7 @@ def icds_aggregation_task(self, date, func_name):
         '_agg_ccs_record_table': _agg_ccs_record_table,
         '_agg_awc_table': _agg_awc_table,
         'aggregate_awc_daily': aggregate_awc_daily,
-        'update_service_delivery_report': update_service_delivery_report,
-        'update_bihar_api_table': update_bihar_api_table
+        'update_service_delivery_report': update_service_delivery_report
     }[func_name]
 
     db_alias = get_icds_ucr_citus_db_alias()

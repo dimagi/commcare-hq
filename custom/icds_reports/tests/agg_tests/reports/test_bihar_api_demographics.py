@@ -2,9 +2,18 @@
 from django.test import TestCase
 from custom.icds_reports.reports.bihar_api import get_api_demographics_data
 from datetime import date
+from custom.icds_reports.models.aggregate import BiharAPIDemographics, AwcLocation
+from mock import patch
 
 
+@patch('custom.icds_reports.utils.aggregation_helpers.distributed.bihar_api_demographics.BiharApiDemographicsHelper.bihar_state_id',
+       'st1')
 class DemographicsAPITest(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        super(DemographicsAPITest, cls).setUpClass()
+        BiharAPIDemographics.aggregate(date(2017, 5, 1))
+
     def test_file_content(self):
 
         data = get_api_demographics_data(
