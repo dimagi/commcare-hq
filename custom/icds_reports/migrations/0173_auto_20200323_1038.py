@@ -80,4 +80,4 @@ class Migration(migrations.Migration):
         migrations.RunSQL(f"CREATE TABLE {BIHAR_API_DEMOGRAPHICS_TABLE} (LIKE {BIHAR_API_DEMOGRAPHICS_TABLE}_old INCLUDING DEFAULTS INCLUDING CONSTRAINTS INCLUDING INDEXES) PARTITION BY LIST (month)"),
         migrations.RunSQL(f"SELECT create_distributed_table('{BIHAR_API_DEMOGRAPHICS_TABLE}', 'supervisor_id')"),
         migrations.RunSQL(f"DROP TABLE {BIHAR_API_DEMOGRAPHICS_TABLE}_old"),
-        ]
+    ]
