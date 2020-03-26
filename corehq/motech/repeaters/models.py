@@ -88,6 +88,7 @@ from dimagi.ext.couchdbkit import (
     StringListProperty,
     StringProperty,
 )
+from dimagi.utils.couch.undo import DELETED_SUFFIX
 from dimagi.utils.parsing import json_format_datetime
 from dimagi.utils.post import simple_post
 
@@ -156,9 +157,6 @@ def log_repeater_success_in_datadog(domain, status_code, repeater_type):
         'status_code:{}'.format(status_code),
         'repeater_type:{}'.format(repeater_type),
     ])
-
-
-DELETED = "-Deleted"
 
 
 class Repeater(QuickCachedDocumentMixin, Document):
@@ -313,7 +311,7 @@ class Repeater(QuickCachedDocumentMixin, Document):
 
     @staticmethod
     def get_class_from_doc_type(doc_type):
-        doc_type = doc_type.replace(DELETED, '')
+        doc_type = doc_type.replace(DELETED_SUFFIX, '')
         repeater_types = get_all_repeater_types()
         if doc_type in repeater_types:
             return repeater_types[doc_type]
@@ -321,10 +319,10 @@ class Repeater(QuickCachedDocumentMixin, Document):
             return None
 
     def retire(self):
-        if DELETED not in self['doc_type']:
-            self['doc_type'] += DELETED
-        if DELETED not in self['base_doc']:
-            self['base_doc'] += DELETED
+        if DELETED_SUFFIX not in self['doc_type']:
+            self['doc_type'] += DELETED_SUFFIX
+        if DELETED_SUFFIX not in self['base_doc']:
+            self['base_doc'] += DELETED_SUFFIX
         self.paused = False
         self.save()
 
