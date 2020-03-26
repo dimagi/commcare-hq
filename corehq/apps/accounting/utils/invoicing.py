@@ -2,8 +2,11 @@ import datetime
 
 from django.db.models import Q, Sum
 
-from corehq.apps.accounting.models import Invoice
-from corehq.apps.accounting.models import SubscriptionType
+from corehq.apps.accounting.models import (
+    Invoice,
+    SubscriptionType,
+    CustomerInvoice,
+)
 
 UNPAID_INVOICE_THRESHOLD = 100
 
@@ -43,3 +46,32 @@ def get_domains_with_subscription_invoices_over_threshold(today):
         overdue_invoice, total_overdue_to_date = get_unpaid_invoices_over_threshold_by_domain(today, domain)
         if overdue_invoice:
             yield domain, overdue_invoice, total_overdue_to_date
+
+
+def get_accounts_with_customer_invoices_over_threshold(today):
+    unpaid_customer_invoices = CustomerInvoice.objects.filter(
+        is_hidden=False,
+        date_paid__isnull=True
+    )
+
+    overdue_customer_invoices_in_downgrade_daterange = unpaid_customer_invoices.filter(
+        date_due__lte=today - datetime.timedelta(days=1),
+        date_due__gte=today - datetime.timedelta(days=61)
+    ).order_by('date_due').select_related('account')
+
+    accounts = set()
+    for overdue_invoice in overdue_customer_invoices_in_downgrade_daterange:
+        account = overdue_invoice.account.name
+        plan = overdue_invoice.subscriptions.first().plan_version
+        if (account, plan) not in accounts:
+            invoices = unpaid_customer_invoices.filter(
+                Q(date_due__lte=overdue_invoice.date_due)
+                | (Q(date_due__isnull=True) & Q(date_end__lte=overdue_invoice.date_end)),
+                account__name=account
+            )
+            invoices = [invoice for invoice in invoices if invoice.subscriptions.first().plan_version == plan]
+            total_overdue_to_date = sum(invoice.balance for invoice in invoices)
+
+            if total_overdue_to_date >= UNPAID_INVOICE_THRESHOLD:
+                accounts.add((account, plan))
+                yield overdue_invoice, total_overdue_to_date
