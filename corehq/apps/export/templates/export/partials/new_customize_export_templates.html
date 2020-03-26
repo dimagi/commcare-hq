@@ -298,7 +298,9 @@
                                  as: 'tag'
                                }">
                 <span data-bind="text: tag,
-                                 attr: { class: $root.getTagCSSClass(tag) }"></span>
+                                 attr: { class: $root.getTagCSSClass(tag) },
+                                 visible: column.formatProperty() !== 'name'">
+                </span>
               </span>
 
               <!-- ko if: !column.isEditable() -->
