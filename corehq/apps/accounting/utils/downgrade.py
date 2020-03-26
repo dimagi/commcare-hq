@@ -139,10 +139,12 @@ def _apply_downgrade_process(oldest_unpaid_invoice, total, today, subscription=N
         _send_overdue_notice(oldest_unpaid_invoice, context)
 
 
-def downgrade_eligible_domains():
+def downgrade_eligible_domains(only_downgrade_domain=None):
     today = datetime.date.today()
 
     for domain, oldest_unpaid_invoice, total in get_domains_with_subscription_invoices_over_threshold(today):
+        if only_downgrade_domain and domain != only_downgrade_domain:
+            continue
         current_subscription = Subscription.get_active_subscription_by_domain(domain)
         if is_subscription_eligible_for_downgrade_process(current_subscription):
             _apply_downgrade_process(oldest_unpaid_invoice, total, today,
@@ -150,5 +152,7 @@ def downgrade_eligible_domains():
 
     for oldest_unpaid_invoice, total in get_accounts_with_customer_invoices_over_threshold(today):
         subscription_on_invoice = oldest_unpaid_invoice.subscriptions.first()
+        if only_downgrade_domain and subscription_on_invoice.subscriber.domain != only_downgrade_domain:
+            continue
         if is_subscription_eligible_for_downgrade_process(subscription_on_invoice):
             _apply_downgrade_process(oldest_unpaid_invoice, total, today)

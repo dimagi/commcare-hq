@@ -2738,9 +2738,3 @@ class TriggerDowngradeForm(forms.Form):
                 ),
             )
         )
-
-    @transaction.atomic
-    def trigger_downgrade(self):
-        domain = self.cleaned_data['domain']
-        print(f'trigger downgrade for {domain}')
-

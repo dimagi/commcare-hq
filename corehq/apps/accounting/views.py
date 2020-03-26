@@ -1,3 +1,4 @@
+import datetime
 import json
 from datetime import date
 
@@ -34,6 +35,10 @@ from memoized import memoized
 from six.moves.urllib.parse import urlencode
 
 from corehq.apps.accounting.decorators import always_allow_project_access
+from corehq.apps.accounting.utils.downgrade import downgrade_eligible_domains
+from corehq.apps.accounting.utils.invoicing import (
+    get_unpaid_invoices_over_threshold_by_domain,
+)
 from corehq.toggles import ACCOUNTING_TESTING_TOOLS
 from couchexport.export import Format
 from dimagi.utils.couch.cache.cache_core import get_redis_client
@@ -1518,10 +1523,22 @@ class TriggerDowngradeView(AccountingSectionView, AsyncHandlerMixin):
         if self.async_response is not None:
             return self.async_response
         if self.trigger_form.is_valid():
-            self.trigger_form.trigger_downgrade()
-            messages.success(
-                request, "Successfully triggered the downgrade "
-                         "process for domain %s."
-                         % self.trigger_form.cleaned_data['domain'])
+            domain = self.trigger_form.cleaned_data['domain']
+            overdue_invoice, _ = get_unpaid_invoices_over_threshold_by_domain(
+                datetime.date.today(),
+                domain
+            )
+            if not overdue_invoice:
+                messages.error(
+                    request,
+                    f'No overdue invoices were found for project "{domain}"',
+                )
+            else:
+                downgrade_eligible_domains(only_downgrade_domain=domain)
+                messages.success(
+                    request,
+                    f'Successfully triggered the downgrade process '
+                    f'for project "{domain}".'
+                )
             return HttpResponseRedirect(reverse(self.urlname))
         return self.get(request, *args, **kwargs)
