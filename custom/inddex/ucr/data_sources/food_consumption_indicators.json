@@ -62,14 +62,12 @@
                     }
                 },
                 "column_id": "recall_case_id",
-                "datatype": "string",
-                "display_name": "recall_case_id"
+                "datatype": "string"
             },
             {
                 "type": "expression",
                 "column_id": "owner_name",
                 "datatype": "string",
-                "display_name": "Owner",
                 "expression": {
                     "type": "property_name",
                     "property_name": "owner_id",
@@ -84,7 +82,6 @@
                 "type": "expression",
                 "column_id": "opened_by_username",
                 "datatype": "string",
-                "display_name": "Opened By",
                 "expression": {
                     "type": "property_name",
                     "property_name": "opened_by",
@@ -99,7 +96,6 @@
                 "type": "expression",
                 "column_id": "recall_status",
                 "datatype": "string",
-                "display_name": "recall_status",
                 "expression": {
                     "type": "nested",
                     "argument_expression": {
@@ -119,7 +115,6 @@
                 "type": "expression",
                 "column_id": "unique_respondent_id",
                 "datatype": "string",
-                "display_name": "Unique Respondent Id",
                 "expression": {
                     "type": "nested",
                     "argument_expression": {
@@ -139,7 +134,6 @@
                 "type": "expression",
                 "column_id": "respondent_id",
                 "datatype": "string",
-                "display_name": "Respondent Id",
                 "expression": {
                     "type": "nested",
                     "argument_expression": {
@@ -159,7 +153,6 @@
                 "type": "expression",
                 "column_id": "location_id",
                 "datatype": "string",
-                "display_name": "Location Id",
                 "expression": {
                     "type": "nested",
                     "argument_expression": {
@@ -179,7 +172,6 @@
                 "type": "expression",
                 "column_id": "gender",
                 "datatype": "string",
-                "display_name": "Gender",
                 "expression": {
                     "type": "nested",
                     "argument_expression": {
@@ -199,7 +191,6 @@
                 "type": "expression",
                 "column_id": "age_years_calculated",
                 "datatype": "integer",
-                "display_name": "Age in years",
                 "expression": {
                     "type": "nested",
                     "argument_expression": {
@@ -219,7 +210,6 @@
                 "type": "expression",
                 "column_id": "age_months_calculated",
                 "datatype": "integer",
-                "display_name": "Age in months",
                 "expression": {
                     "type": "nested",
                     "argument_expression": {
@@ -239,7 +229,6 @@
                 "type": "expression",
                 "column_id": "supplements",
                 "datatype": "string",
-                "display_name": "Supplements",
                 "expression": {
                     "type": "nested",
                     "argument_expression": {
@@ -259,7 +248,6 @@
                 "type": "expression",
                 "column_id": "urban_rural",
                 "datatype": "string",
-                "display_name": "Urban Rural",
                 "expression": {
                     "type": "nested",
                     "argument_expression": {
@@ -279,7 +267,6 @@
                 "type": "expression",
                 "column_id": "pregnant",
                 "datatype": "string",
-                "display_name": "Pregnant",
                 "expression": {
                     "type": "nested",
                     "argument_expression": {
@@ -299,7 +286,6 @@
                 "type": "expression",
                 "column_id": "breastfeeding",
                 "datatype": "string",
-                "display_name": "Breastfeeding",
                 "expression": {
                     "type": "nested",
                     "argument_expression": {
@@ -319,7 +305,6 @@
                 "type": "expression",
                 "column_id": "food_code",
                 "datatype": "string",
-                "display_name": "Food Code",
                 "expression": {
                     "type": "property_name",
                     "property_name": "food_code"
@@ -329,7 +314,6 @@
                 "type": "expression",
                 "column_id": "food_type",
                 "datatype": "string",
-                "display_name": "Food Type",
                 "expression": {
                     "type": "property_name",
                     "property_name": "food_type"
@@ -339,7 +323,6 @@
                 "type": "expression",
                 "column_id": "food_status",
                 "datatype": "string",
-                "display_name": "Food Status",
                 "expression": {
                     "type": "property_name",
                     "property_name": "food_status"
@@ -349,7 +332,6 @@
                 "type": "expression",
                 "column_id": "recalled_date",
                 "datatype": "string",
-                "display_name": "recalled_date",
                 "expression": {
                     "type": "nested",
                     "argument_expression": {
@@ -369,7 +351,6 @@
                 "type": "expression",
                 "column_id": "opened_date",
                 "datatype": "datetime",
-                "display_name": "opened_date",
                 "expression": {
                     "type": "nested",
                     "argument_expression": {
@@ -389,7 +370,6 @@
                 "type": "expression",
                 "column_id": "eating_time",
                 "datatype": "string",
-                "display_name": "Eating Time",
                 "expression": {
                     "type": "property_name",
                     "property_name": "eating_time"
@@ -399,7 +379,6 @@
                 "type": "expression",
                 "column_id": "time_block",
                 "datatype": "string",
-                "display_name": "time_block",
                 "expression": {
                     "type": "property_name",
                     "property_name": "time_block_name"
@@ -409,7 +388,6 @@
                 "type": "expression",
                 "column_id": "already_reported_food",
                 "datatype": "string",
-                "display_name": "Already Reported Food",
                 "expression": {
                     "type": "property_name",
                     "property_name": "already_reported_food"
@@ -419,7 +397,6 @@
                 "type": "expression",
                 "column_id": "already_reported_food_case_id",
                 "datatype": "string",
-                "display_name": "Already Reported Food Case Id",
                 "expression": {
                     "type": "property_name",
                     "property_name": "already_reported_food_case_id"
@@ -429,7 +406,6 @@
                 "type": "expression",
                 "column_id": "is_ingredient",
                 "datatype": "string",
-                "display_name": "Is Ingredient",
                 "expression": {
                     "type": "property_name",
                     "property_name": "is_ingredient"
@@ -439,7 +415,6 @@
                 "type": "expression",
                 "column_id": "recipe_case_id",
                 "datatype": "string",
-                "display_name": "Recipe Case Id",
                 "expression": {
                     "type": "property_name",
                     "property_name": "recipe_case_id"
@@ -449,7 +424,6 @@
                 "type": "expression",
                 "column_id": "short_name",
                 "datatype": "string",
-                "display_name": "Short Name",
                 "expression": {
                     "type": "property_name",
                     "property_name": "short_name"
@@ -459,7 +433,6 @@
                 "type": "expression",
                 "column_id": "food_name",
                 "datatype": "string",
-                "display_name": "Food Name",
                 "expression": {
                     "type": "property_name",
                     "property_name": "name"
@@ -478,7 +451,6 @@
                 "type": "expression",
                 "column_id": "food_base_term",
                 "datatype": "string",
-                "display_name": "Food Base Term",
                 "expression": {
                     "type": "property_name",
                     "property_name": "food_base_term"
@@ -488,7 +460,6 @@
                 "type": "expression",
                 "column_id": "tag_1",
                 "datatype": "string",
-                "display_name": "Tag 1",
                 "expression": {
                     "type": "property_name",
                     "property_name": "tag_1"
@@ -498,7 +469,6 @@
                 "type": "expression",
                 "column_id": "other_tag_1",
                 "datatype": "string",
-                "display_name": "Other Tag 1",
                 "expression": {
                     "type": "property_name",
                     "property_name": "other_tag_1"
@@ -508,7 +478,6 @@
                 "type": "expression",
                 "column_id": "tag_2",
                 "datatype": "string",
-                "display_name": "Tag 2",
                 "expression": {
                     "type": "property_name",
                     "property_name": "tag_2"
@@ -518,7 +487,6 @@
                 "type": "expression",
                 "column_id": "other_tag_2",
                 "datatype": "string",
-                "display_name": "Other Tag 2",
                 "expression": {
                     "type": "property_name",
                     "property_name": "other_tag_2"
@@ -528,7 +496,6 @@
                 "type": "expression",
                 "column_id": "tag_3",
                 "datatype": "string",
-                "display_name": "Tag 3",
                 "expression": {
                     "type": "property_name",
                     "property_name": "tag_3"
@@ -538,7 +505,6 @@
                 "type": "expression",
                 "column_id": "other_tag_3",
                 "datatype": "string",
-                "display_name": "Other Tag 3",
                 "expression": {
                     "type": "property_name",
                     "property_name": "other_tag_3"
@@ -548,7 +514,6 @@
                 "type": "expression",
                 "column_id": "tag_4",
                 "datatype": "string",
-                "display_name": "Tag 4",
                 "expression": {
                     "type": "property_name",
                     "property_name": "tag_4"
@@ -558,7 +523,6 @@
                 "type": "expression",
                 "column_id": "other_tag_4",
                 "datatype": "string",
-                "display_name": "Other Tag 4",
                 "expression": {
                     "type": "property_name",
                     "property_name": "other_tag_4"
@@ -568,7 +532,6 @@
                 "type": "expression",
                 "column_id": "tag_5",
                 "datatype": "string",
-                "display_name": "Tag 5",
                 "expression": {
                     "type": "property_name",
                     "property_name": "tag_5"
@@ -578,7 +541,6 @@
                 "type": "expression",
                 "column_id": "other_tag_5",
                 "datatype": "string",
-                "display_name": "Other Tag 5",
                 "expression": {
                     "type": "property_name",
                     "property_name": "other_tag_5"
@@ -588,7 +550,6 @@
                 "type": "expression",
                 "column_id": "tag_6",
                 "datatype": "string",
-                "display_name": "Tag 6",
                 "expression": {
                     "type": "property_name",
                     "property_name": "tag_6"
@@ -598,7 +559,6 @@
                 "type": "expression",
                 "column_id": "other_tag_6",
                 "datatype": "string",
-                "display_name": "Other Tag 6",
                 "expression": {
                     "type": "property_name",
                     "property_name": "other_tag_6"
@@ -608,7 +568,6 @@
                 "type": "expression",
                 "column_id": "tag_7",
                 "datatype": "string",
-                "display_name": "Tag 7",
                 "expression": {
                     "type": "property_name",
                     "property_name": "tag_7"
@@ -618,7 +577,6 @@
                 "type": "expression",
                 "column_id": "other_tag_7",
                 "datatype": "string",
-                "display_name": "Other Tag 7",
                 "expression": {
                     "type": "property_name",
                     "property_name": "other_tag_7"
@@ -628,7 +586,6 @@
                 "type": "expression",
                 "column_id": "tag_8",
                 "datatype": "string",
-                "display_name": "Tag 8",
                 "expression": {
                     "type": "property_name",
                     "property_name": "tag_8"
@@ -638,7 +595,6 @@
                 "type": "expression",
                 "column_id": "other_tag_8",
                 "datatype": "string",
-                "display_name": "Other Tag 8",
                 "expression": {
                     "type": "property_name",
                     "property_name": "other_tag_8"
@@ -648,7 +604,6 @@
                 "type": "expression",
                 "column_id": "tag_9",
                 "datatype": "string",
-                "display_name": "Tag 9",
                 "expression": {
                     "type": "property_name",
                     "property_name": "tag_9"
@@ -658,7 +613,6 @@
                 "type": "expression",
                 "column_id": "other_tag_9",
                 "datatype": "string",
-                "display_name": "Other Tag 9",
                 "expression": {
                     "type": "property_name",
                     "property_name": "other_tag_9"
@@ -668,7 +622,6 @@
                 "type": "expression",
                 "column_id": "tag_10",
                 "datatype": "string",
-                "display_name": "Tag 10",
                 "expression": {
                     "type": "property_name",
                     "property_name": "tag_10"
@@ -678,7 +631,6 @@
                 "type": "expression",
                 "column_id": "other_tag_10",
                 "datatype": "string",
-                "display_name": "Other Tag 10",
                 "expression": {
                     "type": "property_name",
                     "property_name": "other_tag_10"
@@ -688,7 +640,6 @@
                 "type": "expression",
                 "column_id": "conv_method_code",
                 "datatype": "string",
-                "display_name": "Conversion Method",
                 "expression": {
                     "type": "property_name",
                     "property_name": "conv_method_code"
@@ -698,7 +649,6 @@
                 "type": "expression",
                 "column_id": "conv_method_desc",
                 "datatype": "string",
-                "display_name": "Conversion Method Description",
                 "expression": {
                     "type": "property_name",
                     "property_name": "conv_method_desc"
@@ -708,7 +658,6 @@
                 "type": "expression",
                 "column_id": "conv_option_code",
                 "datatype": "string",
-                "display_name": "Conversion Option",
                 "expression": {
                     "type": "property_name",
                     "property_name": "conv_option_code"
@@ -718,7 +667,6 @@
                 "type": "expression",
                 "column_id": "conv_option_desc",
                 "datatype": "string",
-                "display_name": "Conversion Option Description",
                 "expression": {
                     "type": "property_name",
                     "property_name": "conv_option_desc"
@@ -727,7 +675,6 @@
                 "type": "expression",
                 "column_id": "measurement_amount",
                 "datatype": "string",
-                "display_name": "Conversion Size",
                 "expression": {
                     "type": "property_name",
                     "property_name": "measurement_amount"
@@ -737,7 +684,6 @@
                 "type": "expression",
                 "column_id": "conv_units",
                 "datatype": "string",
-                "display_name": "Conversion Units",
                 "expression": {
                     "type": "property_name",
                     "property_name": "conv_units"
@@ -747,7 +693,6 @@
                 "type": "expression",
                 "column_id": "portions",
                 "datatype": "string",
-                "display_name": "Portions",
                 "expression": {
                     "type": "property_name",
                     "property_name": "portions"
