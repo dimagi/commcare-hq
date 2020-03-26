@@ -128,7 +128,7 @@ class Parser(object):
             missing_site_codes = set(descendants_sites_codes) - site_codes_to_be_archived
             if missing_site_codes:
                 self.errors.append("Location %s is getting archived but the following descendants are not %s" % (
-                    location.location_id, ",".join(missing_site_codes)
+                    location.site_code, ",".join(missing_site_codes)
                 ))
 
     def process(self):

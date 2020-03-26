@@ -7,11 +7,10 @@ from django.utils.translation import ugettext_lazy
 from django.views.decorators.http import require_GET
 
 from corehq import toggles
-from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.locations.models import LocationType
 from corehq.apps.locations.permissions import require_can_edit_locations
-from corehq.apps.locations.views import LocationsListView
+from corehq.apps.locations.views import BaseLocationView, LocationsListView
 from corehq.util.files import safe_filename_header
 from corehq.util.workbook_json.excel import WorkbookJSONError, get_workbook
 from custom.icds.location_reassignment.download import Download
@@ -24,10 +23,10 @@ from custom.icds.location_reassignment.parser import Parser
 
 @method_decorator([toggles.LOCATION_REASSIGNMENT.required_decorator()], name='dispatch')
 @method_decorator(require_can_edit_locations, name='dispatch')
-class LocationReassignmentView(BaseDomainView):
+class LocationReassignmentView(BaseLocationView):
     section_name = ugettext_lazy("Locations")
 
-    page_title = _('Location Reassignment')
+    page_title = ugettext_lazy('Location Reassignment')
     urlname = 'location_reassignment'
     template_name = 'icds/location_reassignment.html'
 
@@ -88,7 +87,6 @@ class LocationReassignmentView(BaseDomainView):
 
     def _generate_response(self, transitions):
         response_file = Dumper().dump(transitions)
-        response_file.seek(0)
         response = HttpResponse(response_file, content_type="text/html; charset=utf-8")
         filename = '%s Location Reassignment Expected' % self.domain
         response['Content-Disposition'] = safe_filename_header(filename, 'xlsx')
@@ -106,7 +104,6 @@ def download_location_reassignment_template(request, domain):
         return HttpResponseRedirect(reverse(LocationReassignmentView.urlname, args=[domain]))
 
     response_file = Download(location_id).dump()
-    response_file.seek(0)
     response = HttpResponse(response_file, content_type="text/html; charset=utf-8")
     filename = '%s Location Reassignment Request Template' % domain
     response['Content-Disposition'] = safe_filename_header(filename, 'xlsx')

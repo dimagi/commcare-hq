@@ -31,6 +31,7 @@ class Download(object):
         wb = self._create_workbook()
         stream = io.BytesIO()
         wb.save(stream)
+        stream.seek(0)
         return stream
 
     def _init_location_details(self):
@@ -45,7 +46,6 @@ class Download(object):
                 'location_type': location.location_type.code,
                 'assigned_users': [],
             }
-        return self._location_details_by_location_id
 
     def _locations(self):
         # fetch all locations necessary for this download request
@@ -56,19 +56,20 @@ class Download(object):
 
     def _populate_assigned_users(self):
         # allot assign user details to each location
-        for user_detail in self._get_users():
-            username, assigned_location_ids = user_detail
-            if not isinstance(assigned_location_ids, list):
-                assigned_location_ids = [assigned_location_ids]
+        for username, assigned_location_ids in self._get_assigned_location_ids().items():
             for location_id in assigned_location_ids:
                 if location_id in self._location_details_by_location_id:
                     self._location_details_by_location_id[location_id]['assigned_users'].append(username)
 
-    def _get_users(self):
+    def _get_assigned_location_ids(self):
         location_ids = list(self._location_details_by_location_id.keys())
-        # ToDo: confirm that its good to use base_username instead of username from ES, something about
-        #  them not being analysed
-        return UserES().location(location_ids).values_list('base_username', 'assigned_location_ids')
+        assigned_location_ids_per_username = {}
+        user_details = UserES().location(location_ids).values_list('base_username', 'assigned_location_ids')
+        for username, assigned_location_ids in user_details:
+            if not isinstance(assigned_location_ids, list):
+                assigned_location_ids = [assigned_location_ids]
+                assigned_location_ids_per_username[username] = assigned_location_ids
+        return assigned_location_ids_per_username
 
     def _create_workbook(self):
         wb = Workbook()
