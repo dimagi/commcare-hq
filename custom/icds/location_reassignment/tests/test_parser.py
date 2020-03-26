@@ -50,7 +50,7 @@ class TestParser(TestCase):
             # invalid row with unknown operation
             ('State 1', 'State 1', '1', '1', 'State-1',
              'State-11', 'username4', 'username4', 'Unknown')))
-         )
+    )
 
     def test_parser(self):
         with tempfile.TemporaryFile() as file:
