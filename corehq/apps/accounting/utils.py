@@ -78,6 +78,15 @@ def get_unpaid_invoices_over_threshold_by_domain(today, domain):
     return None, None
 
 
+def get_domains_with_subscription_invoices_over_threshold(today):
+    for domain in set(get_unpaid_saas_invoices_in_downgrade_daterange(today).values_list(
+        'subscription__subscriber__domain', flat=True
+    )):
+        overdue_invoice, total_overdue_to_date = get_unpaid_invoices_over_threshold_by_domain(today, domain)
+        if overdue_invoice:
+            yield domain, overdue_invoice, total_overdue_to_date
+
+
 def fmt_feature_rate_dict(feature, feature_rate=None):
     """
     This will be turned into a JSON representation of this Feature and its FeatureRate

@@ -63,8 +63,7 @@ from corehq.apps.accounting.utils import (
     get_dimagi_from_email,
     log_accounting_error,
     log_accounting_info,
-    get_unpaid_saas_invoices_in_downgrade_daterange,
-    get_unpaid_invoices_over_threshold_by_domain,
+    get_domains_with_subscription_invoices_over_threshold,
     UNPAID_INVOICE_THRESHOLD,
 )
 from corehq.apps.app_manager.dbaccessors import get_all_apps
@@ -736,7 +735,7 @@ def assign_explicit_unpaid_subscription(domain_name, start_date, method, account
 def run_downgrade_process():
     today = datetime.date.today()
 
-    for domain, oldest_unpaid_invoice, total in _get_domains_with_subscription_invoices_over_threshold(today):
+    for domain, oldest_unpaid_invoice, total in get_domains_with_subscription_invoices_over_threshold(today):
         current_subscription = Subscription.get_active_subscription_by_domain(domain)
         if is_subscription_eligible_for_downgrade_process(current_subscription):
             _apply_downgrade_process(oldest_unpaid_invoice, total, today, current_subscription)
@@ -745,15 +744,6 @@ def run_downgrade_process():
         subscription_on_invoice = oldest_unpaid_invoice.subscriptions.first()
         if is_subscription_eligible_for_downgrade_process(subscription_on_invoice):
             _apply_downgrade_process(oldest_unpaid_invoice, total, today)
-
-
-def _get_domains_with_subscription_invoices_over_threshold(today):
-    for domain in set(get_unpaid_saas_invoices_in_downgrade_daterange(today).values_list(
-        'subscription__subscriber__domain', flat=True
-    )):
-        overdue_invoice, total_overdue_to_date = get_unpaid_invoices_over_threshold_by_domain(today, domain)
-        if overdue_invoice:
-            yield domain, overdue_invoice, total_overdue_to_date
 
 
 def get_accounts_with_customer_invoices_over_threshold(today):
