@@ -16,6 +16,9 @@ from corehq.util.files import safe_filename_header
 from corehq.util.workbook_json.excel import WorkbookJSONError, get_workbook
 from custom.icds.location_reassignment.download import Download
 from custom.icds.location_reassignment.dumper import Dumper
+from custom.icds.location_reassignment.forms import (
+    LocationReassignmentRequestForm,
+)
 from custom.icds.location_reassignment.parser import Parser
 
 
@@ -43,11 +46,12 @@ class LocationReassignmentView(BaseDomainView):
             },
         })
         context.update({
-            'bulk_upload_form': get_bulk_upload_form(context),
+            'bulk_upload_form': get_bulk_upload_form(context, form_class=LocationReassignmentRequestForm),
         })
         return context
 
     def post(self, request, *args, **kwargs):
+        update = request.POST.get('update')
         try:
             workbook = get_workbook(request.FILES['bulk_upload_file'])
         except WorkbookJSONError as e:
@@ -55,10 +59,16 @@ class LocationReassignmentView(BaseDomainView):
         else:
             errors = self._workbook_is_valid(workbook)
             if not errors:
-                transitions, errors = Parser(workbook).parse()
-                [messages.error(request, error) for error in errors]
-                if not errors:
+                parser = Parser(self.domain, workbook)
+                transitions, errors = parser.parse()
+                if errors:
+                    [messages.error(request, error) for error in errors]
+                elif not update:
                     return self._generate_response(transitions)
+                else:
+                    # ToDo: process request async
+                    messages.success(request, _(
+                        "Your request has been submitted. We will notify you via email once completed."))
             else:
                 [messages.error(request, error) for error in errors]
         return self.get(request, *args, **kwargs)
