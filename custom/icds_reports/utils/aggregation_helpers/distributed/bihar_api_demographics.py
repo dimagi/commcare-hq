@@ -4,6 +4,7 @@ from custom.icds_reports.utils.aggregation_helpers.distributed.base import BaseI
 from corehq.apps.userreports.util import get_table_name
 from dateutil.relativedelta import relativedelta
 from custom.icds_reports.utils.aggregation_helpers import transform_day_to_month, month_formatter
+from corehq.apps.locations.models import SQLLocation
 
 
 class BiharApiDemographicsHelper(BaseICDSAggregationDistributedHelper):
@@ -46,10 +47,7 @@ class BiharApiDemographicsHelper(BaseICDSAggregationDistributedHelper):
 
     @property
     def bihar_state_id(self):
-        from custom.icds_reports.models.aggregate import AwcLocation
-        bihar_state_id = AwcLocation.objects.filter(aggregation_level=1, state_name='Bihar').values_list('state_id',
-                                                                                                         flat=True)
-        return bihar_state_id[0]
+        return SQLLocation.objects.get(name='Bihar', location_type__name='state').location_id
 
     def aggregation_query(self):
         month_start_string = month_formatter(self.month)

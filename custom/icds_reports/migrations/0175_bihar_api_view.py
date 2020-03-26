@@ -10,5 +10,5 @@ class Migration(migrations.Migration):
     dependencies = [
         ('icds_reports', '0174_bihar_api_model'),
     ]
-    # rebuild views because its required to build dependent views after alter distributed table
+
     operations = get_view_migrations()
