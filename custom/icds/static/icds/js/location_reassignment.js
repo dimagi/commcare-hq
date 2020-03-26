@@ -3,7 +3,6 @@ hqDefine("icds/js/location_reassignment", [
     'knockout',
     'hqwebapp/js/assert_properties',
     'locations/js/search',
-    'hqwebapp/js/widgets',     // .hqwebapp-select2
 ], function (
     $,
     ko,
