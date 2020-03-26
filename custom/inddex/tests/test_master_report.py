@@ -214,8 +214,6 @@ class TestNewReport(TestCase):
             self.assert_columns_equal(expected, actual, column)
 
     def get_expected_rows(self):
-        expected = [r for r in get_expected_report()]
-
         # Swap out the external IDs in the test fixture for the real IDs
         accessor = CaseAccessors(DOMAIN)
         case_ids = accessor.get_case_ids_in_domain()
@@ -223,12 +221,12 @@ class TestNewReport(TestCase):
                                    for c in accessor.get_cases(case_ids)}
 
         def substitute_real_ids(row):
-            for id_col in ['recall_case_id', 'caseid', 'already_reported_food_case_id', 'recipe_case_id']:
-                if row[id_col]:
-                    row[id_col] = case_ids_by_external_id[row[id_col]]
-            return row
+            return {
+                key: case_ids_by_external_id[val] if val in case_ids_by_external_id else val
+                for key, val in row.items()
+            }
 
-        return map(substitute_real_ids, expected)
+        return map(substitute_real_ids, get_expected_report())
 
     def run_new_report(self):
         ucr_data = get_ucr_data()
