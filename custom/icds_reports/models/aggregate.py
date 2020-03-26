@@ -24,7 +24,8 @@ from custom.icds_reports.const import (
     AGG_ADOLESCENT_GIRLS_REGISTRATION_TABLE,
     AGG_GOV_DASHBOARD_TABLE,
     AGG_SDR_TABLE,
-    AGG_MIGRATION_TABLE
+    AGG_MIGRATION_TABLE,
+    AGG_AVAILING_SERVICES_TABLE
 )
 from custom.icds_reports.utils.aggregation_helpers.distributed import (
     AggAwcDailyAggregationDistributedHelper,
@@ -57,7 +58,8 @@ from custom.icds_reports.utils.aggregation_helpers.distributed import (
     AggAdolescentGirlsRegistrationAggregate,
     AggGovDashboardHelper,
     AggServiceDeliveryReportHelper,
-    MigrationFormsAggregationDistributedHelper
+    MigrationFormsAggregationDistributedHelper,
+    AvailingServiceFormsAggregationDistributedHelper
 )
 
 
@@ -1590,6 +1592,33 @@ class AggregateMigrationForms(models.Model, AggregateMixin):
     _agg_atomic = False
 
 
+class AggregateAvailingServiceForms(models.Model, AggregateMixin):
+    """ Aggregated data for the availing services
+
+    A availing services exists for each state_id
+
+    A row exists for every person case that has had a record of registration
+    submitted against it this month
+    """
+    state_id = models.CharField(max_length=10)
+    supervisor_id = models.TextField(null=True)
+    awc_id = models.TextField(null=True)
+    month = models.DateField(help_text="Will always be YYYY-MM-01")
+
+    # not the real pkey - see unique_together
+    person_case_id = models.CharField(max_length=40, primary_key=True)
+
+    is_registered = models.PositiveSmallIntegerField(blank=True, null=True, help_text="Status of the Registration")
+    registration_date = models.DateTimeField(help_text="Registration Date", null=True)
+
+    class Meta(object):
+        db_table = AGG_AVAILING_SERVICES_TABLE
+        unique_together = ('month', 'supervisor_id', 'person_case_id')  # pkey
+
+    _agg_helper_cls = AvailingServiceFormsAggregationDistributedHelper
+    _agg_atomic = False
+
+
 class AggGovernanceDashboard(models.Model, AggregateMixin):
     state_id = models.TextField(null=True)
     district_id = models.TextField(null=True)
@@ -1677,14 +1706,14 @@ class AggServiceDeliveryReport(models.Model, AggregateMixin):
     month = models.DateField(null=True)
     aggregation_level = models.SmallIntegerField(null=True)
     children_0_3 = models.IntegerField(null=True)
-    children_3_5 =  models.IntegerField(null=True)
+    children_3_5 = models.IntegerField(null=True)
     gm_0_3 = models.IntegerField(null=True)
     gm_3_5 = models.IntegerField(null=True)
 
     class Meta(object):
         db_table = AGG_SDR_TABLE
         unique_together = ('month', 'aggregation_level', 'state_id', 'district_id', 'block_id',
-                           'supervisor_id', 'awc_id') #pkey
+                           'supervisor_id', 'awc_id')  # pkey
 
     _agg_helper_cls = AggServiceDeliveryReportHelper
     _agg_atomic = False
