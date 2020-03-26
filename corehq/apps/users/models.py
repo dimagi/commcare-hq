@@ -2661,37 +2661,6 @@ class Invitation(models.Model):
                                     email_from=settings.DEFAULT_FROM_EMAIL)
 
 
-<<<<<<< HEAD
-=======
-class Invitation(SyncCouchToSQLMixin, QuickCachedDocumentMixin, Document):
-    email = StringProperty()
-    invited_by = StringProperty()
-    invited_on = DateTimeProperty()
-    is_accepted = BooleanProperty(default=False)
-    domain = StringProperty()
-    role = StringProperty()
-    program = None
-    supply_point = None
-
-    @classmethod
-    def _migration_get_fields(cls):
-        return [
-            "email",
-            "invited_by",
-            "invited_on",
-            "is_accepted",
-            "domain",
-            "role",
-            "program",
-            "supply_point",
-        ]
-
-    @classmethod
-    def _migration_get_sql_model_class(cls):
-        return SQLInvitation
-
-
->>>>>>> master
 class DomainRemovalRecord(DeleteRecord):
     user_id = StringProperty()
     domain_membership = SchemaProperty(DomainMembership)
