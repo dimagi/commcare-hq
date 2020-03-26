@@ -157,6 +157,26 @@
             },
             {
                 "type": "expression",
+                "column_id": "location_id",
+                "datatype": "string",
+                "display_name": "Location Id",
+                "expression": {
+                    "type": "nested",
+                    "argument_expression": {
+                        "type": "indexed_case",
+                        "case_expression": {
+                            "type": "identity"
+                        },
+                        "index": "parent"
+                    },
+                    "value_expression": {
+                        "type": "property_name",
+                        "property_name": "location_id"
+                    }
+                }
+            },
+            {
+                "type": "expression",
                 "column_id": "gender",
                 "datatype": "string",
                 "display_name": "Gender",

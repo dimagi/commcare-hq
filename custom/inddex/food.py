@@ -19,7 +19,7 @@ class I:
 
 INDICATORS = [
     I('unique_respondent_id', IN_UCR, IS_RECALL_META),
-    I('location_id'),
+    I('location_id', IN_UCR, IS_RECALL_META),
     I('respondent_id', IN_UCR, IS_RECALL_META),
     I('recall_case_id', IN_UCR, IS_RECALL_META),
     I('opened_date', IN_UCR, IS_RECALL_META),
@@ -119,7 +119,6 @@ INDICATORS = [
 
 
 class FoodRow:
-    location_id = 'report'
 
     def __init__(self, food_code, ucr_row, fixtures):
         self.food_code = food_code
