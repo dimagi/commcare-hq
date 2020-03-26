@@ -200,7 +200,7 @@ class TestMaternalChildData(TestCase):
                 "frequency": "month",
                 "format": "percent_and_div",
                 "help_text": "Of the total number of women enrolled for Anganwadi services who gave birth in "
-                             "the last month, the percentage who delivered in a public or private medical "
+                             "the current month, the percentage who delivered in a public or private medical "
                              "facility. Delivery in medical instituitions is associated with a decrease in "
                              "maternal mortality rate",
                 "percent": 0,

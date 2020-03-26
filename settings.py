@@ -191,12 +191,13 @@ DEFAULT_APPS = (
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.humanize',
+    'django.contrib.messages',
     'django.contrib.sessions',
     'django.contrib.sites',
     'django.contrib.staticfiles',
     'django_celery_results',
     'django_prbac',
-    'djangular',
+    'djng',
     'captcha',
     'couchdbkit.ext.django',
     'crispy_forms',
@@ -434,15 +435,11 @@ EMAIL_SMTP_PORT = 587
 # These are the normal Django settings
 EMAIL_USE_TLS = True
 
-# put email addresses here to have them receive bug reports
-BUG_REPORT_RECIPIENTS = ()
-
 # the physical server emailing - differentiate if needed
 SERVER_EMAIL = 'commcarehq-noreply@example.com'
 DEFAULT_FROM_EMAIL = 'commcarehq-noreply@example.com'
 SUPPORT_EMAIL = "support@example.com"
 PROBONO_SUPPORT_EMAIL = 'pro-bono@example.com'
-CCHQ_BUG_REPORT_EMAIL = 'commcarehq-bug-reports@example.com'
 ACCOUNTS_EMAIL = 'accounts@example.com'
 DATA_EMAIL = 'datatree@example.com'
 SUBSCRIPTION_CHANGE_EMAIL = 'accounts+subchange@example.com'
@@ -745,8 +742,7 @@ ELASTICSEARCH_MAJOR_VERSION = 1
 # If elasticsearch queries take more than this, they result in timeout errors
 ES_SEARCH_TIMEOUT = 30
 
-BITLY_LOGIN = ''
-BITLY_APIKEY = ''
+BITLY_OAUTH_TOKEN = None
 
 # this should be overridden in localsettings
 INTERNAL_DATA = defaultdict(list)
@@ -836,6 +832,11 @@ SUPERVISOR_RPC_ENABLED = False
 SUBSCRIPTION_USERNAME = None
 SUBSCRIPTION_PASSWORD = None
 
+# List of metrics providers to use. Available providers:
+# * 'corehq.util.metrics.datadog.DatadogMetrics'
+# * 'corehq.util.metrics.prometheus.PrometheusMetrics'
+METRICS_PROVIDERS = []
+
 DATADOG_API_KEY = None
 DATADOG_APP_KEY = None
 
@@ -918,6 +919,8 @@ CUSTOM_LANDING_TEMPLATE = {
 }
 
 ES_SETTINGS = None
+ES_XFORM_INDEX_NAME = "xforms_2016-07-07"
+ES_XFORM_DISABLE_ALL = False
 PHI_API_KEY = None
 PHI_PASSWORD = None
 
@@ -945,6 +948,12 @@ RATE_LIMIT_SUBMISSIONS = False
 # without the email option will be quickly rejected.
 # This is useful for load-shedding in times of crisis.
 STALE_EXPORT_THRESHOLD = None
+
+REQUIRE_TWO_FACTOR_FOR_SUPERUSERS = False
+# Use an experimental partitioning algorithm
+# that adds messages to the partition with the fewest unprocessed messages
+USE_KAFKA_SHORTEST_BACKLOG_PARTITIONER = False
+
 
 try:
     # try to see if there's an environmental variable set for local_settings
@@ -1038,7 +1047,6 @@ TEMPLATES = [
             'loaders': [
                 'django.template.loaders.filesystem.Loader',
                 'django.template.loaders.app_directories.Loader',
-                'django.template.loaders.eggs.Loader',
             ],
         },
     },
@@ -1302,19 +1310,11 @@ INDICATOR_CONFIG = {
 
 COMPRESS_URL = STATIC_CDN + STATIC_URL
 
-####### Couch Forms & Couch DB Kit Settings #######
-NEW_USERS_GROUPS_DB = 'users'
-USERS_GROUPS_DB = NEW_USERS_GROUPS_DB
-
-NEW_FIXTURES_DB = 'fixtures'
-FIXTURES_DB = NEW_FIXTURES_DB
-
-NEW_DOMAINS_DB = 'domains'
-DOMAINS_DB = NEW_DOMAINS_DB
-
-NEW_APPS_DB = 'apps'
-APPS_DB = NEW_APPS_DB
-
+# Couch database name suffixes
+USERS_GROUPS_DB = 'users'
+FIXTURES_DB = 'fixtures'
+DOMAINS_DB = 'domains'
+APPS_DB = 'apps'
 META_DB = 'meta'
 
 _serializer = 'corehq.util.python_compatibility.Py3PickleSerializer'
@@ -1412,7 +1412,7 @@ COUCHDB_APPS = [
 COUCH_SETTINGS_HELPER = helper.CouchSettingsHelper(
     COUCH_DATABASES,
     COUCHDB_APPS,
-    [NEW_USERS_GROUPS_DB, NEW_FIXTURES_DB, NEW_DOMAINS_DB, NEW_APPS_DB],
+    [USERS_GROUPS_DB, FIXTURES_DB, DOMAINS_DB, APPS_DB],
     UNIT_TESTING
 )
 COUCH_DATABASE = COUCH_SETTINGS_HELPER.main_db_url
@@ -2074,19 +2074,6 @@ if 'locmem' not in CACHES:
 if 'dummy' not in CACHES:
     CACHES['dummy'] = {'BACKEND': 'django.core.cache.backends.dummy.DummyCache'}
 
-try:
-    from datadog import initialize
-except ImportError:
-    pass
-else:
-    initialize(DATADOG_API_KEY, DATADOG_APP_KEY)
-
-if UNIT_TESTING or DEBUG or 'ddtrace.contrib.django' not in INSTALLED_APPS:
-    try:
-        from ddtrace import tracer
-        tracer.enabled = False
-    except ImportError:
-        pass
 
 REST_FRAMEWORK = {
     'DATETIME_FORMAT': '%Y-%m-%dT%H:%M:%S.%fZ',

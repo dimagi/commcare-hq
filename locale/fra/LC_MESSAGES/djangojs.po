@@ -20,7 +20,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-02-12 21:28+0000\n"
+"POT-Creation-Date: 2020-03-25 22:33+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
 "Last-Translator: Tyler Wymer <twymer@dimagi.com>, 2019\n"
 "Language-Team: French (https://www.transifex.com/dimagi/teams/9388/fr/)\n"
@@ -138,6 +138,10 @@ msgstr ""
 #: corehq/apps/domain/static/domain/js/pro-bono.js:33
 msgid "Please enter a valid email."
 msgstr "Veuillez entrer une adresse e-mail valide"
+
+#: corehq/apps/analytics/static/analytix/js/hubspot.js:187
+msgid "Your trial request has been received!"
+msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/add_ons.js:15
 #: corehq/apps/hqwebapp/static/hqwebapp/js/components/inline_edit.js:80
@@ -629,11 +633,11 @@ msgstr ""
 "'commcare-user' est un type de dossier réservé. Veuillez changer le type de "
 "dossier"
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:171
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:174
 msgid "Go back to case list"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:172
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:175
 msgid "Proceed with registered case"
 msgstr ""
 
@@ -2788,7 +2792,7 @@ msgid "Form submission found!"
 msgstr ""
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/list_automatic_update_rules.js:40
-#: corehq/apps/users/static/users/js/mobile_workers.js:100
+#: corehq/apps/users/static/users/js/mobile_workers.js:110
 msgid "Issue communicating with server. Try again."
 msgstr "Problème de communication avec le serveur. Veuillez réessayer. "
 
@@ -2877,15 +2881,15 @@ msgstr ""
 msgid "Data file deleted."
 msgstr ""
 
-#: corehq/apps/export/static/export/js/download_export.js:196
+#: corehq/apps/export/static/export/js/download_export.js:219
 msgid "Sorry, there was a problem reaching the server. Please try again."
 msgstr ""
 
-#: corehq/apps/export/static/export/js/download_export.js:325
+#: corehq/apps/export/static/export/js/download_export.js:363
 msgid "Server maintenance in progress. Please try again later."
 msgstr "Maintenance du serveur en cours. Veuillez réessayer plus tard."
 
-#: corehq/apps/export/static/export/js/download_export.js:335
+#: corehq/apps/export/static/export/js/download_export.js:373
 msgid "There was an error downloading your export."
 msgstr "Il y avait une erreur avec votre téléchargement"
 
@@ -3153,17 +3157,17 @@ msgstr ""
 msgid "Error saving user"
 msgstr ""
 
-#: corehq/apps/locations/static/locations/js/location_tree.js:301
+#: corehq/apps/locations/static/locations/js/location_tree.js:294
 msgid "You have successfully archived the location <%=name%>"
 msgstr ""
 
-#: corehq/apps/locations/static/locations/js/location_tree.js:304
+#: corehq/apps/locations/static/locations/js/location_tree.js:297
 msgid ""
 "You have successfully deleted the location <%=name%> and all of its child "
 "locations"
 msgstr ""
 
-#: corehq/apps/locations/static/locations/js/location_tree.js:307
+#: corehq/apps/locations/static/locations/js/location_tree.js:300
 msgid ""
 "An error occurred while deleting your location. If the problem persists, "
 "please report an issue"
@@ -3171,11 +3175,11 @@ msgstr ""
 "Une erreur est survenue lors de la suppression de votre site. Si le problème "
 "subsiste, veuillez signaler ce problème."
 
-#: corehq/apps/locations/static/locations/js/widgets.js:25
+#: corehq/apps/locations/static/locations/js/widgets.js:23
 msgid "Select a Location"
 msgstr "Sélectionner un site"
 
-#: corehq/apps/locations/static/locations/js/widgets.js:70
+#: corehq/apps/locations/static/locations/js/widgets.js:73
 msgid "Choose a primary location"
 msgstr "Choisir un site principal"
 
@@ -3203,16 +3207,20 @@ msgstr "Veuillez spécifier un nom de projet."
 msgid "Please specify."
 msgstr ""
 
-#: corehq/apps/registration/static/registration/js/password.js:37
+#: corehq/apps/registration/static/registration/js/password.js:38
 msgid "Your password is too weak! Try adding numbers or symbols!"
 msgstr ""
 
-#: corehq/apps/registration/static/registration/js/password.js:39
+#: corehq/apps/registration/static/registration/js/password.js:40
 msgid "Your password is almost strong enough! Try adding numbers or symbols!"
 msgstr ""
 
-#: corehq/apps/registration/static/registration/js/password.js:41
+#: corehq/apps/registration/static/registration/js/password.js:42
 msgid "Good Job! Your password is strong!"
+msgstr ""
+
+#: corehq/apps/registration/static/registration/js/register_new_user.js:33
+msgid "Choose a time for your CommCare trial setup"
 msgstr ""
 
 #: corehq/apps/reports/static/reports/js/base.js:32
@@ -3596,18 +3604,18 @@ msgstr ""
 msgid "Download <%= count %> users"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/mobile_workers.js:307
+#: corehq/apps/users/static/users/js/mobile_workers.js:280
+msgid "Email address is required when users confirm their own accounts."
+msgstr ""
+
+#: corehq/apps/users/static/users/js/mobile_workers.js:341
 msgid "Checking availability..."
 msgstr ""
 
-#: corehq/apps/users/static/users/js/mobile_workers.js:328
+#: corehq/apps/users/static/users/js/mobile_workers.js:362
 msgid "Issue connecting to server. Check Internet connection."
 msgstr ""
 "Problème de connexion au serveur. Veuillez vérifier votre connexion internet."
-
-#: corehq/apps/users/static/users/js/mobile_workers.js:352
-msgid "Select location"
-msgstr ""
 
 #: corehq/apps/users/static/users/js/roles.js:136
 msgid "Edit Role: "
@@ -3758,7 +3766,7 @@ msgstr "Envoyer"
 msgid "Complete"
 msgstr "Complet"
 
-#: corehq/motech/dhis2/static/dhis2/js/dhis2_map_settings.js:158
+#: corehq/motech/dhis2/static/dhis2/js/dhis2_map_settings.js:160
 msgid "Unable to save DataSet maps"
 msgstr ""
 
@@ -3814,30 +3822,16 @@ msgstr ""
 msgid "Failed to cancel"
 msgstr ""
 
-#: custom/ilsgateway/static/ilsgateway/js/main.js:7
-msgid "Sync Successful"
-msgstr "Synchronisation réussie"
-
-#: custom/ilsgateway/static/ilsgateway/js/main.js:8
-msgid "Error!"
-msgstr "Erreur !"
-
-#: custom/ilsgateway/static/ilsgateway/js/main.js:9
-msgid "Syncing..."
-msgstr "Synchronisation en cours..."
-
-#: custom/ilsgateway/static/ilsgateway/js/main.js:27
-msgid "Sync started"
-msgstr "Synchronisation démarrée"
-
-#: custom/ilsgateway/static/ilsgateway/js/main.js:48
-msgid "Available Locations"
+#: custom/icds/data_management/static/data_management/js/data_management.js:21
+msgid "<%= initiatedBy %> On <%= createdAt %>"
 msgstr ""
 
-#: custom/ilsgateway/static/ilsgateway/js/main.js:49
-msgid "Locations in Program"
+#: custom/icds/data_management/static/data_management/js/data_management.js:55
+msgid "This project has no data management requests."
 msgstr ""
 
-#: custom/ilsgateway/static/ilsgateway/js/main.js:50
-msgid "Search Locations..."
+#: custom/icds/data_management/static/data_management/js/data_management.js:82
+msgid ""
+"Could not load requests. Please try again later or report an issue if this "
+"problem persists."
 msgstr ""

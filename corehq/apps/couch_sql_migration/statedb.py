@@ -16,16 +16,20 @@ from sqlalchemy import (
     Integer,
     String,
     Text,
+    and_,
     bindparam,
     func,
+    or_,
 )
 from sqlalchemy.exc import IntegrityError
+
+from dimagi.utils.chunked import chunked
 
 from corehq.apps.hqwebapp.encoders import LazyEncoder
 from corehq.apps.tzmigration.planning import Base, DiffDB, PlanningDiff as Diff
 from corehq.apps.tzmigration.timezonemigration import MISSING, json_diff
-from corehq.util.datadog.gauges import datadog_counter
 from corehq.util.log import with_progress_bar
+from corehq.util.metrics import metrics_counter
 
 from .diff import filter_form_diffs
 
@@ -342,7 +346,7 @@ class StateDB(DiffDB):
     def save_form_diffs(self, couch_json, sql_json):
         diffs = json_diff(couch_json, sql_json, track_list_indices=False)
         diffs = filter_form_diffs(couch_json, sql_json, diffs)
-        dd_count = partial(datadog_counter, tags=["domain:" + self.domain])
+        dd_count = partial(metrics_counter, tags={"domain": self.domain})
         dd_count("commcare.couchsqlmigration.form.diffed")
         doc_type = couch_json["doc_type"]
         doc_id = couch_json["_id"]
@@ -405,7 +409,7 @@ class StateDB(DiffDB):
     def iter_changes(self):
         return self.iter_diffs(_model=DocChanges)
 
-    def iter_doc_diffs(self, kind=None, _model=None):
+    def iter_doc_diffs(self, kind=None, doc_ids=None, by_kind=None, _model=None):
         """Iterate over diffs of the given kind
 
         "stock state" diffs cannot be queried directly with this method.
@@ -418,18 +422,27 @@ class StateDB(DiffDB):
         """
         if _model is None:
             _model = DocDiffs
+        if by_kind is not None:
+            assert kind is None, kind
+            assert doc_ids is None, doc_ids
+            for kind, doc_ids in by_kind.items():
+                for chunk in chunked(doc_ids, 500, list):
+                    yield from self.iter_doc_diffs(kind, chunk, _model=_model)
+            return
         with self.session() as session:
             query = session.query(_model)
             if kind is not None:
                 query = query.filter_by(kind=kind)
+            if doc_ids is not None:
+                query = query.filter(_model.doc_id.in_(doc_ids))
             for doc in iter_large(query, _model.doc_id):
-                yield doc.doc_id, [
+                yield doc.kind, doc.doc_id, [
                     _model.dict_to_diff(doc.kind, doc.doc_id, data)
                     for data in json.loads(doc.diffs)
                 ]
 
-    def iter_doc_changes(self, kind=None):
-        return self.iter_doc_diffs(kind, _model=DocChanges)
+    def iter_doc_changes(self, kind=None, **kw):
+        return self.iter_doc_diffs(kind, _model=DocChanges, **kw)
 
     def get_diffs(self):
         """DEPRECATED use iter_diffs(); the result may be very large"""
@@ -458,10 +471,15 @@ class StateDB(DiffDB):
                 MissingDoc.kind,
                 func.count(MissingDoc.doc_id),
             ).group_by(MissingDoc.kind))
+            changes = dict(session.query(
+                DocChanges.kind,
+                func.count(DocChanges.doc_id),
+            ).group_by(DocChanges.kind))
         return {kind: Counts(
             total=totals.get(kind, 0),
             diffs=diffs.get(kind, 0),
             missing=missing.get(kind, 0),
+            changes=changes.get(kind, 0),
         ) for kind in set(totals) | set(missing) | set(diffs)}
 
     def iter_missing_doc_ids(self, kind):
@@ -470,7 +488,7 @@ class StateDB(DiffDB):
                 session.query(MissingDoc.doc_id)
                 .filter(MissingDoc.kind == kind)
             )
-            yield from iter_large(query, MissingDoc.doc_id)
+            yield from (x for x, in iter_large(query, MissingDoc.doc_id))
 
     def get_diff_stats(self):
         raise NotImplementedError("use get_doc_counts")
@@ -739,6 +757,7 @@ class Counts:
     total = attr.ib(default=0)
     diffs = attr.ib(default=0)
     missing = attr.ib(default=0)
+    changes = attr.ib(default=0)
 
 
 def iter_large(query, pk_attr, maxrq=1000):

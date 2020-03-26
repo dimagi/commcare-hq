@@ -9,7 +9,11 @@ from corehq.form_processor.utils.general import (
 )
 from corehq.util.markup import SimpleTableWriter, TableRowFormatter
 
-from ...couchsqlmigration import do_couch_to_sql_migration, setup_logging
+from ...couchsqlmigration import (
+    MigrationRestricted,
+    do_couch_to_sql_migration,
+    setup_logging,
+)
 from ...missingdocs import find_missing_docs
 from ...progress import (
     couch_sql_migration_in_progress,
@@ -57,7 +61,7 @@ class Command(BaseCommand):
                     failed.append((domain, reason))
             except Exception as err:
                 log.exception("Error migrating domain %s", domain)
-                self.abort(domain)
+                self.abort(domain, state_dir)
                 failed.append((domain, err))
 
         if failed:
@@ -68,16 +72,20 @@ class Command(BaseCommand):
 
     def migrate_domain(self, domain, state_dir):
         if should_use_sql_backend(domain):
-            log.error("{} already on the SQL backend\n".format(domain))
+            log.info("{} already on the SQL backend\n".format(domain))
             return True, None
 
         if couch_sql_migration_in_progress(domain, include_dry_runs=True):
-            log.error("{} migration is already in progress\n".format(domain))
+            log.error("{} migration is in progress\n".format(domain))
             return False, "in progress"
 
         set_couch_sql_migration_started(domain)
-
-        do_couch_to_sql_migration(domain, state_dir, with_progress=False)
+        try:
+            do_couch_to_sql_migration(domain, state_dir, with_progress=False)
+        except MigrationRestricted as err:
+            log.error("migration restricted: %s", err)
+            set_couch_sql_migration_not_started(domain)
+            return False, str(err)
 
         stats = get_diff_stats(domain, state_dir, self.strict)
         if stats:
@@ -98,7 +106,7 @@ class Command(BaseCommand):
 
 
 def get_diff_stats(domain, state_dir, strict=True):
-    find_missing_docs(domain, state_dir, resume=False)
+    find_missing_docs(domain, state_dir, resume=False, progress=False)
     statedb = open_state_db(domain, state_dir)
     stats = {}
     for doc_type, counts in sorted(statedb.get_doc_counts().items()):
@@ -108,6 +116,10 @@ def get_diff_stats(domain, state_dir, strict=True):
             couch_count = counts.total
             sql_count = counts.total - counts.missing
             stats[doc_type] = (couch_count, sql_count, counts.diffs)
+    if "CommCareCase" not in stats:
+        pending = statedb.count_undiffed_cases()
+        if pending:
+            stats["CommCareCase"] = ("?", "?", f"{pending} diffs pending")
     return stats
 
 

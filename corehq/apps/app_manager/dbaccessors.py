@@ -540,6 +540,15 @@ def get_case_types_from_apps(domain):
     return set(q.run().aggregations.modules.case_types.keys) - {''}
 
 
+@quickcache(['domain'], timeout=24 * 60 * 60)
+def get_app_languages(domain):
+    query = (AppES()
+        .domain(domain)
+        .terms_aggregation('langs', 'languages')
+        .size(0))
+    return set(query.run().aggregations.languages.keys)
+
+
 def get_case_sharing_apps_in_domain(domain, exclude_app_id=None):
     apps = get_apps_in_domain(domain, include_remote=False)
     return [a for a in apps if a.case_sharing and exclude_app_id != a.id]

@@ -17,6 +17,10 @@ class Command(PopulateSQLCommand):
         from corehq.apps.users.models import Invitation
         return Invitation
 
+    @classmethod
+    def commit_adding_migration(cls):
+        return "3c6e3ea5b42834ac78b266b4e340af3d9a10481e"
+
     def update_or_create_sql_object(self, doc):
         model, created = self.sql_class().objects.update_or_create(
             couch_id=doc['_id'],

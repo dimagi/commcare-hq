@@ -94,7 +94,6 @@ EMAIL_SMTP_PORT = 587
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 ADMINS = (('HQ Dev Team', 'commcarehq-dev+www-notifications@example.com'),)
-BUG_REPORT_RECIPIENTS = ['commcarehq-support@example.com']
 NEW_DOMAIN_RECIPIENTS = ['commcarehq-dev+newdomain@example.com']
 
 SERVER_EMAIL = 'commcarehq-noreply@example.com'  # the physical server emailing - differentiate if needed
@@ -122,9 +121,7 @@ COMPRESS_OFFLINE = False
 
 ####### Bitly ########
 
-BITLY_LOGIN = None  # set to None to disable bitly app url shortening (useful offline) set to 'dimagi' if you are using the api key
-BITLY_APIKEY = '*******'
-
+BITLY_OAUTH_TOKEN = None
 
 ####### Jar signing config ########
 

@@ -22,6 +22,7 @@ from memoized import memoized
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.phone.models import OTARestoreCommCareUser, OTARestoreWebUser
 from casexml.apps.phone.restore_caching import get_loadtest_factor_for_user
+from corehq.apps.users.exceptions import IllegalAccountConfirmation
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
     DateProperty,
@@ -43,7 +44,7 @@ from dimagi.utils.couch.undo import DELETED_SUFFIX, DeleteRecord
 from dimagi.utils.dates import force_to_datetime
 from dimagi.utils.logging import log_signal_errors, notify_exception
 from dimagi.utils.modules import to_function
-from dimagi.utils.web import get_site_domain
+from dimagi.utils.web import get_static_url_prefix
 
 from corehq import toggles
 from corehq.apps.app_manager.const import USERCASE_TYPE
@@ -1126,7 +1127,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
         elif self.doc_type == 'CommCareUser':
             return 'commcare'
         else:
-            raise NotImplementedError()
+            raise NotImplementedError(f'Unrecognized user type {self.doc_type!r}')
 
     @property
     def projects(self):
@@ -1394,7 +1395,10 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
 
     @classmethod
     def wrap_correctly(cls, source, allow_deleted_doc_types=False):
-        doc_type = source['doc_type']
+        try:
+            doc_type = source['doc_type']
+        except KeyError as err:
+            raise KeyError(f"'doc_type' not found in {source!r}") from err
         if allow_deleted_doc_types:
             doc_type = doc_type.replace(DELETED_SUFFIX, '')
 
@@ -1639,6 +1643,9 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     loadtest_factor = IntegerProperty()
     is_demo_user = BooleanProperty(default=False)
     demo_restore_id = IntegerProperty()
+    # used by user provisioning workflow. defaults to true unless explicitly overridden during
+    # user creation
+    is_account_confirmed = BooleanProperty(default=True)
 
     # This means that this user represents a location, and has a 1-1 relationship
     # with a location where location.location_type.has_user == True
@@ -1727,12 +1734,18 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
                phone_number=None,
                location=None,
                commit=True,
+               is_account_confirmed=True,
                **kwargs):
         """
-        used to be a function called `create_hq_user_from_commcare_registration_info`
-
+        Main entry point into creating a CommCareUser (mobile worker).
         """
         uuid = uuid or uuid4().hex
+        # if the account is not confirmed, also set is_active false so they can't login
+        if 'is_active' not in kwargs:
+            kwargs['is_active'] = is_account_confirmed
+        elif not is_account_confirmed:
+            assert not kwargs['is_active'], \
+                "it's illegal to create a user with is_active=True and is_account_confirmed=False"
         commcare_user = super(CommCareUser, cls).create(domain, username, password, email, uuid, date, **kwargs)
         if phone_number is not None:
             commcare_user.add_phone_number(phone_number)
@@ -1742,7 +1755,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         commcare_user.domain = domain
         commcare_user.device_ids = [device_id]
         commcare_user.registering_device_id = device_id
-
+        commcare_user.is_account_confirmed = is_account_confirmed
         commcare_user.domain_membership = DomainMembership(domain=domain, **kwargs)
 
         if location:
@@ -1851,6 +1864,15 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             pass
         else:
             django_user.delete()
+        self.save()
+
+    def confirm_account(self, password):
+        if self.is_account_confirmed:
+            raise IllegalAccountConfirmation('Account is already confirmed')
+        assert not self.is_active, 'Active account should not be unconfirmed!'
+        self.is_active = True
+        self.is_account_confirmed = True
+        self.set_password(password)
         self.save()
 
     def get_case_sharing_groups(self):
@@ -2599,8 +2621,6 @@ class Invitation(models.Model):
     program = models.CharField(max_length=126, null=True)   # couch id of a Program
     supply_point = models.CharField(max_length=126, null=True)  # couch id of a Location
 
-    _inviter = None
-
     @classmethod
     def by_domain(cls, domain):
         return Invitation.objects.filter(domain=domain, is_accepted=False)
@@ -2613,22 +2633,15 @@ class Invitation(models.Model):
     def is_expired(self):
         return self.invited_on.date() + relativedelta(months=1) < datetime.utcnow().date()
 
-    def get_inviter(self):
-        if self._inviter is None:
-            self._inviter = CouchUser.get_by_user_id(self.invited_by)
-            if self._inviter.user_id != self.invited_by:
-                self.invited_by = self._inviter.user_id
-                self.save()
-        return self._inviter
-
     def send_activation_email(self, remaining_days=30):
+        inviter = CouchUser.get_by_user_id(self.invited_by)
         url = absolute_reverse("domain_accept_invitation", args=[self.domain, self.id])
         params = {
             "domain": self.domain,
             "url": url,
             'days': remaining_days,
-            "inviter": self.get_inviter().formatted_name,
-            'url_prefix': '' if settings.STATIC_CDN else 'http://' + get_site_domain(),
+            "inviter": inviter.formatted_name,
+            'url_prefix': get_static_url_prefix(),
         }
 
         domain_request = DomainRequest.by_email(self.domain, self.email, is_approved=True)
@@ -2637,17 +2650,48 @@ class Invitation(models.Model):
             if domain_request is None:
                 text_content = render_to_string("domain/email/domain_invite.txt", params)
                 html_content = render_to_string("domain/email/domain_invite.html", params)
-                subject = _('Invitation from %s to join CommCareHQ') % self.get_inviter().formatted_name
+                subject = _('Invitation from %s to join CommCareHQ') % inviter.formatted_name
             else:
                 text_content = render_to_string("domain/email/domain_request_approval.txt", params)
                 html_content = render_to_string("domain/email/domain_request_approval.html", params)
                 subject = _('Request to join CommCareHQ approved')
         send_html_email_async.delay(subject, self.email, html_content,
                                     text_content=text_content,
-                                    cc=[self.get_inviter().get_email()],
+                                    cc=[inviter.get_email()],
                                     email_from=settings.DEFAULT_FROM_EMAIL)
 
 
+<<<<<<< HEAD
+=======
+class Invitation(SyncCouchToSQLMixin, QuickCachedDocumentMixin, Document):
+    email = StringProperty()
+    invited_by = StringProperty()
+    invited_on = DateTimeProperty()
+    is_accepted = BooleanProperty(default=False)
+    domain = StringProperty()
+    role = StringProperty()
+    program = None
+    supply_point = None
+
+    @classmethod
+    def _migration_get_fields(cls):
+        return [
+            "email",
+            "invited_by",
+            "invited_on",
+            "is_accepted",
+            "domain",
+            "role",
+            "program",
+            "supply_point",
+        ]
+
+    @classmethod
+    def _migration_get_sql_model_class(cls):
+        return SQLInvitation
+
+
+>>>>>>> master
 class DomainRemovalRecord(DeleteRecord):
     user_id = StringProperty()
     domain_membership = SchemaProperty(DomainMembership)

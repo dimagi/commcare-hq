@@ -33,7 +33,7 @@ function PrevalenceOfStuntingReportController($scope, $routeParams, $location, $
     };
     vm.filters = [];
 
-    vm.chosenFilters = function() {
+    vm.chosenFilters = function () {
         var defaultAge = '0 - 5 years';
         var gender = genderIndex > 0 ? genders[genderIndex].name : '';
         var age = ageIndex > 0 ? ages[ageIndex].name : defaultAge;
@@ -78,7 +78,7 @@ function PrevalenceOfStuntingReportController($scope, $routeParams, $location, $
             {
                 indicator_name: '% children ' + vm.chosenFilters() + ' with normal stunted growth: ',
                 indicator_value: normal,
-            }
+            },
         ];
     };
 
@@ -94,12 +94,14 @@ function PrevalenceOfStuntingReportController($scope, $routeParams, $location, $
     vm.chartOptions = vm.getChartOptions(options);
     vm.chartOptions.chart.width = 1100;
     vm.chartOptions.chart.color = d3.scale.category10().range();
-    vm.chartOptions.chart.callback = function(chart) {
+    vm.chartOptions.chart.callback = function (chart) {
         var tooltip = chart.interactiveLayer.tooltip;
         tooltip.contentGenerator(function (d) {
 
             var findValue = function (values, date) {
-                return _.find(values, function(num) { return num['x'] === date; });
+                return _.find(values, function (num) {
+                    return num['x'] === date; 
+                });
             };
 
             var normal = findValue(vm.chartData[0].values, d.value).y;
@@ -142,14 +144,14 @@ function PrevalenceOfStuntingReportController($scope, $routeParams, $location, $
         );
     };
 
-    vm.resetAdditionalFilter = function() {
+    vm.resetAdditionalFilter = function () {
         vm.filtersData.gender = '';
         vm.filtersData.age = '';
         $location.search('gender', null);
         $location.search('age', null);
     };
 
-    vm.resetOnlyAgeAdditionalFilter = function() {
+    vm.resetOnlyAgeAdditionalFilter = function () {
         vm.filtersData.age = '';
         $location.search('age', null);
     };

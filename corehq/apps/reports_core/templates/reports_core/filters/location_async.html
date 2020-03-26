@@ -6,7 +6,7 @@
   <span class="form-group report-filter-location-async"
         id="group_{{ filter.css_id }}"
         data-bind="visible: show_location_filter_bool()"
-        data-loc-url='{{ context_.loc_url }}'
+        data-location-url='{{ context_.loc_url }}'
         data-locs='{{ context_.locations|JSON }}'
         data-selected='{{ context_.loc_id|default_if_none:"" }}'
         data-hierarchy='{{ context_.hierarchy|JSON }}'

@@ -84,23 +84,23 @@ class TestDiffCases(SimpleTestCase):
         self.assert_diffs()
 
     def test_diff(self):
-        couch_json = self.add_case("a", prop=1)
-        couch_json["prop"] = 2
+        couch_json = self.add_case("a", prop="1")
+        couch_json["prop"] = "2"
         mod.diff_cases_and_save_state(self.couch_cases, self.statedb)
-        self.assert_diffs([Diff("a", path=["prop"], old=2, new=1)])
+        self.assert_diffs([Diff("a", path=["prop"], old="2", new="1")])
 
     def test_wrong_domain(self):
-        couch_json = self.add_case("a", prop=1, domain="wrong")
+        couch_json = self.add_case("a", prop="1", domain="wrong")
         couch_json["prop"] = 2
         mod.diff_cases_and_save_state(self.couch_cases, self.statedb)
         self.assert_diffs([Diff("a", path=["domain"], old="wrong", new="test")])
 
     def test_replace_diff(self):
-        self.add_case("a", prop=1)
+        self.add_case("a", prop="1")
         different_cases = deepcopy(self.couch_cases)
-        different_cases["a"]["prop"] = 2
+        different_cases["a"]["prop"] = "2"
         mod.diff_cases_and_save_state(different_cases, self.statedb)
-        self.assert_diffs([Diff("a", path=["prop"], old=2, new=1)])
+        self.assert_diffs([Diff("a", path=["prop"], old="2", new="1")])
         mod.diff_cases_and_save_state(self.couch_cases, self.statedb)
         self.assert_diffs()
 
@@ -123,7 +123,7 @@ class TestDiffCases(SimpleTestCase):
             Diff(
                 doc_id="a",
                 path=["?"],
-                old={"forms": {"b": "missing, blob present"}},
+                old={"forms": {"b": mod.MISSING_BLOB_PRESENT}},
                 new={"forms": {"b": "missing"}},
             ),
         ])
@@ -147,7 +147,7 @@ class TestDiffCases(SimpleTestCase):
         self.assert_diffs([
             Diff(
                 "a/stock/a", "stock state", "missing", ["*"],
-                old={'form_state': 'missing, blob present'},
+                old={'form_state': mod.MISSING_BLOB_PRESENT},
                 new={'form_state': 'missing', 'ledger': self.sql_ledgers["a"].to_json()},
             ),
         ])
@@ -179,7 +179,7 @@ class TestDiffCases(SimpleTestCase):
         self.assert_diffs([
             Diff(
                 "a/stock/a", "stock state", "missing", ["*"],
-                old={'form_state': 'missing, blob present', 'ledger': stock.to_json()},
+                old={'form_state': mod.MISSING_BLOB_PRESENT, 'ledger': stock.to_json()},
                 new={'form_state': 'missing'},
             ),
         ])

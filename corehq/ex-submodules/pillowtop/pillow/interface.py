@@ -371,7 +371,10 @@ class PillowBase(metaclass=ABCMeta):
             change_lag = (datetime.utcnow() - change.metadata.publish_timestamp).total_seconds()
             datadog_gauge('commcare.change_feed.change_lag', change_lag, tags=[
                 'pillow_name:{}'.format(self.get_name()),
-                _topic_for_ddog(change.topic),
+                _topic_for_ddog(
+                    TopicPartition(change.topic, change.partition)
+                    if change.partition is not None else change.topic
+                ),
             ])
 
             if processing_time:

@@ -58,6 +58,17 @@
           "property_value": true,
           "type": "boolean_expression",
           "comment": null
+        },
+        {
+          "expression": {
+            "type": "property_name",
+            "property_name": "base_doc",
+            "datatype": null
+          },
+          "operator": "not_eq",
+          "property_value": "CouchUser-Deleted",
+          "type": "boolean_expression",
+          "comment": null
         }
       ]
     },

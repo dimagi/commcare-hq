@@ -627,10 +627,10 @@ class CasesReceivedCounter:
         self.queue.clean_break = value
 
 
-class NoCaseDiff:
+class CaseDiffPending:
 
     def __init__(self, statedb):
-        pass
+        self.statedb = statedb
 
     def __enter__(self):
         return self
@@ -639,10 +639,10 @@ class NoCaseDiff:
         pass
 
     def update(self, case_ids, form_id):
-        pass
+        self.statedb.add_cases_to_diff(case_ids)
 
     def enqueue(self, case_id):
-        pass
+        self.statedb.add_cases_to_diff([case_id])
 
 
 def prune_premature_diffs(couch_cases, statedb):

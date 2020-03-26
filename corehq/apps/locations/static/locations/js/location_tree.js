@@ -79,15 +79,8 @@ hqDefine('locations/js/location_tree', [
 
         var self = {};
         self.selected_location = ko.observable();
-        self.l__selected_location_id = ko.observable();
+        self.selected_location_id = ko.observable();
         self.clearLocationSelection = locationUtils.clearLocationSelection.bind(self, treeModel);
-
-        self.selected_location_id = ko.computed(function () {
-            if (!self.l__selected_location_id()) {
-                return;
-            }
-            return self.l__selected_location_id();
-        });
 
         self.selected_location = ko.computed(function () {
             if (!self.selected_location_id()) {

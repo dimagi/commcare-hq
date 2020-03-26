@@ -8,7 +8,7 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext, ugettext_lazy
 from django.views import View
 
-from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
+from djng.views.mixins import JSONResponseMixin, allow_remote_invocation
 from memoized import memoized
 
 from corehq.apps.analytics.tasks import track_workflow

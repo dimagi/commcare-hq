@@ -9,7 +9,7 @@ from contextlib import ExitStack, contextmanager
 from datetime import datetime, timedelta
 from functools import wraps
 from io import StringIO, open
-from textwrap import wrap, indent
+from textwrap import indent, wrap
 from time import time
 from unittest import SkipTest, TestCase
 
@@ -19,6 +19,7 @@ from django.db.backends import utils
 from django.test.utils import CaptureQueriesContext
 
 import mock
+
 from corehq.util.context_managers import drop_connected_signals
 from corehq.util.decorators import ContextDecorator
 
@@ -714,3 +715,16 @@ class capture_sql(ContextDecorator):
             print('\n{}'.format(indent('\n'.join(wrap(out, width)), '\t')))
             if with_traceback:
                 print('\n{}'.format(indent(''.join(query['traceback']), '\t\t')))
+
+
+def require_db_context(fn):
+    """
+    Only run 'fn' in DB tests
+    :param fn: a setUpModule or tearDownModule function
+    """
+    @wraps(fn)
+    def inner(*args, **kwargs):
+        from corehq.apps.domain.models import Domain
+        if not isinstance(Domain.get_db(), mock.Mock):
+            return fn(*args, **kwargs)
+    return inner

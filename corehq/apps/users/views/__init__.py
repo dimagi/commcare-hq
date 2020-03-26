@@ -40,7 +40,7 @@ from corehq.apps.analytics.tasks import (
     send_hubspot_form,
     track_workflow,
 )
-from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
+from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain, get_app_languages
 from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps
 from corehq.apps.domain.decorators import (
     domain_admin_required,
@@ -73,7 +73,7 @@ from corehq.apps.sms.verify import (
     VERIFICATION__WORKFLOW_STARTED,
     initiate_sms_verification_workflow,
 )
-from corehq.apps.translations.models import StandaloneTranslationDoc
+from corehq.apps.translations.models import SMSTranslations
 from corehq.apps.users.decorators import (
     require_can_edit_or_view_web_users,
     require_can_edit_web_users,
@@ -420,17 +420,12 @@ class EditWebUserView(BaseEditUserView):
 
 
 def get_domain_languages(domain):
-    query = (AppES()
-             .domain(domain)
-             .terms_aggregation('langs', 'languages')
-             .size(0))
-    app_languages = query.run().aggregations.languages.keys
-
-    translation_doc = StandaloneTranslationDoc.get_obj(domain, 'sms')
-    sms_languages = translation_doc.langs if translation_doc else []
+    app_languages = get_app_languages(domain)
+    translations = SMSTranslations.objects.filter(domain=domain).first()
+    sms_languages = translations.langs if translations else []
 
     domain_languages = []
-    for lang_code in set(app_languages + sms_languages):
+    for lang_code in app_languages.union(sms_languages):
         name = langcodes.get_name(lang_code)
         label = "{} ({})".format(lang_code, name) if name else lang_code
         domain_languages.append((lang_code, label))
@@ -731,12 +726,12 @@ class UserInvitationView(object):
             return HttpResponseRedirect(request.path)
 
         try:
-            invitation = Invitation.objects.get(id=invitation_id)
-        except Invitation.DoesNotExist:
+            invitation = Invitation.objects.get(id=int(invitation_id))
+        except (ValueError, Invitation.DoesNotExist):
             messages.error(request, _("Sorry, it looks like your invitation has expired. "
                                       "Please check the invitation link you received and try again, or "
                                       "request a project administrator to send you the invitation again."))
-            return HttpResponseRedirect(reverse("login"))
+                return HttpResponseRedirect(reverse("login"))
         if invitation.is_accepted:
             messages.error(request, _("Sorry, that invitation has already been used up. "
                                       "If you feel this is a mistake please ask the inviter for "
@@ -751,7 +746,6 @@ class UserInvitationView(object):
         # Add zero-width space to username for better line breaking
         username = self.request.user.username.replace("@", "&#x200b;@")
         context = {
-            'create_domain': False,
             'formatted_username': username,
             'domain': self.domain,
             'invite_to': self.domain,
@@ -825,8 +819,6 @@ class UserInvitationView(object):
                         reverse('domain_accept_invitation', args=[invitation.domain, invitation.id]))
                 form = WebUserInvitationForm(initial={
                     'email': invitation.email,
-                    'hr_name': invitation.domain,
-                    'create_domain': False,
                 })
 
         context.update({"form": form})

@@ -1,4 +1,4 @@
-from django.core.management import BaseCommand
+from django.core.management import BaseCommand, CommandError
 
 from corehq.apps.app_manager.dbaccessors import get_build_doc_by_version, wrap_app
 from corehq.apps.app_manager.models import import_app
@@ -22,10 +22,23 @@ class Command(BaseCommand):
         parser.add_argument('source_domain')
         parser.add_argument('target_domain')
         parser.add_argument('new_name')
+        parser.add_argument('--skip-dynamic-report-check', action='store_true', default=False)
 
     def handle(self, app_id, version, source_domain, target_domain, new_name, **options):
+        if options['skip_dynamic_report_check']:
+            message = """
+                WARNING: You are skipping report-related safety checks.
+                If your app uses mobile UCR and contains references to dynamic reports, it wwill break
+                if those references do not use aliases to reference the correct report ids.
+                Do you wish to proceed?
+            """
+            response = input('{} [y/N]'.format(message)).lower()
+            if response != 'y':
+                raise CommandError('abort')
+
         old_app = get_app_by_version(source_domain, app_id, version)
-        new_app = import_app(old_app.to_json(), target_domain, source_properties={'name': new_name})
+        new_app = import_app(old_app.to_json(), target_domain, source_properties={'name': new_name},
+                             check_all_reports=not(options['skip_dynamic_report_check']))
 
         find_and_replace_report_ids(old_app, new_app)
 

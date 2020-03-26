@@ -111,7 +111,8 @@ class MessagingDashboardView(BaseMessagingSectionView):
         scheduled_events_url = reverse(ScheduleInstanceReport.dispatcher.name(), args=[],
             kwargs={'domain': self.domain, 'report_slug': ScheduleInstanceReport.slug})
 
-        context = {
+        context = super().page_context
+        context.update({
             'scheduled_events_url': scheduled_events_url,
             'message_log_url': reverse(
                 MessageLogReport.dispatcher.name(), args=[],
@@ -121,7 +122,7 @@ class MessagingDashboardView(BaseMessagingSectionView):
                 MessagingEventsReport.dispatcher.name(), args=[],
                 kwargs={'domain': self.domain, 'report_slug': MessagingEventsReport.slug}
             ),
-        }
+        })
 
         context['messaging_history_errors_url'] = self.get_messaging_history_errors_url(
             context['messaging_history_url']
@@ -454,10 +455,12 @@ class CreateScheduleView(BaseMessagingSectionView, AsyncHandlerMixin):
 
     @property
     def page_context(self):
-        return {
+        context = super().page_context
+        context.update({
             'schedule_form': self.schedule_form,
             'read_only_mode': self.read_only_mode,
-        }
+        })
+        return context
 
     def post(self, request, *args, **kwargs):
         if self.async_response is not None:
@@ -604,7 +607,7 @@ class ConditionalAlertListView(ConditionalAlertBaseView):
 
     @property
     def page_context(self):
-        context = super(ConditionalAlertListView, self).page_context
+        context = super().page_context
         context['limit_rule_restarts'] = self.limit_rule_restarts
         return context
 
@@ -745,6 +748,16 @@ class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
     async_handlers = [ConditionalAlertAsyncHandler]
     read_only_mode = False
 
+    @property
+    def help_text(self):
+        return _("""
+            For information on Conditional Alerts, see the
+            <a target="_blank" href="https://confluence.dimagi.com/display/commcarepublic/Conditional+Alerts">
+                Conditional Alerts
+            </a>
+            help page.
+        """)
+
     @method_decorator(requires_privilege_with_fallback(privileges.REMINDERS_FRAMEWORK))
     @use_jquery_ui
     @use_timepicker
@@ -762,9 +775,11 @@ class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
 
     @property
     def page_context(self):
-        context = {
+        context = super().page_context
+        context.update({
             'basic_info_form': self.basic_info_form,
             'criteria_form': self.criteria_form,
+            'help_text': self.help_text,
             'schedule_form': self.schedule_form,
             'read_only_mode': self.read_only_mode,
             'is_system_admin': self.is_system_admin,
@@ -772,7 +787,7 @@ class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
             'schedule_form_active': False,
             'new_rule': not bool(self.rule),
             'rule_name': self.rule.name if self.rule else '',
-        }
+        })
 
         if self.request.method == 'POST':
             context.update({
@@ -883,6 +898,14 @@ class EditConditionalAlertView(CreateConditionalAlertView):
     @property
     def page_url(self):
         return reverse(self.urlname, args=[self.domain, self.rule_id])
+
+    @property
+    def help_text(self):
+        return super().help_text + _("""
+            <br>
+            Editing a conditional alert will cause it to process each case of the alert's case type.
+            This may take some time.
+        """)
 
     @property
     def rule_id(self):
@@ -1005,14 +1028,15 @@ class UploadConditionalAlertView(BaseMessagingSectionView):
 
     @property
     def page_context(self):
-        context = {
+        context = super().page_context
+        context.update({
             'bulk_upload': {
                 "download_url": reverse("download_conditional_alert", args=(self.domain,)),
                 "adjective": _("SMS alert content"),
                 "plural_noun": _("SMS alert content"),
                 "help_link": "https://confluence.dimagi.com/display/commcarepublic/Bulk+download+and+upload+of+SMS+content+in+conditional+alerts", # noqa
             },
-        }
+        })
         context.update({
             'bulk_upload_form': get_bulk_upload_form(context),
         })

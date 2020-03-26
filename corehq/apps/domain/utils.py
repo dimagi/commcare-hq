@@ -17,7 +17,6 @@ from couchexport.models import Format
 from dimagi.utils.django.email import send_HTML_email
 from soil.util import expose_zipped_blob_download
 
-from corehq import toggles
 from corehq.apps.domain.models import Domain
 from corehq.apps.es import DomainES
 from corehq.util.quickcache import quickcache
