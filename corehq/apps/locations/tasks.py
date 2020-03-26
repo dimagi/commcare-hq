@@ -1,5 +1,4 @@
 import logging
-import uuid
 
 from django.conf import settings
 
@@ -20,11 +19,9 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.util import dump_locations
 from corehq.apps.userreports.dbaccessors import get_datasources_for_domain
 from corehq.apps.userreports.tasks import rebuild_indicators_in_place
-from corehq.apps.users.forms import generate_strong_password
 from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.apps.users.util import format_username
 from corehq.toggles import LOCATIONS_IN_UCR
-from corehq.util.couch import DocUpdate, IterDB, iter_update
 from corehq.util.decorators import serial_task
 from corehq.util.workbook_json.excel_importer import MultiExcelImporter
 
