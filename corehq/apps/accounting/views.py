@@ -734,7 +734,7 @@ class TriggerInvoiceView(AccountingSectionView, AsyncHandlerMixin):
                     request, "Successfully triggered invoices for domain %s."
                              % self.trigger_form.cleaned_data['domain'])
                 return HttpResponseRedirect(reverse(self.urlname))
-            except (CreditLineError, InvoiceError) as e:
+            except (CreditLineError, InvoiceError, ObjectDoesNotExist) as e:
                 messages.error(request, "Error generating invoices: %s" % e, extra_tags='html')
         return self.get(request, *args, **kwargs)
 
