@@ -192,6 +192,7 @@ class FoodCaseRow(FoodRow):
 
 class RecipeIngredientRow(FoodRow):
     """A food item inferred from a recipe"""
+    is_ingredient = "yes"
 
     def __init__(self, ucr_row, fixtures, ingredient):
         # ucr_row is data from the parent food case
