@@ -213,30 +213,26 @@ def get_sql_case_data_for_db(db, run_config):
 class FormBackend:
     @staticmethod
     def run(run_config):
-        rows = FormBackend._get_stale_form_data(run_config)
-        for form_id, doc_type, xmlns, es_date, primary_date, domain in rows:
-            yield DataRow(doc_id=form_id, doc_type=doc_type, doc_subtype=xmlns, domain=domain,
-                          es_date=es_date, primary_date=primary_date)
+        for chunk in FormBackend._get_form_chunks(run_config):
+            yield from FormBackend._yield_missing_in_es(chunk)
 
     @staticmethod
-    def _get_stale_form_data(run_config):
-        yield from FormBackend._get_stale_form_data_for_sql_backend(run_config)
-        yield from FormBackend._get_stale_form_data_for_couch_backend(run_config)
+    def _get_form_chunks(run_config):
+        yield from FormBackend._get_sql_form_chunks(run_config)
+        yield from FormBackend._get_couch_form_chunks(run_config)
 
     @staticmethod
-    def _get_stale_form_data_for_sql_backend(run_config):
+    def _get_sql_form_chunks(run_config):
         for db in get_db_aliases_for_partitioned_query():
             matching_records_for_db = FormBackend._get_sql_form_data_for_db(db, run_config)
-            for chunk in _chunked_with_progress_bar(matching_records_for_db, 1000,
-                                                    prefix=f'Processing forms in DB {db}'):
-                yield from FormBackend._yield_missing_in_es(chunk)
+            yield from _chunked_with_progress_bar(matching_records_for_db, 1000,
+                                                  prefix=f'Processing forms in DB {db}')
 
     @staticmethod
-    def _get_stale_form_data_for_couch_backend(run_config):
+    def _get_couch_form_chunks(run_config):
         length, matching_records = FormBackend._get_couch_form_data(run_config)
-        for chunk in _chunked_with_progress_bar(matching_records, 1000, length=length,
-                                                prefix=f'Processing forms in Couch'):
-            yield from FormBackend._yield_missing_in_es(chunk)
+        return _chunked_with_progress_bar(matching_records, 1000, length=length,
+                                          prefix=f'Processing forms in Couch')
 
     @staticmethod
     def _yield_missing_in_es(chunk):
@@ -245,7 +241,8 @@ class FormBackend:
         for form_id, doc_type, xmlns, modified_on, domain in chunk:
             es_modified_on, es_doc_type, es_domain = es_modified_on_by_ids.get(form_id, (None, None, None))
             if (es_modified_on, es_doc_type, es_domain) != (modified_on, doc_type, domain):
-                yield form_id, doc_type, xmlns, es_modified_on, modified_on, domain
+                yield DataRow(doc_id=form_id, doc_type=doc_type, doc_subtype=xmlns, domain=domain,
+                              es_date=es_modified_on, primary_date=modified_on)
 
     @staticmethod
     def _get_sql_form_data_for_db(db, run_config):
