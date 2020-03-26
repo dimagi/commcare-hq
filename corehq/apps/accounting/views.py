@@ -1501,6 +1501,9 @@ class TriggerDowngradeView(AccountingSectionView, AsyncHandlerMixin):
     urlname = 'accounting_test_downgrade'
     page_title = "Trigger Downgrade"
     template_name = 'accounting/trigger_downgrade.html'
+    async_handlers = [
+        Select2InvoiceTriggerHandler,
+    ]
 
     @property
     @memoized
