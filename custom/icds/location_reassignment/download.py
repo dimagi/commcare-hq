@@ -66,8 +66,6 @@ class Download(object):
 
     def _get_users(self):
         location_ids = list(self._location_details_by_location_id.keys())
-        # ToDo: confirm that its good to use base_username instead of username from ES, something about
-        #  them not being analysed
         return UserES().location(location_ids).values_list('base_username', 'assigned_location_ids')
 
     def _create_workbook(self):
