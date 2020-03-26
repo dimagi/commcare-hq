@@ -2626,6 +2626,7 @@ class SQLInvitation(SyncSQLToCouchMixin, models.Model):
     program = models.CharField(max_length=126, null=True)   # couch id of a Program
     supply_point = models.CharField(max_length=126, null=True)  # couch id of a Location
     couch_id = models.CharField(max_length=126, null=True, db_index=True)
+    uuid = models.UUIDField(unique=True, db_index=True, default=uuid4)
 
     class Meta:
         db_table = "users_invitation"
@@ -2661,7 +2662,7 @@ class SQLInvitation(SyncSQLToCouchMixin, models.Model):
 
     def send_activation_email(self, remaining_days=30):
         inviter = CouchUser.get_by_user_id(self.invited_by)
-        url = absolute_reverse("domain_accept_invitation", args=[self.domain, self.id])
+        url = absolute_reverse("domain_accept_invitation", args=[self.domain, self.uuid])
         params = {
             "domain": self.domain,
             "url": url,
