@@ -98,7 +98,7 @@ from corehq.form_processor.interfaces.dbaccessors import (
     CaseAccessors,
     FormAccessors,
 )
-from corehq.motech.const import ALGO_AES
+from corehq.motech.const import ALGO_AES, BASIC_AUTH, DIGEST_AUTH, OAUTH1
 from corehq.motech.repeaters.repeater_generators import (
     AppStructureGenerator,
     CaseRepeaterJsonPayloadGenerator,
@@ -157,9 +157,6 @@ def log_repeater_success_in_datadog(domain, status_code, repeater_type):
 
 
 DELETED = "-Deleted"
-BASIC_AUTH = "basic"
-DIGEST_AUTH = "digest"
-OAUTH1 = "oauth1"
 
 
 class Repeater(QuickCachedDocumentMixin, Document):
