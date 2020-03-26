@@ -1,5 +1,6 @@
 from collections import defaultdict
 
+from corehq.apps.locations.models import SQLLocation
 from custom.icds.location_reassignment.const import (
     EXTRACT_OPERATION,
     MERGE_OPERATION,
@@ -36,6 +37,7 @@ class Parser(object):
         self.workbook = workbook
         # mapping each location code to the type of operation requested for it
         self.requested_transitions = {}
+        self.site_codes_to_be_archived = []
         location_types = [ws.title for ws in workbook.worksheets]
         self.valid_transitions = {location_type: {
             MERGE_OPERATION: defaultdict(list),
@@ -56,6 +58,7 @@ class Parser(object):
                     self.errors.append("Invalid Operation %s" % operation)
                     continue
                 self._parse_row(row, location_type)
+        self.validate()
         return self.valid_transitions, self.errors
 
     def _parse_row(self, row, location_type):
@@ -99,5 +102,24 @@ class Parser(object):
             self.valid_transitions[location_type][operation][new_site_code] = old_site_code
         elif operation == EXTRACT_OPERATION:
             self.valid_transitions[location_type][operation][new_site_code] = old_site_code
+        self.site_codes_to_be_archived.append(old_site_code)
         self.requested_transitions[old_site_code] = operation
         self.requested_transitions[new_site_code] = operation
+
+    def validate(self):
+        if self.site_codes_to_be_archived:
+            self._validate_descendants_archived()
+
+    def _validate_descendants_archived(self):
+        """
+        ensure all locations getting archived, also have their descendants getting archived
+        """
+        site_codes_to_be_archived = set(self.site_codes_to_be_archived)
+        locations_to_be_archived = SQLLocation.active_objects.filter(site_code__in=self.site_codes_to_be_archived)
+        for location in locations_to_be_archived:
+            descendants_sites_codes = location.get_descendants().values_list('site_code', flat=True)
+            missing_site_codes = set(descendants_sites_codes) - site_codes_to_be_archived
+            if missing_site_codes:
+                self.errors.append("Location %s is getting archived but the following descendants are not %s" % (
+                    location.location_id, ",".join(missing_site_codes)
+                ))
