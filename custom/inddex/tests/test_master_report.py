@@ -181,9 +181,6 @@ class TestNewReport(TestCase):
         self.assertEqual(food_names(expected), food_names(actual))
 
         columns_known_to_fail = {  # TODO address these columns
-            'nsr_conv_method_code_post_cooking',
-            'nsr_conv_option_code_post_cooking',
-            'nsr_conv_option_desc_post_cooking',
             'already_reported_food',
             'food_status',
             'is_ingredient',
@@ -197,8 +194,6 @@ class TestNewReport(TestCase):
             'already_reported_recipe_name',
             'ingr_fraction',
             'ingr_recipe_total_grams_consumed',
-            'nsr_conv_method_desc_post_cooking',  # TODO this one should be added to the UCR
-            'nsr_consumed_cooked_fraction',  # TODO this one should be added to the UCR
             'recipe_num_ingredients',
             'conv_factor_food_code',
             'conv_factor_base_term_food_code',

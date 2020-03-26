@@ -758,8 +758,17 @@
                 "column_id": "nsr_conv_method_code_post_cooking",
                 "datatype": "string",
                 "expression": {
-                    "type": "named",
-                    "name": "nsr_conv_method_post_cooking"
+                    "type": "property_name",
+                    "property_name": "nsr_conv_method_code_post_cooking"
+                }
+            },
+            {
+                "type": "expression",
+                "column_id": "nsr_conv_method_desc_post_cooking",
+                "datatype": "string",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "nsr_conv_method_desc_post_cooking"
                 }
             },
             {
@@ -767,8 +776,8 @@
                 "column_id": "nsr_conv_option_code_post_cooking",
                 "datatype": "string",
                 "expression": {
-                    "type": "named",
-                    "name": "nsr_conv_option_post_cooking"
+                    "type": "property_name",
+                    "property_name": "nsr_conv_option_code_post_cooking"
                 }
             },
             {
@@ -776,8 +785,8 @@
                 "column_id": "nsr_conv_option_desc_post_cooking",
                 "datatype": "string",
                 "expression": {
-                    "type": "named",
-                    "name": "nsr_conv_option_desc_post_cooking"
+                    "type": "property_name",
+                    "property_name": "nsr_conv_option_desc_post_cooking"
                 }
             },
             {
@@ -785,8 +794,17 @@
                 "column_id": "nsr_measurement_amount_post_cooking",
                 "datatype": "string",
                 "expression": {
-                    "type": "named",
-                    "name": "nsr_measurement_amount_post_cooking"
+                    "type": "property_name",
+                    "property_name": "nsr_measurement_amount_post_cooking"
+                }
+            },
+            {
+                "type": "expression",
+                "column_id": "nsr_consumed_cooked_fraction",
+                "datatype": "string",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "nsr_consumed_cooked_fraction"
                 }
             },
             {
@@ -801,74 +819,6 @@
         ],
         "base_item_expression": {},
         "named_expressions": {
-            "nsr_conv_method_post_cooking": {
-                "type": "conditional",
-                "test": {
-                    "type": "boolean_expression",
-                    "expression": {
-                        "type": "property_name",
-                        "property_name": "food_type"
-                    },
-                    "operator": "eq",
-                    "property_value": "non_std_recipe"
-                },
-                "expression_if_true": {
-                    "type": "property_name",
-                    "property_name": "recipe_conv_method_post_cooking"
-                },
-                "expression_if_false": ""
-            },
-            "nsr_conv_option_post_cooking": {
-                "type": "conditional",
-                "test": {
-                    "type": "boolean_expression",
-                    "expression": {
-                        "type": "property_name",
-                        "property_name": "food_type"
-                    },
-                    "operator": "eq",
-                    "property_value": "non_std_recipe"
-                },
-                "expression_if_true": {
-                    "type": "property_name",
-                    "property_name": "recipe_conv_option_post_cooking"
-                },
-                "expression_if_false": ""
-            },
-            "nsr_conv_option_desc_post_cooking": {
-                "type": "conditional",
-                "test": {
-                    "type": "boolean_expression",
-                    "expression": {
-                        "type": "property_name",
-                        "property_name": "food_type"
-                    },
-                    "operator": "eq",
-                    "property_value": "non_std_recipe"
-                },
-                "expression_if_true": {
-                    "type": "property_name",
-                    "property_name": "recipe_conv_option_post_cooking"
-                },
-                "expression_if_false": ""
-            },
-            "nsr_measurement_amount_post_cooking": {
-                "type": "conditional",
-                "test": {
-                    "type": "boolean_expression",
-                    "expression": {
-                        "type": "property_name",
-                        "property_name": "food_type"
-                    },
-                    "operator": "eq",
-                    "property_value": "non_std_recipe"
-                },
-                "expression_if_true": {
-                    "type": "property_name",
-                    "property_name": "nsr_measurement_amount_post_cooking"
-                },
-                "expression_if_false": ""
-            },
             "nsr_same_conv_method_named": {
                 "type": "conditional",
                 "test": {
