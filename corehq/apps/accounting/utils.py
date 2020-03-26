@@ -56,6 +56,12 @@ def get_all_unpaid_saas_invoices():
     )
 
 
+def get_unpaid_saas_invoices_in_downgrade_daterange(today):
+    return get_all_unpaid_saas_invoices().filter(
+        date_due__lte=today - datetime.timedelta(days=1)
+    ).order_by('date_due').select_related('subscription__subscriber')
+
+
 def fmt_feature_rate_dict(feature, feature_rate=None):
     """
     This will be turned into a JSON representation of this Feature and its FeatureRate
