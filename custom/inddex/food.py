@@ -200,6 +200,7 @@ class RecipeIngredientRow(FoodRow):
         super().__init__(ingredient.ingr_code, ucr_row, fixtures)
 
         self.recipe_name = ucr_row['recipe_name']
+        self.recipe_case_id = ucr_row['doc_id']
         self.ingr_recipe_code = ingredient.recipe_code
         food_data = self.fixtures.foods[self.food_code]
         for indicator in INDICATORS:

@@ -181,7 +181,6 @@ class TestNewReport(TestCase):
         self.assertEqual(food_names(expected), food_names(actual))
 
         columns_known_to_fail = {  # TODO address these columns
-            'recipe_case_id',
             'base_term_food_code',
             'fao_who_gift_food_group_code',
             'fao_who_gift_food_group_description',
@@ -224,7 +223,7 @@ class TestNewReport(TestCase):
                                    for c in accessor.get_cases(case_ids)}
 
         def substitute_real_ids(row):
-            for id_col in ['recall_case_id', 'caseid', 'already_reported_food_case_id']:
+            for id_col in ['recall_case_id', 'caseid', 'already_reported_food_case_id', 'recipe_case_id']:
                 if row[id_col]:
                     row[id_col] = case_ids_by_external_id[row[id_col]]
             return row
