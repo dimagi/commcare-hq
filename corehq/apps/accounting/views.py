@@ -4,6 +4,7 @@ from datetime import date
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.models import User
+from django.core.exceptions import ObjectDoesNotExist
 from django.core.files.base import ContentFile
 from django.core.paginator import Paginator
 from django.db.models import Sum
