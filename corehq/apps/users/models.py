@@ -2661,7 +2661,7 @@ class SQLInvitation(SyncSQLToCouchMixin, models.Model):
 
     def send_activation_email(self, remaining_days=30):
         inviter = CouchUser.get_by_user_id(self.invited_by)
-        url = absolute_reverse("domain_accept_invitation", args=[self.domain, self.id])
+        url = absolute_reverse("domain_accept_invitation", args=[self.domain, self.uuid])
         params = {
             "domain": self.domain,
             "url": url,
