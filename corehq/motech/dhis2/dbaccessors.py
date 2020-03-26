@@ -2,12 +2,6 @@ from corehq.util.quickcache import quickcache
 
 
 @quickcache(['domain_name'])
-def get_dhis2_connection(domain_name):
-    from corehq.motech.dhis2.models import Dhis2Connection
-    return Dhis2Connection.objects.filter(domain=domain_name).first()
-
-
-@quickcache(['domain_name'])
 def get_dataset_maps(domain_name):
     from corehq.motech.dhis2.models import DataSetMap
 

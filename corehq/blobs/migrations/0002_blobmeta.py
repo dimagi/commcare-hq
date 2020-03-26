@@ -41,7 +41,7 @@ class Migration(migrations.Migration):
         ),
         migrations.AddIndex(
             model_name='blobmeta',
-            index=partial_index.PartialIndex(fields=['expires_on'], name='blobs_blobm_expires_64b92d_partial', unique=False, where='expires_on IS NOT NULL', where_postgresql=b'', where_sqlite=b''),  # noqa: E501
+            index=partial_index.PartialIndex(fields=['expires_on'], name='blobs_blobm_expires_64b92d_partial', unique=False, where='expires_on IS NOT NULL', where_postgresql='', where_sqlite=''),  # noqa: E501
         ),
         migrations.AlterIndexTogether(
             name='blobmeta',

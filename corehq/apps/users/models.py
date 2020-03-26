@@ -45,7 +45,7 @@ from dimagi.utils.couch.undo import DELETED_SUFFIX, DeleteRecord
 from dimagi.utils.dates import force_to_datetime
 from dimagi.utils.logging import log_signal_errors, notify_exception
 from dimagi.utils.modules import to_function
-from dimagi.utils.web import get_site_domain
+from dimagi.utils.web import get_static_url_prefix
 
 from corehq import toggles
 from corehq.apps.app_manager.const import USERCASE_TYPE
@@ -2666,7 +2666,7 @@ class SQLInvitation(SyncSQLToCouchMixin, models.Model):
             "url": url,
             'days': remaining_days,
             "inviter": inviter.formatted_name,
-            'url_prefix': '' if settings.STATIC_CDN else 'http://' + get_site_domain(),
+            'url_prefix': get_static_url_prefix(),
         }
 
         domain_request = DomainRequest.by_email(self.domain, self.email, is_approved=True)

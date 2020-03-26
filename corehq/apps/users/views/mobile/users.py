@@ -8,6 +8,7 @@ from braces.views import JsonRequestResponseMixin
 from couchdbkit import ResourceNotFound
 
 from corehq.apps.registration.forms import MobileWorkerAccountConfirmationForm
+from corehq.apps.users.account_confirmation import send_account_confirmation_if_necessary
 from corehq.util import get_document_or_404
 from couchexport.models import Format
 from couchexport.writers import Excel2007ExportWriter
@@ -643,10 +644,6 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
         return NewMobileWorkerForm(self.request.project, self.couch_user)
 
     @property
-    def _mobile_worker_form(self):
-        return self.new_mobile_worker_form
-
-    @property
     @memoized
     def custom_data(self):
         return CustomDataEditor(
@@ -676,7 +673,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
             'can_edit_billing_info': self.request.couch_user.is_domain_admin(self.domain),
             'strong_mobile_passwords': self.request.project.strong_mobile_passwords,
             'implement_password_obfuscation': settings.OBFUSCATE_PASSWORD_FOR_NIC_COMPLIANCE,
-            'bulk_download_url': bulk_download_url
+            'bulk_download_url': bulk_download_url,
         }
 
     @property
@@ -738,12 +735,13 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
 
         self.request.POST = form_data
 
-        is_valid = lambda: self._mobile_worker_form.is_valid() and self.custom_data.is_valid()
+        is_valid = lambda: self.new_mobile_worker_form.is_valid() and self.custom_data.is_valid()
         if not is_valid():
             return {'error': _("Forms did not validate")}
 
         couch_user = self._build_commcare_user()
-
+        if self.new_mobile_worker_form.cleaned_data['send_account_confirmation_email']:
+            send_account_confirmation_if_necessary(couch_user)
         return {
             'success': True,
             'user_id': couch_user.userID,
@@ -753,17 +751,21 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
         username = self.new_mobile_worker_form.cleaned_data['username']
         password = self.new_mobile_worker_form.cleaned_data['new_password']
         first_name = self.new_mobile_worker_form.cleaned_data['first_name']
+        email = self.new_mobile_worker_form.cleaned_data['email']
         last_name = self.new_mobile_worker_form.cleaned_data['last_name']
         location_id = self.new_mobile_worker_form.cleaned_data['location_id']
+        is_account_confirmed = not self.new_mobile_worker_form.cleaned_data['force_account_confirmation']
 
         return CommCareUser.create(
             self.domain,
             username,
             password,
+            email=email,
             device_id="Generated from HQ",
             first_name=first_name,
             last_name=last_name,
             user_data=self.custom_data.get_data_to_save(),
+            is_account_confirmed=is_account_confirmed,
             location=SQLLocation.objects.get(location_id=location_id) if location_id else None,
         )
 
@@ -785,6 +787,9 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
                 'first_name': user_data.get('first_name'),
                 'last_name': user_data.get('last_name'),
                 'location_id': user_data.get('location_id'),
+                'email': user_data.get('email'),
+                'force_account_confirmation': user_data.get('force_account_confirmation'),
+                'send_account_confirmation_email': user_data.get('send_account_confirmation_email'),
                 'domain': self.domain,
             }
             for k, v in user_data.get('custom_fields', {}).items():
@@ -1267,10 +1272,15 @@ class CommCareUsersLookup(BaseManageCommCareUserView, UsernameUploadMixin):
         if not usernames:
             return self.get(request, *args, **kwargs)
 
-        known_usernames = {doc['username'] for doc in get_user_docs_by_username(usernames)}
+        docs_by_username = {doc['username']: doc for doc in get_user_docs_by_username(usernames)}
         rows = []
         for username in usernames:
-            rows.append([raw_username(username), _("yes") if username in known_usernames else _("no")])
+            row = [raw_username(username)]
+            if username in docs_by_username:
+                row.extend([_("yes"), docs_by_username[username].get("is_active")])
+            else:
+                row.extend([_("no"), ""])
+            rows.append(row)
 
         response = HttpResponse(content_type=Format.from_format('xlsx').mimetype)
         response['Content-Disposition'] = f'attachment; filename="{self.domain} users.xlsx"'
@@ -1280,7 +1290,7 @@ class CommCareUsersLookup(BaseManageCommCareUserView, UsernameUploadMixin):
     def _excel_data(self, rows):
         outfile = io.BytesIO()
         tab_name = "users"
-        header_table = [(tab_name, [(_("username"), _("exists"))])]
+        header_table = [(tab_name, [(_("username"), _("exists"), _("is_active"))])]
         writer = Excel2007ExportWriter()
         writer.open(header_table=header_table, file=outfile)
         writer.write([(tab_name, rows)])
@@ -1425,6 +1435,7 @@ class CommCareUserConfirmAccountView(TemplateView, DomainViewMixin):
         else:
             return MobileWorkerAccountConfirmationForm(initial={
                 'username': self.user.raw_username,
+                'full_name': self.user.full_name,
                 'email': self.user.email,
             })
 
@@ -1438,9 +1449,14 @@ class CommCareUserConfirmAccountView(TemplateView, DomainViewMixin):
         return context
 
     def post(self, request, *args, **kwargs):
-        if self.form.is_valid():
-            # todo set email and name too
-            self.user.confirm_account(password=self.form.cleaned_data['password'])
+        form = self.form
+        if form.is_valid():
+            user = self.user
+            user.email = form.cleaned_data['email']
+            full_name = form.cleaned_data['full_name']
+            user.first_name = full_name[0]
+            user.last_name = full_name[1]
+            user.confirm_account(password=self.form.cleaned_data['password'])
             messages.success(request, _(
                 f'You have successfully confirmed the {self.user.raw_username} account. '
                 'You can now login'

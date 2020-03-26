@@ -45,7 +45,7 @@ class process_pillow_changes(ContextDecorator):
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         for offsets, pillow in zip(self.offsets, self._pillows):
-            pillow.process_changes(since=offsets)
+            pillow.process_changes(since=offsets, forever=False)
 
 
 class real_pillow_settings(ContextDecorator):

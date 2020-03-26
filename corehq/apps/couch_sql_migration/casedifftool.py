@@ -249,6 +249,8 @@ def init_worker(domain, *args):
     clean_break = False
     reset_django_db_connections()
     reset_couchdb_connections()
+    reset_blobdb_connections()
+    reset_redis_connections()
     signal.signal(signal.SIGINT, on_break)
     set_local_domain_sql_backend_override(domain)
     return global_diff_state(domain, *args)
@@ -274,4 +276,48 @@ def reset_couchdb_connections():
     dbs = CouchdbkitHandler.__shared_state__["_databases"]
     for db in dbs.values():
         server = db[0] if isinstance(db, tuple) else db.server
-        server.cloudant_client.r_session.close()
+        with safe_socket_close():
+            server.cloudant_client.r_session.close()
+
+
+def reset_blobdb_connections():
+    from corehq.blobs import _db, get_blob_db
+    if _db:
+        assert len(_db) == 1, _db
+        old_blob_db = get_blob_db()
+        _db.pop()
+        assert get_blob_db() is not old_blob_db
+
+
+def reset_redis_connections():
+    from django_redis.pool import ConnectionFactory
+    for pool in ConnectionFactory._pools.values():
+        pool.reset()
+
+
+@contextmanager
+def safe_socket_close():
+    from functools import partial
+    from gevent._socket3 import socket
+
+    def safe_cancel_wait(hub_cancel_wait, *args):
+        try:
+            hub_cancel_wait(*args)
+        except ValueError as err:
+            if str(err) != "operation on destroyed loop":
+                raise
+
+    def drop_events(self):
+        self.hub.cancel_wait = partial(safe_cancel_wait, self.hub.cancel_wait)
+        try:
+            return _drop_events(self)
+        finally:
+            del self.hub.cancel_wait
+            assert self.hub.cancel_wait, "unexpected method removal"
+
+    _drop_events = socket._drop_events
+    socket._drop_events = drop_events
+    try:
+        yield
+    finally:
+        socket._drop_events = _drop_events
