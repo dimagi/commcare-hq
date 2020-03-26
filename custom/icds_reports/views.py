@@ -2091,7 +2091,7 @@ class CasDataExport(View):
                         export_file = filter_cas_data_export(sync, location)
                     except InvalidLocationTypeException as e:
                         return JsonResponse({"message": e})
-                    with open(export_file, 'r') as csv_file:
+                    with open(export_file, 'rb') as csv_file:
                         blob_id = f'{data_type}-{location_id}-{selected_date}'
                         THREE_DAYS = 60 * 60 * 24 * 3
                         icds_file, new = IcdsFile.objects.get_or_create(blob_id=blob_id, data_type=f'mbt_{data_type}')
