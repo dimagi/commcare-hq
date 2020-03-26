@@ -46,12 +46,11 @@ from corehq.motech.repeater_helpers import (
     RepeaterResponse,
     get_relevant_case_updates_from_form_json,
 )
-from corehq.motech.repeaters.models import CaseRepeater, Repeater
+from corehq.motech.repeaters.models import CaseRepeater, Repeater, get_requests
 from corehq.motech.repeaters.repeater_generators import (
     FormRepeaterJsonPayloadGenerator,
 )
 from corehq.motech.repeaters.signals import create_repeat_records
-from corehq.motech.requests import Requests
 from corehq.motech.utils import pformat_json
 from corehq.motech.value_source import (
     CaseTriggerInfo,
@@ -132,18 +131,7 @@ class OpenmrsRepeater(CaseRepeater):
     def requests(self):
         # Used by atom_feed module and views that don't have a payload
         # associated with the request
-        return self.get_requests()
-
-    def get_requests(self, payload_id=None):
-        return Requests(
-            self.domain,
-            self.url,
-            self.username,
-            self.plaintext_password,
-            verify=self.verify,
-            notify_addresses=self.notify_addresses,
-            payload_id=payload_id,
-        )
+        return get_requests(self)
 
     @cached_property
     def first_user(self):
@@ -216,7 +204,7 @@ class OpenmrsRepeater(CaseRepeater):
             extra_fields=[conf["case_property"] for conf in value_source_configs if "case_property" in conf],
             form_question_values=get_form_question_values(payload),
         )
-        requests = self.get_requests(payload_id=repeat_record.payload_id)
+        requests = get_requests(self, repeat_record.payload_id)
         try:
             response = send_openmrs_data(
                 requests,

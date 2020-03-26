@@ -29,12 +29,16 @@ from corehq.motech.exceptions import ConfigurationError
 from corehq.motech.repeater_helpers import (
     get_relevant_case_updates_from_form_json,
 )
-from corehq.motech.repeaters.models import CaseRepeater, FormRepeater, Repeater
+from corehq.motech.repeaters.models import (
+    CaseRepeater,
+    FormRepeater,
+    Repeater,
+    get_requests,
+)
 from corehq.motech.repeaters.repeater_generators import (
     FormRepeaterJsonPayloadGenerator,
 )
 from corehq.motech.repeaters.signals import create_repeat_records
-from corehq.motech.requests import Requests
 from corehq.motech.value_source import get_form_question_values
 from corehq.toggles import DHIS2_INTEGRATION
 
@@ -135,7 +139,7 @@ class Dhis2EntityRepeater(CaseRepeater, Dhis2Instance):
                           if 'case_property' in c],
             form_question_values=get_form_question_values(payload),
         )
-        requests = get_requests(self)
+        requests = get_requests(self, repeat_record.payload_id)
         try:
             return send_dhis2_entities(requests, self, case_trigger_infos)
         except Exception:
@@ -202,7 +206,7 @@ class Dhis2Repeater(FormRepeater, Dhis2Instance):
         # Notify admins if API version is not supported
         self.get_api_version()
 
-        requests = get_requests(self)
+        requests = get_requests(self, repeat_record.payload_id)
         for form_config in self.dhis2_config.form_configs:
             if form_config.xmlns == payload['form']['@xmlns']:
                 try:
@@ -251,17 +255,6 @@ def fetch_metadata(requests):
     """
     response = requests.get('/api/metadata', raise_for_status=True)
     return response.json()
-
-
-def get_requests(repeater):
-    return Requests(
-        repeater.domain,
-        repeater.url,
-        repeater.username,
-        repeater.plaintext_password,
-        verify=repeater.verify,
-        notify_addresses=repeater.notify_addresses,
-    )
 
 
 def create_dhis2_event_repeat_records(sender, xform, **kwargs):
