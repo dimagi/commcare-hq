@@ -404,6 +404,33 @@
             },
             {
                 "type": "expression",
+                "column_id": "already_reported_recipe",
+                "datatype": "string",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "already_reported_recipe"
+                }
+            },
+            {
+                "type": "expression",
+                "column_id": "already_reported_recipe_case_id",
+                "datatype": "string",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "already_reported_recipe_case_id"
+                }
+            },
+            {
+                "type": "expression",
+                "column_id": "already_reported_recipe_name",
+                "datatype": "string",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "already_reported_recipe_name"
+                }
+            },
+            {
+                "type": "expression",
                 "column_id": "is_ingredient",
                 "datatype": "string",
                 "expression": {
