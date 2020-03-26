@@ -2,11 +2,9 @@ import datetime
 import json
 import re
 
-from captcha.fields import CaptchaField
 from django import forms
 from django.conf import settings
 from django.contrib.auth.forms import SetPasswordForm
-from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.core.validators import EmailValidator, validate_email
 from django.forms.widgets import PasswordInput
@@ -26,13 +24,14 @@ from crispy_forms.layout import Fieldset, Layout, Submit
 from django_countries.data import COUNTRIES
 from memoized import memoized
 
+from corehq.toggles import TWO_STAGE_USER_PROVISIONING
 from dimagi.utils.django.fields import TrimmedCharField
 
 from corehq import toggles
 from corehq.apps.analytics.tasks import set_analytics_opt_out
 from corehq.apps.app_manager.models import validate_lang
 from corehq.apps.custom_data_fields.edit_entity import CustomDataEditor
-from corehq.apps.domain.forms import EditBillingAccountInfoForm, clean_password, NoAutocompleteMixin
+from corehq.apps.domain.forms import EditBillingAccountInfoForm, clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.crispy import HQModalFormHelper
@@ -530,6 +529,33 @@ class NewMobileWorkerForm(forms.Form):
         label=ugettext_noop("Location"),
         required=False,
     )
+    force_account_confirmation = forms.BooleanField(
+        label=ugettext_noop("Require Account Confirmation?"),
+        help_text=ugettext_noop(
+            "The user's account will not be active until "
+            "they have confirmed their email and set a password."
+        ),
+        required=False,
+    )
+    email = forms.EmailField(
+        label=ugettext_noop("Email"),
+        required=False,
+        help_text="""
+            <span data-bind="visible: $root.emailStatus() !== $root.STATUS.NONE">
+                <i class="fa fa-exclamation-triangle"
+                   data-bind="visible: $root.emailStatus() === $root.STATUS.ERROR"></i>
+                <!-- ko text: $root.emailStatusMessage --><!-- /ko -->
+            </span>
+        """
+    )
+    send_account_confirmation_email = forms.BooleanField(
+        label=ugettext_noop("Send Account Confirmation Email Now?"),
+        help_text=ugettext_noop(
+            "The user will be sent their account confirmation email now. "
+            "Otherwise it must be sent manually at a later time."
+        ),
+        required=False,
+    )
     new_password = forms.CharField(
         widget=forms.PasswordInput(),
         required=True,
@@ -539,7 +565,7 @@ class NewMobileWorkerForm(forms.Form):
 
     def __init__(self, project, request_user, *args, **kwargs):
         super(NewMobileWorkerForm, self).__init__(*args, **kwargs)
-        email_string = "@{}.commcarehq.org".format(project.name)
+        email_string = "@{}.{}".format(project.name, settings.HQ_ACCOUNT_ROOT)
         max_chars_username = 80 - len(email_string)
         self.project = project
         self.domain = self.project.name
@@ -574,6 +600,45 @@ class NewMobileWorkerForm(forms.Form):
                 data_bind='value: location_id',
             )
 
+        self.two_stage_provisioning_enabled = TWO_STAGE_USER_PROVISIONING.enabled(self.domain)
+        if self.two_stage_provisioning_enabled:
+            confirm_account_field = crispy.Field(
+                'force_account_confirmation',
+                data_bind='checked: force_account_confirmation',
+            )
+            email_field = crispy.Div(
+                crispy.Field(
+                    'email',
+                    data_bind="value: email, valueUpdate: 'keyup'",
+                ),
+                data_bind='''
+                    css: {
+                        'has-error': $root.emailStatus() === $root.STATUS.ERROR,
+                    },
+                '''
+            )
+            send_email_field = crispy.Field(
+                'send_account_confirmation_email',
+                data_bind='checked: send_account_confirmation_email, enable: sendConfirmationEmailEnabled',
+            )
+        else:
+            confirm_account_field = crispy.Hidden(
+                'force_account_confirmation',
+                '',
+                data_bind='value: force_account_confirmation',
+            )
+            email_field = crispy.Hidden(
+                'email',
+                '',
+                data_bind='value: email',
+            )
+            send_email_field = crispy.Hidden(
+                'send_account_confirmation_email',
+                '',
+                data_bind='value: send_account_confirmation_email',
+            )
+
+
         self.helper = HQModalFormHelper()
         self.helper.form_tag = False
         self.helper.layout = Layout(
@@ -603,12 +668,15 @@ class NewMobileWorkerForm(forms.Form):
                     data_bind='value: last_name',
                 ),
                 location_field,
+                confirm_account_field,
+                email_field,
+                send_email_field,
                 crispy.Div(
                     hqcrispy.B3MultiField(
                         _("Password"),
                         InlineField(
                             'new_password',
-                            data_bind="value: password, valueUpdate: 'input'",
+                            data_bind="value: password, valueUpdate: 'input', enable: passwordEnabled",
                         ),
                         crispy.HTML('''
                             <p class="help-block" data-bind="if: $root.isSuggestedPassword">
@@ -632,6 +700,9 @@ class NewMobileWorkerForm(forms.Form):
                                         <i class="fa fa-warning"></i> {rules}
                                     <!-- /ko -->
                                 <!-- /ko -->
+                                <!-- ko if: $root.passwordStatus() === $root.STATUS.DISABLED -->
+                                    <i class="fa fa-warning"></i> {disabled}
+                                <!-- /ko -->
                             </p>
                         '''.format(
                             suggested=_("This password is automatically generated. Please copy it or create "
@@ -641,6 +712,8 @@ class NewMobileWorkerForm(forms.Form):
                             weak=_("Your password is too weak! Try adding numbers or symbols!"),
                             rules=_("Password Requirements: 1 special character, 1 number, 1 capital letter, "
                                 "minimum length of 8 characters."),
+                            disabled=_("Setting a password is disabled. "
+                                       "The user will set their own password on confirming their account email."),
                         )),
                         required=True,
                     ),

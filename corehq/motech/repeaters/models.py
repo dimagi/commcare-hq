@@ -170,14 +170,16 @@ class Repeater(QuickCachedDocumentMixin, Document):
     base_doc = 'Repeater'
 
     domain = StringProperty()
+
+    # TODO: (2020-03-06) Migrate to ConnectionSettings
     url = StringProperty()
     format = StringProperty()
 
     auth_type = StringProperty(choices=(BASIC_AUTH, DIGEST_AUTH, OAUTH1), required=False)
     username = StringProperty()
-    password = StringProperty()
-    skip_cert_verify = BooleanProperty(default=False)
-    notify_addresses_str = StringProperty(default="")
+    password = StringProperty()  # See also plaintext_password()
+    skip_cert_verify = BooleanProperty(default=False)  # See also verify()
+    notify_addresses_str = StringProperty(default="")  # See also notify_addresses()
 
     friendly_name = _("Data")
     paused = BooleanProperty(default=False)

@@ -580,14 +580,13 @@ def jserror(request):
 
 @method_decorator([login_required], name='dispatch')
 class BugReportView(View):
-
     @property
     def recipients(self):
         """
             Returns:
                 list
         """
-        return settings.BUG_REPORT_RECIPIENTS
+        return [settings.SUPPORT_EMAIL]
 
     def post(self, req, *args, **kwargs):
         report = dict([(key, req.POST.get(key, '')) for key in (
@@ -710,7 +709,7 @@ class BugReportView(View):
         if re.search(r'@dimagi\.com$', report['username']) and not is_icds_env:
             email.from_email = report['username']
         else:
-            email.from_email = settings.CCHQ_BUG_REPORT_EMAIL
+            email.from_email = settings.SUPPORT_EMAIL
 
         email.send(fail_silently=False)
 
