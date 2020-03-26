@@ -78,7 +78,6 @@ class LocationReassignmentView(BaseDomainView):
 
     def _generate_response(self, transitions):
         response_file = Dumper().dump(transitions)
-        response_file.seek(0)
         response = HttpResponse(response_file, content_type="text/html; charset=utf-8")
         filename = '%s Location Reassignment Expected' % self.domain
         response['Content-Disposition'] = safe_filename_header(filename, 'xlsx')
@@ -96,7 +95,6 @@ def download_location_reassignment_template(request, domain):
         return HttpResponseRedirect(reverse(LocationReassignmentView.urlname, args=[domain]))
 
     response_file = Download(location_id).dump()
-    response_file.seek(0)
     response = HttpResponse(response_file, content_type="text/html; charset=utf-8")
     filename = '%s Location Reassignment Request Template' % domain
     response['Content-Disposition'] = safe_filename_header(filename, 'xlsx')

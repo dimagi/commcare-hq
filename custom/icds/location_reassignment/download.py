@@ -31,6 +31,7 @@ class Download(object):
         wb = self._create_workbook()
         stream = io.BytesIO()
         wb.save(stream)
+        stream.seek(0)
         return stream
 
     def _init_location_details(self):
