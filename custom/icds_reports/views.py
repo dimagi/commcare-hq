@@ -2083,18 +2083,23 @@ class CasDataExport(View):
         if not sync:
             return JsonResponse({"message": "Sorry, the export you requested does not exist."})
         else:
-            export_file = ''
             if state != location:
-                try:
-                    export_file = filter_cas_data_export(sync, location)
-                except InvalidLocationTypeException as e:
-                    return JsonResponse({"message": e})
+                # check for cached version
+                sync, blob_id = get_cas_data_blob_file(data_type, location_id, selected_date)
+                if not sync:
+                    try:
+                        export_file = filter_cas_data_export(sync, location)
+                    except InvalidLocationTypeException as e:
+                        return JsonResponse({"message": e})
+                    with open(export_file, 'r') as csv_file:
+                        icds_file, new = IcdsFile.objects.get_or_create(blob_id=blob_id, data_type=f'mbt_{data_type}')
+                        THREE_DAYS = 60 * 60 * 24 * 3
+                        icds_file.store_file_in_blobdb(csv_file, expired=THREE_DAYS)
             params = dict(
                 indicator=data_type,
                 location=location_id,
                 month=month,
-                year=year,
-                export_file=export_file
+                year=year
             )
             return JsonResponse(
                 {
@@ -2113,20 +2118,15 @@ class CasDataExport(View):
         month = int(request.GET.get('month', None))
         year = int(request.GET.get('year', None))
         selected_date = date(year, month, 1).strftime('%Y-%m-%d')
-        export_file = request.GET.get('export_file', None)
 
         if location_id and not user_can_access_location_id(
                 self.kwargs['domain'], request.couch_user, location_id
         ):
             return HttpResponse(status_code=403)
-        if not export_file:
-            sync, zip_name = get_cas_data_blob_file(data_type, location_id, selected_date)
-            data = sync.get_file_from_blobdb()
-        else:
-            data = open(export_file, 'rb')
-            zip_name = f'{data_type}-{location_id}-{selected_date}'
+        sync, csv_name = get_cas_data_blob_file(data_type, location_id, selected_date)
+        data = sync.get_file_from_blobdb()
         try:
-            return export_response(data, 'unzipped-csv', zip_name)
+            return export_response(data, 'unzipped-csv', csv_name)
         except NotFound:
             raise Http404
 
