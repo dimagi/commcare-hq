@@ -129,6 +129,7 @@
             ) as cases_person_adolescent_girls_15_18,
             sum(
                 CASE WHEN %(month_end_15yr)s > dob AND %(month_start_18yr)s <= dob AND sex = 'F'
+                    AND migration_status IS DISTINCT FROM 1
                 THEN 1 ELSE 0 END
             ) as cases_person_adolescent_girls_15_18_all,
             sum(
