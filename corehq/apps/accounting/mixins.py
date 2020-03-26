@@ -2,12 +2,12 @@ import itertools
 from datetime import date, timedelta
 
 from corehq.apps.accounting.models import CreditLine, Subscription
-from corehq.apps.accounting.tasks import (
-    is_subscription_eligible_for_downgrade_process,
-)
 from corehq.apps.accounting.utils import months_from_date
 from corehq.apps.accounting.utils.invoicing import (
     get_unpaid_invoices_over_threshold_by_domain,
+)
+from corehq.apps.accounting.utils.downgrade import (
+    is_subscription_eligible_for_downgrade_process,
 )
 from corehq.apps.users.decorators import get_permission_name
 from corehq.apps.users.models import Permissions

@@ -22,6 +22,9 @@ from dateutil.relativedelta import relativedelta
 from six.moves.urllib.parse import urlencode
 
 from corehq.apps.accounting.automated_reports import CreditsAutomatedReport
+from corehq.apps.accounting.utils.downgrade import (
+    is_subscription_eligible_for_downgrade_process,
+)
 from corehq.apps.accounting.utils.subscription import (
     assign_explicit_unpaid_subscription,
 )
@@ -692,15 +695,6 @@ def run_downgrade_process():
         subscription_on_invoice = oldest_unpaid_invoice.subscriptions.first()
         if is_subscription_eligible_for_downgrade_process(subscription_on_invoice):
             _apply_downgrade_process(oldest_unpaid_invoice, total, today)
-
-
-def is_subscription_eligible_for_downgrade_process(subscription):
-    return (
-        subscription.plan_version.plan.edition not in [
-            SoftwarePlanEdition.COMMUNITY,
-            SoftwarePlanEdition.PAUSED,
-        ] and not subscription.skip_auto_downgrade
-    )
 
 
 def _apply_downgrade_process(oldest_unpaid_invoice, total, today, subscription=None):
