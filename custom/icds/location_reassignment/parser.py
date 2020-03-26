@@ -52,7 +52,7 @@ class Parser(object):
 
     @cached_property
     def location_type_codes(self):
-        return [lt.code for lt in LocationType.objects.by_domain()]
+        return [lt.code for lt in LocationType.objects.by_domain(self.domain)]
 
     def parse(self):
         for worksheet in self.workbook.worksheets:
