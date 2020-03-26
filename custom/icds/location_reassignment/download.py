@@ -56,16 +56,20 @@ class Download(object):
 
     def _populate_assigned_users(self):
         # allot assign user details to each location
-        for username, assigned_location_ids in self._get_users():
-            if not isinstance(assigned_location_ids, list):
-                assigned_location_ids = [assigned_location_ids]
+        for username, assigned_location_ids in self._get_assigned_location_ids().items():
             for location_id in assigned_location_ids:
                 if location_id in self._location_details_by_location_id:
                     self._location_details_by_location_id[location_id]['assigned_users'].append(username)
 
-    def _get_users(self):
+    def _get_assigned_location_ids(self):
         location_ids = list(self._location_details_by_location_id.keys())
-        return UserES().location(location_ids).values_list('base_username', 'assigned_location_ids')
+        assigned_location_ids_per_username = {}
+        user_details = UserES().location(location_ids).values_list('base_username', 'assigned_location_ids')
+        for username, assigned_location_ids in user_details:
+            if not isinstance(assigned_location_ids, list):
+                assigned_location_ids = [assigned_location_ids]
+                assigned_location_ids_per_username[username] = assigned_location_ids
+        return assigned_location_ids_per_username
 
     def _create_workbook(self):
         wb = Workbook()
