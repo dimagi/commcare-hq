@@ -700,7 +700,6 @@ class ViewSoftwarePlanVersionView(AccountingSectionView):
         return reverse(self.urlname, args=self.args)
 
 
-
 class TriggerInvoiceView(AccountingSectionView, AsyncHandlerMixin):
     urlname = 'accounting_trigger_invoice'
     page_title = "Trigger Invoice"
