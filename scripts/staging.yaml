@@ -56,4 +56,5 @@ branches:
   #- jls/use-textinput # Jenny March 10
   - mk/location-reassignment-1 # MK March 25
   - cz/confirm-user-ui # Jenny March 25
+  - jls/app-status-cc-app-version-tag # Jenny March 25
 submodules: {}
