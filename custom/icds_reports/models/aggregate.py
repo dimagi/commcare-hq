@@ -25,6 +25,7 @@ from custom.icds_reports.const import (
     AGG_GOV_DASHBOARD_TABLE,
     AGG_SDR_TABLE,
     AGG_MIGRATION_TABLE,
+    BIHAR_API_DEMOGRAPHICS_TABLE,
     AGG_AVAILING_SERVICES_TABLE
 )
 from custom.icds_reports.utils.aggregation_helpers.distributed import (
@@ -59,6 +60,7 @@ from custom.icds_reports.utils.aggregation_helpers.distributed import (
     AggGovDashboardHelper,
     AggServiceDeliveryReportHelper,
     MigrationFormsAggregationDistributedHelper,
+    BiharApiDemographicsHelper,
     AvailingServiceFormsAggregationDistributedHelper
 )
 
@@ -1716,4 +1718,52 @@ class AggServiceDeliveryReport(models.Model, AggregateMixin):
                            'supervisor_id', 'awc_id')  # pkey
 
     _agg_helper_cls = AggServiceDeliveryReportHelper
+    _agg_atomic = False
+
+
+class BiharAPIDemographics(models.Model, AggregateMixin):
+    state_id = models.TextField(null=True)
+    district_id = models.TextField(null=True)
+    block_id = models.TextField(null=True)
+    supervisor_id = models.TextField(null=True)
+    awc_id = models.TextField(null=True)
+    month = models.DateField()
+    household_id = models.TextField(null=True)
+    household_name = models.TextField(null=True)
+    hh_reg_date = models.TextField(null=True)
+    hh_num = models.IntegerField(null=True)
+    hh_gps_location = models.TextField(null=True)
+    hh_caste = models.TextField(null=True)
+    hh_bpl_apl = models.TextField(null=True)
+    hh_minority = models.SmallIntegerField(null=True)
+    hh_religion = models.TextField(null=True)
+    hh_member_number = models.IntegerField(null=True)
+    person_id = models.TextField(primary_key=True)
+    person_name = models.TextField(null=True)
+    has_adhaar = models.SmallIntegerField(null=True)
+    bank_account_number = models.TextField(null=True)
+    ifsc_code = models.TextField(null=True)
+    age_at_reg = models.SmallIntegerField(null=True)
+    dob = models.DateField(null=True)
+    gender = models.TextField(null=True)
+    blood_group = models.TextField(null=True)
+    disabled = models.SmallIntegerField(null=True)
+    disability_type = models.TextField(null=True)
+    referral_status = models.TextField(null=True)
+    migration_status = models.SmallIntegerField(null=True)
+    resident = models.SmallIntegerField(null=True)
+    registered_status = models.SmallIntegerField(null=True)
+    rch_id = models.TextField(null=True)
+    mcts_id = models.TextField(null=True)
+    phone_number = models.TextField(null=True)
+    date_death = models.DateField(null=True)
+    site_death = models.TextField(null=True)
+    closed_on = models.DateField(null=True)
+    reason_closure = models.TextField(null=True)
+
+    class Meta(object):
+        db_table = BIHAR_API_DEMOGRAPHICS_TABLE
+        unique_together = ('month', 'state_id', 'district_id', 'block_id', 'supervisor_id', 'person_id')  # pkey
+
+    _agg_helper_cls = BiharApiDemographicsHelper
     _agg_atomic = False

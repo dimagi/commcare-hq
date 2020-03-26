@@ -135,6 +135,7 @@ HOUSEHOLD_TABLE_ID = 'static-household_cases'
 AWW_USER_TABLE_ID = 'static-commcare_user_cases'
 DAILY_FEEDING_TABLE_ID = 'static-daily_feeding_forms'
 AGG_SDR_TABLE = 'agg_service_delivery_report'
+BIHAR_API_DEMOGRAPHICS_TABLE = 'bihar_api_demographics'
 
 DASHBOARD_DOMAIN = 'icds-dashboard-qa' if settings.SERVER_ENVIRONMENT == 'india' else 'icds-cas'
 
