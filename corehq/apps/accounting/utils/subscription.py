@@ -1,3 +1,5 @@
+from django.db.models import Q
+
 from corehq.apps.accounting.models import (
     Subscription,
     SoftwarePlanEdition,
@@ -41,3 +43,23 @@ def assign_explicit_unpaid_subscription(domain_name, start_date, method, account
         service_type=SubscriptionType.PRODUCT,
         web_user=web_user,
     )
+
+
+def ensure_community_or_paused_subscription(domain_name, from_date, method, web_user=None):
+    if Subscription.visible_objects.filter(
+        Q(date_end__gt=from_date) | Q(date_end__isnull=True),
+        date_start__lte=from_date,
+        subscriber__domain=domain_name,
+    ).exists():
+        return
+
+    # if there are any subscriptions present that are not the community edition,
+    # then the ensured plan must be PAUSED
+    is_paused = Subscription.visible_objects.filter(
+        subscriber__domain=domain_name,
+    ).exclude(
+        plan_version__plan__edition=SoftwarePlanEdition.COMMUNITY
+    ).exists()
+
+    assign_explicit_unpaid_subscription(domain_name, from_date, method,
+                                        web_user=web_user, is_paused=is_paused)
