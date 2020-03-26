@@ -18,6 +18,7 @@ from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
 from corehq.pillows.xform import transform_xform_for_elasticsearch
 from corehq.util.elastic import reset_es_index
+from corehq.util.es import elasticsearch
 
 
 class TestStaleDataInESSQL(TestCase):
@@ -117,8 +118,7 @@ class TestStaleDataInESSQL(TestCase):
         result = submit_form_locally(form_xml, domain)
         return result.xform, result.cases
 
-    @classmethod
-    def _send_forms_to_es(cls, forms):
+    def _send_forms_to_es(self, forms):
         for form in forms:
 
             es_form = transform_xform_for_elasticsearch(
@@ -126,17 +126,39 @@ class TestStaleDataInESSQL(TestCase):
             )
             send_to_elasticsearch('forms', es_form)
 
-        cls.elasticsearch.indices.refresh(XFORM_INDEX_INFO.index)
+        self.elasticsearch.indices.refresh(XFORM_INDEX_INFO.index)
+        self.forms_to_delete_from_es.update(form.form_id for form in forms)
 
-    @classmethod
-    def _send_cases_to_es(cls, cases):
+    def _send_cases_to_es(self, cases):
         for case in cases:
             es_case = transform_case_for_elasticsearch(
                 CaseDocumentStore(case.domain, case.type).get_document(case.case_id)
             )
             send_to_elasticsearch('cases', es_case)
 
-        cls.elasticsearch.indices.refresh(CASE_INDEX_INFO.index)
+        self.elasticsearch.indices.refresh(CASE_INDEX_INFO.index)
+        self.cases_to_delete_from_es.update(case.case_id for case in cases)
+
+    @classmethod
+    def _delete_forms_from_es(cls, form_ids):
+        cls._delete_docs_from_es(form_ids, index_info=XFORM_INDEX_INFO)
+
+    @classmethod
+    def _delete_cases_from_es(cls, case_ids):
+        cls._delete_docs_from_es(case_ids, index_info=CASE_INDEX_INFO)
+
+    @classmethod
+    def _delete_docs_from_es(cls, doc_ids, index_info):
+        refresh = False
+        for doc_id in doc_ids:
+            try:
+                cls.elasticsearch.delete(index_info.index, index_info.type, doc_id)
+            except elasticsearch.NotFoundError:
+                pass
+            else:
+                refresh = True
+        if refresh:
+            cls.elasticsearch.indices.refresh(index_info.index)
 
     def _assert_in_sync(self, output):
         self.assertEqual(
@@ -157,16 +179,22 @@ class TestStaleDataInESSQL(TestCase):
             'project', is_active=True, use_sql_backend=cls.use_sql_backend)
         cls.project.save()
         cls.elasticsearch = get_es_new()
+        reset_es_index(XFORM_INDEX_INFO)
+        reset_es_index(CASE_INDEX_INFO)
 
     @classmethod
     def tearDownClass(cls):
         cls.project.delete()
 
+    def setUp(self):
+        self.forms_to_delete_from_es = set()
+        self.cases_to_delete_from_es = set()
+
     def tearDown(self):
         delete_all_xforms()
         delete_all_cases()
-        reset_es_index(XFORM_INDEX_INFO)
-        reset_es_index(CASE_INDEX_INFO)
+        self._delete_forms_from_es(self.forms_to_delete_from_es)
+        self._delete_cases_from_es(self.cases_to_delete_from_es)
 
 
 @method_decorator(skip("Not yet implemented"), 'test_form_missing_then_not')
