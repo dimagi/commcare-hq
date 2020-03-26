@@ -65,7 +65,8 @@ class LocationReassignmentView(BaseLocationView):
                 elif not update:
                     return self._generate_response(transitions)
                 else:
-                    # ToDo: process request async
+                    # ToDo: Make this async
+                    parser.process()
                     messages.success(request, _(
                         "Your request has been submitted. We will notify you via email once completed."))
             else:
