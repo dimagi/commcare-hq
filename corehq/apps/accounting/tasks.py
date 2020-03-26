@@ -22,6 +22,9 @@ from dateutil.relativedelta import relativedelta
 from six.moves.urllib.parse import urlencode
 
 from corehq.apps.accounting.automated_reports import CreditsAutomatedReport
+from corehq.apps.accounting.utils.subscription import (
+    assign_explicit_unpaid_subscription,
+)
 from couchexport.export import export_from_tables
 from couchexport.models import Format
 from dimagi.utils.couch.cache.cache_core import get_redis_client
@@ -694,41 +697,6 @@ def ensure_community_or_paused_subscription(domain_name, from_date, method, web_
 
     assign_explicit_unpaid_subscription(domain_name, from_date, method,
                                         web_user=web_user, is_paused=is_paused)
-
-
-def assign_explicit_unpaid_subscription(domain_name, start_date, method, account=None,
-                                        web_user=None, is_paused=False):
-    plan_edition = SoftwarePlanEdition.PAUSED if is_paused else SoftwarePlanEdition.COMMUNITY
-    future_subscriptions = Subscription.visible_objects.filter(
-        date_start__gt=start_date,
-        subscriber__domain=domain_name,
-    )
-    if future_subscriptions.exists():
-        end_date = future_subscriptions.earliest('date_start').date_start
-    else:
-        end_date = None
-
-    if account is None:
-        account = BillingAccount.get_or_create_account_by_domain(
-            domain_name,
-            created_by='assign_explicit_unpaid_subscription',
-            entry_point=EntryPoint.SELF_STARTED,
-        )[0]
-
-    return Subscription.new_domain_subscription(
-        account=account,
-        domain=domain_name,
-        plan_version=DefaultProductPlan.get_default_plan_version(
-            edition=plan_edition
-        ),
-        date_start=start_date,
-        date_end=end_date,
-        skip_invoicing_if_no_feature_charges=True,
-        adjustment_method=method,
-        internal_change=True,
-        service_type=SubscriptionType.PRODUCT,
-        web_user=web_user,
-    )
 
 
 @periodic_task(run_every=crontab(minute=0, hour=9), queue='background_queue', acks_late=True)
