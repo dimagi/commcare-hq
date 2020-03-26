@@ -2,7 +2,6 @@ hqDefine('locations/js/locations', [
     'jquery',
     'hqwebapp/js/initial_page_data',
     'locations/js/location_tree',
-    'locations/js/search',
 ], function (
     $,
     initialPageData,
