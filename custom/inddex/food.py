@@ -45,7 +45,7 @@ INDICATORS = [
     I('base_term_food_code'),
     I('food_type', IN_UCR, IN_FOOD_FIXTURE),
     I('include_in_analysis'),
-    I('food_status', IN_UCR),
+    I('food_status', IN_UCR, IS_RECALL_META),
     I('eating_time', IN_UCR, IS_RECALL_META),
     I('time_block', IN_UCR, IS_RECALL_META),
     I('fao_who_gift_food_group_code'),
