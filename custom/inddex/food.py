@@ -1,4 +1,7 @@
 from datetime import datetime
+
+from django.utils.functional import cached_property
+
 from .fixtures import FixtureAccessor
 
 MISSING = ''
@@ -42,7 +45,7 @@ INDICATORS = [
     I('recipe_name', IN_UCR),
     I('caseid'),
     I('reference_food_code'),
-    I('base_term_food_code'),
+    I('base_term_food_code', IN_UCR),
     I('food_type', IN_UCR, IN_FOOD_FIXTURE),
     I('include_in_analysis'),
     I('food_status', IN_UCR, IS_RECALL_META),
@@ -206,6 +209,9 @@ class RecipeIngredientRow(FoodRow):
         for indicator in INDICATORS:
             if indicator.in_food_fixture:
                 setattr(self, indicator.slug, getattr(food_data, indicator.slug))
+
+        base_food = self.fixtures.foods_by_name.get(self.food_base_term)
+        self.base_term_food_code = base_food.food_code if base_food else None
 
 
 class FoodData:

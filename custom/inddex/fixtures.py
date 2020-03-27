@@ -101,6 +101,10 @@ class FixtureAccessor:
         return foods
 
     @cached_property
+    def foods_by_name(self):
+        return {food.food_name: food for food in self.foods.values()}
+
+    @cached_property
     def food_compositions(self):
         foods = {}
         for item_dict in self._get_fixture_dicts('food_composition_table'):
