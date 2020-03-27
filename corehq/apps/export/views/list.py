@@ -939,6 +939,7 @@ class ODataFeedListHelper(ExportListHelper):
         return DownloadNewCaseExportView
 
 
+@location_safe
 @method_decorator(requires_privilege_with_fallback(ODATA_FEED), name='dispatch')
 class ODataFeedListView(BaseExportListView, ODataFeedListHelper):
     is_odata = True
