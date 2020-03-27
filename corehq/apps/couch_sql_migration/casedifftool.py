@@ -14,6 +14,7 @@ from corehq.form_processor.utils.general import set_local_domain_sql_backend_ove
 from corehq.util.log import with_progress_bar
 
 from .casediff import (
+    add_cases_missing_from_couch,
     diff_cases,
     get_couch_cases,
     global_diff_state,
@@ -182,13 +183,17 @@ class CaseDiffTool:
 
 
 def load_and_diff_cases(case_ids, log_cases=False):
-    couch_cases = {c.case_id: c.to_json()
-        for c in get_couch_cases(case_ids) if should_diff(c)}
+    couch_cases = get_couch_cases(case_ids)
+    cases_to_diff = {c.case_id: c.to_json() for c in couch_cases if should_diff(c)}
     if log_cases:
-        skipped = [id for id in case_ids if id not in couch_cases]
+        skipped = {c.case_id for c in couch_cases} - cases_to_diff.keys()
         if skipped:
             log.info("skipping cases modified since cutoff date: %s", skipped)
-    return diff_cases_with_retry(couch_cases, log_cases=log_cases)
+    data = diff_cases_with_retry(cases_to_diff, log_cases=log_cases)
+    if len(set(case_ids)) > len(couch_cases):
+        missing_ids = set(case_ids) - {c.case_id for c in couch_cases}
+        add_cases_missing_from_couch(data, missing_ids)
+    return data
 
 
 def _close_connections(err):

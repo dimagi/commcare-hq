@@ -113,17 +113,20 @@ CASE_DOC_TYPES = ['CommCareCase', 'CommCareCase-Deleted', ]
 UNPROCESSED_DOC_TYPES = list(all_known_formlike_doc_types() - {'XFormInstance'})
 
 
-def setup_logging(log_dir, slug, debug=False):
+def setup_logging(state_dir, slug, debug=False):
     if debug:
         assert log.level <= logging.DEBUG, log.level
         logging.root.setLevel(logging.DEBUG)
         for handler in logging.root.handlers:
             if handler.name in ["file", "console"]:
                 handler.setLevel(logging.DEBUG)
-    if not log_dir:
+    if not state_dir:
         return
+    log_dir = os.path.join(state_dir, "log")
+    if not os.path.exists(log_dir):
+        os.mkdir(log_dir)
     time = datetime.utcnow().strftime("%Y%m%d%H%M%S")
-    log_file = os.path.join(log_dir, f"couch2sql-form-case-{time}-{slug}.log")
+    log_file = os.path.join(log_dir, f"{time}-{slug}.log")
     formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
     handler = logging.FileHandler(log_file)
     handler.setFormatter(formatter)
@@ -389,6 +392,7 @@ class CouchSqlDomainMigrator:
             form = XFormInstance.get(form_id)
         except XFormNotFound:
             form = MissingFormLoader(self.domain).load_form(form_id, case_id)
+            log.warning("couch form missing, blob present: %s", form_id)
         except Exception:
             log.exception("Error migrating form %s", form_id)
             form = None
