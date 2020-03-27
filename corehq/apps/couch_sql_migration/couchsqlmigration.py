@@ -555,7 +555,7 @@ class CouchSqlDomainMigrator:
                 log.warning("unprocessed form %s referenced by case %s", form_id, case_id)
             return False
         sql_form = FormAccessorSQL.get_form(form_id)
-        result = self._get_case_stock_result(sql_form, couch_form)
+        result = self._apply_form_to_case(sql_form, couch_form)
         if not result:
             return False
         cases = [c for c in result.case_models if did_update(c)]
@@ -582,6 +582,17 @@ class CouchSqlDomainMigrator:
                 LedgerAccessorSQL.save_ledger_values(ledgers, result.stock_result)
                 saved = True
         return saved
+
+    def _apply_form_to_case(self, sql_form, couch_form):
+        if (sql_form.is_error and couch_form.problem
+                and couch_form.doc_type == "XFormInstance"):
+            self._convert_error_form_to_normal(sql_form)
+        return self._get_case_stock_result(sql_form, couch_form)
+
+    def _convert_error_form_to_normal(self, sql_form):
+        # Note: does not clear "problem" field
+        sql_form.state = XFormInstanceSQL.NORMAL
+        sql_form.save()
 
     def _check_for_migration_restrictions(self, domain_name):
         msgs = []

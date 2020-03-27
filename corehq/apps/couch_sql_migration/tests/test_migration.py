@@ -1337,6 +1337,22 @@ class MigrationTestCase(BaseMigrationTestCase):
         self.assertEqual(form.deprecated_form_id, "test-form")
         self.assertIsNone(form.problem)
 
+    def test_case_with_problem_form(self):
+        # form state=error, has problem, normal form in couch
+        # move error to Operation, set state to normal, rebuild case
+        self.submit_form(make_test_form("one", age=27))
+        two = self.submit_form(make_test_form("two", age=30))
+        two.problem = "Bad thing that happened"
+        two.save()
+        self._do_migration()
+        self._compare_diffs([
+            ('CommCareCase', Diff('diff', ['age'], old='30', new='27')),
+            ('CommCareCase', Diff('set_mismatch', ['xform_ids', '[*]'], old='two', new='')),
+        ])
+        clear_local_domain_sql_backend_override(self.domain_name)
+        self._do_migration(forms="missing")
+        self._compare_diffs()
+
     def test_missing_case(self):
         # This can happen when a form is edited, removing the last
         # remaining reference to a case. The case effectively becomes
