@@ -724,7 +724,7 @@ class UserInvitationView(object):
             logout(request)
             return HttpResponseRedirect(request.path)
 
-        invitation = SQLInvitation.objects.filter(uuid=uuid)
+        invitation = SQLInvitation.objects.filter(uuid=uuid).first()
         if not invitation:
             try:
                 invitation = SQLInvitation.objects.get(id=int(uuid))
