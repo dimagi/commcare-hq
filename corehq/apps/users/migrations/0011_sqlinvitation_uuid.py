@@ -25,10 +25,17 @@ class Migration(migrations.Migration):
             name='uuid',
             field=models.UUIDField(db_index=True, null=True)
         ),
-        migrations.RunPython(create_uuid),
+        migrations.RunPython(create_uuid,
+            reverse_code=migrations.RunPython.noop,
+            elidable=True),
+        migrations.AlterField(
+            model_name='sqlinvitation',
+            name='id',
+            field=models.AutoField(auto_created=True, serialize=False, verbose_name='ID'),
+        ),
         migrations.AlterField(
             model_name='sqlinvitation',
             name='uuid',
-            field=models.UUIDField(unique=True, db_index=True, default=uuid.uuid4)
+            field=models.UUIDField(db_index=True, default=uuid.uuid4, primary_key=True, serialize=False),
         )
     ]

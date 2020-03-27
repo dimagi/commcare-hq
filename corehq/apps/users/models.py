@@ -2616,6 +2616,7 @@ class DomainRequest(models.Model):
 
 
 class SQLInvitation(SyncSQLToCouchMixin, models.Model):
+    uuid = models.UUIDField(primary_key=True, db_index=True, default=uuid4)
     email = models.CharField(max_length=255, db_index=True)
     invited_by = models.CharField(max_length=126)           # couch id of a WebUser
     invited_on = models.DateTimeField()
@@ -2625,7 +2626,6 @@ class SQLInvitation(SyncSQLToCouchMixin, models.Model):
     program = models.CharField(max_length=126, null=True)   # couch id of a Program
     supply_point = models.CharField(max_length=126, null=True)  # couch id of a Location
     couch_id = models.CharField(max_length=126, null=True, db_index=True)
-    uuid = models.UUIDField(unique=True, db_index=True, default=uuid4)
 
     class Meta:
         db_table = "users_invitation"
