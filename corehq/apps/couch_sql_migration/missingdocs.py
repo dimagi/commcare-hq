@@ -113,7 +113,7 @@ class MissingIds:
 
     form_types = list(form_doc_types()) + ["HQSubmission", "XFormInstance-Deleted"]
     case_types = ['CommCareCase', 'CommCareCase-Deleted']
-    _doc_types = {
+    DOC_TYPES = {
         FORM: form_types,
         CASE: case_types,
     }
@@ -121,7 +121,7 @@ class MissingIds:
     def __attrs_post_init__(self):
         self.domain = self.statedb.domain
         self.counter = DocCounter(self.statedb)
-        self.doc_types = self._doc_types[self.entity]
+        self.doc_types = self.DOC_TYPES[self.entity]
         sql_params = self.sql_params[self.entity]
         self.sql = self.missing_docs_sql.format(**sql_params)
         self._count_keys = set()

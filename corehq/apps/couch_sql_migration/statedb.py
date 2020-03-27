@@ -426,8 +426,11 @@ class StateDB(DiffDB):
             assert kind is None, kind
             assert doc_ids is None, doc_ids
             for kind, doc_ids in by_kind.items():
-                for chunk in chunked(doc_ids, 500, list):
-                    yield from self.iter_doc_diffs(kind, chunk, _model=_model)
+                if not doc_ids:
+                    yield from self.iter_doc_diffs(kind, _model=_model)
+                else:
+                    for chunk in chunked(doc_ids, 500, list):
+                        yield from self.iter_doc_diffs(kind, chunk, _model=_model)
             return
         with self.session() as session:
             query = session.query(_model)
@@ -460,6 +463,7 @@ class StateDB(DiffDB):
         - total: number of items counted with `increment_counter`.
         - missing: count of ids found in Couch but not in SQL.
         - diffs: count of docs with diffs.
+        - changes: count of docs with expected changes.
         """
         with self.session() as session:
             totals = {dc.kind: dc.value for dc in session.query(DocCount)}

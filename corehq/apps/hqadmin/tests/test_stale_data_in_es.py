@@ -1,10 +1,9 @@
 import uuid
 from io import StringIO
-from unittest import skip
 
+import mock
 from django.core.management import call_command
 from django.test import TestCase
-from django.utils.decorators import method_decorator
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
@@ -12,7 +11,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.elastic import get_es_new, send_to_elasticsearch
 from corehq.form_processor.document_stores import FormDocumentStore, CaseDocumentStore
-from corehq.form_processor.utils.xform import FormSubmissionBuilder
+from corehq.form_processor.utils.xform import FormSubmissionBuilder, TestFormMetadata
 from corehq.pillows.case import transform_case_for_elasticsearch
 from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
@@ -24,7 +23,9 @@ from corehq.util.es import elasticsearch
 class TestStaleDataInESSQL(TestCase):
 
     use_sql_backend = True
+    project_name = 'sql-project'
     case_type = 'patient'
+    form_xmlns = None
 
     def test_no_output(self):
         self._assert_in_sync(self._stale_data_in_es('form'))
@@ -94,7 +95,8 @@ class TestStaleDataInESSQL(TestCase):
     @staticmethod
     def _stale_data_in_es(*args, **kwargs):
         f = StringIO()
-        call_command('stale_data_in_es', *args, stdout=f, **kwargs)
+        with mock.patch('sys.stdout', f):
+            call_command('stale_data_in_es', *args, stdout=f, **kwargs)
         return f.getvalue()
 
     def _submit_form(self, domain, new_cases=0, update_cases=()):
@@ -114,7 +116,11 @@ class TestStaleDataInESSQL(TestCase):
             for case in update_cases
         ]
 
-        form_xml = FormSubmissionBuilder(form_id=str(uuid.uuid4()), case_blocks=case_blocks).as_xml_string()
+        form_xml = FormSubmissionBuilder(
+            form_id=str(uuid.uuid4()),
+            case_blocks=case_blocks,
+            metadata=TestFormMetadata(xmlns=self.form_xmlns) if self.form_xmlns else None
+        ).as_xml_string()
         result = submit_form_locally(form_xml, domain)
         return result.xform, result.cases
 
@@ -176,7 +182,7 @@ class TestStaleDataInESSQL(TestCase):
     @classmethod
     def setUpClass(cls):
         cls.project = Domain.get_or_create_with_name(
-            'project', is_active=True, use_sql_backend=cls.use_sql_backend)
+            cls.project_name, is_active=True, use_sql_backend=cls.use_sql_backend)
         cls.project.save()
         cls.elasticsearch = get_es_new()
         reset_es_index(XFORM_INDEX_INFO)
@@ -197,10 +203,9 @@ class TestStaleDataInESSQL(TestCase):
         self._delete_cases_from_es(self.cases_to_delete_from_es)
 
 
-@method_decorator(skip("Not yet implemented"), 'test_form_missing_then_not')
-@method_decorator(skip("Not yet implemented"), 'test_form_missing_then_not_domain_specific')
-@method_decorator(skip("Not yet implemented"), 'test_case_missing_then_not')
 class TestStaleDataInESCouch(TestStaleDataInESSQL):
 
     use_sql_backend = False
+    project_name = 'couch-project'
     case_type = 'COUCH_TYPE_NOT_SUPPORTED'
+    form_xmlns = 'COUCH_XMLNS_NOT_SUPPORTED'
