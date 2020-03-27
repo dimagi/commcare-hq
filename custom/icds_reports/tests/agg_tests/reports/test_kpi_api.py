@@ -9,6 +9,26 @@ class KPIAPITest(TestCase):
     def test_view_content(self):
         data = KPIAPIView.objects.filter(
             month=date(2017, 5, 1)
+        ).values(
+            "state_id",
+            "state_name",
+            "state_site_code",
+            "district_id",
+            "district_name",
+            "district_site_code",
+            "aggregation_level",
+            "district_map_location_name",
+            "state_map_location_name",
+            "month",
+            "cbe_conducted",
+            "vhnd_conducted",
+            "num_launched_awcs",
+            "wer_weighed",
+            "wer_eligible",
+            "bf_at_birth",
+            "born_in_month",
+            "cf_initiation_eligible",
+            "cf_initiation_in_month"
         )
         first_result = data[0]
         self.assertDictEqual(
