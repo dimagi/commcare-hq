@@ -554,7 +554,7 @@ def app_exchange(request, domain):
     for obj in ExchangeApplication.objects.all():
         results = get_all_built_app_results(obj.domain, app_id=obj.app_id)
         results = [r['value'] for r in results if r['value']['is_released']]
-        if not len(results):
+        if not results:
             continue
         results.reverse()
         first = results[0]
