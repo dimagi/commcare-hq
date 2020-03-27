@@ -21,6 +21,11 @@ from corehq.apps.accounting.utils import (
 from corehq.util.view_utils import absolute_reverse
 
 
+DAYS_PAST_DUE_TO_TRIGGER_DOWNGRADE = 61
+DAYS_PAST_DUE_TO_TRIGGER_DOWNGRADE_WARNING = 58
+DAYS_PAST_DUE_TO_TRIGGER_OVERDUE_NOTICE = 30
+
+
 def downgrade_eligible_domains(only_downgrade_domain=None):
     today = datetime.date.today()
 
@@ -148,11 +153,11 @@ def _apply_downgrade_process(oldest_unpaid_invoice, total, today, subscription=N
         })
 
     days_ago = (today - oldest_unpaid_invoice.date_due).days
-    if days_ago >= 61:
+    if days_ago >= DAYS_PAST_DUE_TO_TRIGGER_DOWNGRADE:
         if not oldest_unpaid_invoice.is_customer_invoice:  # We do not automatically downgrade customer invoices
             _downgrade_domain(subscription)
             _send_downgrade_notice(oldest_unpaid_invoice, context)
-    elif days_ago == 58:
+    elif days_ago == DAYS_PAST_DUE_TO_TRIGGER_DOWNGRADE_WARNING:
         _send_downgrade_warning(oldest_unpaid_invoice, context)
-    elif days_ago == 30:
+    elif days_ago == DAYS_PAST_DUE_TO_TRIGGER_OVERDUE_NOTICE:
         _send_overdue_notice(oldest_unpaid_invoice, context)
