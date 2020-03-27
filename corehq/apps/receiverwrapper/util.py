@@ -90,7 +90,7 @@ def get_profile_property_from_build_id(domain, build_id, property_name):
     elif build.domain != domain:
         return None
     else:
-        return build.profile.get('custom_properties', {}).get(property_name)
+        return build.profile.get('custom_properties', {}).get(property_name, 'something')
 
 
 def get_version_from_appversion_text(appversion_text):
