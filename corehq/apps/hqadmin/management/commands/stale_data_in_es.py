@@ -126,67 +126,67 @@ DATA_MODEL_BACKENDS = {
 class CaseBackend:
     @staticmethod
     def run(run_config):
-        rows = CaseBackend._get_server_modified_on_for_domain(run_config)
-        for case_id, case_type, es_date, primary_date, domain in rows:
-            yield DataRow(doc_id=case_id, doc_type='CommCareCase', doc_subtype=case_type, domain=domain,
-                          es_date=es_date, primary_date=primary_date)
+        for chunk in CaseBackend._get_case_chunks(run_config):
+            yield from CaseBackend._yield_missing_in_es(chunk)
 
     @staticmethod
-    def _get_server_modified_on_for_domain(run_config):
-        if run_config.domain is ALL_SQL_DOMAINS or should_use_sql_backend(run_config.domain):
-            return CaseBackend._get_data_for_sql_backend(run_config)
-        else:
-            return CaseBackend._get_data_for_couch_backend(run_config)
+    def _get_case_chunks(run_config):
+        yield from CaseBackend._get_sql_case_chunks(run_config)
+        yield from CaseBackend._get_couch_case_chunks(run_config)
 
     @staticmethod
-    def _get_data_for_sql_backend(run_config):
+    def _get_sql_case_chunks(run_config):
         for db in get_db_aliases_for_partitioned_query():
             matching_records_for_db = get_sql_case_data_for_db(db, run_config)
 
-            for chunk in _chunked_with_progress_bar(matching_records_for_db, 1000,
-                                                    prefix=f'Processing cases in DB {db}'):
-                case_ids = [val[0] for val in chunk]
-                es_modified_on_by_ids = CaseBackend._get_es_modified_dates(run_config.domain, case_ids)
-                for case_id, case_type, sql_modified_on, domain in chunk:
-                    es_modified_on = es_modified_on_by_ids.get(case_id)
-                    if not es_modified_on or (es_modified_on < sql_modified_on):
-                        yield case_id, case_type, es_modified_on, sql_modified_on, domain
+            yield from _chunked_with_progress_bar(matching_records_for_db, 1000,
+                                                  prefix=f'Processing cases in DB {db}')
 
     @staticmethod
-    def _get_data_for_couch_backend(run_config):
-        if run_config.case_type:
+    def _get_couch_case_chunks(run_config):
+        if run_config.case_type and run_config is not ALL_SQL_DOMAINS \
+                and not _should_use_sql_backend(run_config.domain):
             raise CommandError('Case type argument is not supported for couch domains!')
-        domain = run_config.domain
-        start_time = datetime.utcnow()
-        chunk_size = 1000
-        chunked_iterator = chunked(paginate_view(
-            CommCareCase.get_db(),
-            'cases_by_server_date/by_server_modified_on',
-            chunk_size=chunk_size,
-            startkey=[domain],
-            endkey=[domain, {}],
-            include_docs=False,
-            reduce=False
-        ), chunk_size)
-        for chunk in chunked_iterator:
-            case_ids = [row['id'] for row in chunk]
-            es_modified_on_by_ids = CaseBackend._get_es_modified_dates(domain, case_ids)
-            for row in chunk:
-                case_id, couch_modified_on = row['id'], iso_string_to_datetime(row['value'])
-                if couch_modified_on > start_time:
-                    # skip cases modified after the script started
-                    continue
-                es_modified_on = es_modified_on_by_ids.get(case_id)
-                if not es_modified_on or (es_modified_on != couch_modified_on):
-                    yield case_id, 'COUCH_TYPE_NOT_SUPPORTED', es_modified_on, couch_modified_on, run_config.domain
+        matching_records = CaseBackend._get_couch_case_data(run_config)
+        print("Processing cases in Couch, which doesn't support nice progress bar")
+        yield from chunked(matching_records, 1000)
 
     @staticmethod
-    def _get_es_modified_dates(domain, case_ids):
-        es_query = CaseES(es_instance_alias=ES_EXPORT_INSTANCE)
-        if domain is not ALL_SQL_DOMAINS:
-            es_query = es_query.domain(domain)
-        results = es_query.case_ids(case_ids).values_list('_id', 'server_modified_on')
-        return {_id: iso_string_to_datetime(server_modified_on) for _id, server_modified_on in results}
+    def _yield_missing_in_es(chunk):
+        case_ids = [val[0] for val in chunk]
+        es_modified_on_by_ids = CaseBackend._get_es_modified_dates(case_ids)
+        for case_id, case_type, modified_on, domain in chunk:
+            es_modified_on, es_domain = es_modified_on_by_ids.get(case_id, (None, None))
+            if (es_modified_on, es_domain) != (modified_on, domain):
+                yield DataRow(doc_id=case_id, doc_type='CommCareCase', doc_subtype=case_type, domain=domain,
+                              es_date=es_modified_on, primary_date=modified_on)
+
+    @staticmethod
+    def _get_couch_case_data(run_config):
+        for couch_domain in _get_matching_couch_domains(run_config):
+            iterator = paginate_view(
+                CommCareCase.get_db(),
+                'cases_by_server_date/by_server_modified_on',
+                chunk_size=1000,
+                startkey=[couch_domain],
+                endkey=[couch_domain, {}],
+                include_docs=False,
+                reduce=False,
+            )
+            for row in iterator:
+                case_id, modified_on = row['id'], iso_string_to_datetime(row['value'])
+                if run_config.start_date <= modified_on < run_config.end_date:
+                    yield case_id, 'COUCH_TYPE_NOT_SUPPORTED', modified_on, couch_domain
+
+    @staticmethod
+    def _get_es_modified_dates(case_ids):
+        results = (
+            CaseES(es_instance_alias=ES_EXPORT_INSTANCE)
+            .case_ids(case_ids)
+            .values_list('_id', 'server_modified_on', 'domain')
+        )
+        return {_id: (iso_string_to_datetime(server_modified_on), domain)
+                for _id, server_modified_on, domain in results}
 
 
 def get_sql_case_data_for_db(db, run_config):
@@ -285,14 +285,13 @@ class FormBackend:
 
         def _yield_records():
             for couch_domain in _get_matching_couch_domains(run_config):
-                chunk_size = 1000
                 for doc_type in ['XFormArchived', 'XFormInstance']:
                     iterator = paginate_view(
                         db,
                         view,
                         reduce=False,
                         include_docs=False,
-                        chunk_size=chunk_size,
+                        chunk_size=1000,
                         **get_kwargs(couch_domain, doc_type)
                     )
                     for row in iterator:
