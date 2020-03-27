@@ -134,14 +134,13 @@ class FoodRow:
                 if indicator.in_ucr and self._include_ucr_indicator(indicator):
                     setattr(self, indicator.slug, ucr_row[indicator.slug])
                 else:
-                    setattr(self, indicator.slug, MISSING)
+                    setattr(self, indicator.slug, None)
 
     @property
     def reference_food_code(self):
         composition = self.fixtures.food_compositions.get(self.food_code)
         if composition:
             return composition.reference_food_code_for_food_composition
-        return MISSING
 
     @property
     def include_in_analysis(self):
@@ -174,6 +173,8 @@ class FoodRow:
                 return "yes" if val else "no"
             if isinstance(val, int):
                 return str(val)
+            if val is None:
+                return MISSING
             return val
 
         return [_format(getattr(self, column.slug)) for column in INDICATORS]
