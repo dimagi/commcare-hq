@@ -131,17 +131,19 @@ class FoodRow:
         self.ucr_row = ucr_row
         self.fixtures = fixtures
 
+        if self.composition:
+            self.fao_who_gift_food_group_code = self.composition.fao_who_gift_food_group_code
+            self.fao_who_gift_food_group_description = self.composition.fao_who_gift_food_group_description
+            self.user_food_group = self.composition.user_defined_food_group
+            self.reference_food_code = self.composition.reference_food_code_for_food_composition
+
+
     @cached_property
     def composition(self):
         # If the food isn't in the composition table, check the base food
         for food_code in [self.food_code, self.base_term_food_code]:
             if food_code and food_code in self.fixtures.food_compositions:
                 return self.fixtures.food_compositions[food_code]
-
-    @property
-    def reference_food_code(self):
-        if self.composition:
-            return self.composition.reference_food_code_for_food_composition
 
     @property
     def include_in_analysis(self):
