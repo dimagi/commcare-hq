@@ -13,6 +13,7 @@ from corehq.apps.accounting.models import (
 from corehq.apps.accounting.utils.invoicing import (
     get_domains_with_subscription_invoices_over_threshold,
     get_accounts_with_customer_invoices_over_threshold,
+    get_unpaid_invoices_over_threshold_by_domain,
 )
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.accounting.utils import (
@@ -43,6 +44,15 @@ def downgrade_eligible_domains(only_downgrade_domain=None):
             continue
         if is_subscription_eligible_for_downgrade_process(subscription_on_invoice):
             _apply_downgrade_process(oldest_unpaid_invoice, total, today)
+
+
+def can_domain_unpause(domain):
+    today = datetime.date.today()
+    oldest_unpaid_invoice = get_unpaid_invoices_over_threshold_by_domain(today, domain)[0]
+    if not oldest_unpaid_invoice:
+        return True
+    days_ago = (today - oldest_unpaid_invoice.date_due).days
+    return days_ago < DAYS_PAST_DUE_TO_TRIGGER_DOWNGRADE
 
 
 def is_subscription_eligible_for_downgrade_process(subscription):
