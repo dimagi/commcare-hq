@@ -552,7 +552,7 @@ class NewMobileWorkerForm(forms.Form):
         label=ugettext_noop("Send Account Confirmation Email Now?"),
         help_text=ugettext_noop(
             "The user will be sent their account confirmation email now. "
-            "Otherwise it must be sent manually at a later time."
+            "Otherwise it must be sent manually from the Mobile Worker 'Deactivated Users' list."
         ),
         required=False,
     )
