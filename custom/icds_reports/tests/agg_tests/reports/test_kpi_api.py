@@ -33,7 +33,6 @@ class KPIAPITest(TestCase):
             "cf_initiation_in_month"
         )
         first_result = data[0]
-        print(first_result)
         self.assertDictEqual(
             {
                 "state_id": "st1", "state_name": "st1", "state_site_code": "st1",
