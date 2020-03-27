@@ -1,23 +1,26 @@
 {% load staticfiles %}
-<div cg-busy="[$ctrl.myPromise, $rootScope.locationPromise]">
+<div cg-busy="[$ctrl.myPromise]">
   <div class="app-bg h-100vh overflow-hidden" ng-show="!$ctrl.filtersOpen && $ctrl.selectedLocationLevel==4">
     <div class="top-section p-3" style="padding-bottom: 25vh">
       {% include 'icds_reports/icds_app/mobile/partials/mobile-heading.html' %}
-      <div class="d-flex no-gutters align-items-center justify-content-around mb-5">
-          <div class="position-relative" ng-repeat="step in $ctrl.mobileSteps">
+      <div class="d-flex no-gutters align-items-center mb-5 overflow-auto justify-content-between">
+          <div class="position-relative m-3" ng-repeat="step in $ctrl.mobileSteps">
               <dot-link id="{$ step.id $}" label="{$ step.label $}" route="{$ step.route $}" image="{$ step.image $}"></dot-link>
           </div>
       </div>
-      <p class="font-weight-700 text-white font-16 font-montserrat" ng-bind="$ctrl.currentStepMeta.label"></p>
+      {% include 'icds_reports/icds_app/mobile/partials/section-heading.html' %}
     </div>
-    <div class="summary-list">
-      <div ng-if="$ctrl.step === 'demographics'">
-        <div class="bar-chart">
-          <h2 class="center pl-3">{$ $ctrl.data.chart[0].key $}</h2>
-          <nvd3 options="$ctrl.chartOptions" data="$ctrl.data.chart" class="with-3d-shadow with-transitions" id="mobile-bar-chart"></nvd3>
+    <div class="summary-list" id="summaryList">
+      <div ng-if="!$ctrl.isTabularDataDisplayed">
+        <div ng-if="$ctrl.step === 'demographics'">
+          <div class="bar-chart">
+            <h2 class="center pl-3">{$ $ctrl.data.chart[0].key $}</h2>
+            <nvd3 options="$ctrl.chartOptions" data="$ctrl.data.chart" class="with-3d-shadow with-transitions" id="mobile-bar-chart"></nvd3>
+          </div>
         </div>
+        <kpi data="$ctrl.data.kpi"></kpi>
       </div>
-      <kpi data="$ctrl.data.kpi"></kpi>
+      <sortable-kpi ng-if="$ctrl.isTabularDataDisplayed" data="$ctrl.sortableInputKpiData"></sortable-kpi>
     </div>
     <help-popup></help-popup>
   </div>

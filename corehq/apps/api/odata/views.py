@@ -71,9 +71,16 @@ class ODataCaseMetadataView(BaseODataView):
     def get(self, request, domain, config_id, **kwargs):
         table_id = int(kwargs.get('table_id', 0))
         config = get_document_or_404(CaseExportInstance, domain, config_id)
+        case_fields = get_case_odata_fields_from_config(config, table_id)
+
+        field_names = [f.name for f in case_fields]
+        primary_key = 'caseid' if table_id == 0 else 'number'
+        if f'{primary_key} *sensitive*' in field_names:
+            primary_key = f'{primary_key} *sensitive*'
+
         metadata = render_to_string('api/odata_metadata.xml', {
-            'fields': get_case_odata_fields_from_config(config, table_id),
-            'primary_key': 'caseid' if table_id == 0 else 'number',
+            'fields': case_fields,
+            'primary_key': primary_key,
         })
         return add_odata_headers(HttpResponse(metadata, content_type='application/xml'))
 
@@ -113,9 +120,16 @@ class ODataFormMetadataView(BaseODataView):
     def get(self, request, domain, config_id, **kwargs):
         table_id = int(kwargs.get('table_id', 0))
         config = get_document_or_404(FormExportInstance, domain, config_id)
+        form_fields = get_form_odata_fields_from_config(config, table_id)
+
+        field_names = [f.name for f in form_fields]
+        primary_key = 'formid' if table_id == 0 else 'number'
+        if f'{primary_key} *sensitive*' in field_names:
+            primary_key = f'{primary_key} *sensitive*'
+
         metadata = render_to_string('api/odata_metadata.xml', {
-            'fields': get_form_odata_fields_from_config(config, table_id),
-            'primary_key': 'formid' if table_id == 0 else 'number',
+            'fields': form_fields,
+            'primary_key': primary_key,
         })
         return add_odata_headers(HttpResponse(metadata, content_type='application/xml'))
 

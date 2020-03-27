@@ -336,6 +336,7 @@ def diff_form_state(form_id, *, in_couch=False):
     couch_miss = "missing"
     if not in_couch and get_blob_db().metadb.get_for_parent(form_id):
         couch_miss = MISSING_BLOB_PRESENT
+        log.warning("couch form missing, blob present: %s", form_id)
     old = {"form_state": FORM_PRESENT if in_couch else couch_miss}
     new = {"form_state": FORM_PRESENT if in_sql else "missing"}
     return old, new
@@ -362,6 +363,18 @@ def add_missing_docs(data, couch_cases, sql_case_ids, dd_count):
                 case_id,
                 [Diff("missing", path=["*"], old_value="*", new_value=MISSING)],
             ))
+
+
+def add_cases_missing_from_couch(data, case_ids):
+    sql_ids = {c.case_id for c in CaseAccessorSQL.get_cases(list(case_ids))}
+    data.doc_ids.extend(case_ids)
+    for case_id in case_ids:
+        new = "present" if case_id in sql_ids else MISSING
+        data.diffs.append((
+            "CommCareCase",
+            case_id,
+            [Diff("missing", path=["*"], old_value=MISSING, new_value=new)],
+        ))
 
 
 @contextmanager
