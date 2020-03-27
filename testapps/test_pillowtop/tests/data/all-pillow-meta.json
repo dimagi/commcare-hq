@@ -58,7 +58,7 @@
     "GroupToUserPillow": {
         "advertised_name": "GroupToUserPillow",
         "change_feed_type": "KafkaChangeFeed",
-        "checkpoint_id": "GroupToUserPillow-test_hqusers_2017-09-07",
+        "checkpoint_id": "GroupToUserPillow-test_hqusers_2020-03-25",
         "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
         "name": "GroupToUserPillow"
     },
@@ -128,7 +128,7 @@
     "UnknownUsersPillow": {
         "advertised_name": "UnknownUsersPillow",
         "change_feed_type": "KafkaChangeFeed",
-        "checkpoint_id": "UnknownUsersPillow-test_hqusers_2017-09-07",
+        "checkpoint_id": "UnknownUsersPillow-test_hqusers_2020-03-25",
         "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
         "name": "UnknownUsersPillow"
     },
@@ -149,7 +149,7 @@
     "UserPillow": {
         "advertised_name": "UserPillow",
         "change_feed_type": "KafkaChangeFeed",
-        "checkpoint_id": "UserPillow-test_hqusers_2017-09-07",
+        "checkpoint_id": "UserPillow-test_hqusers_2020-03-25",
         "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
         "name": "UserPillow"
     },
@@ -197,21 +197,21 @@
     },
     "xform-pillow": {
         "change_feed_type": "KafkaChangeFeed",
-        "checkpoint_id": "xform-pillow-test_xforms_2016-07-07-test_report_xforms_20160824_1708-test_hqusers_2017-09-07",
+        "checkpoint_id": "xform-pillow-test_xforms_2016-07-07-test_report_xforms_20160824_1708-test_hqusers_2020-03-25",
         "name": "xform-pillow",
         "advertised_name": "xform-pillow",
         "full_class_name": "pillowtop.pillow.interface.ConstructedPillow"
     },
     "user-pillow": {
         "change_feed_type": "KafkaChangeFeed",
-        "checkpoint_id": "user-pillow-test_hqusers_2017-09-07",
+        "checkpoint_id": "user-pillow-test_hqusers_2020-03-25",
         "name": "user-pillow",
         "advertised_name": "user-pillow",
         "full_class_name": "pillowtop.pillow.interface.ConstructedPillow"
     },
     "group-pillow": {
         "change_feed_type": "KafkaChangeFeed",
-        "checkpoint_id": "group-pillow-test_hqusers_2017-09-07-test_hqgroups_2017-05-29",
+        "checkpoint_id": "group-pillow-test_hqusers_2020-03-25-test_hqgroups_2017-05-29",
         "name": "group-pillow",
         "advertised_name": "group-pillow",
         "full_class_name": "pillowtop.pillow.interface.ConstructedPillow"

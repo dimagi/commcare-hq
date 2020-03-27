@@ -103,6 +103,12 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
                                  help_text=_("The build profile from the user's last hearbeat request."),
                                  sortable=False)
             )
+        if self.show_version_tag:
+            columns.append(
+                DataTablesColumn(_("Tag"),
+                                 help_text=_("Value of the app profile's cc-app-version-tag."),
+                                 sortable=False)
+            )
         headers = DataTablesHeader(*columns)
         headers.custom_sort = [[1, 'desc']]
         return headers
@@ -110,6 +116,10 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
     @cached_property
     def show_build_profile(self):
         return toggles.SHOW_BUILD_PROFILE_IN_APPLICATION_STATUS.enabled(self.domain)
+
+    @cached_property
+    def show_version_tag(self):
+        return toggles.APP_VERSION_TAG_COLUMN_APP_STATUS_REPORT.enabled(self.domain)
 
     @property
     def default_sort(self):
@@ -298,6 +308,7 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
         for user in users:
             last_build = last_seen = last_sub = last_sync = last_sync_date = app_name = commcare_version = None
             last_build_profile_name = None
+            last_build_version_tag = None
             build_version = _("Unknown")
             reporting_metadata = user.get('reporting_metadata', {})
             if self.selected_app_id:
@@ -339,6 +350,8 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
                         build_profiles = self._get_app_details(last_build['app_id']).get('build_profiles', {})
                         if last_build_profile_id in build_profiles:
                             last_build_profile_name = build_profiles[last_build_profile_id]
+                if self.show_version_tag:
+                    last_build_version_tag = last_build.get('app_version_tag')
 
             row_data = [
                 user_display_string(user.get('username', ''),
@@ -349,6 +362,9 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
             ]
             if self.show_build_profile:
                 row_data.append(last_build_profile_name)
+
+            if self.show_version_tag:
+                row_data.append(last_build_version_tag)
 
             if self.include_location_data():
                 location_data = self.user_locations(grouped_ancestor_locs.get(user['location_id'], []),
