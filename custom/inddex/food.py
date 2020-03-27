@@ -10,6 +10,12 @@ IN_UCR = 'in_ucr'
 IN_FOOD_FIXTURE = 'in_food_fixture'
 IS_RECALL_META = 'is_recall_meta'
 
+# food_type options
+FOOD_ITEM = 'food_item'
+NON_STANDARD_FOOD_ITEM = 'non_std_food_item'
+STANDARD_RECIPE = 'std_recipe'
+NON_STANDARD_RECIPE = 'non_std_recipe'
+
 
 class I:
     def __init__(self, slug, *tags):
@@ -147,7 +153,7 @@ class FoodRow:
 
     @property
     def include_in_analysis(self):
-        return self.food_type not in ('std_recipe', 'non_std_recipe')  # recipes are excluded
+        return self.food_type not in (STANDARD_RECIPE, NON_STANDARD_RECIPE)  # recipes are excluded
 
     @property
     def age_range(self):
@@ -242,7 +248,7 @@ class FoodData:
         for ucr_row in self.ucr_rows:
             food = FoodCaseRow(ucr_row, self.fixtures)
             yield food.as_list()
-            if food.food_type == 'std_recipe':
+            if food.food_type == STANDARD_RECIPE:
                 for ingredient_data in self.fixtures.recipes[food.food_code]:
                     ingr_row = RecipeIngredientRow(ucr_row, self.fixtures, ingredient_data)
                     yield ingr_row.as_list()
