@@ -59,4 +59,5 @@ branches:
   - cz/confirm-user-ui # Jenny March 25
   - jls/sql-invitation-uuid # Jenny March 25
   - jls/app-status-cc-app-version-tag-debug # Jenny March 27
+  - bmb/SAAS-10712-pt2  # Biyeun March 27
 submodules: {}
