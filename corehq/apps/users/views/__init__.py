@@ -711,10 +711,9 @@ class UserInvitationView(object):
     # todo cleanup this view so it properly inherits from BaseSectionPageView
     template = "users/accept_invite.html"
 
-    def __call__(self, request, invitation_id, **kwargs):
+    def __call__(self, request, uuid, **kwargs):
         # add the correct parameters to this instance
         self.request = request
-        self.inv_id = invitation_id
         if 'domain' in kwargs:
             self.domain = kwargs['domain']
 
@@ -725,13 +724,13 @@ class UserInvitationView(object):
             logout(request)
             return HttpResponseRedirect(request.path)
 
-        try:
-            invitation = Invitation.objects.get(id=int(invitation_id))
-        except (ValueError, Invitation.DoesNotExist):
+        invitation = Invitation.objects.filter(uuid=uuid).first()
+        if not invitation:
             messages.error(request, _("Sorry, it looks like your invitation has expired. "
                                       "Please check the invitation link you received and try again, or "
                                       "request a project administrator to send you the invitation again."))
-                return HttpResponseRedirect(reverse("login"))
+            return HttpResponseRedirect(reverse("login"))
+
         if invitation.is_accepted:
             messages.error(request, _("Sorry, that invitation has already been used up. "
                                       "If you feel this is a mistake please ask the inviter for "
@@ -816,7 +815,7 @@ class UserInvitationView(object):
             else:
                 if CouchUser.get_by_username(invitation.email):
                     return HttpResponseRedirect(reverse("login") + '?next=' +
-                        reverse('domain_accept_invitation', args=[invitation.domain, invitation.id]))
+                        reverse('domain_accept_invitation', args=[invitation.domain, invitation.uuid]))
                 form = WebUserInvitationForm(initial={
                     'email': invitation.email,
                 })
@@ -857,8 +856,8 @@ class UserInvitationView(object):
 @always_allow_project_access
 @location_safe
 @sensitive_post_parameters('password')
-def accept_invitation(request, domain, invitation_id):
-    return UserInvitationView()(request, invitation_id, domain=domain)
+def accept_invitation(request, domain, uuid):
+    return UserInvitationView()(request, uuid, domain=domain)
 
 
 @always_allow_project_access
