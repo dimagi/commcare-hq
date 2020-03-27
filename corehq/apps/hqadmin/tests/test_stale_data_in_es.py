@@ -1,11 +1,9 @@
 import uuid
 from io import StringIO
-from unittest import skip
 
 import mock
 from django.core.management import call_command
 from django.test import TestCase
-from django.utils.decorators import method_decorator
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
