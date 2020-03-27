@@ -151,7 +151,7 @@ class CaseBackend:
                 and not _should_use_sql_backend(run_config.domain):
             raise CommandError('Case type argument is not supported for couch domains!')
         matching_records = CaseBackend._get_couch_case_data(run_config)
-        print("Processing cases in Couch, which doesn't support nice progress bar")
+        print("Processing cases in Couch, which doesn't support nice progress bar", file=sys.stderr)
         yield from chunked(matching_records, 1000)
 
     @staticmethod
