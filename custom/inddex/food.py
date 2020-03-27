@@ -131,11 +131,17 @@ class FoodRow:
         self.ucr_row = ucr_row
         self.fixtures = fixtures
 
+    @cached_property
+    def composition(self):
+        # If the food isn't in the composition table, check the base food
+        for food_code in [self.food_code, self.base_term_food_code]:
+            if food_code and food_code in self.fixtures.food_compositions:
+                return self.fixtures.food_compositions[food_code]
+
     @property
     def reference_food_code(self):
-        composition = self.fixtures.food_compositions.get(self.food_code)
-        if composition:
-            return composition.reference_food_code_for_food_composition
+        if self.composition:
+            return self.composition.reference_food_code_for_food_composition
 
     @property
     def include_in_analysis(self):
