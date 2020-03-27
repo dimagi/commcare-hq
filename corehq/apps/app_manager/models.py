@@ -5601,7 +5601,7 @@ class LinkedApplication(Application):
             self.create_mapping(mm, ref['path'], save=False)
 
 
-def import_app(app_id_or_source, domain, source_properties=None, request=None):
+def import_app(app_id_or_source, domain, source_properties=None, request=None, check_all_reports=True):
     if isinstance(app_id_or_source, str):
         source_app = get_app(None, app_id_or_source)
     else:
@@ -5635,9 +5635,10 @@ def import_app(app_id_or_source, domain, source_properties=None, request=None):
                 try:
                     config.report_id = report_map[config.report_id]
                 except KeyError:
-                    raise AppEditingError(
-                        "Report {} not found in {}".format(config.report_id, domain)
-                    )
+                    if check_all_reports or config.report(source_domain).is_static:
+                        raise AppEditingError(
+                            "Report {} not found in {}".format(config.report_id, domain)
+                        )
 
     app.save_attachments(attachments)
 
@@ -5716,8 +5717,8 @@ class DeleteFormRecord(DeleteRecord):
 class ExchangeApplication(models.Model):
     domain = models.CharField(max_length=255, null=False)
     app_id = models.CharField(max_length=255, null=False)
-    last_released = models.DateTimeField(null=True)  # manual value unrelated to HQ's definition of last released
     help_link = models.CharField(max_length=255, null=True)
+    changelog_link = models.CharField(max_length=255, null=True)
 
     class Meta(object):
         unique_together = ('domain', 'app_id')

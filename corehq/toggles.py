@@ -1835,3 +1835,12 @@ LOCATION_REASSIGNMENT = StaticToggle(
     [NAMESPACE_USER],
     relevant_environments={'icds', 'india', 'staging'},
 )
+
+ICDS_BIHAR_DEMOGRAPHICS_API = StaticToggle(
+    'bihar_demographics_api',
+    'ICDS: Bihar Demographics API',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_USER],
+    relevant_environments={'icds', 'india'},
+
+)
