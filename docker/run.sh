@@ -1,4 +1,4 @@
-#! /bin/bash
+#! /bin/bash -ex
 # This script runs inside the web container
 set -e
 
