@@ -1,3 +1,5 @@
+import doctest
+
 from django.test import SimpleTestCase
 
 from corehq.motech.dhis2.entities_helpers import validate_tracked_entity
@@ -39,3 +41,10 @@ class ValidateTrackedEntityTests(SimpleTestCase):
         }
         with self.assertRaises(ConfigurationError):
             validate_tracked_entity(tracked_entity)
+
+
+def test_doctests():
+    from corehq.motech.dhis2 import entities_helpers
+
+    results = doctest.testmod(entities_helpers)
+    assert results.failed == 0
