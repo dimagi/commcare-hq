@@ -7,8 +7,11 @@ import uuid
 
 
 def create_uuid(apps, schema_editor):
-    SQLInvitation = apps.get_model('users', 'SQLInvitation')
-    for invitation in SQLInvitation.objects.all():
+    try:
+        Invitation = apps.get_model('users', 'SQLInvitation')
+    except LookupError:
+        Invitation = apps.get_model('users', 'Invitation')
+    for invitation in Invitation.objects.all():
         invitation.uuid = uuid.uuid4()
         invitation.save()
 
