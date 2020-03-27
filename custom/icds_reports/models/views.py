@@ -1392,3 +1392,43 @@ class BiharDemographicsView(models.Model):
         app_label = 'icds_reports'
         managed = False
         db_table = 'bihar_demographics_view'
+
+
+class KPIAPIView(models.Model):
+    """
+    Contains rows for KPI API.
+    """
+    district_id = models.TextField(blank=True, null=True)
+    district_name = models.TextField(blank=True, null=True)
+    district_site_code = models.TextField(blank=True, null=True)
+    state_id = models.TextField(blank=True, null=True)
+    state_name = models.TextField(blank=True, null=True)
+    state_site_code = models.TextField(blank=True, null=True)
+    aggregation_level = models.IntegerField(blank=True, null=True)
+    district_map_location_name = models.TextField(blank=True, null=True)
+    state_map_location_name = models.TextField(blank=True, null=True)
+    month = models.DateField(blank=True, null=True)
+    cbe_conducted = models.IntegerField(help_text='Number of CBE conducted by AWC')
+    vhnd_conducted = models.IntegerField(help_text='Number of VHND conducted by AWC')
+    num_launched_awcs = models.IntegerField(blank=True, null=True)
+    wer_weighed = models.IntegerField(
+        blank=True, null=True, help_text="Number of children that have been weighed in the month"
+    )
+    wer_eligible = models.IntegerField(
+        blank=True, null=True, help_text="Number of children valid_in_month and age < 60 months"
+    )
+    bf_at_birth = models.IntegerField(
+        blank=True, null=True, help_text="born_in_month AND breastfed_within_first = 'yes'"
+    )
+    born_in_month = models.IntegerField(blank=True, null=True, help_text="beneficiary with dob in this month")
+    cf_initiation_eligible = models.IntegerField(
+        blank=True, null=True, help_text="valid_in_month AND > 6 months <= 8 months"
+    )
+    cf_initiation_in_month = models.IntegerField(
+        blank=True, null=True, help_text="cf_initiation_eligible AND comp_feeding = 'yes' in any form submitted"
+    )
+
+    class Meta(object):
+        app_label = 'icds_reports'
+        managed = False
+        db_table = 'kpi_api_view'
