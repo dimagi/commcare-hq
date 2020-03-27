@@ -64,6 +64,15 @@ class FoodComposition:
     nutrients: dict = attrib()
 
 
+@attrs(kw_only=True, frozen=True)
+class ConversionFactor:
+    food_code = attrib()
+    conv_method = attrib()
+    conv_option = attrib()
+    conv_factor = attrib(converter=lambda x: float(x) if x else None)
+    energy_kcal = attrib(converter=float)
+
+
 class FixtureAccessor:
     def __init__(self, domain):
         self.domain = domain
@@ -118,6 +127,14 @@ class FixtureAccessor:
             food = FoodComposition(nutrients=nutrients, **composition_dict)
             foods[food.food_code] = food
         return foods
+
+    @cached_property
+    def conversion_factors(self):
+        conversion_factors = (ConversionFactor(**item_dict)
+                              for item_dict in self._get_fixture_dicts('conv_factors'))
+        return {
+            (cf.food_code, cf.conv_method, cf.conv_option): cf.conv_factor for cf in conversion_factors
+        }
 
 
 def _add_nutrient(nutrients, k, v):

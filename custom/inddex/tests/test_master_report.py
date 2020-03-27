@@ -120,6 +120,10 @@ class TestFixtures(TestCase):
         self.assertEqual(367, composition.nutrients['1'])
         self.assertEqual(9.1, composition.nutrients['2'])
 
+    def test_conversion_factors(self):
+        conversion_factor = self.fixtures_accessor.conversion_factors[('10', '52', '')]
+        self.assertEqual(0.61, conversion_factor)
+
 
 class TestNewReport(TestCase):
     maxDiff = None
