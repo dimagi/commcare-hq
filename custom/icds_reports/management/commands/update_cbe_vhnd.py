@@ -32,10 +32,9 @@ class Command(BaseCommand):
             action='store',
             help='Only include data modified before this date')
 
-    def handle(self,  *args, **options):
+    def handle(self, *args, **options):
         start = dateutil.parser.parse(options['start']) if options['start'] else datetime(2018, 3, 1)
         end = dateutil.parser.parse(options['end']) if options['end'] else datetime.utcnow()
-
 
         dates = [dt for dt in rrule(MONTHLY, dtstart=start, until=end)]
         path = os.path.join(
@@ -48,6 +47,6 @@ class Command(BaseCommand):
             month_string = date.strftime("%Y-%m-%d")
             table_name = f'agg_awc_{month_string}'
             _run_custom_sql_script(
-                sql_query, {'tablename':AsIs(table_name), 'query_month': month_string}
+                sql_query, {'tablename': AsIs(table_name), 'query_month': month_string}
             )
             print(f"Done for month {month_string}")
