@@ -1,20 +1,20 @@
 from django.conf.urls import url
-from custom.icds.views.data_pull import (
-    CustomDataPull,
-)
+from custom.icds.views.data_pull import CustomDataPull
 from custom.icds.views.hosted_ccz import (
-    ManageHostedCCZ,
-    ManageHostedCCZLink,
     EditHostedCCZLink,
     HostedCCZView,
-    remove_hosted_ccz,
-    recreate_hosted_ccz,
+    ManageHostedCCZ,
+    ManageHostedCCZLink,
+    ccz_hostings_json,
     download_ccz,
     download_ccz_supporting_files,
+    remove_hosted_ccz,
+    recreate_hosted_ccz,
 )
 
 urlpatterns = [
     url(r'^ccz/hostings/manage', ManageHostedCCZ.as_view(), name=ManageHostedCCZ.urlname),
+    url(r'^ccz/hostings/json', ccz_hostings_json, name='ccz_hostings_json'),
     url(r'^ccz/hostings/links', ManageHostedCCZLink.as_view(), name=ManageHostedCCZLink.urlname),
     url(r'^ccz/hostings/link/(?P<link_id>[\d-]+)/edit/', EditHostedCCZLink.as_view(),
         name=EditHostedCCZLink.urlname),

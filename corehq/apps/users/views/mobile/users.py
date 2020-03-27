@@ -18,7 +18,7 @@ from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 from django.http import Http404, HttpResponse, HttpResponseBadRequest, HttpResponseRedirect
-from django.http.response import HttpResponseServerError
+from django.http.response import HttpResponseServerError, JsonResponse
 from django.shortcuts import redirect, render
 from django.template.loader import render_to_string
 from django.urls import reverse
@@ -644,10 +644,6 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
         return NewMobileWorkerForm(self.request.project, self.couch_user)
 
     @property
-    def _mobile_worker_form(self):
-        return self.new_mobile_worker_form
-
-    @property
     @memoized
     def custom_data(self):
         return CustomDataEditor(
@@ -678,7 +674,6 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
             'strong_mobile_passwords': self.request.project.strong_mobile_passwords,
             'implement_password_obfuscation': settings.OBFUSCATE_PASSWORD_FOR_NIC_COMPLIANCE,
             'bulk_download_url': bulk_download_url,
-            'two_stage_provisioning_enabled': TWO_STAGE_USER_PROVISIONING.enabled(self.domain),
         }
 
     @property
@@ -740,13 +735,13 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
 
         self.request.POST = form_data
 
-        is_valid = lambda: self._mobile_worker_form.is_valid() and self.custom_data.is_valid()
+        is_valid = lambda: self.new_mobile_worker_form.is_valid() and self.custom_data.is_valid()
         if not is_valid():
             return {'error': _("Forms did not validate")}
 
         couch_user = self._build_commcare_user()
-        send_account_confirmation_if_necessary(couch_user)
-
+        if self.new_mobile_worker_form.cleaned_data['send_account_confirmation_email']:
+            send_account_confirmation_if_necessary(couch_user)
         return {
             'success': True,
             'user_id': couch_user.userID,
@@ -794,6 +789,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
                 'location_id': user_data.get('location_id'),
                 'email': user_data.get('email'),
                 'force_account_confirmation': user_data.get('force_account_confirmation'),
+                'send_account_confirmation_email': user_data.get('send_account_confirmation_email'),
                 'domain': self.domain,
             }
             for k, v in user_data.get('custom_fields', {}).items():
@@ -836,6 +832,15 @@ def _modify_user_status(request, domain, user_id, is_active):
     })
 
 
+@require_can_edit_commcare_users
+@require_POST
+@location_safe
+def send_confirmation_email(request, domain, user_id):
+    user = CommCareUser.get_by_user_id(user_id, domain)
+    send_account_confirmation_if_necessary(user)
+    return JsonResponse(data={'success': True})
+
+
 @require_can_edit_or_view_commcare_users
 @require_GET
 @location_safe
@@ -867,17 +872,30 @@ def paginate_mobile_workers(request, domain):
         'base_username',
         'created_on',
         'is_active',
+        'is_account_confirmed',
     ]).run()
     users = users_data.hits
+
+    def _status_string(user_data):
+        if user_data['is_active']:
+            return _('Active')
+        elif user_data['is_account_confirmed']:
+            return _('Deactivated')
+        else:
+            return _('Pending Confirmation')
 
     for user in users:
         date_registered = user.pop('created_on', '')
         if date_registered:
             date_registered = iso_string_to_datetime(date_registered).strftime(USER_DATE_FORMAT)
+        # make sure these are always set and default to true
+        user['is_active'] = user.get('is_active', True)
+        user['is_account_confirmed'] = user.get('is_account_confirmed', True)
         user.update({
             'username': user.pop('base_username', ''),
             'user_id': user.pop('_id'),
             'date_registered': date_registered,
+            'status': _status_string(user),
         })
 
     return json_response({

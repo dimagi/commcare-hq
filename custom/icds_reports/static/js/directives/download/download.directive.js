@@ -161,46 +161,21 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         vm.selectedBeneficiaryCategory = 'pw_lw_children';
     }
 
-    var ALL_OPTION = {
-        name: 'All',
-        location_id: 'all',
-        "user_have_access": 0,
-        "user_have_access_to_parent": 1,
-    };
-    var NATIONAL_OPTION = {name: 'National', location_id: 'all'};
+    var ALL_OPTION = locationsService.ALL_OPTION;
+    var NATIONAL_OPTION = locationsService.ALL_OPTION;
 
     var locationsCache = {};
 
     vm.hierarchy = [];
     vm.selectedLocations = [];
 
-    var maxLevel = 0;
+    vm.maxLevel = 0;
 
     var initHierarchy = function () {
-        var hierarchy = _.map(locationHierarchy, function (locationType) {
-            return {
-                name: locationType[0],
-                parents: locationType[1],
-            };
-        });
-
-        var assignLevels = function (currentLocationType, level) {
-            var children = _.filter(hierarchy, function (locationType) {
-                return _.contains(locationType.parents, currentLocationType);
-            });
-            children.forEach(function (child) {
-                child.level = level;
-                assignLevels(child.name, level + 1);
-            });
-        };
-        assignLevels(null, 0);
-        maxLevel = _.max(hierarchy, function (locationType) {
-            return locationType.level;
-        }).level;
-        vm.hierarchy = _.toArray(_.groupBy(hierarchy, function (locationType) {
-            return locationType.level;
-        }));
-        vm.selectedLocations = new Array(maxLevel);
+        hierarchyData = locationsService.initHierarchy(locationHierarchy);
+        vm.maxLevel = hierarchyData['levels'];
+        vm.selectedLocations = new Array(vm.maxLevel);
+        vm.hierarchy = hierarchyData['hierarchy'];
     };
 
     vm.userHaveAccessToAllLocations = function (locations) {
@@ -229,109 +204,19 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
     };
 
     var init = function () {
-        if (vm.selectedLocationId) {
-            vm.myPromise = locationsService.getAncestors(vm.selectedLocationId).then(function (data) {
-                var locations = data.locations;
-
-                var selectedLocation = data.selected_location;
-
-                var locationsGrouppedByParent = _.groupBy(locations, function (location) {
-                    return location.parent_id || 'root';
-                });
-
-                for (var parentId in locationsGrouppedByParent) {
-                    if (locationsGrouppedByParent.hasOwnProperty(parentId)) {
-                        var sortedLocations = _.sortBy(locationsGrouppedByParent[parentId], function (o) {
-                            return o.name;
-                        });
-                        if (vm.preventShowingAllOption(sortedLocations)) {
-                            locationsCache[parentId] = sortedLocations;
-                        } else if (selectedLocation.user_have_access) {
-                            locationsCache[parentId] = [ALL_OPTION].concat(sortedLocations);
-                        } else {
-                            locationsCache[parentId] = sortedLocations;
-                        }
-                    }
-                }
-
-                initHierarchy();
-
-                var levelOfSelectedLocation = _.findIndex(vm.hierarchy, function (locationTypes) {
-                    return _.contains(locationTypes.map(function (x) {
-                        return x.name; 
-                    }), selectedLocation.location_type_name);
-                });
-                vm.selectedLocations[levelOfSelectedLocation] = vm.selectedLocationId;
-                vm.onSelect(selectedLocation, levelOfSelectedLocation);
-
-                levelOfSelectedLocation -= 1;
-
-                while (levelOfSelectedLocation >= 0) {
-                    var childSelectedId = vm.selectedLocations[levelOfSelectedLocation + 1];
-                    var childSelected = _.find(locations, function (location) {
-                        return location.location_id === childSelectedId;
-                    });
-                    vm.selectedLocations[levelOfSelectedLocation] = childSelected.parent_id;
-                    levelOfSelectedLocation -= 1;
-                }
-
-                var levels = [];
-                window.angular.forEach(vm.levels, function (value) {
-                    if (value.id > selectedLocationIndex()) {
-                        levels.push(value);
-                    }
-                });
-                vm.groupByLevels = levels;
-                vm.selectedLevel = selectedLocationIndex() + 1;
-            });
-        } else {
-            initHierarchy();
-            vm.myPromise = locationsService.getRootLocations().then(function (data) {
-                locationsCache.root = [NATIONAL_OPTION].concat(data.locations);
-            });
-            vm.groupByLevels = vm.levels;
-        }
+        initHierarchy();
+        locationsCache = locationsService.initLocations(vm, locationsCache);
     };
 
     init();
 
     vm.getPlaceholder = function (locationTypes) {
-        return _.map(locationTypes, function (locationType) {
-            if (locationType.name === 'state') {
-                if (vm.isChildBeneficiaryListSelected()) {
-                    return 'Select State';
-                } else {
-                    return NATIONAL_OPTION.name;
-                }
-            }
-            return locationType.name;
-        }).join(', ');
-    };
-
-    vm.showErrorMessage = function () {
-        return vm.selectedIndicator === 6 && selectedLocationIndex() !== 4;
+        return locationsService.getLocationPlaceholder(locationTypes, vm.isChildBeneficiaryListSelected())
     };
 
     vm.getLocationsForLevel = function (level) {
-        if (level === 0) {
-            if (vm.isChildBeneficiaryListSelected()) {
-                return locationsCache.root.slice(1);
-            }
-            return locationsCache.root;
-        } else {
-            var selectedLocation = vm.selectedLocations[level - 1];
-            if (!selectedLocation || selectedLocation === ALL_OPTION.location_id) {
-                return [];
-            }
-            return locationsCache[selectedLocation];
-        }
-    };
-
-    var resetLevelsBelow = function (level) {
-        for (var i = level + 1; i <= maxLevel; i++) {
-            vm.hierarchy[i].selected = null;
-            vm.selectedLocations[i] = null;
-        }
+        disallowNational = vm.isChildBeneficiaryListSelected();
+        return locationsService.getLocations(level, locationsCache, vm.selectedLocations, disallowNational);
     };
 
     var selectedLocationIndex = function () {
@@ -341,22 +226,12 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
     };
 
     vm.disabled = function (level) {
-        if (vm.userLocationId === null) {
-            return false;
-        }
-        var notDisabledLocationsForLevel = 0;
-        window.angular.forEach(vm.getLocationsForLevel(level), function (location) {
-            if (location.user_have_access || location.user_have_access_to_parent) {
-                notDisabledLocationsForLevel += 1;
-            }
-        });
-
-        return notDisabledLocationsForLevel <= 1;
+        return locationsService.isLocationDisabled(level, vm);
     };
 
     vm.onSelectForISSNIP = function ($item, level) {
         var selectedLocationId = vm.selectedLocations[selectedLocationIndex()];
-        vm.myPromise = locationsService.getAwcLocations(selectedLocationId).then(function (data) {
+        vm.locationPromise = locationsService.getAwcLocations(selectedLocationId).then(function (data) {
             if ($item.user_have_access) {
                 vm.awcLocations = [ALL_OPTION].concat(data);
             } else {
@@ -364,36 +239,11 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
             }
         });
         vm.selectedAWCs = [];
-        vm.onSelect($item, level);
+        vm.onSelectLocation($item, level);
     };
 
-    vm.onSelect = function ($item, level) {
-        resetLevelsBelow(level);
-        if (level < 4) {
-            vm.myPromise = locationsService.getChildren($item.location_id).then(function (data) {
-                if ($item.user_have_access) {
-                    locationsCache[$item.location_id] = [ALL_OPTION].concat(data.locations);
-                    vm.selectedLocations[level + 1] = ALL_OPTION.location_id;
-                } else {
-                    locationsCache[$item.location_id] = data.locations;
-                    vm.selectedLocations[level + 1] = data.locations[0].location_id;
-                    if (level === 2 && vm.isISSNIPMonthlyRegisterSelected()) {
-                        vm.onSelectForISSNIP(data.locations[0], level + 1);
-                    } else {
-                        vm.onSelect(data.locations[0], level + 1);
-                    }
-                }
-            });
-        }
-        vm.selectedLocationId = vm.selectedLocations[selectedLocationIndex()];
-        var levels = [];
-        vm.selectedLevel = selectedLocationIndex() + 1;
-        window.angular.forEach(vm.levels, function (value) {
-            if (value.id > selectedLocationIndex()) {
-                levels.push(value);
-            }
-        });
-        vm.groupByLevels = levels;
+    vm.onSelectLocation = function ($item, level) {
+        locationsService.onSelectLocation($item, level, locationsCache, vm);
     };
 
     vm.onSelectAWCs = function ($item) {
@@ -495,7 +345,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
     };
 
     vm.getAwcs = function () {
-        vm.myPromise = locationsService.getAncestors();
+        vm.locationPromise = locationsService.getAncestors();
     };
 
     vm.getFormats = function () {
@@ -521,7 +371,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
             if (vm.isTakeHomeRationReportSelected()) {
                 var currentYear  = new Date().getFullYear();
                 vm.selectedYear = vm.selectedYear >= 2019 ? vm.selectedYear : currentYear;
-                resetLevelsBelow(3);
+                locationsService.resetLevelsBelow(3, vm);
             } else if (vm.isSDRSelected()) {
                 if (vm.selectedYear < 2020) {
                     vm.selectedYear = new Date().getFullYear();

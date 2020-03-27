@@ -54,5 +54,9 @@ branches:
   - bmb/SAAS-10269  # Biyeun Feb 23
   - jls/migrate-DefaultConsumption-2 # Jenny March 6
   #- jls/use-textinput # Jenny March 10
-  - mk/location-rationalization-1 # MK March 16
+  - mk/location-reassignment-1 # MK March 25
+  - mk/location-reassignment-2 # MK March 26
+  - cz/confirm-user-ui # Jenny March 25
+  - jls/app-status-cc-app-version-tag # Jenny March 25
+  - jls/sql-invitation-uuid # Jenny March 25
 submodules: {}

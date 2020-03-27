@@ -57,7 +57,7 @@ PRICING_LINK = 'https://www.commcarehq.org/pricing'
 
 @task(serializer='pickle', queue="email_queue")
 def send_domain_registration_email(recipient, domain_name, guid, full_name, first_name):
-    registration_link = 'http://' + DNS_name + reverse('registration_confirm_domain') + guid + '/'
+    registration_link = 'http://' + get_site_domain() + reverse('registration_confirm_domain') + guid + '/'
     params = {
         "domain": domain_name,
         "pricing_link": PRICING_LINK,

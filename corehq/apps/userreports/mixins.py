@@ -9,7 +9,7 @@ from corehq.apps.userreports.util import get_table_name
 
 
 class ConfigurableReportDataSourceMixin(object):
-    def __init__(self, domain, config_or_config_id, filters, aggregation_columns, columns, order_by):
+    def __init__(self, domain, config_or_config_id, filters, aggregation_columns, columns, order_by, distinct_on):
         from corehq.apps.userreports.models import DataSourceConfiguration
         from corehq.apps.aggregate_ucrs.models import AggregateTableDefinition
         self.lang = None
@@ -30,6 +30,7 @@ class ConfigurableReportDataSourceMixin(object):
         self._filter_values = {}
         self._defer_fields = {}
         self._order_by = order_by
+        self._distinct_on = distinct_on
         self._aggregation_columns = aggregation_columns
         self._column_configs = OrderedDict()
         for column in columns:
@@ -121,6 +122,10 @@ class ConfigurableReportDataSourceMixin(object):
     @property
     def has_total_row(self):
         return any(column_config.calculate_total for column_config in self.top_level_db_columns)
+
+    @property
+    def distinct_on(self):
+        return self._distinct_on or []
 
     @property
     def group_by(self):

@@ -6,10 +6,10 @@
 {% requirejs_main "icds/js/manage_hosted_ccz" %}
 
 {% block page_content %}
-{% initial_page_data 'hosted_cczs' hosted_cczs %}
 {% initial_page_data 'appVersionSelectInitialValue' selected_build_details %}
 {% initial_page_data 'appProfileInitialValues' initial_app_profile_details %}
 {% initial_page_data 'appVersionOnlyShowReleased' True %}
+{% registerurl "ccz_hostings_json" domain %}
 {% registerurl "paginate_releases" domain '---' %}
 {% registerurl "remove_hosted_ccz" domain '---' %}
 {% registerurl "recreate_hosted_ccz" domain '---' %}
@@ -26,67 +26,78 @@
     </div>
   </div>
   <div>
-    {% if hosted_cczs %}
-      <table id="ccz-hostings" class="table">
-        <thead>
-          <tr>
-            <th class="col-sm-2">
-              {% trans 'Link' %}
-            </th>
-            <th>
-              {% trans 'Status' %}
-            </th>
-            <th class="col-sm-2">
-              {% trans 'Application' %}
-            </th>
-            <th>
-              {% trans 'Profile' %}
-            </th>
-            <th>
-              {% trans 'Version' %}
-            </th>
-            <th class="col-sm-2">
-              {% trans 'CCZ Name' %}
-            </th>
-            <th class="col-sm-2">
-              {% trans 'Note' %}
-            </th>
-            <th>
-              {% trans 'Action' %}
-            </th>
-          </tr>
-        </thead>
-        <tbody data-bind="foreach: hostings">
-          <tr data-bind="css: {'success': status === 'completed', 'info': status === 'pending',
-                               'danger': status === 'failed', 'warning': status === 'building'}">
-            <td>
-              <a data-bind="attr: { href: viewUrl}, text: link" target="_blank">
-              </a>
-            </td>
-            <td data-bind="text: status">
-            </td>
-            <td data-bind="text: appName">
-            </td>
-            <td data-bind="text: profileName">
-            </td>
-            <td data-bind="text: version">
-            </td>
-            <td data-bind="text: fileName">
-            </td>
-            <td data-bind="text: note">
-            </td>
-            <td>
-              <a data-bind="attr: { href: removeUrl}" class="btn btn-danger">
-                {% trans 'Remove' %}
-              </a>
-              <a data-bind="attr: { href: recreateUrl}" class="btn btn-danger">
-                {% trans 'Recreate' %}
-              </a>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    {% endif %}
+    <table id="ccz-hostings" class="table">
+      <thead>
+        <tr>
+          <th class="col-sm-2">
+            {% trans 'Link' %}
+          </th>
+          <th>
+            {% trans 'Status' %}
+          </th>
+          <th class="col-sm-2">
+            {% trans 'Application' %}
+          </th>
+          <th>
+            {% trans 'Profile' %}
+          </th>
+          <th>
+            {% trans 'Version' %}
+          </th>
+          <th>
+            {% trans 'Tag' %}
+          </th>
+          <th class="col-sm-2">
+            {% trans 'CCZ Name' %}
+          </th>
+          <th class="col-sm-2">
+            {% trans 'Note' %}
+          </th>
+          <th>
+            {% trans 'Action' %}
+          </th>
+        </tr>
+      </thead>
+      <tbody data-bind="foreach: hostings">
+        <tr data-bind="css: {'success': status === 'completed', 'info': status === 'pending',
+                             'danger': status === 'failed', 'warning': status === 'building'}">
+          <td>
+            <a data-bind="attr: { href: viewUrl}, text: link" target="_blank">
+            </a>
+          </td>
+          <td data-bind="text: status">
+          </td>
+          <td data-bind="text: appName">
+          </td>
+          <td data-bind="text: profileName">
+          </td>
+          <td data-bind="text: version">
+          </td>
+          <td data-bind="text: appVersionTag">
+          </td>
+          <td data-bind="text: fileName">
+          </td>
+          <td data-bind="text: note">
+          </td>
+          <td>
+            <a data-bind="attr: { href: removeUrl}" class="btn btn-danger">
+              <i class="fa fa-trash"></i>
+              {% trans 'Remove' %}
+            </a>
+            <a data-bind="attr: { href: recreateUrl}" class="btn btn-danger">
+              <i class="fa fa-recycle"></i>
+              {% trans 'Recreate' %}
+            </a>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <pagination data-apply-bindings="false"
+                params="goToPage: goToPage,
+                        perPage: itemsPerPage,
+                        totalItems: totalItems,
+                        slug: 'hosted-cczs',
+                        showSpinner: showPaginationSpinner"></pagination>
   </div>
 </div>
 {% endblock %}

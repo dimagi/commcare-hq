@@ -67,7 +67,9 @@ hqDefine("users/js/mobile_workers",[
             user_id: '',
             force_account_confirmation: false,
             email: '',
+            send_account_confirmation_email: false,
             is_active: true,
+            is_account_confirmed: true,
             custom_fields: {},
         });
 
@@ -80,6 +82,7 @@ hqDefine("users/js/mobile_workers",[
         // used by two-stage provisioning
         self.emailRequired = ko.observable(self.force_account_confirmation());
         self.passwordEnabled = ko.observable(!self.force_account_confirmation());
+        self.sendConfirmationEmailEnabled = ko.observable(self.force_account_confirmation());
 
         self.action_error = ko.observable('');  // error when activating/deactivating a user
 
@@ -109,6 +112,30 @@ hqDefine("users/js/mobile_workers",[
                 },
             });
         });
+
+        self.sendConfirmationEmail = function () {
+            var urlName = 'send_confirmation_email';
+            var $modal = $('#confirm_' + self.user_id());
+
+            $modal.find(".btn").addSpinnerToButton();
+            $.ajax({
+                method: 'POST',
+                url: initialPageData.reverse(urlName, self.user_id()),
+                success: function (data) {
+                    $modal.modal('hide');
+                    if (data.success) {
+                        self.action_error('');
+                    } else {
+                        self.action_error(data.error);
+                    }
+
+                },
+                error: function () {
+                    $modal.modal('hide');
+                    self.action_error(gettext("Issue communicating with server. Try again."));
+                },
+            });
+        };
 
         return self;
     };
@@ -215,10 +242,6 @@ hqDefine("users/js/mobile_workers",[
         self.useStrongPasswords = ko.observable(options.strong_mobile_passwords);
         self.useDraconianSecurity = ko.observable(options.draconian_security);
         self.implementPasswordObfuscation = ko.observable(options.implement_password_obfuscation);
-        self.twoStageProvisioningEnabled = ko.observable(options.two_stage_provisioning_enabled);
-
-        // Two Stage Provisioning Handling
-        self.twoStageProvisioningEnabled = ko.observable(options.two_stage_provisioning_enabled);
 
         self.passwordStatus = ko.computed(function () {
             if (!self.stagedUser()) {
@@ -374,11 +397,15 @@ hqDefine("users/js/mobile_workers",[
                     // clear and disable password input
                     user.password('');
                     user.passwordEnabled(false);
+                    user.sendConfirmationEmailEnabled(true);
                 } else {
                     // make email optional
                     user.emailRequired(false);
                     // enable password input
                     user.passwordEnabled(true);
+                    user.sendConfirmationEmailEnabled(false);
+                    // uncheck email confirmation box if it was checked
+                    user.send_account_confirmation_email(false);
                 }
             });
         });
@@ -479,7 +506,6 @@ hqDefine("users/js/mobile_workers",[
             location_url: initialPageData.reverse('location_search'),
             require_location_id: !initialPageData.get('can_access_all_locations'),
             strong_mobile_passwords: initialPageData.get('strong_mobile_passwords'),
-            two_stage_provisioning_enabled: initialPageData.get('two_stage_provisioning_enabled'),
         });
         $("#new-user-modal-trigger").koApplyBindings(newUserCreation);
         $("#new-user-modal").koApplyBindings(newUserCreation);
