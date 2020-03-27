@@ -2,6 +2,7 @@ import uuid
 from io import StringIO
 from unittest import skip
 
+import mock
 from django.core.management import call_command
 from django.test import TestCase
 from django.utils.decorators import method_decorator
@@ -96,7 +97,8 @@ class TestStaleDataInESSQL(TestCase):
     @staticmethod
     def _stale_data_in_es(*args, **kwargs):
         f = StringIO()
-        call_command('stale_data_in_es', *args, stdout=f, **kwargs)
+        with mock.patch('sys.stdout', f):
+            call_command('stale_data_in_es', *args, stdout=f, **kwargs)
         return f.getvalue()
 
     def _submit_form(self, domain, new_cases=0, update_cases=()):
