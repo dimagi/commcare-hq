@@ -241,7 +241,7 @@ window.angular.module('icdsApp').factory('locationsService', ['$http', '$locatio
                         locationsCache[item.location_id] = [ALL_OPTION].concat(data.locations);
                         vm.selectedLocations[level + 1] = ALL_OPTION.location_id;
                     } else {
-                        locationsCache[$item.location_id] = data.locations;
+                        locationsCache[item.location_id] = data.locations;
                         vm.selectedLocations[level + 1] = data.locations[0].location_id;
                         vm.onSelect(data.locations[0], level + 1);
                     }
