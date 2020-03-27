@@ -11,6 +11,7 @@ from django.db.models import F
 from memoized import memoized
 
 from casexml.apps.case.models import CommCareCase
+from corehq.apps.domain.models import Domain
 from couchforms.models import XFormInstance
 from dimagi.utils.chunked import chunked
 
@@ -29,7 +30,7 @@ RunConfig = namedtuple('RunConfig', ['domain', 'start_date', 'end_date', 'case_t
 DataRow = namedtuple('DataRow', ['doc_id', 'doc_type', 'doc_subtype', 'domain', 'es_date', 'primary_date'])
 
 
-ALL_SQL_DOMAINS = object()
+ALL_DOMAINS = object()
 HEADER_ROW = DataRow(
     doc_id='Doc ID',
     doc_type='Doc Type',
@@ -67,7 +68,7 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('data_models', nargs='+',
                             help='A list of data models to check. Valid options are "case" and "form".')
-        parser.add_argument('--domain', default=ALL_SQL_DOMAINS)
+        parser.add_argument('--domain', default=ALL_DOMAINS)
         parser.add_argument(
             '--start',
             action='store',
@@ -93,8 +94,8 @@ class Command(BaseCommand):
         case_type = options['case_type']
         run_config = RunConfig(domain, start, end, case_type)
 
-        if run_config.domain is ALL_SQL_DOMAINS:
-            print('Running for all SQL domains (and excluding Couch domains!)', file=self.stderr)
+        if run_config.domain is ALL_DOMAINS:
+            print('Running for all domains', file=self.stderr)
 
         csv_writer = csv.writer(self.stdout, **get_csv_args(delimiter))
 
@@ -144,7 +145,7 @@ class CaseBackend:
 
     @staticmethod
     def _get_couch_case_chunks(run_config):
-        if run_config.case_type and run_config is not ALL_SQL_DOMAINS \
+        if run_config.case_type and run_config is not ALL_DOMAINS \
                 and not _should_use_sql_backend(run_config.domain):
             raise CommandError('Case type argument is not supported for couch domains!')
         matching_records = CaseBackend._get_couch_case_data(run_config)
@@ -195,7 +196,7 @@ def get_sql_case_data_for_db(db, run_config):
         server_modified_on__lte=run_config.end_date,
         deleted=False,
     )
-    if run_config.domain is not ALL_SQL_DOMAINS:
+    if run_config.domain is not ALL_DOMAINS:
         matching_cases = matching_cases.filter(
             domain=run_config.domain,
         )
@@ -252,7 +253,7 @@ class FormBackend:
             # Only check for "normal" and "archived" forms
             state=F('state').bitand(XFormInstanceSQL.NORMAL) + F('state').bitand(XFormInstanceSQL.ARCHIVED)
         )
-        if run_config.domain is not ALL_SQL_DOMAINS:
+        if run_config.domain is not ALL_DOMAINS:
             matching_forms = matching_forms.filter(
                 domain=run_config.domain
             )
@@ -298,7 +299,7 @@ class FormBackend:
                         form_id = row['id']
                         domain, doc_type, received_on = row['key']
                         received_on = iso_string_to_datetime(received_on)
-                        assert domain == run_config.domain
+                        assert run_config.domain in (domain, ALL_DOMAINS)
                         yield (form_id, doc_type, 'COUCH_XMLNS_NOT_SUPPORTED',
                                received_on, domain)
         return _get_length(), _yield_records()
@@ -325,7 +326,9 @@ def _should_use_sql_backend(domain):
 
 @memoized
 def _get_matching_couch_domains(run_config):
-    if run_config.domain is ALL_SQL_DOMAINS or _should_use_sql_backend(run_config.domain):
+    if run_config.domain is ALL_DOMAINS:
+        return [domain.name for domain in Domain.get_all() if not _should_use_sql_backend(domain)]
+    elif _should_use_sql_backend(run_config.domain):
         return []
     else:
         return [run_config.domain]

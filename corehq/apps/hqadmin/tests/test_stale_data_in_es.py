@@ -203,8 +203,6 @@ class TestStaleDataInESSQL(TestCase):
         self._delete_cases_from_es(self.cases_to_delete_from_es)
 
 
-@method_decorator(skip("Not yet implemented"), 'test_form_missing_then_not')
-@method_decorator(skip("Not yet implemented"), 'test_case_missing_then_not')
 class TestStaleDataInESCouch(TestStaleDataInESSQL):
 
     use_sql_backend = False
