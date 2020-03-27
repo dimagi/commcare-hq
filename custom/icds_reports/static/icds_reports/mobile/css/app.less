@@ -250,7 +250,7 @@
   width: 20px;
 }
 .text-blue {
-  color: #1D9ACF;
+  color: @blueColor;
 }
 .navbar-sticky {
   position: sticky;
@@ -315,7 +315,7 @@
 }
 .bar-chart {
   .bg-white;
-  height: 415px;
+  height: 100%;
   margin-bottom: 5px;
   overflow: auto;
 }
@@ -394,4 +394,17 @@
 }
 .align-items-flex-end {
   align-items: flex-end;
+}
+.h-10vh {
+  height: 10vh;
+}
+.h-90vh {
+  height: 90vh;
+}
+.awc-location {
+  top: 0;
+  width: 100vw;
+  background: #2C3648;
+  .position-fixed;
+  .h-100vh;
 }

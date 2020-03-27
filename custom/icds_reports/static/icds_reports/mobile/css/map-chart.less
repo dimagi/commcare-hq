@@ -114,7 +114,7 @@ a:active, a:hover, a:focus {
 
 // reduce font size of x-axis labels
 .nvd3 text {
-  font-size: 10px;
+  font-size: 12px;
 }
 
 // reduce width of tooltip and wrap text if overflows
@@ -141,6 +141,34 @@ a:active, a:hover, a:focus {
 
 //by default labels and vertical lines opacity is made 0 instead of
 // wrapping when label is long to avoid overlap
-#mobile-bar-chart text, #mobile-bar-chart line {
+#mobile-bar-chart text, #mobile-bar-chart line, #mobile-line-chart text, #mobile-line-chart line {
   opacity: 1 !important;
+}
+
+#mobile-bar-chart .nv-x .nv-axis text, #mobile-line-chart .nv-x .nv-axis text {
+  fill: @blueColor;
+}
+
+#mobile-bar-chart .nv-y .nv-axis text, #mobile-line-chart .nv-y .nv-axis text {
+  fill: @oliveColor;
+}
+
+.blue-dot {
+  background: @blueColor;
+}
+
+.olive-dot {
+  background: @oliveColor;
+}
+
+.label-representation-dot {
+  height: 12px;
+  width: 12px;
+  border-radius: 50%;
+  .mr-2;
+}
+.pse-photo-submission {
+  height: 125px;
+  width: 125px;
+  border: 1px solid black;
 }
