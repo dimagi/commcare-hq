@@ -584,15 +584,17 @@ class CouchSqlDomainMigrator:
         return saved
 
     def _apply_form_to_case(self, sql_form, couch_form):
-        if (sql_form.is_error and couch_form.problem
-                and couch_form.doc_type == "XFormInstance"):
-            self._convert_error_form_to_normal(sql_form)
+        if (sql_form.is_error and couch_form.doc_type == "XFormInstance"
+                and couch_form.problem):
+            # Note: does not clear "problem" field
+            sql_form.state = XFormInstanceSQL.NORMAL
+            sql_form.save()
+        elif (sql_form.is_normal and couch_form.doc_type == "XFormInstance"
+                and not couch_form.initial_processing_complete
+                and not sql_form.initial_processing_complete):
+            sql_form.initial_processing_complete = True
+            sql_form.save()
         return self._get_case_stock_result(sql_form, couch_form)
-
-    def _convert_error_form_to_normal(self, sql_form):
-        # Note: does not clear "problem" field
-        sql_form.state = XFormInstanceSQL.NORMAL
-        sql_form.save()
 
     def _check_for_migration_restrictions(self, domain_name):
         msgs = []
