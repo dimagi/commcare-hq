@@ -136,9 +136,6 @@ class FoodRow:
                 else:
                     setattr(self, indicator.slug, MISSING)
 
-    def _include_ucr_indicator(self, indicator):
-        return indicator.is_recall_meta
-
     @property
     def reference_food_code(self):
         composition = self.fixtures.food_compositions.get(self.food_code)
@@ -212,6 +209,9 @@ class RecipeIngredientRow(FoodRow):
 
         base_food = self.fixtures.foods_by_name.get(self.food_base_term)
         self.base_term_food_code = base_food.food_code if base_food else None
+
+    def _include_ucr_indicator(self, indicator):
+        return indicator.is_recall_meta
 
 
 class FoodData:
