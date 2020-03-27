@@ -558,6 +558,13 @@ def app_exchange(request, domain):
             continue
         results.reverse()
         first = results[0]
+
+        def _version_text(result):
+            if result['_id'] == first['_id']:
+                return _("Latest Version")
+            built_on = iso_string_to_datetime(result['built_on']).strftime("%B %d, %Y")
+            return _("{} version").format(built_on)
+
         records.append({
             "id": first['_id'],
             "name": first['name'],
@@ -566,7 +573,7 @@ def app_exchange(request, domain):
             "last_released": iso_string_to_datetime(first['built_on']).date(),
             "versions": [{
                 "id": r['_id'],
-                "text": _("Latest Version") if r['_id'] == first['_id'] else _("Version {}").format(r['version']),
+                "text": _version_text(r),
             } for r in results],
         })
 
