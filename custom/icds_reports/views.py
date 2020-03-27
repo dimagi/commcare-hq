@@ -2435,18 +2435,17 @@ class GovernanceCBEAPI(GovernanceAPIBaseView):
 
 
 @location_safe
-@method_decorator([api_auth, toggles.ICDS_DEMOGRAPHICS_API.required_decorator()], name='dispatch')
+@method_decorator([api_auth, toggles.ICDS_BIHAR_DEMOGRAPHICS_API.required_decorator()], name='dispatch')
 class BiharDemographicsAPI(BaseCasAPIView):
     def message(self, message_name):
         error_messages = {
             "invalid_month": "Please specify a valid month. Month can't be in future and before Jan 2020",
-            "access_denied": "You are not authorised to access this location",
-            "invalid_state": "Invalid State Id"
+            "access_denied": "You are not authorised to access this location"
         }
         return {"message": error_messages[message_name]}
 
     def get(self, request, *args, **kwargs):
-        state_id = request.GET.get('state_id', '')
+
         last_person_case_id = request.GET.get('last_person_case_id', '')
 
         valid_query_month, error_message = self.get_valid_query_month(request.GET.get('month'),
@@ -2458,13 +2457,11 @@ class BiharDemographicsAPI(BaseCasAPIView):
         if not self.query_month_in_range(valid_query_month, start_month=date(2017, 1, 1)):
             return JsonResponse(self.message('invalid_month'), status=400)
 
-        if not state_id:
-            return JsonResponse(self.message('invalid_state'), status=400)
-        if not self.has_access(state_id, request.couch_user):
+        if not self.has_access(self.bihar_state_id, request.couch_user):
             return JsonResponse(self.message('access_denied'), status=403)
 
         demographics_data, total_count = get_api_demographics_data(valid_query_month,
-                                                                   state_id,
+                                                                   self.bihar_state_id,
                                                                    last_person_case_id)
         response_json = {
             'data': demographics_data,
@@ -2477,3 +2474,7 @@ class BiharDemographicsAPI(BaseCasAPIView):
         }
 
         return JsonResponse(data=response_json)
+
+    @property
+    def bihar_state_id(self):
+        return SQLLocation.objects.get(name='Bihar', location_type__name='state').location_id
