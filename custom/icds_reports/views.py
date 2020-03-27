@@ -2474,7 +2474,8 @@ class BiharDemographicsAPI(BaseCasAPIView):
             }
         }
 
-        return JsonResponse(data=response_json)
+        return JsonResponse(data=response_json,
+                            json_dumps_params={'ensure_ascii':False})  # This is to let non-english names to be sent as it is
 
     @property
     def bihar_state_id(self):
