@@ -23,7 +23,6 @@ from ..example_data.data import (
 from ..fixtures import FixtureAccessor
 from ..food import FoodData, INDICATORS
 from ..ucr_data import FoodCaseData
-from ..ucr.data_providers.master_data_file_data import MasterDataFileData
 
 DOMAIN = 'inddex-reports-test'
 
@@ -53,23 +52,6 @@ def food_names(rows):
     return [r['food_name'] for r in rows]
 
 
-def assert_same_column_vals(expected_row, actual_row, columns):
-    def get_differing_columns(expected_row, actual_row):
-        for header in columns:
-            expected = expected_row[header]
-            actual = actual_row.get(header, 'MISSING')
-            if expected != actual:
-                yield (header, expected, actual)
-
-    differing_cols = list(get_differing_columns(expected_row, actual_row))
-    if differing_cols:
-        food_name = expected_row['food_name']
-        msg = f"Incorrect columns in row for {food_name}:"
-        for header, expected, actual in differing_cols:
-            msg += f"\n{header}: expected '{expected}' got '{actual}'"
-        raise AssertionError(msg)
-
-
 class TestSetupUtils(TestCase):
     def test_cases_created(self):
         accessor = CaseAccessors(DOMAIN)
@@ -93,39 +75,6 @@ class TestSetupUtils(TestCase):
              ('food_composition_table', 1042),
              ('conv_factors', 2995)]
         )
-
-
-# I plan to remove this eventually, but it's useful to be able to run while I
-# extract components
-class TestOldReport(TestCase):
-    def test_old_report(self):
-        expected = get_expected_report()
-        # exclude rows not pulled from cases for now
-        expected = [r for r in get_expected_report() if r['caseid']]
-
-        actual = self.run_report()
-        self.assertEqual(expected[0].keys(), actual[0].keys())  # compare headers
-
-        # sort uniformly for comparison
-        expected = sort_rows(expected)
-        actual = sort_rows(actual)
-
-        self.assertItemsEqual(food_names(expected), food_names(actual))
-        for expected_row, actual_row in zip(expected, actual):
-            pass
-            # assert_same_column_vals(expected_row, actual_row, expected_row.keys())
-
-    def run_report(self):
-        report_data = MasterDataFileData({
-            'domain': DOMAIN,
-            'startdate': date(2020, 1, 1).isoformat(),
-            'enddate': date(2020, 4, 1).isoformat(),
-            'case_owners': '',
-            'gap_type': '',
-            'recall_status': '',
-        })
-        headers = [h.html for h in report_data.headers]
-        return [dict(zip(headers, row)) for row in report_data.rows]
 
 
 class TestUcrAdapter(TestCase):
