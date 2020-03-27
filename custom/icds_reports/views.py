@@ -2455,7 +2455,7 @@ class BiharDemographicsAPI(BaseCasAPIView):
         if error_message:
             return JsonResponse({"message": error_message}, status=400)
 
-        if not self.query_month_in_range(valid_query_month, start_month=date(2017, 1, 1)):
+        if not self.query_month_in_range(valid_query_month, start_month=date(2020, 1, 1)):
             return JsonResponse(self.message('invalid_month'), status=400)
 
         if not self.has_access(self.bihar_state_id, request.couch_user):
