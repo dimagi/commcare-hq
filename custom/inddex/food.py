@@ -143,6 +143,21 @@ class FoodRow:
             self.user_food_group = self.composition.user_defined_food_group
             self.reference_food_code = self.composition.reference_food_code_for_food_composition
 
+        self._set_conversion_factors()
+
+    def _set_conversion_factors(self):
+        if self.food_type in (FOOD_ITEM, STANDARD_RECIPE) and self.conv_method_code:
+            self.conv_factor_food_code = self.fixtures.conversion_factors.get(
+                (self.food_code, self.conv_method_code, self.conv_option_code))
+            self.conv_factor_base_term_food_code = self.fixtures.conversion_factors.get(
+                (self.base_term_food_code, self.conv_method_code, self.conv_option_code))
+
+            if self.conv_factor_food_code:
+                self.conv_factor_used = 'food_code'
+                self.conv_factor = self.conv_factor_food_code
+            elif self.conv_factor_base_term_food_code:
+                self.conv_factor_used = 'base_term_food_code'
+                self.conv_factor = self.conv_factor_base_term_food_code
 
     @cached_property
     def composition(self):
@@ -180,8 +195,10 @@ class FoodRow:
                 return val.strftime('%Y-%m-%d %H:%M:%S')
             if isinstance(val, bool):
                 return "yes" if val else "no"
-            if isinstance(val, (int, float)):
+            if isinstance(val, int):
                 return str(val)
+            if isinstance(val, float):
+                return str(int(val)) if val.is_integer() else str(val)
             if val is None:
                 return MISSING
             return val
