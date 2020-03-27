@@ -7,8 +7,6 @@ from django.core.management import BaseCommand, CommandError
 from corehq.apps.change_feed import data_sources, topics
 from corehq.apps.change_feed.producer import producer
 from corehq.apps.hqadmin.management.commands.stale_data_in_es import DataRow, HEADER_ROW, get_csv_args
-from corehq.form_processor.backends.sql.dbaccessors import ShardAccessor
-from corehq.form_processor.models import CommCareCaseSQL
 from corehq.form_processor.utils import should_use_sql_backend
 from dimagi.utils.chunked import chunked
 
@@ -104,31 +102,11 @@ def _publish_cases_for_couch(domain, case_ids):
 
 
 def _publish_cases_for_sql(domain, case_records):
-    records_with_types = filter(lambda r: r.doc_subtype, case_records)
-    records_with_no_types = filter(lambda r: not r.doc_subtype, case_records)
-    # if we already had a type just publish as-is
-    for record in records_with_types:
+    for record in case_records:
         producer.send_change(
             topics.CASE_SQL,
             _change_meta_for_sql_case(domain, record.doc_id, record.doc_subtype)
         )
-
-    # else lookup the type from the database
-    for record_chunk in chunked(records_with_no_types, 10000):
-        # databases will contain a mapping of shard database ids to case_ids in that DB
-        id_chunk = [r.doc_id for r in record_chunk]
-        databases = ShardAccessor.get_docs_by_database(id_chunk)
-        for db, doc_ids in databases.items():
-            results = CommCareCaseSQL.objects.using(db).filter(
-                case_id__in=doc_ids,
-            ).values_list('case_id', 'type')
-            # make sure we found the same number of IDs
-            assert len(results) == len(doc_ids)
-            for case_id, case_type in results:
-                producer.send_change(
-                    topics.CASE_SQL,
-                    _change_meta_for_sql_case(domain, case_id, case_type)
-                )
 
 
 def _change_meta_for_sql_case(domain, case_id, case_type):
