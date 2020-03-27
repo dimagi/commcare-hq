@@ -2455,13 +2455,13 @@ class BiharDemographicsAPI(BaseCasAPIView):
         if error_message:
             return JsonResponse({"message": error_message}, status=400)
 
-        if not self.query_month_in_range(valid_query_month, start_month=date(2017, 1, 1)):
+        if not self.query_month_in_range(valid_query_month, start_month=date(2020, 1, 1)):
             return JsonResponse(self.message('invalid_month'), status=400)
 
         if not self.has_access(self.bihar_state_id, request.couch_user):
             return JsonResponse(self.message('access_denied'), status=403)
 
-        demographics_data, total_count = get_api_demographics_data(valid_query_month,
+        demographics_data, total_count = get_api_demographics_data(valid_query_month.strftime("%Y-%m-%d"),
                                                                    self.bihar_state_id,
                                                                    last_person_case_id)
         response_json = {
