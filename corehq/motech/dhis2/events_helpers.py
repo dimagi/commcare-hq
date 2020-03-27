@@ -1,6 +1,5 @@
 from schema import Schema, SchemaError
 
-from corehq.motech.dhis2.const import DHIS2_API_VERSION
 from corehq.motech.dhis2.schema import get_event_schema
 from corehq.motech.exceptions import ConfigurationError
 from corehq.motech.value_source import (
@@ -14,8 +13,7 @@ def send_dhis2_event(request, form_config, payload):
     event = get_event(request.domain_name, form_config, payload)
     if event:
         validate_event_schema(event)
-        return request.post('/api/%s/events' % DHIS2_API_VERSION, json=event,
-                            raise_for_status=True)
+        return request.post('/api/events', json=event, raise_for_status=True)
 
 
 def get_event(domain, config, form_json=None, info=None):

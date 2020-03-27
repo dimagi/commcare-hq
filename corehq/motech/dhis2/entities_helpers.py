@@ -9,7 +9,7 @@ from schema import Schema, SchemaError
 from casexml.apps.case.mock import CaseBlock
 
 from corehq.apps.hqcase.utils import submit_case_blocks
-from corehq.motech.dhis2.const import DHIS2_API_VERSION, XMLNS_DHIS2
+from corehq.motech.dhis2.const import XMLNS_DHIS2
 from corehq.motech.dhis2.events_helpers import get_event
 from corehq.motech.dhis2.exceptions import (
     BadTrackedEntityInstanceID,
@@ -105,7 +105,7 @@ def get_tracked_entity_instance_and_etag_by_id(requests, tei_id, case_trigger_in
     Raises BadTrackedEntityInstanceID if the ID does not belong to an
     instance.
     """
-    endpoint = f"/api/{DHIS2_API_VERSION}/trackedEntityInstances/{tei_id}"
+    endpoint = f"/api/trackedEntityInstances/{tei_id}"
     params = {"fields": "*"}  # Tells DHIS2 to return everything
     response = requests.get(endpoint, params=params)
     if 200 <= response.status_code < 300:
@@ -140,7 +140,7 @@ def update_tracked_entity_instance(
         )
     validate_tracked_entity(tracked_entity)
     tei_id = tracked_entity["trackedEntityInstance"]
-    endpoint = f"/api/{DHIS2_API_VERSION}/trackedEntityInstances/{tei_id}"
+    endpoint = f"/api/trackedEntityInstances/{tei_id}"
     headers = {
         "Content-type": "application/json",
         "Accept": "application/json",
@@ -200,7 +200,7 @@ def register_tracked_entity_instance(requests, case_trigger_info, case_config):
     if enrollments:
         tracked_entity["enrollments"] = enrollments
     validate_tracked_entity(tracked_entity)
-    endpoint = f"/api/{DHIS2_API_VERSION}/trackedEntityInstances/"
+    endpoint = "/api/trackedEntityInstances/"
     response = requests.post(endpoint, json=tracked_entity, raise_for_status=True)
     summaries = response.json()["response"]["importSummaries"]
     if len(summaries) != 1:

@@ -6,7 +6,6 @@ from django.utils.translation import ugettext as _
 from memoized import memoized_property
 from requests import HTTPError
 
-from corehq.motech.dhis2.const import DHIS2_API_VERSION
 from corehq.motech.finders import MATCH_FUNCTIONS, MATCH_TYPE_EXACT
 from corehq.motech.value_source import deserialize, get_value
 
@@ -66,7 +65,7 @@ class TrackedEntityInstanceFinder:
         return [cs.candidate for cs in candidate_scores]
 
     def fetch_query_results(self, case_trigger_info):
-        endpoint = f"/api/{DHIS2_API_VERSION}/trackedEntityInstances"
+        endpoint = "/api/trackedEntityInstances"
         query_filters = self.get_query_filters(case_trigger_info)
         if not query_filters:
             return []

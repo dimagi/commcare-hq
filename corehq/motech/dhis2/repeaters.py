@@ -1,6 +1,9 @@
 import json
+import re
 import sys
 import traceback
+from datetime import datetime, timedelta
+from distutils.version import LooseVersion
 
 from django.utils.translation import ugettext_lazy as _
 
@@ -9,13 +12,19 @@ from requests import RequestException
 from urllib3.exceptions import HTTPError
 
 from couchforms.signals import successful_form_received
-from dimagi.ext.couchdbkit import SchemaProperty
+from dimagi.ext.couchdbkit import (
+    DateTimeProperty,
+    Document,
+    SchemaProperty,
+    StringProperty,
+)
 
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
-from corehq.motech.dhis2.const import XMLNS_DHIS2
+from corehq.motech.dhis2.const import DHIS2_MAX_VERSION, XMLNS_DHIS2
 from corehq.motech.dhis2.dhis2_config import Dhis2Config, Dhis2EntityConfig
 from corehq.motech.dhis2.entities_helpers import send_dhis2_entities
 from corehq.motech.dhis2.events_helpers import send_dhis2_event
+from corehq.motech.dhis2.exceptions import Dhis2Exception
 from corehq.motech.exceptions import ConfigurationError
 from corehq.motech.repeater_helpers import (
     get_relevant_case_updates_from_form_json,
@@ -26,13 +35,54 @@ from corehq.motech.repeaters.repeater_generators import (
 )
 from corehq.motech.repeaters.signals import create_repeat_records
 from corehq.motech.requests import Requests
-from corehq.motech.value_source import (
-    get_form_question_values,
-)
+from corehq.motech.value_source import get_form_question_values
 from corehq.toggles import DHIS2_INTEGRATION
 
+api_version_re = re.compile(r'^2\.\d+(\.\d)?$')
 
-class Dhis2EntityRepeater(CaseRepeater):
+
+class Dhis2Instance(Document):
+
+    dhis2_version = StringProperty(default=None)
+    dhis2_version_last_modified = DateTimeProperty(default=None)
+
+    def get_api_version(self) -> int:
+        if (
+            self.dhis2_version is None
+            or self.dhis2_version_last_modified + timedelta(days=365) < datetime.now()
+        ):
+            # Fetching DHIS2 metadata is expensive. Only do it if we
+            # don't know the version of DHIS2, or if we haven't checked
+            # for over a year.
+            self.update_dhis2_version()
+        return get_api_version(self.dhis2_version)
+
+    def update_dhis2_version(self):
+        """
+        Fetches metadata from DHIS2 instance and saves DHIS2 version.
+
+        Notifies administrators if the version of DHIS2 exceeds the
+        maximum supported version, but still saves and continues.
+        """
+        requests = get_requests(self)
+        metadata = fetch_metadata(requests)
+        dhis2_version = metadata["system"]["version"]
+        try:
+            get_api_version(dhis2_version)
+        except Dhis2Exception as err:
+            requests.notify_exception(str(err))
+            raise
+        if LooseVersion(dhis2_version) > DHIS2_MAX_VERSION:
+            requests.notify_error(
+                "Integration has not yet been tested for DHIS2 version "
+                f"{dhis2_version}. Its API may not be supported."
+            )
+        self.dhis2_version = dhis2_version
+        self.dhis2_version_last_modified = datetime.now()
+        self.save()
+
+
+class Dhis2EntityRepeater(CaseRepeater, Dhis2Instance):
     class Meta(object):
         app_label = 'repeaters'
 
@@ -69,6 +119,9 @@ class Dhis2EntityRepeater(CaseRepeater):
         return json.loads(payload)
 
     def send_request(self, repeat_record, payload):
+        # Notify admins if API version is not supported
+        self.get_api_version()
+
         value_source_configs = []
         for case_config in self.dhis2_entity_config.case_configs:
             value_source_configs.append(case_config.org_unit_id)
@@ -82,14 +135,7 @@ class Dhis2EntityRepeater(CaseRepeater):
                           if 'case_property' in c],
             form_question_values=get_form_question_values(payload),
         )
-        requests = Requests(
-            self.domain,
-            self.url,
-            self.username,
-            self.plaintext_password,
-            verify=self.verify,
-            notify_addresses=self.notify_addresses,
-        )
+        requests = get_requests(self)
         try:
             return send_dhis2_entities(requests, self, case_trigger_infos)
         except Exception:
@@ -102,7 +148,7 @@ class Dhis2EntityRepeater(CaseRepeater):
             raise
 
 
-class Dhis2Repeater(FormRepeater):
+class Dhis2Repeater(FormRepeater, Dhis2Instance):
     class Meta(object):
         app_label = 'repeaters'
 
@@ -153,15 +199,10 @@ class Dhis2Repeater(FormRepeater):
         If ``payload`` is a form that isn't configured to be forwarded,
         returns True.
         """
-        requests = Requests(
-            self.domain,
-            self.url,
-            self.username,
-            self.plaintext_password,
-            verify=self.verify,
-            notify_addresses=self.notify_addresses,
-            payload_id=repeat_record.payload_id,
-        )
+        # Notify admins if API version is not supported
+        self.get_api_version()
+
+        requests = get_requests(self)
         for form_config in self.dhis2_config.form_configs:
             if form_config.xmlns == payload['form']['@xmlns']:
                 try:
@@ -174,6 +215,53 @@ class Dhis2Repeater(FormRepeater):
                     requests.notify_error(f"Error sending Events to {self}: {err}")
                     raise
         return True
+
+
+def get_api_version(dhis2_version):
+    """
+    Returns the API version supported by the DHIS2 instance.
+
+    `DHIS 2 Developer guide`_:
+
+        The Web API is versioned starting from DHIS 2.25. The API
+        versioning follows the DHIS 2 major version numbering. As an
+        example, the API version for DHIS 2.25 is 25.
+
+
+    .. _DHIS 2 Developer guide: https://docs.dhis2.org/master/en/developer/html/webapi_browsing_the_web_api.html#webapi_api_versions
+    """
+    try:
+        api_version = LooseVersion(dhis2_version).version[1]
+    except (AttributeError, IndexError):
+        raise Dhis2Exception(f"Unable to parse DHIS2 version {dhis2_version}.")
+    return api_version
+
+
+def fetch_metadata(requests):
+    """
+    Fetch metadata about a DHIS2 instance.
+
+    Currently only used for determining what API version it supports.
+
+    .. NOTE::
+       Metadata is large (like a 100MB JSON document), and contains the
+       IDs one would need to compile a human-readable configuration into
+       one that maps to DHIS2 IDs.
+
+    """
+    response = requests.get('/api/metadata', raise_for_status=True)
+    return response.json()
+
+
+def get_requests(repeater):
+    return Requests(
+        repeater.domain,
+        repeater.url,
+        repeater.username,
+        repeater.plaintext_password,
+        verify=repeater.verify,
+        notify_addresses=repeater.notify_addresses,
+    )
 
 
 def create_dhis2_event_repeat_records(sender, xform, **kwargs):
