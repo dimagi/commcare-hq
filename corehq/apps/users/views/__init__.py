@@ -726,12 +726,17 @@ class UserInvitationView(object):
 
         invitation = SQLInvitation.objects.filter(uuid=uuid)
         if not invitation:
-            invitation = SQLInvitation.objects.filter(couch_id=uuid).first()
-            if not invitation:
-                messages.error(request, _("Sorry, it looks like your invitation has expired. "
-                                          "Please check the invitation link you received and try again, or "
-                                          "request a project administrator to send you the invitation again."))
-                return HttpResponseRedirect(reverse("login"))
+            try:
+                invitation = SQLInvitation.objects.get(id=int(uuid))
+            except (ValueError, SQLInvitation.DoesNotExist):
+                invitation = SQLInvitation.objects.filter(couch_id=uuid).first()
+
+        if not invitation:
+            messages.error(request, _("Sorry, it looks like your invitation has expired. "
+                                      "Please check the invitation link you received and try again, or "
+                                      "request a project administrator to send you the invitation again."))
+            return HttpResponseRedirect(reverse("login"))
+
         if invitation.is_accepted:
             messages.error(request, _("Sorry, that invitation has already been used up. "
                                       "If you feel this is a mistake please ask the inviter for "
