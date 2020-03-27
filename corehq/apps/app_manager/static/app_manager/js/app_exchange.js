@@ -13,9 +13,9 @@ hqDefine("app_manager/js/app_exchange", [
 
         self.versionButtonText = ko.computed(function () {
             if (self.showVersions()) {
-                return gettext("Hide Version History");
+                return gettext("Hide Past Versions");
             }
-            return gettext("Show Version History");
+            return gettext("See Past Versions");
         });
 
         self.toggleVersions = function () {
