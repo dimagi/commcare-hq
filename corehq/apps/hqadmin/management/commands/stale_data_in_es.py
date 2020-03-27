@@ -3,6 +3,7 @@ import inspect
 import sys
 from collections import namedtuple
 from datetime import datetime
+from unittest import mock
 
 from django.core.management.base import BaseCommand, CommandError
 
@@ -87,35 +88,36 @@ class Command(BaseCommand):
         parser.add_argument('--delimiter', default='\t', choices=('\t', ','))
 
     def handle(self, domain, data_models, delimiter, **options):
-        data_models = set(data_models)
+        with mock.patch('sys.stdout', self.stdout):
+            data_models = set(data_models)
 
-        start = dateutil.parser.parse(options['start']) if options['start'] else datetime(2010, 1, 1)
-        end = dateutil.parser.parse(options['end']) if options['end'] else datetime.utcnow()
-        case_type = options['case_type']
-        run_config = RunConfig(domain, start, end, case_type)
+            start = dateutil.parser.parse(options['start']) if options['start'] else datetime(2010, 1, 1)
+            end = dateutil.parser.parse(options['end']) if options['end'] else datetime.utcnow()
+            case_type = options['case_type']
+            run_config = RunConfig(domain, start, end, case_type)
 
-        if run_config.domain is ALL_DOMAINS:
-            print('Running for all domains', file=self.stderr)
+            if run_config.domain is ALL_DOMAINS:
+                print('Running for all domains', file=self.stderr)
 
-        csv_writer = csv.writer(self.stdout, **get_csv_args(delimiter))
+            csv_writer = csv.writer(self.stdout, **get_csv_args(delimiter))
 
-        def print_data_row(data_row):
-            # Casting as str print `None` as 'None'
-            csv_writer.writerow(map(str, data_row))
+            def print_data_row(data_row):
+                # Casting as str print `None` as 'None'
+                csv_writer.writerow(map(str, data_row))
 
-        print_data_row(HEADER_ROW)
+            print_data_row(HEADER_ROW)
 
-        for data_model in data_models:
-            try:
-                process_data_model_fn = DATA_MODEL_BACKENDS[data_model.lower()]()
-            except KeyError:
-                raise CommandError('Only valid options for data model are "{}"'.format(
-                    '", "'.join(DATA_MODEL_BACKENDS.keys())
-                ))
-            data_rows = process_data_model_fn(run_config)
+            for data_model in data_models:
+                try:
+                    process_data_model_fn = DATA_MODEL_BACKENDS[data_model.lower()]()
+                except KeyError:
+                    raise CommandError('Only valid options for data model are "{}"'.format(
+                        '", "'.join(DATA_MODEL_BACKENDS.keys())
+                    ))
+                data_rows = process_data_model_fn(run_config)
 
-            for data_row in data_rows:
-                print_data_row(data_row)
+                for data_row in data_rows:
+                    print_data_row(data_row)
 
 
 DATA_MODEL_BACKENDS = {
