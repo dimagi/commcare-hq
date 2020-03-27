@@ -254,8 +254,8 @@ class SqlData(ReportDataSource):
 
     def query_context(self, start=None, limit=None):
         qc = sqlagg.QueryContext(
-            self.table_name, self.wrapped_filters, self.group_by, self.distinct_on, self.order_by,
-            start=start, limit=limit
+            self.table_name, filters=self.wrapped_filters, group_by=self.group_by, distinct_on=self.distinct_on,
+            order_by=self.order_by, start=start, limit=limit
         )
         for c in self.columns:
             qc.append_column(c.view)
