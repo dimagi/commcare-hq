@@ -106,7 +106,8 @@ from custom.icds_reports.models.aggregate import (
     AggGovernanceDashboard,
     AggServiceDeliveryReport,
     AggregateMigrationForms,
-    AggregateAvailingServiceForms
+    AggregateAvailingServiceForms,
+    BiharAPIDemographics
 )
 from custom.icds_reports.models.helper import IcdsFile
 from custom.icds_reports.models.util import UcrReconciliationStatus
@@ -1856,3 +1857,8 @@ def _agg_governance_dashboard(current_month):
 def update_service_delivery_report(target_date):
     current_month = force_to_date(target_date).replace(day=1)
     AggServiceDeliveryReport.aggregate(current_month)
+
+
+def update_bihar_api_table(target_date):
+    current_month = force_to_date(target_date).replace(day=1)
+    BiharAPIDemographics.aggregate(current_month)

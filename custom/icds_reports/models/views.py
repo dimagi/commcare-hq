@@ -1332,3 +1332,63 @@ class ServiceDeliveryReportView(models.Model):
         app_label = 'icds_reports'
         managed = False
         db_table = 'service_delivery_report'
+
+
+class BiharDemographicsView(models.Model):
+    """
+    Contains rows for Bihar Demographics API.
+    """
+    awc_id = models.TextField(blank=True, null=True)
+    awc_name = models.TextField(blank=True, null=True)
+    awc_site_code = models.TextField(blank=True, null=True)
+    supervisor_id = models.TextField(blank=True, null=True)
+    supervisor_name = models.TextField(blank=True, null=True)
+    supervisor_site_code = models.TextField(blank=True, null=True)
+    block_id = models.TextField(blank=True, null=True)
+    block_name = models.TextField(blank=True, null=True)
+    block_site_code = models.TextField(blank=True, null=True)
+    district_id = models.TextField(blank=True, null=True)
+    district_name = models.TextField(blank=True, null=True)
+    district_site_code = models.TextField(blank=True, null=True)
+    state_id = models.TextField(blank=True, null=True)
+    state_name = models.TextField(blank=True, null=True)
+    state_site_code = models.TextField(blank=True, null=True)
+    ward_number = models.TextField(blank=True, null=True)
+    month = models.DateField(blank=True, null=True)
+    household_id = models.TextField(blank=True, null=True)
+    household_name = models.TextField(blank=True, null=True)
+    hh_reg_date = models.TextField(blank=True, null=True)
+    hh_num = models.IntegerField(blank=True, null=True)
+    hh_gps_location = models.TextField(blank=True, null=True)
+    hh_caste = models.TextField(blank=True, null=True)
+    hh_bpl_apl = models.TextField(blank=True, null=True)
+    hh_minority = models.SmallIntegerField(blank=True, null=True)
+    hh_religion = models.TextField(blank=True, null=True)
+    hh_member_number = models.IntegerField(blank=True, null=True)
+    person_id = models.TextField(primary_key=True)
+    person_name = models.TextField(blank=True, null=True)
+    has_adhaar = models.SmallIntegerField(blank=True, null=True)
+    bank_account_number = models.TextField(blank=True, null=True)
+    ifsc_code = models.TextField(blank=True, null=True)
+    age_at_reg = models.SmallIntegerField(blank=True, null=True)
+    dob = models.DateField(blank=True, null=True)
+    gender = models.TextField(blank=True, null=True)
+    blood_group = models.TextField(blank=True, null=True)
+    disabled = models.SmallIntegerField(blank=True, null=True)
+    disability_type = models.TextField(blank=True, null=True)
+    referral_status = models.TextField(blank=True, null=True)
+    migration_status = models.SmallIntegerField(blank=True, null=True)
+    resident = models.SmallIntegerField(blank=True, null=True)
+    registered_status = models.SmallIntegerField(blank=True, null=True)
+    rch_id = models.TextField(blank=True, null=True)
+    mcts_id = models.TextField(blank=True, null=True)
+    phone_number = models.TextField(blank=True, null=True)
+    date_death = models.DateField(blank=True, null=True)
+    site_death = models.TextField(blank=True, null=True)
+    closed_on = models.DateField(blank=True, null=True)
+    reason_closure = models.TextField(blank=True, null=True)
+
+    class Meta(object):
+        app_label = 'icds_reports'
+        managed = False
+        db_table = 'bihar_demographics_view'
