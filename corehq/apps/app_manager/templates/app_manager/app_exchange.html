@@ -5,6 +5,8 @@
 
 {% block title %}{% trans "COVID-19 CommCare Applications" %}{% endblock title %}
 
+{% requirejs_main 'hqwebapp/js/widgets' %}
+
 {% block content %}
 <div class="container" id="hq-content">
   <div class="page-header">
@@ -41,11 +43,14 @@
         {% endif %}
         <form action="{% url "app_exchange" domain %}" method="POST">
           {% csrf_token %}
-          <input type="hidden" name="from_domain" value="{{ app.domain }}" />
-          <input type="hidden" name="from_app_id" value="{{ app.id }}" />
           <div class="col-sm-3">
             <div class="well well-lg text-center">
               <h3>{{ app.name }}</h3>
+              {% if app.help_link %}
+                <p>
+                  <a target="_blank" href="{{ app.help_link }}">{% trans "Application Info" %}</a>
+                </p>
+              {% endif %}
               {% if app.last_released %}
                 <p>
                   {% blocktrans with app.last_released as last_released %}
@@ -53,12 +58,23 @@
                   {% endblocktrans %}
                 </p>
               {% endif %}
-              {% if app.help_link %}
-                <p>
-                  <a target="_blank" href="{{ app.help_link }}">{% trans "Application Info" %}</a>
-                </p>
+              {% if app.versions|length > 1 %}
+                <select name="from_app_id" class="hqwebapp-select2" placeholder="{% trans_html_attr "Latest Version" %}">
+                  {% for version in app.versions %}
+                    <option value="{{ version.id }}">{{ version.text }}</option>
+                  {% endfor %}
+                </select>
+                {% if app.changelog_link %}
+                  <br>
+                  <p>
+                    <a target="_blank" href="{{ app.changelog_link }}">{% trans "Version History" %}</a>
+                  </p>
+                {% endif %}
+              {% else %}
+                {% for version in app.versions %}
+                  <input type="hidden" name="from_app_id" value="{{ version.id }}" />
+                {% endfor %}
               {% endif %}
-              <br>
               <button type="submit" class="btn btn-primary">
                 <i class="fa fa-cloud-download"></i>
                 {% trans "Import" %}

@@ -39,10 +39,10 @@ from corehq.apps.app_manager.const import (
     MAJOR_RELEASE_TO_VERSION,
 )
 from corehq.apps.app_manager.dbaccessors import (
+    get_all_built_app_results,
     get_app,
     get_current_app,
     get_latest_released_app,
-    get_latest_released_app_doc,
 )
 from corehq.apps.app_manager.decorators import (
     no_conflict_require_POST,
@@ -107,6 +107,7 @@ from corehq.apps.users.dbaccessors.all_commcare_users import (
 from corehq.elastic import ESError
 from corehq.tabs.tabclasses import ApplicationsTab
 from corehq.util.compression import decompress
+from corehq.util.dates import iso_string_to_datetime
 from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.util.view_utils import reverse as reverse_util
 
@@ -551,14 +552,22 @@ def app_exchange(request, domain):
     template = "app_manager/app_exchange.html"
     records = []
     for obj in ExchangeApplication.objects.all():
-        app = get_app(obj.domain, obj.app_id)
+        results = get_all_built_app_results(obj.domain, app_id=obj.app_id)
+        results = [r['value'] for r in results if r['value']['is_released']]
+        if not len(results):
+            continue
+        results.reverse()
+        first = results[0]
         records.append({
-            "id": app.get_id,
-            "domain": app.domain,
-            "name": app.name,
-            "comment": app.comment,
-            "last_released": obj.last_released.date() if obj.last_released else None,
+            "id": first['_id'],
+            "name": first['name'],
             "help_link": obj.help_link,
+            "changelog_link": obj.changelog_link,
+            "last_released": iso_string_to_datetime(first['built_on']).date(),
+            "versions": [{
+                "id": r['_id'],
+                "text": _("Latest Version") if r['_id'] == first['_id'] else _("Version {}").format(r['version']),
+            } for r in results],
         })
 
     context = {
@@ -568,15 +577,8 @@ def app_exchange(request, domain):
 
     if request.method == "POST":
         clear_app_cache(request, domain)
-        from_domain = request.POST.get('from_domain')
         from_app_id = request.POST.get('from_app_id')
-        doc = get_latest_released_app_doc(from_domain, from_app_id)
-
-        if not doc:
-            messages.error(request, _("Could not find latest released version of app."))
-            return render(request, template, context)
-
-        app_copy = import_app_util(doc, domain)
+        app_copy = import_app_util(from_app_id, domain)
         return back_to_main(request, domain, app_id=app_copy._id)
 
     return render(request, template, context)
