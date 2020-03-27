@@ -7,7 +7,7 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('users', '0011_remove_sqlinvitation_couch_id'),
+        ('users', '0012_remove_sqlinvitation_couch_id'),
     ]
 
     operations = [

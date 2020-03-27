@@ -8,7 +8,7 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('users', '0010_populate_usersinvitation'),
+        ('users', '0011_sqlinvitation_uuid'),
     ]
 
     operations = [
