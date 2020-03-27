@@ -1,7 +1,18 @@
 from custom.icds_reports.models.views import BiharDemographicsView
 from custom.icds_reports.const import CAS_API_PAGE_SIZE
+from custom.icds_reports.cache import icds_quickcache
 
 
+# cache for 2 hours because it wont change atleast for 24 hours
+@icds_quickcache(['month', 'state_id'], timeout=60 * 60 * 2)
+def get_total_records_count(month, state_id):
+    return BiharDemographicsView.objects.filter(
+        month=month,
+        state_id=state_id
+    ).count()
+
+
+@icds_quickcache(['month', 'state_id', 'last_person_case_id'], timeout=30 * 60)
 def get_api_demographics_data(month, state_id, last_person_case_id):
     demographics_data_query = BiharDemographicsView.objects.filter(
         month=month,
@@ -55,4 +66,4 @@ def get_api_demographics_data(month, state_id, last_person_case_id):
 
     # To apply pagination on database query with data size length
     limited_demographics_data = list(demographics_data_query[:CAS_API_PAGE_SIZE])
-    return limited_demographics_data,  demographics_data_query.count()
+    return limited_demographics_data,  get_total_records_count(month, state_id)
