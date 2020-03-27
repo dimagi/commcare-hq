@@ -16,4 +16,8 @@ class Migration(migrations.Migration):
             model_name='sqlinvitation',
             name='couch_id',
         ),
+        migrations.RemoveField(
+            model_name='sqlinvitation',
+            name='id',
+        ),
     ]
