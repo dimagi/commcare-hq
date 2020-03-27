@@ -121,6 +121,7 @@ INDICATORS = [
     I('fct_gap_code'),
     I('fct_gap_desc'),
 ]
+_INDICATORS_BY_SLUG = {i.slug: i for i in INDICATORS}
 
 
 class FoodRow:
@@ -129,12 +130,6 @@ class FoodRow:
         self.food_code = food_code
         self.ucr_row = ucr_row
         self.fixtures = fixtures
-        for indicator in INDICATORS:
-            if not hasattr(self, indicator.slug):
-                if indicator.in_ucr and self._include_ucr_indicator(indicator):
-                    setattr(self, indicator.slug, ucr_row[indicator.slug])
-                else:
-                    setattr(self, indicator.slug, None)
 
     @property
     def reference_food_code(self):
@@ -187,8 +182,12 @@ class FoodCaseRow(FoodRow):
         super().__init__(ucr_row['food_code'], ucr_row, fixtures)
         self.caseid = ucr_row['doc_id']
 
-    def _include_ucr_indicator(self, indicator):
-        return True
+    def __getattr__(self, name):
+        # If it's an indicator in the UCR that hasn't been explicitly set, return that val
+        if name in _INDICATORS_BY_SLUG:
+            indicator = _INDICATORS_BY_SLUG[name]
+            return self.ucr_row[indicator.slug] if indicator.in_ucr else None
+        return super().__getattr__(name)
 
 
 class RecipeIngredientRow(FoodRow):
@@ -203,16 +202,21 @@ class RecipeIngredientRow(FoodRow):
         self.recipe_name = ucr_row['recipe_name']
         self.recipe_case_id = ucr_row['doc_id']
         self.ingr_recipe_code = ingredient.recipe_code
-        food_data = self.fixtures.foods[self.food_code]
-        for indicator in INDICATORS:
-            if indicator.in_food_fixture:
-                setattr(self, indicator.slug, getattr(food_data, indicator.slug))
 
         base_food = self.fixtures.foods_by_name.get(self.food_base_term)
         self.base_term_food_code = base_food.food_code if base_food else None
 
-    def _include_ucr_indicator(self, indicator):
-        return indicator.is_recall_meta
+    def __getattr__(self, name):
+        # If it's an indicator that hasn't been explicitly set, check if it can
+        # be pulled from the food fixture or from the parent food case's UCR
+        if name in _INDICATORS_BY_SLUG:
+            indicator = _INDICATORS_BY_SLUG[name]
+            if indicator.in_food_fixture:
+                return getattr(self.fixtures.foods[self.food_code], indicator.slug)
+            if indicator.is_recall_meta:
+                return self.ucr_row[indicator.slug]
+            return None
+        return super().__getattr__(name)
 
 
 class FoodData:
