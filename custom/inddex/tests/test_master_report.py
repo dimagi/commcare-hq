@@ -130,7 +130,6 @@ class TestNewReport(TestCase):
         self.assertEqual(food_names(expected), food_names(actual))
 
         columns_known_to_fail = {  # TODO address these columns
-            'ingr_fraction',
             'ingr_recipe_total_grams_consumed',
             'recipe_num_ingredients',
             'conv_factor_food_code',

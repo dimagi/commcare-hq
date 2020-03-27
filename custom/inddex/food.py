@@ -174,7 +174,7 @@ class FoodRow:
                 return val.strftime('%Y-%m-%d %H:%M:%S')
             if isinstance(val, bool):
                 return "yes" if val else "no"
-            if isinstance(val, int):
+            if isinstance(val, (int, float)):
                 return str(val)
             if val is None:
                 return MISSING
@@ -210,6 +210,7 @@ class RecipeIngredientRow(FoodRow):
         self.recipe_name = ucr_row['recipe_name']
         self.recipe_case_id = ucr_row['doc_id']
         self.ingr_recipe_code = ingredient.recipe_code
+        self.ingr_fraction = ingredient.ingr_fraction
 
         base_food = self.fixtures.foods_by_name.get(self.food_base_term)
         self.base_term_food_code = base_food.food_code if base_food else None
