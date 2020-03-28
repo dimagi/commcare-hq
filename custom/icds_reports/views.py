@@ -55,7 +55,6 @@ from custom.icds_reports.const import (
     DASHBOARD_USAGE_EXPORT,
     DEMOGRAPHICS_EXPORT,
     GROWTH_MONITORING_LIST_EXPORT,
-    ICDS_SUPPORT_EMAIL,
     INDIA_TIMEZONE,
     ISSNIP_MONTHLY_REGISTER_PDF,
     LS_REPORT_EXPORT,
@@ -376,7 +375,7 @@ class DashboardView(TemplateView):
         kwargs.update(get_dashboard_template_context(self.domain, self.couch_user))
         kwargs.update({
             'is_mobile': False,
-            'support_email': ICDS_SUPPORT_EMAIL,
+            'support_email': settings.SUPPORT_EMAIL,
         })
         if self.couch_user.is_commcare_user() and self._has_helpdesk_role():
             build_id = get_latest_issue_tracker_build_id()
@@ -1883,12 +1882,6 @@ class AggregationScriptPage(BaseDomainView):
         return redirect(self.urlname, domain=self.domain)
 
 
-class ICDSBugReportView(BugReportView):
-    @property
-    def recipients(self):
-        return [ICDS_SUPPORT_EMAIL]
-
-
 @location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class DownloadExportReport(View):
@@ -2455,13 +2448,13 @@ class BiharDemographicsAPI(BaseCasAPIView):
         if error_message:
             return JsonResponse({"message": error_message}, status=400)
 
-        if not self.query_month_in_range(valid_query_month, start_month=date(2017, 1, 1)):
+        if not self.query_month_in_range(valid_query_month, start_month=date(2020, 1, 1)):
             return JsonResponse(self.message('invalid_month'), status=400)
 
         if not self.has_access(self.bihar_state_id, request.couch_user):
             return JsonResponse(self.message('access_denied'), status=403)
 
-        demographics_data, total_count = get_api_demographics_data(valid_query_month,
+        demographics_data, total_count = get_api_demographics_data(valid_query_month.strftime("%Y-%m-%d"),
                                                                    self.bihar_state_id,
                                                                    last_person_case_id)
         response_json = {
