@@ -297,11 +297,7 @@
                                  data: column.tags,
                                  as: 'tag'
                                }">
-                <!-- ko if: tag !== $root.constants.TAG_DELETED -->
-                <span data-bind="text: tag,
-                                 attr: { class: $root.getTagCSSClass(tag) }"></span>
-                <!-- /ko -->
-                <!-- ko if: (tag === $root.constants.TAG_DELETED && !column.item.isCaseName()) -->
+                <!-- ko ifnot: (tag !== $root.constants.TAG_DELETED && column.item.isCaseName()) -->
                                 <span data-bind="text: tag,
                                  attr: { class: $root.getTagCSSClass(tag) }"></span>
                 <!-- /ko -->
