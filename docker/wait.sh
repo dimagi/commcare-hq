@@ -1,4 +1,4 @@
-#!/bin/bash -ex
+#!/bin/bash 
 # TODO convert to using docker compose'depends_on' feature with health checks
 
 set -ex
