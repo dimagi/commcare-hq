@@ -1394,7 +1394,7 @@ class BiharDemographicsView(models.Model):
         db_table = 'bihar_demographics_view'
 
 
-class KPIAPIView(models.Model):
+class PMOAPIView(models.Model):
     """
     Contains rows for KPI API.
     """
@@ -1405,8 +1405,6 @@ class KPIAPIView(models.Model):
     state_name = models.TextField(blank=True, null=True)
     state_site_code = models.TextField(blank=True, null=True)
     aggregation_level = models.IntegerField(blank=True, null=True)
-    district_map_location_name = models.TextField(blank=True, null=True)
-    state_map_location_name = models.TextField(blank=True, null=True)
     month = models.DateField(blank=True, null=True)
     cbe_conducted = models.IntegerField(help_text='Number of CBE conducted by AWC')
     vhnd_conducted = models.IntegerField(help_text='Number of VHND conducted by AWC')
@@ -1431,4 +1429,4 @@ class KPIAPIView(models.Model):
     class Meta(object):
         app_label = 'icds_reports'
         managed = False
-        db_table = 'kpi_api_view'
+        db_table = 'pmo_api_view'

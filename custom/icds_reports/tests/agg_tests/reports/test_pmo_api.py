@@ -2,14 +2,14 @@ import datetime
 
 from django.test import TestCase
 
-from custom.icds_reports.models.views import KPIAPIView
+from custom.icds_reports.models.views import PMOAPIView
 from datetime import date
 
 
-class KPIAPITest(TestCase):
+class PMOAPITest(TestCase):
 
     def test_view_content(self):
-        data = KPIAPIView.objects.filter(
+        data = PMOAPIView.objects.filter(
             month=date(2017, 5, 1)
         ).values(
             "state_id",

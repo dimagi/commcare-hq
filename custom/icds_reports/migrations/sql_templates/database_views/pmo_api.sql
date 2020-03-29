@@ -1,5 +1,5 @@
-DROP VIEW IF EXISTS kpi_api_view CASCADE;
-CREATE VIEW kpi_api_view AS
+DROP VIEW IF EXISTS pmo_api_view CASCADE;
+CREATE VIEW pmo_api_view AS
     SELECT
         "awc_location_months"."district_id" AS "district_id",
         "awc_location_months"."district_name" AS "district_name",
@@ -8,8 +8,6 @@ CREATE VIEW kpi_api_view AS
         "awc_location_months"."state_name" AS "state_name",
         "awc_location_months"."state_site_code" AS "state_site_code",
         "awc_location_months"."aggregation_level" AS "aggregation_level",
-        "awc_location_months"."district_map_location_name" AS "district_map_location_name",
-        "awc_location_months"."state_map_location_name" AS "state_map_location_name",
         "awc_location_months"."month" AS "month",
         "agg_awc"."cbe_conducted" AS "cbe_conducted",
         "agg_awc"."vhnd_conducted" AS "vhnd_conducted",
@@ -47,8 +45,6 @@ CREATE VIEW kpi_api_view AS
         "awc_location_months"."state_name",
         "awc_location_months"."state_site_code",
         "awc_location_months"."aggregation_level",
-        "awc_location_months"."district_map_location_name",
-        "awc_location_months"."state_map_location_name",
         "awc_location_months"."month",
         "agg_awc"."cbe_conducted",
         "agg_awc"."vhnd_conducted",

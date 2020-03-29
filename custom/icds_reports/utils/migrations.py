@@ -28,7 +28,7 @@ def get_view_migrations():
         'system_usage_report_view.sql',
         'service_delivery_report_view.sql',
         'bihar_demographics.sql',
-        'kpi_api.sql'
+        'pmo_api.sql'
     ]
     migrator = RawSQLMigration(('custom', 'icds_reports', 'migrations', 'sql_templates', 'database_views'))
     operations = []
