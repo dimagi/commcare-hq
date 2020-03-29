@@ -37,10 +37,9 @@ class PMOAPITest(TestCase):
             {
                 "state_id": "st1", "state_name": "st1", "state_site_code": "st1",
                 "district_id": "d1", "district_name": "d1", "district_site_code": "d1",
-                "aggregation_level": 2, "district_map_location_name": None, "state_map_location_name": None,
-                "month": datetime.date(2017, 5, 1), "cbe_conducted": 1, "vhnd_conducted": 3, "num_launched_awcs": 10,
-                "wer_weighed": 317, "wer_eligible": 475, "bf_at_birth": 1, "born_in_month": 2,
-                "cf_initiation_eligible": 17, "cf_initiation_in_month": 14
+                "aggregation_level": 2, "month": datetime.date(2017, 5, 1), "cbe_conducted": 1,
+                "vhnd_conducted": 3, "num_launched_awcs": 10, "wer_weighed": 317, "wer_eligible": 475,
+                "bf_at_birth": 1, "born_in_month": 2, "cf_initiation_eligible": 17, "cf_initiation_in_month": 14
              },
             first_result
         )
