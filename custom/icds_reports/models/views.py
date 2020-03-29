@@ -1396,7 +1396,7 @@ class BiharDemographicsView(models.Model):
 
 class PMOAPIView(models.Model):
     """
-    Contains rows for KPI API.
+    Contains rows for PMO API.
     """
     district_id = models.TextField(blank=True, null=True)
     district_name = models.TextField(blank=True, null=True)
