@@ -19,8 +19,6 @@ class PMOAPITest(TestCase):
             "district_name",
             "district_site_code",
             "aggregation_level",
-            "district_map_location_name",
-            "state_map_location_name",
             "month",
             "cbe_conducted",
             "vhnd_conducted",
