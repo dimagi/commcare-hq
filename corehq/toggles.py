@@ -1664,14 +1664,7 @@ ENABLE_UCR_MIRRORS = StaticToggle(
 
 LOCATION_COLUMNS_APP_STATUS_REPORT = StaticToggle(
     'location_columns_app_status_report',
-    'Enables location columns in app status report',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN]
-)
-
-APP_VERSION_TAG_COLUMN_APP_STATUS_REPORT = StaticToggle(
-    'app_version_tag_column_app_status_report',
-    'Enables app version tag, used for functional app version, column in app status report',
+    'Enables location columns to app status report',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN]
 )
