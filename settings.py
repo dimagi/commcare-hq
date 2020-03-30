@@ -941,7 +941,9 @@ SESSION_BYPASS_URLS = [
     r'^/a/{domain}/apps/download/',
 ]
 
+# Allowed two factor devices
 ALLOW_PHONE_AS_DEFAULT_TWO_FACTOR_DEVICE = True
+TWO_FACTOR_SMS_GATEWAY = True
 
 RATE_LIMIT_SUBMISSIONS = False
 
