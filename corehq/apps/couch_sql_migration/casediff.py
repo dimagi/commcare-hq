@@ -366,7 +366,7 @@ def add_missing_docs(data, couch_cases, sql_case_ids, dd_count):
             if has_only_deleted_forms(couch_case):
                 data.changes.append(as_change(item, "deleted forms"))
             elif is_orphaned_case(couch_case):
-                log.info("Ignoring orphaned case: %s", couch_case["_id"])
+                data.changes.append(as_change(item, "orphaned case"))
             else:
                 data.diffs.append(item)
 

@@ -1387,7 +1387,9 @@ class MigrationTestCase(BaseMigrationTestCase):
         self.assertEqual(self._get_case("other-case").xform_ids, ["test-form"])
         with self.assertRaises(CaseNotFound):
             self._get_case("test-case")
-        self._compare_diffs([])
+        self._compare_diffs(changes=[
+            ('CommCareCase', Diff('missing', ['*'], old='*', new=MISSING, reason="orphaned case")),
+        ])
 
     def test_missing_docs(self):
         self.submit_form(TEST_FORM, timedelta(minutes=-90))
