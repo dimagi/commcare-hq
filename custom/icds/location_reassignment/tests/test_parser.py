@@ -61,8 +61,8 @@ class TestParser(TestCase):
     @patch('custom.icds.location_reassignment.parser.Parser.validate')
     @patch('corehq.apps.locations.models.LocationType.objects.by_domain')
     def test_parser(self, location_type_mock, _):
-        site_codes = ['state', 'supervisor', 'awc']
-        location_type_mock.return_value = list(map(lambda site_code: LocationType(code=site_code), site_codes))
+        type_codes = ['state', 'supervisor', 'awc']
+        location_type_mock.return_value = list(map(lambda site_code: LocationType(code=site_code), type_codes))
         with tempfile.TemporaryFile() as file:
             export_raw(self.headers, self.rows, file, format=Format.XLS_2007)
             file.seek(0)
