@@ -1,6 +1,7 @@
 from django.utils.functional import cached_property
 
 from corehq.apps.locations.models import LocationType, SQLLocation
+from custom.icds.location_reassignment.exceptions import InvalidTransitionError
 from custom.icds.location_reassignment.utils import deprecate_locations
 
 
@@ -29,8 +30,14 @@ class Processor(object):
 
     def _get_locations(self, site_codes):
         site_codes = site_codes if isinstance(site_codes, list) else [site_codes]
-        locations = [self.locations_by_site_code[site_code] for site_code in site_codes]
-        assert len(locations), len(site_codes)
+        locations = [self.locations_by_site_code.get(site_code)
+                     for site_code in site_codes
+                     if self.locations_by_site_code.get(site_code)]
+        if len(locations) != len(site_codes):
+            loaded_site_codes = [loc.site_code for loc in locations]
+            missing_site_codes = set(site_codes) - set(loaded_site_codes)
+            raise InvalidTransitionError(
+                "Could not load location with following site codes: %s" % ",".join(missing_site_codes))
         return locations
 
     @cached_property
