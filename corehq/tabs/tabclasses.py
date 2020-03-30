@@ -20,6 +20,7 @@ from corehq.apps.accounting.utils import (
     domain_is_on_trial,
     is_accounting_admin,
 )
+from corehq.apps.accounting.views import TriggerDowngradeView
 from corehq.apps.app_manager.dbaccessors import (
     domain_has_apps,
     get_brief_apps_in_domain,
@@ -1930,7 +1931,7 @@ class AccountingTab(UITab):
             TriggerInvoiceView, TriggerBookkeeperEmailView,
             TestRenewalEmailView, TriggerCustomerInvoiceView
         )
-        items.append(('Other Actions', (
+        other_actions = [
             {
                 'title': _(TriggerInvoiceView.page_title),
                 'url': reverse(TriggerInvoiceView.urlname),
@@ -1947,7 +1948,13 @@ class AccountingTab(UITab):
                 'title': _(TestRenewalEmailView.page_title),
                 'url': reverse(TestRenewalEmailView.urlname),
             }
-        )))
+        ]
+        if toggles.ACCOUNTING_TESTING_TOOLS.enabled_for_request(self._request):
+            other_actions.append({
+                'title': _(TriggerDowngradeView.page_title),
+                'url': reverse(TriggerDowngradeView.urlname),
+            })
+        items.append(('Other Actions', other_actions))
         return items
 
 
