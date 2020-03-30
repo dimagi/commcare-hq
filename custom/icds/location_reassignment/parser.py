@@ -1,7 +1,5 @@
 from collections import defaultdict
 
-from django.utils.functional import cached_property
-
 from corehq.apps.locations.models import LocationType, SQLLocation
 from custom.icds.location_reassignment.const import (
     EXTRACT_OPERATION,
@@ -41,6 +39,7 @@ class Parser(object):
         # mapping each location code to the type of operation requested for it
         self.requested_transitions = {}
         self.site_codes_to_be_archived = []
+        self.location_type_codes = list(map(lambda lt: lt.code, LocationType.objects.by_domain(self.domain)))
         self.valid_transitions = {location_type_code: {
             MERGE_OPERATION: defaultdict(list),
             SPLIT_OPERATION: defaultdict(list),
@@ -48,10 +47,6 @@ class Parser(object):
             EXTRACT_OPERATION: {},
         } for location_type_code in self.location_type_codes}
         self.errors = []
-
-    @cached_property
-    def location_type_codes(self):
-        return [lt.code for lt in LocationType.objects.by_domain(self.domain)]
 
     def parse(self):
         for worksheet in self.workbook.worksheets:
