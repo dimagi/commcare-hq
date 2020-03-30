@@ -15,9 +15,7 @@ class FoodCaseData(SqlData):
 
     @property
     def columns(self):
-        column_ids = [
-            'doc_id', 'inserted_at', 'nsr_same_conv_method',  # TODO remove this one?
-        ] + [i.slug for i in INDICATORS if i.in_ucr]
+        column_ids = ['doc_id', 'inserted_at'] + [i.slug for i in INDICATORS if i.in_ucr]
         return [DatabaseColumn(col_id, SimpleColumn(col_id)) for col_id in column_ids]
 
     @property
