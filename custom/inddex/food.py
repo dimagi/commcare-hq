@@ -1,3 +1,4 @@
+from collections import defaultdict
 from datetime import datetime
 
 from django.utils.functional import cached_property
@@ -195,7 +196,15 @@ class FoodRow:
             return "50-64 years"
         return "65+ years"
 
-    def as_list(self):
+    @property
+    def recipe_id(self):
+        if self._is_recipe:
+            return self.caseid
+        return self.recipe_case_id or self.already_reported_recipe_case_id or 'NO_RECIPE'
+
+    def as_list(self, rows_in_recipe):
+        if self._is_recipe:
+            self.recipe_num_ingredients = len([r for r in rows_in_recipe if not r._is_recipe])
 
         def _format(val):
             if isinstance(val, datetime):
@@ -269,10 +278,17 @@ class FoodData:
 
     @property
     def rows(self):
+
+        rows_by_recipe = defaultdict(list)
         for ucr_row in self.ucr_rows:
             food = FoodCaseRow(ucr_row, self.fixtures)
-            yield food.as_list()
+            rows_by_recipe[food.recipe_id].append(food)
+
             if food.food_type == STANDARD_RECIPE:
                 for ingredient_data in self.fixtures.recipes[food.food_code]:
                     ingr_row = RecipeIngredientRow(ucr_row, self.fixtures, ingredient_data)
-                    yield ingr_row.as_list()
+                    rows_by_recipe[food.recipe_id].append(ingr_row)
+
+        for recipe_id, rows_in_recipe in rows_by_recipe.items():
+            for row in rows_in_recipe:
+                yield row.as_list(rows_in_recipe if recipe_id != 'NO_RECIPE' else [])
