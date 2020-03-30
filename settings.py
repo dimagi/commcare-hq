@@ -941,7 +941,8 @@ SESSION_BYPASS_URLS = [
     r'^/a/{domain}/apps/download/',
 ]
 
-ALLOW_PHONE_AS_DEFAULT_TWO_FACTOR_DEVICE = False
+ALLOW_PHONE_AS_DEFAULT_TWO_FACTOR_DEVICE = True
+
 RATE_LIMIT_SUBMISSIONS = False
 
 # If set to a positive number, exports requested more than this many seconds ago
