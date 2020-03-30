@@ -968,7 +968,6 @@ class LastBuild(DocumentSchema):
     build_profile_id = StringProperty()
     build_version = IntegerProperty()
     build_version_date = DateTimeProperty()
-    app_version_tag = StringProperty()
 
 
 class ReportingMetadata(DocumentSchema):
