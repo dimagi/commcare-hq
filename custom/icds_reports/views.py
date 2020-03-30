@@ -55,7 +55,6 @@ from custom.icds_reports.const import (
     DASHBOARD_USAGE_EXPORT,
     DEMOGRAPHICS_EXPORT,
     GROWTH_MONITORING_LIST_EXPORT,
-    ICDS_SUPPORT_EMAIL,
     INDIA_TIMEZONE,
     ISSNIP_MONTHLY_REGISTER_PDF,
     LS_REPORT_EXPORT,
@@ -376,7 +375,7 @@ class DashboardView(TemplateView):
         kwargs.update(get_dashboard_template_context(self.domain, self.couch_user))
         kwargs.update({
             'is_mobile': False,
-            'support_email': ICDS_SUPPORT_EMAIL,
+            'support_email': settings.SUPPORT_EMAIL,
         })
         if self.couch_user.is_commcare_user() and self._has_helpdesk_role():
             build_id = get_latest_issue_tracker_build_id()
@@ -1881,12 +1880,6 @@ class AggregationScriptPage(BaseDomainView):
         move_ucr_data_into_aggregation_tables.delay(date)
         messages.success(request, 'Aggregation task is running. Data should appear soon.')
         return redirect(self.urlname, domain=self.domain)
-
-
-class ICDSBugReportView(BugReportView):
-    @property
-    def recipients(self):
-        return [ICDS_SUPPORT_EMAIL]
 
 
 @location_safe

@@ -7,15 +7,16 @@ from django.core.management import BaseCommand, CommandError
 from corehq.apps.change_feed import data_sources, topics
 from corehq.apps.change_feed.producer import producer
 from corehq.apps.hqadmin.management.commands.stale_data_in_es import DataRow, HEADER_ROW, get_csv_args
-from corehq.form_processor.backends.sql.dbaccessors import ShardAccessor
-from corehq.form_processor.models import CommCareCaseSQL
 from corehq.form_processor.utils import should_use_sql_backend
+from couchforms.models import XFormInstance
 from dimagi.utils.chunked import chunked
 
 from casexml.apps.case.models import CommCareCase
 from corehq.util.couch import bulk_get_revs
 from corehq.apps.hqcase.management.commands.backfill_couch_forms_and_cases import (
-    publish_change, create_case_change_meta
+    create_case_change_meta,
+    create_form_change_meta,
+    publish_change,
 )
 from pillowtop.feed.interface import ChangeMeta
 
@@ -83,7 +84,7 @@ def _publish_cases(case_records):
         if should_use_sql_backend(domain):
             _publish_cases_for_sql(domain, list(records))
         else:
-            _publish_cases_for_couch(domain, [c.doc_id for c in records])
+            _publish_cases_for_couch(domain, list(records))
 
 
 def _publish_forms(form_records):
@@ -91,44 +92,19 @@ def _publish_forms(form_records):
         if should_use_sql_backend(domain):
             _publish_forms_for_sql(domain, records)
         else:
-            raise CommandError("Republishing forms for couch domains is not supported yet!")
+            _publish_forms_for_couch(domain, records)
 
 
-def _publish_cases_for_couch(domain, case_ids):
-    for ids in chunked(case_ids, 500):
-        doc_id_rev_list = bulk_get_revs(CommCareCase.get_db(), ids)
-        for doc_id, doc_rev in doc_id_rev_list:
-            publish_change(
-                create_case_change_meta(domain, doc_id, doc_rev)
-            )
+def _publish_cases_for_couch(domain, case_records):
+    _publish_docs_for_couch(CommCareCase, create_case_change_meta, domain, case_records)
 
 
 def _publish_cases_for_sql(domain, case_records):
-    records_with_types = filter(lambda r: r.doc_subtype, case_records)
-    records_with_no_types = filter(lambda r: not r.doc_subtype, case_records)
-    # if we already had a type just publish as-is
-    for record in records_with_types:
+    for record in case_records:
         producer.send_change(
             topics.CASE_SQL,
             _change_meta_for_sql_case(domain, record.doc_id, record.doc_subtype)
         )
-
-    # else lookup the type from the database
-    for record_chunk in chunked(records_with_no_types, 10000):
-        # databases will contain a mapping of shard database ids to case_ids in that DB
-        id_chunk = [r.doc_id for r in record_chunk]
-        databases = ShardAccessor.get_docs_by_database(id_chunk)
-        for db, doc_ids in databases.items():
-            results = CommCareCaseSQL.objects.using(db).filter(
-                case_id__in=doc_ids,
-            ).values_list('case_id', 'type')
-            # make sure we found the same number of IDs
-            assert len(results) == len(doc_ids)
-            for case_id, case_type in results:
-                producer.send_change(
-                    topics.CASE_SQL,
-                    _change_meta_for_sql_case(domain, case_id, case_type)
-                )
 
 
 def _change_meta_for_sql_case(domain, case_id, case_type):
@@ -152,6 +128,10 @@ def _publish_forms_for_sql(domain, form_records):
         )
 
 
+def _publish_forms_for_couch(domain, form_records):
+    _publish_docs_for_couch(XFormInstance, create_form_change_meta, domain, form_records)
+
+
 def _change_meta_for_sql_form_record(domain, form_record):
     return ChangeMeta(
         document_id=form_record.doc_id,
@@ -162,3 +142,13 @@ def _change_meta_for_sql_form_record(domain, form_record):
         domain=domain,
         is_deletion=False,
     )
+
+
+def _publish_docs_for_couch(doc_cls, get_meta, domain, records):
+    doc_ids = [r.doc_id for r in records]
+    for ids in chunked(doc_ids, 500):
+        doc_id_rev_list = bulk_get_revs(doc_cls.get_db(), ids)
+        for doc_id, doc_rev in doc_id_rev_list:
+            publish_change(
+                get_meta(domain, doc_id, doc_rev)
+            )
