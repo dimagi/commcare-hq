@@ -230,7 +230,7 @@ related to angular not being defined. But if we split it here it works fine.
             <h3 class="modal-title" id="modal-title">Report an Issue<i style="float: right;" ng-click="$dismiss()" class="fa fa-close pointer"></i></h3>
         </div>
         <div class="modal-body" id="modal-body">
-            Please contact icds-support@dimagi.com in order to report an issue with the Dashboard
+            Please contact {{ support_email }} in order to report an issue with the Dashboard
         </div>
         <div class="modal-footer">
            <button ng-click="$dismiss()" class="btn btn-primary">Close</button>
@@ -241,7 +241,6 @@ related to angular not being defined. But if we split it here it works fine.
     <script>
         var $modal = $('#modalReportIssue');
         $modal.find('.modal-title').text('Report an Issue with ICDS-CAS Dashboard');
-        $modal.find('form').attr('action', '{% url 'icds_bug_report' domain %}');
     </script>
 </div>
 

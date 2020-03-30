@@ -461,8 +461,8 @@ class FundamentalCaseTests(FundamentalBaseTests):
             self.assert_(not form_1.is_duplicate)
             check_attachments(form_1, attachments)
 
-            form_1 = self.formdb.get_form(form_id)
             form_2 = submit_and_fetch(form, DOMAIN, attachments)
+            form_1 = self.formdb.get_form(form_id)
             self.assert_(not form_1.is_duplicate)
             self.assert_(form_2.is_duplicate)
             check_attachments(form_1, attachments)

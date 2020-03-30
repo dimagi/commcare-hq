@@ -571,7 +571,7 @@ class TestExportData(TestCase):
                     'State', 'Number of households',
                     'Total number of beneficiaries (Children under 6 years old, pregnant women and lactating women, alive and seeking services) who have an Aadhaar ID',
                     'Total number of beneficiaries (Children under 6 years old, pregnant women and lactating women, alive and seeking services)',
-                    'Percent Aadhaar-seeded beneficaries', 'Number of pregnant women',
+                    'Percent Aadhaar-seeded beneficiaries', 'Number of pregnant women',
                     'Number of pregnant women enrolled for services', 'Number of lactating women',
                     'Number of lactating women enrolled for services', 'Number of children 0-6 years old',
                     'Number of children 0-6 years old enrolled for services',

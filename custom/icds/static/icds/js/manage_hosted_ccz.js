@@ -2,50 +2,111 @@ hqDefine('icds/js/manage_hosted_ccz', [
     'jquery',
     'knockout',
     'underscore',
+    'hqwebapp/js/assert_properties',
     'hqwebapp/js/initial_page_data',
+    'hqwebapp/js/components.ko',    // pagination widget
     'translations/js/app_translations',
 ], function (
     $,
     ko,
     _,
+    assertProperties,
     initialPageData
 ) {
     'use strict';
     $(function () {
-        var hostedCCZ = function (id, link, appName, version, profileName, fileName, note, status) {
-            var self = {};
-            self.link = link;
-            self.appName = appName;
-            self.version = version;
-            self.profileName = profileName;
-            self.fileName = fileName;
-            self.note = note;
-            self.status = status;
-            self.removeUrl = initialPageData.reverse("remove_hosted_ccz", id);
-            self.recreateUrl = initialPageData.reverse("recreate_hosted_ccz", id);
-            self.viewUrl = initialPageData.reverse("hosted_ccz", link);
+        var hostedCCZ = function (options) {
+            assertProperties.assertRequired(options, [
+                'id',
+                'link',
+                'app_name',
+                'version',
+                'app_version_tag',
+                'profile_name',
+                'file_name',
+                'note',
+                'status',
+            ]);
+            var self = {
+                id: options.id,
+                link: options.link,
+                appName: options.app_name,
+                version: options.version,
+                appVersionTag: options.app_version_tag,
+                profileName: options.profile_name,
+                fileName: options.file_name,
+                note: options.note,
+                status: options.status,
+            };
+            self.removeUrl = initialPageData.reverse("remove_hosted_ccz", self.id);
+            self.recreateUrl = initialPageData.reverse("recreate_hosted_ccz", self.id);
+            self.viewUrl = initialPageData.reverse("hosted_ccz", self.link);
             return self;
         };
-        var hostedCCZsView = function (hostings) {
+        var hostedCCZsView = function (options) {
+            assertProperties.assertRequired(['url']);
+
             var self = {};
-            self.hostings = _.map(hostings, function (hosting) {
-                return hostedCCZ(hosting.id, hosting.link_name, hosting.app_name, hosting.version,
-                    hosting.profile_name, hosting.file_name, hosting.note, hosting.status);
-            });
+            self.hostings = ko.observableArray();
+
+            // Search options
+            self.linkId = ko.observable();
+            self.appId = ko.observable();
+            self.version = ko.observable();
+            self.profileId = ko.observable();
+            self.status = ko.observable();
+
+            // Pagination
+            self.itemsPerPage = ko.observable(5);
+            self.totalItems = ko.observable();
+            self.showPaginationSpinner = ko.observable(false);
+            self.currentPage = ko.observable(1);
+            self.goToPage = function (page) {
+                self.showPaginationSpinner(true);
+                self.currentPage(page);
+                $.ajax({
+                    url: options.url,
+                    data: {
+                        page: page,
+                        limit: self.itemsPerPage(),
+                        link_id: self.linkId(),
+                        app_id: self.appId(),
+                        version: self.version(),
+                        profile_id: self.profileId(),
+                        status: self.status(),
+                    },
+                    success: function (data) {
+                        self.showPaginationSpinner(false);
+                        self.hostings(_.map(data.hostings, hostedCCZ));
+                        self.totalItems(data.total);
+                    },
+                });
+            };
+
             self.search = function () {
-                var linkId = $("#link-id-select").val();
-                var appId = $("#app-id-search-select").val();
-                var version = $("#version-input").val() || '';
-                var profileId = $("#app-profile-id-input").val() || '';
-                var status = $("#id_status").val();
-                window.location.search = ("link_id=" + linkId + "&app_id=" + appId + "&version=" +
-                    version + "&profile_id=" + profileId + "&status=" + status);
+                self.goToPage(1);
             };
+
             self.clear = function () {
-                window.location.search = "";
+                self.linkId('');
+                self.appId('');
+                self.version('');
+                self.profileId('');
+                self.status('');
+
+                // select2s need to have a change triggered to reflect value in UI
+                $("#id_link_id, #id_app_id, #id_version").trigger("change.select2");
+
+                self.goToPage(1);
             };
+
+            self.goToPage(1);
+
             return self;
         };
-        $("#manage-ccz-hostings").koApplyBindings(hostedCCZsView(initialPageData.get("hosted_cczs")));
+
+        $("#manage-ccz-hostings").koApplyBindings(hostedCCZsView({
+            url: initialPageData.reverse('ccz_hostings_json'),
+        }));
     });
 });

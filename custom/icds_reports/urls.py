@@ -10,12 +10,12 @@ from custom.icds_reports.views import (
     AWCsCoveredView, RegisteredHouseholdView, EnrolledChildrenView, EnrolledWomenView,
     LactatingEnrolledWomenView, AdolescentGirlsView, AdhaarBeneficiariesView, CleanWaterView,
     FunctionalToiletView, MedicineKitView, InfantsWeightScaleView, AdultWeightScaleView, AggregationScriptPage,
-    ICDSBugReportView, AWCLocationView, DownloadPDFReport, CheckExportReportStatus, ICDSImagesAccessorAPI,
+    AWCLocationView, DownloadPDFReport, CheckExportReportStatus, ICDSImagesAccessorAPI,
     HaveAccessToLocation, InactiveAWW, DownloadExportReport, DishaAPIView, NICIndicatorAPIView, LadySupervisorView,
     CasDataExport, CasDataExportAPIView, ServiceDeliveryDashboardView, InactiveDashboardUsers, APWebservice,
     DailyIndicators, InfantometerView, StadiometerView, MWCDDataView, IcdsDynamicMobileTemplateView,
     GovernanceHomeVisitAPI, GovernanceBeneficiaryAPI, GovernanceStateListAPI, GovernanceVHNDSAPI,
-    MobileDashboardDownloadView, GovernanceCBEAPI)
+    MobileDashboardDownloadView, GovernanceCBEAPI, BiharDemographicsAPI)
 
 
 dashboard_urls = [
@@ -171,7 +171,6 @@ urlpatterns = [
     url(r'^icds_export_indicator$', ExportIndicatorView.as_view(), name='icds_export_indicator'),
     url(r'^fact_sheets$', FactSheetsView.as_view(), name='fact_sheets'),
     url(r'^aggregation_script/', AggregationScriptPage.as_view(), name=AggregationScriptPage.urlname),
-    url(r'^bug_report/', ICDSBugReportView.as_view(), name='icds_bug_report'),
     url(r'^awc_locations/', AWCLocationView.as_view(), name='awc_locations'),
     url(r'^icds_download_pdf/', DownloadPDFReport.as_view(), name='icds_download_pdf'),
     url(r'^icds_download_excel/', DownloadExportReport.as_view(), name='icds_download_excel'),
@@ -191,6 +190,7 @@ urlpatterns = [
     url(r'^governance_apis/state_names/', GovernanceStateListAPI.as_view(), name='governance_apis_state_names'),
     url(r'^governance_apis/cbe/', GovernanceCBEAPI.as_view(), name='governance_apis_cbe'),
     url(r'^governance_apis/vhsnd/', GovernanceVHNDSAPI.as_view(), name='governance_apis_vhnds'),
+    url(r'^bihar_demographics/household_members_data/', BiharDemographicsAPI.as_view(), name='household_members_data')
 ]
 
 DASHBOARD_URL_GROUPS = urlpatterns + dashboard_urls + mobile_dashboard_urls + maternal_and_child_urls + cas_reach_urls + demographics_urls + awc_infrastructure_urls

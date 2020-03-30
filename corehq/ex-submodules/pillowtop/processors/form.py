@@ -6,7 +6,7 @@ from django.http import Http404
 from dimagi.utils.parsing import string_to_utc_datetime
 
 from corehq.apps.app_manager.dbaccessors import get_app
-from corehq.apps.receiverwrapper.util import get_app_version_info
+from corehq.apps.receiverwrapper.util import get_app_version_info, get_profile_property_from_build_id
 from corehq.apps.users.models import (
     CouchUser,
     DeviceAppMeta,
@@ -169,7 +169,9 @@ def mark_latest_submission(domain, user, app_id, build_id, version, metadata, re
         last_submission.commcare_version = app_version_info.commcare_version
 
         if app_version_info.build_version:
-            update_latest_builds(user, app_id, received_on_datetime, app_version_info.build_version)
+            app_version_tag = get_profile_property_from_build_id(domain, build_id, 'cc-app-version-tag')
+            update_latest_builds(user, app_id, received_on_datetime, app_version_info.build_version,
+                                 app_version_tag=app_version_tag)
 
         if _last_submission_needs_update(user.reporting_metadata.last_submission_for_user,
                                          received_on_datetime,

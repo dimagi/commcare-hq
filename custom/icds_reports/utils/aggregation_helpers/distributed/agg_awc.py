@@ -247,7 +247,7 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
         WHERE (opened_on <= %(end_date)s AND
               (closed_on IS NULL OR closed_on >= %(start_date)s ))
 
-        GROUP BY ucr.awc_id, ucr.supervisor_id) ut
+        GROUP BY ucr.supervisor_id, ucr.awc_id) ut
         WHERE ut.awc_id = agg_awc.awc_id and ut.supervisor_id=agg_awc.supervisor_id;
         """.format(
             tablename=self.temporary_tablename,
@@ -701,8 +701,8 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
             ('num_launched_awcs', lambda col: _launched_col(col)),
             ('num_awcs_conducted_vhnd',),
             ('num_awcs_conducted_cbe',),
-            ('cbe_conducted', 'NULL'),
-            ('vhnd_conducted', 'NULL'),
+            ('cbe_conducted',),
+            ('vhnd_conducted',),
             ('cases_household',),
             ('cases_person',),
             ('cases_person_all',),

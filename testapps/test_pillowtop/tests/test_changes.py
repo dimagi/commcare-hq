@@ -17,7 +17,7 @@ class ChangeFeedDbTest(TestCase):
         pillow = _make_couch_pillow(self.couch_db)
         doc_id = uuid.uuid4().hex
         self.couch_db.save_doc({'_id': doc_id, 'property': 'property_value'})
-        pillow.process_changes(since=self.update_seq)
+        pillow.process_changes(since=self.update_seq, forever=False)
 
         changes = self._extract_changes_from_call_args(pillow.process_change.call_args_list)
         change_ids = {change['id'] for change in changes}
@@ -34,7 +34,7 @@ class ChangeFeedDbTest(TestCase):
         self.couch_db.save_doc({'_id': uuid.uuid4().hex, 'property': 'property_value'})
         form = XFormInstance(domain='test-domain')
         form.save()
-        pillow.process_changes(since=self.update_seq)
+        pillow.process_changes(since=self.update_seq, forever=False)
 
         changes = self._extract_changes_from_call_args(pillow.process_change.call_args_list)
         change_ids = {change['id'] for change in changes}

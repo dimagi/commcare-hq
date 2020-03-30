@@ -81,11 +81,13 @@ TEST_CASES = [
             {'username': factory.user_name(), 'password': 123},
             {'username': factory.user_name(), 'is_account_confirmed': 'False'},
             {'username': factory.user_name(), 'is_account_confirmed': 'True'},
+            {'username': factory.user_name(), 'is_account_confirmed': ''},
         ],
         NewUserPasswordValidator('domain'),
         {
             0: NewUserPasswordValidator.error_message,
             5: NewUserPasswordValidator.error_message,
+            6: NewUserPasswordValidator.error_message,
         }
     ),
     (

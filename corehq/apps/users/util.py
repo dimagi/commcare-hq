@@ -195,7 +195,6 @@ def doc_value_wrapper(doc_cls, value_cls):
 
 def can_add_extra_mobile_workers(request):
     from corehq.apps.users.models import CommCareUser
-    from corehq.apps.accounting.models import Subscription
     num_web_users = CommCareUser.total_by_domain(request.domain)
     user_limit = request.plan.user_limit
     if user_limit == -1 or num_web_users < user_limit:
@@ -244,7 +243,7 @@ def _last_build_needs_update(last_build, build_date):
     return False
 
 
-def update_latest_builds(user, app_id, date, version, build_profile_id=None):
+def update_latest_builds(user, app_id, date, version, build_profile_id=None, app_version_tag=None):
     """
     determines whether to update the last build attributes in a user's reporting metadata
     """
@@ -260,6 +259,8 @@ def update_latest_builds(user, app_id, date, version, build_profile_id=None):
         # update only when passed to avoid over writing set value
         if build_profile_id is not None:
             last_build.build_profile_id = build_profile_id
+        if app_version_tag is not None:
+            last_build.app_version_tag = app_version_tag
         last_build.build_version_date = date
         changed = True
 

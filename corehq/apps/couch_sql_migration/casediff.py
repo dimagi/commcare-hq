@@ -29,7 +29,7 @@ from corehq.form_processor.exceptions import MissingFormXml, XFormNotFound
 from corehq.form_processor.parsers.ledgers.form import (
     get_all_stock_report_helpers_from_form,
 )
-from corehq.util.datadog.gauges import datadog_counter
+from corehq.util.metrics import metrics_counter
 
 from .diff import filter_case_diffs, filter_ledger_diffs
 from .rebuildcase import rebuild_and_diff_cases
@@ -77,7 +77,7 @@ def diff_cases(couch_cases, log_cases=False):
     assert isinstance(couch_cases, dict), repr(couch_cases)[:100]
     assert "_diff_state" in globals()
     data = DiffData()
-    dd_count = partial(datadog_counter, tags=["domain:" + _diff_state.domain])
+    dd_count = partial(metrics_counter, tags={"domain": _diff_state.domain})
     case_ids = list(couch_cases)
     sql_case_ids = set()
     for sql_case in CaseAccessorSQL.get_cases(case_ids):
@@ -336,6 +336,7 @@ def diff_form_state(form_id, *, in_couch=False):
     couch_miss = "missing"
     if not in_couch and get_blob_db().metadb.get_for_parent(form_id):
         couch_miss = MISSING_BLOB_PRESENT
+        log.warning("couch form missing, blob present: %s", form_id)
     old = {"form_state": FORM_PRESENT if in_couch else couch_miss}
     new = {"form_state": FORM_PRESENT if in_sql else "missing"}
     return old, new
@@ -362,6 +363,18 @@ def add_missing_docs(data, couch_cases, sql_case_ids, dd_count):
                 case_id,
                 [Diff("missing", path=["*"], old_value="*", new_value=MISSING)],
             ))
+
+
+def add_cases_missing_from_couch(data, case_ids):
+    sql_ids = {c.case_id for c in CaseAccessorSQL.get_cases(list(case_ids))}
+    data.doc_ids.extend(case_ids)
+    for case_id in case_ids:
+        new = "present" if case_id in sql_ids else MISSING
+        data.diffs.append((
+            "CommCareCase",
+            case_id,
+            [Diff("missing", path=["*"], old_value=MISSING, new_value=new)],
+        ))
 
 
 @contextmanager
@@ -414,7 +427,7 @@ class WorkerState:
     def should_diff(self, case):
         return (
             case.server_modified_on is None
-            or case.server_modified_on < self.cutoff_date
+            or case.server_modified_on <= self.cutoff_date
         )
 
 

@@ -25,7 +25,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='casesearchqueryaddition',
             name='query_addition',
-            field=jsonfield.fields.JSONField(default=dict, help_text=b"More information about how this field is used can be found <a href='https://docs.google.com/document/d/1MKllkHZ6JlxhfqZLZKWAnfmlA3oUqCLOc7iKzxFTzdY/edit#heading=h.k5pky76mwwon'>here</a>. This ES <a href='https://www.elastic.co/guide/en/elasticsearch/guide/1.x/bool-query.html'>documentation</a> may also be useful. This JSON will be merged at the `query.filtered.query` path of the query JSON."),
+            field=jsonfield.fields.JSONField(default=dict, help_text="More information about how this field is used can be found <a href='https://docs.google.com/document/d/1MKllkHZ6JlxhfqZLZKWAnfmlA3oUqCLOc7iKzxFTzdY/edit#heading=h.k5pky76mwwon'>here</a>. This ES <a href='https://www.elastic.co/guide/en/elasticsearch/guide/1.x/bool-query.html'>documentation</a> may also be useful. This JSON will be merged at the `query.filtered.query` path of the query JSON."),
         ),
         migrations.AlterUniqueTogether(
             name='fuzzyproperties',

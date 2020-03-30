@@ -3,7 +3,7 @@ from corehq.util.quickcache import quickcache
 from corehq.util.test_utils import unit_testing_only
 
 
-def get_number_of_fixture_data_types_in_domain(domain):
+def count_fixture_data_types(domain):
     from corehq.apps.fixtures.models import FixtureDataType
     num_fixtures = FixtureDataType.get_db().view(
         'by_domain_doc_type_date/view',
@@ -16,7 +16,7 @@ def get_number_of_fixture_data_types_in_domain(domain):
 
 
 @quickcache(['domain'], timeout=30 * 60)
-def get_fixture_data_types_in_domain(domain):
+def get_fixture_data_types(domain):
     from corehq.apps.fixtures.models import FixtureDataType
     return list(FixtureDataType.view(
         'by_domain_doc_type_date/view',
@@ -52,6 +52,16 @@ def iter_fixture_items_for_data_type(domain, data_type_id):
             include_docs=True
     ):
         yield FixtureDataItem.wrap(row['doc'])
+
+
+def count_fixture_items(domain, data_type_id):
+    from corehq.apps.fixtures.models import FixtureDataItem
+    return FixtureDataItem.view(
+        'fixtures/data_items_by_domain_type',
+        startkey=[domain, data_type_id],
+        endkey=[domain, data_type_id, {}],
+        reduce=True,
+    ).first()['value']
 
 
 def get_owner_ids_by_type(domain, owner_type, data_item_id):

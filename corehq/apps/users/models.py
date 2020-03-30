@@ -22,6 +22,7 @@ from memoized import memoized
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.phone.models import OTARestoreCommCareUser, OTARestoreWebUser
 from casexml.apps.phone.restore_caching import get_loadtest_factor_for_user
+from corehq.apps.users.exceptions import IllegalAccountConfirmation
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
     DateProperty,
@@ -44,7 +45,7 @@ from dimagi.utils.couch.undo import DELETED_SUFFIX, DeleteRecord
 from dimagi.utils.dates import force_to_datetime
 from dimagi.utils.logging import log_signal_errors, notify_exception
 from dimagi.utils.modules import to_function
-from dimagi.utils.web import get_site_domain
+from dimagi.utils.web import get_static_url_prefix
 
 from corehq import toggles
 from corehq.apps.app_manager.const import USERCASE_TYPE
@@ -967,6 +968,7 @@ class LastBuild(DocumentSchema):
     build_profile_id = StringProperty()
     build_version = IntegerProperty()
     build_version_date = DateTimeProperty()
+    app_version_tag = StringProperty()
 
 
 class ReportingMetadata(DocumentSchema):
@@ -1866,6 +1868,15 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             django_user.delete()
         self.save()
 
+    def confirm_account(self, password):
+        if self.is_account_confirmed:
+            raise IllegalAccountConfirmation('Account is already confirmed')
+        assert not self.is_active, 'Active account should not be unconfirmed!'
+        self.is_active = True
+        self.is_account_confirmed = True
+        self.set_password(password)
+        self.save()
+
     def get_case_sharing_groups(self):
         from corehq.apps.groups.models import Group
         from corehq.apps.locations.models import get_case_sharing_groups_for_locations
@@ -2656,7 +2667,7 @@ class SQLInvitation(SyncSQLToCouchMixin, models.Model):
             "url": url,
             'days': remaining_days,
             "inviter": inviter.formatted_name,
-            'url_prefix': '' if settings.STATIC_CDN else 'http://' + get_site_domain(),
+            'url_prefix': get_static_url_prefix(),
         }
 
         domain_request = DomainRequest.by_email(self.domain, self.email, is_approved=True)
