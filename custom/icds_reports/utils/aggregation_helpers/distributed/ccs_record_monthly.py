@@ -62,11 +62,11 @@ class CcsRecordMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribute
         ).format(end_month_string, start_month_string)
 
         alive_in_month = "(case_list.date_death is null OR case_list.date_death-{}>0)".format(start_month_string)
-        migration_status = "(agg_migration.is_migrated=1 AND agg_migration.migration_date < {})::integer".format(
+        migration_status = "(agg_migration.is_migrated = 1 AND agg_migration.migration_date < {})::integer".format(
             start_month_string)
         registered_status = (
-            "CASE WHEN NOT (agg_as.is_registered=0 AND agg_as.registration_date::date < {start_month_string}"
-            "THEN 1 ELSE 0 END"
+            "CASE WHEN agg_as.is_registered = 0 AND agg_as.registration_date::date < {start_month_string}"
+            " THEN 0 ELSE 1 END"
         ).format(start_month_string=start_month_string)
         seeking_services = "({registered_status} IS DISTINCT FROM 0 AND {migration_status} IS DISTINCT FROM 1)".format(registered_status=registered_status, migration_status=migration_status)
         ccs_lactating = (
@@ -272,9 +272,9 @@ class CcsRecordMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribute
             LEFT OUTER JOIN "{agg_migration_table}" agg_migration ON case_list.person_case_id = agg_migration.person_case_id
                 AND agg_migration.month = %(start_date)s
                 AND case_list.supervisor_id = agg_migration.supervisor_id
-            LEFT OUTER JOIN "{agg_as_table}" agg_as_table ON case_list.person_case_id = agg_as_table.person_case_id
-                AND agg_as_table.month = %(start_date)s
-                AND case_list.supervisor_id = agg_as_table.supervisor_id
+            LEFT OUTER JOIN "{agg_as_table}" agg_as ON case_list.person_case_id = agg_as.person_case_id
+                AND agg_as.month = %(start_date)s
+                AND case_list.supervisor_id = agg_as.supervisor_id
             LEFT OUTER JOIN "{agg_thr_table}" agg_thr ON case_list.doc_id = agg_thr.case_id
                 AND agg_thr.month = %(start_date)s AND {valid_in_month}
                 AND case_list.supervisor_id = agg_thr.supervisor_id
