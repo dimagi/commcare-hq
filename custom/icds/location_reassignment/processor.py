@@ -25,8 +25,8 @@ class Processor(object):
 
     def _perform_transitions(self, operation, transitions):
         for old_site_codes, new_site_codes in transitions.items():
-            deprecate_locations(operation, self._get_locations(old_site_codes),
-                                self._get_locations(new_site_codes))
+            deprecate_locations(self._get_locations(old_site_codes), self._get_locations(new_site_codes),
+                                operation)
 
     def _get_locations(self, site_codes):
         site_codes = site_codes if isinstance(site_codes, list) else [site_codes]
