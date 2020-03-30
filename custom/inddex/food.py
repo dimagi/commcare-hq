@@ -218,7 +218,7 @@ class FoodCaseRow(FoodRow):
         if name in _INDICATORS_BY_SLUG:
             indicator = _INDICATORS_BY_SLUG[name]
             return self.ucr_row[indicator.slug] if indicator.in_ucr else None
-        return super().__getattr__(name)
+        raise AttributeError(f"FoodCaseRow has no definition for {name}")
 
 
 class RecipeIngredientRow(FoodRow):
@@ -248,7 +248,7 @@ class RecipeIngredientRow(FoodRow):
             if indicator.is_recall_meta:
                 return self.ucr_row[indicator.slug]
             return None
-        return super().__getattr__(name)
+        raise AttributeError(f"RecipeIngredientRow has no definition for {name}")
 
 
 class FoodData:
