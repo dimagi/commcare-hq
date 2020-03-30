@@ -358,17 +358,20 @@ def add_missing_docs(data, couch_cases, sql_case_ids, dd_count):
         dd_count("commcare.couchsqlmigration.case.missing_from_sql", value=len(only_in_couch))
         for case_id in only_in_couch:
             couch_case = couch_cases[case_id]
+            diff = change = (couch_case["doc_type"], case_id, [])
             item = (
                 couch_case["doc_type"],
                 case_id,
                 [Diff("missing", path=["*"], old_value="*", new_value=MISSING)],
             )
             if has_only_deleted_forms(couch_case):
-                data.changes.append(as_change(item, "deleted forms"))
+                change = as_change(item, "deleted forms")
             elif is_orphaned_case(couch_case):
-                data.changes.append(as_change(item, "orphaned case"))
+                change = as_change(item, "orphaned case")
             else:
-                data.diffs.append(item)
+                diff = item
+            data.diffs.append(diff)
+            data.changes.append(change)
 
 
 def add_cases_missing_from_couch(data, case_ids):
