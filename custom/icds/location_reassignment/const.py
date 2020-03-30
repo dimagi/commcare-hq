@@ -9,7 +9,7 @@ VALID_OPERATIONS = [MERGE_OPERATION, SPLIT_OPERATION, MOVE_OPERATION, EXTRACT_OP
 
 # metadata fields on locations
 DEPRECATED_TO = "deprecated_to"  # destination location this location was deprecated to
-DEPRECATED_VIA = "deprecated_at"  # operation via this location was deprecated
+DEPRECATED_VIA = "deprecated_via"  # operation via this location was deprecated
 DEPRECATED_AT = "deprecated_at"  # datetime when this location was deprecated
 DEPRECATES = "deprecates"  # source location that this location deprecated
 DEPRECATES_VIA = "deprecates_via"  # operation via which this location deprecated the source location
