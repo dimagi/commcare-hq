@@ -58,6 +58,7 @@ class BaseOperation(metaclass=ABCMeta):
         for new_location in self.new_locations:
             if DEPRECATES in new_location.metadata:
                 return False
+        return True
 
     @abstractmethod
     def perform(self):
