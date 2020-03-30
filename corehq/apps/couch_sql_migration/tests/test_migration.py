@@ -175,20 +175,21 @@ class BaseMigrationTestCase(TestCase, TestFileMixin):
         self._do_migration(domain, finish=True, **options)
         self.assert_backend("sql", domain)
 
-    def _compare_diffs(self, expected_diffs=None, missing=None, ignore_fail=False):
-        def diff_key(diff):
-            return diff.kind, diff.json_diff.diff_type, diff.json_diff.path
-
-        state = open_state_db(self.domain_name, self.state_dir)
-        diffs = sorted(state.get_diffs(), key=diff_key)
-        json_diffs = [(diff.kind, diff.json_diff) for diff in diffs]
-        self.assertEqual(json_diffs, expected_diffs or [])
+    def _compare_diffs(self, diffs=None, changes=None, missing=None, ignore_fail=False):
+        def sortdiffs(items):
+            def key(diff):
+                return diff.kind, diff.json_diff.diff_type, diff.json_diff.path
+            return [(d.kind, d.json_diff) for d in sorted(items, key=key)]
+        statedb = open_state_db(self.domain_name, self.state_dir)
+        self.assertEqual(sortdiffs(statedb.iter_diffs()), diffs or [])
+        if changes is not None:
+            self.assertEqual(sortdiffs(statedb.iter_changes()), changes or [])
         self.assertEqual({
             kind: counts.missing
-            for kind, counts in state.get_doc_counts().items()
+            for kind, counts in statedb.get_doc_counts().items()
             if counts.missing
         }, missing or {})
-        if not (expected_diffs or self.migration_success or ignore_fail):
+        if not (diffs or self.migration_success or ignore_fail):
             self.fail("migration failed")
 
     def _get_form_ids(self, doc_type='XFormInstance'):
@@ -1739,9 +1740,15 @@ class Diff:
     path = attr.ib(default=ANY)
     old = attr.ib(default=ANY)
     new = attr.ib(default=ANY)
+    reason = attr.ib(default=ANY)
 
     def __eq__(self, other):
-        if type(other) == FormJsonDiff:
+        from ..statedb import Change
+        if isinstance(other, Change) and self.reason != other.reason:
+            return False
+        if isinstance(other, FormJsonDiff):
+            assert self.reason is ANY, (self, other)
+        if isinstance(other, (FormJsonDiff, Change)):
             return (
                 self.type == other.diff_type
                 and self.path == other.path
@@ -1751,6 +1758,12 @@ class Diff:
         return NotImplemented
 
     def __repr__(self):
+        if self.reason is not ANY:
+            return (
+                f"Change(kind=ANY, doc_id=ANY, reason={self.reason!r}"
+                f"diff_type={self.type!r}, path={self.path!r}, "
+                f"old_value={self.old!r}, new_value={self.new!r})"
+            )
         return (
             f"FormJsonDiff(diff_type={self.type!r}, path={self.path!r}, "
             f"old_value={self.old!r}, new_value={self.new!r})"

@@ -347,6 +347,9 @@ MISSING_BLOB_PRESENT = "missing, blob present"
 
 
 def add_missing_docs(data, couch_cases, sql_case_ids, dd_count):
+    def as_change(item, reason):
+        kind, doc_id, diffs = item
+        return kind, doc_id, diffs_to_changes(diffs, reason)
     if len(couch_cases) != len(sql_case_ids):
         only_in_sql = sql_case_ids - couch_cases.keys()
         assert not only_in_sql, only_in_sql
@@ -355,14 +358,17 @@ def add_missing_docs(data, couch_cases, sql_case_ids, dd_count):
         dd_count("commcare.couchsqlmigration.case.missing_from_sql", value=len(only_in_couch))
         for case_id in only_in_couch:
             couch_case = couch_cases[case_id]
-            if is_orphaned_case(couch_case):
-                log.info("Ignoring orphaned case: %s", couch_case["_id"])
-                continue
-            data.diffs.append((
+            item = (
                 couch_case["doc_type"],
                 case_id,
                 [Diff("missing", path=["*"], old_value="*", new_value=MISSING)],
-            ))
+            )
+            if has_only_deleted_forms(couch_case):
+                data.changes.append(as_change(item, "deleted forms"))
+            elif is_orphaned_case(couch_case):
+                log.info("Ignoring orphaned case: %s", couch_case["_id"])
+            else:
+                data.diffs.append(item)
 
 
 def add_cases_missing_from_couch(data, case_ids):
@@ -429,6 +435,14 @@ class WorkerState:
             case.server_modified_on is None
             or case.server_modified_on <= self.cutoff_date
         )
+
+
+def has_only_deleted_forms(couch_case):
+    def get_deleted_form_ids(form_ids):
+        forms = FormAccessorSQL.get_forms(form_ids)
+        return {f.form_id for f in forms if f.is_deleted}
+    form_ids = couch_case["xform_ids"]
+    return set(form_ids) == get_deleted_form_ids(form_ids)
 
 
 def is_orphaned_case(couch_case):

@@ -1,10 +1,11 @@
 from contextlib import contextmanager
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 from mock import patch
 
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.tzmigration.timezonemigration import MISSING
+from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.utils.general import (
     clear_local_domain_sql_backend_override,
 )
@@ -137,6 +138,16 @@ class TestCouchSqlDiff(BaseMigrationTestCase):
         sql_case = self._get_case("test-case")
         self.assertEqual(sql_case.dynamic_case_properties()["age"], "33")
         self._compare_diffs([])
+
+    def test_case_with_deleted_form(self):
+        # form state=normal / deleted -> missing case
+        one = self.submit_form(make_test_form("one", age=27))
+        FormAccessors(self.domain_name).soft_delete_forms(
+            [one.form_id], datetime.utcnow(), 'test-deletion')
+        self._do_migration()
+        self._compare_diffs(changes=[
+            ('CommCareCase', Diff('missing', ['*'], old='*', new=MISSING, reason="deleted forms")),
+        ])
 
     def test_diff_case_with_wrong_domain(self):
         wrong_domain = create_domain("wrong")
