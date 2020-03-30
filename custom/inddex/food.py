@@ -140,6 +140,9 @@ class FoodRow:
         self._set_composition()
         self._set_conversion_factors()
 
+        self._is_recipe = self.food_type in (STANDARD_RECIPE, NON_STANDARD_RECIPE)
+        self.include_in_analysis = not self._is_recipe
+
     def _set_composition(self):
         # Get the food composition corresponding to food_code, fall back to base_term_food_code
         fct = self.fixtures.food_compositions
@@ -173,10 +176,6 @@ class FoodRow:
             elif self.conv_factor_base_term_food_code:
                 self.conv_factor_used = 'base_term_food_code'
                 self.conv_factor = self.conv_factor_base_term_food_code
-
-    @property
-    def include_in_analysis(self):
-        return self.food_type not in (STANDARD_RECIPE, NON_STANDARD_RECIPE)  # recipes are excluded
 
     @property
     def age_range(self):
