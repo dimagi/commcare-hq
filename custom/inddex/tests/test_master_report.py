@@ -117,8 +117,8 @@ class TestFixtures(TestCase):
     def test_food_compositions(self):
         composition = self.fixtures_accessor.food_compositions['10']
         self.assertEqual("Millet flour", composition.survey_base_terms_and_food_items)
-        self.assertEqual(367, composition.nutrients['1'])
-        self.assertEqual(9.1, composition.nutrients['2'])
+        self.assertEqual(367, composition.nutrients['energy_kcal'])
+        self.assertEqual(9.1, composition.nutrients['water_g'])
 
     def test_conversion_factors(self):
         conversion_factor = self.fixtures_accessor.conversion_factors[('10', '52', '')]
