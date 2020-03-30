@@ -137,7 +137,9 @@ class TestCouchSqlDiff(BaseMigrationTestCase):
         self.do_case_diffs(cases="with-diffs")
         sql_case = self._get_case("test-case")
         self.assertEqual(sql_case.dynamic_case_properties()["age"], "33")
-        self._compare_diffs([])
+        self._compare_diffs(changes=[
+            ('CommCareCase', Diff('missing', ['thing'], old=MISSING, new='1', reason='rebuild case')),
+        ])
 
     def test_case_with_deleted_form(self):
         # form state=normal / deleted -> missing case
@@ -175,20 +177,15 @@ class TestCouchSqlDiff(BaseMigrationTestCase):
         self._compare_diffs([], ignore_fail=True)
         clear_local_domain_sql_backend_override(self.domain_name)
         self.do_case_diffs()
-        self._compare_diffs([])
-        db = open_state_db(self.domain_name, self.state_dir)
-        self.assertEqual(
-            list(db.iter_changes()),
-            [Change(
-                kind="stock state",
-                doc_id=f"test-case/things/{product_id}",
-                reason="duplicate stock transaction",
-                diff_type="diff",
-                path=["balance"],
-                old_value=2,
-                new_value=1,
-            )],
-        )
+        self._compare_diffs(changes=[("stock state", Diff(
+            kind="stock state",
+            id=f"test-case/things/{product_id}",
+            reason="duplicate stock transaction",
+            type="diff",
+            path=["balance"],
+            old=2,
+            new=1,
+        ))])
 
     def create_form_with_duplicate_stock_transaction(self):
         from corehq.apps.commtrack.helpers import make_product

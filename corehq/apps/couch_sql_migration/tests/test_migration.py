@@ -182,8 +182,7 @@ class BaseMigrationTestCase(TestCase, TestFileMixin):
             return [(d.kind, d.json_diff) for d in sorted(items, key=key)]
         statedb = open_state_db(self.domain_name, self.state_dir)
         self.assertEqual(sortdiffs(statedb.iter_diffs()), diffs or [])
-        if changes is not None:
-            self.assertEqual(sortdiffs(statedb.iter_changes()), changes or [])
+        self.assertEqual(sortdiffs(statedb.iter_changes()), changes or [])
         self.assertEqual({
             kind: counts.missing
             for kind, counts in statedb.get_doc_counts().items()
@@ -1043,7 +1042,9 @@ class MigrationTestCase(BaseMigrationTestCase):
             {self._describe(f) for f in self._iter_forms("XFormArchived")},
             {"hard_delete_case_and_forms test-case"}
         )
-        self._compare_diffs([])
+        self._compare_diffs(changes=[
+            Diff(id="test-case", path=["xform_ids", "[*]"], old="form-2", new="", reason='rebuild case')
+        ])
 
     def test_migrate_deleted_form_after_live_migration(self):
         self.submit_form(make_test_form("form-1"), timedelta(minutes=-95))
@@ -1072,7 +1073,9 @@ class MigrationTestCase(BaseMigrationTestCase):
         self.assertEqual(set(deleted), {"form-2"})
         self.assertEqual(self._get_form_ids(), {"form-1"})
         self.assertEqual(self._get_case_ids(), {"test-case"})
-        self._compare_diffs([])
+        self._compare_diffs(changes=[
+            Diff(id="test-case", path=["xform_ids", "[*]"], old="form-2", new="", reason="rebuild case")
+        ])
 
     def test_delete_user_during_migration(self):
         from corehq.apps.users.models import CommCareUser
@@ -1333,7 +1336,9 @@ class MigrationTestCase(BaseMigrationTestCase):
 
         case = self._get_case("test-case")
         self.assertEqual(case.xform_ids, ["new-form"])
-        self._compare_diffs([])
+        self._compare_diffs(changes=[
+            Diff(id="test-case", path=["xform_ids", "[*]"], old="test-form", new="new-form", reason='rebuild case')
+        ])
         form = self._get_form('new-form')
         self.assertEqual(form.deprecated_form_id, "test-form")
         self.assertIsNone(form.problem)
@@ -1742,14 +1747,28 @@ class Diff:
     path = attr.ib(default=ANY)
     old = attr.ib(default=ANY)
     new = attr.ib(default=ANY)
+    kind = attr.ib(default=ANY)
+    id = attr.ib(default=ANY)
     reason = attr.ib(default=ANY)
 
     def __eq__(self, other):
         from ..statedb import Change
-        if isinstance(other, Change) and self.reason != other.reason:
+        if isinstance(other, tuple) and len(other) == 2:
+            kind, other = other
+            if self.kind != kind:
+                return False
+        if isinstance(other, Change) and (
+            self.kind != other.kind
+            or self.id != other.doc_id
+            or self.reason != other.reason
+        ):
             return False
-        if isinstance(other, FormJsonDiff):
-            assert self.reason is ANY, (self, other)
+        if isinstance(other, FormJsonDiff) and (
+            self.id is not ANY
+            or self.kind is not ANY
+            or self.reason is not ANY
+        ):
+            return False
         if isinstance(other, (FormJsonDiff, Change)):
             return (
                 self.type == other.diff_type
@@ -1762,7 +1781,8 @@ class Diff:
     def __repr__(self):
         if self.reason is not ANY:
             return (
-                f"Change(kind=ANY, doc_id=ANY, reason={self.reason!r}"
+                f"Change(kind={self.kind!r}, "
+                f"doc_id={self.id!r}, reason={self.reason!r}, "
                 f"diff_type={self.type!r}, path={self.path!r}, "
                 f"old_value={self.old!r}, new_value={self.new!r})"
             )
