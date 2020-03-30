@@ -1314,11 +1314,6 @@ class TestExportData(TestCase):
         )
 
     def test_awc_infrastructure_export_with_beta(self):
-        print(AWCInfrastructureExport(
-                config={
-                    'domain': 'icds-cas'
-                }, beta=True
-            ).get_excel_data(location=''))
         self.assertListEqual(
             AWCInfrastructureExport(
                 config={
