@@ -28,7 +28,7 @@ class TestCouchSqlDiff(BaseMigrationTestCase):
             case.save()
             self.do_case_diffs()
         self._compare_diffs([
-            ('CommCareCase', Diff('diff', ['age'], old='35', new='27')),
+            Diff('case-1', 'diff', ['age'], old='35', new='27'),
         ])
 
     def test_diff_specific_case(self):
@@ -40,7 +40,7 @@ class TestCouchSqlDiff(BaseMigrationTestCase):
             case.save()
             self.do_case_diffs(cases="case-1")
         self._compare_diffs([
-            ('CommCareCase', Diff('diff', ['age'], old='35', new='27')),
+            Diff('case-1', 'diff', ['age'], old='35', new='27'),
         ])
 
     def test_pending_diff(self):
@@ -57,7 +57,7 @@ class TestCouchSqlDiff(BaseMigrationTestCase):
             self.assertEqual(result, mod.PENDING_WARNING)
             self.do_case_diffs(cases="pending")
         self._compare_diffs([
-            ('CommCareCase', Diff('diff', ['age'], old='35', new='27')),
+            Diff('case-1', 'diff', ['age'], old='35', new='27'),
         ])
 
     def test_live_diff(self):
@@ -101,7 +101,7 @@ class TestCouchSqlDiff(BaseMigrationTestCase):
         with self.diff_without_rebuild():
             self._do_migration()
         self._compare_diffs([
-            ('CommCareCase', Diff('diff', ['age'], old='33', new='32')),
+            Diff('test-case', 'diff', ['age'], old='33', new='32'),
         ])
         clear_local_domain_sql_backend_override(self.domain_name)
         self.do_case_diffs(cases="with-diffs")
@@ -130,15 +130,15 @@ class TestCouchSqlDiff(BaseMigrationTestCase):
         with self.diff_without_rebuild():
             self._do_migration()
         self._compare_diffs([
-            ('CommCareCase', Diff('diff', ['age'], old='33', new='32')),
-            ('CommCareCase', Diff('missing', ['thing'], old=MISSING, new='1')),
+            Diff('test-case', 'diff', ['age'], old='33', new='32'),
+            Diff('test-case', 'missing', ['thing'], old=MISSING, new='1'),
         ])
         clear_local_domain_sql_backend_override(self.domain_name)
         self.do_case_diffs(cases="with-diffs")
         sql_case = self._get_case("test-case")
         self.assertEqual(sql_case.dynamic_case_properties()["age"], "33")
         self._compare_diffs(changes=[
-            ('CommCareCase', Diff('missing', ['thing'], old=MISSING, new='1', reason='rebuild case')),
+            Diff('test-case', 'missing', ['thing'], old=MISSING, new='1', reason='rebuild case'),
         ])
 
     def test_case_with_deleted_form(self):
@@ -148,7 +148,7 @@ class TestCouchSqlDiff(BaseMigrationTestCase):
             [one.form_id], datetime.utcnow(), 'test-deletion')
         self._do_migration()
         self._compare_diffs(changes=[
-            ('CommCareCase', Diff('missing', ['*'], old='*', new=MISSING, reason="deleted forms")),
+            Diff('test-case', 'missing', ['*'], old='*', new=MISSING, reason="deleted forms"),
         ])
 
     def test_diff_case_with_wrong_domain(self):
@@ -166,7 +166,7 @@ class TestCouchSqlDiff(BaseMigrationTestCase):
             # try to diff case in wrong domain
             self.do_case_diffs(cases="test-case")
         self._compare_diffs([
-            ('CommCareCase', Diff('diff', ['domain'], old='wrong', new=self.domain_name)),
+            Diff('test-case', 'diff', ['domain'], old='wrong', new=self.domain_name),
         ])
         logs = log.get_output()
         self.assertIn("couch case test-case has wrong domain: wrong", logs)
@@ -177,15 +177,15 @@ class TestCouchSqlDiff(BaseMigrationTestCase):
         self._compare_diffs([], ignore_fail=True)
         clear_local_domain_sql_backend_override(self.domain_name)
         self.do_case_diffs()
-        self._compare_diffs(changes=[("stock state", Diff(
-            kind="stock state",
-            id=f"test-case/things/{product_id}",
+        self._compare_diffs(changes=[Diff(
+            f"test-case/things/{product_id}",
             reason="duplicate stock transaction",
             type="diff",
             path=["balance"],
             old=2,
             new=1,
-        ))])
+            kind="stock state",
+        )])
 
     def create_form_with_duplicate_stock_transaction(self):
         from corehq.apps.commtrack.helpers import make_product
