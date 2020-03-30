@@ -1,5 +1,4 @@
 import logging
-import uuid
 
 from django.conf import settings
 
@@ -20,11 +19,9 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.util import dump_locations
 from corehq.apps.userreports.dbaccessors import get_datasources_for_domain
 from corehq.apps.userreports.tasks import rebuild_indicators_in_place
-from corehq.apps.users.forms import generate_strong_password
 from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.apps.users.util import format_username
 from corehq.toggles import LOCATIONS_IN_UCR
-from corehq.util.couch import DocUpdate, IterDB, iter_update
 from corehq.util.decorators import serial_task
 from corehq.util.workbook_json.excel_importer import MultiExcelImporter
 
@@ -172,3 +169,12 @@ def update_users_at_locations(domain, location_ids, supply_point_ids, ancestor_i
     # update fixtures for users at ancestor locations
     user_ids = user_ids_at_locations(ancestor_ids)
     update_fixture_status_for_users(user_ids, UserFixtureType.LOCATION)
+
+
+def deactivate_users_at_location(location_id):
+    from corehq.apps.locations.dbaccessors import user_ids_at_locations
+    user_ids = user_ids_at_locations([location_id])
+    for doc in iter_docs(CouchUser.get_db(), user_ids):
+        user = CouchUser.wrap_correctly(doc)
+        user.is_active = False
+        user.save(spawn_task=True)
