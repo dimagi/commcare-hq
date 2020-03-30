@@ -1318,7 +1318,7 @@ class TestExportData(TestCase):
             AWCInfrastructureExport(
                 config={
                     'domain': 'icds-cas'
-                }
+                }, beta=True
             ).get_excel_data(location=''),
             [
                 [
