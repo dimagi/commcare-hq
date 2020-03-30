@@ -93,7 +93,7 @@ def download_location_reassignment_template(request, domain):
         messages.error(request, _("Please select a location."))
         return HttpResponseRedirect(reverse(LocationReassignmentView.urlname, args=[domain]))
 
-    response_file = Download(location_id).dump()
+    response_file = Download(domain, location_id).dump()
     response = HttpResponse(response_file, content_type="text/html; charset=utf-8")
     filename = '%s Location Reassignment Request Template' % domain
     response['Content-Disposition'] = safe_filename_header(filename, 'xlsx')
