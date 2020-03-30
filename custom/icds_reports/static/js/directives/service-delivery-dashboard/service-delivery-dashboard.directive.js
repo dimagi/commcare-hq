@@ -197,7 +197,7 @@ function ServiceDeliveryDashboardController($rootScope, $scope, $http, $location
         ],
     };
 
-    vm.getSddTableData = function () {
+    vm.getTableData = function () {
         var isPwLwChildren = vm.isPwLwChildrenTab();
         var isAwc = vm.isAwcDataShown();
         return isPwLwChildren ?
@@ -215,7 +215,7 @@ function ServiceDeliveryDashboardController($rootScope, $scope, $http, $location
     };
 
     vm.buildDataTable = function () {
-        var tableData = vm.getSddTableData();
+        var tableData = vm.getTableData();
         var dataTableColumns = [];
         for (var i = 0; i < tableData.length; i++) {
             dataTableColumns.push(DTColumnBuilder.newColumn(tableData[i]['mData'])
@@ -354,6 +354,8 @@ function ServiceDeliveryDashboardController($rootScope, $scope, $http, $location
     const SORT_ASCENDING = 0;
     const DEFAULT_REQUEST_DATA_STARTING_FROM = 0;
     vm.showSortPopup = false;
+    vm.hasHeaderTooltips = true;
+    vm.isTabularDataDisplayed = true;
     vm.tooltipDisplayed = NO_TOOLTIP_DISPLAYED; // '-1' when none of the tooltips are displayed in sort popup
     vm.requestDataStartingFrom = DEFAULT_REQUEST_DATA_STARTING_FROM; // could be any multiple of 10
     vm.dataSortingDirection = SORT_ASCENDING;
@@ -426,7 +428,7 @@ function ServiceDeliveryDashboardController($rootScope, $scope, $http, $location
             'start' : vm.requestDataStartingFrom,
             'length' : 10
         };
-        var tableData = vm.getSddTableData();
+        var tableData = vm.getTableData();
         for(var i = 1; i <= tableData.length; i++) {
             mobileCustomParams['columns[' + i + '][data]'] = tableData[i - 1]['mData'];
         }
@@ -436,11 +438,11 @@ function ServiceDeliveryDashboardController($rootScope, $scope, $http, $location
     // this function generates data from network response & sddTableData to provide input to sortable kpis.
     vm.generateSortableKpiData = function () {
         var locationLevelNameField = vm.getLocationLevelNameAndField()['locationLevelNameField'];
-        var tableData = vm.getSddTableData();
+        var tableData = vm.getTableData();
         var existingDataLength = vm.sortableInputKpiData.length;
         for (var i = existingDataLength; i < (vm.data.length + existingDataLength); i++) {
             vm.sortableInputKpiData[i] = {};
-            vm.sortableInputKpiData[i]['locationName'] = vm.data[i - existingDataLength][locationLevelNameField];
+            vm.sortableInputKpiData[i]['cardHeading'] = vm.data[i - existingDataLength][locationLevelNameField];
             vm.sortableInputKpiData[i]['attributes'] = [];
             for (var j = 0; j < tableData.length; j++) {
                 var kpiObject = {

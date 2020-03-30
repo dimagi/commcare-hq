@@ -57,6 +57,7 @@ branches:
   - mk/location-reassignment-1 # MK March 25
   - mk/location-reassignment-2 # MK March 26
   - cz/confirm-user-ui # Jenny March 25
-  - jls/app-status-cc-app-version-tag # Jenny March 25
   - jls/sql-invitation-uuid # Jenny March 25
+  - bmb/SAAS-10712-pt2  # Biyeun March 27
+  - jls/mini-exchange-toggle-versions # Jenny March 27
 submodules: {}
