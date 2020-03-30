@@ -149,16 +149,16 @@ class FoodRow:
         fct = self.fixtures.food_compositions
         self.fct_food_code_exists = bool(self.food_code and self.food_code in fct)
         self.fct_base_term_food_code_exists = bool(self.base_term_food_code and self.base_term_food_code in fct)
+        self.fct_code = None
         if self.fct_food_code_exists:
-            self.composition = fct[self.food_code]
+            self.fct_code = self.food_code
             self.fct_data_used = 'food_code'
         elif self.fct_base_term_food_code_exists:
-            self.composition = fct[self.base_term_food_code]
-            self.fct_data_used = 'food_code'
-        else:
-            self.composition = None
+            self.fct_code = self.base_term_food_code
+            self.fct_data_used = 'base_term_food_code'
 
-        if self.composition:
+        if self.fct_code:
+            self.composition = fct[self.fct_code]
             self.fao_who_gift_food_group_code = self.composition.fao_who_gift_food_group_code
             self.fao_who_gift_food_group_description = self.composition.fao_who_gift_food_group_description
             self.user_food_group = self.composition.user_defined_food_group

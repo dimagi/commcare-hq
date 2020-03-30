@@ -137,7 +137,6 @@ class TestNewReport(TestCase):
             'ingr_recipe_total_grams_consumed',
             'fct_reference_food_code_exists',
             'fct_data_used',
-            'fct_code',
             'total_grams',
             'energy_kcal_per_100g',
             'energy_kcal',
