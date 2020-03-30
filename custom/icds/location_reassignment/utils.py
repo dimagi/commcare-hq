@@ -21,5 +21,5 @@ def deprecate_locations(old_locations, new_locations, operation):
         transition.perform()
         for old_location in old_locations:
             deactivate_users_at_location(old_location.location_id)
-            return True
+        return True
     return False
