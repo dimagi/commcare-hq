@@ -137,13 +137,28 @@ class FoodRow:
         self.ucr_row = ucr_row
         self.fixtures = fixtures
 
+        self._set_composition()
+        self._set_conversion_factors()
+
+    def _set_composition(self):
+        # Get the food composition corresponding to food_code, fall back to base_term_food_code
+        fct = self.fixtures.food_compositions
+        self.fct_food_code_exists = bool(self.food_code and self.food_code in fct)
+        self.fct_base_term_food_code_exists = bool(self.base_term_food_code and self.base_term_food_code in fct)
+        if self.fct_food_code_exists:
+            self.composition = fct[self.food_code]
+            self.fct_data_used = 'food_code'
+        elif self.fct_base_term_food_code_exists:
+            self.composition = fct[self.base_term_food_code]
+            self.fct_data_used = 'food_code'
+        else:
+            self.composition = None
+
         if self.composition:
             self.fao_who_gift_food_group_code = self.composition.fao_who_gift_food_group_code
             self.fao_who_gift_food_group_description = self.composition.fao_who_gift_food_group_description
             self.user_food_group = self.composition.user_defined_food_group
             self.reference_food_code = self.composition.reference_food_code_for_food_composition
-
-        self._set_conversion_factors()
 
     def _set_conversion_factors(self):
         if self.food_type in (FOOD_ITEM, STANDARD_RECIPE) and self.conv_method_code:
@@ -158,13 +173,6 @@ class FoodRow:
             elif self.conv_factor_base_term_food_code:
                 self.conv_factor_used = 'base_term_food_code'
                 self.conv_factor = self.conv_factor_base_term_food_code
-
-    @cached_property
-    def composition(self):
-        # If the food isn't in the composition table, check the base food
-        for food_code in [self.food_code, self.base_term_food_code]:
-            if food_code and food_code in self.fixtures.food_compositions:
-                return self.fixtures.food_compositions[food_code]
 
     @property
     def include_in_analysis(self):
