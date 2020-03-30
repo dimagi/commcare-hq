@@ -19,6 +19,9 @@ from custom.icds.location_reassignment.forms import (
     LocationReassignmentRequestForm,
 )
 from custom.icds.location_reassignment.parser import Parser
+from custom.icds.location_reassignment.tasks import (
+    process_location_reassignment,
+)
 
 
 @method_decorator([toggles.LOCATION_REASSIGNMENT.required_decorator()], name='dispatch')
@@ -65,8 +68,8 @@ class LocationReassignmentView(BaseLocationView):
                 elif not update:
                     return self._generate_response(transitions)
                 else:
-                    # ToDo: Make this async
-                    parser.process()
+                    process_location_reassignment.delay(self.domain, parser.valid_transitions,
+                                                        list(parser.requested_transitions.keys()))
                     messages.success(request, _(
                         "Your request has been submitted. We will notify you via email once completed."))
             else:

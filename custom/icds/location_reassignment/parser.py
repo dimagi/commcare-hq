@@ -13,7 +13,6 @@ from custom.icds.location_reassignment.const import (
     SPLIT_OPERATION,
     VALID_OPERATIONS,
 )
-from custom.icds.location_reassignment.utils import deprecate_locations
 
 
 class Parser(object):
@@ -130,27 +129,3 @@ class Parser(object):
                 self.errors.append("Location %s is getting archived but the following descendants are not %s" % (
                     location.site_code, ",".join(missing_site_codes)
                 ))
-
-    def process(self):
-        # process each sheet, in reverse order of hierarchy
-        for location_type_code in list(reversed(self.location_type_codes)):
-            for operation, transitions in self.valid_transitions[location_type_code].items():
-                self._perform_transitions(operation, transitions)
-
-    def _perform_transitions(self, operation, transitions):
-        for old_site_codes, new_site_codes in transitions.items():
-            deprecate_locations(operation, self._get_locations(old_site_codes),
-                                self._get_locations(new_site_codes))
-
-    def _get_locations(self, site_codes):
-        site_codes = site_codes if isinstance(site_codes, list) else [site_codes]
-        locations = [self.locations_by_site_code[site_code] for site_code in site_codes]
-        assert len(locations), len(site_codes)
-        return locations
-
-    @cached_property
-    def locations_by_site_code(self):
-        return {
-            loc.site_code: loc
-            for loc in SQLLocation.active_objects.filter(site_code__in=self.requested_transitions.keys())
-        }
