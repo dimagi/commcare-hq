@@ -1313,6 +1313,104 @@ class TestExportData(TestCase):
             ]
         )
 
+    def test_awc_infrastructure_export_with_beta(self):
+        print(AWCInfrastructureExport(
+                config={
+                    'domain': 'icds-cas'
+                }, beta=True
+            ).get_excel_data(location=''))
+        self.assertListEqual(
+            AWCInfrastructureExport(
+                config={
+                    'domain': 'icds-cas'
+                }
+            ).get_excel_data(location=''),
+            [
+                [
+                    'AWC Infrastructure',
+                    [
+                        [
+                            'State',
+                            'Percentage AWCs reported clean drinking water',
+                            'Percentage AWCs reported functional toilet',
+                            'Percentage AWCs reported medicine kit',
+                            'Percentage AWCs reported weighing scale: infants',
+                            'Percentage AWCs reported weighing scale: mother and child',
+                            'Percentage AWCs reported Infantometer',
+                            'Percentage AWCs reported Stadiometer'
+                        ],
+            ['st1', '100.00 %', '50.00 %', '61.54 %', '76.92 %', '26.92 %', '7.69 %', '3.85 %'],
+            ['st1', '100.00 %', '50.00 %', '61.54 %', '76.92 %', '26.92 %', '7.69 %', '3.85 %'],
+            ['st1', '100.00 %', '50.00 %', '61.54 %', '76.92 %', '26.92 %', '7.69 %', '3.85 %'],
+            ['st1', '100.00 %', '50.00 %', '61.54 %', '76.92 %', '26.92 %', '7.69 %', '3.85 %'],
+            ['st1', '100.00 %', '50.00 %', '61.54 %', '76.92 %', '26.92 %', '7.69 %', '3.85 %'],
+            ['st2', '94.44 %', '55.56 %', '83.33 %', '77.78 %', '27.78 %', '0.00 %', '0.00 %'],
+            ['st2', '94.44 %', '55.56 %', '83.33 %', '77.78 %', '27.78 %', '0.00 %', '0.00 %'],
+            ['st2', '94.44 %', '55.56 %', '83.33 %', '77.78 %', '27.78 %', '0.00 %', '0.00 %'],
+            ['st2', '94.44 %', '55.56 %', '83.33 %', '77.78 %', '27.78 %', '0.00 %', '0.00 %'],
+            ['st2', '94.44 %', '55.56 %', '83.33 %', '77.78 %', '27.78 %', 'Data Not Entered', 'Data Not Entered'],
+            ['st3', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered',
+             'Data Not Entered', 'Data Not Entered'],
+            ['st3', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered',
+             'Data Not Entered', 'Data Not Entered'],
+            ['st3', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered',
+             'Data Not Entered', 'Data Not Entered'],
+            ['st3', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered',
+             'Data Not Entered', 'Data Not Entered'],
+            ['st3', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered',
+             'Data Not Entered', 'Data Not Entered'],
+            ['st4', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered',
+             'Data Not Entered', 'Data Not Entered'],
+            ['st4', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered',
+             'Data Not Entered', 'Data Not Entered'],
+            ['st4', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered',
+             'Data Not Entered', 'Data Not Entered'],
+            ['st4', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered',
+             'Data Not Entered', 'Data Not Entered'],
+            ['st4', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered',
+             'Data Not Entered', 'Data Not Entered'],
+            ['st5', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered',
+             'Data Not Entered', 'Data Not Entered'],
+            ['st5', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered',
+             'Data Not Entered', 'Data Not Entered'],
+            ['st5', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered',
+             'Data Not Entered', 'Data Not Entered'],
+            ['st5', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered',
+             'Data Not Entered', 'Data Not Entered'],
+            ['st5', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered',
+             'Data Not Entered', 'Data Not Entered'],
+            ['st6', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered',
+             'Data Not Entered', 'Data Not Entered'],
+            ['st6', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered',
+             'Data Not Entered', 'Data Not Entered'],
+            ['st6', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered',
+             'Data Not Entered', 'Data Not Entered'],
+            ['st6', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered',
+             'Data Not Entered', 'Data Not Entered'],
+            ['st6', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered',
+             'Data Not Entered', 'Data Not Entered'],
+            ['st7', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered',
+             'Data Not Entered', 'Data Not Entered'],
+            ['st7', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered',
+             'Data Not Entered', 'Data Not Entered'],
+            ['st7', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered',
+             'Data Not Entered', 'Data Not Entered'],
+            ['st7', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered',
+             'Data Not Entered', 'Data Not Entered'],
+            ['st7', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered',
+             'Data Not Entered', 'Data Not Entered']]],
+                [
+                    'Export Info',
+                    [
+                        [
+                            'Generated at', '16:21:11 15 November 2017'
+                        ]
+                    ]
+                ]
+            ]
+        )
+
+
     def test_beneficiary_export(self):
         self.assertJSONEqual(
             json.dumps(
