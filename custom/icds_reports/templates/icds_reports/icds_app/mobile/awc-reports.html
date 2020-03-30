@@ -13,7 +13,7 @@
     <div class="summary-list" id="summaryList">
       <div ng-if="!$ctrl.isTabularDataDisplayed">
         <div ng-if="$ctrl.step === 'demographics'">
-          <div class="bar-chart">
+          <div class="mobile-chart">
             <p class="center pl-3 pt-3 mb-0 font-18 font-weight-600 font-montserrat">{$ $ctrl.data.chart[0].key $}</p>
             <nvd3 options="$ctrl.chartOptions" data="$ctrl.data.chart" class="with-3d-shadow with-transitions" id="mobile-bar-chart"></nvd3>
           </div>
@@ -21,7 +21,7 @@
         <kpi data="$ctrl.data.kpi"></kpi>
         <div ng-if="haveAccessToFeatures && $ctrl.step === 'pse'">
           <!--AWC days open per week-->
-          <div class="bar-chart">
+          <div class="mobile-chart">
             <p class="center pl-3 pt-3 mb-0 font-montserrat font-weight-600 font-18">{$ $ctrl.data.charts[0][0].key $}</p>
             <nvd3 options="$ctrl.lineChartDaysPerWeekOptions" data="$ctrl.data.charts[0]" class="with-3d-shadow with-transitions" id="mobile-bar-chart"></nvd3>
             <div class="d-flex justify-content-center mb-3">
@@ -37,7 +37,7 @@
           </div>
 
           <!--line chart for daily attendance-->
-          <div class="bar-chart">
+          <div class="mobile-chart">
             <p class="center pl-3 pt-3 mb-0 font-montserrat font-weight-600 font-18">{$ $ctrl.data.charts[1][0].key $}</p>
             <nvd3 options="$ctrl.lineChartOptions" data="$ctrl.data.charts[1]" class="with-3d-shadow with-transitions" id="mobile-line-chart"></nvd3>
             <div class="d-flex justify-content-center mb-3">
