@@ -37,14 +37,16 @@
   {% endblock %}
 {% endblock content %}
 {% block js-inline %}{{ block.super }}
-{% if initial_username %}
   <script>
     document.addEventListener("DOMContentLoaded", function () {
-      var usernameElt = document.getElementById('id_auth-username');
-      if (usernameElt) {
-        usernameElt.value = '{{ initial_username }}';
+      const urlParams = new URLSearchParams(window.location.search);
+      const username = urlParams.get('username');
+      if (username) {
+        var usernameElt = document.getElementById('id_auth-username');
+        if (usernameElt) {
+          usernameElt.value = username;
+        }
       }
     });
   </script>
-{% endif %}
 {% endblock js-inline %}

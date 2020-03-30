@@ -394,7 +394,6 @@ def _login(req, domain_name, custom_login_page, extra_context=None):
             'domain': domain_name,
             'hr_name': domain_obj.display_name(),
             'next': req_params.get('next', '/a/%s/' % domain_name),
-            'initial_username': req_params.get('username', None),
             'allow_domain_requests': domain_obj.allow_domain_requests,
             'current_page': {'page_name': _('Welcome back to %s!') % domain_obj.display_name()},
         })
