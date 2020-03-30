@@ -141,8 +141,8 @@ class FoodRow:
         self._set_composition()
         self._set_conversion_factors()
 
-        self._is_recipe = self.food_type in (STANDARD_RECIPE, NON_STANDARD_RECIPE)
-        self.include_in_analysis = not self._is_recipe
+        self.is_recipe = self.food_type in (STANDARD_RECIPE, NON_STANDARD_RECIPE)
+        self.include_in_analysis = not self.is_recipe
 
     def _set_composition(self):
         # Get the food composition corresponding to food_code, fall back to base_term_food_code
@@ -203,28 +203,9 @@ class FoodRow:
 
     @property
     def recipe_id(self):
-        if self._is_recipe:
+        if self.is_recipe:
             return self.caseid
         return self.recipe_case_id or self.already_reported_recipe_case_id or 'NO_RECIPE'
-
-    def as_list(self, rows_in_recipe):
-        if self._is_recipe:
-            self.recipe_num_ingredients = len([r for r in rows_in_recipe if not r._is_recipe])
-
-        def _format(val):
-            if isinstance(val, datetime):
-                return val.strftime('%Y-%m-%d %H:%M:%S')
-            if isinstance(val, bool):
-                return "yes" if val else "no"
-            if isinstance(val, int):
-                return str(val)
-            if isinstance(val, float):
-                return str(int(val)) if val.is_integer() else str(val)
-            if val is None:
-                return MISSING
-            return val
-
-        return [_format(getattr(self, column.slug)) for column in INDICATORS]
 
 
 class FoodCaseRow(FoodRow):
@@ -272,6 +253,29 @@ class RecipeIngredientRow(FoodRow):
         raise AttributeError(f"RecipeIngredientRow has no definition for {name}")
 
 
+class RecipeRowGenerator:
+    """Contains all rows of a given recipe. Handles calculations outside the scope of a single row"""
+
+    def __init__(self, recipe_id, rows):
+        self._all_rows = rows
+
+        recipe_possibilities = [row for row in rows if row.is_recipe]
+        self._recipe_row = recipe_possibilities[0] if len(recipe_possibilities) == 1 else None
+        self._recipe_ingredients = [row for row in rows if not row.is_recipe]
+
+    def iter_rows(self):
+        if not self._recipe_row:
+            yield from _yield_non_recipe_rows(self._all_rows)
+
+        for row in [self._recipe_row] + self._recipe_ingredients:
+            yield [_format(self._get_val(row, column.slug)) for column in INDICATORS]
+
+    def _get_val(self, row, slug):
+        if slug == 'recipe_num_ingredients' and row.is_recipe:
+            return len(self._recipe_ingredients)
+        return getattr(row, slug)
+
+
 class FoodData:
     def __init__(self, domain, ucr_rows):
         self.ucr_rows = ucr_rows
@@ -283,8 +287,8 @@ class FoodData:
 
     @property
     def rows(self):
-
         rows_by_recipe = defaultdict(list)
+
         for ucr_row in self.ucr_rows:
             food = FoodCaseRow(ucr_row, self.fixtures)
             rows_by_recipe[food.recipe_id].append(food)
@@ -295,5 +299,26 @@ class FoodData:
                     rows_by_recipe[food.recipe_id].append(ingr_row)
 
         for recipe_id, rows_in_recipe in rows_by_recipe.items():
-            for row in rows_in_recipe:
-                yield row.as_list(rows_in_recipe if recipe_id != 'NO_RECIPE' else [])
+            if recipe_id == 'NO_RECIPE':
+                yield from _yield_non_recipe_rows(rows_in_recipe)
+            else:
+                yield from RecipeRowGenerator(recipe_id, rows_in_recipe).iter_rows()
+
+
+def _yield_non_recipe_rows(rows):
+    for row in rows:
+        yield [_format(getattr(row, column.slug)) for column in INDICATORS]
+
+
+def _format(val):
+    if isinstance(val, datetime):
+        return val.strftime('%Y-%m-%d %H:%M:%S')
+    if isinstance(val, bool):
+        return "yes" if val else "no"
+    if isinstance(val, int):
+        return str(val)
+    if isinstance(val, float):
+        return str(int(val)) if val.is_integer() else str(val)
+    if val is None:
+        return MISSING
+    return val
