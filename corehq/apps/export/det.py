@@ -121,13 +121,6 @@ def generate_case_schema(export_schema_json, main_sheet_name, output_file):
         return path
 
 
-    # def _collapse_path_src(path, relative=''):
-    #     return _collapse_path(path, relative, 1)
-    # def _collapse_path(path, relative='', s=0):
-    #     if relative:
-    #         return '.'.join([p['name'] for p in path[s:]]).replace(relative+'.','',1)
-    #     return '.'.join([p['name'] for p in path[s:]])
-
     def _collapse_path(path, relative='', s=0):
         if relative:
             return '.'.join(
@@ -150,11 +143,6 @@ def generate_case_schema(export_schema_json, main_sheet_name, output_file):
                 header = header + '_' + tbl_name[len('form.'):]
             else:
                 header = header + '_' + tbl_name
-
-        # Excel limits the length of worksheet names
-        ws_name = _truncate(header, 3, 31)
-        # worksheet = workbook.create_sheet(ws_name)
-        ws_data = []
 
         if header not in output.table_names:
             output.tables.append(
