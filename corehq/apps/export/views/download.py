@@ -12,6 +12,7 @@ from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy, ugettext_noop
+from django.views.generic import View
 from django.views.decorators.http import require_GET, require_POST
 
 from memoized import memoized
@@ -537,3 +538,11 @@ def add_export_email_request(request, domain):
     else:
         EmailExportWhenDoneRequest.objects.create(domain=domain, download_id=download_id, user_id=user_id)
     return HttpResponse(ugettext_lazy('Export e-mail request sent.'))
+
+
+@method_decorator(login_and_domain_required, name='dispatch')
+class DownloadDETSchemaView(View):
+    urlname = 'download-det-schema'
+
+    def get(self, request, domain, export_instance_id):
+        return HttpResponse("it works")
