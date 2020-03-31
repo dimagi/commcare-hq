@@ -1,3 +1,5 @@
+import attr
+
 from couchexport.export import export_raw
 from couchexport.models import Format
 
@@ -8,6 +10,83 @@ PREFIX_MAP = {
     1: '',
     2: ACTIONS_PREFIX,
 }
+
+
+@attr.s
+class DETConfig:
+    tables = attr.ib(type=list)
+
+    @property
+    def table_names(self):
+        return [t.name for t in self.tables]
+
+    def get_table(self, name):
+        filtered_tables = [t for t in self.tables if t.name == name]
+        assert len(filtered_tables) == 1
+        return filtered_tables[0]
+
+
+@attr.s
+class DETTable:
+    name = attr.ib()
+    source = attr.ib()
+    rows = attr.ib(type=list)
+    filter_name = attr.ib(default='')
+    filter_value = attr.ib(default='')
+
+    @property
+    def table_name(self):
+        # PG has 64 character limit on table names
+        return _truncate(self.name, 3, 63)
+
+    def get_sheet_data(self):
+        if len(self.rows) == 0:
+            return []
+        else:
+            for i, row in enumerate(self.rows):
+                if i == 0:
+                    # the first row also contains the source/filter data
+                    yield [
+                        row.source_field,
+                        row.field,
+                        row.map_via,
+                        self.source,
+                        self.filter_name,
+                        self.filter_value,
+                    ]
+                else:
+                    yield [
+                        row.source_field,
+                        row.field,
+                        row.map_via,
+                    ]
+
+@attr.s
+class DETRow:
+    source_field = attr.ib()
+    field = attr.ib()
+    map_via = attr.ib(default='')
+
+
+def _get_default_case_rows():
+    return [
+        DETRow(source_field=row[0], field=row[1], map_via=row[2] if len(row) > 2 else '')
+        for row in [
+            ['id', 'id', ''],  # Case ID
+            ['properties.case_type', 'properties.case_type'],  # Case Type
+            ['properties.owner_id', 'properties.owner_id'],  # Owner ID
+            ['properties.case_name', 'properties.case_name'],  # Case Name
+            ['properties.date_opened', 'properties.date_opened', 'str2date'],  # Date opened(phone time)
+            ['server_opened_on', 'server_opened_on', 'str2date'],  # Date opened(server time)
+            ['opened_by', 'opened_by'],  # Opened by(user ID)
+            ['closed', 'closed'],  # Is Closed
+            ['date_closed', 'date_closed', 'str2date'],  # Date closed
+            ['date_modified', 'date_modified', 'str2date'],  # Modified on(phone time)
+            ['server_date_modified', 'server_date_modified', 'str2date'],  # Modified on(server time)
+            ['indices.parent.case_id', 'indices.parent.case_id'],  # Parent case ID
+            ['indices.parent.case_type', 'indices.parent.case_type'],  # Parent case type
+        ]
+    ]
 
 
 def generate_case_schema(export_schema_json, main_sheet_name, output_file):
@@ -24,24 +103,14 @@ def generate_case_schema(export_schema_json, main_sheet_name, output_file):
         'Format Via',
     ]
 
-    output = {
-        main_sheet_name: [
-            # Case ID
-            ['id', 'id', '', 'case', 'type', data['case_type']],
-            ['properties.case_type', 'properties.case_type'],  # Case Type
-            ['properties.owner_id', 'properties.owner_id'],  # Owner ID
-            ['properties.case_name', 'properties.case_name'],  # Case Name
-            ['properties.date_opened', 'properties.date_opened', 'str2date'],  # Date opened(phone time)
-            ['server_opened_on', 'server_opened_on', 'str2date'],  # Date opened(server time)
-            ['opened_by', 'opened_by'],  # Opened by(user ID)
-            ['closed', 'closed'],  # Is Closed
-            ['date_closed', 'date_closed', 'str2date'],  # Date closed
-            ['date_modified', 'date_modified', 'str2date'],  # Modified on(phone time)
-            ['server_date_modified', 'server_date_modified', 'str2date'],  # Modified on(server time)
-            ['indices.parent.case_id', 'indices.parent.case_id'],  # Parent case ID
-            ['indices.parent.case_type', 'indices.parent.case_type'],  # Parent case type
-        ]
-    }
+    main_table = DETTable(
+        name=main_sheet_name,
+        source='case',
+        filter_name='type',
+        filter_value=data['case_type'],
+        rows=_get_default_case_rows()
+    )
+    output = DETConfig(tables=[main_table])
 
     def _collapse_path_out(path, relative=''):
         return _collapse_path(path, relative, 0)
@@ -70,11 +139,6 @@ def generate_case_schema(export_schema_json, main_sheet_name, output_file):
                 p['name'] + '[*]' if p['is_repeat'] else p['name'] for p in path[s:]
             ])
 
-    def _truncate(name, start_char, total_char):
-        if len(name) > total_char:
-            name = name[:start_char] + '$' + name[-(total_char - (start_char + 1)):]
-        return name
-
     for i, form in enumerate(data['group_schemas']):
         header = main_sheet_name
         parent = _collapse_path(form['path'])
@@ -92,13 +156,19 @@ def generate_case_schema(export_schema_json, main_sheet_name, output_file):
         # worksheet = workbook.create_sheet(ws_name)
         ws_data = []
 
-        if header not in output.keys():
-            # PG has 64 character limit on table names
-            table_name = _truncate(header, 3, 63)
-            output[header] = [
-                ['id', 'id', '', 'case', 'type', parent, table_name],
-            ]
+        if header not in output.table_names:
+            output.tables.append(
+                DETTable(
+                    name=header,
+                    source=parent,
+                    rows=[
+                        DETRow(source_field='id', field='id')
+                    ]
 
+                )
+            )
+
+        current_table = output.get_table(header)
         for q in form['items']:
 
             path = _collapse_path_out(q['path'], parent)
@@ -121,12 +191,18 @@ def generate_case_schema(export_schema_json, main_sheet_name, output_file):
                     q['path'][-1]['name'].startswith('dob_'):
                 map_via = 'str2date'
 
-            output[header].append([prefixed_path, x, map_via])
+            current_table.rows.append(DETRow(source_field=prefixed_path, field=x, map_via=map_via))
 
     header_sheets = []
     data_sheets = []
-    for k, v in output.items():
-        header_sheets.append((k, TITLE_ROW))
-        data_sheets.append((k, output[k]))
+    for table in output.tables:
+        header_sheets.append((table.name, TITLE_ROW))
+        data_sheets.append((table.name, list(table.get_sheet_data())))
 
     export_raw(header_sheets, data_sheets, output_file, format=Format.XLS_2007)
+
+
+def _truncate(name, start_char, total_char):
+    if len(name) > total_char:
+        name = name[:start_char] + '$' + name[-(total_char - (start_char + 1)):]
+    return name
