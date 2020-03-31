@@ -119,7 +119,7 @@ INDICATORS = [
     I('total_grams'),
     I('energy_kcal_per_100g'),
     I('energy_kcal'),
-    I('water_G_per_100g'),
+    I('water_g_per_100g'),
     I('water_g'),
     I('protein_g_per_100g'),
     I('protein_g'),

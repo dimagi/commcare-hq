@@ -138,7 +138,7 @@ class TestNewReport(TestCase):
             'total_grams',
             'energy_kcal_per_100g',
             'energy_kcal',
-            'water_G_per_100g',
+            'water_g_per_100g',
             'water_g',
             'protein_g_per_100g',
             'protein_g',
