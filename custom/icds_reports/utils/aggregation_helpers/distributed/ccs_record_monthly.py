@@ -62,13 +62,13 @@ class CcsRecordMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribute
         ).format(end_month_string, start_month_string)
 
         alive_in_month = "(case_list.date_death is null OR case_list.date_death-{}>0)".format(start_month_string)
-        migration_status = "(agg_migration.is_migrated = 1 AND agg_migration.migration_date < {})::integer".format(
-            start_month_string)
-        registered_status = (
-            "CASE WHEN agg_as.is_registered = 0 AND agg_as.registration_date::date < {start_month_string}"
-            " THEN 0 ELSE 1 END"
-        ).format(start_month_string=start_month_string)
-        seeking_services = "({registered_status} IS DISTINCT FROM 0 AND {migration_status} IS DISTINCT FROM 1)".format(registered_status=registered_status, migration_status=migration_status)
+        migration_status = "(agg_migration.is_migrated = 1 AND agg_migration.migration_date::date < {" \
+                           "start_month_string})::integer".format(start_month_string=start_month_string)
+        registered_status = "(agg_availing.is_registered = 0 AND agg_availing.registration_date::date < {" \
+                            "start_month_string})::integer".format(start_month_string=start_month_string)
+        seeking_services = "({registered_status} IS DISTINCT FROM 1 AND " \
+                           "{migration_status} IS DISTINCT FROM 1)".format(registered_status=registered_status,
+                                                                           migration_status=migration_status)
         ccs_lactating = (
             "({} AND {} AND case_list.add is not null AND {}-case_list.add>=0"
             " AND {}-case_list.add<=183)"
