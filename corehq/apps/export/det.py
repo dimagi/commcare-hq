@@ -10,7 +10,6 @@ PREFIX_MAP = {
 }
 
 
-
 def generate_case_schema(export_schema_json, main_sheet_name, output_file):
     data = export_schema_json
 
@@ -29,25 +28,18 @@ def generate_case_schema(export_schema_json, main_sheet_name, output_file):
         main_sheet_name: [
             # Case ID
             ['id', 'id', '', 'case', 'type', data['case_type']],
-            ['id', 'id'],
             ['properties.case_type', 'properties.case_type'],  # Case Type
             ['properties.owner_id', 'properties.owner_id'],  # Owner ID
             ['properties.case_name', 'properties.case_name'],  # Case Name
-            # Date opened(phone time)
-            ['properties.date_opened', 'properties.date_opened',
-             'str2date'],
-            ['server_opened_on', 'server_opened_on',
-             'str2date'],  # Date opened(server time)
+            ['properties.date_opened', 'properties.date_opened', 'str2date'],  # Date opened(phone time)
+            ['server_opened_on', 'server_opened_on', 'str2date'],  # Date opened(server time)
             ['opened_by', 'opened_by'],  # Opened by(user ID)
             ['closed', 'closed'],  # Is Closed
             ['date_closed', 'date_closed', 'str2date'],  # Date closed
-            # Modified on(phone time)
-            ['date_modified', 'date_modified', 'str2date'],
-            # Modified on(server time)
-            ['server_date_modified', 'server_date_modified', 'str2date'],
+            ['date_modified', 'date_modified', 'str2date'],  # Modified on(phone time)
+            ['server_date_modified', 'server_date_modified', 'str2date'],  # Modified on(server time)
             ['indices.parent.case_id', 'indices.parent.case_id'],  # Parent case ID
-            # Parent case type
-            ['indices.parent.case_type', 'indices.parent.case_type'],
+            ['indices.parent.case_type', 'indices.parent.case_type'],  # Parent case type
         ]
     }
 
