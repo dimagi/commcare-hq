@@ -12,10 +12,10 @@ from django.views.decorators.http import require_POST
 from memoized import memoized
 from requests.auth import HTTPBasicAuth, HTTPDigestAuth
 
-from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from dimagi.utils.post import simple_post
 
-from corehq import toggles, privileges
+from corehq import privileges, toggles
+from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.domain.views.settings import (
     BaseAdminProjectSettingsView,
@@ -26,19 +26,19 @@ from corehq.apps.users.decorators import (
     require_permission,
 )
 from corehq.apps.users.models import Permissions
-from corehq.motech.const import ALGO_AES, PASSWORD_PLACEHOLDER
+from corehq.motech.const import (
+    ALGO_AES,
+    BASIC_AUTH,
+    DIGEST_AUTH,
+    PASSWORD_PLACEHOLDER,
+)
 from corehq.motech.repeaters.forms import (
     CaseRepeaterForm,
     FormRepeaterForm,
     GenericRepeaterForm,
     OpenmrsRepeaterForm,
 )
-from corehq.motech.repeaters.models import (
-    BASIC_AUTH,
-    DIGEST_AUTH,
-    Repeater,
-    RepeatRecord,
-)
+from corehq.motech.repeaters.models import Repeater, RepeatRecord
 from corehq.motech.repeaters.repeater_generators import RegisterGenerator
 from corehq.motech.repeaters.utils import get_all_repeater_types
 from corehq.motech.utils import b64_aes_encrypt
@@ -239,6 +239,13 @@ class AddDhis2RepeaterView(AddRepeaterView):
         return reverse(self.urlname, args=[self.domain])
 
 
+class AddDhis2EntityRepeaterView(AddDhis2RepeaterView):
+    urlname = 'new_dhis2_entity_repeater$'
+    repeater_form_class = GenericRepeaterForm
+    page_title = ugettext_lazy("Forward Cases to DHIS2 as Tracked Entities")
+    page_name = ugettext_lazy("Forward Cases to DHIS2 as Tracked Entities")
+
+
 class EditRepeaterView(BaseRepeaterView):
     urlname = 'edit_repeater'
     template_name = 'repeaters/add_form_repeater.html'
@@ -321,6 +328,11 @@ class EditOpenmrsRepeaterView(EditRepeaterView, AddOpenmrsRepeaterView):
 class EditDhis2RepeaterView(EditRepeaterView, AddDhis2RepeaterView):
     urlname = 'edit_dhis2_repeater'
     page_title = ugettext_lazy("Edit DHIS2 Anonymous Event Repeater")
+
+
+class EditDhis2EntityRepeaterView(EditRepeaterView, AddDhis2EntityRepeaterView):
+    urlname = 'edit_dhis2_entity_repeater'
+    page_title = ugettext_lazy("Edit DHIS2 Tracked Entity Repeater")
 
 
 @require_POST
