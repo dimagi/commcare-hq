@@ -144,6 +144,11 @@ class FoodRow:
         self.is_recipe = self.food_type in (STANDARD_RECIPE, NON_STANDARD_RECIPE)
         self.include_in_analysis = not self.is_recipe
 
+        self.measurement_amount = float(self.measurement_amount) if self.measurement_amount else None
+        self.portions = float(self.portions) if self.portions else None
+        self.nsr_consumed_cooked_fraction = (float(self.nsr_consumed_cooked_fraction)
+                                             if self.nsr_consumed_cooked_fraction else None)
+
     def _set_composition(self):
         # Get the food composition corresponding to food_code, fall back to base_term_food_code
         fct = self.fixtures.food_compositions
