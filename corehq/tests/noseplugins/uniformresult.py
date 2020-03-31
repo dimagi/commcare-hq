@@ -12,6 +12,7 @@ Usage:
     # sort each output file
     # diff tests-django.txt tests-nose.txt
 """
+from inspect import isfunction
 from types import ModuleType
 
 from nose.case import FunctionTestCase
@@ -32,6 +33,8 @@ def uniform_description(test):
             descriptor.__name__,
             test.arg,
         )
+    if isfunction(test):
+        return test.__name__
     name = "%s:%s.%s" % (
         test.__module__,
         type(test).__name__,
