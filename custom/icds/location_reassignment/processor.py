@@ -1,6 +1,7 @@
 from django.utils.functional import cached_property
 
 from corehq.apps.locations.models import LocationType, SQLLocation
+from custom.icds.location_reassignment.const import SPLIT_OPERATION
 from custom.icds.location_reassignment.exceptions import InvalidTransitionError
 from custom.icds.location_reassignment.utils import deprecate_locations
 
@@ -24,7 +25,11 @@ class Processor(object):
                 self._perform_transitions(operation, transitions)
 
     def _perform_transitions(self, operation, transitions):
-        for old_site_codes, new_site_codes in transitions.items():
+        for from_site_codes, to_site_codes in transitions.items():
+            if operation == SPLIT_OPERATION:
+                old_site_codes, new_site_codes = from_site_codes, to_site_codes
+            else:
+                new_site_codes, old_site_codes = from_site_codes, to_site_codes
             errors = deprecate_locations(self._get_locations(old_site_codes), self._get_locations(new_site_codes),
                                          operation)
             if errors:

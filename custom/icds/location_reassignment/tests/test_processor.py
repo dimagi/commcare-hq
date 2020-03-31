@@ -38,8 +38,8 @@ class TestProcessor(TestCase):
             'state': {}
         }
         Processor(self.domain, transitions, site_codes).process()
-        calls = [call([location_131], [location_112], MOVE_OPERATION),
-                 call([location_13], [location_12], MOVE_OPERATION)]
+        calls = [call([location_112], [location_131], MOVE_OPERATION),
+                 call([location_12], [location_13], MOVE_OPERATION)]
         deprecate_locations_mock.assert_has_calls(calls)
         self.assertEqual(deprecate_locations_mock.call_count, 2)
 
