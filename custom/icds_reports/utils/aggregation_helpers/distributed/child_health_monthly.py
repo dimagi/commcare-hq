@@ -92,13 +92,12 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
         alive_in_month = "(child_health.date_death IS NULL OR child_health.date_death - {} >= 0)".format(
             start_month_string
         )
-        migration_status = "(agg_migration.is_migrated = 1 AND agg_migration.migration_date < {})::integer".format(
-            start_month_string)
-        registered_status = (
-            "CASE WHEN agg_as.is_registered = 0 AND agg_as.registration_date::date < {start_month_string}"
-            " THEN 0 ELSE 1 END"
-        ).format(start_month_string=start_month_string)
-        seeking_services = "({registered_status} IS DISTINCT FROM 0 AND {migration_status} IS DISTINCT FROM 1)".format(registered_status=registered_status, migration_status=migration_status)
+        migration_status = "(agg_migration.is_migrated = 1 AND agg_migration.migration_date::date < {" \
+                           "start_month_string})::integer".format(start_month_string=start_month_string)
+        registered_status = "(agg_availing.is_registered = 0 AND agg_availing.registration_date::date < {" \
+                            "start_month_string})::integer".format(start_month_string=start_month_string)
+        seeking_services = "({registered_status} IS DISTINCT FROM 1 AND {migration_status} IS DISTINCT FROM 1)".format(
+            registered_status=registered_status, migration_status=migration_status)
         born_in_month = "({} AND person_cases.dob BETWEEN {} AND {})".format(
             seeking_services, start_month_string, end_month_string
         )
@@ -373,10 +372,10 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
               AND agg_migration.month = %(start_date)s
               AND child_health.state_id = agg_migration.state_id
               AND child_health.supervisor_id = agg_migration.supervisor_id
-            LEFT OUTER JOIN "{agg_as_table}" agg_as ON child_health.mother_id = agg_as.person_case_id
-              AND agg_as.month = %(start_date)s
-              AND child_health.state_id = agg_as.state_id
-              AND child_health.supervisor_id = agg_as.supervisor_id
+            LEFT OUTER JOIN "{agg_availing_table}" agg_availing ON child_health.mother_id = agg_availing.person_case_id
+              AND agg_availing.month = %(start_date)s
+              AND child_health.state_id = agg_availing.state_id
+              AND child_health.supervisor_id = agg_availing.supervisor_id
             LEFT OUTER JOIN "{agg_df_table}" df ON child_health.doc_id = df.case_id
               AND df.month = %(start_date)s
               AND child_health.state_id = df.state_id
@@ -398,7 +397,7 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
             agg_pnc_table=AGG_CHILD_HEALTH_PNC_TABLE,
             agg_df_table=AGG_DAILY_FEEDING_TABLE,
             agg_migration_table=AGG_MIGRATION_TABLE,
-            agg_as_table=AGG_AVAILING_SERVICES_TABLE, 
+            agg_availing_table=AGG_AVAILING_SERVICES_TABLE,
             child_tasks_case_ucr=self.child_tasks_case_ucr_tablename,
             person_cases_ucr=self.person_case_ucr_tablename,
             open_in_month=open_in_month
