@@ -535,7 +535,7 @@ class CouchSqlDomainMigrator:
                 return True
             old_tx = CaseAccessorSQL.get_transaction_by_form_id(case.case_id, form_id)
             assert old_tx, (form_id, case_id)
-            return old_tx.type != new_tx.type
+            return old_tx.type != new_tx.type or old_tx.revoked != new_tx.revoked
 
         def iter_missing_ledgers(stock_result):
             assert not stock_result.models_to_delete, (form_id, stock_result)
@@ -592,9 +592,20 @@ class CouchSqlDomainMigrator:
         elif (sql_form.is_normal and couch_form.doc_type == "XFormInstance"
                 and not couch_form.initial_processing_complete
                 and not sql_form.initial_processing_complete):
+            # Note: creates an un-recorded form diff. This is an
+            # internal flag and there are cases that reference the form,
+            # implying that the form was processed, and therefore the
+            # 'initial_processing_complete' state in Couch is wrong.
             sql_form.initial_processing_complete = True
             sql_form.save()
-        return self._get_case_stock_result(sql_form, couch_form)
+        result = self._get_case_stock_result(sql_form, couch_form)
+        if sql_form.is_normal and sql_form.initial_processing_complete:
+            for case in result.case_models:
+                for tx in case.get_live_tracked_models(CaseTransaction):
+                    assert tx.form_id == sql_form.form_id, (sql_form.form_id, tx)
+                    if tx.revoked:
+                        tx.revoked = False
+        return result
 
     def _check_for_migration_restrictions(self, domain_name):
         msgs = []

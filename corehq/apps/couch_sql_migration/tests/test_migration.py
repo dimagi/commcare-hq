@@ -1352,6 +1352,14 @@ class MigrationTestCase(BaseMigrationTestCase):
             Diff('test-case', 'set_mismatch', ['xform_ids', '[*]'], old='two', new=''),
         ])
         clear_local_domain_sql_backend_override(self.domain_name)
+        Mig = mod.CouchSqlDomainMigrator
+        with mock.patch.object(Mig, "_apply_form_to_case", Mig._get_case_stock_result):
+            self._do_migration(forms="missing")
+        self._compare_diffs([
+            Diff('test-case', 'diff', ['age'], old='30', new='27'),
+            Diff('test-case', 'set_mismatch', ['xform_ids', '[*]'], old='two', new=''),
+        ])
+        clear_local_domain_sql_backend_override(self.domain_name)
         self._do_migration(forms="missing")
         self._compare_diffs()
 
