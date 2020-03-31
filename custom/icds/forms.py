@@ -76,7 +76,7 @@ class HostedCCZForm(forms.Form):
             crispy.Field('link_id', css_class="hqwebapp-select2", data_bind="value: linkId"),
             crispy.Field('app_id', css_class="hqwebapp-select2", data_bind="value: appId"),
             crispy.Field('version', data_bind="value: version"),
-            crispy.Field('profile_id', data_bind="value: profileId"),
+            crispy.Field('profile_id', id="build-profile-id-input", data_bind="value: profileId"),
             crispy.Field('file_name'),
             crispy.Field('note'),
             crispy.Field('status', data_bind="value: status"),
