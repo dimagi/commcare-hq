@@ -1,5 +1,6 @@
 from corehq.apps.export.det.base import DETRow, DETTable, DETConfig
 from corehq.apps.export.det.helpers import collapse_path, collapse_path_out, truncate, prepend_prefix
+from corehq.apps.export.models import FormExportInstance
 
 PROPERTIES_PREFIX = 'properties.'
 ACTIONS_PREFIX = 'actions.'
@@ -133,3 +134,32 @@ def _add_schemas_to_output(output, data):
                 map_via = 'str2date'
 
             current_table.rows.append(DETRow(source_field=prefixed_path, field=x, map_via=map_via))
+
+
+def generate_from_form_export_instance(export_instance, output_file):
+    assert isinstance(export_instance, FormExportInstance)
+    main_input_table = export_instance.selected_tables[0]
+    main_output_table = DETTable(
+        name=main_input_table.label,
+        source='form',
+        filter_name='xmlns',
+        filter_value=export_instance.xmlns,
+        rows=[],
+    )
+    output = DETConfig(name=export_instance.name, tables=[main_output_table])
+    _add_rows_for_table(main_input_table, main_output_table)
+    # todo: add rows for other tables
+    output.export_to_file(output_file)
+
+
+def _add_rows_for_table(input_table, output_table):
+    for column in input_table.selected_columns:
+        det_row = _get_det_row_for_export_column(column)
+        output_table.rows.append(det_row)
+
+
+def _get_det_row_for_export_column(column):
+    return DETRow(
+        source_field=column.item.readable_path,
+        field=column.label,
+    )
