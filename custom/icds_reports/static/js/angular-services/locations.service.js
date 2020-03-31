@@ -219,10 +219,9 @@ window.angular.module('icdsApp').factory('locationsService', ['$http', '$locatio
                         vm.selectedLocations[levelOfSelectedLocation] = childSelected.parent_id;
                         levelOfSelectedLocation -= 1;
                     }
-
-                    var levels = _.filter(vm.levels, function (value){return value.id > selectedLocationIndex();});
+                    var levels = _.filter(vm.levels, function (value){return value.id > vm.selectedLocationIndex();});
                     vm.groupByLevels = levels;
-                    vm.selectedLevel = selectedLocationIndex() + 1;
+                    vm.selectedLevel = vm.selectedLocationIndex() + 1;
                 });
             } else {
                 vm.locationPromise = this.getRootLocations().then(function(data) {

@@ -219,10 +219,17 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         return locationsService.getLocations(level, locationsCache, vm.selectedLocations, disallowNational);
     };
 
-    var selectedLocationIndex = function () {
+    vm.selectedLocationIndex = function () {
         return _.findLastIndex(vm.selectedLocations, function (locationId) {
             return locationId && locationId !== ALL_OPTION.location_id;
         });
+    };
+
+    var resetLevelsBelow = function (level) {
+        for (var i = level + 1; i <= vm.maxLevel; i++) {
+            vm.hierarchy[i].selected = null;
+            vm.selectedLocations[i] = null;
+        }
     };
 
     vm.disabled = function (level) {
@@ -230,7 +237,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
     };
 
     vm.onSelectForISSNIP = function ($item, level) {
-        var selectedLocationId = vm.selectedLocations[selectedLocationIndex()];
+        var selectedLocationId = vm.selectedLocations[vm.selectedLocationIndex()];
         vm.locationPromise = locationsService.getAwcLocations(selectedLocationId).then(function (data) {
             if ($item.user_have_access) {
                 vm.awcLocations = [ALL_OPTION].concat(data);
@@ -244,6 +251,35 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
 
     vm.onSelectLocation = function ($item, level) {
         locationsService.onSelectLocation($item, level, locationsCache, vm);
+    };
+
+    vm.onSelect = function($item, level) {
+        resetLevelsBelow(level);
+        if (level < 4) {
+            vm.myPromise = locationsService.getChildren($item.location_id).then(function (data) {
+                if ($item.user_have_access) {
+                    locationsCache[$item.location_id] = [ALL_OPTION].concat(data.locations);
+                    vm.selectedLocations[level + 1] = ALL_OPTION.location_id;
+                } else {
+                    locationsCache[$item.location_id] = data.locations;
+                    vm.selectedLocations[level + 1] = data.locations[0].location_id;
+                    if (level === 2 && vm.isISSNIPMonthlyRegisterSelected()) {
+                        vm.onSelectForISSNIP(data.locations[0], level + 1);
+                    } else {
+                        vm.onSelect(data.locations[0], level + 1);
+                    }
+                }
+            });
+        }
+        vm.selectedLocationId = vm.selectedLocations[vm.selectedLocationIndex()];
+        var levels = [];
+        vm.selectedLevel = vm.selectedLocationIndex() + 1;
+        window.angular.forEach(vm.levels, function (value) {
+            if (value.id > vm.selectedLocationIndex()) {
+                levels.push(value);
+            }
+        });
+        vm.groupByLevels = levels;
     };
 
     vm.onSelectAWCs = function ($item) {
