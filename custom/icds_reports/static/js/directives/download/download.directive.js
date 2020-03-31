@@ -211,7 +211,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
     init();
 
     vm.disallowNational = function () {
-        vm.isChildBeneficiaryListSelected();
+        return vm.isChildBeneficiaryListSelected();
     };
 
     vm.getPlaceholder = function (locationTypes) {
