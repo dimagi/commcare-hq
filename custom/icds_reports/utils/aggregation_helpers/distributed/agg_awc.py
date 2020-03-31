@@ -6,7 +6,12 @@ from corehq.apps.userreports.models import StaticDataSourceConfiguration, get_da
 from corehq.apps.userreports.util import get_table_name
 
 from custom.icds_reports.utils.aggregation_helpers import get_child_health_temp_tablename, transform_day_to_month, get_agg_child_temp_tablename
-from custom.icds_reports.const import AGG_CCS_RECORD_CF_TABLE, AGG_THR_V2_TABLE, AGG_ADOLESCENT_GIRLS_REGISTRATION_TABLE, AGG_MIGRATION_TABLE
+from custom.icds_reports.const import (
+    AGG_CCS_RECORD_CF_TABLE,
+    AGG_THR_V2_TABLE,
+    AGG_ADOLESCENT_GIRLS_REGISTRATION_TABLE,
+    AGG_MIGRATION_TABLE
+)
 from custom.icds_reports.utils.aggregation_helpers.distributed.base import BaseICDSAggregationDistributedHelper
 
 logger = logging.getLogger(__name__)
@@ -259,7 +264,8 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
             migration_table=AGG_MIGRATION_TABLE,
             seeking_services=(
                 "CASE WHEN "
-                "registered_status IS DISTINCT FROM 0 AND (agg_migration.is_migrated IS DISTINCT FROM 1 OR agg_migration.migration_date::date >= %(start_date)s) "
+                "registered_status IS DISTINCT FROM 0 AND (agg_migration.is_migrated IS DISTINCT FROM 1 OR "
+                "agg_migration.migration_date::date >= %(start_date)s) "
                 "THEN 1 ELSE 0 END"
             )
         ), {
