@@ -27,6 +27,7 @@ class TestProcessor(TestCase):
         location_12 = Location(site_code='12')
         locations = [location_12, location_13, location_112, location_131]
         locations_mock.return_value = locations
+        deprecate_locations_mock.return_value = []
         transitions = {
             'awc': {
                 'Move': {'131': '112'},
@@ -37,8 +38,8 @@ class TestProcessor(TestCase):
             'state': {}
         }
         Processor(self.domain, transitions, site_codes).process()
-        calls = [call(MOVE_OPERATION, [location_131], [location_112]),
-                 call(MOVE_OPERATION, [location_13], [location_12])]
+        calls = [call([location_131], [location_112], MOVE_OPERATION),
+                 call([location_13], [location_12], MOVE_OPERATION)]
         deprecate_locations_mock.assert_has_calls(calls)
         self.assertEqual(deprecate_locations_mock.call_count, 2)
 
