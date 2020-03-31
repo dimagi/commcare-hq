@@ -54,7 +54,7 @@ branches:
   - jls/migrate-DefaultConsumption-2 # Jenny March 6
   #- jls/use-textinput # Jenny March 10
   - mk/location-reassignment-1 # MK March 25
-  - mk/location-reassignment-2 # MK March 26
+  - mk/location-reassignment-3 # MK March 31
   - jls/sql-invitation-uuid # Jenny March 25
   - bmb/SAAS-10712-pt2  # Biyeun March 27
 submodules: {}
