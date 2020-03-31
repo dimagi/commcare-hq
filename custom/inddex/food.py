@@ -136,11 +136,18 @@ _INDICATORS_BY_SLUG = {i.slug: i for i in INDICATORS}
 
 class FoodRow:
 
-    def __init__(self, food_code, ucr_row, fixtures):
+    def __init__(self, ucr_row, fixtures, ingredient=None):
         self.uuid = uuid.uuid4()
-        self.food_code = food_code
         self.ucr_row = ucr_row
         self.fixtures = fixtures
+
+        self._is_std_recipe_ingredient = bool(ingredient)
+        if self._is_std_recipe_ingredient:
+            self.food_code = ingredient.ingr_code
+            self._set_ingredient_fields(ingredient)
+        else:
+            self.caseid = ucr_row['doc_id']
+            self.food_code = ucr_row['food_code']
 
         self._set_composition()
         self._set_conversion_factors()
@@ -152,6 +159,17 @@ class FoodRow:
         self.portions = float(self.portions) if self.portions else None
         self.nsr_consumed_cooked_fraction = (float(self.nsr_consumed_cooked_fraction)
                                              if self.nsr_consumed_cooked_fraction else None)
+
+    def _set_ingredient_fields(self, ingredient):
+        if self._is_std_recipe_ingredient:
+            self.is_ingredient = 'yes'
+            self.recipe_name = self.ucr_row['recipe_name']
+            self.recipe_case_id = self.ucr_row['doc_id']
+            self.ingr_recipe_code = ingredient.recipe_code
+            self.ingr_fraction = ingredient.ingr_fraction
+
+            base_food = self.fixtures.foods_by_name.get(self.food_base_term)
+            self.base_term_food_code = base_food.food_code if base_food else None
 
     def _set_composition(self):
         # Get the food composition corresponding to food_code, fall back to base_term_food_code
@@ -216,50 +234,23 @@ class FoodRow:
             return self.caseid
         return self.recipe_case_id or self.already_reported_recipe_case_id or 'NO_RECIPE'
 
-
-class FoodCaseRow(FoodRow):
-    """A food item directly corresponding to a case in the UCR"""
-
-    def __init__(self, ucr_row, fixtures):
-        super().__init__(ucr_row['food_code'], ucr_row, fixtures)
-        self.caseid = ucr_row['doc_id']
-
     def __getattr__(self, name):
-        # If it's an indicator in the UCR that hasn't been explicitly set, return that val
         if name in _INDICATORS_BY_SLUG:
-            indicator = _INDICATORS_BY_SLUG[name]
-            return self.ucr_row[indicator.slug] if indicator.in_ucr else None
-        raise AttributeError(f"FoodCaseRow has no definition for {name}")
+            if self._is_std_recipe_ingredient:
+                # If it's an indicator that hasn't been explicitly set, check if it can
+                # be pulled from the food fixture or from the parent food case's UCR
+                indicator = _INDICATORS_BY_SLUG[name]
+                if indicator.in_food_fixture:
+                    return getattr(self.fixtures.foods[self.food_code], indicator.slug)
+                if indicator.is_recall_meta:
+                    return self.ucr_row[indicator.slug]
+                return None
+            else:
+                # If it's an indicator in the UCR that hasn't been explicitly set, return that val
+                indicator = _INDICATORS_BY_SLUG[name]
+                return self.ucr_row[indicator.slug] if indicator.in_ucr else None
 
-
-class RecipeIngredientRow(FoodRow):
-    """A food item inferred from a recipe"""
-    is_ingredient = "yes"
-
-    def __init__(self, ucr_row, fixtures, ingredient):
-        # ucr_row is data from the parent food case
-        # ingredient is static info for this ingredient from the recipes fixture
-        super().__init__(ingredient.ingr_code, ucr_row, fixtures)
-
-        self.recipe_name = ucr_row['recipe_name']
-        self.recipe_case_id = ucr_row['doc_id']
-        self.ingr_recipe_code = ingredient.recipe_code
-        self.ingr_fraction = ingredient.ingr_fraction
-
-        base_food = self.fixtures.foods_by_name.get(self.food_base_term)
-        self.base_term_food_code = base_food.food_code if base_food else None
-
-    def __getattr__(self, name):
-        # If it's an indicator that hasn't been explicitly set, check if it can
-        # be pulled from the food fixture or from the parent food case's UCR
-        if name in _INDICATORS_BY_SLUG:
-            indicator = _INDICATORS_BY_SLUG[name]
-            if indicator.in_food_fixture:
-                return getattr(self.fixtures.foods[self.food_code], indicator.slug)
-            if indicator.is_recall_meta:
-                return self.ucr_row[indicator.slug]
-            return None
-        raise AttributeError(f"RecipeIngredientRow has no definition for {name}")
+        raise AttributeError(f"FoodRow has no definition for {name}")
 
 
 class RecipeRowGenerator:
@@ -328,12 +319,12 @@ class FoodData:
         rows_by_recipe = defaultdict(list)
 
         for ucr_row in self.ucr_rows:
-            food = FoodCaseRow(ucr_row, self.fixtures)
+            food = FoodRow(ucr_row, self.fixtures)
             rows_by_recipe[food.recipe_id].append(food)
 
             if food.food_type == STANDARD_RECIPE:
                 for ingredient_data in self.fixtures.recipes[food.food_code]:
-                    ingr_row = RecipeIngredientRow(ucr_row, self.fixtures, ingredient_data)
+                    ingr_row = FoodRow(ucr_row, self.fixtures, ingredient_data)
                     rows_by_recipe[food.recipe_id].append(ingr_row)
 
         for recipe_id, rows_in_recipe in rows_by_recipe.items():
