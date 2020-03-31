@@ -1,0 +1,848 @@
+{
+    "_id": "25b1a15c21a6b5da8744ddf6f1006047",
+    "_rev": "2-086a937203d7b778c76c3712291b33bb",
+    "app_id": "9ea2b87abc3c4b359aedda39aaaef9e8",
+    "created_on": "2020-03-31T10:54:10.701445Z",
+    "doc_type": "FormExportDataSchema",
+    "domain": "sabbatical",
+    "group_schemas": [
+        {
+            "doc_type": "ExportGroupSchema",
+            "inferred": false,
+            "items": [
+                {
+                    "datatype": "date",
+                    "doc_type": "ScalarItem",
+                    "inferred": false,
+                    "inferred_from": [],
+                    "label": "Event Date: ",
+                    "last_occurrences": {
+                        "9ea2b87abc3c4b359aedda39aaaef9e8": 2
+                    },
+                    "path": [
+                        {
+                            "doc_type": "PathNode",
+                            "is_repeat": false,
+                            "name": "form"
+                        },
+                        {
+                            "doc_type": "PathNode",
+                            "is_repeat": false,
+                            "name": "event_date"
+                        }
+                    ],
+                    "tag": null,
+                    "transform": null
+                },
+                {
+                    "datatype": "integer",
+                    "doc_type": "ScalarItem",
+                    "inferred": false,
+                    "inferred_from": [],
+                    "label": "Event Duration (minutes): ",
+                    "last_occurrences": {
+                        "9ea2b87abc3c4b359aedda39aaaef9e8": 2
+                    },
+                    "path": [
+                        {
+                            "doc_type": "PathNode",
+                            "is_repeat": false,
+                            "name": "form"
+                        },
+                        {
+                            "doc_type": "PathNode",
+                            "is_repeat": false,
+                            "name": "event_duration_minutes"
+                        }
+                    ],
+                    "tag": null,
+                    "transform": null
+                },
+                {
+                    "datatype": "integer",
+                    "doc_type": "ScalarItem",
+                    "inferred": false,
+                    "inferred_from": [],
+                    "label": "Event Score (0-10):",
+                    "last_occurrences": {
+                        "9ea2b87abc3c4b359aedda39aaaef9e8": 2
+                    },
+                    "path": [
+                        {
+                            "doc_type": "PathNode",
+                            "is_repeat": false,
+                            "name": "form"
+                        },
+                        {
+                            "doc_type": "PathNode",
+                            "is_repeat": false,
+                            "name": "event_score"
+                        }
+                    ],
+                    "tag": null,
+                    "transform": null
+                },
+                {
+                    "datatype": "string",
+                    "doc_type": "ScalarItem",
+                    "inferred": false,
+                    "inferred_from": [],
+                    "label": "#form/activity_name",
+                    "last_occurrences": {
+                        "9ea2b87abc3c4b359aedda39aaaef9e8": 2
+                    },
+                    "path": [
+                        {
+                            "doc_type": "PathNode",
+                            "is_repeat": false,
+                            "name": "form"
+                        },
+                        {
+                            "doc_type": "PathNode",
+                            "is_repeat": false,
+                            "name": "activity_name"
+                        }
+                    ],
+                    "tag": null,
+                    "transform": null
+                },
+                {
+                    "datatype": "string",
+                    "doc_type": "ScalarItem",
+                    "inferred": false,
+                    "inferred_from": [],
+                    "label": "#form/duration_in_seconds",
+                    "last_occurrences": {
+                        "9ea2b87abc3c4b359aedda39aaaef9e8": 2
+                    },
+                    "path": [
+                        {
+                            "doc_type": "PathNode",
+                            "is_repeat": false,
+                            "name": "form"
+                        },
+                        {
+                            "doc_type": "PathNode",
+                            "is_repeat": false,
+                            "name": "duration_in_seconds"
+                        }
+                    ],
+                    "tag": null,
+                    "transform": null
+                },
+                {
+                    "datatype": "string",
+                    "doc_type": "ScalarItem",
+                    "inferred": false,
+                    "inferred_from": [],
+                    "label": "#form/toggl_id",
+                    "last_occurrences": {
+                        "9ea2b87abc3c4b359aedda39aaaef9e8": 2
+                    },
+                    "path": [
+                        {
+                            "doc_type": "PathNode",
+                            "is_repeat": false,
+                            "name": "form"
+                        },
+                        {
+                            "doc_type": "PathNode",
+                            "is_repeat": false,
+                            "name": "toggl_id"
+                        }
+                    ],
+                    "tag": null,
+                    "transform": null
+                },
+                {
+                    "datatype": "string",
+                    "doc_type": "ScalarItem",
+                    "inferred": false,
+                    "inferred_from": [],
+                    "label": "#form/auto_gps",
+                    "last_occurrences": {
+                        "9ea2b87abc3c4b359aedda39aaaef9e8": 2
+                    },
+                    "path": [
+                        {
+                            "doc_type": "PathNode",
+                            "is_repeat": false,
+                            "name": "form"
+                        },
+                        {
+                            "doc_type": "PathNode",
+                            "is_repeat": false,
+                            "name": "auto_gps"
+                        }
+                    ],
+                    "tag": null,
+                    "transform": null
+                },
+                {
+                    "datatype": "string",
+                    "doc_type": "ExportItem",
+                    "inferred": false,
+                    "inferred_from": [],
+                    "label": "case.@case_id",
+                    "last_occurrences": {
+                        "9ea2b87abc3c4b359aedda39aaaef9e8": 2
+                    },
+                    "path": [
+                        {
+                            "doc_type": "PathNode",
+                            "is_repeat": false,
+                            "name": "form"
+                        },
+                        {
+                            "doc_type": "PathNode",
+                            "is_repeat": false,
+                            "name": "case"
+                        },
+                        {
+                            "doc_type": "PathNode",
+                            "is_repeat": false,
+                            "name": "@case_id"
+                        }
+                    ],
+                    "tag": "case",
+                    "transform": null
+                },
+                {
+                    "datatype": "datetime",
+                    "doc_type": "ExportItem",
+                    "inferred": false,
+                    "inferred_from": [],
+                    "label": "case.@date_modified",
+                    "last_occurrences": {
+                        "9ea2b87abc3c4b359aedda39aaaef9e8": 2
+                    },
+                    "path": [
+                        {
+                            "doc_type": "PathNode",
+                            "is_repeat": false,
+                            "name": "form"
+                        },
+                        {
+                            "doc_type": "PathNode",
+                            "is_repeat": false,
+                            "name": "case"
+                        },
+                        {
+                            "doc_type": "PathNode",
+                            "is_repeat": false,
+                            "name": "@date_modified"
+                        }
+                    ],
+                    "tag": "case",
+                    "transform": null
+                },
+                {
+                    "datatype": "string",
+                    "doc_type": "ExportItem",
+                    "inferred": false,
+                    "inferred_from": [],
+                    "label": "case.@user_id",
+                    "last_occurrences": {
+                        "9ea2b87abc3c4b359aedda39aaaef9e8": 2
+                    },
+                    "path": [
+                        {
+                            "doc_type": "PathNode",
+                            "is_repeat": false,
+                            "name": "form"
+                        },
+                        {
+                            "doc_type": "PathNode",
+                            "is_repeat": false,
+                            "name": "case"
+                        },
+                        {
+                            "doc_type": "PathNode",
+                            "is_repeat": false,
+                            "name": "@user_id"
+                        }
+                    ],
+                    "tag": "case",
+                    "transform": null
+                },
+                {
+                    "datatype": null,
+                    "doc_type": "ExportItem",
+                    "inferred": false,
+                    "inferred_from": [],
+                    "label": "case.update.last_event_duration_minutes",
+                    "last_occurrences": {
+                        "9ea2b87abc3c4b359aedda39aaaef9e8": 2
+                    },
+                    "path": [
+                        {
+                            "doc_type": "PathNode",
+                            "is_repeat": false,
+                            "name": "form"
+                        },
+                        {
+                            "doc_type": "PathNode",
+                            "is_repeat": false,
+                            "name": "case"
+                        },
+                        {
+                            "doc_type": "PathNode",
+                            "is_repeat": false,
+                            "name": "update"
+                        },
+                        {
+                            "doc_type": "PathNode",
+                            "is_repeat": false,
+                            "name": "last_event_duration_minutes"
+                        }
+                    ],
+                    "tag": "case",
+                    "transform": null
+                },
+                {
+                    "datatype": null,
+                    "doc_type": "ExportItem",
+                    "inferred": false,
+                    "inferred_from": [],
+                    "label": "case.update.last_event_date",
+                    "last_occurrences": {
+                        "9ea2b87abc3c4b359aedda39aaaef9e8": 2
+                    },
+                    "path": [
+                        {
+                            "doc_type": "PathNode",
+                            "is_repeat": false,
+                            "name": "form"
+                        },
+                        {
+                            "doc_type": "PathNode",
+                            "is_repeat": false,
+                            "name": "case"
+                        },
+                        {
+                            "doc_type": "PathNode",
+                            "is_repeat": false,
+                            "name": "update"
+                        },
+                        {
+                            "doc_type": "PathNode",
+                            "is_repeat": false,
+                            "name": "last_event_date"
+                        }
+                    ],
+                    "tag": "case",
+                    "transform": null
+                },
+                {
+                    "datatype": "string",
+                    "doc_type": "ExportItem",
+                    "inferred": false,
+                    "inferred_from": [],
+                    "label": "subcase_0.@case_id",
+                    "last_occurrences": {
+                        "9ea2b87abc3c4b359aedda39aaaef9e8": 2
+                    },
+                    "path": [
+                        {
+                            "doc_type": "PathNode",
+                            "is_repeat": false,
+                            "name": "form"
+                        },
+                        {
+                            "doc_type": "PathNode",
+                            "is_repeat": false,
+                            "name": "subcase_0"
+                        },
+                        {
+                            "doc_type": "PathNode",
+                            "is_repeat": false,
+                            "name": "case"
+                        },
+                        {
+                            "doc_type": "PathNode",
+                            "is_repeat": false,
+                            "name": "@case_id"
+                        }
+                    ],
+                    "tag": "case",
+                    "transform": null
+                },
+                {
+                    "datatype": "datetime",
+                    "doc_type": "ExportItem",
+                    "inferred": false,
+                    "inferred_from": [],
+                    "label": "subcase_0.@date_modified",
+                    "last_occurrences": {
+                        "9ea2b87abc3c4b359aedda39aaaef9e8": 2
+                    },
+                    "path": [
+                        {
+                            "doc_type": "PathNode",
+                            "is_repeat": false,
+                            "name": "form"
+                        },
+                        {
+                            "doc_type": "PathNode",
+                            "is_repeat": false,
+                            "name": "subcase_0"
+                        },
+                        {
+                            "doc_type": "PathNode",
+                            "is_repeat": false,
+                            "name": "case"
+                        },
+                        {
+                            "doc_type": "PathNode",
+                            "is_repeat": false,
+                            "name": "@date_modified"
+                        }
+                    ],
+                    "tag": "case",
+                    "transform": null
+                },
+                {
+                    "datatype": "string",
+                    "doc_type": "ExportItem",
+                    "inferred": false,
+                    "inferred_from": [],
+                    "label": "subcase_0.@user_id",
+                    "last_occurrences": {
+                        "9ea2b87abc3c4b359aedda39aaaef9e8": 2
+                    },
+                    "path": [
+                        {
+                            "doc_type": "PathNode",
+                            "is_repeat": false,
+                            "name": "form"
+                        },
+                        {
+                            "doc_type": "PathNode",
+                            "is_repeat": false,
+                            "name": "subcase_0"
+                        },
+                        {
+                            "doc_type": "PathNode",
+                            "is_repeat": false,
+                            "name": "case"
+                        },
+                        {
+                            "doc_type": "PathNode",
+                            "is_repeat": false,
+                            "name": "@user_id"
+                        }
+                    ],
+                    "tag": "case",
+                    "transform": null
+                },
+                {
+                    "datatype": null,
+                    "doc_type": "ExportItem",
+                    "inferred": false,
+                    "inferred_from": [],
+                    "label": "subcase_0.update.event_date",
+                    "last_occurrences": {
+                        "9ea2b87abc3c4b359aedda39aaaef9e8": 2
+                    },
+                    "path": [
+                        {
+                            "doc_type": "PathNode",
+                            "is_repeat": false,
+                            "name": "form"
+                        },
+                        {
+                            "doc_type": "PathNode",
+                            "is_repeat": false,
+                            "name": "subcase_0"
+                        },
+                        {
+                            "doc_type": "PathNode",
+                            "is_repeat": false,
+                            "name": "case"
+                        },
+                        {
+                            "doc_type": "PathNode",
+                            "is_repeat": false,
+                            "name": "update"
+                        },
+                        {
+                            "doc_type": "PathNode",
+                            "is_repeat": false,
+                            "name": "event_date"
+                        }
+                    ],
+                    "tag": "case",
+                    "transform": null
+                },
+                {
+                    "datatype": null,
+                    "doc_type": "ExportItem",
+                    "inferred": false,
+                    "inferred_from": [],
+                    "label": "subcase_0.update.activity_name",
+                    "last_occurrences": {
+                        "9ea2b87abc3c4b359aedda39aaaef9e8": 2
+                    },
+                    "path": [
+                        {
+                            "doc_type": "PathNode",
+                            "is_repeat": false,
+                            "name": "form"
+                        },
+                        {
+                            "doc_type": "PathNode",
+                            "is_repeat": false,
+                            "name": "subcase_0"
+                        },
+                        {
+                            "doc_type": "PathNode",
+                            "is_repeat": false,
+                            "name": "case"
+                        },
+                        {
+                            "doc_type": "PathNode",
+                            "is_repeat": false,
+                            "name": "update"
+                        },
+                        {
+                            "doc_type": "PathNode",
+                            "is_repeat": false,
+                            "name": "activity_name"
+                        }
+                    ],
+                    "tag": "case",
+                    "transform": null
+                },
+                {
+                    "datatype": null,
+                    "doc_type": "ExportItem",
+                    "inferred": false,
+                    "inferred_from": [],
+                    "label": "subcase_0.update.event_score",
+                    "last_occurrences": {
+                        "9ea2b87abc3c4b359aedda39aaaef9e8": 2
+                    },
+                    "path": [
+                        {
+                            "doc_type": "PathNode",
+                            "is_repeat": false,
+                            "name": "form"
+                        },
+                        {
+                            "doc_type": "PathNode",
+                            "is_repeat": false,
+                            "name": "subcase_0"
+                        },
+                        {
+                            "doc_type": "PathNode",
+                            "is_repeat": false,
+                            "name": "case"
+                        },
+                        {
+                            "doc_type": "PathNode",
+                            "is_repeat": false,
+                            "name": "update"
+                        },
+                        {
+                            "doc_type": "PathNode",
+                            "is_repeat": false,
+                            "name": "event_score"
+                        }
+                    ],
+                    "tag": "case",
+                    "transform": null
+                },
+                {
+                    "datatype": null,
+                    "doc_type": "ExportItem",
+                    "inferred": false,
+                    "inferred_from": [],
+                    "label": "subcase_0.update.location",
+                    "last_occurrences": {
+                        "9ea2b87abc3c4b359aedda39aaaef9e8": 2
+                    },
+                    "path": [
+                        {
+                            "doc_type": "PathNode",
+                            "is_repeat": false,
+                            "name": "form"
+                        },
+                        {
+                            "doc_type": "PathNode",
+                            "is_repeat": false,
+                            "name": "subcase_0"
+                        },
+                        {
+                            "doc_type": "PathNode",
+                            "is_repeat": false,
+                            "name": "case"
+                        },
+                        {
+                            "doc_type": "PathNode",
+                            "is_repeat": false,
+                            "name": "update"
+                        },
+                        {
+                            "doc_type": "PathNode",
+                            "is_repeat": false,
+                            "name": "location"
+                        }
+                    ],
+                    "tag": "case",
+                    "transform": null
+                },
+                {
+                    "datatype": null,
+                    "doc_type": "ExportItem",
+                    "inferred": false,
+                    "inferred_from": [],
+                    "label": "subcase_0.update.event_duration",
+                    "last_occurrences": {
+                        "9ea2b87abc3c4b359aedda39aaaef9e8": 2
+                    },
+                    "path": [
+                        {
+                            "doc_type": "PathNode",
+                            "is_repeat": false,
+                            "name": "form"
+                        },
+                        {
+                            "doc_type": "PathNode",
+                            "is_repeat": false,
+                            "name": "subcase_0"
+                        },
+                        {
+                            "doc_type": "PathNode",
+                            "is_repeat": false,
+                            "name": "case"
+                        },
+                        {
+                            "doc_type": "PathNode",
+                            "is_repeat": false,
+                            "name": "update"
+                        },
+                        {
+                            "doc_type": "PathNode",
+                            "is_repeat": false,
+                            "name": "event_duration"
+                        }
+                    ],
+                    "tag": "case",
+                    "transform": null
+                },
+                {
+                    "datatype": "string",
+                    "doc_type": "ExportItem",
+                    "inferred": false,
+                    "inferred_from": [],
+                    "label": "subcase_0.create.case_name",
+                    "last_occurrences": {
+                        "9ea2b87abc3c4b359aedda39aaaef9e8": 2
+                    },
+                    "path": [
+                        {
+                            "doc_type": "PathNode",
+                            "is_repeat": false,
+                            "name": "form"
+                        },
+                        {
+                            "doc_type": "PathNode",
+                            "is_repeat": false,
+                            "name": "subcase_0"
+                        },
+                        {
+                            "doc_type": "PathNode",
+                            "is_repeat": false,
+                            "name": "case"
+                        },
+                        {
+                            "doc_type": "PathNode",
+                            "is_repeat": false,
+                            "name": "create"
+                        },
+                        {
+                            "doc_type": "PathNode",
+                            "is_repeat": false,
+                            "name": "case_name"
+                        }
+                    ],
+                    "tag": "case",
+                    "transform": null
+                },
+                {
+                    "datatype": "string",
+                    "doc_type": "ExportItem",
+                    "inferred": false,
+                    "inferred_from": [],
+                    "label": "subcase_0.create.owner_id",
+                    "last_occurrences": {
+                        "9ea2b87abc3c4b359aedda39aaaef9e8": 2
+                    },
+                    "path": [
+                        {
+                            "doc_type": "PathNode",
+                            "is_repeat": false,
+                            "name": "form"
+                        },
+                        {
+                            "doc_type": "PathNode",
+                            "is_repeat": false,
+                            "name": "subcase_0"
+                        },
+                        {
+                            "doc_type": "PathNode",
+                            "is_repeat": false,
+                            "name": "case"
+                        },
+                        {
+                            "doc_type": "PathNode",
+                            "is_repeat": false,
+                            "name": "create"
+                        },
+                        {
+                            "doc_type": "PathNode",
+                            "is_repeat": false,
+                            "name": "owner_id"
+                        }
+                    ],
+                    "tag": "case",
+                    "transform": null
+                },
+                {
+                    "datatype": "string",
+                    "doc_type": "ExportItem",
+                    "inferred": false,
+                    "inferred_from": [],
+                    "label": "subcase_0.create.case_type",
+                    "last_occurrences": {
+                        "9ea2b87abc3c4b359aedda39aaaef9e8": 2
+                    },
+                    "path": [
+                        {
+                            "doc_type": "PathNode",
+                            "is_repeat": false,
+                            "name": "form"
+                        },
+                        {
+                            "doc_type": "PathNode",
+                            "is_repeat": false,
+                            "name": "subcase_0"
+                        },
+                        {
+                            "doc_type": "PathNode",
+                            "is_repeat": false,
+                            "name": "case"
+                        },
+                        {
+                            "doc_type": "PathNode",
+                            "is_repeat": false,
+                            "name": "create"
+                        },
+                        {
+                            "doc_type": "PathNode",
+                            "is_repeat": false,
+                            "name": "case_type"
+                        }
+                    ],
+                    "tag": "case",
+                    "transform": null
+                },
+                {
+                    "datatype": null,
+                    "doc_type": "ExportItem",
+                    "inferred": false,
+                    "inferred_from": [],
+                    "label": "subcase_0.index.#text",
+                    "last_occurrences": {
+                        "9ea2b87abc3c4b359aedda39aaaef9e8": 2
+                    },
+                    "path": [
+                        {
+                            "doc_type": "PathNode",
+                            "is_repeat": false,
+                            "name": "form"
+                        },
+                        {
+                            "doc_type": "PathNode",
+                            "is_repeat": false,
+                            "name": "subcase_0"
+                        },
+                        {
+                            "doc_type": "PathNode",
+                            "is_repeat": false,
+                            "name": "case"
+                        },
+                        {
+                            "doc_type": "PathNode",
+                            "is_repeat": false,
+                            "name": "index"
+                        },
+                        {
+                            "doc_type": "PathNode",
+                            "is_repeat": false,
+                            "name": "parent"
+                        },
+                        {
+                            "doc_type": "PathNode",
+                            "is_repeat": false,
+                            "name": "#text"
+                        }
+                    ],
+                    "tag": "case",
+                    "transform": null
+                },
+                {
+                    "datatype": null,
+                    "doc_type": "ExportItem",
+                    "inferred": false,
+                    "inferred_from": [],
+                    "label": "subcase_0.index.@case_type",
+                    "last_occurrences": {
+                        "9ea2b87abc3c4b359aedda39aaaef9e8": 2
+                    },
+                    "path": [
+                        {
+                            "doc_type": "PathNode",
+                            "is_repeat": false,
+                            "name": "form"
+                        },
+                        {
+                            "doc_type": "PathNode",
+                            "is_repeat": false,
+                            "name": "subcase_0"
+                        },
+                        {
+                            "doc_type": "PathNode",
+                            "is_repeat": false,
+                            "name": "case"
+                        },
+                        {
+                            "doc_type": "PathNode",
+                            "is_repeat": false,
+                            "name": "index"
+                        },
+                        {
+                            "doc_type": "PathNode",
+                            "is_repeat": false,
+                            "name": "parent"
+                        },
+                        {
+                            "doc_type": "PathNode",
+                            "is_repeat": false,
+                            "name": "@case_type"
+                        }
+                    ],
+                    "tag": "case",
+                    "transform": null
+                }
+            ],
+            "last_occurrences": {
+                "9ea2b87abc3c4b359aedda39aaaef9e8": 2
+            },
+            "path": []
+        }
+    ],
+    "last_app_versions": {},
+    "version": 10,
+    "xmlns": "http://openrosa.org/formdesigner/B4FFDB28-8240-4950-B6E2-EA26D7B0856D"
+}
