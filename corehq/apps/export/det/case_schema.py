@@ -1,5 +1,5 @@
 from corehq.apps.export.det.base import DETRow, DETTable, DETConfig
-
+from corehq.apps.export.det.helpers import collapse_path, collapse_path_out, truncate, prepend_prefix
 
 PROPERTIES_PREFIX = 'properties.'
 ACTIONS_PREFIX = 'actions.'
@@ -43,29 +43,9 @@ def generate_case_schema(export_schema_json, main_sheet_name, output_file):
     )
     output = DETConfig(tables=[main_table])
 
-    def _collapse_path_out(path, relative=''):
-        return _collapse_path(path, relative, 0)
-
-    def _prepend_prefix(path, default_prefix):
-        if not path.startswith(default_prefix):
-            return '{}{}'.format(default_prefix, path)
-        return path
-
-
-    def _collapse_path(path, relative='', s=0):
-        if relative:
-            return '.'.join(
-                [
-                    p['name'] + '[*]' if p['is_repeat'] else p['name'] for p in path[s:]
-                ]).replace(relative + '.', '', 1)
-        return '.'.join(
-            [
-                p['name'] + '[*]' if p['is_repeat'] else p['name'] for p in path[s:]
-            ])
-
     for i, form in enumerate(data['group_schemas']):
         header = main_sheet_name
-        parent = _collapse_path(form['path'])
+        parent = collapse_path(form['path'])
         default_prefix = PREFIX_MAP[i]
         if parent:
             # header = header + '_' + parent
@@ -90,10 +70,10 @@ def generate_case_schema(export_schema_json, main_sheet_name, output_file):
         current_table = output.get_table(header)
         for q in form['items']:
 
-            path = _collapse_path_out(q['path'], parent)
-            prefixed_path = _prepend_prefix(path, default_prefix)
+            path = collapse_path_out(q['path'], parent)
+            prefixed_path = prepend_prefix(path, default_prefix)
             # x = _truncate(_collapse_path_src(q['path'], ''), 0, 63)
-            x = _truncate(path, 0, 63)
+            x = truncate(path, 0, 63)
 
             # HACK: the ones using name are an attempt to capture dates
             # that have string as a datatype
@@ -114,9 +94,3 @@ def generate_case_schema(export_schema_json, main_sheet_name, output_file):
 
 
     output.export_to_file(output_file)
-
-
-def _truncate(name, start_char, total_char):
-    if len(name) > total_char:
-        name = name[:start_char] + '$' + name[-(total_char - (start_char + 1)):]
-    return name
