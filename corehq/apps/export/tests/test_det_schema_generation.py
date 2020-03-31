@@ -4,8 +4,7 @@ import tempfile
 from django.test import SimpleTestCase
 from openpyxl import load_workbook
 
-from corehq.apps.export.det.schema_generator import generate_case_schema
-from corehq.apps.export.det.form_schema import generate_form_schema
+from corehq.apps.export.det.schema_generator import generate_case_schema, generate_form_schema
 from corehq.util.test_utils import TestFileMixin
 
 
@@ -56,8 +55,9 @@ class TestDETFormSchema(SimpleTestCase, TestFileMixin):
             id_row_by_heading = dict(zip(headings, id_row))
             self.assertEqual('id', id_row_by_heading['Source Field'])
             self.assertEqual('id', id_row_by_heading['Field'])
-            self.assertEqual('case', id_row_by_heading['Data Source'])
-            self.assertEqual('type', id_row_by_heading['Filter Name'])
-            self.assertEqual('event', id_row_by_heading['Filter Value'])
+            self.assertEqual('form', id_row_by_heading['Data Source'])
+            self.assertEqual('xmlns', id_row_by_heading['Filter Name'])
+            self.assertEqual('http://openrosa.org/formdesigner/B4FFDB28-8240-4950-B6E2-EA26D7B0856D',
+                             id_row_by_heading['Filter Value'])
 
-            # note: subtables for actions and indices are not tested and likely broken
+            # note: subtables for repeats are not tested and likely broken

@@ -32,13 +32,11 @@ def _get_default_case_rows():
 
 
 def generate_case_schema(export_schema_json, main_sheet_name, output_file):
-    data = export_schema_json
-
     main_table = DETTable(
         name=main_sheet_name,
         source='case',
         filter_name='type',
-        filter_value=data['case_type'],
+        filter_value=export_schema_json['case_type'],
         rows=_get_default_case_rows()
     )
     output = DETConfig(name=main_sheet_name, tables=[main_table])
@@ -46,11 +44,50 @@ def generate_case_schema(export_schema_json, main_sheet_name, output_file):
     output.export_to_file(output_file)
 
 
+def _get_default_form_rows():
+    return [
+        DETRow(source_field=row[0], field=row[1], map_via=row[2] if len(row) > 2 else '')
+        for row in [
+            ['id', 'id', ''],
+            ['received_on', 'received_on', 'str2date'],
+            ['xmlns', 'xmlns'],
+            ['form.@name', 'form.@name'],
+            ['app_id', 'app_id'],
+            ['build_id', 'build_id'],
+            ['form.@version', 'form.@version'],
+            ['doc_type', 'doc_type'],
+            ['last_sync_token', 'last_sync_token'],
+            ['partial_submission', 'partial_submission'],
+            ['edited_on', 'edited_on'],
+            ['submit_ip', 'submit_ip'],
+            ['form.meta.instanceID', 'instanceID'],
+            ['form.meta.timeEnd', 'timeEnd', 'str2date'],
+            ['form.meta.timeStart', 'timeStart', 'str2date'],
+            ['form.meta.username', 'username'],
+            ['form.meta.userID', 'userID'],
+            ['form.meta.deviceID', 'deviceID'],
+        ]
+    ]
+
+
+def generate_form_schema(export_schema_json, main_sheet_name, output_file):
+    main_table = DETTable(
+        name=main_sheet_name,
+        source='form',
+        filter_name='xmlns',
+        filter_value=export_schema_json['xmlns'],
+        rows=_get_default_form_rows()
+    )
+    output = DETConfig(name=main_sheet_name, tables=[main_table])
+    _add_schemas_to_output(output, export_schema_json)
+    output.export_to_file(output_file)
+
+
 def _add_schemas_to_output(output, data):
+
     for i, form in enumerate(data['group_schemas']):
         header = output.name
         parent = collapse_path(form['path'])
-        default_prefix = PREFIX_MAP[i]
         if parent:
             # header = header + '_' + parent
             tbl_name = parent.replace('[*]', '')
@@ -65,13 +102,14 @@ def _add_schemas_to_output(output, data):
                     name=header,
                     source=parent,
                     rows=[
-                        DETRow(source_field='id', field='id')
+                        DETRow(source_field='$.id', field='id')
                     ]
 
                 )
             )
 
         current_table = output.get_table(header)
+        default_prefix = PREFIX_MAP[i]
         for q in form['items']:
 
             path = collapse_path_out(q['path'], parent)
