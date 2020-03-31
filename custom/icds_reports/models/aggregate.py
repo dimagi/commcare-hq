@@ -347,6 +347,8 @@ class ChildHealthMonthly(models.Model, AggregateMixin):
     lunch_count = models.IntegerField(blank=True, null=True)
     state_id = models.TextField(blank=True, null=True)
     opened_on = models.DateField(blank=True, null=True)
+    birth_weight = models.PositiveSmallIntegerField(null=True, help_text="birth weight in grams")
+    mother_id = models.TextField(blank=True, null=True)
 
     class Meta:
         managed = False
