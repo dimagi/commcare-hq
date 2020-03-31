@@ -16,6 +16,9 @@ from custom.icds.location_reassignment.const import (
     SPLIT_OPERATION,
 )
 
+ONE = "one"
+MANY = "many"
+
 
 class Transition(object):
     def __init__(self, operation, old_locations, new_locations):
@@ -39,6 +42,8 @@ class Transition(object):
 
 class BaseOperation(metaclass=ABCMeta):
     type = None
+    expected_old_locations = ONE
+    expected_new_locations = ONE
 
     def __init__(self, old_locations, new_locations):
         self.old_locations = old_locations
@@ -69,6 +74,20 @@ class BaseOperation(metaclass=ABCMeta):
                 self.errors.append("%s operation: location %s with site code %s is already deprecated." % (
                     self.type, new_location.name, new_location.site_code))
                 valid = False
+        valid = valid and self._validate_location_count(self.expected_old_locations,
+                                                        len(self.old_locations), "old")
+        valid = valid and self._validate_location_count(self.expected_new_locations,
+                                                        len(self.new_locations), "new")
+        return valid
+
+    def _validate_location_count(self, expected, count, location_type):
+        valid = True
+        if expected == MANY and count == 1:
+            self.errors.append("%s operation: Got only one %s location." % (self.type, location_type))
+            valid = False
+        elif expected == ONE and count > 1:
+            self.errors.append("%s operation: Got %s %s location." % (self.type, count, location_type))
+            valid = False
         return valid
 
     @abstractmethod
@@ -78,12 +97,7 @@ class BaseOperation(metaclass=ABCMeta):
 
 class MergeOperation(BaseOperation):
     type = MERGE_OPERATION
-
-    def valid(self):
-        valid = super().valid()
-        if not valid:
-            return False
-        return len(self.old_locations) > 1 and len(self.new_locations) == 1
+    expected_old_locations = MANY
 
     def perform(self):
         with transaction.atomic():
@@ -104,12 +118,7 @@ class MergeOperation(BaseOperation):
 
 class SplitOperation(BaseOperation):
     type = SPLIT_OPERATION
-
-    def valid(self):
-        valid = super().valid()
-        if not valid:
-            return False
-        return len(self.old_locations) == 1 and len(self.new_locations) > 1
+    expected_new_locations = MANY
 
     def perform(self):
         with transaction.atomic():
@@ -131,12 +140,6 @@ class SplitOperation(BaseOperation):
 class ExtractOperation(BaseOperation):
     type = EXTRACT_OPERATION
 
-    def valid(self):
-        valid = super().valid()
-        if not valid:
-            return False
-        return len(self.old_locations) == 1 and len(self.new_locations) == 1
-
     def perform(self):
         with transaction.atomic():
             timestamp = datetime.utcnow()
@@ -155,12 +158,6 @@ class ExtractOperation(BaseOperation):
 
 class MoveOperation(BaseOperation):
     type = MOVE_OPERATION
-
-    def valid(self):
-        valid = super().valid()
-        if not valid:
-            return False
-        return len(self.old_locations) == 1 and len(self.new_locations) == 1
 
     def perform(self):
         with transaction.atomic():
