@@ -1,6 +1,5 @@
 from corehq.apps.export.det.base import DETRow, DETTable, DETConfig
-from couchexport.export import export_raw
-from couchexport.models import Format
+
 
 PROPERTIES_PREFIX = 'properties.'
 ACTIONS_PREFIX = 'actions.'
@@ -34,17 +33,6 @@ def _get_default_case_rows():
 
 def generate_case_schema(export_schema_json, main_sheet_name, output_file):
     data = export_schema_json
-
-    TITLE_ROW = [
-        'Source Field',
-        'Field',
-        'Map Via',
-        'Data Source',
-        'Filter Name',
-        'Filter Value',
-        'Table Name',
-        'Format Via',
-    ]
 
     main_table = DETTable(
         name=main_sheet_name,
@@ -124,13 +112,8 @@ def generate_case_schema(export_schema_json, main_sheet_name, output_file):
 
             current_table.rows.append(DETRow(source_field=prefixed_path, field=x, map_via=map_via))
 
-    header_sheets = []
-    data_sheets = []
-    for table in output.tables:
-        header_sheets.append((table.name, TITLE_ROW))
-        data_sheets.append((table.name, list(table.get_sheet_data())))
 
-    export_raw(header_sheets, data_sheets, output_file, format=Format.XLS_2007)
+    output.export_to_file(output_file)
 
 
 def _truncate(name, start_char, total_char):
