@@ -32,6 +32,13 @@ class CapturedMetrics:
     def sum(self, name: str, **tags):
         return sum([sample.value for sample in self.list(name, **tags)])
 
+    def to_flattened_dict(self):
+        return {
+            f'{sample.name}.{tag}:{value}': sample.value
+            for sample in self._samples
+            for tag, value in sample.tags.items()
+        }
+
 
 @contextmanager
 def capture_metrics():
