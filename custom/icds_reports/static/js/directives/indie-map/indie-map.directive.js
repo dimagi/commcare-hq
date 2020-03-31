@@ -343,9 +343,12 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
         return html;
     };
 
-    vm.closePopup = function () {
-        var popup = d3.select("#locPopup");
-        popup.classed("hidden", true);
+    vm.closePopup = function (e) {
+        // checking if click event is triggered on map
+        if (e.target.tagName !== 'path') {
+            var popup = d3.select("#locPopup");
+            popup.classed("hidden", true);
+        }
     };
 
     function renderPopup(html) {

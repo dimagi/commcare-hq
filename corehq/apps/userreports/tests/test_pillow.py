@@ -46,7 +46,6 @@ from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from corehq.pillows.case import get_case_pillow
 from corehq.util.context_managers import drop_connected_signals
 from corehq.util.test_utils import softer_assert
-from pillowtop.pillow.interface import PillowRuntimeContext
 
 
 def setup_module():
@@ -148,7 +147,7 @@ class ChunkedUCRProcessorTest(TestCase):
         since = self.pillow.get_change_feed().get_latest_offsets()
         cases = self._create_cases(docs=docs)
         # run pillow and check changes
-        self.pillow.process_changes(since=since)
+        self.pillow.process_changes(since=since, forever=False)
         return cases
 
     @mock.patch('corehq.apps.userreports.pillow.ConfigurableReportPillowProcessor.process_changes_chunk')
@@ -360,7 +359,7 @@ class IndicatorPillowTest(TestCase):
         producer.send_change(topics.CASE, doc_to_change(sample_doc).metadata)
 
         # run pillow and check changes
-        pillow.process_changes(since=since)
+        pillow.process_changes(since=since, forever=False)
         self._check_sample_doc_state(expected_indicators)
         case.delete()
 
@@ -385,7 +384,7 @@ class IndicatorPillowTest(TestCase):
         case = _save_sql_case(sample_doc)
 
         # run pillow and check changes
-        self.pillow.process_changes(since=since)
+        self.pillow.process_changes(since=since, forever=False)
         self._check_sample_doc_state(expected_indicators)
 
         CaseAccessorSQL.hard_delete_cases(case.domain, [case.case_id])
@@ -411,13 +410,13 @@ class IndicatorPillowTest(TestCase):
         case = _save_sql_case(sample_doc)
 
         # run pillow and check changes
-        self.pillow.process_changes(since=since)
+        self.pillow.process_changes(since=since, forever=False)
         self._check_sample_doc_state(expected_indicators)
 
         # delete the case and verify it's removed
         since = self.pillow.get_change_feed().get_latest_offsets()
         CaseAccessorSQL.soft_delete_cases(case.domain, [case.case_id])
-        self.pillow.process_changes(since=since)
+        self.pillow.process_changes(since=since, forever=False)
         self.assertEqual(0, self.adapter.get_query_object().count())
 
         CaseAccessorSQL.hard_delete_cases(case.domain, [case.case_id])
@@ -517,8 +516,8 @@ class ProcessRelatedDocTypePillowTest(TestCase):
         for i in range(3):
             since = pillow.get_change_feed().get_latest_offsets()
             form, cases = self._post_case_blocks(i)
-            with self.assertNumQueries(num_queries), skip_final_checkpoint():
-                pillow.process_changes(since=since)
+            with self.assertNumQueries(num_queries):
+                pillow.process_changes(since=since, forever=False)
             rows = self.adapter.get_query_object()
             self.assertEqual(rows.count(), 1)
             row = rows[0]
@@ -577,7 +576,7 @@ class ReuseEvaluationContextTest(TestCase):
 
     def _test_pillow(self, pillow, since, num_queries=12):
         with self.assertNumQueries(num_queries):
-            pillow.process_changes(since=since)
+            pillow.process_changes(since=since, forever=False)
 
     def test_reuse_cache(self):
         self._test_reuse_cache()
@@ -596,9 +595,8 @@ class ReuseEvaluationContextTest(TestCase):
         since2 = pillow2.get_change_feed().get_latest_offsets()
         form, cases = self._post_case_blocks()
 
-        with skip_final_checkpoint():
-            self._test_pillow(pillow1, since1, num_queries)
-            self._test_pillow(pillow2, since2, num_queries)
+        self._test_pillow(pillow1, since1, num_queries)
+        self._test_pillow(pillow2, since2, num_queries)
 
         for a in self.adapters:
             rows = a.get_query_object()
@@ -661,7 +659,7 @@ class AsyncIndicatorTest(TestCase):
             # ensure indicator is added
             indicators = AsyncIndicator.objects.filter(doc_id=child_id)
             self.assertEqual(indicators.count(), 0)
-            self.pillow.process_changes(since=since)
+            self.pillow.process_changes(since=since, forever=False)
             self.assertEqual(indicators.count(), 1)
 
             # ensure saving document produces a row
@@ -707,7 +705,7 @@ class AsyncIndicatorTest(TestCase):
         # ensure async indicator is added
         indicators = AsyncIndicator.objects.filter(doc_id=child_id)
         self.assertEqual(indicators.count(), 0)
-        self.pillow.process_changes(since=since)
+        self.pillow.process_changes(since=since, forever=False)
         self.assertEqual(indicators.count(), 1)
 
         queue_async_indicators()
@@ -760,7 +758,7 @@ class AsyncIndicatorTest(TestCase):
                     ).as_xml()
                 ], domain=self.domain
             )
-        self.pillow.process_changes(since=since)
+        self.pillow.process_changes(since=since, forever=False)
 
         # run async queue
         queue_async_indicators()
@@ -827,8 +825,3 @@ def _save_sql_case(doc):
             ], domain=doc['domain']
         )
     return cases[0]
-
-
-def skip_final_checkpoint():
-    return mock.patch.object(
-        PillowRuntimeContext, 'flush_checkpoint_on_next_opportunity', lambda self: None)

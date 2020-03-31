@@ -37,6 +37,7 @@ from custom.icds_reports.tasks import (
     update_child_health_monthly_table,
     _agg_adolescent_girls_registration_table,
     _agg_migration_table,
+    _agg_availing_services_table,
     create_df_indices,
     drop_df_indices,
     drop_gm_indices,
@@ -64,6 +65,7 @@ STATE_TASKS = {
     'aggregate_df_forms': (drop_df_indices, _aggregate_df_forms, create_df_indices),
     'aggregate_ag_forms': (None, _agg_adolescent_girls_registration_table, None),
     'aggregate_migration_forms': (None, _agg_migration_table, None),
+    'aggregate_availing_services_forms': (None, _agg_availing_services_table, None)
 }
 
 ALL_STATES_TASKS = {

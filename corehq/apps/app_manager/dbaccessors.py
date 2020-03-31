@@ -540,7 +540,7 @@ def get_case_types_from_apps(domain):
     return set(q.run().aggregations.modules.case_types.keys) - {''}
 
 
-@quickcache(['domain'])
+@quickcache(['domain'], timeout=24 * 60 * 60)
 def get_app_languages(domain):
     query = (AppES()
         .domain(domain)
