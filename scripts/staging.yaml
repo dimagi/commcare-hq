@@ -50,16 +50,11 @@ trunk: master
 name: autostaging
 branches:
   - vellum-staging  # DO NOT REMOVE this is similar to "autostaging", but for vellum
-  #- fr/case-templates      # FR May 15
-  - rn_only_select_app_type_when_no_advanced # Rohit June 27
   - nh/dhis2/te  # Norman Oct 2
-  - sr-session-audit  # Sravan Oct 15
-  - dm/select-toggle # Daniel Nov 19
-  - bmb/update-requirejs  # Biyeun Nov 21
-  - dmr/throttle-and-measure-case-imports  # Danny Dec 12
-  - es/enterprise-subscriptions  # Ethan Jan 15
-  - dmr/smarter-wait  # Danny Jan 22
-  - jls/bulk-app-trans-format-fixes # Jenny Jan 27
-  - bmb/SAASP-10249  # Biyeun Feb 3
-  - jls/migrate-HqDeploy-3 # Jenny Feb 5
+  - jls/migrate-DefaultConsumption-2 # Jenny March 6
+  #- jls/use-textinput # Jenny March 10
+  - mk/location-reassignment-1 # MK March 25
+  - mk/location-reassignment-2 # MK March 26
+  - jls/sql-invitation-uuid # Jenny March 25
+  - bmb/SAAS-10712-pt2  # Biyeun March 27
 submodules: {}

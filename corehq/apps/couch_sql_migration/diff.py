@@ -121,6 +121,7 @@ load_ignore_rules = memoized(lambda: add_duplicate_rules({
 
         Ignore('diff', 'name', check=is_truncated_255),
         Ignore('diff', check=has_date_values),
+        Ignore('diff', check=sql_number_has_leading_zero),
         ignore_renamed('hq_user_id', 'external_id'),
         Ignore(path=('xform_ids', '[*]'), check=xform_ids_order),
         Ignore(check=case_attachments),
@@ -319,7 +320,7 @@ def sql_number_has_leading_zero(old_obj, new_obj, rule, diff):
     processor stripped off the leading zero(s), but the SQL form
     processor does not do that.
     """
-    if diff.new_value.startswith("0"):
+    if isinstance(diff.new_value, str) and diff.new_value.startswith("0"):
         try:
             return float(diff.old_value) == float(diff.new_value)
         except (TypeError, ValueError):

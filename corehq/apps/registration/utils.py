@@ -9,10 +9,11 @@ from django.utils.translation import ugettext
 
 from celery import chord
 
+from corehq.util.soft_assert import soft_assert
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.database import get_safe_write_kwargs
 from dimagi.utils.name_to_url import name_to_url
-from dimagi.utils.web import get_ip, get_site_domain, get_url_base
+from dimagi.utils.web import get_ip, get_url_base, get_static_url_prefix
 
 from corehq.apps.accounting.models import (
     DEFAULT_ACCOUNT_FORMAT,
@@ -40,6 +41,14 @@ from corehq.apps.users.models import CouchUser, UserRole, WebUser
 from corehq.util.view_utils import absolute_reverse
 
 APPCUES_APP_SLUGS = ['health', 'agriculture', 'wash']
+
+_soft_assert_registration_issues = soft_assert(
+    to=[
+        '{}@{}'.format(name, 'dimagi.com')
+        for name in ['biyeun']
+    ],
+    exponential_backoff=False,
+)
 
 
 def activate_new_user(form, is_domain_admin=True, domain=None, ip=None):
@@ -111,22 +120,12 @@ def request_new_domain(request, form, is_new_user=True):
     if not new_domain.name:
         new_domain.name = new_domain._id
         new_domain.save()  # we need to get the name from the _id
+    dom_req.domain = new_domain.name
 
-    with transaction.atomic():
-        ensure_community_or_paused_subscription(
-            new_domain.name, date.today(), SubscriptionAdjustmentMethod.USER,
-            web_user=current_user.username,
-        )
+    if not settings.ENTERPRISE_MODE:
+        _setup_subscription(new_domain.name, current_user)
 
     UserRole.init_domain_with_presets(new_domain.name)
-
-    # add user's email as contact email for billing account for the domain
-    account = BillingAccount.get_account_by_domain(new_domain.name)
-    billing_contact, _ = BillingContactInfo.objects.get_or_create(account=account)
-    billing_contact.email_list = [current_user.email]
-    billing_contact.save()
-
-    dom_req.domain = new_domain.name
 
     if request.user.is_authenticated:
         if not current_user:
@@ -137,6 +136,11 @@ def request_new_domain(request, form, is_new_user=True):
         current_user.save()
         dom_req.requesting_user_username = request.user.username
         dom_req.new_user_username = request.user.username
+    elif is_new_user:
+        _soft_assert_registration_issues(
+            f"A new user {request.user.username} was not added to their domain "
+            f"{new_domain.name} during registration"
+        )
 
     if is_new_user:
         dom_req.save()
@@ -165,6 +169,20 @@ def request_new_domain(request, form, is_new_user=True):
 
     send_hubspot_form(HUBSPOT_CREATED_NEW_PROJECT_SPACE_FORM_ID, request)
     return new_domain.name
+
+
+def _setup_subscription(domain_name, user):
+    with transaction.atomic():
+        ensure_community_or_paused_subscription(
+            domain_name, date.today(), SubscriptionAdjustmentMethod.USER,
+            web_user=user.username,
+        )
+
+    # add user's email as contact email for billing account for the domain
+    account = BillingAccount.get_account_by_domain(domain_name)
+    billing_contact, _ = BillingContactInfo.objects.get_or_create(account=account)
+    billing_contact.email_list = [user.email]
+    billing_contact.save()
 
 
 def send_new_request_update_email(user, requesting_ip, entity_name, entity_type="domain", is_new_user=False, is_confirming=False):
@@ -205,7 +223,7 @@ def send_mobile_experience_reminder(recipient, full_name):
     params = {
         "full_name": full_name,
         "url": url,
-        'url_prefix': '' if settings.STATIC_CDN else 'http://' + get_site_domain(),
+        'url_prefix': get_static_url_prefix(),
     }
     message_plaintext = render_to_string(
         'registration/email/mobile_signup_reminder.txt', params)

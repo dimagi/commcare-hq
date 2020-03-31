@@ -1,3 +1,5 @@
+import json
+
 from django.core.management.base import BaseCommand, CommandError
 
 from pillowtop.utils import get_pillow_by_name
@@ -17,8 +19,9 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('pillow_name')
+        parser.add_argument('by_partition', default=False)
 
-    def handle(self, pillow_name, **options):
+    def handle(self, pillow_name, by_partition, **options):
         confirm("Are you sure you want to reset the checkpoint for the '{}' pillow?".format(pillow_name))
         confirm("Have you stopped the pillow?")
 
@@ -27,14 +30,18 @@ class Command(BaseCommand):
             raise CommandError("No pillow found with name: {}".format(pillow_name))
 
         checkpoint = pillow.checkpoint
-        store = HistoricalPillowCheckpoint.get_historical_max(checkpoint.checkpoint_id)
+        store = HistoricalPillowCheckpoint.get_historical_max(checkpoint.checkpoint_id, by_partition)
 
         if not store:
             print("No new sequence exists for that pillow. You'll have to do it manually.")
             exit()
 
         old_seq = pillow.get_last_checkpoint_sequence()
-        new_seq = store.seq
+        if by_partition:
+            # update_to expects a json string or a list of tuples
+            new_seq = json.dumps(store)
+        else:
+            new_seq = store.seq
         confirm("\nReset checkpoint for '{}' pillow from:\n\n{}\n\nto\n\n{}\n\n".format(
             pillow_name, old_seq, new_seq
         ))

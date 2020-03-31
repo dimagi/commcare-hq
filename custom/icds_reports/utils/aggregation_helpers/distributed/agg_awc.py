@@ -78,8 +78,8 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
         (
             state_id, district_id, block_id, supervisor_id, awc_id, month, num_awcs,
             is_launched, aggregation_level,  num_awcs_conducted_vhnd, num_awcs_conducted_cbe,
-            thr_distribution_image_count, num_launched_awcs, num_launched_supervisors, num_launched_blocks,
-            num_launched_districts, num_launched_states
+            cbe_conducted, vhnd_conducted, thr_distribution_image_count, num_launched_awcs,
+            num_launched_supervisors, num_launched_blocks, num_launched_districts, num_launched_states
         )
         (
             SELECT
@@ -94,6 +94,8 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
             5,
             CASE WHEN vhnd_conducted is not null and vhnd_conducted>0 THEN 1 ELSE 0 END,
             CASE WHEN cbe_conducted is not null and cbe_conducted>1 THEN 1 ELSE 0 END,
+            cbe_conducted,
+            vhnd_conducted,
             thr_v2.thr_distribution_image_count,
             0,
             0,
@@ -245,7 +247,7 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
         WHERE (opened_on <= %(end_date)s AND
               (closed_on IS NULL OR closed_on >= %(start_date)s ))
 
-        GROUP BY ucr.awc_id, ucr.supervisor_id) ut
+        GROUP BY ucr.supervisor_id, ucr.awc_id) ut
         WHERE ut.awc_id = agg_awc.awc_id and ut.supervisor_id=agg_awc.supervisor_id;
         """.format(
             tablename=self.temporary_tablename,
@@ -404,7 +406,7 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
             type_toilet = ut.type_toilet,
             preschool_kit_available = ut.preschool_kit_available,
             preschool_kit_usable = ut.preschool_kit_usable,
-            infra_functional_toilet = ut.infra_functional_toilet,
+            infra_functional_toilet = CASE WHEN ut.toilet_facility=1 THEN ut.infra_functional_toilet ELSE 0 END,
             infra_baby_weighing_scale = ut.infra_baby_weighing_scale,
             infra_adult_weighing_scale = ut.infra_adult_weighing_scale,
             infra_infant_weighing_scale = ut.infra_infant_weighing_scale,
@@ -699,6 +701,8 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
             ('num_launched_awcs', lambda col: _launched_col(col)),
             ('num_awcs_conducted_vhnd',),
             ('num_awcs_conducted_cbe',),
+            ('cbe_conducted',),
+            ('vhnd_conducted',),
             ('cases_household',),
             ('cases_person',),
             ('cases_person_all',),

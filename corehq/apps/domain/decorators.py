@@ -54,8 +54,6 @@ from django_digest.decorators import httpdigest
 
 logger = logging.getLogger(__name__)
 
-REDIRECT_FIELD_NAME = 'next'
-
 OTP_AUTH_FAIL_RESPONSE = {"error": "must send X-COMMCAREHQ-OTP header or 'otp' URL parameter"}
 
 
@@ -364,6 +362,14 @@ def _two_factor_required(view_func, domain, couch_user):
     if exempt:
         return False
     return (
+        # If a user is a superuser, then there is no two_factor_disabled loophole allowed.
+        # If you lose your phone, you have to give up superuser privileges
+        # until you have two factor set up again.
+        settings.REQUIRE_TWO_FACTOR_FOR_SUPERUSERS and couch_user.is_superuser
+    ) or (
+        # For other policies requiring two factor auth,
+        # allow the two_factor_disabled loophole for people who have lost their phones
+        # and need time to set up two factor auth again.
         (domain.two_factor_auth or TWO_FACTOR_SUPERUSER_ROLLOUT.enabled(couch_user.username))
         and not couch_user.two_factor_disabled
     )

@@ -36,7 +36,7 @@ def setUpModule():
         setup_tables_and_fixtures(domain.name)
         aggregate_state_form_data()
         try:
-            with mock.patch('custom.icds_reports.tasks._update_aggregate_locations_tables'):
+            with mock.patch('custom.icds_reports.tasks.update_aggregate_locations_tables'):
                 move_ucr_data_into_aggregation_tables(datetime(2017, 5, 28), intervals=2)
             build_incentive_report(agg_date=datetime(2017, 5, 28))
         except Exception as e:

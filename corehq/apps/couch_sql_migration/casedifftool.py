@@ -4,18 +4,30 @@ import pdb
 import signal
 from contextlib import contextmanager, suppress
 
+from django.db import close_old_connections
+from django.db.utils import DatabaseError, InterfaceError
+
 from dimagi.utils.chunked import chunked
+from dimagi.utils.retry import retry_on
 
 from corehq.form_processor.utils.general import set_local_domain_sql_backend_override
 from corehq.util.log import with_progress_bar
 
-from .casediff import global_diff_state, make_result_saver
+from .casediff import (
+    add_cases_missing_from_couch,
+    diff_cases,
+    get_couch_cases,
+    global_diff_state,
+    make_result_saver,
+    should_diff,
+)
 from .casediffqueue import ProcessNotAllowed, get_casediff_state_path
 from .couchsqlmigration import (
     CouchSqlDomainMigrator,
     get_main_forms_iteration_stop_date,
 )
 from .parallel import Pool
+from .progress import MigrationStatus, get_couch_sql_migration_status
 from .util import get_ids_from_string_or_file
 
 log = logging.getLogger(__name__)
@@ -23,11 +35,13 @@ log = logging.getLogger(__name__)
 PENDING_WARNING = "Diffs pending. Run again with --cases=pending"
 
 
-def get_migrator(domain, state_dir, live):
+def get_migrator(domain, state_dir):
     # Set backend for CouchSqlDomainMigrator._check_for_migration_restrictions
+    status = get_couch_sql_migration_status(domain)
+    live_migrate = status == MigrationStatus.DRY_RUN
     set_local_domain_sql_backend_override(domain)
     return CouchSqlDomainMigrator(
-        domain, state_dir, live_migrate=live, diff_process=None)
+        domain, state_dir, live_migrate=live_migrate, case_diff="none")
 
 
 def do_case_diffs(migrator, cases, stop, batch_size):
@@ -47,13 +61,10 @@ def do_case_diffs(migrator, cases, stop, batch_size):
     If true perform diffs in the main process and drop into a pdb
     session when the first batch of cases with diffs is encountered.
     """
-    casediff = CaseDiffTool(migrator, cases, stop, batch_size)
-    log.info("cutoff_date = %s", casediff.cutoff_date)
-    with casediff.context() as add_cases:
-        save_result = make_result_saver(casediff.statedb, add_cases)
-        for data in casediff.iter_case_diff_results():
-            save_result(data)
-    if casediff.should_diff_pending():
+    casediff = CaseDiffTool(migrator, stop, batch_size)
+    with migrator.counter, migrator.stopper:
+        casediff.diff_cases(cases)
+    if cases is None and casediff.should_diff_pending():
         return PENDING_WARNING
 
 
@@ -64,11 +75,10 @@ class CaseDiffTool:
     See also `do_case_diffs`.
     """
 
-    def __init__(self, migrator, cases, stop, batch_size):
+    def __init__(self, migrator, stop=False, batch_size=100):
         self.migrator = migrator
         self.domain = migrator.domain
         self.statedb = migrator.statedb
-        self.cases = cases
         self.stop = stop
         self.batch_size = batch_size
         if not migrator.live_migrate:
@@ -76,8 +86,7 @@ class CaseDiffTool:
         elif hasattr(migrator.stopper, "stop_date"):
             cutoff_date = migrator.stopper.stop_date
         else:
-            cutoff_date = get_main_forms_iteration_stop_date(
-                self.domain, self.statedb.unique_id)
+            cutoff_date = get_main_forms_iteration_stop_date(self.statedb)
             migrator.stopper.stop_date = cutoff_date
         self.cutoff_date = cutoff_date
         self.lock_out_casediff_process()
@@ -89,20 +98,21 @@ class CaseDiffTool:
                 self.statedb.clone_casediff_data_from(state_path)
             self.statedb.set(ProcessNotAllowed.__name__, True)
 
-    @contextmanager
-    def context(self):
-        with self.migrator.counter as counter, self.migrator.stopper:
-            with counter('diff_cases', 'CommCareCase.id') as add_cases:
-                yield add_cases
+    def diff_cases(self, cases=None):
+        log.info("case diff cutoff date = %s", self.cutoff_date)
+        with self.migrator.counter('diff_cases', 'CommCareCase.id') as add_cases:
+            save_result = make_result_saver(self.statedb, add_cases)
+            for data in self.iter_case_diff_results(cases):
+                save_result(data)
 
-    def iter_case_diff_results(self):
-        if self.cases is None:
+    def iter_case_diff_results(self, cases):
+        if cases is None:
             return self.resumable_iter_diff_cases()
-        if self.cases == "pending":
+        if cases == "pending":
             return self.iter_diff_cases(self.get_pending_cases())
-        if self.cases == "with-diffs":
+        if cases == "with-diffs":
             return self.iter_diff_cases_with_diffs()
-        case_ids = get_ids_from_string_or_file(self.cases)
+        case_ids = get_ids_from_string_or_file(cases)
         return self.iter_diff_cases(case_ids, log_cases=True)
 
     def resumable_iter_diff_cases(self):
@@ -140,7 +150,7 @@ class CaseDiffTool:
             for batch in batches:
                 data = load_and_diff_cases(batch, log_cases=log_cases)
                 yield data
-                diffs = {case_id: diffs for x, case_id, diffs in data.diffs if diffs}
+                diffs = [(kind, case_id, diffs) for kind, case_id, diffs in data.diffs if diffs]
                 if diffs:
                     log.info("found cases with diffs:\n%s", format_diffs(diffs))
                     if stop:
@@ -157,8 +167,7 @@ class CaseDiffTool:
         return with_progress_bar(
             pending, count, prefix="Pending case diffs", oneline=False)
 
-    def should_diff_pending(self):
-        return self.cases is None and self.get_pending_cases()
+    should_diff_pending = get_pending_cases
 
     @property
     def pool(self):
@@ -174,15 +183,29 @@ class CaseDiffTool:
 
 
 def load_and_diff_cases(case_ids, log_cases=False):
-    from .casediff import _diff_state, get_couch_cases, diff_cases
-    should_diff = _diff_state.should_diff
-    couch_cases = {c.case_id: c.to_json()
-        for c in get_couch_cases(case_ids) if should_diff(c)}
+    couch_cases = get_couch_cases(case_ids)
+    cases_to_diff = {c.case_id: c.to_json() for c in couch_cases if should_diff(c)}
     if log_cases:
-        skipped = [id for id in case_ids if id not in couch_cases]
+        skipped = {c.case_id for c in couch_cases} - cases_to_diff.keys()
         if skipped:
             log.info("skipping cases modified since cutoff date: %s", skipped)
-    return diff_cases(couch_cases, log_cases=log_cases)
+    data = diff_cases_with_retry(cases_to_diff, log_cases=log_cases)
+    if len(set(case_ids)) > len(couch_cases):
+        missing_ids = set(case_ids) - {c.case_id for c in couch_cases}
+        add_cases_missing_from_couch(data, missing_ids)
+    return data
+
+
+def _close_connections(err):
+    """Close old connections, then return true to retry"""
+    log.warning("retry diff cases on %s: %s", type(err).__name__, err)
+    close_old_connections()
+    return True
+
+
+@retry_on(DatabaseError, InterfaceError, should_retry=_close_connections)
+def diff_cases_with_retry(*args, **kw):
+    return diff_cases(*args, **kw)
 
 
 def iter_sql_cases_with_sorted_transactions(domain):
@@ -203,10 +226,10 @@ def iter_sql_cases_with_sorted_transactions(domain):
             yield from iter(set(case_id for case_id, in cursor.fetchall()))
 
 
-def format_diffs(diff_dict):
+def format_diffs(json_diffs, changes=False):
     lines = []
-    for doc_id, diffs in sorted(diff_dict.items()):
-        lines.append(doc_id)
+    for kind, doc_id, diffs in sorted(json_diffs, key=lambda x: x[1]):
+        lines.append(f"{kind} {doc_id} {diffs[0].reason if changes else ''}")
         for diff in sorted(diffs, key=lambda d: (d.diff_type, d.path)):
             if len(repr(diff.old_value) + repr(diff.new_value)) > 60:
                 lines.append(f"  {diff.diff_type} {list(diff.path)}")
@@ -231,6 +254,8 @@ def init_worker(domain, *args):
     clean_break = False
     reset_django_db_connections()
     reset_couchdb_connections()
+    reset_blobdb_connections()
+    reset_redis_connections()
     signal.signal(signal.SIGINT, on_break)
     set_local_domain_sql_backend_override(domain)
     return global_diff_state(domain, *args)
@@ -256,4 +281,48 @@ def reset_couchdb_connections():
     dbs = CouchdbkitHandler.__shared_state__["_databases"]
     for db in dbs.values():
         server = db[0] if isinstance(db, tuple) else db.server
-        server.cloudant_client.r_session.close()
+        with safe_socket_close():
+            server.cloudant_client.r_session.close()
+
+
+def reset_blobdb_connections():
+    from corehq.blobs import _db, get_blob_db
+    if _db:
+        assert len(_db) == 1, _db
+        old_blob_db = get_blob_db()
+        _db.pop()
+        assert get_blob_db() is not old_blob_db
+
+
+def reset_redis_connections():
+    from django_redis.pool import ConnectionFactory
+    for pool in ConnectionFactory._pools.values():
+        pool.reset()
+
+
+@contextmanager
+def safe_socket_close():
+    from functools import partial
+    from gevent._socket3 import socket
+
+    def safe_cancel_wait(hub_cancel_wait, *args):
+        try:
+            hub_cancel_wait(*args)
+        except ValueError as err:
+            if str(err) != "operation on destroyed loop":
+                raise
+
+    def drop_events(self):
+        self.hub.cancel_wait = partial(safe_cancel_wait, self.hub.cancel_wait)
+        try:
+            return _drop_events(self)
+        finally:
+            del self.hub.cancel_wait
+            assert self.hub.cancel_wait, "unexpected method removal"
+
+    _drop_events = socket._drop_events
+    socket._drop_events = drop_events
+    try:
+        yield
+    finally:
+        socket._drop_events = _drop_events

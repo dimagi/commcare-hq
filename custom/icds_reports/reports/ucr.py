@@ -50,7 +50,7 @@ class TwoStageAggregateCustomQueryProvider(ConfigurableReportCustomQueryProvider
             'outer': outer_filters,
         }
 
-    def _get_select_query(self):
+    def get_select_query(self):
         # break filters into those that can be used in the inner query and those that
         # need to bubble up to the outer query (aggregates)
         split_filters = self._split_filters(self.helper._filters)
@@ -60,8 +60,8 @@ class TwoStageAggregateCustomQueryProvider(ConfigurableReportCustomQueryProvider
             self.table.name,
             filters=split_filters['inner'],
             group_by=self.report_data_source.group_by,
-            # note: is this necessary to add?
-            # order_by=self.order_by,
+            order_by=self.report_data_source.order_by,
+            distinct_on=self.report_data_source.distinct_on,
         )
         for c in self.report_data_source.columns:
             query_context.append_column(c.view)
@@ -83,7 +83,7 @@ class TwoStageAggregateCustomQueryProvider(ConfigurableReportCustomQueryProvider
         return query
 
     def get_data(self, start=None, limit=None):
-        select_query = self._get_select_query()
+        select_query = self.get_select_query()
         if start is not None:
             select_query = select_query.offset(start)
         if limit is not None:
@@ -109,7 +109,7 @@ class TwoStageAggregateCustomQueryProvider(ConfigurableReportCustomQueryProvider
         raise NotImplementedError("This data source doesn't support total rows")
 
     def get_total_records(self):
-        select_query = self._get_select_query()
+        select_query = self.get_select_query()
         with self.helper.session_helper().session_context() as session:
             count_query = select([func.count()]).select_from(select_query.alias())
             return session.connection().execute(count_query, **self.helper.sql_alchemy_filter_values).scalar()

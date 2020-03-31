@@ -1,3 +1,4 @@
+DROP TABLE IF EXISTS dummy_thr_table;
 CREATE TEMPORARY TABLE dummy_thr_table AS
   (SELECT supervisor_id,
           SUM(CASE

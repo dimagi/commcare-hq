@@ -580,11 +580,11 @@ def run_case_diff_queue(queue_class, calls, stats, domain, state_path, is_rebuil
 
 def setup_logging(state_path, debug):
     from .couchsqlmigration import setup_logging
-    log_dir = os.path.dirname(state_path)
-    if os.path.basename(log_dir) == "db":
+    state_dir = os.path.dirname(state_path)
+    if os.path.basename(state_dir) == "db":
         # unfortunately coupled to _get_state_db_filepath, which adds /db/
-        log_dir = os.path.dirname(log_dir)
-    setup_logging(log_dir, "casediff", debug)
+        state_dir = os.path.dirname(state_dir)
+    setup_logging(state_dir, "casediff", debug)
 
 
 class GracefulExit(Exception):
@@ -627,10 +627,10 @@ class CasesReceivedCounter:
         self.queue.clean_break = value
 
 
-class NoCaseDiff:
+class CaseDiffPending:
 
     def __init__(self, statedb):
-        pass
+        self.statedb = statedb
 
     def __enter__(self):
         return self
@@ -639,10 +639,10 @@ class NoCaseDiff:
         pass
 
     def update(self, case_ids, form_id):
-        pass
+        self.statedb.add_cases_to_diff(case_ids)
 
     def enqueue(self, case_id):
-        pass
+        self.statedb.add_cases_to_diff([case_id])
 
 
 def prune_premature_diffs(couch_cases, statedb):

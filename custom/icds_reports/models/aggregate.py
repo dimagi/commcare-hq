@@ -22,7 +22,11 @@ from custom.icds_reports.const import (
     AWW_INCENTIVE_TABLE,
     AGG_DASHBOARD_ACTIVITY,
     AGG_ADOLESCENT_GIRLS_REGISTRATION_TABLE,
-    AGG_GOV_DASHBOARD_TABLE
+    AGG_GOV_DASHBOARD_TABLE,
+    AGG_SDR_TABLE,
+    AGG_MIGRATION_TABLE,
+    BIHAR_API_DEMOGRAPHICS_TABLE,
+    AGG_AVAILING_SERVICES_TABLE
 )
 from custom.icds_reports.utils.aggregation_helpers.distributed import (
     AggAwcDailyAggregationDistributedHelper,
@@ -53,7 +57,11 @@ from custom.icds_reports.utils.aggregation_helpers.distributed import (
     THRFormV2AggDistributedHelper,
     DashboardActivityReportAggregate,
     AggAdolescentGirlsRegistrationAggregate,
-    AggGovDashboardHelper
+    AggGovDashboardHelper,
+    AggServiceDeliveryReportHelper,
+    MigrationFormsAggregationDistributedHelper,
+    BiharApiDemographicsHelper,
+    AvailingServiceFormsAggregationDistributedHelper
 )
 
 
@@ -232,10 +240,12 @@ class AwcLocation(models.Model, AggregateMixin):
     block_is_test = models.SmallIntegerField(blank=True, null=True)
     supervisor_is_test = models.SmallIntegerField(blank=True, null=True)
     awc_is_test = models.SmallIntegerField(blank=True, null=True)
-
     # from commcare-user case
     aww_name = models.TextField(blank=True, null=True)
     contact_phone_number = models.TextField(blank=True, null=True)
+    awc_ward_1 = models.TextField(blank=True, null=True)
+    awc_ward_2 = models.TextField(blank=True, null=True)
+    awc_ward_3 = models.TextField(blank=True, null=True)
 
     class Meta(object):
         managed = False
@@ -477,7 +487,8 @@ class AggAwc(models.Model, AggregateMixin):
 
     num_awcs_conducted_cbe = models.IntegerField(null=True)
     num_awcs_conducted_vhnd = models.IntegerField(null=True)
-
+    cbe_conducted = models.IntegerField(null=True)
+    vhnd_conducted = models.IntegerField(null=True)
     cases_household = models.IntegerField(null=True)
     cases_person = models.IntegerField(null=True)
     cases_person_all = models.IntegerField(null=True)
@@ -739,6 +750,7 @@ class AggChildHealth(models.Model, AggregateMixin):
     zscore_grading_hfa_recorded_in_month = models.IntegerField(blank=True, null=True)
     zscore_grading_wfh_recorded_in_month = models.IntegerField(blank=True, null=True)
     lunch_count_21_days = models.IntegerField(blank=True, null=True)
+
     class Meta:
         managed = False
         db_table = 'agg_child_health'
@@ -1554,6 +1566,61 @@ class AggregateAdolescentGirlsRegistrationForms(models.Model, AggregateMixin):
     _agg_atomic = False
 
 
+class AggregateMigrationForms(models.Model, AggregateMixin):
+    """Aggregated data for migration
+
+    A migration table exists for each state_id and month.
+
+    A row exists for every person case that has had a record of migration
+    submitted against it this month.
+    """
+
+    # partitioned based on these fields
+    state_id = models.CharField(max_length=40)
+    supervisor_id = models.TextField(null=True)
+    month = models.DateField(help_text="Will always be YYYY-MM-01")
+
+    # not the real pkey - see unique_together
+    person_case_id = models.CharField(max_length=40, primary_key=True)
+
+    is_migrated = models.PositiveSmallIntegerField(blank=True, null=True, help_text="Status of the Migration")
+    migration_date = models.DateTimeField(help_text="Migration Date", null=True)
+
+    class Meta(object):
+        db_table = AGG_MIGRATION_TABLE
+        unique_together = ('month', 'supervisor_id', 'person_case_id')  # pkey
+
+    _agg_helper_cls = MigrationFormsAggregationDistributedHelper
+    _agg_atomic = False
+
+
+class AggregateAvailingServiceForms(models.Model, AggregateMixin):
+    """ Aggregated data for the availing services
+
+    A availing services exists for each state_id
+
+    A row exists for every person case that has had a record of registration
+    submitted against it this month
+    """
+    state_id = models.CharField(max_length=10)
+    supervisor_id = models.TextField(null=True)
+    awc_id = models.TextField(null=True)
+    month = models.DateField(help_text="Will always be YYYY-MM-01")
+
+    # not the real pkey - see unique_together
+    person_case_id = models.CharField(max_length=40, primary_key=True)
+
+    is_registered = models.PositiveSmallIntegerField(blank=True, null=True, help_text="Status of the Registration")
+    registration_date = models.DateTimeField(help_text="Registration Date", null=True)
+
+    class Meta(object):
+        db_table = AGG_AVAILING_SERVICES_TABLE
+        unique_together = ('month', 'supervisor_id', 'person_case_id')  # pkey
+
+    _agg_helper_cls = AvailingServiceFormsAggregationDistributedHelper
+    _agg_atomic = False
+
+
 class AggGovernanceDashboard(models.Model, AggregateMixin):
     state_id = models.TextField(null=True)
     district_id = models.TextField(null=True)
@@ -1606,4 +1673,97 @@ class AggGovernanceDashboard(models.Model, AggregateMixin):
         unique_together = ('month', 'state_id', 'awc_id')  # pkey
 
     _agg_helper_cls = AggGovDashboardHelper
+    _agg_atomic = False
+
+
+class AggServiceDeliveryReport(models.Model, AggregateMixin):
+    state_id = models.TextField(null=True)
+    district_id = models.TextField(null=True)
+    block_id = models.TextField(null=True)
+    supervisor_id = models.TextField(null=True)
+    awc_id = models.TextField(primary_key=True)
+    lunch_eligible = models.IntegerField(null=True)
+    lunch_0_days = models.IntegerField(null=True)
+    lunch_1_7_days = models.IntegerField(null=True)
+    lunch_8_14_days = models.IntegerField(null=True)
+    lunch_15_20_days = models.IntegerField(null=True)
+    lunch_21_days = models.IntegerField(null=True)
+    pse_eligible = models.IntegerField(null=True)
+    pse_0_days = models.IntegerField(null=True)
+    pse_1_7_days = models.IntegerField(null=True)
+    pse_8_14_days = models.IntegerField(null=True)
+    pse_15_20_days = models.IntegerField(null=True)
+    pse_21_days = models.IntegerField(null=True)
+    thr_eligible = models.IntegerField(null=True)
+    thr_0_days = models.IntegerField(null=True)
+    thr_1_7_days = models.IntegerField(null=True)
+    thr_8_14_days = models.IntegerField(null=True)
+    thr_15_20_days = models.IntegerField(null=True)
+    thr_21_days = models.IntegerField(null=True)
+    state_is_test = models.SmallIntegerField(null=True)
+    district_is_test = models.SmallIntegerField(null=True)
+    block_is_test = models.SmallIntegerField(null=True)
+    supervisor_is_test = models.SmallIntegerField(null=True)
+    awc_is_test = models.SmallIntegerField(null=True)
+    month = models.DateField(null=True)
+    aggregation_level = models.SmallIntegerField(null=True)
+    children_0_3 = models.IntegerField(null=True)
+    children_3_5 = models.IntegerField(null=True)
+    gm_0_3 = models.IntegerField(null=True)
+    gm_3_5 = models.IntegerField(null=True)
+
+    class Meta(object):
+        db_table = AGG_SDR_TABLE
+        unique_together = ('month', 'aggregation_level', 'state_id', 'district_id', 'block_id',
+                           'supervisor_id', 'awc_id')  # pkey
+
+    _agg_helper_cls = AggServiceDeliveryReportHelper
+    _agg_atomic = False
+
+
+class BiharAPIDemographics(models.Model, AggregateMixin):
+    state_id = models.TextField(null=True)
+    district_id = models.TextField(null=True)
+    block_id = models.TextField(null=True)
+    supervisor_id = models.TextField(null=True)
+    awc_id = models.TextField(null=True)
+    month = models.DateField()
+    household_id = models.TextField(null=True)
+    household_name = models.TextField(null=True)
+    hh_reg_date = models.TextField(null=True)
+    hh_num = models.IntegerField(null=True)
+    hh_gps_location = models.TextField(null=True)
+    hh_caste = models.TextField(null=True)
+    hh_bpl_apl = models.TextField(null=True)
+    hh_minority = models.SmallIntegerField(null=True)
+    hh_religion = models.TextField(null=True)
+    hh_member_number = models.IntegerField(null=True)
+    person_id = models.TextField(primary_key=True)
+    person_name = models.TextField(null=True)
+    has_adhaar = models.SmallIntegerField(null=True)
+    bank_account_number = models.TextField(null=True)
+    ifsc_code = models.TextField(null=True)
+    age_at_reg = models.SmallIntegerField(null=True)
+    dob = models.DateField(null=True)
+    gender = models.TextField(null=True)
+    blood_group = models.TextField(null=True)
+    disabled = models.SmallIntegerField(null=True)
+    disability_type = models.TextField(null=True)
+    referral_status = models.TextField(null=True)
+    migration_status = models.SmallIntegerField(null=True)
+    resident = models.SmallIntegerField(null=True)
+    registered_status = models.SmallIntegerField(null=True)
+    rch_id = models.TextField(null=True)
+    mcts_id = models.TextField(null=True)
+    phone_number = models.TextField(null=True)
+    date_death = models.DateField(null=True)
+    site_death = models.TextField(null=True)
+    closed_on = models.DateField(null=True)
+    reason_closure = models.TextField(null=True)
+
+    class Meta(object):
+        db_table = BIHAR_API_DEMOGRAPHICS_TABLE
+        unique_together = ('month', 'state_id', 'district_id', 'block_id', 'supervisor_id', 'person_id')  # pkey
+
+    _agg_helper_cls = BiharApiDemographicsHelper
     _agg_atomic = False

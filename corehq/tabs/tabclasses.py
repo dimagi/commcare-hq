@@ -84,9 +84,9 @@ from corehq.messaging.scheduling.views import (
     UploadConditionalAlertView,
 )
 from corehq.messaging.util import show_messaging_dashboard
-from corehq.motech.dhis2.views import DataSetMapView, Dhis2ConnectionView
+from corehq.motech.dhis2.views import DataSetMapView
 from corehq.motech.openmrs.views import OpenmrsImporterView
-from corehq.motech.views import MotechLogListView
+from corehq.motech.views import ConnectionSettingsView, MotechLogListView
 from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD
 from corehq.tabs.uitab import UITab
 from corehq.tabs.utils import (
@@ -261,8 +261,8 @@ class DashboardTab(UITab):
     @property
     @memoized
     def url(self):
-        from corehq.apps.dashboard.views import default_dashboard_url
-        return default_dashboard_url(self._request, self.domain)
+        from corehq.apps.dashboard.views import DomainDashboardView
+        return reverse(DomainDashboardView.urlname, args=[self.domain])
 
 
 class SetupTab(UITab):
@@ -1271,6 +1271,8 @@ class ProjectUsersTab(UITab):
                      'urlname': 'upload_commcare_users'},
                     {'title': _('Bulk Delete'),
                      'urlname': 'delete_commcare_users'},
+                    {'title': _('Bulk Lookup'),
+                     'urlname': 'commcare_users_lookup'},
                     {'title': _('Edit User Fields'),
                      'urlname': 'user_fields_view'},
                     {'title': _('Filter and Download Users'),
@@ -1792,8 +1794,8 @@ def _get_integration_section(domain):
 
     if toggles.DHIS2_INTEGRATION.enabled(domain):
         integration.extend([{
-            'title': _(Dhis2ConnectionView.page_title),
-            'url': reverse(Dhis2ConnectionView.urlname, args=[domain])
+            'title': _(ConnectionSettingsView.page_title),
+            'url': reverse(ConnectionSettingsView.urlname, args=[domain])
         }, {
             'title': _(DataSetMapView.page_title),
             'url': reverse(DataSetMapView.urlname, args=[domain])

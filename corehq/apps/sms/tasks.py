@@ -7,6 +7,7 @@ from django.db import DataError, transaction
 
 from celery.schedules import crontab
 
+from corehq.util.metrics import metrics_gauge_task
 from dimagi.utils.couch import (
     CriticalSection,
     get_redis_client,
@@ -50,7 +51,7 @@ from corehq.apps.smsbillables.models import SmsBillable
 from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.messaging.util import use_phone_entries
 from corehq.util.celery_utils import no_result_task
-from corehq.util.datadog.gauges import datadog_counter, datadog_gauge_task
+from corehq.util.datadog.gauges import datadog_counter
 from corehq.util.timezones.conversions import ServerTime
 
 MAX_TRIAL_SMS = 50
@@ -427,11 +428,7 @@ def process_sms(queued_sms_pk):
 
 
 def send_to_sms_queue(queued_sms):
-    options = {}
-    if queued_sms.direction == OUTGOING and queued_sms.domain in settings.CUSTOM_PROJECT_SMS_QUEUES:
-        options['queue'] = settings.CUSTOM_PROJECT_SMS_QUEUES[queued_sms.domain]
-
-    process_sms.apply_async([queued_sms.pk], **options)
+    process_sms.apply_async([queued_sms.pk])
 
 
 @no_result_task(serializer='pickle', queue='background_queue', default_retry_delay=10 * 60,
@@ -592,4 +589,4 @@ def queued_sms():
     return QueuedSMS.objects.count()
 
 
-datadog_gauge_task('commcare.sms.queued', queued_sms, run_every=crontab())
+metrics_gauge_task('commcare.sms.queued', queued_sms, run_every=crontab())

@@ -272,13 +272,6 @@ class BaseFilterExportDownloadForm(forms.Form):
         return [n[1] for n in matches]
 
 
-location_query_help_text = ugettext_lazy(mark_safe(
-    '<i class="fa fa-info-circle"></i> To quick search for a '
-    '<a href="https://confluence.dimagi.com/display/commcarepublic/Exact+Search+for+Locations" '
-    'target="_blank">location</a>, write your query as "parent"/descendant.'
-))
-
-
 class DashboardFeedFilterForm(forms.Form):
     """
     A form used to configure the filters on a Dashboard Feed export
@@ -287,13 +280,13 @@ class DashboardFeedFilterForm(forms.Form):
         label=ugettext_lazy("Case Owner(s)"),
         required=False,
         widget=Select2Ajax(multiple=True),
-        help_text=location_query_help_text,
+        help_text=ExpandedMobileWorkerFilter.location_search_help,
     )
     emwf_form_filter = forms.Field(
         label=ugettext_lazy("User(s)"),
         required=False,
         widget=Select2Ajax(multiple=True),
-        help_text=location_query_help_text,
+        help_text=ExpandedMobileWorkerFilter.location_search_help,
     )
     date_range = forms.ChoiceField(
         label=ugettext_lazy("Date Range"),

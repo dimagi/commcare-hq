@@ -1,3 +1,4 @@
+from collections import defaultdict
 from datetime import timedelta
 
 from dimagi.utils.parsing import string_to_utc_datetime
@@ -9,6 +10,7 @@ from corehq.motech.openmrs.const import (
     PERSON_PROPERTIES,
     PERSON_UUID_IDENTIFIER_TYPE_ID,
 )
+from corehq.motech.openmrs.openmrs_config import ALL_CONCEPTS
 from corehq.motech.openmrs.repeater_helpers import (
     get_ancestor_location_openmrs_uuid,
     get_export_data,
@@ -166,17 +168,6 @@ class CreateVisitsEncountersObsTask(WorkflowTask):
         stop_datetime = to_omrs_datetime(cc_stop_datetime)
         return start_datetime, stop_datetime
 
-    def _get_values_for_concept(self, form_config):
-        values_for_concept = {}
-        for obs in form_config.openmrs_observations:
-            if not obs.concept:
-                # Skip ObservationMappings for importing all observations.
-                continue
-            value_source = as_value_source(obs.value)
-            if value_source.can_export and not is_blank(value_source.get_value(self.info)):
-                values_for_concept[obs.concept] = [value_source.get_value(self.info)]
-        return values_for_concept
-
     def run(self):
         """
         Returns WorkflowTasks for creating visits, encounters and observations
@@ -194,13 +185,13 @@ class CreateVisitsEncountersObsTask(WorkflowTask):
             if form_config.xmlns == self.form_json['form']['@xmlns']:
                 start_datetime, stop_datetime = self._get_start_stop_datetime(form_config)
                 subtasks.append(
-                    CreateVisitTask(
+                    CreateOptionalVisitTask(
                         self.requests,
                         person_uuid=self.person_uuid,
                         provider_uuid=provider_uuid,
                         start_datetime=start_datetime,
                         stop_datetime=stop_datetime,
-                        values_for_concept=self._get_values_for_concept(form_config),
+                        values_for_concept=get_values_for_concept(form_config, self.info),
                         encounter_type=form_config.openmrs_encounter_type,
                         openmrs_form=form_config.openmrs_form,
                         visit_type=form_config.openmrs_visit_type,
@@ -208,6 +199,23 @@ class CreateVisitsEncountersObsTask(WorkflowTask):
                     )
                 )
         return subtasks
+
+
+def get_values_for_concept(form_config, info):
+    """
+    Returns a dictionary mapping OpenMRS concept UUIDs to lists of
+    values. Each value will be exported as a separate Observation.
+    """
+    values_for_concept = defaultdict(list)
+    for obs in form_config.openmrs_observations:
+        if obs.concept == ALL_CONCEPTS:
+            # ALL_CONCEPTS is a special value for importing all
+            # Observations as extension cases. It's not applicable here.
+            continue
+        value_source = as_value_source(obs.value)
+        if value_source.can_export and not is_blank(value_source.get_value(info)):
+            values_for_concept[obs.concept].append(value_source.get_value(info))
+    return values_for_concept
 
 
 class CreatePersonAttributeTask(WorkflowTask):
@@ -361,7 +369,11 @@ class UpdatePatientIdentifierTask(WorkflowTask):
         )
 
 
-class CreateVisitTask(WorkflowTask):
+class CreateOptionalVisitTask(WorkflowTask):
+    """
+    If ``visit_type`` is given, creates a Visit and an Encounter for
+    that Visit. Otherwise just creates the Encounter.
+    """
 
     def __init__(self, requests, person_uuid, provider_uuid, start_datetime, stop_datetime, values_for_concept,
                  encounter_type, openmrs_form, visit_type, location_uuid=None):

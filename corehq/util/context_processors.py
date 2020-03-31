@@ -22,7 +22,6 @@ def base_template(request):
     return {
         'base_template': settings.BASE_TEMPLATE,
         'login_template': settings.LOGIN_TEMPLATE,
-        'less_debug': settings.LESS_DEBUG,
         'env': get_environment_friendly_name(),
     }
 
@@ -79,7 +78,9 @@ def domain(request):
 def domain_billing_context(request):
     is_domain_billing_admin = False
     restrict_domain_creation = settings.RESTRICT_DOMAIN_CREATION
-    if getattr(request, 'couch_user', None) and getattr(request, 'domain', None):
+    if (getattr(request, 'couch_user', None)
+            and getattr(request, 'domain', None)
+            and not settings.ENTERPRISE_MODE):
         account = BillingAccount.get_account_by_domain(request.domain)
         if account:
             if has_privilege(request, privileges.ACCOUNTING_ADMIN):

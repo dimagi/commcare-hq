@@ -9,7 +9,6 @@ from django.contrib import messages
 import settingshelper as helper
 
 DEBUG = True
-LESS_DEBUG = DEBUG
 
 # clone http://github.com/dimagi/Vellum into submodules/formdesigner and use
 # this to select various versions of Vellum source on the form designer page.
@@ -192,12 +191,13 @@ DEFAULT_APPS = (
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.humanize',
+    'django.contrib.messages',
     'django.contrib.sessions',
     'django.contrib.sites',
     'django.contrib.staticfiles',
     'django_celery_results',
     'django_prbac',
-    'djangular',
+    'djng',
     'captcha',
     'couchdbkit.ext.django',
     'crispy_forms',
@@ -342,7 +342,6 @@ HQ_APPS = (
     'corehq.motech.repeaters',
     'corehq.util',
     'dimagi.ext',
-    'corehq.doctypemigrations',
     'corehq.blobs',
     'corehq.apps.case_search',
     'corehq.apps.zapier.apps.ZapierConfig',
@@ -353,8 +352,6 @@ HQ_APPS = (
 
     'custom.reports.mc',
     'custom.apps.crs_reports',
-    'custom.ilsgateway',
-    'custom.zipline',
     'custom.m4change',
     'custom.succeed',
     'custom.ucla',
@@ -365,6 +362,7 @@ HQ_APPS = (
     'custom.common',
 
     'custom.icds',
+    'custom.icds.data_management',
     'custom.icds_reports',
     'custom.nic_compliance',
     'custom.hki',
@@ -437,15 +435,11 @@ EMAIL_SMTP_PORT = 587
 # These are the normal Django settings
 EMAIL_USE_TLS = True
 
-# put email addresses here to have them receive bug reports
-BUG_REPORT_RECIPIENTS = ()
-
 # the physical server emailing - differentiate if needed
 SERVER_EMAIL = 'commcarehq-noreply@example.com'
 DEFAULT_FROM_EMAIL = 'commcarehq-noreply@example.com'
 SUPPORT_EMAIL = "support@example.com"
 PROBONO_SUPPORT_EMAIL = 'pro-bono@example.com'
-CCHQ_BUG_REPORT_EMAIL = 'commcarehq-bug-reports@example.com'
 ACCOUNTS_EMAIL = 'accounts@example.com'
 DATA_EMAIL = 'datatree@example.com'
 SUBSCRIPTION_CHANGE_EMAIL = 'accounts+subchange@example.com'
@@ -573,7 +567,6 @@ CELERY_HEARTBEAT_THRESHOLDS = {
     "export_download_queue": 30,
     "icds_aggregation_queue": None,
     "icds_dashboard_reports_queue": None,
-    "ils_gateway_sms_queue": None,
     "logistics_background_queue": None,
     "logistics_reminder_queue": None,
     "reminder_case_update_queue": 15 * 60,
@@ -603,12 +596,6 @@ HQ_ACCOUNT_ROOT = "commcarehq.org"
 FORMPLAYER_URL = 'http://localhost:8080'
 
 ####### SMS Queue Settings #######
-
-CUSTOM_PROJECT_SMS_QUEUES = {
-    'ils-gateway': 'ils_gateway_sms_queue',
-    'ils-gateway-train': 'ils_gateway_sms_queue',
-    'ils-gateway-training': 'ils_gateway_sms_queue',
-}
 
 # Setting this to False will make the system process outgoing and incoming SMS
 # immediately rather than use the queue.
@@ -755,8 +742,7 @@ ELASTICSEARCH_MAJOR_VERSION = 1
 # If elasticsearch queries take more than this, they result in timeout errors
 ES_SEARCH_TIMEOUT = 30
 
-BITLY_LOGIN = ''
-BITLY_APIKEY = ''
+BITLY_OAUTH_TOKEN = None
 
 # this should be overridden in localsettings
 INTERNAL_DATA = defaultdict(list)
@@ -779,7 +765,10 @@ DIGEST_LOGIN_FACTORY = 'django_digest.NoEmailLoginFactory'
 COMPRESS_PRECOMPILERS = (
     ('text/less', 'corehq.apps.hqwebapp.precompilers.LessFilter'),
 )
-COMPRESS_ENABLED = True
+# if not overwritten in localsettings, these will be replaced by the value they return
+# using the local DEBUG value (which we don't have access to here yet)
+COMPRESS_ENABLED = lambda: not DEBUG
+COMPRESS_OFFLINE = lambda: not DEBUG
 COMPRESS_JS_COMPRESSOR = 'corehq.apps.hqwebapp.uglify.JsUglifySourcemapCompressor'
 # use 'compressor.js.JsCompressor' for faster local compressing (will get rid of source maps)
 COMPRESS_CSS_FILTERS = ['compressor.filters.css_default.CssAbsoluteFilter',
@@ -843,6 +832,11 @@ SUPERVISOR_RPC_ENABLED = False
 SUBSCRIPTION_USERNAME = None
 SUBSCRIPTION_PASSWORD = None
 
+# List of metrics providers to use. Available providers:
+# * 'corehq.util.metrics.datadog.DatadogMetrics'
+# * 'corehq.util.metrics.prometheus.PrometheusMetrics'
+METRICS_PROVIDERS = []
+
 DATADOG_API_KEY = None
 DATADOG_APP_KEY = None
 
@@ -863,11 +857,6 @@ LOAD_BALANCED_APPS = {}
 # Override with the PEM export of an RSA private key, for use with any
 # encryption or signing workflows.
 HQ_PRIVATE_KEY = None
-
-# Settings for Zipline integration
-ZIPLINE_API_URL = ''
-ZIPLINE_API_USER = ''
-ZIPLINE_API_PASSWORD = ''
 
 # Set to the list of domain names for which we will run the ICDS SMS indicators
 ICDS_SMS_INDICATOR_DOMAINS = []
@@ -930,6 +919,8 @@ CUSTOM_LANDING_TEMPLATE = {
 }
 
 ES_SETTINGS = None
+ES_XFORM_INDEX_NAME = "xforms_2016-07-07"
+ES_XFORM_DISABLE_ALL = False
 PHI_API_KEY = None
 PHI_PASSWORD = None
 
@@ -958,6 +949,12 @@ RATE_LIMIT_SUBMISSIONS = False
 # This is useful for load-shedding in times of crisis.
 STALE_EXPORT_THRESHOLD = None
 
+REQUIRE_TWO_FACTOR_FOR_SUPERUSERS = False
+# Use an experimental partitioning algorithm
+# that adds messages to the partition with the fewest unprocessed messages
+USE_KAFKA_SHORTEST_BACKLOG_PARTITIONER = False
+
+
 try:
     # try to see if there's an environmental variable set for local_settings
     custom_settings = os.environ.get('CUSTOMSETTINGS', None)
@@ -979,6 +976,14 @@ except ImportError as error:
         raise error
     # fallback in case nothing else is found - used for readthedocs
     from dev_settings import *
+
+
+# The defaults above are given as a function of (or rather a closure on) DEBUG,
+# so if not overridden they need to be evaluated after DEBUG is set
+if callable(COMPRESS_ENABLED):
+    COMPRESS_ENABLED = COMPRESS_ENABLED()
+if callable(COMPRESS_OFFLINE):
+    COMPRESS_OFFLINE = COMPRESS_OFFLINE()
 
 
 # Unless DISABLE_SERVER_SIDE_CURSORS has explicitly been set, default to True because Django >= 1.11.1 and our
@@ -1042,7 +1047,6 @@ TEMPLATES = [
             'loaders': [
                 'django.template.loaders.filesystem.Loader',
                 'django.template.loaders.app_directories.Loader',
-                'django.template.loaders.eggs.Loader',
             ],
         },
     },
@@ -1306,19 +1310,11 @@ INDICATOR_CONFIG = {
 
 COMPRESS_URL = STATIC_CDN + STATIC_URL
 
-####### Couch Forms & Couch DB Kit Settings #######
-NEW_USERS_GROUPS_DB = 'users'
-USERS_GROUPS_DB = NEW_USERS_GROUPS_DB
-
-NEW_FIXTURES_DB = 'fixtures'
-FIXTURES_DB = NEW_FIXTURES_DB
-
-NEW_DOMAINS_DB = 'domains'
-DOMAINS_DB = NEW_DOMAINS_DB
-
-NEW_APPS_DB = 'apps'
-APPS_DB = NEW_APPS_DB
-
+# Couch database name suffixes
+USERS_GROUPS_DB = 'users'
+FIXTURES_DB = 'fixtures'
+DOMAINS_DB = 'domains'
+APPS_DB = 'apps'
 META_DB = 'meta'
 
 _serializer = 'corehq.util.python_compatibility.Py3PickleSerializer'
@@ -1388,7 +1384,6 @@ COUCHDB_APPS = [
     'pact',
     'accounting',
     'succeed',
-    'ilsgateway',
     ('auditcare', 'auditcare'),
     ('repeaters', 'receiverwrapper'),
     ('userreports', META_DB),
@@ -1417,7 +1412,7 @@ COUCHDB_APPS = [
 COUCH_SETTINGS_HELPER = helper.CouchSettingsHelper(
     COUCH_DATABASES,
     COUCHDB_APPS,
-    [NEW_USERS_GROUPS_DB, NEW_FIXTURES_DB, NEW_DOMAINS_DB, NEW_APPS_DB],
+    [USERS_GROUPS_DB, FIXTURES_DB, DOMAINS_DB, APPS_DB],
     UNIT_TESTING
 )
 COUCH_DATABASE = COUCH_SETTINGS_HELPER.main_db_url
@@ -1478,10 +1473,6 @@ WEB_USER_TERM = "Web User"
 
 DEFAULT_CURRENCY = "USD"
 DEFAULT_CURRENCY_SYMBOL = "$"
-
-CUSTOM_SMS_HANDLERS = [
-    'custom.ilsgateway.tanzania.handler.handle',
-]
 
 SMS_HANDLERS = [
     'corehq.apps.commtrack.sms.handle',
@@ -1901,9 +1892,10 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'thr_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'birth_preparedness_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'daily_feeding_forms.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'migrations_form.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'availing_service_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'primary_private_school_form_ucr.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'cbe_form.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'migrations_form.json'),
     os.path.join('custom', 'champ', 'ucr_data_sources', 'champ_cameroon.json'),
     os.path.join('custom', 'champ', 'ucr_data_sources', 'enhanced_peer_mobilization.json'),
     os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'commande_combined.json'),
@@ -1990,13 +1982,7 @@ CUSTOM_UCR_REPORT_FILTER_VALUES = [
 
 CUSTOM_MODULES = [
     'custom.apps.crs_reports',
-    'custom.ilsgateway',
 ]
-
-CUSTOM_DASHBOARD_PAGE_URL_NAMES = {
-    'ews-ghana': 'dashboard_page',
-    'ils-gateway': 'ils_dashboard_report'
-}
 
 DOMAIN_MODULE_MAP = {
     'mc-inscale': 'custom.reports.mc',
@@ -2076,17 +2062,10 @@ DATADOG_DOMAINS = {
 
 #### Django Compressor Stuff after localsettings overrides ####
 
-# This makes sure that Django Compressor does not run at all
-# when LESS_DEBUG is set to True.
-if LESS_DEBUG:
-    COMPRESS_ENABLED = False
-    COMPRESS_PRECOMPILERS = ()
-
 COMPRESS_OFFLINE_CONTEXT = {
     'base_template': BASE_TEMPLATE,
     'login_template': LOGIN_TEMPLATE,
     'original_template': BASE_ASYNC_TEMPLATE,
-    'less_debug': LESS_DEBUG,
 }
 
 COMPRESS_CSS_HASHING_METHOD = 'content'
@@ -2097,19 +2076,6 @@ if 'locmem' not in CACHES:
 if 'dummy' not in CACHES:
     CACHES['dummy'] = {'BACKEND': 'django.core.cache.backends.dummy.DummyCache'}
 
-try:
-    from datadog import initialize
-except ImportError:
-    pass
-else:
-    initialize(DATADOG_API_KEY, DATADOG_APP_KEY)
-
-if UNIT_TESTING or DEBUG or 'ddtrace.contrib.django' not in INSTALLED_APPS:
-    try:
-        from ddtrace import tracer
-        tracer.enabled = False
-    except ImportError:
-        pass
 
 REST_FRAMEWORK = {
     'DATETIME_FORMAT': '%Y-%m-%dT%H:%M:%S.%fZ',

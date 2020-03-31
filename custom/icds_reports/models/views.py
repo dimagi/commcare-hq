@@ -716,7 +716,7 @@ class AggCcsRecordMonthly(models.Model):
 
 
 class CcsRecordMonthlyView(models.Model):
-    awc_id = models.TextField(primary_key=True)
+    awc_id = models.TextField()
     awc_name = models.TextField(blank=True, null=True)
     awc_site_code = models.TextField(blank=True, null=True)
     supervisor_id = models.TextField(blank=True, null=True)
@@ -1201,3 +1201,232 @@ class SystemUsageReportView(models.Model):
         app_label = 'icds_reports'
         managed = False
         db_table = 'system_usage_report_view'
+
+
+
+class ServiceDeliveryReportView(models.Model):
+    """
+    Contains rows for Tabular Service delivery report.
+    """
+    awc_id = models.TextField(primary_key=True)
+    awc_name = models.TextField(blank=True, null=True)
+    awc_site_code = models.TextField(blank=True, null=True)
+    supervisor_id = models.TextField(blank=True, null=True)
+    supervisor_name = models.TextField(blank=True, null=True)
+    supervisor_site_code = models.TextField(blank=True, null=True)
+    block_id = models.TextField(blank=True, null=True)
+    block_name = models.TextField(blank=True, null=True)
+    block_site_code = models.TextField(blank=True, null=True)
+    district_id = models.TextField(blank=True, null=True)
+    district_name = models.TextField(blank=True, null=True)
+    district_site_code = models.TextField(blank=True, null=True)
+    state_id = models.TextField(blank=True, null=True)
+    state_name = models.TextField(blank=True, null=True)
+    state_site_code = models.TextField(blank=True, null=True)
+    aggregation_level = models.IntegerField(
+        blank=True, null=True, help_text="1 for state rows, 2 for district rows, and so on"
+    )
+
+    block_map_location_name = models.TextField(blank=True, null=True)
+    district_map_location_name = models.TextField(blank=True, null=True)
+    state_map_location_name = models.TextField(blank=True, null=True)
+    month = models.DateField(blank=True, null=True)
+    num_launched_awcs = models.IntegerField(help_text='Number of AWC launched')
+    valid_visits = models.IntegerField(help_text='valid home visits')
+    expected_visits= models.IntegerField(help_text='expected home visits')
+    num_awcs_conducted_cbe = models.IntegerField(help_text='Number of AWC conducted atleast one CBE')
+    num_awcs_conducted_vhnd = models.IntegerField(help_text='Number of AWC conducted atleast one VHSND visits')
+    cbe_conducted = models.IntegerField(help_text='Number of CBE conducted by AWC')
+    vhnd_conducted = models.IntegerField(help_text='Number of VHND conducted by AWC')
+    gm_0_3 = models.IntegerField(
+        blank=True, null=True,
+        help_text="weighing efficiency for 0-3 years of children"
+    )
+    gm_3_5 = models.IntegerField(
+        blank=True, null=True,
+        help_text="weighing efficiency for 3-5 years of children"
+    )
+    children_0_3 = models.IntegerField(
+        blank=True, null=True,
+        help_text="Number of children age 0-3 years"
+    )
+    children_3_5 = models.IntegerField(
+        blank=True, null=True,
+        help_text="Number of children age 3-5 years"
+    )
+
+    pse_eligible= models.IntegerField(
+        blank=True, null=True,
+        help_text="Number of children eligible for pse"
+    )
+    pse_0_days= models.IntegerField(
+        blank=True, null=True,
+        help_text="Number of children who are eligible but attended 0 days of PSE"
+    )
+    pse_1_7_days= models.IntegerField(
+        blank=True, null=True,
+        help_text="Number of children attended 1-7 days of PSE"
+    )
+    pse_8_14_days= models.IntegerField(
+        blank=True, null=True,
+        help_text="Number of children attended 8-14 days of PSE"
+    )
+    pse_15_20_days= models.IntegerField(
+        blank=True, null=True,
+        help_text="Number of children attended 15-20 days of PSE"
+    )
+    pse_21_days= models.IntegerField(
+        blank=True, null=True,
+        help_text="Number of children attended >=21 days of PSE"
+    )
+    lunch_eligible= models.IntegerField(
+        blank=True, null=True,
+        help_text="Number of children eligible for lunch"
+    )
+    lunch_0_days= models.IntegerField(
+        blank=True, null=True,
+        help_text="Number of children who are eligible but got 0 days of lunch"
+    )
+    lunch_1_7_days= models.IntegerField(
+        blank=True, null=True,
+        help_text="Number of children got 1-7 days of lunch"
+    )
+    lunch_8_14_days= models.IntegerField(
+        blank=True, null=True,
+        help_text="Number of children got 8-14 days of lunch"
+    )
+    lunch_15_20_days= models.IntegerField(
+        blank=True, null=True,
+        help_text="Number of children got 15-20 days of lunch"
+    )
+    lunch_21_days= models.IntegerField(
+        blank=True, null=True,
+        help_text="Number of children got >=21 days of lunch"
+    )
+    thr_eligible= models.IntegerField(
+        blank=True, null=True,
+        help_text="Total number of beneficiaries eligible for THR"
+    )
+    thr_0_days= models.IntegerField(
+        blank=True, null=True,
+        help_text="beneficiarys who are eligible but got 0 days of THR"
+    )
+    thr_1_7_days= models.IntegerField(
+        blank=True, null=True,
+        help_text="beneficiaries who got 1-7 days of THR"
+    )
+    thr_8_14_days= models.IntegerField(
+        blank=True, null=True,
+        help_text="beneficiaries who got 8-14 days of THR"
+    )
+    thr_15_20_days= models.IntegerField(
+        blank=True, null=True,
+        help_text="beneficiaries who got 15-20 days of THR"
+    )
+    thr_21_days= models.IntegerField(
+        blank=True, null=True,
+        help_text="beneficiaries who got >=21 days of THR"
+    )
+
+    class Meta(object):
+        app_label = 'icds_reports'
+        managed = False
+        db_table = 'service_delivery_report'
+
+
+class BiharDemographicsView(models.Model):
+    """
+    Contains rows for Bihar Demographics API.
+    """
+    awc_id = models.TextField(blank=True, null=True)
+    awc_name = models.TextField(blank=True, null=True)
+    awc_site_code = models.TextField(blank=True, null=True)
+    supervisor_id = models.TextField(blank=True, null=True)
+    supervisor_name = models.TextField(blank=True, null=True)
+    supervisor_site_code = models.TextField(blank=True, null=True)
+    block_id = models.TextField(blank=True, null=True)
+    block_name = models.TextField(blank=True, null=True)
+    block_site_code = models.TextField(blank=True, null=True)
+    district_id = models.TextField(blank=True, null=True)
+    district_name = models.TextField(blank=True, null=True)
+    district_site_code = models.TextField(blank=True, null=True)
+    state_id = models.TextField(blank=True, null=True)
+    state_name = models.TextField(blank=True, null=True)
+    state_site_code = models.TextField(blank=True, null=True)
+    ward_number = models.TextField(blank=True, null=True)
+    month = models.DateField(blank=True, null=True)
+    household_id = models.TextField(blank=True, null=True)
+    household_name = models.TextField(blank=True, null=True)
+    hh_reg_date = models.TextField(blank=True, null=True)
+    hh_num = models.IntegerField(blank=True, null=True)
+    hh_gps_location = models.TextField(blank=True, null=True)
+    hh_caste = models.TextField(blank=True, null=True)
+    hh_bpl_apl = models.TextField(blank=True, null=True)
+    hh_minority = models.SmallIntegerField(blank=True, null=True)
+    hh_religion = models.TextField(blank=True, null=True)
+    hh_member_number = models.IntegerField(blank=True, null=True)
+    person_id = models.TextField(primary_key=True)
+    person_name = models.TextField(blank=True, null=True)
+    has_adhaar = models.SmallIntegerField(blank=True, null=True)
+    bank_account_number = models.TextField(blank=True, null=True)
+    ifsc_code = models.TextField(blank=True, null=True)
+    age_at_reg = models.SmallIntegerField(blank=True, null=True)
+    dob = models.DateField(blank=True, null=True)
+    gender = models.TextField(blank=True, null=True)
+    blood_group = models.TextField(blank=True, null=True)
+    disabled = models.SmallIntegerField(blank=True, null=True)
+    disability_type = models.TextField(blank=True, null=True)
+    referral_status = models.TextField(blank=True, null=True)
+    migration_status = models.SmallIntegerField(blank=True, null=True)
+    resident = models.SmallIntegerField(blank=True, null=True)
+    registered_status = models.SmallIntegerField(blank=True, null=True)
+    rch_id = models.TextField(blank=True, null=True)
+    mcts_id = models.TextField(blank=True, null=True)
+    phone_number = models.TextField(blank=True, null=True)
+    date_death = models.DateField(blank=True, null=True)
+    site_death = models.TextField(blank=True, null=True)
+    closed_on = models.DateField(blank=True, null=True)
+    reason_closure = models.TextField(blank=True, null=True)
+
+    class Meta(object):
+        app_label = 'icds_reports'
+        managed = False
+        db_table = 'bihar_demographics_view'
+
+
+class PMOAPIView(models.Model):
+    """
+    Contains rows for PMO API.
+    """
+    district_id = models.TextField(blank=True, null=True)
+    district_name = models.TextField(blank=True, null=True)
+    district_site_code = models.TextField(blank=True, null=True)
+    state_id = models.TextField(blank=True, null=True)
+    state_name = models.TextField(blank=True, null=True)
+    state_site_code = models.TextField(blank=True, null=True)
+    aggregation_level = models.IntegerField(blank=True, null=True)
+    month = models.DateField(blank=True, null=True)
+    cbe_conducted = models.IntegerField(help_text='Number of CBE conducted by AWC')
+    vhnd_conducted = models.IntegerField(help_text='Number of VHND conducted by AWC')
+    num_launched_awcs = models.IntegerField(blank=True, null=True)
+    wer_weighed = models.IntegerField(
+        blank=True, null=True, help_text="Number of children that have been weighed in the month"
+    )
+    wer_eligible = models.IntegerField(
+        blank=True, null=True, help_text="Number of children valid_in_month and age < 60 months"
+    )
+    bf_at_birth = models.IntegerField(
+        blank=True, null=True, help_text="born_in_month AND breastfed_within_first = 'yes'"
+    )
+    born_in_month = models.IntegerField(blank=True, null=True, help_text="beneficiary with dob in this month")
+    cf_initiation_eligible = models.IntegerField(
+        blank=True, null=True, help_text="valid_in_month AND > 6 months <= 8 months"
+    )
+    cf_initiation_in_month = models.IntegerField(
+        blank=True, null=True, help_text="cf_initiation_eligible AND comp_feeding = 'yes' in any form submitted"
+    )
+
+    class Meta(object):
+        app_label = 'icds_reports'
+        managed = False
+        db_table = 'pmo_api_view'

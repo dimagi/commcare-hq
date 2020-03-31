@@ -13,4 +13,4 @@ class Migration(migrations.Migration):
         ('icds_reports', '0166_auto_20200123_0748'),
     ]
 
-    operations = [migrator.get_migration('child_health_monthly.sql')]
+    operations = []

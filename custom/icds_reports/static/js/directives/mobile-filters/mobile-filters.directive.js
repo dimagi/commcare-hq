@@ -1,10 +1,24 @@
-function MobileFiltersController($scope) {
+function MobileFiltersController($scope, $rootScope) {
     const MONTH = 'month';
     const LOCATION = 'location';
     $scope.selectedTab = LOCATION;
+    if ($scope.$ctrl && $scope.$ctrl.selectSddDate) {
+        $scope.selectedTab = MONTH;
+    }
     $scope.filterData = {};
+    var vm = this;
+    vm.showGenderFilter = false;
+    vm.showAgeFilter = false;
+    // eg:vm.filters = ['gender', 'age']
+    // this array has filters that are not to be shown. so if 'gender' is not in array, it can be shown.
+    if (vm.filters && vm.filters.indexOf('gender') === -1) {
+        vm.showGenderFilter = true;
+    }
+    if (vm.filters && vm.filters.indexOf('age') === -1) {
+        vm.showAgeFilter = true;
+    }
     $scope.closeFilters = function () {
-        $scope.$emit('closeFilterMenu', {});
+        $rootScope.$broadcast('closeFilterMenu', {});
     };
     $scope.selectMonthTab = function () {
         $scope.selectedTab = MONTH;
@@ -15,6 +29,9 @@ function MobileFiltersController($scope) {
     $scope.applyFilters = function () {
         $scope.hasLocation = false;
         $scope.hasDate = false;
+        // if neither of the filters exist, we consider filter data is received. else we wait till data is received to
+        // emit 'mobile_filter_data_changed' event.
+        $scope.receivedAdditionalFilterData = !(vm.showAgeFilter || vm.showGenderFilter);
         $scope.filterData = {};
         $scope.$broadcast('request_filter_data',{});
     };
@@ -31,16 +48,20 @@ function MobileFiltersController($scope) {
             $scope.filterData['date'] = data.date;
             $scope.filterData['month'] = data.month;
             $scope.filterData['year'] = data.year;
+        } else if (data.hasAdditionalFilterData) {
+            $scope.filterData['gender'] = data.gender;
+            $scope.filterData['age'] = data.age;
+            $scope.receivedAdditionalFilterData = true;
         }
-        if ($scope.hasLocation && $scope.hasDate) {
+        if ($scope.hasLocation && $scope.hasDate && $scope.receivedAdditionalFilterData ) {
             // if we have all the data then pass it along to other places
-            $scope.$emit('mobile_filter_data_changed', $scope.filterData);
+            $rootScope.$broadcast('mobile_filter_data_changed', $scope.filterData);
         }
     });
 }
 
 
-MobileFiltersController.$inject = ['$scope'];
+MobileFiltersController.$inject = ['$scope', '$rootScope'];
 
 window.angular.module('icdsApp').directive("mobileFilters", ['templateProviderService', function (templateProviderService) {
     return {
@@ -48,6 +69,8 @@ window.angular.module('icdsApp').directive("mobileFilters", ['templateProviderSe
         scope: {
             selectedLocations: '=',
             selectAwc: '=?',
+            filters: '=',
+            selectSddDate: '=?',
         },
         bindToController: true,
         templateUrl: function () {

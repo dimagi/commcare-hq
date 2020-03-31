@@ -1,5 +1,4 @@
 {% load hq_shared_tags %}
-{% load report_tags %}
 {% load i18n %}
 
 <table id="report_table_{{ report_table.slug }}" class="table table-striped datatable" {% if pagination.filter %} data-filter="true"{% endif %}>
@@ -38,15 +37,6 @@
     {% endfor %}
     {% endblock %}
     </tbody>
-    {% if report_table.total_row and report_table.rows %}
-        <tfoot>
-        <tr>
-            {% for col in report_table.total_row %}
-                <td>{% if col.html != None %}{{ col.html|safe }}{% else %}{{ col|safe }}{% endif %}</td>
-            {% endfor %}
-        </tr>
-        </tfoot>
-    {% endif %}
 </table>
 
 <script>

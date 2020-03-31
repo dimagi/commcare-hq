@@ -186,6 +186,14 @@ class SqlData(ReportDataSource):
         raise NotImplementedError()
 
     @property
+    def distinct_on(self):
+        """
+        Returns a list of column names to create the
+        DISTINCT ON portion of the SQL query
+        """
+        return []
+
+    @property
     def order_by(self):
         """
         Returns a list of OrderBy objects.
@@ -246,8 +254,8 @@ class SqlData(ReportDataSource):
 
     def query_context(self, start=None, limit=None):
         qc = sqlagg.QueryContext(
-            self.table_name, self.wrapped_filters, self.group_by, self.order_by,
-            start=start, limit=limit
+            self.table_name, filters=self.wrapped_filters, group_by=self.group_by, distinct_on=self.distinct_on,
+            order_by=self.order_by, start=start, limit=limit
         )
         for c in self.columns:
             qc.append_column(c.view)
@@ -399,15 +407,6 @@ class DictDataFormat(BaseDataFormat):
             else:
                 ret[key] = row
 
-        return ret
-
-
-class SummingSqlTabularReport(SqlTabularReport):
-
-    @property
-    def rows(self):
-        ret = list(super(SummingSqlTabularReport, self).rows)
-        self.total_row = calculate_total_row(ret)
         return ret
 
 

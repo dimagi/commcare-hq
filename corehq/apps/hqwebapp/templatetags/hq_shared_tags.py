@@ -7,8 +7,8 @@ from django import template
 from django.conf import settings
 from django.http import QueryDict
 from django.template import NodeList, TemplateSyntaxError, loader_tags
+from corehq.util.django2_shim.template.base import TokenType
 from django.template.base import (
-    TOKEN_TEXT,
     Token,
     Variable,
     VariableDoesNotExist,
@@ -72,19 +72,6 @@ def dict_lookup(dict, key):
 
 
 @register.filter
-def array_lookup(array, index):
-    '''Get an item from an array.'''
-    if index < len(array):
-        return array[index]
-
-
-@register.simple_tag
-def dict_as_query_string(dict, prefix=""):
-    '''Convert a dictionary to a query string, minus the initial ?'''
-    return "&".join(["%s%s=%s" % (prefix, key, value) for key, value in dict.items()])
-
-
-@register.filter
 def add_days(date, days=1):
     '''Return a date with some days added'''
     span = timedelta(days=days)
@@ -93,11 +80,6 @@ def add_days(date, days=1):
     except:
         return datetime.strptime(date, '%m/%d/%Y').date() + span
 
-
-@register.filter
-def concat(str1, str2):
-    """Concatenate two strings"""
-    return "%s%s" % (str1, str2)
 
 try:
     from get_resource_versions import get_resource_versions
@@ -159,16 +141,6 @@ def domains_for_user(context, request, selected_domain=None):
 @register.simple_tag
 def commcare_user():
     return _(settings.COMMCARE_USER_TERM)
-
-
-@register.simple_tag
-def hq_web_user():
-    return _(settings.WEB_USER_TERM)
-
-
-@register.filter
-def mod(value, arg):
-    return value % arg
 
 
 # This is taken from https://code.djangoproject.com/ticket/15583
@@ -279,15 +251,6 @@ def css_field_class():
 def css_action_class():
     from corehq.apps.hqwebapp.crispy import CSS_ACTION_CLASS
     return CSS_ACTION_CLASS
-
-
-def _get_py_filename(module):
-    """
-    return the full path to the .py file of a module
-    (not the .pyc file)
-
-    """
-    return module.__file__.rstrip('c')
 
 
 @register.filter
@@ -603,7 +566,7 @@ def registerurl(parser, token):
 
     class FakeNode(template.Node):
         # must mock token or error handling code will fail and not reveal real error
-        token = Token(TOKEN_TEXT, '', (0, 0), 0)
+        token = Token(TokenType.TEXT, '', (0, 0), 0)
 
         def render(self, context):
             args = [expression.resolve(context) for expression in expressions]

@@ -51,6 +51,7 @@ from corehq.apps.case_search.models import (
 )
 from corehq.apps.cloudcare.dbaccessors import get_application_access_for_domain
 from corehq.apps.cloudcare.models import ApplicationAccess
+from corehq.apps.consumption.models import SQLDefaultConsumption
 from corehq.apps.commtrack.models import CommtrackConfig
 from corehq.apps.data_analytics.models import GIRRow, MALTRow
 from corehq.apps.data_dictionary.models import CaseProperty, CaseType
@@ -74,6 +75,7 @@ from corehq.apps.locations.models import (
 from corehq.apps.ota.models import MobileRecoveryMeasure, SerialIdBucket
 from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.reminders.models import EmailUsage
+from corehq.apps.registration.models import RegistrationRequest
 from corehq.apps.reports.models import ReportsSidebarOrdering
 from corehq.apps.sms.models import (
     SMS,
@@ -92,8 +94,9 @@ from corehq.apps.sms.models import (
     SQLMobileBackendMapping,
 )
 from corehq.apps.smsforms.models import SQLXFormsSession
+from corehq.apps.translations.models import SMSTranslations, TransifexBlacklist
 from corehq.apps.userreports.models import AsyncIndicator
-from corehq.apps.users.models import DomainRequest
+from corehq.apps.users.models import DomainRequest, SQLInvitation
 from corehq.apps.zapier.consts import EventTypes
 from corehq.apps.zapier.models import ZapierSubscription
 from corehq.blobs import NotFound, get_blob_db
@@ -485,6 +488,20 @@ class TestDeleteDomain(TestCase):
         self._assert_cloudcare_counts(self.domain.name, 0)
         self._assert_cloudcare_counts(self.domain2.name, 1)
 
+    def _assert_consumption_counts(self, domain_name, count):
+        self._assert_queryset_count([
+            SQLDefaultConsumption.objects.filter(domain=domain_name),
+        ], count)
+
+    def test_consumption(self):
+        for domain_name in [self.domain.name, self.domain2.name]:
+            SQLDefaultConsumption.objects.create(domain=domain_name)
+
+        self.domain.delete()
+
+        self._assert_consumption_counts(self.domain.name, 0)
+        self._assert_consumption_counts(self.domain2.name, 1)
+
     def _assert_data_analytics_counts(self, domain_name, count):
         self._assert_queryset_count([
             GIRRow.objects.filter(domain_name=domain_name),
@@ -690,6 +707,26 @@ class TestDeleteDomain(TestCase):
         self._assert_phone_counts(self.domain.name, 0)
         self._assert_phone_counts(self.domain2.name, 1)
 
+    def _assert_registration_count(self, domain_name, count):
+        self._assert_queryset_count([
+            RegistrationRequest.objects.filter(domain=domain_name),
+        ], count)
+
+    def test_registration_delete(self):
+        for domain_name in [self.domain.name, self.domain2.name]:
+            RegistrationRequest.objects.create(
+                domain=domain_name,
+                activation_guid=uuid.uuid4().hex,
+                request_time=datetime.utcnow(),
+                request_ip='12.34.567.8'
+            )
+            self._assert_registration_count(domain_name, 1)
+
+        self.domain.delete()
+
+        self._assert_registration_count(self.domain.name, 0)
+        self._assert_registration_count(self.domain2.name, 1)
+
     def _assert_reminders_counts(self, domain_name, count):
         self._assert_queryset_count([
             EmailUsage.objects.filter(domain=domain_name),
@@ -750,6 +787,23 @@ class TestDeleteDomain(TestCase):
         self._assert_smsforms_counts(self.domain.name, 0)
         self._assert_smsforms_counts(self.domain2.name, 1)
 
+    def _assert_translations_count(self, domain_name, count):
+        self._assert_queryset_count([
+            SMSTranslations.objects.filter(domain=domain_name),
+            TransifexBlacklist.objects.filter(domain=domain_name),
+        ], count)
+
+    def test_translations_delete(self):
+        for domain_name in [self.domain.name, self.domain2.name]:
+            SMSTranslations.objects.create(domain=domain_name, langs=['en'], translations={'a': 'a'})
+            TransifexBlacklist.objects.create(domain=domain_name, app_id='123', field_name='xyz')
+            self._assert_translations_count(domain_name, 1)
+
+        self.domain.delete()
+
+        self._assert_translations_count(self.domain.name, 0)
+        self._assert_translations_count(self.domain2.name, 1)
+
     def _assert_userreports_counts(self, domain_name, count):
         self._assert_queryset_count([
             AsyncIndicator.objects.filter(domain=domain_name)
@@ -773,11 +827,14 @@ class TestDeleteDomain(TestCase):
     def _assert_users_counts(self, domain_name, count):
         self._assert_queryset_count([
             DomainRequest.objects.filter(domain=domain_name),
+            SQLInvitation.objects.filter(domain=domain_name),
         ], count)
 
     def test_users_delete(self):
         for domain_name in [self.domain.name, self.domain2.name]:
             DomainRequest.objects.create(domain=domain_name, email='user@test.com', full_name='User')
+            SQLInvitation.objects.create(domain=domain_name, email='user@test.com',
+                                         invited_by='friend@test.com', invited_on=datetime.utcnow())
             self._assert_users_counts(domain_name, 1)
 
         self.domain.delete()

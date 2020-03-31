@@ -43,7 +43,9 @@ function RegisteredHouseholdController($scope, $routeParams, $location, $filter,
         var tooltip = chart.interactiveLayer.tooltip;
         tooltip.contentGenerator(function (d) {
             var findValue = function (values, date) {
-                var day = _.find(values, function(num) { return num['x'] === date; });
+                var day = _.find(values, function (num) {
+                    return num['x'] === date; 
+                });
                 return d3.format(",")(day['y']);
             };
             var value = findValue(vm.chartData[0].values, d.value);

@@ -262,6 +262,15 @@ def send_keys_to_couch(db, keys):
     return r.json()['rows']
 
 
+def bulk_get_revs(target_db, doc_ids):
+    """
+    return (_id, _rev) for every existing doc in doc_ids
+    if a doc id is not found in target_db, it is excluded from the result
+    """
+    result = target_db.all_docs(keys=list(doc_ids)).all()
+    return [(row['id'], row['value']['rev']) for row in result if not row.get('error')]
+
+
 def iter_update(db, fn, ids, max_retries=3, verbose=False, chunksize=100):
     """
     Map `fn` over every doc in `db` matching `ids`

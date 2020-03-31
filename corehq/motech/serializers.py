@@ -15,14 +15,34 @@ value in `to_data_type`.
 """
 import datetime
 import re
+from typing import Any
 
 from dateutil import parser as dateutil_parser
 
+from dimagi.utils.parsing import FALSE_STRINGS
+
 from corehq.motech.const import (
+    COMMCARE_DATA_TYPE_BOOLEAN,
     COMMCARE_DATA_TYPE_DECIMAL,
     COMMCARE_DATA_TYPE_INTEGER,
     COMMCARE_DATA_TYPE_TEXT,
 )
+
+
+def to_boolean(value: Any) -> bool:
+    """
+    Converts truthy and falsey values, including falsey strings, to
+    boolean.
+
+    >>> to_boolean(1)
+    True
+    >>> to_boolean('No')
+    False
+
+    """
+    if isinstance(value, str) and value.lower() in FALSE_STRINGS:
+        return False
+    return bool(value)
 
 
 def to_decimal(value):
@@ -65,6 +85,7 @@ def to_date_str(value):
 
 serializers = {
     # (from_data_type, to_data_type): function
+    (None, COMMCARE_DATA_TYPE_BOOLEAN): to_boolean,
     (None, COMMCARE_DATA_TYPE_DECIMAL): to_decimal,
     (None, COMMCARE_DATA_TYPE_INTEGER): to_integer,
     (None, COMMCARE_DATA_TYPE_TEXT): to_text,

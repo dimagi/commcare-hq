@@ -1,12 +1,15 @@
+from django.conf import settings
 from django.utils.translation import ugettext_lazy as _
 
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import static
 from corehq.apps.locations.util import location_hierarchy_config
 from corehq.toggles import ICDS_DASHBOARD_SHOW_MOBILE_APK, NAMESPACE_USER
 from custom.icds_reports.const import NavigationSections
+from custom.icds_reports.const import SDDSections
 from custom.icds_reports.utils import icds_pre_release_features
 
 import attr
+
 
 def get_dashboard_template_context(domain, couch_user):
     context = {}
@@ -38,7 +41,10 @@ def get_dashboard_template_context(domain, couch_user):
         context['is_web_user'] = True
 
     context['nav_metadata'] = _get_nav_metadatada()
+    context['sdd_metadata'] = _get_sdd_metadata()
     context['nav_menu_items'] = _get_nav_menu_items()
+    context['fact_sheet_sections'] = _get_factsheet_sections()
+    context['MAPBOX_ACCESS_TOKEN'] = settings.MAPBOX_ACCESS_TOKEN
     return context
 
 
@@ -67,6 +73,22 @@ def _get_nav_metadatada():
     }
 
 
+def _get_sdd_metadata():
+    """
+    sdd metadata that is passed through to the Angular app.
+    See service-delivery-dashboard.directive.js for an example of using this.
+    """
+    return {
+        SDDSections.PW_LW_CHILDREN: {
+            'label': _('PW, LW & Children 0-3 years (0-1095 days)'),
+            'image': static('icds_reports/mobile/images/motherandchild.png')
+        },
+        SDDSections.CHILDREN: {
+            'label': _('Children 3-6 years (1096-2190 days)'),
+            'image': static('icds_reports/mobile/images/babyboy.png')
+        },
+    }
+
 @attr.s
 class NavMenuSectionsList (object):
     sections = attr.ib()
@@ -88,6 +110,48 @@ class NavMenuSubPages (object):
     featureFlagOnly = attr.ib(default=False)
     showInWeb = attr.ib(default=True)
     showInMobile = attr.ib(default=True)
+
+
+@attr.s
+class FactSheetSectionsList (object):
+    sections = attr.ib()
+
+
+@attr.s
+class FactSheetSection (object):
+    name = attr.ib()
+    route = attr.ib()
+    image = attr.ib()
+    style = attr.ib()
+
+
+def _get_factsheet_sections():
+    return attr.asdict(FactSheetSectionsList([
+        FactSheetSection('Maternal And Child Nutrition',
+                         'maternal_and_child_nutrition',
+                         'maternal_and_child.png',
+                         'fact-sheet-nav-nutrition'),
+        FactSheetSection('Interventions',
+                         'interventions',
+                         'interventions.png',
+                         'fact-sheet-nav-interventions'),
+        FactSheetSection('Behavior change',
+                         'behavior_change',
+                         'behavior_change.png',
+                         'fact-sheet-nav-behaviour-change'),
+        FactSheetSection('Water Sanitation and Hygiene',
+                         'water_sanitation_and_hygiene',
+                         'water_sanitation_hygiene.png',
+                         'fact-sheet-nav-water'),
+        FactSheetSection('Demographics',
+                         'demographics',
+                         'demographics.png',
+                         'fact-sheet-nav-demographics'),
+        FactSheetSection('All',
+                         'all',
+                         'all.png',
+                         'fact-sheet-nav-all')
+    ]))
 
 
 def _get_nav_menu_items():

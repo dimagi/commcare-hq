@@ -1,3 +1,4 @@
+import datetime
 from mock import patch
 
 from custom.icds_reports.ucr.tests.test_base_form_ucr import BaseFormsTest
@@ -13,7 +14,7 @@ class TestLsUsage(BaseFormsTest):
     def test_vhnd_form_inclusion(self):
         self._test_data_source_results(
             'ls_vhnd_observation_form', [{
-                'timeend': None,
+                'timeend': datetime.datetime(2018, 8, 24, 8, 6, 40, 712000),
                 'doc_id': None
             }
             ])
@@ -21,7 +22,7 @@ class TestLsUsage(BaseFormsTest):
     def test_awc_mngt_form_inclusion(self):
         self._test_data_source_results(
             'awc_visit_form_with_location', [{
-                'timeend': None,
+                'timeend': datetime.datetime(2018, 11, 6, 15, 24, 34, 784000),
                 'doc_id': None
             }
             ])
@@ -29,7 +30,7 @@ class TestLsUsage(BaseFormsTest):
     def test_ls_home_visit_form_inclusion(self):
         self._test_data_source_results(
             'ls_home_visits', [{
-                'timeend': None,
+                'timeend': datetime.datetime(2019, 3, 27, 7, 15, 37, 183000),
                 'doc_id': None
             }
             ])

@@ -17,6 +17,7 @@ from corehq.util.models import (
     AwsMeta,
 )
 from corehq.util.soft_assert import soft_assert
+from corehq.util.datadog.gauges import datadog_counter
 
 _bounced_email_soft_assert = soft_assert(
     to=['{}@{}'.format('biyeun+bounces', 'dimagi.com')],
@@ -137,6 +138,9 @@ class BouncedEmailManager(object):
                     destination=mail_info.get('destination', []),
                 ))
         else:
+            datadog_counter(
+                'commcare.bounced_email_manager.unknown_notification_type'
+            )
             self._label_problem_email(
                 uid,
                 extra_labels=['UnknownAWSNotificationType']
@@ -179,6 +183,7 @@ class BouncedEmailManager(object):
             )
         if self.delete_processed_messages:
             self._delete_message_with_uid(uid)
+        datadog_counter('commcare.bounced_email_manager.permanent_bounce_recorded')
 
     def _record_transient_bounce(self, aws_meta, uid):
         exists = TransientBounceEmail.objects.filter(
@@ -193,6 +198,7 @@ class BouncedEmailManager(object):
             )
         if self.delete_processed_messages:
             self._delete_message_with_uid(uid)
+        datadog_counter('commcare.bounced_email_manager.transient_bounce_recorded')
 
     def _handle_undetermined_bounce(self, aws_meta, uid):
         _bounced_email_soft_assert(
@@ -221,6 +227,7 @@ class BouncedEmailManager(object):
             )
         if self.delete_processed_messages:
             self._delete_message_with_uid(uid)
+        datadog_counter('commcare.bounced_email_manager.complaint_recorded')
 
     def process_aws_notifications(self):
         self.mail.select('inbox')
@@ -239,6 +246,9 @@ class BouncedEmailManager(object):
                         elif aws_meta.main_type == BounceType.UNDETERMINED:
                             self._handle_undetermined_bounce(aws_meta, uid)
                         else:
+                            datadog_counter(
+                                'commcare.bounced_email_manager.unexpected_bounce_type'
+                            )
                             self._label_problem_email(
                                 uid,
                                 extra_labels=["UnexpectedBounceType"]
@@ -251,6 +261,7 @@ class BouncedEmailManager(object):
                     elif aws_meta.notification_type == NotificationType.COMPLAINT:
                         self._record_complaint(aws_meta, uid)
             except Exception as e:
+                datadog_counter('commcare.bounced_email_manager.formatting_issues')
                 self._label_problem_email(
                     uid,
                     extra_labels=["FormattingIssues"]
@@ -320,6 +331,7 @@ class BouncedEmailManager(object):
                 BouncedEmail.objects.update_or_create(
                     email=recipient,
                 )
+                datadog_counter('commcare.bounced_email_manager.sns_notification_missing')
                 self._label_problem_email(
                     uid,
                     extra_labels=["SNSNotificationMissing"]
@@ -331,6 +343,7 @@ class BouncedEmailManager(object):
                 )
             elif not exists:
                 # this email failed to validate, find out why
+                datadog_counter('commcare.bounced_email_manager.validation_failed')
                 self._label_problem_email(
                     uid,
                     extra_labels=["ValidationFailed"]
@@ -362,6 +375,7 @@ class BouncedEmailManager(object):
                 if recipients:
                     self._handle_raw_bounced_recipients(recipients, uid)
                 else:
+                    datadog_counter('commcare.bounced_email_manager.recipient_unknown')
                     self._label_problem_email(
                         uid,
                         extra_labels=["RecipientUnknown"]
