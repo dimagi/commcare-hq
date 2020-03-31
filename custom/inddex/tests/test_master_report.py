@@ -134,7 +134,6 @@ class TestNewReport(TestCase):
         self.assertEqual(food_names(expected), food_names(actual))
 
         columns_known_to_fail = {  # TODO address these columns
-            'ingr_recipe_total_grams_consumed',
             'energy_kcal_per_100g',
             'energy_kcal',
             'water_g_per_100g',

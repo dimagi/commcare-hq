@@ -284,6 +284,9 @@ class RecipeRowGenerator:
             return len(self._recipe_ingredients)
         if slug == 'total_grams':
             return self._total_grams[row.uuid]
+        if slug == 'ingr_recipe_total_grams_consumed':
+            if row.is_ingredient == 'yes' and self._recipe_row.food_type == STANDARD_RECIPE:
+                return self._total_grams[self._recipe_row.uuid]
         return getattr(row, slug)
 
     @cached_property
