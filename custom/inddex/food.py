@@ -162,7 +162,12 @@ class FoodRow:
             self.fao_who_gift_food_group_code = self.composition.fao_who_gift_food_group_code
             self.fao_who_gift_food_group_description = self.composition.fao_who_gift_food_group_description
             self.user_food_group = self.composition.user_defined_food_group
+
             self.reference_food_code = self.composition.reference_food_code_for_food_composition
+            if self.fct_data_used == 'food_code' and self.reference_food_code:
+                self.fct_data_used = 'reference_food_code'
+
+        self.fct_reference_food_code_exists = bool(self.reference_food_code)
 
     def _set_conversion_factors(self):
         if self.food_type in (FOOD_ITEM, STANDARD_RECIPE) and self.conv_method_code:

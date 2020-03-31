@@ -135,8 +135,6 @@ class TestNewReport(TestCase):
 
         columns_known_to_fail = {  # TODO address these columns
             'ingr_recipe_total_grams_consumed',
-            'fct_reference_food_code_exists',
-            'fct_data_used',
             'total_grams',
             'energy_kcal_per_100g',
             'energy_kcal',
