@@ -1,5 +1,8 @@
+import operator
+import uuid
 from collections import defaultdict
 from datetime import datetime
+from functools import reduce
 
 from django.utils.functional import cached_property
 
@@ -134,6 +137,7 @@ _INDICATORS_BY_SLUG = {i.slug: i for i in INDICATORS}
 class FoodRow:
 
     def __init__(self, food_code, ucr_row, fixtures):
+        self.uuid = uuid.uuid4()
         self.food_code = food_code
         self.ucr_row = ucr_row
         self.fixtures = fixtures
@@ -278,7 +282,33 @@ class RecipeRowGenerator:
     def _get_val(self, row, slug):
         if slug == 'recipe_num_ingredients' and row.is_recipe:
             return len(self._recipe_ingredients)
+        if slug == 'total_grams':
+            return self._total_grams[row.uuid]
         return getattr(row, slug)
+
+    @cached_property
+    def _total_grams(self):
+        recipe = self._recipe_row
+        if recipe.food_type == STANDARD_RECIPE:
+            res = {}
+            recipe_total = _multiply(recipe.measurement_amount, recipe.conv_factor, recipe.portions)
+            res[recipe.uuid] = recipe_total
+            for row in self._recipe_ingredients:
+                res[row.uuid] = _multiply(recipe_total, row.ingr_fraction)
+            return res
+
+        else:  # NON_STANDARD_RECIPE
+            res = {}
+
+            for row in self._recipe_ingredients:
+                res[row.uuid] = _multiply(row.measurement_amount, row.conv_factor,
+                                          row.portions, recipe.nsr_consumed_cooked_fraction)
+            try:
+                res[recipe.uuid] = sum(res.values()) if res else None
+            except TypeError:
+                res[recipe.uuid] = None
+            return res
+
 
 
 class FoodData:
@@ -311,8 +341,21 @@ class FoodData:
 
 
 def _yield_non_recipe_rows(rows):
+
+    def _get_val(row, slug):
+        if slug == 'total_grams':
+            return _multiply(row.measurement_amount, row.conv_factor, row.portions)
+        return getattr(row, slug)
+
     for row in rows:
-        yield [_format(getattr(row, column.slug)) for column in INDICATORS]
+        yield [_format(_get_val(row, column.slug)) for column in INDICATORS]
+
+
+def _multiply(*args):
+    try:
+        return round(reduce(operator.mul, args), 2)
+    except TypeError:
+        return None
 
 
 def _format(val):
