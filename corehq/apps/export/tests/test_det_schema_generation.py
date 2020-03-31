@@ -44,7 +44,7 @@ class TestDETFormSchema(SimpleTestCase, TestFileMixin):
         super().setUpClass()
         cls.schema = cls.get_json('form_schema')
 
-    def test_generate_from_case_schema(self):
+    def test_generate_from_form_schema(self):
         with tempfile.NamedTemporaryFile(mode='wb', suffix='.xlsx') as tmp:
             generate_form_schema(self.schema, 'test', tmp)
             wb = load_workbook(filename=tmp.name)
@@ -59,5 +59,4 @@ class TestDETFormSchema(SimpleTestCase, TestFileMixin):
             self.assertEqual('xmlns', id_row_by_heading['Filter Name'])
             self.assertEqual('http://openrosa.org/formdesigner/B4FFDB28-8240-4950-B6E2-EA26D7B0856D',
                              id_row_by_heading['Filter Value'])
-
             # note: subtables for repeats are not tested and likely broken
