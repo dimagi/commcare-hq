@@ -178,8 +178,9 @@ window.angular.module('icdsApp').factory('locationsService', ['$http', '$locatio
         },
 
         initLocations : function(vm, locationsCache) {
+            var locationsService = this;
             if (vm.selectedLocationId) {
-                vm.locationPromise = this.getAncestors(vm.selectedLocationId).then(function(data) {
+                vm.locationPromise = locationsService.getAncestors(vm.selectedLocationId).then(function(data) {
                     var locations = data.locations;
 
                     var selectedLocation = data.selected_location;
@@ -207,7 +208,7 @@ window.angular.module('icdsApp').factory('locationsService', ['$http', '$locatio
                         return _.contains(_.pluck(locationTypes, 'name'), selectedLocation.location_type_name);
                     });
                     vm.selectedLocations[levelOfSelectedLocation] = vm.selectedLocationId;
-                    this.onSelectLocation(selectedLocation, levelOfSelectedLocation, locationsCache, vm);
+                    locationsService.onSelectLocation(selectedLocation, levelOfSelectedLocation, locationsCache, vm);
 
                     levelOfSelectedLocation -= 1;
 
@@ -220,13 +221,13 @@ window.angular.module('icdsApp').factory('locationsService', ['$http', '$locatio
                         levelOfSelectedLocation -= 1;
                     }
 
-                    var locationIndex = this.selectedLocationIndex(vm.selectedLocations);
+                    var locationIndex = locationsService.selectedLocationIndex(vm.selectedLocations);
                     var levels = _.filter(vm.levels, function (value){return value.id > locationIndex;});
                     vm.groupByLevels = levels;
                     vm.selectedLevel = locationIndex + 1;
                 });
             } else {
-                vm.locationPromise = this.getRootLocations().then(function(data) {
+                vm.locationPromise = locationsService.getRootLocations().then(function(data) {
                     locationsCache.root = [NATIONAL_OPTION].concat(data.locations);
                 });
                 vm.groupByLevels = vm.levels;
