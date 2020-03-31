@@ -41,10 +41,14 @@ def generate_case_schema(export_schema_json, main_sheet_name, output_file):
         filter_value=data['case_type'],
         rows=_get_default_case_rows()
     )
-    output = DETConfig(tables=[main_table])
+    output = DETConfig(name=main_sheet_name, tables=[main_table])
+    _add_schemas_to_output(output, export_schema_json)
+    output.export_to_file(output_file)
 
+
+def _add_schemas_to_output(output, data):
     for i, form in enumerate(data['group_schemas']):
-        header = main_sheet_name
+        header = output.name
         parent = collapse_path(form['path'])
         default_prefix = PREFIX_MAP[i]
         if parent:
@@ -91,6 +95,3 @@ def generate_case_schema(export_schema_json, main_sheet_name, output_file):
                 map_via = 'str2date'
 
             current_table.rows.append(DETRow(source_field=prefixed_path, field=x, map_via=map_via))
-
-
-    output.export_to_file(output_file)
