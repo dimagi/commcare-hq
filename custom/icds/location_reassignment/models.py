@@ -63,14 +63,16 @@ class BaseOperation(metaclass=ABCMeta):
             return False
         valid = True
         for old_location in self.old_locations:
-            if (DEPRECATED_TO in old_location.metadata
-                    or DEPRECATED_AT in old_location.metadata
-                    or DEPRECATED_VIA in old_location.metadata):
+            if (old_location.metadata.get(DEPRECATED_TO)
+                    or old_location.metadata.get(DEPRECATED_AT)
+                    or old_location.metadata.get(DEPRECATED_VIA)):
                 self.errors.append("%s operation: location %s with site code %s is already deprecated." % (
                     self.type, old_location.name, old_location.site_code))
                 valid = False
         for new_location in self.new_locations:
-            if DEPRECATES in new_location.metadata:
+            if (new_location.metadata.get(DEPRECATES)
+                    or new_location.metadata.get(DEPRECATES_AT)
+                    or new_location.metadata.get(DEPRECATES_VIA)):
                 self.errors.append("%s operation: location %s with site code %s is already deprecated." % (
                     self.type, new_location.name, new_location.site_code))
                 valid = False
