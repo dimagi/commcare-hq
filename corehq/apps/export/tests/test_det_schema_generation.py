@@ -17,7 +17,7 @@ class TestDETCaseSchema(SimpleTestCase, TestFileMixin):
         super().setUpClass()
         cls.schema = cls.get_json('case_schema')
 
-    def test_generate_schema(self):
+    def test_generate_from_case_schema(self):
         with tempfile.NamedTemporaryFile(mode='wb', suffix='.xlsx') as tmp:
             generate_case_schema(self.schema, 'test', tmp)
             wb = load_workbook(filename=tmp.name)
@@ -31,3 +31,5 @@ class TestDETCaseSchema(SimpleTestCase, TestFileMixin):
             self.assertEqual('case', id_row_by_heading['Data Source'])
             self.assertEqual('type', id_row_by_heading['Filter Name'])
             self.assertEqual('event', id_row_by_heading['Filter Value'])
+
+            # note: subtables for actions and indices are not tested and likely broken
