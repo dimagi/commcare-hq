@@ -2094,6 +2094,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
     vm.dataSortingDirection = SORT_ASCENDING;
     vm.sortingColumn = DEFAULT_SORTED_COLUMN;
     vm.sortableInputKpiData = [];
+    vm.showAwcOnMap = false;
     vm.getTableData = function () {
         return vm.awcReportTableData[vm.step].slice(1);
     };
@@ -2342,13 +2343,14 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
     vm.lineChartDaysPerWeekOptions = {
         chart: {
             type: 'multiBarChart',
-            height: 450,
-            width: 1100,
+            wrapLabels: true,
+            height: isMobile ? 350 : 450,
+            width: isMobile ? '' : 1100,
             margin: {
                 top: 20,
                 right: 20,
-                bottom: 150,
-                left: 80,
+                bottom: isMobile ? 50 : 150,
+                left: isMobile ? 20 : 80,
             },
             x: function (d) {
                 return d.x;
@@ -2363,15 +2365,15 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
             clipVoronoi: false,
             duration: 500,
             xAxis: {
-                axisLabel: 'Week',
+                axisLabel: isMobile ? '' : 'Week',
                 tickFormat: function (d) {
                     return d3.time.format('Week of %d/%m')(new Date(d));
                 },
-                staggerLabels: true,
+                staggerLabels: !isMobile,
                 showMaxMin: false,
             },
             yAxis: {
-                axisLabel: 'Number of Days',
+                axisLabel: isMobile ? '' : 'Number of Days',
                 tickFormat: function (d) {
                     return d3.format('d')(d);
                 },
@@ -2385,13 +2387,14 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
     vm.lineChartOptions = {
         chart: {
             type: 'lineChart',
-            height: 450,
-            width: 1100,
+            height: isMobile ? 350 : 450,
+            width: isMobile ? 800 : 1100,
+            wrapLabels: true,
             margin: {
                 top: 20,
                 right: 50,
-                bottom: 100,
-                left: 80,
+                bottom: isMobile ? 50 : 100,
+                left: isMobile ? 20 : 80,
             },
             x: function (d) {
                 return d.x;
@@ -2405,15 +2408,15 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
             clipVoronoi: false,
             duration: 1000,
             xAxis: {
-                axisLabel: 'Day',
+                axisLabel: isMobile ? '' : 'Day',
                 tickFormat: function (d) {
                     return d3.time.format('%d/%m/%Y')(new Date(d));
                 },
-                staggerLabels: true,
+                staggerLabels: !isMobile,
                 showMaxMin: false,
             },
             yAxis: {
-                axisLabel: 'Number of Children',
+                axisLabel: isMobile ? '' : 'Number of Children',
                 tickFormat: function (d) {
                     return d3.format('d')(d);
                 },

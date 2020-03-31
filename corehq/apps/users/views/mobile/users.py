@@ -1480,10 +1480,13 @@ class CommCareUserConfirmAccountView(TemplateView, DomainViewMixin):
             user.last_name = full_name[1]
             user.confirm_account(password=self.form.cleaned_data['password'])
             messages.success(request, _(
-                f'You have successfully confirmed the {self.user.raw_username} account. '
+                f'You have successfully confirmed the {user.raw_username} account. '
                 'You can now login'
             ))
-            return HttpResponseRedirect(reverse('domain_login', args=[self.domain]))
+            return HttpResponseRedirect('{}?username={}'.format(
+                reverse('domain_login', args=[self.domain]),
+                user.raw_username,
+            ))
 
         # todo: process form data and activate the account
         return self.get(request, *args, **kwargs)
