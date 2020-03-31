@@ -37,7 +37,7 @@ function RegisteredHouseholdController($scope, $routeParams, $location, $filter,
         'captionContent': ' Total number of households registered',
     };
     vm.chartOptions = vm.getChartOptions(options);
-    vm.chartOptions.chart.width = 1100;
+    vm.chartOptions.chart.width = isMobile ? '' : 1100;
     vm.chartOptions.chart.color = d3.scale.category10().range();
     vm.chartOptions.chart.callback = function (chart) {
         var tooltip = chart.interactiveLayer.tooltip;

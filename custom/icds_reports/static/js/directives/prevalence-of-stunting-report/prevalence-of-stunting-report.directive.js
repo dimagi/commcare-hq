@@ -92,7 +92,7 @@ function PrevalenceOfStuntingReportController($scope, $routeParams, $location, $
         'Stunting is a sign of chronic undernutrition and has long lasting harmful consequences on the growth of a child',
     };
     vm.chartOptions = vm.getChartOptions(options);
-    vm.chartOptions.chart.width = 1100;
+    vm.chartOptions.chart.width = isMobile ? '' : 1100;
     vm.chartOptions.chart.color = d3.scale.category10().range();
     vm.chartOptions.chart.callback = function (chart) {
         var tooltip = chart.interactiveLayer.tooltip;
