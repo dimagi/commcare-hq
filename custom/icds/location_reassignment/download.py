@@ -68,7 +68,7 @@ class Download(object):
         for username, assigned_location_ids in user_details:
             if not isinstance(assigned_location_ids, list):
                 assigned_location_ids = [assigned_location_ids]
-                assigned_location_ids_per_username[username] = assigned_location_ids
+            assigned_location_ids_per_username[username] = assigned_location_ids
         return assigned_location_ids_per_username
 
     def _create_workbook(self):

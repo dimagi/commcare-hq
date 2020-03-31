@@ -15,7 +15,13 @@ from corehq.util.files import safe_filename_header
 from corehq.util.workbook_json.excel import WorkbookJSONError, get_workbook
 from custom.icds.location_reassignment.download import Download
 from custom.icds.location_reassignment.dumper import Dumper
+from custom.icds.location_reassignment.forms import (
+    LocationReassignmentRequestForm,
+)
 from custom.icds.location_reassignment.parser import Parser
+from custom.icds.location_reassignment.tasks import (
+    process_location_reassignment,
+)
 
 
 @method_decorator([toggles.LOCATION_REASSIGNMENT.required_decorator()], name='dispatch')
@@ -42,11 +48,12 @@ class LocationReassignmentView(BaseLocationView):
             },
         })
         context.update({
-            'bulk_upload_form': get_bulk_upload_form(context),
+            'bulk_upload_form': get_bulk_upload_form(context, form_class=LocationReassignmentRequestForm),
         })
         return context
 
     def post(self, request, *args, **kwargs):
+        update = request.POST.get('update')
         try:
             workbook = get_workbook(request.FILES['bulk_upload_file'])
         except WorkbookJSONError as e:
@@ -54,10 +61,17 @@ class LocationReassignmentView(BaseLocationView):
         else:
             errors = self._workbook_is_valid(workbook)
             if not errors:
-                transitions, errors = Parser(workbook).parse()
-                [messages.error(request, error) for error in errors]
-                if not errors:
+                parser = Parser(self.domain, workbook)
+                transitions, errors = parser.parse()
+                if errors:
+                    [messages.error(request, error) for error in errors]
+                elif not update:
                     return self._generate_response(transitions)
+                else:
+                    process_location_reassignment.delay(self.domain, parser.valid_transitions,
+                                                        list(parser.requested_transitions.keys()))
+                    messages.success(request, _(
+                        "Your request has been submitted. We will notify you via email once completed."))
             else:
                 [messages.error(request, error) for error in errors]
         return self.get(request, *args, **kwargs)
