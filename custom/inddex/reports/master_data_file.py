@@ -1,6 +1,9 @@
+from django.utils.functional import cached_property
+
 from memoized import memoized
 
-from custom.inddex.ucr.data_providers.master_data_file_data import MasterDataFileData
+from custom.inddex.food import FoodData
+from custom.inddex.ucr_data import FoodCaseData
 from custom.inddex.utils import BaseGapsSummaryReport
 
 
@@ -19,3 +22,26 @@ class MasterDataFileSummaryReport(BaseGapsSummaryReport):
         return [
             MasterDataFileData(config=self.report_config),
         ]
+
+
+class MasterDataFileData:
+    title = 'Master Data'
+    slug = 'master_data'
+
+    def __init__(self, config):
+        self.config = config
+
+    @cached_property
+    def food_data(self):
+        return FoodData(
+            self.config['domain'],
+            FoodCaseData(self.config).get_data(),
+        )
+
+    @property
+    def headers(self):
+        return self.food_data.headers
+
+    @property
+    def rows(self):
+        return self.food_data.rows

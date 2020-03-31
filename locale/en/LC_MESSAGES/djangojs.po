@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-03-18 20:45+0000\n"
+"POT-Creation-Date: 2020-03-25 22:33+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -124,6 +124,10 @@ msgstr ""
 #: corehq/apps/accounting/static/accounting/js/widgets.js:70
 #: corehq/apps/domain/static/domain/js/pro-bono.js:33
 msgid "Please enter a valid email."
+msgstr ""
+
+#: corehq/apps/analytics/static/analytix/js/hubspot.js:187
+msgid "Your trial request has been received!"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/add_ons.js:15
@@ -2752,7 +2756,7 @@ msgid "Form submission found!"
 msgstr ""
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/list_automatic_update_rules.js:40
-#: corehq/apps/users/static/users/js/mobile_workers.js:101
+#: corehq/apps/users/static/users/js/mobile_workers.js:110
 msgid "Issue communicating with server. Try again."
 msgstr ""
 
@@ -3163,16 +3167,20 @@ msgstr ""
 msgid "Please specify."
 msgstr ""
 
-#: corehq/apps/registration/static/registration/js/password.js:37
+#: corehq/apps/registration/static/registration/js/password.js:38
 msgid "Your password is too weak! Try adding numbers or symbols!"
 msgstr ""
 
-#: corehq/apps/registration/static/registration/js/password.js:39
+#: corehq/apps/registration/static/registration/js/password.js:40
 msgid "Your password is almost strong enough! Try adding numbers or symbols!"
 msgstr ""
 
-#: corehq/apps/registration/static/registration/js/password.js:41
+#: corehq/apps/registration/static/registration/js/password.js:42
 msgid "Good Job! Your password is strong!"
+msgstr ""
+
+#: corehq/apps/registration/static/registration/js/register_new_user.js:33
+msgid "Choose a time for your CommCare trial setup"
 msgstr ""
 
 #: corehq/apps/reports/static/reports/js/base.js:32
@@ -3551,11 +3559,15 @@ msgstr ""
 msgid "Download <%= count %> users"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/mobile_workers.js:308
+#: corehq/apps/users/static/users/js/mobile_workers.js:280
+msgid "Email address is required when users confirm their own accounts."
+msgstr ""
+
+#: corehq/apps/users/static/users/js/mobile_workers.js:341
 msgid "Checking availability..."
 msgstr ""
 
-#: corehq/apps/users/static/users/js/mobile_workers.js:329
+#: corehq/apps/users/static/users/js/mobile_workers.js:362
 msgid "Issue connecting to server. Check Internet connection."
 msgstr ""
 
@@ -3708,7 +3720,7 @@ msgstr ""
 msgid "Complete"
 msgstr ""
 
-#: corehq/motech/dhis2/static/dhis2/js/dhis2_map_settings.js:158
+#: corehq/motech/dhis2/static/dhis2/js/dhis2_map_settings.js:160
 msgid "Unable to save DataSet maps"
 msgstr ""
 

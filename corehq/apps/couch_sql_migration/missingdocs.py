@@ -11,8 +11,8 @@ from dimagi.utils.chunked import chunked
 from corehq.apps.domain.dbaccessors import get_doc_count_in_domain_by_type
 from corehq.form_processor.models import XFormInstanceSQL
 from corehq.sql_db.util import split_list_by_db_partition
-from corehq.util.datadog.gauges import datadog_counter
 from corehq.util.log import with_progress_bar
+from corehq.util.metrics import metrics_counter
 from corehq.util.pagination import ResumableFunctionIterator
 
 from .casediff import get_couch_cases
@@ -39,7 +39,7 @@ def find_missing_docs(domain, state_dir, live_migrate=False, resume=True, progre
     - commcare.couchsqlmigration.case.has_diff
     """
     stopper = Stopper(live_migrate)
-    dd_count = partial(datadog_counter, tags=["domain:" + domain])
+    dd_count = partial(metrics_counter, tags={"domain": domain})
     statedb = open_state_db(domain, state_dir, readonly=False)
     if live_migrate:
         log.info(f"stopping at {get_main_forms_iteration_stop_date(statedb)}")
@@ -57,7 +57,7 @@ def find_missing_docs(domain, state_dir, live_migrate=False, resume=True, progre
 
 def recheck_missing_docs(domain, state_dir):
     """Check if documents marked as missing are still missing"""
-    dd_count = partial(datadog_counter, tags=["domain:" + domain])
+    dd_count = partial(metrics_counter, tags={"domain": domain})
     statedb = open_state_db(domain, state_dir, readonly=False)
     counts = statedb.get_doc_counts()
     with statedb:
@@ -113,7 +113,7 @@ class MissingIds:
 
     form_types = list(form_doc_types()) + ["HQSubmission", "XFormInstance-Deleted"]
     case_types = ['CommCareCase', 'CommCareCase-Deleted']
-    _doc_types = {
+    DOC_TYPES = {
         FORM: form_types,
         CASE: case_types,
     }
@@ -121,7 +121,7 @@ class MissingIds:
     def __attrs_post_init__(self):
         self.domain = self.statedb.domain
         self.counter = DocCounter(self.statedb)
-        self.doc_types = self._doc_types[self.entity]
+        self.doc_types = self.DOC_TYPES[self.entity]
         sql_params = self.sql_params[self.entity]
         self.sql = self.missing_docs_sql.format(**sql_params)
         self._count_keys = set()

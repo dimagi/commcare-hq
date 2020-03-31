@@ -1,0 +1,39 @@
+{% extends "registration/email/confirm_account.html" %}
+{% load i18n %}
+
+{% block preview_text %}
+  {% blocktrans %}
+    You have been added to the {{ domain }} project on {{ hq_name }}.
+  {% endblocktrans %}
+{% endblock %}
+
+{% block cta_headline %}
+  {% blocktrans %}
+    You've been added to {{ domain }}.
+  {% endblocktrans %}
+{% endblock %}
+
+{% block cta_url %}{{ url }}{% endblock %}
+
+{% block cta_text %}
+  {% blocktrans %}
+    Confirm Account
+  {% endblocktrans %}
+{% endblock %}
+
+{% block lead_text %}
+  {% blocktrans %}
+    Once you confirm your account you will be able to
+    access and submit data in the {{ domain }} project on {{ hq_name }}.
+    Your username to login is <strong>{{ username }}</strong>.
+  {% endblocktrans %}
+{% endblock %}
+
+{% block secondary_text %}{% endblock %}
+
+{% block reason_for_email %}
+  {% blocktrans %}
+    You received this message because we received an invitation request from
+    an administrator of the project "{{ domain }}".
+  {% endblocktrans %}
+{% endblock %}

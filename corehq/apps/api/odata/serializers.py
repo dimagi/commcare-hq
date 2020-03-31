@@ -86,6 +86,7 @@ class ODataBaseSerializer(Serializer):
                 split_columns=config.split_multiselects,
                 transform_dates=config.transform_dates,
                 as_json=True,
+                is_odata=True,
             )
             data.extend(rows)
         return data

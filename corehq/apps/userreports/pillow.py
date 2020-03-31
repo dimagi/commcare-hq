@@ -46,7 +46,7 @@ from corehq.util.datadog.gauges import datadog_bucket_timer, datadog_histogram
 from corehq.util.soft_assert import soft_assert
 from corehq.util.timer import TimingContext
 
-REBUILD_CHECK_INTERVAL = 60 * 60  # in seconds
+REBUILD_CHECK_INTERVAL = 3 * 60 * 60  # in seconds
 LONG_UCR_LOGGING_THRESHOLD = 0.5
 
 

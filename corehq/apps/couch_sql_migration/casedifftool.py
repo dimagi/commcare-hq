@@ -14,6 +14,7 @@ from corehq.form_processor.utils.general import set_local_domain_sql_backend_ove
 from corehq.util.log import with_progress_bar
 
 from .casediff import (
+    add_cases_missing_from_couch,
     diff_cases,
     get_couch_cases,
     global_diff_state,
@@ -182,13 +183,17 @@ class CaseDiffTool:
 
 
 def load_and_diff_cases(case_ids, log_cases=False):
-    couch_cases = {c.case_id: c.to_json()
-        for c in get_couch_cases(case_ids) if should_diff(c)}
+    couch_cases = get_couch_cases(case_ids)
+    cases_to_diff = {c.case_id: c.to_json() for c in couch_cases if should_diff(c)}
     if log_cases:
-        skipped = [id for id in case_ids if id not in couch_cases]
+        skipped = {c.case_id for c in couch_cases} - cases_to_diff.keys()
         if skipped:
             log.info("skipping cases modified since cutoff date: %s", skipped)
-    return diff_cases_with_retry(couch_cases, log_cases=log_cases)
+    data = diff_cases_with_retry(cases_to_diff, log_cases=log_cases)
+    if len(set(case_ids)) > len(couch_cases):
+        missing_ids = set(case_ids) - {c.case_id for c in couch_cases}
+        add_cases_missing_from_couch(data, missing_ids)
+    return data
 
 
 def _close_connections(err):
@@ -249,6 +254,8 @@ def init_worker(domain, *args):
     clean_break = False
     reset_django_db_connections()
     reset_couchdb_connections()
+    reset_blobdb_connections()
+    reset_redis_connections()
     signal.signal(signal.SIGINT, on_break)
     set_local_domain_sql_backend_override(domain)
     return global_diff_state(domain, *args)
@@ -274,4 +281,48 @@ def reset_couchdb_connections():
     dbs = CouchdbkitHandler.__shared_state__["_databases"]
     for db in dbs.values():
         server = db[0] if isinstance(db, tuple) else db.server
-        server.cloudant_client.r_session.close()
+        with safe_socket_close():
+            server.cloudant_client.r_session.close()
+
+
+def reset_blobdb_connections():
+    from corehq.blobs import _db, get_blob_db
+    if _db:
+        assert len(_db) == 1, _db
+        old_blob_db = get_blob_db()
+        _db.pop()
+        assert get_blob_db() is not old_blob_db
+
+
+def reset_redis_connections():
+    from django_redis.pool import ConnectionFactory
+    for pool in ConnectionFactory._pools.values():
+        pool.reset()
+
+
+@contextmanager
+def safe_socket_close():
+    from functools import partial
+    from gevent._socket3 import socket
+
+    def safe_cancel_wait(hub_cancel_wait, *args):
+        try:
+            hub_cancel_wait(*args)
+        except ValueError as err:
+            if str(err) != "operation on destroyed loop":
+                raise
+
+    def drop_events(self):
+        self.hub.cancel_wait = partial(safe_cancel_wait, self.hub.cancel_wait)
+        try:
+            return _drop_events(self)
+        finally:
+            del self.hub.cancel_wait
+            assert self.hub.cancel_wait, "unexpected method removal"
+
+    _drop_events = socket._drop_events
+    socket._drop_events = drop_events
+    try:
+        yield
+    finally:
+        socket._drop_events = _drop_events

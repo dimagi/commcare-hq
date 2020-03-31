@@ -23,7 +23,7 @@ class Migration(migrations.Migration):
                 ('name', models.CharField(max_length=255)),
                 ('description', models.TextField()),
                 ('deprecated', models.BooleanField(default=False)),
-                ('type', models.CharField(default=b'', max_length=20, choices=[(b'Date', b'Date'), (b'Plain', b'Plain'), (b'Number', b'Number'), (b'Select', b'Select'), (b'Integer', b'Integer'), (b'', b'No Type Currently Selected')])),
+                ('type', models.CharField(default='', max_length=20, choices=[('Date', 'Date'), ('Plain', 'Plain'), ('Number', 'Number'), ('Select', 'Select'), ('Integer', 'Integer'), ('', 'No Type Currently Selected')])),
             ],
         ),
         migrations.AlterUniqueTogether(
@@ -37,6 +37,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='caseproperty',
             name='case_type',
-            field=models.ForeignKey(related_query_name=b'property', related_name='properties', to='data_dictionary.CaseType', on_delete=models.CASCADE),
+            field=models.ForeignKey(related_query_name='property', related_name='properties', to='data_dictionary.CaseType', on_delete=models.CASCADE),
         ),
     ]
