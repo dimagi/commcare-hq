@@ -20,7 +20,10 @@ class Server:
 
 def setup():
     # ensure env var not set
-    os.environ.pop('prometheus_multiproc_dir')
+    try:
+        os.environ.pop('prometheus_multiproc_dir')
+    except KeyError:
+        pass
 
 
 def test_on_starting():
