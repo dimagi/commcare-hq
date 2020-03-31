@@ -244,7 +244,7 @@ window.angular.module('icdsApp').factory('locationsService', ['$http', '$locatio
                     } else {
                         locationsCache[item.location_id] = data.locations;
                         vm.selectedLocations[level + 1] = data.locations[0].location_id;
-                        this.onSelectLocation(data.locations[0], level + 1);
+                        this.onSelectLocation(data.locations[0], level + 1, locationsCache, vm);
                     }
                 });
             }

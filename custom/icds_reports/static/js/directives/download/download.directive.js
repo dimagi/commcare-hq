@@ -215,7 +215,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
     };
 
     vm.getPlaceholder = function (locationTypes) {
-        return locationsService.getLocationPlaceholder(locationTypes, vm.disallowNational())
+        return locationsService.getLocationPlaceholder(locationTypes, vm.disallowNational());
     };
 
     vm.getLocationsForLevel = function (level) {
