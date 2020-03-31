@@ -55,6 +55,9 @@ class PrometheusMetrics(HqMetrics):
 
     def _get_metric(self, metric_type, name, tags, documentation, **kwargs):
         name = name.replace('.', '_')
+        if isinstance(metric_type, PCounter) and name.endswith('_total'):
+            # this suffix get's added to counter metrics by the Prometheus client
+            name = name[:-6]
         metric = self._metrics.get(name)
         if not metric:
             tags = tags or {}
