@@ -32,6 +32,10 @@ class Transition(object):
     def perform(self):
         return self.operation.perform()
 
+    @property
+    def errors(self):
+        return self.operation.errors
+
 
 class BaseOperation(metaclass=ABCMeta):
     type = None
@@ -39,6 +43,7 @@ class BaseOperation(metaclass=ABCMeta):
     def __init__(self, old_locations, new_locations):
         self.old_locations = old_locations
         self.new_locations = new_locations
+        self.errors = []
 
     def valid(self):
         """
@@ -49,16 +54,22 @@ class BaseOperation(metaclass=ABCMeta):
         :return:
         """
         if not self.old_locations or not self.new_locations:
+            self.errors.append("Missing old or new locations.")
             return False
+        valid = True
         for old_location in self.old_locations:
             if (DEPRECATED_TO in old_location.metadata
                     or DEPRECATED_AT in old_location.metadata
                     or DEPRECATED_VIA in old_location.metadata):
-                return False
+                self.errors.append("%s operation: location %s with site code %s is already deprecated." % (
+                    self.type, old_location.name, old_location.site_code))
+                valid = False
         for new_location in self.new_locations:
             if DEPRECATES in new_location.metadata:
-                return False
-        return True
+                self.errors.append("%s operation: location %s with site code %s is already deprecated." % (
+                    self.type, new_location.name, new_location.site_code))
+                valid = False
+        return valid
 
     @abstractmethod
     def perform(self):
