@@ -210,13 +210,16 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
 
     init();
 
+    vm.disallowNational = function () {
+        vm.isChildBeneficiaryListSelected();
+    };
+
     vm.getPlaceholder = function (locationTypes) {
-        return locationsService.getLocationPlaceholder(locationTypes, vm.isChildBeneficiaryListSelected())
+        return locationsService.getLocationPlaceholder(locationTypes, vm.disallowNational())
     };
 
     vm.getLocationsForLevel = function (level) {
-        disallowNational = vm.isChildBeneficiaryListSelected();
-        return locationsService.getLocations(level, locationsCache, vm.selectedLocations, disallowNational);
+        return locationsService.getLocations(level, locationsCache, vm.selectedLocations, vm.disallowNational());
     };
 
     var selectedLocationIndex = function () {

@@ -207,7 +207,7 @@ window.angular.module('icdsApp').factory('locationsService', ['$http', '$locatio
                         return _.contains(_.pluck(locationTypes, 'name'), selectedLocation.location_type_name);
                     });
                     vm.selectedLocations[levelOfSelectedLocation] = vm.selectedLocationId;
-                    vm.onSelect(selectedLocation, levelOfSelectedLocation);
+                    this.onSelectLocation(selectedLocation, levelOfSelectedLocation, locationsCache, vm);
 
                     levelOfSelectedLocation -= 1;
 
@@ -220,9 +220,10 @@ window.angular.module('icdsApp').factory('locationsService', ['$http', '$locatio
                         levelOfSelectedLocation -= 1;
                     }
 
-                    var levels = _.filter(vm.levels, function (value){return value.id > selectedLocationIndex();});
+                    var locationIndex = this.selectedLocationIndex(vm.selectedLocations);
+                    var levels = _.filter(vm.levels, function (value){return value.id > locationIndex;});
                     vm.groupByLevels = levels;
-                    vm.selectedLevel = selectedLocationIndex() + 1;
+                    vm.selectedLevel = locationIndex + 1;
                 });
             } else {
                 vm.locationPromise = this.getRootLocations().then(function(data) {
@@ -243,14 +244,14 @@ window.angular.module('icdsApp').factory('locationsService', ['$http', '$locatio
                     } else {
                         locationsCache[item.location_id] = data.locations;
                         vm.selectedLocations[level + 1] = data.locations[0].location_id;
-                        vm.onSelect(data.locations[0], level + 1);
+                        this.onSelectLocation(data.locations[0], level + 1);
                     }
                 });
             }
-            var selectedLocationIndex = this.selectedLocationIndex(vm.selectedLocations);
-            vm.selectedLocationId = vm.selectedLocations[selectedLocationIndex];
-            var levels = _.filter(vm.levels, function (value){return value.id > selectedLocationIndex;});
-            vm.selectedLevel = selectedLocationIndex + 1;
+            var locationIndex = this.selectedLocationIndex(vm.selectedLocations);
+            vm.selectedLocationId = vm.selectedLocations[locationIndex];
+            var levels = _.filter(vm.levels, function (value){return value.id > locationIndex;});
+            vm.selectedLevel = locationIndex + 1;
             vm.groupByLevels = levels;
         },
 
