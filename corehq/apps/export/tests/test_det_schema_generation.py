@@ -4,7 +4,7 @@ import tempfile
 from django.test import SimpleTestCase
 from openpyxl import load_workbook
 
-from corehq.apps.export.det import generate_case_schema
+from corehq.apps.export.det.case_schema import generate_case_schema
 from corehq.util.test_utils import TestFileMixin
 
 
