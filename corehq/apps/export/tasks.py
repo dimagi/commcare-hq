@@ -17,9 +17,10 @@ from corehq.apps.data_dictionary.util import add_properties_to_data_dictionary
 from corehq.apps.export.utils import get_export
 from corehq.apps.users.models import CouchUser
 from corehq.blobs import CODES, get_blob_db
-from corehq.util.datadog.gauges import datadog_track_errors, datadog_counter
+from corehq.util.datadog.gauges import datadog_track_errors
 from corehq.util.decorators import serial_task
 from corehq.util.files import TransientTempfile, safe_filename_header
+from corehq.util.metrics import metrics_counter
 from corehq.util.quickcache import quickcache
 
 from .const import EXPORT_DOWNLOAD_QUEUE, SAVED_EXPORTS_QUEUE
@@ -50,7 +51,7 @@ def populate_export_download_task(domain, export_ids, exports_type, username, fi
     if settings.STALE_EXPORT_THRESHOLD is not None and not email_requests.count():
         delay = get_task_time_to_start(populate_export_download_task.request.id)
         if delay.total_seconds() > settings.STALE_EXPORT_THRESHOLD:
-            datadog_counter('commcare.exports.rejected_unfresh_export')
+            metrics_counter('commcare.exports.rejected_unfresh_export')
             raise RejectedStaleExport()
 
     export_instances = [get_export(exports_type, domain, export_id, username)
