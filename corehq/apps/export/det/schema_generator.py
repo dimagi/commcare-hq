@@ -20,6 +20,15 @@ CASE_API_PATH_MAP = {
 }
 
 
+def generate_from_export_instance(export_instance, output_file):
+    if isinstance(export_instance, CaseExportInstance):
+        return generate_from_case_export_instance(export_instance, output_file)
+    elif isinstance(export_instance, FormExportInstance):
+        return generate_from_form_export_instance(export_instance, output_file)
+    else:
+        raise ValueError(_(f'Export instance type {type(export_instance)} not supported!'))
+
+
 def generate_from_case_export_instance(export_instance, output_file):
     assert isinstance(export_instance, CaseExportInstance)
     main_input_table = export_instance.selected_tables[0]
