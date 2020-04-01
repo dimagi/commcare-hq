@@ -148,6 +148,7 @@ def get_tracked_entity_schema() -> dict:
             SchemaOptional("lastUpdatedAtClient"): datetime_schema,
             SchemaOptional("notes"): [note_schema],
             "orgUnit": id_schema,
+            SchemaOptional("orgUnitName"): str,
             "program": id_schema,
             SchemaOptional("relationships"): [relationship_schema],
             SchemaOptional("status"): enrollment_status_schema,
