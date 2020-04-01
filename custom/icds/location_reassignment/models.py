@@ -16,6 +16,9 @@ from custom.icds.location_reassignment.const import (
     SPLIT_OPERATION,
 )
 
+ONE = "one"
+MANY = "many"
+
 
 class Transition(object):
     def __init__(self, operation, old_locations, new_locations):
@@ -32,13 +35,20 @@ class Transition(object):
     def perform(self):
         return self.operation.perform()
 
+    @property
+    def errors(self):
+        return self.operation.errors
+
 
 class BaseOperation(metaclass=ABCMeta):
     type = None
+    expected_old_locations = ONE
+    expected_new_locations = ONE
 
     def __init__(self, old_locations, new_locations):
         self.old_locations = old_locations
         self.new_locations = new_locations
+        self.errors = []
 
     def valid(self):
         """
@@ -49,16 +59,38 @@ class BaseOperation(metaclass=ABCMeta):
         :return:
         """
         if not self.old_locations or not self.new_locations:
+            self.errors.append("Missing old or new locations.")
             return False
+        valid = True
         for old_location in self.old_locations:
-            if (DEPRECATED_TO in old_location.metadata
-                    or DEPRECATED_AT in old_location.metadata
-                    or DEPRECATED_VIA in old_location.metadata):
-                return False
+            if (old_location.metadata.get(DEPRECATED_TO)
+                    or old_location.metadata.get(DEPRECATED_AT)
+                    or old_location.metadata.get(DEPRECATED_VIA)):
+                self.errors.append("%s operation: location %s with site code %s is already deprecated." % (
+                    self.type, old_location.name, old_location.site_code))
+                valid = False
         for new_location in self.new_locations:
-            if DEPRECATES in new_location.metadata:
-                return False
-        return True
+            if (new_location.metadata.get(DEPRECATES)
+                    or new_location.metadata.get(DEPRECATES_AT)
+                    or new_location.metadata.get(DEPRECATES_VIA)):
+                self.errors.append("%s operation: location %s with site code %s is already deprecated." % (
+                    self.type, new_location.name, new_location.site_code))
+                valid = False
+        valid = valid and self._validate_location_count(self.expected_old_locations,
+                                                        len(self.old_locations), "old")
+        valid = valid and self._validate_location_count(self.expected_new_locations,
+                                                        len(self.new_locations), "new")
+        return valid
+
+    def _validate_location_count(self, expected, count, location_type):
+        valid = True
+        if expected == MANY and count == 1:
+            self.errors.append("%s operation: Got only one %s location." % (self.type, location_type))
+            valid = False
+        elif expected == ONE and count > 1:
+            self.errors.append("%s operation: Got %s %s location." % (self.type, count, location_type))
+            valid = False
+        return valid
 
     @abstractmethod
     def perform(self):
@@ -67,12 +99,7 @@ class BaseOperation(metaclass=ABCMeta):
 
 class MergeOperation(BaseOperation):
     type = MERGE_OPERATION
-
-    def valid(self):
-        valid = super().valid()
-        if not valid:
-            return False
-        return len(self.old_locations) > 1 and len(self.new_locations) == 1
+    expected_old_locations = MANY
 
     def perform(self):
         with transaction.atomic():
@@ -93,12 +120,7 @@ class MergeOperation(BaseOperation):
 
 class SplitOperation(BaseOperation):
     type = SPLIT_OPERATION
-
-    def valid(self):
-        valid = super().valid()
-        if not valid:
-            return False
-        return len(self.old_locations) == 1 and len(self.new_locations) > 1
+    expected_new_locations = MANY
 
     def perform(self):
         with transaction.atomic():
@@ -120,12 +142,6 @@ class SplitOperation(BaseOperation):
 class ExtractOperation(BaseOperation):
     type = EXTRACT_OPERATION
 
-    def valid(self):
-        valid = super().valid()
-        if not valid:
-            return False
-        return len(self.old_locations) == 1 and len(self.new_locations) == 1
-
     def perform(self):
         with transaction.atomic():
             timestamp = datetime.utcnow()
@@ -144,12 +160,6 @@ class ExtractOperation(BaseOperation):
 
 class MoveOperation(BaseOperation):
     type = MOVE_OPERATION
-
-    def valid(self):
-        valid = super().valid()
-        if not valid:
-            return False
-        return len(self.old_locations) == 1 and len(self.new_locations) == 1
 
     def perform(self):
         with transaction.atomic():
