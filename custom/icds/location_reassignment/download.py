@@ -76,23 +76,23 @@ class Download(object):
         wb = Workbook()
         # workbook adds an empty sheet for new workbook unless they are write only
         wb.remove(wb.active)
-        operation_data_validation = DataValidation(type="list", formula1='"Move,Extract,Split,Merge"')
         for location_type, rows in self._create_rows().items():
             worksheet = wb.create_sheet(location_type)
             uniq_headers = self._extract_unique_headers(rows)
             worksheet.append(uniq_headers)
             for row in rows:
                 worksheet.append([row.get(header) for header in uniq_headers])
-            self._add_validation(operation_data_validation, worksheet)
+            self._add_validation(worksheet)
         return wb
 
     @staticmethod
-    def _add_validation(dv, worksheet):
-        worksheet.add_data_validation(dv)
+    def _add_validation(worksheet):
+        operation_data_validation = DataValidation(type="list", formula1='"Move,Extract,Split,Merge"')
+        worksheet.add_data_validation(operation_data_validation)
         for header_cell in worksheet[1]:
             if header_cell.value == OPERATION_COLUMN:
                 letter = header_cell.column_letter
-                dv.add(f"{letter}2:{letter}{worksheet.max_row}")
+                operation_data_validation.add(f"{letter}2:{letter}{worksheet.max_row}")
 
     def _create_rows(self):
         def append_row(username):
