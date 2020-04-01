@@ -347,7 +347,7 @@ def get_nutrient_values(nutrient_names, row):
         if row.fct_code:
             per_100g = row.composition.nutrients.get(name)
             yield per_100g
-            yield _multiply(per_100g, row.total_grams)
+            yield _multiply(per_100g, row.total_grams, 0.01)
         else:
             yield None
             yield None
