@@ -1147,6 +1147,14 @@ HIDE_MESSAGING_DASHBOARD_FROM_NON_SUPERUSERS = StaticToggle(
 )
 
 
+WHATSAPP_MESSAGING = StaticToggle(
+    'whatsapp_messaging',
+    "Default SMS to send messages via Whatsapp, where available",
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN]
+)
+
+
 UNLIMITED_REPORT_BUILDER_REPORTS = StaticToggle(
     'unlimited_report_builder_reports',
     'Allow unlimited reports created in report builder',
