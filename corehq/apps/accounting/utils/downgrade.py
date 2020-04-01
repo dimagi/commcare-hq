@@ -13,12 +13,18 @@ from corehq.apps.accounting.models import (
 from corehq.apps.accounting.utils.invoicing import (
     get_domains_with_subscription_invoices_over_threshold,
     get_accounts_with_customer_invoices_over_threshold,
+    get_unpaid_invoices_over_threshold_by_domain,
 )
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.accounting.utils import (
     get_dimagi_from_email,
 )
 from corehq.util.view_utils import absolute_reverse
+
+
+DAYS_PAST_DUE_TO_TRIGGER_DOWNGRADE = 61
+DAYS_PAST_DUE_TO_TRIGGER_DOWNGRADE_WARNING = 58
+DAYS_PAST_DUE_TO_TRIGGER_OVERDUE_NOTICE = 30
 
 
 def downgrade_eligible_domains(only_downgrade_domain=None):
@@ -38,6 +44,15 @@ def downgrade_eligible_domains(only_downgrade_domain=None):
             continue
         if is_subscription_eligible_for_downgrade_process(subscription_on_invoice):
             _apply_downgrade_process(oldest_unpaid_invoice, total, today)
+
+
+def can_domain_unpause(domain):
+    today = datetime.date.today()
+    oldest_unpaid_invoice = get_unpaid_invoices_over_threshold_by_domain(today, domain)[0]
+    if not oldest_unpaid_invoice:
+        return True
+    days_ago = (today - oldest_unpaid_invoice.date_due).days
+    return days_ago < DAYS_PAST_DUE_TO_TRIGGER_DOWNGRADE
 
 
 def is_subscription_eligible_for_downgrade_process(subscription):
@@ -148,11 +163,11 @@ def _apply_downgrade_process(oldest_unpaid_invoice, total, today, subscription=N
         })
 
     days_ago = (today - oldest_unpaid_invoice.date_due).days
-    if days_ago >= 61:
+    if days_ago >= DAYS_PAST_DUE_TO_TRIGGER_DOWNGRADE:
         if not oldest_unpaid_invoice.is_customer_invoice:  # We do not automatically downgrade customer invoices
             _downgrade_domain(subscription)
             _send_downgrade_notice(oldest_unpaid_invoice, context)
-    elif days_ago == 58:
+    elif days_ago == DAYS_PAST_DUE_TO_TRIGGER_DOWNGRADE_WARNING:
         _send_downgrade_warning(oldest_unpaid_invoice, context)
-    elif days_ago == 30:
+    elif days_ago == DAYS_PAST_DUE_TO_TRIGGER_OVERDUE_NOTICE:
         _send_overdue_notice(oldest_unpaid_invoice, context)
