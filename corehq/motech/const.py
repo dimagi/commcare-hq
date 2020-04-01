@@ -1,4 +1,6 @@
-
+BASIC_AUTH = "basic"
+DIGEST_AUTH = "digest"
+OAUTH1 = "oauth1"
 
 PASSWORD_PLACEHOLDER = '*' * 16
 
