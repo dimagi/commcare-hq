@@ -31,7 +31,7 @@ def pillow_datadog_metrics():
 
         for topic_name, offset in pillow['offsets'].items():
             if _is_couch(pillow):
-                tags_with_topic = {**tags, **{'topic': topic_name}}
+                tags_with_topic = {**tags, 'topic': topic_name}
                 processed_offset = pillow['seq']
             else:
                 if not pillow['seq']:
@@ -39,7 +39,7 @@ def pillow_datadog_metrics():
                     # (custom pillows on most environments)
                     continue
                 topic, partition = topic_name.split(',')
-                tags_with_topic = {**tags, **{'topic': '{}-{}'.format(topic, partition)}}
+                tags_with_topic = {**tags, 'topic': '{}-{}'.format(topic, partition)}
                 processed_offset = pillow['seq'][topic_name]
 
             if processed_offset == 0:

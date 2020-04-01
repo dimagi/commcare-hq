@@ -300,7 +300,7 @@ class PillowBase(metaclass=ABCMeta):
             ])
             for case_type, type_count in type_counter.items():
                 metrics_counter('commcare.change_feed.changes.count', type_count,
-                                tags={**tags, **{'case_type': case_type}})
+                                tags={**tags, 'case_type': case_type})
 
             remainder = change_count - sum(type_counter.values())
             if remainder:
