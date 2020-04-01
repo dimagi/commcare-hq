@@ -281,6 +281,8 @@ def get_enrollments(case_trigger_info, case_config):
 def get_programs_by_id(case_trigger_info, case_config):
     programs_by_id = defaultdict(lambda: {"events": []})
     for form_config in case_config.form_configs:
+        if case_trigger_info.form_question_values['/metadata/xmlns'] != form_config.xmlns:
+            continue
         event = get_event(case_trigger_info.domain, form_config, info=case_trigger_info)
         if event:
             program = programs_by_id[event["program"]]
