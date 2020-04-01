@@ -1,6 +1,6 @@
 from corehq.apps.export.det.base import DETRow, DETTable, DETConfig
 from corehq.apps.export.det.helpers import collapse_path, collapse_path_out, truncate, prepend_prefix
-from corehq.apps.export.models import FormExportInstance
+from corehq.apps.export.models import FormExportInstance, CaseExportInstance
 
 PROPERTIES_PREFIX = 'properties.'
 ACTIONS_PREFIX = 'actions.'
@@ -8,6 +8,18 @@ PREFIX_MAP = {
     0: PROPERTIES_PREFIX,
     1: '',
     2: ACTIONS_PREFIX,
+}
+
+
+# maps Case fields to the API field names used in CommCareCaseResource
+CASE_API_PATH_MAP = {
+    'date_modified': 'date_modified',
+    'date_closed': 'date_closed',
+    '_id': 'id',
+    'opened_by': 'opened_by',
+    'server_modified_on': 'server_date_modified',
+    'server_opened_on': 'server_date_opened',
+    'user_id': 'user_id',
 }
 
 
@@ -136,6 +148,27 @@ def _add_schemas_to_output(output, data):
             current_table.rows.append(DETRow(source_field=prefixed_path, field=x, map_via=map_via))
 
 
+def generate_from_case_export_instance(export_instance, output_file):
+    assert isinstance(export_instance, CaseExportInstance)
+    main_input_table = export_instance.selected_tables[0]
+    main_output_table = DETTable(
+        name=main_input_table.label,
+        source='case',
+        filter_name='type',
+        filter_value=export_instance.case_type,
+        rows=[],
+    )
+    output = DETConfig(name=export_instance.name, tables=[main_output_table])
+    _add_rows_for_table(main_input_table, main_output_table, path_transform_fn=_transform_path_for_case_properties)
+    # todo: add rows for other tables
+    output.export_to_file(output_file)
+
+
+def _transform_path_for_case_properties(input_path):
+    # either return hard-coded lookup or add prefix
+    return CASE_API_PATH_MAP.get(input_path, f'{PROPERTIES_PREFIX}{input_path}')
+
+
 def generate_from_form_export_instance(export_instance, output_file):
     assert isinstance(export_instance, FormExportInstance)
     main_input_table = export_instance.selected_tables[0]
@@ -152,14 +185,15 @@ def generate_from_form_export_instance(export_instance, output_file):
     output.export_to_file(output_file)
 
 
-def _add_rows_for_table(input_table, output_table):
+def _add_rows_for_table(input_table, output_table, path_transform_fn=None):
+    path_transform_fn = path_transform_fn if path_transform_fn else lambda x: x
     for column in input_table.selected_columns:
-        det_row = _get_det_row_for_export_column(column)
+        det_row = _get_det_row_for_export_column(column, path_transform_fn)
         output_table.rows.append(det_row)
 
 
-def _get_det_row_for_export_column(column):
+def _get_det_row_for_export_column(column, path_transform_fn):
     return DETRow(
-        source_field=column.item.readable_path,
+        source_field=path_transform_fn(column.item.readable_path),
         field=column.label,
     )

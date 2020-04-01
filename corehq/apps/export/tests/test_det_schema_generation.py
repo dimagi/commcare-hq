@@ -5,8 +5,8 @@ from django.test import SimpleTestCase
 from openpyxl import load_workbook
 
 from corehq.apps.export.det.schema_generator import generate_case_schema, generate_form_schema, \
-    generate_from_form_export_instance
-from corehq.apps.export.models import FormExportInstance
+    generate_from_form_export_instance, generate_from_case_export_instance, _transform_path_for_case_properties
+from corehq.apps.export.models import FormExportInstance, CaseExportInstance
 from corehq.util.test_utils import TestFileMixin
 
 
@@ -62,6 +62,34 @@ class TestDETFormSchema(SimpleTestCase, TestFileMixin):
             self.assertEqual('http://openrosa.org/formdesigner/B4FFDB28-8240-4950-B6E2-EA26D7B0856D',
                              id_row_by_heading['Filter Value'])
             # note: subtables for repeats are not tested and likely broken
+
+
+class TestDETFCaseInstance(SimpleTestCase, TestFileMixin):
+    file_path = ['data', 'det']
+    root = os.path.dirname(__file__)
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.export_instance = CaseExportInstance.wrap(cls.get_json('case_export_instance'))
+
+    def test_generate_from_case_schema(self):
+        with tempfile.NamedTemporaryFile(mode='wb', suffix='.xlsx') as tmp:
+            generate_from_case_export_instance(self.export_instance, tmp)
+            wb = load_workbook(filename=tmp.name)
+            ws = wb.worksheets[0]
+            all_data = list(ws.values)
+            headings = all_data.pop(0)
+            main_table = self.export_instance.selected_tables[0]
+            self.assertEqual(len(main_table.selected_columns), len(all_data))
+            for i, input_column in enumerate(main_table.selected_columns):
+                output_row_by_headings = dict(zip(headings, all_data[i]))
+                self.assertEqual(input_column.label, output_row_by_headings['Field'])
+                # todo: test these
+                self.assertEqual(_transform_path_for_case_properties(input_column.item.readable_path),
+                                 output_row_by_headings['Source Field'])
+
+            # note: subtables not supported
 
 
 class TestDETFormInstance(SimpleTestCase, TestFileMixin):
