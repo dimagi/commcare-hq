@@ -575,7 +575,7 @@ class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMix
                         'date_due': date_due,
                         'pdfUrl': reverse(
                             BillingStatementPdfView.urlname,
-                            args=[self.domain, last_billing_record.pdf_data_id]
+                            args=[self.domain, last_billing_record.pdf_data_id]     # TODO: update
                         ),
                         'canMakePayment': (not invoice.is_paid
                                            and self.can_pay_invoices),

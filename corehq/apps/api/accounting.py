@@ -300,7 +300,7 @@ class BillingRecordResource(ModelResource):
 
     class Meta(AccountingResourceMeta):
         queryset = BillingRecord.objects.all().order_by('pk')
-        fields = ['id', 'date_created', 'pdf_data_id', 'skipped_email', 'last_modified']
+        fields = ['id', 'date_created', 'pdf_data_id', 'skipped_email', 'last_modified']    # TODO: update in PR3
         resource_name = 'billing_record'
 
     def dehydrate_emailed_to(self, bundle):

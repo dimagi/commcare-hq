@@ -883,7 +883,7 @@ class InvoiceSummaryViewBase(AccountingSectionView):
                     'date_created': billing_record.date_created,
                     'email_recipients': ', '.join(billing_record.emailed_to_list),
                     'invoice': billing_record.invoice,
-                    'pdf_data_id': billing_record.pdf_data_id,
+                    'pdf_data_id': billing_record.pdf_data_id,      # TODO: update
                 }
                 for billing_record in self.billing_records if not billing_record.skipped_email
             ],
@@ -1468,7 +1468,7 @@ class EnterpriseBillingStatementsView(DomainAccountingSettings, CRUDPaginatedVie
                         'date_due': date_due,
                         'pdfUrl': reverse(
                             BillingStatementPdfView.urlname,
-                            args=[self.domain, last_billing_record.pdf_data_id]
+                            args=[self.domain, last_billing_record.pdf_data_id]     # TODO: update
                         ),
                         'canMakePayment': (not invoice.is_paid
                                            and self.can_pay_invoices),

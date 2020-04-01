@@ -62,13 +62,13 @@
             <td>{{ billing_record.email_recipients }}</td>
             {% if billing_record.invoice.is_customer_invoice %}
               <td>
-                <a href="{% url 'invoice_pdf_view' billing_record.pdf_data_id %}">
+                <a href="{% url 'invoice_pdf_view' billing_record.pdf_data_id %}"><!-- TODO: update -->
                   View PDF
                 </a>
               </td>
             {% else %}
               <td>
-                <a href="{% url 'domain_billing_statement_download' billing_record.invoice.get_domain billing_record.pdf_data_id %}">
+                <a href="{% url 'domain_billing_statement_download' billing_record.invoice.get_domain billing_record.pdf_data_id %}"><!-- TODO: update -->
                   View PDF
                 </a>
               </td>
