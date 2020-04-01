@@ -3,8 +3,9 @@
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function NavigationController($window, $rootScope, $scope, $route, $routeParams, $location, navigationService,
-    stateLevelAccess, haveAccessToAllLocations, haveAccessToFeatures,
-    userFullName, userUsername, isMobile, navMenuItems, $uibModal, reportAnIssueUrl, isWebUser) {
+                              stateLevelAccess, haveAccessToAllLocations, haveAccessToFeatures,
+                              userFullName, userUsername, isMobile, navMenuItems, $uibModal, reportAnIssueUrl,
+                              isWebUser) {
     $scope.$route = $route;
     $scope.$location = $location;
     $scope.$routeParams = $routeParams;
@@ -71,7 +72,7 @@ function NavigationController($window, $rootScope, $scope, $route, $routeParams,
             ariaDescribedBy: 'modal-body',
             templateUrl: 'reportIssueModal.html',
         });
-    }
+    };
 }
 
 NavigationController.$inject = [
