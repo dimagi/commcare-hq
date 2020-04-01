@@ -4,7 +4,7 @@ var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function NavigationController($window, $rootScope, $scope, $route, $routeParams, $location, navigationService,
     stateLevelAccess, haveAccessToAllLocations, haveAccessToFeatures,
-    userFullName, userUsername, isMobile, navMenuItems) {
+    userFullName, userUsername, isMobile, navMenuItems, $uibModal, reportAnIssueUrl, isWebUser) {
     $scope.$route = $route;
     $scope.$location = $location;
     $scope.$routeParams = $routeParams;
@@ -15,6 +15,7 @@ function NavigationController($window, $rootScope, $scope, $route, $routeParams,
     $scope.userUsername = userUsername;
     $scope.expandedSectionId = '';
     $scope.navMenuItems = navMenuItems;
+    $scope.isWebUser = isWebUser;
 
     var checkCollapse = function (reports) {
         var path = _.filter(reports, function (report) {
@@ -58,12 +59,25 @@ function NavigationController($window, $rootScope, $scope, $route, $routeParams,
             document.getElementById('nav-menu').style.left = '-300px';
         }
     };
+
+    $scope.reportAnIssue = function () {
+        $scope.closeMenu();
+        if (reportAnIssueUrl) {
+            $window.location.href = reportAnIssueUrl;
+            return;
+        }
+        $uibModal.open({
+            ariaLabelledBy: 'modal-title',
+            ariaDescribedBy: 'modal-body',
+            templateUrl: 'reportIssueModal.html',
+        });
+    }
 }
 
 NavigationController.$inject = [
     '$window', '$rootScope', '$scope', '$route', '$routeParams', '$location', 'navigationService',
     'stateLevelAccess', 'haveAccessToAllLocations', 'haveAccessToFeatures',
-    'userFullName', 'userUsername', 'isMobile', 'navMenuItems',
+    'userFullName', 'userUsername', 'isMobile', 'navMenuItems', '$uibModal', 'reportAnIssueUrl', 'isWebUser',
 ];
 
 window.angular.module('icdsApp').directive('navigation', ['templateProviderService', function (templateProviderService) {
