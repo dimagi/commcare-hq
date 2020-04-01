@@ -5,6 +5,7 @@ from copy import deepcopy
 
 from memoized import memoized
 from openpyxl import Workbook
+from openpyxl.worksheet.datavalidation import DataValidation
 
 from corehq.apps.es import UserES
 from corehq.apps.locations.models import SQLLocation
@@ -72,14 +73,26 @@ class Download(object):
         return assigned_location_ids_per_username
 
     def _create_workbook(self):
-        wb = Workbook(write_only=True)
+        wb = Workbook()
+        # workbook adds an empty sheet for new workbook unless they are write only
+        wb.remove(wb.active)
+        operation_data_validation = DataValidation(type="list", formula1='"Move,Extract,Split,Merge"')
         for location_type, rows in self._create_rows().items():
-            ws = wb.create_sheet(location_type)
+            worksheet = wb.create_sheet(location_type)
             uniq_headers = self._extract_unique_headers(rows)
-            ws.append(uniq_headers)
+            worksheet.append(uniq_headers)
             for row in rows:
-                ws.append([row.get(header) for header in uniq_headers])
+                worksheet.append([row.get(header) for header in uniq_headers])
+            self._add_validation(operation_data_validation, worksheet)
         return wb
+
+    @staticmethod
+    def _add_validation(dv, worksheet):
+        worksheet.add_data_validation(dv)
+        for header_cell in worksheet[1]:
+            if header_cell.value == OPERATION_COLUMN:
+                letter = header_cell.column_letter
+                dv.add(f"{letter}2:{letter}{worksheet.max_row}")
 
     def _create_rows(self):
         def append_row(username):
