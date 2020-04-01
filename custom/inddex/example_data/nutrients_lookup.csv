@@ -1,0 +1,153 @@
+nutrient_code,nutrient_name,nutrient_name_unit,unit
+nut_1,Energy (kcal)*,energy_kcal,kcal
+nut_2,Water (g),water_g,g
+nut_3,Protein (g),protein_g,g
+nut_4,Tryptophan (g),tryptophan_g,g
+nut_5,Threonine (g),threonine_g,g
+nut_6,Isoleucine (g),isoleucine_g,g
+nut_7,Leucine (g),leucine_g,g
+nut_8,Lysine (g),lysine_g,g
+nut_9,Methionine (g),methionine_g,g
+nut_10,Cystine (g),cystine_g,g
+nut_11,Phenylalanine (g),phenylalanine_g,g
+nut_12,Tyrosine (g),tyrosine_g,g
+nut_13,Valine (g),valine_g,g
+nut_14,Arginine (g),arginine_g,g
+nut_15,Histidine (g),histidine_g,g
+nut_16,Alanine (g),alanine_g,g
+nut_17,Aspartic acid (g),aspartic_acid_g,g
+nut_18,Glutamic acid (g),glutamic_acid_g,g
+nut_19,Glycine (g),glycine_g,g
+nut_20,Proline (g),proline_g,g
+nut_21,Serine (g),serine_g,g
+nut_22,Hydroxyproline (g),hydroxyproline_g,g
+nut_23,Total lipid (Fat) (g),total_lipid_fat_g,g
+nut_24,"Fatty acids, total saturated (g)",fatty_acids_total_saturated_g,g
+nut_25,4:0 (g),_4_0_g,g
+nut_26,6:0 (g),_6_0_g,g
+nut_27,8:0 (g),_8_0_g,g
+nut_28,10:0 (g),_10_0_g,g
+nut_29,12:0 (g),_12_0_g,g
+nut_30,13:0 (g),_13_0_g,g
+nut_31,14:0 (g),_14_0_g,g
+nut_32,15:0 (g),_15_0_g,g
+nut_33,16:0 (g),_16_0_g,g
+nut_34,17:0 (g),_17_0_g,g
+nut_35,18:0 (g),_18_0_g,g
+nut_36,20:0 (g),_20_0_g,g
+nut_37,22:0 (g),_22_0_g,g
+nut_38,24:0 (g),_24_0_g,g
+nut_39,"Fatty acids, total monounsaturated (g)",fatty_acids_total_monounsaturated_g,g
+nut_40,14:1 (g),_14_1_g,g
+nut_41,15:1 (g),_15_1_g,g
+nut_42,16:1 undifferentiated (g),_16_1_undifferentiated_g,g
+nut_43,16:1 c (g),_16_1_c_g,g
+nut_44,16:1 t (g),_16_1_t_g,g
+nut_45,17:1 (g),_17_1_g,g
+nut_46,18:1 undifferentiated (g),_18_1_undifferentiated_g,g
+nut_47,18:1 c (g),_18_1_c_g,g
+nut_48,18:1 t (g),_18_1_t_g,g
+nut_49,18:1-11 t (18:1t n-7) (g),_18_1_11_t_18_1t_n_7_g,g
+nut_50,20:1 (g),_20_1_g,g
+nut_51,22:1 undifferentiated (g),_22_1_undifferentiated_g,g
+nut_52,22:1 c (g),_22_1_c_g,g
+nut_53,22:1 t (g),_22_1_t_g,g
+nut_54,24:1 c (g),_24_1_c_g,g
+nut_55,"Fatty acids, total polyunsaturated (g)",fatty_acids_total_polyunsaturated_g,g
+nut_56,18:2 undifferentiated (g),_18_2_undifferentiated_g,g
+nut_57,"C 18:2, cis, n-6 (Linoleic Acid) (g)",c_18_2_cis_n_6_linoleic_acid_g,g
+nut_58,18:2 CLAs (g),_18_2_clas_g,g
+nut_59,"18:2 t,t (g)",_18_2_tt_g,g
+nut_60,18:2 i (g),_18_2_i_g,g
+nut_61,18:2 t not further defined (g),_18_2_t_not_further_defined_g,g
+nut_62,18:3 undifferentiated (g),_18_3_undifferentiated_g,g
+nut_63,"C 18:3, cis, n-3 (Alpha-Linolenic Acid) (g)",c_18_3_cis_n_3_alpha_linolenic_acid_g,g
+nut_64,"18:3 n-6 c,c,c (g)",_18_3_n_6_ccc_g,g
+nut_65,18:3i (g),_18_3i_g,g
+nut_66,18:4 (g),_18_4_g,g
+nut_67,"20:2 n-6 c,c (g)",_20_2_n_6_cc_g,g
+nut_68,20:3 undifferentiated (g),_20_3_undifferentiated_g,g
+nut_69,20:3 n-3 (g),_20_3_n_3_g,g
+nut_70,20:3 n-6 (g),_20_3_n_6_g,g
+nut_71,20:4 undifferentiated (g),_20_4_undifferentiated_g,g
+nut_72,20:4 n-6 (g),_20_4_n_6_g,g
+nut_73,20:5 n-3 (EPA) (g),_20_5_n_3_epa_g,g
+nut_74,21:5 (g),_21_5_g,g
+nut_75,22:4 (g),_22_4_g,g
+nut_76,22:5 n-3 (DPA) (g),_22_5_n_3_dpa_g,g
+nut_77,22:6 n-3 (DHA) (g),_22_6_n_3_dha_g,g
+nut_78,"Fatty acids, total trans (g)",fatty_acids_total_trans_g,g
+nut_79,"Fatty acids, total trans-monoenoic (g)",fatty_acids_total_trans_monoenoic_g,g
+nut_80,"Fatty acids, total trans-polyenoic (g)",fatty_acids_total_trans_polyenoic_g,g
+nut_81,Cholesterol (mg),cholesterol_mg,mg
+nut_82,Phytosterols (mg),phytosterols_mg,mg
+nut_83,Stigmasterol (mg),stigmasterol_mg,mg
+nut_84,Campesterol (mg),campesterol_mg,mg
+nut_85,Beta-sitosterol (mg),beta_sitosterol_mg,mg
+nut_86,Carbohydrate (g),carbohydrate_g,g
+nut_87,"Fibre, total dietary (g)",fibre_total_dietary_g,g
+nut_88,"Sugars, total (g)",sugars_total_g,g
+nut_89,"Sugars, added (g)",sugars_added_g,g
+nut_90,Sucrose (g),sucrose_g,g
+nut_91,Glucose (Dextrose) (g),glucose_dextrose_g,g
+nut_92,Fructose (g),fructose_g,g
+nut_93,Lactose (g),lactose_g,g
+nut_94,Maltose (g),maltose_g,g
+nut_95,Galactose (g),galactose_g,g
+nut_96,Starch (g),starch_g,g
+nut_97,Ash (g),ash_g,g
+nut_98,Ca (mg),ca_mg,mg
+nut_99,Fe (mg),fe_mg,mg
+nut_100,Mg (mg),mg_mg,mg
+nut_101,P (mg),p_mg,mg
+nut_102,K (mg),k_mg,mg
+nut_103,Na (mg),na_mg,mg
+nut_104,Zn (mg),zn_mg,mg
+nut_105,Cu (mg),cu_mg,mg
+nut_106,Mn (mg),mn_mg,mg
+nut_107,Se (mcg),se_mcg,mcg
+nut_108,F (mcg),f_mcg,mcg
+nut_109,Phytic acid (mg),phytic_acid_mg,mg
+nut_110,Vit A (mg),vit_a_mg,mg
+nut_111,Vit A-RAE (mcg),vit_a_rae_mcg,mcg
+nut_112,Vit A-RE (mcg),vit_a_re_mcg,mcg
+nut_113,Lycopene (mcg),lycopene_mcg,mcg
+nut_114,Lutein + zeaxanthin (mcg),lutein_zeaxanthin_mcg,mcg
+nut_115,Retinol (mcg),retinol_mcg,mcg
+nut_116,Beta-carotene equivalents (mcg),beta_carotene_equivalents_mcg,mcg
+nut_117,"Carotene, alpha (mcg)",carotene_alpha_mcg,mcg
+nut_118,"Cryptoxanthin, beta (mcg)",cryptoxanthin_beta_mcg,mcg
+nut_119,Vit D (D2 +D3) (mcg),vit_d_d2_d3_mcg,mcg
+nut_120,Vit D2 (ergocalciferol) (mcg),vit_d2_ergocalciferol_mcg,mcg
+nut_121,Vit D3 (cholecalciferol) (mcg),vit_d3_cholecalciferol_mcg,mcg
+nut_122,Vit E (mg),vit_e_mg,mg
+nut_123,"Vit E, added (mg)",vit_e_added_mg,mg
+nut_124,"Tocopherol, alpha (mg)",tocopherol_alpha_mg,mg
+nut_125,"Tocopherol, beta (mg)",tocopherol_beta_mg,mg
+nut_126,"Tocopherol, gamma (mg)",tocopherol_gamma_mg,mg
+nut_127,"Tocopherol, delta (mg)",tocopherol_delta_mg,mg
+nut_128,"Tocotrienol, alpha (mg)",tocotrienol_alpha_mg,mg
+nut_129,"Tocotrienol, beta (mg)",tocotrienol_beta_mg,mg
+nut_130,"Tocotrienol, gamma (mg)",tocotrienol_gamma_mg,mg
+nut_131,"Tocotrienol, delta (mg)",tocotrienol_delta_mg,mg
+nut_132,Thiamin (mg),thiamin_mg,mg
+nut_133,Riboflavin (mg),riboflavin_mg,mg
+nut_134,Niacin (mg),niacin_mg,mg
+nut_135,Niacin equivalents (mg),niacin_equivalents_mg,mg
+nut_136,Pantothenic acid (mg),pantothenic_acid_mg,mg
+nut_137,Vit B6 (mg),vit_b6_mg,mg
+nut_138,"Folate, total (mcg)",folate_total_mcg,mcg
+nut_139,Folic acid (mcg),folic_acid_mcg,mcg
+nut_140,"Folate, food (mcg)",folate_food_mcg,mcg
+nut_141,"Folate, DFE (mcg)",folate_dfe_mcg,mcg
+nut_142,"Choline, total (mg)",choline_total_mg,mg
+nut_143,Betaine (mg),betaine_mg,mg
+nut_144,Vit B12 (mcg),vit_b12_mcg,mcg
+nut_145,"Vit B12, added (mcg)",vit_b12_added_mcg,mcg
+nut_146,Vit C (mg),vit_c_mg,mg
+nut_147,Vit K (phylloquinone) (mcg),vit_k_phylloquinone_mcg,mcg
+nut_148,Dihydrophylloquinone (mcg),dihydrophylloquinone_mcg,mcg
+nut_149,Menaquinone-4 (mcg),menaquinone_4_mcg,mcg
+nut_150,"Alcohol, ethyl (g)",alcohol_ethyl_g,g
+nut_151,Caffeine (mg),caffeine_mg,mg
+nut_152,Theobromine (mg),theobromine_mg,mg

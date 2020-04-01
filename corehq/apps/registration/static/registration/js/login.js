@@ -16,6 +16,16 @@ hqDefine('registration/js/login', [
             container: 'body',
         });
 
+        // populate username field if set in the query string
+        const urlParams = new URLSearchParams(window.location.search);
+        const username = urlParams.get('username');
+        if (username) {
+            var usernameElt = document.getElementById('id_auth-username');
+            if (usernameElt) {
+                usernameElt.value = username;
+            }
+        }
+
         kissmetrics.whenReadyAlways(function () {
 
             $('#cta-form-get-demo-button-body').click(function () {

@@ -13,7 +13,7 @@ from corehq.apps.change_feed.consumer.feed import (
     KafkaChangeFeed,
     KafkaCheckpointEventHandler,
 )
-from corehq.apps.receiverwrapper.util import get_profile_property_from_build_id, get_version_from_build_id
+from corehq.apps.receiverwrapper.util import get_version_from_build_id
 from corehq.apps.users.models import (
     CommCareUser,
     CouchUser,
@@ -112,15 +112,13 @@ def mark_last_synclog(domain, user, app_id, build_id, sync_date, latest_build_da
     version = None
     if build_id:
         version = get_version_from_build_id(domain, build_id)
-        app_version_tag = get_profile_property_from_build_id(domain, build_id, 'cc-app-version-tag')
 
     local_save = False
     if sync_date:
         # sync_date could be null if this is called from a heartbeat request
         local_save |= update_last_sync(user, app_id, sync_date, version)
     if version:
-        local_save |= update_latest_builds(user, app_id, latest_build_date, version,
-                                           build_profile_id=build_profile_id, app_version_tag=app_version_tag)
+        local_save |= update_latest_builds(user, app_id, latest_build_date, version, build_profile_id=build_profile_id)
 
     if device_id:
         local_save |= update_device_meta(user, device_id, commcare_version=commcare_version,

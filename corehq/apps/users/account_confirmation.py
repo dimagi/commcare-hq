@@ -40,6 +40,7 @@ def send_account_confirmation(commcare_user):
                            args=[commcare_user.domain, commcare_user.get_id])
     template_params = {
         'domain': commcare_user.domain,
+        'username': commcare_user.raw_username,
         'url': url,
         'url_prefix': get_static_url_prefix(),
         'hq_name': commcare_hq_names()['commcare_hq_names']['COMMCARE_HQ_NAME']
