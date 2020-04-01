@@ -784,27 +784,27 @@ def person_is_beneficiary_column(beta):
 
 
 def wasting_moderate_column(beta):
-    return 'wasting_moderate_v2'
+    return 'wasting_moderate'
 
 
 def wasting_severe_column(beta):
-    return 'wasting_severe_v2'
+    return 'wasting_severe'
 
 
 def wasting_normal_column(beta):
-    return 'wasting_normal_v2'
+    return 'wasting_normal'
 
 
 def stunting_moderate_column(beta):
-    return 'zscore_grading_hfa_moderate'
+    return 'stunting_moderate'
 
 
 def stunting_severe_column(beta):
-    return 'zscore_grading_hfa_severe'
+    return 'stunting_severe'
 
 
 def stunting_normal_column(beta):
-    return 'zscore_grading_hfa_normal'
+    return 'stunting_normal'
 
 
 def current_month_stunting_column(beta):
@@ -816,11 +816,11 @@ def current_month_wasting_column(beta):
 
 
 def hfa_recorded_in_month_column(beta):
-    return 'zscore_grading_hfa_recorded_in_month'
+    return 'height_measured_in_month'
 
 
 def wfh_recorded_in_month_column(beta):
-    return 'zscore_grading_wfh_recorded_in_month'
+    return 'weighed_and_height_measured_in_month'
 
 
 def default_age_interval(beta):
