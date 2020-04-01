@@ -18,6 +18,7 @@ class MasterDataFileSummaryReport(DatespanMixin, CustomProjectReport, GenericTab
     name = title
     slug = 'output_1_master_data_file'
     export_only = False
+    exportable = True
     report_comment = 'This output includes all data that appears in the output files as well as background ' \
                      'data that are used to perform calculations that appear in the outputs.'
 
