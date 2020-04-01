@@ -68,8 +68,10 @@ class LocationReassignmentView(BaseLocationView):
                 elif not update:
                     return self._generate_response(transitions)
                 else:
-                    process_location_reassignment.delay(self.domain, parser.valid_transitions,
-                                                        list(parser.requested_transitions.keys()))
+                    process_location_reassignment.delay(
+                        self.domain, parser.valid_transitions,
+                        list(parser.requested_transitions.keys()), request.user.email
+                    )
                     messages.success(request, _(
                         "Your request has been submitted. We will notify you via email once completed."))
             else:
