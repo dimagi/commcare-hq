@@ -186,7 +186,24 @@ def generate_from_form_export_instance(export_instance, output_file):
     )
     output = DETConfig(name=export_instance.name, tables=[main_output_table])
     _add_rows_for_table(main_input_table, main_output_table)
-    # todo: add rows for other tables
+    for additional_input_table in export_instance.selected_tables[1:]:
+        additional_output_table = DETTable(
+            name=additional_input_table.label,
+            source=f'form.{additional_input_table.readable_path}[*]',
+            filter_name='xmlns',
+            filter_value=export_instance.xmlns,
+            rows=[],
+        )
+
+        # note: this has to be defined here because it relies on closures
+        def _strip_repeat_path(input_path):
+            return input_path.replace(f'{additional_input_table.readable_path}.', '')
+
+        _add_rows_for_table(additional_input_table, additional_output_table,
+                            path_transform_fn=_strip_repeat_path)
+
+        output.tables.append(additional_output_table)
+
     output.export_to_file(output_file)
 
 
