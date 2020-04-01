@@ -39,6 +39,9 @@ class CapturedMetrics:
             for tag, value in sample.tags.items()
         }
 
+    def __contains__(self, metric_name: str):
+        return any(sample.name == metric_name for sample in self._samples)
+
 
 @contextmanager
 def capture_metrics():
