@@ -1828,10 +1828,19 @@ TWO_STAGE_USER_PROVISIONING = StaticToggle(
     help_link='https://confluence.dimagi.com/display/ccinternal/Two-Stage+Mobile+Worker+Account+Creation',
 )
 
+LOCATION_REASSIGNMENT = StaticToggle(
+    'location_reassignment',
+    'Ability to reorder organization structure',
+    TAG_CUSTOM,
+    [NAMESPACE_USER],
+    relevant_environments={'icds', 'india', 'staging'},
+)
+
 ICDS_BIHAR_DEMOGRAPHICS_API = StaticToggle(
     'bihar_demographics_api',
     'ICDS: Bihar Demographics API',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_USER],
     relevant_environments={'icds', 'india'},
+
 )
