@@ -266,9 +266,9 @@ class RecipeRowGenerator:
     def iter_rows(self):
         if not self._recipe_row:
             yield from _yield_non_recipe_rows(self._all_rows)
-
-        for row in [self._recipe_row] + self._recipe_ingredients:
-            yield [_format(self._get_val(row, column.slug)) for column in INDICATORS]
+        else:
+            for row in [self._recipe_row] + self._recipe_ingredients:
+                yield [_format(self._get_val(row, column.slug)) for column in INDICATORS]
 
     def _get_val(self, row, slug):
         if slug == 'recipe_num_ingredients' and row.is_recipe:
