@@ -126,7 +126,7 @@ XFORM_MAPPING = {
 if settings.ES_XFORM_DISABLE_ALL:
     XFORM_MAPPING["_all"] = {"enabled": False}
 
-XFORM_ES_TYPE = prefix_slug('xform')
+XFORM_ES_TYPE = 'xform'
 XFORM_ALIAS = prefix_slug("xforms")
 
 XFORM_INDEX_INFO = ElasticsearchIndexInfo(
