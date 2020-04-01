@@ -25,6 +25,7 @@ class Processor(object):
                 self._perform_transitions(operation, transitions)
 
     def _perform_transitions(self, operation, transitions):
+        # split operation has the old site code as the key whereas others have the new site code
         for from_site_codes, to_site_codes in transitions.items():
             if operation == SPLIT_OPERATION:
                 old_site_codes, new_site_codes = from_site_codes, to_site_codes
