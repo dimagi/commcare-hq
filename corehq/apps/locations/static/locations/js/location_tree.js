@@ -5,7 +5,7 @@ hqDefine('locations/js/location_tree', [
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/alert_user',
     'analytix/js/google',
-    'locations/js/utils',
+    'locations/js/search',
 ], function (
     $,
     ko,
