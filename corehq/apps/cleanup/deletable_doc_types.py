@@ -27,5 +27,6 @@ DELETABLE_COUCH_DOC_TYPES = {
     'ILSGatewayConfig': (MAIN_DB,),
     'Invitation': (settings.USERS_GROUPS_DB,),
     'RegistrationRequest': (MAIN_DB,),
+    'StandaloneTranslationDoc': (MAIN_DB,),
     'WisePillDeviceEvent': (MAIN_DB,),
 }

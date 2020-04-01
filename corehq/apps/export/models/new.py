@@ -405,12 +405,9 @@ class ExportColumn(DocumentSchema):
     def is_deidentifed(self):
         return bool(self.deid_transform)
 
-    def get_headers(self, split_column=False, is_odata=False):
+    def get_headers(self, split_column=False):
         if self.is_deidentifed:
-            return ["{} {}".format(
-                self.label,
-                "*sensitive*" if is_odata else "[sensitive]"
-            )]
+            return [f"{self.label} *sensitive*"]
         else:
             return [self.label]
 
@@ -487,7 +484,7 @@ class TableConfiguration(DocumentSchema):
         return headers
 
     def get_rows(self, document, row_number, split_columns=False,
-                 transform_dates=False, as_json=False, is_odata=False):
+                 transform_dates=False, as_json=False):
         """
         Return a list of ExportRows generated for the given document.
         :param document: dictionary representation of a form submission or case
@@ -523,7 +520,7 @@ class TableConfiguration(DocumentSchema):
                     transform_dates=transform_dates,
                 )
                 if as_json:
-                    for index, header in enumerate(col.get_headers(split_column=split_columns, is_odata=is_odata)):
+                    for index, header in enumerate(col.get_headers(split_column=split_columns)):
                         if isinstance(val, list):
                             row_data[header] = "{}".format(val[index])
                         else:
