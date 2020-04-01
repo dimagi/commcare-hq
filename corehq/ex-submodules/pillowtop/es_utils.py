@@ -84,19 +84,22 @@ class ElasticsearchIndexInfo(jsonobject.JsonObject):
 
     @property
     def meta(self):
+        from corehq.util.elastic import TEST_ES_PREFIX
+        # the setting overrides are defined without prefix, so look them without prefix
+        alias = self.alias.replace(TEST_ES_PREFIX, '')
         meta_settings = deepcopy(ES_INDEX_SETTINGS['default'])
         meta_settings.update(
-            ES_INDEX_SETTINGS.get(self.alias, {})
+            ES_INDEX_SETTINGS.get(alias, {})
         )
         meta_settings.update(
-            ES_INDEX_SETTINGS.get(settings.SERVER_ENVIRONMENT, {}).get(self.alias, {})
+            ES_INDEX_SETTINGS.get(settings.SERVER_ENVIRONMENT, {}).get(alias, {})
         )
 
         overrides = copy(ES_ENV_SETTINGS)
         if settings.ES_SETTINGS is not None:
             overrides.update({settings.SERVER_ENVIRONMENT: settings.ES_SETTINGS})
 
-        for alias in ['default', self.alias]:
+        for alias in ['default', alias]:
             for key, value in overrides.get(settings.SERVER_ENVIRONMENT, {}).get(alias, {}).items():
                 if value is REMOVE_SETTING:
                     del meta_settings['settings'][key]
