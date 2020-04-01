@@ -13,12 +13,17 @@ PREFIX_MAP = {
 
 # maps Case fields to the API field names used in CommCareCaseResource
 CASE_API_PATH_MAP = {
-    'date_modified': 'date_modified',
     'date_closed': 'date_closed',
+    'date_modified': 'date_modified',
+    'external_id': 'properties.external_id',
+    'opened_on': 'properties.date_opened',
+    'owner_id': 'properties.owner_id',
     '_id': 'id',
+    'name': 'properties.case_name',
     'opened_by': 'opened_by',
     'server_modified_on': 'server_date_modified',
     'server_opened_on': 'server_date_opened',
+    'type': 'properties.case_type',
     'user_id': 'user_id',
 }
 
