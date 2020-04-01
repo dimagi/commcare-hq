@@ -32,6 +32,7 @@ class MetaDB(object):
                     "keyword arguments are incompatible with `meta` argument")
             return blob_meta_args["meta"]
         timeout = blob_meta_args.pop("timeout", None)
+        blob_meta_args['compressed'] = blob_meta_args.get('type_code') == CODES.form_xml
         meta = BlobMeta(**blob_meta_args)
         if not meta.domain:
             raise TypeError("domain is required")

@@ -2,10 +2,11 @@ import os
 import weakref
 from contextlib import contextmanager
 from io import RawIOBase, UnsupportedOperation
+from gzip import GzipFile
 
 from corehq.blobs.exceptions import NotFound
 from corehq.blobs.interface import AbstractBlobDB
-from corehq.blobs.util import check_safe_key
+from corehq.blobs.util import check_safe_key, GzipCompressReadStream
 from corehq.util.datadog.gauges import datadog_counter, datadog_bucket_timer
 from dimagi.utils.logging import notify_exception
 
@@ -68,17 +69,25 @@ class S3BlobDB(AbstractBlobDB):
                 s3_bucket.copy(source, meta.key)
         else:
             content.seek(0)
-            meta.content_length = get_file_size(content)
+            if meta.compressed:
+                meta.content_length = get_file_size(GzipCompressReadStream(content))
+                # Need to re-initialize stream as cannot seek on Gzipstream
+                content.seek(0)
+                content = GzipCompressReadStream(content)
             self.metadb.put(meta)
             with self.report_timing('put', meta.key):
                 s3_bucket.upload_fileobj(content, meta.key)
         return meta
 
     def get(self, key):
+        key = self._validate_get_args(key, type_code, meta)
         check_safe_key(key)
         with maybe_not_found(throw=NotFound(key)), self.report_timing('get', key):
             resp = self._s3_bucket().Object(key).get()
-        return BlobStream(resp["Body"], self, key)
+        blobstream = BlobStream(resp["Body"], self, key)
+        if meta and meta.compressed:
+            return GzipFile(blobstream)
+        return blobstream
 
     def size(self, key):
         check_safe_key(key)
@@ -184,6 +193,16 @@ def is_not_found(err, not_found_codes=["NoSuchKey", "NoSuchBucket", "404"]):
 
 
 def get_file_size(fileobj):
+    CHUNK_SIZE = 4096
+    if isinstance(fileobj, GzipCompressReadStream):
+        content_length = 0
+        while True:
+            chunk = fileobj.read(CHUNK_SIZE)
+            if not chunk:
+                break
+            content_length += len(chunk)
+        return content_length
+
     # botocore.response.StreamingBody has a '_content_length' attribute
     length = getattr(fileobj, "_content_length", None)
     if length is not None:

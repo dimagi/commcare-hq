@@ -1,5 +1,6 @@
 from abc import ABCMeta, abstractmethod
 
+from . import CODES
 from .metadata import MetaDB
 
 NOT_SET = object()
@@ -52,7 +53,7 @@ class AbstractBlobDB(metaclass=ABCMeta):
         raise NotImplementedError
 
     @abstractmethod
-    def get(self, key):
+    def get(self, key=None, type_code=None, meta=None):
         """Get a blob
 
         :param key: Blob key.
@@ -60,6 +61,25 @@ class AbstractBlobDB(metaclass=ABCMeta):
         object should be closed when finished reading.
         """
         raise NotImplementedError
+
+    def _validate_get_args(self, key, type_code, meta):
+        if type_code == CODES.form_xml:
+            if meta is None:
+                raise ValueError("form XML must be loaded with 'meta' argument")
+            elif key is not None:
+                raise ValueError("'key' and 'meta' are mutually exclusive")
+            elif type_code is not None:
+                raise ValueError("'type_code' and 'meta' are mutually exclusive")
+            return meta.key
+        elif key is not None or type_code is not None:
+            if key is None or type_code is None:
+                raise ValueError("'key' must be specified with 'type_code'")
+            if meta is not None:
+                raise ValueError("'key' and 'meta' are mutually exclusive")
+            return key
+        if meta is None:
+            raise ValueError("'key' and 'type_code' or 'meta' is required")
+        return meta.key
 
     @abstractmethod
     def exists(self, key):

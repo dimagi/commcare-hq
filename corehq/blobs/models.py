@@ -3,6 +3,7 @@ from uuid import uuid4
 
 from django.db.models import (
     BigIntegerField,
+    NullBooleanField,
     CharField,
     DateTimeField,
     IntegerField,
@@ -59,6 +60,7 @@ class BlobMeta(PartitionedModel, Model):
     properties = NullJsonField(default=dict)
     created_on = DateTimeField(default=datetime.utcnow)
     expires_on = DateTimeField(default=None, null=True)
+    compressed = NullBooleanField()
 
     class Meta:
         unique_together = [
@@ -97,7 +99,7 @@ class BlobMeta(PartitionedModel, Model):
         The returned object should be closed when it is no longer needed.
         """
         from . import get_blob_db
-        return get_blob_db().get(key=self.key)
+        return get_blob_db().get(meta=self)
 
     def blob_exists(self):
         from . import get_blob_db

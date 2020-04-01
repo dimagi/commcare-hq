@@ -2,12 +2,13 @@
 """
 import os
 from collections import namedtuple
+from gzip import GzipFile
 from hashlib import md5
 from os.path import commonprefix, exists, isabs, isdir, dirname, join, realpath, sep
 
 from corehq.blobs.exceptions import BadName, NotFound
 from corehq.blobs.interface import AbstractBlobDB
-from corehq.blobs.util import check_safe_key
+from corehq.blobs.util import check_safe_key, GzipCompressReadStream
 from corehq.util.datadog.gauges import datadog_counter
 
 CHUNK_SIZE = 4096
@@ -28,6 +29,8 @@ class FilesystemBlobDB(AbstractBlobDB):
         dirpath = dirname(path)
         if not isdir(dirpath):
             os.makedirs(dirpath)
+        if meta.compressed:
+            content = GzipCompressReadStream(content)
         length = 0
         digest = md5()
         with open(path, "wb") as fh:
@@ -42,11 +45,14 @@ class FilesystemBlobDB(AbstractBlobDB):
         self.metadb.put(meta)
         return meta
 
-    def get(self, key):
+    def get(self, key=None, type_code=None, meta=None):
+        key = self._validate_get_args(key, type_code, meta)
         path = self.get_path(key)
         if not exists(path):
             datadog_counter('commcare.blobdb.notfound')
             raise NotFound(key)
+        if meta and meta.compressed:
+            return GzipFile(path)
         return open(path, "rb")
 
     def size(self, key):
