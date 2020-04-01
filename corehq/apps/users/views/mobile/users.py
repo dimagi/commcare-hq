@@ -18,7 +18,7 @@ from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 from django.http import Http404, HttpResponse, HttpResponseBadRequest, HttpResponseRedirect
-from django.http.response import HttpResponseServerError
+from django.http.response import HttpResponseServerError, JsonResponse
 from django.shortcuts import redirect, render
 from django.template.loader import render_to_string
 from django.urls import reverse
@@ -832,6 +832,15 @@ def _modify_user_status(request, domain, user_id, is_active):
     })
 
 
+@require_can_edit_commcare_users
+@require_POST
+@location_safe
+def send_confirmation_email(request, domain, user_id):
+    user = CommCareUser.get_by_user_id(user_id, domain)
+    send_account_confirmation_if_necessary(user)
+    return JsonResponse(data={'success': True})
+
+
 @require_can_edit_or_view_commcare_users
 @require_GET
 @location_safe
@@ -863,17 +872,30 @@ def paginate_mobile_workers(request, domain):
         'base_username',
         'created_on',
         'is_active',
+        'is_account_confirmed',
     ]).run()
     users = users_data.hits
+
+    def _status_string(user_data):
+        if user_data['is_active']:
+            return _('Active')
+        elif user_data['is_account_confirmed']:
+            return _('Deactivated')
+        else:
+            return _('Pending Confirmation')
 
     for user in users:
         date_registered = user.pop('created_on', '')
         if date_registered:
             date_registered = iso_string_to_datetime(date_registered).strftime(USER_DATE_FORMAT)
+        # make sure these are always set and default to true
+        user['is_active'] = user.get('is_active', True)
+        user['is_account_confirmed'] = user.get('is_account_confirmed', True)
         user.update({
             'username': user.pop('base_username', ''),
             'user_id': user.pop('_id'),
             'date_registered': date_registered,
+            'status': _status_string(user),
         })
 
     return json_response({
@@ -1458,10 +1480,13 @@ class CommCareUserConfirmAccountView(TemplateView, DomainViewMixin):
             user.last_name = full_name[1]
             user.confirm_account(password=self.form.cleaned_data['password'])
             messages.success(request, _(
-                f'You have successfully confirmed the {self.user.raw_username} account. '
+                f'You have successfully confirmed the {user.raw_username} account. '
                 'You can now login'
             ))
-            return HttpResponseRedirect(reverse('domain_login', args=[self.domain]))
+            return HttpResponseRedirect('{}?username={}'.format(
+                reverse('domain_login', args=[self.domain]),
+                user.raw_username,
+            ))
 
         # todo: process form data and activate the account
         return self.get(request, *args, **kwargs)
