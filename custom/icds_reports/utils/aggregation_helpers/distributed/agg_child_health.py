@@ -116,25 +116,27 @@ class AggChildHealthAggregationDistributedHelper(AggregationPartitionedHelper):
                 "SUM(CASE WHEN (chm.born_in_month = 1 AND (chm.nutrition_status_weighed = 1 "
                 "OR chm.low_birth_weight_born_in_month = 1)) THEN 1 ELSE 0 END)"),
             ('zscore_grading_hfa_normal',
-                "SUM(CASE WHEN chm.zscore_grading_hfa_recorded_in_month = 1 AND "
+                "SUM(CASE WHEN chm.wer_eligible=1 AND chm.zscore_grading_hfa_recorded_in_month = 1 AND "
                 "chm.zscore_grading_hfa = 3 THEN 1 ELSE 0 END)"),
             ('zscore_grading_hfa_moderate',
-                "SUM(CASE WHEN chm.zscore_grading_hfa_recorded_in_month = 1 AND "
+                "SUM(CASE WHEN chm.wer_eligible=1 AND chm.zscore_grading_hfa_recorded_in_month = 1 AND "
                 "chm.zscore_grading_hfa = 2 THEN 1 ELSE 0 END)"),
             ('zscore_grading_hfa_severe',
-                "SUM(CASE WHEN chm.zscore_grading_hfa_recorded_in_month = 1 AND "
+                "SUM(CASE WHEN chm.wer_eligible=1 AND chm.zscore_grading_hfa_recorded_in_month = 1 AND "
                 "chm.zscore_grading_hfa = 1 THEN 1 ELSE 0 END)"),
             ('wasting_normal_v2',
-                "SUM(CASE WHEN chm.zscore_grading_wfh_recorded_in_month = 1 AND chm.zscore_grading_wfh = 3 THEN 1 "
-                "ELSE 0 END)"),
+                "SUM(CASE WHEN chm.wer_eligible=1 AND chm.zscore_grading_wfh_recorded_in_month = 1"
+                "AND chm.zscore_grading_wfh = 3 THEN 1 ELSE 0 END)"),
             ('wasting_moderate_v2',
-                "SUM(CASE WHEN chm.zscore_grading_wfh_recorded_in_month = 1 AND chm.zscore_grading_wfh = 2 THEN 1 "
-                "ELSE 0 END)"),
+                "SUM(CASE WHEN chm.wer_eligible=1 AND chm.zscore_grading_wfh_recorded_in_month = 1 "
+                "AND chm.zscore_grading_wfh = 2 THEN 1 ELSE 0 END)"),
             ('wasting_severe_v2',
-                "SUM(CASE WHEN chm.zscore_grading_wfh_recorded_in_month = 1 AND chm.zscore_grading_wfh = 1 THEN 1 "
-                "ELSE 0 END)"),
-            ('zscore_grading_hfa_recorded_in_month', "SUM(chm.zscore_grading_hfa_recorded_in_month)"),
-            ('zscore_grading_wfh_recorded_in_month', "SUM(chm.zscore_grading_wfh_recorded_in_month)"),
+                "SUM(CASE WHEN chm.wer_eligible=1 AND chm.zscore_grading_wfh_recorded_in_month = 1 "
+                "AND chm.zscore_grading_wfh = 1 THEN 1 ELSE 0 END)"),
+            ('zscore_grading_hfa_recorded_in_month',
+                "SUM(CASE WHEN chm.wer_eligible=1 THEN chm.zscore_grading_hfa_recorded_in_month ELSE 0 END)"),
+            ('zscore_grading_wfh_recorded_in_month',
+             "SUM(CASE WHEN chm.wer_eligible=1 THEN chm.zscore_grading_wfh_recorded_in_month ELSE 0 END)"),
             ('days_ration_given_child', "SUM(chm.days_ration_given_child)"),
         )
         query_cols = []
