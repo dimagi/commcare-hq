@@ -1,4 +1,4 @@
-hqDefine('locations/js/utils', [
+hqDefine('locations/js/search', [
     'jquery',
     'hqwebapp/js/initial_page_data',
     'select2/dist/js/select2.full.min',
@@ -52,10 +52,10 @@ hqDefine('locations/js/utils', [
         show_inactive = initialPageData.get('show_inactive');
         location_search_url = initialPageData.reverse('location_search');
         locs = initialPageData.get('locations');
+        enableLocationSearchSelect();
     });
 
     return {
-        enableLocationSearchSelect: enableLocationSearchSelect,
         reloadLocationSearchSelect: reloadLocationSearchSelect,
         clearLocationSelection: clearLocationSelection,
     };
