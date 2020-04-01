@@ -135,18 +135,20 @@ class TestNewReport(TestCase):
         self.assertEqual(food_names(expected), food_names(actual))
 
         columns_known_to_fail = {  # TODO address these columns
+            'conv_factor_gap_code',
+            'conv_factor_gap_desc',
+            'fct_gap_code',
+            'fct_gap_desc',
+        }
+        nutrient_columns = [
             'energy_kcal_per_100g',
             'energy_kcal',
             'water_g_per_100g',
             'water_g',
             'protein_g_per_100g',
             'protein_g',
-            'conv_factor_gap_code',
-            'conv_factor_gap_desc',
-            'fct_gap_code',
-            'fct_gap_desc',
-        }
-        columns = [c.slug for c in INDICATORS if c.slug not in columns_known_to_fail]
+        ]
+        columns = [c.slug for c in INDICATORS if c.slug not in columns_known_to_fail] + nutrient_columns
         for column in columns:
             self.assert_columns_equal(expected, actual, column)
 
