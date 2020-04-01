@@ -23,6 +23,7 @@ from custom.icds.location_reassignment.const import (
     OLD_SITE_CODE_COLUMN,
     OPERATION_COLUMN,
     USERNAME_COLUMN,
+    VALID_OPERATIONS,
 )
 
 
@@ -98,7 +99,7 @@ class Download(object):
 
     @staticmethod
     def _add_validation(worksheet):
-        operation_data_validation = DataValidation(type="list", formula1='"Move,Extract,Split,Merge"')
+        operation_data_validation = DataValidation(type="list", formula1='"%s"' % (','.join(VALID_OPERATIONS)))
         worksheet.add_data_validation(operation_data_validation)
         for header_cell in worksheet[1]:
             if header_cell.value == OPERATION_COLUMN:
