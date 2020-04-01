@@ -320,8 +320,7 @@ class RepeatRecordView(View):
             _schedule_task_with_flag(request, domain, 'resend')
         else:
             _schedule_task_without_flag(request, domain, 'resend')
-
-        return HttpResponse('OK')
+        return JsonResponse({'success': True})
 
 
 @require_POST
