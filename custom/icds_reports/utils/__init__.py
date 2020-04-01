@@ -808,11 +808,11 @@ def stunting_normal_column(beta):
 
 
 def current_month_stunting_column(beta):
-    return 'current_month_stunting_v2'
+    return 'current_month_stunting'
 
 
 def current_month_wasting_column(beta):
-    return 'current_month_wasting_v2'
+    return 'current_month_wasting'
 
 
 def hfa_recorded_in_month_column(beta):
