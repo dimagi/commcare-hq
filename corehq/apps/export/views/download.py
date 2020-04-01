@@ -1,13 +1,13 @@
 import json
 from datetime import date
+from io import BytesIO
 
 from django.http import (
     Http404,
     HttpResponse,
     HttpResponseBadRequest,
     HttpResponseServerError,
-    JsonResponse,
-)
+    JsonResponse)
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _
@@ -17,6 +17,8 @@ from django.views.decorators.http import require_GET, require_POST
 
 from memoized import memoized
 
+from corehq.apps.export.dbaccessors import get_properly_wrapped_export_instance
+from corehq.apps.export.det.schema_generator import generate_from_export_instance
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_response
 from soil import DownloadBase
@@ -545,4 +547,11 @@ class DownloadDETSchemaView(View):
     urlname = 'download-det-schema'
 
     def get(self, request, domain, export_instance_id):
-        return HttpResponse("it works")
+        export_instance = get_properly_wrapped_export_instance(export_instance_id)
+        assert domain == export_instance.domain
+        output_file = BytesIO()
+        generate_from_export_instance(export_instance, output_file)
+        output_file.seek(0)
+        response = HttpResponse(output_file.read(), content_type='application/vnd.ms-excel')
+        response['Content-Disposition'] = f'attachment; filename="{export_instance.name}.xlsx"'
+        return response
