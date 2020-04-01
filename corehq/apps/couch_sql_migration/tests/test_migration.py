@@ -797,10 +797,7 @@ class MigrationTestCase(BaseMigrationTestCase):
             'commcare.couch_sql_migration.count',
         ]
         for t_stat in tracked_stats:
-            self.assertTrue(
-                any(r_stat.name == t_stat for r_stat in received_stats),
-                "missing stat %r" % t_stat,
-            )
+            self.assertIn(t_stat, received_stats, "missing stat %r" % t_stat)
 
     def test_live_migrate(self):
         self.submit_form(make_test_form("test-1"), timedelta(minutes=-95))

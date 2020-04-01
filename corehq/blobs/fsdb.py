@@ -8,7 +8,7 @@ from os.path import commonprefix, exists, isabs, isdir, dirname, join, realpath,
 from corehq.blobs.exceptions import BadName, NotFound
 from corehq.blobs.interface import AbstractBlobDB
 from corehq.blobs.util import check_safe_key
-from corehq.util.datadog.gauges import datadog_counter
+from corehq.util.metrics import metrics_counter
 
 CHUNK_SIZE = 4096
 
@@ -45,14 +45,14 @@ class FilesystemBlobDB(AbstractBlobDB):
     def get(self, key):
         path = self.get_path(key)
         if not exists(path):
-            datadog_counter('commcare.blobdb.notfound')
+            metrics_counter('commcare.blobdb.notfound')
             raise NotFound(key)
         return open(path, "rb")
 
     def size(self, key):
         path = self.get_path(key)
         if not exists(path):
-            datadog_counter('commcare.blobdb.notfound')
+            metrics_counter('commcare.blobdb.notfound')
             raise NotFound(key)
         return _count_size(path).size
 
