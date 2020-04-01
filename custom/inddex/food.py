@@ -3,6 +3,7 @@ import uuid
 from collections import defaultdict
 from datetime import datetime
 from functools import reduce
+from itertools import chain
 
 from django.utils.functional import cached_property
 
@@ -318,7 +319,7 @@ class FoodData:
 
     @property
     def headers(self):
-        return [i.slug for i in INDICATORS]
+        return [i.slug for i in INDICATORS] + list(get_nutrient_headers(self.fixtures.nutrient_names))
 
     @property
     def rows(self):
@@ -336,7 +337,26 @@ class FoodData:
         for recipe_id, rows_in_recipe in rows_by_recipe.items():
             enrich_rows(recipe_id, rows_in_recipe)
             for row in rows_in_recipe:
-                yield [_format(getattr(row, column.slug)) for column in INDICATORS]
+                static_rows = (getattr(row, column.slug) for column in INDICATORS)
+                nutrient_rows = get_nutrient_values(self.fixtures.nutrient_names, row)
+                yield map(_format, chain(static_rows, nutrient_rows))
+
+
+def get_nutrient_headers(nutrient_names):
+    for name in nutrient_names:
+        yield f"{name}_per_100g"
+        yield name
+
+
+def get_nutrient_values(nutrient_names, row):
+    for name in nutrient_names:
+        if row.fct_code:
+            per_100g = row.composition.nutrients.get(name)
+            yield per_100g
+            yield _multiply(per_100g, row.total_grams)
+        else:
+            yield None
+            yield None
 
 
 def _multiply(*args):
