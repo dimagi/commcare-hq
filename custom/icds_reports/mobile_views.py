@@ -45,7 +45,7 @@ def password_reset(request, domain):
     kwargs['extra_context']['form_submit_url'] = reverse('cas_mobile_dashboard_password_reset', args=[domain])
     kwargs['extra_context']['login_url'] = reverse('cas_mobile_dashboard_login', args=[domain])
     # so that we can redirect to a custom "done" page
-    kwargs['post_reset_redirect'] = reverse('cas_mobile_dashboard_password_reset_done', args=[domain])
+    kwargs['success_url'] = reverse('cas_mobile_dashboard_password_reset_done', args=[domain])
     return auth_views.PasswordResetView.as_view(**kwargs)(request)
 
 

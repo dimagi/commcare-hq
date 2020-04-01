@@ -113,11 +113,11 @@ from corehq.motech.repeaters.repeater_generators import (
 )
 from corehq.motech.requests import Requests
 from corehq.motech.utils import b64_aes_decrypt
-from corehq.util.datadog.gauges import datadog_counter
 from corehq.util.datadog.metrics import (
     REPEATER_ERROR_COUNT,
     REPEATER_SUCCESS_COUNT,
 )
+from corehq.util.metrics import metrics_counter
 from corehq.util.quickcache import quickcache
 
 from .const import (
@@ -140,23 +140,23 @@ from .utils import get_all_repeater_types
 
 
 def log_repeater_timeout_in_datadog(domain):
-    datadog_counter('commcare.repeaters.timeout', tags=['domain:{}'.format(domain)])
+    metrics_counter('commcare.repeaters.timeout', tags={'domain': domain})
 
 
 def log_repeater_error_in_datadog(domain, status_code, repeater_type):
-    datadog_counter(REPEATER_ERROR_COUNT, tags=[
-        'domain:{}'.format(domain),
-        'status_code:{}'.format(status_code),
-        'repeater_type:{}'.format(repeater_type),
-    ])
+    metrics_counter(REPEATER_ERROR_COUNT, tags={
+        'domain': domain,
+        'status_code': status_code,
+        'repeater_type': repeater_type,
+    })
 
 
 def log_repeater_success_in_datadog(domain, status_code, repeater_type):
-    datadog_counter(REPEATER_SUCCESS_COUNT, tags=[
-        'domain:{}'.format(domain),
-        'status_code:{}'.format(status_code),
-        'repeater_type:{}'.format(repeater_type),
-    ])
+    metrics_counter(REPEATER_SUCCESS_COUNT, tags={
+        'domain': domain,
+        'status_code': status_code,
+        'repeater_type': repeater_type,
+    })
 
 
 class Repeater(QuickCachedDocumentMixin, Document):
