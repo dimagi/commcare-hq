@@ -43,10 +43,11 @@ class SubmissionReprocessingEnqueuingOperation(BaseCommand):
         _record_datadog_metrics()
         utcnow = datetime.utcnow()
         queued_threshold = utcnow - timedelta(minutes=ENQUEUING_TIMEOUT)
-        min_processing_age = utcnow - timedelta(minutes=5)
         filters = Q(date_queued__isnull=True) | Q(date_queued__lte=queued_threshold)
 
-        # wait 5 mins before processing to avoid processing during form submission
+        # wait before processing to avoid processing during form submission and hopefully after any
+        # current infra issues
+        min_processing_age = utcnow - timedelta(minutes=30)
         filters = Q(timestamp__lt=min_processing_age) & filters
         query = UnfinishedSubmissionStub.objects.filter(filters).order_by('timestamp')
         stub_ids = list(query.values_list('id', flat=True)[:BATCH_SIZE])
