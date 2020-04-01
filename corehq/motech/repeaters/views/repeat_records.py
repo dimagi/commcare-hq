@@ -353,18 +353,8 @@ def requeue_repeat_record(request, domain):
 
 
 def _get_records(request):
-    if not request:
-        return []
-
-    records = request.POST.get('record_id', None)
-    if not records:
-        return []
-
-    records_ids = records.split(' ')
-    if records_ids[-1] == '':
-        records_ids.pop()
-
-    return records_ids
+    record_ids = request.POST.get('record_id') or ''
+    return record_ids.strip().split()
 
 
 def _get_query(request):
