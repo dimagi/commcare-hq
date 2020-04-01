@@ -10,9 +10,19 @@ from openpyxl.worksheet.datavalidation import DataValidation
 from corehq.apps.es import UserES
 from corehq.apps.locations.models import SQLLocation
 from custom.icds.location_reassignment.const import (
+    CURRENT_LGD_CODE,
+    CURRENT_NAME,
+    CURRENT_PARENT_NAME,
+    CURRENT_PARENT_SITE_CODE,
+    CURRENT_PARENT_TYPE,
+    NEW_LGD_CODE,
+    NEW_NAME,
+    NEW_PARENT_SITE_CODE,
     NEW_SITE_CODE_COLUMN,
+    NEW_USERNAME_COLUMN,
     OLD_SITE_CODE_COLUMN,
     OPERATION_COLUMN,
+    USERNAME_COLUMN,
 )
 
 
@@ -41,6 +51,7 @@ class Download(object):
         for location in self._locations():
             self._location_details_by_location_id[location.location_id] = {
                 'name': location.name,
+                'type_name': location.location_type.name,
                 'site_code': location.site_code,
                 'lgd_code': location.metadata.get('lgd_code', ''),
                 'parent_location_id': location.parent_location_id,
@@ -97,8 +108,8 @@ class Download(object):
     def _create_rows(self):
         def append_row(username):
             row = deepcopy(location_content)
-            row['username'] = username
-            row['new_username'] = ''
+            row[USERNAME_COLUMN] = username
+            row[NEW_USERNAME_COLUMN] = ''
             row[OPERATION_COLUMN] = ''
             rows[location_type].append(row)
 
@@ -121,19 +132,20 @@ class Download(object):
         location_details = self._location_details_by_location_id[location_id]
         location_parent_id = location_details['parent_location_id']
         location_content = {
-            'name': location_details['name'],
-            'new_name': '',
+            CURRENT_NAME: location_details['name'],
+            NEW_NAME: '',
             OLD_SITE_CODE_COLUMN: location_details['site_code'],
             NEW_SITE_CODE_COLUMN: '',
-            'lgd_code': location_details['lgd_code'],
-            'new_lgd_code': '',
+            CURRENT_LGD_CODE: location_details['lgd_code'],
+            NEW_LGD_CODE: '',
         }
         if location_parent_id and location_parent_id in self._location_details_by_location_id:
             location_parent_details = self._location_details_by_location_id[location_parent_id]
             location_content.update({
-                'parent_name': location_parent_details['name'],
-                'parent_site_code': location_parent_details['site_code'],
-                'new_parent_site_code': ''
+                CURRENT_PARENT_TYPE: location_parent_details['type_name'],
+                CURRENT_PARENT_NAME: location_parent_details['name'],
+                CURRENT_PARENT_SITE_CODE: location_parent_details['site_code'],
+                NEW_PARENT_SITE_CODE: ''
             })
         return location_content
 
