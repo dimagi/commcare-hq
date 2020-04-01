@@ -45,6 +45,7 @@ def get_dashboard_template_context(domain, couch_user):
     context['nav_menu_items'] = _get_nav_menu_items()
     context['fact_sheet_sections'] = _get_factsheet_sections()
     context['MAPBOX_ACCESS_TOKEN'] = settings.MAPBOX_ACCESS_TOKEN
+    context['support_email'] = settings.SUPPORT_EMAIL
     return context
 
 
