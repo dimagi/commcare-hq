@@ -1,7 +1,7 @@
 #!/bin/bash 
 # TODO convert to using docker compose'depends_on' feature with health checks
 
-set -ex
+
 
 if [ -n "$1" ]; then
     SERVICES="$1"
