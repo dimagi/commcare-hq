@@ -179,7 +179,7 @@ class TestFactSheetReportMaternalAndChildNutritionICDS(TestCase):
             {
                 'average': {
                     'html': 25.806451612903224,
-                    'sort_key': 29.62962962962963
+                    'sort_key': 25.806451612903224
                 },
                 'data': [
                     {'html': 'Children from 0 - 5 years with moderate acute malnutrition (weight-for-height)'},
