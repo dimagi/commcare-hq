@@ -269,48 +269,46 @@ class FoodRow:
         raise AttributeError(f"FoodRow has no definition for {name}")
 
 
-class RecipeRowEnricher:
-    """Contains all rows of a given recipe. Handles calculations outside the scope of a single row"""
-
-    def __init__(self, recipe_id, rows):
-        self._all_rows = rows
-
+def enrich_rows(recipe_id, rows):
+    """Insert data possibly dependent on other rows in a recipe"""
+    if recipe_id == 'NO_RECIPE':
+        recipe = None
+    else:
         recipe_possibilities = [row for row in rows if row.is_recipe]
-        self._recipe_row = recipe_possibilities[0] if len(recipe_possibilities) == 1 else None
-        self._recipe_ingredients = [row for row in rows if not row.is_recipe]
+        recipe = recipe_possibilities[0] if len(recipe_possibilities) == 1 else None
+    ingredients = [row for row in rows if not row.is_recipe]
 
-    def enrich(self):
-        if not self._recipe_row:
-            _enrich_non_recipe_rows(self._all_rows)
-        else:
-            for row in [self._recipe_row] + self._recipe_ingredients:
-                row.total_grams = self._total_grams[row.uuid]
-                if row.is_recipe:
-                    row.recipe_num_ingredients = len(self._recipe_ingredients)
-                if row.is_ingredient == 'yes' and self._recipe_row.food_type == STANDARD_RECIPE:
-                    row.ingr_recipe_total_grams_consumed = self._total_grams[self._recipe_row.uuid]
+    if not recipe:
+        for row in rows:
+            row.total_grams = _multiply(row.measurement_amount, row.conv_factor, row.portions)
+    else:
+        total_grams = _calculate_total_grams(recipe, ingredients)
+        for row in [recipe] + ingredients:
+            row.total_grams = total_grams[row.uuid]
+            if row.is_recipe:
+                row.recipe_num_ingredients = len(ingredients)
+            if row.is_ingredient == 'yes' and recipe.food_type == STANDARD_RECIPE:
+                row.ingr_recipe_total_grams_consumed = total_grams[recipe.uuid]
 
-    @cached_property
-    def _total_grams(self):
-        recipe = self._recipe_row
-        if recipe.food_type == STANDARD_RECIPE:
-            res = {}
-            recipe_total = _multiply(recipe.measurement_amount, recipe.conv_factor, recipe.portions)
-            res[recipe.uuid] = recipe_total
-            for row in self._recipe_ingredients:
-                res[row.uuid] = _multiply(recipe_total, row.ingr_fraction)
-            return res
 
-        else:  # NON_STANDARD_RECIPE
-            res = {}
-            for row in self._recipe_ingredients:
-                res[row.uuid] = _multiply(row.measurement_amount, row.conv_factor,
-                                          row.portions, recipe.nsr_consumed_cooked_fraction)
-            try:
-                res[recipe.uuid] = sum(res.values()) if res else None
-            except TypeError:
-                res[recipe.uuid] = None
-            return res
+def _calculate_total_grams(recipe, ingredients):
+    if recipe.food_type == STANDARD_RECIPE:
+        res = {}
+        recipe_total = _multiply(recipe.measurement_amount, recipe.conv_factor, recipe.portions)
+        res[recipe.uuid] = recipe_total
+        for row in ingredients:
+            res[row.uuid] = _multiply(recipe_total, row.ingr_fraction)
+        return res
+    else:  # NON_STANDARD_RECIPE
+        res = {}
+        for row in ingredients:
+            res[row.uuid] = _multiply(row.measurement_amount, row.conv_factor,
+                                      row.portions, recipe.nsr_consumed_cooked_fraction)
+        try:
+            res[recipe.uuid] = sum(res.values()) if res else None
+        except TypeError:
+            res[recipe.uuid] = None
+        return res
 
 
 class FoodData:
@@ -336,17 +334,9 @@ class FoodData:
                     rows_by_recipe[food.recipe_id].append(ingr_row)
 
         for recipe_id, rows_in_recipe in rows_by_recipe.items():
-            if recipe_id == 'NO_RECIPE':
-                _enrich_non_recipe_rows(rows_in_recipe)
-            else:
-                RecipeRowEnricher(recipe_id, rows_in_recipe).enrich()
+            enrich_rows(recipe_id, rows_in_recipe)
             for row in rows_in_recipe:
                 yield [_format(getattr(row, column.slug)) for column in INDICATORS]
-
-
-def _enrich_non_recipe_rows(rows):
-    for row in rows:
-        row.total_grams = _multiply(row.measurement_amount, row.conv_factor, row.portions)
 
 
 def _multiply(*args):
