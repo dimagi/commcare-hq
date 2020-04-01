@@ -56,6 +56,5 @@ branches:
   - mk/location-reassignment-1 # MK March 25
   - mk/location-reassignment-3 # MK March 31
   - mk/location-reassignment-4 # MK April 1
-  - bmb/SAAS-10712-pt2  # Biyeun March 27
   - ap/remove-delete-in-name  # Amit April 1
 submodules: {}
