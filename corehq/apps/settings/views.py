@@ -456,11 +456,11 @@ class BaseProjectDataView(BaseDomainView):
 @require_POST
 @login_required
 def new_api_key(request):
-    api_key = ApiKey.objects.get(user=request.user)
+    api_key = ApiKey.objects.get_or_create(user=request.user)[0]
     api_key.key = api_key.generate_key()
     api_key.created = datetime.datetime.now()
     api_key.save()
-    return HttpResponse(api_key.key)
+    return HttpResponse(_('{} (copy this in a secure place)').format(api_key.key))
 
 
 @quickcache(['data'])
