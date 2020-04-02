@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 
 from django.conf import settings
 
+from corehq.util.metrics import metrics_counter
 from pillowtop.checkpoints.manager import KafkaPillowCheckpoint
 from pillowtop.const import DEFAULT_PROCESSOR_CHUNK_SIZE
 from pillowtop.dao.exceptions import DocumentMismatchError
@@ -42,7 +43,7 @@ from corehq.apps.userreports.sql import get_metadata
 from corehq.apps.userreports.tasks import rebuild_indicators
 from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.sql_db.connections import connection_manager
-from corehq.util.datadog.gauges import datadog_bucket_timer, datadog_histogram
+from corehq.util.datadog.gauges import datadog_bucket_timer
 from corehq.util.soft_assert import soft_assert
 from corehq.util.timer import TimingContext
 
@@ -432,9 +433,9 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
                 break
 
         for domain, duration in top_half_domains.items():
-            datadog_histogram('commcare.change_feed.ucr_slow_log', duration, tags=[
-                'domain:{}'.format(domain)
-            ])
+            metrics_counter('commcare.change_feed.ucr_slow_log', duration, tags={
+                'domain': domain
+            })
         self.domain_timing_context.clear()
 
 
