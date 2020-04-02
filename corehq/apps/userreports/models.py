@@ -10,7 +10,7 @@ from uuid import UUID
 from django.conf import settings
 from django.contrib.postgres.fields import ArrayField, JSONField
 from django.core.serializers.json import DjangoJSONEncoder
-from django.db import models
+from django.db import models, transaction
 from django.utils.translation import ugettext as _
 
 import yaml
@@ -1095,6 +1095,7 @@ class AsyncIndicator(models.Model):
         ])
 
     @classmethod
+    @transaction.atomic
     def bulk_update_records(cls, configs_by_docs, domain, doc_type_by_id):
         # type (Dict[str, List[str]], str, Dict[str, str]) -> None
         # configs_by_docs should be a dict of doc_id -> list of config_ids
