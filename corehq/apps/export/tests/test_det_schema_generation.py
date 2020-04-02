@@ -90,6 +90,17 @@ class TestDETFormInstanceWithRepeat(SimpleTestCase, TestFileMixin):
         super().setUpClass()
         cls.export_instance = FormExportInstance.wrap(cls.get_json('form_export_instance_with_repeat'))
 
+    def test_main_table_not_selected(self):
+        self.export_instance.tables[0].selected = False
+        with tempfile.NamedTemporaryFile(mode='wb', suffix='.xlsx') as tmp:
+            generate_from_form_export_instance(self.export_instance, tmp)
+            wb = load_workbook(filename=tmp.name)
+            self.assertEqual(1, len(wb.worksheets))
+            repeat_ws = wb.worksheets[0]
+            self._check_repeat_worksheet(repeat_ws)
+
+        self.export_instance.tables[0].selected = True
+
     def test_generate_from_form_schema(self):
         with tempfile.NamedTemporaryFile(mode='wb', suffix='.xlsx') as tmp:
             generate_from_form_export_instance(self.export_instance, tmp)
