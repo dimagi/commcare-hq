@@ -14,12 +14,11 @@ def deprecate_locations(old_locations, new_locations, operation):
     :param old_locations: the locations to deprecate
     :param new_locations: the location that deprecates these location
     :param operation: the operation being performed, split/merge/move/extract
-    :return: True for success, False in case of failure
+    :return: errors in case of failure
     """
     transition = Transition(operation, old_locations, new_locations)
     if transition.valid():
         transition.perform()
         for old_location in old_locations:
             deactivate_users_at_location(old_location.location_id)
-        return True
-    return False
+    return transition.errors
