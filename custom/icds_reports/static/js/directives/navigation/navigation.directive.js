@@ -63,10 +63,6 @@ function NavigationController($window, $rootScope, $scope, $route, $routeParams,
 
     $scope.reportAnIssue = function () {
         $scope.closeMenu();
-        if (reportAnIssueUrl) {
-            $window.location.href = reportAnIssueUrl;
-            return;
-        }
         $uibModal.open({
             ariaLabelledBy: 'modal-title',
             ariaDescribedBy: 'modal-body',
