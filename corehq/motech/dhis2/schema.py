@@ -1,12 +1,17 @@
 from schema import Optional as SchemaOptional
 from schema import Regex, Schema
 
+from corehq.motech.dhis2.const import (
+    DHIS2_EVENT_STATUSES,
+    DHIS2_PROGRAM_STATUSES,
+)
+
 id_schema = Regex(r"^[A-Za-z0-9]+$")
 # DHIS2 accepts date values, but returns datetime values for dates:
 date_schema = Regex(r"^\d{4}-\d{2}-\d{2}(:?T\d{2}:\d{2}:\d{2}.\d{3})?$")
 datetime_schema = Regex(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}$")
-enrollment_status_schema = Regex("^(ACTIVE|COMPLETED|CANCELED)$")
-event_status_schema = Regex("^(ACTIVE|COMPLETED|VISITED|SCHEDULE|OVERDUE|SKIPPED)$")
+enrollment_status_schema = Regex(f"^({'|'.join(DHIS2_PROGRAM_STATUSES)})$")
+event_status_schema = Regex(f"^({'|'.join(DHIS2_EVENT_STATUSES)})$")
 
 
 def get_attribute_schema() -> dict:
