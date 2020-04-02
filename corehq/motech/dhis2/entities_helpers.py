@@ -290,7 +290,7 @@ def get_programs_by_id(case_trigger_info, case_config):
             program = programs_by_id[event["program"]]
             program["events"].append(event)
             program["orgUnit"] = get_value(form_config.org_unit_id, case_trigger_info)
-            program["status"] = form_config.program_status
+            program["status"] = get_value(form_config.program_status, case_trigger_info)
             program.update(get_program_dates(form_config, case_trigger_info))
     return programs_by_id
 
