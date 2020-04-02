@@ -24,7 +24,7 @@ CASE_API_PATH_MAP = {
 }
 
 MAP_VIA_STR2DATE = 'str2date'
-
+MAP_VIA_STR2NUM = 'str2num'
 
 def generate_from_export_instance(export_instance, output_file):
     if isinstance(export_instance, CaseExportInstance):
@@ -118,4 +118,6 @@ def _get_det_map_for_export_item_datatype(datatype):
     return {
         datatypes.DATA_TYPE_DATETIME: MAP_VIA_STR2DATE,
         datatypes.DATA_TYPE_DATE: MAP_VIA_STR2DATE,
+        datatypes.DATA_TYPE_INTEGER: MAP_VIA_STR2NUM,
+        datatypes.DATA_TYPE_DECIMAL: MAP_VIA_STR2NUM,
     }.get(datatype, '')

@@ -85,8 +85,9 @@ class TestDETFormInstance(SimpleTestCase, TestFileMixin):
             data_by_headings_by_source_field = {
                 row['Source Field']: row for row in data_by_headings
             }
-            received_on_row = data_by_headings_by_source_field['received_on']
-            self.assertEqual('str2date', received_on_row['Map Via'])
+            self.assertEqual('str2date', data_by_headings_by_source_field['received_on']['Map Via'])
+            self.assertEqual('str2date', data_by_headings_by_source_field['form.event_date']['Map Via'])
+            self.assertEqual('str2num', data_by_headings_by_source_field['form.event_duration_minutes']['Map Via'])
 
 
 class TestDETFormInstanceWithRepeat(SimpleTestCase, TestFileMixin):
