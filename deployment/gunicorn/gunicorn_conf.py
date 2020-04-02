@@ -23,8 +23,13 @@ def post_fork(server, worker):
     resolve('/')
 
 
-def on_starting(server, path=None):
-    """Wipe the metrics from previous processes"""
+def on_starting(server):
+    """Function for testing since actual function can not have additional args"""
+    _on_starting(server)
+
+
+def _on_starting(server, path=None):
+    """Function for testing"""
     try:
         _remove_prometheus_metric_files(path)
     except Exception:
@@ -45,7 +50,12 @@ def _remove_prometheus_metric_files(path, worker=None):
             os.remove(f)
 
 
-def child_exit(server, worker, path=None):
+def child_exit(server, worker):
+    _child_exit(server, worker)
+
+
+def _child_exit(server, worker, path=None):
+    """Function for testing since actual function can not have additional args"""
     try:
         _remove_prometheus_metric_files(path, worker)
     except Exception:
