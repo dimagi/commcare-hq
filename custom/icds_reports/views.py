@@ -27,7 +27,6 @@ from custom.icds_reports.utils.topojson_util.topojson_util import get_topojson_f
 from dimagi.utils.dates import add_months, force_to_date
 
 from corehq import toggles
-from corehq.apps.cloudcare.utils import webapps_module
 from corehq.apps.domain.decorators import api_auth, login_and_domain_required
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.hqwebapp.decorators import use_daterangepicker
@@ -221,7 +220,6 @@ from custom.icds_reports.utils import (
     get_age_filter,
     get_age_filter_in_months,
     get_datatables_ordering_info,
-    get_latest_issue_tracker_build_id,
     get_location_filter,
     get_location_level,
     icds_pre_release_features,
@@ -360,27 +358,10 @@ class DashboardView(TemplateView):
     def couch_user(self):
         return self.request.couch_user
 
-    def _has_helpdesk_role(self):
-        user_roles = UserRole.by_domain(self.domain)
-        helpdesk_roles_id = [
-            role.get_id
-            for role in user_roles
-            if role.name in const.HELPDESK_ROLES
-        ]
-        domain_membership = self.couch_user.get_domain_membership(self.domain)
-        return domain_membership.role_id in helpdesk_roles_id
-
     def get_context_data(self, **kwargs):
         kwargs.update(self.kwargs)
         kwargs.update(get_dashboard_template_context(self.domain, self.couch_user))
         kwargs['is_mobile'] = False
-        if self.couch_user.is_commcare_user() and self._has_helpdesk_role():
-            build_id = get_latest_issue_tracker_build_id()
-            kwargs['report_an_issue_url'] = webapps_module(
-                domain=self.domain,
-                app_id=build_id,
-                module_id=0,
-            )
         return super().get_context_data(**kwargs)
 
 
