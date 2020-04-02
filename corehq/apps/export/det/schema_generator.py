@@ -1,6 +1,7 @@
 from django.utils.translation import ugettext_lazy as _
 
 from corehq.apps.export.det.base import DETRow, DETTable, DETConfig
+from corehq.apps.export.det.exceptions import DETConfigError
 from corehq.apps.export.models import FormExportInstance, CaseExportInstance
 
 PROPERTIES_PREFIX = 'properties.'
@@ -28,7 +29,7 @@ def generate_from_export_instance(export_instance, output_file):
     elif isinstance(export_instance, FormExportInstance):
         return generate_from_form_export_instance(export_instance, output_file)
     else:
-        raise ValueError(_(f'Export instance type {type(export_instance)} not supported!'))
+        raise DETConfigError(_(f'Export instance type {type(export_instance)} not supported!'))
 
 
 def generate_from_case_export_instance(export_instance, output_file):
