@@ -59,6 +59,13 @@ class TestDETFormInstance(SimpleTestCase, TestFileMixin):
         super().setUpClass()
         cls.export_instance = FormExportInstance.wrap(cls.get_json('form_export_instance'))
 
+    def test_empty(self):
+        old_tables = self.export_instance.tables
+        self.export_instance.tables = []
+        with self.assertRaises(DETConfigError):
+            generate_from_form_export_instance(self.export_instance, BytesIO())
+        self.export_instance.tables = old_tables
+
     def test_generate_from_form_schema(self):
         with tempfile.NamedTemporaryFile(mode='wb', suffix='.xlsx') as tmp:
             generate_from_form_export_instance(self.export_instance, tmp)

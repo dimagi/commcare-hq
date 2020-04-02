@@ -57,6 +57,8 @@ def _transform_path_for_case_properties(input_path):
 
 def generate_from_form_export_instance(export_instance, output_file):
     assert isinstance(export_instance, FormExportInstance)
+    if not export_instance.selected_tables:
+        raise DETConfigError(_(f'No Tables found in Export {export_instance.name}'))
     main_input_table = export_instance.selected_tables[0]
     main_output_table = DETTable(
         name=main_input_table.label,
