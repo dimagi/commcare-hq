@@ -6,6 +6,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.views import redirect_to_login
+from django.core.exceptions import ValidationError
 from django.http import Http404, HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import render
 from django.template.loader import render_to_string
@@ -724,12 +725,22 @@ class UserInvitationView(object):
             logout(request)
             return HttpResponseRedirect(request.path)
 
-        invitation = SQLInvitation.objects.filter(uuid=uuid).first()
+        # Recently-sent invitations will use a URL based on UUID
+        try:
+            invitation = SQLInvitation.objects.get(uuid=uuid)
+        except (SQLInvitation.DoesNotExist, ValidationError):
+            invitation = None
+
+        # Older invitations, created before PR#26975, will use a URL based on SQL id
         if not invitation:
             try:
                 invitation = SQLInvitation.objects.get(id=int(uuid))
-            except (ValueError, SQLInvitation.DoesNotExist):
-                invitation = SQLInvitation.objects.filter(couch_id=uuid).first()
+            except (SQLInvitation.DoesNotExist, ValueError):
+                invitation = None
+
+        # The oldest invitations, created before PR#26686, will use a URL based on couch id.
+        if not invitation:
+            invitation = SQLInvitation.objects.filter(couch_id=uuid).first()
 
         if not invitation:
             messages.error(request, _("Sorry, it looks like your invitation has expired. "
