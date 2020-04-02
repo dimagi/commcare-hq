@@ -1,3 +1,4 @@
+import datetime
 import json
 import re
 from base64 import b64encode
@@ -456,6 +457,7 @@ class BaseProjectDataView(BaseDomainView):
 def new_api_key(request):
     api_key = ApiKey.objects.get(user=request.user)
     api_key.key = api_key.generate_key()
+    api_key.created = datetime.datetime.now()
     api_key.save()
     return HttpResponse(api_key.key)
 
