@@ -3,6 +3,7 @@ from django.utils.translation import ugettext_lazy as _
 from corehq.apps.export.det.base import DETRow, DETTable, DETConfig
 from corehq.apps.export.det.exceptions import DETConfigError
 from corehq.apps.export.models import FormExportInstance, CaseExportInstance
+from corehq.apps.userreports import datatypes
 
 PROPERTIES_PREFIX = 'properties.'
 
@@ -21,6 +22,8 @@ CASE_API_PATH_MAP = {
     'type': 'properties.case_type',
     'user_id': 'user_id',
 }
+
+MAP_VIA_STR2DATE = 'str2date'
 
 
 def generate_from_export_instance(export_instance, output_file):
@@ -107,4 +110,12 @@ def _get_det_row_for_export_column(column, path_transform_fn):
     return DETRow(
         source_field=path_transform_fn(column.item.readable_path),
         field=column.label,
+        map_via=_get_det_map_for_export_item_datatype(column.item.datatype)
     )
+
+
+def _get_det_map_for_export_item_datatype(datatype):
+    return {
+        datatypes.DATA_TYPE_DATETIME: MAP_VIA_STR2DATE,
+        datatypes.DATA_TYPE_DATE: MAP_VIA_STR2DATE,
+    }.get(datatype, '')
