@@ -1,3 +1,5 @@
+from django.utils.translation import ugettext_lazy as _
+
 from corehq.apps.export.det.base import DETRow, DETTable, DETConfig
 from corehq.apps.export.models import FormExportInstance, CaseExportInstance
 
