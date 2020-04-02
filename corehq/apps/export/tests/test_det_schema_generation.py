@@ -38,14 +38,13 @@ class TestDETFCaseInstance(SimpleTestCase, TestFileMixin):
             ws = wb.worksheets[0]
             all_data = list(ws.values)
             headings = all_data.pop(0)
+            data_by_headings = [dict(zip(headings, row)) for row in all_data]
             main_table = self.export_instance.selected_tables[0]
-            self.assertEqual(len(main_table.selected_columns), len(all_data))
+            self.assertEqual(len(main_table.selected_columns), len(data_by_headings))
             for i, input_column in enumerate(main_table.selected_columns):
-                output_row_by_headings = dict(zip(headings, all_data[i]))
-                self.assertEqual(input_column.label, output_row_by_headings['Field'])
-                # todo: test these
+                self.assertEqual(input_column.label, data_by_headings[i]['Field'])
                 self.assertEqual(_transform_path_for_case_properties(input_column.item.readable_path),
-                                 output_row_by_headings['Source Field'])
+                                 data_by_headings[i]['Source Field'])
 
             # note: subtables not supported
 
