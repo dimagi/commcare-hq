@@ -559,5 +559,5 @@ class DownloadDETSchemaView(View):
         else:
             output_file.seek(0)
             response = HttpResponse(output_file, content_type='application/vnd.ms-excel')
-            response['Content-Disposition'] = f'attachment; filename="{export_instance.name}.xlsx"'
+            response['Content-Disposition'] = f'attachment; filename="{export_instance.name}-DET.xlsx"'
             return response
