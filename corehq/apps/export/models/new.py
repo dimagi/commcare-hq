@@ -453,7 +453,7 @@ class DocRow(namedtuple("DocRow", ["doc", "row"])):
     """
 
 
-class TableConfiguration(DocumentSchema):
+class TableConfiguration(DocumentSchema, ReadablePathMixin):
     """
     The TableConfiguration represents one excel sheet in an export.
     It contains a list of columns and other presentation properties
