@@ -1,9 +1,11 @@
 import os
 import tempfile
+from io import BytesIO
 
 from django.test import SimpleTestCase
 from openpyxl import load_workbook
 
+from corehq.apps.export.det.exceptions import DETConfigError
 from corehq.apps.export.det.schema_generator import (
     generate_from_form_export_instance,
     generate_from_case_export_instance,
@@ -21,6 +23,13 @@ class TestDETFCaseInstance(SimpleTestCase, TestFileMixin):
     def setUpClass(cls):
         super().setUpClass()
         cls.export_instance = CaseExportInstance.wrap(cls.get_json('case_export_instance'))
+
+    def test_empty(self):
+        old_tables = self.export_instance.tables
+        self.export_instance.tables = []
+        with self.assertRaises(DETConfigError):
+            generate_from_case_export_instance(self.export_instance, BytesIO())
+        self.export_instance.tables = old_tables
 
     def test_generate_from_case_schema(self):
         with tempfile.NamedTemporaryFile(mode='wb', suffix='.xlsx') as tmp:

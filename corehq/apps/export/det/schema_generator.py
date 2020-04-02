@@ -34,6 +34,8 @@ def generate_from_export_instance(export_instance, output_file):
 
 def generate_from_case_export_instance(export_instance, output_file):
     assert isinstance(export_instance, CaseExportInstance)
+    if not export_instance.selected_tables:
+        raise DETConfigError(_(f'No Tables found in Export {export_instance.name}'))
     main_input_table = export_instance.selected_tables[0]
     main_output_table = DETTable(
         name=main_input_table.label,
