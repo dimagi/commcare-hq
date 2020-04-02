@@ -22,7 +22,7 @@ class MasterDataFileSummaryReport(DatespanMixin, CustomProjectReport, GenericTab
 
     @property
     def fields(self):
-        return [CaseOwnersFilter, DateRangeFilter, GapTypeFilter, RecallStatusFilter]
+        return [CaseOwnersFilter, DateRangeFilter, RecallStatusFilter]
 
     @property
     def headers(self):
@@ -40,6 +40,5 @@ class MasterDataFileSummaryReport(DatespanMixin, CustomProjectReport, GenericTab
             self.domain,
             datespan=self.datespan,
             case_owners=self.request.GET.get('case_owners'),
-            gap_type=self.request.GET.get('gap_type'),
             recall_status=self.request.GET.get('recall_status'),
         )

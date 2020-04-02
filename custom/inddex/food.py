@@ -307,14 +307,13 @@ def _calculate_total_grams(recipe, ingredients):
 
 
 class FoodData:
-    def __init__(self, domain, *, datespan, case_owners=None, gap_type=None, recall_status=None):
+    def __init__(self, domain, *, datespan, case_owners=None, recall_status=None):
         self.fixtures = FixtureAccessor(domain)
         self._ucr = FoodCaseData({
             'domain': domain,
             'startdate': str(datespan.startdate),
             'enddate': str(datespan.enddate),
             'case_owners': case_owners or '',
-            'gap_type': gap_type or '',
             'recall_status': recall_status or '',
         })
 
