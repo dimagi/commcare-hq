@@ -14,6 +14,7 @@ TITLE_ROW = [
     'Format Via',
 ]
 
+
 @attr.s
 class DETConfig:
     name = attr.ib()
@@ -36,6 +37,7 @@ class DETConfig:
             data_sheets.append((table.name, list(table.get_sheet_data())))
 
         export_raw(header_sheets, data_sheets, output_file, format=Format.XLS_2007)
+
 
 @attr.s
 class DETTable:
@@ -66,6 +68,7 @@ class DETTable:
                         row.field,
                         row.map_via,
                     ]
+
 
 @attr.s
 class DETRow:
