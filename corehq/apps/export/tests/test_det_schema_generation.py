@@ -73,12 +73,20 @@ class TestDETFormInstance(SimpleTestCase, TestFileMixin):
             ws = wb.worksheets[0]
             all_data = list(ws.values)
             headings = all_data.pop(0)
+            data_by_headings = [dict(zip(headings, row)) for row in all_data]
             main_table = self.export_instance.selected_tables[0]
             self.assertEqual(len(main_table.selected_columns), len(all_data))
+            # basic sanity check
             for i, input_column in enumerate(main_table.selected_columns):
-                output_row_by_headings = dict(zip(headings, all_data[i]))
-                self.assertEqual(input_column.label, output_row_by_headings['Field'])
-                self.assertEqual(input_column.item.readable_path, output_row_by_headings['Source Field'])
+                self.assertEqual(input_column.label, data_by_headings[i]['Field'])
+                self.assertEqual(input_column.item.readable_path, data_by_headings[i]['Source Field'])
+
+            # test individual fields / types
+            data_by_headings_by_source_field = {
+                row['Source Field']: row for row in data_by_headings
+            }
+            received_on_row = data_by_headings_by_source_field['received_on']
+            self.assertEqual('str2date', received_on_row['Map Via'])
 
 
 class TestDETFormInstanceWithRepeat(SimpleTestCase, TestFileMixin):
