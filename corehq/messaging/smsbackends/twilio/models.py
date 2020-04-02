@@ -52,14 +52,12 @@ class SQLTwilioBackend(SQLSMSBackend, PhoneLoadBalancingMixin):
         return ['STOP', 'STOPALL', 'UNSUBSCRIBE', 'CANCEL', 'END', 'QUIT']
 
     def _convert_to_whatsapp(self, number):
-        if WHATSAPP_PREFIX not in number:
-            number = f"{WHATSAPP_PREFIX}{number}"
-        return number
+        assert WHATSAPP_PREFIX not in number, "Attempted to re-convert a number already formatted for Whatsapp"
+        return f"{WHATSAPP_PREFIX}{number}"
 
     def _convert_from_whatsapp(self, number):
-        if WHATSAPP_PREFIX in number:
-            number = number.replace(WHATSAPP_PREFIX, "")
-        return number
+        assert WHATSAPP_PREFIX in number, "Attempted to convert a number that is not formatted for Whatsapp"
+        return number.replace(WHATSAPP_PREFIX, "")
 
     def send(self, msg, orig_phone_number=None, *args, **kwargs):
         if not orig_phone_number:
