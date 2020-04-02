@@ -129,7 +129,7 @@ def update_tracked_entity_instance(requests, tracked_entity, etag, case_trigger_
         case_updates.update(case_update)
     enrollments_with_new_events = get_enrollments(case_trigger_info, case_config)
     if enrollments_with_new_events:
-        tracked_entity["enrollments"] = append_new_events_to_enrollments(
+        tracked_entity["enrollments"] = update_enrollments(
             tracked_entity, enrollments_with_new_events
         )
     validate_tracked_entity(tracked_entity)
@@ -153,7 +153,7 @@ def update_tracked_entity_instance(requests, tracked_entity, etag, case_trigger_
         save_case_updates(requests.domain_name, case_trigger_info.case_id, case_updates)
 
 
-def append_new_events_to_enrollments(
+def update_enrollments(
     tracked_entity: Dict,
     enrollments_with_new_events: List,
 ) -> List:
@@ -167,6 +167,7 @@ def append_new_events_to_enrollments(
         program_id = enrol["program"]
         if program_id in enrollments_by_program_id:
             enrollments_by_program_id[program_id]["events"].extend(enrol["events"])
+            enrollments_by_program_id[program_id]["status"] = enrol["status"]
         else:
             enrollments_by_program_id[program_id] = enrol
     return list(enrollments_by_program_id.values())
@@ -268,6 +269,7 @@ def get_enrollments(case_trigger_info, case_config):
         enrollment = {
             "orgUnit": program["orgUnit"] or case_org_unit,
             "program": program_id,
+            "status": program["status"],
             "events": program["events"],
         }
         if program.get("enrollmentDate"):
@@ -288,6 +290,7 @@ def get_programs_by_id(case_trigger_info, case_config):
             program = programs_by_id[event["program"]]
             program["events"].append(event)
             program["orgUnit"] = get_value(form_config.org_unit_id, case_trigger_info)
+            program["status"] = form_config.program_status
             program.update(get_program_dates(form_config, case_trigger_info))
     return programs_by_id
 

@@ -13,6 +13,8 @@ from corehq.motech.dhis2.const import (
     DHIS2_DATA_TYPE_DATE,
     DHIS2_EVENT_STATUS_COMPLETED,
     DHIS2_EVENT_STATUSES,
+    DHIS2_PROGRAM_STATUS_ACTIVE,
+    DHIS2_PROGRAM_STATUSES,
     LOCATION_DHIS_ID,
 )
 from corehq.motech.finders import PropertyWeight
@@ -29,6 +31,10 @@ class Dhis2FormConfig(DocumentSchema):
     enrollment_date = DictProperty(required=False)
     incident_date = DictProperty(required=False)
     program_stage_id = DictProperty(required=False)
+    program_status = StringProperty(
+        choices=DHIS2_PROGRAM_STATUSES,
+        default=DHIS2_PROGRAM_STATUS_ACTIVE,
+    )
     org_unit_id = DictProperty(required=False, default={
         "form_user_ancestor_location_field": LOCATION_DHIS_ID
     })
