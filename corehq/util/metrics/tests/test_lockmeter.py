@@ -85,7 +85,7 @@ class TestMeteredLock(TestCase):
     def test_acquire_trace(self):
         fake = FakeLock()
         lock = MeteredLock(fake, "test")
-        with patch("corehq.util.datadog.lockmeter.tracer") as tracer:
+        with patch("corehq.util.metrics.lockmeter.tracer") as tracer:
             lock.acquire()
         self.assertListEqual(tracer.mock_calls, [
             call.trace("commcare.lock.acquire", resource="key"),
@@ -103,7 +103,7 @@ class TestMeteredLock(TestCase):
     def test_release_trace(self):
         fake = FakeLock()
         lock = MeteredLock(fake, "test")
-        with patch("corehq.util.datadog.lockmeter.tracer") as tracer:
+        with patch("corehq.util.metrics.lockmeter.tracer") as tracer:
             lock.acquire()
             tracer.reset_mock()
             lock.release()
@@ -112,7 +112,7 @@ class TestMeteredLock(TestCase):
     def test_del_trace(self):
         fake = FakeLock()
         lock = MeteredLock(fake, "test")
-        with patch("corehq.util.datadog.lockmeter.tracer") as tracer:
+        with patch("corehq.util.metrics.lockmeter.tracer") as tracer:
             lock.acquire()
             tracer.reset_mock()
             lock.__del__()
@@ -124,7 +124,7 @@ class TestMeteredLock(TestCase):
     def test_acquire_untracked(self):
         fake = FakeLock()
         lock = MeteredLock(fake, "test", track_unreleased=False)
-        with patch("corehq.util.datadog.lockmeter.tracer") as tracer:
+        with patch("corehq.util.metrics.lockmeter.tracer") as tracer:
             lock.acquire()
         self.assertListEqual(tracer.mock_calls, [
             call.trace("commcare.lock.acquire", resource="key"),
@@ -140,7 +140,7 @@ class TestMeteredLock(TestCase):
     def test_release_untracked(self):
         fake = FakeLock()
         lock = MeteredLock(fake, "test", track_unreleased=False)
-        with patch("corehq.util.datadog.lockmeter.tracer") as tracer:
+        with patch("corehq.util.metrics.lockmeter.tracer") as tracer:
             lock.acquire()
             tracer.reset_mock()
             lock.release()
@@ -149,7 +149,7 @@ class TestMeteredLock(TestCase):
     def test_del_untracked(self):
         fake = FakeLock()
         lock = MeteredLock(fake, "test", track_unreleased=False)
-        with patch("corehq.util.datadog.lockmeter.tracer") as tracer:
+        with patch("corehq.util.metrics.lockmeter.tracer") as tracer:
             lock.acquire()
             tracer.reset_mock()
             lock.__del__()
