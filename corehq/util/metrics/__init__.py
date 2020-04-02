@@ -113,11 +113,16 @@ from typing import Iterable, Callable, Dict
 from celery.task import periodic_task
 
 import settings
-from corehq.util.metrics.const import COMMON_TAGS, ALERT_INFO
-from corehq.util.metrics.metrics import DebugMetrics, DelegatedMetrics, DEFAULT_BUCKETS, _enforce_prefix, \
-    metrics_logger
 from corehq.util.timer import TimingContext
 from dimagi.utils.modules import to_function
+from .const import COMMON_TAGS, ALERT_INFO
+from .metrics import (
+    DebugMetrics,
+    DelegatedMetrics,
+    DEFAULT_BUCKETS,
+    _enforce_prefix,
+    metrics_logger
+)
 
 __all__ = [
     'metrics_counter',
@@ -125,6 +130,7 @@ __all__ = [
     'metrics_histogram',
     'metrics_gauge_task',
     'create_metrics_event',
+    'metrics_histogram_timer',
 ]
 
 _metrics = []
