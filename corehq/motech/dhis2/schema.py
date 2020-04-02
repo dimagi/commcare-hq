@@ -53,6 +53,7 @@ def get_event_schema() -> dict:
         SchemaOptional("assignedUser"): id_schema,
         SchemaOptional("attributeCategoryOptions"): id_schema,
         SchemaOptional("attributeOptionCombo"): id_schema,
+        SchemaOptional("completedBy"): str,
         SchemaOptional("completedDate"): date_schema,
         SchemaOptional("coordinate"): {
             "latitude": float,
@@ -139,6 +140,8 @@ def get_tracked_entity_schema() -> dict:
             SchemaOptional("attributes"): [attribute_schema],
             SchemaOptional("created"): datetime_schema,
             SchemaOptional("createdAtClient"): datetime_schema,
+            SchemaOptional("completedBy"): str,
+            SchemaOptional("completedDate"): date_schema,
             SchemaOptional("deleted"): bool,
             SchemaOptional("enrollment"): id_schema,
             SchemaOptional("enrollmentDate"): date_schema,
