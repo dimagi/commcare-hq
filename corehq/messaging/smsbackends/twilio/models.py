@@ -8,8 +8,8 @@ from corehq.apps.sms.models import SMS, PhoneLoadBalancingMixin, SQLSMSBackend
 from corehq.messaging.smsbackends.twilio.forms import TwilioBackendForm
 
 # https://www.twilio.com/docs/api/errors/reference
-ERROR_INVALID_TO_PHONE_NUMBER = 21211
-ERROR_WHATSAPP_LIMITATION = 63032
+INVALID_TO_PHONE_NUMBER_ERROR_CODE = 21211
+WHATSAPP_LIMITATION_ERROR_CODE = 63032
 
 WHATSAPP_PREFIX = "whatsapp:"
 
@@ -82,10 +82,10 @@ class SQLTwilioBackend(SQLSMSBackend, PhoneLoadBalancingMixin):
                 from_=from_
             )
         except TwilioRestException as e:
-            if e.code == ERROR_INVALID_TO_PHONE_NUMBER:
+            if e.code == INVALID_TO_PHONE_NUMBER_ERROR_CODE:
                 msg.set_system_error(SMS.ERROR_INVALID_DESTINATION_NUMBER)
                 return
-            elif e.code == ERROR_WHATSAPP_LIMITATION:
+            elif e.code == WHATSAPP_LIMITATION_ERROR_CODE:
                 notify_exception(None, "Error with Twilio Whatsapp: %s" % str(e))
                 orig_phone_number = self._convert_from_whatsapp(orig_phone_number)
                 kwargs['skip_whatsapp'] = True
