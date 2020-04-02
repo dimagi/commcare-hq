@@ -84,7 +84,7 @@ class SQLTwilioBackend(SQLSMSBackend, PhoneLoadBalancingMixin):
                 msg.set_system_error(SMS.ERROR_INVALID_DESTINATION_NUMBER)
                 return
             elif e.code == WHATSAPP_LIMITATION_ERROR_CODE:
-                notify_exception(None, "Error with Twilio Whatsapp: %s" % str(e))
+                notify_exception(None, f"Error with Twilio Whatsapp: {e}")
                 orig_phone_number = self._convert_from_whatsapp(orig_phone_number)
                 kwargs['skip_whatsapp'] = True
                 self.send(msg, orig_phone_number, *args, **kwargs)
