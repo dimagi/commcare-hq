@@ -22,6 +22,21 @@ STANDARD_RECIPE = 'std_recipe'
 NON_STANDARD_RECIPE = 'non_std_recipe'
 
 
+class ConvFactorGaps:
+    AVAILABLE = 1
+    BASE_TERM = 2
+    NOT_AVAILABLE = 8
+    DESCRIPTIONS = {
+        AVAILABLE: "conversion factor available",
+        BASE_TERM: "using conversion factor from base term food code",
+        NOT_AVAILABLE: "no conversion factor available",
+    }
+
+    @classmethod
+    def get_description(self, code):
+        return f"{code} - {self.DESCRIPTIONS[code]}"
+
+
 class I:
     def __init__(self, slug, *tags):
         self.slug = slug
@@ -196,6 +211,7 @@ class FoodRow:
         self.fct_reference_food_code_exists = bool(self.reference_food_code)
 
     def _set_conversion_factors(self):
+        self.conv_factor_gap_code = ConvFactorGaps.NOT_AVAILABLE
         if self.food_type in (FOOD_ITEM, STANDARD_RECIPE) and self.conv_method_code:
             self.conv_factor_food_code = self.fixtures.conversion_factors.get(
                 (self.food_code, self.conv_method_code, self.conv_option_code))
@@ -205,9 +221,13 @@ class FoodRow:
             if self.conv_factor_food_code:
                 self.conv_factor_used = 'food_code'
                 self.conv_factor = self.conv_factor_food_code
+                self.conv_factor_gap_code = ConvFactorGaps.AVAILABLE
             elif self.conv_factor_base_term_food_code:
                 self.conv_factor_used = 'base_term_food_code'
                 self.conv_factor = self.conv_factor_base_term_food_code
+                self.conv_factor_gap_code = ConvFactorGaps.BASE_TERM
+
+        self.conv_factor_gap_desc = ConvFactorGaps.get_description(self.conv_factor_gap_code)
 
     @property
     def age_range(self):
