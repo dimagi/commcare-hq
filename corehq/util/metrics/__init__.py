@@ -92,6 +92,16 @@ Histograms are recorded differently in the different providers.
 .. automethod:: corehq.util.metrics.prometheus.PrometheusMetrics._histogram
 
 
+Utilities
+=========
+
+.. autofunction:: corehq.util.metrics.create_metrics_event
+
+.. autofunction:: corehq.util.metrics.metrics_gauge_task
+
+.. autofunction:: corehq.util.metrics.metrics_histogram_timer
+
+
 Other Notes
 ===========
 
@@ -137,12 +147,12 @@ def _get_metrics_provider():
     return _metrics[-1]
 
 
-def metrics_counter(name: str, value: float = 1, tags: dict = None, documentation: str = ''):
+def metrics_counter(name: str, value: float = 1, tags: Dict[str, str] = None, documentation: str = ''):
     provider = _get_metrics_provider()
     provider.counter(name, value, tags=tags, documentation=documentation)
 
 
-def metrics_gauge(name: str, value: float, tags: dict = None, documentation: str = ''):
+def metrics_gauge(name: str, value: float, tags: Dict[str, str] = None, documentation: str = ''):
     provider = _get_metrics_provider()
     provider.gauge(name, value, tags=tags, documentation=documentation)
 
@@ -150,7 +160,7 @@ def metrics_gauge(name: str, value: float, tags: dict = None, documentation: str
 def metrics_histogram(
         name: str, value: float,
         bucket_tag: str, buckets: Iterable[int] = DEFAULT_BUCKETS, bucket_unit: str = '',
-        tags: dict = None, documentation: str = ''):
+        tags: Dict[str, str] = None, documentation: str = ''):
     provider = _get_metrics_provider()
     provider.histogram(
         name, value, bucket_tag,
@@ -185,7 +195,19 @@ def metrics_gauge_task(name, fn, run_every):
     return inner
 
 
-def create_metrics_event(title, text, alert_type=ALERT_INFO, tags=None, aggregation_key=None):
+def create_metrics_event(title: str, text: str, alert_type: str = ALERT_INFO,
+                         tags: Dict[str, str] = None, aggregation_key: str = None):
+    """
+    Send an event record to the monitoring provider.
+
+    Currently only implemented by the Datadog provider.
+
+    :param title: Title of the event
+    :param text: Event body
+    :param alert_type: Event type. One of 'success', 'info', 'warning', 'error'
+    :param tags: Event tags
+    :param aggregation_key: Key to use to group multiple events
+    """
     tags = COMMON_TAGS.update(tags or {})
     try:
         _get_metrics_provider().create_event(title, text, tags, alert_type, aggregation_key)
