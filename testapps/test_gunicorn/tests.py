@@ -1,7 +1,7 @@
 import os
 
 import mock
-from deployment.gunicorn.gunicorn_conf import child_exit, on_starting
+from deployment.gunicorn.gunicorn_conf import _child_exit, _on_starting
 from testil import eq
 
 
@@ -31,7 +31,7 @@ def test_on_starting():
     ]
 
     def _test(path):
-        on_starting(Server(), path=path)
+        _on_starting(Server(), path=path)
 
     for path in paths:
         yield _test, path
@@ -40,7 +40,7 @@ def test_on_starting():
 def test_on_starting_error():
     server = Server()
     with mock.patch('deployment.gunicorn.gunicorn_conf._remove_prometheus_metric_files', side_effect=Exception):
-        on_starting(server, path='anything')
+        _on_starting(server, path='anything')
 
     eq(len(server.log.logs), 1)
 
@@ -48,6 +48,6 @@ def test_on_starting_error():
 def test_child_exit():
     server = Server()
     with mock.patch('deployment.gunicorn.gunicorn_conf._remove_prometheus_metric_files', side_effect=Exception):
-        child_exit(server, None, path='anything')
+        _child_exit(server, None, path='anything')
 
     eq(len(server.log.logs), 1)
