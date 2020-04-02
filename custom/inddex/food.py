@@ -3,6 +3,7 @@ import uuid
 from collections import defaultdict
 from datetime import datetime
 from functools import reduce
+from itertools import chain
 
 from django.utils.functional import cached_property
 
@@ -120,12 +121,6 @@ INDICATORS = [
     I('fct_data_used'),
     I('fct_code'),
     I('total_grams'),
-    I('energy_kcal_per_100g'),
-    I('energy_kcal'),
-    I('water_g_per_100g'),
-    I('water_g'),
-    I('protein_g_per_100g'),
-    I('protein_g'),
     I('conv_factor_gap_code'),
     I('conv_factor_gap_desc'),
     I('fct_gap_code'),
@@ -159,6 +154,10 @@ class FoodRow:
         self.portions = float(self.portions) if self.portions else None
         self.nsr_consumed_cooked_fraction = (float(self.nsr_consumed_cooked_fraction)
                                              if self.nsr_consumed_cooked_fraction else None)
+
+        # These properties will be mutated in RecipeRowEnricher
+        self.recipe_num_ingredients = None
+        self.ingr_recipe_total_grams_consumed = None
 
     def _set_ingredient_fields(self, ingredient):
         if self._is_std_recipe_ingredient:
@@ -234,6 +233,18 @@ class FoodRow:
             return self.caseid
         return self.recipe_case_id or self.already_reported_recipe_case_id or 'NO_RECIPE'
 
+    _total_grams = 'NOT_YET_COMPUTED'
+    @property
+    def total_grams(self):
+        # This property must be computed later, as it depends on other rows
+        if self._total_grams == 'NOT_YET_COMPUTED':
+            raise AssertionError("total_grams has not yet been computed")
+        return self._total_grams
+
+    @total_grams.setter
+    def total_grams(self, val):
+        self._total_grams = val
+
     def __getattr__(self, name):
         if name in _INDICATORS_BY_SLUG:
             if self._is_std_recipe_ingredient:
@@ -253,56 +264,46 @@ class FoodRow:
         raise AttributeError(f"FoodRow has no definition for {name}")
 
 
-class RecipeRowGenerator:
-    """Contains all rows of a given recipe. Handles calculations outside the scope of a single row"""
-
-    def __init__(self, recipe_id, rows):
-        self._all_rows = rows
-
+def enrich_rows(recipe_id, rows):
+    """Insert data possibly dependent on other rows in a recipe"""
+    if recipe_id == 'NO_RECIPE':
+        recipe = None
+    else:
         recipe_possibilities = [row for row in rows if row.is_recipe]
-        self._recipe_row = recipe_possibilities[0] if len(recipe_possibilities) == 1 else None
-        self._recipe_ingredients = [row for row in rows if not row.is_recipe]
+        recipe = recipe_possibilities[0] if len(recipe_possibilities) == 1 else None
+    ingredients = [row for row in rows if not row.is_recipe]
 
-    def iter_rows(self):
-        if not self._recipe_row:
-            yield from _yield_non_recipe_rows(self._all_rows)
-        else:
-            for row in [self._recipe_row] + self._recipe_ingredients:
-                yield [_format(self._get_val(row, column.slug)) for column in INDICATORS]
+    if not recipe:
+        for row in rows:
+            row.total_grams = _multiply(row.measurement_amount, row.conv_factor, row.portions)
+    else:
+        total_grams = _calculate_total_grams(recipe, ingredients)
+        for row in [recipe] + ingredients:
+            row.total_grams = total_grams[row.uuid]
+            if row.is_recipe:
+                row.recipe_num_ingredients = len(ingredients)
+            if row.is_ingredient == 'yes' and recipe.food_type == STANDARD_RECIPE:
+                row.ingr_recipe_total_grams_consumed = total_grams[recipe.uuid]
 
-    def _get_val(self, row, slug):
-        if slug == 'recipe_num_ingredients' and row.is_recipe:
-            return len(self._recipe_ingredients)
-        if slug == 'total_grams':
-            return self._total_grams[row.uuid]
-        if slug == 'ingr_recipe_total_grams_consumed':
-            if row.is_ingredient == 'yes' and self._recipe_row.food_type == STANDARD_RECIPE:
-                return self._total_grams[self._recipe_row.uuid]
-        return getattr(row, slug)
 
-    @cached_property
-    def _total_grams(self):
-        recipe = self._recipe_row
-        if recipe.food_type == STANDARD_RECIPE:
-            res = {}
-            recipe_total = _multiply(recipe.measurement_amount, recipe.conv_factor, recipe.portions)
-            res[recipe.uuid] = recipe_total
-            for row in self._recipe_ingredients:
-                res[row.uuid] = _multiply(recipe_total, row.ingr_fraction)
-            return res
-
-        else:  # NON_STANDARD_RECIPE
-            res = {}
-
-            for row in self._recipe_ingredients:
-                res[row.uuid] = _multiply(row.measurement_amount, row.conv_factor,
-                                          row.portions, recipe.nsr_consumed_cooked_fraction)
-            try:
-                res[recipe.uuid] = sum(res.values()) if res else None
-            except TypeError:
-                res[recipe.uuid] = None
-            return res
-
+def _calculate_total_grams(recipe, ingredients):
+    if recipe.food_type == STANDARD_RECIPE:
+        res = {}
+        recipe_total = _multiply(recipe.measurement_amount, recipe.conv_factor, recipe.portions)
+        res[recipe.uuid] = recipe_total
+        for row in ingredients:
+            res[row.uuid] = _multiply(recipe_total, row.ingr_fraction)
+        return res
+    else:  # NON_STANDARD_RECIPE
+        res = {}
+        for row in ingredients:
+            res[row.uuid] = _multiply(row.measurement_amount, row.conv_factor,
+                                      row.portions, recipe.nsr_consumed_cooked_fraction)
+        try:
+            res[recipe.uuid] = sum(res.values()) if res else None
+        except TypeError:
+            res[recipe.uuid] = None
+        return res
 
 
 class FoodData:
@@ -312,7 +313,7 @@ class FoodData:
 
     @property
     def headers(self):
-        return [i.slug for i in INDICATORS]
+        return [i.slug for i in INDICATORS] + list(get_nutrient_headers(self.fixtures.nutrient_names))
 
     @property
     def rows(self):
@@ -328,21 +329,28 @@ class FoodData:
                     rows_by_recipe[food.recipe_id].append(ingr_row)
 
         for recipe_id, rows_in_recipe in rows_by_recipe.items():
-            if recipe_id == 'NO_RECIPE':
-                yield from _yield_non_recipe_rows(rows_in_recipe)
-            else:
-                yield from RecipeRowGenerator(recipe_id, rows_in_recipe).iter_rows()
+            enrich_rows(recipe_id, rows_in_recipe)
+            for row in rows_in_recipe:
+                static_rows = (getattr(row, column.slug) for column in INDICATORS)
+                nutrient_rows = get_nutrient_values(self.fixtures.nutrient_names, row)
+                yield map(_format, chain(static_rows, nutrient_rows))
 
 
-def _yield_non_recipe_rows(rows):
+def get_nutrient_headers(nutrient_names):
+    for name in nutrient_names:
+        yield f"{name}_per_100g"
+        yield name
 
-    def _get_val(row, slug):
-        if slug == 'total_grams':
-            return _multiply(row.measurement_amount, row.conv_factor, row.portions)
-        return getattr(row, slug)
 
-    for row in rows:
-        yield [_format(_get_val(row, column.slug)) for column in INDICATORS]
+def get_nutrient_values(nutrient_names, row):
+    for name in nutrient_names:
+        if row.fct_code:
+            per_100g = row.composition.nutrients.get(name)
+            yield per_100g
+            yield _multiply(per_100g, row.total_grams, 0.01)
+        else:
+            yield None
+            yield None
 
 
 def _multiply(*args):
