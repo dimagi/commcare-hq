@@ -30,6 +30,16 @@ class Command(BaseCommand):
 
     }
 
+    def handle(self, encryption_key, date_range_api, data_push_api, *args, **options):
+        missing_months = self.get_missing_months()
+        self.encryption_key = encryption_key.encode()
+        self.date_range_api = date_range_api
+        self.data_push_api = data_push_api
+
+        for month in missing_months:
+            print(f"Sending data for month: {month}")
+            self.send_data(self.get_month_data(month))
+
     def get_missing_months(self):
         data = {
             'mcode': self.STATIC_PROJECT_DATA['mcode'],
@@ -45,7 +55,8 @@ class Command(BaseCommand):
         if response.status_code ==200:
             json_content = json.loads(response.content)
             dates_list = json_content['RetDMDashCaption']
-            return [parser.parse(missing_date['DATE_DD_MM_YYYY']).date().replace(day=1) for missing_date in dates_list]
+            return [parser.parse(missing_date['DATE_DD_MM_YYYY']).date().replace(day=1)
+                    for missing_date in dates_list]
         else:
             print("Error while fetching the dates")
             print(response.content)
@@ -68,29 +79,30 @@ class Command(BaseCommand):
             'wer_eligible',
             'cbe_conducted',
             'vhnd_conducted',
+            'month'
         )
-
-
         pmo_month_payload = []
         for data in pmo_data_query:
-            packet = dict()
-            packet.update(self.STATIC_PROJECT_DATA)
-            packet['state_code'] = data['state_site_code']
-            packet['district_code'] = data['district_site_code'][2:]
-            packet['cnt1'] = int(data['num_launched_awcs'])
-            packet['cnt2'] = round(data['bf_at_birth'] / float(data['born_in_month']), 5)
-            packet['cnt3'] = round(data['cf_initiation_in_month'] / float(data['cf_initiation_eligible']), 5)
-            packet['cnt4'] = round(data['wer_weighed'] / float(data['wer_eligible']), 5)
-            packet['cnt5'] = int(data['cbe_conducted'])
-            packet['cnt6'] = int(data['vhnd_conducted'])
-            packet['yr'] = month.year
-            packet['mnth'] = month.month
-            packet['datadt'] = (month + relativedelta(months=1, seconds=-1)).strftime('%m/%d/%Y')  # month end
-            packet_string = json.dumps(packet)
-
-            pmo_month_payload.append(self.encrypt_string(packet_string))
+            pmo_month_payload.append(self.get_encrypted_record(data))
 
         return pmo_month_payload
+
+    def get_encrypted_record(self, data):
+        packet = dict()
+        packet.update(self.STATIC_PROJECT_DATA)
+        packet['state_code'] = data['state_site_code']
+        packet['district_code'] = data['district_site_code'][2:]
+        packet['cnt1'] = int(data['num_launched_awcs'])
+        packet['cnt2'] = round(data['bf_at_birth'] / float(data['born_in_month']), 5)
+        packet['cnt3'] = round(data['cf_initiation_in_month'] / float(data['cf_initiation_eligible']), 5)
+        packet['cnt4'] = round(data['wer_weighed'] / float(data['wer_eligible']), 5)
+        packet['cnt5'] = int(data['cbe_conducted'])
+        packet['cnt6'] = int(data['vhnd_conducted'])
+        packet['yr'] = data['month'].year
+        packet['mnth'] = data['month'].month
+        packet['datadt'] = (data['month'] + relativedelta(months=1, seconds=-1)).strftime('%m/%d/%Y')  # month end
+        packet_string = json.dumps(packet)
+        return self.encrypt_string(packet_string)
 
     def encrypt_string(self, input_string):
         input_string += f"|dt={datetime.now()}"
@@ -103,7 +115,7 @@ class Command(BaseCommand):
     def send_data(self, missing_data_list):
         data_payload = {
             'IP': {
-                "mcode": 0, # TODO: Will be updated as NIC gives us this
+                "mcode": 0,  # TODO: Will be updated as NIC gives us this
                 "state_code": 999,
                 "dept_code": self.STATIC_PROJECT_DATA['dept_code'],
                 "project_code": self.STATIC_PROJECT_DATA['project_code'],
@@ -123,19 +135,9 @@ class Command(BaseCommand):
             print(response.content)
 
     def add_arguments(self, parser):
-        parser.add_argument('encryption_key', help="Encryption key with which data has to be encrypted.",)
-
-    def add_arguments(self, parser):
-        parser.add_argument('date_range_api', help="API URL to fetch the pendency",)
-    def add_arguments(self, parser):
-        parser.add_argument('data_push_api', help="API URL to push the data",)
-
-    def handle(self, encryption_key, date_range_api, data_push_api, *args, **options):
-        missing_months = self.get_missing_months()
-        self.encryption_key = encryption_key.encode()
-        self.date_range_api = date_range_api
-        self.data_push_api = data_push_api
-
-        for month in missing_months:
-            print(f"Sending data for month: {month}")
-            self.send_data(self.get_month_data(month))
+        parser.add_argument('encryption_key',
+                            help="Encryption key with which data has to be encrypted.",)
+        parser.add_argument('date_range_api',
+                            help="API URL to fetch the pendency",)
+        parser.add_argument('data_push_api',
+                            help="API URL to push the data",)
