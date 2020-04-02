@@ -22,6 +22,25 @@ STANDARD_RECIPE = 'std_recipe'
 NON_STANDARD_RECIPE = 'non_std_recipe'
 
 
+class FctGaps:
+    AVAILABLE = 1
+    BASE_TERM = 2
+    REFERENCE = 3
+    INGREDIENT_GAPS = 7
+    NOT_AVAILABLE = 8
+    DESCRIPTIONS = {
+        AVAILABLE: "fct data available",
+        BASE_TERM: "using fct data from base term food code",
+        REFERENCE: "using fct data from reference food code",
+        INGREDIENT_GAPS: "ingredients contain fct data gaps",
+        NOT_AVAILABLE: "no fct data available",
+    }
+
+    @classmethod
+    def get_description(self, code):
+        return f"{code} - {self.DESCRIPTIONS[code]}"
+
+
 class ConvFactorGaps:
     AVAILABLE = 1
     BASE_TERM = 2
@@ -170,9 +189,11 @@ class FoodRow:
         self.nsr_consumed_cooked_fraction = (float(self.nsr_consumed_cooked_fraction)
                                              if self.nsr_consumed_cooked_fraction else None)
 
-        # These properties will be mutated in RecipeRowEnricher
+        # These properties will be mutated in enrich_rows
         self.recipe_num_ingredients = None
         self.ingr_recipe_total_grams_consumed = None
+        self.fct_gap_code = None
+        self.fct_gap_desc = None
 
     def _set_ingredient_fields(self, ingredient):
         if self._is_std_recipe_ingredient:
@@ -209,6 +230,28 @@ class FoodRow:
                 self.fct_data_used = 'reference_food_code'
 
         self.fct_reference_food_code_exists = bool(self.reference_food_code)
+
+    def set_fct_gap(self, ingredients=None):
+        if ingredients:
+            for row in ingredients:
+                row.set_fct_gap()
+
+        self.fct_gap_code = FctGaps.NOT_AVAILABLE
+
+        if self.food_type == FOOD_ITEM and self.fct_code:
+            self.fct_gap_code = {
+                'food_code': FctGaps.AVAILABLE,
+                'base_term_food_code': FctGaps.BASE_TERM,
+                'reference_food_code': FctGaps.REFERENCE,
+            }[self.fct_data_used]
+
+        if self.is_recipe:
+            if all(i.fct_gap_code == FctGaps.AVAILABLE for i in ingredients):
+                self.fct_gap_code = FctGaps.AVAILABLE
+            else:
+                self.fct_gap_code = FctGaps.INGREDIENT_GAPS
+
+        self.fct_gap_desc = FctGaps.get_description(self.fct_gap_code)
 
     def _set_conversion_factors(self):
         self.conv_factor_gap_code = ConvFactorGaps.NOT_AVAILABLE
@@ -296,8 +339,10 @@ def enrich_rows(recipe_id, rows):
     if not recipe:
         for row in rows:
             row.total_grams = _multiply(row.measurement_amount, row.conv_factor, row.portions)
+            row.set_fct_gap()
     else:
         total_grams = _calculate_total_grams(recipe, ingredients)
+        recipe.set_fct_gap(ingredients)
         for row in [recipe] + ingredients:
             row.total_grams = total_grams[row.uuid]
             if row.is_recipe:
