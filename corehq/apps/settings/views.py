@@ -171,7 +171,6 @@ class MyAccountSettingsView(BaseMyAccountView):
         return {
             'form': self.settings_form,
             'add_phone_number_form': AddPhoneNumberForm(),
-            'api_key': self.get_or_create_api_key(),
             'phonenumbers': user.phone_numbers_extended(user),
             'user_type': 'mobile' if user.is_commcare_user() else 'web',
         }
