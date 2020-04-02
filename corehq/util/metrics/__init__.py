@@ -221,7 +221,7 @@ def create_metrics_event(title: str, text: str, alert_type: str = ALERT_INFO,
         metrics_logger.exception('Error creating metrics event', e)
 
 
-def metrics_histogram_timer(metric: str, tags: Dict[str, str], timing_buckets: Iterable[int],
+def metrics_histogram_timer(metric: str, timing_buckets: Iterable[int], tags: Dict[str, str] = None,
                             bucket_tag: str = 'duration', callback: Callable = None):
     """
     Create a context manager that times and reports to the metric providers as a histogram
