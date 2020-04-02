@@ -16,11 +16,9 @@ from custom.inddex.ucr_data import FoodCaseData
 class MasterDataFileSummaryReport(DatespanMixin, CustomProjectReport, GenericTabularReport):
     title = 'Output 1 - Master Data File'
     name = title
-    slug = 'output_1_master_data_file'
+    slug = 'master_data_file'
     export_only = False
     exportable = True
-    report_comment = 'This output includes all data that appears in the output files as well as background ' \
-                     'data that are used to perform calculations that appear in the outputs.'
 
     @property
     def fields(self):
