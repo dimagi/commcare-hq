@@ -38,12 +38,8 @@ class MasterDataFileSummaryReport(DatespanMixin, CustomProjectReport, GenericTab
     def _food_data(self):
         return FoodData(
             self.domain,
-            FoodCaseData({
-                'domain': self.domain,
-                'startdate': str(self.datespan.startdate),
-                'enddate': str(self.datespan.enddate),
-                'case_owners': self.request.GET.get('case_owners') or '',
-                'gap_type': self.request.GET.get('gap_type') or '',
-                'recall_status': self.request.GET.get('recall_status') or '',
-            }).get_data(),
+            datespan=self.datespan,
+            case_owners=self.request.GET.get('case_owners'),
+            gap_type=self.request.GET.get('gap_type'),
+            recall_status=self.request.GET.get('recall_status'),
         )
