@@ -45,11 +45,6 @@ class DETTable:
     filter_name = attr.ib(default='')
     filter_value = attr.ib(default='')
 
-    @property
-    def table_name(self):
-        # PG has 64 character limit on table names
-        return _truncate(self.name, 3, 63)
-
     def get_sheet_data(self):
         if not self.rows:
             return
