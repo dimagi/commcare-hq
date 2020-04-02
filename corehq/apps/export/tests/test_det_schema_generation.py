@@ -9,7 +9,7 @@ from corehq.apps.export.det.exceptions import DETConfigError
 from corehq.apps.export.det.schema_generator import (
     generate_from_form_export_instance,
     generate_from_case_export_instance,
-    _transform_path_for_case_properties
+    _transform_path_for_case_properties,
 )
 from corehq.apps.export.models import FormExportInstance, CaseExportInstance
 from corehq.util.test_utils import TestFileMixin
@@ -74,8 +74,11 @@ class TestDETFormInstance(SimpleTestCase, TestFileMixin):
             all_data = list(ws.values)
             headings = all_data.pop(0)
             data_by_headings = [dict(zip(headings, row)) for row in all_data]
+            id_row = data_by_headings.pop(0)
+            self.assertEqual('form.meta.instanceID', id_row['Source Field'])
+            self.assertEqual('id', id_row['Field'])
             main_table = self.export_instance.selected_tables[0]
-            self.assertEqual(len(main_table.selected_columns), len(all_data))
+            self.assertEqual(len(main_table.selected_columns), len(data_by_headings))
             # basic sanity check
             for i, input_column in enumerate(main_table.selected_columns):
                 self.assertEqual(input_column.label, data_by_headings[i]['Field'])

@@ -6,6 +6,9 @@ from corehq.apps.export.models import FormExportInstance, CaseExportInstance
 from corehq.apps.userreports import datatypes
 
 PROPERTIES_PREFIX = 'properties.'
+ID_FIELD = 'id'
+FORM_ID_SOURCE = 'form.meta.instanceID'
+CASE_ID_SOURCE = 'case_id'
 
 # maps Case fields to the API field names used in CommCareCaseResource
 CASE_API_PATH_MAP = {
@@ -74,6 +77,7 @@ def generate_from_form_export_instance(export_instance, output_file):
                 rows=[],
             )
             _add_rows_for_table(input_table, output_table)
+            _add_id_row_if_necessary(output_table, FORM_ID_SOURCE)
         else:
             output_table = DETTable(
                 name=input_table.label,
@@ -97,6 +101,17 @@ def generate_from_form_export_instance(export_instance, output_file):
 
 def _is_main_form_table(table_configuration):
     return table_configuration.readable_path == ''
+
+
+def _add_id_row_if_necessary(output_table, source_value):
+    # DET requires an "id" field to exist to use SQL export.
+    # if it doesn't insert one at the beginning of the table
+    id_rows = [row for row in output_table.rows if row.field == ID_FIELD]
+    if not id_rows:
+        output_table.rows.insert(0, DETRow(
+            source_field=source_value,
+            field=ID_FIELD,
+        ))
 
 
 def _add_rows_for_table(input_table, output_table, path_transform_fn=None):
