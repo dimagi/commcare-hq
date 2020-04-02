@@ -39,6 +39,9 @@ class TestDETFCaseInstance(SimpleTestCase, TestFileMixin):
             all_data = list(ws.values)
             headings = all_data.pop(0)
             data_by_headings = [dict(zip(headings, row)) for row in all_data]
+            id_row = data_by_headings.pop(0)
+            self.assertEqual('case_id', id_row['Source Field'])
+            self.assertEqual('id', id_row['Field'])
             main_table = self.export_instance.selected_tables[0]
             self.assertEqual(len(main_table.selected_columns), len(data_by_headings))
             for i, input_column in enumerate(main_table.selected_columns):

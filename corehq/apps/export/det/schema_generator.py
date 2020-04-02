@@ -52,6 +52,7 @@ def generate_from_case_export_instance(export_instance, output_file):
     )
     output = DETConfig(name=export_instance.name, tables=[main_output_table])
     _add_rows_for_table(main_input_table, main_output_table, path_transform_fn=_transform_path_for_case_properties)
+    _add_id_row_if_necessary(main_output_table, CASE_ID_SOURCE)
     # todo: add rows for other tables
     output.export_to_file(output_file)
 
