@@ -1,8 +1,8 @@
-from corehq.util.elastic import prefix_slug
+from corehq.util.elastic import prefix_for_tests
 from pillowtop.es_utils import ElasticsearchIndexInfo
 
-DOMAIN_INDEX = prefix_slug("hqdomains_2020-02-10")
-DOMAIN_ES_ALIAS = prefix_slug('hqdomains')
+DOMAIN_INDEX = prefix_for_tests("hqdomains_2020-02-10")
+DOMAIN_ES_ALIAS = prefix_for_tests('hqdomains')
 
 DOMAIN_MAPPING = {
  '_all': {'enabled': False},

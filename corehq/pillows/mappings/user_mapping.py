@@ -1,10 +1,10 @@
-from corehq.util.elastic import prefix_slug
+from corehq.util.elastic import prefix_for_tests
 from corehq.pillows.core import DATE_FORMATS_ARR, DATE_FORMATS_STRING
 
 from pillowtop.es_utils import ElasticsearchIndexInfo
 
 
-USER_INDEX = prefix_slug("hqusers_2017-09-07")
+USER_INDEX = prefix_for_tests("hqusers_2017-09-07")
 USER_MAPPING = {'_all': {'analyzer': 'standard'},
  '_meta': {'created': None},
  'date_detection': False,
@@ -232,7 +232,7 @@ USER_MAPPING = {'_all': {'analyzer': 'standard'},
                                                                 'type': 'string'}},
                                   'type': 'multi_field'}}}
 
-USER_ES_ALIAS = prefix_slug('hqusers')
+USER_ES_ALIAS = prefix_for_tests('hqusers')
 
 USER_INDEX_INFO = ElasticsearchIndexInfo(
     index=USER_INDEX,

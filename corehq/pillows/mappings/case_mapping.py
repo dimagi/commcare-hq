@@ -1,9 +1,9 @@
 from corehq.pillows.core import DATE_FORMATS_ARR, DATE_FORMATS_STRING
 from corehq.pillows.mappings import NULL_VALUE
-from corehq.util.elastic import prefix_slug
+from corehq.util.elastic import prefix_for_tests
 from pillowtop.es_utils import ElasticsearchIndexInfo
 
-CASE_INDEX = prefix_slug("hqcases_2016-03-04")
+CASE_INDEX = prefix_for_tests("hqcases_2016-03-04")
 CASE_ES_TYPE = 'case'
 
 CASE_MAPPING = {
@@ -101,7 +101,7 @@ CASE_MAPPING = {
     }
 }
 
-CASE_ES_ALIAS = prefix_slug("hqcases")
+CASE_ES_ALIAS = prefix_for_tests("hqcases")
 
 CASE_INDEX_INFO = ElasticsearchIndexInfo(
     index=CASE_INDEX,
