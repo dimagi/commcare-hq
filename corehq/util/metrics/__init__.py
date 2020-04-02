@@ -98,7 +98,7 @@ Other Notes
 * All metrics must use the prefix 'commcare.'
 """
 from functools import wraps
-from typing import Iterable
+from typing import Iterable, Callable, Dict
 
 from celery.task import periodic_task
 
@@ -106,6 +106,7 @@ import settings
 from corehq.util.metrics.const import COMMON_TAGS, ALERT_INFO
 from corehq.util.metrics.metrics import DebugMetrics, DelegatedMetrics, DEFAULT_BUCKETS, _enforce_prefix, \
     metrics_logger
+from corehq.util.timer import TimingContext
 from dimagi.utils.modules import to_function
 
 __all__ = [
@@ -190,3 +191,49 @@ def create_metrics_event(title, text, alert_type=ALERT_INFO, tags=None, aggregat
         _get_metrics_provider().create_event(title, text, tags, alert_type, aggregation_key)
     except Exception as e:
         metrics_logger.exception('Error creating metrics event', e)
+
+
+def metrics_histogram_timer(metric: str, tags: Dict[str, str], timing_buckets: Iterable[int],
+                            bucket_tag: str = 'duration', callback: Callable = None):
+    """
+    Create a context manager that times and reports to the metric providers as a histogram
+
+    Example Usage:
+
+    ::
+
+        timer = metrics_histogram_timer('commcare.some.special.metric', tags={
+            'type': type,
+        ], timing_buckets=(.001, .01, .1, 1, 10, 100))
+        with timer:
+            some_special_thing()
+
+    This will result it a call to `metrics_histogram` with the timer value.
+
+    Note: Histograms are implemented differently by each provider. See documentation for details.
+
+    :param metric: Name of the metric (must start with 'commcare.')
+    :param tags: metric tags to include
+    :param timing_buckets: sequence of numbers representing time thresholds, in seconds
+    :param bucket_tag: The name of the bucket tag to use (if used by the underlying provider)
+    :param callback: a callable which will be called when exiting the context manager with a single argument
+                     of the timer duratio
+    :return: A context manager that will perform the specified timing
+             and send the specified metric
+
+    """
+    timer = TimingContext()
+    original_stop = timer.stop
+
+    def new_stop(name=None):
+        original_stop(name)
+        if callback:
+            callback(timer.duration)
+        metrics_histogram(
+            metric, timer.duration,
+            bucket_tag=bucket_tag, buckets=timing_buckets, bucket_unit='s',
+            tags=tags
+        )
+
+    timer.stop = new_stop
+    return timer
