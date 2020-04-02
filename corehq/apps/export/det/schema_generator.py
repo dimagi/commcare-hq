@@ -59,35 +59,41 @@ def generate_from_form_export_instance(export_instance, output_file):
     assert isinstance(export_instance, FormExportInstance)
     if not export_instance.selected_tables:
         raise DETConfigError(_(f'No Tables found in Export {export_instance.name}'))
-    main_input_table = export_instance.selected_tables[0]
-    main_output_table = DETTable(
-        name=main_input_table.label,
-        source='form',
-        filter_name='xmlns',
-        filter_value=export_instance.xmlns,
-        rows=[],
-    )
-    output = DETConfig(name=export_instance.name, tables=[main_output_table])
-    _add_rows_for_table(main_input_table, main_output_table)
-    for additional_input_table in export_instance.selected_tables[1:]:
-        additional_output_table = DETTable(
-            name=additional_input_table.label,
-            source=f'form.{additional_input_table.readable_path}[*]',
-            filter_name='xmlns',
-            filter_value=export_instance.xmlns,
-            rows=[],
-        )
 
-        # note: this has to be defined here because it relies on closures
-        def _strip_repeat_path(input_path):
-            return input_path.replace(f'{additional_input_table.readable_path}.', '')
+    output = DETConfig(name=export_instance.name)
+    for input_table in export_instance.selected_tables:
+        if _is_main_form_table(input_table):
+            output_table = DETTable(
+                name=input_table.label,
+                source='form',
+                filter_name='xmlns',
+                filter_value=export_instance.xmlns,
+                rows=[],
+            )
+            _add_rows_for_table(input_table, output_table)
+        else:
+            output_table = DETTable(
+                name=input_table.label,
+                source=f'form.{input_table.readable_path}[*]',
+                filter_name='xmlns',
+                filter_value=export_instance.xmlns,
+                rows=[],
+            )
 
-        _add_rows_for_table(additional_input_table, additional_output_table,
-                            path_transform_fn=_strip_repeat_path)
+            # note: this has to be defined here because it relies on closures
+            def _strip_repeat_path(input_path):
+                return input_path.replace(f'{input_table.readable_path}.', '')
 
-        output.tables.append(additional_output_table)
+            _add_rows_for_table(input_table, output_table,
+                                path_transform_fn=_strip_repeat_path)
+
+        output.tables.append(output_table)
 
     output.export_to_file(output_file)
+
+
+def _is_main_form_table(table_configuration):
+    return table_configuration.readable_path == ''
 
 
 def _add_rows_for_table(input_table, output_table, path_transform_fn=None):
