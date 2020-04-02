@@ -2,6 +2,7 @@ from django.conf.urls import url
 
 from corehq.apps.export.views.download import (
     BulkDownloadNewFormExportView,
+    DownloadDETSchemaView,
     DownloadNewCaseExportView,
     DownloadNewFormExportView,
     DownloadNewSmsExportView,
@@ -10,7 +11,6 @@ from corehq.apps.export.views.download import (
     poll_custom_export_download,
     prepare_custom_export,
     prepare_form_multimedia,
-    DownloadDETSchemaView,
 )
 from corehq.apps.export.views.edit import (
     EditCaseDailySavedExportView,
