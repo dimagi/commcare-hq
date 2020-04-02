@@ -245,7 +245,7 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
 
     def __init__(self, *args, **kwargs):
         self.user = kwargs['existing_user']
-        api_key = kwargs.pop('api_key') if 'api_key' in kwargs else None
+        api_key_status = kwargs.pop('api_key_status') if 'api_key_status' in kwargs else None
         super(UpdateMyAccountInfoForm, self).__init__(*args, **kwargs)
         self.username = self.user.username
 
@@ -256,10 +256,10 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
             )
 
         api_key_controls = [
-            hqcrispy.StaticField(ugettext_lazy('API Key'), api_key),
+            hqcrispy.StaticField(ugettext_lazy('API Key'), api_key_status),
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(
-                    ugettext_lazy('Generate API Key'),
+                    ugettext_lazy('Generate New API Key'),
                     type="button",
                     id='generate-api-key',
                     css_class='btn-default',
