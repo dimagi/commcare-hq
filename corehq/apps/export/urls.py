@@ -10,7 +10,8 @@ from corehq.apps.export.views.download import (
     poll_custom_export_download,
     prepare_custom_export,
     prepare_form_multimedia,
-    DownloadDETSchemaView)
+    DownloadDETSchemaView,
+)
 from corehq.apps.export.views.edit import (
     EditCaseDailySavedExportView,
     EditCaseFeedView,

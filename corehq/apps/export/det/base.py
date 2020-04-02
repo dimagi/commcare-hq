@@ -41,7 +41,7 @@ class DETConfig:
 class DETTable:
     name = attr.ib()
     source = attr.ib()
-    rows = attr.ib(type=list)
+    rows = attr.ib(factory=list)
     filter_name = attr.ib(default='')
     filter_value = attr.ib(default='')
 
@@ -51,8 +51,8 @@ class DETTable:
         return _truncate(self.name, 3, 63)
 
     def get_sheet_data(self):
-        if len(self.rows) == 0:
-            return []
+        if not self.rows:
+            return
         else:
             for i, row in enumerate(self.rows):
                 if i == 0:
