@@ -42,6 +42,9 @@ class CapturedMetrics:
     def __contains__(self, metric_name: str):
         return any(sample.name == metric_name for sample in self._samples)
 
+    def __repr__(self):
+        return repr(self._samples)
+
 
 @contextmanager
 def capture_metrics():
