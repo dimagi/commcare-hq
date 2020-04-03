@@ -88,7 +88,7 @@ class Command(BaseCommand):
         person_cases = case_accessor.get_cases(person_case_ids)
 
         person_cases_dict = {case.get_case_property('case_id'): case for case in person_cases}
-        ccs_cases_dict = {case.get_case_property('case_id'): case for case in person_cases}
+        ccs_cases_dict = {case.get_case_property('case_id'): case for case in ccs_cases}
 
         data_rows = [headers]
 
