@@ -1,10 +1,12 @@
 hqDefine("app_manager/js/app_exchange", [
     "jquery",
     "knockout",
+    'analytix/js/kissmetrix',
     "hqwebapp/js/widgets",  // hqwebapp-select2 for versions
 ], function (
     $,
-    ko
+    ko,
+    kissmetrics
 ) {
     var AppExchangeModel = function () {
         var self = {};
@@ -27,5 +29,9 @@ hqDefine("app_manager/js/app_exchange", [
 
     $(function () {
         $("#hq-content").koApplyBindings(AppExchangeModel());
+
+        $('.import-button').on('click', function () {
+            kissmetrics.track.event("COVID App Library: Imported application");
+        });
     });
 });
