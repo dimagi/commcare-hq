@@ -19,7 +19,6 @@ class Dumper(object):
         """
         Dump all transitions in an excel sheet in a format easy to understand by users
         One tab per location type, with changes specific to the location type
-        ToDo: add TestDumper
         See TestDumper.test_dump for example
         """
         self.domain = domain
