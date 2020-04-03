@@ -245,7 +245,7 @@ class FoodRow:
                 'reference_food_code': FctGaps.REFERENCE,
             }[self.fct_data_used]
 
-        if self.is_recipe:
+        if self.is_recipe and ingredients:
             if all(i.fct_gap_code == FctGaps.AVAILABLE for i in ingredients):
                 self.fct_gap_code = FctGaps.AVAILABLE
             else:
@@ -294,7 +294,7 @@ class FoodRow:
     def recipe_id(self):
         if self.is_recipe:
             return self.caseid
-        return self.recipe_case_id or self.already_reported_recipe_case_id or 'NO_RECIPE'
+        return self.recipe_case_id or 'NO_RECIPE'
 
     _total_grams = 'NOT_YET_COMPUTED'
     @property
@@ -334,13 +334,13 @@ def enrich_rows(recipe_id, rows):
     else:
         recipe_possibilities = [row for row in rows if row.is_recipe]
         recipe = recipe_possibilities[0] if len(recipe_possibilities) == 1 else None
-    ingredients = [row for row in rows if not row.is_recipe]
 
     if not recipe:
         for row in rows:
             row.total_grams = _multiply(row.measurement_amount, row.conv_factor, row.portions)
             row.set_fct_gap()
     else:
+        ingredients = [row for row in rows if not row.uuid == recipe.uuid]
         total_grams = _calculate_total_grams(recipe, ingredients)
         recipe.set_fct_gap(ingredients)
         for row in [recipe] + ingredients:
