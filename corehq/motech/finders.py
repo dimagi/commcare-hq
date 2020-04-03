@@ -3,6 +3,7 @@ from operator import eq
 
 from Levenshtein._levenshtein import distance
 from couchdbkit.ext.django.schema import (
+    BooleanProperty,
     DecimalProperty,
     ListProperty,
     StringProperty,
@@ -73,3 +74,13 @@ class PropertyWeight(DocumentSchema):
     weight = DecimalProperty()
     match_type = StringProperty(required=False, choices=MATCH_TYPES, default=MATCH_TYPE_DEFAULT)
     match_params = ListProperty(required=False)
+
+    # Filter initial search query by case property value?
+    # In OpenMRS usually only family name and identifiers can be used
+    # for searching patients. DHIS2 can filter by tracked entity
+    # attributes, but we may not want to filter by some properties, like
+    # date of birth, where the tracked entity may not have a value. We
+    # can still compare date of birth with the results returned by the
+    # remote system and increase the score of candidates if their date
+    # of birth matches the CommCare case.
+    is_filter = BooleanProperty(required=False, default=True)
