@@ -67,13 +67,14 @@ class TestSetupUtils(TestCase):
     def test_fixtures_created(self):
         # Note, this is actually quite slow - might want to drop
         data_types = get_fixture_data_types(DOMAIN)
-        self.assertEqual(len(data_types), 4)
+        self.assertEqual(len(data_types), 5)
         self.assertItemsEqual(
             [(dt.tag, count_fixture_items(DOMAIN, dt._id)) for dt in data_types],
             [('recipes', 384),
              ('food_list', 1130),
              ('food_composition_table', 1042),
-             ('conv_factors', 2995)]
+             ('conv_factors', 2995),
+             ('nutrients_lookup', 152)]
         )
 
 
@@ -117,8 +118,8 @@ class TestFixtures(TestCase):
     def test_food_compositions(self):
         composition = self.fixtures_accessor.food_compositions['10']
         self.assertEqual("Millet flour", composition.survey_base_terms_and_food_items)
-        self.assertEqual(367, composition.nutrients['1'])
-        self.assertEqual(9.1, composition.nutrients['2'])
+        self.assertEqual(367, composition.nutrients['energy_kcal'])
+        self.assertEqual(9.1, composition.nutrients['water_g'])
 
     def test_conversion_factors(self):
         conversion_factor = self.fixtures_accessor.conversion_factors[('10', '52', '')]
@@ -134,26 +135,20 @@ class TestNewReport(TestCase):
         self.assertEqual(food_names(expected), food_names(actual))
 
         columns_known_to_fail = {  # TODO address these columns
-            'ingr_recipe_total_grams_consumed',
-            'recipe_num_ingredients',
-            'fct_food_code_exists',
-            'fct_base_term_food_code_exists',
-            'fct_reference_food_code_exists',
-            'fct_data_used',
-            'fct_code',
-            'total_grams',
-            'energy_kcal_per_100g',
-            'energy_kcal',
-            'water_G_per_100g',
-            'water_g',
-            'protein_g_per_100g',
-            'protein_g',
             'conv_factor_gap_code',
             'conv_factor_gap_desc',
             'fct_gap_code',
             'fct_gap_desc',
         }
-        columns = [c.slug for c in INDICATORS if c.slug not in columns_known_to_fail]
+        nutrient_columns = [
+            'energy_kcal_per_100g',
+            'energy_kcal',
+            'water_g_per_100g',
+            'water_g',
+            'protein_g_per_100g',
+            'protein_g',
+        ]
+        columns = [c.slug for c in INDICATORS if c.slug not in columns_known_to_fail] + nutrient_columns
         for column in columns:
             self.assert_columns_equal(expected, actual, column)
 

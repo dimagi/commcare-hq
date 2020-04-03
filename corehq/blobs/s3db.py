@@ -138,7 +138,7 @@ class S3BlobDB(AbstractBlobDB):
                     self.db.meta.client.head_bucket(Bucket=self.s3_bucket_name)
             except ClientError as err:
                 if not is_not_found(err):
-                    datadog_counter('commcare.blobdb.notfound')
+                    metrics_counter('commcare.blobdb.notfound')
                     raise
                 with self.report_timing('create_bucket', self.s3_bucket_name):
                     self.db.create_bucket(Bucket=self.s3_bucket_name)
@@ -232,6 +232,6 @@ def maybe_not_found(throw=None):
     except ClientError as err:
         if not is_not_found(err):
             raise
-        datadog_counter('commcare.blobdb.notfound')
+        metrics_counter('commcare.blobdb.notfound')
         if throw is not None:
             raise throw

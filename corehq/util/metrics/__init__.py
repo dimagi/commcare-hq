@@ -138,12 +138,12 @@ def _get_metrics_provider():
 
 def metrics_counter(name: str, value: float = 1, tags: dict = None, documentation: str = ''):
     provider = _get_metrics_provider()
-    provider.counter(name, value, tags, documentation)
+    provider.counter(name, value, tags=tags, documentation=documentation)
 
 
 def metrics_gauge(name: str, value: float, tags: dict = None, documentation: str = ''):
     provider = _get_metrics_provider()
-    provider.gauge(name, value, tags, documentation)
+    provider.gauge(name, value, tags=tags, documentation=documentation)
 
 
 def metrics_histogram(
@@ -151,7 +151,10 @@ def metrics_histogram(
         bucket_tag: str, buckets: Iterable[int] = DEFAULT_BUCKETS, bucket_unit: str = '',
         tags: dict = None, documentation: str = ''):
     provider = _get_metrics_provider()
-    provider.histogram(name, value, bucket_tag, buckets, bucket_unit, tags, documentation)
+    provider.histogram(
+        name, value, bucket_tag,
+        buckets=buckets, bucket_unit=bucket_unit, tags=tags, documentation=documentation
+    )
 
 
 def metrics_gauge_task(name, fn, run_every):
