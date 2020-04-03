@@ -109,10 +109,6 @@ class WeightedPropertyPatientFinder(PatientFinder):
     confidence score.
     """
 
-    # Identifiers that are searchable in OpenMRS. e.g.
-    #     [ 'bahmni_id', 'household_id', 'last_name']
-    searchable_properties = ListProperty()
-
     # The weight assigned to a matching property.
     # [
     #     {"case_property": "bahmni_id", "weight": 0.9},
@@ -151,6 +147,13 @@ class WeightedPropertyPatientFinder(PatientFinder):
         super(WeightedPropertyPatientFinder, self).__init__(*args, **kwargs)
         self._property_map = {}
 
+    @classmethod
+    def wrap(cls, data):
+        if 'searchable_properties' in data:
+            for property_weight in data['property_weights']:
+                property_weight['is_filter'] = property_weight['case_property'] in data['searchable_properties']
+            del data['searchable_properties']
+
     def get_score(self, patient, case):
         """
         Return the sum of weighted properties to give an OpenMRS
@@ -185,8 +188,10 @@ class WeightedPropertyPatientFinder(PatientFinder):
         self._property_map = get_property_map(case_config)
 
         candidates = {}  # key on OpenMRS UUID to filter duplicates
-        for prop in self.searchable_properties:
-            value = case.get_case_property(prop)
+        for property_weight in self.property_weights:
+            if not property_weight.is_filter:
+                continue
+            value = case.get_case_property(property_weight.case_property)
             if value:
                 response_json = search_patients(requests, value)
                 for patient in response_json['results']:
