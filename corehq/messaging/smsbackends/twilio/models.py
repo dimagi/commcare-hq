@@ -51,12 +51,14 @@ class SQLTwilioBackend(SQLSMSBackend, PhoneLoadBalancingMixin):
     def get_opt_out_keywords(cls):
         return ['STOP', 'STOPALL', 'UNSUBSCRIBE', 'CANCEL', 'END', 'QUIT']
 
-    def _convert_to_whatsapp(self, number):
-        assert WHATSAPP_PREFIX not in number, "Attempted to re-convert a number already formatted for Whatsapp"
+    @classmethod
+    def convert_to_whatsapp(cls, number):
+        if WHATSAPP_PREFIX in number:
+            return number
         return f"{WHATSAPP_PREFIX}{number}"
 
-    def _convert_from_whatsapp(self, number):
-        assert WHATSAPP_PREFIX in number, "Attempted to convert a number that is not formatted for Whatsapp"
+    @classmethod
+    def convert_from_whatsapp(cls, number):
         return number.replace(WHATSAPP_PREFIX, "")
 
     def send(self, msg, orig_phone_number=None, *args, **kwargs):
@@ -69,7 +71,7 @@ class SQLTwilioBackend(SQLSMSBackend, PhoneLoadBalancingMixin):
         from_ = orig_phone_number
         to = msg.phone_number
         if toggles.WHATSAPP_MESSAGING.enabled(msg.domain) and not kwargs.get('skip_whatsapp', False):
-            to = self._convert_to_whatsapp(to)
+            to = self.convert_to_whatsapp(to)
         msg.system_phone_number = from_
         body = msg.text
         try:
