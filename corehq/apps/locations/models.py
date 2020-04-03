@@ -435,14 +435,17 @@ class SQLLocation(AdjListModel):
 
     full_delete = delete
 
-    def get_descendants(self, include_self=False, **kwargs):
+    def get_descendants(self, include_self=False, include_archived=True, **kwargs):
         if include_self:
             where = Q(domain=self.domain, id=self.id)
         else:
             where = Q(domain=self.domain, parent_id=self.id)
-        return SQLLocation.objects.get_descendants(
+        queryset = SQLLocation.objects.get_descendants(
             where, **kwargs
         )
+        if not include_archived:
+            queryset = queryset.filter(is_archived=False)
+        return queryset
 
     def get_ancestors(self, include_self=False, **kwargs):
         where = Q(domain=self.domain, id=self.id if include_self else self.parent_id)
