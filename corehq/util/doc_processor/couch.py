@@ -5,7 +5,7 @@ from corehq.util.doc_processor.interface import DocumentProvider, ProcessorProgr
 from corehq.util.pagination import ResumableFunctionIterator
 
 
-def resumable_view_iterator(db, iteration_key, view_name, view_keys, chunk_size=100, view_event_handler=None):
+def resumable_view_iterator(db, iteration_key, view_name, view_keys, chunk_size=100, view_event_handler=None, full_row=False):
     """Perform one-time resumable iteration over a CouchDB View
 
     Iteration can be efficiently stopped and resumed. The iteration may
@@ -34,7 +34,7 @@ def resumable_view_iterator(db, iteration_key, view_name, view_keys, chunk_size=
     class ResumableDocsIterator(ResumableFunctionIterator):
         def __iter__(self):
             for result in super(ResumableDocsIterator, self).__iter__():
-                yield result['doc']
+                yield result if full_row else result['doc']
 
     def item_getter(doc_id):
         try:

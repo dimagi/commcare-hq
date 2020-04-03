@@ -5,28 +5,39 @@ from collections import namedtuple
 from datetime import datetime
 
 from django.core.management.base import BaseCommand, CommandError
+from django.db.models import F
 
 import dateutil
-from django.db.models import F
-from memoized import memoized
 
 from casexml.apps.case.models import CommCareCase
-from corehq.apps.domain.models import Domain
 from couchforms.models import XFormInstance
 from dimagi.utils.chunked import chunked
+from dimagi.utils.parsing import json_format_datetime
 
+from corehq.apps.domain.models import Domain
 from corehq.apps.es import CaseES, FormES
 from corehq.elastic import ES_EXPORT_INSTANCE
-from corehq.form_processor.backends.sql.dbaccessors import state_to_doc_type
-from corehq.form_processor.models import CommCareCaseSQL, XFormInstanceSQL
+from corehq.form_processor.backends.sql.dbaccessors import (
+    CaseReindexAccessor,
+    state_to_doc_type,
+)
+from corehq.form_processor.models import XFormInstanceSQL
 from corehq.form_processor.utils import should_use_sql_backend
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 from corehq.util.couch_helpers import paginate_view
 from corehq.util.dates import iso_string_to_datetime
+from corehq.util.doc_processor.couch import resumable_view_iterator
+from corehq.util.doc_processor.sql import SqlModelArgsProvider
 from corehq.util.log import with_progress_bar
-from dimagi.utils.parsing import json_format_datetime
+from corehq.util.pagination import (
+    PaginationEventHandler,
+    ResumableFunctionIterator,
+)
+from memoized import memoized
 
-RunConfig = namedtuple('RunConfig', ['domain', 'start_date', 'end_date', 'case_type'])
+CHUNK_SIZE = 1000
+
+RunConfig = namedtuple('RunConfig', ['iteration_key', 'domain', 'start_date', 'end_date', 'case_type'])
 DataRow = namedtuple('DataRow', ['doc_id', 'doc_type', 'doc_subtype', 'domain', 'es_date', 'primary_date'])
 
 
@@ -66,6 +77,7 @@ class Command(BaseCommand):
     help = inspect.cleandoc(__doc__).split('\n')[0]
 
     def add_arguments(self, parser):
+        parser.add_argument('iteration_key', help='Unique slug to identify this run. Used to allow resuming.')
         parser.add_argument('data_models', nargs='+',
                             help='A list of data models to check. Valid options are "case" and "form".')
         parser.add_argument('--domain', default=ALL_DOMAINS)
@@ -86,13 +98,21 @@ class Command(BaseCommand):
         )
         parser.add_argument('--delimiter', default='\t', choices=('\t', ','))
 
-    def handle(self, domain, data_models, delimiter, **options):
+    def handle(self, iteration_key, domain, data_models, delimiter, **options):
         data_models = set(data_models)
 
-        start = dateutil.parser.parse(options['start']) if options['start'] else datetime(2010, 1, 1)
-        end = dateutil.parser.parse(options['end']) if options['end'] else datetime.utcnow()
+        default_start, default_end = datetime(2010, 1, 1), datetime.utcnow()
+        start = dateutil.parser.parse(options['start']) if options['start'] else default_start
+        end = dateutil.parser.parse(options['end']) if options['end'] else default_end
         case_type = options['case_type']
-        run_config = RunConfig(domain, start, end, case_type)
+        iteration_key = (
+            f'{iteration_key}'
+            f'-{"" if domain == ALL_DOMAINS else domain}'
+            f'-{start.isoformat() if start != default_start else ""}'
+            f'-{end.isoformat() if end != default_end else ""}'
+            f'-{case_type or ""}'
+        )
+        run_config = RunConfig(iteration_key, domain, start, end, case_type)
 
         if run_config.domain is ALL_DOMAINS:
             print('Running for all domains', file=self.stderr)
@@ -137,11 +157,34 @@ class CaseBackend:
 
     @staticmethod
     def _get_sql_case_chunks(run_config):
-        for db in get_db_aliases_for_partitioned_query():
-            matching_records_for_db = get_sql_case_data_for_db(db, run_config)
+        domain = run_config.domain if run_config.domain is not ALL_DOMAINS else None
 
-            yield from _chunked_with_progress_bar(matching_records_for_db, 1000,
-                                                  prefix=f'Processing cases in DB {db}')
+        accessor = CaseReindexAccessor(
+            domain,
+            start_date=run_config.start_date, end_date=run_config.end_date,
+            case_type=run_config.case_type
+        )
+        iteration_key = f'sql_cases-{run_config.iteration_key}'
+
+        total_docs = 0
+        for db in accessor.sql_db_aliases:
+            total_docs += accessor.get_approximate_doc_count(db)
+
+        event_handler = ProgressEventHandler(iteration_key, total_docs, sys.stderr)
+        iterator = resumable_sql_model_iterator(
+            iteration_key,
+            accessor,
+            ['case_id', 'type', 'server_modified_on', 'domain'],
+            chunk_size=CHUNK_SIZE,
+            event_handler=event_handler
+        )
+        for chunk in chunked(iterator, CHUNK_SIZE):
+            matching_records = [
+                (*rest, domain)
+                for *rest, domain in chunk
+                if _should_use_sql_backend(domain)
+            ]
+            yield matching_records
 
     @staticmethod
     def _get_couch_case_chunks(run_config):
@@ -150,7 +193,7 @@ class CaseBackend:
             raise CommandError('Case type argument is not supported for couch domains!')
         matching_records = CaseBackend._get_couch_case_data(run_config)
         print("Processing cases in Couch, which doesn't support nice progress bar", file=sys.stderr)
-        yield from chunked(matching_records, 1000)
+        yield from chunked(matching_records, CHUNK_SIZE)
 
     @staticmethod
     def _yield_missing_in_es(chunk):
@@ -164,20 +207,22 @@ class CaseBackend:
 
     @staticmethod
     def _get_couch_case_data(run_config):
-        for couch_domain in _get_matching_couch_domains(run_config):
-            iterator = paginate_view(
-                CommCareCase.get_db(),
-                'cases_by_server_date/by_server_modified_on',
-                chunk_size=1000,
-                startkey=[couch_domain],
-                endkey=[couch_domain, {}],
-                include_docs=False,
-                reduce=False,
-            )
-            for row in iterator:
-                case_id, modified_on = row['id'], iso_string_to_datetime(row['value'])
-                if run_config.start_date <= modified_on < run_config.end_date:
-                    yield case_id, 'COUCH_TYPE_NOT_SUPPORTED', modified_on, couch_domain
+        view_name = 'cases_by_server_date/by_server_modified_on'
+
+        keys = [[couch_domain] for couch_domain in _get_matching_couch_domains(run_config)]
+        if not keys:
+            return
+
+        iteration_key = f'couch_cases-{run_config.iteration_key}'
+        event_handler = ProgressEventHandler(iteration_key, 'unknown', sys.stderr)
+        iterator = resumable_view_iterator(
+            CommCareCase.get_db(), iteration_key, view_name, keys,
+            chunk_size=CHUNK_SIZE, view_event_handler=event_handler, full_row=True
+        )
+        for row in iterator:
+            case_id, domain, modified_on = row['id'], row['key'][0], iso_string_to_datetime(row['value'])
+            if run_config.start_date <= modified_on < run_config.end_date:
+                yield case_id, 'COUCH_TYPE_NOT_SUPPORTED', modified_on, domain
 
     @staticmethod
     def _get_es_modified_dates(case_ids):
@@ -188,27 +233,6 @@ class CaseBackend:
         )
         return {_id: (iso_string_to_datetime(server_modified_on), domain)
                 for _id, server_modified_on, domain in results}
-
-
-def get_sql_case_data_for_db(db, run_config):
-    matching_cases = CommCareCaseSQL.objects.using(db).filter(
-        server_modified_on__gte=run_config.start_date,
-        server_modified_on__lte=run_config.end_date,
-        deleted=False,
-    )
-    if run_config.domain is not ALL_DOMAINS:
-        matching_cases = matching_cases.filter(
-            domain=run_config.domain,
-        )
-    if run_config.case_type:
-        matching_cases = matching_cases.filter(
-            type=run_config.case_type
-        )
-    return [
-        (*rest, domain)
-        for *rest, domain in matching_cases.values_list('case_id', 'type', 'server_modified_on', 'domain')
-        if _should_use_sql_backend(domain)
-    ]
 
 
 class FormBackend:
@@ -226,13 +250,13 @@ class FormBackend:
     def _get_sql_form_chunks(run_config):
         for db in get_db_aliases_for_partitioned_query():
             matching_records_for_db = FormBackend._get_sql_form_data_for_db(db, run_config)
-            yield from _chunked_with_progress_bar(matching_records_for_db, 1000,
+            yield from _chunked_with_progress_bar(matching_records_for_db, CHUNK_SIZE,
                                                   prefix=f'Processing forms in DB {db}')
 
     @staticmethod
     def _get_couch_form_chunks(run_config):
         length, matching_records = FormBackend._get_couch_form_data(run_config)
-        return _chunked_with_progress_bar(matching_records, 1000, length=length,
+        return _chunked_with_progress_bar(matching_records, CHUNK_SIZE, length=length,
                                           prefix=f'Processing forms in Couch')
 
     @staticmethod
@@ -292,7 +316,7 @@ class FormBackend:
                         view,
                         reduce=False,
                         include_docs=False,
-                        chunk_size=1000,
+                        chunk_size=CHUNK_SIZE,
                         **get_kwargs(couch_domain, doc_type)
                     )
                     for row in iterator:
@@ -332,3 +356,43 @@ def _get_matching_couch_domains(run_config):
         return []
     else:
         return [run_config.domain]
+
+
+def resumable_sql_model_iterator(iteration_key, reindex_accessor, fields, chunk_size=100, event_handler=None):
+    try:
+        index_of_pk = fields.index(reindex_accessor.primary_key_field_name)
+    except ValueError:
+        fields = fields + [reindex_accessor.primary_key_field_name]
+        index_of_pk = -1
+
+    def get_next_id(result):
+        return result[index_of_pk]
+
+    NULL = object()
+    def data_function(from_db, filter_value, last_id=NULL):
+        if last_id is NULL:
+            # adapt to old iteration states
+            last_id = filter_value
+        return reindex_accessor.get_doc_values(from_db, fields, last_doc_pk=last_id, limit=chunk_size)
+
+    args_provider = SqlModelArgsProvider(reindex_accessor.sql_db_aliases, get_next_id=get_next_id)
+
+    def item_getter(*args, **kwargs):
+        raise NotImplementedError("retries are not supported")
+
+    iterator = ResumableFunctionIterator(
+        iteration_key, data_function, args_provider, item_getter, event_handler=event_handler
+    )
+    for row in iterator:
+        yield row[:-1] if index_of_pk == -1 else row
+
+
+class ProgressEventHandler(PaginationEventHandler):
+
+    def __init__(self, log_prefix, total, stream=None):
+        self.log_prefix = log_prefix
+        self.stream = stream
+        self.total = total
+
+    def page_end(self, total_emitted, duration, *args, **kwargs):
+        print(f'{self.log_prefix} Processed {total_emitted} of {self.total} in {duration}', file=self.stream)
