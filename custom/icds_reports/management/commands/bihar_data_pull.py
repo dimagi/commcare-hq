@@ -1,57 +1,77 @@
-from django.core.management.base import BaseCommand
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 import csv
 
-from custom.icds_reports.models.aggregate import AwcLocation
+from django.core.management.base import BaseCommand
+
+from django.db import connections, transaction
+from datetime import date
+from corehq.sql_db.connections import get_icds_ucr_citus_db_alias
+
 
 headers = [
-    'StateID',
-    'StateName'
-    'DistrictID',
-    'DistrictName',
-    'ProjectID',
-    'ProjectName',
-    'SectorID',
-    'SectorName',
-    'AWCID',
-    'AWCName',
-    'Name',
+    'District',
+    'Block',
+    'Sector',
+    'Sector Code',
+    'AWC',
+    'AWC Code (11 Digit)',
+    'Name of Beneficiary',
+    'Age',
+    'Male/Female',
+    'Pregnant or not (If applicable)',
     'Phone_Number',
+    'adhar number',
     'Has Bank Account?',
     'Bank IFSC Code',
     'Bank Account Number',
     'Bank Name',
-    'Bank branch name']
-
+    'husband Name'
+]
 data_rows = [headers]
 
 
-def get_person_case(case):
-    for parent in case.get_parent():
-        if parent.get_case_property('person') == 'person':
-            return parent
+
+@transaction.atomic
+def _run_custom_sql_script(command, day=None):
+    db_alias = get_icds_ucr_citus_db_alias()
+    if not db_alias:
+        return
+
+    cursor = connections[db_alias].cursor()
+    cursor.execute(command, [day])
+
+    return cursor.fetchall()
 
 
-def fetch_case_properties(case, awc, person_case):
-    return [
-        awc['state_site_code'],
-        awc['state_name'],
-        awc['district_site_code'],
-        awc['district_name'],
-        awc['block_site_code'],
-        awc['block_name'],
-        awc['supervisor_site_code'],
-        awc['supervisor_name'],
-        awc['awc_site_code'],
-        awc['awc_name'],
-        person_case.get_case_property('name'),
-        person_case.get_case_property('contact_phone_number'),
-        case.get_case_property('has_bank_account'),
-        case.get_case_property('bank_ifsc_code'),
-        case.get_case_property('bank_account_number'),
-        case.get_case_property('bank_name'),
-        case.get_case_property('bank_branch_name')
-    ]
+def ccs_record_cases():
+    query = """
+        Select
+            district_name,
+            block_name,
+            supervisor_name,
+            supervisor_site_code,
+            awc_name,
+            awc_site_code,
+            case_id,
+            person_case_id,
+            person_name,
+            husband_name,
+            dob,
+            mobile_number
+        from ccs_record_monthly
+        INNER join awc_location ON
+                    ccs_record_monthly.awc_id = awc_location.doc_id AND
+                    ccs_record_monthly.supervisor_id = awc_location.supervisor_id AND
+                    awc_location.aggregation_level=5 AND
+                    awc_location.state_id='f9b47ea2ee2d8a02acddeeb491d3e175'
+        WHERE ccs_record_monthly.migration_status is distinct from 1 AND ccs_record_monthly.month='2020-04-01'
+        """
+    return _run_custom_sql_script(query)
+
+
+def get_age_from_dob(dob):
+    today = date.today()
+    return today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
 
 
 class Command(BaseCommand):
@@ -60,22 +80,45 @@ class Command(BaseCommand):
     def handle(self, **options):
         case_accessor = CaseAccessors('icds-cas')
 
-        awcs = AwcLocation.objects.filter(aggregation_level=5,
-                                          state_id='f9b47ea2ee2d8a02acddeeb491d3e175').values(
-            'doc_id', 'state_site_code', 'state_name', 'district_site_code',
-            'district_site_code', 'block_site_code', 'block_name', 'supervisor_site_code',
-            'supervisor_name', 'awc_site_code', 'awc_name')
-        for awc in awcs:
-            case_ids = case_accessor.get_open_case_ids_in_domain_by_type('ccs_record', [awc['doc_id']])
-            cases = case_accessor.get_cases(case_ids)
+        ccs_cases = ccs_record_cases()
 
-            for case in cases:
-                person_case = get_person_case(case)
-                if person_case.get_case_property('migration_status') != 'migrated':
-                    row = fetch_case_properties(case, awc, person_case)
-                    data_rows.append(row)
+        ccs_case_ids = [case[6] for case in ccs_cases]
+        person_case_ids = [case[7] for case in ccs_cases]
 
-        fout = open('/home/cchq/Bihar_bank_account_data.csv', 'w')
+        # this is slower but 100000 times faster than scraping case by case
+        ccs_cases = case_accessor.get_cases(ccs_case_ids)
+        person_cases = case_accessor.get_cases(person_case_ids)
+
+        person_cases_dict = {case.get_case_property('case_id'): case for case in person_cases}
+        ccs_cases_dict = {case.get_case_property('case_id'): case for case in person_cases}
+
+        data_rows = [headers]
+
+        for case in ccs_cases:
+            case_obj = ccs_cases_dict[case[6]]
+            person_case_obj = person_cases_dict[case[7]]
+            row = [
+                case[0],
+                case[1],
+                case[2],
+                case[3],
+                case[4],
+                case[5],
+                case[8],
+                '' if case.get_case_property('dob') is None else get_age_from_dob(case[10]),
+                'Female',
+                person_case_obj.get_case_property('is_pregnant'),
+                case[11],
+                person_case_obj.get_case_property('aadhar_number'),
+                case_obj.get_case_property('has_bank_account'),
+                case_obj.get_case_property('bank_ifsc_code'),
+                case_obj.get_case_property('bank_account_number'),
+                case_obj.get_case_property('bank_name'),
+                case[9]
+            ]
+            data_rows.append(row)
+
+        fout = open('/home/cchq/Bihar_bank_account_adhaar_data.csv', 'w')
 
         writer = csv.writer(fout)
         writer.writerows(data_rows)
