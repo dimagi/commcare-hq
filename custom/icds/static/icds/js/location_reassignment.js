@@ -34,11 +34,11 @@ hqDefine("icds/js/location_reassignment", [
 
         // https://stackoverflow.com/a/35489517
         // bind the form submit to the document ajax to get notified on success
-        $("#bulk_upload_form").on("submit", function(e) {
-            $.ajax({context: this})
+        $("#bulk_upload_form").on("submit", function () {
+            $.ajax({context: this});
         });
 
-        $("#bulk_upload_form").ajaxSuccess(function(event) {
+        $("#bulk_upload_form").ajaxSuccess(function (event) {
             if (event.target.id === "bulk_upload_form") {
                 $(event.target).trigger('reset');
             }
