@@ -158,8 +158,7 @@ class SimplifiedInventoryDataSource(ReportDataSource, CommtrackDataSourceMixin):
                 locations = []
 
             locations += list(
-                self.active_location.get_descendants().filter(
-                    is_archived=False,
+                self.active_location.get_descendants(include_archived=False).filter(
                     supply_point_id__isnull=False
                 )
             )

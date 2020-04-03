@@ -57,8 +57,8 @@ def get_product_id(product_name, domain):
 
 
 def _locations_per_type(domain, loc_type, location):
-    return (location.get_descendants(include_self=True)
-            .filter(domain=domain, location_type__name=loc_type, is_archived=False).count())
+    return (location.get_descendants(include_self=True, include_archived=False)
+            .filter(domain=domain, location_type__name=loc_type).count())
 
 
 def get_product_name(product_id):

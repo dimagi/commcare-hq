@@ -213,7 +213,7 @@ class ScheduleInstance(PartitionedModel):
                 # for locations the user selected in the UI, and not for
                 # locations that happen to get here because they are a case
                 # owner, for example.
-                qs = location.get_descendants(include_self=True).filter(is_archived=False)
+                qs = location.get_descendants(include_self=True, include_archived=False)
 
                 # We also only apply the location_type_filter when the recipient_type
                 # is RECIPIENT_TYPE_LOCATION for the same reason.
