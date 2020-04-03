@@ -53,7 +53,8 @@ class Buffer(object):
         self.__size += len(data)
 
     def read(self, size=-1):
-        if size < 0: size = self.__size
+        if size < 0:
+            size = self.__size
         ret_list = []
         while size > 0 and len(self.__buf):
             s = self.__buf.popleft()

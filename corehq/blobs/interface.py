@@ -54,9 +54,16 @@ class AbstractBlobDB(metaclass=ABCMeta):
 
     @abstractmethod
     def get(self, key=None, type_code=None, meta=None):
-        """Get a blob
+        """Get a blob.
 
         :param key: Blob key.
+        :param type_code: Blob type code.
+        :param meta: BlobMeta instance.
+
+        key and type_code are required if meta is not provided. If meta
+        is provided, then key and type_code should be None. For type_code
+        form_xml, meta is required.
+
         :returns: A file-like object in binary read mode. The returned
         object should be closed when finished reading.
         """

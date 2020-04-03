@@ -1074,7 +1074,6 @@ class CaseAttachmentSQL(PartitionedModel, models.Model, SaveStateMixin, IsImageM
 
     # DEPRECATED - use CaseAttachmentSQL.content_md5() instead
     md5 = models.CharField(max_length=255, default="")
-    type_code = models.IntegerField(default=CODES.form_attachment)
 
     @property
     def key(self):
@@ -1112,7 +1111,6 @@ class CaseAttachmentSQL(PartitionedModel, models.Model, SaveStateMixin, IsImageM
         self.content_length = attachment.content_length
         self.content_type = attachment.content_type
         self.properties = attachment.properties
-        self.type_code = attachment.type_code
 
         if not self.content_type and attachment_src:
             guessed = mimetypes.guess_type(attachment_src)
@@ -1137,7 +1135,7 @@ class CaseAttachmentSQL(PartitionedModel, models.Model, SaveStateMixin, IsImageM
 
     def open(self):
         try:
-            return get_blob_db().get(key=self.key, type_code=self.type_code)
+            return get_blob_db().get(key=self.key, type_code=CODES.form_attachment)
         except (KeyError, NotFound, BadName):
             raise AttachmentNotFound(self.case_id, self.name)
 

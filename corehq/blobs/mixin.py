@@ -11,7 +11,6 @@ from os.path import join
 
 from corehq.blobs import get_blob_db, CODES  # noqa: F401
 from corehq.blobs.exceptions import AmbiguousBlobStorageError, NotFound
-from corehq.blobs.models import BlobMeta
 from corehq.blobs.util import (
     classproperty,
     document_method,

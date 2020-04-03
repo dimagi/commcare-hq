@@ -79,7 +79,7 @@ class S3BlobDB(AbstractBlobDB):
                 s3_bucket.upload_fileobj(content, meta.key)
         return meta
 
-    def get(self, key):
+    def get(self, key=None, type_code=None, meta=None):
         key = self._validate_get_args(key, type_code, meta)
         check_safe_key(key)
         with maybe_not_found(throw=NotFound(key)), self.report_timing('get', key):
