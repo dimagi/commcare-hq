@@ -1,6 +1,7 @@
 import inspect
 import re
 from collections import defaultdict
+from itertools import chain
 
 from django.utils.translation import ugettext as _
 
@@ -443,6 +444,8 @@ def get_relevant_case_updates_from_form_json(domain, form_json, case_types, extr
     for case, case_block in zip(cases, case_blocks):
         assert case_block['@case_id'] == case.case_id
         if not case_types or case.type in case_types:
+            case_create = case_block.get('create') or {}
+            case_update = case_block.get('update') or {}
             result.append(CaseTriggerInfo(
                 domain=domain,
                 case_id=case_block['@case_id'],
@@ -450,10 +453,7 @@ def get_relevant_case_updates_from_form_json(domain, form_json, case_types, extr
                 name=case.name,
                 owner_id=case.owner_id,
                 modified_by=case.modified_by,
-                updates=dict(
-                    list(case_block.get('create', {}).items()) +
-                    list(case_block.get('update', {}).items())
-                ),
+                updates=dict(chain(case_create.items(), case_update.items())),
                 created='create' in case_block,
                 closed='close' in case_block,
                 extra_fields={field: case.get_case_property(field) for field in extra_fields},
