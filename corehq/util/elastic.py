@@ -7,7 +7,7 @@ from pillowtop.es_utils import initialize_index_and_mapping
 TEST_ES_PREFIX = 'test_'
 
 
-def es_index(index):
+def prefix_for_tests(index):
     prefix = '' if not settings.UNIT_TESTING else TEST_ES_PREFIX
     return "{}{}".format(prefix, index)
 
@@ -17,7 +17,7 @@ def reset_es_index(index_info):
     with trap_extra_setup(ConnectionError):
         from corehq.elastic import get_es_new
         ensure_index_deleted(index_info.index)
-        initialize_index_and_mapping(get_es_new(), index_info)
+        initialize_index_and_mapping(get_es_new(), index_info, set_alias=True)
 
 
 @unit_testing_only
