@@ -1,7 +1,6 @@
 import inspect
 import re
 from collections import defaultdict
-from itertools import chain
 
 from django.utils.translation import ugettext as _
 
