@@ -1,5 +1,3 @@
-import json
-
 from memoized import memoized
 
 from corehq.apps.es import GroupES, UserES, groups
