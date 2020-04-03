@@ -116,10 +116,22 @@ function MapOrSectorController($scope, $compile, $location, storageService, loca
         $compile(popup[0])($scope);
     };
 
+    // watching mapData for any changes. As soon as there is change in data, height of chart is calculated and
+    // chart is refreshed.
+    $scope.$watch(function () {
+        return vm.data.mapData;
+    }, function () {
+        if (vm.data.mapData && vm.data.mapData.chart_data) {
+            var chartHeight = vm.data.mapData.chart_data[0].values.length * 70;
+            vm.chartOptions.chart.height = ((chartHeight > 280) ? chartHeight : 280);
+        }
+    }, true);
+
     vm.chartOptions = {
 
         chart: {
             type: 'multiBarHorizontalChart',
+            height: 1500,
             margin: {
                 bottom: 40,
                 left: leftMargin,
@@ -159,9 +171,6 @@ function MapOrSectorController($scope, $compile, $location, storageService, loca
                 contentGenerator: getChartTooltip,
             },
             callback: function (chart) {
-                var height = 1500;
-                var calcHeight = vm.data.mapData ? vm.data.mapData.chart_data[0].values.length * 60 : 0;
-                vm.chartOptions.chart.height = calcHeight !== 0 ? calcHeight : height;
 
                 chart.multibar.dispatch.on('elementClick', function (e) {
                     var locName = e.data[0];
