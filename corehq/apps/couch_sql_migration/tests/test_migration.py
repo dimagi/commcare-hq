@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+import sys
 import uuid
 from contextlib import contextmanager, suppress
 from datetime import datetime, timedelta
@@ -9,7 +10,7 @@ from signal import SIGINT
 
 from django.conf import settings
 from django.core.files.uploadedfile import UploadedFile
-from django.core.management import call_command
+from django.core.management import call_command as django_call_command
 from django.core.management.base import CommandError
 from django.db import transaction
 from django.test import TestCase, override_settings
@@ -17,11 +18,13 @@ from django.test import TestCase, override_settings
 import attr
 import mock
 from couchdbkit.exceptions import ResourceNotFound
+from gevent.pool import Pool
 from nose.tools import nottest
 from testil import tempdir
 
 from casexml.apps.case.mock import CaseBlock
 from corehq.apps.domain.models import Domain
+from corehq.util.metrics.tests.utils import capture_metrics
 from couchforms.models import XFormInstance
 from dimagi.utils.parsing import ISO_DATETIME_FORMAT
 
@@ -66,17 +69,16 @@ from corehq.util.test_utils import (
     create_and_save_a_case,
     create_and_save_a_form,
     flag_enabled,
-    patch_datadog,
     set_parent_case,
     softer_assert,
     trap_extra_setup,
 )
 
+from .. import casedifftool
 from .. import couchsqlmigration as mod
 from ..asyncforms import get_case_ids
 from ..diffrule import ANY
 from ..management.commands.migrate_domain_from_couch_to_sql import (
-    CACHED,
     COMMIT,
     MIGRATE,
     REBUILD,
@@ -104,24 +106,30 @@ class BaseMigrationTestCase(TestCase, TestFileMixin):
             assert get_blob_db() is cls.s3db, (get_blob_db(), cls.s3db)
         cls.tmp = tempdir()
         cls.state_dir = cls.tmp.__enter__()
-        # patch to workaround django call_command() bug with required options
-        # which causes error when passing `state_dir=...`
-        cls.state_dir_patch = mock.patch.dict(
-            os.environ, CCHQ_MIGRATION_STATE_DIR=cls.state_dir)
-        cls.state_dir_patch.start()
+        cls.pool_mock = mock.patch.object(casedifftool, "Pool", MockPool)
+        cls.patches = [
+            # patch to workaround django call_command() bug with required options
+            # which causes error when passing `state_dir=...`
+            mock.patch.dict(os.environ, CCHQ_MIGRATION_STATE_DIR=cls.state_dir),
+            mock.patch.object(casedifftool, "load_and_diff_cases", log_and_diff_cases()),
+            cls.pool_mock,
+        ]
+        for patch in cls.patches:
+            patch.start()
 
     @classmethod
     def tearDownClass(cls):
         cls.s3db.close()
         cls.tmp.__exit__(None, None, None)
-        cls.state_dir_patch.stop()
+        for patch in cls.patches:
+            patch.stop()
         super(BaseMigrationTestCase, cls).tearDownClass()
 
     def setUp(self):
         super(BaseMigrationTestCase, self).setUp()
 
         FormProcessorTestUtils.delete_all_cases_forms_ledgers()
-        self.domain_name = uuid.uuid4().hex
+        self.domain_name = uuid.uuid4().hex[:7]
         self.domain = create_domain(self.domain_name)
         # all new domains are set complete when they are created
         DomainMigrationProgress.objects.filter(domain=self.domain_name).delete()
@@ -149,7 +157,6 @@ class BaseMigrationTestCase(TestCase, TestFileMixin):
         self.assert_backend("couch", domain)
         self.migration_success = None
         options.setdefault("no_input", True)
-        options.setdefault("case_diff", "local")
         assert "diff_process" not in options, options  # old/invalid option
         with mock.patch(
             "corehq.form_processor.backends.sql.dbaccessors.transaction.atomic",
@@ -781,19 +788,16 @@ class MigrationTestCase(BaseMigrationTestCase):
         self._compare_diffs([])
 
     def test_timings(self):
-        with patch_datadog() as received_stats:
+        with capture_metrics() as received_stats:
             self._do_migration_and_assert_flags(self.domain_name)
         tracked_stats = [
-            'commcare.couch_sql_migration.unprocessed_cases.count.duration:',
-            'commcare.couch_sql_migration.main_forms.count.duration:',
-            'commcare.couch_sql_migration.unprocessed_forms.count.duration:',
-            'commcare.couch_sql_migration.count.duration:',
+            'commcare.couch_sql_migration.unprocessed_cases.count',
+            'commcare.couch_sql_migration.main_forms.count',
+            'commcare.couch_sql_migration.unprocessed_forms.count',
+            'commcare.couch_sql_migration.count',
         ]
         for t_stat in tracked_stats:
-            self.assertTrue(
-                any(r_stat.startswith(t_stat) for r_stat in received_stats),
-                "missing stat %r" % t_stat,
-            )
+            self.assertIn(t_stat, received_stats, "missing stat %r" % t_stat)
 
     def test_live_migrate(self):
         self.submit_form(make_test_form("test-1"), timedelta(minutes=-95))
@@ -1146,16 +1150,21 @@ class MigrationTestCase(BaseMigrationTestCase):
         self.assert_backend("sql")
         self.assertEqual(self._get_form_ids(), {"test-3"})
         self.assertEqual(self._get_case_ids(), {"test-case"})
-        clear_local_domain_sql_backend_override(self.domain_name)
 
+        clear_local_domain_sql_backend_override(self.domain_name)
         with self.patch_migration_chunk_size(1), skip_forms({"test-2"}):
             self._do_migration(action=STATS, missing_docs=REBUILD)
             self._do_migration(live=True, forms="missing")
-        self.assertEqual(self._get_form_ids(), {"test-1", "test-3", "test-4"})
+        self.assertEqual(self._get_form_ids(), {"test-1", "test-3"})
 
         clear_local_domain_sql_backend_override(self.domain_name)
-        self._do_migration(action=STATS, missing_docs=REBUILD)
+        with self.patch_migration_chunk_size(1):
+            self._do_migration(action=STATS, missing_docs=REBUILD)
         self._do_migration(forms="missing")
+        self.assertEqual(self._get_form_ids(), {"test-1", "test-2", "test-3"})
+
+        clear_local_domain_sql_backend_override(self.domain_name)
+        self._do_migration(finish=True)
         self.assertEqual(self._get_form_ids(), {"test-1", "test-2", "test-3", "test-4"})
         self._compare_diffs([])
 
@@ -1237,7 +1246,7 @@ class MigrationTestCase(BaseMigrationTestCase):
         self.submit_form(make_test_form("arch"), timedelta(minutes=-93)).archive()
         with self.patch_migration_chunk_size(1), \
                 self.on_doc("XFormInstance", "one", interrupt, **kw):
-            self._do_migration(live=True, case_diff="process")
+            self._do_migration(live=True, case_diff="asap")
         self.assert_backend("sql")
         self.assertFalse(self._get_form_ids("XFormArchived"))
 
@@ -1652,6 +1661,44 @@ def atomic_savepoint(*args, **kw):
 
 
 _real_atomic = transaction.atomic
+
+
+@attr.s
+class MockPool:
+    """Pool that uses greenlets rather than processes"""
+    initializer = attr.ib()  # not used
+    initargs = attr.ib()
+    processes = attr.ib(default=None)
+    maxtasksperchild = attr.ib(default=None)
+    pool = attr.ib(factory=Pool, init=False)
+
+    def imap_unordered(self, *args, **kw):
+        from ..casediff import global_diff_state
+        with global_diff_state(*self.initargs):
+            yield from self.pool.imap_unordered(*args, **kw)
+
+
+def log_and_diff_cases():
+    """Always log diffed cases in tests"""
+    def log_and_diff_cases(*args, **kw):
+        kw.setdefault("log_cases", True)
+        return load_and_diff_cases(*args, **kw)
+    load_and_diff_cases = casedifftool.load_and_diff_cases
+    return log_and_diff_cases
+
+
+def call_command(*args, **kw):
+    """call_command with patched sys.argv
+
+    Handy for reading log output of failed tests. Otherwise commands log
+    sys.argv of the test process, which is not very useful.
+    """
+    old = sys.argv
+    sys.argv = list(args) + [f"--{k}={v}" for k, v in kw.items()]
+    try:
+        return django_call_command(*args, **kw)
+    finally:
+        sys.argv = old
 
 
 @attr.s(cmp=False, repr=False)

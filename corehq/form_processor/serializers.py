@@ -178,7 +178,7 @@ class CommCareCaseSQLSerializer(DeletableModelSerializer):
 
     class Meta(object):
         model = CommCareCaseSQL
-        exclude = ('id', 'case_json',)
+        exclude = ('id',)
 
 
 class CommCareCaseSQLAPISerializer(serializers.ModelSerializer):
@@ -235,7 +235,7 @@ class LedgerValueSerializer(serializers.ModelSerializer):
 class StockStateSerializer(serializers.ModelSerializer):
     _id = serializers.IntegerField(source='id')
     entry_id = serializers.CharField(source='product_id')
-    location_id = serializers.CharField(source='sql_location.location_id')
+    location_id = serializers.CharField(source='sql_location.location_id', default=None)
     balance = serializers.IntegerField(source='stock_on_hand')
     last_modified = serializers.DateTimeField(source='last_modified_date')
     domain = serializers.CharField()

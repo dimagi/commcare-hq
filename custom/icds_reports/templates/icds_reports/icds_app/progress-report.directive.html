@@ -1,18 +1,18 @@
 {% load static %}
 
-<div class="progress-report-directive" cg-busy="[$ctrl.myPromise, $rootScope.locationPromise]">
+<div class="progress-report-directive" cg-busy="[$ctrl.myPromise]">
     <div class="row no-margin fixes-filters" ng-class="{'fixes-filters-with-alert': $ctrl.isAlertActive}">
         <div class="col-md-5">
             <div class="row">
-                <span class="breadcrump-element pointer" ng-click="$ctrl.goBack()">
+                <span class="breadcrumb-element pointer" ng-click="$ctrl.goBack()">
                     {$ $ctrl.label $}
                     <i ng-if="$ctrl.title" class="fa fa-chevron-right" aria-hidden="true"></i>
                 </span>
-                <span id="reportTitle" class="breadcrump-element">{$ $ctrl.title $}</span>
+                <span id="reportTitle" class="breadcrumb-element">{$ $ctrl.title $}</span>
             </div>
             <div class="row">
-                <span class="location-breadcump" ng-click="$ctrl.haveAccessToAllLocations && $ctrl.moveToLocation('national', -1)">National </span>
-                <span class="location-breadcump" ng-click="$ctrl.getDisableIndex() < $index && $ctrl.moveToLocation(loc, $index)" ng-repeat="loc in $ctrl.selectedLocations | filter: { location_id: '!all'} track by $index">
+                <span class="location-breadcrumb" ng-click="$ctrl.haveAccessToAllLocations && $ctrl.moveToLocation('national', -1)">National </span>
+                <span class="location-breadcrumb" ng-click="$ctrl.getDisableIndex() < $index && $ctrl.moveToLocation(loc, $index)" ng-repeat="loc in $ctrl.selectedLocations | filter: { location_id: '!all'} track by $index">
                     <i class="fa fa-chevron-right" aria-hidden="true"></i> <span id="locationName">{$ loc.name $}</span>
                 </span>
             </div>

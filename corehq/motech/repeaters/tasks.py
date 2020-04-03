@@ -6,6 +6,7 @@ from celery.schedules import crontab
 from celery.task import periodic_task, task
 from celery.utils.log import get_task_logger
 
+from corehq.util.metrics import metrics_gauge_task, metrics_counter
 from dimagi.utils.couch import get_redis_lock
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 
@@ -24,8 +25,6 @@ from corehq.motech.repeaters.dbaccessors import (
 from corehq.privileges import DATA_FORWARDING, ZAPIER_INTEGRATION
 from corehq.util.datadog.gauges import (
     datadog_bucket_timer,
-    datadog_counter,
-    datadog_gauge_task,
 )
 from corehq.util.datadog.utils import make_buckets_from_timedeltas
 from corehq.util.soft_assert import soft_assert
@@ -72,7 +71,7 @@ def check_repeaters():
         name=CHECK_REPEATERS_KEY,
     )
     if not check_repeater_lock.acquire(blocking=False):
-        datadog_counter("commcare.repeaters.check.locked_out")
+        metrics_counter("commcare.repeaters.check.locked_out")
         return
 
     try:
@@ -85,7 +84,7 @@ def check_repeaters():
                 if datetime.utcnow() > six_hours_later:
                     _soft_assert(False, "I've been iterating repeat records for six hours. I quit!")
                     break
-                datadog_counter("commcare.repeaters.check.attempt_forward")
+                metrics_counter("commcare.repeaters.check.attempt_forward")
                 record.attempt_forward_now()
     finally:
         check_repeater_lock.release()
@@ -137,7 +136,7 @@ def process_repeat_record(repeat_record):
         logging.exception('Failed to process repeat record: {}'.format(repeat_record._id))
 
 
-repeaters_overdue = datadog_gauge_task(
+repeaters_overdue = metrics_gauge_task(
     'commcare.repeaters.overdue',
     get_overdue_repeat_record_count,
     run_every=crontab()  # every minute

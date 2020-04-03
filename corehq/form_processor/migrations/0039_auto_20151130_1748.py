@@ -25,7 +25,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='casetransaction',
             name='type',
-            field=models.PositiveSmallIntegerField(choices=[(0, b'form'), (1, b'rebuild_with_reason'), (2, b'user_requested_rebuild'), (3, b'user_archived_rebuild'), (4, b'form_archive_rebuild'), (5, b'form_edit_rebuild'), (6, b'ledger')]),
+            field=models.PositiveSmallIntegerField(choices=[(0, 'form'), (1, 'rebuild_with_reason'), (2, 'user_requested_rebuild'), (3, 'user_archived_rebuild'), (4, 'form_archive_rebuild'), (5, 'form_edit_rebuild'), (6, 'ledger')]),
             preserve_default=True,
         ),
     ]

@@ -48,6 +48,7 @@ Welcome to CommCareHQ's documentation!
    openmrs
    js-guide/README
    databases
+   metrics
 
 Tips for documenting
 --------------------

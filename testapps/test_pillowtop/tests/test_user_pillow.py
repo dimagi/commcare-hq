@@ -62,7 +62,7 @@ class UserPillowTest(UserPillowTestBase):
 
         # send to elasticsearch
         pillow = get_user_pillow_old(skip_ucr=True)
-        pillow.process_changes(since=since)
+        pillow.process_changes(since=since, forever=False)
         self.elasticsearch.indices.refresh(self.index_info.index)
         self.assertEqual(0, UserES().run().total)
 
@@ -76,7 +76,7 @@ class UserPillowTest(UserPillowTestBase):
 
         # send to elasticsearch
         pillow = get_user_pillow_old()
-        pillow.process_changes(since=since)
+        pillow.process_changes(since=since, forever=False)
         self.elasticsearch.indices.refresh(self.index_info.index)
         self._verify_user_in_es(username)
         return user
@@ -105,7 +105,7 @@ class UnknownUserPillowTest(UserPillowTestBase):
 
         # send to elasticsearch
         pillow = get_xform_pillow()
-        pillow.process_changes(since=since)
+        pillow.process_changes(since=since, forever=False)
         self.elasticsearch.indices.refresh(self.index_info.index)
 
         # the default query doesn't include unknown users so should have no results

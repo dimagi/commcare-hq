@@ -331,7 +331,7 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
         var html = "";
         html += '<div class="secondary-location-selector">';
         html += '<div class="modal-header">';
-        html += '<button type="button" class="close" ng-click="$ctrl.closePopup()" aria-label="Close">' +
+        html += '<button type="button" class="close" ng-click="$ctrl.closePopup($event)" aria-label="Close">' +
             '<span aria-hidden="true">&times;</span></button>';
         html += "</div>";
         html += '<div class="modal-body">';
@@ -343,9 +343,12 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
         return html;
     };
 
-    vm.closePopup = function () {
-        var popup = d3.select("#locPopup");
-        popup.classed("hidden", true);
+    vm.closePopup = function (e) {
+        // checking if click event is triggered on map
+        if (e.target.tagName !== 'path') {
+            var popup = d3.select("#locPopup");
+            popup.classed("hidden", true);
+        }
     };
 
     function renderPopup(html) {

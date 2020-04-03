@@ -763,9 +763,9 @@ class RecouvrementDesCouts(BaseSqlData):
 
 class IntraHealthQueryMeta(QueryMeta):
 
-    def __init__(self, table_name, filters, group_by, key):
+    def __init__(self, table_name, filters, group_by, distinct_on, key):
         self.key = key
-        super(IntraHealthQueryMeta, self).__init__(table_name, filters, group_by, [])
+        super(IntraHealthQueryMeta, self).__init__(table_name, filters, group_by, distinct_on, [])
         assert len(filters) > 0
         self.filter = AND(self.filters) if len(self.filters) > 1 else self.filters[0]
 
@@ -818,11 +818,13 @@ class CountUniqueAndSumQueryMeta(IntraHealthQueryMeta):
 
 class IntraHealthCustomColumn(CustomQueryColumn):
 
-    def get_query_meta(self, default_table_name, default_filters, default_group_by, default_order_by):
+    def get_query_meta(self, default_table_name, default_filters, default_group_by, default_distinct_on,
+                       default_order_by):
         table_name = self.table_name or default_table_name
         filters = self.filters or default_filters
         group_by = self.group_by or default_group_by
-        return self.query_cls(table_name, filters, group_by, self.key)
+        distinct_on = self.distinct_on or default_distinct_on
+        return self.query_cls(table_name, filters, group_by, distinct_on, self.key)
 
 
 class SumAndAvgGCustomColumn(IntraHealthCustomColumn):

@@ -60,8 +60,8 @@ class TwoStageAggregateCustomQueryProvider(ConfigurableReportCustomQueryProvider
             self.table.name,
             filters=split_filters['inner'],
             group_by=self.report_data_source.group_by,
-            # note: is this necessary to add?
-            # order_by=self.order_by,
+            order_by=self.report_data_source.order_by,
+            distinct_on=self.report_data_source.distinct_on,
         )
         for c in self.report_data_source.columns:
             query_context.append_column(c.view)

@@ -314,17 +314,13 @@ class DomainRegistrationForm(forms.Form):
         return self.cleaned_data
 
 
-class WebUserInvitationForm(NoAutocompleteMixin, DomainRegistrationForm):
-    """
-    Form for a brand new user, before they've created a domain or done anything on CommCare HQ.
-    """
+class BaseUserInvitationForm(NoAutocompleteMixin, forms.Form):
     full_name = forms.CharField(label=_('Full Name'),
                                 max_length=User._meta.get_field('first_name').max_length +
                                            User._meta.get_field('last_name').max_length + 1,
                                 widget=forms.TextInput(attrs={'class': 'form-control'}))
     email = forms.EmailField(label=_('Email Address'),
                              max_length=User._meta.get_field('email').max_length,
-                             help_text=_('You will use this email to log in.'),
                              widget=forms.TextInput(attrs={'class': 'form-control'}))
     password = forms.CharField(label=_('Create Password'),
                                widget=forms.PasswordInput(render_value=False,
@@ -337,7 +333,6 @@ class WebUserInvitationForm(NoAutocompleteMixin, DomainRegistrationForm):
                                """))
     if settings.ENABLE_DRACONIAN_SECURITY_FEATURES:
         captcha = CaptchaField(_("Type the letters in the box"))
-    create_domain = forms.BooleanField(widget=forms.HiddenInput(), required=False, initial=False)
     # Must be set to False to have the clean_*() routine called
     eula_confirmed = forms.BooleanField(required=False,
                                         label="",
@@ -354,11 +349,7 @@ class WebUserInvitationForm(NoAutocompleteMixin, DomainRegistrationForm):
                                                """)))
 
     def __init__(self, *args, **kwargs):
-        super(WebUserInvitationForm, self).__init__(*args, **kwargs)
-        initial_create_domain = kwargs.get('initial', {}).get('create_domain', True)
-        data_create_domain = self.data.get('create_domain', "True")
-        if not initial_create_domain or data_create_domain == "False":
-            self.fields['hr_name'].widget = forms.HiddenInput()
+        super().__init__(*args, **kwargs)
 
     def clean_full_name(self):
         data = self.cleaned_data['full_name'].split()
@@ -367,12 +358,6 @@ class WebUserInvitationForm(NoAutocompleteMixin, DomainRegistrationForm):
     def clean_email(self):
         data = self.cleaned_data['email'].strip().lower()
         validate_email(data)
-        duplicate = CouchUser.get_by_username(data)
-        if duplicate:
-            # sync django user
-            duplicate.save()
-        if User.objects.filter(username__iexact=data).count() > 0 or duplicate:
-            raise forms.ValidationError('Username already taken; please try another')
         return data
 
     def clean_password(self):
@@ -391,9 +376,39 @@ class WebUserInvitationForm(NoAutocompleteMixin, DomainRegistrationForm):
     def clean_eula_confirmed(self):
         data = self.cleaned_data['eula_confirmed']
         if data is not True:
-            raise forms.ValidationError('You must agree to our Terms of Service and Business Agreement '
-                                        'in order to register an account.')
+            raise forms.ValidationError(_(
+                'You must agree to our Terms of Service and Business Agreement '
+                'in order to register an account.'
+            ))
         return data
+
+
+class WebUserInvitationForm(BaseUserInvitationForm):
+    """
+    Form for a brand new user, before they've created a domain or done anything on CommCare HQ.
+    """
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # web users login with their emails
+        self.fields['email'].help_text = _('You will use this email to log in.')
+
+    def clean_email(self):
+        data = super().clean_email()
+        # web user login emails should be globally unique
+        duplicate = CouchUser.get_by_username(data)
+        if duplicate:
+            # sync django user
+            duplicate.save()
+        if User.objects.filter(username__iexact=data).count() > 0 or duplicate:
+            raise forms.ValidationError('Username already taken; please try another')
+        return data
+
+
+class MobileWorkerAccountConfirmationForm(BaseUserInvitationForm):
+    """
+    For Mobile Workers to confirm their accounts.
+    """
+    pass
 
 
 # From http://www.peterbe.com/plog/automatically-strip-whitespace-in-django-app_manager

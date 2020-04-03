@@ -10,6 +10,7 @@ from couchdbkit.exceptions import (
     ResourceNotFound,
 )
 
+from corehq.apps.user_importer.helpers import spec_value_to_boolean_or_none
 from dimagi.utils.parsing import string_to_boolean
 
 from corehq import privileges
@@ -29,7 +30,7 @@ from corehq.apps.users.util import normalize_username
 required_headers = set(['username'])
 allowed_headers = set([
     'data', 'email', 'group', 'language', 'name', 'password', 'phone-number',
-    'uncategorized_data', 'user_id', 'is_active', 'location_code', 'role',
+    'uncategorized_data', 'user_id', 'is_active', 'is_account_confirmed', 'location_code', 'role',
     'User IMEIs (read only)', 'registered_on (read only)', 'last_submission (read only)',
     'last_sync (read only)'
 ]) | required_headers
@@ -319,9 +320,8 @@ def create_or_update_users_and_groups(domain, user_specs, group_memoizer=None, u
                 username = normalize_username(str(username), domain) if username else None
                 password = str(password) if password else None
 
-                is_active = row.get('is_active') or None
-                if is_active and isinstance(is_active, str):
-                    is_active = string_to_boolean(is_active)
+                is_active = spec_value_to_boolean_or_none(row, 'is_active')
+                is_account_confirmed = spec_value_to_boolean_or_none(row, 'is_account_confirmed')
 
                 if user_id:
                     user = CommCareUser.get_by_user_id(user_id, domain)
@@ -335,11 +335,21 @@ def create_or_update_users_and_groups(domain, user_specs, group_memoizer=None, u
                             'Changing usernames is not supported: %(username)r to %(new_username)r'
                         ) % {'username': user.username, 'new_username': username})
 
+                    # note: explicitly not including "None" here because that's the default value if not set.
+                    # False means it was set explicitly to that value
+                    if is_account_confirmed is False:
+                        raise UserUploadError(_(
+                            f"You can only set 'Is Account Confirmed' to 'False' on a new User."
+                        ))
+
                     if is_password(password):
                         user.set_password(password)
                     status_row['flag'] = 'updated'
                 else:
-                    user = CommCareUser.create(domain, username, password, commit=False)
+                    kwargs = {}
+                    if is_account_confirmed is not None:
+                        kwargs['is_account_confirmed'] = is_account_confirmed
+                    user = CommCareUser.create(domain, username, password, commit=False, **kwargs)
                     status_row['flag'] = 'created'
 
                 if phone_number:

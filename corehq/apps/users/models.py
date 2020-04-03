@@ -22,6 +22,7 @@ from memoized import memoized
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.phone.models import OTARestoreCommCareUser, OTARestoreWebUser
 from casexml.apps.phone.restore_caching import get_loadtest_factor_for_user
+from corehq.apps.users.exceptions import IllegalAccountConfirmation
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
     DateProperty,
@@ -44,7 +45,7 @@ from dimagi.utils.couch.undo import DELETED_SUFFIX, DeleteRecord
 from dimagi.utils.dates import force_to_datetime
 from dimagi.utils.logging import log_signal_errors, notify_exception
 from dimagi.utils.modules import to_function
-from dimagi.utils.web import get_site_domain
+from dimagi.utils.web import get_static_url_prefix
 
 from corehq import toggles
 from corehq.apps.app_manager.const import USERCASE_TYPE
@@ -1643,6 +1644,9 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     loadtest_factor = IntegerProperty()
     is_demo_user = BooleanProperty(default=False)
     demo_restore_id = IntegerProperty()
+    # used by user provisioning workflow. defaults to true unless explicitly overridden during
+    # user creation
+    is_account_confirmed = BooleanProperty(default=True)
 
     # This means that this user represents a location, and has a 1-1 relationship
     # with a location where location.location_type.has_user == True
@@ -1731,12 +1735,18 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
                phone_number=None,
                location=None,
                commit=True,
+               is_account_confirmed=True,
                **kwargs):
         """
-        used to be a function called `create_hq_user_from_commcare_registration_info`
-
+        Main entry point into creating a CommCareUser (mobile worker).
         """
         uuid = uuid or uuid4().hex
+        # if the account is not confirmed, also set is_active false so they can't login
+        if 'is_active' not in kwargs:
+            kwargs['is_active'] = is_account_confirmed
+        elif not is_account_confirmed:
+            assert not kwargs['is_active'], \
+                "it's illegal to create a user with is_active=True and is_account_confirmed=False"
         commcare_user = super(CommCareUser, cls).create(domain, username, password, email, uuid, date, **kwargs)
         if phone_number is not None:
             commcare_user.add_phone_number(phone_number)
@@ -1746,7 +1756,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         commcare_user.domain = domain
         commcare_user.device_ids = [device_id]
         commcare_user.registering_device_id = device_id
-
+        commcare_user.is_account_confirmed = is_account_confirmed
         commcare_user.domain_membership = DomainMembership(domain=domain, **kwargs)
 
         if location:
@@ -1855,6 +1865,15 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             pass
         else:
             django_user.delete()
+        self.save()
+
+    def confirm_account(self, password):
+        if self.is_account_confirmed:
+            raise IllegalAccountConfirmation('Account is already confirmed')
+        assert not self.is_active, 'Active account should not be unconfirmed!'
+        self.is_active = True
+        self.is_account_confirmed = True
+        self.set_password(password)
         self.save()
 
     def get_case_sharing_groups(self):
@@ -2597,6 +2616,7 @@ class DomainRequest(models.Model):
 
 
 class SQLInvitation(SyncSQLToCouchMixin, models.Model):
+    uuid = models.UUIDField(primary_key=True, db_index=True, default=uuid4)
     email = models.CharField(max_length=255, db_index=True)
     invited_by = models.CharField(max_length=126)           # couch id of a WebUser
     invited_on = models.DateTimeField()
@@ -2641,13 +2661,13 @@ class SQLInvitation(SyncSQLToCouchMixin, models.Model):
 
     def send_activation_email(self, remaining_days=30):
         inviter = CouchUser.get_by_user_id(self.invited_by)
-        url = absolute_reverse("domain_accept_invitation", args=[self.domain, self.id])
+        url = absolute_reverse("domain_accept_invitation", args=[self.domain, self.uuid])
         params = {
             "domain": self.domain,
             "url": url,
             'days': remaining_days,
             "inviter": inviter.formatted_name,
-            'url_prefix': '' if settings.STATIC_CDN else 'http://' + get_site_domain(),
+            'url_prefix': get_static_url_prefix(),
         }
 
         domain_request = DomainRequest.by_email(self.domain, self.email, is_approved=True)
