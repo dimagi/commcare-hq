@@ -31,7 +31,11 @@ hqDefine("app_manager/js/app_exchange", [
         $("#hq-content").koApplyBindings(AppExchangeModel());
 
         $('.import-button').on('click', function () {
-            kissmetrics.track.event("COVID App Library: Imported application");
+            var $tile = $(this).closest(".well");
+            kissmetrics.track.event("COVID App Library: Imported application", {
+                app_id: $tile.find("[name='from_app_id']").val(),
+                app_name: $tile.find(".app-name").text(),
+            });
         });
     });
 });
