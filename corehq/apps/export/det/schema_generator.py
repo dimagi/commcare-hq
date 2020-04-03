@@ -35,13 +35,13 @@ def generate_from_export_instance(export_instance, output_file):
     elif isinstance(export_instance, FormExportInstance):
         return generate_from_form_export_instance(export_instance, output_file)
     else:
-        raise DETConfigError(_(f'Export instance type {type(export_instance)} not supported!'))
+        raise DETConfigError(_('Export instance type {name} not supported!').format(name=type(export_instance).__name__))
 
 
 def generate_from_case_export_instance(export_instance, output_file):
     assert isinstance(export_instance, CaseExportInstance)
     if not export_instance.selected_tables:
-        raise DETConfigError(_(f'No Tables found in Export {export_instance.name}'))
+        raise DETConfigError(_('No Tables found in Export {name}').format(name=export_instance.name))
     main_input_table = export_instance.selected_tables[0]
     main_output_table = DETTable(
         name=main_input_table.label,
@@ -65,7 +65,7 @@ def _transform_path_for_case_properties(input_path):
 def generate_from_form_export_instance(export_instance, output_file):
     assert isinstance(export_instance, FormExportInstance)
     if not export_instance.selected_tables:
-        raise DETConfigError(_(f'No Tables found in Export {export_instance.name}'))
+        raise DETConfigError(_('No Tables found in Export {name}').format(name=export_instance.name))
 
     output = DETConfig(name=export_instance.name)
     for input_table in export_instance.selected_tables:
@@ -106,9 +106,8 @@ def _is_main_form_table(table_configuration):
 
 def _add_id_row_if_necessary(output_table, source_value):
     # DET requires an "id" field to exist to use SQL export.
-    # if it doesn't insert one at the beginning of the table
-    id_rows = [row for row in output_table.rows if row.field == ID_FIELD]
-    if not id_rows:
+    # Insert one at the beginning of the table if it doesn't exist.
+    if not any(row.field == ID_FIELD for row in output_table.rows):
         output_table.rows.insert(0, DETRow(
             source_field=source_value,
             field=ID_FIELD,

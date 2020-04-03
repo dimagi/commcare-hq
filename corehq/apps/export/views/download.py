@@ -555,7 +555,7 @@ class DownloadDETSchemaView(View):
         try:
             generate_from_export_instance(export_instance, output_file)
         except DETConfigError as e:
-            return HttpResponse(_(f'Sorry, something went wrong creating that file: {e}'))
+            return HttpResponse(_('Sorry, something went wrong creating that file: {error}').format(error=e))
         else:
             output_file.seek(0)
             response = HttpResponse(output_file, content_type='application/vnd.ms-excel')
