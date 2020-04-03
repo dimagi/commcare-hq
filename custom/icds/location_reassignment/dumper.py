@@ -1,7 +1,8 @@
 import io
 
-from couchexport.export import export_raw
 from memoized import memoized
+
+from couchexport.export import export_raw
 
 from corehq.apps.locations.models import SQLLocation
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
@@ -56,6 +57,7 @@ class Dumper(object):
             SQLLocation.inactive_objects.filter(site_code__in=destination_site_codes).
             values_list('site_code', flat=True)
         )
+        self.old_site_codes = self._get_old_site_codes(transitions)
 
     @staticmethod
     def _get_destination_site_codes(transitions):
@@ -63,11 +65,28 @@ class Dumper(object):
         new_site_codes = []
         for transition in transitions:
             for operation, details in transition.items():
+                # in case of split final site codes is a list itself and is the value in the dict
                 if operation == SPLIT_OPERATION:
                     [new_site_codes.extend(to_site_codes) for to_site_codes in list(details.values())]
                 else:
                     new_site_codes.extend(list(details.keys()))
         return new_site_codes
+
+    @staticmethod
+    def _get_old_site_codes(transitions):
+        # find all sites codes of the destination/final locations
+        old_site_codes = []
+        for transition in transitions:
+            for operation, details in transition.items():
+                # in case of merge old site code is the key in the dict
+                if operation == SPLIT_OPERATION:
+                    old_site_codes.extend(list(details.keys()))
+                # in case of merge old site codes is a list itself and is the value in the dict
+                elif operation == MERGE_OPERATION:
+                    [old_site_codes.extend(from_site_codes) for from_site_codes in list(details.values())]
+                else:
+                    old_site_codes.extend(list(details.values()))
+        return old_site_codes
 
     def _rows(self, transitions_per_location_type):
         rows = {location_type: [] for location_type in transitions_per_location_type}
@@ -109,6 +128,13 @@ class Dumper(object):
 
     @memoized
     def _get_count_of_cases_owned(self, site_code):
-        location_id = SQLLocation.active_objects.get(domain=self.domain,
-                                                     site_code=site_code).location_id
+        location_id = self._old_location_ids_by_site_code()[site_code]
         return len(self.case_accessor.get_case_ids_by_owners([location_id]))
+
+    @memoized
+    def _old_location_ids_by_site_code(self):
+        return {
+            loc.site_code: loc.location_id
+            for loc in
+            SQLLocation.active_objects.filter(domain=self.domain, site_code__in=self.old_site_codes)
+        }
