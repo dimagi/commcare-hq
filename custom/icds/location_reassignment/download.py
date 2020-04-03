@@ -86,7 +86,7 @@ class Download(object):
 
     def _create_workbook(self):
         wb = Workbook()
-        # workbook adds an empty sheet for new workbook unless they are write only
+        # workbook adds an empty sheet for new workbook unless it is write only
         wb.remove(wb.active)
         for location_type, rows in self._create_rows().items():
             worksheet = wb.create_sheet(location_type)
