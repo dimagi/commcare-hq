@@ -35,7 +35,9 @@ def generate_from_export_instance(export_instance, output_file):
     elif isinstance(export_instance, FormExportInstance):
         return generate_from_form_export_instance(export_instance, output_file)
     else:
-        raise DETConfigError(_('Export instance type {name} not supported!').format(name=type(export_instance).__name__))
+        raise DETConfigError(_('Export instance type {name} not supported!').format(
+            name=type(export_instance).__name__
+        ))
 
 
 def generate_from_case_export_instance(export_instance, output_file):
