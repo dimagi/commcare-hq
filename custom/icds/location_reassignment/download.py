@@ -64,7 +64,7 @@ class Download(object):
         # fetch all locations necessary for this download request
         ancestors = list(self.location.get_ancestors().select_related('location_type'))
         self_and_descendants = list(self.location.get_descendants(include_self=True)
-                                    .select_related('location_type'))
+                                    .filter(is_archived=False).select_related('location_type'))
         return ancestors + self_and_descendants
 
     def _populate_assigned_users(self):
