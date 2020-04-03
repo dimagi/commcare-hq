@@ -128,8 +128,10 @@ class Dumper(object):
 
     @memoized
     def _get_count_of_cases_owned(self, site_code):
-        location_id = self._old_location_ids_by_site_code()[site_code]
-        return len(self.case_accessor.get_case_ids_by_owners([location_id]))
+        location_id = self._old_location_ids_by_site_code().get(site_code)
+        if location_id:
+            return len(self.case_accessor.get_case_ids_by_owners([location_id]))
+        return "Not Found"
 
     @memoized
     def _old_location_ids_by_site_code(self):
