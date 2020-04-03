@@ -92,16 +92,16 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
         alive_in_month = "(child_health.date_death IS NULL OR child_health.date_death - {} >= 0)".format(
             start_month_string
         )
-        migration_status = (
+        migrated = (
             "agg_migration.is_migrated IS DISTINCT FROM 0"
             "AND agg_migration.migration_date::date < {start_month_string}"
         ).format(start_month_string=start_month_string)
-        registered_status = (
-            "agg_availing.is_registered IS DISTINCT FROM 1"
+        not_registered = (
+            "agg_availing.is_registered = 0"
             "AND agg_availing.registration_date::date < {start_month_string}"
         ).format(start_month_string=start_month_string)
-        seeking_services = "NOT {registered_status} AND NOT {migration_status}".format(
-            registered_status=registered_status, migration_status=migration_status)
+        seeking_services = "NOT {not_registered} AND NOT {migrated}".format(
+            not_registered=not_registered, migrated=migrated)
         born_in_month = "({} AND person_cases.dob BETWEEN {} AND {})".format(
             seeking_services, start_month_string, end_month_string
         )
@@ -165,7 +165,7 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
             ("valid_in_month", "CASE WHEN {} THEN 1 ELSE 0 END".format(valid_in_month)),
             ("valid_all_registered_in_month",
                 "CASE WHEN {} AND {} AND {} <= 72 AND NOT {} THEN 1 ELSE 0 END".format(
-                    open_in_month, alive_in_month, age_in_months, migration_status
+                    open_in_month, alive_in_month, age_in_months, migrated
                 )),
             ("person_name", "child_health.person_name"),
             ("mother_name", "child_health.mother_name"),
