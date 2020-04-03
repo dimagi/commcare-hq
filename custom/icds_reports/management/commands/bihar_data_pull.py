@@ -30,8 +30,6 @@ headers = [
 data_rows = [headers]
 
 
-
-@transaction.atomic
 def _run_custom_sql_script(command, day=None):
     db_alias = get_icds_ucr_citus_db_alias()
     if not db_alias:
@@ -56,7 +54,7 @@ def ccs_record_cases():
             person_case_id,
             person_name,
             husband_name,
-            dob,
+            EXTRACT(year FROM age(CURRENT_DATE,dob::date))
             mobile_number
         from ccs_record_monthly
         INNER join awc_location ON
@@ -105,7 +103,7 @@ class Command(BaseCommand):
                 case[4],
                 case[5],
                 case[8],
-                '' if case.get_case_property('dob') is None else get_age_from_dob(case[10]),
+                case[10],
                 'Female',
                 person_case_obj.get_case_property('is_pregnant'),
                 case[11],
