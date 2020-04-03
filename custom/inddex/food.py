@@ -1,4 +1,9 @@
+import operator
+import uuid
+from collections import defaultdict
 from datetime import datetime
+from functools import reduce
+from itertools import chain
 
 from django.utils.functional import cached_property
 
@@ -116,12 +121,6 @@ INDICATORS = [
     I('fct_data_used'),
     I('fct_code'),
     I('total_grams'),
-    I('energy_kcal_per_100g'),
-    I('energy_kcal'),
-    I('water_G_per_100g'),
-    I('water_g'),
-    I('protein_g_per_100g'),
-    I('protein_g'),
     I('conv_factor_gap_code'),
     I('conv_factor_gap_desc'),
     I('fct_gap_code'),
@@ -132,18 +131,69 @@ _INDICATORS_BY_SLUG = {i.slug: i for i in INDICATORS}
 
 class FoodRow:
 
-    def __init__(self, food_code, ucr_row, fixtures):
-        self.food_code = food_code
+    def __init__(self, ucr_row, fixtures, ingredient=None):
+        self.uuid = uuid.uuid4()
         self.ucr_row = ucr_row
         self.fixtures = fixtures
 
-        if self.composition:
+        self._is_std_recipe_ingredient = bool(ingredient)
+        if self._is_std_recipe_ingredient:
+            self.food_code = ingredient.ingr_code
+            self._set_ingredient_fields(ingredient)
+        else:
+            self.caseid = ucr_row['doc_id']
+            self.food_code = ucr_row['food_code']
+
+        self._set_composition()
+        self._set_conversion_factors()
+
+        self.is_recipe = self.food_type in (STANDARD_RECIPE, NON_STANDARD_RECIPE)
+        self.include_in_analysis = not self.is_recipe
+
+        self.measurement_amount = float(self.measurement_amount) if self.measurement_amount else None
+        self.portions = float(self.portions) if self.portions else None
+        self.nsr_consumed_cooked_fraction = (float(self.nsr_consumed_cooked_fraction)
+                                             if self.nsr_consumed_cooked_fraction else None)
+
+        # These properties will be mutated in RecipeRowEnricher
+        self.recipe_num_ingredients = None
+        self.ingr_recipe_total_grams_consumed = None
+
+    def _set_ingredient_fields(self, ingredient):
+        if self._is_std_recipe_ingredient:
+            self.is_ingredient = 'yes'
+            self.recipe_name = self.ucr_row['recipe_name']
+            self.recipe_case_id = self.ucr_row['doc_id']
+            self.ingr_recipe_code = ingredient.recipe_code
+            self.ingr_fraction = ingredient.ingr_fraction
+
+            base_food = self.fixtures.foods_by_name.get(self.food_base_term)
+            self.base_term_food_code = base_food.food_code if base_food else None
+
+    def _set_composition(self):
+        # Get the food composition corresponding to food_code, fall back to base_term_food_code
+        fct = self.fixtures.food_compositions
+        self.fct_food_code_exists = bool(self.food_code and self.food_code in fct)
+        self.fct_base_term_food_code_exists = bool(self.base_term_food_code and self.base_term_food_code in fct)
+        self.fct_code = None
+        if self.fct_food_code_exists:
+            self.fct_code = self.food_code
+            self.fct_data_used = 'food_code'
+        elif self.fct_base_term_food_code_exists:
+            self.fct_code = self.base_term_food_code
+            self.fct_data_used = 'base_term_food_code'
+
+        if self.fct_code:
+            self.composition = fct[self.fct_code]
             self.fao_who_gift_food_group_code = self.composition.fao_who_gift_food_group_code
             self.fao_who_gift_food_group_description = self.composition.fao_who_gift_food_group_description
             self.user_food_group = self.composition.user_defined_food_group
-            self.reference_food_code = self.composition.reference_food_code_for_food_composition
 
-        self._set_conversion_factors()
+            self.reference_food_code = self.composition.reference_food_code_for_food_composition
+            if self.fct_data_used == 'food_code' and self.reference_food_code:
+                self.fct_data_used = 'reference_food_code'
+
+        self.fct_reference_food_code_exists = bool(self.reference_food_code)
 
     def _set_conversion_factors(self):
         if self.food_type in (FOOD_ITEM, STANDARD_RECIPE) and self.conv_method_code:
@@ -158,17 +208,6 @@ class FoodRow:
             elif self.conv_factor_base_term_food_code:
                 self.conv_factor_used = 'base_term_food_code'
                 self.conv_factor = self.conv_factor_base_term_food_code
-
-    @cached_property
-    def composition(self):
-        # If the food isn't in the composition table, check the base food
-        for food_code in [self.food_code, self.base_term_food_code]:
-            if food_code and food_code in self.fixtures.food_compositions:
-                return self.fixtures.food_compositions[food_code]
-
-    @property
-    def include_in_analysis(self):
-        return self.food_type not in (STANDARD_RECIPE, NON_STANDARD_RECIPE)  # recipes are excluded
 
     @property
     def age_range(self):
@@ -188,67 +227,83 @@ class FoodRow:
             return "50-64 years"
         return "65+ years"
 
-    def as_list(self):
+    @property
+    def recipe_id(self):
+        if self.is_recipe:
+            return self.caseid
+        return self.recipe_case_id or self.already_reported_recipe_case_id or 'NO_RECIPE'
 
-        def _format(val):
-            if isinstance(val, datetime):
-                return val.strftime('%Y-%m-%d %H:%M:%S')
-            if isinstance(val, bool):
-                return "yes" if val else "no"
-            if isinstance(val, int):
-                return str(val)
-            if isinstance(val, float):
-                return str(int(val)) if val.is_integer() else str(val)
-            if val is None:
-                return MISSING
-            return val
+    _total_grams = 'NOT_YET_COMPUTED'
+    @property
+    def total_grams(self):
+        # This property must be computed later, as it depends on other rows
+        if self._total_grams == 'NOT_YET_COMPUTED':
+            raise AssertionError("total_grams has not yet been computed")
+        return self._total_grams
 
-        return [_format(getattr(self, column.slug)) for column in INDICATORS]
-
-
-class FoodCaseRow(FoodRow):
-    """A food item directly corresponding to a case in the UCR"""
-
-    def __init__(self, ucr_row, fixtures):
-        super().__init__(ucr_row['food_code'], ucr_row, fixtures)
-        self.caseid = ucr_row['doc_id']
+    @total_grams.setter
+    def total_grams(self, val):
+        self._total_grams = val
 
     def __getattr__(self, name):
-        # If it's an indicator in the UCR that hasn't been explicitly set, return that val
         if name in _INDICATORS_BY_SLUG:
-            indicator = _INDICATORS_BY_SLUG[name]
-            return self.ucr_row[indicator.slug] if indicator.in_ucr else None
-        return super().__getattr__(name)
+            if self._is_std_recipe_ingredient:
+                # If it's an indicator that hasn't been explicitly set, check if it can
+                # be pulled from the food fixture or from the parent food case's UCR
+                indicator = _INDICATORS_BY_SLUG[name]
+                if indicator.in_food_fixture:
+                    return getattr(self.fixtures.foods[self.food_code], indicator.slug)
+                if indicator.is_recall_meta:
+                    return self.ucr_row[indicator.slug]
+                return None
+            else:
+                # If it's an indicator in the UCR that hasn't been explicitly set, return that val
+                indicator = _INDICATORS_BY_SLUG[name]
+                return self.ucr_row[indicator.slug] if indicator.in_ucr else None
+
+        raise AttributeError(f"FoodRow has no definition for {name}")
 
 
-class RecipeIngredientRow(FoodRow):
-    """A food item inferred from a recipe"""
-    is_ingredient = "yes"
+def enrich_rows(recipe_id, rows):
+    """Insert data possibly dependent on other rows in a recipe"""
+    if recipe_id == 'NO_RECIPE':
+        recipe = None
+    else:
+        recipe_possibilities = [row for row in rows if row.is_recipe]
+        recipe = recipe_possibilities[0] if len(recipe_possibilities) == 1 else None
+    ingredients = [row for row in rows if not row.is_recipe]
 
-    def __init__(self, ucr_row, fixtures, ingredient):
-        # ucr_row is data from the parent food case
-        # ingredient is static info for this ingredient from the recipes fixture
-        super().__init__(ingredient.ingr_code, ucr_row, fixtures)
+    if not recipe:
+        for row in rows:
+            row.total_grams = _multiply(row.measurement_amount, row.conv_factor, row.portions)
+    else:
+        total_grams = _calculate_total_grams(recipe, ingredients)
+        for row in [recipe] + ingredients:
+            row.total_grams = total_grams[row.uuid]
+            if row.is_recipe:
+                row.recipe_num_ingredients = len(ingredients)
+            if row.is_ingredient == 'yes' and recipe.food_type == STANDARD_RECIPE:
+                row.ingr_recipe_total_grams_consumed = total_grams[recipe.uuid]
 
-        self.recipe_name = ucr_row['recipe_name']
-        self.recipe_case_id = ucr_row['doc_id']
-        self.ingr_recipe_code = ingredient.recipe_code
-        self.ingr_fraction = ingredient.ingr_fraction
 
-        base_food = self.fixtures.foods_by_name.get(self.food_base_term)
-        self.base_term_food_code = base_food.food_code if base_food else None
-
-    def __getattr__(self, name):
-        # If it's an indicator that hasn't been explicitly set, check if it can
-        # be pulled from the food fixture or from the parent food case's UCR
-        if name in _INDICATORS_BY_SLUG:
-            indicator = _INDICATORS_BY_SLUG[name]
-            if indicator.in_food_fixture:
-                return getattr(self.fixtures.foods[self.food_code], indicator.slug)
-            if indicator.is_recall_meta:
-                return self.ucr_row[indicator.slug]
-            return None
-        return super().__getattr__(name)
+def _calculate_total_grams(recipe, ingredients):
+    if recipe.food_type == STANDARD_RECIPE:
+        res = {}
+        recipe_total = _multiply(recipe.measurement_amount, recipe.conv_factor, recipe.portions)
+        res[recipe.uuid] = recipe_total
+        for row in ingredients:
+            res[row.uuid] = _multiply(recipe_total, row.ingr_fraction)
+        return res
+    else:  # NON_STANDARD_RECIPE
+        res = {}
+        for row in ingredients:
+            res[row.uuid] = _multiply(row.measurement_amount, row.conv_factor,
+                                      row.portions, recipe.nsr_consumed_cooked_fraction)
+        try:
+            res[recipe.uuid] = sum(res.values()) if res else None
+        except TypeError:
+            res[recipe.uuid] = None
+        return res
 
 
 class FoodData:
@@ -258,14 +313,62 @@ class FoodData:
 
     @property
     def headers(self):
-        return [i.slug for i in INDICATORS]
+        return [i.slug for i in INDICATORS] + list(get_nutrient_headers(self.fixtures.nutrient_names))
 
     @property
     def rows(self):
+        rows_by_recipe = defaultdict(list)
+
         for ucr_row in self.ucr_rows:
-            food = FoodCaseRow(ucr_row, self.fixtures)
-            yield food.as_list()
+            food = FoodRow(ucr_row, self.fixtures)
+            rows_by_recipe[food.recipe_id].append(food)
+
             if food.food_type == STANDARD_RECIPE:
                 for ingredient_data in self.fixtures.recipes[food.food_code]:
-                    ingr_row = RecipeIngredientRow(ucr_row, self.fixtures, ingredient_data)
-                    yield ingr_row.as_list()
+                    ingr_row = FoodRow(ucr_row, self.fixtures, ingredient_data)
+                    rows_by_recipe[food.recipe_id].append(ingr_row)
+
+        for recipe_id, rows_in_recipe in rows_by_recipe.items():
+            enrich_rows(recipe_id, rows_in_recipe)
+            for row in rows_in_recipe:
+                static_rows = (getattr(row, column.slug) for column in INDICATORS)
+                nutrient_rows = get_nutrient_values(self.fixtures.nutrient_names, row)
+                yield map(_format, chain(static_rows, nutrient_rows))
+
+
+def get_nutrient_headers(nutrient_names):
+    for name in nutrient_names:
+        yield f"{name}_per_100g"
+        yield name
+
+
+def get_nutrient_values(nutrient_names, row):
+    for name in nutrient_names:
+        if row.fct_code:
+            per_100g = row.composition.nutrients.get(name)
+            yield per_100g
+            yield _multiply(per_100g, row.total_grams, 0.01)
+        else:
+            yield None
+            yield None
+
+
+def _multiply(*args):
+    try:
+        return round(reduce(operator.mul, args), 2)
+    except TypeError:
+        return None
+
+
+def _format(val):
+    if isinstance(val, datetime):
+        return val.strftime('%Y-%m-%d %H:%M:%S')
+    if isinstance(val, bool):
+        return "yes" if val else "no"
+    if isinstance(val, int):
+        return str(val)
+    if isinstance(val, float):
+        return str(int(val)) if val.is_integer() else str(val)
+    if val is None:
+        return MISSING
+    return val

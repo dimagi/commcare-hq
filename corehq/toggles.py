@@ -1177,6 +1177,14 @@ ALLOW_USER_DEFINED_EXPORT_COLUMNS = StaticToggle(
 )
 
 
+DATA_EXPORT_TOOL_SCHEMA_EXPORT = StaticToggle(
+    'data_export_tool_schema_export',
+    'Show an option to download data export tool schemas from the exports list view (Experimental)',
+    TAG_SOLUTIONS_LIMITED,
+    [NAMESPACE_DOMAIN, NAMESPACE_USER],
+)
+
+
 DISABLE_COLUMN_LIMIT_IN_UCR = StaticToggle(
     'disable_column_limit_in_ucr',
     'Enikshay: Disable column limit in UCR',

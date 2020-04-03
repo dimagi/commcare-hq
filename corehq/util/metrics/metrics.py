@@ -86,7 +86,13 @@ class HqMetrics(metaclass=abc.ABCMeta):
         pass
 
 
-Sample = namedtuple('Sample', ['type', 'name', 'tags', 'value'])
+class Sample(namedtuple('Sample', ['type', 'name', 'tags', 'value'])):
+    def match_tags(self, tags):
+        missing = object()
+        return all([
+            self.tags.get(tag, missing) == val
+            for tag, val in tags.items()
+        ])
 
 
 class DebugMetrics:
