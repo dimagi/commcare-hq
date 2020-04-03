@@ -5,7 +5,7 @@ from datetime import datetime
 from functools import reduce
 from itertools import chain
 
-from django.utils.functional import cached_property
+from custom.inddex.ucr_data import FoodCaseData
 
 from .fixtures import FixtureAccessor
 
@@ -307,9 +307,15 @@ def _calculate_total_grams(recipe, ingredients):
 
 
 class FoodData:
-    def __init__(self, domain, ucr_rows):
-        self.ucr_rows = ucr_rows
+    def __init__(self, domain, *, datespan, case_owners=None, recall_status=None):
         self.fixtures = FixtureAccessor(domain)
+        self._ucr = FoodCaseData({
+            'domain': domain,
+            'startdate': str(datespan.startdate),
+            'enddate': str(datespan.enddate),
+            'case_owners': case_owners or '',
+            'recall_status': recall_status or '',
+        })
 
     @property
     def headers(self):
@@ -319,7 +325,7 @@ class FoodData:
     def rows(self):
         rows_by_recipe = defaultdict(list)
 
-        for ucr_row in self.ucr_rows:
+        for ucr_row in self._ucr.get_data():
             food = FoodRow(ucr_row, self.fixtures)
             rows_by_recipe[food.recipe_id].append(food)
 
