@@ -72,7 +72,7 @@ class Download(object):
         return assigned_location_ids_per_username
 
     def _create_workbook(self):
-        wb = Workbook()
+        wb = Workbook(write_only=True)
         for location_type, rows in self._create_rows().items():
             ws = wb.create_sheet(location_type)
             uniq_headers = self._extract_unique_headers(rows)
