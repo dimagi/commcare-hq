@@ -4,12 +4,11 @@ from datetime import timedelta
 from celery.schedules import crontab
 from celery.task import periodic_task
 from django.conf import settings
-from django.db.models import F
 
 from corehq.form_processor.reprocess import reprocess_unfinished_stub
 from corehq.util.celery_utils import no_result_task
-from corehq.util.datadog.gauges import datadog_counter, datadog_gauge
 from corehq.util.decorators import serial_task
+from corehq.util.metrics import metrics_counter, metrics_gauge
 from couchforms.models import UnfinishedSubmissionStub
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.logging import notify_exception
@@ -26,7 +25,7 @@ def reprocess_submission(submssion_stub_id):
             return
 
         reprocess_unfinished_stub(stub)
-        datadog_counter('commcare.submission_reprocessing.count')
+        metrics_counter('commcare.submission_reprocessing.count')
 
 
 @periodic_task(run_every=crontab(minute='*/5'), queue=settings.CELERY_PERIODIC_QUEUE)
@@ -40,7 +39,7 @@ def reprocess_archive_stubs():
     from corehq.form_processor.interfaces.dbaccessors import FormAccessors
     from couchforms.models import UnfinishedArchiveStub
     stubs = UnfinishedArchiveStub.objects.filter(attempts__lt=3)
-    datadog_gauge('commcare.unfinished_archive_stubs', len(stubs))
+    metrics_gauge('commcare.unfinished_archive_stubs', len(stubs))
     start = time.time()
     cutoff = start + timedelta(minutes=4).total_seconds()
     for stub in stubs:

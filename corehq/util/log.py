@@ -67,7 +67,7 @@ class HqAdminEmailHandler(AdminEmailHandler):
     """
 
     def get_context(self, record):
-        from corehq.util.datadog.gauges import datadog_counter
+        from corehq.util.metrics import metrics_counter
         try:
             request = record.request
         except Exception:
@@ -107,11 +107,11 @@ class HqAdminEmailHandler(AdminEmailHandler):
         })
         if request:
             sanitized_url = sanitize_url(request.build_absolute_uri())
-            datadog_counter(ERROR_COUNT, tags=[
-                'url:{}'.format(sanitized_url),
-                'group:{}'.format(get_url_group(sanitized_url)),
-                'domain:{}'.format(getattr(request, 'domain', DATADOG_UNKNOWN)),
-            ])
+            metrics_counter(ERROR_COUNT, tags={
+                'url': sanitized_url,
+                'group': get_url_group(sanitized_url),
+                'domain': getattr(request, 'domain', DATADOG_UNKNOWN),
+            })
 
             context.update({
                 'get': list(request.GET.items()),
