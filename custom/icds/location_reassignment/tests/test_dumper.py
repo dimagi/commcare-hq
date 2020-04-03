@@ -3,6 +3,14 @@ from unittest import TestCase
 from mock import patch
 
 from corehq.util.workbook_json.excel import get_workbook
+from custom.icds.location_reassignment.const import (
+    ARCHIVED_COLUMN,
+    CASE_COUNT_COLUMN,
+    MISSING_COLUMN,
+    NEW_LOCATION_CODE_COLUMN,
+    OLD_LOCATION_CODE_COLUMN,
+    TRANSITION_COLUMN,
+)
 from custom.icds.location_reassignment.dumper import Dumper
 
 
@@ -46,24 +54,24 @@ class TestDumper(TestCase):
         self.assertEqual(
             supervisor_worksheet_rows,
             [
-                {'from': '12', 'transition': 'Move', 'to': '13',
-                 'Missing': True, 'Archived': False, 'Cases': 0}
+                {OLD_LOCATION_CODE_COLUMN: '12', TRANSITION_COLUMN: 'Move', NEW_LOCATION_CODE_COLUMN: '13',
+                 MISSING_COLUMN: True, ARCHIVED_COLUMN: False, CASE_COUNT_COLUMN: 0}
             ]
         )
         self.assertEqual(
             awc_worksheet_rows,
             [
-                {'from': '111', 'transition': 'Move', 'to': '112',
-                 'Missing': False, 'Archived': False, 'Cases': 0},
-                {'from': '113', 'transition': 'Merge', 'to': '115',
-                 'Missing': False, 'Archived': False, 'Cases': 0},
-                {'from': '114', 'transition': 'Merge', 'to': '115',
-                 'Missing': False, 'Archived': False, 'Cases': 0},
-                {'from': '116', 'transition': 'Split', 'to': '117',
-                 'Missing': False, 'Archived': False, 'Cases': 0},
-                {'from': '116', 'transition': 'Split', 'to': '118',
-                 'Missing': True, 'Archived': False, 'Cases': 0},
-                {'from': '119', 'transition': 'Extract', 'to': '120',
-                 'Missing': True, 'Archived': True, 'Cases': 0}
+                {OLD_LOCATION_CODE_COLUMN: '111', TRANSITION_COLUMN: 'Move', NEW_LOCATION_CODE_COLUMN: '112',
+                 MISSING_COLUMN: False, ARCHIVED_COLUMN: False, CASE_COUNT_COLUMN: 0},
+                {OLD_LOCATION_CODE_COLUMN: '113', TRANSITION_COLUMN: 'Merge', NEW_LOCATION_CODE_COLUMN: '115',
+                 MISSING_COLUMN: False, ARCHIVED_COLUMN: False, CASE_COUNT_COLUMN: 0},
+                {OLD_LOCATION_CODE_COLUMN: '114', TRANSITION_COLUMN: 'Merge', NEW_LOCATION_CODE_COLUMN: '115',
+                 MISSING_COLUMN: False, ARCHIVED_COLUMN: False, CASE_COUNT_COLUMN: 0},
+                {OLD_LOCATION_CODE_COLUMN: '116', TRANSITION_COLUMN: 'Split', NEW_LOCATION_CODE_COLUMN: '117',
+                 MISSING_COLUMN: False, ARCHIVED_COLUMN: False, CASE_COUNT_COLUMN: 0},
+                {OLD_LOCATION_CODE_COLUMN: '116', TRANSITION_COLUMN: 'Split', NEW_LOCATION_CODE_COLUMN: '118',
+                 MISSING_COLUMN: True, ARCHIVED_COLUMN: False, CASE_COUNT_COLUMN: 0},
+                {OLD_LOCATION_CODE_COLUMN: '119', TRANSITION_COLUMN: 'Extract', NEW_LOCATION_CODE_COLUMN: '120',
+                 MISSING_COLUMN: True, ARCHIVED_COLUMN: True, CASE_COUNT_COLUMN: 0}
             ]
         )

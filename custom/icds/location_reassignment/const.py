@@ -1,4 +1,5 @@
 # column names
+# Download
 CURRENT_LGD_CODE = "Current LGD Code"
 CURRENT_NAME = "Current Name"
 CURRENT_PARENT_NAME = "Current Parent Name"
@@ -17,6 +18,22 @@ SPLIT_OPERATION = 'Split'
 MOVE_OPERATION = 'Move'
 EXTRACT_OPERATION = 'Extract'
 VALID_OPERATIONS = [MERGE_OPERATION, SPLIT_OPERATION, MOVE_OPERATION, EXTRACT_OPERATION]
+
+# Dumper
+OLD_LOCATION_CODE_COLUMN = "Old location code"
+TRANSITION_COLUMN = "Transition"
+NEW_LOCATION_CODE_COLUMN = "New location code"
+MISSING_COLUMN = "Missing"
+ARCHIVED_COLUMN = "Archived"
+CASE_COUNT_COLUMN = "Number of Cases"
+DUMPER_COLUMNS = [
+    OLD_LOCATION_CODE_COLUMN,
+    TRANSITION_COLUMN,
+    NEW_LOCATION_CODE_COLUMN,
+    MISSING_COLUMN,
+    ARCHIVED_COLUMN,
+    CASE_COUNT_COLUMN
+]
 
 # metadata fields on locations
 DEPRECATED_TO = "deprecated_to"  # destination location this location was deprecated to

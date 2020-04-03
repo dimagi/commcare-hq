@@ -7,6 +7,7 @@ from couchexport.export import export_raw
 from corehq.apps.locations.models import SQLLocation
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from custom.icds.location_reassignment.const import (
+    DUMPER_COLUMNS,
     EXTRACT_OPERATION,
     MERGE_OPERATION,
     MOVE_OPERATION,
@@ -33,7 +34,7 @@ class Dumper(object):
         Check Parser for the expected format for each operation
         """
         location_types = list(transitions_per_location_type.keys())
-        headers = [[location_type, ['from', 'transition', 'to', 'Missing', 'Archived', 'Cases']]
+        headers = [[location_type, DUMPER_COLUMNS]
                    for location_type in location_types]
         stream = io.BytesIO()
         self._setup_site_codes(list(transitions_per_location_type.values()))
