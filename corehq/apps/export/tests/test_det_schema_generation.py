@@ -113,6 +113,7 @@ class TestDETFormInstanceWithRepeat(SimpleTestCase, TestFileMixin):
             repeat_ws = wb.worksheets[0]
             self._check_repeat_worksheet(repeat_ws)
 
+        # restore self.export_instance changes made in this test
         self.export_instance.tables[0].selected = True
 
     def test_generate_from_form_schema(self):
