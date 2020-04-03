@@ -20,7 +20,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-03-25 22:33+0000\n"
+"POT-Creation-Date: 2020-04-01 20:11+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
 "Last-Translator: Tyler Wymer <twymer@dimagi.com>, 2019\n"
 "Language-Team: French (https://www.transifex.com/dimagi/teams/9388/fr/)\n"
@@ -151,6 +151,14 @@ msgstr "Vous avez des modifications non sauvegardées."
 
 #: corehq/apps/app_manager/static/app_manager/js/add_ons.js:24
 msgid "There was an error saving."
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/app_exchange.js:16
+msgid "Hide Past Versions"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/app_exchange.js:18
+msgid "See Past Versions"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/app_manager.js:144
@@ -2792,7 +2800,8 @@ msgid "Form submission found!"
 msgstr ""
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/list_automatic_update_rules.js:40
-#: corehq/apps/users/static/users/js/mobile_workers.js:110
+#: corehq/apps/users/static/users/js/mobile_workers.js:111
+#: corehq/apps/users/static/users/js/mobile_workers.js:135
 msgid "Issue communicating with server. Try again."
 msgstr "Problème de communication avec le serveur. Veuillez réessayer. "
 
@@ -3604,15 +3613,15 @@ msgstr ""
 msgid "Download <%= count %> users"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/mobile_workers.js:280
+#: corehq/apps/users/static/users/js/mobile_workers.js:305
 msgid "Email address is required when users confirm their own accounts."
 msgstr ""
 
-#: corehq/apps/users/static/users/js/mobile_workers.js:341
+#: corehq/apps/users/static/users/js/mobile_workers.js:366
 msgid "Checking availability..."
 msgstr ""
 
-#: corehq/apps/users/static/users/js/mobile_workers.js:362
+#: corehq/apps/users/static/users/js/mobile_workers.js:387
 msgid "Issue connecting to server. Check Internet connection."
 msgstr ""
 "Problème de connexion au serveur. Veuillez vérifier votre connexion internet."
