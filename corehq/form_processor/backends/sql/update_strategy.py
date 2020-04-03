@@ -35,7 +35,7 @@ from corehq.form_processor.models import (
 )
 from corehq.form_processor.update_strategy_base import UpdateStrategy
 from corehq.util import cmp
-from corehq.util.datadog.gauges import datadog_counter
+from corehq.util.metrics import metrics_counter
 from corehq.util.soft_assert import soft_assert
 
 reconciliation_soft_assert = soft_assert('@'.join(['dmiller', 'dimagi.com']))
@@ -318,7 +318,7 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
     def reconcile_transactions_if_necessary(self):
         if self.case.check_transaction_order():
             return False
-        datadog_counter("commcare.form_processor.sql.reconcile_transactions")
+        metrics_counter("commcare.form_processor.sql.reconcile_transactions")
         try:
             self.reconcile_transactions()
         except ReconciliationError as e:

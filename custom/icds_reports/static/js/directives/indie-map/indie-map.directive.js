@@ -331,7 +331,7 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
         var html = "";
         html += '<div class="secondary-location-selector">';
         html += '<div class="modal-header">';
-        html += '<button type="button" class="close" ng-click="$ctrl.closePopup()" aria-label="Close">' +
+        html += '<button type="button" class="close" ng-click="$ctrl.closePopup($event)" aria-label="Close">' +
             '<span aria-hidden="true">&times;</span></button>';
         html += "</div>";
         html += '<div class="modal-body">';

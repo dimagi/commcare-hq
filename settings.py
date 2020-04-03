@@ -1229,7 +1229,7 @@ LOGGING = {
             'propagate': False,
         },
         'accounting': {
-            'handlers': ['accountinglog', 'console', 'mail_admins'],
+            'handlers': ['accountinglog', 'console'],
             'level': 'INFO',
             'propagate': False,
         },
