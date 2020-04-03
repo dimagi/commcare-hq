@@ -1,20 +1,10 @@
 import time
 from contextlib import ContextDecorator
-from functools import wraps
 
-from celery.task import periodic_task
 from corehq.util.datadog import statsd, datadog_logger
-from corehq.util.soft_assert import soft_assert
 from corehq.util.datadog.utils import bucket_value
+from corehq.util.soft_assert import soft_assert
 from corehq.util.timer import TimingContext
-
-
-def datadog_histogram(name, value, enforce_prefix='commcare', tags=None):
-    """
-    Usage: Used to track the statistical distribution of a set of values over a statsd flush period.
-    Actually submits as multiple metrics:
-    """
-    _datadog_record(statsd.histogram, name, value, enforce_prefix, tags)
 
 
 def datadog_counter(name, value=1, enforce_prefix='commcare', tags=None):
