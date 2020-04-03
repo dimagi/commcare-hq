@@ -64,13 +64,12 @@ class SQLTwilioBackend(SQLSMSBackend, PhoneLoadBalancingMixin):
             raise Exception("Expected orig_phone_number to be passed for all "
                             "instances of PhoneLoadBalancingMixin")
 
-        if toggles.WHATSAPP_MESSAGING.enabled(msg.domain) and not kwargs.get('skip_whatsapp', False):
-            orig_phone_number = self._convert_to_whatsapp(orig_phone_number)
-
         config = self.config
         client = Client(config.account_sid, config.auth_token)
-        to = msg.phone_number
         from_ = orig_phone_number
+        to = msg.phone_number
+        if toggles.WHATSAPP_MESSAGING.enabled(msg.domain) and not kwargs.get('skip_whatsapp', False):
+            to = self._convert_to_whatsapp(to)
         msg.system_phone_number = from_
         body = msg.text
         try:
@@ -85,7 +84,6 @@ class SQLTwilioBackend(SQLSMSBackend, PhoneLoadBalancingMixin):
                 return
             elif e.code == WHATSAPP_LIMITATION_ERROR_CODE:
                 notify_exception(None, f"Error with Twilio Whatsapp: {e}")
-                orig_phone_number = self._convert_from_whatsapp(orig_phone_number)
                 kwargs['skip_whatsapp'] = True
                 self.send(msg, orig_phone_number, *args, **kwargs)
             else:
