@@ -6,9 +6,13 @@ from corehq.util.workbook_json.excel import get_workbook
 from custom.icds.location_reassignment.const import (
     ARCHIVED_COLUMN,
     CASE_COUNT_COLUMN,
+    EXTRACT_OPERATION,
+    MERGE_OPERATION,
     MISSING_COLUMN,
+    MOVE_OPERATION,
     NEW_LOCATION_CODE_COLUMN,
     OLD_LOCATION_CODE_COLUMN,
+    SPLIT_OPERATION,
     TRANSITION_COLUMN,
 )
 from custom.icds.location_reassignment.dumper import Dumper
@@ -26,13 +30,13 @@ class TestDumper(TestCase):
         mock_case_count.return_value = []
         transitions = {
             'awc': {
-                'Move': {'112': '111'},  # new: old
-                'Merge': {'115': ['113', '114']},  # new: old
-                'Split': {'116': ['117', '118']},  # old: new
-                'Extract': {'120': '119'}  # new: old
+                MOVE_OPERATION: {'112': '111'},  # new: old
+                MERGE_OPERATION: {'115': ['113', '114']},  # new: old
+                SPLIT_OPERATION: {'116': ['117', '118']},  # old: new
+                EXTRACT_OPERATION: {'120': '119'}  # new: old
             },
             'supervisor': {
-                'Move': {'13': '12'}
+                MOVE_OPERATION: {'13': '12'}
             },
             'state': {}
         }
@@ -54,24 +58,24 @@ class TestDumper(TestCase):
         self.assertEqual(
             supervisor_worksheet_rows,
             [
-                {OLD_LOCATION_CODE_COLUMN: '12', TRANSITION_COLUMN: 'Move', NEW_LOCATION_CODE_COLUMN: '13',
+                {OLD_LOCATION_CODE_COLUMN: '12', TRANSITION_COLUMN: MOVE_OPERATION, NEW_LOCATION_CODE_COLUMN: '13',
                  MISSING_COLUMN: True, ARCHIVED_COLUMN: False, CASE_COUNT_COLUMN: 0}
             ]
         )
         self.assertEqual(
             awc_worksheet_rows,
             [
-                {OLD_LOCATION_CODE_COLUMN: '111', TRANSITION_COLUMN: 'Move', NEW_LOCATION_CODE_COLUMN: '112',
+                {OLD_LOCATION_CODE_COLUMN: '111', TRANSITION_COLUMN: MOVE_OPERATION, NEW_LOCATION_CODE_COLUMN: '112',
                  MISSING_COLUMN: False, ARCHIVED_COLUMN: False, CASE_COUNT_COLUMN: 0},
-                {OLD_LOCATION_CODE_COLUMN: '113', TRANSITION_COLUMN: 'Merge', NEW_LOCATION_CODE_COLUMN: '115',
+                {OLD_LOCATION_CODE_COLUMN: '113', TRANSITION_COLUMN: MERGE_OPERATION, NEW_LOCATION_CODE_COLUMN: '115',
                  MISSING_COLUMN: False, ARCHIVED_COLUMN: False, CASE_COUNT_COLUMN: 0},
-                {OLD_LOCATION_CODE_COLUMN: '114', TRANSITION_COLUMN: 'Merge', NEW_LOCATION_CODE_COLUMN: '115',
+                {OLD_LOCATION_CODE_COLUMN: '114', TRANSITION_COLUMN: MERGE_OPERATION, NEW_LOCATION_CODE_COLUMN: '115',
                  MISSING_COLUMN: False, ARCHIVED_COLUMN: False, CASE_COUNT_COLUMN: 0},
-                {OLD_LOCATION_CODE_COLUMN: '116', TRANSITION_COLUMN: 'Split', NEW_LOCATION_CODE_COLUMN: '117',
+                {OLD_LOCATION_CODE_COLUMN: '116', TRANSITION_COLUMN: SPLIT_OPERATION, NEW_LOCATION_CODE_COLUMN: '117',
                  MISSING_COLUMN: False, ARCHIVED_COLUMN: False, CASE_COUNT_COLUMN: 0},
-                {OLD_LOCATION_CODE_COLUMN: '116', TRANSITION_COLUMN: 'Split', NEW_LOCATION_CODE_COLUMN: '118',
+                {OLD_LOCATION_CODE_COLUMN: '116', TRANSITION_COLUMN: SPLIT_OPERATION, NEW_LOCATION_CODE_COLUMN: '118',
                  MISSING_COLUMN: True, ARCHIVED_COLUMN: False, CASE_COUNT_COLUMN: 0},
-                {OLD_LOCATION_CODE_COLUMN: '119', TRANSITION_COLUMN: 'Extract', NEW_LOCATION_CODE_COLUMN: '120',
+                {OLD_LOCATION_CODE_COLUMN: '119', TRANSITION_COLUMN: EXTRACT_OPERATION, NEW_LOCATION_CODE_COLUMN: '120',
                  MISSING_COLUMN: True, ARCHIVED_COLUMN: True, CASE_COUNT_COLUMN: 0}
             ]
         )
