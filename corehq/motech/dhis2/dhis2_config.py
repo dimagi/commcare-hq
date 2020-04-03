@@ -30,10 +30,9 @@ class Dhis2FormConfig(DocumentSchema):
         "form_question": "/metadata/received_on",
         "external_data_type": DHIS2_DATA_TYPE_DATE,
     })
-    event_status = StringProperty(
-        choices=DHIS2_EVENT_STATUSES,
-        default=DHIS2_EVENT_STATUS_COMPLETED,
-    )
+    event_status = DictProperty(required=False, default={
+        "value": DHIS2_EVENT_STATUS_COMPLETED
+    })
     completed_date = DictProperty(required=False)
     datavalue_maps = SchemaListProperty(FormDataValueMap)
 
@@ -42,6 +41,8 @@ class Dhis2FormConfig(DocumentSchema):
         if isinstance(data.get('org_unit_id'), str):
             # Convert org_unit_id from a string to a ConstantValue
             data['org_unit_id'] = {'value': data['org_unit_id']}
+        if isinstance(data.get('event_status'), str):
+            data['event_status'] = {'value': data['event_status']}
         return super(Dhis2FormConfig, cls).wrap(data)
 
 

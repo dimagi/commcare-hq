@@ -56,7 +56,8 @@ def _get_event_date(config, case_trigger_info):
 
 
 def _get_event_status(config, case_trigger_info):
-    return {'status': config.event_status}
+    event_status = get_value(config.event_status, case_trigger_info)
+    return {'status': event_status}
 
 
 def _get_completed_date(config, case_trigger_info):
