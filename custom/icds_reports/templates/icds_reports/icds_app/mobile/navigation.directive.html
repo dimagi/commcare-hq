@@ -42,6 +42,11 @@
             <a  href="{$ goToStep('fact_sheets', $location.search()) $}" class="sub-links" ng-click="closeMenu()">{% trans "ICDS-CAS Fact Sheets" %}</a>
         </div>
         <hr>
+        <div class="menu-options navigation-font mb-0" ng-show="haveAccessToFeatures">
+            <i class="fa fa-exclamation-triangle mr-3" aria-hidden="true"></i>
+            <span class="sub-links" ng-click="closeMenu()" ng-if="isWebUser" data-target="#modalReportIssue" data-toggle="modal">{% trans "Report an Issue" %}</span>
+            <span class="sub-links" ng-click="reportAnIssue()" ng-if="!isWebUser">{% trans "Report an Issue" %}</span>
+        </div>
         {% comment %}
         Mobile settings page has not been implemented yet so just hide the option
         <div class="menu-options">
