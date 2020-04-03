@@ -1,3 +1,41 @@
+"""
+This file contains the logic to generate the master dataset for the INDDEX reports
+
+Overview
+--------
+Beneficiaries are asked about their diet in a "recall" session. This results in
+a "foodrecall" case. Every food they mention results in the creation of a "food"
+case that's a child of this foodrecall.
+
+This dataset has a row for every food, with metadata about the recall session,
+calculated nutritional information, and auditing columns reporting on what data
+is or isn't available. Some of these foods are recipes, and their ingredients
+appear as separate rows in the report.
+
+Standard recipes have their ingredients enumerated in the "recipes" lookup
+table. This dataset has additional rows inserted for each ingredient. These
+rows are associated with the recipe case, but don't have a case of their own.
+
+Nonstandard recipes are defined by the user and beneficiary during a recall
+session. The ingredients of the recipe are entered as additional food cases and
+linked to the recipe by `recipe_case_id`.
+
+Beneficiaries may report eating a nonstandard recipe more than once, in which
+case subsequent references point to the recipe definition with
+already_reported_recipe_case_id and don't enumerate the ingredients again.
+
+
+Components
+----------
+FoodData :: This is the interface to this dataset, it glues together all the
+            component pieces and presents the result as a unified dataset.
+
+FoodRow :: Class responsible for row-wise calculations and indicator definitions.
+
+enrich_rows :: mutates FoodRow after the fact to calculate information related
+               to ingredients in a recipe (which is otherwise outside the
+               direct scope of FoodRow)
+"""
 import operator
 import uuid
 from collections import defaultdict
@@ -372,6 +410,7 @@ def _calculate_total_grams(recipe, ingredients):
 
 
 class FoodData:
+    """Generates the primary dataset for INDDEX reports.  See file docstring for more."""
     def __init__(self, domain, *, datespan, case_owners=None, recall_status=None):
         self.fixtures = FixtureAccessor(domain)
         self._ucr = FoodCaseData({
