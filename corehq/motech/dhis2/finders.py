@@ -82,6 +82,8 @@ class TrackedEntityInstanceFinder:
     def get_query_filters(self, case_trigger_info):
         filters = []
         for property_weight in self.property_weights:
+            if not property_weight['is_filter']:
+                continue
             case_property = property_weight['case_property']
             value = case_trigger_info.extra_fields[case_property]
             if property_weight["match_type"] == MATCH_TYPE_EXACT and is_a_value(value):
