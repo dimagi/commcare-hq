@@ -71,6 +71,7 @@ class TrackedEntityInstanceFinder:
             return []
         params = {
             "ou": get_value(self.case_config.org_unit_id, case_trigger_info),
+            "trackedEntity": self.case_config.te_type_id,
             "filter": query_filters,
             "ouMode": "DESCENDANTS",
             "skipPaging": "true",
