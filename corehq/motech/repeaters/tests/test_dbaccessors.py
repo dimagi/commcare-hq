@@ -204,7 +204,7 @@ class TestRepeatRecordDBAccessors(TestCase):
 
 
 class TestRepeatersDBAccessors(TestCase):
-    domain = 'test-domain'
+    domain = 'test-domain-3'
 
     @classmethod
     def setUpClass(cls):
