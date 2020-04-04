@@ -136,16 +136,16 @@ class MyAccountSettingsView(BaseMyAccountView):
         api_query = ApiKey.objects.filter(user=self.request.user)
         if api_query.exists():
             api_key = api_query.order_by('-created').first()
-            return _("API Key has been active since {}").format(
+            return ugettext_lazy("API Key has been active since {}").format(
                 api_key.created.strftime('%d %B %Y')
-            )
-        return _("No API Key has been generated")
+            ), True
+        return ugettext_lazy("No API Key has been generated"), False
 
     @property
     @memoized
     def settings_form(self):
         language_choices = langcodes.get_all_langs_for_select()
-        api_key_status = self.get_api_key_status()
+        api_key_status, api_key_exists = self.get_api_key_status()
         from corehq.apps.users.forms import UpdateMyAccountInfoForm
         try:
             domain = self.request.domain
@@ -155,12 +155,14 @@ class MyAccountSettingsView(BaseMyAccountView):
             form = UpdateMyAccountInfoForm(
                 self.request.POST,
                 api_key_status=api_key_status,
+                api_key_exists=api_key_exists,
                 domain=domain,
                 existing_user=self.request.couch_user,
             )
         else:
             form = UpdateMyAccountInfoForm(
                 api_key_status=api_key_status,
+                api_key_exists=api_key_exists,
                 domain=domain,
                 existing_user=self.request.couch_user,
             )
