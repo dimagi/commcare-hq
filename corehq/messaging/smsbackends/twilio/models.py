@@ -71,7 +71,7 @@ class SQLTwilioBackend(SQLSMSBackend, PhoneLoadBalancingMixin):
         from_ = orig_phone_number
         to = msg.phone_number
         if toggles.WHATSAPP_MESSAGING.enabled(msg.domain) and not kwargs.get('skip_whatsapp', False):
-            from_ = self._convert_to_whatspp(clean_phone_number(WHATSAPP_SANDBOX_PHONE_NUMBER))
+            from_ = self._convert_to_whatsapp(clean_phone_number(WHATSAPP_SANDBOX_PHONE_NUMBER))
             to = self._convert_to_whatsapp(to)
         msg.system_phone_number = from_
         body = msg.text
