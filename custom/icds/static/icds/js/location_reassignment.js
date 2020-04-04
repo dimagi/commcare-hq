@@ -31,5 +31,17 @@ hqDefine("icds/js/location_reassignment", [
         $content.koApplyBindings(LocationReassignmentModel({
             baseUrl: $content.find("#download_link").attr("href"),
         }));
+
+        // https://stackoverflow.com/a/35489517
+        // bind the form submit to the document ajax to get notified on success
+        $("#bulk_upload_form").on("submit", function () {
+            $.ajax({context: this});
+        });
+
+        $("#bulk_upload_form").ajaxSuccess(function (event) {
+            if (event.target.id === "bulk_upload_form") {
+                $(event.target).trigger('reset');
+            }
+        });
     });
 });
