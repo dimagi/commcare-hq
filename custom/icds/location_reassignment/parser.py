@@ -118,7 +118,8 @@ class Parser(object):
         site_codes_to_be_archived = set(self.site_codes_to_be_archived)
         locations_to_be_archived = SQLLocation.active_objects.filter(site_code__in=self.site_codes_to_be_archived)
         for location in locations_to_be_archived:
-            descendants_sites_codes = location.get_descendants().values_list('site_code', flat=True)
+            descendants_sites_codes = (location.get_descendants().filter(is_archived=False).
+                                       values_list('site_code', flat=True))
             missing_site_codes = set(descendants_sites_codes) - site_codes_to_be_archived
             if missing_site_codes:
                 self.errors.append("Location %s is getting archived but the following descendants are not %s" % (
