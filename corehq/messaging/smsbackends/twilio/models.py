@@ -5,6 +5,7 @@ from dimagi.utils.logging import notify_exception
 
 from corehq import toggles
 from corehq.apps.sms.models import SMS, PhoneLoadBalancingMixin, SQLSMSBackend
+from corehq.apps.sms.util import clean_phone_number
 from corehq.messaging.smsbackends.twilio.forms import TwilioBackendForm
 
 # https://www.twilio.com/docs/api/errors/reference
@@ -12,6 +13,7 @@ INVALID_TO_PHONE_NUMBER_ERROR_CODE = 21211
 WHATSAPP_LIMITATION_ERROR_CODE = 63032
 
 WHATSAPP_PREFIX = "whatsapp:"
+WHATSAPP_SANDBOX_PHONE_NUMBER = "14155238886"
 
 
 class SQLTwilioBackend(SQLSMSBackend, PhoneLoadBalancingMixin):
@@ -69,6 +71,7 @@ class SQLTwilioBackend(SQLSMSBackend, PhoneLoadBalancingMixin):
         from_ = orig_phone_number
         to = msg.phone_number
         if toggles.WHATSAPP_MESSAGING.enabled(msg.domain) and not kwargs.get('skip_whatsapp', False):
+            from_ = self._convert_to_whatspp(clean_phone_number(WHATSAPP_SANDBOX_PHONE_NUMBER))
             to = self._convert_to_whatsapp(to)
         msg.system_phone_number = from_
         body = msg.text
