@@ -5,13 +5,25 @@ from copy import deepcopy
 
 from memoized import memoized
 from openpyxl import Workbook
+from openpyxl.worksheet.datavalidation import DataValidation
 
 from corehq.apps.es import UserES
 from corehq.apps.locations.models import SQLLocation
 from custom.icds.location_reassignment.const import (
+    CURRENT_LGD_CODE,
+    CURRENT_NAME,
+    CURRENT_PARENT_NAME,
+    CURRENT_PARENT_SITE_CODE,
+    CURRENT_PARENT_TYPE,
+    NEW_LGD_CODE,
+    NEW_NAME,
+    NEW_PARENT_SITE_CODE,
     NEW_SITE_CODE_COLUMN,
+    NEW_USERNAME_COLUMN,
     OLD_SITE_CODE_COLUMN,
     OPERATION_COLUMN,
+    USERNAME_COLUMN,
+    VALID_OPERATIONS,
 )
 
 
@@ -40,6 +52,7 @@ class Download(object):
         for location in self._locations():
             self._location_details_by_location_id[location.location_id] = {
                 'name': location.name,
+                'type_name': location.location_type.name,
                 'site_code': location.site_code,
                 'lgd_code': location.metadata.get('lgd_code', ''),
                 'parent_location_id': location.parent_location_id,
@@ -51,7 +64,7 @@ class Download(object):
         # fetch all locations necessary for this download request
         ancestors = list(self.location.get_ancestors().select_related('location_type'))
         self_and_descendants = list(self.location.get_descendants(include_self=True)
-                                    .select_related('location_type'))
+                                    .filter(is_archived=False).select_related('location_type'))
         return ancestors + self_and_descendants
 
     def _populate_assigned_users(self):
@@ -72,20 +85,32 @@ class Download(object):
         return assigned_location_ids_per_username
 
     def _create_workbook(self):
-        wb = Workbook(write_only=True)
+        wb = Workbook()
+        # workbook adds an empty sheet for new workbook unless it is write only
+        wb.remove(wb.active)
         for location_type, rows in self._create_rows().items():
-            ws = wb.create_sheet(location_type)
+            worksheet = wb.create_sheet(location_type)
             uniq_headers = self._extract_unique_headers(rows)
-            ws.append(uniq_headers)
+            worksheet.append(uniq_headers)
             for row in rows:
-                ws.append([row.get(header) for header in uniq_headers])
+                worksheet.append([row.get(header) for header in uniq_headers])
+            self._add_validation(worksheet)
         return wb
+
+    @staticmethod
+    def _add_validation(worksheet):
+        operation_data_validation = DataValidation(type="list", formula1='"%s"' % (','.join(VALID_OPERATIONS)))
+        worksheet.add_data_validation(operation_data_validation)
+        for header_cell in worksheet[1]:
+            if header_cell.value == OPERATION_COLUMN:
+                letter = header_cell.column_letter
+                operation_data_validation.add(f"{letter}2:{letter}{worksheet.max_row}")
 
     def _create_rows(self):
         def append_row(username):
             row = deepcopy(location_content)
-            row['username'] = username
-            row['new_username'] = ''
+            row[USERNAME_COLUMN] = username
+            row[NEW_USERNAME_COLUMN] = ''
             row[OPERATION_COLUMN] = ''
             rows[location_type].append(row)
 
@@ -108,19 +133,20 @@ class Download(object):
         location_details = self._location_details_by_location_id[location_id]
         location_parent_id = location_details['parent_location_id']
         location_content = {
-            'name': location_details['name'],
-            'new_name': '',
+            CURRENT_NAME: location_details['name'],
+            NEW_NAME: '',
             OLD_SITE_CODE_COLUMN: location_details['site_code'],
             NEW_SITE_CODE_COLUMN: '',
-            'lgd_code': location_details['lgd_code'],
-            'new_lgd_code': '',
+            CURRENT_LGD_CODE: location_details['lgd_code'],
+            NEW_LGD_CODE: '',
         }
         if location_parent_id and location_parent_id in self._location_details_by_location_id:
             location_parent_details = self._location_details_by_location_id[location_parent_id]
             location_content.update({
-                'parent_name': location_parent_details['name'],
-                'parent_site_code': location_parent_details['site_code'],
-                'new_parent_site_code': ''
+                CURRENT_PARENT_TYPE: location_parent_details['type_name'],
+                CURRENT_PARENT_NAME: location_parent_details['name'],
+                CURRENT_PARENT_SITE_CODE: location_parent_details['site_code'],
+                NEW_PARENT_SITE_CODE: ''
             })
         return location_content
 
