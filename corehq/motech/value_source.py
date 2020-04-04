@@ -520,7 +520,9 @@ def get_form_question_values(form_json):
     # familiar from form builder. The form's data will usually be immediately under "form_json[TAG_FORM]" but not
     # necessarily. If this causes problems we may need a more reliable way to get to it.
 
-    metadata = {'xmlns': form_json[TAG_FORM]['@xmlns']}
+    metadata = {}
+    if '@xmlns' in form_json[TAG_FORM]:
+        metadata['xmlns'] = form_json[TAG_FORM]['@xmlns']
     if TAG_META in form_json[TAG_FORM]:
         metadata.update(form_json[TAG_FORM][TAG_META])
     if 'received_on' in form_json:
