@@ -58,5 +58,4 @@ branches:
   - bmb/SAAS-10712  # Biyeun April 1
   - sr-es-alias # Sravan April 3
   - dmr/twilio-messaging-service  # Danny Apr 3
-  - dmr/fix-verify-phone-number-workflow  # Danny Apr 3
 submodules: {}
