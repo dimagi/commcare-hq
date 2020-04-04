@@ -137,9 +137,12 @@ class LoadBalancingBackendFormMixin(Form):
                 "number."))
 
         for phone_number in result:
-            validate_phone_number(phone_number)
+            self.validate_phone_number(phone_number)
 
         return result
+
+    def validate_phone_number(self, phone_number: str) -> None:
+        validate_phone_number(phone_number)
 
 
 class SettingsForm(Form):
