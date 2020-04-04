@@ -1,3 +1,6 @@
+from typing import Optional
+
+from twilio.base import values
 from twilio.base.exceptions import TwilioRestException
 from twilio.rest import Client
 
@@ -68,18 +71,20 @@ class SQLTwilioBackend(SQLSMSBackend, PhoneLoadBalancingMixin):
 
         config = self.config
         client = Client(config.account_sid, config.auth_token)
-        from_ = orig_phone_number
         to = msg.phone_number
+        msg.system_phone_number = orig_phone_number
         if toggles.WHATSAPP_MESSAGING.enabled(msg.domain) and not kwargs.get('skip_whatsapp', False):
             from_ = self._convert_to_whatspp(clean_phone_number(WHATSAPP_SANDBOX_PHONE_NUMBER))
             to = self._convert_to_whatsapp(to)
-        msg.system_phone_number = from_
+
+        from_, messaging_service_sid = self.from_or_messaging_service_sid(orig_phone_number)
         body = msg.text
         try:
             message = client.messages.create(
                 body=body,
                 to=to,
-                from_=from_
+                from_=from_ or values.unset,
+                messaging_service_sid=messaging_service_sid or values.unset,
             )
         except TwilioRestException as e:
             if e.code == INVALID_TO_PHONE_NUMBER_ERROR_CODE:
@@ -94,3 +99,13 @@ class SQLTwilioBackend(SQLSMSBackend, PhoneLoadBalancingMixin):
 
         msg.backend_message_id = message.sid
         msg.save()
+
+    def from_or_messaging_service_sid(self, phone_number: str) -> (Optional[str], Optional[str]):
+        if self.phone_number_is_messaging_service_sid(phone_number):
+            return None, phone_number
+        else:
+            return phone_number, None
+
+    @staticmethod
+    def phone_number_is_messaging_service_sid(phone_number):
+        return phone_number[:2] == 'MG'
