@@ -1,4 +1,4 @@
-SELECT awc_name, awc_site_code, supervisor_name, supervisor_site_code, block_name, block_site_code, district_name, district_site_code, state_name, state_site_code, aww_name, contact_phone_number
+SELECT doc_id, awc_name, awc_site_code, supervisor_name, supervisor_site_code, block_name, block_site_code, district_name, district_site_code, state_name, state_site_code, aww_name, contact_phone_number
 FROM awc_location
     WHERE aggregation_level=5
     AND contact_phone_number<>''
