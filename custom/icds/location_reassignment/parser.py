@@ -2,11 +2,11 @@ from collections import defaultdict
 
 from corehq.apps.locations.models import LocationType, SQLLocation
 from custom.icds.location_reassignment.const import (
+    CURRENT_SITE_CODE_COLUMN,
     EXTRACT_OPERATION,
     MERGE_OPERATION,
     MOVE_OPERATION,
     NEW_SITE_CODE_COLUMN,
-    CURRENT_SITE_CODE_COLUMN,
     OPERATION_COLUMN,
     SPLIT_OPERATION,
     VALID_OPERATIONS,
