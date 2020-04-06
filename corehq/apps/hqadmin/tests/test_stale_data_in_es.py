@@ -21,6 +21,10 @@ from corehq.util.elastic import reset_es_index
 from corehq.util.es import elasticsearch
 
 
+class ExitEarlyException(Exception):
+    pass
+
+
 class TestStaleDataInESSQL(TestCase):
 
     use_sql_backend = True
@@ -54,7 +58,7 @@ class TestStaleDataInESSQL(TestCase):
             def _fake_es_check(chunk):
                 chunk = list(chunk)
                 if len(seen) == num_to_process:
-                    raise Exception(seen)
+                    raise ExitEarlyException(seen)
                 seen.extend(chunk)
                 for case_id, case_type, modified_on, domain in chunk:
                     yield DataRow(
@@ -76,7 +80,7 @@ class TestStaleDataInESSQL(TestCase):
         form, cases = self._submit_form(self.project.name, new_cases=4)
 
         # process first 2 then raise exception
-        self._assert_not_in_sync(call(2, expect_exception=Exception), rows=[
+        self._assert_not_in_sync(call(2, expect_exception=ExitEarlyException), rows=[
             (case.case_id, 'CommCareCase', case.type, case.domain, None, case.server_modified_on)
             for case in cases[:2]
         ])
@@ -85,6 +89,50 @@ class TestStaleDataInESSQL(TestCase):
         self._assert_not_in_sync(call(4), rows=[
             (case.case_id, 'CommCareCase', case.type, case.domain, None, case.server_modified_on)
             for case in cases[2:]
+        ])
+
+    def test_form_resume(self):
+        iteration_key = uuid.uuid4().hex
+
+        def _make_fake_es_check(num_to_process):
+            seen = []
+
+            def _fake_es_check(chunk):
+                chunk = list(chunk)
+                if len(seen) == num_to_process:
+                    raise ExitEarlyException(seen)
+                seen.extend(chunk)
+                for form_id, doc_type, xmlns, modified_on, domain in chunk:
+                    yield DataRow(
+                        doc_id=form_id, doc_type=doc_type, doc_subtype=xmlns, domain=domain,
+                        es_date=None, primary_date=modified_on
+                    )
+
+            return _fake_es_check
+
+        def call(num_to_process=None, expect_exception=None):
+            _fake_es_check = _make_fake_es_check(num_to_process)
+            patch_path = 'corehq.apps.hqadmin.management.commands.stale_data_in_es'
+            with mock.patch(f'{patch_path}.CHUNK_SIZE', 1), \
+                    mock.patch(f'{patch_path}.FormBackend._yield_missing_in_es', _fake_es_check):
+                return self._stale_data_in_es(
+                    'form', iteration_key=iteration_key, expect_exception=expect_exception
+                )
+
+        forms = [
+            self._submit_form(self.project.name)[0] for i in range(4)
+        ]
+
+        # process first 2 then raise exception
+        self._assert_not_in_sync(call(2, expect_exception=ExitEarlyException), rows=[
+            (form.form_id, 'XFormInstance', form.xmlns, form.domain, None, form.received_on)
+            for form in forms[:2]
+        ])
+
+        # process rest - should start at 3rd doc
+        self._assert_not_in_sync(call(4), rows=[
+            (form.form_id, 'XFormInstance', form.xmlns, form.domain, None, form.received_on)
+            for form in forms[2:]
         ])
 
     def _test_form_missing_then_not(self, cmd_kwargs):

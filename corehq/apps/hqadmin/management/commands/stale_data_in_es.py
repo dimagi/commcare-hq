@@ -10,6 +10,7 @@ from django.db.models import F
 import dateutil
 
 from casexml.apps.case.models import CommCareCase
+from corehq.util.doc_processor.progress import ProgressManager, ProcessorProgressLogger
 from couchforms.models import XFormInstance
 from dimagi.utils.chunked import chunked
 from dimagi.utils.parsing import json_format_datetime
@@ -20,7 +21,7 @@ from corehq.elastic import ES_EXPORT_INSTANCE
 from corehq.form_processor.backends.sql.dbaccessors import (
     CaseReindexAccessor,
     state_to_doc_type,
-)
+    FormReindexAccessor)
 from corehq.form_processor.models import XFormInstanceSQL
 from corehq.form_processor.utils import should_use_sql_backend
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
@@ -248,16 +249,92 @@ class FormBackend:
 
     @staticmethod
     def _get_sql_form_chunks(run_config):
-        for db in get_db_aliases_for_partitioned_query():
-            matching_records_for_db = FormBackend._get_sql_form_data_for_db(db, run_config)
-            yield from _chunked_with_progress_bar(matching_records_for_db, CHUNK_SIZE,
-                                                  prefix=f'Processing forms in DB {db}')
+        domain = run_config.domain if run_config.domain is not ALL_DOMAINS else None
+
+        accessor = FormReindexAccessor(
+            domain,
+            start_date=run_config.start_date, end_date=run_config.end_date,
+        )
+        iteration_key = f'sql_forms-{run_config.iteration_key}'
+
+        total_docs = 0
+        for db in accessor.sql_db_aliases:
+            total_docs += accessor.get_approximate_doc_count(db)
+
+        iterable = resumable_sql_model_iterator(
+            iteration_key,
+            accessor,
+            ['form_id', 'state', 'xmlns', 'received_on', 'domain'],
+            chunk_size=CHUNK_SIZE,
+        )
+        progress = ProgressManager(
+            iterable,
+            total=total_docs,
+            reset=False,
+            chunk_size=CHUNK_SIZE,
+            logger=ProcessorProgressLogger('[Couch Forms] ', sys.stderr)
+        )
+        with progress:
+            for chunk in chunked(iterable, CHUNK_SIZE):
+                matching_records = [
+                    (form_id, state_to_doc_type.get(state, 'XFormInstance'), xmlns, received_on, domain)
+                    for form_id, state, xmlns, received_on, domain in chunk
+                    if (
+                        _should_use_sql_backend(domain) and
+                        # Only check for "normal" and "archived" forms
+                        state in (XFormInstanceSQL.NORMAL, XFormInstanceSQL.ARCHIVED)
+                    )
+                ]
+                yield matching_records
+                progress.add(len(matching_records))
 
     @staticmethod
     def _get_couch_form_chunks(run_config):
-        length, matching_records = FormBackend._get_couch_form_data(run_config)
-        return _chunked_with_progress_bar(matching_records, CHUNK_SIZE, length=length,
-                                          prefix=f'Processing forms in Couch')
+        db = XFormInstance.get_db()
+        view_name = 'by_domain_doc_type_date/view'
+
+        keys = [
+            {
+                'startkey': [couch_domain, doc_type, json_format_datetime(run_config.start_date)],
+                'endkey': [couch_domain, doc_type, json_format_datetime(run_config.end_date)],
+            }
+            for couch_domain in _get_matching_couch_domains(run_config)
+            for doc_type in ['XFormArchived', 'XFormInstance']
+        ]
+        if not keys:
+            return
+
+        def _get_length():
+            length = 0
+            for key in keys:
+                result = db.view(view_name, reduce=True, **key).one()
+                if result:
+                    length += result['value']
+            return length
+
+        iteration_key = f'couch_forms-{run_config.iteration_key}'
+        iterable = resumable_view_iterator(
+            XFormInstance.get_db(), iteration_key, view_name, keys,
+            chunk_size=CHUNK_SIZE, full_row=True
+        )
+        progress = ProgressManager(
+            iterable,
+            total=_get_length(),
+            reset=False,
+            chunk_size=CHUNK_SIZE,
+            logger=ProcessorProgressLogger('[Couch Forms] ', sys.stderr)
+        )
+        with progress:
+            for chunk in chunked(iterable, CHUNK_SIZE):
+                records = []
+                for row in chunk:
+                    form_id = row['id']
+                    domain, doc_type, received_on = row['key']
+                    received_on = iso_string_to_datetime(received_on)
+                    assert run_config.domain in (domain, ALL_DOMAINS)
+                    records.append((form_id, doc_type, 'COUCH_XMLNS_NOT_SUPPORTED', received_on, domain))
+                yield records
+                progress.add(len(chunk))
 
     @staticmethod
     def _yield_missing_in_es(chunk):
@@ -268,65 +345,6 @@ class FormBackend:
             if (es_modified_on, es_doc_type, es_domain) != (modified_on, doc_type, domain):
                 yield DataRow(doc_id=form_id, doc_type=doc_type, doc_subtype=xmlns, domain=domain,
                               es_date=es_modified_on, primary_date=modified_on)
-
-    @staticmethod
-    def _get_sql_form_data_for_db(db, run_config):
-        matching_forms = XFormInstanceSQL.objects.using(db).filter(
-            received_on__gte=run_config.start_date,
-            received_on__lte=run_config.end_date,
-            # Only check for "normal" and "archived" forms
-            state=F('state').bitand(XFormInstanceSQL.NORMAL) + F('state').bitand(XFormInstanceSQL.ARCHIVED)
-        )
-        if run_config.domain is not ALL_DOMAINS:
-            matching_forms = matching_forms.filter(
-                domain=run_config.domain
-            )
-        return [
-            (form_id, state_to_doc_type.get(state, 'XFormInstance'), xmlns, received_on, domain)
-            for form_id, state, xmlns, received_on, domain in matching_forms.values_list(
-                'form_id', 'state', 'xmlns', 'received_on', 'domain')
-            if _should_use_sql_backend(domain)
-        ]
-
-    @staticmethod
-    def _get_couch_form_data(run_config):
-        db = XFormInstance.get_db()
-        view = 'by_domain_doc_type_date/view'
-
-        def get_kwargs(couch_domain, doc_type):
-            return dict(
-                startkey=[couch_domain, doc_type, json_format_datetime(run_config.start_date)],
-                endkey=[couch_domain, doc_type, json_format_datetime(run_config.end_date)],
-            )
-
-        def _get_length():
-            length = 0
-            for couch_domain in _get_matching_couch_domains(run_config):
-                for doc_type in ['XFormArchived', 'XFormInstance']:
-                    result = db.view(view, reduce=True, **get_kwargs(couch_domain, doc_type)).one()
-                    if result:
-                        length += result['value']
-            return length
-
-        def _yield_records():
-            for couch_domain in _get_matching_couch_domains(run_config):
-                for doc_type in ['XFormArchived', 'XFormInstance']:
-                    iterator = paginate_view(
-                        db,
-                        view,
-                        reduce=False,
-                        include_docs=False,
-                        chunk_size=CHUNK_SIZE,
-                        **get_kwargs(couch_domain, doc_type)
-                    )
-                    for row in iterator:
-                        form_id = row['id']
-                        domain, doc_type, received_on = row['key']
-                        received_on = iso_string_to_datetime(received_on)
-                        assert run_config.domain in (domain, ALL_DOMAINS)
-                        yield (form_id, doc_type, 'COUCH_XMLNS_NOT_SUPPORTED',
-                               received_on, domain)
-        return _get_length(), _yield_records()
 
     @staticmethod
     def _get_es_modified_dates_for_forms(form_ids):

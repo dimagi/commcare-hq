@@ -1,6 +1,6 @@
 from couchdbkit import ResourceNotFound
 
-from corehq.util.couch_helpers import MultiKeyViewArgsProvider
+from corehq.util.couch_helpers import MultiKeyViewArgsProvider, MultiKwargViewArgsProvider
 from corehq.util.doc_processor.interface import DocumentProvider, ProcessorProgressLogger
 from corehq.util.pagination import ResumableFunctionIterator
 
@@ -28,7 +28,10 @@ def resumable_view_iterator(db, iteration_key, view_name, view_keys, chunk_size=
         view_kwargs["limit"] = chunk_size
         return db.view(view_name, **view_kwargs)
 
-    args_provider = MultiKeyViewArgsProvider(view_keys, include_docs=True)
+    if isinstance(view_keys[0], dict):
+        args_provider = MultiKwargViewArgsProvider(view_keys, include_docs=True)
+    else:
+        args_provider = MultiKeyViewArgsProvider(view_keys, include_docs=True)
     args_provider.initial_view_kwargs.pop("limit")
 
     class ResumableDocsIterator(ResumableFunctionIterator):
