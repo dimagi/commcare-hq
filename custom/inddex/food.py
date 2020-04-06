@@ -1,3 +1,41 @@
+"""
+This file contains the logic to generate the master dataset for the INDDEX reports
+
+Overview
+--------
+Beneficiaries are asked about their diet in a "recall" session. This results in
+a "foodrecall" case. Every food they mention results in the creation of a "food"
+case that's a child of this foodrecall.
+
+This dataset has a row for every food, with metadata about the recall session,
+calculated nutritional information, and auditing columns reporting on what data
+is or isn't available. Some of these foods are recipes, and their ingredients
+appear as separate rows in the report.
+
+Standard recipes have their ingredients enumerated in the "recipes" lookup
+table. This dataset has additional rows inserted for each ingredient. These
+rows are associated with the recipe case, but don't have a case of their own.
+
+Nonstandard recipes are defined by the user and beneficiary during a recall
+session. The ingredients of the recipe are entered as additional food cases and
+linked to the recipe by `recipe_case_id`.
+
+Beneficiaries may report eating a nonstandard recipe more than once, in which
+case subsequent references point to the recipe definition with
+already_reported_recipe_case_id and don't enumerate the ingredients again.
+
+
+Components
+----------
+FoodData :: This is the interface to this dataset, it glues together all the
+            component pieces and presents the result as a unified dataset.
+
+FoodRow :: Class responsible for row-wise calculations and indicator definitions.
+
+enrich_rows :: mutates FoodRow after the fact to calculate information related
+               to ingredients in a recipe (which is otherwise outside the
+               direct scope of FoodRow)
+"""
 import operator
 import uuid
 from collections import defaultdict
@@ -20,6 +58,40 @@ FOOD_ITEM = 'food_item'
 NON_STANDARD_FOOD_ITEM = 'non_std_food_item'
 STANDARD_RECIPE = 'std_recipe'
 NON_STANDARD_RECIPE = 'non_std_recipe'
+
+
+class FctGaps:
+    AVAILABLE = 1
+    BASE_TERM = 2
+    REFERENCE = 3
+    INGREDIENT_GAPS = 7
+    NOT_AVAILABLE = 8
+    DESCRIPTIONS = {
+        AVAILABLE: "fct data available",
+        BASE_TERM: "using fct data from base term food code",
+        REFERENCE: "using fct data from reference food code",
+        INGREDIENT_GAPS: "ingredients contain fct data gaps",
+        NOT_AVAILABLE: "no fct data available",
+    }
+
+    @classmethod
+    def get_description(self, code):
+        return f"{code} - {self.DESCRIPTIONS[code]}"
+
+
+class ConvFactorGaps:
+    AVAILABLE = 1
+    BASE_TERM = 2
+    NOT_AVAILABLE = 8
+    DESCRIPTIONS = {
+        AVAILABLE: "conversion factor available",
+        BASE_TERM: "using conversion factor from base term food code",
+        NOT_AVAILABLE: "no conversion factor available",
+    }
+
+    @classmethod
+    def get_description(self, code):
+        return f"{code} - {self.DESCRIPTIONS[code]}"
 
 
 class I:
@@ -155,9 +227,11 @@ class FoodRow:
         self.nsr_consumed_cooked_fraction = (float(self.nsr_consumed_cooked_fraction)
                                              if self.nsr_consumed_cooked_fraction else None)
 
-        # These properties will be mutated in RecipeRowEnricher
+        # These properties will be mutated in enrich_rows
         self.recipe_num_ingredients = None
         self.ingr_recipe_total_grams_consumed = None
+        self.fct_gap_code = None
+        self.fct_gap_desc = None
 
     def _set_ingredient_fields(self, ingredient):
         if self._is_std_recipe_ingredient:
@@ -195,7 +269,30 @@ class FoodRow:
 
         self.fct_reference_food_code_exists = bool(self.reference_food_code)
 
+    def set_fct_gap(self, ingredients=None):
+        if ingredients:
+            for row in ingredients:
+                row.set_fct_gap()
+
+        self.fct_gap_code = FctGaps.NOT_AVAILABLE
+
+        if self.food_type == FOOD_ITEM and self.fct_code:
+            self.fct_gap_code = {
+                'food_code': FctGaps.AVAILABLE,
+                'base_term_food_code': FctGaps.BASE_TERM,
+                'reference_food_code': FctGaps.REFERENCE,
+            }[self.fct_data_used]
+
+        if self.is_recipe and ingredients:
+            if all(i.fct_gap_code == FctGaps.AVAILABLE for i in ingredients):
+                self.fct_gap_code = FctGaps.AVAILABLE
+            else:
+                self.fct_gap_code = FctGaps.INGREDIENT_GAPS
+
+        self.fct_gap_desc = FctGaps.get_description(self.fct_gap_code)
+
     def _set_conversion_factors(self):
+        self.conv_factor_gap_code = ConvFactorGaps.NOT_AVAILABLE
         if self.food_type in (FOOD_ITEM, STANDARD_RECIPE) and self.conv_method_code:
             self.conv_factor_food_code = self.fixtures.conversion_factors.get(
                 (self.food_code, self.conv_method_code, self.conv_option_code))
@@ -205,9 +302,13 @@ class FoodRow:
             if self.conv_factor_food_code:
                 self.conv_factor_used = 'food_code'
                 self.conv_factor = self.conv_factor_food_code
+                self.conv_factor_gap_code = ConvFactorGaps.AVAILABLE
             elif self.conv_factor_base_term_food_code:
                 self.conv_factor_used = 'base_term_food_code'
                 self.conv_factor = self.conv_factor_base_term_food_code
+                self.conv_factor_gap_code = ConvFactorGaps.BASE_TERM
+
+        self.conv_factor_gap_desc = ConvFactorGaps.get_description(self.conv_factor_gap_code)
 
     @property
     def age_range(self):
@@ -231,7 +332,7 @@ class FoodRow:
     def recipe_id(self):
         if self.is_recipe:
             return self.caseid
-        return self.recipe_case_id or self.already_reported_recipe_case_id or 'NO_RECIPE'
+        return self.recipe_case_id or 'NO_RECIPE'
 
     _total_grams = 'NOT_YET_COMPUTED'
     @property
@@ -271,13 +372,15 @@ def enrich_rows(recipe_id, rows):
     else:
         recipe_possibilities = [row for row in rows if row.is_recipe]
         recipe = recipe_possibilities[0] if len(recipe_possibilities) == 1 else None
-    ingredients = [row for row in rows if not row.is_recipe]
 
     if not recipe:
         for row in rows:
             row.total_grams = _multiply(row.measurement_amount, row.conv_factor, row.portions)
+            row.set_fct_gap()
     else:
+        ingredients = [row for row in rows if not row.uuid == recipe.uuid]
         total_grams = _calculate_total_grams(recipe, ingredients)
+        recipe.set_fct_gap(ingredients)
         for row in [recipe] + ingredients:
             row.total_grams = total_grams[row.uuid]
             if row.is_recipe:
@@ -307,6 +410,7 @@ def _calculate_total_grams(recipe, ingredients):
 
 
 class FoodData:
+    """Generates the primary dataset for INDDEX reports.  See file docstring for more."""
     def __init__(self, domain, *, datespan, case_owners=None, recall_status=None):
         self.fixtures = FixtureAccessor(domain)
         self._ucr = FoodCaseData({
