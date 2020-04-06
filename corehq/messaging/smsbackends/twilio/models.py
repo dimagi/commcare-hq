@@ -81,7 +81,7 @@ class SQLTwilioBackend(SQLSMSBackend, PhoneLoadBalancingMixin):
             from_ = getattr(domain_obj, 'twilio_whatsapp_phone_number') or WHATSAPP_SANDBOX_PHONE_NUMBER
             from_ = clean_phone_number(from_)
             from_ = self.convert_to_whatsapp(from_)
-            to = self._convert_to_whatsapp(to)
+            to = self.convert_to_whatsapp(to)
             messaging_service_sid = None
         else:
             from_, messaging_service_sid = self.from_or_messaging_service_sid(orig_phone_number)
