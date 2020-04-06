@@ -416,9 +416,9 @@ class StateDB(DiffDB):
         They are grouped with diffs of the corresponding case
         (kind="CommCareCase", doc_id=<case_id>).
 
-        :yeilds: two-tuples `(doc_id, diffs)`. The diffs yielded here are
-        `PlanningDiff` objects, which should not be confused with json
-        diffs (`<PlanningDiff>.json_diff`).
+        :yeilds: three-tuples `(kind, doc_id, diffs)`. The diffs yielded
+        here are `PlanningDiff` objects, which should not be confused
+        with json diffs (`<PlanningDiff>.json_diff`).
         """
         if _model is None:
             _model = DocDiffs
