@@ -63,10 +63,15 @@ class TestDETFormInstance(SimpleTestCase, TestFileMixin):
 
     def test_empty(self):
         old_tables = self.export_instance.tables
+
+        def _cleanup():
+            self.export_instance.tables = old_tables
+
+        self.addCleanup(_cleanup)
+
         self.export_instance.tables = []
         with self.assertRaises(DETConfigError):
             generate_from_form_export_instance(self.export_instance, BytesIO())
-        self.export_instance.tables = old_tables
 
     def test_generate_from_form_schema(self):
         with tempfile.NamedTemporaryFile(mode='wb', suffix='.xlsx') as tmp:
@@ -106,15 +111,17 @@ class TestDETFormInstanceWithRepeat(SimpleTestCase, TestFileMixin):
 
     def test_main_table_not_selected(self):
         self.export_instance.tables[0].selected = False
+
+        def _cleanup():
+            self.export_instance.tables[0].selected = True
+
+        self.addCleanup(_cleanup)
         with tempfile.NamedTemporaryFile(mode='wb', suffix='.xlsx') as tmp:
             generate_from_form_export_instance(self.export_instance, tmp)
             wb = load_workbook(filename=tmp.name)
             self.assertEqual(1, len(wb.worksheets))
             repeat_ws = wb.worksheets[0]
             self._check_repeat_worksheet(repeat_ws)
-
-        # restore self.export_instance changes made in this test
-        self.export_instance.tables[0].selected = True
 
     def test_generate_from_form_schema(self):
         with tempfile.NamedTemporaryFile(mode='wb', suffix='.xlsx') as tmp:
