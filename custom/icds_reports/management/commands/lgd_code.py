@@ -1,4 +1,5 @@
 import csv
+import json
 from django.core.management.base import BaseCommand
 
 from corehq.apps.locations.models import SQLLocation
@@ -21,10 +22,11 @@ class Command(BaseCommand):
             if count % 1000 == 0:
                 print(f"processed entries {count}\n")
             lgd_code = ''
-            if "lgd_code" in location.metadata:
-                lgd_code = location.metadata['lgd_code']
+            metadata = json.loads(location['metadata'])
+            if "lgd_code" in metadata:
+                lgd_code = metadata['lgd_code']
             row = [
-                location.location_id,
+                location['location_id'],
                 lgd_code
             ]
             data_rows.append(row)
