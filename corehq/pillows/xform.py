@@ -204,20 +204,22 @@ def get_xform_pillow(pillow_id='xform-pillow', ucr_division=None,
     )
     unknown_user_form_processor = UnknownUsersProcessor()
     form_meta_processor = FormSubmissionMetadataTrackerProcessor()
-    checkpoint_id = "{}-{}-{}-{}".format(
-        pillow_id, XFORM_INDEX_INFO.index, REPORT_XFORM_INDEX_INFO.index, USER_INDEX)
-    checkpoint = KafkaPillowCheckpoint(checkpoint_id, topics)
-    event_handler = KafkaCheckpointEventHandler(
-        checkpoint=checkpoint, checkpoint_frequency=1000, change_feed=change_feed,
-        checkpoint_callback=ucr_processor
-    )
     if ucr_configs:
         ucr_processor.bootstrap(ucr_configs)
+
+    checkpoint_id = "{}-{}".format(
+        pillow_id, XFORM_INDEX_INFO.index)
     processors = [xform_to_es_processor]
-    if settings.RUN_UNKNOWN_USER_PILLOW:
-        processors.append(unknown_user_form_processor)
     if settings.RUN_FORM_META_PILLOW:
+        checkpoint_id = "{}-{}".format(
+            checkpoint_id, REPORT_XFORM_INDEX_INFO.index
+        )
         processors.append(form_meta_processor)
+    if settings.RUN_UNKNOWN_USER_PILLOW:
+        checkpoint_id = "{}-{}".format(
+            checkpoint_id, USER_INDEX
+        )
+        processors.append(unknown_user_form_processor)
     if not settings.ENTERPRISE_MODE:
         xform_to_report_es_processor = BulkElasticProcessor(
             elasticsearch=get_es_new(),
@@ -228,6 +230,12 @@ def get_xform_pillow(pillow_id='xform-pillow', ucr_division=None,
         processors.append(xform_to_report_es_processor)
     if not skip_ucr:
         processors.append(ucr_processor)
+
+    checkpoint = KafkaPillowCheckpoint(checkpoint_id, topics)
+    event_handler = KafkaCheckpointEventHandler(
+        checkpoint=checkpoint, checkpoint_frequency=1000, change_feed=change_feed,
+        checkpoint_callback=ucr_processor
+    )
     return ConstructedPillow(
         name=pillow_id,
         change_feed=change_feed,
