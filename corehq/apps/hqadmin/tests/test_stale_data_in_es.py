@@ -1,18 +1,25 @@
 import uuid
 from io import StringIO
 
-import mock
 from django.core.management import call_command
 from django.test import TestCase
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
+
+import mock
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqadmin.management.commands.stale_data_in_es import DataRow
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.elastic import get_es_new, send_to_elasticsearch
-from corehq.form_processor.document_stores import FormDocumentStore, CaseDocumentStore
-from corehq.form_processor.utils.xform import FormSubmissionBuilder, TestFormMetadata
+from corehq.form_processor.document_stores import (
+    CaseDocumentStore,
+    FormDocumentStore,
+)
+from corehq.form_processor.utils.xform import (
+    FormSubmissionBuilder,
+    TestFormMetadata,
+)
 from corehq.pillows.case import transform_case_for_elasticsearch
 from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO

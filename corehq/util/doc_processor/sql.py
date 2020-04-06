@@ -2,21 +2,16 @@ from corehq.util.doc_processor.interface import DocumentProvider
 from corehq.util.pagination import ResumableFunctionIterator, ArgsProvider
 
 
-def get_pk(result):
-    return result.pk
-
-
 class SqlModelArgsProvider(ArgsProvider):
-    def __init__(self, db_list, get_next_id=get_pk):
+    def __init__(self, db_list):
         self.db_list = db_list
-        self.get_next_id = get_next_id
 
     def get_initial_args(self):
         return [self.db_list[0], None], {}
 
     def get_next_args(self, result, *last_args, **last_view_kwargs):
         if result:
-            next_id = self.get_next_id(result)
+            next_id = result.pk
             return [last_args[0], next_id], {}
         else:
             last_db = last_args[0]

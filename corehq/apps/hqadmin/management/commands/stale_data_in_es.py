@@ -5,12 +5,10 @@ from collections import namedtuple
 from datetime import datetime
 
 from django.core.management.base import BaseCommand, CommandError
-from django.db.models import F
 
 import dateutil
 
 from casexml.apps.case.models import CommCareCase
-from corehq.util.doc_processor.progress import ProgressManager, ProcessorProgressLogger
 from couchforms.models import XFormInstance
 from dimagi.utils.chunked import chunked
 from dimagi.utils.parsing import json_format_datetime
@@ -20,20 +18,17 @@ from corehq.apps.es import CaseES, FormES
 from corehq.elastic import ES_EXPORT_INSTANCE
 from corehq.form_processor.backends.sql.dbaccessors import (
     CaseReindexAccessor,
-    state_to_doc_type,
-    FormReindexAccessor)
-from corehq.form_processor.models import XFormInstanceSQL
+    FormReindexAccessor,
+)
 from corehq.form_processor.utils import should_use_sql_backend
-from corehq.sql_db.util import get_db_aliases_for_partitioned_query
-from corehq.util.couch_helpers import paginate_view
 from corehq.util.dates import iso_string_to_datetime
 from corehq.util.doc_processor.couch import resumable_view_iterator
-from corehq.util.doc_processor.sql import SqlModelArgsProvider, resumable_sql_model_iterator
-from corehq.util.log import with_progress_bar
-from corehq.util.pagination import (
-    PaginationEventHandler,
-    ResumableFunctionIterator,
+from corehq.util.doc_processor.progress import (
+    ProcessorProgressLogger,
+    ProgressManager,
 )
+from corehq.util.doc_processor.sql import resumable_sql_model_iterator
+from corehq.util.pagination import PaginationEventHandler
 from memoized import memoized
 
 CHUNK_SIZE = 1000
@@ -166,33 +161,13 @@ class CaseBackend:
             case_type=run_config.case_type
         )
         iteration_key = f'sql_cases-{run_config.iteration_key}'
-
-        total_docs = 0
-        for db in accessor.sql_db_aliases:
-            total_docs += accessor.get_approximate_doc_count(db)
-
-        iterable = resumable_sql_model_iterator(
-            iteration_key,
-            accessor,
-            chunk_size=CHUNK_SIZE,
-            transform=lambda x: x
-        )
-        progress = ProgressManager(
-            iterable,
-            total=total_docs,
-            reset=False,
-            chunk_size=CHUNK_SIZE,
-            logger=ProcessorProgressLogger('[Couch Forms] ', sys.stderr)
-        )
-        with progress:
-            for chunk in chunked(iterable, CHUNK_SIZE):
-                matching_records = [
-                    (case.case_id, case.type, case.server_modified_on, case.domain)
-                    for case in chunk
-                    if _should_use_sql_backend(case.domain)
-                ]
-                yield matching_records
-                progress.add(len(matching_records))
+        for chunk in _get_resumable_chunked_iterator(accessor, iteration_key):
+            matching_records = [
+                (case.case_id, case.type, case.server_modified_on, case.domain)
+                for case in chunk
+                if _should_use_sql_backend(case.domain)
+            ]
+            yield matching_records
 
     @staticmethod
     def _get_couch_case_chunks(run_config):
@@ -263,37 +238,17 @@ class FormBackend:
             start_date=run_config.start_date, end_date=run_config.end_date,
         )
         iteration_key = f'sql_forms-{run_config.iteration_key}'
-
-        total_docs = 0
-        for db in accessor.sql_db_aliases:
-            total_docs += accessor.get_approximate_doc_count(db)
-
-        iterable = resumable_sql_model_iterator(
-            iteration_key,
-            accessor,
-            chunk_size=CHUNK_SIZE,
-            transform=lambda x: x
-        )
-        progress = ProgressManager(
-            iterable,
-            total=total_docs,
-            reset=False,
-            chunk_size=CHUNK_SIZE,
-            logger=ProcessorProgressLogger('[Couch Forms] ', sys.stderr)
-        )
-        with progress:
-            for chunk in chunked(iterable, CHUNK_SIZE):
-                matching_records = [
-                    (form.form_id, form.doc_type, form.xmlns, form.received_on, form.domain)
-                    for form in chunk
-                    if (
-                        _should_use_sql_backend(form.domain) and
-                        # Only check for "normal" and "archived" forms
-                        (form.is_normal or form.is_archived)
-                    )
-                ]
-                yield matching_records
-                progress.add(len(matching_records))
+        for chunk in _get_resumable_chunked_iterator(accessor, iteration_key):
+            matching_records = [
+                (form.form_id, form.doc_type, form.xmlns, form.received_on, form.domain)
+                for form in chunk
+                if (
+                    _should_use_sql_backend(form.domain) and
+                    # Only check for "normal" and "archived" forms
+                    (form.is_normal or form.is_archived)
+                )
+            ]
+            yield matching_records
 
     @staticmethod
     def _get_couch_form_chunks(run_config):
@@ -364,10 +319,6 @@ class FormBackend:
                 for _id, received_on, doc_type, domain in results}
 
 
-def _chunked_with_progress_bar(collection, n, prefix, **kwargs):
-    return chunked(with_progress_bar(collection, prefix=prefix, stream=sys.stderr, **kwargs), n)
-
-
 @memoized
 def _should_use_sql_backend(domain):
     return should_use_sql_backend(domain)
@@ -392,3 +343,27 @@ class ProgressEventHandler(PaginationEventHandler):
 
     def page_end(self, total_emitted, duration, *args, **kwargs):
         print(f'{self.log_prefix} Processed {total_emitted} of {self.total} in {duration}', file=self.stream)
+
+
+def _get_resumable_chunked_iterator(dbaccessor, iteration_key):
+    total_docs = 0
+    for db in dbaccessor.sql_db_aliases:
+        total_docs += dbaccessor.get_approximate_doc_count(db)
+
+    iterable = resumable_sql_model_iterator(
+        iteration_key,
+        dbaccessor,
+        chunk_size=CHUNK_SIZE,
+        transform=lambda x: x
+    )
+    progress = ProgressManager(
+        iterable,
+        total=total_docs,
+        reset=False,
+        chunk_size=CHUNK_SIZE,
+        logger=ProcessorProgressLogger('[Couch Forms] ', sys.stderr)
+    )
+    with progress:
+        for chunk in chunked(iterable, CHUNK_SIZE):
+            yield chunk
+            progress.add(len(chunk))
