@@ -3,13 +3,13 @@
 CURRENT_LGD_CODE = "Current LGD Code"
 CURRENT_NAME = "Current Name"
 CURRENT_PARENT_NAME = "Current Parent Name"
-CURRENT_PARENT_SITE_CODE = "Current Parent Site Code"
+CURRENT_PARENT_SITE_CODE = "Current Parent Location Code"
 CURRENT_PARENT_TYPE = "Current Parent Type"
-CURRENT_SITE_CODE_COLUMN = 'Current Site Code'
+CURRENT_SITE_CODE_COLUMN = 'Current Location Code'
 NEW_LGD_CODE = "New LGD Code"
 NEW_NAME = "New Name"
-NEW_SITE_CODE_COLUMN = 'New Site Code'
-NEW_PARENT_SITE_CODE = "New Parent Site Code"
+NEW_SITE_CODE_COLUMN = 'New Location Code'
+NEW_PARENT_SITE_CODE = "New Parent Location Code"
 OPERATION_COLUMN = 'Operation'
 USERNAME_COLUMN = "Username"
 NEW_USERNAME_COLUMN = "New Username"
