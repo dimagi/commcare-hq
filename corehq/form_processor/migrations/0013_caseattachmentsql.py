@@ -16,7 +16,7 @@ class Migration(migrations.Migration):
                 ('name', models.CharField(max_length=255, db_index=False)),
                 ('content_type', models.CharField(max_length=255)),
                 ('md5', models.CharField(max_length=255)),
-                ('case', models.ForeignKey(related_query_name=b'attachment', related_name='attachments', db_column='case_uuid', to_field='case_uuid', to='form_processor.CommCareCaseSQL', db_index=False, on_delete=models.CASCADE)),
+                ('case', models.ForeignKey(related_query_name='attachment', related_name='attachments', db_column='case_uuid', to_field='case_uuid', to='form_processor.CommCareCaseSQL', db_index=False, on_delete=models.CASCADE)),
             ],
             options={
                 'abstract': False,

@@ -15,6 +15,7 @@
         <link type="text/less" rel="stylesheet" media="all" href="{% static 'icds_reports/mobile/css/filters.less' %}" />
         <link type="text/less" rel="stylesheet" media="all" href="{% static 'icds_reports/mobile/css/fact-sheets.less' %}" />
         <link type="text/less" rel="stylesheet" media="all" href="{% static 'icds_reports/mobile/css/map-chart.less' %}" />
+        <link type="text/css" rel="stylesheet" media="all" href="{% static 'leaflet/dist/leaflet.css' %}">
   {% endcompress %}
 
   {% include 'analytics/analytics_js.html' %}
@@ -47,7 +48,7 @@ Split up compression due to a weird js dependency bug that makes it not work wit
 
 
   <script src="{% static 'js/icds_app_mobile.js' %}"></script>
-  <script src="{% static "js/icds_dashboard_utils.js" %}"></script>
+  <script src="{% static 'js/icds_dashboard_utils.js' %}"></script>
 
   <script src="{% static 'js/filters/india-numbers/india-numbers.filter.js' %}"></script>
 
@@ -93,6 +94,24 @@ Split up compression due to a weird js dependency bug that makes it not work wit
              ng-if="isMobile && !filtersOpen && isWebView && haveAccessToFeatures" class="share-icon" ng-click="shareViaWhatsapp()">
       </div>
   </div>
+  <script type="text/ng-template" id="reportIssueModal.html">
+      <div class="modal-header">
+          <h3 class="modal-title" id="modal-title">Report an Issue<i style="float: right;" ng-click="$dismiss()" class="fa fa-close pointer"></i></h3>
+      </div>
+      <div class="modal-body" id="modal-body">
+          Please contact {{ support_email }} in order to report an issue with the Dashboard
+      </div>
+      <div class="modal-footer">
+         <button ng-click="$dismiss()" class="btn btn-primary">Close</button>
+      </div>
+  </script>
+  {% include 'hqwebapp/includes/modal_report_issue.html' %}
+  <script src="{% static 'hqwebapp/js/hq.helpers.js' %}"></script>
+  <script src="{% static 'hqwebapp/js/hq-bug-report.js' %}"></script>
+  <script>
+      var $modal = $('#modalReportIssue');
+      $modal.find('.modal-title').text('Report an Issue with ICDS-CAS Dashboard');
+  </script>
 </div>
 {% include 'analytics/initial/global.html' %}
 {% include 'analytics/initial/google.html' %}

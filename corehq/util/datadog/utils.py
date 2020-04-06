@@ -103,7 +103,7 @@ def bucket_value(value, buckets, unit=''):
 def maybe_add_domain_tag(domain_name, tags):
     """Conditionally add a domain tag to the given list of tags"""
     if (settings.SERVER_ENVIRONMENT, domain_name) in settings.DATADOG_DOMAINS:
-        tags.append('domain:{}'.format(domain_name))
+        tags['domain'] = domain_name
 
 
 def load_counter(load_type, source, domain_name, extra_tags=None):

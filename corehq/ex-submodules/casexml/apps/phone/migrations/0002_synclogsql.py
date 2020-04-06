@@ -28,8 +28,8 @@ class Migration(migrations.Migration):
                 ('previous_synclog_id', models.UUIDField(blank=True, default=None, max_length=255, null=True)),
                 ('doc', django.contrib.postgres.fields.jsonb.JSONField()),
                 ('log_format', models.CharField(
-                    choices=[(b'legacy', b'legacy'), (b'simplified', b'simplified'), (b'livequery', b'livequery')],
-                    default=b'legacy', max_length=10)),
+                    choices=[('legacy', 'legacy'), ('simplified', 'simplified'), ('livequery', 'livequery')],
+                    default='legacy', max_length=10)),
                 ('build_id', models.CharField(max_length=255, null=True, blank=True)),
                 ('duration', models.PositiveIntegerField(null=True, blank=True)),
                 ('last_submitted', models.DateTimeField(db_index=True, null=True, blank=True)),

@@ -49,7 +49,7 @@ from sentry_sdk import last_event_id
 from two_factor.forms import AuthenticationTokenForm, BackupTokenForm
 from two_factor.views import LoginView
 
-from corehq.util.metrics import create_metrics_event
+from corehq.util.metrics import create_metrics_event, metrics_counter, metrics_gauge
 from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.django.request import mutable_querydict
@@ -109,7 +109,6 @@ from corehq.form_processor.exceptions import CaseNotFound, XFormNotFound
 from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.util.context_processors import commcare_hq_names
 from corehq.util.datadog.const import DATADOG_UNKNOWN
-from corehq.util.datadog.gauges import datadog_counter, datadog_gauge
 from corehq.util.datadog.metrics import JSERROR_COUNT
 from corehq.util.datadog.utils import sanitize_url
 from corehq.util.view_utils import reverse
@@ -304,11 +303,11 @@ def server_up(req):
     failed_checks = [(check, status) for check, status in statuses if not status.success]
 
     for check_name, status in statuses:
-        tags = [
-            'status:{}'.format('failed' if not status.success else 'ok'),
-            'check:{}'.format(check_name)
-        ]
-        datadog_gauge('commcare.serverup.check', status.duration, tags=tags)
+        tags = {
+            'status': 'failed' if not status.success else 'ok',
+            'check': check_name
+        }
+        metrics_gauge('commcare.serverup.check', status.duration, tags=tags)
 
     if failed_checks and not is_deploy_in_progress():
         status_messages = [
@@ -566,29 +565,20 @@ def jserror(request):
             browser_version = parsed_agent['browser'].get('version', DATADOG_UNKNOWN)
             browser_name = parsed_agent['browser'].get('name', DATADOG_UNKNOWN)
 
-    datadog_counter(JSERROR_COUNT, tags=[
-        'os:{}'.format(os),
-        'browser_version:{}'.format(browser_version),
-        'browser_name:{}'.format(browser_name),
-        'url:{}'.format(sanitize_url(request.POST.get('page', None))),
-        'file:{}'.format(request.POST.get('filename')),
-        'bot:{}'.format(bot),
-    ])
+    metrics_counter(JSERROR_COUNT, tags={
+        'os': os,
+        'browser_version': browser_version,
+        'browser_name': browser_name,
+        'url': sanitize_url(request.POST.get('page', None)),
+        'file': request.POST.get('filename'),
+        'bot': bot,
+    })
 
     return HttpResponse('')
 
 
 @method_decorator([login_required], name='dispatch')
 class BugReportView(View):
-
-    @property
-    def recipients(self):
-        """
-            Returns:
-                list
-        """
-        return settings.BUG_REPORT_RECIPIENTS
-
     def post(self, req, *args, **kwargs):
         report = dict([(key, req.POST.get(key, '')) for key in (
             'subject',
@@ -694,7 +684,7 @@ class BugReportView(View):
         email = EmailMessage(
             subject=subject,
             body=message,
-            to=self.recipients,
+            to=[settings.SUPPORT_EMAIL],
             headers={'Reply-To': reply_to},
             cc=cc
         )
@@ -710,7 +700,7 @@ class BugReportView(View):
         if re.search(r'@dimagi\.com$', report['username']) and not is_icds_env:
             email.from_email = report['username']
         else:
-            email.from_email = settings.CCHQ_BUG_REPORT_EMAIL
+            email.from_email = settings.SUPPORT_EMAIL
 
         email.send(fail_silently=False)
 

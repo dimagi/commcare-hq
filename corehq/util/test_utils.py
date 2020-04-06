@@ -9,7 +9,7 @@ from contextlib import ExitStack, contextmanager
 from datetime import datetime, timedelta
 from functools import wraps
 from io import StringIO, open
-from textwrap import wrap, indent
+from textwrap import indent, wrap
 from time import time
 from unittest import SkipTest, TestCase
 
@@ -19,6 +19,7 @@ from django.db.backends import utils
 from django.test.utils import CaptureQueriesContext
 
 import mock
+
 from corehq.util.context_managers import drop_connected_signals
 from corehq.util.decorators import ContextDecorator
 
@@ -587,27 +588,6 @@ def make_make_path(current_directory):
     return _make_path
 
 
-@contextmanager
-def patch_datadog():
-    from corehq.util.datadog.gauges import _enforce_prefix
-
-    def record(fn, name, value, enforce_prefix='commcare', tags=None):
-        _enforce_prefix(name, enforce_prefix)
-        if tags:
-            for tag in (tags or []):
-                stats[name + "." + tag].append(value)
-        else:
-            stats[name].append(value)
-
-    stats = defaultdict(list)
-    patch = mock.patch("corehq.util.datadog.gauges._datadog_record", new=record)
-    patch.start()
-    try:
-        yield stats
-    finally:
-        patch.stop()
-
-
 class PatchMeta(type):
     """A metaclass to patch all inherited classes.
 
@@ -714,3 +694,16 @@ class capture_sql(ContextDecorator):
             print('\n{}'.format(indent('\n'.join(wrap(out, width)), '\t')))
             if with_traceback:
                 print('\n{}'.format(indent(''.join(query['traceback']), '\t\t')))
+
+
+def require_db_context(fn):
+    """
+    Only run 'fn' in DB tests
+    :param fn: a setUpModule or tearDownModule function
+    """
+    @wraps(fn)
+    def inner(*args, **kwargs):
+        from corehq.apps.domain.models import Domain
+        if not isinstance(Domain.get_db(), mock.Mock):
+            return fn(*args, **kwargs)
+    return inner

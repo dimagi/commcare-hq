@@ -15,6 +15,7 @@ from celery.schedules import crontab
 from celery.task import periodic_task, task
 from couchdbkit import ResourceConflict, ResourceNotFound
 from corehq.util.es.elasticsearch import ConnectionTimeout
+from corehq.util.metrics import metrics_counter, metrics_gauge
 
 from couchexport.models import Format
 from dimagi.utils.chunked import chunked
@@ -58,11 +59,6 @@ from corehq.apps.userreports.util import (
 )
 from corehq.elastic import ESError
 from corehq.util.context_managers import notify_someone
-from corehq.util.datadog.gauges import (
-    datadog_counter,
-    datadog_gauge,
-    datadog_histogram,
-)
 from corehq.util.decorators import serial_task
 from corehq.util.timer import TimingContext
 from corehq.util.view_utils import reverse
@@ -341,7 +337,7 @@ def _queue_indicators(indicators):
         indicator_doc_ids = [i.doc_id for i in indicators]
         AsyncIndicator.objects.filter(doc_id__in=indicator_doc_ids).update(date_queued=now)
         build_async_indicators.delay(indicator_doc_ids)
-        datadog_counter('commcare.async_indicator.indicators_queued', len(indicator_doc_ids))
+        metrics_counter('commcare.async_indicator.indicators_queued', len(indicator_doc_ids))
 
     to_queue = []
     for indicator in indicators:
@@ -378,8 +374,7 @@ def _build_async_indicators(indicator_doc_ids):
             if adapter:
                 adapter.handle_exception(doc, exception)
         if metric:
-            datadog_counter(metric, 1,
-                tags={'config_id': config_id, 'doc_id': doc['_id']})
+            metrics_counter(metric, tags={'config_id': config_id, 'doc_id': doc['_id']})
 
     def doc_ids_from_rows(rows):
         formatted_rows = [
@@ -479,13 +474,15 @@ def _build_async_indicators(indicator_doc_ids):
                 )
                 indicator.save()
 
-        datadog_counter('commcare.async_indicator.processed_success', len(processed_indicators))
-        datadog_counter('commcare.async_indicator.processed_fail', len(failed_indicators))
-        datadog_histogram(
-            'commcare.async_indicator.processing_time', timer.duration / len(indicator_doc_ids),
-            tags=[
-                'config_ids:{}'.format(config_ids),
-            ]
+        metrics_counter('commcare.async_indicator.processed_success', len(processed_indicators))
+        metrics_counter('commcare.async_indicator.processed_fail', len(failed_indicators))
+        metrics_counter(
+            'commcare.async_indicator.processing_time', timer.duration,
+            tags={'config_ids': config_ids}
+        )
+        metrics_counter(
+            'commcare.async_indicator.processed_total', len(indicator_doc_ids),
+            tags={'config_ids': config_ids}
         )
 
 
@@ -495,29 +492,29 @@ def async_indicators_metrics():
     oldest_indicator = AsyncIndicator.objects.order_by('date_queued').first()
     if oldest_indicator and oldest_indicator.date_queued:
         lag = (now - oldest_indicator.date_queued).total_seconds()
-        datadog_gauge('commcare.async_indicator.oldest_queued_indicator', lag)
+        metrics_gauge('commcare.async_indicator.oldest_queued_indicator', lag)
 
     oldest_100_indicators = AsyncIndicator.objects.all()[:100]
     if oldest_100_indicators.exists():
         oldest_indicator = oldest_100_indicators[0]
         lag = (now - oldest_indicator.date_created).total_seconds()
-        datadog_gauge('commcare.async_indicator.oldest_created_indicator', lag)
+        metrics_gauge('commcare.async_indicator.oldest_created_indicator', lag)
 
         lags = [
             (now - indicator.date_created).total_seconds()
             for indicator in oldest_100_indicators
         ]
         avg_lag = sum(lags) / len(lags)
-        datadog_gauge('commcare.async_indicator.oldest_created_indicator_avg', avg_lag)
+        metrics_gauge('commcare.async_indicator.oldest_created_indicator_avg', avg_lag)
 
     for config_id, metrics in _indicator_metrics().items():
-        tags = ["config_id:{}".format(config_id)]
-        datadog_gauge('commcare.async_indicator.indicator_count', metrics['count'], tags=tags)
-        datadog_gauge('commcare.async_indicator.lag', metrics['lag'], tags=tags)
+        tags = {"config_id": config_id}
+        metrics_gauge('commcare.async_indicator.indicator_count', metrics['count'], tags=tags)
+        metrics_gauge('commcare.async_indicator.lag', metrics['lag'], tags=tags)
 
     # Don't use ORM summing because it would attempt to get every value in DB
     unsuccessful_attempts = sum(AsyncIndicator.objects.values_list('unsuccessful_attempts', flat=True).all()[:100])
-    datadog_gauge('commcare.async_indicator.unsuccessful_attempts', unsuccessful_attempts)
+    metrics_gauge('commcare.async_indicator.unsuccessful_attempts', unsuccessful_attempts)
 
 
 def _indicator_metrics(date_created=None):

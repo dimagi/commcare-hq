@@ -4,7 +4,7 @@
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
 # Translators:
-# Dimagi Dev <devops@dimagi.com>, 2020
+# Dimagi Dev <devops@dimagi.com>, 2017
 # Gladys Teos <info@enestranslations.com>, 2020
 #
 #, fuzzy
@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-03-18 20:45+0000\n"
+"POT-Creation-Date: 2020-04-01 20:11+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
 "Last-Translator: Gladys Teos <info@enestranslations.com>, 2020\n"
 "Language-Team: Spanish (https://www.transifex.com/dimagi/teams/9388/es/)\n"
@@ -131,6 +131,10 @@ msgstr ""
 msgid "Please enter a valid email."
 msgstr "Por favor ingrese un correo electrónico válido."
 
+#: corehq/apps/analytics/static/analytix/js/hubspot.js:187
+msgid "Your trial request has been received!"
+msgstr ""
+
 #: corehq/apps/app_manager/static/app_manager/js/add_ons.js:15
 #: corehq/apps/hqwebapp/static/hqwebapp/js/components/inline_edit.js:80
 #: corehq/apps/locations/static/locations/js/location_types.js:365
@@ -140,6 +144,14 @@ msgstr "Tiene cambios sin guardar."
 #: corehq/apps/app_manager/static/app_manager/js/add_ons.js:24
 msgid "There was an error saving."
 msgstr "Ocurrió un error al guardar."
+
+#: corehq/apps/app_manager/static/app_manager/js/app_exchange.js:16
+msgid "Hide Past Versions"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/app_exchange.js:18
+msgid "See Past Versions"
+msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/app_manager.js:144
 #: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_app_profile.js:45
@@ -2898,7 +2910,8 @@ msgid "Form submission found!"
 msgstr ""
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/list_automatic_update_rules.js:40
-#: corehq/apps/users/static/users/js/mobile_workers.js:101
+#: corehq/apps/users/static/users/js/mobile_workers.js:111
+#: corehq/apps/users/static/users/js/mobile_workers.js:135
 msgid "Issue communicating with server. Try again."
 msgstr "Ocurrió un problema al comunicarse con el servidor. Intente otra vez."
 
@@ -3249,10 +3262,8 @@ msgid "Edit mapping for <%= property %>"
 msgstr ""
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/validators.ko.js:15
-#, fuzzy
-#| msgid "Not a valid choice"
 msgid "Not a valid email"
-msgstr "Opción no válida"
+msgstr "No es un correo electrónico válido"
 
 #: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:80
 msgid ""
@@ -3320,17 +3331,21 @@ msgstr "Por favor especifique un nombre de proyecto."
 msgid "Please specify."
 msgstr ""
 
-#: corehq/apps/registration/static/registration/js/password.js:37
+#: corehq/apps/registration/static/registration/js/password.js:38
 msgid "Your password is too weak! Try adding numbers or symbols!"
 msgstr "¡Su contraseña es muy débil! ¡Intente agregar números o simbolos!"
 
-#: corehq/apps/registration/static/registration/js/password.js:39
+#: corehq/apps/registration/static/registration/js/password.js:40
 msgid "Your password is almost strong enough! Try adding numbers or symbols!"
 msgstr ""
 
-#: corehq/apps/registration/static/registration/js/password.js:41
+#: corehq/apps/registration/static/registration/js/password.js:42
 msgid "Good Job! Your password is strong!"
 msgstr "¡Bien Hecho! ¡Su contraseña es segura!"
+
+#: corehq/apps/registration/static/registration/js/register_new_user.js:33
+msgid "Choose a time for your CommCare trial setup"
+msgstr ""
 
 #: corehq/apps/reports/static/reports/js/base.js:32
 #: corehq/apps/userreports/static/userreports/js/configurable_report.js:97
@@ -3749,11 +3764,15 @@ msgstr ""
 msgid "Download <%= count %> users"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/mobile_workers.js:308
+#: corehq/apps/users/static/users/js/mobile_workers.js:305
+msgid "Email address is required when users confirm their own accounts."
+msgstr ""
+
+#: corehq/apps/users/static/users/js/mobile_workers.js:366
 msgid "Checking availability..."
 msgstr ""
 
-#: corehq/apps/users/static/users/js/mobile_workers.js:329
+#: corehq/apps/users/static/users/js/mobile_workers.js:387
 msgid "Issue connecting to server. Check Internet connection."
 msgstr ""
 "Ocurrió un problema al conectarse con el servidor. Revise la conexión a "
@@ -3908,7 +3927,7 @@ msgstr "Enviar"
 msgid "Complete"
 msgstr "Completar"
 
-#: corehq/motech/dhis2/static/dhis2/js/dhis2_map_settings.js:158
+#: corehq/motech/dhis2/static/dhis2/js/dhis2_map_settings.js:160
 msgid "Unable to save DataSet maps"
 msgstr "No es posible guardar los mapas DataSet"
 
@@ -3977,18 +3996,3 @@ msgid ""
 "Could not load requests. Please try again later or report an issue if this "
 "problem persists."
 msgstr ""
-
-#~ msgid "show"
-#~ msgstr "mostrar"
-
-#~ msgid "hide"
-#~ msgstr "ocultar"
-
-#~ msgid "toggle"
-#~ msgstr "alternar"
-
-#~ msgid "URL"
-#~ msgstr "URL"
-
-#~ msgid "Parameters"
-#~ msgstr "Manejo de Casos"

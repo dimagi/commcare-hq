@@ -2,7 +2,7 @@ import time
 
 from ddtrace import tracer
 
-from corehq.util.datadog.gauges import datadog_counter, datadog_bucket_timer
+from corehq.util.metrics import metrics_counter, metrics_histogram_timer
 
 
 class MeteredLock(object):
@@ -16,11 +16,12 @@ class MeteredLock(object):
 
     def __init__(self, lock, name, track_unreleased=True):
         self.lock = lock
-        self.tags = ["lock_name:%s" % name]
+        self.tags = {"lock_name": name}
         self.name = name
         self.key = lock.name
-        self.lock_timer = datadog_bucket_timer(
-            "commcare.lock.locked_time", self.tags, self.timing_buckets)
+        self.lock_timer = metrics_histogram_timer(
+            "commcare.lock.locked_time", self.timing_buckets, self.tags
+        )
         self.track_unreleased = track_unreleased
         self.end_time = None
         self.lock_trace = None
@@ -28,7 +29,7 @@ class MeteredLock(object):
     def acquire(self, *args, **kw):
         tags = self.tags
         buckets = self.timing_buckets
-        with datadog_bucket_timer("commcare.lock.acquire_time", tags, buckets), \
+        with metrics_histogram_timer("commcare.lock.acquire_time", buckets, tags), \
                 tracer.trace("commcare.lock.acquire", resource=self.key) as span:
             acquired = self.lock.acquire(*args, **kw)
             span.set_tags({
@@ -51,7 +52,7 @@ class MeteredLock(object):
         if self.lock_timer.is_started():
             self.lock_timer.stop()
         if self.end_time and time.time() > self.end_time:
-            datadog_counter("commcare.lock.released_after_timeout", tags=self.tags)
+            metrics_counter("commcare.lock.released_after_timeout", tags=self.tags)
         if self.lock_trace is not None:
             self.lock_trace.finish()
             self.lock_trace = None
@@ -65,7 +66,7 @@ class MeteredLock(object):
 
     def __del__(self):
         if self.track_unreleased and self.lock_timer.is_started():
-            datadog_counter("commcare.lock.not_released", tags=self.tags)
+            metrics_counter("commcare.lock.not_released", tags=self.tags)
         if self.lock_trace is not None:
             self.lock_trace.set_tag("deleted", "not_released")
             self.lock_trace.finish()
@@ -73,7 +74,7 @@ class MeteredLock(object):
 
     def release_failed(self):
         """Indicate that the lock was not released"""
-        datadog_counter("commcare.lock.release_failed", tags=self.tags)
+        metrics_counter("commcare.lock.release_failed", tags=self.tags)
 
     def degraded(self):
         """Indicate that the lock has "degraded gracefully"
@@ -81,4 +82,4 @@ class MeteredLock(object):
         The lock was not acquired, but processing continued as if it had
         been acquired.
         """
-        datadog_counter("commcare.lock.degraded", tags=self.tags)
+        metrics_counter("commcare.lock.degraded", tags=self.tags)

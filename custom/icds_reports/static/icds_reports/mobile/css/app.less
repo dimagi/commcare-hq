@@ -229,14 +229,14 @@
   padding: 15px;
 }
 
-.yellow-gradient, .maternal_child, dot-link .children {
+.yellow-gradient, .maternal_child, dot-link .children, .beneficiary {
     background: linear-gradient(180deg, #F2EA25 0%, #C65B1F 100%);
 }
 
-.green-gradient, .icds_cas_reach, .pse {
+.green-gradient, .icds_cas_reach, .pse, .pregnant {
     background: linear-gradient(180deg, #F8F26D 0%, #07EDA8 100%);
 }
-.red-gradient, .demographics {
+.red-gradient, .demographics, .lactating {
     background: linear-gradient(180deg, #6DF8EF 0%, #E16969 100%);
 }
 .blue-gradient, .awc_infrastructure, dot-link .pw_lw_children {
@@ -250,7 +250,7 @@
   width: 20px;
 }
 .text-blue {
-  color: #1D9ACF;
+  color: @blueColor;
 }
 .navbar-sticky {
   position: sticky;
@@ -313,9 +313,9 @@
 .float-left {
   float: left;
 }
-.bar-chart {
+.mobile-chart {
   .bg-white;
-  height: 415px;
+  height: 100%;
   margin-bottom: 5px;
   overflow: auto;
 }
@@ -368,6 +368,9 @@
   .ml-0;
   .mr-0;
 }
+.m-3 {
+  margin: 1rem;
+}
 .overflow-auto {
   overflow: auto;
 }
@@ -391,4 +394,17 @@
 }
 .align-items-flex-end {
   align-items: flex-end;
+}
+.h-10vh {
+  height: 10vh;
+}
+.h-90vh {
+  height: 90vh;
+}
+.awc-location {
+  top: 0;
+  width: 100vw;
+  background: #2C3648;
+  .position-fixed;
+  .h-100vh;
 }

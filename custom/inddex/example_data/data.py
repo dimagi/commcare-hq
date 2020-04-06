@@ -2,6 +2,9 @@ import csv
 import os
 import uuid
 
+from casexml.apps.case.mock import CaseBlock
+from casexml.apps.case.util import post_case_blocks
+
 from corehq.apps.case_importer.do_import import do_import
 from corehq.apps.case_importer.util import ImporterConfig, WorksheetWrapper
 from corehq.apps.fixtures.models import (
@@ -13,6 +16,7 @@ from corehq.apps.userreports.models import StaticDataSourceConfiguration
 from corehq.apps.userreports.tasks import rebuild_indicators
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import format_username
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.couch import IterDB
 from corehq.util.workbook_reading import make_worksheet
 
@@ -25,13 +29,14 @@ def populate_inddex_domain(domain):
     user = _get_or_create_user(domain)
     _import_cases(domain, FOODRECALL_CASE_TYPE, 'foodrecall_cases.csv', user)
     _import_cases(domain, FOOD_CASE_TYPE, 'food_cases.csv', user)
+    _update_case_id_properties(domain, user)
     _import_fixtures(domain)
     _rebuild_datasource(domain)
 
 
 def _get_or_create_user(domain):
     username = format_username('nick', domain)
-    user = CommCareUser.get_by_username(username)
+    user = CommCareUser.get_by_username(username, strict=True)
     if not user:
         user = CommCareUser.create(domain, username, 'secret')
     return user
@@ -44,6 +49,32 @@ def _import_cases(domain, case_type, csv_filename, user):
     res = do_import(worksheet, config, domain)
     if res['errors']:
         raise Exception(res)
+
+
+def _update_case_id_properties(domain, user):
+    """Some case properties store the ID of related cases.  This updates those IDs"""
+
+    accessor = CaseAccessors(domain)
+    case_ids = accessor.get_case_ids_in_domain()
+    cases = list(accessor.get_cases(case_ids))
+    case_ids_by_external_id = {c.external_id: c.case_id for c in cases}
+
+    case_blocks = []
+    for case in cases:
+        update = {}
+        for k, v in case.dynamic_case_properties().items():
+            if v in case_ids_by_external_id:
+                update[k] = case_ids_by_external_id[v]
+        if update:
+            case_blocks.append(
+                CaseBlock(
+                    case_id=case.case_id,
+                    user_id=user._id,
+                    update=update,
+                ).as_xml()
+            )
+
+    post_case_blocks(case_blocks, domain=domain, user_id=user._id)
 
 
 def _read_csv(filename):
@@ -68,7 +99,8 @@ def _get_importer_config(case_type, headers, user_id):
 
 
 def get_expected_report():
-    return _read_csv('expected_result.csv')
+    headers, rows = _read_csv('expected_result.csv')
+    return [dict(zip(headers, row)) for row in rows]
 
 
 def _import_fixtures(domain):
@@ -77,6 +109,7 @@ def _import_fixtures(domain):
             ('conv_factors', 'conv_factors.csv'),
             ('food_list', 'food_list.csv'),
             ('food_composition_table', 'food_composition_table.csv'),
+            ('nutrients_lookup', 'nutrients_lookup.csv'),
     ]:
         fields, rows = _read_csv(filename)
         data_type = FixtureDataType(

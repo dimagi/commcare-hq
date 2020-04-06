@@ -92,7 +92,7 @@ The ``SqlData`` class allows you to define how to query the data
 in a declarative manner by breaking down a query into a number of components.
 
 .. autoclass:: corehq.apps.reports.sqlreport.SqlData
-    :members: table_name, columns, filters, filter_values, group_by, keys
+    :members: table_name, distinct_on, columns, filters, filter_values, group_by, keys
 
 This approach means you don't write any raw SQL. It also allows you to
 easily include or exclude columns, format column values and combine values

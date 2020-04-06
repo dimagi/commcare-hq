@@ -29,7 +29,7 @@ from corehq.form_processor.exceptions import MissingFormXml, XFormNotFound
 from corehq.form_processor.parsers.ledgers.form import (
     get_all_stock_report_helpers_from_form,
 )
-from corehq.util.datadog.gauges import datadog_counter
+from corehq.util.metrics import metrics_counter
 
 from .diff import filter_case_diffs, filter_ledger_diffs
 from .rebuildcase import rebuild_and_diff_cases
@@ -77,7 +77,7 @@ def diff_cases(couch_cases, log_cases=False):
     assert isinstance(couch_cases, dict), repr(couch_cases)[:100]
     assert "_diff_state" in globals()
     data = DiffData()
-    dd_count = partial(datadog_counter, tags=["domain:" + _diff_state.domain])
+    dd_count = partial(metrics_counter, tags={"domain": _diff_state.domain})
     case_ids = list(couch_cases)
     sql_case_ids = set()
     for sql_case in CaseAccessorSQL.get_cases(case_ids):
@@ -336,6 +336,7 @@ def diff_form_state(form_id, *, in_couch=False):
     couch_miss = "missing"
     if not in_couch and get_blob_db().metadb.get_for_parent(form_id):
         couch_miss = MISSING_BLOB_PRESENT
+        log.warning("couch form missing, blob present: %s", form_id)
     old = {"form_state": FORM_PRESENT if in_couch else couch_miss}
     new = {"form_state": FORM_PRESENT if in_sql else "missing"}
     return old, new
@@ -346,6 +347,9 @@ MISSING_BLOB_PRESENT = "missing, blob present"
 
 
 def add_missing_docs(data, couch_cases, sql_case_ids, dd_count):
+    def as_change(item, reason):
+        kind, doc_id, diffs = item
+        return kind, doc_id, diffs_to_changes(diffs, reason)
     if len(couch_cases) != len(sql_case_ids):
         only_in_sql = sql_case_ids - couch_cases.keys()
         assert not only_in_sql, only_in_sql
@@ -354,14 +358,32 @@ def add_missing_docs(data, couch_cases, sql_case_ids, dd_count):
         dd_count("commcare.couchsqlmigration.case.missing_from_sql", value=len(only_in_couch))
         for case_id in only_in_couch:
             couch_case = couch_cases[case_id]
-            if is_orphaned_case(couch_case):
-                log.info("Ignoring orphaned case: %s", couch_case["_id"])
-                continue
-            data.diffs.append((
+            diff = change = (couch_case["doc_type"], case_id, [])
+            item = (
                 couch_case["doc_type"],
                 case_id,
                 [Diff("missing", path=["*"], old_value="*", new_value=MISSING)],
-            ))
+            )
+            if has_only_deleted_forms(couch_case):
+                change = as_change(item, "deleted forms")
+            elif is_orphaned_case(couch_case):
+                change = as_change(item, "orphaned case")
+            else:
+                diff = item
+            data.diffs.append(diff)
+            data.changes.append(change)
+
+
+def add_cases_missing_from_couch(data, case_ids):
+    sql_ids = {c.case_id for c in CaseAccessorSQL.get_cases(list(case_ids))}
+    data.doc_ids.extend(case_ids)
+    for case_id in case_ids:
+        new = "present" if case_id in sql_ids else MISSING
+        data.diffs.append((
+            "CommCareCase",
+            case_id,
+            [Diff("missing", path=["*"], old_value=MISSING, new_value=new)],
+        ))
 
 
 @contextmanager
@@ -416,6 +438,14 @@ class WorkerState:
             case.server_modified_on is None
             or case.server_modified_on <= self.cutoff_date
         )
+
+
+def has_only_deleted_forms(couch_case):
+    def get_deleted_form_ids(form_ids):
+        forms = FormAccessorSQL.get_forms(form_ids)
+        return {f.form_id for f in forms if f.is_deleted}
+    form_ids = couch_case["xform_ids"]
+    return set(form_ids) == get_deleted_form_ids(form_ids)
 
 
 def is_orphaned_case(couch_case):

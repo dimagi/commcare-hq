@@ -72,11 +72,11 @@ class Command(BaseCommand):
 
     def migrate_domain(self, domain, state_dir):
         if should_use_sql_backend(domain):
-            log.error("{} already on the SQL backend\n".format(domain))
+            log.info("{} already on the SQL backend\n".format(domain))
             return True, None
 
         if couch_sql_migration_in_progress(domain, include_dry_runs=True):
-            log.error("{} migration is already in progress\n".format(domain))
+            log.error("{} migration is in progress\n".format(domain))
             return False, "in progress"
 
         set_couch_sql_migration_started(domain)
@@ -112,10 +112,10 @@ def get_diff_stats(domain, state_dir, strict=True):
     for doc_type, counts in sorted(statedb.get_doc_counts().items()):
         if not strict and doc_type == "CommCareCase-Deleted":
             continue
-        if counts.diffs or counts.missing:
+        if counts.diffs or counts.changes or counts.missing:
             couch_count = counts.total
             sql_count = counts.total - counts.missing
-            stats[doc_type] = (couch_count, sql_count, counts.diffs)
+            stats[doc_type] = (couch_count, sql_count, counts.diffs + counts.changes)
     if "CommCareCase" not in stats:
         pending = statedb.count_undiffed_cases()
         if pending:

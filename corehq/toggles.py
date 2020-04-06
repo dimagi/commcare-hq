@@ -454,7 +454,7 @@ APP_BUILDER_SHADOW_MODULES = StaticToggle(
     'Shadow Modules',
     TAG_SOLUTIONS_CONDITIONAL,
     [NAMESPACE_DOMAIN],
-    help_link='https://confluence.dimagi.com/display/ccinternal/Shadow+Modules',
+    help_link='https://confluence.dimagi.com/display/ccinternal/Shadow+Modules+and+Forms',
 )
 
 CASE_LIST_CUSTOM_XML = StaticToggle(
@@ -1147,6 +1147,14 @@ HIDE_MESSAGING_DASHBOARD_FROM_NON_SUPERUSERS = StaticToggle(
 )
 
 
+WHATSAPP_MESSAGING = StaticToggle(
+    'whatsapp_messaging',
+    "Default SMS to send messages via Whatsapp, where available",
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN]
+)
+
+
 UNLIMITED_REPORT_BUILDER_REPORTS = StaticToggle(
     'unlimited_report_builder_reports',
     'Allow unlimited reports created in report builder',
@@ -1174,6 +1182,14 @@ ALLOW_USER_DEFINED_EXPORT_COLUMNS = StaticToggle(
     'Add user defined columns to exports',
     TAG_DEPRECATED,
     [NAMESPACE_DOMAIN],
+)
+
+
+DATA_EXPORT_TOOL_SCHEMA_EXPORT = StaticToggle(
+    'data_export_tool_schema_export',
+    'Show an option to download data export tool schemas from the exports list view (Experimental)',
+    TAG_SOLUTIONS_LIMITED,
+    [NAMESPACE_DOMAIN, NAMESPACE_USER],
 )
 
 
@@ -1736,7 +1752,7 @@ DO_NOT_RATE_LIMIT_SUBMISSIONS = StaticToggle(
 )
 
 TEST_FORM_SUBMISSION_RATE_LIMIT_RESPONSE = StaticToggle(
-    'TEST_FORM_SUBMISSION_RATE_LIMIT_RESPONSE',
+    'test_form_submission_rate_limit_response',
     ("Respond to all form submissions with a 429 response. For use on test domains only. "
      "Without this, there's no sane way to test the UI for being rate limited on "
      "Mobile and Web Apps. Never use this on a real domain."),
@@ -1824,5 +1840,14 @@ TWO_STAGE_USER_PROVISIONING = StaticToggle(
     'two_stage_user_provisioning',
     'Enable two-stage user provisioning (users confirm and set their own passwords via email).',
     TAG_SOLUTIONS_LIMITED,
-    [NAMESPACE_DOMAIN]
+    [NAMESPACE_DOMAIN],
+    help_link='https://confluence.dimagi.com/display/ccinternal/Two-Stage+Mobile+Worker+Account+Creation',
+)
+
+ICDS_BIHAR_DEMOGRAPHICS_API = StaticToggle(
+    'bihar_demographics_api',
+    'ICDS: Bihar Demographics API',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_USER],
+    relevant_environments={'icds', 'india'},
 )

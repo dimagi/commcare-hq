@@ -8,7 +8,6 @@ services:
       DEPENDENT_SERVICES: "couch:5984 postgres:5432 redis:6379 elasticsearch:9200 minio:9980 kafka:9092"
       DOCKER_HQ_OVERLAY: "${DOCKER_HQ_OVERLAY}"
       JS_SETUP: "${JS_SETUP}"
-      PYTHON_VERSION: "${PYTHON_VERSION}"
       NOSE_DIVIDED_WE_RUN: "${NOSE_DIVIDED_WE_RUN}"
       REUSE_DB: "${REUSE_DB}"
       TRAVIS_HQ_USERNAME: "${TRAVIS_HQ_USERNAME}"

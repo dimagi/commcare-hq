@@ -10,7 +10,8 @@ exclude_urls = (
     'icds-ng-template',
     'locations',
     'mwcd_indicators',
-    'data_export_api'
+    'data_export_api',
+    'household_members_data'
 )
 
 AUDIT_URLS = frozenset(
