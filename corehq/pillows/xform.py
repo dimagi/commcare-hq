@@ -210,17 +210,10 @@ def get_xform_pillow(pillow_id='xform-pillow', ucr_division=None,
     checkpoint_id = "{}-{}".format(
         pillow_id, XFORM_INDEX_INFO.index)
     processors = [xform_to_es_processor]
-    if settings.RUN_FORM_META_PILLOW:
+    if not settings.ENTERPRISE_MODE:
         checkpoint_id = "{}-{}".format(
             checkpoint_id, REPORT_XFORM_INDEX_INFO.index
         )
-        processors.append(form_meta_processor)
-    if settings.RUN_UNKNOWN_USER_PILLOW:
-        checkpoint_id = "{}-{}".format(
-            checkpoint_id, USER_INDEX
-        )
-        processors.append(unknown_user_form_processor)
-    if not settings.ENTERPRISE_MODE:
         xform_to_report_es_processor = BulkElasticProcessor(
             elasticsearch=get_es_new(),
             index_info=REPORT_XFORM_INDEX_INFO,
@@ -228,6 +221,13 @@ def get_xform_pillow(pillow_id='xform-pillow', ucr_division=None,
             doc_filter_fn=report_xform_filter
         )
         processors.append(xform_to_report_es_processor)
+    if settings.RUN_UNKNOWN_USER_PILLOW:
+        checkpoint_id = "{}-{}".format(
+            checkpoint_id, USER_INDEX
+        )
+        processors.append(unknown_user_form_processor)
+    if settings.RUN_FORM_META_PILLOW:
+        processors.append(form_meta_processor)
     if not skip_ucr:
         processors.append(ucr_processor)
 
