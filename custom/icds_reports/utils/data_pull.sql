@@ -1,7 +1,8 @@
 SELECT awc_name, awc_site_code, supervisor_name, supervisor_site_code, block_name, block_site_code, district_name, district_site_code, state_name, state_site_code, aww_name, contact_phone_number
 FROM awc_location
     WHERE aggregation_level=5
-    AND (contact_phone_number<>'' OR contact_phone_number IS NOT NULL)
+    AND contact_phone_number<>''
+    AND contact_phone_number IS NOT NULL
     AND state_is_test<>1
     AND district_is_test<>1
     AND block_is_test<>1
