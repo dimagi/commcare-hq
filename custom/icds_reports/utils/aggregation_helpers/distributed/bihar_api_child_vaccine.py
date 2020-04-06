@@ -58,22 +58,18 @@ class BiharApiChildVaccineHelper(BaseICDSAggregationDistributedHelper):
         child_health_monthly = get_child_health_tablename(self.month)
 
         columns = (
-            ('state_id', 'person_list.state_id'),
-            ('district_id', 'person_list.district_id'),
-            ('block_id', 'person_list.block_id'),
-            ('supervisor_id', 'person_list.supervisor_id'),
-            ('awc_id', 'person_list.awc_id'),
             ('month', f"'{month_start_string}'"),
+            ('person_id', 'person_list.doc_id'),
+            ('supervisor_id', 'person_list.supervisor_id'),
             ('time_birth', 'person_list.time_birth'),
             ('child_alive', 'person_list.child_alive'),
             ('father_name', 'person_list.father_name'),
             ('mother_name', 'person_list.mother_name'),
             ("case_id", "child_health.case_id"),
             ('dob', 'person_list.dob'),
-            ('doc_id', 'person_list.doc_id'),
             ('household_case_id', 'person_list.household_case_id'),
             ('delivery_nature', 'ccs_cases.delivery_nature'),
-            ('term_days', 'CASE WHEN (person_list.dob-ccs_cases.lmp >z= 0) THEN 1 ELSE NULL END')
+            ('term_days', 'CASE WHEN (person_list.dob-ccs_cases.lmp >= 0) THEN 1 ELSE NULL END')
         )
         column_names = ", ".join([col[0] for col in columns])
         calculations = ", ".join([col[1] for col in columns])
@@ -99,8 +95,8 @@ class BiharApiChildVaccineHelper(BaseICDSAggregationDistributedHelper):
                 (
                     person_list.opened_on <= '{month_end_string}' AND
                     (person_list.closed_on IS NULL OR person_list.closed_on >= '{month_start_string}' )
+                    AND person_list.state_id='{self.bihar_state_id}'
                 )
-                
               );
                 """
 

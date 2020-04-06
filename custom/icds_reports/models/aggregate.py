@@ -1817,12 +1817,8 @@ class BiharAPIDemographics(models.Model, AggregateMixin):
 
 
 class BiharAPIChildVaccine(models.Model, AggregateMixin):
-    state_id = models.TextField(null=True)
-    district_id = models.TextField(null=True)
-    block_id = models.TextField(null=True)
-    supervisor_id = models.TextField(null=True)
-    awc_id = models.TextField(null=True)
     month = models.DateField()
+    supervisor_id = models.TextField(null=True)
     time_birth = models.TextField(null=True)
     child_alive = models.SmallIntegerField(null=True)
     father_name = models.TextField(null=True)
@@ -1836,7 +1832,7 @@ class BiharAPIChildVaccine(models.Model, AggregateMixin):
 
     class Meta(object):
         db_table = BIHAR_API_CHILD_VACCINE_TABLE
-        unique_together = ('month', 'state_id', 'district_id', 'block_id', 'supervisor_id', 'case_id')  # pkey
+        unique_together = ('month', 'supervisor_id', 'case_id')  # pkey
 
     _agg_helper_cls = BiharApiChildVaccineHelper
     _agg_atomic = False
