@@ -164,7 +164,7 @@ class CaseSearchReindexerFactory(ReindexerFactory):
         domain = self.options.pop('domain', None)
 
         limit_db_aliases = [limit_to_db] if limit_to_db else None
-        initialize_index_and_mapping(get_es_new(), CASE_SEARCH_INDEX_INFO)
+        initialize_index_and_mapping(get_es_new(), CASE_SEARCH_INDEX_INFO, set_alias=False)
         try:
             if domain is not None:
                 if not domain_needs_search_index(domain):
@@ -266,7 +266,7 @@ def delete_case_search_cases(domain):
 
     ElasticsearchInterface(get_es_new()).bulk_ops([{
         "_op_type": "delete",
-        "_index": CASE_SEARCH_INDEX,
+        "_index": CASE_SEARCH_INDEX_INFO.alias,
         "_type": CASE_ES_TYPE,
         "_id": case_id,
     } for case_id in case_ids])
