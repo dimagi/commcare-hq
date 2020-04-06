@@ -44,7 +44,7 @@ class LocationReassignmentView(BaseLocationView):
                 "download_url": reverse('download_location_reassignment_template', args=[self.domain]),
                 "adjective": _("locations"),
                 "plural_noun": _("location operations"),
-                "help_link": "TODO",
+                "help_link": "https://confluence.dimagi.com/display/ICDS/Location+Reassignment",
             },
         })
         context.update({
@@ -92,7 +92,7 @@ class LocationReassignmentView(BaseLocationView):
         return errors
 
     def _generate_response(self, transitions):
-        response_file = Dumper().dump(transitions)
+        response_file = Dumper(self.domain).dump(transitions)
         response = HttpResponse(response_file, content_type="text/html; charset=utf-8")
         filename = '%s Location Reassignment Expected' % self.domain
         response['Content-Disposition'] = safe_filename_header(filename, 'xlsx')
