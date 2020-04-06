@@ -21,7 +21,7 @@ from corehq.pillows.xform import get_xform_pillow
 from corehq.util.elastic import ensure_index_deleted
 from couchforms.models import XFormInstance
 from corehq.util.test_utils import get_form_ready_to_save
-from pillowtop.es_utils import initialize_index
+from pillowtop.es_utils import initialize_index_and_mapping
 
 
 TEST_DOMAIN = 'user-pillow-test'
@@ -34,7 +34,7 @@ class UserPillowTestBase(TestCase):
         self.elasticsearch = get_es_new()
         delete_all_users()
         ensure_index_deleted(self.index_info.index)
-        initialize_index(self.elasticsearch, self.index_info)
+        initialize_index_and_mapping(self.elasticsearch, self.index_info)
 
     @classmethod
     def setUpClass(cls):
