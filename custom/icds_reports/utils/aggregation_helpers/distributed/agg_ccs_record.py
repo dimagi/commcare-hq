@@ -121,7 +121,7 @@ class AggCcsRecordAggregationDistributedHelper(BaseICDSAggregationDistributedHel
                 name = c[0]
             query_cols.append((name, c[1]))
         return """
-        DROP TABLE "{tmp_tablename}";
+        DROP TABLE IF EXISTS "{tmp_tablename}";
         CREATE TEMPORARY TABLE "{tmp_tablename}" AS SELECT
             {query_cols}
             FROM  "{ccs_record_monthly_table}" as crm
