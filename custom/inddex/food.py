@@ -52,6 +52,7 @@ MISSING = ''
 IN_UCR = 'in_ucr'
 IN_FOOD_FIXTURE = 'in_food_fixture'
 IS_RECALL_META = 'is_recall_meta'
+CALCULATED_LATER = 'calculated_later'
 
 # food_type options
 FOOD_ITEM = 'food_item'
@@ -101,6 +102,7 @@ class I:
         self.in_ucr = IN_UCR in tags
         self.in_food_fixture = IN_FOOD_FIXTURE in tags
         self.is_recall_meta = IS_RECALL_META in tags
+        self.is_calculated_later = CALCULATED_LATER in tags
 
 
 # Indicator descriptions can be found here:
@@ -146,7 +148,7 @@ INDICATORS = [
     I('recipe_case_id', IN_UCR),
     I('ingr_recipe_code'),
     I('ingr_fraction'),
-    I('ingr_recipe_total_grams_consumed'),
+    I('ingr_recipe_total_grams_consumed', CALCULATED_LATER),
     I('short_name', IN_UCR),
     I('food_base_term', IN_UCR, IN_FOOD_FIXTURE),
     I('tag_1', IN_UCR, IN_FOOD_FIXTURE),
@@ -182,7 +184,7 @@ INDICATORS = [
     I('nsr_conv_option_desc_post_cooking', IN_UCR),
     I('nsr_measurement_amount_post_cooking', IN_UCR),
     I('nsr_consumed_cooked_fraction', IN_UCR),
-    I('recipe_num_ingredients'),
+    I('recipe_num_ingredients', CALCULATED_LATER),
     I('conv_factor_food_code'),
     I('conv_factor_base_term_food_code'),
     I('conv_factor_used'),
@@ -192,11 +194,11 @@ INDICATORS = [
     I('fct_reference_food_code_exists'),
     I('fct_data_used'),
     I('fct_code'),
-    I('total_grams'),
+    I('total_grams', CALCULATED_LATER),
     I('conv_factor_gap_code'),
     I('conv_factor_gap_desc'),
-    I('fct_gap_code'),
-    I('fct_gap_desc'),
+    I('fct_gap_code', CALCULATED_LATER),
+    I('fct_gap_desc', CALCULATED_LATER),
 ]
 _INDICATORS_BY_SLUG = {i.slug: i for i in INDICATORS}
 
@@ -226,12 +228,7 @@ class FoodRow:
         self.portions = float(self.portions) if self.portions else None
         self.nsr_consumed_cooked_fraction = (float(self.nsr_consumed_cooked_fraction)
                                              if self.nsr_consumed_cooked_fraction else None)
-
-        # These properties will be mutated in enrich_rows
-        self.recipe_num_ingredients = None
-        self.ingr_recipe_total_grams_consumed = None
-        self.fct_gap_code = None
-        self.fct_gap_desc = None
+        self.enrichment_complete = False
 
     def _set_ingredient_fields(self, ingredient):
         if self._is_std_recipe_ingredient:
@@ -334,24 +331,17 @@ class FoodRow:
             return self.caseid
         return self.recipe_case_id or 'NO_RECIPE'
 
-    _total_grams = 'NOT_YET_COMPUTED'
-    @property
-    def total_grams(self):
-        # This property must be computed later, as it depends on other rows
-        if self._total_grams == 'NOT_YET_COMPUTED':
-            raise AssertionError("total_grams has not yet been computed")
-        return self._total_grams
-
-    @total_grams.setter
-    def total_grams(self, val):
-        self._total_grams = val
-
     def __getattr__(self, name):
         if name in _INDICATORS_BY_SLUG:
+            indicator = _INDICATORS_BY_SLUG[name]
+            if indicator.is_calculated_later:
+                if not self.enrichment_complete:
+                    raise AttributeError(f"{name} hasn't yet been set. It will be "
+                                        "calculated outside the scope of FoodRow.")
+                return None
             if self._is_std_recipe_ingredient:
                 # If it's an indicator that hasn't been explicitly set, check if it can
                 # be pulled from the food fixture or from the parent food case's UCR
-                indicator = _INDICATORS_BY_SLUG[name]
                 if indicator.in_food_fixture:
                     return getattr(self.fixtures.foods[self.food_code], indicator.slug)
                 if indicator.is_recall_meta:
@@ -359,7 +349,6 @@ class FoodRow:
                 return None
             else:
                 # If it's an indicator in the UCR that hasn't been explicitly set, return that val
-                indicator = _INDICATORS_BY_SLUG[name]
                 return self.ucr_row[indicator.slug] if indicator.in_ucr else None
 
         raise AttributeError(f"FoodRow has no definition for {name}")
@@ -377,6 +366,7 @@ def enrich_rows(recipe_id, rows):
         for row in rows:
             row.total_grams = _multiply(row.measurement_amount, row.conv_factor, row.portions)
             row.set_fct_gap()
+            row.enrichment_complete = True
     else:
         ingredients = [row for row in rows if not row.uuid == recipe.uuid]
         total_grams = _calculate_total_grams(recipe, ingredients)
@@ -387,6 +377,7 @@ def enrich_rows(recipe_id, rows):
                 row.recipe_num_ingredients = len(ingredients)
             if row.is_ingredient == 'yes' and recipe.food_type == STANDARD_RECIPE:
                 row.ingr_recipe_total_grams_consumed = total_grams[recipe.uuid]
+            row.enrichment_complete = True
 
 
 def _calculate_total_grams(recipe, ingredients):
