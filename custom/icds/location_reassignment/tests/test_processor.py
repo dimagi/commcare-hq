@@ -51,3 +51,25 @@ class TestProcessor(TestCase):
         with self.assertRaises(InvalidTransitionError) as e:
             Processor(self.domain, self.transitions, {}, site_codes).process()
             self.assertEqual(str(e.exception), "Could not load location with following site codes: 112")
+
+    @patch('corehq.apps.locations.models.SQLLocation.objects.create')
+    def test_creating_new_locations(self, location_create_mock, locations_mock, *_):
+        locations_mock.return_value = self.all_locations
+        new_location_details = {
+            'supervisor': [{
+                'name': 'Test 13',
+                'site_code': '13',
+                'parent_site_code': None,
+                'lgd_code': 'LGD 13'
+            }]
+        }
+        Processor(self.domain, self.transitions, new_location_details, site_codes).process()
+        location_type_supervisor = None
+        for location_type in location_types:
+            if location_type.code == 'supervisor':
+                location_type_supervisor = location_type
+                break
+        location_create_mock.assert_called_with(
+            domain=self.domain, site_code='13', name='Test 13', parent=None,
+            metadata={'lgd_code': 'LGD 13'}, location_type=location_type_supervisor
+        )
