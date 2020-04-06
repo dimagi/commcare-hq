@@ -26,7 +26,8 @@ from custom.icds_reports.const import (
     AGG_SDR_TABLE,
     AGG_MIGRATION_TABLE,
     BIHAR_API_DEMOGRAPHICS_TABLE,
-    AGG_AVAILING_SERVICES_TABLE
+    AGG_AVAILING_SERVICES_TABLE,
+    BIHAR_API_CHILD_VACCINE_TABLE
 )
 from custom.icds_reports.utils.aggregation_helpers.distributed import (
     AggAwcDailyAggregationDistributedHelper,
@@ -61,7 +62,8 @@ from custom.icds_reports.utils.aggregation_helpers.distributed import (
     AggServiceDeliveryReportHelper,
     MigrationFormsAggregationDistributedHelper,
     BiharApiDemographicsHelper,
-    AvailingServiceFormsAggregationDistributedHelper
+    AvailingServiceFormsAggregationDistributedHelper,
+    BiharApiChildVaccineHelper
 )
 
 
@@ -1811,4 +1813,30 @@ class BiharAPIDemographics(models.Model, AggregateMixin):
         unique_together = ('month', 'state_id', 'district_id', 'block_id', 'supervisor_id', 'person_id')  # pkey
 
     _agg_helper_cls = BiharApiDemographicsHelper
+    _agg_atomic = False
+
+
+class BiharAPIChildVaccine(models.Model, AggregateMixin):
+    state_id = models.TextField(null=True)
+    district_id = models.TextField(null=True)
+    block_id = models.TextField(null=True)
+    supervisor_id = models.TextField(null=True)
+    awc_id = models.TextField(null=True)
+    month = models.DateField()
+    time_birth = models.TextField(null=True)
+    child_alive = models.SmallIntegerField(null=True)
+    father_name = models.TextField(null=True)
+    mother_name = models.TextField(null=True)
+    case_id = models.TextField(null=True)
+    doc_id = models.TextField(null=True)
+    household_case_id = models.TextField(null=True)
+    dob = models.DateField(null=True)
+    delivery_nature = models.SmallIntegerField(blank=True, null=True)
+    term_days = models.SmallIntegerField(null=True)
+
+    class Meta(object):
+        db_table = BIHAR_API_CHILD_VACCINE_TABLE
+        unique_together = ('month', 'state_id', 'district_id', 'block_id', 'supervisor_id', 'case_id')  # pkey
+
+    _agg_helper_cls = BiharApiChildVaccineHelper
     _agg_atomic = False

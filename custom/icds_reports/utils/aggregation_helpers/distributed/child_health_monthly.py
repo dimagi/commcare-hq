@@ -338,7 +338,6 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
             ("opened_on", "child_health.opened_on"),
             ("birth_weight", "child_health.birth_weight"),
             ("mother_id", "child_health.mother_id"),
-            ("opened_on", "child_health.opened_on"),
             ("due_list_date_1g_dpt_1", "child_tasks.due_list_date_1g_dpt_1"),
             ("due_list_date_2g_dpt_2", "child_tasks.due_list_date_2g_dpt_2"),
             ("due_list_date_3g_dpt_3", "child_tasks.due_list_date_3g_dpt_3"),
