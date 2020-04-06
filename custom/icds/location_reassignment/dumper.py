@@ -54,7 +54,7 @@ class Dumper(object):
         )
         self.new_site_codes = set(destination_site_codes) - set(site_codes_present)
         self.archived_sites_codes = set(
-            SQLLocation.inactive_objects.filter(site_code__in=destination_site_codes).
+            SQLLocation.objects.filter(site_code__in=destination_site_codes, is_archived=True).
             values_list('site_code', flat=True)
         )
         self.old_site_codes = self._get_old_site_codes(transitions)

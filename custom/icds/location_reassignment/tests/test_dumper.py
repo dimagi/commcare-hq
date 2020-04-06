@@ -23,7 +23,7 @@ class TestDumper(TestCase):
 
     @patch('custom.icds.location_reassignment.dumper.Dumper._old_location_ids_by_site_code')
     @patch('corehq.form_processor.interfaces.dbaccessors.CaseAccessors.get_case_ids_by_owners')
-    @patch('corehq.apps.locations.models.SQLLocation.inactive_objects.filter')
+    @patch('corehq.apps.locations.models.SQLLocation.objects.filter')
     @patch('corehq.apps.locations.models.SQLLocation.active_objects.filter')
     def test_dump(self, mock_active_site_codes_search, mock_inactive_site_codes_search, mock_case_count,
                   mock_location_ids):
