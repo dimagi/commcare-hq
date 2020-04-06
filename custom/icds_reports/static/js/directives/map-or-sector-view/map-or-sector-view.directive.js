@@ -122,8 +122,8 @@ function MapOrSectorController($scope, $compile, $location, storageService, loca
         return vm.data.mapData;
     }, function () {
         if (vm.data.mapData && vm.data.mapData.chart_data) {
-            var chartHeight = vm.data.mapData.chart_data[0].values.length * 70;
-            vm.chartOptions.chart.height = ((chartHeight > 280) ? chartHeight : 280);
+            // 75 for padding of svg and 70 for each entry in chart
+            vm.chartOptions.chart.height = vm.data.mapData.chart_data[0].values.length * 70 + 75;
         }
     }, true);
 
