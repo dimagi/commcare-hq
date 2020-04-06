@@ -78,6 +78,8 @@ class TestStaleDataInESSQL(TestCase):
                 )
 
         form, cases = self._submit_form(self.project.name, new_cases=4)
+        # the couch view is sorted by case_id
+        cases = list(sorted(cases, key=lambda c: c.case_id))
 
         # process first 2 then raise exception
         self._assert_not_in_sync(call(2, expect_exception=ExitEarlyException), rows=[

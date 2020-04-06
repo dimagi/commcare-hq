@@ -28,7 +28,7 @@ from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 from corehq.util.couch_helpers import paginate_view
 from corehq.util.dates import iso_string_to_datetime
 from corehq.util.doc_processor.couch import resumable_view_iterator
-from corehq.util.doc_processor.sql import SqlModelArgsProvider
+from corehq.util.doc_processor.sql import SqlModelArgsProvider, resumable_sql_model_iterator
 from corehq.util.log import with_progress_bar
 from corehq.util.pagination import (
     PaginationEventHandler,
@@ -171,21 +171,28 @@ class CaseBackend:
         for db in accessor.sql_db_aliases:
             total_docs += accessor.get_approximate_doc_count(db)
 
-        event_handler = ProgressEventHandler(iteration_key, total_docs, sys.stderr)
-        iterator = resumable_sql_model_iterator(
+        iterable = resumable_sql_model_iterator(
             iteration_key,
             accessor,
-            ['case_id', 'type', 'server_modified_on', 'domain'],
             chunk_size=CHUNK_SIZE,
-            event_handler=event_handler
+            transform=lambda x: x
         )
-        for chunk in chunked(iterator, CHUNK_SIZE):
-            matching_records = [
-                (*rest, domain)
-                for *rest, domain in chunk
-                if _should_use_sql_backend(domain)
-            ]
-            yield matching_records
+        progress = ProgressManager(
+            iterable,
+            total=total_docs,
+            reset=False,
+            chunk_size=CHUNK_SIZE,
+            logger=ProcessorProgressLogger('[Couch Forms] ', sys.stderr)
+        )
+        with progress:
+            for chunk in chunked(iterable, CHUNK_SIZE):
+                matching_records = [
+                    (case.case_id, case.type, case.server_modified_on, case.domain)
+                    for case in chunk
+                    if _should_use_sql_backend(case.domain)
+                ]
+                yield matching_records
+                progress.add(len(matching_records))
 
     @staticmethod
     def _get_couch_case_chunks(run_config):
@@ -216,11 +223,11 @@ class CaseBackend:
 
         iteration_key = f'couch_cases-{run_config.iteration_key}'
         event_handler = ProgressEventHandler(iteration_key, 'unknown', sys.stderr)
-        iterator = resumable_view_iterator(
+        iterable = resumable_view_iterator(
             CommCareCase.get_db(), iteration_key, view_name, keys,
             chunk_size=CHUNK_SIZE, view_event_handler=event_handler, full_row=True
         )
-        for row in iterator:
+        for row in iterable:
             case_id, domain, modified_on = row['id'], row['key'][0], iso_string_to_datetime(row['value'])
             if run_config.start_date <= modified_on < run_config.end_date:
                 yield case_id, 'COUCH_TYPE_NOT_SUPPORTED', modified_on, domain
@@ -264,8 +271,8 @@ class FormBackend:
         iterable = resumable_sql_model_iterator(
             iteration_key,
             accessor,
-            ['form_id', 'state', 'xmlns', 'received_on', 'domain'],
             chunk_size=CHUNK_SIZE,
+            transform=lambda x: x
         )
         progress = ProgressManager(
             iterable,
@@ -277,12 +284,12 @@ class FormBackend:
         with progress:
             for chunk in chunked(iterable, CHUNK_SIZE):
                 matching_records = [
-                    (form_id, state_to_doc_type.get(state, 'XFormInstance'), xmlns, received_on, domain)
-                    for form_id, state, xmlns, received_on, domain in chunk
+                    (form.form_id, form.doc_type, form.xmlns, form.received_on, form.domain)
+                    for form in chunk
                     if (
-                        _should_use_sql_backend(domain) and
+                        _should_use_sql_backend(form.domain) and
                         # Only check for "normal" and "archived" forms
-                        state in (XFormInstanceSQL.NORMAL, XFormInstanceSQL.ARCHIVED)
+                        (form.is_normal or form.is_archived)
                     )
                 ]
                 yield matching_records
@@ -374,35 +381,6 @@ def _get_matching_couch_domains(run_config):
         return []
     else:
         return [run_config.domain]
-
-
-def resumable_sql_model_iterator(iteration_key, reindex_accessor, fields, chunk_size=100, event_handler=None):
-    try:
-        index_of_pk = fields.index(reindex_accessor.primary_key_field_name)
-    except ValueError:
-        fields = fields + [reindex_accessor.primary_key_field_name]
-        index_of_pk = -1
-
-    def get_next_id(result):
-        return result[index_of_pk]
-
-    NULL = object()
-    def data_function(from_db, filter_value, last_id=NULL):
-        if last_id is NULL:
-            # adapt to old iteration states
-            last_id = filter_value
-        return reindex_accessor.get_doc_values(from_db, fields, last_doc_pk=last_id, limit=chunk_size)
-
-    args_provider = SqlModelArgsProvider(reindex_accessor.sql_db_aliases, get_next_id=get_next_id)
-
-    def item_getter(*args, **kwargs):
-        raise NotImplementedError("retries are not supported")
-
-    iterator = ResumableFunctionIterator(
-        iteration_key, data_function, args_provider, item_getter, event_handler=event_handler
-    )
-    for row in iterator:
-        yield row[:-1] if index_of_pk == -1 else row
 
 
 class ProgressEventHandler(PaginationEventHandler):
