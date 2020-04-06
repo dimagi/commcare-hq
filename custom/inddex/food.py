@@ -228,6 +228,7 @@ class FoodRow:
         self.portions = float(self.portions) if self.portions else None
         self.nsr_consumed_cooked_fraction = (float(self.nsr_consumed_cooked_fraction)
                                              if self.nsr_consumed_cooked_fraction else None)
+        self.enrichment_complete = False
 
     def _set_ingredient_fields(self, ingredient):
         if self._is_std_recipe_ingredient:
@@ -334,9 +335,11 @@ class FoodRow:
         if name in _INDICATORS_BY_SLUG:
             indicator = _INDICATORS_BY_SLUG[name]
             if indicator.is_calculated_later:
-                raise AttributeError(f"{name} hasn't yet been set. It will be "
-                                     "calculated outside the scope of FoodRow.")
-            elif self._is_std_recipe_ingredient:
+                if not self.enrichment_complete:
+                    raise AttributeError(f"{name} hasn't yet been set. It will be "
+                                        "calculated outside the scope of FoodRow.")
+                return None
+            if self._is_std_recipe_ingredient:
                 # If it's an indicator that hasn't been explicitly set, check if it can
                 # be pulled from the food fixture or from the parent food case's UCR
                 if indicator.in_food_fixture:
@@ -363,6 +366,7 @@ def enrich_rows(recipe_id, rows):
         for row in rows:
             row.total_grams = _multiply(row.measurement_amount, row.conv_factor, row.portions)
             row.set_fct_gap()
+            row.enrichment_complete = True
     else:
         ingredients = [row for row in rows if not row.uuid == recipe.uuid]
         total_grams = _calculate_total_grams(recipe, ingredients)
@@ -373,6 +377,7 @@ def enrich_rows(recipe_id, rows):
                 row.recipe_num_ingredients = len(ingredients)
             if row.is_ingredient == 'yes' and recipe.food_type == STANDARD_RECIPE:
                 row.ingr_recipe_total_grams_consumed = total_grams[recipe.uuid]
+            row.enrichment_complete = True
 
 
 def _calculate_total_grams(recipe, ingredients):
