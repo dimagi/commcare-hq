@@ -102,5 +102,5 @@ class Processor(object):
     def locations_by_site_code(self):
         return {
             loc.site_code: loc
-            for loc in SQLLocation.active_objects.filter(site_code__in=self.site_codes)
+            for loc in SQLLocation.active_objects.filter(domain=self.domain, site_code__in=self.site_codes)
         }
