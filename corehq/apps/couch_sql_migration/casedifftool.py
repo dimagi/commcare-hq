@@ -109,11 +109,11 @@ class CaseDiffTool:
         if cases is None:
             return self.resumable_iter_diff_cases()
         if cases == "pending":
-            return self.iter_diff_cases(self.get_pending_cases())
+            return self.map_cases(load_and_diff_cases, self.get_pending_cases())
         if cases == "with-diffs":
             return self.iter_diff_cases_with_diffs()
         case_ids = get_ids_from_string_or_file(cases)
-        return self.iter_diff_cases(case_ids, log_cases=True)
+        return self.map_cases(load_and_diff_cases, case_ids, log_cases=True)
 
     def resumable_iter_diff_cases(self):
         def diff_batch(case_ids):
@@ -127,15 +127,15 @@ class CaseDiffTool:
             progress_name="Diff",
             offset_key='CommCareCase.id',
         )
-        return self.iter_diff_cases(case_ids, diff_batch)
+        return self.map_cases(load_and_diff_cases, case_ids, diff_batch)
 
     def iter_diff_cases_with_diffs(self):
         count = self.statedb.count_case_ids_with_diffs()
         cases = self.statedb.iter_case_ids_with_diffs()
         cases = with_progress_bar(cases, count, prefix="Cases with diffs", oneline=False)
-        return self.iter_diff_cases(cases)
+        return self.map_cases(load_and_diff_cases, cases)
 
-    def iter_diff_cases(self, case_ids, batcher=None, log_cases=False):
+    def map_cases(self, process_cases, case_ids, batcher=None, log_cases=False):
         def list_or_stop(items):
             if self.is_stopped():
                 raise StopIteration
@@ -143,12 +143,12 @@ class CaseDiffTool:
 
         batches = chunked(case_ids, self.batch_size, batcher or list_or_stop)
         if not self.stop:
-            yield from self.pool.imap_unordered(load_and_diff_cases, batches)
+            yield from self.pool.imap_unordered(process_cases, batches)
             return
         stop = [1]
         with global_diff_state(*self.initargs), suppress(pdb.bdb.BdbQuit):
             for batch in batches:
-                data = load_and_diff_cases(batch, log_cases=log_cases)
+                data = process_cases(batch, log_cases=log_cases)
                 yield data
                 diffs = [(kind, case_id, diffs) for kind, case_id, diffs in data.diffs if diffs]
                 if diffs:
