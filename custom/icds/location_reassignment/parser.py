@@ -6,7 +6,7 @@ from custom.icds.location_reassignment.const import (
     MERGE_OPERATION,
     MOVE_OPERATION,
     NEW_SITE_CODE_COLUMN,
-    OLD_SITE_CODE_COLUMN,
+    CURRENT_SITE_CODE_COLUMN,
     OPERATION_COLUMN,
     SPLIT_OPERATION,
     VALID_OPERATIONS,
@@ -64,7 +64,7 @@ class Parser(object):
 
     def _parse_row(self, row, location_type_code):
         operation = row.get(OPERATION_COLUMN)
-        old_site_code = row.get(OLD_SITE_CODE_COLUMN)
+        old_site_code = row.get(CURRENT_SITE_CODE_COLUMN)
         new_site_code = row.get(NEW_SITE_CODE_COLUMN)
         if not old_site_code or not new_site_code:
             self.errors.append("Missing location code for %s, got old: '%s' and new: '%s'" % (

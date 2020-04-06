@@ -10,7 +10,7 @@ from couchexport.models import Format
 from corehq.util.workbook_json.excel import get_workbook
 from custom.icds.location_reassignment.const import (
     NEW_SITE_CODE_COLUMN,
-    OLD_SITE_CODE_COLUMN,
+    CURRENT_SITE_CODE_COLUMN,
     OPERATION_COLUMN,
 )
 from custom.icds.location_reassignment.parser import Parser
@@ -22,15 +22,15 @@ class TestParser(TestCase):
     domain = 'test'
     headers = (
         ('awc',
-         ('name', 'new_name', OLD_SITE_CODE_COLUMN, NEW_SITE_CODE_COLUMN, 'lgd_code',
+         ('name', 'new_name', CURRENT_SITE_CODE_COLUMN, NEW_SITE_CODE_COLUMN, 'lgd_code',
           'new_lgd_code', 'parent_name', 'parent_site_code', 'new_parent_site_code',
           'username', 'new_username', OPERATION_COLUMN)),
         ('supervisor',
-         ('name', 'new_name', OLD_SITE_CODE_COLUMN, NEW_SITE_CODE_COLUMN, 'lgd_code',
+         ('name', 'new_name', CURRENT_SITE_CODE_COLUMN, NEW_SITE_CODE_COLUMN, 'lgd_code',
           'new_lgd_code', 'parent_name', 'parent_site_code', 'new_parent_site_code',
           'username', 'new_username', OPERATION_COLUMN)),
         ('state',
-         ('name', 'new_name', OLD_SITE_CODE_COLUMN, NEW_SITE_CODE_COLUMN, 'lgd_code',
+         ('name', 'new_name', CURRENT_SITE_CODE_COLUMN, NEW_SITE_CODE_COLUMN, 'lgd_code',
           'new_lgd_code', 'username', 'new_username', OPERATION_COLUMN)),
     )
     rows = (

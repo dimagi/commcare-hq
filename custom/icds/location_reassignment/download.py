@@ -20,7 +20,7 @@ from custom.icds.location_reassignment.const import (
     NEW_PARENT_SITE_CODE,
     NEW_SITE_CODE_COLUMN,
     NEW_USERNAME_COLUMN,
-    OLD_SITE_CODE_COLUMN,
+    CURRENT_SITE_CODE_COLUMN,
     OPERATION_COLUMN,
     USERNAME_COLUMN,
     VALID_OPERATIONS,
@@ -135,7 +135,7 @@ class Download(object):
         location_content = {
             CURRENT_NAME: location_details['name'],
             NEW_NAME: '',
-            OLD_SITE_CODE_COLUMN: location_details['site_code'],
+            CURRENT_SITE_CODE_COLUMN: location_details['site_code'],
             NEW_SITE_CODE_COLUMN: '',
             CURRENT_LGD_CODE: location_details['lgd_code'],
             NEW_LGD_CODE: '',
