@@ -4,6 +4,7 @@ from twilio.rest import Client
 from dimagi.utils.logging import notify_exception
 
 from corehq import toggles
+from corehq.apps.domain.models import Domain
 from corehq.apps.sms.models import SMS, PhoneLoadBalancingMixin, SQLSMSBackend
 from corehq.apps.sms.util import clean_phone_number
 from corehq.messaging.smsbackends.twilio.forms import TwilioBackendForm
@@ -71,7 +72,9 @@ class SQLTwilioBackend(SQLSMSBackend, PhoneLoadBalancingMixin):
         from_ = orig_phone_number
         to = msg.phone_number
         if toggles.WHATSAPP_MESSAGING.enabled(msg.domain) and not kwargs.get('skip_whatsapp', False):
-            from_ = self._convert_to_whatsapp(clean_phone_number(WHATSAPP_SANDBOX_PHONE_NUMBER))
+            domain_obj = Domain.get_by_name(msg.domain)
+            from_ = getattr(domain_obj, 'twilio_whatsapp_phone_number') or WHATSAPP_SANDBOX_PHONE_NUMBER
+            from_ = self._convert_to_whatsapp(clean_phone_number(from_))
             to = self._convert_to_whatsapp(to)
         msg.system_phone_number = from_
         body = msg.text
