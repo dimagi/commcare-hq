@@ -336,13 +336,14 @@ class LocationExcelValidator(object):
                 actual = set(sheet_reader.fieldnames) - set(optional_headers)
                 expected = set(LOCATION_SHEET_HEADERS_BASE.values())
                 if actual != expected:
+                    if expected - actual:
+                        detail = "'{}' are missing.".format(", ".join(expected - actual))
+                    else:
+                        detail = "'{}' are not recognized.".format(", ".join(actual - expected))
                     raise LocationExcelSheetError(
                         _("Locations sheet with title '{name}' should contain exactly '{expected}' "
-                          "as the sheet headers. '{missing}' are missing")
-                        .format(
-                            name=sheet_name,
-                            expected=", ".join(expected),
-                            missing=", ".join(expected - actual))
+                          "as the sheet headers. {detail}")
+                        .format(name=sheet_name, expected=", ".join(expected), detail=detail)
                     )
                 location_data.extend([
                     self._get_location_data(index, row, sheet_name)
