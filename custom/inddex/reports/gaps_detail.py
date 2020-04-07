@@ -1,10 +1,4 @@
-from custom.inddex.filters import (
-    FaoWhoGiftFoodGroupDescriptionFilter,
-    FoodTypeFilter,
-    GapDescriptionFilter,
-    GapTypeFilter,
-    RecallStatusFilter,
-)
+from custom.inddex import filters
 from custom.inddex.ucr.data_providers.gaps_report_by_item_data import (
     GapsReportByItemDetailsData,
     GapsReportByItemSummaryData,
@@ -19,15 +13,15 @@ class GapsDetailReport(MultiTabularReport):
 
     @property
     def fields(self):
-        fields = super().fields
-        fields += [
-            GapTypeFilter,
-            GapDescriptionFilter,
-            FaoWhoGiftFoodGroupDescriptionFilter,
-            FoodTypeFilter,
-            RecallStatusFilter,
+        return [
+            filters.CaseOwnersFilter,
+            filters.DateRangeFilter,
+            filters.GapTypeFilter,
+            filters.GapDescriptionFilter,
+            filters.FaoWhoGiftFoodGroupDescriptionFilter,
+            filters.FoodTypeFilter,
+            filters.RecallStatusFilter,
         ]
-        return fields
 
 
     @property

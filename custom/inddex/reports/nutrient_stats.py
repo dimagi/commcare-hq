@@ -1,14 +1,6 @@
 from memoized import memoized
 
-from custom.inddex.filters import (
-    AgeRangeFilter,
-    BreastFeedingFilter,
-    GenderFilter,
-    PregnancyFilter,
-    RecallStatusFilter,
-    SettlementAreaFilter,
-    SupplementsFilter,
-)
+from custom.inddex import filters
 from custom.inddex.ucr.data_providers.summary_statistics_data import (
     SummaryStatsNutrientDataProvider,
 )
@@ -22,14 +14,16 @@ class NutrientStatsReport(MultiTabularReport):
 
     @property
     def fields(self):
-        return super().fields + [
-            GenderFilter,
-            AgeRangeFilter,
-            PregnancyFilter,
-            BreastFeedingFilter,
-            SettlementAreaFilter,
-            SupplementsFilter,
-            RecallStatusFilter
+        return [
+            filters.CaseOwnersFilter,
+            filters.DateRangeFilter,
+            filters.GenderFilter,
+            filters.AgeRangeFilter,
+            filters.PregnancyFilter,
+            filters.BreastFeedingFilter,
+            filters.SettlementAreaFilter,
+            filters.SupplementsFilter,
+            filters.RecallStatusFilter
         ]
 
     @property

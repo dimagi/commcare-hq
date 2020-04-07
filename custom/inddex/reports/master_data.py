@@ -3,12 +3,7 @@ from django.utils.functional import cached_property
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin
-from custom.inddex.filters import (
-    CaseOwnersFilter,
-    DateRangeFilter,
-    GapTypeFilter,
-    RecallStatusFilter,
-)
+from custom.inddex import filters
 from custom.inddex.food import FoodData
 
 
@@ -21,7 +16,12 @@ class MasterDataReport(DatespanMixin, CustomProjectReport, GenericTabularReport)
 
     @property
     def fields(self):
-        return [CaseOwnersFilter, DateRangeFilter, GapTypeFilter, RecallStatusFilter]
+        return [
+            filters.CaseOwnersFilter,
+            filters.DateRangeFilter,
+            filters.GapTypeFilter,
+            filters.RecallStatusFilter
+        ]
 
     @property
     def headers(self):

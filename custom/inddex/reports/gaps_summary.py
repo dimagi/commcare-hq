@@ -1,6 +1,6 @@
 from memoized import memoized
 
-from custom.inddex.filters import GapTypeFilter, RecallStatusFilter
+from custom.inddex import filters
 from custom.inddex.ucr.data_providers.gaps_summary_data import (
     ConvFactorGapsSummaryData,
     FCTGapsSummaryData,
@@ -16,7 +16,12 @@ class GapsSummaryReport(MultiTabularReport):
 
     @property
     def fields(self):
-        return super().fields + [GapTypeFilter, RecallStatusFilter]
+        return [
+            filters.CaseOwnersFilter,
+            filters.DateRangeFilter,
+            filters.GapTypeFilter,
+            filters.RecallStatusFilter,
+        ]
 
     @property
     @memoized

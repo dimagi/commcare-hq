@@ -42,10 +42,6 @@ class MultiTabularReport(DatespanMixin, CustomProjectReport, GenericTabularRepor
     export_only = False
 
     @property
-    def fields(self):
-        return [CaseOwnersFilter, DateRangeFilter]
-
-    @property
     def data_providers(self):
         return []
 
