@@ -759,6 +759,24 @@
         "datatype": "string",
         "type": "raw",
         "property_name": "phone_number"
+      },
+      {
+        "column_id": "location_rationalisation_date",
+        "datatype": "date",
+        "type": "raw",
+        "property_name": "location_rationalisation_date"
+      },
+      {
+        "column_id": "last_owner_id",
+        "datatype": "string",
+        "type": "raw",
+        "property_name": "location_rationalisation_last_owner_id"
+      },
+      {
+        "column_id": "last_supervisor_id",
+        "datatype": "string",
+        "type": "raw",
+        "property_name": "location_rationalisation_last_supervisor_id"
       }
     ],
     "named_expressions": {},

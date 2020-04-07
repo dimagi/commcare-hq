@@ -240,6 +240,10 @@ class AwcLocation(models.Model, AggregateMixin):
     block_is_test = models.SmallIntegerField(blank=True, null=True)
     supervisor_is_test = models.SmallIntegerField(blank=True, null=True)
     awc_is_test = models.SmallIntegerField(blank=True, null=True)
+    awc_deprecated_at = models.DateField(blank=True, null=True)
+    awc_deprecates = models.TextField(blank=True, null=True)
+    ls_deprecated_at = models.DateField(blank=True, null=True)
+    ls_deprecates = models.TextField(blank=True, null=True)
     # from commcare-user case
     aww_name = models.TextField(blank=True, null=True)
     contact_phone_number = models.TextField(blank=True, null=True)
