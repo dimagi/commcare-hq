@@ -6,12 +6,10 @@ from custom.inddex.ucr.data_providers.summary_statistics_data import (
 from custom.inddex.utils import BaseNutrientReport
 
 
-class SummaryStatisticsReport(BaseNutrientReport):
+class NutrientStatsReport(BaseNutrientReport):
     title = 'Output 4 - Nutrient Intake Summary Statistics'
     name = title
-    slug = 'output_4_nutrient_intake_summary_statistics'
-    report_comment = 'This output includes summary statistics for nutrient intakes reported during the recall ' \
-                     '(mean, median, standard deviation, and percentiles). '
+    slug = 'nutrient_stats'
 
     @property
     def report_config(self):

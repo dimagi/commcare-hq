@@ -12,10 +12,10 @@ from custom.inddex.filters import (
 from custom.inddex.food import FoodData
 
 
-class MasterDataFileSummaryReport(DatespanMixin, CustomProjectReport, GenericTabularReport):
+class MasterDataReport(DatespanMixin, CustomProjectReport, GenericTabularReport):
     title = 'Output 1 - Master Data File'
     name = title
-    slug = 'master_data_file'
+    slug = 'master_data'
     export_only = False
     exportable = True
 

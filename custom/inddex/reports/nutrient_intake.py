@@ -8,15 +8,12 @@ from custom.inddex.ucr.data_providers.nutrient_intakes_data import (
 from custom.inddex.utils import BaseNutrientReport
 
 
-class NutrientIntakesReport(BaseNutrientReport):
+class NutrientIntakeReport(BaseNutrientReport):
     title = 'Output 3 - Disaggregated Intake Data by Food and Aggregated Daily Intake Data by Respondent'
     name = title
-    slug = 'output_3_disaggr_intake_data_by_food_and_aggr_daily_intake_data_by_respondent'
+    slug = 'nutrient_intake'
     export_only = True
     show_filters = True
-    report_comment = 'This output provides information on the total quantity and total nutrient content for ' \
-                     'each individual food or recipe reported by each respondent in the recall. This output ' \
-                     'cannot be previewed. Users must download the data to access the information.'
 
     @property
     def fields(self):
