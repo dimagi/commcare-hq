@@ -1,11 +1,18 @@
-from custom.inddex.filters import GapTypeFilter, GapDescriptionFilter, FoodTypeFilter, \
-    RecallStatusFilter, FaoWhoGiftFoodGroupDescriptionFilter
-from custom.inddex.ucr.data_providers.gaps_report_by_item_data import GapsReportByItemDetailsData, \
-    GapsReportByItemSummaryData
-from custom.inddex.utils import BaseGapsSummaryReport
+from custom.inddex.filters import (
+    FaoWhoGiftFoodGroupDescriptionFilter,
+    FoodTypeFilter,
+    GapDescriptionFilter,
+    GapTypeFilter,
+    RecallStatusFilter,
+)
+from custom.inddex.ucr.data_providers.gaps_report_by_item_data import (
+    GapsReportByItemDetailsData,
+    GapsReportByItemSummaryData,
+)
+from custom.inddex.utils import MultiTabularReport
 
 
-class GapsDetailReport(BaseGapsSummaryReport):
+class GapsDetailReport(MultiTabularReport):
     title = 'Output 2b - Detailed Information on Gaps'
     name = title
     slug = 'gaps_detail'
@@ -18,20 +25,21 @@ class GapsDetailReport(BaseGapsSummaryReport):
             GapDescriptionFilter,
             FaoWhoGiftFoodGroupDescriptionFilter,
             FoodTypeFilter,
-            RecallStatusFilter
+            RecallStatusFilter,
         ]
-
         return fields
+
 
     @property
     def report_config(self):
         report_config = super().report_config
         report_config.update(
+            gap_type=self.request.GET.get('gap_type') or '',
+            recall_status=self.request.GET.get('recall_status') or '',
             fao_who_gift_food_group_description=self.fao_who_gift_food_group_description,
             gap_description=self.gap_description,
             food_type=self.food_type,
         )
-
         return report_config
 
     @property
