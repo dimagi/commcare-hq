@@ -1,12 +1,15 @@
 from custom.champ.tests.utils import ChampTestCase
 from custom.champ.views import PrevisionVsAchievementsTableView
 
+from unittest2 import skip
+
 import json
 import mock
 
 from django.urls import reverse
 
 
+@skip("to add back post https://github.com/dimagi/sql-agg/pull/56")
 class TestPVATable(ChampTestCase):
 
     def setUp(self):
