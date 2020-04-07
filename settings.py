@@ -2051,6 +2051,7 @@ DOMAIN_MODULE_MAP = {
     'vectorlink-zimbabwe': 'custom.abt',
 
     'inddex-reports': 'custom.inddex',
+    'inddex-multilingual': 'custom.inddex',
 
     'ccqa': 'custom.ccqa',
 }

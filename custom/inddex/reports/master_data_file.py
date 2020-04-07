@@ -16,15 +16,13 @@ from custom.inddex.ucr_data import FoodCaseData
 class MasterDataFileSummaryReport(DatespanMixin, CustomProjectReport, GenericTabularReport):
     title = 'Output 1 - Master Data File'
     name = title
-    slug = 'output_1_master_data_file'
+    slug = 'master_data_file'
     export_only = False
     exportable = True
-    report_comment = 'This output includes all data that appears in the output files as well as background ' \
-                     'data that are used to perform calculations that appear in the outputs.'
 
     @property
     def fields(self):
-        return [CaseOwnersFilter, DateRangeFilter, GapTypeFilter, RecallStatusFilter]
+        return [CaseOwnersFilter, DateRangeFilter, RecallStatusFilter]
 
     @property
     def headers(self):
@@ -40,12 +38,7 @@ class MasterDataFileSummaryReport(DatespanMixin, CustomProjectReport, GenericTab
     def _food_data(self):
         return FoodData(
             self.domain,
-            FoodCaseData({
-                'domain': self.domain,
-                'startdate': str(self.datespan.startdate),
-                'enddate': str(self.datespan.enddate),
-                'case_owners': self.request.GET.get('case_owners') or '',
-                'gap_type': self.request.GET.get('gap_type') or '',
-                'recall_status': self.request.GET.get('recall_status') or '',
-            }).get_data(),
+            datespan=self.datespan,
+            case_owners=self.request.GET.get('case_owners'),
+            recall_status=self.request.GET.get('recall_status'),
         )
