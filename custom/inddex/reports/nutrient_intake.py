@@ -39,12 +39,6 @@ class NutrientIntakeReport(MultiTabularReport):
         ]
 
     @property
-    def report_context(self):
-        context = super().report_context
-        context['export_only'] = self.export_only
-        return context
-
-    @property
     def report_config(self):
         report_config = super().report_config
         request_slugs = [
