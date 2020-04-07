@@ -3,9 +3,7 @@ from memoized import memoized
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin
 from corehq.apps.userreports.reports.util import ReportExport
-from custom.inddex.filters import DateRangeFilter, GenderFilter, AgeRangeFilter, PregnancyFilter, \
-    BreastFeedingFilter, SettlementAreaFilter, RecallStatusFilter, CaseOwnersFilter, \
-    FaoWhoGiftFoodGroupDescriptionFilter, SupplementsFilter, GapTypeFilter
+from custom.inddex.filters import CaseOwnersFilter, DateRangeFilter
 
 
 class MultiSheetReportExport(ReportExport):
@@ -109,34 +107,3 @@ class MultiTabularReport(DatespanMixin, CustomProjectReport, GenericTabularRepor
         title = data_provider.slug
 
         return title, exported_rows
-
-
-class BaseNutrientReport(MultiTabularReport):
-
-    @property
-    def fields(self):
-        return super().fields + [
-            GenderFilter,
-            AgeRangeFilter,
-            PregnancyFilter,
-            BreastFeedingFilter,
-            SettlementAreaFilter,
-            SupplementsFilter,
-            RecallStatusFilter
-        ]
-
-    @property
-    def filters_config(self):
-        request_slugs = [
-            'gender',
-            'age_range',
-            'pregnant',
-            'breastfeeding',
-            'urban_rural',
-            'supplements',
-            'recall_status',
-        ]
-        filters_config = super().report_config
-        filters_config.update({slug: self.request.GET.get(slug, '') for slug in request_slugs})
-
-        return filters_config

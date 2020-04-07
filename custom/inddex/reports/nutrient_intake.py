@@ -1,14 +1,24 @@
 from memoized import memoized
 
-from custom.inddex.filters import FaoWhoGiftFoodGroupDescriptionFilter
+from custom.inddex.filters import (
+    AgeRangeFilter,
+    BreastFeedingFilter,
+    FaoWhoGiftFoodGroupDescriptionFilter,
+    GapTypeFilter,
+    GenderFilter,
+    PregnancyFilter,
+    RecallStatusFilter,
+    SettlementAreaFilter,
+    SupplementsFilter,
+)
 from custom.inddex.ucr.data_providers.nutrient_intakes_data import (
     NutrientIntakesByFoodData,
     NutrientIntakesByRespondentData,
 )
-from custom.inddex.utils import BaseNutrientReport
+from custom.inddex.utils import MultiTabularReport
 
 
-class NutrientIntakeReport(BaseNutrientReport):
+class NutrientIntakeReport(MultiTabularReport):
     title = 'Output 3 - Disaggregated Intake Data by Food and Aggregated Daily Intake Data by Respondent'
     name = title
     slug = 'nutrient_intake'
@@ -17,10 +27,16 @@ class NutrientIntakeReport(BaseNutrientReport):
 
     @property
     def fields(self):
-        fields = super().fields
-        fields.insert(-1, FaoWhoGiftFoodGroupDescriptionFilter)
-
-        return fields
+        return super().fields + [
+            GenderFilter,
+            AgeRangeFilter,
+            PregnancyFilter,
+            BreastFeedingFilter,
+            SettlementAreaFilter,
+            SupplementsFilter,
+            FaoWhoGiftFoodGroupDescriptionFilter,
+            RecallStatusFilter,
+        ]
 
     @property
     def report_context(self):
@@ -32,11 +48,26 @@ class NutrientIntakeReport(BaseNutrientReport):
     @property
     def report_config(self):
         report_config = super().report_config
-        report_config.update(self.filters_config)
+        report_config.update(self._filters_config)
         report_config.update(
             fao_who_gift_food_group_description=self.fao_who_gift_food_group_description
         )
         return report_config
+
+    @property
+    def _filters_config(self):
+        request_slugs = [
+            'gender',
+            'age_range',
+            'pregnant',
+            'breastfeeding',
+            'urban_rural',
+            'supplements',
+            'recall_status',
+        ]
+        filters_config = super().report_config
+        filters_config.update({slug: self.request.GET.get(slug, '') for slug in request_slugs})
+        return filters_config
 
     @property
     def fao_who_gift_food_group_description(self):
