@@ -48,23 +48,15 @@ class MultiTabularReport(DatespanMixin, CustomProjectReport, GenericTabularRepor
         }
 
     def _get_report_context(self, data_provider):
-        self.data_source = data_provider
-        if self.needs_filters:
-            headers = []
-            rows = []
-        else:
-            rows = data_provider.rows
-            headers = data_provider.headers
-
-        context = dict(
-            report_table=dict(
-                title=data_provider.title,
-                slug=data_provider.slug,
-                headers=headers,
-                rows=rows
-            )
-        )
-        return context
+        filters_selected = not self.needs_filters
+        return {
+            'report_table': {
+                'title': data_provider.title,
+                'slug': data_provider.slug,
+                'headers': data_provider.headers if filters_selected else [],
+                'rows': data_provider.rows if filters_selected else [],
+            }
+        }
 
     @property
     def export_table(self):
