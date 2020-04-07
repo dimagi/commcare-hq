@@ -4,11 +4,7 @@ import pdb
 import signal
 from contextlib import contextmanager, suppress
 
-from django.db import close_old_connections
-from django.db.utils import DatabaseError, InterfaceError
-
 from dimagi.utils.chunked import chunked
-from dimagi.utils.retry import retry_on
 
 from corehq.form_processor.utils.general import set_local_domain_sql_backend_override
 from corehq.util.log import with_progress_bar
@@ -28,7 +24,7 @@ from .couchsqlmigration import (
 )
 from .parallel import Pool
 from .progress import MigrationStatus, get_couch_sql_migration_status
-from .util import get_ids_from_string_or_file
+from .util import get_ids_from_string_or_file, retry_on_sql_error
 
 log = logging.getLogger(__name__)
 
@@ -196,14 +192,7 @@ def load_and_diff_cases(case_ids, log_cases=False):
     return data
 
 
-def _close_connections(err):
-    """Close old connections, then return true to retry"""
-    log.warning("retry diff cases on %s: %s", type(err).__name__, err)
-    close_old_connections()
-    return True
-
-
-@retry_on(DatabaseError, InterfaceError, should_retry=_close_connections)
+@retry_on_sql_error
 def diff_cases_with_retry(*args, **kw):
     return diff_cases(*args, **kw)
 
