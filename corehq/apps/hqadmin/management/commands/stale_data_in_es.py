@@ -73,10 +73,10 @@ class Command(BaseCommand):
     help = inspect.cleandoc(__doc__).split('\n')[0]
 
     def add_arguments(self, parser):
-        parser.add_argument('iteration_key', help='Unique slug to identify this run. Used to allow resuming.')
         parser.add_argument('data_models', nargs='+',
                             help='A list of data models to check. Valid options are "case" and "form".')
         parser.add_argument('--domain', default=ALL_DOMAINS)
+        parser.add_argument('--iteration_key', help='Unique slug to identify this run. Used to allow resuming.')
         parser.add_argument(
             '--start',
             action='store',
@@ -94,20 +94,26 @@ class Command(BaseCommand):
         )
         parser.add_argument('--delimiter', default='\t', choices=('\t', ','))
 
-    def handle(self, iteration_key, domain, data_models, delimiter, **options):
+    def handle(self, domain, data_models, delimiter, **options):
         data_models = set(data_models)
 
         default_start, default_end = datetime(2010, 1, 1), datetime.utcnow()
         start = dateutil.parser.parse(options['start']) if options['start'] else default_start
         end = dateutil.parser.parse(options['end']) if options['end'] else default_end
         case_type = options['case_type']
-        iteration_key = (
-            f'{iteration_key}'
-            f'-{"" if domain == ALL_DOMAINS else domain}'
-            f'-{start.isoformat() if start != default_start else ""}'
-            f'-{end.isoformat() if end != default_end else ""}'
-            f'-{case_type or ""}'
-        )
+        iteration_key = options['iteration_key']
+        if iteration_key:
+            print(f'\nResuming previous run. Iteration Key:\n\t"{iteration_key}"\n', file=self.stderr)
+        else:
+            iteration_key = (
+                f'stale_data_{datetime.utcnow().isoformat()}'
+                f'-{"" if domain == ALL_DOMAINS else domain}'
+                f'-{start.isoformat() if start != default_start else ""}'
+                f'-{end.isoformat() if end != default_end else ""}'
+                f'-{case_type or ""}'
+            )
+            print(f'\nStarting new run. Iteration key:\n\t"{iteration_key}"\n', file=self.stderr)
+
         run_config = RunConfig(iteration_key, domain, start, end, case_type)
 
         if run_config.domain is ALL_DOMAINS:
@@ -121,17 +127,22 @@ class Command(BaseCommand):
 
         print_data_row(HEADER_ROW)
 
-        for data_model in data_models:
-            try:
-                process_data_model_fn = DATA_MODEL_BACKENDS[data_model.lower()]()
-            except KeyError:
-                raise CommandError('Only valid options for data model are "{}"'.format(
-                    '", "'.join(DATA_MODEL_BACKENDS.keys())
-                ))
-            data_rows = process_data_model_fn(run_config)
+        try:
+            for data_model in data_models:
+                try:
+                    process_data_model_fn = DATA_MODEL_BACKENDS[data_model.lower()]()
+                except KeyError:
+                    raise CommandError('Only valid options for data model are "{}"'.format(
+                        '", "'.join(DATA_MODEL_BACKENDS.keys())
+                    ))
+                data_rows = process_data_model_fn(run_config)
 
-            for data_row in data_rows:
-                print_data_row(data_row)
+                for data_row in data_rows:
+                    print_data_row(data_row)
+        except:
+            print(f'\nERROR: To resume the previous run add the "iteration_key" parameter to the command:\n'
+                  f"\t--iteration_key '{iteration_key}'\n", file=self.stderr)
+            raise
 
 
 DATA_MODEL_BACKENDS = {
