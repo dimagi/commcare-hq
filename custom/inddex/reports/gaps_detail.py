@@ -22,7 +22,6 @@ class GapsDetailReport(MultiTabularReport):
             filters.RecallStatusFilter,
         ]
 
-
     @property
     def report_config(self):
         report_config = {}  # TODO port to FoodData.from_request
