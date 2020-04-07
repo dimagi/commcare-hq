@@ -13,7 +13,6 @@ class NutrientIntakeReport(MultiTabularReport):
     name = title
     slug = 'nutrient_intake'
     export_only = True
-    show_filters = True
 
     @property
     def fields(self):

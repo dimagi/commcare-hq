@@ -12,7 +12,6 @@ class GapsSummaryReport(MultiTabularReport):
     title = 'Output 2a - Gaps Summary by Food Type'
     name = title
     slug = 'gaps_summary'
-    show_filters = True
 
     @property
     def fields(self):

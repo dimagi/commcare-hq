@@ -31,9 +31,6 @@ class MultiSheetReportExport(ReportExport):
 
 
 class MultiTabularReport(DatespanMixin, CustomProjectReport, GenericTabularReport):
-    title = 'Multi report'
-    name = 'Multi Report'
-    slug = 'multi_report'
     report_template_path = 'inddex/multi_report.html'
     report_comment = ''
     flush_layout = True

@@ -11,8 +11,6 @@ class MasterDataReport(DatespanMixin, CustomProjectReport, GenericTabularReport)
     title = 'Output 1 - Master Data File'
     name = title
     slug = 'master_data'
-    export_only = False
-    exportable = True
 
     @property
     def fields(self):
