@@ -2,12 +2,14 @@ import csv
 from datetime import datetime
 
 from django.core.management.base import BaseCommand
+from django.db.models.functions import Length
 
+from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.form_processor.models import CommCareCaseSQL
 from corehq.apps.locations.models import SQLLocation
 
 DOMAIN = "icds-cas"
-CASE_TYPE = "person"
+CASE_TYPE = USERCASE_TYPE
 
 
 class Command(BaseCommand):
@@ -50,6 +52,10 @@ class Command(BaseCommand):
                 base_query = CommCareCaseSQL.objects.using(partition)
                 base_query = base_query.filter(domain=DOMAIN, type=CASE_TYPE, closed=False, deleted=False)
                 base_query = base_query.exclude(owner_id__in=test_locations)
+
+                # AWWs have 11-digit numeric case names
+                base_query = base_query.annotate(text_len=Length('name')).filter(text_len=11)
+                base_query = base_query.filter(name__regex="^\d+$")
 
                 persons = base_query.count()
                 self.stdout.write("person cases: %s" % persons)
