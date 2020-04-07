@@ -5,22 +5,11 @@
 {% block reportcontent %}
 {% block pretable %}
     {% if not report.needs_filters %}
-        {% if rendered_as == 'print' %}
-        <div class="row">
-            <div class="col-sm-10">{% now "d M Y" %}</div>
-        </div>
-        <div class="row">
-            <div class="col-sm-10">
-                <h3 class="media-heading">{{ name }}<br/></h3>
-            </div>
-        </div>
-        {% else %}
         <div class="media">
           <div class="media-body" style="height: 64px">
             <h3 class="media-heading">{{ name }}<br/></h3>
           </div>
         </div>
-        {% endif %}
     {% endif %}{{ block.super }}
 {% endblock %}
 
