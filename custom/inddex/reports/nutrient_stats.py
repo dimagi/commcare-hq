@@ -35,11 +35,6 @@ class NutrientStatsReport(MultiTabularReport):
     @property
     def report_config(self):
         report_config = super().report_config
-        report_config.update(self._filters_config)
-        return report_config
-
-    @property
-    def _filters_config(self):
         request_slugs = [
             'gender',
             'age_range',
@@ -49,9 +44,9 @@ class NutrientStatsReport(MultiTabularReport):
             'supplements',
             'recall_status',
         ]
-        filters_config = super().report_config
-        filters_config.update({slug: self.request.GET.get(slug, '') for slug in request_slugs})
-        return filters_config
+        report_config.update({slug: self.request.GET.get(slug, '')
+                              for slug in request_slugs})
+        return report_config
 
     @property
     @memoized

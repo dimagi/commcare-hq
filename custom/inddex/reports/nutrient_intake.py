@@ -42,20 +42,11 @@ class NutrientIntakeReport(MultiTabularReport):
     def report_context(self):
         context = super().report_context
         context['export_only'] = self.export_only
-
         return context
 
     @property
     def report_config(self):
         report_config = super().report_config
-        report_config.update(self._filters_config)
-        report_config.update(
-            fao_who_gift_food_group_description=self.fao_who_gift_food_group_description
-        )
-        return report_config
-
-    @property
-    def _filters_config(self):
         request_slugs = [
             'gender',
             'age_range',
@@ -64,14 +55,11 @@ class NutrientIntakeReport(MultiTabularReport):
             'urban_rural',
             'supplements',
             'recall_status',
+            'fao_who_gift_food_group_description',
         ]
-        filters_config = super().report_config
-        filters_config.update({slug: self.request.GET.get(slug, '') for slug in request_slugs})
-        return filters_config
-
-    @property
-    def fao_who_gift_food_group_description(self):
-        return self.request.GET.get('fao_who_gift_food_group_description') or ''
+        report_config.update({slug: self.request.GET.get(slug, '')
+                              for slug in request_slugs})
+        return report_config
 
     @property
     @memoized
