@@ -54,10 +54,7 @@ branches:
   - jls/migrate-DefaultConsumption-2 # Jenny March 6
   #- jls/use-textinput # Jenny March 10
   - mk/location-reassignment-1 # MK March 25
-  - mk/location-reassignment-3 # MK March 31
-  - mk/location-reassignment-4 # MK April 1
   - bmb/SAAS-10712  # Biyeun April 1
-  - jls/restore-invitation-id # Jenny April 2
   - sr-es-alias # Sravan April 3
-  - ap/fix-demo-form # Amit April 3
+  - dmr/twilio-messaging-service  # Danny Apr 3
 submodules: {}

@@ -22,12 +22,15 @@ from casexml.apps.case.xform import (
     get_case_updates,
 )
 from casexml.apps.case.xml.parser import CaseNoopAction
-from couchforms.models import XFormInstance, all_known_formlike_doc_types
+from couchforms.models import XFormInstance, XFormOperation, all_known_formlike_doc_types
 from couchforms.models import doc_types as form_doc_types
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.database import iter_docs, retry_on_couch_error
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 
+from corehq.apps.cleanup.management.commands.swap_duplicate_xforms import (
+    PROBLEM_TEMPLATE_START,
+)
 from corehq.apps.domain.dbaccessors import get_doc_count_in_domain_by_type
 from corehq.apps.domain.models import Domain
 from corehq.apps.tzmigration.api import (
@@ -82,7 +85,6 @@ from corehq.form_processor.utils.general import (
 from corehq.form_processor.utils.xform import convert_xform_to_json
 from corehq.toggles import COUCH_SQL_MIGRATION_BLACKLIST, NAMESPACE_DOMAIN
 from corehq.util.couch_helpers import NoSkipArgsProvider
-from corehq.util.datadog.utils import bucket_value
 from corehq.util.log import with_progress_bar
 from corehq.util.pagination import (
     PaginationEventHandler,
@@ -191,13 +193,24 @@ class CouchSqlDomainMigrator:
 
     def _process_main_forms(self):
         """process main forms (including cases and ledgers)"""
+        def process_form(doc):
+            if not doc.get('problem'):
+                pool.process_xform(doc)
+            elif str(doc['problem']).startswith(PROBLEM_TEMPLATE_START):
+                doc = _fix_replacement_form_problem_in_couch(doc)
+                pool.process_xform(doc)
+            else:
+                log.debug("defer 'problem' form: %s", doc["_id"])
+                self.statedb.add_problem_form(doc["_id"])
+
         def migrate_form(form, case_ids):
             self._migrate_form(form, case_ids, form_is_processed=True)
             add_form()
+
         with self.counter('main_forms', 'XFormInstance') as add_form, \
                 AsyncFormProcessor(self.statedb, migrate_form) as pool:
             for doc in self._get_resumable_iterator(['XFormInstance']):
-                pool.process_xform(doc)
+                process_form(doc)
 
     def _migrate_form(self, couch_form, case_ids, **kw):
         set_local_domain_sql_backend_override(self.domain)
@@ -364,7 +377,8 @@ class CouchSqlDomainMigrator:
     def _diff_cases(self):
         from .casedifftool import CaseDiffTool
         casediff = CaseDiffTool(self)
-        casediff.diff_cases()
+        if not self.forms:
+            casediff.diff_cases()
         if casediff.should_diff_pending():
             casediff.diff_cases("pending")
 
@@ -521,7 +535,7 @@ class CouchSqlDomainMigrator:
                 return True
             old_tx = CaseAccessorSQL.get_transaction_by_form_id(case.case_id, form_id)
             assert old_tx, (form_id, case_id)
-            return old_tx.type != new_tx.type
+            return old_tx.type != new_tx.type or old_tx.revoked != new_tx.revoked
 
         def iter_missing_ledgers(stock_result):
             assert not stock_result.models_to_delete, (form_id, stock_result)
@@ -541,7 +555,7 @@ class CouchSqlDomainMigrator:
                 log.warning("unprocessed form %s referenced by case %s", form_id, case_id)
             return False
         sql_form = FormAccessorSQL.get_form(form_id)
-        result = self._get_case_stock_result(sql_form, couch_form)
+        result = self._apply_form_to_case(sql_form, couch_form)
         if not result:
             return False
         cases = [c for c in result.case_models if did_update(c)]
@@ -568,6 +582,30 @@ class CouchSqlDomainMigrator:
                 LedgerAccessorSQL.save_ledger_values(ledgers, result.stock_result)
                 saved = True
         return saved
+
+    def _apply_form_to_case(self, sql_form, couch_form):
+        if (sql_form.is_error and couch_form.doc_type == "XFormInstance"
+                and couch_form.problem):
+            # Note: does not clear "problem" field
+            sql_form.state = XFormInstanceSQL.NORMAL
+            sql_form.save()
+        elif (sql_form.is_normal and couch_form.doc_type == "XFormInstance"
+                and not couch_form.initial_processing_complete
+                and not sql_form.initial_processing_complete):
+            # Note: creates an un-recorded form diff. This is an
+            # internal flag and there are cases that reference the form,
+            # implying that the form was processed, and therefore the
+            # 'initial_processing_complete' state in Couch is wrong.
+            sql_form.initial_processing_complete = True
+            sql_form.save()
+        result = self._get_case_stock_result(sql_form, couch_form)
+        if sql_form.is_normal and sql_form.initial_processing_complete:
+            for case in result.case_models:
+                for tx in case.get_live_tracked_models(CaseTransaction):
+                    assert tx.form_id == sql_form.form_id, (sql_form.form_id, tx)
+                    if tx.revoked:
+                        tx.revoked = False
+        return result
 
     def _check_for_migration_restrictions(self, domain_name):
         msgs = []
@@ -896,6 +934,40 @@ def _migrate_case_actions(couch_case, sql_case):
 
     for transaction in transactions.values():
         sql_case.track_create(transaction)
+
+
+def _fix_replacement_form_problem_in_couch(doc):
+    """Fix replacement form created by swap_duplicate_xforms
+
+    The replacement form was incorrectly created with "problem" text,
+    which causes it to be counted as an error form, and that messes up
+    the diff counts at the end of this migration.
+
+    NOTE the replacement form's _id does not match instanceID in its
+    form.xml. That issue is not resolved here.
+
+    See:
+    - corehq/apps/cleanup/management/commands/swap_duplicate_xforms.py
+    - couchforms/_design/views/all_submissions_by_domain/map.js
+    """
+    problem = doc["problem"]
+    assert problem.startswith(PROBLEM_TEMPLATE_START), doc
+    assert doc["doc_type"] == "XFormInstance", doc
+    deprecated_id = problem[len(PROBLEM_TEMPLATE_START):].split(" on ", 1)[0]
+    form = XFormInstance.wrap(doc)
+    form.deprecated_form_id = deprecated_id
+    form.history.append(XFormOperation(
+        user="system",
+        date=datetime.utcnow(),
+        operation="Resolved bad duplicate form during couch-to-sql "
+        "migration. Original problem: %s" % problem,
+    ))
+    form.problem = None
+    old_form = XFormInstance.get(deprecated_id)
+    if old_form.initial_processing_complete and not form.initial_processing_complete:
+        form.initial_processing_complete = True
+    form.save()
+    return form.to_json()
 
 
 def _migrate_couch_attachments_to_blob_db(couch_form):
