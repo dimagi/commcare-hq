@@ -35,10 +35,4 @@ class MasterDataReport(DatespanMixin, CustomProjectReport, GenericTabularReport)
 
     @cached_property
     def _food_data(self):
-        return FoodData(
-            self.domain,
-            datespan=self.datespan,
-            case_owners=self.request.GET.get('case_owners'),
-            gap_type=self.request.GET.get('gap_type'),
-            recall_status=self.request.GET.get('recall_status'),
-        )
+        return FoodData.from_request(self.domain, self.request)

@@ -414,6 +414,16 @@ class FoodData:
             'recall_status': recall_status or '',
         })
 
+    @classmethod
+    def from_request(cls, domain, request):
+        return cls(
+            domain,
+            datespan=request.datespan,
+            case_owners=request.GET.get('case_owners'),
+            recall_status=request.GET.get('recall_status'),
+            gap_type=request.GET.get('gap_type'),
+        )
+
     @property
     def headers(self):
         return [i.slug for i in INDICATORS] + list(get_nutrient_headers(self.fixtures.nutrient_names))

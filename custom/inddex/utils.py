@@ -46,19 +46,6 @@ class MultiTabularReport(DatespanMixin, CustomProjectReport, GenericTabularRepor
         return [CaseOwnersFilter, DateRangeFilter]
 
     @property
-    def report_config(self):
-        return {
-            'domain': self.domain,
-            'startdate': str(self.datespan.startdate),
-            'enddate': str(self.datespan.enddate),
-            'case_owners': self.case_owner
-        }
-
-    @property
-    def case_owner(self):
-        return self.request.GET.get('case_owners') or ''
-
-    @property
     def data_providers(self):
         return []
 

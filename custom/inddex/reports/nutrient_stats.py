@@ -34,7 +34,7 @@ class NutrientStatsReport(MultiTabularReport):
 
     @property
     def report_config(self):
-        report_config = super().report_config
+        report_config = {}  # TODO port to FoodData.from_request
         request_slugs = [
             'gender',
             'age_range',

@@ -32,7 +32,7 @@ class GapsDetailReport(MultiTabularReport):
 
     @property
     def report_config(self):
-        report_config = super().report_config
+        report_config = {}  # TODO port to FoodData.from_request
         report_config.update(
             gap_type=self.request.GET.get('gap_type') or '',
             recall_status=self.request.GET.get('recall_status') or '',
