@@ -3,15 +3,6 @@
 {% load i18n %}
 
 {% block reportcontent %}
-{% block pretable %}
-    {% if not report.needs_filters %}
-        <div class="media">
-          <div class="media-body" style="height: 64px">
-            <h3 class="media-heading">{{ name }}<br/></h3>
-          </div>
-        </div>
-    {% endif %}{{ block.super }}
-{% endblock %}
 
 {% block reporttable %}
 {% if report.needs_filters %}
@@ -30,6 +21,7 @@
 {% endif %}
 {% endblock %}
 {% block posttable %}{% endblock %}
+
 {% endblock %}
 
 {% block js-inline %}
