@@ -337,9 +337,9 @@ class LocationExcelValidator(object):
                 expected = set(LOCATION_SHEET_HEADERS_BASE.values())
                 if actual != expected:
                     if expected - actual:
-                        detail = "'{}' are missing.".format(", ".join(expected - actual))
+                        detail = _("'{}' are missing.").format(", ".join(expected - actual))
                     else:
-                        detail = "'{}' are not recognized.".format(", ".join(actual - expected))
+                        detail = _("'{}' are not recognized.").format(", ".join(actual - expected))
                     raise LocationExcelSheetError(
                         _("Locations sheet with title '{name}' should contain exactly '{expected}' "
                           "as the sheet headers. {detail}")
