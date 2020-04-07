@@ -6,7 +6,7 @@ from collections import Counter
 
 from couchdbkit import ResourceConflict
 
-from corehq.util.metrics import metrics_histogram, metrics_counter
+from corehq.util.metrics import metrics_counter
 from couchexport.export import FormattedRow, get_writer
 from couchexport.models import Format
 from dimagi.utils.logging import notify_exception
