@@ -152,7 +152,12 @@ from custom.icds_reports.utils.aggregation_helpers.distributed import (
     AggAwcDistributedHelper,
     AggChildHealthAggregationDistributedHelper,
     GrowthMonitoringFormsAggregationDistributedHelper,
-    DailyFeedingFormsChildHealthAggregationDistributedHelper
+    DailyFeedingFormsChildHealthAggregationDistributedHelper,
+)
+from custom.icds_reports.utils.aggregation_helpers.distributed.deprecation import (
+    TempPrevUCRTables,
+    TempPrevIntermediateTables,
+    TempInfraTables
 )
 from custom.icds_reports.utils.aggregation_helpers.distributed.mbt import (
     AwcMbtDistributedHelper,
@@ -215,11 +220,15 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
 
         update_aggregate_locations_tables()
 
+
         state_ids = list(SQLLocation.objects
                      .filter(domain=DASHBOARD_DOMAIN, location_type__name='state')
                      .values_list('location_id', flat=True))
 
         for monthly_date in monthly_dates:
+            TempPrevUCRTables().make_all_tables(monthly_date)
+            TempPrevIntermediateTables().make_all_tables(monthly_date)
+            TempInfraTables().make_all_tables(monthly_date)
             calculation_date = monthly_date.strftime('%Y-%m-%d')
             res_daily = icds_aggregation_task.delay(date=calculation_date, func_name='_daily_attendance_table')
             res_daily.get(disable_sync_subtasks=False)
