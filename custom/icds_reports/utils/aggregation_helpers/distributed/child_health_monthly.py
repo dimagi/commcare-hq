@@ -96,7 +96,7 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
             start_month_string=start_month_string)
         not_registered = "(agg_availing.is_registered = 0 AND agg_availing.registration_date::date < {start_month_string})::boolean".format(
             start_month_string=start_month_string)
-        seeking_services = "NOT COALESCE({not_registered},'f') AND NOT COALESCE({migrated}, 'f')".format(
+        seeking_services = "{not_registered} IS DISTINCT FROM 't' AND {migrated} IS DISTINCT FROM 't'".format(
             not_registered=not_registered, migrated=migrated)
         born_in_month = "({} AND person_cases.dob BETWEEN {} AND {})".format(
             seeking_services, start_month_string, end_month_string
@@ -160,7 +160,7 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
                 "CASE WHEN person_cases.aadhar_date < {} THEN  1 ELSE 0 END".format(end_month_string)),
             ("valid_in_month", "CASE WHEN {} THEN 1 ELSE 0 END".format(valid_in_month)),
             ("valid_all_registered_in_month",
-                "CASE WHEN {} AND {} AND {} <= 72 AND NOT COALESCE({}, 'f') THEN 1 ELSE 0 END".format(
+                "CASE WHEN {} AND {} AND {} <= 72 AND {} IS DISTINCT FROM 't' THEN 1 ELSE 0 END".format(
                     open_in_month, alive_in_month, age_in_months, migrated
                 )),
             ("person_name", "child_health.person_name"),
