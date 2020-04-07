@@ -5,17 +5,17 @@ COPY(SELECT
     awc.supervisor_name,
     awc.awc_name,
     awc.awc_site_code,
-    SUM(CASE WHEN chm.nutrition_status_weighed=1 AND chm.age_tranche::int<=36 AND month='%(month_1)s' THEN 1 ELSE 0 END) as wight_recorded_%(column_1)s,
+    SUM(CASE WHEN chm.nutrition_status_weighed=1 AND chm.age_tranche::int<=36 AND month='%(month_1)s' THEN 1 ELSE 0 END) as weight_recorded_%(column_1)s,
     SUM(CASE WHEN chm.wer_eligible=1 AND chm.age_tranche::int<=36 AND month='%(month_1)s' THEN 1 ELSE 0 END) as weight_eligible_%(column_1)s,
     SUM(CASE WHEN chm.num_rations_distributed>=21 AND month='%(month_1)s' THEN 1 ELSE 0 END) as thr_count_%(column_1)s,
     SUM(CASE WHEN chm.thr_eligible=1 AND month='%(month_1)s' THEN 1 ELSE 0 END) as thr_eligible_%(column_1)s,
 
-    SUM(CASE WHEN chm.nutrition_status_weighed=1 AND chm.age_tranche::int<=36 AND month='%(month_2)s' THEN 1 ELSE 0 END) as wight_recorded_%(column_2)s,
+    SUM(CASE WHEN chm.nutrition_status_weighed=1 AND chm.age_tranche::int<=36 AND month='%(month_2)s' THEN 1 ELSE 0 END) as weight_recorded_%(column_2)s,
     SUM(CASE WHEN chm.wer_eligible=1 AND chm.age_tranche::int<=36 AND month='%(month_2)s' THEN 1 ELSE 0 END) as weight_eligible_%(column_2)s,
     SUM(CASE WHEN chm.num_rations_distributed>=21 AND month='%(month_3)s' THEN 1 ELSE 0 END) as thr_count_%(column_2)s,
     SUM(CASE WHEN chm.thr_eligible=1 AND month='%(month_2)s' THEN 1 ELSE 0 END) as thr_eligible_%(column_2)s,
 
-    SUM(CASE WHEN chm.nutrition_status_weighed=1 AND chm.age_tranche::int<=36 AND month='%(month_3)s' THEN 1 ELSE 0 END) as wight_recorded_%(column_3)s,
+    SUM(CASE WHEN chm.nutrition_status_weighed=1 AND chm.age_tranche::int<=36 AND month='%(month_3)s' THEN 1 ELSE 0 END) as weight_recorded_%(column_3)s,
     SUM(CASE WHEN chm.wer_eligible=1 AND chm.age_tranche::int<=36 AND month='%(month_3)s' THEN 1 ELSE 0 END) as weight_eligible_%(column_3)s,
     SUM(CASE WHEN chm.num_rations_distributed>=21 AND month='%(month_3)s' THEN 1 ELSE 0 END) as thr_count_%(column_3)s,
     SUM(CASE WHEN chm.thr_eligible=1 AND month='%(month_3)s' THEN 1 ELSE 0 END) as thr_eligible_%(column_3)s
