@@ -10,7 +10,6 @@ from custom.inddex.filters import (
     RecallStatusFilter,
 )
 from custom.inddex.food import FoodData
-from custom.inddex.ucr_data import FoodCaseData
 
 
 class MasterDataFileSummaryReport(DatespanMixin, CustomProjectReport, GenericTabularReport):
@@ -22,7 +21,7 @@ class MasterDataFileSummaryReport(DatespanMixin, CustomProjectReport, GenericTab
 
     @property
     def fields(self):
-        return [CaseOwnersFilter, DateRangeFilter, RecallStatusFilter]
+        return [CaseOwnersFilter, DateRangeFilter, GapTypeFilter, RecallStatusFilter]
 
     @property
     def headers(self):
@@ -40,5 +39,6 @@ class MasterDataFileSummaryReport(DatespanMixin, CustomProjectReport, GenericTab
             self.domain,
             datespan=self.datespan,
             case_owners=self.request.GET.get('case_owners'),
+            gap_type=self.request.GET.get('gap_type'),
             recall_status=self.request.GET.get('recall_status'),
         )
