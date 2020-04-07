@@ -1,6 +1,5 @@
 import os
 from datetime import datetime
-from dateutil.relativedelta import relativedelta
 
 
 from django.core.management.base import BaseCommand
@@ -29,15 +28,16 @@ class Command(BaseCommand):
         )
 
     def build_data(self, date):
-        for i in range(1, 3):
+        for i in range(1, 4):
             path = os.path.join(os.path.dirname(__file__), 'sql_scripts',
                                 'ap_data_pull_{}.sql'.format(i))
             context = {
-                'month_execute': date.strftime("%Y-%m-%d").replace("-", "_")
+                'month_execute': date.strftime("%Y-%m-%d")
             }
             with open(path, "r", encoding='utf-8') as sql_file:
                 sql_to_execute = sql_file.read()
                 sql_to_execute = sql_to_execute % context
+                print(f"Executing Pull ap_date_pull_{i}\n")
                 _run_custom_sql_script(sql_to_execute)
 
     def handle(self, *args, **kwargs):
