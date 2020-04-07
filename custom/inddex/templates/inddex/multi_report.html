@@ -13,7 +13,7 @@
     {% else %}
         {% for thisreport in reports %}
           <br/>
-          <h4 class="media-heading">{{ thisreport.report_table.title }}<br/><small>{{ subtitle1 }}</small><br/><small>{{ subtitle2 }}</small></h4>
+          <h4 class="media-heading">{{ thisreport.report_table.title }}</h4>
           {% include 'inddex/partials/report_table.html' with report_table=thisreport.report_table %}
           <br/>
         {% endfor %}
