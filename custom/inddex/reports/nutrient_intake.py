@@ -9,8 +9,7 @@ from custom.inddex.utils import MultiTabularReport
 
 
 class NutrientIntakeReport(MultiTabularReport):
-    title = 'Output 3 - Disaggregated Intake Data by Food and Aggregated Daily Intake Data by Respondent'
-    name = title
+    name = 'Output 3 - Disaggregated Intake Data by Food and Aggregated Daily Intake Data by Respondent'
     slug = 'nutrient_intake'
     export_only = True
 

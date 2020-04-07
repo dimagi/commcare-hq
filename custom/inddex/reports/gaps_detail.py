@@ -7,8 +7,7 @@ from custom.inddex.utils import MultiTabularReport
 
 
 class GapsDetailReport(MultiTabularReport):
-    title = 'Output 2b - Detailed Information on Gaps'
-    name = title
+    name = 'Output 2b - Detailed Information on Gaps'
     slug = 'gaps_detail'
 
     @property

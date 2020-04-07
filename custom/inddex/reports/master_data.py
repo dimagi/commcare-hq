@@ -8,8 +8,7 @@ from custom.inddex.food import FoodData
 
 
 class MasterDataReport(DatespanMixin, CustomProjectReport, GenericTabularReport):
-    title = 'Output 1 - Master Data File'
-    name = title
+    name = 'Output 1 - Master Data File'
     slug = 'master_data'
 
     @property

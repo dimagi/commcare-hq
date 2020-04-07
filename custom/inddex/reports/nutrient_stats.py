@@ -8,8 +8,7 @@ from custom.inddex.utils import MultiTabularReport
 
 
 class NutrientStatsReport(MultiTabularReport):
-    title = 'Output 4 - Nutrient Intake Summary Statistics'
-    name = title
+    name = 'Output 4 - Nutrient Intake Summary Statistics'
     slug = 'nutrient_stats'
 
     @property
