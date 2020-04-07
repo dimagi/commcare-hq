@@ -21,13 +21,13 @@ MANY = "many"
 
 
 class Transition(object):
-    def __init__(self, operation, old_locations, new_locations):
+    def __init__(self, domain, operation, old_locations, new_locations):
         self.operation = {
             MERGE_OPERATION: MergeOperation,
             SPLIT_OPERATION: SplitOperation,
             EXTRACT_OPERATION: ExtractOperation,
             MOVE_OPERATION: MoveOperation
-        }[operation](old_locations, new_locations)
+        }[operation](domain, old_locations, new_locations)
 
     def valid(self):
         return self.operation.valid()
@@ -45,7 +45,8 @@ class BaseOperation(metaclass=ABCMeta):
     expected_old_locations = ONE
     expected_new_locations = ONE
 
-    def __init__(self, old_locations, new_locations):
+    def __init__(self, domain, old_locations, new_locations):
+        self.domain = domain
         self.old_locations = old_locations
         self.new_locations = new_locations
         self.errors = []
@@ -102,6 +103,7 @@ class MergeOperation(BaseOperation):
     expected_old_locations = MANY
 
     def perform(self):
+        from custom.icds.location_reassignment.utils import reassign_cases
         with transaction.atomic():
             timestamp = datetime.utcnow()
             new_location = self.new_locations[0]
@@ -116,6 +118,8 @@ class MergeOperation(BaseOperation):
             new_location.metadata[DEPRECATES_AT] = timestamp
             new_location.metadata[DEPRECATES_VIA] = self.type
             new_location.save()
+        for old_location in self.old_locations:
+            reassign_cases.delay(self.domain, old_location.location_id, new_location.location_id, timestamp)
 
 
 class SplitOperation(BaseOperation):
@@ -162,6 +166,7 @@ class MoveOperation(BaseOperation):
     type = MOVE_OPERATION
 
     def perform(self):
+        from custom.icds.location_reassignment.utils import reassign_cases
         with transaction.atomic():
             timestamp = datetime.utcnow()
             old_location = self.old_locations[0]
@@ -176,3 +181,4 @@ class MoveOperation(BaseOperation):
             new_location.metadata[DEPRECATES_AT] = timestamp
             new_location.metadata[DEPRECATES_VIA] = self.type
             new_location.save()
+        reassign_cases.delay(self.domain, old_location.location_id, new_location.location_id, timestamp)

@@ -81,8 +81,8 @@ class Processor(object):
                 old_site_codes, new_site_codes = from_site_codes, to_site_codes
             else:
                 new_site_codes, old_site_codes = from_site_codes, to_site_codes
-            errors = deprecate_locations(self._get_locations(old_site_codes), self._get_locations(new_site_codes),
-                                         operation)
+            errors = deprecate_locations(self.domain, self._get_locations(old_site_codes),
+                                         self._get_locations(new_site_codes), operation)
             if errors:
                 raise InvalidTransitionError(",".join(errors))
 
