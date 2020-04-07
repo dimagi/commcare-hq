@@ -33,8 +33,6 @@ class MultiSheetReportExport(ReportExport):
 class MultiTabularReport(DatespanMixin, CustomProjectReport, GenericTabularReport):
     report_template_path = 'inddex/multi_report.html'
     report_comment = ''
-    flush_layout = True
-    default_rows = 10
     exportable = True
     export_only = False
 
