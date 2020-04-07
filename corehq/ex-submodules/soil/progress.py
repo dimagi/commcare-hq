@@ -173,7 +173,7 @@ def _is_real_task(task):
         #   - task_id: <task_id>
         # If ANYTHING else is set, we give it the benefit of the doubt and call it real
         return any(
-            value
+            value is not None
             for key, value in task._get_task_meta().items()
             if not (
                 (key == 'status' and value == 'PENDING')
