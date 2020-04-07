@@ -34,7 +34,6 @@ from corehq.apps.userreports.models import StaticReportConfiguration, AsyncIndic
 from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
 from corehq.blobs.mixin import safe_id
 from corehq.const import ONE_DAY
-from corehq.util.datadog.gauges import datadog_histogram
 from corehq.util.files import TransientTempfile
 from corehq.util.quickcache import quickcache
 from corehq.util.timer import TimingContext
@@ -185,11 +184,6 @@ class ICDSMixin(object):
         tags = ["location_type:{}".format(loc_type), "report_slug:{}".format(self.slug)]
         if self.allow_conditional_agg:
             tags.append("allow_conditional_agg:yes")
-        datadog_histogram(
-            "commcare.icds.block_reports.custom_data_duration",
-            timer.duration,
-            tags=tags
-        )
         return to_ret
 
     def _custom_data(self, selected_location, domain):
@@ -233,11 +227,6 @@ class ICDSMixin(object):
             tags = ["location_type:{}".format(loc_type), "report_slug:{}".format(self.slug), "config:{}".format(config['id'])]
             if allow_conditional_agg:
                 tags.append("allow_conditional_agg:yes")
-            datadog_histogram(
-                "commcare.icds.block_reports.ucr_querytime",
-                timer.duration,
-                tags=tags
-            )
 
             for column in config['columns']:
                 column_agg_func = column['agg_fun']
