@@ -27,7 +27,7 @@ class Processor(object):
     def process(self):
         self._create_new_locations()
         # process each sheet, in reverse order of hierarchy
-        for location_type_code in list(reversed(list(self.location_types_by_code.keys()))):
+        for location_type_code in list(reversed(list(self.location_types_by_code))):
             for operation, transitions in self.transitions[location_type_code].items():
                 self._perform_transitions(operation, transitions)
 

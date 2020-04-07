@@ -84,7 +84,8 @@ class Parser(object):
             return
         self._note_transition(operation, location_type_code, new_site_code, old_site_code)
         self.new_location_details[location_type_code].append({
-            'name': row.get(NEW_NAME), 'site_code': new_site_code,
+            'name': row.get(NEW_NAME),
+            'site_code': new_site_code,
             'parent_site_code': row.get(NEW_PARENT_SITE_CODE),
             'lgd_code': row.get(NEW_LGD_CODE)
         })
