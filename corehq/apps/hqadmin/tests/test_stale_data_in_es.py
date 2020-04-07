@@ -195,9 +195,7 @@ class TestStaleDataInESSQL(TestCase):
 
     def _stale_data_in_es(self, *args, **kwargs):
         f = StringIO()
-        iteration_key = kwargs.pop('iteration_key', f'test-iteration-{uuid.uuid4().hex}')
         expect_exception = kwargs.pop('expect_exception', None)
-        args = (iteration_key,) + args
         with mock.patch('sys.stdout', f):
             if expect_exception:
                 with self.assertRaises(expect_exception):
