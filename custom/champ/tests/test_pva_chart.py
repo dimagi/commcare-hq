@@ -1,15 +1,14 @@
 import json
 import mock
 
-from unittest2 import skip
-
+from corehq.util.test_utils import softer_assert
 from custom.champ.tests.utils import ChampTestCase
 from custom.champ.views import PrevisionVsAchievementsView
 
 from django.urls import reverse
 
 
-@skip("to add back post https://github.com/dimagi/sql-agg/pull/56")
+@softer_assert("to add back post https://github.com/dimagi/sql-agg/pull/56")
 class TestPVAChart(ChampTestCase):
 
     def setUp(self):
