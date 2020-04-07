@@ -1,11 +1,12 @@
 import logging
 
+from datetime import date
 from dateutil.relativedelta import relativedelta
 
 from corehq.apps.userreports.models import StaticDataSourceConfiguration, get_datasource_config
 from corehq.apps.userreports.util import get_table_name
 
-from custom.icds_reports.utils.aggregation_helpers import get_child_health_temp_tablename, transform_day_to_month, get_agg_child_temp_tablename
+from custom.icds_reports.utils.aggregation_helpers import get_child_health_temp_tablename, transform_day_to_month, get_agg_child_temp_tablename, get_prev_table
 from custom.icds_reports.const import AGG_CCS_RECORD_CF_TABLE, AGG_THR_V2_TABLE, AGG_ADOLESCENT_GIRLS_REGISTRATION_TABLE
 from custom.icds_reports.utils.aggregation_helpers.distributed.base import BaseICDSAggregationDistributedHelper
 
@@ -34,6 +35,11 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
     @property
     def agg_child_temp_tablename(self):
         return get_agg_child_temp_tablename()
+
+    def get_table(self, table_id):
+        if self.month_start != transform_day_to_month(date.today()):
+            return get_prev_table(table_id)
+        return get_table_name(self.domain, table_id)
 
     def aggregate(self, cursor):
         agg_query, agg_params = self.aggregation_query()
@@ -178,6 +184,7 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
             'start_date': self.month_start
         }
 
+        # MAKE SURE YOU DID NOT RUIN PERFORMANCE
         yield """
         UPDATE "{tablename}" agg_awc SET
            cases_household = ut.cases_household,
@@ -188,17 +195,17 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
            num_launched_supervisors = CASE WHEN ut.all_cases_household>0 THEN 1 ELSE 0 END,
            num_launched_awcs = CASE WHEN ut.all_cases_household>0 THEN 1 ELSE 0 END
         FROM ( SELECT
-            owner_id,
+            awc_id,
             supervisor_id,
             sum(open_count) AS cases_household,
             count(*) AS all_cases_household
             FROM "{household_cases}"
             WHERE opened_on<= %(end_date)s
-            GROUP BY owner_id, supervisor_id ) ut
-        WHERE ut.owner_id = agg_awc.awc_id and ut.supervisor_id=agg_awc.supervisor_id;
+            GROUP BY awc_id, supervisor_id ) ut
+        WHERE ut.awc_id = agg_awc.awc_id and ut.supervisor_id=agg_awc.supervisor_id;
         """.format(
             tablename=self.temporary_tablename,
-            household_cases=get_table_name(self.domain, 'static-household_cases'),
+            household_cases=self.get_table('static-household_cases')
         ), {'end_date': self.month_end}
 
         yield """
@@ -246,12 +253,11 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
         FROM "{ucr_tablename}" ucr
         WHERE (opened_on <= %(end_date)s AND
               (closed_on IS NULL OR closed_on >= %(start_date)s ))
-
         GROUP BY ucr.supervisor_id, ucr.awc_id) ut
         WHERE ut.awc_id = agg_awc.awc_id and ut.supervisor_id=agg_awc.supervisor_id;
         """.format(
             tablename=self.temporary_tablename,
-            ucr_tablename=get_table_name(self.domain, 'static-person_cases_v3'),
+            ucr_tablename=self.get_table('static-person_cases_v3'),
             seeking_services=(
                 "CASE WHEN "
                 "registered_status IS DISTINCT FROM 0 AND migration_status IS DISTINCT FROM 1 "
@@ -266,7 +272,6 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
             'month_end_15yr': self.month_end_15yr,
             'month_start_18yr': self.month_start_18yr,
         }
-
 
         yield """
         UPDATE "{tablename}" agg_awc SET
@@ -291,15 +296,12 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
         where agg_awc.awc_id = ut.awc_id and ut.supervisor_id=agg_awc.supervisor_id;
         """.format(
             tablename=self.temporary_tablename,
-            ucr_tablename=get_table_name(self.domain, 'static-person_cases_v3'),
+            ucr_tablename=self.get_table('static-person_cases_v3'),
             adolescent_girls_table=AGG_ADOLESCENT_GIRLS_REGISTRATION_TABLE
         ), {
             'start_date': self.month_start,
             'end_date': self.month_end
         }
-
-
-
 
         yield """
         UPDATE "{tablename}" agg_awc SET
@@ -449,7 +451,7 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
                 CASE WHEN GREATEST(adult_scale_available, adult_scale_usable, baby_scale_available,
                               flat_scale_available, baby_scale_usable,
                               infantometer_usable, stadiometer_usable, 0) > 0 THEN 1 ELSE 0 END as awc_with_gm_devices
-            FROM icds_dashboard_infrastructure_forms
+            FROM icds_dashboard_infrastructure_forms infra
             WHERE month = %(start_date)s
         ) ut
         WHERE ut.awc_id = agg_awc.awc_id
@@ -619,7 +621,7 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
         DROP TABLE "tmp_home_visit";
         """.format(
             tablename=self.tablename,
-            ccs_record_case_ucr=get_table_name(self.domain, 'static-ccs_record_cases'),
+            ccs_record_case_ucr=self.get_table('static-ccs_record_cases'),
             agg_cf_table=AGG_CCS_RECORD_CF_TABLE,
         ), {
             'start_date': self.month_start

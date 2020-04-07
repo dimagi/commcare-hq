@@ -11,6 +11,7 @@ from custom.icds_reports.utils.aggregation_helpers import (
     AggregationHelper,
     month_formatter,
     transform_day_to_month,
+    get_prev_table
 )
 
 logger = logging.getLogger(__name__)
@@ -41,6 +42,10 @@ class BaseICDSAggregationDistributedHelper(AggregationHelper):
     @property
     def ucr_tablename(self):
         return get_table_name(self.domain, self.ucr_data_source_id)
+
+    @property
+    def prev_tablename(self):
+        return get_prev_table(self.helper_key)
 
     def aggregate(self, cursor):
         raise NotImplementedError

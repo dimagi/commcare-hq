@@ -1,5 +1,6 @@
 import logging
 
+from datetime import date
 from dateutil.relativedelta import relativedelta
 
 from corehq.apps.userreports.util import get_table_name
@@ -16,6 +17,7 @@ from custom.icds_reports.utils.aggregation_helpers import (
     get_child_health_temp_tablename,
     transform_day_to_month,
     month_formatter,
+    get_prev_table
 )
 from custom.icds_reports.utils.aggregation_helpers.distributed.base import BaseICDSAggregationDistributedHelper
 
@@ -47,9 +49,14 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
             logger.info(f'executing query {i}')
             cursor.execute(query)
 
+    def get_table(self, table_id):
+        if self.month != transform_day_to_month(date.today()):
+            return get_prev_table(table_id)
+        return get_table_name(self.domain, table_id)
+
     @property
     def child_health_case_ucr_tablename(self):
-        return get_table_name(self.domain, 'static-child_health_cases')
+        return self.get_table('static-child_health_cases')
 
     @property
     def child_tasks_case_ucr_tablename(self):
@@ -57,7 +64,7 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
 
     @property
     def person_case_ucr_tablename(self):
-        return get_table_name(self.domain, 'static-person_cases_v3')
+        return self.get_table('static-person_cases_v3')
 
     @property
     def tablename(self):

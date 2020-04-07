@@ -89,7 +89,7 @@ class ComplementaryFormsAggregationDistributedHelper(StateBasedAggregationDistri
             END AS hand_wash
           FROM ({ucr_table_query}) ucr
           FULL OUTER JOIN (
-             SELECT * FROM "{tablename}" WHERE month = %(previous_month)s AND state_id = %(state_id)s
+             SELECT * FROM "{prev_tablename}" WHERE state_id = %(state_id)s
           ) prev_month
           ON ucr.case_id = prev_month.case_id AND ucr.supervisor_id = prev_month.supervisor_id
           WHERE coalesce(ucr.month, %(month)s) = %(month)s
@@ -98,5 +98,6 @@ class ComplementaryFormsAggregationDistributedHelper(StateBasedAggregationDistri
         )
         """.format(
             tablename=self.aggregate_parent_table,
-            ucr_table_query=ucr_query
+            ucr_table_query=ucr_query,
+            prev_tablename=self.prev_tablename
         ), query_params

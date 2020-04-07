@@ -1,7 +1,7 @@
 from dateutil.relativedelta import relativedelta
 
 from custom.icds_reports.const import AGG_INFRASTRUCTURE_TABLE
-from custom.icds_reports.utils.aggregation_helpers import month_formatter
+from custom.icds_reports.utils.aggregation_helpers import month_formatter, get_prev_table
 from custom.icds_reports.utils.aggregation_helpers.distributed.base import (
     StateBasedAggregationPartitionedHelper,
 )
@@ -22,6 +22,10 @@ class AwcInfrastructureAggregationHelper(StateBasedAggregationPartitionedHelper)
         'infantometer_usable', 'medicine_kits_usable', 'stadiometer_usable',
         'preschool_kit_available', 'preschool_kit_usable'
     )
+
+    @property
+    def temp_ucr_tablename(self):
+        return get_prev_table(self.ucr_data_source_id)
 
     def _window_helper(self, column_name):
         return (
@@ -57,7 +61,7 @@ class AwcInfrastructureAggregationHelper(StateBasedAggregationPartitionedHelper)
             WINDOW
                 {window_lines}
         """.format(
-            ucr_tablename=self.ucr_tablename,
+            ucr_tablename=self.temp_ucr_tablename,
             select_lines=select_lines,
             window_lines=window_lines,
         ), {

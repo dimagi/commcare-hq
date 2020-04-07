@@ -26,6 +26,10 @@ def get_agg_child_temp_tablename():
     return 'tmp_agg_child_health_5'
 
 
+def get_prev_table(alias):
+    return f'{alias}_prev'
+
+
 class AggregationHelper(object):
     """Base class used to tag aggregation helpers
 
