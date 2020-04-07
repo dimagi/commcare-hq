@@ -45,23 +45,13 @@ class MultiTabularReport(DatespanMixin, CustomProjectReport, GenericTabularRepor
     @property
     def report_context(self):
         return {
-            'reports': [self.get_report_context(dp) for dp in self.data_providers],
+            'reports': [self._get_report_context(dp) for dp in self.data_providers],
             'name': self.name,
             'report_comment': self.report_comment,
             'export_only': self.export_only
         }
 
-    @property
-    @memoized
-    def report_export(self):
-        prepared_data = [self.format_table_to_export(dp) for dp in self.data_providers]
-        return MultiSheetReportExport(self.name, prepared_data)
-
-    @property
-    def export_table(self):
-        return self.report_export.get_table()
-
-    def get_report_context(self, data_provider):
+    def _get_report_context(self, data_provider):
         self.data_source = data_provider
         if self.needs_filters:
             headers = []
@@ -78,12 +68,16 @@ class MultiTabularReport(DatespanMixin, CustomProjectReport, GenericTabularRepor
                 rows=rows
             )
         )
-
         return context
 
-    def format_table_to_export(self, data_provider):
+    @property
+    def export_table(self):
+        prepared_data = [self._format_table_to_export(dp) for dp in self.data_providers]
+        export = MultiSheetReportExport(self.name, prepared_data)
+        return export.get_table()
+
+    def _format_table_to_export(self, data_provider):
         exported_rows = [[header.html for header in data_provider.headers]]
         exported_rows.extend(data_provider.rows)
         title = data_provider.slug
-
         return title, exported_rows
