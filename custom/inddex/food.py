@@ -445,7 +445,7 @@ class FoodData:
                 if self._matches_in_memory_filters(row):
                     static_rows = (getattr(row, column.slug) for column in INDICATORS)
                     nutrient_rows = get_nutrient_values(self.fixtures.nutrient_names, row)
-                    yield map(_format, chain(static_rows, nutrient_rows))
+                    yield [_format(val) for val in chain(static_rows, nutrient_rows)]
 
 
 def get_nutrient_headers(nutrient_names):
