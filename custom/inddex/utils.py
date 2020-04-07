@@ -32,7 +32,6 @@ class MultiSheetReportExport(ReportExport):
 
 class MultiTabularReport(DatespanMixin, CustomProjectReport, GenericTabularReport):
     report_template_path = 'inddex/multi_report.html'
-    report_comment = ''
     exportable = True
     export_only = False
 
@@ -45,7 +44,6 @@ class MultiTabularReport(DatespanMixin, CustomProjectReport, GenericTabularRepor
         return {
             'reports': [self._get_report_context(dp) for dp in self.data_providers],
             'name': self.name,
-            'report_comment': self.report_comment,
             'export_only': self.export_only
         }
 
