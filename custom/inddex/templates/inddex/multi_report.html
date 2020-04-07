@@ -11,10 +11,10 @@
     {% if export_only %}
       <h2>{% blocktrans %}This report is available <i><b>only for export</b></i>{% endblocktrans %}</h2>
     {% else %}
-        {% for thisreport in reports %}
+        {% for data_provider in data_providers %}
           <br/>
-          <h4 class="media-heading">{{ thisreport.report_table.title }}</h4>
-          {% include 'inddex/partials/report_table.html' with report_table=thisreport.report_table %}
+          <h4 class="media-heading">{{ data_provider.title }}</h4>
+          {% include 'inddex/partials/report_table.html' with report_table=data_provider %}
           <br/>
         {% endfor %}
     {% endif %}
