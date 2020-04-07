@@ -32,10 +32,7 @@ class MultiTabularReport(DatespanMixin, CustomProjectReport, GenericTabularRepor
 
     @property
     def export_table(self):
-        return [self._format_table_to_export(dp) for dp in self.data_providers]
-
-    def _format_table_to_export(self, data_provider):
-        exported_rows = [[header.html for header in data_provider.headers]]
-        exported_rows.extend(data_provider.rows)
-        title = data_provider.slug
-        return title, exported_rows
+        return [
+            [dp.slug, [dp.headers] + dp.rows]
+            for dp in self.data_providers
+        ]
