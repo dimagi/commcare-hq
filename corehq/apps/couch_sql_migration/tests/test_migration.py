@@ -186,7 +186,7 @@ class BaseMigrationTestCase(TestCase, TestFileMixin):
             for kind, counts in statedb.get_doc_counts().items()
             if counts.missing
         }, missing or {})
-        if not (diffs or self.migration_success or ignore_fail):
+        if not (diffs or changes or self.migration_success or ignore_fail):
             self.fail("migration failed")
 
     def _get_form_ids(self, doc_type='XFormInstance'):
@@ -1072,6 +1072,10 @@ class MigrationTestCase(BaseMigrationTestCase):
             Diff("test-case", path=["xform_ids", "[*]"], old="form-2", new="", reason="rebuild case")
         ])
 
+        self._do_migration(forms="missing", case_diff="patch")
+        self._compare_diffs()
+        self.assertEqual(self._get_case("test-case").xform_ids, ["form-1", ANY])
+
     def test_delete_user_during_migration(self):
         from corehq.apps.users.models import CommCareUser
         user = CommCareUser.create(self.domain_name, "mobile-user", "123")
@@ -1328,6 +1332,10 @@ class MigrationTestCase(BaseMigrationTestCase):
         form = self._get_form('new-form')
         self.assertEqual(form.deprecated_form_id, "test-form")
         self.assertIsNone(form.problem)
+
+        self._do_migration(forms="missing", case_diff="patch")
+        self._compare_diffs()
+        self.assertEqual(self._get_case("test-case").xform_ids, ["new-form", ANY])
 
     def test_case_with_problem_form(self):
         # form state=error, has problem, normal form in couch

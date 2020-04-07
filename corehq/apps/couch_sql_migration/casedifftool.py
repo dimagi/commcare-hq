@@ -101,6 +101,20 @@ class CaseDiffTool:
             for data in self.iter_case_diff_results(cases):
                 save_result(data)
 
+    def patch_diffs(self):
+        from .casepatch import patch_diffs
+        statedb = self.statedb
+        counts = statedb.get_doc_counts().get("CommCareCase")
+        if not counts or not counts.changes:
+            log.info("nothing to patch")
+            return
+        count = counts.changes
+        log.info(f"patching {count} cases")
+        diffs = statedb.iter_doc_changes("CommCareCase")
+        diffs = with_progress_bar(diffs, count, prefix="Case diffs", oneline=False)
+        for pending_diffs in self.map_cases(patch_diffs, diffs):
+            statedb.add_cases_to_diff(pending_diffs)
+
     def iter_case_diff_results(self, cases):
         if cases is None:
             return self.resumable_iter_diff_cases()

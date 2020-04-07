@@ -484,7 +484,7 @@ class StateDB(DiffDB):
             diffs=diffs.get(kind, 0),
             missing=missing.get(kind, 0),
             changes=changes.get(kind, 0),
-        ) for kind in set(totals) | set(missing) | set(diffs)}
+        ) for kind in set(totals) | set(diffs) | set(missing) | set(changes)}
 
     def iter_missing_doc_ids(self, kind):
         with self.session() as session:
