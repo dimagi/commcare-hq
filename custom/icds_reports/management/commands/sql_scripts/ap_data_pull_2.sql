@@ -5,34 +5,28 @@ COPY(SELECT
     awc.supervisor_name,
     awc.awc_name,
     awc.awc_site_code,
-    CASE WHEN (agg.num_awcs_conducted_vhnd IS NOT NULL AND agg.num_awcs_conducted_vhnd>0 AND agg.month='%(month_1)s') THEN 'Y'
-        ELSE 'N'
-    END as vhnd_conducted_%(column_1)s,
-    CASE WHEN agg.num_launched_awcs=1 AND agg.month='%(month_1)s' THEN 'Launched'
-        ELSE 'Not Launched'
-    END as launched_status_%(column_1)s,
+    SUM(CASE WHEN (agg.num_awcs_conducted_vhnd IS NOT NULL AND agg.num_awcs_conducted_vhnd>0 AND agg.month='%(month_1)s') THEN 1 ELSE 0 END) as vhnd_conducted_%(column_1)s,
+    SUM(CASE WHEN agg.num_launched_awcs=1 AND agg.month='%(month_1)s' THEN 1 ELSE 0 END) as launched_status_%(column_1)s,
 
-    CASE WHEN (agg.num_awcs_conducted_vhnd IS NOT NULL AND agg.num_awcs_conducted_vhnd>0 AND agg.month='%(month_2)s') THEN 'Y'
-        ELSE 'N'
-    END as vhnd_conducted_%(column_2)s,
-    CASE WHEN agg.num_launched_awcs=1 AND agg.month='%(month_2)s' THEN 'Launched'
-        ELSE 'Not Launched'
-    END as launched_status_%(column_2)s,
+    SUM(CASE WHEN (agg.num_awcs_conducted_vhnd IS NOT NULL AND agg.num_awcs_conducted_vhnd>0 AND agg.month='%(month_2)s') THEN 1 ELSE 0 END) as vhnd_conducted_%(column_2)s,
+    SUM(CASE WHEN agg.num_launched_awcs=1 AND agg.month='%(month_2)s' THEN 1 ELSE 0 END) as launched_status_%(column_2)s,
 
-    CASE WHEN (agg.num_awcs_conducted_vhnd IS NOT NULL AND agg.num_awcs_conducted_vhnd>0 AND agg.month='%(month_3)s') THEN 'Y'
-        ELSE 'N'
-    END as vhnd_conducted_%(column_3)s,
-    CASE WHEN agg.num_launched_awcs=1 AND agg.month='%(month_3)s' THEN 'Launched'
-        ELSE 'Not Launched'
-    END as launched_status_%(column_3)s
+    SUM(CASE WHEN (agg.num_awcs_conducted_vhnd IS NOT NULL AND agg.num_awcs_conducted_vhnd>0 AND agg.month='%(month_3)s') THEN 1 ELSE 0 END) as vhnd_conducted_%(column_3)s,
+    SUM(CASE WHEN agg.num_launched_awcs=1 AND agg.month='%(month_3)s' THEN 1 ELSE 0 END) as launched_status_%(column_3)s
 FROM
     "awc_location_local" awc LEFT JOIN "agg_awc" agg ON (
         awc.supervisor_id=agg.supervisor_id and
         awc.doc_id = agg.awc_id AND
-        awc.supervisor_id=agg.supervisor_id
+        awc.supervisor_id=agg.supervisor_id and
+        agg.month in ('%(month_1)s','%(month_2)s','%(month_3)s')
     )
-    where agg.month in ('%(month_1)s','%(month_2)s','%(month_3)s')
-    and awc.state_id='f98e91aa003accb7b849a0f18ebd7039' and awc.aggregation_level=5) TO '/tmp/%(name)s/ap_data_pull_2.csv' DELIMITER ',' CSV HEADER
+    where awc.state_id='f98e91aa003accb7b849a0f18ebd7039' and awc.aggregation_level=5
+    group by awc.state_name,
+    awc.district_name,
+    awc.block_name,
+    awc.supervisor_name,
+    awc.awc_name,
+    awc.awc_site_code) TO '/tmp/%(name)s/ap_data_pull_2.csv' DELIMITER ',' CSV HEADER
 
 --                                                                QUERY PLAN
 -- ----------------------------------------------------------------------------------------------------------------------------------------

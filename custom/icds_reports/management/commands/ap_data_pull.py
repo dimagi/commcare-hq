@@ -66,9 +66,9 @@ class Command(BaseCommand):
             },
             {
                 "name": "january_2020_march_2020",
-                "column_1": "october_2019",
-                "column_2": "november_2019",
-                "column_3": "december_2019",
+                "column_1": "january_2019",
+                "column_2": "february_2019",
+                "column_3": "march_2019",
                 "month_1": "2020-01-01",
                 "month_2": "2020-02-01",
                 "month_3": "2020-03-01"
