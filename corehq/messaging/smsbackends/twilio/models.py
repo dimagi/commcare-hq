@@ -1,10 +1,15 @@
+from typing import Optional
+
+from twilio.base import values
 from twilio.base.exceptions import TwilioRestException
 from twilio.rest import Client
 
 from dimagi.utils.logging import notify_exception
 
 from corehq import toggles
+from corehq.apps.domain.models import Domain
 from corehq.apps.sms.models import SMS, PhoneLoadBalancingMixin, SQLSMSBackend
+from corehq.apps.sms.util import clean_phone_number
 from corehq.messaging.smsbackends.twilio.forms import TwilioBackendForm
 
 # https://www.twilio.com/docs/api/errors/reference
@@ -12,6 +17,7 @@ INVALID_TO_PHONE_NUMBER_ERROR_CODE = 21211
 WHATSAPP_LIMITATION_ERROR_CODE = 63032
 
 WHATSAPP_PREFIX = "whatsapp:"
+WHATSAPP_SANDBOX_PHONE_NUMBER = "14155238886"
 
 
 class SQLTwilioBackend(SQLSMSBackend, PhoneLoadBalancingMixin):
@@ -51,12 +57,14 @@ class SQLTwilioBackend(SQLSMSBackend, PhoneLoadBalancingMixin):
     def get_opt_out_keywords(cls):
         return ['STOP', 'STOPALL', 'UNSUBSCRIBE', 'CANCEL', 'END', 'QUIT']
 
-    def _convert_to_whatsapp(self, number):
-        assert WHATSAPP_PREFIX not in number, "Attempted to re-convert a number already formatted for Whatsapp"
+    @classmethod
+    def convert_to_whatsapp(cls, number):
+        if number.startswith(WHATSAPP_PREFIX):
+            return number
         return f"{WHATSAPP_PREFIX}{number}"
 
-    def _convert_from_whatsapp(self, number):
-        assert WHATSAPP_PREFIX in number, "Attempted to convert a number that is not formatted for Whatsapp"
+    @classmethod
+    def convert_from_whatsapp(cls, number):
         return number.replace(WHATSAPP_PREFIX, "")
 
     def send(self, msg, orig_phone_number=None, *args, **kwargs):
@@ -64,20 +72,26 @@ class SQLTwilioBackend(SQLSMSBackend, PhoneLoadBalancingMixin):
             raise Exception("Expected orig_phone_number to be passed for all "
                             "instances of PhoneLoadBalancingMixin")
 
-        if toggles.WHATSAPP_MESSAGING.enabled(msg.domain) and not kwargs.get('skip_whatsapp', False):
-            orig_phone_number = self._convert_to_whatsapp(orig_phone_number)
-
         config = self.config
         client = Client(config.account_sid, config.auth_token)
         to = msg.phone_number
-        from_ = orig_phone_number
-        msg.system_phone_number = from_
+        msg.system_phone_number = orig_phone_number
+        if toggles.WHATSAPP_MESSAGING.enabled(msg.domain) and not kwargs.get('skip_whatsapp', False):
+            domain_obj = Domain.get_by_name(msg.domain)
+            from_ = getattr(domain_obj, 'twilio_whatsapp_phone_number') or WHATSAPP_SANDBOX_PHONE_NUMBER
+            from_ = clean_phone_number(from_)
+            from_ = self.convert_to_whatsapp(from_)
+            to = self.convert_to_whatsapp(to)
+            messaging_service_sid = None
+        else:
+            from_, messaging_service_sid = self.from_or_messaging_service_sid(orig_phone_number)
         body = msg.text
         try:
             message = client.messages.create(
                 body=body,
                 to=to,
-                from_=from_
+                from_=from_ or values.unset,
+                messaging_service_sid=messaging_service_sid or values.unset,
             )
         except TwilioRestException as e:
             if e.code == INVALID_TO_PHONE_NUMBER_ERROR_CODE:
@@ -85,7 +99,6 @@ class SQLTwilioBackend(SQLSMSBackend, PhoneLoadBalancingMixin):
                 return
             elif e.code == WHATSAPP_LIMITATION_ERROR_CODE:
                 notify_exception(None, f"Error with Twilio Whatsapp: {e}")
-                orig_phone_number = self._convert_from_whatsapp(orig_phone_number)
                 kwargs['skip_whatsapp'] = True
                 self.send(msg, orig_phone_number, *args, **kwargs)
             else:
@@ -93,3 +106,13 @@ class SQLTwilioBackend(SQLSMSBackend, PhoneLoadBalancingMixin):
 
         msg.backend_message_id = message.sid
         msg.save()
+
+    def from_or_messaging_service_sid(self, phone_number: str) -> (Optional[str], Optional[str]):
+        if self.phone_number_is_messaging_service_sid(phone_number):
+            return None, phone_number
+        else:
+            return phone_number, None
+
+    @staticmethod
+    def phone_number_is_messaging_service_sid(phone_number):
+        return phone_number[:2] == 'MG'
