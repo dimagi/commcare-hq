@@ -9,6 +9,7 @@ from .utils import MultiTabularReport
 class GapsSummaryReport(MultiTabularReport):
     name = 'Output 2a - Gaps Summary by Food Type'
     slug = 'gaps_summary'
+    is_released = False
 
     @property
     def fields(self):
