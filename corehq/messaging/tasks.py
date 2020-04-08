@@ -48,7 +48,8 @@ def _sync_case_for_messaging(domain, case_id):
         case = None
     case_load_counter("messaging_sync", domain)()
     update_messaging_for_case(domain, case_id, case)
-    run_auto_update_rules_for_case(case)
+    if case is not None:
+        run_auto_update_rules_for_case(case)
 
 
 def update_messaging_for_case(domain, case_id, case):
