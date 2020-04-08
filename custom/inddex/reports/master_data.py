@@ -1,5 +1,3 @@
-from django.utils.functional import cached_property
-
 from custom.inddex import filters
 from custom.inddex.food import FoodData
 
@@ -22,11 +20,8 @@ class MasterDataReport(MultiTabularReport):
 
     @property
     def data_providers(self):
-        return [MasterData(self._food_data)]
-
-    @cached_property
-    def _food_data(self):
-        return FoodData.from_request(self.domain, self.request)
+        food_data = FoodData.from_request(self.domain, self.request)
+        return [MasterData(food_data)]
 
 
 class MasterData:
