@@ -2056,8 +2056,9 @@ Field should refer to report column IDs, not database fields.
 
 Distinct On
 -----------
-Based on columns mentioned in the distinct on clause,
+Can be used to limit the rows in a report based on a single column or set of columns.
 The top most row is picked in case of duplicates.
+
 This is different from aggregation in sense that this is done after fetching
 the rows, whereas aggregation is done before selecting the rows.
 
