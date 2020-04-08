@@ -15,9 +15,8 @@ from django.http import HttpRequest
 from django.utils.log import AdminEmailHandler
 from django.views.debug import SafeExceptionReporterFilter, get_exception_reporter_filter
 from django.template.loader import render_to_string
-from corehq.apps.analytics.utils import analytics_enabled_for_email
 from corehq.util.view_utils import get_request
-from corehq.util.datadog.utils import get_url_group, sanitize_url
+from corehq.util.metrics.utils import get_url_group, sanitize_url
 from corehq.util.datadog.metrics import ERROR_COUNT
 from corehq.util.datadog.const import DATADOG_UNKNOWN
 

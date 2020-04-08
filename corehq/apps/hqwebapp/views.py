@@ -110,7 +110,7 @@ from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.util.context_processors import commcare_hq_names
 from corehq.util.datadog.const import DATADOG_UNKNOWN
 from corehq.util.datadog.metrics import JSERROR_COUNT
-from corehq.util.datadog.utils import sanitize_url
+from corehq.util.metrics.utils import sanitize_url
 from corehq.util.view_utils import reverse
 from no_exceptions.exceptions import Http403
 
