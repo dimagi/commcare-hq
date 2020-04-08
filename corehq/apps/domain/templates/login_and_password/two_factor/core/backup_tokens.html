@@ -23,7 +23,7 @@
   <form method="post">{% csrf_token %}{{ form }}
     {% if request.couch_user.domain_memberships.0.role.default_landing_page == 'webapps' %}
       <a href="{% url 'homepage'%}"
-       class="pull-right btn btn-link">{% trans "Begin Using CommCare Now" %}</a>
+       class="btn btn-primary">{% trans "Begin Using CommCare Now" %}</a>
     {% endif %}
     <a href="{% url 'two_factor:profile'%}"
        class="pull-right btn btn-link">{% trans "Back to Profile" %}</a>
