@@ -17,19 +17,15 @@
 
   <p>
     {% if request.can_access_all_locations %}
-      <a id="download_link" href="{{ bulk_upload.download_url }}?download_type=full">
-        <button class="btn btn-primary">
-          <i class="fa fa-cloud-download"></i>
-          {% blocktrans with plural_noun=bulk_upload.plural_noun|title %}
-            Download {{ plural_noun }}
-          {% endblocktrans %}
-        </button>
+      <a class="btn btn-primary" id="download_link" href="{{ bulk_upload.download_url }}?download_type=full">
+        <i class="fa fa-cloud-download"></i>
+        {% blocktrans with plural_noun=bulk_upload.plural_noun|title %}
+          Download {{ plural_noun }}
+        {% endblocktrans %}
       </a>
     {% endif %}
-    <a id="download_link" href="{{ bulk_upload.download_url }}?download_type=empty">
-      <button class="btn btn-default">
-        {% trans "Download Empty Template" %}
-      </button>
+    <a class="btn {% if request.can_access_all_locations %}btn-default{% else %}btn-primary{% endif %}" href="{{ bulk_upload.download_url }}?download_type=empty">
+      {% trans "Download Empty Template" %}
     </a>
   </p>
 

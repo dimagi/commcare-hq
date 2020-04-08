@@ -42,13 +42,13 @@ hqDefine("export/js/export_list", [
             options[key] = options[key] || false;
         });
         options.formname = options.formname || '';
-
         assertProperties.assert(options, [
             'addedToBulk',
             'can_edit',
             'deleteUrl',
             'description',
             'downloadUrl',
+            'detSchemaUrl',
             'editUrl',
             'emailedExport',
             'exportType',

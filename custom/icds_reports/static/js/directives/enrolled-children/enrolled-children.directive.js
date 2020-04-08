@@ -77,7 +77,7 @@ function EnrolledChildrenController($scope, $routeParams, $location, $filter, de
     };
     vm.chartOptions = vm.getChartOptions(options);
     vm.chartOptions.chart.type = 'multiBarChart';
-    vm.chartOptions.chart.width = 1100;
+    vm.chartOptions.chart.width = isMobile ? '' : 1100;
     vm.chartOptions.chart.color = d3.scale.category10().range();
     delete vm.chartOptions.chart.tooltips;
     vm.chartOptions.chart.useInteractiveGuideline = false;

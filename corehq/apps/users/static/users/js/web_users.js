@@ -103,10 +103,10 @@ hqDefine("users/js/web_users",[
 
         $('.resend-invite').click(function (e) {
             $(this).addClass('disabled').prop('disabled', true);
-            var id = this.getAttribute('data-invite');
+            var uuid = this.getAttribute('data-uuid');
             var self = this;
             $.post(url("reinvite_web_user"), {
-                invite: id,
+                uuid: uuid,
             },
             function (data) {
                 $(self).parent().text(data.response);
@@ -116,13 +116,13 @@ hqDefine("users/js/web_users",[
         });
 
         function handleDeletion($el, title, body, postUrl) {
-            var id = $el.data('id');
+            var uuid = $el.data('uuid');
             $('#confirm-delete').off('click');
             $('#confirm-delete').on('click', function () {
                 var $button = $(this);
                 $button.addClass('disabled').prop('disabled', true);
                 $.post(postUrl, {
-                    id: id,
+                    uuid: uuid,
                 },
                 function () {
                     $el.closest("tr").remove();

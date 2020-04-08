@@ -10,6 +10,7 @@ from couchdbkit import ResourceNotFound
 from corehq.apps.registration.forms import MobileWorkerAccountConfirmationForm
 from corehq.apps.users.account_confirmation import send_account_confirmation_if_necessary
 from corehq.util import get_document_or_404
+from corehq.util.metrics import metrics_counter
 from couchexport.models import Format
 from couchexport.writers import Excel2007ExportWriter
 from django.conf import settings
@@ -103,7 +104,6 @@ from corehq.apps.users.views import (
 )
 from corehq.const import GOOGLE_PLAY_STORE_COMMCARE_URL, USER_DATE_FORMAT
 from corehq.toggles import FILTERED_BULK_USER_DOWNLOAD, TWO_STAGE_USER_PROVISIONING
-from corehq.util.datadog.gauges import datadog_counter
 from corehq.util.dates import iso_string_to_datetime
 from corehq.util.workbook_json.excel import (
     WorkbookJSONError,
@@ -422,7 +422,7 @@ def force_user_412(request, domain, user_id):
     if not _can_edit_workers_location(request.couch_user, user):
         raise PermissionDenied()
 
-    datadog_counter('commcare.force_user_412.count', tags=['domain:{}'.format(domain)])
+    metrics_counter('commcare.force_user_412.count', tags={'domain': domain})
 
     SyncLogSQL.objects.filter(user_id=user_id).delete()
 
