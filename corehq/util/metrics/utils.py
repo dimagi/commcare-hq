@@ -14,3 +14,23 @@ DAY_SCALE_TIME_BUCKETS = make_buckets_from_timedeltas(
     timedelta(hours=12),
     timedelta(hours=24),
 )
+
+
+def bucket_value(value, buckets, unit=''):
+    """Get value bucket for the given value
+
+    Bucket values because datadog's histogram is too limited
+
+    Basically frequency is not high enough to have a meaningful
+    distribution with datadog's 10s aggregation window, especially
+    with tags. More details:
+    https://help.datadoghq.com/hc/en-us/articles/211545826
+    """
+    buckets = sorted(buckets)
+    number_length = max(len("{}".format(buckets[-1])), 3)
+    lt_template = "lt_{:0%s}{}" % number_length
+    over_template = "over_{:0%s}{}" % number_length
+    for bucket in buckets:
+        if value < bucket:
+            return lt_template.format(bucket, unit)
+    return over_template.format(buckets[-1], unit)

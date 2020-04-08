@@ -1,7 +1,7 @@
 from django.test import SimpleTestCase
 
+from corehq.util.datadog.utils import sanitize_url, get_url_group
 from corehq.util.test_utils import generate_cases
-from corehq.util.datadog.utils import sanitize_url, get_url_group, bucket_value
 
 
 class DatadogUtilsTest(SimpleTestCase):
@@ -28,17 +28,3 @@ def test_sanitize_url(self, url, sanitized):
 ], DatadogUtilsTest)
 def test_url_group(self, url, group):
     self.assertEqual(get_url_group(url), group)
-
-
-@generate_cases([
-    (0, (1, 2, 5), '', 'lt_001'),
-    (1, (1, 2, 5), '', 'lt_002'),
-    (6, (1, 2, 5), '', 'over_005'),
-    (101, (1, 2, 100), 's', 'over_100s'),
-    (4, (1, 2, 5), 's', 'lt_005s'),
-    (4, (1, 2, 5, 1000), 's', 'lt_0005s'),
-    (6, (1, 2, 5, 1000, 43000), 's', 'lt_01000s'),
-    (3000, (1, 2, 5, 1000), 's', 'over_1000s'),
-], DatadogUtilsTest)
-def test_bucket_value(self, value, buckets, unit, expected):
-    self.assertEqual(bucket_value(value, buckets, unit), expected)

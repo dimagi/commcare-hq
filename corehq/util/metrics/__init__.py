@@ -123,7 +123,7 @@ from .metrics import (
     _enforce_prefix,
     metrics_logger
 )
-from .utils import make_buckets_from_timedeltas, DAY_SCALE_TIME_BUCKETS
+from .utils import make_buckets_from_timedeltas, DAY_SCALE_TIME_BUCKETS, bucket_value
 
 __all__ = [
     'metrics_counter',
@@ -133,7 +133,8 @@ __all__ = [
     'create_metrics_event',
     'metrics_histogram_timer',
     'make_buckets_from_timedeltas',
-    'DAY_SCALE_TIME_BUCKETS'
+    'DAY_SCALE_TIME_BUCKETS',
+    'bucket_value',
 ]
 
 _metrics = []

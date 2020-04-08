@@ -2,7 +2,7 @@ import time
 from contextlib import ContextDecorator
 
 from corehq.util.datadog import statsd, datadog_logger
-from corehq.util.datadog.utils import bucket_value
+from corehq.util.metrics import bucket_value
 from corehq.util.soft_assert import soft_assert
 
 
