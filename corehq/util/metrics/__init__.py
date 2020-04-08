@@ -101,12 +101,15 @@ Utilities
 
 .. autofunction:: corehq.util.metrics.metrics_histogram_timer
 
+.. autoclass:: corehq.util.metrics.metrics_track_errors
+
 
 Other Notes
 ===========
 
 * All metrics must use the prefix 'commcare.'
 """
+from contextlib import ContextDecorator
 from functools import wraps
 from typing import Iterable, Callable, Dict
 
@@ -265,3 +268,31 @@ def metrics_histogram_timer(metric: str, timing_buckets: Iterable[int], tags: Di
 
     timer.stop = new_stop
     return timer
+
+
+class metrics_track_errors(ContextDecorator):
+    """Record when something succeeds or errors in the configured metrics provider
+
+    Eg: This code will log to `commcare.myfunction.succeeded` when it completes
+    successfully, and to `commcare.myfunction.failed` when an exception is
+    raised.
+
+    ::
+
+        @metrics_track_errors('myfunction')
+        def myfunction():
+            pass
+    """
+
+    def __init__(self, name):
+        self.succeeded_name = "commcare.{}.succeeded".format(name)
+        self.failed_name = "commcare.{}.failed".format(name)
+
+    def __enter__(self):
+        pass
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if not exc_type:
+            metrics_counter(self.succeeded_name)
+        else:
+            metrics_counter(self.failed_name)

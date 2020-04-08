@@ -29,38 +29,3 @@ def _enforce_prefix(name, prefix):
         "Did you mean to call your gauge 'commcare.{}'? "
         "If you're sure you want to forgo the prefix, you can "
         "pass enforce_prefix=None".format(name))
-
-
-class datadog_track_errors(ContextDecorator):
-    """Record when something succeeds or errors in datadog
-
-    Eg: This code will log to commcare.myfunction.succeeded when it completes
-    successfully, and to commcare.myfunction.failed when an exception is
-    raised.
-
-        @datadog_track_errors('myfunction')
-        def myfunction():
-            pass
-    """
-
-    def __init__(self, name, duration_buckets=None):
-        self.succeeded_name = "commcare.{}.succeeded".format(name)
-        self.failed_name = "commcare.{}.failed".format(name)
-        self.duration_buckets = duration_buckets
-        self.timer_start = None
-
-    def __enter__(self):
-        if self.duration_buckets:
-            self.timer_start = time.time()
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        if self.duration_buckets:
-            duration = time.time() - self.timer_start
-            duration_value = bucket_value(duration, self.duration_buckets, unit='s')
-            tags = ['duration:{}'.format(duration_value)]
-        else:
-            tags = None
-        if not exc_type:
-            datadog_counter(self.succeeded_name, tags=tags)
-        else:
-            datadog_counter(self.failed_name, tags=tags)
