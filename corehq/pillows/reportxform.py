@@ -1,6 +1,10 @@
 from django.conf import settings
 
+from couchforms.models import XFormInstance, XFormArchived, XFormError, XFormDeprecated, \
+    XFormDuplicate, SubmissionErrorLog
 from corehq.elastic import get_es_new
+from corehq.form_processor.utils.general import should_use_sql_backend
+from corehq.form_processor.backends.sql.dbaccessors import FormReindexAccessor
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
 from corehq.pillows.base import convert_property_dict
@@ -9,8 +13,11 @@ from corehq.pillows.xform import transform_xform_for_elasticsearch, xform_pillow
 from pillowtop.checkpoints.manager import get_checkpoint_for_elasticsearch_pillow
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors import ElasticProcessor
-from pillowtop.reindexer.change_providers.form import get_domain_form_change_provider
-from pillowtop.reindexer.reindexer import ElasticPillowReindexer, ReindexerFactory
+from pillowtop.reindexer.reindexer import ResumableBulkElasticPillowReindexer, ReindexerFactory
+from corehq.util.doc_processor.sql import SqlDocumentProvider
+from corehq.util.doc_processor.couch import CouchDocumentProvider
+from pillowtop.reindexer.change_providers.composite import CompositeDocProvider
+
 
 
 def report_xform_filter(doc_dict):
@@ -61,6 +68,29 @@ def get_report_xform_to_elasticsearch_pillow(pillow_id='ReportXFormToElasticsear
     )
 
 
+def get_domain_form_doc_provider(domains, iteration_key):
+    providers = []
+    for domain in domains:
+        if should_use_sql_backend(domain):
+            reindex_accessor = FormReindexAccessor(domain=domain)
+            doc_provider = SqlDocumentProvider(iteration_key, reindex_accessor)
+        else:
+            doc_provider = CouchDocumentProvider(iteration_key,
+                doc_type_tuples=[
+                    XFormInstance,
+                    XFormArchived,
+                    XFormError,
+                    XFormDeprecated,
+                    XFormDuplicate,
+                    ('XFormInstance-Deleted', XFormInstance),
+                    ('HQSubmission', XFormInstance),
+                    SubmissionErrorLog,
+                ],
+                domain=domain)
+        providers.append(doc_provider)
+    return CompositeDocProvider(providers)
+
+
 class ReportFormReindexerFactory(ReindexerFactory):
     slug = 'report-xform'
     arg_contributors = [
@@ -68,14 +98,14 @@ class ReportFormReindexerFactory(ReindexerFactory):
     ]
 
     def build(self):
-        """Returns a reindexer that will only reindex data from enabled domains
-        """
         domains = getattr(settings, 'ES_XFORM_FULL_INDEX_DOMAINS', [])
-        change_provider = get_domain_form_change_provider(domains=domains)
-        return ElasticPillowReindexer(
-            pillow_or_processor=get_report_xform_to_elasticsearch_pillow(),
-            change_provider=change_provider,
+        iteration_key = "ReportFormToElasticsearchPillow_{}_reindexer".format(REPORT_XFORM_INDEX_INFO.index)
+        doc_provider = get_domain_form_doc_provider(domains, iteration_key)
+        return ResumableBulkElasticPillowReindexer(
+            doc_provider,
             elasticsearch=get_es_new(),
             index_info=REPORT_XFORM_INDEX_INFO,
+            doc_transform=transform_xform_for_report_forms_index,
+            pillow=get_report_xform_to_elasticsearch_pillow(),
             **self.options
         )

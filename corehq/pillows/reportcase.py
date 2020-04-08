@@ -2,15 +2,21 @@ import copy
 
 from django.conf import settings
 
+from casexml.apps.case.models import CommCareCase
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
 from corehq.elastic import get_es_new
+from corehq.form_processor.utils.general import should_use_sql_backend
+from corehq.form_processor.backends.sql.dbaccessors import CaseReindexAccessor
+from corehq.pillows.case_search import transform_case_for_elasticsearch
 from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_INDEX_INFO
+from corehq.util.doc_processor.sql import SqlDocumentProvider
+from corehq.util.doc_processor.couch import CouchDocumentProvider
 from pillowtop.checkpoints.manager import get_checkpoint_for_elasticsearch_pillow
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors import ElasticProcessor
-from pillowtop.reindexer.change_providers.case import get_domain_case_change_provider
-from pillowtop.reindexer.reindexer import ElasticPillowReindexer, ReindexerFactory
+from pillowtop.reindexer.change_providers.composite import CompositeDocProvider
+from pillowtop.reindexer.reindexer import ResumableBulkElasticPillowReindexer, ReindexerFactory
 from .base import convert_property_dict
 
 
@@ -67,6 +73,21 @@ def get_report_case_to_elasticsearch_pillow(pillow_id='ReportCaseToElasticsearch
     )
 
 
+def get_domain_case_doc_provider(domains, iteration_key):
+    providers = []
+    for domain in domains:
+        if should_use_sql_backend(domain):
+            reindex_accessor = CaseReindexAccessor(domain=domain)
+            doc_provider = SqlDocumentProvider(iteration_key, reindex_accessor)
+        else:
+            doc_provider = CouchDocumentProvider(iteration_key, doc_type_tuples=[
+                CommCareCase,
+                ("CommCareCase-Deleted", CommCareCase)
+            ], domain=domain)
+        providers.append(doc_provider)
+    return CompositeDocProvider(providers)
+
+
 class ReportCaseReindexerFactory(ReindexerFactory):
     slug = 'report-case'
     arg_contributors = [
@@ -74,14 +95,14 @@ class ReportCaseReindexerFactory(ReindexerFactory):
     ]
 
     def build(self):
-        """Returns a reindexer that will only reindex data from enabled domains
-        """
         domains = getattr(settings, 'ES_CASE_FULL_INDEX_DOMAINS', [])
-        change_provider = get_domain_case_change_provider(domains=domains)
-        return ElasticPillowReindexer(
-            pillow_or_processor=get_report_case_to_elasticsearch_pillow(),
-            change_provider=change_provider,
+        iteration_key = "ReportCaseToElasticsearchPillow_{}_reindexer".format(REPORT_CASE_INDEX_INFO.index)
+        doc_provider = get_domain_case_doc_provider(domains, iteration_key)
+        return ResumableBulkElasticPillowReindexer(
+            doc_provider,
             elasticsearch=get_es_new(),
             index_info=REPORT_CASE_INDEX_INFO,
+            doc_transform=transform_case_for_elasticsearch,
+            pillow=get_report_case_to_elasticsearch_pillow(),
             **self.options
         )
