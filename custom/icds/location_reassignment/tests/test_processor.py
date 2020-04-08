@@ -22,6 +22,7 @@ class TestProcessor(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super().setUpClass()
         cls.location_131 = Location(site_code='131')
         cls.location_112 = Location(site_code='112')
         cls.location_13 = Location(site_code='13')
