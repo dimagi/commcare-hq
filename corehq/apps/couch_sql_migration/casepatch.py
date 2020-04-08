@@ -8,10 +8,12 @@ from django.template.loader import render_to_string
 import attr
 from memoized import memoized
 
+from casexml.apps.case import const
 from casexml.apps.phone.xml import get_case_xml
 from dimagi.utils.couch.database import retry_on_couch_error
 from dimagi.utils.parsing import json_format_datetime
 
+from corehq.apps.tzmigration.timezonemigration import MISSING
 from corehq.blobs import get_blob_db
 from corehq.form_processor.backends.couch.dbaccessors import CaseAccessorCouch
 from corehq.form_processor.models import (
@@ -76,14 +78,19 @@ class PatchCase:
     IGNORE_PROPS = {"xform_ids"}
 
     def __attrs_post_init__(self):
-        self._updates = []
-        if not all(isinstance(d, Change) for d in self.diffs):
-            raise CannotPatch([d.json_diff for d in self.diffs])
+        self._updates = updates = []
+        diffs = self.diffs
+        if not all(isinstance(d, Change) for d in diffs):
+            raise CannotPatch([d.json_diff for d in diffs])
+        if is_missing_in_sql(self.case_id, diffs):
+            updates.extend([const.CASE_ACTION_CREATE, const.CASE_ACTION_UPDATE])
 
     def __getattr__(self, name):
         return getattr(self.case, name)
 
     def dynamic_case_properties(self):
+        if is_missing_in_sql(self.case_id, self.diffs):
+            return self.case.dynamic_case_properties()
         props = {}
         ignore = self.IGNORE_PROPS
         for planning_diff in self.diffs:
@@ -169,3 +176,14 @@ def get_couch_case(case_id):
 @retry_on_sql_error
 def save_sql_form(sql_form, case_stock_result):
     save_migrated_models(sql_form, case_stock_result)
+
+
+def is_missing_in_sql(case_id, diffs):
+    diff = diffs[0]
+    return (
+        len(diffs) == 1
+        and diff.diff_type == "missing"
+        and diff.path == ['*']
+        and diff.old_value is not MISSING
+        and diff.new_value is MISSING
+    )

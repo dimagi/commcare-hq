@@ -1011,6 +1011,9 @@ class MigrationTestCase(BaseMigrationTestCase):
             Diff('test-case', 'set_mismatch', ['xform_ids', '[*]'], old='arch', new=''),
         ])
 
+        self._do_migration(forms="missing", case_diff="patch")
+        self._compare_diffs()
+
     @staticmethod
     def _describe(form):
         data = form.form_data
@@ -1383,7 +1386,8 @@ class MigrationTestCase(BaseMigrationTestCase):
         submit_form_locally(test_form, self.domain_name)
         edited_form = test_form.replace("test-case", "other-case")
         submit_form_locally(edited_form, self.domain_name)
-        self.assertEqual(self._get_case("test-case").xform_ids, ["test-form"])
+        couch_case = self._get_case("test-case")
+        self.assertEqual(couch_case.xform_ids, ["test-form"])
         self.assertEqual(self._get_case("other-case").xform_ids, ["test-form"])
 
         self._do_migration_and_assert_flags(self.domain_name)
@@ -1394,6 +1398,13 @@ class MigrationTestCase(BaseMigrationTestCase):
         self._compare_diffs(changes=[
             Diff('test-case', 'missing', ['*'], old='*', new=MISSING, reason="orphaned case"),
         ])
+
+        self._do_migration(forms="missing", case_diff="patch")
+        self._compare_diffs()
+        sql_case = self._get_case("test-case")
+        self.assertNotEqual(type(couch_case), type(sql_case))
+        self.assertEqual(sql_case.dynamic_case_properties()["age"], '27')
+        self.assertEqual(sql_case.modified_on, couch_case.modified_on)
 
     def test_missing_docs(self):
         self.submit_form(TEST_FORM, timedelta(minutes=-90))
