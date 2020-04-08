@@ -1,3 +1,5 @@
+from itertools import chain
+
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin
@@ -6,6 +8,7 @@ from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin
 class MultiTabularReport(DatespanMixin, CustomProjectReport, GenericTabularReport):
     report_template_path = 'inddex/multi_report.html'
     exportable = True
+    exportable_all = True
     export_only = False
 
     @property
@@ -33,6 +36,6 @@ class MultiTabularReport(DatespanMixin, CustomProjectReport, GenericTabularRepor
     @property
     def export_table(self):
         return [
-            [dp.slug, [dp.headers] + dp.rows]
+            [dp.slug, chain([dp.headers], dp.rows)]
             for dp in self.data_providers
         ]
