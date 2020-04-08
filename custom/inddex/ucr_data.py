@@ -6,7 +6,6 @@ from corehq.apps.userreports.util import get_table_name
 from corehq.sql_db.connections import UCR_ENGINE_ID
 
 from .const import FOOD_CONSUMPTION
-from .food import INDICATORS
 
 
 class FoodCaseData(SqlData):
@@ -17,6 +16,7 @@ class FoodCaseData(SqlData):
 
     @property
     def columns(self):
+        from .food import INDICATORS
         column_ids = ['doc_id', 'inserted_at'] + [i.slug for i in INDICATORS if i.in_ucr]
         return [DatabaseColumn(col_id, SimpleColumn(col_id)) for col_id in column_ids]
 

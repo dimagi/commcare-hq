@@ -175,20 +175,16 @@ class BaseMigrationTestCase(TestCase, TestFileMixin):
         self._do_migration(domain, finish=True, **options)
         self.assert_backend("sql", domain)
 
-    def _compare_diffs(self, expected_diffs=None, missing=None, ignore_fail=False):
-        def diff_key(diff):
-            return diff.kind, diff.json_diff.diff_type, diff.json_diff.path
-
-        state = open_state_db(self.domain_name, self.state_dir)
-        diffs = sorted(state.get_diffs(), key=diff_key)
-        json_diffs = [(diff.kind, diff.json_diff) for diff in diffs]
-        self.assertEqual(json_diffs, expected_diffs or [])
+    def _compare_diffs(self, diffs=None, changes=None, missing=None, ignore_fail=False):
+        statedb = open_state_db(self.domain_name, self.state_dir)
+        self.assertEqual(Diff.getlist(statedb.iter_diffs()), diffs or [])
+        self.assertEqual(Diff.getlist(statedb.iter_changes()), changes or [])
         self.assertEqual({
             kind: counts.missing
-            for kind, counts in state.get_doc_counts().items()
+            for kind, counts in statedb.get_doc_counts().items()
             if counts.missing
         }, missing or {})
-        if not (expected_diffs or self.migration_success or ignore_fail):
+        if not (diffs or self.migration_success or ignore_fail):
             self.fail("migration failed")
 
     def _get_form_ids(self, doc_type='XFormInstance'):
@@ -860,7 +856,7 @@ class MigrationTestCase(BaseMigrationTestCase):
         self.assertEqual(self._get_form_ids(), {"form-1", "form-2"})
         self.assertEqual(self._get_case_ids(), {"test-case"})
         self._compare_diffs([
-            ('XFormInstance', Diff('diff', ['form', 'first_name'], old="Zeena", new="Xeenax")),
+            Diff('form-1', 'diff', ['form', 'first_name'], old="Zeena", new="Xeenax"),
         ])
 
     def test_migrate_unprocessed_form_twice(self):
@@ -886,7 +882,7 @@ class MigrationTestCase(BaseMigrationTestCase):
         self.assertEqual(self._get_form_ids("XFormArchived"), {"form-1", "form-2"})
         self.assertEqual(self._get_case_ids("CommCareCase-Deleted"), {"test-case"})
         self._compare_diffs([
-            ('XFormArchived', Diff('diff', ['form', 'first_name'], old="Zeena", new="Xeenax")),
+            Diff('form-1', 'diff', ['form', 'first_name'], old="Zeena", new="Xeenax"),
         ])
 
     def test_migrate_deleted_case_twice(self):
@@ -916,7 +912,7 @@ class MigrationTestCase(BaseMigrationTestCase):
             self._do_migration_and_assert_flags(self.domain_name)
         self.assertEqual(self._get_case_ids("CommCareCase-Deleted"), {"case-1", "case-2"})
         self._compare_diffs([
-            ('CommCareCase-Deleted', Diff('diff', ['age'], old='35', new='27')),
+            Diff("case-1", 'diff', ['age'], old='35', new='27', kind="CommCareCase-Deleted"),
         ])
 
     def test_migrate_archived_form_after_live_migration_of_error_forms(self):
@@ -1013,7 +1009,7 @@ class MigrationTestCase(BaseMigrationTestCase):
         self.assertEqual(self._get_case_ids(), {"test-case"})
         # diff because "arch" was originally migrated as an "unprocessed_form"
         self._compare_diffs([
-            ('CommCareCase', Diff('set_mismatch', ['xform_ids', '[*]'], old='arch', new='')),
+            Diff('test-case', 'set_mismatch', ['xform_ids', '[*]'], old='arch', new=''),
         ])
 
     @staticmethod
@@ -1042,7 +1038,9 @@ class MigrationTestCase(BaseMigrationTestCase):
             {self._describe(f) for f in self._iter_forms("XFormArchived")},
             {"hard_delete_case_and_forms test-case"}
         )
-        self._compare_diffs([])
+        self._compare_diffs(changes=[
+            Diff("test-case", path=["xform_ids", "[*]"], old="form-2", new="", reason='rebuild case')
+        ])
 
     def test_migrate_deleted_form_after_live_migration(self):
         self.submit_form(make_test_form("form-1"), timedelta(minutes=-95))
@@ -1071,7 +1069,9 @@ class MigrationTestCase(BaseMigrationTestCase):
         self.assertEqual(set(deleted), {"form-2"})
         self.assertEqual(self._get_form_ids(), {"form-1"})
         self.assertEqual(self._get_case_ids(), {"test-case"})
-        self._compare_diffs([])
+        self._compare_diffs(changes=[
+            Diff("test-case", path=["xform_ids", "[*]"], old="form-2", new="", reason="rebuild case")
+        ])
 
     def test_delete_user_during_migration(self):
         from corehq.apps.users.models import CommCareUser
@@ -1181,8 +1181,8 @@ class MigrationTestCase(BaseMigrationTestCase):
         self.assertEqual(self._get_form_ids(), {"test-1", "test-2"})
         self.assertEqual(self._get_case_ids(), {"test-case"})
         self._compare_diffs([
-            ('CommCareCase', Diff('missing', ['min'], old='0', new=MISSING)),
-            ('CommCareCase', Diff('set_mismatch', ['xform_ids', '[*]'], old='test-1', new='')),
+            Diff("test-case", 'missing', ['min'], old='0', new=MISSING),
+            Diff("test-case", 'set_mismatch', ['xform_ids', '[*]'], old='test-1', new=''),
         ])
         clear_local_domain_sql_backend_override(self.domain_name)
         self._do_migration(forms="missing")
@@ -1332,10 +1332,51 @@ class MigrationTestCase(BaseMigrationTestCase):
 
         case = self._get_case("test-case")
         self.assertEqual(case.xform_ids, ["new-form"])
-        self._compare_diffs([])
+        self._compare_diffs(changes=[
+            Diff("test-case", path=["xform_ids", "[*]"], old="test-form", new="new-form", reason='rebuild case')
+        ])
         form = self._get_form('new-form')
         self.assertEqual(form.deprecated_form_id, "test-form")
         self.assertIsNone(form.problem)
+
+    def test_case_with_problem_form(self):
+        # form state=error, has problem, normal form in couch
+        # move error to Operation, set state to normal, rebuild case
+        self.submit_form(make_test_form("one", age=27))
+        two = self.submit_form(make_test_form("two", age=30))
+        two.problem = "Bad thing that happened"
+        two.save()
+        self._do_migration()
+        self._compare_diffs([
+            Diff('test-case', 'diff', ['age'], old='30', new='27'),
+            Diff('test-case', 'set_mismatch', ['xform_ids', '[*]'], old='two', new=''),
+        ])
+        clear_local_domain_sql_backend_override(self.domain_name)
+        Mig = mod.CouchSqlDomainMigrator
+        with mock.patch.object(Mig, "_apply_form_to_case", Mig._get_case_stock_result):
+            self._do_migration(forms="missing")
+        self._compare_diffs([
+            Diff('test-case', 'diff', ['age'], old='30', new='27'),
+            Diff('test-case', 'set_mismatch', ['xform_ids', '[*]'], old='two', new=''),
+        ])
+        clear_local_domain_sql_backend_override(self.domain_name)
+        self._do_migration(forms="missing")
+        self._compare_diffs()
+
+    def test_case_with_unprocessed_form(self):
+        # form state=normal, initial_processing_complete=false
+        self.submit_form(make_test_form("one", age=27))
+        two = self.submit_form(make_test_form("two", age=30))
+        two.initial_processing_complete = False
+        two.save()
+        self._do_migration()
+        self._compare_diffs([
+            Diff('test-case', 'diff', ['age'], old='30', new='27'),
+            Diff('test-case', 'set_mismatch', ['xform_ids', '[*]'], old='two', new=''),
+        ])
+        clear_local_domain_sql_backend_override(self.domain_name)
+        self._do_migration(forms="missing")
+        self._compare_diffs()
 
     def test_missing_case(self):
         # This can happen when a form is edited, removing the last
@@ -1355,7 +1396,9 @@ class MigrationTestCase(BaseMigrationTestCase):
         self.assertEqual(self._get_case("other-case").xform_ids, ["test-form"])
         with self.assertRaises(CaseNotFound):
             self._get_case("test-case")
-        self._compare_diffs([])
+        self._compare_diffs(changes=[
+            Diff('test-case', 'missing', ['*'], old='*', new=MISSING, reason="orphaned case"),
+        ])
 
     def test_missing_docs(self):
         self.submit_form(TEST_FORM, timedelta(minutes=-90))
@@ -1387,22 +1430,22 @@ class MigrationTestCase(BaseMigrationTestCase):
     def test_unwrappable_form(self):
         def bad_wrap(doc):
             raise Exception(f"refusing to wrap {doc}")
-        submit_form_locally(SIMPLE_FORM_XML, self.domain_name).xform
+        form_id = submit_form_locally(SIMPLE_FORM_XML, self.domain_name).xform.form_id
         with mock.patch.object(XFormInstance, "wrap", bad_wrap):
             self._do_migration_and_assert_flags(self.domain_name)
         self._compare_diffs([
-            ('XFormInstance', Diff('missing', ['_id'], new=MISSING)),
-            ('XFormInstance', Diff('missing', ['auth_context'], new=MISSING)),
-            ('XFormInstance', Diff('missing', ['doc_type'], new=MISSING)),
-            ('XFormInstance', Diff('missing', ['domain'], new=MISSING)),
-            ('XFormInstance', Diff('missing', ['form'], new=MISSING)),
-            ('XFormInstance', Diff('missing', ['history'], new=MISSING)),
-            ('XFormInstance', Diff('missing', ['initial_processing_complete'], new=MISSING)),
-            ('XFormInstance', Diff('missing', ['openrosa_headers'], new=MISSING)),
-            ('XFormInstance', Diff('missing', ['partial_submission'], new=MISSING)),
-            ('XFormInstance', Diff('missing', ['received_on'], new=MISSING)),
-            ('XFormInstance', Diff('missing', ['server_modified_on'], new=MISSING)),
-            ('XFormInstance', Diff('missing', ['xmlns'], new=MISSING)),
+            Diff(form_id, 'missing', ['_id'], new=MISSING),
+            Diff(form_id, 'missing', ['auth_context'], new=MISSING),
+            Diff(form_id, 'missing', ['doc_type'], new=MISSING),
+            Diff(form_id, 'missing', ['domain'], new=MISSING),
+            Diff(form_id, 'missing', ['form'], new=MISSING),
+            Diff(form_id, 'missing', ['history'], new=MISSING),
+            Diff(form_id, 'missing', ['initial_processing_complete'], new=MISSING),
+            Diff(form_id, 'missing', ['openrosa_headers'], new=MISSING),
+            Diff(form_id, 'missing', ['partial_submission'], new=MISSING),
+            Diff(form_id, 'missing', ['received_on'], new=MISSING),
+            Diff(form_id, 'missing', ['server_modified_on'], new=MISSING),
+            Diff(form_id, 'missing', ['xmlns'], new=MISSING),
         ])
 
     def test_case_with_very_long_name(self):
@@ -1468,8 +1511,12 @@ class LedgerMigrationTests(BaseMigrationTestCase):
         with self.skip_case_and_ledger_updates(form1):
             self._do_migration(live=True)
         self.fix_missing_ledger_diffs(form1, form2, [
-            ("CommCareCase", Diff("set_mismatch", ["xform_ids", "[*]"], old=form1, new="")),
-            ("stock state", Diff("missing", ["*"],
+            Diff("test-case", "set_mismatch", ["xform_ids", "[*]"], old=form1, new=""),
+            Diff(
+                doc_id=f"test-case/stock/{self.sherbert._id}",
+                kind="stock state",
+                type="missing",
+                path=["*"],
                 old={'form_state': 'present', 'ledger': {
                     '_id': ANY,
                     'entry_id': self.sherbert._id,
@@ -1483,7 +1530,7 @@ class LedgerMigrationTests(BaseMigrationTestCase):
                     'last_modified_form_id': form1,
                 }},
                 new={'form_state': 'present'},
-            )),
+            ),
         ])
 
     def test_migrate_partially_migrated_form2_with_ledger(self):
@@ -1497,10 +1544,10 @@ class LedgerMigrationTests(BaseMigrationTestCase):
         with self.skip_case_and_ledger_updates(form2):
             self._do_migration(live=True)
         self.fix_missing_ledger_diffs(form1, form2, [
-            ("CommCareCase", Diff("set_mismatch", ["xform_ids", "[*]"], old=form2, new="")),
-            ("stock state", Diff("diff", ["balance"], old=75, new=50)),
-            ('stock state', Diff('diff', ['last_modified'])),
-            ('stock state', Diff('diff', ['last_modified_form_id'], old=form2, new=form1)),
+            Diff("test-case", "set_mismatch", ["xform_ids", "[*]"], old=form2, new=""),
+            Diff(kind="stock state", path=["balance"], old=75, new=50),
+            Diff(kind="stock state", path=['last_modified'], type="diff"),
+            Diff(kind="stock state", path=['last_modified_form_id'], old=form2, new=form1),
         ])
 
     def fix_missing_ledger_diffs(self, form1, form2, diffs):
@@ -1701,31 +1748,35 @@ def call_command(*args, **kw):
         sys.argv = old
 
 
-@attr.s(cmp=False, repr=False)
+@attr.s
 class Diff:
 
+    doc_id = attr.ib(default=ANY)
     type = attr.ib(default=ANY)
     path = attr.ib(default=ANY)
     old = attr.ib(default=ANY)
     new = attr.ib(default=ANY)
-
-    def __eq__(self, other):
-        if type(other) == FormJsonDiff:
-            return (
-                self.type == other.diff_type
-                and self.path == other.path
-                and self.old == other.old_value
-                and self.new == other.new_value
-            )
-        return NotImplemented
-
-    def __repr__(self):
-        return (
-            f"FormJsonDiff(diff_type={self.type!r}, path={self.path!r}, "
-            f"old_value={self.old!r}, new_value={self.new!r})"
-        )
-
+    kind = attr.ib(default=ANY)
+    reason = attr.ib(default=ANY)
     __hash__ = None
+
+    @classmethod
+    def getlist(cls, diffs):
+        from ..statedb import Change
+
+        def make_diff(diff):
+            json_diff = diff.json_diff
+            return cls(
+                doc_id=diff.doc_id,
+                type=json_diff.diff_type,
+                path=json_diff.path,
+                old=json_diff.old_value,
+                new=json_diff.new_value,
+                kind=diff.kind,
+                reason=(diff.reason if isinstance(diff, Change) else ''),
+            )
+
+        return sorted(make_diff(d) for d in diffs)
 
 
 SIMPLE_FORM_XML = """<?xml version="1.0" ?>

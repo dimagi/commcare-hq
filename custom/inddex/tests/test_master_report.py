@@ -5,6 +5,8 @@ from django.utils.functional import cached_property
 
 from mock import patch
 
+from dimagi.utils.dates import DateSpan
+
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.fixtures.dbaccessors import (
@@ -21,7 +23,7 @@ from ..example_data.data import (
     populate_inddex_domain,
 )
 from ..fixtures import FixtureAccessor
-from ..food import FoodData, INDICATORS
+from ..food import INDICATORS, FoodData
 from ..ucr_data import FoodCaseData
 
 DOMAIN = 'inddex-reports-test'
@@ -82,18 +84,14 @@ class TestUcrAdapter(TestCase):
     def test_data_source(self):
         # Only the rows with case IDs will appear in the UCR
         expected = [r for r in get_expected_report() if r['caseid']]
-        ucr_data = get_ucr_data()
+        ucr_data = FoodCaseData({
+            'domain': DOMAIN,
+            'startdate': date(2020, 1, 1).isoformat(),
+            'enddate': date(2020, 4, 1).isoformat(),
+            'case_owners': '',
+            'recall_status': '',
+        }).get_data()
         self.assertItemsEqual(food_names(expected), food_names(ucr_data))
-
-
-def get_ucr_data():
-    return FoodCaseData({
-        'domain': DOMAIN,
-        'startdate': date(2020, 1, 1).isoformat(),
-        'enddate': date(2020, 4, 1).isoformat(),
-        'case_owners': '',
-        'recall_status': '',
-    }).get_data()
 
 
 class TestFixtures(TestCase):
@@ -134,19 +132,15 @@ class TestNewReport(TestCase):
         actual = sort_rows(self.run_new_report())
         self.assertEqual(food_names(expected), food_names(actual))
 
-        columns_known_to_fail = {  # TODO address these columns
+        nutrient_columns = [
             'energy_kcal_per_100g',
             'energy_kcal',
             'water_g_per_100g',
             'water_g',
             'protein_g_per_100g',
             'protein_g',
-            'conv_factor_gap_code',
-            'conv_factor_gap_desc',
-            'fct_gap_code',
-            'fct_gap_desc',
-        }
-        columns = [c.slug for c in INDICATORS if c.slug not in columns_known_to_fail]
+        ]
+        columns = [c.slug for c in INDICATORS] + nutrient_columns
         for column in columns:
             self.assert_columns_equal(expected, actual, column)
 
@@ -166,8 +160,7 @@ class TestNewReport(TestCase):
         return map(substitute_real_ids, get_expected_report())
 
     def run_new_report(self):
-        ucr_data = get_ucr_data()
-        report = FoodData(DOMAIN, ucr_data)
+        report = FoodData(DOMAIN, datespan=DateSpan(date(2020, 1, 1), date(2020, 4, 1)))
         return [dict(zip(report.headers, row)) for row in report.rows]
 
     def assert_columns_equal(self, expected_rows, actual_rows, column):

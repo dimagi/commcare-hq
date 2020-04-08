@@ -122,12 +122,19 @@ class FixtureAccessor:
         return {food.food_name: food for food in self.foods.values()}
 
     @cached_property
+    def _nutrients(self):
+        return [
+            Nutrient(**item_dict)
+            for item_dict in self._get_fixture_dicts('nutrients_lookup')
+        ]
+
+    @cached_property
+    def nutrient_names(self):
+        return [n.nutrient_name_unit for n in self._nutrients]
+
+    @cached_property
     def _nutrient_names_by_code(self):
-        nutrients = {}
-        for item_dict in self._get_fixture_dicts('nutrients_lookup'):
-            nutrient = Nutrient(**item_dict)
-            nutrients[nutrient.nutrient_code] = nutrient.nutrient_name_unit
-        return nutrients
+        return {n.nutrient_code: n.nutrient_name_unit for n in self._nutrients}
 
     @cached_property
     def food_compositions(self):
@@ -157,4 +164,4 @@ def _to_float(v):
     try:
         return float(v)
     except ValueError:
-        return 0
+        return None

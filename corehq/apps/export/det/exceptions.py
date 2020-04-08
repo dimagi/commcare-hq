@@ -1,0 +1,4 @@
+
+
+class DETConfigError(Exception):
+    pass
