@@ -244,7 +244,7 @@ class CouchSqlDomainMigrator:
                 xmlns = couch_form.xmlns
                 user_id = couch_form.user_id
             if xmlns == SYSTEM_ACTION_XMLNS:
-                for form_id, case_ids in do_system_action(couch_form):
+                for form_id, case_ids in do_system_action(couch_form, self.statedb):
                     self.case_diff_queue.update(case_ids, form_id)
             sql_form = XFormInstanceSQL(
                 form_id=couch_form.form_id,

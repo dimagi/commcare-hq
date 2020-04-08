@@ -1027,11 +1027,15 @@ class MigrationTestCase(BaseMigrationTestCase):
         self.submit_form(make_test_form("form-2"), timedelta(minutes=-90)).soft_delete()
         with self.patch_migration_chunk_size(1):
             self._do_migration(live=True)
+        self._compare_diffs(changes=[
+            Diff("test-case", path=["xform_ids", "[*]"], old="form-2", new="", reason='rebuild case'),
+        ])
 
         clear_local_domain_sql_backend_override(self.domain_name)
         safe_hard_delete(self._get_case("test-case"))
 
         self._do_migration_and_assert_flags(self.domain_name)
+        self._compare_diffs()
         deleted = FormAccessorSQL.get_deleted_form_ids_in_domain(self.domain_name)
         self.assertEqual(set(deleted), {"form-2"})
         self.assertEqual(self._get_form_ids(), set())
@@ -1040,9 +1044,6 @@ class MigrationTestCase(BaseMigrationTestCase):
             {self._describe(f) for f in self._iter_forms("XFormArchived")},
             {"hard_delete_case_and_forms test-case"}
         )
-        self._compare_diffs(changes=[
-            Diff("test-case", path=["xform_ids", "[*]"], old="form-2", new="", reason='rebuild case')
-        ])
 
     def test_migrate_deleted_form_after_live_migration(self):
         self.submit_form(make_test_form("form-1"), timedelta(minutes=-95))
