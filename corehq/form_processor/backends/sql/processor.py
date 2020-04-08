@@ -4,7 +4,7 @@ import uuid
 from itertools import chain
 
 import redis
-from contextlib2 import ExitStack
+from contextlib import ExitStack
 from django.db import transaction, DatabaseError
 from lxml import etree
 

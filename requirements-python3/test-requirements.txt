@@ -24,7 +24,6 @@ click==7.0                # via pip-tools
 cloudant==2.12.0          # via jsonobject-couchdbkit
 commcaretranslationchecker==0.9.3.5
 concurrent-log-handler==0.9.12
-contextlib2==0.5.5
 coverage==4.5.1
 csiphash==0.0.5
 cssselect2==0.2.2         # via cairosvg, weasyprint
