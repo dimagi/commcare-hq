@@ -1,8 +1,6 @@
 import re
 from functools import partial
 
-from django.conf import settings
-
 WILDCARD = '*'
 
 
@@ -29,12 +27,6 @@ def get_url_group(url):
         return parts[3] if len(parts) >= 4 else default
 
     return default
-
-
-def maybe_add_domain_tag(domain_name, tags):
-    """Conditionally add a domain tag to the given list of tags"""
-    if (settings.SERVER_ENVIRONMENT, domain_name) in settings.DATADOG_DOMAINS:
-        tags['domain'] = domain_name
 
 
 def load_counter(load_type, source, domain_name, extra_tags=None):
