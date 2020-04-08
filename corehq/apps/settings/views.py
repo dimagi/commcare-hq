@@ -360,7 +360,7 @@ class TwoFactorSetupCompleteView(BaseMyAccountView, SetupCompleteView):
     @property
     def page_context(self):
         return {
-            "link_to_webapps": _show_link_to_webapps(self.request.user),
+            "link_to_webapps": _show_link_to_webapps(self.request.couch_user),
         }
 
 
@@ -377,12 +377,12 @@ class TwoFactorBackupTokensView(BaseMyAccountView, BackupTokensView):
     @property
     def page_context(self):
         return {
-            "link_to_webapps": _show_link_to_webapps(self.request.user),
+            "link_to_webapps": _show_link_to_webapps(self.request.couch_user),
         }
 
 
 def _show_link_to_webapps(user):
-    if user.is_commcare_user():
+    if user and user.is_commcare_user():
         if user.domain_memberships:
             membership = user.domain_memberships[0]
             if membership.role and membership.role.default_landing_page == "webapps":
