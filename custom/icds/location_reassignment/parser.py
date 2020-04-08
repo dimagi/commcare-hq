@@ -2,11 +2,14 @@ from collections import defaultdict
 
 from corehq.apps.locations.models import LocationType, SQLLocation
 from custom.icds.location_reassignment.const import (
+    CURRENT_SITE_CODE_COLUMN,
     EXTRACT_OPERATION,
     MERGE_OPERATION,
     MOVE_OPERATION,
+    NEW_LGD_CODE,
+    NEW_NAME,
+    NEW_PARENT_SITE_CODE,
     NEW_SITE_CODE_COLUMN,
-    CURRENT_SITE_CODE_COLUMN,
     OPERATION_COLUMN,
     SPLIT_OPERATION,
     VALID_OPERATIONS,
@@ -40,6 +43,7 @@ class Parser(object):
         self.requested_transitions = {}
         self.site_codes_to_be_archived = []
         self.location_type_codes = list(map(lambda lt: lt.code, LocationType.objects.by_domain(self.domain)))
+        self.new_location_details = {location_type_code: [] for location_type_code in self.location_type_codes}
         self.valid_transitions = {location_type_code: {
             MERGE_OPERATION: defaultdict(list),
             SPLIT_OPERATION: defaultdict(list),
@@ -79,6 +83,12 @@ class Parser(object):
         if self._invalid_row(operation, old_site_code, new_site_code):
             return
         self._note_transition(operation, location_type_code, new_site_code, old_site_code)
+        self.new_location_details[location_type_code].append({
+            'name': row.get(NEW_NAME),
+            'site_code': new_site_code,
+            'parent_site_code': row.get(NEW_PARENT_SITE_CODE),
+            'lgd_code': row.get(NEW_LGD_CODE)
+        })
 
     def _invalid_row(self, operation, old_site_code, new_site_code):
         invalid = False

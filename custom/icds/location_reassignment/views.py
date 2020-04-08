@@ -69,7 +69,7 @@ class LocationReassignmentView(BaseLocationView):
                     return self._generate_response(transitions)
                 else:
                     process_location_reassignment.delay(
-                        self.domain, parser.valid_transitions,
+                        self.domain, parser.valid_transitions, parser.new_location_details,
                         list(parser.requested_transitions.keys()), request.user.email
                     )
                     messages.success(request, _(
