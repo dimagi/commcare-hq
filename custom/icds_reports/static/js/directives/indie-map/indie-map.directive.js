@@ -205,7 +205,7 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
                     for (var locationId in vm.map.data) {
                         if (vm.map.data.hasOwnProperty(locationId)) {
                             svg.selectAll('.datamaps-subunit' + locationId.replace(/\s/g,''))
-                            .transition().style('fill', vm.map.data[locationId].fillKey);
+                                .transition().style('fill', vm.map.data[locationId].fillKey);
                         }
                     }
                 });
