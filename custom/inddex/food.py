@@ -309,7 +309,9 @@ class FoodRow:
 
     @property
     def age_range(self):
-        if self.age_months_calculated < 6:
+        if not self.age_months_calculated:
+            return None
+        elif self.age_months_calculated < 6:
             return "0-5.9 months"
         elif self.age_months_calculated < 60:
             return "06-59 months"
