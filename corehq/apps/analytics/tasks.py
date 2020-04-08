@@ -18,9 +18,8 @@ from celery.schedules import crontab
 from celery.task import periodic_task
 from email_validator import EmailNotValidError, validate_email
 from memoized import memoized
-from requests import HTTPError
 
-from corehq.util.metrics import metrics_counter
+from corehq.util.metrics import metrics_counter, metrics_gauge
 from dimagi.utils.logging import notify_exception
 
 from corehq.apps.accounting.models import (
@@ -42,11 +41,6 @@ from corehq.apps.es.forms import FormES
 from corehq.apps.es.users import UserES
 from corehq.apps.users.models import WebUser
 from corehq.toggles import deterministic_random
-from corehq.util.datadog.utils import (
-    DATADOG_DOMAINS_EXCEEDING_FORMS_GAUGE,
-    DATADOG_WEB_USERS_GAUGE,
-    update_datadog_metrics,
-)
 from corehq.util.dates import unix_time
 from corehq.util.decorators import analytics_task
 from corehq.util.soft_assert import soft_assert
@@ -560,10 +554,10 @@ def track_periodic_data():
         submit_json = json.dumps(submit)
         submit_data_to_hub_and_kiss(submit_json)
 
-    update_datadog_metrics({
-        DATADOG_WEB_USERS_GAUGE: hubspot_number_of_users,
-        DATADOG_DOMAINS_EXCEEDING_FORMS_GAUGE: hubspot_number_of_domains_with_forms_gt_threshold
-    })
+    metrics_gauge('commcare.hubspot.web_users_processed', hubspot_number_of_users)
+    metrics_gauge(
+        'commcare.hubspot.domains_with_forms_gt_threshold', hubspot_number_of_domains_with_forms_gt_threshold
+    )
 
 
 def _email_is_valid(email):

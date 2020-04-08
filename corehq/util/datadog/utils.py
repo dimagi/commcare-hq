@@ -7,8 +7,6 @@ from django.conf import settings
 from corehq.util.datadog import datadog_logger, statsd
 
 WILDCARD = '*'
-DATADOG_WEB_USERS_GAUGE = 'commcare.hubspot.web_users_processed'
-DATADOG_DOMAINS_EXCEEDING_FORMS_GAUGE = 'commcare.hubspot.domains_with_forms_gt_threshold'
 
 
 def sanitize_url(url):
@@ -34,11 +32,6 @@ def get_url_group(url):
         return parts[3] if len(parts) >= 4 else default
 
     return default
-
-
-def update_datadog_metrics(metrics):
-    for metric, value in metrics.items():
-        statsd.gauge(metric, value)
 
 
 def make_buckets_from_timedeltas(*timedeltas):
