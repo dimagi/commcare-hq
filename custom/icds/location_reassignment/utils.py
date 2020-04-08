@@ -9,7 +9,8 @@ from casexml.apps.case.mock import CaseBlock
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.tasks import deactivate_users_at_location
-from corehq.apps.users.util import SYSTEM_USER_ID
+from corehq.apps.users.models import CouchUser
+from corehq.apps.users.util import SYSTEM_USER_ID, normalize_username
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from custom.icds.location_reassignment.const import (
     AWC_CODE,
@@ -90,3 +91,26 @@ def get_household_and_child_cases_by_owner(domain, household_case_id, owner_id):
         else:
             case_ids = None
     return all_child_case_ids
+
+
+@task(queue=settings.CELERY_LOCATION_REASSIGNMENT_QUEUE)
+def update_usercase(domain, old_username, new_username):
+    if "@" not in old_username:
+        old_username = normalize_username(old_username, domain)
+    if "@" not in new_username:
+        new_username = normalize_username(new_username, domain)
+    old_user = CouchUser.get_by_username(old_username)
+    new_user = CouchUser.get_by_username(new_username)
+    if old_user and new_user and old_user.is_commcare_user() and new_user.is_commcare_user():
+        old_user_usercase = old_user.get_usercase()
+        new_user_usercase = new_user.get_usercase()
+        # pick values that are not already present on the new user's usercase, populated already via HQ
+        updates = {}
+        for key, value in old_user_usercase.case_json.items():
+            if key not in new_user_usercase.case_json:
+                updates[key] = value
+        if updates:
+            case_block = CaseBlock(new_user_usercase.case_id,
+                                   update=old_user_usercase.case_json,
+                                   user_id=SYSTEM_USER_ID)
+            submit_case_blocks([case_block], domain, user_id=SYSTEM_USER_ID)
