@@ -26,7 +26,7 @@ from corehq.apps.export.models.new import (
 )
 from corehq.elastic import iter_es_docs_from_query
 from corehq.toggles import PAGINATED_EXPORTS
-from corehq.util.datadog.utils import load_counter
+from corehq.util.metrics.load_counters import load_counter
 from corehq.util.files import TransientTempfile, safe_filename
 
 

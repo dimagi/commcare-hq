@@ -9,7 +9,7 @@ from corehq.messaging.scheduling.util import utcnow
 from corehq.messaging.util import MessagingRuleProgressHelper, use_phone_entries
 from corehq.sql_db.util import paginate_query_across_partitioned_databases
 from corehq.util.celery_utils import no_result_task
-from corehq.util.datadog.utils import case_load_counter
+from corehq.util.metrics.load_counters import case_load_counter
 from dimagi.utils.couch import CriticalSection
 from django.conf import settings
 from django.db.models import Q

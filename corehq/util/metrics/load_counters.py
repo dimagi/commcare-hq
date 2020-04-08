@@ -9,18 +9,17 @@ def load_counter(load_type, source, domain_name, extra_tags=None):
     rather than passing a string literal.
     :param source: Load source string. Example: `"form_submission"`.
     :param domain_name: Domain name string.
-    :param extra_tags: Optional list of extra datadog tags.
+    :param extra_tags: Optional dict of extra datadog tags.
     :returns: Function that adds load when called: `add_load(value=1)`.
     """
-    from corehq.util.datadog.gauges import datadog_counter
-    tags = ["src:%s" % source]
-    if extra_tags:
-        tags.extend(extra_tags)
-    tags.append('domain:{}'.format(domain_name))
+    from corehq.util.metrics import metrics_counter
+    tags = extra_tags or {}
+    tags['src'] = source
+    tags['domain'] = domain_name
     metric = "commcare.load.%s" % load_type
 
     def track_load(value=1):
-        datadog_counter(metric, value, tags=tags)
+        metrics_counter(metric, value, tags=tags)
 
     return track_load
 
