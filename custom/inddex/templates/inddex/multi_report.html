@@ -9,7 +9,10 @@
     {% include 'reports/partials/description.html' %}
 {% else %}
     {% if export_only %}
-      <h2>{% blocktrans %}This report is available <i><b>only for export</b></i>{% endblocktrans %}</h2>
+    <div class="alert alert-info">
+        <h3>This report is only available for export.</h3>
+        <p>Click "<i class="fa fa-share"></i> Export to Excel" above to download.</p>
+    </div>
     {% else %}
         {% for data_provider in data_providers %}
           <br/>

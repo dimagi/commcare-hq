@@ -9,6 +9,7 @@ from .utils import MultiTabularReport
 class MasterDataReport(MultiTabularReport):
     name = 'Output 1 - Master Data File'
     slug = 'master_data'
+    export_only = True
 
     @property
     def fields(self):
