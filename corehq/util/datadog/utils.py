@@ -1,10 +1,7 @@
 import re
-from datetime import timedelta
-from functools import partial, wraps
+from functools import partial
 
 from django.conf import settings
-
-from corehq.util.datadog import datadog_logger, statsd
 
 WILDCARD = '*'
 
@@ -32,21 +29,6 @@ def get_url_group(url):
         return parts[3] if len(parts) >= 4 else default
 
     return default
-
-
-def make_buckets_from_timedeltas(*timedeltas):
-    return [td.total_seconds() for td in timedeltas]
-
-
-DAY_SCALE_TIME_BUCKETS = make_buckets_from_timedeltas(
-    timedelta(seconds=1),
-    timedelta(seconds=10),
-    timedelta(minutes=1),
-    timedelta(minutes=10),
-    timedelta(hours=1),
-    timedelta(hours=12),
-    timedelta(hours=24),
-)
 
 
 def bucket_value(value, buckets, unit=''):

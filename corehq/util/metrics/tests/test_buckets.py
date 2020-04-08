@@ -2,7 +2,7 @@ from datetime import timedelta
 
 from testil import eq
 
-from corehq.util.datadog.utils import make_buckets_from_timedeltas, DAY_SCALE_TIME_BUCKETS
+from corehq.util.metrics import make_buckets_from_timedeltas, DAY_SCALE_TIME_BUCKETS
 
 
 def test_make_buckets_from_timedeltas():
