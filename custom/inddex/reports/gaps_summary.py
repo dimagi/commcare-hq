@@ -5,7 +5,7 @@ from custom.inddex.ucr.data_providers.gaps_summary_data import (
     ConvFactorGapsSummaryData,
     FCTGapsSummaryData,
 )
-from custom.inddex.utils import MultiTabularReport
+from .utils import MultiTabularReport
 
 
 class GapsSummaryReport(MultiTabularReport):

@@ -4,7 +4,7 @@ from custom.inddex import filters
 from custom.inddex.ucr.data_providers.summary_statistics_data import (
     SummaryStatsNutrientDataProvider,
 )
-from custom.inddex.utils import MultiTabularReport
+from .utils import MultiTabularReport
 
 
 class NutrientStatsReport(MultiTabularReport):

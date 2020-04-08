@@ -3,7 +3,7 @@ from custom.inddex.ucr.data_providers.gaps_report_by_item_data import (
     GapsReportByItemDetailsData,
     GapsReportByItemSummaryData,
 )
-from custom.inddex.utils import MultiTabularReport
+from .utils import MultiTabularReport
 
 
 class GapsDetailReport(MultiTabularReport):
