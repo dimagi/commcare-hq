@@ -57,4 +57,5 @@ branches:
   - mk/location-reassignment-temp-fix # MK April 7
   - bmb/SAAS-10712  # Biyeun April 1
   - ap/remove-delete-in-name # Amit April 8
+  - bmb/support-email-from  # Biyeun April 8
 submodules: {}
