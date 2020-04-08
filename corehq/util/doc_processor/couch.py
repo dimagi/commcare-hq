@@ -85,7 +85,7 @@ class CouchProcessorProgressLogger(ProcessorProgressLogger):
     :param doc_types: List of doc_types that are being processed
     """
     def __init__(self, doc_types):
-        super(CouchProcessorProgressLogger, self).__init__()
+        super().__init__()
         self.doc_types = doc_type_tuples_to_list(doc_types)
 
     def progress_starting(self, total, previously_visited):
