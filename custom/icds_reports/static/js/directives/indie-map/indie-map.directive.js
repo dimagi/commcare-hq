@@ -194,14 +194,7 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
                 $(function () {
                     var svg = d3.select('#map svg');
                     svg.selectAll(".datamaps-subunit").transition().style('fill', vm.map.fills.defaultFill);
-                    var locations = document.getElementsByClassName("datamaps-subunit");
-                    for (var i = 0; i < locations.length; i++) {
-                        var combinedClass = "";
-                        for (var j = 0; j < locations[i].classList.length; j++) {
-                            combinedClass += locations[i].classList[j];
-                        }
-                        locations[i].classList.add(combinedClass);
-                    }
+                    vm.addCombinedSelectorClassToMaps(document.getElementsByClassName("datamaps-subunit"));
                     for (var locationId in vm.map.data) {
                         if (vm.map.data.hasOwnProperty(locationId)) {
                             svg.selectAll('.datamaps-subunit' + locationId.replace(/\s/g,''))
@@ -220,6 +213,15 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
             };
         }
 
+        vm.addCombinedSelectorClassToMaps = function (locations) {
+            for (var i = 0; i < locations.length; i++) {
+                var combinedClass = "";
+                for (var j = 0; j < locations[i].classList.length; j++) {
+                    combinedClass += locations[i].classList[j];
+                }
+                locations[i].classList.add(combinedClass);
+            }
+        };
         vm.mapPlugins = {
             bubbles: null,
         };
