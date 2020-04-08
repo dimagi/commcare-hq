@@ -84,8 +84,8 @@ class Parser(object):
             ))
             return
         if (
-            (row.get(NEW_USERNAME_COLUMN) and not row.get(USERNAME_COLUMN)) or
-            (not row.get(NEW_USERNAME_COLUMN) and row.get(USERNAME_COLUMN))
+            (row.get(NEW_USERNAME_COLUMN) and not row.get(USERNAME_COLUMN))
+            or (not row.get(NEW_USERNAME_COLUMN) and row.get(USERNAME_COLUMN))
         ):
             self.errors.append("Invalid user transition for %s for location '%s'" % (
                 operation, old_site_code
