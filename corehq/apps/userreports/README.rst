@@ -2069,7 +2069,7 @@ in the sort expression as the first set of columns in the same order.
 
 Pick distinct by a single column
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Sort expression should have username and then other columns if needed
+Sort expression should have column1 and then other columns if needed
 
 .. code:: json
 
@@ -2084,7 +2084,7 @@ Sort expression should have username and then other columns if needed
      }
    ]
 
-distinct on would be
+and distinct on would be
 
 .. code:: json
 
@@ -2108,6 +2108,8 @@ More columns can be added after these if needed
        "order": "ASC"
      }
    ]
+
+and distinct on would be
 
 .. code:: json
 
