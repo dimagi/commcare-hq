@@ -195,12 +195,7 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
                     var svg = d3.select('#map svg');
                     svg.selectAll(".datamaps-subunit").transition().style('fill', vm.map.fills.defaultFill);
                     vm.addCombinedSelectorClassToMaps(document.getElementsByClassName("datamaps-subunit"));
-                    for (var locationId in vm.map.data) {
-                        if (vm.map.data.hasOwnProperty(locationId)) {
-                            svg.selectAll('.datamaps-subunit' + locationId.replace(/\s/g,''))
-                                .transition().style('fill', vm.map.data[locationId].fillKey);
-                        }
-                    }
+                    vm.colorMapBasedOnCombinedSelectorClass(svg);
                 });
                 return {path: path, projection: projection};
             },
@@ -220,6 +215,14 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
                     combinedClass += locations[i].classList[j];
                 }
                 locations[i].classList.add(combinedClass);
+            }
+        };
+        vm.colorMapBasedOnCombinedSelectorClass = function (svg) {
+            for (var locationId in vm.map.data) {
+                if (vm.map.data.hasOwnProperty(locationId)) {
+                    svg.selectAll('.datamaps-subunit' + locationId.replace(/\s/g,''))
+                        .transition().style('fill', vm.map.data[locationId].fillKey);
+                }
             }
         };
         vm.mapPlugins = {
