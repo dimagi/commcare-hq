@@ -58,4 +58,5 @@ branches:
   - bmb/SAAS-10712  # Biyeun April 1
   - ap/remove-delete-in-name # Amit April 8
   - bmb/support-email-from  # Biyeun April 8
+  - pv/2fa-webapps-redirect # Jenny April 8
 submodules: {}
