@@ -1,6 +1,5 @@
 {% extends "hqwebapp/base_section.html" %}
 {% load i18n %}
-{% load hq_shared_tags %}
 
 {% block page_content %}
   <h1>{% block title %}{% trans "Enable Two-Factor Authentication" %}{% endblock %}</h1>
@@ -9,21 +8,15 @@
     authentication.{% endblocktrans %}
 
     {% if not phone_methods %}
-      {% if request|toggle_enabled:"TWO_STAGE_USER_PROVISIONING" %}
-        {% if request.couch_user.domain_memberships.0.role.default_landing_page == 'webapps' %}
-          <a href="{% url 'homepage'%}"
-           class="btn btn-primary">{% trans "Begin Using CommCare Now" %}</a>
-        {% endif %}
+      {% if link_to_webapps %}
+        <a href="{% url 'homepage'%}" class="btn btn-primary">{% trans "Begin Using CommCare Now" %}</a>
       {% endif %}
       <p><a href="{% url 'two_factor:profile' %}"
             class="btn btn-block btn-default">{% trans "Back to Profile" %}</a></p>
     {% else %}
       <p>{% blocktrans %}To enable account recovery, generate backup tokens.{% endblocktrans %}</p>
-      {% if request|toggle_enabled:"TWO_STAGE_USER_PROVISIONING" %}
-        {% if request.couch_user.domain_memberships.0.role.default_landing_page == 'webapps' %}
-          <a href="{% url 'homepage'%}"
-           class="btn btn-primary">{% trans "Begin Using CommCare Now" %}</a>
-        {% endif %}
+      {% if link_to_webapps %}
+        <a href="{% url 'homepage'%}" class="btn btn-primary">{% trans "Begin Using CommCare Now" %}</a>
       {% endif %}
       <p></p><a href="{% url 'two_factor:profile' %}"
          class="pull-right btn btn-link">{% trans "Back to Profile" %}</a></p>
