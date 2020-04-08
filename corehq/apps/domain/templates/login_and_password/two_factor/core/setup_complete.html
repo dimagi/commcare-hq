@@ -20,8 +20,8 @@
         <a href="{% url 'homepage'%}"
          class="btn btn-primary">{% trans "Begin Using CommCare Now" %}</a>
       {% endif %}
-      <a href="{% url 'two_factor:profile' %}"
-         class="pull-right btn btn-link">{% trans "Back to Profile" %}</a>
+      <p></p><a href="{% url 'two_factor:profile' %}"
+         class="pull-right btn btn-link">{% trans "Back to Profile" %}</a></p>
       <p><a href="{% url 'two_factor:backup_tokens' %}"
             class="btn btn-default">{% trans "Generate Backup Tokens" %}</a></p>
     {% endif %}
