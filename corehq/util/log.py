@@ -17,7 +17,6 @@ from django.views.debug import SafeExceptionReporterFilter, get_exception_report
 from django.template.loader import render_to_string
 from corehq.util.view_utils import get_request
 from corehq.util.metrics.utils import get_url_group, sanitize_url
-from corehq.util.datadog.metrics import ERROR_COUNT
 from corehq.util.metrics.const import TAG_UNKNOWN
 
 
@@ -106,7 +105,7 @@ class HqAdminEmailHandler(AdminEmailHandler):
         })
         if request:
             sanitized_url = sanitize_url(request.build_absolute_uri())
-            metrics_counter(ERROR_COUNT, tags={
+            metrics_counter('commcare.error.count', tags={
                 'url': sanitized_url,
                 'group': get_url_group(sanitized_url),
                 'domain': getattr(request, 'domain', TAG_UNKNOWN),
