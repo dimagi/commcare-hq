@@ -1,13 +1,12 @@
 from django.utils.functional import cached_property
 
-from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
-from corehq.apps.reports.generic import GenericTabularReport
-from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin
 from custom.inddex import filters
 from custom.inddex.food import FoodData
 
+from .utils import MultiTabularReport
 
-class MasterDataReport(DatespanMixin, CustomProjectReport, GenericTabularReport):
+
+class MasterDataReport(MultiTabularReport):
     name = 'Output 1 - Master Data File'
     slug = 'master_data'
 
@@ -21,15 +20,25 @@ class MasterDataReport(DatespanMixin, CustomProjectReport, GenericTabularReport)
         ]
 
     @property
-    def headers(self):
-        return DataTablesHeader(
-            *(DataTablesColumn(header) for header in self._food_data.headers)
-        )
-
-    @property
-    def rows(self):
-        return self._food_data.rows
+    def data_providers(self):
+        return [MasterData(self._food_data)]
 
     @cached_property
     def _food_data(self):
         return FoodData.from_request(self.domain, self.request)
+
+
+class MasterData:
+    title = "master_data"
+    slug = title
+
+    def __init__(self, food_data):
+        self._food_data = food_data
+
+    @property
+    def headers(self):
+        return self._food_data.headers
+
+    @property
+    def rows(self):
+        return self._food_data.rows

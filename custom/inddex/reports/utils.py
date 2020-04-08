@@ -1,3 +1,4 @@
+from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin
 
@@ -9,6 +10,7 @@ class MultiTabularReport(DatespanMixin, CustomProjectReport, GenericTabularRepor
 
     @property
     def data_providers(self):
+        # data providers should supply a title, slug, headers, and rows
         return []
 
     @property
@@ -21,7 +23,9 @@ class MultiTabularReport(DatespanMixin, CustomProjectReport, GenericTabularRepor
             context['data_providers'] = [{
                 'title': data_provider.title,
                 'slug': data_provider.slug,
-                'headers': data_provider.headers,
+                'headers': DataTablesHeader(
+                    *(DataTablesColumn(header) for header in data_provider.headers),
+                ),
                 'rows': data_provider.rows,
             } for data_provider in self.data_providers]
         return context
