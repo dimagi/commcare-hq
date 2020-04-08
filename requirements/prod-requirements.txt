@@ -165,6 +165,7 @@ tinys3==0.1.12
 tornado==4.5.3
 traitlets==4.3.3          # via ipython
 tropo-webapi-python==0.1.3
+git+git://github.com/dimagi/turn-python.git
 twilio==6.5.1
 ua-parser==0.8.0          # via user-agents
 unidecode==0.04.20
