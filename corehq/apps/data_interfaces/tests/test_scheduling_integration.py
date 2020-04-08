@@ -721,6 +721,20 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
 
     @run_with_all_backends
     @patch('corehq.messaging.scheduling.util.utcnow')
+    def test_sync_rule_on_hard_deleted_case(self, utcnow_patch):
+        setup = self.setup_timed_schedule_with_case(utcnow_patch)
+        with setup as (schedule, rule, definition, case):
+            utcnow_patch.return_value = datetime(2018, 2, 28, 7, 1)
+            update_case(self.domain, case.case_id, case_properties={'start_sending': 'Y'})
+            instances = get_case_timed_schedule_instances_for_schedule(case.case_id, schedule)
+            self.assertEqual(instances.count(), 1)
+
+        sync_case_for_messaging_rule(self.domain, case.case_id, rule.pk)
+        instances = get_case_timed_schedule_instances_for_schedule(case.case_id, schedule)
+        self.assertEqual(instances.count(), 0)
+
+    @run_with_all_backends
+    @patch('corehq.messaging.scheduling.util.utcnow')
     def test_sync_messaging_on_hard_deleted_case(self, utcnow_patch):
         setup = self.setup_timed_schedule_with_case(utcnow_patch)
         with setup as (schedule, rule, definition, case):
