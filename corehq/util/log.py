@@ -18,7 +18,7 @@ from django.template.loader import render_to_string
 from corehq.util.view_utils import get_request
 from corehq.util.metrics.utils import get_url_group, sanitize_url
 from corehq.util.datadog.metrics import ERROR_COUNT
-from corehq.util.datadog.const import DATADOG_UNKNOWN
+from corehq.util.metrics.const import TAG_UNKNOWN
 
 
 def clean_exception(exception):
@@ -109,7 +109,7 @@ class HqAdminEmailHandler(AdminEmailHandler):
             metrics_counter(ERROR_COUNT, tags={
                 'url': sanitized_url,
                 'group': get_url_group(sanitized_url),
-                'domain': getattr(request, 'domain', DATADOG_UNKNOWN),
+                'domain': getattr(request, 'domain', TAG_UNKNOWN),
             })
 
             context.update({
