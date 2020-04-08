@@ -191,6 +191,24 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
                         .translate([element.offsetWidth / 2, element.offsetHeight / div]);
                     path = d3.geo.path().projection(projection);
                 }
+                $(function () {
+                    var svg = d3.select('#map svg');
+                    svg.selectAll(".datamaps-subunit").transition().style('fill', vm.map.fills.defaultFill);
+                    var locations = document.getElementsByClassName("datamaps-subunit");
+                    for (var i = 0; i < locations.length; i++) {
+                        var combinedClass = "";
+                        for (var j = 0; j < locations[i].classList.length; j++) {
+                            combinedClass += locations[i].classList[j];
+                        }
+                        locations[i].classList.add(combinedClass);
+                    }
+                    for (var locationId in vm.map.data) {
+                        if (vm.map.data.hasOwnProperty(locationId)) {
+                            svg.selectAll('.datamaps-subunit' + locationId.replace(/\s/g,''))
+                            .transition().style('fill', vm.map.data[locationId].fillKey);
+                        }
+                    }
+                });
                 return {path: path, projection: projection};
             },
         };
