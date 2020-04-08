@@ -695,12 +695,13 @@ class BugReportView(View):
             content = uploaded_file.read()
             email.attach(filename=filename, content=content)
 
-        # only fake the from email if it's an @dimagi.com account
         is_icds_env = settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS
-        if re.search(r'@dimagi\.com$', report['username']) and not is_icds_env:
-            email.from_email = report['username']
-        else:
+        if is_icds_env:
             email.from_email = settings.SUPPORT_EMAIL
+        else:
+            # we use the same reply-to email here, because jira does not hadle
+            # a different from and reply-to email very well
+            email.from_email = reply_to
 
         email.send(fail_silently=False)
 
