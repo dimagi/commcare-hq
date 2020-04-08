@@ -39,15 +39,11 @@ enrich_rows :: mutates FoodRow after the fact to calculate information related
 import operator
 import uuid
 from collections import defaultdict
-from datetime import datetime
 from functools import reduce
-from itertools import chain
 
 from custom.inddex.ucr_data import FoodCaseData
 
 from .fixtures import FixtureAccessor
-
-MISSING = ''
 
 IN_UCR = 'in_ucr'
 IN_FOOD_FIXTURE = 'in_food_fixture'
@@ -426,10 +422,6 @@ class FoodData:
             gap_type=request.GET.get('gap_type'),
         )
 
-    @property
-    def headers(self):
-        return [i.slug for i in INDICATORS] + list(get_nutrient_headers(self.fixtures.nutrient_names))
-
     def _matches_in_memory_filters(self, row):
         # If a gap type is specified, show only rows with gaps of that type
         if self._gap_type == 'conv_factor':
@@ -455,26 +447,22 @@ class FoodData:
             enrich_rows(recipe_id, rows_in_recipe)
             for row in rows_in_recipe:
                 if self._matches_in_memory_filters(row):
-                    static_rows = (getattr(row, column.slug) for column in INDICATORS)
-                    nutrient_rows = get_nutrient_values(self.fixtures.nutrient_names, row)
-                    yield [_format(val) for val in chain(static_rows, nutrient_rows)]
+                    yield row
 
+    def get_nutrient_headers(self):
+        for name in self.fixtures.nutrient_names:
+            yield f"{name}_per_100g"
+            yield name
 
-def get_nutrient_headers(nutrient_names):
-    for name in nutrient_names:
-        yield f"{name}_per_100g"
-        yield name
-
-
-def get_nutrient_values(nutrient_names, row):
-    for name in nutrient_names:
-        if row.fct_code:
-            per_100g = row.composition.nutrients.get(name)
-            yield per_100g
-            yield _multiply(per_100g, row.total_grams, 0.01)
-        else:
-            yield None
-            yield None
+    def get_nutrient_values(self, row):
+        for name in self.fixtures.nutrient_names:
+            if row.fct_code:
+                per_100g = row.composition.nutrients.get(name)
+                yield per_100g
+                yield _multiply(per_100g, row.total_grams, 0.01)
+            else:
+                yield None
+                yield None
 
 
 def _multiply(*args):
@@ -482,17 +470,3 @@ def _multiply(*args):
         return round(reduce(operator.mul, args), 2)
     except TypeError:
         return None
-
-
-def _format(val):
-    if isinstance(val, datetime):
-        return val.strftime('%Y-%m-%d %H:%M:%S')
-    if isinstance(val, bool):
-        return "yes" if val else "no"
-    if isinstance(val, int):
-        return str(val)
-    if isinstance(val, float):
-        return str(int(val)) if val.is_integer() else str(val)
-    if val is None:
-        return MISSING
-    return val

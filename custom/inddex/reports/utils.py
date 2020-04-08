@@ -1,3 +1,4 @@
+from datetime import datetime
 from itertools import chain
 
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
@@ -39,3 +40,17 @@ class MultiTabularReport(DatespanMixin, CustomProjectReport, GenericTabularRepor
             [dp.slug, chain([dp.headers], dp.rows)]
             for dp in self.data_providers
         ]
+
+
+def format_val(val):
+    if isinstance(val, datetime):
+        return val.strftime('%Y-%m-%d %H:%M:%S')
+    if isinstance(val, bool):
+        return "yes" if val else "no"
+    if isinstance(val, int):
+        return str(val)
+    if isinstance(val, float):
+        return str(int(val)) if val.is_integer() else str(val)
+    if val is None:
+        return ''
+    return val

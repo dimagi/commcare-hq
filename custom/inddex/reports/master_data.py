@@ -1,7 +1,9 @@
-from custom.inddex import filters
-from custom.inddex.food import FoodData
+from itertools import chain
 
-from .utils import MultiTabularReport
+from custom.inddex import filters
+from custom.inddex.food import INDICATORS, FoodData
+
+from .utils import MultiTabularReport, format_val
 
 
 class MasterDataReport(MultiTabularReport):
@@ -33,8 +35,11 @@ class MasterData:
 
     @property
     def headers(self):
-        return self._food_data.headers
+        return [i.slug for i in INDICATORS] + list(self._food_data.get_nutrient_headers())
 
     @property
     def rows(self):
-        return self._food_data.rows
+        for row in self._food_data.rows:
+            static_cols = (getattr(row, column.slug) for column in INDICATORS)
+            nutrient_cols = self._food_data.get_nutrient_values(row)
+            yield [format_val(val) for val in chain(static_cols, nutrient_cols)]
