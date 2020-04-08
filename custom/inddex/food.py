@@ -402,8 +402,10 @@ def _calculate_total_grams(recipe, ingredients):
 
 class FoodData:
     """Generates the primary dataset for INDDEX reports.  See file docstring for more."""
-    def __init__(self, domain, *, datespan, case_owners=None, recall_status=None):
+    def __init__(self, domain, *, datespan,
+                 case_owners=None, recall_status=None, gap_type=None):
         self.fixtures = FixtureAccessor(domain)
+        self._gap_type = gap_type
         self._ucr = FoodCaseData({
             'domain': domain,
             'startdate': str(datespan.startdate),
@@ -412,9 +414,27 @@ class FoodData:
             'recall_status': recall_status or '',
         })
 
+    @classmethod
+    def from_request(cls, domain, request):
+        return cls(
+            domain,
+            datespan=request.datespan,
+            case_owners=request.GET.get('case_owners'),
+            recall_status=request.GET.get('recall_status'),
+            gap_type=request.GET.get('gap_type'),
+        )
+
     @property
     def headers(self):
         return [i.slug for i in INDICATORS] + list(get_nutrient_headers(self.fixtures.nutrient_names))
+
+    def _matches_in_memory_filters(self, row):
+        # If a gap type is specified, show only rows with gaps of that type
+        if self._gap_type == 'conv_factor':
+            return row.conv_factor_gap_code != ConvFactorGaps.AVAILABLE
+        elif self._gap_type == 'fct':
+            return row.fct_gap_code != FctGaps.AVAILABLE
+        return True
 
     @property
     def rows(self):
@@ -432,9 +452,10 @@ class FoodData:
         for recipe_id, rows_in_recipe in rows_by_recipe.items():
             enrich_rows(recipe_id, rows_in_recipe)
             for row in rows_in_recipe:
-                static_rows = (getattr(row, column.slug) for column in INDICATORS)
-                nutrient_rows = get_nutrient_values(self.fixtures.nutrient_names, row)
-                yield map(_format, chain(static_rows, nutrient_rows))
+                if self._matches_in_memory_filters(row):
+                    static_rows = (getattr(row, column.slug) for column in INDICATORS)
+                    nutrient_rows = get_nutrient_values(self.fixtures.nutrient_names, row)
+                    yield [_format(val) for val in chain(static_rows, nutrient_rows)]
 
 
 def get_nutrient_headers(nutrient_names):
