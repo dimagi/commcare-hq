@@ -2048,8 +2048,8 @@ THROTTLE_SCHED_REPORTS_PATTERNS = (
     'mvp-',
 )
 
-# Domains that we want to tag in datadog
-DATADOG_DOMAINS = {
+# Domains that we want to tag in metrics provider
+METRICS_TAGGED_DOMAINS = {
     # ("env", "domain"),
     ("production", "born-on-time-2"),
     ("production", "hki-nepal-suaahara-2"),
