@@ -53,7 +53,11 @@ class MultiDBRouter(object):
         obj1_partitioned = isinstance(obj1, PartitionedModel)
         obj2_partitioned = isinstance(obj2, PartitionedModel)
         if obj1_partitioned and obj2_partitioned:
-            return obj1.db == obj2.db
+            if 'partition_value' not in obj2.__dict__:
+                # skip this check when the model is first being initialized
+                return True
+            else:
+                return obj1.partition_value == obj2.partition_value
         elif not obj1_partitioned and not obj2_partitioned:
             app1, app2 = obj1._meta.app_label, obj2._meta.app_label
             if app1 == SYNCLOGS_APP:
