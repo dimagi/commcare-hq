@@ -1229,7 +1229,7 @@ LOGGING = {
             'propagate': False,
         },
         'accounting': {
-            'handlers': ['accountinglog', 'console', 'mail_admins'],
+            'handlers': ['accountinglog', 'console'],
             'level': 'INFO',
             'propagate': False,
         },
@@ -2036,6 +2036,7 @@ DOMAIN_MODULE_MAP = {
     'vectorlink-zimbabwe': 'custom.abt',
 
     'inddex-reports': 'custom.inddex',
+    'inddex-multilingual': 'custom.inddex',
 
     'ccqa': 'custom.ccqa',
 }

@@ -3,6 +3,7 @@ from unittest import TestCase
 import attr
 from mock import ANY, call, patch
 
+from corehq.util.metrics.tests.utils import capture_metrics
 from ..lockmeter import MeteredLock
 
 
@@ -16,31 +17,31 @@ class TestMeteredLock(TestCase):
     def test_acquire(self):
         fake = FakeLock()
         lock = MeteredLock(fake, "test")
-        with patch("corehq.util.datadog.gauges.datadog_counter") as counter:
+        with capture_metrics() as metrics:
             lock.acquire()
             self.assertTrue(fake.locked)
-        counter.assert_called_once_with("commcare.lock.acquire_time", tags=["lock_name:test", ANY])
+        self.assertEqual(1, len(metrics.list("commcare.lock.acquire_time", lock_name='test')), metrics)
 
     def test_not_acquired(self):
         fake = FakeLock()
         lock = MeteredLock(fake, "test")
-        with patch("corehq.util.datadog.gauges.datadog_counter") as counter:
+        with capture_metrics() as metrics:
             self.assertFalse(lock.acquire(blocking=False))
-        counter.assert_called_once_with("commcare.lock.acquire_time", tags=["lock_name:test", ANY])
+        self.assertEqual(1, len(metrics.list("commcare.lock.acquire_time", lock_name='test')), metrics)
 
     def test_release(self):
         fake = FakeLock()
         lock = MeteredLock(fake, "test")
         lock.acquire()
-        with patch("corehq.util.datadog.gauges.datadog_counter") as counter:
+        with capture_metrics() as metrics:
             lock.release()
             self.assertFalse(fake.locked)
-        counter.assert_called_once_with("commcare.lock.locked_time", tags=["lock_name:test", ANY])
+        self.assertEqual(1, len(metrics.list("commcare.lock.locked_time", lock_name='test')), metrics)
 
     def test_release_not_locked(self):
         fake = FakeLock()
         lock = MeteredLock(fake, "test")
-        with patch("corehq.util.datadog.gauges.datadog_counter") as counter:
+        with patch("corehq.util.metrics.metrics_histogram") as counter:
             lock.release()
             self.assertFalse(fake.locked)
         counter.assert_not_called()
@@ -48,34 +49,31 @@ class TestMeteredLock(TestCase):
     def test_lock_as_context_manager(self):
         fake = FakeLock()
         lock = MeteredLock(fake, "test")
-        with patch("corehq.util.datadog.gauges.datadog_counter") as counter:
+        with capture_metrics() as metrics:
             with lock:
                 self.assertTrue(fake.locked)
             self.assertFalse(fake.locked)
-        counter.assert_has_calls([
-            call("commcare.lock.acquire_time", tags=["lock_name:test", ANY]),
-            call("commcare.lock.locked_time", tags=["lock_name:test", ANY]),
-        ])
-        self.assertEqual(counter.call_count, 2, counter.call_args_list)
+        self.assertEqual(1, len(metrics.list("commcare.lock.acquire_time", lock_name='test')), metrics)
+        self.assertEqual(1, len(metrics.list("commcare.lock.locked_time", lock_name='test')), metrics)
 
     def test_release_failed(self):
         lock = MeteredLock(FakeLock(), "test")
-        with patch("corehq.util.datadog.lockmeter.datadog_counter") as counter:
+        with capture_metrics() as metrics:
             lock.release_failed()
-        counter.assert_called_once_with("commcare.lock.release_failed", tags=["lock_name:test"])
+        self.assertEqual(1, len(metrics.list("commcare.lock.release_failed", lock_name='test')), metrics)
 
     def test_degraded(self):
         lock = MeteredLock(FakeLock(), "test")
-        with patch("corehq.util.datadog.lockmeter.datadog_counter") as counter:
+        with capture_metrics() as metrics:
             lock.degraded()
-        counter.assert_called_once_with("commcare.lock.degraded", tags=["lock_name:test"])
+        self.assertEqual(1, len(metrics.list("commcare.lock.degraded", lock_name='test')), metrics)
 
     def test_released_after_timeout(self):
         lock = MeteredLock(FakeLock(timeout=-1), "test")
         lock.acquire()
-        with patch("corehq.util.datadog.lockmeter.datadog_counter") as counter:
+        with capture_metrics() as metrics:
             lock.release()
-        counter.assert_called_once_with("commcare.lock.released_after_timeout", tags=["lock_name:test"])
+        self.assertEqual(1, len(metrics.list("commcare.lock.released_after_timeout", lock_name='test')), metrics)
 
     def test_lock_without_timeout(self):
         fake = FakeLock()
@@ -87,7 +85,7 @@ class TestMeteredLock(TestCase):
     def test_acquire_trace(self):
         fake = FakeLock()
         lock = MeteredLock(fake, "test")
-        with patch("corehq.util.datadog.lockmeter.tracer") as tracer:
+        with patch("corehq.util.metrics.lockmeter.tracer") as tracer:
             lock.acquire()
         self.assertListEqual(tracer.mock_calls, [
             call.trace("commcare.lock.acquire", resource="key"),
@@ -105,7 +103,7 @@ class TestMeteredLock(TestCase):
     def test_release_trace(self):
         fake = FakeLock()
         lock = MeteredLock(fake, "test")
-        with patch("corehq.util.datadog.lockmeter.tracer") as tracer:
+        with patch("corehq.util.metrics.lockmeter.tracer") as tracer:
             lock.acquire()
             tracer.reset_mock()
             lock.release()
@@ -114,7 +112,7 @@ class TestMeteredLock(TestCase):
     def test_del_trace(self):
         fake = FakeLock()
         lock = MeteredLock(fake, "test")
-        with patch("corehq.util.datadog.lockmeter.tracer") as tracer:
+        with patch("corehq.util.metrics.lockmeter.tracer") as tracer:
             lock.acquire()
             tracer.reset_mock()
             lock.__del__()
@@ -126,7 +124,7 @@ class TestMeteredLock(TestCase):
     def test_acquire_untracked(self):
         fake = FakeLock()
         lock = MeteredLock(fake, "test", track_unreleased=False)
-        with patch("corehq.util.datadog.lockmeter.tracer") as tracer:
+        with patch("corehq.util.metrics.lockmeter.tracer") as tracer:
             lock.acquire()
         self.assertListEqual(tracer.mock_calls, [
             call.trace("commcare.lock.acquire", resource="key"),
@@ -142,7 +140,7 @@ class TestMeteredLock(TestCase):
     def test_release_untracked(self):
         fake = FakeLock()
         lock = MeteredLock(fake, "test", track_unreleased=False)
-        with patch("corehq.util.datadog.lockmeter.tracer") as tracer:
+        with patch("corehq.util.metrics.lockmeter.tracer") as tracer:
             lock.acquire()
             tracer.reset_mock()
             lock.release()
@@ -151,7 +149,7 @@ class TestMeteredLock(TestCase):
     def test_del_untracked(self):
         fake = FakeLock()
         lock = MeteredLock(fake, "test", track_unreleased=False)
-        with patch("corehq.util.datadog.lockmeter.tracer") as tracer:
+        with patch("corehq.util.metrics.lockmeter.tracer") as tracer:
             lock.acquire()
             tracer.reset_mock()
             lock.__del__()
