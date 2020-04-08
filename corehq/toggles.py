@@ -1190,6 +1190,7 @@ DATA_EXPORT_TOOL_SCHEMA_EXPORT = StaticToggle(
     'Show an option to download data export tool schemas from the exports list view (Experimental)',
     TAG_SOLUTIONS_LIMITED,
     [NAMESPACE_DOMAIN, NAMESPACE_USER],
+    help_link='https://confluence.dimagi.com/display/ccinternal/Download+Data+Export+Tool+Schemas+from+the+Exports+List+View',
 )
 
 
