@@ -143,13 +143,12 @@ def completely_initialize_pillow_index(pillow):
     return initialize_index_and_mapping(pillow.get_es_new(), get_index_info_from_pillow(pillow), set_alias=False)
 
 
-def initialize_index_and_mapping(es, index_info, set_alias=True):
+def initialize_index_and_mapping(es, index_info):
     index_exists = es.indices.exists(index_info.index)
     if not index_exists:
         initialize_index(es, index_info)
     initialize_mapping_if_necessary(es, index_info)
-    if set_alias:
-        assume_alias(es, index_info.index, index_info.alias)
+    assume_alias(es, index_info.index, index_info.alias)
 
 
 def initialize_index(es, index_info):
