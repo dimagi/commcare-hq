@@ -230,6 +230,36 @@
         "type": "expression",
         "column_id": "sex"
       },
+        {
+        "display_name": null,
+        "datatype": "string",
+        "expression": {
+          "datatype": null,
+          "type": "property_path",
+          "property_path": ["case_open_child_health_3", "case", "@case_id"]
+        },
+        "is_primary_key": false,
+        "transform": {},
+        "is_nullable": true,
+        "type": "expression",
+        "column_id": "child_health_case_id"
+      },
+        {
+        "column_id": "delivery_nature",
+        "datatype": "string",
+        "type": "expression",
+        "expression": {
+          "type": "root_doc",
+          "expression": {
+            "datatype": "string",
+            "type": "property_path",
+            "property_path": [
+              "form",
+              "delivery_nature"
+            ]
+          }
+        }
+      },
       {
         "display_name": null,
         "datatype": "string",
