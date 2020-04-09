@@ -96,8 +96,10 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
             start_month_string=start_month_string)
         not_registered = "(agg_availing.is_registered = 0 AND agg_availing.registration_date::date < {start_month_string})::boolean".format(
             start_month_string=start_month_string)
-        seeking_services = "{not_registered} IS DISTINCT FROM 't' AND {migrated} IS DISTINCT FROM 't'".format(
-            not_registered=not_registered, migrated=migrated)
+        seeking_services = (
+            "{not_registered} IS DISTINCT FROM 't' "
+            "AND {migrated} IS DISTINCT FROM 't'"
+        ).format(not_registered=not_registered, migrated=migrated)
         born_in_month = "({} AND person_cases.dob BETWEEN {} AND {})".format(
             seeking_services, start_month_string, end_month_string
         )
