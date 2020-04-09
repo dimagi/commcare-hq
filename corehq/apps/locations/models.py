@@ -524,7 +524,7 @@ class SQLLocation(AdjListModel):
         self.stocks_all_products = (set(value) ==
                                     set(SQLProduct.by_domain(self.domain)))
 
-        self._products = value
+        self._products.set(value)
 
     def _remove_user(self):
         """
