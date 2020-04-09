@@ -5,7 +5,7 @@ from corehq.util.es.elasticsearch import bulk
 from corehq.util.es.interface import ElasticsearchInterface
 
 from pillowtop.es_utils import (
-    initialize_mapping_if_necessary,
+    initialize_index_and_mapping,
     set_index_normal_settings,
     set_index_reindex_settings,
 )
