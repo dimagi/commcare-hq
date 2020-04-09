@@ -88,7 +88,7 @@ def get_domain_form_doc_provider(domains, iteration_key):
                 ],
                 domain=domain)
         providers.append(doc_provider)
-    return CompositeDocProvider(providers, iteration_key)
+    return CompositeDocProvider(providers)
 
 
 class ReportFormReindexerFactory(ReindexerFactory):
