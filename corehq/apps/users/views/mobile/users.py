@@ -737,7 +737,11 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
 
         is_valid = lambda: self.new_mobile_worker_form.is_valid() and self.custom_data.is_valid()
         if not is_valid():
-            return {'error': _("Forms did not validate")}
+            all_errors = [e for errors in self.new_mobile_worker_form.errors.values() for e in errors]
+            all_errors += [e for errors in self.custom_data.errors.values() for e in errors]
+            return {'error': _("Forms did not validate: {errors}").format(
+                errors=', '.join(all_errors)
+            )}
 
         couch_user = self._build_commcare_user()
         if self.new_mobile_worker_form.cleaned_data['send_account_confirmation_email']:
