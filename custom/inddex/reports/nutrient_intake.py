@@ -5,7 +5,7 @@ from custom.inddex.ucr.data_providers.nutrient_intakes_data import (
     NutrientIntakesByFoodData,
     NutrientIntakesByRespondentData,
 )
-from custom.inddex.utils import MultiTabularReport
+from .utils import MultiTabularReport
 
 
 class NutrientIntakeReport(MultiTabularReport):
