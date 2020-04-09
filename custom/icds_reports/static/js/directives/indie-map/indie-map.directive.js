@@ -191,6 +191,12 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
                         .translate([element.offsetWidth / 2, element.offsetHeight / div]);
                     path = d3.geo.path().projection(projection);
                 }
+                $(function () {
+                    var svg = d3.select('#map svg');
+                    svg.selectAll(".datamaps-subunit").transition().style('fill', vm.map.fills.defaultFill);
+                    vm.addCombinedSelectorClassToMaps(document.getElementsByClassName("datamaps-subunit"));
+                    vm.colorMapBasedOnCombinedSelectorClass(svg);
+                });
                 return {path: path, projection: projection};
             },
         };
@@ -202,6 +208,23 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
             };
         }
 
+        vm.addCombinedSelectorClassToMaps = function (locations) {
+            for (var i = 0; i < locations.length; i++) {
+                var combinedClass = "";
+                for (var j = 0; j < locations[i].classList.length; j++) {
+                    combinedClass += locations[i].classList[j];
+                }
+                locations[i].classList.add(combinedClass);
+            }
+        };
+        vm.colorMapBasedOnCombinedSelectorClass = function (svg) {
+            for (var locationId in vm.map.data) {
+                if (vm.map.data.hasOwnProperty(locationId)) {
+                    svg.selectAll('.datamaps-subunit' + locationId.replace(/\s/g,''))
+                        .transition().style('fill', vm.map.data[locationId].fillKey);
+                }
+            }
+        };
         vm.mapPlugins = {
             bubbles: null,
         };
@@ -331,7 +354,7 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
         var html = "";
         html += '<div class="secondary-location-selector">';
         html += '<div class="modal-header">';
-        html += '<button type="button" class="close" ng-click="$ctrl.closePopup()" aria-label="Close">' +
+        html += '<button type="button" class="close" ng-click="$ctrl.closePopup($event)" aria-label="Close">' +
             '<span aria-hidden="true">&times;</span></button>';
         html += "</div>";
         html += '<div class="modal-body">';

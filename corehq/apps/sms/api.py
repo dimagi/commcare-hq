@@ -47,7 +47,7 @@ from corehq.apps.sms.util import (
 from corehq.apps.smsbillables.utils import log_smsbillables_error
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.form_processor.utils import is_commcarecase
-from corehq.util.datadog.utils import sms_load_counter
+from corehq.util.metrics.load_counters import sms_load_counter
 
 # A list of all keywords which allow registration via sms.
 # Meant to allow support for multiple languages.
@@ -660,6 +660,10 @@ def process_incoming(msg):
         is_two_way = v is not None and v.is_two_way
 
         if msg.domain and domain_has_privilege(msg.domain, privileges.INBOUND_SMS):
+            if v and v.pending_verification:
+                from . import verify
+                handled = verify.process_verification(v, msg, create_subevent_for_inbound=not has_domain_two_way_scope)
+
             if (
                 (is_two_way or has_domain_two_way_scope)
                 and is_contact_active(v.domain, v.owner_doc_type, v.owner_id)

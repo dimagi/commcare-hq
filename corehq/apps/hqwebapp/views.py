@@ -49,7 +49,7 @@ from sentry_sdk import last_event_id
 from two_factor.forms import AuthenticationTokenForm, BackupTokenForm
 from two_factor.views import LoginView
 
-from corehq.util.metrics import create_metrics_event
+from corehq.util.metrics import create_metrics_event, metrics_counter, metrics_gauge
 from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.django.request import mutable_querydict
@@ -108,10 +108,8 @@ from corehq.form_processor.backends.sql.dbaccessors import (
 from corehq.form_processor.exceptions import CaseNotFound, XFormNotFound
 from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.util.context_processors import commcare_hq_names
-from corehq.util.datadog.const import DATADOG_UNKNOWN
-from corehq.util.datadog.gauges import datadog_counter, datadog_gauge
-from corehq.util.datadog.metrics import JSERROR_COUNT
-from corehq.util.datadog.utils import sanitize_url
+from corehq.util.metrics.const import TAG_UNKNOWN
+from corehq.util.metrics.utils import sanitize_url
 from corehq.util.view_utils import reverse
 from no_exceptions.exceptions import Http403
 
@@ -304,11 +302,11 @@ def server_up(req):
     failed_checks = [(check, status) for check, status in statuses if not status.success]
 
     for check_name, status in statuses:
-        tags = [
-            'status:{}'.format('failed' if not status.success else 'ok'),
-            'check:{}'.format(check_name)
-        ]
-        datadog_gauge('commcare.serverup.check', status.duration, tags=tags)
+        tags = {
+            'status': 'failed' if not status.success else 'ok',
+            'check': check_name
+        }
+        metrics_gauge('commcare.serverup.check', status.duration, tags=tags)
 
     if failed_checks and not is_deploy_in_progress():
         status_messages = [
@@ -555,25 +553,25 @@ def debug_notify(request):
 @require_POST
 def jserror(request):
     agent = request.META.get('HTTP_USER_AGENT', None)
-    os = browser_name = browser_version = bot = DATADOG_UNKNOWN
+    os = browser_name = browser_version = bot = TAG_UNKNOWN
     if agent:
         parsed_agent = httpagentparser.detect(agent)
         bot = parsed_agent.get('bot', False)
         if 'os' in parsed_agent:
-            os = parsed_agent['os'].get('name', DATADOG_UNKNOWN)
+            os = parsed_agent['os'].get('name', TAG_UNKNOWN)
 
         if 'browser' in parsed_agent:
-            browser_version = parsed_agent['browser'].get('version', DATADOG_UNKNOWN)
-            browser_name = parsed_agent['browser'].get('name', DATADOG_UNKNOWN)
+            browser_version = parsed_agent['browser'].get('version', TAG_UNKNOWN)
+            browser_name = parsed_agent['browser'].get('name', TAG_UNKNOWN)
 
-    datadog_counter(JSERROR_COUNT, tags=[
-        'os:{}'.format(os),
-        'browser_version:{}'.format(browser_version),
-        'browser_name:{}'.format(browser_name),
-        'url:{}'.format(sanitize_url(request.POST.get('page', None))),
-        'file:{}'.format(request.POST.get('filename')),
-        'bot:{}'.format(bot),
-    ])
+    metrics_counter('commcare.jserror.count', tags={
+        'os': os,
+        'browser_version': browser_version,
+        'browser_name': browser_name,
+        'url': sanitize_url(request.POST.get('page', None)),
+        'file': request.POST.get('filename'),
+        'bot': bot,
+    })
 
     return HttpResponse('')
 
