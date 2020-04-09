@@ -5,6 +5,7 @@ from datetime import date
 from django.test import TestCase
 from django.utils.functional import cached_property
 
+from memoized import memoized
 from mock import patch
 
 from dimagi.utils.dates import DateSpan
@@ -50,6 +51,13 @@ def setUpModule():
 @require_db_context
 def tearDownModule():
     Domain.get_by_name(DOMAIN).delete()
+    get_food_data.reset_cache()
+
+
+@memoized
+def get_food_data(*args, **kwargs):
+    # This class takes a while to run.  Memoizing lets me share between tests
+    return FoodData(DOMAIN, datespan=DateSpan(date(2020, 1, 1), date(2020, 4, 1)))
 
 
 def sort_rows(rows):
@@ -167,8 +175,7 @@ class TestNewReport(TestCase):
         return map(substitute_real_ids, get_expected_report('master.csv'))
 
     def run_new_report(self):
-        data = FoodData(DOMAIN, datespan=DateSpan(date(2020, 1, 1), date(2020, 4, 1)))
-        report = MasterData(data)
+        report = MasterData(get_food_data())
         return [dict(zip(report.headers, row)) for row in report.rows]
 
     def assert_columns_equal(self, expected_rows, actual_rows, column):
