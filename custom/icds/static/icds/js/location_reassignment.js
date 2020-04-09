@@ -3,6 +3,7 @@ hqDefine("icds/js/location_reassignment", [
     'knockout',
     'hqwebapp/js/assert_properties',
     'locations/js/search',
+    'hqwebapp/js/components.ko',  // select toggle widget
 ], function (
     $,
     ko,
