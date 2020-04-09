@@ -19,7 +19,6 @@ from corehq.apps.mobile_auth.utils import (
 )
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import update_device_meta
-from corehq.util.datadog.utils import count_by_response_code
 
 
 class FetchKeyRecords(object):
@@ -72,7 +71,6 @@ class FetchKeyRecords(object):
 
 @mobile_auth
 @require_GET
-@count_by_response_code('commcare.auth_keys.fetch.count')
 def fetch_key_records(request, domain):
     last_issued = request.GET.get('last_issued')
     if last_issued:

@@ -23,7 +23,7 @@ from corehq.motech.repeaters.dbaccessors import (
     iterate_repeat_records,
 )
 from corehq.privileges import DATA_FORWARDING, ZAPIER_INTEGRATION
-from corehq.util.datadog.utils import make_buckets_from_timedeltas
+from corehq.util.metrics import make_buckets_from_timedeltas
 from corehq.util.soft_assert import soft_assert
 
 _check_repeaters_buckets = make_buckets_from_timedeltas(

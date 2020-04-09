@@ -108,9 +108,8 @@ from corehq.form_processor.backends.sql.dbaccessors import (
 from corehq.form_processor.exceptions import CaseNotFound, XFormNotFound
 from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.util.context_processors import commcare_hq_names
-from corehq.util.datadog.const import DATADOG_UNKNOWN
-from corehq.util.datadog.metrics import JSERROR_COUNT
-from corehq.util.datadog.utils import sanitize_url
+from corehq.util.metrics.const import TAG_UNKNOWN
+from corehq.util.metrics.utils import sanitize_url
 from corehq.util.view_utils import reverse
 from no_exceptions.exceptions import Http403
 
@@ -554,18 +553,18 @@ def debug_notify(request):
 @require_POST
 def jserror(request):
     agent = request.META.get('HTTP_USER_AGENT', None)
-    os = browser_name = browser_version = bot = DATADOG_UNKNOWN
+    os = browser_name = browser_version = bot = TAG_UNKNOWN
     if agent:
         parsed_agent = httpagentparser.detect(agent)
         bot = parsed_agent.get('bot', False)
         if 'os' in parsed_agent:
-            os = parsed_agent['os'].get('name', DATADOG_UNKNOWN)
+            os = parsed_agent['os'].get('name', TAG_UNKNOWN)
 
         if 'browser' in parsed_agent:
-            browser_version = parsed_agent['browser'].get('version', DATADOG_UNKNOWN)
-            browser_name = parsed_agent['browser'].get('name', DATADOG_UNKNOWN)
+            browser_version = parsed_agent['browser'].get('version', TAG_UNKNOWN)
+            browser_name = parsed_agent['browser'].get('name', TAG_UNKNOWN)
 
-    metrics_counter(JSERROR_COUNT, tags={
+    metrics_counter('commcare.jserror.count', tags={
         'os': os,
         'browser_version': browser_version,
         'browser_name': browser_name,

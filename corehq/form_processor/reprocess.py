@@ -16,7 +16,7 @@ from corehq.form_processor.interfaces.processor import FormProcessorInterface, P
 from corehq.form_processor.models import XFormInstanceSQL, FormReprocessRebuild
 from corehq.form_processor.submission_post import SubmissionPost
 from corehq.form_processor.utils.general import should_use_sql_backend
-from corehq.util.datadog.utils import form_load_counter
+from corehq.util.metrics.load_counters import form_load_counter
 from dimagi.utils.couch import LockManager
 
 ReprocessingResult = namedtuple('ReprocessingResult', 'form cases ledgers error')
