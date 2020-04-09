@@ -17,7 +17,8 @@ class CompositeChangeProvider(ChangeProvider):
 
 class CompositeDocProvider(DocumentProvider):
 
-    def __init__(self, doc_providers):
+    def __init__(self, doc_providers, iteration_key):
+        self.iteration_key = iteration_key
         self.doc_providers = doc_providers
 
     def get_document_iterator(self, *args, **kwargs):
