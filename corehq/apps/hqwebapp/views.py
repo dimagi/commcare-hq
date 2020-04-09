@@ -247,7 +247,7 @@ def _two_factor_needed(domain_name, request):
         return (
             domain_obj.two_factor_auth
             and not request.couch_user.two_factor_disabled
-            and not request.user.is_verified()
+            and not (hasattr(request.user, 'is_verified') and request.user.is_verified())
         )
 
 

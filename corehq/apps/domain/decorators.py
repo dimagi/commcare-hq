@@ -136,7 +136,7 @@ def _inactive_domain_response(request, domain_name):
 def _is_missing_two_factor(view_fn, request):
     return (_two_factor_required(view_fn, request.project, request.couch_user)
             and not getattr(request, 'bypass_two_factor', False)
-            and not request.user.is_verified())
+            and not (hasattr(request.user, 'is_verified') and request.user.is_verified()))
 
 
 def _page_is_whitelisted(path, domain):
