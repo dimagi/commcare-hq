@@ -92,10 +92,14 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
         alive_in_month = "(child_health.date_death IS NULL OR child_health.date_death - {} >= 0)".format(
             start_month_string
         )
-        migrated = "(agg_migration.is_migrated = 1 AND agg_migration.migration_date::date < {start_month_string})::boolean".format(
-            start_month_string=start_month_string)
-        not_registered = "(agg_availing.is_registered = 0 AND agg_availing.registration_date::date < {start_month_string})::boolean".format(
-            start_month_string=start_month_string)
+        migrated = (
+            "agg_migration.is_migrated = 1 "
+            "AND agg_migration.migration_date::date < {start_month_string}"
+        ).format(start_month_string=start_month_string)
+        not_registered = (
+            "agg_availing.is_registered = 0 "
+            "AND agg_availing.registration_date::date < {start_month_string}"
+        ).format(start_month_string=start_month_string)
         seeking_services = (
             "{not_registered} IS DISTINCT FROM 't' "
             "AND {migrated} IS DISTINCT FROM 't'"
