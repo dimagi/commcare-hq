@@ -11,35 +11,35 @@ from corehq.form_processor.utils.general import (
 )
 from corehq.util.test_utils import capture_log_output
 
-from .test_migration import BaseMigrationTestCase, Diff, make_test_form
+from .test_migration import BaseMigrationTestCase, Diff, IGNORE, make_test_form
 from .. import casediff
 from .. import casedifftool as mod
-from ..statedb import Change, open_state_db
+from ..statedb import open_state_db
 
 
 class TestCouchSqlDiff(BaseMigrationTestCase):
 
     def test_diff(self):
         self.submit_form(make_test_form("form-1", case_id="case-1"))
-        self._do_migration(case_diff="none")
+        self.do_migration(case_diff="none")
         clear_local_domain_sql_backend_override(self.domain_name)
         with self.augmented_couch_case("case-1") as case:
             case.age = '35'
             case.save()
             self.do_case_diffs()
-        self._compare_diffs([
+        self.compare_diffs([
             Diff('case-1', 'diff', ['age'], old='35', new='27'),
         ])
 
     def test_diff_specific_case(self):
         self.submit_form(make_test_form("form-1", case_id="case-1"))
-        self._do_migration(case_diff="none")
+        self.do_migration(case_diff="none")
         clear_local_domain_sql_backend_override(self.domain_name)
         with self.augmented_couch_case("case-1") as case:
             case.age = '35'
             case.save()
             self.do_case_diffs(cases="case-1")
-        self._compare_diffs([
+        self.compare_diffs([
             Diff('case-1', 'diff', ['age'], old='35', new='27'),
         ])
 
@@ -47,7 +47,7 @@ class TestCouchSqlDiff(BaseMigrationTestCase):
         def diff_none(case_ids, log_cases=None):
             return casediff.DiffData([])
         self.submit_form(make_test_form("form-1", case_id="case-1"))
-        self._do_migration(case_diff='none')
+        self.do_migration(case_diff='none')
         clear_local_domain_sql_backend_override(self.domain_name)
         with self.augmented_couch_case("case-1") as case:
             case.age = '35'
@@ -56,7 +56,7 @@ class TestCouchSqlDiff(BaseMigrationTestCase):
                 result = self.do_case_diffs()
             self.assertEqual(result, mod.PENDING_WARNING)
             self.do_case_diffs(cases="pending")
-        self._compare_diffs([
+        self.compare_diffs([
             Diff('case-1', 'diff', ['age'], old='35', new='27'),
         ])
 
@@ -64,18 +64,18 @@ class TestCouchSqlDiff(BaseMigrationTestCase):
         # do not diff case modified since most recent case created in SQL
         self.submit_form(make_test_form("form-1", case_id="case-1"), timedelta(minutes=-90))
         self.submit_form(make_test_form("form-2", case_id="case-1", age=35))
-        self._do_migration(live=True, chunk_size=1, case_diff="none")
+        self.do_migration(live=True, chunk_size=1, case_diff="none")
         self.assert_backend("sql")
         case = self._get_case("case-1")
         self.assertEqual(case.dynamic_case_properties()["age"], '27')
         self.do_case_diffs()
-        self._compare_diffs([])
+        self.compare_diffs(ignore_fail=True)
 
     def test_failed_diff(self):
         self.pool_mock.stop()
         self.addCleanup(self.pool_mock.start)
         self.submit_form(make_test_form("form-1", case_id="case-1"))
-        self._do_migration(case_diff="none")
+        self.do_migration(case_diff="none")
         # patch init_worker to make subprocesses use the same database
         # connections as this process (which is operating in a transaction)
         init_worker_path = "corehq.apps.couch_sql_migration.casedifftool.init_worker"
@@ -87,7 +87,7 @@ class TestCouchSqlDiff(BaseMigrationTestCase):
         logs = log.get_output()
         self.assertIn("error processing item in worker", logs)
         self.assertIn("Exception: diff failed!", logs)
-        self._compare_diffs([])
+        self.compare_diffs()
         db = open_state_db(self.domain_name, self.state_dir)
         self.assertEqual(list(db.iter_undiffed_case_ids()), ["case-1"])
 
@@ -99,15 +99,15 @@ class TestCouchSqlDiff(BaseMigrationTestCase):
         self.submit_form(form2)
         self.assertEqual(self._get_case("test-case").age, "33")
         with self.diff_without_rebuild():
-            self._do_migration()
-        self._compare_diffs([
+            self.do_migration()
+        self.compare_diffs([
             Diff('test-case', 'diff', ['age'], old='33', new='32'),
         ])
         clear_local_domain_sql_backend_override(self.domain_name)
         self.do_case_diffs(cases="with-diffs")
         sql_case = self._get_case("test-case")
         self.assertEqual(sql_case.dynamic_case_properties()["age"], "33")
-        self._compare_diffs([])
+        self.compare_diffs()
         details = sql_case.transactions[-1].details
         self.assertEqual(details["reason"], SortTransactionsRebuild._REASON)
         server_dates = details["original_server_dates"]
@@ -128,8 +128,8 @@ class TestCouchSqlDiff(BaseMigrationTestCase):
         with self.assertRaises(AttributeError):
             self._get_case("test-case").thing
         with self.diff_without_rebuild():
-            self._do_migration()
-        self._compare_diffs([
+            self.do_migration()
+        self.compare_diffs([
             Diff('test-case', 'diff', ['age'], old='33', new='32'),
             Diff('test-case', 'missing', ['thing'], old=MISSING, new='1'),
         ])
@@ -137,7 +137,7 @@ class TestCouchSqlDiff(BaseMigrationTestCase):
         self.do_case_diffs(cases="with-diffs")
         sql_case = self._get_case("test-case")
         self.assertEqual(sql_case.dynamic_case_properties()["age"], "33")
-        self._compare_diffs(changes=[
+        self.compare_diffs(changes=[
             Diff('test-case', 'missing', ['thing'], old=MISSING, new='1', reason='rebuild case'),
         ])
 
@@ -146,8 +146,8 @@ class TestCouchSqlDiff(BaseMigrationTestCase):
         one = self.submit_form(make_test_form("one", age=27))
         FormAccessors(self.domain_name).soft_delete_forms(
             [one.form_id], datetime.utcnow(), 'test-deletion')
-        self._do_migration()
-        self._compare_diffs(changes=[
+        self.do_migration()
+        self.compare_diffs(changes=[
             Diff('test-case', 'missing', ['*'], old='*', new=MISSING, reason="deleted forms"),
         ])
 
@@ -155,8 +155,8 @@ class TestCouchSqlDiff(BaseMigrationTestCase):
         wrong_domain = create_domain("wrong")
         self.addCleanup(wrong_domain.delete)
         self.submit_form(make_test_form("form-1"), domain="wrong")
-        self._do_migration(case_diff="none", domain="wrong")
-        self._do_migration(case_diff="none")
+        self.do_migration(case_diff="none", domain="wrong")
+        self.do_migration(case_diff="none")
         clear_local_domain_sql_backend_override(self.domain_name)
         with capture_log_output("corehq.apps.couch_sql_migration") as log, \
                 self.augmented_couch_case("test-case") as case:
@@ -165,7 +165,7 @@ class TestCouchSqlDiff(BaseMigrationTestCase):
             case.save()
             # try to diff case in wrong domain
             self.do_case_diffs(cases="test-case")
-        self._compare_diffs([
+        self.compare_diffs([
             Diff('test-case', 'diff', ['domain'], old='wrong', new=self.domain_name),
         ])
         logs = log.get_output()
@@ -173,11 +173,11 @@ class TestCouchSqlDiff(BaseMigrationTestCase):
 
     def test_ledger_dup_transaction_diff(self):
         product_id = self.create_form_with_duplicate_stock_transaction()
-        self._do_migration(case_diff='none')
-        self._compare_diffs([], ignore_fail=True)
+        self.do_migration(case_diff='none')
+        self.compare_diffs(ignore_fail=True)
         clear_local_domain_sql_backend_override(self.domain_name)
         self.do_case_diffs()
-        self._compare_diffs(changes=[Diff(
+        self.compare_diffs(changes=[Diff(
             f"test-case/things/{product_id}",
             reason="duplicate stock transaction",
             type="diff",
@@ -197,6 +197,10 @@ class TestCouchSqlDiff(BaseMigrationTestCase):
         for model in stock_result.models_to_save:
             model.save()
         return thing1._id
+
+    def do_migration(self, *args, **kw):
+        kw.setdefault("diffs", IGNORE)
+        return super().do_migration(*args, **kw)
 
     def do_case_diffs(self, cases=None):
         self.migration_success = True  # clear migration failure on diff cases
