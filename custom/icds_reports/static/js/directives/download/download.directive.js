@@ -154,6 +154,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
 
     if (haveAccessToFeatures) {
         vm.indicators.push({id: 12, name: 'Service Delivery Report'});
+        vm.indicator.push({id: 13, name: 'Child Growth Tracking Report'});
         vm.beneficiaryCategories = [
             {id: 'pw_lw_children', name: 'PW, LW & Children 0-3 years'},
             {id: 'children_3_6', name: 'Children 3-6 years'},
