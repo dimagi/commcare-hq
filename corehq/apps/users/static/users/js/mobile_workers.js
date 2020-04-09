@@ -60,6 +60,7 @@ hqDefine("users/js/mobile_workers",[
         options = options || {};
         options = _.defaults(options, {
             creation_status: STATUS.NONE,
+            creation_error: "",
             username: '',
             first_name: '',
             last_name: '',
@@ -497,6 +498,9 @@ hqDefine("users/js/mobile_workers",[
                     newUser.creation_status(STATUS.SUCCESS);
                 } else {
                     newUser.creation_status(STATUS.ERROR);
+                    if (data.error) {
+                        newUser.creation_error(data.error);
+                    }
                 }
             }).fail(function () {
                 newUser.creation_status(STATUS.ERROR);
