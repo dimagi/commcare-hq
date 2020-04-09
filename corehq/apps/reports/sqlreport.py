@@ -280,7 +280,10 @@ class SqlData(ReportDataSource):
             raise SqlReportException('Keys supplied without group_by.')
 
         if not self.group_by:
-            queries = self.get_sql_queries()
+            try:
+                queries = self.get_sql_queries()
+            except NotImplementedError:
+                queries = "Not implemented"
             soft_assert('mkangia@{}'.format('dimagi.com'))(
                 self.group_by, f'SqlAgg has no group by: {self.__class__.__name__}', queries
             )
