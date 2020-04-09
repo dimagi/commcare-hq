@@ -230,7 +230,7 @@
         "type": "expression",
         "column_id": "sex"
       },
-        {
+      {
         "display_name": null,
         "datatype": "string",
         "expression": {
@@ -244,7 +244,7 @@
         "type": "expression",
         "column_id": "child_health_case_id"
       },
-        {
+      {
         "column_id": "delivery_nature",
         "datatype": "string",
         "type": "expression",
@@ -818,6 +818,11 @@
     },
     "engine_id": "icds-ucr-citus",
     "disable_destructive_rebuild": true,
+    "sql_column_indexes": [
+      {
+        "column_ids": ["supervisor_id", "child_health_case_id"]
+      }
+    ],
     "sql_settings": {
       "citus_config": {
         "distribution_type": "hash",
