@@ -58,5 +58,5 @@ class Migration(migrations.Migration):
             migrator.get_migration('delete_blob_meta_v2.sql', 'delete_blob_meta.sql'),
             apply_to_proxy=False,
         ),
-        migrations.RunPython(_drop_empty_default_blobmeta_table, migrations.RunPython.noop),
+        # migrations.RunPython(_drop_empty_default_blobmeta_table, migrations.RunPython.noop),
     ]
