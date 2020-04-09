@@ -66,7 +66,8 @@ from custom.icds_reports.const import (
     THR_REPORT_EXPORT,
     THREE_MONTHS,
     DASHBOARD_USAGE_EXPORT,
-    SERVICE_DELIVERY_REPORT
+    SERVICE_DELIVERY_REPORT,
+    CHILD_GROWTH_TRACKER_REPORT
 )
 from custom.icds_reports.models import (
     AggAwc,
@@ -125,6 +126,7 @@ from custom.icds_reports.sqldata.exports.beneficiary import BeneficiaryExport
 from custom.icds_reports.sqldata.exports.children import ChildrenExport
 from custom.icds_reports.sqldata.exports.dashboard_usage import DashBoardUsage
 from custom.icds_reports.sqldata.exports.demographics import DemographicsExport
+from custom.icds_reports.sqldata.exports.growth import GrowthExport
 from custom.icds_reports.sqldata.exports.lady_supervisor import (
     LadySupervisorExport,
 )
@@ -145,7 +147,8 @@ from custom.icds_reports.utils import (
     track_time,
     zip_folder,
     get_dashboard_usage_excel_file,
-    create_service_delivery_report
+    create_service_delivery_report,
+    create_child_growth_tracker_report
 )
 from custom.icds_reports.utils.aggregation_helpers.distributed import (
     ChildHealthMonthlyAggregationDistributedHelper,
@@ -989,8 +992,34 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
 
         formatted_timestamp = datetime.now().strftime("%d-%m-%Y__%H-%M-%S")
         data_type = 'Service Delivery Report__{}'.format(formatted_timestamp)
+    elif indicator == CHILD_GROWTH_TRACKER_REPORT:
+        config.pop('aggregation_level', None)
+        data_type = 'Child_Growth_Tracker_list'
+        excel_data = GrowthExport(
+            config=config,
+            loc_level=aggregation_level,
+            show_test=include_test,
+            beta=beta
+        ).get_excel_data(location)
+        export_info = excel_data[1][1]
+        generated_timestamp = date_parser.parse(export_info[0][1])
+        formatted_timestamp = generated_timestamp.strftime("%d-%m-%Y__%H-%M-%S")
+        data_type = 'Child Growth Tracker Report__{}'.format(formatted_timestamp)
+
+        if file_format == 'xlsx':
+            cache_key = create_child_growth_tracker_report(
+                excel_data,
+                data_type,
+                config,
+            )
+        else:
+            cache_key = create_excel_file(excel_data, data_type, file_format)
+
+        formatted_timestamp = datetime.now().strftime("%d-%m-%Y__%H-%M-%S")
+        data_type = 'Child Growth Tracker Report__{}'.format(formatted_timestamp)
+
     if indicator not in (AWW_INCENTIVE_REPORT, LS_REPORT_EXPORT, THR_REPORT_EXPORT, CHILDREN_EXPORT,
-                         DASHBOARD_USAGE_EXPORT, SERVICE_DELIVERY_REPORT):
+                         DASHBOARD_USAGE_EXPORT, SERVICE_DELIVERY_REPORT, CHILD_GROWTH_TRACKER_REPORT):
         if file_format == 'xlsx' and beta:
             cache_key = create_excel_file_in_openpyxl(excel_data, data_type)
         else:
