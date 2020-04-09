@@ -21,7 +21,7 @@ class GrowthExport(ExportableMixin, IcdsSqlData):
         })
         super().__init__(config, loc_level, show_test, beta, use_excluded_states=False)
 
-    @@property
+    @property
     def group_by(self):
         group_by_columns = self.get_columns_by_loc_level
         group_by = []
