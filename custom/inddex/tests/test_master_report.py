@@ -1,3 +1,5 @@
+import csv
+import os
 from datetime import date
 
 from django.test import TestCase
@@ -19,7 +21,6 @@ from corehq.util.test_utils import require_db_context
 from ..example_data.data import (
     FOOD_CASE_TYPE,
     FOODRECALL_CASE_TYPE,
-    get_expected_report,
     populate_inddex_domain,
 )
 from ..fixtures import FixtureAccessor
@@ -28,6 +29,11 @@ from ..reports.master_data import MasterData
 from ..ucr_data import FoodCaseData
 
 DOMAIN = 'inddex-reports-test'
+
+
+def get_expected_report(filename):
+    with open(os.path.join(os.path.dirname(__file__), 'data', filename)) as f:
+        return list(csv.DictReader(f))
 
 
 @require_db_context
@@ -84,7 +90,7 @@ class TestSetupUtils(TestCase):
 class TestUcrAdapter(TestCase):
     def test_data_source(self):
         # Only the rows with case IDs will appear in the UCR
-        expected = [r for r in get_expected_report() if r['caseid']]
+        expected = [r for r in get_expected_report('master.csv') if r['caseid']]
         ucr_data = FoodCaseData({
             'domain': DOMAIN,
             'startdate': date(2020, 1, 1).isoformat(),
@@ -158,7 +164,7 @@ class TestNewReport(TestCase):
                 for key, val in row.items()
             }
 
-        return map(substitute_real_ids, get_expected_report())
+        return map(substitute_real_ids, get_expected_report('master.csv'))
 
     def run_new_report(self):
         data = FoodData(DOMAIN, datespan=DateSpan(date(2020, 1, 1), date(2020, 4, 1)))
