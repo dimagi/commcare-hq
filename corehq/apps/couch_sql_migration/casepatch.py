@@ -9,6 +9,7 @@ import attr
 from memoized import memoized
 
 from casexml.apps.case import const
+from casexml.apps.case.xml.parser import KNOWN_PROPERTIES
 from casexml.apps.phone.xml import get_case_xml
 from dimagi.utils.couch.database import retry_on_couch_error
 from dimagi.utils.parsing import json_format_datetime
@@ -73,33 +74,51 @@ def patch_ledgers(diffs):
 class PatchCase:
     case = attr.ib()
     diffs = attr.ib()
-    indices = attr.ib(factory=list, init=False)
-    case_attachments = attr.ib(factory=list, init=False)
-    IGNORE_PROPS = {"xform_ids"}
 
     def __attrs_post_init__(self):
+        self.indices = []
+        self.case_attachments = []
         self._updates = updates = []
-        diffs = self.diffs
-        if not all(isinstance(d, Change) for d in diffs):
-            raise CannotPatch([d.json_diff for d in diffs])
-        if is_missing_in_sql(self.case_id, diffs):
+        if is_missing_in_sql(self.case_id, self.diffs):
             updates.extend([const.CASE_ACTION_CREATE, const.CASE_ACTION_UPDATE])
+            self._dynamic_properties = self.case.dynamic_case_properties()
+        else:
+            if has_illegal_props(self.diffs):
+                raise CannotPatch([d.json_diff for d in self.diffs])
+            props = dict(iter_dynamic_properties(self.diffs))
+            self._dynamic_properties = props
+            if props or has_known_props(self.diffs):
+                updates.append(const.CASE_ACTION_UPDATE)
 
     def __getattr__(self, name):
         return getattr(self.case, name)
 
     def dynamic_case_properties(self):
-        if is_missing_in_sql(self.case_id, self.diffs):
-            return self.case.dynamic_case_properties()
-        props = {}
-        ignore = self.IGNORE_PROPS
-        for planning_diff in self.diffs:
-            diff = planning_diff.json_diff
-            path = diff.path
-            if path[0] in ignore:
-                continue
+        return self._dynamic_properties
+
+
+ILLEGAL_PROPS = {"indices", "actions"}
+IGNORE_PROPS = {"xform_ids", "*"} | KNOWN_PROPERTIES.keys()
+
+
+def has_illegal_props(diffs):
+    return any(d.json_diff.path[0] in ILLEGAL_PROPS for d in diffs)
+
+
+def has_known_props(diffs):
+    return any(d.json_diff.path[0] in KNOWN_PROPERTIES for d in diffs)
+
+
+def iter_dynamic_properties(diffs):
+    for doc_diff in diffs:
+        diff = doc_diff.json_diff
+        name = diff.path[0]
+        if name in IGNORE_PROPS:
+            continue
+        if len(diff.path) > 1:
             raise CannotPatch([diff])
-        return props
+        assert isinstance(diff.old_value, str), (doc_diff.doc_id, diff)
+        yield name, diff.old_value
 
 
 @attr.s

@@ -3,6 +3,7 @@ import os
 import pdb
 import signal
 from contextlib import contextmanager, suppress
+from itertools import chain
 
 from dimagi.utils.chunked import chunked
 
@@ -105,12 +106,15 @@ class CaseDiffTool:
         from .casepatch import patch_diffs
         statedb = self.statedb
         counts = statedb.get_doc_counts().get("CommCareCase")
-        if not counts or not counts.changes:
+        if not counts or not counts.diffs + counts.changes:
             log.info("nothing to patch")
             return
-        count = counts.changes
+        count = counts.diffs + counts.changes
+        diffs = chain(
+            statedb.iter_doc_diffs("CommCareCase"),
+            statedb.iter_doc_changes("CommCareCase"),
+        )
         log.info(f"patching {count} cases")
-        diffs = statedb.iter_doc_changes("CommCareCase")
         diffs = with_progress_bar(diffs, count, prefix="Case diffs", oneline=False)
         for pending_diffs in self.map_cases(patch_diffs, diffs):
             statedb.add_cases_to_diff(pending_diffs)
