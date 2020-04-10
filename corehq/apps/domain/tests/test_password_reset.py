@@ -3,6 +3,7 @@ from django.test import TestCase
 from corehq.apps.domain.auth import get_active_users_by_email
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import WebUser, CommCareUser
+from corehq.util.test_utils import flag_enabled
 
 
 class PasswordResetTest(TestCase):
@@ -35,3 +36,12 @@ class PasswordResetTest(TestCase):
         self.addCleanup(mobile_worker.delete)
         results = get_active_users_by_email(email)
         self.assertEqual(0, results.count())
+
+    @flag_enabled('TWO_STAGE_USER_PROVISIONING')
+    def test_mobile_worker_included_with_flag(self):
+        email = 'mw-included@example.com'
+        mobile_worker = CommCareUser.create(self.domain, 'mw-included', 's3cr3t', email=email)
+        self.addCleanup(mobile_worker.delete)
+        results = get_active_users_by_email(email)
+        self.assertEqual(1, results.count())
+        self.assertEqual(mobile_worker.username, results[0].username)
