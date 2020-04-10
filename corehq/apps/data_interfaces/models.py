@@ -50,11 +50,6 @@ from corehq.messaging.scheduling.const import (
 )
 from corehq.messaging.scheduling.models import (
     AlertSchedule,
-    CustomContent,
-    EmailContent,
-    Schedule,
-    SMSContent,
-    SMSSurveyContent,
     TimedSchedule,
 )
 from corehq.messaging.scheduling.scheduling_partitioned.dbaccessors import (
