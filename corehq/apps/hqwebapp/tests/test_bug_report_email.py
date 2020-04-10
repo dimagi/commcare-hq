@@ -21,7 +21,7 @@ class BugReportEmailTest(SimpleTestCase):
                 'url': 'https://www.commcarehq.org/a/droberts/dashboard/',
                 'message': "I can't stop eating premixed pb&j by the jarful",
                 'app_id': '',
-                'cc': 'frankie@example.com, angie@example.com',
+                'cc': ' frankie@example.com,  angie@example.com ',
             },
             couch_user=WebUser(username='example@example.com', first_name='Eliezer', last_name='Xample'),
             uploaded_file=None,
@@ -31,6 +31,7 @@ class BugReportEmailTest(SimpleTestCase):
             full name: Eliezer Xample
             domain: example
             url: https://www.commcarehq.org/a/droberts/dashboard/
+            recipients: frankie@example.com, angie@example.com
             Message:
 
             I can't stop eating premixed pb&j by the jarful

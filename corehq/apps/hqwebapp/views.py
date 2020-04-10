@@ -631,12 +631,15 @@ class BugReportView(View):
         else:
             domain = "<no domain>"
 
+        other_recipients = [el.strip() for el in report['cc'].split(",") if el]
+
         message = (
-            "username: {username}\n"
-            "full name: {full_name}\n"
-            "domain: {domain}\n"
-            "url: {url}\n"
-        ).format(**report)
+            f"username: {report['username']}\n"
+            f"full name: {report['full_name']}\n"
+            f"domain: {report['domain']}\n"
+            f"url: {report['url']}\n"
+            f"recipients: {', '.join(other_recipients)}\n"
+        )
 
         domain_object = Domain.get_by_name(domain) if report['domain'] else None
         debug_context = {
@@ -670,7 +673,6 @@ class BugReportView(View):
             })
 
         subject = '{subject} ({domain})'.format(subject=report['subject'], domain=domain)
-        cc = [el for el in report['cc'].strip().split(",") if el]
 
         if full_name and not any([c in full_name for c in '<>"']):
             reply_to = '"{full_name}" <{email}>'.format(**report)
@@ -703,7 +705,7 @@ class BugReportView(View):
             body=message,
             to=[settings.SUPPORT_EMAIL],
             headers={'Reply-To': reply_to},
-            cc=cc
+            cc=other_recipients
         )
 
         if uploaded_file:
