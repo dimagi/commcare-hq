@@ -88,8 +88,10 @@ load_ignore_rules = memoized(lambda: add_duplicate_rules({
         Ignore('diff', 'owner_id', old=''),
         Ignore('type', 'owner_id', old=None),
         Ignore('type', 'user_id', old=None),
+        Ignore('diff', 'user_id', old='', check=is_user_owner_mapping_case),
         Ignore('type', 'opened_on', old=None),
         Ignore('type', 'opened_by', old=MISSING),
+        Ignore('diff', 'opened_by', old='', check=is_user_owner_mapping_case),
         # The form that created the case was archived, but the opened_by
         # field was not updated as part of the subsequent rebuild.
         # `CouchCaseUpdateStrategy.reset_case_state()` does not reset
@@ -440,3 +442,7 @@ def is_case_without_create_action(old_obj, new_obj, rule, diff):
 
 def is_truncated_255(old_obj, new_obj, rule, diff):
     return len(diff.old_value) > 255 and diff.old_value[:255] == diff.new_value
+
+
+def is_user_owner_mapping_case(old_obj, new_obj, rule, diff):
+    return new_obj.get("case_id", "").startswith("user-owner-mapping-")

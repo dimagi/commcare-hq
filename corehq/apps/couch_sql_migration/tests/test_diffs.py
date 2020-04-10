@@ -644,3 +644,44 @@ class DiffTestCases(SimpleTestCase):
         diffs = json_diff(couch_case, sql_case, track_list_indices=False)
         filtered = filter_case_diffs(couch_case, sql_case, diffs)
         self.assertEqual(filtered, [])
+
+    def test_user_owner_mapping_case_with_opened_and_user_diffs(self):
+        couch_case = {
+            "case_id": "user-owner-mapping-eca7a8",
+            "actions": [{"action_type": "create", "user_id": "somebody"}],
+            "doc_type": "CommCareCase",
+            "opened_by": "",
+            "user_id": "",
+        }
+        sql_case = {
+            "case_id": "user-owner-mapping-eca7a8",
+            "actions": [{"action_type": "create", "user_id": "somebody"}],
+            "doc_type": "CommCareCase",
+            "opened_by": "somebody",
+            "user_id": "somebody",
+        }
+        diffs = json_diff(couch_case, sql_case, track_list_indices=False)
+        filtered = filter_case_diffs(couch_case, sql_case, diffs)
+        self.assertEqual(filtered, [])
+
+    def test_non_user_owner_mapping_case_with_opened_and_user_diffs(self):
+        couch_case = {
+            "case_id": "eca7a8",
+            "actions": [{"action_type": "create", "user_id": "somebody"}],
+            "doc_type": "CommCareCase",
+            "opened_by": "",
+            "user_id": "",
+        }
+        sql_case = {
+            "case_id": "eca7a8",
+            "actions": [{"action_type": "create", "user_id": "somebody"}],
+            "doc_type": "CommCareCase",
+            "opened_by": "somebody",
+            "user_id": "somebody",
+        }
+        diffs = json_diff(couch_case, sql_case, track_list_indices=False)
+        filtered = filter_case_diffs(couch_case, sql_case, diffs)
+        self.assertEqual(filtered, [
+            FormJsonDiff(diff_type='diff', path=('opened_by',), old_value='', new_value='somebody'),
+            FormJsonDiff(diff_type='diff', path=('user_id',), old_value='', new_value='somebody'),
+        ])
