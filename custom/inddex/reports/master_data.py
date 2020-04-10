@@ -3,7 +3,7 @@ from itertools import chain
 from custom.inddex import filters
 from custom.inddex.food import INDICATORS, FoodData
 
-from .utils import MultiTabularReport, format_val
+from .utils import MultiTabularReport, format_row
 
 
 class MasterDataReport(MultiTabularReport):
@@ -42,4 +42,4 @@ class MasterData:
         for row in self._food_data.rows:
             static_cols = (getattr(row, column.slug) for column in INDICATORS)
             nutrient_cols = self._food_data.get_nutrient_values(row)
-            yield [format_val(val) for val in chain(static_cols, nutrient_cols)]
+            yield format_row(chain(static_cols, nutrient_cols))

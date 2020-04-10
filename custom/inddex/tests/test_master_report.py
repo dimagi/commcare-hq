@@ -26,6 +26,7 @@ from ..example_data.data import (
 )
 from ..fixtures import FixtureAccessor
 from ..food import INDICATORS, FoodData
+from ..reports.gaps_summary import get_gaps_data
 from ..reports.master_data import MasterData
 from ..ucr_data import FoodCaseData
 
@@ -191,3 +192,31 @@ class TestNewReport(TestCase):
             for food, expected_val, actual_val in differences:
                 msg += f"{food}: expected '{expected_val}', got '{actual_val}'\n"
             raise AssertionError(msg)
+
+
+class TestGapsSummaryReports(TestCase):
+    maxDiff = None
+
+    def test(self):
+        with patch('custom.inddex.reports.gaps_summary.FoodData.from_request', get_food_data):
+            cf_gaps_data, fct_gaps_data = get_gaps_data(DOMAIN, None)
+
+        self.assert_reports_match(get_expected_report('conv_factor_gaps_summary.csv'), cf_gaps_data)
+        self.assert_reports_match(get_expected_report('fct_gaps_summary.csv'), fct_gaps_data)
+
+    def assert_reports_match(self, expected_report, actual_report):
+        def to_string(row):
+            return ' | '.join(f'{v:<25}' for v in row)
+
+        self.assertEqual(list(expected_report[0].keys()), actual_report.headers)
+
+        for expected_row, actual in zip(expected_report, actual_report.rows):
+            expected = list(expected_row.values())
+            if expected != actual:
+                msg = (
+                    "\nRow doesn't match:\n"
+                    "\nHeaders:  {}"
+                    "\nExpected: {}"
+                    "\nActual:   {}"
+                ).format(*map(to_string, [actual_report.headers, expected, actual]))
+                self.assertEqual(expected, actual, msg)

@@ -3,7 +3,7 @@ from collections import defaultdict
 from custom.inddex import filters
 from custom.inddex.food import ConvFactorGaps, FctGaps, FoodData
 
-from .utils import MultiTabularReport
+from .utils import MultiTabularReport, format_row
 
 
 class GapsSummaryReport(MultiTabularReport):
@@ -22,20 +22,22 @@ class GapsSummaryReport(MultiTabularReport):
 
     @property
     def data_providers(self):
-        cf_gaps, fct_gaps = self._get_gap_counts()
-        return [
-            ConvFactorGapsData(cf_gaps),
-            FctGapsData(fct_gaps),
-        ]
+        cf_gaps_data, fct_gaps_data = get_gaps_data(self.domain, self.request)
+        return [cf_gaps_data, fct_gaps_data]
 
-    def _get_gap_counts(self):
-        cf_gaps = defaultdict(int)
-        fct_gaps = defaultdict(int)
-        food_data = FoodData.from_request(self.domain, self.request)
-        for row in food_data.rows:
-            cf_gaps[(row.conv_factor_gap_code, row.food_type)] += 1
-            fct_gaps[(row.fct_gap_code, row.food_type)] += 1
-        return cf_gaps, fct_gaps
+
+def get_gaps_data(domain, request):
+    cf_gaps = defaultdict(int)
+    fct_gaps = defaultdict(int)
+    food_data = FoodData.from_request(domain, request)
+    for row in food_data.rows:
+        cf_gaps[(row.conv_factor_gap_code, row.food_type)] += 1
+        fct_gaps[(row.fct_gap_code, row.food_type)] += 1
+
+    return (
+        ConvFactorGapsData(cf_gaps),
+        FctGapsData(fct_gaps),
+    )
 
 
 class GapsData:
@@ -44,9 +46,9 @@ class GapsData:
 
     @property
     def rows(self):
-        for (code, food_type), count in self._gaps.items():
+        for (code, food_type), count in sorted(self._gaps.items()):
             description = self._gaps_descriptions[code]
-            yield [code, description, food_type, count]
+            yield format_row([code, description, food_type, count])
 
 
 class ConvFactorGapsData(GapsData):
