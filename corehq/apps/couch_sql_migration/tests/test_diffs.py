@@ -308,7 +308,17 @@ class DiffTestCases(SimpleTestCase):
         ])
 
     def test_filter_ledger_diffs(self):
-        ignored_diffs = _make_ignored_diffs('LedgerValue')
+        ignored_diffs = _make_ignored_diffs('LedgerValue') + [
+            FormJsonDiff(
+                diff_type='diff', path=('last_modified',),
+                old_value='2016-04-01T00:00:00.000000Z',
+                new_value='2016-04-01T15:39:19.711333Z',
+            ),
+            FormJsonDiff(
+                diff_type='type', path=('last_modified_form_id',),
+                old_value=None, new_value='7ab03ccc-e5b7-4c8f-b88f-43ee3b0543a5',
+            ),
+        ]
         filtered = filter_ledger_diffs(ignored_diffs + REAL_DIFFS)
         self.assertEqual(filtered, REAL_DIFFS)
 

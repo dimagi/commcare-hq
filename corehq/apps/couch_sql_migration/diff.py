@@ -1,4 +1,5 @@
 from collections import defaultdict
+from datetime import timedelta
 from itertools import chain
 
 from memoized import memoized
@@ -9,6 +10,7 @@ from corehq.apps.tzmigration.timezonemigration import (
     is_datetime_string,
     json_diff,
 )
+from corehq.util.dates import iso_string_to_datetime
 
 from .diffrule import Ignore
 
@@ -101,6 +103,7 @@ load_ignore_rules = memoized(lambda: add_duplicate_rules({
         # CASE_IGNORED_DIFFS
         Ignore('type', 'name', old='', new=None),
         Ignore('type', 'closed_by', old='', new=None),
+        Ignore('type', 'closed_by', old=None, new=''),
         Ignore('diff', 'closed_by', old=''),
         Ignore('missing', 'location_id', old=MISSING, new=None),
         Ignore('missing', 'referrals', new=MISSING),
@@ -110,6 +113,7 @@ load_ignore_rules = memoized(lambda: add_duplicate_rules({
         Ignore('type', 'owner_id', old=None, new=''),
         Ignore('missing', 'closed_by', old=MISSING, new=None),
         Ignore('type', 'external_id', old='', new=None),
+        Ignore('type', 'external_id', old=None, new=''),
         Ignore('missing', 'deleted_on', old=MISSING, new=None),
         Ignore('missing', 'backend_id', old=MISSING, new='sql'),
 
@@ -150,6 +154,8 @@ load_ignore_rules = memoized(lambda: add_duplicate_rules({
     'LedgerValue': [
         Ignore(path='_id'),  # couch != SQL
         Ignore("missing", "location_id", old=MISSING, new=None),
+        Ignore("diff", "last_modified", check=has_close_dates),
+        Ignore("type", "last_modified_form_id", old=None),
     ],
     'case_attachment': [
         Ignore(path='attachment_properties', new=MISSING),
@@ -306,6 +312,14 @@ def ignore_renamed(old_name, new_name):
         return False
 
     return Ignore(check=is_renamed)
+
+
+def has_close_dates(old_obj, new_obj, rule, diff):
+    if _both_dates(diff.old_value, diff.new_value):
+        old = iso_string_to_datetime(diff.old_value)
+        new = iso_string_to_datetime(diff.new_value)
+        return abs(old - new) < timedelta(days=1)
+    return False
 
 
 def has_date_values(old_obj, new_obj, rule, diff):
