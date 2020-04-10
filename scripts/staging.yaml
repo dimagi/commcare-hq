@@ -52,6 +52,7 @@ branches:
   - vellum-staging  # DO NOT REMOVE this is similar to "autostaging", but for vellum
   - jls/migrate-DefaultConsumption-2 # Jenny March 6
   #- jls/use-textinput # Jenny March 10
+  - mk/location-reassignment-6-bug-1 # MK April 10
   - mk/location-reassignment-5 # MK April 7
   - mk/location-reassignment-7 # MK April 9
   - bmb/SAAS-10712  # Biyeun April 1
