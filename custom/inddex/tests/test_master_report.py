@@ -194,20 +194,14 @@ class TestNewReport(TestCase):
             raise AssertionError(msg)
 
 
-class TestGapsSummaryReports(TestCase):
+class TestInddexReports(TestCase):
     maxDiff = None
 
-    def test(self):
-        with patch('custom.inddex.reports.gaps_summary.FoodData.from_request', get_food_data):
-            cf_gaps_data, fct_gaps_data = get_gaps_data(DOMAIN, None)
-
-        self.assert_reports_match(get_expected_report('conv_factor_gaps_summary.csv'), cf_gaps_data)
-        self.assert_reports_match(get_expected_report('fct_gaps_summary.csv'), fct_gaps_data)
-
-    def assert_reports_match(self, expected_report, actual_report):
+    def assert_reports_match(self, csv_filename, actual_report):
         def to_string(row):
             return ' | '.join(f'{v:<25}' for v in row)
 
+        expected_report = get_expected_report(csv_filename)
         self.assertEqual(list(expected_report[0].keys()), actual_report.headers)
 
         for expected_row, actual in zip(expected_report, actual_report.rows):
@@ -220,3 +214,10 @@ class TestGapsSummaryReports(TestCase):
                     "\nActual:   {}"
                 ).format(*map(to_string, [actual_report.headers, expected, actual]))
                 self.assertEqual(expected, actual, msg)
+
+    def test_gaps_summary(self):
+        with patch('custom.inddex.reports.gaps_summary.FoodData.from_request', get_food_data):
+            cf_gaps_data, fct_gaps_data = get_gaps_data(DOMAIN, None)
+
+        self.assert_reports_match('conv_factor_gaps_summary.csv', cf_gaps_data)
+        self.assert_reports_match('fct_gaps_summary.csv', fct_gaps_data)
