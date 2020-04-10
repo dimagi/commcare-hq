@@ -1,12 +1,11 @@
 import csv
-import logging
 
 from datetime import datetime
 from django.core.management.base import BaseCommand
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import CouchUser
-from dimagi.utils.parsing import ISO_DATE_FORMAT, ISO_DATETIME_FORMAT
+from dimagi.utils.parsing import ISO_DATETIME_FORMAT
 
 
 class Command(BaseCommand):
