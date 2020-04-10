@@ -182,7 +182,7 @@ def partitioned(cls):
     Marks a test to be run with the partitioned database settings in
     addition to the non-partitioned database settings.
     """
-    return attr(sql_backend=True)(cls)
+    return attr(sql_backend=True, databases='__all__')(cls)
 
 
 def only_run_with_non_partitioned_database(cls):
