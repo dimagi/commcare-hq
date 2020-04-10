@@ -10,8 +10,10 @@ from custom.icds.location_reassignment.const import (
     NEW_NAME,
     NEW_PARENT_SITE_CODE,
     NEW_SITE_CODE_COLUMN,
+    NEW_USERNAME_COLUMN,
     OPERATION_COLUMN,
     SPLIT_OPERATION,
+    USERNAME_COLUMN,
     VALID_OPERATIONS,
 )
 
@@ -44,6 +46,7 @@ class Parser(object):
         self.site_codes_to_be_archived = []
         self.location_type_codes = list(map(lambda lt: lt.code, LocationType.objects.by_domain(self.domain)))
         self.new_location_details = {location_type_code: [] for location_type_code in self.location_type_codes}
+        self.user_transitions = {}
         self.valid_transitions = {location_type_code: {
             MERGE_OPERATION: defaultdict(list),
             SPLIT_OPERATION: defaultdict(list),
@@ -80,6 +83,14 @@ class Parser(object):
                 operation, old_site_code, new_site_code
             ))
             return
+        if (
+            (row.get(NEW_USERNAME_COLUMN) and not row.get(USERNAME_COLUMN))
+            or (not row.get(NEW_USERNAME_COLUMN) and row.get(USERNAME_COLUMN))
+        ):
+            self.errors.append("Invalid user transition for %s for location '%s'" % (
+                operation, old_site_code
+            ))
+            return
         if self._invalid_row(operation, old_site_code, new_site_code):
             return
         self._note_transition(operation, location_type_code, new_site_code, old_site_code)
@@ -89,6 +100,8 @@ class Parser(object):
             'parent_site_code': row.get(NEW_PARENT_SITE_CODE),
             'lgd_code': row.get(NEW_LGD_CODE)
         })
+        if row.get(NEW_USERNAME_COLUMN) and row.get(USERNAME_COLUMN):
+            self.user_transitions[row.get(NEW_USERNAME_COLUMN)] = row.get(USERNAME_COLUMN)
 
     def _invalid_row(self, operation, old_site_code, new_site_code):
         invalid = False

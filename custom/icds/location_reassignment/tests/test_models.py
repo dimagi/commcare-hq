@@ -54,7 +54,7 @@ class TestOperation(TestCase):
         )
 
     def check_operation(self, old_locations, new_locations, archived=True):
-        self.operation(old_locations, new_locations).perform()
+        self.operation(self.domain, old_locations, new_locations).perform()
         old_location_ids = [loc.location_id for loc in old_locations]
         new_location_ids = [loc.location_id for loc in new_locations]
         operation_time = old_locations[0].metadata[DEPRECATED_AT]

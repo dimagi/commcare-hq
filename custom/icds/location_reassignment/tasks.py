@@ -7,9 +7,10 @@ from custom.icds.location_reassignment.processor import Processor
 
 
 @task
-def process_location_reassignment(domain, transitions, new_location_details, site_codes, user_email):
+def process_location_reassignment(domain, transitions, new_location_details, user_transitions,
+                                  site_codes, user_email):
     try:
-        Processor(domain, transitions, new_location_details, site_codes).process()
+        Processor(domain, transitions, new_location_details, user_transitions, site_codes).process()
     except Exception as e:
         email = EmailMessage(
             subject='[{}] - Location Reassignment Failed'.format(settings.SERVER_ENVIRONMENT),
