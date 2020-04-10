@@ -653,9 +653,8 @@ class BugReportView(View):
         if domain_object:
             current_project_description = domain_object.project_description if domain_object else None
             new_project_description = post_params.get('project_description')
-            if (domain_object and
-                    couch_user.is_domain_admin(domain=domain) and
-                    new_project_description and current_project_description != new_project_description):
+            if (domain_object and couch_user.is_domain_admin(domain=domain) and new_project_description
+                    and current_project_description != new_project_description):
                 domain_object.project_description = new_project_description
                 domain_object.save()
 
