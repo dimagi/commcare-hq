@@ -89,7 +89,7 @@ jdcal==1.4.1              # via openpyxl
 jinja2==2.10.3
 jmespath==0.9.4           # via boto3, botocore
 json-delta==2.0
-jsonfield==1.0.3
+jsonfield==2.1.1
 jsonobject-couchdbkit==1.0.1
 jsonobject==0.9.9
 jsonpath-rw==1.4.0
