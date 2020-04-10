@@ -54,13 +54,12 @@ class Processor(object):
         existing_parent_site_codes = set()
 
         for location_type_code in list(reversed(list(self.location_types_by_code))):
-            new_locations_details = self.new_location_details.get(location_type_code)
-            if new_locations_details:
-                for site_code, details in new_locations_details.items():
-                    if details['parent_site_code']:
-                        existing_parent_site_codes.add(details['parent_site_code'])
-                    # remove it from parent site codes if it itself needs to be created
-                    existing_parent_site_codes.discard(site_code)
+            new_locations_details = self.new_location_details.get(location_type_code, {})
+            for site_code, details in new_locations_details.items():
+                if details['parent_site_code']:
+                    existing_parent_site_codes.add(details['parent_site_code'])
+                # remove it from parent site codes if it itself needs to be created
+                existing_parent_site_codes.discard(site_code)
 
         if existing_parent_site_codes:
             return self._get_locations_by_site_codes(existing_parent_site_codes)
