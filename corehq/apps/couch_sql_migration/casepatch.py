@@ -17,6 +17,7 @@ from dimagi.utils.parsing import json_format_datetime
 from corehq.apps.tzmigration.timezonemigration import MISSING
 from corehq.blobs import get_blob_db
 from corehq.form_processor.backends.couch.dbaccessors import CaseAccessorCouch
+from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.models import (
     Attachment,
     XFormInstanceSQL,
@@ -57,7 +58,10 @@ def patch_diffs(doc_diffs, log_cases=False):
 
 def patch_case(case_id, diffs):
     case_diffs = [d for d in diffs if d.kind != "stock state"]
-    couch_case = get_couch_case(case_id)
+    try:
+        couch_case = get_couch_case(case_id)
+    except CaseNotFound:
+        raise CannotPatch([d.json_diff for d in case_diffs])
     assert couch_case.domain == get_domain(), (couch_case, get_domain())
     case = PatchCase(couch_case, case_diffs)
     form = PatchForm(case)
@@ -79,7 +83,7 @@ class PatchCase:
         self.indices = []
         self.case_attachments = []
         self._updates = updates = []
-        if is_missing_in_sql(self.case_id, self.diffs):
+        if is_missing_in_sql(self.diffs):
             updates.extend([const.CASE_ACTION_CREATE, const.CASE_ACTION_UPDATE])
             self._dynamic_properties = self.case.dynamic_case_properties()
         else:
@@ -97,8 +101,8 @@ class PatchCase:
         return self._dynamic_properties
 
 
-ILLEGAL_PROPS = {"indices", "actions"}
-IGNORE_PROPS = {"xform_ids", "*"} | KNOWN_PROPERTIES.keys()
+ILLEGAL_PROPS = {"indices", "actions", "*"}
+IGNORE_PROPS = {"xform_ids"} | KNOWN_PROPERTIES.keys()
 
 
 def has_illegal_props(diffs):
@@ -197,7 +201,7 @@ def save_sql_form(sql_form, case_stock_result):
     save_migrated_models(sql_form, case_stock_result)
 
 
-def is_missing_in_sql(case_id, diffs):
+def is_missing_in_sql(diffs):
     diff = diffs[0]
     return (
         len(diffs) == 1

@@ -3,8 +3,11 @@ from datetime import datetime, timedelta
 
 from mock import patch
 
+from casexml.apps.case.models import CommCareCase
+
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.tzmigration.timezonemigration import MISSING
+from corehq.form_processor.backends.couch.dbaccessors import CaseAccessorCouch
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.utils.general import (
     clear_local_domain_sql_backend_override,
@@ -226,6 +229,14 @@ class TestCouchSqlDiff(BaseMigrationTestCase):
         self.do_migration(forms="missing", case_diff="patch")
         self.assertEqual(self._get_case("case-1").closed, True)
 
+    def test_cannot_patch_case_missing_in_couch(self):
+        self.submit_form(make_test_form("form-1", case_id="case-1"))
+        self.do_migration(case_diff="none")
+        CommCareCase.get_db().delete_doc("case-1")
+        self.do_migration(forms="missing", case_diff="patch", diffs=[
+            Diff('case-1', 'missing', ['*'], old=MISSING, new='present'),
+        ])
+
     def create_form_with_duplicate_stock_transaction(self):
         from corehq.apps.commtrack.helpers import make_product
         from corehq.apps.commtrack.processing import process_stock
@@ -249,7 +260,7 @@ class TestCouchSqlDiff(BaseMigrationTestCase):
 
     @contextmanager
     def augmented_couch_case(self, case_id):
-        case = self._get_case(case_id)
+        case = CaseAccessorCouch.get_case(case_id)
         with self.diff_without_rebuild():
             yield case
 
