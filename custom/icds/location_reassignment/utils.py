@@ -53,11 +53,10 @@ def reassign_cases(domain, old_location_id, new_location_id, deprecation_time):
         domain=domain, location_id=new_location_id)
     if new_location.location_type.code == AWC_CODE:
         supervisor_id = new_location.parent.location_id
-    household_case_ids = CaseAccessorSQL.get_case_ids_in_domain_by_owners(
-        domain, [old_location_id], case_type=HOUSEHOLD_CASE_TYPE)
+    household_case_ids = get_household_case_ids(domain, old_location_id)
 
     for household_case_id in household_case_ids:
-        case_ids = get_household_and_child_cases_by_owner(domain, household_case_id, old_location_id)
+        case_ids = get_household_and_child_case_ids_by_owner(domain, household_case_id, old_location_id)
         case_ids.add(household_case_id)
         case_blocks = []
         for case_id in case_ids:
@@ -75,22 +74,38 @@ def reassign_cases(domain, old_location_id, new_location_id, deprecation_time):
             submit_case_blocks(case_blocks, domain, user_id=SYSTEM_USER_ID)
 
 
-def get_household_and_child_cases_by_owner(domain, household_case_id, owner_id):
-    def get_child_case_ids(ids):
-        return [case.case_id for case in CaseAccessorSQL.get_reverse_indexed_cases(domain, ids)
+def get_household_case_ids(domain, location_id):
+    return CaseAccessorSQL.get_case_ids_in_domain_by_owners(
+        domain, [location_id], case_type=HOUSEHOLD_CASE_TYPE)
+
+
+def get_household_and_child_case_ids_by_owner(domain, household_case_id, owner_id, case_types=None):
+    case_ids = {household_case_id}
+    child_cases = get_household_child_cases_by_owner(domain, household_case_id, owner_id, case_types)
+    child_case_ids = [case.case_id for case in child_cases]
+    case_ids.update(child_case_ids)
+    return case_ids
+
+
+def get_household_child_cases_by_owner(domain, household_case_id, owner_id, case_types):
+    def get_child_cases(ids):
+        return [case for case in
+                CaseAccessorSQL.get_reverse_indexed_cases(domain, ids)
                 if case.owner_id == owner_id]
 
-    all_child_case_ids = {household_case_id}
-    case_ids = [household_case_id]
-
-    while case_ids:
-        child_case_ids = get_child_case_ids(case_ids)
-        if child_case_ids:
-            all_child_case_ids.update(child_case_ids)
-            case_ids = child_case_ids
+    cases = []
+    parent_case_ids = [household_case_id]
+    while parent_case_ids:
+        child_cases = get_child_cases(parent_case_ids)
+        if child_cases:
+            parent_case_ids = [case.case_id for case in child_cases]
+            if case_types:
+                cases.extend([case for case in child_cases if case.type in case_types])
+            else:
+                cases.extend(child_cases)
         else:
-            case_ids = None
-    return all_child_case_ids
+            parent_case_ids = None
+    return cases
 
 
 @task(queue=settings.CELERY_LOCATION_REASSIGNMENT_QUEUE)
