@@ -1,4 +1,4 @@
-UPDATE "agg_child_health_%(start_date)s_5" agg_child_health
+UPDATE "agg_child_health_%(start_date)s" agg_child_health
   SET
     wasting_moderate = ut.wasting_moderate,
     wasting_severe = ut.wasting_severe,
@@ -17,5 +17,6 @@ UPDATE "agg_child_health_%(start_date)s_5" agg_child_health
     agg_child_health.caste=ut.caste and
     agg_child_health.disabled=ut.coalesce_disabled and
     agg_child_health.minority = ut.coalesce_minority and
-    agg_child_health.resident = ut.coalesce_resident
+    agg_child_health.resident = ut.coalesce_resident and
+    agg_child_health.aggregation_level = 5
   );
