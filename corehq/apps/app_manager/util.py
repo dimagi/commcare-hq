@@ -562,17 +562,17 @@ def get_and_assert_practice_user_in_domain(practice_user_id, domain):
 
 class LatestAppInfo(object):
 
-    def __init__(self, brief_app_id, domain):
+    def __init__(self, app_id, domain):
         """
         Wrapper to get latest app version and CommCare APK version info
 
         args:
-            brief_app_id: id of an app that is not copy (to facilitate quickcaching)
+            app_id: master id of an app (to facilitate quickcaching)
 
         raises Http404 error if id is not valid
         raises assertion error if an id of app copy is passed
         """
-        self.app_id = brief_app_id
+        self.app_id = app_id
         self.domain = domain
 
     @property
@@ -580,8 +580,7 @@ class LatestAppInfo(object):
     def app(self):
         app = get_app(self.domain, self.app_id, latest=True, target='release')
         # quickache based on a copy app_id will have to be updated too fast
-        is_app_id_brief = self.app_id == app.master_id
-        assert is_app_id_brief, "this class doesn't handle copy app ids"
+        assert self.app_id == app.master_id, "this class doesn't handle copy app ids"
         return app
 
     def clear_caches(self):
