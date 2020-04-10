@@ -585,7 +585,9 @@ def app_exchange(request, domain):
     if request.method == "POST":
         clear_app_cache(request, domain)
         from_app_id = request.POST.get('from_app_id')
-        app_copy = import_app_util(from_app_id, domain)
+        app_copy = import_app_util(from_app_id, domain, {
+            'created_from_template': from_app_id,
+        })
         return back_to_main(request, domain, app_id=app_copy._id)
 
     return render(request, template, context)

@@ -1,3 +1,4 @@
+import sys
 from datetime import datetime, timedelta
 
 import attr
@@ -120,26 +121,30 @@ class ProgressManager(object):
 
 
 class ProcessorProgressLogger(object):
+    def __init__(self, prefix=None, stream=None):
+        self.prefix = prefix or ''
+        self.stream = stream or sys.stdout
+
     def progress_starting(self, total, previously_visited):
-        print("Processing {} documents{}: ...".format(
-            total,
-            " (~{} already processed)".format(previously_visited) if previously_visited else ""
-        ))
+        suffix = " (~{} already processed)".format(previously_visited) if previously_visited else ""
+        print(f"{self.prefix}Processing {total} documents{suffix}: ...", file=self.stream)
 
     def document_skipped(self, doc_dict):
-        print("Skip: {doc_type} {_id}".format(**doc_dict))
+        print(f"{self.prefix}Skip: {doc_dict['doc_type']} {doc_dict['id']}", file=self.stream)
 
     def document_processed(self, doc_dict, doc_updates):
         pass
 
     def progress(self, processed, visited, total, time_elapsed, time_remaining):
-        print("Processed {}/{} of {} documents in {} ({} remaining)"
-              .format(processed, visited, total, time_elapsed, time_remaining))
+        print(
+            f"{self.prefix}Processed {processed}/{visited} of {total} documents in {time_elapsed}"
+            f" ({time_remaining} remaining)",
+            file=self.stream
+        )
 
     def progress_complete(self, processed, visited, total, previously_visited):
-        print("Processed {}/{} of {} documents ({} previously processed).".format(
-            processed,
-            visited,
-            total,
-            previously_visited,
-        ))
+        print(
+            f"{self.prefix}Processed {processed}/{visited} of {total} documents"
+            f" ({previously_visited} previously processed).",
+            file=self.stream
+        )

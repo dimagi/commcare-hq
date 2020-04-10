@@ -24,6 +24,7 @@ from ..example_data.data import (
 )
 from ..fixtures import FixtureAccessor
 from ..food import INDICATORS, FoodData
+from ..reports.master_data import MasterData
 from ..ucr_data import FoodCaseData
 
 DOMAIN = 'inddex-reports-test'
@@ -132,12 +133,6 @@ class TestNewReport(TestCase):
         actual = sort_rows(self.run_new_report())
         self.assertEqual(food_names(expected), food_names(actual))
 
-        columns_known_to_fail = {  # TODO address these columns
-            'conv_factor_gap_code',
-            'conv_factor_gap_desc',
-            'fct_gap_code',
-            'fct_gap_desc',
-        }
         nutrient_columns = [
             'energy_kcal_per_100g',
             'energy_kcal',
@@ -146,7 +141,7 @@ class TestNewReport(TestCase):
             'protein_g_per_100g',
             'protein_g',
         ]
-        columns = [c.slug for c in INDICATORS if c.slug not in columns_known_to_fail] + nutrient_columns
+        columns = [c.slug for c in INDICATORS] + nutrient_columns
         for column in columns:
             self.assert_columns_equal(expected, actual, column)
 
@@ -166,7 +161,8 @@ class TestNewReport(TestCase):
         return map(substitute_real_ids, get_expected_report())
 
     def run_new_report(self):
-        report = FoodData(DOMAIN, datespan=DateSpan(date(2020, 1, 1), date(2020, 4, 1)))
+        data = FoodData(DOMAIN, datespan=DateSpan(date(2020, 1, 1), date(2020, 4, 1)))
+        report = MasterData(data)
         return [dict(zip(report.headers, row)) for row in report.rows]
 
     def assert_columns_equal(self, expected_rows, actual_rows, column):
