@@ -228,6 +228,7 @@ class TestCouchSqlDiff(BaseMigrationTestCase):
         ])
         self.do_migration(forms="missing", case_diff="patch")
         self.assertEqual(self._get_case("case-1").closed, True)
+        self.assert_patched_cases(["case-1"])
 
     def test_cannot_patch_case_missing_in_couch(self):
         self.submit_form(make_test_form("form-1", case_id="case-1"))
@@ -236,6 +237,7 @@ class TestCouchSqlDiff(BaseMigrationTestCase):
         self.do_migration(forms="missing", case_diff="patch", diffs=[
             Diff('case-1', 'missing', ['*'], old=MISSING, new='present'),
         ])
+        self.assert_patched_cases()
 
     def create_form_with_duplicate_stock_transaction(self):
         from corehq.apps.commtrack.helpers import make_product
@@ -263,6 +265,11 @@ class TestCouchSqlDiff(BaseMigrationTestCase):
         case = CaseAccessorCouch.get_case(case_id)
         with self.diff_without_rebuild():
             yield case
+
+    def assert_patched_cases(self, case_ids=None):
+        statedb = open_state_db(self.domain_name, self.state_dir)
+        self.assertEqual(list(statedb.iter_patched_case_ids()), case_ids or [])
+        self.assertFalse(list(statedb.iter_undiffed_case_ids()))
 
 
 THING_FORM = """

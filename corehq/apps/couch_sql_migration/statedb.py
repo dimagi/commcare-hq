@@ -201,10 +201,10 @@ class StateDB(DiffDB):
             query = session.query(CaseForms.total_forms).filter_by(case_id=case_id)
             return query.scalar() or 0
 
-    def add_cases_to_diff(self, case_ids):
+    def add_cases_to_diff(self, case_ids, *, session=None):
         if not case_ids:
             return
-        with self.session() as session:
+        with self.session(session) as session:
             session.execute(
                 f"INSERT OR IGNORE INTO {CaseToDiff.__tablename__} (id) VALUES (:id)",
                 [{"id": x} for x in case_ids],
@@ -248,6 +248,21 @@ class StateDB(DiffDB):
                 .filter(DocDiffs.kind == "CommCareCase")
                 .count()
             )
+
+    def add_patched_cases(self, case_ids):
+        if not case_ids:
+            return
+        with self.session() as session:
+            self.add_cases_to_diff(case_ids, session=session)
+            session.execute(
+                f"INSERT OR IGNORE INTO {PatchedCase.__tablename__} (id) VALUES (:id)",
+                [{"id": x} for x in case_ids],
+            )
+
+    def iter_patched_case_ids(self):
+        query = self.Session().query(PatchedCase.id)
+        for case_id, in iter_large(query, PatchedCase.id):
+            yield case_id
 
     def add_problem_form(self, form_id):
         """Add form to be migrated with "unprocessed" forms
@@ -746,6 +761,12 @@ class MissingDoc(Base):
 
 class NoActionCaseForm(Base):
     __tablename__ = "noactioncaseform"
+
+    id = Column(String(50), nullable=False, primary_key=True)
+
+
+class PatchedCase(Base):
+    __tablename__ = 'patchedcase'
 
     id = Column(String(50), nullable=False, primary_key=True)
 

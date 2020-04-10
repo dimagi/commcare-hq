@@ -117,7 +117,7 @@ class CaseDiffTool:
         log.info(f"patching {count} cases")
         diffs = with_progress_bar(diffs, count, prefix="Case diffs", oneline=False)
         for pending_diffs in self.map_cases(patch_diffs, diffs):
-            statedb.add_cases_to_diff(pending_diffs)
+            statedb.add_patched_cases(pending_diffs)
 
     def iter_case_diff_results(self, cases):
         if cases is None:
