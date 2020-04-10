@@ -2,7 +2,7 @@ import base64
 import re
 from functools import wraps
 
-from django.contrib.auth import authenticate
+from django.contrib.auth import authenticate, get_user_model
 from django.contrib.auth.models import User
 from django.http import HttpResponse
 from django.views.decorators.debug import sensitive_variables
@@ -209,3 +209,8 @@ class ApiKeyFallbackBackend(object):
         else:
             request.skip_two_factor_check = True
             return user
+
+
+def get_active_users_by_email(email):
+    UserModel = get_user_model()
+    return UserModel._default_manager.filter(username__iexact=email, is_active=True)
