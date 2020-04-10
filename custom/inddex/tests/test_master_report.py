@@ -140,7 +140,7 @@ class TestFixtures(TestCase):
         self.assertEqual(0.61, conversion_factor)
 
 
-class TestNewReport(TestCase):
+class TestMasterReport(TestCase):
     maxDiff = None
 
     def test_new_report(self):

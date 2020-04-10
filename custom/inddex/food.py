@@ -329,6 +329,13 @@ class FoodRow:
             return self.caseid
         return self.recipe_case_id or 'NO_RECIPE'
 
+    def get_nutrient_per_100g(self, nutrient_name):
+        if self.fct_code:
+            return self.composition.nutrients.get(nutrient_name)
+
+    def get_nutrient_amt(self, nutrient_name):
+        return _multiply(self.get_nutrient_per_100g(nutrient_name), self.total_grams, 0.01)
+
     def __getattr__(self, name):
         if name in _INDICATORS_BY_SLUG:
             indicator = _INDICATORS_BY_SLUG[name]
@@ -448,21 +455,6 @@ class FoodData:
             for row in rows_in_recipe:
                 if self._matches_in_memory_filters(row):
                     yield row
-
-    def get_nutrient_headers(self):
-        for name in self.fixtures.nutrient_names:
-            yield f"{name}_per_100g"
-            yield name
-
-    def get_nutrient_values(self, row):
-        for name in self.fixtures.nutrient_names:
-            if row.fct_code:
-                per_100g = row.composition.nutrients.get(name)
-                yield per_100g
-                yield _multiply(per_100g, row.total_grams, 0.01)
-            else:
-                yield None
-                yield None
 
 
 def _multiply(*args):
