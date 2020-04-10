@@ -195,7 +195,7 @@ class BlobMixin(Document):
             type_code = meta_ref.type_code
             if type_code is None:
                 type_code = self._blobdb_type_code
-            meta = MetaDB.get(parent_id=self._id, type_code=type_code, name=name, key=meta_ref.key)
+            meta = MetaDB().get(parent_id=self._id, key=meta_ref.key)
             blob = db.get(meta=meta)
         except NotFound:
             raise ResourceNotFound(
