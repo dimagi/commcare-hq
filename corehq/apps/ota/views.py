@@ -302,13 +302,13 @@ def heartbeat(request, domain, app_build_id):
     info = {"app_id": app_id}
     try:
         # mobile will send brief_app_id
-        info.update(LatestAppInfo(app_id, domain).get_info())
+        info.update(LatestAppInfo(app_id, domain).get_info(build_profile_id))
     except (Http404, AssertionError):
         # If it's not a valid 'brief' app id, find it by talking to couch
         notify_exception(request, 'Received an invalid heartbeat request')
         app = get_app_cached(domain, app_build_id)
         brief_app_id = app.master_id
-        info.update(LatestAppInfo(brief_app_id, domain).get_info())
+        info.update(LatestAppInfo(brief_app_id, domain).get_info(build_profile_id))
 
     else:
         if not toggles.SKIP_UPDATING_USER_REPORTING_METADATA.enabled(domain):

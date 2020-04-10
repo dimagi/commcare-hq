@@ -604,9 +604,9 @@ class LatestAppInfo(object):
             force = self.app.global_app_config.apk_prompt == "forced"
             return {"value": value, "force": force}
 
-    @quickcache(vary_on=['self.app_id'])
-    def get_latest_app_version(self):
-        from corehq.apps.app_manager.models import LATEST_APP_VALUE
+    @quickcache(vary_on=['self.app_id', 'build_profile_id'])
+    def get_latest_app_version(self, build_profile_id=None):
+        from corehq.apps.app_manager.models import LATEST_APP_VALUE, LatestEnabledBuildProfiles
         if self.app.global_app_config.app_prompt == "off":
             return {}
         else:
@@ -618,12 +618,17 @@ class LatestAppInfo(object):
                 if not self.app or not self.app.is_released:
                     return {}
                 else:
-                    return {"value": self.app.version, "force": force}
+                    version = self.app.version
+                    if build_profile_id:
+                        latest = LatestEnabledBuildProfiles.for_app_and_profile(self.app_id, build_profile_id)
+                        if latest:
+                            version = latest.version
+                    return {"value": version, "force": force}
 
-    def get_info(self):
+    def get_info(self, build_profile_id=None):
         return {
             "latest_apk_version": self.get_latest_apk_version(),
-            "latest_ccz_version": self.get_latest_app_version(),
+            "latest_ccz_version": self.get_latest_app_version(build_profile_id),
         }
 
 
