@@ -92,18 +92,16 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
         alive_in_month = "(child_health.date_death IS NULL OR child_health.date_death - {} >= 0)".format(
             start_month_string
         )
-        migrated = (
-            "agg_migration.is_migrated = 1 "
-            "AND agg_migration.migration_date::date < {start_month_string}"
+        not_migrated = (
+            "(agg_migration.is_migrated IS DISTINCT FROM 1 "
+            "OR agg_migration.migration_date::date >= {start_month_string})"
         ).format(start_month_string=start_month_string)
-        not_registered = (
-            "agg_availing.is_registered = 0 "
-            "AND agg_availing.registration_date::date < {start_month_string}"
+        registered = (
+            "(agg_availing.is_registered IS DISTINCT FROM 0 "
+            "OR agg_availing.registration_date::date >= {start_month_string})"
         ).format(start_month_string=start_month_string)
-        seeking_services = (
-            "{not_registered} IS DISTINCT FROM 't' "
-            "AND {migrated} IS DISTINCT FROM 't'"
-        ).format(not_registered=not_registered, migrated=migrated)
+        seeking_services = "({registered} AND {not_migrated})".format(
+            registered=registered, not_migrated=not_migrated)
         born_in_month = "({} AND person_cases.dob BETWEEN {} AND {})".format(
             seeking_services, start_month_string, end_month_string
         )
@@ -166,8 +164,8 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
                 "CASE WHEN person_cases.aadhar_date < {} THEN  1 ELSE 0 END".format(end_month_string)),
             ("valid_in_month", "CASE WHEN {} THEN 1 ELSE 0 END".format(valid_in_month)),
             ("valid_all_registered_in_month",
-                "CASE WHEN {} AND {} AND {} <= 72 AND {} IS DISTINCT FROM 't' THEN 1 ELSE 0 END".format(
-                    open_in_month, alive_in_month, age_in_months, migrated
+                "CASE WHEN {} AND {} AND {} <= 72 AND {} THEN 1 ELSE 0 END".format(
+                    open_in_month, alive_in_month, age_in_months, not_migrated
                 )),
             ("person_name", "child_health.person_name"),
             ("mother_name", "child_health.mother_name"),
