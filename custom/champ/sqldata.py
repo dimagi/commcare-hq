@@ -180,6 +180,7 @@ class TargetsDataSource(ChampSqlData):
 
     @property
     def group_by(self):
+        # ToDo: add a group by clause here or test before release
         return []
 
     @property
