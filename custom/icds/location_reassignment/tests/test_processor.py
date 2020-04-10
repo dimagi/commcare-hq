@@ -57,12 +57,11 @@ class TestProcessor(TestCase):
     def test_creating_new_locations(self, location_create_mock, locations_mock, *_):
         locations_mock.return_value = self.all_locations
         new_location_details = {
-            'supervisor': [{
+            'supervisor': {'13': {
                 'name': 'Test 13',
-                'site_code': '13',
                 'parent_site_code': None,
                 'lgd_code': 'LGD 13'
-            }]
+            }}
         }
         Processor(self.domain, self.transitions, new_location_details, site_codes).process()
         location_type_supervisor = None
