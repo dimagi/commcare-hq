@@ -135,8 +135,8 @@ class AutomaticUpdateRule(models.Model):
 
     @property
     def references_parent_case(self):
-        for crierion in self.memoized_criteria:
-            definition = crierion.definition
+        for criterion in self.memoized_criteria:
+            definition = criterion.definition
             if isinstance(definition, ClosedParentDefinition):
                 return True
             elif (
