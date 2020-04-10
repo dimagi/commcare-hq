@@ -279,7 +279,7 @@ class CustomCriteriaTestCase(BaseCaseRuleTest):
 
     def test_ccs_record_case_that_is_availing_services(self):
         rule = _create_empty_rule(self.domain, case_type='ccs_record')
-        rule.add_criteria(CustomMatchDefinition, name='ICDS_CCS_RECORD_CASE_AVAILING_SERVICES')
+        rule.add_criteria(CustomMatchDefinition, name='ICDS_CCS_RECORD_CASE_CHILD_AVAILING_SERVICES')
 
         def check(case, add, match):
             case = self._set_case_props(case, {"add": add})
