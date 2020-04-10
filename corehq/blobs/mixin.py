@@ -10,6 +10,7 @@ from os.path import join
 
 from corehq.blobs import get_blob_db, CODES  # noqa: F401
 from corehq.blobs.exceptions import AmbiguousBlobStorageError, NotFound
+from corehq.blobs.metadata import MetaDB
 from corehq.blobs.util import (
     classproperty,
     document_method,
@@ -194,7 +195,8 @@ class BlobMixin(Document):
             type_code = meta_ref.type_code
             if type_code is None:
                 type_code = self._blobdb_type_code
-            blob = db.get(key=meta_ref.key, type_code=type_code)
+            meta = MetaDB.get(parent_id=self._id, type_code=type_code, name=name, key=meta_ref.key)
+            blob = db.get(meta=meta)
         except NotFound:
             raise ResourceNotFound(
                 "{model} {model_id} attachment: {name!r}".format(

@@ -75,13 +75,11 @@ class S3BlobDB(AbstractBlobDB):
         else:
             content.seek(0)
             if meta.compressed:
-                meta.content_length = get_file_size(GzipCompressReadStream(content))
-                # Need to re-initialize stream as cannot seek on Gzipstream
-                content.seek(0)
                 content = GzipCompressReadStream(content)
-            self.metadb.put(meta)
             with self.report_timing('put', meta.key):
                 s3_bucket.upload_fileobj(content, meta.key)
+            meta.content_length = get_file_size(content)
+            self.metadb.put(meta)
         return meta
 
     def get(self, key=None, type_code=None, meta=None):
@@ -200,13 +198,7 @@ def is_not_found(err, not_found_codes=["NoSuchKey", "NoSuchBucket", "404"]):
 def get_file_size(fileobj):
     CHUNK_SIZE = 4096
     if isinstance(fileobj, GzipCompressReadStream):
-        content_length = 0
-        while True:
-            chunk = fileobj.read(CHUNK_SIZE)
-            if not chunk:
-                break
-            content_length += len(chunk)
-        return content_length
+        fileobj.content_length
 
     # botocore.response.StreamingBody has a '_content_length' attribute
     length = getattr(fileobj, "_content_length", None)

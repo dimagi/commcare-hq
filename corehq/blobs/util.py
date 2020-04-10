@@ -39,57 +39,78 @@ class NullJsonField(JSONField):
         return self.get_default() if value is None else value
 
 
-# adapted from https://stackoverflow.com/a/31566082
-class Buffer(object):
-    def __init__(self):
-        self.__buf = deque()
-        self.__size = 0
-
-    def __len__(self):
-        return self.__size
-
-    def write(self, data):
-        self.__buf.append(data)
-        self.__size += len(data)
-
-    def read(self, size=-1):
-        if size < 0:
-            size = self.__size
-        ret_list = []
-        while size > 0 and len(self.__buf):
-            s = self.__buf.popleft()
-            size -= len(s)
-            ret_list.append(s)
-        if size < 0:
-            ret_list[-1], remainder = ret_list[-1][:size], ret_list[-1][size:]
-            self.__buf.appendleft(remainder)
-        ret = b''.join(ret_list)
-        self.__size -= len(ret)
-        return ret
-
-    def flush(self):
-        pass
-
-    def close(self):
-        pass
+# extended from https://stackoverflow.com/a/31566082
 
 
-class GzipCompressReadStream(object):
+# extended from https://stackoverflow.com/a/31566082
+class GzipCompressReadStream:
     CHUNK_SIZE = 4096
 
+    class Buffer:
+        def __init__(self):
+            self._buf = deque()
+            self._size = 0
+            self._content_length = None
+
+        @property
+        def content_length(self):
+            if self._content_length is None or self._size > 0:
+                raise Exception("content_length can't be accessed without completely reading the stream")
+            return self._content_length
+
+        def __len__(self):
+            return self._size
+
+        def write(self, data):
+            self._buf.append(data)
+            self._size += len(data)
+
+        def read(self, size=-1):
+            if size < 0:
+                size = self._size
+            ret_list = []
+            while size > 0 and self._buf:
+                s = self._buf.popleft()
+                size -= len(s)
+                ret_list.append(s)
+            if size < 0:
+                ret_list[-1], remainder = ret_list[-1][:size], ret_list[-1][size:]
+                self._buf.appendleft(remainder)
+            ret = b''.join(ret_list)
+            self._size -= len(ret)
+            if self._content_length is None:
+                self._content_length = 0
+            self._content_length += len(ret)
+            return ret
+
+        def flush(self):
+            pass
+
+        def close(self):
+            self._buf = None
+            self._size = 0
+
     def __init__(self, fileobj):
-        self.__input = fileobj
-        self.__buf = Buffer()
-        self.__gzip = GzipFile(None, mode='wb', fileobj=self.__buf)
+        self._input = fileobj
+        self._buf = self.Buffer()
+        self._gzip = GzipFile(None, mode='wb', fileobj=self._buf)
+
+    @property
+    def content_length(self):
+        return self._buf.content_length
 
     def read(self, size=-1):
-        while size < 0 or len(self.__buf) < size:
-            chunk = self.__input.read(self.CHUNK_SIZE)
+        while size < 0 or len(self._buf) < size:
+            chunk = self._input.read(self.CHUNK_SIZE)
             if not chunk:
-                self.__gzip.close()
+                self._gzip.close()
                 break
-            self.__gzip.write(chunk)
-        return self.__buf.read(size)
+            self._gzip.write(chunk)
+        return self._buf.read(size)
+
+    def close(self):
+        self._buf.close()
+
 
 class document_method(object):
     """Document method
