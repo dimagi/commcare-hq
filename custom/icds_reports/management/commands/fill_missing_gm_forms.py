@@ -25,7 +25,8 @@ class Command(BaseCommand):
         self.run_task(date)
 
     def run_task(self, date):
-        initial_date = datetime(2017, 3, 1, 0, 0)
+        initial_date = datetime(2017, 4, 1, 0, 0)
+        # get the number of month intervals between the dates
         intervals = date.month - initial_date.month + 12 * (date.year - initial_date.year) + 1
         monthly_dates = _get_monthly_dates(date, total_intervals=intervals)
 
