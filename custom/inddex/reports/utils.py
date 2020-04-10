@@ -56,7 +56,7 @@ def _format_val(val):
     if isinstance(val, int):
         return str(val)
     if isinstance(val, float):
-        return str(int(val)) if val.is_integer() else str(val)
+        return f"{val:.5g}"
     if val is None:
         return ''
     return val

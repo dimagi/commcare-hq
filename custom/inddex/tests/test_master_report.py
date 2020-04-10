@@ -143,7 +143,7 @@ class TestFixtures(TestCase):
 class TestMasterReport(TestCase):
     maxDiff = None
 
-    def test_new_report(self):
+    def test_master_report(self):
         expected = sort_rows(self.get_expected_rows())
         actual = sort_rows(self.run_new_report())
         self.assertEqual(food_names(expected), food_names(actual))

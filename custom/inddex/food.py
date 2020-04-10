@@ -459,6 +459,6 @@ class FoodData:
 
 def _multiply(*args):
     try:
-        return round(reduce(operator.mul, args), 2)
+        return reduce(operator.mul, args)
     except TypeError:
         return None
