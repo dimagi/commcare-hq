@@ -156,6 +156,7 @@ load_ignore_rules = memoized(lambda: add_duplicate_rules({
     'LedgerValue': [
         Ignore(path='_id'),  # couch != SQL
         Ignore("missing", "location_id", old=MISSING, new=None),
+        Ignore("type", "location_id", old=None),
         Ignore("diff", "last_modified", check=has_close_dates),
         Ignore("type", "last_modified_form_id", old=None),
     ],
