@@ -7,9 +7,10 @@ from custom.inddex.reports.gaps_summary_by_food_type import GapsSummaryByFoodTyp
 CUSTOM_REPORTS = (
     ('Custom Reports', (
         MasterDataFileSummaryReport,
-        GapsSummaryByFoodTypeSummaryReport,
-        GapsReportByItem,
-        NutrientIntakesReport,
-        SummaryStatisticsReport
+        # TODO update these reports:
+        # GapsSummaryByFoodTypeSummaryReport,
+        # GapsReportByItem,
+        # NutrientIntakesReport,
+        # SummaryStatisticsReport
     )),
 )

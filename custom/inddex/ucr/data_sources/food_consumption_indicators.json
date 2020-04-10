@@ -1,5 +1,6 @@
 {
     "domains": [
+        "inddex-multilingual",
         "inddex-reports",
         "inddex-reports-test"
     ],

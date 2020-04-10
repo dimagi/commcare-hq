@@ -1147,6 +1147,14 @@ HIDE_MESSAGING_DASHBOARD_FROM_NON_SUPERUSERS = StaticToggle(
 )
 
 
+WHATSAPP_MESSAGING = StaticToggle(
+    'whatsapp_messaging',
+    "Default SMS to send messages via Whatsapp, where available",
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN]
+)
+
+
 UNLIMITED_REPORT_BUILDER_REPORTS = StaticToggle(
     'unlimited_report_builder_reports',
     'Allow unlimited reports created in report builder',
@@ -1836,10 +1844,19 @@ TWO_STAGE_USER_PROVISIONING = StaticToggle(
     help_link='https://confluence.dimagi.com/display/ccinternal/Two-Stage+Mobile+Worker+Account+Creation',
 )
 
+LOCATION_REASSIGNMENT = StaticToggle(
+    'location_reassignment',
+    'Ability to reorder organization structure',
+    TAG_CUSTOM,
+    [NAMESPACE_USER],
+    relevant_environments={'icds', 'india', 'staging'},
+)
+
 ICDS_BIHAR_DEMOGRAPHICS_API = StaticToggle(
     'bihar_demographics_api',
     'ICDS: Bihar Demographics API',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_USER],
     relevant_environments={'icds', 'india'},
+
 )
