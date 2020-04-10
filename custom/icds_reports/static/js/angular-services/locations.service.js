@@ -303,7 +303,7 @@ window.angular.module('icdsApp').factory('locationsService', ['$http', '$locatio
                 return locationsCache[selectedLocation];
             }
         },
-
+        
         resetLevelsBelow : function(level, vm) {
             for (var i = level + 1; i <= vm.maxLevel; i++) {
                 vm.hierarchy[i].selected = null;
