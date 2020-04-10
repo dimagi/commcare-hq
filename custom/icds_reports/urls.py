@@ -15,7 +15,8 @@ from custom.icds_reports.views import (
     CasDataExport, CasDataExportAPIView, ServiceDeliveryDashboardView, InactiveDashboardUsers, APWebservice,
     DailyIndicators, InfantometerView, StadiometerView, MWCDDataView, IcdsDynamicMobileTemplateView,
     GovernanceHomeVisitAPI, GovernanceBeneficiaryAPI, GovernanceStateListAPI, GovernanceVHNDSAPI,
-    MobileDashboardDownloadView, GovernanceCBEAPI, BiharDemographicsAPI)
+    MobileDashboardDownloadView, GovernanceCBEAPI, BiharDemographicsAPI, BiharVaccinesAPI
+)
 
 
 dashboard_urls = [
@@ -190,7 +191,8 @@ urlpatterns = [
     url(r'^governance_apis/state_names/', GovernanceStateListAPI.as_view(), name='governance_apis_state_names'),
     url(r'^governance_apis/cbe/', GovernanceCBEAPI.as_view(), name='governance_apis_cbe'),
     url(r'^governance_apis/vhsnd/', GovernanceVHNDSAPI.as_view(), name='governance_apis_vhnds'),
-    url(r'^bihar_demographics/household_members_data/', BiharDemographicsAPI.as_view(), name='household_members_data')
+    url(r'^bihar_demographics/household_members_data/', BiharDemographicsAPI.as_view(), name='household_members_data'),
+    url(r'^bihar_demographics/child_vaccines_data/', BiharVaccinesAPI.as_view(), name='child_vaccines_data')
 ]
 
 DASHBOARD_URL_GROUPS = urlpatterns + dashboard_urls + mobile_dashboard_urls + maternal_and_child_urls + cas_reach_urls + demographics_urls + awc_infrastructure_urls

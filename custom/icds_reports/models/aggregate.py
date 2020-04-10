@@ -27,8 +27,8 @@ from custom.icds_reports.const import (
     AGG_MIGRATION_TABLE,
     BIHAR_API_DEMOGRAPHICS_TABLE,
     AGG_AVAILING_SERVICES_TABLE,
-    CHILD_VACCINE_TABLE
-)
+    CHILD_VACCINE_TABLE,
+    BIHAR_API_CHILD_VACCINE_TABLE)
 from custom.icds_reports.utils.aggregation_helpers.distributed import (
     AggAwcDailyAggregationDistributedHelper,
     AggAwcDistributedHelper,
@@ -65,6 +65,8 @@ from custom.icds_reports.utils.aggregation_helpers.distributed import (
     AvailingServiceFormsAggregationDistributedHelper,
     ChildVaccineHelper
 )
+from custom.icds_reports.utils.aggregation_helpers.distributed.bihar_api_child_vaccine import BiharApiChildVaccineHelper
+
 
 def get_cursor(model):
     db = router.db_for_write(model)
@@ -1826,4 +1828,28 @@ class ChildVaccines(models.Model, AggregateMixin):
         unique_together = ('month', 'state_id', 'supervisor_id', 'child_health_case_id')  # pkey
 
     _agg_helper_cls = ChildVaccineHelper
+    _agg_atomic = False
+
+
+class BiharAPIChildVaccine(models.Model, AggregateMixin):
+    month = models.DateField()
+    supervisor_id = models.TextField(null=True)
+    time_birth = models.TextField(null=True)
+    child_alive = models.SmallIntegerField(null=True)
+    father_name = models.TextField(null=True)
+    father_id = models.TextField(null=True)
+    mother_id = models.TextField(null=True)
+    mother_name = models.TextField(null=True)
+    case_id = models.TextField(null=True)
+    dob = models.DateField(null=True)
+    private_admit = models.SmallIntegerField(blank=True, null=True)
+    primary_admit = models.SmallIntegerField(blank=True, null=True)
+    date_last_private_admit = models.DateField(null=True)
+    date_return_private = models.DateField(null=True)
+
+    class Meta(object):
+        db_table = BIHAR_API_CHILD_VACCINE_TABLE
+        unique_together = ('month', 'supervisor_id', 'case_id')  # pkey
+
+    _agg_helper_cls = BiharApiChildVaccineHelper
     _agg_atomic = False

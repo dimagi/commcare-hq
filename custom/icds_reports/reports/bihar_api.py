@@ -1,4 +1,4 @@
-from custom.icds_reports.models.views import BiharDemographicsView
+from custom.icds_reports.models.views import BiharDemographicsView, BiharVaccineView
 from custom.icds_reports.const import CAS_API_PAGE_SIZE
 from custom.icds_reports.cache import icds_quickcache
 
@@ -69,3 +69,71 @@ def get_api_demographics_data(month, state_id, last_person_case_id):
     # To apply pagination on database query with data size length
     limited_demographics_data = list(demographics_data_query[:CAS_API_PAGE_SIZE])
     return limited_demographics_data,  get_total_records_count(month, state_id)
+
+
+@icds_quickcache(['month'], timeout=60 * 60 * 2)
+def get_vaccine_total_records_count(month):
+    return BiharVaccineView.objects.filter(
+        month=month
+    ).count()
+
+
+@icds_quickcache(['month', 'last_person_case_id'], timeout=30 * 60)
+def get_api_vaccine_data(month, last_person_case_id):
+    vaccine_data_query = BiharVaccineView.objects.filter(
+        month=month,
+        person_id__gt=last_person_case_id
+    ).order_by('person_id').values(
+        'month',
+        'person_id',
+        'time_birth',
+        'child_alive',
+        'father_name',
+        'mother_name',
+        'father_id',
+        'mother_id',
+        'dob',
+        'private_admit',
+        'primary_admit',
+        'date_last_private_admit',
+        'date_return_private',
+        'due_list_date_1g_dpt_1',
+        'due_list_date_2g_dpt_2',
+        'due_list_date_3g_dpt_3',
+        'due_list_date_5g_dpt_booster',
+        'due_list_date_7gdpt_booster_2',
+        'due_list_date_0g_hep_b_0',
+        'due_list_date_1g_hep_b_1',
+        'due_list_date_2g_hep_b_2',
+        'due_list_date_3g_hep_b_3',
+        'due_list_date_3g_ipv',
+        'due_list_date_4g_je_1',
+        'due_list_date_5g_je_2',
+        'due_list_date_5g_measles_booster',
+        'due_list_date_4g_measles',
+        'due_list_date_0g_opv_0',
+        'due_list_date_1g_opv_1',
+        'due_list_date_2g_opv_2',
+        'due_list_date_3g_opv_3',
+        'due_list_date_5g_opv_booster',
+        'due_list_date_1g_penta_1',
+        'due_list_date_2g_penta_2',
+        'due_list_date_3g_penta_3',
+        'due_list_date_1g_rv_1',
+        'due_list_date_2g_rv_2',
+        'due_list_date_3g_rv_3',
+        'due_list_date_4g_vit_a_1',
+        'due_list_date_5g_vit_a_2',
+        'due_list_date_6g_vit_a_3',
+        'due_list_date_6g_vit_a_4',
+        'due_list_date_6g_vit_a_5',
+        'due_list_date_6g_vit_a_6',
+        'due_list_date_6g_vit_a_7',
+        'due_list_date_6g_vit_a_8',
+        'due_list_date_7g_vit_a_9',
+        'due_list_date_1g_bcg'
+    )
+
+    # To apply pagination on database query with data size length
+    limited_vaccine_data = list(vaccine_data_query[:CAS_API_PAGE_SIZE])
+    return limited_vaccine_data,  get_total_records_count(month)
