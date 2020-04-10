@@ -69,5 +69,6 @@ __all__ = (
     'AggGovDashboardHelper',
     'AggServiceDeliveryReportHelper',
     'MigrationFormsAggregationDistributedHelper',
-    'BiharApiDemographicsHelper'
+    'BiharApiDemographicsHelper',
+    'ChildVaccineHelper'
 )
