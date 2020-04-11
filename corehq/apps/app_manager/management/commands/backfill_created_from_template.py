@@ -37,7 +37,7 @@ class Command(BaseCommand):
     def handle(self, commit, **options):
         logger.setLevel('DEBUG')
 
-        start_date = datetime(2020, 3, 19)
+        start_date = datetime(2020, 3, 19)      # Initial release of FFX app
         app_query = AppES().term('doc_type', 'Application').date_range('date_created', gt=start_date) \
                            .missing('created_from_template')
         hits = app_query.run().hits
