@@ -38,8 +38,11 @@ class Command(BaseCommand):
         logger.setLevel('DEBUG')
 
         start_date = datetime(2020, 3, 19)
-        app_query = AppES().term('doc_type', 'Application').date_range('date_created', gt=start_date) \
-                           .missing('created_from_template')
+        end_date = datetime(2020, 4, 4)
+        app_query = AppES().term('doc_type', 'Application') \
+                           .missing('created_from_template') \
+                           .missing('family_id') \
+                           .date_range('date_created', gt=start_date, lt=end_date)
         hits = app_query.run().hits
         logger.info(f"Pulled {len(hits)} apps from ES")
 
