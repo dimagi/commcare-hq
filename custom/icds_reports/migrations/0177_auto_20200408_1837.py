@@ -8,6 +8,7 @@ from django.db import migrations, models
 from custom.icds_reports.utils.migrations import get_composite_primary_key_migrations
 from custom.icds_reports.const import CHILD_VACCINE_TABLE
 
+
 class Migration(migrations.Migration):
 
     dependencies = [
