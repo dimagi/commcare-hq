@@ -19,13 +19,13 @@ class ChildVaccineAggregationTest(TestCase):
             values(*self.always_include_columns)
         self.assertDictEqual(actual_data[0],
                          {
-                             'due_list_date_anc_1': datetime.date('2017-03-01'),
-                             'due_list_date_anc_2': datetime.date('2017-03-01'),
-                             'due_list_date_anc_3': datetime.date('2017-03-01'),
-                             'due_list_date_anc_4': datetime.date('2017-03-01'),
-                             'due_list_date_tt_1': datetime.date('2017-03-01'),
-                             'due_list_date_tt_2': datetime.date('2017-03-01'),
-                             'due_list_date_tt_booster': datetime.date('2017-03-01'),
-                             'due_list_date_1g_bcg': datetime.date('2017-03-01')
+                             'due_list_date_anc_1': datetime.date(2017, 3, 1),
+                             'due_list_date_anc_2': datetime.date(2017, 3, 1),
+                             'due_list_date_anc_3': datetime.date(2017, 3, 1),
+                             'due_list_date_anc_4': datetime.date(2017, 3, 1),
+                             'due_list_date_tt_1': datetime.date(2017, 3, 1),
+                             'due_list_date_tt_2': datetime.date(2017, 3, 1),
+                             'due_list_date_tt_booster': datetime.date(2017, 3, 1),
+                             'due_list_date_1g_bcg': datetime.date(2017, 3, 1)
                           }
                          )
