@@ -154,7 +154,7 @@ from custom.icds_reports.utils.aggregation_helpers.distributed import (
     GrowthMonitoringFormsAggregationDistributedHelper,
     DailyFeedingFormsChildHealthAggregationDistributedHelper,
 )
-from custom.icds_reports.utils.aggregation_helpers.distributed.deprecation import (
+from custom.icds_reports.utils.aggregation_helpers.distributed.location_reassignment import (
     TempPrevUCRTables,
     TempPrevIntermediateTables,
     TempInfraTables
