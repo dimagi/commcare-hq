@@ -1829,6 +1829,14 @@ ALLOW_DEID_ODATA_FEED = StaticToggle(
 )
 
 
+ACCOUNTING_TESTING_TOOLS = StaticToggle(
+    'accounting_testing_tools',
+    'Enable Accounting Testing Tools',
+    TAG_INTERNAL,
+    [NAMESPACE_USER]
+)
+
+
 ADD_ROW_INDEX_TO_MOBILE_UCRS = StaticToggle(
     'add_row_index_to_mobile_ucrs',
     'Add row index to mobile UCRs as the first column to retain original order of data',
