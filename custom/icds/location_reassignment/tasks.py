@@ -16,6 +16,7 @@ from custom.icds.location_reassignment.const import (
     AWC_CODE,
     HOUSEHOLD_CASE_TYPE,
 )
+from custom.icds.location_reassignment.exceptions import InvalidUserTransition
 from custom.icds.location_reassignment.processor import Processor
 from custom.icds.location_reassignment.utils import (
     get_household_and_child_case_ids_by_owner,
@@ -102,3 +103,7 @@ def update_usercase(domain, old_username, new_username):
                                    update=old_user_usercase.case_json,
                                    user_id=SYSTEM_USER_ID)
             submit_case_blocks([case_block], domain, user_id=SYSTEM_USER_ID)
+    else:
+        raise InvalidUserTransition("Invalid Transition with old user %s and new user %s" % (
+            old_username, new_username
+        ))
