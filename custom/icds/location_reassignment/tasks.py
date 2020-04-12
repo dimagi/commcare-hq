@@ -11,15 +11,14 @@ from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import SYSTEM_USER_ID, normalize_username
-from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from custom.icds.location_reassignment.const import (
     AWC_CODE,
-    HOUSEHOLD_CASE_TYPE,
 )
 from custom.icds.location_reassignment.exceptions import InvalidUserTransition
 from custom.icds.location_reassignment.processor import Processor
 from custom.icds.location_reassignment.utils import (
     get_household_and_child_case_ids_by_owner,
+    get_household_case_ids,
 )
 
 
@@ -60,8 +59,7 @@ def reassign_cases(domain, old_location_id, new_location_id, deprecation_time):
         domain=domain, location_id=new_location_id)
     if new_location.location_type.code == AWC_CODE:
         supervisor_id = new_location.parent.location_id
-    household_case_ids = CaseAccessorSQL.get_case_ids_in_domain_by_owners(
-        domain, [old_location_id], case_type=HOUSEHOLD_CASE_TYPE)
+    household_case_ids = get_household_case_ids(domain, old_location_id)
 
     for household_case_id in household_case_ids:
         case_ids = get_household_and_child_case_ids_by_owner(domain, household_case_id, old_location_id)
