@@ -14,6 +14,7 @@ from corehq.apps.users.util import SYSTEM_USER_ID, normalize_username
 from custom.icds.location_reassignment.const import (
     AWC_CODE,
 )
+from custom.icds.location_reassignment.dumper import HouseHolds
 from custom.icds.location_reassignment.exceptions import InvalidUserTransition
 from custom.icds.location_reassignment.processor import Processor
 from custom.icds.location_reassignment.utils import (
@@ -104,3 +105,32 @@ def update_usercase(domain, old_username, new_username):
         raise InvalidUserTransition("Invalid Transition with old user %s and new user %s" % (
             old_username, new_username
         ))
+
+
+@task
+def email_household_details(domain, transitions, user_email):
+    try:
+        filestream = HouseHolds(domain).dump(transitions)
+    except Exception as e:
+        email = EmailMessage(
+            subject='[{}] - Location Reassignment Household Dump Failed'.format(settings.SERVER_ENVIRONMENT),
+            body="The request could not be completed. Something went wrong. "
+                 "Error raised : {}. "
+                 "Please report an issue if needed.".format(e),
+            to=[user_email],
+            from_email=settings.DEFAULT_FROM_EMAIL
+        )
+        email.send()
+        raise e
+    else:
+        email = EmailMessage(
+            subject='[{}] - Location Reassignment Household Dump Completed'.format(settings.SERVER_ENVIRONMENT),
+            body="The request has been successfully completed.",
+            to=[user_email],
+            from_email=settings.DEFAULT_FROM_EMAIL
+        )
+        if filestream:
+            email.attach(filename="Households.xlsx", content=filestream.read())
+        else:
+            email.body += "There were no house hold details found."
+        email.send()
