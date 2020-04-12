@@ -275,22 +275,22 @@
         "column_id": "open_count"
       },
       {
-        "column_id": "location_rationalisation_date",
+        "column_id": "location_reassignment_date",
         "datatype": "date",
         "type": "raw",
-        "property_name": "location_rationalisation_date"
+        "property_name": "location_reassignment_date"
       },
       {
         "column_id": "last_owner_id",
         "datatype": "string",
         "type": "raw",
-        "property_name": "location_rationalisation_last_owner_id"
+        "property_name": "location_reassignment_last_owner_id"
       },
       {
         "column_id": "last_supervisor_id",
         "datatype": "string",
         "type": "raw",
-        "property_name": "location_rationalisation_last_supervisor_id"
+        "property_name": "location_reassignment_last_supervisor_id"
       }
     ],
     "named_expressions": {},

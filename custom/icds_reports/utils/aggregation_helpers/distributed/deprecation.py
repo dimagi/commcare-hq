@@ -43,10 +43,10 @@ class TempPrevUCRTables(TempPrevTables):
     CREATE UNLOGGED TABLE "{prev_table}" (LIKE "{current_table}");
     SELECT create_distributed_table('{prev_table}', 'supervisor_id');
     INSERT INTO "{prev_table}" (SELECT * FROM "{current_table}");
-    CREATE INDEX "idx_rationalization_date_{alias}" ON "{prev_table}" USING hash (location_rationalisation_date);
-    CREATE UNLOGGED TABLE "{prev_local}" AS (SELECT * FROM "{current_table}" WHERE location_rationalisation_date='{prev_month}');
+    CREATE INDEX "idx_reassignment_date_{alias}" ON "{prev_table}" USING hash (location_reassignment_date);
+    CREATE UNLOGGED TABLE "{prev_local}" AS (SELECT * FROM "{current_table}" WHERE location_reassignment_date='{prev_month}');
     UPDATE "{prev_local}" SET supervisor_id = last_supervisor_id, awc_id=last_owner_id;
-    DELETE FROM "{prev_table}" WHERE location_rationalisation_date='{prev_month}';
+    DELETE FROM "{prev_table}" WHERE location_reassignment_date='{prev_month}';
     INSERT INTO "{prev_table}" (SELECT * FROM "{prev_local}");
     """
 

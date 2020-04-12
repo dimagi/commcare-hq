@@ -1,4 +1,4 @@
-doc_id,inserted_at,owner_id,awc_id,supervisor_id,block_id,district_id,state_id,open_count,opened_on,location_rationalisation_date,last_owner_id,last_supervisor_id
+doc_id,inserted_at,owner_id,awc_id,supervisor_id,block_id,district_id,state_id,open_count,opened_on,location_reassignment_date,last_owner_id,last_supervisor_id
 60d8459b-3e15-4994-a91e-dc6dd4ba8ba9,2017-07-01,a10,a10,s2,b1,d1,st1,1,2017-04-15,,,
 c40104c5-440e-4295-acac-8c3d5ffe3781,2017-07-01,a10,a10,s2,b1,d1,st1,1,2017-04-15,,,
 fdee7590-a29d-4dac-b6a0-2c89a5399898,2017-07-01,a10,a10,s2,b1,d1,st1,0,2017-04-15,,,
