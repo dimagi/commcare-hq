@@ -18,7 +18,6 @@ class VaccinesAPITest(TestCase):
             last_person_case_id=''
         )
         first_person_case = data[0]
-        print(first_person_case)
         self.assertCountEqual(
             {"state_name": "Bihar", "state_site_code": "st1",
              "district_name": "d1", "district_site_code": "d1",
