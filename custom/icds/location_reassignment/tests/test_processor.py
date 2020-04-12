@@ -1,4 +1,5 @@
 from collections import namedtuple
+
 from django.test import TestCase
 
 from mock import call, patch
@@ -41,16 +42,16 @@ class TestProcessor(TestCase):
     def test_process(self, locations_mock, deprecate_locations_mock, *_):
         locations_mock.return_value = self.all_locations
 
-        Processor(self.domain, self.transitions, {}, site_codes).process()
-        calls = [call([self.location_112], [self.location_131], MOVE_OPERATION),
-                 call([self.location_12], [self.location_13], MOVE_OPERATION)]
+        Processor(self.domain, self.transitions, {}, {}, site_codes).process()
+        calls = [call(self.domain, [self.location_112], [self.location_131], MOVE_OPERATION),
+                 call(self.domain, [self.location_12], [self.location_13], MOVE_OPERATION)]
         deprecate_locations_mock.assert_has_calls(calls)
         self.assertEqual(deprecate_locations_mock.call_count, 2)
 
     def test_missing_locations(self, locations_mock, *_):
         locations_mock.return_value = [self.location_131]
         with self.assertRaises(InvalidTransitionError) as e:
-            Processor(self.domain, self.transitions, {}, site_codes).process()
+            Processor(self.domain, self.transitions, {}, {}, site_codes).process()
             self.assertEqual(str(e.exception), "Could not load location with following site codes: 112")
 
     @patch('corehq.apps.locations.models.SQLLocation.objects.create')
@@ -74,7 +75,7 @@ class TestProcessor(TestCase):
 
             }
         }
-        Processor(self.domain, self.transitions, new_location_details, site_codes).process()
+        Processor(self.domain, self.transitions, new_location_details, {}, site_codes).process()
         location_type_supervisor = None
         location_type_awc = None
         for location_type in location_types:
@@ -89,3 +90,14 @@ class TestProcessor(TestCase):
                  metadata={'lgd_code': 'LGD 131'}, location_type=location_type_awc)
         ]
         location_create_mock.assert_has_calls(calls)
+
+    @patch('custom.icds.location_reassignment.tasks.update_usercase.delay')
+    def test_updating_cases(self, update_usercase_mock, locations_mock, *_):
+        locations_mock.return_value = self.all_locations
+        user_transitions = {
+            'username_new': 'username_old'
+        }
+        Processor(self.domain, self.transitions, {}, user_transitions, site_codes).process()
+        update_usercase_mock.assert_called_with(
+            self.domain, 'username_new', 'username_old'
+        )
