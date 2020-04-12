@@ -4,3 +4,7 @@ class InvalidTransitionError(Exception):
 
 class LocationCreateError(Exception):
     pass
+
+
+class InvalidUserTransition(Exception):
+    pass
