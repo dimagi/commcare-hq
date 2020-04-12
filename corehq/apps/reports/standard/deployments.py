@@ -208,12 +208,6 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
             mobile_user_and_group_slugs,
             self.request.couch_user,
         )
-        user_query = (user_query
-                      .set_sorting_block(self.get_sorting_block()))
-        if pagination:
-            user_query = (user_query
-                          .size(self.pagination.count)
-                          .start(self.pagination.start))
         if self.selected_app_id:
             # adding nested filter for reporting_metadata.last_submissions.app_id
             # and reporting_metadata.last_syncs.app_id when app is selected
@@ -228,6 +222,12 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
             user_query = user_query.OR(last_submission_filter,
                                        last_sync_filter
                                        )
+        user_query = (user_query
+                      .set_sorting_block(self.get_sorting_block()))
+        if pagination:
+            user_query = (user_query
+                          .size(self.pagination.count)
+                          .start(self.pagination.start))
         return user_query
 
     def get_location_columns(self, grouped_ancestor_locs):
