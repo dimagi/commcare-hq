@@ -562,7 +562,7 @@ def get_and_assert_practice_user_in_domain(practice_user_id, domain):
 
 class LatestAppInfo(object):
 
-    def __init__(self, app_id, domain):
+    def __init__(self, app_id, domain, build_profile_id=None):
         """
         Wrapper to get latest app version and CommCare APK version info
 
@@ -574,6 +574,7 @@ class LatestAppInfo(object):
         """
         self.app_id = app_id
         self.domain = domain
+        self.build_profile_id = build_profile_id
 
     @property
     @memoized
@@ -603,8 +604,8 @@ class LatestAppInfo(object):
             force = self.app.global_app_config.apk_prompt == "forced"
             return {"value": value, "force": force}
 
-    @quickcache(vary_on=['self.app_id', 'build_profile_id'])
-    def get_latest_app_version(self, build_profile_id=None):
+    @quickcache(vary_on=['self.app_id', 'self.build_profile_id'])
+    def get_latest_app_version(self):
         from corehq.apps.app_manager.models import LATEST_APP_VALUE, LatestEnabledBuildProfiles
         if self.app.global_app_config.app_prompt == "off":
             return {}
@@ -618,16 +619,16 @@ class LatestAppInfo(object):
                     return {}
                 else:
                     version = self.app.version
-                    if build_profile_id:
-                        latest = LatestEnabledBuildProfiles.for_app_and_profile(self.app_id, build_profile_id)
+                    if self.build_profile_id:
+                        latest = LatestEnabledBuildProfiles.for_app_and_profile(self.app_id, self.build_profile_id)
                         if latest:
                             version = latest.version
                     return {"value": version, "force": force}
 
-    def get_info(self, build_profile_id=None):
+    def get_info(self):
         return {
             "latest_apk_version": self.get_latest_apk_version(),
-            "latest_ccz_version": self.get_latest_app_version(build_profile_id),
+            "latest_ccz_version": self.get_latest_app_version(),
         }
 
 
