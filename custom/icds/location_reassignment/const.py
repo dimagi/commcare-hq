@@ -45,3 +45,4 @@ DEPRECATES_AT = "deprecates_at"  # datetime when this location deprecated the ot
 
 AWC_CODE = "awc"
 HOUSEHOLD_CASE_TYPE = "household"
+PERSON_CASE_TYPE = "person"
