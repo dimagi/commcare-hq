@@ -95,9 +95,8 @@ def update_usercase(domain, old_username, new_username):
         new_user_usercase = new_user.get_usercase()
         # pick values that are not already present on the new user's usercase, populated already via HQ
         updates = {}
-        for key, value in old_user_usercase.case_json.items():
-            if key not in new_user_usercase.case_json:
-                updates[key] = value
+        for key in set(old_user_usercase.case_json.keys()) - set(new_user_usercase.case_json.keys()):
+            updates[key] = old_user_usercase.case_json[key]
         if updates:
             case_block = CaseBlock(new_user_usercase.case_id,
                                    update=old_user_usercase.case_json,
