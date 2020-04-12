@@ -9,7 +9,6 @@ from custom.icds.location_reassignment.exceptions import (
 )
 from custom.icds.location_reassignment.utils import (
     deprecate_locations,
-    update_usercase,
 )
 
 
@@ -112,5 +111,6 @@ class Processor(object):
         }
 
     def update_users(self):
+        from custom.icds.location_reassignment.tasks import update_usercase
         for old_username, new_username in self.user_transitions.items():
             update_usercase.delay(self.domain, old_username, new_username)

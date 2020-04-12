@@ -91,7 +91,7 @@ class TestProcessor(TestCase):
         ]
         location_create_mock.assert_has_calls(calls)
 
-    @patch('custom.icds.location_reassignment.utils.update_usercase.delay')
+    @patch('custom.icds.location_reassignment.tasks.update_usercase.delay')
     def test_updating_cases(self, update_usercase_mock, locations_mock, *_):
         locations_mock.return_value = self.all_locations
         user_transitions = {

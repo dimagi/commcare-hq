@@ -103,7 +103,7 @@ class MergeOperation(BaseOperation):
     expected_old_locations = MANY
 
     def perform(self):
-        from custom.icds.location_reassignment.utils import reassign_cases
+        from custom.icds.location_reassignment.tasks import reassign_cases
         with transaction.atomic():
             timestamp = datetime.utcnow()
             new_location = self.new_locations[0]
@@ -166,7 +166,7 @@ class MoveOperation(BaseOperation):
     type = MOVE_OPERATION
 
     def perform(self):
-        from custom.icds.location_reassignment.utils import reassign_cases
+        from custom.icds.location_reassignment.tasks import reassign_cases
         with transaction.atomic():
             timestamp = datetime.utcnow()
             old_location = self.old_locations[0]
