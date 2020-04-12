@@ -19,10 +19,16 @@ class ChildVaccineHelper(BaseICDSAggregationDistributedHelper):
         drop_query = self.drop_table_query()
         create_query = self.create_table_query()
         agg_query = self.aggregation_query()
+        index_queries = self.indexes()
+        add_partition_query = self.add_partition_table__query()
 
         cursor.execute(drop_query)
         cursor.execute(create_query)
         cursor.execute(agg_query)
+        for query in index_queries:
+            cursor.execute(query)
+
+        cursor.execute(add_partition_query)
 
     def drop_table_query(self):
         return f"""
@@ -114,3 +120,16 @@ class ChildVaccineHelper(BaseICDSAggregationDistributedHelper):
                 )
               );
                 """
+
+    def indexes(self):
+        return [
+            f"""CREATE INDEX IF NOT EXISTS vaccines_state_child_health_case_idx
+                ON "{self.monthly_tablename}" (month, state_id, child_health_case_id)
+            """
+        ]
+
+    def add_partition_table__query(self):
+        return f"""
+            ALTER TABLE "{self.tablename}" ATTACH PARTITION "{self.monthly_tablename}"
+            FOR VALUES IN ('{month_formatter(self.month)}')
+        """
