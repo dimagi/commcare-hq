@@ -300,16 +300,20 @@ def heartbeat(request, domain, app_build_id):
     build_profile_id = request.GET.get('build_profile_id', '')
 
     info = {"app_id": app_id}
+    # TODO: use get_app_cached? except that's for builds, not apps
     try:
         # mobile will send master app_id
-        info.update(LatestAppInfo(app_id, domain, build_profile_id).get_info())
+        latest_app_info = LatestAppInfo(app_id, domain, build_profile_id)
     except (Http404, AssertionError):
         # If it's not a valid master app id, find it by talking to couch
         notify_exception(request, 'Received an invalid heartbeat request')
         app = get_app_cached(domain, app_build_id)
-        info.update(LatestAppInfo(app.master_id, domain, build_profile_id).get_info())
-
+        latest_app_info = LatestAppInfo(app.master_id, domain, build_profile_id)
     else:
+        info.update({
+            "latest_apk_version": latest_app_info.get_latest_apk_version(),
+            "latest_ccz_version": latest_app_info.get_latest_app_version(),
+        })
         if not toggles.SKIP_UPDATING_USER_REPORTING_METADATA.enabled(domain):
             update_user_reporting_data(app_build_id, app_id, build_profile_id, request.couch_user, request)
     if _should_force_log_submission(request):

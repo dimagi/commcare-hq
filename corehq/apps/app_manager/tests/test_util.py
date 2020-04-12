@@ -167,7 +167,9 @@ class TestLatestAppInfo(TestCase):
     def test_args(self):
         with self.assertRaises(AssertionError):
             # should not be id of a copy
-            LatestAppInfo(self.v3_build.id, self.domain).get_info()
+            latest_app_info = LatestAppInfo(self.v3_build.id, self.domain)
+            latest_app_info.get_latest_app_version()
 
         with self.assertRaises(Http404):
-            LatestAppInfo('wrong-id', self.domain).get_info()
+            latest_app_info = LatestAppInfo('wrong-id', self.domain)
+            latest_app_info.get_latest_app_version()

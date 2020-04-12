@@ -625,12 +625,6 @@ class LatestAppInfo(object):
                             version = latest.version
                     return {"value": version, "force": force}
 
-    def get_info(self):
-        return {
-            "latest_apk_version": self.get_latest_apk_version(),
-            "latest_ccz_version": self.get_latest_app_version(),
-        }
-
 
 def get_form_source_download_url(xform):
     """Returns the download url for the form source for a submitted XForm
