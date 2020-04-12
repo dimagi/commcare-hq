@@ -13,6 +13,7 @@ from corehq.apps.locations.permissions import require_can_edit_locations
 from corehq.apps.locations.views import BaseLocationView, LocationsListView
 from corehq.util.files import safe_filename_header
 from corehq.util.workbook_json.excel import WorkbookJSONError, get_workbook
+from custom.icds.location_reassignment.const import AWC_CODE
 from custom.icds.location_reassignment.download import Download
 from custom.icds.location_reassignment.dumper import Dumper
 from custom.icds.location_reassignment.forms import (
@@ -21,7 +22,7 @@ from custom.icds.location_reassignment.forms import (
 from custom.icds.location_reassignment.parser import Parser
 from custom.icds.location_reassignment.tasks import (
     process_location_reassignment,
-)
+    email_household_details)
 
 
 @method_decorator([toggles.LOCATION_REASSIGNMENT.required_decorator()], name='dispatch')
@@ -53,31 +54,30 @@ class LocationReassignmentView(BaseLocationView):
         return context
 
     def post(self, request, *args, **kwargs):
-        update = request.POST.get('update')
+        workbook, errors = self._get_workbook(request)
+        if errors:
+            [messages.error(request, error) for error in errors]
+            return self.get(request, *args, **kwargs)
+        parser = Parser(self.domain, workbook)
+        transitions, errors = parser.parse()
+        if errors:
+            [messages.error(request, error) for error in errors]
+        else:
+            action_type = request.POST.get('action_type')
+            if action_type == LocationReassignmentRequestForm.EMAIL_HOUSEHOLDS:
+                self._process_request_for_email_households(parser, request)
+            elif action_type == LocationReassignmentRequestForm.UPDATE:
+                self._process_request_for_update(parser, request)
+            else:
+                return self._generate_summary_response(transitions)
+        return self.get(request, *args, **kwargs)
+
+    def _get_workbook(self, request):
         try:
             workbook = get_workbook(request.FILES['bulk_upload_file'])
         except WorkbookJSONError as e:
-            messages.error(request, str(e))
-        else:
-            errors = self._workbook_is_valid(workbook)
-            if not errors:
-                parser = Parser(self.domain, workbook)
-                transitions, errors = parser.parse()
-                if errors:
-                    [messages.error(request, error) for error in errors]
-                elif not update:
-                    return self._generate_response(transitions)
-                else:
-                    process_location_reassignment.delay(
-                        self.domain, parser.valid_transitions, parser.new_location_details,
-                        parser.user_transitions, list(parser.requested_transitions.keys()),
-                        request.user.email
-                    )
-                    messages.success(request, _(
-                        "Your request has been submitted. We will notify you via email once completed."))
-            else:
-                [messages.error(request, error) for error in errors]
-        return self.get(request, *args, **kwargs)
+            return None, [str(e)]
+        return workbook, self._workbook_is_valid(workbook)
 
     def _workbook_is_valid(self, workbook):
         # ensure worksheets present and with titles as the location type codes
@@ -92,12 +92,30 @@ class LocationReassignmentView(BaseLocationView):
                 errors.append(_("Unexpected sheet {sheet_title}").format(sheet_title=worksheet_title))
         return errors
 
-    def _generate_response(self, transitions):
+    def _generate_summary_response(self, transitions):
         response_file = Dumper(self.domain).dump(transitions)
         response = HttpResponse(response_file, content_type="text/html; charset=utf-8")
         filename = '%s Location Reassignment Expected' % self.domain
         response['Content-Disposition'] = safe_filename_header(filename, 'xlsx')
         return response
+
+    def _process_request_for_email_households(self, parser, request):
+        if AWC_CODE in parser.valid_transitions:
+            email_household_details.delay(self.domain, parser.valid_transitions[AWC_CODE],
+                                          request.user.email)
+            messages.success(request, _(
+                "Your request has been submitted. You will be updated via email."))
+        else:
+            messages.error(request, "No transitions found for %s" % AWC_CODE)
+
+    def _process_request_for_update(self, parser, request):
+        process_location_reassignment.delay(
+            self.domain, parser.valid_transitions, parser.new_location_details,
+            parser.user_transitions, list(parser.requested_transitions.keys()),
+            request.user.email
+        )
+        messages.success(request, _(
+            "Your request has been submitted. We will notify you via email once completed."))
 
 
 @toggles.LOCATION_REASSIGNMENT.required_decorator()
