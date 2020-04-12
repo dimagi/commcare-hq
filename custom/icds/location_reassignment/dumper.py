@@ -149,8 +149,9 @@ class Dumper(object):
 
 class HouseHolds(object):
     valid_operations = [SPLIT_OPERATION, EXTRACT_OPERATION]
-    headers = ['Name of AWC', 'Name of Household', 'Date of Registration', 'Religion',
-               'Caste', 'APL/BPL', 'Number of Household Members', 'Household Members']
+    headers = ['Name of AWC', 'AWC Code', 'Name of Household', 'Date of Registration', 'Religion',
+               'Caste', 'APL/BPL', 'Number of Household Members', 'Household Members',
+               'Household ID in ICDS-CAS (Do Not Modify)']
 
     def __init__(self, domain):
         self.domain = domain
@@ -191,7 +192,8 @@ class HouseHolds(object):
             person_cases = get_household_child_cases_by_owner(
                 self.domain, case_id, location.location_id, [PERSON_CASE_TYPE])
             rows.append([
-                location.name,
+                '',
+                '',
                 household_case.name,
                 household_case.get_case_property('hh_reg_date'),
                 household_case.get_case_property('hh_religion'),
@@ -202,6 +204,7 @@ class HouseHolds(object):
                     "%s (%s/%s)" % (
                         case.name, case.get_case_property('age_at_reg'), case.get_case_property('sex'))
                     for case in person_cases
-                ])
+                ]),
+                household_case.case_id
             ])
         return rows
