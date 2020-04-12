@@ -5,11 +5,9 @@ from datetime import datetime, timedelta
 
 from django.conf import settings
 
-from corehq.util.datadog.gauges import datadog_histogram
-from corehq.util.metrics import metrics_histogram_timer
+from corehq.util.metrics import metrics_counter, metrics_histogram_timer
 from pillowtop.checkpoints.manager import KafkaPillowCheckpoint
 from pillowtop.const import DEFAULT_PROCESSOR_CHUNK_SIZE
-from pillowtop.dao.exceptions import DocumentMismatchError
 from pillowtop.exceptions import PillowConfigError
 from pillowtop.logger import pillow_logging
 from pillowtop.pillow.interface import ConstructedPillow
@@ -433,9 +431,9 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
                 break
 
         for domain, duration in top_half_domains.items():
-            datadog_histogram('commcare.change_feed.ucr_slow_log', duration, tags=[
-                'domain:{}'.format(domain)
-            ])
+            metrics_counter('commcare.change_feed.ucr_slow_log', duration, tags={
+                'domain': domain
+            })
         self.domain_timing_context.clear()
 
 

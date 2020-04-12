@@ -39,15 +39,11 @@ enrich_rows :: mutates FoodRow after the fact to calculate information related
 import operator
 import uuid
 from collections import defaultdict
-from datetime import datetime
 from functools import reduce
-from itertools import chain
 
 from custom.inddex.ucr_data import FoodCaseData
 
 from .fixtures import FixtureAccessor
-
-MISSING = ''
 
 IN_UCR = 'in_ucr'
 IN_FOOD_FIXTURE = 'in_food_fixture'
@@ -309,7 +305,9 @@ class FoodRow:
 
     @property
     def age_range(self):
-        if self.age_months_calculated < 6:
+        if not self.age_months_calculated:
+            return None
+        elif self.age_months_calculated < 6:
             return "0-5.9 months"
         elif self.age_months_calculated < 60:
             return "06-59 months"
@@ -402,8 +400,10 @@ def _calculate_total_grams(recipe, ingredients):
 
 class FoodData:
     """Generates the primary dataset for INDDEX reports.  See file docstring for more."""
-    def __init__(self, domain, *, datespan, case_owners=None, recall_status=None):
+    def __init__(self, domain, *, datespan,
+                 case_owners=None, recall_status=None, gap_type=None):
         self.fixtures = FixtureAccessor(domain)
+        self._gap_type = gap_type
         self._ucr = FoodCaseData({
             'domain': domain,
             'startdate': str(datespan.startdate),
@@ -412,9 +412,23 @@ class FoodData:
             'recall_status': recall_status or '',
         })
 
-    @property
-    def headers(self):
-        return [i.slug for i in INDICATORS] + list(get_nutrient_headers(self.fixtures.nutrient_names))
+    @classmethod
+    def from_request(cls, domain, request):
+        return cls(
+            domain,
+            datespan=request.datespan,
+            case_owners=request.GET.get('case_owners'),
+            recall_status=request.GET.get('recall_status'),
+            gap_type=request.GET.get('gap_type'),
+        )
+
+    def _matches_in_memory_filters(self, row):
+        # If a gap type is specified, show only rows with gaps of that type
+        if self._gap_type == 'conv_factor':
+            return row.conv_factor_gap_code != ConvFactorGaps.AVAILABLE
+        elif self._gap_type == 'fct':
+            return row.fct_gap_code != FctGaps.AVAILABLE
+        return True
 
     @property
     def rows(self):
@@ -432,26 +446,23 @@ class FoodData:
         for recipe_id, rows_in_recipe in rows_by_recipe.items():
             enrich_rows(recipe_id, rows_in_recipe)
             for row in rows_in_recipe:
-                static_rows = (getattr(row, column.slug) for column in INDICATORS)
-                nutrient_rows = get_nutrient_values(self.fixtures.nutrient_names, row)
-                yield map(_format, chain(static_rows, nutrient_rows))
+                if self._matches_in_memory_filters(row):
+                    yield row
 
+    def get_nutrient_headers(self):
+        for name in self.fixtures.nutrient_names:
+            yield f"{name}_per_100g"
+            yield name
 
-def get_nutrient_headers(nutrient_names):
-    for name in nutrient_names:
-        yield f"{name}_per_100g"
-        yield name
-
-
-def get_nutrient_values(nutrient_names, row):
-    for name in nutrient_names:
-        if row.fct_code:
-            per_100g = row.composition.nutrients.get(name)
-            yield per_100g
-            yield _multiply(per_100g, row.total_grams, 0.01)
-        else:
-            yield None
-            yield None
+    def get_nutrient_values(self, row):
+        for name in self.fixtures.nutrient_names:
+            if row.fct_code:
+                per_100g = row.composition.nutrients.get(name)
+                yield per_100g
+                yield _multiply(per_100g, row.total_grams, 0.01)
+            else:
+                yield None
+                yield None
 
 
 def _multiply(*args):
@@ -459,17 +470,3 @@ def _multiply(*args):
         return round(reduce(operator.mul, args), 2)
     except TypeError:
         return None
-
-
-def _format(val):
-    if isinstance(val, datetime):
-        return val.strftime('%Y-%m-%d %H:%M:%S')
-    if isinstance(val, bool):
-        return "yes" if val else "no"
-    if isinstance(val, int):
-        return str(val)
-    if isinstance(val, float):
-        return str(int(val)) if val.is_integer() else str(val)
-    if val is None:
-        return MISSING
-    return val

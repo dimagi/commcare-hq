@@ -4,7 +4,7 @@ from typing import List, Dict
 from datadog import api
 from django.conf import settings
 
-from corehq.util.datadog.utils import bucket_value
+from corehq.util.metrics.utils import bucket_value
 from corehq.util.metrics.const import COMMON_TAGS, ALERT_INFO
 from corehq.util.metrics.metrics import HqMetrics
 from datadog.dogstatsd.base import DogStatsd

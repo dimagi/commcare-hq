@@ -63,7 +63,7 @@ from corehq.sql_db.util import (
     get_db_aliases_for_partitioned_query,
     split_list_by_db_partition,
 )
-from corehq.util.datadog.utils import form_load_counter
+from corehq.util.metrics.load_counters import form_load_counter
 from corehq.util.queries import fast_distinct_in_domain
 
 doc_type_to_state = {
@@ -340,11 +340,14 @@ class ReindexAccessor(metaclass=ABCMeta):
 
 class FormReindexAccessor(ReindexAccessor):
 
-    def __init__(self, domain=None, include_attachments=True, limit_db_aliases=None, include_deleted=False):
+    def __init__(self, domain=None, include_attachments=True, limit_db_aliases=None, include_deleted=False,
+                 start_date=None, end_date=None):
         super(FormReindexAccessor, self).__init__(limit_db_aliases)
         self.domain = domain
         self.include_attachments = include_attachments
         self.include_deleted = include_deleted
+        self.start_date = start_date
+        self.end_date = end_date
 
     @property
     def model_class(self):
@@ -374,6 +377,10 @@ class FormReindexAccessor(ReindexAccessor):
             filters.append(Q(state=F('state').bitand(XFormInstanceSQL.DELETED) + F('state')))
         if self.domain:
             filters.append(Q(domain=self.domain))
+        if self.start_date is not None:
+            filters.append(Q(received_on__gte=self.start_date))
+        if self.end_date is not None:
+            filters.append(Q(received_on__lt=self.end_date))
         return filters
 
 

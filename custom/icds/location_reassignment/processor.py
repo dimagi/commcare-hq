@@ -41,29 +41,30 @@ class Processor(object):
 
         with transaction.atomic():
             for location_type_code in self.location_types_by_code:
-                new_locations_details = self.new_location_details.get(location_type_code, [])
-                for details in new_locations_details:
+                new_locations_details = self.new_location_details.get(location_type_code, {})
+                for site_code, details in new_locations_details.items():
                     parent_location = None
                     if details['parent_site_code']:
                         parent_location = locations_by_site_code[details['parent_site_code']]
                     location = SQLLocation.objects.create(
-                        domain=self.domain, site_code=details['site_code'], name=details['name'],
+                        domain=self.domain, site_code=site_code, name=details['name'],
                         parent=parent_location,
                         location_type=self.location_types_by_code[location_type_code],
                         metadata={'lgd_code': details['lgd_code']}
                     )
                     # add new location in case its a parent to any other locations getting created
-                    locations_by_site_code[details['site_code']] = location
+                    locations_by_site_code[site_code] = location
 
     def _get_existing_parent_locations(self):
         existing_parent_site_codes = set()
 
-        for location_type_code, new_locations_details in self.new_location_details.items():
-            for details in new_locations_details:
+        for location_type_code in list(reversed(list(self.location_types_by_code))):
+            new_locations_details = self.new_location_details.get(location_type_code, {})
+            for site_code, details in new_locations_details.items():
                 if details['parent_site_code']:
                     existing_parent_site_codes.add(details['parent_site_code'])
                 # remove it from parent site codes if it itself needs to be created
-                existing_parent_site_codes.discard(details['site_code'])
+                existing_parent_site_codes.discard(site_code)
 
         if existing_parent_site_codes:
             return self._get_locations_by_site_codes(existing_parent_site_codes)

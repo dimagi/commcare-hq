@@ -57,24 +57,39 @@ class TestProcessor(TestCase):
     @patch('corehq.apps.locations.models.SQLLocation.objects.create')
     def test_creating_new_locations(self, location_create_mock, locations_mock, *_):
         locations_mock.return_value = self.all_locations
+        location_create_mock.return_value = "A New Location"
         new_location_details = {
-            'supervisor': [{
-                'name': 'Test 13',
-                'site_code': '13',
-                'parent_site_code': None,
-                'lgd_code': 'LGD 13'
-            }]
+            'supervisor': {
+                '13': {
+                    'name': 'Test 13',
+                    'parent_site_code': None,
+                    'lgd_code': 'LGD 13'
+                }
+            },
+            'awc': {
+                '131': {
+                    'name': 'Test 131',
+                    'parent_site_code': '13',
+                    'lgd_code': 'LGD 131'
+                }
+
+            }
         }
         Processor(self.domain, self.transitions, new_location_details, {}, site_codes).process()
         location_type_supervisor = None
+        location_type_awc = None
         for location_type in location_types:
             if location_type.code == 'supervisor':
                 location_type_supervisor = location_type
-                break
-        location_create_mock.assert_called_with(
-            domain=self.domain, site_code='13', name='Test 13', parent=None,
-            metadata={'lgd_code': 'LGD 13'}, location_type=location_type_supervisor
-        )
+            elif location_type.code == 'awc':
+                location_type_awc = location_type
+        calls = [
+            call(domain=self.domain, site_code='13', name='Test 13', parent=None,
+                 metadata={'lgd_code': 'LGD 13'}, location_type=location_type_supervisor),
+            call(domain=self.domain, site_code='131', name='Test 131', parent="A New Location",
+                 metadata={'lgd_code': 'LGD 131'}, location_type=location_type_awc)
+        ]
+        location_create_mock.assert_has_calls(calls)
 
     @patch('custom.icds.location_reassignment.utils.update_usercase.delay')
     def test_updating_cases(self, update_usercase_mock, locations_mock, *_):

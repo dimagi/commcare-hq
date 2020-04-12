@@ -21,7 +21,7 @@ chardet==3.0.4            # via ghdiff, requests
 cloudant==2.12.0          # via jsonobject-couchdbkit
 commcaretranslationchecker==0.9.3.5
 concurrent-log-handler==0.9.12
-contextlib2==0.5.5
+contextlib2==0.5.5        # via schema
 csiphash==0.0.5
 cssselect2==0.2.2         # via cairosvg, weasyprint
 datadog==0.15.0

@@ -1,1 +1,0 @@
-DATADOG_UNKNOWN = '<unknown>'

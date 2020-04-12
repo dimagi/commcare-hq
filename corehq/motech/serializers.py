@@ -83,6 +83,24 @@ def to_date_str(value):
         return value.strftime('%Y-%m-%d')
 
 
+def to_datetime_str(value):
+    """
+    Append midnight to a date
+
+    >>> to_datetime_str('2017-06-27')
+    '2017-06-27T00:00:00.000'
+
+    """
+    if isinstance(value, str):
+        if not re.match(r'\d{4}-\d{2}-\d{2}', value):
+            raise ValueError('"{}" is not recognised as a date or a datetime'.format(value))
+        value = dateutil_parser.parse(value)
+    if isinstance(value, datetime.date):
+        value = datetime.datetime(value.year, value.month, value.day)
+    if isinstance(value, datetime.datetime):
+        return value.isoformat(timespec='milliseconds')
+
+
 serializers = {
     # (from_data_type, to_data_type): function
     (None, COMMCARE_DATA_TYPE_BOOLEAN): to_boolean,

@@ -368,14 +368,6 @@ class CreditStripePaymentHandler(BaseStripePaymentHandler):
                     subscription=self.subscription,
                     payment_record=payment_record,
                 ))
-            else:
-                log_accounting_error(
-                    "{account} tried to make a payment for Credits for less than $0.5."
-                    "You should follow up with them."
-                    .format(
-                        account=self.account,
-                    )
-                )
 
 
 class AutoPayInvoicePaymentHandler(object):
