@@ -83,11 +83,8 @@ class Parser(object):
                 operation, old_site_code, new_site_code
             ))
             return
-        if (
-            (row.get(NEW_USERNAME_COLUMN) and not row.get(USERNAME_COLUMN))
-            or (not row.get(NEW_USERNAME_COLUMN) and row.get(USERNAME_COLUMN))
-        ):
-            self.errors.append("Invalid user transition for %s for location '%s'" % (
+        if bool(row.get(NEW_USERNAME_COLUMN)) != bool(row.get(USERNAME_COLUMN)):
+            self.errors.append("Need both old and new username for %s operation on location '%s'" % (
                 operation, old_site_code
             ))
             return
