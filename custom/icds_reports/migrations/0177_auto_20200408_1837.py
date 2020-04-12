@@ -5,6 +5,8 @@ from __future__ import unicode_literals
 import custom.icds_reports.models.aggregate
 from django.db import migrations, models
 
+from custom.icds_reports.utils.migrations import get_composite_primary_key_migrations
+from custom.icds_reports.const import CHILD_VACCINE_TABLE
 
 class Migration(migrations.Migration):
 
@@ -13,12 +15,14 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+        migrations.RunSQL("ALTER TABLE child_health_monthly ADD COLUMN birth_weight smallint"),
+        migrations.RunSQL("ALTER TABLE child_health_monthly ADD COLUMN child_person_case_id text"),
         migrations.CreateModel(
             name='ChildVaccines',
             fields=[
                 ('state_id', models.TextField(null=True)),
                 ('supervisor_id', models.TextField(null=True)),
-                ('child_health_case_id', models.TextField(null=True)),
+                ('child_health_case_id', models.TextField(primary_key=True, serialize=False)),
                 ('month', models.DateField()),
                 ('due_list_date_1g_dpt_1', models.DateField(blank=True, null=True)),
                 ('due_list_date_2g_dpt_2', models.DateField(blank=True, null=True)),
@@ -73,6 +77,13 @@ class Migration(migrations.Migration):
             name='childvaccines',
             unique_together=set([('month', 'state_id', 'supervisor_id', 'child_health_case_id')]),
         ),
-        migrations.RunSQL("ALTER TABLE child_health_monthly ADD COLUMN birth_weight smallint"),
-        migrations.RunSQL("ALTER TABLE child_health_monthly ADD COLUMN child_id text"),
+    ]
+
+    operations.extend(get_composite_primary_key_migrations(['childvaccines']))
+
+    operations += [
+        migrations.RunSQL(f"ALTER TABLE {CHILD_VACCINE_TABLE} RENAME TO {CHILD_VACCINE_TABLE}_old"),
+        migrations.RunSQL(f"CREATE TABLE {CHILD_VACCINE_TABLE} (LIKE {CHILD_VACCINE_TABLE}_old INCLUDING DEFAULTS INCLUDING CONSTRAINTS INCLUDING INDEXES) PARTITION BY LIST (month)"),
+        migrations.RunSQL(f"SELECT create_distributed_table('{CHILD_VACCINE_TABLE}', 'supervisor_id')"),
+        migrations.RunSQL(f"DROP TABLE {CHILD_VACCINE_TABLE}_old"),
     ]

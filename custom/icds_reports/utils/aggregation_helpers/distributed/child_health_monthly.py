@@ -337,7 +337,7 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
             ("state_id", "child_health.state_id"),
             ("opened_on", "child_health.opened_on"),
             ("birth_weight", "child_health.birth_weight"),
-            ("child_id", "child_health.mother_id"),
+            ("child_person_case_id", "child_health.mother_id"),
         )
         yield """
         INSERT INTO "{child_tablename}" (

@@ -349,7 +349,7 @@ class ChildHealthMonthly(models.Model, AggregateMixin):
     state_id = models.TextField(blank=True, null=True)
     opened_on = models.DateField(blank=True, null=True)
     birth_weight = models.PositiveSmallIntegerField(null=True, help_text="birth weight in grams")
-    child_id = models.TextField(blank=True, null=True)
+    child_person_case_id = models.TextField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -1775,7 +1775,7 @@ class BiharAPIDemographics(models.Model, AggregateMixin):
 class ChildVaccines(models.Model, AggregateMixin):
     state_id = models.TextField(null=True)
     supervisor_id = models.TextField(null=True)
-    child_health_case_id = models.TextField(null=True)
+    child_health_case_id = models.TextField(primary_key=True)
     month = models.DateField()
     due_list_date_1g_dpt_1 = models.DateField(blank=True, null=True)
     due_list_date_2g_dpt_2 = models.DateField(blank=True, null=True)

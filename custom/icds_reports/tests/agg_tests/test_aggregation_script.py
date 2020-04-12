@@ -386,15 +386,6 @@ class ChildHealthMonthlyAggregationTest(AggregationScriptTestBase):
         )
 
 
-class ChildVaccineAggregationTest(AggregationScriptTestBase):
-    def test_child_vaccine_2017_05_01(self):
-        self._load_and_compare_data(
-            'child_vaccines_2017-05-01',
-            os.path.join(OUTPUT_PATH, 'child_vaccines_2017-05-01.csv'),
-            filter_by={'month': '2017-05-01'}
-        )
-
-
 class DailyAttendanceAggregationTest(AggregationScriptTestBase):
     def test_daily_attendance_2017_04_01(self):
         self._load_and_compare_data(
