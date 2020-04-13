@@ -42,6 +42,9 @@ class Processor(object):
             for location_type_code in self.location_types_by_code:
                 new_locations_details = self.new_location_details.get(location_type_code, {})
                 for site_code, details in new_locations_details.items():
+                    # if location already present don't try creating it
+                    if site_code in self.transiting_locations_by_site_code:
+                        continue
                     parent_location = None
                     if details['parent_site_code']:
                         parent_location = locations_by_site_code[details['parent_site_code']]
