@@ -28,7 +28,6 @@ from corehq.util.metrics import metrics_counter
 from .casediff import get_domain
 from .casedifftool import format_diffs
 from .couchsqlmigration import get_case_and_ledger_updates, save_migrated_models
-from .statedb import Change
 from .util import retry_on_sql_error
 
 log = logging.getLogger(__name__)
