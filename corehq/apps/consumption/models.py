@@ -42,6 +42,22 @@ class SQLDefaultConsumption(SyncSQLToCouchMixin, models.Model):
     def _migration_get_couch_model_class(cls):
         return DefaultConsumption
 
+    @classmethod
+    def get_domain_default(cls, domain):
+        return SQLDefaultConsumption.objects.filter(domain=domain).first()
+
+    @classmethod
+    def get_product_default(cls, domain, product_id):
+        return SQLDefaultConsumption.objects.filter(domain=domain, product_id=product_id).first()
+
+    @classmethod
+    def get_supply_point_default(cls, domain, product_id, supply_point_id):
+        return SQLDefaultConsumption.objects.filter(
+            domain=domain,
+            product_id=product_id,
+            supply_point_id=supply_point_id,
+        ).first()
+
 
 class DefaultConsumption(SyncCouchToSQLMixin, CachedCouchDocumentMixin, Document):
     """
@@ -68,23 +84,3 @@ class DefaultConsumption(SyncCouchToSQLMixin, CachedCouchDocumentMixin, Document
     @classmethod
     def _migration_get_sql_model_class(cls):
         return SQLDefaultConsumption
-
-    @classmethod
-    def get_domain_default(cls, domain):
-        return cls._by_index_key([domain, None, None, None])
-
-    @classmethod
-    def get_product_default(cls, domain, product_id):
-        return cls._by_index_key([domain, product_id, None, None])
-
-    @classmethod
-    def get_supply_point_default(cls, domain, product_id, supply_point_id):
-        return cls._by_index_key([domain, product_id, {}, supply_point_id])
-
-    @classmethod
-    def _by_index_key(cls, key):
-        return cls.view('consumption/consumption_index',
-            key=key,
-            reduce=False,
-            include_docs=True,
-        ).one()
