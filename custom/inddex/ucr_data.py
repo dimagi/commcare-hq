@@ -1,11 +1,11 @@
 from sqlagg.columns import SimpleColumn
-from sqlagg.filters import EQ, GTE, LTE
+from sqlagg.filters import EQ, GTE, LT, LTE
 
 from corehq.apps.reports.sqlreport import DatabaseColumn, SqlData
 from corehq.apps.userreports.util import get_table_name
 from corehq.sql_db.connections import UCR_ENGINE_ID
 
-from .const import FOOD_CONSUMPTION
+from .const import FOOD_CONSUMPTION, AGE_RANGES
 
 
 class FoodCaseData(SqlData):
@@ -37,5 +37,14 @@ class FoodCaseData(SqlData):
         filters = [GTE('recalled_date', 'startdate'), LTE('recalled_date', 'enddate')]
         for column in self.FILTERABLE_COLUMNS:
             if self.config.get(column):
-                filters.append(EQ(column, column))
+                if column == 'age_range':
+                    filters.append(self._age_range_filter)
+                else:
+                    filters.append(EQ(column, column))
         return filters
+
+    @property
+    def _age_range_filter(self):
+        age_range = {age_range.slug: age_range for age_range in AGE_RANGES}[self.config['age_range']]
+        return [GTE(age_range.column, age_range.lower_bound),
+                LT(age_range.column, age_range.upper_bound)]

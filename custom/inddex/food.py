@@ -44,6 +44,7 @@ from functools import reduce
 from custom.inddex.ucr_data import FoodCaseData
 
 from .fixtures import FixtureAccessor
+from .const import AGE_RANGES
 
 IN_UCR = 'in_ucr'
 IN_FOOD_FIXTURE = 'in_food_fixture'
@@ -307,21 +308,9 @@ class FoodRow:
     def age_range(self):
         if not self.age_months_calculated:
             return None
-        elif self.age_months_calculated < 6:
-            return "0-5.9 months"
-        elif self.age_months_calculated < 60:
-            return "06-59 months"
-        elif self.age_years_calculated < 7:
-            return "5-6 years"
-        elif self.age_years_calculated < 11:
-            return "7-10 years"
-        elif self.age_years_calculated < 15:
-            return "7-14 years"
-        elif self.age_years_calculated < 50:
-            return "15-49 years"
-        elif self.age_years_calculated < 65:
-            return "50-64 years"
-        return "65+ years"
+        for age_range in AGE_RANGES:
+            if age_range.lower_bound <= getattr(self, age_range.column) < age_range.upper_bound:
+                return age_range.name
 
     @property
     def recipe_id(self):

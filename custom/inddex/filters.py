@@ -7,7 +7,7 @@ from corehq.apps.reports.filters.base import BaseSingleOptionFilter
 from corehq.apps.reports.filters.dates import DatespanFilter
 from corehq.apps.reports.sqlreport import DatabaseColumn, SqlData
 from corehq.apps.userreports.util import get_table_name
-from custom.inddex.const import FOOD_CONSUMPTION
+from custom.inddex.const import FOOD_CONSUMPTION, AGE_RANGES
 
 
 class DateRangeFilter(DatespanFilter):
@@ -21,16 +21,7 @@ class AgeRangeFilter(BaseSingleOptionFilter):
 
     @property
     def options(self):
-        return [
-            ('0-5.9 months', _('0-5.9 months')),
-            ('06-59 months', _('06-59 months')),
-            ('5-6 years', _('5-6 years')),
-            ('7-10 years', _('7-10 years')),
-            ('11-14 years', _('11-14 years')),
-            ('15-49 years', _('15-49 years')),
-            ('50-64 years', _('50-64 years')),
-            ('65+ years', _('65+ years'))
-        ]
+        return [(age_range.slug, age_range.name) for age_range in AGE_RANGES]
 
 
 class GenderFilter(BaseSingleOptionFilter):
