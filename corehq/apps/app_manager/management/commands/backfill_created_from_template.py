@@ -13,7 +13,8 @@ logger = logging.getLogger('created_from_template_migration')
 APP_V1 = "828f651b0508423783d541240965c73a"
 APP_V2 = "46b1b6e5e3f04a1e9ca12d05150ad948"
 APP_V3 = "fe922d12718b4f2f9b4f9b36205ee860"
-APP_IDS = [APP_V1, APP_V2, APP_V3]
+OLD_APP = "a55dad9d483643d6abca13b16f5a7331"
+KNOWN_FAMILY_IDS = [APP_V1, APP_V2, APP_V3, OLD_APP]
 
 
 def _get_app_id(date_created):
@@ -30,7 +31,7 @@ class Command(BaseCommand):
     help = '''
         Populates created_from_template on apps docs that were likely imported from the COVID app library,
         prior to analytics being added.
-        
+
         This will only do anything on production, sicne it contains hard-coded app ids.
     '''
 
@@ -56,7 +57,7 @@ class Command(BaseCommand):
             h for h in hits
             if 'FFX' in h['name']
             and len(h['modules']) == 9
-            and (not h['family_id'] or h['family_id'] in APP_IDS)
+            and (not h['family_id'] or h['family_id'] in KNOWN_FAMILY_IDS)
         ]
         logger.info(f"Filtered to {len(hits)} apps likely imported from app library")
 
