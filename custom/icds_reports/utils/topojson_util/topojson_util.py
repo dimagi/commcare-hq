@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 from pathlib import Path
 
@@ -80,24 +81,13 @@ def copy_custom_metadata(from_topojson, to_topojson):
 def get_topojson_for_district(state, district):
     path = get_topojson_directory()
     district_topojson_data = get_district_topojson_data()
-    # if we have the state name already use that
-    filename = None
     if state in district_topojson_data:
         filename = district_topojson_data[state]['file_name']
+        if filename:
+            with open(os.path.join(path, 'blocks/' + filename), encoding='utf-8') as f:
+                return json.loads(f.read())
     else:
-        # legacy support - missing state name so look for the district by name across all states
-        _assert = soft_assert('@'.join(['czue', 'dimagi.com']), fail_if_debug=True)
-        _assert(
-            False,
-            f"State {state} not found in district topojosn file!"
-        )
-        for state, data in district_topojson_data.items():
-            if district in data['districts']:
-                filename = data['file_name']
-                break
-    if filename:
-        with open(os.path.join(path, 'blocks/' + filename), encoding='utf-8') as f:
-            return json.loads(f.read())
+        logging.error('State {} not found in district topojson file'.format(state))
 
 
 def get_district_topojson_data():
