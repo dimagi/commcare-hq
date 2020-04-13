@@ -7,12 +7,20 @@ from django.conf import settings
 from corehq.util.es.elasticsearch import bulk
 
 
+def debug_assert(es):
+    from elasticsearch2.exceptions import NotFoundError
+    try:
+        alias_info = es.indices.get_alias('test_hqusers')
+        assert 'test_hqusers' not in alias_info, alias_info
+    except NotFoundError:
+        pass
+
+
 class AbstractElasticsearchInterface(metaclass=abc.ABCMeta):
     def __init__(self, es):
         self.es = es
 
     def _verify_is_alias(self, index_or_alias):
-        from corehq.elastic import debug_assert
         debug_assert(self.es)
         from corehq.elastic import ES_META
         if settings.ENABLE_ES_INTERFACE_LOGGING:
@@ -36,6 +44,7 @@ class AbstractElasticsearchInterface(metaclass=abc.ABCMeta):
         self._verify_is_alias(index_alias)
         doc = self.es.get_source(index_alias, doc_type, doc_id)
         doc['_id'] = doc_id
+        debug_assert(self.es)
         return doc
 
     def get_bulk_docs(self, index_alias, doc_type, doc_ids):
@@ -50,21 +59,25 @@ class AbstractElasticsearchInterface(metaclass=abc.ABCMeta):
             if doc_result['found']:
                 self._fix_hit(doc_result)
                 docs.append(doc_result['_source'])
+        debug_assert(self.es)
         return docs
 
     def create_doc(self, index_alias, doc_type, doc_id, doc):
         self._verify_is_alias(index_alias)
         self.es.create(index_alias, doc_type, body=self._without_id_field(doc), id=doc_id)
+        debug_assert(self.es)
 
     def update_doc(self, index_alias, doc_type, doc_id, doc, params=None):
         self._verify_is_alias(index_alias)
         self.es.index(index_alias, doc_type, body=self._without_id_field(doc), id=doc_id,
                       params=params or {})
+        debug_assert(self.es)
 
     def update_doc_fields(self, index_alias, doc_type, doc_id, fields, params=None):
         self._verify_is_alias(index_alias)
         self.es.update(index_alias, doc_type, doc_id, body={"doc": self._without_id_field(fields)},
                        params=params or {})
+        debug_assert(self.es)
 
     @staticmethod
     def _without_id_field(doc):
@@ -77,7 +90,6 @@ class AbstractElasticsearchInterface(metaclass=abc.ABCMeta):
         self.es.delete(index_alias, doc_type, doc_id)
 
     def bulk_ops(self, actions, stats_only=False, **kwargs):
-        from corehq.elastic import debug_assert
         debug_assert(self.es)
         for action in actions:
             if '_source' in action:
@@ -90,13 +102,14 @@ class AbstractElasticsearchInterface(metaclass=abc.ABCMeta):
         self._verify_is_alias(index_alias)
         results = self.es.search(index_alias, doc_type, body=body, params=params or {}, **kwargs)
         self._fix_hits_in_results(results)
+        debug_assert(self.es)
         return results
 
     def scroll(self, scroll_id=None, body=None, params=None, **kwargs):
-        from corehq.elastic import debug_assert
         debug_assert(self.es)
         results = self.es.scroll(scroll_id, body, params=params or {}, **kwargs)
         self._fix_hits_in_results(results)
+        debug_assert(self.es)
         return results
 
     @staticmethod
