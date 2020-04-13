@@ -71,7 +71,7 @@ def tearDownModule():
 @memoized
 def get_food_data(*args, **kwargs):
     # This class takes a while to run.  Memoizing lets me share between tests
-    return FoodData(DOMAIN, datespan=DateSpan(date(2020, 1, 1), date(2020, 4, 1)))
+    return FoodData(DOMAIN, datespan=DateSpan(date(2020, 1, 1), date(2020, 4, 1)), filter_selections={})
 
 
 @memoized

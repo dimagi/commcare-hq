@@ -10,9 +10,12 @@ from .const import FOOD_CONSUMPTION
 
 class FoodCaseData(SqlData):
     """This class pulls raw data from the food_consumption_indicators UCR"""
-
     group_by = ['doc_id']
     engine_id = UCR_ENGINE_ID
+    FILTERABLE_COLUMNS = [  # columns easily filtered by exact match
+        'owner_name',
+        'recall_status',
+    ]
 
     @property
     def columns(self):
@@ -27,8 +30,7 @@ class FoodCaseData(SqlData):
     @property
     def filters(self):
         filters = [GTE('recalled_date', 'startdate'), LTE('recalled_date', 'enddate')]
-        if self.config['owner_name']:
-            filters.append(EQ('owner_name', 'owner_name'))
-        if self.config['recall_status']:
-            filters.append(EQ('recall_status', 'recall_status'))
+        for column in self.FILTERABLE_COLUMNS:
+            if self.config.get(column):
+                filters.append(EQ(column, column))
         return filters

@@ -407,16 +407,21 @@ def _calculate_total_grams(recipe, ingredients):
 
 class FoodData:
     """Generates the primary dataset for INDDEX reports.  See file docstring for more."""
-    def __init__(self, domain, *, datespan,
-                 owner_name=None, recall_status=None, gap_type=None):
+    IN_MEMORY_FILTERS = ['gap_type']
+    FILTERABLE_COLUMNS = IN_MEMORY_FILTERS + FoodCaseData.FILTERABLE_COLUMNS
+
+    def __init__(self, domain, *, datespan, filter_selections):
+        if not all(k in self.FILTERABLE_COLUMNS for k in filter_selections):
+            raise AssertionError(f"{k} is not a valid filter slug")
+
         self.fixtures = FixtureAccessor(domain)
-        self._gap_type = gap_type
+        self._gap_type = filter_selections.get('gap_type')
         self._ucr = FoodCaseData({
             'domain': domain,
             'startdate': str(datespan.startdate),
             'enddate': str(datespan.enddate),
-            'owner_name': owner_name or '',
-            'recall_status': recall_status or '',
+            **{k: v for k, v in filter_selections.items()
+               if k in FoodCaseData.FILTERABLE_COLUMNS}
         })
 
     @classmethod
@@ -424,9 +429,7 @@ class FoodData:
         return cls(
             domain,
             datespan=request.datespan,
-            owner_name=request.GET.get('owner_name'),
-            recall_status=request.GET.get('recall_status'),
-            gap_type=request.GET.get('gap_type'),
+            filter_selections={k: request.GET.get(k) for k in cls.FILTERABLE_COLUMNS}
         )
 
     def _matches_in_memory_filters(self, row):
