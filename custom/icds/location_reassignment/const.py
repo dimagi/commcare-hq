@@ -19,6 +19,11 @@ MOVE_OPERATION = 'Move'
 EXTRACT_OPERATION = 'Extract'
 VALID_OPERATIONS = [MERGE_OPERATION, SPLIT_OPERATION, MOVE_OPERATION, EXTRACT_OPERATION]
 
+AWC_NAME_COLUMN = 'Name of AWC'
+AWC_CODE_COLUMN = 'AWC Code (11 digits)'
+HOUSEHOLD_MEMBER_DETAILS_COLUMN = 'Names of HH Members with Age and Gender'
+HOUSEHOLD_ID_COLUMN = 'Household ID in ICDS-CAS (Do Not Modify)'
+
 # Dumper
 OLD_LOCATION_CODE_COLUMN = "Old location code"
 TRANSITION_COLUMN = "Transition"
@@ -45,3 +50,4 @@ DEPRECATES_AT = "deprecates_at"  # datetime when this location deprecated the ot
 
 AWC_CODE = "awc"
 HOUSEHOLD_CASE_TYPE = "household"
+PERSON_CASE_TYPE = "person"

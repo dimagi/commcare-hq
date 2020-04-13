@@ -1,5 +1,3 @@
-from xml.etree import cElementTree as ElementTree
-
 from django.conf import settings
 from django.core.mail.message import EmailMessage
 
@@ -8,18 +6,18 @@ from celery.task import task
 from casexml.apps.case.mock import CaseBlock
 
 from corehq.apps.hqcase.utils import submit_case_blocks
-from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import SYSTEM_USER_ID, normalize_username
-from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
-from custom.icds.location_reassignment.const import (
-    AWC_CODE,
-    HOUSEHOLD_CASE_TYPE,
-)
+from custom.icds.location_reassignment.download import Households
 from custom.icds.location_reassignment.exceptions import InvalidUserTransition
-from custom.icds.location_reassignment.processor import Processor
+from custom.icds.location_reassignment.processor import (
+    HouseholdReassignmentProcessor,
+    Processor,
+)
 from custom.icds.location_reassignment.utils import (
-    get_household_and_child_case_ids_by_owner,
+    get_household_case_ids,
+    get_supervisor_id,
+    reassign_household_case,
 )
 
 
@@ -55,31 +53,12 @@ def reassign_household_and_child_cases_for_owner(domain, old_location_id, new_lo
     finds all household cases assigned to the old location and then
     reassign the household case and all its child cases to new location
     """
-    supervisor_id = ""
-    new_location = SQLLocation.active_objects.select_related('location_type').get(
-        domain=domain, location_id=new_location_id)
-    if new_location.location_type.code == AWC_CODE:
-        supervisor_id = new_location.parent.location_id
-    household_case_ids = CaseAccessorSQL.get_case_ids_in_domain_by_owners(
-        domain, [old_location_id], case_type=HOUSEHOLD_CASE_TYPE)
+    supervisor_id = get_supervisor_id(domain, old_location_id)
+    household_case_ids = get_household_case_ids(domain, old_location_id)
 
     for household_case_id in household_case_ids:
-        case_ids = get_household_and_child_case_ids_by_owner(domain, household_case_id, old_location_id)
-        case_ids.add(household_case_id)
-        case_blocks = []
-        for case_id in case_ids:
-            case_block = CaseBlock(case_id,
-                                   update={
-                                       'location_reassignment_last_owner_id': old_location_id,
-                                       'location_reassignment_datetime': deprecation_time,
-                                       'location_reassignment_last_supervisor_id': supervisor_id
-                                   },
-                                   owner_id=new_location_id,
-                                   user_id=SYSTEM_USER_ID)
-            case_block = ElementTree.tostring(case_block.as_xml()).decode('utf-8')
-            case_blocks.append(case_block)
-        if case_blocks:
-            submit_case_blocks(case_blocks, domain, user_id=SYSTEM_USER_ID)
+        reassign_household_case(domain, household_case_id, old_location_id, new_location_id, supervisor_id,
+                                deprecation_time)
 
 
 @task(queue=settings.CELERY_LOCATION_REASSIGNMENT_QUEUE)
@@ -106,3 +85,57 @@ def update_usercase(domain, old_username, new_username):
         raise InvalidUserTransition("Invalid Transition with old user %s and new user %s" % (
             old_username, new_username
         ))
+
+
+@task
+def email_household_details(domain, transitions, user_email):
+    try:
+        filestream = Households(domain).dump(transitions)
+    except Exception as e:
+        email = EmailMessage(
+            subject='[{}] - Location Reassignment Household Dump Failed'.format(settings.SERVER_ENVIRONMENT),
+            body="The request could not be completed. Something went wrong. "
+                 "Error raised : {}. "
+                 "Please report an issue if needed.".format(e),
+            to=[user_email],
+            from_email=settings.DEFAULT_FROM_EMAIL
+        )
+        email.send()
+        raise e
+    else:
+        email = EmailMessage(
+            subject='[{}] - Location Reassignment Household Dump Completed'.format(settings.SERVER_ENVIRONMENT),
+            body="The request has been successfully completed.",
+            to=[user_email],
+            from_email=settings.DEFAULT_FROM_EMAIL
+        )
+        if filestream:
+            email.attach(filename="Households.xlsx", content=filestream.read())
+        else:
+            email.body += "There were no house hold details found."
+        email.send()
+
+
+@task
+def process_households_reassignment(domain, reassignments, user_email):
+    try:
+        HouseholdReassignmentProcessor(domain, reassignments).process()
+    except Exception as e:
+        email = EmailMessage(
+            subject='[{}] - Household Reassignment Failed'.format(settings.SERVER_ENVIRONMENT),
+            body="The request could not be completed. Something went wrong. "
+                 "Error raised : {}. "
+                 "Please report an issue if needed.".format(e),
+            to=[user_email],
+            from_email=settings.DEFAULT_FROM_EMAIL
+        )
+        email.send()
+        raise e
+    else:
+        email = EmailMessage(
+            subject='[{}] - Household Reassignment Completed'.format(settings.SERVER_ENVIRONMENT),
+            body="The request has been successfully completed.",
+            to=[user_email],
+            from_email=settings.DEFAULT_FROM_EMAIL
+        )
+        email.send()
