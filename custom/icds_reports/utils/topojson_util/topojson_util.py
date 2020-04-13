@@ -78,7 +78,7 @@ def copy_custom_metadata(from_topojson, to_topojson):
             raise ValueError(f'{location_name} was not found in source topojson!')
 
 
-def get_block_topojson_for_state(state, district):
+def get_block_topojson_for_state(state):
     path = get_topojson_directory()
     district_topojson_data = get_district_topojson_data()
     if state in district_topojson_data:

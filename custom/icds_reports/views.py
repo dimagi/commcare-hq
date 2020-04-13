@@ -471,9 +471,7 @@ class TopoJsonView(BaseReportView):
 
     def get(self, request, *args, **kwargs):
         state = request.GET.get('state')
-        district = request.GET.get('district')
-
-        topojson = get_block_topojson_for_state(state, district)
+        topojson = get_block_topojson_for_state(state)
         data = {'topojson': topojson}
         return JsonResponse(data=data)
 
