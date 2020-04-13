@@ -1,5 +1,4 @@
 from django.db import transaction
-from django.utils.functional import cached_property
 
 from corehq.apps.locations.models import LocationType, SQLLocation
 from custom.icds.location_reassignment.const import SPLIT_OPERATION
@@ -7,9 +6,7 @@ from custom.icds.location_reassignment.exceptions import (
     InvalidTransitionError,
     LocationCreateError,
 )
-from custom.icds.location_reassignment.utils import (
-    deprecate_locations,
-)
+from custom.icds.location_reassignment.utils import deprecate_locations
 
 
 class Processor(object):
