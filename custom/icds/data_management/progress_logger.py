@@ -5,6 +5,7 @@ from corehq.util.doc_processor.progress import ProcessorProgressLogger
 
 class DataManagementProgressLogger(ProcessorProgressLogger):
     def __init__(self, iteration_key):
+        super().__init__()
         self.success_logger = logging.getLogger(iteration_key + 'success')
         self.success_logger.setLevel(logging.INFO)
         success_log = f"success-{iteration_key}.log"

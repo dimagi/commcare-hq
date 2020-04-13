@@ -1190,6 +1190,7 @@ DATA_EXPORT_TOOL_SCHEMA_EXPORT = StaticToggle(
     'Show an option to download data export tool schemas from the exports list view (Experimental)',
     TAG_SOLUTIONS_LIMITED,
     [NAMESPACE_DOMAIN, NAMESPACE_USER],
+    help_link='https://confluence.dimagi.com/display/ccinternal/Download+Data+Export+Tool+Schemas+from+the+Exports+List+View',
 )
 
 
@@ -1844,10 +1845,19 @@ TWO_STAGE_USER_PROVISIONING = StaticToggle(
     help_link='https://confluence.dimagi.com/display/ccinternal/Two-Stage+Mobile+Worker+Account+Creation',
 )
 
+LOCATION_REASSIGNMENT = StaticToggle(
+    'location_reassignment',
+    'Ability to reorder organization structure',
+    TAG_CUSTOM,
+    [NAMESPACE_USER],
+    relevant_environments={'icds', 'india', 'staging'},
+)
+
 ICDS_BIHAR_DEMOGRAPHICS_API = StaticToggle(
     'bihar_demographics_api',
     'ICDS: Bihar Demographics API',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_USER],
     relevant_environments={'icds', 'india'},
+
 )

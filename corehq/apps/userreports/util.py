@@ -10,7 +10,7 @@ from corehq.apps.userreports.const import REPORT_BUILDER_EVENTS_KEY
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.toggles import ENABLE_UCR_MIRRORS
 from corehq.util.couch import DocumentNotFound
-from corehq.util.datadog.utils import ucr_load_counter
+from corehq.util.metrics.load_counters import ucr_load_counter
 
 UCR_TABLE_PREFIX = 'ucr_'
 LEGACY_UCR_TABLE_PREFIX = 'config_report_'
