@@ -393,9 +393,16 @@ hqDefine('hqwebapp/js/main', [
                             $("#eulaModal").modal('hide');
                             $("body").removeClass("has-eula");
                         },
-                        error: function () {
-                            // do nothing, user will get the popup again on next page load
-                            $("body").removeClass("has-eula");
+                        error: function (xhr) {
+                            // if we got a 403 it may be due to two-factor settings.
+                            // force a page reload
+                            // https://dimagi-dev.atlassian.net/browse/SAAS-10785
+                            if (xhr.status === 403) {
+                                location.reload();
+                            } else {
+                                // do nothing, user will get the popup again on next page load
+                                $("body").removeClass("has-eula");
+                            }
                         },
                     });
                 });

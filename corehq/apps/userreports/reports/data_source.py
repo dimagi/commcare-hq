@@ -12,7 +12,7 @@ from corehq.apps.userreports.models import (
 from corehq.apps.userreports.sql.data_source import (
     ConfigurableReportSqlDataSource,
 )
-from corehq.util.datadog.utils import ucr_load_counter
+from corehq.util.metrics.load_counters import ucr_load_counter
 
 
 class ConfigurableReportDataSource(object):

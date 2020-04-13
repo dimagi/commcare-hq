@@ -9,8 +9,8 @@ from couchexport.models import Format
 
 from corehq.util.workbook_json.excel import get_workbook
 from custom.icds.location_reassignment.const import (
-    NEW_SITE_CODE_COLUMN,
     CURRENT_SITE_CODE_COLUMN,
+    NEW_SITE_CODE_COLUMN,
     OPERATION_COLUMN,
 )
 from custom.icds.location_reassignment.parser import Parser

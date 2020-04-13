@@ -141,8 +141,8 @@ class GapTypeFilter(BaseSingleOptionFilter):
     @property
     def options(self):
         return [
-            ('conversion factor', 'conversion factor'),
-            ('fct', 'fct'),
+            ('conv_factor', 'Conversion Factor'),
+            ('fct', 'Food Composition Table'),
         ]
 
 
