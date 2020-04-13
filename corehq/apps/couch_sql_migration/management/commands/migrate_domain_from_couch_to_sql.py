@@ -13,6 +13,7 @@ from dimagi.utils.chunked import chunked
 
 from corehq.apps.couch_sql_migration.couchsqlmigration import (
     CASE_DOC_TYPES,
+    CleanBreak,
     do_couch_to_sql_migration,
     setup_logging,
 )
@@ -235,16 +236,20 @@ class Command(BaseCommand):
                 sys.exit(1)
         else:
             set_couch_sql_migration_started(domain, self.live_migrate)
-        do_couch_to_sql_migration(
-            domain,
-            self.state_dir,
-            with_progress=not self.no_input,
-            live_migrate=self.live_migrate,
-            case_diff=self.case_diff,
-            rebuild_state=self.rebuild_state,
-            stop_on_error=self.stop_on_error,
-            forms=self.forms,
-        )
+        try:
+            do_couch_to_sql_migration(
+                domain,
+                self.state_dir,
+                with_progress=not self.no_input,
+                live_migrate=self.live_migrate,
+                case_diff=self.case_diff,
+                rebuild_state=self.rebuild_state,
+                stop_on_error=self.stop_on_error,
+                forms=self.forms,
+            )
+        except CleanBreak:
+            print("migration stopped")
+            sys.exit(1)
 
         has_diffs = self.print_stats(domain, short=True, diffs_only=True)
         if self.live_migrate:

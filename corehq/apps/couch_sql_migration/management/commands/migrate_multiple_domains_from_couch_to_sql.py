@@ -10,6 +10,7 @@ from corehq.form_processor.utils.general import (
 from corehq.util.markup import SimpleTableWriter, TableRowFormatter
 
 from ...couchsqlmigration import (
+    CleanBreak,
     MigrationRestricted,
     do_couch_to_sql_migration,
     setup_logging,
@@ -62,6 +63,9 @@ class Command(BaseCommand):
                 success, reason = self.migrate_domain(domain, state_dir)
                 if not success:
                     failed.append((domain, reason))
+            except CleanBreak:
+                log.info("stopped by operator")
+                break
             except Exception as err:
                 log.exception("Error migrating domain %s", domain)
                 if not self.live_migrate:

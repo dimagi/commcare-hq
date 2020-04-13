@@ -193,6 +193,9 @@ class CouchSqlDomainMigrator:
             elif self.should_diff_cases:
                 self._diff_cases()
 
+        if self.stopper.clean_break:
+            raise CleanBreak
+
         log.info('migrated domain {}'.format(self.domain))
 
     def _process_main_forms(self):
@@ -1516,4 +1519,8 @@ def commit_migration(domain_name):
 
 
 class MigrationRestricted(Exception):
+    pass
+
+
+class CleanBreak(Exception):
     pass
