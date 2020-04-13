@@ -1,6 +1,6 @@
 from abc import ABCMeta, abstractmethod, abstractproperty
 from casexml.apps.case.exceptions import IllegalCaseId
-from corehq.util.datadog.utils import case_load_counter
+from corehq.util.metrics.load_counters import case_load_counter
 from corehq.util.soft_assert.api import soft_assert
 from dimagi.utils.couch import release_lock
 from corehq.form_processor.interfaces.processor import CaseUpdateMetadata, FormProcessorInterface

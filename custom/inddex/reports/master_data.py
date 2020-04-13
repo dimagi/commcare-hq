@@ -1,15 +1,15 @@
-from django.utils.functional import cached_property
+from itertools import chain
 
-from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
-from corehq.apps.reports.generic import GenericTabularReport
-from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin
 from custom.inddex import filters
-from custom.inddex.food import FoodData
+from custom.inddex.food import INDICATORS, FoodData
+
+from .utils import MultiTabularReport, format_val
 
 
-class MasterDataReport(DatespanMixin, CustomProjectReport, GenericTabularReport):
+class MasterDataReport(MultiTabularReport):
     name = 'Output 1 - Master Data File'
     slug = 'master_data'
+    export_only = True
 
     @property
     def fields(self):
@@ -21,15 +21,25 @@ class MasterDataReport(DatespanMixin, CustomProjectReport, GenericTabularReport)
         ]
 
     @property
+    def data_providers(self):
+        food_data = FoodData.from_request(self.domain, self.request)
+        return [MasterData(food_data)]
+
+
+class MasterData:
+    title = "master_data"
+    slug = title
+
+    def __init__(self, food_data):
+        self._food_data = food_data
+
+    @property
     def headers(self):
-        return DataTablesHeader(
-            *(DataTablesColumn(header) for header in self._food_data.headers)
-        )
+        return [i.slug for i in INDICATORS] + list(self._food_data.get_nutrient_headers())
 
     @property
     def rows(self):
-        return self._food_data.rows
-
-    @cached_property
-    def _food_data(self):
-        return FoodData.from_request(self.domain, self.request)
+        for row in self._food_data.rows:
+            static_cols = (getattr(row, column.slug) for column in INDICATORS)
+            nutrient_cols = self._food_data.get_nutrient_values(row)
+            yield [format_val(val) for val in chain(static_cols, nutrient_cols)]

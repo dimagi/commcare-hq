@@ -63,7 +63,7 @@ from corehq.sql_db.util import (
     get_db_aliases_for_partitioned_query,
     split_list_by_db_partition,
 )
-from corehq.util.datadog.utils import form_load_counter
+from corehq.util.metrics.load_counters import form_load_counter
 from corehq.util.queries import fast_distinct_in_domain
 
 doc_type_to_state = {

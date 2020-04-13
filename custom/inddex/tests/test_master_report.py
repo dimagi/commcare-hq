@@ -24,6 +24,7 @@ from ..example_data.data import (
 )
 from ..fixtures import FixtureAccessor
 from ..food import INDICATORS, FoodData
+from ..reports.master_data import MasterData
 from ..ucr_data import FoodCaseData
 
 DOMAIN = 'inddex-reports-test'
@@ -160,7 +161,8 @@ class TestNewReport(TestCase):
         return map(substitute_real_ids, get_expected_report())
 
     def run_new_report(self):
-        report = FoodData(DOMAIN, datespan=DateSpan(date(2020, 1, 1), date(2020, 4, 1)))
+        data = FoodData(DOMAIN, datespan=DateSpan(date(2020, 1, 1), date(2020, 4, 1)))
+        report = MasterData(data)
         return [dict(zip(report.headers, row)) for row in report.rows]
 
     def assert_columns_equal(self, expected_rows, actual_rows, column):

@@ -40,7 +40,7 @@ def silence_and_report_error(message, metric_name):
     """
     Prevent a piece of code from ever causing 500s if it errors
 
-    Instead, report the issue to sentry and track the overall count on datadog
+    Instead, report the issue to sentry and track the overall count as a metric
     """
 
     try:
