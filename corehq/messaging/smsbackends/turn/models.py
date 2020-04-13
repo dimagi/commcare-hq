@@ -22,9 +22,9 @@ class SQLTurnWhatsAppBackend(SQLSMSBackend):
     @classmethod
     def get_available_extra_fields(cls):
         return [
-            'username',
-            'password',
-            'auth_token',
+            'client_auth_token',
+            'business_id',
+            'business_auth_token',
         ]
 
     @classmethod
@@ -33,7 +33,7 @@ class SQLTurnWhatsAppBackend(SQLSMSBackend):
 
     def send(self, msg, orig_phone_number=None, *args, **kwargs):
         config = self.config
-        client = TurnClient(config.auth_token)
+        client = TurnClient(config.client_auth_token)
         to = clean_phone_number(msg.phone_number)
 
         try:
