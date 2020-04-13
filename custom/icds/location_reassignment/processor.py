@@ -1,5 +1,4 @@
 from django.db import transaction
-from django.utils.functional import cached_property
 
 from memoized import memoized
 
@@ -29,6 +28,10 @@ class Processor(object):
         self.new_location_details = new_location_details
         self.user_transitions = user_transitions
         self.site_codes = site_codes
+        self.transiting_locations_by_site_code = {
+            loc.site_code: loc
+            for loc in SQLLocation.active_objects.filter(domain=self.domain, site_code__in=self.site_codes)
+        }
 
     def process(self):
         self._create_new_locations()
@@ -39,15 +42,18 @@ class Processor(object):
         self.update_users()
 
     def _create_new_locations(self):
-        locations_by_site_code = self._get_existing_parent_locations()
+        parent_locations_by_site_code = self._get_existing_parent_locations()
 
         with transaction.atomic():
             for location_type_code in self.location_types_by_code:
                 new_locations_details = self.new_location_details.get(location_type_code, {})
                 for site_code, details in new_locations_details.items():
+                    # if location already present don't try creating it
+                    if site_code in self.transiting_locations_by_site_code:
+                        continue
                     parent_location = None
                     if details['parent_site_code']:
-                        parent_location = locations_by_site_code[details['parent_site_code']]
+                        parent_location = parent_locations_by_site_code[details['parent_site_code']]
                     location = SQLLocation.objects.create(
                         domain=self.domain, site_code=site_code, name=details['name'],
                         parent=parent_location,
@@ -55,7 +61,9 @@ class Processor(object):
                         metadata={'lgd_code': details['lgd_code']}
                     )
                     # add new location in case its a parent to any other locations getting created
-                    locations_by_site_code[site_code] = location
+                    parent_locations_by_site_code[site_code] = location
+                    # update transiting locations mapping
+                    self.transiting_locations_by_site_code[site_code] = location
 
     def _get_existing_parent_locations(self):
         existing_parent_site_codes = set()
@@ -96,22 +104,15 @@ class Processor(object):
 
     def _get_locations(self, site_codes):
         site_codes = site_codes if isinstance(site_codes, list) else [site_codes]
-        locations = [self.locations_by_site_code.get(site_code)
+        locations = [self.transiting_locations_by_site_code.get(site_code)
                      for site_code in site_codes
-                     if self.locations_by_site_code.get(site_code)]
+                     if self.transiting_locations_by_site_code.get(site_code)]
         if len(locations) != len(site_codes):
             loaded_site_codes = [loc.site_code for loc in locations]
             missing_site_codes = set(site_codes) - set(loaded_site_codes)
             raise InvalidTransitionError(
                 "Could not load location with following site codes: %s" % ",".join(missing_site_codes))
         return locations
-
-    @cached_property
-    def locations_by_site_code(self):
-        return {
-            loc.site_code: loc
-            for loc in SQLLocation.active_objects.filter(domain=self.domain, site_code__in=self.site_codes)
-        }
 
     def update_users(self):
         from custom.icds.location_reassignment.tasks import update_usercase

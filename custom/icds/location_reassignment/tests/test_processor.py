@@ -60,7 +60,7 @@ class TestProcessor(TestCase):
 
     @patch('corehq.apps.locations.models.SQLLocation.objects.create')
     def test_creating_new_locations(self, location_create_mock, locations_mock, *_):
-        locations_mock.return_value = self.all_locations
+        locations_mock.return_value = [self.location_112, self.location_12]
         location_create_mock.return_value = "A New Location"
         new_location_details = {
             'supervisor': {
