@@ -521,22 +521,3 @@ class BaseNutrientData(MasterReportData):
         self.filter_age_range(rows)
 
         return rows
-
-
-class NutrientIntakesData(BaseNutrientData):
-
-    @property
-    def additional_filters(self):
-        return {
-            'age_range': self.config['age_range']
-        }
-
-    @property
-    def rows(self):
-        rows = super().rows
-        self.append_fct_gap_information(rows)
-        self.append_conv_factor_gap_information(rows)
-        self.append_fao_who_information(rows)
-        self.filter_fao_who_gift_food_group_description(rows)
-
-        return rows
