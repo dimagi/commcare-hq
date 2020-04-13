@@ -28,7 +28,7 @@ window.angular.module('icdsApp').factory('topojsonService', ['$http', function (
         getDistrictTopoJson: function () {
             return getStaticTopojson(districtTopoJsonUrl, 'districts');
         },
-        getTopoJsonForDistrict: function (district, state) {
+        getBlockTopoJsonForState: function (district, state) {
             var cacheKey = state + district;
             if (cacheKey in CACHE["blocks"]) {
                 // https://javascript.info/promise-api#promise-resolve-reject
