@@ -35,7 +35,18 @@ DOMAIN = 'inddex-reports-test'
 
 def get_expected_report(filename):
     with open(os.path.join(os.path.dirname(__file__), 'data', filename)) as f:
-        return list(csv.DictReader(f))
+        rows = list(csv.DictReader(f))
+
+    # Swap out the external IDs in the test fixture for the real IDs
+    case_ids_by_external_id = _get_case_ids_by_external_id()
+
+    def substitute_real_ids(row):
+        return {
+            key: case_ids_by_external_id[val] if val in case_ids_by_external_id else val
+            for key, val in row.items()
+        }
+
+    return [substitute_real_ids(r) for r in rows]
 
 
 @require_db_context
@@ -53,12 +64,20 @@ def setUpModule():
 def tearDownModule():
     Domain.get_by_name(DOMAIN).delete()
     get_food_data.reset_cache()
+    _get_case_ids_by_external_id.reset_cache()
 
 
 @memoized
 def get_food_data(*args, **kwargs):
     # This class takes a while to run.  Memoizing lets me share between tests
     return FoodData(DOMAIN, datespan=DateSpan(date(2020, 1, 1), date(2020, 4, 1)))
+
+
+@memoized
+def _get_case_ids_by_external_id():
+    accessor = CaseAccessors(DOMAIN)
+    case_ids = accessor.get_case_ids_in_domain()
+    return {c.external_id: c.case_id for c in accessor.get_cases(case_ids)}
 
 
 def sort_rows(rows):
@@ -144,7 +163,7 @@ class TestMasterReport(TestCase):
     maxDiff = None
 
     def test_master_report(self):
-        expected = sort_rows(self.get_expected_rows())
+        expected = sort_rows(get_expected_report('master.csv'))
         actual = sort_rows(self.run_new_report())
         self.assertEqual(food_names(expected), food_names(actual))
 
@@ -159,21 +178,6 @@ class TestMasterReport(TestCase):
         columns = [c.slug for c in INDICATORS] + nutrient_columns
         for column in columns:
             self.assert_columns_equal(expected, actual, column)
-
-    def get_expected_rows(self):
-        # Swap out the external IDs in the test fixture for the real IDs
-        accessor = CaseAccessors(DOMAIN)
-        case_ids = accessor.get_case_ids_in_domain()
-        case_ids_by_external_id = {c.external_id: c.case_id
-                                   for c in accessor.get_cases(case_ids)}
-
-        def substitute_real_ids(row):
-            return {
-                key: case_ids_by_external_id[val] if val in case_ids_by_external_id else val
-                for key, val in row.items()
-            }
-
-        return map(substitute_real_ids, get_expected_report('master.csv'))
 
     def run_new_report(self):
         report = MasterData(get_food_data())
