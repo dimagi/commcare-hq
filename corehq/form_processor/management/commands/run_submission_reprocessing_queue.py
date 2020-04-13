@@ -6,7 +6,7 @@ from django.db.models import F
 from django.db.models import Q
 
 from corehq.form_processor.tasks import reprocess_submission
-from corehq.util.datadog.gauges import datadog_gauge
+from corehq.util.metrics import metrics_gauge
 from couchforms.models import UnfinishedSubmissionStub
 from dimagi.utils.logging import notify_exception
 
@@ -17,7 +17,7 @@ BATCH_SIZE = 1000
 
 def _record_datadog_metrics():
     count = UnfinishedSubmissionStub.objects.count()
-    datadog_gauge('commcare.submission_reprocessing.queue_size', count)
+    metrics_gauge('commcare.submission_reprocessing.queue_size', count)
 
 
 class SubmissionReprocessingEnqueuingOperation(BaseCommand):

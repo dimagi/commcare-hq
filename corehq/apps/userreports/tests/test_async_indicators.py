@@ -208,7 +208,7 @@ class BulkAsyncIndicatorProcessingTest(TestCase):
             return [doc for doc in self.docs if doc['_id'] in ids]
 
         # patch this to allow counting success/failure counts
-        _patch = mock.patch('corehq.apps.userreports.tasks.datadog_counter')
+        _patch = mock.patch('corehq.apps.userreports.tasks.metrics_counter')
         self.datadog_patch = _patch.start()
         # patch docstore to avoid overhead of saving/querying docs
         docstore_patch = mock.patch(

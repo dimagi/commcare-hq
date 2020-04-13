@@ -1147,6 +1147,14 @@ HIDE_MESSAGING_DASHBOARD_FROM_NON_SUPERUSERS = StaticToggle(
 )
 
 
+WHATSAPP_MESSAGING = StaticToggle(
+    'whatsapp_messaging',
+    "Default SMS to send messages via Whatsapp, where available",
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN]
+)
+
+
 UNLIMITED_REPORT_BUILDER_REPORTS = StaticToggle(
     'unlimited_report_builder_reports',
     'Allow unlimited reports created in report builder',
@@ -1174,6 +1182,15 @@ ALLOW_USER_DEFINED_EXPORT_COLUMNS = StaticToggle(
     'Add user defined columns to exports',
     TAG_DEPRECATED,
     [NAMESPACE_DOMAIN],
+)
+
+
+DATA_EXPORT_TOOL_SCHEMA_EXPORT = StaticToggle(
+    'data_export_tool_schema_export',
+    'Show an option to download data export tool schemas from the exports list view (Experimental)',
+    TAG_SOLUTIONS_LIMITED,
+    [NAMESPACE_DOMAIN, NAMESPACE_USER],
+    help_link='https://confluence.dimagi.com/display/ccinternal/Download+Data+Export+Tool+Schemas+from+the+Exports+List+View',
 )
 
 
@@ -1664,14 +1681,7 @@ ENABLE_UCR_MIRRORS = StaticToggle(
 
 LOCATION_COLUMNS_APP_STATUS_REPORT = StaticToggle(
     'location_columns_app_status_report',
-    'Enables location columns in app status report',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN]
-)
-
-APP_VERSION_TAG_COLUMN_APP_STATUS_REPORT = StaticToggle(
-    'app_version_tag_column_app_status_report',
-    'Enables app version tag, used for functional app version, column in app status report',
+    'Enables location columns to app status report',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN]
 )
@@ -1843,10 +1853,19 @@ TWO_STAGE_USER_PROVISIONING = StaticToggle(
     help_link='https://confluence.dimagi.com/display/ccinternal/Two-Stage+Mobile+Worker+Account+Creation',
 )
 
+LOCATION_REASSIGNMENT = StaticToggle(
+    'location_reassignment',
+    'Ability to reorder organization structure',
+    TAG_CUSTOM,
+    [NAMESPACE_USER],
+    relevant_environments={'icds', 'india', 'staging'},
+)
+
 ICDS_BIHAR_DEMOGRAPHICS_API = StaticToggle(
     'bihar_demographics_api',
     'ICDS: Bihar Demographics API',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_USER],
     relevant_environments={'icds', 'india'},
+
 )

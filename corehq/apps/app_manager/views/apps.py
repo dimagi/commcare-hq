@@ -554,7 +554,7 @@ def app_exchange(request, domain):
     for obj in ExchangeApplication.objects.all():
         results = get_all_built_app_results(obj.domain, app_id=obj.app_id)
         results = [r['value'] for r in results if r['value']['is_released']]
-        if not len(results):
+        if not results:
             continue
         results.reverse()
         first = results[0]
@@ -585,7 +585,9 @@ def app_exchange(request, domain):
     if request.method == "POST":
         clear_app_cache(request, domain)
         from_app_id = request.POST.get('from_app_id')
-        app_copy = import_app_util(from_app_id, domain)
+        app_copy = import_app_util(from_app_id, domain, {
+            'created_from_template': from_app_id,
+        })
         return back_to_main(request, domain, app_id=app_copy._id)
 
     return render(request, template, context)

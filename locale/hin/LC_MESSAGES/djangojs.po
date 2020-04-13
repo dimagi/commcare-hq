@@ -11,7 +11,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-03-25 22:33+0000\n"
+"POT-Creation-Date: 2020-04-09 19:23+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
 "Last-Translator: Dimagi Dev <devops@dimagi.com>, 2019\n"
 "Language-Team: Hindi (https://www.transifex.com/dimagi/teams/9388/hi/)\n"
@@ -144,9 +144,17 @@ msgstr ""
 msgid "There was an error saving."
 msgstr ""
 
+#: corehq/apps/app_manager/static/app_manager/js/app_exchange.js:18
+msgid "Hide Past Versions"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/app_exchange.js:20
+msgid "See Past Versions"
+msgstr ""
+
 #: corehq/apps/app_manager/static/app_manager/js/app_manager.js:144
 #: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_app_profile.js:45
-#: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_location.js:36
+#: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_location.js:35
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:23
 msgid "Add"
 msgstr ""
@@ -592,7 +600,7 @@ msgid "Inactive"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_app_profile.js:45
-#: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_location.js:36
+#: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_location.js:35
 #: corehq/apps/sms/static/sms/js/add_gateway.js:11
 msgid "Remove"
 msgstr ""
@@ -2760,7 +2768,8 @@ msgid "Form submission found!"
 msgstr ""
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/list_automatic_update_rules.js:40
-#: corehq/apps/users/static/users/js/mobile_workers.js:110
+#: corehq/apps/users/static/users/js/mobile_workers.js:116
+#: corehq/apps/users/static/users/js/mobile_workers.js:140
 msgid "Issue communicating with server. Try again."
 msgstr ""
 
@@ -3563,15 +3572,19 @@ msgstr ""
 msgid "Download <%= count %> users"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/mobile_workers.js:280
+#: corehq/apps/users/static/users/js/mobile_workers.js:317
 msgid "Email address is required when users confirm their own accounts."
 msgstr ""
 
-#: corehq/apps/users/static/users/js/mobile_workers.js:341
+#: corehq/apps/users/static/users/js/mobile_workers.js:319
+msgid "Please enter a valid email address."
+msgstr ""
+
+#: corehq/apps/users/static/users/js/mobile_workers.js:380
 msgid "Checking availability..."
 msgstr ""
 
-#: corehq/apps/users/static/users/js/mobile_workers.js:362
+#: corehq/apps/users/static/users/js/mobile_workers.js:401
 msgid "Issue connecting to server. Check Internet connection."
 msgstr ""
 
@@ -3722,6 +3735,10 @@ msgstr ""
 
 #: corehq/messaging/smsbackends/telerivet/static/telerivet/js/telerivet_setup.js:127
 msgid "Complete"
+msgstr ""
+
+#: corehq/motech/dhis2/static/dhis2/js/dhis2_entity_config.js:60
+msgid "Unable to save case configs"
 msgstr ""
 
 #: corehq/motech/dhis2/static/dhis2/js/dhis2_map_settings.js:160

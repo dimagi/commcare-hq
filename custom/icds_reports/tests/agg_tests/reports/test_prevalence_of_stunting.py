@@ -305,10 +305,10 @@ class TestPrevalenceOfStunting(TestCase):
                         "measured": 0
                     },
                     {
-                        "y": 0.3076923076923077,
+                        "y": 0.3333333333333333,
                         "x": 1491004800000,
                         "all": 1021,
-                        "measured": 13
+                        "measured": 12
                     },
                     {
                         "y": 0.40625,
@@ -350,10 +350,10 @@ class TestPrevalenceOfStunting(TestCase):
                         "measured": 0
                     },
                     {
-                        "y": 0.3076923076923077,
+                        "y": 0.3333333333333333,
                         "x": 1491004800000,
                         "all": 1021,
-                        "measured": 13
+                        "measured": 12
                     },
                     {
                         "y": 0.25,
@@ -395,10 +395,10 @@ class TestPrevalenceOfStunting(TestCase):
                         "measured": 0
                     },
                     {
-                        "y": 0.38461538461538464,
+                        "y": 0.4166666666666667,
                         "x": 1491004800000,
                         "all": 1021,
-                        "measured": 13
+                        "measured": 12
                     },
                     {
                         "y": 0.34375,

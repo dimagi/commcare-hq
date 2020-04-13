@@ -10,6 +10,7 @@ from couchdbkit import ResourceNotFound
 from corehq.apps.registration.forms import MobileWorkerAccountConfirmationForm
 from corehq.apps.users.account_confirmation import send_account_confirmation_if_necessary
 from corehq.util import get_document_or_404
+from corehq.util.metrics import metrics_counter
 from couchexport.models import Format
 from couchexport.writers import Excel2007ExportWriter
 from django.conf import settings
@@ -103,7 +104,6 @@ from corehq.apps.users.views import (
 )
 from corehq.const import GOOGLE_PLAY_STORE_COMMCARE_URL, USER_DATE_FORMAT
 from corehq.toggles import FILTERED_BULK_USER_DOWNLOAD, TWO_STAGE_USER_PROVISIONING
-from corehq.util.datadog.gauges import datadog_counter
 from corehq.util.dates import iso_string_to_datetime
 from corehq.util.workbook_json.excel import (
     WorkbookJSONError,
@@ -422,7 +422,7 @@ def force_user_412(request, domain, user_id):
     if not _can_edit_workers_location(request.couch_user, user):
         raise PermissionDenied()
 
-    datadog_counter('commcare.force_user_412.count', tags=['domain:{}'.format(domain)])
+    metrics_counter('commcare.force_user_412.count', tags={'domain': domain})
 
     SyncLogSQL.objects.filter(user_id=user_id).delete()
 
@@ -737,7 +737,11 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
 
         is_valid = lambda: self.new_mobile_worker_form.is_valid() and self.custom_data.is_valid()
         if not is_valid():
-            return {'error': _("Forms did not validate")}
+            all_errors = [e for errors in self.new_mobile_worker_form.errors.values() for e in errors]
+            all_errors += [e for errors in self.custom_data.errors.values() for e in errors]
+            return {'error': _("Forms did not validate: {errors}").format(
+                errors=', '.join(all_errors)
+            )}
 
         couch_user = self._build_commcare_user()
         if self.new_mobile_worker_form.cleaned_data['send_account_confirmation_email']:
@@ -1480,10 +1484,13 @@ class CommCareUserConfirmAccountView(TemplateView, DomainViewMixin):
             user.last_name = full_name[1]
             user.confirm_account(password=self.form.cleaned_data['password'])
             messages.success(request, _(
-                f'You have successfully confirmed the {self.user.raw_username} account. '
+                f'You have successfully confirmed the {user.raw_username} account. '
                 'You can now login'
             ))
-            return HttpResponseRedirect(reverse('domain_login', args=[self.domain]))
+            return HttpResponseRedirect('{}?username={}'.format(
+                reverse('domain_login', args=[self.domain]),
+                user.raw_username,
+            ))
 
         # todo: process form data and activate the account
         return self.get(request, *args, **kwargs)

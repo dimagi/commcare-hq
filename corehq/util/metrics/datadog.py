@@ -1,10 +1,10 @@
 import logging
-from typing import List
+from typing import List, Dict
 
 from datadog import api
 from django.conf import settings
 
-from corehq.util.datadog.utils import bucket_value
+from corehq.util.metrics.utils import bucket_value
 from corehq.util.metrics.const import COMMON_TAGS, ALERT_INFO
 from corehq.util.metrics.metrics import HqMetrics
 from datadog.dogstatsd.base import DogStatsd
@@ -12,7 +12,7 @@ from datadog.dogstatsd.base import DogStatsd
 datadog_logger = logging.getLogger('datadog')
 
 
-def _format_tags(tag_values: dict):
+def _format_tags(tag_values: Dict[str, str]):
     if not tag_values:
         return None
 
@@ -57,20 +57,20 @@ class DatadogMetrics(HqMetrics):
         else:
             initialize(settings.DATADOG_API_KEY, settings.DATADOG_APP_KEY)
 
-    def _counter(self, name: str, value: float, tags: dict = None, documentation: str = ''):
+    def _counter(self, name: str, value: float, tags: Dict[str, str] = None, documentation: str = ''):
         """Although this is submitted as a COUNT the Datadog app represents these as a RATE.
         See https://docs.datadoghq.com/developers/metrics/types/?tab=rate#definition"""
         dd_tags = _format_tags(tags)
         _datadog_record(statsd.increment, name, value, dd_tags)
 
-    def _gauge(self, name: str, value: float, tags: dict = None, documentation: str = ''):
+    def _gauge(self, name: str, value: float, tags: Dict[str, str] = None, documentation: str = ''):
         """See https://docs.datadoghq.com/developers/metrics/types/?tab=gauge#definition"""
         dd_tags = _format_tags(tags)
         _datadog_record(statsd.gauge, name, value, dd_tags)
 
     def _histogram(self, name: str, value: float,
                   bucket_tag: str, buckets: List[int], bucket_unit: str = '',
-                  tags: dict = None, documentation: str = ''):
+                  tags: Dict[str, str] = None, documentation: str = ''):
         """
         This implementation of histogram uses tagging to record the buckets.
         It does not use the Datadog Histogram metric type.
@@ -104,7 +104,7 @@ class DatadogMetrics(HqMetrics):
         _datadog_record(statsd.increment, name, 1, tags)
 
     def _create_event(self, title: str, text: str, alert_type: str = ALERT_INFO,
-                      tags: dict = None, aggregation_key: str = None):
+                      tags: Dict[str, str] = None, aggregation_key: str = None):
         if datadog_initialized():
             api.Event.create(
                 title=title, text=text, tags=tags,

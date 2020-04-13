@@ -3,21 +3,21 @@ from sqlagg.filters import EQ, GTE, LTE
 
 from corehq.apps.reports.sqlreport import DatabaseColumn, SqlData
 from corehq.apps.userreports.util import get_table_name
+from corehq.sql_db.connections import UCR_ENGINE_ID
 
 from .const import FOOD_CONSUMPTION
-from .food import INDICATORS
 
 
 class FoodCaseData(SqlData):
     """This class pulls raw data from the food_consumption_indicators UCR"""
 
     group_by = ['doc_id']
+    engine_id = UCR_ENGINE_ID
 
     @property
     def columns(self):
-        column_ids = [
-            'doc_id', 'inserted_at', 'nsr_same_conv_method',  # TODO remove this one?
-        ] + [i.slug for i in INDICATORS if i.in_ucr]
+        from .food import INDICATORS
+        column_ids = ['doc_id', 'inserted_at'] + [i.slug for i in INDICATORS if i.in_ucr]
         return [DatabaseColumn(col_id, SimpleColumn(col_id)) for col_id in column_ids]
 
     @property

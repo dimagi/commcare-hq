@@ -34,6 +34,7 @@ from corehq.apps.accounting.exceptions import (
     NewSubscriptionError,
     PaymentRequestError,
     SubscriptionAdjustmentError,
+    SubscriptionRenewalError,
 )
 from corehq.apps.accounting.forms import (
     AnnualPlanContactForm,
@@ -1572,13 +1573,15 @@ class ConfirmSubscriptionRenewalView(DomainAccountingSettings, AsyncHandlerMixin
     def next_plan_version(self):
         plan_version = DefaultProductPlan.get_default_plan_version(self.new_edition)
         if plan_version is None:
-            log_accounting_error(
-                "Could not find a matching renewable plan "
-                "for %(domain)s, subscription number %(sub_pk)s." % {
-                    'domain': self.domain,
-                    'sub_pk': self.subscription.pk
-                }
-            )
+            try:
+                # needed for sending to sentry
+                raise SubscriptionRenewalError()
+            except SubscriptionRenewalError:
+                log_accounting_error(
+                    f"Could not find a matching renewable plan "
+                    f"for {self.domain}, "
+                    f"subscription number {self.subscription.pk}."
+                )
             raise Http404
         return plan_version
 

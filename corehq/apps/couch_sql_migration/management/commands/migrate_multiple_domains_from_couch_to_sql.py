@@ -112,10 +112,10 @@ def get_diff_stats(domain, state_dir, strict=True):
     for doc_type, counts in sorted(statedb.get_doc_counts().items()):
         if not strict and doc_type == "CommCareCase-Deleted":
             continue
-        if counts.diffs or counts.missing:
+        if counts.diffs or counts.changes or counts.missing:
             couch_count = counts.total
             sql_count = counts.total - counts.missing
-            stats[doc_type] = (couch_count, sql_count, counts.diffs)
+            stats[doc_type] = (couch_count, sql_count, counts.diffs + counts.changes)
     if "CommCareCase" not in stats:
         pending = statedb.count_undiffed_cases()
         if pending:
