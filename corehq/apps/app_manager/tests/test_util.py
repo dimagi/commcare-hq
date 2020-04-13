@@ -35,12 +35,12 @@ class TestGetDefaultFollowupForm(TestCase):
         self.assertEqual(first_question['label'], " Default label message ")
 
 
-class TestLatestAppInfo(TestCase):
+class TestGlobalAppConfig(TestCase):
     domain = 'test-latest-app'
 
     @classmethod
     def setUpClass(cls):
-        super(TestLatestAppInfo, cls).setUpClass()
+        super(TestGlobalAppConfig, cls).setUpClass()
         cls.project = Domain(name=cls.domain)
         cls.project.save()
 
@@ -85,7 +85,7 @@ class TestLatestAppInfo(TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.project.delete()
-        super(TestLatestAppInfo, cls).tearDownClass()
+        super(TestGlobalAppConfig, cls).tearDownClass()
 
     def test_apk_prompt(self):
         from corehq.apps.builds.utils import get_default_build_spec
