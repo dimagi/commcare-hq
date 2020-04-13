@@ -36,7 +36,7 @@ class Processor(object):
                 self._perform_transitions(operation, transitions)
 
     def _create_new_locations(self):
-        locations_by_site_code = self._get_existing_parent_locations()
+        parent_locations_by_site_code = self._get_existing_parent_locations()
 
         with transaction.atomic():
             for location_type_code in self.location_types_by_code:
@@ -47,7 +47,7 @@ class Processor(object):
                         continue
                     parent_location = None
                     if details['parent_site_code']:
-                        parent_location = locations_by_site_code[details['parent_site_code']]
+                        parent_location = parent_locations_by_site_code[details['parent_site_code']]
                     location = SQLLocation.objects.create(
                         domain=self.domain, site_code=site_code, name=details['name'],
                         parent=parent_location,
@@ -55,7 +55,7 @@ class Processor(object):
                         metadata={'lgd_code': details['lgd_code']}
                     )
                     # add new location in case its a parent to any other locations getting created
-                    locations_by_site_code[site_code] = location
+                    parent_locations_by_site_code[site_code] = location
                     # update transiting locations mapping
                     self.transiting_locations_by_site_code[site_code] = location
 
