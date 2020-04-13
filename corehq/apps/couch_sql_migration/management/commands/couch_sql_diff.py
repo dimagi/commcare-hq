@@ -168,7 +168,7 @@ class Command(BaseCommand):
             print(CSV_HEADERS, file=sys.stdout)
         try:
             for doc_diffs in chunked(items, self.batch_size, list):
-                format_doc_diffs(doc_diffs, self.csv, self.changes, sys.stdout)
+                format_doc_diffs(doc_diffs, self.csv, self.changes)
                 if len(doc_diffs) < self.batch_size:
                     continue
                 if prompt and not confirm("show more?"):
@@ -378,13 +378,13 @@ class Command(BaseCommand):
             delete_all(DiffedCase)
 
 
-def format_doc_diffs(doc_diffs, csv, changes, stream):
+def format_doc_diffs(doc_diffs, csv=False, changes=None, stream=sys.stdout):
     json_diffs = iter_json_diffs(doc_diffs)
     if csv:
         related = dict(iter_related(doc_diffs))
         csv_diffs(json_diffs, related, changes, stream)
     else:
-        print(format_diffs(json_diffs, changes), file=stream)
+        print(format_diffs(json_diffs), file=stream)
 
 
 CASE = "CommCareCase"
@@ -433,8 +433,7 @@ def iter_json_diffs(doc_diffs):
 
     for kind, doc_id, diffs in doc_diffs:
         assert kind != STOCK
-        dxx = [d.json_diff for d in diffs if d.kind != STOCK]
-        yield kind, doc_id, dxx
+        yield kind, doc_id, [d.json_diff for d in diffs if d.kind != STOCK]
         stock_diffs = [d for d in diffs if d.kind == STOCK]
         if stock_diffs:
             yield from iter_stock_diffs(stock_diffs)

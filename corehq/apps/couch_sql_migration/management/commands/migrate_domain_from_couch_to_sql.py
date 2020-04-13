@@ -1,6 +1,7 @@
 import logging
 import os
 import sys
+from itertools import chain
 
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
@@ -276,7 +277,17 @@ class Command(BaseCommand):
         self.print_stats(domain, short=not self.verbose)
 
     def do_diff(self, domain):
-        print(f"replaced by: couch_sql_diff {domain} show [--select=DOC_TYPE]")
+        from .couch_sql_diff import format_doc_diffs
+        statedb = open_state_db(domain, self.state_dir)
+        items = chain(
+            statedb.iter_doc_diffs(),
+            statedb.iter_doc_changes(),
+        )
+        try:
+            for doc_diffs in chunked(items, 100, list):
+                format_doc_diffs(doc_diffs)
+        except (KeyboardInterrupt, BrokenPipeError):
+            pass
 
     def do_rewind(self, domain):
         db = open_state_db(domain, self.state_dir)

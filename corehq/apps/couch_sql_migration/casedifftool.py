@@ -233,10 +233,12 @@ def iter_sql_cases_with_sorted_transactions(domain):
             yield from iter(set(case_id for case_id, in cursor.fetchall()))
 
 
-def format_diffs(json_diffs, changes=False):
+def format_diffs(json_diffs):
     lines = []
     for kind, doc_id, diffs in sorted(json_diffs, key=lambda x: x[1]):
-        lines.append(f"{kind} {doc_id} {diffs[0].reason if changes else ''}")
+        if not diffs:
+            continue
+        lines.append(f"{kind} {doc_id} {getattr(diffs[0], 'reason', '')}")
         for diff in sorted(diffs, key=lambda d: (d.diff_type, d.path)):
             if len(repr(diff.old_value) + repr(diff.new_value)) > 60:
                 lines.append(f"  {diff.diff_type} {list(diff.path)}")
