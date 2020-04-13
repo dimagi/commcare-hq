@@ -77,6 +77,8 @@ class TempPrevUCRTables(TempPrevTables):
             ('static-ccs_record_cases', get_table_name(DASHBOARD_DOMAIN, 'static-ccs_record_cases')),
             ('static-person_cases_v3', get_table_name(DASHBOARD_DOMAIN, 'static-person_cases_v3')),
             ('static-household_cases', get_table_name(DASHBOARD_DOMAIN, 'static-household_cases')),
+            ('static-child_tasks_cases', get_table_name(DASHBOARD_DOMAIN, 'static-child_tasks_cases')),
+            ('static-pregnant-tasks_cases', get_table_name(DASHBOARD_DOMAIN, 'static-pregnant-tasks_cases')),
         ]
         for table in table_list:
             self.drop_temp_tables(table[0])

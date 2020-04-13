@@ -6,7 +6,7 @@ from dateutil.relativedelta import relativedelta
 from corehq.apps.userreports.models import StaticDataSourceConfiguration, get_datasource_config
 from corehq.apps.userreports.util import get_table_name
 
-from custom.icds_reports.utils.aggregation_helpers import get_child_health_temp_tablename, transform_day_to_month, get_agg_child_temp_tablename, get_prev_table
+from custom.icds_reports.utils.aggregation_helpers import get_child_health_temp_tablename, transform_day_to_month, get_agg_child_temp_tablename, get_prev_table, current_month
 from custom.icds_reports.const import AGG_CCS_RECORD_CF_TABLE, AGG_THR_V2_TABLE, AGG_ADOLESCENT_GIRLS_REGISTRATION_TABLE
 from custom.icds_reports.utils.aggregation_helpers.distributed.base import BaseICDSAggregationDistributedHelper
 
@@ -37,7 +37,7 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
         return get_agg_child_temp_tablename()
 
     def get_table(self, table_id):
-        if self.month_start != transform_day_to_month(date.today()):
+        if not current_month(self.month_start):
             return get_prev_table(table_id)
         return get_table_name(self.domain, table_id)
 
@@ -451,7 +451,7 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
                 CASE WHEN GREATEST(adult_scale_available, adult_scale_usable, baby_scale_available,
                               flat_scale_available, baby_scale_usable,
                               infantometer_usable, stadiometer_usable, 0) > 0 THEN 1 ELSE 0 END as awc_with_gm_devices
-            FROM icds_dashboard_infrastructure_forms infra
+            FROM icds_dashboard_infrastructure_forms
             WHERE month = %(start_date)s
         ) ut
         WHERE ut.awc_id = agg_awc.awc_id
