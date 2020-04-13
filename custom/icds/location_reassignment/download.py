@@ -196,8 +196,7 @@ class Households(object):
         if rows:
             stream = io.BytesIO()
             headers = [[site_code, self.headers] for site_code in rows]
-            rows = [(k, v) for k, v in rows.items()]
-            export_raw(headers, rows, stream)
+            export_raw(headers, rows.items(), stream)
             stream.seek(0)
             return stream
 
