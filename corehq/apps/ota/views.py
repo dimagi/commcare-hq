@@ -34,6 +34,7 @@ from corehq.apps.app_manager.dbaccessors import (
     get_app_cached,
     get_latest_released_app_version,
 )
+from corehq.apps.app_manager.models import GlobalAppConfig
 from corehq.apps.app_manager.util import LatestAppInfo
 from corehq.apps.builds.utils import get_default_build_spec
 from corehq.apps.case_search.models import QueryMergeException
@@ -304,14 +305,16 @@ def heartbeat(request, domain, app_build_id):
     try:
         # mobile will send master app_id
         latest_app_info = LatestAppInfo(app_id, domain, build_profile_id)
+        config = GlobalAppConfig.by_app_id(domain, app_id)
     except (Http404, AssertionError):
         # If it's not a valid master app id, find it by talking to couch
         notify_exception(request, 'Received an invalid heartbeat request')
         app = get_app_cached(domain, app_build_id)
         latest_app_info = LatestAppInfo(app.master_id, domain, build_profile_id)
+        config = GlobalAppConfig.by_app_id(domain, app.master_id)
     else:
         info.update({
-            "latest_apk_version": latest_app_info.get_latest_apk_version(),
+            "latest_apk_version": config.get_latest_apk_version(),
             "latest_ccz_version": latest_app_info.get_latest_app_version(),
         })
         if not toggles.SKIP_UPDATING_USER_REPORTING_METADATA.enabled(domain):

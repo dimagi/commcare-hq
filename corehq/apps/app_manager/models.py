@@ -4045,7 +4045,7 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
     @property
     @memoized
     def global_app_config(self):
-        return GlobalAppConfig.for_app(self)
+        return GlobalAppConfig.by_app(self)
 
     def rename_lang(self, old_lang, new_lang):
         validate_lang(new_lang)
@@ -5750,19 +5750,41 @@ class GlobalAppConfig(models.Model):
     class Meta(object):
         unique_together = ('domain', 'app_id')
 
+    _app = None
+
     @classmethod
-    def for_app(cls, app):
+    def by_app(cls, app):
         model, created = cls.objects.get_or_create(app_id=app.master_id, domain=app.domain, defaults={
             'apk_version': LATEST_APK_VALUE,
             'app_version': LATEST_APP_VALUE,
         })
+        model._app = app
         return model
+
+    @classmethod
+    def by_app_id(cls, domain, app_id):
+        app = get_app(domain, app_id, latest=True, target='release')
+        assert app_id == app.master_id, "this class doesn't handle copy app ids"
+        return cls.by_app(app)
 
     def save(self, force_insert=False, force_update=False, using=DEFAULT_DB_ALIAS, update_fields=None):
         LatestAppInfo(self.app_id, self.domain).clear_caches()
         super().save(
             force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields
         )
+
+    # TODO: cache this (or perhaps just cache by_app_id...though it would be confusing to cache by_app_id and not by_app)
+    def get_latest_apk_version(self):
+        if self.apk_prompt == "off":
+            return {}
+        else:
+            configured_version = self.apk_version
+            if configured_version == LATEST_APK_VALUE:
+                value = get_default_build_spec().version
+            else:
+                value = BuildSpec.from_string(configured_version).version
+            force = self.apk_prompt == "forced"
+            return {"value": value, "force": force}
 
 
 class AppReleaseByLocation(models.Model):

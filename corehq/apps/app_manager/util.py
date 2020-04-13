@@ -586,23 +586,6 @@ class LatestAppInfo(object):
 
     def clear_caches(self):
         self.get_latest_app_version.clear(self)
-        self.get_latest_apk_version.clear(self)
-
-    @quickcache(vary_on=['self.app_id'])
-    def get_latest_apk_version(self):
-        from corehq.apps.app_manager.models import LATEST_APK_VALUE
-        from corehq.apps.builds.models import BuildSpec
-        from corehq.apps.builds.utils import get_default_build_spec
-        if self.app.global_app_config.apk_prompt == "off":
-            return {}
-        else:
-            configured_version = self.app.global_app_config.apk_version
-            if configured_version == LATEST_APK_VALUE:
-                value = get_default_build_spec().version
-            else:
-                value = BuildSpec.from_string(configured_version).version
-            force = self.app.global_app_config.apk_prompt == "forced"
-            return {"value": value, "force": force}
 
     @quickcache(vary_on=['self.app_id', 'self.build_profile_id'])
     def get_latest_app_version(self):

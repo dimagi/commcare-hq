@@ -5,6 +5,7 @@ from corehq.apps.app_manager.models import (
     AdvancedModule,
     Application,
     BuildProfile,
+    GlobalAppConfig,
     LatestEnabledBuildProfiles,
     Module,
 )
@@ -99,9 +100,9 @@ class TestLatestAppInfo(TestCase):
             app_config = self.app.global_app_config
             app_config.apk_prompt = config
             app_config.save()
-            latest_info = LatestAppInfo(self.app.master_id, self.domain)
+            config = GlobalAppConfig.by_app_id(self.domain, self.app.master_id)
             self.assertEqual(
-                latest_info.get_latest_apk_version(),
+                config.get_latest_apk_version(),
                 response
             )
 
@@ -119,9 +120,9 @@ class TestLatestAppInfo(TestCase):
             app_config = self.app.global_app_config
             app_config.apk_prompt = config
             app_config.save()
-            latest_info = LatestAppInfo(self.app.master_id, self.domain)
+            config = GlobalAppConfig.by_app_id(self.domain, self.app.master_id)
             self.assertEqual(
-                latest_info.get_latest_apk_version(),
+                config.get_latest_apk_version(),
                 response
             )
 
