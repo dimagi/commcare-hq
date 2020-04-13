@@ -124,7 +124,7 @@ class TestUcrAdapter(TestCase):
             'domain': DOMAIN,
             'startdate': date(2020, 1, 1).isoformat(),
             'enddate': date(2020, 4, 1).isoformat(),
-            'case_owners': '',
+            'owner_name': '',
             'recall_status': '',
         }).get_data()
         self.assertItemsEqual(food_names(expected), food_names(ucr_data))

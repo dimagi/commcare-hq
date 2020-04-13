@@ -171,7 +171,7 @@ class CaseOwnerData(SqlData):
 
 
 class CaseOwnersFilter(BaseSingleOptionFilter):
-    slug = 'case_owners'
+    slug = 'owner_name'
     label = _('Case Owners')
     default_text = _('All')
 

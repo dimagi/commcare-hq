@@ -408,14 +408,14 @@ def _calculate_total_grams(recipe, ingredients):
 class FoodData:
     """Generates the primary dataset for INDDEX reports.  See file docstring for more."""
     def __init__(self, domain, *, datespan,
-                 case_owners=None, recall_status=None, gap_type=None):
+                 owner_name=None, recall_status=None, gap_type=None):
         self.fixtures = FixtureAccessor(domain)
         self._gap_type = gap_type
         self._ucr = FoodCaseData({
             'domain': domain,
             'startdate': str(datespan.startdate),
             'enddate': str(datespan.enddate),
-            'case_owners': case_owners or '',
+            'owner_name': owner_name or '',
             'recall_status': recall_status or '',
         })
 
@@ -424,7 +424,7 @@ class FoodData:
         return cls(
             domain,
             datespan=request.datespan,
-            case_owners=request.GET.get('case_owners'),
+            owner_name=request.GET.get('owner_name'),
             recall_status=request.GET.get('recall_status'),
             gap_type=request.GET.get('gap_type'),
         )

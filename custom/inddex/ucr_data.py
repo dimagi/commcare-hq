@@ -27,8 +27,8 @@ class FoodCaseData(SqlData):
     @property
     def filters(self):
         filters = [GTE('recalled_date', 'startdate'), LTE('recalled_date', 'enddate')]
-        if self.config['case_owners']:
-            filters.append(EQ('owner_name', 'case_owners'))
+        if self.config['owner_name']:
+            filters.append(EQ('owner_name', 'owner_name'))
         if self.config['recall_status']:
             filters.append(EQ('recall_status', 'recall_status'))
         return filters
