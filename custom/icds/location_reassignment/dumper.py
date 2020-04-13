@@ -8,9 +8,11 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from custom.icds.location_reassignment.const import (
     AWC_CODE_COLUMN,
+    AWC_NAME_COLUMN,
     DUMPER_COLUMNS,
     EXTRACT_OPERATION,
     HOUSEHOLD_ID_COLUMN,
+    HOUSEHOLD_MEMBER_DETAILS_COLUMN,
     MERGE_OPERATION,
     MOVE_OPERATION,
     PERSON_CASE_TYPE,
@@ -151,8 +153,8 @@ class Dumper(object):
 
 class HouseHolds(object):
     valid_operations = [SPLIT_OPERATION, EXTRACT_OPERATION]
-    headers = ['Name of AWC', AWC_CODE_COLUMN, 'Name of Household', 'Date of Registration', 'Religion',
-               'Caste', 'APL/BPL', 'Number of Household Members', 'Household Members',
+    headers = [AWC_NAME_COLUMN, AWC_CODE_COLUMN, 'Name of Household', 'Date of Registration', 'Religion',
+               'Caste', 'APL/BPL', 'Number of Household Members', HOUSEHOLD_MEMBER_DETAILS_COLUMN,
                HOUSEHOLD_ID_COLUMN]
 
     def __init__(self, domain):
@@ -169,8 +171,8 @@ class HouseHolds(object):
                 rows.update(self._get_rows_for_location(operation, details))
         if rows:
             stream = io.BytesIO()
-            rows = [(k, v) for k, v in rows.items()]
             headers = [[site_code, self.headers] for site_code in rows]
+            rows = [(k, v) for k, v in rows.items()]
             export_raw(headers, rows, stream)
             stream.seek(0)
             return stream
@@ -202,7 +204,7 @@ class HouseHolds(object):
                 household_case.get_case_property('hh_caste'),
                 household_case.get_case_property('hh_bpl_apl'),
                 len(person_cases),
-                ",".join([
+                ", ".join([
                     "%s (%s/%s)" % (
                         case.name, case.get_case_property('age_at_reg'), case.get_case_property('sex'))
                     for case in person_cases
