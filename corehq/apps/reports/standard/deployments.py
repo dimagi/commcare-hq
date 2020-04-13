@@ -138,7 +138,7 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
         return self.sort_base + '.app_id'
 
     def get_sorting_block(self):
-        sort_prop_name = 'prop_name' if self.selected_app_id else 'alt_prop_name'
+        sort_prop_name = 'alt_prop_name'
         res = []
         #the NUMBER of cols sorting
         sort_cols = int(self.request.GET.get('iSortingCols', 0))
