@@ -524,6 +524,7 @@ class StateDB(DiffDB):
         - DocChanges - casediff w (case and stock kinds), main r/w
         - MissingDoc - casediff w, main r
         - NoActionCaseForm - main r/w
+        - PatchedCase - main r/w
         - ProblemForm - main r/w
         """
         def quote(value):
