@@ -175,7 +175,7 @@ class Download(object):
         return uniq_headers
 
 
-class HouseHolds(object):
+class Households(object):
     valid_operations = [SPLIT_OPERATION, EXTRACT_OPERATION]
     headers = [AWC_NAME_COLUMN, AWC_CODE_COLUMN, 'Name of Household', 'Date of Registration', 'Religion',
                'Caste', 'APL/BPL', 'Number of Household Members', HOUSEHOLD_MEMBER_DETAILS_COLUMN,

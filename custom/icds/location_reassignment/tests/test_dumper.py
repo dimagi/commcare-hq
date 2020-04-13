@@ -21,7 +21,7 @@ from custom.icds.location_reassignment.const import (
     SPLIT_OPERATION,
     TRANSITION_COLUMN,
 )
-from custom.icds.location_reassignment.download import HouseHolds
+from custom.icds.location_reassignment.download import Households
 from custom.icds.location_reassignment.dumper import Dumper
 
 Location = namedtuple('Location', ['location_id', 'site_code'])
@@ -130,7 +130,7 @@ class TestHouseholds(TestCase):
             EXTRACT_OPERATION: {'120': '119'}  # new: old
         }
 
-        filestream = HouseHolds(self.domain).dump(transitions)
+        filestream = Households(self.domain).dump(transitions)
 
         get_location_mock.assert_has_calls([
             call(domain='test', site_code='116'),

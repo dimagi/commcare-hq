@@ -8,7 +8,7 @@ from casexml.apps.case.mock import CaseBlock
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import SYSTEM_USER_ID, normalize_username
-from custom.icds.location_reassignment.download import HouseHolds
+from custom.icds.location_reassignment.download import Households
 from custom.icds.location_reassignment.exceptions import InvalidUserTransition
 from custom.icds.location_reassignment.processor import (
     HouseholdReassignmentProcessor,
@@ -90,7 +90,7 @@ def update_usercase(domain, old_username, new_username):
 @task
 def email_household_details(domain, transitions, user_email):
     try:
-        filestream = HouseHolds(domain).dump(transitions)
+        filestream = Households(domain).dump(transitions)
     except Exception as e:
         email = EmailMessage(
             subject='[{}] - Location Reassignment Household Dump Failed'.format(settings.SERVER_ENVIRONMENT),
