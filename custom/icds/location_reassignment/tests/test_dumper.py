@@ -21,7 +21,8 @@ from custom.icds.location_reassignment.const import (
     SPLIT_OPERATION,
     TRANSITION_COLUMN,
 )
-from custom.icds.location_reassignment.dumper import Dumper, HouseHolds
+from custom.icds.location_reassignment.download import HouseHolds
+from custom.icds.location_reassignment.dumper import Dumper
 
 Location = namedtuple('Location', ['location_id', 'site_code'])
 
@@ -108,9 +109,9 @@ class TestDumper(TestCase):
 class TestHouseholds(TestCase):
     domain = 'test'
 
-    @patch('custom.icds.location_reassignment.dumper.get_household_child_cases_by_owner')
+    @patch('custom.icds.location_reassignment.download.get_household_child_cases_by_owner')
     @patch('corehq.form_processor.interfaces.dbaccessors.CaseAccessors.get_case')
-    @patch('custom.icds.location_reassignment.dumper.get_household_case_ids')
+    @patch('custom.icds.location_reassignment.download.get_household_case_ids')
     @patch('corehq.apps.locations.models.SQLLocation.active_objects.get')
     def test_dump(self, get_location_mock, get_household_case_ids_mock, case_accessor_mock, child_cases_mock):
         location = Location(site_code='123', location_id='123654789')

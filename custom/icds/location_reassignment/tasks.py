@@ -8,7 +8,7 @@ from casexml.apps.case.mock import CaseBlock
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import SYSTEM_USER_ID, normalize_username
-from custom.icds.location_reassignment.dumper import HouseHolds
+from custom.icds.location_reassignment.download import HouseHolds
 from custom.icds.location_reassignment.exceptions import InvalidUserTransition
 from custom.icds.location_reassignment.processor import (
     HouseholdReassignmentProcessor,

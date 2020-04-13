@@ -7,20 +7,11 @@ from couchexport.export import export_raw
 from corehq.apps.locations.models import SQLLocation
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from custom.icds.location_reassignment.const import (
-    AWC_CODE_COLUMN,
-    AWC_NAME_COLUMN,
     DUMPER_COLUMNS,
     EXTRACT_OPERATION,
-    HOUSEHOLD_ID_COLUMN,
-    HOUSEHOLD_MEMBER_DETAILS_COLUMN,
     MERGE_OPERATION,
     MOVE_OPERATION,
-    PERSON_CASE_TYPE,
     SPLIT_OPERATION,
-)
-from custom.icds.location_reassignment.utils import (
-    get_household_case_ids,
-    get_household_child_cases_by_owner,
 )
 
 
@@ -149,66 +140,3 @@ class Dumper(object):
             for loc in
             SQLLocation.active_objects.filter(domain=self.domain, site_code__in=self.old_site_codes)
         }
-
-
-class HouseHolds(object):
-    valid_operations = [SPLIT_OPERATION, EXTRACT_OPERATION]
-    headers = [AWC_NAME_COLUMN, AWC_CODE_COLUMN, 'Name of Household', 'Date of Registration', 'Religion',
-               'Caste', 'APL/BPL', 'Number of Household Members', HOUSEHOLD_MEMBER_DETAILS_COLUMN,
-               HOUSEHOLD_ID_COLUMN]
-
-    def __init__(self, domain):
-        self.domain = domain
-
-    def dump(self, transitions):
-        """
-        :return: excel workbook with one tab with title as old location's site code,
-        which holds details all household cases assigned to it
-        """
-        rows = {}
-        for operation, details in transitions.items():
-            if operation in self.valid_operations:
-                rows.update(self._get_rows_for_location(operation, details))
-        if rows:
-            stream = io.BytesIO()
-            headers = [[site_code, self.headers] for site_code in rows]
-            rows = [(k, v) for k, v in rows.items()]
-            export_raw(headers, rows, stream)
-            stream.seek(0)
-            return stream
-
-    def _get_rows_for_location(self, operation, details):
-        rows = {}
-        if operation == SPLIT_OPERATION:
-            for site_code in details.keys():
-                rows[site_code] = self._build_rows(site_code)
-        elif operation == EXTRACT_OPERATION:
-            for site_code in details.values():
-                rows[site_code] = self._build_rows(site_code)
-        return rows
-
-    def _build_rows(self, site_code):
-        rows = []
-        location = SQLLocation.active_objects.get(domain=self.domain, site_code=site_code)
-        case_ids = get_household_case_ids(self.domain, location.location_id)
-        for case_id in case_ids:
-            household_case = CaseAccessors(self.domain).get_case(case_id)
-            person_cases = get_household_child_cases_by_owner(
-                self.domain, case_id, location.location_id, [PERSON_CASE_TYPE])
-            rows.append([
-                '',
-                '',
-                household_case.name,
-                household_case.get_case_property('hh_reg_date'),
-                household_case.get_case_property('hh_religion'),
-                household_case.get_case_property('hh_caste'),
-                household_case.get_case_property('hh_bpl_apl'),
-                len(person_cases),
-                ", ".join([
-                    "%s (%s/%s)" % (
-                        case.name, case.get_case_property('age_at_reg'), case.get_case_property('sex'))
-                    for case in person_cases
-                ]),
-                household_case.case_id
-            ])
-        return rows
