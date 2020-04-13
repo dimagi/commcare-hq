@@ -2,8 +2,10 @@ from collections import defaultdict
 
 from corehq.apps.locations.models import LocationType, SQLLocation
 from custom.icds.location_reassignment.const import (
+    AWC_CODE_COLUMN,
     CURRENT_SITE_CODE_COLUMN,
     EXTRACT_OPERATION,
+    HOUSEHOLD_ID_COLUMN,
     MERGE_OPERATION,
     MOVE_OPERATION,
     NEW_LGD_CODE,
@@ -67,7 +69,7 @@ class Parser(object):
                     continue
                 self._parse_row(row, location_type_code)
         self.validate()
-        return self.valid_transitions, self.errors
+        return self.errors
 
     def _parse_row(self, row, location_type_code):
         operation = row.get(OPERATION_COLUMN)
@@ -151,3 +153,36 @@ class Parser(object):
                 self.errors.append("Location %s is getting archived but the following descendants are not %s" % (
                     location.site_code, ",".join(missing_site_codes)
                 ))
+
+
+class HouseholdReassignmentParser(object):
+    def __init__(self, domain, workbook):
+        self.domain = domain
+        self.workbook = workbook
+        self.reassignments = {}  # household id mapped to new awc code
+
+    def parse(self):
+        errors = []
+        site_codes = set()
+        for worksheet in self.workbook.worksheets:
+            location_site_code = worksheet.title
+            site_codes.add(location_site_code)
+            for row in worksheet:
+                household_id = row.get(HOUSEHOLD_ID_COLUMN)
+                new_awc_code = row.get(AWC_CODE_COLUMN)
+                if not household_id:
+                    errors.append("Missing Household ID")
+                if not household_id and not new_awc_code:
+                    errors.append("Missing New AWC Code")
+                site_codes.add(new_awc_code)
+                self.reassignments[household_id] = {
+                    'old_site_code': location_site_code,
+                    'new_site_code': new_awc_code
+                }
+        locations = SQLLocation.active_objects.filter(site_codes)
+        if len(locations) != len(site_codes):
+            site_codes_found = set([l.site_code for l in locations])
+            errors.append(
+                "Missing site codes %s" % ",".join(site_codes - site_codes_found)
+            )
+        return errors

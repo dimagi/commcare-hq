@@ -7,8 +7,10 @@ from couchexport.export import export_raw
 from corehq.apps.locations.models import SQLLocation
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from custom.icds.location_reassignment.const import (
+    AWC_CODE_COLUMN,
     DUMPER_COLUMNS,
     EXTRACT_OPERATION,
+    HOUSEHOLD_ID_COLUMN,
     MERGE_OPERATION,
     MOVE_OPERATION,
     PERSON_CASE_TYPE,
@@ -149,9 +151,9 @@ class Dumper(object):
 
 class HouseHolds(object):
     valid_operations = [SPLIT_OPERATION, EXTRACT_OPERATION]
-    headers = ['Name of AWC', 'AWC Code', 'Name of Household', 'Date of Registration', 'Religion',
+    headers = ['Name of AWC', AWC_CODE_COLUMN, 'Name of Household', 'Date of Registration', 'Religion',
                'Caste', 'APL/BPL', 'Number of Household Members', 'Household Members',
-               'Household ID in ICDS-CAS (Do Not Modify)']
+               HOUSEHOLD_ID_COLUMN]
 
     def __init__(self, domain):
         self.domain = domain

@@ -67,9 +67,10 @@ class TestParser(TestCase):
             export_raw(self.headers, self.rows, file, format=Format.XLS_2007)
             file.seek(0)
             workbook = get_workbook(file)
-            valid_transitions, errors = Parser(self.domain, workbook).parse()
-            self.assertEqual(valid_transitions['awc']['Move'], {'131': '112'})
-            self.assertEqual(valid_transitions['supervisor']['Move'], {'13': '12'})
+            parser = Parser(self.domain, workbook)
+            errors = parser.parse()
+            self.assertEqual(parser.valid_transitions['awc']['Move'], {'131': '112'})
+            self.assertEqual(parser.valid_transitions['supervisor']['Move'], {'13': '12'})
             self.assertEqual(errors, [
                 "No change in location code for Extract, got old: '111' and new: '111'",
                 "Missing location code for Split, got old: '11' and new: ''",

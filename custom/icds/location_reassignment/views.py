@@ -19,7 +19,10 @@ from custom.icds.location_reassignment.dumper import Dumper
 from custom.icds.location_reassignment.forms import (
     LocationReassignmentRequestForm,
 )
-from custom.icds.location_reassignment.parser import Parser
+from custom.icds.location_reassignment.parser import (
+    HouseholdReassignmentParser,
+    Parser,
+)
 from custom.icds.location_reassignment.tasks import (
     process_location_reassignment,
     email_household_details)
@@ -58,19 +61,24 @@ class LocationReassignmentView(BaseLocationView):
         if errors:
             [messages.error(request, error) for error in errors]
             return self.get(request, *args, **kwargs)
-        parser = Parser(self.domain, workbook)
-        transitions, errors = parser.parse()
+        action_type = request.POST.get('action_type')
+        parser = self._get_parser(action_type, workbook)
+        errors = parser.parse()
         if errors:
             [messages.error(request, error) for error in errors]
         else:
-            action_type = request.POST.get('action_type')
             if action_type == LocationReassignmentRequestForm.EMAIL_HOUSEHOLDS:
                 self._process_request_for_email_households(parser, request)
             elif action_type == LocationReassignmentRequestForm.UPDATE:
                 self._process_request_for_update(parser, request)
             else:
-                return self._generate_summary_response(transitions)
+                return self._generate_summary_response(parser.valid_transitions)
         return self.get(request, *args, **kwargs)
+
+    def _get_parser(self, action_type, workbook):
+        if action_type == LocationReassignmentRequestForm.REASSIGN_HOUSEHOLDS:
+            return HouseholdReassignmentParser(self.domain, workbook)
+        return Parser(self.domain, workbook)
 
     def _get_workbook(self, request):
         try:

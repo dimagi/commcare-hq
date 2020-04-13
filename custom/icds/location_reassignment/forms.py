@@ -12,9 +12,11 @@ class LocationReassignmentRequestForm(BulkUploadForm):
     VALIDATE = "validate"
     EMAIL_HOUSEHOLDS = "email_households"
     UPDATE = "update"
+    REASSIGN_HOUSEHOLDS = "reassign_households"
     ACTION_TYPE_CHOICES = [(VALIDATE, ugettext("Validate")),
                            (EMAIL_HOUSEHOLDS, ugettext("Email Households")),
-                           (UPDATE, ugettext("Perform Reassignment"))]
+                           (UPDATE, ugettext("Perform Reassignment")),
+                           (REASSIGN_HOUSEHOLDS, ugettext("Reassign Households"))]
     action_type = forms.ChoiceField(choices=ACTION_TYPE_CHOICES,
                                     initial=VALIDATE,
                                     widget=SelectToggle(choices=ACTION_TYPE_CHOICES))
