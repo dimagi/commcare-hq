@@ -71,6 +71,15 @@ def _es_hosts():
     return hosts
 
 
+def debug_assert(es):
+    from elasticsearch2.exceptions import NotFoundError
+    try:
+        alias_info = es.indices.get_alias('test_hqusers')
+        assert 'test_hqusers' not in alias_info, alias_info
+    except NotFoundError:
+        pass
+
+
 @memoized
 def get_es_new():
     """
@@ -79,8 +88,7 @@ def get_es_new():
     """
     hosts = _es_hosts()
     es = Elasticsearch(hosts, timeout=settings.ES_SEARCH_TIMEOUT, serializer=ESJSONSerializer())
-    alias_info = es.indices.get_alias('test_hqusers')
-    assert 'test_hqusers' not in alias_info
+    debug_assert(es)
     return es
 
 
@@ -99,8 +107,7 @@ def get_es_export():
         timeout=300,
         serializer=ESJSONSerializer(),
     )
-    alias_info = es.indices.get_alias('test_hqusers')
-    assert 'test_hqusers' not in alias_info
+    debug_assert(es)
     return es
 
 
