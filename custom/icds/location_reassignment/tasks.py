@@ -10,7 +10,10 @@ from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import SYSTEM_USER_ID, normalize_username
 from custom.icds.location_reassignment.dumper import HouseHolds
 from custom.icds.location_reassignment.exceptions import InvalidUserTransition
-from custom.icds.location_reassignment.processor import Processor
+from custom.icds.location_reassignment.processor import (
+    HouseholdReassignmentProcessor,
+    Processor,
+)
 from custom.icds.location_reassignment.utils import (
     get_household_case_ids,
     get_supervisor_id,
@@ -110,4 +113,29 @@ def email_household_details(domain, transitions, user_email):
             email.attach(filename="Households.xlsx", content=filestream.read())
         else:
             email.body += "There were no house hold details found."
+        email.send()
+
+
+@task
+def process_households_reassignment(domain, reassignments, user_email):
+    try:
+        HouseholdReassignmentProcessor(domain, reassignments).process()
+    except Exception as e:
+        email = EmailMessage(
+            subject='[{}] - Household Reassignment Failed'.format(settings.SERVER_ENVIRONMENT),
+            body="The request could not be completed. Something went wrong. "
+                 "Error raised : {}. "
+                 "Please report an issue if needed.".format(e),
+            to=[user_email],
+            from_email=settings.DEFAULT_FROM_EMAIL
+        )
+        email.send()
+        raise e
+    else:
+        email = EmailMessage(
+            subject='[{}] - Household Reassignment Completed'.format(settings.SERVER_ENVIRONMENT),
+            body="The request has been successfully completed.",
+            to=[user_email],
+            from_email=settings.DEFAULT_FROM_EMAIL
+        )
         email.send()

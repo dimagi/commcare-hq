@@ -1,6 +1,8 @@
 from django.db import transaction
 from django.utils.functional import cached_property
 
+from memoized import memoized
+
 from corehq.apps.locations.models import LocationType, SQLLocation
 from custom.icds.location_reassignment.const import SPLIT_OPERATION
 from custom.icds.location_reassignment.exceptions import (
@@ -9,6 +11,7 @@ from custom.icds.location_reassignment.exceptions import (
 )
 from custom.icds.location_reassignment.utils import (
     deprecate_locations,
+    get_supervisor_id,
 )
 
 
@@ -114,3 +117,32 @@ class Processor(object):
         from custom.icds.location_reassignment.tasks import update_usercase
         for old_username, new_username in self.user_transitions.items():
             update_usercase.delay(self.domain, old_username, new_username)
+
+
+class HouseholdReassignmentProcessor():
+    def __init__(self, domain, reassignments):
+        self.domain = domain
+        self.reassignments = reassignments
+
+    def process(self):
+        from custom.icds.location_reassignment.tasks import reassign_household_case
+        old_site_codes = set()
+        new_site_codes = set()
+        for household_id, details in self.reassignments:
+            old_site_codes.add(details['old_site_code'])
+            new_site_codes.add(details['new_site_code'])
+        old_locations_by_site_code = {
+            loc.site_code: loc
+            for loc in SQLLocation.active_objects.filter(site_code__in=old_site_codes)}
+        new_locations_by_site_code = {
+            loc.site_code: loc
+            for loc in SQLLocation.active_objects.filter(site_code__in=new_site_codes)}
+        for household_id, details in self.reassignments:
+            old_owner_id = old_locations_by_site_code[details['old_site_code']].location_id
+            new_owner_id = new_locations_by_site_code[details['new_site_code']].location_id
+            supervisor_id = self._supervisor_id(old_owner_id)
+            reassign_household_case(self.domain, household_id, old_owner_id, new_owner_id, supervisor_id)
+
+    @memoized
+    def _supervisor_id(self, location_id):
+        return get_supervisor_id(self.domain, location_id)

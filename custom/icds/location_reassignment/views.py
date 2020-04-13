@@ -24,8 +24,10 @@ from custom.icds.location_reassignment.parser import (
     Parser,
 )
 from custom.icds.location_reassignment.tasks import (
+    email_household_details,
+    process_households_reassignment,
     process_location_reassignment,
-    email_household_details)
+)
 
 
 @method_decorator([toggles.LOCATION_REASSIGNMENT.required_decorator()], name='dispatch')
@@ -71,6 +73,8 @@ class LocationReassignmentView(BaseLocationView):
                 self._process_request_for_email_households(parser, request)
             elif action_type == LocationReassignmentRequestForm.UPDATE:
                 self._process_request_for_update(parser, request)
+            elif action_type == LocationReassignmentRequestForm.REASSIGN_HOUSEHOLDS:
+                self._process_request_for_household_reassignment(parser, request)
             else:
                 return self._generate_summary_response(parser.valid_transitions)
         return self.get(request, *args, **kwargs)
@@ -121,6 +125,13 @@ class LocationReassignmentView(BaseLocationView):
             self.domain, parser.valid_transitions, parser.new_location_details,
             parser.user_transitions, list(parser.requested_transitions.keys()),
             request.user.email
+        )
+        messages.success(request, _(
+            "Your request has been submitted. We will notify you via email once completed."))
+
+    def _process_request_for_household_reassignment(self, parser, request):
+        process_households_reassignment.delay(
+            self.domain, parser.reassignments, request.user.email
         )
         messages.success(request, _(
             "Your request has been submitted. We will notify you via email once completed."))
