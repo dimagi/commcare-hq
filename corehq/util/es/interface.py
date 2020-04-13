@@ -77,6 +77,8 @@ class AbstractElasticsearchInterface(metaclass=abc.ABCMeta):
         self.es.delete(index_alias, doc_type, doc_id)
 
     def bulk_ops(self, actions, stats_only=False, **kwargs):
+        from corehq.elastic import debug_assert
+        debug_assert(self.es)
         for action in actions:
             if '_source' in action:
                 action['_source'] = self._without_id_field(action['_source'])
@@ -89,6 +91,8 @@ class AbstractElasticsearchInterface(metaclass=abc.ABCMeta):
         return results
 
     def scroll(self, scroll_id=None, body=None, params=None, **kwargs):
+        from corehq.elastic import debug_assert
+        debug_assert(self.es)
         results = self.es.scroll(scroll_id, body, params=params or {}, **kwargs)
         self._fix_hits_in_results(results)
         return results
