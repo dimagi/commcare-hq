@@ -92,11 +92,11 @@ class Parser(object):
             return
         self._note_transition(operation, location_type_code, new_site_code, old_site_code)
         if new_site_code in self.new_location_details[location_type_code]:
-            details = self.new_location_details[location_type_code]
+            details = self.new_location_details[location_type_code][new_site_code]
             if (details['name'] != row.get(NEW_NAME)
                     or details['parent_site_code'] != row.get(NEW_PARENT_SITE_CODE)
                     or details['lgd_code'] != row.get(NEW_LGD_CODE)):
-                self.errors.append("Creating new location %s with different information" % new_site_code)
+                self.errors.append("New location %s reused with different information" % new_site_code)
         else:
             self.new_location_details[location_type_code][new_site_code] = {
                 'name': row.get(NEW_NAME),
