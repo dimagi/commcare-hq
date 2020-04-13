@@ -82,7 +82,9 @@ class AbstractElasticsearchInterface(metaclass=abc.ABCMeta):
         for action in actions:
             if '_source' in action:
                 action['_source'] = self._without_id_field(action['_source'])
-        return bulk(self.es, actions, stats_only=stats_only, **kwargs)
+        ret = bulk(self.es, actions, stats_only=stats_only, **kwargs)
+        debug_assert(self.es)
+        return ret
 
     def search(self, index_alias=None, doc_type=None, body=None, params=None, **kwargs):
         self._verify_is_alias(index_alias)
