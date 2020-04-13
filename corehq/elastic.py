@@ -208,10 +208,11 @@ def run_query(index_name, q, debug_host=None, es_instance_alias=ES_DEFAULT_INSTA
     es_interface = ElasticsearchInterface(es_instance)
 
     es_meta = ES_META[index_name]
-
+    debug_assert(es_instance)
     try:
         results = es_interface.search(es_meta.alias, es_meta.type, body=q)
         report_and_fail_on_shard_failures(results)
+        debug_assert(es_instance)
         return results
     except ElasticsearchException as e:
         raise ESError(e)
