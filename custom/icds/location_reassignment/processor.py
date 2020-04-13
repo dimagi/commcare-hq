@@ -126,7 +126,7 @@ class HouseholdReassignmentProcessor():
         self.reassignments = reassignments
 
     def process(self):
-        from custom.icds.location_reassignment.tasks import reassign_household_case
+        from custom.icds.location_reassignment.utils import reassign_household_case
         old_site_codes = set()
         new_site_codes = set()
         for household_id, details in self.reassignments.items():
