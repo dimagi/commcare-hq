@@ -669,7 +669,7 @@ class DiffTestCases(SimpleTestCase):
             "case_id": "eca7a8",
             "actions": [{"action_type": "create", "user_id": "somebody"}],
             "doc_type": "CommCareCase",
-            "opened_by": "",
+            "opened_by": None,
             "user_id": "",
         }
         sql_case = {
@@ -681,7 +681,22 @@ class DiffTestCases(SimpleTestCase):
         }
         diffs = json_diff(couch_case, sql_case, track_list_indices=False)
         filtered = filter_case_diffs(couch_case, sql_case, diffs)
-        self.assertEqual(filtered, [
-            FormJsonDiff(diff_type='diff', path=('opened_by',), old_value='', new_value='somebody'),
-            FormJsonDiff(diff_type='diff', path=('user_id',), old_value='', new_value='somebody'),
-        ])
+        self.assertEqual(filtered, [])
+
+    def test_weird_user_id_attribute(self):
+        couch_case = {
+            "case_id": "eca7a8",
+            "actions": [{"action_type": "create", "user_id": "person-2"}],
+            "doc_type": "CommCareCase",
+            "@user_id": "person-1",
+            "user_id": "person-2",
+        }
+        sql_case = {
+            "case_id": "eca7a8",
+            "actions": [{"action_type": "create", "user_id": "person-2"}],
+            "doc_type": "CommCareCase",
+            "user_id": "person-2",
+        }
+        diffs = json_diff(couch_case, sql_case, track_list_indices=False)
+        filtered = filter_case_diffs(couch_case, sql_case, diffs)
+        self.assertEqual(filtered, [])
