@@ -13,8 +13,7 @@ hqDefine('hqadmin/js/raw_doc', [
         $("#doc-form").koApplyBindings(viewModel);
 
         var $element = $("#doc-element"),
-            options = {maxLines: Infinity},
             doc = ($element.length ? JSON.stringify($element.data('doc'), null, 4) : null);
-        baseAce.initAceEditor($element.get(0), 'ace/mode/json', options, doc);
+        baseAce.initAceEditor($element.get(0), 'ace/mode/json', {}, doc);
     });
 });
