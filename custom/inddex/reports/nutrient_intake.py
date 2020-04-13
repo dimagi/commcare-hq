@@ -27,23 +27,6 @@ class NutrientIntakeReport(MultiTabularReport):
         ]
 
     @property
-    def report_config(self):
-        report_config = {}  # TODO port to FoodData.from_request
-        request_slugs = [
-            'gender',
-            'age_range',
-            'pregnant',
-            'breastfeeding',
-            'urban_rural',
-            'supplements',
-            'recall_status',
-            'fao_who_gift_food_group_description',
-        ]
-        report_config.update({slug: self.request.GET.get(slug, '')
-                              for slug in request_slugs})
-        return report_config
-
-    @property
     def data_providers(self):
         food_data = FoodData.from_request(self.domain, self.request)
         return [

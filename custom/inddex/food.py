@@ -396,7 +396,7 @@ def _calculate_total_grams(recipe, ingredients):
 
 class FoodData:
     """Generates the primary dataset for INDDEX reports.  See file docstring for more."""
-    IN_MEMORY_FILTERS = ['gap_type']
+    IN_MEMORY_FILTERS = ['gap_type', 'fao_who_gift_food_group_description']
     FILTERABLE_COLUMNS = IN_MEMORY_FILTERS + FoodCaseData.FILTERABLE_COLUMNS
 
     def __init__(self, domain, *, datespan, filter_selections):
@@ -404,7 +404,9 @@ class FoodData:
             raise AssertionError(f"{k} is not a valid filter slug")
 
         self.fixtures = FixtureAccessor(domain)
-        self._gap_type = filter_selections.get('gap_type')
+        self._in_memory_filter_selections = {
+            filter_selections[slug] for slug in self.IN_MEMORY_FILTERS if slug in filter_selections
+        }
         self._ucr = FoodCaseData({
             'domain': domain,
             'startdate': str(datespan.startdate),
@@ -423,10 +425,16 @@ class FoodData:
 
     def _matches_in_memory_filters(self, row):
         # If a gap type is specified, show only rows with gaps of that type
-        if self._gap_type == 'conv_factor':
-            return row.conv_factor_gap_code != ConvFactorGaps.AVAILABLE
-        elif self._gap_type == 'fct':
-            return row.fct_gap_code != FctGaps.AVAILABLE
+        gap_type = self._in_memory_filter_selections.get('gap_type')
+        if gap_type == 'conv_factor' and row.conv_factor_gap_code == ConvFactorGaps.AVAILABLE:
+            return False
+        if gap_type == 'fct' and row.fct_gap_code == FctGaps.AVAILABLE:
+            return False
+
+        food_group = self._in_memory_filter_selections.get('fao_who_gift_food_group_description')
+        if food_group and food_group != row.fao_who_gift_food_group_description:
+            return False
+
         return True
 
     @property
