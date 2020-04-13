@@ -1,0 +1,44 @@
+{% extends "hqwebapp/base_section.html" %}
+{% load i18n %}
+{% load hq_shared_tags %}
+
+{% block title %}
+  {% trans "WhatsApp Templates" %}
+{% endblock %}
+
+
+{% block page_content %}
+  <h2>{% trans "WhatsApp Templates" %}</h2>
+  <hr/>
+  <table class="table table-bordered table-striped">
+    <thead>
+      <tr>
+        <th>{% trans "Template Name" %}</th>
+        <th>{% trans "Body" %}</th>
+        <th>{% trans "Category" %}</th>
+        <th>{% trans "Status" %}</th>
+        <th>{% trans "Template ID" %}</th>
+        <th>{% trans "Language" %}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for template in wa_templates %}
+        <tr>
+          <td>{{ template.name }}</td>
+          <td>
+            {% for component in template.components %}
+              {% if component.type == 'BODY' %}
+                {{ component.text }}
+              {% endif %}
+            {% endfor %}
+          </td>
+          <td>{{ template.category }}</td>
+          <td>{{ template.status }}</td>
+          <td>{{ template.id }}</td>
+          <td>{{ template.language }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+{% endblock %}

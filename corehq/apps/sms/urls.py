@@ -18,6 +18,7 @@ from corehq.apps.sms.views import (
     SMSSettingsView,
     SubscribeSMSView,
     TestSMSMessageView,
+    WhatsAppTemplatesView,
     api_send_sms,
     chat,
     chat_contact_list,
@@ -62,6 +63,7 @@ urlpatterns = [
     url(r'^app_info/(?P<app_id>[\w-]+)/$', InvitationAppInfoView.as_view(),
         name=InvitationAppInfoView.urlname),
     url(r'^telerivet/', include(telerivet_urls)),
+    url(r'^whatsapp_templates/$', WhatsAppTemplatesView.as_view(), name=WhatsAppTemplatesView.urlname),
 ]
 
 

@@ -1,7 +1,7 @@
 from corehq.apps.sms.models import SQLSMSBackend
 from corehq.apps.sms.util import clean_phone_number
 from corehq.messaging.smsbackends.turn.forms import TurnBackendForm
-from turn import TurnClient
+from turn import TurnClient, TurnBusinessManagementClient
 from turn.exceptions import WhatsAppContactNotFound
 
 
@@ -45,3 +45,8 @@ class SQLTurnWhatsAppBackend(SQLSMSBackend):
             message = client.messages.send_text(wa_id, msg.text)
         except:                 # TODO: Add message exceptions to package
             raise
+
+    def get_all_templates(self):
+        config = self.config
+        client = TurnBusinessManagementClient(config.business_id, config.business_auth_token)
+        return client.message_templates.get_message_templates()
