@@ -10,6 +10,7 @@ class NutrientIntakeReport(MultiTabularReport):
     name = 'Output 3 - Disaggregated Intake Data by Food and Aggregated Daily Intake Data by Respondent'
     slug = 'nutrient_intake'
     export_only = True
+    is_released = False
 
     @property
     def fields(self):
