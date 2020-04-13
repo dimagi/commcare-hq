@@ -9,9 +9,18 @@ from couchexport.models import Format
 
 from corehq.util.workbook_json.excel import get_workbook
 from custom.icds.location_reassignment.const import (
+    CURRENT_LGD_CODE,
+    CURRENT_NAME,
+    CURRENT_PARENT_NAME,
+    CURRENT_PARENT_SITE_CODE,
     CURRENT_SITE_CODE_COLUMN,
+    NEW_LGD_CODE,
+    NEW_NAME,
+    NEW_PARENT_SITE_CODE,
     NEW_SITE_CODE_COLUMN,
+    NEW_USERNAME_COLUMN,
     OPERATION_COLUMN,
+    USERNAME_COLUMN,
 )
 from custom.icds.location_reassignment.parser import Parser
 
@@ -22,16 +31,16 @@ class TestParser(TestCase):
     domain = 'test'
     headers = (
         ('awc',
-         ('name', 'new_name', CURRENT_SITE_CODE_COLUMN, NEW_SITE_CODE_COLUMN, 'lgd_code',
-          'new_lgd_code', 'parent_name', 'parent_site_code', 'new_parent_site_code',
-          'username', 'new_username', OPERATION_COLUMN)),
+         (CURRENT_NAME, NEW_NAME, CURRENT_SITE_CODE_COLUMN, NEW_SITE_CODE_COLUMN, CURRENT_LGD_CODE,
+          NEW_LGD_CODE, CURRENT_PARENT_NAME, CURRENT_PARENT_SITE_CODE, NEW_PARENT_SITE_CODE,
+          USERNAME_COLUMN, NEW_USERNAME_COLUMN, OPERATION_COLUMN)),
         ('supervisor',
-         ('name', 'new_name', CURRENT_SITE_CODE_COLUMN, NEW_SITE_CODE_COLUMN, 'lgd_code',
-          'new_lgd_code', 'parent_name', 'parent_site_code', 'new_parent_site_code',
-          'username', 'new_username', OPERATION_COLUMN)),
+         (CURRENT_NAME, NEW_NAME, CURRENT_SITE_CODE_COLUMN, NEW_SITE_CODE_COLUMN, CURRENT_LGD_CODE,
+          NEW_LGD_CODE, CURRENT_PARENT_NAME, CURRENT_PARENT_SITE_CODE, NEW_PARENT_SITE_CODE,
+          USERNAME_COLUMN, NEW_USERNAME_COLUMN, OPERATION_COLUMN)),
         ('state',
-         ('name', 'new_name', CURRENT_SITE_CODE_COLUMN, NEW_SITE_CODE_COLUMN, 'lgd_code',
-          'new_lgd_code', 'username', 'new_username', OPERATION_COLUMN)),
+         (CURRENT_NAME, NEW_NAME, CURRENT_SITE_CODE_COLUMN, NEW_SITE_CODE_COLUMN, CURRENT_LGD_CODE,
+          NEW_LGD_CODE, USERNAME_COLUMN, NEW_USERNAME_COLUMN, OPERATION_COLUMN)),
     )
     rows = (
         ('awc', (
