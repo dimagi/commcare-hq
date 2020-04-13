@@ -171,9 +171,11 @@ class HouseholdReassignmentParser(object):
                 household_id = row.get(HOUSEHOLD_ID_COLUMN)
                 new_awc_code = row.get(AWC_CODE_COLUMN)
                 if not household_id:
-                    errors.append("Missing Household ID")
-                if not household_id and not new_awc_code:
-                    errors.append("Missing New AWC Code")
+                    errors.append("Missing Household ID for %s" % location_site_code)
+                    continue
+                if not new_awc_code:
+                    errors.append("Missing New AWC Code for household ID %s" % household_id)
+                    continue
                 site_codes.add(new_awc_code)
                 self.reassignments[household_id] = {
                     'old_site_code': location_site_code,
