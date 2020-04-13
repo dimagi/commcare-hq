@@ -28,6 +28,7 @@ from ..fixtures import FixtureAccessor
 from ..food import INDICATORS, FoodData
 from ..reports.gaps_summary import get_gaps_data
 from ..reports.master_data import MasterData
+from ..reports.nutrient_intake import DailyIntakeData
 from ..ucr_data import FoodCaseData
 
 DOMAIN = 'inddex-reports-test'
@@ -225,3 +226,7 @@ class TestInddexReports(TestCase):
 
         self.assert_reports_match('conv_factor_gaps_summary.csv', cf_gaps_data)
         self.assert_reports_match('fct_gaps_summary.csv', fct_gaps_data)
+
+    def test_daily_intake(self):
+        data = DailyIntakeData(get_food_data())
+        self.assert_reports_match('aggr_daily_intake_by_rspndnt.csv', data)
