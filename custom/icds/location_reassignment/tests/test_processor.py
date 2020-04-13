@@ -29,7 +29,7 @@ class TestProcessor(TestCase):
     def setUpClass(cls):
         super().setUpClass()
         cls.location_131 = Location(location_id='13199', site_code='131')
-        cls.location_112 = Location(location_id='11299',site_code='112')
+        cls.location_112 = Location(location_id='11299', site_code='112')
         cls.location_13 = Location(location_id='1399', site_code='13')
         cls.location_12 = Location(location_id='1299', site_code='12')
         cls.all_locations = [cls.location_12, cls.location_13, cls.location_112, cls.location_131]
