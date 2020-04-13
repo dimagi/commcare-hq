@@ -8,7 +8,6 @@ from openpyxl import Workbook
 from openpyxl.worksheet.datavalidation import DataValidation
 
 from corehq.apps.es import UserES
-from corehq.apps.locations.models import SQLLocation
 from custom.icds.location_reassignment.const import (
     CURRENT_LGD_CODE,
     CURRENT_NAME,
@@ -28,14 +27,14 @@ from custom.icds.location_reassignment.const import (
 
 
 class Download(object):
-    def __init__(self, domain, location_id):
+    def __init__(self, location):
         """
         Generates an Excel file stream
         With details of all locations related to a location
         and users assigned to these locations.
         Each sheet corresponds to a location type.
         """
-        self.location = SQLLocation.active_objects.get(location_id=location_id, domain=domain)
+        self.location = location
 
     def dump(self):
         self._init_location_details()

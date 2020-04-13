@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from django.contrib import messages
 from django.http import HttpResponse, HttpResponseRedirect
 from django.urls import reverse
@@ -8,9 +10,10 @@ from django.views.decorators.http import require_GET
 
 from corehq import toggles
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
-from corehq.apps.locations.models import LocationType
+from corehq.apps.locations.models import LocationType, SQLLocation
 from corehq.apps.locations.permissions import require_can_edit_locations
 from corehq.apps.locations.views import BaseLocationView, LocationsListView
+from corehq.const import USER_DATETIME_FORMAT
 from corehq.util.files import safe_filename_header
 from corehq.util.workbook_json.excel import WorkbookJSONError, get_workbook
 from custom.icds.location_reassignment.download import Download
@@ -109,8 +112,10 @@ def download_location_reassignment_template(request, domain):
         messages.error(request, _("Please select a location."))
         return HttpResponseRedirect(reverse(LocationReassignmentView.urlname, args=[domain]))
 
-    response_file = Download(domain, location_id).dump()
+    location = SQLLocation.active_objects.get(location_id=location_id, domain=domain)
+    response_file = Download(location).dump()
     response = HttpResponse(response_file, content_type="text/html; charset=utf-8")
-    filename = '%s Location Reassignment Request Template' % domain
+    creation_time = datetime.utcnow().strftime(USER_DATETIME_FORMAT)
+    filename = f"[{domain}] {location.name} Location Reassignment Request Template {creation_time}"
     response['Content-Disposition'] = safe_filename_header(filename, 'xlsx')
     return response
