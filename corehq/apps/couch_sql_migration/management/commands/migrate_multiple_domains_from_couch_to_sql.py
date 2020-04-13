@@ -48,7 +48,6 @@ class Command(BaseCommand):
     def handle(self, path, state_dir, **options):
         self.strict = options['strict']
         self.live_migrate = options["live"]
-        setup_logging(state_dir, "multiple")
 
         if not os.path.isfile(path):
             raise CommandError("Couldn't locate domain list: {}".format(path))
@@ -59,12 +58,13 @@ class Command(BaseCommand):
         failed = []
         log.info("Processing {} domains\n".format(len(domains)))
         for domain in domains:
+            setup_logging(state_dir, f"migrate-{domain}")
             try:
                 success, reason = self.migrate_domain(domain, state_dir)
                 if not success:
                     failed.append((domain, reason))
             except CleanBreak:
-                log.info("stopped by operator")
+                failed.append((domain, "stopped by operator"))
                 break
             except Exception as err:
                 log.exception("Error migrating domain %s", domain)

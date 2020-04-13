@@ -113,9 +113,11 @@ log = logging.getLogger(__name__)
 CASE_DOC_TYPES = ['CommCareCase', 'CommCareCase-Deleted', ]
 
 UNPROCESSED_DOC_TYPES = list(all_known_formlike_doc_types() - {'XFormInstance'})
+_old_handler = None
 
 
 def setup_logging(state_dir, slug, debug=False):
+    global _old_handler
     if debug:
         assert log.level <= logging.DEBUG, log.level
         logging.root.setLevel(logging.DEBUG)
@@ -133,6 +135,9 @@ def setup_logging(state_dir, slug, debug=False):
     handler = logging.FileHandler(log_file)
     handler.setFormatter(formatter)
     logging.root.addHandler(handler)
+    if _old_handler is not None:
+        logging.root.removeHandler(_old_handler)
+    _old_handler = handler
     log.info("command: %s", " ".join(sys.argv))
 
 
