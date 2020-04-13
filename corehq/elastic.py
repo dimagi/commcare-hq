@@ -78,7 +78,10 @@ def get_es_new():
     Returns an elasticsearch.Elasticsearch instance.
     """
     hosts = _es_hosts()
-    return Elasticsearch(hosts, timeout=settings.ES_SEARCH_TIMEOUT, serializer=ESJSONSerializer())
+    es = Elasticsearch(hosts, timeout=settings.ES_SEARCH_TIMEOUT, serializer=ESJSONSerializer())
+    alias_info = es.indices.get_alias('test_hqusers')
+    assert 'test_hqusers' not in alias_info
+    return es
 
 
 @memoized
@@ -88,7 +91,7 @@ def get_es_export():
     Returns an elasticsearch.Elasticsearch instance.
     """
     hosts = _es_hosts()
-    return Elasticsearch(
+    es = Elasticsearch(
         hosts,
         retry_on_timeout=True,
         max_retries=3,
@@ -96,6 +99,9 @@ def get_es_export():
         timeout=300,
         serializer=ESJSONSerializer(),
     )
+    alias_info = es.indices.get_alias('test_hqusers')
+    assert 'test_hqusers' not in alias_info
+    return es
 
 
 ES_DEFAULT_INSTANCE = 'default'
