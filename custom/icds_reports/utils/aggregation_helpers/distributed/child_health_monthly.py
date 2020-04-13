@@ -1,6 +1,5 @@
 import logging
 
-from datetime import date
 from dateutil.relativedelta import relativedelta
 
 from corehq.apps.userreports.util import get_table_name
