@@ -103,7 +103,7 @@ class MergeOperation(BaseOperation):
     expected_old_locations = MANY
 
     def perform(self):
-        from custom.icds.location_reassignment.tasks import reassign_cases
+        from custom.icds.location_reassignment.tasks import reassign_household_and_child_cases_for_owner
         with transaction.atomic():
             timestamp = datetime.utcnow()
             new_location = self.new_locations[0]
@@ -119,7 +119,8 @@ class MergeOperation(BaseOperation):
             new_location.metadata[DEPRECATES_VIA] = self.type
             new_location.save()
         for old_location in self.old_locations:
-            reassign_cases.delay(self.domain, old_location.location_id, new_location.location_id, timestamp)
+            reassign_household_and_child_cases_for_owner.delay(self.domain, old_location.location_id,
+                                                               new_location.location_id, timestamp)
 
 
 class SplitOperation(BaseOperation):
@@ -166,7 +167,7 @@ class MoveOperation(BaseOperation):
     type = MOVE_OPERATION
 
     def perform(self):
-        from custom.icds.location_reassignment.tasks import reassign_cases
+        from custom.icds.location_reassignment.tasks import reassign_household_and_child_cases_for_owner
         with transaction.atomic():
             timestamp = datetime.utcnow()
             old_location = self.old_locations[0]
@@ -181,4 +182,5 @@ class MoveOperation(BaseOperation):
             new_location.metadata[DEPRECATES_AT] = timestamp
             new_location.metadata[DEPRECATES_VIA] = self.type
             new_location.save()
-        reassign_cases.delay(self.domain, old_location.location_id, new_location.location_id, timestamp)
+        reassign_household_and_child_cases_for_owner.delay(self.domain, old_location.location_id,
+                                                           new_location.location_id, timestamp)

@@ -50,7 +50,7 @@ def process_location_reassignment(domain, transitions, new_location_details, use
 
 
 @task(queue=settings.CELERY_LOCATION_REASSIGNMENT_QUEUE)
-def reassign_cases(domain, old_location_id, new_location_id, deprecation_time):
+def reassign_household_and_child_cases_for_owner(domain, old_location_id, new_location_id, deprecation_time):
     """
     finds all household cases assigned to the old location and then
     reassign the household case and all its child cases to new location
