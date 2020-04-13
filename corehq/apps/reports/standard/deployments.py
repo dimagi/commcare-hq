@@ -151,19 +151,7 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
                 sort_prop = getattr(col, sort_prop_name) or col.prop_name
                 if x == 0:
                     self.primary_sort_prop = sort_prop
-                if self.selected_app_id:
-                    sort_dict = {
-                        sort_prop: {
-                            "order": sort_dir,
-                            "nested_filter": {
-                                "term": {
-                                    self.sort_filter: self.selected_app_id
-                                }
-                            }
-                        }
-                    }
-                else:
-                    sort_dict = {sort_prop: sort_dir}
+                sort_dict = {sort_prop: sort_dir}
                 res.append(sort_dict)
         if len(res) == 0 and self.default_sort is not None:
             res.append(self.default_sort)
