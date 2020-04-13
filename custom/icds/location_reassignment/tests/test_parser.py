@@ -51,7 +51,15 @@ class TestParser(TestCase):
             # valid operation to move 112 -> 131
             ('AWC 2', 'AWC 3', '112', '131', 'AWC-112',
              'AWC-131', 'Supervisor 2', '11', '13',
-             'username2', 'username3', 'Move'))),
+             'username2', 'username3', 'Move'),
+            # valid operation to merge 113 114 -> 132 but
+            # with different lgd code for new location in 114
+            ('AWC 4', 'AWC 6', '113', '132', 'AWC-113',
+             'AWC-132', 'Supervisor 1', '11', '13',
+             'username4', 'username5', 'Merge'),
+            ('AWC 5', 'AWC 6', '114', '132', 'AWC-114',
+             'AWC-133', 'Supervisor 1', '11', '13',
+             'username6', 'username7', 'Merge'))),
         ('supervisor', (
             # invalid row with missing new site code
             ('Supervisor 1', 'Supervisor 1', '11', '', 'Sup-11',
@@ -78,9 +86,11 @@ class TestParser(TestCase):
             workbook = get_workbook(file)
             valid_transitions, errors = Parser(self.domain, workbook).parse()
             self.assertEqual(valid_transitions['awc']['Move'], {'131': '112'})
+            self.assertEqual(valid_transitions['awc']['Merge'], {'132': ['113', '114']})
             self.assertEqual(valid_transitions['supervisor']['Move'], {'13': '12'})
             self.assertEqual(errors, [
                 "No change in location code for Extract, got old: '111' and new: '111'",
+                "New location 132 reused with different information",
                 "Missing location code for Split, got old: '11' and new: ''",
                 "Invalid Operation Unknown"
             ])
