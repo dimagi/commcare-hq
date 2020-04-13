@@ -5786,6 +5786,25 @@ class GlobalAppConfig(models.Model):
             force = self.apk_prompt == "forced"
             return {"value": value, "force": force}
 
+    def get_latest_app_version(self, build_profile_id=None):
+        if self.app_prompt == "off":
+            return {}
+        else:
+            force = self.app_prompt == "forced"
+            app_version = self.app_version
+            if app_version != LATEST_APP_VALUE:
+                return {"value": app_version, "force": force}
+            else:
+                if not self._app or not self._app.is_released:
+                    return {}
+                else:
+                    version = self._app.version
+                    if build_profile_id:
+                        latest = LatestEnabledBuildProfiles.for_app_and_profile(self.app_id, build_profile_id)
+                        if latest:
+                            version = latest.version
+                    return {"value": version, "force": force}
+
 
 class AppReleaseByLocation(models.Model):
     domain = models.CharField(max_length=255, null=False)

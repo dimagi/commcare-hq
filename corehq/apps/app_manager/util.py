@@ -585,28 +585,7 @@ class LatestAppInfo(object):
         return app
 
     def clear_caches(self):
-        self.get_latest_app_version.clear(self)
-
-    @quickcache(vary_on=['self.app_id', 'self.build_profile_id'])
-    def get_latest_app_version(self):
-        from corehq.apps.app_manager.models import LATEST_APP_VALUE, LatestEnabledBuildProfiles
-        if self.app.global_app_config.app_prompt == "off":
-            return {}
-        else:
-            force = self.app.global_app_config.app_prompt == "forced"
-            app_version = self.app.global_app_config.app_version
-            if app_version != LATEST_APP_VALUE:
-                return {"value": app_version, "force": force}
-            else:
-                if not self.app or not self.app.is_released:
-                    return {}
-                else:
-                    version = self.app.version
-                    if self.build_profile_id:
-                        latest = LatestEnabledBuildProfiles.for_app_and_profile(self.app_id, self.build_profile_id)
-                        if latest:
-                            version = latest.version
-                    return {"value": version, "force": force}
+        return
 
 
 def get_form_source_download_url(xform):

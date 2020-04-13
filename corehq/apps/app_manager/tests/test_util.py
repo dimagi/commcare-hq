@@ -9,7 +9,6 @@ from corehq.apps.app_manager.models import (
     LatestEnabledBuildProfiles,
     Module,
 )
-from corehq.apps.app_manager.util import LatestAppInfo
 from corehq.apps.app_manager.views.utils import get_default_followup_form_xml
 from corehq.apps.domain.models import Domain
 
@@ -139,9 +138,9 @@ class TestLatestAppInfo(TestCase):
             app_config = self.app.global_app_config
             app_config.app_prompt = config
             app_config.save()
-            latest_info = LatestAppInfo(self.app.master_id, self.domain, build_profile_id)
+            config = GlobalAppConfig.by_app_id(self.domain, self.app.master_id)
             self.assertEqual(
-                latest_info.get_latest_app_version(),
+                config.get_latest_app_version(build_profile_id),
                 response
             )
 
@@ -159,18 +158,18 @@ class TestLatestAppInfo(TestCase):
             app_config = self.app.global_app_config
             app_config.app_prompt = config
             app_config.save()
-            latest_info = LatestAppInfo(self.app.master_id, self.domain)
+            config = GlobalAppConfig.by_app_id(self.domain, self.app.master_id)
             self.assertEqual(
-                latest_info.get_latest_app_version(),
+                config.get_latest_app_version(),
                 response
             )
 
     def test_args(self):
         with self.assertRaises(AssertionError):
             # should not be id of a copy
-            latest_app_info = LatestAppInfo(self.v3_build.id, self.domain)
-            latest_app_info.get_latest_app_version()
+            config = GlobalAppConfig.by_app_id(self.domain, self.v3_build.id)
+            config.get_latest_app_version()
 
         with self.assertRaises(Http404):
-            latest_app_info = LatestAppInfo('wrong-id', self.domain)
-            latest_app_info.get_latest_app_version()
+            config = GlobalAppConfig.by_app_id(self.domain, 'wrong-id')
+            config.get_latest_app_version()
