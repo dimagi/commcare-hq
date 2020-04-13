@@ -124,8 +124,18 @@ class TestUcrAdapter(TestCase):
             'domain': DOMAIN,
             'startdate': date(2020, 1, 1).isoformat(),
             'enddate': date(2020, 4, 1).isoformat(),
-            'owner_name': '',
-            'recall_status': '',
+        }).get_data()
+        self.assertItemsEqual(food_names(expected), food_names(ucr_data))
+
+    def test_data_source_filter(self):
+        # Only the rows with case IDs will appear in the UCR
+        expected = [r for r in get_expected_report('master.csv')
+                    if r['caseid'] and r['breastfeeding'] == 'breastfeeding_yes']
+        ucr_data = FoodCaseData({
+            'domain': DOMAIN,
+            'startdate': date(2020, 1, 1).isoformat(),
+            'enddate': date(2020, 4, 1).isoformat(),
+            'breastfeeding': 'breastfeeding_yes',
         }).get_data()
         self.assertItemsEqual(food_names(expected), food_names(ucr_data))
 

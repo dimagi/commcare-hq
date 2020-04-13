@@ -13,8 +13,13 @@ class FoodCaseData(SqlData):
     group_by = ['doc_id']
     engine_id = UCR_ENGINE_ID
     FILTERABLE_COLUMNS = [  # columns easily filtered by exact match
+        'breastfeeding',
+        'gender',
         'owner_name',
+        'pregnant',
         'recall_status',
+        'supplements'
+        'urban_rural',
     ]
 
     @property
