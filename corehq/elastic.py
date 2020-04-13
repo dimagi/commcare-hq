@@ -88,7 +88,6 @@ def get_es_new():
     """
     hosts = _es_hosts()
     es = Elasticsearch(hosts, timeout=settings.ES_SEARCH_TIMEOUT, serializer=ESJSONSerializer())
-    debug_assert(es)
     return es
 
 
@@ -107,7 +106,6 @@ def get_es_export():
         timeout=300,
         serializer=ESJSONSerializer(),
     )
-    debug_assert(es)
     return es
 
 

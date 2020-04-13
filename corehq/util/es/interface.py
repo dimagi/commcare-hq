@@ -12,6 +12,8 @@ class AbstractElasticsearchInterface(metaclass=abc.ABCMeta):
         self.es = es
 
     def _verify_is_alias(self, index_or_alias):
+        from corehq.elastic import debug_assert
+        debug_assert(self.es)
         from corehq.elastic import ES_META
         if settings.ENABLE_ES_INTERFACE_LOGGING:
             logger = logging.getLogger('es_interface')
