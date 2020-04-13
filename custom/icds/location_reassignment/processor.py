@@ -128,16 +128,16 @@ class HouseholdReassignmentProcessor():
         from custom.icds.location_reassignment.tasks import reassign_household_case
         old_site_codes = set()
         new_site_codes = set()
-        for household_id, details in self.reassignments:
+        for household_id, details in self.reassignments.items():
             old_site_codes.add(details['old_site_code'])
             new_site_codes.add(details['new_site_code'])
         old_locations_by_site_code = {
             loc.site_code: loc
-            for loc in SQLLocation.active_objects.filter(site_code__in=old_site_codes)}
+            for loc in SQLLocation.active_objects.filter(domain=self.domain, site_code__in=old_site_codes)}
         new_locations_by_site_code = {
             loc.site_code: loc
-            for loc in SQLLocation.active_objects.filter(site_code__in=new_site_codes)}
-        for household_id, details in self.reassignments:
+            for loc in SQLLocation.active_objects.filter(domain=self.domain, site_code__in=new_site_codes)}
+        for household_id, details in self.reassignments.items():
             old_owner_id = old_locations_by_site_code[details['old_site_code']].location_id
             new_owner_id = new_locations_by_site_code[details['new_site_code']].location_id
             supervisor_id = self._supervisor_id(old_owner_id)

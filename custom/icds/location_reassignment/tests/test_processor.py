@@ -1,4 +1,5 @@
 from collections import namedtuple
+from unittest import TestCase as UnitTestTestCase
 
 from django.test import TestCase
 
@@ -6,10 +7,13 @@ from mock import call, patch
 
 from custom.icds.location_reassignment.const import MOVE_OPERATION
 from custom.icds.location_reassignment.exceptions import InvalidTransitionError
-from custom.icds.location_reassignment.processor import Processor
+from custom.icds.location_reassignment.processor import (
+    HouseholdReassignmentProcessor,
+    Processor,
+)
 
 LocationType = namedtuple("LocationType", ["code"])
-Location = namedtuple("Location", ["site_code"])
+Location = namedtuple("Location", ["location_id", "site_code"])
 type_codes = ['state', 'supervisor', 'awc']
 location_types = list(map(lambda site_code: LocationType(code=site_code), type_codes))
 site_codes = ['131', '112', '13', '12']
@@ -24,10 +28,10 @@ class TestProcessor(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.location_131 = Location(site_code='131')
-        cls.location_112 = Location(site_code='112')
-        cls.location_13 = Location(site_code='13')
-        cls.location_12 = Location(site_code='12')
+        cls.location_131 = Location(location_id='13199', site_code='131')
+        cls.location_112 = Location(location_id='11299',site_code='112')
+        cls.location_13 = Location(location_id='1399', site_code='13')
+        cls.location_12 = Location(location_id='1299', site_code='12')
         cls.all_locations = [cls.location_12, cls.location_13, cls.location_112, cls.location_131]
         cls.transitions = {
             'awc': {
@@ -101,3 +105,40 @@ class TestProcessor(TestCase):
         update_usercase_mock.assert_called_with(
             self.domain, 'username_new', 'username_old'
         )
+
+
+class TestHouseholdReassignmentProcessor(UnitTestTestCase):
+    domain = "test"
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.location_1 = Location(location_id='199', site_code='1')
+        cls.location_2 = Location(location_id='299', site_code='2')
+        cls.location_3 = Location(location_id='399', site_code='3')
+        cls.location_4 = Location(location_id='499', site_code='4')
+        cls.all_locations = [cls.location_1, cls.location_2, cls.location_3, cls.location_4]
+        cls.reassignments = {
+            'household_case_id1': {'old_site_code': '1', 'new_site_code': '2'},
+            'household_case_id2': {'old_site_code': '3', 'new_site_code': '4'},
+        }
+
+    @patch('custom.icds.location_reassignment.utils.reassign_household_case')
+    @patch('custom.icds.location_reassignment.processor.get_supervisor_id')
+    @patch('custom.icds.location_reassignment.processor.SQLLocation.active_objects.filter')
+    def test_process(self, locations_fetch_mock, supervisor_id_mock, reassign_household_mock):
+        locations_fetch_mock.return_value = self.all_locations
+        supervisor_id_mock.return_value = 'a_supervisor_id'
+        HouseholdReassignmentProcessor(self.domain, self.reassignments).process()
+        locations_fetch_mock.assert_has_calls([
+            call(domain=self.domain, site_code__in={'1', '3'}),
+            call(domain=self.domain, site_code__in={'2', '4'})
+        ])
+        supervisor_id_mock.assert_has_calls([
+            call(self.domain, '199'),
+            call(self.domain, '399')
+        ])
+        reassign_household_mock.assert_has_calls([
+            call(self.domain, 'household_case_id1', '199', '299', 'a_supervisor_id'),
+            call(self.domain, 'household_case_id2', '399', '499', 'a_supervisor_id')
+        ])

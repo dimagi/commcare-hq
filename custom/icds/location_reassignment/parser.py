@@ -159,7 +159,7 @@ class HouseholdReassignmentParser(object):
     def __init__(self, domain, workbook):
         self.domain = domain
         self.workbook = workbook
-        self.reassignments = {}  # household id mapped to new awc code
+        self.reassignments = {}  # household id mapped to old and new site code
 
     def parse(self):
         errors = []
