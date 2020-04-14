@@ -289,22 +289,51 @@ def _get_bulk_case_upload_args_from_request(request, domain):
 def bulk_case_upload_api(request, domain, **kwargs):
     try:
         response = _bulk_case_upload_api(request,domain)
+        return response
     except ImporterError as e:
         error = get_importer_error_message(e)
     except SpreadsheetFileExtError:
         error = "Please upload file with extension .xls or .xlsx"
-
-    if(error):
         return json_response({'error_msg': _(error)})
-
-    return response
 
 def _bulk_case_upload_api(request,domain):
     upload_file, case_type, search_field, create_new_cases,search_column = _get_bulk_case_upload_args_from_request(request,domain)
 
-    case_upload, context = _process_file_and_create_upload(upload_file, request, domain)
+    case_upload, context = _process_file_and_get_upload(upload_file, request, domain)
 
     case_upload.check_file()
 
+    with case_upload.get_spreadsheet() as spreadsheet:
+        columns = spreadsheet.get_header_columns()
+        excel_fields = columns
 
+    # hide search column and matching case fields from the update list
+    if search_column in excel_fields:
+        excel_fields.remove(search_column)
 
+    custom_fields = []
+    case_fields = []
+
+    #populate field arrays
+    for f in excel_fields:
+        if f == "name":
+            custom_fields.append("")
+            case_fields.append(f)
+        else:
+            custom_fields.append(f)
+            case_fields.append("")
+
+    config = importer_util.ImporterConfig(
+            couch_user_id=request.couch_user._id,
+            excel_fields=excel_fields,
+            case_fields=case_fields,
+            custom_fields=custom_fields,
+            search_column=search_column,
+            case_type=case_type,
+            search_field=search_field,
+            create_new_cases=create_new_cases,
+            )
+    print(config.to_json())
+
+    case_upload.trigger_upload(domain, config)
+    return json_response({"msg":"success"})
