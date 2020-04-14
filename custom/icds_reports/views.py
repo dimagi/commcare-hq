@@ -1,4 +1,4 @@
-from collections import OrderedDict
+from collections import defaultdict, OrderedDict
 from datetime import date, datetime
 from wsgiref.util import FileWrapper
 
@@ -227,6 +227,8 @@ from custom.icds_reports.utils import (
     icds_pre_release_features,
     india_now,
     filter_cas_data_export,
+    get_deprecation_info,
+    get_replacement_name
 )
 from custom.icds_reports.utils.data_accessor import (
     get_awc_covered_data_with_retrying,
@@ -612,7 +614,7 @@ class LocationView(View):
                 domain=self.kwargs['domain'],
                 location_id=location_id
             )
-
+            location_list, replacement_names = get_deprecation_info([location], True)
             return JsonResponse({
                 'name': location.name,
                 'map_location_name': get_map_name(location),
@@ -625,6 +627,10 @@ class LocationView(View):
                 'user_have_access_to_parent': location.location_id in parent_ids,
                 'parent_name': location.parent.name if location.parent else None,
                 'parent_map_name': get_map_name(location.parent),
+                'deprecates': get_replacement_names(loc, 'deprecates', replacement_names),
+                'deprecated_at': location.metadata.get('deprecated_at'),
+                'deprecated_to': get_replacement_names(loc, 'deprecated_to', replacement_names),
+                'deprecates_at': location.metadata.get('deprecates_at'),
             })
 
         parent_id = request.GET.get('parent_id')
@@ -632,7 +638,7 @@ class LocationView(View):
 
         show_test = request.GET.get('include_test', False)
 
-        locations = SQLLocation.objects.accessible_to_user(self.kwargs['domain'], self.request.couch_user)
+        locations = SQLLocation.objects.accessible_to_user(self.kwargs['domain'], self.request.couch_user).select_related('location_type')
         if not parent_id:
             locations = locations.filter(parent_id__isnull=True)
         else:
@@ -645,6 +651,11 @@ class LocationView(View):
             locations = locations.filter(name__iexact=name)
 
         locations = locations.order_by('name')
+
+        if not locations:
+            return JsonResponse(data={'locations': []})
+
+        locations_list, replacement_names = get_deprecation_info(locations, show_test)
         return JsonResponse(data={
             'locations': [
                 {
@@ -656,9 +667,13 @@ class LocationView(View):
                         self.kwargs['domain'],
                         request.couch_user, loc.location_id
                     ),
-                    'user_have_access_to_parent': loc.location_id in parent_ids
+                    'user_have_access_to_parent': loc.location_id in parent_ids,
+                    'deprecates': get_replacement_name(loc, 'deprecates', replacement_names),
+                    'deprecated_at': loc.metadata.get('deprecated_at'),
+                    'deprecated_to': get_replacement_name(loc, 'deprecated_to', replacement_names),
+                    'deprecates_at': loc.metadata.get('deprecates_at'),
                 }
-                for loc in locations if show_test or loc.metadata.get('is_test_location', 'real') != 'test'
+                for loc in locations_list
             ]
         })
 
@@ -682,7 +697,8 @@ class LocationAncestorsView(View):
         ).filter(
             ~Q(pk__in=parent_ids) & (Q(parent_id__in=parent_ids) | Q(parent_id__isnull=True))
         ).select_related('parent').distinct().order_by('name')
-
+        all_locations = list(OrderedDict.fromkeys(list(locations) + list(parents)))
+        location_list, replacement_names = get_deprecation_info(all_locations, show_test, True)
         return JsonResponse(data={
             'locations': [
                 {
@@ -694,10 +710,13 @@ class LocationAncestorsView(View):
                         self.kwargs['domain'],
                         request.couch_user, location.location_id
                     ),
-                    'user_have_access_to_parent': location.location_id in parent_locations_ids
+                    'user_have_access_to_parent': location.location_id in parent_locations_ids,
+                    'deprecates': get_replacement_name(location, 'deprecates', replacement_names),
+                    'deprecated_at': location.metadata.get('deprecated_at'),
+                    'deprecated_to': get_replacement_name(location, 'deprecated_to', replacement_names),
+                    'deprecates_at': location.metadata.get('deprecates_at'),
                 }
-                for location in list(OrderedDict.fromkeys(list(locations) + list(parents)))
-                if show_test or location.metadata.get('is_test_location', 'real') != 'test'
+                for location in location_list
             ],
             'selected_location': {
                 'location_type_name': selected_location.location_type_name,
@@ -708,7 +727,11 @@ class LocationAncestorsView(View):
                     self.kwargs['domain'],
                     request.couch_user, selected_location.location_id
                 ),
-                'user_have_access_to_parent': selected_location.location_id in parent_locations_ids
+                'user_have_access_to_parent': selected_location.location_id in parent_locations_ids,
+                'deprecates': get_replacement_name(selected_location, 'deprecates', replacement_names),
+                'deprecated_at': selected_location.metadata.get('deprecated_at'),
+                'deprecated_to': get_replacement_name(selected_location, 'deprecated_to', replacement_names),
+                'deprecates_at': selected_location.metadata.get('deprecates_at'),
             }
         })
 
@@ -2272,7 +2295,7 @@ class GovernanceAPIBaseView(View):
             state_id = GovernanceAPIBaseView.get_state_id_from_state_site_code(state_site_code)
 
         last_awc_id = request.GET.get('last_awc_id', '')
-        return  last_awc_id, month, year, state_id
+        return last_awc_id, month, year, state_id
 
     def validate_param(self, state_id, month, year):
         selected_month = date(year, month, 1)
