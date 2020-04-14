@@ -1,5 +1,4 @@
 import asyncio
-from itertools import count
 
 from django.core.management import BaseCommand
 
@@ -54,8 +53,8 @@ async def wipe_blobdb(commit=False):
 
 async def wipe_shard(dbname, commit=False):
     bytes_deleted = 0
-    metas = BlobMeta.objects.using(dbname).order_by('created_on').all()
-    for chunk in paginated(metas, CHUNK_SIZE):
+    metas = BlobMeta.objects.using(dbname).order_by('id').all()
+    for chunk in cursor_paginated(metas, CHUNK_SIZE):
         if commit:
             await wipe_chunk(chunk)
         bytes_deleted += sum(meta.content_length for meta in chunk)
@@ -70,20 +69,19 @@ async def wipe_chunk(chunk):
     blob_db.bulk_delete(metas=chunk)
 
 
-def paginated(sliceable, page_size):
+def cursor_paginated(queryset, page_size):
     """
-    A light-weight paginator that uses slicing, so that if ``sliceable``
-    is a QuerySet, each page is fetched with a new query.
+    Paginates using auto-incremented integer primary key ``id`` instead
+    of offset (not an actual database cursor).
 
-    >>> foo = 'the quick brown fox jumps over the lazy dog'
-    >>> list(paginated(foo, 10))
-    ['the quick ', 'brown fox ', 'jumps over', ' the lazy ', 'dog']
-
+    Credit: http://cra.mr/2011/03/08/building-cursors-for-the-disqus-api
     """
-    for start in count(0, page_size):
-        page = sliceable[start:start + page_size]
+    next_id = 0
+    while True:
+        page = list(queryset.filter(id__gte=next_id)[:page_size])
         if not page:
             return
         yield page
         if len(page) < page_size:
             return
+        next_id = page[-1].id + 1
