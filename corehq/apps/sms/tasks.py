@@ -545,7 +545,7 @@ def sync_user_phone_numbers(self, couch_user_id):
 def _sync_user_phone_numbers(couch_user_id):
     couch_user = CouchUser.get_by_user_id(couch_user_id)
 
-    if not isinstance(couch_user, CommCareUser):
+    if not couch_user.is_commcare_user():
         # It isn't necessary to sync WebUser's phone numbers right now
         # and we need to think through how to support entries when a user
         # can belong to multiple domains
