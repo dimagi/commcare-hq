@@ -469,6 +469,42 @@
           "type": "and",
           "filters": [
             {
+              "operator": "lte",
+              "expression": {
+                "type": "named",
+                "name": "age_in_months"
+              },
+              "type": "boolean_expression",
+              "property_value": 36
+            },
+            {
+              "operator": "gte",
+              "expression": {
+                "type": "named",
+                "name": "food_distributed"
+              },
+              "type": "boolean_expression",
+              "property_value": 21
+            },
+            {
+              "type": "named",
+              "name": "thr_eligible"
+            },
+            {
+              "type": "named",
+              "name": "open_in_month"
+            }
+          ]
+        },
+        "display_name": null,
+        "type": "boolean",
+        "column_id": "new_thr_rations_gte_21"
+      },
+      {
+        "filter": {
+          "type": "and",
+          "filters": [
+            {
               "type": "named",
               "name": "female"
             },
