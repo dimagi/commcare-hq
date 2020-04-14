@@ -169,7 +169,8 @@ you'll need to install `bower` and run `bower install`. Follow these steps to in
         $ sudo npm -g install bower
 
 3. Run bower with:
-
+        $ sudo chown -R $USER:$GROUP ~/.npm
+        $ sudo chown -R $USER:$GROUP ~/.config
         $ bower install
 
 
