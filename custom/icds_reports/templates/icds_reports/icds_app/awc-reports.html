@@ -19,7 +19,8 @@
         </div>
     </div>
     <info-message></info-message>
-    <div class="report-content report-content-without-message">
+    <reassignment-message ng-show="$ctrl.showReassignmentMessage()" selected-location="$ctrl.selectedLocation()"></reassignment-message>
+    <div class="report-content report-content-without-message" ng-if="!$ctrl.showReassignmentMessage()">
         <div ng-if="$ctrl.data">
             <div class="row" ng-if="$ctrl.step === 'pse'">
                 <div class="row no-margin">

@@ -249,6 +249,7 @@ window.angular.module('icdsApp').factory('locationsService', ['$http', '$locatio
             }
             var selectedLocationIndex = this.selectedLocationIndex(vm.selectedLocations);
             vm.selectedLocationId = vm.selectedLocations[selectedLocationIndex];
+            vm.selectedLocation = item;
             var levels = _.filter(vm.levels, function (value){return value.id > selectedLocationIndex;});
             vm.selectedLevel = selectedLocationIndex + 1;
             vm.groupByLevels = levels;

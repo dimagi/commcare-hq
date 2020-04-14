@@ -124,7 +124,6 @@ function ProgramSummaryController($scope, $http, $log, $routeParams, $location, 
 
     vm.getDataForStep(vm.step);
     vm.currentStepMeta = vm.steps[vm.step];
-
 }
 
 ProgramSummaryController.$inject = [
