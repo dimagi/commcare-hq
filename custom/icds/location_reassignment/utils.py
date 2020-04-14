@@ -57,16 +57,16 @@ def get_household_child_cases_by_owner(domain, household_case_id, owner_id, case
                 CaseAccessorSQL.get_reverse_indexed_cases(domain, ids)
                 if case.owner_id == owner_id]
 
-    cases = []
+    cases = set()
     parent_case_ids = [household_case_id]
     while parent_case_ids:
         child_cases = get_child_cases(parent_case_ids)
         if child_cases:
             parent_case_ids = [case.case_id for case in child_cases]
             if case_types:
-                cases.extend([case for case in child_cases if case.type in case_types])
+                cases.update([case for case in child_cases if case.type in case_types])
             else:
-                cases.extend(child_cases)
+                cases.update(child_cases)
         else:
             parent_case_ids = None
     return cases
