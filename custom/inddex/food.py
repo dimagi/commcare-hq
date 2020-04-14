@@ -400,8 +400,9 @@ class FoodData:
     FILTERABLE_COLUMNS = IN_MEMORY_FILTERS + FoodCaseData.FILTERABLE_COLUMNS
 
     def __init__(self, domain, *, datespan, filter_selections):
-        if not all(k in self.FILTERABLE_COLUMNS for k in filter_selections):
-            raise AssertionError(f"{k} is not a valid filter slug")
+        for slug in filter_selections:
+            if slug not in self.FILTERABLE_COLUMNS:
+                raise AssertionError(f"{slug} is not a valid filter slug")
 
         self.fixtures = FixtureAccessor(domain)
         self._in_memory_filter_selections = {
