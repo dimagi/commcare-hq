@@ -140,7 +140,7 @@ load_ignore_rules = memoized(lambda: add_duplicate_rules({
         Ignore('missing', '-deletion_id', new=MISSING),
         Ignore('missing', '-deletion_date', new=MISSING),
 
-        ignore_renamed('@user_id', 'user_id'),
+        ignore_renamed('@user_id', 'user_id'),  # 'user_id' is an alias for 'modified_by'
         ignore_renamed('@date_modified', 'modified_on'),
     ],
     'CommCareCase-Deleted': [

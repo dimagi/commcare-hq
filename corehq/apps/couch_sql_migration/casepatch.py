@@ -101,7 +101,35 @@ class PatchCase:
 
 
 ILLEGAL_PROPS = {"indices", "actions", "*"}
-IGNORE_PROPS = {"xform_ids"} | KNOWN_PROPERTIES.keys()
+STATIC_PROPS = {
+    "case_id",
+    "closed",
+    "closed_by",
+    "closed_on",
+    "deleted",
+    "deleted_on",
+    "deletion_id",
+    "domain",
+    "external_id",
+    "location_id",
+    "modified_by",
+    "modified_on",
+    "name",
+    "opened_by",
+    "opened_on",
+    "owner_id",
+    "server_modified_on",
+    "type",
+    "user_id",
+    "xform_ids",
+
+    # renamed Couch properties
+    "-deletion_date",   # deleted_on
+    "-deletion_id",     # deletion_id
+    "@date_modified",   # modified_on
+    "@user_id",         # user_id
+    "hq_user_id",       # external_id
+}
 
 
 def has_illegal_props(diffs):
@@ -116,7 +144,7 @@ def iter_dynamic_properties(diffs):
     for doc_diff in diffs:
         diff = doc_diff.json_diff
         name = diff.path[0]
-        if name in IGNORE_PROPS:
+        if name in STATIC_PROPS:
             continue
         if len(diff.path) > 1:
             raise CannotPatch([diff])
