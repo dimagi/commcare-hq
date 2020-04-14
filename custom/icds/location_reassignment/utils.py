@@ -73,7 +73,8 @@ def get_household_child_cases_by_owner(domain, household_case_id, owner_id, case
 
 
 def get_supervisor_id(domain, location_id):
-    new_location = SQLLocation.active_objects.select_related('location_type').get(
+    # get archived/unarchived location's supervisor id
+    new_location = SQLLocation.objects.select_related('location_type').get(
         domain=domain, location_id=location_id)
     if new_location.location_type.code == AWC_CODE:
         return new_location.parent.location_id
