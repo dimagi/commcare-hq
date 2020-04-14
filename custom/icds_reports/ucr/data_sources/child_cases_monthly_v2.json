@@ -509,6 +509,10 @@
               "name": "female"
             },
             {
+              "type": "named",
+              "name": "is_resident"
+            },
+            {
               "operator": "gte",
               "expression": {
                 "type": "named",
@@ -536,6 +540,10 @@
               "name": "male"
             },
             {
+              "type": "named",
+              "name": "is_resident"
+            },
+            {
               "operator": "gte",
               "expression": {
                 "type": "named",
@@ -561,6 +569,10 @@
             {
               "type": "named",
               "name": "male"
+            },
+            {
+              "type": "named",
+              "name": "is_resident"
             },
             {
               "type": "named",
@@ -595,6 +607,10 @@
             },
             {
               "type": "named",
+              "name": "is_resident"
+            },
+            {
+              "type": "named",
               "name": "is_caste_st"
             },
             {
@@ -623,6 +639,10 @@
             {
               "type": "named",
               "name": "male"
+            },
+            {
+              "type": "named",
+              "name": "is_resident"
             },
             {
               "type": "named",
@@ -657,6 +677,10 @@
             },
             {
               "type": "named",
+              "name": "is_resident"
+            },
+            {
+              "type": "named",
               "name": "is_caste_sc"
             },
             {
@@ -685,6 +709,10 @@
             {
               "type": "named",
               "name": "male"
+            },
+            {
+              "type": "named",
+              "name": "is_resident"
             },
             {
               "type": "named",
@@ -719,6 +747,10 @@
             },
             {
               "type": "named",
+              "name": "is_resident"
+            },
+            {
+              "type": "named",
               "name": "is_caste_others"
             },
             {
@@ -747,6 +779,10 @@
             {
               "type": "named",
               "name": "male"
+            },
+            {
+              "type": "named",
+              "name": "is_resident"
             },
             {
               "type": "named",
@@ -781,6 +817,10 @@
             },
             {
               "type": "named",
+              "name": "is_resident"
+            },
+            {
+              "type": "named",
               "name": "is_disabled"
             },
             {
@@ -812,6 +852,10 @@
             },
             {
               "type": "named",
+              "name": "is_resident"
+            },
+            {
+              "type": "named",
               "name": "is_minority"
             },
             {
@@ -840,6 +884,10 @@
             {
               "type": "named",
               "name": "female"
+            },
+            {
+              "type": "named",
+              "name": "is_resident"
             },
             {
               "type": "named",
@@ -1120,6 +1168,10 @@
             },
             {
               "type": "named",
+              "name": "is_resident"
+            },
+            {
+              "type": "named",
               "name": "is_caste_st"
             },
             {
@@ -1148,6 +1200,10 @@
             {
               "type": "named",
               "name": "female"
+            },
+            {
+              "type": "named",
+              "name": "is_resident"
             },
             {
               "type": "named",
@@ -1182,6 +1238,10 @@
             },
             {
               "type": "named",
+              "name": "is_resident"
+            },
+            {
+              "type": "named",
               "name": "is_caste_sc"
             },
             {
@@ -1210,6 +1270,10 @@
             {
               "type": "named",
               "name": "female"
+            },
+            {
+              "type": "named",
+              "name": "is_resident"
             },
             {
               "type": "named",
@@ -1244,6 +1308,10 @@
             },
             {
               "type": "named",
+              "name": "is_resident"
+            },
+            {
+              "type": "named",
               "name": "is_caste_others"
             },
             {
@@ -1272,6 +1340,10 @@
             {
               "type": "named",
               "name": "female"
+            },
+            {
+              "type": "named",
+              "name": "is_resident"
             },
             {
               "type": "named",
@@ -1306,6 +1378,10 @@
             },
             {
               "type": "named",
+              "name": "is_resident"
+            },
+            {
+              "type": "named",
               "name": "is_disabled"
             },
             {
@@ -1334,6 +1410,10 @@
             {
               "type": "named",
               "name": "female"
+            },
+            {
+              "type": "named",
+              "name": "is_resident"
             },
             {
               "type": "named",
@@ -1368,6 +1448,10 @@
             },
             {
               "type": "named",
+              "name": "is_resident"
+            },
+            {
+              "type": "named",
               "name": "is_minority"
             },
             {
@@ -1396,6 +1480,10 @@
             {
               "type": "named",
               "name": "female"
+            },
+            {
+              "type": "named",
+              "name": "is_resident"
             },
             {
               "type": "named",
@@ -1455,6 +1543,10 @@
               {
                 "type": "named",
                 "name": "pse_eligible"
+              },
+              {
+                "type": "named",
+                "name": "is_resident"
               }
             ]
           },
@@ -1486,6 +1578,10 @@
               {
                 "type": "named",
                 "name": "pse_eligible"
+              },
+              {
+                "type": "named",
+                "name": "is_resident"
               }
             ]
           },
@@ -1515,6 +1611,10 @@
             {
               "type": "named",
               "name": "pse_eligible"
+            },
+            {
+              "type": "named",
+              "name": "is_resident"
             },
             {
               "type": "named",
@@ -1566,6 +1666,10 @@
             },
             {
               "type": "named",
+              "name": "is_resident"
+            },
+            {
+              "type": "named",
               "name": "valid_in_month"
             },
             {
@@ -1613,6 +1717,10 @@
               "name": "pse_eligible"
             },
             {
+              "type": "named",
+              "name": "is_resident"
+            },
+            {
               "operator": "gt",
               "expression": {
                 "type": "named",
@@ -1647,6 +1755,10 @@
             {
               "type": "named",
               "name": "pse_eligible"
+            },
+            {
+              "type": "named",
+              "name": "is_resident"
             },
             {
               "operator": "gt",
