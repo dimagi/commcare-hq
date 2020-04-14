@@ -2409,7 +2409,7 @@
                     "property_name": "migration_status"
                   }
                 },
-                "property_value": "yes"
+                "property_value": "migrated"
               }
             ]
           }
@@ -3478,7 +3478,7 @@
                     "property_name": "migration_status"
                   }
                 },
-                "property_value": "yes"
+                "property_value": "migrated"
               }
             ]
           }
