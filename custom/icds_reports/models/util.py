@@ -111,6 +111,8 @@ UCR_MAPPING = {
         ],
         "static-dashboard_growth_monitoring_forms": [
             'http://openrosa.org/formdesigner/7a55754119359466b1951d7251068bd4f45e73c3',
+            'http://openrosa.org/formdesigner/b183124a25f2a0ceab266e4564d3526199ac4d75',
+            'http://openrosa.org/formdesigner/376FA2E1-6FD1-4C9E-ACB4-E046038CD5E2',
         ],
         "static-awc_mgt_forms": [
             'http://openrosa.org/formdesigner/D8EED5E3-88CD-430E-984F-45F14E76A551',
