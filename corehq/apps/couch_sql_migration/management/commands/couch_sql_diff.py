@@ -22,7 +22,7 @@ from corehq.form_processor.utils import should_use_sql_backend
 from corehq.util.log import with_progress_bar
 
 from ...casediff import get_couch_cases
-from ...casedifftool import do_case_diffs, format_diffs, get_migrator
+from ...casedifftool import do_case_diffs, do_case_patch, format_diffs, get_migrator
 from ...couchsqlmigration import setup_logging
 from ...diff import filter_case_diffs, filter_form_diffs
 from ...missingdocs import MissingIds
@@ -32,6 +32,7 @@ from ...statedb import Counts, StateDB, open_state_db
 log = logging.getLogger(__name__)
 
 CASES = "cases"
+PATCH = "patch"
 SHOW = "show"
 FILTER = "filter"
 
@@ -44,8 +45,9 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('domain')
-        parser.add_argument('action', choices=[CASES, SHOW, FILTER], help="""
+        parser.add_argument('action', choices=[CASES, PATCH, SHOW, FILTER], help="""
             "cases": diff cases.
+            "patch": patch cases with diffs.
             "show": print diffs.
             "filter": filter diffs, removing ones that would normally be
             filtered out. This is useful when new diff ignore rules have
@@ -152,6 +154,11 @@ class Command(BaseCommand):
         setup_logging(self.state_path, "case_diff", self.debug)
         migrator = get_migrator(domain, self.state_path)
         return do_case_diffs(migrator, self.select, self.stop, self.batch_size)
+
+    def do_patch(self, domain):
+        setup_logging(self.state_path, "case_patch", self.debug)
+        migrator = get_migrator(domain, self.state_path)
+        return do_case_patch(migrator, self.select, self.stop, self.batch_size)
 
     def do_show(self, domain):
         """Show diffs from state db"""
