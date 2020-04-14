@@ -63,7 +63,8 @@ class LocationReassignmentView(BaseLocationView):
         return context
 
     def post(self, request, *args, **kwargs):
-        workbook, errors = self._get_workbook(request)
+        uploaded_file = request.FILES['bulk_upload_file']
+        workbook, errors = self._get_workbook(uploaded_file)
         if errors:
             [messages.error(request, error) for error in errors]
             return self.get(request, *args, **kwargs)
@@ -80,7 +81,7 @@ class LocationReassignmentView(BaseLocationView):
             elif action_type == LocationReassignmentRequestForm.REASSIGN_HOUSEHOLDS:
                 self._process_request_for_household_reassignment(parser, request)
             else:
-                return self._generate_summary_response(parser.valid_transitions)
+                return self._generate_summary_response(parser.valid_transitions, uploaded_file.name)
         return self.get(request, *args, **kwargs)
 
     def _get_parser(self, action_type, workbook):
@@ -88,9 +89,9 @@ class LocationReassignmentView(BaseLocationView):
             return HouseholdReassignmentParser(self.domain, workbook)
         return Parser(self.domain, workbook)
 
-    def _get_workbook(self, request):
+    def _get_workbook(self, uploaded_file):
         try:
-            workbook = get_workbook(request.FILES['bulk_upload_file'])
+            workbook = get_workbook(uploaded_file)
         except WorkbookJSONError as e:
             return None, [str(e)]
         return workbook, self._workbook_is_valid(workbook)
@@ -108,10 +109,10 @@ class LocationReassignmentView(BaseLocationView):
                 errors.append(_("Unexpected sheet {sheet_title}").format(sheet_title=worksheet_title))
         return errors
 
-    def _generate_summary_response(self, transitions):
+    def _generate_summary_response(self, transitions, uploaded_filename):
+        filename = uploaded_filename.split('.')[0] + " Summary"
         response_file = Dumper(self.domain).dump(transitions)
         response = HttpResponse(response_file, content_type="text/html; charset=utf-8")
-        filename = '%s Location Reassignment Expected' % self.domain
         response['Content-Disposition'] = safe_filename_header(filename, 'xlsx')
         return response
 
