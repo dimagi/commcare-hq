@@ -841,7 +841,9 @@ hqDefine('export/js/models', [
       if(this.isCaseName() && this.is_deleted())
       {
         this.is_deleted(false);
-        var new_tags = this.tags().filter(ele => ele !== "deleted");
+        var new_tags = _.filter(this.tags(), function(tag) {
+            return tag !== "deleted";
+        });
         this.tags(new_tags);
       }
     };
