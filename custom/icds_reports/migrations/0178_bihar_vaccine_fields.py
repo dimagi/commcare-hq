@@ -5,7 +5,7 @@ from __future__ import unicode_literals
 import custom.icds_reports.models.aggregate
 from django.db import migrations, models
 
-from custom.icds_reports.utils.migrations import get_view_migrations, get_composite_primary_key_migrations
+from custom.icds_reports.utils.migrations import get_composite_primary_key_migrations
 from custom.icds_reports.const import BIHAR_API_CHILD_VACCINE_TABLE
 
 
@@ -19,15 +19,17 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='BiharAPIChildVaccine',
             fields=[
+                ('state_id', models.TextField(null=True)),
                 ('month', models.DateField()),
                 ('supervisor_id', models.TextField(null=True)),
+                ('household_id', models.TextField(null=True)),
                 ('time_birth', models.TextField(null=True)),
                 ('child_alive', models.SmallIntegerField(null=True)),
                 ('father_name', models.TextField(null=True)),
                 ('father_id', models.TextField(null=True)),
                 ('mother_id', models.TextField(null=True)),
                 ('mother_name', models.TextField(null=True)),
-                ('case_id', models.TextField(null=True)),
+                ('case_id', models.TextField(primary_key=True, serialize=False)),
                 ('dob', models.DateField(null=True)),
                 ('private_admit', models.SmallIntegerField(null=True)),
                 ('primary_admit', models.SmallIntegerField(null=True)),
@@ -41,14 +43,15 @@ class Migration(migrations.Migration):
         ),
         migrations.AlterUniqueTogether(
             name='biharapichildvaccine',
-            unique_together=set([('month', 'supervisor_id', 'case_id')]),
+            unique_together=set([('month', 'state_id', 'supervisor_id', 'case_id')]),
         )
     ]
 
     operations.extend(get_composite_primary_key_migrations(['biharapichildvaccine']))
 
     operations += [
+        migrations.RunSQL(f"ALTER TABLE {BIHAR_API_CHILD_VACCINE_TABLE} RENAME TO {BIHAR_API_CHILD_VACCINE_TABLE}_old"),
+        migrations.RunSQL(f"CREATE TABLE {BIHAR_API_CHILD_VACCINE_TABLE} (LIKE {BIHAR_API_CHILD_VACCINE_TABLE}_old INCLUDING DEFAULTS INCLUDING CONSTRAINTS INCLUDING INDEXES) PARTITION BY LIST (month)"),
         migrations.RunSQL(f"SELECT create_distributed_table('{BIHAR_API_CHILD_VACCINE_TABLE}', 'supervisor_id')"),
+        migrations.RunSQL(f"DROP TABLE {BIHAR_API_CHILD_VACCINE_TABLE}_old"),
     ]
-
-    operations += get_view_migrations()

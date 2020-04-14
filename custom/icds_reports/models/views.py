@@ -1437,6 +1437,7 @@ class BiharVaccineView(models.Model):
     Contains rows for Bihar Vaccines API.
     """
     month = models.DateField()
+    state_id = models.TextField()
     person_id = models.TextField()
     time_birth = models.TextField(null=True)
     child_alive = models.SmallIntegerField(null=True)

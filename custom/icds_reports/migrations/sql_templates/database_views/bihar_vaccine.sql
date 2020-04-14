@@ -1,8 +1,10 @@
-DROP VIEW IF EXISTS bihar_vaacine_view CASCADE;
-CREATE VIEW bihar_vaacine_view AS
+DROP VIEW IF EXISTS bihar_vaccine_view CASCADE;
+CREATE VIEW bihar_vaccine_view AS
     SELECT
         "bihar_vaccine"."month" AS "month",
         "bihar_vaccine"."case_id" AS "person_id",
+        "bihar_vaccine"."state_id" AS "state_id",
+        "bihar_vaccine"."supervisor_id" AS "supervisor_id",
         "bihar_vaccine"."time_birth" AS "time_birth",
         "bihar_vaccine"."child_alive" AS "child_alive",
         "bihar_vaccine"."father_name" AS "father_name",
@@ -10,6 +12,11 @@ CREATE VIEW bihar_vaacine_view AS
         "bihar_vaccine"."father_id" AS "father_id",
         "bihar_vaccine"."mother_id" AS "mother_id",
         "bihar_vaccine"."dob" AS "dob",
+        "bihar_vaccine"."household_id" AS "household_id",
+        "bihar_vaccine"."private_admit" AS "private_admit",
+        "bihar_vaccine"."primary_admit" AS "primary_admit",
+        "bihar_vaccine"."date_last_private_admit" AS "date_last_private_admit",
+        "bihar_vaccine"."date_return_private" AS "date_return_private",
         "child_vaccines"."due_list_date_1g_dpt_1" as "due_list_date_1g_dpt_1",
         "child_vaccines"."due_list_date_2g_dpt_2" as "due_list_date_2g_dpt_2",
         "child_vaccines"."due_list_date_3g_dpt_3" as "due_list_date_3g_dpt_3",
@@ -49,5 +56,6 @@ CREATE VIEW bihar_vaacine_view AS
     FROM "public"."bihar_api_child_vaccine" "bihar_vaccine"
     LEFT JOIN "public"."child_vaccines" "child_vaccines"
     ON (
-        ("child_vaccines"."child_health_case_id" = "bihar_vaccine"."case_id")
+        ("child_vaccines"."child_health_case_id" = "bihar_vaccine"."case_id") AND
+        ("child_vaccines"."supervisor_id" = "bihar_vaccine"."supervisor_id")
     );

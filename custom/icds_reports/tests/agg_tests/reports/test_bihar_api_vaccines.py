@@ -1,6 +1,7 @@
+import datetime
 
 from django.test import TestCase
-from custom.icds_reports.reports.bihar_api import get_api_demographics_data, get_api_vaccine_data
+from custom.icds_reports.reports.bihar_api import get_api_vaccine_data
 from datetime import date
 from custom.icds_reports.models.aggregate import BiharAPIChildVaccine
 from mock import patch
@@ -17,29 +18,28 @@ class VaccinesAPITest(TestCase):
             state_id='st1',
             last_person_case_id=''
         )
-        first_person_case = data[0]
-        self.assertCountEqual(
-            {"state_name": "Bihar", "state_site_code": "st1",
-             "district_name": "d1", "district_site_code": "d1",
-             "block_name": "b2", "block_site_code": "b2",
-             "supervisor_name": "s4", "supervisor_site_code": "s4",
-             "awc_name": "a36", "awc_site_code": "a36",
-             "ward_number": "", "household_id": '0c05ae24-3d23-4382-a346-8d053c1ec81c',
-             "household_name": None, "hh_reg_date": None,
-             "hh_num": None, "hh_gps_location": None,
-             "hh_caste": None, "hh_bpl_apl": None,
-             "hh_minority": None, "hh_religion": None,
-             "hh_member_number": None,
-             "person_id": "008b146c-0f21-4506-8800-6cdf5f0d04fc",
-             "person_name": None, "has_adhaar": 0,
-             "bank_account_number": '123456789', "ifsc_code": 'testcode1234',
-             "age_at_reg": 28, "dob": "1988-04-07", "gender": "F",
-             "blood_group": 'APos', "disabled": None,
-             "disability_type": None, "referral_status": 'reffered',
-             "migration_status": None, "resident": 1,
-             "registered_status": None, "rch_id": 1234,
-             "mcts_id": 213, "phone_number": None,
-             "date_death": None, "site_death": None,
-             "closed_on": None, "reason_closure": None},
+        for item in data:
+            if item['person_id'] == 'a60e5b3e-31d2-43d7-b66d-9486108a9816':
+                first_person_case = item
+                break
+        self.assertDictEqual(
+            {'month': datetime.date(2017, 5, 1), 'person_id': 'a60e5b3e-31d2-43d7-b66d-9486108a9816',
+             'time_birth': None, 'child_alive': None, 'father_name': None, 'mother_name': None, 'father_id': None,
+             'mother_id': None, 'dob': datetime.date(2016, 10, 7), 'private_admit': None, 'primary_admit': None,
+             'date_last_private_admit': None, 'date_return_private': None, 'due_list_date_1g_dpt_1': None,
+             'due_list_date_2g_dpt_2': datetime.date(2017, 4, 1), 'due_list_date_3g_dpt_3': None,
+             'due_list_date_5g_dpt_booster': None, 'due_list_date_7gdpt_booster_2': None,
+             'due_list_date_0g_hep_b_0': None, 'due_list_date_1g_hep_b_1': None, 'due_list_date_2g_hep_b_2': None,
+             'due_list_date_3g_hep_b_3': None, 'due_list_date_3g_ipv': None, 'due_list_date_4g_je_1': None,
+             'due_list_date_5g_je_2': None, 'due_list_date_5g_measles_booster': None, 'due_list_date_4g_measles': None,
+             'due_list_date_0g_opv_0': None, 'due_list_date_1g_opv_1': None, 'due_list_date_2g_opv_2': None,
+             'due_list_date_3g_opv_3': None, 'due_list_date_5g_opv_booster': None, 'due_list_date_1g_penta_1': None,
+             'due_list_date_2g_penta_2': None, 'due_list_date_3g_penta_3': None, 'due_list_date_1g_rv_1': None,
+             'due_list_date_2g_rv_2': None, 'due_list_date_3g_rv_3': None, 'due_list_date_4g_vit_a_1': None,
+             'due_list_date_5g_vit_a_2': None, 'due_list_date_6g_vit_a_3': None, 'due_list_date_6g_vit_a_4': None,
+             'due_list_date_6g_vit_a_5': None, 'due_list_date_6g_vit_a_6': None, 'due_list_date_6g_vit_a_7': None,
+             'due_list_date_6g_vit_a_8': None, 'due_list_date_7g_vit_a_9': None, 'due_list_date_1g_bcg': None}
+            ,
             first_person_case
         )
+        self.assertEqual(618, count)

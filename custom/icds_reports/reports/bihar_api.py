@@ -72,16 +72,18 @@ def get_api_demographics_data(month, state_id, last_person_case_id):
 
 
 @icds_quickcache(['month'], timeout=60 * 60 * 2)
-def get_vaccine_total_records_count(month):
+def get_vaccine_total_records_count(month, state_id):
     return BiharVaccineView.objects.filter(
-        month=month
+        month=month,
+        state_id=state_id
     ).count()
 
 
-@icds_quickcache(['month', 'last_person_case_id'], timeout=30 * 60)
-def get_api_vaccine_data(month, last_person_case_id):
+@icds_quickcache(['state_id', 'month', 'last_person_case_id'], timeout=30 * 60)
+def get_api_vaccine_data(state_id, month, last_person_case_id):
     vaccine_data_query = BiharVaccineView.objects.filter(
         month=month,
+        state_id=state_id,
         person_id__gt=last_person_case_id
     ).order_by('person_id').values(
         'month',
@@ -136,4 +138,4 @@ def get_api_vaccine_data(month, last_person_case_id):
 
     # To apply pagination on database query with data size length
     limited_vaccine_data = list(vaccine_data_query[:CAS_API_PAGE_SIZE])
-    return limited_vaccine_data,  get_total_records_count(month)
+    return limited_vaccine_data,  get_vaccine_total_records_count(month, state_id)

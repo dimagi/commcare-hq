@@ -192,7 +192,7 @@ urlpatterns = [
     url(r'^governance_apis/cbe/', GovernanceCBEAPI.as_view(), name='governance_apis_cbe'),
     url(r'^governance_apis/vhsnd/', GovernanceVHNDSAPI.as_view(), name='governance_apis_vhnds'),
     url(r'^bihar_demographics/household_members_data/', BiharDemographicsAPI.as_view(), name='household_members_data'),
-    url(r'^bihar_demographics/child_vaccines_data/', BiharVaccinesAPI.as_view(), name='child_vaccines_data')
+    url(r'^bihar_demographics/children_and_vaccines/', BiharVaccinesAPI.as_view(), name='children_and_vaccines')
 ]
 
 DASHBOARD_URL_GROUPS = urlpatterns + dashboard_urls + mobile_dashboard_urls + maternal_and_child_urls + cas_reach_urls + demographics_urls + awc_infrastructure_urls

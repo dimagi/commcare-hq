@@ -48,23 +48,23 @@ class BiharApiChildVaccineHelper(BaseICDSAggregationDistributedHelper):
 
     @property
     def bihar_state_id(self):
-        # return SQLLocation.objects.get(name='Bihar', location_type__name='state').location_id
-        return 'st1'
+        return SQLLocation.objects.get(name='Bihar', location_type__name='state').location_id
 
     def aggregation_query(self):
         month_start_string = month_formatter(self.month)
-        month_end_string = month_formatter(self.month + relativedelta(months=1, seconds=-1))
         person_case_ucr = get_table_name(self.domain, 'static-person_cases_v3')
         child_health_monthly = get_child_health_tablename(self.month)
 
         columns = (
+            ('state_id', 'person_list.state_id'),
             ('month', f"'{month_start_string}'"),
             ('supervisor_id', 'person_list.supervisor_id'),
             ('time_birth', 'person_list.time_birth'),
+            ('household_id', 'person_list.household_case_id'),
             ('child_alive', 'person_list.child_alive'),
             ('father_name', 'person_list.father_name'),
             ('mother_name', 'person_list.mother_name'),
-            ('mother_id', 'person_list.mother_case_id'),
+            ('mother_id', 'child_health.mother_case_id'),
             ("case_id", "child_health.case_id"),
             ('dob', 'person_list.dob'),
             ('private_admit', 'person_list.primary_admit'),
@@ -84,21 +84,37 @@ class BiharApiChildVaccineHelper(BaseICDSAggregationDistributedHelper):
                 {calculations}
                 from "{child_health_monthly}" child_health
                 LEFT JOIN "{person_case_ucr}" person_list ON (
-                    person_list.doc_id = child_health.mother_id
+                    person_list.doc_id = child_health.child_person_case_id
                     AND person_list.supervisor_id = child_health.supervisor_id
                 )
                 WHERE 
                 (
-                    person_list.opened_on <= '{month_end_string}' AND
-                    (person_list.closed_on IS NULL OR person_list.closed_on >= '{month_start_string}' )
-                    AND person_list.state_id='{self.bihar_state_id}'
+                    person_list.state_id='{self.bihar_state_id}' AND 
+                    child_health.valid_all_registered_in_month = 1
                 )
               );
+              
+              UPDATE "{self.monthly_tablename}" bihar_vaccine_table
+                    SET father_id = ut.father_id
+                    FROM (
+                        SELECT
+                        person_case_ucr.doc_id AS father_id,
+                        person_case_ucr.name AS father_name,
+                        person_case_ucr.household_case_id AS household_id
+                    
+                    FROM "{self.monthly_tablename}" new_bihar_table
+                    LEFT JOIN "{person_case_ucr}" person_case_ucr ON 
+                        new_bihar_table.father_name = person_case_ucr.name AND
+                        new_bihar_table.household_id = person_case_ucr.household_case_id AND 
+                        new_bihar_table.supervisor_id = person_case_ucr.supervisor_id
+                    ) ut
+                    
+                    WHERE bihar_vaccine_table.father_id = ut.father_id and bihar_vaccine_table.household_id = ut.household_id
                 """
 
     def indexes(self):
         return [
-            f"""CREATE INDEX IF NOT EXISTS demographics_state_person_case_idx
+            f"""CREATE INDEX IF NOT EXISTS demographics_state_case_idx
                 ON "{self.monthly_tablename}" (month, state_id, supervisor_id, case_id)
             """
         ]
