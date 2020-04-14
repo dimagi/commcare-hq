@@ -8,3 +8,5 @@ http.port: 9200
 http.cors.allow-origin: "*"
 http.cors.enabled: true
 index.max_result_window: 1000000
+
+action.auto_create_index: false
