@@ -209,10 +209,11 @@
           "filters": [
             {
               "type": "named",
-              "name": "awc_open"
+              "name": "awc_open",
+              "comment": null
             },
             {
-              "operator": "eq",
+              "operator": "not_eq",
               "type": "boolean_expression",
               "expression": {
                 "datatype": "string",
@@ -222,13 +223,15 @@
                   "meal_served"
                 ]
               },
-              "property_value": "cooked_served_hot"
+              "property_value": "not_served",
+              "comment": null
             }
           ]
         },
         "display_name": null,
         "type": "boolean",
-        "column_id": "open_hotcooked_count"
+        "column_id": "open_hotcooked_count",
+        "comment": null
       },
       {
         "filter": {
