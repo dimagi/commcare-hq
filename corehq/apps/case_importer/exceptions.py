@@ -11,6 +11,8 @@ class ImporterError(Exception):
     When possible, a more specific subclass should be used
     """
 
+class ImporterRawError(ImporterError):
+    """Stand-in for generic error return codes"""
 
 class ImporterFileNotFound(ImporterError):
     """Raised when a referenced file can't be found"""
