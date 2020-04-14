@@ -295,7 +295,7 @@ def bulk_case_upload_api(request, domain, **kwargs):
         return json_response({'error_msg': _(error)})
 
 
-def _bulk_case_upload_api(request,domain):
+def _bulk_case_upload_api(request, domain):
     upload_file, case_type, search_field, create_new_cases, search_column =_get_bulk_case_upload_args_from_request(request, domain)
 
     case_upload, context = _process_file_and_get_upload(upload_file, request, domain)
