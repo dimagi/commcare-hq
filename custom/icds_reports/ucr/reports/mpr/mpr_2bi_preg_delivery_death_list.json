@@ -258,7 +258,7 @@
           "type": "translation",
           "mobile_or_web": "mobile",
           "translations": {
-            "yes": {
+            "1": {
               "mar": "होय",
               "tel": "అవును",
               "hin": "हाँ",
@@ -276,7 +276,7 @@
               "kan": "ಹೌದು",
               "urd": "جی ہاں"
             },
-            "no": {
+            "0": {
               "mar": "नाही",
               "tel": "కాదు",
               "hin": "नहीं",
