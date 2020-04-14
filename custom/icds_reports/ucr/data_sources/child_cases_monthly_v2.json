@@ -1982,35 +1982,17 @@
               "type": "and",
               "filters": [
                 {
-                  "type": "or",
-                  "filters": [
-                    {
-                      "operator": "eq",
-                      "type": "boolean_expression",
-                      "expression": {
-                        "datatype": "string",
-                        "type": "property_path",
-                        "property_path": [
-                          "form",
-                          "meal_served"
-                        ]
-                      },
-                      "property_value": "cooked_served_hot"
-                    },
-                    {
-                      "operator": "eq",
-                      "type": "boolean_expression",
-                      "expression": {
-                        "datatype": "string",
-                        "type": "property_path",
-                        "property_path": [
-                          "form",
-                          "meal_served"
-                        ]
-                      },
-                      "property_value": "packed_served_hot"
-                    }
-                  ]
+                  "operator": "not_eq",
+                  "type": "boolean_expression",
+                  "expression": {
+                    "datatype": "string",
+                    "type": "property_path",
+                    "property_path": [
+                      "form",
+                      "meal_served"
+                    ]
+                  },
+                  "property_value": "not_served"
                 },
                 {
                   "operator": "in_multi",
