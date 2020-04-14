@@ -162,7 +162,7 @@ class Command(BaseCommand):
             items = statedb.iter_doc_changes(**select)
         else:
             items = statedb.iter_doc_diffs(**select)
-        prompt = not self.csv
+        prompt = os.isatty(sys.stdout.fileno()) and not self.csv
         if self.csv:
             items = self.with_progress(items, statedb, select)
             print(CSV_HEADERS, file=sys.stdout)
