@@ -354,6 +354,86 @@
         "type": "boolean",
         "display_name": null,
         "column_id": "M_mod_resident_weighed_count"
+      },
+      {
+        "filter": {
+          "type": "and",
+          "filters": [
+            {
+              "type": "named",
+              "name": "resident",
+              "comment": null
+            },
+            {
+              "type": "named",
+              "name": "weighed",
+              "comment": null
+            },
+            {
+              "type": "named",
+              "name": "male",
+              "comment": null
+            },
+            {
+              "operator": "eq",
+              "expression": {
+                "datatype": null,
+                "type": "property_path",
+                "property_path": [
+                  "form",
+                  "zscore_grading_wfa"
+                ]
+              },
+              "type": "boolean_expression",
+              "property_value": "green",
+              "comment": null
+            }
+          ]
+        },
+        "type": "boolean",
+        "display_name": null,
+        "column_id": "M_norm_resident_weighed_count",
+        "comment": null
+      },
+      {
+        "filter": {
+          "type": "and",
+          "filters": [
+            {
+              "type": "named",
+              "name": "resident",
+              "comment": null
+            },
+            {
+              "type": "named",
+              "name": "weighed",
+              "comment": null
+            },
+            {
+              "type": "named",
+              "name": "female",
+              "comment": null
+            },
+            {
+              "operator": "eq",
+              "expression": {
+                "datatype": null,
+                "type": "property_path",
+                "property_path": [
+                  "form",
+                  "zscore_grading_wfa"
+                ]
+              },
+              "type": "boolean_expression",
+              "property_value": "green",
+              "comment": null
+            }
+          ]
+        },
+        "type": "boolean",
+        "display_name": null,
+        "column_id": "F_norm_resident_weighed_count",
+        "comment": null
       }
     ],
     "named_expressions": {
