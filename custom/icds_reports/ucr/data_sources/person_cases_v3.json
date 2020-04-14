@@ -583,7 +583,8 @@
           "type": "switch",
           "switch_on": {
             "type": "property_name",
-            "property_name": "registered_status"
+            "property_name": "registered_status",
+            "datatype": null
           },
           "cases": {
             "not_registered": {
@@ -593,9 +594,15 @@
           },
           "default": {
             "type": "constant",
-            "constant": null
+            "constant": 1
           }
-        }
+        },
+        "is_nullable": true,
+        "is_primary_key": false,
+        "create_index": false,
+        "transform": {},
+        "display_name": null,
+        "comment": null
       },
       {
         "column_id": "migration_status",
@@ -605,7 +612,8 @@
           "type": "switch",
           "switch_on": {
             "type": "property_name",
-            "property_name": "migration_status"
+            "property_name": "migration_status",
+            "datatype": null
           },
           "cases": {
             "migrated": {
@@ -615,9 +623,15 @@
           },
           "default": {
             "type": "constant",
-            "constant": null
+            "constant": 0
           }
-        }
+        },
+        "is_nullable": true,
+        "is_primary_key": false,
+        "create_index": false,
+        "transform": {},
+        "display_name": null,
+        "comment": null
       },
       {
         "column_id": "aadhar_date",
