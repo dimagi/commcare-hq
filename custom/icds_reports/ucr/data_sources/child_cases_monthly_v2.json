@@ -1783,6 +1783,89 @@
         "display_name": null,
         "type": "boolean",
         "column_id": "pse_partial_female"
+      },
+      {
+        "display_name": null,
+        "datatype": "date",
+        "type": "expression",
+        "is_primary_key": false,
+        "transform": {},
+        "is_nullable": true,
+        "expression": {
+          "type": "named",
+          "name": "last_date_gmp_in_month"
+        },
+        "column_id": "last_date_gmp_in_month_display"
+      },
+      {
+        "filter": {
+          "type": "and",
+          "filters": [
+            {
+              "type": "named",
+              "name": "open_in_month"
+            },
+            {
+              "operator": "not_eq",
+              "expression": {
+                "type": "named",
+                "name": "last_date_gmp_in_month"
+              },
+              "type": "boolean_expression",
+              "property_value": null
+            }
+          ]
+        },
+        "display_name": null,
+        "type": "boolean",
+        "column_id": "weighed_in_month"
+      },
+      {
+        "display_name": null,
+        "datatype": "string",
+        "expression": {
+          "type": "conditional",
+          "test": {
+            "type": "and",
+            "filters": [
+              {
+                "type": "named",
+                "name": "open_in_month"
+              },
+              {
+                "operator": "lte",
+                "expression": {
+                  "type": "named",
+                  "name": "age_in_months"
+                },
+                "type": "boolean_expression",
+                "property_value": 24
+              },
+              {
+                "operator": "gte",
+                "expression": {
+                  "type": "named",
+                  "name": "age_in_months"
+                },
+                "type": "boolean_expression",
+                "property_value": 6
+              }
+            ]
+          },
+          "expression_if_true": {
+            "constant": "cf",
+            "type": "constant"
+          },
+          "expression_if_false": {
+            "constant": "non_cf",
+            "type": "constant"
+          }
+        },
+        "is_primary_key": false,
+        "transform": {},
+        "is_nullable": true,
+        "type": "expression",
+        "column_id": "ccs_phase"
       }
     ],
     "named_expressions": {
