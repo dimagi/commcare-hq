@@ -1,4 +1,5 @@
 import asyncio
+from itertools import count
 
 from django.core.management import BaseCommand
 
@@ -6,7 +7,6 @@ from corehq.apps.cleanup.utils import confirm_destructive_operation
 from corehq.blobs import get_blob_db
 from corehq.blobs.models import BlobMeta
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
-from dimagi.utils.chunked import chunked
 
 CHUNK_SIZE = 1000
 
@@ -54,8 +54,8 @@ async def wipe_blobdb(commit=False):
 
 async def wipe_shard(dbname, commit=False):
     bytes_deleted = 0
-    metas = BlobMeta.objects.using(dbname).all()
-    for chunk in chunked(metas, CHUNK_SIZE):
+    metas = BlobMeta.objects.using(dbname).order_by('created_on').all()
+    for chunk in paginated(metas, CHUNK_SIZE):
         if commit:
             await wipe_chunk(chunk)
         bytes_deleted += sum(meta.content_length for meta in chunk)
@@ -68,3 +68,22 @@ async def wipe_chunk(chunk):
     """
     blob_db = get_blob_db()
     blob_db.bulk_delete(metas=chunk)
+
+
+def paginated(sliceable, page_size):
+    """
+    A light-weight paginator that uses slicing, so that if ``sliceable``
+    is a QuerySet, each page is fetched with a new query.
+
+    >>> foo = 'the quick brown fox jumps over the lazy dog'
+    >>> list(paginated(foo, 10))
+    ['the quick ', 'brown fox ', 'jumps over', ' the lazy ', 'dog']
+
+    """
+    for start in count(0, page_size):
+        page = sliceable[start:start + page_size]
+        if not page:
+            return
+        yield page
+        if len(page) < page_size:
+            return
