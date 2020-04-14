@@ -900,51 +900,8 @@
           "filters": [
             {
               "type": "named",
-              "name": "open_cases"
-            },
-            {
-              "operator": "not_eq",
-              "expression": {
-                "datatype": null,
-                "type": "property_name",
-                "property_name": "zscore_grading_wfa"
-              },
-              "type": "boolean_expression",
-              "property_value": "yellow"
-            },
-            {
-              "operator": "not_eq",
-              "expression": {
-                "datatype": null,
-                "type": "property_name",
-                "property_name": "zscore_grading_wfa"
-              },
-              "type": "boolean_expression",
-              "property_value": "red"
-            },
-            {
-              "operator": "not_eq",
-              "expression": {
-                "datatype": null,
-                "type": "property_name",
-                "property_name": "zscore_grading_wfa"
-              },
-              "type": "boolean_expression",
-              "property_value": null
-            }
-          ]
-        },
-        "display_name": null,
-        "type": "boolean",
-        "column_id": "norm_mal_open_count"
-      },
-      {
-        "filter": {
-          "type": "and",
-          "filters": [
-            {
-              "type": "named",
-              "name": "open_cases"
+              "name": "open_cases",
+              "comment": null
             },
             {
               "operator": "eq",
@@ -954,13 +911,58 @@
                 "property_name": "zscore_grading_wfa"
               },
               "type": "boolean_expression",
-              "property_value": null
+              "property_value": "green",
+              "comment": null
             }
           ]
         },
         "display_name": null,
         "type": "boolean",
-        "column_id": "open_not_weighed_count"
+        "column_id": "norm_mal_open_count",
+        "comment": null
+      },
+      {
+        "filter": {
+          "type": "and",
+          "filters": [
+            {
+              "type": "named",
+              "name": "open_cases",
+              "comment": null
+            },
+            {
+              "type": "or",
+              "filters": [
+                {
+                  "operator": "eq",
+                  "expression": {
+                    "datatype": null,
+                    "type": "property_name",
+                    "property_name": "zscore_grading_wfa"
+                  },
+                  "type": "boolean_expression",
+                  "property_value": null,
+                  "comment": null
+                },
+                {
+                  "operator": "eq",
+                  "expression": {
+                    "datatype": null,
+                    "type": "property_name",
+                    "property_name": "zscore_grading_wfa"
+                  },
+                  "type": "boolean_expression",
+                  "property_value": "",
+                  "comment": null
+                }
+              ]
+            }
+          ]
+        },
+        "display_name": null,
+        "type": "boolean",
+        "column_id": "open_not_weighed_count",
+        "comment": null
       },
       {
         "display_name": null,
