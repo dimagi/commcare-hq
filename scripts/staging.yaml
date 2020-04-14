@@ -57,5 +57,4 @@ branches:
   - bmb/SAAS-10712  # Biyeun April 1
   - ap/remove-delete-in-name # Amit April 8
   - bmb/SAAS-10717 # Biyeun April 10
-  - ctsims/importer_api # Clayton April 13
 submodules: {}
