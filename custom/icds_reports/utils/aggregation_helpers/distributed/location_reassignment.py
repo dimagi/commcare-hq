@@ -4,10 +4,10 @@ from django.db import connections
 from corehq.apps.userreports.util import get_table_name
 from corehq.sql_db.connections import get_icds_ucr_citus_db_alias
 from custom.icds_reports.const import DASHBOARD_DOMAIN
-from custom.icds_reports.utils.aggregation_helpers import get_prev_table, transform_day_to_month
+from custom.icds_reports.utils.aggregation_helpers import get_prev_agg_tablename, transform_day_to_month
 
 
-class TempPrevTables(object):
+class TempPrevTablesBase(object):
 
     DROP_QUERY = """
     DROP TABLE IF EXISTS "{prev_table}";
@@ -16,7 +16,7 @@ class TempPrevTables(object):
 
     def drop_temp_tables(self, alias):
         data = {
-            'prev_table': get_prev_table(alias),
+            'prev_table': get_prev_agg_tablename(alias),
             'prev_local': f"{alias}_prev_local",
         }
         with connections[get_icds_ucr_citus_db_alias()].cursor() as cursor:
@@ -24,7 +24,7 @@ class TempPrevTables(object):
 
     def create_temp_tables(self, alias, table, day):
         data = {
-            'prev_table': get_prev_table(alias),
+            'prev_table': get_prev_agg_tablename(alias),
             'prev_local': f"{alias}_prev_local",
             'prev_month': day,
             'current_table': table,
@@ -37,7 +37,7 @@ class TempPrevTables(object):
         raise NotImplementedError
 
 
-class TempPrevUCRTables(TempPrevTables):
+class TempPrevUCRTables(TempPrevTablesBase):
 
     CREATE_QUERY = """
     CREATE UNLOGGED TABLE "{prev_table}" (LIKE "{current_table}");
@@ -52,7 +52,7 @@ class TempPrevUCRTables(TempPrevTables):
 
     def drop_temp_tables(self, alias):
         data = {
-            'prev_table': get_prev_table(alias),
+            'prev_table': get_prev_agg_tablename(alias),
             'prev_local': f"{alias}_prev_local",
         }
         with connections[get_icds_ucr_citus_db_alias()].cursor() as cursor:
@@ -61,7 +61,7 @@ class TempPrevUCRTables(TempPrevTables):
     def create_temp_tables(self, table, day):
         alias, table = table
         data = {
-            'prev_table': get_prev_table(alias),
+            'prev_table': get_prev_agg_tablename(alias),
             'prev_local': f"{alias}_prev_local",
             'prev_month': day,
             'current_table': table,
@@ -85,28 +85,28 @@ class TempPrevUCRTables(TempPrevTables):
             self.create_temp_tables(table, day)
 
 
-class TempPrevIntermediateTables(TempPrevTables):
+class TempPrevIntermediateTables(TempPrevTablesBase):
     CREATE_QUERY = """
     CREATE UNLOGGED TABLE "{prev_table}" (LIKE "{current_table}");
     SELECT create_distributed_table('{prev_table}', 'supervisor_id');
     INSERT INTO "{prev_table}" (SELECT * FROM "{current_table}" where month='{prev_month}');
     CREATE INDEX "idx_sup_case_{alias}" ON "{prev_table}" USING hash (case_id);
     CREATE INDEX "idx_sup_state_{alias}" ON "{prev_table}" USING hash (state_id);
-    CREATE UNLOGGED TABLE "{prev_local}" AS (SELECT * FROM "{current_table}" WHERE case_id in (select case_id from "{ucr_local}"));
-    DELETE FROM "{prev_table}" WHERE case_id in (select doc_id from "{ucr_local}");
-    UPDATE "{prev_local}" prev SET supervisor_id = last_supervisor_id FROM "{ucr_local}" ucr WHERE prev.case_id=ucr.doc_id;
+    CREATE UNLOGGED TABLE "{prev_local}" AS (SELECT * FROM "{current_table}" WHERE case_id in (select case_id from "{ucr_prev_local}"));
+    DELETE FROM "{prev_table}" WHERE case_id in (select doc_id from "{ucr_prev_local}");
+    UPDATE "{prev_local}" prev SET supervisor_id = last_supervisor_id FROM "{ucr_prev_local}" ucr WHERE prev.case_id=ucr.doc_id;
     INSERT INTO "{prev_table}" (SELECT * FROM "{prev_local}");
     """
 
     def create_temp_tables(self, table, day):
         alias, table, ucr_alias = table
         data = {
-            'prev_table': get_prev_table(alias),
+            'prev_table': get_prev_agg_tablename(alias),
             'prev_local': f"{alias}_prev_local",
             'prev_month': day,
             'current_table': table,
             'alias': alias,
-            'ucr_local': f"{ucr_alias}_prev_local"
+            'ucr_prev_local': f"{ucr_alias}_prev_local"
         }
         with connections[get_icds_ucr_citus_db_alias()].cursor() as cursor:
             cursor.execute(self.CREATE_QUERY.format(**data))
@@ -126,7 +126,7 @@ class TempPrevIntermediateTables(TempPrevTables):
             self.create_temp_tables(table, day)
 
 
-class TempInfraTables(TempPrevTables):
+class TempInfraTables(TempPrevTablesBase):
     CREATE_QUERY = """
     CREATE UNLOGGED TABLE "{prev_table}" (LIKE "{current_table}");
     INSERT INTO "{prev_table}" (SELECT * FROM "{current_table}" where timeend >= '{six_months_ago}' AND timeend < '{next_month_start}');
@@ -142,7 +142,7 @@ class TempInfraTables(TempPrevTables):
         six_months_ago = day - relativedelta(months=6)
         alias, table = table
         data = {
-            'prev_table': get_prev_table(alias),
+            'prev_table': get_prev_agg_tablename(alias),
             'prev_local': f"{alias}_prev_local",
             'prev_month': day,
             'current_table': table,

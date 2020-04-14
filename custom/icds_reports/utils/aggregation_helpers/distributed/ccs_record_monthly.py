@@ -9,7 +9,7 @@ from custom.icds_reports.const import (
     AGG_CCS_RECORD_DELIVERY_TABLE,
     AGG_CCS_RECORD_CF_TABLE,
     AGG_MIGRATION_TABLE)
-from custom.icds_reports.utils.aggregation_helpers import transform_day_to_month, month_formatter, get_prev_table, current_month
+from custom.icds_reports.utils.aggregation_helpers import transform_day_to_month, month_formatter, get_prev_agg_tablename, is_current_month
 from custom.icds_reports.utils.aggregation_helpers.distributed.base import BaseICDSAggregationDistributedHelper
 
 
@@ -32,8 +32,8 @@ class CcsRecordMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribute
             cursor.execute(query)
 
     def get_table(self, table_id):
-        if not current_month(self.month):
-            return get_prev_table(table_id)
+        if not is_current_month(self.month):
+            return get_prev_agg_tablename(table_id)
         return get_table_name(self.domain, table_id)
 
     @property

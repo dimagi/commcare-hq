@@ -16,8 +16,8 @@ from custom.icds_reports.utils.aggregation_helpers import (
     get_child_health_temp_tablename,
     transform_day_to_month,
     month_formatter,
-    get_prev_table,
-    current_month
+    get_prev_agg_tablename,
+    is_current_month
 )
 from custom.icds_reports.utils.aggregation_helpers.distributed.base import BaseICDSAggregationDistributedHelper
 
@@ -50,8 +50,8 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
             cursor.execute(query)
 
     def get_table(self, table_id):
-        if not current_month(self.month):
-            return get_prev_table(table_id)
+        if not is_current_month(self.month):
+            return get_prev_agg_tablename(table_id)
         return get_table_name(self.domain, table_id)
 
     @property
