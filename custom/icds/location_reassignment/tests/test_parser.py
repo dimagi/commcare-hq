@@ -9,9 +9,18 @@ from couchexport.models import Format
 
 from corehq.util.workbook_json.excel import get_workbook
 from custom.icds.location_reassignment.const import (
+    CURRENT_LGD_CODE,
+    CURRENT_NAME,
+    CURRENT_PARENT_NAME,
+    CURRENT_PARENT_SITE_CODE,
     CURRENT_SITE_CODE_COLUMN,
+    NEW_LGD_CODE,
+    NEW_NAME,
+    NEW_PARENT_SITE_CODE,
     NEW_SITE_CODE_COLUMN,
+    NEW_USERNAME_COLUMN,
     OPERATION_COLUMN,
+    USERNAME_COLUMN,
 )
 from custom.icds.location_reassignment.parser import Parser
 
@@ -22,16 +31,16 @@ class TestParser(TestCase):
     domain = 'test'
     headers = (
         ('awc',
-         ('name', 'new_name', CURRENT_SITE_CODE_COLUMN, NEW_SITE_CODE_COLUMN, 'lgd_code',
-          'new_lgd_code', 'parent_name', 'parent_site_code', 'new_parent_site_code',
-          'username', 'new_username', OPERATION_COLUMN)),
+         (CURRENT_NAME, NEW_NAME, CURRENT_SITE_CODE_COLUMN, NEW_SITE_CODE_COLUMN, CURRENT_LGD_CODE,
+          NEW_LGD_CODE, CURRENT_PARENT_NAME, CURRENT_PARENT_SITE_CODE, NEW_PARENT_SITE_CODE,
+          USERNAME_COLUMN, NEW_USERNAME_COLUMN, OPERATION_COLUMN)),
         ('supervisor',
-         ('name', 'new_name', CURRENT_SITE_CODE_COLUMN, NEW_SITE_CODE_COLUMN, 'lgd_code',
-          'new_lgd_code', 'parent_name', 'parent_site_code', 'new_parent_site_code',
-          'username', 'new_username', OPERATION_COLUMN)),
+         (CURRENT_NAME, NEW_NAME, CURRENT_SITE_CODE_COLUMN, NEW_SITE_CODE_COLUMN, CURRENT_LGD_CODE,
+          NEW_LGD_CODE, CURRENT_PARENT_NAME, CURRENT_PARENT_SITE_CODE, NEW_PARENT_SITE_CODE,
+          USERNAME_COLUMN, NEW_USERNAME_COLUMN, OPERATION_COLUMN)),
         ('state',
-         ('name', 'new_name', CURRENT_SITE_CODE_COLUMN, NEW_SITE_CODE_COLUMN, 'lgd_code',
-          'new_lgd_code', 'username', 'new_username', OPERATION_COLUMN)),
+         (CURRENT_NAME, NEW_NAME, CURRENT_SITE_CODE_COLUMN, NEW_SITE_CODE_COLUMN, CURRENT_LGD_CODE,
+          NEW_LGD_CODE, USERNAME_COLUMN, NEW_USERNAME_COLUMN, OPERATION_COLUMN)),
     )
     rows = (
         ('awc', (
@@ -42,7 +51,15 @@ class TestParser(TestCase):
             # valid operation to move 112 -> 131
             ('AWC 2', 'AWC 3', '112', '131', 'AWC-112',
              'AWC-131', 'Supervisor 2', '11', '13',
-             'username2', 'username3', 'Move'))),
+             'username2', 'username3', 'Move'),
+            # valid operation to merge 113 114 -> 132 but
+            # with different lgd code for new location in 114
+            ('AWC 4', 'AWC 6', '113', '132', 'AWC-113',
+             'AWC-132', 'Supervisor 1', '11', '13',
+             'username4', 'username5', 'Merge'),
+            ('AWC 5', 'AWC 6', '114', '132', 'AWC-114',
+             'AWC-133', 'Supervisor 1', '11', '13',
+             'username6', 'username7', 'Merge'))),
         ('supervisor', (
             # invalid row with missing new site code
             ('Supervisor 1', 'Supervisor 1', '11', '', 'Sup-11',
@@ -67,11 +84,14 @@ class TestParser(TestCase):
             export_raw(self.headers, self.rows, file, format=Format.XLS_2007)
             file.seek(0)
             workbook = get_workbook(file)
-            valid_transitions, errors = Parser(self.domain, workbook).parse()
-            self.assertEqual(valid_transitions['awc']['Move'], {'131': '112'})
-            self.assertEqual(valid_transitions['supervisor']['Move'], {'13': '12'})
+            parser = Parser(self.domain, workbook)
+            errors = parser.parse()
+            self.assertEqual(parser.valid_transitions['awc']['Move'], {'131': '112'})
+            self.assertEqual(parser.valid_transitions['awc']['Merge'], {'132': ['113', '114']})
+            self.assertEqual(parser.valid_transitions['supervisor']['Move'], {'13': '12'})
             self.assertEqual(errors, [
                 "No change in location code for Extract, got old: '111' and new: '111'",
+                "New location 132 reused with different information",
                 "Missing location code for Split, got old: '11' and new: ''",
                 "Invalid Operation Unknown"
             ])
