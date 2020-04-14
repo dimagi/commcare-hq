@@ -838,14 +838,13 @@ hqDefine('export/js/models', [
     };
 
     ExportColumn.prototype.removeDeletedTagFromCaseName = function () {
-      if(this.isCaseName() && this.is_deleted())
-      {
-        this.is_deleted(false);
-        var new_tags = _.filter(this.tags(), function(tag) {
-            return tag !== "deleted";
-        });
-        this.tags(new_tags);
-      }
+        if (this.isCaseName() && this.is_deleted()) {
+            this.is_deleted(false);
+            var newTags = _.filter(this.tags(), function (tag) {
+                return tag !== "deleted";
+            });
+            this.tags(newTags);
+        }
     };
 
     ExportColumn.mapping = {
