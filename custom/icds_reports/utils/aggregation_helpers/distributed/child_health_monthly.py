@@ -3,6 +3,7 @@ import logging
 from dateutil.relativedelta import relativedelta
 
 from corehq.apps.userreports.util import get_table_name
+from corehq.toggles import ICDS_LOCATION_REASSIGNMENT_AGG
 from custom.icds_reports.const import (
     AGG_COMP_FEEDING_TABLE,
     AGG_CHILD_HEALTH_PNC_TABLE,
@@ -50,7 +51,7 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
             cursor.execute(query)
 
     def get_table(self, table_id):
-        if not is_current_month(self.month):
+        if not is_current_month(self.month) and ICDS_LOCATION_REASSIGNMENT_AGG.enabled(self.domain):
             return get_prev_agg_tablename(table_id)
         return get_table_name(self.domain, table_id)
 
