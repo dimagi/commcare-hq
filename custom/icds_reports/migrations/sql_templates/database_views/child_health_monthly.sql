@@ -36,6 +36,7 @@ CREATE VIEW child_health_monthly_view AS
       child_health_monthly.current_month_wasting,
       child_health_monthly.thr_eligible,
       child_health_monthly.num_rations_distributed,
+      child_health_monthly.lunch_count,
       GREATEST(child_health_monthly.fully_immunized_on_time, child_health_monthly.fully_immunized_late) AS fully_immunized,
       CASE WHEN child_health_monthly.current_month_nutrition_status = 'severely_underweight' THEN 1
           WHEN child_health_monthly.current_month_nutrition_status = 'moderately_underweight' THEN 2
