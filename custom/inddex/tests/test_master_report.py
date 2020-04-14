@@ -1,8 +1,9 @@
 import csv
+import doctest
 import os
 from datetime import date
 
-from django.test import TestCase
+from django.test import SimpleTestCase, TestCase
 from django.utils.functional import cached_property
 
 from memoized import memoized
@@ -10,6 +11,7 @@ from mock import patch
 
 from dimagi.utils.dates import DateSpan
 
+import custom.inddex.reports.nutrient_stats
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.fixtures.dbaccessors import (
@@ -29,6 +31,7 @@ from ..food import INDICATORS, FoodData
 from ..reports.gaps_summary import get_gaps_data
 from ..reports.master_data import MasterData
 from ..reports.nutrient_intake import DailyIntakeData
+from ..reports.nutrient_stats import NutrientStatsData
 from ..ucr_data import FoodCaseData
 
 DOMAIN = 'inddex-reports-test'
@@ -241,3 +244,14 @@ class TestInddexReports(TestCase):
     def test_daily_intake(self):
         data = DailyIntakeData(get_food_data())
         self.assert_reports_match('aggr_daily_intake_by_rspndnt.csv', data)
+
+    def test_nutrient_stats(self):
+        data = NutrientStatsData(get_food_data())
+        self.assert_reports_match('nutr_intake_summary_stats.csv', data)
+
+
+class DocTests(SimpleTestCase):
+
+    def test_doctests(self):
+        results = doctest.testmod(custom.inddex.reports.nutrient_stats)
+        self.assertEqual(results.failed, 0)
