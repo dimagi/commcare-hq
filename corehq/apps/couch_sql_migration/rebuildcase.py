@@ -34,10 +34,9 @@ def rebuild_and_diff_cases(sql_case, couch_case, original_couch_case, diff, dd_c
         sql_json = new_case.to_json()
         diffs = diff(couch_case, sql_json)
         if diffs and couch_case != original_couch_case:
-            original_diffs = diff(original_couch_case, sql_json)
-            if not original_diffs:
+            diffs = diff(original_couch_case, sql_json)
+            if not diffs:
                 log.info("original Couch case matches rebuilt SQL case: %s", sql_case.case_id)
-                diffs = original_diffs
         if not diffs:
             # save case only if rebuild resolves diffs
             CaseAccessorSQL.save_case(new_case)
