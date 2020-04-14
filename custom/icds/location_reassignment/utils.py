@@ -52,21 +52,25 @@ def get_household_and_child_case_ids_by_owner(domain, household_case_id, owner_i
 
 
 def get_household_child_cases_by_owner(domain, household_case_id, owner_id, case_types):
-    def get_child_cases(ids):
+    def get_child_cases(ids, exclude_ids):
         return [case for case in
                 CaseAccessorSQL.get_reverse_indexed_cases(domain, ids)
-                if case.owner_id == owner_id]
+                if case.case_id not in exclude_ids and case.owner_id == owner_id]
 
+    # keep a list of case ids already iterated to avoid duplicates
+    iterated_case_ids = set()
     cases = []
     parent_case_ids = [household_case_id]
     while parent_case_ids:
-        child_cases = get_child_cases(parent_case_ids)
+        child_cases = get_child_cases(parent_case_ids, iterated_case_ids)
         if child_cases:
-            parent_case_ids = [case.case_id for case in child_cases]
+            child_case_ids = set([case.case_id for case in child_cases])
+            iterated_case_ids.update(child_case_ids)
             if case_types:
                 cases.extend([case for case in child_cases if case.type in case_types])
             else:
                 cases.extend(child_cases)
+            parent_case_ids = child_case_ids
         else:
             parent_case_ids = None
     return cases
