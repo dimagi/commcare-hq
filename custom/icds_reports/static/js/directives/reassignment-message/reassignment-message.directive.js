@@ -1,10 +1,9 @@
-var url = hqImport('hqwebapp/js/initial_page_data').reverse;
-
 window.angular.module('icdsApp').directive("reassignmentMessage", function () {
+    var url = hqImport('hqwebapp/js/initial_page_data').reverse;
     return {
         restrict: 'E',
         scope: {
-            selectedLocation: '='
+            selectedLocation: '=',
         },
         templateUrl: url('icds-ng-template', 'reassignment-message'),
     };

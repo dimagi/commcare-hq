@@ -53,7 +53,7 @@ function LocationModalController($uibModalInstance, $location, locationsService,
 
     var selectedLocationIndex = function () {
         return _.findLastIndex(vm.selectedLocations, function (location) {
-            return location && location !== ALL_OPTION.location_id && location.location_id != ALL_OPTION.location_id;
+            return location && location !== ALL_OPTION.location_id && location.location_id !== ALL_OPTION.location_id;
         });
     };
 

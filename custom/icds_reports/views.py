@@ -1,4 +1,4 @@
-from collections import defaultdict, OrderedDict
+from collections import OrderedDict
 from datetime import date, datetime
 from wsgiref.util import FileWrapper
 
@@ -627,9 +627,9 @@ class LocationView(View):
                 'user_have_access_to_parent': location.location_id in parent_ids,
                 'parent_name': location.parent.name if location.parent else None,
                 'parent_map_name': get_map_name(location.parent),
-                'deprecates': get_replacement_names(loc, 'deprecates', replacement_names),
+                'deprecates': get_replacement_name(location, 'deprecates', replacement_names),
                 'deprecated_at': location.metadata.get('deprecated_at'),
-                'deprecated_to': get_replacement_names(loc, 'deprecated_to', replacement_names),
+                'deprecated_to': get_replacement_name(location, 'deprecated_to', replacement_names),
                 'deprecates_at': location.metadata.get('deprecates_at'),
             })
 

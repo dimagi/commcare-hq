@@ -1832,7 +1832,6 @@ def _construct_repacement_map_from_sql_location(replacement_location_ids):
     return replacement_names
 
 
-
 def get_deprecation_info(locations, show_test, multiple_levels=False):
     locations_list = []
     replacement_location_ids = []
