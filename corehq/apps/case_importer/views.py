@@ -23,7 +23,7 @@ from corehq.apps.case_importer.suggested_fields import (
 )
 from corehq.apps.case_importer.tracking.case_upload_tracker import CaseUpload
 from corehq.apps.case_importer.util import get_importer_error_message
-from corehq.apps.domain.decorators import api_auth, login_and_domain_required
+from corehq.apps.domain.decorators import api_auth
 from corehq.apps.locations.permissions import conditionally_location_safe
 from corehq.apps.reports.analytics.esaccessors import (
     get_case_types_for_domain_es,
@@ -91,7 +91,6 @@ def excel_config(request, domain):
     return render(request, "case_importer/excel_config.html", context)
 
 
-
 def _process_file_and_get_upload(uploaded_file_handle, request, domain):
     extension = os.path.splitext(uploaded_file_handle.name)[1][1:].strip().lower()
 
@@ -135,7 +134,7 @@ def _process_file_and_get_upload(uploaded_file_handle, request, domain):
         raise ImporterError(
             'Your spreadsheet has too many columns. '
             'A maximum of %(max_columns)s is supported.'
-         % {'max_columns': MAX_CASE_IMPORTER_COLUMNS})
+            % {'max_columns': MAX_CASE_IMPORTER_COLUMNS})
 
     case_types_from_apps = sorted(get_case_types_from_apps(domain))
     unrecognized_case_types = sorted([t for t in get_case_types_for_domain_es(domain)
@@ -218,7 +217,7 @@ def excel_fields(request, domain):
 
     field_specs = get_suggested_case_fields(
         domain, case_type, exclude=[search_field])
-    
+
     case_field_specs = [field_spec.to_json() for field_spec in field_specs]
 
     context = {
@@ -267,7 +266,6 @@ def excel_commit(request, domain):
     return HttpResponseRedirect(base.ImportCases.get_url(domain))
 
 
-
 def _get_bulk_case_upload_args_from_request(request, domain):
     try:
         upload_file = request.FILES["file"]
@@ -275,11 +273,12 @@ def _get_bulk_case_upload_args_from_request(request, domain):
         search_field = request.POST['search_field']
         create_new_cases = request.POST.get('create_new_cases') == 'on'
         search_column = request.POST['search_column']
-        return upload_file, case_type, search_field, create_new_cases,search_column
+        return upload_file, case_type, search_field, create_new_cases, search_column
     except Exception:
         raise ImporterError(
                 "Invalid post request."
                 "Submit the form with field 'file' and the required params")
+
 
 @csrf_exempt
 @require_POST
@@ -287,7 +286,7 @@ def _get_bulk_case_upload_args_from_request(request, domain):
 @require_can_edit_data
 def bulk_case_upload_api(request, domain, **kwargs):
     try:
-        response = _bulk_case_upload_api(request,domain)
+        response = _bulk_case_upload_api(request, domain)
         return response
     except ImporterError as e:
         error = get_importer_error_message(e)
@@ -295,8 +294,9 @@ def bulk_case_upload_api(request, domain, **kwargs):
         error = "Please upload file with extension .xls or .xlsx"
         return json_response({'error_msg': _(error)})
 
+
 def _bulk_case_upload_api(request,domain):
-    upload_file, case_type, search_field, create_new_cases,search_column = _get_bulk_case_upload_args_from_request(request,domain)
+    upload_file, case_type, search_field, create_new_cases, search_column =_get_bulk_case_upload_args_from_request(request, domain)
 
     case_upload, context = _process_file_and_get_upload(upload_file, request, domain)
 
@@ -330,8 +330,7 @@ def _bulk_case_upload_api(request,domain):
             search_column=search_column,
             case_type=case_type,
             search_field=search_field,
-            create_new_cases=create_new_cases,
-            )
+            create_new_cases=create_new_cases)
 
     case_upload.trigger_upload(domain, config)
-    return json_response({"msg":"success"})
+    return json_response({"msg": "success"})
