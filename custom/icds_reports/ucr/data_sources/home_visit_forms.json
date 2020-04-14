@@ -128,10 +128,11 @@
                   "unscheduled_visit"
                 ]
               },
-              "property_value": "0"
+              "property_value": "0",
+              "comment": null
             },
             {
-              "operator": "lte",
+              "operator": "lt",
               "type": "boolean_expression",
               "expression": {
                 "datatype": null,
@@ -141,13 +142,41 @@
                   "days_visit_late"
                 ]
               },
-              "property_value": "3"
+              "property_value": "8",
+              "comment": null
+            },
+            {
+              "operator": "lt",
+              "type": "boolean_expression",
+              "expression": {
+                "type": "diff_days",
+                "from_date_expression": {
+                  "type": "property_path",
+                  "property_path": [
+                    "form",
+                    "next_visit_date"
+                  ],
+                  "datatype": null
+                },
+                "to_date_expression": {
+                  "type": "property_path",
+                  "property_path": [
+                    "form",
+                    "meta",
+                    "timeEnd"
+                  ],
+                  "datatype": null
+                }
+              },
+              "property_value": 8,
+              "comment": null
             }
           ]
         },
         "display_name": null,
         "type": "boolean",
-        "column_id": "visit_on_time"
+        "column_id": "visit_on_time",
+        "comment": null
       },
       {
         "type": "count",
