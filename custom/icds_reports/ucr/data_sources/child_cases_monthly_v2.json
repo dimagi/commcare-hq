@@ -2055,6 +2055,48 @@
           }
         },
         "statement": "age_in_days / 30.4"
+      },
+      "last_date_gmp_in_month": {
+        "type": "reduce_items",
+        "aggregation_fn": "max",
+        "items_expression": {
+          "type": "map_items",
+          "items_expression": {
+            "type": "icds_get_case_forms_by_date",
+            "xmlns": [
+              "http://openrosa.org/formdesigner/b183124a25f2a0ceab266e4564d3526199ac4d75"
+            ],
+            "start_date": {
+              "type": "named",
+              "name": "month_start"
+            },
+            "end_date": {
+              "type": "named",
+              "name": "month_end"
+            },
+            "form_filter": {
+              "operator": "not_eq",
+              "type": "boolean_expression",
+              "expression": {
+                "datatype": "date",
+                "type": "property_path",
+                "property_path": [
+                  "form",
+                  "last_date_gmp"
+                ]
+              },
+              "property_value": null
+            }
+          },
+          "map_expression": {
+            "datatype": "date",
+            "type": "property_path",
+            "property_path": [
+              "form",
+              "last_date_gmp"
+            ]
+          }
+        }
       }
     },
     "named_filters": {
