@@ -505,19 +505,3 @@ class GapsReportByItemData(GapsReportData):
             for record in data.copy():
                 if record['data']['gap_description'] != gap_description:
                     data.pop(data.index(record))
-
-
-class BaseNutrientData(MasterReportData):
-
-    @property
-    def filters(self):
-        slugs = ['gender', 'pregnant', 'breastfeeding', 'urban_rural', 'supplements']
-        return super().filters + [EQ(s, s) for s in slugs if self.config.get(s)]
-
-    @property
-    def rows(self):
-        rows = super().rows
-        self.append_age_information(rows)
-        self.filter_age_range(rows)
-
-        return rows
