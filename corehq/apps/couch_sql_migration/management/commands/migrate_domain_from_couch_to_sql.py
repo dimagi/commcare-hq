@@ -154,6 +154,13 @@ class Command(BaseCommand):
                 forms referenced by a case that do not exist in Couch but
                 a blob does exit. The file path must begin with / or ./
             """)
+        parser.add_argument('--patch',
+            dest="patch", action='store_true', default=False,
+            help="""
+                Shorthand for --forms=missing --case-diff=patch
+                This option is useful to migrate missing forms and patch
+                case diffs after a standard MIGRATE run.
+            """)
         parser.add_argument('-x', '--stop-on-error',
             dest="stop_on_error", action='store_true', default=False,
             help="""
@@ -177,6 +184,14 @@ class Command(BaseCommand):
     def handle(self, domain, action, **options):
         if action != STATS and should_use_sql_backend(domain):
             raise CommandError('It looks like {} has already been migrated.'.format(domain))
+
+        if options["patch"]:
+            if options["forms"]:
+                raise CommandError("--patch and --forms=... are mutually exclusive")
+            if options["case_diff"] != "after":
+                raise CommandError("--patch and --case-diff=... are mutually exclusive")
+            options["forms"] = "missing"
+            options["case_diff"] = "patch"
 
         for opt in [
             "no_input",
