@@ -405,7 +405,8 @@ class FoodData:
 
         self.fixtures = FixtureAccessor(domain)
         self._in_memory_filter_selections = {
-            filter_selections[slug] for slug in self.IN_MEMORY_FILTERS if slug in filter_selections
+            slug: filter_selections[slug] for slug in self.IN_MEMORY_FILTERS
+            if slug in filter_selections
         }
         self._ucr = FoodCaseData({
             'domain': domain,
