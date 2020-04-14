@@ -251,7 +251,6 @@ def excel_commit(request, domain):
     more information.
     """
     config = importer_util.ImporterConfig.from_request(request)
-    print(config.to_json())
 
     excel_id = request.session.get(EXCEL_SESSION_ID)
 
@@ -333,7 +332,6 @@ def _bulk_case_upload_api(request,domain):
             search_field=search_field,
             create_new_cases=create_new_cases,
             )
-    print(config.to_json())
 
     case_upload.trigger_upload(domain, config)
     return json_response({"msg":"success"})
