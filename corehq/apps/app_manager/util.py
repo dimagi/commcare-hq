@@ -15,7 +15,6 @@ from django.utils.translation import ugettext as _
 import yaml
 from couchdbkit import ResourceNotFound
 from couchdbkit.exceptions import DocTypeError
-from memoized import memoized
 
 from dimagi.utils.couch import CriticalSection
 
@@ -558,34 +557,6 @@ def get_and_assert_practice_user_in_domain(practice_user_id, domain):
                 username=user.username)
         )
     return user
-
-
-class LatestAppInfo(object):
-
-    def __init__(self, app_id, domain, build_profile_id=None):
-        """
-        Wrapper to get latest app version and CommCare APK version info
-
-        args:
-            app_id: master id of an app (to facilitate quickcaching)
-
-        raises Http404 error if id is not valid
-        raises assertion error if an id of app copy is passed
-        """
-        self.app_id = app_id
-        self.domain = domain
-        self.build_profile_id = build_profile_id
-
-    @property
-    @memoized
-    def app(self):
-        app = get_app(self.domain, self.app_id, latest=True, target='release')
-        # quickache based on a copy app_id will have to be updated too fast
-        assert self.app_id == app.master_id, "this class doesn't handle copy app ids"
-        return app
-
-    def clear_caches(self):
-        return
 
 
 def get_form_source_download_url(xform):

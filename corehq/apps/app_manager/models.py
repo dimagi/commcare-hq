@@ -123,7 +123,6 @@ from corehq.apps.app_manager.suite_xml.utils import get_select_chain
 from corehq.apps.app_manager.tasks import prune_auto_generated_builds
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.app_manager.util import (
-    LatestAppInfo,
     actions_use_usercase,
     expire_get_latest_app_release_by_location_cache,
     get_and_assert_practice_user_in_domain,
@@ -131,7 +130,6 @@ from corehq.apps.app_manager.util import (
     get_latest_app_release_by_location,
     get_latest_enabled_build_for_profile,
     get_latest_enabled_versions_per_profile,
-    is_linked_app,
     is_remote_app,
     is_usercase_in_use,
     module_offers_search,
@@ -4455,7 +4453,7 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
         if not self._rev and not domain_has_apps(self.domain):
             domain_has_apps.clear(self.domain)
 
-        LatestAppInfo(self.master_id, self.domain).clear_caches()
+        # TODO: invalidate cache for former LatestAppInfo
 
         get_all_case_properties.clear(self)
         get_usercase_properties.clear(self)
@@ -5768,7 +5766,7 @@ class GlobalAppConfig(models.Model):
         return cls.by_app(app)
 
     def save(self, force_insert=False, force_update=False, using=DEFAULT_DB_ALIAS, update_fields=None):
-        LatestAppInfo(self.app_id, self.domain).clear_caches()
+        # TODO: invalidate cache for former LatestAppInfo
         super().save(
             force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields
         )
@@ -5786,6 +5784,7 @@ class GlobalAppConfig(models.Model):
             force = self.apk_prompt == "forced"
             return {"value": value, "force": force}
 
+    # TODO: cache
     def get_latest_app_version(self, build_profile_id=None):
         if self.app_prompt == "off":
             return {}
@@ -5895,6 +5894,7 @@ class LatestEnabledBuildProfiles(models.Model):
 
     def save(self, *args, **kwargs):
         super(LatestEnabledBuildProfiles, self).save(*args, **kwargs)
+        # TODO: invalidate cache for former LatestAppInfo
         self.expire_cache(self.domain)
 
     @property
