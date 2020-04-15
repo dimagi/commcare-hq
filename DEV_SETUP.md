@@ -247,16 +247,7 @@ When running HQ, be sure to use `runserver_plus`:
 python manage.py runserver_plus
 ```
 
-Then you need to have formplayer running. There are a few options as described below.
-
-##### Running Formplayer in Docker
-
-Please refer to FormPlayer's install instructions under "[Running in Docker](https://github.com/dimagi/formplayer#running-in-docker)".
-
-If you are on Mac, don't bother trying to run this in Docker. There seems to be some kind of bug.
-Instead, try running formplayer from a .jar file
-
-##### Running formplayer.jar
+Then you need to have formplayer running.
 
 Prerequisites:
 + Install Java (left as an exercise for the reader)
