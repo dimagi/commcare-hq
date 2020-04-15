@@ -64,24 +64,6 @@
       {
         "display_name": null,
         "datatype": "string",
-        "expression": {
-          "expression": {
-            "datatype": null,
-            "type": "property_name",
-            "property_name": "owner_id"
-          }
-        },
-        "is_primary_key": false,
-        "transform": {},
-        "is_nullable": false,
-        "type": "expression",
-        "column_id": "awc_id",
-        "create_index": false,
-        "comment": null
-      },
-      {
-        "display_name": null,
-        "datatype": "string",
         "type": "expression",
         "is_primary_key": true,
         "transform": {},
