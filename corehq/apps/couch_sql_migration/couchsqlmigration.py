@@ -1419,6 +1419,8 @@ class MissingFormLoader:
 def get_main_forms_iteration_stop_date(statedb):
     resume_key = f"{statedb.domain}.XFormInstance.{statedb.unique_id}"
     itr = ResumableFunctionIterator(resume_key, None, None, None)
+    if itr.state.complete:
+        return None
     kwargs = itr.state.kwargs
     assert kwargs, f"migration state not found: {resume_key}"
     # this is tightly coupled to by_domain_doc_type_date/view in couch:
