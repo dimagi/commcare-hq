@@ -1,5 +1,4 @@
 import gzip
-import os
 import tempfile
 from unittest import TestCase
 
@@ -59,3 +58,4 @@ class TestGzipCompressReadStream(TestCase):
             # that it's correct
             content_length += len(compress_stream.read())
             self.assertEqual(compress_stream.content_length, content_length)
+
