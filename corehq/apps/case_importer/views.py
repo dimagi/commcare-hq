@@ -347,8 +347,8 @@ def _bulk_case_upload_api(request, domain):
     upload_id = case_upload.upload_id
 
     status_url = "{}{}".format(
-            get_url_base(),
-            reverse('case_importer_upload_status', args=(domain, upload_id))
-            )
+        get_url_base(),
+        reverse('case_importer_upload_status', args=(domain, upload_id))
+    )
 
     return json_response({"code": 200, "message": "success", "status_url": status_url})
