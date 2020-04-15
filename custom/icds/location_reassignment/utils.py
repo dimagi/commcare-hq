@@ -51,7 +51,7 @@ def get_household_and_child_case_ids_by_owner(domain, household_case_id, owner_i
     return case_ids
 
 
-def get_household_child_cases_by_owner(domain, household_case_id, owner_id, case_types):
+def get_household_child_cases_by_owner(domain, household_case_id, owner_id, case_types=None):
     def get_child_cases(ids, exclude_ids):
         return [case for case in
                 CaseAccessorSQL.get_reverse_indexed_cases(domain, ids)
