@@ -279,7 +279,7 @@ def bulk_case_upload_api(request, domain, **kwargs):
         error = get_importer_error_message(e)
     except SpreadsheetFileExtError:
         error = "Please upload file with extension .xls or .xlsx"
-    return json_response({'code': 500,'message': _(error)}, status_code=500)
+    return json_response({'code': 500, 'message': _(error)}, status_code=500)
 
 
 def _bulk_case_upload_api(request, domain):
@@ -292,7 +292,7 @@ def _bulk_case_upload_api(request, domain):
         raise ImporterError("Invalid POST request. "
         "Both 'file' and 'case_type' are required")
 
-    search_field = request.POST.get('search_field','case_id')
+    search_field = request.POST.get('search_field', 'case_id')
     create_new_cases = request.POST.get('create_new_cases') == 'on'
 
     if search_field == 'case_id':
@@ -303,7 +303,7 @@ def _bulk_case_upload_api(request, domain):
         raise ImporterError("Illegal value for search_field: %s" % search_field)
 
     search_column = request.POST.get('search_column', default_search_column)
-    name_column = request.POST.get('name_column','name')
+    name_column = request.POST.get('name_column', 'name')
 
     upload_comment = request.POST.get('comment')
 
@@ -351,4 +351,4 @@ def _bulk_case_upload_api(request, domain):
             reverse('case_importer_upload_status', args=(domain, upload_id))
             )
 
-    return json_response({"code":200,"message": "success", "status_url":status_url})
+    return json_response({"code": 200, "message": "success", "status_url": status_url})

@@ -58,6 +58,7 @@ def case_uploads(request, domain):
 
     return json_response(case_uploads_json)
 
+
 @api_auth
 @require_GET
 @require_can_edit_data
