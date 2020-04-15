@@ -345,16 +345,11 @@ class DataFormatter(object):
                 formatted_row = self._format.format_row(row)
                 if self.filter_row(row_key, formatted_row):
                     yield row_key, formatted_row
-        elif group_by:
+        else:
             for key, row in data.items():
                 formatted_row = self._format.format_row(row)
                 if self.filter_row(key, formatted_row):
                     yield key, formatted_row
-        else:
-            for index, row_data in data.items():
-                formatted_row = self._format.format_row(row_data)
-                if self.filter_row(None, formatted_row):
-                    yield index, formatted_row
 
     def filter_row(self, key, row):
         return not self.row_filter or self.row_filter(key, row)
