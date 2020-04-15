@@ -2057,7 +2057,7 @@ class AdminTab(UITab):
             from corehq.apps.hqadmin.views.users import AuthenticateAs
             from corehq.apps.notifications.views import ManageNotificationView
             data_operations = [
-                {'title': _('View raw documents'),
+                {'title': _('View documents in Couch'),
                  'url': reverse('raw_doc')},
                 {'title': _('View documents in ES'),
                  'url': reverse('doc_in_es')},

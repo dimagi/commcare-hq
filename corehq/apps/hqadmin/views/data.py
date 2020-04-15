@@ -191,6 +191,9 @@ def raw_doc(request):
     if db_name and "__" in db_name:
         db_name = db_name.split("__")[-1]
     context = _lookup_id_in_database(doc_id, db_name) if doc_id else {}
+    context.update({
+        'multiple_results': len([db for db in context['db_results'] if db.result == 'found']) > 1,
+    })
 
     if request.GET.get("raw", False):
         if 'doc' in context:

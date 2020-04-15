@@ -1,4 +1,4 @@
-{% extends "hqwebapp/base.html" %}
+{% extends "hqwebapp/full_screen.html" %}
 {% load hq_shared_tags %}
 
 {% block title %}Doc {{ doc_id }} ({{ doc_type }}){% endblock %}
@@ -11,74 +11,85 @@
 {% block content %}
   {% initial_page_data 'all_databases' all_databases %}
   <div class="container-fluid">
-    <div class="page-header">
-      <h1>Enter a doc id</h1>
-      <form class="form-inline" method="GET" action="" id="doc-form">
-        <input name="id" class="form-control" type="search" style="width: 30em"/>
-        <select class="form-control"
-                data-bind="options: allDatabases, optionsText:'dbName', optionsValue: 'dbValue'"
-                name="db_name" style="width: 12em">
-        </select>
-        <input class="btn btn-primary form-control" type="submit"/>
-      </form>
-    </div>
-  </div>
-
-  {% if doc_id %}
-    <div class="container-fluid">
-      <div class="row">
-        <div class="col-xs-3">
-          <div>
-            <h3>Databases/Tables Searched:</h3>
-            <table class="table">
-              <tr>
-                <th>Status</th>
-                <th>Database Name</th>
-              </tr>
-              {% for db in db_results %}
-                <tr>
-                  <td><span class="label label-{{ db.status }}">{{ db.result }}</span></td>
-                  {% if db.result == "found"  %}
-                    <td><a href="{% url "raw_doc" %}?id={{ doc_id }}&db_name={{ db.dbname }}">
-                      {{ db.dbname }}
-                    </a></td>
-                  {% else %}
-                    <td>{{ db.dbname }}</td>
-                  {% endif %}
-                </tr>
-              {% endfor %}
-            </table>
+    <div class="spacer"></div>
+    <div class="row">
+      <div class="col-xs-3">
+        <form method="GET" action="" id="doc-form"><!-- don't .form-horizontal, because this page has a non-standard layout where .form-horizontal ruins the left margin -->
+          <div class="form-group">
+            <select class="form-control hqwebapp-select2"
+                    data-bind="options: allDatabases, optionsText:'dbName', optionsValue: 'dbValue'"
+                    name="db_name">
+            </select>
           </div>
-        </div>
+          <div class="form-group">
+            <input name="id" class="form-control" type="search" value="{{ doc_id }}" placeholder="Enter a doc id" />
+          </div>
+          <div class="form-group">
+            <button class="btn btn-primary form-control" type="submit">
+                <i class="fa fa-search"></i>
+                Search
+            </button>
+          </div>
+        </form>
 
-        <div class="col-xs-9">
-          <h3>Doc {{ doc_id }}</h3>
-          <p>Doc type: {{ doc_type }}</p>
-          <p>Database or table: {{ dbname }}</p>
-          <p>Domain: {{ domain }}</p>
+        {% if doc_id %}
           <p>
-            <a href="{% url 'global_quick_find' %}?q={{ doc_id }}">
-            <img src="{% static 'hqwebapp/images/commcare-flower.png' %}"
-                 alt="CommCare" witdth="14px" height="14px"
-                 title="Open in HQ" />
-            </a>
-            <a href="{% url 'doc_in_es' %}?id={{ doc_id }}" target="_blank" title="Search in ES"><i class="fa fa-search"></i></a>
-            <a href="{% url "raw_doc" %}?id={{ doc_id }}&db_name={{ selected_db }}&raw=true" title="Load raw json doc"><i class="fa fa-code"></i></a>
+            <span class="label label-default">database: {{ dbname }}</span>
+            <span class="label label-default">doc_type: {{ doc_type }}</span>
+            <span class="label label-default">domain: {{ domain }}</span>
           </p>
-          {% if errors %}
-          <p>Error messages:</p>
-          <div class="row">
-            <div class="col-sm-12">
-                {% for message in errors %}
-                  <div class="alert alert-margin-top fade in alert-danger">
-                    {{ message }}
-                  </div>
+
+          {% if multiple_results %}
+            Document found in multiple databases
+            <ul>
+                {% for db in db_results %}
+                  {% if db.result == "found" %}{#and db.dbname != dbname %}#}
+                    <li>
+                      <a href="{% url "raw_doc" %}?id={{ doc_id }}&db_name={{ db.dbname }}">
+                        {{ db.dbname }}
+                      </a>
+                    </li>
+                  {% endif %}
                 {% endfor %}
+            </ul>
+          {% endif %}
+        {% endif %}
+
+        <p>
+          <a href="{% url 'global_quick_find' %}?q={{ doc_id }}">
+            <img src="{% static 'hqwebapp/images/commcare-flower.png' %}" alt="CommCare" witdth="14px" height="14px" title="Open in HQ" />
+            Open in HQ
+          </a>
+        </p>
+        <p>
+          <a href="{% url 'doc_in_es' %}?id={{ doc_id }}" target="_blank" title="Search in ES">
+            <i class="fa fa-search"></i>
+            Search in ES
+          </a>
+        </p>
+        <p>
+          <a href="{% url "raw_doc" %}?id={{ doc_id }}&db_name={{ selected_db }}&raw=true" title="Load raw json doc">
+            <i class="fa fa-code"></i>
+            Raw JSON
+          </a>
+        <p>
+      </div>
+
+      <div class="col-xs-9">
+        {% if doc_id %}
+          {% if errors %}
+            <p>Error messages:</p>
+            <div class="row">
+              <div class="col-sm-12">
+                  {% for message in errors %}
+                    <div class="alert alert-margin-top fade in alert-danger">
+                      {{ message }}
+                    </div>
+                  {% endfor %}
+              </div>
             </div>
-          </div>
           {% endif %}
           <div>
-            <h3>Raw Doc:</h3>
             <pre id="doc-element" data-doc="{% html_attr doc %}"></pre>
           </div>
           {% if raw_data %}
@@ -87,8 +98,8 @@
             <pre>{{ raw_data }}</pre>
           </div>
           {% endif %}
-        </div>
+        {% endif %}
       </div>
     </div>
-  {% endif %}
+  </div>
 {% endblock content %}

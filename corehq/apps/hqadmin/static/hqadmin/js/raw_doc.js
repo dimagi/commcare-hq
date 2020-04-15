@@ -2,6 +2,7 @@ hqDefine('hqadmin/js/raw_doc', [
     'jquery',
     'hqwebapp/js/initial_page_data',
     "hqwebapp/js/base_ace",
+    'hqwebapp/js/widgets',      // select2 for databases
 ], function ($, intialPageData, baseAce) {
     $(function () {
         var allDatabase = intialPageData.get('all_databases').map(function (database) {
