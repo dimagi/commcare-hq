@@ -30,8 +30,12 @@ Save those backups to somewhere you'll be able to access from the new environmen
 #### Prerequisites
 
 - [Git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)
-- [Python 3.6](https://www.python.org/downloads/) and `python-dev`, `distutils` packages
-  - `sudo apt install python3-distutils python3-dev`
+- [Python 3.8](https://www.python.org/downloads/) and `python-dev`, `distutils` packages
+
+      $ sudo add-apt-repository ppa:deadsnakes/ppa
+      $ sudo apt update
+      $ sudo apt install python3.8 python3.8-dev python3.8-distutils
+
 - [Pip](https://pip.pypa.io/en/stable/installing/)
 - [Virtualenv](https://virtualenv.pypa.io/en/stable/)
 - [Virtualenvwrapper](https://virtualenvwrapper.readthedocs.io/en/latest/#introduction)
@@ -57,7 +61,7 @@ Save those backups to somewhere you'll be able to access from the new environmen
 Run the following commands:
 
     $ source /usr/local/bin/virtualenvwrapper.sh
-    $ mkvirtualenv --no-site-packages commcare-hq -p python3.6
+    $ mkvirtualenv --no-site-packages commcare-hq -p python3.8
 
 #### Clone and setup repo / requirements
 
