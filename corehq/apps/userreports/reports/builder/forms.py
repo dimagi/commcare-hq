@@ -48,12 +48,14 @@ from corehq.apps.userreports.reports.builder.columns import (
     CountColumn,
     FormMetaColumnOption,
     MultiselectQuestionColumnOption,
+    OwnerIdComputedCasePropertyOption,
     OwnernameComputedCasePropertyOption,
     QuestionColumnOption,
     RawPropertyColumnOption,
     UsernameComputedCasePropertyOption,
 )
 from corehq.apps.userreports.reports.builder.const import (
+    COMPUTED_OWNER_LOCATION_PROPERTY_ID,
     COMPUTED_OWNER_NAME_PROPERTY_ID,
     COMPUTED_USER_NAME_PROPERTY_ID,
     PROPERTY_TYPE_CASE_PROP,
@@ -75,7 +77,7 @@ from corehq.apps.userreports.reports.builder.sources import (
 from corehq.apps.userreports.sql import get_column_name
 from corehq.apps.userreports.ui.fields import JsonField
 from corehq.apps.userreports.util import has_report_builder_access
-from corehq.toggles import SHOW_RAW_DATA_SOURCES_IN_REPORT_BUILDER
+from corehq.toggles import SHOW_RAW_DATA_SOURCES_IN_REPORT_BUILDER, SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER
 
 # This dict maps filter types from the report builder frontend to UCR filter types
 REPORT_BUILDER_FILTER_TYPE_MAP = {
@@ -172,6 +174,8 @@ class DataSourceProperty(object):
         elif self._type == PROPERTY_TYPE_CASE_PROP:
             if self._id == COMPUTED_OWNER_NAME_PROPERTY_ID:
                 return OwnernameComputedCasePropertyOption(self._id, self._data_types, self._text)
+            elif self._id == COMPUTED_OWNER_LOCATION_PROPERTY_ID:
+                return OwnerIdComputedCasePropertyOption(self._id, self._data_types, self._text)
             elif self._id == COMPUTED_USER_NAME_PROPERTY_ID:
                 return UsernameComputedCasePropertyOption(self._id, self._data_types, self._text)
             else:
@@ -229,6 +233,8 @@ class DataSourceProperty(object):
             filter.update({"choice_provider": {"type": "owner"}})
         if filter_format == 'dynamic_choice_list' and self._id == COMPUTED_USER_NAME_PROPERTY_ID:
             filter.update({"choice_provider": {"type": "user"}})
+        if filter_format == 'dynamic_choice_list' and self._id == COMPUTED_OWNER_LOCATION_PROPERTY_ID:
+            filter.update({"choice_provider": {"type": "location"}})
         if configuration.get('pre_value') or configuration.get('pre_operator'):
             filter.update({
                 'type': 'pre',  # type could have been "date"
@@ -527,8 +533,7 @@ class DataSourceBuilder(ReportBuilderDataSourceInterface):
         if self.source_type == 'form':
             return self._get_data_source_properties_from_form(self.source_form, self.source_xform)
 
-    @classmethod
-    def _get_data_source_properties_from_case(cls, case_properties):
+    def _get_data_source_properties_from_case(self, case_properties):
         property_map = {
             'closed': _('Case Closed'),
             'user_id': _('User ID Last Updating Case'),
@@ -550,8 +555,11 @@ class DataSourceBuilder(ReportBuilderDataSourceInterface):
                 source=property,
                 data_types=data_types,
             )
-        properties[COMPUTED_OWNER_NAME_PROPERTY_ID] = cls._get_owner_name_pseudo_property()
-        properties[COMPUTED_USER_NAME_PROPERTY_ID] = cls._get_user_name_pseudo_property()
+        properties[COMPUTED_OWNER_NAME_PROPERTY_ID] = self._get_owner_name_pseudo_property()
+        properties[COMPUTED_USER_NAME_PROPERTY_ID] = self._get_user_name_pseudo_property()
+
+        if SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER.enabled(self.domain):
+            properties[COMPUTED_OWNER_LOCATION_PROPERTY_ID] = self._get_owner_location_pseudo_property()
         return properties
 
     @staticmethod
@@ -564,6 +572,18 @@ class DataSourceBuilder(ReportBuilderDataSourceInterface):
             id=COMPUTED_OWNER_NAME_PROPERTY_ID,
             text=_('Case Owner'),
             source=COMPUTED_OWNER_NAME_PROPERTY_ID,
+            data_types=["string"],
+        )
+
+    @classmethod
+    def _get_owner_location_pseudo_property(cls):
+        # owner_location is a special pseudo-case property for which
+        # the report builder reference the owner_id, but treat it as a location
+        return DataSourceProperty(
+            type=PROPERTY_TYPE_CASE_PROP,
+            id=COMPUTED_OWNER_LOCATION_PROPERTY_ID,
+            text=_('Case Owner (Location)'),
+            source=COMPUTED_OWNER_LOCATION_PROPERTY_ID,
             data_types=["string"],
         )
 

@@ -300,7 +300,7 @@ class UsernameComputedCasePropertyOption(ColumnOption):
         return column_dicts
 
 
-class OwnernameComputedCasePropertyOption(ColumnOption):
+class OwnerIdComputedCasePropertyOption(ColumnOption):
     def _get_indicator(self, ui_aggregation, is_multiselect_chart_report=False):
         column_id = get_column_name(self._property)
         expression = {
@@ -317,8 +317,10 @@ class OwnernameComputedCasePropertyOption(ColumnOption):
             'expression': expression
         }
 
+
+class OwnernameComputedCasePropertyOption(OwnerIdComputedCasePropertyOption):
     def to_column_dicts(self, index, display_text, ui_aggregation, is_aggregated_on=False):
-        column_dicts = super(OwnernameComputedCasePropertyOption, self).to_column_dicts(
+        column_dicts = super().to_column_dicts(
             index, display_text, ui_aggregation
         )
         column_dicts[0]['transform'] = {
