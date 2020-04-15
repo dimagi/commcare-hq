@@ -36,8 +36,8 @@ SELECT
     awc.num_launched_awcs as total_awcs,
     ucr.unique_visits as visited_awcs,
     CASE
-        WHEN awc.num_launched_awcs > ucr.unique_visits THEN 'NO'
-        ELSE 'YES'
+        WHEN awc.num_launched_awcs = ucr.unique_visits THEN 'YES'
+        ELSE 'NO'
     END as all_visited
     FROM "agg_awc_2020-03-01_4" awc
     LEFT JOIN "temp_visit_table" ucr
@@ -45,7 +45,8 @@ SELECT
     LEFT JOIN "awc_location_local" t
         ON (t.supervisor_id = awc.supervisor_id
         AND t.aggregation_level=awc.aggregation_level
-        AND t.aggregation_level=4);
+        AND t.aggregation_level=4)
+    WHERE awc.state_is_test<>1;
 --  QUERY PLAN
 -- ------------------------------------------------------------------------------------------------------------------------------------
 --  Hash Right Join  (cost=4165.52..17406.48 rows=26824 width=83)
