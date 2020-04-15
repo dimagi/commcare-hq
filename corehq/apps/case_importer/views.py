@@ -266,20 +266,6 @@ def excel_commit(request, domain):
     return HttpResponseRedirect(base.ImportCases.get_url(domain))
 
 
-def _get_bulk_case_upload_args_from_request(request, domain):
-    try:
-        upload_file = request.FILES["file"]
-        case_type = request.POST["case_type"]
-        search_field = request.POST['search_field']
-        create_new_cases = request.POST.get('create_new_cases') == 'on'
-        search_column = request.POST['search_column']
-        return upload_file, case_type, search_field, create_new_cases, search_column
-    except Exception:
-        raise ImporterError(
-                "Invalid post request."
-                "Submit the form with field 'file' and the required params")
-
-
 @csrf_exempt
 @require_POST
 @api_auth
@@ -296,7 +282,19 @@ def bulk_case_upload_api(request, domain, **kwargs):
 
 
 def _bulk_case_upload_api(request, domain):
-    upload_file, case_type, search_field, create_new_cases, search_column =_get_bulk_case_upload_args_from_request(request, domain)
+
+    try:
+        upload_file = request.FILES["file"]
+        case_type = request.POST["case_type"]
+        search_field = request.POST['search_field']
+        create_new_cases = request.POST.get('create_new_cases') == 'on'
+        search_column = request.POST['search_column']
+    except Exception:
+        raise ImporterError(
+                "Invalid post request. "
+                "Submit the form with field 'file' and the required params: "
+                "case_type,search_field,search_column")
+
 
     case_upload, context = _process_file_and_get_upload(upload_file, request, domain)
 
@@ -313,7 +311,8 @@ def _bulk_case_upload_api(request, domain):
     custom_fields = []
     case_fields = []
 
-    #populate field arrays
+    #Create the field arrays for the importer in the same format
+    #as the "Step 2" Web UI from the manual process
     for f in excel_fields:
         if f == "name":
             custom_fields.append("")
