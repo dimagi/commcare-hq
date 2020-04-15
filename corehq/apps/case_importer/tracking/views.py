@@ -31,6 +31,7 @@ from corehq.apps.domain.decorators import api_auth
 from corehq.apps.locations.permissions import conditionally_location_safe
 from corehq.util.view_utils import set_file_download
 
+
 @require_can_edit_data
 @conditionally_location_safe(location_safe_case_imports_enabled)
 def case_uploads(request, domain):
