@@ -683,7 +683,7 @@
         "distribution_type": "hash",
         "distribution_column": "supervisor_id"
       },
-      "primary_key": ["supervisor_id","doc_id"]
+      "primary_key": ["supervisor_id","doc_id","repeat_iteration"]
     },
     "sql_column_indexes": [
       {
