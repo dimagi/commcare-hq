@@ -683,19 +683,22 @@ class DiffTestCases(SimpleTestCase):
         filtered = filter_case_diffs(couch_case, sql_case, diffs)
         self.assertEqual(filtered, [])
 
-    def test_weird_user_id_attribute(self):
+    def test_weird_case_attributes(self):
         couch_case = {
             "case_id": "eca7a8",
             "actions": [{"action_type": "create", "user_id": "person-2"}],
             "doc_type": "CommCareCase",
             "@user_id": "person-1",
             "user_id": "person-2",
+            "@date_modified": "2016-02-12",
+            "modified_on": "2016-02-12T00:00:00.000000Z",
         }
         sql_case = {
             "case_id": "eca7a8",
             "actions": [{"action_type": "create", "user_id": "person-2"}],
             "doc_type": "CommCareCase",
             "user_id": "person-2",
+            "modified_on": "2016-02-12T00:00:00.000000Z",
         }
         diffs = json_diff(couch_case, sql_case, track_list_indices=False)
         filtered = filter_case_diffs(couch_case, sql_case, diffs)
