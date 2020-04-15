@@ -48,7 +48,6 @@ from corehq.apps.userreports.reports.builder.columns import (
     CountColumn,
     FormMetaColumnOption,
     MultiselectQuestionColumnOption,
-    OwnerIdComputedCasePropertyOption,
     OwnernameComputedCasePropertyOption,
     QuestionColumnOption,
     RawPropertyColumnOption,
@@ -172,10 +171,8 @@ class DataSourceProperty(object):
         elif self._type == PROPERTY_TYPE_META:
             return FormMetaColumnOption(self._id, self._data_types, self._text, self._source)
         elif self._type == PROPERTY_TYPE_CASE_PROP:
-            if self._id == COMPUTED_OWNER_NAME_PROPERTY_ID:
+            if self._id == COMPUTED_OWNER_NAME_PROPERTY_ID or self._id == COMPUTED_OWNER_LOCATION_PROPERTY_ID:
                 return OwnernameComputedCasePropertyOption(self._id, self._data_types, self._text)
-            elif self._id == COMPUTED_OWNER_LOCATION_PROPERTY_ID:
-                return OwnerIdComputedCasePropertyOption(self._id, self._data_types, self._text)
             elif self._id == COMPUTED_USER_NAME_PROPERTY_ID:
                 return UsernameComputedCasePropertyOption(self._id, self._data_types, self._text)
             else:
