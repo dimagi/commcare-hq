@@ -31,8 +31,8 @@ def get_gaps_data(domain, request):
     fct_gaps = defaultdict(int)
     food_data = FoodData.from_request(domain, request)
     for row in food_data.rows:
-        cf_gaps[(row.conv_factor_gap_code, row.food_type)] += 1
-        fct_gaps[(row.fct_gap_code, row.food_type)] += 1
+        cf_gaps[(row.conv_factor_gap_code, row.food_type or '')] += 1
+        fct_gaps[(row.fct_gap_code, row.food_type or '')] += 1
 
     return (
         ConvFactorGapsData(cf_gaps),
