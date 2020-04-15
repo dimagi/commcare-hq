@@ -56,11 +56,11 @@ def patch_diffs(doc_diffs, log_cases=False):
 
 
 def patch_case(case_id, diffs):
-    case_diffs = [d for d in diffs if d.kind != "stock state"]
+    case_diffs = [d.json_diff for d in diffs if d.kind != "stock state"]
     try:
         couch_case = get_couch_case(case_id)
     except CaseNotFound:
-        raise CannotPatch([d.json_diff for d in case_diffs])
+        raise CannotPatch(case_diffs)
     assert couch_case.domain == get_domain(), (couch_case, get_domain())
     case = PatchCase(couch_case, case_diffs)
     form = PatchForm(case)
@@ -87,7 +87,7 @@ class PatchCase:
             self._dynamic_properties = self.case.dynamic_case_properties()
         else:
             if has_illegal_props(self.diffs):
-                raise CannotPatch([d.json_diff for d in self.diffs])
+                raise CannotPatch(self.diffs)
             props = dict(iter_dynamic_properties(self.diffs))
             self._dynamic_properties = props
             if props or has_known_props(self.diffs):
@@ -133,22 +133,20 @@ STATIC_PROPS = {
 
 
 def has_illegal_props(diffs):
-    return any(d.json_diff.path[0] in ILLEGAL_PROPS for d in diffs)
+    return any(d.path[0] in ILLEGAL_PROPS for d in diffs)
 
 
 def has_known_props(diffs):
-    return any(d.json_diff.path[0] in KNOWN_PROPERTIES for d in diffs)
+    return any(d.path[0] in KNOWN_PROPERTIES for d in diffs)
 
 
 def iter_dynamic_properties(diffs):
-    for doc_diff in diffs:
-        diff = doc_diff.json_diff
+    for diff in diffs:
         name = diff.path[0]
         if name in STATIC_PROPS:
             continue
-        if len(diff.path) > 1:
+        if len(diff.path) > 1 or not isinstance(diff.old_value, str):
             raise CannotPatch([diff])
-        assert isinstance(diff.old_value, str), (doc_diff.doc_id, diff)
         yield name, diff.old_value
 
 
