@@ -6,12 +6,15 @@ from datetime import date
 from custom.icds_reports.models.aggregate import BiharAPIChildVaccine
 from mock import patch
 
+from custom.icds_reports.tasks import update_child_vaccine_table
+
 
 @patch('custom.icds_reports.utils.aggregation_helpers.distributed.bihar_api_child_vaccine.BiharApiChildVaccineHelper.bihar_state_id',
        'st1')
 class VaccinesAPITest(TestCase):
 
     def test_file_content(self):
+        update_child_vaccine_table(date(2017, 5, 1))
         BiharAPIChildVaccine.aggregate(date(2017, 5, 1))
         data, count = get_api_vaccine_data(
             month=date(2017, 5, 1).strftime("%Y-%m-%d"),

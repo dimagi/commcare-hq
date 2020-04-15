@@ -63,9 +63,9 @@ from custom.icds_reports.utils.aggregation_helpers.distributed import (
     MigrationFormsAggregationDistributedHelper,
     BiharApiDemographicsHelper,
     AvailingServiceFormsAggregationDistributedHelper,
-    ChildVaccineHelper
+    ChildVaccineHelper,
+    BiharApiChildVaccineHelper
 )
-from custom.icds_reports.utils.aggregation_helpers.distributed.bihar_api_child_vaccine import BiharApiChildVaccineHelper
 
 
 def get_cursor(model):
