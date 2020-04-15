@@ -28,22 +28,23 @@ CREATE TEMPORARY TABLE "temp_visit_table" AS (
 --                                  Filter: ((location_entered IS NOT NULL) AND (submitted_on >= '2020-02-01'::date) AND (submitted_on < '2020-04-01'::date) AND (location_entered <> ''::text))
 -- (13 rows)
 
+
 SELECT
-    awc.state_name,
-    awc.supervisor_name
-    t.total_awcs,
-    t.visited_awcs,
+    t.state_name,
+    t.supervisor_name
+    awc.supervisor_id,
+    SUM(awc.num_launched_awcs) as total_awcs,
+    ucr.unique_visits as visited_awcs,
     CASE
-        WHEN t.total_awcs > t.visited_awcs THEN 'NO'
+        WHEN total_awcs > visited_awcs THEN 'NO'
         ELSE 'YES'
     END as all_visited
-    FROM "awc_locations" awc LEFT JOIN (
-        SELECT
-            awc.supervisor_id,
-            SUM(awc.num_launched_awcs) as total_awcs,
-            ucr.unique_visits as visited_awcs
-            FROM "agg_awc" awc LEFT JOIN "temp_visit_table" ucr
-            ON awc.supervisor_id = ucr.supervisor_id
-            WHERE awc.aggregation_level = 4 AND month='2020-03-01';
-    ) t ON awc.supervisor_id = t.
-    WHERE awc.aggregation_level = 4;
+    FROM "agg_awc" awc
+    LEFT JOIN "temp_visit_table" ucr
+        ON awc.supervisor_id = ucr.supervisor_id
+    LEFT JOIN "awc_locations" t
+        ON t.supervisor_id = awc.supervisor_id
+    WHERE
+        awc.aggregation_level = 4
+        AND t.aggregation_level = 4
+        AND awc.month='2020-03-01';
