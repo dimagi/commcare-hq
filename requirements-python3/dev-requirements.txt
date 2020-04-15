@@ -195,7 +195,7 @@ sphinxcontrib-htmlhelp==1.0.2  # via sphinx
 sphinxcontrib-jsmath==1.0.1  # via sphinx
 sphinxcontrib-qthelp==1.0.2  # via sphinx
 sphinxcontrib-serializinghtml==1.1.3  # via sphinx
-git+git://github.com/dimagi/sql-agg/@582fb4f7ab8b2d441d9d2cdb4b6489f68954c377#egg=sqlagg
+sqlagg==0.17.0b0
 sqlalchemy-postgres-copy==0.5.0
 sqlalchemy==1.3.10
 sqlparse==0.3.0           # via django-debug-toolbar
