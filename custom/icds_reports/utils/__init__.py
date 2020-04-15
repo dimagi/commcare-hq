@@ -1785,7 +1785,7 @@ class AggLevelInfo(object):
     col_name = attr.ib()
 
 
-def _construct_repacement_map_from_awc_location(loc_level, replacement_location_ids):
+def _construct_replacement_map_from_awc_location(loc_level, replacement_location_ids):
     levels = {
         'state': AggLevelInfo(1, 'state'),
         'district': AggLevelInfo(2, 'district'),
@@ -1816,7 +1816,7 @@ def _construct_repacement_map_from_awc_location(loc_level, replacement_location_
     return replacement_names
 
 
-def _construct_repacement_map_from_sql_location(replacement_location_ids):
+def _construct_replacement_map_from_sql_location(replacement_location_ids):
     # prefetch all possible parents
     replacements = SQLLocation.objects.filter(location_id__in=replacement_location_ids).select_related('parent__parent__parent__parent')
 
@@ -1845,10 +1845,10 @@ def get_deprecation_info(locations, show_test, multiple_levels=False):
                 replacement_location_ids.extend(loc.metadata.get('deprecates', []))
 
     if multiple_levels:
-        replacement_names = _construct_repacement_map_from_sql_location(replacement_location_ids)
+        replacement_names = _construct_replacement_map_from_sql_location(replacement_location_ids)
 
     else:
-        replacement_names = _construct_repacement_map_from_awc_location(loc_level, replacement_location_ids)
+        replacement_names = _construct_replacement_map_from_awc_location(loc_level, replacement_location_ids)
 
     return locations_list, replacement_names
 
