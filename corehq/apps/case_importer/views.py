@@ -282,13 +282,13 @@ def bulk_case_upload_api(request, domain, **kwargs):
 
 
 def _bulk_case_upload_api(request, domain):
-
     try:
         upload_file = request.FILES["file"]
         case_type = request.POST["case_type"]
         search_field = request.POST['search_field']
         create_new_cases = request.POST.get('create_new_cases') == 'on'
         search_column = request.POST['search_column']
+        name_column = request.POST.get('name_column','name')
     except Exception:
         raise ImporterError(
                 "Invalid post request. "
@@ -314,9 +314,9 @@ def _bulk_case_upload_api(request, domain):
     #Create the field arrays for the importer in the same format
     #as the "Step 2" Web UI from the manual process
     for f in excel_fields:
-        if f == "name":
+        if f == name_column:
             custom_fields.append("")
-            case_fields.append(f)
+            case_fields.append("name")
         else:
             custom_fields.append(f)
             case_fields.append("")
