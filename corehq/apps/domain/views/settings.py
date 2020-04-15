@@ -473,7 +473,7 @@ class CustomPasswordResetView(PasswordResetConfirmView):
         if self.user:
             # redirect mobile worker password reset to a domain-specific login with their username already set
             couch_user = CouchUser.get_by_username(self.user.username)
-            if isinstance(couch_user, CommCareUser):
+            if couch_user.is_commcare_user():
                 messages.success(
                     self.request,
                     _('Password for {} has successfully been reset. You can now login.').format(

@@ -162,8 +162,10 @@ class CouchSqlDomainMigrator:
         self.counter = DocCounter(self.statedb)
         if rebuild_state:
             self.statedb.is_rebuild = True
-        assert case_diff in {"after", "asap", "none"}, case_diff
-        self.diff_cases_after_forms = case_diff == "after"
+        assert case_diff in {"after", "patch", "asap", "none"}, case_diff
+        assert case_diff != "patch" or forms in [None, "missing"], (case_diff, forms)
+        self.should_patch_diffs = case_diff == "patch"
+        self.should_diff_cases = case_diff == "after"
         if case_diff == "asap":
             diff_queue = CaseDiffProcess
         else:
@@ -186,7 +188,9 @@ class CouchSqlDomainMigrator:
                 self._process_main_forms()
                 self._copy_unprocessed_forms()
                 self._copy_unprocessed_cases()
-            if self.diff_cases_after_forms:
+            if self.should_patch_diffs:
+                self._patch_diffs()
+            elif self.should_diff_cases:
                 self._diff_cases()
 
         log.info('migrated domain {}'.format(self.domain))
@@ -240,7 +244,7 @@ class CouchSqlDomainMigrator:
                 xmlns = couch_form.xmlns
                 user_id = couch_form.user_id
             if xmlns == SYSTEM_ACTION_XMLNS:
-                for form_id, case_ids in do_system_action(couch_form):
+                for form_id, case_ids in do_system_action(couch_form, self.statedb):
                     self.case_diff_queue.update(case_ids, form_id)
             sql_form = XFormInstanceSQL(
                 form_id=couch_form.form_id,
@@ -253,7 +257,7 @@ class CouchSqlDomainMigrator:
             _migrate_form_operations(sql_form, couch_form)
             case_stock_result = (self._get_case_stock_result(sql_form, couch_form)
                 if form_is_processed else None)
-            _save_migrated_models(sql_form, case_stock_result)
+            save_migrated_models(sql_form, case_stock_result)
         except IntegrityError as err:
             exc_info = sys.exc_info()
             try:
@@ -285,7 +289,7 @@ class CouchSqlDomainMigrator:
     def _get_case_stock_result(self, sql_form, couch_form):
         case_stock_result = None
         if sql_form.initial_processing_complete:
-            case_stock_result = _get_case_and_ledger_updates(self.domain, sql_form)
+            case_stock_result = get_case_and_ledger_updates(self.domain, sql_form)
             if case_stock_result.case_models:
                 has_noop_update = any(
                     len(update.actions) == 1 and isinstance(update.actions[0], CaseNoopAction)
@@ -373,6 +377,16 @@ class CouchSqlDomainMigrator:
             )
         finally:
             self.case_diff_queue.enqueue(couch_case.case_id)
+
+    def _patch_diffs(self):
+        from .casedifftool import CaseDiffTool
+        casediff = CaseDiffTool(self)
+        if not self.forms:
+            casediff.diff_cases()
+            self._process_missing_forms()
+        casediff.diff_cases("pending")
+        casediff.patch_diffs()
+        casediff.diff_cases("pending")
 
     def _diff_cases(self):
         from .casedifftool import CaseDiffTool
@@ -1036,7 +1050,7 @@ def _migrate_case_indices(couch_case, sql_case):
         ))
 
 
-def _get_case_and_ledger_updates(domain, sql_form):
+def get_case_and_ledger_updates(domain, sql_form):
     """
     Get a CaseStockProcessingResult with the appropriate cases and ledgers to
     be saved.
@@ -1077,7 +1091,7 @@ def _get_case_and_ledger_updates(domain, sql_form):
     )
 
 
-def _save_migrated_models(sql_form, case_stock_result):
+def save_migrated_models(sql_form, case_stock_result):
     """
     See SubmissionPost.save_processed_models for ~what this should do.
     However, note that that function does some things that this one shouldn't,
