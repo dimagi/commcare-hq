@@ -351,9 +351,10 @@ class DataFormatter(object):
                 if self.filter_row(key, formatted_row):
                     yield key, formatted_row
         else:
-            formatted_row = self._format.format_row(data)
-            if self.filter_row(None, formatted_row):
-                yield None, formatted_row
+            for index, row_data in data.items():
+                formatted_row = self._format.format_row(row_data)
+                if self.filter_row(None, formatted_row):
+                    yield index, formatted_row
 
     def filter_row(self, key, row):
         return not self.row_filter or self.row_filter(key, row)
