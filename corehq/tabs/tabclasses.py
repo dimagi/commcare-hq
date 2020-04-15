@@ -524,6 +524,7 @@ class ProjectDataTab(UITab):
                 DeIdFormExportListView,
                 DeIdDailySavedExportListView,
                 DeIdDashboardFeedListView,
+                ODataFeedListView,
             )
             export_data_views.append({
                 'title': _(DeIdFormExportListView.page_title),
@@ -537,6 +538,10 @@ class ProjectDataTab(UITab):
                 {
                     'title': _(DeIdDashboardFeedListView.page_title),
                     'url': reverse(DeIdDashboardFeedListView.urlname, args=(self.domain,)),
+                },
+                {
+                    'title': _(ODataFeedListView.page_title),
+                    'url': reverse(ODataFeedListView.urlname, args=(self.domain,)),
                 },
             ])
 
