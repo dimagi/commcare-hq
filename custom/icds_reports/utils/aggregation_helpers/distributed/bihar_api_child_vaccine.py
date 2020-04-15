@@ -69,7 +69,7 @@ class BiharApiChildVaccineHelper(BaseICDSAggregationDistributedHelper):
             ('dob', 'person_list.dob'),
             ('private_admit', 'person_list.primary_admit'),
             ('primary_admit', 'person_list.primary_admit'),
-            ('date_last_private_admit' , 'person_list.date_last_private_admit '),
+            ('date_last_private_admit', 'person_list.date_last_private_admit '),
             ('date_return_private', 'person_list.date_return_private')
         )
         column_names = ", ".join([col[0] for col in columns])

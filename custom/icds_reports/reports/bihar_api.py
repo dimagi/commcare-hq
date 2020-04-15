@@ -138,4 +138,4 @@ def get_api_vaccine_data(state_id, month, last_person_case_id):
 
     # To apply pagination on database query with data size length
     limited_vaccine_data = list(vaccine_data_query[:CAS_API_PAGE_SIZE])
-    return limited_vaccine_data,  get_vaccine_total_records_count(month, state_id)
+    return limited_vaccine_data, get_vaccine_total_records_count(month, state_id)

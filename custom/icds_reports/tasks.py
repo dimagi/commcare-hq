@@ -1871,4 +1871,3 @@ def update_child_vaccine_table(target_date):
 def update_bihar_vaccine_table(target_date):
     current_month = force_to_date(target_date).replace(day=1)
     BiharAPIChildVaccine.aggregate(current_month)
-
