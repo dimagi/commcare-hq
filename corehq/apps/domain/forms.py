@@ -97,6 +97,7 @@ from corehq.apps.callcenter.views import (
     CallCenterOwnerOptionsView,
 )
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
+from corehq.apps.domain.auth import get_active_users_by_email
 from corehq.apps.domain.models import (
     AREA_CHOICES,
     BUSINESS_UNITS,
@@ -1183,15 +1184,13 @@ class HQPasswordResetForm(NoAutocompleteMixin, forms.Form):
             subject_template_name = 'registration/email/password_reset_subject_hq.txt'
             email_template_name = 'registration/email/password_reset_email_hq.html'
 
-        UserModel = get_user_model()
         email = self.cleaned_data["email"]
 
         # this is the line that we couldn't easily override in PasswordForm where
         # we specifically filter for the username, not the email, so that
         # mobile workers who have the same email set as a web worker don't
         # get a password reset email.
-        active_users = UserModel._default_manager.filter(
-            username__iexact=email, is_active=True)
+        active_users = get_active_users_by_email(email)
 
         # the code below is copied from default PasswordForm
         for user in active_users:
