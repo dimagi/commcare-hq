@@ -58,7 +58,7 @@ openpyxl~=2.6
 six~=1.11
 socketpool==0.5.3
 markdown==2.2.1
-git+git://github.com/dimagi/sql-agg/@a8d4af08a63ef880bd591521441efbcd51b12a33#egg=sqlagg
+git+git://github.com/dimagi/sql-agg/@582fb4f7ab8b2d441d9d2cdb4b6489f68954c377#egg=sqlagg
 django-redis~=4.9
 redis==2.10.6
 redis-py-cluster==1.3.6
