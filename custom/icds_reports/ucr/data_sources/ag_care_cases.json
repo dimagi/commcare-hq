@@ -69,8 +69,7 @@
             "datatype": null,
             "type": "property_name",
             "property_name": "owner_id"
-          },
-          "type": "root_doc"
+          }
         },
         "is_primary_key": false,
         "transform": {},
@@ -93,8 +92,7 @@
               "datatype": null,
               "type": "property_name",
               "property_name": "owner_id"
-            },
-            "type": "root_doc"
+            }
           },
           "location_type": "supervisor",
           "location_property": "_id",
@@ -117,8 +115,7 @@
               "datatype": null,
               "type": "property_name",
               "property_name": "owner_id"
-            },
-            "type": "root_doc"
+            }
           },
           "location_type": "block",
           "location_property": "_id",
@@ -141,8 +138,7 @@
               "datatype": null,
               "type": "property_name",
               "property_name": "owner_id"
-            },
-            "type": "root_doc"
+            }
           },
           "location_type": "district",
           "location_property": "_id",
@@ -165,8 +161,7 @@
               "datatype": null,
               "type": "property_name",
               "property_name": "owner_id"
-            },
-            "type": "root_doc"
+            }
           },
           "location_type": "state",
           "location_property": "_id",
