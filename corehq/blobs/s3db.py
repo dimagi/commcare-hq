@@ -196,9 +196,8 @@ def is_not_found(err, not_found_codes=["NoSuchKey", "NoSuchBucket", "404"]):
 
 
 def get_file_size(fileobj):
-    CHUNK_SIZE = 4096
     if isinstance(fileobj, GzipCompressReadStream):
-        fileobj.content_length
+        return fileobj.content_length
 
     # botocore.response.StreamingBody has a '_content_length' attribute
     length = getattr(fileobj, "_content_length", None)

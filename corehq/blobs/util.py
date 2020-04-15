@@ -8,7 +8,7 @@ import re
 
 from jsonfield import JSONField
 
-from corehq.blobs.exceptions import BadName
+from corehq.blobs.exceptions import BadName, GzipStreamAttrAccessBeforeRead
 
 SAFENAME = re.compile("^[a-z0-9_./{}-]+$", re.IGNORECASE)
 
@@ -55,7 +55,8 @@ class GzipCompressReadStream:
         @property
         def content_length(self):
             if self._content_length is None or self._size > 0:
-                raise Exception("content_length can't be accessed without completely reading the stream")
+                raise GzipStreamAttrAccessBeforeRead(
+                    "content_length can't be accessed without completely reading the stream")
             return self._content_length
 
         def __len__(self):

@@ -4,6 +4,7 @@ import tempfile
 from unittest import TestCase
 
 import corehq.blobs.util as mod
+from corehq.blobs.exceptions import GzipStreamAttrAccessBeforeRead
 
 
 class TestRandomUrlId(TestCase):
@@ -39,12 +40,22 @@ class TestGzipCompressReadStream(TestCase):
                 compressed_f.write(compress_stream.read())
                 self.assertTrue(self._is_gzip_compressed(compressed_f))
 
-    def test_content_length(self):
+    def test_content_length_access(self):
         with tempfile.NamedTemporaryFile() as f:
+            f.seek(10)
             f.write(b"x")
             compress_stream = mod.GzipCompressReadStream(f)
-            with self.assertRaises(Exception):
-                compress_stream.content_length
-            content_length = len(compress_stream.read())
-            self.assertEqual(compress_stream.content_length, content_length)
 
+            # Try to read content_length without reading the stream
+            with self.assertRaises(GzipStreamAttrAccessBeforeRead):
+                content_length = compress_stream.content_length
+
+            # Try to read content_length after partially reading the stream
+            content_length = len(compress_stream.read(5))
+            with self.assertRaises(GzipStreamAttrAccessBeforeRead):
+                content_length = compress_stream.content_length
+
+            # Read content_length after completely reading the stream and check
+            # that it's correct
+            content_length += len(compress_stream.read())
+            self.assertEqual(compress_stream.content_length, content_length)

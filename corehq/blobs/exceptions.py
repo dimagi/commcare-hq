@@ -18,3 +18,8 @@ class InvalidContext(Error):
 
 class NotFound(Error):
     """Raised when an attachment cannot be found"""
+
+
+class GzipStreamAttrAccessBeforeRead(Exception):
+	"""Raised when an attribure (eg: content_length) of the
+	Gzip Stream is accessed before the stream is read completely"""

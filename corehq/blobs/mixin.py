@@ -10,7 +10,6 @@ from os.path import join
 
 from corehq.blobs import get_blob_db, CODES  # noqa: F401
 from corehq.blobs.exceptions import AmbiguousBlobStorageError, NotFound
-from corehq.blobs.metadata import MetaDB
 from corehq.blobs.util import (
     classproperty,
     document_method,
@@ -35,7 +34,6 @@ class BlobMetaRef(DocumentSchema):
     blobmeta_id = IntegerProperty()
     content_type = StringProperty()
     content_length = IntegerProperty()
-    type_code = IntegerProperty()
 
     @classmethod
     def _from_attachment(cls, data):
@@ -149,13 +147,12 @@ class BlobMixin(Document):
             content = BytesIO(content)
 
         # do we need to worry about BlobDB reading beyond content_length?
-        type_code = self._blobdb_type_code if type_code is None else type_code
         meta = db.put(
             content,
             domain=domain or self.domain,
             parent_id=self._id,
             name=name,
-            type_code=type_code,
+            type_code=(self._blobdb_type_code if type_code is None else type_code),
             content_type=content_type,
         )
         self.external_blobs[name] = BlobMetaRef(
@@ -163,7 +160,6 @@ class BlobMixin(Document):
             blobmeta_id=meta.id,
             content_type=content_type,
             content_length=meta.content_length,
-            type_code=type_code,
         )
         if self._migrating_blobs_from_couch and self._attachments:
             self._attachments.pop(name, None)
@@ -186,16 +182,13 @@ class BlobMixin(Document):
         db = get_blob_db()
         try:
             try:
-                meta_ref = self.external_blobs[name]
+                key = self.external_blobs[name].key
             except KeyError:
                 if self._migrating_blobs_from_couch:
                     return super(BlobMixin, self) \
                         .fetch_attachment(name, stream=stream)
                 raise NotFound(name)
-            type_code = meta_ref.type_code
-            if type_code is None:
-                type_code = self._blobdb_type_code
-            meta = MetaDB().get(parent_id=self._id, key=meta_ref.key)
+            meta = db.metadb.get(parent_id=self._id, key=key)
             blob = db.get(meta=meta)
         except NotFound:
             raise ResourceNotFound(
