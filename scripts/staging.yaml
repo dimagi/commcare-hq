@@ -55,4 +55,5 @@ branches:
   - mk/location-reassignment-9 # MK April 14
   - bmb/SAAS-10712  # Biyeun April 1
   - ap/remove-delete-in-name # Amit April 8
+  - bmb/odata-qa-feedback  # Biyeun April 15
 submodules: {}
