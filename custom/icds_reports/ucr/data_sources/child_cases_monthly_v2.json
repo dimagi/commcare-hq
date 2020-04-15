@@ -1520,8 +1520,8 @@
             "name": "pse_days"
           },
           "expression_if_false": {
-            "type": "property_name",
-            "property_name": "no_exist"
+            "type": "constant",
+            "constant": 0
           }
         },
         "display_name": null,
@@ -1555,8 +1555,8 @@
             "name": "pse_days"
           },
           "expression_if_false": {
-            "type": "property_name",
-            "property_name": "no_exist"
+            "type": "constant",
+            "constant": 0
           }
         },
         "display_name": null,
@@ -1590,8 +1590,8 @@
             "name": "pse_days"
           },
           "expression_if_false": {
-            "type": "property_name",
-            "property_name": "no_exist"
+            "type": "constant",
+            "constant": 0
           }
         },
         "display_name": null,
