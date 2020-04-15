@@ -86,7 +86,7 @@ class PatchCase:
             updates.extend([const.CASE_ACTION_CREATE, const.CASE_ACTION_UPDATE])
             self._dynamic_properties = self.case.dynamic_case_properties()
         else:
-            if has_illegal_props(self.diffs):
+            if cannot_patch(self.diffs):
                 raise CannotPatch(self.diffs)
             props = dict(iter_dynamic_properties(self.diffs))
             self._dynamic_properties = props
@@ -101,6 +101,7 @@ class PatchCase:
 
 
 ILLEGAL_PROPS = {"indices", "actions", "*"}
+IGNORE_PROPS = {"opened_by"}
 STATIC_PROPS = {
     "case_id",
     "closed",
@@ -132,8 +133,9 @@ STATIC_PROPS = {
 }
 
 
-def has_illegal_props(diffs):
-    return any(d.path[0] in ILLEGAL_PROPS for d in diffs)
+def cannot_patch(diffs):
+    return any(d.path[0] in ILLEGAL_PROPS for d in diffs) \
+        or all(d.path[0] in IGNORE_PROPS for d in diffs)
 
 
 def has_known_props(diffs):
