@@ -50,6 +50,7 @@ def do_case_diffs(migrator, cases, stop, batch_size):
 
         - 'pending': clear out in-process diffs
         - 'with-diffs': re-diff cases that previously had diffs
+        - 'with-changes': re-diff cases that previously had changes
         - a comma-delimited list of case ids
         - a path to a file containing a case id on each line. The path must
           begin with / or ./
@@ -155,8 +156,8 @@ class CaseDiffTool:
             return self.resumable_iter_diff_cases()
         if cases == "pending":
             return self.map_cases(load_and_diff_cases, self.get_pending_cases())
-        if cases == "with-diffs":
-            return self.iter_diff_cases_with_diffs()
+        if cases in ["with-diffs", "with-changes"]:
+            return self.iter_diff_cases_with_diffs(cases == "with-changes")
         case_ids = get_ids_from_string_or_file(cases)
         return self.map_cases(load_and_diff_cases, case_ids, log_cases=True)
 
@@ -174,9 +175,9 @@ class CaseDiffTool:
         )
         return self.map_cases(load_and_diff_cases, case_ids, diff_batch)
 
-    def iter_diff_cases_with_diffs(self):
-        count = self.statedb.count_case_ids_with_diffs()
-        cases = self.statedb.iter_case_ids_with_diffs()
+    def iter_diff_cases_with_diffs(self, changes):
+        count = self.statedb.count_case_ids_with_diffs(changes)
+        cases = self.statedb.iter_case_ids_with_diffs(changes)
         cases = with_progress_bar(cases, count, prefix="Cases with diffs", oneline=False)
         return self.map_cases(load_and_diff_cases, cases)
 
