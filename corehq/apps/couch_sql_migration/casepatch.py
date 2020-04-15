@@ -51,6 +51,10 @@ def patch_diffs(doc_diffs, log_cases=False):
             error_diffs = [(kind, case_id, err.diffs)]
             log.warning("cannot patch %s", format_diffs(error_diffs))
             continue
+        except Exception:
+            error_diffs = [(kind, case_id, [d.json_diff for d in diffs])]
+            log.exception("cannot patch %s", format_diffs(error_diffs))
+            continue
         pending_diffs.append(case_id)
     return pending_diffs
 
@@ -70,7 +74,8 @@ def patch_case(case_id, diffs):
 
 def patch_ledgers(diffs):
     if diffs:
-        raise NotImplementedError
+        # TODO implement ledger patch
+        raise CannotPatch([d.json_diff for d in diffs])
 
 
 @attr.s
