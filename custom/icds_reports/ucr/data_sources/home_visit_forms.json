@@ -114,6 +114,23 @@
         }
       },
       {
+        "display_name": "Next Due",
+        "transform": {},
+        "datatype": "date",
+        "type": "expression",
+        "is_primary_key": false,
+        "is_nullable": true,
+        "column_id": "next_due",
+        "expression": {
+          "datatype": "date",
+          "type": "property_path",
+          "property_path": [
+            "form",
+            "next_due"
+          ]
+        }
+      },
+      {
         "filter": {
           "type": "and",
           "filters": [
