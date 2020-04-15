@@ -648,7 +648,7 @@
         },
         "display_name": null,
         "type": "boolean",
-        "column_id": "new_thr_rations_gte_21"
+        "column_id": "thr_rations_gte_21"
       },
       {
         "filter": {
