@@ -107,6 +107,7 @@ load_ignore_rules = memoized(lambda: add_duplicate_rules({
 
         # CASE_IGNORED_DIFFS
         Ignore('type', 'name', old='', new=None),
+        Ignore('type', 'name', old=None, new=''),
         Ignore('type', 'closed_by', old='', new=None),
         Ignore('type', 'closed_by', old=None, new=''),
         Ignore('diff', 'closed_by', old=''),
