@@ -261,7 +261,7 @@ class CachedResponse(object):
         try:
             value = self._fileobj
         except AttributeError:
-            value = get_blob_db().get(key=self.name) if self.name else None
+            value = get_blob_db().get(key=self.name, type_code=CODES.restore) if self.name else None
             self._fileobj = value
         return value
 

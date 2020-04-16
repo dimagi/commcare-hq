@@ -104,7 +104,7 @@ def cache_fixture_items_data(io_data, domain, fixure_name, key_prefix):
 
 def get_cached_fixture_items(domain, bucket_prefix):
     try:
-        return get_blob_db().get(key=bucket_prefix + '/' + domain).read()
+        return get_blob_db().get(key=bucket_prefix + '/' + domain, type_code=CODES.fixture).read()
     except NotFound:
         return None
 

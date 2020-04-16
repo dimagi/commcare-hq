@@ -93,13 +93,18 @@ class BlobMeta(PartitionedModel, Model):
         """Use content type to check if blob is an image"""
         return (self.content_type or "").startswith("image/")
 
-    def open(self):
+    def open(self, db=None):
         """Get a file-like object containing blob content
 
         The returned object should be closed when it is no longer needed.
         """
-        from . import get_blob_db
-        return get_blob_db().get(meta=self)
+        from . import get_blob_db, CODES
+        if self.type_code == CODES.form_xml:
+            kwargs = {'meta': self}
+        else:
+            kwargs = {'key': self.key, 'type_code': self.type_code}
+        db = db or get_blob_db()
+        return db.get(**kwargs)
 
     def blob_exists(self):
         from . import get_blob_db

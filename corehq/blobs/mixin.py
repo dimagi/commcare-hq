@@ -189,7 +189,7 @@ class BlobMixin(Document):
                         .fetch_attachment(name, stream=stream)
                 raise NotFound(name)
             meta = db.metadb.get(parent_id=self._id, key=key)
-            blob = db.get(meta=meta)
+            blob = meta.open()
         except NotFound:
             raise ResourceNotFound(
                 "{model} {model_id} attachment: {name!r}".format(
