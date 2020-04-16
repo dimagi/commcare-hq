@@ -332,7 +332,7 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
                 mapConfiguration(location, resp);
             });
         } else if (locationLevel === 1) {
-            topojsonService.getTopoJsonForDistrict(location.map_location_name, location.parent_map_name).then(
+            topojsonService.getBlockTopoJsonForState(location.parent_map_name).then(
                 function (resp) {
                     mapConfiguration(location, resp.topojson);
                 }
