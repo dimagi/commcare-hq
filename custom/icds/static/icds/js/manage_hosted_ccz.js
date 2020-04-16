@@ -21,7 +21,6 @@ hqDefine('icds/js/manage_hosted_ccz', [
                 'app_name',
                 'app_version_tag',
                 'file_name',
-                'link',
                 'link_name',
                 'note',
                 'profile_name',
@@ -33,7 +32,6 @@ hqDefine('icds/js/manage_hosted_ccz', [
                 appName: options.app_name,
                 appVersionTag: options.app_version_tag,
                 fileName: options.file_name,
-                link: options.link,
                 link_name: options.link_name,
                 profileName: options.profile_name,
                 note: options.note,
@@ -42,7 +40,7 @@ hqDefine('icds/js/manage_hosted_ccz', [
             };
             self.removeUrl = initialPageData.reverse("remove_hosted_ccz", self.id);
             self.recreateUrl = initialPageData.reverse("recreate_hosted_ccz", self.id);
-            self.viewUrl = initialPageData.reverse("hosted_ccz", self.link);
+            self.viewUrl = initialPageData.reverse("hosted_ccz", self.link_name);
             return self;
         };
         var hostedCCZsView = function (options) {
