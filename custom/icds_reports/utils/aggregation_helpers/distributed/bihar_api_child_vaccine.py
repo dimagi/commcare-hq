@@ -56,8 +56,7 @@ class BiharApiChildVaccineHelper(BaseICDSAggregationDistributedHelper):
 
     @property
     def bihar_state_id(self):
-        # return self.state_id_from_state_name('Bihar')
-        return 'st1'
+        return self.state_id_from_state_name('Bihar')
 
     def aggregation_query(self):
 
