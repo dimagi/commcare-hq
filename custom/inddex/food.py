@@ -44,7 +44,7 @@ from functools import reduce
 from custom.inddex.ucr_data import FoodCaseData
 
 from .fixtures import FixtureAccessor
-from .const import AGE_RANGES
+from .const import AGE_RANGES, FctGaps, ConvFactorGaps
 
 IN_UCR = 'in_ucr'
 IN_FOOD_FIXTURE = 'in_food_fixture'
@@ -56,42 +56,6 @@ FOOD_ITEM = 'food_item'
 NON_STANDARD_FOOD_ITEM = 'non_std_food_item'
 STANDARD_RECIPE = 'std_recipe'
 NON_STANDARD_RECIPE = 'non_std_recipe'
-
-
-class FctGaps:
-    slug = 'fct'
-    AVAILABLE = 1
-    BASE_TERM = 2
-    REFERENCE = 3
-    INGREDIENT_GAPS = 7
-    NOT_AVAILABLE = 8
-    DESCRIPTIONS = {
-        AVAILABLE: "fct data available",
-        BASE_TERM: "using fct data from base term food code",
-        REFERENCE: "using fct data from reference food code",
-        INGREDIENT_GAPS: "ingredients contain fct data gaps",
-        NOT_AVAILABLE: "no fct data available",
-    }
-
-    @classmethod
-    def get_description(self, code):
-        return f"{code} - {self.DESCRIPTIONS[code]}"
-
-
-class ConvFactorGaps:
-    slug = 'conv_factor'
-    AVAILABLE = 1
-    BASE_TERM = 2
-    NOT_AVAILABLE = 8
-    DESCRIPTIONS = {
-        AVAILABLE: "conversion factor available",
-        BASE_TERM: "using conversion factor from base term food code",
-        NOT_AVAILABLE: "no conversion factor available",
-    }
-
-    @classmethod
-    def get_description(self, code):
-        return f"{code} - {self.DESCRIPTIONS[code]}"
 
 
 class I:

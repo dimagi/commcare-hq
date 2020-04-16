@@ -1,7 +1,8 @@
 from collections import defaultdict
 
 from custom.inddex import filters
-from custom.inddex.food import ConvFactorGaps, FctGaps, FoodData
+from custom.inddex.const import ConvFactorGaps, FctGaps
+from custom.inddex.food import FoodData
 
 from .utils import MultiTabularReport, format_row
 

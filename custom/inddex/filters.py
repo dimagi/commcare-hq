@@ -7,8 +7,12 @@ from corehq.apps.reports.filters.base import BaseSingleOptionFilter
 from corehq.apps.reports.filters.dates import DatespanFilter
 from corehq.apps.reports.sqlreport import DatabaseColumn, SqlData
 from corehq.apps.userreports.util import get_table_name
-from custom.inddex.const import AGE_RANGES, FOOD_CONSUMPTION
-from custom.inddex.food import ConvFactorGaps, FctGaps
+from custom.inddex.const import (
+    AGE_RANGES,
+    FOOD_CONSUMPTION,
+    ConvFactorGaps,
+    FctGaps,
+)
 
 
 class DateRangeFilter(DatespanFilter):
