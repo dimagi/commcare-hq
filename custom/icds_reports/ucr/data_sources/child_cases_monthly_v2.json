@@ -1793,9 +1793,9 @@
         "is_nullable": true,
         "expression": {
           "type": "named",
-          "name": "last_date_gmp_in_month"
+          "name": "last_date_gmp"
         },
-        "column_id": "last_date_gmp_in_month_display"
+        "column_id": "last_date_gmp_display"
       },
       {
         "filter": {
@@ -1809,7 +1809,7 @@
               "operator": "not_eq",
               "expression": {
                 "type": "named",
-                "name": "last_date_gmp_in_month"
+                "name": "last_date_gmp"
               },
               "type": "boolean_expression",
               "property_value": null
@@ -2121,46 +2121,64 @@
         },
         "statement": "age_in_days / 30.4"
       },
-      "last_date_gmp_in_month": {
-        "type": "reduce_items",
-        "aggregation_fn": "max",
-        "items_expression": {
-          "type": "map_items",
-          "items_expression": {
-            "type": "icds_get_case_forms_by_date",
-            "xmlns": [
-              "http://openrosa.org/formdesigner/b183124a25f2a0ceab266e4564d3526199ac4d75"
-            ],
-            "start_date": {
-              "type": "named",
-              "name": "month_start"
-            },
-            "end_date": {
-              "type": "named",
-              "name": "month_end"
-            },
-            "form_filter": {
-              "operator": "not_eq",
+      "last_date_gmp": {
+        "type": "conditional",
+        "test": {
+          "type": "and",
+          "filters": [
+            {
+              "operator": "gte",
               "type": "boolean_expression",
               "expression": {
-                "datatype": "date",
-                "type": "property_path",
-                "property_path": [
-                  "form",
-                  "last_date_gmp"
-                ]
+                "type": "diff_days",
+                "from_date_expression": {
+                  "type": "root_doc",
+                  "expression": {
+                    "datatype": "date",
+                    "type": "property_name",
+                    "property_name": "last_date_gmp"
+                  }
+                },
+                "to_date_expression": {
+                  "type": "named",
+                  "name": "month_end"
+                }
               },
-              "property_value": null
+              "property_value": 0
+            },
+            {
+              "operator": "gte",
+              "type": "boolean_expression",
+              "expression": {
+                "type": "diff_days",
+                "from_date_expression": {
+                  "type": "named",
+                  "name": "month_start"
+                },
+                "to_date_expression": {
+                  "type": "root_doc",
+                  "expression": {
+                    "datatype": "date",
+                    "type": "property_name",
+                    "property_name": "last_date_gmp"
+                  }
+                }
+              },
+              "property_value": 0
             }
-          },
-          "map_expression": {
+          ]
+        },
+        "expression_if_true": {
+          "type": "root_doc",
+          "expression": {
             "datatype": "date",
-            "type": "property_path",
-            "property_path": [
-              "form",
-              "last_date_gmp"
-            ]
+            "type": "property_name",
+            "property_name": "last_date_gmp"
           }
+        },
+        "expression_if_false": {
+          "type": "property_name",
+          "property_name": "no_exist"
         }
       }
     },
