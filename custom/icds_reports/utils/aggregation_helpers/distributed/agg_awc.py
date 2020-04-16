@@ -315,7 +315,7 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
         """.format(
             tablename=self.temporary_tablename,
             ucr_tablename=self.get_table('static-person_cases_v3'),
-            adolescent_girls_table=AGG_ADOLESCENT_GIRLS_REGISTRATION_TABLE
+            adolescent_girls_table=AGG_ADOLESCENT_GIRLS_REGISTRATION_TABLE,
             migration_table=AGG_MIGRATION_TABLE
         ), {
             'start_date': self.month_start,
