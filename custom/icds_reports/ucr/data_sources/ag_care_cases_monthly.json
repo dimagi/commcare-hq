@@ -77,7 +77,7 @@
                         "type": "identity"
                       }
                     },
-                    "statement": "iteration - 2",
+                    "statement": "iteration - 1",
                     "datatype": null
                   }
                 }
@@ -402,7 +402,7 @@
                 "type": "base_iteration_number"
               }
             },
-            "statement": "iteration - 2"
+            "statement": "iteration - 1"
           }
         }
       },
@@ -420,7 +420,7 @@
                 "type": "base_iteration_number"
               }
             },
-            "statement": "iteration - 2"
+            "statement": "iteration - 1"
           }
         }
       },
