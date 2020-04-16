@@ -66,8 +66,7 @@ class S3BlobDB(AbstractBlobDB):
         check_safe_key(meta.key)
         s3_bucket = self._s3_bucket(create=True)
         if isinstance(content, BlobStream) and content.blob_db is self:
-            obj = s3_bucket.Object(content.blob_key)
-            meta.content_length = obj.content_length
+            meta.content_length = content.uncompressed_length
             self.metadb.put(meta)
             source = {"Bucket": self.s3_bucket_name, "Key": content.blob_key}
             with self.report_timing('put-via-copy', meta.key):
@@ -93,10 +92,12 @@ class S3BlobDB(AbstractBlobDB):
         check_safe_key(key)
         with maybe_not_found(throw=NotFound(key)), self.report_timing('get', key):
             resp = self._s3_bucket().Object(key).get()
-        blobstream = BlobStream(resp["Body"], self, key)
+        uncompressed_length = resp['ContentLength']
+        body = resp["Body"]
         if meta and meta.compressed:
-            return GzipFile(blobstream)
-        return blobstream
+            uncompressed_length = meta.content_length
+            body = GzipFile(key, mode='rb', fileobj=body)
+        return BlobStream(body, self, key, uncompressed_length)
 
     def size(self, key):
         check_safe_key(key)
@@ -157,10 +158,11 @@ class S3BlobDB(AbstractBlobDB):
 
 class BlobStream(RawIOBase):
 
-    def __init__(self, stream, blob_db, blob_key):
+    def __init__(self, stream, blob_db, blob_key, uncompressed_length):
         self._obj = stream
         self._blob_db = weakref.ref(blob_db)
         self.blob_key = blob_key
+        self.uncompressed_length = uncompressed_length
 
     def readable(self):
         return True
@@ -174,6 +176,9 @@ class BlobStream(RawIOBase):
         raise IOError
 
     def tell(self):
+        tell = getattr(self._obj, 'tell', None)
+        if tell is not None:
+            return tell()
         return self._obj._amount_read
 
     def seek(self, offset, from_what=os.SEEK_SET):

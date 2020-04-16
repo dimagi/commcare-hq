@@ -65,6 +65,7 @@ from io import BytesIO, SEEK_SET, TextIOWrapper
 from django.conf import settings
 from django.test import TestCase
 
+from corehq.blobs import CODES
 from corehq.blobs.s3db import S3BlobDB, BlobStream
 from corehq.blobs.tests.util import new_meta, TemporaryS3BlobDB
 from corehq.blobs.tests.test_fsdb import _BlobDBTests
@@ -99,12 +100,16 @@ class TestS3BlobDB(TestCase, _BlobDBTests):
 class TestBlobStream(TestCase):
 
     @classmethod
+    def new_meta(cls, **kwargs):
+        return new_meta(**kwargs)
+
+    @classmethod
     def setUpClass(cls):
         super(TestBlobStream, cls).setUpClass()
         with trap_extra_setup(AttributeError, msg="S3_BLOB_DB_SETTINGS not configured"):
             config = settings.S3_BLOB_DB_SETTINGS
         cls.db = TemporaryS3BlobDB(config)
-        cls.meta = cls.db.put(BytesIO(b"bytes"), meta=new_meta())
+        cls.meta = cls.db.put(BytesIO(b"bytes"), meta=cls.new_meta())
 
     @classmethod
     def tearDownClass(cls):
@@ -112,7 +117,7 @@ class TestBlobStream(TestCase):
         super(TestBlobStream, cls).tearDownClass()
 
     def test_text_io_wrapper(self):
-        meta = self.db.put(BytesIO(b"x\ny\rz\n"), meta=new_meta())
+        meta = self.db.put(BytesIO(b"x\ny\rz\n"), meta=self.new_meta())
         with self.db.get(meta=meta) as fh:
             # universl unewline mode: \r -> \n
             textio = TextIOWrapper(fh, encoding="utf-8")
@@ -157,18 +162,24 @@ class TestBlobStream(TestCase):
     def test_close(self):
         fake = FakeStream()
         self.assertEqual(fake.close_calls, 0)
-        BlobStream(fake, fake, None).close()
+        BlobStream(fake, fake, None, 0).close()
         self.assertEqual(fake.close_calls, 1)
 
     def test_close_on_exit_context(self):
         fake = FakeStream()
         self.assertEqual(fake.close_calls, 0)
-        with BlobStream(fake, fake, None):
+        with BlobStream(fake, fake, None, 0):
             pass
         self.assertEqual(fake.close_calls, 1)
 
     def get_blob(self):
         return self.db.get(meta=self.meta)
+
+
+class TestBlobStreamCompressed(TestBlobStream):
+    @classmethod
+    def new_meta(cls, **kwargs):
+        return new_meta(compressed=True, type_code=CODES.form_xml)
 
 
 class FakeStream(object):
