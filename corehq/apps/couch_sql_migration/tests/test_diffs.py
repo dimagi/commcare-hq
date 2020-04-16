@@ -698,7 +698,7 @@ class DiffTestCases(SimpleTestCase):
             "actions": [{"action_type": "create", "user_id": "person-2"}],
             "doc_type": "CommCareCase",
             "user_id": "person-2",
-            "modified_on": "2016-02-12T00:00:00.000000Z",
+            "modified_on": "2016-02-12T10:00:00.000000Z",
         }
         diffs = json_diff(couch_case, sql_case, track_list_indices=False)
         filtered = filter_case_diffs(couch_case, sql_case, diffs)

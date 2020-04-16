@@ -84,6 +84,7 @@ load_ignore_rules = memoized(lambda: add_duplicate_rules({
         Ignore(path='@case_id'),  # legacy
         Ignore(path='case_json', old=MISSING),
         Ignore(path='modified_by', old=MISSING),
+        Ignore(path='modified_on', check=has_close_dates),
         Ignore(path='@date_modified', check=case_has_duplicate_modified_on),
         # legacy bug left cases with no owner_id
         Ignore('diff', 'owner_id', old=''),
@@ -460,8 +461,17 @@ def case_has_duplicate_user_id(old_obj, new_obj, rule, diff):
 def case_has_duplicate_modified_on(old_obj, new_obj, rule, diff):
     return (
         "@date_modified" in old_obj
-        and "modified_on" in old_obj
         and "modified_on" in new_obj
         and old_obj["@date_modified"] != new_obj["modified_on"]
-        and old_obj["modified_on"] == new_obj["modified_on"]
+        and has_acceptable_date_diff(old_obj, new_obj, "modified_on")
     )
+
+
+def has_acceptable_date_diff(old_obj, new_obj, field, delta=timedelta(days=1)):
+    old = old_obj.get(field)
+    new = new_obj.get(field)
+    if _both_dates(old, new):
+        old = iso_string_to_datetime(old)
+        new = iso_string_to_datetime(new)
+        return abs(old - new) < delta
+    return False
