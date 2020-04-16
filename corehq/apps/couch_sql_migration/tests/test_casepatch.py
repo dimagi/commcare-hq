@@ -22,3 +22,4 @@ def test_can_patch_opened_by_with_user_id():
 
 class FakeCase:
     case_id = "fake"
+    closed = False

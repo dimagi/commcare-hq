@@ -239,6 +239,27 @@ class TestCouchSqlDiff(BaseMigrationTestCase):
         ])
         self.assert_patched_cases()
 
+    def test_patch_case_closed_in_couch_not_sql(self):
+        self.submit_form(make_test_form("form-1", case_id="case-1"))
+        self.do_migration(case_diff="none")
+        with self.augmented_couch_case("case-1") as case:
+            case.closed = True
+            case.closed_by = "system"
+            case.closed_on = datetime(2010, 9, 8, 7, 6, 5)
+            case.user_id = "system"
+            case.save()
+            self.do_case_diffs()
+        self.compare_diffs([
+            Diff('case-1', 'diff', ['closed'], old=True, new=False),
+            Diff('case-1', 'diff', ['user_id'], old='system', new='3fae4ea4af440efaa53441b5'),
+            Diff('case-1', 'type', ['closed_by'], old='system', new=None),
+            Diff('case-1', 'type', ['closed_on'], old='2010-09-08T07:06:05.000000Z', new=None),
+        ])
+        self.do_case_patch()
+        self.do_case_diffs("pending")
+        self.compare_diffs()
+        self.assert_patched_cases(["case-1"])
+
     def create_form_with_duplicate_stock_transaction(self):
         from corehq.apps.commtrack.helpers import make_product
         from corehq.apps.commtrack.processing import process_stock
@@ -259,6 +280,11 @@ class TestCouchSqlDiff(BaseMigrationTestCase):
         self.migration_success = True  # clear migration failure on diff cases
         migrator = mod.get_migrator(self.domain_name, self.state_dir)
         return mod.do_case_diffs(migrator, cases, stop=False, batch_size=100)
+
+    def do_case_patch(self, cases=None):
+        self.migration_success = True  # clear migration failure on diff cases
+        migrator = mod.get_migrator(self.domain_name, self.state_dir)
+        return mod.do_case_patch(migrator, cases, stop=False, batch_size=100)
 
     @contextmanager
     def augmented_couch_case(self, case_id):
