@@ -66,11 +66,7 @@ class BiharApiMotherDetailsHelper(BaseICDSAggregationDistributedHelper):
             ('ccs_case_id', 'ccs_record.case_id'),
             ('person_id', 'person_list.doc_id'),
             ('household_id', 'person_list.household_case_id'),
-            ('married', 'person_list.marital_status'),
-            ('husband_name', 'person_list.husband_name'),
             ('last_preg_year', 'preg.last_preg'),
-            ('last_preg_tt', 'person_list.last_preg_tt'),
-            ('is_pregnant', 'person_list.is_pregnant'),
             ('tt_booster', 'ut.due_list_date_tt_booster'),
 
         )
