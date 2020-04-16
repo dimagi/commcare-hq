@@ -26,7 +26,8 @@ from custom.icds_reports.const import (
     AGG_SDR_TABLE,
     AGG_MIGRATION_TABLE,
     BIHAR_API_DEMOGRAPHICS_TABLE,
-    AGG_AVAILING_SERVICES_TABLE
+    AGG_AVAILING_SERVICES_TABLE,
+    BIHAR_API_MOTHER_DETAILS_TABLE
 )
 from custom.icds_reports.utils.aggregation_helpers.distributed import (
     AggAwcDailyAggregationDistributedHelper,
@@ -61,6 +62,7 @@ from custom.icds_reports.utils.aggregation_helpers.distributed import (
     AggServiceDeliveryReportHelper,
     MigrationFormsAggregationDistributedHelper,
     BiharApiDemographicsHelper,
+    BiharApiMotherDetailsHelper,
     AvailingServiceFormsAggregationDistributedHelper
 )
 
@@ -1766,4 +1768,32 @@ class BiharAPIDemographics(models.Model, AggregateMixin):
         unique_together = ('month', 'state_id', 'district_id', 'block_id', 'supervisor_id', 'person_id')  # pkey
 
     _agg_helper_cls = BiharApiDemographicsHelper
+    _agg_atomic = False
+
+
+class BiharAPIMotherDetails(models.Model, AggregateMixin):
+    state_id = models.TextField(null=True)
+    supervisor_id = models.TextField(null=True)
+    month = models.DateField()
+    household_id = models.TextField(null=True)
+    ccs_case_id = models.TextField(primary_key=True)
+    person_id = models.TextField(null=True)
+    married = models.SmallIntegerField(null=True)
+    husband_id = models.TextField(null=True)
+    husband_name = models.TextField(null=True)
+    last_preg_year = models.IntegerField(null=True)
+    last_preg_tt = models.SmallIntegerField(null=True)
+    is_pregnant = models.SmallIntegerField(null=True)
+    preg_reg_date = models.DateField(null=True)
+    tt_1 = models.DateField(null=True)
+    tt_2 = models.DateField(null=True)
+    tt_booster = models.DateField(null=True)
+    hb = models.SmallIntegerField(null=True)
+    add = models.DateField(null=True)
+
+    class Meta(object):
+        db_table = BIHAR_API_MOTHER_DETAILS_TABLE
+        unique_together = ('month', 'state_id', 'supervisor_id', 'ccs_case_id')  # pkey
+
+    _agg_helper_cls = BiharApiMotherDetailsHelper
     _agg_atomic = False
