@@ -11,7 +11,6 @@ from .utils import MultiTabularReport, format_row
 class NutrientStatsReport(MultiTabularReport):
     name = 'Output 4 - Nutrient Intake Summary Statistics'
     slug = 'nutrient_stats'
-    is_released = False
 
     @property
     def fields(self):
