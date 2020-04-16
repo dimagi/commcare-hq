@@ -53,9 +53,9 @@ class NutrientStatsData:
         for nutrient, amts in self._get_daily_totals():
             yield format_row([
                 nutrient,
-                mean(amts),
-                median(amts),
-                stdev(amts),
+                mean(amts) if len(amts) >= 1 else None,
+                median(amts) if len(amts) >= 1 else None,
+                stdev(amts) if len(amts) >= 2 else None,
                 percentile(amts, .05),
                 percentile(amts, .25),
                 percentile(amts, .5),
