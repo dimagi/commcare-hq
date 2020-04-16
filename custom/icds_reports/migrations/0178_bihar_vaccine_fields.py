@@ -29,7 +29,7 @@ class Migration(migrations.Migration):
                 ('father_id', models.TextField(null=True)),
                 ('mother_id', models.TextField(null=True)),
                 ('mother_name', models.TextField(null=True)),
-                ('case_id', models.TextField(primary_key=True, serialize=False)),
+                ('person_case_id', models.TextField(primary_key=True, serialize=False)),
                 ('dob', models.DateField(null=True)),
                 ('private_admit', models.SmallIntegerField(null=True)),
                 ('primary_admit', models.SmallIntegerField(null=True)),
@@ -43,7 +43,7 @@ class Migration(migrations.Migration):
         ),
         migrations.AlterUniqueTogether(
             name='biharapichildvaccine',
-            unique_together=set([('month', 'state_id', 'supervisor_id', 'case_id')]),
+            unique_together=set([('month', 'state_id', 'supervisor_id', 'person_case_id')]),
         )
     ]
 

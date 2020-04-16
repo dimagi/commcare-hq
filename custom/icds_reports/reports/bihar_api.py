@@ -71,7 +71,6 @@ def get_api_demographics_data(month, state_id, last_person_case_id):
     return limited_demographics_data,  get_total_records_count(month, state_id)
 
 
-@icds_quickcache(['month'], timeout=60 * 60 * 2)
 def get_vaccine_total_records_count(month, state_id):
     return BiharVaccineView.objects.filter(
         month=month,
@@ -79,7 +78,6 @@ def get_vaccine_total_records_count(month, state_id):
     ).count()
 
 
-@icds_quickcache(['state_id', 'month', 'last_person_case_id'], timeout=30 * 60)
 def get_api_vaccine_data(state_id, month, last_person_case_id):
     vaccine_data_query = BiharVaccineView.objects.filter(
         month=month,

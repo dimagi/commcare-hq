@@ -22,7 +22,7 @@ class VaccinesAPITest(TestCase):
             last_person_case_id=''
         )
         for item in data:
-            if item['person_id'] == 'a60e5b3e-31d2-43d7-b66d-9486108a9816':
+            if item['person_id'] == '0a04f052-f32b-4874-b38b-d21244f81516':
                 first_person_case = item
                 break
         self.assertDictEqual(
@@ -30,7 +30,7 @@ class VaccinesAPITest(TestCase):
              'time_birth': None, 'child_alive': None, 'father_name': None, 'mother_name': None, 'father_id': None,
              'mother_id': None, 'dob': datetime.date(2016, 10, 7), 'private_admit': None, 'primary_admit': None,
              'date_last_private_admit': None, 'date_return_private': None, 'due_list_date_1g_dpt_1': None,
-             'due_list_date_2g_dpt_2': datetime.date(2017, 4, 1), 'due_list_date_3g_dpt_3': None,
+             'due_list_date_2g_dpt_2': datetime.date(2017, 3, 1), 'due_list_date_3g_dpt_3': None,
              'due_list_date_5g_dpt_booster': None, 'due_list_date_7gdpt_booster_2': None,
              'due_list_date_0g_hep_b_0': None, 'due_list_date_1g_hep_b_1': None, 'due_list_date_2g_hep_b_2': None,
              'due_list_date_3g_hep_b_3': None, 'due_list_date_3g_ipv': None, 'due_list_date_4g_je_1': None,
@@ -41,7 +41,8 @@ class VaccinesAPITest(TestCase):
              'due_list_date_2g_rv_2': None, 'due_list_date_3g_rv_3': None, 'due_list_date_4g_vit_a_1': None,
              'due_list_date_5g_vit_a_2': None, 'due_list_date_6g_vit_a_3': None, 'due_list_date_6g_vit_a_4': None,
              'due_list_date_6g_vit_a_5': None, 'due_list_date_6g_vit_a_6': None, 'due_list_date_6g_vit_a_7': None,
-             'due_list_date_6g_vit_a_8': None, 'due_list_date_7g_vit_a_9': None, 'due_list_date_1g_bcg': None}
+             'due_list_date_6g_vit_a_8': None, 'due_list_date_7g_vit_a_9': None,
+             'due_list_date_1g_bcg': datetime.date(2017, 3, 1)}
             ,
             first_person_case
         )

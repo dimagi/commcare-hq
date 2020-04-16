@@ -2,7 +2,7 @@ DROP VIEW IF EXISTS bihar_vaccine_view CASCADE;
 CREATE VIEW bihar_vaccine_view AS
     SELECT
         "bihar_vaccine"."month" AS "month",
-        "bihar_vaccine"."case_id" AS "person_id",
+        "bihar_vaccine"."person_case_id" AS "person_id",
         "bihar_vaccine"."state_id" AS "state_id",
         "bihar_vaccine"."supervisor_id" AS "supervisor_id",
         "bihar_vaccine"."time_birth" AS "time_birth",
@@ -56,6 +56,6 @@ CREATE VIEW bihar_vaccine_view AS
     FROM "public"."bihar_api_child_vaccine" "bihar_vaccine"
     LEFT JOIN "public"."child_vaccines" "child_vaccines"
     ON (
-        ("child_vaccines"."child_health_case_id" = "bihar_vaccine"."case_id") AND
+        ("child_vaccines"."child_health_case_id" = "bihar_vaccine"."person_case_id") AND
         ("child_vaccines"."supervisor_id" = "bihar_vaccine"."supervisor_id")
     );
