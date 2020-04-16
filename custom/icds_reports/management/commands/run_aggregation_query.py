@@ -42,7 +42,8 @@ from custom.icds_reports.tasks import (
     drop_df_indices,
     drop_gm_indices,
     update_governance_dashboard,
-    update_service_delivery_report
+    update_service_delivery_report,
+    update_bihar_api_table
 )
 
 
@@ -87,6 +88,7 @@ NORMAL_TASKS = {
     'update_agg_child_health': (None, update_agg_child_health, None),
     'update_governance_dashboard': (None, update_governance_dashboard, None),
     'update_service_delivery_report': (None, update_service_delivery_report, None),
+    'update_bihar_api_table': (None, update_service_delivery_report, None)
 }
 
 
