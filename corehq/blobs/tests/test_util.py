@@ -23,26 +23,24 @@ class TestRandomUrlId(TestCase):
 
 class TestGzipCompressReadStream(TestCase):
 
-    def _is_gzip_compressed(self, file_):
-        with gzip.open(file_, 'r') as f:
-            try:
-                f.read(1)
-                return True
-            except OSError:
-                return False
-
     def test_compression(self):
+        content = b"xx" * 1000
         with tempfile.NamedTemporaryFile() as f:
-            f.write(b"x")
+            f.write(content)
+            f.seek(0)
             compress_stream = mod.GzipCompressReadStream(f)
             with tempfile.NamedTemporaryFile() as compressed_f:
                 compressed_f.write(compress_stream.read())
-                self.assertTrue(self._is_gzip_compressed(compressed_f))
+                compressed_f.flush()
+                with gzip.open(compressed_f.name, 'r') as reader:
+                    actual = reader.read()
+        self.assertEqual(content, actual)
+        self.assertEqual(len(content), compress_stream.content_length)
 
     def test_content_length_access(self):
         with tempfile.NamedTemporaryFile() as f:
-            f.seek(10)
-            f.write(b"x")
+            f.write(b"x" * 11)
+            f.seek(0)
             compress_stream = mod.GzipCompressReadStream(f)
 
             # Try to read content_length without reading the stream
@@ -57,4 +55,5 @@ class TestGzipCompressReadStream(TestCase):
             # Read content_length after completely reading the stream and check
             # that it's correct
             content_length += len(compress_stream.read())
-            self.assertEqual(compress_stream.content_length, content_length)
+            self.assertNotEqual(compress_stream.content_length, content_length)
+            self.assertEqual(compress_stream.content_length, 11)

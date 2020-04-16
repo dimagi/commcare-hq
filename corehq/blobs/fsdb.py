@@ -41,7 +41,7 @@ class FilesystemBlobDB(AbstractBlobDB):
                 fh.write(chunk)
                 length += len(chunk)
                 digest.update(chunk)
-        meta.content_length = length
+        meta.content_length = content.content_length if meta.compressed else length
         self.metadb.put(meta)
         return meta
 

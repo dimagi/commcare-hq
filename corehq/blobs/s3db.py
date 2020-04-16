@@ -76,9 +76,15 @@ class S3BlobDB(AbstractBlobDB):
             content.seek(0)
             if meta.compressed:
                 content = GzipCompressReadStream(content)
+
+            chunk_sizes = []
+
+            def _track_transfer(bytes_sent):
+                chunk_sizes.append(bytes_sent)
+
             with self.report_timing('put', meta.key):
-                s3_bucket.upload_fileobj(content, meta.key)
-            meta.content_length = get_file_size(content)
+                s3_bucket.upload_fileobj(content, meta.key, Callback=_track_transfer)
+            meta.content_length = get_content_size(content, chunk_sizes)
             self.metadb.put(meta)
         return meta
 
@@ -195,30 +201,11 @@ def is_not_found(err, not_found_codes=["NoSuchKey", "NoSuchBucket", "404"]):
         err.response.get("Errors", {}).get("Error", {}).get("Code") in not_found_codes)
 
 
-def get_file_size(fileobj):
+def get_content_size(fileobj, chunks_sent):
     if isinstance(fileobj, GzipCompressReadStream):
         return fileobj.content_length
 
-    # botocore.response.StreamingBody has a '_content_length' attribute
-    length = getattr(fileobj, "_content_length", None)
-    if length is not None:
-        return int(length)
-
-    def tell_end(fileobj_):
-        pos = fileobj_.tell()
-        try:
-            fileobj_.seek(0, os.SEEK_END)
-            return fileobj_.tell()
-        finally:
-            fileobj_.seek(pos)
-
-    if not hasattr(fileobj, 'fileno'):
-        return tell_end(fileobj)
-    try:
-        fileno = fileobj.fileno()
-    except UnsupportedOperation:
-        return tell_end(fileobj)
-    return os.fstat(fileno).st_size
+    return sum(chunks_sent)
 
 
 @contextmanager

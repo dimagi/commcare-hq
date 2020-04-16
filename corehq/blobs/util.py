@@ -54,6 +54,8 @@ class GzipCompressReadStream:
 
         @property
         def content_length(self):
+            """Size of compressed data. Can only be accessed once stream has been
+            fully read."""
             if self._content_length is None or self._size > 0:
                 raise GzipStreamAttrAccessBeforeRead(
                     "content_length can't be accessed without completely reading the stream")
@@ -95,17 +97,27 @@ class GzipCompressReadStream:
         self._input = fileobj
         self._buf = self.Buffer()
         self._gzip = GzipFile(None, mode='wb', fileobj=self._buf)
+        self._content_length = None
 
     @property
     def content_length(self):
-        return self._buf.content_length
+        """Size of uncompressed data. Can only be accessed once stream has been
+        fully read."""
+        if self._content_length is None or len(self._buf) > 0:
+            raise GzipStreamAttrAccessBeforeRead(
+                "content_length can't be accessed without completely reading the stream")
+        return self._content_length
 
     def read(self, size=-1):
+        if self._content_length is None:
+            self._content_length = 0
+
         while size < 0 or len(self._buf) < size:
             chunk = self._input.read(self.CHUNK_SIZE)
             if not chunk:
                 self._gzip.close()
                 break
+            self._content_length += len(chunk)
             self._gzip.write(chunk)
         return self._buf.read(size)
 
