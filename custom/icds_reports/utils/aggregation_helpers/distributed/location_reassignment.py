@@ -133,8 +133,8 @@ class TempInfraTables(TempPrevTablesBase):
     CREATE INDEX "idx_sup_state_{alias}" ON "{prev_table}" USING hash (state_id);
     CREATE UNLOGGED TABLE "{prev_local}" AS (SELECT * FROM "{current_table}" WHERE awc_id in (select doc_id from awc_location_local where aggregation_level=5 and awc_deprecated_at  >= '{prev_month}' AND awc_deprecated_at < '{next_month_start}'));
     DELETE FROM "{prev_table}" WHERE awc_id in (select awc_id from "{prev_local}");
-    UPDATE "{prev_local}" prev SET 
-        supervisor_id = awc.supervisor_id, 
+    UPDATE "{prev_local}" prev SET
+        supervisor_id = awc.supervisor_id,
         awc_id=awc.awc_id
     FROM (
         SELECT
@@ -143,7 +143,7 @@ class TempInfraTables(TempPrevTablesBase):
         FROM "awc_location_local" awc
         WHERE awc_deprecated_at  >= '{prev_month}' AND
               awc_deprecated_at < '{next_month_start}' AND
-              aggregation_level=5) awc 
+              aggregation_level=5) awcg
     WHERE prev.awc_id=awc.prev_awc_id;
     INSERT INTO "{prev_table}" (SELECT * FROM "{prev_local}");
     """
