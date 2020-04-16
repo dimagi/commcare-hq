@@ -132,10 +132,11 @@ class Command(BaseCommand):
             """)
         parser.add_argument('--case-diff',
             dest='case_diff', default="after",
-            choices=["after", "none", "asap"],
+            choices=["after", "patch", "none", "asap"],
             help='''
                 after: (default) diff cases after migrating forms. Uses
                 multiple parallel processes.
+                patch: like "after", but resolve case diffs with patch forms.
                 none: save "pending" cases to be diffed at a later time.
                 asap: (experimental) attempt to diff cases as soon as
                 all related forms have been migrated. Uses a single
@@ -208,6 +209,8 @@ class Command(BaseCommand):
             raise CommandError(f"{action} --missing-docs not allowed")
         if action != REWIND and self.rewind:
             raise CommandError("--to=... only allowed for `rewind`")
+        if self.case_diff == "patch" and self.forms not in [None, "missing"]:
+            raise CommandError(f"not supported: --case-diff=patch --forms={self.forms}")
 
         assert Domain.get_by_name(domain), f'Unknown domain "{domain}"'
         slug = f"{action.lower()}-{domain}"
@@ -320,7 +323,7 @@ class Command(BaseCommand):
         return has_diffs
 
     def _print_status(self, doc_type, counts, statedb, short, diffs_only):
-        has_diffs = counts.missing or counts.diffs
+        has_diffs = counts.missing or counts.diffs or counts.changes
         if diffs_only and not has_diffs:
             return False
 

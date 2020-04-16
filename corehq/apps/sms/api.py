@@ -47,7 +47,7 @@ from corehq.apps.sms.util import (
 from corehq.apps.smsbillables.utils import log_smsbillables_error
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.form_processor.utils import is_commcarecase
-from corehq.util.datadog.utils import sms_load_counter
+from corehq.util.metrics.load_counters import sms_load_counter
 
 # A list of all keywords which allow registration via sms.
 # Meant to allow support for multiple languages.

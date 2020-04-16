@@ -63,7 +63,7 @@ from corehq.sql_db.util import (
     get_db_aliases_for_partitioned_query,
     split_list_by_db_partition,
 )
-from corehq.util.datadog.utils import form_load_counter
+from corehq.util.metrics.load_counters import form_load_counter
 from corehq.util.queries import fast_distinct_in_domain
 
 doc_type_to_state = {
@@ -989,8 +989,9 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         return CaseAccessorSQL._get_case_ids_in_domain(domain, deleted=True)
 
     @staticmethod
-    def get_case_ids_in_domain_by_owners(domain, owner_ids, closed=None):
-        return CaseAccessorSQL._get_case_ids_in_domain(domain, owner_ids=owner_ids, is_closed=closed)
+    def get_case_ids_in_domain_by_owners(domain, owner_ids, closed=None, case_type=None):
+        return CaseAccessorSQL._get_case_ids_in_domain(domain, case_type=case_type,
+                                                       owner_ids=owner_ids, is_closed=closed)
 
     @staticmethod
     def save_case(case):

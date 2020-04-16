@@ -24,7 +24,7 @@ from corehq.apps.users.cases import get_wrapped_owner
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import format_username
 from corehq.toggles import BULK_UPLOAD_DATE_OPENED
-from corehq.util.datadog.utils import case_load_counter, bucket_value
+from corehq.util.metrics.load_counters import case_load_counter
 from corehq.util.soft_assert import soft_assert
 from corehq.util.metrics import metrics_counter, metrics_histogram
 

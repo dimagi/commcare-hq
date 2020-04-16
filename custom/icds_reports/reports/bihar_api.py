@@ -14,7 +14,6 @@ def get_total_records_count(month, state_id):
     ).count()
 
 
-@icds_quickcache(['month', 'state_id', 'last_person_case_id'], timeout=30 * 60)
 def get_api_demographics_data(month, state_id, last_person_case_id):
     demographics_data_query = BiharDemographicsView.objects.filter(
         month=month,
