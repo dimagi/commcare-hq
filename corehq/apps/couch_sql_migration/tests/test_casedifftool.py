@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 from mock import patch
 
 from casexml.apps.case.models import CommCareCase
+from casexml.apps.case.sharedmodels import CommCareCaseIndex
 
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.tzmigration.timezonemigration import MISSING
@@ -256,7 +257,27 @@ class TestCouchSqlDiff(BaseMigrationTestCase):
             Diff('case-1', 'type', ['closed_on'], old='2010-09-08T07:06:05.000000Z', new=None),
         ])
         self.do_case_patch()
-        self.do_case_diffs("pending")
+        self.compare_diffs()
+        self.assert_patched_cases(["case-1"])
+
+    def test_patch_case_indices(self):
+        self.submit_form(make_test_form("form-1", case_id="case-1"))
+        self.do_migration(case_diff="none")
+        index = {
+            "doc_type": "CommCareCaseIndex",
+            "identifier": "parent",
+            "referenced_type": "household",
+            "referenced_id": "a53346d5",
+            "relationship": "child",
+        }
+        with self.augmented_couch_case("case-1") as case:
+            case.indices = [CommCareCaseIndex.wrap(index)]
+            case.save()
+            self.do_case_diffs()
+        self.compare_diffs([
+            Diff('case-1', 'missing', ['indices', '[*]'], old=index, new=MISSING),
+        ])
+        self.do_case_patch()
         self.compare_diffs()
         self.assert_patched_cases(["case-1"])
 

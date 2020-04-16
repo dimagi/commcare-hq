@@ -1,6 +1,6 @@
 import logging
 from datetime import datetime
-from functools import partial
+from functools import partial, wraps
 from uuid import uuid4
 
 from django.template.loader import render_to_string
@@ -9,6 +9,7 @@ import attr
 from memoized import memoized
 
 from casexml.apps.case import const
+from casexml.apps.case.sharedmodels import CommCareCaseIndex
 from casexml.apps.case.xml.parser import KNOWN_PROPERTIES
 from casexml.apps.phone.xml import get_case_xml
 from dimagi.utils.couch.database import retry_on_couch_error
@@ -78,13 +79,19 @@ def patch_ledgers(diffs):
         raise CannotPatch([d.json_diff for d in diffs])
 
 
-@attr.s
+def aslist(generator_func):
+    @wraps(generator_func)
+    def wrapper(*args, **kw):
+        return list(generator_func(*args, **kw))
+    return wrapper
+
+
+@attr.s(hash=False)
 class PatchCase:
     case = attr.ib()
     diffs = attr.ib()
 
     def __attrs_post_init__(self):
-        self.indices = []
         self.case_attachments = []
         self._updates = updates = []
         if is_missing_in_sql(self.diffs):
@@ -95,10 +102,13 @@ class PatchCase:
                 raise CannotPatch(self.diffs)
             props = dict(iter_dynamic_properties(self.diffs))
             self._dynamic_properties = props
-            if props or has_known_props(self.diffs):
+            if props or has_known_props(self.diffs) or self.indices:
                 updates.append(const.CASE_ACTION_UPDATE)
             if self._should_close():
                 updates.append(const.CASE_ACTION_CLOSE)
+
+    def __hash__(self):
+        return hash(self.case_id)
 
     def __getattr__(self, name):
         return getattr(self.case, name)
@@ -110,8 +120,20 @@ class PatchCase:
     def dynamic_case_properties(self):
         return self._dynamic_properties
 
+    @property
+    @memoized
+    @aslist
+    def indices(self):
+        diffs = [d for d in self.diffs if d.path[0] == "indices"]
+        if not diffs:
+            return
+        for diff in diffs:
+            if diff.path != ["indices", "[*]"] or diff.new_value is not MISSING:
+                raise CannotPatch([diff])
+            yield CommCareCaseIndex.wrap(diff.old_value)
 
-ILLEGAL_PROPS = {"indices", "actions", "*"}
+
+ILLEGAL_PROPS = {"actions", "*"}
 IGNORE_PROPS = {"opened_by", "external_id"}
 STATIC_PROPS = {
     "case_id",
@@ -123,6 +145,7 @@ STATIC_PROPS = {
     "deletion_id",
     "domain",
     "external_id",
+    "indices",
     "location_id",
     "modified_by",
     "modified_on",
