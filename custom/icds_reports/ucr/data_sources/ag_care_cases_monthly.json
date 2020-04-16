@@ -669,8 +669,8 @@
     "sql_column_indexes": [
       {
         "column_ids": [
-          "owner_id",
           "supervisor_id",
+          "owner_id",
           "month"
         ]
       },
