@@ -23,14 +23,14 @@ class MultiTabularReport(DatespanMixin, CustomProjectReport, GenericTabularRepor
             'name': self.name,
             'export_only': self.export_only
         }
-        if not self.needs_filters:
+        if not self.export_only and not self.needs_filters:
             context['data_providers'] = [{
                 'title': data_provider.title,
                 'slug': data_provider.slug,
                 'headers': DataTablesHeader(
                     *(DataTablesColumn(header) for header in data_provider.headers),
                 ),
-                'rows': data_provider.rows,
+                'rows': list(data_provider.rows),
             } for data_provider in self.data_providers]
         return context
 

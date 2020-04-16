@@ -44,7 +44,7 @@ from functools import reduce
 from custom.inddex.ucr_data import FoodCaseData
 
 from .fixtures import FixtureAccessor
-from .const import AGE_RANGES
+from .const import AGE_RANGES, FctGaps, ConvFactorGaps
 
 IN_UCR = 'in_ucr'
 IN_FOOD_FIXTURE = 'in_food_fixture'
@@ -56,40 +56,6 @@ FOOD_ITEM = 'food_item'
 NON_STANDARD_FOOD_ITEM = 'non_std_food_item'
 STANDARD_RECIPE = 'std_recipe'
 NON_STANDARD_RECIPE = 'non_std_recipe'
-
-
-class FctGaps:
-    AVAILABLE = 1
-    BASE_TERM = 2
-    REFERENCE = 3
-    INGREDIENT_GAPS = 7
-    NOT_AVAILABLE = 8
-    DESCRIPTIONS = {
-        AVAILABLE: "fct data available",
-        BASE_TERM: "using fct data from base term food code",
-        REFERENCE: "using fct data from reference food code",
-        INGREDIENT_GAPS: "ingredients contain fct data gaps",
-        NOT_AVAILABLE: "no fct data available",
-    }
-
-    @classmethod
-    def get_description(self, code):
-        return f"{code} - {self.DESCRIPTIONS[code]}"
-
-
-class ConvFactorGaps:
-    AVAILABLE = 1
-    BASE_TERM = 2
-    NOT_AVAILABLE = 8
-    DESCRIPTIONS = {
-        AVAILABLE: "conversion factor available",
-        BASE_TERM: "using conversion factor from base term food code",
-        NOT_AVAILABLE: "no conversion factor available",
-    }
-
-    @classmethod
-    def get_description(self, code):
-        return f"{code} - {self.DESCRIPTIONS[code]}"
 
 
 class I:
@@ -396,7 +362,7 @@ def _calculate_total_grams(recipe, ingredients):
 
 class FoodData:
     """Generates the primary dataset for INDDEX reports.  See file docstring for more."""
-    IN_MEMORY_FILTERS = ['gap_type', 'fao_who_gift_food_group_description']
+    IN_MEMORY_FILTERS = ['gap_type', 'gap', 'fao_who_gift_food_group_description']
     FILTERABLE_COLUMNS = IN_MEMORY_FILTERS + FoodCaseData.FILTERABLE_COLUMNS
 
     def __init__(self, domain, *, datespan, filter_selections):
@@ -428,10 +394,18 @@ class FoodData:
     def _matches_in_memory_filters(self, row):
         # If a gap type is specified, show only rows with gaps of that type
         gap_type = self._in_memory_filter_selections.get('gap_type')
-        if gap_type == 'conv_factor' and row.conv_factor_gap_code == ConvFactorGaps.AVAILABLE:
+        if gap_type == ConvFactorGaps.slug and row.conv_factor_gap_code == ConvFactorGaps.AVAILABLE:
             return False
-        if gap_type == 'fct' and row.fct_gap_code == FctGaps.AVAILABLE:
+        if gap_type == FctGaps.slug and row.fct_gap_code == FctGaps.AVAILABLE:
             return False
+
+        gap = self._in_memory_filter_selections.get('gap')
+        if gap:
+            gap_type, gap_code = gap.split('-')
+            if gap_type == ConvFactorGaps.slug and row.conv_factor_gap_code != gap_code:
+                return False
+            if gap_type == FctGaps.slug and row.fct_gap_code != gap_code:
+                return False
 
         food_group = self._in_memory_filter_selections.get('fao_who_gift_food_group_description')
         if food_group and food_group != row.fao_who_gift_food_group_description:
