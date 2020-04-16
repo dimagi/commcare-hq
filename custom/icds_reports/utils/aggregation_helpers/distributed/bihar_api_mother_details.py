@@ -63,20 +63,20 @@ class BiharApiMotherDetailsHelper(BaseICDSAggregationDistributedHelper):
             ('state_id', 'person_list.state_id'),
             ('supervisor_id', 'person_list.supervisor_id'),
             ('month', f"'{month_start_string}'"),
-            ('ccs_case_id','ccs_record.case_id'),
+            ('ccs_case_id', 'ccs_record.case_id'),
             ('person_id', 'person_list.doc_id'),
             ('household_id', 'person_list.household_case_id'),
-            ('married','person_list.marital_status'),
+            ('married', 'person_list.marital_status'),
             ('husband_name', 'person_list.husband_name'),
-            ('last_preg_year','preg.last_preg'),
+            ('last_preg_year', 'preg.last_preg'),
             ('last_preg_tt', 'person_list.last_preg_tt'),
             ('is_pregnant', 'person_list.is_pregnant'),
-            ('preg_reg_date','CASE WHEN person_list.is_pregnant=1 THEN ccs_record.opened_on ELSE NULL END'),
-            ('tt_1','ccs_record.tt_1'),
+            ('preg_reg_date', 'CASE WHEN person_list.is_pregnant=1 THEN ccs_record.opened_on ELSE NULL END'),
+            ('tt_1', 'ccs_record.tt_1'),
             ('tt_2', 'ccs_record.tt_2'),
-            ('tt_booster','ut.due_list_date_tt_booster'),
-            ('add','ccs_record.add'),
-            ('hb','ccs_record.anemia')
+            ('tt_booster', 'ut.due_list_date_tt_booster'),
+            ('add', 'ccs_record.add'),
+            ('hb', 'ccs_record.anemia')
 
         )
         column_names = ", ".join([col[0] for col in columns])
@@ -95,7 +95,7 @@ class BiharApiMotherDetailsHelper(BaseICDSAggregationDistributedHelper):
                     person_list.supervisor_id = ccs_record.supervisor_id
                 )
                 LEFT OUTER JOIN "{pregnant_tasks_case_ucr}" ut ON (
-                ccs_record.case_id = ut.ccs_record_case_id AND 
+                ccs_record.case_id = ut.ccs_record_case_id AND
                 ccs_record.supervisor_id = ut.supervisor_id
                 )
                 LEFT OUTER JOIN "{add_preg_ucr}" preg ON (
@@ -103,9 +103,9 @@ class BiharApiMotherDetailsHelper(BaseICDSAggregationDistributedHelper):
                 ccs_record.supervisor_id = preg.supervisor_id AND
                 preg.timeend <= '{month_end_string}'
                 )
-                WHERE 
+                WHERE
                     ccs_record.migration_status IS DISTINCT FROM 1 AND
-                    ccs_record.month='{month_start_string}' AND 
+                    ccs_record.month='{month_start_string}' AND
                     person_list.state_id='{self.bihar_state_id}'
               );
                 """

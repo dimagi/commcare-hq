@@ -2,7 +2,7 @@ import datetime
 from django.test import TestCase
 from custom.icds_reports.reports.bihar_api import get_mother_details
 from datetime import date
-from custom.icds_reports.models.aggregate import BiharAPIMotherDetails, AwcLocation
+from custom.icds_reports.models.aggregate import BiharAPIMotherDetails
 from mock import patch
 
 
@@ -28,12 +28,12 @@ class DemographicsAPITest(TestCase):
                 "husband_id": "fcbafe96-f73d-4930-9277-b42965b8419d",
                 "last_preg_year": 12,
                 "is_pregnant": 1,
-                "preg_reg_date": datetime.date(2017,4,12),
+                "preg_reg_date": datetime.date(2017, 4, 12),
                 "tt_1": None,
                 "tt_2": None,
-                "tt_booster": datetime.date(2017,5,3),
+                "tt_booster": datetime.date(2017, 5, 3),
                 "hb": 2,
-                "add": datetime.date(2017,6,1),
+                "add": datetime.date(2017, 6, 1),
              },
             ccs_case_details
         )

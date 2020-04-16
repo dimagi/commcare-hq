@@ -2450,8 +2450,6 @@ class BiharDemographicsAPI(BaseCasAPIView):
         return SQLLocation.objects.get(name='Bihar', location_type__name='state').location_id
 
 
-
-
 @location_safe
 @method_decorator([api_auth, toggles.ICDS_BIHAR_DEMOGRAPHICS_API.required_decorator()], name='dispatch')
 class BiharMotherDetailsAPI(BaseCasAPIView):

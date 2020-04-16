@@ -72,7 +72,7 @@ def get_api_demographics_data(month, state_id, last_person_case_id):
 
     # To apply pagination on database query with data size length
     limited_demographics_data = list(demographics_data_query[:CAS_API_PAGE_SIZE])
-    return limited_demographics_data,  get_total_records_count(BiharDemographicsView.__name__, month, state_id)
+    return limited_demographics_data, get_total_records_count(BiharDemographicsView.__name__, month, state_id)
 
 
 def get_mother_details(month, state_id, last_ccs_case_id):
