@@ -387,7 +387,14 @@
       },
       "primary_key": ["supervisor_id","doc_id"]
     },
-    "sql_column_indexes": [],
+    "sql_column_indexes": [
+      {
+        "column_ids": [
+          "awc_id",
+          "opened_on"
+        ]
+      }
+    ],
     "disable_destructive_rebuild": true
   }
 }
