@@ -2,7 +2,7 @@ Setting up CommCare HQ for Developers
 -------------------------------------
 
 This document describes setting up a development environment for working on
-CommCareHQ. Such an environment is not suitable for real projects. Production
+CommCare HQ. Such an environment is not suitable for real projects. Production
 environments should be deployed and managed [using
 commcare-cloud](https://dimagi.github.io/commcare-cloud/)
 
@@ -14,14 +14,18 @@ of this document.
 
 ### (Optional) Copying data from an existing HQ install
 
-If you're setting up HQ on a new computer, you may have an old, functional environment around.  If you don't want to start from scratch, back up your postgres and couch data.
+If you're setting up HQ on a new computer, you may have an old, functional
+environment around.  If you don't want to start from scratch, back up your
+Postgres and Couch data.
 
 * PostgreSQL
   * Create a pg dump.  You'll need to verify the host IP address:
-    `pg_dump -h 0.0.0.0 -U commcarehq commcarehq > /path/to/backup_hq_db.sql`
-* Couchdb
-  * From a non-docker install: Copy `/var/lib/couchdb2/`
-  * From a docker install: Copy `~/.local/share/dockerhq/couchdb2`.
+
+        $ pg_dump -h 0.0.0.0 -U commcarehq commcarehq > /path/to/backup_hq_db.sql
+
+* CouchDB
+  * From a non-Docker install: Copy `/var/lib/couchdb2/`
+  * From a Docker install: Copy `~/.local/share/dockerhq/couchdb2`.
 
 Save those backups to somewhere you'll be able to access from the new environment.
 
@@ -31,21 +35,24 @@ Save those backups to somewhere you'll be able to access from the new environmen
 
 - [Git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)
 - [Python 3.6](https://www.python.org/downloads/) and `python-dev`, `distutils` packages
-  - `sudo apt install python3-distutils python3-dev`
+
+      $ sudo apt install python3-distutils python3-dev
+
 - [Pip](https://pip.pypa.io/en/stable/installing/)
 - [Virtualenv](https://virtualenv.pypa.io/en/stable/)
 - [Virtualenvwrapper](https://virtualenvwrapper.readthedocs.io/en/latest/#introduction)
 - [Pango](https://pango.gnome.org/) 
-  - `sudo apt install libpango1.0-0`
+
+      $ sudo apt install libpango1.0-0
+
 
 ##### macOS Notes
 
 - You may need to use `sudo` to for some of the above setup:
-```
-    $ sudo python get-pip.py
-    $ sudo pip install virtualenv
-    $ sudo pip install virtualenvwrapper --ignore-installed six
-```
+
+      $ sudo python get-pip.py
+      $ sudo pip install virtualenv
+      $ sudo pip install virtualenvwrapper --ignore-installed six
 
 - Additional requirements:
   - [Homebrew](https://brew.sh)
@@ -71,12 +78,17 @@ Once all the dependencies are in order, please do the following:
 
 Next, install the appropriate requirements (only one is necessary).
 
-* Recommended for those developing CommCareHQ
-  * `$ pip install -r requirements/dev-requirements.txt`
+* Recommended for those developing CommCare HQ
+
+      $ pip install -r requirements/dev-requirements.txt
+
 * For production environments
-  * `$ pip install -r requirements/prod-requirements.txt`
+
+      $ pip install -r requirements/prod-requirements.txt
+
 * Minimum required packages
-  * `$ pip install -r requirements/requirements.txt`
+
+      $ pip install -r requirements/requirements.txt
 
 (If this fails you may need to [install lxml's dependencies](https://stackoverflow.com/a/5178444/8207) or pango.)
 
@@ -97,7 +109,7 @@ Create the shared directory.  If you have not modified `SHARED_DRIVE_ROOT`, then
 
     $ mkdir sharedfiles
 
-### Set up docker services
+### Set up Docker services
 
 Once you have completed the above steps, you can use Docker to build and run all of the service containers.
 The steps for setting up Docker can be found in the [docker folder](docker/README.md).
@@ -107,20 +119,36 @@ The steps for setting up Docker can be found in the [docker folder](docker/READM
 If you previously created backups of another HQ install's data, you can now copy that to the new install.
 
 * Postgres
-  * Make sure postgres is running: `./scripts/docker ps`
-  * Make sure `psql` is installed
-    * Ubuntu: `$ sudo apt install postgresql postgresql-contrib`
-  * Restore the backup: `psql -U commcarehq -h 0.0.0.0 commcarehq < /path/to/backup_hq_db.sql`
-* Couchdb
-  * Stop couch `./scripts/docker stop couch`
+  * Make sure Postgres is running:
+
+        $ ./scripts/docker ps
+
+  * Make sure `psql` is installed: (Ubuntu)
+
+        $ sudo apt install postgresql postgresql-contrib
+
+  * Restore the backup:
+
+        $ psql -U commcarehq -h 0.0.0.0 commcarehq < /path/to/backup_hq_db.sql
+
+* CouchDB
+  * Stop Couch:
+
+        $ ./scripts/docker stop couch
+
   * Copy the `couchdb2/` dir to `~/.local/share/dockerhq/couchdb2`.
-  * Start couch `./scripts/docker start couch`
-  * Fire up fauxton to check that the dbs are there: http://0.0.0.0:5984/_utils/
+  * Start Couch
 
-### Set up your django environment
+        $ ./scripts/docker start couch
 
-Before running any of the commands below, you should have all of the following running: couchdb, redis, and elasticsearch.
-The easiest way to do this is using the docker instructions above.
+  * Fire up Fauxton to check that the dbs are there: http://0.0.0.0:5984/_utils/
+
+
+### Set up your Django environment
+
+Before running any of the commands below, you should have all of the following
+running: CouchDB, Redis, and Elasticsearch.
+The easiest way to do this is using the Docker instructions above.
 
 Populate your database:
 
@@ -147,7 +175,7 @@ names to the aliases.
 
 ### Installing Bower
 
-We use bower to manage our javascript dependencies. In order to download the required javascript packages,
+We use Bower to manage our JavaScript dependencies. In order to download the required JavaScript packages,
 you'll need to install `bower` and run `bower install`. Follow these steps to install:
 
 1. If you do not already have npm:
@@ -164,11 +192,11 @@ you'll need to install `bower` and run `bower install`. Follow these steps to in
 
     For others: install [npm](https://www.npmjs.com/)
 
-2. Install bower:
+2. Install Bower:
 
         $ sudo npm -g install bower
 
-3. Run bower with:
+3. Run Bower with:
 
         $ bower install
 
@@ -222,16 +250,7 @@ When running HQ, be sure to use `runserver_plus`:
 python manage.py runserver_plus
 ```
 
-Then you need to have formplayer running. There are a few options as described below.
-
-##### Running Formplayer in Docker
-
-Please refer to FormPlayer's install instructions under "[Running in Docker](https://github.com/dimagi/formplayer#running-in-docker)".
-
-If you are on Mac, don't bother trying to run this in Docker. There seems to be some kind of bug.
-Instead, try running formplayer from a .jar file
-
-##### Running formplayer.jar
+Then you need to have Formplayer running.
 
 Prerequisites:
 + Install Java (left as an exercise for the reader)
@@ -240,26 +259,20 @@ Prerequisites:
 To get set up, download the settings file and `formplayer.jar`. You may run this
 in the commcare-hq repo root.
 
-```bash
-$ curl https://raw.githubusercontent.com/dimagi/formplayer/master/config/application.example.properties -o formplayer.properties
-$ curl https://s3.amazonaws.com/dimagi-formplayer-jars/latest-successful/formplayer.jar -o formplayer.jar
-```
+    $ curl https://raw.githubusercontent.com/dimagi/formplayer/master/config/application.example.properties -o formplayer.properties
+    $ curl https://s3.amazonaws.com/dimagi-formplayer-jars/latest-successful/formplayer.jar -o formplayer.jar
 
-Thereafter, to run formplayer, navigate to the dir where you installed them
+Thereafter, to run Formplayer, navigate to the dir where you installed them
 above (probably the repo root), and run:
 
-```bash
-$ java -jar formplayer.jar --spring.config.name=formplayer
-```
+    $ java -jar formplayer.jar --spring.config.name=formplayer
 
 This starts a process in the foreground, so you'll need to keep it open as long
-as you plan on using formplayer. If formplayer stops working, you can try
+as you plan on using Formplayer. If Formplayer stops working, you can try
 re-fetching it using the same command above. Feel free to add it to your
 `hammer` command or wherever.
 
-```bash
-$ curl https://s3.amazonaws.com/dimagi-formplayer-jars/latest-successful/formplayer.jar -o formplayer.jar
-```
+    $ curl https://s3.amazonaws.com/dimagi-formplayer-jars/latest-successful/formplayer.jar -o formplayer.jar
 
 #### Browser Settings
 
@@ -271,9 +284,7 @@ Running CommCare HQ
 
 Make sure the required services are running (PostgreSQL, Redis, CouchDB, Kafka, Elasticsearch).
 
-```bash
-$ ./manage.py check_services
-```
+    $ ./manage.py check_services
 
 Some of the services listed there aren't necessary for very basic operation, but it can give you a good idea of what's broken.
 
@@ -335,16 +346,21 @@ To run a particular test or subset of tests
     $ ./manage.py test corehq/apps/app_manager/tests/test_suite.py:SuiteTest
     $ ./manage.py test corehq/apps/app_manager/tests/test_suite.py:SuiteTest.test_picture_format
 
-If database tests are failing because of a `permission denied` error, give your postgres user permissions to create a database.
-In the postgres shell, run the following as a superuser: `ALTER USER commcarehq CREATEDB;`
+If database tests are failing because of a `permission denied` error, give your
+Postgres user permissions to create a database.
+In the Postgres shell, run the following as a superuser:
+
+    # ALTER USER commcarehq CREATEDB;
 
 ### REUSE DB
-To avoid having to run the databse setup for each test run you can specify the `REUSE_DB` environment variable
- which will use an existing test database if one exists:
+To avoid having to run the database setup for each test run you can specify the
+`REUSE_DB` environment variable
+which will use an existing test database if one exists:
 
     $ REUSE_DB=1 ./manage.py test corehq.apps.app_manager
 
 Or, to drop the current test DB and create a fresh one
+
     $ ./manage.py test corehq.apps.app_manager --reusedb=reset
 
 See `corehq.tests.nose.HqdbContext` for full description
@@ -368,7 +384,7 @@ See https://github.com/nose-devs/nose/blob/master/nose/plugins/testid.py
 
 ### Setup
 
-In order to run the javascript tests you'll need to install the required npm packages:
+In order to run the JavaScript tests you'll need to install the required npm packages:
 
     $ npm install
 
@@ -381,11 +397,11 @@ In order for the tests to run the __development server needs to be running on po
 
 ### Running tests from the command line
 
-To run all javascript tests in all the apps:
+To run all JavaScript tests in all the apps:
 
     $ grunt mocha
 
-To run the javascript tests for a particular app run:
+To run the JavaScript tests for a particular app run:
 
     $ grunt mocha:<app_name> // (e.g. grunt mocha:app_manager)
 
@@ -408,15 +424,15 @@ Occasionally you will see an app specified with a `#`, like `app_manager#b3`. Th
 http://localhost:8000/mocha/<app_name>/<config>  // (e.g. http://localhost:8000/mocha/app_manager/b3)
 ```
 
-### Continuous javascript testing
+### Continuous JavaScript testing
 
-By running the `watch` command, it's possible to continuously run the javascript test suite while developing
+By running the `watch` command, it's possible to continuously run the JavaScript test suite while developing
 
     $ grunt watch:<app_name>  // (e.g. grunt watch:app_manager)
 
 ## Sniffer
 
-You can also use sniffer to auto run the python tests.
+You can also use sniffer to auto run the Python tests.
 
 When running, sniffer auto-runs the specified tests whenever you save a file
 For example, you are working on the `retire` method of `CommCareUser`. You are writing a `RetireUserTestCase`, which you want to run every time you make a small change to the `retire` method, or to the `testCase`. Sniffer to the rescue!
@@ -425,15 +441,20 @@ For example, you are working on the `retire` method of `CommCareUser`. You are w
 
     $ sniffer -x <test.module.path>[:<TestClass>[.<test_name>]]
 
-In our example, we would run `sniffer -x corehq.apps.users.tests.retire:RetireUserTestCase`
+In our example, we would run 
+
+    $ sniffer -x corehq.apps.users.tests.retire:RetireUserTestCase`
 
 You can also add the regular `nose` environment variables, like `REUSE_DB=1 sniffer -x <test>`
 
-For javascript tests, you can add `--js-` before the javascript app test name, for example:
-`sniffer -x --js-app_manager`
+For JavaScript tests, you can add `--js-` before the JavaScript app test name, for example:
 
-You can combine the two to run the javascript tests when saving js files, and run the python tests when saving py files as follows:
-`sniffer -x --js-app_manager -x corehq.apps.app_manager:AppManagerViewTest`
+    $ sniffer -x --js-app_manager
+
+You can combine the two to run the JavaScript tests when saving js files, and
+run the Python tests when saving py files as follows:
+
+    $ sniffer -x --js-app_manager -x corehq.apps.app_manager:AppManagerViewTest
 
 ### Sniffer Installation instructions
 https://github.com/jeffh/sniffer/
