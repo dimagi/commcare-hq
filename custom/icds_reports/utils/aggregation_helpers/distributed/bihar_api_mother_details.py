@@ -71,12 +71,7 @@ class BiharApiMotherDetailsHelper(BaseICDSAggregationDistributedHelper):
             ('last_preg_year', 'preg.last_preg'),
             ('last_preg_tt', 'person_list.last_preg_tt'),
             ('is_pregnant', 'person_list.is_pregnant'),
-            ('preg_reg_date', 'CASE WHEN person_list.is_pregnant=1 THEN ccs_record.opened_on ELSE NULL END'),
-            ('tt_1', 'ccs_record.tt_1'),
-            ('tt_2', 'ccs_record.tt_2'),
             ('tt_booster', 'ut.due_list_date_tt_booster'),
-            ('add', 'ccs_record.add'),
-            ('hb', 'ccs_record.anemia')
 
         )
         column_names = ", ".join([col[0] for col in columns])

@@ -1787,12 +1787,7 @@ class BiharAPIMotherDetails(models.Model, AggregateMixin):
     last_preg_year = models.IntegerField(null=True)
     last_preg_tt = models.SmallIntegerField(null=True)
     is_pregnant = models.SmallIntegerField(null=True)
-    preg_reg_date = models.DateField(null=True)
-    tt_1 = models.DateField(null=True)
-    tt_2 = models.DateField(null=True)
     tt_booster = models.DateField(null=True)
-    hb = models.SmallIntegerField(null=True)
-    add = models.DateField(null=True)
 
     class Meta(object):
         db_table = BIHAR_API_MOTHER_DETAILS_TABLE

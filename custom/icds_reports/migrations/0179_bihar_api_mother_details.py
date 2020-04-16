@@ -8,6 +8,9 @@ from custom.icds_reports.utils.migrations import (
     get_composite_primary_key_migrations,
 )
 from custom.icds_reports.const import BIHAR_API_MOTHER_DETAILS_TABLE
+from corehq.sql_db.operations import RawSQLMigration
+
+migrator = RawSQLMigration(('custom', 'icds_reports', 'migrations', 'sql_templates', 'database_views'))
 
 
 class Migration(migrations.Migration):
@@ -33,12 +36,7 @@ class Migration(migrations.Migration):
                 ('last_preg_year', models.IntegerField(null=True)),
                 ('last_preg_tt', models.SmallIntegerField(null=True)),
                 ('is_pregnant', models.SmallIntegerField(null=True)),
-                ('preg_reg_date', models.DateField(null=True)),
-                ('tt_1', models.DateField(null=True)),
-                ('tt_2', models.DateField(null=True)),
                 ('tt_booster', models.DateField(null=True)),
-                ('hb', models.SmallIntegerField(null=True)),
-                ('add', models.DateField(null=True)),
             ],
             options={
                 'db_table': 'bihar_api_mother_details',
@@ -59,3 +57,6 @@ class Migration(migrations.Migration):
         migrations.RunSQL(f"SELECT create_distributed_table('{BIHAR_API_MOTHER_DETAILS_TABLE}', 'supervisor_id')"),
         migrations.RunSQL(f"DROP TABLE {BIHAR_API_MOTHER_DETAILS_TABLE}_old"),
     ]
+    operations.append(
+        migrator.get_migration('bihar_api_mother_view.sql')
+    )
