@@ -35,8 +35,6 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.util import datespan_from_beginning
 from corehq.apps.settings.views import BaseProjectDataView
-from corehq.apps.users.decorators import get_permission_name
-from corehq.apps.users.models import Permissions
 from corehq.apps.users.permissions import (
     CASE_EXPORT_PERMISSION,
     DEID_EXPORT_PERMISSION,
@@ -65,21 +63,13 @@ def get_timezone(domain, couch_user):
 
 def user_can_view_deid_exports(domain, couch_user):
     return (domain_has_privilege(domain, privileges.DEIDENTIFIED_DATA)
-            and couch_user.has_permission(
-                domain,
-                get_permission_name(Permissions.view_report),
-                data=DEID_EXPORT_PERMISSION
-            ))
+            and has_permission_to_view_report(couch_user, domain, DEID_EXPORT_PERMISSION))
 
 
 def user_can_view_odata_feed(domain, couch_user):
     domain_can_view_odata = domain_has_privilege(domain, privileges.ODATA_FEED)
     return (domain_can_view_odata
-            and couch_user.has_permission(
-                domain,
-                get_permission_name(Permissions.view_report),
-                data=ODATA_FEED_PERMISSION
-            ))
+            and has_permission_to_view_report(couch_user, domain, ODATA_FEED_PERMISSION))
 
 
 class ExportsPermissionsManager(object):
