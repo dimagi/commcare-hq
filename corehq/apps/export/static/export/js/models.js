@@ -704,6 +704,9 @@ hqDefine('export/js/models', [
     var ExportColumn = function (columnJSON) {
         var self = this;
         ko.mapping.fromJS(columnJSON, ExportColumn.mapping, self);
+        // In some cases case property was having deleted tag present
+        // the function removes such exceptions on display
+        self.removeDeletedTagFromCaseName();
         // showOptions is used a boolean for whether to show options for user defined option
         // lists. This is used for the feature preview SPLIT_MULTISELECT_CASE_EXPORT
         self.showOptions = ko.observable(false);
@@ -832,6 +835,16 @@ hqDefine('export/js/models', [
 
     ExportColumn.prototype.isEditable = function () {
         return false;
+    };
+
+    ExportColumn.prototype.removeDeletedTagFromCaseName = function () {
+        if (this.isCaseName() && this.is_deleted()) {
+            this.is_deleted(false);
+            var newTags = _.filter(this.tags(), function (tag) {
+                return tag !== "deleted";
+            });
+            this.tags(newTags);
+        }
     };
 
     ExportColumn.mapping = {
