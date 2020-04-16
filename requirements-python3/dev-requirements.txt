@@ -27,7 +27,7 @@ colorama==0.4.1           # via sniffer
 commcaretranslationchecker==0.9.3.5
 commonmark==0.9.1         # via recommonmark
 concurrent-log-handler==0.9.12
-contextlib2==0.5.5
+contextlib2==0.5.5        # via schema
 coverage==4.5.1
 csiphash==0.0.5
 cssselect2==0.2.2         # via cairosvg, weasyprint

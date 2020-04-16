@@ -2824,7 +2824,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
     };
 
     vm.isAWCsSelected = function () {
-        return vm.selectedLocationLevel === 4;
+        return parseInt(vm.selectedLocationLevel) === 4;
     };
 
     vm.toShowDataTables = function () {
