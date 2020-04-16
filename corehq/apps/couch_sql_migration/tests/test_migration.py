@@ -408,6 +408,13 @@ class MigrationTestCase(BaseMigrationTestCase):
         self.do_migration()
         self.assertEqual(1, len(self._get_form_ids()))
 
+    def test_form_with_null_xmlns(self):
+        form = submit_form_locally(ERROR_FORM, self.domain_name).xform
+        form.xmlns = None
+        form.save()
+        self.do_migration()
+        self.assertEqual(self._get_form_ids('XFormError'), {"im-a-bad-form"})
+
     def test_archived_form_migration(self):
         form = create_and_save_a_form(self.domain_name)
         form.archive('user1')

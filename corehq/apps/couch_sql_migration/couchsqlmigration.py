@@ -249,7 +249,7 @@ class CouchSqlDomainMigrator:
                 xmlns = form_data.get("@xmlns", "")
                 user_id = extract_meta_user_id(form_data)
             else:
-                xmlns = couch_form.xmlns
+                xmlns = couch_form.xmlns or ""
                 user_id = couch_form.user_id
             if xmlns == SYSTEM_ACTION_XMLNS:
                 for form_id, case_ids in do_system_action(couch_form, self.statedb):
