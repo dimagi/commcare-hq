@@ -56,6 +56,6 @@ CREATE VIEW bihar_vaccine_view AS
     FROM "public"."bihar_api_child_vaccine" "bihar_vaccine"
     LEFT JOIN "public"."child_vaccines" "child_vaccines"
     ON (
-        ("child_vaccines"."child_health_case_id" = "bihar_vaccine"."person_case_id") AND
+        ("child_vaccines"."child_health_case_id" = "bihar_vaccine"."child_health_case_id") AND
         ("child_vaccines"."supervisor_id" = "bihar_vaccine"."supervisor_id")
     );

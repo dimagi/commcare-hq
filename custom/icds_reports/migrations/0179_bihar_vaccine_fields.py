@@ -23,6 +23,7 @@ class Migration(migrations.Migration):
                 ('month', models.DateField()),
                 ('supervisor_id', models.TextField(null=True)),
                 ('household_id', models.TextField(null=True)),
+                ('child_health_case_id', models.TextField(null=True)),
                 ('time_birth', models.TextField(null=True)),
                 ('child_alive', models.SmallIntegerField(null=True)),
                 ('father_name', models.TextField(null=True)),

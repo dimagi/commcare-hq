@@ -1856,14 +1856,14 @@ def update_service_delivery_report(target_date):
 
 def update_bihar_api_table(target_date):
     current_month = force_to_date(target_date).replace(day=1)
-    BiharAPIDemographics.aggregate(current_month)
+    _agg_bihar_api_vaccine_details.delay(current_month)
+
+
+@task(queue='icds_aggregation_queue', serializer='pickle')
+def _agg_bihar_api_vaccine_details(target_date):
+    BiharAPIChildVaccine.aggregate(target_date)
 
 
 def update_child_vaccine_table(target_date):
     current_month = force_to_date(target_date).replace(day=1)
     ChildVaccines.aggregate(current_month)
-
-
-def update_bihar_vaccine_table(target_date):
-    current_month = force_to_date(target_date).replace(day=1)
-    BiharAPIChildVaccine.aggregate(current_month)

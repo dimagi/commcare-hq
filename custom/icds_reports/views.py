@@ -442,9 +442,8 @@ class BaseCasAPIView(View):
             in_range = False
         return in_range
 
-    @property
-    def bihar_state_id(self):
-        return SQLLocation.objects.get(name='Bihar', location_type__name='state').location_id
+    def get_state_id_from_state_name(self, state_name):
+        return SQLLocation.objects.get(name=state_name, location_type__name='state').location_id
 
 
 @method_decorator(DASHBOARD_CHECKS, name='dispatch')
@@ -2424,18 +2423,18 @@ class BiharDemographicsAPI(BaseCasAPIView):
 
         valid_query_month, error_message = self.get_valid_query_month(request.GET.get('month'),
                                                                       request.GET.get('year'))
-
+        bihar_state_id = self.get_state_id_from_state_name('Bihar')
         if error_message:
             return JsonResponse({"message": error_message}, status=400)
 
         if not self.query_month_in_range(valid_query_month, start_month=date(2020, 1, 1)):
             return JsonResponse(self.message('invalid_month'), status=400)
 
-        if not self.has_access(self.bihar_state_id, request.couch_user):
+        if not self.has_access(bihar_state_id, request.couch_user):
             return JsonResponse(self.message('access_denied'), status=403)
 
         demographics_data, total_count = get_api_demographics_data(valid_query_month.strftime("%Y-%m-%d"),
-                                                                   self.bihar_state_id,
+                                                                   bihar_state_id,
                                                                    last_person_case_id)
         response_json = {
             'data': demographics_data,
@@ -2466,18 +2465,18 @@ class BiharVaccinesAPI(BaseCasAPIView):
 
         valid_query_month, error_message = self.get_valid_query_month(request.GET.get('month'),
                                                                       request.GET.get('year'))
-
+        bihar_state_id = self.get_state_id_from_state_name('Bihar')
         if error_message:
             return JsonResponse({"message": error_message}, status=400)
 
         if not self.query_month_in_range(valid_query_month, start_month=date(2020, 1, 1)):
             return JsonResponse(self.message('invalid_month'), status=400)
 
-        if not self.has_access(self.bihar_state_id, request.couch_user):
+        if not self.has_access(bihar_state_id, request.couch_user):
             return JsonResponse(self.message('access_denied'), status=403)
 
         vaccines_data, total_count = get_api_vaccine_data(valid_query_month.strftime("%Y-%m-%d"),
-                                                          self.bihar_state_id,
+                                                          bihar_state_id,
                                                           last_person_case_id)
         response_json = {
             'data': vaccines_data,
