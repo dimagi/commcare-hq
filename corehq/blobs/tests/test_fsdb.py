@@ -18,19 +18,27 @@ from corehq.util.test_utils import generate_cases
 
 
 class _BlobDBTests(object):
+    meta_kwargs = {}
+
+    def new_meta(self, **kwargs):
+        kwargs.update(self.meta_kwargs)
+        return new_meta(**kwargs)
 
     def test_has_metadb(self):
         self.assertIsInstance(self.db.metadb, MetaDB)
 
-    def test_put_and_get(self):
-        identifier = new_meta()
+    def test_put_and_get(self, **meta_kwargs):
+        identifier = self.new_meta()
         meta = self.db.put(BytesIO(b"content"), meta=identifier)
         self.assertEqual(identifier, meta)
-        with self.db.get(key=meta.key, type_code=meta.type_code) as fh:
+        with self.db.get(meta=meta) as fh:
             self.assertEqual(fh.read(), b"content")
 
+    def test_put_and_get_compressed(self):
+        self.test_put_and_get(compressed=True)
+
     def test_put_and_size(self):
-        identifier = new_meta()
+        identifier = self.new_meta()
         with capture_metrics() as metrics:
             meta = self.db.put(BytesIO(b"content"), meta=identifier)
         size = len(b'content')
@@ -47,7 +55,7 @@ class _BlobDBTests(object):
             type_code=CODES.tempfile,
             timeout=60,
         )
-        with self.db.get(key=meta.key, type_code=CODES.tempfile) as fh:
+        with self.db.get(meta=meta) as fh:
             self.assertEqual(fh.read(), b"content")
         self.assertLessEqual(
             meta.expires_on - datetime.utcnow(),
@@ -55,38 +63,38 @@ class _BlobDBTests(object):
         )
 
     def test_put_and_get_with_unicode(self):
-        identifier = new_meta(name='Łukasz')
+        identifier = self.new_meta(name='Łukasz')
         meta = self.db.put(BytesIO(b'\xc5\x81ukasz'), meta=identifier)
         self.assertEqual(identifier, meta)
-        with self.db.get(key=meta.key, type_code=meta.type_code) as fh:
+        with self.db.get(meta=meta) as fh:
             self.assertEqual(fh.read(), b'\xc5\x81ukasz')
 
     def test_put_from_get_stream(self):
-        old = self.db.put(BytesIO(b"content"), meta=new_meta())
-        with self.db.get(key=old.key, type_code=old.type_code) as fh:
-            new = self.db.put(fh, meta=new_meta())
-        with self.db.get(key=new.key, type_code=new.type_code) as fh:
+        old = self.db.put(BytesIO(b"content"), meta=self.new_meta())
+        with self.db.get(meta=old) as fh:
+            new = self.db.put(fh, meta=self.new_meta())
+        with self.db.get(meta=new) as fh:
             self.assertEqual(fh.read(), b"content")
 
     def test_exists(self):
-        meta = self.db.put(BytesIO(b"content"), meta=new_meta())
+        meta = self.db.put(BytesIO(b"content"), meta=self.new_meta())
         self.assertTrue(self.db.exists(key=meta.key), 'not found')
 
     def test_delete_not_exists(self):
-        meta = self.db.put(BytesIO(b"content"), meta=new_meta())
+        meta = self.db.put(BytesIO(b"content"), meta=self.new_meta())
         self.db.delete(key=meta.key)
         self.assertFalse(self.db.exists(key=meta.key), 'not deleted')
 
     def test_delete(self):
-        meta = self.db.put(BytesIO(b"content"), meta=new_meta())
+        meta = self.db.put(BytesIO(b"content"), meta=self.new_meta())
         self.assertTrue(self.db.delete(key=meta.key), 'delete failed')
         with self.assertRaises(mod.NotFound):
-            self.db.get(key=meta.key, type_code=meta.type_code)
+            self.db.get(meta=meta)
         return meta
 
     def test_bulk_delete(self):
         metas = [
-            self.db.put(BytesIO("content-{}".format(key).encode('utf-8')), meta=new_meta())
+            self.db.put(BytesIO("content-{}".format(key).encode('utf-8')), meta=self.new_meta())
             for key in ['test.5', 'test.6']
         ]
 
@@ -97,28 +105,28 @@ class _BlobDBTests(object):
 
         for meta in metas:
             with self.assertRaises(mod.NotFound):
-                self.db.get(key=meta.key, type_code=meta.type_code)
+                self.db.get(meta=meta)
 
         return metas
 
     def test_delete_no_args(self):
-        meta = self.db.put(BytesIO(b"content"), meta=new_meta())
+        meta = self.db.put(BytesIO(b"content"), meta=self.new_meta())
         with self.assertRaises(TypeError):
             self.db.delete()
-        with self.db.get(key=meta.key, type_code=meta.type_code) as fh:
+        with self.db.get(meta=meta) as fh:
             self.assertEqual(fh.read(), b"content")
         self.assertTrue(self.db.delete(key=meta.key))
 
     def test_empty_attachment_name(self):
-        meta = self.db.put(BytesIO(b"content"), meta=new_meta())
+        meta = self.db.put(BytesIO(b"content"), meta=self.new_meta())
         self.assertNotIn(".", meta.key)
         return meta
 
     def test_put_with_colliding_blob_id(self):
-        meta = new_meta()
+        meta = self.new_meta()
         self.db.put(BytesIO(b"bing"), meta=meta)
         self.db.put(BytesIO(b"bang"), meta=meta)
-        with self.db.get(key=meta.key, type_code=meta.type_code) as fh:
+        with self.db.get(meta=meta) as fh:
             self.assertEqual(fh.read(), b"bang")
 
     def test_expire(self):
@@ -129,7 +137,7 @@ class _BlobDBTests(object):
             parent_id="test",
             type_code=CODES.tempfile,
         )
-        with self.db.get(key=meta.key, type_code=meta.type_code) as fh:
+        with self.db.get(meta=meta) as fh:
             self.assertEqual(fh.read(), b"content")
         self.db.expire("test", meta.key)
 
@@ -139,7 +147,7 @@ class _BlobDBTests(object):
             delete_expired_blobs()
 
         with self.assertRaises(mod.NotFound):
-            self.db.get(key=meta.key, type_code=meta.type_code)
+            self.db.get(meta=meta)
 
     def test_expire_missing_blob(self):
         self.db.expire("test", "abc")  # should not raise error
@@ -196,3 +204,7 @@ class TestFilesystemBlobDB(TestCase, _BlobDBTests):
         path = self.db.get_path(key=meta.key)
         with open(path, "rb") as fh:
             self.assertEqual(fh.read(), b"content")
+
+
+class TestFilesystemBlobDBCompressed(TestFilesystemBlobDB):
+    meta_kwargs = {'compressed': True}

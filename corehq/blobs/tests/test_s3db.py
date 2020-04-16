@@ -89,12 +89,16 @@ class TestS3BlobDB(TestCase, _BlobDBTests):
     def test_put_from_other_s3_db(self):
         # cleanup will be done by self.db
         db2 = S3BlobDB(settings.S3_BLOB_DB_SETTINGS)
-        meta = self.db.put(BytesIO(b"content"), meta=new_meta())
-        with self.db.get(key=meta.key, type_code=meta.type_code) as blob:
-            meta2 = db2.put(blob, meta=new_meta())
+        meta = self.db.put(BytesIO(b"content"), meta=self.new_meta())
+        with self.db.get(meta=meta) as blob:
+            meta2 = db2.put(blob, meta=self.new_meta())
         self.assertEqual(meta2.content_length, meta.content_length)
-        with db2.get(key=meta2.key, type_code=meta2.type_code) as blob2:
+        with db2.get(meta=meta2) as blob2:
             self.assertEqual(blob2.read(), b"content")
+
+
+class TestS3BlobDBCompressed(TestS3BlobDB):
+    meta_kwargs = {'compressed': True}
 
 
 class TestBlobStream(TestCase):
