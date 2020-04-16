@@ -22,7 +22,7 @@ class VaccinesAPITest(TestCase):
             last_person_case_id=''
         )
         for item in data:
-            if item['person_id'] == '0a04f052-f32b-4874-b38b-d21244f81516':
+            if item['person_id'] == 'a176b7f5-680d-4be8-bbdc-ed8fcf4da682':
                 first_person_case = item
                 break
         self.assertDictEqual(

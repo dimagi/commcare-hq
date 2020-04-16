@@ -11,7 +11,8 @@ exclude_urls = (
     'locations',
     'mwcd_indicators',
     'data_export_api',
-    'household_members_data'
+    'household_members_data',
+    'children_and_vaccines'
 )
 
 AUDIT_URLS = frozenset(
