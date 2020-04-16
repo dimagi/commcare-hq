@@ -90,6 +90,7 @@ class Command(BaseCommand):
                 ]
                 fast_data_rows.update({f"{location[2]}_vhnd_day_{visit}": row})
         count = 0
+        supervisor_ids = [location[3] for location in location_details]
         for form in forms_list:
             supervisor_id = user_location_details[form['form']['case']['@user_id']]
             m_type = form['form']['meeting_type']
@@ -97,7 +98,8 @@ class Command(BaseCommand):
                 visit = form['form']['beneficiary_type_for_visit_vhnd']
             else:
                 visit = form['form']['beneficiary_type_for_visit']
-            fast_data_rows[f"{supervisor_id}_{m_type}_{visit}"][5] = fast_data_rows[f"{supervisor_id}_{m_type}_{visit}"][5] + 1
+            if supervisor_id in supervisor_ids:
+                fast_data_rows[f"{supervisor_id}_{m_type}_{visit}"][5] = fast_data_rows[f"{supervisor_id}_{m_type}_{visit}"][5] + 1
             if count % 1000 == 0:
                 print(f"{count} forms processed ======\n")
             count = count + 1
