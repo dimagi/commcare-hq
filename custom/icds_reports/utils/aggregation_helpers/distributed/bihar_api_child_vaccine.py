@@ -71,9 +71,9 @@ class BiharApiChildVaccineHelper(BaseICDSAggregationDistributedHelper):
             ('mother_name', 'person_list.mother_name'),
             ('mother_id', 'child_health.mother_case_id'),
             ("person_case_id", "child_health.child_person_case_id"),
-            ("child_health_case_id", "child_health.doc_id"),
+            ("child_health_case_id", "child_health.case_id"),
             ('dob', 'person_list.dob'),
-            ('private_admit', 'person_list.primary_admit'),
+            ('private_admit', 'person_list.private_admit'),
             ('primary_admit', 'person_list.primary_admit'),
             ('date_last_private_admit', 'person_list.date_last_private_admit '),
             ('date_return_private', 'person_list.date_return_private')
