@@ -98,17 +98,13 @@ def _get_importer_config(case_type, headers, user_id):
     )
 
 
-def get_expected_report():
-    headers, rows = _read_csv('expected_result.csv')
-    return [dict(zip(headers, row)) for row in rows]
-
-
 def _import_fixtures(domain):
     for fixture_name, filename in [
             ('recipes', 'recipes.csv'),
             ('conv_factors', 'conv_factors.csv'),
             ('food_list', 'food_list.csv'),
             ('food_composition_table', 'food_composition_table.csv'),
+            ('nutrients_lookup', 'nutrients_lookup.csv'),
     ]:
         fields, rows = _read_csv(filename)
         data_type = FixtureDataType(
@@ -119,12 +115,12 @@ def _import_fixtures(domain):
         data_type.save()
 
         with IterDB(FixtureDataItem.get_db(), chunksize=1000) as iter_db:
-            for vals in rows:
-                fixture_data_item = _mk_fixture_data_item(domain, data_type._id, fields, vals)
+            for i, vals in enumerate(rows):
+                fixture_data_item = _mk_fixture_data_item(domain, data_type._id, fields, vals, i)
                 iter_db.save(fixture_data_item)
 
 
-def _mk_fixture_data_item(domain, data_type_id, fields, vals):
+def _mk_fixture_data_item(domain, data_type_id, fields, vals, i):
     """Fixtures are wicked slow, so just do it in JSON"""
     return {
         "_id": uuid.uuid4().hex,
@@ -143,7 +139,7 @@ def _mk_fixture_data_item(domain, data_type_id, fields, vals):
             for field_name, field_value in zip(fields, vals)
         },
         "item_attributes": {},
-        "sort_key": 0,
+        "sort_key": i,
     }
 
 

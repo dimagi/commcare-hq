@@ -66,6 +66,7 @@ class.
 import re
 import warnings
 from datetime import datetime, timedelta
+from typing import Optional
 from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
 from django.utils.translation import ugettext_lazy as _
@@ -87,6 +88,7 @@ from dimagi.ext.couchdbkit import (
     StringListProperty,
     StringProperty,
 )
+from dimagi.utils.couch.undo import DELETED_SUFFIX
 from dimagi.utils.parsing import json_format_datetime
 from dimagi.utils.post import simple_post
 
@@ -98,7 +100,7 @@ from corehq.form_processor.interfaces.dbaccessors import (
     CaseAccessors,
     FormAccessors,
 )
-from corehq.motech.const import ALGO_AES
+from corehq.motech.const import ALGO_AES, BASIC_AUTH, DIGEST_AUTH, OAUTH1
 from corehq.motech.repeaters.repeater_generators import (
     AppStructureGenerator,
     CaseRepeaterJsonPayloadGenerator,
@@ -109,12 +111,9 @@ from corehq.motech.repeaters.repeater_generators import (
     ShortFormRepeaterJsonPayloadGenerator,
     UserPayloadGenerator,
 )
+from corehq.motech.requests import Requests
 from corehq.motech.utils import b64_aes_decrypt
-from corehq.util.datadog.gauges import datadog_counter
-from corehq.util.datadog.metrics import (
-    REPEATER_ERROR_COUNT,
-    REPEATER_SUCCESS_COUNT,
-)
+from corehq.util.metrics import metrics_counter
 from corehq.util.quickcache import quickcache
 
 from .const import (
@@ -137,29 +136,23 @@ from .utils import get_all_repeater_types
 
 
 def log_repeater_timeout_in_datadog(domain):
-    datadog_counter('commcare.repeaters.timeout', tags=['domain:{}'.format(domain)])
+    metrics_counter('commcare.repeaters.timeout', tags={'domain': domain})
 
 
 def log_repeater_error_in_datadog(domain, status_code, repeater_type):
-    datadog_counter(REPEATER_ERROR_COUNT, tags=[
-        'domain:{}'.format(domain),
-        'status_code:{}'.format(status_code),
-        'repeater_type:{}'.format(repeater_type),
-    ])
+    metrics_counter('commcare.repeaters.error', tags={
+        'domain': domain,
+        'status_code': status_code,
+        'repeater_type': repeater_type,
+    })
 
 
 def log_repeater_success_in_datadog(domain, status_code, repeater_type):
-    datadog_counter(REPEATER_SUCCESS_COUNT, tags=[
-        'domain:{}'.format(domain),
-        'status_code:{}'.format(status_code),
-        'repeater_type:{}'.format(repeater_type),
-    ])
-
-
-DELETED = "-Deleted"
-BASIC_AUTH = "basic"
-DIGEST_AUTH = "digest"
-OAUTH1 = "oauth1"
+    metrics_counter('commcare.repeaters.success', tags={
+        'domain': domain,
+        'status_code': status_code,
+        'repeater_type': repeater_type,
+    })
 
 
 class Repeater(QuickCachedDocumentMixin, Document):
@@ -314,7 +307,7 @@ class Repeater(QuickCachedDocumentMixin, Document):
 
     @staticmethod
     def get_class_from_doc_type(doc_type):
-        doc_type = doc_type.replace(DELETED, '')
+        doc_type = doc_type.replace(DELETED_SUFFIX, '')
         repeater_types = get_all_repeater_types()
         if doc_type in repeater_types:
             return repeater_types[doc_type]
@@ -322,10 +315,10 @@ class Repeater(QuickCachedDocumentMixin, Document):
             return None
 
     def retire(self):
-        if DELETED not in self['doc_type']:
-            self['doc_type'] += DELETED
-        if DELETED not in self['base_doc']:
-            self['base_doc'] += DELETED
+        if DELETED_SUFFIX not in self['doc_type']:
+            self['doc_type'] += DELETED_SUFFIX
+        if DELETED_SUFFIX not in self['base_doc']:
+            self['base_doc'] += DELETED_SUFFIX
         self.paused = False
         self.save()
 
@@ -910,6 +903,26 @@ def _is_response(duck):
     instance that this module uses, otherwise False.
     """
     return hasattr(duck, 'status_code') and hasattr(duck, 'reason')
+
+
+def get_requests(
+    repeater: Repeater,
+    payload_id: Optional[str] = None,
+) -> Requests:
+    """
+    Returns a Requests object instantiated with properties of the given
+    Repeater. ``payload_id`` specifies the payload that the object will
+    be used for sending, if applicable.
+    """
+    return Requests(
+        repeater.domain,
+        repeater.url,
+        repeater.username,
+        repeater.plaintext_password,
+        verify=repeater.verify,
+        notify_addresses=repeater.notify_addresses,
+        payload_id=payload_id,
+    )
 
 
 # import signals

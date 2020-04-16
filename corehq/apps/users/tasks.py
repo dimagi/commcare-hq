@@ -329,7 +329,12 @@ def process_reporting_metadata_staging():
         )[:100]
         for record in records:
             user = CouchUser.get_by_user_id(record.user_id, record.domain)
-            record.process_record(user)
+            try:
+                record.process_record(user)
+            except ResourceConflict:
+                # https://sentry.io/organizations/dimagi/issues/1479516073/
+                user = CouchUser.get_by_user_id(record.user_id, record.domain)
+                record.process_record(user)
             record.delete()
 
     duration = datetime.utcnow() - start

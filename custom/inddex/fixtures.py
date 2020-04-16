@@ -65,6 +65,14 @@ class FoodComposition:
 
 
 @attrs(kw_only=True, frozen=True)
+class Nutrient:
+    nutrient_code = attrib()
+    nutrient_name = attrib()
+    nutrient_name_unit = attrib()
+    unit = attrib()
+
+
+@attrs(kw_only=True, frozen=True)
 class ConversionFactor:
     food_code = attrib()
     conv_method = attrib()
@@ -114,6 +122,21 @@ class FixtureAccessor:
         return {food.food_name: food for food in self.foods.values()}
 
     @cached_property
+    def _nutrients(self):
+        return [
+            Nutrient(**item_dict)
+            for item_dict in self._get_fixture_dicts('nutrients_lookup')
+        ]
+
+    @cached_property
+    def nutrient_names(self):
+        return [n.nutrient_name_unit for n in self._nutrients]
+
+    @cached_property
+    def _nutrient_names_by_code(self):
+        return {n.nutrient_code: n.nutrient_name_unit for n in self._nutrients}
+
+    @cached_property
     def food_compositions(self):
         foods = {}
         for item_dict in self._get_fixture_dicts('food_composition_table'):
@@ -121,7 +144,7 @@ class FixtureAccessor:
             composition_dict = {}
             for k, v in item_dict.items():
                 if k.startswith('nut_'):
-                    _add_nutrient(nutrients, k, v)
+                    nutrients[self._nutrient_names_by_code[k]] = _to_float(v)
                 else:
                     composition_dict[k] = v
             food = FoodComposition(nutrients=nutrients, **composition_dict)
@@ -137,9 +160,8 @@ class FixtureAccessor:
         }
 
 
-def _add_nutrient(nutrients, k, v):
+def _to_float(v):
     try:
-        value = float(v)
+        return float(v)
     except ValueError:
-        value = 0
-    nutrients[k.lstrip('nut_')] = value
+        return None

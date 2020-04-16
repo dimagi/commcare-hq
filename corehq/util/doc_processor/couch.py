@@ -1,11 +1,11 @@
 from couchdbkit import ResourceNotFound
 
-from corehq.util.couch_helpers import MultiKeyViewArgsProvider
+from corehq.util.couch_helpers import MultiKeyViewArgsProvider, MultiKwargViewArgsProvider
 from corehq.util.doc_processor.interface import DocumentProvider, ProcessorProgressLogger
 from corehq.util.pagination import ResumableFunctionIterator
 
 
-def resumable_view_iterator(db, iteration_key, view_name, view_keys, chunk_size=100, view_event_handler=None):
+def resumable_view_iterator(db, iteration_key, view_name, view_keys, chunk_size=100, view_event_handler=None, full_row=False):
     """Perform one-time resumable iteration over a CouchDB View
 
     Iteration can be efficiently stopped and resumed. The iteration may
@@ -28,13 +28,16 @@ def resumable_view_iterator(db, iteration_key, view_name, view_keys, chunk_size=
         view_kwargs["limit"] = chunk_size
         return db.view(view_name, **view_kwargs)
 
-    args_provider = MultiKeyViewArgsProvider(view_keys, include_docs=True)
+    if isinstance(view_keys[0], dict):
+        args_provider = MultiKwargViewArgsProvider(view_keys, include_docs=True)
+    else:
+        args_provider = MultiKeyViewArgsProvider(view_keys, include_docs=True)
     args_provider.initial_view_kwargs.pop("limit")
 
     class ResumableDocsIterator(ResumableFunctionIterator):
         def __iter__(self):
             for result in super(ResumableDocsIterator, self).__iter__():
-                yield result['doc']
+                yield result if full_row else result['doc']
 
     def item_getter(doc_id):
         try:
@@ -82,6 +85,7 @@ class CouchProcessorProgressLogger(ProcessorProgressLogger):
     :param doc_types: List of doc_types that are being processed
     """
     def __init__(self, doc_types):
+        super().__init__()
         self.doc_types = doc_type_tuples_to_list(doc_types)
 
     def progress_starting(self, total, previously_visited):
