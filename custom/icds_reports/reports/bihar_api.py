@@ -78,7 +78,7 @@ def get_vaccine_total_records_count(month, state_id):
     ).count()
 
 
-def get_api_vaccine_data(state_id, month, last_person_case_id):
+def get_api_vaccine_data(month, state_id, last_person_case_id):
     vaccine_data_query = BiharVaccineView.objects.filter(
         month=month,
         state_id=state_id,
