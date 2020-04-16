@@ -13,7 +13,7 @@ from custom.icds_reports.const import BIHAR_API_MOTHER_DETAILS_TABLE
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('icds_reports', '0176_kpi_api_view'),
+        ('icds_reports', '0178_rebuild_chm_view'),
     ]
 
     operations = [
