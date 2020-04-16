@@ -88,9 +88,9 @@ class TestMigrateBackend(TestCase):
         for meta in self.blob_metas:
             if meta.id in not_found:
                 with self.assertRaises(mod.NotFound):
-                    self.db.new_db.get(key=meta.key)
+                    meta.open(self.db.new_db)
                 continue
-            content = self.db.new_db.get(key=meta.key)
+            content = meta.open(self.db.new_db)
             data = content.read()
             self.assertEqual(data, b'binary data not valid utf-8 \xe4\x94')
             self.assertEqual(len(data), meta.content_length)

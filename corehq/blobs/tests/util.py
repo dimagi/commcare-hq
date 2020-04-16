@@ -23,7 +23,7 @@ def get_id():
 def new_meta(**kw):
     kw.setdefault("domain", "test")
     kw.setdefault("parent_id", "test")
-    kw.setdefault("type_code", blobs.CODES.form_xml)
+    kw.setdefault("type_code", blobs.CODES.tempfile)
     return BlobMeta(**kw)
 
 

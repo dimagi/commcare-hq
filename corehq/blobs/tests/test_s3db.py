@@ -89,10 +89,10 @@ class TestS3BlobDB(TestCase, _BlobDBTests):
         # cleanup will be done by self.db
         db2 = S3BlobDB(settings.S3_BLOB_DB_SETTINGS)
         meta = self.db.put(BytesIO(b"content"), meta=new_meta())
-        with self.db.get(meta.key) as blob:
+        with self.db.get(key=meta.key, type_code=meta.type_code) as blob:
             meta2 = db2.put(blob, meta=new_meta())
         self.assertEqual(meta2.content_length, meta.content_length)
-        with db2.get(meta2.key) as blob2:
+        with db2.get(key=meta2.key, type_code=meta2.type_code) as blob2:
             self.assertEqual(blob2.read(), b"content")
 
 
@@ -113,7 +113,7 @@ class TestBlobStream(TestCase):
 
     def test_text_io_wrapper(self):
         meta = self.db.put(BytesIO(b"x\ny\rz\n"), meta=new_meta())
-        with self.db.get(key=meta.key) as fh:
+        with self.db.get(meta=meta) as fh:
             # universl unewline mode: \r -> \n
             textio = TextIOWrapper(fh, encoding="utf-8")
             self.assertEqual(list(textio), ["x\n", "y\n", "z\n"])
@@ -168,7 +168,7 @@ class TestBlobStream(TestCase):
         self.assertEqual(fake.close_calls, 1)
 
     def get_blob(self):
-        return self.db.get(key=self.meta.key)
+        return self.db.get(meta=self.meta)
 
 
 class FakeStream(object):

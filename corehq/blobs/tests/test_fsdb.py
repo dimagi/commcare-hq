@@ -26,7 +26,7 @@ class _BlobDBTests(object):
         identifier = new_meta()
         meta = self.db.put(BytesIO(b"content"), meta=identifier)
         self.assertEqual(identifier, meta)
-        with self.db.get(key=meta.key) as fh:
+        with self.db.get(key=meta.key, type_code=meta.type_code) as fh:
             self.assertEqual(fh.read(), b"content")
 
     def test_put_and_size(self):
@@ -35,8 +35,8 @@ class _BlobDBTests(object):
             meta = self.db.put(BytesIO(b"content"), meta=identifier)
         size = len(b'content')
 
-        self.assertEqual(metrics.sum('commcare.blobs.added.count', type='form_xml'), 1)
-        self.assertEqual(metrics.sum('commcare.blobs.added.bytes', type='form_xml'), size)
+        self.assertEqual(metrics.sum('commcare.blobs.added.count', type='tempfile'), 1)
+        self.assertEqual(metrics.sum('commcare.blobs.added.bytes', type='tempfile'), size)
         self.assertEqual(self.db.size(key=meta.key), size)
 
     def test_put_with_timeout(self):
@@ -47,7 +47,7 @@ class _BlobDBTests(object):
             type_code=CODES.tempfile,
             timeout=60,
         )
-        with self.db.get(key=meta.key) as fh:
+        with self.db.get(key=meta.key, type_code=CODES.tempfile) as fh:
             self.assertEqual(fh.read(), b"content")
         self.assertLessEqual(
             meta.expires_on - datetime.utcnow(),
@@ -58,14 +58,14 @@ class _BlobDBTests(object):
         identifier = new_meta(name='Łukasz')
         meta = self.db.put(BytesIO(b'\xc5\x81ukasz'), meta=identifier)
         self.assertEqual(identifier, meta)
-        with self.db.get(key=meta.key) as fh:
+        with self.db.get(key=meta.key, type_code=meta.type_code) as fh:
             self.assertEqual(fh.read(), b'\xc5\x81ukasz')
 
     def test_put_from_get_stream(self):
         old = self.db.put(BytesIO(b"content"), meta=new_meta())
-        with self.db.get(key=old.key) as fh:
+        with self.db.get(key=old.key, type_code=old.type_code) as fh:
             new = self.db.put(fh, meta=new_meta())
-        with self.db.get(key=new.key) as fh:
+        with self.db.get(key=new.key, type_code=new.type_code) as fh:
             self.assertEqual(fh.read(), b"content")
 
     def test_exists(self):
@@ -81,7 +81,7 @@ class _BlobDBTests(object):
         meta = self.db.put(BytesIO(b"content"), meta=new_meta())
         self.assertTrue(self.db.delete(key=meta.key), 'delete failed')
         with self.assertRaises(mod.NotFound):
-            self.db.get(key=meta.key)
+            self.db.get(key=meta.key, type_code=meta.type_code)
         return meta
 
     def test_bulk_delete(self):
@@ -97,7 +97,7 @@ class _BlobDBTests(object):
 
         for meta in metas:
             with self.assertRaises(mod.NotFound):
-                self.db.get(key=meta.key)
+                self.db.get(key=meta.key, type_code=meta.type_code)
 
         return metas
 
@@ -105,7 +105,7 @@ class _BlobDBTests(object):
         meta = self.db.put(BytesIO(b"content"), meta=new_meta())
         with self.assertRaises(TypeError):
             self.db.delete()
-        with self.db.get(key=meta.key) as fh:
+        with self.db.get(key=meta.key, type_code=meta.type_code) as fh:
             self.assertEqual(fh.read(), b"content")
         self.assertTrue(self.db.delete(key=meta.key))
 
@@ -118,7 +118,7 @@ class _BlobDBTests(object):
         meta = new_meta()
         self.db.put(BytesIO(b"bing"), meta=meta)
         self.db.put(BytesIO(b"bang"), meta=meta)
-        with self.db.get(key=meta.key) as fh:
+        with self.db.get(key=meta.key, type_code=meta.type_code) as fh:
             self.assertEqual(fh.read(), b"bang")
 
     def test_expire(self):
@@ -129,7 +129,7 @@ class _BlobDBTests(object):
             parent_id="test",
             type_code=CODES.tempfile,
         )
-        with self.db.get(key=meta.key) as fh:
+        with self.db.get(key=meta.key, type_code=meta.type_code) as fh:
             self.assertEqual(fh.read(), b"content")
         self.db.expire("test", meta.key)
 
@@ -139,12 +139,12 @@ class _BlobDBTests(object):
             delete_expired_blobs()
 
         with self.assertRaises(mod.NotFound):
-            self.db.get(key=meta.key)
+            self.db.get(key=meta.key, type_code=meta.type_code)
 
     def test_expire_missing_blob(self):
         self.db.expire("test", "abc")  # should not raise error
         with self.assertRaises(mod.NotFound):
-            self.db.get(key="abc")
+            self.db.get(key="abc", type_code=CODES.tempfile)
 
 
 @generate_cases([
@@ -158,7 +158,7 @@ class _BlobDBTests(object):
 ], _BlobDBTests)
 def test_bad_name(self, key):
     with self.assertRaises(mod.BadName):
-        self.db.get(key=key)
+        self.db.get(key=key, type_code=CODES.tempfile)
 
 
 class TestFilesystemBlobDB(TestCase, _BlobDBTests):
