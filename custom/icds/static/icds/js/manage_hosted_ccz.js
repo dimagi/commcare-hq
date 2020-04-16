@@ -18,29 +18,29 @@ hqDefine('icds/js/manage_hosted_ccz', [
         var hostedCCZ = function (options) {
             assertProperties.assertRequired(options, [
                 'id',
-                'link',
                 'app_name',
-                'version',
                 'app_version_tag',
-                'profile_name',
                 'file_name',
+                'link_name',
                 'note',
+                'profile_name',
                 'status',
+                'version',
             ]);
             var self = {
                 id: options.id,
-                link: options.link,
                 appName: options.app_name,
-                version: options.version,
                 appVersionTag: options.app_version_tag,
-                profileName: options.profile_name,
                 fileName: options.file_name,
+                link_name: options.link_name,
+                profileName: options.profile_name,
                 note: options.note,
                 status: options.status,
+                version: options.version,
             };
             self.removeUrl = initialPageData.reverse("remove_hosted_ccz", self.id);
             self.recreateUrl = initialPageData.reverse("recreate_hosted_ccz", self.id);
-            self.viewUrl = initialPageData.reverse("hosted_ccz", self.link);
+            self.viewUrl = initialPageData.reverse("hosted_ccz", self.link_name);
             return self;
         };
         var hostedCCZsView = function (options) {
