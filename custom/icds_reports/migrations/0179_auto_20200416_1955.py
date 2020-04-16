@@ -18,33 +18,33 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        # migrations.AddField(
-        #     model_name='biharapidemographics',
-        #     name='husband_id',
-        #     field=models.TextField(null=True),
-        # ),
-        # migrations.AddField(
-        #     model_name='biharapidemographics',
-        #     name='husband_name',
-        #     field=models.TextField(null=True),
-        # ),
-        # migrations.AddField(
-        #     model_name='biharapidemographics',
-        #     name='is_pregnant',
-        #     field=models.SmallIntegerField(null=True),
-        # ),
-        # migrations.AddField(
-        #     model_name='biharapidemographics',
-        #     name='last_preg_tt',
-        #     field=models.SmallIntegerField(null=True),
-        # ),
-        # migrations.AddField(
-        #     model_name='biharapidemographics',
-        #     name='married',
-        #     field=models.SmallIntegerField(null=True),
-        # ),
-        # migrations.RunSQL("ALTER TABLE ccs_record_monthly ADD COLUMN tt_booster date"),
-        # migrations.RunSQL("ALTER TABLE ccs_record_monthly ADD COLUMN last_preg_year integer"),
+        migrations.AddField(
+            model_name='biharapidemographics',
+            name='husband_id',
+            field=models.TextField(null=True),
+        ),
+        migrations.AddField(
+            model_name='biharapidemographics',
+            name='husband_name',
+            field=models.TextField(null=True),
+        ),
+        migrations.AddField(
+            model_name='biharapidemographics',
+            name='is_pregnant',
+            field=models.SmallIntegerField(null=True),
+        ),
+        migrations.AddField(
+            model_name='biharapidemographics',
+            name='last_preg_tt',
+            field=models.SmallIntegerField(null=True),
+        ),
+        migrations.AddField(
+            model_name='biharapidemographics',
+            name='married',
+            field=models.SmallIntegerField(null=True),
+        ),
+        migrations.RunSQL("ALTER TABLE ccs_record_monthly ADD COLUMN tt_booster date"),
+        migrations.RunSQL("ALTER TABLE ccs_record_monthly ADD COLUMN last_preg_year integer"),
         migrator.get_migration('child_health_monthly.sql'),
         migrator.get_migration('bihar_api_mother_view.sql')
 
