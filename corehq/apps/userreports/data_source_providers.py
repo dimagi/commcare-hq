@@ -15,6 +15,10 @@ class DataSourceProvider(metaclass=ABCMeta):
     def get_all_data_sources(self):
         pass
 
+    @abstractmethod
+    def by_domain(self, domain):
+        pass
+
     def get_data_sources(self):
         sources = self.get_all_data_sources()
         if self.referenced_doc_type:
@@ -29,11 +33,19 @@ class DynamicDataSourceProvider(DataSourceProvider):
         return DataSourceConfiguration.view(
             'userreports/active_data_sources', reduce=False, include_docs=True).all()
 
+    def by_domain(self, domain):
+        return DataSourceConfiguration.view(
+            'userreports/active_data_sources', startkey=[domain], endkey=[domain, {}],
+            reduce=False, include_docs=True).all()
+
 
 class StaticDataSourceProvider(DataSourceProvider):
 
     def get_all_data_sources(self):
         return StaticDataSourceConfiguration.all()
+
+    def by_domain(self, domain):
+        return StaticDataSourceConfiguration.by_domain(domain)
 
 
 class MockDataSourceProvider(DataSourceProvider):

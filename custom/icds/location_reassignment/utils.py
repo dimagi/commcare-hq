@@ -6,6 +6,13 @@ from casexml.apps.case.mock import CaseBlock
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.tasks import deactivate_users_at_location
+from corehq.apps.userreports.data_source_providers import (
+    DynamicDataSourceProvider,
+    StaticDataSourceProvider,
+)
+from corehq.apps.userreports.models import AsyncIndicator
+from corehq.apps.userreports.specs import EvaluationContext
+from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.apps.users.util import SYSTEM_USER_ID
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from custom.icds.location_reassignment.const import (
@@ -101,3 +108,35 @@ def reassign_household_case(domain, household_case_id, old_owner_id, new_owner_i
         case_blocks.append(case_block)
     if case_blocks:
         submit_case_blocks(case_blocks, domain, user_id=SYSTEM_USER_ID)
+        process_ucr_changes(domain, case_ids)
+
+
+def process_ucr_changes(domain, case_ids):
+    cases = CaseAccessorSQL.get_cases(case_ids)
+    cases_by_id = {case.case_id: case for case in cases}
+    docs = [case.to_json() for case in cases]
+    data_source_providers = [DynamicDataSourceProvider(), StaticDataSourceProvider()]
+
+    all_configs = [
+        source
+        for provider in data_source_providers
+        for source in provider.by_domain(domain)
+    ]
+
+    adapters = [
+        get_indicator_adapter(config, raise_errors=True, load_source='change_feed')
+        for config in all_configs
+    ]
+
+    async_configs_by_doc_id = {}
+    for doc in docs:
+        eval_context = EvaluationContext(doc)
+        for adapter in adapters:
+            if adapter.config.filter(doc, eval_context):
+                async_configs_by_doc_id[doc['_id']].append(adapter.config._id)
+
+    doc_type_by_id = {
+        _id: cases_by_id[_id].metadata.document_type
+        for _id in async_configs_by_doc_id.keys()
+    }
+    AsyncIndicator.bulk_update_records(async_configs_by_doc_id, domain, doc_type_by_id)
