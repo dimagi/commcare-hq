@@ -106,7 +106,7 @@ class PatchCase:
 
 
 ILLEGAL_PROPS = {"indices", "actions", "*"}
-IGNORE_PROPS = {"opened_by"}
+IGNORE_PROPS = {"opened_by", "external_id"}
 STATIC_PROPS = {
     "case_id",
     "closed",
