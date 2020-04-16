@@ -1,6 +1,6 @@
 import os
 
-from . import get_blob_db, NotFound, CODES
+from . import NotFound
 from .migrate import PROCESSING_COMPLETE_MESSAGE
 from .models import BlobMeta
 from .zipdb import get_export_filename, ZipBlobDB
