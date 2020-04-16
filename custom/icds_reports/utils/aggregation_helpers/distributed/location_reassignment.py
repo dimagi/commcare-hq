@@ -97,6 +97,14 @@ class TempPrevIntermediateTables(TempPrevTablesBase):
     UPDATE "{prev_local}" prev SET supervisor_id = last_supervisor_id FROM "{ucr_prev_local}" ucr WHERE prev.case_id=ucr.doc_id;
     INSERT INTO "{prev_table}" (SELECT * FROM "{prev_local}");
     """
+    table_list = [
+        ('postnatal-care-forms-child-health', 'icds_dashboard_child_health_postnatal_forms', 'static-child_health_cases'),
+        ('growth-monitoring-forms', 'icds_dashboard_growth_monitoring_forms', 'static-child_health_cases'),
+        ('birth-preparedness-forms', 'icds_dashboard_ccs_record_bp_forms', 'static-ccs_record_cases'),
+        ('postnatal-care-forms-ccs-record', 'icds_dashboard_ccs_record_postnatal_forms', 'static-ccs_record_cases'),
+        ('complementary-forms-ccs-record', 'icds_dashboard_ccs_record_cf_forms', 'static-ccs_record_cases'),
+        ('complementary-forms', 'icds_dashboard_comp_feed_form', 'static-child_health_cases')
+    ]
 
     def create_temp_tables(self, table, day):
         alias, table, ucr_alias = table
@@ -113,15 +121,7 @@ class TempPrevIntermediateTables(TempPrevTablesBase):
 
     def make_all_tables(self, day):
         day = transform_day_to_month(day) - relativedelta(months=1)
-        table_list = [
-            ('postnatal-care-forms-child-health', 'icds_dashboard_child_health_postnatal_forms', 'static-child_health_cases'),
-            ('growth-monitoring-forms', 'icds_dashboard_growth_monitoring_forms', 'static-child_health_cases'),
-            ('birth-preparedness-forms', 'icds_dashboard_ccs_record_bp_forms', 'static-ccs_record_cases'),
-            ('postnatal-care-forms-ccs-record', 'icds_dashboard_ccs_record_postnatal_forms', 'static-ccs_record_cases'),
-            ('complementary-forms-ccs-record', 'icds_dashboard_ccs_record_cf_forms', 'static-ccs_record_cases'),
-            ('complementary-forms', 'icds_dashboard_comp_feed_form', 'static-child_health_cases')
-        ]
-        for table in table_list:
+        for table in self.table_list:
             self.drop_temp_tables(table[0])
             self.create_temp_tables(table, day)
 

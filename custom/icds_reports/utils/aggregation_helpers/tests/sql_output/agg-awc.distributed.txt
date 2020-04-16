@@ -87,7 +87,7 @@
             supervisor_id,
             sum(open_count) AS cases_household,
             count(*) AS all_cases_household
-            FROM "static-household_cases_prev"
+            FROM "ucr_icds-cas_static-household_cases_eadc276d"
             WHERE opened_on<= %(end_date)s
             GROUP BY awc_id, supervisor_id ) ut
         WHERE ut.awc_id = agg_awc.awc_id and ut.supervisor_id=agg_awc.supervisor_id;
@@ -135,7 +135,7 @@
                 CASE WHEN last_referral_date BETWEEN %(start_date)s AND %(end_date)s
                 THEN 1 ELSE 0 END
             ) as cases_person_referred
-        FROM "static-person_cases_v3_prev" ucr
+        FROM "ucr_icds-cas_static-person_cases_v3_2ae0879a" ucr
         WHERE (opened_on <= %(end_date)s AND
               (closed_on IS NULL OR closed_on >= %(start_date)s ))
         GROUP BY ucr.supervisor_id, ucr.awc_id) ut
@@ -151,7 +151,7 @@
             ucr.supervisor_id,
             SUM(CASE WHEN ( (out_of_school or re_out_of_school) AND
                         (not admitted_in_school )) THEN 1 ELSE 0 END ) as girls_out_of_schoool
-            from "static-person_cases_v3_prev" ucr INNER JOIN
+            from "ucr_icds-cas_static-person_cases_v3_2ae0879a" ucr INNER JOIN
                  "icds_dashboard_adolescent_girls_registration" adolescent_girls_table ON (
                     ucr.doc_id = adolescent_girls_table.person_case_id AND
                     ucr.supervisor_id = adolescent_girls_table.supervisor_id AND
@@ -392,7 +392,7 @@
             %(start_date)s AS month,
             SUM(COALESCE(agg_cf.valid_visits, 0)) AS valid_visits,
             sum(0.39) AS expected_visits
-            FROM  "static-ccs_record_cases_prev" ucr
+            FROM  "ucr_icds-cas_static-ccs_record_cases_cedcca39" ucr
             LEFT OUTER JOIN "icds_dashboard_ccs_record_cf_forms" agg_cf ON (
                 ucr.case_id = agg_cf.case_id AND
                 agg_cf.month = %(start_date)s AND
