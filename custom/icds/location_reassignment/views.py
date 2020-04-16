@@ -75,11 +75,11 @@ class LocationReassignmentView(BaseLocationView):
             [messages.error(request, error) for error in errors]
         else:
             if action_type == LocationReassignmentRequestForm.EMAIL_HOUSEHOLDS:
-                self._process_request_for_email_households(parser, request)
+                self._process_request_for_email_households(parser, request, uploaded_file.name)
             elif action_type == LocationReassignmentRequestForm.UPDATE:
-                self._process_request_for_update(parser, request)
+                self._process_request_for_update(parser, request, uploaded_file.name)
             elif action_type == LocationReassignmentRequestForm.REASSIGN_HOUSEHOLDS:
-                self._process_request_for_household_reassignment(parser, request)
+                self._process_request_for_household_reassignment(parser, request, uploaded_file.name)
             else:
                 return self._generate_summary_response(parser.valid_transitions, uploaded_file.name)
         return self.get(request, *args, **kwargs)
@@ -116,27 +116,27 @@ class LocationReassignmentView(BaseLocationView):
         response['Content-Disposition'] = safe_filename_header(filename, 'xlsx')
         return response
 
-    def _process_request_for_email_households(self, parser, request):
+    def _process_request_for_email_households(self, parser, request, uploaded_filename):
         if AWC_CODE in parser.valid_transitions:
             email_household_details.delay(self.domain, parser.valid_transitions[AWC_CODE],
-                                          request.user.email)
+                                          uploaded_filename, request.user.email)
             messages.success(request, _(
                 "Your request has been submitted. You will be updated via email."))
         else:
             messages.error(request, "No transitions found for %s" % AWC_CODE)
 
-    def _process_request_for_update(self, parser, request):
+    def _process_request_for_update(self, parser, request, uploaded_filename):
         process_location_reassignment.delay(
             self.domain, parser.valid_transitions, parser.new_location_details,
             parser.user_transitions, list(parser.requested_transitions.keys()),
-            request.user.email
+            uploaded_filename, request.user.email
         )
         messages.success(request, _(
             "Your request has been submitted. We will notify you via email once completed."))
 
-    def _process_request_for_household_reassignment(self, parser, request):
+    def _process_request_for_household_reassignment(self, parser, request, uploaded_filename):
         process_households_reassignment.delay(
-            self.domain, parser.reassignments, request.user.email
+            self.domain, parser.reassignments, uploaded_filename, request.user.email
         )
         messages.success(request, _(
             "Your request has been submitted. We will notify you via email once completed."))

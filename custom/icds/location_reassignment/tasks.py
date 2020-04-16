@@ -23,15 +23,15 @@ from custom.icds.location_reassignment.utils import (
 
 @task
 def process_location_reassignment(domain, transitions, new_location_details, user_transitions,
-                                  site_codes, user_email):
+                                  site_codes, uploaded_filename, user_email):
     try:
         Processor(domain, transitions, new_location_details, user_transitions, site_codes).process()
     except Exception as e:
         email = EmailMessage(
             subject='[{}] - Location Reassignment Failed'.format(settings.SERVER_ENVIRONMENT),
-            body="The request could not be completed. Something went wrong. "
+            body="The request could not be completed for file {}. Something went wrong. "
                  "Error raised : {}. "
-                 "Please report an issue if needed.".format(e),
+                 "Please report an issue if needed.".format(uploaded_filename, e),
             to=[user_email],
             from_email=settings.DEFAULT_FROM_EMAIL
         )
@@ -40,7 +40,7 @@ def process_location_reassignment(domain, transitions, new_location_details, use
     else:
         email = EmailMessage(
             subject='[{}] - Location Reassignment Completed'.format(settings.SERVER_ENVIRONMENT),
-            body="The request has been successfully completed.",
+            body="The request has been successfully completed for file {}.".format(uploaded_filename),
             to=[user_email],
             from_email=settings.DEFAULT_FROM_EMAIL
         )
@@ -88,15 +88,15 @@ def update_usercase(domain, old_username, new_username):
 
 
 @task
-def email_household_details(domain, transitions, user_email):
+def email_household_details(domain, transitions, uploaded_filename, user_email):
     try:
         filestream = Households(domain).dump(transitions)
     except Exception as e:
         email = EmailMessage(
             subject='[{}] - Location Reassignment Household Dump Failed'.format(settings.SERVER_ENVIRONMENT),
-            body="The request could not be completed. Something went wrong. "
+            body="The request could not be completed for file {}. Something went wrong. "
                  "Error raised : {}. "
-                 "Please report an issue if needed.".format(e),
+                 "Please report an issue if needed.".format(uploaded_filename, e),
             to=[user_email],
             from_email=settings.DEFAULT_FROM_EMAIL
         )
@@ -105,7 +105,7 @@ def email_household_details(domain, transitions, user_email):
     else:
         email = EmailMessage(
             subject='[{}] - Location Reassignment Household Dump Completed'.format(settings.SERVER_ENVIRONMENT),
-            body="The request has been successfully completed.",
+            body="The request has been successfully completed for file {}.".format(uploaded_filename),
             to=[user_email],
             from_email=settings.DEFAULT_FROM_EMAIL
         )
@@ -117,15 +117,15 @@ def email_household_details(domain, transitions, user_email):
 
 
 @task
-def process_households_reassignment(domain, reassignments, user_email):
+def process_households_reassignment(domain, reassignments, uploaded_filename, user_email):
     try:
         HouseholdReassignmentProcessor(domain, reassignments).process()
     except Exception as e:
         email = EmailMessage(
             subject='[{}] - Household Reassignment Failed'.format(settings.SERVER_ENVIRONMENT),
-            body="The request could not be completed. Something went wrong. "
+            body="The request could not be completed for file {}. Something went wrong. "
                  "Error raised : {}. "
-                 "Please report an issue if needed.".format(e),
+                 "Please report an issue if needed.".format(uploaded_filename, e),
             to=[user_email],
             from_email=settings.DEFAULT_FROM_EMAIL
         )
@@ -134,7 +134,7 @@ def process_households_reassignment(domain, reassignments, user_email):
     else:
         email = EmailMessage(
             subject='[{}] - Household Reassignment Completed'.format(settings.SERVER_ENVIRONMENT),
-            body="The request has been successfully completed.",
+            body="The request has been successfully completed for file {}.".format(uploaded_filename),
             to=[user_email],
             from_email=settings.DEFAULT_FROM_EMAIL
         )
