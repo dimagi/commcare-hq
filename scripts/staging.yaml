@@ -53,8 +53,8 @@ branches:
   - jls/migrate-DefaultConsumption-2 # Jenny March 6
   #- jls/use-textinput # Jenny March 10
   - mk/location-reassignment-9 # MK April 14
-  - mk/location-reassignment-10 # MK April 14
+  - mk/location-reassignment-11 # MK April 16
   - bmb/SAAS-10712  # Biyeun April 1
   - ap/remove-delete-in-name # Amit April 8
-  - bmb/SAAS-10717 # Biyeun April 10
+  - bmb/odata-qa-feedback  # Biyeun April 15
 submodules: {}

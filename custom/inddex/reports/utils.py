@@ -48,7 +48,7 @@ class MultiTabularReport(DatespanMixin, CustomProjectReport, GenericTabularRepor
         ]
 
 
-def format_val(val):
+def _format_val(val):
     if isinstance(val, datetime):
         return val.strftime('%Y-%m-%d %H:%M:%S')
     if isinstance(val, bool):
@@ -56,7 +56,11 @@ def format_val(val):
     if isinstance(val, int):
         return str(val)
     if isinstance(val, float):
-        return str(int(val)) if val.is_integer() else str(val)
+        return f"{val:.5g}"
     if val is None:
         return ''
     return val
+
+
+def format_row(row):
+    return [_format_val(val) for val in row]

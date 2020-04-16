@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from django.contrib import messages
 from django.http import HttpResponse, HttpResponseRedirect
 from django.urls import reverse
@@ -8,9 +10,10 @@ from django.views.decorators.http import require_GET
 
 from corehq import toggles
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
-from corehq.apps.locations.models import LocationType
+from corehq.apps.locations.models import LocationType, SQLLocation
 from corehq.apps.locations.permissions import require_can_edit_locations
 from corehq.apps.locations.views import BaseLocationView, LocationsListView
+from corehq.const import FILENAME_DATETIME_FORMAT
 from corehq.util.files import safe_filename_header
 from corehq.util.workbook_json.excel import WorkbookJSONError, get_workbook
 from custom.icds.location_reassignment.const import AWC_CODE
@@ -49,7 +52,8 @@ class LocationReassignmentView(BaseLocationView):
             'bulk_upload': {
                 "download_url": reverse('download_location_reassignment_template', args=[self.domain]),
                 "adjective": _("locations"),
-                "plural_noun": _("location operations"),
+                "plural_noun": _("location reassignments"),
+                "verb": _("Perform"),
                 "help_link": "https://confluence.dimagi.com/display/ICDS/Location+Reassignment",
             },
         })
@@ -59,7 +63,8 @@ class LocationReassignmentView(BaseLocationView):
         return context
 
     def post(self, request, *args, **kwargs):
-        workbook, errors = self._get_workbook(request)
+        uploaded_file = request.FILES['bulk_upload_file']
+        workbook, errors = self._get_workbook(uploaded_file)
         if errors:
             [messages.error(request, error) for error in errors]
             return self.get(request, *args, **kwargs)
@@ -76,7 +81,7 @@ class LocationReassignmentView(BaseLocationView):
             elif action_type == LocationReassignmentRequestForm.REASSIGN_HOUSEHOLDS:
                 self._process_request_for_household_reassignment(parser, request)
             else:
-                return self._generate_summary_response(parser.valid_transitions)
+                return self._generate_summary_response(parser.valid_transitions, uploaded_file.name)
         return self.get(request, *args, **kwargs)
 
     def _get_parser(self, action_type, workbook):
@@ -84,9 +89,9 @@ class LocationReassignmentView(BaseLocationView):
             return HouseholdReassignmentParser(self.domain, workbook)
         return Parser(self.domain, workbook)
 
-    def _get_workbook(self, request):
+    def _get_workbook(self, uploaded_file):
         try:
-            workbook = get_workbook(request.FILES['bulk_upload_file'])
+            workbook = get_workbook(uploaded_file)
         except WorkbookJSONError as e:
             return None, [str(e)]
         return workbook, self._workbook_is_valid(workbook)
@@ -104,10 +109,10 @@ class LocationReassignmentView(BaseLocationView):
                 errors.append(_("Unexpected sheet {sheet_title}").format(sheet_title=worksheet_title))
         return errors
 
-    def _generate_summary_response(self, transitions):
+    def _generate_summary_response(self, transitions, uploaded_filename):
+        filename = uploaded_filename.split('.')[0] + " Summary"
         response_file = Dumper(self.domain).dump(transitions)
         response = HttpResponse(response_file, content_type="text/html; charset=utf-8")
-        filename = '%s Location Reassignment Expected' % self.domain
         response['Content-Disposition'] = safe_filename_header(filename, 'xlsx')
         return response
 
@@ -147,8 +152,10 @@ def download_location_reassignment_template(request, domain):
         messages.error(request, _("Please select a location."))
         return HttpResponseRedirect(reverse(LocationReassignmentView.urlname, args=[domain]))
 
-    response_file = Download(domain, location_id).dump()
+    location = SQLLocation.active_objects.get(location_id=location_id, domain=domain)
+    response_file = Download(location).dump()
     response = HttpResponse(response_file, content_type="text/html; charset=utf-8")
-    filename = '%s Location Reassignment Request Template' % domain
+    creation_time = datetime.utcnow().strftime(FILENAME_DATETIME_FORMAT)
+    filename = f"[{domain}] {location.name} Location Reassignment Request Template {creation_time}"
     response['Content-Disposition'] = safe_filename_header(filename, 'xlsx')
     return response
