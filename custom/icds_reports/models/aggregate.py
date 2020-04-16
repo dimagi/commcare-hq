@@ -241,9 +241,17 @@ class AwcLocation(models.Model, AggregateMixin):
     supervisor_is_test = models.SmallIntegerField(blank=True, null=True)
     awc_is_test = models.SmallIntegerField(blank=True, null=True)
     awc_deprecated_at = models.DateField(blank=True, null=True)
-    awc_deprecates = models.TextField(blank=True, null=True)
+    awc_deprecates = models.TextField(
+        blank=True,
+        null=True,
+        help_text='text representation of list of location ids'
+    )
     ls_deprecated_at = models.DateField(blank=True, null=True)
-    ls_deprecates = models.TextField(blank=True, null=True)
+    ls_deprecates = models.TextField(
+        blank=True,
+        null=True,
+        help_text='text representation of list of location ids'
+    )
     # from commcare-user case
     aww_name = models.TextField(blank=True, null=True)
     contact_phone_number = models.TextField(blank=True, null=True)
