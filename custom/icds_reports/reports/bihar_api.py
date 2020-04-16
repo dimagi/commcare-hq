@@ -80,7 +80,7 @@ def get_mother_details(month, state_id, last_ccs_case_id):
         month=month,
         state_id=state_id,
         ccs_case_id__gt=last_ccs_case_id
-    ).order_by('person_id').values(
+    ).order_by('ccs_case_id').values(
         'household_id',
         'ccs_case_id',
         'person_id',

@@ -8,7 +8,7 @@ from mock import patch
 
 @patch('custom.icds_reports.utils.aggregation_helpers.distributed.bihar_api_mother_details.BiharApiMotherDetailsHelper.bihar_state_id',
        'st1')
-class DemographicsAPITest(TestCase):
+class BiharAPIMotherTest(TestCase):
 
     def test_file_content(self):
         BiharAPIMotherDetails.aggregate(date(2017, 5, 1))
@@ -17,8 +17,8 @@ class DemographicsAPITest(TestCase):
             state_id='st1',
             last_ccs_case_id=''
         )
-        ccs_case_details = data[23]
-        self.assertCountEqual(
+        ccs_case_details = data[2]
+        self.assertEqual(
             {
                 "household_id": 'b6a55583-e07d-4367-ae5c-f3ff22f85271',
                 "person_id": "cc75916b-a71e-4c4d-a537-5c7bef95b12f",
@@ -34,6 +34,7 @@ class DemographicsAPITest(TestCase):
                 "tt_booster": datetime.date(2017, 5, 3),
                 "hb": 2,
                 "add": datetime.date(2017, 6, 1),
+                "last_preg_tt": None
              },
             ccs_case_details
         )
