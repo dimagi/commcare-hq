@@ -17,6 +17,7 @@ class MetaDB(object):
 
     This class manages persistence of blob metadata in a SQL database.
     """
+    DoesNotExist = BlobMeta.DoesNotExist
 
     def new(self, **blob_meta_args):
         """Get a new `BlobMeta` object

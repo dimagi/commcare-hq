@@ -190,7 +190,7 @@ class BlobMixin(Document):
                 raise NotFound(name)
             meta = db.metadb.get(parent_id=self._id, key=key)
             blob = meta.open()
-        except NotFound:
+        except (NotFound, db.metadb.DoesNotExist):
             raise ResourceNotFound(
                 "{model} {model_id} attachment: {name!r}".format(
                     model=type(self).__name__,
