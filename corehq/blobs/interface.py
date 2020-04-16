@@ -69,12 +69,11 @@ class AbstractBlobDB(metaclass=ABCMeta):
         """
         raise NotImplementedError
 
-    def _validate_get_args(self, key, type_code, meta):
+    @staticmethod
+    def _validate_get_args(key, type_code, meta):
         if key is not None or type_code is not None:
             if meta is not None:
-                if key is not None:
-                    raise ValueError("'key' and 'meta' are mutually exclusive")
-                raise ValueError("'type_code' and 'meta' are mutually exclusive")
+                raise ValueError("'key' and 'meta' are mutually exclusive")
             if type_code == CODES.form_xml:
                 raise ValueError("form XML must be loaded with 'meta' argument")
             if key is None or type_code is None:
