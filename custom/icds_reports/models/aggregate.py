@@ -63,7 +63,6 @@ from custom.icds_reports.utils.aggregation_helpers.distributed import (
     AggServiceDeliveryReportHelper,
     MigrationFormsAggregationDistributedHelper,
     BiharApiDemographicsHelper,
-    BiharApiMotherDetailsHelper,
     AvailingServiceFormsAggregationDistributedHelper,
     ChildVaccineHelper
 )
