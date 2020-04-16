@@ -13,7 +13,7 @@ migrator = RawSQLMigration(('custom', 'icds_reports', 'migrations', 'sql_templat
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('icds_reports', '0178_bihar_vaccine_fields')
+        ('icds_reports', '0179_bihar_vaccine_fields')
     ]
 
     operations = [

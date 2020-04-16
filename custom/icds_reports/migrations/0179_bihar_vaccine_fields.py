@@ -12,7 +12,7 @@ from custom.icds_reports.const import BIHAR_API_CHILD_VACCINE_TABLE
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('icds_reports', '0177_auto_20200408_1837'),
+        ('icds_reports', '0178_rebuild_chm_view'),
     ]
 
     operations = [
