@@ -26,7 +26,8 @@ from custom.icds_reports.const import (
     AGG_SDR_TABLE,
     AGG_MIGRATION_TABLE,
     BIHAR_API_DEMOGRAPHICS_TABLE,
-    AGG_AVAILING_SERVICES_TABLE
+    AGG_AVAILING_SERVICES_TABLE,
+    CHILD_VACCINE_TABLE
 )
 from custom.icds_reports.utils.aggregation_helpers.distributed import (
     AggAwcDailyAggregationDistributedHelper,
@@ -61,9 +62,9 @@ from custom.icds_reports.utils.aggregation_helpers.distributed import (
     AggServiceDeliveryReportHelper,
     MigrationFormsAggregationDistributedHelper,
     BiharApiDemographicsHelper,
-    AvailingServiceFormsAggregationDistributedHelper
+    AvailingServiceFormsAggregationDistributedHelper,
+    ChildVaccineHelper
 )
-
 
 def get_cursor(model):
     db = router.db_for_write(model)
@@ -241,9 +242,17 @@ class AwcLocation(models.Model, AggregateMixin):
     supervisor_is_test = models.SmallIntegerField(blank=True, null=True)
     awc_is_test = models.SmallIntegerField(blank=True, null=True)
     awc_deprecated_at = models.DateField(blank=True, null=True)
-    awc_deprecates = models.TextField(blank=True, null=True)
+    awc_deprecates = models.TextField(
+        blank=True,
+        null=True,
+        help_text='text representation of list of location ids'
+    )
     ls_deprecated_at = models.DateField(blank=True, null=True)
-    ls_deprecates = models.TextField(blank=True, null=True)
+    ls_deprecates = models.TextField(
+        blank=True,
+        null=True,
+        help_text='text representation of list of location ids'
+    )
     # from commcare-user case
     aww_name = models.TextField(blank=True, null=True)
     contact_phone_number = models.TextField(blank=True, null=True)
@@ -351,6 +360,8 @@ class ChildHealthMonthly(models.Model, AggregateMixin):
     lunch_count = models.IntegerField(blank=True, null=True)
     state_id = models.TextField(blank=True, null=True)
     opened_on = models.DateField(blank=True, null=True)
+    birth_weight = models.PositiveSmallIntegerField(null=True, help_text="birth weight in grams")
+    child_person_case_id = models.TextField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -1770,4 +1781,61 @@ class BiharAPIDemographics(models.Model, AggregateMixin):
         unique_together = ('month', 'state_id', 'district_id', 'block_id', 'supervisor_id', 'person_id')  # pkey
 
     _agg_helper_cls = BiharApiDemographicsHelper
+    _agg_atomic = False
+
+
+class ChildVaccines(models.Model, AggregateMixin):
+    state_id = models.TextField(null=True)
+    supervisor_id = models.TextField(null=True)
+    child_health_case_id = models.TextField(primary_key=True)
+    month = models.DateField()
+    due_list_date_1g_dpt_1 = models.DateField(blank=True, null=True)
+    due_list_date_2g_dpt_2 = models.DateField(blank=True, null=True)
+    due_list_date_3g_dpt_3 = models.DateField(blank=True, null=True)
+    due_list_date_5g_dpt_booster = models.DateField(blank=True, null=True)
+    due_list_date_5g_dpt_booster1 = models.DateField(blank=True, null=True)
+    due_list_date_7gdpt_booster_2 = models.DateField(blank=True, null=True)
+    due_list_date_0g_hep_b_0 = models.DateField(blank=True, null=True)
+    due_list_date_1g_hep_b_1 = models.DateField(blank=True, null=True)
+    due_list_date_2g_hep_b_2 = models.DateField(blank=True, null=True)
+    due_list_date_3g_hep_b_3 = models.DateField(blank=True, null=True)
+    due_list_date_3g_ipv = models.DateField(blank=True, null=True)
+    due_list_date_4g_je_1 = models.DateField(blank=True, null=True)
+    due_list_date_5g_je_2 = models.DateField(blank=True, null=True)
+    due_list_date_5g_measles_booster = models.DateField(blank=True, null=True)
+    due_list_date_4g_measles = models.DateField(blank=True, null=True)
+    due_list_date_0g_opv_0 = models.DateField(blank=True, null=True)
+    due_list_date_1g_opv_1 = models.DateField(blank=True, null=True)
+    due_list_date_2g_opv_2 = models.DateField(blank=True, null=True)
+    due_list_date_3g_opv_3 = models.DateField(blank=True, null=True)
+    due_list_date_5g_opv_booster = models.DateField(blank=True, null=True)
+    due_list_date_1g_penta_1 = models.DateField(blank=True, null=True)
+    due_list_date_2g_penta_2 = models.DateField(blank=True, null=True)
+    due_list_date_3g_penta_3 = models.DateField(blank=True, null=True)
+    due_list_date_1g_rv_1 = models.DateField(blank=True, null=True)
+    due_list_date_2g_rv_2 = models.DateField(blank=True, null=True)
+    due_list_date_3g_rv_3 = models.DateField(blank=True, null=True)
+    due_list_date_4g_vit_a_1 = models.DateField(blank=True, null=True)
+    due_list_date_5g_vit_a_2 = models.DateField(blank=True, null=True)
+    due_list_date_6g_vit_a_3 = models.DateField(blank=True, null=True)
+    due_list_date_6g_vit_a_4 = models.DateField(blank=True, null=True)
+    due_list_date_6g_vit_a_5 = models.DateField(blank=True, null=True)
+    due_list_date_6g_vit_a_6 = models.DateField(blank=True, null=True)
+    due_list_date_6g_vit_a_7 = models.DateField(blank=True, null=True)
+    due_list_date_6g_vit_a_8 = models.DateField(blank=True, null=True)
+    due_list_date_7g_vit_a_9 = models.DateField(blank=True, null=True)
+    due_list_date_anc_1 = models.DateField(blank=True, null=True)
+    due_list_date_anc_2 = models.DateField(blank=True, null=True)
+    due_list_date_anc_3 = models.DateField(blank=True, null=True)
+    due_list_date_anc_4 = models.DateField(blank=True, null=True)
+    due_list_date_tt_1 = models.DateField(blank=True, null=True)
+    due_list_date_tt_2 = models.DateField(blank=True, null=True)
+    due_list_date_tt_booster = models.DateField(blank=True, null=True)
+    due_list_date_1g_bcg = models.DateField(blank=True, null=True)
+
+    class Meta(object):
+        db_table = CHILD_VACCINE_TABLE
+        unique_together = ('month', 'state_id', 'supervisor_id', 'child_health_case_id')  # pkey
+
+    _agg_helper_cls = ChildVaccineHelper
     _agg_atomic = False

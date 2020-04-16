@@ -29,12 +29,12 @@ def get_agg_child_temp_tablename():
     return 'tmp_agg_child_health_5'
 
 
-def get_prev_table(alias):
-    return f'{alias}_prev'
+def get_prev_agg_tablename(table_alias):
+    return f'{table_alias}_prev'
 
 
-def current_month(day):
-    return day == transform_day_to_month(date.today())
+def is_current_month(month):
+    return month == transform_day_to_month(date.today())
 
 
 class AggregationHelper(object):

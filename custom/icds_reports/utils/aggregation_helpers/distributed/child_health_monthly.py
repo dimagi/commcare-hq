@@ -3,6 +3,7 @@ import logging
 from dateutil.relativedelta import relativedelta
 
 from corehq.apps.userreports.util import get_table_name
+from corehq.toggles import ICDS_LOCATION_REASSIGNMENT_AGG
 from custom.icds_reports.const import (
     AGG_COMP_FEEDING_TABLE,
     AGG_CHILD_HEALTH_PNC_TABLE,
@@ -16,8 +17,8 @@ from custom.icds_reports.utils.aggregation_helpers import (
     get_child_health_temp_tablename,
     transform_day_to_month,
     month_formatter,
-    get_prev_table,
-    current_month
+    get_prev_agg_tablename,
+    is_current_month
 )
 from custom.icds_reports.utils.aggregation_helpers.distributed.base import BaseICDSAggregationDistributedHelper
 
@@ -50,8 +51,8 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
             cursor.execute(query)
 
     def get_table(self, table_id):
-        if not current_month(self.month):
-            return get_prev_table(table_id)
+        if not is_current_month(self.month) and ICDS_LOCATION_REASSIGNMENT_AGG.enabled(self.domain):
+            return get_prev_agg_tablename(table_id)
         return get_table_name(self.domain, table_id)
 
     @property
@@ -342,7 +343,9 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
             ("date_death", "child_health.date_death"),
             ("mother_case_id", "child_health.mother_case_id"),
             ("state_id", "child_health.state_id"),
-            ("opened_on", "child_health.opened_on")
+            ("opened_on", "child_health.opened_on"),
+            ("birth_weight", "child_health.birth_weight"),
+            ("child_person_case_id", "child_health.mother_id"),
         )
         yield """
         INSERT INTO "{child_tablename}" (

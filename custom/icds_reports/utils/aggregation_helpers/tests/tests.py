@@ -13,6 +13,7 @@ from freezegun import freeze_time
 from mock import patch
 
 from custom.icds_reports.utils.aggregation_helpers.helpers import HELPERS
+from custom.icds_reports.utils.aggregation_helpers.distributed.location_reassignment import TempPrevIntermediateTables
 
 BASE_PATH = os.path.join(os.path.dirname(__file__), 'sql_output')
 
@@ -66,6 +67,15 @@ class TestQueryDiffs(SimpleTestCase):
 
                 """)
             ))
+
+
+class TestLocationReassignmentHelpers(SimpleTestCase):
+    def test_location_reassignment_helpers(self):
+        keys = [table[0] for table in TempPrevIntermediateTables.table_list]
+        for helper in HELPERS:
+            months_required = getattr(helper, 'months_required', None)
+            if months_required is not None and months_required > 0:
+                self.assertIn(helper.helper_key, keys)
 
 
 def get_diff(saved, generated):

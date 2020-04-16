@@ -178,8 +178,9 @@ window.angular.module('icdsApp').factory('locationsService', ['$http', '$locatio
         },
 
         initLocations : function(vm, locationsCache) {
+            var locationsService = this;
             if (vm.selectedLocationId) {
-                vm.locationPromise = this.getAncestors(vm.selectedLocationId).then(function(data) {
+                vm.locationPromise = locationsService.getAncestors(vm.selectedLocationId).then(function(data) {
                     var locations = data.locations;
 
                     var selectedLocation = data.selected_location;
@@ -207,7 +208,7 @@ window.angular.module('icdsApp').factory('locationsService', ['$http', '$locatio
                         return _.contains(_.pluck(locationTypes, 'name'), selectedLocation.location_type_name);
                     });
                     vm.selectedLocations[levelOfSelectedLocation] = vm.selectedLocationId;
-                    vm.onSelect(selectedLocation, levelOfSelectedLocation);
+                    locationsService.onSelectLocation(selectedLocation, levelOfSelectedLocation, locationsCache, vm);
 
                     levelOfSelectedLocation -= 1;
 
@@ -220,12 +221,13 @@ window.angular.module('icdsApp').factory('locationsService', ['$http', '$locatio
                         levelOfSelectedLocation -= 1;
                     }
 
-                    var levels = _.filter(vm.levels, function (value){return value.id > selectedLocationIndex();});
+                    var locationIndex = locationsService.selectedLocationIndex(vm.selectedLocations);
+                    var levels = _.filter(vm.levels, function (value){return value.id > locationIndex;});
                     vm.groupByLevels = levels;
-                    vm.selectedLevel = selectedLocationIndex() + 1;
+                    vm.selectedLevel = locationIndex + 1;
                 });
             } else {
-                vm.locationPromise = this.getRootLocations().then(function(data) {
+                vm.locationPromise = locationsService.getRootLocations().then(function(data) {
                     locationsCache.root = [NATIONAL_OPTION].concat(data.locations);
                 });
                 vm.groupByLevels = vm.levels;
@@ -243,15 +245,15 @@ window.angular.module('icdsApp').factory('locationsService', ['$http', '$locatio
                     } else {
                         locationsCache[item.location_id] = data.locations;
                         vm.selectedLocations[level + 1] = data.locations[0].location_id;
-                        vm.onSelect(data.locations[0], level + 1);
+                        this.onSelectLocation(data.locations[0], level + 1, locationsCache, vm);
                     }
                 });
             }
-            var selectedLocationIndex = this.selectedLocationIndex(vm.selectedLocations);
-            vm.selectedLocationId = vm.selectedLocations[selectedLocationIndex];
+            var locationIndex = this.selectedLocationIndex(vm.selectedLocations);
+            vm.selectedLocationId = vm.selectedLocations[locationIndex];
             vm.selectedLocation = item;
-            var levels = _.filter(vm.levels, function (value){return value.id > selectedLocationIndex;});
-            vm.selectedLevel = selectedLocationIndex + 1;
+            var levels = _.filter(vm.levels, function (value){return value.id > locationIndex;});
+            vm.selectedLevel = locationIndex + 1;
             vm.groupByLevels = levels;
         },
 

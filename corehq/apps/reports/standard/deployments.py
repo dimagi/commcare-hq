@@ -155,6 +155,7 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
                     sort_dict = {
                         sort_prop: {
                             "order": sort_dir,
+                            "nested_path": "reporting_metadata.last_submissions",
                             "nested_filter": {
                                 "term": {
                                     self.sort_filter: self.selected_app_id
