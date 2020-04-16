@@ -155,7 +155,6 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
                     sort_dict = {
                         sort_prop: {
                             "order": sort_dir,
-                            "nested_path": "reporting_metadata.last_submissions",
                             "nested_filter": {
                                 "term": {
                                     self.sort_filter: self.selected_app_id
@@ -163,6 +162,9 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
                             }
                         }
                     }
+                    if sort_prop != 'username.exact':
+                        # we can't specify a nested_path when sorting by username
+                        sort_dict[sort_prop]['nested_path'] = "reporting_metadata.last_submissions"
                 else:
                     sort_dict = {sort_prop: sort_dir}
                 res.append(sort_dict)
