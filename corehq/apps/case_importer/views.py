@@ -31,6 +31,7 @@ from corehq.apps.reports.analytics.esaccessors import (
 )
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
+from corehq.util.view_utils import absolute_reverse
 from corehq.util.workbook_reading import SpreadsheetFileExtError
 
 require_can_edit_data = require_permission(Permissions.edit_data)
@@ -345,10 +346,6 @@ def _bulk_case_upload_api(request, domain):
     case_upload.trigger_upload(domain, config, comment=upload_comment)
 
     upload_id = case_upload.upload_id
-
-    status_url = "{}{}".format(
-        get_url_base(),
-        reverse('case_importer_upload_status', args=(domain, upload_id))
-    )
+    status_url = absolute_reverse('case_importer_upload_status', args=(domain, upload_id))
 
     return json_response({"code": 200, "message": "success", "status_url": status_url})
