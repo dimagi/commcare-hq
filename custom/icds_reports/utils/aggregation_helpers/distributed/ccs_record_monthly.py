@@ -325,5 +325,8 @@ class CcsRecordMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribute
             'CREATE INDEX IF NOT EXISTS crm_awc_case_idx ON "{}" (awc_id, case_id)'.format(self.tablename),
             'CREATE INDEX IF NOT EXISTS crm_person_add_case_idx ON "{}" (person_case_id, add, case_id)'.format(
                 self.tablename
+            ),
+            'CREATE INDEX IF NOT EXISTS crm_supervisor_person_month_idx ON "{}" (supervisor_id, person_case_id, month)'.format(
+                self.tablename
             )
         ]

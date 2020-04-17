@@ -153,7 +153,7 @@ class BiharApiDemographicsHelper(BaseICDSAggregationDistributedHelper):
     def indexes(self):
         return [
             f"""CREATE INDEX IF NOT EXISTS demographics_state_person_case_idx
-                ON "{self.monthly_tablename}" (month, state_id, person_id)
+                ON "{self.tablename}" (supervisor_id, person_id, month)
             """
         ]
 
