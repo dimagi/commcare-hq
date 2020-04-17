@@ -26,7 +26,7 @@
     "icds"
   ],
   "config": {
-    "table_id": "static-ag_care_monthly",
+    "table_id": "static-ag_care_cases_monthly",
     "display_name": "Cases - ag_care monthly",
     "referenced_doc_type": "CommCareCase",
     "description": "",
