@@ -1776,19 +1776,19 @@ class AggLevelInfo(object):
 
 def _construct_replacement_map_from_awc_location(loc_level, replacement_location_ids):
     levels = {
-        'state': AggLevelInfo(1, 'state'),
-        'district': AggLevelInfo(2, 'district'),
-        'block': AggLevelInfo(3, 'block'),
-        'supervisor': AggLevelInfo(4, 'supervisor'),
-        'awc': AggLevelInfo(5, 'doc')
+        'state': AggLevelInfo(1, 'state_id'),
+        'district': AggLevelInfo(2, 'district_id'),
+        'block': AggLevelInfo(3, 'block_id'),
+        'supervisor': AggLevelInfo(4, 'supervisor_id'),
+        'awc': AggLevelInfo(5, 'doc_id')
     }
     level_info = levels[loc_level]
     filters = {
-        f'{level_info.col_name}_id__in': replacement_location_ids,
+        f'{level_info.col_name}__in': replacement_location_ids,
         'aggregation_level': level_info.agg_level
     }
     columns = [
-        f'{level_info.col_name}_id',
+        level_info.col_name,
         'state_name',
         'district_name',
         'block_name',
@@ -1801,7 +1801,7 @@ def _construct_replacement_map_from_awc_location(loc_level, replacement_location
         loc_names = [loc[f'{level}_name'] for level in levels.keys() if loc[f'{level}_name']]
         return ' > '.join(loc_names)
 
-    replacement_names = {loc[f'{level_info.col_name}_id']: _full_hierarchy_name(loc) for loc in replacements}
+    replacement_names = {loc[level_info.col_name]: _full_hierarchy_name(loc) for loc in replacements}
     return replacement_names
 
 
