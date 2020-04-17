@@ -1785,7 +1785,7 @@ def create_child_growth_tracker_report(excel_data, data_type, config, aggregatio
         worksheet[cell].fill = grey_fill
         worksheet[cell].border = thin_border
         worksheet[cell].font = bold_font
-        worksheet[cell].alignment = warp_text_alignment
+        worksheet[cell].alignment = Alignment(horizontal="center")
         worksheet[cell].value = col
         start_col = start_col + 3
         merge_cell = f"{string.ascii_uppercase[start_col - 1]}{table_header_position_row - 1}"
