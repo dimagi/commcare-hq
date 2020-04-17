@@ -58,8 +58,8 @@ window.angular.module('icdsApp').factory('baseControllersService', ['$timeout', 
             return storageService.getKey('selectedLocation');
         };
         vm.showReassignmentMessage = function () {
-            var selectedMonth = parseInt($location.search()['month']) || new Date().getMonth() + 1;
-            var selectedYear =  parseInt($location.search()['year']) || new Date().getFullYear();
+            var selectedMonth = dateHelperService.getSelectedMonth();
+            var selectedYear =  dateHelperService.getSelectedYear();
             var selectedDate = selectedMonth ? new Date(selectedYear, selectedMonth) : new Date();
             var selectedLocation = vm.selectedLocation();
             return selectedLocation && (Date.parse(selectedLocation.deprecated_at) < selectedDate || Date.parse(selectedLocation.deprecates_at) > selectedDate);

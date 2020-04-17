@@ -2,7 +2,7 @@
 
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
-function LadySupervisorController($scope, $http, $log, $routeParams, $location, storageService, userLocationId, haveAccessToAllLocations, isAlertActive) {
+function LadySupervisorController($scope, $http, $log, $routeParams, $location, storageService, userLocationId, haveAccessToAllLocations, isAlertActive, dateHelperService) {
     var vm = this;
     vm.data = {};
     vm.label = "LS Indicators";
@@ -70,15 +70,15 @@ function LadySupervisorController($scope, $http, $log, $routeParams, $location, 
         return storageService.getKey('selectedLocation');
     };
     vm.showReassignmentMessage = function () {
-        var selectedMonth = parseInt($location.search()['month']) || new Date().getMonth() + 1;
-        var selectedYear =  parseInt($location.search()['year']) || new Date().getFullYear();
+        var selectedMonth = dateHelperService.getSelectedMonth();
+        var selectedYear =  dateHelperService.getSelectedYear();
         var selectedDate = selectedMonth ? new Date(selectedYear, selectedMonth) : new Date();
         var selectedLocation = vm.selectedLocation();
         return selectedLocation && (Date.parse(selectedLocation.deprecated_at) < selectedDate || Date.parse(selectedLocation.deprecates_at) > selectedDate);
     };
 }
 
-LadySupervisorController.$inject = ['$scope', '$http', '$log', '$routeParams', '$location', 'storageService', 'userLocationId', 'haveAccessToAllLocations', 'isAlertActive'];
+LadySupervisorController.$inject = ['$scope', '$http', '$log', '$routeParams', '$location', 'storageService', 'userLocationId', 'haveAccessToAllLocations', 'isAlertActive', 'dateHelperService'];
 
 window.angular.module('icdsApp').directive('ladySupervisor', function () {
     return {

@@ -1,6 +1,6 @@
 /* global _, LocationModalController, LocationFilterController */
 
-function LocationModalController($uibModalInstance, $location, locationsService, selectedLocationId, hierarchy, selectedLocations, locationsCache, maxLevel, userLocationId, showMessage, showSectorMessage, storageService) {
+function LocationModalController($uibModalInstance, $location, locationsService, selectedLocationId, hierarchy, selectedLocations, locationsCache, maxLevel, userLocationId, showMessage, showSectorMessage, dateHelperService) {
     // LocationModalController shares a lot of the same logic / state as LocationFilterController.
     // But it controls all the logic once the modal is popped up (so tiered selection).
     var vm = this;
@@ -28,8 +28,8 @@ function LocationModalController($uibModalInstance, $location, locationsService,
     };
 
     vm.showReassignmentMessage = function () {
-        var selectedMonth = storageService.getKey('month');
-        var selectedYear = storageService.getKey('year');
+        var selectedMonth = dateHelperService.getSelectedMonth();
+        var selectedYear =  dateHelperService.getSelectedYear();
         var selectedDate = selectedMonth ? new Date(selectedYear, selectedMonth) : new Date();
         var selectedLocation = vm.selectedLocation();
         return selectedLocation && (Date.parse(selectedLocation.deprecated_at) < selectedDate || Date.parse(selectedLocation.deprecates_at) > selectedDate);
@@ -523,7 +523,7 @@ LocationFilterController.$inject = [
     '$rootScope', '$scope', '$location', '$uibModal', 'locationHierarchy', 'locationsService', 'storageService',
     'navigationService', 'userLocationId', 'haveAccessToAllLocations', 'allUserLocationId',
 ];
-LocationModalController.$inject = ['$uibModalInstance', '$location', 'locationsService', 'selectedLocationId', 'hierarchy', 'selectedLocations', 'locationsCache', 'maxLevel', 'userLocationId', 'showMessage', 'showSectorMessage', 'storageService'];
+LocationModalController.$inject = ['$uibModalInstance', '$location', 'locationsService', 'selectedLocationId', 'hierarchy', 'selectedLocations', 'locationsCache', 'maxLevel', 'userLocationId', 'showMessage', 'showSectorMessage', 'dateHelperService'];
 
 window.angular.module('icdsApp').directive("locationFilter", ['templateProviderService', function (templateProviderService) {
     var url = hqImport('hqwebapp/js/initial_page_data').reverse;
