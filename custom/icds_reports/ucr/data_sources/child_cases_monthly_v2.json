@@ -1865,7 +1865,7 @@
         "transform": {},
         "is_nullable": true,
         "type": "expression",
-        "column_id": "ccs_phase"
+        "column_id": "is_cf"
       }
     ],
     "named_expressions": {
