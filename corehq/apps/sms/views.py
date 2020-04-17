@@ -2123,3 +2123,36 @@ class IncomingBackendView(View):
             return HttpResponse(status=401)
 
         return super(IncomingBackendView, self).dispatch(request, api_key, *args, **kwargs)
+
+
+class WhatsAppTemplatesView(BaseMessagingSectionView):
+    urlname = 'whatsapp_templates_view'
+    template_name = "sms/whatsapp_templates.html"
+
+    @method_decorator(domain_admin_required)
+    def dispatch(self, request, *args, **kwargs):
+        return super(WhatsAppTemplatesView, self).dispatch(request, *args, **kwargs)
+
+    @property
+    def page_context(self):
+        context = super(WhatsAppTemplatesView, self).page_context
+        from corehq.messaging.smsbackends.turn.models import SQLTurnWhatsAppBackend, generate_template_string
+        try:
+            turn_backend = SQLTurnWhatsAppBackend.active_objects.get(domain=self.domain)
+        except SQLTurnWhatsAppBackend.MultipleObjectsReturned:
+            messages.error(
+                self.request,
+                _("You have multiple Turn backends configured. Please remove the ones you don't use.")
+            )
+        except SQLTurnWhatsAppBackend.DoesNotExist:
+            messages.error(
+                self.request,
+                _("You have no Turn backends configured. Please configure one before proceeding ")
+            )
+        else:
+            templates = turn_backend.get_all_templates()
+            for template in templates:
+                template['template_string'] = generate_template_string(template)
+            context.update({'wa_templates': templates})
+        finally:
+            return context
