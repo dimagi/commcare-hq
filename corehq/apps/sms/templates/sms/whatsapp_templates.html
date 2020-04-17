@@ -10,6 +10,11 @@
 {% block page_content %}
   <h2>{% trans "WhatsApp Templates" %}</h2>
   <hr/>
+  <p>
+    {% blocktrans %}
+      To send a template message, copy and paste the <strong>Template String</strong> as the message text, replacing each <code>{var}</code> with the variables you want to add in to the template. Don't forget the <code>~</code> at the end.
+    {% endblocktrans %}
+  </p>
   <table class="table table-bordered table-striped">
     <thead>
       <tr>
@@ -17,8 +22,8 @@
         <th>{% trans "Body" %}</th>
         <th>{% trans "Category" %}</th>
         <th>{% trans "Status" %}</th>
-        <th>{% trans "Template ID" %}</th>
         <th>{% trans "Language" %}</th>
+        <th>{% trans "Template String" %}</th>
       </tr>
     </thead>
     <tbody>
@@ -34,8 +39,8 @@
           </td>
           <td>{{ template.category }}</td>
           <td>{{ template.status }}</td>
-          <td>{{ template.id }}</td>
           <td>{{ template.language }}</td>
+          <td>{{ template.template_string }}</td>
         </tr>
       {% endfor %}
     </tbody>

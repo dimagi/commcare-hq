@@ -2136,7 +2136,7 @@ class WhatsAppTemplatesView(BaseMessagingSectionView):
     @property
     def page_context(self):
         context = super(WhatsAppTemplatesView, self).page_context
-        from corehq.messaging.smsbackends.turn.models import SQLTurnWhatsAppBackend
+        from corehq.messaging.smsbackends.turn.models import SQLTurnWhatsAppBackend, generate_template_string
         try:
             turn_backend = SQLTurnWhatsAppBackend.active_objects.get(domain=self.domain)
         except SQLTurnWhatsAppBackend.MultipleObjectsReturned:
@@ -2151,6 +2151,8 @@ class WhatsAppTemplatesView(BaseMessagingSectionView):
             )
         else:
             templates = turn_backend.get_all_templates()
+            for template in templates:
+                template['template_string'] = generate_template_string(template)
             context.update({'wa_templates': templates})
         finally:
             return context
