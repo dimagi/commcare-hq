@@ -1,7 +1,7 @@
-UPDATE child_health_monthly child_health
+UPDATE child_health_monthly
    SET
       height_measured_in_month = CASE
-        WHEN (gm.height_child_last_recorded >= '%(start_date)s' AND gm.height_child_last_recorded <'%(end_date)s') AND (valid_in_month=1 AND age_tranche::Integer <= 60) THEN 1
+        WHEN (recorded_height is not NULL) AND (valid_in_month=1 AND age_tranche::Integer <= 60) THEN 1
         ELSE
           0
         END,
@@ -25,13 +25,7 @@ UPDATE child_health_monthly child_health
         ELSE
           current_month_wasting
         END
-   FROM icds_dashboard_growth_monitoring_forms gm
-   WHERE child_health.case_id = gm.case_id
-    AND child_health.month = gm.month
-    AND child_health.month='%(start_date)s'
-    AND gm.month='%(start_date)s'
-    AND child_health.supervisor_id=gm.supervisor_id;
-
+    WHERE month='%(start_date)s';
 -- QUERY PLAN
 -- ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 --  Custom Scan (Citus Router)  (cost=0.00..0.00 rows=0 width=0)
