@@ -36,7 +36,7 @@ SELECT
 FROM 
   "child_health_monthly" chm 
 WHERE 
-  chm.month = '%(start_date)s' 
+  chm.month = '{start_date}'
 GROUP BY 
   chm.awc_id,
   chm.supervisor_id, 
@@ -46,9 +46,7 @@ GROUP BY
   chm.caste, 
   coalesce_disabled, 
   coalesce_minority, 
-  coalesce_resident 
-ORDER BY 
-  chm.awc_id;
+  coalesce_resident;
 
 --    QUERY PLAN
 -- --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

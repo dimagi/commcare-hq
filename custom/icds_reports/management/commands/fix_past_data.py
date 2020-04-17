@@ -10,12 +10,12 @@ from corehq.sql_db.connections import get_icds_ucr_citus_db_alias
 
 
 @transaction.atomic
-def _run_custom_sql_script(command, day=None):
+def _run_custom_sql_script(command):
     db_alias = get_icds_ucr_citus_db_alias()
     if not db_alias:
         return
     with connections[db_alias].cursor() as cursor:
-        cursor.execute(command, [day])
+        cursor.execute(command, [])
 
 
 class Command(BaseCommand):
@@ -27,25 +27,20 @@ class Command(BaseCommand):
             help='The start date (inclusive). format YYYY-MM-DD'
         )
 
-    def build_data(self, monthly_date):
-        date = monthly_date['record_date']
+    def build_data(self, monthly_date_dict):
+        date = monthly_date_dict['record_date']
         print(f'\n======= Executing for month {date}======\n')
         for i in range(1, 8):
             print(f'==============Executing Script {i} =============')
-            if monthly_date["default"] is False and i > 2:
+            if monthly_date_dict["default"] is False and i > 2:
                 path = os.path.join(os.path.dirname(__file__), 'sql_scripts',
                                 'fix_past_data_part_1_{}.sql'.format(i))
             else:
                 path = os.path.join(os.path.dirname(__file__), 'sql_scripts',
                                     'fix_past_data_part_{}.sql'.format(i))
-            end_date = date + relativedelta(months=1)
-            context = {
-                'start_date': date.strftime("%Y-%m-%d"),
-                'end_date': end_date.strftime("%Y-%m-%d")
-            }
             with open(path, "r", encoding='utf-8') as sql_file:
                 sql_to_execute = sql_file.read()
-                sql_to_execute = sql_to_execute % context
+                sql_to_execute = sql_to_execute.format(start_date=date.strftime("%Y-%m-%d"))
                 print(sql_to_execute)
                 _run_custom_sql_script(sql_to_execute)
 
@@ -70,5 +65,5 @@ class Command(BaseCommand):
             monthly_dates.append({"record_date": initial, "default": default})
             initial = initial + relativedelta(months=1)
 
-        for monthly_date in monthly_dates:
-            self.build_data(monthly_date)
+        for monthly_date_dict in monthly_dates:
+            self.build_data(monthly_date_dict)

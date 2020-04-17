@@ -1,4 +1,4 @@
-UPDATE "agg_child_health_%(start_date)s_5" agg_child_health
+UPDATE "agg_child_health_{start_date}_5" agg_child_health
   SET
     wasting_moderate = ut.wasting_moderate,
     wasting_severe = ut.wasting_severe,

@@ -1,5 +1,5 @@
 UPDATE 
-  "agg_child_health_%(start_date)s_2" agg_child_health 
+  "agg_child_health_{start_date}_2" agg_child_health
 SET 
   wasting_moderate = ut.wasting_moderate, 
   wasting_severe = ut.wasting_severe, 
@@ -26,7 +26,7 @@ FROM
         weighed_and_height_measured_in_month
       ) as weighed_and_height_measured_in_month 
     FROM 
-      "agg_child_health_%(start_date)s_3" agg_child 
+      "agg_child_health_{start_date}_3" agg_child
       INNER JOIN (
         SELECT 
           DISTINCT ucr.block_id
