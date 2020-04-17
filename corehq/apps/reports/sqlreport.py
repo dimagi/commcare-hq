@@ -266,10 +266,7 @@ class SqlData(ReportDataSource):
         formatter = DataFormatter(DictDataFormat(self.columns, no_value=None))
         formatted_data = formatter.format(data, keys=self.keys, group_by=self.group_by)
 
-        if self.group_by:
-            return list(formatted_data.values())
-        else:
-            return [formatted_data]
+        return list(formatted_data.values())
 
     def slugs(self):
         return [c.slug for c in self.columns]
