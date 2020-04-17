@@ -66,12 +66,13 @@ class FilesystemBlobDB(AbstractBlobDB):
         if not exists(path):
             metrics_counter('commcare.blobdb.notfound')
             raise NotFound(key)
+
+        file_obj = open(path, "rb")
         if meta and meta.is_compressed:
             content_length, compressed_length = meta.content_length, meta.compressed_length
-            file_obj = GzipFile(path, 'rb')
+            file_obj = GzipFile(fileobj=file_obj, mode='rb')
         else:
             content_length, compressed_length = self.size(key), None
-            file_obj = open(path, "rb")
         return BlobStream(file_obj, key, self, content_length, compressed_length)
 
     def size(self, key):
