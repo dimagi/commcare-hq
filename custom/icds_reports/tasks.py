@@ -1706,7 +1706,7 @@ def reconcile_data_not_in_ucr(reconciliation_status_pk):
     # running the data accessor again to avoid storing all doc ids in memory
     # since run time is relatively short and does not scale with number of errors
     # but the number of doc ids will increase with the number of errors
-    for doc_id, doc_subtype, sql_modified_on in get_data_not_in_ucr(status_record):
+    for doc_id, doc_subtype, sql_modified_on in data_not_in_ucr:
         if doc_id in known_bad_doc_ids:
             # These docs are invalid
             continue
