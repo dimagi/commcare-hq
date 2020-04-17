@@ -1,16 +1,15 @@
 from collections import defaultdict
 from datetime import datetime, timedelta
 
-from django.db import connections
-
 from corehq.sql_db.util import (
     get_db_alias_for_partitioned_doc,
     split_list_by_db_partition,
 )
-from corehq.util.datadog.gauges import datadog_counter
+from corehq.util.metrics import metrics_counter
 from . import CODES
 
 from .models import BlobMeta
+
 
 
 class MetaDB(object):
@@ -50,11 +49,11 @@ class MetaDB(object):
         meta.save()
         length = meta.content_length
         tags = _meta_tags(meta)
-        datadog_counter('commcare.blobs.added.count', tags=tags)
-        datadog_counter('commcare.blobs.added.bytes', value=length, tags=tags)
+        metrics_counter('commcare.blobs.added.count', tags=tags)
+        metrics_counter('commcare.blobs.added.bytes', value=length, tags=tags)
         if meta.expires_on is not None:
-            datadog_counter('commcare.temp_blobs.count', tags=tags)
-            datadog_counter('commcare.temp_blobs.bytes_added', value=length, tags=tags)
+            metrics_counter('commcare.temp_blobs.count', tags=tags)
+            metrics_counter('commcare.temp_blobs.bytes_added', value=length, tags=tags)
 
     def delete(self, key, content_length):
         """Delete blob metadata
@@ -67,8 +66,8 @@ class MetaDB(object):
         """
         with BlobMeta.get_plproxy_cursor() as cursor:
             cursor.execute('SELECT 1 FROM delete_blob_meta(%s)', [key])
-        datadog_counter('commcare.blobs.deleted.count')
-        datadog_counter('commcare.blobs.deleted.bytes', value=content_length)
+        metrics_counter('commcare.blobs.deleted.count')
+        metrics_counter('commcare.blobs.deleted.bytes', value=content_length)
 
     def bulk_delete(self, metas):
         """Delete blob metadata in bulk
@@ -122,8 +121,8 @@ class MetaDB(object):
             with BlobMeta.get_cursor_for_partition_db(dbname) as cursor:
                 cursor.execute(delete_blobs_sql, [ids, now])
         deleted_bytes = sum(m.content_length for m in metas)
-        datadog_counter('commcare.blobs.deleted.count', value=len(metas))
-        datadog_counter('commcare.blobs.deleted.bytes', value=deleted_bytes)
+        metrics_counter('commcare.blobs.deleted.count', value=len(metas))
+        metrics_counter('commcare.blobs.deleted.bytes', value=deleted_bytes)
 
     def expire(self, parent_id, key, minutes=60):
         """Set blob expiration to some minutes from now
@@ -146,8 +145,8 @@ class MetaDB(object):
             return
         if meta.expires_on is None:
             tags = _meta_tags(meta)
-            datadog_counter('commcare.temp_blobs.count', tags=tags)
-            datadog_counter('commcare.temp_blobs.bytes_added', value=meta.content_length, tags=tags)
+            metrics_counter('commcare.temp_blobs.count', tags=tags)
+            metrics_counter('commcare.temp_blobs.bytes_added', value=meta.content_length, tags=tags)
         meta.expires_on = _utcnow() + timedelta(minutes=minutes)
         meta.save()
 
@@ -228,4 +227,4 @@ def _utcnow():
 
 def _meta_tags(meta):
     type_ = CODES.name_of(meta.type_code, f'type_code_{meta.type_code}')
-    return [f'type:{type_}']
+    return {'type': type_}

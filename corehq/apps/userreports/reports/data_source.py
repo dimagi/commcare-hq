@@ -12,7 +12,7 @@ from corehq.apps.userreports.models import (
 from corehq.apps.userreports.sql.data_source import (
     ConfigurableReportSqlDataSource,
 )
-from corehq.util.datadog.utils import ucr_load_counter
+from corehq.util.metrics.load_counters import ucr_load_counter
 
 
 class ConfigurableReportDataSource(object):
@@ -22,7 +22,7 @@ class ConfigurableReportDataSource(object):
     """
 
     def __init__(self, domain, config_or_config_id, filters, aggregation_columns, columns, order_by,
-                 custom_query_provider=None, data_source_type=DATA_SOURCE_TYPE_STANDARD):
+                 distinct_on, custom_query_provider=None, data_source_type=DATA_SOURCE_TYPE_STANDARD):
         """
             config_or_config_id: an instance of DataSourceConfiguration or an id pointing to it
         """
@@ -39,6 +39,7 @@ class ConfigurableReportDataSource(object):
         self.data_source_type = data_source_type
         self._filters = filters
         self._order_by = order_by
+        self._distinct_on = distinct_on
         self._aggregation_columns = aggregation_columns
         self._columns = columns
 
@@ -57,7 +58,8 @@ class ConfigurableReportDataSource(object):
             aggregation_columns=spec.aggregation_columns,
             columns=spec.report_columns,
             order_by=order_by,
-            custom_query_provider=spec.custom_query_provider
+            custom_query_provider=spec.custom_query_provider,
+            distinct_on=spec.distinct_on
         )
 
     def track_load(self, value):
@@ -77,14 +79,14 @@ class ConfigurableReportDataSource(object):
                 self._data_source = ConfigurableReportCustomDataSource(
                     self.domain, self.config, self._filters,
                     self._aggregation_columns, self._columns,
-                    self._order_by
+                    self._order_by, self._distinct_on
                 )
                 self._data_source.set_provider(self._custom_query_provider)
             else:
                 self._data_source = ConfigurableReportSqlDataSource(
                     self.domain, self.config, self._filters,
                     self._aggregation_columns, self._columns,
-                    self._order_by)
+                    self._order_by, self._distinct_on)
         return self._data_source
 
     @property

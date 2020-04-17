@@ -53,7 +53,7 @@ class CaseUpload(object):
     def get_spreadsheet(self):
         return get_spreadsheet(self.get_tempfile())
 
-    def trigger_upload(self, domain, config):
+    def trigger_upload(self, domain, config, comment=None):
         from corehq.apps.case_importer.tasks import bulk_import_async
         task = bulk_import_async.delay(config, domain, self.upload_id)
         original_filename = transient_file_store.get_filename(self.upload_id)
@@ -62,6 +62,7 @@ class CaseUpload(object):
 
         CaseUploadRecord(
             domain=domain,
+            comment=comment,
             upload_id=self.upload_id,
             task_id=task.task_id,
             couch_user_id=config.couch_user_id,

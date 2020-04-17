@@ -391,6 +391,9 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
     # If this is None, then the default is applied. See get_daily_outbound_sms_limit()
     custom_daily_outbound_sms_limit = IntegerProperty()
 
+    # Twilio Whatsapp-enabled phone number
+    twilio_whatsapp_phone_number = StringProperty()
+
     # Allowed number of case updates or closes from automatic update rules in the daily rule run.
     # If this value is None, the value in settings.MAX_RULE_UPDATES_IN_ONE_RUN is used.
     auto_case_update_limit = IntegerProperty()

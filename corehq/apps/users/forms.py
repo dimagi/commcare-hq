@@ -245,7 +245,8 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
 
     def __init__(self, *args, **kwargs):
         self.user = kwargs['existing_user']
-        api_key = kwargs.pop('api_key') if 'api_key' in kwargs else None
+        api_key_status = kwargs.pop('api_key_status') if 'api_key_status' in kwargs else None
+        api_key_exists = kwargs.pop('api_key_exists') if 'api_key_exists' in kwargs else None
         super(UpdateMyAccountInfoForm, self).__init__(*args, **kwargs)
         self.username = self.user.username
 
@@ -255,15 +256,26 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
                 ugettext_lazy('Username'), self.username)
             )
 
+        api_key_button = [
+            twbscrispy.StrictButton(
+                ugettext_lazy('Generate New API Key'),
+                type="button",
+                id='generate-api-key',
+                css_class='btn-default',
+            ),
+        ]
+        if api_key_exists:
+            api_key_button.append(
+                crispy.HTML('&nbsp;&nbsp;{}'.format(ugettext_lazy(
+                    'NOTE: Generating a new API Key will cause the '
+                    'current Key to become inactive.'
+                ))),
+            )
+
         api_key_controls = [
-            hqcrispy.StaticField(ugettext_lazy('API Key'), api_key),
+            hqcrispy.StaticField(ugettext_lazy('API Key'), api_key_status),
             hqcrispy.FormActions(
-                twbscrispy.StrictButton(
-                    ugettext_lazy('Generate API Key'),
-                    type="button",
-                    id='generate-api-key',
-                    css_class='btn-default',
-                ),
+                crispy.Div(*api_key_button),
                 css_class="form-group"
             ),
         ]
@@ -552,7 +564,7 @@ class NewMobileWorkerForm(forms.Form):
         label=ugettext_noop("Send Account Confirmation Email Now?"),
         help_text=ugettext_noop(
             "The user will be sent their account confirmation email now. "
-            "Otherwise it must be sent manually at a later time."
+            "Otherwise it must be sent manually from the Mobile Worker 'Deactivated Users' list."
         ),
         required=False,
     )
@@ -727,6 +739,12 @@ class NewMobileWorkerForm(forms.Form):
                 ),
             )
         )
+
+    def clean_email(self):
+        clean_email = self.cleaned_data['email'].strip().lower()
+        if clean_email:
+            validate_email(clean_email)
+        return clean_email
 
     def clean_location_id(self):
         location_id = self.cleaned_data['location_id']

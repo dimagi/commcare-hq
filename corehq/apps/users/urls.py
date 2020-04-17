@@ -62,7 +62,7 @@ from .views.mobile.users import (
     update_user_groups,
     user_download_job_poll,
     user_upload_job_poll,
-    CommCareUserConfirmAccountView)
+    CommCareUserConfirmAccountView, send_confirmation_email)
 
 urlpatterns = [
     url(r'^$', DefaultProjectUserSettingsView.as_view(), name=DefaultProjectUserSettingsView.urlname),
@@ -90,7 +90,7 @@ urlpatterns = [
     url(r'^web/delete_request/$', delete_request, name='delete_request'),
     url(r'^web/$', ListWebUsersView.as_view(), name=ListWebUsersView.urlname),
     url(r'^web/json/$', paginate_web_users, name='paginate_web_users'),
-    url(r'^join/(?P<invitation_id>[ \w-]+)/$', accept_invitation, name='domain_accept_invitation'),
+    url(r'^join/(?P<uuid>[ \w-]+)/$', accept_invitation, name='domain_accept_invitation'),
     url(r'^roles/$', ListRolesView.as_view(), name=ListRolesView.urlname),
     url(r'^roles/save/$', post_user_role, name='post_user_role'),
     url(r'^roles/delete/$', delete_user_role, name='delete_user_role'),
@@ -109,6 +109,8 @@ urlpatterns = [
     url(r'^commcare/account/(?P<couch_user_id>[ \w-]+)/groups/$', update_user_groups, name='update_user_groups'),
     url(r'^commcare/activate/(?P<user_id>[ \w-]+)/$', activate_commcare_user, name='activate_commcare_user'),
     url(r'^commcare/deactivate/(?P<user_id>[ \w-]+)/$', deactivate_commcare_user, name='deactivate_commcare_user'),
+    url(r'^commcare/send_confirmation_email/(?P<user_id>[ \w-]+)/$', send_confirmation_email,
+        name='send_confirmation_email'),
     url(r'^commcare/delete/(?P<user_id>[ \w-]+)/$', delete_commcare_user, name='delete_commcare_user'),
     url(r'^commcare/force_412/(?P<user_id>[ \w-]+)/$', force_user_412, name='force_user_412'),
     url(r'^commcare/restore/(?P<user_id>[ \w-]+)/$', restore_commcare_user, name='restore_commcare_user'),

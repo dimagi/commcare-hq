@@ -1,5 +1,3 @@
-import json
-
 from memoized import memoized
 
 from corehq.apps.es import GroupES, UserES, groups
@@ -87,12 +85,10 @@ class EmwfOptionsController(object):
         return [self.utils.reporting_group_tuple(g) for g in groups_query.run().hits]
 
     def get_locations_query(self, query):
-        show_inactive = json.loads(self.request.GET.get('show_inactive', 'false'))
-        if show_inactive:
-            included_objects = SQLLocation.inactive_objects
-        else:
-            included_objects = SQLLocation.active_objects
-        locations = included_objects.filter_by_user_input(self.domain, query)
+        show_inactive = self.request.GET.get('show_inactive') == 'true'
+        locations = (SQLLocation.objects
+                     .filter_by_user_input(self.domain, query)
+                     .filter(is_archived=show_inactive))
         if self.case_sharing_only:
             locations = locations.filter(location_type__shares_cases=True)
         return locations.accessible_to_user(self.domain, self.request.couch_user)

@@ -44,13 +44,13 @@
           <th>
             {% trans 'Version' %}
           </th>
-          <th>
-            {% trans 'Tag' %}
+          <th class="col-sm-2">
+            {% trans 'Functional Version' %}
           </th>
           <th class="col-sm-2">
             {% trans 'CCZ Name' %}
           </th>
-          <th class="col-sm-2">
+          <th>
             {% trans 'Note' %}
           </th>
           <th>
@@ -62,7 +62,7 @@
         <tr data-bind="css: {'success': status === 'completed', 'info': status === 'pending',
                              'danger': status === 'failed', 'warning': status === 'building'}">
           <td>
-            <a data-bind="attr: { href: viewUrl}, text: link" target="_blank">
+            <a data-bind="attr: { href: viewUrl}, text: link_name" target="_blank">
             </a>
           </td>
           <td data-bind="text: status">

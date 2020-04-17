@@ -130,4 +130,5 @@ def _get_primary_data_for_db(db, run_config):
             matching_xforms = matching_xforms.filter(xmlns=run_config.xmlns)
         return matching_xforms.values_list('form_id', 'xmlns', 'received_on')
     else:
-        return get_sql_case_data_for_db(db, run_config)
+        for case_id, case_type, server_date_modified, _ in get_sql_case_data_for_db(db, run_config):
+            yield case_id, case_type, server_date_modified

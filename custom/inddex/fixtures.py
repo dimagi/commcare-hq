@@ -40,6 +40,47 @@ class Food:
     tag_10 = attrib()
 
 
+@attrs(kw_only=True, frozen=True)
+class FoodComposition:
+    food_code = attrib()
+    foodex2_code = attrib()
+    foodex2_code_description = attrib()
+    user_defined_food_group = attrib()
+    fao_who_gift_food_group_code = attrib()
+    fao_who_gift_food_group_description = attrib()
+    fao_who_gift_nutrition_sub_group_code = attrib()
+    fao_who_gift_nutrition_sub_group_description = attrib()
+    fct_food_name = attrib()
+    survey_base_terms_and_food_items = attrib()
+    reference_food_code_for_food_composition = attrib()
+    scientific_name = attrib()
+    fct_source_description = attrib()
+    yield_factor = attrib()
+    yield_source_descr = attrib()
+    retention_factor = attrib()
+    retention_source_description = attrib()
+    additional_details = attrib()
+    additional_details_on_nutrients = attrib()
+    nutrients: dict = attrib()
+
+
+@attrs(kw_only=True, frozen=True)
+class Nutrient:
+    nutrient_code = attrib()
+    nutrient_name = attrib()
+    nutrient_name_unit = attrib()
+    unit = attrib()
+
+
+@attrs(kw_only=True, frozen=True)
+class ConversionFactor:
+    food_code = attrib()
+    conv_method = attrib()
+    conv_option = attrib()
+    conv_factor = attrib(converter=lambda x: float(x) if x else None)
+    energy_kcal = attrib(converter=float)
+
+
 class FixtureAccessor:
     def __init__(self, domain):
         self.domain = domain
@@ -75,3 +116,52 @@ class FixtureAccessor:
             food = Food(**item_dict)
             foods[food.food_code] = food
         return foods
+
+    @cached_property
+    def foods_by_name(self):
+        return {food.food_name: food for food in self.foods.values()}
+
+    @cached_property
+    def _nutrients(self):
+        return [
+            Nutrient(**item_dict)
+            for item_dict in self._get_fixture_dicts('nutrients_lookup')
+        ]
+
+    @cached_property
+    def nutrient_names(self):
+        return [n.nutrient_name_unit for n in self._nutrients]
+
+    @cached_property
+    def _nutrient_names_by_code(self):
+        return {n.nutrient_code: n.nutrient_name_unit for n in self._nutrients}
+
+    @cached_property
+    def food_compositions(self):
+        foods = {}
+        for item_dict in self._get_fixture_dicts('food_composition_table'):
+            nutrients = {}
+            composition_dict = {}
+            for k, v in item_dict.items():
+                if k.startswith('nut_'):
+                    nutrients[self._nutrient_names_by_code[k]] = _to_float(v)
+                else:
+                    composition_dict[k] = v
+            food = FoodComposition(nutrients=nutrients, **composition_dict)
+            foods[food.food_code] = food
+        return foods
+
+    @cached_property
+    def conversion_factors(self):
+        conversion_factors = (ConversionFactor(**item_dict)
+                              for item_dict in self._get_fixture_dicts('conv_factors'))
+        return {
+            (cf.food_code, cf.conv_method, cf.conv_option): cf.conv_factor for cf in conversion_factors
+        }
+
+
+def _to_float(v):
+    try:
+        return float(v)
+    except ValueError:
+        return None

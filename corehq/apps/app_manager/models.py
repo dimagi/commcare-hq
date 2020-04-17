@@ -169,7 +169,6 @@ from corehq.apps.reports.daterange import (
     get_daterange_start_end_dates,
     get_simple_dateranges,
 )
-from corehq.apps.translations.models import TranslationMixin
 from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
 from corehq.apps.userreports.util import get_static_report_mapping
 from corehq.apps.users.dbaccessors.couch_users import (
@@ -4559,8 +4558,7 @@ class SavedAppBuild(ApplicationBase):
         return data
 
 
-class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
-                  ApplicationIntegrationMixin):
+class Application(ApplicationBase, ApplicationMediaMixin, ApplicationIntegrationMixin):
     """
     An Application that can be created entirely through the online interface
 
@@ -4574,6 +4572,7 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
     custom_base_url = StringProperty()
     cloudcare_enabled = BooleanProperty(default=False)
 
+    translations = DictProperty()
     translation_strategy = StringProperty(default='select-known',
                                           choices=list(app_strings.CHOICES.keys()))
     auto_gps_capture = BooleanProperty(default=False)
@@ -4623,8 +4622,11 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
         # TODO: revamp so signal_connections <- models <- signals
         from corehq.apps.app_manager import signals
         from couchforms.analytics import get_form_analytics_metadata
+        from corehq.apps.reports.analytics.esaccessors import (
+            guess_form_name_from_submissions_using_xmlns)
         for xmlns in self.get_xmlns_map():
             get_form_analytics_metadata.clear(self.domain, self._id, xmlns)
+            guess_form_name_from_submissions_using_xmlns.clear(self.domain, xmlns)
         signals.app_post_save.send(Application, application=self)
 
     def delete_copy(self, copy):
@@ -4772,6 +4774,9 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
                 mod.get_or_create_unique_id()
             if should_save:
                 self.save()
+
+    def set_translations(self, lang, translations):
+        self.translations[lang] = translations
 
     def create_app_strings(self, lang, build_profile_id=None):
         gen = app_strings.CHOICES[self.translation_strategy]
@@ -5717,8 +5722,8 @@ class DeleteFormRecord(DeleteRecord):
 class ExchangeApplication(models.Model):
     domain = models.CharField(max_length=255, null=False)
     app_id = models.CharField(max_length=255, null=False)
-    last_released = models.DateTimeField(null=True)  # manual value unrelated to HQ's definition of last released
     help_link = models.CharField(max_length=255, null=True)
+    changelog_link = models.CharField(max_length=255, null=True)
 
     class Meta(object):
         unique_together = ('domain', 'app_id')
