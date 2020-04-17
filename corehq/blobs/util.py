@@ -281,3 +281,15 @@ class BlobStream(RawIOBase):
     @property
     def blob_db(self):
         return self._blob_db()
+
+
+def get_content_size(fileobj, chunks_sent):
+    """
+    :param fileobj: content object written to the backend
+    :param chunks_sent: list of chunk sizes sent
+    :return: tuple(uncompressed_size, compressed_size or None)
+    """
+    if isinstance(fileobj, GzipCompressReadStream):
+        return fileobj.content_length, sum(chunks_sent)
+
+    return sum(chunks_sent), None

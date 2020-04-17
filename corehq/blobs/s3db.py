@@ -1,18 +1,22 @@
 from contextlib import contextmanager
 from gzip import GzipFile
 
-from corehq.blobs.exceptions import NotFound
-from corehq.blobs.interface import AbstractBlobDB
-from corehq.blobs.util import check_safe_key, GzipCompressReadStream, BlobStream
-from corehq.util.metrics import metrics_counter, metrics_histogram_timer
-from dimagi.utils.logging import notify_exception
-
 from dimagi.utils.chunked import chunked
+from dimagi.utils.logging import notify_exception
 
 import boto3
 from botocore.client import Config
 from botocore.exceptions import ClientError
 from botocore.utils import fix_s3_host
+from corehq.blobs.exceptions import NotFound
+from corehq.blobs.interface import AbstractBlobDB
+from corehq.blobs.util import (
+    BlobStream,
+    GzipCompressReadStream,
+    check_safe_key,
+    get_content_size,
+)
+from corehq.util.metrics import metrics_counter, metrics_histogram_timer
 
 DEFAULT_S3_BUCKET = "blobdb"
 DEFAULT_BULK_DELETE_CHUNKSIZE = 1000
@@ -160,18 +164,6 @@ class S3BlobDB(AbstractBlobDB):
 def is_not_found(err, not_found_codes=["NoSuchKey", "NoSuchBucket", "404"]):
     return (err.response["Error"]["Code"] in not_found_codes or
         err.response.get("Errors", {}).get("Error", {}).get("Code") in not_found_codes)
-
-
-def get_content_size(fileobj, chunks_sent):
-    """
-    :param fileobj: content object written to the backend
-    :param chunks_sent: list of chunk sizes sent
-    :return: tuple(uncompressed_size, compressed_size or None)
-    """
-    if isinstance(fileobj, GzipCompressReadStream):
-        return fileobj.content_length, sum(chunks_sent)
-
-    return sum(chunks_sent), None
 
 
 @contextmanager
