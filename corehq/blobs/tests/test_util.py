@@ -1,5 +1,8 @@
 import gzip
+import os
 import tempfile
+import uuid
+from io import BytesIO
 from unittest import TestCase
 
 import corehq.blobs.util as mod
@@ -24,16 +27,19 @@ class TestRandomUrlId(TestCase):
 class TestGzipCompressReadStream(TestCase):
 
     def test_compression(self):
-        content = b"xx" * 1000
-        with tempfile.NamedTemporaryFile() as f:
-            f.write(content)
-            f.seek(0)
-            compress_stream = mod.GzipCompressReadStream(f)
-            with tempfile.NamedTemporaryFile() as compressed_f:
-                compressed_f.write(compress_stream.read())
-                compressed_f.flush()
-                with gzip.open(compressed_f.name, 'r') as reader:
-                    actual = reader.read()
+        desired_size = mod.GzipCompressReadStream.CHUNK_SIZE * 4
+        content = uuid.uuid4().bytes * 4
+        while len(content) < desired_size:
+            content += uuid.uuid4().bytes * 4
+
+        compress_stream = mod.GzipCompressReadStream(BytesIO(content))
+        with tempfile.NamedTemporaryFile() as compressed_f:
+            compressed_f.write(compress_stream.read())
+            compressed_f.flush()
+            with gzip.open(compressed_f.name, 'r') as reader:
+                actual = reader.read()
+            file_size = os.stat(compressed_f.name).st_size
+            self.assertGreater(len(content), file_size)
         self.assertEqual(content, actual)
         self.assertEqual(len(content), compress_stream.content_length)
 

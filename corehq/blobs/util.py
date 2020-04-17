@@ -41,11 +41,11 @@ class NullJsonField(JSONField):
         return self.get_default() if value is None else value
 
 
-# extended from https://stackoverflow.com/a/31566082
-
-
-# extended from https://stackoverflow.com/a/31566082
 class GzipCompressReadStream:
+    """Wrapper for a file like object that compresses the data as
+    it is read.
+
+    Adapted from https://stackoverflow.com/a/31566082"""
     CHUNK_SIZE = 4096
 
     class Buffer:
