@@ -46,6 +46,11 @@ class Parser(object):
         # mapping each location code to the type of operation requested for it
         self.requested_transitions = {}
         self.site_codes_to_be_archived = []
+        self.location_type_parent = {
+            lt.code: lt.parent_type.code
+            for lt in LocationType.objects.select_related('parent_type').filter(domain=self.domain)
+            if lt.parent_type
+        }
         location_type_codes_in_hierarchy = [lt.code for lt in LocationType.objects.by_domain(self.domain)]
         self.new_location_details = {
             location_type_code: {}
@@ -93,7 +98,7 @@ class Parser(object):
                 operation, old_site_code
             ))
             return
-        if self._invalid_row(row):
+        if self._invalid_row(row, location_type_code):
             return
         self._note_transition(operation, location_type_code, new_site_code, old_site_code)
         if new_site_code in self.new_location_details[location_type_code]:
@@ -111,7 +116,7 @@ class Parser(object):
         if row.get(NEW_USERNAME_COLUMN) and row.get(USERNAME_COLUMN):
             self.user_transitions[row.get(NEW_USERNAME_COLUMN)] = row.get(USERNAME_COLUMN)
 
-    def _invalid_row(self, row):
+    def _invalid_row(self, row, location_type_code):
         operation = row.get(OPERATION_COLUMN)
         old_site_code = row.get(CURRENT_SITE_CODE_COLUMN)
         new_site_code = row.get(NEW_SITE_CODE_COLUMN)
@@ -126,6 +131,12 @@ class Parser(object):
                 self.errors.append("Multiple transitions for %s, %s and %s" % (
                     new_site_code, self.requested_transitions.get(new_site_code), operation))
                 invalid = True
+        if self.location_type_parent.get(location_type_code) and not row.get(NEW_PARENT_SITE_CODE):
+            self.errors.append(f"Need parent for {old_site_code}")
+            invalid = True
+        if not self.location_type_parent.get(location_type_code) and row.get(NEW_PARENT_SITE_CODE):
+            self.errors.append(f"Unexpected parent set for {old_site_code}")
+            invalid = True
         return invalid
 
     def _note_transition(self, operation, location_type_code, new_site_code, old_site_code):
