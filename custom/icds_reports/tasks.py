@@ -1748,9 +1748,10 @@ def get_valid_data_not_in_ucr(status_record):
         doc_ids = [val[0] for val in chunk]
         known_bad_doc_ids = set(
             InvalidUCRData.objects.filter(doc_id__in=doc_ids).values_list('doc_id', flat=True))
-        doc_ids = list(set(doc_ids) - known_bad_doc_ids)
-        doc_id_and_inserted_in_ucr = _get_docs_in_ucr(domain, status_record.table_id, doc_ids)
+        doc_id_and_inserted_in_ucr = _get_docs_in_ucr(domain, status_record.table_id, list(set(doc_ids) - set(known_bad_doc_ids)))
         for doc_id, doc_subtype, sql_modified_on in chunk:
+            if doc_id in known_bad_doc_ids:
+                continue
             if doc_id in doc_id_and_inserted_in_ucr:
                 # This is to handle the cases which are outdated. This condition also handles the time drift of 1 sec
                 # between main db and ucr db. i.e  doc will even be included when inserted_at-sql_modified_on <= 1 sec
