@@ -266,8 +266,9 @@ class CachedResponse(object):
         return value
 
     def get_http_response(self):
-        headers = {'Content-Length': get_blob_db().size(key=self.name)}
-        return stream_response(self.as_file(), headers)
+        file = self.as_file()
+        headers = {'Content-Length': file.content_length}
+        return stream_response(file, headers)
 
 
 class RestoreParams(object):

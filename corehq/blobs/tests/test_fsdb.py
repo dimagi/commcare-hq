@@ -1,3 +1,4 @@
+import gzip
 import os
 from datetime import datetime, timedelta
 from io import BytesIO, open
@@ -27,21 +28,18 @@ class _BlobDBTests(object):
     def test_has_metadb(self):
         self.assertIsInstance(self.db.metadb, MetaDB)
 
-    def test_put_and_get(self, **meta_kwargs):
+    def test_put_and_get(self):
         identifier = self.new_meta()
         meta = self.db.put(BytesIO(b"content"), meta=identifier)
         self.assertEqual(identifier, meta)
         with self.db.get(meta=meta) as fh:
             self.assertEqual(fh.read(), b"content")
 
-    def test_put_and_get_compressed(self):
-        self.test_put_and_get(compressed=True)
-
     def test_put_and_size(self):
         identifier = self.new_meta()
         with capture_metrics() as metrics:
             meta = self.db.put(BytesIO(b"content"), meta=identifier)
-        size = len(b'content')
+        size = meta.stored_content_length
 
         self.assertEqual(metrics.sum('commcare.blobs.added.count', type='tempfile'), 1)
         self.assertEqual(metrics.sum('commcare.blobs.added.bytes', type='tempfile'), size)
@@ -100,8 +98,9 @@ class _BlobDBTests(object):
 
         with capture_metrics() as metrics:
             self.assertTrue(self.db.bulk_delete(metas=metas), 'delete failed')
+        size = sum(meta.stored_content_length for meta in metas)
         self.assertEqual(metrics.sum("commcare.blobs.deleted.count"), 2)
-        self.assertEqual(metrics.sum("commcare.blobs.deleted.bytes"), 28)
+        self.assertEqual(metrics.sum("commcare.blobs.deleted.bytes"), size)
 
         for meta in metas:
             with self.assertRaises(mod.NotFound):
@@ -202,9 +201,16 @@ class TestFilesystemBlobDB(TestCase, _BlobDBTests):
     def test_empty_attachment_name(self):
         meta = super(TestFilesystemBlobDB, self).test_empty_attachment_name()
         path = self.db.get_path(key=meta.key)
+        self._check_file_content(path, b"content")
+
+    def _check_file_content(self, path, expected):
         with open(path, "rb") as fh:
-            self.assertEqual(fh.read(), b"content")
+            self.assertEqual(fh.read(), expected)
 
 
 class TestFilesystemBlobDBCompressed(TestFilesystemBlobDB):
-    meta_kwargs = {'compressed': True}
+    meta_kwargs = {'compressed_length': -1}
+
+    def _check_file_content(self, path, expected):
+        with gzip.open(path, 'rb') as fh:
+            self.assertEqual(fh.read(), expected)

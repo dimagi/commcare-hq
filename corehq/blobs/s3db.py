@@ -1,12 +1,9 @@
-import os
-import weakref
 from contextlib import contextmanager
-from io import RawIOBase, UnsupportedOperation
 from gzip import GzipFile
 
 from corehq.blobs.exceptions import NotFound
 from corehq.blobs.interface import AbstractBlobDB
-from corehq.blobs.util import check_safe_key, GzipCompressReadStream
+from corehq.blobs.util import check_safe_key, GzipCompressReadStream, BlobStream
 from corehq.util.metrics import metrics_counter, metrics_histogram_timer
 from dimagi.utils.logging import notify_exception
 
@@ -66,14 +63,15 @@ class S3BlobDB(AbstractBlobDB):
         check_safe_key(meta.key)
         s3_bucket = self._s3_bucket(create=True)
         if isinstance(content, BlobStream) and content.blob_db is self:
-            meta.content_length = content.uncompressed_length
+            meta.content_length = content.content_length
+            meta.compressed_length = content.compressed_length
             self.metadb.put(meta)
             source = {"Bucket": self.s3_bucket_name, "Key": content.blob_key}
             with self.report_timing('put-via-copy', meta.key):
                 s3_bucket.copy(source, meta.key)
         else:
             content.seek(0)
-            if meta.compressed:
+            if meta.is_compressed:
                 content = GzipCompressReadStream(content)
 
             chunk_sizes = []
@@ -83,7 +81,7 @@ class S3BlobDB(AbstractBlobDB):
 
             with self.report_timing('put', meta.key):
                 s3_bucket.upload_fileobj(content, meta.key, Callback=_track_transfer)
-            meta.content_length = get_content_size(content, chunk_sizes)
+            meta.content_length, meta.compressed_length = get_content_size(content, chunk_sizes)
             self.metadb.put(meta)
         return meta
 
@@ -92,12 +90,15 @@ class S3BlobDB(AbstractBlobDB):
         check_safe_key(key)
         with maybe_not_found(throw=NotFound(key)), self.report_timing('get', key):
             resp = self._s3_bucket().Object(key).get()
-        uncompressed_length = resp['ContentLength']
+        reported_content_length = resp['ContentLength']
+
         body = resp["Body"]
-        if meta and meta.compressed:
-            uncompressed_length = meta.content_length
+        if meta and meta.is_compressed:
+            content_length, compressed_length = meta.content_length, meta.compressed_length
             body = GzipFile(key, mode='rb', fileobj=body)
-        return BlobStream(body, self, key, uncompressed_length)
+        else:
+            content_length, compressed_length = reported_content_length, None
+        return BlobStream(body, self, key, content_length, compressed_length)
 
     def size(self, key):
         check_safe_key(key)
@@ -156,61 +157,21 @@ class S3BlobDB(AbstractBlobDB):
         return self.db.Bucket(self.s3_bucket_name)
 
 
-class BlobStream(RawIOBase):
-
-    def __init__(self, stream, blob_db, blob_key, uncompressed_length):
-        self._obj = stream
-        self._blob_db = weakref.ref(blob_db)
-        self.blob_key = blob_key
-        self.uncompressed_length = uncompressed_length
-
-    def readable(self):
-        return True
-
-    def read(self, *args, **kw):
-        return self._obj.read(*args, **kw)
-
-    read1 = read
-
-    def write(self, *args, **kw):
-        raise IOError
-
-    def tell(self):
-        tell = getattr(self._obj, 'tell', None)
-        if tell is not None:
-            return tell()
-        return self._obj._amount_read
-
-    def seek(self, offset, from_what=os.SEEK_SET):
-        if from_what != os.SEEK_SET:
-            raise ValueError("seek mode not supported")
-        pos = self.tell()
-        if offset != pos:
-            raise ValueError("seek not supported")
-        return pos
-
-    def close(self):
-        self._obj.close()
-        return super(BlobStream, self).close()
-
-    def __getattr__(self, name):
-        return getattr(self._obj, name)
-
-    @property
-    def blob_db(self):
-        return self._blob_db()
-
-
 def is_not_found(err, not_found_codes=["NoSuchKey", "NoSuchBucket", "404"]):
     return (err.response["Error"]["Code"] in not_found_codes or
         err.response.get("Errors", {}).get("Error", {}).get("Code") in not_found_codes)
 
 
 def get_content_size(fileobj, chunks_sent):
+    """
+    :param fileobj: content object written to the backend
+    :param chunks_sent: list of chunk sizes sent
+    :return: tuple(uncompressed_size, compressed_size or None)
+    """
     if isinstance(fileobj, GzipCompressReadStream):
-        return fileobj.content_length
+        return fileobj.content_length, sum(chunks_sent)
 
-    return sum(chunks_sent)
+    return sum(chunks_sent), None
 
 
 @contextmanager

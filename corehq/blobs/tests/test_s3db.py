@@ -66,7 +66,8 @@ from django.conf import settings
 from django.test import TestCase
 
 from corehq.blobs import CODES
-from corehq.blobs.s3db import S3BlobDB, BlobStream
+from corehq.blobs.s3db import S3BlobDB
+from corehq.blobs.util import BlobStream
 from corehq.blobs.tests.util import new_meta, TemporaryS3BlobDB
 from corehq.blobs.tests.test_fsdb import _BlobDBTests
 from corehq.util.test_utils import trap_extra_setup
@@ -98,7 +99,7 @@ class TestS3BlobDB(TestCase, _BlobDBTests):
 
 
 class TestS3BlobDBCompressed(TestS3BlobDB):
-    meta_kwargs = {'compressed': True}
+    meta_kwargs = {'compressed_length': -1}
 
 
 class TestBlobStream(TestCase):
@@ -166,13 +167,13 @@ class TestBlobStream(TestCase):
     def test_close(self):
         fake = FakeStream()
         self.assertEqual(fake.close_calls, 0)
-        BlobStream(fake, fake, None, 0).close()
+        BlobStream(fake, fake, None, 0, 0).close()
         self.assertEqual(fake.close_calls, 1)
 
     def test_close_on_exit_context(self):
         fake = FakeStream()
         self.assertEqual(fake.close_calls, 0)
-        with BlobStream(fake, fake, None, 0):
+        with BlobStream(fake, fake, None, 0, 0):
             pass
         self.assertEqual(fake.close_calls, 1)
 
@@ -183,7 +184,8 @@ class TestBlobStream(TestCase):
 class TestBlobStreamCompressed(TestBlobStream):
     @classmethod
     def new_meta(cls, **kwargs):
-        return new_meta(compressed=True, type_code=CODES.form_xml)
+        # set compressed_length to anything except None
+        return new_meta(compressed_length=-1, type_code=CODES.form_xml)
 
 
 class FakeStream(object):

@@ -303,14 +303,13 @@ class BlobDownload(DownloadBase):
             blob_key = "_default/" + self.identifier
         blob_db = get_blob_db()
         file_obj = blob_db.get(key=blob_key, type_code=CODES.tempfile)
-        blob_size = blob_db.size(key=blob_key)
 
         response = StreamingHttpResponse(
             FileWrapper(file_obj, CHUNK_SIZE),
             content_type=self.content_type
         )
 
-        response['Content-Length'] = blob_size
+        response['Content-Length'] = file_obj.content_length
         response['Content-Disposition'] = self.content_disposition
         for k, v in self.extras.items():
             response[k] = v

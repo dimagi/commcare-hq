@@ -1,3 +1,4 @@
+import weakref
 from base64 import urlsafe_b64encode, b64encode
 from collections import deque
 from datetime import datetime
@@ -5,6 +6,7 @@ from gzip import GzipFile
 import hashlib
 import os
 import re
+from io import RawIOBase
 
 from jsonfield import JSONField
 
@@ -227,3 +229,55 @@ def set_max_connections(num_workers):
     for name in ["S3_BLOB_DB_SETTINGS", "OLD_S3_BLOB_DB_SETTINGS"]:
         if getattr(settings, name, False):
             update_config(name)
+
+
+class BlobStream(RawIOBase):
+    """Wrapper around the raw stream with additional properties for convenient access:
+
+    * blob_key
+    * content_length
+    * compressed_length (will be None if blob is not compressed)
+    """
+
+    def __init__(self, stream, blob_db, blob_key, content_length, compressed_length):
+        self._obj = stream
+        self._blob_db = weakref.ref(blob_db)
+        self.blob_key = blob_key
+        self.content_length = content_length
+        self.compressed_length = compressed_length
+
+    def readable(self):
+        return True
+
+    def read(self, *args, **kw):
+        return self._obj.read(*args, **kw)
+
+    read1 = read
+
+    def write(self, *args, **kw):
+        raise IOError
+
+    def tell(self):
+        tell = getattr(self._obj, 'tell', None)
+        if tell is not None:
+            return tell()
+        return self._obj._amount_read
+
+    def seek(self, offset, from_what=os.SEEK_SET):
+        if from_what != os.SEEK_SET:
+            raise ValueError("seek mode not supported")
+        pos = self.tell()
+        if offset != pos:
+            raise ValueError("seek not supported")
+        return pos
+
+    def close(self):
+        self._obj.close()
+        return super(BlobStream, self).close()
+
+    def __getattr__(self, name):
+        return getattr(self._obj, name)
+
+    @property
+    def blob_db(self):
+        return self._blob_db()

@@ -64,7 +64,7 @@ class AbstractBlobDB(metaclass=ABCMeta):
         is provided, then key and type_code should be None. For type_code
         form_xml, meta is required.
 
-        :returns: A file-like object in binary read mode. The returned
+        :returns: A BlobStream object binary read mode. The returned
         object should be closed when finished reading.
         """
         raise NotImplementedError
@@ -94,7 +94,8 @@ class AbstractBlobDB(metaclass=ABCMeta):
 
     @abstractmethod
     def size(self, key):
-        """Gets the size of a blob in bytes
+        """Gets the size of a stored blob in bytes. This may be different from the raw
+        content length if the blob was compressed.
 
         :param key: Blob key.
         :returns: The number of bytes of a blob

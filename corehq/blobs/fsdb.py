@@ -8,7 +8,7 @@ from os.path import commonprefix, exists, isabs, isdir, dirname, join, realpath,
 
 from corehq.blobs.exceptions import BadName, NotFound
 from corehq.blobs.interface import AbstractBlobDB
-from corehq.blobs.util import check_safe_key, GzipCompressReadStream
+from corehq.blobs.util import check_safe_key, GzipCompressReadStream, BlobStream
 from corehq.util.metrics import metrics_counter
 
 CHUNK_SIZE = 4096
@@ -29,7 +29,7 @@ class FilesystemBlobDB(AbstractBlobDB):
         dirpath = dirname(path)
         if not isdir(dirpath):
             os.makedirs(dirpath)
-        if meta.compressed:
+        if meta.is_compressed:
             content = GzipCompressReadStream(content)
         length = 0
         digest = md5()
@@ -41,7 +41,11 @@ class FilesystemBlobDB(AbstractBlobDB):
                 fh.write(chunk)
                 length += len(chunk)
                 digest.update(chunk)
-        meta.content_length = content.content_length if meta.compressed else length
+        if meta.is_compressed:
+            meta.content_length = content.content_length
+            meta.compressed_length = length
+        else:
+            meta.content_length = length
         self.metadb.put(meta)
         return meta
 
@@ -51,9 +55,13 @@ class FilesystemBlobDB(AbstractBlobDB):
         if not exists(path):
             metrics_counter('commcare.blobdb.notfound')
             raise NotFound(key)
-        if meta and meta.compressed:
-            return GzipFile(path)
-        return open(path, "rb")
+        if meta and meta.is_compressed:
+            content_length, compressed_length = meta.content_length, meta.compressed_length
+            file_obj = GzipFile(path, 'rb')
+        else:
+            content_length, compressed_length = self.size(key), None
+            file_obj = open(path, "rb")
+        return BlobStream(file_obj, key, self, content_length, compressed_length)
 
     def size(self, key):
         path = self.get_path(key)

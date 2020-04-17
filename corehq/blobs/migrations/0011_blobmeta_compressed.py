@@ -14,7 +14,7 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AddField(
             model_name='blobmeta',
-            name='compressed',
-            field=models.NullBooleanField(),
+            name='compressed_length',
+            field=models.BigIntegerField(null=True),
         ),
     ]
