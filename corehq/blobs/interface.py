@@ -64,7 +64,7 @@ class AbstractBlobDB(metaclass=ABCMeta):
         is provided, then key and type_code should be None. For type_code
         form_xml, meta is required.
 
-        :returns: A BlobStream object binary read mode. The returned
+        :returns: A BlobStream object in binary read mode. The returned
         object should be closed when finished reading.
         """
         raise NotImplementedError
