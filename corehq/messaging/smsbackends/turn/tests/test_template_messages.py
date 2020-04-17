@@ -21,13 +21,13 @@ class TurnWhatsAppTemplateTest(SimpleTestCase):
         )
         self.assertEqual(parts.template_name, "template_name")
         self.assertEqual(parts.lang_code, "en-US")
-        self.assertEqual(parts.variables, ["name of person", "address"])
+        self.assertEqual(parts.params, ["name of person", "address"])
 
         # missing ending
         parts = get_template_hsm_parts("cc_wa_template:template_name:en-US: name of person,address")
         self.assertEqual(parts.template_name, "template_name")
         self.assertEqual(parts.lang_code, "en-US")
-        self.assertEqual(parts.variables, ["name of person", "address"])
+        self.assertEqual(parts.params, ["name of person", "address"])
 
         # extra stuff at the end, this is added in by formplayer when parsing SMS forms
         parts = get_template_hsm_parts(
@@ -35,22 +35,22 @@ class TurnWhatsAppTemplateTest(SimpleTestCase):
         )
         self.assertEqual(parts.template_name, "template_name")
         self.assertEqual(parts.lang_code, "en-US")
-        self.assertEqual(parts.variables, ["name of person", "address"])
+        self.assertEqual(parts.params, ["name of person", "address"])
 
-        # no variables and extra stuff
+        # no params and extra stuff
         parts = get_template_hsm_parts("cc_wa_template:template_name:en-US~1:yes, 2:no")
         self.assertEqual(parts.template_name, "template_name")
         self.assertEqual(parts.lang_code, "en-US")
-        self.assertEqual(parts.variables, [])
+        self.assertEqual(parts.params, [])
 
-        # no variables and missing ending
+        # no params and missing ending
         parts = get_template_hsm_parts("cc_wa_template:template_name:en-US")
         self.assertEqual(parts.template_name, "template_name")
         self.assertEqual(parts.lang_code, "en-US")
-        self.assertEqual(parts.variables, [])
+        self.assertEqual(parts.params, [])
 
-        # no variables
+        # no params
         parts = get_template_hsm_parts("cc_wa_template:template_name:en-US~")
         self.assertEqual(parts.template_name, "template_name")
         self.assertEqual(parts.lang_code, "en-US")
-        self.assertEqual(parts.variables, [])
+        self.assertEqual(parts.params, [])

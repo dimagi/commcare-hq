@@ -26,6 +26,7 @@ class SQLTurnWhatsAppBackend(SQLSMSBackend):
     @classmethod
     def get_available_extra_fields(cls):
         return [
+            "template_namespace",
             "client_auth_token",
             "business_id",
             "business_auth_token",
@@ -45,8 +46,27 @@ class SQLTurnWhatsAppBackend(SQLSMSBackend):
         except WhatsAppContactNotFound:
             pass  # TODO: Fallback to SMS?
 
+        if is_whatsapp_template_message(msg.text):
+            return self._send_template_message(client, wa_id, msg.text)
+        else:
+            return self._send_text_message(client, wa_id, msg.text)
+
+    def _send_template_message(self, client, wa_id, message_text):
+        parts = get_template_hsm_parts(message_text)
         try:
-            message = client.messages.send_text(wa_id, msg.text)
+            return client.messages.send_templated_message(
+                wa_id,
+                self.config.template_namespace,
+                parts.template_name,
+                parts.lang_code,
+                parts.params,
+            )
+        except:  # TODO: Add messaging exceptions to package
+            raise
+
+    def _send_text_message(self, client, wa_id, message_text):
+        try:
+            return client.messages.send_text(wa_id, message_text)
         except:  # TODO: Add message exceptions to package
             raise
 
@@ -61,15 +81,15 @@ def is_whatsapp_template_message(message_text):
 
 
 def get_template_hsm_parts(message_text):
-    HsmParts = namedtuple("hsm_parts", "template_name lang_code variables")
+    HsmParts = namedtuple("hsm_parts", "template_name lang_code params")
     parts = message_text.split("~")[0].split(":")
 
     try:
-        variables = [p.strip() for p in parts[3].split(",")]
+        params = [p.strip() for p in parts[3].split(",")]
     except IndexError:
-        variables = []
+        params = []
 
     try:
-        return HsmParts(template_name=parts[1], lang_code=parts[2], variables=variables,)
+        return HsmParts(template_name=parts[1], lang_code=parts[2], params=params)
     except IndexError:
         raise WhatsAppTemplateStringException
