@@ -192,7 +192,7 @@ class Parser(object):
                 SQLLocation.active_objects.select_related('location_type')
                 .filter(domain=self.domain, site_code__in=new_parent_site_codes)
             }
-            for details in self.new_location_details[location_type_code]:
+            for details in self.new_location_details[location_type_code].values():
                 parent_site_code = details['parent_site_code']
                 if parent_site_code in existing_new_parents:
                     if existing_new_parents[parent_site_code].location_type.code != expected_parent_type:
@@ -203,7 +203,7 @@ class Parser(object):
     def _get_new_parent_site_codes(self, location_type_code):
         return {
             details['parent_site_code']
-            for details in self.new_location_details[location_type_code]
+            for details in self.new_location_details[location_type_code].values()
             if details['parent_site_code']
         }
 
