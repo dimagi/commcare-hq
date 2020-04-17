@@ -93,7 +93,8 @@ class BiharApiDemographicsHelper(BaseICDSAggregationDistributedHelper):
             ('hh_bpl_apl', 'hh_list.hh_bpl_apl'),
             ('hh_minority', 'hh_list.hh_minority'),
             ('hh_religion', 'hh_list.hh_religion'),
-
+            ('out_of_school_status', 'person_list.is_oos'),
+            ('last_class_attended_ever', 'person_list.last_class_attended_ever')
         )
         column_names = ", ".join([col[0] for col in columns])
         calculations = ", ".join([col[1] for col in columns])
@@ -132,7 +133,10 @@ class BiharApiDemographicsHelper(BaseICDSAggregationDistributedHelper):
         return [
             f"""CREATE INDEX IF NOT EXISTS demographics_state_person_case_idx
                 ON "{self.monthly_tablename}" (month, state_id, person_id)
-            """
+            """,
+            f"""CREATE INDEX IF NOT EXISTS demographics_gender_dobx
+                            ON "{self.monthly_tablename}" (gender, dob)
+                        """
         ]
 
     def add_partition_table__query(self):

@@ -1387,6 +1387,8 @@ class BiharDemographicsView(models.Model):
     site_death = models.TextField(blank=True, null=True)
     closed_on = models.DateField(blank=True, null=True)
     reason_closure = models.TextField(blank=True, null=True)
+    out_of_school_status = models.SmallIntegerField(null=True)
+    last_class_attended_ever = models.SmallIntegerField(null=True)
 
     class Meta(object):
         app_label = 'icds_reports'

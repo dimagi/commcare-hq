@@ -1763,6 +1763,8 @@ class BiharAPIDemographics(models.Model, AggregateMixin):
     site_death = models.TextField(null=True)
     closed_on = models.DateField(null=True)
     reason_closure = models.TextField(null=True)
+    out_of_school_status = models.SmallIntegerField(null=True)
+    last_class_attended_ever = models.SmallIntegerField(null=True)
 
     class Meta(object):
         db_table = BIHAR_API_DEMOGRAPHICS_TABLE
