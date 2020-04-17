@@ -410,6 +410,8 @@ class SettingsForm(Form):
                 'twilio_whatsapp_phone_number',
                 help_bubble_text=_("""
                     Whatsapp-enabled phone number for use with Twilio.
+                    This should be formatted as a full-length, numeric-only
+                    phone number, e.g., 16173481000.
                 """),
             ))
 

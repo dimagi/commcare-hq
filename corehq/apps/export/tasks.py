@@ -17,10 +17,9 @@ from corehq.apps.data_dictionary.util import add_properties_to_data_dictionary
 from corehq.apps.export.utils import get_export
 from corehq.apps.users.models import CouchUser
 from corehq.blobs import CODES, get_blob_db
-from corehq.util.datadog.gauges import datadog_track_errors
 from corehq.util.decorators import serial_task
 from corehq.util.files import TransientTempfile, safe_filename_header
-from corehq.util.metrics import metrics_counter
+from corehq.util.metrics import metrics_counter, metrics_track_errors
 from corehq.util.quickcache import quickcache
 
 from .const import EXPORT_DOWNLOAD_QUEUE, SAVED_EXPORTS_QUEUE
@@ -56,7 +55,7 @@ def populate_export_download_task(domain, export_ids, exports_type, username, fi
 
     export_instances = [get_export(exports_type, domain, export_id, username)
                         for export_id in export_ids]
-    with TransientTempfile() as temp_path, datadog_track_errors('populate_export_download_task'):
+    with TransientTempfile() as temp_path, metrics_track_errors('populate_export_download_task'):
         export_file = get_export_file(
             export_instances,
             filters,

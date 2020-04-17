@@ -16,7 +16,7 @@ from django.db.models import F
 import pytz
 from celery import chain
 from celery.schedules import crontab
-from celery.task import periodic_task, task
+from celery.task import task
 from dateutil import parser as date_parser
 from dateutil.relativedelta import relativedelta
 from gevent.pool import Pool
@@ -27,7 +27,6 @@ from dimagi.utils.chunked import chunked
 from dimagi.utils.dates import force_to_date, force_to_datetime
 from dimagi.utils.logging import notify_exception
 from pillowtop.feed.interface import ChangeMeta
-from pillow_retry.models import PillowError
 
 from corehq.apps.change_feed import data_sources, topics
 from corehq.apps.change_feed.producer import producer
@@ -42,12 +41,9 @@ from corehq.apps.users.dbaccessors.all_commcare_users import (
     get_all_user_id_username_pairs_by_domain,
 )
 from corehq.const import SERVER_DATE_FORMAT, SERVER_DATETIME_FORMAT
-from corehq.form_processor.change_publishers import publish_case_saved
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import CommCareCaseSQL, XFormInstanceSQL
 from corehq.sql_db.connections import get_icds_ucr_citus_db_alias
 from corehq.util.celery_utils import periodic_task_on_envs
-from corehq.util.datadog.utils import case_load_counter
 from corehq.util.decorators import serial_task
 from corehq.util.log import send_HTML_email
 from corehq.util.soft_assert import soft_assert
@@ -108,7 +104,8 @@ from custom.icds_reports.models.aggregate import (
     AggServiceDeliveryReport,
     AggregateMigrationForms,
     AggregateAvailingServiceForms,
-    BiharAPIDemographics
+    BiharAPIDemographics,
+    ChildVaccines
 )
 from custom.icds_reports.models.helper import IcdsFile
 from custom.icds_reports.models.util import UcrReconciliationStatus
@@ -1889,3 +1886,8 @@ def update_service_delivery_report(target_date):
 def update_bihar_api_table(target_date):
     current_month = force_to_date(target_date).replace(day=1)
     BiharAPIDemographics.aggregate(current_month)
+
+
+def update_child_vaccine_table(target_date):
+    current_month = force_to_date(target_date).replace(day=1)
+    ChildVaccines.aggregate(current_month)

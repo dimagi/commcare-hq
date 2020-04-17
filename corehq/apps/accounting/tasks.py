@@ -28,7 +28,16 @@ from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.couch.database import iter_docs
 
 from corehq.apps.accounting.enterprise import EnterpriseReport
-from corehq.apps.accounting.exceptions import CreditLineError, InvoiceError
+from corehq.apps.accounting.exceptions import (
+    CreditLineError,
+    InvoiceError,
+    NoActiveSubscriptionError,
+    MultipleActiveSubscriptionsError,
+    ActiveSubscriptionWithoutDomain,
+    CreditLineBalanceMismatchError,
+    AccountingCommunicationError,
+    SubscriptionTaskError,
+)
 from corehq.apps.accounting.invoicing import (
     CustomerAccountInvoiceFactory,
     DomainInvoiceFactory,
@@ -192,7 +201,11 @@ def warn_subscriptions_still_active(based_on_date=None):
         is_active=True,
     )
     for subscription in subscriptions_still_active:
-        log_accounting_error("%s is still active." % subscription)
+        try:
+            # needed for sending to sentry
+            raise SubscriptionTaskError()
+        except SubscriptionTaskError:
+            log_accounting_error(f"{subscription} is still active.")
 
 
 def warn_subscriptions_not_active(based_on_date=None):
@@ -203,7 +216,11 @@ def warn_subscriptions_not_active(based_on_date=None):
         is_active=False,
     )
     for subscription in subscriptions_not_active:
-        log_accounting_error("%s is not active" % subscription)
+        try:
+            # needed for sending to sentry
+            raise SubscriptionTaskError()
+        except SubscriptionTaskError:
+            log_accounting_error(f"{subscription} is not active.")
 
 
 def warn_active_subscriptions_per_domain_not_one():
@@ -212,10 +229,21 @@ def warn_active_subscriptions_per_domain_not_one():
             subscriber__domain=domain_name,
             is_active=True,
         ).count()
-        if active_subscription_count > 1:
-            log_accounting_error("Multiple active subscriptions found for domain %s" % domain_name)
-        elif active_subscription_count == 0 and Domain.get_by_name(domain_name).is_active:
-            log_accounting_error("There is no active subscription for domain %s" % domain_name)
+
+        # we need to put a try/except here so that sentry captures logging
+        try:
+            if active_subscription_count > 1:
+                raise MultipleActiveSubscriptionsError()
+            elif active_subscription_count == 0 and Domain.get_by_name(domain_name).is_active:
+                raise NoActiveSubscriptionError()
+        except NoActiveSubscriptionError:
+            log_accounting_error(
+                f"There is no active subscription for domain {domain_name}"
+            )
+        except MultipleActiveSubscriptionsError:
+            log_accounting_error(
+                f"Multiple active subscriptions found for domain {domain_name}"
+            )
 
 
 def warn_subscriptions_without_domain():
@@ -223,7 +251,13 @@ def warn_subscriptions_without_domain():
         is_active=True,
     ).values_list('subscriber__domain', flat=True).distinct()
     for domain_name in set(domains_with_active_subscription) - set(Domain.get_all_names()):
-        log_accounting_error('Domain %s has an active subscription but does not exist.' % domain_name)
+        # we need to put a try/except here so that sentry captures logging
+        try:
+            raise ActiveSubscriptionWithoutDomain()
+        except ActiveSubscriptionWithoutDomain:
+            log_accounting_error(
+                f'Domain {domain_name} has an active subscription but does not exist.'
+            )
 
 
 @periodic_task(run_every=crontab(minute=0, hour=5), acks_late=True)
@@ -246,9 +280,14 @@ def check_credit_line_balances():
     for credit_line in CreditLine.objects.all():
         expected_balance = sum(credit_line.creditadjustment_set.values_list('amount', flat=True))
         if expected_balance != credit_line.balance:
-            log_accounting_error(
-                'Credit line %s has balance %s, expected %s' % (credit_line.id, credit_line.balance, expected_balance)
-            )
+            try:
+                # needed for sending to sentry
+                raise CreditLineBalanceMismatchError()
+            except CreditLineBalanceMismatchError:
+                log_accounting_error(
+                    f'Credit line {credit_line.id} has balance {credit_line.balance},'
+                    f' expected {expected_balance}'
+                )
 
 
 @periodic_task(serializer='pickle', run_every=crontab(hour=13, minute=0, day_of_month='1'), acks_late=True)
@@ -477,11 +516,15 @@ def send_purchase_receipt(payment_record, domain,
         email = web_user.get_email()
         name = web_user.first_name
     else:
-        log_accounting_error(
-            "Strange. A payment attempt was made by a user that "
-            "we can't seem to find! %s" % username,
-            show_stack_trace=True,
-        )
+        try:
+            # needed for sentry
+            raise AccountingCommunicationError()
+        except AccountingCommunicationError:
+            log_accounting_error(
+                f"A payment attempt was made by a user that "
+                f"does not exist: {username}",
+                show_stack_trace=True,
+            )
         name = email = username
 
     context = {
