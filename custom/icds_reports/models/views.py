@@ -114,6 +114,7 @@ class DailyAttendanceView(models.Model):
 class ChildHealthMonthlyView(models.Model):
     """Contains one row for the status of every child_health case at the end of each month
     """
+    state_name = models.TextField(blank=True, null=True)
     case_id = models.TextField(primary_key=True)
     awc_id = models.TextField(blank=True, null=True)
     awc_name = models.TextField(blank=True, null=True)
@@ -123,6 +124,7 @@ class ChildHealthMonthlyView(models.Model):
     block_id = models.TextField(blank=True, null=True)
     block_name = models.TextField(blank=True, null=True)
     district_id = models.TextField(blank=True, null=True)
+    district_name = models.TextField(blank=True, null=True)
     state_id = models.TextField(blank=True, null=True)
     person_name = models.TextField(blank=True, null=True)
     mother_name = models.TextField(blank=True, null=True)
@@ -156,6 +158,7 @@ class ChildHealthMonthlyView(models.Model):
         help_text="Number of days a Daily Feeing Form has been submitted against this child case"
         "when valid_in_month and age in months between 36 and 72 months"
     )
+    lunch_count = models.IntegerField(blank=True, null=True)
     recorded_weight = models.DecimalField(
         max_digits=65535, decimal_places=65535, blank=True, null=True,
         help_text="weight_child if it has been recorded in the month"
