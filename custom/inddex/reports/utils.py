@@ -12,12 +12,6 @@ class MultiTabularReport(DatespanMixin, CustomProjectReport, GenericTabularRepor
     exportable_all = True
     export_only = False
 
-    is_released = True
-    @classmethod
-    def show_in_navigation(cls, domain=None, project=None, user=None):
-        # This is a temporary hack to hide WIP reports from view while in development
-        return cls.is_released or domain == 'inddex-reports'
-
     @property
     def data_providers(self):
         # data providers should supply a title, slug, headers, and rows
@@ -29,14 +23,14 @@ class MultiTabularReport(DatespanMixin, CustomProjectReport, GenericTabularRepor
             'name': self.name,
             'export_only': self.export_only
         }
-        if not self.needs_filters:
+        if not self.export_only and not self.needs_filters:
             context['data_providers'] = [{
                 'title': data_provider.title,
                 'slug': data_provider.slug,
                 'headers': DataTablesHeader(
                     *(DataTablesColumn(header) for header in data_provider.headers),
                 ),
-                'rows': data_provider.rows,
+                'rows': list(data_provider.rows),
             } for data_provider in self.data_providers]
         return context
 
