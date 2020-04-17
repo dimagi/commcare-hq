@@ -17,8 +17,6 @@ class Command(BaseCommand):
                             help='supervisor from where records are to fetch', default='')
 
     def get_supervisor_ids(self, start_supervisor_id):
-        print(start_supervisor_id)
-        print(type(start_supervisor_id))
         return (AwcLocation.objects.filter(state_id=self.BIHAR_STATE_ID, aggregation_level=4,
                                            supervisor_id__gte=start_supervisor_id)
                 .order_by('supervisor_id')
