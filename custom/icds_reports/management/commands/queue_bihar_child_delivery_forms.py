@@ -11,16 +11,30 @@ from dimagi.utils.chunked import chunked
 class Command(BaseCommand):
     help = "Rebuild Bihar delivery forms"
 
+    def add_arguments(self, parser):
+        parser.add_argument('--start_supervisor_id',required=False, dest='start_supervisor_id',
+                            help='supervisor from where records are to fetch')
+
+
     def handle(self, *args, **kwargs):
         delivery_config = _get_config_by_id('static-icds-cas-static-child_delivery_forms')
         table_name = get_table_name('icds-cas', 'static-child_delivery_forms')
         # sort by supervisor_id and doc_id to improve the performance, sorting is needed to resume the queueing
         # if it fails in between.
-        query = """
-            select supervisor_id, doc_id from "{}"
-            where state_id='f9b47ea2ee2d8a02acddeeb491d3e175'
-            order by supervisor_id, doc_id
-        """.format(table_name)
+        start_supervisor_id = kwargs.get('start_supervisor_id')
+        bihar_state_id = 'f9b47ea2ee2d8a02acddeeb491d3e175'
+        if not start_supervisor_id:
+            query = f"""
+                select supervisor_id, doc_id from "{table_name}"
+                where state_id='{bihar_state_id}'
+                order by supervisor_id, doc_id
+            """
+        else:
+            query = f"""
+                    select supervisor_id, doc_id from "{table_name}"
+                    where state_id='{bihar_state_id}' and supervisor_id>='{start_supervisor_id}'
+                    order by supervisor_id, doc_id
+            """
 
         with connections['icds-ucr-citus'].cursor() as cursor:
             cursor.execute(query)
