@@ -1,6 +1,6 @@
 from collections import namedtuple
 
-from corehq.apps.sms.models import SQLSMSBackend
+from corehq.apps.sms.models import SMS, SQLSMSBackend
 from corehq.apps.sms.util import clean_phone_number
 from corehq.messaging.smsbackends.turn.exceptions import WhatsAppTemplateStringException
 from corehq.messaging.smsbackends.turn.forms import TurnBackendForm
@@ -43,16 +43,21 @@ class SQLTurnWhatsAppBackend(SQLSMSBackend):
 
         try:
             wa_id = client.contacts.get_whatsapp_id(to)
+
+            if is_whatsapp_template_message(msg.text):
+                return self._send_template_message(client, wa_id, msg)
+            else:
+                return self._send_text_message(client, wa_id, msg)
+
         except WhatsAppContactNotFound:
-            pass  # TODO: Fallback to SMS?
+            msg.set_system_error(SMS.ERROR_INVALID_DESTINATION_NUMBER)
+            return
 
-        if is_whatsapp_template_message(msg.text):
-            return self._send_template_message(client, wa_id, msg.text)
-        else:
-            return self._send_text_message(client, wa_id, msg.text)
-
-    def _send_template_message(self, client, wa_id, message_text):
-        parts = get_template_hsm_parts(message_text)
+    def _send_template_message(self, client, wa_id, msg):
+        try:
+            parts = get_template_hsm_parts(msg.text)
+        except WhatsAppTemplateStringException:
+            msg.set_system_error(SMS.ERROR_MESSAGE_FORMAT_INVALID)
         try:
             return client.messages.send_templated_message(
                 wa_id,
@@ -63,11 +68,15 @@ class SQLTurnWhatsAppBackend(SQLSMSBackend):
             )
         except:  # TODO: Add messaging exceptions to package
             raise
+        else:
+            raise
 
-    def _send_text_message(self, client, wa_id, message_text):
+    def _send_text_message(self, client, wa_id, msg):
         try:
-            return client.messages.send_text(wa_id, message_text)
+            return client.messages.send_text(wa_id, msg.text)
         except:  # TODO: Add message exceptions to package
+            raise
+        else:
             raise
 
     def get_all_templates(self):
