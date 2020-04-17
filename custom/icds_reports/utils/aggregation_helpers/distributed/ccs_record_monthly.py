@@ -256,7 +256,7 @@ class CcsRecordMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribute
             ('child_name', 'case_list.child_name'),
             ('husband_name', 'person_cases.husband_name'),
             ('lmp', 'case_list.lmp'),
-            ('migration_status', 'COALESCE({}::integer,0)'.format(not_migrated)),
+            ('migration_status', 'COALESCE({},0)::integer'.format(not_migrated)),
             ('where_born', 'agg_delivery.where_born'),
             ('num_children_del', 'agg_delivery.num_children_del'),
             ('still_live_birth', 'agg_delivery.still_live_birth'),
