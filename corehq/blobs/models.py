@@ -106,13 +106,9 @@ class BlobMeta(PartitionedModel, Model):
 
         The returned object should be closed when it is no longer needed.
         """
-        from . import get_blob_db, CODES
-        if self.type_code == CODES.form_xml:
-            kwargs = {'meta': self}
-        else:
-            kwargs = {'key': self.key, 'type_code': self.type_code}
+        from . import get_blob_db
         db = db or get_blob_db()
-        return db.get(**kwargs)
+        return db.get(meta=self)
 
     def blob_exists(self):
         from . import get_blob_db
