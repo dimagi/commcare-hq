@@ -73,7 +73,7 @@ class FilesystemBlobDB(AbstractBlobDB):
             file_obj = GzipFile(fileobj=file_obj, mode='rb')
         else:
             content_length, compressed_length = self.size(key), None
-        return BlobStream(file_obj, key, self, content_length, compressed_length)
+        return BlobStream(file_obj, self, key, content_length, compressed_length)
 
     def size(self, key):
         path = self.get_path(key)
