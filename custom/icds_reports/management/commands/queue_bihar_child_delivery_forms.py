@@ -17,10 +17,9 @@ class Command(BaseCommand):
                             help='supervisor from where records are to fetch', default='')
 
     def get_supervisor_ids(self, start_supervisor_id):
-        return (AwcLocation.objects.filter(state_id=self.BIHAR_STATE_ID, aggregation_level=4,
-                                           supervisor_id__gte=start_supervisor_id)
-                .order_by('supervisor_id')
-                .values_list('supervisor_id', flat=True))
+        return AwcLocation.objects.filter(
+            state_id=self.BIHAR_STATE_ID, aggregation_level=4, supervisor_id__gte=start_supervisor_id
+        ).order_by('supervisor_id').values_list('supervisor_id', flat=True)
 
     def handle(self, *args, **kwargs):
         table_name = get_table_name('icds-cas', 'static-child_delivery_forms')
