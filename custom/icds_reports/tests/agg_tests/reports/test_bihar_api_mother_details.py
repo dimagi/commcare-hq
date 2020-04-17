@@ -31,7 +31,7 @@ class BiharAPIMotherTest(TestCase):
                 "ccs_case_id": "08d215e7-81c7-4ad3-9c7d-1b27f0ed4bb5",
                 "married": 1,
                 "husband_name": "test_husband_name",
-                "husband_id": "fcbafe96-f73d-4930-9277-b42965b8419d",
+                "husband_id": "b1e7f7d8-149e-4ffc-a876-2a70a469edbc",
                 "last_preg_year": 12,
                 "is_pregnant": 1,
                 "preg_reg_date": datetime.date(2017, 4, 12),
