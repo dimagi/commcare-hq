@@ -28,10 +28,10 @@ def process_location_reassignment(domain, transitions, new_location_details, use
         Processor(domain, transitions, new_location_details, user_transitions, site_codes).process()
     except Exception as e:
         email = EmailMessage(
-            subject='[{}] - Location Reassignment Failed'.format(settings.SERVER_ENVIRONMENT),
-            body="The request could not be completed for file {}. Something went wrong. "
-                 "Error raised : {}. "
-                 "Please report an issue if needed.".format(uploaded_filename, e),
+            subject=f"[{settings.SERVER_ENVIRONMENT}] - Location Reassignment Failed",
+            body=f"The request could not be completed for file {uploaded_filename}. Something went wrong. "
+                 f"Error raised : {e}. "
+                 "Please report an issue if needed.",
             to=[user_email],
             from_email=settings.DEFAULT_FROM_EMAIL
         )
@@ -39,8 +39,8 @@ def process_location_reassignment(domain, transitions, new_location_details, use
         raise e
     else:
         email = EmailMessage(
-            subject='[{}] - Location Reassignment Completed'.format(settings.SERVER_ENVIRONMENT),
-            body="The request has been successfully completed for file {}.".format(uploaded_filename),
+            subject=f"[{settings.SERVER_ENVIRONMENT}] - Location Reassignment Completed",
+            body=f"The request has been successfully completed for file {uploaded_filename}.",
             to=[user_email],
             from_email=settings.DEFAULT_FROM_EMAIL
         )
@@ -93,10 +93,10 @@ def email_household_details(domain, transitions, uploaded_filename, user_email):
         filestream = Households(domain).dump(transitions)
     except Exception as e:
         email = EmailMessage(
-            subject='[{}] - Location Reassignment Household Dump Failed'.format(settings.SERVER_ENVIRONMENT),
-            body="The request could not be completed for file {}. Something went wrong. "
-                 "Error raised : {}. "
-                 "Please report an issue if needed.".format(uploaded_filename, e),
+            subject=f"[{settings.SERVER_ENVIRONMENT}] - Location Reassignment Household Dump Failed",
+            body=f"The request could not be completed for file {uploaded_filename}. Something went wrong. "
+                 f"Error raised : {e}. "
+                 "Please report an issue if needed.",
             to=[user_email],
             from_email=settings.DEFAULT_FROM_EMAIL
         )
@@ -104,8 +104,8 @@ def email_household_details(domain, transitions, uploaded_filename, user_email):
         raise e
     else:
         email = EmailMessage(
-            subject='[{}] - Location Reassignment Household Dump Completed'.format(settings.SERVER_ENVIRONMENT),
-            body="The request has been successfully completed for file {}.".format(uploaded_filename),
+            subject=f"[{settings.SERVER_ENVIRONMENT}] - Location Reassignment Household Dump Completed",
+            body=f"The request has been successfully completed for file {uploaded_filename}.",
             to=[user_email],
             from_email=settings.DEFAULT_FROM_EMAIL
         )
@@ -122,10 +122,10 @@ def process_households_reassignment(domain, reassignments, uploaded_filename, us
         HouseholdReassignmentProcessor(domain, reassignments).process()
     except Exception as e:
         email = EmailMessage(
-            subject='[{}] - Household Reassignment Failed'.format(settings.SERVER_ENVIRONMENT),
-            body="The request could not be completed for file {}. Something went wrong. "
-                 "Error raised : {}. "
-                 "Please report an issue if needed.".format(uploaded_filename, e),
+            subject=f"[{settings.SERVER_ENVIRONMENT}] - Household Reassignment Failed",
+            body=f"The request could not be completed for file {uploaded_filename}. Something went wrong. "
+                 f"Error raised : {e}. "
+                 "Please report an issue if needed.",
             to=[user_email],
             from_email=settings.DEFAULT_FROM_EMAIL
         )
@@ -133,8 +133,8 @@ def process_households_reassignment(domain, reassignments, uploaded_filename, us
         raise e
     else:
         email = EmailMessage(
-            subject='[{}] - Household Reassignment Completed'.format(settings.SERVER_ENVIRONMENT),
-            body="The request has been successfully completed for file {}.".format(uploaded_filename),
+            subject=f"[{settings.SERVER_ENVIRONMENT}] - Household Reassignment Completed",
+            body=f"The request has been successfully completed for file {uploaded_filename}.",
             to=[user_email],
             from_email=settings.DEFAULT_FROM_EMAIL
         )
