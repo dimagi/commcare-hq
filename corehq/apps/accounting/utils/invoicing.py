@@ -25,7 +25,7 @@ def _get_unpaid_saas_invoices_in_downgrade_daterange(today):
     ).order_by('date_due').select_related('subscription__subscriber')
 
 
-def get_unpaid_invoices_over_threshold_by_domain(today, domain):
+def get_oldest_unpaid_invoice_over_threshold(today, domain):
     for overdue_invoice in _get_unpaid_saas_invoices_in_downgrade_daterange(today).filter(
         subscription__subscriber__domain=domain
     ):
@@ -43,7 +43,7 @@ def get_domains_with_subscription_invoices_over_threshold(today):
     for domain in set(_get_unpaid_saas_invoices_in_downgrade_daterange(today).values_list(
         'subscription__subscriber__domain', flat=True
     )):
-        overdue_invoice, total_overdue_to_date = get_unpaid_invoices_over_threshold_by_domain(today, domain)
+        overdue_invoice, total_overdue_to_date = get_oldest_unpaid_invoice_over_threshold(today, domain)
         if overdue_invoice:
             yield domain, overdue_invoice, total_overdue_to_date
 
