@@ -37,7 +37,7 @@ from six.moves.urllib.parse import urlencode
 from corehq.apps.accounting.decorators import always_allow_project_access
 from corehq.apps.accounting.utils.downgrade import downgrade_eligible_domains
 from corehq.apps.accounting.utils.invoicing import (
-    get_unpaid_invoices_over_threshold_by_domain,
+    get_oldest_unpaid_invoice_over_threshold,
 )
 from corehq.toggles import ACCOUNTING_TESTING_TOOLS
 from couchexport.export import Format
@@ -1527,7 +1527,7 @@ class TriggerDowngradeView(AccountingSectionView, AsyncHandlerMixin):
             return self.async_response
         if self.trigger_form.is_valid():
             domain = self.trigger_form.cleaned_data['domain']
-            overdue_invoice, _ = get_unpaid_invoices_over_threshold_by_domain(
+            overdue_invoice, _ = get_oldest_unpaid_invoice_over_threshold(
                 datetime.date.today(),
                 domain
             )
