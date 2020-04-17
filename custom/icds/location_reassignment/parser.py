@@ -155,6 +155,7 @@ class Parser(object):
     def validate(self):
         if self.site_codes_to_be_archived:
             self._validate_descendants_archived()
+        self._validate_parents()
 
     def _validate_descendants_archived(self):
         """
@@ -170,6 +171,40 @@ class Parser(object):
                 self.errors.append("Location %s is getting archived but the following descendants are not %s" % (
                     location.site_code, ",".join(missing_site_codes)
                 ))
+
+    def _validate_parents(self):
+        """
+        validate new parent set respects the hierarchy
+        if the parent location is already present in the system, validate it's location type
+        else check for parent location in new locations to be created for the expected parent location type
+        else add error for missing parent
+        """
+        for location_type_code in self.new_location_details:
+            expected_parent_type = self.location_type_parent.get(location_type_code)
+            if not expected_parent_type:
+                continue
+            new_parent_site_codes = self._get_new_parent_site_codes(location_type_code)
+            if not new_parent_site_codes:
+                continue
+            existing_new_parents = {
+                loc.site_code: loc for loc in
+                SQLLocation.active_objects.select_related('location_type')
+                .filter(domain=self.domain, site_code__in=new_parent_site_codes)
+            }
+            for details in self.new_location_details[location_type_code]:
+                parent_site_code = details['parent_site_code']
+                if parent_site_code in existing_new_parents:
+                    if existing_new_parents[parent_site_code].location_type.code != expected_parent_type:
+                        self.errors.append(f"Unexpected parent {parent_site_code} for type {location_type_code}")
+                elif parent_site_code not in self.new_location_details[expected_parent_type]:
+                    self.errors.append(f"Unexpected parent {parent_site_code} for type {location_type_code}")
+
+    def _get_new_parent_site_codes(self, location_type_code):
+        return {
+            details['parent_site_code']
+            for details in self.new_location_details[location_type_code]
+            if details['parent_site_code']
+        }
 
 
 class HouseholdReassignmentParser(object):
