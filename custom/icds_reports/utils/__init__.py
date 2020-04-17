@@ -1777,7 +1777,8 @@ def create_child_growth_tracker_report(excel_data, data_type, config, aggregatio
         worksheet[cell].font = bold_font
         worksheet[cell].alignment = warp_text_alignment
         worksheet[cell].value = value
-    cols = ["Pre-school Education Attendance", "Supplementary Nutrition", "Stunting (height-for-age)", "Wasting (weight-for-height)", "Underweight (weight-for-age)"]
+    cols = ["Pre-school Education Attendance", "Supplementary Nutrition", "Stunting (height-for-age)",
+            "Wasting (weight-for-height)", "Underweight (weight-for-age)"]
     start_col = 11
     for col in cols:
         cell = f"{string.ascii_uppercase[start_col]}{table_header_position_row-1}"
@@ -1789,8 +1790,6 @@ def create_child_growth_tracker_report(excel_data, data_type, config, aggregatio
         start_col = start_col + 3
         merge_cell = f"{string.ascii_uppercase[start_col - 1]}{table_header_position_row - 1}"
         worksheet.merge_cells(f"{cell}:{merge_cell}")
-
-
     # table contents
     row_position = table_header_position_row + 1
     for enum, row in enumerate(excel_data[1:], start=1):
