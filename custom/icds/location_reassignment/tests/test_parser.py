@@ -24,7 +24,7 @@ from custom.icds.location_reassignment.const import (
 )
 from custom.icds.location_reassignment.parser import Parser
 
-LocationType = namedtuple("LocationType", ['code'])
+LocationType = namedtuple("LocationType", ['code', 'parent_type'])
 
 
 class TestParser(TestCase):
@@ -76,10 +76,15 @@ class TestParser(TestCase):
     )
 
     @patch('custom.icds.location_reassignment.parser.Parser.validate')
-    @patch('corehq.apps.locations.models.LocationType.objects.by_domain')
+    @patch('corehq.apps.locations.models.LocationType.objects')
     def test_parser(self, location_type_mock, _):
         type_codes = ['state', 'supervisor', 'awc']
-        location_type_mock.return_value = list(map(lambda site_code: LocationType(code=site_code), type_codes))
+        state_location_type = LocationType(code='state', parent_type=None)
+        supervisor_location_type = LocationType(code='supervisor', parent_type=state_location_type)
+        awc_location_type = LocationType(code='awc', parent_type=supervisor_location_type)
+        location_types = [state_location_type, supervisor_location_type, awc_location_type]
+        location_type_mock.by_domain.return_value = location_types
+        location_type_mock.select_related.return_value.filter.return_value = location_types
         with tempfile.TemporaryFile() as file:
             export_raw(self.headers, self.rows, file, format=Format.XLS_2007)
             file.seek(0)
