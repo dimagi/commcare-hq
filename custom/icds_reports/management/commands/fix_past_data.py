@@ -32,7 +32,7 @@ class Command(BaseCommand):
         print(f'\n======= Executing for month {date}======\n')
         for i in range(1, 8):
             print(f'==============Executing Script {i} =============')
-            if monthly_date["default"] is False:
+            if monthly_date["default"] is False and i > 2:
                 path = os.path.join(os.path.dirname(__file__), 'sql_scripts',
                                 'fix_past_data_part_1_{}.sql'.format(i))
             else:
