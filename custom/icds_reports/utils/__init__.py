@@ -1694,9 +1694,8 @@ def get_dashboard_usage_excel_file(excel_data, data_type):
     return file_hash
 
 
-def create_child_growth_tracker_report(excel_data, data_type, config):
+def create_child_growth_tracker_report(excel_data, data_type, config, aggregation_level):
     month = config['month']
-    aggregation_level = config['aggregation_level']
     export_info = excel_data[1][1]
     national = 'National Level' if aggregation_level == 0 else ''
     state = export_info[1][1] if aggregation_level > 0 else ''
@@ -1704,7 +1703,7 @@ def create_child_growth_tracker_report(excel_data, data_type, config):
     block = export_info[3][1] if aggregation_level > 2 else ''
     supervisor = export_info[3][1] if aggregation_level > 3 else ''
 
-    excel_data = [line[aggregation_level:] for line in excel_data[0][1]]
+    excel_data = excel_data[0][1]
     thin_border = Border(
         left=Side(style='thin'),
         right=Side(style='thin'),
@@ -1721,7 +1720,7 @@ def create_child_growth_tracker_report(excel_data, data_type, config):
     # sheet title
     worksheet.title = "Child Growth Tracker Report"
     worksheet.sheet_view.showGridLines = False
-    amount_of_columns = 11 - aggregation_level
+    amount_of_columns = 25
     last_column = string.ascii_uppercase[amount_of_columns]
     worksheet.merge_cells('B2:{0}2'.format(last_column))
     title_cell = worksheet['B2']
@@ -1763,14 +1762,14 @@ def create_child_growth_tracker_report(excel_data, data_type, config):
     worksheet[date_cell].alignment = Alignment(horizontal="right")
 
     # table header
-    table_header_position_row = 5
+    table_header_position_row = 6
     header_data = excel_data[0]
     headers = ["S.No"]
     headers.extend(header_data)
 
     table_header = {}
     for col, header in zip(columns, headers):
-        table_header[col] = header
+        table_header[col] = header.split('_')[1] if len(header.split('_')) > 1 else header
     for column, value in table_header.items():
         cell = "{}{}".format(column, table_header_position_row)
         worksheet[cell].fill = grey_fill
@@ -1778,10 +1777,22 @@ def create_child_growth_tracker_report(excel_data, data_type, config):
         worksheet[cell].font = bold_font
         worksheet[cell].alignment = warp_text_alignment
         worksheet[cell].value = value
+    cols = ["Pre-school Education Attendance", "Supplementary Nutrition", "Stunting (height-for-age)", "Wasting (weight-for-height)", "Underweight (weight-for-age)"]
+    start_col = 11
+    for col in cols:
+        cell = f"{string.ascii_uppercase[start_col]}{table_header_position_row-1}"
+        worksheet[cell].fill = grey_fill
+        worksheet[cell].border = thin_border
+        worksheet[cell].font = bold_font
+        worksheet[cell].alignment = warp_text_alignment
+        worksheet[cell].value = col
+        start_col = start_col + 3
+        merge_cell = f"{string.ascii_uppercase[start_col - 1]}{table_header_position_row - 1}"
+        worksheet.merge_cells(f"{cell}:{merge_cell}")
+
 
     # table contents
     row_position = table_header_position_row + 1
-
     for enum, row in enumerate(excel_data[1:], start=1):
         for column_index in range(len(columns)):
             column = columns[column_index]
@@ -1801,15 +1812,14 @@ def create_child_growth_tracker_report(excel_data, data_type, config):
     widths_columns = ['A']
     widths_columns.extend(columns)
     standard_widths = [4, 7]
-    standard_widths.extend([15] * (4 - aggregation_level))
-    standard_widths.extend([25, 15, 25, 15, 15, 15])
+    standard_widths.extend([15] * 24)
     for col, width in zip(widths_columns, standard_widths):
         widths[col] = width
 
-    widths['C'] = max(widths['C'], len(state) * 4 // 3 if state else 0)
-    widths['D'] = 9 + (len(district) * 4 // 3 if district else 0)
-    widths['E'] = 8 + (len(block) * 4 // 3 if district else 0)
-    widths['F'] = 8 + (len(supervisor) * 4 // 3 if district else 0)
+    widths['C'] = max(widths['C'], len(state) * 4 // 3)
+    widths['D'] = 9 + (len(district) * 4 // 3)
+    widths['E'] = 8 + (len(block) * 4 // 3)
+    widths['F'] = 8 + (len(supervisor) * 4 // 3)
 
     columns = columns[1:]
     # column widths based on table contents
