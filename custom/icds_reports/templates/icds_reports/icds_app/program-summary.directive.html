@@ -17,7 +17,7 @@
         </div>
     </div>
     <info-message></info-message>
-    <reassignment-message ng-show="$ctrl.showReassignmentMessage()" selected-location="$ctrl.selectedLocation()"></reassignment-message>
+    <reassignment-message ng-show="$ctrl.showReassignmentMessage()" selected-location="$ctrl.selectedLocation()" selected-date="$ctrl.selectedDate"></reassignment-message>
     <div ng-if="!$ctrl.showReassignmentMessage()"
          class="
                 {$ $ctrl.label === 'Program Summary' ? 'report-content' : '' $}

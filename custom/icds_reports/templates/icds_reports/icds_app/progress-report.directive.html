@@ -22,7 +22,7 @@
         </div>
     </div>
     <info-message></info-message>
-    <reassignment-message ng-show="$ctrl.showReassignmentMessage()" selected-location="$ctrl.selectedLocation()"></reassignment-message>
+    <reassignment-message ng-show="$ctrl.showReassignmentMessage()" selected-location="$ctrl.selectedLocation()" selected-date="$ctrl.selectedDate"></reassignment-message>
     <div class="report-content" ng-if="!$ctrl.showReassignmentMessage()">
         <div ng-if="$ctrl.data === void(0)">
             <h2>No Data</h2>

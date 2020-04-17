@@ -4,6 +4,7 @@ window.angular.module('icdsApp').directive("reassignmentMessage", function () {
         restrict: 'E',
         scope: {
             selectedLocation: '=',
+            selectedDate: '=',
         },
         templateUrl: url('icds-ng-template', 'reassignment-message'),
     };

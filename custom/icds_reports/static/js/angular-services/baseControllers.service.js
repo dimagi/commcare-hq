@@ -57,12 +57,9 @@ window.angular.module('icdsApp').factory('baseControllersService', ['$timeout', 
         vm.selectedLocation = function () {
             return storageService.getKey('selectedLocation');
         };
+        vm.selectedDate = dateHelperService.getSelectedDate();
         vm.showReassignmentMessage = function () {
-            var selectedMonth = dateHelperService.getSelectedMonth();
-            var selectedYear =  dateHelperService.getSelectedYear();
-            var selectedDate = selectedMonth ? new Date(selectedYear, selectedMonth) : new Date();
-            var selectedLocation = vm.selectedLocation();
-            return selectedLocation && (Date.parse(selectedLocation.deprecated_at) < selectedDate || Date.parse(selectedLocation.deprecates_at) > selectedDate);
+            return vm.selectedLocation() && (Date.parse(vm.selectedLocation().deprecated_at) < vm.selectedDate || Date.parse(vm.selectedLocation().deprecates_at) > vm.selectedDate);
         };
     };
     return {
