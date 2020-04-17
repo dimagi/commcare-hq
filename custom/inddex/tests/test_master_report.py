@@ -28,6 +28,7 @@ from ..example_data.data import (
 )
 from ..fixtures import FixtureAccessor
 from ..food import INDICATORS, FoodData
+from ..reports.gaps_detail import GapsByItemSummaryData
 from ..reports.gaps_summary import get_gaps_data
 from ..reports.master_data import MasterData
 from ..reports.nutrient_intake import DailyIntakeData
@@ -240,6 +241,10 @@ class TestInddexReports(TestCase):
 
         self.assert_reports_match('conv_factor_gaps_summary.csv', cf_gaps_data)
         self.assert_reports_match('fct_gaps_summary.csv', fct_gaps_data)
+
+    def test_gaps_detail(self):
+        data = GapsByItemSummaryData(get_food_data())
+        self.assert_reports_match('gaps_by_item_summary.csv', data)
 
     def test_daily_intake(self):
         data = DailyIntakeData(get_food_data())
