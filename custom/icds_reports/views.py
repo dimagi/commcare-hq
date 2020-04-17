@@ -1008,7 +1008,7 @@ class ExportIndicatorView(View):
 @method_decorator(DASHBOARD_CHECKS, name='dispatch')
 class FactSheetsView(BaseReportView):
     def get(self, request, *args, **kwargs):
-        step, now, month, year, include_test, domain, current_month, prev_month, location, selected_month = \
+        step, now, month, year, include_test, domain, current_month, prev_month, location_id, selected_month = \
             self.get_settings(request, *args, **kwargs)
 
         aggregation_level = 1
@@ -1025,7 +1025,7 @@ class FactSheetsView(BaseReportView):
             'domain': domain
         }
 
-        config.update(get_location_filter(location, domain))
+        config.update(get_location_filter(location_id, domain, include_object=True))
 
         # query database at same level for which it is requested
         if config.get('aggregation_level') > 1:
