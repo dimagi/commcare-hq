@@ -12,12 +12,6 @@ class MultiTabularReport(DatespanMixin, CustomProjectReport, GenericTabularRepor
     exportable_all = True
     export_only = False
 
-    is_released = True
-    @classmethod
-    def show_in_navigation(cls, domain=None, project=None, user=None):
-        # This is a temporary hack to hide WIP reports from view while in development
-        return cls.is_released or domain == 'inddex-reports'
-
     @property
     def data_providers(self):
         # data providers should supply a title, slug, headers, and rows
@@ -29,14 +23,14 @@ class MultiTabularReport(DatespanMixin, CustomProjectReport, GenericTabularRepor
             'name': self.name,
             'export_only': self.export_only
         }
-        if not self.needs_filters:
+        if not self.export_only and not self.needs_filters:
             context['data_providers'] = [{
                 'title': data_provider.title,
                 'slug': data_provider.slug,
                 'headers': DataTablesHeader(
                     *(DataTablesColumn(header) for header in data_provider.headers),
                 ),
-                'rows': data_provider.rows,
+                'rows': list(data_provider.rows),
             } for data_provider in self.data_providers]
         return context
 
@@ -48,7 +42,7 @@ class MultiTabularReport(DatespanMixin, CustomProjectReport, GenericTabularRepor
         ]
 
 
-def format_val(val):
+def _format_val(val):
     if isinstance(val, datetime):
         return val.strftime('%Y-%m-%d %H:%M:%S')
     if isinstance(val, bool):
@@ -56,7 +50,11 @@ def format_val(val):
     if isinstance(val, int):
         return str(val)
     if isinstance(val, float):
-        return str(int(val)) if val.is_integer() else str(val)
+        return f"{val:.5g}"
     if val is None:
         return ''
     return val
+
+
+def format_row(row):
+    return [_format_val(val) for val in row]
