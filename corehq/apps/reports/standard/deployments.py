@@ -162,9 +162,12 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
                             }
                         }
                     }
-                    if sort_prop != 'username.exact':
-                        # we can't specify a nested_path when sorting by username
-                        sort_dict[sort_prop]['nested_path'] = "reporting_metadata.last_submissions"
+                    sort_prop_path = sort_prop.split('.')
+                    if sort_prop_path[-1] == 'exact':
+                        sort_prop_path.pop()
+                    sort_prop_path.pop()
+                    if sort_prop_path:
+                        sort_dict[sort_prop]['nested_path'] = '.'.join(sort_prop_path)
                 else:
                     sort_dict = {sort_prop: sort_dir}
                 res.append(sort_dict)
