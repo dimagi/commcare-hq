@@ -46,15 +46,18 @@ class Parser(object):
         # mapping each location code to the type of operation requested for it
         self.requested_transitions = {}
         self.site_codes_to_be_archived = []
-        self.location_type_codes = list(map(lambda lt: lt.code, LocationType.objects.by_domain(self.domain)))
-        self.new_location_details = {location_type_code: {} for location_type_code in self.location_type_codes}
+        location_type_codes_in_hierarchy = [lt.code for lt in LocationType.objects.by_domain(self.domain)]
+        self.new_location_details = {
+            location_type_code: {}
+            for location_type_code in location_type_codes_in_hierarchy
+        }
         self.user_transitions = {}
         self.valid_transitions = {location_type_code: {
             MERGE_OPERATION: defaultdict(list),
             SPLIT_OPERATION: defaultdict(list),
             MOVE_OPERATION: {},
             EXTRACT_OPERATION: {},
-        } for location_type_code in self.location_type_codes}
+        } for location_type_code in location_type_codes_in_hierarchy}
         self.errors = []
 
     def parse(self):
@@ -90,7 +93,7 @@ class Parser(object):
                 operation, old_site_code
             ))
             return
-        if self._invalid_row(operation, old_site_code, new_site_code):
+        if self._invalid_row(row):
             return
         self._note_transition(operation, location_type_code, new_site_code, old_site_code)
         if new_site_code in self.new_location_details[location_type_code]:
@@ -108,7 +111,10 @@ class Parser(object):
         if row.get(NEW_USERNAME_COLUMN) and row.get(USERNAME_COLUMN):
             self.user_transitions[row.get(NEW_USERNAME_COLUMN)] = row.get(USERNAME_COLUMN)
 
-    def _invalid_row(self, operation, old_site_code, new_site_code):
+    def _invalid_row(self, row):
+        operation = row.get(OPERATION_COLUMN)
+        old_site_code = row.get(CURRENT_SITE_CODE_COLUMN)
+        new_site_code = row.get(NEW_SITE_CODE_COLUMN)
         invalid = False
         if old_site_code in self.requested_transitions:
             if self.requested_transitions.get(old_site_code) != operation:
