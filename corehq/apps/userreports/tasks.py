@@ -339,15 +339,8 @@ def _queue_indicators(indicators):
         build_async_indicators.delay(indicator_doc_ids)
         metrics_counter('commcare.async_indicator.indicators_queued', len(indicator_doc_ids))
 
-    to_queue = []
-    for indicator in indicators:
-        to_queue.append(indicator)
-        if len(to_queue) >= ASYNC_INDICATOR_CHUNK_SIZE:
-            _queue_chunk(to_queue)
-            to_queue = []
-
-    if to_queue:
-        _queue_chunk(to_queue)
+    for chunked_indicators in chunked(indicators, ASYNC_INDICATOR_CHUNK_SIZE):
+        _queue_chunk(chunked_indicators)
 
 
 @task(serializer='pickle', queue=UCR_INDICATOR_CELERY_QUEUE, ignore_result=True, acks_late=True)
