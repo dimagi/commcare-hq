@@ -331,7 +331,7 @@ def queue_async_indicators():
             break
 
 
-def _queue_indicators(indicators):
+def _queue_indicators(async_indicators):
     def _queue_chunk(indicators):
         now = datetime.utcnow()
         indicator_doc_ids = [i.doc_id for i in indicators]
@@ -339,7 +339,7 @@ def _queue_indicators(indicators):
         build_async_indicators.delay(indicator_doc_ids)
         metrics_counter('commcare.async_indicator.indicators_queued', len(indicator_doc_ids))
 
-    for chunked_indicators in chunked(indicators, ASYNC_INDICATOR_CHUNK_SIZE):
+    for chunked_indicators in chunked(async_indicators, ASYNC_INDICATOR_CHUNK_SIZE):
         _queue_chunk(chunked_indicators)
 
 
