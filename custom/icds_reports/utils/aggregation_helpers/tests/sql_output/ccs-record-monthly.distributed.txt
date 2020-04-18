@@ -43,5 +43,5 @@ CREATE INDEX IF NOT EXISTS crm_awc_case_idx ON "ccs_record_monthly" (awc_id, cas
 {}
 CREATE INDEX IF NOT EXISTS crm_person_add_case_idx ON "ccs_record_monthly" (person_case_id, add, case_id)
 {}
-CREATE INDEX IF NOT EXISTS crm_supervisor_person_month_idx ON "ccs_record_monthly" (supervisor_id, person_case_id, month, case_id)
+CREATE INDEX IF NOT EXISTS crm_supervisor_person_month_idx ON "ccs_record_monthly" (supervisor_id, month, person_case_id)
 {}
