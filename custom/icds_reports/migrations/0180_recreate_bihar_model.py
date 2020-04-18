@@ -19,7 +19,7 @@ migrator = RawSQLMigration(('custom', 'icds_reports', 'migrations', 'sql_templat
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('icds_reports', '0179_auto_20200416_1955'),
+        ('icds_reports', '0179_drop_bihar_model'),
     ]
 
     operations = [
