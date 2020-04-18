@@ -69,7 +69,7 @@ class Migration(migrations.Migration):
         ),
         migrations.AlterUniqueTogether(
             name='biharapidemographics',
-            unique_together=set([('supervisor_id', 'person_id', 'month')]),
+            unique_together=set([('month', 'state_id', 'district_id', 'block_id', 'supervisor_id', 'person_id')]),
         ),
     ]
 
