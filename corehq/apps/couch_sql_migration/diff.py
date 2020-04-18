@@ -54,6 +54,7 @@ load_ignore_rules = memoized(lambda: add_duplicate_rules({
         Ignore(check=is_text_xmlns),
     ],
     'XFormInstance': [
+        Ignore('missing', '-deletion_id', new=MISSING),
         ignore_renamed('uid', 'instanceID'),
     ],
     'XFormInstance-Deleted': [

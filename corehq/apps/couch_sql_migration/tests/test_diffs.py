@@ -146,6 +146,12 @@ class DiffTestCases(SimpleTestCase):
         }
         self._test_form_diff_filter(couch_doc, sql_doc, DELETION_DIFFS + REAL_DIFFS)
 
+    def test_filter_normal_form_deletion_fields(self):
+        self._test_form_diff_filter(
+            {'doc_type': 'XFormInstance', '-deletion_id': 'abc'},
+            {'doc_type': 'XFormInstance'},
+        )
+
     def test_filter_text_xmlns_fields(self):
         self._test_form_diff_filter(
             {'doc_type': 'XFormInstance'},
