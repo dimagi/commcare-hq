@@ -19,7 +19,6 @@ class BiharApiDemographicsHelper(BaseICDSAggregationDistributedHelper):
         drop_query = self.drop_table_query()
         create_query = self.create_table_query()
         agg_query = self.aggregation_query()
-        index_queries = self.indexes()
         update_queries = self.update_queries()
         add_partition_query = self.add_partition_table__query()
 
@@ -28,8 +27,6 @@ class BiharApiDemographicsHelper(BaseICDSAggregationDistributedHelper):
         cursor.execute(agg_query)
 
         for query in update_queries:
-            cursor.execute(query)
-        for query in index_queries:
             cursor.execute(query)
 
         cursor.execute(add_partition_query)
@@ -149,13 +146,6 @@ class BiharApiDemographicsHelper(BaseICDSAggregationDistributedHelper):
             demographics_details.husband_name = person_list.name AND
             demographics_details.supervisor_id = person_list.supervisor_id
         """
-
-    def indexes(self):
-        return [
-            f"""CREATE INDEX IF NOT EXISTS demographics_state_person_case_idx
-                ON "{self.tablename}" (supervisor_id, person_id, month)
-            """
-        ]
 
     def add_partition_table__query(self):
         return f"""
