@@ -63,21 +63,52 @@ Save those backups to somewhere you'll be able to access from the new environmen
   - [libmagic](https://macappstore.org/libmagic) (available via homebrew)
   - [pango](https://www.pango.org/) (available via homebrew)
 
-#### Setup virtualenv
 
-Run the following commands:
+#### Set up virtual environment
 
-    $ source /usr/local/bin/virtualenvwrapper.sh
-    $ mkvirtualenv --no-site-packages commcare-hq -p python3.6
+1. Set the `WORKON_HOME` environment variable to the path where you keep
+   your virtual environments. If you don't already have a home for your
+   virtual environments, ~/venv is not a bad choice:
 
-#### Clone and setup repo / requirements
+       $ export WORKON_HOME=$HOME/venv
+       $ mkdir -p $WORKON_HOME
+
+1. Create a virtual environment for CommCare HQ. "commcare-hq" is a good
+   name, but naming it "cchq" might save you some typing in the future:
+
+       $ python3 -m venv $WORKON_HOME/cchq
+
+1. Ubuntu no longer ships with Python 2 and its Python binary is named
+   "python3" to avoid ambiguity. You may need to tell virtualenvwrapper
+   where to find Python:
+
+       $ export VIRTUALENVWRAPPER_PYTHON=/usr/bin/python3
+
+1. Enable virtualenvwrapper:
+
+       $ source /usr/local/bin/virtualenvwrapper.sh
+
+1. You will want to add virtualenvwrapper settings to your startup
+   script, say, ~/.bashrc, or ~/.zshrc. For example:
+
+       $ cat <<EOF >> ~/.bashrc
+       export WORKON_HOME=\$HOME/venv
+       export VIRTUALENVWRAPPER_PYTHON=/usr/bin/python3
+       source /usr/local/bin/virtualenvwrapper.sh
+       EOF
+
+1. Activate your virtual environment:
+
+       $ workon cchq
+
+
+#### Clone repo and install requirements
 
 Once all the dependencies are in order, please do the following:
 
     $ git clone https://github.com/dimagi/commcare-hq.git
     $ cd commcare-hq
     $ git submodule update --init --recursive
-    $ workon commcare-hq  # if your "commcare-hq" virtualenv is not already activated
     $ setvirtualenvproject  # optional - sets this directory as the project root
 
 Next, install the appropriate requirements (only one is necessary).
