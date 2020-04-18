@@ -34,13 +34,18 @@ Save those backups to somewhere you'll be able to access from the new environmen
 #### Prerequisites
 
 - [Git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)
-- [Python 3.6](https://www.python.org/downloads/) and `python-dev`, `distutils` packages
 
-      $ sudo apt install python3-distutils python3-dev
+      $ sudo apt install git
 
-- [Pip](https://pip.pypa.io/en/stable/installing/)
-- [Virtualenv](https://virtualenv.pypa.io/en/stable/)
+- [Python 3.6](https://www.python.org/downloads/) and `python-dev`. In Ubuntu
+  you will also need to install the modules for pip and venv explicitly.
+
+      $ sudo apt install python3-dev python3-pip python3-venv
+
 - [Virtualenvwrapper](https://virtualenvwrapper.readthedocs.io/en/latest/#introduction)
+
+      $ sudo python3 -m pip install virtualenvwrapper
+
 - [Pango](https://pango.gnome.org/) 
 
       $ sudo apt install libpango1.0-0
@@ -51,7 +56,6 @@ Save those backups to somewhere you'll be able to access from the new environmen
 - You may need to use `sudo` to for some of the above setup:
 
       $ sudo python get-pip.py
-      $ sudo pip install virtualenv
       $ sudo pip install virtualenvwrapper --ignore-installed six
 
 - Additional requirements:
