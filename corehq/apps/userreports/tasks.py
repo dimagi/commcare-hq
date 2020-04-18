@@ -285,6 +285,10 @@ def delete_data_source_task(domain, config_id):
 
 @periodic_task(run_every=crontab(minute='*/5'), queue=settings.CELERY_PERIODIC_QUEUE)
 def run_queue_async_indicators_task():
+    """
+    A periodic task that runs every few minutes, if ran within the permitted time slots,
+    would queue a task to further queue few AsyncIndicators for processing
+    """
     if time_in_range(datetime.utcnow(), settings.ASYNC_INDICATOR_QUEUE_TIMES):
         queue_async_indicators.delay()
 
@@ -314,6 +318,14 @@ def time_in_range(time, time_dictionary):
 
 @serial_task('queue-async-indicators', timeout=30 * 60, queue=settings.CELERY_PERIODIC_QUEUE, max_retries=0)
 def queue_async_indicators():
+    """
+    Fetches AsyncIndicators that
+    1. were not queued till now or were last queued more than 4 hours ago
+    2. have failed less than 20 times
+    This task quits after it has run for more than
+    ASYNC_INDICATOR_QUEUE_TIME - 30 seconds i.e 4 minutes 30 seconds.
+    While it runs, it clubs fetched AsyncIndicators by domain and doc type and queue them for processing.
+    """
     start = datetime.utcnow()
     cutoff = start + ASYNC_INDICATOR_QUEUE_TIME - timedelta(seconds=30)
     retry_threshold = start - timedelta(hours=4)
@@ -332,9 +344,15 @@ def queue_async_indicators():
 
 
 def _queue_indicators(async_indicators):
+    """
+    Extract doc ids for the passed AsyncIndicators and queue task to process indicators for them.
+    Mark date_queued on all AsyncIndicator passed to utcnow.
+    """
     def _queue_chunk(indicators):
         now = datetime.utcnow()
         indicator_doc_ids = [i.doc_id for i in indicators]
+        # AsyncIndicator have doc_id as a unique column, so this update would only
+        # update the passed AsyncIndicators
         AsyncIndicator.objects.filter(doc_id__in=indicator_doc_ids).update(date_queued=now)
         build_async_indicators.delay(indicator_doc_ids)
         metrics_counter('commcare.async_indicator.indicators_queued', len(indicator_doc_ids))
@@ -403,6 +421,7 @@ def _build_async_indicators(indicator_doc_ids):
 
         rows_to_save_by_adapter = defaultdict(list)
         docs_to_delete_by_adapter = defaultdict(list)
+        # there will always be one AsyncIndicator per doc id
         indicator_by_doc_id = {i.doc_id: i for i in all_indicators}
         config_ids = set()
         with timer:
