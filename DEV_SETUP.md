@@ -109,10 +109,34 @@ Create the shared directory.  If you have not modified `SHARED_DRIVE_ROOT`, then
 
     $ mkdir sharedfiles
 
+
 ### Set up Docker services
 
-Once you have completed the above steps, you can use Docker to build and run all of the service containers.
-The steps for setting up Docker can be found in the [docker folder](docker/README.md).
+Once you have completed the above steps, you can use Docker to build
+and run all of the service containers. There are detailed instructions
+for setting up Docker in the [docker folder](docker/README.md). But the
+following should cover the needs of most developers:
+
+    $ sudo apt install docker.io
+    $ pip install docker-compose
+    $ sudo adduser $USER docker
+
+Log in as yourself again, to activate membership of the "docker" group:
+
+    $ su - $USER
+
+Ensure the Docker service is running:
+
+    $ sudo service docker status
+
+Bring up the Docker containers for the services you probably need:
+
+    $ scripts/docker up postgres couch redis elasticsearch zookeeper kafka minio
+
+or, to detach and run in the background, use the `-d` option:
+
+    $ scripts/docker up -d postgres couch redis elasticsearch zookeeper kafka minio
+
 
 ### (Optional) Copying data from an existing HQ install
 
