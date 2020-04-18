@@ -270,15 +270,22 @@ LOCAL_APPS += ('django_extensions',)
 ```
 
 When running HQ, be sure to use `runserver_plus`:
-```
-python manage.py runserver_plus
-```
+
+    $ ./manage.py runserver_plus 0.0.0.0:8000
 
 Then you need to have Formplayer running.
 
 Prerequisites:
-+ Install Java (left as an exercise for the reader)
-+ [Initialize formplayer database](https://github.com/dimagi/formplayer#building-and-running)
++ Install Java
+
+      $ sudo apt install openjdk-8-jre
+
++ [Initialize formplayer database](https://github.com/dimagi/formplayer#building-and-running).
+  The password for the "commcarehq" user is in the localsettings.py file
+  in the `DATABASES` dictionary.
+
+      $ sudo apt install postgresql-client
+      $ createdb formplayer -U commcarehq -h localhost
 
 To get set up, download the settings file and `formplayer.jar`. You may run this
 in the commcare-hq repo root.
