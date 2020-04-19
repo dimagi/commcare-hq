@@ -846,10 +846,14 @@ def _migrate_form_attachments(sql_form, couch_form):
     def get_form_xml_metadata(meta):
         try:
             couch_form._unsafe_get_xml()
-            assert meta is not None, couch_form.form_id
-            return meta
         except MissingFormXml:
             pass
+        else:
+            if meta is None:
+                blob = couch_form.blobs["form.xml"]
+                assert blob.blobmeta_id is None, couch_form.form_id
+                meta = new_meta_for_blob(blob, CODES.form_xml, "form.xml")
+            return meta
         metas = get_blob_metadata(couch_form.form_id)[(CODES.form_xml, "form.xml")]
         if len(metas) == 1:
             couch_meta = couch_form.blobs.get("form.xml")
@@ -870,6 +874,19 @@ def _migrate_form_attachments(sql_form, couch_form):
         xml = convert_form_to_xml(couch_form.to_json()["form"])
         att = Attachment("form.xml", xml.encode("utf-8"), content_type="text/xml")
         return att.write(blobdb, sql_form)
+
+    def new_meta_for_blob(blob, type_code, name):
+        meta = metadb.new(
+            domain=sql_form.domain,
+            name=name,
+            parent_id=sql_form.form_id,
+            type_code=type_code,
+            content_type=blob.content_type,
+            content_length=blob.content_length,
+            key=blob.key,
+        )
+        meta.save()
+        return meta
 
     if couch_form._attachments and any(
         name not in couch_form.blobs for name in couch_form._attachments
@@ -898,16 +915,7 @@ def _migrate_form_attachments(sql_form, couch_form):
                 meta.save()
 
         if not meta:
-            meta = metadb.new(
-                domain=sql_form.domain,
-                name=name,
-                parent_id=sql_form.form_id,
-                type_code=CODES.form_attachment,
-                content_type=blob.content_type,
-                content_length=blob.content_length,
-                key=blob.key,
-            )
-            meta.save()
+            meta = new_meta_for_blob(blob, CODES.form_attachment, name)
 
         attachments.append(meta)
     sql_form.attachments_list = attachments
