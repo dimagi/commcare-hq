@@ -239,7 +239,7 @@ from custom.icds_reports.reports.governance_apis import (
     get_state_names,
     get_cbe_data)
 
-from custom.icds_reports.reports.bihar_api import get_api_demographics_data, get_mother_details, get_api_school_data
+from custom.icds_reports.reports.bihar_api import get_api_demographics_data, get_mother_details, get_api_ag_school_data
 
 from . import const
 from .exceptions import InvalidLocationTypeException, TableauTokenException
@@ -2476,9 +2476,9 @@ class BiharSchoolAPI(BaseCasAPIView):
         if not self.has_access(bihar_state_id, request.couch_user):
             return JsonResponse(self.message('access_denied'), status=403)
 
-        school_data, total_count = get_api_school_data(valid_query_month.strftime("%Y-%m-%d"),
-                                                       bihar_state_id,
-                                                       last_person_case_id)
+        school_data, total_count = get_api_ag_school_data(valid_query_month.strftime("%Y-%m-%d"),
+                                                          bihar_state_id,
+                                                          last_person_case_id)
         response_json = {
             'data': school_data,
             'metadata': {

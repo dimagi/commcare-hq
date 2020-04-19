@@ -1,6 +1,6 @@
 
 from django.test import TestCase
-from custom.icds_reports.reports.bihar_api import get_api_school_data
+from custom.icds_reports.reports.bihar_api import get_api_ag_school_data
 from datetime import date
 from custom.icds_reports.models.aggregate import BiharAPIDemographics
 from mock import patch
@@ -12,7 +12,7 @@ class SchoolAPITest(TestCase):
 
     def test_file_content(self):
         BiharAPIDemographics.aggregate(date(2017, 5, 1))
-        data, count = get_api_school_data(
+        data, count = get_api_ag_school_data(
             month=date(2017, 5, 1).strftime("%Y-%m-%d"),
             state_id='st1',
             last_person_case_id=''

@@ -113,7 +113,7 @@ def get_total_school_records_count(month, state_id, month_end_11yr, month_start_
     ).count()
 
 
-def get_api_school_data(month, state_id, last_person_case_id):
+def get_api_ag_school_data(month, state_id, last_person_case_id):
     month_start = force_to_date(month).replace(day=1)
     month_end = month_start + relativedelta(months=1, seconds=-1)
     month_end_11yr = month_end - relativedelta(years=11)

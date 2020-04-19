@@ -3,6 +3,8 @@
 from __future__ import unicode_literals
 
 from django.db import migrations, models
+from custom.icds_reports.const import BIHAR_API_DEMOGRAPHICS_TABLE
+from custom.icds_reports.utils.migrations import get_view_migrations
 
 
 class Migration(migrations.Migration):
@@ -22,4 +24,9 @@ class Migration(migrations.Migration):
             name='out_of_school_status',
             field=models.SmallIntegerField(null=True),
         ),
+        migrations.RunSQL(f"CREATE INDEX idx_demographics_gender_dob_person_id ON '{BIHAR_API_DEMOGRAPHICS_TABLE}' (gender, dob, person_id)")
     ]
+
+
+    operations.extend(get_view_migrations())
+
