@@ -10,7 +10,7 @@ from corehq.apps.app_manager.views.formdesigner import ping
 from corehq.apps.app_manager.views.phone import list_apps
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.utils import legacy_domain_re
-from corehq.apps.domain.views.base import covid19
+from corehq.apps.domain.views.base import covid19, domain_select_redirect
 from corehq.apps.domain.views.feedback import submit_feedback
 from corehq.apps.domain.views.pro_bono import ProBonoStaticView
 from corehq.apps.domain.views.settings import logo
@@ -137,6 +137,7 @@ urlpatterns = [
     url(r'^bsd_license_basic/$', TemplateView.as_view(template_name='bsd_license.html'), name='bsd_license_basic'),
     url(r'^bsd_license/$', bsd_license, name='bsd_license'),
     url(r'^covid19/$', covid19, name='covid19'),
+    url(r'^domain_redirect/(?P<next_view>[\w-]+)/$', domain_select_redirect, name='domain_select_redirect'),
     url(r'^pro_bono/$', ProBonoStaticView.as_view(), name=ProBonoStaticView.urlname),
     url(r'^ping/$', ping, name='ping'),
     url(r'^robots.txt$', TemplateView.as_view(template_name='robots.txt', content_type='text/plain')),

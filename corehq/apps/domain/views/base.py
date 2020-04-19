@@ -20,6 +20,10 @@ from corehq.apps.users.models import SQLInvitation
 def covid19(request):
     return select(request, next_view="app_exchange")
 
+
+def domain_select_redirect(request, next_view):
+    return select(request, next_view=next_view)
+
 # Domain not required here - we could be selecting it for the first time. See notes domain.decorators
 # about why we need this custom login_required decorator
 @login_required
