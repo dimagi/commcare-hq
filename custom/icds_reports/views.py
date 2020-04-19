@@ -2507,7 +2507,7 @@ class BiharSchoolAPI(BaseCasAPIView):
 
         valid_query_month, error_message = self.get_valid_query_month(request.GET.get('month'),
                                                                       request.GET.get('year'))
-        bihar_state_id = self.get_state_name_from_state_id('Bihar')
+        bihar_state_id = self.get_state_id_from_state_name('Bihar')
 
         if error_message:
             return JsonResponse({"message": error_message}, status=400)
@@ -2550,6 +2550,7 @@ class BiharMotherDetailsAPI(BaseCasAPIView):
 
         valid_query_month, error_message = self.get_valid_query_month(request.GET.get('month'),
                                                                       request.GET.get('year'))
+        bihar_state_id = self.get_state_id_from_state_name('Bihar')
 
         if error_message:
             return JsonResponse({"message": error_message}, status=400)
@@ -2557,11 +2558,11 @@ class BiharMotherDetailsAPI(BaseCasAPIView):
         if not self.query_month_in_range(valid_query_month, start_month=date(2020, 1, 1)):
             return JsonResponse(self.message('invalid_month'), status=400)
 
-        if not self.has_access(self.bihar_state_id, request.couch_user):
+        if not self.has_access(bihar_state_id, request.couch_user):
             return JsonResponse(self.message('access_denied'), status=403)
 
         demographics_data, total_count = get_mother_details(valid_query_month.strftime("%Y-%m-%d"),
-                                                            self.bihar_state_id,
+                                                            bihar_state_id,
                                                             last_ccs_case_id)
         response_json = {
             'data': demographics_data,
@@ -2574,7 +2575,3 @@ class BiharMotherDetailsAPI(BaseCasAPIView):
         }
 
         return JsonResponse(data=response_json)
-
-    @property
-    def bihar_state_id(self):
-        return SQLLocation.objects.get(name='Bihar', location_type__name='state').location_id

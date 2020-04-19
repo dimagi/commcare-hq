@@ -10,7 +10,7 @@ from custom.icds_reports.utils.migrations import get_view_migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('icds_reports', '0180_recreate_bihar_model'),
+        ('icds_reports', '0181_auto_20200418_0946'),
     ]
 
     operations = [
@@ -24,7 +24,7 @@ class Migration(migrations.Migration):
             name='out_of_school_status',
             field=models.SmallIntegerField(null=True),
         ),
-        migrations.RunSQL(f"CREATE INDEX idx_demographics_gender_dob_person_id ON {BIHAR_API_DEMOGRAPHICS_TABLE} (gender, dob, person_id)")
+        migrations.RunSQL(f"CREATE INDEX idx_demographics_gender_dob ON {BIHAR_API_DEMOGRAPHICS_TABLE} (gender, dob)")
     ]
 
     operations.extend(get_view_migrations())

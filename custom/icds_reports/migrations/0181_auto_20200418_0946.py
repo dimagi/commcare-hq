@@ -65,5 +65,3 @@ class Migration(migrations.Migration):
             field=models.TextField(null=True),
         ),
     ]
-
-    operations.extend(get_view_migrations())
