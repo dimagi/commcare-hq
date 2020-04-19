@@ -79,7 +79,7 @@ class IndicatorAdapter(object):
         indicator_rows = self.get_all_values(doc, eval_context)
         self.save_rows(indicator_rows)
 
-    def save_rows(self, rows):
+    def save_rows(self, rows, reassigning_cases=False):
         raise NotImplementedError
 
     def bulk_save(self, docs):
@@ -92,11 +92,11 @@ class IndicatorAdapter(object):
         "Gets all the values from a document to save"
         return self.config.get_all_values(doc, eval_context)
 
-    def bulk_delete(self, docs):
+    def bulk_delete(self, docs, reassigning_cases=False):
         for doc in docs:
-            self.delete(doc)
+            self.delete(doc, reassigning_cases)
 
-    def delete(self, doc):
+    def delete(self, doc, reassigning_cases=False):
         raise NotImplementedError
 
     @property
@@ -178,13 +178,13 @@ class IndicatorAdapterLoadTracker(object):
     def track_load(self, value=1):
         self._track_load(value)
 
-    def save_rows(self, rows):
+    def save_rows(self, rows, reassigning_cases=False):
         self._track_load(len(rows))
-        self.adapter.save_rows(rows)
+        self.adapter.save_rows(rows, reassigning_cases)
 
-    def delete(self, doc):
+    def delete(self, doc, reassigning_cases=False):
         self._track_load()
-        self.adapter.delete(doc)
+        self.adapter.delete(doc, reassigning_cases)
 
     def get_distinct_values(self, column, limit):
         distinct_values, too_many_values = self.adapter.get_distinct_values(column, limit)
