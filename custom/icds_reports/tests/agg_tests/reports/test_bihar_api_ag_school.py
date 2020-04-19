@@ -19,7 +19,7 @@ class SchoolAPITest(TestCase):
         )
         expected_count = 10
         expected_result = {"person_id": "85585a4c-469e-4cfc-b261-f5ff6f4bdff1", "person_name": None,
-                           "out_of_school_status": 5, "last_class_attended_ever": 3}
+                           "out_of_school_status": 3, "last_class_attended_ever": 5}
         for item in data:
             if item['person_id'] == "85585a4c-469e-4cfc-b261-f5ff6f4bdff1":
                 first_person_case = item
