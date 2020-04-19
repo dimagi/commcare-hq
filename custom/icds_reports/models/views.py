@@ -1430,3 +1430,31 @@ class PMOAPIView(models.Model):
         app_label = 'icds_reports'
         managed = False
         db_table = 'pmo_api_view'
+
+
+class BiharAPIMotherView(models.Model):
+    state_id = models.TextField(null=True)
+    supervisor_id = models.TextField(null=True)
+    month = models.DateField()
+    household_id = models.TextField(null=True)
+    ccs_case_id = models.TextField(null=True)
+    person_id = models.TextField(null=True)
+    married = models.SmallIntegerField(null=True)
+    husband_id = models.TextField(null=True)
+    husband_name = models.TextField(null=True)
+    last_preg_year = models.IntegerField(null=True)
+    last_preg_tt = models.SmallIntegerField(null=True)
+    is_pregnant = models.SmallIntegerField(null=True)
+    preg_reg_date = models.DateField(null=True)
+    tt_1 = models.DateField(null=True)
+    tt_2 = models.DateField(null=True)
+    tt_booster = models.DateField(null=True)
+    hb = models.SmallIntegerField(null=True)
+    preg_reg_date = models.DateField(null=True)
+    add = models.DateField(null=True)
+
+    class Meta(object):
+        app_label = 'icds_reports'
+        db_table = 'bihar_api_mother_view'
+        managed = False
+
