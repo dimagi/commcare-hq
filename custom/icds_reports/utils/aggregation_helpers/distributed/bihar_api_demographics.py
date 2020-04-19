@@ -53,7 +53,7 @@ class BiharApiDemographicsHelper(BaseICDSAggregationDistributedHelper):
 
     @property
     def bihar_state_id(self):
-        return self.get_state_id_from_state_name('st1')
+        return self.get_state_id_from_state_name('Bihar')
 
     def aggregation_query(self):
         month_start_string = month_formatter(self.month)
