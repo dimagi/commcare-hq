@@ -15,6 +15,7 @@ from corehq.apps.locations.permissions import require_can_edit_locations
 from corehq.apps.locations.views import BaseLocationView, LocationsListView
 from corehq.const import FILENAME_DATETIME_FORMAT
 from corehq.util.files import safe_filename_header
+from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.util.workbook_json.excel import WorkbookJSONError, get_workbook
 from custom.icds.location_reassignment.const import AWC_CODE
 from custom.icds.location_reassignment.download import Download
@@ -155,7 +156,8 @@ def download_location_reassignment_template(request, domain):
     location = SQLLocation.active_objects.get(location_id=location_id, domain=domain)
     response_file = Download(location).dump()
     response = HttpResponse(response_file, content_type="text/html; charset=utf-8")
-    creation_time = datetime.utcnow().strftime(FILENAME_DATETIME_FORMAT)
+    timezone = get_timezone_for_user(request.couch_user, domain)
+    creation_time = datetime.now(timezone).strftime(FILENAME_DATETIME_FORMAT)
     filename = f"[{domain}] {location.name} Location Reassignment Request Template {creation_time}"
     response['Content-Disposition'] = safe_filename_header(filename, 'xlsx')
     return response
