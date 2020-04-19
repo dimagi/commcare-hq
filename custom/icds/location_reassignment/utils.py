@@ -123,7 +123,7 @@ def process_ucr_changes(domain, case_ids):
     ]
 
     adapters = [
-        get_indicator_adapter(config, raise_errors=True, load_source='change_feed')
+        get_indicator_adapter(config, raise_errors=True, load_source='location_reassignment')
         for config in all_configs
     ]
 
