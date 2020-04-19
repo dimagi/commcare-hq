@@ -1765,6 +1765,16 @@ class BiharAPIDemographics(models.Model, AggregateMixin):
     site_death = models.TextField(null=True)
     closed_on = models.DateField(null=True)
     reason_closure = models.TextField(null=True)
+    time_birth = models.TextField(null=True)
+    child_alive = models.SmallIntegerField(null=True)
+    father_name = models.TextField(null=True)
+    father_id = models.TextField(null=True)
+    mother_id = models.TextField(null=True)
+    mother_name = models.TextField(null=True)
+    private_admit = models.SmallIntegerField(blank=True, null=True)
+    primary_admit = models.SmallIntegerField(blank=True, null=True)
+    date_last_private_admit = models.DateField(null=True)
+    date_return_private = models.DateField(null=True)
 
     class Meta(object):
         db_table = BIHAR_API_DEMOGRAPHICS_TABLE
@@ -1828,31 +1838,4 @@ class ChildVaccines(models.Model, AggregateMixin):
         unique_together = ('month', 'state_id', 'supervisor_id', 'child_health_case_id')  # pkey
 
     _agg_helper_cls = ChildVaccineHelper
-    _agg_atomic = False
-
-
-class BiharAPIChildVaccine(models.Model, AggregateMixin):
-    state_id = models.TextField(null=True)
-    supervisor_id = models.TextField(null=True)
-    month = models.DateField()
-    household_id = models.TextField(null=True)
-    child_health_case_id = models.TextField(null=True)
-    time_birth = models.TextField(null=True)
-    child_alive = models.SmallIntegerField(null=True)
-    father_name = models.TextField(null=True)
-    father_id = models.TextField(null=True)
-    mother_id = models.TextField(null=True)
-    mother_name = models.TextField(null=True)
-    person_case_id = models.TextField(primary_key=True)
-    dob = models.DateField(null=True)
-    private_admit = models.SmallIntegerField(blank=True, null=True)
-    primary_admit = models.SmallIntegerField(blank=True, null=True)
-    date_last_private_admit = models.DateField(null=True)
-    date_return_private = models.DateField(null=True)
-
-    class Meta(object):
-        db_table = BIHAR_API_CHILD_VACCINE_TABLE
-        unique_together = ('month', 'state_id', 'supervisor_id', 'person_case_id')  # pkey
-
-    _agg_helper_cls = BiharApiChildVaccineHelper
     _agg_atomic = False

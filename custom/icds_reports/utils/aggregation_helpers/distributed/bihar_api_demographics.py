@@ -14,17 +14,21 @@ class BiharApiDemographicsHelper(BaseICDSAggregationDistributedHelper):
     def __init__(self, month):
         self.month = transform_day_to_month(month)
         self.end_date = transform_day_to_month(month + relativedelta(months=1, seconds=-1))
+        self.person_case_ucr = get_table_name(self.domain, 'static-person_cases_v3')
+        self.household_ucr = get_table_name(self.domain, 'static-household_cases')
 
     def aggregate(self, cursor):
         drop_query = self.drop_table_query()
         create_query = self.create_table_query()
         agg_query = self.aggregation_query()
+        update_query = self.update_query()
         index_queries = self.indexes()
         add_partition_query = self.add_partition_table__query()
 
         cursor.execute(drop_query)
         cursor.execute(create_query)
         cursor.execute(agg_query)
+        cursor.execute(update_query)
         for query in index_queries:
             cursor.execute(query)
 
@@ -45,15 +49,16 @@ class BiharApiDemographicsHelper(BaseICDSAggregationDistributedHelper):
     def monthly_tablename(self):
         return f"{self.tablename}_{month_formatter(self.month)}"
 
+    def get_state_id_from_state_name(self, state_name):
+        return SQLLocation.objects.get(name=state_name, location_type__name='state').location_id
+
     @property
     def bihar_state_id(self):
-        return SQLLocation.objects.get(name='Bihar', location_type__name='state').location_id
+        return self.get_state_id_from_state_name('Bihar')
 
     def aggregation_query(self):
         month_start_string = month_formatter(self.month)
         month_end_string = month_formatter(self.month + relativedelta(months=1, seconds=-1))
-        person_case_ucr = get_table_name(self.domain, 'static-person_cases_v3')
-        household_ucr = get_table_name(self.domain, 'static-household_cases')
 
         columns = (
             ('state_id', 'person_list.state_id'),
@@ -93,6 +98,14 @@ class BiharApiDemographicsHelper(BaseICDSAggregationDistributedHelper):
             ('hh_bpl_apl', 'hh_list.hh_bpl_apl'),
             ('hh_minority', 'hh_list.hh_minority'),
             ('hh_religion', 'hh_list.hh_religion'),
+            ('time_birth', 'person_list.time_birth'),
+            ('child_alive', 'person_list.child_alive'),
+            ('father_name', 'person_list.father_name'),
+            ('mother_name', 'person_list.mother_name'),
+            ('private_admit', 'person_list.private_admit'),
+            ('primary_admit', 'person_list.primary_admit'),
+            ('date_last_private_admit', 'person_list.date_last_private_admit '),
+            ('date_return_private', 'person_list.date_return_private')
 
         )
         column_names = ", ".join([col[0] for col in columns])
@@ -105,13 +118,13 @@ class BiharApiDemographicsHelper(BaseICDSAggregationDistributedHelper):
                 (
                 SELECT
                 {calculations}
-                from "{person_case_ucr}" person_list
+                from "{self.person_case_ucr}" person_list
                 LEFT JOIN "{AGG_MIGRATION_TABLE}" migration_tab ON (
                     person_list.doc_id = migration_tab.person_case_id AND
                     person_list.supervisor_id = migration_tab.supervisor_id AND
                     migration_tab.month='{month_start_string}'
                 )
-                LEFT JOIN "{household_ucr}" hh_list ON (
+                LEFT JOIN "{self.household_ucr}" hh_list ON (
                     person_list.household_case_id = hh_list.doc_id AND
                     person_list.supervisor_id = hh_list.supervisor_id
                 )
@@ -127,6 +140,17 @@ class BiharApiDemographicsHelper(BaseICDSAggregationDistributedHelper):
                 
               );
                 """
+
+    def update_query(self):
+        return f"""
+            UPDATE  "{self.monthly_tablename}" bihar_demographics
+                SET father_id = person_list.doc_id
+                    FROM "{self.person_case_ucr}" person_list
+                    WHERE
+                        bihar_demographics.household_id = person_list.household_case_id AND
+                        bihar_demographics.father_name = person_list.name AND 
+                        bihar_demographics.supervisor_id = person_list.supervisor_id
+            """
 
     def indexes(self):
         return [
