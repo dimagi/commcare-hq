@@ -105,6 +105,7 @@ from custom.icds_reports.models.aggregate import (
     AggregateAvailingServiceForms,
     BiharAPIDemographics,
     ChildVaccines
+
 )
 from custom.icds_reports.models.helper import IcdsFile
 from custom.icds_reports.models.util import UcrReconciliationStatus
