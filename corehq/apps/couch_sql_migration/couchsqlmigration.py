@@ -435,7 +435,19 @@ class CouchSqlDomainMigrator:
         if form is None:
             self.statedb.add_missing_docs("XFormInstance", [form_id])
         else:
-            self._migrate_form(form, get_case_ids(form))
+            if form.problem and not form.is_error and case_id is None:
+                doc = self._transform_problem(form.to_json())
+                form = XFormInstance.wrap(doc)
+            proc = case_id is not None or form.doc_type not in UNPROCESSED_DOC_TYPES
+            case_ids = get_case_ids(form) if proc else []
+            self._migrate_form(form, case_ids, form_is_processed=proc)
+
+    def _transform_problem(self, doc):
+        if str(doc['problem']).startswith(PROBLEM_TEMPLATE_START):
+            doc = _fix_replacement_form_problem_in_couch(doc)
+        else:
+            doc['doc_type'] = 'XFormError'
+        return doc
 
     def _rediff_already_migrated_forms(self, form_ids):
         for form_id in form_ids:
@@ -449,13 +461,16 @@ class CouchSqlDomainMigrator:
         migrated = 0
         with self.counter('missing_forms', 'XFormInstance.id') as add_form:
             for doc_type, doc in _iter_missing_forms(self.statedb, self.stopper):
+                if doc.get("problem") and doc_type == "XFormInstance":
+                    doc = self._transform_problem(doc)
                 try:
                     form = XFormInstance.wrap(doc)
                 except Exception:
                     log.exception("Error wrapping form %s", doc)
                 else:
-                    proc = doc_type not in UNPROCESSED_DOC_TYPES
-                    self._migrate_form(form, get_case_ids(form), form_is_processed=proc)
+                    proc = form.doc_type not in UNPROCESSED_DOC_TYPES
+                    case_ids = get_case_ids(form) if proc else []
+                    self._migrate_form(form, case_ids, form_is_processed=proc)
                     self.statedb.doc_not_missing(doc_type, form.form_id)
                     add_form()
                     migrated += 1
@@ -520,7 +535,7 @@ class CouchSqlDomainMigrator:
             for form in loader.iter_blob_forms(diff):
                 log.info("migrating form %s received on %s from case %s",
                     form.form_id, form.received_on, case_id)
-                self._migrate_form(form, get_case_ids(form))
+                self._migrate_form(form, get_case_ids(form), form_is_processed=True)
             if diff.kind == "stock state":
                 dropped = maybe_drop_duplicate_ledgers(diff.json_diff, case_id)
                 if dropped:
