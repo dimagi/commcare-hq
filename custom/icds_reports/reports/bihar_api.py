@@ -195,5 +195,5 @@ def get_api_ag_school_data(month, state_id, last_person_case_id):
 
     # To apply pagination on database query with data size length
     limited_school_data = list(school_data_query[:CAS_API_PAGE_SIZE])
-    return limited_school_data, get_total_records_count(BiharVaccineView.__name__, month, state_id,
+    return limited_school_data, get_total_records_count(BiharDemographicsView.__name__, month, state_id,
                                                         month_end_11yr, month_start_14yr)
