@@ -1,11 +1,9 @@
 
-from custom.icds_reports.const import BIHAR_API_DEMOGRAPHICS_TABLE, AGG_MIGRATION_TABLE, CHILD_VACCINE_TABLE
+from custom.icds_reports.const import CHILD_VACCINE_TABLE
 from custom.icds_reports.utils.aggregation_helpers.distributed.base import BaseICDSAggregationDistributedHelper
 from corehq.apps.userreports.util import get_table_name
-from dateutil.relativedelta import relativedelta
 from custom.icds_reports.utils.aggregation_helpers import transform_day_to_month, month_formatter, \
     get_child_health_tablename
-from corehq.apps.locations.models import SQLLocation
 
 
 class ChildVaccineHelper(BaseICDSAggregationDistributedHelper):

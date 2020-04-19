@@ -15,8 +15,10 @@ from custom.icds_reports.views import (
     CasDataExport, CasDataExportAPIView, ServiceDeliveryDashboardView, InactiveDashboardUsers, APWebservice,
     DailyIndicators, InfantometerView, StadiometerView, MWCDDataView, IcdsDynamicMobileTemplateView,
     GovernanceHomeVisitAPI, GovernanceBeneficiaryAPI, GovernanceStateListAPI, GovernanceVHNDSAPI,
-    MobileDashboardDownloadView, GovernanceCBEAPI, BiharDemographicsAPI, BiharMotherDetailsAPI, BiharSchoolAPI
+    MobileDashboardDownloadView, GovernanceCBEAPI, BiharDemographicsAPI, BiharMotherDetailsAPI, BiharVaccinesAPI,
+    BiharSchoolAPI
 )
+
 
 dashboard_urls = [
     url('^mobile_app/$', MobileDashboardDownloadView.as_view(), name='icds_mobile_dashboard_download'),
@@ -192,6 +194,7 @@ urlpatterns = [
     url(r'^governance_apis/vhsnd/', GovernanceVHNDSAPI.as_view(), name='governance_apis_vhnds'),
     url(r'^bihar_demographics/household_members_data/', BiharDemographicsAPI.as_view(), name='household_members_data'),
     url(r'^bihar_demographics/mother_details/', BiharMotherDetailsAPI.as_view(), name='mother_details'),
+    url(r'^bihar_demographics/children_and_vaccines/', BiharVaccinesAPI.as_view(), name='children_and_vaccines'),
     url(r'^bihar_demographics/school_data/', BiharSchoolAPI.as_view(), name='school_data')
 ]
 

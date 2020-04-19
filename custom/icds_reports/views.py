@@ -239,7 +239,8 @@ from custom.icds_reports.reports.governance_apis import (
     get_state_names,
     get_cbe_data)
 
-from custom.icds_reports.reports.bihar_api import get_api_demographics_data, get_mother_details, get_api_ag_school_data
+from custom.icds_reports.reports.bihar_api import get_api_demographics_data, get_mother_details,\
+    get_api_vaccine_data, get_api_ag_school_data
 
 from . import const
 from .exceptions import InvalidLocationTypeException, TableauTokenException
@@ -442,7 +443,7 @@ class BaseCasAPIView(View):
             in_range = False
         return in_range
 
-    def get_state_name_from_state_id(self, state_name):
+    def get_state_id_from_state_name(self, state_name):
         return SQLLocation.objects.get(name=state_name, location_type__name='state').location_id
 
 
@@ -2423,7 +2424,7 @@ class BiharDemographicsAPI(BaseCasAPIView):
 
         valid_query_month, error_message = self.get_valid_query_month(request.GET.get('month'),
                                                                       request.GET.get('year'))
-        bihar_state_id = self.get_state_name_from_state_id('Bihar')
+        bihar_state_id = self.get_state_id_from_state_name('Bihar')
         if error_message:
             return JsonResponse({"message": error_message}, status=400)
 
@@ -2448,6 +2449,47 @@ class BiharDemographicsAPI(BaseCasAPIView):
 
         return JsonResponse(data=response_json)
 
+
+@location_safe
+@method_decorator([api_auth, toggles.ICDS_BIHAR_DEMOGRAPHICS_API.required_decorator()], name='dispatch')
+class BiharVaccinesAPI(BaseCasAPIView):
+    def message(self, message_name):
+        error_messages = {
+            "invalid_month": "Please specify a valid month. Month can't be in future and before Jan 2020",
+            "access_denied": "You are not authorised to access this location"
+        }
+        return {"message": error_messages[message_name]}
+
+    def get(self, request, *args, **kwargs):
+
+        last_person_case_id = request.GET.get('last_person_case_id', '')
+
+        valid_query_month, error_message = self.get_valid_query_month(request.GET.get('month'),
+                                                                      request.GET.get('year'))
+        bihar_state_id = self.get_state_id_from_state_name('Bihar')
+        if error_message:
+            return JsonResponse({"message": error_message}, status=400)
+
+        if not self.query_month_in_range(valid_query_month, start_month=date(2020, 1, 1)):
+            return JsonResponse(self.message('invalid_month'), status=400)
+
+        if not self.has_access(bihar_state_id, request.couch_user):
+            return JsonResponse(self.message('access_denied'), status=403)
+
+        vaccines_data, total_count = get_api_vaccine_data(valid_query_month.strftime("%Y-%m-%d"),
+                                                          bihar_state_id,
+                                                          last_person_case_id)
+        response_json = {
+            'data': vaccines_data,
+            'metadata': {
+                'month': valid_query_month.month,
+                'year': valid_query_month.year,
+                'total_count': total_count,
+                'timestamp': india_now()
+            }
+        }
+
+        return JsonResponse(data=response_json)
 
 @location_safe
 @method_decorator([api_auth, toggles.ICDS_BIHAR_DEMOGRAPHICS_API.required_decorator()], name='dispatch')
