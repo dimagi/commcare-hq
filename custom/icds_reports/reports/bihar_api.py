@@ -177,7 +177,7 @@ def get_api_ag_school_data(month, state_id, last_person_case_id):
     month_start = force_to_date(month).replace(day=1)
     month_end = month_start + relativedelta(months=1, seconds=-1)
     month_end_11yr = month_end - relativedelta(years=11)
-    month_start_14yr = month_start - relativedelta(years=14)
+    month_start_14yr = month_start - relativedelta(years=14, seconds=-1)
 
     school_data_query = BiharDemographicsView.objects.filter(
         month=month,
