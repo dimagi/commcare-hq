@@ -54,7 +54,7 @@ CREATE VIEW bihar_vaccine_view AS
         "child_vaccines"."due_list_date_1g_bcg" as "due_list_date_1g_bcg"
 
     FROM "public"."child_health_monthly" "child_health"
-    INNER JOIN "public"."child_vaccines" "child_vaccines"
+    LEFT JOIN "public"."child_vaccines" "child_vaccines"
     ON (
         ("child_health"."supervisor_id" = "child_vaccines"."supervisor_id") AND
         ("child_health"."case_id" = "child_vaccines"."child_health_case_id")

@@ -21,7 +21,6 @@ class BiharApiDemographicsHelper(BaseICDSAggregationDistributedHelper):
         drop_query = self.drop_table_query()
         create_query = self.create_table_query()
         agg_query = self.aggregation_query()
-        index_queries = self.indexes()
         update_queries = self.update_queries()
         add_partition_query = self.add_partition_table__query()
 
@@ -30,9 +29,6 @@ class BiharApiDemographicsHelper(BaseICDSAggregationDistributedHelper):
         cursor.execute(agg_query)
 
         for query in update_queries:
-            cursor.execute(query)
-
-        for query in index_queries:
             cursor.execute(query)
 
         cursor.execute(add_partition_query)
@@ -57,7 +53,7 @@ class BiharApiDemographicsHelper(BaseICDSAggregationDistributedHelper):
 
     @property
     def bihar_state_id(self):
-        return self.get_state_id_from_state_name('Bihar')
+        return self.get_state_id_from_state_name('st1')
 
     def aggregation_query(self):
         month_start_string = month_formatter(self.month)
@@ -148,13 +144,6 @@ class BiharApiDemographicsHelper(BaseICDSAggregationDistributedHelper):
                 
               );
                 """
-
-    def indexes(self):
-        return [
-            f"""CREATE INDEX IF NOT EXISTS demographics_state_person_case_idx
-                ON "{self.monthly_tablename}" (month, state_id, person_id)
-            """
-        ]
 
     def update_queries(self):
         person_case_ucr = get_table_name(self.domain, 'static-person_cases_v3')

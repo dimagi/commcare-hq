@@ -8,7 +8,7 @@ from mock import patch
 from custom.icds_reports.tasks import update_child_vaccine_table
 
 
-@patch('custom.icds_reports.utils.aggregation_helpers.distributed.bihar_api_child_vaccine.BiharApiChildVaccineHelper.bihar_state_id',
+@patch('custom.icds_reports.utils.aggregation_helpers.distributed.bihar_api_demographics.BiharApiDemographicsHelper.bihar_state_id',
        'st1')
 class VaccinesAPITest(TestCase):
 
