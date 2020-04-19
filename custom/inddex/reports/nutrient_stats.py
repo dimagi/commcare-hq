@@ -11,7 +11,6 @@ from .utils import MultiTabularReport, format_row
 class NutrientStatsReport(MultiTabularReport):
     name = 'Output 4 - Nutrient Intake Summary Statistics'
     slug = 'nutrient_stats'
-    is_released = False
 
     @property
     def fields(self):
@@ -50,12 +49,12 @@ class NutrientStatsData:
 
     @property
     def rows(self):
-        for nutrient, amts in self._get_daily_totals():
+        for nutrient, amts in self._get_recall_totals():
             yield format_row([
                 nutrient,
-                mean(amts),
-                median(amts),
-                stdev(amts),
+                mean(amts) if len(amts) >= 1 else None,
+                median(amts) if len(amts) >= 1 else None,
+                stdev(amts) if len(amts) >= 2 else None,
                 percentile(amts, .05),
                 percentile(amts, .25),
                 percentile(amts, .5),
@@ -63,14 +62,11 @@ class NutrientStatsData:
                 percentile(amts, .95),
             ])
 
-    def _get_daily_totals(self):
-        """For each nutrient, returns a list of daily totals for individual respondents"""
+    def _get_recall_totals(self):
         totals = defaultdict(lambda: defaultdict(int))
         for row in self._food_data.rows:
             for nutrient in self._nutrient_names:
-                # Keep a total amt for this respondent on this day
-                day_key = (row.unique_respondent_id, row.recalled_date)
-                totals[nutrient][day_key] += row.get_nutrient_amt(nutrient) or 0
+                totals[nutrient][row.recall_case_id] += row.get_nutrient_amt(nutrient) or 0
 
         for nutrient in self._nutrient_names:
             yield nutrient, list(sorted(totals[nutrient].values()))
