@@ -10,7 +10,6 @@ from corehq.apps.userreports.data_source_providers import (
     DynamicDataSourceProvider,
     StaticDataSourceProvider,
 )
-from corehq.apps.userreports.models import AsyncIndicator
 from corehq.apps.userreports.specs import EvaluationContext
 from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.apps.users.util import SYSTEM_USER_ID
@@ -134,9 +133,8 @@ def process_ucr_changes(domain, case_ids):
         for adapter in adapters:
             if adapter.config.filter(doc, eval_context):
                 async_configs_by_doc_id[doc['_id']].append(adapter.config._id)
-
-    doc_type_by_id = {
-        _id: cases_by_id[_id].metadata.document_type
-        for _id in async_configs_by_doc_id.keys()
-    }
-    AsyncIndicator.bulk_update_records(async_configs_by_doc_id, domain, doc_type_by_id)
+                rows_to_save = adapter.get_all_values(doc, eval_context)
+                if rows_to_save:
+                    adapter.save_rows(rows_to_save)
+                else:
+                    adapter.delete(doc)
