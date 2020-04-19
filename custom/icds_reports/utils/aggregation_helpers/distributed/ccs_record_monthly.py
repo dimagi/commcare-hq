@@ -44,6 +44,10 @@ class CcsRecordMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribute
     def person_case_ucr_tablename(self):
         return get_table_name(self.domain, 'static-person_cases_v3')
 
+    @property
+    def add_preg_form_ucr(self):
+        return get_table_name(self.domain, 'static-dashboard_add_pregnancy_form')
+
     def drop_table_query(self):
         return (
             'DELETE FROM "{}" WHERE month=%(month)s'.format(self.tablename),
@@ -215,6 +219,7 @@ class CcsRecordMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribute
             ('anc_4', 'ut.due_list_date_anc_4'),
             ('tt_1', 'ut.due_list_date_tt_1'),
             ('tt_2', 'ut.due_list_date_tt_2'),
+            ('tt_booster', 'ut.due_list_date_tt_booster'),
             ('immediate_breastfeeding', 'agg_bp.immediate_breastfeeding'),
             ('anemia', 'agg_bp.anemia'),
             ('eating_extra', 'agg_bp.eating_extra'),
@@ -260,6 +265,7 @@ class CcsRecordMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribute
             ('where_born', 'agg_delivery.where_born'),
             ('num_children_del', 'agg_delivery.num_children_del'),
             ('still_live_birth', 'agg_delivery.still_live_birth'),
+            ('last_preg_year', 'preg.last_preg'),
 
         )
         return """
@@ -293,6 +299,11 @@ class CcsRecordMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribute
             LEFT OUTER JOIN "{agg_delivery_table}" agg_delivery ON case_list.doc_id = agg_delivery.case_id
                 AND agg_delivery.month = %(start_date)s AND {valid_in_month}
                 AND case_list.supervisor_id = agg_delivery.supervisor_id
+            LEFT OUTER JOIN "{add_preg_ucr}" preg ON (
+                case_list.doc_id = preg.case_load_ccs_record0 AND
+                case_list.supervisor_id = preg.supervisor_id AND
+                preg.timeend <= %(end_date)s
+                )
             WHERE {open_in_month} AND (case_list.add is NULL OR %(start_date)s-case_list.add<=183)
                 AND case_list.supervisor_id IS NOT NULL
             ORDER BY case_list.supervisor_id, case_list.awc_id, case_list.case_id, case_list.modified_on
@@ -311,6 +322,7 @@ class CcsRecordMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribute
             agg_migration_table=AGG_MIGRATION_TABLE,
             agg_availing_table=AGG_AVAILING_SERVICES_TABLE,
             person_cases_ucr=self.person_case_ucr_tablename,
+            add_preg_ucr =self.add_preg_form_ucr,
             valid_in_month=valid_in_month,
             open_in_month=open_in_month
         ), {
@@ -323,6 +335,9 @@ class CcsRecordMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribute
         return [
             'CREATE INDEX IF NOT EXISTS crm_awc_case_idx ON "{}" (awc_id, case_id)'.format(self.tablename),
             'CREATE INDEX IF NOT EXISTS crm_person_add_case_idx ON "{}" (person_case_id, add, case_id)'.format(
+                self.tablename
+            ),
+            'CREATE INDEX IF NOT EXISTS crm_supervisor_person_month_idx ON "{}" (supervisor_id, month, person_case_id)'.format(
                 self.tablename
             )
         ]
