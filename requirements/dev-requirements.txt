@@ -209,6 +209,7 @@ traceback2==1.4.0         # via unittest2
 traitlets==4.3.3          # via ipython
 transifex-client==0.12.4
 tropo-webapi-python==0.1.3
+git+git://github.com/dimagi/turn-python.git
 twilio==6.5.1
 ua-parser==0.8.0          # via user-agents
 unidecode==0.04.20
