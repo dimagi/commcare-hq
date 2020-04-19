@@ -19,13 +19,14 @@ class BiharApiDemographicsHelper(BaseICDSAggregationDistributedHelper):
         drop_query = self.drop_table_query()
         create_query = self.create_table_query()
         agg_query = self.aggregation_query()
-        index_queries = self.indexes()
+        update_queries = self.update_queries()
         add_partition_query = self.add_partition_table__query()
 
         cursor.execute(drop_query)
         cursor.execute(create_query)
         cursor.execute(agg_query)
-        for query in index_queries:
+
+        for query in update_queries:
             cursor.execute(query)
 
         cursor.execute(add_partition_query)
@@ -84,6 +85,10 @@ class BiharApiDemographicsHelper(BaseICDSAggregationDistributedHelper):
             ('site_death', 'person_list.site_death'),
             ('closed_on', 'person_list.closed_on'),
             ('reason_closure', 'person_list.reason_closure'),
+            ('married', 'person_list.marital_status'),
+            ('husband_name', 'person_list.husband_name'),
+            ('last_preg_tt', 'person_list.last_preg_tt'),
+            ('is_pregnant', 'person_list.is_pregnant'),
             ('household_id', 'hh_list.doc_id'),
             ('household_name', 'hh_list.name'),
             ('hh_reg_date', 'hh_list.hh_reg_date'),
@@ -129,15 +134,18 @@ class BiharApiDemographicsHelper(BaseICDSAggregationDistributedHelper):
               );
                 """
 
-    def indexes(self):
-        return [
-            f"""CREATE INDEX IF NOT EXISTS demographics_state_person_case_idx
-                ON "{self.monthly_tablename}" (month, state_id, person_id)
-            """,
-            f"""CREATE INDEX IF NOT EXISTS demographics_gender_dobx
-                            ON "{self.monthly_tablename}" (gender, dob)
-                        """
-        ]
+    def update_queries(self):
+        person_case_ucr = get_table_name(self.domain, 'static-person_cases_v3')
+
+        yield f"""
+        UPDATE "{self.monthly_tablename}" demographics_details
+            SET husband_id = person_list.doc_id
+        FROM "{person_case_ucr}" person_list
+        WHERE
+            demographics_details.household_id = person_list.household_case_id AND
+            demographics_details.husband_name = person_list.name AND
+            demographics_details.supervisor_id = person_list.supervisor_id
+        """
 
     def add_partition_table__query(self):
         return f"""
