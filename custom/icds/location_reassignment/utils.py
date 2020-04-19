@@ -112,7 +112,6 @@ def reassign_household_case(domain, household_case_id, old_owner_id, new_owner_i
 
 def process_ucr_changes(domain, case_ids):
     cases = CaseAccessorSQL.get_cases(case_ids)
-    cases_by_id = {case.case_id: case for case in cases}
     docs = [case.to_json() for case in cases]
     data_source_providers = [DynamicDataSourceProvider(), StaticDataSourceProvider()]
 
