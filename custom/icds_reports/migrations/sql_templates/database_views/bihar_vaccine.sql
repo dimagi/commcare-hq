@@ -57,10 +57,13 @@ CREATE VIEW bihar_vaccine_view AS
     LEFT JOIN "public"."child_vaccines" "child_vaccines"
     ON (
         ("child_health"."supervisor_id" = "child_vaccines"."supervisor_id") AND
-        ("child_health"."case_id" = "child_vaccines"."child_health_case_id")
+        ("child_health"."case_id" = "child_vaccines"."child_health_case_id") AND
+        ("child_health"."month" = "child_vaccines"."month")
     )
     INNER JOIN "public"."bihar_api_demographics" "bihar_demographics"
     ON (
         ("child_health"."supervisor_id" = "bihar_demographics"."supervisor_id") AND
-        ("child_health"."child_person_case_id" = "bihar_demographics"."person_id")
+        ("child_health"."child_person_case_id" = "bihar_demographics"."person_id") AND
+        ("child_health"."month" = "bihar_demographics"."month")
+
     );
