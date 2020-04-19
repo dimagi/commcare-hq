@@ -29,6 +29,9 @@ class BiharApiDemographicsHelper(BaseICDSAggregationDistributedHelper):
         cursor.execute(create_query)
         cursor.execute(agg_query)
 
+        for query in update_queries:
+            cursor.execute(query)
+
         for query in index_queries:
             cursor.execute(query)
 
@@ -146,23 +149,13 @@ class BiharApiDemographicsHelper(BaseICDSAggregationDistributedHelper):
               );
                 """
 
-    def update_query(self):
-        return f"""
-            UPDATE  "{self.monthly_tablename}" bihar_demographics
-                SET father_id = person_list.doc_id
-                    FROM "{self.person_case_ucr}" person_list
-                    WHERE
-                        bihar_demographics.household_id = person_list.household_case_id AND
-                        bihar_demographics.father_name = person_list.name AND 
-                        bihar_demographics.supervisor_id = person_list.supervisor_id
-            """
-
     def indexes(self):
         return [
             f"""CREATE INDEX IF NOT EXISTS demographics_state_person_case_idx
                 ON "{self.monthly_tablename}" (month, state_id, person_id)
             """
         ]
+
     def update_queries(self):
         person_case_ucr = get_table_name(self.domain, 'static-person_cases_v3')
 
@@ -175,6 +168,16 @@ class BiharApiDemographicsHelper(BaseICDSAggregationDistributedHelper):
             demographics_details.husband_name = person_list.name AND
             demographics_details.supervisor_id = person_list.supervisor_id
         """
+
+        yield f"""
+            UPDATE  "{self.monthly_tablename}" bihar_demographics
+                SET father_id = person_list.doc_id
+                    FROM "{self.person_case_ucr}" person_list
+                    WHERE
+                        bihar_demographics.household_id = person_list.household_case_id AND
+                        bihar_demographics.father_name = person_list.name AND 
+                        bihar_demographics.supervisor_id = person_list.supervisor_id
+            """
 
     def add_partition_table__query(self):
         return f"""

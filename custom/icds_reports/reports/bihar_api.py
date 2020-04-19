@@ -1,5 +1,4 @@
-from custom.icds_reports.models.views import BiharDemographicsView, BiharAPIMotherView
-from custom.icds_reports.models.views import BiharDemographicsView, BiharVaccineView
+from custom.icds_reports.models.views import BiharDemographicsView, BiharVaccineView, BiharAPIMotherView
 from custom.icds_reports.const import CAS_API_PAGE_SIZE
 from custom.icds_reports.cache import icds_quickcache
 
@@ -11,7 +10,8 @@ from custom.icds_reports.cache import icds_quickcache
 def get_total_records_count(model_classname, month, state_id):
     classes = {
         BiharDemographicsView.__name__: BiharDemographicsView,
-        BiharAPIMotherView.__name__: BiharAPIMotherView
+        BiharAPIMotherView.__name__: BiharAPIMotherView,
+        BiharVaccineView.__name__: BiharVaccineView
     }
     return classes[model_classname].objects.filter(
         month=month,
@@ -101,14 +101,6 @@ def get_mother_details(month, state_id, last_ccs_case_id):
     return limited_mother_details_data, get_total_records_count(BiharAPIMotherView.__name__, month, state_id)
 
 
-@icds_quickcache(['month', 'state_id'], timeout=60 * 60 * 2)
-def get_vaccine_total_records_count(month, state_id):
-    return BiharVaccineView.objects.filter(
-        month=month,
-        state_id=state_id
-    ).count()
-
-
 def get_api_vaccine_data(month, state_id, last_person_case_id):
     vaccine_data_query = BiharVaccineView.objects.filter(
         month=month,
@@ -167,4 +159,4 @@ def get_api_vaccine_data(month, state_id, last_person_case_id):
 
     # To apply pagination on database query with data size length
     limited_vaccine_data = list(vaccine_data_query[:CAS_API_PAGE_SIZE])
-    return limited_vaccine_data, get_vaccine_total_records_count(month, state_id)
+    return limited_vaccine_data, get_total_records_count(BiharVaccineView.__name__, month, state_id)

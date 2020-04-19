@@ -27,9 +27,7 @@ from custom.icds_reports.const import (
     AGG_MIGRATION_TABLE,
     BIHAR_API_DEMOGRAPHICS_TABLE,
     AGG_AVAILING_SERVICES_TABLE,
-    BIHAR_API_MOTHER_DETAILS_TABLE,
-    CHILD_VACCINE_TABLE,
-    BIHAR_API_CHILD_VACCINE_TABLE
+    CHILD_VACCINE_TABLE
 )
 from custom.icds_reports.utils.aggregation_helpers.distributed import (
     AggAwcDailyAggregationDistributedHelper,

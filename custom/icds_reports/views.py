@@ -239,8 +239,8 @@ from custom.icds_reports.reports.governance_apis import (
     get_state_names,
     get_cbe_data)
 
-from custom.icds_reports.reports.bihar_api import get_api_demographics_data, get_api_vaccine_data
-from custom.icds_reports.reports.bihar_api import get_api_demographics_data, get_mother_details
+from custom.icds_reports.reports.bihar_api import get_api_demographics_data, get_mother_details,\
+    get_api_vaccine_data
 
 from . import const
 from .exceptions import InvalidLocationTypeException, TableauTokenException
