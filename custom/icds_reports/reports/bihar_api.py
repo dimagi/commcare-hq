@@ -7,7 +7,7 @@ from dimagi.utils.dates import force_to_date
 # cache for 2 hours because it wont change atleast for 24 hours.
 # This API will be hit in a loop of something and they should be able to scrape all
 # the records in 2 hours.
-@icds_quickcache(['model_classname', 'month', 'state_id'], timeout=60 * 60 * 2)
+@icds_quickcache(['model_classname', 'month', 'state_id', 'month_end_11yr', 'month_start_14yr'], timeout=60 * 60 * 2)
 def get_total_records_count(model_classname, month, state_id, month_end_11yr=None,
                             month_start_14yr=None):
     classes = {
