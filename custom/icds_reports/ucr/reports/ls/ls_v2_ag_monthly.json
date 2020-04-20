@@ -26,7 +26,7 @@
     "icds"
   ],
   "report_id": "ls_v2_ag_monthly",
-  "data_source_table": "TODO",
+  "data_source_table": "static-ag_care_cases_monthly",
   "config": {
     "title": "UCR V2 - LS - Adolescent Girls Monthly",
     "description": "",

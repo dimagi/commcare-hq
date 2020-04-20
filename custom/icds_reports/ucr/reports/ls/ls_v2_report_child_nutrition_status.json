@@ -26,7 +26,7 @@
     "icds"
   ],
   "report_id": "ls_v2_report_child_nutrition_status",
-  "data_source_table": "TODO",
+  "data_source_table": "static-child_health_cases",
   "config": {
     "title": "UCR V2- LS - Child Nutrition Status",
     "description": "",
