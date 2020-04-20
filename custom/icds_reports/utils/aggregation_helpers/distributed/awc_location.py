@@ -33,7 +33,7 @@ class LocationAggregationDistributedHelper(BaseICDSAggregationDistributedHelper)
             'block_id', 'block_name', 'block_site_code', 'block_is_test', 'block_map_location_name',
             'district_id', 'district_name', 'district_site_code', 'district_is_test', 'district_map_location_name',
             'state_id', 'state_name', 'state_site_code', 'state_is_test', 'state_map_location_name',
-            'aggregation_level', 'awc_deprecates', 'awc_deprecated_at', 'ls_deprecates', 'ls_deprecated_at'
+            'aggregation_level', 'awc_deprecates', 'awc_deprecated_at', 'supervisor_deprecates', 'supervisor_deprecated_at'
         )
 
     def generate_csv(self):
@@ -79,8 +79,8 @@ class LocationAggregationDistributedHelper(BaseICDSAggregationDistributedHelper)
                 })
                 if loc_type == 'supervisor':
                     loc.update({
-                        'ls_deprecates': ','.join(metadata.get('deprecates', [])),
-                        'ls_deprecated_at': metadata.get("deprecated_at"),
+                        'supervisor_deprecates': ','.join(metadata.get('deprecates', [])),
+                        'supervisor_deprecated_at': metadata.get("deprecated_at"),
                     })
                 if loc_type in ('block', 'district', 'state'):
                     loc.update({
@@ -166,8 +166,8 @@ class LocationAggregationDistributedHelper(BaseICDSAggregationDistributedHelper)
             ('awc_is_test', 'awc_is_test'),
             ('awc_deprecates', 'awc_deprecates'),
             ('awc_deprecated_at', 'awc_deprecated_at'),
-            ('ls_deprecates', 'ls_deprecates'),
-            ('ls_deprecated_at', 'ls_deprecated_at')
+            ('supervisor_deprecates', 'supervisor_deprecates'),
+            ('supervisor_deprecated_at', 'supervisor_deprecated_at')
         )
 
         return """
@@ -254,8 +254,8 @@ class LocationAggregationDistributedHelper(BaseICDSAggregationDistributedHelper)
             ),
             ('awc_deprecates', 'NULL'),
             ('awc_deprecated_at', 'NULL'),
-            ('ls_deprecates', 'NULL'),
-            ('ls_deprecated_at', 'NULL')
+            ('supervisor_deprecates', 'NULL'),
+            ('supervisor_deprecated_at', 'NULL')
 
         )
 

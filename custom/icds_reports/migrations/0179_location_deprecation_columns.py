@@ -8,17 +8,17 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('icds_reports', '0176_kpi_api_view'),
+        ('icds_reports', '0178_rebuild_chm_view'),
     ]
 
     operations = [
         migrations.RunSQL('ALTER TABLE awc_location ADD COLUMN awc_deprecates TEXT'),
         migrations.RunSQL('ALTER TABLE awc_location ADD COLUMN awc_deprecated_at TEXT'),
-        migrations.RunSQL('ALTER TABLE awc_location ADD COLUMN ls_deprecates TEXT'),
-        migrations.RunSQL('ALTER TABLE awc_location ADD COLUMN ls_deprecated_at TEXT'),
+        migrations.RunSQL('ALTER TABLE awc_location ADD COLUMN supervisor_deprecates TEXT'),
+        migrations.RunSQL('ALTER TABLE awc_location ADD COLUMN supervisor_deprecated_at TEXT'),
         migrations.RunSQL('ALTER TABLE awc_location_local ADD COLUMN awc_deprecates TEXT'),
         migrations.RunSQL('ALTER TABLE awc_location_local ADD COLUMN awc_deprecated_at TEXT'),
-        migrations.RunSQL('ALTER TABLE awc_location_local ADD COLUMN ls_deprecates TEXT'),
-        migrations.RunSQL('ALTER TABLE awc_location_local ADD COLUMN ls_deprecated_at TEXT'),
+        migrations.RunSQL('ALTER TABLE awc_location_local ADD COLUMN supervisor_deprecates TEXT'),
+        migrations.RunSQL('ALTER TABLE awc_location_local ADD COLUMN supervisor_deprecated_at TEXT'),
 
     ]

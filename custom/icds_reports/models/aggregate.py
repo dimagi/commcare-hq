@@ -247,8 +247,8 @@ class AwcLocation(models.Model, AggregateMixin):
         null=True,
         help_text='text representation of list of location ids'
     )
-    ls_deprecated_at = models.DateField(blank=True, null=True)
-    ls_deprecates = models.TextField(
+    supervisor_deprecated_at = models.DateField(blank=True, null=True)
+    supervisor_deprecates = models.TextField(
         blank=True,
         null=True,
         help_text='text representation of list of location ids'

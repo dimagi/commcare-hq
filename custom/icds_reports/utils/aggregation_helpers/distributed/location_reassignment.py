@@ -143,7 +143,7 @@ class TempInfraTables(TempPrevTablesBase):
         FROM "awc_location_local" awc
         WHERE awc_deprecated_at  >= '{prev_month}' AND
               awc_deprecated_at < '{next_month_start}' AND
-              aggregation_level=5) awcg
+              aggregation_level=5) awc
     WHERE prev.awc_id=awc.prev_awc_id;
     INSERT INTO "{prev_table}" (SELECT * FROM "{prev_local}");
     """
