@@ -57,7 +57,7 @@ class BiharApiDemographicsHelper(BaseICDSAggregationDistributedHelper):
 
     def aggregation_query(self):
         month_start_string = month_formatter(self.month)
-        month_end_string = month_formatter(self.month + relativedelta(months=1, seconds=-1))
+        month_end_string = self.month + relativedelta(months=1, seconds=-1)
 
         columns = (
             ('state_id', 'person_list.state_id'),
