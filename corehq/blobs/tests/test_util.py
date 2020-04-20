@@ -1,5 +1,6 @@
 import gzip
 import os
+import random
 import tempfile
 import uuid
 from io import BytesIO
@@ -63,3 +64,52 @@ class TestGzipStream(TestCase):
             content_length += len(compress_stream.read())
             self.assertNotEqual(compress_stream.content_length, content_length)
             self.assertEqual(compress_stream.content_length, 11)
+
+    def test_content_length_0(self):
+        # NOTE invariant based on GzipFile implementation
+        zipper = mod.GzipStream(BytesIO(b""))
+        zipper.read(10)
+        assert zipper._buf.size == 0, f"invariant failed ({zipper._buf.size})"
+        with self.assertRaises(GzipStreamError):
+            zipper.content_length
+        zipper.read()
+        self.assertEqual(zipper.content_length, 0)
+
+    def test_content_length_1(self):
+        # NOTE invariant based on GzipFile implementation
+        zipper = mod.GzipStream(BytesIO(b"x"))
+        zipper.read(10)
+        assert zipper._buf.size == 0, f"invariant failed ({zipper._buf.size})"
+        with self.assertRaises(GzipStreamError):
+            zipper.content_length
+        zipper.read()
+        self.assertEqual(zipper.content_length, 1)
+
+    def test_content_length_10x_chunk(self):
+        # NOTE invariant based on GzipFile implementation
+        self.addCleanup(random.seed)
+        random.seed(42)
+        size = mod.GzipStream.CHUNK_SIZE * 10
+        data = bytes(random.getrandbits(8) for _ in range(size))
+        zipper = mod.GzipStream(BytesIO(data))
+        zipper.read(16405)
+        assert zipper._buf.size == 0, f"invariant failed ({zipper._buf.size})"
+        with self.assertRaises(GzipStreamError):
+            zipper.content_length
+        zipper.read()
+        self.assertEqual(zipper.content_length, size, "bad content length")
+
+    def test_content_length_after_partial_read_and_close(self):
+        # NOTE invariant based on GzipFile implementation
+        zipper = mod.GzipStream(BytesIO(b""))
+        zipper.read(1)
+        assert zipper._buf.size, f"invariant failed ({zipper._buf.size})"
+        zipper.close()
+        with self.assertRaises(GzipStreamError):
+            zipper.content_length
+
+    def test_content_length_after_full_read_and_close(self):
+        zipper = mod.GzipStream(BytesIO(b"x"))
+        zipper.read()
+        zipper.close()
+        self.assertEqual(zipper.content_length, 1)

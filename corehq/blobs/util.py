@@ -52,7 +52,7 @@ class GzipStream:
         self._input = fileobj
         self._buf = _IoBuffer()
         self._gzip = GzipFile(None, mode='wb', fileobj=self._buf)
-        self._content_length = None
+        self._content_length = 0
 
     @property
     def content_length(self):
@@ -60,14 +60,11 @@ class GzipStream:
 
         Can only be accessed once stream has beenfully read.
         """
-        if self._content_length is None or len(self._buf) > 0:
+        if not self._gzip.closed or self._content_length is None:
             raise GzipStreamError("cannot read length before full stream")
         return self._content_length
 
     def read(self, size=-1):
-        if self._content_length is None:
-            self._content_length = 0
-
         while size < 0 or len(self._buf) < size:
             chunk = self._input.read(self.CHUNK_SIZE)
             if not chunk:
@@ -78,6 +75,10 @@ class GzipStream:
         return self._buf.read(size)
 
     def close(self):
+        if not self._gzip.closed:
+            self._content_length = None
+        self._input.close()
+        self._gzip.close()
         self._buf.close()
 
 
