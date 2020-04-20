@@ -42,56 +42,24 @@ class NullJsonField(JSONField):
 
 
 class GzipStream:
-    """Wrapper for a file like object that compresses the data as
-    it is read.
+    """Wrapper for a file like object that compresses the data as it is read
 
-    Adapted from https://stackoverflow.com/a/31566082"""
+    Adapted from https://stackoverflow.com/a/31566082
+    """
     CHUNK_SIZE = 4096
-
-    class Buffer:
-        def __init__(self):
-            self._buf = deque()
-            self._size = 0
-
-        def __len__(self):
-            return self._size
-
-        def write(self, data):
-            self._buf.append(data)
-            self._size += len(data)
-
-        def read(self, size=-1):
-            if size < 0:
-                size = self._size
-            ret_list = []
-            while size > 0 and self._buf:
-                s = self._buf.popleft()
-                size -= len(s)
-                ret_list.append(s)
-            if size < 0:
-                ret_list[-1], remainder = ret_list[-1][:size], ret_list[-1][size:]
-                self._buf.appendleft(remainder)
-            ret = b''.join(ret_list)
-            self._size -= len(ret)
-            return ret
-
-        def flush(self):
-            pass
-
-        def close(self):
-            self._buf = None
-            self._size = 0
 
     def __init__(self, fileobj):
         self._input = fileobj
-        self._buf = self.Buffer()
+        self._buf = _IoBuffer()
         self._gzip = GzipFile(None, mode='wb', fileobj=self._buf)
         self._content_length = None
 
     @property
     def content_length(self):
-        """Size of uncompressed data. Can only be accessed once stream has been
-        fully read."""
+        """Size of uncompressed data
+
+        Can only be accessed once stream has beenfully read.
+        """
         if self._content_length is None or len(self._buf) > 0:
             raise GzipStreamError("cannot read length before full stream")
         return self._content_length
@@ -111,6 +79,41 @@ class GzipStream:
 
     def close(self):
         self._buf.close()
+
+
+class _IoBuffer:
+    def __init__(self):
+        self.buffer = deque()
+        self.size = 0
+
+    def __len__(self):
+        return self.size
+
+    def write(self, data):
+        self.buffer.append(data)
+        self.size += len(data)
+
+    def read(self, size=-1):
+        if size < 0:
+            size = self.size
+        ret_list = []
+        while size > 0 and self.buffer:
+            s = self.buffer.popleft()
+            size -= len(s)
+            ret_list.append(s)
+        if size < 0:
+            ret_list[-1], remainder = ret_list[-1][:size], ret_list[-1][size:]
+            self.buffer.appendleft(remainder)
+        ret = b''.join(ret_list)
+        self.size -= len(ret)
+        return ret
+
+    def flush(self):
+        pass
+
+    def close(self):
+        self.buffer = None
+        self.size = 0
 
 
 class document_method(object):
