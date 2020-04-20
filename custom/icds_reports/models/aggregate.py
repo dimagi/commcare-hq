@@ -206,6 +206,8 @@ class CcsRecordMonthly(models.Model, AggregateMixin):
         blank=True, null=True,
         help_text="Number of children alive"
     )
+    tt_booster = models.DateField(null=True)
+    last_preg_year = models.IntegerField(null=True)
 
     class Meta(object):
         managed = False
@@ -1756,6 +1758,11 @@ class BiharAPIDemographics(models.Model, AggregateMixin):
     migration_status = models.SmallIntegerField(null=True)
     resident = models.SmallIntegerField(null=True)
     registered_status = models.SmallIntegerField(null=True)
+    married = models.SmallIntegerField(null=True)
+    husband_name = models.TextField(null=True)
+    husband_id = models.TextField(null=True)
+    last_preg_tt = models.SmallIntegerField(null=True)
+    is_pregnant = models.SmallIntegerField(null=True)
     rch_id = models.TextField(null=True)
     mcts_id = models.TextField(null=True)
     phone_number = models.TextField(null=True)
@@ -1763,10 +1770,22 @@ class BiharAPIDemographics(models.Model, AggregateMixin):
     site_death = models.TextField(null=True)
     closed_on = models.DateField(null=True)
     reason_closure = models.TextField(null=True)
+    time_birth = models.TextField(null=True)
+    child_alive = models.SmallIntegerField(null=True)
+    father_name = models.TextField(null=True)
+    father_id = models.TextField(null=True)
+    mother_id = models.TextField(null=True)
+    mother_name = models.TextField(null=True)
+    private_admit = models.SmallIntegerField(blank=True, null=True)
+    primary_admit = models.SmallIntegerField(blank=True, null=True)
+    date_last_private_admit = models.DateField(null=True)
+    date_return_private = models.DateField(null=True)
+    out_of_school_status = models.SmallIntegerField(null=True)
+    last_class_attended_ever = models.SmallIntegerField(null=True)
 
     class Meta(object):
         db_table = BIHAR_API_DEMOGRAPHICS_TABLE
-        unique_together = ('month', 'state_id', 'district_id', 'block_id', 'supervisor_id', 'person_id')  # pkey
+        unique_together = ('supervisor_id', 'month', 'person_id')  # pkey
 
     _agg_helper_cls = BiharApiDemographicsHelper
     _agg_atomic = False
@@ -1827,3 +1846,4 @@ class ChildVaccines(models.Model, AggregateMixin):
 
     _agg_helper_cls = ChildVaccineHelper
     _agg_atomic = False
+
