@@ -25,6 +25,7 @@ from django_prbac.utils import has_privilege
 from memoized import memoized
 
 from corehq.apps.accounting.decorators import always_allow_project_access
+from corehq.apps.accounting.utils.downgrade import can_domain_unpause
 from dimagi.utils.web import json_response
 
 from corehq import privileges
@@ -964,6 +965,11 @@ class SelectPlanView(DomainAccountingSettings):
     lead_text = ugettext_lazy("Please select a plan below that fits your organization's needs.")
 
     @property
+    @memoized
+    def can_domain_unpause(self):
+        return can_domain_unpause(self.domain)
+
+    @property
     def plan_options(self):
         return [
             PlanOption(
@@ -1087,6 +1093,7 @@ class SelectPlanView(DomainAccountingSettings):
             'subscription_below_minimum': (self.current_subscription.is_below_minimum_subscription
                                            if self.current_subscription is not None else False),
             'next_subscription_edition': self.next_subscription_edition,
+            'can_domain_unpause': self.can_domain_unpause,
         }
 
 
@@ -1313,6 +1320,8 @@ class ConfirmSelectedPlanView(SelectPlanView):
         return HttpResponseRedirect(reverse(SelectPlanView.urlname, args=[self.domain]))
 
     def post(self, request, *args, **kwargs):
+        if not self.can_domain_unpause:
+            return HttpResponseRedirect(reverse(SelectPlanView.urlname, args=[self.domain]))
         if self.edition == SoftwarePlanEdition.ENTERPRISE:
             return HttpResponseRedirect(reverse(SelectedEnterprisePlanView.urlname, args=[self.domain]))
         return super(ConfirmSelectedPlanView, self).get(request, *args, **kwargs)
@@ -1394,6 +1403,9 @@ class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
     def post(self, request, *args, **kwargs):
         if self.async_response is not None:
             return self.async_response
+
+        if not self.can_domain_unpause:
+            return HttpResponseRedirect(reverse(SelectPlanView.urlname, args=[self.domain]))
 
         if self.is_form_post and self.billing_account_info_form.is_valid():
             if not self.current_subscription.user_can_change_subscription(self.request.user):
