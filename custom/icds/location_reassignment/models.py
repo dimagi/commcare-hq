@@ -21,6 +21,7 @@ MANY = "many"
 
 
 class Transition(object):
+    # Fails if operation fails
     def __init__(self, domain, operation, old_locations, new_locations):
         self.operation = {
             MERGE_OPERATION: MergeOperation,
@@ -55,8 +56,9 @@ class BaseOperation(metaclass=ABCMeta):
         """
         Invalid if
         1. there are no locations
-        2. if any of the old locations have already been deprecated
+        2. if any of the old locations has already been deprecated
         3. if any of the new locations has already been a part of a deprecation
+        4. the count of old and new locations is not as expected for the operation
         :return:
         """
         if not self.old_locations or not self.new_locations:

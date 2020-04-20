@@ -40,6 +40,25 @@ class Parser(object):
                     'New location site code': 'Old location site code'
                 }
         }
+
+        Validates:
+        1. Excel validations, adds to errors and skips a row if:
+            a. operation column has a valid value
+            b. If there is an operation
+                i. there should be both old and new location codes
+                ii. there should be a change in old and new location codes
+                iii. there should be both old and new usernames or none
+                iv. an old location should be in only one extract, move or merge or
+                    can only be more than once in a merge operation
+                v. a new location should be in only one extract, move or split or
+                    can only be more than once in a split operation
+                vi. there should be a new parent site code where expected
+                vii. there should be no new parent site code where not expected
+            c. Operation noted, but additional errors
+                i. new location is created with different details for a reused parent
+        2. Consolidated validations
+            a. if a location is archived, all its descendants should get archived too
+            b. new parent assigned should be of the expected location type
         """
         self.domain = domain
         self.workbook = workbook
