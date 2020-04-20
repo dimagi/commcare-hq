@@ -111,7 +111,7 @@ def get_awcs_covered_data_map(domain, config, loc_level, show_test=False):
             "Number of {:s} launched: {:s}".format(
                 awcs_launched_help_text(),
                 indian_formatted_number(total_awcs),
-                prop.title(),
+                'Sectors' if prop.title() == 'Supervisors' else prop.title(),
                 indian_formatted_number(total)
             )
         )
@@ -206,7 +206,12 @@ def get_awcs_covered_sector_data(domain, config, loc_level, location_id, show_te
         info = _(
             "{:s}<br /><br />"
             "Number of AWCs launched: {:d} <br />"
-            "Number of {:s} launched: {:d}".format(awcs_launched_help_text(), total_awcs, prop.title(), total)
+            "Number of {:s} launched: {:d}".format(
+                awcs_launched_help_text(),
+                total_awcs,
+                'Sectors' if prop.title() == 'Supervisors' else prop.title(),
+                total
+            )
         )
 
     return {
