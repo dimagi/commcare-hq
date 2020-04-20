@@ -80,6 +80,15 @@
         }
       },
       {
+        "column_id": "edd",
+        "datatype": "date",
+        "type": "expression",
+        "expression": {
+          "type": "property_path",
+          "property_path": ["form", "edd"]
+        }
+      },
+      {
         "column_id": "where_born",
         "datatype": "string",
         "type": "expression",
