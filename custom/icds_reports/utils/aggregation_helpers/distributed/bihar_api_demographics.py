@@ -155,7 +155,8 @@ class BiharApiDemographicsHelper(BaseICDSAggregationDistributedHelper):
         WHERE
             demographics_details.household_id = person_list.household_case_id AND
             demographics_details.husband_name = person_list.name AND
-            demographics_details.supervisor_id = person_list.supervisor_id
+            demographics_details.supervisor_id = person_list.supervisor_id AND
+            person_list.state_id='{self.bihar_state_id}'
         """
 
         yield f"""
@@ -165,7 +166,8 @@ class BiharApiDemographicsHelper(BaseICDSAggregationDistributedHelper):
                     WHERE
                         bihar_demographics.household_id = person_list.household_case_id AND
                         bihar_demographics.father_name = person_list.name AND 
-                        bihar_demographics.supervisor_id = person_list.supervisor_id
+                        bihar_demographics.supervisor_id = person_list.supervisor_id AND
+                        person_list.state_id='{self.bihar_state_id}'
             """
 
     def add_partition_table__query(self):
