@@ -42,4 +42,4 @@ class VaccinesAPITest(TestCase):
             ,
             first_person_case
         )
-        self.assertEqual(44, count)
+        self.assertEqual(48, count)
