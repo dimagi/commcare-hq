@@ -95,7 +95,7 @@ class TestParser(TestCase):
             parser = Parser(self.domain, workbook)
             errors = parser.parse()
             self.assertEqual(parser.valid_transitions['awc']['Move'], {'131': '112'})
-            self.assertEqual(parser.valid_transitions['awc']['Merge'], {'132': ['113', '114']})
+            self.assertEqual(parser.valid_transitions['awc']['Merge'], {'132': ['113']})
             self.assertEqual(parser.valid_transitions['supervisor']['Move'], {'13': '12'})
             self.assertEqual(errors, [
                 "No change in location code for Extract, got old: '111' and new: '111'",

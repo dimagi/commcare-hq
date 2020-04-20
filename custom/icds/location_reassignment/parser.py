@@ -54,8 +54,7 @@ class Parser(object):
                     can only be more than once in a split operation
                 vi. there should be a new parent site code where expected
                 vii. there should be no new parent site code where not expected
-            c. Operation noted, but additional errors
-                i. new location is created with different details for a reused parent
+                viii. new location is created with different details for a reused parent
         2. Consolidated validations
             a. if a location is archived, all its descendants should get archived too
             b. new parent assigned should be of the expected location type
@@ -119,19 +118,19 @@ class Parser(object):
             return
         if self._invalid_row(row, location_type_code):
             return
-        self._note_transition(operation, location_type_code, new_site_code, old_site_code)
         if new_site_code in self.new_location_details[location_type_code]:
             details = self.new_location_details[location_type_code][new_site_code]
             if (details['name'] != row.get(NEW_NAME)
                     or details['parent_site_code'] != row.get(NEW_PARENT_SITE_CODE)
                     or details['lgd_code'] != row.get(NEW_LGD_CODE)):
                 self.errors.append("New location %s reused with different information" % new_site_code)
-        else:
-            self.new_location_details[location_type_code][new_site_code] = {
-                'name': row.get(NEW_NAME),
-                'parent_site_code': row.get(NEW_PARENT_SITE_CODE),
-                'lgd_code': row.get(NEW_LGD_CODE)
-            }
+                return
+        self.new_location_details[location_type_code][new_site_code] = {
+            'name': row.get(NEW_NAME),
+            'parent_site_code': row.get(NEW_PARENT_SITE_CODE),
+            'lgd_code': row.get(NEW_LGD_CODE)
+        }
+        self._note_transition(operation, location_type_code, new_site_code, old_site_code)
         if row.get(NEW_USERNAME_COLUMN) and row.get(USERNAME_COLUMN):
             self.user_transitions[row.get(NEW_USERNAME_COLUMN)] = row.get(USERNAME_COLUMN)
 
