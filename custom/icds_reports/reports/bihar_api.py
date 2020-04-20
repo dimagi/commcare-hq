@@ -1,22 +1,33 @@
 from custom.icds_reports.models.views import BiharDemographicsView, BiharVaccineView, BiharAPIMotherView
 from custom.icds_reports.const import CAS_API_PAGE_SIZE
 from custom.icds_reports.cache import icds_quickcache
-
+from dateutil.relativedelta import relativedelta
+from dimagi.utils.dates import force_to_date
 
 # cache for 2 hours because it wont change atleast for 24 hours.
 # This API will be hit in a loop of something and they should be able to scrape all
 # the records in 2 hours.
-@icds_quickcache(['model_classname', 'month', 'state_id'], timeout=60 * 60 * 2)
-def get_total_records_count(model_classname, month, state_id):
+@icds_quickcache(['model_classname', 'month', 'state_id', 'month_end_11yr', 'month_start_14yr'], timeout=60 * 60 * 2)
+def get_total_records_count(model_classname, month, state_id, month_end_11yr=None,
+                            month_start_14yr=None):
     classes = {
         BiharDemographicsView.__name__: BiharDemographicsView,
         BiharAPIMotherView.__name__: BiharAPIMotherView,
-        BiharVaccineView.__name__: BiharVaccineView
+        BiharVaccineView.__name__: BiharVaccineView,
     }
-    return classes[model_classname].objects.filter(
-        month=month,
-        state_id=state_id
-    ).count()
+    if month_start_14yr is None:
+        return classes[model_classname].objects.filter(
+            month=month,
+            state_id=state_id
+        ).count()
+    else:
+        return classes[model_classname].objects.filter(
+            month=month,
+            state_id=state_id,
+            dob__lt=month_end_11yr,
+            dob__gte=month_start_14yr,
+            gender='F',
+        ).count()
 
 
 def get_api_demographics_data(month, state_id, last_person_case_id):
@@ -160,3 +171,29 @@ def get_api_vaccine_data(month, state_id, last_person_case_id):
     # To apply pagination on database query with data size length
     limited_vaccine_data = list(vaccine_data_query[:CAS_API_PAGE_SIZE])
     return limited_vaccine_data, get_total_records_count(BiharVaccineView.__name__, month, state_id)
+
+
+def get_api_ag_school_data(month, state_id, last_person_case_id):
+    month_start = force_to_date(month).replace(day=1)
+    month_end = month_start + relativedelta(months=1, seconds=-1)
+    month_end_11yr = month_end - relativedelta(years=11)
+    month_start_14yr = month_start - relativedelta(years=14, seconds=-1)
+
+    school_data_query = BiharDemographicsView.objects.filter(
+        month=month,
+        state_id=state_id,
+        dob__lt=month_end_11yr,
+        dob__gte=month_start_14yr,
+        gender='F',
+        person_id__gt=last_person_case_id
+    ).order_by('person_id').values(
+        'person_id',
+        'person_name',
+        'out_of_school_status',
+        'last_class_attended_ever'
+    )
+
+    # To apply pagination on database query with data size length
+    limited_school_data = list(school_data_query[:CAS_API_PAGE_SIZE])
+    return limited_school_data, get_total_records_count(BiharDemographicsView.__name__, month, state_id,
+                                                        month_end_11yr, month_start_14yr)
