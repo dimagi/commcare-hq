@@ -84,6 +84,14 @@ function MonthFilterController($scope, $location, $uibModal, storageService, dat
     var isSDD =  $location.path().indexOf('service_delivery_dashboard') !== -1;
     vm.startYear = dateHelperService.getStartingYear(isSDD);
     vm.startMonth = dateHelperService.getStartingMonth(isSDD);
+    if (dateHelperService.isBetweenFirstAndThirdDayOfCurrentMonth(new Date())) {
+        var previousMonthDate = dateHelperService.getPreviousMonthDate();
+        vm.maxMonth = previousMonthDate.getMonth() + 1;
+        vm.maxYear = previousMonthDate.getFullYear();
+    } else {
+        vm.maxMonth = new Date().getMonth() + 1;
+        vm.maxYear = new Date().getFullYear();
+    }
 
     vm.selectedDate = dateHelperService.getSelectedDate();
     if (isSDD && vm.selectedDate < dateHelperService.getReportStartDates()['sdd']) {
