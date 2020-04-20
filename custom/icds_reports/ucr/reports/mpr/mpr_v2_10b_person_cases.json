@@ -32,7 +32,8 @@
     "description": "",
     "visible": false,
     "aggregation_columns": [
-      "TODO"
+      "owner_id",
+      "month"
     ],
     "filters": [
       "TODO"
@@ -40,11 +41,7 @@
     "columns": [
       "TODO"
     ],
-    "sort_expression": [
-      "TODO"
-    ],
-    "configured_charts": [
-      "TODO"
-    ]
+    "sort_expression": [],
+    "configured_charts": []
   }
 }
