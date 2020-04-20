@@ -1,5 +1,7 @@
+import datetime
 import logging
 from collections import namedtuple
+from contextlib import contextmanager
 
 from django.conf import settings
 from django.db import IntegrityError
@@ -75,6 +77,50 @@ def get_task_progress(task):
 
 def set_task_progress(task, current, total):
     update_task_state(task, 'PROGRESS', {'current': current, 'total': total})
+
+
+class ProgressManager(object):
+    """
+    A context manager that mediates calls to `set_task_progress`
+
+    and inserts exponential backoff (with a max interval) to spare the db
+    and flushes on __exit__
+
+    """
+    def __init__(self, task, min_interval=.5, exp_rate=1.20, max_interval=10 * 60):
+        self.task = task
+        self._interval = min_interval
+        self._exp_rate = exp_rate
+        self._max_interval = max_interval
+        self._next_flush_time = datetime.datetime.utcnow()
+        self._value = {'current': None, 'total': None}
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, type, value, traceback):
+        self.flush()
+
+    def set_progress(self, current, total):
+        new_value = {'current': current, 'total': total}
+
+        if new_value != self._value:
+            self._value = new_value
+            if self._should_flush():
+                self.flush()
+                self._set_next_flush_time()
+
+    def _should_flush(self):
+        return self._next_flush_time <= datetime.datetime.utcnow()
+
+    def flush(self):
+        self._set_task_progress(self.task, **self._value)
+
+    def _set_next_flush_time(self):
+        self._next_flush_time += datetime.timedelta(seconds=self._interval)
+        self._interval = min(self._interval * self._exp_rate, self._max_interval)
+
+    _set_task_progress = staticmethod(set_task_progress)
 
 
 def update_task_state(task, state, meta):
