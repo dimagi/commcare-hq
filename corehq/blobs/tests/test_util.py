@@ -6,7 +6,7 @@ from io import BytesIO
 from unittest import TestCase
 
 import corehq.blobs.util as mod
-from corehq.blobs.exceptions import GzipStreamAttrAccessBeforeRead
+from corehq.blobs.exceptions import GzipStreamError
 
 
 class TestRandomUrlId(TestCase):
@@ -50,12 +50,12 @@ class TestGzipStream(TestCase):
             compress_stream = mod.GzipStream(f)
 
             # Try to read content_length without reading the stream
-            with self.assertRaises(GzipStreamAttrAccessBeforeRead):
+            with self.assertRaises(GzipStreamError):
                 compress_stream.content_length  # noqa
 
             # Try to read content_length after partially reading the stream
             content_length = len(compress_stream.read(5))
-            with self.assertRaises(GzipStreamAttrAccessBeforeRead):
+            with self.assertRaises(GzipStreamError):
                 compress_stream.content_length  # noqa
 
             # Read content_length after completely reading the stream and check

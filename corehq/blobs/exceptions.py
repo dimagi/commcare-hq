@@ -20,6 +20,5 @@ class NotFound(Error):
     """Raised when an attachment cannot be found"""
 
 
-class GzipStreamAttrAccessBeforeRead(Exception):
-    """Raised when an attribute (eg: content_length) of the
-    Gzip Stream is accessed before the stream is read completely"""
+class GzipStreamError(Exception):
+    """Raised when GzipStream is used improperly"""

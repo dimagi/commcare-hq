@@ -10,7 +10,7 @@ from io import RawIOBase
 
 from jsonfield import JSONField
 
-from corehq.blobs.exceptions import BadName, GzipStreamAttrAccessBeforeRead
+from corehq.blobs.exceptions import BadName, GzipStreamError
 
 SAFENAME = re.compile("^[a-z0-9_./{}-]+$", re.IGNORECASE)
 
@@ -93,8 +93,7 @@ class GzipStream:
         """Size of uncompressed data. Can only be accessed once stream has been
         fully read."""
         if self._content_length is None or len(self._buf) > 0:
-            raise GzipStreamAttrAccessBeforeRead(
-                "content_length can't be accessed without completely reading the stream")
+            raise GzipStreamError("cannot read length before full stream")
         return self._content_length
 
     def read(self, size=-1):
