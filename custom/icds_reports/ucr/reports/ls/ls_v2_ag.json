@@ -141,6 +141,7 @@
         "display": "ag_out_of_school"
       }
     ],
+    "sort_expression": [ ],
     "configured_charts": [ ]
   }
 }

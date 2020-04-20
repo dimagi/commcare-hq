@@ -179,6 +179,7 @@
         }
       }
     ],
+    "sort_expression": [ ],
     "configured_charts": [ ]
   }
 }

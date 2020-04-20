@@ -99,6 +99,7 @@
         "display": "count"
       }
     ],
+    "sort_expression": [ ],
     "configured_charts": [ ]
   }
 }

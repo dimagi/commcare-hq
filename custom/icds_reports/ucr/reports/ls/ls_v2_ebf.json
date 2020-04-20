@@ -115,6 +115,7 @@
         "display": "is_ebf_open_count"
       }
     ],
+    "sort_expression": [ ],
     "configured_charts": [ ]
   }
 }

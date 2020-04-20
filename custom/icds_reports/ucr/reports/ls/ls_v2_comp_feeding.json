@@ -115,6 +115,7 @@
         "display": "comp_feeding_yes_open_count"
       }
     ],
+    "sort_expression": [ ],
     "configured_charts": [ ]
   }
 }

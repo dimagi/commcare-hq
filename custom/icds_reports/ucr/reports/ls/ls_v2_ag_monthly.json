@@ -143,6 +143,7 @@
         "display": "hcm_21_plus_days"
       }
     ],
+    "sort_expression": [ ],
     "configured_charts": [ ]
   }
 }

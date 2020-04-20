@@ -124,6 +124,7 @@
         "display": "open_count"
       }
     ],
+    "sort_expression": [ ],
     "configured_charts": [ ]
   }
 }

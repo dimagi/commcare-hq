@@ -115,6 +115,7 @@
         "display": "hand_washing_open_count"
       }
     ],
+    "sort_expression": [ ],
     "configured_charts": [ ]
   }
 }

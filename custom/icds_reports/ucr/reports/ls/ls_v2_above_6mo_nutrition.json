@@ -127,6 +127,7 @@
         "display": "diet_quantity_open_count"
       }
     ],
+    "sort_expression": [ ],
     "configured_charts": [ ]
   }
 }

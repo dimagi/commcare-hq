@@ -149,6 +149,7 @@
         "visible": true
       }
     ],
+    "sort_expression": [ ],
     "configured_charts": [ ]
   }
 }

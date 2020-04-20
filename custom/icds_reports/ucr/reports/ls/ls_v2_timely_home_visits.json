@@ -122,6 +122,7 @@
         "display": "visit_on_time"
       }
     ],
+    "sort_expression": [ ],
     "configured_charts": [ ]
   }
 }
