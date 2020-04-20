@@ -157,10 +157,24 @@ function ServiceDeliveryDashboardController($rootScope, $scope, $http, $location
                     'columnValueIndicator': 'num_awcs_conducted_cbe',
                 },
                 {
+                    'mData': 'num_awcs_conducted_cbe',
+                    'heading': 'Number of CBE Conducted',
+                    'tooltipValue': 'Number of Community-Based Events (CBEs) organised by an AWC in a month',
+                    'columnValueType': 'raw',
+                    'columnValueIndicator': 'num_awcs_conducted_cbe',
+                },
+                {
                     'mData': 'num_awcs_conducted_vhnd',
                     'heading': 'VHSND',
                     'tooltipValue': 'If the AWC conducted at least 1 VHSND in the current month then Yes otherwise No.',
                     'columnValueType': 'booleanRaw',
+                    'columnValueIndicator': 'num_awcs_conducted_vhnd',
+                },
+                {
+                    'mData': 'num_awcs_conducted_vhnd',
+                    'heading': 'Number of VHSND conducted',
+                    'tooltipValue': 'Number of Village Health Sanitation and Nutrition Days (VHSNDs) organised by an AWC in a month',
+                    'columnValueType': 'raw',
                     'columnValueIndicator': 'num_awcs_conducted_vhnd',
                 },
                 {
