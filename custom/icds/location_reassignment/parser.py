@@ -58,6 +58,7 @@ class Parser(object):
         2. Consolidated validations
             a. if a location is deprecated, all its descendants should get deprecated too
             b. new parent assigned should be of the expected location type
+            c. all old locations should be present in the system
         """
         self.domain = domain
         self.workbook = workbook
@@ -172,8 +173,22 @@ class Parser(object):
 
     def validate(self):
         if self.site_codes_to_be_deprecated:
+            self._validate_old_locations()
             self._validate_descendants_deprecated()
         self._validate_parents()
+
+    def _validate_old_locations(self):
+        deprecating_locations_site_codes = (
+            SQLLocation.active_objects
+            .filter(domain=self.domain, site_code__in=self.site_codes_to_be_deprecated)
+            .values_list('site_code', flat=True)
+        )
+        if len(deprecating_locations_site_codes) != len(self.site_codes_to_be_deprecated):
+            self.errors.append(f"Found {len(deprecating_locations_site_codes)} locations for "
+                               f"{len(self.site_codes_to_be_deprecated)} deprecating site codes")
+        missing_site_codes = set(self.site_codes_to_be_deprecated) - set(deprecating_locations_site_codes)
+        if missing_site_codes:
+            self.errors.append(f"Could not find old locations with site codes {','.join(missing_site_codes)}")
 
     def _validate_descendants_deprecated(self):
         """
