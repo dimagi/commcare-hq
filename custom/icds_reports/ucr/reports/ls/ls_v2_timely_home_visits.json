@@ -36,10 +36,91 @@
       "month"
     ],
     "filters": [
-      "TODO"
+      {
+        "compare_as_string": true,
+        "datatype": "date",
+        "required": false,
+        "slug": "submitted_on",
+        "field": "submitted_on",
+        "type": "date",
+        "display": "Submission Date"
+      },
+      {
+        "compare_as_string": false,
+        "show_all": true,
+        "datatype": "string",
+        "type": "dynamic_choice_list",
+        "required": false,
+        "slug": "awc_id",
+        "field": "awc_id",
+        "choice_provider": {
+          "type": "location"
+        },
+        "display": "Filter by AWW",
+        "ancestor_expression": {}
+      },
+      {
+        "compare_as_string": false,
+        "show_all": true,
+        "datatype": "string",
+        "type": "dynamic_choice_list",
+        "required": false,
+        "slug": "supervisor_id",
+        "field": "supervisor_id",
+        "choice_provider": {
+          "type": "location"
+        },
+        "display": "Filter by Supervisor",
+        "ancestor_expression": {}
+      }
     ],
     "columns": [
-      "TODO"
+      {
+        "display": "Month",
+        "column_id": "month",
+        "type": "aggregate_date",
+        "field": "submitted_on",
+        "format": "%Y-%m"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "transform": {
+          "type": "custom",
+          "custom_type": "owner_display"
+        },
+        "column_id": "owner_id",
+        "field": "awc_id",
+        "calculate_total": false,
+        "type": "field",
+        "display": "owner_id",
+        "aggregation": "simple"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "aggregation": "sum",
+        "column_id": "count",
+        "field": "count",
+        "transform": {},
+        "calculate_total": true,
+        "type": "field",
+        "display": "count"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "aggregation": "sum",
+        "column_id": "visit_on_time",
+        "field": "visit_on_time",
+        "transform": {},
+        "calculate_total": true,
+        "type": "field",
+        "display": "visit_on_time"
+      }
     ],
     "configured_charts": [ ]
   }

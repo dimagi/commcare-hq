@@ -36,10 +36,122 @@
       "awc_id"
     ],
     "filters": [
-      "TODO"
+      {
+        "compare_as_string": false,
+        "datatype": "date",
+        "required": false,
+        "display": "Date of CBE",
+        "field": "date_cbe_organise",
+        "type": "date",
+        "slug": "date_cbe_organise"
+      },
+      {
+        "compare_as_string": false,
+        "show_all": true,
+        "datatype": "string",
+        "type": "dynamic_choice_list",
+        "required": false,
+        "slug": "awc_id",
+        "field": "awc_id",
+        "choice_provider": {
+          "type": "location"
+        },
+        "ancestor_expression": {
+          "field": "supervisor_id",
+          "location_type": "supervisor"
+        },
+        "display": "Filter by AWW"
+      },
+      {
+        "compare_as_string": false,
+        "show_all": true,
+        "datatype": "string",
+        "type": "dynamic_choice_list",
+        "required": false,
+        "slug": "supervisor_id",
+        "field": "supervisor_id",
+        "choice_provider": {
+          "type": "location"
+        },
+        "display": "Filter by Supervisor"
+      }
     ],
     "columns": [
-      "TODO"
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "transform": {
+          "type": "custom",
+          "custom_type": "owner_display"
+        },
+        "column_id": "awc_id",
+        "field": "awc_id",
+        "calculate_total": false,
+        "type": "field",
+        "display": "awc_id",
+        "aggregation": "simple"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "aggregation": "simple",
+        "column_id": "date_cbe_organise",
+        "field": "date_cbe_organise",
+        "transform": {},
+        "calculate_total": false,
+        "type": "field",
+        "display": "date_cbe_organise"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "aggregation": "simple",
+        "column_id": "theme_cbe",
+        "field": "theme_cbe",
+        "transform": {},
+        "calculate_total": false,
+        "type": "field",
+        "display": "theme_cbe"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "aggregation": "simple",
+        "column_id": "count_targeted_beneficiaries",
+        "field": "count_targeted_beneficiaries",
+        "transform": {},
+        "calculate_total": false,
+        "type": "field",
+        "display": "count_targeted_beneficiaries"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "aggregation": "simple",
+        "column_id": "count_other_beneficiaries",
+        "field": "count_other_beneficiaries",
+        "transform": {},
+        "calculate_total": false,
+        "type": "field",
+        "display": "count_other_beneficiaries"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "aggregation": "simple",
+        "column_id": "submitted_on",
+        "field": "submitted_on",
+        "transform": {},
+        "calculate_total": false,
+        "type": "field",
+        "display": "submitted_on"
+      }
     ],
     "sort_expression": [
       {

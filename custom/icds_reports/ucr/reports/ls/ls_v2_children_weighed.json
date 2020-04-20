@@ -35,10 +35,94 @@
       "owner_id"
     ],
     "filters": [
-      "TODO"
+      {
+        "compare_as_string": false,
+        "datatype": "string",
+        "required": false,
+        "slug": "dob",
+        "field": "dob",
+        "type": "date",
+        "display": "Date of Birth"
+      },
+      {
+        "compare_as_string": false,
+        "datatype": "string",
+        "required": false,
+        "slug": "last_date_gmp",
+        "field": "last_date_gmp",
+        "type": "date",
+        "display": "Last Date Weighed"
+      },
+      {
+        "compare_as_string": false,
+        "show_all": true,
+        "datatype": "string",
+        "type": "dynamic_choice_list",
+        "required": false,
+        "slug": "supervisor_id",
+        "field": "supervisor_id",
+        "choice_provider": {
+          "type": "location"
+        },
+        "display": "Filter by Supervisor"
+      },
+      {
+        "required": false,
+        "type": "numeric",
+        "slug": "is_migrated",
+        "field": "is_migrated",
+        "display": "Whether Migrated",
+        "datatype": "string"
+      },
+      {
+        "required": false,
+        "type": "numeric",
+        "slug": "is_availing",
+        "field": "is_availing",
+        "display": "Whether Availing Services",
+        "datatype": "string"
+      }
     ],
     "columns": [
-      "TODO"
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "transform": {
+          "type": "custom",
+          "custom_type": "owner_display"
+        },
+        "column_id": "owner_id",
+        "field": "owner_id",
+        "calculate_total": false,
+        "type": "field",
+        "display": "owner_id",
+        "aggregation": "simple"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "aggregation": "sum",
+        "column_id": "open_weighed",
+        "field": "open_weighed",
+        "transform": {},
+        "calculate_total": true,
+        "type": "field",
+        "display": "open_weighed"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "aggregation": "sum",
+        "column_id": "open_count",
+        "field": "open_count",
+        "transform": {},
+        "calculate_total": true,
+        "type": "field",
+        "display": "open_count"
+      }
     ],
     "configured_charts": [ ]
   }

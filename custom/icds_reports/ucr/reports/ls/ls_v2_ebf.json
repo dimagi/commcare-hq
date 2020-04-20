@@ -35,10 +35,85 @@
       "owner_id"
     ],
     "filters": [
-      "TODO"
+      {
+        "compare_as_string": false,
+        "datatype": "string",
+        "required": false,
+        "display": "Date of Birth",
+        "field": "dob",
+        "type": "date",
+        "slug": "dob"
+      },
+      {
+        "compare_as_string": false,
+        "show_all": true,
+        "datatype": "string",
+        "choice_provider": {
+          "type": "location"
+        },
+        "required": false,
+        "display": "Filter by Supervisor",
+        "field": "supervisor_id",
+        "type": "dynamic_choice_list",
+        "slug": "supervisor_id"
+      },
+      {
+        "required": false,
+        "type": "numeric",
+        "slug": "is_migrated",
+        "field": "is_migrated",
+        "display": "Whether Migrated",
+        "datatype": "string"
+      },
+      {
+        "required": false,
+        "type": "numeric",
+        "slug": "is_availing",
+        "field": "is_availing",
+        "display": "Whether Availing Services",
+        "datatype": "string"
+      }
     ],
     "columns": [
-      "TODO"
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "transform": {
+          "type": "custom",
+          "custom_type": "owner_display"
+        },
+        "column_id": "owner_id",
+        "field": "owner_id",
+        "calculate_total": false,
+        "type": "field",
+        "display": "owner_id",
+        "aggregation": "simple"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "aggregation": "sum",
+        "column_id": "open_count",
+        "field": "open_count",
+        "transform": {},
+        "calculate_total": true,
+        "type": "field",
+        "display": "open_count"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "aggregation": "sum",
+        "column_id": "is_ebf_open_count",
+        "field": "is_ebf_open_count",
+        "transform": {},
+        "calculate_total": true,
+        "type": "field",
+        "display": "is_ebf_open_count"
+      }
     ],
     "configured_charts": [ ]
   }
