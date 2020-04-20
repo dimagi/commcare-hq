@@ -12,7 +12,7 @@ from corehq.blobs.exceptions import NotFound
 from corehq.blobs.interface import AbstractBlobDB
 from corehq.blobs.util import (
     BlobStream,
-    GzipCompressReadStream,
+    GzipStream,
     check_safe_key,
     get_content_size,
 )
@@ -76,7 +76,7 @@ class S3BlobDB(AbstractBlobDB):
         else:
             content.seek(0)
             if meta.is_compressed:
-                content = GzipCompressReadStream(content)
+                content = GzipStream(content)
 
             chunk_sizes = []
 

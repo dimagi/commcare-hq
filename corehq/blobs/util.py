@@ -41,7 +41,7 @@ class NullJsonField(JSONField):
         return self.get_default() if value is None else value
 
 
-class GzipCompressReadStream:
+class GzipStream:
     """Wrapper for a file like object that compresses the data as
     it is read.
 
@@ -276,7 +276,7 @@ def get_content_size(fileobj, chunks_sent):
     :param chunks_sent: list of chunk sizes sent
     :return: tuple(uncompressed_size, compressed_size or None)
     """
-    if isinstance(fileobj, GzipCompressReadStream):
+    if isinstance(fileobj, GzipStream):
         return fileobj.content_length, sum(chunks_sent)
 
     return sum(chunks_sent), None

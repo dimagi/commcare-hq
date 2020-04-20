@@ -24,15 +24,15 @@ class TestRandomUrlId(TestCase):
         self.assertEqual(len(set(self.ids)), self.sample_size, self.ids)
 
 
-class TestGzipCompressReadStream(TestCase):
+class TestGzipStream(TestCase):
 
     def test_compression(self):
-        desired_size = mod.GzipCompressReadStream.CHUNK_SIZE * 4
+        desired_size = mod.GzipStream.CHUNK_SIZE * 4
         content = uuid.uuid4().bytes * 4
         while len(content) < desired_size:
             content += uuid.uuid4().bytes * 4
 
-        compress_stream = mod.GzipCompressReadStream(BytesIO(content))
+        compress_stream = mod.GzipStream(BytesIO(content))
         with tempfile.NamedTemporaryFile() as compressed_f:
             compressed_f.write(compress_stream.read())
             compressed_f.flush()
@@ -47,7 +47,7 @@ class TestGzipCompressReadStream(TestCase):
         with tempfile.NamedTemporaryFile() as f:
             f.write(b"x" * 11)
             f.seek(0)
-            compress_stream = mod.GzipCompressReadStream(f)
+            compress_stream = mod.GzipStream(f)
 
             # Try to read content_length without reading the stream
             with self.assertRaises(GzipStreamAttrAccessBeforeRead):
