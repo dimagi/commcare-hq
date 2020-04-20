@@ -49,9 +49,9 @@ class Parser(object):
                 ii. there should be a change in old and new location codes
                 iii. there should be both old and new usernames or none
                 iv. an old location should be in only one extract, move or merge or
-                    can only be more than once in a merge operation
-                v. a new location should be in only one extract, move or split or
                     can only be more than once in a split operation
+                v. a new location should be in only one extract, move or split or
+                    can only be more than once in a merge operation
                 vi. there should be a new parent site code where expected
                 vii. there should be no new parent site code where not expected
                 viii. new location is created with different details for a reused parent
@@ -140,12 +140,12 @@ class Parser(object):
         new_site_code = row.get(NEW_SITE_CODE_COLUMN)
         invalid = False
         if old_site_code in self.requested_transitions:
-            if self.requested_transitions.get(old_site_code) != operation:
+            if self.requested_transitions.get(old_site_code) != SPLIT_OPERATION or operation != SPLIT_OPERATION:
                 self.errors.append("Multiple transitions for %s, %s and %s" % (
                     old_site_code, self.requested_transitions.get(old_site_code), operation))
                 invalid = True
         if new_site_code in self.requested_transitions:
-            if self.requested_transitions.get(new_site_code) != operation:
+            if self.requested_transitions.get(new_site_code) != MERGE_OPERATION or operation != MERGE_OPERATION:
                 self.errors.append("Multiple transitions for %s, %s and %s" % (
                     new_site_code, self.requested_transitions.get(new_site_code), operation))
                 invalid = True
