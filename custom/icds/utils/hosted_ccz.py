@@ -19,9 +19,6 @@ class HostedCCZUtility:
     def get_file(self):
         return get_blob_db().get(key=self.blob_id, type_code=CODES.tempfile)
 
-    def get_file_size(self):
-        return get_blob_db().size(key=self.blob_id)
-
     @memoized
     def get_file_meta(self):
         if self.file_exists():

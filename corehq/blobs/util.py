@@ -1,3 +1,4 @@
+import weakref
 from base64 import urlsafe_b64encode, b64encode
 from collections import deque
 from datetime import datetime
@@ -5,6 +6,7 @@ from gzip import GzipFile
 import hashlib
 import os
 import re
+from io import RawIOBase
 
 from jsonfield import JSONField
 
@@ -39,11 +41,11 @@ class NullJsonField(JSONField):
         return self.get_default() if value is None else value
 
 
-# extended from https://stackoverflow.com/a/31566082
-
-
-# extended from https://stackoverflow.com/a/31566082
 class GzipCompressReadStream:
+    """Wrapper for a file like object that compresses the data as
+    it is read.
+
+    Adapted from https://stackoverflow.com/a/31566082"""
     CHUNK_SIZE = 4096
 
     class Buffer:
@@ -54,6 +56,8 @@ class GzipCompressReadStream:
 
         @property
         def content_length(self):
+            """Size of compressed data. Can only be accessed once stream has been
+            fully read."""
             if self._content_length is None or self._size > 0:
                 raise GzipStreamAttrAccessBeforeRead(
                     "content_length can't be accessed without completely reading the stream")
@@ -95,17 +99,27 @@ class GzipCompressReadStream:
         self._input = fileobj
         self._buf = self.Buffer()
         self._gzip = GzipFile(None, mode='wb', fileobj=self._buf)
+        self._content_length = None
 
     @property
     def content_length(self):
-        return self._buf.content_length
+        """Size of uncompressed data. Can only be accessed once stream has been
+        fully read."""
+        if self._content_length is None or len(self._buf) > 0:
+            raise GzipStreamAttrAccessBeforeRead(
+                "content_length can't be accessed without completely reading the stream")
+        return self._content_length
 
     def read(self, size=-1):
+        if self._content_length is None:
+            self._content_length = 0
+
         while size < 0 or len(self._buf) < size:
             chunk = self._input.read(self.CHUNK_SIZE)
             if not chunk:
                 self._gzip.close()
                 break
+            self._content_length += len(chunk)
             self._gzip.write(chunk)
         return self._buf.read(size)
 
@@ -215,3 +229,67 @@ def set_max_connections(num_workers):
     for name in ["S3_BLOB_DB_SETTINGS", "OLD_S3_BLOB_DB_SETTINGS"]:
         if getattr(settings, name, False):
             update_config(name)
+
+
+class BlobStream(RawIOBase):
+    """Wrapper around the raw stream with additional properties for convenient access:
+
+    * blob_key
+    * content_length
+    * compressed_length (will be None if blob is not compressed)
+    """
+
+    def __init__(self, stream, blob_db, blob_key, content_length, compressed_length):
+        self._obj = stream
+        self._blob_db = weakref.ref(blob_db)
+        self.blob_key = blob_key
+        self.content_length = content_length
+        self.compressed_length = compressed_length
+
+    def readable(self):
+        return True
+
+    def read(self, *args, **kw):
+        return self._obj.read(*args, **kw)
+
+    read1 = read
+
+    def write(self, *args, **kw):
+        raise IOError
+
+    def tell(self):
+        tell = getattr(self._obj, 'tell', None)
+        if tell is not None:
+            return tell()
+        return self._obj._amount_read
+
+    def seek(self, offset, from_what=os.SEEK_SET):
+        if from_what != os.SEEK_SET:
+            raise ValueError("seek mode not supported")
+        pos = self.tell()
+        if offset != pos:
+            raise ValueError("seek not supported")
+        return pos
+
+    def close(self):
+        self._obj.close()
+        return super(BlobStream, self).close()
+
+    def __getattr__(self, name):
+        return getattr(self._obj, name)
+
+    @property
+    def blob_db(self):
+        return self._blob_db()
+
+
+def get_content_size(fileobj, chunks_sent):
+    """
+    :param fileobj: content object written to the backend
+    :param chunks_sent: list of chunk sizes sent
+    :return: tuple(uncompressed_size, compressed_size or None)
+    """
+    if isinstance(fileobj, GzipCompressReadStream):
+        return fileobj.content_length, sum(chunks_sent)
+
+    return sum(chunks_sent), None

@@ -64,17 +64,16 @@ class AbstractBlobDB(metaclass=ABCMeta):
         is provided, then key and type_code should be None. For type_code
         form_xml, meta is required.
 
-        :returns: A file-like object in binary read mode. The returned
+        :returns: A BlobStream object in binary read mode. The returned
         object should be closed when finished reading.
         """
         raise NotImplementedError
 
-    def _validate_get_args(self, key, type_code, meta):
+    @staticmethod
+    def _validate_get_args(key, type_code, meta):
         if key is not None or type_code is not None:
             if meta is not None:
-                if key is not None:
-                    raise ValueError("'key' and 'meta' are mutually exclusive")
-                raise ValueError("'type_code' and 'meta' are mutually exclusive")
+                raise ValueError("'key' and 'meta' are mutually exclusive")
             if type_code == CODES.form_xml:
                 raise ValueError("form XML must be loaded with 'meta' argument")
             if key is None or type_code is None:
@@ -95,7 +94,8 @@ class AbstractBlobDB(metaclass=ABCMeta):
 
     @abstractmethod
     def size(self, key):
-        """Gets the size of a blob in bytes
+        """Gets the size of a stored blob in bytes. This may be different from the raw
+        content length if the blob was compressed.
 
         :param key: Blob key.
         :returns: The number of bytes of a blob

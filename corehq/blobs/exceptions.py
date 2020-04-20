@@ -21,6 +21,5 @@ class NotFound(Error):
 
 
 class GzipStreamAttrAccessBeforeRead(Exception):
-    """Raised when an attribure (eg: content_length) of the
+    """Raised when an attribute (eg: content_length) of the
     Gzip Stream is accessed before the stream is read completely"""
-
