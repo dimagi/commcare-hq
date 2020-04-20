@@ -95,6 +95,4 @@ class Migration(migrations.Migration):
         migrations.RunSQL("ALTER TABLE ccs_record_monthly ADD COLUMN last_preg_year integer")
     ]
 
-    operations += get_view_migrations()
-
 
