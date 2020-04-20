@@ -1162,6 +1162,14 @@ UNLIMITED_REPORT_BUILDER_REPORTS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER = StaticToggle(
+    'show_owner_location_property_in_report_builder',
+    'Show an additional "Owner (Location)" property in report builder reports. '
+    'This can be used to create report builder reports that are location-safe.',
+    TAG_SOLUTIONS_OPEN,
+    [NAMESPACE_DOMAIN]
+)
+
 MOBILE_USER_DEMO_MODE = StaticToggle(
     'mobile_user_demo_mode',
     'Ability to make a mobile worker into Demo only mobile worker',
@@ -1826,6 +1834,14 @@ ALLOW_DEID_ODATA_FEED = StaticToggle(
     'Allow De-Identification in OData feeds',
     TAG_PRODUCT,
     [NAMESPACE_DOMAIN]
+)
+
+
+ACCOUNTING_TESTING_TOOLS = StaticToggle(
+    'accounting_testing_tools',
+    'Enable Accounting Testing Tools',
+    TAG_INTERNAL,
+    [NAMESPACE_USER]
 )
 
 

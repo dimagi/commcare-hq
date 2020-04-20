@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.core.mail.message import EmailMessage
+from django.template.defaultfilters import linebreaksbr
 
 from celery.task import task
 
@@ -23,15 +24,17 @@ from custom.icds.location_reassignment.utils import (
 
 @task
 def process_location_reassignment(domain, transitions, new_location_details, user_transitions,
-                                  site_codes, user_email):
+                                  site_codes, uploaded_filename, user_email):
     try:
         Processor(domain, transitions, new_location_details, user_transitions, site_codes).process()
     except Exception as e:
         email = EmailMessage(
-            subject='[{}] - Location Reassignment Failed'.format(settings.SERVER_ENVIRONMENT),
-            body="The request could not be completed. Something went wrong. "
-                 "Error raised : {}. "
-                 "Please report an issue if needed.".format(e),
+            subject=f"[{settings.SERVER_ENVIRONMENT}] - Location Reassignment Failed",
+            body=linebreaksbr(
+                f"The request could not be completed for file {uploaded_filename}. Something went wrong.\n"
+                f"Error raised : {e}.\n"
+                "Please report an issue if needed."
+            ),
             to=[user_email],
             from_email=settings.DEFAULT_FROM_EMAIL
         )
@@ -39,8 +42,8 @@ def process_location_reassignment(domain, transitions, new_location_details, use
         raise e
     else:
         email = EmailMessage(
-            subject='[{}] - Location Reassignment Completed'.format(settings.SERVER_ENVIRONMENT),
-            body="The request has been successfully completed.",
+            subject=f"[{settings.SERVER_ENVIRONMENT}] - Location Reassignment Completed",
+            body=f"The request has been successfully completed for file {uploaded_filename}.",
             to=[user_email],
             from_email=settings.DEFAULT_FROM_EMAIL
         )
@@ -88,15 +91,17 @@ def update_usercase(domain, old_username, new_username):
 
 
 @task
-def email_household_details(domain, transitions, user_email):
+def email_household_details(domain, transitions, uploaded_filename, user_email):
     try:
         filestream = Households(domain).dump(transitions)
     except Exception as e:
         email = EmailMessage(
-            subject='[{}] - Location Reassignment Household Dump Failed'.format(settings.SERVER_ENVIRONMENT),
-            body="The request could not be completed. Something went wrong. "
-                 "Error raised : {}. "
-                 "Please report an issue if needed.".format(e),
+            subject=f"[{settings.SERVER_ENVIRONMENT}] - Location Reassignment Household Dump Failed",
+            body=linebreaksbr(
+                f"The request could not be completed for file {uploaded_filename}. Something went wrong.\n"
+                f"Error raised : {e}.\n"
+                "Please report an issue if needed."
+            ),
             to=[user_email],
             from_email=settings.DEFAULT_FROM_EMAIL
         )
@@ -104,8 +109,8 @@ def email_household_details(domain, transitions, user_email):
         raise e
     else:
         email = EmailMessage(
-            subject='[{}] - Location Reassignment Household Dump Completed'.format(settings.SERVER_ENVIRONMENT),
-            body="The request has been successfully completed.",
+            subject=f"[{settings.SERVER_ENVIRONMENT}] - Location Reassignment Household Dump Completed",
+            body=f"The request has been successfully completed for file {uploaded_filename}.",
             to=[user_email],
             from_email=settings.DEFAULT_FROM_EMAIL
         )
@@ -117,15 +122,17 @@ def email_household_details(domain, transitions, user_email):
 
 
 @task
-def process_households_reassignment(domain, reassignments, user_email):
+def process_households_reassignment(domain, reassignments, uploaded_filename, user_email):
     try:
         HouseholdReassignmentProcessor(domain, reassignments).process()
     except Exception as e:
         email = EmailMessage(
-            subject='[{}] - Household Reassignment Failed'.format(settings.SERVER_ENVIRONMENT),
-            body="The request could not be completed. Something went wrong. "
-                 "Error raised : {}. "
-                 "Please report an issue if needed.".format(e),
+            subject=f"[{settings.SERVER_ENVIRONMENT}] - Household Reassignment Failed",
+            body=linebreaksbr(
+                f"The request could not be completed for file {uploaded_filename}. Something went wrong.\n"
+                f"Error raised : {e}.\n"
+                "Please report an issue if needed."
+            ),
             to=[user_email],
             from_email=settings.DEFAULT_FROM_EMAIL
         )
@@ -133,8 +140,8 @@ def process_households_reassignment(domain, reassignments, user_email):
         raise e
     else:
         email = EmailMessage(
-            subject='[{}] - Household Reassignment Completed'.format(settings.SERVER_ENVIRONMENT),
-            body="The request has been successfully completed.",
+            subject=f"[{settings.SERVER_ENVIRONMENT}] - Household Reassignment Completed",
+            body=f"The request has been successfully completed for file {uploaded_filename}.",
             to=[user_email],
             from_email=settings.DEFAULT_FROM_EMAIL
         )
