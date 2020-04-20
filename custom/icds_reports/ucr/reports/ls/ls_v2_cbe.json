@@ -32,7 +32,8 @@
     "description": "",
     "visible": false,
     "aggregation_columns": [
-      "owner_id"
+      "doc_id",
+      "awc_id"
     ],
     "filters": [
       "TODO"

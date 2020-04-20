@@ -32,7 +32,8 @@
     "description": "",
     "visible": false,
     "aggregation_columns": [
-      "owner_id"
+      "doc_id",
+      "supervisor_id"
     ],
     "filters": [
       "TODO"

@@ -32,7 +32,8 @@
     "description": "",
     "visible": false,
     "aggregation_columns": [
-      "owner_id"
+      "awc_id",
+      "month"
     ],
     "filters": [
       "TODO"
