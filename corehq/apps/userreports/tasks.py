@@ -354,11 +354,12 @@ def _queue_indicators(indicators):
 def build_async_indicators(indicator_doc_ids):
     # written to be used with _queue_indicators, indicator_doc_ids must
     #   be a chunk of 100
+    memoizers = {'configs': {}, 'adapters': {}}
     for ids in chunked(indicator_doc_ids, ASYNC_INDICATOR_CHUNK_SIZE):
-        _build_async_indicators(ids)
+        _build_async_indicators(ids, memoizers)
 
 
-def _build_async_indicators(indicator_doc_ids):
+def _build_async_indicators(indicator_doc_ids, memoizers):
     def handle_exception(exception, config_id, doc, adapter):
         metric = None
         if isinstance(exception, (ProtocolError, ReadTimeout)):
@@ -382,6 +383,24 @@ def _build_async_indicators(indicator_doc_ids):
             for row in rows
         ]
         return set(row['doc_id'] for row in formatted_rows)
+
+    def _get_config(config_id):
+        config_by_id = memoizers['configs']
+        if config_id in config_by_id:
+            return config_by_id[config_id]
+        else:
+            config = _get_config_by_id(config_id)
+            config_by_id[config_id] = config
+            return config
+
+    def _get_adapter(config):
+        adapter_by_config = memoizers['adapters']
+        if config._id in adapter_by_config:
+            return adapter_by_config[config._id]
+        else:
+            adapter = get_indicator_adapter(config, load_source='build_async_indicators')
+            adapter_by_config[config._id] = adapter
+            return adapter
 
     # tracks processed/deleted configs to be removed from each indicator
     configs_to_remove_by_indicator_id = defaultdict(list)
@@ -419,7 +438,7 @@ def _build_async_indicators(indicator_doc_ids):
                 for config_id in indicator.indicator_config_ids:
                     config_ids.add(config_id)
                     try:
-                        config = _get_config_by_id(config_id)
+                        config = _get_config(config_id)
                     except (ResourceNotFound, StaticDataSourceConfigurationNotFoundError):
                         celery_task_logger.info("{} no longer exists, skipping".format(config_id))
                         # remove because the config no longer exists
@@ -431,7 +450,7 @@ def _build_async_indicators(indicator_doc_ids):
                         continue
                     adapter = None
                     try:
-                        adapter = get_indicator_adapter(config, load_source='build_async_indicators')
+                        adapter = _get_adapter(config)
                         rows_to_save = adapter.get_all_values(doc, eval_context)
                         if rows_to_save:
                             rows_to_save_by_adapter[adapter].extend(rows_to_save)
