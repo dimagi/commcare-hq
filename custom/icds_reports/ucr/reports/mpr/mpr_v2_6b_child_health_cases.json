@@ -26,9 +26,9 @@
     "icds"
   ],
   "report_id": "static-mpr_v2_6b_child_health_cases",
-  "data_source_table": "static-TODO",
+  "data_source_table": "static-child_cases_monthly_v2",
   "config": {
-    "title": "TODO",
+    "title": "UCR V2 - MPR - 6b - Child Health cases",
     "description": "",
     "visible": false,
     "aggregation_columns": [

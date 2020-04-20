@@ -26,9 +26,9 @@
     "icds"
   ],
   "report_id": "static-mpr_v2_4b_infra_forms",
-  "data_source_table": "static-TODO",
+  "data_source_table": "static-infrastructure_form",
   "config": {
-    "title": "TODO",
+    "title": "UCR V2 - MPR - 4b - Infra forms",
     "description": "",
     "visible": false,
     "aggregation_columns": [

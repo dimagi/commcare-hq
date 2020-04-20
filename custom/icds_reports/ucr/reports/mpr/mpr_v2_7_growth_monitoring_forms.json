@@ -26,9 +26,9 @@
     "icds"
   ],
   "report_id": "static-mpr_v2_7_growth_monitoring_forms",
-  "data_source_table": "static-TODO",
+  "data_source_table": "static-gm_forms",
   "config": {
-    "title": "TODO",
+    "title": "UCR V2 - MPR - 7 - Growth Monitoring Forms (Static)",
     "description": "",
     "visible": false,
     "aggregation_columns": [

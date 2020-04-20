@@ -26,9 +26,9 @@
     "icds"
   ],
   "report_id": "static-mpr_v2_8_tasks_cases",
-  "data_source_table": "static-TODO",
+  "data_source_table": "static-tasks_cases",
   "config": {
-    "title": "TODO",
+    "title": "UCR V2 - MPR - 8 - Tasks Cases",
     "description": "",
     "visible": false,
     "aggregation_columns": [

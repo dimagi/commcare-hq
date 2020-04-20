@@ -26,9 +26,9 @@
     "icds"
   ],
   "report_id": "static-mpr_v2_2a_person_cases",
-  "data_source_table": "static-TODO",
+  "data_source_table": "static-person_cases_v3",
   "config": {
-    "title": "TODO",
+    "title": "UCR V2 - MPR - 2a - Person cases",
     "description": "",
     "visible": false,
     "aggregation_columns": [

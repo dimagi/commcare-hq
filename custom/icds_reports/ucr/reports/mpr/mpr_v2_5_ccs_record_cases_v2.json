@@ -26,9 +26,9 @@
     "icds"
   ],
   "report_id": "static-mpr_v2_5_ccs_record_cases_v2",
-  "data_source_table": "static-TODO",
+  "data_source_table": "static-ccs_record_cases_monthly_v2",
   "config": {
-    "title": "TODO",
+    "title": "UCR V2 - MPR - 5 - CCS Record cases v2",
     "description": "",
     "visible": false,
     "aggregation_columns": [

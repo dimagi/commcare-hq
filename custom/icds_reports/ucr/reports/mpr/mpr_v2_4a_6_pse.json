@@ -26,9 +26,9 @@
     "icds"
   ],
   "report_id": "static-mpr_v2_4a_6_pse",
-  "data_source_table": "static-TODO",
+  "data_source_table": "static-daily_feeding_forms",
   "config": {
-    "title": "TODO",
+    "title": "UCR V2 - MPR - 4a,6 - PSE",
     "description": "",
     "visible": false,
     "aggregation_columns": [
