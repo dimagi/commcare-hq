@@ -56,14 +56,14 @@ class Parser(object):
                 vii. there should be no new parent site code where not expected
                 viii. new location is created with different details for a reused parent
         2. Consolidated validations
-            a. if a location is archived, all its descendants should get archived too
+            a. if a location is deprecated, all its descendants should get deprecated too
             b. new parent assigned should be of the expected location type
         """
         self.domain = domain
         self.workbook = workbook
         # mapping each location code to the type of operation requested for it
         self.requested_transitions = {}
-        self.site_codes_to_be_archived = []
+        self.site_codes_to_be_deprecated = []
         self.location_type_parent = {
             lt.code: lt.parent_type.code
             for lt in LocationType.objects.select_related('parent_type').filter(domain=self.domain)
@@ -166,28 +166,28 @@ class Parser(object):
             self.valid_transitions[location_type_code][operation][new_site_code] = old_site_code
         elif operation == EXTRACT_OPERATION:
             self.valid_transitions[location_type_code][operation][new_site_code] = old_site_code
-        self.site_codes_to_be_archived.append(old_site_code)
+        self.site_codes_to_be_deprecated.append(old_site_code)
         self.requested_transitions[old_site_code] = operation
         self.requested_transitions[new_site_code] = operation
 
     def validate(self):
-        if self.site_codes_to_be_archived:
-            self._validate_descendants_archived()
+        if self.site_codes_to_be_deprecated:
+            self._validate_descendants_deprecated()
         self._validate_parents()
 
-    def _validate_descendants_archived(self):
+    def _validate_descendants_deprecated(self):
         """
-        ensure all locations getting archived, also have their descendants getting archived
+        ensure all locations getting deprecated, also have their descendants getting deprecated
         """
-        site_codes_to_be_archived = set(self.site_codes_to_be_archived)
-        locations_to_be_archived = SQLLocation.active_objects.filter(
-            domain=self.domain, site_code__in=self.site_codes_to_be_archived)
-        for location in locations_to_be_archived:
+        site_codes_to_be_deprecated = set(self.site_codes_to_be_deprecated)
+        locations_to_be_deprecated = SQLLocation.active_objects.filter(
+            domain=self.domain, site_code__in=self.site_codes_to_be_deprecated)
+        for location in locations_to_be_deprecated:
             descendants_sites_codes = (location.get_descendants().filter(is_archived=False).
                                        values_list('site_code', flat=True))
-            missing_site_codes = set(descendants_sites_codes) - site_codes_to_be_archived
+            missing_site_codes = set(descendants_sites_codes) - site_codes_to_be_deprecated
             if missing_site_codes:
-                self.errors.append("Location %s is getting archived but the following descendants are not %s" % (
+                self.errors.append("Location %s is getting deprecated but the following descendants are not %s" % (
                     location.site_code, ",".join(missing_site_codes)
                 ))
 

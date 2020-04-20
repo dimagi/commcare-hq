@@ -104,7 +104,7 @@ class TestParser(TestCase):
                 "Invalid Operation Unknown"
             ])
 
-    @patch('custom.icds.location_reassignment.parser.Parser._validate_descendants_archived')
+    @patch('custom.icds.location_reassignment.parser.Parser._validate_descendants_deprecated')
     @patch('corehq.apps.locations.models.SQLLocation.active_objects')
     @patch('corehq.apps.locations.models.LocationType.objects')
     def test_validate_parents(self, location_type_mock, locations_mock, _):
