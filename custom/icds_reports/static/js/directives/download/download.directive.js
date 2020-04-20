@@ -104,6 +104,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
     vm.selectedPDFFormat = 'many';
     vm.selectedLocationId = userLocationId;
     vm.selectedLevel = 1;
+    vm.selectedLocationLevel = 0;
     vm.now = new Date().getMonth() + 1;
     vm.showWarning = function () {
         return (
@@ -246,6 +247,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
     };
 
     vm.onSelectLocation = function ($item, level) {
+        vm.selectedLocationLevel = level + 1;
         locationsService.onSelectLocation($item, level, locationsCache, vm);
     };
 
@@ -385,8 +387,21 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
             vm.onSelectYear({'id': vm.selectedYear});
             vm.selectedFormat = 'xlsx';
         }
+
+        vm.adjustSelectedLevelForNoViewByFilter();
+
     };
 
+    /**
+     * To Adjust selectedLevel for the reports does not have viewBy filters
+     * end up having aggregation_leve set by viewBy filter in the last report selected.
+     */
+    vm.adjustSelectedLevelForNoViewByFilter = function () {
+
+        if (!vm.showViewBy() || vm.isTakeHomeRationReportSelected()) {
+            vm.selectedLevel = vm.selectedLocationLevel;
+        }
+    };
     vm.submitForm = function (csrfToken) {
         $rootScope.report_link = '';
         var awcs = vm.selectedPDFFormat === 'one' ? ['all'] : vm.selectedAWCs;
@@ -430,6 +445,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         vm.selectedLocations = [];
         vm.selectedLocationId = userLocationId;
         vm.selectedLevel = 1;
+        vm.selectedLocationLevel = 0;
         vm.selectedMonth = new Date().getMonth() + 1;
         vm.selectedYear = new Date().getFullYear();
         vm.selectedIndicator = 1;
