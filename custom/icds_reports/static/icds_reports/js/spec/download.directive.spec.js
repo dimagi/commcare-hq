@@ -151,6 +151,16 @@ describe('Download Directive', function () {
             assert.equal(expected, result);
         });
 
+        it('tests get placeholder when state and child growth tracker list is selected', function () {
+            controller.selectedIndicator = 6;
+            var mockLocationType = [{"name": "state", "parents": ["state"], "level": 1}];
+
+            var expected = 'Select State';
+            var result = controller.getPlaceholder(mockLocationType);
+            assert.equal(expected, result);
+        });
+
+
         it('tests get locations for level', function () {
             var level = 0;
             var expected = [
@@ -174,6 +184,14 @@ describe('Download Directive', function () {
             assert.deepEqual(expected, result);
         });
 
+        it('tests get formats when child growth tracker list is selected', function () {
+            controller.selectedIndicator = 6;
+            var expected = [{"id": "csv", "name": "CSV"}, {"id": "xlsx", "name": "Excel"}];
+
+            var result = controller.getFormats();
+            assert.deepEqual(expected, result);
+        });
+
         it('tests get formats when child beneficiary list is not selected', function () {
             controller.selectedIndicator = 5;
             var expected = [{"id": "csv", "name": "CSV"}, {"id": "xlsx", "name": "Excel"}];
@@ -181,6 +199,17 @@ describe('Download Directive', function () {
             var result = controller.getFormats();
             assert.deepEqual(expected, result);
         });
+
+        it('tests on indicator select when child growth tracker list is selected', function () {
+            controller.selectedIndicator = 13;
+            var expected = "csv";
+
+            controller.onIndicatorSelect();
+            var result = controller.selectedFormat;
+
+            assert.equal(expected, result);
+        });
+
 
         it('tests on indicator select when child beneficiary list is selected', function () {
             controller.selectedIndicator = 6;
