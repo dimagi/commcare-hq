@@ -28,7 +28,7 @@
   "report_id": "ls_v2_handwashing",
   "data_source_table": "TODO",
   "config": {
-    "title": "TODO",
+    "title": "UCR V2 - LS - Handwashing",
     "description": "",
     "visible": false,
     "aggregation_columns": [
