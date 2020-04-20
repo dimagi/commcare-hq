@@ -12,7 +12,12 @@
   <hr/>
   <p>
     {% blocktrans %}
-      To send a template message, copy and paste the <strong>Template String</strong> as the message text, replacing each <code>{var}</code> with the variables you want to add in to the template. Don't forget the <code>~</code> at the end.
+      To send a template message, copy and paste the <strong>Template String</strong> as the message text, replacing each <code>{variable}</code> with the variables you want to add in to the template, surrounded by curly braces.
+    {% endblocktrans %}
+  </p>
+  <p>
+    {% blocktrans %}
+      For example <code>cc_wa_template:daily_screening:en:{var1},{var2}</code> would become <code>cc_wa_template:daily_screening:en:{Hello dear user, }, {55}</code>
     {% endblocktrans %}
   </p>
   <table class="table table-bordered table-striped">

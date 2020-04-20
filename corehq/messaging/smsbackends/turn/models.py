@@ -1,8 +1,11 @@
+import re
 from collections import namedtuple
 
 from corehq.apps.sms.models import SMS, SQLSMSBackend
 from corehq.apps.sms.util import clean_phone_number
-from corehq.messaging.smsbackends.turn.exceptions import WhatsAppTemplateStringException
+from corehq.messaging.smsbackends.turn.exceptions import (
+    WhatsAppTemplateStringException,
+)
 from corehq.messaging.smsbackends.turn.forms import TurnBackendForm
 from turn import TurnBusinessManagementClient, TurnClient
 from turn.exceptions import WhatsAppContactNotFound
@@ -90,11 +93,13 @@ def is_whatsapp_template_message(message_text):
 
 
 def get_template_hsm_parts(message_text):
+    """The magic string users enter looks like: cc_wa_template:template_name:lang_code:{var1}{var2}{var3}
+    """
     HsmParts = namedtuple("hsm_parts", "template_name lang_code params")
-    parts = message_text.split("~")[0].split(":")
+    parts = message_text.split(":")
 
     try:
-        params = [p.strip() for p in parts[3].split(",")]
+        params = re.findall('{(.+?)}+', parts[3])
     except IndexError:
         params = []
 
@@ -115,4 +120,4 @@ def generate_template_string(template):
             break
     num_params = template_text.count('{') // 2  # each parameter is bracketed by {{}}
     parameters = ",".join([f'{{var{i}}}' for i in range(1, num_params + 1)])
-    return f"{WA_TEMPLATE_STRING}:{template['name']}:{template['language']}:{parameters}~"
+    return f"{WA_TEMPLATE_STRING}:{template['name']}:{template['language']}:{parameters}"
