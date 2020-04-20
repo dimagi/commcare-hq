@@ -590,7 +590,7 @@ class BugReportView(View):
         if req.POST.get('five-hundred-report'):
             messages.success(
                 req,
-                "Your CommCare HQ Issue Report has been sent. We are working quickly to resolve this problem."
+                _("Your CommCare HQ Issue Report has been sent. We are working quickly to resolve this problem.")
             )
             return HttpResponseRedirect(reverse('homepage'))
 

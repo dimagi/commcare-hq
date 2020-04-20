@@ -43,12 +43,24 @@ def get_extra_permissions():
 
 
 def can_download_data_files(domain, couch_user):
+    return _has_data_file_permission(domain, couch_user, read_only=True)
+
+
+def can_upload_data_files(domain, couch_user):
+    return _has_data_file_permission(domain, couch_user, read_only=False)
+
+
+def _has_data_file_permission(domain, couch_user, read_only=True):
     from corehq.apps.users.models import DomainMembershipError
     try:
         role = couch_user.get_role(domain)
     except DomainMembershipError:
         return False
-    return toggles.DATA_FILE_DOWNLOAD.enabled(domain) and role.permissions.view_file_dropzone
+
+    if not (role and toggles.DATA_FILE_DOWNLOAD.enabled(domain)):
+        return False
+
+    return role.permissions.edit_file_dropzone or (read_only and role.permissions.view_file_dropzone)
 
 
 def can_view_sms_exports(couch_user, domain):

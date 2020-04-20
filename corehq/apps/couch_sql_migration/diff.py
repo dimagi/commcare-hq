@@ -1,4 +1,5 @@
 from collections import defaultdict
+from datetime import timedelta
 from itertools import chain
 
 from memoized import memoized
@@ -9,6 +10,7 @@ from corehq.apps.tzmigration.timezonemigration import (
     is_datetime_string,
     json_diff,
 )
+from corehq.util.dates import iso_string_to_datetime
 
 from .diffrule import Ignore
 
@@ -86,8 +88,10 @@ load_ignore_rules = memoized(lambda: add_duplicate_rules({
         Ignore('diff', 'owner_id', old=''),
         Ignore('type', 'owner_id', old=None),
         Ignore('type', 'user_id', old=None),
+        Ignore('diff', 'user_id', old='', check=is_user_owner_mapping_case),
         Ignore('type', 'opened_on', old=None),
         Ignore('type', 'opened_by', old=MISSING),
+        Ignore('diff', 'opened_by', old='', check=is_user_owner_mapping_case),
         # The form that created the case was archived, but the opened_by
         # field was not updated as part of the subsequent rebuild.
         # `CouchCaseUpdateStrategy.reset_case_state()` does not reset
@@ -101,6 +105,7 @@ load_ignore_rules = memoized(lambda: add_duplicate_rules({
         # CASE_IGNORED_DIFFS
         Ignore('type', 'name', old='', new=None),
         Ignore('type', 'closed_by', old='', new=None),
+        Ignore('type', 'closed_by', old=None, new=''),
         Ignore('diff', 'closed_by', old=''),
         Ignore('missing', 'location_id', old=MISSING, new=None),
         Ignore('missing', 'referrals', new=MISSING),
@@ -110,6 +115,7 @@ load_ignore_rules = memoized(lambda: add_duplicate_rules({
         Ignore('type', 'owner_id', old=None, new=''),
         Ignore('missing', 'closed_by', old=MISSING, new=None),
         Ignore('type', 'external_id', old='', new=None),
+        Ignore('type', 'external_id', old=None, new=''),
         Ignore('missing', 'deleted_on', old=MISSING, new=None),
         Ignore('missing', 'backend_id', old=MISSING, new='sql'),
 
@@ -150,6 +156,9 @@ load_ignore_rules = memoized(lambda: add_duplicate_rules({
     'LedgerValue': [
         Ignore(path='_id'),  # couch != SQL
         Ignore("missing", "location_id", old=MISSING, new=None),
+        Ignore("type", "location_id", old=None),
+        Ignore("diff", "last_modified", check=has_close_dates),
+        Ignore("type", "last_modified_form_id", old=None),
     ],
     'case_attachment': [
         Ignore(path='attachment_properties', new=MISSING),
@@ -308,6 +317,14 @@ def ignore_renamed(old_name, new_name):
     return Ignore(check=is_renamed)
 
 
+def has_close_dates(old_obj, new_obj, rule, diff):
+    if _both_dates(diff.old_value, diff.new_value):
+        old = iso_string_to_datetime(diff.old_value)
+        new = iso_string_to_datetime(diff.new_value)
+        return abs(old - new) < timedelta(days=1)
+    return False
+
+
 def has_date_values(old_obj, new_obj, rule, diff):
     return _both_dates(diff.old_value, diff.new_value)
 
@@ -426,3 +443,7 @@ def is_case_without_create_action(old_obj, new_obj, rule, diff):
 
 def is_truncated_255(old_obj, new_obj, rule, diff):
     return len(diff.old_value) > 255 and diff.old_value[:255] == diff.new_value
+
+
+def is_user_owner_mapping_case(old_obj, new_obj, rule, diff):
+    return new_obj.get("case_id", "").startswith("user-owner-mapping-")

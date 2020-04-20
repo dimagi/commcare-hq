@@ -1415,7 +1415,12 @@ def _get_form_render_context(request, domain, instance, case_id=None):
     # Build ordered list of questions and dict of question values => responses
     # Question values will be formatted to be processed by XFormQuestionValueIterator,
     # for example "/data/group/repeat_group[2]/question_id"
-    question_response_map, ordered_question_values = get_data_cleaning_data(form_data, instance)
+    try:
+        question_response_map, ordered_question_values = get_data_cleaning_data(form_data, instance)
+    except AttributeError as err:
+        question_response_map, ordered_question_values = (None, None)
+        import logging
+        logging.exception(err)
 
     context.update({
         "context_case_id": case_id,
