@@ -46,6 +46,7 @@ from corehq.sql_db.connections import get_icds_ucr_citus_db_alias
 from corehq.util.celery_utils import periodic_task_on_envs
 from corehq.util.decorators import serial_task
 from corehq.util.log import send_HTML_email
+from corehq.util.metrics import metrics_counter
 from corehq.util.soft_assert import soft_assert
 from corehq.util.view_utils import reverse
 from custom.icds_reports.const import (
@@ -1709,6 +1710,11 @@ def reconcile_data_not_in_ucr(reconciliation_status_pk):
         celery_task_logger.info(f'doc_id {doc_id} from {sql_modified_on} not found in UCR data sources')
         send_change_for_ucr_reprocessing(doc_id, doc_subtype, status_record.is_form_ucr)
 
+    metrics_counter(
+        "commcare.icds.reconciled_changes.count",
+        number_documents_missing,
+        tags={'config_id': status_record.table_id, 'doc_type': status_record.doc_type}
+    )
     status_record.last_processed_date = datetime.utcnow()
     status_record.documents_missing = number_documents_missing
     if number_documents_missing == 0:
