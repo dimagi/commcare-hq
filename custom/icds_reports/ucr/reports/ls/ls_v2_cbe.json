@@ -41,7 +41,10 @@
       "TODO"
     ],
     "sort_expression": [
-      "TODO"
+      {
+        "field": "date_cbe_organise",
+        "order": "DESC"
+      }
     ],
     "configured_charts": [ ]
   }
