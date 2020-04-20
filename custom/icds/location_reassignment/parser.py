@@ -183,8 +183,7 @@ class Parser(object):
         locations_to_be_deprecated = SQLLocation.active_objects.filter(
             domain=self.domain, site_code__in=self.site_codes_to_be_deprecated)
         for location in locations_to_be_deprecated:
-            descendants_sites_codes = (location.get_descendants().filter(is_archived=False).
-                                       values_list('site_code', flat=True))
+            descendants_sites_codes = location.child_locations().values_list('site_code', flat=True)
             missing_site_codes = set(descendants_sites_codes) - site_codes_to_be_deprecated
             if missing_site_codes:
                 self.errors.append("Location %s is getting deprecated but the following descendants are not %s" % (
