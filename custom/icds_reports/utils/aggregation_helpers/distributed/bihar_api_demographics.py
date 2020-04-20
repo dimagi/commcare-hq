@@ -13,7 +13,7 @@ class BiharApiDemographicsHelper(BaseICDSAggregationDistributedHelper):
 
     def __init__(self, month):
         self.month = transform_day_to_month(month)
-        self.end_date = transform_day_to_month(month + relativedelta(months=1, seconds=-1))
+        self.next_month_start = month + relativedelta(months=1)
         self.person_case_ucr = get_table_name(self.domain, 'static-person_cases_v3')
         self.household_ucr = get_table_name(self.domain, 'static-household_cases')
 
@@ -57,7 +57,6 @@ class BiharApiDemographicsHelper(BaseICDSAggregationDistributedHelper):
 
     def aggregation_query(self):
         month_start_string = month_formatter(self.month)
-        month_end_string = self.month + relativedelta(months=1, seconds=-1)
 
         columns = (
             ('state_id', 'person_list.state_id'),
@@ -134,7 +133,7 @@ class BiharApiDemographicsHelper(BaseICDSAggregationDistributedHelper):
                 )
                 WHERE 
                 (
-                    person_list.opened_on <= '{month_end_string}' AND
+                    person_list.opened_on < '{self.next_month_start}' AND
                     (person_list.closed_on IS NULL OR person_list.closed_on >= '{month_start_string}' )
                 ) AND
                 (
