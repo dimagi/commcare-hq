@@ -135,7 +135,6 @@ AGG_SDR_TABLE = 'agg_service_delivery_report'
 BIHAR_API_DEMOGRAPHICS_TABLE = 'bihar_api_demographics'
 BIHAR_API_MOTHER_DETAILS_TABLE = 'bihar_api_mother_details'
 CHILD_VACCINE_TABLE = 'child_vaccines'
-BIHAR_API_CHILD_VACCINE_TABLE = 'bihar_api_child_vaccine'
 
 DASHBOARD_DOMAIN = 'icds-dashboard-qa' if settings.SERVER_ENVIRONMENT == 'india' else 'icds-cas'
 
