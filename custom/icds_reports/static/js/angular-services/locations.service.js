@@ -305,6 +305,11 @@ window.angular.module('icdsApp').factory('locationsService', ['$http', '$locatio
         },
         
         resetLevelsBelow : function(level, vm) {
+            if (vm.selectedLocationLevel > level &&
+                vm.selectedLocations[level] !== undefined &&
+                vm.selectedLocations[level] !== null) {
+                vm.selectedLocationId = vm.selectedLocations[level];
+            }
             for (var i = level + 1; i <= vm.maxLevel; i++) {
                 vm.hierarchy[i].selected = null;
                 vm.selectedLocations[i] = null;
