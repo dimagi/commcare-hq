@@ -1,5 +1,6 @@
 from datetime import datetime
 
+from dateutil.relativedelta import relativedelta
 from django.core.management import BaseCommand
 from django.db import connection
 
@@ -8,7 +9,6 @@ from custom.icds_reports.const import (
     DASHBOARD_DOMAIN
 )
 from custom.icds_reports.tasks import (
-    _get_monthly_dates,
     icds_state_aggregation_task
 )
 query_text_0 = """
@@ -26,68 +26,68 @@ query_text_1 = """
     thr_v2.thr_distribution_image_count as thr_distribution_image_count
     FROM awc_location_local awc_location
     LEFT JOIN "icds_dashboard_thr_v2" thr_v2 on (awc_location.doc_id = thr_v2.awc_id AND
-                                                thr_v2.month = {month}
+                                                thr_v2.month = '{month}'
                                                 )
             WHERE awc_location.aggregation_level = 5
 """
 
 query_text_2 = """
     UPDATE "agg_awc_{month}_5" t
-    SET t.thr_distribution_image_count = ut.thr_distribution_image_count
+    SET thr_distribution_image_count = ut.thr_distribution_image_count
     FROM  temp_thr ut
-    WHERE t.awc_id = ut.awc_id AND t.aggregation_level = 5
+    WHERE t.awc_id = ut.awc_id
 """
 
 query_text_3 = """
     UPDATE "agg_awc_{month}_4" t
-    SET t.thr_distribution_image_count = ut.thr_distribution_image_count
+    SET thr_distribution_image_count = ut.thr_distribution_image_count
     FROM (
         SELECT
             supervisor_id,
             SUM(thr_distribution_image_count) as thr_distribution_image_count
         FROM "agg_awc_{month}_5"
-        GROUP BY state_id, district_id,block_id,supervisor_id;
+        GROUP BY state_id, district_id,block_id,supervisor_id
     ) ut
-    WHERE t.supervisor_id = ut.supervisor_id AND t.aggregation_level = 4
+    WHERE t.supervisor_id = ut.supervisor_id
 """
 
 query_text_4 = """
     UPDATE "agg_awc_{month}_3" t
-    SET t.thr_distribution_image_count = ut.thr_distribution_image_count
+    SET thr_distribution_image_count = ut.thr_distribution_image_count
     FROM (
         SELECT
             block_id,
             SUM(thr_distribution_image_count) as thr_distribution_image_count
         FROM "agg_awc_{month}_4"
-        GROUP BY state_id, district_id,block_id;
+        GROUP BY state_id, district_id,block_id
     ) ut
-    WHERE t.block_id = ut.block_id AND t.aggregation_level = 3
+    WHERE t.block_id = ut.block_id
 """
 
 query_text_5 = """
     UPDATE "agg_awc_{month}_2" t
-    SET t.thr_distribution_image_count = ut.thr_distribution_image_count
+    SET thr_distribution_image_count = ut.thr_distribution_image_count
     FROM (
         SELECT
             district_id,
             SUM(thr_distribution_image_count) as thr_distribution_image_count
         FROM "agg_awc_{month}_3"
-        GROUP BY state_id, district_id;
+        GROUP BY state_id, district_id
     ) ut
-    WHERE t.district_id = ut.district_id AND t.aggregation_level = 2
+    WHERE t.district_id = ut.district_id
 """
 
 query_text_6 = """
     UPDATE "agg_awc_{month}_1" t
-    SET t.thr_distribution_image_count = ut.thr_distribution_image_count
+    SET thr_distribution_image_count = ut.thr_distribution_image_count
     FROM (
         SELECT
             state_id,
             SUM(thr_distribution_image_count) as thr_distribution_image_count
         FROM "agg_awc_{month}_2"
-        GROUP BY state_id, district_id;
+        GROUP BY state_id, district_id
     ) ut
-    WHERE t.state_id = ut.state_id AND t.aggregation_level = 1
+    WHERE t.state_id = ut.state_id
 """
 
 
@@ -104,7 +104,9 @@ class Command(BaseCommand):
 
         # get the number of month intervals between the dates
         intervals = final_date.month - initial_date.month + 12 * (final_date.year - initial_date.year) + 1
-        monthly_dates = _get_monthly_dates(final_date, total_intervals=intervals)
+        monthly_dates = []
+        for i in range(0, intervals):
+            monthly_dates.append(initial_date + relativedelta(months=i))
 
         state_ids = list(
             SQLLocation.objects.filter(domain=DASHBOARD_DOMAIN, location_type__name='state').values_list(
@@ -118,7 +120,7 @@ class Command(BaseCommand):
                                             func_name='_agg_thr_table')
         for monthly_date in monthly_dates:
             date = monthly_date.strftime("%Y-%m-%d")
-            queries = [query_text_0, query_text_0, query_text_0, query_text_0, query_text_0, query_text_0]
+            queries = [query_text_0, query_text_1, query_text_2, query_text_3, query_text_4, query_text_4, query_text_5, query_text_6]
             print("====Executing for month f{date}========\n")
             count = 0
             for query in queries:
