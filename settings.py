@@ -288,6 +288,7 @@ HQ_APPS = (
     'corehq.messaging.scheduling',
     'corehq.messaging.scheduling.scheduling_partitioned',
     'corehq.messaging.smsbackends.tropo',
+    'corehq.messaging.smsbackends.turn',
     'corehq.messaging.smsbackends.twilio',
     'corehq.apps.dropbox',
     'corehq.messaging.smsbackends.megamobile',
@@ -1497,6 +1498,7 @@ SMS_LOADED_SQL_BACKENDS = [
     'corehq.messaging.smsbackends.telerivet.models.SQLTelerivetBackend',
     'corehq.messaging.smsbackends.test.models.SQLTestSMSBackend',
     'corehq.messaging.smsbackends.tropo.models.SQLTropoBackend',
+    'corehq.messaging.smsbackends.turn.models.SQLTurnWhatsAppBackend',
     'corehq.messaging.smsbackends.twilio.models.SQLTwilioBackend',
     'corehq.messaging.smsbackends.unicel.models.SQLUnicelBackend',
     'corehq.messaging.smsbackends.yo.models.SQLYoBackend',
@@ -1626,7 +1628,7 @@ AVAILABLE_CUSTOM_RULE_CRITERIA = {
         'custom.icds.rules.custom_criteria.person_case_is_under_19_years_old',
     'ICDS_CCS_RECORD_CASE_HAS_FUTURE_EDD':
         'custom.icds.rules.custom_criteria.ccs_record_case_has_future_edd',
-    'ICDS_CCS_RECORD_CASE_AVAILING_SERVICES':
+    'ICDS_CCS_RECORD_CASE_CHILD_AVAILING_SERVICES':
         'custom.icds.rules.custom_criteria.ccs_record_case_is_availing_services',
     'ICDS_IS_USERCASE_OF_AWW':
         'custom.icds.rules.custom_criteria.is_usercase_of_aww',
