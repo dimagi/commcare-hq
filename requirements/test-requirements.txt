@@ -166,6 +166,7 @@ tinycss2==1.0.2           # via cairosvg, cssselect2, weasyprint
 tinys3==0.1.12
 traceback2==1.4.0         # via unittest2
 tropo-webapi-python==0.1.3
+git+git://github.com/dimagi/turn-python.git
 twilio==6.5.1
 ua-parser==0.8.0          # via user-agents
 unidecode==0.04.20
