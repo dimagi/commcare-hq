@@ -3,7 +3,8 @@ var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 function ServiceDeliveryDashboardController($rootScope, $scope, $http, $location, $routeParams, $log, DTOptionsBuilder,
                                             DTColumnBuilder, $compile, storageService, userLocationId,
                                             baseControllersService, haveAccessToAllLocations, isAlertActive,
-                                            sddMetadata, dateHelperService, navigationService, isMobile) {
+                                            sddMetadata, dateHelperService, navigationService, isMobile,
+                                            haveAccessToFeatures) {
     baseControllersService.BaseFilterController.call(
         this, $scope, $routeParams, $location, dateHelperService, storageService, navigationService
     );
@@ -157,24 +158,10 @@ function ServiceDeliveryDashboardController($rootScope, $scope, $http, $location
                     'columnValueIndicator': 'num_awcs_conducted_cbe',
                 },
                 {
-                    'mData': 'num_awcs_conducted_cbe',
-                    'heading': 'Number of CBE Conducted',
-                    'tooltipValue': 'Number of Community-Based Events (CBEs) organised by an AWC in a month',
-                    'columnValueType': 'raw',
-                    'columnValueIndicator': 'num_awcs_conducted_cbe',
-                },
-                {
                     'mData': 'num_awcs_conducted_vhnd',
                     'heading': 'VHSND',
                     'tooltipValue': 'If the AWC conducted at least 1 VHSND in the current month then Yes otherwise No.',
                     'columnValueType': 'booleanRaw',
-                    'columnValueIndicator': 'num_awcs_conducted_vhnd',
-                },
-                {
-                    'mData': 'num_awcs_conducted_vhnd',
-                    'heading': 'Number of VHSND conducted',
-                    'tooltipValue': 'Number of Village Health Sanitation and Nutrition Days (VHSNDs) organised by an AWC in a month',
-                    'columnValueType': 'raw',
                     'columnValueIndicator': 'num_awcs_conducted_vhnd',
                 },
                 {
@@ -210,6 +197,25 @@ function ServiceDeliveryDashboardController($rootScope, $scope, $http, $location
             },
         ],
     };
+
+    if (haveAccessToFeatures) {
+        var numberOfCbeConducted = {
+            'mData': 'num_awcs_conducted_cbe',
+            'heading': 'Number of CBE Conducted',
+            'tooltipValue': 'Number of Community-Based Events (CBEs) organised by an AWC in a month',
+            'columnValueType': 'raw',
+            'columnValueIndicator': 'num_awcs_conducted_cbe',
+        };
+        var numberOfVHSNDConducted = {
+            'mData': 'num_awcs_conducted_vhnd',
+            'heading': 'Number of VHSND conducted',
+            'tooltipValue': 'Number of Village Health Sanitation and Nutrition Days (VHSNDs) organised by an AWC in a month',
+            'columnValueType': 'raw',
+            'columnValueIndicator': 'num_awcs_conducted_vhnd',
+        };
+        vm.sddTableData['pw_lw_children']['awc'].splice(3, 0, numberOfCbeConducted);
+        vm.sddTableData['pw_lw_children']['awc'].splice(5, 0, numberOfVHSNDConducted);
+    }
 
     vm.getTableData = function () {
         var isPwLwChildren = vm.isPwLwChildrenTab();
@@ -530,7 +536,8 @@ function ServiceDeliveryDashboardController($rootScope, $scope, $http, $location
 
 ServiceDeliveryDashboardController.$inject = ['$rootScope', '$scope', '$http', '$location', '$routeParams', '$log',
     'DTOptionsBuilder', 'DTColumnBuilder', '$compile', 'storageService', 'userLocationId', 'baseControllersService',
-    'haveAccessToAllLocations', 'isAlertActive', 'sddMetadata', 'dateHelperService', 'navigationService', 'isMobile'];
+    'haveAccessToAllLocations', 'isAlertActive', 'sddMetadata', 'dateHelperService', 'navigationService', 'isMobile',
+    'haveAccessToFeatures'];
 
 window.angular.module('icdsApp').directive('serviceDeliveryDashboard', ['templateProviderService', function (templateProviderService) {
     return {
