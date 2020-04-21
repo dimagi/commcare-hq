@@ -1,7 +1,5 @@
-import datetime
 import logging
 from collections import namedtuple
-from contextlib import contextmanager
 
 from django.conf import settings
 from django.db import IntegrityError
@@ -83,7 +81,8 @@ class ProgressManager(object):
     """
     A context manager that mediates calls to `set_task_progress`
 
-    and only flushes updates when progress % changes by 1/resolution (conceptual "pixel size" on progress bar) or more
+    and only flushes updates when progress % changes by 1/resolution or more
+    (conceptual "pixel size" on progress bar)
     and flushes on __exit__
 
     """

@@ -1,5 +1,3 @@
-import datetime
-
 import mock
 from django.test import SimpleTestCase
 from freezegun import freeze_time
