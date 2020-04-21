@@ -1,6 +1,6 @@
 import logging
 from datetime import datetime
-from functools import partial
+from functools import partial, wraps
 from uuid import uuid4
 
 from django.template.loader import render_to_string
@@ -9,6 +9,7 @@ import attr
 from memoized import memoized
 
 from casexml.apps.case import const
+from casexml.apps.case.sharedmodels import CommCareCaseIndex
 from casexml.apps.case.xml.parser import KNOWN_PROPERTIES
 from casexml.apps.phone.xml import get_case_xml
 from dimagi.utils.couch.database import retry_on_couch_error
@@ -51,16 +52,20 @@ def patch_diffs(doc_diffs, log_cases=False):
             error_diffs = [(kind, case_id, err.diffs)]
             log.warning("cannot patch %s", format_diffs(error_diffs))
             continue
+        except Exception:
+            error_diffs = [(kind, case_id, [d.json_diff for d in diffs])]
+            log.exception("cannot patch %s", format_diffs(error_diffs))
+            continue
         pending_diffs.append(case_id)
     return pending_diffs
 
 
 def patch_case(case_id, diffs):
-    case_diffs = [d for d in diffs if d.kind != "stock state"]
+    case_diffs = [d.json_diff for d in diffs if d.kind != "stock state"]
     try:
         couch_case = get_couch_case(case_id)
     except CaseNotFound:
-        raise CannotPatch([d.json_diff for d in case_diffs])
+        raise CannotPatch(case_diffs)
     assert couch_case.domain == get_domain(), (couch_case, get_domain())
     case = PatchCase(couch_case, case_diffs)
     form = PatchForm(case)
@@ -70,57 +75,114 @@ def patch_case(case_id, diffs):
 
 def patch_ledgers(diffs):
     if diffs:
-        raise NotImplementedError
+        # TODO implement ledger patch
+        raise CannotPatch([d.json_diff for d in diffs])
 
 
-@attr.s
+def aslist(generator_func):
+    @wraps(generator_func)
+    def wrapper(*args, **kw):
+        return list(generator_func(*args, **kw))
+    return wrapper
+
+
+@attr.s(hash=False)
 class PatchCase:
     case = attr.ib()
     diffs = attr.ib()
 
     def __attrs_post_init__(self):
-        self.indices = []
         self.case_attachments = []
         self._updates = updates = []
         if is_missing_in_sql(self.diffs):
             updates.extend([const.CASE_ACTION_CREATE, const.CASE_ACTION_UPDATE])
             self._dynamic_properties = self.case.dynamic_case_properties()
         else:
-            if has_illegal_props(self.diffs):
-                raise CannotPatch([d.json_diff for d in self.diffs])
+            if cannot_patch(self.diffs):
+                raise CannotPatch(self.diffs)
             props = dict(iter_dynamic_properties(self.diffs))
             self._dynamic_properties = props
-            if props or has_known_props(self.diffs):
+            if props or has_known_props(self.diffs) or self.indices:
                 updates.append(const.CASE_ACTION_UPDATE)
+            if self._should_close():
+                updates.append(const.CASE_ACTION_CLOSE)
+
+    def __hash__(self):
+        return hash(self.case_id)
 
     def __getattr__(self, name):
         return getattr(self.case, name)
 
+    def _should_close(self):
+        return (self.case.closed
+            and any(d.path == ["closed"] and not d.new_value for d in self.diffs))
+
     def dynamic_case_properties(self):
         return self._dynamic_properties
 
+    @property
+    @memoized
+    @aslist
+    def indices(self):
+        diffs = [d for d in self.diffs if d.path[0] == "indices"]
+        if not diffs:
+            return
+        for diff in diffs:
+            if diff.path != ["indices", "[*]"] or diff.new_value is not MISSING:
+                raise CannotPatch([diff])
+            yield CommCareCaseIndex.wrap(diff.old_value)
 
-ILLEGAL_PROPS = {"indices", "actions", "*"}
-IGNORE_PROPS = {"xform_ids"} | KNOWN_PROPERTIES.keys()
+
+ILLEGAL_PROPS = {"actions", "*"}
+IGNORE_PROPS = {"opened_by", "external_id"}
+STATIC_PROPS = {
+    "case_id",
+    "closed",
+    "closed_by",
+    "closed_on",
+    "deleted",
+    "deleted_on",
+    "deletion_id",
+    "domain",
+    "external_id",
+    "indices",
+    "location_id",
+    "modified_by",
+    "modified_on",
+    "name",
+    "opened_by",
+    "opened_on",
+    "owner_id",
+    "server_modified_on",
+    "type",
+    "user_id",
+    "xform_ids",
+
+    # renamed Couch properties
+    "-deletion_date",   # deleted_on
+    "-deletion_id",     # deletion_id
+    "@date_modified",   # modified_on
+    "@user_id",         # user_id
+    "hq_user_id",       # external_id
+}
 
 
-def has_illegal_props(diffs):
-    return any(d.json_diff.path[0] in ILLEGAL_PROPS for d in diffs)
+def cannot_patch(diffs):
+    return any(d.path[0] in ILLEGAL_PROPS for d in diffs) \
+        or all(d.path[0] in IGNORE_PROPS for d in diffs)
 
 
 def has_known_props(diffs):
-    return any(d.json_diff.path[0] in KNOWN_PROPERTIES for d in diffs)
+    return any(d.path[0] in KNOWN_PROPERTIES for d in diffs)
 
 
 def iter_dynamic_properties(diffs):
-    for doc_diff in diffs:
-        diff = doc_diff.json_diff
+    for diff in diffs:
         name = diff.path[0]
-        if name in IGNORE_PROPS:
+        if name in STATIC_PROPS:
             continue
-        if len(diff.path) > 1:
+        if len(diff.path) > 1 or not isinstance(diff.old_value, str):
             raise CannotPatch([diff])
-        assert isinstance(diff.old_value, str), (doc_diff.doc_id, diff)
         yield name, diff.old_value
 
 

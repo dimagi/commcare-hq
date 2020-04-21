@@ -1,6 +1,6 @@
 import os
 
-from . import get_blob_db, NotFound
+from . import NotFound
 from .migrate import PROCESSING_COMPLETE_MESSAGE
 from .models import BlobMeta
 from .zipdb import get_export_filename, ZipBlobDB
@@ -23,10 +23,9 @@ class BlobDbBackendExporter(object):
             print(PROCESSING_COMPLETE_MESSAGE.format(self.not_found, self.total_blobs))
 
     def process_object(self, meta):
-        from_db = get_blob_db()
         self.total_blobs += 1
         try:
-            content = from_db.get(key=meta.key)
+            content = meta.open()
         except NotFound:
             self.not_found += 1
         else:

@@ -352,6 +352,8 @@ class ChildHealthMonthly(models.Model, AggregateMixin):
     opened_on = models.DateField(blank=True, null=True)
     birth_weight = models.PositiveSmallIntegerField(null=True, help_text="birth weight in grams")
     child_person_case_id = models.TextField(blank=True, null=True)
+    delivery_nature = models.TextField(blank=True, null=True)
+    term_days = models.SmallIntegerField(blank=True, null=True)
 
     class Meta:
         managed = False
