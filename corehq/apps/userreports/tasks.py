@@ -355,11 +355,8 @@ def build_async_indicators(indicator_doc_ids):
     # written to be used with _queue_indicators, indicator_doc_ids must
     #   be a chunk of 100
     memoizers = {'configs': {}, 'adapters': {}}
-    for ids in chunked(indicator_doc_ids, ASYNC_INDICATOR_CHUNK_SIZE):
-        _build_async_indicators(ids, memoizers)
+    assert(len(indicator_doc_ids)) <= ASYNC_INDICATOR_CHUNK_SIZE
 
-
-def _build_async_indicators(indicator_doc_ids, memoizers):
     def handle_exception(exception, config_id, doc, adapter):
         metric = None
         if isinstance(exception, (ProtocolError, ReadTimeout)):
