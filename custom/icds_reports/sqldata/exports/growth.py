@@ -24,7 +24,10 @@ class GrowthExport(ExportableMixin, IcdsSqlData):
         }
         initial_month = self.config['month']
 
-        if self.loc_level == 4:
+        if self.loc_level == 5:
+            filters['awc_id'] = location
+            order_by = ('awc_name',)
+        elif self.loc_level == 4:
             filters['supervisor_id'] = location
             order_by = ('awc_name',)
         elif self.loc_level == 3:
