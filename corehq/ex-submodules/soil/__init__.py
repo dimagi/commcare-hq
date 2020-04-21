@@ -14,7 +14,7 @@ from django.http import HttpResponse, StreamingHttpResponse
 
 from django_transfer import TransferHttpResponse
 from soil.progress import get_task_progress, get_multiple_task_progress, set_task_progress
-from corehq.blobs import get_blob_db
+from corehq.blobs import get_blob_db, CODES
 
 from corehq.const import ONE_DAY
 
@@ -302,15 +302,14 @@ class BlobDownload(DownloadBase):
             # legacy key; remove after all legacy blob downloads have expired
             blob_key = "_default/" + self.identifier
         blob_db = get_blob_db()
-        file_obj = blob_db.get(key=blob_key)
-        blob_size = blob_db.size(key=blob_key)
+        file_obj = blob_db.get(key=blob_key, type_code=CODES.tempfile)
 
         response = StreamingHttpResponse(
             FileWrapper(file_obj, CHUNK_SIZE),
             content_type=self.content_type
         )
 
-        response['Content-Length'] = blob_size
+        response['Content-Length'] = file_obj.content_length
         response['Content-Disposition'] = self.content_disposition
         for k, v in self.extras.items():
             response[k] = v

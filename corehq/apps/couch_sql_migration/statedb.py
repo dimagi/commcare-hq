@@ -233,19 +233,21 @@ class StateDB(DiffDB):
         with self.session() as session:
             return session.query(CaseToDiff).count()
 
-    def iter_case_ids_with_diffs(self):
+    def iter_case_ids_with_diffs(self, changes=False):
+        model = DocChanges if changes else DocDiffs
         query = (
-            self.Session().query(DocDiffs.doc_id)
-            .filter(DocDiffs.kind == "CommCareCase")
+            self.Session().query(model.doc_id)
+            .filter(model.kind == "CommCareCase")
         )
-        for doc_id, in iter_large(query, DocDiffs.doc_id):
+        for doc_id, in iter_large(query, model.doc_id):
             yield doc_id
 
-    def count_case_ids_with_diffs(self):
+    def count_case_ids_with_diffs(self, changes=False):
+        model = DocChanges if changes else DocDiffs
         with self.session() as session:
             return (
-                session.query(DocDiffs.doc_id)
-                .filter(DocDiffs.kind == "CommCareCase")
+                session.query(model.doc_id)
+                .filter(model.kind == "CommCareCase")
                 .count()
             )
 

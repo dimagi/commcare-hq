@@ -2770,7 +2770,7 @@ class DataFile(object):
     def get_blob(self):
         db = get_blob_db()
         try:
-            blob = db.get(key=self._meta.key)
+            blob = db.get(meta=self._meta)
         except (KeyError, NotFound) as err:
             raise NotFound(str(err))
         return blob
