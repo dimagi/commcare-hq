@@ -346,7 +346,7 @@ def write_export_instance(writer, export_instance, documents, progress_tracker=N
     :param progress_tracker: A task for soil to track progress against
     :return: None
     """
-    with TaskProgressManager(progress_tracker) as progress_manager:
+    with TaskProgressManager(progress_tracker, src="export") as progress_manager:
         if progress_tracker:
             progress_manager.set_progress(0, documents.count)
 

@@ -56,7 +56,7 @@ class _Importer(object):
         self._unsubmitted_caseblocks = []
 
     def do_import(self, spreadsheet):
-        with TaskProgressManager(self.task) as progress_manager:
+        with TaskProgressManager(self.task, src="case_importer") as progress_manager:
             for row_num, row in enumerate(spreadsheet.iter_row_dicts(), start=1):
                 progress_manager.set_progress(row_num - 1, spreadsheet.max_row)
                 if row_num == 1:
