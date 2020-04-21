@@ -77,7 +77,7 @@ def set_task_progress(task, current, total):
     update_task_state(task, 'PROGRESS', {'current': current, 'total': total})
 
 
-class ProgressManager(object):
+class TaskProgressManager(object):
     """
     A context manager that mediates calls to `set_task_progress`
 

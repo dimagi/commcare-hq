@@ -2,10 +2,10 @@ import mock
 from django.test import SimpleTestCase
 from freezegun import freeze_time
 
-from soil.progress import ProgressManager
+from soil.progress import TaskProgressManager
 
 
-@mock.patch.object(ProgressManager, '_set_task_progress')
+@mock.patch.object(TaskProgressManager, '_set_task_progress')
 class ProgressManagerTest(SimpleTestCase):
 
     def test_basic(self, set_task_progress):
@@ -18,7 +18,7 @@ class ProgressManagerTest(SimpleTestCase):
 
         with freeze_time("2020-04-20", as_arg=True) as frozen_time:
             start_time = frozen_time()
-            with ProgressManager(task) as progress_manager:
+            with TaskProgressManager(task) as progress_manager:
                 for i in range(1, total + 1):
                     progress_manager.set_progress(i, total)
                     frozen_time.tick(delta=delta)

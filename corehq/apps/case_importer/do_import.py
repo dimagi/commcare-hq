@@ -13,7 +13,7 @@ from corehq.apps.receiverwrapper.rate_limiter import rate_limit_submission
 from corehq.util.timer import TimingContext
 from couchexport.export import SCALAR_NEVER_WAS
 from dimagi.utils.logging import notify_exception
-from soil.progress import ProgressManager
+from soil.progress import TaskProgressManager
 
 from corehq.apps.case_importer.exceptions import CaseRowError
 from corehq.apps.export.tasks import add_inferred_export_properties
@@ -56,7 +56,7 @@ class _Importer(object):
         self._unsubmitted_caseblocks = []
 
     def do_import(self, spreadsheet):
-        with ProgressManager(self.task) as progress_manager:
+        with TaskProgressManager(self.task) as progress_manager:
             for row_num, row in enumerate(spreadsheet.iter_row_dicts(), start=1):
                 progress_manager.set_progress(row_num - 1, spreadsheet.max_row)
                 if row_num == 1:
