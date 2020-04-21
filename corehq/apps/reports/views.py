@@ -132,7 +132,7 @@ from corehq.apps.users.permissions import (
     DEID_EXPORT_PERMISSION,
     FORM_EXPORT_PERMISSION,
 )
-from corehq.blobs import NotFound, get_blob_db, models
+from corehq.blobs import CODES, NotFound, get_blob_db, models
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import (
     CaseAccessors,
@@ -2068,7 +2068,7 @@ def export_report(request, domain, export_hash, format):
     report_class = meta.properties["report_class"]
 
     try:
-        report_file = db.get(export_hash)
+        report_file = db.get(export_hash, type_code=CODES.tempfile)
     except NotFound:
         return report_not_found
     with report_file:

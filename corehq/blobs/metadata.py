@@ -17,6 +17,7 @@ class MetaDB(object):
 
     This class manages persistence of blob metadata in a SQL database.
     """
+    DoesNotExist = BlobMeta.DoesNotExist
 
     def new(self, **blob_meta_args):
         """Get a new `BlobMeta` object
@@ -31,6 +32,8 @@ class MetaDB(object):
                     "keyword arguments are incompatible with `meta` argument")
             return blob_meta_args["meta"]
         timeout = blob_meta_args.pop("timeout", None)
+        if blob_meta_args.get('type_code') == CODES.form_xml:
+            blob_meta_args['compressed_length'] = -1
         meta = BlobMeta(**blob_meta_args)
         if not meta.domain:
             raise TypeError("domain is required")
@@ -47,7 +50,7 @@ class MetaDB(object):
     def put(self, meta):
         """Save `BlobMeta` in the metadata database"""
         meta.save()
-        length = meta.content_length
+        length = meta.stored_content_length
         tags = _meta_tags(meta)
         metrics_counter('commcare.blobs.added.count', tags=tags)
         metrics_counter('commcare.blobs.added.bytes', value=length, tags=tags)
@@ -120,7 +123,7 @@ class MetaDB(object):
             ids = tuple(m for p in split_parent_ids for m in parents[p])
             with BlobMeta.get_cursor_for_partition_db(dbname) as cursor:
                 cursor.execute(delete_blobs_sql, [ids, now])
-        deleted_bytes = sum(m.content_length for m in metas)
+        deleted_bytes = sum(m.stored_content_length for m in metas)
         metrics_counter('commcare.blobs.deleted.count', value=len(metas))
         metrics_counter('commcare.blobs.deleted.bytes', value=deleted_bytes)
 
@@ -146,7 +149,7 @@ class MetaDB(object):
         if meta.expires_on is None:
             tags = _meta_tags(meta)
             metrics_counter('commcare.temp_blobs.count', tags=tags)
-            metrics_counter('commcare.temp_blobs.bytes_added', value=meta.content_length, tags=tags)
+            metrics_counter('commcare.temp_blobs.bytes_added', value=meta.stored_content_length, tags=tags)
         meta.expires_on = _utcnow() + timedelta(minutes=minutes)
         meta.save()
 
