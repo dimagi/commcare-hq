@@ -113,9 +113,11 @@ log = logging.getLogger(__name__)
 CASE_DOC_TYPES = ['CommCareCase', 'CommCareCase-Deleted', ]
 
 UNPROCESSED_DOC_TYPES = list(all_known_formlike_doc_types() - {'XFormInstance'})
+_old_handler = None
 
 
 def setup_logging(state_dir, slug, debug=False):
+    global _old_handler
     if debug:
         assert log.level <= logging.DEBUG, log.level
         logging.root.setLevel(logging.DEBUG)
@@ -133,6 +135,9 @@ def setup_logging(state_dir, slug, debug=False):
     handler = logging.FileHandler(log_file)
     handler.setFormatter(formatter)
     logging.root.addHandler(handler)
+    if _old_handler is not None:
+        logging.root.removeHandler(_old_handler)
+    _old_handler = handler
     log.info("command: %s", " ".join(sys.argv))
 
 
@@ -192,6 +197,9 @@ class CouchSqlDomainMigrator:
                 self._patch_diffs()
             elif self.should_diff_cases:
                 self._diff_cases()
+
+        if self.stopper.clean_break:
+            raise CleanBreak
 
         log.info('migrated domain {}'.format(self.domain))
 
@@ -1411,6 +1419,8 @@ class MissingFormLoader:
 def get_main_forms_iteration_stop_date(statedb):
     resume_key = f"{statedb.domain}.XFormInstance.{statedb.unique_id}"
     itr = ResumableFunctionIterator(resume_key, None, None, None)
+    if itr.state.complete:
+        return None
     kwargs = itr.state.kwargs
     assert kwargs, f"migration state not found: {resume_key}"
     # this is tightly coupled to by_domain_doc_type_date/view in couch:
@@ -1516,4 +1526,8 @@ def commit_migration(domain_name):
 
 
 class MigrationRestricted(Exception):
+    pass
+
+
+class CleanBreak(Exception):
     pass

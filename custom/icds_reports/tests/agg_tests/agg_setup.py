@@ -52,7 +52,8 @@ FILE_NAME_TO_TABLE_MAPPING = {
     'adolescent_girls_reg_form': get_table_name('icds-cas', 'static-adolescent_girls_reg_form'),
     'add_preg_table': get_table_name('icds-cas', 'static-dashboard_add_pregnancy_form'),
     'migration_form': get_table_name('icds-cas', 'static-migration_form'),
-    'availing_services_form': get_table_name('icds-cas', 'static-availing_service_form')
+    'availing_services_form': get_table_name('icds-cas', 'static-availing_service_form'),
+    'child_delivery_form': get_table_name('icds-cas', 'static-child_delivery_forms')
 }
 
 
