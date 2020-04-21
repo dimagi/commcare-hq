@@ -77,6 +77,45 @@ def set_task_progress(task, current, total):
     update_task_state(task, 'PROGRESS', {'current': current, 'total': total})
 
 
+class ProgressManager(object):
+    """
+    A context manager that mediates calls to `set_task_progress`
+
+    and only flushes updates when progress % changes by 1/resolution or more
+    (conceptual "pixel size" on progress bar)
+    and flushes on __exit__
+
+    """
+    def __init__(self, task, resolution=100):
+        self.task = task
+        self._resolution = resolution
+        self._value = {'current': None, 'total': None}
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, type, value, traceback):
+        self.flush()
+
+    def set_progress(self, current, total):
+        new_value = {'current': current, 'total': total}
+
+        if self._should_flush(new_value):
+            self._value = new_value
+            self.flush()
+
+    def _should_flush(self, new_value):
+        return self._quantized_value(**self._value) != self._quantized_value(**new_value)
+
+    def _quantized_value(self, current, total):
+        return self._resolution * current // total if current and total else None
+
+    def flush(self):
+        self._set_task_progress(self.task, **self._value)
+
+    _set_task_progress = staticmethod(set_task_progress)
+
+
 def update_task_state(task, state, meta):
     try:
         if task:
