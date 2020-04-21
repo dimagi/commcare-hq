@@ -31,7 +31,7 @@ billiard!=3.5.0.5  # Should be resolved in celery 4.3: https://github.com/celery
 mock==2.0.0
 Pillow>=6.2.2,<7.0.0
 phonenumberslite~=8.8
-psycopg2>=2.8.4  # Python 3.8 support
+psycopg2~=2.7.7
 psycogreen~=1.0
 pycryptodome>=3.6.6  # security update
 py-KISSmetrics==1.0.1
