@@ -936,7 +936,12 @@ hqDefine('export/js/models', [
      * @returns {Boolean} - True if it is the case name property False otherwise.
      */
     ExportItem.prototype.isCaseName = function () {
-        return this.path()[this.path().length - 1].name() === 'name';
+        try {
+            return this.path()[this.path().length - 1].name() === 'name';
+        } catch (error) {
+            console.log(error);
+        }
+        return false;
     };
 
     ExportItem.prototype.readablePath = function () {
