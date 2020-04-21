@@ -63,6 +63,7 @@ class ConfigurableReportEditForm(DocumentFormBase):
     columns = JsonField(expected_type=list)
     configured_charts = JsonField(expected_type=list)
     sort_expression = JsonField(expected_type=list)
+    distinct_on = JsonField(expected_type=list)
 
     def __init__(self, domain, instance=None, read_only=False, *args, **kwargs):
         super(ConfigurableReportEditForm, self).__init__(instance, read_only, *args, **kwargs)
@@ -87,6 +88,7 @@ class ConfigurableReportEditForm(DocumentFormBase):
             'columns',
             'configured_charts',
             'sort_expression',
+            'distinct_on',
         ]
         if instance.config_id:
             fields.append('_id')

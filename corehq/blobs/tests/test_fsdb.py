@@ -13,7 +13,8 @@ from corehq.blobs import CODES
 from corehq.blobs.metadata import MetaDB
 from corehq.blobs.tasks import delete_expired_blobs
 from corehq.blobs.tests.util import new_meta, temporary_blob_db
-from corehq.util.test_utils import generate_cases, patch_datadog
+from corehq.util.metrics.tests.utils import capture_metrics
+from corehq.util.test_utils import generate_cases
 
 
 class _BlobDBTests(object):
@@ -30,12 +31,12 @@ class _BlobDBTests(object):
 
     def test_put_and_size(self):
         identifier = new_meta()
-        with patch_datadog() as stats:
+        with capture_metrics() as metrics:
             meta = self.db.put(BytesIO(b"content"), meta=identifier)
         size = len(b'content')
-        print(stats)
-        self.assertEqual(sum(s for s in stats["commcare.blobs.added.count.type:form_xml"]), 1)
-        self.assertEqual(sum(s for s in stats["commcare.blobs.added.bytes.type:form_xml"]), size)
+
+        self.assertEqual(metrics.sum('commcare.blobs.added.count', type='form_xml'), 1)
+        self.assertEqual(metrics.sum('commcare.blobs.added.bytes', type='form_xml'), size)
         self.assertEqual(self.db.size(key=meta.key), size)
 
     def test_put_with_timeout(self):
@@ -89,10 +90,10 @@ class _BlobDBTests(object):
             for key in ['test.5', 'test.6']
         ]
 
-        with patch_datadog() as stats:
+        with capture_metrics() as metrics:
             self.assertTrue(self.db.bulk_delete(metas=metas), 'delete failed')
-        self.assertEqual(sum(s for s in stats["commcare.blobs.deleted.count"]), 2)
-        self.assertEqual(sum(s for s in stats["commcare.blobs.deleted.bytes"]), 28)
+        self.assertEqual(metrics.sum("commcare.blobs.deleted.count"), 2)
+        self.assertEqual(metrics.sum("commcare.blobs.deleted.bytes"), 28)
 
         for meta in metas:
             with self.assertRaises(mod.NotFound):

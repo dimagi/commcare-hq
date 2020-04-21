@@ -1332,3 +1332,191 @@ class ServiceDeliveryReportView(models.Model):
         app_label = 'icds_reports'
         managed = False
         db_table = 'service_delivery_report'
+
+
+class BiharDemographicsView(models.Model):
+    """
+    Contains rows for Bihar Demographics API.
+    """
+    awc_id = models.TextField(blank=True, null=True)
+    awc_name = models.TextField(blank=True, null=True)
+    awc_site_code = models.TextField(blank=True, null=True)
+    supervisor_id = models.TextField(blank=True, null=True)
+    supervisor_name = models.TextField(blank=True, null=True)
+    supervisor_site_code = models.TextField(blank=True, null=True)
+    block_id = models.TextField(blank=True, null=True)
+    block_name = models.TextField(blank=True, null=True)
+    block_site_code = models.TextField(blank=True, null=True)
+    district_id = models.TextField(blank=True, null=True)
+    district_name = models.TextField(blank=True, null=True)
+    district_site_code = models.TextField(blank=True, null=True)
+    state_id = models.TextField(blank=True, null=True)
+    state_name = models.TextField(blank=True, null=True)
+    state_site_code = models.TextField(blank=True, null=True)
+    ward_number = models.TextField(blank=True, null=True)
+    month = models.DateField(blank=True, null=True)
+    household_id = models.TextField(blank=True, null=True)
+    household_name = models.TextField(blank=True, null=True)
+    hh_reg_date = models.TextField(blank=True, null=True)
+    hh_num = models.IntegerField(blank=True, null=True)
+    hh_gps_location = models.TextField(blank=True, null=True)
+    hh_caste = models.TextField(blank=True, null=True)
+    hh_bpl_apl = models.TextField(blank=True, null=True)
+    hh_minority = models.SmallIntegerField(blank=True, null=True)
+    hh_religion = models.TextField(blank=True, null=True)
+    hh_member_number = models.IntegerField(blank=True, null=True)
+    person_id = models.TextField(primary_key=True)
+    person_name = models.TextField(blank=True, null=True)
+    has_adhaar = models.SmallIntegerField(blank=True, null=True)
+    bank_account_number = models.TextField(blank=True, null=True)
+    ifsc_code = models.TextField(blank=True, null=True)
+    age_at_reg = models.SmallIntegerField(blank=True, null=True)
+    dob = models.DateField(blank=True, null=True)
+    gender = models.TextField(blank=True, null=True)
+    blood_group = models.TextField(blank=True, null=True)
+    disabled = models.SmallIntegerField(blank=True, null=True)
+    disability_type = models.TextField(blank=True, null=True)
+    referral_status = models.TextField(blank=True, null=True)
+    migration_status = models.SmallIntegerField(blank=True, null=True)
+    resident = models.SmallIntegerField(blank=True, null=True)
+    registered_status = models.SmallIntegerField(blank=True, null=True)
+    rch_id = models.TextField(blank=True, null=True)
+    mcts_id = models.TextField(blank=True, null=True)
+    phone_number = models.TextField(blank=True, null=True)
+    date_death = models.DateField(blank=True, null=True)
+    site_death = models.TextField(blank=True, null=True)
+    closed_on = models.DateField(blank=True, null=True)
+    reason_closure = models.TextField(blank=True, null=True)
+    out_of_school_status = models.SmallIntegerField(null=True)
+    last_class_attended_ever = models.SmallIntegerField(null=True)
+
+    class Meta(object):
+        app_label = 'icds_reports'
+        managed = False
+        db_table = 'bihar_demographics_view'
+
+
+class PMOAPIView(models.Model):
+    """
+    Contains rows for PMO API.
+    """
+    district_id = models.TextField(blank=True, null=True)
+    district_name = models.TextField(blank=True, null=True)
+    district_site_code = models.TextField(blank=True, null=True)
+    state_id = models.TextField(blank=True, null=True)
+    state_name = models.TextField(blank=True, null=True)
+    state_site_code = models.TextField(blank=True, null=True)
+    aggregation_level = models.IntegerField(blank=True, null=True)
+    month = models.DateField(blank=True, null=True)
+    cbe_conducted = models.IntegerField(help_text='Number of CBE conducted by AWC')
+    vhnd_conducted = models.IntegerField(help_text='Number of VHND conducted by AWC')
+    num_launched_awcs = models.IntegerField(blank=True, null=True)
+    wer_weighed = models.IntegerField(
+        blank=True, null=True, help_text="Number of children that have been weighed in the month"
+    )
+    wer_eligible = models.IntegerField(
+        blank=True, null=True, help_text="Number of children valid_in_month and age < 60 months"
+    )
+    bf_at_birth = models.IntegerField(
+        blank=True, null=True, help_text="born_in_month AND breastfed_within_first = 'yes'"
+    )
+    born_in_month = models.IntegerField(blank=True, null=True, help_text="beneficiary with dob in this month")
+    cf_initiation_eligible = models.IntegerField(
+        blank=True, null=True, help_text="valid_in_month AND > 6 months <= 8 months"
+    )
+    cf_initiation_in_month = models.IntegerField(
+        blank=True, null=True, help_text="cf_initiation_eligible AND comp_feeding = 'yes' in any form submitted"
+    )
+
+    class Meta(object):
+        app_label = 'icds_reports'
+        managed = False
+        db_table = 'pmo_api_view'
+
+
+class BiharVaccineView(models.Model):
+    """
+    Contains rows for Bihar Vaccines API.
+    """
+    month = models.DateField()
+    state_id = models.TextField()
+    person_id = models.TextField()
+    time_birth = models.TextField(null=True)
+    child_alive = models.SmallIntegerField(null=True)
+    father_name = models.TextField(null=True)
+    father_id = models.TextField(null=True)
+    mother_id = models.TextField(null=True)
+    mother_name = models.TextField(null=True)
+    dob = models.DateField(null=True)
+    private_admit = models.SmallIntegerField(blank=True, null=True)
+    primary_admit = models.SmallIntegerField(blank=True, null=True)
+    date_last_private_admit = models.DateField(null=True)
+    date_return_private = models.DateField(null=True)
+    due_list_date_1g_bcg = models.DateField(blank=True, null=True)
+    due_list_date_0g_opv_0 = models.DateField(blank=True, null=True)
+    due_list_date_0g_hep_b_0 = models.DateField(blank=True, null=True)
+    due_list_date_1g_dpt_1 = models.DateField(blank=True, null=True)
+    due_list_date_1g_hep_b_1 = models.DateField(blank=True, null=True)
+    due_list_date_1g_penta_1 = models.DateField(blank=True, null=True)
+    due_list_date_1g_rv_1 = models.DateField(blank=True, null=True)
+    due_list_date_1g_opv_1 = models.DateField(blank=True, null=True)
+    due_list_date_2g_dpt_2 = models.DateField(blank=True, null=True)
+    due_list_date_2g_hep_b_2 = models.DateField(blank=True, null=True)
+    due_list_date_2g_penta_2 = models.DateField(blank=True, null=True)
+    due_list_date_2g_rv_2 = models.DateField(blank=True, null=True)
+    due_list_date_2g_opv_2 = models.DateField(blank=True, null=True)
+    due_list_date_3g_dpt_3 = models.DateField(blank=True, null=True)
+    due_list_date_3g_hep_b_3 = models.DateField(blank=True, null=True)
+    due_list_date_3g_penta_3 = models.DateField(blank=True, null=True)
+    due_list_date_3g_rv_3 = models.DateField(blank=True, null=True)
+    due_list_date_3g_opv_3 = models.DateField(blank=True, null=True)
+    due_list_date_3g_ipv = models.DateField(blank=True, null=True)
+    due_list_date_4g_measles = models.DateField(blank=True, null=True)
+    due_list_date_4g_je_1 = models.DateField(blank=True, null=True)
+    due_list_date_4g_vit_a_1 = models.DateField(blank=True, null=True)
+    due_list_date_5g_dpt_booster = models.DateField(blank=True, null=True)
+    due_list_date_5g_opv_booster = models.DateField(blank=True, null=True)
+    due_list_date_5g_measles_booster = models.DateField(blank=True, null=True)
+    due_list_date_5g_je_2 = models.DateField(blank=True, null=True)
+    due_list_date_5g_vit_a_2 = models.DateField(blank=True, null=True)
+    due_list_date_6g_vit_a_3 = models.DateField(blank=True, null=True)
+    due_list_date_6g_vit_a_4 = models.DateField(blank=True, null=True)
+    due_list_date_6g_vit_a_5 = models.DateField(blank=True, null=True)
+    due_list_date_6g_vit_a_6 = models.DateField(blank=True, null=True)
+    due_list_date_6g_vit_a_7 = models.DateField(blank=True, null=True)
+    due_list_date_6g_vit_a_8 = models.DateField(blank=True, null=True)
+    due_list_date_7g_vit_a_9 = models.DateField(blank=True, null=True)
+    due_list_date_7gdpt_booster_2 = models.DateField(blank=True, null=True)
+
+    class Meta(object):
+        app_label = 'icds_reports'
+        managed = False
+        db_table = 'bihar_vaccine_view'
+
+
+class BiharAPIMotherView(models.Model):
+    state_id = models.TextField(null=True)
+    supervisor_id = models.TextField(null=True)
+    month = models.DateField()
+    household_id = models.TextField(null=True)
+    ccs_case_id = models.TextField(null=True)
+    person_id = models.TextField(null=True)
+    married = models.SmallIntegerField(null=True)
+    husband_id = models.TextField(null=True)
+    husband_name = models.TextField(null=True)
+    last_preg_year = models.IntegerField(null=True)
+    last_preg_tt = models.SmallIntegerField(null=True)
+    is_pregnant = models.SmallIntegerField(null=True)
+    preg_reg_date = models.DateField(null=True)
+    tt_1 = models.DateField(null=True)
+    tt_2 = models.DateField(null=True)
+    tt_booster = models.DateField(null=True)
+    hb = models.SmallIntegerField(null=True)
+    preg_reg_date = models.DateField(null=True)
+    add = models.DateField(null=True)
+
+    class Meta(object):
+        app_label = 'icds_reports'
+        db_table = 'bihar_api_mother_view'
+        managed = False
+

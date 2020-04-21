@@ -2,6 +2,7 @@ from django.conf.urls import url
 
 from corehq.apps.export.views.download import (
     BulkDownloadNewFormExportView,
+    DownloadDETSchemaView,
     DownloadNewCaseExportView,
     DownloadNewFormExportView,
     DownloadNewSmsExportView,
@@ -120,7 +121,7 @@ urlpatterns = [
         CreateNewDailySavedCaseExport.as_view(),
         name=CreateNewDailySavedCaseExport.urlname),
 
-    # Download views
+    # Data Download views
     url(r"^custom/new/form/download/bulk/$",
         BulkDownloadNewFormExportView.as_view(),
         name=BulkDownloadNewFormExportView.urlname),
@@ -136,6 +137,11 @@ urlpatterns = [
     url(r"^custom/new/sms/download/$",
         DownloadNewSmsExportView.as_view(),
         name=DownloadNewSmsExportView.urlname),
+
+    # Schema Download views
+    url(r"^custom/schema/det/download/(?P<export_instance_id>[\w\-]+)/$",
+        DownloadDETSchemaView.as_view(),
+        name=DownloadDETSchemaView.urlname),
 
     # Edit export views
     url(r"^custom/new/form/edit/(?P<export_id>[\w\-]+)/$",

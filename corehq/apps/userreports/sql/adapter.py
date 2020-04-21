@@ -7,7 +7,7 @@ from django.utils.translation import ugettext as _
 import psycopg2
 import sqlalchemy
 from memoized import memoized
-from sqlalchemy.exc import ProgrammingError
+from sqlalchemy.exc import ProgrammingError, OperationalError
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.schema import Index, PrimaryKeyConstraint
 
@@ -102,7 +102,7 @@ class IndicatorSqlAdapter(IndicatorAdapter):
         try:
             rebuild_table(self.engine, self.get_table())
             self._apply_sql_addons()
-        except ProgrammingError as e:
+        except (ProgrammingError, OperationalError) as e:
             raise TableRebuildError('problem rebuilding UCR table {}: {}'.format(self.config, e))
         finally:
             self.session_helper.Session.commit()
@@ -113,7 +113,7 @@ class IndicatorSqlAdapter(IndicatorAdapter):
         try:
             build_table(self.engine, self.get_table())
             self._apply_sql_addons()
-        except ProgrammingError as e:
+        except (ProgrammingError, OperationalError) as e:
             raise TableRebuildError('problem building UCR table {}: {}'.format(self.config, e))
         finally:
             self.session_helper.Session.commit()

@@ -20,6 +20,7 @@ from crispy_forms.layout import Div
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.django.fields import TrimmedCharField
 
+from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_built_app_ids
 from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.models import DayTimeWindow
@@ -137,9 +138,12 @@ class LoadBalancingBackendFormMixin(Form):
                 "number."))
 
         for phone_number in result:
-            validate_phone_number(phone_number)
+            self.validate_phone_number(phone_number)
 
         return result
+
+    def validate_phone_number(self, phone_number: str) -> None:
+        validate_phone_number(phone_number)
 
 
 class SettingsForm(Form):
@@ -266,6 +270,9 @@ class SettingsForm(Form):
     language_fallback = ChoiceField(
         choices=LANGUAGE_FALLBACK_CHOICES,
         label=ugettext_lazy("Backup behavior for missing translations"),
+    )
+    twilio_whatsapp_phone_number = CharField(
+        required=False,
     )
 
     # Internal settings
@@ -397,6 +404,16 @@ class SettingsForm(Form):
                 """),
             ),
         ]
+
+        if toggles.WHATSAPP_MESSAGING.enabled(self.domain):
+            fields.append(hqcrispy.FieldWithHelpBubble(
+                'twilio_whatsapp_phone_number',
+                help_bubble_text=_("""
+                    Whatsapp-enabled phone number for use with Twilio.
+                    This should be formatted as a full-length, numeric-only
+                    phone number, e.g., 16173481000.
+                """),
+            ))
 
         return crispy.Fieldset(
             _("Registration Settings"),

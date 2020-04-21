@@ -11,11 +11,12 @@
                 {% endcomment %}
                 {$ $ctrl.selectedMonthDisplay $} |
                 <span ng-click="$ctrl.getDisableIndex() < 0 && $ctrl.moveToLocation('national', -1)"
-                      ng-class="{'d-none':($ctrl.selectedLocationsCount()>0)}">National</span>
-                <span ng-click="$ctrl.getDisableIndex() < $index && $ctrl.moveToLocation(loc, $index)"
-                      ng-class="{'d-none':($index != $ctrl.selectedLocationsCount()) && ($index != $ctrl.selectedLocationsCount()-1)}"
+                      ng-class="{'d-none':($ctrl.selectedLocationsCount()>0), 'clickable-breadcrumb': ($ctrl.selectedLocationsCount()==0)}">National</span>
+                <span ng-class="{'d-none':($index != $ctrl.selectedLocationsCount()) && ($index != $ctrl.selectedLocationsCount()-1)}"
                       ng-repeat="loc in $ctrl.selectedLocations | filter: { location_id: '!all'} track by $index">
-                  <span ng-show="($ctrl.selectedLocationsCount()==$index)">&gt;</span> {$ loc.name $}
+                  <span ng-show="($ctrl.selectedLocationsCount()==$index)">&gt;</span>
+                  <span ng-click="$ctrl.getDisableIndex() < $index && $ctrl.moveToLocation(loc, $index)"
+                        ng-class="{'text-underline':(($ctrl.selectedLocationsCount()-1)==$index)}">{$ loc.name $}</span>
                 </span>
             </p>
         </div>

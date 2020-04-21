@@ -2,8 +2,7 @@ import re
 import sys
 import uuid
 from collections import defaultdict
-from contextlib import contextmanager
-from contextlib2 import ExitStack
+from contextlib import contextmanager, ExitStack
 from io import BytesIO
 from hashlib import sha1
 from itertools import chain

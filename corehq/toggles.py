@@ -1147,10 +1147,26 @@ HIDE_MESSAGING_DASHBOARD_FROM_NON_SUPERUSERS = StaticToggle(
 )
 
 
+WHATSAPP_MESSAGING = StaticToggle(
+    'whatsapp_messaging',
+    "Default SMS to send messages via Whatsapp, where available",
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN]
+)
+
+
 UNLIMITED_REPORT_BUILDER_REPORTS = StaticToggle(
     'unlimited_report_builder_reports',
     'Allow unlimited reports created in report builder',
     TAG_INTERNAL,
+    [NAMESPACE_DOMAIN]
+)
+
+SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER = StaticToggle(
+    'show_owner_location_property_in_report_builder',
+    'Show an additional "Owner (Location)" property in report builder reports. '
+    'This can be used to create report builder reports that are location-safe.',
+    TAG_SOLUTIONS_OPEN,
     [NAMESPACE_DOMAIN]
 )
 
@@ -1174,6 +1190,15 @@ ALLOW_USER_DEFINED_EXPORT_COLUMNS = StaticToggle(
     'Add user defined columns to exports',
     TAG_DEPRECATED,
     [NAMESPACE_DOMAIN],
+)
+
+
+DATA_EXPORT_TOOL_SCHEMA_EXPORT = StaticToggle(
+    'data_export_tool_schema_export',
+    'Show an option to download data export tool schemas from the exports list view (Experimental)',
+    TAG_SOLUTIONS_LIMITED,
+    [NAMESPACE_DOMAIN, NAMESPACE_USER],
+    help_link='https://confluence.dimagi.com/display/ccinternal/Download+Data+Export+Tool+Schemas+from+the+Exports+List+View',
 )
 
 
@@ -1812,6 +1837,14 @@ ALLOW_DEID_ODATA_FEED = StaticToggle(
 )
 
 
+ACCOUNTING_TESTING_TOOLS = StaticToggle(
+    'accounting_testing_tools',
+    'Enable Accounting Testing Tools',
+    TAG_INTERNAL,
+    [NAMESPACE_USER]
+)
+
+
 ADD_ROW_INDEX_TO_MOBILE_UCRS = StaticToggle(
     'add_row_index_to_mobile_ucrs',
     'Add row index to mobile UCRs as the first column to retain original order of data',
@@ -1826,4 +1859,21 @@ TWO_STAGE_USER_PROVISIONING = StaticToggle(
     TAG_SOLUTIONS_LIMITED,
     [NAMESPACE_DOMAIN],
     help_link='https://confluence.dimagi.com/display/ccinternal/Two-Stage+Mobile+Worker+Account+Creation',
+)
+
+LOCATION_REASSIGNMENT = StaticToggle(
+    'location_reassignment',
+    'Ability to reorder organization structure',
+    TAG_CUSTOM,
+    [NAMESPACE_USER],
+    relevant_environments={'icds', 'india', 'staging'},
+)
+
+ICDS_BIHAR_DEMOGRAPHICS_API = StaticToggle(
+    'bihar_demographics_api',
+    'ICDS: Bihar Demographics API',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_USER],
+    relevant_environments={'icds', 'india'},
+
 )

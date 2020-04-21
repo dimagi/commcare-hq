@@ -91,7 +91,7 @@ hqDefine('analytix/js/hubspot', [
                 });
             },
             onFormSubmit: function ($form) {
-                $('#get-demo-cta-calendar-content').toggleClass("hidden");
+                $('#get-demo-cta-calendar-content').fadeIn();
                 $('#get-demo-cta-form-content').addClass('hidden');
 
                 var email = $form.find('[name="email"]').val(),

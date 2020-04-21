@@ -30,6 +30,9 @@ from .adolescent_girls_registration import AggAdolescentGirlsRegistrationAggrega
 from .agg_gov_dashboard import AggGovDashboardHelper
 from .agg_service_delivery_report import AggServiceDeliveryReportHelper
 from .migration_forms import MigrationFormsAggregationDistributedHelper
+from .bihar_api_demographics import BiharApiDemographicsHelper
+from .availing_service_forms import AvailingServiceFormsAggregationDistributedHelper
+from .child_vaccine_helper import ChildVaccineHelper
 
 __all__ = (
     'AggAwcDistributedHelper',
@@ -37,6 +40,7 @@ __all__ = (
     'AggChildHealthAggregationDistributedHelper',
     'AggCcsRecordAggregationDistributedHelper',
     'AggLsHelper',
+    'AvailingServiceFormsAggregationDistributedHelper',
     'AwcMbtDistributedHelper',
     'AwwIncentiveAggregationDistributedHelper',
     'AwcInfrastructureAggregationHelper',
@@ -65,5 +69,7 @@ __all__ = (
     'AggAdolescentGirlsRegistrationAggregate',
     'AggGovDashboardHelper',
     'AggServiceDeliveryReportHelper',
-    'MigrationFormsAggregationDistributedHelper'
+    'MigrationFormsAggregationDistributedHelper',
+    'BiharApiDemographicsHelper',
+    'ChildVaccineHelper'
 )

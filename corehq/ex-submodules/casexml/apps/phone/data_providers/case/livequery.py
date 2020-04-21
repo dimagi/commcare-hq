@@ -37,7 +37,7 @@ from casexml.apps.phone.tasks import ASYNC_RESTORE_SENT
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.sql_db.routers import read_from_plproxy_standbys
 from corehq.toggles import LIVEQUERY_READ_FROM_STANDBYS, NAMESPACE_USER
-from corehq.util.datadog.utils import case_load_counter
+from corehq.util.metrics.load_counters import case_load_counter
 
 
 def livequery_read_from_standbys(func):

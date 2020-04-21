@@ -20,10 +20,12 @@ from corehq.apps.accounting.utils import (
     domain_is_on_trial,
     is_accounting_admin,
 )
+from corehq.apps.accounting.views import TriggerDowngradeView
 from corehq.apps.app_manager.dbaccessors import (
     domain_has_apps,
     get_brief_apps_in_domain,
 )
+from corehq.apps.app_manager.models import ExchangeApplication
 from corehq.apps.app_manager.util import is_remote_app
 from corehq.apps.builds.views import EditMenuView
 from corehq.apps.domain.views.internal import ProjectLimitsView
@@ -896,6 +898,11 @@ class ApplicationsTab(UITab):
                 _('New Application'),
                 url=(reverse('default_new_app', args=[self.domain])),
             ))
+            if ExchangeApplication.objects.count():
+                submenu_context.append(dropdown_dict(
+                    _('Import Template Application'),
+                    url=(reverse('app_exchange', args=[self.domain])),
+                ))
         if toggles.APP_TRANSLATIONS_WITH_TRANSIFEX.enabled_for_request(self._request):
             submenu_context.append(dropdown_dict(
                 _('Translations'),
@@ -1209,6 +1216,7 @@ class ProjectUsersTab(UITab):
         '/a/{domain}/settings/users/',
         '/a/{domain}/settings/cloudcare/',
         '/a/{domain}/settings/locations/',
+        '/a/{domain}/location_reassignment/',
     )
 
     @property
@@ -1439,6 +1447,13 @@ class ProjectUsersTab(UITab):
                 'title': _(LocationTypesView.page_title),
                 'url': reverse(LocationTypesView.urlname, args=[self.domain]),
                 'show_in_dropdown': True,
+            })
+
+        if toggles.LOCATION_REASSIGNMENT.enabled(self.couch_user.username):
+            from custom.icds.location_reassignment.views import LocationReassignmentView
+            menu.append({
+                'title': _("Location Reassignment"),
+                'url': reverse(LocationReassignmentView.urlname, args=[self.domain])
             })
 
         return menu
@@ -1922,7 +1937,7 @@ class AccountingTab(UITab):
             TriggerInvoiceView, TriggerBookkeeperEmailView,
             TestRenewalEmailView, TriggerCustomerInvoiceView
         )
-        items.append(('Other Actions', (
+        other_actions = [
             {
                 'title': _(TriggerInvoiceView.page_title),
                 'url': reverse(TriggerInvoiceView.urlname),
@@ -1939,7 +1954,13 @@ class AccountingTab(UITab):
                 'title': _(TestRenewalEmailView.page_title),
                 'url': reverse(TestRenewalEmailView.urlname),
             }
-        )))
+        ]
+        if toggles.ACCOUNTING_TESTING_TOOLS.enabled_for_request(self._request):
+            other_actions.append({
+                'title': _(TriggerDowngradeView.page_title),
+                'url': reverse(TriggerDowngradeView.urlname),
+            })
+        items.append(('Other Actions', other_actions))
         return items
 
 

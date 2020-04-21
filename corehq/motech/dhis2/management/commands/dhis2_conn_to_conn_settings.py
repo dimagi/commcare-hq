@@ -3,10 +3,10 @@ Migrate Dhis2Connection instances to ConnectionSettings model
 """
 from django.core.management import BaseCommand
 
+from corehq.motech.const import BASIC_AUTH
 from corehq.motech.dhis2.dbaccessors import get_dataset_maps
 from corehq.motech.dhis2.models import Dhis2Connection
 from corehq.motech.models import ConnectionSettings
-from corehq.motech.repeaters.models import BASIC_AUTH
 
 
 class Command(BaseCommand):

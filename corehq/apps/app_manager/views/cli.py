@@ -3,6 +3,7 @@ from django.utils.text import slugify
 
 from couchdbkit.exceptions import DocTypeError, ResourceNotFound
 
+from corehq.util.metrics import metrics_histogram_timer
 from dimagi.ext.couchdbkit import Document
 from dimagi.utils.web import json_response
 from soil import FileDownload
@@ -12,7 +13,6 @@ from corehq.apps.app_manager.views.utils import get_langs
 from corehq.apps.domain.decorators import api_auth
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqmedia.tasks import build_application_zip
-from corehq.util.datadog.gauges import datadog_bucket_timer
 from corehq.util.view_utils import absolute_reverse, json_error
 
 from ..dbaccessors import (
@@ -97,9 +97,7 @@ def direct_ccz(request, domain):
 
     lang, langs = get_langs(request, app)
 
-    timer = datadog_bucket_timer('commcare.app_build.live_preview', tags=[],
-                                 timing_buckets=(1, 10, 30, 60, 120, 240))
-    with timer:
+    with metrics_histogram_timer('commcare.app_build.live_preview', timing_buckets=(1, 10, 30, 60, 120, 240)):
         return get_direct_ccz(domain, app, lang, langs, version, include_multimedia, visit_scheduler_enabled)
 
 

@@ -19,6 +19,8 @@ describe('Navigation Directive', function () {
         $provide.constant("isMobile", false);
         $provide.constant("userFullName", 'A User');
         $provide.constant("userUsername", 'user');
+        $provide.constant("reportAnIssueUrl", '');
+        $provide.constant("isWebUser", false);
         $provide.constant("navMenuItems", {
             sections: [
                 {'name': 'Maternal and Child Nutrition'},

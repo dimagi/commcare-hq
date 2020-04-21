@@ -139,6 +139,7 @@ class Permissions(DocumentSchema):
     view_web_apps_list = StringListProperty(default=[])
 
     view_file_dropzone = BooleanProperty(default=False)
+    edit_file_dropzone = BooleanProperty(default=False)
     manage_releases = BooleanProperty(default=True)
     manage_releases_list = StringListProperty(default=[])
 
@@ -234,6 +235,7 @@ class Permissions(DocumentSchema):
             edit_billing=True,
             edit_shared_exports=True,
             view_file_dropzone=True,
+            edit_file_dropzone=True,
         )
 
 
@@ -2616,6 +2618,8 @@ class DomainRequest(models.Model):
 
 
 class SQLInvitation(SyncSQLToCouchMixin, models.Model):
+    id = models.IntegerField(db_index=True, null=True)
+    uuid = models.UUIDField(primary_key=True, db_index=True, default=uuid4)
     email = models.CharField(max_length=255, db_index=True)
     invited_by = models.CharField(max_length=126)           # couch id of a WebUser
     invited_on = models.DateTimeField()
@@ -2660,7 +2664,7 @@ class SQLInvitation(SyncSQLToCouchMixin, models.Model):
 
     def send_activation_email(self, remaining_days=30):
         inviter = CouchUser.get_by_user_id(self.invited_by)
-        url = absolute_reverse("domain_accept_invitation", args=[self.domain, self.id])
+        url = absolute_reverse("domain_accept_invitation", args=[self.domain, self.uuid])
         params = {
             "domain": self.domain,
             "url": url,

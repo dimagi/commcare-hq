@@ -21,13 +21,13 @@ from casexml.apps.case.exceptions import (
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.util import primary_actions
 from casexml.apps.case.xml.parser import KNOWN_PROPERTIES
+from corehq.util.metrics import metrics_counter
 from couchforms.models import XFormInstance
 from dimagi.ext.couchdbkit import StringProperty
 from dimagi.utils.logging import notify_exception
 
 from corehq.form_processor.update_strategy_base import UpdateStrategy
 from corehq.util import cmp
-from corehq.util.datadog.gauges import datadog_counter
 
 
 def coerce_to_datetime(v):
@@ -85,7 +85,7 @@ class CouchCaseUpdateStrategy(UpdateStrategy):
 
     def reconcile_actions_if_necessary(self, xform):
         if not self.check_action_order():
-            datadog_counter("commcare.form_processor.couch.reconcile_actions")
+            metrics_counter("commcare.form_processor.couch.reconcile_actions")
             try:
                 self.reconcile_actions(rebuild=True, xforms={xform.form_id: xform})
             except ReconciliationError:

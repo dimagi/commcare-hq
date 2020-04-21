@@ -18,10 +18,14 @@ from tastypie.resources import ModelResource, Resource, convert_post_to_patch
 from tastypie.utils import dict_strip_unicode_keys
 
 from casexml.apps.stock.models import StockTransaction
-from corehq.apps.export.views.utils import user_can_view_odata_feed
+from corehq.apps.locations.permissions import location_safe
+from corehq.apps.reports.standard.cases.utils import (
+    query_location_restricted_cases,
+    query_location_restricted_forms,
+)
 from phonelog.models import DeviceReportEntry
 
-from corehq import privileges, toggles
+from corehq import privileges
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.api.odata.serializers import (
     ODataCaseSerializer,
@@ -962,13 +966,6 @@ class BaseODataResource(HqBaseResource, DomainSpecificResourceMixin):
             response = super(BaseODataResource, self).dispatch(
                 request_type, request, **kwargs
             )
-
-            # order REALLY matters for the following code. It should be called
-            # AFTER the super's dispatch or request.couch_user will not be present
-            if not user_can_view_odata_feed(request.domain, request.couch_user):
-                raise ImmediateHttpResponse(
-                    response=HttpResponseNotFound('No permission to view feed.')
-                )
         record_feed_access_in_datadog(request, self.config_id, timer.duration, response)
         return response
 
@@ -993,6 +990,7 @@ class BaseODataResource(HqBaseResource, DomainSpecificResourceMixin):
         return 'application/json'
 
 
+@location_safe
 class ODataCaseResource(BaseODataResource):
 
     def obj_get_list(self, bundle, domain, **kwargs):
@@ -1000,10 +998,16 @@ class ODataCaseResource(BaseODataResource):
         query = get_case_export_base_query(domain, config.case_type)
         for filter in config.get_filters():
             query = query.filter(filter.to_es_filter())
+
+        if not bundle.request.couch_user.has_permission(
+            domain, 'access_all_locations'
+        ):
+            query = query_location_restricted_cases(query, bundle.request)
+
         return query
 
     class Meta(v0_4.CommCareCaseResource.Meta):
-        authentication = ODataAuthentication(Permissions.edit_data)
+        authentication = ODataAuthentication()
         resource_name = 'odata/cases'
         serializer = ODataCaseSerializer()
         limit = 2000
@@ -1018,6 +1022,7 @@ class ODataCaseResource(BaseODataResource):
         ]
 
 
+@location_safe
 class ODataFormResource(BaseODataResource):
 
     def obj_get_list(self, bundle, domain, **kwargs):
@@ -1025,10 +1030,16 @@ class ODataFormResource(BaseODataResource):
         query = get_form_export_base_query(domain, config.app_id, config.xmlns, include_errors=False)
         for filter in config.get_filters():
             query = query.filter(filter.to_es_filter())
+
+        if not bundle.request.couch_user.has_permission(
+            domain, 'access_all_locations'
+        ):
+            query = query_location_restricted_forms(query, bundle.request)
+
         return query
 
     class Meta(v0_4.XFormInstanceResource.Meta):
-        authentication = ODataAuthentication(Permissions.edit_data)
+        authentication = ODataAuthentication()
         resource_name = 'odata/forms'
         serializer = ODataFormSerializer()
         limit = 2000

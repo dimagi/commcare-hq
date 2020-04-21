@@ -35,5 +35,6 @@
     "user_id",
     "version",
     "xform_id",
-    "xform_ids"
+    "xform_ids",
+    "userid"
 ]

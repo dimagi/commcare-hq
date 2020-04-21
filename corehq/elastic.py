@@ -9,8 +9,8 @@ from django.conf import settings
 
 from memoized import memoized
 
-from corehq.util.datadog.gauges import datadog_counter
 from corehq.util.es.interface import ElasticsearchInterface
+from corehq.util.metrics import metrics_counter
 from dimagi.utils.chunked import chunked
 from pillowtop.processors.elastic import send_to_elasticsearch as send_to_es
 
@@ -505,7 +505,7 @@ def report_and_fail_on_shard_failures(search_result):
         return
 
     if search_result.get('_shards', {}).get('failed'):
-        datadog_counter('commcare.es.partial_results', value=1)
+        metrics_counter('commcare.es.partial_results')
         # Example message:
         #   "_shards: {'successful': 4, 'failed': 1, 'total': 5}"
         raise ESShardFailure('_shards: {!r}'.format(search_result.get('_shards')))

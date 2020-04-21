@@ -25,8 +25,7 @@ def send_account_confirmation_if_necessary(couch_user):
 
 
 def should_send_account_confirmation(couch_user):
-    from corehq.apps.users.models import CommCareUser
-    if not isinstance(couch_user, CommCareUser):
+    if not couch_user.is_commcare_user():
         return False
     # todo: this might want to get more complex, e.g. maintain state of whether it has been
     # sent already, etc.
@@ -40,6 +39,7 @@ def send_account_confirmation(commcare_user):
                            args=[commcare_user.domain, commcare_user.get_id])
     template_params = {
         'domain': commcare_user.domain,
+        'username': commcare_user.raw_username,
         'url': url,
         'url_prefix': get_static_url_prefix(),
         'hq_name': commcare_hq_names()['commcare_hq_names']['COMMCARE_HQ_NAME']

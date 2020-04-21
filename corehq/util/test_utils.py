@@ -588,27 +588,6 @@ def make_make_path(current_directory):
     return _make_path
 
 
-@contextmanager
-def patch_datadog():
-    from corehq.util.datadog.gauges import _enforce_prefix
-
-    def record(fn, name, value, enforce_prefix='commcare', tags=None):
-        _enforce_prefix(name, enforce_prefix)
-        if tags:
-            for tag in (tags or []):
-                stats[name + "." + tag].append(value)
-        else:
-            stats[name].append(value)
-
-    stats = defaultdict(list)
-    patch = mock.patch("corehq.util.datadog.gauges._datadog_record", new=record)
-    patch.start()
-    try:
-        yield stats
-    finally:
-        patch.stop()
-
-
 class PatchMeta(type):
     """A metaclass to patch all inherited classes.
 

@@ -6,7 +6,7 @@ from io import RawIOBase, UnsupportedOperation
 from corehq.blobs.exceptions import NotFound
 from corehq.blobs.interface import AbstractBlobDB
 from corehq.blobs.util import check_safe_key
-from corehq.util.datadog.gauges import datadog_counter, datadog_bucket_timer
+from corehq.util.metrics import metrics_counter, metrics_histogram_timer
 from dimagi.utils.logging import notify_exception
 
 from dimagi.utils.chunked import chunked
@@ -50,10 +50,15 @@ class S3BlobDB(AbstractBlobDB):
                     'key': key,
                 })
 
-        return datadog_bucket_timer('commcare.blobs.requests.timing', tags=[
-            'action:{}'.format(action),
-            's3_bucket_name:{}'.format(self.s3_bucket_name)
-        ], timing_buckets=(.03, .1, .3, 1, 3, 10, 30, 100), callback=record_long_request)
+        return metrics_histogram_timer(
+            'commcare.blobs.requests.timing',
+            timing_buckets=(.03, .1, .3, 1, 3, 10, 30, 100),
+            tags={
+                'action': action,
+                's3_bucket_name': self.s3_bucket_name
+            },
+            callback=record_long_request
+        )
 
     def put(self, content, **blob_meta_args):
         meta = self.metadb.new(**blob_meta_args)
@@ -129,7 +134,7 @@ class S3BlobDB(AbstractBlobDB):
                     self.db.meta.client.head_bucket(Bucket=self.s3_bucket_name)
             except ClientError as err:
                 if not is_not_found(err):
-                    datadog_counter('commcare.blobdb.notfound')
+                    metrics_counter('commcare.blobdb.notfound')
                     raise
                 with self.report_timing('create_bucket', self.s3_bucket_name):
                     self.db.create_bucket(Bucket=self.s3_bucket_name)
@@ -213,6 +218,6 @@ def maybe_not_found(throw=None):
     except ClientError as err:
         if not is_not_found(err):
             raise
-        datadog_counter('commcare.blobdb.notfound')
+        metrics_counter('commcare.blobdb.notfound')
         if throw is not None:
             raise throw

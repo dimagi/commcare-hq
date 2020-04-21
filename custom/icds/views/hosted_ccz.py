@@ -215,10 +215,9 @@ class HostedCCZView(DomainViewMixin, TemplateView):
         return HostedCCZLink.objects.get(identifier=self.identifier)
 
     def get_context_data(self, **kwargs):
-        app_names = {app.id: app.name for app in get_brief_apps_in_domain(self.domain, include_remote=True)}
         return {
             'page_title': self._page_title,
-            'hosted_cczs': [h.to_json(app_names) for h in HostedCCZ.objects.filter(link=self.hosted_ccz_link)
+            'hosted_cczs': [h.to_json() for h in HostedCCZ.objects.filter(link=self.hosted_ccz_link)
                             if h.utility.file_exists()],
             'icds_env': settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS,
             'supporting_files': self._get_supporting_files(),

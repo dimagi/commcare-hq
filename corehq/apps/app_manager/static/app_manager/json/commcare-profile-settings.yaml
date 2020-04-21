@@ -353,3 +353,12 @@
   default: "none"
   since: "2.24"
   force: true
+
+- name: "Default Map Tileset"
+  description: "For mobile map displays, chooses a base tileset for the underlying map layer"
+  id: "cc-maps-default-layer"
+  values: ["normal", "satellite","terrain","hybrid"]
+  value_names: ["Normal","Satellite","Terrain","Hybrid"]
+  default: "normal"
+  since: "2.48"
+  force: false

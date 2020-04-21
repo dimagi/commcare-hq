@@ -72,10 +72,11 @@ class Command(BaseCommand):
 
                 With the "show" or "filter" actions, this option should
                 be a doc type, optionally followed by a colon and one or
-                more doc ids (e.g., CommCareCase:id1,id2,id3). All form
-                and case doc types are supported. Alternately, it may be
-                a csv file with the first two columns being doc type and
-                doc id. The path must begin with / or ./
+                more doc ids (e.g., CommCareCase:id1,id2,id3), or a
+                comma-delimited list of doc types, or "forms" to select
+                all form doc types. Alternately, it may be a csv file
+                with the first two columns being doc type and doc id.
+                The path must begin with / or ./
             ''')
         parser.add_argument('--changes',
             dest="changes", action='store_true', default=False,
@@ -188,6 +189,9 @@ class Command(BaseCommand):
                     if len(row) > 1:
                         by_kind[row[0]].add(row[1])
                         count += 1
+                    elif len(row) == 1:
+                        by_kind[row[0]]
+                        assert row[0] in by_kind
             k = len(by_kind)
             kinds = ", ".join(sorted(by_kind)) if k < 5 else f"{k} kinds"
             print(f"selecting {count} docs of {kinds}", file=sys.stderr)
@@ -195,6 +199,10 @@ class Command(BaseCommand):
         if ":" in self.select:
             kind, doc_ids = self.select.split(":", 1)
             return {"kind": kind, "doc_ids": doc_ids.split(",")}
+        if "," in self.select:
+            return {"by_kind": {k: None for k in self.select.split(",")}}
+        if self.select == "forms":
+            return {"by_kind": {k: None for k in MissingIds.form_types}}
         return {"kind": self.select}
 
     def do_filter(self, domain):
@@ -256,7 +264,7 @@ class Command(BaseCommand):
         if "doc_ids" in select:
             count = len(select["doc_ids"])
         elif "by_kind" in select:
-            count = sum(len(v) for v in select["by_kind"].values())
+            count = sum(len(v) for v in select["by_kind"].values() if v)
         elif select:
             count = counts.get(select["kind"], Counts())
             count = count.changes if self.changes else count.diffs
@@ -319,8 +327,8 @@ class Command(BaseCommand):
 
     def setup_reset_logging(self):
         path = self.state_path
-        log_dir = os.path.dirname(path) if os.path.isfile(path) else path
-        setup_logging(log_dir, "couch_sql_diff", self.debug)
+        state_dir = os.path.dirname(path) if os.path.isfile(path) else path
+        setup_logging(state_dir, "couch_sql_diff", self.debug)
 
     def delete_resumable_iteration_state(self, itr_state):
         pretty_value = json.dumps(itr_state.value, indent=2)

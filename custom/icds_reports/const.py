@@ -91,9 +91,6 @@ HELPDESK_ROLES = [
 ]
 
 
-ICDS_SUPPORT_EMAIL = 'icds-support@dimagi.com'
-
-
 CHILDREN_EXPORT = 1
 PREGNANT_WOMEN_EXPORT = 2
 DEMOGRAPHICS_EXPORT = 3
@@ -127,6 +124,7 @@ AGG_DASHBOARD_ACTIVITY = 'icds_dashboard_user_activity'
 AGG_ADOLESCENT_GIRLS_REGISTRATION_TABLE = 'icds_dashboard_adolescent_girls_registration'
 AGG_GOV_DASHBOARD_TABLE = 'agg_gov_dashboard'
 AGG_MIGRATION_TABLE = 'icds_dashboard_migration_forms'
+AGG_AVAILING_SERVICES_TABLE = 'icds_dashboard_availing_service_forms'
 
 AWC_LOCATION_TABLE_ID = 'static-awc_location'
 USAGE_TABLE_ID = 'static-usage_forms'
@@ -134,6 +132,9 @@ HOUSEHOLD_TABLE_ID = 'static-household_cases'
 AWW_USER_TABLE_ID = 'static-commcare_user_cases'
 DAILY_FEEDING_TABLE_ID = 'static-daily_feeding_forms'
 AGG_SDR_TABLE = 'agg_service_delivery_report'
+BIHAR_API_DEMOGRAPHICS_TABLE = 'bihar_api_demographics'
+BIHAR_API_MOTHER_DETAILS_TABLE = 'bihar_api_mother_details'
+CHILD_VACCINE_TABLE = 'child_vaccines'
 
 DASHBOARD_DOMAIN = 'icds-dashboard-qa' if settings.SERVER_ENVIRONMENT == 'india' else 'icds-cas'
 
@@ -177,7 +178,7 @@ NUM_OF_ADOLESCENT_GIRLS_11_14_YEARS = 'Number of adolescent girls (11-14 years)'
 NUM_OUT_OF_SCHOOL_ADOLESCENT_GIRLS_11_14_YEARS = 'Number of out of school adolescent girls (11-14 years)'
 
 
-GOVERNANCE_API_PAGE_SIZE = 10000
+CAS_API_PAGE_SIZE = 10000
 
 CUSTOM_DATA_PULLS = {
     AndhraPradeshMonthly.slug: AndhraPradeshMonthly,

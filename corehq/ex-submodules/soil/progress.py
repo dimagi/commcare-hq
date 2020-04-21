@@ -167,7 +167,21 @@ def get_task_status(task, is_multiple_download_task=False):
 def _is_real_task(task):
     # You can look up a task with a made-up ID and it'll give you a meaningless task object
     # Make sure the task object you have corresponds to an actual celery task
-    return task and task._get_task_meta().get('task_name') is not None
+    if task:
+        # Non-real "tasks" will have all null values except for
+        #   - status: "PENDING"
+        #   - task_id: <task_id>
+        # If ANYTHING else is set, we give it the benefit of the doubt and call it real
+        return any(
+            value is not None
+            for key, value in task._get_task_meta().items()
+            if not (
+                (key == 'status' and value == 'PENDING')
+                or key == 'task_id'
+            )
+        )
+    else:
+        return False
 
 
 def _is_task_pending(task):

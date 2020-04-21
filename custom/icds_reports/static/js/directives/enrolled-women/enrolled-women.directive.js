@@ -50,7 +50,7 @@ function EnrolledWomenController($scope, $routeParams, $location, $filter, demog
         'captionContent': ' Of the total number of pregnant women, the percentage of pregnant women enrolled for Anganwadi Services',
     };
     vm.chartOptions = vm.getChartOptions(options);
-    vm.chartOptions.chart.width = 1100;
+    vm.chartOptions.chart.width = isMobile ? '' : 1100;
     vm.chartOptions.chart.color = d3.scale.category10().range();
 
     vm.getDisableIndex = function () {

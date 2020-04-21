@@ -64,6 +64,7 @@ class GetFormQuestionValuesTests(SimpleTestCase):
     def test_metadata(self):
         value = get_form_question_values({
             'form': {
+                '@xmlns': 'http://openrosa.org/formdesigner/04279622',
                 'foo': {'bar': 'baz'},
                 'meta': {
                     'timeStart': '2018-11-06T18:00:00.000000Z',
@@ -75,6 +76,7 @@ class GetFormQuestionValuesTests(SimpleTestCase):
         })
         self.assertDictEqual(value, {
             '/data/foo/bar': 'baz',
+            '/metadata/xmlns': 'http://openrosa.org/formdesigner/04279622',
             '/metadata/timeStart': '2018-11-06T18:00:00.000000Z',
             '/metadata/timeEnd': '2018-11-06T18:15:00.000000Z',
             '/metadata/spam': 'ham',

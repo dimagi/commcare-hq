@@ -3,17 +3,15 @@ import os
 import pdb
 import signal
 from contextlib import contextmanager, suppress
-
-from django.db import close_old_connections
-from django.db.utils import DatabaseError, InterfaceError
+from itertools import chain
 
 from dimagi.utils.chunked import chunked
-from dimagi.utils.retry import retry_on
 
 from corehq.form_processor.utils.general import set_local_domain_sql_backend_override
 from corehq.util.log import with_progress_bar
 
 from .casediff import (
+    add_cases_missing_from_couch,
     diff_cases,
     get_couch_cases,
     global_diff_state,
@@ -27,7 +25,7 @@ from .couchsqlmigration import (
 )
 from .parallel import Pool
 from .progress import MigrationStatus, get_couch_sql_migration_status
-from .util import get_ids_from_string_or_file
+from .util import get_ids_from_string_or_file, retry_on_sql_error
 
 log = logging.getLogger(__name__)
 
@@ -104,15 +102,32 @@ class CaseDiffTool:
             for data in self.iter_case_diff_results(cases):
                 save_result(data)
 
+    def patch_diffs(self):
+        from .casepatch import patch_diffs
+        statedb = self.statedb
+        counts = statedb.get_doc_counts().get("CommCareCase")
+        if not counts or not counts.diffs + counts.changes:
+            log.info("nothing to patch")
+            return
+        count = counts.diffs + counts.changes
+        diffs = chain(
+            statedb.iter_doc_diffs("CommCareCase"),
+            statedb.iter_doc_changes("CommCareCase"),
+        )
+        log.info(f"patching {count} cases")
+        diffs = with_progress_bar(diffs, count, prefix="Case diffs", oneline=False)
+        for pending_diffs in self.map_cases(patch_diffs, diffs):
+            statedb.add_patched_cases(pending_diffs)
+
     def iter_case_diff_results(self, cases):
         if cases is None:
             return self.resumable_iter_diff_cases()
         if cases == "pending":
-            return self.iter_diff_cases(self.get_pending_cases())
+            return self.map_cases(load_and_diff_cases, self.get_pending_cases())
         if cases == "with-diffs":
             return self.iter_diff_cases_with_diffs()
         case_ids = get_ids_from_string_or_file(cases)
-        return self.iter_diff_cases(case_ids, log_cases=True)
+        return self.map_cases(load_and_diff_cases, case_ids, log_cases=True)
 
     def resumable_iter_diff_cases(self):
         def diff_batch(case_ids):
@@ -126,15 +141,15 @@ class CaseDiffTool:
             progress_name="Diff",
             offset_key='CommCareCase.id',
         )
-        return self.iter_diff_cases(case_ids, diff_batch)
+        return self.map_cases(load_and_diff_cases, case_ids, diff_batch)
 
     def iter_diff_cases_with_diffs(self):
         count = self.statedb.count_case_ids_with_diffs()
         cases = self.statedb.iter_case_ids_with_diffs()
         cases = with_progress_bar(cases, count, prefix="Cases with diffs", oneline=False)
-        return self.iter_diff_cases(cases)
+        return self.map_cases(load_and_diff_cases, cases)
 
-    def iter_diff_cases(self, case_ids, batcher=None, log_cases=False):
+    def map_cases(self, process_cases, case_ids, batcher=None, log_cases=False):
         def list_or_stop(items):
             if self.is_stopped():
                 raise StopIteration
@@ -142,12 +157,12 @@ class CaseDiffTool:
 
         batches = chunked(case_ids, self.batch_size, batcher or list_or_stop)
         if not self.stop:
-            yield from self.pool.imap_unordered(load_and_diff_cases, batches)
+            yield from self.pool.imap_unordered(process_cases, batches)
             return
         stop = [1]
         with global_diff_state(*self.initargs), suppress(pdb.bdb.BdbQuit):
             for batch in batches:
-                data = load_and_diff_cases(batch, log_cases=log_cases)
+                data = process_cases(batch, log_cases=log_cases)
                 yield data
                 diffs = [(kind, case_id, diffs) for kind, case_id, diffs in data.diffs if diffs]
                 if diffs:
@@ -182,23 +197,20 @@ class CaseDiffTool:
 
 
 def load_and_diff_cases(case_ids, log_cases=False):
-    couch_cases = {c.case_id: c.to_json()
-        for c in get_couch_cases(case_ids) if should_diff(c)}
+    couch_cases = get_couch_cases(case_ids)
+    cases_to_diff = {c.case_id: c.to_json() for c in couch_cases if should_diff(c)}
     if log_cases:
-        skipped = [id for id in case_ids if id not in couch_cases]
+        skipped = {c.case_id for c in couch_cases} - cases_to_diff.keys()
         if skipped:
             log.info("skipping cases modified since cutoff date: %s", skipped)
-    return diff_cases_with_retry(couch_cases, log_cases=log_cases)
+    data = diff_cases_with_retry(cases_to_diff, log_cases=log_cases)
+    if len(set(case_ids)) > len(couch_cases):
+        missing_ids = set(case_ids) - {c.case_id for c in couch_cases}
+        add_cases_missing_from_couch(data, missing_ids)
+    return data
 
 
-def _close_connections(err):
-    """Close old connections, then return true to retry"""
-    log.warning("retry diff cases on %s: %s", type(err).__name__, err)
-    close_old_connections()
-    return True
-
-
-@retry_on(DatabaseError, InterfaceError, should_retry=_close_connections)
+@retry_on_sql_error
 def diff_cases_with_retry(*args, **kw):
     return diff_cases(*args, **kw)
 
