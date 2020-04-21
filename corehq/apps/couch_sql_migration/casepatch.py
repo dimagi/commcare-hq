@@ -133,6 +133,25 @@ class PatchCase:
             yield CommCareCaseIndex.wrap(diff.old_value)
 
 
+def cannot_patch(diffs):
+    return any(d.path[0] in ILLEGAL_PROPS for d in diffs) \
+        or all(d.path[0] in IGNORE_PROPS for d in diffs)
+
+
+def has_known_props(diffs):
+    return any(d.path[0] in KNOWN_PROPERTIES for d in diffs)
+
+
+def iter_dynamic_properties(diffs):
+    for diff in diffs:
+        name = diff.path[0]
+        if name in STATIC_PROPS:
+            continue
+        if len(diff.path) > 1 or not isinstance(diff.old_value, str):
+            raise CannotPatch([diff])
+        yield name, diff.old_value
+
+
 ILLEGAL_PROPS = {"actions", "*"}
 IGNORE_PROPS = {"opened_by", "external_id"}
 STATIC_PROPS = {
@@ -165,25 +184,6 @@ STATIC_PROPS = {
     "@user_id",         # user_id
     "hq_user_id",       # external_id
 }
-
-
-def cannot_patch(diffs):
-    return any(d.path[0] in ILLEGAL_PROPS for d in diffs) \
-        or all(d.path[0] in IGNORE_PROPS for d in diffs)
-
-
-def has_known_props(diffs):
-    return any(d.path[0] in KNOWN_PROPERTIES for d in diffs)
-
-
-def iter_dynamic_properties(diffs):
-    for diff in diffs:
-        name = diff.path[0]
-        if name in STATIC_PROPS:
-            continue
-        if len(diff.path) > 1 or not isinstance(diff.old_value, str):
-            raise CannotPatch([diff])
-        yield name, diff.old_value
 
 
 @attr.s
