@@ -16,6 +16,7 @@ from celery.task import periodic_task, task
 from couchdbkit import ResourceConflict, ResourceNotFound
 from corehq.util.es.elasticsearch import ConnectionTimeout
 from corehq.util.metrics import metrics_counter, metrics_gauge
+from corehq.util.queries import paginated_queryset
 
 from couchexport.models import Format
 from dimagi.utils.chunked import chunked
@@ -303,7 +304,8 @@ def queue_async_indicators():
     )[:settings.ASYNC_INDICATORS_TO_QUEUE]
 
     indicators_by_domain_doc_type = defaultdict(list)
-    for indicator in indicators:
+    # page so that envs can have arbitarily large settings.ASYNC_INDICATORS_TO_QUEUE
+    for indicator in paginated_queryset(indicators, 1000):
         indicators_by_domain_doc_type[(indicator.domain, indicator.doc_type)].append(indicator)
 
     for k, indicators in indicators_by_domain_doc_type.items():
