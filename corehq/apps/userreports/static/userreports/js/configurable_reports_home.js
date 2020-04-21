@@ -2,7 +2,7 @@ hqDefine("userreports/js/configurable_reports_home", [
     'jquery',
     'underscore',
     'DOMPurify/dist/purify.min',
-    'select2/dist/js/select2.full.min'
+    'select2/dist/js/select2.full.min',
 ], function (
     $,
     _,
@@ -10,7 +10,7 @@ hqDefine("userreports/js/configurable_reports_home", [
 ) {
     var $select = $("#select2-navigation");
 
-    $select.on('select2:select', function (e) {
+    $select.on('select2:select', function () {
         document.location = $select.val();
     });
 
@@ -29,6 +29,8 @@ hqDefine("userreports/js/configurable_reports_home", [
                 text: text,
             });
         },
-        escapeMarkup: function (m) { return DOMPurify.sanitize(m); },
+        escapeMarkup: function (m) {
+            return DOMPurify.sanitize(m);
+        },
     });
 });
