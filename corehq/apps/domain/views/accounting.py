@@ -1785,7 +1785,7 @@ def pause_subscription(request, domain):
             ]).format(
                 user=request.couch_user.username,
                 domain=domain,
-                old_plan=request.POST.get('old_plan', 'unknown'),
+                old_plan=current_subscription.plan_version.plan.edition,
                 note=_get_downgrade_or_pause_note(request, True),
             )
 
