@@ -19,7 +19,7 @@ from corehq.blobs.exceptions import BadName, NotFound
 from corehq.blobs.interface import AbstractBlobDB
 from corehq.blobs.util import (
     BlobStream,
-    GzipCompressReadStream,
+    GzipStream,
     check_safe_key,
     get_content_size,
 )
@@ -44,7 +44,7 @@ class FilesystemBlobDB(AbstractBlobDB):
         if not isdir(dirpath):
             os.makedirs(dirpath)
         if meta.is_compressed:
-            content = GzipCompressReadStream(content)
+            content = GzipStream(content)
         chunk_sizes = []
         digest = md5()
         with open(path, "wb") as fh:
