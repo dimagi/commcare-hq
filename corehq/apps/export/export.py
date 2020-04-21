@@ -376,7 +376,7 @@ def write_export_instance(writer, export_instance, documents, progress_tracker=N
                     raise
 
                 for row in rows:
-                    # It might be bad to write one row at a time when you can do more (from a performance perspective)
+                    # It might be bad to write one row at a time from a performance perspective.
                     # Regardless, we should handle the batching of rows in the _Writer class, not here.
                     writer.write(table, row)
 
