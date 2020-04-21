@@ -1,4 +1,5 @@
 from collections import defaultdict
+from datetime import timedelta
 from itertools import chain
 
 from memoized import memoized
@@ -9,6 +10,7 @@ from corehq.apps.tzmigration.timezonemigration import (
     is_datetime_string,
     json_diff,
 )
+from corehq.util.dates import iso_string_to_datetime
 
 from .diffrule import Ignore
 
@@ -82,12 +84,18 @@ load_ignore_rules = memoized(lambda: add_duplicate_rules({
         Ignore(path='@case_id'),  # legacy
         Ignore(path='case_json', old=MISSING),
         Ignore(path='modified_by', old=MISSING),
+        Ignore(path='modified_on', check=has_close_dates),
+        Ignore(path='@date_modified', check=case_has_duplicate_modified_on),
         # legacy bug left cases with no owner_id
         Ignore('diff', 'owner_id', old=''),
         Ignore('type', 'owner_id', old=None),
+        Ignore(path='@user_id', check=case_has_duplicate_user_id),
         Ignore('type', 'user_id', old=None),
+        Ignore('diff', 'user_id', old=''),
         Ignore('type', 'opened_on', old=None),
         Ignore('type', 'opened_by', old=MISSING),
+        Ignore('type', 'opened_by', old=None),
+        Ignore('diff', 'opened_by', old=''),
         # The form that created the case was archived, but the opened_by
         # field was not updated as part of the subsequent rebuild.
         # `CouchCaseUpdateStrategy.reset_case_state()` does not reset
@@ -100,7 +108,9 @@ load_ignore_rules = memoized(lambda: add_duplicate_rules({
 
         # CASE_IGNORED_DIFFS
         Ignore('type', 'name', old='', new=None),
+        Ignore('type', 'name', old=None, new=''),
         Ignore('type', 'closed_by', old='', new=None),
+        Ignore('type', 'closed_by', old=None, new=''),
         Ignore('diff', 'closed_by', old=''),
         Ignore('missing', 'location_id', old=MISSING, new=None),
         Ignore('missing', 'referrals', new=MISSING),
@@ -110,6 +120,7 @@ load_ignore_rules = memoized(lambda: add_duplicate_rules({
         Ignore('type', 'owner_id', old=None, new=''),
         Ignore('missing', 'closed_by', old=MISSING, new=None),
         Ignore('type', 'external_id', old='', new=None),
+        Ignore('type', 'external_id', old=None, new=''),
         Ignore('missing', 'deleted_on', old=MISSING, new=None),
         Ignore('missing', 'backend_id', old=MISSING, new='sql'),
 
@@ -132,7 +143,7 @@ load_ignore_rules = memoized(lambda: add_duplicate_rules({
         Ignore('missing', '-deletion_id', new=MISSING),
         Ignore('missing', '-deletion_date', new=MISSING),
 
-        ignore_renamed('@user_id', 'user_id'),
+        ignore_renamed('@user_id', 'user_id'),  # 'user_id' is an alias for 'modified_by'
         ignore_renamed('@date_modified', 'modified_on'),
     ],
     'CommCareCase-Deleted': [
@@ -150,6 +161,9 @@ load_ignore_rules = memoized(lambda: add_duplicate_rules({
     'LedgerValue': [
         Ignore(path='_id'),  # couch != SQL
         Ignore("missing", "location_id", old=MISSING, new=None),
+        Ignore("type", "location_id", old=None),
+        Ignore("diff", "last_modified", check=has_close_dates),
+        Ignore("type", "last_modified_form_id", old=None),
     ],
     'case_attachment': [
         Ignore(path='attachment_properties', new=MISSING),
@@ -308,6 +322,14 @@ def ignore_renamed(old_name, new_name):
     return Ignore(check=is_renamed)
 
 
+def has_close_dates(old_obj, new_obj, rule, diff):
+    if _both_dates(diff.old_value, diff.new_value):
+        old = iso_string_to_datetime(diff.old_value)
+        new = iso_string_to_datetime(diff.new_value)
+        return abs(old - new) < timedelta(days=1)
+    return False
+
+
 def has_date_values(old_obj, new_obj, rule, diff):
     return _both_dates(diff.old_value, diff.new_value)
 
@@ -426,3 +448,30 @@ def is_case_without_create_action(old_obj, new_obj, rule, diff):
 
 def is_truncated_255(old_obj, new_obj, rule, diff):
     return len(diff.old_value) > 255 and diff.old_value[:255] == diff.new_value
+
+
+def case_has_duplicate_user_id(old_obj, new_obj, rule, diff):
+    return (
+        "@user_id" in old_obj and "user_id" in old_obj and "user_id" in new_obj
+        and old_obj["@user_id"] != new_obj["user_id"]
+        and old_obj["user_id"] == new_obj["user_id"]
+    )
+
+
+def case_has_duplicate_modified_on(old_obj, new_obj, rule, diff):
+    return (
+        "@date_modified" in old_obj
+        and "modified_on" in new_obj
+        and old_obj["@date_modified"] != new_obj["modified_on"]
+        and has_acceptable_date_diff(old_obj, new_obj, "modified_on")
+    )
+
+
+def has_acceptable_date_diff(old_obj, new_obj, field, delta=timedelta(days=1)):
+    old = old_obj.get(field)
+    new = new_obj.get(field)
+    if _both_dates(old, new):
+        old = iso_string_to_datetime(old)
+        new = iso_string_to_datetime(new)
+        return abs(old - new) < delta
+    return False

@@ -288,6 +288,7 @@ HQ_APPS = (
     'corehq.messaging.scheduling',
     'corehq.messaging.scheduling.scheduling_partitioned',
     'corehq.messaging.smsbackends.tropo',
+    'corehq.messaging.smsbackends.turn',
     'corehq.messaging.smsbackends.twilio',
     'corehq.apps.dropbox',
     'corehq.messaging.smsbackends.megamobile',
@@ -542,6 +543,7 @@ CELERY_PERIODIC_QUEUE = 'celery_periodic'
 CELERY_REMINDER_RULE_QUEUE = 'reminder_rule_queue'
 CELERY_REMINDER_CASE_UPDATE_QUEUE = 'reminder_case_update_queue'
 CELERY_REPEAT_RECORD_QUEUE = 'repeat_record_queue'
+CELERY_LOCATION_REASSIGNMENT_QUEUE = 'celery'
 
 # Will cause a celery task to raise a SoftTimeLimitExceeded exception if
 # time limit is exceeded.
@@ -1496,6 +1498,7 @@ SMS_LOADED_SQL_BACKENDS = [
     'corehq.messaging.smsbackends.telerivet.models.SQLTelerivetBackend',
     'corehq.messaging.smsbackends.test.models.SQLTestSMSBackend',
     'corehq.messaging.smsbackends.tropo.models.SQLTropoBackend',
+    'corehq.messaging.smsbackends.turn.models.SQLTurnWhatsAppBackend',
     'corehq.messaging.smsbackends.twilio.models.SQLTwilioBackend',
     'corehq.messaging.smsbackends.unicel.models.SQLUnicelBackend',
     'corehq.messaging.smsbackends.yo.models.SQLYoBackend',
@@ -1929,7 +1932,6 @@ COUCH_CACHE_BACKENDS = [
     'corehq.apps.cachehq.cachemodels.GroupGenerationCache',
     'corehq.apps.cachehq.cachemodels.UserRoleGenerationCache',
     'corehq.apps.cachehq.cachemodels.ReportGenerationCache',
-    'corehq.apps.cachehq.cachemodels.DefaultConsumptionGenerationCache',
     'corehq.apps.cachehq.cachemodels.InvitationGenerationCache',
     'corehq.apps.cachehq.cachemodels.UserReportsDataSourceCache',
     'dimagi.utils.couch.cache.cache_core.gen.GlobalCache',
@@ -2038,6 +2040,7 @@ DOMAIN_MODULE_MAP = {
 
     'inddex-reports': 'custom.inddex',
     'inddex-multilingual': 'custom.inddex',
+    'inddex-multi-vn': 'custom.inddex',
 
     'ccqa': 'custom.ccqa',
 }

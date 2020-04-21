@@ -50,12 +50,12 @@ trunk: master
 name: autostaging
 branches:
   - vellum-staging  # DO NOT REMOVE this is similar to "autostaging", but for vellum
-  - jls/migrate-DefaultConsumption-2 # Jenny March 6
+  # - jls/migrate-DefaultConsumption-2 # Jenny March 6
   #- jls/use-textinput # Jenny March 10
-  - mk/location-reassignment-6-bug-1-1 # MK April 13
-  #- mk/location-reassignment-5 # MK April 7
-  #- mk/location-reassignment-8 # MK April 12
+  - mk/location-reassignment-13 # MK April 17
+  - mk/location-reassignment-11-followup
   - bmb/SAAS-10712  # Biyeun April 1
   - ap/remove-delete-in-name # Amit April 8
-  - bmb/SAAS-10717 # Biyeun April 10
+  - bmb/odata-qa-feedback  # Biyeun April 15
+  - fr/turn-backend        # Farid April 17
 submodules: {}

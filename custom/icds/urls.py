@@ -38,6 +38,6 @@ urlpatterns = [
     url(r'^custom_data_pull/', CustomDataPull.as_view(), name=CustomDataPull.urlname),
     url(r'^location_reassignment/$', LocationReassignmentView.as_view(),
         name=LocationReassignmentView.urlname),
-    url(r'^location_rationalization/download/$', download_location_reassignment_template,
+    url(r'^location_reassignment/download/$', download_location_reassignment_template,
         name='download_location_reassignment_template'),
 ]
