@@ -332,22 +332,11 @@ def time_in_range(time, time_dictionary):
 
 
 def _queue_indicators(indicators):
-    def _queue_chunk(indicators):
+    for chunk in chunked(indicators, ASYNC_INDICATOR_CHUNK_SIZE):
         now = datetime.utcnow()
-        indicator_doc_ids = [i.doc_id for i in indicators]
+        indicator_doc_ids = [i.doc_id for i in chunk]
         AsyncIndicator.objects.filter(doc_id__in=indicator_doc_ids).update(date_queued=now)
         build_async_indicators.delay(indicator_doc_ids)
-        metrics_counter('commcare.async_indicator.indicators_queued', len(indicator_doc_ids))
-
-    to_queue = []
-    for indicator in indicators:
-        to_queue.append(indicator)
-        if len(to_queue) >= ASYNC_INDICATOR_CHUNK_SIZE:
-            _queue_chunk(to_queue)
-            to_queue = []
-
-    if to_queue:
-        _queue_chunk(to_queue)
 
 
 @task(serializer='pickle', queue=UCR_INDICATOR_CELERY_QUEUE, ignore_result=True, acks_late=True)
