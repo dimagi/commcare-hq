@@ -294,11 +294,11 @@ def queue_async_indicators():
     start = datetime.utcnow()
     cutoff = start + ASYNC_INDICATOR_QUEUE_TIME - timedelta(seconds=30)
     retry_threshold = start - timedelta(hours=4)
-    # don't requeue anything that has been retried more than 20 times
     indicators = (
         AsyncIndicator.objects
+        # don't requeue anything that has been retried more than 20 times
         .filter(unsuccessful_attempts__lt=20)
-        # only requeue things that have were last queued earlier than the threshold
+        # only requeue things that are not in queue or were last queued earlier than the threshold
         .filter(Q(date_queued__isnull=True) | Q(date_queued__lt=retry_threshold))
     )[:settings.ASYNC_INDICATORS_TO_QUEUE]
 
