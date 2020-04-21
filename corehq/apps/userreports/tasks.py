@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 
 from django.conf import settings
 from django.db import DatabaseError, InternalError, transaction
-from django.db.models import Count, Min
+from django.db.models import Count, Min, Q
 from django.utils.translation import ugettext as _
 
 from botocore.vendored.requests.exceptions import ReadTimeout
@@ -295,12 +295,16 @@ def queue_async_indicators():
     cutoff = start + ASYNC_INDICATOR_QUEUE_TIME - timedelta(seconds=30)
     retry_threshold = start - timedelta(hours=4)
     # don't requeue anything that has been retried more than 20 times
-    indicators = AsyncIndicator.objects.filter(unsuccessful_attempts__lt=20)[:settings.ASYNC_INDICATORS_TO_QUEUE]
+    indicators = (
+        AsyncIndicator.objects
+        .filter(unsuccessful_attempts__lt=20)
+        # only requeue things that have were last queued earlier than the threshold
+        .filter(Q(date_queued__isnull=True) | Q(date_queued__lt=retry_threshold))
+    )[:settings.ASYNC_INDICATORS_TO_QUEUE]
+
     indicators_by_domain_doc_type = defaultdict(list)
     for indicator in indicators:
-        # only requeue things that have were last queued earlier than the threshold
-        if not indicator.date_queued or indicator.date_queued < retry_threshold:
-            indicators_by_domain_doc_type[(indicator.domain, indicator.doc_type)].append(indicator)
+        indicators_by_domain_doc_type[(indicator.domain, indicator.doc_type)].append(indicator)
 
     for k, indicators in indicators_by_domain_doc_type.items():
         _queue_indicators(indicators)
