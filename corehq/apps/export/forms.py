@@ -3,7 +3,6 @@ from datetime import timedelta
 
 from django import forms
 from django.urls import reverse
-from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy
 
@@ -11,7 +10,6 @@ import dateutil
 from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
 from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Layout
 
 from dimagi.utils.dates import DateSpan
 
@@ -222,7 +220,7 @@ class BaseFilterExportDownloadForm(forms.Form):
         self.helper = HQFormHelper()
         self.helper.form_tag = False
 
-        self.helper.layout = Layout(
+        self.helper.layout = crispy.Layout(
             *self.extra_fields
         )
 
@@ -342,7 +340,7 @@ class DashboardFeedFilterForm(forms.Form):
 
         self.helper = HQModalFormHelper()
         self.helper.form_tag = False
-        self.helper.layout = Layout(*self.layout_fields)
+        self.helper.layout = crispy.Layout(*self.layout_fields)
 
     def clean(self):
         cleaned_data = super(DashboardFeedFilterForm, self).clean()
