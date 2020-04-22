@@ -393,8 +393,8 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
     };
 
     /**
-     * To Adjust selectedLevel for the reports does not have viewBy filters
-     * end up having aggregation_leve set by viewBy filter in the last report selected.
+     * To adjust selectedLevel for the reports that do not have viewBy filter. These
+     * reports end up having selectedLevel set by viewBy filter in the last report selected.
      */
     vm.adjustSelectedLevelForNoViewByFilter = function () {
 
