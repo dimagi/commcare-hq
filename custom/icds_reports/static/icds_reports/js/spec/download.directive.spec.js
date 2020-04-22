@@ -152,7 +152,7 @@ describe('Download Directive', function () {
         });
 
         it('tests get placeholder when state and child growth tracker list is selected', function () {
-            controller.selectedIndicator = 6;
+            controller.selectedIndicator = 13;
             var mockLocationType = [{"name": "state", "parents": ["state"], "level": 1}];
 
             var expected = 'Select State';
@@ -185,7 +185,7 @@ describe('Download Directive', function () {
         });
 
         it('tests get formats when child growth tracker list is selected', function () {
-            controller.selectedIndicator = 6;
+            controller.selectedIndicator = 13;
             var expected = [{"id": "csv", "name": "CSV"}, {"id": "xlsx", "name": "Excel"}];
 
             var result = controller.getFormats();
