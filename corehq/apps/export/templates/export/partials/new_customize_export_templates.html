@@ -297,10 +297,8 @@
                                  data: column.tags,
                                  as: 'tag'
                                }">
-                <!-- ko ifnot: (tag !== $root.constants.TAG_DELETED && column.item.isCaseName()) -->
                                 <span data-bind="text: tag,
                                  attr: { class: $root.getTagCSSClass(tag) }"></span>
-                <!-- /ko -->
               </span>
 
               <!-- ko if: !column.isEditable() -->
