@@ -105,6 +105,7 @@ from custom.icds_reports.models.aggregate import (
     AggregateAvailingServiceForms,
     BiharAPIDemographics,
     ChildVaccines
+
 )
 from custom.icds_reports.models.helper import IcdsFile
 from custom.icds_reports.models.util import UcrReconciliationStatus
@@ -1864,7 +1865,12 @@ def update_service_delivery_report(target_date):
 
 def update_bihar_api_table(target_date):
     current_month = force_to_date(target_date).replace(day=1)
-    BiharAPIDemographics.aggregate(current_month)
+    _agg_bihar_api_demographics.delay(current_month)
+
+
+@task(queue='icds_aggregation_queue', serializer='pickle')
+def _agg_bihar_api_demographics(target_date):
+    BiharAPIDemographics.aggregate(target_date)
 
 
 def update_child_vaccine_table(target_date):

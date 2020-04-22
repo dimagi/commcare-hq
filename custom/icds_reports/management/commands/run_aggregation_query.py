@@ -14,6 +14,7 @@ from custom.icds_reports.tasks import (
     _agg_ls_awc_mgt_form,
     _agg_ls_table,
     _agg_ls_vhnd_form,
+    _agg_thr_table,
     _aggregate_awc_infra_forms,
     _aggregate_bp_forms,
     _aggregate_ccs_cf_forms,
@@ -43,6 +44,7 @@ from custom.icds_reports.tasks import (
     drop_gm_indices,
     update_governance_dashboard,
     update_service_delivery_report,
+    update_bihar_api_table,
     update_child_vaccine_table
 )
 
@@ -53,6 +55,7 @@ STATE_TASKS = {
     'aggregate_gm_forms': (drop_gm_indices, _aggregate_gm_forms, None),
     'aggregate_cf_forms': (None, _aggregate_cf_forms, None),
     'aggregate_ccs_cf_forms': (None, _aggregate_ccs_cf_forms, None),
+    'aggregate_thr_forms': (None, _agg_thr_table, None),
     'aggregate_child_health_thr_forms': (None, _aggregate_child_health_thr_forms, None),
     'aggregate_ccs_record_thr_forms': (None, _aggregate_ccs_record_thr_forms, None),
     'aggregate_child_health_pnc_forms': (None, _aggregate_child_health_pnc_forms, None),
@@ -88,6 +91,7 @@ NORMAL_TASKS = {
     'update_agg_child_health': (None, update_agg_child_health, None),
     'update_governance_dashboard': (None, update_governance_dashboard, None),
     'update_service_delivery_report': (None, update_service_delivery_report, None),
+    'update_bihar_api_table': (None, update_bihar_api_table, None),
     'update_child_vaccine_table': (None, update_child_vaccine_table, None),
 }
 

@@ -20,6 +20,7 @@ from corehq.apps.accounting.utils import (
     domain_is_on_trial,
     is_accounting_admin,
 )
+from corehq.apps.accounting.views import TriggerDowngradeView
 from corehq.apps.app_manager.dbaccessors import (
     domain_has_apps,
     get_brief_apps_in_domain,
@@ -1147,6 +1148,27 @@ class MessagingTab(UITab):
         return settings_urls
 
     @property
+    @memoized
+    def whatsapp_urls(self):
+        from corehq.apps.sms.models import SQLMobileBackend
+        from corehq.messaging.smsbackends.turn.models import SQLTurnWhatsAppBackend
+        from corehq.apps.sms.views import WhatsAppTemplatesView
+        whatsapp_urls = []
+
+        domain_has_turn_integration = (
+            SQLTurnWhatsAppBackend.get_api_id() in
+            (b.get_api_id() for b in
+             SQLMobileBackend.get_domain_backends(SQLMobileBackend.SMS, self.domain)))
+        user_is_admin = (self.couch_user.is_superuser or self.couch_user.is_domain_admin(self.domain))
+
+        if user_is_admin and domain_has_turn_integration:
+            whatsapp_urls.append({
+                'title': _('Template Management'),
+                'url': reverse(WhatsAppTemplatesView.urlname, args=[self.domain]),
+            })
+        return whatsapp_urls
+
+    @property
     def dropdown_items(self):
         result = []
 
@@ -1199,7 +1221,8 @@ class MessagingTab(UITab):
             (_("Data Collection and Reminders"), self.reminders_urls),
             (_("CommCare Supply"), self.supply_urls),
             (_("Contacts"), self.contacts_urls),
-            (_("Settings"), self.settings_urls)
+            (_("Settings"), self.settings_urls),
+            (_("WhatsApp Settings"), self.whatsapp_urls),
         ):
             if urls:
                 items.append((title, urls))
@@ -1936,7 +1959,7 @@ class AccountingTab(UITab):
             TriggerInvoiceView, TriggerBookkeeperEmailView,
             TestRenewalEmailView, TriggerCustomerInvoiceView
         )
-        items.append(('Other Actions', (
+        other_actions = [
             {
                 'title': _(TriggerInvoiceView.page_title),
                 'url': reverse(TriggerInvoiceView.urlname),
@@ -1953,7 +1976,13 @@ class AccountingTab(UITab):
                 'title': _(TestRenewalEmailView.page_title),
                 'url': reverse(TestRenewalEmailView.urlname),
             }
-        )))
+        ]
+        if toggles.ACCOUNTING_TESTING_TOOLS.enabled_for_request(self._request):
+            other_actions.append({
+                'title': _(TriggerDowngradeView.page_title),
+                'url': reverse(TriggerDowngradeView.urlname),
+            })
+        items.append(('Other Actions', other_actions))
         return items
 
 

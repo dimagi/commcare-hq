@@ -1166,7 +1166,7 @@ SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER = StaticToggle(
     'show_owner_location_property_in_report_builder',
     'Show an additional "Owner (Location)" property in report builder reports. '
     'This can be used to create report builder reports that are location-safe.',
-    TAG_SOLUTIONS_LIMITED,
+    TAG_SOLUTIONS_OPEN,
     [NAMESPACE_DOMAIN]
 )
 
@@ -1196,7 +1196,7 @@ ALLOW_USER_DEFINED_EXPORT_COLUMNS = StaticToggle(
 DATA_EXPORT_TOOL_SCHEMA_EXPORT = StaticToggle(
     'data_export_tool_schema_export',
     'Show an option to download data export tool schemas from the exports list view (Experimental)',
-    TAG_SOLUTIONS_LIMITED,
+    TAG_SOLUTIONS_OPEN,
     [NAMESPACE_DOMAIN, NAMESPACE_USER],
     help_link='https://confluence.dimagi.com/display/ccinternal/Download+Data+Export+Tool+Schemas+from+the+Exports+List+View',
 )
@@ -1834,6 +1834,14 @@ ALLOW_DEID_ODATA_FEED = StaticToggle(
     'Allow De-Identification in OData feeds',
     TAG_PRODUCT,
     [NAMESPACE_DOMAIN]
+)
+
+
+ACCOUNTING_TESTING_TOOLS = StaticToggle(
+    'accounting_testing_tools',
+    'Enable Accounting Testing Tools',
+    TAG_INTERNAL,
+    [NAMESPACE_USER]
 )
 
 
