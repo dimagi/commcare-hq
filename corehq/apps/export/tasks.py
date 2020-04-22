@@ -268,7 +268,9 @@ def _generate_incremental_export(incremental_export):
         if docs.doc_count <= 0:
             return
 
-        new_checkpoint = incremental_export.checkpoint(docs.last_doc.get('_id'), docs.last_doc.get('server_modified_on'))
+        new_checkpoint = incremental_export.checkpoint(
+            docs.doc_count, docs.last_doc.get('server_modified_on')
+        )
 
         with export_file as file_:
             # TODO: would be nice to save this compressed instead of uncompressed

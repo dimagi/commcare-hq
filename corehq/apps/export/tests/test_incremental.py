@@ -104,6 +104,7 @@ class TestIncrementalExport(TestCase):
         data = checkpoint.get_blob().read().decode('utf-8-sig')
         expected = "Foo column,Bar column\r\napple,banana\r\norange,pear\r\n"
         self.assertEqual(data, expected)
+        self.assertEqual(checkpoint.doc_count, 2)
         return checkpoint
 
     def test_initial_failure(self):
@@ -127,6 +128,7 @@ class TestIncrementalExport(TestCase):
         data = checkpoint.get_blob().read().decode('utf-8-sig')
         expected = "Foo column,Bar column\r\npeach,plumb\r\n"
         self.assertEqual(data, expected)
+        self.assertEqual(checkpoint.doc_count, 1)
 
     def test_sending_success(self):
         self._test_sending(200, IncrementalExportStatus.SUCCESS)

@@ -33,7 +33,7 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('date_created', models.DateTimeField(auto_now_add=True)),
-                ('last_doc_id', models.CharField(max_length=126)),
+                ('doc_count', models.IntegerField(null=True)),
                 ('last_doc_date', models.DateTimeField()),
                 ('blob_key', models.UUIDField(default=uuid.uuid4)),
                 ('incremental_export', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='checkpoints', to='export.IncrementalExport')),

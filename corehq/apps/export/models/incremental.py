@@ -16,11 +16,11 @@ class IncrementalExport(models.Model):
     date_modified = models.DateTimeField(auto_now=True)
     active = models.BooleanField(default=True)
 
-    def checkpoint(self, doc_id, doc_date):
+    def checkpoint(self, doc_count, last_doc_date):
         return IncrementalExportCheckpoint.objects.create(
             incremental_export=self,
-            last_doc_id=doc_id,
-            last_doc_date=doc_date
+            doc_count=doc_count,
+            last_doc_date=last_doc_date
         )
 
     @property
@@ -51,7 +51,7 @@ class IncrementalExportStatus(object):
 class IncrementalExportCheckpoint(models.Model):
     incremental_export = models.ForeignKey(IncrementalExport, related_name='checkpoints', on_delete=models.CASCADE)
     date_created = models.DateTimeField(auto_now_add=True)
-    last_doc_id = models.CharField(max_length=126)
+    doc_count = models.IntegerField(null=True)
     last_doc_date = models.DateTimeField()
     blob_key = models.UUIDField(default=uuid4)
 
