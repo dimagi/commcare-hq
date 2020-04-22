@@ -126,8 +126,8 @@ FormplayerFrontend.on('showError', function (errorMessage, isHTML) {
     }
 });
 
-FormplayerFrontend.on('showWarning', function (errorMessage, isHTML) {
-    showWarning(errorMessage, $("#cloudcare-notifications"));
+FormplayerFrontend.on('showWarning', function (message) {
+    showWarning(message, $("#cloudcare-notifications"));
 });
 
 FormplayerFrontend.reqres.setHandler('showSuccess', function (successMessage) {
@@ -135,15 +135,15 @@ FormplayerFrontend.reqres.setHandler('showSuccess', function (successMessage) {
 });
 
 FormplayerFrontend.reqres.setHandler('handleNotification', function (notification) {
-    type = notification.type;
+    var type = notification.type;
     if (!type) {
         type = notification.error ? "error" : "success";
     }
 
-    if (type == "success") {
-	FormplayerFrontend.request('showSuccess', notification.message);
-    } else if (type == "warning") {
-	FormplayerFrontend.trigger('showWarning', notification.message);
+    if (type === "success") {
+        FormplayerFrontend.request('showSuccess', notification.message);
+    } else if (type === "warning") {
+        FormplayerFrontend.trigger('showWarning', notification.message);
     } else {
         FormplayerFrontend.trigger('showError', notification.message);
     }
