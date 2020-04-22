@@ -32,7 +32,7 @@ class AvailingServiceFormsAggregationDistributedHelper(StateBasedAggregationDist
             %(month)s::DATE AS month,
             person_case_id AS person_case_id,
             LAST_VALUE(is_registered) OVER w AS is_registered,
-            LAST_VALUE(timeend) AS registration_date
+            LAST_VALUE(timeend) OVER w AS registration_date
           FROM "{ucr_tablename}"
           WHERE state_id = %(state_id)s AND
                 timeend >= %(current_month_start)s AND timeend < %(next_month_start)s AND
