@@ -284,13 +284,15 @@ def _generate_incremental_export(incremental_export):
 
 
 def _send_incremental_export(export, checkpoint):
-    requests = export.connection_settings.requests
+    requests = _get_requests(checkpoint, export)
     headers = {
         'Accept': 'application/json'
     }
     date_suffix = checkpoint.date_created.replace(microsecond=0).isoformat()
     filename = f'{checkpoint.incremental_export.name}_{date_suffix}.csv'
     files = {'file': (filename, checkpoint.get_blob(), 'text/csv')}
-    # TODO: update logs to link to checkpoint
-    # TODO: checkpoint only valid if request successful
     requests.post(uri='', files=files, headers=headers)
+
+
+def _get_requests(checkpoint, export):
+    return export.connection_settings.get_requests(checkpoint.id, checkpoint.log_request)

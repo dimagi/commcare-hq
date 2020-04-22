@@ -61,8 +61,7 @@ class ConnectionSettings(models.Model):
     def notify_addresses(self):
         return [addr for addr in re.split('[, ]+', self.notify_addresses_str) if addr]
 
-    @property
-    def requests(self):
+    def get_requests(self, payload_id, logger):
         from corehq.motech.requests import Requests
         return Requests(
             self.domain,
@@ -70,7 +69,9 @@ class ConnectionSettings(models.Model):
             self.username,
             self.plaintext_password,
             verify=not self.skip_cert_verify,
-            notify_addresses=self.notify_addresses
+            notify_addresses=self.notify_addresses,
+            payload_id=payload_id,
+            logger=logger
         )
 
 
@@ -103,52 +104,17 @@ class RequestLog(models.Model):
         db_table = 'dhis2_jsonapilog'
 
     @staticmethod
-    def unpack_request_args(request_method, args, kwargs):
-        params = kwargs.pop('params', None)
-        json_data = kwargs.pop('json', None)  # dict
-        data = kwargs.pop('data', None)  # string
-        if data is None:
-            data = json_data
-        # Don't bother trying to cast `data` as a dict.
-        # RequestLog.request_body will store it, and it will be rendered
-        # as prettified JSON if possible, regardless of whether it's a
-        # dict or a string.
-        if args:
-            if request_method == 'GET':
-                params = args[0]
-            elif request_method == 'PUT':
-                data = args[0]
-        headers = kwargs.pop('headers', {})
-        return params, data, headers
-
-    @staticmethod
-    def log(
-        log_level,
-        domain_name,
-        payload_id,
-        request_error,
-        response_status,
-        response_body,
-        request_method,
-        request_url,
-        *args,
-        **kwargs,
-    ):
-        # The order of arguments is important: `request_method`,
-        # `request_url` and `*args` are the positional arguments of
-        # `Requests.send_request()`. Having these at the end of this
-        # method's args allows us to call `log` with `*args, **kwargs`
-        params, data, headers = RequestLog.unpack_request_args(request_method, args, kwargs)
-        RequestLog.objects.create(
-            domain=domain_name,
-            log_level=log_level,
-            payload_id=payload_id,
-            request_method=request_method,
-            request_url=request_url,
-            request_headers=headers,
-            request_params=params,
-            request_body=data,
-            request_error=request_error,
-            response_status=response_status,
-            response_body=response_body,
+    def log(level, log_entry):
+        return RequestLog.objects.create(
+            domain=log_entry.domain,
+            log_level=level,
+            payload_id=log_entry.payload_id,
+            request_method=log_entry.method,
+            request_url=log_entry.url,
+            request_headers=log_entry.headers,
+            request_params=log_entry.params,
+            request_body=log_entry.data,
+            request_error=log_entry.error,
+            response_status=log_entry.response_status,
+            response_body=log_entry.response_body,
         )

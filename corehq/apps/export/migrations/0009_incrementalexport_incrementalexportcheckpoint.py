@@ -37,6 +37,8 @@ class Migration(migrations.Migration):
                 ('last_doc_date', models.DateTimeField()),
                 ('blob_key', models.UUIDField(default=uuid.uuid4)),
                 ('incremental_export', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='checkpoints', to='export.IncrementalExport')),
+                ('status', models.PositiveSmallIntegerField(choices=[(1, 'success'), (2, 'failure')], null=True)),
+                ('request_log', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='motech.RequestLog', null=True)),
             ],
         ),
     ]
