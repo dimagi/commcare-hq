@@ -15,7 +15,7 @@ from celery.schedules import crontab
 from celery.task import periodic_task, task
 from couchdbkit import ResourceConflict, ResourceNotFound
 from corehq.util.es.elasticsearch import ConnectionTimeout
-from corehq.util.metrics import metrics_counter, metrics_gauge
+from corehq.util.metrics import metrics_counter, metrics_gauge, metrics_histogram_timer
 from corehq.util.queries import paginated_queryset
 
 from couchexport.models import Format
@@ -391,6 +391,17 @@ def build_async_indicators(indicator_doc_ids):
             adapter_by_config[config._id] = adapter
             return adapter
 
+    def _metrics_timer(self, step, config_id=None):
+        tags = {
+            'action': step,
+        }
+        if config_id and settings.ENTERPRISE_MODE:
+            tags['config_id'] = config_id
+        return metrics_histogram_timer(
+            'commcare.async_indicator.timing',
+            timing_buckets=(.03, .1, .3, 1, 3, 10), tags=tags
+        )
+
     # tracks processed/deleted configs to be removed from each indicator
     configs_to_remove_by_indicator_id = defaultdict(list)
 
@@ -424,51 +435,56 @@ def build_async_indicators(indicator_doc_ids):
             for doc in doc_store.iter_documents(list(indicator_by_doc_id.keys())):
                 indicator = indicator_by_doc_id[doc['_id']]
                 eval_context = EvaluationContext(doc)
-                for config_id in indicator.indicator_config_ids:
-                    config_ids.add(config_id)
+                with _metrics_timer('transform'):
+                    for config_id in indicator.indicator_config_ids:
+                        config_ids.add(config_id)
+                        try:
+                            config = _get_config(config_id)
+                        except (ResourceNotFound, StaticDataSourceConfigurationNotFoundError):
+                            celery_task_logger.info("{} no longer exists, skipping".format(config_id))
+                            # remove because the config no longer exists
+                            _mark_config_to_remove(config_id, [indicator.pk])
+                            continue
+                        except ESError:
+                            celery_task_logger.info("ES errored when trying to retrieve config")
+                            failed_indicators.add(indicator)
+                            continue
+                        adapter = None
+                        try:
+                            adapter = _get_adapter(config)
+                            rows_to_save = adapter.get_all_values(doc, eval_context)
+                            if rows_to_save:
+                                rows_to_save_by_adapter[adapter].extend(rows_to_save)
+                            else:
+                                docs_to_delete_by_adapter[adapter].append(doc)
+                            eval_context.reset_iteration()
+                        except Exception as e:
+                            failed_indicators.add(indicator)
+                            handle_exception(e, config_id, doc, adapter)
+
+            with _metrics_timer('single_batch_update'):
+                for adapter, rows in rows_to_save_by_adapter.items():
+                    doc_ids = doc_ids_from_rows(rows)
+                    indicators = [indicator_by_doc_id[doc_id] for doc_id in doc_ids]
                     try:
-                        config = _get_config(config_id)
-                    except (ResourceNotFound, StaticDataSourceConfigurationNotFoundError):
-                        celery_task_logger.info("{} no longer exists, skipping".format(config_id))
-                        # remove because the config no longer exists
-                        _mark_config_to_remove(config_id, [indicator.pk])
-                        continue
-                    except ESError:
-                        celery_task_logger.info("ES errored when trying to retrieve config")
-                        failed_indicators.add(indicator)
-                        continue
-                    adapter = None
-                    try:
-                        adapter = _get_adapter(config)
-                        rows_to_save = adapter.get_all_values(doc, eval_context)
-                        if rows_to_save:
-                            rows_to_save_by_adapter[adapter].extend(rows_to_save)
-                        else:
-                            docs_to_delete_by_adapter[adapter].append(doc)
-                        eval_context.reset_iteration()
+                        with _metrics_timer('update', adapter.config._id):
+                            adapter.save_rows(rows)
                     except Exception as e:
-                        failed_indicators.add(indicator)
-                        handle_exception(e, config_id, doc, adapter)
+                        failed_indicators.union(indicators)
+                        message = str(e)
+                        notify_exception(None,
+                            "Exception bulk saving async indicators:{}".format(message))
+                    else:
+                        # remove because it's sucessfully processed
+                        _mark_config_to_remove(
+                            config_id,
+                            [i.pk for i in indicators]
+                        )
 
-            for adapter, rows in rows_to_save_by_adapter.items():
-                doc_ids = doc_ids_from_rows(rows)
-                indicators = [indicator_by_doc_id[doc_id] for doc_id in doc_ids]
-                try:
-                    adapter.save_rows(rows)
-                except Exception as e:
-                    failed_indicators.union(indicators)
-                    message = str(e)
-                    notify_exception(None,
-                        "Exception bulk saving async indicators:{}".format(message))
-                else:
-                    # remove because it's sucessfully processed
-                    _mark_config_to_remove(
-                        config_id,
-                        [i.pk for i in indicators]
-                    )
-
-            for adapter, docs in docs_to_delete_by_adapter.items():
-                adapter.bulk_delete(docs)
+            with _metrics_timer('single_batch_delete'):
+                for adapter, docs in docs_to_delete_by_adapter.items():
+                    with _metrics_timer('delete', adapter.config._id):
+                        adapter.bulk_delete(docs)
 
         # delete fully processed indicators
         processed_indicators = set(all_indicators) - failed_indicators
