@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 
 from django.conf import settings
 from django.db import DatabaseError, InternalError, transaction
-from django.db.models import Count, Min, Q
+from django.db.models import Count, Min
 from django.utils.translation import ugettext as _
 
 from botocore.vendored.requests.exceptions import ReadTimeout
