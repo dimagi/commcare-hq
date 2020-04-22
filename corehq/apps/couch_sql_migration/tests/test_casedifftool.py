@@ -1,5 +1,7 @@
+import json
 from contextlib import contextmanager
 from datetime import datetime, timedelta
+from xml.sax.saxutils import unescape
 
 from mock import patch
 
@@ -13,6 +15,7 @@ from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.utils.general import (
     clear_local_domain_sql_backend_override,
 )
+from corehq.util.dates import iso_string_to_datetime
 from corehq.util.test_utils import capture_log_output
 
 from .test_migration import BaseMigrationTestCase, Diff, IGNORE, make_test_form
@@ -213,6 +216,56 @@ class TestCouchSqlDiff(BaseMigrationTestCase):
         ])
         self.do_migration(forms="missing", case_diff="patch")
         self.assertEqual(self._get_case("case-1").opened_on, open_date)
+
+    def test_unpatchable_properties(self):
+        date1 = "2018-07-13T11:20:11.381000Z"
+        self.submit_form(make_test_form("form-1", case_id="case-1"))
+        case = self._get_case("case-1")
+        user = case.user_id
+        case.closed = True
+        case.closed_by = "someone"
+        case.closed_on = iso_string_to_datetime(date1)
+        case.external_id = "ext"
+        case.name = "Zena"
+        case.opened_by = "someone"
+        case.server_modified_on = iso_string_to_datetime(date1)
+        case.user_id = "person"
+        case.save()
+        self.do_migration(diffs=[
+            Diff('case-1', 'diff', ['closed'], old=True, new=False),
+            Diff('case-1', 'diff', ['closed_by'], old='someone', new=''),
+            Diff('case-1', 'diff', ['external_id'], old='ext', new=''),
+            Diff('case-1', 'diff', ['name'], old='Zena', new='Xeenax'),
+            Diff('case-1', 'diff', ['opened_by'], old='someone', new=user),
+            Diff('case-1', 'diff', ['user_id'], old='person', new=user),
+            Diff('case-1', 'type', ['closed_on'], old=date1, new=None),
+        ])
+        self.do_migration(patch=True, diffs=[])
+        close2 = iso_string_to_datetime("2015-08-04T18:25:56.656Z")
+        case = self._get_case("case-1")
+        self.assertEqual(case.closed, True)         # patched
+        self.assertEqual(case.closed_by, "person")  # unpatched
+        self.assertEqual(case.closed_on, close2)    # unpatched
+        self.assertEqual(case.external_id, 'ext')   # patched, not sure how/why
+        self.assertEqual(case.name, "Zena")         # patched
+        self.assertEqual(case.opened_by, user)      # unpatched
+        self.assertEqual(case.user_id, "person")    # patched
+        self.assertNotEqual(case.server_modified_on,
+                            iso_string_to_datetime(date1))  # unpatched
+        form = self._get_form(case.xform_ids[-1])
+        diffs = json.loads(unescape(form.form_data["diff"]))
+        self.assertEqual(diffs, {
+            "case_id": "case-1",
+            "diffs": [
+                {"path": ["closed"], "old": True, "new": False, "patch": True},
+                {"path": ["closed_by"], "old": "someone", "new": "", "patch": False},
+                {"path": ["closed_on"], "old": date1, "new": None, "patch": False},
+                {"path": ["external_id"], "old": "ext", "new": "", "patch": False},
+                {"path": ["name"], "old": "Zena", "new": "Xeenax", "patch": True},
+                {"path": ["opened_by"], "old": "someone", "new": user, "patch": False},
+                {"path": ["user_id"], "old": "person", "new": user, "patch": True},
+            ],
+        })
 
     def test_patch_closed_case(self):
         from casexml.apps.case.cleanup import close_case

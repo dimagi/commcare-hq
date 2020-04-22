@@ -1,35 +1,41 @@
-from testil import assert_raises, eq
+import json
+from unittest.mock import patch
+from xml.sax.saxutils import unescape
+
+import attr
+from testil import eq
 
 from corehq.apps.tzmigration.timezonemigration import FormJsonDiff as Diff
 
+from .. import casediff
 from .. import casepatch as mod
 
 
-def test_cannot_patch_opened_by_alone():
+def test_patch_opened_by():
     diffs = [Diff("diff", ["opened_by"], "old", "new")]
-    with assert_raises(mod.CannotPatch):
-        mod.PatchCase(FakeCase(), diffs)
+    case = mod.PatchCase(FakeCase(), diffs)
+    check_diff_block(case, diffs)
 
 
-def test_cannot_patch_closed_by_alone():
+def test_patch_closed_by():
     diffs = [Diff("diff", ["closed_by"], "old", "new")]
-    with assert_raises(mod.CannotPatch):
-        mod.PatchCase(FakeCase(), diffs)
+    case = mod.PatchCase(FakeCase(), diffs)
+    check_diff_block(case, diffs)
 
 
-def test_cannot_patch_modified_by_alone():
+def test_patch_modified_by():
     diffs = [Diff("diff", ["modified_by"], "old", "new")]
-    with assert_raises(mod.CannotPatch):
-        mod.PatchCase(FakeCase(), diffs)
+    case = mod.PatchCase(FakeCase(), diffs)
+    check_diff_block(case, diffs)
 
 
-def test_cannot_patch_opened_by_with_xform_ids():
+def test_patch_opened_by_with_xform_ids():
     diffs = [
         Diff("diff", ["opened_by"], "old", "new"),
-        Diff("diff", ["xform_ids", "[*]"], "old", "new"),
+        Diff("set_mismatch", ["xform_ids", "[*]"], "old", "new"),
     ]
-    with assert_raises(mod.CannotPatch):
-        mod.PatchCase(FakeCase(), diffs)
+    case = mod.PatchCase(FakeCase(), diffs)
+    check_diff_block(case, diffs)
 
 
 def test_can_patch_opened_by_with_user_id():
@@ -39,8 +45,39 @@ def test_can_patch_opened_by_with_user_id():
     ]
     case = mod.PatchCase(FakeCase(), diffs)
     eq(case.dynamic_case_properties(), {})
+    check_diff_block(case, diffs)
+
+
+def check_diff_block(case, diffs):
+    form = FakeForm(mod.get_diff_block(case))
+    data = json.loads(unescape(form.form_data["diff"]))
+    eq(data["case_id"], case.case_id)
+    eq(data["diffs"], [mod.diff_to_json(y) for y in diffs])
+
+    nopatch = [d for d in diffs if not mod.is_patchable(d)]
+    if not any(d.path[0] == "xform_ids" for d in nopatch):
+        nopatch.append(Diff("set_mismatch", ["xform_ids", "[*]"], "old", "new"))
+    with patch.object(casediff, "get_sql_forms", lambda x, **k: [form]):
+        sep = "\n"
+        assert casediff.is_case_patched(case.case_id, nopatch), (
+            f"is_case_patched(case_id, diffs) -> False\n"
+            f"{sep.join(repr(d) for d in nopatch)}\n\n{form.diff_block}"
+        )
 
 
 class FakeCase:
     case_id = "fake"
     closed = False
+
+
+@attr.s
+class FakeForm:
+    diff_block = attr.ib()
+    xmlns = mod.PatchForm.xmlns
+
+    @property
+    def form_data(self):
+        xml = self.diff_block
+        assert xml.startswith("<diff>"), xml
+        assert xml.endswith("</diff>"), xml
+        return {"diff": xml[6:-7]}
