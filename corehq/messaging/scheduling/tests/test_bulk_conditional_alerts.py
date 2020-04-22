@@ -595,12 +595,26 @@ class TestBulkConditionalAlerts(TestCase):
 
         msgs = self._upload(data, headers)
 
-        self.assertEqual(len(msgs), 5)
-        self._assertPatternIn(r"Error updating rule with id \d+ in 'translated' sheet: "
-                              r"Missing message", msgs)
-        self.assertIn("Updated 0 rule(s) in 'translated' sheet", msgs)
-        self._assertPatternIn(r"Error updating rule with id \d+ in 'not translated' sheet: Missing message", msgs)
-        self.assertIn("Updated 0 rule(s) in 'not translated' sheet", msgs)
+        self.assertEqual(len(msgs), 2)
+        self.assertIn("Updated 2 rule(s) in 'translated' sheet", msgs)
+        daily_rule = self._get_rule(self.DAILY_RULE)
+        daily_content = daily_rule.get_schedule().memoized_events[0].content
+        self.assertEqual(daily_content.message, {
+            'en': '',
+            'es': 'Más Oxidado',
+        })
+        monthly_rule = self._get_rule(self.MONTHLY_RULE)
+        monthly_content = monthly_rule.get_schedule().memoized_events[0].content
+        self.assertEqual(monthly_content.message, {
+            'en': '',
+            'es': '',
+        })
+        self.assertIn("Updated 1 rule(s) in 'not translated' sheet", msgs)
+        untranslated_rule = self._get_rule(self.UNTRANSLATED_IMMEDIATE_RULE)
+        untranslated_content = untranslated_rule.get_schedule().memoized_events[0].content
+        self.assertEqual(untranslated_content.message, {
+            '*': '',
+        })
 
     @patch('corehq.messaging.scheduling.view_helpers.get_language_list')
     def test_partial_upload(self, language_list_patch):
