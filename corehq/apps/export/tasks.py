@@ -16,6 +16,7 @@ from corehq.apps.export.utils import get_export
 from corehq.apps.users.models import CouchUser
 from corehq.blobs import CODES, get_blob_db
 from corehq.celery_monitoring.signals import get_task_time_to_start
+from corehq.elastic import iter_es_docs_from_query
 from corehq.util.decorators import serial_task
 from corehq.util.files import TransientTempfile, safe_filename_header
 from corehq.util.metrics import metrics_counter, metrics_track_errors
@@ -29,17 +30,16 @@ from .dbaccessors import (
 )
 from .export import (
     ExportFile,
-    get_export_documents,
+    _get_export_query,
     get_export_file,
     get_export_writer,
     rebuild_export,
-    write_export_instance, _get_export_query,
+    write_export_instance,
 )
 from .filters import ServerModifiedOnRangeFilter
 from .models.incremental import IncrementalExport
 from .models.new import EmailExportWhenDoneRequest
 from .system_properties import MAIN_CASE_TABLE_PROPERTIES
-from ...elastic import iter_es_docs_from_query
 
 logger = logging.getLogger('export_migration')
 
@@ -241,17 +241,18 @@ def _generate_incremental_export(incremental_export):
     checkpoint = incremental_export.last_valid_checkpoint
     filters = []
     if checkpoint:
-        print(checkpoint.last_doc_date)
         filters.append(ServerModifiedOnRangeFilter(gt=checkpoint.last_doc_date))
 
     class LastDocTracker:
         def __init__(self, doc_iterator):
             self.doc_iterator = doc_iterator
             self.last_doc = None
+            self.doc_count = 0
 
         def __iter__(self):
             for doc in self.doc_iterator:
                 self.last_doc = doc
+                self.doc_count += 1
                 yield doc
 
     with TransientTempfile() as temp_path, metrics_track_errors('generate_incremental_exports'):
@@ -264,7 +265,7 @@ def _generate_incremental_export(incremental_export):
 
         export_file = ExportFile(writer.path, writer.format)
 
-        if not docs.last_doc:
+        if docs.doc_count <= 0:
             return
 
         new_checkpoint = incremental_export.checkpoint(docs.last_doc.get('_id'), docs.last_doc.get('server_modified_on'))
