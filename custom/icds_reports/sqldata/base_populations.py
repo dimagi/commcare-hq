@@ -18,10 +18,13 @@ class BasePopulation(ICDSMixin):
     @property
     def rows(self):
         if self.config['location_id']:
-            data = self.custom_data(selected_location=self.selected_location, domain=self.config['domain'])
+            location_id = self.config['location_id']
+            month = self.config['month']
+            location_type = self.selected_location.location_type.name
+            data = AggAwc.objects.get(f'{location_type}_id'=location_id, aggregation_level=self.aggregation_level, month=month).values('cases_person_all')
             return [
                 [
                     "Total Population of the project:",
-                    data['open_count']
+                    data['cases_person_all']
                 ]
             ]

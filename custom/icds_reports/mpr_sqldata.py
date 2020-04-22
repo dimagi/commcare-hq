@@ -3,6 +3,7 @@ from operator import mul, truediv, sub
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DataTablesColumnGroup
 
+from django.db.models.aggregates import Sum
 from django.utils.translation import ugettext as _
 from custom.icds_reports.sqldata.base_identification import BaseIdentification
 from custom.icds_reports.sqldata.base_operationalization import BaseOperationalization
@@ -99,6 +100,17 @@ class MPRBirthsAndDeaths(ICDSMixin, MPRData):
     @property
     def rows(self):
         if self.config['location_id']:
+            location_id = self.config['location_id']
+            month = self.config['month']
+            location_type = self.selected_location.location_type.name
+            data = AggChildHealth.objects.get(
+                f'{location_type}_id'=location_id,
+                aggregation_level=5, month=month
+            ).values('resident', 'sex').annotate(
+                birth=Sum('born_in_month'),
+                lbw=Sum('low_birth_weight_in_month')
+            )
+
             data = self.custom_data(selected_location=self.selected_location, domain=self.config['domain'])
             rows = []
             for row in self.row_config:

@@ -1,6 +1,8 @@
-from custom.icds_reports.utils import ICDSMixin
 from corehq.apps.reports.datatables import DataTablesColumn
 from corehq.apps.reports.datatables import DataTablesHeader
+
+from custom.icds_reports.models.aggregate import AggAwc
+from custom.icds_reports.utils import ICDSMixin
 
 
 class BaseOperationalization(ICDSMixin):
@@ -20,13 +22,16 @@ class BaseOperationalization(ICDSMixin):
     @property
     def rows(self):
         if self.config['location_id']:
-            data = self.custom_data(selected_location=self.selected_location, domain=self.config['domain'])
+            location_id = self.config['location_id']
+            month = self.config['month']
+            location_type = self.selected_location.location_type.name
+            data = AggAwc.objects.get(f'{location_type}_id'=location_id, aggregation_level=self.aggregation_level, month=month).values('awc_num_open')
             return [
                 [
                     'No. of AWCs',
                     self.awc_number,
-                    data['owner_id'],
-                    data['owner_id']
+                    data['awc_num_open'],
+                    data['awc_num_open']
                 ],
                 [
                     'No. of Mini AWCs',

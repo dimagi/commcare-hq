@@ -156,6 +156,12 @@ class ICDSMixin(object):
 
     @property
     @memoized
+    def aggregation_level(self):
+        if self.selected_location:
+            return LOCATION_TYPES.index(selected_location.location_type.name) + 1
+
+    @property
+    @memoized
     def awc(self):
         if self.config['location_id']:
             return self.selected_location.get_descendants(include_self=True).filter(
