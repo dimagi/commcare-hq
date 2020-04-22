@@ -259,6 +259,7 @@ def _generate_incremental_export(incremental_export):
         writer = get_export_writer([export_instance], temp_path, allow_pagination=False)
         with writer.open([export_instance]):
             query = _get_export_query(export_instance, filters)
+            # TODO: for some reason this sorting doesn't always seem to work in tests
             query = query.sort('server_modified_on')  # reset sort to this instead of opened_on
             docs = LastDocTracker(iter_es_docs_from_query(query))
             write_export_instance(writer, export_instance, docs)
