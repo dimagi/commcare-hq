@@ -212,7 +212,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
     init();
 
     vm.disallowNational = function () {
-        return vm.isChildBeneficiaryListSelected();
+        return vm.isChildBeneficiaryListSelected() || vm.isChildGrowthSelected();
     };
 
     vm.getPlaceholder = function (locationTypes) {
@@ -441,9 +441,10 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
 
     vm.hasErrors = function () {
         var beneficiaryListErrors = vm.isChildBeneficiaryListSelected() && (vm.selectedFilterOptions().length === 0 || !vm.isDistrictOrBelowSelected());
+        var growthListErrors = vm.isChildGrowthSelected() && (vm.selectedFilterOptions().length === 0 || !vm.isDistrictOrBelowSelected());
         var incentiveReportErrors = vm.isIncentiveReportSelected() && !vm.isStateSelected();
         var ladySupervisorReportErrors = vm.isLadySupervisorSelected() && !vm.isStateSelected();
-        return beneficiaryListErrors || incentiveReportErrors || ladySupervisorReportErrors;
+        return beneficiaryListErrors || incentiveReportErrors || ladySupervisorReportErrors || growthListErrors;
     };
 
     vm.isCombinedPDFSelected = function () {
@@ -503,6 +504,10 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
 
     vm.isDashboardUsageSelected = function () {
         return vm.selectedIndicator === 11;
+    };
+
+    vm.isChildGrowthSelected = function () {
+        return vm.selectedIndicator === 13;
     };
 
     vm.isSupervisorOrBelowSelected = function () {
