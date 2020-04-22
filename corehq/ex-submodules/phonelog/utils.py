@@ -200,7 +200,7 @@ class SumoLogicLog(object):
         https://docs.google.com/document/d/18sSwv2GRGepOIHthC6lxQAh_aUYgDcTou6w9jL2976o/edit#bookmark=id.ao4j7x5tjvt7
         """
         environment = 'test-env'
-        if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS:
+        if settings.IS_ICDS_ENV:
             environment = 'cas'
         if settings.SERVER_ENVIRONMENT == 'india':
             environment = 'india'

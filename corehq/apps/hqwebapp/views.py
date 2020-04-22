@@ -400,7 +400,7 @@ def _login(req, domain_name, custom_login_page, extra_context=None):
         context.update({
             'current_page': {'page_name': _('Welcome back to %s!') % commcare_hq_name},
         })
-    if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS:
+    if settings.IS_ICDS_ENV:
         auth_view = CloudCareLoginView
     else:
         auth_view = HQLoginView if not domain_name else CloudCareLoginView
@@ -423,7 +423,7 @@ def _login(req, domain_name, custom_login_page, extra_context=None):
 def login(req):
     # This is a wrapper around the _login view
 
-    if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS:
+    if settings.IS_ICDS_ENV:
         login_url = reverse('domain_login', kwargs={'domain': 'icds-cas'})
         return HttpResponseRedirect(login_url)
 
@@ -713,8 +713,7 @@ class BugReportView(View):
             email.attach(filename=filename, content=content)
 
         # only fake the from email if it's an @dimagi.com account
-        is_icds_env = settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS
-        if re.search(r'@dimagi\.com$', report['username']) and not is_icds_env:
+        if re.search(r'@dimagi\.com$', report['username']) and not settings.IS_ICDS_ENV:
             email.from_email = report['username']
         else:
             email.from_email = settings.SUPPORT_EMAIL

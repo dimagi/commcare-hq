@@ -308,7 +308,7 @@ class MessageLogReport(BaseCommConnectLogReport):
 
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
-        return settings.SERVER_ENVIRONMENT not in settings.ICDS_ENVS
+        return not settings.IS_ICDS_ENV
 
     def get_message_type_filter(self):
         filtered_types = MessageTypeFilter.get_value(self.request, self.domain)
@@ -636,7 +636,7 @@ class MessagingEventsReport(BaseMessagingEventReport):
 
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
-        return settings.SERVER_ENVIRONMENT not in settings.ICDS_ENVS
+        return not settings.IS_ICDS_ENV
 
     @property
     def headers(self):

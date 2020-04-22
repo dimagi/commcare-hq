@@ -205,7 +205,7 @@ def from_demo_user(form_json):
 # Form-submissions with request.GET['submit_mode'] as 'demo' are ignored, if not from demo-user
 DEMO_SUBMIT_MODE = 'demo'
 
-IGNORE_ALL_DEMO_USER_SUBMISSIONS = settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS
+IGNORE_ALL_DEMO_USER_SUBMISSIONS = settings.IS_ICDS_ENV
 
 
 def _submitted_by_demo_user(form_meta, domain):

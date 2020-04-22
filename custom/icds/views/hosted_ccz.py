@@ -219,7 +219,7 @@ class HostedCCZView(DomainViewMixin, TemplateView):
             'page_title': self._page_title,
             'hosted_cczs': [h.to_json() for h in HostedCCZ.objects.filter(link=self.hosted_ccz_link)
                             if h.utility.file_exists()],
-            'icds_env': settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS,
+            'icds_env': settings.IS_ICDS_ENV,
             'supporting_files': self._get_supporting_files(),
             'footer_files': self._get_files_for(DISPLAY_CHOICE_FOOTER),
         }

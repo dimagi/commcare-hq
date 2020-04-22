@@ -101,7 +101,7 @@ def use_phone_entries():
     Phone entries are not used in ICDS because they're not needed and
     it helps performance to avoid keeping them up to date.
     """
-    return settings.SERVER_ENVIRONMENT not in settings.ICDS_ENVS
+    return not settings.IS_ICDS_ENV
 
 
 def show_messaging_dashboard(domain, couch_user):
