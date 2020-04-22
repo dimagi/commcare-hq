@@ -229,7 +229,7 @@ def generate_incremental_exports():
 
 @task
 def process_incremental_export(incremental_export_id):
-    incremental_export = IncrementalExport.objects.get(incremental_export_id)
+    incremental_export = IncrementalExport.objects.get(id=incremental_export_id)
     checkpoint = _generate_incremental_export(incremental_export)
     if checkpoint:
         _send_incremental_export(incremental_export, checkpoint)
