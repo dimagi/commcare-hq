@@ -15,11 +15,9 @@ window.angular.module('icdsApp').factory('dateHelperService', ['$location', func
 
         var selectedDate = new Date(selectedYear, selectedMonth - 1, currentDate.getDate());
 
-        if (isBetweenFirstAndThirdDayOfCurrentMonth(selectedDate)) {
-            selectedDate = getPreviousMonthDate();
-            $location.search()['month'] ? $location.search('month', selectedDate.getMonth() + 1) : void(0);
-            $location.search()['year'] ? $location.search('year', selectedDate.getFullYear()) : void(0);
-        }
+        selectedDate = checkAndGetValidDate(selectedDate);
+        $location.search()['month'] ? $location.search('month', selectedDate.getMonth() + 1) : void(0);
+        $location.search()['year'] ? $location.search('year', selectedDate.getFullYear()) : void(0);
         return selectedDate;
     }
     function getSelectedMonth() {
@@ -109,9 +107,12 @@ window.angular.module('icdsApp').factory('dateHelperService', ['$location', func
         return (date < new Date(currentDate.getFullYear(), currentDate.getMonth(), 3)) &&
             (date >= new Date(currentDate.getFullYear(), currentDate.getMonth(), 1));
     }
-    function getPreviousMonthDate() {
+    function checkAndGetValidDate(date) {
         var currentDate = new Date();
-        return new Date(currentDate.getFullYear(), (currentDate.getMonth() - 1));
+        if (isBetweenFirstAndThirdDayOfCurrentMonth(date)) {
+            return new Date(currentDate.getFullYear(), (currentDate.getMonth() - 1));
+        }
+        return date;
     }
     return {
         getSelectedMonth: getSelectedMonth,
@@ -123,8 +124,7 @@ window.angular.module('icdsApp').factory('dateHelperService', ['$location', func
         getStartingYear: getStartingYear,
         getStartingMonth: getStartingMonth,
         getReportStartDates: getReportStartDates,
-        isBetweenFirstAndThirdDayOfCurrentMonth: isBetweenFirstAndThirdDayOfCurrentMonth,
-        getPreviousMonthDate: getPreviousMonthDate,
         getValidSelectedDate: getValidSelectedDate,
+        checkAndGetValidDate: checkAndGetValidDate,
     };
 }]);

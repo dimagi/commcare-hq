@@ -14,8 +14,7 @@ function MonthModalController($location, $uibModalInstance, dateHelperService) {
     var startYear = dateHelperService.getStartingYear(isSDD);
 
     var currentDate = new Date();
-    var maxYear = dateHelperService.isBetweenFirstAndThirdDayOfCurrentMonth(currentDate) ?
-        dateHelperService.getPreviousMonthDate().getFullYear() : currentDate.getFullYear();
+    var maxYear = dateHelperService.checkAndGetValidDate(currentDate).getFullYear();
 
     window.angular.forEach(moment.months(), function (key, value) {
         vm.monthsCopy.push({
@@ -84,19 +83,12 @@ function MonthFilterController($scope, $location, $uibModal, storageService, dat
     var isSDD =  $location.path().indexOf('service_delivery_dashboard') !== -1;
     vm.startYear = dateHelperService.getStartingYear(isSDD);
     vm.startMonth = dateHelperService.getStartingMonth(isSDD);
-    if (dateHelperService.isBetweenFirstAndThirdDayOfCurrentMonth(new Date())) {
-        var previousMonthDate = dateHelperService.getPreviousMonthDate();
-        vm.maxMonth = previousMonthDate.getMonth() + 1;
-        vm.maxYear = previousMonthDate.getFullYear();
-    } else {
-        vm.maxMonth = new Date().getMonth() + 1;
-        vm.maxYear = new Date().getFullYear();
-    }
+    vm.maxMonth = dateHelperService.checkAndGetValidDate(new Date()).getMonth() + 1;
+    vm.maxYear = dateHelperService.checkAndGetValidDate(new Date()).getFullYear();
 
     vm.selectedDate = dateHelperService.getSelectedDate();
     if (isSDD && vm.selectedDate < dateHelperService.getReportStartDates()['sdd']) {
-        vm.selectedDate = dateHelperService.isBetweenFirstAndThirdDayOfCurrentMonth(new Date()) ?
-            dateHelperService.getPreviousMonthDate() : new Date();
+        vm.selectedDate = dateHelperService.checkAndGetValidDate(new Date());
     }
     vm.currentYear = new Date().getFullYear();
     vm.getPlaceholder = function () {
@@ -140,12 +132,7 @@ function MonthFilterController($scope, $location, $uibModal, storageService, dat
 
     $scope.$on('reset_filter_data', function () {
         $scope.$broadcast('reset_date',{});
-        var currentDate = new Date();
-        if (dateHelperService.isBetweenFirstAndThirdDayOfCurrentMonth(currentDate)) {
-            vm.selectedDate = dateHelperService.getPreviousMonthDate();
-        } else {
-            vm.selectedDate = currentDate;
-        }
+        vm.selectedDate = dateHelperService.checkAndGetValidDate(new Date());
     });
     // end mobile only helpers
 
