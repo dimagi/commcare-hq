@@ -103,7 +103,10 @@ class TempPrevIntermediateTables(TempPrevTablesBase):
         ('birth-preparedness-forms', 'icds_dashboard_ccs_record_bp_forms', 'static-ccs_record_cases'),
         ('postnatal-care-forms-ccs-record', 'icds_dashboard_ccs_record_postnatal_forms', 'static-ccs_record_cases'),
         ('complementary-forms-ccs-record', 'icds_dashboard_ccs_record_cf_forms', 'static-ccs_record_cases'),
-        ('complementary-forms', 'icds_dashboard_comp_feed_form', 'static-child_health_cases')
+        ('complementary-forms', 'icds_dashboard_comp_feed_form', 'static-child_health_cases'),
+        ('migration-forms', 'icds_dashboard_migration_forms', 'static-migration_form'),
+        ('availing_service-forms', 'icds_dashboard_availing_service_forms', 'static-availing_service_form'),
+        ('adolescent-girls', 'icds_dashboard_adolescent_girls_registration', 'static-adolescent_girls_reg_form'),
     ]
 
     def create_temp_tables(self, table, day):
