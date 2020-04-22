@@ -3,13 +3,13 @@ from datetime import timedelta
 
 from django import forms
 from django.urls import reverse
-from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy
 
 import dateutil
+from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
-from crispy_forms.layout import Layout
+from crispy_forms.helper import FormHelper
 
 from dimagi.utils.dates import DateSpan
 
@@ -26,6 +26,7 @@ from corehq.apps.export.filters import (
     SmsReceivedRangeFilter,
     UserTypeFilter,
 )
+from corehq.apps.export.models import IncrementalExport
 from corehq.apps.export.models.new import (
     CaseExportInstance,
     CaseExportInstanceFilters,
@@ -219,7 +220,7 @@ class BaseFilterExportDownloadForm(forms.Form):
         self.helper = HQFormHelper()
         self.helper.form_tag = False
 
-        self.helper.layout = Layout(
+        self.helper.layout = crispy.Layout(
             *self.extra_fields
         )
 
@@ -339,7 +340,7 @@ class DashboardFeedFilterForm(forms.Form):
 
         self.helper = HQModalFormHelper()
         self.helper.form_tag = False
-        self.helper.layout = Layout(*self.layout_fields)
+        self.helper.layout = crispy.Layout(*self.layout_fields)
 
     def clean(self):
         cleaned_data = super(DashboardFeedFilterForm, self).clean()
@@ -1076,3 +1077,85 @@ class FilterSmsESExportDownloadForm(BaseFilterExportDownloadForm):
                 data_bind='value: dateRange',
             ),
         ]
+
+
+class IncrementalExportForm(forms.ModelForm):
+    # export_instance_id defined in __init__ to populate choices from request
+    active = forms.BooleanField(
+        label=_('Active'),
+        help_text=_('This export is enabled'),
+        required=False,
+        initial=True,
+    )
+
+    class Meta:
+        model = IncrementalExport
+        fields = [
+            'name',
+            'export_instance_id',
+            'connection_settings',
+            'active',
+        ]
+
+    def __init__(self, *args, request, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.domain = request.domain  # Passed by ``FormSet.form_kwargs``
+        self.fields['export_instance_id'] = forms.ChoiceField(
+            label=_('Case Data Export'),
+            choices=_get_case_data_export_choices(request),
+        )
+
+    def save(self, commit=True):
+        self.instance.domain = self.domain
+        return super().save(commit)
+
+
+class BaseIncrementalExportFormSet(forms.BaseModelFormSet):
+
+    def __init__(self, *args, request, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.form_kwargs['request'] = request  # Passed by ``FormView.get_form_kwargs()``
+
+
+IncrementalExportFormSet = forms.modelformset_factory(
+    model=IncrementalExport,
+    form=IncrementalExportForm,
+    formset=BaseIncrementalExportFormSet,
+    extra=1,
+    can_delete=True,
+)
+
+
+class IncrementalExportFormSetHelper(FormHelper):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.form_class = 'form-horizontal'
+        self.label_class = 'col-sm-3 col-md-2'
+        self.field_class = 'col-sm-9 col-md-8 col-lg-6'
+        self.layout = crispy.Layout(
+            crispy.Fieldset(
+                _('Incremental Export'),
+                crispy.Field('name'),
+                crispy.Field('export_instance_id'),
+                crispy.Field('connection_settings'),
+                twbscrispy.PrependedText('active', ''),
+
+                twbscrispy.PrependedText(
+                    'DELETE', '',
+                    wrapper_class='alert alert-warning'
+                ),
+            ),
+        )
+        self.add_input(
+            crispy.Submit('submit', _('Save'))
+        )
+        self.render_required_fields = True
+
+
+def _get_case_data_export_choices(request):
+    from corehq.apps.export.views.list import CaseExportListHelper
+
+    list_helper = CaseExportListHelper(request)
+    exports = list_helper.get_saved_exports()
+    return [(exp['_id'], exp['name']) for exp in exports]
