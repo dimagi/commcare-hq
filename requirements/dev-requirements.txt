@@ -137,7 +137,7 @@ prometheus-client==0.7.1
 prompt-toolkit==1.0.18    # via ipython
 psutil==5.7.0
 psycogreen==1.0.1
-psycopg2==2.8.5
+psycopg2==2.7.7
 ptyprocess==0.6.0         # via pexpect
 py-kissmetrics==1.0.1
 pycco==0.5.1

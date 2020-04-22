@@ -103,7 +103,7 @@ ply==3.11                 # via eulxml, jsonpath-rw
 polib==1.1.0
 prometheus-client==0.7.1
 psycogreen==1.0.1
-psycopg2==2.8.5
+psycopg2==2.7.7
 py-kissmetrics==1.0.1
 pycco==0.5.1
 pycparser==2.19           # via cffi
