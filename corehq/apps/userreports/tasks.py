@@ -391,7 +391,7 @@ def build_async_indicators(indicator_doc_ids):
             adapter_by_config[config._id] = adapter
             return adapter
 
-    def _metrics_timer(self, step, config_id=None):
+    def _metrics_timer(step, config_id=None):
         tags = {
             'action': step,
         }
@@ -435,8 +435,8 @@ def build_async_indicators(indicator_doc_ids):
             for doc in doc_store.iter_documents(list(indicator_by_doc_id.keys())):
                 indicator = indicator_by_doc_id[doc['_id']]
                 eval_context = EvaluationContext(doc)
-                with _metrics_timer('transform'):
-                    for config_id in indicator.indicator_config_ids:
+                for config_id in indicator.indicator_config_ids:
+                    with _metrics_timer('transform', config_id):
                         config_ids.add(config_id)
                         try:
                             config = _get_config(config_id)
