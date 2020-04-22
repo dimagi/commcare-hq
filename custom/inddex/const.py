@@ -14,3 +14,41 @@ AGE_RANGES = [
     AgeRange("50-64 years", 'lt65years', 'age_years_calculated', 0, 65),
     AgeRange("65+ years", 'gte65years', 'age_years_calculated', 65, 200),
 ]
+
+
+class FctGaps:
+    slug = 'fct'
+    name = "Food Composition Table"
+    AVAILABLE = 1
+    BASE_TERM = 2
+    REFERENCE = 3
+    INGREDIENT_GAPS = 7
+    NOT_AVAILABLE = 8
+    DESCRIPTIONS = {
+        AVAILABLE: "fct data available",
+        BASE_TERM: "using fct data from base term food code",
+        REFERENCE: "using fct data from reference food code",
+        INGREDIENT_GAPS: "ingredients contain fct data gaps",
+        NOT_AVAILABLE: "no fct data available",
+    }
+
+    @classmethod
+    def get_description(self, code):
+        return f"{code} - {self.DESCRIPTIONS[code]}"
+
+
+class ConvFactorGaps:
+    slug = 'conv_factor'
+    name = "Conversion Factor"
+    AVAILABLE = 1
+    BASE_TERM = 2
+    NOT_AVAILABLE = 8
+    DESCRIPTIONS = {
+        AVAILABLE: "conversion factor available",
+        BASE_TERM: "using conversion factor from base term food code",
+        NOT_AVAILABLE: "no conversion factor available",
+    }
+
+    @classmethod
+    def get_description(self, code):
+        return f"{code} - {self.DESCRIPTIONS[code]}"

@@ -32,6 +32,7 @@ from .agg_service_delivery_report import AggServiceDeliveryReportHelper
 from .migration_forms import MigrationFormsAggregationDistributedHelper
 from .bihar_api_demographics import BiharApiDemographicsHelper
 from .availing_service_forms import AvailingServiceFormsAggregationDistributedHelper
+from .child_vaccine_helper import ChildVaccineHelper
 
 __all__ = (
     'AggAwcDistributedHelper',
@@ -69,5 +70,6 @@ __all__ = (
     'AggGovDashboardHelper',
     'AggServiceDeliveryReportHelper',
     'MigrationFormsAggregationDistributedHelper',
-    'BiharApiDemographicsHelper'
+    'BiharApiDemographicsHelper',
+    'ChildVaccineHelper'
 )
