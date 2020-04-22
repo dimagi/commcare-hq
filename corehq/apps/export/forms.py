@@ -1080,7 +1080,7 @@ class FilterSmsESExportDownloadForm(BaseFilterExportDownloadForm):
 
 
 class IncrementalExportForm(forms.ModelForm):
-    # TODO: Get export instances to populate export_instance_id dropdown
+    # export_instance_id defined in __init__ to populate choices from request
     active = forms.BooleanField(
         label=_('Active'),
         help_text=_('This export is enabled'),
@@ -1097,9 +1097,13 @@ class IncrementalExportForm(forms.ModelForm):
             'active',
         ]
 
-    def __init__(self, *args, domain, **kwargs):
-        self.domain = domain  # Passed by ``FormSet.form_kwargs``
+    def __init__(self, *args, request, **kwargs):
         super().__init__(*args, **kwargs)
+        self.domain = request.domain  # Passed by ``FormSet.form_kwargs``
+        self.fields['export_instance_id'] = forms.ChoiceField(
+            label=_('Case Data Export'),
+            choices=_get_case_data_export_choices(request),
+        )
 
     def save(self, commit=True):
         self.instance.domain = self.domain
@@ -1108,10 +1112,9 @@ class IncrementalExportForm(forms.ModelForm):
 
 class BaseIncrementalExportFormSet(forms.BaseModelFormSet):
 
-    def __init__(self, *args, domain, **kwargs):
+    def __init__(self, *args, request, **kwargs):
         super().__init__(*args, **kwargs)
-        self.domain = domain
-        self.form_kwargs['domain'] = domain  # Passed by ``FormView.get_form_kwargs()``
+        self.form_kwargs['request'] = request  # Passed by ``FormView.get_form_kwargs()``
 
 
 IncrementalExportFormSet = forms.modelformset_factory(
@@ -1148,3 +1151,11 @@ class IncrementalExportFormSetHelper(FormHelper):
             crispy.Submit('submit', _('Save'))
         )
         self.render_required_fields = True
+
+
+def _get_case_data_export_choices(request):
+    from corehq.apps.export.views.list import CaseExportListHelper
+
+    list_helper = CaseExportListHelper(request)
+    exports = list_helper.get_saved_exports()
+    return [(exp['_id'], exp['name']) for exp in exports]

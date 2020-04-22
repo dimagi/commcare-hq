@@ -17,10 +17,11 @@ class IncrementalExportView(BaseProjectDataView, FormView):
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        # BaseIncrementalExportFormSet needs domain to add to its
-        # form_kwargs. IncrementalExportForm needs it to set
+        # BaseIncrementalExportFormSet needs request to add to its
+        # form_kwargs. IncrementalExportForm needs it to populate the
+        # case export instance select box, and to set
         # IncrementalExport.domain when the model instance is saved.
-        kwargs['domain'] = self.domain
+        kwargs['request'] = self.request
         return kwargs
 
     def get_context_data(self, **kwargs):
