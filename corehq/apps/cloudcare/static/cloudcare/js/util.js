@@ -34,6 +34,13 @@ hqDefine('cloudcare/js/util', function () {
         _show(message, $el, null, "alert alert-danger");
     };
 
+    var showWarning = function (message, $el) {
+        if (message === undefined) {
+            return;
+        }
+        _show(message, $el, 5000, "alert alert-warning");
+    }
+
     var showHTMLError = function (message, $el, autoHideTime) {
         message = message || gettext("Sorry, an error occurred while processing that request.");
         _show(message, $el, autoHideTime, "", true);
@@ -118,6 +125,7 @@ hqDefine('cloudcare/js/util', function () {
         getFormUrl: getFormUrl,
         getSubmitUrl: getSubmitUrl,
         showError: showError,
+	showWarning: showWarning,
         showHTMLError: showHTMLError,
         showSuccess: showSuccess,
         clearUserDataComplete: clearUserDataComplete,
