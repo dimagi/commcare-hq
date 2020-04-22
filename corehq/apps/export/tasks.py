@@ -277,9 +277,9 @@ def _generate_incremental_export(incremental_export):
                 file_,
                 domain=incremental_export.domain,
                 parent_id=new_checkpoint.id,
-                type_code=CODES.data_export,  # TODO: should this be a new code?
+                type_code=CODES.incremental_data_export,
                 key=str(new_checkpoint.blob_key),
-                # timeout=expiry, should these expire?
+                timeout=24 * 60
             )
     return new_checkpoint
 
