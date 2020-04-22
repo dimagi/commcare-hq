@@ -9,7 +9,6 @@ from django.utils.translation import ugettext_lazy
 import dateutil
 from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
-from crispy_forms.helper import FormHelper
 
 from dimagi.utils.dates import DateSpan
 
@@ -1126,7 +1125,7 @@ IncrementalExportFormSet = forms.modelformset_factory(
 )
 
 
-class IncrementalExportFormSetHelper(FormHelper):
+class IncrementalExportFormSetHelper(HQFormHelper):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
