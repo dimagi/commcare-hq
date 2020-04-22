@@ -25,10 +25,10 @@ class Command(BaseCommand):
         print(f"==========={len(users)} Web Users======\n")
         usernames = []
         for user in users:
-            if ((len(user.assigned_location_ids)==0 or 'cpmu' in user.username.tolower() ) and user.has_permission('icds-cas', 'access_all_locations')):
+            if ((len(user.assigned_location_ids)==0 or 'cpmu' in user.username.lower() ) and user.has_permission('icds-cas', 'access_all_locations')):
                 usernames.append(user.username)
         for user in web_users:
-            if ((len(user.assigned_location_ids)==0 or 'cpmu' in user.username.tolower() ) and user.has_permission('icds-cas', 'access_all_locations')):
+            if ((len(user.assigned_location_ids)==0 or 'cpmu' in user.username.lower() ) and user.has_permission('icds-cas', 'access_all_locations')):
                 usernames.append(user.username)
         usernames = list(set(usernames))
         print(f"==========={len(usernames)} Unique national users======\n")
