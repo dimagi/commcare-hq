@@ -1,8 +1,5 @@
 {
   "domains": [
-    "icds-cas",
-    "icds-cas-sandbox",
-    "cas-lab",
     "icds-dashboard-qa",
     "sankalp_cas",
     "zohaib-sandbox",
@@ -17,16 +14,21 @@
     "aparatest",
     "reach-sandbox",
     "reach-dashboard-qa",
-    "reach-test"
+    "reach-test",
+    "icds-test",
+    "icds-sql",
+    "icds-cas",
+    "cas-lab",
+    "icds-cas-sandbox"
   ],
   "server_environment": [
     "india",
     "icds"
   ],
-  "report_id": "static-mpr_3i_pregnancies",
+  "report_id": "static-mpr_v2_1_person_cases",
   "data_source_table": "static-person_cases_v3",
   "config": {
-    "title": "MPR 3i - Pregnancies Registered (Static)",
+    "title": "UCR V2 - MPR - 1 - Person cases",
     "description": "",
     "visible": false,
     "aggregation_columns": [
@@ -35,11 +37,13 @@
     ],
     "filters": [
       {
-        "display": "Date Case Opened",
+        "compare_as_string": false,
+        "display": "Opened on",
         "slug": "opened_on",
         "type": "date",
         "field": "opened_on",
-        "datatype": "date"
+        "datatype": "date",
+        "required": false
       },
       {
         "display": "Filter by AWW",
@@ -50,9 +54,11 @@
           "type": "location"
         },
         "ancestor_expression": {
-            "field": "supervisor_id",
-            "location_type": "supervisor"
-        }
+          "field": "supervisor_id",
+          "location_type": "supervisor"
+        },
+        "datatype": "string",
+        "show_all": true
       },
       {
         "display": "Filter by Supervisor",
@@ -61,7 +67,10 @@
         "field": "supervisor_id",
         "choice_provider": {
           "type": "location"
-        }
+        },
+        "datatype": "string",
+        "show_all": true,
+        "ancestor_expression": {}
       },
       {
         "display": "Filter by Block",
@@ -70,7 +79,10 @@
         "field": "block_id",
         "choice_provider": {
           "type": "location"
-        }
+        },
+        "datatype": "string",
+        "show_all": true,
+        "ancestor_expression": {}
       },
       {
         "display": "Filter by District",
@@ -79,7 +91,10 @@
         "field": "district_id",
         "choice_provider": {
           "type": "location"
-        }
+        },
+        "datatype": "string",
+        "show_all": true,
+        "ancestor_expression": {}
       },
       {
         "display": "Filter by State",
@@ -88,10 +103,40 @@
         "field": "state_id",
         "choice_provider": {
           "type": "location"
-        }
+        },
+        "datatype": "string",
+        "show_all": true,
+        "ancestor_expression": {}
+      },
+      {
+        "required": false,
+        "type": "numeric",
+        "slug": "migration_status",
+        "field": "migration_status",
+        "display": "Whether Migrated",
+        "datatype": "integer"
+      },
+      {
+        "required": false,
+        "type": "numeric",
+        "slug": "registered_status",
+        "field": "registered_status",
+        "display": "Whether Availing Services",
+        "datatype": "integer"
       }
     ],
     "columns": [
+      {
+        "display": "Month",
+        "column_id": "month",
+        "type": "aggregate_date",
+        "field": "opened_on",
+        "format": "%Y-%m",
+        "transform": {},
+        "calculate_total": false,
+        "description": null,
+        "visible": true
+      },
       {
         "display": {
           "en": "Owner",
@@ -104,36 +149,32 @@
         "transform": {
           "type": "custom",
           "custom_type": "owner_display"
-        }
+        },
+        "format": "default",
+        "sortable": false,
+        "width": null,
+        "css_class": null,
+        "calculate_total": false,
+        "description": null,
+        "visible": true
       },
       {
-        "display": "Month",
-        "column_id": "month",
-        "type": "aggregate_date",
-        "field": "opened_on",
-        "format": "%Y-%m"
-      },
-      {
-        "display": "pregnant_resident_count",
-        "column_id": "pregnant_resident_count",
+        "display": "open_count",
+        "column_id": "open_count",
         "type": "sum_when_template",
         "calculate_total": true,
-        "whens": [{
-          "type": "open_pregnant_resident",
-          "binds": [],
-          "then": 1
-        }]
-      },
-      {
-        "display": "pregnant_migrant_count",
-        "column_id": "pregnant_migrant_count",
-        "type": "sum_when_template",
-        "calculate_total": true,
-        "whens": [{
-          "type": "open_pregnant_migrant",
-          "binds": [],
-          "then": 1
-        }]
+        "whens": [
+          {
+            "type": "closed_on_null",
+            "binds": [],
+            "then": 1
+          }
+        ],
+        "else_": 0,
+        "sortable": false,
+        "transform": {},
+        "description": null,
+        "visible": true
       }
     ],
     "sort_expression": [],
