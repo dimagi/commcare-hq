@@ -50,7 +50,7 @@ trunk: master
 name: autostaging
 branches:
   - vellum-staging  # DO NOT REMOVE this is similar to "autostaging", but for vellum
-  - jls/migrate-DefaultConsumption-3 # Jenny March 6
+  #- jls/migrate-DefaultConsumption-3 # Jenny March 6
   #- jls/use-textinput # Jenny March 10
   - mk/location-reassignment-13 # MK April 17
   - mk/location-reassignment-11-followup
