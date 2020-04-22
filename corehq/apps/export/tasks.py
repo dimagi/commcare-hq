@@ -3,20 +3,19 @@ from datetime import datetime, timedelta
 
 from django.conf import settings
 
-from celery.schedules import crontab
-from celery.task import periodic_task, task
-
-from corehq.apps.export.exceptions import RejectedStaleExport
-from corehq.celery_monitoring.signals import get_task_time_to_start
 from couchexport.models import Format
 from soil import DownloadBase
 from soil.progress import get_task_status
 from soil.util import expose_blob_download, process_email_request
 
+from celery.schedules import crontab
+from celery.task import periodic_task, task
 from corehq.apps.data_dictionary.util import add_properties_to_data_dictionary
+from corehq.apps.export.exceptions import RejectedStaleExport
 from corehq.apps.export.utils import get_export
 from corehq.apps.users.models import CouchUser
 from corehq.blobs import CODES, get_blob_db
+from corehq.celery_monitoring.signals import get_task_time_to_start
 from corehq.util.decorators import serial_task
 from corehq.util.files import TransientTempfile, safe_filename_header
 from corehq.util.metrics import metrics_counter, metrics_track_errors
@@ -28,9 +27,19 @@ from .dbaccessors import (
     get_daily_saved_export_ids_for_auto_rebuild,
     get_properly_wrapped_export_instance,
 )
-from .export import get_export_file, rebuild_export
+from .export import (
+    ExportFile,
+    get_export_documents,
+    get_export_file,
+    get_export_writer,
+    rebuild_export,
+    write_export_instance, _get_export_query,
+)
+from .filters import ServerModifiedOnRangeFilter
+from .models.incremental import IncrementalExport
 from .models.new import EmailExportWhenDoneRequest
 from .system_properties import MAIN_CASE_TABLE_PROPERTIES
+from ...elastic import iter_es_docs_from_query
 
 logger = logging.getLogger('export_migration')
 
@@ -208,3 +217,80 @@ def generate_schema_for_all_builds(self, schema_cls, domain, app_id, identifier)
         only_process_current_builds=False,
         task=self,
     )
+
+
+@periodic_task(run_every='hourly', queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
+def generate_incremental_exports():
+    incremental_exports = IncrementalExport.objects.filter(active=True)
+    for incremental_export in incremental_exports:
+        process_incremental_export.delay(incremental_export.id)
+
+
+@task
+def process_incremental_export(incremental_export_id):
+    incremental_export = IncrementalExport.objects.get(incremental_export_id)
+    checkpoint = _generate_incremental_export(incremental_export)
+    if checkpoint:
+        _send_incremental_export(incremental_export, checkpoint)
+
+
+def _generate_incremental_export(incremental_export):
+    export_instance = incremental_export.export_instance
+    export_instance.export_format = Format.UNZIPPED_CSV  # force to unzipped CSV
+    checkpoint = incremental_export.last_valid_checkpoint
+    filters = []
+    if checkpoint:
+        print(checkpoint.last_doc_date)
+        filters.append(ServerModifiedOnRangeFilter(gt=checkpoint.last_doc_date))
+
+    class LastDocTracker:
+        def __init__(self, doc_iterator):
+            self.doc_iterator = doc_iterator
+            self.last_doc = None
+
+        def __iter__(self):
+            for doc in self.doc_iterator:
+                self.last_doc = doc
+                yield doc
+
+    with TransientTempfile() as temp_path, metrics_track_errors('generate_incremental_exports'):
+        writer = get_export_writer([export_instance], temp_path, allow_pagination=False)
+        with writer.open([export_instance]):
+            query = _get_export_query(export_instance, filters)
+            query.sort('server_modified_on')  # reset sort to this instead of opened_on
+            docs = LastDocTracker(iter_es_docs_from_query(query))
+            write_export_instance(writer, export_instance, docs)
+
+        export_file = ExportFile(writer.path, writer.format)
+
+        if not docs.last_doc:
+            return
+
+        new_checkpoint = incremental_export.checkpoint(docs.last_doc.get('_id'), docs.last_doc.get('server_modified_on'))
+
+        with export_file as file_:
+            # TODO: would be nice to save this compressed instead of uncompressed
+            # Could either be handled by the blobdb or else generated as a compressed CSV zip
+            db = get_blob_db()
+            db.put(
+                file_,
+                domain=incremental_export.domain,
+                parent_id=new_checkpoint.id,
+                type_code=CODES.data_export,  # TODO: should this be a new code?
+                key=str(new_checkpoint.blob_key),
+                # timeout=expiry, should these expire?
+            )
+    return new_checkpoint
+
+
+def _send_incremental_export(export, checkpoint):
+    requests = export.connection_settings.requests
+    headers = {
+        'Accept': 'application/json'
+    }
+    date_suffix = checkpoint.date_created.replace(microsecond=0).isoformat()
+    filename = f'{checkpoint.incremental_export.name}_{date_suffix}.csv'
+    files = {'file': (filename, checkpoint.get_blob(), 'text/csv')}
+    # TODO: update logs to link to checkpoint
+    # TODO: checkpoint only valid if request successful
+    requests.post(uri='', files=files, headers=headers)

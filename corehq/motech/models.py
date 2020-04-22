@@ -61,6 +61,18 @@ class ConnectionSettings(models.Model):
     def notify_addresses(self):
         return [addr for addr in re.split('[, ]+', self.notify_addresses_str) if addr]
 
+    @property
+    def requests(self):
+        from corehq.motech.requests import Requests
+        return Requests(
+            self.domain,
+            self.url,
+            self.username,
+            self.plaintext_password,
+            verify=not self.skip_cert_verify,
+            notify_addresses=self.notify_addresses
+        )
+
 
 class RequestLog(models.Model):
     """

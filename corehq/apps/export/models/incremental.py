@@ -1,7 +1,6 @@
 from uuid import uuid4
 
 from django.db import models
-from django.utils.functional import cached_property
 
 from corehq.apps.export.dbaccessors import get_properly_wrapped_export_instance
 from corehq.blobs import get_blob_db, CODES
@@ -25,9 +24,9 @@ class IncrementalExport(models.Model):
 
     @property
     def export_instance(self):
-        return get_properly_wrapped_export_instance(self.export_id)
+        return get_properly_wrapped_export_instance(self.export_instance_id)
 
-    @cached_property
+    @property
     def last_valid_checkpoint(self):
         for checkpoint in self.checkpoints.order_by('-date_created'):
             if checkpoint.blob_exists:
@@ -43,9 +42,9 @@ class IncrementalExportCheckpoint(models.Model):
 
     def get_blob(self):
         db = get_blob_db()
-        return db.get(key=self.blob_key, type_code=CODES.data_export)
+        return db.get(key=str(self.blob_key), type_code=CODES.data_export)
 
     @property
     def blob_exists(self):
         db = get_blob_db()
-        return db.exists(self.blob_key)
+        return db.exists(str(self.blob_key))
