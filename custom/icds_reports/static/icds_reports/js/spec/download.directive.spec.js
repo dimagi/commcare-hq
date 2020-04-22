@@ -202,7 +202,7 @@ describe('Download Directive', function () {
 
         it('tests on indicator select when child growth tracker list is selected', function () {
             controller.selectedIndicator = 13;
-            var expected = "csv";
+            var expected = "xlsx";
 
             controller.onIndicatorSelect();
             var result = controller.selectedFormat;
@@ -409,7 +409,7 @@ describe('Download Directive', function () {
         it('tests that all users have access to ISSNIP monthly register', function () {
 
             var length = controller.indicators.length;
-            assert.equal(numberOfReports, length);
+            assert.equal(numberOfReports + 1, length);
         });
 
         it('tests first possible data choice on THR raport', function () {
@@ -566,7 +566,7 @@ describe('Download Directive', function () {
 
         it('tests that all users have access to ISSNIP monthly register', function () {
             var length = controller.indicators.length;
-            assert.equal(numberOfReports, length);
+            assert.equal(numberOfReports + 1, length);
         });
     });
 
@@ -618,7 +618,7 @@ describe('Download Directive', function () {
 
         it('tests that block user does not have access to dashboard usage report', function () {
             var length = controller.indicators.length;
-            assert.equal(numberOfReports - 1, length);
+            assert.equal(numberOfReports, length);
         });
     });
 
