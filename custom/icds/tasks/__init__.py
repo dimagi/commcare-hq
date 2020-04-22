@@ -8,7 +8,7 @@ from iso8601 import parse_date
 from corehq.blobs import CODES, get_blob_db
 from corehq.blobs.models import BlobMeta
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query, estimate_row_count
-from corehq.util.celery_utils import periodic_task_on_envs
+from corehq.util.celery_utils import periodic_task_when_true
 from corehq.util.metrics import metrics_counter, metrics_gauge
 from custom.icds.tasks.sms import send_monthly_sms_report  # noqa imported for celery
 from custom.icds.tasks.hosted_ccz import setup_ccz_file_for_hosting  # noqa imported for celery
@@ -16,7 +16,7 @@ from custom.icds.tasks.hosted_ccz import setup_ccz_file_for_hosting  # noqa impo
 MAX_RUNTIME = 6 * 3600
 
 
-@periodic_task_on_envs(settings.ICDS_ENVS, run_every=crontab(minute=30, hour=18))
+@periodic_task_when_true(settings.IS_ICDS_ENV, run_every=crontab(minute=30, hour=18))
 def delete_old_images():
     for db_name in get_db_aliases_for_partitioned_query():
         delete_old_images_on_db.delay(db_name, datetime.utcnow())

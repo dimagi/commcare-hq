@@ -43,7 +43,7 @@ from corehq.apps.users.dbaccessors.all_commcare_users import (
 from corehq.const import SERVER_DATE_FORMAT, SERVER_DATETIME_FORMAT
 from corehq.form_processor.models import CommCareCaseSQL, XFormInstanceSQL
 from corehq.sql_db.connections import get_icds_ucr_citus_db_alias
-from corehq.util.celery_utils import periodic_task_on_envs
+from corehq.util.celery_utils import periodic_task_when_true
 from corehq.util.decorators import serial_task
 from corehq.util.log import send_HTML_email
 from corehq.util.soft_assert import soft_assert
@@ -755,8 +755,8 @@ def email_dashboad_team(aggregation_date, aggregation_start_time):
     icds_data_validation.delay(aggregation_date)
 
 
-@periodic_task_on_envs(
-    settings.ICDS_ENVS,
+@periodic_task_when_true(
+    settings.IS_ICDS_ENV,
     queue='background_queue',
     run_every=crontab(day_of_week='tuesday,thursday,saturday', minute=0, hour=16),
     acks_late=True
@@ -777,8 +777,8 @@ def recalculate_stagnant_child_health_cases(latest_datetime='1970-01-01'):
     recalculate_stagnant_child_health_cases.delay(last_processed_datetime)
 
 
-@periodic_task_on_envs(
-    settings.ICDS_ENVS,
+@periodic_task_when_true(
+    settings.IS_ICDS_ENV,
     queue='background_queue',
     run_every=crontab(day_of_week='tuesday,thursday,saturday', minute=0, hour=16),
     acks_late=True
@@ -1164,8 +1164,8 @@ def _get_value(data, field):
 
 # This task caused memory spikes once a day on the india env
 # before it was switched to icds-only (June 2019)
-@periodic_task_on_envs(
-    settings.ICDS_ENVS,
+@periodic_task_when_true(
+    settings.IS_ICDS_ENV,
     run_every=crontab(minute=30, hour=18),
     acks_late=True,
     queue='icds_aggregation_queue'
@@ -1210,8 +1210,8 @@ def collect_inactive_awws():
     celery_task_logger.info("Ended updating the Inactive AWW")
 
 
-@periodic_task_on_envs(settings.ICDS_ENVS, run_every=crontab(day_of_week='monday', hour=0, minute=0),
-                       acks_late=True, queue='background_queue')
+@periodic_task_when_true(settings.IS_ICDS_ENV, run_every=crontab(day_of_week='monday', hour=0, minute=0),
+                         acks_late=True, queue='background_queue')
 def collect_inactive_dashboard_users():
     celery_task_logger.info("Started updating the Inactive Dashboard users")
 
@@ -1293,8 +1293,8 @@ def get_dashboard_users_not_logged_in(start_date, end_date, domain='icds-cas'):
     not_logged_in = dashboard_usernames - logged_in_dashboard_users
     return not_logged_in
 
-@periodic_task_on_envs(settings.ICDS_ENVS, run_every=crontab(day_of_week=5, hour=14, minute=0),
-                       acks_late=True, queue='icds_aggregation_queue')
+@periodic_task_when_true(settings.IS_ICDS_ENV, run_every=crontab(day_of_week=5, hour=14, minute=0),
+                         acks_late=True, queue='icds_aggregation_queue')
 def build_disha_dump():
     # Weekly refresh of disha dumps for current and last month
     DISHA_NOTIFICATION_EMAIL = '{}@{}'.format('icds-dashboard', 'dimagi.com')
@@ -1320,8 +1320,8 @@ def build_missing_disha_dump(month, state_name):
     DishaDump(state_name, month).build_export_json(query_master=True)
 
 
-@periodic_task_on_envs(settings.ICDS_ENVS, run_every=crontab(hour=17, minute=0, day_of_month='12'),
-                       acks_late=True, queue='icds_aggregation_queue')
+@periodic_task_when_true(settings.IS_ICDS_ENV, run_every=crontab(hour=17, minute=0, day_of_month='12'),
+                         acks_late=True, queue='icds_aggregation_queue')
 def build_incentive_report(agg_date=None):
     state_ids = (SQLLocation.objects
                  .filter(domain=DASHBOARD_DOMAIN, location_type__name='state')
@@ -1685,7 +1685,7 @@ def email_location_changes(domain, old_location_blob_id, new_location_blob_id):
     )
 
 
-@periodic_task_on_envs(settings.ICDS_ENVS, run_every=crontab(hour=22, minute=0))
+@periodic_task_when_true(settings.IS_ICDS_ENV, run_every=crontab(hour=22, minute=0))
 def create_reconciliation_records():
     # Setup yesterday's data to reduce noise in case we're behind by a lot in pillows
     UcrReconciliationStatus.setup_days_records(date.today() - timedelta(days=1))
@@ -1798,8 +1798,8 @@ def _get_primary_data_for_cases(db, domain, day, case_type):
     return matching_cases.values_list('case_id', 'type', 'server_modified_on')
 
 
-@periodic_task_on_envs(
-    settings.ICDS_ENVS,
+@periodic_task_when_true(
+    settings.IS_ICDS_ENV,
     run_every=crontab(minute=30, hour=0),  # To run on 6AM IST
     acks_late=True,
     queue='icds_aggregation_queue'
