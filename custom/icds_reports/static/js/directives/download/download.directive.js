@@ -442,7 +442,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         var beneficiaryListErrors = vm.isChildBeneficiaryListSelected() && (vm.selectedFilterOptions().length === 0 || !vm.isDistrictOrBelowSelected());
         var incentiveReportErrors = vm.isIncentiveReportSelected() && !vm.isStateSelected();
         var ladySupervisorReportErrors = false;
-        if(!vm.haveAccessToFeatures) {
+        if (!vm.haveAccessToFeatures) {
             ladySupervisorReportErrors = vm.isLadySupervisorSelected() && !vm.isStateSelected();
         }
         return beneficiaryListErrors || incentiveReportErrors || ladySupervisorReportErrors;
