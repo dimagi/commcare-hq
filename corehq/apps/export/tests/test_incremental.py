@@ -1,12 +1,12 @@
 import uuid
 from datetime import datetime, timedelta
 
-import requests_mock
 from django.test import TestCase
-import mock
+
 from couchexport.models import Format
 from pillowtop.es_utils import initialize_index_and_mapping
 
+import requests_mock
 from corehq.apps.export.models import (
     CaseExportInstance,
     ExportColumn,
@@ -14,8 +14,14 @@ from corehq.apps.export.models import (
     PathNode,
     TableConfiguration,
 )
-from corehq.apps.export.models.incremental import IncrementalExport, IncrementalExportStatus
-from corehq.apps.export.tasks import _generate_incremental_export, _send_incremental_export
+from corehq.apps.export.models.incremental import (
+    IncrementalExport,
+    IncrementalExportStatus,
+)
+from corehq.apps.export.tasks import (
+    _generate_incremental_export,
+    _send_incremental_export,
+)
 from corehq.apps.export.tests.util import DEFAULT_CASE_TYPE, new_case
 from corehq.elastic import get_es_new, send_to_elasticsearch
 from corehq.motech.const import BASIC_AUTH
@@ -26,10 +32,6 @@ from corehq.util.test_utils import trap_extra_setup
 
 
 class TestIncrementalExport(TestCase):
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-
     @classmethod
     def setUpClass(cls):
         super().setUpClass()

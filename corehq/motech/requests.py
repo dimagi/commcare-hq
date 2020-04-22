@@ -1,14 +1,13 @@
 import logging
-from collections import namedtuple
 from functools import wraps
 
-import attr
 from django.conf import settings
 
 import requests
 
 from dimagi.utils.logging import notify_exception
 
+import attr
 from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.motech.const import REQUEST_TIMEOUT
 from corehq.motech.models import RequestLog
