@@ -62,6 +62,10 @@ class IncrementalExportCheckpoint(models.Model):
         db = get_blob_db()
         return db.get(key=str(self.blob_key), type_code=CODES.data_export)
 
+    def blob_exists(self):
+        db = get_blob_db()
+        return db.exists(key=str(self.blob_key))
+
     def log_request(self, log_level, log_entry):
         log = RequestLog.log(log_level, log_entry)
         self.status = IncrementalExportStatus.from_log_entry(log_entry)
