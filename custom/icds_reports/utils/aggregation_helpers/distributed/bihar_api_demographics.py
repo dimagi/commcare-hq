@@ -10,6 +10,7 @@ from corehq.apps.locations.models import SQLLocation
 class BiharApiDemographicsHelper(BaseICDSAggregationDistributedHelper):
     helper_key = 'agg-bihar_api_demographics'
     tablename = BIHAR_API_DEMOGRAPHICS_TABLE
+    months_required = 3
 
     def __init__(self, month):
         self.month = transform_day_to_month(month)
@@ -18,12 +19,14 @@ class BiharApiDemographicsHelper(BaseICDSAggregationDistributedHelper):
         self.household_ucr = get_table_name(self.domain, 'static-household_cases')
 
     def aggregate(self, cursor):
+        drop_older_table = self.drop_old_tables_query()
         drop_query = self.drop_table_query()
         create_query = self.create_table_query()
         agg_query = self.aggregation_query()
         update_queries = self.update_queries()
         add_partition_query = self.add_partition_table__query()
 
+        cursor.execute(drop_older_table)
         cursor.execute(drop_query)
         cursor.execute(create_query)
         cursor.execute(agg_query)
@@ -32,6 +35,13 @@ class BiharApiDemographicsHelper(BaseICDSAggregationDistributedHelper):
             cursor.execute(query)
 
         cursor.execute(add_partition_query)
+
+    def drop_old_tables_query(self):
+        month = self.month - relativedelta(months=self.months_required)
+
+        return f"""
+            DROP TABLE IF EXISTS "{self.monthly_tablename(month)}"
+        """
 
     def drop_table_query(self):
         return f"""
@@ -45,8 +55,11 @@ class BiharApiDemographicsHelper(BaseICDSAggregationDistributedHelper):
         """
 
     @property
-    def monthly_tablename(self):
-        return f"{self.tablename}_{month_formatter(self.month)}"
+    def monthly_tablename(self, month=None):
+        if not month:
+            month = self.month
+
+        return f"{self.tablename}_{month_formatter(month)}"
 
     def get_state_id_from_state_name(self, state_name):
         return SQLLocation.objects.get(name=state_name, location_type__name='state').location_id
