@@ -8,7 +8,9 @@ from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy
 
 import dateutil
+from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
+from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout
 
 from dimagi.utils.dates import DateSpan
@@ -26,6 +28,7 @@ from corehq.apps.export.filters import (
     SmsReceivedRangeFilter,
     UserTypeFilter,
 )
+from corehq.apps.export.models import IncrementalExport
 from corehq.apps.export.models.new import (
     CaseExportInstance,
     CaseExportInstanceFilters,
@@ -1076,3 +1079,47 @@ class FilterSmsESExportDownloadForm(BaseFilterExportDownloadForm):
                 data_bind='value: dateRange',
             ),
         ]
+
+
+class IncrementalExportForm(forms.ModelForm):
+    # TODO: Get export instances to populate export_instance_id dropdown
+    active = forms.BooleanField(
+        label=_('Active'),
+        help_text=_('This export is enabled'),
+        required=False,
+        initial=True,
+    )
+
+    class Meta:
+        model = IncrementalExport
+        fields = [
+            'name',
+            'export_instance_id',
+            'connection_settings',
+            'active',
+        ]
+
+    def __init__(self, *args, domain, **kwargs):
+        self.domain = domain  # Passed by ``FormSet.form_kwargs``
+        super().__init__(*args, **kwargs)
+
+    def save(self, commit=True):
+        self.instance.domain = self.domain
+        return super().save(commit)
+
+
+class BaseIncrementalExportFormSet(forms.BaseModelFormSet):
+
+    def __init__(self, *args, domain, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.domain = domain
+        self.form_kwargs['domain'] = domain  # Passed by ``FormView.get_form_kwargs()``
+
+
+IncrementalExportFormSet = forms.modelformset_factory(
+    model=IncrementalExport,
+    form=IncrementalExportForm,
+    formset=BaseIncrementalExportFormSet,
+    extra=1,
+    can_delete=True,
+)
