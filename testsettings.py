@@ -130,8 +130,6 @@ helper.assign_test_db_names(DATABASES)
 REPORTING_DATABASES = {
     'default': 'default',
     'ucr': 'default',
-    'aaa-data': 'default',
-    'icds-ucr-citus': 'icds-ucr',
 }
 
 # See comment under settings.SMS_QUEUE_ENABLED
