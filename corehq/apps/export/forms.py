@@ -1123,3 +1123,30 @@ IncrementalExportFormSet = forms.modelformset_factory(
     extra=1,
     can_delete=True,
 )
+
+
+class IncrementalExportFormSetHelper(FormHelper):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.form_class = 'form-horizontal'
+        self.label_class = 'col-sm-3 col-md-2'
+        self.field_class = 'col-sm-9 col-md-8 col-lg-6'
+        self.layout = crispy.Layout(
+            crispy.Fieldset(
+                _('Incremental Export'),
+                crispy.Field('name'),
+                crispy.Field('export_instance_id'),
+                crispy.Field('connection_settings'),
+                twbscrispy.PrependedText('active', ''),
+
+                twbscrispy.PrependedText(
+                    'DELETE', '',
+                    wrapper_class='alert alert-warning'
+                ),
+            ),
+        )
+        self.add_input(
+            crispy.Submit('submit', _('Save'))
+        )
+        self.render_required_fields = True
