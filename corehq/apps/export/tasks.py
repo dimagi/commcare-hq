@@ -219,7 +219,8 @@ def generate_schema_for_all_builds(self, schema_cls, domain, app_id, identifier)
     )
 
 
-@periodic_task(run_every='hourly', queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
+@periodic_task(run_every=crontab(hour="*", minute="30", day_of_week="*"),
+               queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
 def generate_incremental_exports():
     incremental_exports = IncrementalExport.objects.filter(active=True)
     for incremental_export in incremental_exports:
