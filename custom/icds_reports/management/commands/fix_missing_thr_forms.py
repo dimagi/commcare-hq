@@ -94,11 +94,16 @@ query_text_6 = """
 class Command(BaseCommand):
     help = "Fills the Missing THR Forms"
 
-    def handle(self, *args, **kwargs):
-        self.run_task()
+    def add_arguments(self, parser):
+        parser.add_argument('date', type=str, nargs='?')
 
-    def run_task(self):
-        initial_date = datetime(2019, 9, 1, 0, 0)
+    def handle(self, *args, **options):
+        date = options["date"] if options["date"] else "2020-09-01"
+        date = datetime.strptime(date, '%Y-%m-%d')
+        self.run_task(date)
+
+    def run_task(self, initial_date):
+        print(initial_date)
         final_date = datetime.now()
         final_date = final_date.replace(day=1)
 
@@ -115,12 +120,11 @@ class Command(BaseCommand):
         for monthly_date in monthly_dates:
             print(f"========{monthly_date}======\n")
             for state_id in state_ids:
-                print(f"========{state_id}=======\n")
                 icds_state_aggregation_task(state_id=state_id, date=monthly_date,
                                             func_name='_agg_thr_table')
-        for monthly_date in monthly_dates:
             date = monthly_date.strftime("%Y-%m-%d")
-            queries = [query_text_0, query_text_1, query_text_2, query_text_3, query_text_4, query_text_4, query_text_5, query_text_6]
+            queries = [query_text_0, query_text_1, query_text_2, query_text_3, query_text_4, query_text_4,
+                       query_text_5, query_text_6]
             print("====Executing for month f{date}========\n")
             count = 0
             for query in queries:
@@ -129,6 +133,7 @@ class Command(BaseCommand):
                 with connection.cursor() as c:
                     c.execute(query)
                 count = count + 1
+
 
 
 
