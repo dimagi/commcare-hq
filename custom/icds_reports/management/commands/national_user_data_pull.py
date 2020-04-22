@@ -1,10 +1,11 @@
 import csv
 
 from django.core.management.base import BaseCommand
-from corehq.apps.reports.util import get_all_users_by_domain
+from corehq.apps.users.models import CommCareUser
 from custom.icds_reports.const import INDIA_TIMEZONE
 from custom.icds_reports.models import ICDSAuditEntryRecord
 from django.db.models import Max
+from dimagi.utils.chunked import chunked
 
 
 class Command(BaseCommand):
@@ -14,38 +15,31 @@ class Command(BaseCommand):
         if date is None:
             return 'N/A'
         date = date.astimezone(INDIA_TIMEZONE)
-        date_formatted = date.strftime(date, "%d/%m/%Y, %I:%M %p")
+        date_formatted = date.strftime("%d/%m/%Y, %I:%M %p")
         return date_formatted
 
     def handle(self, *args, **options):
-        users = get_all_users_by_domain('icds-cas')
+        users = CommCareUser.by_domain('icds-cas')
         usernames = []
         for user in users:
             if user.has_permission('icds-cas', 'access_all_locations'):
                 usernames.append(user.username)
-        usage_data = ICDSAuditEntryRecord.objects.filter(username__in=usernames).values('username').annotate(time=Max('time_of_use'))
-        headers = ["S.No", "username", "time"]
-        count = 1
+        chunk_size = 100
+        headers = ["username", "time"]
         rows = [headers]
         usernames_usage = []
-        for usage in usage_data:
-            row_data = [
-                count,
-                usage.username,
-                self.convert_to_ist(usage.time)
-            ]
-            usernames_usage.append(usage.username)
-            rows.append(row_data)
-            count = count + 1
-        for user in usernames:
-            if user not in usernames_usage:
+        for user_chunk in chunked(usernames, chunk_size):
+            usage_data = ICDSAuditEntryRecord.objects.filter(username__in=list(user_chunk)).values('username').annotate(time=Max('time_of_use'))
+            for usage in usage_data:
+                print(usage)
                 row_data = [
-                    count,
-                    user,
-                    "N/A"
+                    usage['username'],
+                    self.convert_to_ist(usage['time'])
                 ]
+                usernames_usage.append(usage['username'])
                 rows.append(row_data)
-                count = count + 1
+        users_not_logged_in = set(usernames) - set(usernames_usage)
+        rows.extend([[user, 'N/A'] for user in users_not_logged_in])
         fout = open('/home/cchq/National_users_data.csv', 'w')
         writer = csv.writer(fout)
         writer.writerows(rows)
