@@ -373,7 +373,7 @@ class PillowBase(metaclass=ABCMeta):
             })
 
             if processing_time:
-                tags = {'pillow_name': self.get_name(),}
+                tags = {'pillow_name': self.get_name()}
                 metrics_counter('commcare.change_feed.processing_time.total', processing_time, tags=tags)
                 metrics_counter('commcare.change_feed.processing_time.count', tags=tags)
 
