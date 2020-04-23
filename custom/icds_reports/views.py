@@ -226,7 +226,7 @@ from custom.icds_reports.utils import (
     india_now,
     filter_cas_data_export,
     get_deprecation_info,
-    get_replacement_name
+    get_location_replacement_name
 )
 from custom.icds_reports.utils.data_accessor import (
     get_awc_covered_data_with_retrying,
@@ -603,9 +603,9 @@ class LocationView(View):
                 'user_have_access_to_parent': location.location_id in parent_ids,
                 'parent_name': location.parent.name if location.parent else None,
                 'parent_map_name': get_map_name(location.parent),
-                'deprecates': get_replacement_name(location, 'deprecates', replacement_names),
+                'deprecates': get_location_replacement_name(location, 'deprecates', replacement_names),
                 'deprecated_at': location.metadata.get('deprecated_at'),
-                'deprecated_to': get_replacement_name(location, 'deprecated_to', replacement_names),
+                'deprecated_to': get_location_replacement_name(location, 'deprecated_to', replacement_names),
                 'deprecates_at': location.metadata.get('deprecates_at'),
             })
 
@@ -644,9 +644,9 @@ class LocationView(View):
                         request.couch_user, loc.location_id
                     ),
                     'user_have_access_to_parent': loc.location_id in parent_ids,
-                    'deprecates': get_replacement_name(loc, 'deprecates', replacement_names),
+                    'deprecates': get_location_replacement_name(loc, 'deprecates', replacement_names),
                     'deprecated_at': loc.metadata.get('deprecated_at'),
-                    'deprecated_to': get_replacement_name(loc, 'deprecated_to', replacement_names),
+                    'deprecated_to': get_location_replacement_name(loc, 'deprecated_to', replacement_names),
                     'deprecates_at': loc.metadata.get('deprecates_at'),
                 }
                 for loc in locations_list
@@ -687,9 +687,9 @@ class LocationAncestorsView(View):
                         request.couch_user, location.location_id
                     ),
                     'user_have_access_to_parent': location.location_id in parent_locations_ids,
-                    'deprecates': get_replacement_name(location, 'deprecates', replacement_names),
+                    'deprecates': get_location_replacement_name(location, 'deprecates', replacement_names),
                     'deprecated_at': location.metadata.get('deprecated_at'),
-                    'deprecated_to': get_replacement_name(location, 'deprecated_to', replacement_names),
+                    'deprecated_to': get_location_replacement_name(location, 'deprecated_to', replacement_names),
                     'deprecates_at': location.metadata.get('deprecates_at'),
                 }
                 for location in location_list
@@ -704,9 +704,9 @@ class LocationAncestorsView(View):
                     request.couch_user, selected_location.location_id
                 ),
                 'user_have_access_to_parent': selected_location.location_id in parent_locations_ids,
-                'deprecates': get_replacement_name(selected_location, 'deprecates', replacement_names),
+                'deprecates': get_location_replacement_name(selected_location, 'deprecates', replacement_names),
                 'deprecated_at': selected_location.metadata.get('deprecated_at'),
-                'deprecated_to': get_replacement_name(selected_location, 'deprecated_to', replacement_names),
+                'deprecated_to': get_location_replacement_name(selected_location, 'deprecated_to', replacement_names),
                 'deprecates_at': selected_location.metadata.get('deprecates_at'),
             }
         })
