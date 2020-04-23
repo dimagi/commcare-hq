@@ -32,7 +32,8 @@
     "description": "",
     "visible": false,
     "aggregation_columns": [
-      "owner_id"
+      "owner_id",
+      "month"
     ],
     "filters": [
       {
@@ -59,6 +60,13 @@
       }
     ],
     "columns": [
+      {
+        "display": "Month",
+        "column_id": "month",
+        "type": "aggregate_date",
+        "field": "submitted_on",
+        "format": "%Y-%m"
+      },
       {
         "sortable": false,
         "description": null,
@@ -99,7 +107,12 @@
         "display": "count"
       }
     ],
-    "sort_expression": [ ],
+    "sort_expression": [
+      {
+        "field": "month",
+        "order": "DESC"
+      }
+    ],
     "configured_charts": [ ]
   }
 }
