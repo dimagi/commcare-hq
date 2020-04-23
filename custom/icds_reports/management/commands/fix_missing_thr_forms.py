@@ -2,7 +2,7 @@ from datetime import datetime
 
 from dateutil.relativedelta import relativedelta
 from django.core.management import BaseCommand
-from django.db import connection
+from django.db import connections
 
 from corehq.apps.locations.models import SQLLocation
 from custom.icds_reports.const import (
@@ -16,7 +16,7 @@ query_text_1 = """
     UPDATE "agg_awc_{month}_5" t
     SET thr_distribution_image_count = ut.thr_distribution_image_count
     FROM  "icds_dashboard_thr_v2" ut
-    WHERE t.awc_id = ut.awc_id AND t.month = ut.month AND ut.month='{month}';
+    WHERE t.awc_id = ut.awc_id AND t.month = ut.month AND ut.month='{month}'
 """
 
 query_text_2 = """
@@ -109,7 +109,7 @@ class Command(BaseCommand):
             for query in queries:
                 print("=====Executing query {count} =====\n")
                 query = query.format(month=date)
-                with connection.cursor() as c:
+                with connections['icds-ucr-citus'].cursor() as c:
                     c.execute(query)
                 count = count + 1
 
