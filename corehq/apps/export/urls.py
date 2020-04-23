@@ -25,7 +25,6 @@ from corehq.apps.export.views.edit import (
     EditODataFormFeedView,
 )
 from corehq.apps.export.views.incremental import (
-    IncrementalExportLogView,
     IncrementalExportView,
     incremental_export_checkpoint_file,
 )

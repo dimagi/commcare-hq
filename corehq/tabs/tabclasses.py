@@ -1867,9 +1867,10 @@ def _get_integration_section(domain):
             'url': reverse(OpenmrsImporterView.urlname, args=[domain])
         })
 
-    if (toggles.DHIS2_INTEGRATION.enabled(domain)
-        or toggles.OPENMRS_INTEGRATION.enabled(domain)
-        or toggles.INCREMENTAL_EXPORTS.enabled(domain)
+    if (
+            toggles.DHIS2_INTEGRATION.enabled(domain)
+            or toggles.OPENMRS_INTEGRATION.enabled(domain)
+            or toggles.INCREMENTAL_EXPORTS.enabled(domain)
     ):
         integration.append({
             'title': _(MotechLogListView.page_title),
