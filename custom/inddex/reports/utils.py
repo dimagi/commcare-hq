@@ -1,8 +1,6 @@
 from datetime import datetime
 from itertools import chain
 
-from django.contrib import messages
-
 from dimagi.utils.logging import notify_exception
 
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
@@ -44,8 +42,8 @@ class MultiTabularReport(DatespanMixin, CustomProjectReport, GenericTabularRepor
                 context['data_providers'] = list(map(_to_context_dict, self.data_providers))
             except InddexFixtureError as e:
                 context['data_providers'] = []
+                context['fixture_error'] = str(e)
                 notify_exception(self.request, str(e))
-                messages.error(self.request, str(e))
         return context
 
     @property
