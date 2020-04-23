@@ -211,7 +211,7 @@ class FormsInDateExpressionSpec(NoPropertyTypeCoercionMixIn, JsonObject):
             return context.get_cache_value(cache_key)
 
         domain = context.root_doc['domain']
-        if case_id != context.root_doc['_id'] or 'xform_ids' not in context.root_doc:
+        if case_id != context.root_doc.get('_id') or 'xform_ids' not in context.root_doc:
             xform_ids = CaseAccessors(domain).get_case_xform_ids(case_id)
         else:
             xform_ids = context.root_doc.get('xform_ids')
