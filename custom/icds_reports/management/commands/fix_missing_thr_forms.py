@@ -16,7 +16,7 @@ query_text_1 = """
     UPDATE "agg_awc_{month}_5" t
     SET thr_distribution_image_count = ut.thr_distribution_image_count
     FROM  "icds_dashboard_thr_v2" ut
-    WHERE t.awc_id = ut.awc_id AND t.month = ut.month;
+    WHERE t.awc_id = ut.awc_id AND t.month = ut.month AND ut.month='{month}';
 """
 
 query_text_2 = """
@@ -79,7 +79,7 @@ class Command(BaseCommand):
         parser.add_argument('date', type=str, nargs='?')
 
     def handle(self, *args, **options):
-        date = options["date"] if options["date"] else "2020-09-01"
+        date = options["date"] if options["date"] else "2019-09-01"
         date = datetime.strptime(date, '%Y-%m-%d')
         self.run_task(date)
 
