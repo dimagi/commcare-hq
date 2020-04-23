@@ -34,16 +34,21 @@ Save those backups to somewhere you'll be able to access from the new environmen
 #### Prerequisites
 
 - [Git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)
-- [Python 3.6](https://www.python.org/downloads/) and `python-dev`, `distutils` packages
 
-      $ sudo apt install python3-distutils python3-dev
+      $ sudo apt install git
 
-- [Pip](https://pip.pypa.io/en/stable/installing/)
-- [Virtualenv](https://virtualenv.pypa.io/en/stable/)
+- [Python 3.6](https://www.python.org/downloads/) and `python-dev`. In Ubuntu
+  you will also need to install the modules for pip and venv explicitly.
+
+      $ sudo apt install python3-dev python3-pip python3-venv
+
 - [Virtualenvwrapper](https://virtualenvwrapper.readthedocs.io/en/latest/#introduction)
-- [Pango](https://pango.gnome.org/) 
 
-      $ sudo apt install libpango1.0-0
+      $ sudo python3 -m pip install virtualenvwrapper
+
+- Requirements of Python libraries, if they aren't already installed.
+
+      $ sudo apt install libpango1.0-0 postgresql-common libncurses-dev libxml2-dev libxslt1-dev
 
 
 ##### macOS Notes
@@ -51,7 +56,6 @@ Save those backups to somewhere you'll be able to access from the new environmen
 - You may need to use `sudo` to for some of the above setup:
 
       $ sudo python get-pip.py
-      $ sudo pip install virtualenv
       $ sudo pip install virtualenvwrapper --ignore-installed six
 
 - Additional requirements:
@@ -59,21 +63,52 @@ Save those backups to somewhere you'll be able to access from the new environmen
   - [libmagic](https://macappstore.org/libmagic) (available via homebrew)
   - [pango](https://www.pango.org/) (available via homebrew)
 
-#### Setup virtualenv
 
-Run the following commands:
+#### Set up virtual environment
 
-    $ source /usr/local/bin/virtualenvwrapper.sh
-    $ mkvirtualenv --no-site-packages commcare-hq -p python3.6
+1. Set the `WORKON_HOME` environment variable to the path where you keep
+   your virtual environments. If you don't already have a home for your
+   virtual environments, ~/venv is not a bad choice:
 
-#### Clone and setup repo / requirements
+       $ export WORKON_HOME=$HOME/venv
+       $ mkdir -p $WORKON_HOME
+
+1. Create a virtual environment for CommCare HQ. "commcare-hq" is a good
+   name, but naming it "cchq" might save you some typing in the future:
+
+       $ python3 -m venv $WORKON_HOME/cchq
+
+1. Ubuntu no longer ships with Python 2 and its Python binary is named
+   "python3" to avoid ambiguity. You may need to tell virtualenvwrapper
+   where to find Python:
+
+       $ export VIRTUALENVWRAPPER_PYTHON=/usr/bin/python3
+
+1. Enable virtualenvwrapper:
+
+       $ source /usr/local/bin/virtualenvwrapper.sh
+
+1. You will want to add virtualenvwrapper settings to your startup
+   script, say, ~/.bashrc, or ~/.zshrc. For example:
+
+       $ cat <<EOF >> ~/.bashrc
+       export WORKON_HOME=\$HOME/venv
+       export VIRTUALENVWRAPPER_PYTHON=/usr/bin/python3
+       source /usr/local/bin/virtualenvwrapper.sh
+       EOF
+
+1. Activate your virtual environment:
+
+       $ workon cchq
+
+
+#### Clone repo and install requirements
 
 Once all the dependencies are in order, please do the following:
 
     $ git clone https://github.com/dimagi/commcare-hq.git
     $ cd commcare-hq
     $ git submodule update --init --recursive
-    $ workon commcare-hq  # if your "commcare-hq" virtualenv is not already activated
     $ setvirtualenvproject  # optional - sets this directory as the project root
 
 Next, install the appropriate requirements (only one is necessary).
@@ -109,10 +144,34 @@ Create the shared directory.  If you have not modified `SHARED_DRIVE_ROOT`, then
 
     $ mkdir sharedfiles
 
+
 ### Set up Docker services
 
-Once you have completed the above steps, you can use Docker to build and run all of the service containers.
-The steps for setting up Docker can be found in the [docker folder](docker/README.md).
+Once you have completed the above steps, you can use Docker to build
+and run all of the service containers. There are detailed instructions
+for setting up Docker in the [docker folder](docker/README.md). But the
+following should cover the needs of most developers:
+
+    $ sudo apt install docker.io
+    $ pip install docker-compose
+    $ sudo adduser $USER docker
+
+Log in as yourself again, to activate membership of the "docker" group:
+
+    $ su - $USER
+
+Ensure the Docker service is running:
+
+    $ sudo service docker status
+
+Bring up the Docker containers for the services you probably need:
+
+    $ scripts/docker up postgres couch redis elasticsearch zookeeper kafka minio
+
+or, to detach and run in the background, use the `-d` option:
+
+    $ scripts/docker up -d postgres couch redis elasticsearch zookeeper kafka minio
+
 
 ### (Optional) Copying data from an existing HQ install
 
@@ -183,7 +242,7 @@ you'll need to install `bower` and run `bower install`. Follow these steps to in
     For Ubuntu: In Ubuntu this is now bundled with NodeJS. An up-to-date version is available on the NodeSource
     repository. Run the following commands:
 
-        $ curl -sL https://deb.nodesource.com/setup_8.x | sudo -E bash -
+        $ curl -sL https://deb.nodesource.com/setup_10.x | sudo -E bash -
         $ sudo apt-get install -y nodejs
 
     For macOS: Install with Homebrew:
@@ -246,15 +305,22 @@ LOCAL_APPS += ('django_extensions',)
 ```
 
 When running HQ, be sure to use `runserver_plus`:
-```
-python manage.py runserver_plus
-```
+
+    $ ./manage.py runserver_plus 0.0.0.0:8000
 
 Then you need to have Formplayer running.
 
 Prerequisites:
-+ Install Java (left as an exercise for the reader)
-+ [Initialize formplayer database](https://github.com/dimagi/formplayer#building-and-running)
++ Install Java
+
+      $ sudo apt install openjdk-8-jre
+
++ [Initialize formplayer database](https://github.com/dimagi/formplayer#building-and-running).
+  The password for the "commcarehq" user is in the localsettings.py file
+  in the `DATABASES` dictionary.
+
+      $ sudo apt install postgresql-client
+      $ createdb formplayer -U commcarehq -h localhost
 
 To get set up, download the settings file and `formplayer.jar`. You may run this
 in the commcare-hq repo root.

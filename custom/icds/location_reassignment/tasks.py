@@ -38,6 +38,7 @@ def process_location_reassignment(domain, transitions, new_location_details, use
             to=[user_email],
             from_email=settings.DEFAULT_FROM_EMAIL
         )
+        email.content_subtype = "html"
         email.send()
         raise e
     else:
@@ -105,6 +106,7 @@ def email_household_details(domain, transitions, uploaded_filename, user_email):
             to=[user_email],
             from_email=settings.DEFAULT_FROM_EMAIL
         )
+        email.content_subtype = "html"
         email.send()
         raise e
     else:
@@ -136,6 +138,7 @@ def process_households_reassignment(domain, reassignments, uploaded_filename, us
             to=[user_email],
             from_email=settings.DEFAULT_FROM_EMAIL
         )
+        email.content_subtype = "html"
         email.send()
         raise e
     else:

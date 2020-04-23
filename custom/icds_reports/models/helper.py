@@ -40,10 +40,7 @@ class IcdsFile(models.Model):
         db.put(file, **kw)
 
     def get_file_from_blobdb(self):
-        return get_blob_db().get(key=self.blob_id)
-
-    def get_file_size(self):
-        return get_blob_db().size(key=self.blob_id)
+        return get_blob_db().get(key=self.blob_id, type_code=CODES.tempfile)
 
     class Meta:
         app_label = 'icds_reports'

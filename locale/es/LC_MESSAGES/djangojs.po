@@ -4,7 +4,7 @@
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
 # Translators:
-# Dimagi Dev <devops@dimagi.com>, 2017
+# Dimagi Dev <devops@dimagi.com>, 2020
 # Gladys Teos <info@enestranslations.com>, 2020
 #
 #, fuzzy
@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-04-15 19:45+0000\n"
+"POT-Creation-Date: 2020-04-22 22:56+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
 "Last-Translator: Gladys Teos <info@enestranslations.com>, 2020\n"
 "Language-Team: Spanish (https://www.transifex.com/dimagi/teams/9388/es/)\n"
@@ -4059,6 +4059,22 @@ msgstr ""
 msgid "Please check above for any errors in your configuration."
 msgstr "Por favor verifique arriba si hay algún error en su configuración."
 
+#: corehq/apps/userreports/static/userreports/js/configurable_reports_home.js:18
+#, fuzzy
+#| msgid "Edit Data Source"
+msgid "Edit a report or data source"
+msgstr "Editar la Fuente de Datos"
+
+#: corehq/apps/userreports/static/userreports/js/configurable_reports_home.js:27
+msgid "static"
+msgstr ""
+
+#: corehq/apps/userreports/static/userreports/js/configurable_reports_home.js:28
+#, fuzzy
+#| msgid "Inactive"
+msgid "deactivated"
+msgstr "Inactivo"
+
 #: corehq/apps/userreports/static/userreports/js/expression_evaluator.js:73
 msgid "Unknown error"
 msgstr ""
@@ -4346,25 +4362,23 @@ msgstr ""
 
 #: submodules/formdesigner/_build/src/global-deps.js:3
 msgid "show"
-msgstr ""
+msgstr "mostrar"
 
 #: submodules/formdesigner/_build/src/global-deps.js:3
 msgid "hide"
-msgstr ""
+msgstr "ocultar"
 
 #: submodules/formdesigner/_build/src/global-deps.js:3
 msgid "toggle"
-msgstr ""
+msgstr "alternar"
 
 #: submodules/formdesigner/src/remoteRequest.js:34
-#, fuzzy
-#| msgid "Delete request"
 msgid "Remote Request"
-msgstr "Eliminar solicitud"
+msgstr ""
 
 #: submodules/formdesigner/src/remoteRequest.js:48
 msgid "URL"
-msgstr ""
+msgstr "URL"
 
 #: submodules/formdesigner/src/remoteRequest.js:52
 msgid "The URL to be requested on form load."
@@ -4372,7 +4386,7 @@ msgstr ""
 
 #: submodules/formdesigner/src/remoteRequest.js:55
 msgid "Parameters"
-msgstr ""
+msgstr "Manejo de Casos"
 
 #: submodules/formdesigner/src/remoteRequest.js:62
 msgid ""
@@ -4381,9 +4395,5 @@ msgid ""
 msgstr ""
 
 #: submodules/formdesigner/src/saveToCase.js:752
-#, fuzzy
-#| msgid "An error occurred emailing you report. Please try again."
 msgid "An error occurred when parsing bind node [{path}]. Please fix this."
 msgstr ""
-"Ocurrió un error al enviar por correo electrónico su reporte. Por favor "
-"intente de nuevo."

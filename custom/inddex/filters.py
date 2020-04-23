@@ -139,8 +139,8 @@ class GapTypeFilter(BaseSingleOptionFilter):
     @property
     def options(self):
         return [
-            (ConvFactorGaps.slug, 'Conversion Factor'),
-            (FctGaps.slug, 'Food Composition Table'),
+            (ConvFactorGaps.slug, ConvFactorGaps.name),
+            (FctGaps.slug, FctGaps.name),
         ]
 
 

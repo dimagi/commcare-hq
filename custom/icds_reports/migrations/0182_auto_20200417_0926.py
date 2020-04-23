@@ -26,5 +26,3 @@ class Migration(migrations.Migration):
         ),
         migrations.RunSQL(f"CREATE INDEX idx_demographics_gender_dob ON {BIHAR_API_DEMOGRAPHICS_TABLE} (gender, dob)")
     ]
-
-    operations.extend(get_view_migrations())
