@@ -3,7 +3,7 @@ from contextlib import contextmanager
 
 import mock
 
-from corehq.util.metrics import DebugMetrics
+from corehq.util.metrics import DebugMetrics, DelegatedMetrics
 
 
 @contextmanager
@@ -50,9 +50,9 @@ class CapturedMetrics:
 def capture_metrics():
     from corehq.util.metrics import _metrics
     capture = DebugMetrics(capture=True)
-    _metrics.append(capture)
+    _metrics.append(DelegatedMetrics([capture] + _metrics))
     try:
         yield CapturedMetrics(capture.metrics)
     finally:
-        assert _metrics[-1] is capture, _metrics
+        assert _metrics[-1].delegates[0] is capture, _metrics
         _metrics.pop()
