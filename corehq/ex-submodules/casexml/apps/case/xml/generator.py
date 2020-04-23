@@ -50,8 +50,8 @@ def get_dynamic_element(key, val):
     element = ElementTree.Element(key)
     if isinstance(val, dict):
         element.text = six.text_type(val.get('#text', ''))
-        element.attrib = dict([(x[1:], six.text_type(val[x])) for x in \
-                               [x for x in val if x and x.startswith("@")]])
+        element.attrib = {
+            k[1:]: str(v) for k, v in val.items() if k and k.startswith("@")}
     else:
         # assume it's a string. Hopefully this is valid
         element.text = six.text_type(val)
