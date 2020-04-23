@@ -7,6 +7,7 @@
 <div style="padding-top: 45px">
   {% comment %}
     start-month will be the month number in the min-year from which reports are available
+    max-month will be the month number in the max-year till which reports are available
   {% endcomment %}
-  <mobile-datepicker date="$ctrl.selectedDate" min-year='$ctrl.startYear' max-year='$ctrl.currentYear' start-month='$ctrl.startMonth'></mobile-datepicker>
+  <mobile-datepicker date="$ctrl.selectedDate" min-year='$ctrl.startYear' max-year='$ctrl.maxYear' max-month="$ctrl.maxMonth" start-month='$ctrl.startMonth'></mobile-datepicker>
 </div>
