@@ -11,34 +11,15 @@ from custom.icds_reports.const import (
 from custom.icds_reports.tasks import (
     icds_state_aggregation_task
 )
-query_text_0 = """
-    DROP TABLE IF EXISTS temp_thr
-"""
 
 query_text_1 = """
-    CREATE TEMPORARY TABLE "temp_thr" AS 
-    SELECT
-    awc_location.state_id as state_id,
-    awc_location.district_id as district_id,
-    awc_location.block_id as block_id,
-    awc_location.supervisor_id as supervisor_id,
-    awc_location.doc_id AS awc_id,
-    thr_v2.thr_distribution_image_count as thr_distribution_image_count
-    FROM awc_location_local awc_location
-    LEFT JOIN "icds_dashboard_thr_v2" thr_v2 on (awc_location.doc_id = thr_v2.awc_id AND
-                                                thr_v2.month = '{month}'
-                                                )
-            WHERE awc_location.aggregation_level = 5
+    UPDATE "agg_awc_{month}_5" t
+    SET thr_distribution_image_count = ut.thr_distribution_image_count
+    FROM  "icds_dashboard_thr_v2" ut
+    WHERE t.awc_id = ut.awc_id AND t.month = ut.month;
 """
 
 query_text_2 = """
-    UPDATE "agg_awc_{month}_5" t
-    SET thr_distribution_image_count = ut.thr_distribution_image_count
-    FROM  temp_thr ut
-    WHERE t.awc_id = ut.awc_id
-"""
-
-query_text_3 = """
     UPDATE "agg_awc_{month}_4" t
     SET thr_distribution_image_count = ut.thr_distribution_image_count
     FROM (
@@ -51,7 +32,7 @@ query_text_3 = """
     WHERE t.supervisor_id = ut.supervisor_id
 """
 
-query_text_4 = """
+query_text_3 = """
     UPDATE "agg_awc_{month}_3" t
     SET thr_distribution_image_count = ut.thr_distribution_image_count
     FROM (
@@ -64,7 +45,7 @@ query_text_4 = """
     WHERE t.block_id = ut.block_id
 """
 
-query_text_5 = """
+query_text_4 = """
     UPDATE "agg_awc_{month}_2" t
     SET thr_distribution_image_count = ut.thr_distribution_image_count
     FROM (
@@ -77,7 +58,7 @@ query_text_5 = """
     WHERE t.district_id = ut.district_id
 """
 
-query_text_6 = """
+query_text_5 = """
     UPDATE "agg_awc_{month}_1" t
     SET thr_distribution_image_count = ut.thr_distribution_image_count
     FROM (
@@ -85,7 +66,7 @@ query_text_6 = """
             state_id,
             SUM(thr_distribution_image_count) as thr_distribution_image_count
         FROM "agg_awc_{month}_2"
-        GROUP BY state_id, district_id
+        GROUP BY state_id
     ) ut
     WHERE t.state_id = ut.state_id
 """
@@ -103,7 +84,6 @@ class Command(BaseCommand):
         self.run_task(date)
 
     def run_task(self, initial_date):
-        print(initial_date)
         final_date = datetime.now()
         final_date = final_date.replace(day=1)
 
@@ -123,8 +103,7 @@ class Command(BaseCommand):
                 icds_state_aggregation_task(state_id=state_id, date=monthly_date,
                                             func_name='_agg_thr_table')
             date = monthly_date.strftime("%Y-%m-%d")
-            queries = [query_text_0, query_text_1, query_text_2, query_text_3, query_text_4, query_text_4,
-                       query_text_5, query_text_6]
+            queries = [query_text_1, query_text_2, query_text_3, query_text_4, query_text_5]
             print("====Executing for month f{date}========\n")
             count = 0
             for query in queries:
