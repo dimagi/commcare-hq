@@ -48,8 +48,9 @@ class CapturedMetrics:
 
 @contextmanager
 def capture_metrics():
-    from corehq.util.metrics import _metrics
+    from corehq.util.metrics import _get_metrics_provider, _metrics  # noqa
     capture = DebugMetrics(capture=True)
+    _get_metrics_provider()  # ensure _metrics is populated
     _metrics.append(DelegatedMetrics([capture] + _metrics))
     try:
         yield CapturedMetrics(capture.metrics)
