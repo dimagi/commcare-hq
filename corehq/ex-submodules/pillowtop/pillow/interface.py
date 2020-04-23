@@ -314,8 +314,6 @@ class PillowBase(metaclass=ABCMeta):
 
         tags = {"pillow_name": self.get_name()}
         max_change_lag = (datetime.utcnow() - changes_chunk[0].metadata.publish_timestamp).total_seconds()
-        min_change_lag = (datetime.utcnow() - changes_chunk[-1].metadata.publish_timestamp).total_seconds()
-        metrics_gauge('commcare.change_feed.chunked.min_change_lag', min_change_lag, tags=tags)
         metrics_gauge('commcare.change_feed.chunked.max_change_lag', max_change_lag, tags=tags)
 
         # processing_time per change
