@@ -25,6 +25,7 @@ class TestPillowMetrics(SimpleTestCase):
         self.assertEqual(set(metrics.to_flattened_dict()), {
             'commcare.change_feed.changes.count.datasource:test_commcarehq',
             'commcare.change_feed.changes.count.pillow_name:fake pillow',
+            'commcare.change_feed.changes.count.case_type:NA',
             'commcare.change_feed.change_lag.pillow_name:fake pillow',
             'commcare.change_feed.change_lag.topic:case',
             'commcare.change_feed.processing_time.total.pillow_name:fake pillow',
@@ -36,6 +37,7 @@ class TestPillowMetrics(SimpleTestCase):
         self.assertEqual(set(metrics.to_flattened_dict()), {
             'commcare.change_feed.changes.count.datasource:test_commcarehq',
             'commcare.change_feed.changes.count.pillow_name:fake pillow',
+            'commcare.change_feed.changes.count.case_type:NA',
             'commcare.change_feed.change_lag.pillow_name:fake pillow',
             'commcare.change_feed.change_lag.topic:case-1',
             'commcare.change_feed.processing_time.total.pillow_name:fake pillow',

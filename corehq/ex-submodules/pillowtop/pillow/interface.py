@@ -356,9 +356,9 @@ class PillowBase(metaclass=ABCMeta):
                 'pillow_name': self.get_name(),
             }
 
-            if add_case_type_tag and settings.ENTERPRISE_MODE:
+            if add_case_type_tag:
                 metric_tags['case_type'] = 'NA'
-                if change.metadata.document_type == 'CommCareCase':
+                if settings.ENTERPRISE_MODE and change.metadata.document_type == 'CommCareCase':
                     metric_tags['case_type'] = change.metadata.document_subtype
 
             metrics_counter(metric, tags=metric_tags)
