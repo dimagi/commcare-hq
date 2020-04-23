@@ -21,6 +21,7 @@ from corehq.util.test_utils import capture_log_output
 from .test_migration import BaseMigrationTestCase, Diff, IGNORE, make_test_form
 from .. import casediff
 from .. import casedifftool as mod
+from ..diffrule import ANY
 from ..statedb import open_state_db
 
 
@@ -148,6 +149,31 @@ class TestCouchSqlDiff(BaseMigrationTestCase):
         self.compare_diffs(changes=[
             Diff('test-case', 'missing', ['thing'], old=MISSING, new='1', reason='rebuild case'),
         ])
+        self.do_migration(patch=True, diffs=[])
+
+    def test_couch_missing_create_case(self):
+        with self.skip_case_and_ledger_updates("thing-form"):
+            self.submit_form(THING_FORM)
+        self.submit_form(UPDATE_FORM)
+        case = self._get_case("test-case")
+        # simulate null properties seen in the wild
+        object.__setattr__(case, "name", None)
+        object.__setattr__(case, "type", None)
+        case.save()
+        with self.diff_without_rebuild():
+            self.do_migration()
+        self.compare_diffs([
+            Diff('test-case', 'missing', ['thing'], old=MISSING, new='1'),
+            Diff('test-case', 'set_mismatch', ['xform_ids', '[*]'], old='', new='thing-form'),
+            Diff('test-case', 'type', ['name'], old=None, new='Thing'),
+            Diff('test-case', 'type', ['type'], old=None, new='testing'),
+        ])
+        self.do_migration(patch=True, diffs=[])
+        case = self._get_case("test-case")
+        self.assertEqual(case.name, "")
+        self.assertEqual(case.type, "")
+        self.assertEqual(case.dynamic_case_properties()["thing"], "")
+        self.assertEqual(case.xform_ids, ['thing-form', 'update-form', ANY])
 
     def test_case_with_deleted_form(self):
         # form state=normal / deleted -> missing case
@@ -408,6 +434,40 @@ THING_FORM = """
     </n1:meta>
 </data>
 """.strip()
+
+
+UPDATE_FORM = """
+<?xml version="1.0" ?>
+<data
+    name="Update"
+    uiVersion="1"
+    version="11"
+    xmlns="http://openrosa.org/formdesigner/update-form"
+    xmlns:jrm="http://dev.commcarehq.org/jr/xforms"
+>
+    <age>27</age>
+    <n0:case
+        case_id="test-case"
+        date_modified="2015-08-04T18:25:56.656Z"
+        user_id="3fae4ea4af440efaa53441b5"
+        xmlns:n0="http://commcarehq.org/case/transaction/v2"
+    >
+        <n0:update>
+            <n0:age>27</n0:age>
+        </n0:update>
+    </n0:case>
+    <n1:meta xmlns:n1="http://openrosa.org/jr/xforms">
+        <n1:deviceID>cloudcare</n1:deviceID>
+        <n1:timeStart>2015-07-13T11:20:11.381Z</n1:timeStart>
+        <n1:timeEnd>2015-08-04T18:25:56.656Z</n1:timeEnd>
+        <n1:username>jeremy</n1:username>
+        <n1:userID>3fae4ea4af440efaa53441b5</n1:userID>
+        <n1:instanceID>update-form</n1:instanceID>
+        <n2:appVersion xmlns:n2="http://commcarehq.org/xforms">2.0</n2:appVersion>
+    </n1:meta>
+</data>
+""".strip()
+
 
 LEDGER_FORM = """
 <?xml version="1.0" ?>

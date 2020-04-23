@@ -148,9 +148,13 @@ def iter_dynamic_properties(diffs):
         name = diff.path[0]
         if name in STATIC_PROPS:
             continue
-        if len(diff.path) > 1 or not isinstance(diff.old_value, str):
+        if diff.old_value is MISSING:
+            value = ""
+        elif len(diff.path) > 1 or not isinstance(diff.old_value, str):
             raise CannotPatch([diff])
-        yield name, diff.old_value
+        else:
+            value = diff.old_value
+        yield name, value
 
 
 ILLEGAL_PROPS = {"actions", "case_id", "domain", "*"}
@@ -289,13 +293,13 @@ def get_diff_block(case):
     return f"<diff>{escape(json.dumps(data))}</diff>"
 
 
-def diff_to_json(diff):
+def diff_to_json(diff, new_value=None):
     assert diff.old_value is not MISSING or diff.new_value is not MISSING, diff
     obj = {"path": list(diff.path), "patch": is_patchable(diff)}
     if diff.old_value is not MISSING:
         obj["old"] = diff.old_value
     if diff.new_value is not MISSING:
-        obj["new"] = diff.new_value
+        obj["new"] = diff.new_value if new_value is None else new_value
     if getattr(diff, "reason", ""):
         obj["reason"] = diff.reason
     return obj

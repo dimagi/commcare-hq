@@ -34,6 +34,7 @@ from corehq.form_processor.parsers.ledgers.form import (
 from corehq.util.metrics import metrics_counter
 
 from .diff import filter_case_diffs, filter_ledger_diffs
+from .diffrule import ANY
 from .rebuildcase import rebuild_and_diff_cases
 from .statedb import Change
 from .util import retry_on_sql_error
@@ -322,6 +323,12 @@ def is_case_patched(case_id, diffs):
     unpatchable and match an unpatchable diff encoded in one of the
     patch forms.
 
+    Additionally, diffs having a MISSING `old_value` are patched with an
+    empty string, which is semantically equivalent to removing the case
+    property in CommCare. However, a difference is detectable at the
+    storage level even after the patch has been applied, and therefore
+    these subsequent patch diffs are considered to be patched.
+
     The "xform_ids" diff is a special exception because it is not
     patchable and is not required to be present in the patch form.
 
@@ -331,23 +338,27 @@ def is_case_patched(case_id, diffs):
         forms = get_sql_forms(form_ids, ordered=True)
         for form in reversed(forms):
             if form.xmlns == PatchForm.xmlns:
-                discard_unpatched(form.form_data.get("diff"))
+                discard_expected_diffs(form.form_data.get("diff"))
                 if not unpatched:
                     return True
         return False
 
-    def discard_unpatched(patch_data):
+    def discard_expected_diffs(patch_data):
         data = json.loads(unescape(patch_data)) if patch_data else {}
         if data.get("case_id") != case_id:
             return
         for diff in data.get("diffs", []):
             diff.pop("reason", None)
             path = tuple(diff["path"])
-            if path in unpatched and diff_to_json(unpatched[path]) == diff:
+            if path in unpatched and diff_to_json(unpatched[path], ANY) == diff:
                 unpatched.pop(path)
 
+    def expected_patch_diff(diff):
+        return not is_patchable(diff) or (
+            diff.old_value is MISSING and diff.new_value == "")
+
     from .casepatch import PatchForm, is_patchable, diff_to_json
-    unpatched = {tuple(d.path): d for d in diffs if not is_patchable(d)}
+    unpatched = {tuple(d.path): d for d in diffs if expected_patch_diff(d)}
     xform_ids = unpatched.pop(("xform_ids", "[*]"), None)
     return (
         xform_ids is not None

@@ -5,7 +5,7 @@ from xml.sax.saxutils import unescape
 import attr
 from testil import eq
 
-from corehq.apps.tzmigration.timezonemigration import FormJsonDiff as Diff
+from corehq.apps.tzmigration.timezonemigration import FormJsonDiff as Diff, MISSING
 
 from .. import casediff
 from .. import casepatch as mod
@@ -48,21 +48,36 @@ def test_can_patch_opened_by_with_user_id():
     check_diff_block(case, diffs)
 
 
-def check_diff_block(case, diffs):
+def test_patch_missing_case_property():
+    diffs = [Diff("diff", ["gone"], MISSING, "new")]
+    case = mod.PatchCase(FakeCase(), diffs)
+    eq(case.dynamic_case_properties(), {"gone": ""})
+    check_diff_block(case, diffs, [Diff("diff", ["gone"], MISSING, "")])
+
+
+def check_diff_block(case, diffs, patched_diffs=None):
     form = FakeForm(mod.get_diff_block(case))
     data = json.loads(unescape(form.form_data["diff"]))
     eq(data["case_id"], case.case_id)
     eq(data["diffs"], [mod.diff_to_json(y) for y in diffs])
 
-    nopatch = [d for d in diffs if not mod.is_patchable(d)]
-    if not any(d.path[0] == "xform_ids" for d in nopatch):
-        nopatch.append(Diff("set_mismatch", ["xform_ids", "[*]"], "old", "new"))
+    assert_patched(form, patched_diffs or diffs)
+    if patched_diffs:
+        assert_patched(form, diffs, False)
+
+
+def assert_patched(form, diffs, expect_patched=True):
+    patch_diffs = [diff for diff in diffs
+        if not mod.is_patchable(diff) or diff.old_value is MISSING]
+    if not any(d.path[0] == "xform_ids" for d in patch_diffs):
+        patch_diffs.append(Diff("set_mismatch", ["xform_ids", "[*]"], "old", "new"))
     with patch.object(casediff, "get_sql_forms", lambda x, **k: [form]):
-        sep = "\n"
-        assert casediff.is_case_patched(case.case_id, nopatch), (
-            f"is_case_patched(case_id, diffs) -> False\n"
-            f"{sep.join(repr(d) for d in nopatch)}\n\n{form.diff_block}"
-        )
+        actual_patched = casediff.is_case_patched(FakeCase.case_id, patch_diffs)
+    sep = "\n"
+    assert actual_patched == expect_patched, (
+        f"is_case_patched(case_id, diffs) -> {actual_patched}\n"
+        f"{sep.join(repr(d) for d in patch_diffs)}\n\n{form.diff_block}"
+    )
 
 
 class FakeCase:
