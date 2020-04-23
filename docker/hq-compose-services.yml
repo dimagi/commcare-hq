@@ -46,7 +46,6 @@ services:
     environment:
       ES_CLUSTER_NAME: ES_CLUSTER_NAME
       ES_JAVA_OPTS: "-Des.script.engine.groovy.inline.aggs=true -Des.script.engine.groovy.inline.search=true"
-      action.auto_create_index: 0
     ports:
       - "9200:9200"
 
