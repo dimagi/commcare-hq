@@ -104,10 +104,10 @@ class Command(BaseCommand):
                                             func_name='_agg_thr_table')
             date = monthly_date.strftime("%Y-%m-%d")
             queries = [query_text_1, query_text_2, query_text_3, query_text_4, query_text_5]
-            print("====Executing for month f{date}========\n")
+            print(f"====Executing for month f{date}========\n")
             count = 0
             for query in queries:
-                print("=====Executing query {count} =====\n")
+                print(f"=====Executing query {count} =====\n")
                 query = query.format(month=date)
                 with connections['icds-ucr-citus'].cursor() as c:
                     c.execute(query)
