@@ -1,5 +1,5 @@
 from abc import ABCMeta, abstractproperty, abstractmethod
-from collections import Counter
+from collections import Counter, defaultdict
 from datetime import datetime
 
 from django.conf import settings
@@ -291,23 +291,30 @@ class PillowBase(metaclass=ABCMeta):
         return sequence
 
     def _record_datadog_metrics(self, changes_chunk, processing_time):
-        tags = {"pillow_name": self.get_name(), "mode": "chunked"}
         change_count = len(changes_chunk)
-        if settings.ENTERPRISE_MODE:
-            type_counter = Counter([
-                change.metadata.document_subtype
-                for change in changes_chunk if change.metadata.document_type == 'CommCareCase'
-            ])
-            for case_type, type_count in type_counter.items():
-                metrics_counter('commcare.change_feed.changes.count', type_count,
-                                tags={**tags, 'case_type': case_type})
+        by_data_source = defaultdict(list)
+        for change in changes_chunk:
+            by_data_source[change.metadata.data_source_name].append(change)
+        for data_source, changes in by_data_source.items():
+            tags = {"pillow_name": self.get_name(), 'datasource': data_source}
+            if settings.ENTERPRISE_MODE:
+                type_counter = Counter([
+                    change.metadata.document_subtype
+                    for change in changes_chunk if change.metadata.document_type == 'CommCareCase'
+                ])
+                for case_type, type_count in type_counter.items():
+                    metrics_counter('commcare.change_feed.changes.count', type_count,
+                                    tags={**tags, 'case_type': case_type})
 
-            remainder = change_count - sum(type_counter.values())
-            if remainder:
-                metrics_counter('commcare.change_feed.changes.count', remainder, tags=tags)
-        else:
-            metrics_counter('commcare.change_feed.changes.count', change_count, tags=tags)
+                remainder = change_count - sum(type_counter.values())
+                if remainder:
+                    metrics_counter('commcare.change_feed.changes.count', remainder,
+                                    tags={**tags, 'case_type': 'NA'})
+            else:
+                metrics_counter('commcare.change_feed.changes.count', change_count,
+                                tags={**tags, 'case_type': 'NA'})
 
+        tags = {"pillow_name": self.get_name()}
         max_change_lag = (datetime.utcnow() - changes_chunk[0].metadata.publish_timestamp).total_seconds()
         min_change_lag = (datetime.utcnow() - changes_chunk[-1].metadata.publish_timestamp).total_seconds()
         metrics_gauge('commcare.change_feed.chunked.min_change_lag', min_change_lag, tags=tags)
@@ -351,16 +358,15 @@ class PillowBase(metaclass=ABCMeta):
     def __record_change_metric_in_datadog(self, metric, change, processor=None, processing_time=None,
                                           add_case_type_tag=False):
         if change.metadata is not None:
-            common_tags = {
+            metric_tags = {
                 'datasource': change.metadata.data_source_name,
-                'is_deletion': change.metadata.is_deletion,
                 'pillow_name': self.get_name(),
-                'processor': processor.__class__.__name__ if processor else "all_processors",
+                'case_type': 'NA'
             }
 
-            metric_tags = common_tags.copy()
-            if add_case_type_tag and settings.ENTERPRISE_MODE and change.metadata.document_type == 'CommCareCase':
-                metric_tags['case_type'] = change.metadata.document_subtype
+            if add_case_type_tag and settings.ENTERPRISE_MODE:
+                if change.metadata.document_type == 'CommCareCase':
+                    metric_tags['case_type'] = change.metadata.document_subtype
 
             metrics_counter(metric, tags=metric_tags)
 
@@ -374,8 +380,9 @@ class PillowBase(metaclass=ABCMeta):
             })
 
             if processing_time:
-                metrics_counter('commcare.change_feed.processing_time.total', processing_time, tags=common_tags)
-                metrics_counter('commcare.change_feed.processing_time.count', tags=common_tags)
+                tags = {'pillow_name': self.get_name(),}
+                metrics_counter('commcare.change_feed.processing_time.total', processing_time, tags=tags)
+                metrics_counter('commcare.change_feed.processing_time.count', tags=tags)
 
     @staticmethod
     def _deduplicate_changes(changes_chunk):
