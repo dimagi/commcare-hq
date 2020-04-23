@@ -350,7 +350,7 @@ class DemographicsExport(ExportableMixin):
             }
         ]
         if self.beta:
-            final_columns.insert(1, {
+            final_columns.insert(2, {
                 'header': 'Total number of household members',
                 'slug': 'num_people'
             })
