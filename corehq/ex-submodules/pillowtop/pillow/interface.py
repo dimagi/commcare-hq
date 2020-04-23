@@ -254,7 +254,7 @@ class PillowBase(metaclass=ABCMeta):
                 ))
                 raise
         if is_success:
-            self._record_change_success_in_datadog(change, processor)
+            self._record_change_success_in_datadog(change)
         return timer.duration
 
     @abstractmethod
@@ -347,19 +347,19 @@ class PillowBase(metaclass=ABCMeta):
                 'processor': processor.__class__.__name__ if processor else "all_processors",
             })
 
-    def _record_change_success_in_datadog(self, change, processor):
-        self.__record_change_metric_in_datadog('commcare.change_feed.changes.success', change, processor)
+    def _record_change_success_in_datadog(self, change):
+        self.__record_change_metric_in_datadog('commcare.change_feed.changes.success', change)
 
-    def __record_change_metric_in_datadog(self, metric, change, processor=None, processing_time=None,
+    def __record_change_metric_in_datadog(self, metric, change, processing_time=None,
                                           add_case_type_tag=False):
         if change.metadata is not None:
             metric_tags = {
                 'datasource': change.metadata.data_source_name,
                 'pillow_name': self.get_name(),
-                'case_type': 'NA'
             }
 
             if add_case_type_tag and settings.ENTERPRISE_MODE:
+                metric_tags['case_type'] = 'NA'
                 if change.metadata.document_type == 'CommCareCase':
                     metric_tags['case_type'] = change.metadata.document_subtype
 
