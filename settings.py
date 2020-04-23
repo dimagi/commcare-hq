@@ -837,7 +837,7 @@ SUBSCRIPTION_PASSWORD = None
 # List of metrics providers to use. Available providers:
 # * 'corehq.util.metrics.datadog.DatadogMetrics'
 # * 'corehq.util.metrics.prometheus.PrometheusMetrics'
-METRICS_PROVIDERS = ['corehq.util.metrics.prometheus.PrometheusMetrics']
+METRICS_PROVIDERS = []
 
 DATADOG_API_KEY = None
 DATADOG_APP_KEY = None
