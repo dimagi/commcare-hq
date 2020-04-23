@@ -255,8 +255,6 @@ class PillowBase(metaclass=ABCMeta):
                 raise
         if is_success:
             self._record_change_success_in_datadog(change, processor)
-        else:
-            self._record_change_exception_in_datadog(change, processor)
         return timer.duration
 
     @abstractmethod
@@ -351,9 +349,6 @@ class PillowBase(metaclass=ABCMeta):
 
     def _record_change_success_in_datadog(self, change, processor):
         self.__record_change_metric_in_datadog('commcare.change_feed.changes.success', change, processor)
-
-    def _record_change_exception_in_datadog(self, change, processor):
-        self.__record_change_metric_in_datadog('commcare.change_feed.changes.exceptions', change, processor)
 
     def __record_change_metric_in_datadog(self, metric, change, processor=None, processing_time=None,
                                           add_case_type_tag=False):
