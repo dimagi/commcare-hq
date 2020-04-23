@@ -939,9 +939,8 @@ hqDefine('export/js/models', [
         try {
             return this.path()[this.path().length - 1].name() === 'name';
         } catch (error) {
-            console.log(error);
+            return false;
         }
-        return false;
     };
 
     ExportItem.prototype.readablePath = function () {
