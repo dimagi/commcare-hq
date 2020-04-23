@@ -268,7 +268,6 @@ class BulkAsyncIndicatorProcessingTest(TestCase):
         patched_build.assert_has_calls(
             patched_build.call(self.doc_ids)
         )
-        self.assertEqual(patched_build.call_count, 1)
 
     def test_known_exception(self):
         # check that exceptions due to unknown configs are handled correctly
