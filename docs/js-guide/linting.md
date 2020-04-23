@@ -2,11 +2,10 @@
 
 Our recommended linter is [ESLint](http://eslint.org/).
 This is what
-[dimagimon](https://confluence.dimagi.com/display/internal/Lint-Review+Service)
-is currently running.
+our [Stickler configuration](https://github.com/dimagi/commcare-hq/blob/679d3ca7cf81d7808b6792a72046cedd891ed62f/.stickler.yml#L10)
+uses.
 
-There is an `.eslintrc.js` file in the root of the commcare-hq repository which
-defines the rules to check.
+The [.eslintrc.js](https://github.com/dimagi/commcare-hq/blob/master/.eslintrc.js) file in the root of the commcare-hq repository defines the rules to check.
 
 ## Running ESLint locally
 The best time to find out about a code error (or stylistic faux pas) is when
