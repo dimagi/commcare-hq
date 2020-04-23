@@ -12,7 +12,10 @@ from corehq.apps.export.forms import (
     IncrementalExportFormSet,
     IncrementalExportFormSetHelper,
 )
-from corehq.apps.export.models.incremental import IncrementalExportCheckpoint
+from corehq.apps.export.models.incremental import (
+    IncrementalExport,
+    IncrementalExportCheckpoint,
+)
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.dispatcher import DomainReportDispatcher
 from corehq.apps.reports.generic import GenericTabularReport
@@ -36,6 +39,7 @@ class IncrementalExportView(BaseProjectDataView, FormView):
         # case export instance select box, and to set
         # IncrementalExport.domain when the model instance is saved.
         kwargs['request'] = self.request
+        kwargs['queryset'] = IncrementalExport.objects.filter(domain=self.domain)
         return kwargs
 
     def get_context_data(self, **kwargs):
