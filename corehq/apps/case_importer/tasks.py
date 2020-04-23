@@ -33,13 +33,13 @@ def bulk_import_async(config, domain, excel_id):
         return exit_celery_with_error_message(bulk_import_async, get_importer_error_message(e))
     finally:
         if not result_stored:
-            store_task_result.delay(excel_id)
+            store_task_result_if_failed.delay(excel_id)
 
 
 @task(serializer='pickle', queue='case_import_queue')
-def store_task_result(upload_id):
+def store_task_result_if_failed(upload_id):
     case_upload = CaseUpload.get(upload_id)
-    case_upload.store_task_result()
+    case_upload.store_task_result_if_failed()
 
 
 def _alert_on_result(result, domain):
