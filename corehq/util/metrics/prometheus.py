@@ -4,7 +4,13 @@ from prometheus_client import Counter as PCounter
 from prometheus_client import Gauge as PGauge
 from prometheus_client import Histogram as PHistogram
 
+from corehq.util.soft_assert import soft_assert
 from corehq.util.metrics.metrics import HqMetrics
+
+prometheus_soft_assert = soft_assert(to=[
+    f'{name}@dimagi.com'
+    for name in ['skelly', 'rkumar']
+])
 
 
 class PrometheusMetrics(HqMetrics):
@@ -15,11 +21,17 @@ class PrometheusMetrics(HqMetrics):
 
     def _counter(self, name: str, value: float = 1, tags: Dict[str, str] = None, documentation: str = ''):
         """See https://prometheus.io/docs/concepts/metric_types/#counter"""
-        self._get_metric(PCounter, name, tags, documentation).inc(value)
+        try:
+            self._get_metric(PCounter, name, tags, documentation).inc(value)
+        except ValueError:
+            pass
 
     def _gauge(self, name: str, value: float, tags: Dict[str, str] = None, documentation: str = ''):
         """See https://prometheus.io/docs/concepts/metric_types/#histogram"""
-        self._get_metric(PGauge, name, tags, documentation).set(value)
+        try:
+            self._get_metric(PGauge, name, tags, documentation).set(value)
+        except ValueError:
+            pass
 
     def _histogram(self, name: str, value: float, bucket_tag: str, buckets: List[int], bucket_unit: str = '',
                   tags: Dict[str, str] = None, documentation: str = ''):
@@ -51,7 +63,10 @@ class PrometheusMetrics(HqMetrics):
             # commcare_request_duration_count{...tags...} 1.0
 
         See https://prometheus.io/docs/concepts/metric_types/#histogram"""
-        self._get_metric(PHistogram, name, tags, documentation, buckets=buckets).observe(value)
+        try:
+            self._get_metric(PHistogram, name, tags, documentation, buckets=buckets).observe(value)
+        except ValueError:
+            pass
 
     def _get_metric(self, metric_type, name, tags, documentation, **kwargs):
         name = name.replace('.', '_')
@@ -68,5 +83,9 @@ class PrometheusMetrics(HqMetrics):
         try:
             return metric.labels(**tags) if tags else metric
         except ValueError:
-            print(name, tags, metric._labelnames)
+            prometheus_soft_assert(False, 'Prometheus metric error', {
+                'metric_name': name,
+                'tags': list(tags),
+                'expected_tags': metric._labelnames
+            })
             raise
