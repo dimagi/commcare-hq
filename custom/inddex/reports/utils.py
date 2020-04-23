@@ -1,9 +1,14 @@
 from datetime import datetime
 from itertools import chain
 
+from django.contrib import messages
+
+from dimagi.utils.logging import notify_exception
+
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin
+from custom.inddex.fixtures import InddexFixtureError
 
 
 class MultiTabularReport(DatespanMixin, CustomProjectReport, GenericTabularReport):
@@ -19,19 +24,28 @@ class MultiTabularReport(DatespanMixin, CustomProjectReport, GenericTabularRepor
 
     @property
     def report_context(self):
-        context = {
-            'name': self.name,
-            'export_only': self.export_only
-        }
-        if not self.export_only and not self.needs_filters:
-            context['data_providers'] = [{
+
+        def _to_context_dict(data_provider):
+            return {
                 'title': data_provider.title,
                 'slug': data_provider.slug,
                 'headers': DataTablesHeader(
                     *(DataTablesColumn(header) for header in data_provider.headers),
                 ),
                 'rows': list(data_provider.rows),
-            } for data_provider in self.data_providers]
+            }
+
+        context = {
+            'name': self.name,
+            'export_only': self.export_only
+        }
+        if not self.export_only and not self.needs_filters:
+            try:
+                context['data_providers'] = list(map(_to_context_dict, self.data_providers))
+            except InddexFixtureError as e:
+                context['data_providers'] = []
+                notify_exception(self.request, str(e))
+                messages.error(self.request, str(e))
         return context
 
     @property

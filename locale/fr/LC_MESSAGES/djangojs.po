@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-04-15 19:45+0000\n"
+"POT-Creation-Date: 2020-04-22 22:56+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -3864,6 +3864,18 @@ msgstr ""
 
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js:425
 msgid "Please check above for any errors in your configuration."
+msgstr ""
+
+#: corehq/apps/userreports/static/userreports/js/configurable_reports_home.js:18
+msgid "Edit a report or data source"
+msgstr ""
+
+#: corehq/apps/userreports/static/userreports/js/configurable_reports_home.js:27
+msgid "static"
+msgstr ""
+
+#: corehq/apps/userreports/static/userreports/js/configurable_reports_home.js:28
+msgid "deactivated"
 msgstr ""
 
 #: corehq/apps/userreports/static/userreports/js/expression_evaluator.js:73
