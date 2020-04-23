@@ -2,6 +2,7 @@ from wsgiref.util import FileWrapper
 
 from django.http import HttpResponseNotFound, StreamingHttpResponse
 from django.urls import reverse
+from django.utils.decorators import method_decorator
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy
 from django.views.generic import FormView
@@ -17,10 +18,11 @@ from corehq.apps.reports.dispatcher import DomainReportDispatcher
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import DatespanMixin
 from corehq.apps.settings.views import BaseProjectDataView
-from corehq.blobs.exceptions import NotFound
 from corehq.motech.views import MotechLogDetailView
+from corehq.toggles import INCREMENTAL_EXPORTS
 
 
+@method_decorator(INCREMENTAL_EXPORTS.required_decorator(), name='dispatch')
 class IncrementalExportView(BaseProjectDataView, FormView):
     urlname = 'incremental_export_view'
     page_title = ugettext_lazy('Incremental Export')

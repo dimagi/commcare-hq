@@ -1,5 +1,6 @@
 import re
 
+from django.http import Http404
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_lazy
@@ -101,12 +102,19 @@ class MotechLogDetailView(BaseProjectSettingsView, DetailView):
 
 
 @method_decorator(require_permission(Permissions.edit_motech), name='dispatch')
-@method_decorator(toggles.DHIS2_INTEGRATION.required_decorator(), name='dispatch')
 class ConnectionSettingsView(BaseProjectSettingsView, FormView):
     urlname = 'connection_settings_view'
     page_title = ugettext_lazy('Connection Settings')
     template_name = 'motech/connection_settings.html'
     form_class = ConnectionSettingsFormSet  # NOTE: form_class is a formset
+
+    def dispatch(self, request, *args, **kwargs):
+        if not (
+                toggles.DHIS2_INTEGRATION.enabled_for_request(request)
+                or toggles.INCREMENTAL_EXPORTS.enabled_for_request(request)
+        ):
+            raise Http404()
+        return super(ConnectionSettingsView, self).dispatch(request, *args, **kwargs)
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
