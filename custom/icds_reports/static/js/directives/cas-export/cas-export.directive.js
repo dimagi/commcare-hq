@@ -142,6 +142,13 @@ function CasExportController($window, $location, locationHierarchy, locationsSer
         });
     };
 
+    vm.selectedDate = function () {
+        return selectedDate = vm.selectedMonth ? new Date(vm.selectedYear, vm.selectedMonth) : new Date();
+    };
+
+    vm.showReassignmentMessage = function () {
+        return vm.selectedLocation && (Date.parse(vm.selectedLocation.deprecated_at) < vm.selectedDate() || Date.parse(vm.selectedLocation.deprecates_at) > vm.selectedDate());
+    };
 }
 
 CasExportController.$inject = ['$window', '$location', 'locationHierarchy', 'locationsService', 'downloadService', 'userLocationId', 'isAlertActive'];

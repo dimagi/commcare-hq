@@ -558,6 +558,13 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         }
     };
 
+    vm.selectedDate = function () {
+        return selectedDate = vm.selectedMonth ? new Date(vm.selectedYear, vm.selectedMonth) : new Date();
+    };
+
+    vm.showReassignmentMessage = function () {
+        return vm.selectedLocation && (Date.parse(vm.selectedLocation.deprecated_at) < vm.selectedDate() || Date.parse(vm.selectedLocation.deprecates_at) > vm.selectedDate());
+    };
 }
 
 DownloadController.$inject = ['$rootScope', '$location', 'locationHierarchy', 'locationsService', 'userLocationId',
