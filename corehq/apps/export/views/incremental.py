@@ -157,9 +157,6 @@ def incremental_export_checkpoint_file(request, domain, checkpoint_id):
 
     if not checkpoint.blob_exists():
         return HttpResponseNotFound()
-
-    filename = (f'incremental_export-{checkpoint.incremental_export.name}-'
-                f'{checkpoint.date_created.strftime("%Y-%m-%d-%H-%M-%S")}.csv')
     response = StreamingHttpResponse(FileWrapper(checkpoint.get_blob()), content_type='text/csv')
-    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    response['Content-Disposition'] = f'attachment; filename="{checkpoint.filename}"'
     return response

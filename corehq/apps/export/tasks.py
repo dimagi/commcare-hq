@@ -293,9 +293,7 @@ def _send_incremental_export(export, checkpoint):
     headers = {
         'Accept': 'application/json'
     }
-    date_suffix = checkpoint.date_created.replace(microsecond=0).isoformat()
-    filename = f'{checkpoint.incremental_export.name}_{date_suffix}.csv'
-    files = {'file': (filename, checkpoint.get_blob(), 'text/csv')}
+    files = {'file': (checkpoint.filename, checkpoint.get_blob(), 'text/csv')}
     requests.post(uri='', files=files, headers=headers)
 
 

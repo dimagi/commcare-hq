@@ -71,3 +71,8 @@ class IncrementalExportCheckpoint(models.Model):
         self.status = IncrementalExportStatus.from_log_entry(log_entry)
         self.request_log = log
         self.save()
+
+    @property
+    def filename(self):
+        date_suffix = self.date_created.replace(microsecond=0).isoformat()
+        return f'{self.incremental_export.name}-{date_suffix}.csv'
