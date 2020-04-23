@@ -11,6 +11,27 @@ def test_cannot_patch_opened_by_alone():
         mod.PatchCase(FakeCase(), diffs)
 
 
+def test_cannot_patch_closed_by_alone():
+    diffs = [Diff("diff", ["closed_by"], "old", "new")]
+    with assert_raises(mod.CannotPatch):
+        mod.PatchCase(FakeCase(), diffs)
+
+
+def test_cannot_patch_modified_by_alone():
+    diffs = [Diff("diff", ["modified_by"], "old", "new")]
+    with assert_raises(mod.CannotPatch):
+        mod.PatchCase(FakeCase(), diffs)
+
+
+def test_cannot_patch_opened_by_with_xform_ids():
+    diffs = [
+        Diff("diff", ["opened_by"], "old", "new"),
+        Diff("diff", ["xform_ids", "[*]"], "old", "new"),
+    ]
+    with assert_raises(mod.CannotPatch):
+        mod.PatchCase(FakeCase(), diffs)
+
+
 def test_can_patch_opened_by_with_user_id():
     diffs = [
         Diff("diff", ["opened_by"], "old", "new"),

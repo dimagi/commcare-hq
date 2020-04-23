@@ -134,8 +134,11 @@ class PatchCase:
 
 
 def cannot_patch(diffs):
-    return any(d.path[0] in ILLEGAL_PROPS for d in diffs) \
-        or all(d.path[0] in IGNORE_PROPS for d in diffs)
+    props = {d.path[0] for d in diffs}
+    if props == {"xform_ids"}:
+        # can patch xform_ids diff (patch => ignore the diff)
+        return False
+    return props & ILLEGAL_PROPS or not props - IGNORE_PROPS
 
 
 def has_known_props(diffs):
@@ -152,8 +155,19 @@ def iter_dynamic_properties(diffs):
         yield name, diff.old_value
 
 
-ILLEGAL_PROPS = {"actions", "*"}
-IGNORE_PROPS = {"opened_by", "external_id"}
+ILLEGAL_PROPS = {"actions", "domain", "*"}
+IGNORE_PROPS = {
+    "closed_by",
+    "closed_on",
+    "deleted_on",
+    "external_id",  # deprecated
+    "modified_by",
+    "modified_on",
+    "opened_by",
+    "opened_on",
+    "server_modified_on",
+    "xform_ids",
+}
 STATIC_PROPS = {
     "case_id",
     "closed",
