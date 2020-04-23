@@ -1847,42 +1847,42 @@ def drop_df_indices(agg_date):
 
 def cf_pre_queries(agg_date):
     helper = AggregateComplementaryFeedingForms._agg_helper_cls(None, agg_date)
-    helper.helper.create_temporary_prev_table()
+    helper.create_temporary_prev_table()
 
 
 def ccs_cf_pre_queries(agg_date):
     helper = AggregateCcsRecordComplementaryFeedingForms._agg_helper_cls(None, agg_date)
-    helper.helper.create_temporary_prev_table()
+    helper.create_temporary_prev_table()
 
 
 def migration_pre_queries(agg_date):
     helper = AggregateMigrationForms._agg_helper_cls(None, agg_date)
-    helper.helper.create_temporary_prev_table()
+    helper.create_temporary_prev_table()
 
 
 def availing_pre_queries(agg_date):
     helper = AggregateAvailingServiceForms._agg_helper_cls(None, agg_date)
-    helper.helper.create_temporary_prev_table()
+    helper.create_temporary_prev_table()
 
 
 def ch_pnc_pre_queries(agg_date):
     helper = AggregateChildHealthPostnatalCareForms._agg_helper_cls(None, agg_date)
-    helper.helper.create_temporary_prev_table()
+    helper.create_temporary_prev_table()
 
 
 def ccs_pnc_pre_queries(agg_date):
     helper = AggregateCcsRecordPostnatalCareForms._agg_helper_cls(None, agg_date)
-    helper.helper.create_temporary_prev_table()
+    helper.create_temporary_prev_table()
 
 
 def bp_pre_queries(agg_date):
     helper = AggregateBirthPreparednesForms._agg_helper_cls(None, agg_date)
-    helper.helper.create_temporary_prev_table()
+    helper.create_temporary_prev_table()
 
 
 def ag_pre_queries(agg_date):
     helper = AggregateAdolescentGirlsRegistrationForms._agg_helper_cls(None, agg_date)
-    helper.helper.create_temporary_prev_table()
+    helper.create_temporary_prev_table()
 
 
 def update_governance_dashboard(target_date):

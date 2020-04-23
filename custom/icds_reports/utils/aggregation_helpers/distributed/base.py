@@ -13,7 +13,7 @@ from custom.icds_reports.utils.aggregation_helpers import (
     transform_day_to_month,
     get_prev_agg_tablename
 )
-from custom.icds_reports.utils.aggregation_helpers.location_reassignment import TempPrevIntermediateTables
+from custom.icds_reports.utils.aggregation_helpers.distributed.location_reassignment import TempPrevIntermediateTables
 
 logger = logging.getLogger(__name__)
 
