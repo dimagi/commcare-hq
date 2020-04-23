@@ -65,4 +65,8 @@ class PrometheusMetrics(HqMetrics):
             self._metrics[name] = metric
         else:
             assert metric.__class__ == metric_type
-        return metric.labels(**tags) if tags else metric
+        try:
+            return metric.labels(**tags) if tags else metric
+        except ValueError:
+            print(name, tags, metric._labelnames)
+            raise
