@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date
 
 from dateutil.relativedelta import relativedelta
 from django.core.management import BaseCommand
@@ -76,22 +76,21 @@ class Command(BaseCommand):
     help = "Fills the Missing THR Forms"
 
     def add_arguments(self, parser):
-        parser.add_argument('date', type=str, nargs='?')
+        parser.add_argument('date', type=date, nargs='?')
 
     def handle(self, *args, **options):
-        date = options["date"] if options["date"] else "2019-09-01"
-        date = datetime.strptime(date, '%Y-%m-%d')
-        self.run_task(date)
+        date_entered = options["date"] if options["date"] else date(2019, 9, 1)
+        self.run_task(date_entered)
 
     def run_task(self, initial_date):
-        final_date = datetime.now()
+        final_date = date.today()
         final_date = final_date.replace(day=1)
 
-        # get the number of month intervals between the dates
-        intervals = final_date.month - initial_date.month + 12 * (final_date.year - initial_date.year) + 1
         monthly_dates = []
-        for i in range(0, intervals):
-            monthly_dates.append(initial_date + relativedelta(months=i))
+        date_itr = initial_date
+        while date_itr <= final_date:
+            monthly_dates.append(date_itr)
+            date_itr = date_itr + relativedelta(months=1)
 
         state_ids = list(
             SQLLocation.objects.filter(domain=DASHBOARD_DOMAIN, location_type__name='state').values_list(
@@ -112,7 +111,3 @@ class Command(BaseCommand):
                 with connections['icds-ucr-citus'].cursor() as c:
                     c.execute(query)
                 count = count + 1
-
-
-
-
