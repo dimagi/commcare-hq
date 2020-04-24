@@ -1305,13 +1305,13 @@ class TestFactSheetReportDemographics(TestCase):
             self.get_data()['config']['sections'][0]['rows_config'][17],
             {
                 'average': {
-                    'html': 13,
-                    'sort_key': 13
+                    'html': 12,
+                    'sort_key': 12
                 },
                 'data': [
                     {'html': 'Adolescent girls (15-18 years)'},
-                    {'html': 19, 'sort_key': 19},
-                    {'html': 13, 'sort_key': 13},
+                    {'html': 18, 'sort_key': 18},
+                    {'html': 12, 'sort_key': 12},
                     {'html': 0}
                 ],
                 'data_source': 'AggAWCMonthlyDataSource',
