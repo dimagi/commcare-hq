@@ -53,7 +53,7 @@ class DishaDump(object):
         if file_ref:
             _file = file_ref.get_file_from_blobdb()
             content_format = Format('', 'json', '', True)
-            return get_download_response(_file, file_ref.get_file_size(), content_format, self._blob_id(), request)
+            return get_download_response(_file, _file.content_length, content_format, self._blob_id(), request)
         else:
             from custom.icds_reports.tasks import build_missing_disha_dump
             args = [self.month, self.state_name]

@@ -630,6 +630,117 @@ class TestExportData(TestCase):
             ]
         )
 
+    def test_demographics_export_with_beta(self):
+        self.assertListEqual(
+            DemographicsExport(
+                config={
+                    'domain': 'icds-cas'
+                }, beta=True
+            ).get_excel_data('st1'),
+            [
+                [
+                    'Demographics',
+                    [
+                        [
+                            'State',
+                            'Number of households',
+                            'Total number of household members',
+                            'Total number of beneficiaries (Children under 6 years old, pregnant women and lactating women, alive and seeking services) who have an Aadhaar ID',
+                            'Total number of beneficiaries (Children under 6 years old, pregnant women and lactating women, alive and seeking services)',
+                            'Percent Aadhaar-seeded beneficiaries', 'Number of pregnant women',
+                            'Number of pregnant women enrolled for services', 'Number of lactating women',
+                            'Number of lactating women enrolled for services', 'Number of children 0-6 years old',
+                            'Number of children 0-6 years old enrolled for services',
+                            'Number of children 0-6 months old enrolled for services',
+                            'Number of children 6 months to 3 years old enrolled for services',
+                            'Number of children 3 to 6 years old enrolled for services',
+                            'Number of adolescent girls (11-14 years)',
+                            'Number of out of school adolescent girls (11-14 years)',
+                            'Number of adolescent girls 15 to 18 years old'],
+                           ['st1', 2637, 859, 369, 1518, '24.31 %', 120, 120, 171, 171, 1227, 1227, 56, 244, 927, 26, 0,
+                            12],
+                           ['st1', 2637, 859, 369, 1518, '24.31 %', 120, 120, 171, 171, 1227, 1227, 56, 244, 927, 26, 0,
+                            12],
+                           ['st1', 2637, 859, 369, 1518, '24.31 %', 120, 120, 171, 171, 1227, 1227, 56, 244, 927, 26, 0,
+                            12],
+                           ['st1', 2637, 859, 369, 1518, '24.31 %', 120, 120, 171, 171, 1227, 1227, 56, 244, 927, 26, 0,
+                            12],
+                           ['st1', 2637, 859, 369, 1518, '24.31 %', 120, 120, 171, 171, 1227, 1227, 56, 244, 927, 26, 0,
+                            12],
+                           ['st2', 2952, 1057, 275, 1613, '17.05 %', 139, 139, 154, 154, 1320, 1320, 52, 301, 967, 25, 0,
+                            20],
+                           ['st2', 2952, 1057, 275, 1613, '17.05 %', 139, 139, 154, 154, 1320, 1320, 52, 301, 967, 25, 0,
+                            20],
+                           ['st2', 2952, 1057, 275, 1613, '17.05 %', 139, 139, 154, 154, 1320, 1320, 52, 301, 967, 25, 0,
+                            20],
+                           ['st2', 2952, 1057, 275, 1613, '17.05 %', 139, 139, 154, 154, 1320, 1320, 52, 301, 967, 25, 0,
+                            20],
+                           ['st2', 2952, 1057, 275, 1613, '17.05 %', 139, 139, 154, 154, 1320, 1320, 52, 301, 967, 25, 0,
+                            20],
+                           ['st3', 0, 0, 0, 0, '0.00 %', 0, 0, 0, 0, 0, 0, 'Data Not Entered', 'Data Not Entered',
+                            'Data Not Entered', 0, 0, 0],
+                           ['st3', 0, 0, 0, 0, '0.00 %', 0, 0, 0, 0, 0, 0, 'Data Not Entered', 'Data Not Entered',
+                            'Data Not Entered', 0, 0, 0],
+                           ['st3', 0, 0, 0, 0, '0.00 %', 0, 0, 0, 0, 0, 0, 'Data Not Entered', 'Data Not Entered',
+                            'Data Not Entered', 0, 0, 0],
+                           ['st3', 0, 0, 0, 0, '0.00 %', 0, 0, 0, 0, 0, 0, 'Data Not Entered', 'Data Not Entered',
+                            'Data Not Entered', 0, 0, 0],
+                           ['st3', 2, 0, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered',
+                            'Data Not Entered', 0, 0, 0],
+                           ['st4', 0, 0, 0, 0, '0.00 %', 0, 0, 0, 0, 0, 0, 'Data Not Entered', 'Data Not Entered',
+                            'Data Not Entered', 0, 0, 0],
+                           ['st4', 0, 0, 0, 0, '0.00 %', 0, 0, 0, 0, 0, 0, 'Data Not Entered', 'Data Not Entered',
+                            'Data Not Entered', 0, 0, 0],
+                           ['st4', 0, 0, 0, 0, '0.00 %', 0, 0, 0, 0, 0, 0, 'Data Not Entered', 'Data Not Entered',
+                            'Data Not Entered', 0, 0, 0],
+                           ['st4', 2, 0, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered',
+                            'Data Not Entered', 0, 0, 0],
+                           ['st4', 2, 0, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered',
+                            'Data Not Entered', 0, 0, 0],
+                           ['st5', 0, 0, 0, 0, '0.00 %', 0, 0, 0, 0, 0, 0, 'Data Not Entered', 'Data Not Entered',
+                            'Data Not Entered', 0, 0, 0],
+                           ['st5', 0, 0, 0, 0, '0.00 %', 0, 0, 0, 0, 0, 0, 'Data Not Entered', 'Data Not Entered',
+                            'Data Not Entered', 0, 0, 0],
+                           ['st5', 2, 0, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered',
+                            'Data Not Entered', 0, 0, 0],
+                           ['st5', 2, 0, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered',
+                            'Data Not Entered', 0, 0, 0],
+                           ['st5', 2, 0, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered',
+                            'Data Not Entered', 0, 0, 0],
+                           ['st6', 0, 0, 0, 0, '0.00 %', 0, 0, 0, 0, 0, 0, 'Data Not Entered', 'Data Not Entered',
+                            'Data Not Entered', 0, 0, 0],
+                           ['st6', 2, 0, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered',
+                            'Data Not Entered', 0, 0, 0],
+                           ['st6', 2, 0, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered',
+                            'Data Not Entered', 0, 0, 0],
+                           ['st6', 2, 0, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered',
+                            'Data Not Entered', 0, 0, 0],
+                           ['st6', 2, 0, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered',
+                            'Data Not Entered', 0, 0, 0],
+                           ['st7', 2, 8, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 1,
+                            6, 4, 0],
+                           ['st7', 2, 8, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 1,
+                            6, 4, 0],
+                           ['st7', 2, 8, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 1,
+                            6, 4, 0],
+                           ['st7', 2, 8, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 1,
+                            6, 4, 0],
+                           ['st7', 2, 8, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 1,
+                            6, 4, 0]]],
+             [
+                 'Export Info',
+                 [
+                     [
+                         'Generated at', '16:21:11 15 November 2017'
+                     ],
+                     [
+                         'State', 'st1'
+                     ]
+                 ]
+             ]
+            ]
+        )
+
     def test_system_usage_export(self):
         self.assertListEqual(
             SystemUsageExport(
@@ -1314,6 +1425,99 @@ class TestExportData(TestCase):
                 ]
             ]
         )
+
+    def test_awc_infrastructure_export_with_beta(self):
+        self.assertListEqual(
+            AWCInfrastructureExport(
+                config={
+                    'domain': 'icds-cas'
+                }, beta=True
+            ).get_excel_data(location=''),
+            [
+                [
+                    'AWC Infrastructure',
+                    [
+                        [
+                            'State',
+                            'Percentage AWCs reported clean drinking water',
+                            'Percentage AWCs reported functional toilet',
+                            'Percentage AWCs reported medicine kit',
+                            'Percentage AWCs reported weighing scale: infants',
+                            'Percentage AWCs reported weighing scale: mother and child',
+                            'Percentage AWCs reported Infantometer',
+                            'Percentage AWCs reported Stadiometer'
+                        ],
+            ['st1', '100.00 %', '50.00 %', '61.54 %', '76.92 %', '26.92 %', '7.69 %', '3.85 %'],
+            ['st1', '100.00 %', '50.00 %', '61.54 %', '76.92 %', '26.92 %', '7.69 %', '3.85 %'],
+            ['st1', '100.00 %', '50.00 %', '61.54 %', '76.92 %', '26.92 %', '7.69 %', '3.85 %'],
+            ['st1', '100.00 %', '50.00 %', '61.54 %', '76.92 %', '26.92 %', '7.69 %', '3.85 %'],
+            ['st1', '100.00 %', '50.00 %', '61.54 %', '76.92 %', '26.92 %', '7.69 %', '3.85 %'],
+            ['st2', '94.44 %', '55.56 %', '83.33 %', '77.78 %', '27.78 %', '0.00 %', '0.00 %'],
+            ['st2', '94.44 %', '55.56 %', '83.33 %', '77.78 %', '27.78 %', '0.00 %', '0.00 %'],
+            ['st2', '94.44 %', '55.56 %', '83.33 %', '77.78 %', '27.78 %', '0.00 %', '0.00 %'],
+            ['st2', '94.44 %', '55.56 %', '83.33 %', '77.78 %', '27.78 %', '0.00 %', '0.00 %'],
+            ['st2', '94.44 %', '55.56 %', '83.33 %', '77.78 %', '27.78 %', 'Data Not Entered', 'Data Not Entered'],
+            ['st3', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered',
+             'Data Not Entered', 'Data Not Entered'],
+            ['st3', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered',
+             'Data Not Entered', 'Data Not Entered'],
+            ['st3', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered',
+             'Data Not Entered', 'Data Not Entered'],
+            ['st3', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered',
+             'Data Not Entered', 'Data Not Entered'],
+            ['st3', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered',
+             'Data Not Entered', 'Data Not Entered'],
+            ['st4', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered',
+             'Data Not Entered', 'Data Not Entered'],
+            ['st4', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered',
+             'Data Not Entered', 'Data Not Entered'],
+            ['st4', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered',
+             'Data Not Entered', 'Data Not Entered'],
+            ['st4', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered',
+             'Data Not Entered', 'Data Not Entered'],
+            ['st4', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered',
+             'Data Not Entered', 'Data Not Entered'],
+            ['st5', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered',
+             'Data Not Entered', 'Data Not Entered'],
+            ['st5', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered',
+             'Data Not Entered', 'Data Not Entered'],
+            ['st5', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered',
+             'Data Not Entered', 'Data Not Entered'],
+            ['st5', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered',
+             'Data Not Entered', 'Data Not Entered'],
+            ['st5', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered',
+             'Data Not Entered', 'Data Not Entered'],
+            ['st6', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered',
+             'Data Not Entered', 'Data Not Entered'],
+            ['st6', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered',
+             'Data Not Entered', 'Data Not Entered'],
+            ['st6', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered',
+             'Data Not Entered', 'Data Not Entered'],
+            ['st6', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered',
+             'Data Not Entered', 'Data Not Entered'],
+            ['st6', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered',
+             'Data Not Entered', 'Data Not Entered'],
+            ['st7', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered',
+             'Data Not Entered', 'Data Not Entered'],
+            ['st7', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered',
+             'Data Not Entered', 'Data Not Entered'],
+            ['st7', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered',
+             'Data Not Entered', 'Data Not Entered'],
+            ['st7', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered',
+             'Data Not Entered', 'Data Not Entered'],
+            ['st7', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered', 'Data Not Entered',
+             'Data Not Entered', 'Data Not Entered']]],
+                [
+                    'Export Info',
+                    [
+                        [
+                            'Generated at', '16:21:11 15 November 2017'
+                        ]
+                    ]
+                ]
+            ]
+        )
+
 
     def test_beneficiary_export(self):
         self.assertJSONEqual(

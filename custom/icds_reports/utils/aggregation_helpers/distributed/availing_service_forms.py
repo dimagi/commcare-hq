@@ -11,6 +11,7 @@ class AvailingServiceFormsAggregationDistributedHelper(StateBasedAggregationDist
     helper_key = 'availing_service-forms'
     ucr_data_source_id = 'static-availing_service_form'
     aggregate_parent_table = AGG_AVAILING_SERVICES_TABLE
+    months_required = 3
 
     def data_from_ucr_query(self):
         month = self.month.replace(day=1)
@@ -31,7 +32,7 @@ class AvailingServiceFormsAggregationDistributedHelper(StateBasedAggregationDist
             %(month)s::DATE AS month,
             person_case_id AS person_case_id,
             LAST_VALUE(is_registered) OVER w AS is_registered,
-            timeend AS registration_date
+            LAST_VALUE(timeend) OVER w AS registration_date
           FROM "{ucr_tablename}"
           WHERE state_id = %(state_id)s AND
                 timeend >= %(current_month_start)s AND timeend < %(next_month_start)s AND

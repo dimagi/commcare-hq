@@ -15,7 +15,7 @@ from corehq.motech.forms import (
     ConnectionSettingsFormSet,
     ConnectionSettingsFormSetHelper,
 )
-from corehq.motech.models import RequestLog
+from corehq.motech.models import ConnectionSettings, RequestLog
 
 
 @method_decorator(require_permission(Permissions.edit_motech), name='dispatch')
@@ -114,6 +114,7 @@ class ConnectionSettingsView(BaseProjectSettingsView, FormView):
         # form_kwargs. ConnectionSettingsForm needs it to set
         # ConnectionSettings.domain when model instance is saved.
         kwargs['domain'] = self.domain
+        kwargs['queryset'] = ConnectionSettings.objects.filter(domain=self.domain)
         return kwargs
 
     def get_context_data(self, **kwargs):

@@ -11,6 +11,8 @@ CREATE VIEW bihar_vaccine_view AS
         "bihar_demographics"."mother_name" AS "mother_name",
         "bihar_demographics"."father_id" AS "father_id",
         "child_health"."mother_case_id" AS "mother_id",
+        "child_health"."delivery_nature" AS "delivery_nature",
+        CASE WHEN "child_health"."term_days" > 0 THEN "child_health"."term_days" ELSE NULL END AS term_days,
         "bihar_demographics"."dob" AS "dob",
         "bihar_demographics"."household_id" AS "household_id",
         "bihar_demographics"."private_admit" AS "private_admit",

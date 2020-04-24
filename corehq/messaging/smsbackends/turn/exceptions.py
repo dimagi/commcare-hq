@@ -1,0 +1,2 @@
+class WhatsAppTemplateStringException(Exception):
+    pass
