@@ -49,6 +49,7 @@ INSERT INTO "temp_chm" (
       coalesce_minority,
       coalesce_resident
 );
+DROP TABLE IF EXISTS temp_chm_local;
 CREATE temp_chm_local TABLE AS SELECT * from temp_chm;
 
 
