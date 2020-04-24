@@ -37,21 +37,17 @@
     ],
     "filters": [
       {
-        "compare_as_string": false,
-        "datatype": "date",
-        "required": false,
-        "display": "Date Submitted",
-        "field": "submitted_on",
+        "display": "Last Referral Date",
+        "slug": "last_referral_date",
         "type": "date",
-        "slug": "submitted_on"
+        "field": "last_referral_date",
+        "datatype": "date",
+        "compare_as_string": false
       },
       {
-        "compare_as_string": false,
-        "show_all": true,
-        "datatype": "string",
-        "type": "dynamic_choice_list",
-        "required": false,
+        "display": "Filter by AWW",
         "slug": "awc_id",
+        "type": "dynamic_choice_list",
         "field": "awc_id",
         "choice_provider": {
           "type": "location"
@@ -60,62 +56,55 @@
           "field": "supervisor_id",
           "location_type": "supervisor"
         },
-        "display": "Filter by AWW"
+        "datatype": "string",
+        "show_all": true
       },
       {
-        "compare_as_string": false,
-        "show_all": true,
-        "datatype": "string",
-        "type": "dynamic_choice_list",
-        "required": false,
+        "display": "Filter by Supervisor",
         "slug": "supervisor_id",
+        "type": "dynamic_choice_list",
         "field": "supervisor_id",
         "choice_provider": {
           "type": "location"
         },
-        "display": "Filter by Supervisor",
+        "datatype": "string",
+        "show_all": true,
         "ancestor_expression": {}
       },
       {
-        "compare_as_string": false,
-        "show_all": true,
-        "datatype": "string",
-        "type": "dynamic_choice_list",
-        "required": false,
+        "display": "Filter by Block",
         "slug": "block_id",
+        "type": "dynamic_choice_list",
         "field": "block_id",
         "choice_provider": {
           "type": "location"
         },
-        "display": "Filter by Block",
+        "datatype": "string",
+        "show_all": true,
         "ancestor_expression": {}
       },
       {
-        "compare_as_string": false,
-        "show_all": true,
-        "datatype": "string",
-        "type": "dynamic_choice_list",
-        "required": false,
+        "display": "Filter by District",
         "slug": "district_id",
+        "type": "dynamic_choice_list",
         "field": "district_id",
         "choice_provider": {
           "type": "location"
         },
-        "display": "Filter by District",
+        "datatype": "string",
+        "show_all": true,
         "ancestor_expression": {}
       },
       {
-        "compare_as_string": false,
-        "show_all": true,
-        "datatype": "string",
-        "type": "dynamic_choice_list",
-        "required": false,
+        "display": "Filter by State",
         "slug": "state_id",
+        "type": "dynamic_choice_list",
         "field": "state_id",
         "choice_provider": {
           "type": "location"
         },
-        "display": "Filter by State",
+        "datatype": "string",
+        "show_all": true,
         "ancestor_expression": {}
       }
     ],
@@ -124,7 +113,7 @@
         "display": "Month",
         "column_id": "month",
         "type": "aggregate_date",
-        "field": "submitted_on",
+        "field": "last_referral_date",
         "format": "%Y-%m",
         "transform": {},
         "calculate_total": false,
@@ -132,199 +121,311 @@
         "visible": true
       },
       {
-        "sortable": false,
-        "description": null,
-        "format": "default",
-        "transform": {
-          "type": "custom",
-          "custom_type": "owner_display"
-        },
-        "column_id": "owner_id",
-        "field": "awc_id",
-        "calculate_total": false,
-        "type": "field",
         "display": {
           "en": "Owner",
           "hin": "Owner"
         },
+        "column_id": "owner_id",
+        "type": "field",
+        "field": "awc_id",
         "aggregation": "simple",
+        "transform": {
+          "type": "custom",
+          "custom_type": "owner_display"
+        },
+        "format": "default",
+        "sortable": false,
         "width": null,
         "css_class": null,
-        "visible": true
-      },
-      {
-        "type": "array_agg_last_value",
-        "column_id": "vhsnd_date_past_month",
-        "field": "vhsnd_date_past_month",
-        "display": "vhsnd_date_past_month",
-        "order_by_col": "inserted_at",
-        "transform": {},
         "calculate_total": false,
         "description": null,
         "visible": true
       },
       {
-        "type": "array_agg_last_value",
-        "column_id": "done_when_planned",
-        "field": "done_when_planned",
-        "display": "done_when_planned",
-        "order_by_col": "inserted_at",
+        "display": "referred_premature",
+        "column_id": "referred_premature",
+        "type": "sum_when_template",
+        "calculate_total": true,
+        "whens": [
+          {
+            "type": "referral_health_problem",
+            "binds": [
+              "\\ypremature\\y"
+            ],
+            "then": 1
+          }
+        ],
+        "else_": 0,
+        "sortable": false,
         "transform": {},
-        "calculate_total": false,
         "description": null,
         "visible": true
       },
       {
-        "type": "array_agg_last_value",
-        "column_id": "aww_present",
-        "field": "aww_present",
-        "display": "aww_present",
-        "order_by_col": "inserted_at",
+        "display": "referred_sepsis",
+        "column_id": "referred_sepsis",
+        "type": "sum_when_template",
+        "calculate_total": true,
+        "whens": [
+          {
+            "type": "referral_health_problem",
+            "binds": [
+              "\\ysepsis\\y"
+            ],
+            "then": 1
+          }
+        ],
+        "else_": 0,
+        "sortable": false,
         "transform": {},
-        "calculate_total": false,
         "description": null,
         "visible": true
       },
       {
-        "type": "array_agg_last_value",
-        "column_id": "icds_sup",
-        "field": "icds_sup",
-        "display": "icds_sup",
-        "order_by_col": "inserted_at",
+        "display": "referred_diarrhoea",
+        "column_id": "referred_diarrhoea",
+        "type": "sum_when_template",
+        "calculate_total": true,
+        "whens": [
+          {
+            "type": "referral_health_problem",
+            "binds": [
+              "\\ydiarrhoea\\y"
+            ],
+            "then": 1
+          }
+        ],
+        "else_": 0,
+        "sortable": false,
         "transform": {},
-        "calculate_total": false,
         "description": null,
         "visible": true
       },
       {
-        "type": "array_agg_last_value",
-        "column_id": "asha_present",
-        "field": "asha_present",
-        "display": "asha_present",
-        "order_by_col": "inserted_at",
+        "display": "referred_pneumonia",
+        "column_id": "referred_pneumonia",
+        "type": "sum_when_template",
+        "calculate_total": true,
+        "whens": [
+          {
+            "type": "referral_health_problem",
+            "binds": [
+              "\\ypneumonia\\y"
+            ],
+            "then": 1
+          }
+        ],
+        "else_": 0,
+        "sortable": false,
         "transform": {},
-        "calculate_total": false,
         "description": null,
         "visible": true
       },
       {
-        "type": "array_agg_last_value",
-        "column_id": "anm_mpw",
-        "field": "anm_mpw",
-        "display": "anm_mpw",
-        "order_by_col": "inserted_at",
+        "display": "referred_fever_child",
+        "column_id": "referred_fever_child",
+        "type": "sum_when_template",
+        "calculate_total": true,
+        "whens": [
+          {
+            "type": "referral_health_problem",
+            "binds": [
+              "\\yfever_child\\y"
+            ],
+            "then": 1
+          }
+        ],
+        "else_": 0,
+        "sortable": false,
         "transform": {},
-        "calculate_total": false,
         "description": null,
         "visible": true
       },
       {
-        "type": "array_agg_last_value",
-        "column_id": "health_edu_org",
-        "field": "health_edu_org",
-        "display": "health_edu_org",
-        "order_by_col": "inserted_at",
+        "display": "referred_severely_underweight",
+        "column_id": "referred_severely_underweight",
+        "type": "sum_when_template",
+        "calculate_total": true,
+        "whens": [
+          {
+            "type": "referral_health_problem",
+            "binds": [
+              "\\yseverely_underweight\\y"
+            ],
+            "then": 1
+          }
+        ],
+        "else_": 0,
+        "sortable": false,
         "transform": {},
-        "calculate_total": false,
         "description": null,
         "visible": true
       },
       {
-        "type": "array_agg_last_value",
-        "column_id": "display_tools",
-        "field": "display_tools",
-        "display": "display_tools",
-        "order_by_col": "inserted_at",
+        "display": "referred_other_child",
+        "column_id": "referred_other_child",
+        "type": "sum_when_template",
+        "calculate_total": true,
+        "whens": [
+          {
+            "type": "referral_health_problem",
+            "binds": [
+              "\\yother_child\\y"
+            ],
+            "then": 1
+          }
+        ],
+        "else_": 0,
+        "sortable": false,
         "transform": {},
-        "calculate_total": false,
         "description": null,
         "visible": true
       },
       {
-        "type": "array_agg_last_value",
-        "column_id": "thr_distr",
-        "field": "thr_distr",
-        "display": "thr_distr",
-        "order_by_col": "inserted_at",
+        "display": "premature_reached_count",
+        "column_id": "premature_reached_count",
+        "type": "sum_when_template",
+        "calculate_total": true,
+        "whens": [
+          {
+            "type": "reached_referral_health_problem",
+            "binds": [
+              1,
+              "\\ypremature\\y"
+            ],
+            "then": 1
+          }
+        ],
+        "else_": 0,
+        "sortable": false,
         "transform": {},
-        "calculate_total": false,
         "description": null,
         "visible": true
       },
       {
-        "type": "array_agg_last_value",
-        "column_id": "child_immu",
-        "field": "child_immu",
-        "display": "child_immu",
-        "order_by_col": "inserted_at",
+        "display": "sepsis_reached_count",
+        "column_id": "sepsis_reached_count",
+        "type": "sum_when_template",
+        "calculate_total": true,
+        "whens": [
+          {
+            "type": "reached_referral_health_problem",
+            "binds": [
+              1,
+              "\\ysepsis\\y"
+            ],
+            "then": 1
+          }
+        ],
+        "else_": 0,
+        "sortable": false,
         "transform": {},
-        "calculate_total": false,
         "description": null,
         "visible": true
       },
       {
-        "type": "array_agg_last_value",
-        "column_id": "vit_a_given",
-        "field": "vit_a_given",
-        "display": "vit_a_given",
-        "order_by_col": "inserted_at",
+        "display": "diarrhoea_reached_count",
+        "column_id": "diarrhoea_reached_count",
+        "type": "sum_when_template",
+        "calculate_total": true,
+        "whens": [
+          {
+            "type": "reached_referral_health_problem",
+            "binds": [
+              1,
+              "\\ydiarrhoea\\y"
+            ],
+            "then": 1
+          }
+        ],
+        "else_": 0,
+        "sortable": false,
         "transform": {},
-        "calculate_total": false,
         "description": null,
         "visible": true
       },
       {
-        "type": "array_agg_last_value",
-        "column_id": "anc_today",
-        "field": "anc_today",
-        "display": "anc_today",
-        "order_by_col": "inserted_at",
+        "display": "pneumonia_reached_count",
+        "column_id": "pneumonia_reached_count",
+        "type": "sum_when_template",
+        "aggregation": "sum",
+        "calculate_total": true,
+        "whens": [
+          {
+            "type": "reached_referral_health_problem",
+            "binds": [
+              1,
+              "\\ypneumonia\\y"
+            ],
+            "then": 1
+          }
+        ],
+        "else_": 0,
+        "sortable": false,
         "transform": {},
-        "calculate_total": false,
         "description": null,
         "visible": true
       },
       {
-        "type": "array_agg_last_value",
-        "column_id": "local_leader",
-        "field": "local_leader",
-        "display": "local_leader",
-        "order_by_col": "inserted_at",
+        "display": "fever_child_reached_count",
+        "column_id": "fever_child_reached_count",
+        "type": "sum_when_template",
+        "calculate_total": true,
+        "whens": [
+          {
+            "type": "reached_referral_health_problem",
+            "binds": [
+              1,
+              "\\yfever_child\\y"
+            ],
+            "then": 1
+          }
+        ],
+        "else_": 0,
+        "sortable": false,
         "transform": {},
-        "calculate_total": false,
         "description": null,
         "visible": true
       },
       {
-        "type": "array_agg_last_value",
-        "column_id": "due_list_prep_immunization",
-        "field": "due_list_prep_immunization",
-        "display": "due_list_prep_immunization",
-        "order_by_col": "inserted_at",
+        "display": "sev_underweight_reached_count",
+        "column_id": "sev_underweight_reached_count",
+        "type": "sum_when_template",
+        "calculate_total": true,
+        "whens": [
+          {
+            "type": "reached_referral_health_problem",
+            "binds": [
+              1,
+              "\\yseverely_underweight\\y"
+            ],
+            "then": 1
+          }
+        ],
+        "else_": 0,
+        "sortable": false,
         "transform": {},
-        "calculate_total": false,
         "description": null,
         "visible": true
       },
       {
-        "type": "array_agg_last_value",
-        "column_id": "due_list_prep_vit_a",
-        "field": "due_list_prep_vit_a",
-        "display": "due_list_prep_vit_a",
-        "order_by_col": "inserted_at",
+        "display": "other_child_reached_count",
+        "column_id": "other_child_reached_count",
+        "type": "sum_when_template",
+        "calculate_total": true,
+        "whens": [
+          {
+            "type": "reached_referral_health_problem",
+            "binds": [
+              1,
+              "\\yother_child\\y"
+            ],
+            "then": 1
+          }
+        ],
+        "else_": 0,
+        "sortable": false,
         "transform": {},
-        "calculate_total": false,
-        "description": null,
-        "visible": true
-      },
-      {
-        "type": "array_agg_last_value",
-        "column_id": "due_list_prep_antenatal_checkup",
-        "field": "due_list_prep_antenatal_checkup",
-        "display": "due_list_prep_antenatal_checkup",
-        "order_by_col": "inserted_at",
-        "transform": {},
-        "calculate_total": false,
         "description": null,
         "visible": true
       }
