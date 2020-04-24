@@ -3,6 +3,7 @@ import re
 from urllib.parse import urljoin
 from requests.exceptions import RequestException
 
+
 class HTTPBearerAuth(requests.auth.AuthBase):
     def __init__(self, username, plaintext_password):
         self.username = username
@@ -19,16 +20,17 @@ class HTTPBearerAuth(requests.auth.AuthBase):
         token_base = self._find_bearer_base(r)
         token_request_url = urljoin(token_base, "token")
 
-        post_data = {"grant_type": "password", 
-            "username": self.username, 
+        post_data = {"grant_type": "password",
+            "username": self.username,
             "password": self.password
-        }
+            }
 
         token_response = requests.get(token_request_url, data=post_data)
-        try: 
+        try:
             return token_response.json()['access_token']
-        except:
-            raise RequestException(None, r, "Unable to retrieve access token for request: %s" % token_response.content)
+        except e:
+            raise RequestException(None, r, 
+                    "Unable to retrieve access token for request: %s" % token_response.content)
 
     def __call__(self, r):
         token = self._get_auth_token(r)
