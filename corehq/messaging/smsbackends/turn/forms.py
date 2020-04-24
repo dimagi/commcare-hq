@@ -14,7 +14,7 @@ class TurnBackendForm(BackendForm):
     business_id = TrimmedCharField(label=_("Business ID"))
     template_namespace = TrimmedCharField(label=_("Template Namespace"))
     business_auth_token = TrimmedCharField(label=_("Business Auth Token"))
-    fallback_backend_id = ChoiceField(label=_("Fallback Backend"))
+    fallback_backend_id = ChoiceField(label=_("Fallback Backend"), required=False)
 
     @property
     def gateway_specific_fields(self):
@@ -24,7 +24,7 @@ class TurnBackendForm(BackendForm):
         )
         backend_choices = [('', _("No Fallback Backend"))]
         backend_choices.extend([
-            (backend.id, backend.name) for backend in domain_backends
+            (backend.couch_id, backend.name) for backend in domain_backends
             if backend.id != self.backend_id
         ])
         self.fields['fallback_backend_id'].choices = backend_choices
