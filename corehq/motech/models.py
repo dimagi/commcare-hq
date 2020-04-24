@@ -5,6 +5,7 @@ from django.db import models
 
 import jsonfield
 
+from corehq.motech.auth import get_auth_factory
 from corehq.motech.const import (
     ALGO_AES,
     BASIC_AUTH,
@@ -66,8 +67,7 @@ class ConnectionSettings(models.Model):
         return Requests(
             self.domain,
             self.url,
-            self.username,
-            self.plaintext_password,
+            auth=get_auth_factory(self),
             verify=not self.skip_cert_verify,
             notify_addresses=self.notify_addresses,
             payload_id=payload_id,

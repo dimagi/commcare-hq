@@ -71,15 +71,14 @@ class Requests(object):
     Requests as a context manager.
     """
 
-    def __init__(self, domain_name, base_url, username, password,
+    def __init__(self, domain_name, base_url, auth,
                  verify=True, notify_addresses=None, payload_id=None, logger=None):
         """
         Initialise instance
 
         :param domain_name: Domain to store logs under
         :param base_url: Remote API base URL
-        :param username: Remote API username
-        :param password: Remote API plaintext password
+        :param auth: requests auth class
         :param verify: Verify SSL certificate?
         :param notify_addresses: A list of email addresses to notify of
             errors.
@@ -90,8 +89,7 @@ class Requests(object):
         """
         self.domain_name = domain_name
         self.base_url = base_url
-        self.username = username
-        self.password = password
+        self.auth = auth
         self.verify = verify
         self.notify_addresses = [] if notify_addresses is None else notify_addresses
         self.payload_id = payload_id
@@ -128,13 +126,13 @@ class Requests(object):
     def delete(self, uri, **kwargs):
         kwargs.setdefault('headers', {'Accept': 'application/json'})
         return self.send_request('DELETE', self.get_url(uri),
-                                 auth=(self.username, self.password), **kwargs)
+                                 auth=self.auth, **kwargs)
 
     def get(self, uri, *args, **kwargs):
         kwargs.setdefault('headers', {'Accept': 'application/json'})
         kwargs.setdefault('allow_redirects', True)
         return self.send_request('GET', self.get_url(uri), *args,
-                                 auth=(self.username, self.password), **kwargs)
+                                 auth=self.auth, **kwargs)
 
     def post(self, uri, data=None, json=None, *args, **kwargs):
         kwargs.setdefault('headers', {
@@ -143,7 +141,7 @@ class Requests(object):
         })
         return self.send_request('POST', self.get_url(uri), *args,
                                  data=data, json=json,
-                                 auth=(self.username, self.password), **kwargs)
+                                 auth=self.auth, **kwargs)
 
     def put(self, uri, data=None, json=None, *args, **kwargs):
         kwargs.setdefault('headers', {
@@ -152,7 +150,7 @@ class Requests(object):
         })
         return self.send_request('PUT', self.get_url(uri), *args,
                                  data=data, json=json,
-                                 auth=(self.username, self.password), **kwargs)
+                                 auth=self.auth, **kwargs)
 
     def notify_exception(self, message=None, details=None):
         self.notify_error(message, details)
@@ -165,7 +163,6 @@ class Requests(object):
             message,
             f'Project space: {self.domain_name}',
             f'Remote API base URL: {self.base_url}',
-            f'Remote API username: {self.username}',
         ]
         if self.payload_id:
             message_lines.append(f'Payload ID: {self.payload_id}')
