@@ -527,7 +527,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
 
     vm.showViewBy = function () {
         return !(vm.isChildBeneficiaryListSelected() || vm.isIncentiveReportSelected() ||
-            vm.isLadySupervisorSelected() || vm.isDashboardUsageSelected());
+            vm.isLadySupervisorSelected() || vm.isDashboardUsageSelected() || vm.isChildGrowthTrackerSelected());
     };
 
     vm.showLocationFilter = function () {
