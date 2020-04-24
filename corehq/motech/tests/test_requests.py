@@ -22,29 +22,6 @@ class RequestsTests(SimpleTestCase):
         self.org_unit_id = 'abc'
         self.data_element_id = '123'
 
-    def test_authentication(self):
-        with patch('corehq.motech.requests.RequestLog', Mock()), \
-                patch.object(requests.Session, 'request') as request_mock:
-            content = {'code': TEST_API_USERNAME}
-            content_json = json.dumps(content)
-            response_mock = Mock()
-            response_mock.status_code = 200
-            response_mock.content = content_json
-            response_mock.json.return_value = content
-            request_mock.return_value = response_mock
-
-            response = self.requests.get('me')
-            request_mock.assert_called_with(
-                'GET',
-                TEST_API_URL + 'me',
-                allow_redirects=True,
-                headers={'Accept': 'application/json'},
-                auth=(TEST_API_USERNAME, TEST_API_PASSWORD),
-                timeout=REQUEST_TIMEOUT,
-            )
-            self.assertEqual(response.status_code, 200)
-            self.assertEqual(response.json()['code'], TEST_API_USERNAME)
-
     def test_send_data_value_set(self):
         with patch('corehq.motech.requests.RequestLog', Mock()), \
                 patch.object(requests.Session, 'request') as request_mock:
@@ -146,3 +123,31 @@ class RequestsTests(SimpleTestCase):
                 from_email=settings.DEFAULT_FROM_EMAIL,
                 recipient_list=['foo@example.com', 'bar@example.com']
             )
+
+
+class RequestsAuthenticationTests(SimpleTestCase):
+
+    def test_basic_auth(self):
+        reqs = Requests(TEST_DOMAIN, TEST_API_URL, TEST_API_USERNAME, TEST_API_PASSWORD)
+
+        with patch('corehq.motech.requests.RequestLog', Mock()), \
+                patch.object(requests.Session, 'request') as request_mock:
+            content = {'code': TEST_API_USERNAME}
+            content_json = json.dumps(content)
+            response_mock = Mock()
+            response_mock.status_code = 200
+            response_mock.content = content_json
+            response_mock.json.return_value = content
+            request_mock.return_value = response_mock
+
+            response = reqs.get('me')
+            request_mock.assert_called_with(
+                'GET',
+                TEST_API_URL + 'me',
+                allow_redirects=True,
+                headers={'Accept': 'application/json'},
+                auth=(TEST_API_USERNAME, TEST_API_PASSWORD),
+                timeout=REQUEST_TIMEOUT,
+            )
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(response.json()['code'], TEST_API_USERNAME)
