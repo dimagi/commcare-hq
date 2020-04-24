@@ -73,7 +73,8 @@ class ConnectionSettings(models.Model):
             verify=not self.skip_cert_verify,
             notify_addresses=self.notify_addresses,
             payload_id=payload_id,
-            logger=logger
+            logger=logger,
+            auth_type=self.auth_type,
         )
 
 
