@@ -30,6 +30,9 @@ from pillowtop.feed.interface import ChangeMeta
 
 from corehq.apps.change_feed import data_sources, topics
 from corehq.apps.change_feed.producer import producer
+from corehq.apps.hqcase.management.commands.backfill_couch_forms_and_cases import (
+    get_case_ids_missing_from_elasticsearch,
+    get_form_ids_missing_from_elasticsearch)
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.userreports.models import (
     AsyncIndicator,
@@ -1702,13 +1705,20 @@ def reconcile_data_not_in_ucr(reconciliation_status_pk):
     data_not_in_ucr = get_data_not_in_ucr(status_record)
     doc_ids_not_in_ucr = {data[0] for data in data_not_in_ucr}
 
+    if status_record.is_form_ucr:
+        doc_ids_missing_in_es = get_form_ids_missing_from_elasticsearch(doc_ids_not_in_ucr)
+    else:
+        doc_ids_missing_in_es = get_case_ids_missing_from_elasticsearch(doc_ids_not_in_ucr)
+
     # republish_kafka_changes
     # running the data accessor again to avoid storing all doc ids in memory
     # since run time is relatively short and does not scale with number of errors
     # but the number of doc ids will increase with the number of errors
     for doc_id, doc_subtype, sql_modified_on in data_not_in_ucr:
         number_documents_missing += 1
-        celery_task_logger.info(f'doc_id {doc_id} from {sql_modified_on} not found in UCR data sources')
+        not_found_in_es = doc_id in doc_ids_missing_in_es
+        celery_task_logger.info(f'doc_id {doc_id} from {sql_modified_on} not found in UCR data sources. '
+            f'Missing in ES: {not_found_in_es}')
         send_change_for_ucr_reprocessing(doc_id, doc_subtype, status_record.is_form_ucr)
 
     metrics_counter(
