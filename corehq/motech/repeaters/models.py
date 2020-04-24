@@ -920,6 +920,7 @@ def get_requests(
         repeater.username,
         repeater.plaintext_password,
         verify=repeater.verify,
+        auth_type=repeater.auth_type,
         notify_addresses=repeater.notify_addresses,
         payload_id=payload_id,
     )
