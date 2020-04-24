@@ -23,13 +23,13 @@ class HTTPBearerAuth(requests.auth.AuthBase):
         post_data = {"grant_type": "password",
             "username": self.username,
             "password": self.password
-            }
+                    }
 
         token_response = requests.get(token_request_url, data=post_data)
         try:
             return token_response.json()['access_token']
         except Exception:
-            raise RequestException(None, r, 
+            raise RequestException(None, r,
                     "Unable to retrieve access token for request: %s" % token_response.content)
 
     def __call__(self, r):
