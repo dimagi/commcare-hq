@@ -2039,30 +2039,30 @@ class Invoice(InvoiceBase):
         if self.subscription.service_type == SubscriptionType.IMPLEMENTATION:
             return [settings.ACCOUNTS_EMAIL]
         else:
-            return self.contact_emails
+            return self.get_contact_emails()
 
-    @property
-    def contact_emails(self):
+    def get_contact_emails(self, include_domain_admins=False):
         try:
             billing_contact_info = BillingContactInfo.objects.get(account=self.account)
             contact_emails = billing_contact_info.email_list
         except BillingContactInfo.DoesNotExist:
             contact_emails = []
 
-        from corehq.apps.accounting.views import ManageBillingAccountView
-        admins = WebUser.get_admins_by_domain(self.get_domain())
-        contact_emails.extend([admin.email if admin.email else admin.username for admin in admins])
-        if not settings.UNIT_TESTING:
-            _soft_assert_contact_emails_missing(
-                False,
-                "Could not find an email to send the invoice "
-                "email to for the domain %s. Sending to domain admins instead: %s."
-                " Add client contact emails here: %s" % (
-                    self.get_domain(),
-                    ', '.join(contact_emails),
-                    absolute_reverse(ManageBillingAccountView.urlname, args=[self.account.id]),
+        if include_domain_admins or not contact_emails:
+            from corehq.apps.accounting.views import ManageBillingAccountView
+            admins = WebUser.get_admins_by_domain(self.get_domain())
+            contact_emails.extend([admin.email if admin.email else admin.username for admin in admins])
+            if not settings.UNIT_TESTING:
+                _soft_assert_contact_emails_missing(
+                    False,
+                    "Could not find an email to send the invoice "
+                    "email to for the domain %s. Sending to domain admins instead: %s."
+                    " Add client contact emails here: %s" % (
+                        self.get_domain(),
+                        ', '.join(contact_emails),
+                        absolute_reverse(ManageBillingAccountView.urlname, args=[self.account.id]),
+                    )
                 )
-            )
         return contact_emails
 
     @property
@@ -2547,7 +2547,7 @@ class BillingRecord(BillingRecordBase):
             context.update({
                 'salesforce_contract_id': self.invoice.subscription.salesforce_contract_id,
                 'billing_account': self.invoice.subscription.account.name,
-                'billing_contacts': self.invoice.contact_emails,
+                'billing_contacts': self.invoice.get_contact_emails(),
                 'admin_invoices_url': "{url}?subscriber={domain}".format(
                     url=absolute_reverse(AccountingAdminInterfaceDispatcher.name(), args=['invoices']),
                     domain=self.invoice.get_domain()
