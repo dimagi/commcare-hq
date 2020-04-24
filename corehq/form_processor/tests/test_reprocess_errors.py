@@ -1,22 +1,32 @@
 import contextlib
 import uuid
 
-from django.db.utils import InternalError
-from django.test import TestCase
+from django.db.utils import IntegrityError, InternalError
+from django.test import TestCase, TransactionTestCase
 from mock import patch
 
-from casexml.apps.case.mock import CaseBlock
-from casexml.apps.case.mock import CaseFactory
-from casexml.apps.case.mock import CaseStructure
+from casexml.apps.case.mock import CaseBlock, CaseFactory, CaseStructure
 from casexml.apps.case.signals import case_post_save
 from casexml.apps.case.util import post_case_blocks
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.receiverwrapper.util import submit_form_locally
+from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
 from corehq.form_processor.exceptions import CaseNotFound
-from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors, LedgerAccessors
-from corehq.form_processor.reprocess import reprocess_xform_error, reprocess_unfinished_stub, reprocess_form
-from corehq.form_processor.tests.utils import FormProcessorTestUtils, use_sql_backend
+from corehq.form_processor.interfaces.dbaccessors import (
+    CaseAccessors,
+    FormAccessors,
+    LedgerAccessors,
+)
+from corehq.form_processor.reprocess import (
+    reprocess_form,
+    reprocess_unfinished_stub,
+    reprocess_xform_error,
+)
+from corehq.form_processor.tests.utils import (
+    FormProcessorTestUtils,
+    use_sql_backend,
+)
 from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.util.context_managers import catch_signal
 from couchforms.models import UnfinishedSubmissionStub
@@ -457,6 +467,92 @@ class TestReprocessDuringSubmission(TestCase):
 @use_sql_backend
 class TestReprocessDuringSubmissionSQL(TestReprocessDuringSubmission):
     pass
+
+
+@use_sql_backend
+class TestTransactionErrors(TransactionTestCase):
+    domain = uuid.uuid4().hex
+
+    def tearDown(self):
+        FormProcessorTestUtils.delete_all_cases_forms_ledgers(self.domain)
+        super().tearDown()
+
+    def test_error_saving_case(self):
+        form_id = uuid.uuid4().hex
+        case_id = uuid.uuid4().hex
+
+        with patch(
+            'corehq.form_processor.backends.sql.dbaccessors.CaseAccessorSQL.save_case',
+            side_effect=IntegrityError
+        ), self.assertRaises(IntegrityError):
+            submit_case_blocks(
+                [CaseBlock(case_id=case_id, update={'a': "2"}).as_text()],
+                self.domain,
+                form_id=form_id
+            )
+
+        form = FormAccessorSQL.get_form(form_id)
+        self.assertTrue(form.is_error)
+        self.assertIsNotNone(form.get_xml())
+
+    def test_error_saving_case_during_edit(self):
+        form_id = uuid.uuid4().hex
+        case_id = uuid.uuid4().hex
+        submit_case_blocks(
+            [CaseBlock(case_id=case_id, update={'a': "1"}).as_text()],
+            self.domain,
+            form_id=form_id
+        )
+
+        with patch(
+            'corehq.form_processor.backends.sql.dbaccessors.CaseAccessorSQL.save_case',
+            side_effect=IntegrityError
+        ), self.assertRaises(IntegrityError):
+            submit_case_blocks(
+                [CaseBlock(case_id=case_id, update={'a': "2"}).as_text()],
+                self.domain,
+                form_id=form_id
+            )
+
+        [error_form_id] = FormAccessorSQL.get_form_ids_in_domain_by_type(self.domain, 'XFormError')
+        self.assertNotEqual(error_form_id, form_id)
+        form = FormAccessorSQL.get_form(error_form_id)
+        self.assertTrue(form.is_error)
+        self.assertIsNotNone(form.get_xml())
+
+    def test_error_reprocessing_ledgers_after_borked_save(self):
+        from corehq.apps.commtrack.tests.util import get_single_balance_block
+        form_id, case_id, product_id = uuid.uuid4().hex, uuid.uuid4().hex, uuid.uuid4().hex
+
+        # setup by creating the case
+        submit_case_blocks([CaseBlock(case_id=case_id, create=True).as_text()], self.domain)
+
+        # submit a form that updates the case and ledger
+        submit_case_blocks(
+            [
+                CaseBlock(case_id=case_id, update={'a': "1"}).as_text(),
+                get_single_balance_block(case_id, product_id, 100),
+            ],
+            self.domain,
+            form_id=form_id
+        )
+
+        # simulate an error by deleting the form XML
+        form = FormAccessorSQL.get_form(form_id)
+        form.get_attachment_meta('form.xml').delete()
+
+        # re-submit the form again
+        submit_case_blocks(
+            [
+                CaseBlock(case_id=case_id, update={'a': "1"}).as_text(),
+                get_single_balance_block(case_id, product_id, 100),
+            ],
+            self.domain,
+            form_id=form_id
+        )
+
+        form = FormAccessorSQL.get_form(form_id)
+        self.assertTrue(form.is_normal)
 
 
 @contextlib.contextmanager

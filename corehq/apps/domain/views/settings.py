@@ -4,7 +4,7 @@ from collections import defaultdict
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.models import User
-from django.contrib.auth.views import password_reset_confirm
+from django.contrib.auth.views import PasswordResetConfirmView
 from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import redirect
 from django.urls import reverse
@@ -50,7 +50,7 @@ from corehq.apps.domain.views.base import BaseDomainView, LoginAndDomainMixin
 from corehq.apps.hqwebapp.signals import clear_login_attempts
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.ota.models import MobileRecoveryMeasure
-from corehq.apps.users.models import CouchUser
+from corehq.apps.users.models import CouchUser, CommCareUser
 from corehq.toggles import NAMESPACE_DOMAIN
 from custom.openclinica.forms import OpenClinicaSettingsForm
 from custom.openclinica.models import OpenClinicaSettings
@@ -466,19 +466,34 @@ class FeaturePreviewsView(BaseAdminProjectSettingsView):
                 feature.save_fn(self.domain, new_state)
 
 
-class PasswordResetView(View):
+class CustomPasswordResetView(PasswordResetConfirmView):
     urlname = "password_reset_confirm"
 
+    def get_success_url(self):
+        if self.user:
+            # redirect mobile worker password reset to a domain-specific login with their username already set
+            couch_user = CouchUser.get_by_username(self.user.username)
+            if couch_user.is_commcare_user():
+                messages.success(
+                    self.request,
+                    _('Password for {} has successfully been reset. You can now login.').format(
+                        couch_user.raw_username
+                    )
+                )
+                return '{}?username={}'.format(
+                    reverse('domain_login', args=[couch_user.domain]),
+                    couch_user.raw_username,
+                )
+        return super().get_success_url()
+
     def get(self, request, *args, **kwargs):
-        extra_context = kwargs.setdefault('extra_context', {})
-        extra_context['hide_password_feedback'] = settings.ENABLE_DRACONIAN_SECURITY_FEATURES
-        extra_context['implement_password_obfuscation'] = settings.OBFUSCATE_PASSWORD_FOR_NIC_COMPLIANCE
-        return password_reset_confirm(request, *args, **kwargs)
+        self.extra_context['hide_password_feedback'] = settings.ENABLE_DRACONIAN_SECURITY_FEATURES
+        self.extra_context['implement_password_obfuscation'] = settings.OBFUSCATE_PASSWORD_FOR_NIC_COMPLIANCE
+        return super().get(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
-        extra_context = kwargs.setdefault('extra_context', {})
-        extra_context['hide_password_feedback'] = settings.ENABLE_DRACONIAN_SECURITY_FEATURES
-        response = password_reset_confirm(request, *args, **kwargs)
+        self.extra_context['hide_password_feedback'] = settings.ENABLE_DRACONIAN_SECURITY_FEATURES
+        response = super().post(request, *args, **kwargs)
         uidb64 = kwargs.get('uidb64')
         uid = urlsafe_base64_decode(uidb64)
         user = User.objects.get(pk=uid)

@@ -1,7 +1,7 @@
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
 
-from corehq.apps.translations.models import StandaloneTranslationDoc
+from corehq.apps.translations.models import SMSTranslations
 from corehq.util.translation import localize
 
 MSG_MULTIPLE_SESSIONS = "sms.survey.restart"
@@ -112,11 +112,11 @@ def get_message(msg_id, verified_number=None, context=None, domain=None, languag
     default_msg = _MESSAGES.get(msg_id, "")
 
     if domain:
-        tdoc = StandaloneTranslationDoc.get_obj(domain, "sms")
+        translations = SMSTranslations.objects.filter(domain=domain).first()
     elif verified_number:
-        tdoc = StandaloneTranslationDoc.get_obj(verified_number.domain, "sms")
+        translations = SMSTranslations.objects.filter(domain=verified_number.domain).first()
     else:
-        tdoc = None
+        translations = None
 
     if language:
         user_lang = language
@@ -127,17 +127,17 @@ def get_message(msg_id, verified_number=None, context=None, domain=None, languag
             user_lang = None
 
     def get_translation(lang):
-        return tdoc.translations.get(lang, {}).get(msg_id, None)
+        return translations.translations.get(lang, {}).get(msg_id, None)
 
     def domain_msg_user_lang():
-        if tdoc and user_lang in tdoc.langs:
+        if translations and user_lang in translations.langs:
             return get_translation(user_lang)
         else:
             return None
 
     def domain_msg_domain_lang():
-        if tdoc and tdoc.default_lang:
-            return get_translation(tdoc.default_lang)
+        if translations and translations.default_lang:
+            return get_translation(translations.default_lang)
         else:
             return None
 
@@ -150,8 +150,8 @@ def get_message(msg_id, verified_number=None, context=None, domain=None, languag
 
     def global_msg_domain_lang():
         result = None
-        if tdoc and tdoc.default_lang:
-            with localize(tdoc.default_lang):
+        if translations and translations.default_lang:
+            with localize(translations.default_lang):
                 result = _(default_msg)
         return result if result != default_msg else None
 

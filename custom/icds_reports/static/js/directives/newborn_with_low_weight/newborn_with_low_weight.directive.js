@@ -65,7 +65,7 @@ function NewbornWithLowBirthController($scope, $routeParams, $location, $filter,
             {
                 indicator_name: '% Unweighted' + chosenFilters + ': ',
                 indicator_value: unweighedPercent,
-            }
+            },
         ];
     };
 
@@ -79,7 +79,7 @@ function NewbornWithLowBirthController($scope, $routeParams, $location, $filter,
         'Newborns with Low Birth Weight are closely associated with fetal and neonatal mortality and morbidity, inhibited growth and cognitive development, and chronic diseases later in life. ',
     };
     vm.chartOptions = vm.getChartOptions(options);
-    vm.chartOptions.chart.width = 1100;
+    vm.chartOptions.chart.width = isMobile ? '' : 1100;
     vm.chartOptions.chart.color = d3.scale.category10().range();
 
     vm.tooltipContent = function (monthName, dataInMonth) {
@@ -118,7 +118,7 @@ function NewbornWithLowBirthController($scope, $routeParams, $location, $filter,
         );
     };
 
-    vm.resetAdditionalFilter = function() {
+    vm.resetAdditionalFilter = function () {
         vm.filtersData.gender = '';
         $location.search('gender', null);
     };

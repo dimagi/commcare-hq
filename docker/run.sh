@@ -71,6 +71,9 @@ function send_counter_metric_to_datadog() {
 }
 
 function send_metric_to_datadog() {
+    if [ -z "$DATADOG_API_KEY" ]; then
+        return
+    fi
 
     currenttime=$(date +%s)
     curl  -X POST -H "Content-type: application/json" \

@@ -17,6 +17,7 @@ from couchdbkit import ResourceNotFound
 from memoized import memoized
 
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
+from corehq.apps.export.views.download import DownloadDETSchemaView
 from couchexport.models import Format
 from couchexport.writers import XlsLengthException
 from dimagi.utils.couch import CriticalSection
@@ -219,6 +220,8 @@ class ExportListHelper(object):
             'deleteUrl': reverse(DeleteNewCustomExportView.urlname,
                                  args=(self.domain, export.type, export.get_id)),
             'downloadUrl': reverse(self._download_view(export).urlname, args=(self.domain, export.get_id)),
+            'detSchemaUrl': reverse(DownloadDETSchemaView.urlname,
+                                    args=(self.domain, export.get_id)),
             'editUrl': reverse(self._edit_view(export).urlname, args=(self.domain, export.get_id)),
             'editNameUrl': reverse(EditExportNameView.urlname, args=(self.domain, export.get_id)),
             'editDescriptionUrl': reverse(EditExportDescription.urlname, args=(self.domain, export.get_id)),
@@ -939,6 +942,7 @@ class ODataFeedListHelper(ExportListHelper):
         return DownloadNewCaseExportView
 
 
+@location_safe
 @method_decorator(requires_privilege_with_fallback(ODATA_FEED), name='dispatch')
 class ODataFeedListView(BaseExportListView, ODataFeedListHelper):
     is_odata = True

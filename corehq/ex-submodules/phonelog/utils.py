@@ -295,19 +295,17 @@ def clear_device_log_request(domain, xform):
     user_subreport = _get_logs(xform.form_data, 'user_subreport', 'user')
     username = (user_subreport[0].get('username') if user_subreport
                 else cached_user_id_to_username(xform.user_id))
-    device_id = xform.form_data.get('device_id')
     try:
-        if not (username and device_id):
+        if not username:
             raise DeviceLogRequest.DoesNotExist()
         log_request = DeviceLogRequest.objects.get(
             domain=domain,
             username=username,
-            device_id=device_id,
         )
     except DeviceLogRequest.DoesNotExist:
         msg = "Forced log submission, but no corresponding request found."
         notify_exception(None, msg, details={
-            'domain': domain, 'device_id': device_id, 'username': username
+            'domain': domain, 'username': username
         })
     else:
         log_request.delete()

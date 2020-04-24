@@ -1,6 +1,9 @@
 {
     "domains": [
-        "inddex-reports"
+        "inddex-multilingual",
+        "inddex-multi-vn",
+        "inddex-reports",
+        "inddex-reports-test"
     ],
     "server_environment": [
         "production",
@@ -61,14 +64,12 @@
                     }
                 },
                 "column_id": "recall_case_id",
-                "datatype": "string",
-                "display_name": "recall_case_id"
+                "datatype": "string"
             },
             {
                 "type": "expression",
                 "column_id": "owner_name",
                 "datatype": "string",
-                "display_name": "Owner",
                 "expression": {
                     "type": "property_name",
                     "property_name": "owner_id",
@@ -83,7 +84,6 @@
                 "type": "expression",
                 "column_id": "opened_by_username",
                 "datatype": "string",
-                "display_name": "Opened By",
                 "expression": {
                     "type": "property_name",
                     "property_name": "opened_by",
@@ -98,7 +98,6 @@
                 "type": "expression",
                 "column_id": "recall_status",
                 "datatype": "string",
-                "display_name": "recall_status",
                 "expression": {
                     "type": "nested",
                     "argument_expression": {
@@ -118,7 +117,6 @@
                 "type": "expression",
                 "column_id": "unique_respondent_id",
                 "datatype": "string",
-                "display_name": "Unique Respondent Id",
                 "expression": {
                     "type": "nested",
                     "argument_expression": {
@@ -130,7 +128,45 @@
                     },
                     "value_expression": {
                         "type": "property_name",
-                        "property_name": "respondent_unique_id"
+                        "property_name": "unique_respondent_id"
+                    }
+                }
+            },
+            {
+                "type": "expression",
+                "column_id": "respondent_id",
+                "datatype": "string",
+                "expression": {
+                    "type": "nested",
+                    "argument_expression": {
+                        "type": "indexed_case",
+                        "case_expression": {
+                            "type": "identity"
+                        },
+                        "index": "parent"
+                    },
+                    "value_expression": {
+                        "type": "property_name",
+                        "property_name": "respondent_id"
+                    }
+                }
+            },
+            {
+                "type": "expression",
+                "column_id": "location_id",
+                "datatype": "string",
+                "expression": {
+                    "type": "nested",
+                    "argument_expression": {
+                        "type": "indexed_case",
+                        "case_expression": {
+                            "type": "identity"
+                        },
+                        "index": "parent"
+                    },
+                    "value_expression": {
+                        "type": "property_name",
+                        "property_name": "location_id"
                     }
                 }
             },
@@ -138,7 +174,6 @@
                 "type": "expression",
                 "column_id": "gender",
                 "datatype": "string",
-                "display_name": "Gender",
                 "expression": {
                     "type": "nested",
                     "argument_expression": {
@@ -153,13 +188,11 @@
                         "property_name": "gender"
                     }
                 }
-
             },
             {
                 "type": "expression",
-                "column_id": "age",
-                "datatype": "string",
-                "display_name": "Age",
+                "column_id": "age_years_calculated",
+                "datatype": "integer",
                 "expression": {
                     "type": "nested",
                     "argument_expression": {
@@ -171,16 +204,33 @@
                     },
                     "value_expression": {
                         "type": "property_name",
-                        "property_name": "age_years"
+                        "property_name": "age_years_calculated"
                     }
                 }
-
+            },
+            {
+                "type": "expression",
+                "column_id": "age_months_calculated",
+                "datatype": "integer",
+                "expression": {
+                    "type": "nested",
+                    "argument_expression": {
+                        "type": "indexed_case",
+                        "case_expression": {
+                            "type": "identity"
+                        },
+                        "index": "parent"
+                    },
+                    "value_expression": {
+                        "type": "property_name",
+                        "property_name": "age_months_calculated"
+                    }
+                }
             },
             {
                 "type": "expression",
                 "column_id": "supplements",
                 "datatype": "string",
-                "display_name": "Supplements",
                 "expression": {
                     "type": "nested",
                     "argument_expression": {
@@ -200,7 +250,6 @@
                 "type": "expression",
                 "column_id": "urban_rural",
                 "datatype": "string",
-                "display_name": "Urban Rural",
                 "expression": {
                     "type": "nested",
                     "argument_expression": {
@@ -220,7 +269,6 @@
                 "type": "expression",
                 "column_id": "pregnant",
                 "datatype": "string",
-                "display_name": "Pregnant",
                 "expression": {
                     "type": "nested",
                     "argument_expression": {
@@ -240,7 +288,6 @@
                 "type": "expression",
                 "column_id": "breastfeeding",
                 "datatype": "string",
-                "display_name": "Breastfeeding",
                 "expression": {
                     "type": "nested",
                     "argument_expression": {
@@ -260,7 +307,6 @@
                 "type": "expression",
                 "column_id": "food_code",
                 "datatype": "string",
-                "display_name": "Food Code",
                 "expression": {
                     "type": "property_name",
                     "property_name": "food_code"
@@ -268,19 +314,8 @@
             },
             {
                 "type": "expression",
-                "column_id": "reference_food_code",
-                "datatype": "string",
-                "display_name": "Reference Food Code",
-                "expression": {
-                    "type": "property_name",
-                    "property_name": "parent_food_code"
-                }
-            },
-            {
-                "type": "expression",
                 "column_id": "food_type",
                 "datatype": "string",
-                "display_name": "Food Type",
                 "expression": {
                     "type": "property_name",
                     "property_name": "food_type"
@@ -288,18 +323,17 @@
             },
             {
                 "type": "expression",
-                "column_id": "include_in_analysis",
+                "column_id": "base_term_food_code",
                 "datatype": "string",
                 "expression": {
-                    "type": "named",
-                    "name": "include_in_analysis"
+                    "type": "property_name",
+                    "property_name": "base_term_food_code"
                 }
             },
             {
                 "type": "expression",
                 "column_id": "food_status",
                 "datatype": "string",
-                "display_name": "Food Status",
                 "expression": {
                     "type": "property_name",
                     "property_name": "food_status"
@@ -307,9 +341,8 @@
             },
             {
                 "type": "expression",
-                "column_id": "recall_date",
+                "column_id": "recalled_date",
                 "datatype": "string",
-                "display_name": "recall_date",
                 "expression": {
                     "type": "nested",
                     "argument_expression": {
@@ -321,15 +354,14 @@
                     },
                     "value_expression": {
                         "type": "property_name",
-                        "property_name": "visit_date"
+                        "property_name": "recalled_date"
                     }
                 }
             },
             {
                 "type": "expression",
                 "column_id": "opened_date",
-                "datatype": "string",
-                "display_name": "opened_date",
+                "datatype": "datetime",
                 "expression": {
                     "type": "nested",
                     "argument_expression": {
@@ -349,7 +381,6 @@
                 "type": "expression",
                 "column_id": "eating_time",
                 "datatype": "string",
-                "display_name": "Eating Time",
                 "expression": {
                     "type": "property_name",
                     "property_name": "eating_time"
@@ -359,17 +390,15 @@
                 "type": "expression",
                 "column_id": "time_block",
                 "datatype": "string",
-                "display_name": "time_block",
                 "expression": {
                     "type": "property_name",
-                    "property_name": "eating_occasion"
+                    "property_name": "time_block_name"
                 }
             },
             {
                 "type": "expression",
                 "column_id": "already_reported_food",
                 "datatype": "string",
-                "display_name": "Already Reported Food",
                 "expression": {
                     "type": "property_name",
                     "property_name": "already_reported_food"
@@ -377,19 +406,44 @@
             },
             {
                 "type": "expression",
-                "column_id": "already_reported_food_caseid",
+                "column_id": "already_reported_food_case_id",
                 "datatype": "string",
-                "display_name": "Already Reported Food Case Id",
                 "expression": {
                     "type": "property_name",
-                    "property_name": "already_reported_food_caseid"
+                    "property_name": "already_reported_food_case_id"
+                }
+            },
+            {
+                "type": "expression",
+                "column_id": "already_reported_recipe",
+                "datatype": "string",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "already_reported_recipe"
+                }
+            },
+            {
+                "type": "expression",
+                "column_id": "already_reported_recipe_case_id",
+                "datatype": "string",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "already_reported_recipe_case_id"
+                }
+            },
+            {
+                "type": "expression",
+                "column_id": "already_reported_recipe_name",
+                "datatype": "string",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "already_reported_recipe_name"
                 }
             },
             {
                 "type": "expression",
                 "column_id": "is_ingredient",
                 "datatype": "string",
-                "display_name": "Is Ingredient",
                 "expression": {
                     "type": "property_name",
                     "property_name": "is_ingredient"
@@ -397,37 +451,17 @@
             },
             {
                 "type": "expression",
-                "column_id": "ingr_recipe_case_id",
+                "column_id": "recipe_case_id",
                 "datatype": "string",
-                "display_name": "Ingr Recipe Case Id",
                 "expression": {
                     "type": "property_name",
                     "property_name": "recipe_case_id"
                 }
             },
             {
-                "column_id": "ingr_recipe_code",
-                "type": "expression",
-                "datatype": "string",
-                "display_name": "Ingr Recipe Code",
-                "expression": {
-                    "type": "related_doc",
-                    "related_doc_type": "CommCareCase",
-                    "doc_id_expression": {
-                        "type": "property_name",
-                        "property_name": "recipe_case_id"
-                    },
-                    "value_expression": {
-                        "type": "property_name",
-                        "property_name": "food_code"
-                    }
-                }
-            },
-            {
                 "type": "expression",
                 "column_id": "short_name",
                 "datatype": "string",
-                "display_name": "Short Name",
                 "expression": {
                     "type": "property_name",
                     "property_name": "short_name"
@@ -437,7 +471,6 @@
                 "type": "expression",
                 "column_id": "food_name",
                 "datatype": "string",
-                "display_name": "Food Name",
                 "expression": {
                     "type": "property_name",
                     "property_name": "name"
@@ -448,15 +481,14 @@
                 "column_id": "recipe_name",
                 "datatype": "string",
                 "expression": {
-                    "type": "named",
-                    "name": "recipe_name"
+                    "type": "property_name",
+                    "property_name": "recipe_name"
                 }
             },
             {
                 "type": "expression",
                 "column_id": "food_base_term",
                 "datatype": "string",
-                "display_name": "Food Base Term",
                 "expression": {
                     "type": "property_name",
                     "property_name": "food_base_term"
@@ -466,7 +498,6 @@
                 "type": "expression",
                 "column_id": "tag_1",
                 "datatype": "string",
-                "display_name": "Tag 1",
                 "expression": {
                     "type": "property_name",
                     "property_name": "tag_1"
@@ -476,7 +507,6 @@
                 "type": "expression",
                 "column_id": "other_tag_1",
                 "datatype": "string",
-                "display_name": "Other Tag 1",
                 "expression": {
                     "type": "property_name",
                     "property_name": "other_tag_1"
@@ -486,7 +516,6 @@
                 "type": "expression",
                 "column_id": "tag_2",
                 "datatype": "string",
-                "display_name": "Tag 2",
                 "expression": {
                     "type": "property_name",
                     "property_name": "tag_2"
@@ -496,7 +525,6 @@
                 "type": "expression",
                 "column_id": "other_tag_2",
                 "datatype": "string",
-                "display_name": "Other Tag 2",
                 "expression": {
                     "type": "property_name",
                     "property_name": "other_tag_2"
@@ -506,7 +534,6 @@
                 "type": "expression",
                 "column_id": "tag_3",
                 "datatype": "string",
-                "display_name": "Tag 3",
                 "expression": {
                     "type": "property_name",
                     "property_name": "tag_3"
@@ -516,7 +543,6 @@
                 "type": "expression",
                 "column_id": "other_tag_3",
                 "datatype": "string",
-                "display_name": "Other Tag 3",
                 "expression": {
                     "type": "property_name",
                     "property_name": "other_tag_3"
@@ -526,7 +552,6 @@
                 "type": "expression",
                 "column_id": "tag_4",
                 "datatype": "string",
-                "display_name": "Tag 4",
                 "expression": {
                     "type": "property_name",
                     "property_name": "tag_4"
@@ -536,7 +561,6 @@
                 "type": "expression",
                 "column_id": "other_tag_4",
                 "datatype": "string",
-                "display_name": "Other Tag 4",
                 "expression": {
                     "type": "property_name",
                     "property_name": "other_tag_4"
@@ -546,7 +570,6 @@
                 "type": "expression",
                 "column_id": "tag_5",
                 "datatype": "string",
-                "display_name": "Tag 5",
                 "expression": {
                     "type": "property_name",
                     "property_name": "tag_5"
@@ -556,7 +579,6 @@
                 "type": "expression",
                 "column_id": "other_tag_5",
                 "datatype": "string",
-                "display_name": "Other Tag 5",
                 "expression": {
                     "type": "property_name",
                     "property_name": "other_tag_5"
@@ -566,7 +588,6 @@
                 "type": "expression",
                 "column_id": "tag_6",
                 "datatype": "string",
-                "display_name": "Tag 6",
                 "expression": {
                     "type": "property_name",
                     "property_name": "tag_6"
@@ -576,7 +597,6 @@
                 "type": "expression",
                 "column_id": "other_tag_6",
                 "datatype": "string",
-                "display_name": "Other Tag 6",
                 "expression": {
                     "type": "property_name",
                     "property_name": "other_tag_6"
@@ -586,7 +606,6 @@
                 "type": "expression",
                 "column_id": "tag_7",
                 "datatype": "string",
-                "display_name": "Tag 7",
                 "expression": {
                     "type": "property_name",
                     "property_name": "tag_7"
@@ -596,7 +615,6 @@
                 "type": "expression",
                 "column_id": "other_tag_7",
                 "datatype": "string",
-                "display_name": "Other Tag 7",
                 "expression": {
                     "type": "property_name",
                     "property_name": "other_tag_7"
@@ -606,7 +624,6 @@
                 "type": "expression",
                 "column_id": "tag_8",
                 "datatype": "string",
-                "display_name": "Tag 8",
                 "expression": {
                     "type": "property_name",
                     "property_name": "tag_8"
@@ -616,7 +633,6 @@
                 "type": "expression",
                 "column_id": "other_tag_8",
                 "datatype": "string",
-                "display_name": "Other Tag 8",
                 "expression": {
                     "type": "property_name",
                     "property_name": "other_tag_8"
@@ -626,7 +642,6 @@
                 "type": "expression",
                 "column_id": "tag_9",
                 "datatype": "string",
-                "display_name": "Tag 9",
                 "expression": {
                     "type": "property_name",
                     "property_name": "tag_9"
@@ -636,7 +651,6 @@
                 "type": "expression",
                 "column_id": "other_tag_9",
                 "datatype": "string",
-                "display_name": "Other Tag 9",
                 "expression": {
                     "type": "property_name",
                     "property_name": "other_tag_9"
@@ -646,7 +660,6 @@
                 "type": "expression",
                 "column_id": "tag_10",
                 "datatype": "string",
-                "display_name": "Tag 10",
                 "expression": {
                     "type": "property_name",
                     "property_name": "tag_10"
@@ -656,7 +669,6 @@
                 "type": "expression",
                 "column_id": "other_tag_10",
                 "datatype": "string",
-                "display_name": "Other Tag 10",
                 "expression": {
                     "type": "property_name",
                     "property_name": "other_tag_10"
@@ -664,19 +676,17 @@
             },
             {
                 "type": "expression",
-                "column_id": "conv_method",
+                "column_id": "conv_method_code",
                 "datatype": "string",
-                "display_name": "Conversion Method",
                 "expression": {
                     "type": "property_name",
-                    "property_name": "conv_method"
+                    "property_name": "conv_method_code"
                 }
             },
             {
                 "type": "expression",
                 "column_id": "conv_method_desc",
                 "datatype": "string",
-                "display_name": "Conversion Method Description",
                 "expression": {
                     "type": "property_name",
                     "property_name": "conv_method_desc"
@@ -684,38 +694,34 @@
             },
             {
                 "type": "expression",
-                "column_id": "conv_option",
+                "column_id": "conv_option_code",
                 "datatype": "string",
-                "display_name": "Conversion Option",
                 "expression": {
                     "type": "property_name",
-                    "property_name": "conv_option"
+                    "property_name": "conv_option_code"
                 }
             },
             {
                 "type": "expression",
                 "column_id": "conv_option_desc",
                 "datatype": "string",
-                "display_name": "Conversion Option Description",
                 "expression": {
                     "type": "property_name",
                     "property_name": "conv_option_desc"
                 }
             },            {
                 "type": "expression",
-                "column_id": "conv_size",
+                "column_id": "measurement_amount",
                 "datatype": "string",
-                "display_name": "Conversion Size",
                 "expression": {
                     "type": "property_name",
-                    "property_name": "conv_size"
+                    "property_name": "measurement_amount"
                 }
             },
             {
                 "type": "expression",
                 "column_id": "conv_units",
                 "datatype": "string",
-                "display_name": "Conversion Units",
                 "expression": {
                     "type": "property_name",
                     "property_name": "conv_units"
@@ -723,179 +729,69 @@
             },
             {
                 "type": "expression",
-                "column_id": "quantity",
+                "column_id": "portions",
                 "datatype": "string",
-                "display_name": "Quantity",
                 "expression": {
                     "type": "property_name",
-                    "property_name": "quantity"
+                    "property_name": "portions"
                 }
             },
             {
                 "type": "expression",
-                "column_id": "nsr_post_cooking_conv_method_code",
+                "column_id": "nsr_conv_method_code_post_cooking",
                 "datatype": "string",
                 "expression": {
-                    "type": "named",
-                    "name": "nsr_conv_method_post_cooking"
+                    "type": "property_name",
+                    "property_name": "nsr_conv_method_code_post_cooking"
                 }
             },
             {
                 "type": "expression",
-                "column_id": "nsr_post_cooking_conv_option_code",
+                "column_id": "nsr_conv_method_desc_post_cooking",
                 "datatype": "string",
                 "expression": {
-                    "type": "named",
-                    "name": "nsr_conv_option_post_cooking"
+                    "type": "property_name",
+                    "property_name": "nsr_conv_method_desc_post_cooking"
                 }
             },
             {
                 "type": "expression",
-                "column_id": "nsr_post_cooking_conv_option_desc",
+                "column_id": "nsr_conv_option_code_post_cooking",
                 "datatype": "string",
                 "expression": {
-                    "type": "named",
-                    "name": "nsr_conv_option_desc_post_cooking"
+                    "type": "property_name",
+                    "property_name": "nsr_conv_option_code_post_cooking"
                 }
             },
             {
                 "type": "expression",
-                "column_id": "nsr_post_cooking_conv_size",
+                "column_id": "nsr_conv_option_desc_post_cooking",
                 "datatype": "string",
                 "expression": {
-                    "type": "named",
-                    "name": "nsr_conv_size_post_cooking"
+                    "type": "property_name",
+                    "property_name": "nsr_conv_option_desc_post_cooking"
                 }
             },
             {
                 "type": "expression",
-                "column_id": "nsr_same_conv_method",
+                "column_id": "nsr_measurement_amount_post_cooking",
                 "datatype": "string",
                 "expression": {
-                    "type": "named",
-                    "name": "nsr_same_conv_method_named"
+                    "type": "property_name",
+                    "property_name": "nsr_measurement_amount_post_cooking"
+                }
+            },
+            {
+                "type": "expression",
+                "column_id": "nsr_consumed_cooked_fraction",
+                "datatype": "string",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "nsr_consumed_cooked_fraction"
                 }
             }
         ],
         "base_item_expression": {},
-        "named_expressions": {
-            "include_in_analysis": {
-                "type": "conditional",
-                "test": {
-                    "type": "boolean_expression",
-                    "expression": {
-                        "type": "property_name",
-                        "property_name": "food_type"
-                    },
-                    "operator": "not_eq",
-                    "property_value": "non_std_recipe"
-                },
-                "expression_if_true": "Yes",
-                "expression_if_false": "No"
-            },
-            "recipe_name": {
-                "type": "conditional",
-                "test": {
-                    "type": "boolean_expression",
-                    "expression": {
-                        "type": "property_name",
-                        "property_name": "food_type"
-                    },
-                    "operator": "in",
-                    "property_value": ["non_std_recipe", "std_recipe"]
-                },
-                "expression_if_true": {
-                    "type": "property_name",
-                    "property_name": "name"
-                },
-                "expression_if_false": ""
-            },
-            "nsr_conv_method_post_cooking": {
-                "type": "conditional",
-                "test": {
-                    "type": "boolean_expression",
-                    "expression": {
-                        "type": "property_name",
-                        "property_name": "food_type"
-                    },
-                    "operator": "eq",
-                    "property_value": "non_std_recipe"
-                },
-                "expression_if_true": {
-                    "type": "property_name",
-                    "property_name": "recipe_conv_method_post_cooking"
-                },
-                "expression_if_false": ""
-            },
-            "nsr_conv_option_post_cooking": {
-                "type": "conditional",
-                "test": {
-                    "type": "boolean_expression",
-                    "expression": {
-                        "type": "property_name",
-                        "property_name": "food_type"
-                    },
-                    "operator": "eq",
-                    "property_value": "non_std_recipe"
-                },
-                "expression_if_true": {
-                    "type": "property_name",
-                    "property_name": "recipe_conv_option_post_cooking"
-                },
-                "expression_if_false": ""
-            },
-            "nsr_conv_option_desc_post_cooking": {
-                "type": "conditional",
-                "test": {
-                    "type": "boolean_expression",
-                    "expression": {
-                        "type": "property_name",
-                        "property_name": "food_type"
-                    },
-                    "operator": "eq",
-                    "property_value": "non_std_recipe"
-                },
-                "expression_if_true": {
-                    "type": "property_name",
-                    "property_name": "recipe_conv_option_post_cooking"
-                },
-                "expression_if_false": ""
-            },
-            "nsr_conv_size_post_cooking": {
-                "type": "conditional",
-                "test": {
-                    "type": "boolean_expression",
-                    "expression": {
-                        "type": "property_name",
-                        "property_name": "food_type"
-                    },
-                    "operator": "eq",
-                    "property_value": "non_std_recipe"
-                },
-                "expression_if_true": {
-                    "type": "property_name",
-                    "property_name": "recipe_conv_size_post_cooking"
-                },
-                "expression_if_false": ""
-            },
-            "nsr_same_conv_method_named": {
-                "type": "conditional",
-                "test": {
-                    "type": "boolean_expression",
-                    "expression": {
-                        "type": "property_name",
-                        "property_name": "food_type"
-                    },
-                    "operator": "eq",
-                    "property_value": "non_std_recipe"
-                },
-                "expression_if_true": {
-                    "type": "property_name",
-                    "property_name": "recipe_same_method_used"
-                },
-                "expression_if_false": ""
-            }
-        },
         "named_filters": {}
     }
 }

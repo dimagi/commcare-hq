@@ -7,6 +7,7 @@ import pytz
 from custom.icds_reports.data_pull.data_pulls import (
     AndhraPradeshMonthly,
     MonthlyPerformance,
+    VHSNDMonthlyReport,
 )
 
 ISSUE_TRACKER_APP_ID = '48cc1709b7f62ffea24cc6634a005734'
@@ -31,6 +32,11 @@ class NavigationSections:
     ICDS_CAS_REACH = 'icds_cas_reach'
     DEMOGRAPHICS = 'demographics'
     AWC_INFRASTRUCTURE = 'awc_infrastructure'
+
+
+class SDDSections:
+    PW_LW_CHILDREN = 'pw_lw_children'
+    CHILDREN = 'children'
 
 
 class LocationTypes(object):
@@ -85,9 +91,6 @@ HELPDESK_ROLES = [
 ]
 
 
-ICDS_SUPPORT_EMAIL = 'icds-support@dimagi.com'
-
-
 CHILDREN_EXPORT = 1
 PREGNANT_WOMEN_EXPORT = 2
 DEMOGRAPHICS_EXPORT = 3
@@ -99,6 +102,7 @@ AWW_INCENTIVE_REPORT = 8
 LS_REPORT_EXPORT = 9
 THR_REPORT_EXPORT = 10
 DASHBOARD_USAGE_EXPORT = 11
+SERVICE_DELIVERY_REPORT = 12
 
 AGG_COMP_FEEDING_TABLE = 'icds_dashboard_comp_feed_form'
 AGG_CCS_RECORD_CF_TABLE = 'icds_dashboard_ccs_record_cf_forms'
@@ -120,13 +124,18 @@ AGG_DASHBOARD_ACTIVITY = 'icds_dashboard_user_activity'
 AGG_ADOLESCENT_GIRLS_REGISTRATION_TABLE = 'icds_dashboard_adolescent_girls_registration'
 AGG_GOV_DASHBOARD_TABLE = 'agg_gov_dashboard'
 AGG_MIGRATION_TABLE = 'icds_dashboard_migration_forms'
+AGG_AVAILING_SERVICES_TABLE = 'icds_dashboard_availing_service_forms'
 
 AWC_LOCATION_TABLE_ID = 'static-awc_location'
 USAGE_TABLE_ID = 'static-usage_forms'
 HOUSEHOLD_TABLE_ID = 'static-household_cases'
 AWW_USER_TABLE_ID = 'static-commcare_user_cases'
 DAILY_FEEDING_TABLE_ID = 'static-daily_feeding_forms'
-
+AGG_SDR_TABLE = 'agg_service_delivery_report'
+BIHAR_API_DEMOGRAPHICS_TABLE = 'bihar_api_demographics'
+BIHAR_API_MOTHER_DETAILS_TABLE = 'bihar_api_mother_details'
+CHILD_VACCINE_TABLE = 'child_vaccines'
+CHILD_DELIVERY_FORM_ID = 'static-child_delivery_forms'
 
 DASHBOARD_DOMAIN = 'icds-dashboard-qa' if settings.SERVER_ENVIRONMENT == 'india' else 'icds-cas'
 
@@ -170,9 +179,10 @@ NUM_OF_ADOLESCENT_GIRLS_11_14_YEARS = 'Number of adolescent girls (11-14 years)'
 NUM_OUT_OF_SCHOOL_ADOLESCENT_GIRLS_11_14_YEARS = 'Number of out of school adolescent girls (11-14 years)'
 
 
-GOVERNANCE_API_PAGE_SIZE = 10000
+CAS_API_PAGE_SIZE = 10000
 
 CUSTOM_DATA_PULLS = {
     AndhraPradeshMonthly.slug: AndhraPradeshMonthly,
     MonthlyPerformance.slug: MonthlyPerformance,
+    VHSNDMonthlyReport.slug: VHSNDMonthlyReport,
 }

@@ -1,6 +1,5 @@
 from decimal import Decimal
 
-from corehq.apps.consumption.const import DAYS_IN_MONTH
 from corehq.apps.consumption.models import (
     TYPE_DOMAIN,
     TYPE_PRODUCT,
@@ -25,31 +24,30 @@ def get_default_monthly_consumption(domain, product_id, location_type, case_id):
         consumption = DefaultConsumption.objects.filter(
             domain=domain,
             product_id=product_id,
-            supply_point_type=location_type
+            supply_point_type=location_type,
+            supply_point_id=None
         ).first()
 
     if not consumption:
         consumption = DefaultConsumption.objects.filter(
             domain=domain,
-            product_id=product_id
+            product_id=product_id,
+            supply_point_type=None,
+            supply_point_id=None
         ).first()
 
     if not consumption:
-        consumption = DefaultConsumption.objects.filter(domain=domain).first()
+        consumption = DefaultConsumption.objects.filter(
+            domain=domain,
+            product_id=None,
+            supply_point_type=None,
+            supply_point_id=None
+        ).first()
 
     if consumption:
         return consumption.default_consumption
 
     return None
-
-
-def get_default_consumption(domain, product_id, location_type, case_id):
-    consumption = get_default_monthly_consumption(domain, product_id, location_type, case_id)
-
-    if consumption:
-        return consumption / Decimal(DAYS_IN_MONTH)
-    else:
-        return None
 
 
 def set_default_monthly_consumption_for_domain(domain, amount):
@@ -60,12 +58,6 @@ def set_default_monthly_consumption_for_domain(domain, amount):
 def set_default_consumption_for_product(domain, product_id, amount):
     default = DefaultConsumption.get_product_default(domain, product_id)
     return _update_or_create_default(domain, amount, default, TYPE_PRODUCT, product_id=product_id)
-
-
-def set_default_consumption_for_supply_point(domain, product_id, supply_point_id, amount):
-    default = DefaultConsumption.get_supply_point_default(domain, product_id, supply_point_id)
-    return _update_or_create_default(domain, amount, default, TYPE_SUPPLY_POINT,
-                                     product_id=product_id, supply_point_id=supply_point_id)
 
 
 def _update_or_create_default(domain, amount, default, type, **kwargs):
@@ -83,19 +75,21 @@ def _update_or_create_default(domain, amount, default, type, **kwargs):
 
 def build_consumption_dict(domain):
     """
-    Takes raw rows from couch and builds a dict to
-    look up consumption values from.
+    Builds a dict to look up consumption values from.
     """
-    DefaultConsumption.objects.filter(domain=domain)
+    return {
+        _hash_key(obj): obj.default_consumption
+        for obj in DefaultConsumption.objects.filter(domain=domain)
+        if obj.default_consumption
+    }
 
-    return dict(
-        (tuple(
-            obj.domain,
-            obj.product_id,
-            obj.supply_point_type,
-            obj.supply_point_id,
-        ), obj.default_consumption)
-        for obj in DefaultConsumption.objects.filter(domain=domain) if obj.default_consumption
+
+def _hash_key(default_consumption):
+    return (
+        default_consumption.domain,
+        default_consumption.product_id,
+        default_consumption.supply_point_type,
+        default_consumption.supply_point_id,
     )
 
 
@@ -116,12 +110,3 @@ def get_loaded_default_monthly_consumption(consumption_dict, domain, product_id,
             return consumption_dict[key]
 
     return None
-
-
-def get_loaded_default_consumption(consumption_dict, domain, product_id, location_type, case_id):
-    consumption = get_loaded_default_monthly_consumption(consumption_dict, domain, product_id, location_type, case_id)
-
-    if consumption:
-        return consumption / Decimal(DAYS_IN_MONTH)
-    else:
-        return None

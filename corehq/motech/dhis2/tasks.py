@@ -1,5 +1,3 @@
-import bz2
-from base64 import b64decode
 from datetime import datetime
 
 from celery.schedules import crontab
@@ -8,10 +6,8 @@ from celery.task import periodic_task, task
 from toggle.shortcuts import find_domains_with_toggle_enabled
 
 from corehq import toggles
-from corehq.motech.dhis2.dbaccessors import (
-    get_dataset_maps,
-    get_dhis2_connection,
-)
+from corehq.motech.dhis2.dbaccessors import get_dataset_maps
+from corehq.motech.dhis2.models import Dhis2Connection
 from corehq.motech.requests import Requests
 
 
@@ -38,21 +34,32 @@ def send_datasets(domain_name, send_now=False, send_date=None):
     """
     if not send_date:
         send_date = datetime.today()
-    dhis2_conn = get_dhis2_connection(domain_name)
+    dhis2_conn = Dhis2Connection.objects.filter(domain=domain_name).first()
     dataset_maps = get_dataset_maps(domain_name)
-    if not dhis2_conn or not dataset_maps:
+    if not dataset_maps:
         return  # Nothing to do
-    requests = Requests(
-        domain_name,
-        dhis2_conn.server_url,
-        dhis2_conn.username,
-        bz2.decompress(b64decode(dhis2_conn.password)),
-        verify=not dhis2_conn.skip_cert_verify,
-    )
-    endpoint = 'dataValueSets'
     for dataset_map in dataset_maps:
         if send_now or dataset_map.should_send_on_date(send_date):
+            if dataset_map.connection_settings:
+                conn = dataset_map.connection_settings
+                url = conn.url
+                endpoint = '/api/dataValueSets'
+            else:
+                conn = dhis2_conn
+                url = conn.server_url
+                endpoint = 'dataValueSets'
+            if not conn:
+                continue
+
             dataset = dataset_map.get_dataset(send_date)
+            requests = Requests(
+                domain_name,
+                url,
+                conn.username,
+                conn.plaintext_password,
+                verify=not conn.skip_cert_verify,
+                notify_addresses=conn.notify_addresses if hasattr(conn, 'notify_addresses') else None
+            )
             requests.post(endpoint, json=dataset)
 
 

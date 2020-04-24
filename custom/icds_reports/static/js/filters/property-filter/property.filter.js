@@ -1,11 +1,11 @@
-window.angular.module('icdsApp').filter('propsFilter', function() {
-    return function(items, props) {
+window.angular.module('icdsApp').filter('propsFilter', function () {
+    return function (items, props) {
         var out = [];
 
         if (window.angular.isArray(items)) {
             var keys = Object.keys(props);
 
-            items.forEach(function(item) {
+            items.forEach(function (item) {
                 var itemMatches = false;
 
                 for (var i = 0; i < keys.length; i++) {

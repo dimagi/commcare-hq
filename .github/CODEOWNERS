@@ -28,6 +28,7 @@
 /corehq/apps/app_manager/ @orangejenny @proteusvacuum
 /corehq/apps/callcenter/ @snopoke
 /corehq/apps/case_search/ @proteusvacuum
+/corehq/apps/change_feed/ @dannyroberts
 /corehq/apps/commtrack/ @esoergel
 /corehq/apps/commtrack/static/ @esoergel @orangejenny
 /corehq/apps/commtrack/templates/ @esoergel @orangejenny
@@ -51,6 +52,7 @@
 /corehq/apps/users/ @esoergel
 /corehq/apps/users/static/ @esoergel @orangejenny
 /corehq/apps/users/templates/ @esoergel @orangejenny
+/corehq/ex-submodules/pillowtop @dannyroberts
 
 /custom/icds_reports/ @calellowitz @Rohit25negi
 /custom/icds_reports/templates/ @czue @calellowitz @Rohit25negi

@@ -1,22 +1,34 @@
-from dateutil.rrule import rrule, DAILY, MO, TU, WE, TH, FR, SA
-from sqlagg.columns import SimpleColumn
-from sqlagg.filters import EQ
-from sqlagg.sorting import OrderBy
 from django.db.models.aggregates import Count
-
-from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
-from corehq.apps.reports.generic import GenericTabularReport
-from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn
-from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin
 from django.utils.functional import cached_property
 from django.utils.translation import ugettext as _
 
+from dateutil.rrule import DAILY, FR, MO, SA, TH, TU, WE, rrule
+from sqlagg.columns import SimpleColumn
+from sqlagg.filters import EQ
+from sqlagg.sorting import OrderBy
+
+from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.filters.dates import DatespanFilter
-from corehq.apps.sms.models import SMS, INCOMING, MessagingSubEvent, MessagingEvent, OUTGOING
+from corehq.apps.reports.generic import GenericTabularReport
+from corehq.apps.reports.sqlreport import DatabaseColumn, SqlData
+from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin
+from corehq.apps.sms.models import (
+    INCOMING,
+    SMS,
+    MessagingEvent,
+    MessagingSubEvent,
+)
 from corehq.apps.userreports.util import get_table_name
 from corehq.sql_db.connections import DEFAULT_ENGINE_ID
-from custom.abt.reports.filters import UsernameFilter, CountryFilter, LevelOneFilter, LevelTwoFilter, \
-    LevelThreeFilter, LevelFourFilter, SubmissionStatusFilter
+from custom.abt.reports.filters import (
+    CountryFilter,
+    LevelFourFilter,
+    LevelOneFilter,
+    LevelThreeFilter,
+    LevelTwoFilter,
+    SubmissionStatusFilter,
+    UsernameFilter,
+)
 
 
 class LatePMTUsers(SqlData):

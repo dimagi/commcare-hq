@@ -28,7 +28,7 @@ def get_bulk_app_sheet_headers(app, single_sheet=False, lang=None, eligible_for_
     `eligible_for_transifex_only` will skip modules and forms that have "SKIP
     TRANSIFEX" in their comment.
     '''
-    langs = [lang] if single_sheet else app.langs
+    langs = [lang] if lang else app.langs
 
     default_lang_list = ['default_' + l for l in langs]
     audio_lang_list = ['audio_' + l for l in langs]
@@ -127,6 +127,16 @@ def is_modules_and_forms_sheet(identifier):
 
 def is_single_sheet(identifier):
     return identifier == SINGLE_SHEET_NAME
+
+
+def is_single_sheet_workbook(workbook):
+    sheets_count = len(workbook.worksheets)
+
+    first_sheet = workbook.worksheets[0]
+    if sheets_count == 1 and is_single_sheet(first_sheet.title):
+        return True
+
+    return False
 
 
 def get_menu_or_form_by_sheet_name(app, sheet_name):

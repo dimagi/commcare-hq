@@ -63,7 +63,7 @@ class Command(BaseCommand):
         if pillow.kafka_topic in (topics.CASE, topics.FORM):
             couch_db = couch_config.get_db(None)
         elif pillow.kafka_topic == topics.COMMCARE_USER:
-            couch_db = couch_config.get_db(settings.NEW_USERS_GROUPS_DB)
+            couch_db = couch_config.get_db(settings.USERS_GROUPS_DB)
         else:
             raise CommandError('Reindexer not configured for topic: {}'.format(pillow.kafka_topic))
 

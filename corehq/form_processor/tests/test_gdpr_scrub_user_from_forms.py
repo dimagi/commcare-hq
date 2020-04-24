@@ -69,6 +69,7 @@ class GDPRScrubUserFromFormsCouchTests(TestCase):
         FormAccessors(DOMAIN).modify_attachment_xml_and_metadata(form, new_form_xml, NEW_USERNAME)
 
         # Test that the metadata changed in the database
+        form = FormAccessors(DOMAIN).get_form(form.form_id)
         actual_form_xml = form.get_attachment("form.xml").decode('utf-8')
         self.assertXMLEqual(EXPECTED_FORM_XML, actual_form_xml)
 

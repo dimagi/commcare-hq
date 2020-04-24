@@ -11,7 +11,6 @@ from corehq.messaging.scheduling.forms import ScheduleForm
 from corehq.messaging.scheduling.models.alert_schedule import AlertSchedule
 from corehq.messaging.scheduling.models.content import SMSContent
 from corehq.messaging.scheduling.models.timed_schedule import TimedSchedule
-from corehq.messaging.tasks import initiate_messaging_rule_run
 
 
 def get_conditional_alerts_queryset_by_domain(domain, query_string=''):
@@ -176,7 +175,6 @@ class ConditionalAlertUploader(object):
 
                 if dirty:
                     rule.save()
-                    initiate_messaging_rule_run(rule)
                     success_count += 1
 
         self.msgs.append((messages.success, _("Updated {count} rule(s) in '{sheet_name}' sheet").format(
@@ -230,12 +228,9 @@ class ConditionalAlertUploader(object):
             new_message = copy(old_message)
             if self.event_is_relevant(event) or allow_sheet_swap:
                 new_message = self.update_message(new_message, rows[row_index])
-                message_dirty = old_message != new_message
+                message_dirty = message_dirty or old_message != new_message
                 row_index += 1
             new_messages.append(new_message)
-
-        if message_dirty:
-            self.check_for_missing_content(new_messages)
 
         {
             ScheduleForm.SEND_IMMEDIATELY: self._save_immediate_schedule,
@@ -247,12 +242,6 @@ class ConditionalAlertUploader(object):
         }[send_frequency](schedule, new_messages)
 
         return message_dirty
-
-    def check_for_missing_content(self, messages):
-        """
-        Raise an exception if any of the given messages are missing content in any language.
-        """
-        raise NotImplementedError()
 
     def update_message(self, message, row):
         """
@@ -345,11 +334,6 @@ class TranslatedConditionalAlertUploader(ConditionalAlertUploader):
         message = event.content.message
         return len(message) and '*' not in message
 
-    def check_for_missing_content(self, messages):
-        missing = [lang for message in messages for lang, value in message.items() if not message[lang]]
-        if missing:
-            raise RuleUpdateError(_("Missing content for {langs}").format(langs=", ".join(missing)))
-
     def update_message(self, message, row):
         message.pop('*', None)
         for lang in self.langs:
@@ -369,11 +353,6 @@ class UntranslatedConditionalAlertUploader(ConditionalAlertUploader):
 
         message = event.content.message
         return (not len(message) or '*' in message)
-
-    def check_for_missing_content(self, messages):
-        missing = [m for m in messages if not m.get('*', '')]
-        if missing:
-            raise RuleUpdateError(_("Missing content"))
 
     def update_message(self, message, row):
         if 'message' in row:

@@ -5,7 +5,6 @@ from corehq.apps.sms.forms import (
     LANGUAGE_FALLBACK_DOMAIN,
     LANGUAGE_FALLBACK_UNTRANSLATED,
 )
-from corehq.apps.translations.models import StandaloneTranslationDoc
 from corehq.apps.users.models import CommCareUser
 from corehq.messaging.scheduling.models import Schedule, Content, CustomContent
 from corehq.messaging.scheduling.scheduling_partitioned.models import (
@@ -35,14 +34,14 @@ class TestContent(TestCase):
         cls.domain = 'test-content'
         cls.domain_obj = create_domain(cls.domain)
         cls.user = CommCareUser(phone_numbers=['9990000000000'], language='es')
-        from corehq.apps.sms.util import get_or_create_translation_doc
-        cls.translation_doc = get_or_create_translation_doc(cls.domain)
-        cls.translation_doc.set_translations('es', {})
-        cls.translation_doc.save()
+        from corehq.apps.sms.util import get_or_create_sms_translations
+        cls.sms_translations = get_or_create_sms_translations(cls.domain)
+        cls.sms_translations.set_translations('es', {})
+        cls.sms_translations.save()
 
     @classmethod
     def tearDownClass(cls):
-        cls.translation_doc.delete()
+        cls.sms_translations.delete()
         super(TestContent, cls).tearDownClass()
 
     @override_settings(AVAILABLE_CUSTOM_SCHEDULING_CONTENT=AVAILABLE_CUSTOM_SCHEDULING_CONTENT)

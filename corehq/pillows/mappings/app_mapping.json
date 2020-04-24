@@ -14,13 +14,15 @@
             "type": "date"
         },
         "short_url": {
-            "type": "string"
+            "type": "string",
+            "index": "not_analyzed"
         },
         "build_broken": {
             "type": "boolean"
         },
         "copy_of": {
-            "type": "string"
+            "type": "string",
+            "index": "not_analyzed"
         },
         "phone_model": {
             "type": "string"
@@ -157,7 +159,8 @@
             "type": "boolean"
         },
         "short_odk_url": {
-            "type": "string"
+            "type": "string",
+            "index": "not_analyzed"
         },
         "domain": {
             "fields": {
@@ -169,7 +172,8 @@
             "type": "string"
         },
         "build_langs": {
-            "type": "string"
+            "type": "string",
+            "index": "not_analyzed"
         },
         "deployment_date": {
             "type": "date",
@@ -210,10 +214,12 @@
             "type": "string"
         },
         "short_odk_media_url": {
-            "type": "string"
+            "type": "string",
+            "index": "not_analyzed"
         },
         "langs": {
-            "type": "string"
+            "type": "string",
+            "index": "not_analyzed"
         },
         "use_custom_suite": {
             "type": "boolean"
@@ -299,7 +305,8 @@
                     "dynamic": false,
                     "properties": {
                         "unique_id": {
-                            "type": "string"
+                            "type": "string",
+                            "index": "not_analyzed"
                         },
                         "doc_type": {
                             "index": "not_analyzed",
@@ -672,7 +679,8 @@
                             }
                         },
                         "xmlns": {
-                            "type": "string"
+                            "type": "string",
+                            "index": "not_analyzed"
                         }
                     }
                 },

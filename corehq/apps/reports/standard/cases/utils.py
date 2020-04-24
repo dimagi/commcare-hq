@@ -1,6 +1,7 @@
 from corehq.apps.es import cases as case_es
 from corehq.apps.es import filters
 from corehq.apps.es import users as user_es
+from corehq.apps.es import forms as form_es
 from corehq.apps.es.es_query import HQESQuery
 from corehq.apps.locations.dbaccessors import (
     get_users_location_ids,
@@ -170,3 +171,8 @@ def _get_location_accessible_ids(request):
 def query_location_restricted_cases(query, request):
     accessible_ids = _get_location_accessible_ids(request)
     return query.OR(case_es.owner(accessible_ids))
+
+
+def query_location_restricted_forms(query, request):
+    accessible_ids = _get_location_accessible_ids(request)
+    return query.OR(form_es.user_id(accessible_ids))

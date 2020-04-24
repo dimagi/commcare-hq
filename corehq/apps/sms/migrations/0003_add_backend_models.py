@@ -17,7 +17,7 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('couch_id', models.CharField(max_length=126, null=True, db_index=True)),
-                ('backend_type', models.CharField(default=b'SMS', max_length=3, choices=[(b'SMS', 'SMS'), (b'IVR', 'IVR')])),
+                ('backend_type', models.CharField(default='SMS', max_length=3, choices=[('SMS', 'SMS'), ('IVR', 'IVR')])),
                 ('inbound_api_key', models.UUIDField(unique=True, max_length=32, editable=False, blank=True)),
                 ('hq_api_id', models.CharField(max_length=126, null=True)),
                 ('is_global', models.BooleanField(default=False)),
@@ -43,7 +43,7 @@ class Migration(migrations.Migration):
                 ('couch_id', models.CharField(max_length=126, null=True, db_index=True)),
                 ('is_global', models.BooleanField(default=False)),
                 ('domain', models.CharField(max_length=126, null=True)),
-                ('backend_type', models.CharField(max_length=3, choices=[(b'SMS', 'SMS'), (b'IVR', 'IVR')])),
+                ('backend_type', models.CharField(max_length=3, choices=[('SMS', 'SMS'), ('IVR', 'IVR')])),
                 ('prefix', models.CharField(max_length=25)),
                 ('backend', models.ForeignKey(to='sms.SQLMobileBackend', on_delete=models.CASCADE)),
             ],
@@ -202,7 +202,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='messagingevent',
             name='recipient_type',
-            field=models.CharField(db_index=True, max_length=3, null=True, choices=[(b'CAS', b'Case'), (b'MOB', b'Mobile Worker'), (b'WEB', b'Web User'), (b'UGP', b'User Group'), (b'CGP', b'Case Group'), (b'MUL', b'Multiple Recipients'), (b'LOC', b'Location'), (b'LC+', b'Location (including child locations)'), (b'VLC', b'Multiple Locations'), (b'VL+', b'Multiple Locations (including child locations)'), (b'UNK', b'Unknown Contact')]),
+            field=models.CharField(db_index=True, max_length=3, null=True, choices=[('CAS', 'Case'), ('MOB', 'Mobile Worker'), ('WEB', 'Web User'), ('UGP', 'User Group'), ('CGP', 'Case Group'), ('MUL', 'Multiple Recipients'), ('LOC', 'Location'), ('LC+', 'Location (including child locations)'), ('VLC', 'Multiple Locations'), ('VL+', 'Multiple Locations (including child locations)'), ('UNK', 'Unknown Contact')]),
             preserve_default=True,
         ),
     ]

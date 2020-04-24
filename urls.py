@@ -10,6 +10,7 @@ from corehq.apps.app_manager.views.formdesigner import ping
 from corehq.apps.app_manager.views.phone import list_apps
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.utils import legacy_domain_re
+from corehq.apps.domain.views.base import covid19
 from corehq.apps.domain.views.feedback import submit_feedback
 from corehq.apps.domain.views.pro_bono import ProBonoStaticView
 from corehq.apps.domain.views.settings import logo
@@ -104,6 +105,7 @@ urlpatterns = [
     url(r'^hq/sms/', include(sms_admin_interface_urls)),
     url(r'^hq/multimedia/', include('corehq.apps.hqmedia.urls')),
     url(r'^hq/admin/', include('corehq.apps.hqadmin.urls')),
+    url(r'^hq/admin/', include('corehq.util.metrics.urls')),
     url(r'^hq/flags/', include('corehq.apps.toggle_ui.urls')),
     url(r'^hq/notifications/', include('corehq.apps.notifications.urls')),
     url(r'^unicel/', include('corehq.messaging.smsbackends.unicel.urls')),
@@ -112,6 +114,7 @@ urlpatterns = [
     url(r'^starfish/', include('corehq.messaging.smsbackends.starfish.urls')),
     url(r'^apposit/', include('corehq.messaging.smsbackends.apposit.urls')),
     url(r'^tropo/', include('corehq.messaging.smsbackends.tropo.urls')),
+    url(r'^turn/', include('corehq.messaging.smsbackends.turn.urls')),
     url(r'^twilio/', include('corehq.messaging.smsbackends.twilio.urls')),
     url(r'^dropbox/', include('corehq.apps.dropbox.urls')),
     url(r'^start_enterprise/', include('corehq.messaging.smsbackends.start_enterprise.urls')),
@@ -134,6 +137,7 @@ urlpatterns = [
     url(r'^apache_license/$', apache_license, name='apache_license'),
     url(r'^bsd_license_basic/$', TemplateView.as_view(template_name='bsd_license.html'), name='bsd_license_basic'),
     url(r'^bsd_license/$', bsd_license, name='bsd_license'),
+    url(r'^covid19/$', covid19, name='covid19'),
     url(r'^pro_bono/$', ProBonoStaticView.as_view(), name=ProBonoStaticView.urlname),
     url(r'^ping/$', ping, name='ping'),
     url(r'^robots.txt$', TemplateView.as_view(template_name='robots.txt', content_type='text/plain')),
@@ -141,7 +145,7 @@ urlpatterns = [
     url(r'^unsubscribe_report/(?P<scheduled_report_id>[\w-]+)/'
         r'(?P<user_email>[\w.%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,})/(?P<scheduled_report_secret>[\w-]+)/',
         ReportNotificationUnsubscribeView.as_view(), name=ReportNotificationUnsubscribeView.urlname),
-    url(r'^phone/list_apps', list_apps, name="list_accessible_apps")
+    url(r'^phone/list_apps', list_apps, name="list_accessible_apps"),
 ] + LOCAL_APP_URLS
 
 if settings.ENABLE_PRELOGIN_SITE:

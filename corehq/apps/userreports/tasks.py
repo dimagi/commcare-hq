@@ -15,6 +15,8 @@ from celery.schedules import crontab
 from celery.task import periodic_task, task
 from couchdbkit import ResourceConflict, ResourceNotFound
 from corehq.util.es.elasticsearch import ConnectionTimeout
+from corehq.util.metrics import metrics_counter, metrics_gauge, metrics_histogram_timer
+from corehq.util.queries import paginated_queryset
 
 from couchexport.models import Format
 from dimagi.utils.chunked import chunked
@@ -58,11 +60,6 @@ from corehq.apps.userreports.util import (
 )
 from corehq.elastic import ESError
 from corehq.util.context_managers import notify_someone
-from corehq.util.datadog.gauges import (
-    datadog_counter,
-    datadog_gauge,
-    datadog_histogram,
-)
 from corehq.util.decorators import serial_task
 from corehq.util.timer import TimingContext
 from corehq.util.view_utils import reverse
@@ -300,9 +297,11 @@ def queue_async_indicators():
     retry_threshold = start - timedelta(hours=4)
     # don't requeue anything that has been retried more than 20 times
     indicators = AsyncIndicator.objects.filter(unsuccessful_attempts__lt=20)[:settings.ASYNC_INDICATORS_TO_QUEUE]
+
     indicators_by_domain_doc_type = defaultdict(list)
-    for indicator in indicators:
-        # only requeue things that have were last queued earlier than the threshold
+    # page so that envs can have arbitarily large settings.ASYNC_INDICATORS_TO_QUEUE
+    for indicator in paginated_queryset(indicators, 1000):
+        # only requeue things that are not in queue or were last queued earlier than the threshold
         if not indicator.date_queued or indicator.date_queued < retry_threshold:
             indicators_by_domain_doc_type[(indicator.domain, indicator.doc_type)].append(indicator)
 
@@ -336,33 +335,20 @@ def time_in_range(time, time_dictionary):
 
 
 def _queue_indicators(indicators):
-    def _queue_chunk(indicators):
+    for chunk in chunked(indicators, ASYNC_INDICATOR_CHUNK_SIZE):
         now = datetime.utcnow()
-        indicator_doc_ids = [i.doc_id for i in indicators]
+        indicator_doc_ids = [i.doc_id for i in chunk]
         AsyncIndicator.objects.filter(doc_id__in=indicator_doc_ids).update(date_queued=now)
         build_async_indicators.delay(indicator_doc_ids)
-        datadog_counter('commcare.async_indicator.indicators_queued', len(indicator_doc_ids))
-
-    to_queue = []
-    for indicator in indicators:
-        to_queue.append(indicator)
-        if len(to_queue) >= ASYNC_INDICATOR_CHUNK_SIZE:
-            _queue_chunk(to_queue)
-            to_queue = []
-
-    if to_queue:
-        _queue_chunk(to_queue)
 
 
 @task(serializer='pickle', queue=UCR_INDICATOR_CELERY_QUEUE, ignore_result=True, acks_late=True)
 def build_async_indicators(indicator_doc_ids):
     # written to be used with _queue_indicators, indicator_doc_ids must
     #   be a chunk of 100
-    for ids in chunked(indicator_doc_ids, 10):
-        _build_async_indicators(ids)
+    memoizers = {'configs': {}, 'adapters': {}}
+    assert(len(indicator_doc_ids)) <= ASYNC_INDICATOR_CHUNK_SIZE
 
-
-def _build_async_indicators(indicator_doc_ids):
     def handle_exception(exception, config_id, doc, adapter):
         metric = None
         if isinstance(exception, (ProtocolError, ReadTimeout)):
@@ -378,8 +364,7 @@ def _build_async_indicators(indicator_doc_ids):
             if adapter:
                 adapter.handle_exception(doc, exception)
         if metric:
-            datadog_counter(metric, 1,
-                tags={'config_id': config_id, 'doc_id': doc['_id']})
+            metrics_counter(metric, tags={'config_id': config_id, 'doc_id': doc['_id']})
 
     def doc_ids_from_rows(rows):
         formatted_rows = [
@@ -387,6 +372,35 @@ def _build_async_indicators(indicator_doc_ids):
             for row in rows
         ]
         return set(row['doc_id'] for row in formatted_rows)
+
+    def _get_config(config_id):
+        config_by_id = memoizers['configs']
+        if config_id in config_by_id:
+            return config_by_id[config_id]
+        else:
+            config = _get_config_by_id(config_id)
+            config_by_id[config_id] = config
+            return config
+
+    def _get_adapter(config):
+        adapter_by_config = memoizers['adapters']
+        if config._id in adapter_by_config:
+            return adapter_by_config[config._id]
+        else:
+            adapter = get_indicator_adapter(config, load_source='build_async_indicators')
+            adapter_by_config[config._id] = adapter
+            return adapter
+
+    def _metrics_timer(step, config_id=None):
+        tags = {
+            'action': step,
+        }
+        if config_id and settings.ENTERPRISE_MODE:
+            tags['config_id'] = config_id
+        return metrics_histogram_timer(
+            'commcare.async_indicator.timing',
+            timing_buckets=(.03, .1, .3, 1, 3, 10), tags=tags
+        )
 
     # tracks processed/deleted configs to be removed from each indicator
     configs_to_remove_by_indicator_id = defaultdict(list)
@@ -422,50 +436,55 @@ def _build_async_indicators(indicator_doc_ids):
                 indicator = indicator_by_doc_id[doc['_id']]
                 eval_context = EvaluationContext(doc)
                 for config_id in indicator.indicator_config_ids:
-                    config_ids.add(config_id)
+                    with _metrics_timer('transform', config_id):
+                        config_ids.add(config_id)
+                        try:
+                            config = _get_config(config_id)
+                        except (ResourceNotFound, StaticDataSourceConfigurationNotFoundError):
+                            celery_task_logger.info("{} no longer exists, skipping".format(config_id))
+                            # remove because the config no longer exists
+                            _mark_config_to_remove(config_id, [indicator.pk])
+                            continue
+                        except ESError:
+                            celery_task_logger.info("ES errored when trying to retrieve config")
+                            failed_indicators.add(indicator)
+                            continue
+                        adapter = None
+                        try:
+                            adapter = _get_adapter(config)
+                            rows_to_save = adapter.get_all_values(doc, eval_context)
+                            if rows_to_save:
+                                rows_to_save_by_adapter[adapter].extend(rows_to_save)
+                            else:
+                                docs_to_delete_by_adapter[adapter].append(doc)
+                            eval_context.reset_iteration()
+                        except Exception as e:
+                            failed_indicators.add(indicator)
+                            handle_exception(e, config_id, doc, adapter)
+
+            with _metrics_timer('single_batch_update'):
+                for adapter, rows in rows_to_save_by_adapter.items():
+                    doc_ids = doc_ids_from_rows(rows)
+                    indicators = [indicator_by_doc_id[doc_id] for doc_id in doc_ids]
                     try:
-                        config = _get_config_by_id(config_id)
-                    except (ResourceNotFound, StaticDataSourceConfigurationNotFoundError):
-                        celery_task_logger.info("{} no longer exists, skipping".format(config_id))
-                        # remove because the config no longer exists
-                        _mark_config_to_remove(config_id, [indicator.pk])
-                        continue
-                    except ESError:
-                        celery_task_logger.info("ES errored when trying to retrieve config")
-                        failed_indicators.add(indicator)
-                        continue
-                    adapter = None
-                    try:
-                        adapter = get_indicator_adapter(config, load_source='build_async_indicators')
-                        rows_to_save = adapter.get_all_values(doc, eval_context)
-                        if rows_to_save:
-                            rows_to_save_by_adapter[adapter].extend(rows_to_save)
-                        else:
-                            docs_to_delete_by_adapter[adapter].append(doc)
-                        eval_context.reset_iteration()
+                        with _metrics_timer('update', adapter.config._id):
+                            adapter.save_rows(rows)
                     except Exception as e:
-                        failed_indicators.add(indicator)
-                        handle_exception(e, config_id, doc, adapter)
+                        failed_indicators.union(indicators)
+                        message = str(e)
+                        notify_exception(None,
+                            "Exception bulk saving async indicators:{}".format(message))
+                    else:
+                        # remove because it's sucessfully processed
+                        _mark_config_to_remove(
+                            config_id,
+                            [i.pk for i in indicators]
+                        )
 
-            for adapter, rows in rows_to_save_by_adapter.items():
-                doc_ids = doc_ids_from_rows(rows)
-                indicators = [indicator_by_doc_id[doc_id] for doc_id in doc_ids]
-                try:
-                    adapter.save_rows(rows)
-                except Exception as e:
-                    failed_indicators.union(indicators)
-                    message = str(e)
-                    notify_exception(None,
-                        "Exception bulk saving async indicators:{}".format(message))
-                else:
-                    # remove because it's sucessfully processed
-                    _mark_config_to_remove(
-                        config_id,
-                        [i.pk for i in indicators]
-                    )
-
-            for adapter, docs in docs_to_delete_by_adapter.items():
-                adapter.bulk_delete(docs)
+            with _metrics_timer('single_batch_delete'):
+                for adapter, docs in docs_to_delete_by_adapter.items():
+                    with _metrics_timer('delete', adapter.config._id):
+                        adapter.bulk_delete(docs)
 
         # delete fully processed indicators
         processed_indicators = set(all_indicators) - failed_indicators
@@ -479,13 +498,15 @@ def _build_async_indicators(indicator_doc_ids):
                 )
                 indicator.save()
 
-        datadog_counter('commcare.async_indicator.processed_success', len(processed_indicators))
-        datadog_counter('commcare.async_indicator.processed_fail', len(failed_indicators))
-        datadog_histogram(
-            'commcare.async_indicator.processing_time', timer.duration / len(indicator_doc_ids),
-            tags=[
-                'config_ids:{}'.format(config_ids),
-            ]
+        metrics_counter('commcare.async_indicator.processed_success', len(processed_indicators))
+        metrics_counter('commcare.async_indicator.processed_fail', len(failed_indicators))
+        metrics_counter(
+            'commcare.async_indicator.processing_time', timer.duration,
+            tags={'config_ids': config_ids}
+        )
+        metrics_counter(
+            'commcare.async_indicator.processed_total', len(indicator_doc_ids),
+            tags={'config_ids': config_ids}
         )
 
 
@@ -495,29 +516,29 @@ def async_indicators_metrics():
     oldest_indicator = AsyncIndicator.objects.order_by('date_queued').first()
     if oldest_indicator and oldest_indicator.date_queued:
         lag = (now - oldest_indicator.date_queued).total_seconds()
-        datadog_gauge('commcare.async_indicator.oldest_queued_indicator', lag)
+        metrics_gauge('commcare.async_indicator.oldest_queued_indicator', lag)
 
     oldest_100_indicators = AsyncIndicator.objects.all()[:100]
     if oldest_100_indicators.exists():
         oldest_indicator = oldest_100_indicators[0]
         lag = (now - oldest_indicator.date_created).total_seconds()
-        datadog_gauge('commcare.async_indicator.oldest_created_indicator', lag)
+        metrics_gauge('commcare.async_indicator.oldest_created_indicator', lag)
 
         lags = [
             (now - indicator.date_created).total_seconds()
             for indicator in oldest_100_indicators
         ]
         avg_lag = sum(lags) / len(lags)
-        datadog_gauge('commcare.async_indicator.oldest_created_indicator_avg', avg_lag)
+        metrics_gauge('commcare.async_indicator.oldest_created_indicator_avg', avg_lag)
 
     for config_id, metrics in _indicator_metrics().items():
-        tags = ["config_id:{}".format(config_id)]
-        datadog_gauge('commcare.async_indicator.indicator_count', metrics['count'], tags=tags)
-        datadog_gauge('commcare.async_indicator.lag', metrics['lag'], tags=tags)
+        tags = {"config_id": config_id}
+        metrics_gauge('commcare.async_indicator.indicator_count', metrics['count'], tags=tags)
+        metrics_gauge('commcare.async_indicator.lag', metrics['lag'], tags=tags)
 
     # Don't use ORM summing because it would attempt to get every value in DB
     unsuccessful_attempts = sum(AsyncIndicator.objects.values_list('unsuccessful_attempts', flat=True).all()[:100])
-    datadog_gauge('commcare.async_indicator.unsuccessful_attempts', unsuccessful_attempts)
+    metrics_gauge('commcare.async_indicator.unsuccessful_attempts', unsuccessful_attempts)
 
 
 def _indicator_metrics(date_created=None):
@@ -534,7 +555,7 @@ def _indicator_metrics(date_created=None):
         AsyncIndicator.objects
         .values('indicator_config_ids')
         .annotate(Count('indicator_config_ids'), Min('date_created'))
-        .order_by()  # needed to get rid of implict ordering by date_created
+        .order_by()  # needed to get rid of implicit ordering by date_created
     )
     now = datetime.utcnow()
     if date_created:

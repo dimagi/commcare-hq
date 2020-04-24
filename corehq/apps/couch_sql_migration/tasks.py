@@ -2,7 +2,7 @@ from celery.schedules import crontab
 from celery.task import periodic_task
 
 from corehq.apps.es import DomainES, aggregations, filters
-from corehq.util.datadog.gauges import datadog_gauge
+from corehq.util.metrics import metrics_gauge
 
 
 @periodic_task(queue='background_queue', run_every=crontab(minute=0, hour=10),
@@ -19,6 +19,6 @@ def couch_sql_migration_stats():
         .size(0).run()
     )
 
-    datadog_gauge('commcare.couch_sql_migration.domains_remaining', int(result.total))
-    datadog_gauge('commcare.couch_sql_migration.forms_remaining', int(result.aggregations.forms.value))
-    datadog_gauge('commcare.couch_sql_migration.cases_remaining', int(result.aggregations.cases.value))
+    metrics_gauge('commcare.couch_sql_migration.domains_remaining', int(result.total))
+    metrics_gauge('commcare.couch_sql_migration.forms_remaining', int(result.aggregations.forms.value))
+    metrics_gauge('commcare.couch_sql_migration.cases_remaining', int(result.aggregations.cases.value))

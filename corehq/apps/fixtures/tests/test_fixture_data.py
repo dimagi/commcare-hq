@@ -9,7 +9,7 @@ from casexml.apps.phone.tests.utils import \
 from corehq.apps.fixtures import fixturegenerators
 from corehq.apps.fixtures.dbaccessors import (
     delete_all_fixture_data_types,
-    get_fixture_data_types_in_domain,
+    get_fixture_data_types,
 )
 from corehq.apps.fixtures.exceptions import FixtureVersionError
 from corehq.apps.fixtures.models import (
@@ -108,7 +108,7 @@ class FixtureDataTest(TestCase):
             data_item_id=self.data_item.get_id
         )
         self.fixture_ownership.save()
-        get_fixture_data_types_in_domain.clear(self.domain)
+        get_fixture_data_types.clear(self.domain)
 
     def tearDown(self):
         self.data_type.delete()
@@ -117,7 +117,7 @@ class FixtureDataTest(TestCase):
         self.fixture_ownership.delete()
         delete_all_users()
         delete_all_fixture_data_types()
-        get_fixture_data_types_in_domain.clear(self.domain)
+        get_fixture_data_types.clear(self.domain)
         get_blob_db().delete(key=FIXTURE_BUCKET + '/' + self.domain)
         super(FixtureDataTest, self).tearDown()
 
@@ -241,7 +241,7 @@ class FixtureDataTest(TestCase):
         )
         empty_data_type.save()
         self.addCleanup(empty_data_type.delete)
-        get_fixture_data_types_in_domain.clear(self.domain)
+        get_fixture_data_types.clear(self.domain)
 
         fixtures = call_fixture_generator(self.user.to_ota_restore_user())
         self.assertEqual(2, len(fixtures))

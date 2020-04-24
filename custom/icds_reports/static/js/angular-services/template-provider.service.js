@@ -1,6 +1,6 @@
 window.angular.module('icdsApp').factory('templateProviderService', ['isMobile', function (isMobile) {
     var url = hqImport('hqwebapp/js/initial_page_data').reverse;
-    function getTemplate (templateName) {
+    function getTemplate(templateName) {
         if (isMobile) {
             return url('icds-ng-template-mobile', templateName);
         } else {
@@ -11,6 +11,6 @@ window.angular.module('icdsApp').factory('templateProviderService', ['isMobile',
         getTemplate: getTemplate,
         getMapChartTemplate: function () {
             return getTemplate('map-chart');
-        }
+        },
     };
 }]);

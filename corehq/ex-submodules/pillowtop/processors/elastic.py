@@ -11,8 +11,9 @@ from corehq.util.es.elasticsearch import (
     RequestError,
 )
 from corehq.util.es.interface import ElasticsearchInterface
+from corehq.util.metrics import metrics_histogram_timer
 
-from pillowtop.exceptions import BulkDocExeption, PillowtopIndexingError
+from pillowtop.exceptions import BulkDocException, PillowtopIndexingError
 from pillowtop.logger import pillow_logging
 from pillowtop.utils import (
     ErrorCollector,
@@ -22,8 +23,6 @@ from pillowtop.utils import (
     ensure_matched_revisions,
     get_errors_with_ids,
 )
-
-from corehq.util.datadog.gauges import datadog_bucket_timer
 
 from .interface import BulkPillowProcessor, PillowProcessor
 
@@ -105,10 +104,13 @@ class ElasticProcessor(PillowProcessor):
             self.elasticsearch.delete(self.index_info.index, self.index_info.type, doc_id)
 
     def _datadog_timing(self, step):
-        return datadog_bucket_timer('commcare.change_feed.processor.timing', tags=[
-            'action:{}'.format(step),
-            'index:{}'.format(self.index_info.alias),
-        ], timing_buckets=(.03, .1, .3, 1, 3, 10))
+        return metrics_histogram_timer(
+            'commcare.change_feed.processor.timing',
+            timing_buckets=(.03, .1, .3, 1, 3, 10),
+            tags={
+                'action': step,
+                'index': self.index_info.alias,
+            })
 
 
 class BulkElasticProcessor(ElasticProcessor, BulkPillowProcessor):
@@ -153,7 +155,7 @@ class BulkElasticProcessor(ElasticProcessor, BulkPillowProcessor):
             ])
         else:
             for change_id, error_msg in get_errors_with_ids(errors):
-                error_changes.append((changes_to_process[change_id], BulkDocExeption(error_msg)))
+                error_changes.append((changes_to_process[change_id], BulkDocException(error_msg)))
         return retry_changes, error_changes
 
 

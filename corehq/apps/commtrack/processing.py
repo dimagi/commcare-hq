@@ -13,8 +13,8 @@ from dimagi.utils.decorators.log_exception import log_exception
 from corehq.form_processor.casedb_base import AbstractCaseDbCache
 from corehq.form_processor.exceptions import MissingFormXml
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
-from corehq.form_processor.parsers.ledgers import get_stock_actions
-from corehq.util.datadog.utils import ledger_load_counter
+from corehq.form_processor.parsers.ledgers import get_stock_actions, get_ledger_case_action_intents
+from corehq.util.metrics.load_counters import ledger_load_counter
 
 logger = logging.getLogger('commtrack.incoming')
 
@@ -125,7 +125,7 @@ def process_stock(xforms, case_db=None):
 
     stock_report_helpers = []
     case_action_intents = []
-    sorted_forms = sorted(xforms, key=lambda f: 0 if f.is_deprecated else 1)
+    sorted_forms = sorted(xforms, key=lambda f: 1 if f.is_deprecated else 0)
     for xform in sorted_forms:
         try:
             actions_for_form = get_stock_actions(xform)
@@ -135,13 +135,18 @@ def process_stock(xforms, case_db=None):
             if not xform.is_deprecated:
                 raise
 
+            # in the case where the XML is missing for the deprecated form add a
+            # deprecation intent for all cases touched by the primary form
+            case_ids = {intent.case_id for intent in case_action_intents}
+            case_action_intents += get_ledger_case_action_intents(xform, case_ids)
+
     # validate the parsed transactions
     for stock_report_helper in stock_report_helpers:
         stock_report_helper.validate()
 
     relevant_cases = mark_cases_changed(case_action_intents, case_db)
     return StockProcessingResult(
-        xform=sorted_forms[-1],
+        xform=sorted_forms[0],
         relevant_cases=relevant_cases,
         stock_report_helpers=stock_report_helpers,
     )

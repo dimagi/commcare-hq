@@ -1,6 +1,7 @@
 from django.core.management import BaseCommand
 
 from corehq.apps.app_manager.models import LinkedApplication
+from corehq.apps.app_manager.views.utils import update_linked_app
 from corehq.apps.linked_domain.applications import link_app
 from corehq.apps.linked_domain.models import RemoteLinkDetails
 
@@ -34,3 +35,4 @@ class Command(BaseCommand):
 
         linked_app = LinkedApplication.get(linked_id)
         link_app(linked_app, domain, master_id, remote_details)
+        update_linked_app(linked_app, master_id, 'system')

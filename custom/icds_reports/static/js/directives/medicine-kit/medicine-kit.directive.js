@@ -31,7 +31,7 @@ function MedicineKitController($scope, $routeParams, $location, $filter, infrast
             {
                 indicator_name: 'Percentage of AWCs that reported having a Medicine Kit: ',
                 indicator_value: percent,
-            }
+            },
         ];
     };
 

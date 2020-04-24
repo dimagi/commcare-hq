@@ -58,6 +58,8 @@ def parse_users(group_memoizer, domain, user_data_model, location_cache, user_fi
             user_data_model.get_model_and_uncategorized(user.user_data)
         )
         role = user.get_role(domain)
+        activity = user.reporting_metadata
+
         location_codes = []
         try:
             location_codes.append(location_cache.get(user.location_id))
@@ -70,6 +72,10 @@ def parse_users(group_memoizer, domain, user_data_model, location_cache, user_fi
                     location_codes.append(location_cache.get(location_id))
                 except SQLLocation.DoesNotExist:
                     pass
+
+        def _format_date(date):
+            return date.strftime('%Y-%m-%d %H:%M:%S') if date else ''
+
         return {
             'data': model_data,
             'uncategorized_data': uncategorized_data,
@@ -85,7 +91,9 @@ def parse_users(group_memoizer, domain, user_data_model, location_cache, user_fi
             'User IMEIs (read only)': _get_devices(user),
             'location_code': location_codes,
             'role': role.name if role else '',
-            'registered_on (read only)': user.created_on.strftime('%Y-%m-%d %H:%M:%S') if user.created_on else ''
+            'registered_on (read only)': _format_date(user.created_on),
+            'last_submission (read only)': _format_date(activity.last_submission_for_user.submission_date),
+            'last_sync (read only)': activity.last_sync_for_user.sync_date,
         }
 
     unrecognized_user_data_keys = set()
@@ -104,7 +112,7 @@ def parse_users(group_memoizer, domain, user_data_model, location_cache, user_fi
     user_headers = [
         'username', 'password', 'name', 'phone-number', 'email',
         'language', 'role', 'user_id', 'is_active', 'User IMEIs (read only)',
-        'registered_on (read only)']
+        'registered_on (read only)', 'last_submission (read only)', 'last_sync (read only)']
 
     user_data_fields = [f.slug for f in user_data_model.get_fields(include_system=False)]
     user_headers.extend(build_data_headers(user_data_fields))
@@ -172,7 +180,13 @@ def dump_usernames(domain, download_id, user_filters, task):
 
     headers = [('users', [['username']])]
     rows = [('users', [[username] for username in usernames])]
-    filename = "{}_users.xlsx".format(domain)
+    location_id = user_filters.get('location_id')
+    location_name = ""
+    if location_id:
+        location = SQLLocation.active_objects.get_or_None(location_id=location_id)
+        location_name = location.name if location else ""
+    filename_prefix = "_".join([a for a in [domain, location_name] if bool(a)])
+    filename = "{}_users.xlsx".format(filename_prefix)
     _dump_xlsx_and_expose_download(filename, headers, rows, download_id, task, users_count)
 
 

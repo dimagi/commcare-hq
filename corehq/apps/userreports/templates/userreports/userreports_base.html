@@ -16,6 +16,52 @@
 {% endblock %}
 
 {% block page_navigation %}
+  <h2 class="text-hq-nav-header">{% trans "Tools" %}</h2>
+  <ul class="nav nav-hq-sidebar">
+    <li>
+      <a href="{% url 'configurable_reports_home' domain %}">
+        <i class="fa fa-wrench"></i>
+        {% trans "Configurable Reports" %}
+      </a>
+    </li>
+    <li>
+      <a href="{% url 'create_configurable_report' domain %}">
+        <i class="fa fa-plus"></i>
+        {% trans "Add report" %}
+      </a>
+    </li>
+    <li>
+      <a href="{% url 'import_configurable_report' domain %}">
+        <i class="fa fa-cloud-upload"></i>
+        {% trans "Import report" %}
+      </a>
+    </li>
+    <li>
+      <a href="{% url 'create_configurable_data_source' domain %}">
+        <i class="fa fa-plus"></i>
+        {% trans "Add data source" %}
+      </a>
+    </li>
+    <li>
+      <a href="{% url 'create_configurable_data_source_from_app' domain %}">
+        <i class="fa fa-copy"></i>
+        {% trans "Data source from application" %}
+      </a>
+    </li>
+    <li>
+      <a href="{% url 'expression_debugger' domain %}">
+        <i class="fa fa-search"></i>
+        {% trans "Expression Debugger" %}
+      </a>
+    </li>
+    <li>
+      <a href="{% url 'data_source_debugger' domain %}">
+        <i class="fa fa-search"></i>
+        {% trans "Data Source Debugger" %}
+      </a>
+    </li>
+  </ul>
+
   <h2 class="text-hq-nav-header">{% trans "Edit Reports" %}</h2>
   <ul class="nav nav-hq-sidebar">
     {% with report as selected_report %}
@@ -30,16 +76,6 @@
         </li>
       {% endfor %}
     {% endwith %}
-    <li>
-      <a href="{% url 'create_configurable_report' domain %}">
-        <i class="fa fa-plus"></i>
-        <span class="text-muted">{% trans "Add report" %}</span>
-      </a>
-      <a href="{% url 'import_configurable_report' domain %}">
-        <i class="fa fa-cloud-upload"></i>
-        <span class="text-muted">{% trans "Import report" %}</span>
-      </a>
-    </li>
   </ul>
 
   <h2 class="text-hq-nav-header">{% trans "Edit Data Sources" %}</h2>
@@ -59,30 +95,6 @@
         </li>
       {% endfor %}
     {% endwith %}
-    <li>
-      <a href="{% url 'create_configurable_data_source' domain %}">
-        <i class="fa fa-plus"></i>
-        <span class="text-muted">{% trans "Add data source" %}</span>
-      </a>
-    </li>
-    <li>
-      <a href="{% url 'create_configurable_data_source_from_app' domain %}">
-        <i class="fa fa-copy"></i>
-        <span class="text-muted">{% trans "Data source from application" %}</span>
-      </a>
-    </li>
-    <li>
-      <a href="{% url 'expression_debugger' domain %}">
-        <i class="fa fa-search"></i>
-        <span class="text-muted">{% trans "Expression Debugger" %}</span>
-      </a>
-    </li>
-    <li>
-      <a href="{% url 'data_source_debugger' domain %}">
-        <i class="fa fa-search"></i>
-        <span class="text-muted">{% trans "Data Source Debugger" %}</span>
-      </a>
-    </li>
   </ul>
   {% if request|toggle_enabled:"AGGREGATE_UCRS" %}
     <h2 class="text-hq-nav-header">{% trans "Aggregate Data Sources" %}</h2>

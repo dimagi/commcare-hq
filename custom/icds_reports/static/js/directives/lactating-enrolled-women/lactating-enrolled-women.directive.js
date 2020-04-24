@@ -39,7 +39,7 @@ function LactatingEnrolledWomenController($scope, $routeParams, $location, $filt
             {
                 indicator_name: 'Percentage of registered lactating women who are enrolled for Anganwadi Services: ',
                 indicator_value: percent,
-            }
+            },
         ];
     };
 
@@ -51,7 +51,7 @@ function LactatingEnrolledWomenController($scope, $routeParams, $location, $filt
         'captionContent': ' Of the total number of lactating women, the percentage of lactating women enrolled for Anganwadi Services',
     };
     vm.chartOptions = vm.getChartOptions(options);
-    vm.chartOptions.chart.width = 1100;
+    vm.chartOptions.chart.width = isMobile ? '' : 1100;
     vm.chartOptions.chart.color = d3.scale.category10().range();
 
     vm.getDisableIndex = function () {
@@ -66,7 +66,7 @@ function LactatingEnrolledWomenController($scope, $routeParams, $location, $filt
         return i;
     };
 
-    vm.tooltipContent = function(monthName, day) {
+    vm.tooltipContent = function (monthName, day) {
         return vm.createTooltipContent(
             monthName,
             [{

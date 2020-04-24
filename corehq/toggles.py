@@ -454,7 +454,7 @@ APP_BUILDER_SHADOW_MODULES = StaticToggle(
     'Shadow Modules',
     TAG_SOLUTIONS_CONDITIONAL,
     [NAMESPACE_DOMAIN],
-    help_link='https://confluence.dimagi.com/display/ccinternal/Shadow+Modules',
+    help_link='https://confluence.dimagi.com/display/ccinternal/Shadow+Modules+and+Forms',
 )
 
 CASE_LIST_CUSTOM_XML = StaticToggle(
@@ -1072,8 +1072,8 @@ ENABLE_INCLUDE_SMS_GATEWAY_CHARGING = StaticToggle(
 
 MOBILE_WORKER_SELF_REGISTRATION = StaticToggle(
     'mobile_worker_self_registration',
-    'UW: Allow mobile workers to self register',
-    TAG_CUSTOM,
+    'UW: Allow mobile workers to self register. Only works in CommCare 2.44 and lower.',
+    TAG_DEPRECATED,
     help_link='https://confluence.dimagi.com/display/commcarepublic/SMS+Self+Registration',
     namespaces=[NAMESPACE_DOMAIN],
 )
@@ -1147,10 +1147,26 @@ HIDE_MESSAGING_DASHBOARD_FROM_NON_SUPERUSERS = StaticToggle(
 )
 
 
+WHATSAPP_MESSAGING = StaticToggle(
+    'whatsapp_messaging',
+    "Default SMS to send messages via Whatsapp, where available",
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN]
+)
+
+
 UNLIMITED_REPORT_BUILDER_REPORTS = StaticToggle(
     'unlimited_report_builder_reports',
     'Allow unlimited reports created in report builder',
     TAG_INTERNAL,
+    [NAMESPACE_DOMAIN]
+)
+
+SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER = StaticToggle(
+    'show_owner_location_property_in_report_builder',
+    'Show an additional "Owner (Location)" property in report builder reports. '
+    'This can be used to create report builder reports that are location-safe.',
+    TAG_SOLUTIONS_OPEN,
     [NAMESPACE_DOMAIN]
 )
 
@@ -1174,6 +1190,15 @@ ALLOW_USER_DEFINED_EXPORT_COLUMNS = StaticToggle(
     'Add user defined columns to exports',
     TAG_DEPRECATED,
     [NAMESPACE_DOMAIN],
+)
+
+
+DATA_EXPORT_TOOL_SCHEMA_EXPORT = StaticToggle(
+    'data_export_tool_schema_export',
+    'Show an option to download data export tool schemas from the exports list view (Experimental)',
+    TAG_SOLUTIONS_OPEN,
+    [NAMESPACE_DOMAIN, NAMESPACE_USER],
+    help_link='https://confluence.dimagi.com/display/ccinternal/Download+Data+Export+Tool+Schemas+from+the+Exports+List+View',
 )
 
 
@@ -1286,6 +1311,13 @@ PAGINATED_EXPORTS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+INCREMENTAL_EXPORTS = StaticToggle(
+    'incremental_exports',
+    'Allows sending of incremental CSV exports to a particular endpoint',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN],
+)
+
 PUBLISH_CUSTOM_REPORTS = StaticToggle(
     'publish_custom_reports',
     "Publish custom reports (No needed Authorization)",
@@ -1340,18 +1372,10 @@ ENABLE_ALL_ADD_ONS = StaticToggle(
 
 FILTERED_BULK_USER_DOWNLOAD = StaticToggle(
     'filtered_bulk_user_download',
-    "Ability to filter mobile workers based on role, location, and username when doing bulk download",
+    "Bulk mobile worker management features: filtered download, bulk delete, and bulk lookup users.",
     TAG_SOLUTIONS_OPEN,
     [NAMESPACE_DOMAIN],
-    help_link='https://confluence.dimagi.com/display/ccinternal/Filter+Mobile+Workers+Download',
-)
-
-BULK_USER_DELETE = StaticToggle(
-    'bulk_user_delete',
-    "Allow bulk deletion of users based on a username upload.",
-    TAG_SOLUTIONS_LIMITED,
-    [NAMESPACE_DOMAIN],
-    help_link='https://confluence.dimagi.com/display/ccinternal/Bulk+Delete+Users',
+    help_link='https://confluence.dimagi.com/display/ccinternal/Bulk+Mobile+Workers+Management',
 )
 
 FILTERED_LOCATION_DOWNLOAD = StaticToggle(
@@ -1731,19 +1755,26 @@ ICDS_GOVERNANCE_DASHABOARD_API = StaticToggle(
     relevant_environments={'icds', 'india'},
 )
 
-RATE_LIMIT_SUBMISSIONS = DynamicallyPredictablyRandomToggle(
-    'rate_limit_submissions',
-    'Rate limit submissions with a 429 TOO MANY REQUESTS response',
+DO_NOT_RATE_LIMIT_SUBMISSIONS = StaticToggle(
+    'do_not_rate_limit_submissions',
+    'Do not rate limit submissions for this project, on a temporary basis.',
     TAG_INTERNAL,
     [NAMESPACE_DOMAIN],
     description="""
-    While we are gaining an understanding of the effects of rate limiting,
-    we want to force rate limiting on certain domains, while also being to
-    toggle on and off global rate limiting quickly in response to issues.
-
-    To turn on global rate limiting, set Randomness Level to 1.
-    To turn it off, set to 0.
+    When an individual project is having problems with rate limiting,
+    use this toggle to lift the restriction for them on a temporary basis,
+    just to unblock them while we sort out the conversation with the client.
     """
+)
+
+TEST_FORM_SUBMISSION_RATE_LIMIT_RESPONSE = StaticToggle(
+    'test_form_submission_rate_limit_response',
+    ("Respond to all form submissions with a 429 response. For use on test domains only. "
+     "Without this, there's no sane way to test the UI for being rate limited on "
+     "Mobile and Web Apps. Never use this on a real domain."),
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_DOMAIN],
+    description="",
 )
 
 RATE_LIMIT_RESTORES = DynamicallyPredictablyRandomToggle(
@@ -1776,14 +1807,6 @@ SHOW_BUILD_PROFILE_IN_APPLICATION_STATUS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-
-USE_NEW_GET_COLUMN = StaticToggle(
-    'use_new_get_column',
-    'Uses the new get_column method when loading edit exports '
-    '(strictly for QA right now).',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN],
-)
 
 LIVEQUERY_READ_FROM_STANDBYS = DynamicallyPredictablyRandomToggle(
     'livequery_read_from_standbys',
@@ -1818,4 +1841,46 @@ ALLOW_DEID_ODATA_FEED = StaticToggle(
     'Allow De-Identification in OData feeds',
     TAG_PRODUCT,
     [NAMESPACE_DOMAIN]
+)
+
+
+ACCOUNTING_TESTING_TOOLS = StaticToggle(
+    'accounting_testing_tools',
+    'Enable Accounting Testing Tools',
+    TAG_INTERNAL,
+    [NAMESPACE_USER]
+)
+
+
+ADD_ROW_INDEX_TO_MOBILE_UCRS = StaticToggle(
+    'add_row_index_to_mobile_ucrs',
+    'Add row index to mobile UCRs as the first column to retain original order of data',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN]
+)
+
+
+TWO_STAGE_USER_PROVISIONING = StaticToggle(
+    'two_stage_user_provisioning',
+    'Enable two-stage user provisioning (users confirm and set their own passwords via email).',
+    TAG_SOLUTIONS_LIMITED,
+    [NAMESPACE_DOMAIN],
+    help_link='https://confluence.dimagi.com/display/ccinternal/Two-Stage+Mobile+Worker+Account+Creation',
+)
+
+LOCATION_REASSIGNMENT = StaticToggle(
+    'location_reassignment',
+    'Ability to reorder organization structure',
+    TAG_CUSTOM,
+    [NAMESPACE_USER],
+    relevant_environments={'icds', 'india', 'staging'},
+)
+
+ICDS_BIHAR_DEMOGRAPHICS_API = StaticToggle(
+    'bihar_demographics_api',
+    'ICDS: Bihar Demographics API',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_USER],
+    relevant_environments={'icds', 'india'},
+
 )

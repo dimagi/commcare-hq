@@ -1,10 +1,10 @@
 /* global d3, moment */
 
-window.angular.module('icdsApp').factory('baseControllersService', function() {
+window.angular.module('icdsApp').factory('baseControllersService', ['$timeout', function ($timeout) {
     var BaseFilterController = function ($scope, $routeParams, $location, dateHelperService, storageService,
-                                         navigationService) {
+        navigationService) {
         var vm = this;
-        vm.moveToLocation = function(loc, index) {
+        vm.moveToLocation = function (loc, index) {
             if (loc === 'national') {
                 $location.search('location_id', '');
                 $location.search('selectedLocationLevel', -1);
@@ -19,7 +19,7 @@ window.angular.module('icdsApp').factory('baseControllersService', function() {
             $location.search('gender', gender);
             $location.search('age', age);
         };
-        vm.selectedLocationsCount = function() {
+        vm.selectedLocationsCount = function () {
             // this method returns selectedLocationLevel
             // TODO: Need to check why selectedLocationLevel is undefined for all location levels except when awc is selected
             // when awc is selected return selected location level as is or count non null elements in selected Locations array
@@ -27,7 +27,7 @@ window.angular.module('icdsApp').factory('baseControllersService', function() {
             // vm.selectedLocations.filter(Boolean) returns array after removing all null entries
             // eg: if block is selected selectedLocations is (state, district, block, all, null)- only 3 levels selected.
             // since 3 levels are selected, selectedLocationLevel is 2 and vm.selectedLocations.filter(Boolean) = 4
-            return vm.selectedLocationLevel ? vm.selectedLocationLevel : (vm.selectedLocations.filter(Boolean).length-2);
+            return vm.selectedLocationLevel ? vm.selectedLocationLevel : (vm.selectedLocations.filter(Boolean).length - 2);
         };
         vm.filtersOpen = false;
         $scope.$on('openFilterMenu', function () {
@@ -57,8 +57,8 @@ window.angular.module('icdsApp').factory('baseControllersService', function() {
     };
     return {
         BaseController: function ($scope, $routeParams, $location, locationsService, dateHelperService,
-                  navigationService, userLocationId, storageService, haveAccessToAllLocations, haveAccessToFeatures,
-                  isMobile) {
+            navigationService, userLocationId, storageService, haveAccessToAllLocations, haveAccessToFeatures,
+            isMobile) {
             BaseFilterController.call(
                 this, $scope, $routeParams, $location, dateHelperService, storageService, navigationService
             );
@@ -72,6 +72,7 @@ window.angular.module('icdsApp').factory('baseControllersService', function() {
             vm.userLocationId = userLocationId;
             vm.filtersData = $location.search();
             vm.step = $routeParams.step;
+            vm.haveAccessToAllLocations = haveAccessToAllLocations;
             vm.chartData = null;
             vm.top_five = [];
             vm.bottom_five = [];
@@ -87,7 +88,7 @@ window.angular.module('icdsApp').factory('baseControllersService', function() {
             vm.usePercentage = true;
             vm.forceYAxisFromZero = false;
 
-            $scope.$watch(function() {
+            $scope.$watch(function () {
                 return vm.selectedLocations;
             }, function (newValue, oldValue) {
                 if (newValue === oldValue || !newValue || newValue.length === 0) {
@@ -99,7 +100,7 @@ window.angular.module('icdsApp').factory('baseControllersService', function() {
                     $location.search('selectedLocationLevel', 3);
                     $location.search('location_name', parent.name);
                     storageService.setKey('message', true);
-                    setTimeout(function() {
+                    setTimeout(function () {
                         storageService.setKey('message', false);
                     }, 3000);
                 }
@@ -148,7 +149,7 @@ window.angular.module('icdsApp').factory('baseControllersService', function() {
                 return template;
             };
 
-            vm.getLocationType = function() {
+            vm.getLocationType = function () {
                 if (vm.location) {
                     if (vm.location.location_type === 'supervisor') {
                         return "Sector";
@@ -159,7 +160,7 @@ window.angular.module('icdsApp').factory('baseControllersService', function() {
                 }
                 return 'National';
             };
-            vm.setStepsMapLabel = function() {
+            vm.setStepsMapLabel = function () {
                 var locType = vm.getLocationType();
                 if (vm.location && _.contains(['block', 'supervisor', 'awc'], vm.location.location_type)) {
                     vm.mode = 'sector';
@@ -169,7 +170,7 @@ window.angular.module('icdsApp').factory('baseControllersService', function() {
                     vm.steps['map'].label = 'Map View: ' + locType;
                 }
             };
-            vm.loadDataFromResponse = function(usePercentage, forceYAxisFromZero, overrideStep) {
+            vm.loadDataFromResponse = function (usePercentage, forceYAxisFromZero, overrideStep) {
                 // if overrideStep is defined use it, else just use the current step
                 // mobile dashboard requires this to load data beyond the currently displayed step on some pages
                 var currentStep = overrideStep || vm.step;
@@ -177,14 +178,14 @@ window.angular.module('icdsApp').factory('baseControllersService', function() {
                 if (usePercentage) {
                     tailsMultiplier = 100;
                 }
-                var parseTails = function(value) {
+                var parseTails = function (value) {
                     var precision = 0;
                     if (usePercentage) {
                         precision = 2;
                     }
                     return parseFloat((value / tailsMultiplier).toFixed(precision));
                 };
-                return function(response) {
+                return function (response) {
                     if (currentStep === "map") {
                         vm.data.mapData = response.data.report_data;
                     } else if (currentStep === "chart") {
@@ -193,7 +194,9 @@ window.angular.module('icdsApp').factory('baseControllersService', function() {
                         vm.top_five = response.data.report_data.top_five;
                         vm.bottom_five = response.data.report_data.bottom_five;
                         vm.location_type = response.data.report_data.location_type;
-                        vm.chartTicks = vm.chartData[0].values.map(function (d) { return d.x; });
+                        vm.chartTicks = vm.chartData[0].values.map(function (d) {
+                            return d.x; 
+                        });
                         var max = Math.ceil(d3.max(vm.chartData, function (line) {
                             return d3.max(line.values, function (d) {
                                 return d.y;
@@ -233,20 +236,40 @@ window.angular.module('icdsApp').factory('baseControllersService', function() {
                 }
             };
 
-            vm.init = function() {
+            //Creating a promise, which resolves only after map is rendered (wait until canvas is rendered in dom)
+            // Reference: https://stackoverflow.com/a/47776379/12839195 (using timeout instead of rafAsync)
+            vm.waitForMapIfNecessary = function () {
+                // if it is not a page where map is displayed, resolve the promise immediately,
+                // else wait till canvas (svg in dom) is created
+                if (!navigationService.isMapDisplayed($location.path()) && window.Promise) {
+                    return window.Promise.resolve(true);
+                }
+                if (document.querySelector('svg') === null) {
+                    return $timeout().then(function () {
+                        return vm.waitForMapIfNecessary();
+                    });
+                } else {
+                    return window.Promise.resolve(true);
+                }
+            };
+
+            vm.mapLoadingPromise = vm.waitForMapIfNecessary().then(function () {
+            });
+
+            vm.init = function () {
                 var locationId = vm.filtersData.location_id || vm.userLocationId;
                 if (!locationId || ["all", "null", "undefined"].indexOf(locationId) >= 0) {
                     vm.loadData();
                     vm.loaded = true;
                     return;
                 }
-                locationsService.getLocation(locationId).then(function(location) {
+                locationsService.getLocation(locationId).then(function (location) {
                     vm.location = location;
                     vm.loadData();
                     vm.loaded = true;
                 });
             };
-            $scope.$on('filtersChange', function() {
+            $scope.$on('filtersChange', function () {
                 vm.loadData();
             });
             vm.getDisableIndex = function () {
@@ -260,29 +283,37 @@ window.angular.module('icdsApp').factory('baseControllersService', function() {
                 }
                 return i;
             };
-            vm.getChartOptions = function(options) {
+
+            // reduce caption width to fit screen up to 900px on mobile view
+            var captionWidth = (isMobile && window.innerWidth < 960) ? window.innerWidth - 60 : 900;
+
+            vm.getChartOptions = function (options) {
                 return {
                     chart: {
                         type: 'lineChart',
                         height: 450,
-                        margin : {
+                        margin: {
                             top: 20,
                             right: 60,
                             bottom: 60,
-                            left: 80,
+                            left: isMobile ? 50 : 80,
                         },
-                        x: function(d){ return d.x; },
-                        y: function(d){ return d.y; },
+                        x: function (d) {
+                            return d.x; 
+                        },
+                        y: function (d) {
+                            return d.y; 
+                        },
                         useInteractiveGuideline: true,
                         clipVoronoi: false,
                         tooltips: true,
                         xAxis: {
                             axisLabel: '',
                             showMaxMin: true,
-                            tickFormat: function(d) {
+                            tickFormat: function (d) {
                                 return d3.time.format(options['xAxisTickFormat'])(new Date(d));
                             },
-                            tickValues: function() {
+                            tickValues: function () {
                                 return vm.chartTicks;
                             },
                             axisLabelDistance: -100,
@@ -290,16 +321,16 @@ window.angular.module('icdsApp').factory('baseControllersService', function() {
 
                         yAxis: {
                             axisLabel: '',
-                            tickFormat: function(d){
+                            tickFormat: function (d) {
                                 return d3.format(options['yAxisTickFormat'])(d);
                             },
                             axisLabelDistance: 20,
                             forceY: [0],
                         },
-                        callback: function(chart) {
+                        callback: function (chart) {
                             var tooltip = chart.interactiveLayer.tooltip;
                             tooltip.contentGenerator(function (d) {
-                                var day = _.find(vm.chartData[0].values, function(num) {
+                                var day = _.find(vm.chartData[0].values, function (num) {
                                     return num['x'] === d.value;
                                 });
                                 return vm.tooltipContent(d3.time.format('%b %Y')(new Date(d.value)), day);
@@ -313,12 +344,12 @@ window.angular.module('icdsApp').factory('baseControllersService', function() {
                         css: {
                             'text-align': 'center',
                             'margin': '0 auto',
-                            'width': '900px',
+                            'width': captionWidth + 'px',
                         },
                     },
                 };
             };
-            vm.createTooltipContent = function(header, lines) {
+            vm.createTooltipContent = function (header, lines) {
                 var template = "<p><strong>" + header + "</strong></p><br/>";
                 for (var i = 0; i < lines.length; i++) {
                     template += '<div>' + lines[i]['indicator_name'] + '<strong>' + lines[i]['indicator_value'] + '</strong></div>';
@@ -361,4 +392,4 @@ window.angular.module('icdsApp').factory('baseControllersService', function() {
         },
         BaseFilterController: BaseFilterController,
     };
-});
+}]);

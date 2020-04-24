@@ -15,9 +15,9 @@ import settings
 from corehq.messaging.smsbackends.twilio.models import SQLTwilioBackend
 from corehq.project_limits.rate_limiter import RateLimiter, get_dynamic_rate_definition, \
     RateDefinition
-from corehq.util.datadog.gauges import datadog_counter, datadog_gauge
 from corehq.util.decorators import run_only_when, silence_and_report_error
 from corehq.util.global_request import get_request
+from corehq.util.metrics import metrics_counter, metrics_gauge
 from dimagi.utils.web import get_ip
 
 VOICE_LANGUAGES = ('en', 'en-gb', 'es', 'fr', 'it', 'de', 'da-DK', 'de-DE',
@@ -30,10 +30,18 @@ VOICE_LANGUAGES = ('en', 'en-gb', 'es', 'fr', 'it', 'de', 'da-DK', 'de-DE',
 class Gateway(object):
 
     def __init__(self):
-        backends = SQLTwilioBackend.objects.filter(hq_api_id='TWILIO', deleted=False, is_global=True)
-        sid = backends[0].extra_fields['account_sid']
-        token = backends[0].extra_fields['auth_token']
-        self.from_number = backends[0].load_balancing_numbers[0]
+        try:
+            # try to pull a specially-named backend
+            # this lets us separate out the backend used for 2FA specifically from the high-throughput backend.
+            # (This allows the high-throughput backend not to support IVR calls, which are used for 2FA only.)
+            backend = SQLTwilioBackend.objects.get(hq_api_id='TWILIO', name='TWILIO_TWO_FACTOR',
+                                                   domain=None, deleted=False)
+        except SQLTwilioBackend.DoesNotExist:
+            backend = SQLTwilioBackend.objects.filter(hq_api_id='TWILIO', deleted=False, is_global=True)[0]
+
+        sid = backend.extra_fields['account_sid']
+        token = backend.extra_fields['auth_token']
+        self.from_number = backend.load_balancing_numbers[0]
         self.client = self._get_client(sid, token)
 
     def _get_client(self, sid, token):
@@ -118,10 +126,10 @@ def rate_limit_two_factor_setup(device):
     else:
         status = _status_bad_request
 
-    datadog_counter('commcare.two_factor.setup_requests', 1, tags=[
-        'status:{}'.format(status),
-        'method:{}'.format(method),
-    ])
+    metrics_counter('commcare.two_factor.setup_requests', 1, tags={
+        'status': status,
+        'method': method,
+    })
     return status != _status_accepted
 
 
@@ -154,9 +162,9 @@ global_two_factor_setup_rate_limiter = RateLimiter(
 
 def _report_current_global_two_factor_setup_rate_limiter():
     for window, value, threshold in global_two_factor_setup_rate_limiter.iter_rates():
-        datadog_gauge('commcare.two_factor.global_two_factor_setup_threshold', threshold, tags=[
-            'window:{}'.format(window)
-        ])
-        datadog_gauge('commcare.two_factor.global_two_factor_setup_usage', value, tags=[
-            'window:{}'.format(window)
-        ])
+        metrics_gauge('commcare.two_factor.global_two_factor_setup_threshold', threshold, tags={
+            'window': window
+        })
+        metrics_gauge('commcare.two_factor.global_two_factor_setup_usage', value, tags={
+            'window': window
+        })

@@ -17,7 +17,7 @@ class Migration(migrations.Migration):
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('content', models.CharField(max_length=140)),
                 ('url', models.URLField()),
-                ('type', models.CharField(max_length=10, choices=[(b'info', b'info'), (b'alert', b'alert')])),
+                ('type', models.CharField(max_length=10, choices=[('info', 'info'), ('alert', 'alert')])),
                 ('created', models.DateTimeField(auto_now_add=True)),
                 ('users_read', models.ManyToManyField(to=settings.AUTH_USER_MODEL)),
             ],

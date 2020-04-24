@@ -9,10 +9,11 @@ from django.utils.translation import ugettext
 
 from celery import chord
 
+from corehq.util.soft_assert import soft_assert
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.database import get_safe_write_kwargs
 from dimagi.utils.name_to_url import name_to_url
-from dimagi.utils.web import get_ip, get_site_domain, get_url_base
+from dimagi.utils.web import get_ip, get_url_base, get_static_url_prefix
 
 from corehq.apps.accounting.models import (
     DEFAULT_ACCOUNT_FORMAT,
@@ -27,7 +28,7 @@ from corehq.apps.accounting.models import (
     SubscriptionAdjustmentMethod,
     SubscriptionType,
 )
-from corehq.apps.accounting.tasks import ensure_community_or_paused_subscription
+from corehq.apps.accounting.utils.subscription import ensure_community_or_paused_subscription
 from corehq.apps.analytics.tasks import (
     HUBSPOT_CREATED_NEW_PROJECT_SPACE_FORM_ID,
     send_hubspot_form,
@@ -40,6 +41,14 @@ from corehq.apps.users.models import CouchUser, UserRole, WebUser
 from corehq.util.view_utils import absolute_reverse
 
 APPCUES_APP_SLUGS = ['health', 'agriculture', 'wash']
+
+_soft_assert_registration_issues = soft_assert(
+    to=[
+        '{}@{}'.format(name, 'dimagi.com')
+        for name in ['biyeun']
+    ],
+    exponential_backoff=False,
+)
 
 
 def activate_new_user(form, is_domain_admin=True, domain=None, ip=None):
@@ -127,6 +136,11 @@ def request_new_domain(request, form, is_new_user=True):
         current_user.save()
         dom_req.requesting_user_username = request.user.username
         dom_req.new_user_username = request.user.username
+    elif is_new_user:
+        _soft_assert_registration_issues(
+            f"A new user {request.user.username} was not added to their domain "
+            f"{new_domain.name} during registration"
+        )
 
     if is_new_user:
         dom_req.save()
@@ -209,7 +223,7 @@ def send_mobile_experience_reminder(recipient, full_name):
     params = {
         "full_name": full_name,
         "url": url,
-        'url_prefix': '' if settings.STATIC_CDN else 'http://' + get_site_domain(),
+        'url_prefix': get_static_url_prefix(),
     }
     message_plaintext = render_to_string(
         'registration/email/mobile_signup_reminder.txt', params)

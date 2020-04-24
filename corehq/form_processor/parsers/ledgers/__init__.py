@@ -49,5 +49,5 @@ but Per-Entry lets you have many different section_ids among the transactions.
 """
 
 
-from .form import get_stock_actions
+from .form import get_stock_actions, get_ledger_case_action_intents
 from .helpers import StockReportHelper, StockTransactionHelper

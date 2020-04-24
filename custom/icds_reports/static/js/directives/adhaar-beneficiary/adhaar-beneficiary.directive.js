@@ -31,7 +31,7 @@ function AdhaarController($scope, $routeParams, $location, $filter, demographics
             {
                 indicator_name: '% of ICDS beneficiaries whose Aadhaar has been captured: ',
                 indicator_value: percent,
-            }
+            },
         ];
     };
 
@@ -44,7 +44,7 @@ function AdhaarController($scope, $routeParams, $location, $filter, demographics
     };
     vm.chartOptions = vm.getChartOptions(options);
 
-    vm.tooltipContent = function(monthName, day) {
+    vm.tooltipContent = function (monthName, day) {
         return vm.createTooltipContent(
             monthName,
             [{

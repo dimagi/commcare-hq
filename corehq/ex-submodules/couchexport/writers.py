@@ -274,6 +274,7 @@ class OnDiskExportWriter(ExportWriter):
     Keeps tables in temporary csv files. Subclassed by other export writers.
     """
     writer_class = CsvFileWriter
+    _write_row_force_to_bytes = True
 
     def _init(self):
         self.tables = OrderedDict()
@@ -288,12 +289,11 @@ class OnDiskExportWriter(ExportWriter):
     def _write_row(self, sheet_index, row):
 
         def _transform(val):
-            if isinstance(val, str):
-                return val.encode("utf8")
-            elif val is None:
-                return ''
-            else:
-                return val
+            if val is None:
+                val = ''
+            if self._write_row_force_to_bytes and isinstance(val, str):
+                val = val.encode("utf8")
+            return val
 
         row = list(map(_transform, row))
         self.tables[sheet_index].write_row(row)
@@ -524,6 +524,8 @@ class HtmlExportWriter(OnDiskExportWriter):
     """
     format = Format.HTML
     writer_class = PartialHtmlFileWriter
+
+    _write_row_force_to_bytes = False
 
     def _write_final_result(self):
 

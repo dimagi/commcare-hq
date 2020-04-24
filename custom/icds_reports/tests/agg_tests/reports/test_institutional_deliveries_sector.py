@@ -71,7 +71,7 @@ class TestInstitutionalDeliveriesSector(TestCase):
             loc_level='state'
         )
         expected = (
-            "Of the total number of women enrolled for Anganwadi services who gave birth in the last month, "
+            "Of the total number of women enrolled for Anganwadi services who gave birth in the current month, "
             "the percentage who delivered in a public or private medical facility. "
             "<br/><br/>"
             "Delivery in medical instituitions is associated with a decrease in maternal mortality rate"
@@ -102,20 +102,20 @@ class TestInstitutionalDeliveriesSector(TestCase):
             data['rightLegend']['extended_info'],
             [
                 {
-                    'indicator': 'Total number of pregnant women who delivered in the last month:',
+                    'indicator': 'Total number of pregnant women who delivered in the current month:',
                     'value': "20"
                 },
                 {
                     'indicator': (
                         'Total number of pregnant women who delivered in a public/private '
-                        'medical facilitiy in the last month:'
+                        'medical facilitiy in the current month:'
                     ),
                     'value': "20"
                 },
                 {
                     'indicator': (
                         '% pregnant women who delivered in a '
-                        'public or private medical facility in the last month:'
+                        'public or private medical facility in the current month:'
                     ),
                     'value': '100.00%'
                 }
@@ -287,7 +287,7 @@ class TestInstitutionalDeliveriesSector(TestCase):
             ),
             {
                 "info": "Of the total number of women enrolled for Anganwadi services who gave birth in the "
-                        "last month, the percentage who delivered in a public or private medical facility. "
+                        "current month, the percentage who delivered in a public or private medical facility. "
                         "<br/><br/>"
                         "Delivery in medical instituitions is associated with a decrease in maternal "
                         "mortality rate",

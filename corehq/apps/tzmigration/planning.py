@@ -92,7 +92,7 @@ class BaseDB(object):
         self.domain = domain
         self.readonly = readonly
         self.db_filepath = db_filepath
-        self.engine = create_engine("sqlite://", creator=connect)
+        self.engine = create_engine(f"sqlite:///{db_filepath}", creator=connect)
         self.Session = sessionmaker(bind=self.engine)
 
     def __repr__(self):

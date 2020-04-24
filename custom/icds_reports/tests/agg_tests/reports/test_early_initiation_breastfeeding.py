@@ -97,7 +97,7 @@ class TestEarlyInitiationBreastFeeding(TestCase):
         self.assertListEqual(
             data['rightLegend']['extended_info'],
             [
-                {'indicator': 'Total Number of Children born in the given month:', 'value': "5"},
+                {'indicator': 'Total Number of Children born in the current month:', 'value': "5"},
                 {
                     'indicator': (
                         'Total Number of Children who were put to the breast within one hour of birth:'

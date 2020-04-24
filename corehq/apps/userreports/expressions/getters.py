@@ -117,14 +117,7 @@ def transform_date(item):
 def transform_datetime(item):
     if item:
         if isinstance(item, str):
-            try:
-                return iso_string_to_datetime(item, strict=True)
-            except ValueError:
-                try:
-                    parsed_item = iso_string_to_date(item)
-                    return datetime.combine(parsed_item, time(0, 0, 0))
-                except ValueError:
-                    pass
+            return iso_string_to_datetime(item, strict=False)
         elif isinstance(item, datetime):
             return item
         elif isinstance(item, date):

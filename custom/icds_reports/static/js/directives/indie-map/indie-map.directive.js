@@ -1,7 +1,7 @@
 /* global d3, _, Datamap, STATES_TOPOJSON, DISTRICT_TOPOJSON, BLOCK_TOPOJSON */
 
 function IndieMapController($scope, $compile, $location, $filter, storageService, locationsService,
-                            topojsonService, haveAccessToFeatures, isMobile) {
+    topojsonService, haveAccessToFeatures, isMobile) {
     var vm = this;
 
     $scope.$watch(function () {
@@ -69,12 +69,11 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
             }
             if (isMobile) {
                 // scale maps based on space available on device.
-                var headerHeight = $('#map-chart-header').height();
-                // take window height and subtract height of the header plus 44px of additional padding / margins
-                var availableHeight = window.innerHeight - headerHeight - 44;
-                if (availableHeight < vm.mapHeight) {
-                    vm.mapHeight = availableHeight;
-                }
+                var headerHeight = $('#map-chart-header').height() + $('#page-heading').innerHeight();
+                var legendHeight = 145; // fixed legend height to calculate available space for map
+                // always set map height to available height, which is:
+                // widow height - height of the header - legend height - 44px of additional padding / margins
+                vm.mapHeight = window.innerHeight - headerHeight - legendHeight - 44;
             }
         }
     };
@@ -98,6 +97,10 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
                 (bboxFeature[1][0] + bboxFeature[0][0]) / 2,
                 (bboxFeature[1][1] + bboxFeature[0][1]) / 2];
 
+        if (!isMobile) {
+            // for web maps, downsize the scale a bit to avoid overwriting the legend
+            scale = scale * .75;
+        }
         return {
             'scale': scale,
             'center': center,
@@ -149,7 +152,7 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
                 var div = vm.scope === "ind" ? 3 : 4;
                 var options = vm.rawTopojson.objects[vm.scope];
                 var projection, path;
-                if (isMobile) {
+                if (isMobile || !options.center) {
                     // load a dummy projection so we can calculate the true size
                     // more here: https://data-map-d3.readthedocs.io/en/latest/steps/step_03.html#step-03
                     projection = d3.geo.equirectangular().scale(1);
@@ -161,21 +164,26 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
                     );
                     projection.scale(scaleCenter.scale)
                         .center(scaleCenter.center)
-                        .translate([element.offsetWidth / 2, element.offsetHeight / div]);
+                        .translate([element.offsetWidth / 2, element.offsetHeight / 2]); // sets map in center of canvas
 
-                    //setting zoom out limit
-                    //references: https://data-map-d3.readthedocs.io/en/latest/steps/step_06.html#step-06
-                    $(function () {
-                        // DOM Ready
-                        var svg = d3.select('#map svg'); //selects svg in datamap component
-                        var zoom = d3.behavior.zoom().scaleExtent([1, 10]).on('zoom', function () {
-                            // this function redraws the map rendered on zoom event
-                            // reference: bower_components/angular-datamaps/dist/angular-datamaps.js (line 27)
-                            svg.selectAll('g').attr("transform",
-                                "translate(" + d3.event.translate + ") scale(" + d3.event.scale + ")");
+                    if (isMobile) {
+                        // setting zoom out limit
+                        // references: https://data-map-d3.readthedocs.io/en/latest/steps/step_06.html#step-06
+                        $(function () {
+                            // DOM Ready
+                            var svg = d3.select('#map svg'); //selects svg in datamap component
+                            var zoom = d3.behavior.zoom().scaleExtent([1, 10]).on('zoom', function () {
+                                // this function redraws the map rendered on zoom event
+                                // reference: bower_components/angular-datamaps/dist/angular-datamaps.js (line 27)
+                                svg.selectAll('g').attr("transform",
+                                    "translate(" + d3.event.translate + ") scale(" + d3.event.scale + ")");
+                            });
+                            svg.call(zoom); //connects zoom event to map
+                            // overrides default overflow value (hidden) of svg, which allows map to zoom over legend
+                            svg.style("overflow", "inherit");
                         });
-                        svg.call(zoom); //connects zoom event to map
-                    });
+                    }
+
                 } else {
                     projection = d3.geo.equirectangular()
                         .center(options.center)
@@ -183,6 +191,21 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
                         .translate([element.offsetWidth / 2, element.offsetHeight / div]);
                     path = d3.geo.path().projection(projection);
                 }
+                $(function () {
+                    // this function runs after the dom (map) is rendered.
+                    // Datamaps take "id" of a location and assign it as class in the canvas path element.
+                    // In certain cases where there is a space in the "id" of a location it will be added as multiple
+                    // classes to the path element. When map is being colored, it looks for path elements which has the
+                    // class same as the id. (for reference check line 1128 of this library file: datamaps.js).
+                    // But, since there is a space in "id", it looks for path element which has only the first part of
+                    // "id" as its class (this class name could conflict with other locations). So, we are explicitly
+                    // adding a class with all the spaces and special characters removed from "id" to uniquely
+                    // differentiate it from other locations before filling the colors.
+                    var svg = d3.select('#map svg');
+                    svg.selectAll(".datamaps-subunit").transition().style('fill', vm.map.fills.defaultFill);
+                    vm.addCombinedSelectorClassToMaps(document.getElementsByClassName("datamaps-subunit"));
+                    vm.colorMapBasedOnCombinedSelectorClass(svg);
+                });
                 return {path: path, projection: projection};
             },
         };
@@ -194,6 +217,27 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
             };
         }
 
+        vm.addCombinedSelectorClassToMaps = function (locations) {
+            for (var i = 0; i < locations.length; i++) {
+                var combinedClass = "";
+                for (var j = 0; j < locations[i].classList.length; j++) {
+                    // removing all the special characters in strings before creating combined class
+                    // Reference: https://stackoverflow.com/a/6555220/12839195
+                    combinedClass += locations[i].classList[j].replace(/[^a-zA-Z0-9]/g, "");
+                }
+                locations[i].classList.add(combinedClass);
+            }
+        };
+        vm.colorMapBasedOnCombinedSelectorClass = function (svg) {
+            for (var locationId in vm.map.data) {
+                if (vm.map.data.hasOwnProperty(locationId)) {
+                    // removing all the special characters in locationId before checking for combined class
+                    // Reference: https://stackoverflow.com/a/6555220/12839195
+                    svg.selectAll('.datamapssubunit' + locationId.replace(/[^a-zA-Z0-9]/g, ""))
+                        .transition().style('fill', vm.map.data[locationId].fillKey);
+                }
+            }
+        };
         vm.mapPlugins = {
             bubbles: null,
         };
@@ -213,7 +257,9 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
                             '<div class="row no-margin map-legend-title"">' + this.options.label + '</div>',
                         ];
                         for (var fillKey in this.options.fills) {
-                            if (fillKey === 'defaultFill') continue;
+                            if (fillKey === 'defaultFill') {
+                                continue;
+                            }
                             html.push(
                                 '<div class="row no-margin map-legend-color-row">',
                                 '<div class="col-xs-1 map-legend-color" style="color: ' + this.options.fills[fillKey] + ' !important; background-color: ' + this.options.fills[fillKey] + ' !important;"></div>',
@@ -286,7 +332,7 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
                 mapConfiguration(location, resp);
             });
         } else if (locationLevel === 1) {
-            topojsonService.getTopoJsonForDistrict(location.map_location_name, location.parent_map_name).then(
+            topojsonService.getBlockTopoJsonForState(location.parent_map_name).then(
                 function (resp) {
                     mapConfiguration(location, resp.topojson);
                 }
@@ -321,7 +367,7 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
         var html = "";
         html += '<div class="secondary-location-selector">';
         html += '<div class="modal-header">';
-        html += '<button type="button" class="close" ng-click="$ctrl.closePopup()" aria-label="Close">' +
+        html += '<button type="button" class="close" ng-click="$ctrl.closePopup($event)" aria-label="Close">' +
             '<span aria-hidden="true">&times;</span></button>';
         html += "</div>";
         html += '<div class="modal-body">';
@@ -333,9 +379,12 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
         return html;
     };
 
-    vm.closePopup = function () {
-        var popup = d3.select("#locPopup");
-        popup.classed("hidden", true);
+    vm.closePopup = function (e) {
+        // checking if click event is triggered on map
+        if (e.target.tagName !== 'path') {
+            var popup = d3.select("#locPopup");
+            popup.classed("hidden", true);
+        }
     };
 
     function renderPopup(html) {

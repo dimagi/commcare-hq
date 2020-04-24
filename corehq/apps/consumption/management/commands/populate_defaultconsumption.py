@@ -11,6 +11,10 @@ class Command(PopulateSQLCommand):
         from corehq.apps.consumption.models import DefaultConsumption
         return DefaultConsumption
 
+    @classmethod
+    def commit_adding_migration(cls):
+        return "d38d08f8616b908f7d5f803f54bc5f775e49ca95"
+
     def update_or_create_sql_object(self, doc):
         model, created = self.sql_class().objects.update_or_create(
             couch_id=doc['_id'],

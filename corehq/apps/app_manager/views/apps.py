@@ -39,6 +39,7 @@ from corehq.apps.app_manager.const import (
     MAJOR_RELEASE_TO_VERSION,
 )
 from corehq.apps.app_manager.dbaccessors import (
+    get_all_built_app_results,
     get_app,
     get_current_app,
     get_latest_released_app,
@@ -58,6 +59,7 @@ from corehq.apps.app_manager.models import (
     Application,
     ApplicationBase,
     DeleteApplicationRecord,
+    ExchangeApplication,
     Form,
     Module,
     ModuleNotFoundException,
@@ -105,6 +107,7 @@ from corehq.apps.users.dbaccessors.all_commcare_users import (
 from corehq.elastic import ESError
 from corehq.tabs.tabclasses import ApplicationsTab
 from corehq.util.compression import decompress
+from corehq.util.dates import iso_string_to_datetime
 from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.util.view_utils import reverse as reverse_util
 
@@ -542,6 +545,52 @@ def _build_sample_app(app):
         return copy
     else:
         notify_exception(None, 'Validation errors building sample app', details=errors)
+
+
+@require_can_edit_apps
+def app_exchange(request, domain):
+    template = "app_manager/app_exchange.html"
+    records = []
+    for obj in ExchangeApplication.objects.all():
+        results = get_all_built_app_results(obj.domain, app_id=obj.app_id)
+        results = [r['value'] for r in results if r['value']['is_released']]
+        if not results:
+            continue
+        results.reverse()
+        first = results[0]
+
+        def _version_text(result):
+            if result['_id'] == first['_id']:
+                return _("Latest Version")
+            built_on = iso_string_to_datetime(result['built_on']).strftime("%B %d, %Y")
+            return _("{} version").format(built_on)
+
+        records.append({
+            "id": first['_id'],
+            "name": first['name'],
+            "help_link": obj.help_link,
+            "changelog_link": obj.changelog_link,
+            "last_released": iso_string_to_datetime(first['built_on']).date(),
+            "versions": [{
+                "id": r['_id'],
+                "text": _version_text(r),
+            } for r in results],
+        })
+
+    context = {
+        "domain": domain,
+        "records": records,
+    }
+
+    if request.method == "POST":
+        clear_app_cache(request, domain)
+        from_app_id = request.POST.get('from_app_id')
+        app_copy = import_app_util(from_app_id, domain, {
+            'created_from_template': from_app_id,
+        })
+        return back_to_main(request, domain, app_id=app_copy._id)
+
+    return render(request, template, context)
 
 
 @require_can_edit_apps

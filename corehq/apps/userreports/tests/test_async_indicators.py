@@ -10,7 +10,7 @@ from corehq.apps.userreports.models import (
     AsyncIndicator,
     DataSourceConfiguration,
 )
-from corehq.apps.userreports.tasks import build_async_indicators
+from corehq.apps.userreports.tasks import build_async_indicators, queue_async_indicators
 from corehq.apps.userreports.tests.utils import load_data_from_db
 from corehq.apps.userreports.util import get_indicator_adapter, get_table_name
 
@@ -208,7 +208,7 @@ class BulkAsyncIndicatorProcessingTest(TestCase):
             return [doc for doc in self.docs if doc['_id'] in ids]
 
         # patch this to allow counting success/failure counts
-        _patch = mock.patch('corehq.apps.userreports.tasks.datadog_counter')
+        _patch = mock.patch('corehq.apps.userreports.tasks.metrics_counter')
         self.datadog_patch = _patch.start()
         # patch docstore to avoid overhead of saving/querying docs
         docstore_patch = mock.patch(
@@ -261,6 +261,13 @@ class BulkAsyncIndicatorProcessingTest(TestCase):
             mock.call('commcare.async_indicator.processed_success', 10),
             mock.call('commcare.async_indicator.processed_fail', 0)
         ])
+
+    @mock.patch('corehq.apps.userreports.tasks.build_async_indicators')
+    def test_queue_async_indicators(self, patched_build):
+        queue_async_indicators()
+        patched_build.assert_has_calls(
+            patched_build.call(self.doc_ids)
+        )
 
     def test_known_exception(self):
         # check that exceptions due to unknown configs are handled correctly

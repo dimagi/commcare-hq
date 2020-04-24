@@ -14,7 +14,7 @@ from corehq.motech.openmrs.const import (
     OPENMRS_DATA_TYPE_DATETIME,
     OPENMRS_DATA_TYPE_MILLISECONDS,
 )
-from corehq.motech.serializers import serializers, to_date_str
+from corehq.motech.serializers import serializers, to_boolean, to_date_str
 
 
 def to_omrs_date(value):
@@ -49,12 +49,6 @@ def to_omrs_datetime(value):
         micros = value.strftime('%f')[:3]  # Only 3 digits for OpenMRS
         tz = value.strftime('%z') or '+0000'  # If we don't know, lie
         return value.strftime('%Y-%m-%dT%H:%M:%S.{f}{z}'.format(f=micros, z=tz))
-
-
-def to_omrs_boolean(value):
-    if isinstance(value, str) and value.lower() in ('false', '0'):
-        return False
-    return bool(value)
 
 
 def omrs_datetime_to_date(value):
@@ -117,7 +111,7 @@ serializers.update({
     # (from_data_type, to_data_type): function
     (None, OPENMRS_DATA_TYPE_DATE): to_date_str,
     (None, OPENMRS_DATA_TYPE_DATETIME): to_omrs_datetime,
-    (None, OPENMRS_DATA_TYPE_BOOLEAN): to_omrs_boolean,
+    (None, OPENMRS_DATA_TYPE_BOOLEAN): to_boolean,
     (OPENMRS_DATA_TYPE_DATETIME, COMMCARE_DATA_TYPE_DATE): omrs_datetime_to_date,
     (OPENMRS_DATA_TYPE_BOOLEAN, COMMCARE_DATA_TYPE_TEXT): omrs_boolean_to_text,
     (OPENMRS_DATA_TYPE_MILLISECONDS, None): omrs_timestamp_to_datetime,

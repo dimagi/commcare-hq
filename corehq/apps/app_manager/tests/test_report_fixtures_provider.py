@@ -2,6 +2,10 @@ from datetime import datetime
 
 from django.test import SimpleTestCase
 
+from lxml import etree
+from lxml.builder import E
+from mock import Mock, patch
+
 from casexml.apps.phone.models import UCRSyncLog
 
 from corehq.apps.app_manager.fixtures.mobile_ucr import (
@@ -19,15 +23,14 @@ from corehq.apps.app_manager.tests.test_report_config import (
     mock_report_configuration_get,
 )
 from corehq.apps.app_manager.tests.util import TestXmlMixin
-from lxml import etree
-from lxml.builder import E
-from mock import Mock, patch
+from corehq.util.test_utils import flag_enabled
 
 
+@flag_enabled('ADD_ROW_INDEX_TO_MOBILE_UCRS')
 class ReportFixturesProviderTests(SimpleTestCase, TestXmlMixin):
 
     file_path = ('data', 'fixtures')
-
+    maxDiff = None
     @staticmethod
     def get_data_source_mock():
         data_source_mock = Mock()

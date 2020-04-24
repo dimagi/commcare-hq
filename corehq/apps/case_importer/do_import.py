@@ -10,11 +10,10 @@ from couchdbkit import NoResultFound
 from casexml.apps.case.const import CASE_TAG_DATE_OPENED
 from casexml.apps.case.mock import CaseBlock, CaseBlockError
 from corehq.apps.receiverwrapper.rate_limiter import rate_limit_submission
-from corehq.util.datadog.gauges import datadog_counter
 from corehq.util.timer import TimingContext
 from couchexport.export import SCALAR_NEVER_WAS
 from dimagi.utils.logging import notify_exception
-from soil.progress import set_task_progress
+from soil.progress import TaskProgressManager
 
 from corehq.apps.case_importer.exceptions import CaseRowError
 from corehq.apps.export.tasks import add_inferred_export_properties
@@ -25,8 +24,9 @@ from corehq.apps.users.cases import get_wrapped_owner
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import format_username
 from corehq.toggles import BULK_UPLOAD_DATE_OPENED
-from corehq.util.datadog.utils import case_load_counter, bucket_value
+from corehq.util.metrics.load_counters import case_load_counter
 from corehq.util.soft_assert import soft_assert
+from corehq.util.metrics import metrics_counter, metrics_histogram
 
 from . import exceptions
 from .const import LookupErrors
@@ -56,18 +56,19 @@ class _Importer(object):
         self._unsubmitted_caseblocks = []
 
     def do_import(self, spreadsheet):
-        for row_num, row in enumerate(spreadsheet.iter_row_dicts(), start=1):
-            set_task_progress(self.task, row_num - 1, spreadsheet.max_row)
-            if row_num == 1:
-                continue  # skip first row (header row)
+        with TaskProgressManager(self.task, src="case_importer") as progress_manager:
+            for row_num, row in enumerate(spreadsheet.iter_row_dicts(), start=1):
+                progress_manager.set_progress(row_num - 1, spreadsheet.max_row)
+                if row_num == 1:
+                    continue  # skip first row (header row)
 
-            try:
-                self.import_row(row_num, row)
-            except exceptions.CaseRowError as error:
-                self.results.add_error(row_num, error)
+                try:
+                    self.import_row(row_num, row)
+                except exceptions.CaseRowError as error:
+                    self.results.add_error(row_num, error)
 
-        self.commit_caseblocks()
-        return self.results.to_json()
+            self.commit_caseblocks()
+            return self.results.to_json()
 
     def import_row(self, row_num, raw_row):
         search_id = _parse_search_id(self.config, raw_row)
@@ -186,18 +187,20 @@ class _TimedAndThrottledImporter(_Importer):
         rows_created = results['created_count']
         rows_updated = results['match_count']
         rows_failed = results['failed_count']
+
         # Add 1 to smooth / prevent denominator from ever being zero
         active_duration_per_case = active_duration / (rows_created + rows_updated + rows_failed + 1)
-        active_duration_per_case_bucket = bucket_value(
-            active_duration_per_case * 1000, [50, 70, 100, 150, 250, 350, 500], unit='ms')
+        metrics_histogram(
+            'commcare.case_importer.duration_per_case', active_duration_per_case,
+            buckets=[50, 70, 100, 150, 250, 350, 500], bucket_tag='duration', bucket_unit='ms',
+        )
 
         for rows, status in ((rows_created, 'created'),
                              (rows_updated, 'updated'),
                              (rows_failed, 'error')):
-            datadog_counter('commcare.case_importer.cases', rows, tags=[
-                'active_duration_per_case:{}'.format(active_duration_per_case_bucket),
-                'status:{}'.format(status),
-            ])
+            metrics_counter('commcare.case_importer.cases', rows, tags={
+                'status': status,
+            })
 
     def pre_submit_hook(self):
         if rate_limit_submission(self.domain):
@@ -209,12 +212,10 @@ class _TimedAndThrottledImporter(_Importer):
             # should be proportional to this heuristic.
             # For a fully throttled domain, this will up to double
             # the amount of time the case import takes
-            datadog_counter(
-                'commcare.case_importer.import_delays', tags=[
-                    'domain:{}'.format(self.domain),
-                    'duration:{}'.format(bucket_value(
-                        self._last_submission_duration, [5, 7, 10, 15, 25, 35, 50], unit='s'))
-                ]
+            metrics_histogram(
+                'commcare.case_importer.import_delays', self._last_submission_duration,
+                buckets=[5, 7, 10, 15, 25, 35, 50], bucket_tag='duration', bucket_unit='s',
+                tags={'domain': self.domain}
             )
             self._total_delayed_duration += self._last_submission_duration
             time.sleep(self._last_submission_duration)

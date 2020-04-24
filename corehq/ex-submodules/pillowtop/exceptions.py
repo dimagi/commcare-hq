@@ -16,5 +16,5 @@ class PillowConfigError(Exception):
     pass
 
 
-class BulkDocExeption(Exception):
+class BulkDocException(Exception):
     pass

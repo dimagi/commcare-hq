@@ -1,6 +1,9 @@
 from datetime import datetime
 import uuid
+from io import BytesIO
+
 from django.conf import settings
+from django.core.files.uploadedfile import UploadedFile
 from django.test import TestCase
 from django.test.utils import override_settings
 from mock import patch
@@ -17,7 +20,6 @@ from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.blobs import get_blob_db
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface, XFormQuestionValueIterator
-from corehq.form_processor.models import XFormInstanceSQL
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, use_sql_backend
 from corehq.form_processor.backends.couch.update_strategy import coerce_to_datetime
 from corehq.form_processor.utils import get_simple_form_xml
@@ -446,6 +448,34 @@ class FundamentalCaseTests(FundamentalBaseTests):
             self.assertEqual(0, len(cases))
             self.assertTrue(xform.is_error)
             self.assertIn('IllegalCaseId', xform.problem)
+
+    def test_duplicate_with_attachment(self):
+        def main():
+            attachments = {
+                'pic.jpg': UploadedFile(BytesIO(b"fake"), 'pic.jpg', content_type='image/jpeg', size=4)
+            }
+            form_id = uuid.uuid4().hex
+            form = get_simple_form_xml(form_id)
+
+            form_1 = submit_and_fetch(form, DOMAIN, attachments)
+            self.assert_(not form_1.is_duplicate)
+            check_attachments(form_1, attachments)
+
+            form_2 = submit_and_fetch(form, DOMAIN, attachments)
+            form_1 = self.formdb.get_form(form_id)
+            self.assert_(not form_1.is_duplicate)
+            self.assert_(form_2.is_duplicate)
+            check_attachments(form_1, attachments)
+            check_attachments(form_2, attachments)
+
+        def submit_and_fetch(form, domain, attachments):
+            result = submit_form_locally(form, domain, attachments=attachments)
+            return self.formdb.get_form(result.xform.form_id)
+
+        def check_attachments(form, attachments):
+            self.assertEqual(form.attachments.keys(), attachments.keys())
+
+        main()
 
 
 @use_sql_backend

@@ -9,7 +9,7 @@ from django.contrib.sessions.middleware import SessionMiddleware
 from django.core.exceptions import MiddlewareNotUsed
 from django.http import HttpResponseRedirect
 from django.urls import reverse
-from django.contrib.auth.views import logout as django_logout
+from django.contrib.auth.views import LogoutView
 from django.utils.deprecation import MiddlewareMixin
 
 from corehq.apps.domain.models import Domain
@@ -146,7 +146,7 @@ class TimeoutMiddleware(MiddlewareMixin):
             timeout = settings.SECURE_TIMEOUT
             # force re-authentication if the user has been logged in longer than the secure timeout
             if self._session_expired(timeout, request.user.last_login, now):
-                django_logout(request, template_name=settings.BASE_TEMPLATE)
+                LogoutView.as_view(template_name=settings.BASE_TEMPLATE)(request)
                 # this must be after logout so it is attached to the new session
                 request.session['secure_session'] = True
                 request.session.set_expiry(timeout * 60)

@@ -241,7 +241,7 @@ class LocationChoiceProvider(ChainableChoiceProvider):
     def _locations_query(self, query_text, user):
         locations = SQLLocation.active_objects
         if query_text:
-            locations = locations.filter_path_by_user_input(
+            locations = locations.filter_by_user_input(
                 domain=self.domain,
                 user_input=query_text
             )

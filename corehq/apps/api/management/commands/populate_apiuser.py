@@ -8,8 +8,12 @@ class Command(PopulateSQLCommand):
 
     @classmethod
     def sql_class(self):
-        from corehq.apps.api.models import SQLApiUser
-        return SQLApiUser
+        from corehq.apps.api.models import ApiUser
+        return ApiUser
+
+    @classmethod
+    def commit_adding_migration(cls):
+        return "09839af06e924917681371e7a28b295fd15927bb"
 
     def update_or_create_sql_object(self, doc):
         model, created = self.sql_class().objects.update_or_create(

@@ -125,7 +125,7 @@ profile the expensive data sources.
 Parallel Processors
 ~~~~~~~~~~~~~~~~~~~
 
-To scale UCR Pillows horizontally do the following:
+To scale pillows horizontally do the following:
 
 1. Look for what pillows are behind. This can be found in the change feed
    dashboard or the hq admin system info page.
@@ -139,6 +139,14 @@ To scale UCR Pillows horizontally do the following:
 5. In the commcare-cloud repo environments/<env>/app-processes.yml file
    change num_processes to the pillows you want to scale.
 6. On the next deploy multiple processes will be used when starting pillows
+
+Note that pillows will automatically divide up partitions based on the number of partitions
+and the number of processes for the pillow. It doesn't have to be one to one, and you don't
+have to specify the mapping manually. That means you can create more partitions than you need
+without changing the number of pillow processes and just restart pillows
+for the change to take effect. Later you can just change the number of processes without touching
+the number of partitions, and and just update the supervisor conf and restarting pillows
+for the change to take effect.
 
 The UCR pillows also have options to split the pillow into multiple. They
 include `ucr_divsion`, `include_ucrs` and `exclude_ucrs`. Look to the pillow

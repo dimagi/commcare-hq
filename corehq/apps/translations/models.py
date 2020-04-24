@@ -1,6 +1,7 @@
 from collections import defaultdict
 
 from django.contrib import admin
+from django.contrib.postgres.fields import JSONField
 from django.db import models
 from django.urls import reverse
 from django.utils.functional import cached_property
@@ -18,53 +19,17 @@ from corehq.motech.utils import b64_aes_decrypt
 from corehq.util.quickcache import quickcache
 
 
-class TranslationMixin(Document):
-    translations = DictProperty()
-
-    def set_translation(self, lang, key, value):
-        if lang not in self.translations:
-            self.translations[lang] = {}
-        if value is not None:
-            self.translations[lang][key] = value
-        else:
-            del self.translations[lang][key]
-
-    def set_translations(self, lang, translations):
-        self.translations[lang] = translations
-
-
-class StandaloneTranslationDoc(TranslationMixin, CouchDocLockableMixIn):
-    """
-    There is either 0 or 1 StandaloneTranslationDoc doc for each (domain, area).
-    """
-    domain = StringProperty()
-    # For example, "sms"
-    area = StringProperty()
-    langs = ListProperty()
+class SMSTranslations(models.Model):
+    domain = models.CharField(max_length=255, unique=True)
+    langs = JSONField(default=list)
+    translations = JSONField(default=dict)
 
     @property
     def default_lang(self):
-        if len(self.langs) > 0:
-            return self.langs[0]
-        else:
-            return None
+        return self.langs[0] if self.langs else None
 
-    @classmethod
-    def get_obj(cls, domain, area, *args, **kwargs):
-        return StandaloneTranslationDoc.view(
-            "translations/standalone",
-            key=[domain, area],
-            include_docs=True
-        ).one()
-
-    @classmethod
-    def create_obj(cls, domain, area, *args, **kwargs):
-        obj = StandaloneTranslationDoc(
-            domain=domain,
-            area=area,
-        )
-        obj.save()
-        return obj
+    def set_translations(self, lang, translations):
+        self.translations[lang] = translations
 
 
 class Translation(object):

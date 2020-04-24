@@ -115,20 +115,20 @@ def get_institutional_deliveries_data_map(domain, config, loc_level, show_test=F
             "info": institutional_deliveries_help_text(html=True),
             "extended_info": [
                 {
-                    'indicator': 'Total number of pregnant women who delivered in the last month:',
+                    'indicator': 'Total number of pregnant women who delivered in the current month:',
                     'value': indian_formatted_number(valid_total)
                 },
                 {
                     'indicator': (
                         'Total number of pregnant women who delivered in a '
-                        'public/private medical facilitiy in the last month:'
+                        'public/private medical facilitiy in the current month:'
                     ),
                     'value': indian_formatted_number(in_month_total)
                 },
                 {
                     'indicator': (
                         '% pregnant women who delivered in a public or private medical '
-                        'facility in the last month:'
+                        'facility in the current month:'
                     ),
                     'value': '%.2f%%' % (in_month_total * 100 / float(valid_total or 1))
                 }

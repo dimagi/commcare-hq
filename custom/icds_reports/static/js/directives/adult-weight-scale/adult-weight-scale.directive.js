@@ -31,7 +31,7 @@ function AdultWeightScaleController($scope, $routeParams, $location, $filter, in
             {
                 indicator_name: '% of AWCs that reported having a weighing scale for mother and child: ',
                 indicator_value: percent,
-            }
+            },
         ];
     };
 

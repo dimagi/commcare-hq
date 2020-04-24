@@ -3,8 +3,9 @@
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function NavigationController($window, $rootScope, $scope, $route, $routeParams, $location, navigationService,
-    stateLevelAccess, haveAccessToAllLocations, haveAccessToFeatures,
-    userFullName, userUsername, isMobile, navMenuItems) {
+                              stateLevelAccess, haveAccessToAllLocations, haveAccessToFeatures,
+                              userFullName, userUsername, isMobile, navMenuItems, $uibModal, reportAnIssueUrl,
+                              isWebUser) {
     $scope.$route = $route;
     $scope.$location = $location;
     $scope.$routeParams = $routeParams;
@@ -15,9 +16,12 @@ function NavigationController($window, $rootScope, $scope, $route, $routeParams,
     $scope.userUsername = userUsername;
     $scope.expandedSectionId = '';
     $scope.navMenuItems = navMenuItems;
+    $scope.isWebUser = isWebUser;
 
     var checkCollapse = function (reports) {
-        var path = _.filter(reports, function(report) { return $location.path().indexOf(report) !== -1; });
+        var path = _.filter(reports, function (report) {
+            return $location.path().indexOf(report) !== -1; 
+        });
         return !path.length > 0;
     };
 
@@ -27,11 +31,11 @@ function NavigationController($window, $rootScope, $scope, $route, $routeParams,
     $scope.demographics = checkCollapse(['registered_household', 'enrolled_children', 'enrolled_women', 'lactating_enrolled_women', 'adolescent_girls', 'adhaar']);
     $scope.infrastructure = checkCollapse(['clean_water', 'functional_toilet', 'medicine_kit', 'infants_weight_scale', 'adult_weight_scale', 'infantometer', 'stadiometer']);
 
-    $scope.goto = function(path) {
+    $scope.goto = function (path) {
         $window.location.href = path;
     };
 
-    $scope.goToStep = function(path, params) {
+    $scope.goToStep = function (path, params) {
         return navigationService.getPagePath(path, params);
 
     };
@@ -43,18 +47,34 @@ function NavigationController($window, $rootScope, $scope, $route, $routeParams,
         $scope.infrastructure = (sectionId === 'infrastructure') ? !$scope.infrastructure : true;
     };
 
+    $scope.resetCollapseParameters = function () {
+        $scope.healthCollapsed = true;
+        $scope.icdsCasReach = true;
+        $scope.demographics = true;
+        $scope.infrastructure = true;
+    };
+
     // used by mobile only
     $scope.closeMenu = function () {
         if (isMobile) {
             document.getElementById('nav-menu').style.left = '-300px';
         }
     };
+
+    $scope.reportAnIssue = function () {
+        $scope.closeMenu();
+        $uibModal.open({
+            ariaLabelledBy: 'modal-title',
+            ariaDescribedBy: 'modal-body',
+            templateUrl: 'reportIssueModal.html',
+        });
+    };
 }
 
 NavigationController.$inject = [
     '$window', '$rootScope', '$scope', '$route', '$routeParams', '$location', 'navigationService',
     'stateLevelAccess', 'haveAccessToAllLocations', 'haveAccessToFeatures',
-    'userFullName', 'userUsername', 'isMobile', 'navMenuItems',
+    'userFullName', 'userUsername', 'isMobile', 'navMenuItems', '$uibModal', 'reportAnIssueUrl', 'isWebUser',
 ];
 
 window.angular.module('icdsApp').directive('navigation', ['templateProviderService', function (templateProviderService) {

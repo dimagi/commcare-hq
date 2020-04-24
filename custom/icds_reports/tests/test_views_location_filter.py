@@ -1,6 +1,6 @@
 from django.test.testcases import TestCase
 from django.test.client import RequestFactory
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.locations.models import LocationType, SQLLocation

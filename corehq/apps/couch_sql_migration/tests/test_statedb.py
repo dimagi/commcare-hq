@@ -4,6 +4,7 @@ import re
 
 from nose.tools import with_setup
 from sqlalchemy.exc import OperationalError
+from sqlalchemy.pool import SingletonThreadPool
 from testil import Config, assert_raises, eq, tempdir
 
 from corehq.apps.tzmigration.timezonemigration import FormJsonDiff as JsonDiff
@@ -38,6 +39,14 @@ def init_db(name="test", memory=True):
 
 def delete_db(name="test"):
     delete_state_db(name, state_dir)
+
+
+def test_file_connection_pool():
+    # SingletonThreadPool docs state that "it is generally used only
+    # for test scenarios using a SQLite ``:memory:`` database and is
+    # not recommended for production use."
+    with init_db(memory=False) as db:
+        assert not isinstance(db.engine.pool, SingletonThreadPool), db.engine.pool
 
 
 @with_setup(teardown=delete_db)
@@ -268,11 +277,13 @@ def test_counters():
         db.add_missing_docs("abc", ["doc1"])
         db.add_missing_docs("abc", ["doc2", "doc4"])
         db.replace_case_diffs([("abc", "doc5", [make_diff(5)])])
+        chg = mod.Change(kind=None, doc_id=None, reason="because", **make_diff(6)._asdict())
+        db.replace_case_changes([("def", "doc5", [chg])])
         db.set_counter("abc", 4)
         db.set_counter("def", 2)
         eq(db.get_doc_counts(), {
             "abc": Counts(total=4, diffs=1, missing=3),
-            "def": Counts(total=2),
+            "def": Counts(total=2, changes=1),
         })
 
 
@@ -350,6 +361,7 @@ def test_clone_casediff_data_from_tables():
         mod.DocChanges,
         mod.MissingDoc,
         mod.NoActionCaseForm,
+        mod.PatchedCase,
         mod.ProblemForm,
         # models not used by couch-to-sql migration
         PlanningForm,

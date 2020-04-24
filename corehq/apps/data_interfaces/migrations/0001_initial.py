@@ -28,7 +28,7 @@ class Migration(migrations.Migration):
             name='AutomaticUpdateAction',
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
-                ('action', models.CharField(max_length=10, choices=[(b'UPDATE', b'UPDATE'), (b'CLOSE', b'CLOSE')])),
+                ('action', models.CharField(max_length=10, choices=[('UPDATE', 'UPDATE'), ('CLOSE', 'CLOSE')])),
                 ('property_name', models.CharField(max_length=126, null=True)),
                 ('property_value', models.CharField(max_length=126, null=True)),
                 ('rule', models.ForeignKey(to='data_interfaces.AutomaticUpdateRule', on_delete=django.db.models.deletion.PROTECT)),
@@ -43,7 +43,7 @@ class Migration(migrations.Migration):
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('property_name', models.CharField(max_length=126)),
                 ('property_value', models.CharField(max_length=126, null=True)),
-                ('match_type', models.CharField(max_length=10, choices=[(b'DAYS', b'DAYS'), (b'EQUAL', b'EQUAL'), (b'NOT_EQUAL', b'NOT_EQUAL'), (b'EXISTS', b'EXISTS')])),
+                ('match_type', models.CharField(max_length=10, choices=[('DAYS', 'DAYS'), ('EQUAL', 'EQUAL'), ('NOT_EQUAL', 'NOT_EQUAL'), ('EXISTS', 'EXISTS')])),
                 ('rule', models.ForeignKey(to='data_interfaces.AutomaticUpdateRule', on_delete=django.db.models.deletion.PROTECT)),
             ],
             options={

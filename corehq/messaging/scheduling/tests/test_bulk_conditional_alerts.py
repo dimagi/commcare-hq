@@ -435,8 +435,6 @@ class TestBulkConditionalAlerts(TestCase):
     def test_upload_custom_schedule_both_sheets(self, language_list_patch):
         """
         This tests a rule that has a custom schedule with a mix of translated and untranslated messages.
-        The translated messages should be updated correctly, but the untranslated messages will get blocked,
-        because the rule will already be running, updating the transalted ones.
         """
         language_list_patch.return_value = self.langs
         data = (
@@ -453,12 +451,9 @@ class TestBulkConditionalAlerts(TestCase):
         old_schedule = self._get_rule(self.CUSTOM_RULE_BOTH_SHEETS).get_schedule()
 
         msgs = self._upload(data)
-
-        self.assertEqual(len(msgs), 4)
+        self.assertEqual(len(msgs), 2)
         self.assertIn("Updated 1 rule(s) in 'translated' sheet", msgs)
-        self.assertIn("Updated 0 rule(s) in 'not translated' sheet", msgs)
-        self._assertPatternIn(r"Row 2 in 'not translated' sheet.* rule id \d+, .*currently processing", msgs)
-        self._assertPatternIn(r"Row 3 in 'not translated' sheet.* rule id \d+, .*currently processing", msgs)
+        self.assertIn("Updated 1 rule(s) in 'not translated' sheet", msgs)
 
         rule = self._get_rule(self.CUSTOM_RULE_BOTH_SHEETS)
         schedule = rule.get_schedule()
@@ -467,12 +462,12 @@ class TestBulkConditionalAlerts(TestCase):
             'en': "You're Lucky",
             'es': "Tienes Suerte",
         }, {
-            '*': 'Down to Zero',
+            '*': 'Down to One',
         }, {
             'en': "You Yourself You",
             'es': "Tú Tú Mismo Tú",
         }, {
-            '*': 'Rosie',
+            '*': 'Willow',
         }])
 
     @patch('corehq.messaging.scheduling.view_helpers.get_language_list')
@@ -600,14 +595,26 @@ class TestBulkConditionalAlerts(TestCase):
 
         msgs = self._upload(data, headers)
 
-        self.assertEqual(len(msgs), 5)
-        self._assertPatternIn(r"Error updating rule with id \d+ in 'translated' sheet: "
-                              r"Missing content for en", msgs)
-        self._assertPatternIn(r"Error updating rule with id \d+ in 'translated' sheet: "
-                              r"Missing content for en, es", msgs)
-        self.assertIn("Updated 0 rule(s) in 'translated' sheet", msgs)
-        self._assertPatternIn(r"Error updating rule with id \d+ in 'not translated' sheet: Missing content", msgs)
-        self.assertIn("Updated 0 rule(s) in 'not translated' sheet", msgs)
+        self.assertEqual(len(msgs), 2)
+        self.assertIn("Updated 2 rule(s) in 'translated' sheet", msgs)
+        daily_rule = self._get_rule(self.DAILY_RULE)
+        daily_content = daily_rule.get_schedule().memoized_events[0].content
+        self.assertEqual(daily_content.message, {
+            'en': '',
+            'es': 'Más Oxidado',
+        })
+        monthly_rule = self._get_rule(self.MONTHLY_RULE)
+        monthly_content = monthly_rule.get_schedule().memoized_events[0].content
+        self.assertEqual(monthly_content.message, {
+            'en': '',
+            'es': '',
+        })
+        self.assertIn("Updated 1 rule(s) in 'not translated' sheet", msgs)
+        untranslated_rule = self._get_rule(self.UNTRANSLATED_IMMEDIATE_RULE)
+        untranslated_content = untranslated_rule.get_schedule().memoized_events[0].content
+        self.assertEqual(untranslated_content.message, {
+            '*': '',
+        })
 
     @patch('corehq.messaging.scheduling.view_helpers.get_language_list')
     def test_partial_upload(self, language_list_patch):

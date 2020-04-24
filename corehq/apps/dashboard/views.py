@@ -39,12 +39,6 @@ from corehq.apps.users.views import DefaultProjectUserSettingsView
 from corehq.util.context_processors import commcare_hq_names
 
 
-@login_and_domain_required
-@location_safe
-def dashboard_default(request, domain):
-    return HttpResponseRedirect(reverse(DomainDashboardView.urlname, args=[domain]))
-
-
 def _get_tile(request, slug):
     try:
         tile = [t for t in _get_default_tiles(request) if t.slug == slug][0]

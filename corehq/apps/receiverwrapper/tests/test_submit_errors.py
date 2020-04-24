@@ -139,7 +139,7 @@ class SubmissionErrorTest(TestCase, TestFileMixin):
         with f:
             f.write(bad_data)
         with open(path, 'rb') as f:
-            with capture_log_output('', logging.ERROR) as logs:
+            with capture_log_output('', logging.WARNING) as logs:
                 res = self.client.post(self.url, {
                     "xml_submission_file": f
                 })

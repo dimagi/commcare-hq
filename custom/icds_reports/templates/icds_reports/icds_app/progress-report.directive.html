@@ -1,18 +1,18 @@
 {% load static %}
 
-<div class="progress-report-directive" cg-busy="[$ctrl.myPromise, $rootScope.locationPromise]">
+<div class="progress-report-directive" cg-busy="[$ctrl.myPromise]">
     <div class="row no-margin fixes-filters" ng-class="{'fixes-filters-with-alert': $ctrl.isAlertActive}">
         <div class="col-md-5">
             <div class="row">
-                <span class="breadcrump-element pointer" ng-click="$ctrl.goBack()">
+                <span class="breadcrumb-element pointer" ng-click="$ctrl.goBack()">
                     {$ $ctrl.label $}
                     <i ng-if="$ctrl.title" class="fa fa-chevron-right" aria-hidden="true"></i>
                 </span>
-                <span id="reportTitle" class="breadcrump-element">{$ $ctrl.title $}</span>
+                <span id="reportTitle" class="breadcrumb-element">{$ $ctrl.title $}</span>
             </div>
             <div class="row">
-                <span class="location-breadcump" ng-click="$ctrl.getDisableIndex() < 0 && $ctrl.moveToLocation('national', -1)">National </span>
-                <span class="location-breadcump" ng-click="$ctrl.getDisableIndex() < $index && $ctrl.moveToLocation(loc, $index)" ng-repeat="loc in $ctrl.selectedLocations | filter: { location_id: '!all'} track by $index">
+                <span class="location-breadcrumb" ng-click="$ctrl.haveAccessToAllLocations && $ctrl.moveToLocation('national', -1)">National </span>
+                <span class="location-breadcrumb" ng-click="$ctrl.getDisableIndex() < $index && $ctrl.moveToLocation(loc, $index)" ng-repeat="loc in $ctrl.selectedLocations | filter: { location_id: '!all'} track by $index">
                     <i class="fa fa-chevron-right" aria-hidden="true"></i> <span id="locationName">{$ loc.name $}</span>
                 </span>
             </div>
@@ -28,46 +28,21 @@
         </div>
         <div ng-if="!$ctrl.report">
             <div class="row">
-                <div class="col-md-4">
-                    <div class="nav-block pointer col-sm-4 col-md-offset-4 col-md-8" style="background-color: #004ebc;" ng-click="$ctrl.goToReport('maternal_and_child_nutrition')">
-                        <img style="width: 152px;" src="{% static 'img/maternal_and_child.png' %}"/>
-                        <div class="caption">Maternal and Child Nutrition</div>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="nav-block pointer col-sm-4 col-md-offset-2 col-md-8 fact-sheet-nav-interventions" ng-click="$ctrl.goToReport('interventions')">
-                        <img src="{% static 'img/interventions.png' %}"/>
-                        <div class="caption">Interventions</div>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="nav-block pointer col-sm-4 col-md-8" style="background-color: #ff8400;"  ng-click="$ctrl.goToReport('behavior_change')">
-                        <img style="width: 152px;" src="{% static 'img/behavior_change.png' %}"/>
-                        <div class="caption">Behavior Change</div>
+                <div class="col-md-4" ng-repeat="section in $ctrl.factSheetSections | limitTo: 3 ">
+                    <div class="nav-block pointer col-sm-4 col-md-8" ng-class="section.style" ng-click="$ctrl.goToReport(section.route)">
+                        <img style="width: 152px;" ng-src="{% static 'img/' %}{$section['image']$}"/>
+                        <div class="caption" ng-bind="section['name']"></div>
                     </div>
                 </div>
             </div>
             <div class="row" style="margin-top: 20px;">
-                <div class="col-md-4">
-                    <div class="nav-block pointer col-sm-4 col-md-offset-4 col-md-8 fact-sheet-nav-water" ng-click="$ctrl.goToReport('water_sanitation_and_hygiene')">
-                        <img src="{% static 'img/water_sanitation_hygiene.png' %}"/>
-                        <div class="caption">Water, Sanitation and Hygiene</div>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="nav-block pointer col-sm-4 col-md-offset-2 col-md-8" style="background-color: #00bdc5" ng-click="$ctrl.goToReport('demographics')">
-                        <img style="width: 100%" src="{% static 'img/demographics.png' %}"/>
-                        <div class="caption">Demographics</div>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="nav-block pointer col-sm-4 col-md-8" style="background-color: #9060c8;" ng-click="$ctrl.goToReport('all')">
-                        <img src="{% static 'img/all.png' %}"/>
-                        <div class="caption">All</div>
+                <div class="col-md-4" ng-repeat="section in $ctrl.factSheetSections | limitTo: (3 - $ctrl.factSheetSections.length)">
+                    <div class="nav-block pointer col-sm-4 col-md-8" ng-class="section.style" ng-click="$ctrl.goToReport(section.route)">
+                        <img style="max-width: 100%" ng-src="{% static 'img/' %}{$section['image']$}"/>
+                        <div class="caption" ng-bind="section['name']"></div>
                     </div>
                 </div>
             </div>
-
         </div>
         <div ng-if="$ctrl.report">
             <info-message></info-message>

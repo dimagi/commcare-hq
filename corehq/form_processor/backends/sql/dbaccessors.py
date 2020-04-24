@@ -11,7 +11,7 @@ from itertools import groupby
 from uuid import UUID
 
 from django.conf import settings
-from django.db import InternalError, transaction, router
+from django.db import InternalError, transaction, router, DatabaseError
 from django.db.models import F, Q
 from django.db.models.expressions import Value
 from django.db.models.functions import Concat, Greatest
@@ -63,7 +63,7 @@ from corehq.sql_db.util import (
     get_db_aliases_for_partitioned_query,
     split_list_by_db_partition,
 )
-from corehq.util.datadog.utils import form_load_counter
+from corehq.util.metrics.load_counters import form_load_counter
 from corehq.util.queries import fast_distinct_in_domain
 
 doc_type_to_state = {
@@ -340,11 +340,14 @@ class ReindexAccessor(metaclass=ABCMeta):
 
 class FormReindexAccessor(ReindexAccessor):
 
-    def __init__(self, domain=None, include_attachments=True, limit_db_aliases=None, include_deleted=False):
+    def __init__(self, domain=None, include_attachments=True, limit_db_aliases=None, include_deleted=False,
+                 start_date=None, end_date=None):
         super(FormReindexAccessor, self).__init__(limit_db_aliases)
         self.domain = domain
         self.include_attachments = include_attachments
         self.include_deleted = include_deleted
+        self.start_date = start_date
+        self.end_date = end_date
 
     @property
     def model_class(self):
@@ -374,6 +377,10 @@ class FormReindexAccessor(ReindexAccessor):
             filters.append(Q(state=F('state').bitand(XFormInstanceSQL.DELETED) + F('state')))
         if self.domain:
             filters.append(Q(domain=self.domain))
+        if self.start_date is not None:
+            filters.append(Q(received_on__gte=self.start_date))
+        if self.end_date is not None:
+            filters.append(Q(received_on__lt=self.end_date))
         return filters
 
 
@@ -621,10 +628,11 @@ class FormAccessorSQL(AbstractFormAccessor):
             operation.form_id = form.form_id
 
         try:
-            with form.attachment_writer() as write_attachments, \
+            with form.attachment_writer() as attachment_writer, \
                     transaction.atomic(using=form.db, savepoint=False):
+                transaction.on_commit(attachment_writer.commit, using=form.db)
                 form.save()
-                write_attachments()
+                attachment_writer.write()
                 for operation in operations:
                     operation.save()
         except InternalError as e:
@@ -653,12 +661,11 @@ class FormAccessorSQL(AbstractFormAccessor):
         with transaction.atomic(using=db_name):
             if form.form_id_updated():
                 operations = form.original_operations + new_operations
-                with transaction.atomic(db_name):
-                    form.save()
-                    get_blob_db().metadb.reparent(form.orig_id, form.form_id)
-                    for model in operations:
-                        model.form = form
-                        model.save()
+                form.save()
+                get_blob_db().metadb.reparent(form.orig_id, form.form_id)
+                for model in operations:
+                    model.form = form
+                    model.save()
             else:
                 with transaction.atomic(db_name):
                     form.save()
@@ -982,8 +989,9 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         return CaseAccessorSQL._get_case_ids_in_domain(domain, deleted=True)
 
     @staticmethod
-    def get_case_ids_in_domain_by_owners(domain, owner_ids, closed=None):
-        return CaseAccessorSQL._get_case_ids_in_domain(domain, owner_ids=owner_ids, is_closed=closed)
+    def get_case_ids_in_domain_by_owners(domain, owner_ids, closed=None, case_type=None):
+        return CaseAccessorSQL._get_case_ids_in_domain(domain, case_type=case_type,
+                                                       owner_ids=owner_ids, is_closed=closed)
 
     @staticmethod
     def save_case(case):
@@ -1025,7 +1033,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
                 CaseAttachmentSQL.objects.using(case.db).filter(id__in=attachment_ids_to_delete).delete()
 
                 case.clear_tracked_models()
-        except InternalError as e:
+        except DatabaseError as e:
             raise CaseSaveError(e)
 
     @staticmethod

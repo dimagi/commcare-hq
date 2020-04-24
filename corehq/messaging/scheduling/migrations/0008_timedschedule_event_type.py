@@ -13,6 +13,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='timedschedule',
             name='event_type',
-            field=models.CharField(default=b'SPECIFIC_TIME', max_length=50),
+            field=models.CharField(default='SPECIFIC_TIME', max_length=50),
         ),
     ]

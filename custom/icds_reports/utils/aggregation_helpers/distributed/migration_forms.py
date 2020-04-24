@@ -11,11 +11,12 @@ class MigrationFormsAggregationDistributedHelper(StateBasedAggregationDistribute
     helper_key = 'migration-forms'
     ucr_data_source_id = 'static-migration_form'
     aggregate_parent_table = AGG_MIGRATION_TABLE
+    months_required = 3
 
     def data_from_ucr_query(self):
         month = self.month.replace(day=1)
         current_month_start = month_formatter(self.month)
-        next_month_start = month_formatter(self.month + relativedelta(month=1))
+        next_month_start = month_formatter(self.month + relativedelta(months=1))
 
         query_params = {
             "month": month_formatter(month),

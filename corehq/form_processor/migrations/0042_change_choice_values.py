@@ -11,13 +11,13 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='casetransaction',
             name='type',
-            field=models.PositiveSmallIntegerField(choices=[(0, b'form'), (1, b'rebuild_with_reason'), (2, b'user_requested_rebuild'), (4, b'user_archived_rebuild'), (8, b'form_archive_rebuild'), (16, b'form_edit_rebuild'), (32, b'ledger')]),
+            field=models.PositiveSmallIntegerField(choices=[(0, 'form'), (1, 'rebuild_with_reason'), (2, 'user_requested_rebuild'), (4, 'user_archived_rebuild'), (8, 'form_archive_rebuild'), (16, 'form_edit_rebuild'), (32, 'ledger')]),
             preserve_default=True,
         ),
         migrations.AlterField(
             model_name='xforminstancesql',
             name='state',
-            field=models.PositiveSmallIntegerField(default=0, choices=[(0, b'normal'), (1, b'archived'), (2, b'deprecated'), (4, b'duplicate'), (8, b'error'), (16, b'submission_error')]),
+            field=models.PositiveSmallIntegerField(default=0, choices=[(0, 'normal'), (1, 'archived'), (2, 'deprecated'), (4, 'duplicate'), (8, 'error'), (16, 'submission_error')]),
             preserve_default=True,
         ),
     ]

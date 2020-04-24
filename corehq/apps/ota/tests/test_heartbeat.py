@@ -111,7 +111,6 @@ class HeartbeatTests(TestCase):
         device_log_request = DeviceLogRequest.objects.create(
             domain=self.domain_obj.name,
             username=self.user.username,
-            device_id='need-logs',
         )
         self.assertTrue(heartbeat_contains_force_logs())
 

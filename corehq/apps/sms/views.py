@@ -32,7 +32,6 @@ from couchexport.export import export_raw
 from couchexport.models import Format
 from couchexport.shortcuts import export_response
 from dimagi.utils.couch import CriticalSection
-from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.view import get_file
 from dimagi.utils.logging import notify_exception
@@ -116,12 +115,11 @@ from corehq.apps.sms.resources.v0_5 import SelfRegistrationUserInfo
 from corehq.apps.sms.util import (
     ContactNotFoundException,
     get_contact,
-    get_or_create_translation_doc,
+    get_or_create_sms_translations,
     get_sms_backend_classes,
 )
 from corehq.apps.smsbillables.utils import \
     country_name_from_isd_code_or_empty as country_name_from_code
-from corehq.apps.translations.models import StandaloneTranslationDoc
 from corehq.apps.users import models as user_models
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import CommCareUser, CouchUser, Permissions
@@ -623,17 +621,6 @@ def get_mobile_worker_contact_info(domain_obj, user_ids):
 
 
 def get_contact_info(domain):
-    # If the data has been cached, just retrieve it from there
-    cache_key = 'sms-chat-contact-list-%s' % domain
-    cache_expiration = 30 * 60
-    try:
-        client = cache_core.get_redis_client()
-        cached_data = client.get(cache_key)
-        if cached_data:
-            return json.loads(cached_data)
-    except:
-        pass
-
     domain_obj = Domain.get_by_name(domain, strict=True)
     case_ids = []
     mobile_worker_ids = []
@@ -673,13 +660,6 @@ def get_contact_info(domain):
     for row in data:
         contact_info = contact_data.get(row[3])
         row[0] = contact_info[0] if contact_info else _('(unknown)')
-
-    # Save the data to the cache for faster lookup next time
-    try:
-        client.set(cache_key, json.dumps(data))
-        client.expire(cache_key, cache_expiration)
-    except:
-        pass
 
     return data
 
@@ -1615,10 +1595,10 @@ class SMSLanguagesView(BaseMessagingSectionView):
 
     @property
     def page_context(self):
-        tdoc = get_or_create_translation_doc(self.domain)
+        sms_translations = get_or_create_sms_translations(self.domain)
         context = {
             "domain": self.domain,
-            "sms_langs": tdoc.langs,
+            "sms_langs": sms_translations.langs,
             "bulk_upload": {
                 "action": reverse("upload_sms_translations", args=(self.domain,)),
                 "download_url": reverse("download_sms_translations", args=(self.domain,)),
@@ -1639,46 +1619,46 @@ def edit_sms_languages(request, domain):
     """
     Accepts same post body as corehq.apps.app_manager.views.edit_app_langs
     """
-    with StandaloneTranslationDoc.get_locked_obj(domain, "sms",
-        create=True) as tdoc:
+    with transaction.atomic():
+        sms_translations = get_or_create_sms_translations(domain)
         try:
             from corehq.apps.app_manager.views.utils import validate_langs
-            langs, rename = validate_langs(request, tdoc.langs)
+            langs, rename = validate_langs(request, sms_translations.langs)
         except AssertionError:
             return HttpResponse(status=400)
 
         for old, new in rename.items():
             if old != new:
-                tdoc.translations[new] = tdoc.translations[old]
-                del tdoc.translations[old]
+                sms_translations.translations[new] = sms_translations.translations[old]
+                del sms_translations.translations[old]
 
         for lang in langs:
-            if lang not in tdoc.translations:
-                tdoc.translations[lang] = {}
+            if lang not in sms_translations.translations:
+                sms_translations.translations[lang] = {}
 
-        for lang in set(tdoc.translations.keys()):
+        for lang in set(sms_translations.translations.keys()):
             if lang not in langs:
-                del tdoc.translations[lang]
+                del sms_translations.translations[lang]
 
-        tdoc.langs = langs
-        tdoc.save()
+        sms_translations.langs = langs
+        sms_translations.save()
         return json_response(langs)
 
 
 @domain_admin_required
 @requires_privilege_with_fallback(privileges.OUTBOUND_SMS)
 def download_sms_translations(request, domain):
-    tdoc = StandaloneTranslationDoc.get_obj(domain, "sms")
-    columns = ["property"] + tdoc.langs + ["default"]
+    sms_translations = get_or_create_sms_translations(domain)
+    columns = ["property"] + sms_translations.langs + ["default"]
 
     msg_ids = sorted(_MESSAGES.keys())
     rows = []
     for msg_id in msg_ids:
         rows.append([msg_id])
 
-    for lang in tdoc.langs:
+    for lang in sms_translations.langs:
         for row in rows:
-            row.append(tdoc.translations[lang].get(row[0], ""))
+            row.append(sms_translations.translations[lang].get(row[0], ""))
 
     for row in rows:
         row.append(_MESSAGES.get(row[0]))
@@ -1697,25 +1677,21 @@ def upload_sms_translations(request, domain):
     try:
         translations = get_single_worksheet(request.file, title='translations')
 
-        with StandaloneTranslationDoc.get_locked_obj(domain, "sms") as tdoc:
+        with transaction.atomic():
+            sms_translations = get_or_create_sms_translations(domain)
             msg_ids = sorted(_MESSAGES.keys())
-            result = {}
-            for lang in tdoc.langs:
-                result[lang] = {}
+            result = {lang: {} for lang in sms_translations.langs}
 
             for row in translations:
-                for lang in tdoc.langs:
-                    if row.get(lang):
-                        msg_id = row["property"]
-                        if msg_id in msg_ids:
-                            val = row[lang]
-                            if not isinstance(val, str):
-                                val = str(val)
-                            val = val.strip()
-                            result[lang][msg_id] = val
+                for lang in sms_translations.langs:
+                    msg_id = row["property"]
+                    if row.get(lang) and msg_id in msg_ids:
+                        val = str(row[lang])
+                        val = val.strip()
+                        result[lang][msg_id] = val
 
-            tdoc.translations = result
-            tdoc.save()
+            sms_translations.translations = result
+            sms_translations.save()
         messages.success(request, _("SMS Translations Updated."))
     except Exception:
         notify_exception(request, 'SMS Upload Translations Error')
@@ -1825,6 +1801,8 @@ class SMSSettingsView(BaseMessagingSectionView, AsyncHandlerMixin):
                     ENABLED if domain_obj.custom_daily_outbound_sms_limit else DISABLED,
                 "custom_daily_outbound_sms_limit":
                     domain_obj.custom_daily_outbound_sms_limit,
+                "twilio_whatsapp_phone_number":
+                    domain_obj.twilio_whatsapp_phone_number,
             }
             form = SettingsForm(
                 initial=initial,
@@ -1877,6 +1855,12 @@ class SMSSettingsView(BaseMessagingSectionView, AsyncHandlerMixin):
                     ("custom_daily_outbound_sms_limit",
                      "custom_daily_outbound_sms_limit"),
                 ])
+            if toggles.WHATSAPP_MESSAGING.enabled(self.domain):
+                field_map.extend([
+                    ("twilio_whatsapp_phone_number",
+                     "twilio_whatsapp_phone_number"),
+                ])
+
             for (model_field_name, form_field_name) in field_map:
                 setattr(domain_obj, model_field_name,
                     form.cleaned_data[form_field_name])
@@ -2120,3 +2104,36 @@ class IncomingBackendView(View):
             return HttpResponse(status=401)
 
         return super(IncomingBackendView, self).dispatch(request, api_key, *args, **kwargs)
+
+
+class WhatsAppTemplatesView(BaseMessagingSectionView):
+    urlname = 'whatsapp_templates_view'
+    template_name = "sms/whatsapp_templates.html"
+
+    @method_decorator(domain_admin_required)
+    def dispatch(self, request, *args, **kwargs):
+        return super(WhatsAppTemplatesView, self).dispatch(request, *args, **kwargs)
+
+    @property
+    def page_context(self):
+        context = super(WhatsAppTemplatesView, self).page_context
+        from corehq.messaging.smsbackends.turn.models import SQLTurnWhatsAppBackend, generate_template_string
+        try:
+            turn_backend = SQLTurnWhatsAppBackend.active_objects.get(domain=self.domain)
+        except SQLTurnWhatsAppBackend.MultipleObjectsReturned:
+            messages.error(
+                self.request,
+                _("You have multiple Turn backends configured. Please remove the ones you don't use.")
+            )
+        except SQLTurnWhatsAppBackend.DoesNotExist:
+            messages.error(
+                self.request,
+                _("You have no Turn backends configured. Please configure one before proceeding ")
+            )
+        else:
+            templates = turn_backend.get_all_templates()
+            for template in templates:
+                template['template_string'] = generate_template_string(template)
+            context.update({'wa_templates': templates})
+        finally:
+            return context

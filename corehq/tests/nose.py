@@ -144,6 +144,7 @@ class ErrorOnDbAccessContext(object):
 
         class CouchSpec(object):
             dbname = None
+            view = Mock(return_value=[])
 
         def mock_couch(app):
             dbname = dbs.get(app, main_db_url).rsplit("/", 1)[1]

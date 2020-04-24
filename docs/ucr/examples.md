@@ -259,6 +259,35 @@ In the example below, the indicator is inside a form group question called "impa
 }
 ```
 
+### Get a case property form a form that modifies the case
+
+The following expression looks up a case name from a form that references that case.
+
+To lookup a different property, or for more complex form/case relationships and advanced
+modules just adjust the property paths.
+
+```json
+{
+    "type":"related_doc",
+    "related_doc_type":"CommCareCase",
+    "doc_id_expression":{
+        "type": "property_path",
+        "property_path": [
+            "form",
+            "case",
+            "@case_id"
+        ]
+    },
+    "value_expression":{
+        "type":"property_path",
+        "property_path": [
+            "name"
+        ]
+    }
+}
+```
+
+Note: this is an example *expression*. To use it in a data source just wrap it in a column.
 
 ### Get a custom user data property from a form submission
 

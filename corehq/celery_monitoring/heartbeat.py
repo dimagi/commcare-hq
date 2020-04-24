@@ -4,8 +4,7 @@ from celery.task import periodic_task
 from django.conf import settings
 from django.core.cache import cache
 
-from corehq.util.datadog.gauges import datadog_gauge
-
+from corehq.util.metrics import metrics_gauge
 
 HEARTBEAT_FREQUENCY = datetime.timedelta(seconds=10)
 HEARTBEAT_CACHE_TIMEOUT = datetime.timedelta(days=2)
@@ -65,16 +64,16 @@ class Heartbeat(object):
 
     def get_and_report_blockage_duration(self):
         blockage_duration = self.get_blockage_duration()
-        datadog_gauge(
+        metrics_gauge(
             'commcare.celery.heartbeat.blockage_duration',
             blockage_duration.total_seconds(),
-            tags=['celery_queue:{}'.format(self.queue)]
+            tags={'celery_queue': self.queue}
         )
         if self.threshold:
-            datadog_gauge(
+            metrics_gauge(
                 'commcare.celery.heartbeat.blockage_ok',
                 1 if blockage_duration.total_seconds() <= self.threshold else 0,
-                tags=['celery_queue:{}'.format(self.queue)]
+                tags={'celery_queue': self.queue}
             )
         return blockage_duration
 
@@ -98,5 +97,5 @@ class Heartbeat(object):
 
         heartbeat.__name__ = str(self.periodic_task_name)
 
-        heartbeat = periodic_task(run_every=HEARTBEAT_FREQUENCY, queue=self.queue)(heartbeat)
+        heartbeat = periodic_task(run_every=HEARTBEAT_FREQUENCY, queue=self.queue, ignore_result=True)(heartbeat)
         return heartbeat

@@ -8,7 +8,7 @@
 ### On 'master domain':
 
 ```
-DomainLink.link_domains('https://url.of.linked.hq/a/linked_domain_name', 'master_domain_name')
+DomainLink.link_domains('https://url.of.linked.hq/a/linked_domain_name/', 'master_domain_name')
 ```
 
 This gets used as a permissions check during remote requests to ensure

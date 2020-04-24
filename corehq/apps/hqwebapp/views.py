@@ -14,7 +14,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AdminPasswordChangeForm
 from django.contrib.auth.models import User
-from django.contrib.auth.views import logout as django_logout
+from django.contrib.auth.views import LogoutView
 from django.core import cache
 from django.core.mail.message import EmailMessage
 from django.http import (
@@ -49,6 +49,7 @@ from sentry_sdk import last_event_id
 from two_factor.forms import AuthenticationTokenForm, BackupTokenForm
 from two_factor.views import LoginView
 
+from corehq.util.metrics import create_metrics_event, metrics_counter, metrics_gauge
 from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.django.request import mutable_querydict
@@ -107,10 +108,8 @@ from corehq.form_processor.backends.sql.dbaccessors import (
 from corehq.form_processor.exceptions import CaseNotFound, XFormNotFound
 from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.util.context_processors import commcare_hq_names
-from corehq.util.datadog.const import DATADOG_UNKNOWN
-from corehq.util.datadog.gauges import datadog_counter, datadog_gauge
-from corehq.util.datadog.metrics import JSERROR_COUNT
-from corehq.util.datadog.utils import create_datadog_event, sanitize_url
+from corehq.util.metrics.const import TAG_UNKNOWN
+from corehq.util.metrics.utils import sanitize_url
 from corehq.util.view_utils import reverse
 from no_exceptions.exceptions import Http403
 
@@ -210,11 +209,8 @@ def redirect_to_default(req, domain=None):
             domains = Domain.active_for_user(req.user)
 
         if 0 == len(domains) and not req.user.is_superuser:
-            from corehq.apps.registration.views import track_domainless_new_user
-            track_domainless_new_user(req)
             return redirect('registration_domain')
         elif 1 == len(domains):
-            from corehq.apps.dashboard.views import dashboard_default
             from corehq.apps.users.models import DomainMembershipError
             if domains[0]:
                 domain = domains[0].name
@@ -229,14 +225,14 @@ def redirect_to_default(req, domain=None):
                         # web users without roles are redirected to the dashboard default
                         # view since some domains allow web users to request access if they
                         # don't have it
-                        return dashboard_default(req, domain)
+                        url = reverse("dashboard_domain", args=[domain])
                 else:
                     if role and role.default_landing_page:
                         url = get_redirect_url(role.default_landing_page, domain)
                     elif couch_user.is_commcare_user():
                         url = reverse(get_cloudcare_urlname(domain), args=[domain])
                     else:
-                        return dashboard_default(req, domain)
+                        url = reverse("dashboard_domain", args=[domain])
             else:
                 raise Http404()
         else:
@@ -306,18 +302,18 @@ def server_up(req):
     failed_checks = [(check, status) for check, status in statuses if not status.success]
 
     for check_name, status in statuses:
-        tags = [
-            'status:{}'.format('failed' if not status.success else 'ok'),
-            'check:{}'.format(check_name)
-        ]
-        datadog_gauge('commcare.serverup.check', status.duration, tags=tags)
+        tags = {
+            'status': 'failed' if not status.success else 'ok',
+            'check': check_name
+        }
+        metrics_gauge('commcare.serverup.check', status.duration, tags=tags)
 
     if failed_checks and not is_deploy_in_progress():
         status_messages = [
             html.linebreaks('<strong>{}</strong>: {}'.format(check, html.escape(status.msg)).strip())
             for check, status in failed_checks
         ]
-        create_datadog_event(
+        create_metrics_event(
             'Serverup check failed', '\n'.join(status_messages),
             alert_type='error', aggregation_key='serverup',
         )
@@ -480,7 +476,7 @@ def logout(req, default_domain_redirect='domain_login'):
     domain = get_domain_from_url(urlparse(referer).path) if referer else None
 
     # we don't actually do anything with the response here:
-    django_logout(req, **{"template_name": settings.BASE_TEMPLATE})
+    LogoutView.as_view(template_name=settings.BASE_TEMPLATE)(req)
 
     if referer and domain:
         domain_login_url = reverse(default_domain_redirect, kwargs={'domain': domain})
@@ -557,42 +553,52 @@ def debug_notify(request):
 @require_POST
 def jserror(request):
     agent = request.META.get('HTTP_USER_AGENT', None)
-    os = browser_name = browser_version = bot = DATADOG_UNKNOWN
+    os = browser_name = browser_version = bot = TAG_UNKNOWN
     if agent:
         parsed_agent = httpagentparser.detect(agent)
         bot = parsed_agent.get('bot', False)
         if 'os' in parsed_agent:
-            os = parsed_agent['os'].get('name', DATADOG_UNKNOWN)
+            os = parsed_agent['os'].get('name', TAG_UNKNOWN)
 
         if 'browser' in parsed_agent:
-            browser_version = parsed_agent['browser'].get('version', DATADOG_UNKNOWN)
-            browser_name = parsed_agent['browser'].get('name', DATADOG_UNKNOWN)
+            browser_version = parsed_agent['browser'].get('version', TAG_UNKNOWN)
+            browser_name = parsed_agent['browser'].get('name', TAG_UNKNOWN)
 
-    datadog_counter(JSERROR_COUNT, tags=[
-        'os:{}'.format(os),
-        'browser_version:{}'.format(browser_version),
-        'browser_name:{}'.format(browser_name),
-        'url:{}'.format(sanitize_url(request.POST.get('page', None))),
-        'file:{}'.format(request.POST.get('filename')),
-        'bot:{}'.format(bot),
-    ])
+    metrics_counter('commcare.jserror.count', tags={
+        'os': os,
+        'browser_version': browser_version,
+        'browser_name': browser_name,
+        'url': sanitize_url(request.POST.get('page', None)),
+        'file': request.POST.get('filename'),
+        'bot': bot,
+    })
 
     return HttpResponse('')
 
 
 @method_decorator([login_required], name='dispatch')
 class BugReportView(View):
-
-    @property
-    def recipients(self):
-        """
-            Returns:
-                list
-        """
-        return settings.BUG_REPORT_RECIPIENTS
-
     def post(self, req, *args, **kwargs):
-        report = dict([(key, req.POST.get(key, '')) for key in (
+        email = self._get_email_message(
+            post_params=req.POST,
+            couch_user=req.couch_user,
+            uploaded_file=req.FILES.get('report_issue')
+        )
+
+        email.send(fail_silently=False)
+
+        if req.POST.get('five-hundred-report'):
+            messages.success(
+                req,
+                _("Your CommCare HQ Issue Report has been sent. We are working quickly to resolve this problem.")
+            )
+            return HttpResponseRedirect(reverse('homepage'))
+
+        return HttpResponse()
+
+    @staticmethod
+    def _get_email_message(post_params, couch_user, uploaded_file):
+        report = dict([(key, post_params.get(key, '')) for key in (
             'subject',
             'username',
             'domain',
@@ -606,7 +612,6 @@ class BugReportView(View):
         )])
 
         try:
-            couch_user = req.couch_user
             full_name = couch_user.full_name
             if couch_user.is_commcare_user():
                 email = report['email']
@@ -626,12 +631,15 @@ class BugReportView(View):
         else:
             domain = "<no domain>"
 
+        other_recipients = [el.strip() for el in report['cc'].split(",") if el]
+
         message = (
-            "username: {username}\n"
-            "full name: {full_name}\n"
-            "domain: {domain}\n"
-            "url: {url}\n"
-        ).format(**report)
+            f"username: {report['username']}\n"
+            f"full name: {report['full_name']}\n"
+            f"domain: {report['domain']}\n"
+            f"url: {report['url']}\n"
+            f"recipients: {', '.join(other_recipients)}\n"
+        )
 
         domain_object = Domain.get_by_name(domain) if report['domain'] else None
         debug_context = {
@@ -644,10 +652,9 @@ class BugReportView(View):
         }
         if domain_object:
             current_project_description = domain_object.project_description if domain_object else None
-            new_project_description = req.POST.get('project_description')
-            if (domain_object and
-                    req.couch_user.is_domain_admin(domain=domain) and
-                    new_project_description and current_project_description != new_project_description):
+            new_project_description = post_params.get('project_description')
+            if (domain_object and couch_user.is_domain_admin(domain=domain) and new_project_description
+                    and current_project_description != new_project_description):
                 domain_object.project_description = new_project_description
                 domain_object.save()
 
@@ -665,7 +672,6 @@ class BugReportView(View):
             })
 
         subject = '{subject} ({domain})'.format(subject=report['subject'], domain=domain)
-        cc = [el for el in report['cc'].strip().split(",") if el]
 
         if full_name and not any([c in full_name for c in '<>"']):
             reply_to = '"{full_name}" <{email}>'.format(**report)
@@ -678,7 +684,7 @@ class BugReportView(View):
             reply_to = settings.SERVER_EMAIL
 
         message += "Message:\n\n{message}\n".format(message=report['message'])
-        if req.POST.get('five-hundred-report'):
+        if post_params.get('five-hundred-report'):
             extra_message = ("This message was reported from a 500 error page! "
                              "Please fix this ASAP (as if you wouldn't anyway)...")
             extra_debug_info = (
@@ -696,12 +702,11 @@ class BugReportView(View):
         email = EmailMessage(
             subject=subject,
             body=message,
-            to=self.recipients,
+            to=[settings.SUPPORT_EMAIL],
             headers={'Reply-To': reply_to},
-            cc=cc
+            cc=other_recipients
         )
 
-        uploaded_file = req.FILES.get('report_issue')
         if uploaded_file:
             filename = uploaded_file.name
             content = uploaded_file.read()
@@ -712,18 +717,9 @@ class BugReportView(View):
         if re.search(r'@dimagi\.com$', report['username']) and not is_icds_env:
             email.from_email = report['username']
         else:
-            email.from_email = settings.CCHQ_BUG_REPORT_EMAIL
+            email.from_email = settings.SUPPORT_EMAIL
 
-        email.send(fail_silently=False)
-
-        if req.POST.get('five-hundred-report'):
-            messages.success(
-                req,
-                "Your CommCare HQ Issue Report has been sent. We are working quickly to resolve this problem."
-            )
-            return HttpResponseRedirect(reverse('homepage'))
-
-        return HttpResponse()
+        return email
 
 
 def render_static(request, template, page_name):

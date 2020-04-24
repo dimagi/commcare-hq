@@ -17,7 +17,7 @@ from corehq.apps.sms.models import (
     WORKFLOW_KEYWORD,
     WORKFLOW_BROADCAST,
 )
-from corehq.apps.translations.models import StandaloneTranslationDoc
+from corehq.apps.translations.models import SMSTranslations
 from corehq.apps.users.models import CommCareUser
 from corehq.messaging.scheduling.exceptions import (
     NoAvailableContent,
@@ -417,8 +417,8 @@ class Content(models.Model):
         return message_dict.get(language_code, '').strip()
 
     @memoized
-    def get_lang_doc(self, domain):
-        return StandaloneTranslationDoc.get_obj(domain, 'sms')
+    def get_default_lang(self, domain):
+        return SMSTranslations.objects.filter(domain=domain).first().default_lang
 
     def get_translation_from_message_dict(self, domain_obj, message_dict, preferred_language_code):
         """
@@ -444,8 +444,8 @@ class Content(models.Model):
             return result
 
         if not result:
-            tdoc = self.get_lang_doc(domain_obj.name)
-            result = Content.get_cleaned_message(message_dict, tdoc.default_lang)
+            lang = self.get_default_lang(domain_obj.name)
+            result = Content.get_cleaned_message(message_dict, lang)
 
         if domain_obj.sms_language_fallback == LANGUAGE_FALLBACK_DOMAIN:
             return result

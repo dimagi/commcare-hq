@@ -6,6 +6,7 @@ from functools import partial
 import attr
 
 from casexml.apps.case.xform import get_case_ids_from_form
+from casexml.apps.stock.const import TRANSACTION_TYPE_STOCKONHAND
 from casexml.apps.stock.models import StockTransaction
 from dimagi.utils.couch.database import retry_on_couch_error
 
@@ -28,11 +29,12 @@ from corehq.form_processor.exceptions import MissingFormXml, XFormNotFound
 from corehq.form_processor.parsers.ledgers.form import (
     get_all_stock_report_helpers_from_form,
 )
-from corehq.util.datadog.gauges import datadog_counter
+from corehq.util.metrics import metrics_counter
 
 from .diff import filter_case_diffs, filter_ledger_diffs
 from .rebuildcase import rebuild_and_diff_cases
 from .statedb import Change
+from .util import retry_on_sql_error
 
 log = logging.getLogger(__name__)
 
@@ -76,7 +78,7 @@ def diff_cases(couch_cases, log_cases=False):
     assert isinstance(couch_cases, dict), repr(couch_cases)[:100]
     assert "_diff_state" in globals()
     data = DiffData()
-    dd_count = partial(datadog_counter, tags=["domain:" + _diff_state.domain])
+    dd_count = partial(metrics_counter, tags={"domain": get_domain()})
     case_ids = list(couch_cases)
     sql_case_ids = set()
     for sql_case in CaseAccessorSQL.get_cases(case_ids):
@@ -85,6 +87,8 @@ def diff_cases(couch_cases, log_cases=False):
         couch_case, diffs, changes = diff_case(sql_case, couch_cases[case_id], dd_count)
         if diffs:
             dd_count("commcare.couchsqlmigration.case.has_diff")
+        if changes:
+            dd_count("commcare.couchsqlmigration.case.did_change")
         data.doc_ids.append(case_id)
         data.diffs.append((couch_case['doc_type'], case_id, diffs))
         data.changes.append((couch_case['doc_type'], case_id, changes))
@@ -109,9 +113,15 @@ def diff_case(sql_case, couch_case, dd_count):
     changes = []
     if diffs:
         return couch_case, diffs, changes
-    original_couch_case = couch_case
     diffs = diff(couch_case, sql_json)
     if diffs:
+        if is_case_patched(diffs):
+            return couch_case, [], []
+        form_diffs = diff_case_forms(couch_case, sql_json)
+        if form_diffs:
+            diffs.extend(form_diffs)
+            return couch_case, diffs, changes
+        original_couch_case = couch_case
         dd_count("commcare.couchsqlmigration.case.rebuild.couch")
         try:
             couch_case = hard_rebuild(couch_case)
@@ -120,29 +130,30 @@ def diff_case(sql_case, couch_case, dd_count):
             log.warning(f"Case {case_id} rebuild -> {type(err).__name__}: {err}")
         else:
             diffs = diff(couch_case, sql_json)
-            if diffs:
-                try:
-                    sql_json, diffs = rebuild_and_diff_cases(
-                        sql_case, couch_case, original_couch_case, diff, dd_count)
-                except Exception as err:
-                    dd_count("commcare.couchsqlmigration.case.rebuild.error")
-                    log.warning(f"Case {case_id} rebuild SQL -> {type(err).__name__}: {err}")
-            if not diffs:
-                changes = diffs_to_changes(diff(original_couch_case, sql_json), "rebuild case")
+        if diffs:
+            try:
+                sql_json, diffs = rebuild_and_diff_cases(
+                    sql_case, couch_case, original_couch_case, diff, dd_count)
+            except Exception as err:
+                dd_count("commcare.couchsqlmigration.case.rebuild.error")
+                log.warning(f"Case {case_id} rebuild SQL -> {type(err).__name__}: {err}")
         if diffs:
             diffs.extend(diff_case_forms(couch_case, sql_json))
+        else:
+            changes = diffs_to_changes(diff(original_couch_case, sql_json), "rebuild case")
     return couch_case, diffs, changes
 
 
 def check_domains(case_id, couch_json, sql_json):
-    if couch_json["domain"] == _diff_state.domain:
-        if sql_json["domain"] == _diff_state.domain:
+    domain = get_domain()
+    if couch_json["domain"] == domain:
+        if sql_json["domain"] == domain:
             return []
         log.warning("sql case %s has wrong domain: %s", case_id, sql_json["domain"])
-        diffs = json_diff({"domain": _diff_state.domain}, {"domain": sql_json["domain"]})
+        diffs = json_diff({"domain": domain}, {"domain": sql_json["domain"]})
     else:
         log.warning("couch case %s has wrong domain: %s", case_id, couch_json["domain"])
-        diffs = json_diff({"domain": couch_json["domain"]}, {"domain": _diff_state.domain})
+        diffs = json_diff({"domain": couch_json["domain"]}, {"domain": domain})
     assert diffs, "expected domain diff"
     return diffs
 
@@ -177,11 +188,18 @@ def diff_ledgers(case_ids, dd_count):
             dd_count("commcare.couchsqlmigration.ledger.rebuild")
         if couch_state is None:
             diffs = [stock_tx.diff_missing_ledger(ledger_value)]
+            old_value = diffs[0].old_value
+            if old_value["form_state"] == FORM_PRESENT and "ledger" not in old_value:
+                changes = diffs_to_changes(diffs, "missing couch stock transaction")
+                all_changes.append(("stock state", ref.as_id(), changes))
+                dd_count("commcare.couchsqlmigration.ledger.did_change")
+                diffs = []
         else:
             diffs = diff(couch_state, ledger_value)
             if diffs and stock_tx.has_duplicate_transactions(ref):
                 changes = diffs_to_changes(diffs, "duplicate stock transaction")
                 all_changes.append(("stock state", ref.as_id(), changes))
+                dd_count("commcare.couchsqlmigration.ledger.did_change")
                 diffs = []
         if diffs:
             dd_count("commcare.couchsqlmigration.ledger.has_diff")
@@ -285,11 +303,24 @@ class StockTransactionLoader:
         return num
 
     def iter_stock_transactions(self, form_id):
-        xform = FormAccessorCouch.get_form(form_id)
-        assert xform.domain == _diff_state.domain, xform
+        xform = get_couch_form(form_id)
+        assert xform.domain == get_domain(), xform
         for report in get_all_stock_report_helpers_from_form(xform):
             for tx in report.transactions:
                 yield report.report_type, tx
+                if tx.action == TRANSACTION_TYPE_STOCKONHAND:
+                    yield report.report_type, tx
+
+
+def is_case_patched(diffs):
+    from .casepatch import PatchForm
+    if not (len(diffs) == 1
+            and diffs[0].diff_type == "set_mismatch"
+            and list(diffs[0].path) == ["xform_ids", "[*]"]
+            and diffs[0].new_value):
+        return False
+    form_ids = diffs[0].new_value.split(",")
+    return any(f.xmlns == PatchForm.xmlns for f in get_sql_forms(form_ids))
 
 
 def diff_case_forms(couch_json, sql_json):
@@ -304,7 +335,7 @@ def diff_case_forms(couch_json, sql_json):
         old, new = diff_form_state(form_id)
         old_forms[form_id] = old["form_state"]
         new_forms[form_id] = new["form_state"]
-    if any(v.startswith("missing") for v in old_forms.values()):
+    if any(v != FORM_PRESENT for v in old_forms.values()):
         return [Diff(
             "diff",
             path=["?"],
@@ -319,13 +350,21 @@ def diff_form_state(form_id, *, in_couch=False):
     in_sql = FormAccessorSQL.form_exists(form_id)
     couch_miss = "missing"
     if not in_couch and get_blob_db().metadb.get_for_parent(form_id):
-        couch_miss = "missing, blob present"
-    old = {"form_state": "present" if in_couch else couch_miss}
-    new = {"form_state": "present" if in_sql else "missing"}
+        couch_miss = MISSING_BLOB_PRESENT
+        log.warning("couch form missing, blob present: %s", form_id)
+    old = {"form_state": FORM_PRESENT if in_couch else couch_miss}
+    new = {"form_state": FORM_PRESENT if in_sql else "missing"}
     return old, new
 
 
+FORM_PRESENT = "present"
+MISSING_BLOB_PRESENT = "missing, blob present"
+
+
 def add_missing_docs(data, couch_cases, sql_case_ids, dd_count):
+    def as_change(item, reason):
+        kind, doc_id, diffs = item
+        return kind, doc_id, diffs_to_changes(diffs, reason)
     if len(couch_cases) != len(sql_case_ids):
         only_in_sql = sql_case_ids - couch_cases.keys()
         assert not only_in_sql, only_in_sql
@@ -334,14 +373,32 @@ def add_missing_docs(data, couch_cases, sql_case_ids, dd_count):
         dd_count("commcare.couchsqlmigration.case.missing_from_sql", value=len(only_in_couch))
         for case_id in only_in_couch:
             couch_case = couch_cases[case_id]
-            if is_orphaned_case(couch_case):
-                log.info("Ignoring orphaned case: %s", couch_case["_id"])
-                continue
-            data.diffs.append((
+            diff = change = (couch_case["doc_type"], case_id, [])
+            item = (
                 couch_case["doc_type"],
                 case_id,
                 [Diff("missing", path=["*"], old_value="*", new_value=MISSING)],
-            ))
+            )
+            if has_only_deleted_forms(couch_case):
+                change = as_change(item, "deleted forms")
+            elif is_orphaned_case(couch_case):
+                change = as_change(item, "orphaned case")
+            else:
+                diff = item
+            data.diffs.append(diff)
+            data.changes.append(change)
+
+
+def add_cases_missing_from_couch(data, case_ids):
+    sql_ids = {c.case_id for c in CaseAccessorSQL.get_cases(list(case_ids))}
+    data.doc_ids.extend(case_ids)
+    for case_id in case_ids:
+        new = "present" if case_id in sql_ids else MISSING
+        data.diffs.append((
+            "CommCareCase",
+            case_id,
+            [Diff("missing", path=["*"], old_value=MISSING, new_value=new)],
+        ))
 
 
 @contextmanager
@@ -394,14 +451,22 @@ class WorkerState:
     def should_diff(self, case):
         return (
             case.server_modified_on is None
-            or case.server_modified_on < self.cutoff_date
+            or case.server_modified_on <= self.cutoff_date
         )
+
+
+def has_only_deleted_forms(couch_case):
+    def get_deleted_form_ids(form_ids):
+        forms = get_sql_forms(form_ids)
+        return {f.form_id for f in forms if f.is_deleted}
+    form_ids = couch_case["xform_ids"]
+    return set(form_ids) == get_deleted_form_ids(form_ids)
 
 
 def is_orphaned_case(couch_case):
     def references_case(form_id):
         try:
-            form = FormAccessorCouch.get_form(form_id)
+            form = get_couch_form(form_id)
         except XFormNotFound:
             return True  # assume case is referenced if form not found
         try:
@@ -417,6 +482,20 @@ def should_diff(case):
     return _diff_state.should_diff(case)
 
 
+def get_domain():
+    return _diff_state.domain
+
+
 @retry_on_couch_error
 def get_couch_cases(case_ids):
     return CaseAccessorCouch.get_cases(case_ids)
+
+
+@retry_on_couch_error
+def get_couch_form(form_id):
+    return FormAccessorCouch.get_form(form_id)
+
+
+@retry_on_sql_error
+def get_sql_forms(form_id):
+    return FormAccessorSQL.get_forms(form_id)

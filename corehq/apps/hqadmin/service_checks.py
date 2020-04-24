@@ -7,7 +7,6 @@ import logging
 import re
 import time
 import uuid
-import urllib3
 from io import BytesIO
 
 from django.conf import settings
@@ -16,15 +15,19 @@ from django.core import cache
 from django.db import connections
 from django.db.utils import OperationalError
 
-import attr
-import gevent
 import requests
-from celery import Celery
+import urllib3
 
 from soil import heartbeat
 
+import attr
+import gevent
+from celery import Celery
 from corehq.apps.app_manager.models import Application
-from corehq.apps.change_feed.connection import get_kafka_client
+from corehq.apps.change_feed.connection import (
+    get_kafka_client,
+    get_kafka_consumer,
+)
 from corehq.apps.es import GroupES
 from corehq.apps.formplayer_api.utils import get_formplayer_url
 from corehq.apps.hqadmin.escheck import check_es_cluster_health
@@ -105,15 +108,19 @@ def check_rabbitmq(broker_url):
 def check_kafka():
     try:
         client = get_kafka_client()
+        consumer = get_kafka_consumer()
     except Exception as e:
         return ServiceStatus(False, "Could not connect to Kafka: %s" % e)
 
-    if len(client.cluster.brokers()) == 0:
-        return ServiceStatus(False, "No Kafka brokers found")
-    elif len(client.cluster.topics()) == 0:
-        return ServiceStatus(False, "No Kafka topics found")
-    else:
-        return ServiceStatus(True, "Kafka seems to be in order")
+    with client:
+        if len(client.cluster.brokers()) == 0:
+            return ServiceStatus(False, "No Kafka brokers found")
+
+    with consumer:
+        if len(consumer.topics()) == 0:
+            return ServiceStatus(False, "No Kafka topics found")
+
+    return ServiceStatus(True, "Kafka seems to be in order")
 
 
 @change_log_level('urllib3.connectionpool', logging.WARNING)
@@ -146,7 +153,7 @@ def check_blobdb():
         parent_id="check_blobdb",
         type_code=CODES.tempfile,
     )
-    with db.get(key=meta.key) as fh:
+    with db.get(meta=meta) as fh:
         res = fh.read()
     db.delete(key=meta.key)
     if res == contents:

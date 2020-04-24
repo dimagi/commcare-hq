@@ -7,9 +7,8 @@ from corehq.project_limits.rate_limiter import (
 )
 from corehq.project_limits.shortcuts import get_standard_ratio_rate_definition
 from corehq.toggles import RATE_LIMIT_RESTORES, NAMESPACE_DOMAIN
-from corehq.util.datadog.gauges import datadog_counter
 from corehq.util.decorators import run_only_when, silence_and_report_error
-
+from corehq.util.metrics import metrics_counter
 
 RESTORES_PER_DAY = 3
 
@@ -50,16 +49,16 @@ def _rate_limit_restore(domain):
     if allow_usage:
         restore_rate_limiter.report_usage(domain)
     else:
-        datadog_counter('commcare.restore.rate_limited', tags=[
-            'domain:{}'.format(domain),
-        ])
+        metrics_counter('commcare.restore.rate_limited', tags={
+            'domain': domain,
+        })
 
     return not allow_usage
 
 
 def _rate_limit_restore_test(domain):
     if not restore_rate_limiter.allow_usage(domain):
-        datadog_counter('commcare.restore.rate_limited.test', tags=[
-            'domain:{}'.format(domain),
-        ])
+        metrics_counter('commcare.restore.rate_limited.test', tags={
+            'domain': domain,
+        })
     restore_rate_limiter.report_usage(domain)

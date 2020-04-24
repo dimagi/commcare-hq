@@ -1,10 +1,10 @@
 function FiltersController() {
 }
 
-window.angular.module('icdsApp').directive("filters", function() {
+window.angular.module('icdsApp').directive("filters", function () {
     var url = hqImport('hqwebapp/js/initial_page_data').reverse;
     return {
-        restrict:'E',
+        restrict: 'E',
         scope: {
             data: '=',
             filters: '=',

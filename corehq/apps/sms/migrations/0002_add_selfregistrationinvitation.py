@@ -19,7 +19,7 @@ class Migration(migrations.Migration):
                 ('expiration_date', models.DateField()),
                 ('created_date', models.DateTimeField()),
                 ('odk_url', models.CharField(max_length=126, null=True)),
-                ('phone_type', models.CharField(max_length=20, null=True, choices=[(b'android', 'Android'), (b'other', 'Other')])),
+                ('phone_type', models.CharField(max_length=20, null=True, choices=[('android', 'Android'), ('other', 'Other')])),
                 ('registered_date', models.DateTimeField(null=True)),
             ],
             options={

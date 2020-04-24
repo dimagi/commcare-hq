@@ -23,7 +23,7 @@ class TestUtilities(TestCase):
             [],
             ['id_1', 'id_2'],
             ['id_1', 'id_2'],
-            ['', 'id_1', 'id_2'],
+            ['id_1', 'id_2'],
         ]
 
         for r in range(5):
@@ -103,7 +103,7 @@ class TestUtilities(TestCase):
         mock__get_query.return_value = ''
         mock_domain = 'domain_1'
         mock_action = 'action_1'
-        mock_data = {}
+        mock_data = None
 
         repeat_records._schedule_task_with_flag(mock_request, mock_domain, mock_action)
         mock__get_query.assert_called_with(mock_request)
@@ -164,6 +164,6 @@ class TestUtilities(TestCase):
     def _mock_schedule_task(self, data, domain, action, expose_cache_download, task_to_perform):
         expose_cache_download.assert_called_with(payload=None, expiry=1 * 60 * 60, file_extension=None)
         mock_task_ref = expose_cache_download(payload=None, expiry=1 * 60 * 60, file_extension=None)
-        task_to_perform.delay.asssert_called_with(data, domain, action)
+        task_to_perform.delay.assert_called_with(data, domain, action)
         mock_task = task_to_perform.delay(data, domain, action)
         mock_task_ref.set_task.assert_called_with(mock_task)

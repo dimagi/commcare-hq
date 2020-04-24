@@ -14,12 +14,12 @@
 {#            <p class="font-montserrat font-weight-600 font-16 text-white">October 2018 | National</p>#}
         </div>
         <div class="d-flex align-items-center">
-            <div class="col-xs-6 section-heading" id="dateSection" ng-class="{'selectedSection': selectedTab=='month'}" ng-click="selectMonthTab()">Month & Year</div>
+            <div class="col-xs-6 section-heading" id="dateSection" ng-class="{'selectedSection': selectedTab=='month'}" ng-click="selectMonthTab()">Filters</div>
             <div class="col-xs-6 section-heading" id="locationSection" ng-class="{'selectedSection': selectedTab=='location'}" ng-click="selectLocationTab()">Location</div>
         </div>
     </div>
     <location-filter ng-show="selectedTab == 'location'" select-awc="$ctrl.selectAwc" selected-locations="$ctrl.selectedLocations"></location-filter>
-    <month-filter ng-show="selectedTab == 'month'"></month-filter>
+    <month-filter ng-show="selectedTab == 'month'" select-sdd-date="$ctrl.selectSddDate"></month-filter>
     <hr ng-show="selectedTab == 'month' && ($ctrl.showGenderFilter || $ctrl.showAgeFilter)">
     <additional-filter filters="$ctrl.filters"
                        ng-show="selectedTab == 'month' && ($ctrl.showGenderFilter || $ctrl.showAgeFilter)"></additional-filter>

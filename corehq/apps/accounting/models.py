@@ -461,9 +461,9 @@ class BillingAccount(ValidateModelMixin, models.Model):
             return None
         except cls.MultipleObjectsReturned:
             log_accounting_error(
-                "Multiple billing accounts showed up for the domain '%s'. The "
-                "latest one was served, but you should reconcile very soon."
-                % domain
+                f"Multiple billing accounts showed up for the domain '{domain}'. The "
+                "latest one was served, but you should reconcile very soon.",
+                show_stack_trace=True,
             )
             return cls.objects.filter(created_by_domain=domain).latest('date_created')
         return None
@@ -512,7 +512,8 @@ class BillingAccount(ValidateModelMixin, models.Model):
             'old_user_name': old_user_name,
             'billing_account_name': self.name,
             'billing_info_url': absolute_reverse(EditExistingBillingAccountView.urlname,
-                                                 args=[domain])
+                                                 args=[domain]),
+            'invoicing_contact_email': settings.INVOICING_CONTACT_EMAIL,
         }
 
         send_html_email_async(
@@ -541,7 +542,8 @@ class BillingAccount(ValidateModelMixin, models.Model):
             'last_4': last_4,
             'billing_account_name': self.name,
             'billing_info_url': absolute_reverse(EditExistingBillingAccountView.urlname,
-                                                 args=[domain])
+                                                 args=[domain]),
+            'invoicing_contact_email': settings.INVOICING_CONTACT_EMAIL,
         }
 
         send_html_email_async(
@@ -3308,10 +3310,29 @@ class CreditLine(models.Model):
 
     @classmethod
     def get_credits_for_invoice(cls, invoice):
-        return itertools.chain(
+        relevant_credits = [
             cls.get_credits_by_subscription_and_features(invoice.subscription),
             cls.get_credits_for_account(invoice.subscription.account)
-        )
+        ]
+        if invoice.subscription.next_subscription:
+            # check for a transfer of subscription credits due to upgrades by
+            # looking first at the active subscription or the "next" subscription
+            # if the accounts don't match with the active subscription.
+            active_sub = Subscription.get_active_subscription_by_domain(
+                invoice.subscription.subscriber.domain
+            )
+            if active_sub.account == invoice.subscription.account:
+                relevant_credits.append(
+                    cls.get_credits_by_subscription_and_features(active_sub)
+                )
+            elif (invoice.subscription.next_subscription.account
+                  == invoice.subscription.account):
+                relevant_credits.append(
+                    cls.get_credits_by_subscription_and_features(
+                        invoice.subscription.next_subscription
+                    )
+                )
+        return itertools.chain(*relevant_credits)
 
     @classmethod
     def get_credits_for_customer_invoice(cls, invoice):

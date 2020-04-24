@@ -30,7 +30,7 @@ class DataExporter(object):
     @prevent_parallel_execution(DATA_PULL_CACHE_KEY)
     def export(self):
         zip_file_name = "%s-DataPull.zip" % self.data_pull_obj.name
-        with zipfile.ZipFile(zip_file_name, mode='a') as z:
+        with zipfile.ZipFile(zip_file_name, mode='w') as z:
             for filename, string_buffer in self.data_pull_obj.run().items():
                 z.writestr(filename, string_buffer.getvalue())
         return zip_file_name

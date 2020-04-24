@@ -1,3 +1,4 @@
+import datetime
 from mock import patch
 
 from custom.icds_reports.ucr.tests.test_base_form_ucr import BaseFormsTest
@@ -16,7 +17,7 @@ class TestAdolescent(BaseFormsTest):
             [{
                 'admitted_in_school': None,
                 "doc_id": None,
-                "timeend": None,
+                "timeend": datetime.datetime(2019, 12, 9, 8, 23, 52, 511000),
                 'out_of_school': 'yes',
                 'person_case_id': 'dda684cc-f260-4a0e-b608-f22aca3bf467',
                 're_out_of_school': None,
@@ -28,7 +29,7 @@ class TestAdolescent(BaseFormsTest):
             'adolescent_girl_oos_again',
             [{'admitted_in_school': None,
               "doc_id": None,
-              "timeend": None,
+              "timeend": datetime.datetime(2019, 10, 1, 11, 47, 51, 267000),
               'out_of_school': None,
               'person_case_id': 'b957eacc-03a4-40a4-a4c2-4b1e1e12f931',
               're_out_of_school': 'yes',
@@ -40,7 +41,7 @@ class TestAdolescent(BaseFormsTest):
             'adolescent_girl_school_admit',
             [{'admitted_in_school': 'yes',
               "doc_id": None,
-              "timeend": None,
+              "timeend": datetime.datetime(2019, 8, 2, 10, 46, 30, 806000),
               'out_of_school': None,
               'person_case_id': '62861fb8-ba76-4505-b90e-b225b8bf02fe',
               're_out_of_school': None,

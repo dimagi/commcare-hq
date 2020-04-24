@@ -167,6 +167,11 @@ class BaseExportView(BaseProjectDataView):
                          and PROPERTY_TAG_INFO in column.tags)
                             or is_reserved_number):
                         column.selected = True
+                    elif (column.label in ['formid', 'caseid']
+                          and PROPERTY_TAG_INFO not in column.tags):
+                        # make sure hidden (eg deleted) labels that are
+                        # formid/caseid are never selected
+                        column.selected = False
 
                     if column.label not in labels and column.selected:
                         labels.append(column.label)

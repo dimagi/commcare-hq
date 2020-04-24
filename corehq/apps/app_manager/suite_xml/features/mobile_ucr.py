@@ -1,5 +1,6 @@
 from collections import defaultdict
 
+from corehq import toggles
 from corehq.apps.app_manager import id_strings, models
 from corehq.apps.app_manager.const import (
     MOBILE_UCR_MIGRATING_TO_2,
@@ -16,6 +17,7 @@ from corehq.apps.app_manager.suite_xml.xml_models import (
     Header,
     Locale,
     SessionDatum,
+    Sort,
     Template,
     Text,
     Xpath,
@@ -275,43 +277,49 @@ def _get_summary_details(config, domain, module, new_mobile_ucr_restore=False):
             )
 
     detail_id = 'reports.{}.summary'.format(config.uuid)
+    fields = [
+        Field(
+            header=Header(
+                text=Text(
+                    locale=Locale(id=id_strings.report_name_header())
+                )
+            ),
+            template=Template(
+                text=Text(
+                    locale=Locale(id=id_strings.report_name(config.uuid))
+                )
+            ),
+        ),
+        Field(
+            header=Header(
+                text=Text(
+                    locale=Locale(id=id_strings.report_description_header()),
+                )
+            ),
+            template=Template(
+                text=_get_description_text(config)
+            ),
+        ),
+    ]
+
+    if not getattr(module, 'report_context_tile', False):
+        # Don't add "Last Sync" if the module already contains the similar-looking
+        # "Reports last updated on" tile
+        fields.append(Field(
+            header=Header(
+                text=Text(
+                    locale=Locale(id=id_strings.report_last_sync())
+                )
+            ),
+            template=Template(text=_get_last_sync(config))
+        ))
+    fields += list(_get_graph_fields())
+
     detail = Detail(
         title=Text(
             locale=Locale(id=id_strings.report_menu()),
         ),
-        fields=[
-            Field(
-                header=Header(
-                    text=Text(
-                        locale=Locale(id=id_strings.report_name_header())
-                    )
-                ),
-                template=Template(
-                    text=Text(
-                        locale=Locale(id=id_strings.report_name(config.uuid))
-                    )
-                ),
-            ),
-            Field(
-                header=Header(
-                    text=Text(
-                        locale=Locale(id=id_strings.report_description_header()),
-                    )
-                ),
-                template=Template(
-                    text=_get_description_text(config)
-                ),
-            ),
-        ] + [
-            Field(
-                header=Header(
-                    text=Text(
-                        locale=Locale(id=id_strings.report_last_sync())
-                    )
-                ),
-                template=Template(text=_get_last_sync(config))
-            ),
-        ] + list(_get_graph_fields()),
+        fields=fields,
     )
     if config.show_data_table:
         return models.Detail(custom_xml=Detail(
@@ -330,6 +338,15 @@ def _get_data_detail(config, domain, new_mobile_ucr_restore):
     """
     Adds a data table to the report
     """
+    def get_xpath(column_id):
+        if new_mobile_ucr_restore:
+            return Xpath(
+                function="{}".format(column_id),
+            )
+        else:
+            return Xpath(
+                function="column[@id='{}']".format(column_id),
+            )
     def _column_to_field(column):
         def _get_xpath(col):
             def _get_conditional(condition, if_true, if_false):
@@ -385,14 +402,7 @@ def _get_data_detail(config, domain, new_mobile_ucr_restore):
                     variables=[XpathVariable(name='lang', locale_id='lang.current')],
                 )
             else:
-                if new_mobile_ucr_restore:
-                    return Xpath(
-                        function="{}".format(col.column_id),
-                    )
-                else:
-                    return Xpath(
-                        function="column[@id='{}']".format(col.column_id),
-                    )
+                return get_xpath(col.column_id)
 
         return Field(
             header=Header(
@@ -410,6 +420,15 @@ def _get_data_detail(config, domain, new_mobile_ucr_restore):
         )
 
     nodeset_string = 'row{}' if new_mobile_ucr_restore else 'rows/row{}'
+    if toggles.ADD_ROW_INDEX_TO_MOBILE_UCRS.enabled(domain):
+        fields = [Field(
+            header=Header(text=Text(), width=0,),
+            template=Template(text=Text(), width=0,),
+            sort_node=Sort(type='int', direction='ascending', order='1',
+                           text=Text(xpath=get_xpath("row_index")),)
+        )]
+    else:
+        fields = []
     return Detail(
         id='reports.{}.data'.format(config.uuid),
         nodeset=(
@@ -419,7 +438,7 @@ def _get_data_detail(config, domain, new_mobile_ucr_restore):
         title=Text(
             locale=Locale(id=id_strings.report_data_table()),
         ),
-        fields=[
+        fields=fields + [
             _column_to_field(c) for c in config.report(domain).report_columns
             if c.type != 'expanded' and c.visible
         ]

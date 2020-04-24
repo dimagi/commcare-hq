@@ -99,12 +99,13 @@ class BaseCaseMultimediaTest(TestCase, TestFileMixin):
                 last_sync_token=sync_token,
                 received_on=date
             )
-        attachments = result.xform.attachments
+        xform = result.xform
+        attachments = xform.attachments
         self.assertEqual(set(dict_attachments.keys()),
                          set(attachments.keys()))
         self.assertEqual(result.case.case_id, TEST_CASE_ID)
 
-        return result.response, result.xform, result.cases
+        return result.response, self.formdb.get_form(xform.form_id), result.cases
 
     def _submit_and_verify(self, doc_id, xml_data, dict_attachments,
                            sync_token=None, date=None):

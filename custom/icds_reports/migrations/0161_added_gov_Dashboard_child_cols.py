@@ -18,4 +18,3 @@ class Migration(migrations.Migration):
     operations = [
         migrations.RunSQL('ALTER TABLE child_health_monthly ADD COLUMN opened_on DATE')
     ]
-    operations.extend(get_view_migrations())

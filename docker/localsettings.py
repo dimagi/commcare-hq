@@ -154,7 +154,7 @@ EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 ####### Bitly ########
 
-BITLY_LOGIN = None
+BITLY_OAUTH_TOKEN = None
 
 ####### Jar signing config ########
 
@@ -235,3 +235,10 @@ if os.environ.get("COMMCAREHQ_BOOTSTRAP") == "yes":
 BIGCOUCH = True
 
 LOCAL_APPS = ()
+
+REPORTING_DATABASES = {
+    'default': 'default',
+    'ucr': 'default',
+    'aaa-data': 'default',
+    'icds-ucr-citus': 'icds-ucr',
+}

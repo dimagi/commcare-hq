@@ -8,7 +8,7 @@ window.angular.module('icdsApp').factory('navigationService', function () {
             if (Object.keys(params).length > 0) {
                 page_path += '?';
             }
-            window.angular.forEach(params, function(v, k) {
+            window.angular.forEach(params, function (v, k) {
                 if (v === undefined || v === null) {
                     v = '';
                 }
@@ -33,6 +33,9 @@ window.angular.module('icdsApp').factory('navigationService', function () {
                 }
             }
             return awcReportPath;
+        },
+        isMapDisplayed: function (path) {
+            return path.indexOf('/map') !== -1;
         },
     };
 });

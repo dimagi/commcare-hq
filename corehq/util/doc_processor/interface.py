@@ -28,7 +28,7 @@ class BaseDocProcessor(metaclass=ABCMeta):
         """
         raise NotImplementedError
 
-    def process_bulk_docs(self, docs):
+    def process_bulk_docs(self, docs, progress_logger):
         """Process a batch of documents. The default implementation passes
         each doc in turn to ``process_doc``.
 
@@ -192,8 +192,8 @@ class BulkDocProcessor(DocumentProcessorController):
             self.changes.append(doc)
 
     def process_chunk(self):
-        """Called by the BulkDocProcessorLogHandler"""
-        ok = self.doc_processor.process_bulk_docs(self.changes)
+        """Called by the BulkDocProcessorEventHandler"""
+        ok = self.doc_processor.process_bulk_docs(self.changes, self.progress.logger)
         if ok:
             self.progress.add(len(self.changes))
             self.changes = []

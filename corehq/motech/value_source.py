@@ -220,6 +220,20 @@ class FormQuestion(ValueSource):
               metadata, like "received_on" and "userID", are prefixed
               with "/metadata".
 
+    The following metadata is available:
+
+    ===========   ================================================
+    Name          Description
+    ===========   ================================================
+    deviceID      An integer that identifies the user's device
+    timeStart     The device time when the user opened the form
+    timeEnd       The device time when the user completed the form
+    received_on   The server time when the submission was received
+    username      The user's username without domain suffix
+    userID        A large unique number expressed in hexadecimal
+    instanceID    A UUID identifying this form submission
+    ===========   ================================================
+
     """
     form_question: str
 
@@ -507,7 +521,9 @@ def get_form_question_values(form_json):
     # necessarily. If this causes problems we may need a more reliable way to get to it.
 
     metadata = {}
-    if 'meta' in form_json[TAG_FORM]:
+    if '@xmlns' in form_json[TAG_FORM]:
+        metadata['xmlns'] = form_json[TAG_FORM]['@xmlns']
+    if TAG_META in form_json[TAG_FORM]:
         metadata.update(form_json[TAG_FORM][TAG_META])
     if 'received_on' in form_json:
         metadata['received_on'] = form_json['received_on']

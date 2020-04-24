@@ -364,8 +364,7 @@ def update_user_reporting_data(app_build_id, app_id, build_profile_id, couch_use
 def _should_force_log_submission(request):
     return DeviceLogRequest.is_pending(
         request.domain,
-        request.couch_user.username,
-        request.GET.get('device_id', ''),
+        request.couch_user.username
     )
 
 

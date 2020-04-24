@@ -9,6 +9,7 @@ from corehq.apps.userreports.models import (
 )
 from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.form_processor.models import CommCareCaseSQL, XFormInstanceSQL
+from corehq.util.argparse_types import date_type
 
 FakeChange = namedtuple('FakeChange', ['id', 'document'])
 CASE_DOC_TYPE = 'CommCareCase'
@@ -29,6 +30,9 @@ class Command(BaseCommand):
                             help='Only retrieve from one database')
         parser.add_argument('--initiated-by', action='store', required=True, dest='initiated',
                             help='Who initiated the rebuild')
+        parser.add_argument('--start_date', type=date_type,
+                            help='Rebuild on forms received or cases updated on or after this date (inclusive).'
+                                 'Format YYYY-MM-DD.')
 
     def handle(self, domain, type_, case_type_or_xmlns, data_source_ids, **options):
         assert type_ in ('xform', 'case')
@@ -52,7 +56,7 @@ class Command(BaseCommand):
 
         self.config_ids = [config._id for config in configs]
         ids = []
-        for id_ in self._get_ids_to_process():
+        for id_ in self._get_ids_to_process(options['start_date']):
             ids.append(id_)
             if len(ids) > 999:
                 self._save_ids(ids)
@@ -77,13 +81,13 @@ class Command(BaseCommand):
                 change = FakeChange(id_, self.fake_change_doc)
                 AsyncIndicator.update_from_kafka_change(change, self.config_ids)
 
-    def _get_ids_to_process(self):
+    def _get_ids_to_process(self, start_date):
         from corehq.sql_db.util import get_db_aliases_for_partitioned_query
         dbs = get_db_aliases_for_partitioned_query()
         if self.database:
             dbs = [db for db in dbs if db == self.database]
         for db in dbs:
-            ids_ = self._get_ids(db)
+            ids_ = self._get_ids(db, start_date)
             num_ids = len(ids_)
             print("processing %d docs from db %s" % (num_ids, db))
             for i, id_ in enumerate(ids_):
@@ -91,18 +95,22 @@ class Command(BaseCommand):
                 if i % 1000 == 0:
                     print("processed %d / %d docs from db %s" % (i, num_ids, db))
 
-    def _get_ids(self, db):
+    def _get_ids(self, db, start_date):
         if self.referenced_type == CASE_DOC_TYPE:
-            return (
+            cases = (
                 CommCareCaseSQL.objects
                 .using(db)
                 .filter(domain=self.domain, type=self.case_type_or_xmlns)
-                .values_list('case_id', flat=True)
             )
+            if start_date:
+                cases = cases.filter(server_modified_on__gte=start_date)
+            return cases.values_list('case_id', flat=True)
         elif self.referenced_type == XFORM_DOC_TYPE:
-            return(
+            forms = (
                 XFormInstanceSQL.objects
                 .using(db)
                 .filter(domain=self.domain, xmlns=self.case_type_or_xmlns)
-                .values_list('form_id', flat=True)
             )
+            if start_date:
+                forms = forms.filter(received_on__gte=start_date)
+            return forms.values_list('form_id', flat=True)

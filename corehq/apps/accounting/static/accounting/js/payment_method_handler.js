@@ -30,6 +30,28 @@ hqDefine('accounting/js/payment_method_handler', [
         self.paymentIsNotComplete = ko.computed(function () {
             return ! self.paymentIsComplete();
         });
+        self.paymentIsComplete.subscribe(function (value) {
+            if (value) {
+                // Since there is no great way to connect this model with
+                // the subscription summary info, use this hacky way to update
+                // the total of the general amount so the user is
+                // aware something happened.
+                var $generalCredit = $('.js-general-credit');
+
+                // make sure this only applies on pages where that class is present
+                if ($generalCredit && self.costItem() && self.costItem().general_credit) {
+
+                    var addedAmount = self.costItem().general_credit().addAmount(),
+                        newValue = parseFloat($generalCredit.text().replace('USD ', '').trim()) + parseFloat(addedAmount);
+                    $generalCredit.text('USD ' + newValue.toFixed(2));
+
+                    // make sure we reset the credit amount to zero so that the next
+                    // time the user opens the form (before a page refresh),
+                    // the value isn't already set
+                    self.costItem().general_credit().addAmount(0);
+                }
+            }
+        });
         self.paymentProcessing = ko.observable(false);
 
         self.serverErrorMsg = ko.observable();

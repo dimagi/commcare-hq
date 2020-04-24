@@ -74,7 +74,7 @@ class CallCenterOptionsController(EmwfOptionsController):
 
     def get_locations_query(self, query):
         return (SQLLocation.objects
-                .filter_path_by_user_input(self.domain, query)
+                .filter_by_user_input(self.domain, query)
                 .filter(location_type__shares_cases=True))
 
     def group_es_query(self, query):

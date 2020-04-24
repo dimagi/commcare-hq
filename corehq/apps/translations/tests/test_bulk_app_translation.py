@@ -225,21 +225,6 @@ class BulkAppTranslationUploadErrorTest(BulkAppTranslationTestBase):
         ("bad_sheet_name", (
          ("question1-label", "in english", "", "", ""))))
 
-    def test_sheet_formats(self):
-        expected_messages = [
-            "File contains only one sheet. If you are uploading a single-language file, please select a language."
-        ]
-        self.upload_raw_excel_translations(self.factory.app, self.single_sheet_headers,
-                                           self.single_sheet_data,
-                                           expected_messages=expected_messages)
-        expected_messages = [
-            "Expected a single sheet. If you are uploading a multi-sheet file, please select 'All Languages'."
-        ]
-        self.upload_raw_excel_translations(self.factory.app, self.multi_sheet_headers,
-                                           self.multi_sheet_data,
-                                           expected_messages=expected_messages,
-                                           lang=self.lang)
-
     def test_sheet_errors(self):
         expected_messages = [
             'Invalid menu in row "menu9", skipping row.',

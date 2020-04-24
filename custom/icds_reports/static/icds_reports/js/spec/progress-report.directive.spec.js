@@ -2,6 +2,7 @@
 "use strict";
 
 var pageData = hqImport('hqwebapp/js/initial_page_data');
+var utils = hqImport('icds_reports/js/spec/utils');
 
 describe('Progress Report Directive', function () {
 
@@ -11,9 +12,13 @@ describe('Progress Report Directive', function () {
     pageData.registerUrl('icds_locations', 'icds_locations');
 
     beforeEach(module('icdsApp', function ($provide) {
+        utils.provideDefaultConstants($provide, {});
         $provide.constant("userLocationId", null);
         $provide.constant("haveAccessToAllLocations", false);
         $provide.constant("isAlertActive", false);
+        $provide.constant("factSheetSections", {
+            sections: [],
+        });
     }));
 
     beforeEach(inject(function ($rootScope, $compile, _$httpBackend_, _$location_) {

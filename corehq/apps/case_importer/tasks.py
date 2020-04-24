@@ -1,52 +1,45 @@
-from celery import states
-from celery.exceptions import Ignore
 from celery.schedules import crontab
 from celery.task import task
-
-from soil.progress import update_task_state
 
 from corehq.apps.hqadmin.tasks import (
     AbnormalUsageAlert,
     send_abnormal_usage_alert,
 )
-from corehq.util.datadog.gauges import datadog_gauge_task
+from corehq.util.metrics import metrics_gauge_task
 
 from .do_import import do_import
 from .exceptions import ImporterError
 from .tracking.analytics import get_case_upload_files_total_bytes
 from .tracking.case_upload_tracker import CaseUpload
+from .tracking.task_status import make_task_status_success
 from .util import get_importer_error_message, exit_celery_with_error_message
 
 
 @task(serializer='pickle', queue='case_import_queue')
 def bulk_import_async(config, domain, excel_id):
     case_upload = CaseUpload.get(excel_id)
+    result_stored = False
     try:
         case_upload.check_file()
-    except ImporterError as e:
-        return exit_celery_with_error_message(bulk_import_async, get_importer_error_message(e))
-
-    try:
         with case_upload.get_spreadsheet() as spreadsheet:
             result = do_import(spreadsheet, config, domain, task=bulk_import_async,
                                record_form_callback=case_upload.record_form)
 
         _alert_on_result(result, domain)
-
-        # return compatible with soil
-        return {
-            'messages': result
-        }
+        # save the success result into the CaseUploadRecord
+        case_upload.store_task_result(make_task_status_success(result))
+        result_stored = True
     except ImporterError as e:
         return exit_celery_with_error_message(bulk_import_async, get_importer_error_message(e))
     finally:
-        store_task_result.delay(excel_id)
+        if not result_stored:
+            store_task_result_if_failed.delay(excel_id)
 
 
 @task(serializer='pickle', queue='case_import_queue')
-def store_task_result(upload_id):
+def store_task_result_if_failed(upload_id):
     case_upload = CaseUpload.get(upload_id)
-    case_upload.store_task_result()
+    case_upload.store_task_result_if_failed()
 
 
 def _alert_on_result(result, domain):
@@ -64,7 +57,7 @@ def _alert_on_result(result, domain):
         send_abnormal_usage_alert.delay(alert)
 
 
-total_bytes = datadog_gauge_task(
+total_bytes = metrics_gauge_task(
     'commcare.case_importer.files.total_bytes',
     get_case_upload_files_total_bytes,
     run_every=crontab(minute=0)

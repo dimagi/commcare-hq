@@ -1,5 +1,3 @@
-import json
-
 from memoized import memoized
 
 from corehq.apps.es import GroupES, UserES, groups
@@ -37,16 +35,19 @@ def paginate_options(data_sources, query, start, size):
 
 
 class EmwfOptionsController(object):
+    namespace_locations = True
+    case_sharing_only = False
 
-    def __init__(self, request, domain, search):
+    def __init__(self, request, domain, search, case_sharing_only=False):
         self.request = request
         self.domain = domain
         self.search = search
+        self.case_sharing_only = case_sharing_only
 
     @property
     @memoized
     def utils(self):
-        return EmwfUtils(self.domain)
+        return EmwfUtils(self.domain, namespace_locations=self.namespace_locations)
 
     def get_all_static_options(self, query):
         return [user_type for user_type in self.utils.static_options
@@ -83,45 +84,13 @@ class EmwfOptionsController(object):
                         .sort("name.exact"))
         return [self.utils.reporting_group_tuple(g) for g in groups_query.run().hits]
 
-    @staticmethod
-    def _get_location_specific_custom_filters(query):
-        query_sections = query.split("/")
-        # first section would be u'"parent' or u'"parent_name"', so split with " to get
-        # ['', 'parent'] or ['', 'parent_name', '']
-        parent_name_section_splits = query_sections[0].split('"')
-        parent_name = parent_name_section_splits[1]
-        try:
-            search_query = query_sections[1]
-        except IndexError:
-            # when user has entered u'"parent_name"' without trailing "/"
-            # consider it same as u'"parent_name"/'
-            search_query = "" if len(parent_name_section_splits) == 3 else None
-        return parent_name, search_query
-
     def get_locations_query(self, query):
-        show_inactive = json.loads(self.request.GET.get('show_inactive', 'false'))
-        if show_inactive:
-            included_objects = SQLLocation.inactive_objects
-        else:
-            included_objects = SQLLocation.active_objects
-        if self.search.startswith('"'):
-            parent_name, search_query = self._get_location_specific_custom_filters(query)
-            if search_query is None:
-                # autocomplete parent names while user is looking for just the parent name
-                # and has not yet entered any child location name
-                locations = included_objects.filter(name__istartswith=parent_name, domain=self.domain)
-            else:
-                # if any parent locations with name entered then
-                #    find locations under them
-                # else just return empty queryset
-                parents = included_objects.filter(name__iexact=parent_name, domain=self.domain)
-                if parent_name and parents.count():
-                    descendants = included_objects.get_queryset_descendants(parents, include_self=True)
-                    locations = descendants.filter_by_user_input(self.domain, search_query)
-                else:
-                    return included_objects.none()
-        else:
-            locations = included_objects.filter_path_by_user_input(self.domain, query)
+        show_inactive = self.request.GET.get('show_inactive') == 'true'
+        locations = (SQLLocation.objects
+                     .filter_by_user_input(self.domain, query)
+                     .filter(is_archived=show_inactive))
+        if self.case_sharing_only:
+            locations = locations.filter(location_type__shares_cases=True)
         return locations.accessible_to_user(self.domain, self.request.couch_user)
 
     def get_locations_size(self, query):

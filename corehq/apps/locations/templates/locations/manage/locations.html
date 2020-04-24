@@ -104,7 +104,7 @@
 
         <select type="text"
                 id="location_search_select"
-                data-bind="value: l__selected_location_id"
+                data-bind="value: selected_location_id"
                 class="span4 form-control"
                 placeholder="Specify location"
                 name="location_search"
@@ -115,13 +115,7 @@
         </button>
 
         <span class="help-block">
-          <i class="fa fa-info-circle"></i>
-          {% blocktrans %}
-            To quick search for a location, write your query as "parent"/descendant.
-            For more info, see the
-            <a href="https://confluence.dimagi.com/display/commcarepublic/Exact+Search+for+Locations" target="_blank">Location Search</a>
-            help page.
-          {% endblocktrans %}
+          {{ location_search_help }}
         </span>
 
       </div>

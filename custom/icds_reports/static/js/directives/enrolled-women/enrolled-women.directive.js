@@ -38,7 +38,7 @@ function EnrolledWomenController($scope, $routeParams, $location, $filter, demog
             {
                 indicator_name: 'Percentage of registered pregnant women who are enrolled for Anganwadi Services: ',
                 indicator_value: percent,
-            }
+            },
         ];
     };
 
@@ -50,7 +50,7 @@ function EnrolledWomenController($scope, $routeParams, $location, $filter, demog
         'captionContent': ' Of the total number of pregnant women, the percentage of pregnant women enrolled for Anganwadi Services',
     };
     vm.chartOptions = vm.getChartOptions(options);
-    vm.chartOptions.chart.width = 1100;
+    vm.chartOptions.chart.width = isMobile ? '' : 1100;
     vm.chartOptions.chart.color = d3.scale.category10().range();
 
     vm.getDisableIndex = function () {
@@ -65,7 +65,7 @@ function EnrolledWomenController($scope, $routeParams, $location, $filter, demog
         return i;
     };
 
-    vm.tooltipContent = function(monthName, day) {
+    vm.tooltipContent = function (monthName, day) {
         return vm.createTooltipContent(
             monthName,
             [{

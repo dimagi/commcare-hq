@@ -66,7 +66,7 @@ class MobileRecoveryMeasureAdmin(admin.ModelAdmin):
 
 class DeviceLogRequestAdmin(admin.ModelAdmin):
     model = DeviceLogRequest
-    list_display = ['domain', 'username', 'device_id', 'created_on']
+    list_display = ['domain', 'username', 'created_on']
     list_filter = ['domain', 'username']
 
 

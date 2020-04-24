@@ -1,6 +1,6 @@
 from django.conf import settings
 from django.contrib import messages
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, JsonResponse
 from django.http.response import HttpResponse
 from django.shortcuts import redirect
 from django.urls import reverse
@@ -8,6 +8,7 @@ from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy, ugettext_noop
+from django.views.decorators.http import require_GET
 from django.views.generic import TemplateView
 
 from couchexport.models import Format
@@ -23,6 +24,7 @@ from corehq.apps.domain.views import BaseDomainView, DomainViewMixin
 from corehq.apps.locations.permissions import location_safe
 from corehq.util.download import get_download_response
 from custom.icds.const import (
+    DISPLAY_CHOICE_CUSTOM,
     DISPLAY_CHOICE_FOOTER,
     DISPLAY_CHOICE_LIST,
     FILE_TYPE_CHOICE_ZIP,
@@ -30,6 +32,7 @@ from custom.icds.const import (
 from custom.icds.forms import HostedCCZForm, HostedCCZLinkForm
 from custom.icds.models import (
     HostedCCZ,
+    HostedCCZCustomSupportingFile,
     HostedCCZLink,
     HostedCCZSupportingFile,
 )
@@ -85,6 +88,37 @@ class ManageHostedCCZLink(BaseDomainView):
         return self.get(request, *args, **kwargs)
 
 
+@require_GET
+@toggles.MANAGE_CCZ_HOSTING.required_decorator()
+def ccz_hostings_json(request, domain):
+    limit = int(request.GET.get('limit', 10))
+    page = int(request.GET.get('page', 1))
+
+    if request.GET.get('link_id'):
+        hosted_cczs = HostedCCZ.objects.filter(link_id=request.GET.get('link_id'))
+    else:
+        hosted_cczs = HostedCCZ.objects.filter(link__domain=domain)
+    if request.GET.get('app_id'):
+        hosted_cczs = hosted_cczs.filter(app_id=request.GET.get('app_id'))
+    version = request.GET.get('version')
+    if version:
+        hosted_cczs = hosted_cczs.filter(version=request.GET.get('version'))
+    if request.GET.get('profile_id'):
+        hosted_cczs = hosted_cczs.filter(profile_id=request.GET.get('profile_id'))
+    if request.GET.get('status'):
+        hosted_cczs = hosted_cczs.filter(status=request.GET.get('status'))
+
+    total = hosted_cczs.count()
+    skip = (page - 1) * limit
+    hosted_cczs = hosted_cczs[skip:skip + limit]
+    hosted_cczs = [h.to_json() for h in hosted_cczs]
+
+    return JsonResponse({
+        'hostings': hosted_cczs,
+        'total': total,
+    })
+
+
 class EditHostedCCZLink(ManageHostedCCZLink):
     urlname = "edit_hosted_ccz_link"
 
@@ -137,25 +171,10 @@ class ManageHostedCCZ(BaseDomainView):
                 } for _id, details in build_doc['build_profiles'].items()]
 
     def get_context_data(self, **kwargs):
-        app_names = {app.id: app.name for app in get_brief_apps_in_domain(self.domain, include_remote=True)}
-        if self.request.GET.get('link_id'):
-            hosted_cczs = HostedCCZ.objects.filter(link_id=self.request.GET.get('link_id'))
-        else:
-            hosted_cczs = HostedCCZ.objects.filter(link__domain=self.domain)
-        if self.request.GET.get('app_id'):
-            hosted_cczs = hosted_cczs.filter(app_id=self.request.GET.get('app_id'))
-        version = self.request.GET.get('version')
-        if version:
-            hosted_cczs = hosted_cczs.filter(version=self.request.GET.get('version'))
-        if self.request.GET.get('profile_id'):
-            hosted_cczs = hosted_cczs.filter(profile_id=self.request.GET.get('profile_id'))
-        if self.request.GET.get('status'):
-            hosted_cczs = hosted_cczs.filter(status=self.request.GET.get('status'))
-        hosted_cczs = [h.to_json(app_names) for h in hosted_cczs]
+        version = None      # TODO: handle search from js
         return {
             'form': self.form,
             'domain': self.domain,
-            'hosted_cczs': hosted_cczs,
             'selected_build_details': ({'id': version, 'text': version} if version else None),
             'initial_app_profile_details': self._get_initial_app_profile_details(version),
         }
@@ -175,10 +194,6 @@ class HostedCCZView(DomainViewMixin, TemplateView):
     page_title = ugettext_lazy("CCZ Hosting")
     template_name = 'icds/hosted_ccz.html'
 
-    @cached_property
-    def hosted_ccz_link(self):
-        return HostedCCZLink.objects.get(identifier=self.identifier)
-
     def get(self, request, *args, **kwargs):
         self.identifier = kwargs.get('identifier')
         try:
@@ -195,27 +210,41 @@ class HostedCCZView(DomainViewMixin, TemplateView):
         response['WWW-Authenticate'] = 'Basic realm="%s"' % ''
         return response
 
+    @cached_property
+    def hosted_ccz_link(self):
+        return HostedCCZLink.objects.get(identifier=self.identifier)
+
+    def get_context_data(self, **kwargs):
+        return {
+            'page_title': self._page_title,
+            'hosted_cczs': [h.to_json() for h in HostedCCZ.objects.filter(link=self.hosted_ccz_link)
+                            if h.utility.file_exists()],
+            'icds_env': settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS,
+            'supporting_files': self._get_supporting_files(),
+            'footer_files': self._get_files_for(DISPLAY_CHOICE_FOOTER),
+        }
+
     @property
     def _page_title(self):
         return self.hosted_ccz_link.page_title or _("%s CommCare Files" % self.identifier.capitalize())
 
+    def _get_supporting_files(self):
+        supporting_files = self._get_files_for(DISPLAY_CHOICE_LIST)
+        custom_supporting_files = {
+            custom_file.file.file_name: self._download_link(custom_file.file.pk)
+            for custom_file in HostedCCZCustomSupportingFile.objects.filter(link=self.hosted_ccz_link)
+        }
+        supporting_files.update(custom_supporting_files)
+        return supporting_files
+
     def _get_files_for(self, display):
         return {
-            supporting_file.file_name: reverse('hosted_ccz_download_supporting_files',
-                                               args=[supporting_file.domain, supporting_file.pk])
+            supporting_file.file_name: self._download_link(supporting_file.pk)
             for supporting_file in HostedCCZSupportingFile.objects.filter(domain=self.domain, display=display)
         }
 
-    def get_context_data(self, **kwargs):
-        app_names = {app.id: app.name for app in get_brief_apps_in_domain(self.domain, include_remote=True)}
-        return {
-            'page_title': self._page_title,
-            'hosted_cczs': [h.to_json(app_names) for h in HostedCCZ.objects.filter(link=self.hosted_ccz_link)
-                            if h.utility.file_exists()],
-            'icds_env': settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS,
-            'supporting_list_files': self._get_files_for(DISPLAY_CHOICE_LIST),
-            'supporting_footer_files': self._get_files_for(DISPLAY_CHOICE_FOOTER),
-        }
+    def _download_link(self, pk):
+        return reverse('hosted_ccz_download_supporting_files', args=[self.domain, pk])
 
 
 @login_and_domain_required
@@ -265,5 +294,6 @@ def download_ccz_supporting_files(request, domain, hosting_supporting_file_id):
         content_format = Format('', Format.ZIP, '', True)
     else:
         content_format = Format('', Format.HTML, '', True)
-    return get_download_response(ccz_utility.get_file(), ccz_utility.get_file_size(), content_format,
+    file = ccz_utility.get_file()
+    return get_download_response(file, file.content_length, content_format,
                                  file_name, request)

@@ -102,9 +102,7 @@ class LocationAggregationDistributedHelper(BaseICDSAggregationDistributedHelper)
 
     @property
     def ucr_aww_tablename(self):
-        doc_id = StaticDataSourceConfiguration.get_doc_id(self.domain, self.ucr_aww_table)
-        config, _ = get_datasource_config(doc_id, self.domain)
-        return get_table_name(self.domain, config.table_id)
+        return get_table_name(self.domain, self.ucr_aww_table)
 
     def delete_old_locations(self):
         return "DELETE FROM \"{local_tablename}\"".format(local_tablename=self.local_tablename)
@@ -151,6 +149,9 @@ class LocationAggregationDistributedHelper(BaseICDSAggregationDistributedHelper)
             ('state_map_location_name', 'state_map_location_name'),
             ('aww_name', 'aww_name'),
             ('contact_phone_number', 'contact_phone_number'),
+            ('awc_ward_1', 'awc_ward_1'),
+            ('awc_ward_2', 'awc_ward_2'),
+            ('awc_ward_3', 'awc_ward_3'),
             ('state_is_test', 'state_is_test'),
             ('district_is_test', 'district_is_test'),
             ('block_is_test', 'block_is_test'),
@@ -177,12 +178,18 @@ class LocationAggregationDistributedHelper(BaseICDSAggregationDistributedHelper)
         return """
             UPDATE {temporary_tablename} awc_loc SET
               aww_name = ut.aww_name,
-              contact_phone_number = ut.contact_phone_number
+              contact_phone_number = ut.contact_phone_number,
+              awc_ward_1 = ut.awc_ward_1,
+              awc_ward_2 = ut.awc_ward_2,
+              awc_ward_3 = ut.awc_ward_3
             FROM (
               SELECT
                 commcare_location_id,
                 aww_name,
-                contact_phone_number
+                contact_phone_number,
+                awc_ward_1,
+                awc_ward_2,
+                awc_ward_3
               FROM "{ucr_aww_tablename}"
             ) ut
             WHERE ut.commcare_location_id = awc_loc.doc_id
@@ -214,6 +221,9 @@ class LocationAggregationDistributedHelper(BaseICDSAggregationDistributedHelper)
             ('state_map_location_name', 'state_map_location_name'),
             ('aww_name', 'NULL'),
             ('contact_phone_number', 'NULL'),
+            ('awc_ward_1', 'NULL'),
+            ('awc_ward_2', 'NULL'),
+            ('awc_ward_3', 'NULL'),
             ('state_is_test', 'MAX(state_is_test)'),
             (
                 'district_is_test',

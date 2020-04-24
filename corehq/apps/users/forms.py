@@ -12,7 +12,7 @@ from django.template.loader import get_template
 from django.urls import reverse
 from django.utils.functional import lazy
 from django.utils.safestring import mark_safe
-from django.utils.translation import string_concat
+from django.utils.text import format_lazy
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy, ugettext_noop
 
@@ -24,6 +24,7 @@ from crispy_forms.layout import Fieldset, Layout, Submit
 from django_countries.data import COUNTRIES
 from memoized import memoized
 
+from corehq.toggles import TWO_STAGE_USER_PROVISIONING
 from dimagi.utils.django.fields import TrimmedCharField
 
 from corehq import toggles
@@ -42,6 +43,7 @@ from corehq.apps.hqwebapp.widgets import (
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import user_can_access_location_id
 from corehq.apps.programs.models import Program
+from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
 from corehq.apps.users.models import CouchUser, UserRole
 from corehq.apps.users.util import cc_user_domain, format_username
 from custom.nic_compliance.forms import EncodedPasswordChangeFormMixin
@@ -243,7 +245,8 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
 
     def __init__(self, *args, **kwargs):
         self.user = kwargs['existing_user']
-        api_key = kwargs.pop('api_key') if 'api_key' in kwargs else None
+        api_key_status = kwargs.pop('api_key_status') if 'api_key_status' in kwargs else None
+        api_key_exists = kwargs.pop('api_key_exists') if 'api_key_exists' in kwargs else None
         super(UpdateMyAccountInfoForm, self).__init__(*args, **kwargs)
         self.username = self.user.username
 
@@ -253,15 +256,26 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
                 ugettext_lazy('Username'), self.username)
             )
 
+        api_key_button = [
+            twbscrispy.StrictButton(
+                ugettext_lazy('Generate New API Key'),
+                type="button",
+                id='generate-api-key',
+                css_class='btn-default',
+            ),
+        ]
+        if api_key_exists:
+            api_key_button.append(
+                crispy.HTML('&nbsp;&nbsp;{}'.format(ugettext_lazy(
+                    'NOTE: Generating a new API Key will cause the '
+                    'current Key to become inactive.'
+                ))),
+            )
+
         api_key_controls = [
-            hqcrispy.StaticField(ugettext_lazy('API Key'), api_key),
+            hqcrispy.StaticField(ugettext_lazy('API Key'), api_key_status),
             hqcrispy.FormActions(
-                twbscrispy.StrictButton(
-                    ugettext_lazy('Generate API Key'),
-                    type="button",
-                    id='generate-api-key',
-                    css_class='btn-default',
-                ),
+                crispy.Div(*api_key_button),
                 css_class="form-group"
             ),
         ]
@@ -379,10 +393,15 @@ class SetUserPasswordForm(EncodedPasswordChangeFormMixin, SetPasswordForm):
 
         if self.project.strong_mobile_passwords:
             self.fields['new_password1'].widget = forms.TextInput()
-            self.fields['new_password1'].help_text = mark_safe_lazy(string_concat('<i class="fa fa-warning"></i>',
-                 ugettext_lazy("This password is automatically generated. Please copy it or create your own. It will not be shown again."),
-                 '<br /><span data-bind="text: passwordHelp, css: color">'
-            ))
+            self.fields['new_password1'].help_text = mark_safe_lazy(
+                format_lazy(
+                    ('<i class="fa fa-warning"></i>{}<br />'
+                     '<span data-bind="text: passwordHelp, css: color">'),
+                    ugettext_lazy(
+                        "This password is automatically generated. "
+                        "Please copy it or create your own. It will not be shown again."),
+                )
+            )
             initial_password = generate_strong_password()
 
         self.helper = FormHelper()
@@ -522,6 +541,33 @@ class NewMobileWorkerForm(forms.Form):
         label=ugettext_noop("Location"),
         required=False,
     )
+    force_account_confirmation = forms.BooleanField(
+        label=ugettext_noop("Require Account Confirmation?"),
+        help_text=ugettext_noop(
+            "The user's account will not be active until "
+            "they have confirmed their email and set a password."
+        ),
+        required=False,
+    )
+    email = forms.EmailField(
+        label=ugettext_noop("Email"),
+        required=False,
+        help_text="""
+            <span data-bind="visible: $root.emailStatus() !== $root.STATUS.NONE">
+                <i class="fa fa-exclamation-triangle"
+                   data-bind="visible: $root.emailStatus() === $root.STATUS.ERROR"></i>
+                <!-- ko text: $root.emailStatusMessage --><!-- /ko -->
+            </span>
+        """
+    )
+    send_account_confirmation_email = forms.BooleanField(
+        label=ugettext_noop("Send Account Confirmation Email Now?"),
+        help_text=ugettext_noop(
+            "The user will be sent their account confirmation email now. "
+            "Otherwise it must be sent manually from the Mobile Worker 'Deactivated Users' list."
+        ),
+        required=False,
+    )
     new_password = forms.CharField(
         widget=forms.PasswordInput(),
         required=True,
@@ -531,7 +577,7 @@ class NewMobileWorkerForm(forms.Form):
 
     def __init__(self, project, request_user, *args, **kwargs):
         super(NewMobileWorkerForm, self).__init__(*args, **kwargs)
-        email_string = "@{}.commcarehq.org".format(project.name)
+        email_string = "@{}.{}".format(project.name, settings.HQ_ACCOUNT_ROOT)
         max_chars_username = 80 - len(email_string)
         self.project = project
         self.domain = self.project.name
@@ -543,16 +589,21 @@ class NewMobileWorkerForm(forms.Form):
         if self.project.strong_mobile_passwords:
             # Use normal text input so auto-generated strong password is visible
             self.fields['new_password'].widget = forms.TextInput()
-            self.fields['new_password'].help_text = mark_safe_lazy(string_concat('<i class="fa fa-warning"></i>',
-                ugettext_lazy('This password is automatically generated. Please copy it or create your own. It will not be shown again.'),
-                '<br />'
-            ))
+            self.fields['new_password'].help_text = mark_safe_lazy(
+                format_lazy(
+                    '<i class="fa fa-warning"></i>{}<br />',
+                    ugettext_lazy(
+                        'This password is automatically generated. '
+                        'Please copy it or create your own. It will not be shown again.'),
+                )
+            )
 
         if project.uses_locations:
             self.fields['location_id'].widget = forms.Select()
             location_field = crispy.Field(
                 'location_id',
                 data_bind='value: location_id',
+                data_query_url=reverse('location_search', args=[self.domain]),
             )
         else:
             location_field = crispy.Hidden(
@@ -560,6 +611,45 @@ class NewMobileWorkerForm(forms.Form):
                 '',
                 data_bind='value: location_id',
             )
+
+        self.two_stage_provisioning_enabled = TWO_STAGE_USER_PROVISIONING.enabled(self.domain)
+        if self.two_stage_provisioning_enabled:
+            confirm_account_field = crispy.Field(
+                'force_account_confirmation',
+                data_bind='checked: force_account_confirmation',
+            )
+            email_field = crispy.Div(
+                crispy.Field(
+                    'email',
+                    data_bind="value: email, valueUpdate: 'keyup'",
+                ),
+                data_bind='''
+                    css: {
+                        'has-error': $root.emailStatus() === $root.STATUS.ERROR,
+                    },
+                '''
+            )
+            send_email_field = crispy.Field(
+                'send_account_confirmation_email',
+                data_bind='checked: send_account_confirmation_email, enable: sendConfirmationEmailEnabled',
+            )
+        else:
+            confirm_account_field = crispy.Hidden(
+                'force_account_confirmation',
+                '',
+                data_bind='value: force_account_confirmation',
+            )
+            email_field = crispy.Hidden(
+                'email',
+                '',
+                data_bind='value: email',
+            )
+            send_email_field = crispy.Hidden(
+                'send_account_confirmation_email',
+                '',
+                data_bind='value: send_account_confirmation_email',
+            )
+
 
         self.helper = HQModalFormHelper()
         self.helper.form_tag = False
@@ -590,12 +680,15 @@ class NewMobileWorkerForm(forms.Form):
                     data_bind='value: last_name',
                 ),
                 location_field,
+                confirm_account_field,
+                email_field,
+                send_email_field,
                 crispy.Div(
                     hqcrispy.B3MultiField(
                         _("Password"),
                         InlineField(
                             'new_password',
-                            data_bind="value: password, valueUpdate: 'input'",
+                            data_bind="value: password, valueUpdate: 'input', enable: passwordEnabled",
                         ),
                         crispy.HTML('''
                             <p class="help-block" data-bind="if: $root.isSuggestedPassword">
@@ -619,6 +712,9 @@ class NewMobileWorkerForm(forms.Form):
                                         <i class="fa fa-warning"></i> {rules}
                                     <!-- /ko -->
                                 <!-- /ko -->
+                                <!-- ko if: $root.passwordStatus() === $root.STATUS.DISABLED -->
+                                    <i class="fa fa-warning"></i> {disabled}
+                                <!-- /ko -->
                             </p>
                         '''.format(
                             suggested=_("This password is automatically generated. Please copy it or create "
@@ -628,6 +724,8 @@ class NewMobileWorkerForm(forms.Form):
                             weak=_("Your password is too weak! Try adding numbers or symbols!"),
                             rules=_("Password Requirements: 1 special character, 1 number, 1 capital letter, "
                                 "minimum length of 8 characters."),
+                            disabled=_("Setting a password is disabled. "
+                                       "The user will set their own password on confirming their account email."),
                         )),
                         required=True,
                     ),
@@ -641,6 +739,12 @@ class NewMobileWorkerForm(forms.Form):
                 ),
             )
         )
+
+    def clean_email(self):
+        clean_email = self.cleaned_data['email'].strip().lower()
+        if clean_email:
+            validate_email(clean_email)
+        return clean_email
 
     def clean_location_id(self):
         location_id = self.cleaned_data['location_id']
@@ -778,7 +882,7 @@ class PrimaryLocationWidget(forms.Widget):
         self.source_css_id = source_css_id
         self.template = 'locations/manage/partials/drilldown_location_widget.html'
 
-    def render(self, name, value, attrs=None):
+    def render(self, name, value, attrs=None, renderer=None):
         initial_data = {}
         if value:
             try:
@@ -824,6 +928,7 @@ class CommtrackUserForm(forms.Form):
         self.fields['assigned_locations'].widget = LocationSelectWidget(
             self.domain, multiselect=True, id='id_assigned_locations'
         )
+        self.fields['assigned_locations'].help_text = ExpandedMobileWorkerFilter.location_search_help
         self.fields['primary_location'].widget = PrimaryLocationWidget(
             css_id='id_primary_location',
             source_css_id='id_assigned_locations',
@@ -1164,6 +1269,7 @@ class CommCareUserFilterForm(forms.Form):
         self.domain = kwargs.pop('domain')
         super(CommCareUserFilterForm, self).__init__(*args, **kwargs)
         self.fields['location_id'].widget = LocationSelectWidget(self.domain)
+        self.fields['location_id'].help_text = ExpandedMobileWorkerFilter.location_search_help
 
         roles = UserRole.by_domain(self.domain)
         self.fields['role_id'].choices = [('', _('All Roles'))] + [

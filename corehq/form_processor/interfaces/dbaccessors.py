@@ -37,46 +37,57 @@ class AbstractFormAccessor(metaclass=ABCMeta):
     Contract for common methods expected on FormAccessor(SQL/Couch). All methods
     should be static or classmethods.
     """
+    @staticmethod
     @abstractmethod
     def form_exists(form_id, domain=None):
         raise NotImplementedError
 
+    @staticmethod
     @abstractmethod
     def get_form(form_id):
         raise NotImplementedError
 
+    @staticmethod
     @abstractmethod
     def get_forms(form_ids, ordered=False):
         raise NotImplementedError
 
+    @staticmethod
     @abstractmethod
     def get_form_ids_for_user(domain, form_ids):
         raise NotImplementedError
 
+    @staticmethod
     @abstractmethod
     def get_deleted_form_ids_for_user(domain, user_id):
         raise NotImplementedError
 
+    @staticmethod
     @abstractmethod
     def get_form_ids_in_domain_by_type(domain, type_):
         raise NotImplementedError
 
+    @staticmethod
     @abstractmethod
     def get_forms_by_type(domain, type_, limit, recent_first=False):
         raise NotImplementedError
 
+    @staticmethod
     @abstractmethod
     def iter_forms_by_last_modified(start_datetime, end_datetime):
         raise NotImplementedError
 
+    @staticmethod
     @abstractmethod
-    def iter_form_ids_by_xmlns(self, xmlns=None):
+    def iter_form_ids_by_xmlns(domain, xmlns=None):
         raise NotImplementedError
 
+    @staticmethod
     @abstractmethod
     def get_with_attachments(form_id):
         raise NotImplementedError
 
+    @staticmethod
     @abstractmethod
     def get_attachment_content(form_id, attachment_name):
         """
@@ -85,22 +96,27 @@ class AbstractFormAccessor(metaclass=ABCMeta):
         """
         raise NotImplementedError
 
+    @staticmethod
     @abstractmethod
     def save_new_form(form):
         raise NotImplementedError
 
+    @staticmethod
     @abstractmethod
     def update_form_problem_and_state(form):
         raise NotImplementedError
 
+    @staticmethod
     @abstractmethod
     def set_archived_state(form, archive, user_id):
         raise NotImplementedError
 
+    @staticmethod
     @abstractmethod
     def soft_delete_forms(domain, form_ids, deletion_date=None, deletion_id=None):
         raise NotImplementedError
 
+    @staticmethod
     @abstractmethod
     def soft_undelete_forms(domain, form_ids):
         raise NotImplementedError
@@ -243,74 +259,92 @@ class AbstractCaseAccessor(metaclass=ABCMeta):
     Contract for common methods expected on CaseAccessor(SQL/Couch). All methods
     should be static or classmethods.
     """
+    @staticmethod
     @abstractmethod
     def get_case(case_id):
         raise NotImplementedError
 
+    @staticmethod
     @abstractmethod
     def get_cases(case_ids, ordered=False, prefetched_indices=None):
         raise NotImplementedError
 
+    @staticmethod
     @abstractmethod
     def case_exists(case_id):
         raise NotImplementedError
 
+    @staticmethod
     @abstractmethod
     def get_case_xform_ids(case_id):
         raise NotImplementedError
 
+    @staticmethod
     @abstractmethod
     def get_case_ids_in_domain(domain, type=None):
         raise NotImplementedError
 
+    @staticmethod
     @abstractmethod
     def get_case_ids_in_domain_by_owners(domain, owner_ids):
         raise NotImplementedError
 
+    @staticmethod
     @abstractmethod
     def get_open_case_ids_for_owner(domain, owner_id):
         raise NotImplementedError
 
+    @staticmethod
     @abstractmethod
     def get_closed_case_ids_for_owner(domain, owner_id):
         raise NotImplementedError
 
+    @staticmethod
     @abstractmethod
     def get_open_case_ids_in_domain_by_type(domain, case_type, owner_ids=None):
         raise NotImplementedError
 
+    @staticmethod
     @abstractmethod
     def get_open_case_ids(case_ids):
         raise NotImplementedError
 
+    @staticmethod
     @abstractmethod
     def get_related_indices(case_ids, exclude_indices):
         raise NotImplementedError
 
+    @staticmethod
     @abstractmethod
     def get_case_ids_modified_with_owner_since(domain, owner_id, reference_date):
         raise NotImplementedError
 
+    @staticmethod
     @abstractmethod
     def get_extension_case_ids(domain, case_ids, include_closed):
         raise NotImplementedError
 
+    @staticmethod
     @abstractmethod
     def get_indexed_case_ids(domain, case_ids):
         raise NotImplementedError
 
+    @staticmethod
     @abstractmethod
     def get_reverse_indexed_cases(domain, case_ids, case_types=None, is_closed=None):
         raise NotImplementedError
 
+    @staticmethod
     @abstractmethod
     def get_last_modified_dates(domain, case_ids):
         raise NotImplementedError
 
+    @staticmethod
     @abstractmethod
     def get_all_reverse_indices_info(domain, case_ids):
         raise NotImplementedError
 
+    @staticmethod
     @abstractmethod
     def get_attachment_content(case_id, attachment_id):
         """
@@ -319,26 +353,32 @@ class AbstractCaseAccessor(metaclass=ABCMeta):
         """
         raise NotImplementedError
 
+    @staticmethod
     @abstractmethod
     def get_case_by_domain_hq_user_id(domain, user_id, case_type):
         raise NotImplementedError
 
+    @staticmethod
     @abstractmethod
     def get_cases_by_external_id(domain, external_id, case_type=None):
         raise NotImplementedError
 
+    @staticmethod
     @abstractmethod
     def soft_delete_cases(domain, case_ids, deletion_date=None, deletion_id=None):
         raise NotImplementedError
 
+    @staticmethod
     @abstractmethod
     def soft_undelete_cases(domain, case_ids):
         raise NotImplementedError
 
+    @staticmethod
     @abstractmethod
     def get_deleted_case_ids_by_owner(domain, owner_id):
         raise NotImplementedError
 
+    @staticmethod
     @abstractmethod
     def get_case_owner_ids(domain):
         raise NotImplementedError
@@ -502,14 +542,17 @@ def get_cached_case_attachment(domain, case_id, attachment_id, is_image=False):
 
 class AbstractLedgerAccessor(metaclass=ABCMeta):
 
+    @staticmethod
     @abstractmethod
     def get_transactions_for_consumption(domain, case_id, product_id, section_id, window_start, window_end):
         raise NotImplementedError
 
+    @staticmethod
     @abstractmethod
     def get_ledger_value(case_id, section_id, entry_id):
         raise NotImplementedError
 
+    @staticmethod
     @abstractmethod
     def get_ledger_transactions_for_case(case_id, section_id=None, entry_id=None):
         """
@@ -517,10 +560,12 @@ class AbstractLedgerAccessor(metaclass=ABCMeta):
         """
         raise NotImplementedError
 
+    @staticmethod
     @abstractmethod
     def get_latest_transaction(case_id, section_id, entry_id):
         raise NotImplementedError
 
+    @staticmethod
     @abstractmethod
     def get_current_ledger_state(case_ids, ensure_form_id=False):
         """
@@ -539,6 +584,7 @@ class AbstractLedgerAccessor(metaclass=ABCMeta):
         """
         raise NotImplementedError
 
+    @staticmethod
     @abstractmethod
     def get_ledger_values_for_cases(case_ids, section_ids=None, entry_ids=None, date_start=None, date_end=None):
         raise NotImplementedError

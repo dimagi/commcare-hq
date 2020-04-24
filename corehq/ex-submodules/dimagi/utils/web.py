@@ -27,6 +27,10 @@ def get_site_domain():
     return settings.BASE_ADDRESS
 
 
+def get_static_url_prefix():
+    return '' if settings.STATIC_CDN else 'http://' + get_site_domain()
+
+
 def render_to_response(req, template_name, dictionary=None, **kwargs):
     """Proxies calls to django.shortcuts.render_to_response, to avoid having
        to include the global variables in every request. This is a giant hack,

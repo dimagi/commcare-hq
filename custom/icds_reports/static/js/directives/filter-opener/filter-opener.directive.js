@@ -1,11 +1,11 @@
 
-function FilterOpenerController($scope) {
+function FilterOpenerController($scope, $rootScope) {
     $scope.openFilters = function () {
-        $scope.$broadcast('openFilterMenu');
+        $rootScope.$broadcast('openFilterMenu');
     };
 }
 
-FilterOpenerController.$inject = ['$scope'];
+FilterOpenerController.$inject = ['$scope', '$rootScope'];
 
 window.angular.module('icdsApp').directive("filterOpener",  ['templateProviderService', function (templateProviderService) {
     return {

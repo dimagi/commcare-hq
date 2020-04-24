@@ -13,12 +13,13 @@
   {% initial_page_data 'implement_password_obfuscation' implement_password_obfuscation %}
   {% initial_page_data 'pagination_limit_cookie_name' pagination_limit_cookie_name %}
   {% initial_page_data 'strong_mobile_passwords' strong_mobile_passwords %}
-  {% registerurl 'child_locations_for_select2' domain %}
+  {% registerurl 'location_search' domain %}
   {% registerurl 'mobile_workers' domain %}
   {% registerurl 'edit_commcare_user' domain '---' %}
   {% registerurl 'paginate_mobile_workers' domain %}
   {% registerurl 'activate_commcare_user' domain '---' %}
   {% registerurl 'deactivate_commcare_user' domain '---' %}
+  {% registerurl 'send_confirmation_email' domain '---' %}
 
   <div>
     <div class="row">
@@ -60,10 +61,14 @@
                 {% trans "Edit User Fields" %}
               </a>
             {% endif %}
-            {% if request|toggle_enabled:"BULK_USER_DELETE" %}
+            {% if request|toggle_enabled:"FILTERED_BULK_USER_DOWNLOAD" %}
               <a class="btn btn-danger" href="{% url "delete_commcare_users" domain %}">
                 <i class="fa fa-trash"></i>
                 {% trans "Bulk Delete Users" %}
+              </a>
+              <a class="btn btn-default" href="{% url "commcare_users_lookup" domain %}">
+                <i class="fa fa-search"></i>
+                {% trans "Bulk Lookup of Users" %}
               </a>
             {% endif %}
           {% endif %}
@@ -200,6 +205,7 @@
                   <span class="text-danger">
                     <i class="fa fa-exclamation-triangle"></i>
                     {% trans "ERROR" %}
+                    <!-- ko text: creation_error --><!--/ko-->
                   </span>
               </div>
             </td>
@@ -266,6 +272,9 @@
             <th class="col-xs-3">{% trans "First Name" %}</th>
             <th class="col-xs-2">{% trans "Last Name" %}</th>
             <th class="col-xs-2">{% trans 'Date Registered' %}</th>
+            {% if request|toggle_enabled:"TWO_STAGE_USER_PROVISIONING" %}
+            <th class="col-xs-2" data-bind="visible: deactivatedOnly()">{% trans 'Status' %}</th>
+            {% endif %}
             {% if not request.is_view_only %}<th class="col-xs-2">{% trans 'Action' %}</th>{% endif %}
           </tr>
           </thead>
@@ -280,8 +289,37 @@
             <td data-bind="text: first_name"></td>
             <td data-bind="text: last_name"></td>
             <td data-bind="text: date_registered"></td>
+            {% if request|toggle_enabled:"TWO_STAGE_USER_PROVISIONING" %}
+            <td data-bind="text: status, visible: $root.deactivatedOnly()"></td>
+            {% endif %}
             {% if not request.is_view_only %}
               <td>
+                {% if request|toggle_enabled:"TWO_STAGE_USER_PROVISIONING" %}
+                {% comment %}
+                This block should work regardless of feature flag status, but putting it behind the flag
+                to minimize the chance of any regressions.
+                {% endcomment %}
+                <div data-bind="visible: !is_active() && is_account_confirmed()">
+                  <button type="button" class="btn btn-default" data-toggle="modal"
+                          data-bind="attr: {'data-target': '#activate_' + user_id()}">
+                    {% trans "Reactivate" %}
+                  </button>
+                  <p data-bind="visible: action_error">
+                    <i class="fa fa-exclamation-triangle"></i>
+                    <span data-bind="text: action_error"></span>
+                  </p>
+                </div>
+                <div data-bind="visible: !is_active() && !is_account_confirmed()">
+                  <button type="button" class="btn btn-default" data-toggle="modal"
+                          data-bind="attr: {'data-target': '#confirm_' + user_id()}">
+                    {% trans "Send Confirmation Email" %}
+                  </button>
+                  <p data-bind="visible: action_error">
+                    <i class="fa fa-exclamation-triangle"></i>
+                    <span data-bind="text: action_error"></span>
+                  </p>
+                </div>
+                {% else %}
                 <div data-bind="visible: !is_active()">
                   <button type="button" class="btn btn-default" data-toggle="modal"
                           data-bind="attr: {'data-target': '#activate_' + user_id()}">
@@ -292,6 +330,7 @@
                     <span data-bind="text: action_error"></span>
                   </p>
                 </div>
+                {% endif %}
                 <div data-bind="visible: is_active()">
                   <button type="button" class="btn btn-default" data-toggle="modal"
                           data-bind="attr: {'data-target': '#deactivate_' + user_id()}">
@@ -386,6 +425,47 @@
                     </div>
                   </div>
                 </div>
+                {% if request|toggle_enabled:"TWO_STAGE_USER_PROVISIONING" %}
+                <div class="modal fade" data-bind="attr: {id: 'confirm_' + user_id()}">
+                  <div class="modal-dialog">
+                    <div class="modal-content">
+                      <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal">
+                          <span aria-hidden="true">&times;</span>
+                          <span class="sr-only">{% trans "Close" %}</span>
+                        </button>
+                        <h4 class="modal-title">{% trans "Confirm Account" %}</h4>
+                      </div>
+                      <div class="modal-body">
+                        <p class="lead">
+                          {% blocktrans %}
+                            Would you like to send the account confirmation email to this account?
+                          {% endblocktrans %}
+                        </p>
+                        <p class="lead">
+                          <i class="fa fa-user"></i>
+                          <strong data-bind="text: username"></strong>
+                        </p>
+                        <p>
+                          {% blocktrans %}
+                            The user will be sent an email with instructions to
+                            set a password and be able to login to this project.
+                          {% endblocktrans %}
+                        </p>
+                      </div>
+                      <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">
+                          {% trans "Cancel" %}
+                        </button>
+                        <button type="button" class="btn btn-primary"
+                                data-bind="click: sendConfirmationEmail">
+                          {% trans 'Send Account Confirmaton Email' %}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                {% endif %}
               </td>
             {% endif %}
           </tr>

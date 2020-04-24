@@ -12,7 +12,7 @@ from corehq.apps.domain.urls import PASSWORD_RESET_KWARGS, PASSWORD_RESET_DONE_K
 from corehq.apps.hqwebapp import views as hqwebapp_views
 from corehq.apps.locations.permissions import location_safe
 from custom.icds_reports.dashboard_utils import get_dashboard_template_context
-from custom.icds_reports.views import DASHBOARD_CHECKS
+from custom.icds_reports.views import DASHBOARD_CHECKS_FOR_TEMPLATE
 
 
 @xframe_options_exempt
@@ -45,8 +45,8 @@ def password_reset(request, domain):
     kwargs['extra_context']['form_submit_url'] = reverse('cas_mobile_dashboard_password_reset', args=[domain])
     kwargs['extra_context']['login_url'] = reverse('cas_mobile_dashboard_login', args=[domain])
     # so that we can redirect to a custom "done" page
-    kwargs['post_reset_redirect'] = reverse('cas_mobile_dashboard_password_reset_done', args=[domain])
-    return auth_views.password_reset(request, **kwargs)
+    kwargs['success_url'] = reverse('cas_mobile_dashboard_password_reset_done', args=[domain])
+    return auth_views.PasswordResetView.as_view(**kwargs)(request)
 
 
 @xframe_options_exempt
@@ -54,11 +54,11 @@ def password_reset_done(request, domain):
     kwargs = copy.deepcopy(PASSWORD_RESET_DONE_KWARGS)
     kwargs['template_name'] = 'icds_reports/mobile/mobile_password_reset_done.html'
     kwargs['extra_context']['domain'] = domain
-    return auth_views.password_reset_done(request, **kwargs)
+    return auth_views.PasswordResetDoneView.as_view(**kwargs)(request)
 
 
 @location_safe
-@method_decorator(DASHBOARD_CHECKS, name='dispatch')
+@method_decorator(DASHBOARD_CHECKS_FOR_TEMPLATE, name='dispatch')
 @method_decorator(xframe_options_exempt, name='dispatch')
 class MobileDashboardView(TemplateView):
     template_name = 'icds_reports/mobile/dashboard/mobile_dashboard.html'

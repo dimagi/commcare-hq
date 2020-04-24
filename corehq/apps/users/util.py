@@ -41,7 +41,7 @@ def cc_user_domain(domain):
 
 
 def format_username(username, domain):
-    return "%s@%s" % (username.lower(), cc_user_domain(domain))
+    return "%s@%s" % (str(username or '').lower(), cc_user_domain(domain))
 
 
 def normalize_username(username, domain=None):
@@ -73,6 +73,7 @@ def raw_username(username):
     Strips the @domain.commcarehq.org from the username if it's there
     """
     sitewide_domain = settings.HQ_ACCOUNT_ROOT
+    username = str(username or '')
     username = username.lower()
     try:
         u, d = username.split("@")
@@ -102,7 +103,7 @@ def username_to_user_id(username):
     return user._id
 
 
-def user_id_to_username(user_id):
+def user_id_to_username(user_id, use_name_if_available=False):
     from corehq.apps.users.models import CouchUser
     if not user_id:
         return None
@@ -112,10 +113,14 @@ def user_id_to_username(user_id):
     elif user_id == DEMO_USER_ID:
         return DEMO_USER_ID
     try:
-        login = CouchUser.get_db().get(user_id)
+        user_object = CouchUser.get_db().get(user_id)
     except ResourceNotFound:
         return None
-    return raw_username(login['username']) if "username" in login else None
+
+    if use_name_if_available and (user_object.get('first_name', '') or user_object.get('last_name', '')):
+        return ' '.join([user_object.get('first_name', ''), user_object.get('last_name', '')]).strip()
+    else:
+        return raw_username(user_object['username']) if "username" in user_object else None
 
 
 def cached_user_id_to_username(user_id):
@@ -130,6 +135,11 @@ def cached_user_id_to_username(user_id):
         ret = user_id_to_username(user_id)
         cache.set(key, ret)
         return ret
+
+
+@quickcache(['user_id'])
+def cached_user_id_to_user_display(user_id):
+    return user_id_to_username(user_id, use_name_if_available=True)
 
 
 def cached_owner_id_to_display(owner_id):
@@ -185,7 +195,6 @@ def doc_value_wrapper(doc_cls, value_cls):
 
 def can_add_extra_mobile_workers(request):
     from corehq.apps.users.models import CommCareUser
-    from corehq.apps.accounting.models import Subscription
     num_web_users = CommCareUser.total_by_domain(request.domain)
     user_limit = request.plan.user_limit
     if user_limit == -1 or num_web_users < user_limit:

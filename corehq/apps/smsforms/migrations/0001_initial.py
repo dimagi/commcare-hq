@@ -24,7 +24,7 @@ class Migration(migrations.Migration):
                 ('app_id', models.CharField(max_length=50, null=True, blank=True)),
                 ('submission_id', models.CharField(max_length=50, null=True, blank=True)),
                 ('survey_incentive', models.CharField(max_length=100, null=True, blank=True)),
-                ('session_type', models.CharField(default=b'SMS', max_length=10, choices=[(b'SMS', b'SMS'), (b'IVR', b'IVR')])),
+                ('session_type', models.CharField(default='SMS', max_length=10, choices=[('SMS', 'SMS'), ('IVR', 'IVR')])),
                 ('workflow', models.CharField(max_length=20, null=True, blank=True)),
                 ('reminder_id', models.CharField(max_length=50, null=True, blank=True)),
             ],

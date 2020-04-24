@@ -7,7 +7,8 @@ from custom.icds_reports.const import (
     AGG_CCS_RECORD_PNC_TABLE,
     AGG_CCS_RECORD_THR_TABLE,
     AGG_CCS_RECORD_DELIVERY_TABLE,
-    AGG_CCS_RECORD_CF_TABLE)
+    AGG_CCS_RECORD_CF_TABLE,
+    AGG_MIGRATION_TABLE)
 from custom.icds_reports.utils.aggregation_helpers import transform_day_to_month, month_formatter
 from custom.icds_reports.utils.aggregation_helpers.distributed.base import BaseICDSAggregationDistributedHelper
 
@@ -42,6 +43,10 @@ class CcsRecordMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribute
     def person_case_ucr_tablename(self):
         return get_table_name(self.domain, 'static-person_cases_v3')
 
+    @property
+    def add_preg_form_ucr(self):
+        return get_table_name(self.domain, 'static-dashboard_add_pregnancy_form')
+
     def drop_table_query(self):
         return (
             'DELETE FROM "{}" WHERE month=%(month)s'.format(self.tablename),
@@ -60,14 +65,17 @@ class CcsRecordMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribute
         ).format(end_month_string, start_month_string)
 
         alive_in_month = "(case_list.date_death is null OR case_list.date_death-{}>0)".format(start_month_string)
-        seeking_services = "(person_cases.registered_status IS DISTINCT FROM 0 AND person_cases.migration_status IS DISTINCT FROM 1)"
+        migration_status = "(agg_migration.is_migrated=1 AND agg_migration.migration_date < {})::integer".format(
+            start_month_string)
+        seeking_services = "(person_cases.registered_status IS DISTINCT FROM 0 AND {} IS DISTINCT FROM 1)".format(
+            migration_status)
         ccs_lactating = (
             "({} AND {} AND case_list.add is not null AND {}-case_list.add>=0"
             " AND {}-case_list.add<=183)"
         ).format(open_in_month, alive_in_month, end_month_string, start_month_string)
 
         lactating = "({} AND {})".format(ccs_lactating, seeking_services)
-        lactating_all = "({} AND  person_cases.migration_status IS DISTINCT FROM 1)".format(ccs_lactating)
+        lactating_all = "({} AND  {} IS DISTINCT FROM 1)".format(ccs_lactating, migration_status)
 
         ccs_pregnant = (
             "({} AND {} AND case_list.edd is not null and"
@@ -78,7 +86,7 @@ class CcsRecordMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribute
             ccs_pregnant, seeking_services, open_in_month, alive_in_month
         )
 
-        pregnant_all = "({} AND  person_cases.migration_status IS DISTINCT FROM 1)".format(ccs_pregnant)
+        pregnant_all = "({} AND  {} IS DISTINCT FROM 1)".format(ccs_pregnant, migration_status)
 
         valid_in_month = "( {} OR {})".format(pregnant_to_consider, lactating)
 
@@ -204,6 +212,7 @@ class CcsRecordMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribute
             ('anc_4', 'ut.due_list_date_anc_4'),
             ('tt_1', 'ut.due_list_date_tt_1'),
             ('tt_2', 'ut.due_list_date_tt_2'),
+            ('tt_booster', 'ut.due_list_date_tt_booster'),
             ('immediate_breastfeeding', 'agg_bp.immediate_breastfeeding'),
             ('anemia', 'agg_bp.anemia'),
             ('eating_extra', 'agg_bp.eating_extra'),
@@ -245,10 +254,11 @@ class CcsRecordMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribute
             ('child_name', 'case_list.child_name'),
             ('husband_name', 'person_cases.husband_name'),
             ('lmp', 'case_list.lmp'),
-            ('migration_status', 'person_cases.migration_status'),
+            ('migration_status', 'COALESCE({},0)'.format(migration_status)),
             ('where_born', 'agg_delivery.where_born'),
             ('num_children_del', 'agg_delivery.num_children_del'),
             ('still_live_birth', 'agg_delivery.still_live_birth'),
+            ('last_preg_year', 'preg.last_preg'),
 
         )
         return """
@@ -261,6 +271,9 @@ class CcsRecordMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribute
                 AND case_list.supervisor_id = person_cases.supervisor_id
             LEFT OUTER JOIN "{pregnant_tasks_case_ucr}" ut ON case_list.doc_id = ut.ccs_record_case_id
                 AND case_list.supervisor_id = ut.supervisor_id
+            LEFT OUTER JOIN "{agg_migration_table}" agg_migration ON case_list.person_case_id = agg_migration.person_case_id
+                AND agg_migration.month = %(start_date)s
+                AND case_list.supervisor_id = agg_migration.supervisor_id
             LEFT OUTER JOIN "{agg_thr_table}" agg_thr ON case_list.doc_id = agg_thr.case_id
                 AND agg_thr.month = %(start_date)s AND {valid_in_month}
                 AND case_list.supervisor_id = agg_thr.supervisor_id
@@ -276,6 +289,11 @@ class CcsRecordMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribute
             LEFT OUTER JOIN "{agg_delivery_table}" agg_delivery ON case_list.doc_id = agg_delivery.case_id
                 AND agg_delivery.month = %(start_date)s AND {valid_in_month}
                 AND case_list.supervisor_id = agg_delivery.supervisor_id
+            LEFT OUTER JOIN "{add_preg_ucr}" preg ON (
+                case_list.doc_id = preg.case_load_ccs_record0 AND
+                case_list.supervisor_id = preg.supervisor_id AND
+                preg.timeend <= %(end_date)s
+                )
             WHERE {open_in_month} AND (case_list.add is NULL OR %(start_date)s-case_list.add<=183)
                 AND case_list.supervisor_id IS NOT NULL
             ORDER BY case_list.supervisor_id, case_list.awc_id, case_list.case_id, case_list.modified_on
@@ -291,7 +309,9 @@ class CcsRecordMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribute
             agg_delivery_table=AGG_CCS_RECORD_DELIVERY_TABLE,
             pregnant_tasks_case_ucr=self.pregnant_tasks_cases_ucr_tablename,
             agg_cf_table=AGG_CCS_RECORD_CF_TABLE,
+            agg_migration_table=AGG_MIGRATION_TABLE,
             person_cases_ucr=self.person_case_ucr_tablename,
+            add_preg_ucr =self.add_preg_form_ucr,
             valid_in_month=valid_in_month,
             open_in_month=open_in_month
         ), {
@@ -304,6 +324,9 @@ class CcsRecordMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribute
         return [
             'CREATE INDEX IF NOT EXISTS crm_awc_case_idx ON "{}" (awc_id, case_id)'.format(self.tablename),
             'CREATE INDEX IF NOT EXISTS crm_person_add_case_idx ON "{}" (person_case_id, add, case_id)'.format(
+                self.tablename
+            ),
+            'CREATE INDEX IF NOT EXISTS crm_supervisor_person_month_idx ON "{}" (supervisor_id, month, person_case_id)'.format(
                 self.tablename
             )
         ]

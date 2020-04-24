@@ -1,6 +1,6 @@
 from django.dispatch import receiver
 
-from corehq.util.datadog.utils import create_datadog_event
+from corehq.util.metrics import create_metrics_event
 from corehq.util.signals import post_command
 
 
@@ -10,6 +10,6 @@ def record_command_event(sender, args, kwargs, outcome, **extra):
         outcome = f'{outcome.__class__}: {outcome}'
     text = f'args: {args}\noptions: {kwargs}\noutcome: {outcome}'
     event = '{}'.format(sender.__name__)
-    create_datadog_event(
+    create_metrics_event(
         event, text, aggregation_key=sender.__name__
     )

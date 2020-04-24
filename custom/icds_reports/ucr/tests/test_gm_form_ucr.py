@@ -1,3 +1,4 @@
+import datetime
 from mock import patch
 
 from custom.icds_reports.ucr.tests.test_base_form_ucr import BaseFormsTest
@@ -16,7 +17,7 @@ class TestGMForms(BaseFormsTest):
             [{
                 "doc_id": None,
                 "repeat_iteration": 0,
-                "timeend": None,
+                "timeend": datetime.datetime(2017, 12, 2, 11, 52, 42, 11000),
                 "child_health_case_id": "3fb53b1f-605c-4cfd-89c6-f0e72988f9bc",
                 "weight_child": 6,
                 "height_child": 120.0,
@@ -32,7 +33,7 @@ class TestGMForms(BaseFormsTest):
             [{
                 "doc_id": None,
                 "repeat_iteration": 0,
-                "timeend": None,
+                "timeend": datetime.datetime(2018, 1, 16, 10, 24, 49, 881000),
                 "child_health_case_id": "a4f7beff-5995-4155-be9c-ab2f7ec2c91c",
                 "weight_child": 3,
                 "height_child": None,
@@ -48,7 +49,7 @@ class TestGMForms(BaseFormsTest):
             [{
                 "doc_id": None,
                 "repeat_iteration": 0,
-                "timeend": None,
+                "timeend": datetime.datetime(2018, 1, 7, 7, 13, 19, 820000),
                 "child_health_case_id": "00cabe2c-df9e-4520-a943-837ec5b4559b",
                 "weight_child": 3,
                 "height_child": None,

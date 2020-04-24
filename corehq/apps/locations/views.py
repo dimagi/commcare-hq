@@ -39,6 +39,7 @@ from corehq.apps.locations.tasks import (
 from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.reports.filters.api import EmwfOptionsView
 from corehq.apps.reports.filters.controllers import EmwfOptionsController
+from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
 from corehq.apps.users.forms import MultipleSelectionForm
 from corehq.util import reverse
 from corehq.util.files import file_extention_from_filename
@@ -204,6 +205,7 @@ class LocationsListView(BaseLocationView):
             'show_inactive': self.show_inactive,
             'has_location_types': has_location_types,
             'can_edit_root': self.can_access_all_locations,
+            'location_search_help': ExpandedMobileWorkerFilter.location_search_help,
         }
 
     def get_visible_locations(self):
@@ -242,6 +244,8 @@ class FilteredLocationDownload(BaseLocationView):
 
 
 class LocationOptionsController(EmwfOptionsController):
+    namespace_locations = False
+    case_sharing_only = False
 
     @property
     def data_sources(self):
@@ -250,6 +254,7 @@ class LocationOptionsController(EmwfOptionsController):
         ]
 
 
+@method_decorator(locations_access_required, name='dispatch')
 class LocationsSearchView(EmwfOptionsView):
 
     @property
@@ -1053,31 +1058,6 @@ class DownloadLocationStatusView(BaseLocationView):
 
     def page_url(self):
         return reverse(self.urlname, args=self.args, kwargs=self.kwargs)
-
-
-@locations_access_required
-@location_safe
-def child_locations_for_select2(request, domain):
-    from django.core.paginator import Paginator
-    query = request.GET.get('name', '').lower()
-    page = int(request.GET.get('page', 1))
-    user = request.couch_user
-
-    def loc_to_payload(loc):
-        return {'id': loc.location_id, 'name': loc.get_path_display()}
-
-    locs = (SQLLocation.objects
-            .accessible_to_user(domain, user)
-            .filter(domain=domain, is_archived=False))
-    if query:
-        locs = locs.filter(name__icontains=query)
-
-    # 10 results per page
-    paginator = Paginator(locs, 10)
-    return json_response({
-        'results': list(map(loc_to_payload, paginator.page(page))),
-        'total': paginator.count,
-    })
 
 
 class DowngradeLocationsView(BaseDomainView):

@@ -13,6 +13,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='casetransaction',
             name='type',
-            field=models.PositiveSmallIntegerField(choices=[(1, b'form'), (2, b'rebuild_with_reason'), (4, b'user_requested_rebuild'), (8, b'user_archived_rebuild'), (16, b'form_archive_rebuild'), (32, b'form_edit_rebuild'), (2048, b'form_reprocessed_rebuild'), (64, b'ledger'), (128, b'case_create'), (256, b'case_close'), (1024, b'case_attachment'), (512, b'case_index')]),
+            field=models.PositiveSmallIntegerField(choices=[(1, 'form'), (2, 'rebuild_with_reason'), (4, 'user_requested_rebuild'), (8, 'user_archived_rebuild'), (16, 'form_archive_rebuild'), (32, 'form_edit_rebuild'), (2048, 'form_reprocessed_rebuild'), (64, 'ledger'), (128, 'case_create'), (256, 'case_close'), (1024, 'case_attachment'), (512, 'case_index')]),
         ),
     ]

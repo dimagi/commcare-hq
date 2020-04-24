@@ -1,10 +1,11 @@
 import datetime
 import logging
 import uuid
+from itertools import chain
 
 import redis
-from contextlib2 import ExitStack
-from django.db import transaction
+from contextlib import ExitStack
+from django.db import transaction, DatabaseError
 from lxml import etree
 
 from casexml.apps.case import const
@@ -21,7 +22,7 @@ from corehq.form_processor.models import (
     XFormInstanceSQL, CaseTransaction,
     CommCareCaseSQL, FormEditRebuild, Attachment, XFormOperationSQL)
 from corehq.form_processor.utils import convert_xform_to_json, extract_meta_instance_id, extract_meta_user_id
-from corehq.util.datadog.utils import case_load_counter
+from corehq.util.metrics.load_counters import case_load_counter
 from corehq import toggles
 from couchforms.const import ATTACHMENT_NAME
 from dimagi.utils.couch import acquire_lock, release_lock
@@ -91,7 +92,7 @@ class FormProcessorSQL(object):
         return (existing_form, new_form)
 
     @classmethod
-    def save_processed_models(cls, processed_forms, cases=None, stock_result=None, publish_to_kafka=True):
+    def save_processed_models(cls, processed_forms, cases=None, stock_result=None):
         db_names = {processed_forms.submitted.db}
         if processed_forms.deprecated:
             db_names |= {processed_forms.deprecated.db}
@@ -104,36 +105,47 @@ class FormProcessorSQL(object):
                 ledger_value.db for ledger_value in stock_result.models_to_save
             }
 
-        with ExitStack() as stack:
-            for db_name in db_names:
-                stack.enter_context(transaction.atomic(db_name))
+        all_models = filter(None, chain(
+            processed_forms,
+            cases or [],
+            stock_result.models_to_save if stock_result else [],
+        ))
+        try:
+            with ExitStack() as stack:
+                for db_name in db_names:
+                    stack.enter_context(transaction.atomic(db_name))
 
-            # Save deprecated form first to avoid ID conflicts
-            if processed_forms.deprecated:
-                FormAccessorSQL.update_form(processed_forms.deprecated, publish_changes=False)
+                # Save deprecated form first to avoid ID conflicts
+                if processed_forms.deprecated:
+                    FormAccessorSQL.update_form(processed_forms.deprecated, publish_changes=False)
 
-            FormAccessorSQL.save_new_form(processed_forms.submitted)
-            if cases:
-                for case in cases:
-                    CaseAccessorSQL.save_case(case)
-
-            if stock_result:
-                ledgers_to_save = stock_result.models_to_save
-                LedgerAccessorSQL.save_ledger_values(ledgers_to_save, stock_result)
-
-        if cases:
-            sort_submissions = toggles.SORT_OUT_OF_ORDER_FORM_SUBMISSIONS_SQL.enabled(
-                processed_forms.submitted.domain, toggles.NAMESPACE_DOMAIN)
-            if sort_submissions:
-                for case in cases:
-                    if SqlCaseUpdateStrategy(case).reconcile_transactions_if_necessary():
+                FormAccessorSQL.save_new_form(processed_forms.submitted)
+                if cases:
+                    for case in cases:
                         CaseAccessorSQL.save_case(case)
 
-        if publish_to_kafka:
-            try:
-                cls.publish_changes_to_kafka(processed_forms, cases, stock_result)
-            except Exception as e:
-                raise KafkaPublishingError(e)
+                if stock_result:
+                    ledgers_to_save = stock_result.models_to_save
+                    LedgerAccessorSQL.save_ledger_values(ledgers_to_save, stock_result)
+
+            if cases:
+                sort_submissions = toggles.SORT_OUT_OF_ORDER_FORM_SUBMISSIONS_SQL.enabled(
+                    processed_forms.submitted.domain, toggles.NAMESPACE_DOMAIN)
+                if sort_submissions:
+                    for case in cases:
+                        if SqlCaseUpdateStrategy(case).reconcile_transactions_if_necessary():
+                            CaseAccessorSQL.save_case(case)
+        except DatabaseError:
+            for model in all_models:
+                setattr(model, model._meta.pk.attname, None)
+                for tracked in model.create_models:
+                    setattr(tracked, tracked._meta.pk.attname, None)
+            raise
+
+        try:
+            cls.publish_changes_to_kafka(processed_forms, cases, stock_result)
+        except Exception as e:
+            raise KafkaPublishingError(e)
 
     @staticmethod
     def publish_changes_to_kafka(processed_forms, cases, stock_result):

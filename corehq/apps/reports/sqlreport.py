@@ -17,6 +17,7 @@ from corehq.apps.reports.datatables import (
 )
 from corehq.apps.reports.util import format_datatables_data
 from corehq.sql_db.connections import DEFAULT_ENGINE_ID, connection_manager
+from corehq.util.soft_assert import soft_assert
 
 
 class SqlReportException(Exception):
@@ -186,6 +187,14 @@ class SqlData(ReportDataSource):
         raise NotImplementedError()
 
     @property
+    def distinct_on(self):
+        """
+        Returns a list of column names to create the
+        DISTINCT ON portion of the SQL query
+        """
+        return []
+
+    @property
     def order_by(self):
         """
         Returns a list of OrderBy objects.
@@ -246,8 +255,8 @@ class SqlData(ReportDataSource):
 
     def query_context(self, start=None, limit=None):
         qc = sqlagg.QueryContext(
-            self.table_name, self.wrapped_filters, self.group_by, self.order_by,
-            start=start, limit=limit
+            self.table_name, filters=self.wrapped_filters, group_by=self.group_by, distinct_on=self.distinct_on,
+            order_by=self.order_by, start=start, limit=limit
         )
         for c in self.columns:
             qc.append_column(c.view)
@@ -269,6 +278,15 @@ class SqlData(ReportDataSource):
     def _get_data(self, start=None, limit=None):
         if self.keys is not None and not self.group_by:
             raise SqlReportException('Keys supplied without group_by.')
+
+        if not self.group_by:
+            try:
+                queries = self.get_sql_queries()
+            except NotImplementedError:
+                queries = "Not implemented"
+            soft_assert('mkangia@{}'.format('dimagi.com'))(
+                self.group_by, f'SqlAgg has no group by: {self.__class__.__name__}', queries
+            )
 
         qc = self.query_context(start=start, limit=limit)
         session_helper = connection_manager.get_session_helper(self.engine_id, readonly=True)
@@ -399,15 +417,6 @@ class DictDataFormat(BaseDataFormat):
             else:
                 ret[key] = row
 
-        return ret
-
-
-class SummingSqlTabularReport(SqlTabularReport):
-
-    @property
-    def rows(self):
-        ret = list(super(SummingSqlTabularReport, self).rows)
-        self.total_row = calculate_total_row(ret)
         return ret
 
 

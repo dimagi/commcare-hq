@@ -1,9 +1,12 @@
+import json
+
+from collections import defaultdict
+
 from datetime import date, datetime
 
 from django.db import DEFAULT_DB_ALIAS, models
 
 from dimagi.ext.couchdbkit import *
-from dimagi.utils.parsing import json_format_datetime
 from pillowtop.exceptions import PillowNotFoundError
 from pillowtop.utils import (
     get_all_pillow_instances,
@@ -12,67 +15,18 @@ from pillowtop.utils import (
 )
 
 
-class SQLHqDeploy(models.Model):
+class HqDeploy(models.Model):
     date = models.DateTimeField(default=datetime.utcnow, db_index=True)
     user = models.CharField(max_length=100)
     environment = models.CharField(max_length=100, null=True)
     diff_url = models.CharField(max_length=255, null=True)
-    couch_id = models.CharField(max_length=126, null=True, db_index=True)
-
-    class Meta(object):
-        db_table = "hqadmin_hqdeploy"
-
-    def save(self, force_insert=False, force_update=False, using=DEFAULT_DB_ALIAS, update_fields=None):
-        # Update or create couch doc
-        if self.couch_id:
-            doc = HqDeploy.wrap(HqDeploy.get_db().get(self.couch_id))
-        else:
-            doc = HqDeploy(
-                date=self.date,
-                user=self.user,
-                environment=self.environment,
-                diff_url=self.diff_url,
-            )
-
-        doc.save(from_sql=True)
-        self.couch_id = doc.get_id
-
-        # Save to SQL
-        super().save(
-            force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields
-        )
 
     @classmethod
     def get_latest(cls, environment, limit=1):
-        query = SQLHqDeploy.objects.filter(environment=environment).order_by("-date")
+        query = cls.objects.filter(environment=environment).order_by("-date")
         if limit:
             return query[:limit]
         return query
-
-
-class HqDeploy(Document):
-    date = DateTimeProperty()
-    user = StringProperty()
-    environment = StringProperty()
-    code_snapshot = DictProperty()
-    diff_url = StringProperty()
-
-    def save(self, *args, **kwargs):
-        # Save to couch
-        # This must happen first so the SQL save finds this doc and doesn't recreate it
-        super().save(*args, **kwargs)
-
-        # Save to SQL
-        if not kwargs.pop('from_sql', False):
-            model, created = SQLHqDeploy.objects.update_or_create(
-                couch_id=self.get_id,
-                defaults={
-                    'date': self.date,
-                    'user': self.user,
-                    'environment': self.environment,
-                    'diff_url': self.diff_url,
-                }
-            )
 
 
 class HistoricalPillowCheckpoint(models.Model):
@@ -115,11 +69,23 @@ class HistoricalPillowCheckpoint(models.Model):
             return None
 
     @classmethod
-    def get_historical_max(cls, checkpoint_id):
-        try:
-            return cls.objects.filter(checkpoint_id=checkpoint_id).order_by('-seq_int')[0]
-        except IndexError:
-            return None
+    def get_historical_max(cls, checkpoint_id, by_partition=False):
+        if by_partition:
+            # limit to last 10 days
+            checkpoints = cls.objects.filter(checkpoint_id=checkpoint_id)[:10]
+            max_offsets = defaultdict(int)
+            for checkpoint in checkpoints:
+                offset_info = json.loads(checkpoint.seq)
+                for partition, offset in offset_info.items():
+                    if offset > max_offsets[partition]:
+                        max_offsets[partition] = offset
+            return max_offsets
+        else:
+            try:
+                return cls.objects.filter(checkpoint_id=checkpoint_id).order_by('-seq_int')[0]
+            except IndexError:
+                return None
+
 
     class Meta(object):
         ordering = ['-date_updated']

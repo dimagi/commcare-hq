@@ -18,7 +18,7 @@ from itertools import chain
 from mimetypes import guess_type
 
 from django.conf import settings
-from django.contrib import messages
+from django.contrib import admin, messages
 from django.contrib.auth.hashers import make_password
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
@@ -84,6 +84,7 @@ from corehq.apps.app_manager.dbaccessors import (
     get_latest_build_doc,
     get_latest_released_app_doc,
     wrap_app,
+    get_app_languages
 )
 from corehq.apps.app_manager.detail_screen import PropertyXpathGenerator
 from corehq.apps.app_manager.exceptions import (
@@ -168,7 +169,6 @@ from corehq.apps.reports.daterange import (
     get_daterange_start_end_dates,
     get_simple_dateranges,
 )
-from corehq.apps.translations.models import TranslationMixin
 from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
 from corehq.apps.userreports.util import get_static_report_mapping
 from corehq.apps.users.dbaccessors.couch_users import (
@@ -4302,7 +4302,7 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
 
     def generate_shortened_url(self, view_name, build_profile_id=None):
         try:
-            if settings.BITLY_LOGIN:
+            if bitly.BITLY_CONFIGURED:
                 if build_profile_id is not None:
                     long_url = "{}{}?profile={}".format(
                         self.url_base, reverse(view_name, args=[self.domain, self._id]), build_profile_id
@@ -4439,6 +4439,7 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
 
     def delete_app(self):
         domain_has_apps.clear(self.domain)
+        get_app_languages.clear(self.domain)
         self.doc_type += '-Deleted'
         record = DeleteApplicationRecord(
             domain=self.domain,
@@ -4458,6 +4459,7 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
 
         get_all_case_properties.clear(self)
         get_usercase_properties.clear(self)
+        get_app_languages.clear(self.domain)
 
         request = view_utils.get_request()
         user = getattr(request, 'couch_user', None)
@@ -4556,8 +4558,7 @@ class SavedAppBuild(ApplicationBase):
         return data
 
 
-class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
-                  ApplicationIntegrationMixin):
+class Application(ApplicationBase, ApplicationMediaMixin, ApplicationIntegrationMixin):
     """
     An Application that can be created entirely through the online interface
 
@@ -4571,6 +4572,7 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
     custom_base_url = StringProperty()
     cloudcare_enabled = BooleanProperty(default=False)
 
+    translations = DictProperty()
     translation_strategy = StringProperty(default='select-known',
                                           choices=list(app_strings.CHOICES.keys()))
     auto_gps_capture = BooleanProperty(default=False)
@@ -4620,8 +4622,11 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
         # TODO: revamp so signal_connections <- models <- signals
         from corehq.apps.app_manager import signals
         from couchforms.analytics import get_form_analytics_metadata
+        from corehq.apps.reports.analytics.esaccessors import (
+            guess_form_name_from_submissions_using_xmlns)
         for xmlns in self.get_xmlns_map():
             get_form_analytics_metadata.clear(self.domain, self._id, xmlns)
+            guess_form_name_from_submissions_using_xmlns.clear(self.domain, xmlns)
         signals.app_post_save.send(Application, application=self)
 
     def delete_copy(self, copy):
@@ -4769,6 +4774,9 @@ class Application(ApplicationBase, TranslationMixin, ApplicationMediaMixin,
                 mod.get_or_create_unique_id()
             if should_save:
                 self.save()
+
+    def set_translations(self, lang, translations):
+        self.translations[lang] = translations
 
     def create_app_strings(self, lang, build_profile_id=None):
         gen = app_strings.CHOICES[self.translation_strategy]
@@ -5598,7 +5606,7 @@ class LinkedApplication(Application):
             self.create_mapping(mm, ref['path'], save=False)
 
 
-def import_app(app_id_or_source, domain, source_properties=None, request=None):
+def import_app(app_id_or_source, domain, source_properties=None, request=None, check_all_reports=True):
     if isinstance(app_id_or_source, str):
         source_app = get_app(None, app_id_or_source)
     else:
@@ -5632,9 +5640,10 @@ def import_app(app_id_or_source, domain, source_properties=None, request=None):
                 try:
                     config.report_id = report_map[config.report_id]
                 except KeyError:
-                    raise AppEditingError(
-                        "Report {} not found in {}".format(config.report_id, domain)
-                    )
+                    if check_all_reports or config.report(source_domain).is_static:
+                        raise AppEditingError(
+                            "Report {} not found in {}".format(config.report_id, domain)
+                        )
 
     app.save_attachments(attachments)
 
@@ -5708,6 +5717,25 @@ class DeleteFormRecord(DeleteRecord):
         forms.insert(self.form_id, self.form)
         module.forms = forms
         app.save()
+
+
+class ExchangeApplication(models.Model):
+    domain = models.CharField(max_length=255, null=False)
+    app_id = models.CharField(max_length=255, null=False)
+    help_link = models.CharField(max_length=255, null=True)
+    changelog_link = models.CharField(max_length=255, null=True)
+
+    class Meta(object):
+        unique_together = ('domain', 'app_id')
+
+
+class ExchangeApplicationAdmin(admin.ModelAdmin):
+    model = ExchangeApplication
+    list_display = ['domain', 'app_id']
+    list_filter = ['domain', 'app_id']
+
+
+admin.site.register(ExchangeApplication, ExchangeApplicationAdmin)
 
 
 class GlobalAppConfig(models.Model):

@@ -15,49 +15,52 @@ hqDefine("locations/js/widgets", [
         });
     }
 
+    function initAutocomplete($select) {
+        var options = $select.data();
+        $select.select2({
+            multiple: options.multiselect,
+            allowClear: !options.multiselect,
+            placeholder: options.placeholder || gettext("Select a Location"),
+            width: '100%',
+            ajax: {
+                url: options.queryUrl,
+                dataType: 'json',
+                delay: 500,
+                data: function (params) {
+                    return {
+                        q: params.term,
+                        page: params.page,
+                    };
+                },
+                processResults: function (data, params) {
+                    var more = (params.page || 1) * 10 < data.total;
+                    return {
+                        results: data.results,
+                        pagination: { more: more },
+                    };
+                },
+            },
+            templateResult: function (result) { return result.text || result.name; },
+            templateSelection: function (result) { return result.text || result.name; },
+        });
+
+        var initial = options.initial;
+        if (initial) {
+            if (!_.isArray(initial)) {
+                initial = [initial];
+            }
+            _.each(initial, function (result) {
+                $select.append(new Option(result.text, result.id));
+            });
+            $select.val(_.pluck(initial, 'id')).trigger('change');
+        }
+
+        $select.trigger('select-ready');
+    }
+
     $(function () {
         $(".locations-widget-autocomplete").each(function () {
-            var $select = $(this),
-                options = $select.data();
-            $select.select2({
-                multiple: options.multiselect,
-                allowClear: !options.multiselect,
-                placeholder: options.placeholder || gettext("Select a Location"),
-                width: '100%',
-                ajax: {
-                    url: options.queryUrl,
-                    dataType: 'json',
-                    delay: 500,
-                    data: function (params) {
-                        return {
-                            name: params.term,
-                            page: params.page,
-                        };
-                    },
-                    processResults: function (data, params) {
-                        var more = (params.page || 1) * 10 < data.total;
-                        return {
-                            results: data.results,
-                            pagination: { more: more },
-                        };
-                    },
-                },
-                templateResult: function (result) { return result.text || result.name; },
-                templateSelection: function (result) { return result.text || result.name; },
-            });
-
-            var initial = options.initial;
-            if (initial) {
-                if (!_.isArray(initial)) {
-                    initial = [initial];
-                }
-                _.each(initial, function (result) {
-                    $select.append(new Option(result.text, result.id));
-                });
-                $select.val(_.pluck(initial, 'id')).trigger('change');
-            }
-
-            $select.trigger('select-ready');
+            initAutocomplete($(this));
         });
 
         $(".locations-widget-primary").each(function () {
@@ -100,4 +103,8 @@ hqDefine("locations/js/widgets", [
             });
         });
     });
+
+    return {
+        initAutocomplete: initAutocomplete,
+    };
 });

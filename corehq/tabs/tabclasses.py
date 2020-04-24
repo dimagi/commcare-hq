@@ -20,10 +20,12 @@ from corehq.apps.accounting.utils import (
     domain_is_on_trial,
     is_accounting_admin,
 )
+from corehq.apps.accounting.views import TriggerDowngradeView
 from corehq.apps.app_manager.dbaccessors import (
     domain_has_apps,
     get_brief_apps_in_domain,
 )
+from corehq.apps.app_manager.models import ExchangeApplication
 from corehq.apps.app_manager.util import is_remote_app
 from corehq.apps.builds.views import EditMenuView
 from corehq.apps.domain.views.internal import ProjectLimitsView
@@ -31,6 +33,7 @@ from corehq.apps.domain.views.releases import (
     ManageReleasesByAppProfile,
     ManageReleasesByLocation,
 )
+from corehq.apps.export.views.incremental import IncrementalExportView
 from corehq.apps.hqadmin.reports import (
     DeviceLogSoftAssertReport,
     UserAuditReport,
@@ -84,9 +87,9 @@ from corehq.messaging.scheduling.views import (
     UploadConditionalAlertView,
 )
 from corehq.messaging.util import show_messaging_dashboard
-from corehq.motech.dhis2.views import DataSetMapView, Dhis2ConnectionView
+from corehq.motech.dhis2.views import DataSetMapView
 from corehq.motech.openmrs.views import OpenmrsImporterView
-from corehq.motech.views import MotechLogListView
+from corehq.motech.views import ConnectionSettingsView, MotechLogListView
 from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD
 from corehq.tabs.uitab import UITab
 from corehq.tabs.utils import (
@@ -607,7 +610,7 @@ class ProjectDataTab(UITab):
                     }
                 )
             if self.can_view_case_exports:
-                export_data_views.append(
+                export_data_views.extend([
                     {
                         'title': _(CaseExportListView.page_title),
                         'url': reverse(CaseExportListView.urlname,
@@ -628,7 +631,19 @@ class ProjectDataTab(UITab):
                                 'urlname': EditNewCustomCaseExportView.urlname,
                             } if self.can_edit_commcare_data else None,
                         ] if _f]
-                    })
+                    },
+                ])
+            if toggles.INCREMENTAL_EXPORTS.enabled(self.domain):
+                export_data_views.append(
+                    {
+                        'title': _(IncrementalExportView.page_title),
+                        'url': reverse(IncrementalExportView.urlname,
+                                       args=(self.domain,)),
+                        'show_in_dropdown': True,
+                        'icon': 'icon icon-share fa fa-share-square-o',
+                        'subpages': []
+                    }
+                )
 
             if self.can_view_sms_exports:
                 export_data_views.append(
@@ -896,6 +911,11 @@ class ApplicationsTab(UITab):
                 _('New Application'),
                 url=(reverse('default_new_app', args=[self.domain])),
             ))
+            if ExchangeApplication.objects.count():
+                submenu_context.append(dropdown_dict(
+                    _('Import Template Application'),
+                    url=(reverse('app_exchange', args=[self.domain])),
+                ))
         if toggles.APP_TRANSLATIONS_WITH_TRANSIFEX.enabled_for_request(self._request):
             submenu_context.append(dropdown_dict(
                 _('Translations'),
@@ -1141,6 +1161,27 @@ class MessagingTab(UITab):
         return settings_urls
 
     @property
+    @memoized
+    def whatsapp_urls(self):
+        from corehq.apps.sms.models import SQLMobileBackend
+        from corehq.messaging.smsbackends.turn.models import SQLTurnWhatsAppBackend
+        from corehq.apps.sms.views import WhatsAppTemplatesView
+        whatsapp_urls = []
+
+        domain_has_turn_integration = (
+            SQLTurnWhatsAppBackend.get_api_id() in
+            (b.get_api_id() for b in
+             SQLMobileBackend.get_domain_backends(SQLMobileBackend.SMS, self.domain)))
+        user_is_admin = (self.couch_user.is_superuser or self.couch_user.is_domain_admin(self.domain))
+
+        if user_is_admin and domain_has_turn_integration:
+            whatsapp_urls.append({
+                'title': _('Template Management'),
+                'url': reverse(WhatsAppTemplatesView.urlname, args=[self.domain]),
+            })
+        return whatsapp_urls
+
+    @property
     def dropdown_items(self):
         result = []
 
@@ -1193,7 +1234,8 @@ class MessagingTab(UITab):
             (_("Data Collection and Reminders"), self.reminders_urls),
             (_("CommCare Supply"), self.supply_urls),
             (_("Contacts"), self.contacts_urls),
-            (_("Settings"), self.settings_urls)
+            (_("Settings"), self.settings_urls),
+            (_("WhatsApp Settings"), self.whatsapp_urls),
         ):
             if urls:
                 items.append((title, urls))
@@ -1209,6 +1251,7 @@ class ProjectUsersTab(UITab):
         '/a/{domain}/settings/users/',
         '/a/{domain}/settings/cloudcare/',
         '/a/{domain}/settings/locations/',
+        '/a/{domain}/location_reassignment/',
     )
 
     @property
@@ -1271,6 +1314,8 @@ class ProjectUsersTab(UITab):
                      'urlname': 'upload_commcare_users'},
                     {'title': _('Bulk Delete'),
                      'urlname': 'delete_commcare_users'},
+                    {'title': _('Bulk Lookup'),
+                     'urlname': 'commcare_users_lookup'},
                     {'title': _('Edit User Fields'),
                      'urlname': 'user_fields_view'},
                     {'title': _('Filter and Download Users'),
@@ -1437,6 +1482,13 @@ class ProjectUsersTab(UITab):
                 'title': _(LocationTypesView.page_title),
                 'url': reverse(LocationTypesView.urlname, args=[self.domain]),
                 'show_in_dropdown': True,
+            })
+
+        if toggles.LOCATION_REASSIGNMENT.enabled(self.couch_user.username):
+            from custom.icds.location_reassignment.views import LocationReassignmentView
+            menu.append({
+                'title': _("Location Reassignment"),
+                'url': reverse(LocationReassignmentView.urlname, args=[self.domain])
             })
 
         return menu
@@ -1790,14 +1842,24 @@ def _get_integration_section(domain):
             'url': reverse(BiometricIntegrationView.urlname, args=[domain])
         })
 
+    if toggles.INCREMENTAL_EXPORTS.enabled(domain) or toggles.DHIS2_INTEGRATION.enabled(domain):
+        integration.append({
+            'title': _(ConnectionSettingsView.page_title),
+            'url': reverse(ConnectionSettingsView.urlname, args=[domain])
+        })
+
     if toggles.DHIS2_INTEGRATION.enabled(domain):
-        integration.extend([{
-            'title': _(Dhis2ConnectionView.page_title),
-            'url': reverse(Dhis2ConnectionView.urlname, args=[domain])
-        }, {
+        integration.append({
             'title': _(DataSetMapView.page_title),
             'url': reverse(DataSetMapView.urlname, args=[domain])
-        }])
+        })
+
+    if toggles.INCREMENTAL_EXPORTS.enabled(domain):
+        from corehq.apps.export.views.incremental import IncrementalExportLogView
+        integration.append({
+            'title': _(IncrementalExportLogView.name),
+            'url': reverse('domain_report_dispatcher', args=[domain, 'incremental_export_logs']),
+        })
 
     if toggles.OPENMRS_INTEGRATION.enabled(domain):
         integration.append({
@@ -1805,7 +1867,11 @@ def _get_integration_section(domain):
             'url': reverse(OpenmrsImporterView.urlname, args=[domain])
         })
 
-    if toggles.DHIS2_INTEGRATION.enabled(domain) or toggles.OPENMRS_INTEGRATION.enabled(domain):
+    if (
+            toggles.DHIS2_INTEGRATION.enabled(domain)
+            or toggles.OPENMRS_INTEGRATION.enabled(domain)
+            or toggles.INCREMENTAL_EXPORTS.enabled(domain)
+    ):
         integration.append({
             'title': _(MotechLogListView.page_title),
             'url': reverse(MotechLogListView.urlname, args=[domain])
@@ -1920,7 +1986,7 @@ class AccountingTab(UITab):
             TriggerInvoiceView, TriggerBookkeeperEmailView,
             TestRenewalEmailView, TriggerCustomerInvoiceView
         )
-        items.append(('Other Actions', (
+        other_actions = [
             {
                 'title': _(TriggerInvoiceView.page_title),
                 'url': reverse(TriggerInvoiceView.urlname),
@@ -1937,7 +2003,13 @@ class AccountingTab(UITab):
                 'title': _(TestRenewalEmailView.page_title),
                 'url': reverse(TestRenewalEmailView.urlname),
             }
-        )))
+        ]
+        if toggles.ACCOUNTING_TESTING_TOOLS.enabled_for_request(self._request):
+            other_actions.append({
+                'title': _(TriggerDowngradeView.page_title),
+                'url': reverse(TriggerDowngradeView.urlname),
+            })
+        items.append(('Other Actions', other_actions))
         return items
 
 

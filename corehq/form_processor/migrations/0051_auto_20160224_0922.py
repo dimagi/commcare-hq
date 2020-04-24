@@ -11,19 +11,19 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='casetransaction',
             name='type',
-            field=models.PositiveSmallIntegerField(choices=[(1, b'form'), (2, b'rebuild_with_reason'), (4, b'user_requested_rebuild'), (8, b'user_archived_rebuild'), (16, b'form_archive_rebuild'), (32, b'form_edit_rebuild'), (64, b'ledger')]),
+            field=models.PositiveSmallIntegerField(choices=[(1, 'form'), (2, 'rebuild_with_reason'), (4, 'user_requested_rebuild'), (8, 'user_archived_rebuild'), (16, 'form_archive_rebuild'), (32, 'form_edit_rebuild'), (64, 'ledger')]),
             preserve_default=True,
         ),
         migrations.AlterField(
             model_name='commcarecaseindexsql',
             name='relationship_id',
-            field=models.PositiveSmallIntegerField(choices=[(1, b'child'), (2, b'extension')]),
+            field=models.PositiveSmallIntegerField(choices=[(1, 'child'), (2, 'extension')]),
             preserve_default=True,
         ),
         migrations.AlterField(
             model_name='xforminstancesql',
             name='state',
-            field=models.PositiveSmallIntegerField(default=1, choices=[(1, b'normal'), (2, b'archived'), (4, b'deprecated'), (8, b'duplicate'), (16, b'error'), (32, b'submission_error'), (64, b'deleted')]),
+            field=models.PositiveSmallIntegerField(default=1, choices=[(1, 'normal'), (2, 'archived'), (4, 'deprecated'), (8, 'duplicate'), (16, 'error'), (32, 'submission_error'), (64, 'deleted')]),
             preserve_default=True,
         ),
         migrations.AlterField(

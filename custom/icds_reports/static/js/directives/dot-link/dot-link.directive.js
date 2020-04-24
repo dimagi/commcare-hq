@@ -3,11 +3,11 @@ var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 function DotLinkController($location) {
     var vm = this;
 
-    vm.isActive = function() {
+    vm.isActive = function () {
         return $location.path() === vm.route;
     };
 
-    vm.onClick = function() {
+    vm.onClick = function () {
         $location.path(vm.route);
     };
 }

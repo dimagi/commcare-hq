@@ -28,7 +28,7 @@ function ImmunizationCoverageController($scope, $routeParams, $location, $filter
         info: 'Of the total number of children enrolled for Anganwadi Services who are over a year old, the percentage of children who have received the complete immunization as per the National Immunization Schedule of India that is required by age 1.<br/><br/>This includes the following immunizations:<br/>If Pentavalent path: Penta1/2/3, OPV1/2/3, BCG, Measles, VitA1<br/>If DPT/HepB path: DPT1/2/3, HepB1/2/3, OPV1/2/3, BCG, Measles, VitA1',
     };
 
-    vm.getPopupData = function(row) {
+    vm.getPopupData = function (row) {
         var gender = genderIndex > 0 ? genders[genderIndex].name : '';
         var chosenFilters = gender ? ' (' + gender + ') ' : '';
         var total = row ? $filter('indiaNumbers')(row.all) : 'N/A';
@@ -46,13 +46,13 @@ function ImmunizationCoverageController($scope, $routeParams, $location, $filter
             {
                 indicator_name: '% of children who have recieved complete immunizations required by age 1' + chosenFilters + ': ',
                 indicator_value: percent,
-            }
+            },
         ];
     };
 
     vm.init();
 
-    vm.resetAdditionalFilter = function() {
+    vm.resetAdditionalFilter = function () {
         vm.filtersData.gender = '';
         $location.search('gender', null);
     };

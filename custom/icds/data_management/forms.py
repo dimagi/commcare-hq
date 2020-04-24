@@ -9,6 +9,7 @@ from corehq.apps.hqwebapp.crispy import HQFormHelper
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 from custom.icds.data_management.base import SQLBasedDataManagement
 from custom.icds.data_management.const import DATA_MANAGEMENT_TASKS
+from custom.icds.data_management.models import DataManagementRequest
 from custom.icds.data_management.tasks import execute_data_management
 
 
@@ -52,11 +53,9 @@ class DataManagementForm(forms.Form):
             self.add_error("end_date", "End date should be greater than start date")
 
     def submit(self, domain, username):
-        execute_data_management.delay(
-            self.cleaned_data['slug'],
-            domain,
-            self.cleaned_data['db_alias'],
-            username,
-            self.cleaned_data['start_date'],
-            self.cleaned_data['end_date']
+        request = DataManagementRequest.objects.create(
+            slug=self.cleaned_data['slug'], domain=domain, db_alias=self.cleaned_data['db_alias'],
+            initiated_by=username, start_date=self.cleaned_data['start_date'],
+            end_date=self.cleaned_data['end_date']
         )
+        execute_data_management.delay(request.id)

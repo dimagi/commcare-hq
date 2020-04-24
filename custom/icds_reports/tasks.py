@@ -16,7 +16,7 @@ from django.db.models import F
 import pytz
 from celery import chain
 from celery.schedules import crontab
-from celery.task import periodic_task, task
+from celery.task import task
 from dateutil import parser as date_parser
 from dateutil.relativedelta import relativedelta
 from gevent.pool import Pool
@@ -27,7 +27,6 @@ from dimagi.utils.chunked import chunked
 from dimagi.utils.dates import force_to_date, force_to_datetime
 from dimagi.utils.logging import notify_exception
 from pillowtop.feed.interface import ChangeMeta
-from pillow_retry.models import PillowError
 
 from corehq.apps.change_feed import data_sources, topics
 from corehq.apps.change_feed.producer import producer
@@ -42,12 +41,9 @@ from corehq.apps.users.dbaccessors.all_commcare_users import (
     get_all_user_id_username_pairs_by_domain,
 )
 from corehq.const import SERVER_DATE_FORMAT, SERVER_DATETIME_FORMAT
-from corehq.form_processor.change_publishers import publish_case_saved
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import CommCareCaseSQL, XFormInstanceSQL
 from corehq.sql_db.connections import get_icds_ucr_citus_db_alias
 from corehq.util.celery_utils import periodic_task_on_envs
-from corehq.util.datadog.utils import case_load_counter
 from corehq.util.decorators import serial_task
 from corehq.util.log import send_HTML_email
 from corehq.util.soft_assert import soft_assert
@@ -66,6 +62,7 @@ from custom.icds_reports.const import (
     THR_REPORT_EXPORT,
     THREE_MONTHS,
     DASHBOARD_USAGE_EXPORT,
+    SERVICE_DELIVERY_REPORT
 )
 from custom.icds_reports.models import (
     AggAwc,
@@ -103,7 +100,12 @@ from custom.icds_reports.models.aggregate import (
     DashboardUserActivityReport,
     AggregateAdolescentGirlsRegistrationForms,
     AggGovernanceDashboard,
-    AggregateMigrationForms
+    AggServiceDeliveryReport,
+    AggregateMigrationForms,
+    AggregateAvailingServiceForms,
+    BiharAPIDemographics,
+    ChildVaccines
+
 )
 from custom.icds_reports.models.helper import IcdsFile
 from custom.icds_reports.models.util import UcrReconciliationStatus
@@ -113,6 +115,7 @@ from custom.icds_reports.reports.issnip_monthly_register import (
     ISSNIPMonthlyReport,
 )
 from custom.icds_reports.reports.take_home_ration import TakeHomeRationExport
+from custom.icds_reports.reports.service_delivery_report import ServiceDeliveryReport
 from custom.icds_reports.sqldata.exports.awc_infrastructure import (
     AWCInfrastructureExport,
 )
@@ -140,6 +143,7 @@ from custom.icds_reports.utils import (
     track_time,
     zip_folder,
     get_dashboard_usage_excel_file,
+    create_service_delivery_report
 )
 from custom.icds_reports.utils.aggregation_helpers.distributed import (
     ChildHealthMonthlyAggregationDistributedHelper,
@@ -207,7 +211,7 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
         with connections[db_alias].cursor() as cursor:
             _create_aggregate_functions(cursor)
 
-        _update_aggregate_locations_tables()
+        update_aggregate_locations_tables()
 
         state_ids = list(SQLLocation.objects
                      .filter(domain=DASHBOARD_DOMAIN, location_type__name='state')
@@ -286,6 +290,12 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
                 for state_id in state_ids
             ])
 
+            stage_1_tasks.extend([
+                icds_state_aggregation_task.si(state_id=state_id, date=monthly_date,
+                                               func_name='_agg_availing_services_table')
+                for state_id in state_ids
+            ])
+
             stage_1_tasks.append(icds_aggregation_task.si(date=calculation_date, func_name='_update_months_table'))
 
             # https://github.com/celery/celery/issues/4274
@@ -323,6 +333,11 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
                                  ])
 
             res_ls_tasks.append(icds_aggregation_task.si(date=calculation_date, func_name='_agg_ls_table'))
+
+            res_sdr = chain(icds_aggregation_task.si(date=calculation_date, func_name='update_service_delivery_report'),
+                            ).apply_async()
+
+            res_sdr.get(disable_sync_subtasks=False)
 
             res_awc = chain(icds_aggregation_task.si(date=calculation_date, func_name='_agg_awc_table'),
                             *res_ls_tasks
@@ -376,7 +391,7 @@ def _create_aggregate_functions(cursor):
         raise
 
 
-def _update_aggregate_locations_tables():
+def update_aggregate_locations_tables():
     try:
         celery_task_logger.info("Starting icds reports update_location_tables")
         with transaction.atomic(using=router.db_for_write(AwcLocation)):
@@ -407,6 +422,7 @@ def icds_aggregation_task(self, date, func_name):
         '_agg_ccs_record_table': _agg_ccs_record_table,
         '_agg_awc_table': _agg_awc_table,
         'aggregate_awc_daily': aggregate_awc_daily,
+        'update_service_delivery_report': update_service_delivery_report
     }[func_name]
 
     db_alias = get_icds_ucr_citus_db_alias()
@@ -452,7 +468,8 @@ def icds_state_aggregation_task(self, state_id, date, func_name):
         '_agg_beneficiary_form': _agg_beneficiary_form,
         '_agg_thr_table': _agg_thr_table,
         '_agg_adolescent_girls_registration_table': _agg_adolescent_girls_registration_table,
-        '_agg_migration_table': _agg_migration_table
+        '_agg_migration_table': _agg_migration_table,
+        '_agg_availing_services_table': _agg_availing_services_table
     }[func_name]
 
     db_alias = get_icds_ucr_citus_db_alias()
@@ -596,8 +613,8 @@ def _child_health_monthly_data(state_ids, day):
 
     # https://github.com/celery/celery/issues/4274
     sub_aggregations = [
-        _child_health_helper.delay(query=query, params=params)
-        for query, params in helper.pre_aggregation_queries()
+        _child_health_helper.delay(list(queries))
+        for queries in helper.pre_aggregation_queries()
     ]
     for sub_aggregation in sub_aggregations:
         sub_aggregation.get(disable_sync_subtasks=False)
@@ -612,11 +629,12 @@ def update_child_health_monthly_table(day, state_ids):
 
 @task(serializer='pickle', queue='icds_aggregation_queue', default_retry_delay=15 * 60, acks_late=True)
 @track_time
-def _child_health_helper(query, params):
-    celery_task_logger.info("Running child_health_helper with %s", params)
+def _child_health_helper(queries):
     with get_cursor(ChildHealthMonthly) as cursor:
-        cursor.execute(query, params)
-    celery_task_logger.info("Completed child_health_helper with %s", params)
+        for query, params in queries:
+            celery_task_logger.info("Running child_health_helper with %s", params)
+            cursor.execute(query, params)
+        celery_task_logger.info("Completed child_health_helper with %s", params)
 
 
 @track_time
@@ -711,6 +729,13 @@ def _agg_migration_table(state_id, day):
     db_alias = router.db_for_write(AggregateMigrationForms)
     with transaction.atomic(using=db_alias):
         AggregateMigrationForms.aggregate(state_id, force_to_date(day))
+
+
+@track_time
+def _agg_availing_services_table(state_id, day):
+    db_alias = router.db_for_write(AggregateAvailingServiceForms)
+    with transaction.atomic(using=db_alias):
+        AggregateAvailingServiceForms.aggregate(state_id, force_to_date(day))
 
 
 @task(serializer='pickle', queue='icds_aggregation_queue')
@@ -940,9 +965,30 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
             )
         else:
             cache_key = create_excel_file(excel_data, data_type, file_format)
+    elif indicator == SERVICE_DELIVERY_REPORT:
+        excel_data = ServiceDeliveryReport(
+            config=config,
+            location=location,
+            beta=beta
+        ).get_excel_data()
+        export_info = excel_data[1][1]
+        generated_timestamp = date_parser.parse(export_info[0][1])
+        formatted_timestamp = generated_timestamp.strftime("%d-%m-%Y__%H-%M-%S")
+        data_type = 'Service Delivery Report__{}'.format(formatted_timestamp)
 
+        if file_format == 'xlsx':
+            cache_key = create_service_delivery_report(
+                excel_data,
+                data_type,
+                config,
+            )
+        else:
+            cache_key = create_excel_file(excel_data, data_type, file_format)
+
+        formatted_timestamp = datetime.now().strftime("%d-%m-%Y__%H-%M-%S")
+        data_type = 'Service Delivery Report__{}'.format(formatted_timestamp)
     if indicator not in (AWW_INCENTIVE_REPORT, LS_REPORT_EXPORT, THR_REPORT_EXPORT, CHILDREN_EXPORT,
-                         DASHBOARD_USAGE_EXPORT):
+                         DASHBOARD_USAGE_EXPORT, SERVICE_DELIVERY_REPORT):
         if file_format == 'xlsx' and beta:
             cache_key = create_excel_file_in_openpyxl(excel_data, data_type)
         else:
@@ -1576,8 +1622,6 @@ def setup_aggregation(agg_date):
         with connections[db_alias].cursor() as cursor:
             _create_aggregate_functions(cursor)
 
-        _update_aggregate_locations_tables()
-
 
 def _child_health_monthly_aggregation(day, state_ids):
     helper = ChildHealthMonthlyAggregationDistributedHelper(state_ids, force_to_date(day))
@@ -1594,8 +1638,8 @@ def _child_health_monthly_aggregation(day, state_ids):
 
     greenlets = []
     pool = Pool(20)
-    for query, params in helper.pre_aggregation_queries():
-        greenlets.append(pool.spawn(_child_health_helper, query, params))
+    for queries in helper.pre_aggregation_queries():
+        greenlets.append(pool.spawn(_child_health_helper, queries))
     while not pool.join(timeout=120, raise_error=True):
         celery_task_logger.info('failed to join pool - greenlets remaining: {}'.format(len(pool)))
     for g in greenlets:
@@ -1656,11 +1700,8 @@ def reconcile_data_not_in_ucr(reconciliation_status_pk):
 
     data_not_in_ucr = get_data_not_in_ucr(status_record)
     doc_ids_not_in_ucr = {data[0] for data in data_not_in_ucr}
-    doc_ids_in_pillow_error = set(
-        PillowError.objects.filter(doc_id__in=doc_ids_not_in_ucr).values_list('doc_id', flat=True))
-    invalid_doc_ids = set(
+    known_bad_doc_ids = set(
         InvalidUCRData.objects.filter(doc_id__in=doc_ids_not_in_ucr).values_list('doc_id', flat=True))
-    known_bad_doc_ids = doc_ids_in_pillow_error.intersection(invalid_doc_ids)
 
     # republish_kafka_changes
     # running the data accessor again to avoid storing all doc ids in memory
@@ -1668,7 +1709,7 @@ def reconcile_data_not_in_ucr(reconciliation_status_pk):
     # but the number of doc ids will increase with the number of errors
     for doc_id, doc_subtype, sql_modified_on in get_data_not_in_ucr(status_record):
         if doc_id in known_bad_doc_ids:
-            # These docs will either get retried or are invalid
+            # These docs are invalid
             continue
         number_documents_missing += 1
         celery_task_logger.info(f'doc_id {doc_id} from {sql_modified_on} not found in UCR data sources')
@@ -1711,9 +1752,14 @@ def get_data_not_in_ucr(status_record):
     chunk_size = 1000
     for chunk in chunked(matching_records_for_db, chunk_size):
         doc_ids = [val[0] for val in chunk]
-        docs_in_ucr = _get_docs_in_ucr(domain, status_record.table_id, doc_ids)
+        doc_id_and_inserted_in_ucr = _get_docs_in_ucr(domain, status_record.table_id, doc_ids)
         for doc_id, doc_subtype, sql_modified_on in chunk:
-            if doc_id not in docs_in_ucr:
+            if doc_id in doc_id_and_inserted_in_ucr:
+                # This is to handle the cases which are outdated. This condition also handles the time drift of 1 sec
+                # between main db and ucr db. i.e  doc will even be included when inserted_at-sql_modified_on <= 1 sec
+                if sql_modified_on - doc_id_and_inserted_in_ucr[doc_id] >= timedelta(seconds=-1):
+                    yield (doc_id, doc_subtype, sql_modified_on.isoformat())
+            else:
                 yield (doc_id, doc_subtype, sql_modified_on.isoformat())
 
 
@@ -1721,12 +1767,12 @@ def _get_docs_in_ucr(domain, table_id, doc_ids):
     table_name = get_table_name(domain, table_id)
     with connections[get_icds_ucr_citus_db_alias()].cursor() as cursor:
         query = f'''
-            SELECT doc_id
+            SELECT doc_id, inserted_at
             FROM "{table_name}"
             WHERE doc_id = ANY(%(doc_ids)s);
         '''
         cursor.execute(query, {'doc_ids': doc_ids})
-        return {row[0] for row in cursor.fetchall()}
+        return {row[0]: row[1] for row in cursor.fetchall()}
 
 
 def _get_primary_data_for_forms(db, domain, day, xmlns):
@@ -1801,3 +1847,23 @@ def _agg_governance_dashboard(current_month):
         db_alias = router.db_for_write(AggGovernanceDashboard)
         with transaction.atomic(using=db_alias):
             AggGovernanceDashboard().aggregate(month)
+
+
+def update_service_delivery_report(target_date):
+    current_month = force_to_date(target_date).replace(day=1)
+    AggServiceDeliveryReport.aggregate(current_month)
+
+
+def update_bihar_api_table(target_date):
+    current_month = force_to_date(target_date).replace(day=1)
+    _agg_bihar_api_demographics.delay(current_month)
+
+
+@task(queue='icds_aggregation_queue', serializer='pickle')
+def _agg_bihar_api_demographics(target_date):
+    BiharAPIDemographics.aggregate(target_date)
+
+
+def update_child_vaccine_table(target_date):
+    current_month = force_to_date(target_date).replace(day=1)
+    ChildVaccines.aggregate(current_month)

@@ -93,7 +93,7 @@ hqDefine('export/js/models', [
             userDefined: constants.USER_DEFINED_SPLIT_TYPES,
         };
         self.getTagCSSClass = utils.getTagCSSClass;
-
+        self.constants = constants;
         if (self.include_errors) {
             self.initiallyIncludeErrors = ko.observable(self.include_errors());
         }
@@ -923,7 +923,7 @@ hqDefine('export/js/models', [
      * @returns {Boolean} - True if it is the case name property False otherwise.
      */
     ExportItem.prototype.isCaseName = function () {
-        return this.path()[this.path().length - 1].name === 'name';
+        return this.path()[this.path().length - 1].name() === 'name';
     };
 
     ExportItem.prototype.readablePath = function () {

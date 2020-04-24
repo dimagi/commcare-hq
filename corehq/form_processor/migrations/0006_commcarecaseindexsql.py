@@ -16,7 +16,7 @@ class Migration(migrations.Migration):
                 ('identifier', models.CharField(max_length=255)),
                 ('referenced_id', models.CharField(max_length=255)),
                 ('referenced_type', models.CharField(max_length=255)),
-                ('relationship', models.PositiveSmallIntegerField(choices=[(0, b'child'), (1, b'extension')])),
+                ('relationship', models.PositiveSmallIntegerField(choices=[(0, 'child'), (1, 'extension')])),
                 ('case', models.ForeignKey(to='form_processor.CommCareCaseSQL', to_field='case_uuid', db_column='case_uuid', db_index=False, on_delete=models.CASCADE)),
             ],
             options={

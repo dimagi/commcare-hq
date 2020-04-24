@@ -25,4 +25,3 @@ class Migration(migrations.Migration):
         migrations.RunSQL('ALTER TABLE agg_awc ADD COLUMN cases_ccs_pregnant_reg_in_month INTEGER'),
 
     ]
-    operations.extend(get_view_migrations())

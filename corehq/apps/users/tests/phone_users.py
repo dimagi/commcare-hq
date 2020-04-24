@@ -33,18 +33,6 @@ class PhoneUsersTestCase(TestCase):
                                            key=self.domain).count()
         self.assertEqual(phone_users_count, 0)
 
-#    def testPhoneUsersViewLastNumberAdded(self):
-#        self.couch_user.add_phone_number(123)
-#        self.couch_user.add_phone_number(456)
-#        self.couch_user.save()
-#        phone_user = CouchUser.view("users/phone_users_by_domain",
-#            startkey=[self.domain],
-#            endkey=[self.domain, {}],
-#            include_docs=True,
-#        ).one()
-#        self.assertEquals(phone_user['name'], self.username)
-#        self.assertEquals(phone_user['phone_number'], '456')
-
     def testPhoneUsersViewDefaultNumber(self):
         self.couch_user.add_phone_number(789)
         self.couch_user.add_phone_number(101, default=True)

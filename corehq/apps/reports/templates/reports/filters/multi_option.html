@@ -19,8 +19,9 @@
   {% endif %}
   {% if filter_help_inline or search_help_inline %}
     <span class="help-block">
-      <i class="fa fa-info-circle"></i>
-      {{ filter_help_inline }} {{ search_help_inline }}
+      {{ filter_help_inline }}
+      {% if filter_help_inline and search_help_inline %}<br>{% endif %}
+      {{ search_help_inline }}
     </span>
   {% endif %}
 {% endblock %}

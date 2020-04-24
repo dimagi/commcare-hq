@@ -10,12 +10,17 @@ exclude_urls = (
     'icds-ng-template',
     'locations',
     'mwcd_indicators',
-    'data_export_api'
+    'data_export_api',
+    'household_members_data',
+    'mother_details',
+    'children_and_vaccines',
+    'school_data'
 )
 
 AUDIT_URLS = frozenset(
     [url.name for url in DASHBOARD_URL_GROUPS if hasattr(url, 'name') and url.name not in exclude_urls] + [
         'icds_dashboard',
+        'icds_dashboard_mobile',
     ]
 )
 

@@ -28,12 +28,13 @@ from dimagi.utils.django.fields import TrimmedCharField
 from django.utils.translation import ugettext as _, ugettext_lazy
 from corehq.apps.app_manager.dbaccessors import get_app, get_latest_released_app
 from corehq.apps.app_manager.exceptions import FormNotFoundException
-from corehq.apps.app_manager.models import Form as AdvancedForm
+from corehq.apps.app_manager.models import AdvancedForm
 from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.apps.reminders.util import get_form_list, get_combined_id, split_combined_id
-from corehq.apps.sms.util import get_or_create_translation_doc
+from corehq.apps.sms.util import get_or_create_sms_translations
+from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
 from corehq.apps.smsforms.models import SQLXFormsSession
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.models import CommCareCaseSQL
@@ -1063,6 +1064,7 @@ class ScheduleForm(Form):
         required=False,
         label=ugettext_lazy("User Organization Recipient(s)"),
         widget=SelectMultiple(choices=[]),
+        help_text=ExpandedMobileWorkerFilter.location_search_help,
     )
     include_descendant_locations = BooleanField(
         required=False,
@@ -1876,15 +1878,16 @@ class ScheduleForm(Form):
 
     @cached_property
     def language_list(self):
-        tdoc = get_or_create_translation_doc(self.domain)
-        result = set(tdoc.langs)
+        sms_translations = get_or_create_sms_translations(self.domain)
+        result = sms_translations.langs     # maintain order set on languages config page
 
+        # add any languages present in alert but deleted from languages config page
         if self.initial_schedule:
-            result |= self.initial_schedule.memoized_language_set
+            initial_langs = self.initial_schedule.memoized_language_set
+            initial_langs.discard('*')
+            result += list(self.initial_schedule.memoized_language_set - set(result))
 
-        result.discard('*')
-
-        return list(result)
+        return result
 
     @property
     def use_case(self):
@@ -2694,8 +2697,8 @@ class ConditionalAlertScheduleForm(ScheduleForm):
         required=False,
         choices=(
             (START_DATE_RULE_TRIGGER, ugettext_lazy("The first available time after the rule is satisfied")),
-            (START_DATE_CASE_PROPERTY, ugettext_lazy("The date from case property:")),
-            (START_DATE_SPECIFIC_DATE, ugettext_lazy("A specific date:")),
+            (START_DATE_CASE_PROPERTY, ugettext_lazy("The date from case property")),
+            (START_DATE_SPECIFIC_DATE, ugettext_lazy("A specific date")),
         )
     )
 
@@ -3331,7 +3334,7 @@ class ConditionalAlertScheduleForm(ScheduleForm):
         if isinstance(form, AdvancedForm) and form.schedule and form.schedule.enabled:
             return value
 
-        raise ValidationError(_("Please select a visit scheduler form"))
+        raise ValidationError(_("The selected form does not have a schedule enabled."))
 
     def validate_visit(self, form, visit_index):
         try:

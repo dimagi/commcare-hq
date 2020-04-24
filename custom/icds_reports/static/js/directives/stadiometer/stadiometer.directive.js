@@ -36,7 +36,7 @@ function StadiometerController($scope, $routeParams, $location, $filter, infrast
             {
                 indicator_name: '% of AWCs that reported having a Stadiometer: ',
                 indicator_value: percent,
-            }
+            },
         ];
     };
 

@@ -7,7 +7,9 @@ from django.contrib import messages
 from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import render
 from django.template.loader import render_to_string
-from django.urls import RegexURLResolver, Resolver404
+from corehq.util.django2_shim.urls import URLResolver
+
+from django.urls import Resolver404
 from django.utils.translation import ugettext_lazy as _
 
 from couchdbkit import ResourceConflict, ResourceNotFound
@@ -261,7 +263,7 @@ def download_file(request, domain, app_id, path):
         full_path = 'files/%s' % path
 
     def resolve_path(path):
-        return RegexURLResolver(
+        return URLResolver(
             r'^', 'corehq.apps.app_manager.download_urls').resolve(path)
 
     def create_build_files(build_profile_id=None):

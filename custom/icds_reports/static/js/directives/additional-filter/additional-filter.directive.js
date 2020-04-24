@@ -74,7 +74,9 @@ function AdditionalFilterController($scope, $location, $uibModal, storageService
         filtersObjects.forEach(function (filterObject) {
             if (filterObject.value) {
                 var val = filterObject.value;
-                if (filterObject.label === 'Age') val += ' m';
+                if (filterObject.label === 'Age') {
+                    val += ' m';
+                }
                 placeholder += filterObject.label + ': ' + val + ' ';
             }
         });

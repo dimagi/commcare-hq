@@ -26,7 +26,7 @@ def custom_db_checks(app_configs, **kwargs):
 
 @checks.register('settings')
 def check_plproxy_config(app_configs, **kwargs):
-    allowed_keys = {'PROXY_FOR_STANDBYS', 'PROXY', 'SHARDS'}
+    allowed_keys = {'PROXY_FOR_STANDBYS', 'PROXY', 'SHARDS', 'PLPROXY_HOST'}
     messages = []
     for db, config in settings.DATABASES.items():
         if 'PLPROXY' in config:

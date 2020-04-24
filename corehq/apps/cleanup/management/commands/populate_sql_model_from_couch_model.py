@@ -35,6 +35,11 @@ class PopulateSQLCommand(BaseCommand):
         raise NotImplementedError()
 
     def update_or_create_sql_object(self, doc):
+        """
+        This should find and update the sql object that corresponds to the given doc,
+        or create it if it doesn't yet exist. This method is responsible for saving
+        the sql object.
+        """
         raise NotImplementedError()
 
     @classmethod
@@ -44,12 +49,23 @@ class PopulateSQLCommand(BaseCommand):
         return couch_count - sql_count
 
     @classmethod
+    def commit_adding_migration(cls):
+        """
+        This should be the merge commit of the pull request that adds the command to the commcare-hq repository.
+        If this is provided, the failure message in migrate_from_migration will instruct users to deploy this
+        commit before running the command.
+        """
+        return None
+
+    @classmethod
     def migrate_from_migration(cls, apps, schema_editor):
         """
             Should only be called from within a django migration.
             Calls sys.exit on failure.
         """
         to_migrate = cls.count_items_to_be_migrated()
+        print(f"Found {to_migrate} {cls.couch_doc_type()} documents to migrate.")
+
         migrated = to_migrate == 0
         if migrated:
             return
@@ -75,43 +91,40 @@ class PopulateSQLCommand(BaseCommand):
                 A migration must be performed before this environment can be upgraded to the latest version
                 of CommCareHQ. This migration is run using the management command {command_name}.
             """)
+            if cls.commit_adding_migration():
+                print(f"""
+                Run the following commands to run the migration and get up to date:
+
+                    commcare-cloud <env> deploy commcare --commcare-rev={cls.commit_adding_migration()}
+
+                    commcare-cloud <env> django-manage {command_name}
+
+                    commcare-cloud <env> deploy commcare
+                """)
             sys.exit(1)
 
     @classmethod
     def couch_db(cls):
         return couch_config.get_db(cls.couch_db_slug())
 
-    def add_arguments(self, parser):
-        parser.add_argument(
-            '--dry-run',
-            action='store_true',
-            dest='dry_run',
-            default=False,
-            help='Do not actually modify the database, just verbosely log what will happen',
-        )
+    def handle(self, **options):
 
-    def handle(self, dry_run=False, **options):
-        log_prefix = "[DRY RUN] " if dry_run else ""
-
-        logger.info("{}Found {} {} docs and {} {} models".format(
-            log_prefix,
-            get_doc_count_by_type(self.couch_db(), self.couch_doc_type()),
+        doc_count = get_doc_count_by_type(self.couch_db(), self.couch_doc_type())
+        logger.info("Found {} {} docs and {} {} models".format(
+            doc_count,
             self.couch_doc_type(),
             self.sql_class().objects.count(),
             self.sql_class().__name__,
         ))
+        doc_index = 0
         for doc in get_all_docs_with_doc_types(self.couch_db(), [self.couch_doc_type()]):
-            logger.info("{}Looking at {} doc with id {}".format(
-                log_prefix,
+            doc_index += 1
+            logger.info("Looking at {} doc #{} of {} with id {}".format(
                 self.couch_doc_type(),
+                doc_index,
+                doc_count,
                 doc["_id"]
             ))
             with transaction.atomic():
                 model, created = self.update_or_create_sql_object(doc)
-                if not dry_run:
-                    logger.info("{}{} model for doc with id {}".format(log_prefix,
-                                                                        "Created" if created else "Updated",
-                                                                        doc["_id"]))
-                    model.save()
-                elif created:
-                    model.delete()
+                logger.info("{} model for doc with id {}".format("Creating" if created else "Updated", doc["_id"]))

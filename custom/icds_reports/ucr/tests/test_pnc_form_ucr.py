@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 
 from mock import patch
 
@@ -18,7 +18,7 @@ class TestPNCForms(BaseFormsTest):
             [{
                 "doc_id": None,
                 "repeat_iteration": 0,
-                "timeend": None,
+                "timeend": datetime(2017, 7, 15, 14, 55, 30, 315000),
                 "ccs_record_case_id": "d53c940c-3bf3-44f7-97a1-f43fcbe74359",
                 "child_health_case_id": "03f39da4-8ea3-4108-b8a8-1b58fdb4a698",
                 "counsel_adequate_bf": None,
@@ -45,7 +45,7 @@ class TestPNCForms(BaseFormsTest):
             [{
                 "doc_id": None,
                 "repeat_iteration": 0,
-                "timeend": None,
+                "timeend": datetime(2017, 8, 23, 10, 1, 20, 135000),
                 "ccs_record_case_id": "081cc405-5598-430f-ac8f-39cc4a1fdb30",
                 "child_health_case_id": "252d8e20-c698-4c94-a5a9-53bbf8972b64",
                 "counsel_adequate_bf": None,

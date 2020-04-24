@@ -10,7 +10,7 @@ import re
 import six
 import sys
 
-from corehq.util.datadog.lockmeter import MeteredLock
+from corehq.util.metrics.lockmeter import MeteredLock
 
 LOCK_EXPIRATION = timedelta(hours=1)
 

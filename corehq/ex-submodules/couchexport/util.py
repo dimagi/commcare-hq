@@ -225,7 +225,12 @@ def get_excel_format_value(value):
     if re.search(r"^\d+(/|-|\.)\d+(/|-|\.)\d+$", value):
         try:
             # always use standard yyy-mm-dd format for excel
-            return ExcelFormatValue(numbers.FORMAT_DATE_YYYYMMDD2, dateutil.parser.parse(value))
+            date_val = dateutil.parser.parse(value)
+            # Last chance at catching an errored date. If the date is invalid,
+            # yet somehow passed the regex, it will fail at this line with a
+            # ValueError:
+            date_val.isoformat()
+            return ExcelFormatValue(numbers.FORMAT_DATE_YYYYMMDD2, date_val)
         except (ValueError, OverflowError):
             pass
 
