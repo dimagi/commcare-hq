@@ -3,11 +3,12 @@ import logging
 
 from django.test import SimpleTestCase
 
+import requests
 from mock import Mock, patch
 
-import requests
-from corehq.motech.models import RequestLog
-from corehq.motech.requests import Requests
+from corehq.motech.const import ALGO_AES, PASSWORD_PLACEHOLDER
+from corehq.motech.models import ConnectionSettings, RequestLog
+from corehq.motech.requests import get_basic_requests
 
 TEST_API_URL = 'http://localhost:9080/api/'
 TEST_API_USERNAME = 'admin'
@@ -18,7 +19,12 @@ TEST_DOMAIN = 'test-domain'
 class UnpackRequestArgsTests(SimpleTestCase):
 
     def setUp(self):
-        self.requests = Requests(TEST_DOMAIN, TEST_API_URL, TEST_API_USERNAME, TEST_API_PASSWORD)
+        self.requests = get_basic_requests(
+            TEST_DOMAIN,
+            TEST_API_URL,
+            TEST_API_USERNAME,
+            TEST_API_PASSWORD,
+        )
 
         content = {'status': 'Created'}
         self.content_json = json.dumps(content)
@@ -135,3 +141,46 @@ class UnpackRequestArgsTests(SimpleTestCase):
 
             self.requests.delete(self.uri)
             self.assert_create_called_with_request_body_and_params(create_mock, None)
+
+
+class ConnectionSettingsPropertiesTests(SimpleTestCase):
+
+    def test_password_placeholder(self):
+        cs = ConnectionSettings()
+        cs.plaintext_password = PASSWORD_PLACEHOLDER
+        self.assertEqual(cs.password, '')
+
+    def test_client_secret_placeholder(self):
+        cs = ConnectionSettings()
+        cs.plaintext_client_secret = PASSWORD_PLACEHOLDER
+        self.assertEqual(cs.client_secret, '')
+
+    def test_password_setter(self):
+        cs = ConnectionSettings()
+        cs.plaintext_password = 'secret'
+        self.assertTrue(cs.password.startswith(f'${ALGO_AES}$'))
+
+    def test_client_secret_setter(self):
+        cs = ConnectionSettings()
+        cs.plaintext_client_secret = 'secret'
+        self.assertTrue(cs.client_secret.startswith(f'${ALGO_AES}$'))
+
+    def test_password_getter_decrypts(self):
+        cs = ConnectionSettings()
+        cs.plaintext_password = 'secret'
+        self.assertEqual(cs.plaintext_password, 'secret')
+
+    def test_client_secret_getter_decrypts(self):
+        cs = ConnectionSettings()
+        cs.plaintext_client_secret = 'secret'
+        self.assertEqual(cs.plaintext_client_secret, 'secret')
+
+    def test_password_getter_returns(self):
+        cs = ConnectionSettings()
+        cs.password = 'secret'
+        self.assertEqual(cs.plaintext_password, 'secret')
+
+    def test_client_secret_getter_returns(self):
+        cs = ConnectionSettings()
+        cs.client_secret = 'secret'
+        self.assertEqual(cs.plaintext_client_secret, 'secret')
