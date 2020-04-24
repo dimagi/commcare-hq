@@ -2041,7 +2041,7 @@ class Invoice(InvoiceBase):
         else:
             return self.get_contact_emails()
 
-    def get_contact_emails(self, include_domain_admins=False):
+    def get_contact_emails(self, include_domain_admins=False, filter_out_dimagi=False):
         try:
             billing_contact_info = BillingContactInfo.objects.get(account=self.account)
             contact_emails = billing_contact_info.email_list
@@ -2063,6 +2063,8 @@ class Invoice(InvoiceBase):
                         absolute_reverse(ManageBillingAccountView.urlname, args=[self.account.id]),
                     )
                 )
+        if filter_out_dimagi:
+            contact_emails = [e for e in contact_emails if not e.endswith('@dimagi.com')]
         return contact_emails
 
     @property
