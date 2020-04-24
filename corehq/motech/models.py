@@ -5,8 +5,13 @@ from django.db import models
 
 import jsonfield
 
-from corehq.motech.const import ALGO_AES, PASSWORD_PLACEHOLDER
-from corehq.motech.repeaters.models import BASIC_AUTH, DIGEST_AUTH, OAUTH1
+from corehq.motech.const import (
+    ALGO_AES,
+    BASIC_AUTH,
+    DIGEST_AUTH,
+    OAUTH1,
+    PASSWORD_PLACEHOLDER,
+)
 from corehq.motech.utils import b64_aes_decrypt, b64_aes_encrypt
 
 

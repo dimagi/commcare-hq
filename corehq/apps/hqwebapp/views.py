@@ -108,9 +108,8 @@ from corehq.form_processor.backends.sql.dbaccessors import (
 from corehq.form_processor.exceptions import CaseNotFound, XFormNotFound
 from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.util.context_processors import commcare_hq_names
-from corehq.util.datadog.const import DATADOG_UNKNOWN
-from corehq.util.datadog.metrics import JSERROR_COUNT
-from corehq.util.datadog.utils import sanitize_url
+from corehq.util.metrics.const import TAG_UNKNOWN
+from corehq.util.metrics.utils import sanitize_url
 from corehq.util.view_utils import reverse
 from no_exceptions.exceptions import Http403
 
@@ -554,18 +553,18 @@ def debug_notify(request):
 @require_POST
 def jserror(request):
     agent = request.META.get('HTTP_USER_AGENT', None)
-    os = browser_name = browser_version = bot = DATADOG_UNKNOWN
+    os = browser_name = browser_version = bot = TAG_UNKNOWN
     if agent:
         parsed_agent = httpagentparser.detect(agent)
         bot = parsed_agent.get('bot', False)
         if 'os' in parsed_agent:
-            os = parsed_agent['os'].get('name', DATADOG_UNKNOWN)
+            os = parsed_agent['os'].get('name', TAG_UNKNOWN)
 
         if 'browser' in parsed_agent:
-            browser_version = parsed_agent['browser'].get('version', DATADOG_UNKNOWN)
-            browser_name = parsed_agent['browser'].get('name', DATADOG_UNKNOWN)
+            browser_version = parsed_agent['browser'].get('version', TAG_UNKNOWN)
+            browser_name = parsed_agent['browser'].get('name', TAG_UNKNOWN)
 
-    metrics_counter(JSERROR_COUNT, tags={
+    metrics_counter('commcare.jserror.count', tags={
         'os': os,
         'browser_version': browser_version,
         'browser_name': browser_name,
@@ -580,7 +579,26 @@ def jserror(request):
 @method_decorator([login_required], name='dispatch')
 class BugReportView(View):
     def post(self, req, *args, **kwargs):
-        report = dict([(key, req.POST.get(key, '')) for key in (
+        email = self._get_email_message(
+            post_params=req.POST,
+            couch_user=req.couch_user,
+            uploaded_file=req.FILES.get('report_issue')
+        )
+
+        email.send(fail_silently=False)
+
+        if req.POST.get('five-hundred-report'):
+            messages.success(
+                req,
+                _("Your CommCare HQ Issue Report has been sent. We are working quickly to resolve this problem.")
+            )
+            return HttpResponseRedirect(reverse('homepage'))
+
+        return HttpResponse()
+
+    @staticmethod
+    def _get_email_message(post_params, couch_user, uploaded_file):
+        report = dict([(key, post_params.get(key, '')) for key in (
             'subject',
             'username',
             'domain',
@@ -594,7 +612,6 @@ class BugReportView(View):
         )])
 
         try:
-            couch_user = req.couch_user
             full_name = couch_user.full_name
             if couch_user.is_commcare_user():
                 email = report['email']
@@ -614,12 +631,15 @@ class BugReportView(View):
         else:
             domain = "<no domain>"
 
+        other_recipients = [el.strip() for el in report['cc'].split(",") if el]
+
         message = (
-            "username: {username}\n"
-            "full name: {full_name}\n"
-            "domain: {domain}\n"
-            "url: {url}\n"
-        ).format(**report)
+            f"username: {report['username']}\n"
+            f"full name: {report['full_name']}\n"
+            f"domain: {report['domain']}\n"
+            f"url: {report['url']}\n"
+            f"recipients: {', '.join(other_recipients)}\n"
+        )
 
         domain_object = Domain.get_by_name(domain) if report['domain'] else None
         debug_context = {
@@ -632,10 +652,9 @@ class BugReportView(View):
         }
         if domain_object:
             current_project_description = domain_object.project_description if domain_object else None
-            new_project_description = req.POST.get('project_description')
-            if (domain_object and
-                    req.couch_user.is_domain_admin(domain=domain) and
-                    new_project_description and current_project_description != new_project_description):
+            new_project_description = post_params.get('project_description')
+            if (domain_object and couch_user.is_domain_admin(domain=domain) and new_project_description
+                    and current_project_description != new_project_description):
                 domain_object.project_description = new_project_description
                 domain_object.save()
 
@@ -653,7 +672,6 @@ class BugReportView(View):
             })
 
         subject = '{subject} ({domain})'.format(subject=report['subject'], domain=domain)
-        cc = [el for el in report['cc'].strip().split(",") if el]
 
         if full_name and not any([c in full_name for c in '<>"']):
             reply_to = '"{full_name}" <{email}>'.format(**report)
@@ -666,7 +684,7 @@ class BugReportView(View):
             reply_to = settings.SERVER_EMAIL
 
         message += "Message:\n\n{message}\n".format(message=report['message'])
-        if req.POST.get('five-hundred-report'):
+        if post_params.get('five-hundred-report'):
             extra_message = ("This message was reported from a 500 error page! "
                              "Please fix this ASAP (as if you wouldn't anyway)...")
             extra_debug_info = (
@@ -686,10 +704,9 @@ class BugReportView(View):
             body=message,
             to=[settings.SUPPORT_EMAIL],
             headers={'Reply-To': reply_to},
-            cc=cc
+            cc=other_recipients
         )
 
-        uploaded_file = req.FILES.get('report_issue')
         if uploaded_file:
             filename = uploaded_file.name
             content = uploaded_file.read()
@@ -702,16 +719,7 @@ class BugReportView(View):
         else:
             email.from_email = settings.SUPPORT_EMAIL
 
-        email.send(fail_silently=False)
-
-        if req.POST.get('five-hundred-report'):
-            messages.success(
-                req,
-                "Your CommCare HQ Issue Report has been sent. We are working quickly to resolve this problem."
-            )
-            return HttpResponseRedirect(reverse('homepage'))
-
-        return HttpResponse()
+        return email
 
 
 def render_static(request, template, page_name):

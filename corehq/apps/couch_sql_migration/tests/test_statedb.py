@@ -361,6 +361,7 @@ def test_clone_casediff_data_from_tables():
         mod.DocChanges,
         mod.MissingDoc,
         mod.NoActionCaseForm,
+        mod.PatchedCase,
         mod.ProblemForm,
         # models not used by couch-to-sql migration
         PlanningForm,

@@ -6,7 +6,6 @@ from collections import namedtuple
 from typing import List, Dict
 
 from corehq.util.metrics.const import ALERT_INFO
-from corehq.util.soft_assert import soft_assert
 from prometheus_client.utils import INF
 
 METRIC_NAME_RE = re.compile(r'^[a-zA-Z_:.][a-zA-Z0-9_:.]*$')
@@ -19,6 +18,7 @@ metrics_logger = logging.getLogger('commcare.metrics')
 
 
 def _enforce_prefix(name, prefix):
+    from corehq.util.soft_assert import soft_assert
     soft_assert(fail_if_debug=True).call(
         not prefix or name.startswith(prefix),
         "Did you mean to call your metric 'commcare.{}'? ".format(name))

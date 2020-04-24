@@ -5,7 +5,7 @@ from corehq.form_processor.exceptions import LedgerValueNotFound
 from corehq.form_processor.interfaces.ledger_processor import LedgerProcessorInterface, StockModelUpdateResult, \
     LedgerDBInterface
 from corehq.form_processor.models import LedgerValue, LedgerTransaction
-from corehq.util.datadog.utils import ledger_load_counter
+from corehq.util.metrics.load_counters import ledger_load_counter
 
 
 class LedgerDBSQL(LedgerDBInterface):

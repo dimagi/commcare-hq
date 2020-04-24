@@ -740,6 +740,12 @@ class NewMobileWorkerForm(forms.Form):
             )
         )
 
+    def clean_email(self):
+        clean_email = self.cleaned_data['email'].strip().lower()
+        if clean_email:
+            validate_email(clean_email)
+        return clean_email
+
     def clean_location_id(self):
         location_id = self.cleaned_data['location_id']
         if not user_can_access_location_id(self.domain, self.request_user, location_id):

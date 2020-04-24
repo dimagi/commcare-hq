@@ -352,6 +352,8 @@ def two_factor_check(view_func, api_key):
                 request.user.otp_device = otp_device
                 request.user.is_verified = lambda: True
                 return fn(request, domain, *args, **kwargs)
+            if api_key:
+                request.bypass_two_factor = True
             return fn(request, domain, *args, **kwargs)
         return _inner
     return _outer
