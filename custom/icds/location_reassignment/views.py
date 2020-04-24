@@ -65,11 +65,11 @@ class LocationReassignmentView(BaseLocationView):
 
     def post(self, request, *args, **kwargs):
         uploaded_file = request.FILES['bulk_upload_file']
-        workbook, errors = self._get_workbook(uploaded_file)
+        action_type = request.POST.get('action_type')
+        workbook, errors = self._get_workbook(uploaded_file, action_type)
         if errors:
             [messages.error(request, error) for error in errors]
             return self.get(request, *args, **kwargs)
-        action_type = request.POST.get('action_type')
         parser = self._get_parser(action_type, workbook)
         errors = parser.parse()
         if errors:
@@ -90,24 +90,33 @@ class LocationReassignmentView(BaseLocationView):
             return HouseholdReassignmentParser(self.domain, workbook)
         return Parser(self.domain, workbook)
 
-    def _get_workbook(self, uploaded_file):
+    def _get_workbook(self, uploaded_file, action_type):
         try:
             workbook = get_workbook(uploaded_file)
         except WorkbookJSONError as e:
             return None, [str(e)]
-        return workbook, self._workbook_is_valid(workbook)
+        return workbook, self._workbook_is_valid(workbook, action_type)
 
-    def _workbook_is_valid(self, workbook):
+    def _workbook_is_valid(self, workbook, action_type):
         # ensure worksheets present and with titles as the location type codes
         errors = []
         if not workbook.worksheets:
             errors.append(_("No worksheets in workbook"))
             return errors
         worksheet_titles = [ws.title for ws in workbook.worksheets]
-        location_type_codes = [lt.code for lt in LocationType.objects.by_domain(self.domain)]
-        for worksheet_title in worksheet_titles:
-            if worksheet_title not in location_type_codes:
-                errors.append(_("Unexpected sheet {sheet_title}").format(sheet_title=worksheet_title))
+        if action_type == LocationReassignmentRequestForm.REASSIGN_HOUSEHOLDS:
+            location_site_codes = set(worksheet_titles)
+            site_codes_found = set(
+                SQLLocation.active_objects.filter(domain=self.domain, site_code__in=worksheet_titles)
+                .values_list('site_code', flat=True))
+            site_codes_missing = location_site_codes - site_codes_found
+            for site_code in site_codes_missing:
+                errors.append(_("Unexpected sheet {sheet_title}").format(sheet_title=site_code))
+        else:
+            location_type_codes = [lt.code for lt in LocationType.objects.by_domain(self.domain)]
+            for worksheet_title in worksheet_titles:
+                if worksheet_title not in location_type_codes:
+                    errors.append(_("Unexpected sheet {sheet_title}").format(sheet_title=worksheet_title))
         return errors
 
     def _generate_summary_response(self, transitions, uploaded_filename):
