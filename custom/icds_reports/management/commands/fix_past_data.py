@@ -1,7 +1,6 @@
 import os
-from datetime import datetime
+from datetime import date
 from dateutil.relativedelta import relativedelta
-
 
 from django.core.management.base import BaseCommand
 from corehq.util.argparse_types import date_type
@@ -22,48 +21,62 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument(
-            'month',
+            'start_date',
             type=date_type,
-            help='The start date (inclusive). format YYYY-MM-DD'
+            help='The start date (inclusive). format YYYY-MM-DD',
+            nargs='?'
+        )
+        parser.add_argument(
+            'script_number',
+            type=int,
+            help='The number of script running 1-8',
+            nargs='?'
         )
 
-    def build_data(self, monthly_date_dict):
+    def build_data(self, monthly_date_dict, script_number):
         date = monthly_date_dict['record_date']
         print(f'\n======= Executing for month {date}======\n')
-        for i in range(1, 8):
+        for i in range(script_number, 8):
             print(f'==============Executing Script {i} =============')
             if monthly_date_dict["default"] is False and i > 2:
                 path = os.path.join(os.path.dirname(__file__), 'sql_scripts',
-                                'fix_past_data_part_1_{}.sql'.format(i))
+                                    'fix_past_data_part_1_{}.sql'.format(i))
             else:
                 path = os.path.join(os.path.dirname(__file__), 'sql_scripts',
                                     'fix_past_data_part_{}.sql'.format(i))
             with open(path, "r", encoding='utf-8') as sql_file:
                 sql_to_execute = sql_file.read()
                 sql_to_execute = sql_to_execute.format(start_date=date.strftime("%Y-%m-%d"))
-                print(sql_to_execute)
                 _run_custom_sql_script(sql_to_execute)
 
     def handle(self, *args, **kwargs):
-        date = kwargs['month']
-        self.run_task(date)
+        # start date is the date from which we gonna start
+        # by default its the start date of dashboard
+        start_date = kwargs['start_date'] if kwargs['start_date'] else date(2017, 3, 1)
+        # script number is to identify which script to run if we pause the command in between
+        # by default its 1
+        script_number = kwargs['script_number'] if kwargs['script_number'] else 1
+        self.run_task(start_date, script_number)
 
-
-    def run_task(self, date):
-        monthly_dates = []
-        initial = datetime(2017, 3, 1, 0, 0)
-        initial_2 = datetime(2017, 5, 1, 0, 0)
-        initial_3 = datetime(2019, 8, 1, 0, 0)
-        # date at which the partitioning breaks
-        date_breaks = [initial_2, initial_3]
-        # get the number of month intervals between the dates
-        intervals = date.month - initial.month + 12 * (date.year - initial.year) + 1
+    def run_task(self, start_date, script_number):
+        monthly_dates_list = []
+        part_tb_date_start = date(2017, 5, 1)
+        part_tb_date_end = date(2019, 7, 1)
+        end_date = date.today()
+        end_date = end_date.replace(day=1)
+        # default is used to differentiate between the partitioned table monthly date
+        # false -> month got a partitioned table
+        # true -> month got a non partitioned table
         default = False
-        for i in range(0, intervals):
-            if initial in date_breaks:
-                default = not default
-            monthly_dates.append({"record_date": initial, "default": default})
-            initial = initial + relativedelta(months=1)
+        date_itr = start_date
+        while date_itr <= end_date:
+            if date_itr >= part_tb_date_start or date_itr <= part_tb_date_end:
+                default = True
+            else:
+                default = False
+            monthly_dates_list.append({"record_date": date_itr, "default": default})
+            date_itr = date_itr + relativedelta(months=1)
 
-        for monthly_date_dict in monthly_dates:
-            self.build_data(monthly_date_dict)
+        for monthly_date_dict in monthly_dates_list:
+            self.build_data(monthly_date_dict, script_number)
+            script_number = 1
