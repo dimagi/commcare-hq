@@ -242,7 +242,51 @@ class ChildHealthMbtDistributedHelper(MBTDistributedHelper):
                 't.zscore_grading_wfh_recorded_in_month',
                 't.muac_grading',
                 'ccs.case_id as ccs_record_case_id',
-                't.date_death')
+                't.date_death',
+                'vac.due_list_date_1g_dpt_1',
+                'vac.due_list_date_2g_dpt_2',
+                'vac.due_list_date_3g_dpt_3',
+                'vac.due_list_date_5g_dpt_booster',
+                'vac.due_list_date_5g_dpt_booster1',
+                'vac.due_list_date_7gdpt_booster_2',
+                'vac.due_list_date_0g_hep_b_0',
+                'vac.due_list_date_1g_hep_b_1',
+                'vac.due_list_date_2g_hep_b_2',
+                'vac.due_list_date_3g_hep_b_3',
+                'vac.due_list_date_3g_ipv',
+                'vac.due_list_date_4g_je_1',
+                'vac.due_list_date_5g_je_2',
+                'vac.due_list_date_5g_measles_booster',
+                'vac.due_list_date_4g_measles',
+                'vac.due_list_date_0g_opv_0',
+                'vac.due_list_date_1g_opv_1',
+                'vac.due_list_date_2g_opv_2',
+                'vac.due_list_date_3g_opv_3',
+                'vac.due_list_date_5g_opv_booster',
+                'vac.due_list_date_1g_penta_1',
+                'vac.due_list_date_2g_penta_2',
+                'vac.due_list_date_3g_penta_3',
+                'vac.due_list_date_1g_rv_1',
+                'vac.due_list_date_2g_rv_2',
+                'vac.due_list_date_3g_rv_3',
+                'vac.due_list_date_4g_vit_a_1',
+                'vac.due_list_date_5g_vit_a_2',
+                'vac.due_list_date_6g_vit_a_3',
+                'vac.due_list_date_6g_vit_a_4',
+                'vac.due_list_date_6g_vit_a_5',
+                'vac.due_list_date_6g_vit_a_6',
+                'vac.due_list_date_6g_vit_a_7',
+                'vac.due_list_date_6g_vit_a_8',
+                'vac.due_list_date_7g_vit_a_9',
+                'vac.due_list_date_anc_1',
+                'vac.due_list_date_anc_2',
+                'vac.due_list_date_anc_3',
+                'vac.due_list_date_anc_4',
+                'vac.due_list_date_tt_1',
+                'vac.due_list_date_tt_2',
+                'vac.due_list_date_tt_booster',
+                'vac.due_list_date_1g_bcg'
+        )
 
     def query(self):
         return """
@@ -254,6 +298,8 @@ class ChildHealthMbtDistributedHelper(MBTDistributedHelper):
             LEFT JOIN "ccs_record_monthly" ccs on ccs.person_case_id=mother.doc_id AND ccs.add=t.dob
                 AND (ccs.child_name is null OR ccs.child_name=t.person_name)
                 AND ccs.month=t.month AND ccs.supervisor_id=t.supervisor_id
+            LEFT JOIN "child_vaccines" vac on vac.supervisor_id=t.supervisor_id
+              AND vac.state_id=t.state_id AND vac.month=t.month AND vac.child_health_case_id= t.case_id
             WHERE awc.state_id='{state_id}' AND t.month='{month}'
         ) TO STDOUT WITH CSV HEADER ENCODING 'UTF-8';
         """.format(

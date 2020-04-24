@@ -296,6 +296,12 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
                 for state_id in state_ids
             ])
 
+            stage_1_tasks.extend([
+                icds_state_aggregation_task.si(state_id=state_id, date=monthly_date,
+                                               func_name='_agg_availing_services_table')
+                for state_id in state_ids
+            ])
+
             stage_1_tasks.append(icds_aggregation_task.si(date=calculation_date, func_name='_update_months_table'))
 
             # https://github.com/celery/celery/issues/4274
@@ -344,6 +350,10 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
                             ).apply_async()
 
             res_awc.get(disable_sync_subtasks=False)
+
+            res_vac = chain(icds_aggregation_task.si(date=calculation_date, func_name='update_child_vaccine_table'),
+                            ).apply_async()
+            res_vac.get(disable_sync_subtasks=False)
 
             first_of_month_string = monthly_date.strftime('%Y-%m-01')
             for state_id in state_ids:
@@ -422,7 +432,8 @@ def icds_aggregation_task(self, date, func_name):
         '_agg_ccs_record_table': _agg_ccs_record_table,
         '_agg_awc_table': _agg_awc_table,
         'aggregate_awc_daily': aggregate_awc_daily,
-        'update_service_delivery_report': update_service_delivery_report
+        'update_service_delivery_report': update_service_delivery_report,
+        'update_child_vaccine_table': update_child_vaccine_table
     }[func_name]
 
     db_alias = get_icds_ucr_citus_db_alias()
