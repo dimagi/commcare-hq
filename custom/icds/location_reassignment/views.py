@@ -17,7 +17,14 @@ from corehq.const import FILENAME_DATETIME_FORMAT
 from corehq.util.files import safe_filename_header
 from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.util.workbook_json.excel import WorkbookJSONError, get_workbook
-from custom.icds.location_reassignment.const import AWC_CODE
+from custom.icds.location_reassignment.const import (
+    AWC_CODE,
+    AWC_CODE_COLUMN,
+    CURRENT_SITE_CODE_COLUMN,
+    HOUSEHOLD_ID_COLUMN,
+    NEW_SITE_CODE_COLUMN,
+    OPERATION_COLUMN,
+)
 from custom.icds.location_reassignment.download import Download
 from custom.icds.location_reassignment.dumper import Dumper
 from custom.icds.location_reassignment.forms import (
@@ -95,28 +102,47 @@ class LocationReassignmentView(BaseLocationView):
             workbook = get_workbook(uploaded_file)
         except WorkbookJSONError as e:
             return None, [str(e)]
-        return workbook, self._workbook_is_valid(workbook, action_type)
+        return workbook, self._validate_workbook(workbook, action_type)
 
-    def _workbook_is_valid(self, workbook, action_type):
-        # ensure worksheets present and with titles as the location type codes
+    def _validate_workbook(self, workbook, action_type):
+        """
+        Ensure worksheets are present with titles as
+        1. location type codes for request for operations related requests
+        2. site codes of locations present in system for household reassignment
+        Ensure mandatory headers
+        :return list of errors
+        """
         errors = []
         if not workbook.worksheets:
             errors.append(_("No worksheets in workbook"))
             return errors
-        worksheet_titles = [ws.title for ws in workbook.worksheets]
         if action_type == LocationReassignmentRequestForm.REASSIGN_HOUSEHOLDS:
-            location_site_codes = set(worksheet_titles)
+            mandatory_columns = {AWC_CODE_COLUMN, HOUSEHOLD_ID_COLUMN}
+            location_site_codes = set([ws.title for ws in workbook.worksheets])
             site_codes_found = set(
-                SQLLocation.active_objects.filter(domain=self.domain, site_code__in=worksheet_titles)
+                SQLLocation.active_objects.filter(domain=self.domain, site_code__in=location_site_codes)
                 .values_list('site_code', flat=True))
-            site_codes_missing = location_site_codes - site_codes_found
-            for site_code in site_codes_missing:
-                errors.append(_("Unexpected sheet {sheet_title}").format(sheet_title=site_code))
+            for worksheet in workbook.worksheets:
+                errors.extend(self._validate_worksheet(worksheet, site_codes_found, mandatory_columns))
         else:
+            mandatory_columns = {CURRENT_SITE_CODE_COLUMN, NEW_SITE_CODE_COLUMN, OPERATION_COLUMN}
             location_type_codes = [lt.code for lt in LocationType.objects.by_domain(self.domain)]
-            for worksheet_title in worksheet_titles:
-                if worksheet_title not in location_type_codes:
-                    errors.append(_("Unexpected sheet {sheet_title}").format(sheet_title=worksheet_title))
+            for worksheet in workbook.worksheets:
+                errors.extend(self._validate_worksheet(worksheet, location_type_codes, mandatory_columns))
+        return errors
+
+    @staticmethod
+    def _validate_worksheet(worksheet, valid_titles, mandatory_columns):
+        errors = []
+        if worksheet.title not in valid_titles:
+            errors.append(_("Unexpected sheet {sheet_title}").format(sheet_title=worksheet.title))
+            return errors
+
+        columns = set(worksheet.headers)
+        missing_columns = mandatory_columns - columns
+        if missing_columns:
+            errors.append(_("Missing columns {columns} for worksheet {sheet_title}").format(
+                columns=", ".join(missing_columns), sheet_title=worksheet.title))
         return errors
 
     def _generate_summary_response(self, transitions, uploaded_filename):
