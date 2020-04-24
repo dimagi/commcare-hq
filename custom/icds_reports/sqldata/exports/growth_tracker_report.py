@@ -18,7 +18,7 @@ class GrowthTrackerExport(ExportableMixin, IcdsSqlData):
             return data_dict[case_id][column] if case_id in data_dict.keys() else "N/A"
 
         def _fetch_data(filters, order_by, case_by_grouping=False):
-            query_set = ChildHealthMonthlyView.objects.filter(filters).order_by(order_by)
+            query_set = ChildHealthMonthlyView.objects.filter(**filters).order_by(*order_by)
             data_month = query_set.values('state_name', 'district_name', 'block_name', 'supervisor_name',
                                           'awc_name', 'awc_site_code', 'person_name', 'dob', 'mother_name',
                                           'mother_phone_number', 'pse_days_attended', 'lunch_count',
