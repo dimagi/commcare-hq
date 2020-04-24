@@ -18,6 +18,7 @@ AGE_RANGES = [
 
 class FctGaps:
     slug = 'fct'
+    name = "Food Composition Table"
     AVAILABLE = 1
     BASE_TERM = 2
     REFERENCE = 3
@@ -38,6 +39,7 @@ class FctGaps:
 
 class ConvFactorGaps:
     slug = 'conv_factor'
+    name = "Conversion Factor"
     AVAILABLE = 1
     BASE_TERM = 2
     NOT_AVAILABLE = 8

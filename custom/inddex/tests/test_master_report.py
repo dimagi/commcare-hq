@@ -28,6 +28,7 @@ from ..example_data.data import (
 )
 from ..fixtures import FixtureAccessor
 from ..food import INDICATORS, FoodData
+from ..reports.gaps_detail import GapsByItemSummaryData, GapsDetailsData
 from ..reports.gaps_summary import get_gaps_data
 from ..reports.master_data import MasterData
 from ..reports.nutrient_intake import DailyIntakeData
@@ -223,8 +224,9 @@ class TestInddexReports(TestCase):
         expected_report = get_expected_report(csv_filename)
         self.assertEqual(list(expected_report[0].keys()), actual_report.headers)
 
-        for expected_row, actual in zip(expected_report, actual_report.rows):
-            expected = list(expected_row.values())
+        expected_rows = sorted(list(r.values()) for r in expected_report)
+        actual_rows = sorted(actual_report.rows)
+        for expected, actual in zip(expected_rows, actual_rows):
             if expected != actual:
                 msg = (
                     "\nRow doesn't match:\n"
@@ -240,6 +242,14 @@ class TestInddexReports(TestCase):
 
         self.assert_reports_match('conv_factor_gaps_summary.csv', cf_gaps_data)
         self.assert_reports_match('fct_gaps_summary.csv', fct_gaps_data)
+
+    def test_gaps_by_item_summary(self):
+        data = GapsByItemSummaryData(get_food_data())
+        self.assert_reports_match('gaps_by_item_summary.csv', data)
+
+    def test_gaps_by_item_details(self):
+        data = GapsDetailsData(get_food_data())
+        self.assert_reports_match('gaps_by_item_details.csv', data)
 
     def test_daily_intake(self):
         data = DailyIntakeData(get_food_data())

@@ -50,7 +50,8 @@ def do_case_diffs(migrator, cases, stop, batch_size):
 
         - 'pending': clear out in-process diffs
         - 'with-diffs': re-diff cases that previously had diffs
-        - a space-delimited list of case ids
+        - 'with-changes': re-diff cases that previously had changes
+        - a comma-delimited list of case ids
         - a path to a file containing a case id on each line. The path must
           begin with / or ./
 
@@ -61,6 +62,31 @@ def do_case_diffs(migrator, cases, stop, batch_size):
     casediff = CaseDiffTool(migrator, stop, batch_size)
     with migrator.counter, migrator.stopper:
         casediff.diff_cases(cases)
+    if cases is None and casediff.should_diff_pending():
+        return PENDING_WARNING
+
+
+def do_case_patch(migrator, cases, stop, batch_size):
+    """Patch cases with diffs or changes and then re-diff to verify outcome
+
+    :param migrator: CouchSqlDomainMigrator instance. See also `get_migrator`.
+    :param cases: string specifying a subset of cases to be patched. All
+    cases with diffs with be patched if `None`. Accepted values:
+
+        - a comma-delimited list of case ids
+        - a path to a file containing a case id on each line. The path must
+          begin with / or ./
+
+    :param stop: Boolean. If false perform patches and diffs in
+    parallel processes. If true perform patches and diffs in the main
+    process and drop into a pdb session when the first batch of cases
+    with diffs is encountered. NOTE: all cases are patched before any
+    cases are re-diffed to verify patch outcome.
+    """
+    casediff = CaseDiffTool(migrator, stop, batch_size)
+    with migrator.counter, migrator.stopper:
+        casediff.patch_diffs(cases)
+        casediff.diff_cases(cases or "pending")
     if cases is None and casediff.should_diff_pending():
         return PENDING_WARNING
 
@@ -102,17 +128,23 @@ class CaseDiffTool:
             for data in self.iter_case_diff_results(cases):
                 save_result(data)
 
-    def patch_diffs(self):
+    def patch_diffs(self, cases=None):
         from .casepatch import patch_diffs
         statedb = self.statedb
         counts = statedb.get_doc_counts().get("CommCareCase")
         if not counts or not counts.diffs + counts.changes:
             log.info("nothing to patch")
             return
-        count = counts.diffs + counts.changes
+        if cases:
+            case_ids = list(get_ids_from_string_or_file(cases))
+            count = len(case_ids)
+            select = {"by_kind": {"CommCareCase": case_ids}}
+        else:
+            count = counts.diffs + counts.changes
+            select = {"kind": "CommCareCase"}
         diffs = chain(
-            statedb.iter_doc_diffs("CommCareCase"),
-            statedb.iter_doc_changes("CommCareCase"),
+            statedb.iter_doc_diffs(**select),
+            statedb.iter_doc_changes(**select),
         )
         log.info(f"patching {count} cases")
         diffs = with_progress_bar(diffs, count, prefix="Case diffs", oneline=False)
@@ -124,8 +156,8 @@ class CaseDiffTool:
             return self.resumable_iter_diff_cases()
         if cases == "pending":
             return self.map_cases(load_and_diff_cases, self.get_pending_cases())
-        if cases == "with-diffs":
-            return self.iter_diff_cases_with_diffs()
+        if cases in ["with-diffs", "with-changes"]:
+            return self.iter_diff_cases_with_diffs(cases == "with-changes")
         case_ids = get_ids_from_string_or_file(cases)
         return self.map_cases(load_and_diff_cases, case_ids, log_cases=True)
 
@@ -143,9 +175,9 @@ class CaseDiffTool:
         )
         return self.map_cases(load_and_diff_cases, case_ids, diff_batch)
 
-    def iter_diff_cases_with_diffs(self):
-        count = self.statedb.count_case_ids_with_diffs()
-        cases = self.statedb.iter_case_ids_with_diffs()
+    def iter_diff_cases_with_diffs(self, changes):
+        count = self.statedb.count_case_ids_with_diffs(changes)
+        cases = self.statedb.iter_case_ids_with_diffs(changes)
         cases = with_progress_bar(cases, count, prefix="Cases with diffs", oneline=False)
         return self.map_cases(load_and_diff_cases, cases)
 
@@ -164,6 +196,8 @@ class CaseDiffTool:
             for batch in batches:
                 data = process_cases(batch, log_cases=log_cases)
                 yield data
+                if not hasattr(data, "diffs"):
+                    continue
                 diffs = [(kind, case_id, diffs) for kind, case_id, diffs in data.diffs if diffs]
                 if diffs:
                     log.info("found cases with diffs:\n%s", format_diffs(diffs))
@@ -233,10 +267,12 @@ def iter_sql_cases_with_sorted_transactions(domain):
             yield from iter(set(case_id for case_id, in cursor.fetchall()))
 
 
-def format_diffs(json_diffs, changes=False):
+def format_diffs(json_diffs):
     lines = []
     for kind, doc_id, diffs in sorted(json_diffs, key=lambda x: x[1]):
-        lines.append(f"{kind} {doc_id} {diffs[0].reason if changes else ''}")
+        if not diffs:
+            continue
+        lines.append(f"{kind} {doc_id} {getattr(diffs[0], 'reason', '')}")
         for diff in sorted(diffs, key=lambda d: (d.diff_type, d.path)):
             if len(repr(diff.old_value) + repr(diff.new_value)) > 60:
                 lines.append(f"  {diff.diff_type} {list(diff.path)}")
