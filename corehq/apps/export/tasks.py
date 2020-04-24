@@ -16,7 +16,6 @@ from corehq.apps.export.utils import get_export
 from corehq.apps.users.models import CouchUser
 from corehq.blobs import CODES, get_blob_db
 from corehq.celery_monitoring.signals import get_task_time_to_start
-from corehq.elastic import iter_es_docs_from_query
 from corehq.util.decorators import serial_task
 from corehq.util.files import TransientTempfile, safe_filename_header
 from corehq.util.metrics import metrics_counter, metrics_track_errors
@@ -259,9 +258,8 @@ def _generate_incremental_export(incremental_export):
         writer = get_export_writer([export_instance], temp_path, allow_pagination=False)
         with writer.open([export_instance]):
             query = _get_export_query(export_instance, filters)
-            # TODO: for some reason this sorting doesn't always seem to work in tests
             query = query.sort('server_modified_on')  # reset sort to this instead of opened_on
-            docs = LastDocTracker(iter_es_docs_from_query(query))
+            docs = LastDocTracker(query.run().hits)
             write_export_instance(writer, export_instance, docs)
 
         export_file = ExportFile(writer.path, writer.format)
