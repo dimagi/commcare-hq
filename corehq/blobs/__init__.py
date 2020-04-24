@@ -82,8 +82,6 @@ class CODES:
     data_file = 15      # domain data file (see DataFile class)
     form_multimedia = 16     # form submission multimedia zip
 
-    incremental_data_export = 17  # IncrementalExportCheckpoint
-
 
 CODES.name_of = {code: name
     for name, code in vars(CODES).items() if isinstance(code, int)}.get
