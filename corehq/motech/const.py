@@ -1,6 +1,13 @@
 BASIC_AUTH = "basic"
 DIGEST_AUTH = "digest"
 OAUTH1 = "oauth1"
+OAUTH2_BEARER = "bearer"
+AUTH_TYPES = (
+    (BASIC_AUTH, "Basic"),
+    (DIGEST_AUTH, "Digest"),
+    (OAUTH1, "OAuth1"),
+    (OAUTH2_BEARER, "OAuth 2.0 Bearer Tokens"),
+)
 
 PASSWORD_PLACEHOLDER = '*' * 16
 
