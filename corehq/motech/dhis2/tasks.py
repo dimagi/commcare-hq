@@ -52,6 +52,7 @@ def send_datasets(domain_name, send_now=False, send_date=None):
                 continue
 
             dataset = dataset_map.get_dataset(send_date)
+            # TODO: Move this into its own function, or make it a method of ConnectionSettings
             requests = Requests(
                 domain_name,
                 url,

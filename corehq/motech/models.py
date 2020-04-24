@@ -1,5 +1,6 @@
 import re
 
+from django.contrib.postgres.fields import JSONField
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 
@@ -7,12 +8,47 @@ import jsonfield
 
 from corehq.motech.const import (
     ALGO_AES,
-    BASIC_AUTH,
-    DIGEST_AUTH,
+    AUTH_TYPES,
     OAUTH1,
+    OAUTH2_BEARER,
     PASSWORD_PLACEHOLDER,
 )
 from corehq.motech.utils import b64_aes_decrypt, b64_aes_encrypt
+
+
+class ApiAuthSettings(models.Model):
+    """
+    Stores OAuth1 and OAuth 2.0 endpoints and settings for known APIs.
+    Once an API is added, its settings are available to all domains.
+    """
+    name = models.CharField(max_length=255)  # e.g. "DHIS2"
+    auth_type = models.CharField(
+        max_length=7,
+        choices=(
+            (OAUTH1, "OAuth1"),
+            (OAUTH2_BEARER, "OAuth 2.0 Bearer Tokens"),
+        )
+    )
+    # OAuth1
+    # URL for token to identify HQ. e.g. '/oauth/request_token' (Twitter)
+    request_token_url = models.CharField(max_length=255, null=True, blank=True)
+    # URL for user to authorize HQ. e.g. '/oauth/authorize'
+    authorization_url = models.CharField(max_length=255, null=True, blank=True)
+    # URL to fetch access token. e.g. '/oauth/access_token'
+    access_token_url = models.CharField(max_length=255, null=True, blank=True)
+
+    # OAuth 2.0
+    # URL to fetch bearer token. e.g. '/uaa/oauth/token' (DHIS2)
+    token_url = models.CharField(max_length=255, null=True, blank=True)
+    # URL to refresh bearer token. e.g. '/uaa/oauth/token'
+    refresh_url = models.CharField(max_length=255, null=True, blank=True)
+    # Pass credentials in Basic Auth header when requesting a token?
+    # Otherwise they are passed in the request body.
+    pass_credentials_in_header = models.BooleanField(default=False)
+
+    def __str__(self):
+        auth_types = dict(AUTH_TYPES)
+        return f"{self.name} ({auth_types[self.auth_type]})"
 
 
 class ConnectionSettings(models.Model):
@@ -27,17 +63,23 @@ class ConnectionSettings(models.Model):
     url = models.CharField(max_length=255)
     auth_type = models.CharField(
         max_length=7, null=True, blank=True,
-        choices=(
-            (None, "None"),
-            (BASIC_AUTH, "Basic"),
-            (DIGEST_AUTH, "Digest"),
-            (OAUTH1, "OAuth1"),
-        )
+        choices=((None, "None"),) + AUTH_TYPES
     )
     username = models.CharField(max_length=255)
     password = models.CharField(max_length=255)
+    api_auth_settings = models.ForeignKey(
+        ApiAuthSettings, null=True, on_delete=models.PROTECT
+    )
+    client_id = models.CharField(max_length=255, null=True, blank=True)
+    client_secret = models.CharField(max_length=255, null=True, blank=True)
     skip_cert_verify = models.BooleanField(default=False)
     notify_addresses_str = models.CharField(max_length=255, default="")
+
+    last_token = JSONField(null=True, blank=True)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._requests = None
 
     def __str__(self):
         return self.name
@@ -60,6 +102,34 @@ class ConnectionSettings(models.Model):
     @property
     def notify_addresses(self):
         return [addr for addr in re.split('[, ]+', self.notify_addresses_str) if addr]
+
+    def get_requests(self):
+        from corehq.motech.requests import Requests
+
+        if not self._requests:
+            self._requests = Requests(
+                self.domain,
+                self.url,
+                self.username,
+                self.password,
+                verify=not self.skip_cert_verify,
+                auth_type=self.auth_type,
+                api_auth_settings=self.api_auth_settings,
+                client_id=self.client_id,
+                client_secret=self.client_secret,
+                last_token=self.last_token or None,
+                notify_addresses=self.notify_addresses,
+            )
+        return self._requests
+
+    def update_last_token(self):
+        if (
+            self.auth_type in (OAUTH1, OAUTH2_BEARER)
+            and self._requests
+            and self.last_token != self._requests.last_token
+        ):
+            self.last_token = self._requests.last_token
+            self.save()
 
 
 class RequestLog(models.Model):
