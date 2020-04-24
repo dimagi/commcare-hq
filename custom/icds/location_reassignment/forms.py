@@ -21,8 +21,9 @@ class LocationReassignmentRequestForm(BulkUploadForm):
                            (EMAIL_HOUSEHOLDS, ugettext("Email Households "
                                                        f"(Only for {SPLIT_OPERATION} and {EXTRACT_OPERATION})")),
                            (UPDATE, ugettext("Perform Reassignment")),
-                           (REASSIGN_HOUSEHOLDS, ugettext("Reassign Households "
-                                                          f"(Only for {SPLIT_OPERATION} and {EXTRACT_OPERATION})"))]
+                           (REASSIGN_HOUSEHOLDS, ugettext(
+                               "Reassign Households "
+                               f"(Only for {SPLIT_OPERATION} and {EXTRACT_OPERATION})"))]
     action_type = forms.ChoiceField(choices=ACTION_TYPE_CHOICES,
                                     initial=VALIDATE,
                                     widget=SelectToggle(choices=ACTION_TYPE_CHOICES))
