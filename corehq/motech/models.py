@@ -1,5 +1,6 @@
 import re
 
+from django.contrib.postgres.forms import JSONField
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 
@@ -39,6 +40,7 @@ class ConnectionSettings(models.Model):
     password = models.CharField(max_length=255)
     skip_cert_verify = models.BooleanField(default=False)
     notify_addresses_str = models.CharField(max_length=255, default="")
+    properties = JSONField()
 
     def __str__(self):
         return self.name
