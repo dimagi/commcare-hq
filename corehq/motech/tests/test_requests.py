@@ -14,6 +14,7 @@ TEST_API_USERNAME = 'admin'
 TEST_API_PASSWORD = 'district'
 TEST_DOMAIN = 'test-domain'
 
+
 def noop_logger(*args, **kwargs):
     pass
 

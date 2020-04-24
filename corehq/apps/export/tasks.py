@@ -274,8 +274,6 @@ def _generate_incremental_export(incremental_export):
         )
 
         with export_file as file_:
-            # TODO: would be nice to save this compressed instead of uncompressed
-            # Could either be handled by the blobdb or else generated as a compressed CSV zip
             db = get_blob_db()
             db.put(
                 file_,
