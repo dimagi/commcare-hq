@@ -2038,6 +2038,7 @@ DOMAIN_MODULE_MAP = {
 
     'inddex-reports': 'custom.inddex',
     'inddex-multilingual': 'custom.inddex',
+    'inddex-multi-vn': 'custom.inddex',
 
     'ccqa': 'custom.ccqa',
 }

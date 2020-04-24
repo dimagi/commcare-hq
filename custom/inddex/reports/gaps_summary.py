@@ -1,7 +1,8 @@
 from collections import defaultdict
 
 from custom.inddex import filters
-from custom.inddex.food import ConvFactorGaps, FctGaps, FoodData
+from custom.inddex.const import ConvFactorGaps, FctGaps
+from custom.inddex.food import FoodData
 
 from .utils import MultiTabularReport, format_row
 
@@ -9,7 +10,6 @@ from .utils import MultiTabularReport, format_row
 class GapsSummaryReport(MultiTabularReport):
     name = 'Output 2a - Gaps Summary by Food Type'
     slug = 'gaps_summary'
-    is_released = False
 
     @property
     def fields(self):
@@ -31,8 +31,8 @@ def get_gaps_data(domain, request):
     fct_gaps = defaultdict(int)
     food_data = FoodData.from_request(domain, request)
     for row in food_data.rows:
-        cf_gaps[(row.conv_factor_gap_code, row.food_type)] += 1
-        fct_gaps[(row.fct_gap_code, row.food_type)] += 1
+        cf_gaps[(row.conv_factor_gap_code, row.food_type or '')] += 1
+        fct_gaps[(row.fct_gap_code, row.food_type or '')] += 1
 
     return (
         ConvFactorGapsData(cf_gaps),

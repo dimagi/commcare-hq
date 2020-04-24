@@ -136,7 +136,6 @@ def _inactive_domain_response(request, domain_name):
 def _is_missing_two_factor(view_fn, request):
     return (_two_factor_required(view_fn, request.project, request.couch_user)
             and not getattr(request, 'bypass_two_factor', False)
-            and not getattr(request.user, 'is_api_request', False)
             and not request.user.is_verified())
 
 
@@ -353,8 +352,8 @@ def two_factor_check(view_func, api_key):
                 request.user.otp_device = otp_device
                 request.user.is_verified = lambda: True
                 return fn(request, domain, *args, **kwargs)
-            if(api_key):
-                request.user.is_api_request = True
+            if api_key:
+                request.bypass_two_factor = True
             return fn(request, domain, *args, **kwargs)
         return _inner
     return _outer
