@@ -38,21 +38,21 @@ class GrowthTrackerExport(ExportableMixin, IcdsSqlData):
 
         if self.loc_level == 5:
             filters['awc_id'] = location
-            order_by = ('awc_name',)
+            order_by = ('person_name',)
         elif self.loc_level == 4:
             filters['supervisor_id'] = location
-            order_by = ('awc_name',)
+            order_by = ('awc_name','person_name')
         elif self.loc_level == 3:
             filters['block_id'] = location
-            order_by = ('supervisor_name', 'awc_name')
+            order_by = ('supervisor_name', 'awc_name','person_name')
         elif self.loc_level == 2:
             filters['district_id'] = location
-            order_by = ('block_name', 'supervisor_name', 'awc_name')
+            order_by = ('block_name', 'supervisor_name', 'awc_name','person_name')
         elif self.loc_level == 1:
             filters['state_id'] = location
-            order_by = ('district_name', 'block_name', 'supervisor_name', 'awc_name')
+            order_by = ('district_name', 'block_name', 'supervisor_name', 'awc_name','person_name')
         else:
-            order_by = ('state_name', 'district_name', 'block_name', 'supervisor_name', 'awc_name')
+            order_by = ('state_name', 'district_name', 'block_name', 'supervisor_name', 'awc_name','person_name')
 
         # Sample cost of each query(if data fetched for single month) is 0.98..3012.55
         # Sample cost of query(if three months data fetched in single query) is 2.59..43594.85
