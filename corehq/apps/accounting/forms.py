@@ -2239,7 +2239,7 @@ class AdjustBalanceForm(forms.Form):
 
     def __init__(self, invoice, *args, **kwargs):
         self.invoice = invoice
-        super(AdjustBalanceForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.fields['adjustment_type'].choices = (
             ('current', 'Pay off Current Balance: %s' %
                         get_money_str(self.invoice.balance)),

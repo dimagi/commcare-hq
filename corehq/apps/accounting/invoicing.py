@@ -598,7 +598,7 @@ class LineItemFactory(object):
 class ProductLineItemFactory(LineItemFactory):
 
     def create(self):
-        line_item = super(ProductLineItemFactory, self).create()
+        line_item = super().create()
         line_item.product_rate = self.rate
         if not self.is_prorated:
             line_item.base_cost = self.rate.monthly_fee
