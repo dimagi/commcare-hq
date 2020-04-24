@@ -1725,13 +1725,13 @@ def reconcile_data_not_in_ucr(reconciliation_status_pk):
         "commcare.icds.ucr_reconciliation.published_change_count",
         number_documents_missing,
         tags={'config_id': status_record.table_id, 'doc_type': status_record.doc_type},
-        "Number of docs that were not found in UCR that were republished"
+        documentation="Number of docs that were not found in UCR that were republished"
     )
     metrics_counter(
         "commcare.icds.ucr_reconciliation.partially_processed_count",
         len(set(doc_ids_not_in_ucr) - set(doc_ids_not_in_es)),
         tags={'config_id': status_record.table_id, 'doc_type': status_record.doc_type},
-        "Number of docs that exists in Elasticsearch but are not found in UCR"
+        documentation="Number of docs that exists in Elasticsearch but are not found in UCR"
     )
     status_record.last_processed_date = datetime.utcnow()
     status_record.documents_missing = number_documents_missing
