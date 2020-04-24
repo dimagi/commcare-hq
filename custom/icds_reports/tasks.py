@@ -1706,9 +1706,9 @@ def reconcile_data_not_in_ucr(reconciliation_status_pk):
     doc_ids_not_in_ucr = {data[0] for data in data_not_in_ucr}
 
     if status_record.is_form_ucr:
-        doc_ids_missing_in_es = get_form_ids_missing_from_elasticsearch(doc_ids_not_in_ucr)
+        doc_ids_not_in_es = get_form_ids_missing_from_elasticsearch(doc_ids_not_in_ucr)
     else:
-        doc_ids_missing_in_es = get_case_ids_missing_from_elasticsearch(doc_ids_not_in_ucr)
+        doc_ids_not_in_es = get_case_ids_missing_from_elasticsearch(doc_ids_not_in_ucr)
 
     # republish_kafka_changes
     # running the data accessor again to avoid storing all doc ids in memory
@@ -1716,15 +1716,22 @@ def reconcile_data_not_in_ucr(reconciliation_status_pk):
     # but the number of doc ids will increase with the number of errors
     for doc_id, doc_subtype, sql_modified_on in data_not_in_ucr:
         number_documents_missing += 1
-        not_found_in_es = doc_id in doc_ids_missing_in_es
+        not_found_in_es = doc_id in doc_ids_not_in_es
         celery_task_logger.info(f'doc_id {doc_id} from {sql_modified_on} not found in UCR data sources. '
-            f'Missing in ES: {not_found_in_es}')
+            f'Not found in ES: {not_found_in_es}')
         send_change_for_ucr_reprocessing(doc_id, doc_subtype, status_record.is_form_ucr)
 
     metrics_counter(
-        "commcare.icds.reconciled_changes.count",
+        "commcare.icds.ucr_reconciliation.published_change_count",
         number_documents_missing,
-        tags={'config_id': status_record.table_id, 'doc_type': status_record.doc_type}
+        tags={'config_id': status_record.table_id, 'doc_type': status_record.doc_type},
+        "Number of docs that were not found in UCR that were republished"
+    )
+    metrics_counter(
+        "commcare.icds.ucr_reconciliation.partially_processed_count",
+        len(set(doc_ids_not_in_ucr) - set(doc_ids_not_in_es)),
+        tags={'config_id': status_record.table_id, 'doc_type': status_record.doc_type},
+        "Number of docs that exists in Elasticsearch but are not found in UCR"
     )
     status_record.last_processed_date = datetime.utcnow()
     status_record.documents_missing = number_documents_missing
