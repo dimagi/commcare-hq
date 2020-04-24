@@ -44,6 +44,7 @@ from corehq.form_processor.tests.utils import (
     FormProcessorTestUtils,
     create_form_for_test,
 )
+from corehq.messaging.scheduling.scheduling_partitioned.models import AlertScheduleInstance
 
 
 class BaseDumpLoadTest(TestCase):
@@ -490,6 +491,20 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
         )
 
         self._dump_and_load(expected_object_counts)
+
+    def test_message_scheduling(self):
+        AlertScheduleInstance(
+            schedule_instance_id=uuid.uuid4(),
+            domain=self.domain_name,
+            recipient_type='CommCareUser',
+            recipient_id=uuid.uuid4().hex,
+            current_event_num=0,
+            schedule_iteration_num=1,
+            next_event_due=datetime(2017, 3, 1),
+            active=True,
+            alert_schedule_id=uuid.uuid4(),
+        ).save()
+        self._dump_and_load({AlertScheduleInstance: 1})
 
 
 def _normalize_object_counter(counter, for_loaded=False):

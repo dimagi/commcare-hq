@@ -160,11 +160,15 @@ def _group_objects_by_db(objects):
             except KeyError:
                 # in the case of foreign keys the serialized field name is the
                 # name of the foreign key attribute
-                field = [
-                    field for field in model._meta.fields
-                    if field.column == model.partition_attr
-                ][0]
-                partition_value = obj['fields'][field.name]
+                try:
+                    field = [
+                        field for field in model._meta.fields
+                        if field.column == model.partition_attr
+                    ][0]
+                    partition_value = obj['fields'][field.name]
+                except KeyError:
+                    if model.partition_attr == model._meta.pk.attname:
+                        partition_value = obj['pk']
             router_hints[HINT_PARTITION_VALUE] = partition_value
         db_alias = router.db_for_write(model, **router_hints)
         objects_by_db[db_alias].append(obj)
