@@ -33,6 +33,7 @@ class SQLTurnWhatsAppBackend(SQLSMSBackend):
             "client_auth_token",
             "business_id",
             "business_auth_token",
+            "fallback_backend_id",
         ]
 
     @classmethod
