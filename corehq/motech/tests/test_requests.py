@@ -6,7 +6,7 @@ from django.test import SimpleTestCase
 import requests
 from mock import Mock, patch
 
-from corehq.motech.const import REQUEST_TIMEOUT
+from corehq.motech.const import DIGEST_AUTH, REQUEST_TIMEOUT
 from corehq.motech.requests import Requests
 
 TEST_API_URL = 'http://localhost:9080/api/'
@@ -129,25 +129,33 @@ class RequestsAuthenticationTests(SimpleTestCase):
 
     def test_basic_auth(self):
         reqs = Requests(TEST_DOMAIN, TEST_API_URL, TEST_API_USERNAME, TEST_API_PASSWORD)
-
         with patch('corehq.motech.requests.RequestLog', Mock()), \
                 patch.object(requests.Session, 'request') as request_mock:
-            content = {'code': TEST_API_USERNAME}
-            content_json = json.dumps(content)
-            response_mock = Mock()
-            response_mock.status_code = 200
-            response_mock.content = content_json
-            response_mock.json.return_value = content
-            request_mock.return_value = response_mock
+            request_mock.return_value = self.get_response_mock()
 
-            response = reqs.get('me')
-            request_mock.assert_called_with(
-                'GET',
-                TEST_API_URL + 'me',
-                allow_redirects=True,
-                headers={'Accept': 'application/json'},
-                auth=(TEST_API_USERNAME, TEST_API_PASSWORD),
-                timeout=REQUEST_TIMEOUT,
-            )
-            self.assertEqual(response.status_code, 200)
-            self.assertEqual(response.json()['code'], TEST_API_USERNAME)
+            reqs.get('me')
+
+            kwargs = request_mock.call_args[1]
+            self.assertEqual(kwargs['auth'], (TEST_API_USERNAME, TEST_API_PASSWORD))
+
+    def test_digest_auth(self):
+        reqs = Requests(TEST_DOMAIN, TEST_API_URL, TEST_API_USERNAME, TEST_API_PASSWORD,
+                        auth_type=DIGEST_AUTH)
+        with patch('corehq.motech.requests.RequestLog', Mock()), \
+                patch.object(requests.Session, 'request') as request_mock:
+            request_mock.return_value = self.get_response_mock()
+
+            reqs.get('me')
+
+            kwargs = request_mock.call_args[1]
+            auth_class = kwargs['auth'].__class__.__name__
+            self.assertEqual(auth_class, 'HTTPDigestAuth')
+
+    def get_response_mock(self):
+        content = {'code': TEST_API_USERNAME}
+        content_json = json.dumps(content)
+        response_mock = Mock()
+        response_mock.status_code = 200
+        response_mock.content = content_json
+        response_mock.json.return_value = content
+        return response_mock

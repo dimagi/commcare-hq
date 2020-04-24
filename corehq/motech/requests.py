@@ -3,11 +3,12 @@ import logging
 from django.conf import settings
 
 import requests
+from requests.auth import HTTPDigestAuth
 
 from dimagi.utils.logging import notify_exception
 
 from corehq.apps.hqwebapp.tasks import send_mail_async
-from corehq.motech.const import REQUEST_TIMEOUT
+from corehq.motech.const import BASIC_AUTH, DIGEST_AUTH, REQUEST_TIMEOUT
 from corehq.motech.models import RequestLog
 from corehq.motech.utils import pformat_json
 
@@ -61,8 +62,9 @@ class Requests(object):
     Requests as a context manager.
     """
 
-    def __init__(self, domain_name, base_url, username, password,
-                 verify=True, notify_addresses=None, payload_id=None):
+    def __init__(self, domain_name, base_url, username, password, *,
+                 verify=True, auth_type=BASIC_AUTH, notify_addresses=None,
+                 payload_id=None):
         """
         Initialise instance
 
@@ -81,6 +83,7 @@ class Requests(object):
         self.username = username
         self.password = password
         self.verify = verify
+        self.auth_type = auth_type
         self.notify_addresses = [] if notify_addresses is None else notify_addresses
         self.payload_id = payload_id
         self._session = None
@@ -99,6 +102,8 @@ class Requests(object):
         if not self.verify:
             kwargs['verify'] = False
         kwargs.setdefault('timeout', REQUEST_TIMEOUT)
+        if 'auth' not in kwargs:
+            kwargs['auth'] = self.get_auth()
         if self._session:
             response = self._session.request(method, *args, **kwargs)
         else:
@@ -112,16 +117,20 @@ class Requests(object):
     def get_url(self, uri):
         return '/'.join((self.base_url.rstrip('/'), uri.lstrip('/')))
 
+    def get_auth(self):
+        if self.auth_type == BASIC_AUTH:
+            return (self.username, self.password)
+        elif self.auth_type == DIGEST_AUTH:
+            return HTTPDigestAuth(self.username, self.password)
+
     def delete(self, uri, **kwargs):
         kwargs.setdefault('headers', {'Accept': 'application/json'})
-        return self.send_request('DELETE', self.get_url(uri),
-                                 auth=(self.username, self.password), **kwargs)
+        return self.send_request('DELETE', self.get_url(uri), **kwargs)
 
     def get(self, uri, *args, **kwargs):
         kwargs.setdefault('headers', {'Accept': 'application/json'})
         kwargs.setdefault('allow_redirects', True)
-        return self.send_request('GET', self.get_url(uri), *args,
-                                 auth=(self.username, self.password), **kwargs)
+        return self.send_request('GET', self.get_url(uri), *args, **kwargs)
 
     def post(self, uri, data=None, json=None, *args, **kwargs):
         kwargs.setdefault('headers', {
@@ -129,8 +138,7 @@ class Requests(object):
             'Accept': 'application/json'
         })
         return self.send_request('POST', self.get_url(uri), *args,
-                                 data=data, json=json,
-                                 auth=(self.username, self.password), **kwargs)
+                                 data=data, json=json, **kwargs)
 
     def put(self, uri, data=None, json=None, *args, **kwargs):
         kwargs.setdefault('headers', {
@@ -138,8 +146,7 @@ class Requests(object):
             'Accept': 'application/json'
         })
         return self.send_request('PUT', self.get_url(uri), *args,
-                                 data=data, json=json,
-                                 auth=(self.username, self.password), **kwargs)
+                                 data=data, json=json, **kwargs)
 
     def notify_exception(self, message=None, details=None):
         self.notify_error(message, details)
