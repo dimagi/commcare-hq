@@ -212,7 +212,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
     init();
 
     vm.disallowNational = function () {
-        return vm.isChildBeneficiaryListSelected() || vm.isChildGrowthSelected();
+        return vm.isChildBeneficiaryListSelected() || vm.isChildGrowthTrackerSelected();
     };
 
     vm.getPlaceholder = function (locationTypes) {
@@ -441,7 +441,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
 
     vm.hasErrors = function () {
         var beneficiaryListErrors = vm.isChildBeneficiaryListSelected() && (vm.selectedFilterOptions().length === 0 || !vm.isDistrictOrBelowSelected());
-        var growthListErrors = vm.isChildGrowthSelected() && (vm.selectedFilterOptions().length === 0 || !vm.isDistrictOrBelowSelected());
+        var growthListErrors = vm.isChildGrowthTrackerSelected() && (vm.selectedFilterOptions().length === 0 || !vm.isDistrictOrBelowSelected());
         var incentiveReportErrors = vm.isIncentiveReportSelected() && !vm.isStateSelected();
         var ladySupervisorReportErrors = false;
         if (!vm.haveAccessToFeatures) {
@@ -509,7 +509,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         return vm.selectedIndicator === 11;
     };
 
-    vm.isChildGrowthSelected = function () {
+    vm.isChildGrowthTrackerSelected = function () {
         return vm.selectedIndicator === 13;
     };
 

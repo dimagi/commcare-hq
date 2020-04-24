@@ -8,7 +8,7 @@ from custom.icds_reports.utils import get_status, calculate_date_for_age, \
 from dateutil.relativedelta import relativedelta
 
 
-class GrowthExport(ExportableMixin, IcdsSqlData):
+class GrowthTrackerExport(ExportableMixin, IcdsSqlData):
     title = 'Child Growth Tracking'
     table_name = 'child_health_monthly_view'
 
@@ -16,6 +16,18 @@ class GrowthExport(ExportableMixin, IcdsSqlData):
 
         def _check_case_presence(case_id, column, data_dict):
             return data_dict[case_id][column] if case_id in data_dict.keys() else "N/A"
+
+        def _fetch_data(filters, order_by, case_by_grouping=False):
+            query_set = ChildHealthMonthlyView.objects.filter(filters).order_by(order_by)
+            data_month = query_set.values('state_name', 'district_name', 'block_name', 'supervisor_name',
+                                          'awc_name', 'awc_site_code', 'person_name', 'dob', 'mother_name',
+                                          'mother_phone_number', 'pse_days_attended', 'lunch_count',
+                                          'current_month_nutrition_status',
+                                          current_month_wasting_column(self.beta),
+                                          current_month_stunting_column(self.beta), 'case_id')
+            if case_by_grouping is True:
+                data_month = {item['case_id']: item for item in data_month}
+            return data_month
 
         filters = {
             "month": self.config['month'],
@@ -42,30 +54,17 @@ class GrowthExport(ExportableMixin, IcdsSqlData):
         else:
             order_by = ('state_name', 'district_name', 'block_name', 'supervisor_name', 'awc_name')
 
-        query_set_1 = ChildHealthMonthlyView.objects.filter(**filters).order_by(*order_by)
-        data_initial_month = query_set_1.values('state_name', 'district_name', 'block_name', 'supervisor_name',
-                                                'awc_name', 'awc_site_code', 'person_name', 'dob', 'mother_name',
-                                                'mother_phone_number', 'pse_days_attended', 'lunch_count',
-                                                'current_month_nutrition_status',
-                                                current_month_wasting_column(self.beta),
-                                                current_month_stunting_column(self.beta), 'case_id')
+        # Sample cost of each query(if data fetched for single month) is 0.98..3012.55
+        # Sample cost of query(if three months data fetched in single query) is 2.59..43594.85
+        # Sample are tested at supervisior levels
 
+        data_initial_month = _fetch_data(filters, order_by)
         filters["month"] = initial_month - relativedelta(months=1)
-        query_set_2 = ChildHealthMonthlyView.objects.filter(**filters).order_by(*order_by)
-        data_past_month = query_set_2.values('case_id', 'pse_days_attended', 'lunch_count',
-                                             'current_month_nutrition_status',
-                                             current_month_wasting_column(self.beta),
-                                             current_month_stunting_column(self.beta), 'case_id')
-        data_past_month = {item['case_id']: item for item in data_past_month}
-
+        data_past_month = _fetch_data(filters, order_by, True)
         filters["month"] = initial_month - relativedelta(months=2)
-        query_set_3 = ChildHealthMonthlyView.objects.filter(**filters).order_by(*order_by)
-        data_past_month_2 = query_set_3.values('case_id', 'pse_days_attended', 'lunch_count',
-                                               'current_month_nutrition_status',
-                                               current_month_wasting_column(self.beta),
-                                               current_month_stunting_column(self.beta), 'case_id')
-        data_past_month_2 = {item['case_id']: item for item in data_past_month_2}
+        data_past_month_2 = _fetch_data(filters, order_by, True)
         filters["month"] = initial_month
+
 
         month_1 = (initial_month - relativedelta(months=2)).strftime('%Y-%m-%d')
         month_2 = (initial_month - relativedelta(months=1)).strftime('%Y-%m-%d')

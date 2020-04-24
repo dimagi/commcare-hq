@@ -124,7 +124,7 @@ from custom.icds_reports.sqldata.exports.beneficiary import BeneficiaryExport
 from custom.icds_reports.sqldata.exports.children import ChildrenExport
 from custom.icds_reports.sqldata.exports.dashboard_usage import DashBoardUsage
 from custom.icds_reports.sqldata.exports.demographics import DemographicsExport
-from custom.icds_reports.sqldata.exports.growth import GrowthExport
+from custom.icds_reports.sqldata.exports.growth_tracker_report import GrowthTrackerExport
 from custom.icds_reports.sqldata.exports.lady_supervisor import (
     LadySupervisorExport,
 )
@@ -993,7 +993,7 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
     elif indicator == CHILD_GROWTH_TRACKER_REPORT:
         config.pop('aggregation_level', None)
         data_type = 'Child_Growth_Tracker_list'
-        excel_data = GrowthExport(
+        excel_data = GrowthTrackerExport(
             config=config,
             loc_level=aggregation_level,
             show_test=include_test,
