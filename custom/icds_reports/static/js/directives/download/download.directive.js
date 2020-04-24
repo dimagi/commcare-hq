@@ -104,7 +104,6 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
     vm.selectedPDFFormat = 'many';
     vm.selectedLocationId = userLocationId;
     vm.selectedLevel = 1;
-    vm.selectedLocationLevel = 0;
     vm.now = new Date().getMonth() + 1;
     vm.showWarning = function () {
         return (
@@ -223,18 +222,13 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         return locationsService.getLocations(level, locationsCache, vm.selectedLocations, vm.disallowNational());
     };
 
-    var selectedLocationIndex = function () {
-        return _.findLastIndex(vm.selectedLocations, function (locationId) {
-            return locationId && locationId !== ALL_OPTION.location_id;
-        });
-    };
-
     vm.disabled = function (level) {
         return locationsService.isLocationDisabled(level, vm);
     };
 
     vm.onSelectForISSNIP = function ($item, level) {
-        var selectedLocationId = vm.selectedLocations[selectedLocationIndex()];
+        var selectedLocIndex = locationsService.selectedLocationIndex(vm.selectedLocations);
+        var selectedLocationId = vm.selectedLocations[selectedLocIndex];
         vm.locationPromise = locationsService.getAwcLocations(selectedLocationId).then(function (data) {
             if ($item.user_have_access) {
                 vm.awcLocations = [ALL_OPTION].concat(data);
@@ -247,7 +241,6 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
     };
 
     vm.onSelectLocation = function ($item, level) {
-        vm.selectedLocationLevel = level + 1;
         locationsService.onSelectLocation($item, level, locationsCache, vm);
     };
 
@@ -397,9 +390,8 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
      * reports end up having selectedLevel set by viewBy filter in the last report selected.
      */
     vm.adjustSelectedLevelForNoViewByFilter = function () {
-
         if (!vm.showViewBy() || vm.isTakeHomeRationReportSelected()) {
-            vm.selectedLevel = vm.selectedLocationLevel;
+            vm.selectedLevel = locationsService.selectedLocationIndex(vm.selectedLocations) + 1;
         }
     };
     vm.submitForm = function (csrfToken) {
@@ -445,7 +437,6 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         vm.selectedLocations = [];
         vm.selectedLocationId = userLocationId;
         vm.selectedLevel = 1;
-        vm.selectedLocationLevel = 0;
         vm.selectedMonth = new Date().getMonth() + 1;
         vm.selectedYear = new Date().getFullYear();
         vm.selectedIndicator = 1;
