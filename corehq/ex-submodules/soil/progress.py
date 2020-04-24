@@ -116,9 +116,7 @@ class TaskProgressManager(object):
         return self._resolution * current // total if current and total else None
 
     def flush(self):
-        self._set_task_progress(self.task, src=self._src, **self._value)
-
-    _set_task_progress = staticmethod(set_task_progress)
+        set_task_progress(self.task, src=self._src, **self._value)
 
 
 def update_task_state(task, state, meta):

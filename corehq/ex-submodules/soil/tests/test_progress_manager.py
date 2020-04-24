@@ -2,10 +2,11 @@ import mock
 from django.test import SimpleTestCase
 from freezegun import freeze_time
 
+import soil.progress
 from soil.progress import TaskProgressManager
 
 
-@mock.patch.object(TaskProgressManager, '_set_task_progress')
+@mock.patch.object(soil.progress, 'set_task_progress')
 class ProgressManagerTest(SimpleTestCase):
 
     def test_basic(self, set_task_progress):

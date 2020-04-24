@@ -10,6 +10,7 @@ from corehq.motech.const import (
     BASIC_AUTH,
     DIGEST_AUTH,
     OAUTH1,
+    BEARER_AUTH,
     PASSWORD_PLACEHOLDER,
 )
 from corehq.motech.utils import b64_aes_decrypt, b64_aes_encrypt
@@ -32,6 +33,7 @@ class ConnectionSettings(models.Model):
             (BASIC_AUTH, "Basic"),
             (DIGEST_AUTH, "Digest"),
             (OAUTH1, "OAuth1"),
+            (BEARER_AUTH, "Bearer"),
         )
     )
     username = models.CharField(max_length=255)

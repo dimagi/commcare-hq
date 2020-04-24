@@ -32,7 +32,7 @@ class GapsDetailReport(MultiTabularReport):
 
 
 def _sort_rows(rows):
-    return sorted(rows, key=lambda row: (row.food_name, row.unique_respondent_id, row.measurement_amount))
+    return sorted(rows, key=lambda row: (row.food_name or '', row.unique_respondent_id, row.measurement_amount))
 
 
 class GapsByItemSummaryData:
