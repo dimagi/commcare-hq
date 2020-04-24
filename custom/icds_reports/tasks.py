@@ -1699,7 +1699,7 @@ def reconcile_data_not_in_ucr(reconciliation_status_pk):
     status_record = UcrReconciliationStatus.objects.get(pk=reconciliation_status_pk)
     number_documents_missing = 0
 
-    data_not_in_ucr = get_valid_data_not_in_ucr(status_record)
+    data_not_in_ucr = get_data_not_in_ucr(status_record)
     doc_ids_not_in_ucr = {data[0] for data in data_not_in_ucr}
 
     # republish_kafka_changes
@@ -1740,7 +1740,7 @@ def send_change_for_ucr_reprocessing(doc_id, doc_subtype, is_form):
     )
 
 
-def get_valid_data_not_in_ucr(status_record):
+def get_data_not_in_ucr(status_record):
     domain = DASHBOARD_DOMAIN
     if status_record.is_form_ucr:
         matching_records_for_db = _get_primary_data_for_forms(
