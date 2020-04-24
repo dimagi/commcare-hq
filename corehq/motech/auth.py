@@ -28,7 +28,7 @@ class HTTPBearerAuth(requests.auth.AuthBase):
         token_response = requests.get(token_request_url, data=post_data)
         try:
             return token_response.json()['access_token']
-        except e:
+        except Exception:
             raise RequestException(None, r, 
                     "Unable to retrieve access token for request: %s" % token_response.content)
 
