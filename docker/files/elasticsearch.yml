@@ -2,6 +2,7 @@
 #     $ ./scripts/docker rebuild elasticsearch
 #     $ ./scripts/docker up -d elasticsearch
 
+network.host: 0.0.0.0
 http.port: 9200
 
 # dev-only setting to allow client-side ES front-ends

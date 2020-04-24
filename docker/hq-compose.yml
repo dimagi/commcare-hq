@@ -74,13 +74,11 @@ services:
     image: elasticsearch:2.4.6
     environment:
       ES_JAVA_OPTS: "-Des.script.engine.groovy.inline.aggs=true -Des.script.engine.groovy.inline.search=true"
-      action.auto_create_index: "false"
-      TAKE_FILE_OWNERSHIP: "true"
     expose:
       - "9200"
     volumes:
       - ${VOLUME_PREFIX}${BLANK_IF_TESTS-elasticsearch:}/usr/share/elasticsearch/data
-      - ./files/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml
+      - ./files/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:rw
 
   zookeeper:
     image: wurstmeister/zookeeper
