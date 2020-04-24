@@ -1311,6 +1311,13 @@ PAGINATED_EXPORTS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+INCREMENTAL_EXPORTS = StaticToggle(
+    'incremental_exports',
+    'Allows sending of incremental CSV exports to a particular endpoint',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN],
+)
+
 PUBLISH_CUSTOM_REPORTS = StaticToggle(
     'publish_custom_reports',
     "Publish custom reports (No needed Authorization)",
