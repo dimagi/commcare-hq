@@ -676,7 +676,7 @@ class TestExportData(TestCase):
                            ['st2', 2952, 1057, 275, 1613, '17.05 %', 139, 139, 154, 154, 1320, 1320, 52, 301, 967, 25, 0,
                             20],
                            ['st3', 0, 0, 0, 0, '0.00 %', 0, 0, 0, 0, 0, 0, 'Data Not Entered', 'Data Not Entered',
-                            'Data Not Entered', 0, 0, 0]
+                            'Data Not Entered', 0, 0, 0],
                            ['st3', 0, 0, 0, 0, '0.00 %', 0, 0, 0, 0, 0, 0, 'Data Not Entered', 'Data Not Entered',
                             'Data Not Entered', 0, 0, 0],
                            ['st3', 0, 0, 0, 0, '0.00 %', 0, 0, 0, 0, 0, 0, 'Data Not Entered', 'Data Not Entered',
