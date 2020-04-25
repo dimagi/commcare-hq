@@ -27,7 +27,6 @@ from custom.icds_reports.const import (
     AGG_MIGRATION_TABLE,
     BIHAR_API_DEMOGRAPHICS_TABLE,
     AGG_AVAILING_SERVICES_TABLE,
-    BIHAR_API_MOTHER_DETAILS_TABLE,
     CHILD_VACCINE_TABLE
 )
 from custom.icds_reports.utils.aggregation_helpers.distributed import (
@@ -353,6 +352,8 @@ class ChildHealthMonthly(models.Model, AggregateMixin):
     opened_on = models.DateField(blank=True, null=True)
     birth_weight = models.PositiveSmallIntegerField(null=True, help_text="birth weight in grams")
     child_person_case_id = models.TextField(blank=True, null=True)
+    delivery_nature = models.TextField(blank=True, null=True)
+    term_days = models.SmallIntegerField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -1605,10 +1606,9 @@ class AggregateAvailingServiceForms(models.Model, AggregateMixin):
 
     A availing services exists for each state_id
 
-    A row exists for every person case that has had a record of registration
-    submitted against it this month
+    A row for every person case that has ever had an availing services form
     """
-    state_id = models.CharField(max_length=10)
+    state_id = models.TextField(null=True)
     supervisor_id = models.TextField(null=True)
     awc_id = models.TextField(null=True)
     month = models.DateField(help_text="Will always be YYYY-MM-01")
@@ -1771,6 +1771,18 @@ class BiharAPIDemographics(models.Model, AggregateMixin):
     site_death = models.TextField(null=True)
     closed_on = models.DateField(null=True)
     reason_closure = models.TextField(null=True)
+    time_birth = models.TextField(null=True)
+    child_alive = models.SmallIntegerField(null=True)
+    father_name = models.TextField(null=True)
+    father_id = models.TextField(null=True)
+    mother_id = models.TextField(null=True)
+    mother_name = models.TextField(null=True)
+    private_admit = models.SmallIntegerField(blank=True, null=True)
+    primary_admit = models.SmallIntegerField(blank=True, null=True)
+    date_last_private_admit = models.DateField(null=True)
+    date_return_private = models.DateField(null=True)
+    out_of_school_status = models.SmallIntegerField(null=True)
+    last_class_attended_ever = models.SmallIntegerField(null=True)
 
     class Meta(object):
         db_table = BIHAR_API_DEMOGRAPHICS_TABLE

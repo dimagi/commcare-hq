@@ -34,7 +34,7 @@ from corehq.apps.hqwebapp.views import BugReportView
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import (
     location_safe,
-    user_can_access_location_id,
+    user_can_access_location_id
 )
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions, UserRole
@@ -69,6 +69,7 @@ from custom.icds_reports.dashboard_utils import get_dashboard_template_context
 from custom.icds_reports.models.aggregate import AwcLocation
 from custom.icds_reports.models.helper import IcdsFile
 from custom.icds_reports.models.views import AggAwcDailyView, NICIndicatorsView
+from custom.icds_reports.permissions import can_access_location_data
 from custom.icds_reports.queries import get_cas_data_blob_file
 from custom.icds_reports.reports.adhaar import (
     get_adhaar_data_chart,
@@ -239,7 +240,8 @@ from custom.icds_reports.reports.governance_apis import (
     get_state_names,
     get_cbe_data)
 
-from custom.icds_reports.reports.bihar_api import get_api_demographics_data, get_mother_details
+from custom.icds_reports.reports.bihar_api import get_api_demographics_data, get_mother_details,\
+    get_api_vaccine_data, get_api_ag_school_data
 
 from . import const
 from .exceptions import InvalidLocationTypeException, TableauTokenException
@@ -250,7 +252,10 @@ DASHBOARD_CHECKS = [
     require_permission(Permissions.view_report, 'custom.icds_reports.reports.reports.DashboardReport',
                        login_decorator=None),
     login_and_domain_required,
+    can_access_location_data
 ]
+
+DASHBOARD_CHECKS_FOR_TEMPLATE = DASHBOARD_CHECKS[:-1]
 
 
 @location_safe
@@ -335,7 +340,7 @@ def get_tableau_access_token(tableau_user, client_ip):
 
 
 @location_safe
-@method_decorator(DASHBOARD_CHECKS, name='dispatch')
+@method_decorator(DASHBOARD_CHECKS_FOR_TEMPLATE, name='dispatch')
 class DashboardView(TemplateView):
     template_name = 'icds_reports/dashboard.html'
     downtime_template_name = 'icds_reports/dashboard_down.html'
@@ -366,7 +371,7 @@ class DashboardView(TemplateView):
 
 
 @location_safe
-@method_decorator(DASHBOARD_CHECKS, name='dispatch')
+@method_decorator(DASHBOARD_CHECKS_FOR_TEMPLATE, name='dispatch')
 class MobileDashboardDownloadView(TemplateView):
     template_name = 'icds_reports/mobile_dashboard_download.html'
 
@@ -441,6 +446,9 @@ class BaseCasAPIView(View):
         if query_month > current_month or query_month < start_month:
             in_range = False
         return in_range
+
+    def get_state_id_from_state_name(self, state_name):
+        return SQLLocation.objects.get(name=state_name, location_type__name='state').location_id
 
 
 @method_decorator(DASHBOARD_CHECKS, name='dispatch')
@@ -2420,18 +2428,18 @@ class BiharDemographicsAPI(BaseCasAPIView):
 
         valid_query_month, error_message = self.get_valid_query_month(request.GET.get('month'),
                                                                       request.GET.get('year'))
-
+        bihar_state_id = self.get_state_id_from_state_name('Bihar')
         if error_message:
             return JsonResponse({"message": error_message}, status=400)
 
         if not self.query_month_in_range(valid_query_month, start_month=date(2020, 1, 1)):
             return JsonResponse(self.message('invalid_month'), status=400)
 
-        if not self.has_access(self.bihar_state_id, request.couch_user):
+        if not self.has_access(bihar_state_id, request.couch_user):
             return JsonResponse(self.message('access_denied'), status=403)
 
         demographics_data, total_count = get_api_demographics_data(valid_query_month.strftime("%Y-%m-%d"),
-                                                                   self.bihar_state_id,
+                                                                   bihar_state_id,
                                                                    last_person_case_id)
         response_json = {
             'data': demographics_data,
@@ -2445,9 +2453,89 @@ class BiharDemographicsAPI(BaseCasAPIView):
 
         return JsonResponse(data=response_json)
 
-    @property
-    def bihar_state_id(self):
-        return SQLLocation.objects.get(name='Bihar', location_type__name='state').location_id
+
+@location_safe
+@method_decorator([api_auth, toggles.ICDS_BIHAR_DEMOGRAPHICS_API.required_decorator()], name='dispatch')
+class BiharVaccinesAPI(BaseCasAPIView):
+    def message(self, message_name):
+        error_messages = {
+            "invalid_month": "Please specify a valid month. Month can't be in future and before Jan 2020",
+            "access_denied": "You are not authorised to access this location"
+        }
+        return {"message": error_messages[message_name]}
+
+    def get(self, request, *args, **kwargs):
+
+        last_person_case_id = request.GET.get('last_person_case_id', '')
+
+        valid_query_month, error_message = self.get_valid_query_month(request.GET.get('month'),
+                                                                      request.GET.get('year'))
+        bihar_state_id = self.get_state_id_from_state_name('Bihar')
+        if error_message:
+            return JsonResponse({"message": error_message}, status=400)
+
+        if not self.query_month_in_range(valid_query_month, start_month=date(2020, 1, 1)):
+            return JsonResponse(self.message('invalid_month'), status=400)
+
+        if not self.has_access(bihar_state_id, request.couch_user):
+            return JsonResponse(self.message('access_denied'), status=403)
+
+        vaccines_data, total_count = get_api_vaccine_data(valid_query_month.strftime("%Y-%m-%d"),
+                                                          bihar_state_id,
+                                                          last_person_case_id)
+        response_json = {
+            'data': vaccines_data,
+            'metadata': {
+                'month': valid_query_month.month,
+                'year': valid_query_month.year,
+                'total_count': total_count,
+                'timestamp': india_now()
+            }
+        }
+
+        return JsonResponse(data=response_json)
+
+@location_safe
+@method_decorator([api_auth, toggles.ICDS_BIHAR_DEMOGRAPHICS_API.required_decorator()], name='dispatch')
+class BiharSchoolAPI(BaseCasAPIView):
+    def message(self, message_name):
+        error_messages = {
+            "invalid_month": "Please specify a valid month. Month can't be in future and before Jan 2020",
+            "access_denied": "You are not authorised to access this location"
+        }
+        return {"message": error_messages[message_name]}
+
+    def get(self, request, *args, **kwargs):
+
+        last_person_case_id = request.GET.get('last_person_case_id', '')
+
+        valid_query_month, error_message = self.get_valid_query_month(request.GET.get('month'),
+                                                                      request.GET.get('year'))
+        bihar_state_id = self.get_state_id_from_state_name('Bihar')
+
+        if error_message:
+            return JsonResponse({"message": error_message}, status=400)
+
+        if not self.query_month_in_range(valid_query_month, start_month=date(2020, 1, 1)):
+            return JsonResponse(self.message('invalid_month'), status=400)
+
+        if not self.has_access(bihar_state_id, request.couch_user):
+            return JsonResponse(self.message('access_denied'), status=403)
+
+        school_data, total_count = get_api_ag_school_data(valid_query_month.strftime("%Y-%m-%d"),
+                                                          bihar_state_id,
+                                                          last_person_case_id)
+        response_json = {
+            'data': school_data,
+            'metadata': {
+                'month': valid_query_month.month,
+                'year': valid_query_month.year,
+                'total_count': total_count,
+                'timestamp': india_now()
+            }
+        }
+
+        return JsonResponse(data=response_json)
 
 
 @location_safe
@@ -2466,6 +2554,7 @@ class BiharMotherDetailsAPI(BaseCasAPIView):
 
         valid_query_month, error_message = self.get_valid_query_month(request.GET.get('month'),
                                                                       request.GET.get('year'))
+        bihar_state_id = self.get_state_id_from_state_name('Bihar')
 
         if error_message:
             return JsonResponse({"message": error_message}, status=400)
@@ -2473,11 +2562,11 @@ class BiharMotherDetailsAPI(BaseCasAPIView):
         if not self.query_month_in_range(valid_query_month, start_month=date(2020, 1, 1)):
             return JsonResponse(self.message('invalid_month'), status=400)
 
-        if not self.has_access(self.bihar_state_id, request.couch_user):
+        if not self.has_access(bihar_state_id, request.couch_user):
             return JsonResponse(self.message('access_denied'), status=403)
 
         demographics_data, total_count = get_mother_details(valid_query_month.strftime("%Y-%m-%d"),
-                                                            self.bihar_state_id,
+                                                            bihar_state_id,
                                                             last_ccs_case_id)
         response_json = {
             'data': demographics_data,
@@ -2490,7 +2579,3 @@ class BiharMotherDetailsAPI(BaseCasAPIView):
         }
 
         return JsonResponse(data=response_json)
-
-    @property
-    def bihar_state_id(self):
-        return SQLLocation.objects.get(name='Bihar', location_type__name='state').location_id

@@ -105,4 +105,4 @@ def store_file_in_blobdb(domain, export_file, expired=BLOB_EXPIRATION_TIME):
 
 
 def get_file_from_blobdb(key):
-    return get_blob_db().get(key=key)
+    return get_blob_db().get(key=key, type_code=CODES.tempfile)
