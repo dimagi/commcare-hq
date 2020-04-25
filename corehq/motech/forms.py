@@ -6,7 +6,7 @@ from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
 from crispy_forms.helper import FormHelper
 
-from corehq.motech.models import ConnectionSettings
+from corehq.motech.models import ApiAuthSettings, ConnectionSettings
 
 
 class ConnectionSettingsForm(forms.ModelForm):
@@ -14,9 +14,26 @@ class ConnectionSettingsForm(forms.ModelForm):
         label=_('URL'),
         help_text=_('e.g. "http://play.dhis2.org/demo/"')
     )
-    username = forms.CharField(required=False)
+    api_auth_settings = forms.ModelChoiceField(
+        label=_('API settings'),
+        queryset=ApiAuthSettings.objects.all(),
+        required=False,
+    )
+    username = forms.CharField(
+        label=_('Username'),
+        required=False,
+    )
     plaintext_password = forms.CharField(
         label=_('Password'),
+        required=False,
+        widget=forms.PasswordInput,
+    )
+    client_id = forms.CharField(
+        label=_('Client ID'),
+        required=False,
+    )
+    plaintext_client_secret = forms.CharField(
+        label=_('Client secret'),
         required=False,
         widget=forms.PasswordInput,
     )
@@ -38,8 +55,11 @@ class ConnectionSettingsForm(forms.ModelForm):
             'name',
             'url',
             'auth_type',
+            'api_auth_settings',
             'username',
             'plaintext_password',
+            'client_id',
+            'plaintext_client_secret',
             'skip_cert_verify',
             'notify_addresses_str',
         ]
@@ -111,8 +131,11 @@ class ConnectionSettingsFormSetHelper(FormHelper):
                 crispy.Field('name'),
                 crispy.Field('url'),
                 crispy.Field('auth_type'),
+                crispy.Field('api_auth_settings'),
                 crispy.Field('username'),
                 crispy.Field('plaintext_password'),
+                crispy.Field('client_id'),
+                crispy.Field('plaintext_client_secret'),
                 twbscrispy.PrependedText('skip_cert_verify', ''),
                 crispy.Field('notify_addresses_str'),
                 twbscrispy.PrependedText(

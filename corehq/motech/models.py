@@ -100,6 +100,21 @@ class ConnectionSettings(models.Model):
             )
 
     @property
+    def plaintext_client_secret(self):
+        if self.client_secret.startswith('${algo}$'.format(algo=ALGO_AES)):
+            ciphertext = self.client_secret.split('$', 2)[2]
+            return b64_aes_decrypt(ciphertext)
+        return self.client_secret
+
+    @plaintext_client_secret.setter
+    def plaintext_client_secret(self, plaintext):
+        if plaintext != PASSWORD_PLACEHOLDER:
+            self.client_secret = '${algo}${ciphertext}'.format(
+                algo=ALGO_AES,
+                ciphertext=b64_aes_encrypt(plaintext)
+            )
+
+    @property
     def notify_addresses(self):
         return [addr for addr in re.split('[, ]+', self.notify_addresses_str) if addr]
 
