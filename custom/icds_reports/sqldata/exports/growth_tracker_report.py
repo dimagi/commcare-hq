@@ -1,11 +1,12 @@
+from dateutil.relativedelta import relativedelta
+
 from corehq.apps.locations.models import SQLLocation
 from custom.icds_reports.models import ChildHealthMonthlyView
 from custom.icds_reports.sqldata.base import IcdsSqlData
-from custom.icds_reports.utils.mixins import ExportableMixin
 from custom.icds_reports.utils import get_status, calculate_date_for_age, \
     current_month_stunting_column, \
     current_month_wasting_column, phone_number_function, india_now
-from dateutil.relativedelta import relativedelta
+from custom.icds_reports.utils.mixins import ExportableMixin
 
 
 class GrowthTrackerExport(ExportableMixin, IcdsSqlData):
@@ -41,18 +42,18 @@ class GrowthTrackerExport(ExportableMixin, IcdsSqlData):
             order_by = ('person_name',)
         elif self.loc_level == 4:
             filters['supervisor_id'] = location
-            order_by = ('awc_name','person_name')
+            order_by = ('awc_name', 'person_name')
         elif self.loc_level == 3:
             filters['block_id'] = location
-            order_by = ('supervisor_name', 'awc_name','person_name')
+            order_by = ('supervisor_name', 'awc_name', 'person_name')
         elif self.loc_level == 2:
             filters['district_id'] = location
-            order_by = ('block_name', 'supervisor_name', 'awc_name','person_name')
+            order_by = ('block_name', 'supervisor_name', 'awc_name', 'person_name')
         elif self.loc_level == 1:
             filters['state_id'] = location
-            order_by = ('district_name', 'block_name', 'supervisor_name', 'awc_name','person_name')
+            order_by = ('district_name', 'block_name', 'supervisor_name', 'awc_name', 'person_name')
         else:
-            order_by = ('state_name', 'district_name', 'block_name', 'supervisor_name', 'awc_name','person_name')
+            order_by = ('state_name', 'district_name', 'block_name', 'supervisor_name', 'awc_name', 'person_name')
 
         # Sample cost of each query(if data fetched for single month) is 0.98..3012.55
         # Sample cost of query(if three months data fetched in single query) is 2.59..43594.85
@@ -64,8 +65,6 @@ class GrowthTrackerExport(ExportableMixin, IcdsSqlData):
         filters["month"] = initial_month - relativedelta(months=2)
         data_past_month_2 = _fetch_data(filters, order_by, True)
         filters["month"] = initial_month
-
-
         month_1 = (initial_month - relativedelta(months=2)).strftime('%Y-%m-%d')
         month_2 = (initial_month - relativedelta(months=1)).strftime('%Y-%m-%d')
         month_3 = initial_month.strftime('%Y-%m-%d')
