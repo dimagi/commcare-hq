@@ -65,8 +65,8 @@ class ConnectionSettings(models.Model):
         max_length=7, null=True, blank=True,
         choices=((None, "None"),) + AUTH_TYPES
     )
-    username = models.CharField(max_length=255)
-    password = models.CharField(max_length=255)
+    username = models.CharField(max_length=255, blank=True)
+    password = models.CharField(max_length=255, blank=True)
     api_auth_settings = models.ForeignKey(
         ApiAuthSettings, null=True, on_delete=models.PROTECT
     )
