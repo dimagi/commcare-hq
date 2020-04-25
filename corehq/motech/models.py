@@ -1,6 +1,6 @@
 import json
 import re
-from typing import Optional
+from typing import Callable, Optional
 
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
@@ -112,7 +112,11 @@ class ConnectionSettings(models.Model):
     def notify_addresses(self):
         return [addr for addr in re.split('[, ]+', self.notify_addresses_str) if addr]
 
-    def get_requests(self, payload_id, logger):
+    def get_requests(
+        self,
+        payload_id: Optional[str] = None,
+        logger: Optional[Callable] = None,
+    ):
         from corehq.motech.requests import Requests
 
         if not self._requests:
