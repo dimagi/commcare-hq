@@ -4,6 +4,7 @@ from django.conf import settings
 
 import requests
 from requests.auth import HTTPDigestAuth
+from requests.structures import CaseInsensitiveDict
 
 from dimagi.utils.logging import notify_exception
 
@@ -147,6 +148,29 @@ class Requests(object):
         })
         return self.send_request('PUT', self.get_url(uri), *args,
                                  data=data, json=json, **kwargs)
+
+    def simple_post(self, absolute_url, data, *, headers=None, timeout=60):
+        """
+        Used by Repeater base class and to test connections.
+
+        Takes advantage of logging, but does not prepend the base URL,
+        and allows the caller easily to override headers and timeout.
+        """
+        if isinstance(data, str):
+            data = data.encode('utf-8')
+        default_headers = CaseInsensitiveDict({
+            "content-type": "text/xml",
+            "content-length": str(len(data)),
+        })
+        if headers:
+            default_headers.update(headers)
+        kwargs = {
+            "headers": default_headers,
+            "timeout": timeout,
+        }
+        # Use `send_request()` instead of `post()` so that we can pass
+        # the absolute URL
+        return self.send_request('POST', absolute_url, data=data, **kwargs)
 
     def notify_exception(self, message=None, details=None):
         self.notify_error(message, details)

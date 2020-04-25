@@ -10,9 +10,6 @@ from django.utils.translation import ugettext_lazy
 from django.views.decorators.http import require_POST
 
 from memoized import memoized
-from requests.auth import HTTPBasicAuth, HTTPDigestAuth
-
-from dimagi.utils.post import simple_post
 
 from corehq import privileges, toggles
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
@@ -26,19 +23,14 @@ from corehq.apps.users.decorators import (
     require_permission,
 )
 from corehq.apps.users.models import Permissions
-from corehq.motech.const import (
-    ALGO_AES,
-    BASIC_AUTH,
-    DIGEST_AUTH,
-    PASSWORD_PLACEHOLDER,
-)
+from corehq.motech.const import ALGO_AES, PASSWORD_PLACEHOLDER
 from corehq.motech.repeaters.forms import (
     CaseRepeaterForm,
     FormRepeaterForm,
     GenericRepeaterForm,
     OpenmrsRepeaterForm,
 )
-from corehq.motech.repeaters.models import Repeater, RepeatRecord
+from corehq.motech.repeaters.models import Repeater, RepeatRecord, get_requests
 from corehq.motech.repeaters.repeater_generators import RegisterGenerator
 from corehq.motech.repeaters.utils import get_all_repeater_types
 from corehq.motech.utils import b64_aes_encrypt
@@ -384,31 +376,26 @@ def test_repeater(request, domain):
         url = form.cleaned_data["url"]
         format = format or RegisterGenerator.default_format_by_repeater(repeater_class)
         generator_class = RegisterGenerator.generator_class_by_repeater_format(repeater_class, format)
-        generator = generator_class(repeater_class())
+        temp_repeater = repeater_class(
+            domain=domain,
+            auth_type=auth_type,
+            username=request.POST.get('username'),
+            password=request.POST.get('password'),
+            # TODO: Support testing OAuth 2.0
+            skip_cert_verify=request.POST.get('skip_cert_verify') == 'true'
+        )
+        generator = generator_class(temp_repeater)
         fake_post = generator.get_test_payload(domain)
         headers = generator.get_headers()
-
-        username = request.POST.get('username')
-        password = request.POST.get('password')
-        verify = not request.POST.get('skip_cert_verify') == 'true'
-        if auth_type == BASIC_AUTH:
-            auth = HTTPBasicAuth(username, password)
-        elif auth_type == DIGEST_AUTH:
-            auth = HTTPDigestAuth(username, password)
-        else:
-            auth = None
-
+        requests = get_requests(temp_repeater)
         try:
-            resp = simple_post(fake_post, url, headers=headers, auth=auth, verify=verify)
-            if 200 <= resp.status_code < 300:
-                return HttpResponse(json.dumps({"success": True,
-                                                "response": resp.text,
-                                                "status": resp.status_code}))
-            else:
-                return HttpResponse(json.dumps({"success": False,
-                                                "response": resp.text,
-                                                "status": resp.status_code}))
-
+            resp = requests.simple_post(url, fake_post, headers=headers)
+            success = 200 <= resp.status_code < 300
+            return HttpResponse(json.dumps({  # TODO: Try using JsonResponse
+                "success": success,
+                "response": resp.text,
+                "status": resp.status_code
+            }))
         except Exception as e:
             errors = str(e)
         return HttpResponse(json.dumps({"success": False, "response": errors}))

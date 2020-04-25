@@ -73,7 +73,6 @@ from django.utils.translation import ugettext_lazy as _
 
 from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
 from memoized import memoized
-from requests.auth import HTTPBasicAuth, HTTPDigestAuth
 from requests.exceptions import ConnectionError, Timeout
 
 from casexml.apps.case.xml import LEGAL_VERSIONS, V2
@@ -90,7 +89,6 @@ from dimagi.ext.couchdbkit import (
 )
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from dimagi.utils.parsing import json_format_datetime
-from dimagi.utils.post import simple_post
 
 from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
 from corehq.apps.locations.models import SQLLocation
@@ -350,13 +348,6 @@ class Repeater(QuickCachedDocumentMixin, Document):
             return b64_aes_decrypt(ciphertext)
         return self.password
 
-    def get_auth(self):
-        if self.auth_type == BASIC_AUTH:
-            return HTTPBasicAuth(self.username, self.plaintext_password)
-        elif self.auth_type == DIGEST_AUTH:
-            return HTTPDigestAuth(self.username, self.plaintext_password)
-        return None
-
     @property
     def verify(self):
         return not self.skip_cert_verify
@@ -366,10 +357,10 @@ class Repeater(QuickCachedDocumentMixin, Document):
         return [addr for addr in re.split('[, ]+', self.notify_addresses_str) if addr]
 
     def send_request(self, repeat_record, payload):
-        headers = self.get_headers(repeat_record)
-        auth = self.get_auth()
+        requests = get_requests(self, repeat_record.payload_id)
         url = self.get_url(repeat_record)
-        return simple_post(payload, url, headers=headers, timeout=POST_TIMEOUT, auth=auth, verify=self.verify)
+        headers = self.get_headers(repeat_record)
+        return requests.simple_post(url, payload, headers=headers, timeout=POST_TIMEOUT)
 
     def fire_for_record(self, repeat_record):
         payload = self.get_payload(repeat_record)
