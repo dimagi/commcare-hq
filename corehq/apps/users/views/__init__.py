@@ -726,8 +726,8 @@ class UserInvitationView(object):
             return HttpResponseRedirect(request.path)
 
         try:
-            invitation = SQLInvitation.objects.get(uuid=uuid)
-        except (SQLInvitation.DoesNotExist, ValidationError):
+            invitation = Invitation.objects.get(uuid=uuid)
+        except (Invitation.DoesNotExist, ValidationError):
             messages.error(request, _("Sorry, it looks like your invitation has expired. "
                                       "Please check the invitation link you received and try again, or "
                                       "request a project administrator to send you the invitation again."))
