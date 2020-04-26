@@ -436,12 +436,12 @@ class LocationFixturesDataTest(LocationHierarchyTestCase, FixtureHasLocationsMix
         super(LocationFixturesDataTest, cls).setUpClass()
         cls.user = create_restore_user(cls.domain, 'user', '123')
         cls.loc_fields = CustomDataFieldsDefinition.get_or_create(cls.domain, LocationFieldsView.field_type)
-        cls.loc_fields.fields = [
+        cls.loc_fields.sqlfield_set.set([
             CustomDataField(slug='baseball_team'),
             CustomDataField(slug='favorite_passtime'),
-        ]
+        ], bulk=False)
         cls.loc_fields.save()
-        cls.field_slugs = [f.slug for f in cls.loc_fields.fields]
+        cls.field_slugs = [f.slug for f in cls.loc_fields.sqlfield_set.all()]
 
     def setUp(self):
         # this works around the fact that get_locations_to_sync is memoized on OTARestoreUser

@@ -114,6 +114,48 @@ class SQLCustomDataFieldsDefinition(SyncSQLToCouchMixin, models.Model):
             new.save()
             return new
 
+    def get_validator(self, data_field_class):
+        """
+        Returns a validator to be used in bulk import
+        """
+        def validate_choices(field, value):
+            if field.choices and value and str(value) not in field.choices:
+                return _(
+                    "'{value}' is not a valid choice for {slug}, the available "
+                    "options are: {options}."
+                ).format(
+                    value=value,
+                    slug=field.slug,
+                    options=', '.join(field.choices),
+                )
+
+        def validate_regex(field, value):
+            if field.regex and value and not re.search(field.regex, value):
+                return _("'{value}' is not a valid match for {slug}").format(
+                    value=value, slug=field.slug)
+
+        def validate_required(field, value):
+            if field.is_required and not value:
+                return _(
+                    "Cannot create or update a {entity} without "
+                    "the required field: {field}."
+                ).format(
+                    entity=data_field_class.entity_string,
+                    field=field.slug
+                )
+
+        def validate_custom_fields(custom_fields):
+            errors = []
+            for field in self.fields:
+                value = custom_fields.get(field.slug, None)
+                errors.append(validate_required(field, value))
+                errors.append(validate_choices(field, value))
+                errors.append(validate_regex(field, value))
+            return ' '.join(filter(None, errors))
+
+        return validate_custom_fields
+
+
 
 class CustomDataFieldsDefinition(SyncCouchToSQLMixin, QuickCachedDocumentMixin, Document):
     """
@@ -174,47 +216,6 @@ class CustomDataFieldsDefinition(SyncCouchToSQLMixin, QuickCachedDocumentMixin, 
     def clear_caches(self):
         super(CustomDataFieldsDefinition, self).clear_caches()
         get_by_domain_and_type.clear(self.domain, self.field_type)
-
-    def get_validator(self, data_field_class):
-        """
-        Returns a validator to be used in bulk import
-        """
-        def validate_choices(field, value):
-            if field.choices and value and str(value) not in field.choices:
-                return _(
-                    "'{value}' is not a valid choice for {slug}, the available "
-                    "options are: {options}."
-                ).format(
-                    value=value,
-                    slug=field.slug,
-                    options=', '.join(field.choices),
-                )
-
-        def validate_regex(field, value):
-            if field.regex and value and not re.search(field.regex, value):
-                return _("'{value}' is not a valid match for {slug}").format(
-                    value=value, slug=field.slug)
-
-        def validate_required(field, value):
-            if field.is_required and not value:
-                return _(
-                    "Cannot create or update a {entity} without "
-                    "the required field: {field}."
-                ).format(
-                    entity=data_field_class.entity_string,
-                    field=field.slug
-                )
-
-        def validate_custom_fields(custom_fields):
-            errors = []
-            for field in self.fields:
-                value = custom_fields.get(field.slug, None)
-                errors.append(validate_required(field, value))
-                errors.append(validate_choices(field, value))
-                errors.append(validate_regex(field, value))
-            return ' '.join(filter(None, errors))
-
-        return validate_custom_fields
 
     def get_model_and_uncategorized(self, data_dict):
         """

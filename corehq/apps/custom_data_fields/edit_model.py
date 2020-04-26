@@ -17,7 +17,7 @@ from corehq.toggles import REGEX_FIELD_VALIDATION
 
 from .models import (
     CustomDataField,
-    CustomDataFieldsDefinition,
+    SQLCustomDataFieldsDefinition,
     validate_reserved_words,
 )
 
@@ -120,7 +120,7 @@ class CustomDataFieldForm(forms.Form):
 
 class CustomDataModelMixin(object):
     """
-    Provides the interface for editing the ``CustomDataFieldsDefinition``
+    Provides the interface for editing the ``SQLCustomDataFieldsDefinition``
     for each entity type.
     Each entity type must provide a subclass of this mixin.
     """
@@ -136,7 +136,7 @@ class CustomDataModelMixin(object):
 
     @classmethod
     def get_validator(cls, domain):
-        data_model = CustomDataFieldsDefinition.get_or_create(domain, cls.field_type)
+        data_model = SQLCustomDataFieldsDefinition.get_or_create(domain, cls.field_type)
         return data_model.get_validator(cls)
 
     @classmethod
@@ -144,24 +144,24 @@ class CustomDataModelMixin(object):
         return _("Edit {} Fields").format(str(cls.entity_string))
 
     def get_definition(self):
-        return CustomDataFieldsDefinition.get_or_create(self.domain,
-                                                        self.field_type)
+        return SQLCustomDataFieldsDefinition.get_or_create(self.domain, self.field_type)
 
     def get_custom_fields(self):
         definition = self.get_definition()
         if definition:
-            return definition.fields
+            return definition.sqlfield_set.all()
         else:
             return []
 
     def save_custom_fields(self):
-        definition = self.get_definition() or CustomDataFieldsDefinition()
+        definition = self.get_definition() or SQLCustomDataFieldsDefinition()
         definition.field_type = self.field_type
         definition.domain = self.domain
-        definition.fields = [
+        definition.sqlfield_set.all().delete()
+        definition.sqlfield_set.set([
             self.get_field(field)
             for field in self.form.cleaned_data['data_fields']
-        ]
+        ], bulk=False)
         definition.save()
 
     def get_field(self, field):
