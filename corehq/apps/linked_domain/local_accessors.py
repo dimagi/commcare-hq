@@ -21,7 +21,16 @@ def get_custom_data_models(domain, limit_types=None):
             continue
         model = SQLCustomDataFieldsDefinition.get(domain, field_view.field_type)
         if model:
-            fields[field_view.field_type] = model.to_json()['fields']
+            fields[field_view.field_type] = [
+                {
+                    'slug': field.slug,
+                    'is_required': field.is_required,
+                    'label': field.label,
+                    'choices': field.choices,
+                    'regex': field.regex,
+                    'regex_msg': field.regex_msg,
+                } for field in model.fields
+            ]
     return fields
 
 

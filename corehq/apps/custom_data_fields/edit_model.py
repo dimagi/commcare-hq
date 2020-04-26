@@ -16,8 +16,8 @@ from corehq.apps.app_manager.helpers.validators import load_case_reserved_words
 from corehq.toggles import REGEX_FIELD_VALIDATION
 
 from .models import (
-    CustomDataField,
     SQLCustomDataFieldsDefinition,
+    SQLField,
     validate_reserved_words,
 )
 
@@ -146,13 +146,6 @@ class CustomDataModelMixin(object):
     def get_definition(self):
         return SQLCustomDataFieldsDefinition.get_or_create(self.domain, self.field_type)
 
-    def get_custom_fields(self):
-        definition = self.get_definition()
-        if definition:
-            return definition.sqlfield_set.all()
-        else:
-            return []
-
     def save_custom_fields(self):
         definition = self.get_definition()
         definition.field_type = self.field_type
@@ -173,7 +166,7 @@ class CustomDataModelMixin(object):
             choices = field.get('choices')
             regex = None
             regex_msg = None
-        return CustomDataField(
+        return SQLField(
             slug=field.get('slug'),
             is_required=field.get('is_required'),
             label=field.get('label'),
@@ -196,8 +189,17 @@ class CustomDataModelMixin(object):
         if self.request.method == "POST":
             return CustomDataFieldsForm(self.request.POST)
         else:
-            serialized = json.dumps([field.to_json()
-                                     for field in self.get_custom_fields()])
+            definition = self.get_definition()
+            serialized = json.dumps([
+                {
+                    'slug': field.slug,
+                    'is_required': field.is_required,
+                    'label': field.label,
+                    'choices': field.choices,
+                    'regex': field.regex,
+                    'regex_msg': field.regex_msg,
+                } for field in definition.sqlfield_set.all()
+            ])
             return CustomDataFieldsForm({'data_fields': serialized})
 
     def post(self, request, *args, **kwargs):
