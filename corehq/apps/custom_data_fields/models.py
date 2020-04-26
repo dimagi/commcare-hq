@@ -17,8 +17,6 @@ from dimagi.utils.couch.migration import SyncCouchToSQLMixin, SyncSQLToCouchMixi
 
 from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
 
-from .dbaccessors import get_by_domain_and_type
-
 CUSTOM_DATA_FIELD_PREFIX = "data-field"
 # If mobile-worker is demo, this will be set to value 'demo'
 COMMCARE_USER_TYPE_KEY = 'user_type'
@@ -105,8 +103,12 @@ class SQLCustomDataFieldsDefinition(SyncSQLToCouchMixin, models.Model):
         return CustomDataFieldsDefinition
 
     @classmethod
+    def get(cls, domain, field_type):
+        return cls.objects.filter(domain=domain, field_type=field_type).first()
+
+    @classmethod
     def get_or_create(cls, domain, field_type):
-        existing = cls.objects.filter(domain=domain, field_type=field_type).first()
+        existing = cls.get(domain, field_type)
         if existing:
             return existing
         else:
@@ -221,18 +223,3 @@ class CustomDataFieldsDefinition(SyncCouchToSQLMixin, QuickCachedDocumentMixin, 
     @classmethod
     def _migration_get_sql_model_class(cls):
         return SQLCustomDataFieldsDefinition
-
-    @classmethod
-    def get_or_create(cls, domain, field_type):
-        existing = get_by_domain_and_type(domain, field_type)
-
-        if existing:
-            return existing
-        else:
-            new = cls(domain=domain, field_type=field_type)
-            new.save()
-            return new
-
-    def clear_caches(self):
-        super(CustomDataFieldsDefinition, self).clear_caches()
-        get_by_domain_and_type.clear(self.domain, self.field_type)
