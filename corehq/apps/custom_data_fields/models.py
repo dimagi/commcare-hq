@@ -155,6 +155,26 @@ class SQLCustomDataFieldsDefinition(SyncSQLToCouchMixin, models.Model):
 
         return validate_custom_fields
 
+    def get_model_and_uncategorized(self, data_dict):
+        """
+        Splits data_dict into two dictionaries:
+        one for data which matches the model and one for data that doesn't
+        Does not include reserved fields.
+        """
+        if not data_dict:
+            return {}, {}
+        model_data = {}
+        uncategorized_data = {}
+        slugs = [field.slug for field in self.sqlfield_set]
+        for k, v in data_dict.items():
+            if k in slugs:
+                model_data[k] = v
+            elif is_system_key(k):
+                pass
+            else:
+                uncategorized_data[k] = v
+
+        return model_data, uncategorized_data
 
 
 class CustomDataFieldsDefinition(SyncCouchToSQLMixin, QuickCachedDocumentMixin, Document):
@@ -216,24 +236,3 @@ class CustomDataFieldsDefinition(SyncCouchToSQLMixin, QuickCachedDocumentMixin, 
     def clear_caches(self):
         super(CustomDataFieldsDefinition, self).clear_caches()
         get_by_domain_and_type.clear(self.domain, self.field_type)
-
-    def get_model_and_uncategorized(self, data_dict):
-        """
-        Splits data_dict into two dictionaries:
-        one for data which matches the model and one for data that doesn't
-        Does not include reserved fields.
-        """
-        if not data_dict:
-            return {}, {}
-        model_data = {}
-        uncategorized_data = {}
-        slugs = [field.slug for field in self.fields]
-        for k, v in data_dict.items():
-            if k in slugs:
-                model_data[k] = v
-            elif is_system_key(k):
-                pass
-            else:
-                uncategorized_data[k] = v
-
-        return model_data, uncategorized_data
