@@ -1,6 +1,8 @@
 import re
 
 from django.core.exceptions import ValidationError
+from django.contrib.postgres.fields import JSONField
+from django.db import models
 from django.utils.translation import ugettext as _
 
 from dimagi.ext.couchdbkit import (
@@ -43,6 +45,19 @@ def is_system_key(slug):
     return False
 
 
+class SQLField(models.Model):
+    slug = models.CharField(max_length=127)
+    is_required = models.BooleanField(default=False)
+    label = models.CharField(max_length=255)
+    choices = JSONField(default=list, null=True)
+    regex = models.CharField(max_length=127, null=True)
+    regex_msg = models.CharField(max_length=255, null=True)
+    definition = models.ForeignKey('SQLCustomDataFieldsDefinition', on_delete=models.CASCADE)
+
+    class Meta:
+        db_table = "custom_data_fields_field"
+
+
 class CustomDataField(JsonObject):
     slug = StringProperty()
     is_required = BooleanProperty()
@@ -50,6 +65,16 @@ class CustomDataField(JsonObject):
     choices = StringListProperty()
     regex = StringProperty()
     regex_msg = StringProperty()
+
+
+class SQLCustomDataFieldsDefinition(models.Model):
+    field_type = models.CharField(max_length=126)
+    domain = models.CharField(max_length=255, null=True)
+    couch_id = models.CharField(max_length=126, null=True, db_index=True)
+
+    class Meta:
+        db_table = "custom_data_fields_customdatafieldsdefinition"
+        unique_together = ('domain', 'field_type')
 
 
 class CustomDataFieldsDefinition(QuickCachedDocumentMixin, Document):
