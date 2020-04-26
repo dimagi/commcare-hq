@@ -21,8 +21,8 @@ from corehq.apps.app_manager.tests.util import (
 )
 from corehq.apps.commtrack.tests.util import bootstrap_domain
 from corehq.apps.custom_data_fields.models import (
-    SQLCustomDataFieldsDefinition,
-    SQLField,
+    CustomDataFieldsDefinition,
+    Field,
 )
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
@@ -164,9 +164,9 @@ class LocationFixturesTest(LocationHierarchyTestCase, FixtureHasLocationsMixin):
         )
         location_db = LocationSet([location])
         data_fields = [
-            SQLField(slug='best_swordsman'),
-            SQLField(slug='in_westeros'),
-            SQLField(slug='appeared_in_num_episodes'),
+            Field(slug='best_swordsman'),
+            Field(slug='in_westeros'),
+            Field(slug='appeared_in_num_episodes'),
         ]
         fixture = _location_to_fixture(location_db, location, location_type, data_fields)
         location_data = {
@@ -435,13 +435,13 @@ class LocationFixturesDataTest(LocationHierarchyTestCase, FixtureHasLocationsMix
     def setUpClass(cls):
         super(LocationFixturesDataTest, cls).setUpClass()
         cls.user = create_restore_user(cls.domain, 'user', '123')
-        cls.loc_fields = SQLCustomDataFieldsDefinition.get_or_create(cls.domain, LocationFieldsView.field_type)
-        cls.loc_fields.sqlfield_set.set([
-            SQLField(slug='baseball_team'),
-            SQLField(slug='favorite_passtime'),
+        cls.loc_fields = CustomDataFieldsDefinition.get_or_create(cls.domain, LocationFieldsView.field_type)
+        cls.loc_fields.field_set.set([
+            Field(slug='baseball_team'),
+            Field(slug='favorite_pastime'),
         ], bulk=False)
         cls.loc_fields.save()
-        cls.field_slugs = [f.slug for f in cls.loc_fields.sqlfield_set.all()]
+        cls.field_slugs = [f.slug for f in cls.loc_fields.field_set.all()]
 
     def setUp(self):
         # this works around the fact that get_locations_to_sync is memoized on OTARestoreUser

@@ -16,8 +16,8 @@ from corehq.apps.app_manager.helpers.validators import load_case_reserved_words
 from corehq.toggles import REGEX_FIELD_VALIDATION
 
 from .models import (
-    SQLCustomDataFieldsDefinition,
-    SQLField,
+    CustomDataFieldsDefinition,
+    Field,
     validate_reserved_words,
 )
 
@@ -120,7 +120,7 @@ class CustomDataFieldForm(forms.Form):
 
 class CustomDataModelMixin(object):
     """
-    Provides the interface for editing the ``SQLCustomDataFieldsDefinition``
+    Provides the interface for editing the ``CustomDataFieldsDefinition``
     for each entity type.
     Each entity type must provide a subclass of this mixin.
     """
@@ -136,7 +136,7 @@ class CustomDataModelMixin(object):
 
     @classmethod
     def get_validator(cls, domain):
-        data_model = SQLCustomDataFieldsDefinition.get_or_create(domain, cls.field_type)
+        data_model = CustomDataFieldsDefinition.get_or_create(domain, cls.field_type)
         return data_model.get_validator(cls)
 
     @classmethod
@@ -144,14 +144,14 @@ class CustomDataModelMixin(object):
         return _("Edit {} Fields").format(str(cls.entity_string))
 
     def get_definition(self):
-        return SQLCustomDataFieldsDefinition.get_or_create(self.domain, self.field_type)
+        return CustomDataFieldsDefinition.get_or_create(self.domain, self.field_type)
 
     def save_custom_fields(self):
         definition = self.get_definition()
         definition.field_type = self.field_type
         definition.domain = self.domain
-        definition.sqlfield_set.all().delete()
-        definition.sqlfield_set.set([
+        definition.field_set.all().delete()
+        definition.field_set.set([
             self.get_field(field)
             for field in self.form.cleaned_data['data_fields']
         ], bulk=False)
@@ -166,7 +166,7 @@ class CustomDataModelMixin(object):
             choices = field.get('choices')
             regex = None
             regex_msg = None
-        return SQLField(
+        return Field(
             slug=field.get('slug'),
             is_required=field.get('is_required'),
             label=field.get('label'),
@@ -198,7 +198,7 @@ class CustomDataModelMixin(object):
                     'choices': field.choices,
                     'regex': field.regex,
                     'regex_msg': field.regex_msg,
-                } for field in definition.sqlfield_set.all()
+                } for field in definition.field_set.all()
             ])
             return CustomDataFieldsForm({'data_fields': serialized})
 

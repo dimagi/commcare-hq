@@ -9,8 +9,8 @@ from corehq.apps.case_search.models import (
     CaseSearchQueryAddition,
 )
 from corehq.apps.custom_data_fields.models import (
-    SQLField,
     CustomDataFieldsDefinition,
+    Field,
 )
 from corehq.apps.linked_domain.const import (
     MODEL_CASE_SEARCH,
@@ -90,7 +90,7 @@ def update_custom_data_models(domain_link, limit_types=None):
         model = CustomDataFieldsDefinition.get_or_create(domain_link.linked_domain, field_type)
         model.sqlfield_set.all().delete()
         model.sqlfield_set.set([
-            SQLField(
+            Field(
                 slug=field_def['slug'],
                 is_required=field_def['is_required'],
                 label=field_def['label'],

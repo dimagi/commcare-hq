@@ -32,25 +32,21 @@ def is_system_key(slug):
     return False
 
 
-class SQLField(models.Model):
+class Field(models.Model):
     slug = models.CharField(max_length=127)
     is_required = models.BooleanField(default=False)
     label = models.CharField(max_length=255)
     choices = JSONField(default=list, null=True)
     regex = models.CharField(max_length=127, null=True)
     regex_msg = models.CharField(max_length=255, null=True)
-    definition = models.ForeignKey('SQLCustomDataFieldsDefinition', on_delete=models.CASCADE)
-
-    class Meta:
-        db_table = "custom_data_fields_field"
+    definition = models.ForeignKey('CustomDataFieldsDefinition', on_delete=models.CASCADE)
 
 
-class SQLCustomDataFieldsDefinition(models.Model):
+class CustomDataFieldsDefinition(models.Model):
     field_type = models.CharField(max_length=126)
     domain = models.CharField(max_length=255, null=True)
 
     class Meta:
-        db_table = "custom_data_fields_customdatafieldsdefinition"
         unique_together = ('domain', 'field_type')
 
     @classmethod
@@ -73,7 +69,7 @@ class SQLCustomDataFieldsDefinition(models.Model):
                 (required_only and not field.is_required)
                 or (not include_system and is_system_key(field.slug))
             )
-        return filter(_is_match, self.sqlfield_set)
+        return filter(_is_match, self.field_set)
 
     def get_validator(self, data_field_class):
         """
@@ -126,7 +122,7 @@ class SQLCustomDataFieldsDefinition(models.Model):
             return {}, {}
         model_data = {}
         uncategorized_data = {}
-        slugs = [field.slug for field in self.sqlfield_set]
+        slugs = [field.slug for field in self.field_set]
         for k, v in data_dict.items():
             if k in slugs:
                 model_data[k] = v

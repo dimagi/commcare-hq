@@ -1,5 +1,5 @@
 from corehq import feature_previews, toggles
-from corehq.apps.custom_data_fields.models import SQLCustomDataFieldsDefinition
+from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition
 from corehq.apps.linked_domain.util import _clean_json
 from corehq.apps.locations.views import LocationFieldsView
 from corehq.apps.products.views import ProductFieldsView
@@ -19,7 +19,7 @@ def get_custom_data_models(domain, limit_types=None):
     for field_view in [LocationFieldsView, ProductFieldsView, UserFieldsView]:
         if limit_types and field_view.field_type not in limit_types:
             continue
-        model = SQLCustomDataFieldsDefinition.get(domain, field_view.field_type)
+        model = CustomDataFieldsDefinition.get(domain, field_view.field_type)
         if model:
             fields[field_view.field_type] = [
                 {

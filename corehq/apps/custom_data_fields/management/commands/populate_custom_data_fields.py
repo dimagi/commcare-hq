@@ -1,5 +1,5 @@
 from corehq.apps.cleanup.management.commands.populate_sql_model_from_couch_model import PopulateSQLCommand
-from corehq.apps.custom_data_fields.models import SQLField
+from corehq.apps.custom_data_fields.models import Field
 
 
 class Command(PopulateSQLCommand):
@@ -13,8 +13,8 @@ class Command(PopulateSQLCommand):
 
     @classmethod
     def sql_class(self):
-        from corehq.apps.custom_data_fields.models import SQLCustomDataFieldsDefinition
-        return SQLCustomDataFieldsDefinition
+        from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition
+        return CustomDataFieldsDefinition
 
     @classmethod
     def commit_adding_migration(cls):
@@ -28,9 +28,9 @@ class Command(PopulateSQLCommand):
                 "field_type": doc['field_type'],
             },
         )
-        model.sqlfield_set.all().delete()
-        model.sqlfield_set.set([
-            SQLField(
+        model.field_set.all().delete()
+        model.field_set.set([
+            Field(
                 slug=field['slug'],
                 is_required=field.get('is_required', False),
                 label=field.get('label', ''),
