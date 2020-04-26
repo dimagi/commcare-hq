@@ -26,8 +26,9 @@
       <span class="label label-warning">{% trans "Success with warnings" %}</span>
       <!--/ko-->
       <!--/ko-->
+      {# The following failed state is necessary to handle legacy errors #}
       <!--ko if: task_status().state == $root.states.SUCCESS && !task_status().result-->
-      <span class="label label-success">{% trans "Success" %}</span>
+      <span class="label label-danger">{% trans "Failed" %}</span>
       <!--/ko-->
       <!--ko if: task_status().state == $root.states.MISSING && isExpiredUpload() || task_status().state == $root.states.FAILED-->
       <span class="label label-danger">{% trans "Failed" %}</span>
