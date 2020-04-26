@@ -1,3 +1,4 @@
+from contextlib import contextmanager
 from datetime import date, datetime, time
 
 from django.db.models import Q
@@ -58,6 +59,7 @@ from corehq.messaging.scheduling.tests.util import (
 )
 from corehq.messaging.tasks import (
     run_messaging_rule,
+    sync_case_for_messaging,
     sync_case_for_messaging_rule,
 )
 from corehq.sql_db.util import paginate_query_across_partitioned_databases
@@ -614,9 +616,8 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
             instances = get_case_timed_schedule_instances_for_schedule(case.case_id, schedule)
             self.assertEqual(instances.count(), 0)
 
-    @run_with_all_backends
-    @patch('corehq.messaging.scheduling.util.utcnow')
-    def test_timed_schedule_specific_start_date(self, utcnow_patch):
+    @contextmanager
+    def setup_timed_schedule_with_case(self, utcnow_patch):
         schedule = TimedSchedule.create_simple_daily_schedule(
             self.domain,
             TimedEvent(time=time(9, 0)),
@@ -644,6 +645,13 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
 
         utcnow_patch.return_value = datetime(2018, 2, 28, 7, 0)
         with create_case(self.domain, 'person') as case:
+            yield schedule, rule, definition, case
+
+    @run_with_all_backends
+    @patch('corehq.messaging.scheduling.util.utcnow')
+    def test_timed_schedule_specific_start_date(self, utcnow_patch):
+        setup = self.setup_timed_schedule_with_case(utcnow_patch)
+        with setup as (schedule, rule, definition, case):
             # Rule does not match, no instances created
             instances = get_case_timed_schedule_instances_for_schedule(case.case_id, schedule)
             self.assertEqual(instances.count(), 0)
@@ -710,6 +718,34 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
             self.assertEqual(instances[0].schedule_iteration_num, 2)
             self.assertEqual(instances[0].next_event_due, datetime(2018, 2, 2, 14, 0))
             self.assertFalse(instances[0].active)
+
+    @run_with_all_backends
+    @patch('corehq.messaging.scheduling.util.utcnow')
+    def test_sync_rule_on_hard_deleted_case(self, utcnow_patch):
+        setup = self.setup_timed_schedule_with_case(utcnow_patch)
+        with setup as (schedule, rule, definition, case):
+            utcnow_patch.return_value = datetime(2018, 2, 28, 7, 1)
+            update_case(self.domain, case.case_id, case_properties={'start_sending': 'Y'})
+            instances = get_case_timed_schedule_instances_for_schedule(case.case_id, schedule)
+            self.assertEqual(instances.count(), 1)
+
+        sync_case_for_messaging_rule(self.domain, case.case_id, rule.pk)
+        instances = get_case_timed_schedule_instances_for_schedule(case.case_id, schedule)
+        self.assertEqual(instances.count(), 0)
+
+    @run_with_all_backends
+    @patch('corehq.messaging.scheduling.util.utcnow')
+    def test_sync_messaging_on_hard_deleted_case(self, utcnow_patch):
+        setup = self.setup_timed_schedule_with_case(utcnow_patch)
+        with setup as (schedule, rule, definition, case):
+            utcnow_patch.return_value = datetime(2018, 2, 28, 7, 1)
+            update_case(self.domain, case.case_id, case_properties={'start_sending': 'Y'})
+            instances = get_case_timed_schedule_instances_for_schedule(case.case_id, schedule)
+            self.assertEqual(instances.count(), 1)
+
+        sync_case_for_messaging(self.domain, case.case_id)
+        instances = get_case_timed_schedule_instances_for_schedule(case.case_id, schedule)
+        self.assertEqual(instances.count(), 0)
 
     @run_with_all_backends
     @patch('corehq.messaging.scheduling.util.utcnow')

@@ -19,6 +19,7 @@ from django.views.decorators.http import require_GET, require_POST
 from memoized import memoized
 
 from corehq.apps.export.dbaccessors import get_properly_wrapped_export_instance
+from corehq.apps.export.det.exceptions import DETConfigError
 from corehq.apps.export.det.schema_generator import generate_from_export_instance
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_response
@@ -551,8 +552,12 @@ class DownloadDETSchemaView(View):
         export_instance = get_properly_wrapped_export_instance(export_instance_id)
         assert domain == export_instance.domain
         output_file = BytesIO()
-        generate_from_export_instance(export_instance, output_file)
+        try:
+            generate_from_export_instance(export_instance, output_file)
+        except DETConfigError as e:
+            return HttpResponse(_('Sorry, something went wrong creating that file: {error}').format(error=e))
+
         output_file.seek(0)
         response = HttpResponse(output_file, content_type='application/vnd.ms-excel')
-        response['Content-Disposition'] = f'attachment; filename="{export_instance.name}.xlsx"'
+        response['Content-Disposition'] = f'attachment; filename="{export_instance.name}-DET.xlsx"'
         return response

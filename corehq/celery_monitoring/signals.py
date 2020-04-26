@@ -93,8 +93,7 @@ def celery_record_time_to_start(task_id=None, task=None, **kwargs):
 
 @task_postrun.connect
 def celery_record_time_to_run(task_id=None, task=None, state=None, **kwargs):
-    from corehq.util.datadog.utils import DAY_SCALE_TIME_BUCKETS
-    from corehq.util.metrics import metrics_counter, metrics_histogram
+    from corehq.util.metrics import metrics_counter, metrics_histogram, DAY_SCALE_TIME_BUCKETS
 
     get_task_time_to_start.clear(task_id)
 

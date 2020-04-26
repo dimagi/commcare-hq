@@ -18,7 +18,7 @@ TITLE_ROW = [
 @attr.s
 class DETConfig:
     name = attr.ib()
-    tables = attr.ib(type=list)
+    tables = attr.ib(factory=list)
 
     @property
     def table_names(self):

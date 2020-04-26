@@ -26,7 +26,8 @@ class SqlModelArgsProvider(ArgsProvider):
             return [next_db, None], {}
 
 
-def resumable_sql_model_iterator(iteration_key, reindex_accessor, chunk_size=100, event_handler=None):
+def resumable_sql_model_iterator(iteration_key, reindex_accessor, chunk_size=100, event_handler=None,
+                                 transform=None):
     """Perform one-time resumable iteration over documents
 
     Iteration can be efficiently stopped and resumed. The iteration may
@@ -53,10 +54,14 @@ def resumable_sql_model_iterator(iteration_key, reindex_accessor, chunk_size=100
 
     args_provider = SqlModelArgsProvider(reindex_accessor.sql_db_aliases)
 
+    if not transform:
+        def transform(doc):
+            return reindex_accessor.doc_to_json(doc)
+
     class ResumableModelIterator(ResumableFunctionIterator):
         def __iter__(self):
             for doc in super(ResumableModelIterator, self).__iter__():
-                yield reindex_accessor.doc_to_json(doc)
+                yield transform(doc)
 
     item_getter = reindex_accessor.get_doc
 

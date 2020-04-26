@@ -2,8 +2,7 @@ import re
 import sys
 import uuid
 from collections import defaultdict
-from contextlib import contextmanager
-from contextlib2 import ExitStack
+from contextlib import contextmanager, ExitStack
 from io import BytesIO
 from hashlib import sha1
 from itertools import chain
@@ -189,8 +188,9 @@ class BlobMixin(Document):
                     return super(BlobMixin, self) \
                         .fetch_attachment(name, stream=stream)
                 raise NotFound(name)
-            blob = db.get(key=key)
-        except NotFound:
+            meta = db.metadb.get(parent_id=self._id, key=key)
+            blob = meta.open()
+        except (NotFound, db.metadb.DoesNotExist):
             raise ResourceNotFound(
                 "{model} {model_id} attachment: {name!r}".format(
                     model=type(self).__name__,

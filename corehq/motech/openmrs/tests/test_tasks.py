@@ -16,6 +16,7 @@ from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import LocationType, SQLLocation
 from corehq.apps.locations.tests.util import LocationHierarchyTestCase
 from corehq.apps.users.models import CommCareUser, WebUser
+from corehq.motech.const import BASIC_AUTH
 from corehq.motech.exceptions import ConfigurationError
 from corehq.motech.openmrs.const import IMPORT_FREQUENCY_MONTHLY
 from corehq.motech.openmrs.models import OpenmrsImporter
@@ -25,7 +26,6 @@ from corehq.motech.openmrs.tasks import (
     import_patients_with_importer,
     poll_openmrs_atom_feeds,
 )
-from corehq.motech.repeaters.models import BASIC_AUTH
 
 TEST_DOMAIN = 'test-domain'
 

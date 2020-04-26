@@ -4,7 +4,7 @@ from datetime import datetime
 from functools import partial
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.toggles import EXTENSION_CASES_SYNC_ENABLED
-from corehq.util.datadog.utils import case_load_counter
+from corehq.util.metrics.load_counters import case_load_counter
 from casexml.apps.case.const import CASE_INDEX_EXTENSION, CASE_INDEX_CHILD
 from casexml.apps.phone.cleanliness import get_case_footprint_info
 from casexml.apps.phone.const import ASYNC_RETRY_AFTER

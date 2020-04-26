@@ -122,7 +122,7 @@ def _process_form(request, domain, app_id, user_id, authenticated,
             submit_ip=couchforms.get_submit_ip(request),
             last_sync_token=couchforms.get_last_sync_token(request),
             openrosa_headers=couchforms.get_openrosa_headers(request),
-            force_logs=bool(request.GET.get('force_logs', False)),
+            force_logs=request.GET.get('force_logs', 'false') == 'true',
         )
 
         try:

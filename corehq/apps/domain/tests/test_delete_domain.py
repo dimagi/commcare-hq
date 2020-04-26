@@ -99,7 +99,7 @@ from corehq.apps.userreports.models import AsyncIndicator
 from corehq.apps.users.models import DomainRequest, Invitation
 from corehq.apps.zapier.consts import EventTypes
 from corehq.apps.zapier.models import ZapierSubscription
-from corehq.blobs import NotFound, get_blob_db
+from corehq.blobs import NotFound, get_blob_db, CODES
 from corehq.form_processor.backends.sql.dbaccessors import (
     CaseAccessorSQL,
     FormAccessorSQL,
@@ -630,9 +630,9 @@ class TestDeleteDomain(TestCase):
         self.domain.delete()
 
         with self.assertRaises(NotFound):
-            blobdb.get(key=data_files[0].blob_id)
+            blobdb.get(key=data_files[0].blob_id, type_code=CODES.data_file)
 
-        with blobdb.get(key=data_files[1].blob_id) as f:
+        with blobdb.get(key=data_files[1].blob_id, type_code=CODES.data_file) as f:
             self.assertEqual(f.read(), (self.domain2.name + " csv").encode('utf-8'))
 
         self._assert_export_counts(self.domain.name, 0)

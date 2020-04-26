@@ -294,5 +294,6 @@ def download_ccz_supporting_files(request, domain, hosting_supporting_file_id):
         content_format = Format('', Format.ZIP, '', True)
     else:
         content_format = Format('', Format.HTML, '', True)
-    return get_download_response(ccz_utility.get_file(), ccz_utility.get_file_size(), content_format,
+    file = ccz_utility.get_file()
+    return get_download_response(file, file.content_length, content_format,
                                  file_name, request)

@@ -51,7 +51,7 @@
           {% csrf_token %}
           <div class="col-sm-3">
             <div class="well well-lg text-center">
-              <h3>{{ app.name }}</h3>
+              <h3 class="app-name">{{ app.name }}</h3>
               {% if app.help_link %}
                 <p>
                   <a target="_blank" href="{{ app.help_link }}">{% trans "Application Info" %}</a>
@@ -83,7 +83,7 @@
                   <input type="hidden" name="from_app_id" value="{{ version.id }}" />
                 {% endfor %}
               {% endif %}
-              <button type="submit" class="btn btn-primary">
+              <button type="submit" class="btn btn-primary import-button">
                 <i class="fa fa-cloud-download"></i>
                 {% trans "Import" %}
               </button>

@@ -12,9 +12,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AlterField(
-            model_name='sqlinvitation',
-            name='id',
-            field=models.IntegerField(db_index=True, null=True),
-        ),
+        # Intentionally left empty. See note in 0011.
     ]

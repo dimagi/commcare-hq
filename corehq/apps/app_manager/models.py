@@ -4622,8 +4622,11 @@ class Application(ApplicationBase, ApplicationMediaMixin, ApplicationIntegration
         # TODO: revamp so signal_connections <- models <- signals
         from corehq.apps.app_manager import signals
         from couchforms.analytics import get_form_analytics_metadata
+        from corehq.apps.reports.analytics.esaccessors import (
+            guess_form_name_from_submissions_using_xmlns)
         for xmlns in self.get_xmlns_map():
             get_form_analytics_metadata.clear(self.domain, self._id, xmlns)
+            guess_form_name_from_submissions_using_xmlns.clear(self.domain, xmlns)
         signals.app_post_save.send(Application, application=self)
 
     def delete_copy(self, copy):

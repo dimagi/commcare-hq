@@ -61,14 +61,6 @@ class ReportGenerationCache(GenerationCache):
     ]
 
 
-class DefaultConsumptionGenerationCache(GenerationCache):
-    generation_key = '#gen#default_consumption#'
-    doc_types = ['DefaultConsumption']
-    views = [
-        'consumption/consumption_index',
-    ]
-
-
 class UserReportsDataSourceCache(GenerationCache):
     generation_key = '#gen#userreports#datasource#'
     doc_types = ['DataSourceConfiguration']
