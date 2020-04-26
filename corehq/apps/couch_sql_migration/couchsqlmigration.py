@@ -249,7 +249,7 @@ class CouchSqlDomainMigrator:
                 xmlns = form_data.get("@xmlns", "")
                 user_id = extract_meta_user_id(form_data)
             else:
-                xmlns = couch_form.xmlns
+                xmlns = couch_form.xmlns or ""
                 user_id = couch_form.user_id
             if xmlns == SYSTEM_ACTION_XMLNS:
                 for form_id, case_ids in do_system_action(couch_form, self.statedb):
@@ -435,7 +435,19 @@ class CouchSqlDomainMigrator:
         if form is None:
             self.statedb.add_missing_docs("XFormInstance", [form_id])
         else:
-            self._migrate_form(form, get_case_ids(form))
+            if form.problem and not form.is_error and case_id is None:
+                doc = self._transform_problem(form.to_json())
+                form = XFormInstance.wrap(doc)
+            proc = case_id is not None or form.doc_type not in UNPROCESSED_DOC_TYPES
+            case_ids = get_case_ids(form) if proc else []
+            self._migrate_form(form, case_ids, form_is_processed=proc)
+
+    def _transform_problem(self, doc):
+        if str(doc['problem']).startswith(PROBLEM_TEMPLATE_START):
+            doc = _fix_replacement_form_problem_in_couch(doc)
+        else:
+            doc['doc_type'] = 'XFormError'
+        return doc
 
     def _rediff_already_migrated_forms(self, form_ids):
         for form_id in form_ids:
@@ -449,13 +461,16 @@ class CouchSqlDomainMigrator:
         migrated = 0
         with self.counter('missing_forms', 'XFormInstance.id') as add_form:
             for doc_type, doc in _iter_missing_forms(self.statedb, self.stopper):
+                if doc.get("problem") and doc_type == "XFormInstance":
+                    doc = self._transform_problem(doc)
                 try:
                     form = XFormInstance.wrap(doc)
                 except Exception:
                     log.exception("Error wrapping form %s", doc)
                 else:
-                    proc = doc_type not in UNPROCESSED_DOC_TYPES
-                    self._migrate_form(form, get_case_ids(form), form_is_processed=proc)
+                    proc = form.doc_type not in UNPROCESSED_DOC_TYPES
+                    case_ids = get_case_ids(form) if proc else []
+                    self._migrate_form(form, case_ids, form_is_processed=proc)
                     self.statedb.doc_not_missing(doc_type, form.form_id)
                     add_form()
                     migrated += 1
@@ -520,7 +535,7 @@ class CouchSqlDomainMigrator:
             for form in loader.iter_blob_forms(diff):
                 log.info("migrating form %s received on %s from case %s",
                     form.form_id, form.received_on, case_id)
-                self._migrate_form(form, get_case_ids(form))
+                self._migrate_form(form, get_case_ids(form), form_is_processed=True)
             if diff.kind == "stock state":
                 dropped = maybe_drop_duplicate_ledgers(diff.json_diff, case_id)
                 if dropped:
@@ -846,10 +861,14 @@ def _migrate_form_attachments(sql_form, couch_form):
     def get_form_xml_metadata(meta):
         try:
             couch_form._unsafe_get_xml()
-            assert meta is not None, couch_form.form_id
-            return meta
         except MissingFormXml:
             pass
+        else:
+            if meta is None:
+                blob = couch_form.blobs["form.xml"]
+                assert blob.blobmeta_id is None, couch_form.form_id
+                meta = new_meta_for_blob(blob, CODES.form_xml, "form.xml")
+            return meta
         metas = get_blob_metadata(couch_form.form_id)[(CODES.form_xml, "form.xml")]
         if len(metas) == 1:
             couch_meta = couch_form.blobs.get("form.xml")
@@ -870,6 +889,19 @@ def _migrate_form_attachments(sql_form, couch_form):
         xml = convert_form_to_xml(couch_form.to_json()["form"])
         att = Attachment("form.xml", xml.encode("utf-8"), content_type="text/xml")
         return att.write(blobdb, sql_form)
+
+    def new_meta_for_blob(blob, type_code, name):
+        meta = metadb.new(
+            domain=sql_form.domain,
+            name=name,
+            parent_id=sql_form.form_id,
+            type_code=type_code,
+            content_type=blob.content_type,
+            content_length=blob.content_length,
+            key=blob.key,
+        )
+        meta.save()
+        return meta
 
     if couch_form._attachments and any(
         name not in couch_form.blobs for name in couch_form._attachments
@@ -898,16 +930,7 @@ def _migrate_form_attachments(sql_form, couch_form):
                 meta.save()
 
         if not meta:
-            meta = metadb.new(
-                domain=sql_form.domain,
-                name=name,
-                parent_id=sql_form.form_id,
-                type_code=CODES.form_attachment,
-                content_type=blob.content_type,
-                content_length=blob.content_length,
-                key=blob.key,
-            )
-            meta.save()
+            meta = new_meta_for_blob(blob, CODES.form_attachment, name)
 
         attachments.append(meta)
     sql_form.attachments_list = attachments

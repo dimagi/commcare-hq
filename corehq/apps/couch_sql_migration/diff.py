@@ -37,6 +37,8 @@ load_ignore_rules = memoized(lambda: add_duplicate_rules({
 
         # FORM_IGNORED_DIFFS
         Ignore('missing', ('history', '[*]', 'doc_type'), old='XFormOperation', new=MISSING),
+        Ignore('diff', ('history', '[*]', 'user'), check=has_unsorted_history),
+        Ignore('diff', ('history', '[*]', 'operation'), check=has_unsorted_history),
         Ignore('diff', 'doc_type', old='HQSubmission', new='XFormInstance'),
         Ignore('missing', 'deleted_on', old=MISSING, new=None),
         Ignore('missing', 'location_', new=MISSING),
@@ -52,6 +54,7 @@ load_ignore_rules = memoized(lambda: add_duplicate_rules({
         Ignore(check=is_text_xmlns),
     ],
     'XFormInstance': [
+        Ignore('missing', '-deletion_id', new=MISSING),
         ignore_renamed('uid', 'instanceID'),
     ],
     'XFormInstance-Deleted': [
@@ -475,3 +478,16 @@ def has_acceptable_date_diff(old_obj, new_obj, field, delta=timedelta(days=1)):
         new = iso_string_to_datetime(new)
         return abs(old - new) < delta
     return False
+
+
+def has_unsorted_history(old_obj, new_obj, rule, diff):
+    def drop_doc_type(item):
+        item = item.copy()
+        item.pop("doc_type")
+        return item
+
+    def dateof(item):
+        return item["date"]
+
+    old_history = sorted((drop_doc_type(x) for x in old_obj["history"]), key=dateof)
+    return old_history == new_obj["history"]

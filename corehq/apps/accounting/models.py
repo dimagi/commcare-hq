@@ -3161,7 +3161,7 @@ class LineItem(models.Model):
 
 class CreditLine(models.Model):
     """
-    The amount of money in USD that exists can can be applied toward a specific account,
+    The amount of money in USD that exists that can be applied toward a specific account,
     a specific subscription, or specific rates in that subscription.
     """
     account = models.ForeignKey(BillingAccount, on_delete=models.PROTECT)
@@ -3202,7 +3202,6 @@ class CreditLine(models.Model):
             get_credits_available_for_product_in_account.clear(self.account)
         if self.subscription:
             get_credits_available_for_product_in_subscription.clear(self.subscription)
-
 
     def adjust_credit_balance(self, amount, is_new=False, note=None,
                               line_item=None, invoice=None, customer_invoice=None,
