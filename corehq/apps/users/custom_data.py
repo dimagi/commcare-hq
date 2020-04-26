@@ -9,7 +9,7 @@ def remove_unused_custom_fields_from_users(domain):
     """
     from corehq.apps.users.views.mobile.custom_data_fields import CUSTOM_USER_DATA_FIELD_TYPE
     fields_definition = get_by_domain_and_type(domain, CUSTOM_USER_DATA_FIELD_TYPE)
-    assert fields_definition, 'remove_unused_custom_fields_from_users called without a valid CustomDataFieldsDefinition'
+    assert fields_definition, 'remove_unused_custom_fields_from_users called without a valid definition'
     configured_field_keys = set([f.slug for f in fields_definition.get_fields()])
     for user in get_all_commcare_users_by_domain(domain):
         keys_to_delete = _get_invalid_user_data_fields(user, configured_field_keys)

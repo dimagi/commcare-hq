@@ -154,7 +154,7 @@ class CustomDataModelMixin(object):
             return []
 
     def save_custom_fields(self):
-        definition = self.get_definition() or SQLCustomDataFieldsDefinition()
+        definition = self.get_definition()
         definition.field_type = self.field_type
         definition.domain = self.domain
         definition.sqlfield_set.all().delete()
