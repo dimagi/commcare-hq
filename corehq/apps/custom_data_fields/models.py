@@ -69,7 +69,6 @@ class CustomDataField(JsonObject):
 class SQLCustomDataFieldsDefinition(SyncSQLToCouchMixin, models.Model):
     field_type = models.CharField(max_length=126)
     domain = models.CharField(max_length=255, null=True)
-    couch_id = models.CharField(max_length=126, null=True, db_index=True)
 
     class Meta:
         db_table = "custom_data_fields_customdatafieldsdefinition"
