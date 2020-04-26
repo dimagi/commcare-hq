@@ -67,6 +67,7 @@ def link_data_set_maps(conn_settings: ConnectionSettings):
     Links DataSetMap instances to their ConnectionSettings instance.
     """
     for data_set_map in get_dataset_maps(conn_settings.domain):
-        data_set_map.connection_settings_id = conn_settings.id
-        data_set_map.save()
+        if not data_set_map.connection_settings_id:
+            data_set_map.connection_settings_id = conn_settings.id
+            data_set_map.save()
     get_dataset_maps.clear(conn_settings.domain)
