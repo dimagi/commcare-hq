@@ -104,6 +104,16 @@ class SQLCustomDataFieldsDefinition(SyncSQLToCouchMixin, models.Model):
     def _migration_get_couch_model_class(cls):
         return CustomDataFieldsDefinition
 
+    @classmethod
+    def get_or_create(cls, domain, field_type):
+        existing = cls.objects.filter(domain=domain, field_type=field_type).first()
+        if existing:
+            return existing
+        else:
+            new = cls(domain=domain, field_type=field_type)
+            new.save()
+            return new
+
 
 class CustomDataFieldsDefinition(SyncCouchToSQLMixin, QuickCachedDocumentMixin, Document):
     """
