@@ -5,18 +5,6 @@ from django.contrib.postgres.fields import JSONField
 from django.db import models
 from django.utils.translation import ugettext as _
 
-from dimagi.ext.couchdbkit import (
-    BooleanProperty,
-    Document,
-    SchemaListProperty,
-    StringListProperty,
-    StringProperty,
-)
-from dimagi.ext.jsonobject import JsonObject
-from dimagi.utils.couch.migration import SyncCouchToSQLMixin, SyncSQLToCouchMixin
-
-from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
-
 CUSTOM_DATA_FIELD_PREFIX = "data-field"
 # If mobile-worker is demo, this will be set to value 'demo'
 COMMCARE_USER_TYPE_KEY = 'user_type'
@@ -57,49 +45,13 @@ class SQLField(models.Model):
         db_table = "custom_data_fields_field"
 
 
-class CustomDataField(JsonObject):
-    slug = StringProperty()
-    is_required = BooleanProperty()
-    label = StringProperty()
-    choices = StringListProperty()
-    regex = StringProperty()
-    regex_msg = StringProperty()
-
-
-class SQLCustomDataFieldsDefinition(SyncSQLToCouchMixin, models.Model):
+class SQLCustomDataFieldsDefinition(models.Model):
     field_type = models.CharField(max_length=126)
     domain = models.CharField(max_length=255, null=True)
 
     class Meta:
         db_table = "custom_data_fields_customdatafieldsdefinition"
         unique_together = ('domain', 'field_type')
-
-    @classmethod
-    def _migration_get_fields(cls):
-        return [
-            "domain",
-            "field_type",
-        ]
-
-    def _migration_sync_to_couch(self, couch_obj):
-        for field_name in self._migration_get_fields():
-            value = getattr(self, field_name)
-            setattr(couch_obj, field_name, value)
-        couch_obj.fields = [
-            CustomDataField(
-                slug=field.slug,
-                is_required=field.is_required,
-                label=field.label,
-                choices=field.choices,
-                regex=field.regex,
-                regex_msg=field.regex_msg,
-            ) for field in self.sqlfield_set.all()
-        ]
-        couch_obj.save(sync_to_sql=False)
-
-    @classmethod
-    def _migration_get_couch_model_class(cls):
-        return CustomDataFieldsDefinition
 
     @classmethod
     def get(cls, domain, field_type):
@@ -184,41 +136,3 @@ class SQLCustomDataFieldsDefinition(SyncSQLToCouchMixin, models.Model):
                 uncategorized_data[k] = v
 
         return model_data, uncategorized_data
-
-
-class CustomDataFieldsDefinition(SyncCouchToSQLMixin, QuickCachedDocumentMixin, Document):
-    """
-    Per-project user-defined fields such as custom user data.
-    """
-    field_type = StringProperty()
-    base_doc = "CustomDataFieldsDefinition"
-    domain = StringProperty()
-    fields = SchemaListProperty(CustomDataField)
-
-    @classmethod
-    def _migration_get_fields(cls):
-        return [
-            "domain",
-            "field_type",
-        ]
-
-    def _migration_sync_to_sql(self, sql_object):
-        for field_name in self._migration_get_fields():
-            value = getattr(self, field_name)
-            setattr(sql_object, field_name, value)
-        sql_object.sqlfield_set.all().delete()
-        sql_object.sqlfield_set.set([
-            SQLField(
-                slug=field.slug,
-                is_required=field.is_required,
-                label=field.label,
-                choices=field.choices,
-                regex=field.regex,
-                regex_msg=field.regex_msg,
-            ) for field in self.fields
-        ], bulk=False)
-        sql_object.save(sync_to_couch=False)
-
-    @classmethod
-    def _migration_get_sql_model_class(cls):
-        return SQLCustomDataFieldsDefinition
