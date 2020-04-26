@@ -114,6 +114,14 @@ class SQLCustomDataFieldsDefinition(SyncSQLToCouchMixin, models.Model):
             new.save()
             return new
 
+    def get_fields(self, required_only=False, include_system=True):
+        def _is_match(field):
+            return not (
+                (required_only and not field.is_required)
+                or (not include_system and is_system_key(field.slug))
+            )
+        return filter(_is_match, self.sqlfield_set)
+
     def get_validator(self, data_field_class):
         """
         Returns a validator to be used in bulk import
@@ -213,14 +221,6 @@ class CustomDataFieldsDefinition(SyncCouchToSQLMixin, QuickCachedDocumentMixin, 
     @classmethod
     def _migration_get_sql_model_class(cls):
         return SQLCustomDataFieldsDefinition
-
-    def get_fields(self, required_only=False, include_system=True):
-        def _is_match(field):
-            return not (
-                (required_only and not field.is_required) or
-                (not include_system and is_system_key(field.slug))
-            )
-        return filter(_is_match, self.fields)
 
     @classmethod
     def get_or_create(cls, domain, field_type):
