@@ -13,6 +13,7 @@ from dimagi.ext.couchdbkit import (
     StringProperty,
 )
 from dimagi.ext.jsonobject import JsonObject
+from dimagi.utils.couch.migration import SyncCouchToSQLMixin, SyncSQLToCouchMixin
 
 from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
 
@@ -67,7 +68,7 @@ class CustomDataField(JsonObject):
     regex_msg = StringProperty()
 
 
-class SQLCustomDataFieldsDefinition(models.Model):
+class SQLCustomDataFieldsDefinition(SyncSQLToCouchMixin, models.Model):
     field_type = models.CharField(max_length=126)
     domain = models.CharField(max_length=255, null=True)
     couch_id = models.CharField(max_length=126, null=True, db_index=True)
@@ -76,8 +77,35 @@ class SQLCustomDataFieldsDefinition(models.Model):
         db_table = "custom_data_fields_customdatafieldsdefinition"
         unique_together = ('domain', 'field_type')
 
+    @classmethod
+    def _migration_get_fields(cls):
+        return [
+            "domain",
+            "field_type",
+        ]
 
-class CustomDataFieldsDefinition(QuickCachedDocumentMixin, Document):
+    def _migration_sync_to_couch(self, couch_obj):
+        for field_name in self._migration_get_fields():
+            value = getattr(self, field_name)
+            setattr(couch_obj, field_name, value)
+        couch_obj.fields = [
+            CustomDataField(
+                slug=field.slug,
+                is_required=field.is_required,
+                label=field.label,
+                choices=field.choices,
+                regex=field.regex,
+                regex_msg=field.regex_msg,
+            ) for field in self.sqlfield_set.all()
+        ]
+        couch_obj.save(sync_to_sql=False)
+
+    @classmethod
+    def _migration_get_couch_model_class(cls):
+        return CustomDataFieldsDefinition
+
+
+class CustomDataFieldsDefinition(SyncCouchToSQLMixin, QuickCachedDocumentMixin, Document):
     """
     Per-project user-defined fields such as custom user data.
     """
@@ -85,6 +113,34 @@ class CustomDataFieldsDefinition(QuickCachedDocumentMixin, Document):
     base_doc = "CustomDataFieldsDefinition"
     domain = StringProperty()
     fields = SchemaListProperty(CustomDataField)
+
+    @classmethod
+    def _migration_get_fields(cls):
+        return [
+            "domain",
+            "field_type",
+        ]
+
+    def _migration_sync_to_sql(self, sql_object):
+        for field_name in self._migration_get_fields():
+            value = getattr(self, field_name)
+            setattr(sql_object, field_name, value)
+        sql_object.sqlfield_set.all().delete()
+        sql_object.sqlfield_set.set([
+            SQLField(
+                slug=field.slug,
+                is_required=field.is_required,
+                label=field.label,
+                choices=field.choices,
+                regex=field.regex,
+                regex_msg=field.regex_msg,
+            ) for field in self.fields
+        ], bulk=False)
+        sql_object.save(sync_to_couch=False)
+
+    @classmethod
+    def _migration_get_sql_model_class(cls):
+        return SQLCustomDataFieldsDefinition
 
     def get_fields(self, required_only=False, include_system=True):
         def _is_match(field):
