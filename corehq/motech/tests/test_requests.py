@@ -1,12 +1,21 @@
 import json
+import random
+import string
+from unittest import skip
 
 from django.conf import settings
-from django.test import SimpleTestCase
+from django.test import SimpleTestCase, TestCase
 
 import requests
 from mock import Mock, patch
 
-from corehq.motech.const import DIGEST_AUTH, REQUEST_TIMEOUT
+from corehq.motech.const import (
+    BASIC_AUTH,
+    DIGEST_AUTH,
+    OAUTH2_BEARER,
+    REQUEST_TIMEOUT,
+)
+from corehq.motech.models import ApiAuthSettings
 from corehq.motech.requests import Requests
 
 TEST_API_URL = 'http://localhost:9080/api/'
@@ -127,6 +136,18 @@ class RequestsTests(SimpleTestCase):
 
 class RequestsAuthenticationTests(SimpleTestCase):
 
+    def test_no_auth(self):
+        reqs = Requests(TEST_DOMAIN, TEST_API_URL, TEST_API_USERNAME, TEST_API_PASSWORD,
+                        auth_type=None)
+        with patch('corehq.motech.requests.RequestLog', Mock()), \
+                patch.object(requests.Session, 'request') as request_mock:
+            request_mock.return_value = self.get_response_mock()
+
+            reqs.get('me')
+
+            kwargs = request_mock.call_args[1]
+            self.assertNotIn('auth', kwargs)
+
     def test_basic_auth(self):
         reqs = Requests(TEST_DOMAIN, TEST_API_URL, TEST_API_USERNAME, TEST_API_PASSWORD)
         with patch('corehq.motech.requests.RequestLog', Mock()), \
@@ -159,3 +180,80 @@ class RequestsAuthenticationTests(SimpleTestCase):
         response_mock.content = content_json
         response_mock.json.return_value = content
         return response_mock
+
+
+@skip('This test uses third-party resources.')  # Comment this out to run
+class RequestsOAuth2Tests(TestCase):
+
+    base_url = 'https://play.dhis2.org/dev'
+    username = 'admin'
+    password = 'district'
+    fullname = 'John Traore'  # The name of user "admin" on play.dhis2.org
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        id_ = random.randint(10_000, 99_999)
+        cls.client_id = f'client{id_}'
+        client_name = f'Example Client {id_}'  # DHIS2 needs this to be unique
+        cls.client_secret = mkpasswd(length=36)  # Mandatory length for DHIS2
+        cls.client_uid = cls.add_dhis2_oauth2_client(client_name)
+
+    @classmethod
+    def tearDownClass(cls):
+        Requests(
+            TEST_DOMAIN, cls.base_url, cls.username, cls.password,
+            auth_type=BASIC_AUTH
+        ).delete(f'/api/oAuth2Clients/{cls.client_uid}')
+        super().tearDownClass()
+
+    @classmethod
+    def add_dhis2_oauth2_client(cls, client_name):
+        json_data = {
+          "name": client_name,
+          "cid": cls.client_id,
+          "secret": cls.client_secret,
+          "grantTypes": ["password", "refresh_token"]
+        }
+        resp = Requests(
+            TEST_DOMAIN, cls.base_url, cls.username, cls.password,
+            auth_type=BASIC_AUTH
+        ).post('/api/oAuth2Clients', json=json_data, raise_for_status=True)
+        return resp.json()['response']['uid']
+
+    def test_oauth2_0_password(self):
+        api_auth_settings = ApiAuthSettings.objects.get(pk=1)
+        assert api_auth_settings.name == 'DHIS2', \
+            'Expected DHIS2 as it is the ApiAuthSettings model fixture'
+
+        with Requests(
+            TEST_DOMAIN,
+            self.base_url,
+            username=self.username,
+            password=self.password,
+            auth_type=OAUTH2_BEARER,
+            api_auth_settings=api_auth_settings,
+            client_id=self.client_id,
+            client_secret=self.client_secret,
+        ) as requests:
+            # NOTE: Use Requests instance as a context manager so that
+            #       it uses OAuth2Session.
+            resp = requests.get('/api/me/')
+
+            # Check API request succeeded
+            self.assertEqual(resp.json()['name'], self.fullname)
+
+            # Check token
+            expected_keys = {'access_token', 'expires_at', 'expires_in',
+                             'refresh_token', 'scope', 'token_type'}
+            self.assertEqual(set(requests.last_token), expected_keys)
+            self.assertEqual(requests.last_token['token_type'], 'bearer')
+
+
+def mkpasswd(length):
+    population = ''.join((
+        string.ascii_uppercase,
+        string.ascii_lowercase,
+        string.digits,
+    ))
+    return ''.join(random.choices(population, k=length))
