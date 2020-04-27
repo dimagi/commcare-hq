@@ -1520,6 +1520,10 @@ class Subscription(models.Model):
             raise SubscriptionReminderError(
                 "This subscription has no end date."
             )
+        if self.plan_version.plan.edition == SoftwarePlanEdition.PAUSED:
+            # never send a subscription ending email for Paused subscriptions...
+            return
+
         today = datetime.date.today()
         num_days_left = (self.date_end - today).days
 
