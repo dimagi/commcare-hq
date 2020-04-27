@@ -9,8 +9,3 @@ if "django.conf" not in sys.modules:
         SHARED_DRIVE_CONF=None,
         SKIP_TESTS_REQUIRING_EXTRA_SETUP=True,
     )
-
-
-def setUpModule():
-    from corehq.elastic import get_es_new, debug_assert
-    debug_assert(get_es_new())

@@ -25,11 +25,6 @@ class TestODataCaseFeed(TestCase, OdataTestMixin):
     @classmethod
     def setUpClass(cls):
         setup_es_case_index()
-        # todo; tests debug
-        from corehq.elastic import get_es_new
-        es = get_es_new()
-        result = es.search('test_hqusers', 'user')
-        assert result == {}, result
         reset_es_index(USER_INDEX_INFO)
         super(TestODataCaseFeed, cls).setUpClass()
         cls._set_up_class()
