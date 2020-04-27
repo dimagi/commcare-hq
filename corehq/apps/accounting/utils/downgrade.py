@@ -18,6 +18,7 @@ from corehq.apps.accounting.utils.invoicing import (
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.accounting.utils import (
     get_dimagi_from_email,
+    log_accounting_error,
 )
 from corehq.util.view_utils import absolute_reverse
 
@@ -31,19 +32,34 @@ def downgrade_eligible_domains(only_downgrade_domain=None):
     today = datetime.date.today()
 
     for domain, oldest_unpaid_invoice, total in get_domains_with_subscription_invoices_over_threshold(today):
-        if only_downgrade_domain and domain != only_downgrade_domain:
-            continue
-        current_subscription = Subscription.get_active_subscription_by_domain(domain)
-        if is_subscription_eligible_for_downgrade_process(current_subscription):
-            _apply_downgrade_process(oldest_unpaid_invoice, total, today,
-                                     current_subscription)
+        try:
+            if only_downgrade_domain and domain != only_downgrade_domain:
+                continue
+            current_subscription = Subscription.get_active_subscription_by_domain(domain)
+            if current_subscription and is_subscription_eligible_for_downgrade_process(current_subscription):
+                _apply_downgrade_process(
+                    oldest_unpaid_invoice, total, today, current_subscription
+                )
+        except Exception:
+            log_accounting_error(
+                f"There was an issue applying the downgrade process "
+                f"to {domain}.",
+                show_stack_trace=True
+            )
 
     for oldest_unpaid_invoice, total in get_accounts_with_customer_invoices_over_threshold(today):
-        subscription_on_invoice = oldest_unpaid_invoice.subscriptions.first()
-        if only_downgrade_domain and subscription_on_invoice.subscriber.domain != only_downgrade_domain:
-            continue
-        if is_subscription_eligible_for_downgrade_process(subscription_on_invoice):
-            _apply_downgrade_process(oldest_unpaid_invoice, total, today)
+        try:
+            subscription_on_invoice = oldest_unpaid_invoice.subscriptions.first()
+            if only_downgrade_domain and subscription_on_invoice.subscriber.domain != only_downgrade_domain:
+                continue
+            if is_subscription_eligible_for_downgrade_process(subscription_on_invoice):
+                _apply_downgrade_process(oldest_unpaid_invoice, total, today, subscription_on_invoice)
+        except Exception:
+            log_accounting_error(
+                f"There was an issue applying the downgrade process "
+                f"to customer invoice {oldest_unpaid_invoice.id}.",
+                show_stack_trace=True
+            )
 
 
 def can_domain_unpause(domain):
