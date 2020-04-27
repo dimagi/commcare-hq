@@ -132,8 +132,6 @@ def set_index_normal_settings(es, index):
 
 def create_index_and_set_settings_normal(es, index, metadata=None):
     metadata = metadata or {}
-    if index == "test_hqusers":
-        raise AssertionError("Wrong index")
     es.indices.create(index=index, body=metadata)
     set_index_normal_settings(es, index)
 
