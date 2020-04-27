@@ -29,7 +29,7 @@ class AwcInfrastructureAggregationHelper(StateBasedAggregationPartitionedHelper)
     def temp_ucr_tablename(self):
         if ICDS_LOCATION_REASSIGNMENT_AGG.enabled(self.domain):
             return get_prev_agg_tablename(self.ucr_data_source_id)
-        return get_table_name(self.domain, self.ucr_data_source_id)
+        return self.ucr_tablename
 
     def _window_helper(self, column_name):
         return (
