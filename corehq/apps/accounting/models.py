@@ -313,6 +313,17 @@ class PreOrPostPay(object):
     )
 
 
+class CommunicationType(object):
+    OTHER = "OTHER"
+    OVERDUE_INVOICE = "OVERDUE_INVOICE"
+    DOWNGRADE_WARNING = "DOWNGRADE_WARNING"
+    CHOICES = (
+        (OTHER, "other"),
+        (OVERDUE_INVOICE, "Overdue Invoice"),
+        (DOWNGRADE_WARNING, "Subscription Pause Warning"),
+    )
+
+
 class Currency(models.Model):
     """
     Keeps track of the current conversion rates so that we don't have to poll the free, but rate limited API
@@ -3733,3 +3744,28 @@ class DomainUserHistory(models.Model):
 
     class Meta:
         unique_together = ('domain', 'record_date')
+
+
+class CommunicationHistoryBase(models.Model):
+    """
+    A record of any serious correspondence we initiate with admins / billing
+    contacts due to things like downgrade warnings or
+    overdue notices.
+    """
+    date_created = models.DateField(auto_now_add=True)
+    communication_type = models.CharField(
+        max_length=25,
+        default=CommunicationType.OTHER,
+        choices=CommunicationType.CHOICES,
+    )
+
+    class Meta(object):
+        abstract = True
+
+
+class InvoiceCommunicationHistory(CommunicationHistoryBase):
+    invoice = models.ForeignKey(Invoice, on_delete=models.PROTECT)
+
+
+class CustomerInvoiceCommunicationHistory(CommunicationHistoryBase):
+    invoice = models.ForeignKey(CustomerInvoice, on_delete=models.PROTECT)
