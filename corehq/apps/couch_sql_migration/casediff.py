@@ -13,6 +13,7 @@ from casexml.apps.stock.models import StockTransaction
 from dimagi.utils.couch.database import retry_on_couch_error
 
 from corehq.apps.commtrack.models import StockState
+from corehq.apps.es.forms import updating_cases, FormES
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.tzmigration.timezonemigration import FormJsonDiff as Diff
 from corehq.apps.tzmigration.timezonemigration import MISSING, json_diff
@@ -439,12 +440,22 @@ def add_cases_missing_from_couch(data, case_ids):
     sql_ids = {c.case_id for c in CaseAccessorSQL.get_cases(list(case_ids))}
     data.doc_ids.extend(case_ids)
     for case_id in case_ids:
-        new = "present" if case_id in sql_ids else MISSING
-        data.diffs.append((
-            "CommCareCase",
-            case_id,
-            [Diff("missing", path=["*"], old_value=MISSING, new_value=new)],
-        ))
+        if case_id in sql_ids:
+            new = "present"
+        else:
+            forms = find_processed_and_unmigrated_form_ids(case_id)
+            new = f"missing with forms {forms}" if forms else None
+        diff = Diff("missing", path=["*"], old_value=MISSING, new_value=new)
+        data.diffs.append(("CommCareCase", case_id, [diff] if new else []))
+
+
+def find_processed_and_unmigrated_form_ids(case_id):
+    result = FormES().filter(updating_cases([case_id])).run()
+    es_ids = [hit["_id"] for hit in result.hits]
+    forms = get_sql_forms(es_ids)
+    normal = {f.form_id for f in forms if f.initial_processing_complete and f.is_normal}
+    unmigrated = set(es_ids) - {f.form_id for f in forms}
+    return normal | unmigrated
 
 
 @contextmanager
