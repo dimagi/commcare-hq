@@ -481,8 +481,8 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
 
         rows = []
         for item in self.get_items(doc, eval_context):
-            indicators = self.indicators.get_values(item, eval_context)
-            rows.append(indicators)
+            values = self.indicators.get_values(item, eval_context)
+            rows.append(values)
             eval_context.increment_iteration()
 
         return rows
@@ -1119,7 +1119,7 @@ class AsyncIndicator(models.Model):
         new_doc_ids = set(doc_ids) - set([i.doc_id for i in current_indicators])
         AsyncIndicator.objects.bulk_create([
             AsyncIndicator(doc_id=doc_id, doc_type=doc_type_by_id[doc_id], domain=domain,
-                indicator_config_ids=sorted(configs_by_docs[doc_id]))
+                           indicator_config_ids=sorted(configs_by_docs[doc_id]))
             for doc_id in new_doc_ids
         ])
 

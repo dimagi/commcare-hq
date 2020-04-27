@@ -411,8 +411,8 @@ def build_async_indicators(indicator_doc_ids):
 
     timer = TimingContext()
     lock_keys = [
-        get_async_indicator_modify_lock_key(indicator_id)
-        for indicator_id in indicator_doc_ids
+        get_async_indicator_modify_lock_key(indicator_doc_id)
+        for indicator_doc_id in indicator_doc_ids
     ]
     with CriticalSection(lock_keys):
         all_indicators = AsyncIndicator.objects.filter(
@@ -472,10 +472,9 @@ def build_async_indicators(indicator_doc_ids):
                     except Exception as e:
                         failed_indicators.union(indicators)
                         message = str(e)
-                        notify_exception(None,
-                            "Exception bulk saving async indicators:{}".format(message))
+                        notify_exception(None, "Exception bulk saving async indicators:{}".format(message))
                     else:
-                        # remove because it's sucessfully processed
+                        # remove because it's successfully processed
                         _mark_config_to_remove(
                             config_id,
                             [i.pk for i in indicators]
