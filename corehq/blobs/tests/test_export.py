@@ -10,7 +10,6 @@ from corehq.apps.hqmedia.models import CommCareAudio, CommCareVideo, CommCareIma
 from corehq.blobs import CODES, get_blob_db
 from corehq.blobs.export import EXPORTERS
 from corehq.blobs.tests.util import TemporaryFilesystemBlobDB, new_meta
-from corehq.blobs.zipdb import ZipBlobDB
 
 
 class TestBlobExport(TestCase):
