@@ -65,23 +65,7 @@ class TestMigrateBackend(TestCase):
             migrated, skipped = mod.MIGRATIONS[self.slug].migrate(filename, num_workers=2)
             self.assertGreaterEqual(migrated, self.test_size)
 
-            # verify: migration state recorded
-            mod.BlobMigrationState.objects.get(slug=self.slug)
-
-            # verify: missing blobs written to log files
-            missing_log = set()
-            fields = [
-                "blobmeta_id",
-                "domain",
-                "type_code",
-                "parent_id",
-                "blob_key",
-            ]
-            with open(filename, encoding='utf-8') as fh:
-                for line in fh:
-                    doc = json.loads(line)
-                    missing_log.add(tuple(doc[x] for x in fields))
-            self.assertEqual(self.not_founds, missing_log)
+            verify_migration(self, self.slug, filename, self.not_founds)
 
         # verify: blobs were copied to new blob db
         not_found = set(t[0] for t in self.not_founds)
@@ -96,7 +80,27 @@ class TestMigrateBackend(TestCase):
             self.assertEqual(len(data), meta.content_length)
 
 
-def discard_migration_state(slug):
+def verify_migration(test, slug, filename, not_founds):
+    # verify: migration state recorded
+    mod.BlobMigrationState.objects.get(slug=slug)
+
+    # verify: missing blobs written to log files
+    missing_log = set()
+    fields = [
+        "blobmeta_id",
+        "domain",
+        "type_code",
+        "parent_id",
+        "blob_key",
+    ]
+    with open(filename, encoding='utf-8') as fh:
+        for line in fh:
+            doc = json.loads(line)
+            missing_log.add(tuple(doc[x] for x in fields))
+    test.assertEqual(not_founds, missing_log)
+
+
+def discard_migration_state(slug, **kw):
     migrator = mod.MIGRATIONS[slug]
     if hasattr(migrator, "migrators"):
         migrators = migrator.migrators
@@ -104,7 +108,7 @@ def discard_migration_state(slug):
         migrators = migrator.iter_migrators()
     else:
         migrators = [migrator]
-    for provider in (m.get_document_provider() for m in migrators):
+    for provider in (m.get_document_provider(**kw) for m in migrators):
         provider.get_document_iterator(1).discard_state()
     mod.BlobMigrationState.objects.filter(slug=slug).delete()
 
