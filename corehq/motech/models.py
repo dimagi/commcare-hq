@@ -6,9 +6,22 @@ from django.db import models
 
 import jsonfield
 
+import corehq.motech.auth
+from corehq.motech.auth import (
+    AuthManager,
+    BasicAuthManager,
+    DigestAuthManager,
+    OAuth1Manager,
+    OAuth2PasswordGrantTypeManager,
+    api_auth_settings_choices,
+    oauth1_api_endpoints,
+    oauth2_api_settings,
+)
 from corehq.motech.const import (
     ALGO_AES,
     AUTH_TYPES,
+    BASIC_AUTH,
+    DIGEST_AUTH,
     OAUTH1,
     OAUTH2_BEARER,
     PASSWORD_PLACEHOLDER,
@@ -88,20 +101,64 @@ class ConnectionSettings(models.Model):
         from corehq.motech.requests import Requests
 
         if not self._requests:
+            auth_manager = self.get_auth_manager()
             self._requests = Requests(
                 self.domain,
                 self.url,
-                self.username,
-                self.password,
                 verify=not self.skip_cert_verify,
-                auth_type=self.auth_type,
-                api_auth_settings=self.api_auth_settings,
-                client_id=self.client_id,
-                client_secret=self.client_secret,
-                last_token=self.last_token or None,
+                auth_manager=auth_manager,
                 notify_addresses=self.notify_addresses,
             )
         return self._requests
+
+    def get_auth_manager(self):
+        if self.auth_type is None:
+            return AuthManager()
+        if self.auth_type == BASIC_AUTH:
+            return BasicAuthManager(
+                self.username,
+                self.password,
+            )
+        if self.auth_type == DIGEST_AUTH:
+            return DigestAuthManager(
+                self.username,
+                self.password,
+            )
+        if self.auth_type == OAUTH1:
+            return OAuth1Manager(
+                client_id=self.client_id,
+                client_secret=self.client_secret,
+                api_endpoints=self.get_oauth1_api_endpoints(),
+                last_token=self.last_token,
+            )
+        if self.auth_type == OAUTH2_BEARER:
+            return OAuth2PasswordGrantTypeManager(
+                self.url,
+                self.username,
+                self.password,
+                client_id=self.client_id,
+                client_secret=self.client_secret,
+                api_settings=self.get_oauth2_api_settings(),
+                last_token=self.last_token,
+            )
+
+    def get_oauth1_api_endpoints(self):
+        if self.api_auth_settings in dict(oauth1_api_endpoints):
+            return getattr(corehq.motech.auth, self.api_auth_settings)
+        raise ValueError(_(
+            f'Unable to resolve API endpoints {self.api_auth_settings!r}. '
+            'Please select the applicable API auth settings for the '
+            f'{self.name!r} connection.'
+        ))
+
+    def get_oauth2_api_settings(self):
+        if self.api_auth_settings in dict(oauth2_api_settings):
+            return getattr(corehq.motech.auth, self.api_auth_settings)
+        raise ValueError(_(
+            f'Unable to resolve API settings {self.api_auth_settings!r}. '
+            'Please select the applicable API auth settings for the '
+            f'{self.name!r} connection.'
+        ))
 
     def update_last_token(self):
         if (
