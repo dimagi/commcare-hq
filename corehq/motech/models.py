@@ -1,6 +1,7 @@
+import json
 import re
+from typing import Optional
 
-from django.contrib.postgres.fields import JSONField
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 
@@ -54,7 +55,8 @@ class ConnectionSettings(models.Model):
     skip_cert_verify = models.BooleanField(default=False)
     notify_addresses_str = models.CharField(max_length=255, default="")
 
-    last_token = JSONField(null=True, blank=True)
+    # last_token is stored encrypted because it can contain secrets
+    last_token_aes = models.TextField(blank=True, default="")
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -92,6 +94,20 @@ class ConnectionSettings(models.Model):
                 algo=ALGO_AES,
                 ciphertext=b64_aes_encrypt(plaintext)
             )
+
+    @property
+    def last_token(self) -> Optional[dict]:
+        if self.last_token_aes:
+            plaintext = b64_aes_decrypt(self.last_token_aes)
+            return json.loads(plaintext)
+        return None
+
+    @last_token.setter
+    def last_token(self, token: Optional[dict]):
+        if token:
+            plaintext = json.dumps(token)
+            self.last_token_aes = b64_aes_encrypt(plaintext)
+        self.last_token_aes = ''
 
     @property
     def notify_addresses(self):
