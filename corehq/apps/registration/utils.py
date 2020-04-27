@@ -28,7 +28,7 @@ from corehq.apps.accounting.models import (
     SubscriptionAdjustmentMethod,
     SubscriptionType,
 )
-from corehq.apps.accounting.tasks import ensure_community_or_paused_subscription
+from corehq.apps.accounting.utils.subscription import ensure_community_or_paused_subscription
 from corehq.apps.analytics.tasks import (
     HUBSPOT_CREATED_NEW_PROJECT_SPACE_FORM_ID,
     send_hubspot_form,

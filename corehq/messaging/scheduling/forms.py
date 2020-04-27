@@ -1879,14 +1879,15 @@ class ScheduleForm(Form):
     @cached_property
     def language_list(self):
         sms_translations = get_or_create_sms_translations(self.domain)
-        result = set(sms_translations.langs)
+        result = sms_translations.langs     # maintain order set on languages config page
 
+        # add any languages present in alert but deleted from languages config page
         if self.initial_schedule:
-            result |= self.initial_schedule.memoized_language_set
+            initial_langs = self.initial_schedule.memoized_language_set
+            initial_langs.discard('*')
+            result += list(self.initial_schedule.memoized_language_set - set(result))
 
-        result.discard('*')
-
-        return list(result)
+        return result
 
     @property
     def use_case(self):

@@ -100,7 +100,7 @@ from corehq.form_processor.interfaces.dbaccessors import (
     CaseAccessors,
     FormAccessors,
 )
-from corehq.motech.const import ALGO_AES, BASIC_AUTH, DIGEST_AUTH, OAUTH1
+from corehq.motech.const import ALGO_AES, BASIC_AUTH, DIGEST_AUTH, OAUTH1, BEARER_AUTH
 from corehq.motech.repeaters.repeater_generators import (
     AppStructureGenerator,
     CaseRepeaterJsonPayloadGenerator,
@@ -168,7 +168,7 @@ class Repeater(QuickCachedDocumentMixin, Document):
     url = StringProperty()
     format = StringProperty()
 
-    auth_type = StringProperty(choices=(BASIC_AUTH, DIGEST_AUTH, OAUTH1), required=False)
+    auth_type = StringProperty(choices=(BASIC_AUTH, DIGEST_AUTH, OAUTH1, BEARER_AUTH), required=False)
     username = StringProperty()
     password = StringProperty()  # See also plaintext_password()
     skip_cert_verify = BooleanProperty(default=False)  # See also verify()
@@ -922,6 +922,7 @@ def get_requests(
         verify=repeater.verify,
         notify_addresses=repeater.notify_addresses,
         payload_id=payload_id,
+        auth_type=repeater.auth_type,
     )
 
 

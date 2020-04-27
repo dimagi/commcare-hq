@@ -1,6 +1,7 @@
 BASIC_AUTH = "basic"
 DIGEST_AUTH = "digest"
 OAUTH1 = "oauth1"
+BEARER_AUTH = "bearer"
 
 PASSWORD_PLACEHOLDER = '*' * 16
 

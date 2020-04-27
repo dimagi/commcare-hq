@@ -132,7 +132,7 @@ from corehq.apps.users.permissions import (
     DEID_EXPORT_PERMISSION,
     FORM_EXPORT_PERMISSION,
 )
-from corehq.blobs import NotFound, get_blob_db, models
+from corehq.blobs import CODES, NotFound, get_blob_db, models
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import (
     CaseAccessors,
@@ -1415,7 +1415,12 @@ def _get_form_render_context(request, domain, instance, case_id=None):
     # Build ordered list of questions and dict of question values => responses
     # Question values will be formatted to be processed by XFormQuestionValueIterator,
     # for example "/data/group/repeat_group[2]/question_id"
-    question_response_map, ordered_question_values = get_data_cleaning_data(form_data, instance)
+    try:
+        question_response_map, ordered_question_values = get_data_cleaning_data(form_data, instance)
+    except AttributeError as err:
+        question_response_map, ordered_question_values = (None, None)
+        import logging
+        logging.exception(err)
 
     context.update({
         "context_case_id": case_id,
@@ -2063,7 +2068,7 @@ def export_report(request, domain, export_hash, format):
     report_class = meta.properties["report_class"]
 
     try:
-        report_file = db.get(export_hash)
+        report_file = db.get(export_hash, type_code=CODES.tempfile)
     except NotFound:
         return report_not_found
     with report_file:

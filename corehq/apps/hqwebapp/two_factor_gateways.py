@@ -30,10 +30,18 @@ VOICE_LANGUAGES = ('en', 'en-gb', 'es', 'fr', 'it', 'de', 'da-DK', 'de-DE',
 class Gateway(object):
 
     def __init__(self):
-        backends = SQLTwilioBackend.objects.filter(hq_api_id='TWILIO', deleted=False, is_global=True)
-        sid = backends[0].extra_fields['account_sid']
-        token = backends[0].extra_fields['auth_token']
-        self.from_number = backends[0].load_balancing_numbers[0]
+        try:
+            # try to pull a specially-named backend
+            # this lets us separate out the backend used for 2FA specifically from the high-throughput backend.
+            # (This allows the high-throughput backend not to support IVR calls, which are used for 2FA only.)
+            backend = SQLTwilioBackend.objects.get(hq_api_id='TWILIO', name='TWILIO_TWO_FACTOR',
+                                                   domain=None, deleted=False)
+        except SQLTwilioBackend.DoesNotExist:
+            backend = SQLTwilioBackend.objects.filter(hq_api_id='TWILIO', deleted=False, is_global=True)[0]
+
+        sid = backend.extra_fields['account_sid']
+        token = backend.extra_fields['auth_token']
+        self.from_number = backend.load_balancing_numbers[0]
         self.client = self._get_client(sid, token)
 
     def _get_client(self, sid, token):
