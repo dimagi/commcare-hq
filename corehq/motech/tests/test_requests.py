@@ -1,4 +1,3 @@
-import json
 import random
 import string
 from unittest import skip
@@ -7,7 +6,7 @@ from django.conf import settings
 from django.test import SimpleTestCase, TestCase
 
 import requests
-from mock import Mock, patch
+from mock import patch
 
 from corehq.motech.auth import (
     AuthManager,
@@ -19,183 +18,188 @@ from corehq.motech.auth import (
 from corehq.motech.const import REQUEST_TIMEOUT
 from corehq.motech.requests import Requests, get_basic_requests
 
-TEST_API_URL = 'http://localhost:9080/api/'
-TEST_API_USERNAME = 'admin'
-TEST_API_PASSWORD = 'district'
-TEST_DOMAIN = 'test-domain'
+BASE_URL = 'http://dhis2.example.org/2.3.4/'
+USERNAME = 'admin'
+PASSWORD = 'district'
+DOMAIN = 'test-domain'
 
 
-class RequestsTests(SimpleTestCase):
+class SendRequestTests(SimpleTestCase):
 
     def setUp(self):
-        self.requests = get_basic_requests(
-            TEST_DOMAIN, TEST_API_URL, TEST_API_USERNAME, TEST_API_PASSWORD
+        self.log_patcher = patch('corehq.motech.requests.RequestLog')
+        self.log_patcher.start()
+
+        self.request_patcher = patch.object(requests.Session, 'request')
+        self.request_mock = self.request_patcher.start()
+
+        self.auth_patcher = patch.object(BasicAuthManager, 'get_auth')
+        get_auth_mock = self.auth_patcher.start()
+        get_auth_mock.return_value = '<HTTPBasicAuthDummy>'
+
+    def tearDown(self):
+        self.auth_patcher.stop()
+        self.request_patcher.stop()
+        self.log_patcher.stop()
+
+    def test_send_payload(self):
+        payload = {'ham': ['spam', 'spam', 'spam']}
+        req = get_basic_requests(DOMAIN, BASE_URL, USERNAME, PASSWORD)
+        req.post('/api/dataValueSets', json=payload)
+        self.request_mock.assert_called_with(
+            'POST',
+            'http://dhis2.example.org/2.3.4/api/dataValueSets',
+            data=None,
+            json=payload,
+            headers={'Content-type': 'application/json', 'Accept': 'application/json'},
+            auth='<HTTPBasicAuthDummy>',
+            timeout=REQUEST_TIMEOUT,
         )
-        self.org_unit_id = 'abc'
-        self.data_element_id = '123'
-
-    def test_send_data_value_set(self):
-        with patch('corehq.motech.requests.RequestLog', Mock()), \
-                patch.object(requests.Session, 'request') as request_mock:
-            payload = {'dataValues': [
-                {'dataElement': self.data_element_id, 'period': "201701",
-                 'orgUnit': self.org_unit_id, 'value': "180"},
-                {'dataElement': self.data_element_id, 'period': "201702",
-                 'orgUnit': self.org_unit_id, 'value': "200"},
-            ]}
-            content = {'status': 'SUCCESS', 'importCount': {'imported': 2}}
-            content_json = json.dumps(content)
-            response_mock = Mock()
-            response_mock.status_code = 201
-            response_mock.content = content_json
-            response_mock.json.return_value = content
-            request_mock.return_value = response_mock
-
-            response = self.requests.post('dataValueSets', json=payload)
-            request_mock.assert_called_with(
-                'POST',
-                'http://localhost:9080/api/dataValueSets',
-                data=None,
-                json=payload,
-                headers={'Content-type': 'application/json', 'Accept': 'application/json'},
-                auth=(TEST_API_USERNAME, TEST_API_PASSWORD),
-                timeout=REQUEST_TIMEOUT,
-            )
-            self.assertEqual(response.status_code, 201)
-            self.assertEqual(response.json()['status'], 'SUCCESS')
-            self.assertEqual(response.json()['importCount']['imported'], 2)
 
     def test_verify_ssl(self):
-        with patch('corehq.motech.requests.RequestLog', Mock()), \
-                patch.object(requests.Session, 'request') as request_mock:
+        req = get_basic_requests(
+            DOMAIN, BASE_URL, USERNAME, PASSWORD, verify=False,
+        )
+        req.get('/api/me')
+        self.request_mock.assert_called_with(
+            'GET',
+            'http://dhis2.example.org/2.3.4/api/me',
+            allow_redirects=True,
+            headers={'Accept': 'application/json'},
+            auth='<HTTPBasicAuthDummy>',
+            timeout=REQUEST_TIMEOUT,
+            verify=False
+        )
 
-            self.requests = get_basic_requests(
-                TEST_DOMAIN, TEST_API_URL, TEST_API_USERNAME, TEST_API_PASSWORD,
-                verify=False,
-            )
-            self.requests.get('me')
-            request_mock.assert_called_with(
-                'GET',
-                TEST_API_URL + 'me',
-                allow_redirects=True,
-                headers={'Accept': 'application/json'},
-                auth=(TEST_API_USERNAME, TEST_API_PASSWORD),
-                timeout=REQUEST_TIMEOUT,
-                verify=False
-            )
+
+class SessionTests(SimpleTestCase):
+
+    def setUp(self):
+        self.log_patcher = patch('corehq.motech.requests.RequestLog')
+        self.log_patcher.start()
+
+        self.request_patcher = patch.object(requests.Session, 'request')
+        self.request_patcher.start()
+
+        self.close_patcher = patch.object(requests.Session, 'close')
+        self.close_mock = self.close_patcher.start()
+
+    def tearDown(self):
+        self.close_patcher.stop()
+        self.request_patcher.stop()
+        self.log_patcher.stop()
 
     def test_with_session(self):
-        with patch('corehq.motech.requests.RequestLog', Mock()), \
-                patch.object(requests.Session, 'request'), \
-                patch.object(requests.Session, 'close') as close_mock:
-
-            with get_basic_requests(
-                TEST_DOMAIN, TEST_API_URL, TEST_API_USERNAME, TEST_API_PASSWORD
-            ) as self.requests:
-                self.requests.get('me')
-                self.requests.get('me')
-                self.requests.get('me')
-            self.assertEqual(close_mock.call_count, 1)
+        """
+        A context manager should use a single session
+        """
+        with get_basic_requests(
+            DOMAIN, BASE_URL, USERNAME, PASSWORD
+        ) as req:
+            req.get('me')
+            req.get('me')
+            req.get('me')
+        self.assertEqual(self.close_mock.call_count, 1)
 
     def test_without_session(self):
-        with patch('corehq.motech.requests.RequestLog', Mock()), \
-                patch.object(requests.Session, 'request'), \
-                patch.object(requests.Session, 'close') as close_mock:
-
-            self.requests.get('me')
-            self.requests.get('me')
-            self.requests.get('me')
-            self.assertEqual(close_mock.call_count, 3)
+        """
+        Calling without a context manager should use multiple sessions
+        """
+        req = get_basic_requests(
+            DOMAIN, BASE_URL, USERNAME, PASSWORD
+        )
+        req.get('me')
+        req.get('me')
+        req.get('me')
+        self.assertEqual(self.close_mock.call_count, 3)
 
     def test_with_and_without_session(self):
-        with patch('corehq.motech.requests.RequestLog', Mock()), \
-                patch.object(requests.Session, 'request'), \
-                patch.object(requests.Session, 'close') as close_mock:
+        """
+        A context manager session is closed
+        """
+        with get_basic_requests(
+            DOMAIN, BASE_URL, USERNAME, PASSWORD
+        ) as req:
+            req.get('me')
+            req.get('me')
+            req.get('me')
+        req.get('me')
+        self.assertEqual(self.close_mock.call_count, 2)
 
-            with get_basic_requests(
-                TEST_DOMAIN, TEST_API_URL, TEST_API_USERNAME, TEST_API_PASSWORD
-            ) as self.requests:
-                self.requests.get('me')
-                self.requests.get('me')
-                self.requests.get('me')
-            self.requests.get('me')
-            self.assertEqual(close_mock.call_count, 2)
+
+class NotifyErrorTests(SimpleTestCase):
+
+    def setUp(self):
+        self.mail_patcher = patch('corehq.motech.requests.send_mail_async')
+        self.mail_mock = self.mail_patcher.start()
+
+    def tearDown(self):
+        self.mail_patcher.stop()
 
     def test_notify_error_no_address(self):
-        with patch('corehq.motech.requests.send_mail_async') as send_mail_mock:
-            self.requests.notify_error('foo')
-            send_mail_mock.delay.assert_not_called()
+        """
+        notify_error() should not try to send mail without addresses
+        """
+        req = get_basic_requests(DOMAIN, BASE_URL, USERNAME, PASSWORD)
+        req.notify_error('foo')
+        self.mail_mock.delay.assert_not_called()
 
     def test_notify_error_address_list(self):
-        requests = get_basic_requests(
-            TEST_DOMAIN, TEST_API_URL, TEST_API_USERNAME, TEST_API_PASSWORD,
+        req = get_basic_requests(
+            DOMAIN, BASE_URL, USERNAME, PASSWORD,
             notify_addresses=['foo@example.com', 'bar@example.com']
         )
-        with patch('corehq.motech.requests.send_mail_async') as send_mail_mock:
-            requests.notify_error('foo')
-            send_mail_mock.delay.assert_called_with(
-                'MOTECH Error',
-                (
-                    'foo\r\n'
-                    'Project space: test-domain\r\n'
-                    'Remote API base URL: http://localhost:9080/api/\r\n'
-                    'Remote API username: admin'
-                ),
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=['foo@example.com', 'bar@example.com']
-            )
+        req.notify_error('foo')
+        self.mail_mock.delay.assert_called_with(
+            'MOTECH Error',
+            (
+                'foo\r\n'
+                'Project space: test-domain\r\n'
+                'Remote API base URL: http://dhis2.example.org/2.3.4/'
+            ),
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=['foo@example.com', 'bar@example.com']
+        )
 
 
-class RequestsAuthenticationTests(SimpleTestCase):
+class AuthKwargTests(SimpleTestCase):
+
+    def setUp(self):
+        self.log_patcher = patch('corehq.motech.requests.RequestLog')
+        self.log_patcher.start()
+
+        self.request_patcher = patch.object(requests.Session, 'request')
+        self.request_mock = self.request_patcher.start()
+
+    def tearDown(self):
+        self.request_patcher.stop()
+        self.log_patcher.stop()
 
     def test_no_auth(self):
         auth_manager = AuthManager()
-        reqs = Requests(TEST_DOMAIN, TEST_API_URL, auth_manager=auth_manager)
-        with patch('corehq.motech.requests.RequestLog', Mock()), \
-                patch.object(requests.Session, 'request') as request_mock:
-            request_mock.return_value = self.get_response_mock()
-
-            reqs.get('me')
-
-            kwargs = request_mock.call_args[1]
-            self.assertNotIn('auth', kwargs)
+        reqs = Requests(DOMAIN, BASE_URL, auth_manager=auth_manager)
+        reqs.get('me')
+        kwargs = self.request_mock.call_args[1]
+        self.assertNotIn('auth', kwargs)
 
     def test_basic_auth(self):
-        auth_manager = BasicAuthManager(TEST_API_USERNAME, TEST_API_PASSWORD)
-        reqs = Requests(TEST_DOMAIN, TEST_API_URL, auth_manager=auth_manager)
-        with patch('corehq.motech.requests.RequestLog', Mock()), \
-                patch.object(requests.Session, 'request') as request_mock:
-            request_mock.return_value = self.get_response_mock()
-
-            reqs.get('me')
-
-            kwargs = request_mock.call_args[1]
-            self.assertEqual(kwargs['auth'], (TEST_API_USERNAME, TEST_API_PASSWORD))
+        auth_manager = BasicAuthManager(USERNAME, PASSWORD)
+        reqs = Requests(DOMAIN, BASE_URL, auth_manager=auth_manager)
+        reqs.get('me')
+        kwargs = self.request_mock.call_args[1]
+        auth_class = kwargs['auth'].__class__.__name__
+        self.assertEqual(auth_class, 'HTTPBasicAuth')
 
     def test_digest_auth(self):
-        auth_manager = DigestAuthManager(TEST_API_USERNAME, TEST_API_PASSWORD)
-        reqs = Requests(TEST_DOMAIN, TEST_API_URL, auth_manager=auth_manager)
-        with patch('corehq.motech.requests.RequestLog', Mock()), \
-                patch.object(requests.Session, 'request') as request_mock:
-            request_mock.return_value = self.get_response_mock()
-
-            reqs.get('me')
-
-            kwargs = request_mock.call_args[1]
-            auth_class = kwargs['auth'].__class__.__name__
-            self.assertEqual(auth_class, 'HTTPDigestAuth')
-
-    def get_response_mock(self):
-        content = {'code': TEST_API_USERNAME}
-        content_json = json.dumps(content)
-        response_mock = Mock()
-        response_mock.status_code = 200
-        response_mock.content = content_json
-        response_mock.json.return_value = content
-        return response_mock
+        auth_manager = DigestAuthManager(USERNAME, PASSWORD)
+        reqs = Requests(DOMAIN, BASE_URL, auth_manager=auth_manager)
+        reqs.get('me')
+        kwargs = self.request_mock.call_args[1]
+        auth_class = kwargs['auth'].__class__.__name__
+        self.assertEqual(auth_class, 'HTTPDigestAuth')
 
 
-@skip('This test uses third-party resources.')  # Comment this out to run
+@skip('This test uses third-party resources.')
 class RequestsOAuth2Tests(TestCase):
 
     base_url = 'https://play.dhis2.org/dev'
@@ -215,7 +219,7 @@ class RequestsOAuth2Tests(TestCase):
     @classmethod
     def tearDownClass(cls):
         get_basic_requests(
-            TEST_DOMAIN, cls.base_url, cls.username, cls.password,
+            DOMAIN, cls.base_url, cls.username, cls.password,
         ).delete(f'/api/oAuth2Clients/{cls.client_uid}')
         super().tearDownClass()
 
@@ -228,7 +232,7 @@ class RequestsOAuth2Tests(TestCase):
           "grantTypes": ["password", "refresh_token"]
         }
         resp = get_basic_requests(
-            TEST_DOMAIN, cls.base_url, cls.username, cls.password,
+            DOMAIN, cls.base_url, cls.username, cls.password,
         ).post('/api/oAuth2Clients', json=json_data, raise_for_status=True)
         return resp.json()['response']['uid']
 
@@ -242,9 +246,7 @@ class RequestsOAuth2Tests(TestCase):
             api_settings=dhis2_auth_settings,
         )
         with Requests(
-            TEST_DOMAIN,
-            self.base_url,
-            auth_manager=auth_manager,
+            DOMAIN, self.base_url, auth_manager=auth_manager,
         ) as requests:
             # NOTE: Use Requests instance as a context manager so that
             #       it uses OAuth2Session.
@@ -256,8 +258,8 @@ class RequestsOAuth2Tests(TestCase):
             # Check token
             expected_keys = {'access_token', 'expires_at', 'expires_in',
                              'refresh_token', 'scope', 'token_type'}
-            self.assertEqual(set(requests.last_token), expected_keys)
-            self.assertEqual(requests.last_token['token_type'], 'bearer')
+            self.assertEqual(set(auth_manager.last_token), expected_keys)
+            self.assertEqual(auth_manager.last_token['token_type'], 'bearer')
 
 
 def mkpasswd(length):
