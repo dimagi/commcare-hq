@@ -60,5 +60,6 @@ branches:
     #  - fr/turn-backend        # Farid April 17 # Removed April 25 from conflict
     #- dmr/track-sms-by-backend  # Danny April 22
   - revert-27273-revert-27244-dmr/case-upload-success-result  # Danny April 27
+  - dmr/fix-build_full_schema-poll-condition  # Danny April 27
 
 submodules: {}
