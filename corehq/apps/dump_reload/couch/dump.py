@@ -49,6 +49,12 @@ DOC_PROVIDERS = {
     ViewIDProvider('RepeatRecord', 'repeaters/repeat_records', DomainInListKeyGenerator([None])),
 }
 
+DOC_PROVIDERS_BY_DOC_TYPE = {
+    doc_type: provider
+    for provider in DOC_PROVIDERS
+    for doc_type in provider.doc_types
+}
+
 
 # doc types that shouldn't have attachments dumped
 ATTACHMENTS_BLACKLIST = [

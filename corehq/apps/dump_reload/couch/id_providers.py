@@ -65,6 +65,10 @@ class ViewIDProvider(BaseIDProvider):
         self.view_name = view_name
         self.key_generator = key_generator
 
+    @property
+    def doc_types(self):
+        return [self.doc_type]
+
     def get_doc_ids(self, domain):
         doc_class = get_document_class_by_doc_type(self.doc_type)
         key_kwargs = self.key_generator(self.doc_type, domain)
@@ -81,6 +85,15 @@ class UserIDProvider(BaseIDProvider):
     def __init__(self, include_mobile_users=True, include_web_users=True):
         self.include_mobile_users = include_mobile_users
         self.include_web_users = include_web_users
+
+    @property
+    def doc_types(self):
+        doc_types = []
+        if self.include_mobile_users:
+            doc_types.append('CommCareUser')
+        if self.include_web_users:
+            doc_types.append('WebUser')
+        return doc_types
 
     def get_doc_ids(self, domain):
         from corehq.apps.users.dbaccessors.all_commcare_users import get_all_user_ids_by_domain
