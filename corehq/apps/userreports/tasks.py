@@ -36,6 +36,7 @@ from corehq.apps.reports.util import (
 from corehq.apps.userreports.const import (
     ASYNC_INDICATOR_CHUNK_SIZE,
     ASYNC_INDICATOR_QUEUE_TIME,
+    ASYNC_INDICATOR_MAX_RETRIES,
     UCR_CELERY_QUEUE,
     UCR_INDICATOR_CELERY_QUEUE,
 )
@@ -295,8 +296,8 @@ def queue_async_indicators():
     start = datetime.utcnow()
     cutoff = start + ASYNC_INDICATOR_QUEUE_TIME - timedelta(seconds=30)
     retry_threshold = start - timedelta(hours=4)
-    # don't requeue anything that has been retried more than 20 times
-    indicators = AsyncIndicator.objects.filter(unsuccessful_attempts__lt=20)[:settings.ASYNC_INDICATORS_TO_QUEUE]
+    # don't requeue anything that has been retried more than ASYNC_INDICATOR_MAX_RETRIES(20) times
+    indicators = AsyncIndicator.objects.filter(unsuccessful_attempts__lt=ASYNC_INDICATOR_MAX_RETRIES)[:settings.ASYNC_INDICATORS_TO_QUEUE]
 
     indicators_by_domain_doc_type = defaultdict(list)
     # page so that envs can have arbitarily large settings.ASYNC_INDICATORS_TO_QUEUE
@@ -534,11 +535,23 @@ def async_indicators_metrics():
     for config_id, metrics in _indicator_metrics().items():
         tags = {"config_id": config_id}
         metrics_gauge('commcare.async_indicator.indicator_count', metrics['count'], tags=tags)
-        metrics_gauge('commcare.async_indicator.lag', metrics['lag'], tags=tags)
+        metrics_gauge('commcare.async_indicator.lag', metrics['lag'], tags=tags,
+            documentation="Lag of oldest created indicator including failed indicators")
 
     # Don't use ORM summing because it would attempt to get every value in DB
     unsuccessful_attempts = sum(AsyncIndicator.objects.values_list('unsuccessful_attempts', flat=True).all()[:100])
     metrics_gauge('commcare.async_indicator.unsuccessful_attempts', unsuccessful_attempts)
+
+    metrics_gauge(
+        'commcare.async_indicator.true_lag',
+        (now - AsyncIndicator.objects.filter(unsuccessful_attempts=0).first().date_created).total_seconds,
+        documentation="Lag of oldest created indicator that didn't get ever queued"
+    )
+    metrics_gauge(
+        'commcare.async_indicator.fully_failed_count',
+        AsyncIndicator.objects.filter(unsuccessful_attempts=ASYNC_INDICATOR_MAX_RETRIES).count(),
+        documentation="Number of indicators that failed max-retry number of times"
+    )
 
 
 def _indicator_metrics(date_created=None):
