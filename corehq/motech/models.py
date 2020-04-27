@@ -16,41 +16,6 @@ from corehq.motech.const import (
 from corehq.motech.utils import b64_aes_decrypt, b64_aes_encrypt
 
 
-class ApiAuthSettings(models.Model):
-    """
-    Stores OAuth1 and OAuth 2.0 endpoints and settings for known APIs.
-    Once an API is added, its settings are available to all domains.
-    """
-    name = models.CharField(max_length=255)  # e.g. "DHIS2"
-    auth_type = models.CharField(
-        max_length=7,
-        choices=(
-            (OAUTH1, "OAuth1"),
-            (OAUTH2_BEARER, "OAuth 2.0 Bearer Tokens"),
-        )
-    )
-    # OAuth1
-    # URL for token to identify HQ. e.g. '/oauth/request_token' (Twitter)
-    request_token_url = models.CharField(max_length=255, null=True, blank=True)
-    # URL for user to authorize HQ. e.g. '/oauth/authorize'
-    authorization_url = models.CharField(max_length=255, null=True, blank=True)
-    # URL to fetch access token. e.g. '/oauth/access_token'
-    access_token_url = models.CharField(max_length=255, null=True, blank=True)
-
-    # OAuth 2.0
-    # URL to fetch bearer token. e.g. '/uaa/oauth/token' (DHIS2)
-    token_url = models.CharField(max_length=255, null=True, blank=True)
-    # URL to refresh bearer token. e.g. '/uaa/oauth/token'
-    refresh_url = models.CharField(max_length=255, null=True, blank=True)
-    # Pass credentials in Basic Auth header when requesting a token?
-    # Otherwise they are passed in the request body.
-    pass_credentials_in_header = models.BooleanField(default=False)
-
-    def __str__(self):
-        auth_types = dict(AUTH_TYPES)
-        return f"{self.name} ({auth_types[self.auth_type]})"
-
-
 class ConnectionSettings(models.Model):
     """
     Stores the connection details of a remote API.
@@ -67,8 +32,9 @@ class ConnectionSettings(models.Model):
     )
     username = models.CharField(max_length=255, blank=True)
     password = models.CharField(max_length=255, blank=True)
-    api_auth_settings = models.ForeignKey(
-        ApiAuthSettings, null=True, on_delete=models.PROTECT
+    api_auth_settings = models.CharField(
+        max_length=64, null=True, blank=True,
+        choices=api_auth_settings_choices,
     )
     client_id = models.CharField(max_length=255, null=True, blank=True)
     client_secret = models.CharField(max_length=255, null=True, blank=True)

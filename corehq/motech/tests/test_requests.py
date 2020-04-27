@@ -16,9 +16,7 @@ from corehq.motech.auth import (
     OAuth2PasswordGrantTypeManager,
     dhis2_auth_settings,
 )
-from corehq.motech.const import (
-    REQUEST_TIMEOUT,
-)
+from corehq.motech.const import REQUEST_TIMEOUT
 from corehq.motech.requests import Requests, get_basic_requests
 
 TEST_API_URL = 'http://localhost:9080/api/'

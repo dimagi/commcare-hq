@@ -1,10 +1,12 @@
 from typing import Optional
 
+from django.utils.translation import gettext_lazy as _
+
 import attr
 from oauthlib.oauth2 import LegacyApplicationClient
 from requests import Session
 from requests.auth import AuthBase, HTTPBasicAuth, HTTPDigestAuth
-from requests_oauthlib import OAuth2Session, OAuth1
+from requests_oauthlib import OAuth1, OAuth2Session
 
 
 @attr.s(auto_attribs=True, kw_only=True)
@@ -46,6 +48,16 @@ moveit_automation_settings = OAuth2ApiSettings(
     refresh_url="/api/v1/token",
     pass_credentials_in_header=False,
 )
+
+
+oauth1_api_endpoints = []
+oauth2_api_settings = [
+    ('dhis2_auth_settings', 'DHIS2 OAuth 2.0'),
+    ('moveit_automation_settings', 'MOVEit Automation'),
+]
+api_auth_settings_choices = [
+    (None, _('(Not Applicable)')),
+] + oauth1_api_endpoints + oauth2_api_settings
 
 
 class AuthManager:

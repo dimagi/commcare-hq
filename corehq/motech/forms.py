@@ -6,7 +6,8 @@ from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
 from crispy_forms.helper import FormHelper
 
-from corehq.motech.models import ApiAuthSettings, ConnectionSettings
+from corehq.motech.auth import api_auth_settings_choices
+from corehq.motech.models import ConnectionSettings
 
 
 class ConnectionSettingsForm(forms.ModelForm):
@@ -14,9 +15,9 @@ class ConnectionSettingsForm(forms.ModelForm):
         label=_('URL'),
         help_text=_('e.g. "http://play.dhis2.org/demo/"')
     )
-    api_auth_settings = forms.ModelChoiceField(
-        label=_('API settings'),
-        queryset=ApiAuthSettings.objects.all(),
+    api_auth_settings = forms.ChoiceField(
+        label=_('API auth settings'),
+        choices=api_auth_settings_choices,
         required=False,
     )
     username = forms.CharField(
