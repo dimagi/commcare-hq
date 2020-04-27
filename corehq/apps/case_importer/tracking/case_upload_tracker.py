@@ -1,8 +1,11 @@
+import time
+
 from django.db import transaction
 
 from memoized import memoized
 
 from corehq.apps.case_importer.exceptions import ImporterRefError
+from corehq.apps.case_importer.tracking.exceptions import TimedOutWaitingForCaseUploadRecord
 from corehq.apps.case_importer.tracking.filestorage import (
     persistent_file_store,
     transient_file_store,
@@ -36,6 +39,15 @@ class CaseUpload(object):
     def _case_upload_record(self):
         return CaseUploadRecord.objects.get(upload_id=self.upload_id)
 
+    def wait_for_case_upload_record(self):
+        for wait_seconds in [1, 2, 5, 10, 20]:
+            try:
+                self._case_upload_record
+                return
+            except CaseUploadRecord.DoesNotExist:
+                time.sleep(wait_seconds)
+        raise TimedOutWaitingForCaseUploadRecord()
+
     def get_tempfile(self):
         return transient_file_store.get_tempfile_ref_for_contents(self.upload_id)
 
@@ -54,12 +66,18 @@ class CaseUpload(object):
         return get_spreadsheet(self.get_tempfile())
 
     def trigger_upload(self, domain, config, comment=None):
+        """
+        Save a CaseUploadRecord and trigger a task that runs the upload
+
+        The task triggered by this must call case_upload.wait_for_case_upload_record() before using it
+        to avoid a race condition.
+        """
         from corehq.apps.case_importer.tasks import bulk_import_async
-        task = bulk_import_async.delay(config, domain, self.upload_id)
         original_filename = transient_file_store.get_filename(self.upload_id)
         with open(self.get_tempfile(), 'rb') as f:
             case_upload_file_meta = persistent_file_store.write_file(f, original_filename, domain)
 
+        task = bulk_import_async.delay(config, domain, self.upload_id)
         CaseUploadRecord(
             domain=domain,
             comment=comment,

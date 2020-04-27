@@ -17,6 +17,11 @@ from .util import get_importer_error_message, exit_celery_with_error_message
 @task(serializer='pickle', queue='case_import_queue')
 def bulk_import_async(config, domain, excel_id):
     case_upload = CaseUpload.get(excel_id)
+    # case_upload.trigger_upload fires off this task right before saving the CaseUploadRecord
+    # because CaseUploadRecord needs to be saved with the task id firing off the task creates.
+    # Occasionally, this task could start before the CaseUploadRecord was saved,
+    # which causes unpredictable/undesirable error behavior
+    case_upload.wait_for_case_upload_record()
     try:
         case_upload.check_file()
     except ImporterError as e:
