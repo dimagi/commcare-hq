@@ -175,7 +175,7 @@ class SQLCustomDataFieldsDefinition(SyncSQLToCouchMixin, models.Model):
             return {}, {}
         model_data = {}
         uncategorized_data = {}
-        slugs = [field.slug for field in self.sqlfield_set]
+        slugs = {field.slug for field in self.sqlfield_set}
         for k, v in data_dict.items():
             if k in slugs:
                 model_data[k] = v
