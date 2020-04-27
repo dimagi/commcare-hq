@@ -334,8 +334,8 @@ def queue_async_indicators():
             break
 
 
-def _queue_indicators(indicators):
-    for chunk in chunked(indicators, ASYNC_INDICATOR_CHUNK_SIZE):
+def _queue_indicators(async_indicators):
+    for chunk in chunked(async_indicators, ASYNC_INDICATOR_CHUNK_SIZE):
         now = datetime.utcnow()
         indicator_doc_ids = [i.doc_id for i in chunk]
         AsyncIndicator.objects.filter(doc_id__in=indicator_doc_ids).update(date_queued=now)
