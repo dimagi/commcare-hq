@@ -13,7 +13,14 @@ logger = logging.getLogger(__name__)
 class Command(BaseCommand):
     """
         Given a couch document type, iterates over all documents and reports back
-        on whether those attributes are ever null and what their largest values are.
+        on usage of each attribute, to aid in selecting SQL fields for those attributes.
+
+        For each attribute report:
+        - Whether the value is ever null or empty, for the purpose of deciding whether to use null=True
+        - Longest value, for the purpose of setting max_length
+
+        Boolean attributes are ignored. Any attributes that is a list of dicts is assumed to be SchemaListProperty,
+        and each of its attributes is examined the same way as a top-level attribute.
     """
 
     def add_arguments(self, parser):
