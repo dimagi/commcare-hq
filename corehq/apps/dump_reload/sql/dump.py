@@ -78,7 +78,7 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = OrderedDict((iterator.model_label, itera
     FilteredModelIteratorBuilder('scheduling_partitioned.CaseAlertScheduleInstance', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('scheduling_partitioned.CaseTimedScheduleInstance', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('scheduling_partitioned.TimedScheduleInstance', SimpleFilter('domain')),
-    FilteredModelIteratorBuilder('custom_data_fields.SQLCustomDataFieldsDefinition', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('custom_data_fields.CustomDataFieldsDefinition', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('data_interfaces.AutomaticUpdateRule', SimpleFilter('domain')),
     UniqueFilteredModelIteratorBuilder('data_interfaces.ClosedParentDefinition',
                                        SimpleFilter('caserulecriteria__rule__domain')),
