@@ -12,10 +12,10 @@ from corehq.apps.dump_reload.sql.filters import (
     SimpleFilter,
     UniqueFilteredModelIteratorBuilder,
     UserIDFilter,
-    UsernameFilter,
+    UsernameFilter, FilteredModelFieldIteratorBuilder,
 )
 from corehq.apps.dump_reload.sql.serialization import JsonLinesSerializer
-from corehq.apps.dump_reload.util import get_model_label
+from corehq.apps.dump_reload.util import get_model_label, get_model_class
 from corehq.sql_db.config import plproxy_config
 
 # order is important here for foreign key constraints
@@ -127,6 +127,8 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = OrderedDict((iterator.model_label, itera
     FilteredModelIteratorBuilder('app_manager.LatestEnabledBuildProfiles', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('translations.SMSTranslations', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('translations.TransifexBlacklist', SimpleFilter('domain')),
+    FilteredModelFieldIteratorBuilder('translations.TransifexOrganization', 'translations.TransifexProject', SimpleFilter('domain'), 'organization'),
+    FilteredModelIteratorBuilder('translations.TransifexProject', SimpleFilter('domain')),
 ])
 
 
@@ -230,7 +232,7 @@ def _get_app_list(excluded_apps):
     """
     app_list = OrderedDict()
     for label in APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP:
-        app_config, model = _get_model(label)
+        app_config, model = get_model_class(label)
         if app_config in excluded_apps:
             continue
 
@@ -240,18 +242,3 @@ def _get_app_list(excluded_apps):
             app_list_value.append(model)
 
     return app_list
-
-
-def _get_model(model_label):
-    app_label, model_label = model_label.split('.')
-    try:
-        app_config = apps.get_app_config(app_label)
-    except LookupError:
-        raise DomainDumpError("Unknown application: %s" % app_label)
-
-    try:
-        model = app_config.get_model(model_label)
-    except LookupError:
-        raise DomainDumpError("Unknown model: %s.%s" % (app_label, model_label))
-
-    return app_config, model
