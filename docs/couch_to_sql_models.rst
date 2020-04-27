@@ -83,8 +83,9 @@ This should contain:
 
 * Most models belong to a domain. These models need to be deleted when the domain is deleted.
 
-  * Add the new model to `DOMAIN_DELETE_OPERATIONS <https://github.com/dimagi/commcare-hq/blob/522294560cee0f3ac1ddeae0501d653b1ea0f215/corehq/apps/domain/deletion.py#L179>`_.
+  * Add the new model to `DOMAIN_DELETE_OPERATIONS <https://github.com/dimagi/commcare-hq/blob/522294560cee0f3ac1ddeae0501d653b1ea0f215/corehq/apps/domain/deletion.py#L179>`_ so it gets deleted when the domain is deleted.
   * Update tests in `test_delete_domain.py`. `Sample PR that handles several app manager models <https://github.com/dimagi/commcare-hq/pull/26310/files>`_.
+  * Add the new model to `sql/dump.py <https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/dump_reload/sql/dump.py>`_ so that it gets included when a domain is exported.
   
 To test this step locally:
 
