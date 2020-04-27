@@ -923,7 +923,7 @@ class ODataFeedListHelper(ExportListHelper):
         if self.allowed_doc_type == 'neither':
             return []
 
-        if self.allowed_doc_type =='deid':
+        if self.allowed_doc_type == 'deid':
             exports = get_brief_deid_exports(self.domain, None)
         else:
             exports = get_brief_exports(self.domain, self.allowed_doc_type)
