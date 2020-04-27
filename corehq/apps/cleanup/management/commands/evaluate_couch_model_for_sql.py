@@ -12,19 +12,13 @@ logger = logging.getLogger(__name__)
 
 class Command(BaseCommand):
     """
-        Given a set of attributes and a couch document type, Iterates over all documents
-        and reports back on whether those attributes are ever null and what their largest
-        values are.
+        Given a couch document type, iterates over all documents and reports back
+        on whether those attributes are ever null and what their largest values are.
     """
 
     def add_arguments(self, parser):
         parser.add_argument(
             'doc_type',
-        )
-        parser.add_argument(
-            '-a',
-            '--attrs',
-            nargs='+',
         )
         parser.add_argument(
             '-s',
@@ -34,24 +28,36 @@ class Command(BaseCommand):
         )
 
     def handle(self, doc_type, **options):
-        attrs = options.get('attrs', [])
         db = couch_config.get_db(options.get('db', None))
-        blank_counts = defaultdict(lambda: 0)
+        key_counts = defaultdict(lambda: 0)
         max_lengths = defaultdict(lambda: 0)
 
         print("Found {} {} docs\n".format(get_doc_count_by_type(db, doc_type), doc_type))
 
+        def _evaluate_doc(doc, prefix=None):
+            for key, value in doc.items():
+                if prefix:
+                    key = f"{prefix}.{key}"
+                if not value or isinstance(value, bool):
+                    continue
+                if isinstance(value, list):
+                    for item in value:
+                        if isinstance(item, dict):
+                            _evaluate_doc(item, prefix=key)
+                    length = len(value)
+                else:
+                    length = len(str(value))
+                max_lengths[key] = max(length, max_lengths[key])
+                key_counts[key] += 1
+
         docs = get_all_docs_with_doc_types(db, [doc_type])
         for doc in docs:
-            for attr in attrs:
-                if doc.get(attr):
-                    max_lengths[attr] = max(len(doc[attr]), max_lengths[attr])
-                else:
-                    blank_counts[attr] += 1
+            _evaluate_doc(doc)
 
-        for attr in attrs:
+        max_count = max(key_counts.values())
+        for key in sorted(key_counts):
             print("{} is {} blank and has max length of {}".format(
-                attr,
-                'sometimes' if blank_counts[attr] else 'never',
-                max_lengths[attr]
+                key,
+                'never' if key_counts[key] == max_count else 'sometimes',
+                max_lengths[key]
             ))
