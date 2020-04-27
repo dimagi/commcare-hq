@@ -98,6 +98,7 @@ from corehq.form_processor.interfaces.dbaccessors import (
     CaseAccessors,
     FormAccessors,
 )
+from corehq.motech.auth import BasicAuthManager, DigestAuthManager
 from corehq.motech.const import ALGO_AES, BASIC_AUTH, DIGEST_AUTH, OAUTH1
 from corehq.motech.repeaters.repeater_generators import (
     AppStructureGenerator,
@@ -896,6 +897,7 @@ def _is_response(duck):
     return hasattr(duck, 'status_code') and hasattr(duck, 'reason')
 
 
+# TODO: Repeaters to use ConnectionSettings
 def get_requests(
     repeater: Repeater,
     payload_id: Optional[str] = None,
@@ -905,13 +907,24 @@ def get_requests(
     Repeater. ``payload_id`` specifies the payload that the object will
     be used for sending, if applicable.
     """
+    if repeater.auth_type == OAUTH1:
+        raise NotImplementedError(_(
+            'OAuth1 authentication workflow not yet supported.'
+        ))
+
+    auth_manager_class = {
+        BASIC_AUTH: BasicAuthManager,
+        DIGEST_AUTH: DigestAuthManager,
+    }[repeater.auth_type]
+    auth_manager = auth_manager_class(
+        repeater.username,
+        repeater.plaintext_password,
+    )
     return Requests(
         repeater.domain,
         repeater.url,
-        repeater.username,
-        repeater.plaintext_password,
         verify=repeater.verify,
-        auth_type=repeater.auth_type,
+        auth_manager=auth_manager,
         notify_addresses=repeater.notify_addresses,
         payload_id=payload_id,
     )
