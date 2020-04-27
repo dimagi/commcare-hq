@@ -59,7 +59,7 @@ class TestMigrateBackend(TestCase):
             filename = join(tmp, "file.txt")
 
             # do migration
-            migrated, skipped = mod.MIGRATIONS[self.slug].migrate(filename, num_workers=2, domain=domain)
+            migrated, skipped = mod.MIGRATIONS[self.slug]().migrate(filename, num_workers=2, domain=domain)
             self.assertGreaterEqual(migrated, expected_count)
 
             not_founds = {nf for nf in self.not_founds if not domain or nf[1] == domain}

@@ -62,7 +62,7 @@ class TestMigrateBackend(TestCase):
             filename = join(tmp, "file.txt")
 
             # do migration
-            migrated, skipped = mod.MIGRATIONS[self.slug].migrate(filename, num_workers=2)
+            migrated, skipped = mod.MIGRATIONS[self.slug]().migrate(filename, num_workers=2)
             self.assertGreaterEqual(migrated, self.test_size)
 
             verify_migration(self, self.slug, filename, self.not_founds)
@@ -101,7 +101,7 @@ def verify_migration(test, slug, filename, not_founds):
 
 
 def discard_migration_state(slug, **kw):
-    migrator = mod.MIGRATIONS[slug]
+    migrator = mod.MIGRATIONS[slug]()
     if hasattr(migrator, "migrators"):
         migrators = migrator.migrators
     elif hasattr(migrator, "iter_migrators"):
@@ -135,7 +135,7 @@ class BaseMigrationTest(TestCase):
         self._old_flags = {}
         self.docs_to_delete = []
 
-        for model in doc_type_tuples_to_dict(mod.MIGRATIONS[self.slug].doc_types).values():
+        for model in doc_type_tuples_to_dict(mod.MIGRATIONS[self.slug]().doc_types).values():
             self._old_flags[model] = model._migrating_blobs_from_couch
             model._migrating_blobs_from_couch = True
 
@@ -155,7 +155,7 @@ class BaseMigrationTest(TestCase):
 
     @property
     def doc_types(self):
-        return set(doc_type_tuples_to_dict(mod.MIGRATIONS[self.slug].doc_types))
+        return set(doc_type_tuples_to_dict(mod.MIGRATIONS[self.slug]().doc_types))
 
     def do_migration(self, docs, num_attachments=1):
         self.docs_to_delete.extend(docs)
@@ -175,7 +175,7 @@ class BaseMigrationTest(TestCase):
             filename = join(tmp, "file.txt")
 
             # do migration
-            migrated, skipped = mod.MIGRATIONS[self.slug].migrate(filename)
+            migrated, skipped = mod.MIGRATIONS[self.slug]().migrate(filename)
             self.assertGreaterEqual(migrated, len(docs))
 
             # verify: migration state recorded
@@ -213,7 +213,7 @@ class BaseMigrationTest(TestCase):
         # hook doc_migrator_class to simulate concurrent modification
         modified = set()
         docs_by_id = {d._id: d for d in docs}
-        migrator = mod.MIGRATIONS[self.slug]
+        migrator = mod.MIGRATIONS[self.slug]()
 
         class ConcurrentModify(migrator.doc_migrator_class):
             def _do_migration(self, doc):

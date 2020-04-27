@@ -540,9 +540,10 @@ def _migrator_with_worker_pool(migrator, reindexer, iterable, max_retry, num_wor
                 print("done.")
 
 
-MIGRATIONS = {m.slug: m for m in [
-    BackendMigrator("migrate_backend", BlobDbBackendMigrator),
-    BackendMigrator("migrate_backend_check", BlobDbBackendCheckMigrator),
+MIGRATIONS = {m().slug: m for m in [
+    lambda: BackendMigrator("migrate_backend", BlobDbBackendMigrator),
+    lambda: BackendMigrator("migrate_backend_check", BlobDbBackendCheckMigrator),
+    lambda: BackendMigrator("compress_form_xml", BlobDBCompressionMigrator, type_code=CODES.form_xml),
     migrate_metadata,
     # Kept for reference when writing new migrations.
     # Migrator("applications", [
@@ -575,7 +576,7 @@ def assert_migration_complete(slug):
         except BlobMigrationState.DoesNotExist:
             pass
 
-        migrator = MIGRATIONS[slug]
+        migrator = MIGRATIONS[slug]()
         total = 0
         for doc_type, model_class in doc_type_tuples_to_dict(migrator.doc_types).items():
             total += get_doc_count_by_type(model_class.get_db(), doc_type)
