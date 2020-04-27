@@ -2,16 +2,8 @@
   "operationalization": {
     "data_source": [
       {
-        "id": "static-{domain}-static-dashboard_asr_2_3_person_cases",
-        "filter": [
-          {
-            "type": "daterange",
-            "column": "dob",
-            "operator": "between",
-            "end": 1096,
-            "start": 1825
-          }
-        ],
+        "id": "static-{domain}-static-dashboard_asr_4a_6_pse",
+        "date_filter_field": "submitted_on",
         "columns": [
           {
             "column_name": "awc_count",
