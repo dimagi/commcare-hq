@@ -59,6 +59,6 @@ branches:
   - bmb/odata-qa-feedback  # Biyeun April 15
     #  - fr/turn-backend        # Farid April 17 # Removed April 25 from conflict
     #- dmr/track-sms-by-backend  # Danny April 22
-  - revert-27244-dmr/case-upload-success-result # Clayton April 25
+  - revert-27273-revert-27244-dmr/case-upload-success-result  # Danny April 27
 
 submodules: {}
