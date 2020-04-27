@@ -50,11 +50,11 @@ class GrowthTrackerExport(ExportableMixin, IcdsSqlData):
             filters['district_id'] = location
             order_by = ('block_name', 'supervisor_name', 'awc_name', 'person_name')
 
-        data_initial_month = _fetch_data(filters, order_by)
+        data_month_3 = _fetch_data(filters, order_by)
         filters["month"] = initial_month - relativedelta(months=1)
-        data_past_month = _fetch_data(filters, order_by, True)
+        data_month_2 = _fetch_data(filters, order_by, True)
         filters["month"] = initial_month - relativedelta(months=2)
-        data_past_month_2 = _fetch_data(filters, order_by, True)
+        data_month_1 = _fetch_data(filters, order_by, True)
         filters["month"] = initial_month
         month_1 = (initial_month - relativedelta(months=2)).strftime('%Y-%m-%d')
         month_2 = (initial_month - relativedelta(months=1)).strftime('%Y-%m-%d')
@@ -68,7 +68,7 @@ class GrowthTrackerExport(ExportableMixin, IcdsSqlData):
 
         excel_rows = [headers]
 
-        for row in data_initial_month:
+        for row in data_month_3:
             row_data = [
                 row['state_name'],
                 row['district_name'],
@@ -79,22 +79,22 @@ class GrowthTrackerExport(ExportableMixin, IcdsSqlData):
                 calculate_date_for_age(row['dob'], initial_month),
                 row['mother_name'],
                 phone_number_function(row['mother_phone_number']),
-                _check_case_presence(row['case_id'], 'pse_days_attended', data_past_month_2),
-                _check_case_presence(row['case_id'], 'pse_days_attended', data_past_month),
+                _check_case_presence(row['case_id'], 'pse_days_attended', data_month_1),
+                _check_case_presence(row['case_id'], 'pse_days_attended', data_month_2),
                 row['pse_days_attended'],
-                _check_case_presence(row['case_id'], 'lunch_count', data_past_month_2),
-                _check_case_presence(row['case_id'], 'lunch_count', data_past_month),
+                _check_case_presence(row['case_id'], 'lunch_count', data_month_1),
+                _check_case_presence(row['case_id'], 'lunch_count', data_month_2),
                 row['lunch_count'],
                 get_status(
                     _check_case_presence(row['case_id'], current_month_stunting_column(self.beta),
-                                         data_past_month_2),
+                                         data_month_1),
                     'stunted',
                     'Normal height for age',
                     True
                 ),
                 get_status(
                     _check_case_presence(row['case_id'], current_month_stunting_column(self.beta),
-                                         data_past_month),
+                                         data_month_2),
                     'stunted',
                     'Normal height for age',
                     True
@@ -107,13 +107,13 @@ class GrowthTrackerExport(ExportableMixin, IcdsSqlData):
                 ),
                 get_status(
                     _check_case_presence(row['case_id'], current_month_wasting_column(self.beta),
-                                         data_past_month_2),
+                                         data_month_1),
                     'wasted',
                     'Normal weight for height',
                     True
                 ),
                 get_status(
-                    _check_case_presence(row['case_id'], current_month_wasting_column(self.beta), data_past_month),
+                    _check_case_presence(row['case_id'], current_month_wasting_column(self.beta), data_month_2),
                     'wasted',
                     'Normal weight for height',
                     True
@@ -125,13 +125,13 @@ class GrowthTrackerExport(ExportableMixin, IcdsSqlData):
                     True
                 ),
                 get_status(
-                    _check_case_presence(row['case_id'], 'current_month_nutrition_status', data_past_month_2),
+                    _check_case_presence(row['case_id'], 'current_month_nutrition_status', data_month_1),
                     'underweight',
                     'Normal weight for age',
                     True
                 ),
                 get_status(
-                    _check_case_presence(row['case_id'], 'current_month_nutrition_status', data_past_month),
+                    _check_case_presence(row['case_id'], 'current_month_nutrition_status', data_month_2),
                     'underweight',
                     'Normal weight for age',
                     True
