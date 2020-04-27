@@ -114,6 +114,19 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = OrderedDict((iterator.model_label, itera
     FilteredModelIteratorBuilder('sms.SelfRegistrationInvitation', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('sms.SQLMobileBackend', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('sms.SQLMobileBackendMapping', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('cloudcare.ApplicationAccess', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('cloudcare.SQLAppGroup', SimpleFilter('application_access__domain')),
+    FilteredModelIteratorBuilder('linked_domain.DomainLink', SimpleFilter('linked_domain')),
+    FilteredModelIteratorBuilder('linked_domain.DomainLinkHistory', SimpleFilter('link__linked_domain')),
+    FilteredModelIteratorBuilder('locations.LocationFixtureConfiguration', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('consumption.SQLDefaultConsumption', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('data_dictionary.CaseType', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('data_dictionary.CaseProperty', SimpleFilter('case_type__domain')),
+    FilteredModelIteratorBuilder('app_manager.GlobalAppConfig', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('app_manager.AppReleaseByLocation', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('app_manager.LatestEnabledBuildProfiles', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('translations.SMSTranslations', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('translations.TransifexBlacklist', SimpleFilter('domain')),
 ])
 
 
