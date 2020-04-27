@@ -149,8 +149,6 @@ class GrowthTrackerExport(ExportableMixin, IcdsSqlData):
             locs = SQLLocation.objects.get(location_id=location).get_ancestors(include_self=True)
             for loc in locs:
                 filters.append([loc.location_type.name.title(), loc.name])
-        else:
-            filters.append(['Location', 'National'])
 
         date = self.config['month']
         filters.append(['Month', date.strftime("%B")])
