@@ -1,8 +1,8 @@
 import re
 from collections import namedtuple
 
-from corehq.apps.sms.api import send_sms_with_backend, MessageMetadata
-from corehq.apps.sms.models import SMS, SQLSMSBackend, MessagingEvent, PhoneNumber
+from corehq.apps.sms.api import MessageMetadata, send_sms_with_backend
+from corehq.apps.sms.models import SMS, MessagingEvent, SQLSMSBackend
 from corehq.apps.sms.util import clean_phone_number
 from corehq.messaging.smsbackends.turn.exceptions import WhatsAppTemplateStringException
 from corehq.messaging.smsbackends.turn.forms import TurnBackendForm
@@ -75,11 +75,15 @@ class SQLTurnWhatsAppBackend(SQLSMSBackend):
         return client.messages.send_text(wa_id, msg.text)
 
     def _send_fallback_message(self, msg):
-        logged_event = MessagingEvent.create_event_for_adhoc_sms(self.domain, recipient=msg.recipient)
-        logged_subevent = logged_event.create_subevent_for_single_sms(recipient_doc_type=msg.recipient.doc_type, recipient_id=msg.recipient.get_id)
+        logged_event = MessagingEvent.create_event_for_adhoc_sms(
+            self.domain, recipient=msg.recipient
+        )
+        logged_subevent = logged_event.create_subevent_for_single_sms(
+            recipient_doc_type=msg.recipient.doc_type, recipient_id=msg.recipient.get_id
+        )
         metadata = MessageMetadata(
             messaging_subevent_id=logged_subevent.pk,
-            custom_metadata={"fallback": "WhatsApp Contact Not Found"}
+            custom_metadata={"fallback": "WhatsApp Contact Not Found"},
         )
         if send_sms_with_backend(
             self.domain, msg.phone_number, msg.text, self.config.fallback_backend_id, metadata
