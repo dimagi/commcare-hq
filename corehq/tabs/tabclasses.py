@@ -33,6 +33,7 @@ from corehq.apps.domain.views.releases import (
     ManageReleasesByAppProfile,
     ManageReleasesByLocation,
 )
+from corehq.apps.export.views.incremental import IncrementalExportView
 from corehq.apps.hqadmin.reports import (
     DeviceLogSoftAssertReport,
     UserAuditReport,
@@ -609,7 +610,7 @@ class ProjectDataTab(UITab):
                     }
                 )
             if self.can_view_case_exports:
-                export_data_views.append(
+                export_data_views.extend([
                     {
                         'title': _(CaseExportListView.page_title),
                         'url': reverse(CaseExportListView.urlname,
@@ -630,7 +631,19 @@ class ProjectDataTab(UITab):
                                 'urlname': EditNewCustomCaseExportView.urlname,
                             } if self.can_edit_commcare_data else None,
                         ] if _f]
-                    })
+                    },
+                ])
+            if toggles.INCREMENTAL_EXPORTS.enabled(self.domain):
+                export_data_views.append(
+                    {
+                        'title': _(IncrementalExportView.page_title),
+                        'url': reverse(IncrementalExportView.urlname,
+                                       args=(self.domain,)),
+                        'show_in_dropdown': True,
+                        'icon': 'icon icon-share fa fa-share-square-o',
+                        'subpages': []
+                    }
+                )
 
             if self.can_view_sms_exports:
                 export_data_views.append(
@@ -1829,14 +1842,24 @@ def _get_integration_section(domain):
             'url': reverse(BiometricIntegrationView.urlname, args=[domain])
         })
 
-    if toggles.DHIS2_INTEGRATION.enabled(domain):
-        integration.extend([{
+    if toggles.INCREMENTAL_EXPORTS.enabled(domain) or toggles.DHIS2_INTEGRATION.enabled(domain):
+        integration.append({
             'title': _(ConnectionSettingsView.page_title),
             'url': reverse(ConnectionSettingsView.urlname, args=[domain])
-        }, {
+        })
+
+    if toggles.DHIS2_INTEGRATION.enabled(domain):
+        integration.append({
             'title': _(DataSetMapView.page_title),
             'url': reverse(DataSetMapView.urlname, args=[domain])
-        }])
+        })
+
+    if toggles.INCREMENTAL_EXPORTS.enabled(domain):
+        from corehq.apps.export.views.incremental import IncrementalExportLogView
+        integration.append({
+            'title': _(IncrementalExportLogView.name),
+            'url': reverse('domain_report_dispatcher', args=[domain, 'incremental_export_logs']),
+        })
 
     if toggles.OPENMRS_INTEGRATION.enabled(domain):
         integration.append({
@@ -1844,7 +1867,11 @@ def _get_integration_section(domain):
             'url': reverse(OpenmrsImporterView.urlname, args=[domain])
         })
 
-    if toggles.DHIS2_INTEGRATION.enabled(domain) or toggles.OPENMRS_INTEGRATION.enabled(domain):
+    if (
+            toggles.DHIS2_INTEGRATION.enabled(domain)
+            or toggles.OPENMRS_INTEGRATION.enabled(domain)
+            or toggles.INCREMENTAL_EXPORTS.enabled(domain)
+    ):
         integration.append({
             'title': _(MotechLogListView.page_title),
             'url': reverse(MotechLogListView.urlname, args=[domain])

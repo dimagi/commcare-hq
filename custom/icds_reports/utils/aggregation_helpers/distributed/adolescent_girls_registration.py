@@ -10,6 +10,7 @@ class AggAdolescentGirlsRegistrationAggregate(StateBasedAggregationDistributedHe
     helper_key = 'adolescent-girls'
     ucr_data_source_id = 'static-adolescent_girls_reg_form'
     aggregate_parent_table = AGG_ADOLESCENT_GIRLS_REGISTRATION_TABLE
+    months_required = 3
 
     def data_from_ucr_query(self):
         month = self.month.replace(day=1)

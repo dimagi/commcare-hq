@@ -83,7 +83,7 @@ def update_usercase(domain, old_username, new_username):
         if updates:
             case_block = CaseBlock(new_user_usercase.case_id,
                                    update=old_user_usercase.case_json,
-                                   user_id=SYSTEM_USER_ID)
+                                   user_id=SYSTEM_USER_ID).as_text()
             submit_case_blocks([case_block], domain, user_id=SYSTEM_USER_ID)
     else:
         raise InvalidUserTransition("Invalid Transition with old user %s and new user %s" % (

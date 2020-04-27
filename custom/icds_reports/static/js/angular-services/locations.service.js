@@ -306,6 +306,14 @@ window.angular.module('icdsApp').factory('locationsService', ['$http', '$locatio
         },
         
         resetLevelsBelow : function(level, vm) {
+            // for the reports like THR report which does not allow download
+            // below block level. So, if you switch from a report which does
+            // allow download below block level to THR report and does not change
+            // the location and directly click the export. The location_id which is sent
+            // is not the block level but the lower level location selected in previous report
+            if (vm.selectedLocationLevel > level && vm.selectedLocations[level]) {
+                vm.selectedLocationId = vm.selectedLocations[level];
+            }
             for (var i = level + 1; i <= vm.maxLevel; i++) {
                 vm.hierarchy[i].selected = null;
                 vm.selectedLocations[i] = null;
