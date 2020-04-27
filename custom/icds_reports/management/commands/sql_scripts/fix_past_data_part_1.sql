@@ -7,24 +7,30 @@ UPDATE child_health_monthly
         END,
       current_month_stunting = CASE
         WHEN NOT (valid_in_month=1 AND age_tranche::Integer <= 60) THEN NULL
-        ELSE
-            current_month_stunting
-        END,
+        WHEN zscore_grading_hfa_recorded_in_month=0 THEN 'unmeasured'
+        WHEN zscore_grading_hfa = 1 THEN 'severe'
+        WHEN zscore_grading_hfa = 2 THEN 'moderate'
+        WHEN zscore_grading_hfa = 3 THEN 'normal'
+        ELSE 'unmeasured' END,
       stunting_last_recorded = CASE
         WHEN NOT (valid_in_month=1 AND age_tranche::Integer <= 60) THEN NULL
-        ELSE
-           stunting_last_recorded
-        END,
+        WHEN zscore_grading_hfa = 1 THEN 'severe'
+        WHEN zscore_grading_hfa = 2 THEN 'moderate'
+        WHEN zscore_grading_hfa = 3 THEN 'normal'
+        ELSE 'unknown' END,
       wasting_last_recorded = CASE
         WHEN NOT (valid_in_month=1 AND age_tranche::Integer <= 60) THEN NULL
-       ELSE
-          wasting_last_recorded
-       END,
+        WHEN zscore_grading_wfh = 1 THEN 'severe'
+        WHEN zscore_grading_wfh = 2 THEN 'moderate'
+        WHEN zscore_grading_wfh = 3 THEN 'normal'
+        ELSE 'unknown' END,
       current_month_wasting = CASE
         WHEN NOT (valid_in_month=1 AND age_tranche::Integer <= 60) THEN NULL
-        ELSE
-          current_month_wasting
-        END
+        WHEN zscore_grading_wfh_recorded_in_month=0 THEN 'unmeasured'
+        WHEN zscore_grading_wfh = 1 THEN 'severe'
+        WHEN zscore_grading_wfh = 2 THEN 'moderate'
+        WHEN zscore_grading_wfh = 3 THEN 'normal'
+        ELSE 'unmeasured' END
     WHERE month='{start_date}';
 
 -- QUERY PLAN

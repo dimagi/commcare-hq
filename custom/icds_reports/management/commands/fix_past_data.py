@@ -70,7 +70,7 @@ class Command(BaseCommand):
         default = False
         date_itr = start_date
         while date_itr <= end_date:
-            if date_itr >= part_tb_date_start or date_itr <= part_tb_date_end:
+            if date_itr >= part_tb_date_start and date_itr <= part_tb_date_end:
                 default = True
             else:
                 default = False
