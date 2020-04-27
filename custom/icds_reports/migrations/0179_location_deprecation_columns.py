@@ -8,7 +8,7 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('icds_reports', '0178_rebuild_chm_view'),
+        ('icds_reports', '0184_auto_20200421_2017'),
     ]
 
     operations = [
