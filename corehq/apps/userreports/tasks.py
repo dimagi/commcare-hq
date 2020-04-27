@@ -290,27 +290,6 @@ def run_queue_async_indicators_task():
         queue_async_indicators.delay()
 
 
-@serial_task('queue-async-indicators', timeout=30 * 60, queue=settings.CELERY_PERIODIC_QUEUE, max_retries=0)
-def queue_async_indicators():
-    start = datetime.utcnow()
-    cutoff = start + ASYNC_INDICATOR_QUEUE_TIME - timedelta(seconds=30)
-    retry_threshold = start - timedelta(hours=4)
-    # don't requeue anything that has been retried more than 20 times
-    indicators = AsyncIndicator.objects.filter(unsuccessful_attempts__lt=20)[:settings.ASYNC_INDICATORS_TO_QUEUE]
-
-    indicators_by_domain_doc_type = defaultdict(list)
-    # page so that envs can have arbitarily large settings.ASYNC_INDICATORS_TO_QUEUE
-    for indicator in paginated_queryset(indicators, 1000):
-        # only requeue things that are not in queue or were last queued earlier than the threshold
-        if not indicator.date_queued or indicator.date_queued < retry_threshold:
-            indicators_by_domain_doc_type[(indicator.domain, indicator.doc_type)].append(indicator)
-
-    for k, indicators in indicators_by_domain_doc_type.items():
-        _queue_indicators(indicators)
-        if datetime.utcnow() > cutoff:
-            break
-
-
 def time_in_range(time, time_dictionary):
     """time_dictionary will be of the format:
     {
@@ -332,6 +311,27 @@ def time_in_range(time, time_dictionary):
             return True
 
     return False
+
+
+@serial_task('queue-async-indicators', timeout=30 * 60, queue=settings.CELERY_PERIODIC_QUEUE, max_retries=0)
+def queue_async_indicators():
+    start = datetime.utcnow()
+    cutoff = start + ASYNC_INDICATOR_QUEUE_TIME - timedelta(seconds=30)
+    retry_threshold = start - timedelta(hours=4)
+    # don't requeue anything that has been retried more than 20 times
+    indicators = AsyncIndicator.objects.filter(unsuccessful_attempts__lt=20)[:settings.ASYNC_INDICATORS_TO_QUEUE]
+
+    indicators_by_domain_doc_type = defaultdict(list)
+    # page so that envs can have arbitarily large settings.ASYNC_INDICATORS_TO_QUEUE
+    for indicator in paginated_queryset(indicators, 1000):
+        # only requeue things that are not in queue or were last queued earlier than the threshold
+        if not indicator.date_queued or indicator.date_queued < retry_threshold:
+            indicators_by_domain_doc_type[(indicator.domain, indicator.doc_type)].append(indicator)
+
+    for k, indicators in indicators_by_domain_doc_type.items():
+        _queue_indicators(indicators)
+        if datetime.utcnow() > cutoff:
+            break
 
 
 def _queue_indicators(indicators):
