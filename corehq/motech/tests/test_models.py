@@ -7,7 +7,7 @@ from mock import Mock, patch
 
 import requests
 from corehq.motech.models import RequestLog
-from corehq.motech.requests import Requests
+from corehq.motech.requests import get_basic_requests
 
 TEST_API_URL = 'http://localhost:9080/api/'
 TEST_API_USERNAME = 'admin'
@@ -18,7 +18,9 @@ TEST_DOMAIN = 'test-domain'
 class UnpackRequestArgsTests(SimpleTestCase):
 
     def setUp(self):
-        self.requests = Requests(TEST_DOMAIN, TEST_API_URL, TEST_API_USERNAME, TEST_API_PASSWORD)
+        self.requests = get_basic_requests(
+            TEST_DOMAIN, TEST_API_URL, TEST_API_USERNAME, TEST_API_PASSWORD
+        )
 
         content = {'status': 'Created'}
         self.content_json = json.dumps(content)

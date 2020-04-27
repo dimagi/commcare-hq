@@ -250,7 +250,7 @@ class RepeaterTest(BaseRepeaterTest):
                     repeat_record.repeater.get_url(repeat_record),
                     headers=repeat_record.repeater.get_headers(repeat_record),
                     timeout=POST_TIMEOUT,
-                    auth=repeat_record.repeater.get_auth(),
+                    auth=repeat_record.repeater.auth_manager.get_auth(),
                     verify=repeat_record.repeater.verify,
                 )
 

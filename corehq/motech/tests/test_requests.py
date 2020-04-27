@@ -9,14 +9,17 @@ from django.test import SimpleTestCase, TestCase
 import requests
 from mock import Mock, patch
 
+from corehq.motech.auth import (
+    AuthManager,
+    BasicAuthManager,
+    DigestAuthManager,
+    OAuth2PasswordGrantTypeManager,
+    dhis2_auth_settings,
+)
 from corehq.motech.const import (
-    BASIC_AUTH,
-    DIGEST_AUTH,
-    OAUTH2_BEARER,
     REQUEST_TIMEOUT,
 )
-from corehq.motech.models import ApiAuthSettings
-from corehq.motech.requests import Requests
+from corehq.motech.requests import Requests, get_basic_requests
 
 TEST_API_URL = 'http://localhost:9080/api/'
 TEST_API_USERNAME = 'admin'
@@ -27,7 +30,9 @@ TEST_DOMAIN = 'test-domain'
 class RequestsTests(SimpleTestCase):
 
     def setUp(self):
-        self.requests = Requests(TEST_DOMAIN, TEST_API_URL, TEST_API_USERNAME, TEST_API_PASSWORD)
+        self.requests = get_basic_requests(
+            TEST_DOMAIN, TEST_API_URL, TEST_API_USERNAME, TEST_API_PASSWORD
+        )
         self.org_unit_id = 'abc'
         self.data_element_id = '123'
 
@@ -66,7 +71,10 @@ class RequestsTests(SimpleTestCase):
         with patch('corehq.motech.requests.RequestLog', Mock()), \
                 patch.object(requests.Session, 'request') as request_mock:
 
-            self.requests = Requests(TEST_DOMAIN, TEST_API_URL, TEST_API_USERNAME, TEST_API_PASSWORD, verify=False)
+            self.requests = get_basic_requests(
+                TEST_DOMAIN, TEST_API_URL, TEST_API_USERNAME, TEST_API_PASSWORD,
+                verify=False,
+            )
             self.requests.get('me')
             request_mock.assert_called_with(
                 'GET',
@@ -83,7 +91,9 @@ class RequestsTests(SimpleTestCase):
                 patch.object(requests.Session, 'request'), \
                 patch.object(requests.Session, 'close') as close_mock:
 
-            with Requests(TEST_DOMAIN, TEST_API_URL, TEST_API_USERNAME, TEST_API_PASSWORD) as self.requests:
+            with get_basic_requests(
+                TEST_DOMAIN, TEST_API_URL, TEST_API_USERNAME, TEST_API_PASSWORD
+            ) as self.requests:
                 self.requests.get('me')
                 self.requests.get('me')
                 self.requests.get('me')
@@ -104,7 +114,9 @@ class RequestsTests(SimpleTestCase):
                 patch.object(requests.Session, 'request'), \
                 patch.object(requests.Session, 'close') as close_mock:
 
-            with Requests(TEST_DOMAIN, TEST_API_URL, TEST_API_USERNAME, TEST_API_PASSWORD) as self.requests:
+            with get_basic_requests(
+                TEST_DOMAIN, TEST_API_URL, TEST_API_USERNAME, TEST_API_PASSWORD
+            ) as self.requests:
                 self.requests.get('me')
                 self.requests.get('me')
                 self.requests.get('me')
@@ -117,8 +129,10 @@ class RequestsTests(SimpleTestCase):
             send_mail_mock.delay.assert_not_called()
 
     def test_notify_error_address_list(self):
-        requests = Requests(TEST_DOMAIN, TEST_API_URL, TEST_API_USERNAME, TEST_API_PASSWORD,
-                            notify_addresses=['foo@example.com', 'bar@example.com'])
+        requests = get_basic_requests(
+            TEST_DOMAIN, TEST_API_URL, TEST_API_USERNAME, TEST_API_PASSWORD,
+            notify_addresses=['foo@example.com', 'bar@example.com']
+        )
         with patch('corehq.motech.requests.send_mail_async') as send_mail_mock:
             requests.notify_error('foo')
             send_mail_mock.delay.assert_called_with(
@@ -137,8 +151,8 @@ class RequestsTests(SimpleTestCase):
 class RequestsAuthenticationTests(SimpleTestCase):
 
     def test_no_auth(self):
-        reqs = Requests(TEST_DOMAIN, TEST_API_URL, TEST_API_USERNAME, TEST_API_PASSWORD,
-                        auth_type=None)
+        auth_manager = AuthManager()
+        reqs = Requests(TEST_DOMAIN, TEST_API_URL, auth_manager=auth_manager)
         with patch('corehq.motech.requests.RequestLog', Mock()), \
                 patch.object(requests.Session, 'request') as request_mock:
             request_mock.return_value = self.get_response_mock()
@@ -149,7 +163,8 @@ class RequestsAuthenticationTests(SimpleTestCase):
             self.assertNotIn('auth', kwargs)
 
     def test_basic_auth(self):
-        reqs = Requests(TEST_DOMAIN, TEST_API_URL, TEST_API_USERNAME, TEST_API_PASSWORD)
+        auth_manager = BasicAuthManager(TEST_API_USERNAME, TEST_API_PASSWORD)
+        reqs = Requests(TEST_DOMAIN, TEST_API_URL, auth_manager=auth_manager)
         with patch('corehq.motech.requests.RequestLog', Mock()), \
                 patch.object(requests.Session, 'request') as request_mock:
             request_mock.return_value = self.get_response_mock()
@@ -160,8 +175,8 @@ class RequestsAuthenticationTests(SimpleTestCase):
             self.assertEqual(kwargs['auth'], (TEST_API_USERNAME, TEST_API_PASSWORD))
 
     def test_digest_auth(self):
-        reqs = Requests(TEST_DOMAIN, TEST_API_URL, TEST_API_USERNAME, TEST_API_PASSWORD,
-                        auth_type=DIGEST_AUTH)
+        auth_manager = DigestAuthManager(TEST_API_USERNAME, TEST_API_PASSWORD)
+        reqs = Requests(TEST_DOMAIN, TEST_API_URL, auth_manager=auth_manager)
         with patch('corehq.motech.requests.RequestLog', Mock()), \
                 patch.object(requests.Session, 'request') as request_mock:
             request_mock.return_value = self.get_response_mock()
@@ -201,9 +216,8 @@ class RequestsOAuth2Tests(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        Requests(
+        get_basic_requests(
             TEST_DOMAIN, cls.base_url, cls.username, cls.password,
-            auth_type=BASIC_AUTH
         ).delete(f'/api/oAuth2Clients/{cls.client_uid}')
         super().tearDownClass()
 
@@ -215,26 +229,24 @@ class RequestsOAuth2Tests(TestCase):
           "secret": cls.client_secret,
           "grantTypes": ["password", "refresh_token"]
         }
-        resp = Requests(
+        resp = get_basic_requests(
             TEST_DOMAIN, cls.base_url, cls.username, cls.password,
-            auth_type=BASIC_AUTH
         ).post('/api/oAuth2Clients', json=json_data, raise_for_status=True)
         return resp.json()['response']['uid']
 
     def test_oauth2_0_password(self):
-        api_auth_settings = ApiAuthSettings.objects.get(pk=1)
-        assert api_auth_settings.name == 'DHIS2', \
-            'Expected DHIS2 as it is the ApiAuthSettings model fixture'
-
-        with Requests(
-            TEST_DOMAIN,
+        auth_manager = OAuth2PasswordGrantTypeManager(
             self.base_url,
             username=self.username,
             password=self.password,
-            auth_type=OAUTH2_BEARER,
-            api_auth_settings=api_auth_settings,
             client_id=self.client_id,
             client_secret=self.client_secret,
+            api_settings=dhis2_auth_settings,
+        )
+        with Requests(
+            TEST_DOMAIN,
+            self.base_url,
+            auth_manager=auth_manager,
         ) as requests:
             # NOTE: Use Requests instance as a context manager so that
             #       it uses OAuth2Session.

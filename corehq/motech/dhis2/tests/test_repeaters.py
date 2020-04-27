@@ -14,7 +14,7 @@ from nose.tools import assert_equal, assert_true
 from corehq.motech.dhis2.const import DHIS2_MAX_VERSION
 from corehq.motech.dhis2.exceptions import Dhis2Exception
 from corehq.motech.dhis2.repeaters import Dhis2Repeater
-from corehq.motech.requests import Requests
+from corehq.motech.requests import get_basic_requests
 
 dhis2_version = "2.32.2"
 api_version = re.match(r'2\.(\d+)', dhis2_version).group(1)
@@ -45,7 +45,9 @@ class Dhis2ApiTests(SimpleTestCase):
     """
 
     def setUp(self):
-        self.requests = Requests(domain_name, base_url, username, password)
+        self.requests = get_basic_requests(
+            domain_name, base_url, username, password
+        )
 
     @patch('corehq.motech.requests.RequestLog', Mock())
     def test_get_index(self):
