@@ -32,7 +32,7 @@ class GrowthTrackerExport(ExportableMixin, IcdsSqlData):
 
         filters = {
             "month": self.config['month'],
-            "age_in_months__lte": 60,
+            "age_in_months__lte": 72,
             "valid_in_month": 1
         }
         initial_month = self.config['month']
@@ -49,15 +49,6 @@ class GrowthTrackerExport(ExportableMixin, IcdsSqlData):
         elif self.loc_level == 2:
             filters['district_id'] = location
             order_by = ('block_name', 'supervisor_name', 'awc_name', 'person_name')
-        elif self.loc_level == 1:
-            filters['state_id'] = location
-            order_by = ('district_name', 'block_name', 'supervisor_name', 'awc_name', 'person_name')
-        else:
-            order_by = ('state_name', 'district_name', 'block_name', 'supervisor_name', 'awc_name', 'person_name')
-
-        # Sample cost of each query(if data fetched for single month) is 0.98..3012.55
-        # Sample cost of query(if three months data fetched in single query) is 2.59..43594.85
-        # Sample are tested at supervisior levels
 
         data_initial_month = _fetch_data(filters, order_by)
         filters["month"] = initial_month - relativedelta(months=1)
