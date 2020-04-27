@@ -390,7 +390,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
      * reports end up having selectedLevel set by viewBy filter in the last report selected.
      */
     vm.adjustSelectedLevelForNoViewByFilter = function () {
-        if (!vm.showViewBy() || vm.isTakeHomeRationReportSelected()) {
+        if (!vm.showViewBy()) {
             vm.selectedLevel = locationsService.selectedLocationIndex(vm.selectedLocations) + 1;
         }
     };
@@ -525,7 +525,8 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
 
     vm.showViewBy = function () {
         return !(vm.isChildBeneficiaryListSelected() || vm.isIncentiveReportSelected() ||
-            vm.isLadySupervisorSelected() || vm.isDashboardUsageSelected());
+            vm.isLadySupervisorSelected() || vm.isDashboardUsageSelected() ||
+            vm.isTakeHomeRationReportSelected());
     };
 
     vm.showLocationFilter = function () {
