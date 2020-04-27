@@ -2180,6 +2180,10 @@ class CustomerInvoice(InvoiceBase):
     def contact_emails(self):
         return self.account.enterprise_admin_emails
 
+    def get_contact_emails(self, include_domain_admins=False, filter_out_dimagi=False):
+        # mimic the behavior of the regular Invoice for notification purposes
+        return self.contact_emails
+
     @property
     def subtotal(self):
         """
