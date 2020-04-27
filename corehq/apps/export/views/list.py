@@ -67,7 +67,7 @@ from corehq.apps.locations.permissions import (
 )
 from corehq.apps.reports.views import should_update_export
 from corehq.apps.settings.views import BaseProjectDataView
-from corehq.apps.users.models import WebUser
+from corehq.apps.users.models import CouchUser
 from corehq.apps.users.permissions import (
     CASE_EXPORT_PERMISSION,
     FORM_EXPORT_PERMISSION,
@@ -210,7 +210,7 @@ class ExportListHelper(object):
             'description': export.description,
             'sharing': export.sharing,
             'owner_username': (
-                WebUser.get_by_user_id(export.owner_id).username
+                CouchUser.get_by_user_id(export.owner_id).username
                 if export.owner_id else UNKNOWN_EXPORT_OWNER
             ),
             'can_edit': export.can_edit(self.request.couch_user),

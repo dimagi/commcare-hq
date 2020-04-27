@@ -31,10 +31,6 @@ class GapsDetailReport(MultiTabularReport):
         ]
 
 
-def _sort_rows(rows):
-    return sorted(rows, key=lambda row: (row.food_name, row.unique_respondent_id, row.measurement_amount))
-
-
 class GapsByItemSummaryData:
     title = 'Gaps By Item Summary'
     slug = 'gaps_by_item_summary'
@@ -51,7 +47,7 @@ class GapsByItemSummaryData:
     @property
     def rows(self):
         rows = {}
-        for row in _sort_rows(self._food_data.rows):
+        for row in self._food_data.rows:
             if row.conv_factor_gap_code != ConvFactorGaps.AVAILABLE:
                 key = (row.food_name, row.conv_method_code, row.conv_factor_gap_code)
                 if key not in rows:
@@ -93,7 +89,7 @@ class GapsDetailsData:
 
     @property
     def rows(self):
-        for row in _sort_rows(self._food_data.rows):
+        for row in self._food_data.rows:
             for gap_class, gap_code in [
                     (ConvFactorGaps, row.conv_factor_gap_code),
                     (FctGaps, row.fct_gap_code),

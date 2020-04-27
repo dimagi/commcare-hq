@@ -4,7 +4,6 @@
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
 # Translators:
-# Dimagi Dev <devops@dimagi.com>, 2017
 # esoergel, 2018
 # Saket Kanth <skanth@dimagi.com>, 2018
 # Abdel Nasser Iro <abdel.nasser.iro.gigo@millenniumpromise.org>, 2018
@@ -12,7 +11,8 @@
 # Claire_Cravero <ccravero@dimagi.com>, 2018
 # Ismaïla Diene <idiene@dimagi.com>, 2019
 # Sarah Sagan <ssagan@dimagi.com>, 2019
-# Tyler Wymer <twymer@dimagi.com>, 2019
+# Tyler Wymer <twymer@dimagi.com>, 2020
+# Dimagi Dev <devops@dimagi.com>, 2020
 # Aissetou Sawadogo <ais107@hotmail.com>, 2020
 #
 #, fuzzy
@@ -20,7 +20,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-04-15 19:45+0000\n"
+"POT-Creation-Date: 2020-04-22 22:56+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
 "Last-Translator: Aissetou Sawadogo <ais107@hotmail.com>, 2020\n"
 "Language-Team: French (https://www.transifex.com/dimagi/teams/9388/fr/)\n"
@@ -3910,6 +3910,22 @@ msgstr ""
 msgid "Please check above for any errors in your configuration."
 msgstr ""
 
+#: corehq/apps/userreports/static/userreports/js/configurable_reports_home.js:18
+#, fuzzy
+#| msgid "Edit Data Source"
+msgid "Edit a report or data source"
+msgstr "Modifier Source de Données "
+
+#: corehq/apps/userreports/static/userreports/js/configurable_reports_home.js:27
+msgid "static"
+msgstr ""
+
+#: corehq/apps/userreports/static/userreports/js/configurable_reports_home.js:28
+#, fuzzy
+#| msgid "Inactive"
+msgid "deactivated"
+msgstr "Inactif "
+
 #: corehq/apps/userreports/static/userreports/js/expression_evaluator.js:73
 msgid "Unknown error"
 msgstr ""
@@ -4194,25 +4210,23 @@ msgstr ""
 
 #: submodules/formdesigner/_build/src/global-deps.js:3
 msgid "show"
-msgstr ""
+msgstr "afficher"
 
 #: submodules/formdesigner/_build/src/global-deps.js:3
 msgid "hide"
-msgstr ""
+msgstr "masquer"
 
 #: submodules/formdesigner/_build/src/global-deps.js:3
 msgid "toggle"
 msgstr ""
 
 #: submodules/formdesigner/src/remoteRequest.js:34
-#, fuzzy
-#| msgid "Delete request"
 msgid "Remote Request"
-msgstr "Supprimer la requête"
+msgstr ""
 
 #: submodules/formdesigner/src/remoteRequest.js:48
 msgid "URL"
-msgstr ""
+msgstr "URL"
 
 #: submodules/formdesigner/src/remoteRequest.js:52
 msgid "The URL to be requested on form load."
@@ -4220,7 +4234,7 @@ msgstr ""
 
 #: submodules/formdesigner/src/remoteRequest.js:55
 msgid "Parameters"
-msgstr ""
+msgstr "Manejo de Casos"
 
 #: submodules/formdesigner/src/remoteRequest.js:62
 msgid ""
@@ -4229,9 +4243,5 @@ msgid ""
 msgstr ""
 
 #: submodules/formdesigner/src/saveToCase.js:752
-#, fuzzy
-#| msgid "An error occurred emailing you report. Please try again."
 msgid "An error occurred when parsing bind node [{path}]. Please fix this."
 msgstr ""
-"Une erreur est survenue lors de l'envoi du rapport par courrier "
-"électronique. Veuillez essayer à nouveau."

@@ -26,10 +26,12 @@ from corehq.apps.users.decorators import (
     require_permission,
 )
 from corehq.apps.users.models import Permissions
+from corehq.motech.auth import HTTPBearerAuth
 from corehq.motech.const import (
     ALGO_AES,
     BASIC_AUTH,
     DIGEST_AUTH,
+    BEARER_AUTH,
     PASSWORD_PLACEHOLDER,
 )
 from corehq.motech.repeaters.forms import (
@@ -395,6 +397,8 @@ def test_repeater(request, domain):
             auth = HTTPBasicAuth(username, password)
         elif auth_type == DIGEST_AUTH:
             auth = HTTPDigestAuth(username, password)
+        elif auth_type == BEARER_AUTH:
+            auth = HTTPBearerAuth(username, password)
         else:
             auth = None
 
