@@ -146,14 +146,11 @@ def completely_initialize_pillow_index(pillow):
 
 
 def initialize_index_and_mapping(es, index_info):
-    from corehq.elastic import debug_assert
-    debug_assert(es)
     index_exists = es.indices.exists(index_info.index)
     if not index_exists:
         initialize_index(es, index_info)
     initialize_mapping_if_necessary(es, index_info)
     assume_alias(es, index_info.index, index_info.alias)
-    debug_assert(es)
 
 
 def initialize_index(es, index_info):
