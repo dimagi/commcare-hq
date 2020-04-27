@@ -129,3 +129,9 @@ helper.assign_test_db_names(DATABASES)
 
 # See comment under settings.SMS_QUEUE_ENABLED
 SMS_QUEUE_ENABLED = False
+
+# use all providers in tests
+METRICS_PROVIDERS = [
+    'corehq.util.metrics.datadog.DatadogMetrics',
+    'corehq.util.metrics.prometheus.PrometheusMetrics',
+]
