@@ -289,7 +289,8 @@ hqDefine('export/js/models', [
                 }
 
                 self.buildSchemaProgress(response.progress.percent || 0);
-                if (response.not_started || response.progress.current !== response.progress.total) {
+                if (response.not_started || response.progress.current === null ||
+                        response.progress.current !== response.progress.total) {
                     window.setTimeout(
                         self.checkBuildSchemaProgress.bind(self, response.download_id, successHandler, errorHandler),
                         2000
