@@ -235,3 +235,10 @@ if os.environ.get("COMMCAREHQ_BOOTSTRAP") == "yes":
 BIGCOUCH = True
 
 LOCAL_APPS = ()
+
+REPORTING_DATABASES = {
+    'default': 'default',
+    'ucr': 'default',
+    'aaa-data': 'default',
+    'icds-ucr-citus': 'icds-ucr',
+}

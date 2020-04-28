@@ -146,6 +146,12 @@ class DiffTestCases(SimpleTestCase):
         }
         self._test_form_diff_filter(couch_doc, sql_doc, DELETION_DIFFS + REAL_DIFFS)
 
+    def test_filter_normal_form_deletion_fields(self):
+        self._test_form_diff_filter(
+            {'doc_type': 'XFormInstance', '-deletion_id': 'abc'},
+            {'doc_type': 'XFormInstance'},
+        )
+
     def test_filter_text_xmlns_fields(self):
         self._test_form_diff_filter(
             {'doc_type': 'XFormInstance'},
@@ -703,3 +709,71 @@ class DiffTestCases(SimpleTestCase):
         diffs = json_diff(couch_case, sql_case, track_list_indices=False)
         filtered = filter_case_diffs(couch_case, sql_case, diffs)
         self.assertEqual(filtered, [])
+
+    def test_unsorted_form_history(self):
+        couch_form = {
+            "doc_type": "XFormInstance",
+            "history": [
+                {
+                    "date": "2018-07-05T04:30:52.514324Z",
+                    "doc_type": "XFormOperation",
+                    "operation": "edit",
+                    "user": "d2968d57c858409281551be7ea979d5e"
+                },
+                {
+                    "date": "2018-07-05T04:31:46.808364Z",
+                    "doc_type": "XFormOperation",
+                    "operation": "edit",
+                    "user": "unknown"
+                },
+                {
+                    "date": "2018-07-05T04:30:52.514324Z",
+                    "doc_type": "XFormOperation",
+                    "operation": "edit",
+                    "user": "d2968d57c858409281551be7ea979d5e"
+                },
+                {
+                    "date": "2018-07-05T04:31:46.808364Z",
+                    "doc_type": "XFormOperation",
+                    "operation": "edit",
+                    "user": "unknown"
+                },
+                {
+                    "date": "2018-07-05T04:33:38.949598Z",
+                    "doc_type": "XFormOperation",
+                    "operation": "edit",
+                    "user": "unknown"
+                }
+            ],
+        }
+        sql_form = {
+            "doc_type": "XFormInstance",
+            "history": [
+                {
+                    "date": "2018-07-05T04:30:52.514324Z",
+                    "operation": "edit",
+                    "user": "d2968d57c858409281551be7ea979d5e"
+                },
+                {
+                    "date": "2018-07-05T04:30:52.514324Z",
+                    "operation": "edit",
+                    "user": "d2968d57c858409281551be7ea979d5e"
+                },
+                {
+                    "date": "2018-07-05T04:31:46.808364Z",
+                    "operation": "edit",
+                    "user": "unknown"
+                },
+                {
+                    "date": "2018-07-05T04:31:46.808364Z",
+                    "operation": "edit",
+                    "user": "unknown"
+                },
+                {
+                    "date": "2018-07-05T04:33:38.949598Z",
+                    "operation": "edit",
+                    "user": "unknown"
+                }
+            ],
+        }
+        self._test_form_diff_filter(couch_form, sql_form)

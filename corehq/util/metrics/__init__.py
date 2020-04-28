@@ -115,7 +115,7 @@ from typing import Iterable, Callable, Dict
 
 from celery.task import periodic_task
 
-import settings
+from django.conf import settings
 from corehq.util.timer import TimingContext
 from dimagi.utils.modules import to_function
 from .const import COMMON_TAGS, ALERT_INFO

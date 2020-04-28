@@ -419,7 +419,7 @@
         "field": "is_cf",
         "whens": [
           {
-            "type": "ccs_phase",
+            "type": "complementary_feeding",
             "binds": [
               "cf"
             ],
