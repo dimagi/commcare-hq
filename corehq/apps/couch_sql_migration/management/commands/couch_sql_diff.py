@@ -22,7 +22,7 @@ from corehq.form_processor.utils import should_use_sql_backend
 from corehq.util.log import with_progress_bar
 
 from ...casediff import get_couch_cases
-from ...casedifftool import do_case_diffs, format_diffs, get_migrator
+from ...casedifftool import do_case_diffs, do_case_patch, format_diffs, get_migrator
 from ...couchsqlmigration import setup_logging
 from ...diff import filter_case_diffs, filter_form_diffs
 from ...missingdocs import MissingIds
@@ -32,6 +32,7 @@ from ...statedb import Counts, StateDB, open_state_db
 log = logging.getLogger(__name__)
 
 CASES = "cases"
+PATCH = "patch"
 SHOW = "show"
 FILTER = "filter"
 
@@ -44,8 +45,9 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('domain')
-        parser.add_argument('action', choices=[CASES, SHOW, FILTER], help="""
+        parser.add_argument('action', choices=[CASES, PATCH, SHOW, FILTER], help="""
             "cases": diff cases.
+            "patch": patch cases with diffs.
             "show": print diffs.
             "filter": filter diffs, removing ones that would normally be
             filtered out. This is useful when new diff ignore rules have
@@ -65,10 +67,10 @@ class Command(BaseCommand):
             help='''
                 Diff specific items. The value of this option may be
                 'pending' to clear out in-process diffs OR 'with-diffs'
-                to re-diff items that previously had diffs OR a
-                comma-delimited list of case ids OR a path to a file
-                containing a case id on each line. The path must begin
-                with / or ./
+                or 'with-changes' to re-diff items that previously had
+                diffs or changes respectively OR a comma-delimited list
+                of case ids OR a path to a file containing a case id on
+                each line. The path must begin with / or ./
 
                 With the "show" or "filter" actions, this option should
                 be a doc type, optionally followed by a colon and one or
@@ -153,6 +155,11 @@ class Command(BaseCommand):
         migrator = get_migrator(domain, self.state_path)
         return do_case_diffs(migrator, self.select, self.stop, self.batch_size)
 
+    def do_patch(self, domain):
+        setup_logging(self.state_path, "case_patch", self.debug)
+        migrator = get_migrator(domain, self.state_path)
+        return do_case_patch(migrator, self.select, self.stop, self.batch_size)
+
     def do_show(self, domain):
         """Show diffs from state db"""
         statedb = self.open_state_db(domain)
@@ -162,13 +169,13 @@ class Command(BaseCommand):
             items = statedb.iter_doc_changes(**select)
         else:
             items = statedb.iter_doc_diffs(**select)
-        prompt = not self.csv
+        prompt = os.isatty(sys.stdout.fileno()) and not self.csv
         if self.csv:
             items = self.with_progress(items, statedb, select)
             print(CSV_HEADERS, file=sys.stdout)
         try:
             for doc_diffs in chunked(items, self.batch_size, list):
-                format_doc_diffs(doc_diffs, self.csv, self.changes, sys.stdout)
+                format_doc_diffs(doc_diffs, self.csv, self.changes)
                 if len(doc_diffs) < self.batch_size:
                     continue
                 if prompt and not confirm("show more?"):
@@ -378,13 +385,13 @@ class Command(BaseCommand):
             delete_all(DiffedCase)
 
 
-def format_doc_diffs(doc_diffs, csv, changes, stream):
+def format_doc_diffs(doc_diffs, csv=False, changes=None, stream=sys.stdout):
     json_diffs = iter_json_diffs(doc_diffs)
     if csv:
         related = dict(iter_related(doc_diffs))
         csv_diffs(json_diffs, related, changes, stream)
     else:
-        print(format_diffs(json_diffs, changes), file=stream)
+        print(format_diffs(json_diffs), file=stream)
 
 
 CASE = "CommCareCase"
@@ -433,8 +440,7 @@ def iter_json_diffs(doc_diffs):
 
     for kind, doc_id, diffs in doc_diffs:
         assert kind != STOCK
-        dxx = [d.json_diff for d in diffs if d.kind != STOCK]
-        yield kind, doc_id, dxx
+        yield kind, doc_id, [d.json_diff for d in diffs if d.kind != STOCK]
         stock_diffs = [d for d in diffs if d.kind == STOCK]
         if stock_diffs:
             yield from iter_stock_diffs(stock_diffs)

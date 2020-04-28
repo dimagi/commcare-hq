@@ -60,3 +60,27 @@ class ProductPlanNotFoundError(Exception):
 
 class EnterpriseReportError(Exception):
     pass
+
+
+class NoActiveSubscriptionError(Exception):
+    pass
+
+
+class MultipleActiveSubscriptionsError(Exception):
+    pass
+
+
+class ActiveSubscriptionWithoutDomain(Exception):
+    pass
+
+
+class CreditLineBalanceMismatchError(Exception):
+    pass
+
+
+class AccountingCommunicationError(Exception):
+    pass
+
+
+class SubscriptionTaskError(Exception):
+    pass

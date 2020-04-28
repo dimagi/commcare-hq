@@ -1,12 +1,21 @@
-from mock.mock import MagicMock
 import mock
+from mock.mock import MagicMock
 
+from corehq.util.test_utils import softer_assert
+from custom.up_nrhm.reports.asha_facilitators_report import (
+    ASHAFacilitatorsReport,
+)
+from custom.up_nrhm.reports.asha_functionality_checklist_report import (
+    ASHAFunctionalityChecklistReport,
+)
 from custom.up_nrhm.reports.block_level_af_report import BlockLevelAFReport
-from custom.up_nrhm.reports.block_level_month_report import BlockLevelMonthReport
-from custom.up_nrhm.reports.district_functionality_report import DistrictFunctionalityReport
+from custom.up_nrhm.reports.block_level_month_report import (
+    BlockLevelMonthReport,
+)
+from custom.up_nrhm.reports.district_functionality_report import (
+    DistrictFunctionalityReport,
+)
 from custom.up_nrhm.tests.utils import UpNrhmTestCase
-from custom.up_nrhm.reports.asha_functionality_checklist_report import ASHAFunctionalityChecklistReport
-from custom.up_nrhm.reports.asha_facilitators_report import ASHAFacilitatorsReport
 
 RUN_QUERY_VALUE = {
     'hits': {
@@ -66,6 +75,7 @@ class TestASHAFunctionalityChecklistReport(UpNrhmTestCase):
             ]
         )
 
+    @softer_assert("to add back post https://github.com/dimagi/sql-agg/pull/56")
     @mock.patch('corehq.apps.es.es_query.run_query', return_value=RUN_QUERY_VALUE)
     def test_asha_facilitators_report(self, mock_run_query):
         mock = MagicMock()
@@ -135,6 +145,7 @@ class TestASHAFunctionalityChecklistReport(UpNrhmTestCase):
             for record in expected[0][i]:
                 self.assertIn(record, rows[0][i])
 
+    @softer_assert("to add back post https://github.com/dimagi/sql-agg/pull/56")
     @mock.patch('corehq.apps.es.es_query.run_query', return_value=RUN_QUERY_VALUE)
     def test_block_level_month_report(self, mock_run_query):
         mock = MagicMock()
@@ -213,6 +224,7 @@ class TestASHAFunctionalityChecklistReport(UpNrhmTestCase):
             for record in expected[0][i]:
                 self.assertIn(record, rows[0][i])
 
+    @softer_assert("to add back post https://github.com/dimagi/sql-agg/pull/56")
     @mock.patch('corehq.apps.es.es_query.run_query', return_value=RUN_QUERY_VALUE)
     def test_block_level_af_report(self, mock_run_query):
         mock = MagicMock()
@@ -352,6 +364,7 @@ class TestASHAFunctionalityChecklistReport(UpNrhmTestCase):
             for record in expected[0][i]:
                 self.assertIn(record, rows[0][i])
 
+    @softer_assert("to add back post https://github.com/dimagi/sql-agg/pull/56")
     @mock.patch('corehq.apps.es.es_query.run_query', return_value=RUN_QUERY_VALUE)
     def test_district_functionality_report(self, mock_run_query):
         mock = MagicMock()

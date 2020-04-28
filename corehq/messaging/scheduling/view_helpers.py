@@ -232,10 +232,6 @@ class ConditionalAlertUploader(object):
                 row_index += 1
             new_messages.append(new_message)
 
-        if message_dirty:
-            if any(True for message in new_messages for value in message.values() if not value):
-                raise RuleUpdateError(_("Missing message"))
-
         {
             ScheduleForm.SEND_IMMEDIATELY: self._save_immediate_schedule,
             ScheduleForm.SEND_DAILY: self._save_daily_schedule,

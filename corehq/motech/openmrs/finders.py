@@ -8,7 +8,6 @@ See `README.md`__ for more context.
 import logging
 from collections import namedtuple
 from functools import partial
-from operator import eq
 from pprint import pformat
 
 from dimagi.ext.couchdbkit import (
@@ -16,30 +15,17 @@ from dimagi.ext.couchdbkit import (
     DictProperty,
     DocumentSchema,
     ListProperty,
-    StringProperty,
 )
 
-from corehq.motech.openmrs.const import OPENMRS_DATA_TYPE_BOOLEAN
-from corehq.motech.openmrs.finders_utils import (
-    le_days_diff,
-    le_levenshtein_percent,
+from corehq.motech.finders import (
+    MATCH_FUNCTIONS,
+    PropertyWeight,
 )
+from corehq.motech.openmrs.const import OPENMRS_DATA_TYPE_BOOLEAN
 from corehq.motech.value_source import (
-    as_value_source,
     deserialize,
     recurse_subclasses,
 )
-
-MATCH_TYPE_EXACT = 'exact'
-MATCH_TYPE_LEVENSHTEIN = 'levenshtein'  # Useful for words translated across alphabets
-MATCH_TYPE_DAYS_DIFF = 'days_diff'  # Useful for estimated dates of birth
-MATCH_FUNCTIONS = {
-    MATCH_TYPE_EXACT: eq,
-    MATCH_TYPE_LEVENSHTEIN: le_levenshtein_percent,
-    MATCH_TYPE_DAYS_DIFF: le_days_diff,
-}
-MATCH_TYPES = tuple(MATCH_FUNCTIONS)
-MATCH_TYPE_DEFAULT = MATCH_TYPE_EXACT
 
 logger = logging.getLogger(__name__)
 
@@ -119,13 +105,6 @@ class PatientFinder(DocumentSchema):
 
 
 PatientScore = namedtuple('PatientScore', ['patient', 'score'])
-
-
-class PropertyWeight(DocumentSchema):
-    case_property = StringProperty()
-    weight = DecimalProperty()
-    match_type = StringProperty(required=False, choices=MATCH_TYPES, default=MATCH_TYPE_DEFAULT)
-    match_params = ListProperty(required=False)
 
 
 class WeightedPropertyPatientFinder(PatientFinder):
@@ -236,7 +215,7 @@ class WeightedPropertyPatientFinder(PatientFinder):
         patients_scores = sorted(candidates.values(), key=lambda candidate: candidate.score, reverse=True)
         if patients_scores[0].score / patients_scores[1].score > 1 + self.confidence_margin:
             # There is more than a `confidence_margin` difference
-            # (defaults to 10%) in score between the best-ranked
+            # (defaults to 66.7%) in score between the best-ranked
             # patient and the second-best-ranked patient. Let's go with
             # Patient One.
             patient = patients_scores[0].patient

@@ -59,7 +59,7 @@ class SQLTwilioBackend(SQLSMSBackend, PhoneLoadBalancingMixin):
 
     @classmethod
     def convert_to_whatsapp(cls, number):
-        if WHATSAPP_PREFIX in number:
+        if number.startswith(WHATSAPP_PREFIX):
             return number
         return f"{WHATSAPP_PREFIX}{number}"
 

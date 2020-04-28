@@ -1018,6 +1018,8 @@ the UI. A report configuration consists of a few different sections:
 4. `Charts <#charts>`__ - Definition of charts to display on the report.
 5. `Sort Expression <#sort-expression>`__ - How the rows in the report
    are ordered.
+6. `Distinct On <#distinct-on>`__ - Pick distinct rows from result based
+   on columns.
 
 Samples
 -------
@@ -2051,6 +2053,67 @@ Field should refer to report column IDs, not database fields.
        "order": "ASC"
      }
    ]
+
+Distinct On
+-----------
+Can be used to limit the rows in a report based on a single column or set of columns.
+The top most row is picked in case of duplicates.
+
+This is different from aggregation in sense that this is done after fetching
+the rows, whereas aggregation is done before selecting the rows.
+
+This is used in combination with a sort expression to have predictable results.
+
+Please note that the columns used in distinct on clause should also be present
+in the sort expression as the first set of columns in the same order.
+
+Pick distinct by a single column
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Sort expression should have column1 and then other columns if needed
+
+.. code:: json
+
+   [
+     {
+       "field": "column1",
+       "order": "DESC"
+     },
+     {
+       "field": "column2",
+       "order": "ASC"
+     }
+   ]
+
+and distinct on would be
+
+.. code:: json
+
+   ["column1"]
+
+Pick distinct result based on two columns
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+Sort expression should have column1 and column2 in same order,
+More columns can be added after these if needed
+
+.. code:: json
+
+   [
+     {
+       "field": "column1",
+       "order": "DESC"
+     },
+     {
+       "field": "column2",
+       "order": "ASC"
+     }
+   ]
+
+and distinct on would be
+
+.. code:: json
+
+   ["column1", "column2"]
 
 Mobile UCR
 ==========

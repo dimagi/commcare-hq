@@ -17,7 +17,7 @@ from corehq.motech.dhis2.repeaters import Dhis2Repeater
 DOMAIN = "dhis2-test"
 
 
-class TestDhisHandler(TestCase):
+class TestDhis2EventsHelpers(TestCase):
 
     @classmethod
     def setUpClass(cls):

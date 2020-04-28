@@ -23,7 +23,7 @@ npm install -g mapshaper
 
 ## Functionality
 
-The `get_topojson_for_district` function first looks up the appropriate state file
+The `get_block_topojson_for_state` function first looks up the appropriate state file
 for the district by matching on the district name. 
 Then returns the appropriate topojson file for the whole state.
 

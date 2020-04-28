@@ -318,7 +318,7 @@ class OwnernameComputedCasePropertyOption(ColumnOption):
         }
 
     def to_column_dicts(self, index, display_text, ui_aggregation, is_aggregated_on=False):
-        column_dicts = super(OwnernameComputedCasePropertyOption, self).to_column_dicts(
+        column_dicts = super().to_column_dicts(
             index, display_text, ui_aggregation
         )
         column_dicts[0]['transform'] = {

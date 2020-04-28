@@ -1,23 +1,35 @@
 import uuid
 from io import StringIO
 
-import mock
 from django.core.management import call_command
 from django.test import TestCase
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
+
+import mock
 from corehq.apps.domain.models import Domain
+from corehq.apps.hqadmin.management.commands.stale_data_in_es import DataRow
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.elastic import get_es_new, send_to_elasticsearch
-from corehq.form_processor.document_stores import FormDocumentStore, CaseDocumentStore
-from corehq.form_processor.utils.xform import FormSubmissionBuilder, TestFormMetadata
+from corehq.form_processor.document_stores import (
+    CaseDocumentStore,
+    FormDocumentStore,
+)
+from corehq.form_processor.utils.xform import (
+    FormSubmissionBuilder,
+    TestFormMetadata,
+)
 from corehq.pillows.case import transform_case_for_elasticsearch
 from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
 from corehq.pillows.xform import transform_xform_for_elasticsearch
 from corehq.util.elastic import reset_es_index
 from corehq.util.es import elasticsearch
+
+
+class ExitEarlyException(Exception):
+    pass
 
 
 class TestStaleDataInESSQL(TestCase):
@@ -43,6 +55,95 @@ class TestStaleDataInESSQL(TestCase):
 
     def test_case_missing_then_not_domain_specific(self):
         self._test_case_missing_then_not({'domain': self.project.name})
+
+    def test_case_resume(self):
+        iteration_key = uuid.uuid4().hex
+
+        def _make_fake_es_check(num_to_process):
+            seen = []
+
+            def _fake_es_check(chunk):
+                chunk = list(chunk)
+                if len(seen) == num_to_process:
+                    raise ExitEarlyException(seen)
+                seen.extend(chunk)
+                for case_id, case_type, modified_on, domain in chunk:
+                    yield DataRow(
+                        doc_id=case_id, doc_type='CommCareCase', doc_subtype=case_type, domain=domain,
+                        es_date=None, primary_date=modified_on
+                    )
+
+            return _fake_es_check
+
+        def call(num_to_process=None, expect_exception=None):
+            _fake_es_check = _make_fake_es_check(num_to_process)
+            patch_path = 'corehq.apps.hqadmin.management.commands.stale_data_in_es'
+            with mock.patch(f'{patch_path}.CHUNK_SIZE', 1),\
+                    mock.patch(f'{patch_path}.CaseBackend._yield_missing_in_es', _fake_es_check):
+                return self._stale_data_in_es(
+                    'case', iteration_key=iteration_key, expect_exception=expect_exception
+                )
+
+        form, cases = self._submit_form(self.project.name, new_cases=4)
+        if not self.use_sql_backend:
+            # the couch view is sorted by case_id
+            cases = list(sorted(cases, key=lambda c: c.case_id))
+
+        # process first 2 then raise exception
+        self._assert_not_in_sync(call(2, expect_exception=ExitEarlyException), rows=[
+            (case.case_id, 'CommCareCase', case.type, case.domain, None, case.server_modified_on)
+            for case in cases[:2]
+        ])
+
+        # process rest - should start at 3rd doc
+        self._assert_not_in_sync(call(4), rows=[
+            (case.case_id, 'CommCareCase', case.type, case.domain, None, case.server_modified_on)
+            for case in cases[2:]
+        ])
+
+    def test_form_resume(self):
+        iteration_key = uuid.uuid4().hex
+
+        def _make_fake_es_check(num_to_process):
+            seen = []
+
+            def _fake_es_check(chunk):
+                chunk = list(chunk)
+                if len(seen) == num_to_process:
+                    raise ExitEarlyException(seen)
+                seen.extend(chunk)
+                for form_id, doc_type, xmlns, modified_on, domain in chunk:
+                    yield DataRow(
+                        doc_id=form_id, doc_type=doc_type, doc_subtype=xmlns, domain=domain,
+                        es_date=None, primary_date=modified_on
+                    )
+
+            return _fake_es_check
+
+        def call(num_to_process=None, expect_exception=None):
+            _fake_es_check = _make_fake_es_check(num_to_process)
+            patch_path = 'corehq.apps.hqadmin.management.commands.stale_data_in_es'
+            with mock.patch(f'{patch_path}.CHUNK_SIZE', 1), \
+                    mock.patch(f'{patch_path}.FormBackend._yield_missing_in_es', _fake_es_check):
+                return self._stale_data_in_es(
+                    'form', iteration_key=iteration_key, expect_exception=expect_exception
+                )
+
+        forms = [
+            self._submit_form(self.project.name)[0] for i in range(4)
+        ]
+
+        # process first 2 then raise exception
+        self._assert_not_in_sync(call(2, expect_exception=ExitEarlyException), rows=[
+            (form.form_id, 'XFormInstance', form.xmlns, form.domain, None, form.received_on)
+            for form in forms[:2]
+        ])
+
+        # process rest - should start at 3rd doc
+        self._assert_not_in_sync(call(4), rows=[
+            (form.form_id, 'XFormInstance', form.xmlns, form.domain, None, form.received_on)
+            for form in forms[2:]
+        ])
 
     def _test_form_missing_then_not(self, cmd_kwargs):
         def call():
@@ -92,11 +193,15 @@ class TestStaleDataInESSQL(TestCase):
         self._send_cases_to_es([case])
         self._assert_in_sync(call())
 
-    @staticmethod
-    def _stale_data_in_es(*args, **kwargs):
+    def _stale_data_in_es(self, *args, **kwargs):
         f = StringIO()
+        expect_exception = kwargs.pop('expect_exception', None)
         with mock.patch('sys.stdout', f):
-            call_command('stale_data_in_es', *args, stdout=f, **kwargs)
+            if expect_exception:
+                with self.assertRaises(expect_exception):
+                    call_command('stale_data_in_es', *args, stdout=f, **kwargs)
+            else:
+                call_command('stale_data_in_es', *args, stdout=f, **kwargs)
         return f.getvalue()
 
     def _submit_form(self, domain, new_cases=0, update_cases=()):

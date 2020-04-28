@@ -9,9 +9,8 @@ from corehq.project_limits.rate_limiter import (
 from corehq.project_limits.shortcuts import get_standard_ratio_rate_definition
 from corehq.toggles import DO_NOT_RATE_LIMIT_SUBMISSIONS, \
     TEST_FORM_SUBMISSION_RATE_LIMIT_RESPONSE
-from corehq.util.datadog.utils import bucket_value
 from corehq.util.decorators import run_only_when, silence_and_report_error
-from corehq.util.metrics import metrics_counter, metrics_gauge
+from corehq.util.metrics import metrics_counter, metrics_gauge, bucket_value
 from corehq.util.quickcache import quickcache
 from corehq.util.timer import TimingContext
 

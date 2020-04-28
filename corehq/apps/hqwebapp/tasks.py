@@ -5,10 +5,9 @@ from celery.schedules import crontab
 from celery.task import task, periodic_task
 
 from corehq.util.bounced_email_manager import BouncedEmailManager
-from corehq.util.metrics import metrics_gauge_task
+from corehq.util.metrics import metrics_gauge_task, metrics_track_errors
 from dimagi.utils.logging import notify_exception
 
-from corehq.util.datadog.gauges import datadog_track_errors
 from corehq.util.log import send_HTML_email
 
 
@@ -112,7 +111,7 @@ def process_bounced_emails():
         try:
             with BouncedEmailManager(
                 delete_processed_messages=True
-            ) as bounced_manager, datadog_track_errors('process_bounced_emails_task'):
+            ) as bounced_manager, metrics_track_errors('process_bounced_emails_task'):
                 bounced_manager.process_aws_notifications()
                 bounced_manager.process_daemon_messages()
         except Exception as e:

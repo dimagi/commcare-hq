@@ -1,0 +1,404 @@
+<?xml version="1.0" ?>
+<data name="Delivery" uiVersion="1" version="4" xmlns="http://openrosa.org/formdesigner/376FA2E1-6FD1-4C9E-ACB4-E046038CD5E2" xmlns:jrm="http://dev.commcarehq.org/jr/xforms">
+	<app_scope>cas</app_scope>
+	<user_role/>
+	<relationship_type>child</relationship_type>
+	<owner_id>fd1172705461489e9225ad226f21bbaf</owner_id>
+	<mother_name>Preg_Lady_with_Aadhaar</mother_name>
+	<mother_resident_status>no</mother_resident_status>
+	<mother_dob>1989-10-20</mother_dob>
+	<edd>2020-04-09</edd>
+	<prev_referral_status/>
+	<gps_location/>
+	<has_delivered>yes</has_delivered>
+	<is_pregnant/>
+	<date_notified>2020-04-09</date_notified>
+	<time_notified>16:44:00.000+05:30</time_notified>
+	<month_reported>4</month_reported>
+	<add>2020-04-09</add>
+	<preterm_check>full_term</preterm_check>
+	<safe>yes</safe>
+	<open_action_removal>no</open_action_removal>
+	<mother_close>no</mother_close>
+	<mother_alive>yes</mother_alive>
+	<mother_dead>no</mother_dead>
+	<where_born>hospital</where_born>
+	<which_hospital>block_phc</which_hospital>
+	<in_district>yes</in_district>
+	<jsy_money>no</jsy_money>
+	<delivery_nature>vaginal</delivery_nature>
+	<discharge_check>no</discharge_check>
+	<how_many_children>2</how_many_children>
+	<confirm_two_children>yes</confirm_two_children>
+	<num_children_del>2</num_children_del>
+	<child>
+		<position>0</position>
+		<position_num>1</position_num>
+		<message_child>OK</message_child>
+		<time_birth>16:46:00.000+05:30</time_birth>
+		<sex>M</sex>
+		<child_have_a_name>yes</child_have_a_name>
+		<child_name>child 1</child_name>
+		<child_temp_name_multiple>Preg_Lady_with_Aadhaar 's child 1</child_temp_name_multiple>
+		<child_temp_name_final>Preg_Lady_with_Aadhaar 's child 1</child_temp_name_final>
+		<child_current_name>child 1</child_current_name>
+		<child_cried>yes</child_cried>
+		<still_live_birth>live</still_live_birth>
+		<open_child_case>yes</open_child_case>
+		<child_died_check>0</child_died_check>
+		<child_birth_weight_recorded/>
+		<birth_weight_kg/>
+		<birth_weight_kg_int/>
+		<birth_weight_grams_int/>
+		<sd3neg_wfa/>
+		<sd2neg_wfa/>
+		<mean_wfa/>
+		<sd2pos_wfa/>
+		<sd3pos_wfa/>
+		<zscore_unrounded_wfa/>
+		<zscore_wfa/>
+		<zscore_grading_wfa/>
+		<zscore1/>
+		<display_icon_z1>grey</display_icon_z1>
+		<display_icon_z2>grey</display_icon_z2>
+		<display_icon_z3>grey</display_icon_z3>
+		<display_icon_z4>grey</display_icon_z4>
+		<dob>2020-04-09</dob>
+		<age_in_days/>
+		<age_weeks_rounded/>
+		<L_wfa/>
+		<M_wfa/>
+		<S_wfa/>
+		<zscore_wfa_change_status>no_prev</zscore_wfa_change_status>
+		<count>1</count>
+		<weight_calculated>no</weight_calculated>
+		<age_in_months/>
+		<check_test/>
+		<age_in_weeks/>
+		<nutritional_status_group>
+			<WFA_status_val>Normal</WFA_status_val>
+		</nutritional_status_group>
+		<z_score_wfa_ql>
+			<nutrition_status/>
+			<nutrition_status_hindi/>
+		</z_score_wfa_ql>
+		<low_birth_weight/>
+		<skin_care/>
+		<wrapped_dried/>
+		<cord_cut/>
+		<cord_tied/>
+		<cord_applied/>
+		<breastfed_within_first_hour/>
+		<abnormalities/>
+		<add_vaccinations>no</add_vaccinations>
+		<iteration count="36" current_index="0" ids="b1be1892fd8ad911c80e41b8769a58c9 b1be1892fd8ad911c80e41b8769a6219 b1be1892fd8ad911c80e41b8769a64a5 b1be1892fd8ad911c80e41b8769a6aaf b1be1892fd8ad911c80e41b8769a6bf3 b1be1892fd8ad911c80e41b8769a79fe b1be1892fd8ad911c80e41b8769a8326 b1be1892fd8ad911c80e41b8769a90e0 b1be1892fd8ad911c80e41b8769a9ca6 b1be1892fd8ad911c80e41b8769aa7eb b1be1892fd8ad911c80e41b8769ab057 b1be1892fd8ad911c80e41b8769ab434 b1be1892fd8ad911c80e41b8769ab6fe b1be1892fd8ad911c80e41b8769abda2 b1be1892fd8ad911c80e41b8769ac85e b1be1892fd8ad911c80e41b8769acb54 b1be1892fd8ad911c80e41b8769ad478 b1be1892fd8ad911c80e41b8769aed92 b1be1892fd8ad911c80e41b8769af113 b1be1892fd8ad911c80e41b8769afd74 b1be1892fd8ad911c80e41b8769b0aca b1be1892fd8ad911c80e41b8769b29dc b1be1892fd8ad911c80e41b8769b2ebb b1be1892fd8ad911c80e41b8769b3868 b1be1892fd8ad911c80e41b8769b3ef1 b1be1892fd8ad911c80e41b8769b3fd0 b1be1892fd8ad911c80e41b8769b443f b1be1892fd8ad911c80e41b8769b459e b1be1892fd8ad911c80e41b8769b45dd b1be1892fd8ad911c80e41b8769b55cb b1be1892fd8ad911c80e41b8769b55e3 b1be1892fd8ad911c80e41b8769b5abf b1be1892fd8ad911c80e41b8769b6982 b1be1892fd8ad911c80e41b8769b7328 b1be1892fd8ad911c80e41b8769b74d1 b5103e07edf1653467b938053f41e2b2"/>
+		<calc_due_min_max count="36" current_index="0" ids="b1be1892fd8ad911c80e41b8769a58c9 b1be1892fd8ad911c80e41b8769a6219 b1be1892fd8ad911c80e41b8769a64a5 b1be1892fd8ad911c80e41b8769a6aaf b1be1892fd8ad911c80e41b8769a6bf3 b1be1892fd8ad911c80e41b8769a79fe b1be1892fd8ad911c80e41b8769a8326 b1be1892fd8ad911c80e41b8769a90e0 b1be1892fd8ad911c80e41b8769a9ca6 b1be1892fd8ad911c80e41b8769aa7eb b1be1892fd8ad911c80e41b8769ab057 b1be1892fd8ad911c80e41b8769ab434 b1be1892fd8ad911c80e41b8769ab6fe b1be1892fd8ad911c80e41b8769abda2 b1be1892fd8ad911c80e41b8769ac85e b1be1892fd8ad911c80e41b8769acb54 b1be1892fd8ad911c80e41b8769ad478 b1be1892fd8ad911c80e41b8769aed92 b1be1892fd8ad911c80e41b8769af113 b1be1892fd8ad911c80e41b8769afd74 b1be1892fd8ad911c80e41b8769b0aca b1be1892fd8ad911c80e41b8769b29dc b1be1892fd8ad911c80e41b8769b2ebb b1be1892fd8ad911c80e41b8769b3868 b1be1892fd8ad911c80e41b8769b3ef1 b1be1892fd8ad911c80e41b8769b3fd0 b1be1892fd8ad911c80e41b8769b443f b1be1892fd8ad911c80e41b8769b459e b1be1892fd8ad911c80e41b8769b45dd b1be1892fd8ad911c80e41b8769b55cb b1be1892fd8ad911c80e41b8769b55e3 b1be1892fd8ad911c80e41b8769b5abf b1be1892fd8ad911c80e41b8769b6982 b1be1892fd8ad911c80e41b8769b7328 b1be1892fd8ad911c80e41b8769b74d1 b5103e07edf1653467b938053f41e2b2"/>
+		<due_list_min_eligible>18361</due_list_min_eligible>
+		<due_list_max_expires>20553</due_list_max_expires>
+		<schedule_flag>dpt_hepb</schedule_flag>
+		<child_health_case_name>child_health</child_health_case_name>
+		<tasks_case_name>tasks</tasks_case_name>
+		<measurement_case_name>measurement</measurement_case_name>
+		<tasks_type>child</tasks_type>
+		<case_open_person_1>
+			<n0:case case_id="305ad92b-f8d7-46f6-b463-680c85bbf7ae" date_modified="2020-04-09T16:46:59.256+05:30" user_id="3ef9dcb3cc7b4c7a9840cd0955a3c0e6" xmlns:n0="http://commcarehq.org/case/transaction/v2">
+				<n0:create>
+					<n0:case_name>child 1</n0:case_name>
+					<n0:owner_id>3ef9dcb3cc7b4c7a9840cd0955a3c0e6</n0:owner_id>
+					<n0:case_type>person</n0:case_type>
+				</n0:create>
+				<n0:update>
+					<n0:dob>2020-04-09</n0:dob>
+					<n0:owner_id>fd1172705461489e9225ad226f21bbaf</n0:owner_id>
+					<n0:resident>no</n0:resident>
+					<n0:sex>M</n0:sex>
+					<n0:time_birth>16:46:00.000+05:30</n0:time_birth>
+				</n0:update>
+				<n0:index>
+					<n0:mother case_type="person">5d82610a-17e8-46d2-8c76-0f06cd68d3d2</n0:mother>
+					<n0:parent case_type="household" relationship="child">7dec66fc-0b83-4af6-9fb1-3816570d9fd9</n0:parent>
+				</n0:index>
+			</n0:case>
+		</case_open_person_1>
+		<case_open_child_health_3>
+			<n1:case case_id="fc3683ef-94d8-4d0f-a681-148cc7d3b659" date_modified="2020-04-09T16:46:59.256+05:30" user_id="3ef9dcb3cc7b4c7a9840cd0955a3c0e6" xmlns:n1="http://commcarehq.org/case/transaction/v2">
+				<n1:create>
+					<n1:case_name>child_health</n1:case_name>
+					<n1:owner_id>-</n1:owner_id>
+					<n1:case_type>child_health</n1:case_type>
+				</n1:create>
+				<n1:update>
+					<n1:abnormalities/>
+					<n1:breastfed_within_first/>
+					<n1:cord_applied/>
+					<n1:cord_cut/>
+					<n1:cord_tied/>
+					<n1:count>1</n1:count>
+					<n1:display_icon_z1>grey</n1:display_icon_z1>
+					<n1:display_icon_z2>grey</n1:display_icon_z2>
+					<n1:display_icon_z3>grey</n1:display_icon_z3>
+					<n1:display_icon_z4>grey</n1:display_icon_z4>
+					<n1:low_birth_weight/>
+					<n1:owner_id>fd1172705461489e9225ad226f21bbaf</n1:owner_id>
+					<n1:preterm_check>full_term</n1:preterm_check>
+					<n1:skin_care/>
+					<n1:weight_child/>
+					<n1:wfa_nutrition_status>Normal</n1:wfa_nutrition_status>
+					<n1:wrapped_dried/>
+					<n1:zscore1/>
+					<n1:zscore_grading_wfa/>
+				</n1:update>
+				<n1:index>
+					<n1:parent case_type="person" relationship="extension">305ad92b-f8d7-46f6-b463-680c85bbf7ae</n1:parent>
+				</n1:index>
+			</n1:case>
+		</case_open_child_health_3>
+		<case_open_measurement_1/>
+		<case_open_tasks_3>
+			<n2:case case_id="26861bee-c124-4a41-a9d5-29e02386450d" date_modified="2020-04-09T16:46:59.256+05:30" user_id="3ef9dcb3cc7b4c7a9840cd0955a3c0e6" xmlns:n2="http://commcarehq.org/case/transaction/v2">
+				<n2:create>
+					<n2:case_name>tasks</n2:case_name>
+					<n2:owner_id>-</n2:owner_id>
+					<n2:case_type>tasks</n2:case_type>
+				</n2:create>
+				<n2:update>
+					<n2:due_list_max_expires>20553</n2:due_list_max_expires>
+					<n2:due_list_min_eligible>18361</n2:due_list_min_eligible>
+					<n2:owner_id>fd1172705461489e9225ad226f21bbaf</n2:owner_id>
+					<n2:schedule_flag>dpt_hepb</n2:schedule_flag>
+					<n2:tasks_type>child</n2:tasks_type>
+				</n2:update>
+				<n2:index>
+					<n2:parent case_type="child_health" relationship="extension">fc3683ef-94d8-4d0f-a681-148cc7d3b659</n2:parent>
+				</n2:index>
+			</n2:case>
+		</case_open_tasks_3>
+	</child>
+	<child>
+		<position>1</position>
+		<position_num>2</position_num>
+		<message_child>OK</message_child>
+		<time_birth>16:46:00.000+05:30</time_birth>
+		<sex>F</sex>
+		<child_have_a_name>yes</child_have_a_name>
+		<child_name>child 2</child_name>
+		<child_temp_name_multiple>Preg_Lady_with_Aadhaar 's child 2</child_temp_name_multiple>
+		<child_temp_name_final>Preg_Lady_with_Aadhaar 's child 2</child_temp_name_final>
+		<child_current_name>child 2</child_current_name>
+		<child_cried>yes</child_cried>
+		<still_live_birth>live</still_live_birth>
+		<open_child_case>yes</open_child_case>
+		<child_died_check>0</child_died_check>
+		<child_birth_weight_recorded/>
+		<birth_weight_kg/>
+		<birth_weight_kg_int/>
+		<birth_weight_grams_int/>
+		<sd3neg_wfa/>
+		<sd2neg_wfa/>
+		<mean_wfa/>
+		<sd2pos_wfa/>
+		<sd3pos_wfa/>
+		<zscore_unrounded_wfa/>
+		<zscore_wfa/>
+		<zscore_grading_wfa/>
+		<zscore1/>
+		<display_icon_z1>grey</display_icon_z1>
+		<display_icon_z2>grey</display_icon_z2>
+		<display_icon_z3>grey</display_icon_z3>
+		<display_icon_z4>grey</display_icon_z4>
+		<dob>2020-04-09</dob>
+		<age_in_days/>
+		<age_weeks_rounded/>
+		<L_wfa/>
+		<M_wfa/>
+		<S_wfa/>
+		<zscore_wfa_change_status>no_prev</zscore_wfa_change_status>
+		<count>1</count>
+		<weight_calculated>no</weight_calculated>
+		<age_in_months/>
+		<check_test/>
+		<age_in_weeks/>
+		<nutritional_status_group>
+			<WFA_status_val>Normal</WFA_status_val>
+		</nutritional_status_group>
+		<z_score_wfa_ql>
+			<nutrition_status/>
+			<nutrition_status_hindi/>
+		</z_score_wfa_ql>
+		<low_birth_weight/>
+		<skin_care/>
+		<wrapped_dried/>
+		<cord_cut/>
+		<cord_tied/>
+		<cord_applied/>
+		<breastfed_within_first_hour/>
+		<abnormalities/>
+		<add_vaccinations>no</add_vaccinations>
+		<iteration count="36" current_index="0" ids="b1be1892fd8ad911c80e41b8769a58c9 b1be1892fd8ad911c80e41b8769a6219 b1be1892fd8ad911c80e41b8769a64a5 b1be1892fd8ad911c80e41b8769a6aaf b1be1892fd8ad911c80e41b8769a6bf3 b1be1892fd8ad911c80e41b8769a79fe b1be1892fd8ad911c80e41b8769a8326 b1be1892fd8ad911c80e41b8769a90e0 b1be1892fd8ad911c80e41b8769a9ca6 b1be1892fd8ad911c80e41b8769aa7eb b1be1892fd8ad911c80e41b8769ab057 b1be1892fd8ad911c80e41b8769ab434 b1be1892fd8ad911c80e41b8769ab6fe b1be1892fd8ad911c80e41b8769abda2 b1be1892fd8ad911c80e41b8769ac85e b1be1892fd8ad911c80e41b8769acb54 b1be1892fd8ad911c80e41b8769ad478 b1be1892fd8ad911c80e41b8769aed92 b1be1892fd8ad911c80e41b8769af113 b1be1892fd8ad911c80e41b8769afd74 b1be1892fd8ad911c80e41b8769b0aca b1be1892fd8ad911c80e41b8769b29dc b1be1892fd8ad911c80e41b8769b2ebb b1be1892fd8ad911c80e41b8769b3868 b1be1892fd8ad911c80e41b8769b3ef1 b1be1892fd8ad911c80e41b8769b3fd0 b1be1892fd8ad911c80e41b8769b443f b1be1892fd8ad911c80e41b8769b459e b1be1892fd8ad911c80e41b8769b45dd b1be1892fd8ad911c80e41b8769b55cb b1be1892fd8ad911c80e41b8769b55e3 b1be1892fd8ad911c80e41b8769b5abf b1be1892fd8ad911c80e41b8769b6982 b1be1892fd8ad911c80e41b8769b7328 b1be1892fd8ad911c80e41b8769b74d1 b5103e07edf1653467b938053f41e2b2"/>
+		<calc_due_min_max count="36" current_index="0" ids="b1be1892fd8ad911c80e41b8769a58c9 b1be1892fd8ad911c80e41b8769a6219 b1be1892fd8ad911c80e41b8769a64a5 b1be1892fd8ad911c80e41b8769a6aaf b1be1892fd8ad911c80e41b8769a6bf3 b1be1892fd8ad911c80e41b8769a79fe b1be1892fd8ad911c80e41b8769a8326 b1be1892fd8ad911c80e41b8769a90e0 b1be1892fd8ad911c80e41b8769a9ca6 b1be1892fd8ad911c80e41b8769aa7eb b1be1892fd8ad911c80e41b8769ab057 b1be1892fd8ad911c80e41b8769ab434 b1be1892fd8ad911c80e41b8769ab6fe b1be1892fd8ad911c80e41b8769abda2 b1be1892fd8ad911c80e41b8769ac85e b1be1892fd8ad911c80e41b8769acb54 b1be1892fd8ad911c80e41b8769ad478 b1be1892fd8ad911c80e41b8769aed92 b1be1892fd8ad911c80e41b8769af113 b1be1892fd8ad911c80e41b8769afd74 b1be1892fd8ad911c80e41b8769b0aca b1be1892fd8ad911c80e41b8769b29dc b1be1892fd8ad911c80e41b8769b2ebb b1be1892fd8ad911c80e41b8769b3868 b1be1892fd8ad911c80e41b8769b3ef1 b1be1892fd8ad911c80e41b8769b3fd0 b1be1892fd8ad911c80e41b8769b443f b1be1892fd8ad911c80e41b8769b459e b1be1892fd8ad911c80e41b8769b45dd b1be1892fd8ad911c80e41b8769b55cb b1be1892fd8ad911c80e41b8769b55e3 b1be1892fd8ad911c80e41b8769b5abf b1be1892fd8ad911c80e41b8769b6982 b1be1892fd8ad911c80e41b8769b7328 b1be1892fd8ad911c80e41b8769b74d1 b5103e07edf1653467b938053f41e2b2"/>
+		<due_list_min_eligible>18361</due_list_min_eligible>
+		<due_list_max_expires>20553</due_list_max_expires>
+		<schedule_flag>dpt_hepb</schedule_flag>
+		<child_health_case_name>child_health</child_health_case_name>
+		<tasks_case_name>tasks</tasks_case_name>
+		<measurement_case_name>measurement</measurement_case_name>
+		<tasks_type>child</tasks_type>
+		<case_open_person_1>
+			<n3:case case_id="7de5796f-9ae3-44ec-9fbe-cff94d648c2b" date_modified="2020-04-09T16:46:59.256+05:30" user_id="3ef9dcb3cc7b4c7a9840cd0955a3c0e6" xmlns:n3="http://commcarehq.org/case/transaction/v2">
+				<n3:create>
+					<n3:case_name>child 2</n3:case_name>
+					<n3:owner_id>3ef9dcb3cc7b4c7a9840cd0955a3c0e6</n3:owner_id>
+					<n3:case_type>person</n3:case_type>
+				</n3:create>
+				<n3:update>
+					<n3:dob>2020-04-09</n3:dob>
+					<n3:owner_id>fd1172705461489e9225ad226f21bbaf</n3:owner_id>
+					<n3:resident>no</n3:resident>
+					<n3:sex>F</n3:sex>
+					<n3:time_birth>16:46:00.000+05:30</n3:time_birth>
+				</n3:update>
+				<n3:index>
+					<n3:mother case_type="person">5d82610a-17e8-46d2-8c76-0f06cd68d3d2</n3:mother>
+					<n3:parent case_type="household" relationship="child">7dec66fc-0b83-4af6-9fb1-3816570d9fd9</n3:parent>
+				</n3:index>
+			</n3:case>
+		</case_open_person_1>
+		<case_open_child_health_3>
+			<n4:case case_id="dc0eec14-565e-44cb-a82f-b99dc63a023c" date_modified="2020-04-09T16:46:59.256+05:30" user_id="3ef9dcb3cc7b4c7a9840cd0955a3c0e6" xmlns:n4="http://commcarehq.org/case/transaction/v2">
+				<n4:create>
+					<n4:case_name>child_health</n4:case_name>
+					<n4:owner_id>-</n4:owner_id>
+					<n4:case_type>child_health</n4:case_type>
+				</n4:create>
+				<n4:update>
+					<n4:abnormalities/>
+					<n4:breastfed_within_first/>
+					<n4:cord_applied/>
+					<n4:cord_cut/>
+					<n4:cord_tied/>
+					<n4:count>1</n4:count>
+					<n4:display_icon_z1>grey</n4:display_icon_z1>
+					<n4:display_icon_z2>grey</n4:display_icon_z2>
+					<n4:display_icon_z3>grey</n4:display_icon_z3>
+					<n4:display_icon_z4>grey</n4:display_icon_z4>
+					<n4:low_birth_weight/>
+					<n4:owner_id>fd1172705461489e9225ad226f21bbaf</n4:owner_id>
+					<n4:preterm_check>full_term</n4:preterm_check>
+					<n4:skin_care/>
+					<n4:weight_child/>
+					<n4:wfa_nutrition_status>Normal</n4:wfa_nutrition_status>
+					<n4:wrapped_dried/>
+					<n4:zscore1/>
+					<n4:zscore_grading_wfa/>
+				</n4:update>
+				<n4:index>
+					<n4:parent case_type="person" relationship="extension">7de5796f-9ae3-44ec-9fbe-cff94d648c2b</n4:parent>
+				</n4:index>
+			</n4:case>
+		</case_open_child_health_3>
+		<case_open_measurement_1/>
+		<case_open_tasks_3>
+			<n5:case case_id="a902b653-e8d6-401b-b712-98c4c08fb911" date_modified="2020-04-09T16:46:59.256+05:30" user_id="3ef9dcb3cc7b4c7a9840cd0955a3c0e6" xmlns:n5="http://commcarehq.org/case/transaction/v2">
+				<n5:create>
+					<n5:case_name>tasks</n5:case_name>
+					<n5:owner_id>-</n5:owner_id>
+					<n5:case_type>tasks</n5:case_type>
+				</n5:create>
+				<n5:update>
+					<n5:due_list_max_expires>20553</n5:due_list_max_expires>
+					<n5:due_list_min_eligible>18361</n5:due_list_min_eligible>
+					<n5:owner_id>fd1172705461489e9225ad226f21bbaf</n5:owner_id>
+					<n5:schedule_flag>dpt_hepb</n5:schedule_flag>
+					<n5:tasks_type>child</n5:tasks_type>
+				</n5:update>
+				<n5:index>
+					<n5:parent case_type="child_health" relationship="extension">dc0eec14-565e-44cb-a82f-b99dc63a023c</n5:parent>
+				</n5:index>
+			</n5:case>
+		</case_open_tasks_3>
+	</child>
+	<ifa_tablets_given>no</ifa_tablets_given>
+	<complications>no</complications>
+	<complication_type/>
+	<post_postpartum_fp>no</post_postpartum_fp>
+	<referral_status/>
+	<update_mother_person_case>
+		<update_mother_person_case>
+			<n6:case case_id="5d82610a-17e8-46d2-8c76-0f06cd68d3d2" date_modified="2020-04-09T16:46:59.256+05:30" user_id="3ef9dcb3cc7b4c7a9840cd0955a3c0e6" xmlns:n6="http://commcarehq.org/case/transaction/v2">
+				<n6:update>
+					<n6:died>no</n6:died>
+					<n6:is_pregnant/>
+				</n6:update>
+			</n6:case>
+		</update_mother_person_case>
+	</update_mother_person_case>
+	<pregnancy_tasks_case_id>28f7f419-02c5-4a55-9a00-03e7b9db2966</pregnancy_tasks_case_id>
+	<close_ccsrecord_task_case>
+		<close_ccsrecord_task_case>
+			<n7:case case_id="28f7f419-02c5-4a55-9a00-03e7b9db2966" date_modified="2020-04-09T16:46:59.256+05:30" user_id="3ef9dcb3cc7b4c7a9840cd0955a3c0e6" xmlns:n7="http://commcarehq.org/case/transaction/v2">
+				<n7:close/>
+			</n7:case>
+		</close_ccsrecord_task_case>
+	</close_ccsrecord_task_case>
+	<check_schedule>OK</check_schedule>
+	<success>OK</success>
+	<total_children_died>0</total_children_died>
+	<preg_tt_for_next_pregnancy>no</preg_tt_for_next_pregnancy>
+	<close_ccs_record>no</close_ccs_record>
+	<fp_at_delivery>none</fp_at_delivery>
+	<name_local_transport>transport person</name_local_transport>
+	<phone_number_local_transport/>
+	<phone_number_ambulance/>
+	<name_private_hospital>lnjp</name_private_hospital>
+	<phone_number_private_hospital/>
+	<name_public_hospital>aiims</name_public_hospital>
+	<phone_number_public_hospital/>
+	<del1_date>2020-04-09</del1_date>
+	<days_visit_late>45</days_visit_late>
+	<case_load_ccs_record0>
+		<n8:case case_id="fbd23761-4b0e-4074-b2ce-ca9edeb3e665" date_modified="2020-04-09T16:46:59.256+05:30" user_id="3ef9dcb3cc7b4c7a9840cd0955a3c0e6" xmlns:n8="http://commcarehq.org/case/transaction/v2">
+			<n8:update>
+				<n8:add>2020-04-09</n8:add>
+				<n8:child_birth_hospital>block_phc</n8:child_birth_hospital>
+				<n8:child_birth_location>hospital</n8:child_birth_location>
+				<n8:complication_type/>
+				<n8:complications>no</n8:complications>
+				<n8:delivery_nature>vaginal</n8:delivery_nature>
+				<n8:fp_at_delivery>none</n8:fp_at_delivery>
+				<n8:jsy_money_received>no</n8:jsy_money_received>
+				<n8:mother_alive>yes</n8:mother_alive>
+				<n8:number_children_delivered>2</n8:number_children_delivered>
+				<n8:ppfp_adopted_check>no</n8:ppfp_adopted_check>
+				<n8:preterm_check>full_term</n8:preterm_check>
+				<n8:current_schedule_phase>2</n8:current_schedule_phase>
+				<n8:last_visit_number_delivery>1</n8:last_visit_number_delivery>
+				<n8:last_visit_date_delivery>2020-04-09T16:46:59.256+05:30</n8:last_visit_date_delivery>
+			</n8:update>
+		</n8:case>
+	</case_load_ccs_record0>
+	<current_visit_number>1</current_visit_number>
+	<unscheduled_visit>0</unscheduled_visit>
+	<next_bp>18316</next_bp>
+	<next_delivery>18354</next_delivery>
+	<next_visit_date>2020-02-24</next_visit_date>
+	<next_due>2020-03-30</next_due>
+	<case_person>
+		<n9:case case_id="5d82610a-17e8-46d2-8c76-0f06cd68d3d2" date_modified="2020-04-09T16:46:59.256+05:30" user_id="3ef9dcb3cc7b4c7a9840cd0955a3c0e6" xmlns:n9="http://commcarehq.org/case/transaction/v2">
+			<n9:update>
+				<n9:is_pregnant/>
+				<n9:last_preg_tt>no</n9:last_preg_tt>
+			</n9:update>
+		</n9:case>
+	</case_person>
+	<n10:meta xmlns:n10="http://openrosa.org/jr/xforms">
+		<n10:deviceID>42df359f6fe9f9ac</n10:deviceID>
+		<n10:timeStart>2020-03-30T16:44:41.570+05:30</n10:timeStart>
+		<n10:timeEnd>2020-04-09T16:46:59.256+05:30</n10:timeEnd>
+		<n10:username>1.arong_i</n10:username>
+		<n10:userID>3ef9dcb3cc7b4c7a9840cd0955a3c0e6</n10:userID>
+		<n10:instanceID>640577dd-69f2-4aac-96b9-fcb3d2e7fd97</n10:instanceID>
+		<n11:appVersion xmlns:n11="http://commcarehq.org/xforms">CommCare Android, version &quot;2.47.6&quot;(459170). App v4. CommCare Version 2.47. Build 459170, built on: 2020-03-02</n11:appVersion>
+		<n10:drift>-240</n10:drift>
+		<n12:location xmlns:n12="http://commcarehq.org/xforms"/>
+	</n10:meta>
+</data>

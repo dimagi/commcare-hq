@@ -3,10 +3,10 @@ Migrate Dhis2Connection instances to ConnectionSettings model
 """
 from django.core.management import BaseCommand
 
+from corehq.motech.const import BASIC_AUTH
 from corehq.motech.dhis2.dbaccessors import get_dataset_maps
 from corehq.motech.dhis2.models import Dhis2Connection
 from corehq.motech.models import ConnectionSettings
-from corehq.motech.repeaters.models import BASIC_AUTH
 
 
 class Command(BaseCommand):
@@ -67,6 +67,7 @@ def link_data_set_maps(conn_settings: ConnectionSettings):
     Links DataSetMap instances to their ConnectionSettings instance.
     """
     for data_set_map in get_dataset_maps(conn_settings.domain):
-        data_set_map.connection_settings_id = conn_settings.id
-        data_set_map.save()
+        if not data_set_map.connection_settings_id:
+            data_set_map.connection_settings_id = conn_settings.id
+            data_set_map.save()
     get_dataset_maps.clear(conn_settings.domain)

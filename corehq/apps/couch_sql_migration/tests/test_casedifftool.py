@@ -3,43 +3,48 @@ from datetime import datetime, timedelta
 
 from mock import patch
 
+from casexml.apps.case.models import CommCareCase
+from casexml.apps.case.sharedmodels import CommCareCaseIndex
+
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.tzmigration.timezonemigration import MISSING
+from corehq.form_processor.backends.couch.dbaccessors import CaseAccessorCouch
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.utils.general import (
     clear_local_domain_sql_backend_override,
 )
 from corehq.util.test_utils import capture_log_output
 
-from .test_migration import BaseMigrationTestCase, Diff, make_test_form
+from .test_migration import BaseMigrationTestCase, Diff, IGNORE, make_test_form
 from .. import casediff
 from .. import casedifftool as mod
-from ..statedb import Change, open_state_db
+from ..statedb import open_state_db
 
 
 class TestCouchSqlDiff(BaseMigrationTestCase):
 
     def test_diff(self):
         self.submit_form(make_test_form("form-1", case_id="case-1"))
-        self._do_migration(case_diff="none")
+        self.do_migration(case_diff="none")
         clear_local_domain_sql_backend_override(self.domain_name)
         with self.augmented_couch_case("case-1") as case:
             case.age = '35'
             case.save()
             self.do_case_diffs()
-        self._compare_diffs([
+        self.compare_diffs([
             Diff('case-1', 'diff', ['age'], old='35', new='27'),
         ])
+        self.do_migration(forms="missing", case_diff="patch")
 
     def test_diff_specific_case(self):
         self.submit_form(make_test_form("form-1", case_id="case-1"))
-        self._do_migration(case_diff="none")
+        self.do_migration(case_diff="none")
         clear_local_domain_sql_backend_override(self.domain_name)
         with self.augmented_couch_case("case-1") as case:
             case.age = '35'
             case.save()
             self.do_case_diffs(cases="case-1")
-        self._compare_diffs([
+        self.compare_diffs([
             Diff('case-1', 'diff', ['age'], old='35', new='27'),
         ])
 
@@ -47,7 +52,7 @@ class TestCouchSqlDiff(BaseMigrationTestCase):
         def diff_none(case_ids, log_cases=None):
             return casediff.DiffData([])
         self.submit_form(make_test_form("form-1", case_id="case-1"))
-        self._do_migration(case_diff='none')
+        self.do_migration(case_diff='none')
         clear_local_domain_sql_backend_override(self.domain_name)
         with self.augmented_couch_case("case-1") as case:
             case.age = '35'
@@ -56,7 +61,7 @@ class TestCouchSqlDiff(BaseMigrationTestCase):
                 result = self.do_case_diffs()
             self.assertEqual(result, mod.PENDING_WARNING)
             self.do_case_diffs(cases="pending")
-        self._compare_diffs([
+        self.compare_diffs([
             Diff('case-1', 'diff', ['age'], old='35', new='27'),
         ])
 
@@ -64,18 +69,18 @@ class TestCouchSqlDiff(BaseMigrationTestCase):
         # do not diff case modified since most recent case created in SQL
         self.submit_form(make_test_form("form-1", case_id="case-1"), timedelta(minutes=-90))
         self.submit_form(make_test_form("form-2", case_id="case-1", age=35))
-        self._do_migration(live=True, chunk_size=1, case_diff="none")
+        self.do_migration(live=True, chunk_size=1, case_diff="none")
         self.assert_backend("sql")
         case = self._get_case("case-1")
         self.assertEqual(case.dynamic_case_properties()["age"], '27')
         self.do_case_diffs()
-        self._compare_diffs([])
+        self.compare_diffs(ignore_fail=True)
 
     def test_failed_diff(self):
         self.pool_mock.stop()
         self.addCleanup(self.pool_mock.start)
         self.submit_form(make_test_form("form-1", case_id="case-1"))
-        self._do_migration(case_diff="none")
+        self.do_migration(case_diff="none")
         # patch init_worker to make subprocesses use the same database
         # connections as this process (which is operating in a transaction)
         init_worker_path = "corehq.apps.couch_sql_migration.casedifftool.init_worker"
@@ -87,7 +92,7 @@ class TestCouchSqlDiff(BaseMigrationTestCase):
         logs = log.get_output()
         self.assertIn("error processing item in worker", logs)
         self.assertIn("Exception: diff failed!", logs)
-        self._compare_diffs([])
+        self.compare_diffs()
         db = open_state_db(self.domain_name, self.state_dir)
         self.assertEqual(list(db.iter_undiffed_case_ids()), ["case-1"])
 
@@ -99,15 +104,15 @@ class TestCouchSqlDiff(BaseMigrationTestCase):
         self.submit_form(form2)
         self.assertEqual(self._get_case("test-case").age, "33")
         with self.diff_without_rebuild():
-            self._do_migration()
-        self._compare_diffs([
+            self.do_migration()
+        self.compare_diffs([
             Diff('test-case', 'diff', ['age'], old='33', new='32'),
         ])
         clear_local_domain_sql_backend_override(self.domain_name)
         self.do_case_diffs(cases="with-diffs")
         sql_case = self._get_case("test-case")
         self.assertEqual(sql_case.dynamic_case_properties()["age"], "33")
-        self._compare_diffs([])
+        self.compare_diffs()
         details = sql_case.transactions[-1].details
         self.assertEqual(details["reason"], SortTransactionsRebuild._REASON)
         server_dates = details["original_server_dates"]
@@ -128,8 +133,8 @@ class TestCouchSqlDiff(BaseMigrationTestCase):
         with self.assertRaises(AttributeError):
             self._get_case("test-case").thing
         with self.diff_without_rebuild():
-            self._do_migration()
-        self._compare_diffs([
+            self.do_migration()
+        self.compare_diffs([
             Diff('test-case', 'diff', ['age'], old='33', new='32'),
             Diff('test-case', 'missing', ['thing'], old=MISSING, new='1'),
         ])
@@ -137,7 +142,7 @@ class TestCouchSqlDiff(BaseMigrationTestCase):
         self.do_case_diffs(cases="with-diffs")
         sql_case = self._get_case("test-case")
         self.assertEqual(sql_case.dynamic_case_properties()["age"], "33")
-        self._compare_diffs(changes=[
+        self.compare_diffs(changes=[
             Diff('test-case', 'missing', ['thing'], old=MISSING, new='1', reason='rebuild case'),
         ])
 
@@ -146,8 +151,8 @@ class TestCouchSqlDiff(BaseMigrationTestCase):
         one = self.submit_form(make_test_form("one", age=27))
         FormAccessors(self.domain_name).soft_delete_forms(
             [one.form_id], datetime.utcnow(), 'test-deletion')
-        self._do_migration()
-        self._compare_diffs(changes=[
+        self.do_migration()
+        self.compare_diffs(changes=[
             Diff('test-case', 'missing', ['*'], old='*', new=MISSING, reason="deleted forms"),
         ])
 
@@ -155,8 +160,8 @@ class TestCouchSqlDiff(BaseMigrationTestCase):
         wrong_domain = create_domain("wrong")
         self.addCleanup(wrong_domain.delete)
         self.submit_form(make_test_form("form-1"), domain="wrong")
-        self._do_migration(case_diff="none", domain="wrong")
-        self._do_migration(case_diff="none")
+        self.do_migration(case_diff="none", domain="wrong")
+        self.do_migration(case_diff="none")
         clear_local_domain_sql_backend_override(self.domain_name)
         with capture_log_output("corehq.apps.couch_sql_migration") as log, \
                 self.augmented_couch_case("test-case") as case:
@@ -165,7 +170,7 @@ class TestCouchSqlDiff(BaseMigrationTestCase):
             case.save()
             # try to diff case in wrong domain
             self.do_case_diffs(cases="test-case")
-        self._compare_diffs([
+        self.compare_diffs([
             Diff('test-case', 'diff', ['domain'], old='wrong', new=self.domain_name),
         ])
         logs = log.get_output()
@@ -173,11 +178,11 @@ class TestCouchSqlDiff(BaseMigrationTestCase):
 
     def test_ledger_dup_transaction_diff(self):
         product_id = self.create_form_with_duplicate_stock_transaction()
-        self._do_migration(case_diff='none')
-        self._compare_diffs([], ignore_fail=True)
+        self.do_migration(case_diff='none')
+        self.compare_diffs(ignore_fail=True)
         clear_local_domain_sql_backend_override(self.domain_name)
         self.do_case_diffs()
-        self._compare_diffs(changes=[Diff(
+        self.compare_diffs(changes=[Diff(
             f"test-case/things/{product_id}",
             reason="duplicate stock transaction",
             type="diff",
@@ -186,6 +191,95 @@ class TestCouchSqlDiff(BaseMigrationTestCase):
             new=1,
             kind="stock state",
         )])
+
+    def test_patch_known_properties(self):
+        self.submit_form(make_test_form("form-1", case_id="case-1"))
+        self.do_migration(case_diff="none")
+        clear_local_domain_sql_backend_override(self.domain_name)
+        open_date = datetime(2010, 9, 8)
+        with self.augmented_couch_case("case-1") as case:
+            case.name = "Zena"
+            case.type = "old-type"
+            case.user_id = "old-user"
+            case.owner_id = "old-owner"
+            case.opened_on = open_date
+            case.save()
+            self.do_case_diffs()
+        self.compare_diffs([
+            Diff('case-1', 'diff', ['name'], old='Zena', new='Xeenax'),
+            Diff('case-1', 'diff', ['owner_id'], old='old-owner', new='3fae4ea4af440efaa53441b5'),
+            Diff('case-1', 'diff', ['type'], old='old-type', new='testing'),
+            Diff('case-1', 'diff', ['user_id'], old='old-user', new='3fae4ea4af440efaa53441b5'),
+        ])
+        self.do_migration(forms="missing", case_diff="patch")
+        self.assertEqual(self._get_case("case-1").opened_on, open_date)
+
+    def test_patch_closed_case(self):
+        from casexml.apps.case.cleanup import close_case
+        self.submit_form(make_test_form("form-1", case_id="case-1"))
+        close_case("case-1", self.domain_name, "system", "test")
+        self.do_migration(case_diff="none")
+        clear_local_domain_sql_backend_override(self.domain_name)
+        with self.augmented_couch_case("case-1") as case:
+            case.name = "Zena"
+            case.save()
+            self.do_case_diffs()
+        self.compare_diffs([
+            Diff('case-1', 'diff', ['name'], old='Zena', new='Xeenax'),
+        ])
+        self.do_migration(forms="missing", case_diff="patch")
+        self.assertEqual(self._get_case("case-1").closed, True)
+        self.assert_patched_cases(["case-1"])
+
+    def test_cannot_patch_case_missing_in_couch(self):
+        self.submit_form(make_test_form("form-1", case_id="case-1"))
+        self.do_migration(case_diff="none")
+        CommCareCase.get_db().delete_doc("case-1")
+        self.do_migration(forms="missing", case_diff="patch", diffs=[
+            Diff('case-1', 'missing', ['*'], old=MISSING, new='present'),
+        ])
+        self.assert_patched_cases()
+
+    def test_patch_case_closed_in_couch_not_sql(self):
+        self.submit_form(make_test_form("form-1", case_id="case-1"))
+        self.do_migration(case_diff="none")
+        with self.augmented_couch_case("case-1") as case:
+            case.closed = True
+            case.closed_by = "system"
+            case.closed_on = datetime(2010, 9, 8, 7, 6, 5)
+            case.user_id = "system"
+            case.save()
+            self.do_case_diffs()
+        self.compare_diffs([
+            Diff('case-1', 'diff', ['closed'], old=True, new=False),
+            Diff('case-1', 'diff', ['user_id'], old='system', new='3fae4ea4af440efaa53441b5'),
+            Diff('case-1', 'type', ['closed_by'], old='system', new=None),
+            Diff('case-1', 'type', ['closed_on'], old='2010-09-08T07:06:05.000000Z', new=None),
+        ])
+        self.do_case_patch()
+        self.compare_diffs()
+        self.assert_patched_cases(["case-1"])
+
+    def test_patch_case_indices(self):
+        self.submit_form(make_test_form("form-1", case_id="case-1"))
+        self.do_migration(case_diff="none")
+        index = {
+            "doc_type": "CommCareCaseIndex",
+            "identifier": "parent",
+            "referenced_type": "household",
+            "referenced_id": "a53346d5",
+            "relationship": "child",
+        }
+        with self.augmented_couch_case("case-1") as case:
+            case.indices = [CommCareCaseIndex.wrap(index)]
+            case.save()
+            self.do_case_diffs()
+        self.compare_diffs([
+            Diff('case-1', 'missing', ['indices', '[*]'], old=index, new=MISSING),
+        ])
+        self.do_case_patch()
+        self.compare_diffs()
+        self.assert_patched_cases(["case-1"])
 
     def create_form_with_duplicate_stock_transaction(self):
         from corehq.apps.commtrack.helpers import make_product
@@ -198,16 +292,31 @@ class TestCouchSqlDiff(BaseMigrationTestCase):
             model.save()
         return thing1._id
 
+    def do_migration(self, *args, **kw):
+        if kw.get("case_diff") != "patch":
+            kw.setdefault("diffs", IGNORE)
+        return super().do_migration(*args, **kw)
+
     def do_case_diffs(self, cases=None):
         self.migration_success = True  # clear migration failure on diff cases
         migrator = mod.get_migrator(self.domain_name, self.state_dir)
         return mod.do_case_diffs(migrator, cases, stop=False, batch_size=100)
 
+    def do_case_patch(self, cases=None):
+        self.migration_success = True  # clear migration failure on diff cases
+        migrator = mod.get_migrator(self.domain_name, self.state_dir)
+        return mod.do_case_patch(migrator, cases, stop=False, batch_size=100)
+
     @contextmanager
     def augmented_couch_case(self, case_id):
-        case = self._get_case(case_id)
+        case = CaseAccessorCouch.get_case(case_id)
         with self.diff_without_rebuild():
             yield case
+
+    def assert_patched_cases(self, case_ids=None):
+        statedb = open_state_db(self.domain_name, self.state_dir)
+        self.assertEqual(list(statedb.iter_patched_case_ids()), case_ids or [])
+        self.assertFalse(list(statedb.iter_undiffed_case_ids()))
 
 
 THING_FORM = """

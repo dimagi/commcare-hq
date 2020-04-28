@@ -40,6 +40,7 @@ from corehq.apps.domain.decorators import (
     require_superuser,
     two_factor_exempt,
 )
+from corehq import toggles
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.hqwebapp.utils import sign, update_session_language
 from corehq.apps.hqwebapp.views import BaseSectionPageView
@@ -359,6 +360,12 @@ class TwoFactorSetupCompleteView(BaseMyAccountView, SetupCompleteView):
         # this is only here to add the login_required decorator
         return super(TwoFactorSetupCompleteView, self).dispatch(request, *args, **kwargs)
 
+    @property
+    def page_context(self):
+        return {
+            "link_to_webapps": _show_link_to_webapps(self.request.couch_user),
+        }
+
 
 class TwoFactorBackupTokensView(BaseMyAccountView, BackupTokensView):
     urlname = 'two_factor_backup_tokens'
@@ -369,6 +376,22 @@ class TwoFactorBackupTokensView(BaseMyAccountView, BackupTokensView):
     def dispatch(self, request, *args, **kwargs):
         # this is only here to add the login_required decorator
         return super(TwoFactorBackupTokensView, self).dispatch(request, *args, **kwargs)
+
+    @property
+    def page_context(self):
+        return {
+            "link_to_webapps": _show_link_to_webapps(self.request.couch_user),
+        }
+
+
+def _show_link_to_webapps(user):
+    if user and user.is_commcare_user():
+        if user.domain_memberships:
+            membership = user.domain_memberships[0]
+            if membership.role and membership.role.default_landing_page == "webapps":
+                if toggles.TWO_STAGE_USER_PROVISIONING.enabled(membership.domain):
+                    return True
+    return False
 
 
 class TwoFactorDisableView(BaseMyAccountView, DisableView):

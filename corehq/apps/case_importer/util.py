@@ -10,6 +10,7 @@ from memoized import memoized
 
 from corehq.apps.case_importer.const import LookupErrors
 from corehq.apps.case_importer.exceptions import (
+    ImporterRawError,
     ImporterExcelError,
     ImporterExcelFileEncrypted,
     ImporterFileNotFound,
@@ -207,6 +208,8 @@ def get_importer_error_message(e):
                  'Please choose a file that is not password protected.')
     elif isinstance(e, ImporterExcelError):
         return _("The file uploaded has the following error: {}").format(str(e))
+    elif isinstance(e, ImporterRawError):
+        return str(e)
     else:
         return _("Error: {}").format(str(e))
 
