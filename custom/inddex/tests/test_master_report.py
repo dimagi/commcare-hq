@@ -1,12 +1,17 @@
+import csv
+import doctest
+import os
 from datetime import date
 
-from django.test import TestCase
+from django.test import SimpleTestCase, TestCase
 from django.utils.functional import cached_property
 
+from memoized import memoized
 from mock import patch
 
 from dimagi.utils.dates import DateSpan
 
+import custom.inddex.reports.nutrient_stats
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.fixtures.dbaccessors import (
@@ -19,15 +24,34 @@ from corehq.util.test_utils import require_db_context
 from ..example_data.data import (
     FOOD_CASE_TYPE,
     FOODRECALL_CASE_TYPE,
-    get_expected_report,
     populate_inddex_domain,
 )
 from ..fixtures import FixtureAccessor
 from ..food import INDICATORS, FoodData
+from ..reports.gaps_detail import GapsByItemSummaryData, GapsDetailsData
+from ..reports.gaps_summary import get_gaps_data
 from ..reports.master_data import MasterData
+from ..reports.nutrient_intake import DailyIntakeData
+from ..reports.nutrient_stats import NutrientStatsData
 from ..ucr_data import FoodCaseData
 
 DOMAIN = 'inddex-reports-test'
+
+
+def get_expected_report(filename):
+    with open(os.path.join(os.path.dirname(__file__), 'data', filename)) as f:
+        rows = list(csv.DictReader(f))
+
+    # Swap out the external IDs in the test fixture for the real IDs
+    case_ids_by_external_id = _get_case_ids_by_external_id()
+
+    def substitute_real_ids(row):
+        return {
+            key: case_ids_by_external_id[val] if val in case_ids_by_external_id else val
+            for key, val in row.items()
+        }
+
+    return [substitute_real_ids(r) for r in rows]
 
 
 @require_db_context
@@ -44,6 +68,21 @@ def setUpModule():
 @require_db_context
 def tearDownModule():
     Domain.get_by_name(DOMAIN).delete()
+    get_food_data.reset_cache()
+    _get_case_ids_by_external_id.reset_cache()
+
+
+@memoized
+def get_food_data(*args, **kwargs):
+    # This class takes a while to run.  Memoizing lets me share between tests
+    return FoodData(DOMAIN, datespan=DateSpan(date(2020, 1, 1), date(2020, 4, 1)), filter_selections={})
+
+
+@memoized
+def _get_case_ids_by_external_id():
+    accessor = CaseAccessors(DOMAIN)
+    case_ids = accessor.get_case_ids_in_domain()
+    return {c.external_id: c.case_id for c in accessor.get_cases(case_ids)}
 
 
 def sort_rows(rows):
@@ -84,13 +123,24 @@ class TestSetupUtils(TestCase):
 class TestUcrAdapter(TestCase):
     def test_data_source(self):
         # Only the rows with case IDs will appear in the UCR
-        expected = [r for r in get_expected_report() if r['caseid']]
+        expected = [r for r in get_expected_report('master.csv') if r['caseid']]
         ucr_data = FoodCaseData({
             'domain': DOMAIN,
             'startdate': date(2020, 1, 1).isoformat(),
             'enddate': date(2020, 4, 1).isoformat(),
-            'case_owners': '',
-            'recall_status': '',
+        }).get_data()
+        self.assertItemsEqual(food_names(expected), food_names(ucr_data))
+
+    def test_data_source_filter(self):
+        # Only the rows with case IDs will appear in the UCR
+        expected = [r for r in get_expected_report('master.csv')
+                    if r['caseid'] and r['breastfeeding'] == 'breastfeeding_yes']
+        ucr_data = FoodCaseData({
+            'domain': DOMAIN,
+            'startdate': date(2020, 1, 1).isoformat(),
+            'enddate': date(2020, 4, 1).isoformat(),
+            'breastfeeding': 'breastfeeding_yes',
+            'age_range': 'lt50years',
         }).get_data()
         self.assertItemsEqual(food_names(expected), food_names(ucr_data))
 
@@ -125,11 +175,11 @@ class TestFixtures(TestCase):
         self.assertEqual(0.61, conversion_factor)
 
 
-class TestNewReport(TestCase):
+class TestMasterReport(TestCase):
     maxDiff = None
 
-    def test_new_report(self):
-        expected = sort_rows(self.get_expected_rows())
+    def test_master_report(self):
+        expected = sort_rows(get_expected_report('master.csv'))
         actual = sort_rows(self.run_new_report())
         self.assertEqual(food_names(expected), food_names(actual))
 
@@ -145,24 +195,8 @@ class TestNewReport(TestCase):
         for column in columns:
             self.assert_columns_equal(expected, actual, column)
 
-    def get_expected_rows(self):
-        # Swap out the external IDs in the test fixture for the real IDs
-        accessor = CaseAccessors(DOMAIN)
-        case_ids = accessor.get_case_ids_in_domain()
-        case_ids_by_external_id = {c.external_id: c.case_id
-                                   for c in accessor.get_cases(case_ids)}
-
-        def substitute_real_ids(row):
-            return {
-                key: case_ids_by_external_id[val] if val in case_ids_by_external_id else val
-                for key, val in row.items()
-            }
-
-        return map(substitute_real_ids, get_expected_report())
-
     def run_new_report(self):
-        data = FoodData(DOMAIN, datespan=DateSpan(date(2020, 1, 1), date(2020, 4, 1)))
-        report = MasterData(data)
+        report = MasterData(get_food_data())
         return [dict(zip(report.headers, row)) for row in report.rows]
 
     def assert_columns_equal(self, expected_rows, actual_rows, column):
@@ -178,3 +212,56 @@ class TestNewReport(TestCase):
             for food, expected_val, actual_val in differences:
                 msg += f"{food}: expected '{expected_val}', got '{actual_val}'\n"
             raise AssertionError(msg)
+
+
+class TestInddexReports(TestCase):
+    maxDiff = None
+
+    def assert_reports_match(self, csv_filename, actual_report):
+        def to_string(row):
+            return ' | '.join(f'{v:<25}' for v in row)
+
+        expected_report = get_expected_report(csv_filename)
+        self.assertEqual(list(expected_report[0].keys()), actual_report.headers)
+
+        expected_rows = sorted(list(r.values()) for r in expected_report)
+        actual_rows = sorted(actual_report.rows)
+        for expected, actual in zip(expected_rows, actual_rows):
+            if expected != actual:
+                msg = (
+                    "\nRow doesn't match:\n"
+                    "\nHeaders:  {}"
+                    "\nExpected: {}"
+                    "\nActual:   {}"
+                ).format(*map(to_string, [actual_report.headers, expected, actual]))
+                self.assertEqual(expected, actual, msg)
+
+    def test_gaps_summary(self):
+        with patch('custom.inddex.reports.gaps_summary.FoodData.from_request', get_food_data):
+            cf_gaps_data, fct_gaps_data = get_gaps_data(DOMAIN, None)
+
+        self.assert_reports_match('conv_factor_gaps_summary.csv', cf_gaps_data)
+        self.assert_reports_match('fct_gaps_summary.csv', fct_gaps_data)
+
+    def test_gaps_by_item_summary(self):
+        data = GapsByItemSummaryData(get_food_data())
+        self.assert_reports_match('gaps_by_item_summary.csv', data)
+
+    def test_gaps_by_item_details(self):
+        data = GapsDetailsData(get_food_data())
+        self.assert_reports_match('gaps_by_item_details.csv', data)
+
+    def test_daily_intake(self):
+        data = DailyIntakeData(get_food_data())
+        self.assert_reports_match('aggr_daily_intake_by_rspndnt.csv', data)
+
+    def test_nutrient_stats(self):
+        data = NutrientStatsData(get_food_data())
+        self.assert_reports_match('nutr_intake_summary_stats.csv', data)
+
+
+class DocTests(SimpleTestCase):
+
+    def test_doctests(self):
+        results = doctest.testmod(custom.inddex.reports.nutrient_stats)
+        self.assertEqual(results.failed, 0)

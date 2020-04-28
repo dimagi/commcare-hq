@@ -16,7 +16,7 @@ from corehq.form_processor.system_action import (
 from .asyncforms import get_case_ids
 
 
-def do_system_action(couch_form):
+def do_system_action(couch_form, statedb):
     name = couch_form.form_data["name"]
     args_json = json.loads(couch_form.form_data["args"])
     try:
@@ -26,7 +26,7 @@ def do_system_action(couch_form):
     if couch_form.domain != domain:
         raise UnauthorizedSystemAction(repr(couch_form))
     _do_system_action(name, args)
-    return iter_forms_and_cases()
+    return iter_forms_and_cases(statedb)
 
 
 def _load_action_data(name, args_json):
@@ -46,7 +46,7 @@ _actions = {}
 
 @_action(ARCHIVE_FORM)
 def _archive_form_data(args_json):
-    def iter_forms_and_cases():
+    def iter_forms_and_cases(statedb):
         couch_form = FormAccessorCouch.get_form(form.form_id)
         # null form_id -> do not increment form counts in case diff queue
         yield None, get_case_ids(couch_form)
@@ -67,6 +67,11 @@ def _archive_form_data(args_json):
 
 @_action(HARD_DELETE_CASE_AND_FORMS)
 def _hard_delete_data(args_json):
+    def discard_case_diffs(statedb):
+        statedb.add_diffed_cases([case_id])
+        statedb.replace_case_diffs([("CommCareCase", case_id, [])])
+        statedb.replace_case_changes([("CommCareCase", case_id, [])])
+        return []
     # TODO remove form and case diffs, if any, for hard-deleted items
     case_id, form_ids = args_json
     try:
@@ -80,7 +85,7 @@ def _hard_delete_data(args_json):
             forms.append(FormAccessorSQL.get_form(form_id))
         except XFormNotFound:
             pass
-    return case.domain, [case, forms], lambda: []
+    return case.domain, [case, forms], discard_case_diffs
 
 
 class IgnoreSystemAction(Exception):

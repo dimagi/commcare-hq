@@ -242,6 +242,7 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
             ) as cases_person_adolescent_girls_15_18,
             sum(
                 CASE WHEN %(month_end_15yr)s > dob AND %(month_start_18yr)s <= dob AND sex = 'F'
+                    AND (agg_migration.is_migrated IS DISTINCT FROM 1 OR agg_migration.migration_date::date >= %(start_date)s)
                 THEN 1 ELSE 0 END
             ) as cases_person_adolescent_girls_15_18_all,
             sum(

@@ -10,7 +10,8 @@ angular.module('icdsApp').directive('mobileDatepicker', function() {
             date: "=",
             minYear: "=",
             maxYear: "=",
-            startMonth: "="
+            startMonth: "=",
+            maxMonth: "="
         }, // {} = isolate, true = child, false/undefined = no change
         restrict: 'E', // E = Element, A = Attribute, C = Class, M = Comment
         templateUrl: url('icds-ng-template-mobile', 'mobile-datepicker.directive'),
@@ -318,8 +319,8 @@ angular.module('icdsApp').directive('mobileDatepicker', function() {
             // if its current year then from months list months that comes after the current month are removed
             var getAvailableMonthsForSelectedYear = function () {
                 return ($scope.date.getFullYear() === $scope.minYear) ? months.slice($scope.startMonth - 1) :
-                        (($scope.date.getFullYear() === new Date().getFullYear()) ?
-                            months.slice(0, new Date().getMonth()+1) : months);
+                        (($scope.date.getFullYear() === $scope.maxYear) ?
+                            months.slice(0, $scope.maxMonth) : months);
             };
 
             // this method returns which month to be shown at the center of datepicker
@@ -331,9 +332,9 @@ angular.module('icdsApp').directive('mobileDatepicker', function() {
                 var centerMonth = $scope.date.getMonth();
                 if ($scope.date.getFullYear() === $scope.minYear) {
                     centerMonth = $scope.date.getMonth()- ($scope.startMonth - 1);
-                } else if ($scope.date.getFullYear() === new Date().getFullYear()) {
-                    if ($scope.date.getMonth() > new Date().getMonth()) {
-                        centerMonth = new Date().getMonth();
+                } else if ($scope.date.getFullYear() === $scope.maxYear) {
+                    if ($scope.date.getMonth() > $scope.maxMonth - 1) {
+                        centerMonth = $scope.maxMonth - 1;
                     }
                 }
                 return centerMonth;
@@ -383,9 +384,9 @@ angular.module('icdsApp').directive('mobileDatepicker', function() {
                 var mm = ('0'+($('.month').WSlot('get')+1)).slice(-2);
                 if ($scope.date.getFullYear() === $scope.minYear) {
                     mm = ('0'+($('.month').WSlot('get')+$scope.startMonth)).slice(-2);
-                } else if ($scope.date.getFullYear() === new Date().getFullYear()) {
-                    if (parseInt($('.month').WSlot('get')) > new Date().getMonth()) {
-                        mm = '0'+ (new Date().getMonth() + 1);
+                } else if ($scope.date.getFullYear() === $scope.maxYear) {
+                    if (parseInt($('.month').WSlot('get')) > ($scope.maxMonth - 1)) {
+                        mm = '0'+ $scope.maxMonth;
                     }
                 }
                 var yyyy = $('.year').WSlot('getText');
@@ -397,7 +398,7 @@ angular.module('icdsApp').directive('mobileDatepicker', function() {
 
             $scope.$on('reset_date', function() {
                 // upon reset center is set to current year and current month
-                $scope.date = new Date();
+                $scope.date = new Date($scope.maxYear, ($scope.maxMonth - 1));
                 $('.year').WSlot({
                     items:years,
                     center:years.indexOf($scope.date.getFullYear()),

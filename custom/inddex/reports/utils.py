@@ -1,9 +1,12 @@
 from datetime import datetime
 from itertools import chain
 
+from dimagi.utils.logging import notify_exception
+
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin
+from custom.inddex.fixtures import InddexFixtureError
 
 
 class MultiTabularReport(DatespanMixin, CustomProjectReport, GenericTabularReport):
@@ -12,12 +15,6 @@ class MultiTabularReport(DatespanMixin, CustomProjectReport, GenericTabularRepor
     exportable_all = True
     export_only = False
 
-    is_released = True
-    @classmethod
-    def show_in_navigation(cls, domain=None, project=None, user=None):
-        # This is a temporary hack to hide WIP reports from view while in development
-        return cls.is_released or domain == 'inddex-reports'
-
     @property
     def data_providers(self):
         # data providers should supply a title, slug, headers, and rows
@@ -25,19 +22,28 @@ class MultiTabularReport(DatespanMixin, CustomProjectReport, GenericTabularRepor
 
     @property
     def report_context(self):
-        context = {
-            'name': self.name,
-            'export_only': self.export_only
-        }
-        if not self.needs_filters:
-            context['data_providers'] = [{
+
+        def _to_context_dict(data_provider):
+            return {
                 'title': data_provider.title,
                 'slug': data_provider.slug,
                 'headers': DataTablesHeader(
                     *(DataTablesColumn(header) for header in data_provider.headers),
                 ),
-                'rows': data_provider.rows,
-            } for data_provider in self.data_providers]
+                'rows': list(data_provider.rows),
+            }
+
+        context = {
+            'name': self.name,
+            'export_only': self.export_only
+        }
+        if not self.export_only and not self.needs_filters:
+            try:
+                context['data_providers'] = list(map(_to_context_dict, self.data_providers))
+            except InddexFixtureError as e:
+                context['data_providers'] = []
+                context['fixture_error'] = str(e)
+                notify_exception(self.request, str(e))
         return context
 
     @property
@@ -48,7 +54,7 @@ class MultiTabularReport(DatespanMixin, CustomProjectReport, GenericTabularRepor
         ]
 
 
-def format_val(val):
+def _format_val(val):
     if isinstance(val, datetime):
         return val.strftime('%Y-%m-%d %H:%M:%S')
     if isinstance(val, bool):
@@ -56,7 +62,11 @@ def format_val(val):
     if isinstance(val, int):
         return str(val)
     if isinstance(val, float):
-        return str(int(val)) if val.is_integer() else str(val)
+        return f"{val:.5g}"
     if val is None:
         return ''
     return val
+
+
+def format_row(row):
+    return [_format_val(val) for val in row]

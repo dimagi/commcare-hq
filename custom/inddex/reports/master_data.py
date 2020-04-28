@@ -3,7 +3,7 @@ from itertools import chain
 from custom.inddex import filters
 from custom.inddex.food import INDICATORS, FoodData
 
-from .utils import MultiTabularReport, format_val
+from .utils import MultiTabularReport, format_row
 
 
 class MasterDataReport(MultiTabularReport):
@@ -35,11 +35,21 @@ class MasterData:
 
     @property
     def headers(self):
-        return [i.slug for i in INDICATORS] + list(self._food_data.get_nutrient_headers())
+        return [i.slug for i in INDICATORS] + list(self._get_nutrient_headers())
 
     @property
     def rows(self):
         for row in self._food_data.rows:
             static_cols = (getattr(row, column.slug) for column in INDICATORS)
-            nutrient_cols = self._food_data.get_nutrient_values(row)
-            yield [format_val(val) for val in chain(static_cols, nutrient_cols)]
+            nutrient_cols = self._get_nutrient_values(row)
+            yield format_row(chain(static_cols, nutrient_cols))
+
+    def _get_nutrient_headers(self):
+        for name in self._food_data.fixtures.nutrient_names:
+            yield f"{name}_per_100g"
+            yield name
+
+    def _get_nutrient_values(self, row):
+        for name in self._food_data.fixtures.nutrient_names:
+            yield row.get_nutrient_per_100g(name)
+            yield row.get_nutrient_amt(name)

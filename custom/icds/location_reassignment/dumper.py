@@ -38,7 +38,7 @@ class Dumper(object):
                    for location_type in location_types]
         stream = io.BytesIO()
         self._setup_site_codes(list(transitions_per_location_type.values()))
-        rows = [(k, v) for k, v in self._rows(transitions_per_location_type).items()]
+        rows = self._rows(transitions_per_location_type).items()
         export_raw(headers, rows, stream)
         stream.seek(0)
         return stream
