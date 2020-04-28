@@ -216,10 +216,8 @@ class HouseholdReassignmentParser(object):
 
     def parse(self):
         errors = []
-        site_codes = set()
         for worksheet in self.workbook.worksheets:
             location_site_code = worksheet.title
-            site_codes.add(location_site_code)
             for row in worksheet:
                 household_id = row.get(HOUSEHOLD_ID_COLUMN)
                 new_awc_code = row.get(AWC_CODE_COLUMN)
@@ -229,7 +227,6 @@ class HouseholdReassignmentParser(object):
                 if not new_awc_code:
                     errors.append("Missing New AWC Code for household ID %s" % household_id)
                     continue
-                site_codes.add(new_awc_code)
                 self.reassignments[household_id] = {
                     'old_site_code': location_site_code,
                     'new_site_code': new_awc_code
