@@ -45,7 +45,7 @@ class DailyIntakeData:
         'recall_case_id',
         'opened_by_username',
         'owner_name',
-        'recalled_date',
+        'visit_date',
         'recall_status',
         'gender',
         'age_years_calculated',
@@ -70,7 +70,7 @@ class DailyIntakeData:
         rows = {}
         for row in self._food_data.rows:
             nutrients = [row.get_nutrient_amt(name) for name in self._nutrient_names]
-            key = (row.unique_respondent_id, row.recalled_date)
+            key = (row.unique_respondent_id, row.visit_date)
             if key not in rows:
                 rows[key] = {
                     'static_cols': [getattr(row, col) for col in self._metadata_columns],
@@ -92,7 +92,7 @@ class IntakeData:
     slug = 'disaggr_intake_data_by_food'
     _columns = [
         'unique_respondent_id', 'location_id', 'respondent_id',
-        'recall_case_id', 'opened_by_username', 'owner_name', 'recalled_date',
+        'recall_case_id', 'opened_by_username', 'owner_name', 'visit_date',
         'recall_status', 'gender', 'age_years_calculated',
         'age_months_calculated', 'age_range', 'supplements', 'urban_rural',
         'pregnant', 'breastfeeding', 'food_code', 'base_term_food_code',

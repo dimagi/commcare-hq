@@ -36,7 +36,7 @@ class FoodCaseData(SqlData):
 
     @property
     def filters(self):
-        filters = [GTE('recalled_date', 'startdate'), LTE('recalled_date', 'enddate')]
+        filters = [GTE('visit_date', 'startdate'), LTE('visit_date', 'enddate')]
         for column in self.FILTERABLE_COLUMNS:
             if self.config.get(column):
                 if column == 'age_range':

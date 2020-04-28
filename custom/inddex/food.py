@@ -78,7 +78,7 @@ INDICATORS = [
     I('opened_date', IN_UCR, IS_RECALL_META),
     I('opened_by_username', IN_UCR, IS_RECALL_META),
     I('owner_name', IN_UCR, IS_RECALL_META),
-    I('recalled_date', IN_UCR, IS_RECALL_META),
+    I('visit_date', IN_UCR, IS_RECALL_META),
     I('recall_status', IN_UCR, IS_RECALL_META),
     I('gender', IN_UCR, IS_RECALL_META),
     I('age_years_calculated', IN_UCR, IS_RECALL_META),
