@@ -79,7 +79,7 @@ class IndicatorAdapter(object):
         indicator_rows = self.get_all_values(doc, eval_context)
         self.save_rows(indicator_rows)
 
-    def save_rows(self, rows, reassigning_cases=False):
+    def save_rows(self, rows, use_shard_col=True):
         raise NotImplementedError
 
     def bulk_save(self, docs):
@@ -92,11 +92,11 @@ class IndicatorAdapter(object):
         "Gets all the values from a document to save"
         return self.config.get_all_values(doc, eval_context)
 
-    def bulk_delete(self, docs, reassigning_cases=False):
+    def bulk_delete(self, docs, use_shard_col=True):
         for doc in docs:
-            self.delete(doc, reassigning_cases)
+            self.delete(doc, use_shard_col)
 
-    def delete(self, doc, reassigning_cases=False):
+    def delete(self, doc, use_shard_col=True):
         raise NotImplementedError
 
     @property
@@ -178,13 +178,13 @@ class IndicatorAdapterLoadTracker(object):
     def track_load(self, value=1):
         self._track_load(value)
 
-    def save_rows(self, rows, reassigning_cases=False):
+    def save_rows(self, rows, use_shard_col=True):
         self._track_load(len(rows))
-        self.adapter.save_rows(rows, reassigning_cases)
+        self.adapter.save_rows(rows, use_shard_col)
 
-    def delete(self, doc, reassigning_cases=False):
+    def delete(self, doc, use_shard_col=True):
         self._track_load()
-        self.adapter.delete(doc, reassigning_cases)
+        self.adapter.delete(doc, use_shard_col)
 
     def get_distinct_values(self, column, limit):
         distinct_values, too_many_values = self.adapter.get_distinct_values(column, limit)
