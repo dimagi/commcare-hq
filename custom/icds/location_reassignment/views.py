@@ -127,8 +127,7 @@ class LocationReassignmentView(BaseLocationView):
 
     def _process_request_for_update(self, parser, request):
         process_location_reassignment.delay(
-            self.domain, parser.valid_transitions, parser.new_location_details,
-            parser.user_transitions, list(parser.requested_transitions.keys()),
+            self.domain, parser.valid_transitions_json(),
             request.user.email
         )
         messages.success(request, _(

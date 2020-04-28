@@ -1,5 +1,7 @@
 from collections import defaultdict
 
+import attr
+
 from corehq.apps.locations.models import LocationType, SQLLocation
 from custom.icds.location_reassignment.const import (
     AWC_CODE_COLUMN,
@@ -300,6 +302,13 @@ class Parser(object):
                 if new_location_details['parent_site_code']:
                     parent_site_codes.add(new_location_details['parent_site_code'])
         return parent_site_codes
+
+    def valid_transitions_json(self):
+        # return valid transitions as json
+        json_response = {}
+        for location_code, transitions in self.valid_transitions.items():
+            json_response[location_code] = [attr.asdict(transition) for transition in transitions]
+        return json_response
 
 
 class HouseholdReassignmentParser(object):
