@@ -1826,7 +1826,7 @@ def drop_gm_indices(agg_date):
     with get_cursor(AggregateGrowthMonitoringForms) as cursor:
         for query, params in helper.delete_queries():
             cursor.execute(query, params)
-    helper.create_temporary_prev_table()
+    helper.create_temporary_prev_table('static-child_health_cases')
 
 
 def create_df_indices(agg_date):
@@ -1847,42 +1847,42 @@ def drop_df_indices(agg_date):
 
 def cf_pre_queries(agg_date):
     helper = AggregateComplementaryFeedingForms._agg_helper_cls(None, agg_date)
-    helper.create_temporary_prev_table()
+    helper.create_temporary_prev_table('static-child_health_cases')
 
 
 def ccs_cf_pre_queries(agg_date):
     helper = AggregateCcsRecordComplementaryFeedingForms._agg_helper_cls(None, agg_date)
-    helper.create_temporary_prev_table()
+    helper.create_temporary_prev_table('static-ccs_record_cases')
 
 
 def migration_pre_queries(agg_date):
     helper = AggregateMigrationForms._agg_helper_cls(None, agg_date)
-    helper.create_temporary_prev_table()
+    helper.create_temporary_prev_table('static-person_cases_v3', 'person_case_id')
 
 
 def availing_pre_queries(agg_date):
     helper = AggregateAvailingServiceForms._agg_helper_cls(None, agg_date)
-    helper.create_temporary_prev_table()
+    helper.create_temporary_prev_table('static-person_cases_v3', 'person_case_id')
 
 
 def ch_pnc_pre_queries(agg_date):
     helper = AggregateChildHealthPostnatalCareForms._agg_helper_cls(None, agg_date)
-    helper.create_temporary_prev_table()
+    helper.create_temporary_prev_table('static-child_health_cases')
 
 
 def ccs_pnc_pre_queries(agg_date):
     helper = AggregateCcsRecordPostnatalCareForms._agg_helper_cls(None, agg_date)
-    helper.create_temporary_prev_table()
+    helper.create_temporary_prev_table('static-ccs_record_cases')
 
 
 def bp_pre_queries(agg_date):
     helper = AggregateBirthPreparednesForms._agg_helper_cls(None, agg_date)
-    helper.create_temporary_prev_table()
+    helper.create_temporary_prev_table('static-ccs_record_cases')
 
 
 def ag_pre_queries(agg_date):
     helper = AggregateAdolescentGirlsRegistrationForms._agg_helper_cls(None, agg_date)
-    helper.create_temporary_prev_table()
+    helper.create_temporary_prev_table('static-person_cases_v3', 'person_case_id')
 
 
 def update_governance_dashboard(target_date):
