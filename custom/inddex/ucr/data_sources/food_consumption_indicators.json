@@ -68,6 +68,16 @@
             },
             {
                 "type": "expression",
+                "column_id": "owner_id",
+                "datatype": "string",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "owner_id",
+                    "datatype": null
+                }
+            },
+            {
+                "type": "expression",
                 "column_id": "owner_name",
                 "datatype": "string",
                 "expression": {
