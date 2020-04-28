@@ -132,8 +132,7 @@ class BaseOperation(metaclass=ABCMeta):
 
         valid = (
             self._validate_location_count(self.expected_old_locations, len(self.old_site_codes), "old")
-            and
-            self._validate_location_count(self.expected_new_locations, len(self.new_site_codes), "new")
+            and self._validate_location_count(self.expected_new_locations, len(self.new_site_codes), "new")
         )
         if not valid:
             return False

@@ -291,7 +291,8 @@ class Parser(object):
                     parent_site_code = new_location_details['parent_site_code']
                     if parent_site_code in existing_new_parents:
                         if existing_new_parents[parent_site_code].location_type.code != expected_parent_type:
-                            self.errors.append(f"Unexpected parent {parent_site_code} for type {location_type_code}")
+                            self.errors.append(f"Unexpected parent {parent_site_code} "
+                                               f"for type {location_type_code}")
                     elif parent_site_code not in self.new_site_codes_for_location_type[expected_parent_type]:
                         self.errors.append(f"Unexpected parent {parent_site_code} for type {location_type_code}")
 

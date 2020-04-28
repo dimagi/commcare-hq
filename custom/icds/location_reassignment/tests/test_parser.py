@@ -23,7 +23,7 @@ from custom.icds.location_reassignment.const import (
     OPERATION_COLUMN,
     USERNAME_COLUMN,
 )
-from custom.icds.location_reassignment.parser import Parser, Transition
+from custom.icds.location_reassignment.parser import Parser
 
 LocationType = namedtuple("LocationType", ['code', 'parent_type'])
 Location = namedtuple("Location", ['location_type', 'site_code'])
@@ -118,7 +118,12 @@ class TestParser(TestCase):
                  'old_site_codes': ['12'],
                  'new_site_codes': ['13'],
                  'new_location_details': {
-                    '13': {'name': 'Supervisor 3', 'parent_site_code': '1', 'lgd_code': 'Sup-13'}},
+                     '13': {
+                         'name': 'Supervisor 3',
+                         'parent_site_code': '1',
+                         'lgd_code': 'Sup-13'
+                     }
+                 },
                  'user_transitions': {'username5': 'username6'}}
             )
             self.assertEqual(errors, [
