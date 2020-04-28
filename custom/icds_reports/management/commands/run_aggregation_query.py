@@ -45,7 +45,7 @@ from custom.icds_reports.tasks import (
     create_all_mbt,
     create_df_indices,
     drop_df_indices,
-    gm_pre_queries,
+    drop_gm_indices,
     migration_pre_queries,
     setup_aggregation,
     update_agg_child_health,
@@ -60,7 +60,7 @@ from custom.icds_reports.tasks import (
 logger = logging.getLogger(__name__)
 
 STATE_TASKS = {
-    'aggregate_gm_forms': (gm_pre_queries, _aggregate_gm_forms, None),
+    'aggregate_gm_forms': (drop_gm_indices, _aggregate_gm_forms, None),
     'aggregate_cf_forms': (cf_pre_queries, _aggregate_cf_forms, None),
     'aggregate_ccs_cf_forms': (ccs_cf_pre_queries, _aggregate_ccs_cf_forms, None),
     'aggregate_thr_forms': (None, _agg_thr_table, None),
