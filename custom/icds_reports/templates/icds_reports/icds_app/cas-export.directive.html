@@ -10,6 +10,7 @@
         <div class="alert alert-info" ng-show="!$ctrl.allFiltersSelected()">
             Please select all filters!
         </div>
+        <reassignment-message ng-show="$ctrl.showReassignmentMessage()" selected-location="$ctrl.selectedLocation" selected-date="$ctrl.selectedDate()"></reassignment-message>
         <div class="form-horizontal black">
             <div class="form-group">
                 <label class="control-label col-sm-2" for="indicator">Data Type: <i class="fa fa-info-circle" uib-popover="Select the data type for which you want to download a CAS Export."

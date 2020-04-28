@@ -922,6 +922,7 @@ def get_requests(
         verify=repeater.verify,
         notify_addresses=repeater.notify_addresses,
         payload_id=payload_id,
+        auth_type=repeater.auth_type,
     )
 
 
