@@ -4,6 +4,7 @@ from typing import Optional
 
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 
 import jsonfield
 
