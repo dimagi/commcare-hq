@@ -319,6 +319,23 @@ class TestCouchSqlDiff(BaseMigrationTestCase):
         ])
         self.assert_patched_cases()
 
+    def test_convert_error_form_for_case_missing_in_couch(self):
+        def find_forms(case_id):
+            return ["form-1"]
+        self.submit_form(make_test_form("form-1", case_id="case-1"))
+        self.do_migration(case_diff="none")
+        CommCareCase.get_db().delete_doc("case-1")
+        clear_local_domain_sql_backend_override(self.domain_name)
+        form = self._get_form("form-1")
+        form.problem = "something went wrong"
+        form.save()
+        self.do_case_diffs("pending")
+        self.compare_diffs([
+            Diff('case-1', 'missing', ['*'], old=MISSING, new='present'),
+        ])
+        with patch.object(casediff, "find_form_ids_updating_case", find_forms):
+            self.do_migration(forms="missing", diffs=[])
+
     def test_patch_case_closed_in_couch_not_sql(self):
         self.submit_form(make_test_form("form-1", case_id="case-1"))
         self.do_migration(case_diff="none")

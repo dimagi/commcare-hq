@@ -54,9 +54,11 @@ from corehq.form_processor.backends.sql.ledger import LedgerProcessorSQL
 from corehq.form_processor.backends.sql.processor import FormProcessorSQL
 from corehq.form_processor.exceptions import (
     AttachmentNotFound,
+    CaseNotFound,
+    CaseSaveError,
     MissingFormXml,
     XFormNotFound,
-    CaseSaveError)
+)
 from corehq.form_processor.interfaces.processor import (
     FormProcessorInterface,
     ProcessedForms,
@@ -532,15 +534,21 @@ class CouchSqlDomainMigrator:
         drop_sql_ids = MissingIds.forms(self.statedb).drop_sql_ids
         for diff in _iter_case_diffs(self.statedb, self.stopper):
             case_id = diff.doc_id
+            json_diff = diff.json_diff
             for form in loader.iter_blob_forms(diff):
                 log.info("migrating form %s received on %s from case %s",
                     form.form_id, form.received_on, case_id)
                 self._migrate_form(form, get_case_ids(form), form_is_processed=True)
             if diff.kind == "stock state":
-                dropped = maybe_drop_duplicate_ledgers(diff.json_diff, case_id)
+                dropped = maybe_drop_duplicate_ledgers(json_diff, case_id)
                 if dropped:
                     continue
-            form_ids = list(iter_form_ids(diff.json_diff, diff.kind))
+            elif (diff.kind == "CommCareCase" and list(json_diff.path) == ["*"]
+                    and json_diff.old_value is MISSING
+                    and json_diff.new_value == "present"):
+                self._delete_sql_case_missing_in_couch(case_id, json_diff)
+                continue
+            form_ids = list(iter_form_ids(json_diff, diff.kind))
             if not form_ids:
                 continue
             missing_ids = set(drop_sql_ids(form_ids))
@@ -643,6 +651,62 @@ class CouchSqlDomainMigrator:
                     if tx.revoked:
                         tx.revoked = False
         return result
+
+    def _delete_sql_case_missing_in_couch(self, case_id, json_diff):
+        @retry_on_couch_error
+        def get_couch_forms(form_ids):
+            return FormAccessorCouch.get_forms(form_ids)
+
+        from .casediff import get_sql_forms
+        assert (list(json_diff.path) == ["*"]
+                and json_diff.old_value is MISSING
+                and json_diff.new_value == "present"), (case_id, json_diff)
+        try:
+            sql_case = CaseAccessorSQL.get_case(case_id)
+        except CaseNotFound:
+            return  # already deleted
+        assert sql_case.xform_ids, case_id
+        sql_forms = {f.form_id: f for f in get_sql_forms(sql_case.xform_ids)}
+        form_pairs = []
+        for couch_form in get_couch_forms(sql_case.xform_ids):
+            if (couch_form.initial_processing_complete
+                    and not getattr(couch_form, "problem", None)
+                    and couch_form.doc_type == "XFormInstance"):
+                log.warning("refusing to delete case %s for normal Couch form %s",
+                    case_id, couch_form.form_id)
+                return
+            try:
+                sql_form = sql_forms[couch_form.form_id]
+            except KeyError:
+                log.warning("refusing to delete case %s: form not in SQL %s",
+                    case_id, couch_form.form_id)
+                return
+            form_pairs.append((couch_form, sql_form))
+        all_case_ids = set()
+        for couch_form, sql_form in form_pairs:
+            changed = False
+            if not couch_form.initial_processing_complete:
+                sql_form.initial_processing_complete = False
+                changed = True
+            couch_problem = getattr(couch_form, "problem", None)
+            if couch_problem and sql_form.problem != couch_problem:
+                sql_form.problem = couch_form.problem
+                changed = True
+            if sql_form.is_normal:
+                sql_form.state = XFormInstanceSQL.ERROR
+                changed = True
+            if not changed:
+                continue
+            sql_form.save()
+            case_ids = get_case_ids(sql_form)
+            self.case_diff_queue.update(case_ids, couch_form.form_id)
+            all_case_ids.update(case_ids)
+        if case_id in all_case_ids:
+            log.info("deleting SQL case missing in Couch: %s forms=%s",
+                case_id, sql_case.xform_ids)
+            CaseAccessorSQL.hard_delete_cases(self.domain, [case_id])
+        else:
+            log.warning("refusing to delete case %s: form not found", case_id)
 
     def _check_for_migration_restrictions(self, domain_name):
         msgs = []

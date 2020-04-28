@@ -450,12 +450,16 @@ def add_cases_missing_from_couch(data, case_ids):
 
 
 def find_processed_and_unmigrated_form_ids(case_id):
-    result = FormES().filter(updating_cases([case_id])).run()
-    es_ids = [hit["_id"] for hit in result.hits]
+    es_ids = find_form_ids_updating_case(case_id)
     forms = get_sql_forms(es_ids)
     normal = {f.form_id for f in forms if f.initial_processing_complete and f.is_normal}
     unmigrated = set(es_ids) - {f.form_id for f in forms}
     return normal | unmigrated
+
+
+def find_form_ids_updating_case(case_id):
+    result = FormES().filter(updating_cases([case_id])).run()
+    return [hit["_id"] for hit in result.hits]
 
 
 @contextmanager
