@@ -103,3 +103,13 @@ def get_task_status_json(task_id):
             ),
             result=normalize_task_status_result(task_status.result),
         )
+
+
+def make_task_status_success(result):
+    return TaskStatus(
+        state=STATES.success,
+        progress=TaskStatusProgress(
+            percent=0,
+        ),
+        result=normalize_task_status_result(result),
+    )

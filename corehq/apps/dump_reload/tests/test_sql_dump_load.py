@@ -24,6 +24,7 @@ from corehq.apps.dump_reload.sql.dump import (
     get_model_iterator_builders_to_dump,
     get_objects_to_dump,
 )
+from corehq.apps.dump_reload.sql.filters import GetattrQueryset
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.products.models import SQLProduct
 from corehq.blobs.models import BlobMeta
@@ -44,6 +45,7 @@ from corehq.form_processor.tests.utils import (
     FormProcessorTestUtils,
     create_form_for_test,
 )
+from corehq.messaging.scheduling.scheduling_partitioned.models import AlertScheduleInstance
 
 
 class BaseDumpLoadTest(TestCase):
@@ -65,10 +67,14 @@ class BaseDumpLoadTest(TestCase):
 
     def delete_sql_data(self):
         for model_class, builder in get_model_iterator_builders_to_dump(self.domain_name, []):
-            for queryset in builder.querysets():
-                collector = NestedObjects(using=queryset.db)
-                collector.collect(queryset)
-                collector.delete()
+            for iterator in builder.querysets():
+                if isinstance(iterator, GetattrQueryset):
+                    for model in iterator:
+                        model.delete()
+                else:
+                    collector = NestedObjects(using=iterator.db)
+                    collector.collect(iterator)
+                    collector.delete()
 
         self.assertEqual([], list(get_objects_to_dump(self.domain_name, [])))
 
@@ -490,6 +496,28 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
         )
 
         self._dump_and_load(expected_object_counts)
+
+    def test_message_scheduling(self):
+        AlertScheduleInstance(
+            schedule_instance_id=uuid.uuid4(),
+            domain=self.domain_name,
+            recipient_type='CommCareUser',
+            recipient_id=uuid.uuid4().hex,
+            current_event_num=0,
+            schedule_iteration_num=1,
+            next_event_due=datetime(2017, 3, 1),
+            active=True,
+            alert_schedule_id=uuid.uuid4(),
+        ).save()
+        self._dump_and_load({AlertScheduleInstance: 1})
+
+    def test_transifex(self):
+        from corehq.apps.translations.models import TransifexProject, TransifexOrganization
+        org = TransifexOrganization.objects.create(slug='test', name='demo', api_token='123')
+        TransifexProject.objects.create(
+            organization=org, slug='testp', name='demop', domain=self.domain_name
+        )
+        self._dump_and_load(Counter({TransifexOrganization: 1, TransifexProject: 1}))
 
 
 def _normalize_object_counter(counter, for_loaded=False):
