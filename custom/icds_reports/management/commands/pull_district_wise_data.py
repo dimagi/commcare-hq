@@ -18,7 +18,7 @@ def _run_custom_sql_script(command, day=None):
 class Command(BaseCommand):
 
     def build_data(self, context):
-        for i in range(1, 2):
+        for i in range(1, 3):
             path = os.path.join(os.path.dirname(__file__), 'sql_scripts',
                                 'district_data_pull_{}.sql'.format(i))
             with open(path, "r", encoding='utf-8') as sql_file:
