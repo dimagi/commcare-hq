@@ -7,8 +7,15 @@ from celery.task import task
 from casexml.apps.case.mock import CaseBlock
 
 from corehq.apps.hqcase.utils import submit_case_blocks
+from corehq.apps.userreports.data_source_providers import (
+    DynamicDataSourceProvider,
+    StaticDataSourceProvider,
+)
+from corehq.apps.userreports.specs import EvaluationContext
+from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import SYSTEM_USER_ID, normalize_username
+from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from custom.icds.location_reassignment.download import Households
 from custom.icds.location_reassignment.exceptions import InvalidUserTransition
 from custom.icds.location_reassignment.processor import (
@@ -149,3 +156,33 @@ def process_households_reassignment(domain, reassignments, uploaded_filename, us
             from_email=settings.DEFAULT_FROM_EMAIL
         )
         email.send()
+
+
+@task(queue=settings.CELERY_LOCATION_REASSIGNMENT_QUEUE)
+def process_ucr_changes(domain, case_ids):
+    cases = CaseAccessorSQL.get_cases(case_ids)
+    docs = [case.to_json() for case in cases]
+    data_source_providers = [DynamicDataSourceProvider(), StaticDataSourceProvider()]
+
+    all_configs = [
+        source
+        for provider in data_source_providers
+        for source in provider.by_domain(domain)
+    ]
+
+    adapters = [
+        get_indicator_adapter(config, raise_errors=True, load_source='location_reassignment')
+        for config in all_configs
+    ]
+
+    async_configs_by_doc_id = {}
+    for doc in docs:
+        eval_context = EvaluationContext(doc)
+        for adapter in adapters:
+            if adapter.config.filter(doc, eval_context):
+                async_configs_by_doc_id[doc['_id']].append(adapter.config._id)
+                rows_to_save = adapter.get_all_values(doc, eval_context)
+                if rows_to_save:
+                    adapter.save_rows(rows_to_save)
+                else:
+                    adapter.delete(doc)

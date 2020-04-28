@@ -13,6 +13,7 @@ from custom.icds.location_reassignment.const import (
     HOUSEHOLD_CASE_TYPE,
 )
 from custom.icds.location_reassignment.models import Transition
+from custom.icds.location_reassignment.tasks import process_ucr_changes
 
 
 def deprecate_locations(domain, old_locations, new_locations, operation):
@@ -110,3 +111,4 @@ def reassign_household_case(domain, household_case_id, old_owner_id, new_owner_i
         case_blocks.append(case_block)
     if case_blocks:
         submit_case_blocks(case_blocks, domain, user_id=SYSTEM_USER_ID)
+    process_ucr_changes.delay(domain, case_ids)
