@@ -8,8 +8,8 @@ class Command(PopulateSQLCommand):
 
     @classmethod
     def sql_class(self):
-        from corehq.apps.consumption.models import SQLDefaultConsumption
-        return SQLDefaultConsumption
+        from corehq.apps.consumption.models import DefaultConsumption
+        return DefaultConsumption
 
     @classmethod
     def commit_adding_migration(cls):
