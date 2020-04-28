@@ -234,10 +234,4 @@ class HouseholdReassignmentParser(object):
                     'old_site_code': location_site_code,
                     'new_site_code': new_awc_code
                 }
-        locations = SQLLocation.active_objects.filter(domain=self.domain, site_code__in=site_codes)
-        if len(locations) != len(site_codes):
-            site_codes_found = set([l.site_code for l in locations])
-            errors.append(
-                "Missing site codes %s" % ",".join(site_codes - site_codes_found)
-            )
         return errors
