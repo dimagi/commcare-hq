@@ -351,14 +351,14 @@ def _queue_indicators(indicators):
 
 
 @task(serializer='pickle', queue=UCR_INDICATOR_CELERY_QUEUE, ignore_result=True, acks_late=True)
-def build_async_indicators(indicator_doc_ids, reassigning_cases=False):
+def build_async_indicators(indicator_doc_ids):
     # written to be used with _queue_indicators, indicator_doc_ids must
     #   be a chunk of 100
     for ids in chunked(indicator_doc_ids, 10):
-        _build_async_indicators(ids, reassigning_cases)
+        _build_async_indicators(ids)
 
 
-def _build_async_indicators(indicator_doc_ids, reassigning_cases):
+def _build_async_indicators(indicator_doc_ids):
     def handle_exception(exception, config_id, doc, adapter):
         metric = None
         if isinstance(exception, (ProtocolError, ReadTimeout)):
@@ -446,7 +446,7 @@ def _build_async_indicators(indicator_doc_ids, reassigning_cases):
                 doc_ids = doc_ids_from_rows(rows)
                 indicators = [indicator_by_doc_id[doc_id] for doc_id in doc_ids]
                 try:
-                    adapter.save_rows(rows, reassigning_cases)
+                    adapter.save_rows(rows, reassigning_cases=False)
                 except Exception as e:
                     failed_indicators.union(indicators)
                     message = str(e)
