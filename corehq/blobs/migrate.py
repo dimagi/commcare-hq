@@ -75,7 +75,6 @@ from abc import ABC
 from base64 import b64encode
 from contextlib import contextmanager
 from datetime import timedelta
-from io import BufferedReader
 from tempfile import mkdtemp, NamedTemporaryFile
 
 import gevent
