@@ -20,7 +20,7 @@ COPY(SELECT
         awc.district_id = agg.district_id AND
         awc.aggregation_level = agg.aggregation_level
     ) WHERE agg.aggregation_level = 2
-    AND agg.month in ('%(month_3)s', '%(month_3)s', '%(month_3)s') ) TO '/tmp/%(name)s/district_data_pull_1.csv' DELIMITER ',' CSV HEADER
+    AND agg.month in ('%(month_1)s', '%(month_2)s', '%(month_3)s') ) TO '/tmp/%(name)s/district_data_pull_1.csv' DELIMITER ',' CSV HEADER
 
 --   QUERY PLAN
 -- ----------------------------------------------------------------------------------------------------------------------------------------
