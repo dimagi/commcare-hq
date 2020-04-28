@@ -3,24 +3,24 @@ COPY(SELECT
     awc.state_name,
     agg.state_id,
     agg.district_id,
-    CASE WHEN agg.month='%(month_1)s' THEN agg.num_launched_awcs ELSE 0 END as awcs_with_smart_phones_%(column_1)s,
-    CASE WHEN agg.month='%(month_2)s' THEN agg.num_launched_awcs ELSE 0 END as awcs_with_smart_phones_%(column_2)s,
-    CASE WHEN agg.month='%(month_3)s' THEN agg.num_launched_awcs ELSE 0 END as awcs_with_smart_phones_%(column_3)s,
-    CASE WHEN agg.month='%(month_1)s' THEN agg.awc_num_open ELSE 0 END as awcs_with_smart_phones_using_icds_cas_%(column_1)s,
-    CASE WHEN agg.month='%(month_2)s' THEN agg.awc_num_open ELSE 0 END as awcs_with_smart_phones_using_icds_cas_%(column_2)s,
-    CASE WHEN agg.month='%(month_3)s' THEN agg.awc_num_open ELSE 0 END as awcs_with_smart_phones_using_icds_cas_%(column_3)s,
-    CASE WHEN agg.month='%(month_1)s' THEN agg.cbe_conducted ELSE 0 END as cbe_conducted_%(column_1)s,
-    CASE WHEN agg.month='%(month_2)s' THEN agg.cbe_conducted ELSE 0 END as cbe_conducted_%(column_2)s,
-    CASE WHEN agg.month='%(month_3)s' THEN agg.cbe_conducted ELSE 0 END as cbe_conducted_%(column_3)s,
-    CASE WHEN agg.month='%(month_1)s' THEN agg.vhnd_conducted ELSE 0 END as vhnd_conducted_%(column_1)s,
-    CASE WHEN agg.month='%(month_2)s' THEN agg.vhnd_conducted ELSE 0 END as vhnd_conducted_%(column_2)s,
-    CASE WHEN agg.month='%(month_3)s' THEN agg.vhnd_conducted ELSE 0 END as vhnd_conducted_%(column_3)s
+    SUM(CASE WHEN agg.month='%(month_1)s' THEN agg.num_launched_awcs ELSE 0 END) as awcs_with_smart_phones_%(column_1)s,
+    SUM(CASE WHEN agg.month='%(month_2)s' THEN agg.num_launched_awcs ELSE 0 END) as awcs_with_smart_phones_%(column_2)s,
+    SUM(CASE WHEN agg.month='%(month_3)s' THEN agg.num_launched_awcs ELSE 0 END) as awcs_with_smart_phones_%(column_3)s,
+    SUM(CASE WHEN agg.month='%(month_1)s' THEN agg.awc_num_open ELSE 0 END) as awcs_with_smart_phones_using_icds_cas_%(column_1)s,
+    SUM(CASE WHEN agg.month='%(month_2)s' THEN agg.awc_num_open ELSE 0 END) as awcs_with_smart_phones_using_icds_cas_%(column_2)s,
+    SUM(CASE WHEN agg.month='%(month_3)s' THEN agg.awc_num_open ELSE 0 END) as awcs_with_smart_phones_using_icds_cas_%(column_3)s,
+    SUM(CASE WHEN agg.month='%(month_1)s' THEN agg.cbe_conducted ELSE 0 END) as cbe_conducted_%(column_1)s,
+    SUM(CASE WHEN agg.month='%(month_2)s' THEN agg.cbe_conducted ELSE 0 END) as cbe_conducted_%(column_2)s,
+    SUM(CASE WHEN agg.month='%(month_3)s' THEN agg.cbe_conducted ELSE 0 END) as cbe_conducted_%(column_3)s,
+    SUM(CASE WHEN agg.month='%(month_1)s' THEN agg.vhnd_conducted ELSE 0 END) as vhnd_conducted_%(column_1)s,
+    SUM(CASE WHEN agg.month='%(month_2)s' THEN agg.vhnd_conducted ELSE 0 END) as vhnd_conducted_%(column_2)s,
+    SUM(CASE WHEN agg.month='%(month_3)s' THEN agg.vhnd_conducted ELSE 0 END) as vhnd_conducted_%(column_3)s
     FROM agg_awc agg
     LEFT OUTER JOIN awc_location_local awc ON (
         awc.district_id = agg.district_id AND
         awc.aggregation_level = agg.aggregation_level
     ) WHERE agg.aggregation_level = 2
-    AND agg.month in ('%(month_1)s', '%(month_2)s', '%(month_3)s') ) TO '/tmp/%(name)s/district_data_pull_1.csv' DELIMITER ',' CSV HEADER
+    AND agg.month in ('%(month_1)s', '%(month_2)s', '%(month_3)s') GROUP BY agg.district_id, awc.district_name, agg.state_id, awc.state_name) TO '/tmp/%(name)s/district_data_pull_1.csv' DELIMITER ',' CSV HEADER
 
 --   QUERY PLAN
 -- ----------------------------------------------------------------------------------------------------------------------------------------
