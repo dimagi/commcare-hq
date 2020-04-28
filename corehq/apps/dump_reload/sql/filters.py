@@ -113,9 +113,33 @@ class GetattrQueryset:
         return self.queryset[item]
 
 
-class FilteredModelFieldIteratorBuilder(UnfilteredModelIteratorBuilder):
+class RelatedModelIteratorBuilder(UnfilteredModelIteratorBuilder):
+    """Generates an iterator that returns models objects by looking accessing a related model field.
+
+    For example:
+
+    ::
+        class Product(Model):
+            domain = CharField()
+            category = ForeignKey(Category)
+
+        class Category(Model):
+            name = CharField()
+
+        RelatedModelIteratorBuilder('app.Category', 'app.Product', SimpleFilter('domain'), 'category')
+
+    The filter is applied to the related model, in this case `Product`. The iterator will iterate over
+    Products and yield `product.category`.
+    """
     def __init__(self, model_label, related_model, filter, field_name, select_related=True):
-        super(FilteredModelFieldIteratorBuilder, self).__init__(model_label)
+        """
+        :param model_label: Full name of the model final model being returned
+        :param related_model: Full name of the model that will actually be queried from the DB
+        :param filter: Filter for the related model
+        :param field_name: Name of the field on the related model which returns the desired model
+        :param select_related: True if query should use 'select_related'
+        """
+        super(RelatedModelIteratorBuilder, self).__init__(model_label)
         self.filter = filter
         self.field_name = field_name
         self.select_related = select_related

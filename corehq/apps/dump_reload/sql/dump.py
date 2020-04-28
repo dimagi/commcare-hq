@@ -12,7 +12,7 @@ from corehq.apps.dump_reload.sql.filters import (
     SimpleFilter,
     UniqueFilteredModelIteratorBuilder,
     UserIDFilter,
-    UsernameFilter, FilteredModelFieldIteratorBuilder,
+    UsernameFilter, RelatedModelIteratorBuilder,
 )
 from corehq.apps.dump_reload.sql.serialization import JsonLinesSerializer
 from corehq.apps.dump_reload.util import get_model_label, get_model_class
@@ -127,7 +127,7 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = OrderedDict((iterator.model_label, itera
     FilteredModelIteratorBuilder('app_manager.LatestEnabledBuildProfiles', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('translations.SMSTranslations', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('translations.TransifexBlacklist', SimpleFilter('domain')),
-    FilteredModelFieldIteratorBuilder('translations.TransifexOrganization', 'translations.TransifexProject', SimpleFilter('domain'), 'organization'),
+    RelatedModelIteratorBuilder('translations.TransifexOrganization', 'translations.TransifexProject', SimpleFilter('domain'), 'organization'),
     FilteredModelIteratorBuilder('translations.TransifexProject', SimpleFilter('domain')),
 ])
 
