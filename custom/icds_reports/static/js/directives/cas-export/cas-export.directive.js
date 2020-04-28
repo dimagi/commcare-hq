@@ -30,6 +30,12 @@ function CasExportController($window, $location, locationHierarchy, locationsSer
     vm.selectedMonth = now.month() + 1;
     vm.selectedYear = now.year();
 
+    vm.updateSelectedDate = function () {
+        vm.selectedDate = vm.selectedMonth ? new Date(vm.selectedYear, vm.selectedMonth - 1) : new Date();
+    }
+
+    vm.updateSelectedDate();
+
     window.angular.forEach(moment.months(), function (key, value) {
         vm.monthsCopy.push({
             name: key,
@@ -100,6 +106,7 @@ function CasExportController($window, $location, locationHierarchy, locationsSer
         } else {
             vm.months = vm.monthsCopy;
         }
+        vm.updateSelectedDate();
     };
 
     vm.onSelectLocation = function (item, level) {
@@ -142,12 +149,8 @@ function CasExportController($window, $location, locationHierarchy, locationsSer
         });
     };
 
-    vm.selectedDate = function () {
-        return selectedDate = vm.selectedMonth ? new Date(vm.selectedYear, vm.selectedMonth) : new Date();
-    };
-
     vm.showReassignmentMessage = function () {
-        return vm.selectedLocation && (Date.parse(vm.selectedLocation.deprecated_at) < vm.selectedDate() || Date.parse(vm.selectedLocation.deprecates_at) > vm.selectedDate());
+        return vm.selectedLocation && (Date.parse(vm.selectedLocation.deprecated_at) < vm.selectedDate || Date.parse(vm.selectedLocation.deprecates_at) > vm.selectedDate);
     };
 }
 
