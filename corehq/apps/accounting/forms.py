@@ -2221,7 +2221,7 @@ class AdjustBalanceForm(forms.Form):
 
     method = forms.ChoiceField(
         choices=(
-            (CreditAdjustmentReason.MANUAL, "Update balance directly"),
+            (CreditAdjustmentReason.MANUAL, "Register back office payment"),
             (CreditAdjustmentReason.TRANSFER, "Take from available credit lines"),
         )
     )
