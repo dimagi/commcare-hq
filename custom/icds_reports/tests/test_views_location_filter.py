@@ -177,6 +177,10 @@ class TestLocationView(TestCase):
         expected = {
             'locations': [
                 {
+                    'deprecated_at': None,
+                    'deprecated_to': [],
+                    'deprecates': [],
+                    'deprecates_at': None,
                     'name': 'Test State',
                     'user_have_access_to_parent': False,
                     'location_type_name': 'state',
@@ -185,6 +189,10 @@ class TestLocationView(TestCase):
                     'location_id': self.state.location_id
                 },
                 {
+                    'deprecated_at': None,
+                    'deprecated_to': [],
+                    'deprecates': [],
+                    'deprecates_at': None,
                     'name': 'Test State 2',
                     'user_have_access_to_parent': False,
                     'location_type_name': 'state',
@@ -193,6 +201,10 @@ class TestLocationView(TestCase):
                     'location_id': self.state_2.location_id
                 },
                 {
+                    'deprecated_at': None,
+                    'deprecated_to': [],
+                    'deprecates': [],
+                    'deprecates_at': None,
                     'name': 'Test State 3',
                     'user_have_access_to_parent': False,
                     'location_type_name': 'state',
