@@ -120,7 +120,7 @@ class LocationReassignmentView(BaseLocationView):
             mandatory_columns = {AWC_CODE_COLUMN, HOUSEHOLD_ID_COLUMN}
             location_site_codes = set([ws.title for ws in workbook.worksheets])
             site_codes_found = set(
-                SQLLocation.active_objects.filter(domain=self.domain, site_code__in=location_site_codes)
+                SQLLocation.objects.filter(domain=self.domain, site_code__in=location_site_codes)
                 .values_list('site_code', flat=True))
             for worksheet in workbook.worksheets:
                 errors.extend(self._validate_worksheet(worksheet, site_codes_found, mandatory_columns))

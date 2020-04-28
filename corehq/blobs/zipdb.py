@@ -1,5 +1,5 @@
-from os.path import commonprefix, join, sep
 import zipfile
+from os.path import commonprefix, join, sep
 
 from corehq.blobs.exceptions import BadName
 from corehq.blobs.interface import AbstractBlobDB
@@ -10,9 +10,9 @@ class ZipBlobDB(AbstractBlobDB):
     """Blobs stored in zip file. Used for exporting a domain's blobs
     """
 
-    def __init__(self, slug, domain):
+    def __init__(self, filename):
         super(ZipBlobDB, self).__init__()
-        self.zipname = get_export_filename(slug, domain)
+        self.zipname = filename
         self._zipfile = None
 
     def put(self, **blob_meta_args):
