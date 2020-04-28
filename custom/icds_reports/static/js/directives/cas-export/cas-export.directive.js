@@ -32,7 +32,7 @@ function CasExportController($window, $location, locationHierarchy, locationsSer
 
     vm.updateSelectedDate = function () {
         vm.selectedDate = vm.selectedMonth ? new Date(vm.selectedYear, vm.selectedMonth - 1) : new Date();
-    }
+    };
 
     vm.updateSelectedDate();
 

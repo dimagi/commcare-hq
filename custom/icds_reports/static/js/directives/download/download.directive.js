@@ -54,7 +54,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
 
     vm.updateSelectedDate = function () {
         vm.selectedDate = vm.selectedMonth ? new Date(vm.selectedYear, vm.selectedMonth - 1) : new Date();
-    }
+    };
 
     vm.updateSelectedDate();
 
