@@ -20,6 +20,7 @@ from corehq.apps.accounting.utils import (
     domain_is_on_trial,
     is_accounting_admin,
 )
+from corehq.apps.accounting.views import TriggerDowngradeView
 from corehq.apps.app_manager.dbaccessors import (
     domain_has_apps,
     get_brief_apps_in_domain,
@@ -32,6 +33,7 @@ from corehq.apps.domain.views.releases import (
     ManageReleasesByAppProfile,
     ManageReleasesByLocation,
 )
+from corehq.apps.export.views.incremental import IncrementalExportView
 from corehq.apps.hqadmin.reports import (
     DeviceLogSoftAssertReport,
     UserAuditReport,
@@ -608,7 +610,7 @@ class ProjectDataTab(UITab):
                     }
                 )
             if self.can_view_case_exports:
-                export_data_views.append(
+                export_data_views.extend([
                     {
                         'title': _(CaseExportListView.page_title),
                         'url': reverse(CaseExportListView.urlname,
@@ -629,7 +631,19 @@ class ProjectDataTab(UITab):
                                 'urlname': EditNewCustomCaseExportView.urlname,
                             } if self.can_edit_commcare_data else None,
                         ] if _f]
-                    })
+                    },
+                ])
+            if toggles.INCREMENTAL_EXPORTS.enabled(self.domain):
+                export_data_views.append(
+                    {
+                        'title': _(IncrementalExportView.page_title),
+                        'url': reverse(IncrementalExportView.urlname,
+                                       args=(self.domain,)),
+                        'show_in_dropdown': True,
+                        'icon': 'icon icon-share fa fa-share-square-o',
+                        'subpages': []
+                    }
+                )
 
             if self.can_view_sms_exports:
                 export_data_views.append(
@@ -1147,6 +1161,27 @@ class MessagingTab(UITab):
         return settings_urls
 
     @property
+    @memoized
+    def whatsapp_urls(self):
+        from corehq.apps.sms.models import SQLMobileBackend
+        from corehq.messaging.smsbackends.turn.models import SQLTurnWhatsAppBackend
+        from corehq.apps.sms.views import WhatsAppTemplatesView
+        whatsapp_urls = []
+
+        domain_has_turn_integration = (
+            SQLTurnWhatsAppBackend.get_api_id() in
+            (b.get_api_id() for b in
+             SQLMobileBackend.get_domain_backends(SQLMobileBackend.SMS, self.domain)))
+        user_is_admin = (self.couch_user.is_superuser or self.couch_user.is_domain_admin(self.domain))
+
+        if user_is_admin and domain_has_turn_integration:
+            whatsapp_urls.append({
+                'title': _('Template Management'),
+                'url': reverse(WhatsAppTemplatesView.urlname, args=[self.domain]),
+            })
+        return whatsapp_urls
+
+    @property
     def dropdown_items(self):
         result = []
 
@@ -1199,7 +1234,8 @@ class MessagingTab(UITab):
             (_("Data Collection and Reminders"), self.reminders_urls),
             (_("CommCare Supply"), self.supply_urls),
             (_("Contacts"), self.contacts_urls),
-            (_("Settings"), self.settings_urls)
+            (_("Settings"), self.settings_urls),
+            (_("WhatsApp Settings"), self.whatsapp_urls),
         ):
             if urls:
                 items.append((title, urls))
@@ -1806,14 +1842,24 @@ def _get_integration_section(domain):
             'url': reverse(BiometricIntegrationView.urlname, args=[domain])
         })
 
-    if toggles.DHIS2_INTEGRATION.enabled(domain):
-        integration.extend([{
+    if toggles.INCREMENTAL_EXPORTS.enabled(domain) or toggles.DHIS2_INTEGRATION.enabled(domain):
+        integration.append({
             'title': _(ConnectionSettingsView.page_title),
             'url': reverse(ConnectionSettingsView.urlname, args=[domain])
-        }, {
+        })
+
+    if toggles.DHIS2_INTEGRATION.enabled(domain):
+        integration.append({
             'title': _(DataSetMapView.page_title),
             'url': reverse(DataSetMapView.urlname, args=[domain])
-        }])
+        })
+
+    if toggles.INCREMENTAL_EXPORTS.enabled(domain):
+        from corehq.apps.export.views.incremental import IncrementalExportLogView
+        integration.append({
+            'title': _(IncrementalExportLogView.name),
+            'url': reverse('domain_report_dispatcher', args=[domain, 'incremental_export_logs']),
+        })
 
     if toggles.OPENMRS_INTEGRATION.enabled(domain):
         integration.append({
@@ -1821,7 +1867,11 @@ def _get_integration_section(domain):
             'url': reverse(OpenmrsImporterView.urlname, args=[domain])
         })
 
-    if toggles.DHIS2_INTEGRATION.enabled(domain) or toggles.OPENMRS_INTEGRATION.enabled(domain):
+    if (
+            toggles.DHIS2_INTEGRATION.enabled(domain)
+            or toggles.OPENMRS_INTEGRATION.enabled(domain)
+            or toggles.INCREMENTAL_EXPORTS.enabled(domain)
+    ):
         integration.append({
             'title': _(MotechLogListView.page_title),
             'url': reverse(MotechLogListView.urlname, args=[domain])
@@ -1936,7 +1986,7 @@ class AccountingTab(UITab):
             TriggerInvoiceView, TriggerBookkeeperEmailView,
             TestRenewalEmailView, TriggerCustomerInvoiceView
         )
-        items.append(('Other Actions', (
+        other_actions = [
             {
                 'title': _(TriggerInvoiceView.page_title),
                 'url': reverse(TriggerInvoiceView.urlname),
@@ -1953,7 +2003,13 @@ class AccountingTab(UITab):
                 'title': _(TestRenewalEmailView.page_title),
                 'url': reverse(TestRenewalEmailView.urlname),
             }
-        )))
+        ]
+        if toggles.ACCOUNTING_TESTING_TOOLS.enabled_for_request(self._request):
+            other_actions.append({
+                'title': _(TriggerDowngradeView.page_title),
+                'url': reverse(TriggerDowngradeView.urlname),
+            })
+        items.append(('Other Actions', other_actions))
         return items
 
 

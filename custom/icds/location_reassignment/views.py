@@ -15,8 +15,16 @@ from corehq.apps.locations.permissions import require_can_edit_locations
 from corehq.apps.locations.views import BaseLocationView, LocationsListView
 from corehq.const import FILENAME_DATETIME_FORMAT
 from corehq.util.files import safe_filename_header
+from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.util.workbook_json.excel import WorkbookJSONError, get_workbook
-from custom.icds.location_reassignment.const import AWC_CODE
+from custom.icds.location_reassignment.const import (
+    AWC_CODE,
+    AWC_CODE_COLUMN,
+    CURRENT_SITE_CODE_COLUMN,
+    HOUSEHOLD_ID_COLUMN,
+    NEW_SITE_CODE_COLUMN,
+    OPERATION_COLUMN,
+)
 from custom.icds.location_reassignment.download import Download
 from custom.icds.location_reassignment.dumper import Dumper
 from custom.icds.location_reassignment.forms import (
@@ -64,22 +72,22 @@ class LocationReassignmentView(BaseLocationView):
 
     def post(self, request, *args, **kwargs):
         uploaded_file = request.FILES['bulk_upload_file']
-        workbook, errors = self._get_workbook(uploaded_file)
+        action_type = request.POST.get('action_type')
+        workbook, errors = self._get_workbook(uploaded_file, action_type)
         if errors:
             [messages.error(request, error) for error in errors]
             return self.get(request, *args, **kwargs)
-        action_type = request.POST.get('action_type')
         parser = self._get_parser(action_type, workbook)
         errors = parser.parse()
         if errors:
             [messages.error(request, error) for error in errors]
         else:
             if action_type == LocationReassignmentRequestForm.EMAIL_HOUSEHOLDS:
-                self._process_request_for_email_households(parser, request)
+                self._process_request_for_email_households(parser, request, uploaded_file.name)
             elif action_type == LocationReassignmentRequestForm.UPDATE:
-                self._process_request_for_update(parser, request)
+                self._process_request_for_update(parser, request, uploaded_file.name)
             elif action_type == LocationReassignmentRequestForm.REASSIGN_HOUSEHOLDS:
-                self._process_request_for_household_reassignment(parser, request)
+                self._process_request_for_household_reassignment(parser, request, uploaded_file.name)
             else:
                 return self._generate_summary_response(parser.valid_transitions, uploaded_file.name)
         return self.get(request, *args, **kwargs)
@@ -89,24 +97,52 @@ class LocationReassignmentView(BaseLocationView):
             return HouseholdReassignmentParser(self.domain, workbook)
         return Parser(self.domain, workbook)
 
-    def _get_workbook(self, uploaded_file):
+    def _get_workbook(self, uploaded_file, action_type):
         try:
             workbook = get_workbook(uploaded_file)
         except WorkbookJSONError as e:
             return None, [str(e)]
-        return workbook, self._workbook_is_valid(workbook)
+        return workbook, self._validate_workbook(workbook, action_type)
 
-    def _workbook_is_valid(self, workbook):
-        # ensure worksheets present and with titles as the location type codes
+    def _validate_workbook(self, workbook, action_type):
+        """
+        Ensure worksheets are present with titles as
+        1. location type codes for request for operations related requests
+        2. site codes of locations present in system for household reassignment
+        Ensure mandatory headers
+        :return list of errors
+        """
         errors = []
         if not workbook.worksheets:
             errors.append(_("No worksheets in workbook"))
             return errors
-        worksheet_titles = [ws.title for ws in workbook.worksheets]
-        location_type_codes = [lt.code for lt in LocationType.objects.by_domain(self.domain)]
-        for worksheet_title in worksheet_titles:
-            if worksheet_title not in location_type_codes:
-                errors.append(_("Unexpected sheet {sheet_title}").format(sheet_title=worksheet_title))
+        if action_type == LocationReassignmentRequestForm.REASSIGN_HOUSEHOLDS:
+            mandatory_columns = {AWC_CODE_COLUMN, HOUSEHOLD_ID_COLUMN}
+            location_site_codes = set([ws.title for ws in workbook.worksheets])
+            site_codes_found = set(
+                SQLLocation.objects.filter(domain=self.domain, site_code__in=location_site_codes)
+                .values_list('site_code', flat=True))
+            for worksheet in workbook.worksheets:
+                errors.extend(self._validate_worksheet(worksheet, site_codes_found, mandatory_columns))
+        else:
+            mandatory_columns = {CURRENT_SITE_CODE_COLUMN, NEW_SITE_CODE_COLUMN, OPERATION_COLUMN}
+            location_type_codes = [lt.code for lt in LocationType.objects.by_domain(self.domain)]
+            for worksheet in workbook.worksheets:
+                errors.extend(self._validate_worksheet(worksheet, location_type_codes, mandatory_columns))
+        return errors
+
+    @staticmethod
+    def _validate_worksheet(worksheet, valid_titles, mandatory_columns):
+        errors = []
+        if worksheet.title not in valid_titles:
+            errors.append(_("Unexpected sheet {sheet_title}").format(sheet_title=worksheet.title))
+            return errors
+
+        columns = set(worksheet.headers)
+        missing_columns = mandatory_columns - columns
+        if missing_columns:
+            errors.append(_("Missing columns {columns} for worksheet {sheet_title}").format(
+                columns=", ".join(missing_columns), sheet_title=worksheet.title))
         return errors
 
     def _generate_summary_response(self, transitions, uploaded_filename):
@@ -116,26 +152,26 @@ class LocationReassignmentView(BaseLocationView):
         response['Content-Disposition'] = safe_filename_header(filename, 'xlsx')
         return response
 
-    def _process_request_for_email_households(self, parser, request):
+    def _process_request_for_email_households(self, parser, request, uploaded_filename):
         if AWC_CODE in parser.valid_transitions:
             email_household_details.delay(self.domain, parser.valid_transitions[AWC_CODE],
-                                          request.user.email)
+                                          uploaded_filename, request.user.email)
             messages.success(request, _(
                 "Your request has been submitted. You will be updated via email."))
         else:
             messages.error(request, "No transitions found for %s" % AWC_CODE)
 
-    def _process_request_for_update(self, parser, request):
+    def _process_request_for_update(self, parser, request, uploaded_filename):
         process_location_reassignment.delay(
             self.domain, parser.valid_transitions_json(),
-            request.user.email
+            uploaded_filename, request.user.email
         )
         messages.success(request, _(
             "Your request has been submitted. We will notify you via email once completed."))
 
-    def _process_request_for_household_reassignment(self, parser, request):
+    def _process_request_for_household_reassignment(self, parser, request, uploaded_filename):
         process_households_reassignment.delay(
-            self.domain, parser.reassignments, request.user.email
+            self.domain, parser.reassignments, uploaded_filename, request.user.email
         )
         messages.success(request, _(
             "Your request has been submitted. We will notify you via email once completed."))
@@ -154,7 +190,8 @@ def download_location_reassignment_template(request, domain):
     location = SQLLocation.active_objects.get(location_id=location_id, domain=domain)
     response_file = Download(location).dump()
     response = HttpResponse(response_file, content_type="text/html; charset=utf-8")
-    creation_time = datetime.utcnow().strftime(FILENAME_DATETIME_FORMAT)
+    timezone = get_timezone_for_user(request.couch_user, domain)
+    creation_time = datetime.now(timezone).strftime(FILENAME_DATETIME_FORMAT)
     filename = f"[{domain}] {location.name} Location Reassignment Request Template {creation_time}"
     response['Content-Disposition'] = safe_filename_header(filename, 'xlsx')
     return response

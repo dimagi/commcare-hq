@@ -64,6 +64,11 @@ class CCSPhaseTemplateSpec(SumWhenTemplateSpec):
     expression = "ccs_phase = ?"
 
 
+class ComplementaryFeedingTemplateSpec(SumWhenTemplateSpec):
+    type = TypeProperty("complementary_feeding")
+    expression = "is_cf = ?"
+
+
 class ClosedOnNullTemplateSpec(SumWhenTemplateSpec):
     type = TypeProperty("closed_on_null")
     expression = "closed_on IS NULL"

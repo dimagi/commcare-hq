@@ -2,11 +2,11 @@ import bz2
 from base64 import b64decode, b64encode
 from itertools import chain
 
+from django.core.exceptions import ValidationError
 from django.db import models
 
 from corehq.motech.models import ConnectionSettings
 from dimagi.ext.couchdbkit import (
-    BooleanProperty,
     Document,
     DocumentSchema,
     IntegerProperty,
@@ -29,6 +29,7 @@ from corehq.motech.dhis2.utils import (
 from corehq.util.quickcache import quickcache
 
 
+# UNUSED
 class Dhis2Connection(models.Model):
     domain = models.CharField(max_length=255, unique=True)
     server_url = models.CharField(max_length=255, null=True)
@@ -49,6 +50,11 @@ class Dhis2Connection(models.Model):
         # (2020-03-09) Not true. The key is stored separately.
         plaintext_bytes = plaintext.encode('utf8')
         self.password = b64encode(bz2.compress(plaintext_bytes))
+
+    def save(self, *args, **kwargs):
+        raise ValidationError(
+            'Dhis2Connection is unused. Use ConnectionSettings instead.'
+        )
 
 
 class DataValueMap(DocumentSchema):

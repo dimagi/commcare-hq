@@ -10,8 +10,20 @@ from corehq.apps.fixtures.dbaccessors import (
 )
 
 
+class InddexFixtureError(Exception):
+    pass
+
+
+def _wrap(FixtureClass, kwargs):
+    try:
+        return FixtureClass(**kwargs)
+    except Exception as e:
+        raise InddexFixtureError(f"Error loading lookup table '{FixtureClass.table_name}': {e}")
+
+
 @attrs(kw_only=True, frozen=True)
 class RecipeIngredient:
+    table_name = 'recipes'
     recipe_code = attrib()
     recipe_descr = attrib()
     recipe_type = attrib()
@@ -24,6 +36,7 @@ class RecipeIngredient:
 
 @attrs(kw_only=True, frozen=True)
 class Food:
+    table_name = 'food_list'
     food_code = attrib()
     food_type = attrib()
     food_name = attrib()
@@ -42,6 +55,7 @@ class Food:
 
 @attrs(kw_only=True, frozen=True)
 class FoodComposition:
+    table_name = 'food_composition_table'
     food_code = attrib()
     foodex2_code = attrib()
     foodex2_code_description = attrib()
@@ -66,6 +80,7 @@ class FoodComposition:
 
 @attrs(kw_only=True, frozen=True)
 class Nutrient:
+    table_name = 'nutrients_lookup'
     nutrient_code = attrib()
     nutrient_name = attrib()
     nutrient_name_unit = attrib()
@@ -74,6 +89,7 @@ class Nutrient:
 
 @attrs(kw_only=True, frozen=True)
 class ConversionFactor:
+    table_name = 'conv_factors'
     food_code = attrib()
     conv_method = attrib()
     conv_option = attrib()
@@ -99,10 +115,10 @@ class FixtureAccessor:
     def recipes(self):
         """Lists of recipe ingredients by recipe_code"""
         recipes = defaultdict(list)
-        for item_dict in self._get_fixture_dicts('recipes'):
+        for item_dict in self._get_fixture_dicts(RecipeIngredient.table_name):
             # The fixture contains duplicate entries for each language.
             if item_dict.pop('iso_code') == 'en':
-                ingredient = RecipeIngredient(**item_dict)
+                ingredient = _wrap(RecipeIngredient, item_dict)
                 recipes[ingredient.recipe_code].append(ingredient)
         return recipes
 
@@ -110,10 +126,10 @@ class FixtureAccessor:
     def foods(self):
         """Food items by food_code"""
         foods = {}
-        for item_dict in self._get_fixture_dicts('food_list'):
+        for item_dict in self._get_fixture_dicts(Food.table_name):
             # A bunch of columns are duplicated - like food_name_lang_3
             item_dict = {k: v for k, v in item_dict.items() if '_lang_' not in k}
-            food = Food(**item_dict)
+            food = _wrap(Food, item_dict)
             foods[food.food_code] = food
         return foods
 
@@ -124,8 +140,8 @@ class FixtureAccessor:
     @cached_property
     def _nutrients(self):
         return [
-            Nutrient(**item_dict)
-            for item_dict in self._get_fixture_dicts('nutrients_lookup')
+            _wrap(Nutrient, item_dict)
+            for item_dict in self._get_fixture_dicts(Nutrient.table_name)
         ]
 
     @cached_property
@@ -139,7 +155,7 @@ class FixtureAccessor:
     @cached_property
     def food_compositions(self):
         foods = {}
-        for item_dict in self._get_fixture_dicts('food_composition_table'):
+        for item_dict in self._get_fixture_dicts(FoodComposition.table_name):
             nutrients = {}
             composition_dict = {}
             for k, v in item_dict.items():
@@ -147,14 +163,14 @@ class FixtureAccessor:
                     nutrients[self._nutrient_names_by_code[k]] = _to_float(v)
                 else:
                     composition_dict[k] = v
-            food = FoodComposition(nutrients=nutrients, **composition_dict)
+            food = _wrap(FoodComposition, {'nutrients': nutrients, **composition_dict})
             foods[food.food_code] = food
         return foods
 
     @cached_property
     def conversion_factors(self):
-        conversion_factors = (ConversionFactor(**item_dict)
-                              for item_dict in self._get_fixture_dicts('conv_factors'))
+        conversion_factors = (_wrap(ConversionFactor, item_dict)
+                              for item_dict in self._get_fixture_dicts(ConversionFactor.table_name))
         return {
             (cf.food_code, cf.conv_method, cf.conv_option): cf.conv_factor for cf in conversion_factors
         }

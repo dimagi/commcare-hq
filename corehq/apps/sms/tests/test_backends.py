@@ -59,6 +59,7 @@ from corehq.messaging.smsbackends.start_enterprise.models import (
 )
 from corehq.messaging.smsbackends.telerivet.models import SQLTelerivetBackend
 from corehq.messaging.smsbackends.test.models import SQLTestSMSBackend
+from corehq.messaging.smsbackends.turn.models import SQLTurnWhatsAppBackend
 from corehq.messaging.smsbackends.twilio.models import SQLTwilioBackend
 from corehq.messaging.smsbackends.unicel.models import (
     InboundParams,
@@ -124,6 +125,13 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
             hq_api_id=SQLGrapevineBackend.get_api_id()
         )
         cls.grapevine_backend.save()
+
+        cls.turn_backend = SQLTurnWhatsAppBackend(
+            name='TURN',
+            is_global=True,
+            hq_api_id=SQLTurnWhatsAppBackend.get_api_id()
+        )
+        cls.turn_backend.save()
 
         cls.twilio_backend = SQLTwilioBackend(
             name='TWILIO',
@@ -228,6 +236,7 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
         cls.test_backend.delete()
         cls.grapevine_backend.delete()
         cls.twilio_backend.delete()
+        cls.turn_backend.delete()
         cls.megamobile_backend.delete()
         cls.smsgh_backend.delete()
         cls.apposit_backend.delete()
@@ -321,6 +330,7 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
     @patch('corehq.messaging.smsbackends.test.models.SQLTestSMSBackend.send')
     @patch('corehq.messaging.smsbackends.grapevine.models.SQLGrapevineBackend.send')
     @patch('corehq.messaging.smsbackends.twilio.models.SQLTwilioBackend.send')
+    @patch('corehq.messaging.smsbackends.turn.models.SQLTurnWhatsAppBackend.send')
     @patch('corehq.messaging.smsbackends.megamobile.models.SQLMegamobileBackend.send')
     @patch('corehq.messaging.smsbackends.smsgh.models.SQLSMSGHBackend.send')
     @patch('corehq.messaging.smsbackends.apposit.models.SQLAppositBackend.send')
@@ -347,6 +357,7 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
             apposit_send,
             smsgh_send,
             megamobile_send,
+            turn_send,
             twilio_send,
             grapevine_send,
             test_send,
@@ -360,6 +371,7 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
         self._test_outbound_backend(self.telerivet_backend, 'telerivet test', telerivet_send)
         self._test_outbound_backend(self.test_backend, 'test test', test_send)
         self._test_outbound_backend(self.grapevine_backend, 'grapevine test', grapevine_send)
+        self._test_outbound_backend(self.turn_backend, 'turn test', turn_send)
         self._test_outbound_backend(self.twilio_backend, 'twilio test', twilio_send)
         self._test_outbound_backend(self.megamobile_backend, 'megamobile test', megamobile_send)
         self._test_outbound_backend(self.smsgh_backend, 'smsgh test', smsgh_send)
@@ -414,6 +426,25 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
             content_type='application/x-www-form-urlencoded', payload=payload)
 
         self._verify_inbound_request(self.grapevine_backend.get_api_id(), 'grapevine test')
+
+    @run_with_all_backends
+    def test_turn_inbound_sms(self):
+        url = '/turn/sms/%s' % self.turn_backend.inbound_api_key
+        payload = {"messages": [
+            {
+                "from": self.test_phone_number,
+                "id": "1234",
+                "timestamp": "message_timestamp",
+                "type": "text",
+                "text": {
+                    "body": "turn test"
+                }
+            }
+        ]}
+        self._simulate_inbound_request_with_payload(url, 'application/json', json.dumps(payload))
+
+        self._verify_inbound_request(self.turn_backend.get_api_id(), 'turn test',
+            backend_couch_id=self.turn_backend.couch_id)
 
     @run_with_all_backends
     def test_twilio_inbound_sms(self):

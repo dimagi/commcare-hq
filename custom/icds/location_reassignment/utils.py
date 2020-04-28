@@ -42,7 +42,7 @@ def get_household_child_cases_by_owner(domain, household_case_id, owner_id, case
     while parent_case_ids:
         child_cases = get_child_cases(parent_case_ids, iterated_case_ids)
         if child_cases:
-            child_case_ids = set([case.case_id for case in child_cases])
+            child_case_ids = [case.case_id for case in child_cases]
             iterated_case_ids.update(child_case_ids)
             if case_types:
                 cases.extend([case for case in child_cases
