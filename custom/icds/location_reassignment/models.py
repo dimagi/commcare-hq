@@ -124,13 +124,13 @@ class BaseOperation(metaclass=ABCMeta):
 
         return valid
 
-    def _validate_location_count(self, expected, count, location_type):
+    def _validate_location_count(self, expected, count, location_type_code):
         valid = True
         if expected == MANY and count == 1:
-            self.errors.append("%s operation: Got only one %s location." % (self.type, location_type))
+            self.errors.append("%s operation: Got only one %s location." % (self.type, location_type_code))
             valid = False
         elif expected == ONE and count > 1:
-            self.errors.append("%s operation: Got %s %s location." % (self.type, count, location_type))
+            self.errors.append("%s operation: Got %s %s location." % (self.type, count, location_type_code))
             valid = False
         return valid
 
