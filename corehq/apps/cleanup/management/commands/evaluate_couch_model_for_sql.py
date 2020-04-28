@@ -16,7 +16,7 @@ class Command(BaseCommand):
         on usage of each attribute, to aid in selecting SQL fields for those attributes.
 
         For each attribute report:
-        - Whether the value is ever null or empty, for the purpose of deciding whether to use null=True
+        - Whether the value is ever None, for the purpose of deciding whether to use null=True
         - Longest value, for the purpose of setting max_length
 
         Boolean attributes are ignored. Any attributes that is a list of dicts is assumed to be SchemaListProperty,
@@ -45,7 +45,7 @@ class Command(BaseCommand):
             for key, value in doc.items():
                 if prefix:
                     key = f"{prefix}.{key}"
-                if not value or isinstance(value, bool):
+                if value is None:
                     continue
                 if isinstance(value, list):
                     for item in value:
@@ -63,7 +63,7 @@ class Command(BaseCommand):
 
         max_count = max(key_counts.values())
         for key in sorted(key_counts):
-            print("{} is {} blank and has max length of {}".format(
+            print("{} is {} null and has max length of {}".format(
                 key,
                 'never' if key_counts[key] == max_count else 'sometimes',
                 max_lengths[key]
