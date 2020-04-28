@@ -183,6 +183,6 @@ def process_ucr_changes(domain, case_ids):
                 async_configs_by_doc_id[doc['_id']].append(adapter.config._id)
                 rows_to_save = adapter.get_all_values(doc, eval_context)
                 if rows_to_save:
-                    adapter.save_rows(rows_to_save)
+                    adapter.save_rows(rows_to_save, use_shard_col=False)
                 else:
-                    adapter.delete(doc)
+                    adapter.delete(doc, use_shard_col=False)
