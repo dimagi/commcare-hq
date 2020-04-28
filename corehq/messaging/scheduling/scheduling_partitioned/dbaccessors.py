@@ -171,7 +171,7 @@ def _paginate_query_across_partitioned_databases(model_class, q_expression, load
 
 
 def _paginate_query(db_name, model_class, q_expression, load_source, query_size=5000):
-    track_load = load_counter_for_model(model_class)(load_source, None, extra_tags={'db': db_name})
+    track_load = load_counter_for_model(model_class)(load_source, None)
     sort_cols = ('active', 'next_event_due')
 
     # active is always set to true in the queryset's q_expression so we

@@ -1168,7 +1168,7 @@ class CustomerInvoiceInterface(InvoiceInterfaceBase):
                 self.adjust_balance_form.adjust_balance(
                     web_user=self.request.user.username,
                 )
-        return super(CustomerInvoiceInterface, self).view_response
+        return super().view_response
 
     @property
     def email_response(self):

@@ -56,6 +56,7 @@ from corehq.apps.smsbillables.interface import (
     SMSGatewayFeeCriteriaInterface,
 )
 from corehq.motech.repeaters.views import DomainForwardingRepeatRecords
+from corehq.apps.export.views.incremental import IncrementalExportLogView
 from custom.openclinica.reports import OdmExportReport
 
 
@@ -345,5 +346,6 @@ DOMAIN_REPORTS = (
     (_('Project Settings'), (
         DomainForwardingRepeatRecords,
         DomainLinkHistoryReport,
+        IncrementalExportLogView,
     )),
 )

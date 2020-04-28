@@ -222,18 +222,13 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         return locationsService.getLocations(level, locationsCache, vm.selectedLocations, vm.disallowNational());
     };
 
-    var selectedLocationIndex = function () {
-        return _.findLastIndex(vm.selectedLocations, function (locationId) {
-            return locationId && locationId !== ALL_OPTION.location_id;
-        });
-    };
-
     vm.disabled = function (level) {
         return locationsService.isLocationDisabled(level, vm);
     };
 
     vm.onSelectForISSNIP = function ($item, level) {
-        var selectedLocationId = vm.selectedLocations[selectedLocationIndex()];
+        var selectedLocIndex = locationsService.selectedLocationIndex(vm.selectedLocations);
+        var selectedLocationId = vm.selectedLocations[selectedLocIndex];
         vm.locationPromise = locationsService.getAwcLocations(selectedLocationId).then(function (data) {
             if ($item.user_have_access) {
                 vm.awcLocations = [ALL_OPTION].concat(data);
@@ -385,8 +380,20 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
             vm.onSelectYear({'id': vm.selectedYear});
             vm.selectedFormat = 'xlsx';
         }
+
+        vm.adjustSelectedLevelForNoViewByFilter();
+
     };
 
+    /**
+     * To adjust selectedLevel for the reports that do not have viewBy filter. These
+     * reports end up having selectedLevel set by viewBy filter in the last report selected.
+     */
+    vm.adjustSelectedLevelForNoViewByFilter = function () {
+        if (!vm.showViewBy()) {
+            vm.selectedLevel = locationsService.selectedLocationIndex(vm.selectedLocations) + 1;
+        }
+    };
     vm.submitForm = function (csrfToken) {
         $rootScope.report_link = '';
         var awcs = vm.selectedPDFFormat === 'one' ? ['all'] : vm.selectedAWCs;
@@ -521,7 +528,8 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
 
     vm.showViewBy = function () {
         return !(vm.isChildBeneficiaryListSelected() || vm.isIncentiveReportSelected() ||
-            vm.isLadySupervisorSelected() || vm.isDashboardUsageSelected());
+            vm.isLadySupervisorSelected() || vm.isDashboardUsageSelected() ||
+            vm.isTakeHomeRationReportSelected());
     };
 
     vm.showLocationFilter = function () {

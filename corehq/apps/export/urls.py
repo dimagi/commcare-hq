@@ -24,6 +24,10 @@ from corehq.apps.export.views.edit import (
     EditODataCaseFeedView,
     EditODataFormFeedView,
 )
+from corehq.apps.export.views.incremental import (
+    IncrementalExportView,
+    incremental_export_checkpoint_file,
+)
 from corehq.apps.export.views.list import (
     CaseExportListView,
     DailySavedExportListView,
@@ -94,6 +98,12 @@ urlpatterns = [
     url(r"^custom/download_data_files/(?P<pk>[\w\-]+)/(?P<filename>.*)$",
         DataFileDownloadDetail.as_view(),
         name=DataFileDownloadDetail.urlname),
+    url(r"^custom/inc_export/$",
+        IncrementalExportView.as_view(),
+        name=IncrementalExportView.urlname),
+    url(r"^custom/inc_export_file/(?P<checkpoint_id>[\w\-]+)$",
+        incremental_export_checkpoint_file,
+        name='incremental_export_checkpoint_file'),
 
     # New export configuration views
     url(r"^custom/new/form/create$",
