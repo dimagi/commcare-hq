@@ -62,5 +62,6 @@ branches:
   - revert-27273-revert-27244-dmr/case-upload-success-result  # Danny April 27
   - dmr/fix-build_full_schema-poll-condition  # Danny April 27
   - dmr/require_can_edit_or_view_commcare_users-download_commcare_users  # Danny April 27
+  - sr-es-auto # Sravan April 28
 
 submodules: {}
