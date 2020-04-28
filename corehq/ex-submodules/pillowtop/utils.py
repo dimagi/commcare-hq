@@ -220,12 +220,9 @@ class ErrorCollector(object):
         self.errors.append(error)
 
 
-def build_bulk_payload(index_info, changes, doc_transform=None, error_collector=None, use_alias=True):
+def build_bulk_payload(index_info, changes, doc_transform=None, error_collector=None):
     """
     Builds bulk payload json to be called via Elasticsearch Bulk API
-
-    :param use_alias: Whether to use ES alias (used in pillows) or index_name (used in reindexers since
-                      an alias is not set)
     """
     doc_transform = doc_transform or (lambda x: x)
     payload = []
@@ -238,12 +235,11 @@ def build_bulk_payload(index_info, changes, doc_transform=None, error_collector=
         if doc and doc.get('doc_type'):
             return doc['doc_type'].endswith(DELETED_SUFFIX)
 
-    index_ref = index_info.alias if use_alias else index_info.index
     for change in changes:
         if _is_deleted(change):
             payload.append({
                 "_op_type": "delete",
-                "_index": index_ref,
+                "_index": index_info.alias,
                 "_type": index_info.type,
                 "_id": change.id
             })
@@ -253,7 +249,7 @@ def build_bulk_payload(index_info, changes, doc_transform=None, error_collector=
                 doc = doc_transform(doc)
                 payload.append({
                     "_op_type": "index",
-                    "_index": index_ref,
+                    "_index": index_info.alias,
                     "_type": index_info.type,
                     "_id": doc['_id'],
                     "_source": doc

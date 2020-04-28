@@ -206,7 +206,7 @@ class BulkPillowReindexProcessor(BaseDocProcessor):
         changes = [self._doc_to_change(doc) for doc in docs]
         error_collector = ErrorCollector()
 
-        bulk_changes = build_bulk_payload(self.index_info, changes, self.doc_transform, error_collector, use_alias=False)
+        bulk_changes = build_bulk_payload(self.index_info, changes, self.doc_transform, error_collector)
 
         for change, exception in error_collector.errors:
             pillow_logging.error("Error procesing doc %s: %s (%s)", change.id, type(exception), exception)
