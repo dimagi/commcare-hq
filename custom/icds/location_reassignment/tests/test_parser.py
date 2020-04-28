@@ -2,6 +2,7 @@ import tempfile
 from collections import namedtuple
 from unittest import TestCase
 
+import attr
 from mock import patch
 
 from couchexport.export import export_raw
@@ -22,7 +23,7 @@ from custom.icds.location_reassignment.const import (
     OPERATION_COLUMN,
     USERNAME_COLUMN,
 )
-from custom.icds.location_reassignment.parser import Parser
+from custom.icds.location_reassignment.parser import Parser, Transition
 
 LocationType = namedtuple("LocationType", ['code', 'parent_type'])
 Location = namedtuple("Location", ['location_type', 'site_code'])
@@ -94,14 +95,37 @@ class TestParser(TestCase):
             workbook = get_workbook(file)
             parser = Parser(self.domain, workbook)
             errors = parser.parse()
-            self.assertEqual(parser.valid_transitions['awc']['Move'], {'131': '112'})
-            self.assertEqual(parser.valid_transitions['awc']['Merge'], {'132': ['113']})
-            self.assertEqual(parser.valid_transitions['supervisor']['Move'], {'13': '12'})
+            self.assertEqual(len(parser.valid_transitions['awc']), 1)
+            awc_transition = attr.asdict(parser.valid_transitions['awc'][0])
+            self.assertEqual(
+                awc_transition,
+                {'domain': self.domain,
+                 'location_type_code': 'awc',
+                 'operation': 'Move',
+                 'old_site_codes': ['112'],
+                 'new_site_codes': ['131'],
+                 'new_location_details': {
+                     '131': {'name': 'AWC 3', 'parent_site_code': '13', 'lgd_code': 'AWC-131'}},
+                 'user_transitions': {'username2': 'username3'}}
+            )
+            self.assertEqual(len(parser.valid_transitions['supervisor']), 1)
+            supervisor_transition = attr.asdict(parser.valid_transitions['supervisor'][0])
+            self.assertEqual(
+                supervisor_transition,
+                {'domain': self.domain,
+                 'location_type_code': 'supervisor',
+                 'operation': 'Move',
+                 'old_site_codes': ['12'],
+                 'new_site_codes': ['13'],
+                 'new_location_details': {
+                    '13': {'name': 'Supervisor 3', 'parent_site_code': '1', 'lgd_code': 'Sup-13'}},
+                 'user_transitions': {'username5': 'username6'}}
+            )
             self.assertEqual(errors, [
-                "No change in location code for Extract, got old: '111' and new: '111'",
-                "New location 132 reused with different information",
-                "Missing location code for Split, got old: '11' and new: ''",
-                "Invalid Operation Unknown"
+                "Invalid Operation Unknown",
+                "Missing location code for operation Split. Got old: '11' and new: ''",
+                "No change in location code for operation Extract. Got old: '111' and new: '111'",
+                "New location 132 passed with different information"
             ])
 
     @patch('custom.icds.location_reassignment.parser.Parser._validate_descendants_deprecated')

@@ -4,10 +4,8 @@ from corehq.apps.locations.models import LocationType, SQLLocation
 from custom.icds.location_reassignment.const import (
     AWC_CODE_COLUMN,
     CURRENT_SITE_CODE_COLUMN,
-    EXTRACT_OPERATION,
     HOUSEHOLD_ID_COLUMN,
     MERGE_OPERATION,
-    MOVE_OPERATION,
     NEW_LGD_CODE,
     NEW_NAME,
     NEW_PARENT_SITE_CODE,
@@ -18,6 +16,54 @@ from custom.icds.location_reassignment.const import (
     USERNAME_COLUMN,
     VALID_OPERATIONS,
 )
+from custom.icds.location_reassignment.models import Transition
+
+
+class TransitionRow(object):
+    """
+    An object representation of each row in excel
+    """
+    def __init__(self, location_type, operation, old_site_code, new_site_code, expects_parent,
+                 new_location_details=None, old_username=None, new_username=None):
+        self.location_type = location_type
+        self.operation = operation
+        self.old_site_code = old_site_code
+        self.new_site_code = new_site_code
+        self.expects_parent = expects_parent
+        self.new_location_details = new_location_details or {}
+        self.old_username = old_username
+        self.new_username = new_username
+
+    def validate(self):
+        """
+        a. operation column has a valid value
+            b. If its a valid operation
+                i. there should be both old and new location codes
+                ii. there should be a change in old and new location codes
+                iii. there should be both old and new usernames or none
+                iv. there should be a new parent site code where expected
+                v. there should be no new parent site code where not expected
+        """
+        if self.operation not in VALID_OPERATIONS:
+            return [f"Invalid Operation {self.operation}"]
+
+        if not self.old_site_code or not self.new_site_code:
+            return [f"Missing location code for operation {self.operation}. "
+                    f"Got old: '{self.old_site_code}' and new: '{self.new_site_code}'"]
+
+        errors = []
+        if self.old_site_code == self.new_site_code:
+            errors.append(f"No change in location code for operation {self.operation}. "
+                          f"Got old: '{self.old_site_code}' and new: '{self.new_site_code}'")
+
+        if bool(self.new_username) != bool(self.old_username):
+            errors.append(f"Need both old and new username for {self.operation} operation "
+                          f"on location '{self.old_site_code}'")
+        if self.expects_parent and not self.new_location_details.get('parent_site_code'):
+            errors.append(f"Need parent for '{self.new_site_code}'")
+        if not self.expects_parent and self.new_location_details.get('parent_site_code'):
+            errors.append(f"Unexpected parent set for '{self.new_site_code}'")
+        return errors
 
 
 class Parser(object):
@@ -27,149 +73,163 @@ class Parser(object):
         and generates an output like
         {
             location_type_code:
-                'Merge': {
-                    'New location site code': ['Old location site code', 'Old location site code']
-                },
-                'Split': {
-                    'Old location site code': ['New location site code', 'New location site code']
-                },
-                'Rename': {
-                    'New location site code': 'Old location site code'
-                },
-                'Extract': {
-                    'New location site code': 'Old location site code'
+                {
+                    'location site code': Transition object
                 }
         }
 
-        Validates:
-        1. Excel validations, adds to errors and skips a row if:
-            a. operation column has a valid value
-            b. If there is an operation
-                i. there should be both old and new location codes
-                ii. there should be a change in old and new location codes
-                iii. there should be both old and new usernames or none
-                iv. an old location should be in only one extract, move or merge or
-                    can only be more than once in a split operation
-                v. a new location should be in only one extract, move or split or
-                    can only be more than once in a merge operation
-                vi. there should be a new parent site code where expected
-                vii. there should be no new parent site code where not expected
-                viii. new location is created with different details for a reused parent
-        2. Consolidated validations
-            a. if a location is deprecated, all its descendants should get deprecated too
-            b. new parent assigned should be of the expected location type
-            c. all old locations should be present in the system
+        Find valid transitions and then additionally validates that
+            a. all old locations should be present in the system
+            b. if a location is deprecated, all its descendants should get deprecated too
+            c. new parent assigned should be of the expected location type
         """
         self.domain = domain
         self.workbook = workbook
-        # mapping each location code to the type of operation requested for it
-        self.requested_transitions = {}
-        self.site_codes_to_be_deprecated = []
+
+        # For consolidated validations
+        # maintain a map of all transitions being performed by any site code
+        self.transiting_site_codes = set()
+        # maintain a list of valid site codes to be deprecated i.e all old site codes
+        self.site_codes_to_be_deprecated = set()
+
+        # mapping of expected parent type for a location type
         self.location_type_parent = {
             lt.code: lt.parent_type.code
             for lt in LocationType.objects.select_related('parent_type').filter(domain=self.domain)
             if lt.parent_type
         }
         location_type_codes_in_hierarchy = [lt.code for lt in LocationType.objects.by_domain(self.domain)]
-        self.new_location_details = {
-            location_type_code: {}
+
+        # Details of requested changes
+        # site codes of new locations getting created
+        self.new_site_codes_for_location_type = {
+            location_type_code: set()
             for location_type_code in location_type_codes_in_hierarchy
         }
-        self.user_transitions = {}
-        self.valid_transitions = {location_type_code: {
-            MERGE_OPERATION: defaultdict(list),
-            SPLIT_OPERATION: defaultdict(list),
-            MOVE_OPERATION: {},
-            EXTRACT_OPERATION: {},
-        } for location_type_code in location_type_codes_in_hierarchy}
+        # a mapping of all TransitionRows passed for each location type
+        self.transition_rows = {location_type_code: defaultdict(list)
+                                for location_type_code in location_type_codes_in_hierarchy}
+        # a mapping of all valid transitions found
+        self.valid_transitions = {location_type_code: []
+                                  for location_type_code in location_type_codes_in_hierarchy}
         self.errors = []
 
     def parse(self):
         for worksheet in self.workbook.worksheets:
             location_type_code = worksheet.title
+            expects_parent = bool(self.location_type_parent.get(location_type_code))
             for row in worksheet:
                 operation = row.get(OPERATION_COLUMN)
                 if not operation:
                     continue
-                if operation not in VALID_OPERATIONS:
-                    self.errors.append("Invalid Operation %s" % operation)
-                    continue
-                self._parse_row(row, location_type_code)
+                transition_row = TransitionRow(
+                    location_type=location_type_code,
+                    operation=operation,
+                    old_site_code=row.get(CURRENT_SITE_CODE_COLUMN),
+                    new_site_code=row.get(NEW_SITE_CODE_COLUMN),
+                    expects_parent=expects_parent,
+                    new_location_details={
+                        'name': row.get(NEW_NAME),
+                        'parent_site_code': row.get(NEW_PARENT_SITE_CODE),
+                        'lgd_code': row.get(NEW_LGD_CODE)
+                    },
+                    old_username=row.get(USERNAME_COLUMN),
+                    new_username=row.get(NEW_USERNAME_COLUMN)
+                )
+                self._note_transition(transition_row)
+        self._consolidate()
         self.validate()
         return self.errors
 
-    def _parse_row(self, row, location_type_code):
-        operation = row.get(OPERATION_COLUMN)
-        old_site_code = row.get(CURRENT_SITE_CODE_COLUMN)
-        new_site_code = row.get(NEW_SITE_CODE_COLUMN)
-        if not old_site_code or not new_site_code:
-            self.errors.append("Missing location code for %s, got old: '%s' and new: '%s'" % (
-                operation, old_site_code, new_site_code
-            ))
-            return
-        if old_site_code == new_site_code:
-            self.errors.append("No change in location code for %s, got old: '%s' and new: '%s'" % (
-                operation, old_site_code, new_site_code
-            ))
-            return
-        if bool(row.get(NEW_USERNAME_COLUMN)) != bool(row.get(USERNAME_COLUMN)):
-            self.errors.append("Need both old and new username for %s operation on location '%s'" % (
-                operation, old_site_code
-            ))
-            return
-        if self._invalid_row(row, location_type_code):
-            return
-        if new_site_code in self.new_location_details[location_type_code]:
-            details = self.new_location_details[location_type_code][new_site_code]
-            if (details['name'] != row.get(NEW_NAME)
-                    or details['parent_site_code'] != row.get(NEW_PARENT_SITE_CODE)
-                    or details['lgd_code'] != row.get(NEW_LGD_CODE)):
-                self.errors.append("New location %s reused with different information" % new_site_code)
-                return
-        self.new_location_details[location_type_code][new_site_code] = {
-            'name': row.get(NEW_NAME),
-            'parent_site_code': row.get(NEW_PARENT_SITE_CODE),
-            'lgd_code': row.get(NEW_LGD_CODE)
-        }
-        self._note_transition(operation, location_type_code, new_site_code, old_site_code)
-        if row.get(NEW_USERNAME_COLUMN) and row.get(USERNAME_COLUMN):
-            self.user_transitions[row.get(NEW_USERNAME_COLUMN)] = row.get(USERNAME_COLUMN)
-
-    def _invalid_row(self, row, location_type_code):
-        operation = row.get(OPERATION_COLUMN)
-        old_site_code = row.get(CURRENT_SITE_CODE_COLUMN)
-        new_site_code = row.get(NEW_SITE_CODE_COLUMN)
-        invalid = False
-        if old_site_code in self.requested_transitions:
-            if self.requested_transitions.get(old_site_code) != SPLIT_OPERATION or operation != SPLIT_OPERATION:
-                self.errors.append("Multiple transitions for %s, %s and %s" % (
-                    old_site_code, self.requested_transitions.get(old_site_code), operation))
-                invalid = True
-        if new_site_code in self.requested_transitions:
-            if self.requested_transitions.get(new_site_code) != MERGE_OPERATION or operation != MERGE_OPERATION:
-                self.errors.append("Multiple transitions for %s, %s and %s" % (
-                    new_site_code, self.requested_transitions.get(new_site_code), operation))
-                invalid = True
-        if self.location_type_parent.get(location_type_code) and not row.get(NEW_PARENT_SITE_CODE):
-            self.errors.append(f"Need parent for {old_site_code}")
-            invalid = True
-        if not self.location_type_parent.get(location_type_code) and row.get(NEW_PARENT_SITE_CODE):
-            self.errors.append(f"Unexpected parent set for {old_site_code}")
-            invalid = True
-        return invalid
-
-    def _note_transition(self, operation, location_type_code, new_site_code, old_site_code):
+    def _note_transition(self, row):
+        operation = row.operation
+        location_type_code = row.location_type
+        new_site_code = row.new_site_code
+        old_site_code = row.old_site_code
+        # only for merge operation final location is used as the reference key
         if operation == MERGE_OPERATION:
-            self.valid_transitions[location_type_code][operation][new_site_code].append(old_site_code)
-        elif operation == SPLIT_OPERATION:
-            self.valid_transitions[location_type_code][operation][old_site_code].append(new_site_code)
-        elif operation == MOVE_OPERATION:
-            self.valid_transitions[location_type_code][operation][new_site_code] = old_site_code
-        elif operation == EXTRACT_OPERATION:
-            self.valid_transitions[location_type_code][operation][new_site_code] = old_site_code
-        self.site_codes_to_be_deprecated.append(old_site_code)
-        self.requested_transitions[old_site_code] = operation
-        self.requested_transitions[new_site_code] = operation
+            self.transition_rows[location_type_code][new_site_code].append(row)
+        else:
+            self.transition_rows[location_type_code][old_site_code].append(row)
+
+    def _consolidate(self):
+        """
+        Consolidate valid TransitionRow requests into valid Transition objects
+        In case of multiple TransitionRow requests, like in case of merge/split,
+        combine them into one Transition
+        """
+        for location_type_code, rows_for_site_code in self.transition_rows.items():
+            for site_code, rows in rows_for_site_code.items():
+                errors = []
+                for row in rows:
+                    errors.extend(row.validate())
+                if errors:
+                    self.errors.extend(errors)
+                    continue
+
+                operation = self._valid_unique_operation(site_code, rows)
+                if not operation:
+                    continue
+
+                transition = self._consolidated_transition(location_type_code, operation, rows)
+                if not transition:
+                    continue
+                if self._valid_transition(transition):
+                    self.site_codes_to_be_deprecated.update(transition.old_site_codes)
+                    self.valid_transitions[location_type_code].append(transition)
+
+                # keep note of transition details for consolidated validations
+                self.transiting_site_codes.update(transition.old_site_codes)
+                self.transiting_site_codes.update(transition.new_site_codes)
+                self.new_site_codes_for_location_type[location_type_code].update(transition.new_site_codes)
+
+    def _valid_unique_operation(self, site_code, rows):
+        """
+        return unique valid operation for rows
+        """
+        operations = [row.operation for row in rows]
+        unique_operations = set(operations)
+        if len(unique_operations) > 1:
+            self.errors.append(f"Different operations requested for {site_code}: {','.join(unique_operations)}")
+            return None
+        operation = operations[0]
+
+        if len(operations) > 1 and operation not in [MERGE_OPERATION, SPLIT_OPERATION]:
+            self.errors.append(f"Multiple {operation} operations for {site_code}")
+            return None
+        if not len(operations) > 1 and operation in [MERGE_OPERATION, SPLIT_OPERATION]:
+            self.errors.append(f"Expected multiple transitions for {operation} for {site_code}")
+            return None
+        return operation
+
+    def _consolidated_transition(self, location_type_code, operation, rows):
+        transition = Transition(domain=self.domain, location_type_code=location_type_code, operation=operation)
+        for row in rows:
+            if row.new_site_code in transition.new_location_details:
+                # new location is passed with different details
+                if transition.new_location_details[row.new_site_code] != row.new_location_details:
+                    self.errors.append(f"New location {row.new_site_code} passed with different information")
+                    return None
+            transition.add(
+                old_site_code=row.old_site_code,
+                new_site_code=row.new_site_code,
+                new_location_details=row.new_location_details,
+                old_username=row.old_username,
+                new_username=row.new_username
+            )
+        return transition
+
+    def _valid_transition(self, transition):
+        valid = True
+        for old_site_code in transition.old_site_codes:
+            if old_site_code in self.transiting_site_codes:
+                self.errors.append(f"{old_site_code} participating in multiple transitions")
+                valid = False
+        for new_site_code in transition.new_site_codes:
+            if new_site_code in self.transiting_site_codes:
+                self.errors.append(f"{new_site_code} participating in multiple transitions")
+                valid = False
+        return valid
 
     def validate(self):
         if self.site_codes_to_be_deprecated:
@@ -212,7 +272,7 @@ class Parser(object):
         else check for parent location in new locations to be created for the expected parent location type
         else add error for missing parent
         """
-        for location_type_code in self.new_location_details:
+        for location_type_code in self.valid_transitions:
             expected_parent_type = self.location_type_parent.get(location_type_code)
             if not expected_parent_type:
                 continue
@@ -224,20 +284,22 @@ class Parser(object):
                 SQLLocation.active_objects.select_related('location_type')
                 .filter(domain=self.domain, site_code__in=new_parent_site_codes)
             }
-            for details in self.new_location_details[location_type_code].values():
-                parent_site_code = details['parent_site_code']
-                if parent_site_code in existing_new_parents:
-                    if existing_new_parents[parent_site_code].location_type.code != expected_parent_type:
+            for transition in self.valid_transitions[location_type_code]:
+                for new_site_code, new_location_details in transition.new_location_details.items():
+                    parent_site_code = new_location_details['parent_site_code']
+                    if parent_site_code in existing_new_parents:
+                        if existing_new_parents[parent_site_code].location_type.code != expected_parent_type:
+                            self.errors.append(f"Unexpected parent {parent_site_code} for type {location_type_code}")
+                    elif parent_site_code not in self.new_site_codes_for_location_type[expected_parent_type]:
                         self.errors.append(f"Unexpected parent {parent_site_code} for type {location_type_code}")
-                elif parent_site_code not in self.new_location_details[expected_parent_type]:
-                    self.errors.append(f"Unexpected parent {parent_site_code} for type {location_type_code}")
 
     def _get_new_parent_site_codes(self, location_type_code):
-        return {
-            details['parent_site_code']
-            for details in self.new_location_details[location_type_code].values()
-            if details['parent_site_code']
-        }
+        parent_site_codes = set()
+        for transition in self.valid_transitions[location_type_code]:
+            for new_site_code, new_location_details in transition.new_location_details.items():
+                if new_location_details['parent_site_code']:
+                    parent_site_codes.add(new_location_details['parent_site_code'])
+        return parent_site_codes
 
 
 class HouseholdReassignmentParser(object):

@@ -2,7 +2,10 @@ from abc import ABCMeta, abstractmethod
 from datetime import datetime
 
 from django.db import transaction
+from django.utils.functional import cached_property
 
+import attr
+from corehq.apps.locations.models import SQLLocation
 from custom.icds.location_reassignment.const import (
     DEPRECATED_AT,
     DEPRECATED_TO,
@@ -15,30 +18,48 @@ from custom.icds.location_reassignment.const import (
     MOVE_OPERATION,
     SPLIT_OPERATION,
 )
+from custom.icds.location_reassignment.exceptions import InvalidTransitionError
 
 ONE = "one"
 MANY = "many"
 
 
+@attr.s
 class Transition(object):
     # Fails if operation fails
-    def __init__(self, domain, operation, old_locations, new_locations):
-        self.operation = {
+    domain = attr.ib()
+    location_type_code = attr.ib()
+    operation = attr.ib()
+    old_site_codes = attr.ib(factory=list)
+    new_site_codes = attr.ib(factory=list)
+    new_location_details = attr.ib(factory=dict)
+    user_transitions = attr.ib(factory=dict)
+
+    def add(self, old_site_code, new_site_code, new_location_details, old_username, new_username):
+        self.old_site_codes.append(old_site_code)
+        self.new_site_codes.append(new_site_code)
+        self.new_location_details[new_site_code] = new_location_details
+        if old_username and new_username:
+            self.user_transitions[old_username] = new_username
+
+    @cached_property
+    def operation_obj(self):
+        return {
             MERGE_OPERATION: MergeOperation,
             SPLIT_OPERATION: SplitOperation,
             EXTRACT_OPERATION: ExtractOperation,
             MOVE_OPERATION: MoveOperation
-        }[operation](domain, old_locations, new_locations)
-
-    def valid(self):
-        return self.operation.valid()
+        }[self.operation](self.domain, self.old_site_codes, self.new_site_codes)
 
     def perform(self):
         return self.operation.perform()
 
+    def valid(self):
+        return self.operation_obj.valid()
+
     @property
     def errors(self):
-        return self.operation.errors
+        return self.operation_obj.errors
 
 
 class BaseOperation(metaclass=ABCMeta):
@@ -46,10 +67,12 @@ class BaseOperation(metaclass=ABCMeta):
     expected_old_locations = ONE
     expected_new_locations = ONE
 
-    def __init__(self, domain, old_locations, new_locations):
+    def __init__(self, domain, old_site_codes, new_site_codes):
         self.domain = domain
-        self.old_locations = old_locations
-        self.new_locations = new_locations
+        self.old_site_codes = old_site_codes
+        self.new_site_codes = new_site_codes
+        self.old_locations = []
+        self.new_locations = []
         self.errors = []
 
     def valid(self):
@@ -61,10 +84,29 @@ class BaseOperation(metaclass=ABCMeta):
         4. the count of old and new locations is not as expected for the operation
         :return:
         """
-        if not self.old_locations or not self.new_locations:
-            self.errors.append("Missing old or new locations.")
+        if not self.old_site_codes or not self.new_site_codes:
+            self.errors.append("Missing old or new site codes.")
             return False
-        valid = True
+
+        valid = (
+            self._validate_location_count(self.expected_old_locations, len(self.old_site_codes), "old")
+            and
+            self._validate_location_count(self.expected_new_locations, len(self.new_site_codes), "new")
+        )
+        if not valid:
+            return False
+
+        self.old_locations = list(SQLLocation.active_objects.filter(domain=self.domain,
+                                                                    site_code__in=self.old_site_codes))
+        if len(self.old_site_codes) != len(self.old_locations):
+            missing_site_codes = set(self.old_site_codes) - set([l.site_code for l in self.old_locations])
+            if missing_site_codes:
+                raise InvalidTransitionError("Could not load location with following site codes: "
+                                             f"{', '.join(missing_site_codes)}")
+
+        self.new_locations = list(SQLLocation.active_objects.filter(domain=self.domain,
+                                                                    site_code__in=self.new_site_codes))
+
         for old_location in self.old_locations:
             if (old_location.metadata.get(DEPRECATED_TO)
                     or old_location.metadata.get(DEPRECATED_AT)
@@ -79,10 +121,7 @@ class BaseOperation(metaclass=ABCMeta):
                 self.errors.append("%s operation: location %s with site code %s is already deprecated." % (
                     self.type, new_location.name, new_location.site_code))
                 valid = False
-        valid = valid and self._validate_location_count(self.expected_old_locations,
-                                                        len(self.old_locations), "old")
-        valid = valid and self._validate_location_count(self.expected_new_locations,
-                                                        len(self.new_locations), "new")
+
         return valid
 
     def _validate_location_count(self, expected, count, location_type):
