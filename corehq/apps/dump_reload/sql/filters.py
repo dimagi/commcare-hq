@@ -99,8 +99,7 @@ class GetattrQueryset:
         self.attr = attr
 
     def iterator(self):
-        for model in self.queryset:
-            print('-----', model)
+        for model in self.queryset.iterator():
             yield getattr(model, self.attr)
 
     def __iter__(self):
@@ -108,9 +107,6 @@ class GetattrQueryset:
 
     def __getattr__(self, item):
         return getattr(self.queryset, item)
-
-    def __getitem__(self, item):
-        return self.queryset[item]
 
 
 class RelatedModelIteratorBuilder(UnfilteredModelIteratorBuilder):
