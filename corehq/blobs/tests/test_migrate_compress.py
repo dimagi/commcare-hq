@@ -14,7 +14,7 @@ from corehq.blobs.tests.util import TemporaryS3BlobDB, new_meta
 from testil import tempdir
 
 
-class TestMigrateBackend(TestCase):
+class TestCompressMigration(TestCase):
     slug = 'compress_form_xml'
 
     def setUp(self):
