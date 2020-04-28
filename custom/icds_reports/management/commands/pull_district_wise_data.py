@@ -24,7 +24,7 @@ class Command(BaseCommand):
             with open(path, "r", encoding='utf-8') as sql_file:
                 sql_to_execute = sql_file.read()
                 sql_to_execute = sql_to_execute % context
-                print(f"Executing Pull ap_date_pull_{i} {context['name']}\n")
+                print(f"Executing Pull district_date_pull_{i} {context['name']}\n")
                 print(sql_to_execute)
                 print("-----------------------------------------------------\n")
                 _run_custom_sql_script(sql_to_execute)
