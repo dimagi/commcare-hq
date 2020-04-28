@@ -249,6 +249,10 @@
         "column_id": "dob",
         "field": "dob",
         "type": "field",
+        "transform": {
+          "type": "date_format",
+          "format": "%-d/%-m/%Y"
+        },
         "display": {
           "mar": "जन्म तारीख",
           "tel": "పుట్టిన తేదీ",

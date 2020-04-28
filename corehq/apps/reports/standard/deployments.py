@@ -155,7 +155,6 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
                     sort_dict = {
                         sort_prop: {
                             "order": sort_dir,
-                            "nested_path": "reporting_metadata.last_submissions",
                             "nested_filter": {
                                 "term": {
                                     self.sort_filter: self.selected_app_id
@@ -163,6 +162,12 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
                             }
                         }
                     }
+                    sort_prop_path = sort_prop.split('.')
+                    if sort_prop_path[-1] == 'exact':
+                        sort_prop_path.pop()
+                    sort_prop_path.pop()
+                    if sort_prop_path:
+                        sort_dict[sort_prop]['nested_path'] = '.'.join(sort_prop_path)
                 else:
                     sort_dict = {sort_prop: sort_dir}
                 res.append(sort_dict)
