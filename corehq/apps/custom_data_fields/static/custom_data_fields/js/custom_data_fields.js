@@ -17,8 +17,8 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
         self.value = ko.observable(choice);
     }
 
-    function CustomDataField() {
-        var self = this;
+    function Field() {
+        var self = {};
         self.slug = ko.observable();
         self.label = ko.observable();
         self.is_required = ko.observable();
@@ -86,6 +86,8 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
                 'regex_msg': regex_msg,
             };
         };
+
+        return self;
     }
 
     function CustomDataFieldsModel() {
@@ -96,7 +98,7 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
         self.modalField = ko.observable();
 
         self.addField = function () {
-            self.data_fields.push(new CustomDataField());
+            self.data_fields.push(Field());
         };
 
         self.removeField = function (field) {
@@ -114,7 +116,7 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
 
         self.init = function (initialFields) {
             _.each(initialFields, function (field) {
-                var custom_field = new CustomDataField();
+                var custom_field = Field();
                 custom_field.init(field);
                 self.data_fields.push(custom_field);
                 custom_field.choices.subscribe(function () {
