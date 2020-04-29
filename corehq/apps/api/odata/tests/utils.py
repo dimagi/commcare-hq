@@ -15,6 +15,18 @@ from corehq.apps.accounting.models import (
     SubscriptionAdjustment,
 )
 from corehq.apps.domain.models import Domain
+from corehq.apps.export.const import PROPERTY_TAG_CASE
+from corehq.apps.export.models import (
+    FormExportDataSchema,
+    ExportGroupSchema,
+    MAIN_TABLE,
+    PathNode,
+    ExportItem,
+    CaseExportDataSchema,
+    ScalarItem,
+    FormExportInstance,
+    CaseExportInstance,
+)
 from corehq.apps.users.models import WebUser
 from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
@@ -33,6 +45,16 @@ class OdataTestMixin(object):
         cls.domain.save()
         cls.web_user = WebUser.create(cls.domain.name, 'test_user', 'my_password')
         cls._setup_user_permissions()
+        cls.app_id = '1234'
+        cls.instance = cls.get_instance()
+        cls.instance.is_odata_config = True
+        cls.instance.transform_dates = False
+        cls.instance.domain = cls.domain.name
+        cls.instance.save()
+
+    @classmethod
+    def get_instance(cls):
+        raise NotImplementedError()
 
     @classmethod
     def _teardownclass(cls):
@@ -67,19 +89,65 @@ class OdataTestMixin(object):
     def _get_basic_credentials(username, password):
         return base64.b64encode("{}:{}".format(username, password).encode('utf-8')).decode('utf-8')
 
+    @property
+    def view_url(self):
+        return reverse(self.view_urlname, kwargs={'domain': self.domain.name, 'config_id': self.instance._id})
+
 
 class CaseOdataTestMixin(OdataTestMixin):
 
-    @property
-    def view_url(self):
-        return reverse(self.view_urlname, kwargs={'domain': self.domain.name, 'config_id': 'my_config_id'})
+    @classmethod
+    def get_instance(cls):
+        return CaseExportInstance.generate_instance_from_schema(
+            CaseExportDataSchema(
+                group_schemas=[
+                    ExportGroupSchema(
+                        path=MAIN_TABLE,
+                        items=[
+                            ScalarItem(
+                                path=[PathNode(name='p1')],
+                                label='p1',
+                                last_occurrences={},
+                            ),
+                        ],
+                        last_occurrences={cls.app_id: 3},
+                    ),
+                ],
+            ))
 
 
 class FormOdataTestMixin(OdataTestMixin):
 
-    @property
-    def view_url(self):
-        return reverse(self.view_urlname, kwargs={'domain': self.domain.name, 'config_id': 'my_config_id'})
+    @classmethod
+    def get_instance(cls):
+        return FormExportInstance.generate_instance_from_schema(
+            FormExportDataSchema(
+                group_schemas=[
+                    ExportGroupSchema(
+                        path=MAIN_TABLE,
+                        items=[
+                            ExportItem(
+                                path=[PathNode(name='data'), PathNode(name='question1')],
+                                label='Question 1',
+                                last_occurrences={
+                                    cls.app_id: 3,
+                                },
+                            ),
+                            ExportItem(
+                                path=[PathNode(name='data'), PathNode(name='@case_id')],
+                                label='@case_id',
+                                tag=PROPERTY_TAG_CASE,
+                                last_occurrences={
+                                    cls.app_id: 3,
+                                },
+                            )
+                        ],
+                        last_occurrences={
+                            cls.app_id: 3,
+                        },
+                    ),
+                ],
+            ))
 
 
 def generate_api_key_from_web_user(web_user):
