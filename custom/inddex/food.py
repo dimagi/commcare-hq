@@ -41,6 +41,8 @@ import uuid
 from collections import defaultdict
 from functools import reduce
 
+from memoized import memoized
+
 from custom.inddex.ucr_data import FoodCaseData
 
 from .const import AGE_RANGES, ConvFactorGaps, FctGaps
@@ -416,6 +418,7 @@ class FoodData:
         return True
 
     @property
+    @memoized
     def rows(self):
         rows_by_recipe = defaultdict(list)
 
@@ -428,11 +431,13 @@ class FoodData:
                     ingr_row = FoodRow(ucr_row, self.fixtures, ingredient_data)
                     rows_by_recipe[food.recipe_id].append(ingr_row)
 
+        rows = []
         for recipe_id, rows_in_recipe in rows_by_recipe.items():
             enrich_rows(recipe_id, rows_in_recipe)
             for row in rows_in_recipe:
                 if self._matches_in_memory_filters(row):
-                    yield row
+                    rows.append(row)
+        return rows
 
 
 def _multiply(*args):

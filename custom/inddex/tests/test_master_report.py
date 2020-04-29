@@ -259,6 +259,13 @@ class TestInddexReports(TestCase):
         data = NutrientStatsData(get_food_data())
         self.assert_reports_match('nutr_intake_summary_stats.csv', data)
 
+    def test_sharing_filtered_food_data(self):
+        # There should be no data with this filter selection
+        food_data = FoodData(DOMAIN, datespan=DateSpan(date(2020, 1, 1), date(2020, 4, 1)),
+                             filter_selections={'owner_id': ['not-a-user']})
+        self.assertEqual([], list(GapsByItemSummaryData(food_data).rows))
+        self.assertEqual([], list(GapsDetailsData(food_data).rows))
+
 
 class DocTests(SimpleTestCase):
 
