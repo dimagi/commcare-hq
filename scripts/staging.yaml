@@ -53,7 +53,6 @@ branches:
   - jls/migrate-DefaultConsumption-3 # Jenny April 24
   #- jls/use-textinput # Jenny March 10
     #- mk/location-reassignment-11-followup
-  - bmb/SAAS-10712  # Biyeun April 1
   - ap/remove-delete-in-name # Amit April 8
   - bmb/odata-qa-feedback  # Biyeun April 15
     #  - fr/turn-backend        # Farid April 17 # Removed April 25 from conflict
