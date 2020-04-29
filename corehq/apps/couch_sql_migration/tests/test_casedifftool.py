@@ -12,6 +12,7 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.tzmigration.timezonemigration import MISSING
 from corehq.form_processor.backends.couch.dbaccessors import CaseAccessorCouch
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
+from corehq.form_processor.models import CommCareCaseIndexSQL
 from corehq.form_processor.utils.general import (
     clear_local_domain_sql_backend_override,
 )
@@ -374,7 +375,7 @@ class TestCouchSqlDiff(BaseMigrationTestCase):
         self.compare_diffs()
         self.assert_patched_cases(["case-1"])
 
-    def test_patch_case_indices(self):
+    def test_patch_case_index(self):
         self.submit_form(make_test_form("form-1", case_id="case-1"))
         self.do_migration(case_diff="none")
         index = {
@@ -392,6 +393,34 @@ class TestCouchSqlDiff(BaseMigrationTestCase):
             Diff('case-1', 'missing', ['indices', '[*]'], old=index, new=MISSING),
         ])
         self.do_case_patch()
+        self.compare_diffs()
+        self.assert_patched_cases(["case-1"])
+
+    def test_patch_missing_case_index(self):
+        self.submit_form(make_test_form("form-1", case_id="case-1"))
+        self.do_migration(case_diff="none")
+        CommCareCaseIndexSQL(
+            domain=self.domain_name,
+            case_id="case-1",
+            identifier="parent",
+            referenced_id="a53346d5",
+            referenced_type="household",
+            relationship_id=CommCareCaseIndexSQL.CHILD,
+        ).save()
+        with self.diff_without_rebuild():
+            self.do_case_diffs()
+        index = {
+            "case_id": "case-1",
+            "identifier": "parent",
+            "referenced_id": "a53346d5",
+            "referenced_type": "household",
+            "relationship": "child",
+        }
+        self.compare_diffs([
+            Diff('case-1', 'missing', ['indices', '[*]'], old=MISSING, new=index),
+        ])
+        with self.diff_without_rebuild():
+            self.do_case_patch()
         self.compare_diffs()
         self.assert_patched_cases(["case-1"])
 

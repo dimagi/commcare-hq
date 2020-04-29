@@ -130,9 +130,17 @@ class PatchCase:
         if not diffs:
             return
         for diff in diffs:
-            if diff.path != ["indices", "[*]"] or diff.new_value is not MISSING:
+            if diff.path != ["indices", "[*]"]:
                 raise CannotPatch([diff])
-            yield CommCareCaseIndex.wrap(diff.old_value)
+            if diff.new_value is MISSING and isinstance(diff.old_value, dict):
+                yield CommCareCaseIndex.wrap(diff.old_value)
+            elif diff.old_value is MISSING and isinstance(diff.new_value, dict):
+                yield CommCareCaseIndex(
+                    identifier=diff.new_value["identifier"],
+                    referenced_type="",
+                )
+            else:
+                raise CannotPatch([diff])
 
 
 def has_illegal_props(diffs):
