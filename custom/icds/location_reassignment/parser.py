@@ -270,7 +270,8 @@ class Parser(object):
     def _validate_parents(self):
         """
         validate new parent set respects the hierarchy
-        if the parent location is already present in the system, validate it's location type
+        if the parent location is already present in the system, validate it's location type and that its not
+        getting archived
         else check for parent location in new locations to be created for the expected parent location type
         else add error for missing parent
         """
@@ -295,6 +296,8 @@ class Parser(object):
                                                f"for type {location_type_code}")
                     elif parent_site_code not in self.new_site_codes_for_location_type[expected_parent_type]:
                         self.errors.append(f"Unexpected parent {parent_site_code} for type {location_type_code}")
+                    if parent_site_code in self.site_codes_to_be_deprecated:
+                        self.errors.append(f"Parent {parent_site_code} is marked for archival")
 
     def _get_new_parent_site_codes(self, location_type_code):
         parent_site_codes = set()

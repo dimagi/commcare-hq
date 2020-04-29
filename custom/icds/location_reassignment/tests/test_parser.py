@@ -61,7 +61,12 @@ class TestParser(TestCase):
              'username4', 'username5', 'Merge'),
             ('AWC 5', 'AWC 6', '114', '132', 'AWC-114',
              'AWC-133', 'Supervisor 1', '11', '13',
-             'username6', 'username7', 'Merge'))),
+             'username6', 'username7', 'Merge'),
+            # invalid operation passed with new parent site code
+            # of a location getting archived
+            ('AWC 7', 'AWC 8', '115', '133', 'AWC-115',
+             'AWC-133', 'Supervisor 2', '11', '12',
+             'username6', 'username7', 'Move'))),
         ('supervisor', (
             # invalid row with missing new site code
             ('Supervisor 1', 'Supervisor 1', '11', '', 'Sup-11',
@@ -95,18 +100,33 @@ class TestParser(TestCase):
             workbook = get_workbook(file)
             parser = Parser(self.domain, workbook)
             errors = parser.parse()
-            self.assertEqual(len(parser.valid_transitions['awc']), 1)
-            awc_transition = attr.asdict(parser.valid_transitions['awc'][0])
+            self.assertEqual(len(parser.valid_transitions['awc']), 2)
+            awc_transitions = [attr.asdict(t) for t in parser.valid_transitions['awc']]
             self.assertEqual(
-                awc_transition,
-                {'domain': self.domain,
-                 'location_type_code': 'awc',
-                 'operation': 'Move',
-                 'old_site_codes': ['112'],
-                 'new_site_codes': ['131'],
-                 'new_location_details': {
-                     '131': {'name': 'AWC 3', 'parent_site_code': '13', 'lgd_code': 'AWC-131'}},
-                 'user_transitions': {'username2': 'username3'}}
+                awc_transitions,
+                [
+                    {
+                        'domain': self.domain,
+                        'location_type_code': 'awc',
+                        'operation': 'Move',
+                        'old_site_codes': ['112'],
+                        'new_site_codes': ['131'],
+                        'new_location_details': {
+                             '131': {'name': 'AWC 3', 'parent_site_code': '13', 'lgd_code': 'AWC-131'}},
+                        'user_transitions': {'username2': 'username3'}
+                    },
+                    {
+                        'domain': self.domain,
+                        'location_type_code': 'awc',
+                        'operation': 'Move',
+                        'old_site_codes': ['115'],
+                        'new_site_codes': ['133'],
+                        'new_location_details': {
+                            '133': {'name': 'AWC 8', 'parent_site_code': '12', 'lgd_code': 'AWC-133'}},
+                        'user_transitions': {'username6': 'username7'}
+                    }
+
+                ]
             )
             self.assertEqual(len(parser.valid_transitions['supervisor']), 1)
             supervisor_transition = attr.asdict(parser.valid_transitions['supervisor'][0])
@@ -150,3 +170,4 @@ class TestParser(TestCase):
             errors = parser.parse()
             self.assertIn('Unexpected parent 1 for type supervisor', errors, "missing location found")
             self.assertIn('Unexpected parent 13 for type awc', errors, "incorrect parent type not flagged")
+            self.assertIn('Parent 12 is marked for archival', errors, "archived parent not caught")
