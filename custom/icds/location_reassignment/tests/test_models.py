@@ -2,7 +2,10 @@ from datetime import datetime
 
 from django.test import TestCase
 
+from mock import patch
+
 from corehq.apps.commtrack.tests.util import bootstrap_domain
+from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.tests.util import setup_locations_and_types
 from custom.icds.location_reassignment.const import (
     DEPRECATED_AT,
@@ -12,11 +15,13 @@ from custom.icds.location_reassignment.const import (
     DEPRECATES_AT,
     DEPRECATES_VIA,
 )
+from custom.icds.location_reassignment.exceptions import InvalidTransitionError
 from custom.icds.location_reassignment.models import (
     ExtractOperation,
     MergeOperation,
     MoveOperation,
     SplitOperation,
+    Transition,
 )
 
 
@@ -114,3 +119,53 @@ class TestMoveOperation(TestOperation):
         old_site_codes = [self.locations['Boston'].site_code]
         new_site_codes = [self.locations['Cambridge'].site_code]
         self.check_operation(old_site_codes, new_site_codes)
+
+
+class TestTransition(BaseTest):
+    @patch('custom.icds.location_reassignment.tasks.update_usercase.delay')
+    @patch('custom.icds.location_reassignment.models.deactivate_users_at_location')
+    def test_perform(self, deactivate_users_mock, update_usercase_mock):
+        transition = Transition(domain=self.domain, location_type_code='city', operation=MoveOperation.type)
+        transition.add(
+            old_site_code=self.locations['Boston'].site_code,
+            new_site_code='new_boston',
+            new_location_details={
+                'name': 'New Boston',
+                'parent_site_code': self.locations['Suffolk'].site_code,
+                'lgd_code': 'New Boston LGD Code'
+            },
+            old_username="ethan",
+            new_username="aquaman"
+        )
+        self.assertEqual(SQLLocation.objects.filter(domain=self.domain, site_code='new_boston').count(), 0,
+                         "New location already present")
+        transition.perform()
+        self._validate_operation(transition.operation_obj, archived=True)
+        self.assertEqual(SQLLocation.objects.filter(domain=self.domain, site_code='new_boston').count(), 1,
+                         "New location not created successfully")
+        deactivate_users_mock.assert_called_with(self.locations['Boston'].location_id)
+        update_usercase_mock.assert_called_with(self.domain, "ethan", "aquaman")
+
+    @patch('custom.icds.location_reassignment.tasks.update_usercase.delay')
+    @patch('custom.icds.location_reassignment.models.deactivate_users_at_location')
+    def test_invalid_operation(self, deactivate_users_mock, update_usercase_mock):
+        transition = Transition(domain=self.domain, location_type_code='city', operation=MoveOperation.type)
+        transition.add(
+            old_site_code='missing_old_location',
+            new_site_code='new_boston',
+            new_location_details={
+                'name': 'New Boston',
+                'parent_site_code': self.locations['Suffolk'].site_code,
+                'lgd_code': 'New Boston LGD Code'
+            },
+            old_username="ethan",
+            new_username="aquaman"
+        )
+        self.assertEqual(SQLLocation.objects.filter(domain=self.domain, site_code='new_boston').count(), 0)
+        with self.assertRaisesMessage(InvalidTransitionError,
+                                      "Could not load location with following site codes: missing_old_location"):
+            transition.perform()
+        self.assertEqual(SQLLocation.objects.filter(domain=self.domain, site_code='new_boston').count(), 0,
+                         "Unexpected new location created")
+        deactivate_users_mock.assert_not_called()
+        update_usercase_mock.assert_not_called()
