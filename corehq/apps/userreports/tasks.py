@@ -334,12 +334,20 @@ def time_in_range(time, time_dictionary):
     return False
 
 
-def _queue_indicators(indicators):
+def _queue_indicators(indicators, use_agg_queue=False):
     for chunk in chunked(indicators, ASYNC_INDICATOR_CHUNK_SIZE):
         now = datetime.utcnow()
         indicator_doc_ids = [i.doc_id for i in chunk]
         AsyncIndicator.objects.filter(doc_id__in=indicator_doc_ids).update(date_queued=now)
-        build_async_indicators.delay(indicator_doc_ids)
+        if use_agg_queue:
+            build_indicators_with_agg_queue.delay(indicator_doc_ids)
+        else:
+            build_async_indicators.delay(indicator_doc_ids)
+
+
+@task(queue='icds_aggregation_queue', ignore_result=True, acks_late=True)
+def build_indicators_with_agg_queue(indicator_doc_ids):
+    build_async_indicators(indicator_doc_ids)
 
 
 @task(serializer='pickle', queue=UCR_INDICATOR_CELERY_QUEUE, ignore_result=True, acks_late=True)

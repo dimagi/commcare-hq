@@ -8,9 +8,10 @@ from corehq.apps.userreports.tasks import _queue_indicators
 
 class Command(BaseCommand):
 
-    def handle(self, **options):
-        indicators_by_domain_doc_type = defaultdict(list)
-        for indicator in AsyncIndicator.objects.all():
-            indicators_by_domain_doc_type[(indicator.domain, indicator.doc_type)].append(indicator)
-        for k, indicators in indicators_by_domain_doc_type.items():
-            _queue_indicators(indicators)
+    def add_arguments(self, parser):
+        parser.add_argument('data_source_ids')
+        parser.add_argument('--agg-queue', dest='use_agg_queue', action='store_true')
+
+    def handle(self, data_source_ids, use_agg_queue, **options):
+        indicators = AsyncIndicator.objects.filter(indicator_config_ids__contains=[data_source_ids])
+        _queue_indicators(indicators, use_agg_queue=use_agg_queue)
