@@ -272,8 +272,8 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
             availing_services_table=AGG_AVAILING_SERVICES_TABLE,
             seeking_services=(
                 "CASE WHEN "
-                "(agg_availing.is_registered IS DISTINCT FROM 0 OR agg_availing.registration_date::date >= %(start_date)s) AND "
-                "(agg_migration.is_migrated IS DISTINCT FROM 1 OR agg_migration.migration_date::date >= %(start_date)s) "
+                "((agg_availing.is_registered IS DISTINCT FROM 0 OR agg_availing.registration_date::date >= %(start_date)s) AND "
+                "(agg_migration.is_migrated IS DISTINCT FROM 1 OR agg_migration.migration_date::date >= %(start_date)s)) "
                 "THEN 1 ELSE 0 END"
             )
         ), {
