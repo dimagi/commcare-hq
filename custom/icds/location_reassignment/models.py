@@ -17,6 +17,8 @@ from custom.icds.location_reassignment.const import (
     DEPRECATES_AT,
     DEPRECATES_VIA,
     EXTRACT_OPERATION,
+    LGD_CODE,
+    MAP_LOCATION_NAME,
     MERGE_OPERATION,
     MOVE_OPERATION,
     SPLIT_OPERATION,
@@ -87,11 +89,16 @@ class Transition(object):
                 parent_location = None
                 if details['parent_site_code']:
                     parent_location = self._get_parent_location(details['parent_site_code'])
+                metadata = {}
+                if details['lgd_code']:
+                    metadata[LGD_CODE] = details['lgd_code']
+                if details['sub_district_name']:
+                    metadata[MAP_LOCATION_NAME] = details['sub_district_name']
                 new_locations.append(SQLLocation.objects.create(
                     domain=self.domain, site_code=site_code, name=details['name'],
                     parent=parent_location,
                     location_type=self._location_type,
-                    metadata={'lgd_code': details['lgd_code']}
+                    metadata=metadata
                 ))
         return new_locations
 
