@@ -12,6 +12,7 @@ from custom.icds.location_reassignment.const import (
     NEW_NAME,
     NEW_PARENT_SITE_CODE,
     NEW_SITE_CODE_COLUMN,
+    NEW_SUB_DISTRICT_NAME,
     NEW_USERNAME_COLUMN,
     OPERATION_COLUMN,
     SPLIT_OPERATION,
@@ -133,7 +134,8 @@ class Parser(object):
                     new_location_details={
                         'name': row.get(NEW_NAME),
                         'parent_site_code': row.get(NEW_PARENT_SITE_CODE),
-                        'lgd_code': row.get(NEW_LGD_CODE)
+                        'lgd_code': row.get(NEW_LGD_CODE),
+                        'sub_district_name': row.get(NEW_SUB_DISTRICT_NAME)
                     },
                     old_username=row.get(USERNAME_COLUMN),
                     new_username=row.get(NEW_USERNAME_COLUMN)

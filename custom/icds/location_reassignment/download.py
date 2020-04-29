@@ -13,20 +13,24 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from custom.icds.location_reassignment.const import (
     AWC_CODE_COLUMN,
     AWC_NAME_COLUMN,
+    BLOCK_CODE,
     CURRENT_LGD_CODE,
     CURRENT_NAME,
     CURRENT_PARENT_NAME,
     CURRENT_PARENT_SITE_CODE,
     CURRENT_PARENT_TYPE,
     CURRENT_SITE_CODE_COLUMN,
+    CURRENT_SUB_DISTRICT_NAME,
     EXTRACT_OPERATION,
     HOUSEHOLD_ID_COLUMN,
     HOUSEHOLD_MEMBER_DETAILS_COLUMN,
     LGD_CODE,
+    MAP_LOCATION_NAME,
     NEW_LGD_CODE,
     NEW_NAME,
     NEW_PARENT_SITE_CODE,
     NEW_SITE_CODE_COLUMN,
+    NEW_SUB_DISTRICT_NAME,
     NEW_USERNAME_COLUMN,
     OPERATION_COLUMN,
     PERSON_CASE_TYPE,
@@ -68,6 +72,7 @@ class Download(object):
                 'type_name': location.location_type.name,
                 'site_code': location.site_code,
                 'lgd_code': location.metadata.get(LGD_CODE, ''),
+                'sub_district_name': location.metadata.get(MAP_LOCATION_NAME, ''),
                 'parent_location_id': location.parent_location_id,
                 'location_type': location.location_type.code,
                 'assigned_users': [],
@@ -141,6 +146,11 @@ class Download(object):
             CURRENT_NAME: location_details['name'],
             NEW_NAME: '',
         }
+        if location_type == BLOCK_CODE:
+            row.update({
+                CURRENT_SUB_DISTRICT_NAME: location_details['sub_district_name'],
+                NEW_SUB_DISTRICT_NAME: '',
+            })
         row.update({
             USERNAME_COLUMN: username,
             NEW_USERNAME_COLUMN: '',
