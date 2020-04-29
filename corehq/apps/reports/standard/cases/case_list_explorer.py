@@ -11,6 +11,7 @@ from corehq.apps.case_search.const import (
 )
 from corehq.apps.case_search.filter_dsl import CaseFilterError
 from corehq.apps.es.case_search import CaseSearchES, flatten_result
+from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.exceptions import BadRequestError
 from corehq.apps.reports.filters.case_list import CaseListFilter
@@ -29,6 +30,7 @@ from corehq.util.metrics import metrics_histogram_timer
 from corehq.util.soft_assert import soft_assert
 
 
+@location_safe
 class CaseListExplorer(CaseListReport):
     name = _('Case List Explorer')
     slug = 'case_list_explorer'
