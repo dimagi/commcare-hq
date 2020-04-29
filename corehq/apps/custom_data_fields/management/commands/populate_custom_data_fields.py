@@ -40,5 +40,5 @@ class Command(PopulateSQLCommand):
             )
             for field in doc['fields']
         ], bulk=False)
-        model.save(sync_to_couch=False)
+        model.save()
         return (model, created)
