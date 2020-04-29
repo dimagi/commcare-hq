@@ -155,8 +155,7 @@ class TestFixtures(TestCase):
         self.assertEqual(7, len(ingredients))
         for ingredient in ingredients:
             if ingredient.ingr_code == '450':
-                self.assertEqual("Okra sauce", ingredient.recipe_descr)
-                self.assertEqual("Potash,solid", ingredient.ingr_descr)
+                self.assertEqual('10089', ingredient.recipe_code)
                 self.assertEqual(0.01, ingredient.ingr_fraction)
 
     def test_food_list(self):
@@ -166,8 +165,7 @@ class TestFixtures(TestCase):
 
     def test_food_compositions(self):
         composition = self.fixtures_accessor.food_compositions['10']
-        self.assertEqual("Millet flour", composition.survey_base_terms_and_food_items)
-        self.assertEqual(367, composition.nutrients['energy_kcal'])
+        self.assertEqual("Cereals and their products (1)", composition.fao_who_gift_food_group_description)
         self.assertEqual(9.1, composition.nutrients['water_g'])
 
     def test_conversion_factors(self):

@@ -26,13 +26,8 @@ def _wrap(FixtureClass, kwargs):
 class RecipeIngredient:
     table_name = 'recipes'
     recipe_code = attrib()
-    recipe_descr = attrib()
-    recipe_type = attrib()
-    recipe_type_descr = attrib()
     ingr_code = attrib()
-    ingr_descr = attrib()
     ingr_fraction = attrib(converter=float)
-    ingr_fraction_type = attrib()
 
 
 @attrs(kw_only=True, frozen=True)
@@ -58,24 +53,10 @@ class Food:
 class FoodComposition:
     table_name = 'food_composition_table'
     food_code = attrib()
-    foodex2_code = attrib()
-    foodex2_code_description = attrib()
     user_defined_food_group = attrib()
     fao_who_gift_food_group_code = attrib()
     fao_who_gift_food_group_description = attrib()
-    fao_who_gift_nutrition_sub_group_code = attrib()
-    fao_who_gift_nutrition_sub_group_description = attrib()
-    fct_food_name = attrib()
-    survey_base_terms_and_food_items = attrib()
     reference_food_code_for_food_composition = attrib()
-    scientific_name = attrib()
-    fct_source_description = attrib()
-    yield_factor = attrib()
-    yield_source_descr = attrib()
-    retention_factor = attrib()
-    retention_source_description = attrib()
-    additional_details = attrib()
-    additional_details_on_nutrients = attrib()
     nutrients: dict = attrib()
 
 
@@ -83,9 +64,7 @@ class FoodComposition:
 class Nutrient:
     table_name = 'nutrients_lookup'
     nutrient_code = attrib()
-    nutrient_name = attrib()
     nutrient_name_unit = attrib()
-    unit = attrib()
 
 
 @attrs(kw_only=True, frozen=True)
@@ -95,7 +74,6 @@ class ConversionFactor:
     conv_method = attrib()
     conv_option = attrib()
     conv_factor = attrib(converter=lambda x: float(x) if x else None)
-    energy_kcal = attrib(converter=float)
 
 
 class FixtureAccessor:
