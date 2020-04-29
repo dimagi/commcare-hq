@@ -43,8 +43,8 @@ from functools import reduce
 
 from custom.inddex.ucr_data import FoodCaseData
 
+from .const import AGE_RANGES, ConvFactorGaps, FctGaps
 from .fixtures import FixtureAccessor
-from .const import AGE_RANGES, FctGaps, ConvFactorGaps
 
 IN_UCR = 'in_ucr'
 IN_FOOD_FIXTURE = 'in_food_fixture'
@@ -78,7 +78,7 @@ INDICATORS = [
     I('opened_date', IN_UCR, IS_RECALL_META),
     I('opened_by_username', IN_UCR, IS_RECALL_META),
     I('owner_name', IN_UCR, IS_RECALL_META),
-    I('recalled_date', IN_UCR, IS_RECALL_META),
+    I('visit_date', IN_UCR, IS_RECALL_META),
     I('recall_status', IN_UCR, IS_RECALL_META),
     I('gender', IN_UCR, IS_RECALL_META),
     I('age_years_calculated', IN_UCR, IS_RECALL_META),
@@ -388,7 +388,9 @@ class FoodData:
         return cls(
             domain,
             datespan=request.datespan,
-            filter_selections={k: request.GET.get(k) for k in cls.FILTERABLE_COLUMNS}
+            filter_selections={'owner_id': request.GET.getlist('owner_id'),
+                               **{k: request.GET.get(k)
+                                  for k in cls.FILTERABLE_COLUMNS if k != 'owner_id'}}
         )
 
     def _matches_in_memory_filters(self, row):

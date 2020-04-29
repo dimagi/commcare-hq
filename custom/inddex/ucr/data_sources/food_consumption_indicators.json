@@ -68,6 +68,16 @@
             },
             {
                 "type": "expression",
+                "column_id": "owner_id",
+                "datatype": "string",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "owner_id",
+                    "datatype": null
+                }
+            },
+            {
+                "type": "expression",
                 "column_id": "owner_name",
                 "datatype": "string",
                 "expression": {
@@ -341,7 +351,7 @@
             },
             {
                 "type": "expression",
-                "column_id": "recalled_date",
+                "column_id": "visit_date",
                 "datatype": "string",
                 "expression": {
                     "type": "nested",
@@ -354,7 +364,7 @@
                     },
                     "value_expression": {
                         "type": "property_name",
-                        "property_name": "recalled_date"
+                        "property_name": "visit_date"
                     }
                 }
             },
