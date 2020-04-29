@@ -83,14 +83,14 @@
            num_launched_supervisors = CASE WHEN ut.all_cases_household>0 THEN 1 ELSE 0 END,
            num_launched_awcs = CASE WHEN ut.all_cases_household>0 THEN 1 ELSE 0 END
         FROM ( SELECT
-            owner_id,
+            awc_id,
             supervisor_id,
             sum(open_count) AS cases_household,
             count(*) AS all_cases_household
             FROM "ucr_icds-cas_static-household_cases_eadc276d"
             WHERE opened_on<= %(end_date)s
-            GROUP BY owner_id, supervisor_id ) ut
-        WHERE ut.owner_id = agg_awc.awc_id and ut.supervisor_id=agg_awc.supervisor_id;
+            GROUP BY awc_id, supervisor_id ) ut
+        WHERE ut.awc_id = agg_awc.awc_id and ut.supervisor_id=agg_awc.supervisor_id;
         
 {"end_date": "2019-01-31T23:59:59"}
 
@@ -149,7 +149,6 @@
              )
         WHERE (opened_on <= %(end_date)s AND
               (closed_on IS NULL OR closed_on >= %(start_date)s ))
-
         GROUP BY ucr.supervisor_id, ucr.awc_id) ut
         WHERE ut.awc_id = agg_awc.awc_id and ut.supervisor_id=agg_awc.supervisor_id;
         

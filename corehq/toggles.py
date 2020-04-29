@@ -1884,3 +1884,11 @@ ICDS_BIHAR_DEMOGRAPHICS_API = StaticToggle(
     relevant_environments={'icds', 'india'},
 
 )
+
+ICDS_LOCATION_REASSIGNMENT_AGG = StaticToggle(
+    'location_reassignment_agg',
+    'ICDS: Use aggregation modifications for location reassignment',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    relevant_environments={'icds', 'india'},
+)
