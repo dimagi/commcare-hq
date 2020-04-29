@@ -20,7 +20,7 @@ from custom.icds.location_reassignment.models import (
 )
 
 
-class TestOperation(TestCase):
+class BaseTest(TestCase):
     operation = None
     domain = "test"
     location_type_names = ['state', 'county', 'city']
@@ -41,11 +41,11 @@ class TestOperation(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        super(TestOperation, cls).setUpClass()
+        super(BaseTest, cls).setUpClass()
         cls.domain_obj = bootstrap_domain(cls.domain)
 
     def setUp(self):
-        super(TestOperation, self).setUp()
+        super(BaseTest, self).setUp()
         self.location_types, self.locations = setup_locations_and_types(
             self.domain,
             self.location_type_names,
@@ -53,10 +53,7 @@ class TestOperation(TestCase):
             self.location_structure,
         )
 
-    def check_operation(self, old_site_codes, new_site_codes, archived=True):
-        operation = self.operation(self.domain, old_site_codes, new_site_codes)
-        operation.valid()
-        operation.perform()
+    def _validate_operation(self, operation, archived):
         old_locations = operation.old_locations
         new_locations = operation.new_locations
         old_location_ids = [loc.location_id for loc in old_locations]
@@ -65,14 +62,22 @@ class TestOperation(TestCase):
         self.assertIsInstance(operation_time, datetime)
         for old_location in old_locations:
             self.assertEqual(old_location.metadata[DEPRECATED_TO], new_location_ids)
-            self.assertEqual(old_location.metadata[DEPRECATED_VIA], self.operation.type)
+            self.assertEqual(old_location.metadata[DEPRECATED_VIA], operation.type)
             self.assertEqual(old_location.metadata[DEPRECATED_AT], operation_time)
             if archived:
                 self.assertTrue(old_location.is_archived)
         for new_location in new_locations:
             self.assertEqual(new_location.metadata[DEPRECATES], old_location_ids)
-            self.assertEqual(new_location.metadata[DEPRECATES_VIA], self.operation.type)
+            self.assertEqual(new_location.metadata[DEPRECATES_VIA], operation.type)
             self.assertEqual(new_location.metadata[DEPRECATES_AT], operation_time)
+
+
+class TestOperation(BaseTest):
+    def check_operation(self, old_site_codes, new_site_codes, archived=True):
+        operation = self.operation(self.domain, old_site_codes, new_site_codes)
+        operation.valid()
+        operation.perform()
+        self._validate_operation(operation, archived)
 
 
 class TestMergeOperation(TestOperation):
