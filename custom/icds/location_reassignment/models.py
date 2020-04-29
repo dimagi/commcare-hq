@@ -7,7 +7,7 @@ from django.utils.functional import cached_property
 import attr
 from memoized import memoized
 
-from corehq.apps.locations.models import SQLLocation, LocationType
+from corehq.apps.locations.models import LocationType, SQLLocation
 from corehq.apps.locations.tasks import deactivate_users_at_location
 from custom.icds.location_reassignment.const import (
     DEPRECATED_AT,
