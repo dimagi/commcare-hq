@@ -266,7 +266,7 @@ def delete_case_search_cases(domain):
 
     ElasticsearchInterface(get_es_new()).bulk_ops([{
         "_op_type": "delete",
-        "_index": CASE_SEARCH_INDEX,
+        "_index": CASE_SEARCH_INDEX_INFO.alias,
         "_type": CASE_ES_TYPE,
         "_id": case_id,
     } for case_id in case_ids])
