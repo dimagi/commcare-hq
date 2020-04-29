@@ -14,6 +14,8 @@ from custom.icds.location_reassignment.const import (
     DEPRECATES,
     DEPRECATES_AT,
     DEPRECATES_VIA,
+    LGD_CODE,
+    MAP_LOCATION_NAME,
 )
 from custom.icds.location_reassignment.exceptions import InvalidTransitionError
 from custom.icds.location_reassignment.models import (
@@ -132,7 +134,8 @@ class TestTransition(BaseTest):
             new_location_details={
                 'name': 'New Boston',
                 'parent_site_code': self.locations['Suffolk'].site_code,
-                'lgd_code': 'New Boston LGD Code'
+                'lgd_code': 'New Boston LGD Code',
+                'sub_district_name': 'New Boston Sub District'
             },
             old_username="ethan",
             new_username="aquaman"
@@ -141,8 +144,10 @@ class TestTransition(BaseTest):
                          "New location already present")
         transition.perform()
         self._validate_operation(transition.operation_obj, archived=True)
-        self.assertEqual(SQLLocation.objects.filter(domain=self.domain, site_code='new_boston').count(), 1,
-                         "New location not created successfully")
+        new_location = SQLLocation.active_objects.get_or_None(domain=self.domain, site_code='new_boston')
+        self.assertIsNotNone(new_location, "New location not created successfully")
+        self.assertEqual(new_location.metadata[LGD_CODE], 'New Boston LGD Code')
+        self.assertEqual(new_location.metadata[MAP_LOCATION_NAME], 'New Boston Sub District')
         deactivate_users_mock.assert_called_with(self.locations['Boston'].location_id)
         update_usercase_mock.assert_called_with(self.domain, "ethan", "aquaman")
 
@@ -156,7 +161,8 @@ class TestTransition(BaseTest):
             new_location_details={
                 'name': 'New Boston',
                 'parent_site_code': self.locations['Suffolk'].site_code,
-                'lgd_code': 'New Boston LGD Code'
+                'lgd_code': 'New Boston LGD Code',
+                'sub_district_name': None
             },
             old_username="ethan",
             new_username="aquaman"

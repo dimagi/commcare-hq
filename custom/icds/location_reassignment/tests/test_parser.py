@@ -112,7 +112,8 @@ class TestParser(TestCase):
                         'old_site_codes': ['112'],
                         'new_site_codes': ['131'],
                         'new_location_details': {
-                             '131': {'name': 'AWC 3', 'parent_site_code': '13', 'lgd_code': 'AWC-131'}},
+                             '131': {'name': 'AWC 3', 'parent_site_code': '13', 'lgd_code': 'AWC-131',
+                                     'sub_district_name': None}},
                         'user_transitions': {'username2': 'username3'}
                     },
                     {
@@ -122,7 +123,8 @@ class TestParser(TestCase):
                         'old_site_codes': ['115'],
                         'new_site_codes': ['133'],
                         'new_location_details': {
-                            '133': {'name': 'AWC 8', 'parent_site_code': '12', 'lgd_code': 'AWC-133'}},
+                            '133': {'name': 'AWC 8', 'parent_site_code': '12', 'lgd_code': 'AWC-133',
+                                    'sub_district_name': None}},
                         'user_transitions': {'username6': 'username7'}
                     }
 
@@ -141,7 +143,8 @@ class TestParser(TestCase):
                      '13': {
                          'name': 'Supervisor 3',
                          'parent_site_code': '1',
-                         'lgd_code': 'Sup-13'
+                         'lgd_code': 'Sup-13',
+                         'sub_district_name': None
                      }
                  },
                  'user_transitions': {'username5': 'username6'}}
