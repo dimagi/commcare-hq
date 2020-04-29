@@ -364,7 +364,7 @@ def _calculate_total_grams(recipe, ingredients):
 
 class FoodData:
     """Generates the primary dataset for INDDEX reports.  See file docstring for more."""
-    IN_MEMORY_FILTERS = ['gap_type', 'gap', 'fao_who_gift_food_group_description']
+    IN_MEMORY_FILTERS = ['gap_type', 'gap', 'fao_who_gift_food_group_description', 'food_type']
     FILTERABLE_COLUMNS = IN_MEMORY_FILTERS + FoodCaseData.FILTERABLE_COLUMNS
 
     def __init__(self, domain, *, datespan, filter_selections):
@@ -401,6 +401,10 @@ class FoodData:
         if gap_type == ConvFactorGaps.slug and row.conv_factor_gap_code == ConvFactorGaps.AVAILABLE:
             return False
         if gap_type == FctGaps.slug and row.fct_gap_code == FctGaps.AVAILABLE:
+            return False
+
+        food_type = self._in_memory_filter_selections.get('food_type')
+        if food_type and food_type != row.food_type:
             return False
 
         gap = self._in_memory_filter_selections.get('gap')
