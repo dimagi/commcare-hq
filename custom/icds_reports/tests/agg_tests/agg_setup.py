@@ -10,6 +10,7 @@ from corehq.apps.userreports.util import get_indicator_adapter, get_table_name
 from corehq.sql_db.connections import connection_manager, ICDS_UCR_CITUS_ENGINE_ID
 from custom.icds_reports.const import DISTRIBUTED_TABLES, REFERENCE_TABLES
 from custom.icds_reports.utils.migrations import create_citus_reference_table, create_citus_distributed_table, get_view_migrations
+from custom.icds_reports.utils.aggregation_helpers.distributed.location_reassignment import TempPrevIntermediateTables, TempPrevUCRTables
 from custom.icds_reports.tasks import (
     _aggregate_child_health_pnc_forms,
     _aggregate_bp_forms,
@@ -52,7 +53,8 @@ FILE_NAME_TO_TABLE_MAPPING = {
     'adolescent_girls_reg_form': get_table_name('icds-cas', 'static-adolescent_girls_reg_form'),
     'add_preg_table': get_table_name('icds-cas', 'static-dashboard_add_pregnancy_form'),
     'migration_form': get_table_name('icds-cas', 'static-migration_form'),
-    'availing_services_form': get_table_name('icds-cas', 'static-availing_service_form')
+    'availing_services_form': get_table_name('icds-cas', 'static-availing_service_form'),
+    'child_delivery_form': get_table_name('icds-cas', 'static-child_delivery_forms')
 }
 
 
@@ -227,6 +229,8 @@ def _distribute_tables_for_citus(engine):
 
 
 def aggregate_state_form_data():
+    TempPrevUCRTables().make_all_tables(datetime(2017, 3, 31))
+    TempPrevIntermediateTables().make_all_tables(datetime(2017, 3, 31))
     drop_gm_indices(datetime(2017, 3, 31))
     for state_id in ('st1', 'st2'):
         _aggregate_child_health_pnc_forms(state_id, datetime(2017, 3, 31))

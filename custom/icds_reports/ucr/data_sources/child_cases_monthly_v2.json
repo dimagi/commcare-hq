@@ -1,24 +1,27 @@
 {
   "domains": [
-    "icds-dashboard-qa",
-    "sankalp_cas",
-    "zohaib-sandbox",
     "akshita-sandbox",
-    "sunaina-sandbox",
-    "laurence-project-1",
-    "jessica-icds-cas",
-    "marissa-test",
-    "derek-icds-sandbox",
-    "priyanka-app",
-    "shrena-dev",
     "aparatest",
-    "reach-sandbox",
-    "reach-dashboard-qa",
-    "reach-test",
-    "icds-test",
+    "cas-lab",
+    "ccqa",
+    "ccqa-downstream",
+    "derek-icds-sandbox",
     "icds-cas",
     "icds-cas-sandbox",
-    "cas-lab"
+    "icds-dashboard-qa",
+    "icds-sql",
+    "icds-test",
+    "jessica-icds-cas",
+    "laurence-project-1",
+    "marissa-test",
+    "priyanka-app",
+    "reach-dashboard-qa",
+    "reach-sandbox",
+    "reach-test",
+    "sankalp_cas",
+    "shrena-dev",
+    "sunaina-sandbox",
+    "zohaib-sandbox"
   ],
   "server_environment": [
     "india",
@@ -469,8 +472,48 @@
           "type": "and",
           "filters": [
             {
+              "operator": "lte",
+              "expression": {
+                "type": "named",
+                "name": "age_in_months"
+              },
+              "type": "boolean_expression",
+              "property_value": 36
+            },
+            {
+              "operator": "gte",
+              "expression": {
+                "type": "named",
+                "name": "food_distributed"
+              },
+              "type": "boolean_expression",
+              "property_value": 21
+            },
+            {
+              "type": "named",
+              "name": "thr_eligible"
+            },
+            {
+              "type": "named",
+              "name": "open_in_month"
+            }
+          ]
+        },
+        "display_name": null,
+        "type": "boolean",
+        "column_id": "thr_rations_gte_21"
+      },
+      {
+        "filter": {
+          "type": "and",
+          "filters": [
+            {
               "type": "named",
               "name": "female"
+            },
+            {
+              "type": "named",
+              "name": "is_resident"
             },
             {
               "operator": "gte",
@@ -500,6 +543,10 @@
               "name": "male"
             },
             {
+              "type": "named",
+              "name": "is_resident"
+            },
+            {
               "operator": "gte",
               "expression": {
                 "type": "named",
@@ -525,6 +572,10 @@
             {
               "type": "named",
               "name": "male"
+            },
+            {
+              "type": "named",
+              "name": "is_resident"
             },
             {
               "type": "named",
@@ -559,6 +610,10 @@
             },
             {
               "type": "named",
+              "name": "is_resident"
+            },
+            {
+              "type": "named",
               "name": "is_caste_st"
             },
             {
@@ -587,6 +642,10 @@
             {
               "type": "named",
               "name": "male"
+            },
+            {
+              "type": "named",
+              "name": "is_resident"
             },
             {
               "type": "named",
@@ -621,6 +680,10 @@
             },
             {
               "type": "named",
+              "name": "is_resident"
+            },
+            {
+              "type": "named",
               "name": "is_caste_sc"
             },
             {
@@ -649,6 +712,10 @@
             {
               "type": "named",
               "name": "male"
+            },
+            {
+              "type": "named",
+              "name": "is_resident"
             },
             {
               "type": "named",
@@ -683,6 +750,10 @@
             },
             {
               "type": "named",
+              "name": "is_resident"
+            },
+            {
+              "type": "named",
               "name": "is_caste_others"
             },
             {
@@ -711,6 +782,10 @@
             {
               "type": "named",
               "name": "male"
+            },
+            {
+              "type": "named",
+              "name": "is_resident"
             },
             {
               "type": "named",
@@ -745,6 +820,10 @@
             },
             {
               "type": "named",
+              "name": "is_resident"
+            },
+            {
+              "type": "named",
               "name": "is_disabled"
             },
             {
@@ -776,6 +855,10 @@
             },
             {
               "type": "named",
+              "name": "is_resident"
+            },
+            {
+              "type": "named",
               "name": "is_minority"
             },
             {
@@ -804,6 +887,10 @@
             {
               "type": "named",
               "name": "female"
+            },
+            {
+              "type": "named",
+              "name": "is_resident"
             },
             {
               "type": "named",
@@ -1084,6 +1171,10 @@
             },
             {
               "type": "named",
+              "name": "is_resident"
+            },
+            {
+              "type": "named",
               "name": "is_caste_st"
             },
             {
@@ -1112,6 +1203,10 @@
             {
               "type": "named",
               "name": "female"
+            },
+            {
+              "type": "named",
+              "name": "is_resident"
             },
             {
               "type": "named",
@@ -1146,6 +1241,10 @@
             },
             {
               "type": "named",
+              "name": "is_resident"
+            },
+            {
+              "type": "named",
               "name": "is_caste_sc"
             },
             {
@@ -1174,6 +1273,10 @@
             {
               "type": "named",
               "name": "female"
+            },
+            {
+              "type": "named",
+              "name": "is_resident"
             },
             {
               "type": "named",
@@ -1208,6 +1311,10 @@
             },
             {
               "type": "named",
+              "name": "is_resident"
+            },
+            {
+              "type": "named",
               "name": "is_caste_others"
             },
             {
@@ -1236,6 +1343,10 @@
             {
               "type": "named",
               "name": "female"
+            },
+            {
+              "type": "named",
+              "name": "is_resident"
             },
             {
               "type": "named",
@@ -1270,6 +1381,10 @@
             },
             {
               "type": "named",
+              "name": "is_resident"
+            },
+            {
+              "type": "named",
               "name": "is_disabled"
             },
             {
@@ -1298,6 +1413,10 @@
             {
               "type": "named",
               "name": "female"
+            },
+            {
+              "type": "named",
+              "name": "is_resident"
             },
             {
               "type": "named",
@@ -1332,6 +1451,10 @@
             },
             {
               "type": "named",
+              "name": "is_resident"
+            },
+            {
+              "type": "named",
               "name": "is_minority"
             },
             {
@@ -1360,6 +1483,10 @@
             {
               "type": "named",
               "name": "female"
+            },
+            {
+              "type": "named",
+              "name": "is_resident"
             },
             {
               "type": "named",
@@ -1396,8 +1523,8 @@
             "name": "pse_days"
           },
           "expression_if_false": {
-            "type": "property_name",
-            "property_name": "no_exist"
+            "type": "constant",
+            "constant": 0
           }
         },
         "display_name": null,
@@ -1419,6 +1546,10 @@
               {
                 "type": "named",
                 "name": "pse_eligible"
+              },
+              {
+                "type": "named",
+                "name": "is_resident"
               }
             ]
           },
@@ -1427,8 +1558,8 @@
             "name": "pse_days"
           },
           "expression_if_false": {
-            "type": "property_name",
-            "property_name": "no_exist"
+            "type": "constant",
+            "constant": 0
           }
         },
         "display_name": null,
@@ -1450,6 +1581,10 @@
               {
                 "type": "named",
                 "name": "pse_eligible"
+              },
+              {
+                "type": "named",
+                "name": "is_resident"
               }
             ]
           },
@@ -1458,8 +1593,8 @@
             "name": "pse_days"
           },
           "expression_if_false": {
-            "type": "property_name",
-            "property_name": "no_exist"
+            "type": "constant",
+            "constant": 0
           }
         },
         "display_name": null,
@@ -1479,6 +1614,10 @@
             {
               "type": "named",
               "name": "pse_eligible"
+            },
+            {
+              "type": "named",
+              "name": "is_resident"
             },
             {
               "type": "named",
@@ -1530,6 +1669,10 @@
             },
             {
               "type": "named",
+              "name": "is_resident"
+            },
+            {
+              "type": "named",
               "name": "valid_in_month"
             },
             {
@@ -1577,6 +1720,10 @@
               "name": "pse_eligible"
             },
             {
+              "type": "named",
+              "name": "is_resident"
+            },
+            {
               "operator": "gt",
               "expression": {
                 "type": "named",
@@ -1613,6 +1760,10 @@
               "name": "pse_eligible"
             },
             {
+              "type": "named",
+              "name": "is_resident"
+            },
+            {
               "operator": "gt",
               "expression": {
                 "type": "named",
@@ -1635,6 +1786,89 @@
         "display_name": null,
         "type": "boolean",
         "column_id": "pse_partial_female"
+      },
+      {
+        "display_name": null,
+        "datatype": "date",
+        "type": "expression",
+        "is_primary_key": false,
+        "transform": {},
+        "is_nullable": true,
+        "expression": {
+          "type": "named",
+          "name": "last_date_gmp"
+        },
+        "column_id": "last_date_gmp_display"
+      },
+      {
+        "filter": {
+          "type": "and",
+          "filters": [
+            {
+              "type": "named",
+              "name": "open_in_month"
+            },
+            {
+              "operator": "not_eq",
+              "expression": {
+                "type": "named",
+                "name": "last_date_gmp"
+              },
+              "type": "boolean_expression",
+              "property_value": null
+            }
+          ]
+        },
+        "display_name": null,
+        "type": "boolean",
+        "column_id": "weighed_in_month"
+      },
+      {
+        "display_name": null,
+        "datatype": "string",
+        "expression": {
+          "type": "conditional",
+          "test": {
+            "type": "and",
+            "filters": [
+              {
+                "type": "named",
+                "name": "open_in_month"
+              },
+              {
+                "operator": "lte",
+                "expression": {
+                  "type": "named",
+                  "name": "age_in_months"
+                },
+                "type": "boolean_expression",
+                "property_value": 24
+              },
+              {
+                "operator": "gte",
+                "expression": {
+                  "type": "named",
+                  "name": "age_in_months"
+                },
+                "type": "boolean_expression",
+                "property_value": 6
+              }
+            ]
+          },
+          "expression_if_true": {
+            "constant": "cf",
+            "type": "constant"
+          },
+          "expression_if_false": {
+            "constant": "non_cf",
+            "type": "constant"
+          }
+        },
+        "is_primary_key": false,
+        "transform": {},
+        "is_nullable": true,
+        "type": "expression",
+        "column_id": "is_cf"
       }
     ],
     "named_expressions": {
@@ -1751,35 +1985,17 @@
               "type": "and",
               "filters": [
                 {
-                  "type": "or",
-                  "filters": [
-                    {
-                      "operator": "eq",
-                      "type": "boolean_expression",
-                      "expression": {
-                        "datatype": "string",
-                        "type": "property_path",
-                        "property_path": [
-                          "form",
-                          "meal_served"
-                        ]
-                      },
-                      "property_value": "cooked_served_hot"
-                    },
-                    {
-                      "operator": "eq",
-                      "type": "boolean_expression",
-                      "expression": {
-                        "datatype": "string",
-                        "type": "property_path",
-                        "property_path": [
-                          "form",
-                          "meal_served"
-                        ]
-                      },
-                      "property_value": "packed_served_hot"
-                    }
-                  ]
+                  "operator": "not_eq",
+                  "type": "boolean_expression",
+                  "expression": {
+                    "datatype": "string",
+                    "type": "property_path",
+                    "property_path": [
+                      "form",
+                      "meal_served"
+                    ]
+                  },
+                  "property_value": "not_served"
                 },
                 {
                   "operator": "in_multi",
@@ -1907,6 +2123,66 @@
           }
         },
         "statement": "age_in_days / 30.4"
+      },
+      "last_date_gmp": {
+        "type": "conditional",
+        "test": {
+          "type": "and",
+          "filters": [
+            {
+              "operator": "gte",
+              "type": "boolean_expression",
+              "expression": {
+                "type": "diff_days",
+                "from_date_expression": {
+                  "type": "root_doc",
+                  "expression": {
+                    "datatype": "date",
+                    "type": "property_name",
+                    "property_name": "last_date_gmp"
+                  }
+                },
+                "to_date_expression": {
+                  "type": "named",
+                  "name": "month_end"
+                }
+              },
+              "property_value": 0
+            },
+            {
+              "operator": "gte",
+              "type": "boolean_expression",
+              "expression": {
+                "type": "diff_days",
+                "from_date_expression": {
+                  "type": "named",
+                  "name": "month_start"
+                },
+                "to_date_expression": {
+                  "type": "root_doc",
+                  "expression": {
+                    "datatype": "date",
+                    "type": "property_name",
+                    "property_name": "last_date_gmp"
+                  }
+                }
+              },
+              "property_value": 0
+            }
+          ]
+        },
+        "expression_if_true": {
+          "type": "root_doc",
+          "expression": {
+            "datatype": "date",
+            "type": "property_name",
+            "property_name": "last_date_gmp"
+          }
+        },
+        "expression_if_false": {
+          "type": "property_name",
+          "property_name": "no_exist"
+        }
       }
     },
     "named_filters": {
@@ -2219,7 +2495,7 @@
                     "property_name": "migration_status"
                   }
                 },
-                "property_value": "yes"
+                "property_value": "migrated"
               }
             ]
           }
@@ -3288,7 +3564,7 @@
                     "property_name": "migration_status"
                   }
                 },
-                "property_value": "yes"
+                "property_value": "migrated"
               }
             ]
           }

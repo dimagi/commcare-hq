@@ -11,6 +11,7 @@ from corehq.apps.domain.views.internal import EditInternalDomainInfoView
 from corehq.apps.es.domains import DomainES
 from corehq.apps.es.forms import FormES
 from corehq.apps.users.models import WebUser
+from corehq.util.celery_utils import periodic_task_when_true
 from corehq.util.log import send_HTML_email
 
 
@@ -58,7 +59,8 @@ def incomplete_domains_to_email():
     return email_domains
 
 
-@periodic_task(
+@periodic_task_when_true(
+    settings.IS_DIMAGI_ENVIRONMENT,
     run_every=crontab(minute=0, hour=0, day_of_week="monday", day_of_month="15-21"),
     queue='background_queue'
 )

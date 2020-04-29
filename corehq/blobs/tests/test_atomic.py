@@ -23,7 +23,7 @@ class TestAtomicBlobs(TestCase):
     def test_put(self):
         with AtomicBlobs(self.db) as db:
             meta = db.put(BytesIO(b"content"), meta=new_meta())
-        with self.db.get(key=meta.key) as fh:
+        with self.db.get(meta=meta) as fh:
             self.assertEqual(fh.read(), b"content")
 
     def test_put_failed(self):
@@ -31,7 +31,7 @@ class TestAtomicBlobs(TestCase):
             meta = db.put(BytesIO(b"content"), meta=new_meta())
             raise Boom()
         with self.assertRaises(NotFound):
-            self.db.get(key=meta.key)
+            self.db.get(meta=meta)
 
     def test_put_outside_context(self):
         with AtomicBlobs(self.db) as db:
@@ -44,14 +44,14 @@ class TestAtomicBlobs(TestCase):
         with AtomicBlobs(self.db) as db:
             db.delete(key=meta.key)
         with self.assertRaises(NotFound):
-            self.db.get(key=meta.key)
+            self.db.get(meta=meta)
 
     def test_delete_failed(self):
         meta = self.db.put(BytesIO(b"content"), meta=new_meta())
         with self.assertRaises(Boom), AtomicBlobs(self.db) as db:
             db.delete(key=meta.key)
             raise Boom()
-        with self.db.get(key=meta.key) as fh:
+        with self.db.get(meta=meta) as fh:
             self.assertEqual(fh.read(), b"content")
 
     def test_delete_outside_context(self):

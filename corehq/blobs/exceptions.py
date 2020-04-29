@@ -18,3 +18,7 @@ class InvalidContext(Error):
 
 class NotFound(Error):
     """Raised when an attachment cannot be found"""
+
+
+class GzipStreamError(Exception):
+    """Raised when GzipStream is used improperly"""

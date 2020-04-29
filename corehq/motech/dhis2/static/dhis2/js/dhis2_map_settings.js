@@ -80,7 +80,7 @@ hqDefine('dhis2/js/dhis2_map_settings', [
         self.toJSON = function () {
             return {
                 "description": self.description(),
-                "connection_settings_id": self.connectionSettingsId(),
+                "connection_settings_id": Number(self.connectionSettingsId()),
                 "ucr_id": self.ucrId(),
                 "frequency": self.frequency(),
                 "day_to_send": Number(self.dayOfMonth()),
