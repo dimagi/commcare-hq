@@ -98,7 +98,7 @@ class Command(BaseCommand):
         parser.add_argument('-x', '--stop',
             dest="stop", action='store_true', default=False,
             help='''
-                Stop and drop into debugger on first diff. A
+                Stop and drop into debugger before first diff. A
                 non-parallel iteration algorithm is used when this
                 option is set. For "filter --dry-run" propmt to stop
                 after each batch.
