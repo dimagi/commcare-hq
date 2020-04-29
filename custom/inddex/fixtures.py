@@ -2,7 +2,7 @@ from collections import defaultdict
 
 from django.utils.functional import cached_property
 
-from attr import attrib, attrs
+from attr import attrib, attrs, fields_dict
 
 from corehq.apps.fixtures.dbaccessors import (
     get_fixture_data_types,
@@ -16,7 +16,8 @@ class InddexFixtureError(Exception):
 
 def _wrap(FixtureClass, kwargs):
     try:
-        return FixtureClass(**kwargs)
+        return FixtureClass(**{k: v for k, v in kwargs.items()
+                               if k in fields_dict(FixtureClass)})
     except Exception as e:
         raise InddexFixtureError(f"Error loading lookup table '{FixtureClass.table_name}': {e}")
 
