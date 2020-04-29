@@ -1,9 +1,7 @@
 import io
 import itertools
 from collections import defaultdict
-from copy import deepcopy
 
-from memoized import memoized
 from openpyxl import Workbook
 from openpyxl.worksheet.datavalidation import DataValidation
 
@@ -24,6 +22,7 @@ from custom.icds.location_reassignment.const import (
     EXTRACT_OPERATION,
     HOUSEHOLD_ID_COLUMN,
     HOUSEHOLD_MEMBER_DETAILS_COLUMN,
+    LGD_CODE,
     NEW_LGD_CODE,
     NEW_NAME,
     NEW_PARENT_SITE_CODE,
@@ -68,7 +67,7 @@ class Download(object):
                 'name': location.name,
                 'type_name': location.location_type.name,
                 'site_code': location.site_code,
-                'lgd_code': location.metadata.get('lgd_code', ''),
+                'lgd_code': location.metadata.get(LGD_CODE, ''),
                 'parent_location_id': location.parent_location_id,
                 'location_type': location.location_type.code,
                 'assigned_users': [],
@@ -121,48 +120,43 @@ class Download(object):
                 operation_data_validation.add(f"{letter}2:{letter}{worksheet.max_row}")
 
     def _create_rows(self):
-        def append_row(username):
-            row = deepcopy(location_content)
-            row[USERNAME_COLUMN] = username
-            row[NEW_USERNAME_COLUMN] = ''
-            row[OPERATION_COLUMN] = ''
-            rows[location_type].append(row)
-
         # location type code mapped to rows which is a list of dictionaries to pull headers later using keys
         rows = defaultdict(list)
         for location_id, location_details in self._location_details_by_location_id.items():
-            location_content = self._location_content(location_id)
             location_type = location_details['location_type']
             if location_details['assigned_users']:
                 for username in location_details['assigned_users']:
-                    append_row(username)
+                    rows[location_type].append(self._generate_row(username, location_type, location_id))
             else:
                 # set up one row for location that has no user assigned
-                append_row('')
+                rows[location_type].append(self._generate_row('', location_type, location_id))
         return rows
 
-    @memoized
-    def _location_content(self, location_id):
-        # memoized static content for each location
+    def _generate_row(self, username, location_type, location_id):
         location_details = self._location_details_by_location_id[location_id]
         location_parent_id = location_details['parent_location_id']
-        location_content = {
-            CURRENT_NAME: location_details['name'],
-            NEW_NAME: '',
+        row = {
             CURRENT_SITE_CODE_COLUMN: location_details['site_code'],
             NEW_SITE_CODE_COLUMN: '',
+            CURRENT_NAME: location_details['name'],
+            NEW_NAME: '',
+        }
+        row.update({
+            USERNAME_COLUMN: username,
+            NEW_USERNAME_COLUMN: '',
             CURRENT_LGD_CODE: location_details['lgd_code'],
             NEW_LGD_CODE: '',
-        }
+        })
         if location_parent_id and location_parent_id in self._location_details_by_location_id:
             location_parent_details = self._location_details_by_location_id[location_parent_id]
-            location_content.update({
+            row.update({
                 CURRENT_PARENT_TYPE: location_parent_details['type_name'],
                 CURRENT_PARENT_NAME: location_parent_details['name'],
                 CURRENT_PARENT_SITE_CODE: location_parent_details['site_code'],
                 NEW_PARENT_SITE_CODE: ''
             })
-        return location_content
+        row[OPERATION_COLUMN] = ''
+        return row
 
     @staticmethod
     def _extract_unique_headers(rows):

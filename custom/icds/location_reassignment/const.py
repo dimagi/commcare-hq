@@ -47,6 +47,7 @@ DEPRECATED_AT = "deprecated_at"  # datetime when this location was deprecated
 DEPRECATES = "deprecates"  # source location that this location deprecated
 DEPRECATES_VIA = "deprecates_via"  # operation via which this location deprecated the source location
 DEPRECATES_AT = "deprecates_at"  # datetime when this location deprecated the other location
+LGD_CODE = "lgd_code"
 
 AWC_CODE = "awc"
 HOUSEHOLD_CASE_TYPE = "household"
