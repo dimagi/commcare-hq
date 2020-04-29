@@ -406,9 +406,9 @@ class FoodData:
         gap = self._in_memory_filter_selections.get('gap')
         if gap:
             gap_type, gap_code = gap.split('-')
-            if gap_type == ConvFactorGaps.slug and row.conv_factor_gap_code != gap_code:
+            if gap_type == ConvFactorGaps.slug and str(row.conv_factor_gap_code) != gap_code:
                 return False
-            if gap_type == FctGaps.slug and row.fct_gap_code != gap_code:
+            if gap_type == FctGaps.slug and str(row.fct_gap_code) != gap_code:
                 return False
 
         food_group = self._in_memory_filter_selections.get('fao_who_gift_food_group_description')
