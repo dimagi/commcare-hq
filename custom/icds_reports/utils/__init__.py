@@ -11,6 +11,7 @@ from functools import wraps
 from memoized import memoized
 from tempfile import mkstemp
 
+import attr
 import operator
 
 import pytz
@@ -38,8 +39,9 @@ from corehq.util.files import TransientTempfile
 from corehq.util.quickcache import quickcache
 from corehq.util.timer import TimingContext
 from custom.icds_reports import const
-from custom.icds_reports.const import ISSUE_TRACKER_APP_ID, LOCATION_TYPES
+from custom.icds_reports.const import ISSUE_TRACKER_APP_ID, LOCATION_TYPES, AggregationLevels
 from custom.icds_reports.exceptions import InvalidLocationTypeException
+from custom.icds_reports.models.aggregate import AwcLocation
 from custom.icds_reports.models.helper import IcdsFile
 from custom.icds_reports.queries import get_test_state_locations_id, get_test_district_locations_id
 from couchexport.export import export_from_tables
@@ -405,7 +407,7 @@ def match_age(age):
         return '3-6 years'
 
 
-def get_location_filter(location_id, domain):
+def get_location_filter(location_id, domain, include_object=False):
     """
     Args:
         location_id (str)
@@ -421,6 +423,8 @@ def get_location_filter(location_id, domain):
         sql_location = SQLLocation.objects.get(location_id=location_id, domain=domain)
     except SQLLocation.DoesNotExist:
         return {'aggregation_level': 1}
+    if include_object:
+        config['sql_location'] = sql_location
     config.update(
         {
             ('%s_id' % ancestor.location_type.code): ancestor.location_id
@@ -1921,3 +1925,82 @@ def create_group_by(aggregation_level):
 
 def column_value_as_per_agg_level(aggregation_level, agg_level_threshold, true_value, false_value):
     return true_value if aggregation_level > agg_level_threshold else false_value
+
+
+@attr.s
+class AggLevelInfo(object):
+    agg_level = attr.ib()
+    col_name = attr.ib()
+
+
+def _construct_replacement_map_from_awc_location(loc_level, replacement_location_ids):
+
+    def _full_hierarchy_name(loc):
+        loc_names = [loc[f'{level}_name'] for level in levels.keys() if loc[f'{level}_name']]
+        return ' > '.join(loc_names)
+
+    levels = {
+        'state': AggLevelInfo(AggregationLevels.STATE, 'state_id'),
+        'district': AggLevelInfo(AggregationLevels.DISTRICT, 'district_id'),
+        'block': AggLevelInfo(AggregationLevels.BLOCK, 'block_id'),
+        'supervisor': AggLevelInfo(AggregationLevels.SUPERVISOR, 'supervisor_id'),
+        'awc': AggLevelInfo(AggregationLevels.AWC, 'doc_id')
+    }
+    level_info = levels[loc_level]
+    filters = {
+        f'{level_info.col_name}__in': replacement_location_ids,
+        'aggregation_level': level_info.agg_level
+    }
+    columns = [
+        level_info.col_name,
+        'state_name',
+        'district_name',
+        'block_name',
+        'supervisor_name',
+        'awc_name'
+    ]
+    replacement_locations = AwcLocation.objects.filter(**filters).values(*columns)
+    replacement_names = {loc[level_info.col_name]: _full_hierarchy_name(loc) for loc in replacement_locations}
+    return replacement_names
+
+
+def _construct_replacement_map_from_sql_location(replacement_location_ids):
+
+    def _full_hierarchy_name(loc):
+        loc_names = []
+        while loc is not None:
+            loc_names.append(loc.name)
+            loc = loc.parent
+        loc_names.reverse()
+        return ' > '.join(loc_names)
+    
+    # prefetch all possible parents
+    replacement_locations = SQLLocation.objects.filter(location_id__in=replacement_location_ids).select_related('parent__parent__parent__parent')
+
+    replacement_names = {loc.location_id: _full_hierarchy_name(loc) for loc in replacement_locations}
+    return replacement_names
+
+
+def get_deprecation_info(locations, show_test, multiple_levels=False):
+    locations_list = []
+    replacement_location_ids = []
+    for loc in locations:
+        loc_level = loc.location_type.name
+        if show_test or loc.metadata.get('is_test_location', 'real') != 'test':
+            locations_list.append(loc)
+            if loc.metadata.get('deprecated_to'):
+                replacement_location_ids.extend(loc.metadata.get('deprecated_to', []))
+            if loc.metadata.get('deprecates'):
+                replacement_location_ids.extend(loc.metadata.get('deprecates', []))
+
+    if multiple_levels:
+        replacement_names = _construct_replacement_map_from_sql_location(replacement_location_ids)
+
+    else:
+        replacement_names = _construct_replacement_map_from_awc_location(loc_level, replacement_location_ids)
+
+    return locations_list, replacement_names
+
+
+def get_location_replacement_name(location, field, replacement_names):
+    return [replacement_names.get(loc_id, '') for loc_id in location.metadata.get(field, [])]

@@ -52,6 +52,12 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
     vm.selectedMonth = new Date().getMonth() + 1;
     vm.selectedYear = new Date().getFullYear();
 
+    vm.updateSelectedDate = function () {
+        vm.selectedDate = vm.selectedMonth ? new Date(vm.selectedYear, vm.selectedMonth - 1) : new Date();
+    };
+
+    vm.updateSelectedDate();
+
     window.angular.forEach(moment.months(), function (key, value) {
         vm.monthsCopy.push({
             name: key,
@@ -86,6 +92,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
             }
             vm.selectedMonth = vm.months[vm.months.length - 1].id;
         }
+        vm.updateSelectedDate();
     };
 
     vm.excludeCurrentMonthIfInitialThreeDays();
@@ -333,6 +340,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
                 vm.selectedMonth = 10;
             }
         }
+        vm.updateSelectedDate();
     };
 
     vm.setMonthToPreviousIfAfterThe15thAndTwoMonthsIfBefore15th = function (date) {
@@ -444,6 +452,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         vm.selectedFormat = 'xlsx';
         vm.selectedPDFFormat = 'many';
         initHierarchy();
+        vm.updateSelectedDate();
     };
 
     vm.hasErrors = function () {
@@ -575,6 +584,9 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         }
     };
 
+    vm.showReassignmentMessage = function () {
+        return vm.selectedLocation && (Date.parse(vm.selectedLocation.deprecated_at) < vm.selectedDate || Date.parse(vm.selectedLocation.deprecates_at) > vm.selectedDate);
+    };
 }
 
 DownloadController.$inject = ['$rootScope', '$location', 'locationHierarchy', 'locationsService', 'userLocationId',

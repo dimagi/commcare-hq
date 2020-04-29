@@ -58,6 +58,10 @@ class IncrementalExportCheckpoint(models.Model):
     status = models.PositiveSmallIntegerField(choices=IncrementalExportStatus.CHOICES, null=True)
     request_log = models.ForeignKey(RequestLog, on_delete=models.CASCADE, null=True)
 
+    @property
+    def blob_parent_id(self):
+        return str(self.id)
+
     def get_blob(self):
         db = get_blob_db()
         return db.get(key=str(self.blob_key), type_code=CODES.data_export)
