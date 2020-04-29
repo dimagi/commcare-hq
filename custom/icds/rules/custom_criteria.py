@@ -1,10 +1,11 @@
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from custom.icds.case_relationships import (
+    child_person_case_from_child_health_case,
     child_person_cases_from_mother_person_case,
     mother_person_case_from_ccs_record_case,
 )
 from custom.icds.const import AWC_LOCATION_TYPE_CODE, SUPERVISOR_LOCATION_TYPE_CODE
-from custom.icds.messaging.custom_content import get_user_from_usercase
+from custom.icds.messaging.custom_content import get_user_from_usercase, person_case_is_migrated_or_opted_out
 from custom.icds.rules.util import get_date, todays_date
 from dateutil.relativedelta import relativedelta
 
@@ -94,10 +95,20 @@ def ccs_record_case_is_availing_services(case, now):
         return False
 
     return any([
-        child.get_case_property('migration_status') != 'migrated'
-        and child.get_case_property('registered_status') != 'not_registered'
+        not(person_case_is_migrated_or_opted_out(child))
         for child in children
     ])
+
+
+def child_health_case_is_availing_services(case, now):
+    """
+    This filters to child health cases where the relevant child person case is both registered and not migrated.
+    """
+    child = child_person_case_from_child_health_case(case)
+    if person_case_is_migrated_or_opted_out(child):
+        return False
+
+    return case
 
 
 def check_user_location_type(usercase, location_type_code):

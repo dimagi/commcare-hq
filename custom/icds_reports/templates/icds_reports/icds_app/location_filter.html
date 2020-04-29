@@ -9,6 +9,7 @@
         <div class="alert alert-info" ng-show="$ctrl.showSectorMessage">
             You must choose Sector to see data.
         </div>
+        <reassignment-message ng-show="$ctrl.showReassignmentMessage()" selected-location="$ctrl.selectedLocation()" selected-date="$ctrl.selectedDate"></reassignment-message>
         <div style="margin: 20px 50px;" ng-repeat="locationTypes in $ctrl.hierarchy track by $index" ng-show="$ctrl.isVisible($index)">
             <ui-select ng-disabled="$ctrl.disabled($index)" ng-model="$ctrl.selectedLocations[$index]" theme="bootstrap" on-select="$ctrl.onSelect($item, $index)">
                 <ui-select-match placeholder="{$ $ctrl.getPlaceholder(locationTypes) $}"><span ng-bind="$select.selected.name"></span></ui-select-match>

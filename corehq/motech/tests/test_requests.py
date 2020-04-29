@@ -15,16 +15,21 @@ TEST_API_PASSWORD = 'district'
 TEST_DOMAIN = 'test-domain'
 
 
+def noop_logger(*args, **kwargs):
+    pass
+
+
 class RequestsTests(SimpleTestCase):
 
     def setUp(self):
-        self.requests = Requests(TEST_DOMAIN, TEST_API_URL, TEST_API_USERNAME, TEST_API_PASSWORD)
+        self.requests = Requests(
+            TEST_DOMAIN, TEST_API_URL, TEST_API_USERNAME, TEST_API_PASSWORD, logger=noop_logger
+        )
         self.org_unit_id = 'abc'
         self.data_element_id = '123'
 
     def test_authentication(self):
-        with patch('corehq.motech.requests.RequestLog', Mock()), \
-                patch.object(requests.Session, 'request') as request_mock:
+        with patch.object(requests.Session, 'request') as request_mock:
             content = {'code': TEST_API_USERNAME}
             content_json = json.dumps(content)
             response_mock = Mock()
@@ -46,8 +51,7 @@ class RequestsTests(SimpleTestCase):
             self.assertEqual(response.json()['code'], TEST_API_USERNAME)
 
     def test_send_data_value_set(self):
-        with patch('corehq.motech.requests.RequestLog', Mock()), \
-                patch.object(requests.Session, 'request') as request_mock:
+        with patch.object(requests.Session, 'request') as request_mock:
             payload = {'dataValues': [
                 {'dataElement': self.data_element_id, 'period': "201701",
                  'orgUnit': self.org_unit_id, 'value': "180"},
@@ -77,11 +81,11 @@ class RequestsTests(SimpleTestCase):
             self.assertEqual(response.json()['importCount']['imported'], 2)
 
     def test_verify_ssl(self):
-        with patch('corehq.motech.requests.RequestLog', Mock()), \
-                patch.object(requests.Session, 'request') as request_mock:
+        with patch.object(requests.Session, 'request') as request_mock:
 
-            self.requests = Requests(TEST_DOMAIN, TEST_API_URL, TEST_API_USERNAME, TEST_API_PASSWORD, verify=False)
-            self.requests.get('me')
+            req = Requests(TEST_DOMAIN, TEST_API_URL, TEST_API_USERNAME, TEST_API_PASSWORD, verify=False,
+                           logger=noop_logger)
+            req.get('me')
             request_mock.assert_called_with(
                 'GET',
                 TEST_API_URL + 'me',
@@ -93,19 +97,19 @@ class RequestsTests(SimpleTestCase):
             )
 
     def test_with_session(self):
-        with patch('corehq.motech.requests.RequestLog', Mock()), \
-                patch.object(requests.Session, 'request'), \
+        with patch.object(requests.Session, 'request'), \
                 patch.object(requests.Session, 'close') as close_mock:
 
-            with Requests(TEST_DOMAIN, TEST_API_URL, TEST_API_USERNAME, TEST_API_PASSWORD) as self.requests:
-                self.requests.get('me')
-                self.requests.get('me')
-                self.requests.get('me')
+            request = Requests(TEST_DOMAIN, TEST_API_URL, TEST_API_USERNAME, TEST_API_PASSWORD,
+                               logger=noop_logger)
+            with request as req:
+                req.get('me')
+                req.get('me')
+                req.get('me')
             self.assertEqual(close_mock.call_count, 1)
 
     def test_without_session(self):
-        with patch('corehq.motech.requests.RequestLog', Mock()), \
-                patch.object(requests.Session, 'request'), \
+        with patch.object(requests.Session, 'request'), \
                 patch.object(requests.Session, 'close') as close_mock:
 
             self.requests.get('me')
@@ -114,15 +118,16 @@ class RequestsTests(SimpleTestCase):
             self.assertEqual(close_mock.call_count, 3)
 
     def test_with_and_without_session(self):
-        with patch('corehq.motech.requests.RequestLog', Mock()), \
-                patch.object(requests.Session, 'request'), \
+        with patch.object(requests.Session, 'request'), \
                 patch.object(requests.Session, 'close') as close_mock:
 
-            with Requests(TEST_DOMAIN, TEST_API_URL, TEST_API_USERNAME, TEST_API_PASSWORD) as self.requests:
-                self.requests.get('me')
-                self.requests.get('me')
-                self.requests.get('me')
-            self.requests.get('me')
+            request = Requests(TEST_DOMAIN, TEST_API_URL, TEST_API_USERNAME, TEST_API_PASSWORD,
+                               logger=noop_logger)
+            with request as req:
+                req.get('me')
+                req.get('me')
+                req.get('me')
+            req.get('me')
             self.assertEqual(close_mock.call_count, 2)
 
     def test_notify_error_no_address(self):

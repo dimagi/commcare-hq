@@ -52,27 +52,19 @@ class Command(BaseCommand):
         if all:
             exporters = list(EXPORTERS)
 
-        migrator_options = {}
-        if limit_to_db:
-            migrator_options['limit_to_db'] = limit_to_db
-
         for exporter_slug in exporters:
             try:
-                exporter = EXPORTERS[exporter_slug]
+                exporter_cls = EXPORTERS[exporter_slug]
             except KeyError:
                 raise CommandError(USAGE)
 
             self.stdout.write("\nRunning exporter: {}\n{}".format(exporter_slug, '-' * 50))
             export_filename = get_export_filename(exporter_slug, domain)
             if os.path.exists(export_filename):
-                reset_export = False
-                self.stderr.write(
-                    "WARNING: export file for {} exists. "
-                    "Resuming export progress. Delete file to reset progress.".format(exporter_slug)
-                )
-            else:
-                reset_export = True  # always reset if the file doesn't already exist
-            exporter.by_domain(domain)
-            total, skips = exporter.migrate(reset=reset_export, chunk_size=chunk_size, **migrator_options)
+                raise CommandError(f"Export file '{export_filename}' exists. "
+                                   f"Remove the file and re-run the command.")
+
+            exporter = exporter_cls(domain)
+            total, skips = exporter.migrate(export_filename, chunk_size=chunk_size, limit_to_db=limit_to_db)
             if skips:
                 sys.exit(skips)
