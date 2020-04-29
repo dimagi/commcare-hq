@@ -1339,7 +1339,7 @@ def count_users(request, domain):
     })
 
 
-@require_can_edit_commcare_users
+@require_can_edit_or_view_commcare_users
 def download_commcare_users(request, domain):
     form = CommCareUserFilterForm(request.GET, domain=domain)
     user_filters = {}
