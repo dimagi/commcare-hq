@@ -51,9 +51,7 @@ name: autostaging
 branches:
   - vellum-staging  # DO NOT REMOVE this is similar to "autostaging", but for vellum
   - jls/migrate-DefaultConsumption-3 # Jenny April 24
-  #- jls/use-textinput # Jenny March 10
-    #- mk/location-reassignment-11-followup
-  - ap/remove-delete-in-name # Amit April 8
+  #- mk/location-reassignment-11-followup
   - bmb/odata-qa-feedback  # Biyeun April 15
     #  - fr/turn-backend        # Farid April 17 # Removed April 25 from conflict
     #- dmr/track-sms-by-backend  # Danny April 22
