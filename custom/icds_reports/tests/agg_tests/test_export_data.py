@@ -1106,7 +1106,7 @@ class TestExportData(TestCase):
                 config={
                     'domain': 'icds-cas'
                 }
-            ).get_excel_data(location=''),
+            ).get_excel_data(location='b1'),
             [
                 [
                     'AWC Infrastructure',
