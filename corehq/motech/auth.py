@@ -74,7 +74,9 @@ class AuthManager:
         Returns an instance of requests.Session. Manages authentication
         tokens, if applicable.
         """
-        return Session()
+        session = Session()
+        session.auth = self.get_auth()
+        return session
 
 
 class BasicAuthManager(AuthManager):
