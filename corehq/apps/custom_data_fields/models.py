@@ -69,7 +69,7 @@ class CustomDataFieldsDefinition(models.Model):
                 (required_only and not field.is_required)
                 or (not include_system and is_system_key(field.slug))
             )
-        return filter(_is_match, self.field_set)
+        return filter(_is_match, self.sqlfield_set.all())
 
     def get_validator(self, data_field_class):
         """
