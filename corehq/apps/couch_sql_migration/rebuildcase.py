@@ -22,6 +22,7 @@ def rebuild_and_diff_cases(sql_case, couch_case, original_couch_case, diff, dd_c
     :param dd_count: metrics recording counter function.
     :returns: list of diffs returned by `diff(couch_case, rebuilt_case_json)`
     """
+    from .casediff import is_case_patched
     lock = CommCareCaseSQL.get_obj_lock_by_id(sql_case.case_id)
     acquire_lock(lock, degrade_gracefully=False)
     try:
@@ -35,8 +36,9 @@ def rebuild_and_diff_cases(sql_case, couch_case, original_couch_case, diff, dd_c
         diffs = diff(couch_case, sql_json)
         if diffs and couch_case != original_couch_case:
             diffs = diff(original_couch_case, sql_json)
-            if not diffs:
+            if not diffs or is_case_patched(sql_case.case_id, diffs):
                 log.info("original Couch case matches rebuilt SQL case: %s", sql_case.case_id)
+                diffs = []
         if not diffs:
             # save case only if rebuild resolves diffs
             CaseAccessorSQL.save_case(new_case)

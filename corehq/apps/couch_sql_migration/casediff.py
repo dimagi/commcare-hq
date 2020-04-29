@@ -141,6 +141,8 @@ def diff_case(sql_case, couch_case, dd_count):
             except Exception as err:
                 dd_count("commcare.couchsqlmigration.case.rebuild.error")
                 log.warning(f"Case {case_id} rebuild SQL -> {type(err).__name__}: {err}")
+            if not diffs and is_case_patched(case_id, diff(original_couch_case, sql_json)):
+                return original_couch_case, [], []
         if diffs:
             diffs.extend(diff_case_forms(couch_case, sql_json))
         else:
