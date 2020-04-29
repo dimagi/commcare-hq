@@ -53,8 +53,12 @@ class TestOperation(TestCase):
             self.location_structure,
         )
 
-    def check_operation(self, old_locations, new_locations, archived=True):
-        self.operation(self.domain, old_locations, new_locations).perform()
+    def check_operation(self, old_site_codes, new_site_codes, archived=True):
+        operation = self.operation(self.domain, old_site_codes, new_site_codes)
+        operation.valid()
+        operation.perform()
+        old_locations = operation.old_locations
+        new_locations = operation.new_locations
         old_location_ids = [loc.location_id for loc in old_locations]
         new_location_ids = [loc.location_id for loc in new_locations]
         operation_time = old_locations[0].metadata[DEPRECATED_AT]
@@ -75,33 +79,33 @@ class TestMergeOperation(TestOperation):
     operation = MergeOperation
 
     def test_perform(self):
-        new_locations = [self.locations['Boston']]
-        old_locations = [self.locations['Cambridge'], self.locations['Somerville']]
-        self.check_operation(old_locations, new_locations)
+        new_site_codes = [self.locations['Boston'].site_code]
+        old_site_codes = [self.locations['Cambridge'].site_code, self.locations['Somerville'].site_code]
+        self.check_operation(old_site_codes, new_site_codes)
 
 
 class TestSplitOperation(TestOperation):
     operation = SplitOperation
 
     def test_perform(self):
-        old_locations = [self.locations['Boston']]
-        new_locations = [self.locations['Cambridge'], self.locations['Somerville']]
-        self.check_operation(old_locations, new_locations)
+        old_site_codes = [self.locations['Boston'].site_code]
+        new_site_codes = [self.locations['Cambridge'].site_code, self.locations['Somerville'].site_code]
+        self.check_operation(old_site_codes, new_site_codes)
 
 
 class TestExtractOperation(TestOperation):
     operation = ExtractOperation
 
     def test_perform(self):
-        old_locations = [self.locations['Boston']]
-        new_locations = [self.locations['Cambridge']]
-        self.check_operation(old_locations, new_locations, archived=False)
+        old_site_codes = [self.locations['Boston'].site_code]
+        new_site_codes = [self.locations['Cambridge'].site_code]
+        self.check_operation(old_site_codes, new_site_codes, archived=False)
 
 
 class TestMoveOperation(TestOperation):
     operation = MoveOperation
 
     def test_perform(self):
-        old_locations = [self.locations['Boston']]
-        new_locations = [self.locations['Cambridge']]
-        self.check_operation(old_locations, new_locations)
+        old_site_codes = [self.locations['Boston'].site_code]
+        new_site_codes = [self.locations['Cambridge'].site_code]
+        self.check_operation(old_site_codes, new_site_codes)
