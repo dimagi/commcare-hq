@@ -75,6 +75,7 @@ load_ignore_rules = memoized(lambda: add_duplicate_rules({
         Ignore(check=is_case_actions),  # ignore case actions
         Ignore(path='id', old=MISSING),
         Ignore(path='@xmlns'),  # legacy
+        Ignore(path='#text', old='', new=MISSING),
         Ignore(path='_attachments', new=MISSING),
         Ignore(path='external_blobs', new=MISSING),
         Ignore(path='#export_tag', new=MISSING),

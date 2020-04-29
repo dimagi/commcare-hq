@@ -202,12 +202,13 @@ STATIC_PROPS = {
     "user_id",
     "xform_ids",
 
-    # renamed Couch properties
+    # renamed/obsolete Couch properties
     "-deletion_date",   # deleted_on
     "-deletion_id",     # deletion_id
     "@date_modified",   # modified_on
     "@user_id",         # user_id
     "hq_user_id",       # external_id
+    "#text",            # ignore that junk
 }
 
 

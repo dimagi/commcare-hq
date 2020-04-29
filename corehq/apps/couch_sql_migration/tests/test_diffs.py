@@ -651,6 +651,18 @@ class DiffTestCases(SimpleTestCase):
         filtered = filter_case_diffs(couch_case, sql_case, diffs)
         self.assertEqual(filtered, [])
 
+    def test_case_with_empty_text_node(self):
+        couch_case = {
+            "doc_type": "CommCareCase",
+            "#text": "",
+        }
+        sql_case = {
+            "doc_type": "CommCareCase",
+        }
+        diffs = json_diff(couch_case, sql_case, track_list_indices=False)
+        filtered = filter_case_diffs(couch_case, sql_case, diffs)
+        self.assertEqual(filtered, [])
+
     def test_user_owner_mapping_case_with_opened_and_user_diffs(self):
         couch_case = {
             "case_id": "user-owner-mapping-eca7a8",
