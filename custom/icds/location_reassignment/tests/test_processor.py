@@ -126,14 +126,15 @@ class TestHouseholdReassignmentProcessor(UnitTestTestCase):
     @patch('custom.icds.location_reassignment.utils.reassign_household_case')
     @patch('custom.icds.location_reassignment.processor.get_supervisor_id')
     @patch('custom.icds.location_reassignment.processor.SQLLocation.active_objects.filter')
-    def test_process(self, locations_fetch_mock, supervisor_id_mock, reassign_household_mock):
-        locations_fetch_mock.return_value = self.all_locations
+    @patch('custom.icds.location_reassignment.processor.SQLLocation.objects.filter')
+    def test_process(self, old_locations_fetch_mock, new_locations_fetch_mock, supervisor_id_mock,
+                     reassign_household_mock):
+        old_locations_fetch_mock.return_value = [self.location_1, self.location_3]
+        new_locations_fetch_mock.return_value = [self.location_2, self.location_4]
         supervisor_id_mock.return_value = 'a_supervisor_id'
         HouseholdReassignmentProcessor(self.domain, self.reassignments).process()
-        locations_fetch_mock.assert_has_calls([
-            call(domain=self.domain, site_code__in={'1', '3'}),
-            call(domain=self.domain, site_code__in={'2', '4'})
-        ])
+        old_locations_fetch_mock.assert_called_once_with(domain=self.domain, site_code__in={'1', '3'})
+        new_locations_fetch_mock.assert_called_once_with(domain=self.domain, site_code__in={'2', '4'})
         supervisor_id_mock.assert_has_calls([
             call(self.domain, '199'),
             call(self.domain, '399')

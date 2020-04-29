@@ -9,6 +9,7 @@ var FormplayerFrontend = new Marionette.Application();
 var showError = hqImport('cloudcare/js/util').showError;
 var showHTMLError = hqImport('cloudcare/js/util').showHTMLError;
 var showSuccess = hqImport('cloudcare/js/util').showSuccess;
+var showWarning = hqImport('cloudcare/js/util').showWarning;
 var formplayerLoading = hqImport('cloudcare/js/util').formplayerLoading;
 var formplayerLoadingComplete = hqImport('cloudcare/js/util').formplayerLoadingComplete;
 var formplayerSyncComplete = hqImport('cloudcare/js/util').formplayerSyncComplete;
@@ -125,15 +126,26 @@ FormplayerFrontend.on('showError', function (errorMessage, isHTML) {
     }
 });
 
+FormplayerFrontend.on('showWarning', function (message) {
+    showWarning(message, $("#cloudcare-notifications"));
+});
+
 FormplayerFrontend.reqres.setHandler('showSuccess', function (successMessage) {
     showSuccess(successMessage, $("#cloudcare-notifications"), 10000);
 });
 
 FormplayerFrontend.reqres.setHandler('handleNotification', function (notification) {
-    if (notification.error) {
-        FormplayerFrontend.trigger('showError', notification.message);
-    } else {
+    var type = notification.type;
+    if (!type) {
+        type = notification.error ? "error" : "success";
+    }
+
+    if (type === "success") {
         FormplayerFrontend.request('showSuccess', notification.message);
+    } else if (type === "warning") {
+        FormplayerFrontend.trigger('showWarning', notification.message);
+    } else {
+        FormplayerFrontend.trigger('showError', notification.message);
     }
 });
 

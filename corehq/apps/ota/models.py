@@ -62,7 +62,7 @@ class DemoUserRestore(models.Model):
             blob.close()
 
     def _get_restore_xml(self):
-        return get_blob_db().get(key=self.restore_blob_id)
+        return get_blob_db().get(key=self.restore_blob_id, type_code=CODES.demo_user_restore)
 
     def delete(self):
         """

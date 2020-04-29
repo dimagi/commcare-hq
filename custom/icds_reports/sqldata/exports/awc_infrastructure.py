@@ -82,4 +82,25 @@ class AWCInfrastructureExport(ExportableMixin, IcdsSqlData):
                 slug='percent_adult_scale'
             )
         ]
+        if self.beta:
+            agg_columns += [
+                AggregateColumn(
+                    'Percentage AWCs reported Infantometer',
+                    percent_or_not_entered,
+                    [
+                        SumColumn('infantometer'),
+                        AliasColumn('awcs')
+                    ],
+                    slug='percent_with_infantometer'
+                ),
+                AggregateColumn(
+                    'Percentage AWCs reported Stadiometer',
+                    percent_or_not_entered,
+                    [
+                        SumColumn('stadiometer'),
+                        AliasColumn('awcs')
+                    ],
+                    slug='percent_with_stadiometer'
+                )
+            ]
         return columns + agg_columns

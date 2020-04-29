@@ -38,8 +38,8 @@ class VaccinesAPITest(TestCase):
              'due_list_date_5g_vit_a_2': None, 'due_list_date_6g_vit_a_3': None, 'due_list_date_6g_vit_a_4': None,
              'due_list_date_6g_vit_a_5': None, 'due_list_date_6g_vit_a_6': None, 'due_list_date_6g_vit_a_7': None,
              'due_list_date_6g_vit_a_8': None, 'due_list_date_7g_vit_a_9': None,
-             'due_list_date_1g_bcg': datetime.date(2017, 3, 1)}
+             'due_list_date_1g_bcg': datetime.date(2017, 3, 1), 'delivery_nature': 'vaginal', 'term_days': 311}
             ,
             first_person_case
         )
-        self.assertEqual(44, count)
+        self.assertEqual(48, count)
