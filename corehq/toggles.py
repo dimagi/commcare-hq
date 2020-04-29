@@ -1639,6 +1639,12 @@ LOCATION_SAFE_CASE_IMPORTS = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
+FORM_CASE_IDS_CASE_IMPORTER = StaticToggle(
+    'form_case_ids_case_importer',
+    'Show the form and case ids download button on the case importer',
+    TAG_SOLUTIONS_OPEN,
+    namespaces=[NAMESPACE_DOMAIN],
+)
 
 HIDE_HQ_ON_MOBILE_EXPERIENCE = StaticToggle(
     'hide_hq_on_mobile_experience',
