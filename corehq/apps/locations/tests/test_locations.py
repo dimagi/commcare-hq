@@ -1,3 +1,5 @@
+import datetime
+
 from django.test import TestCase
 
 from corehq.apps.commtrack.helpers import make_product
@@ -152,6 +154,21 @@ class LocationsTest(TestCase):
             {loc.location_id for loc in [self.loc, test_state1, test_state2, test_village1]},
             set(SQLLocation.objects.filter(domain=self.domain.name).location_ids()),
         )
+
+    def test_location_archived_at(self):
+        loc = make_loc(
+            'teststate1',
+            type='state',
+            parent=self.loc,
+            domain=self.domain.name
+        )
+        self.assertIsNone(loc.archived_at)
+        loc.archive()
+        loc.refresh_from_db()
+        self.assertIsInstance(loc.archived_at, datetime.datetime)
+        loc.unarchive()
+        loc.refresh_from_db()
+        self.assertIsNone(loc.archived_at)
 
 
 class TestDeleteLocations(LocationHierarchyPerTest):
