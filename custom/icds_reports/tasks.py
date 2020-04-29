@@ -30,7 +30,7 @@ from pillowtop.feed.interface import ChangeMeta
 
 from corehq.apps.change_feed import data_sources, topics
 from corehq.apps.change_feed.producer import producer
-from corehq.apps.hqcase.management.commands.backfill_couch_forms_and_cases import (
+from corehq.apps.reports.analytics.esaccessors import (
     get_case_ids_missing_from_elasticsearch,
     get_form_ids_missing_from_elasticsearch)
 from corehq.apps.locations.models import SQLLocation
