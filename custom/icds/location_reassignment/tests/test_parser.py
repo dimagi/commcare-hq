@@ -112,8 +112,8 @@ class TestParser(TestCase):
                         'old_site_codes': ['112'],
                         'new_site_codes': ['131'],
                         'new_location_details': {
-                             '131': {'name': 'AWC 3', 'parent_site_code': '13', 'lgd_code': 'AWC-131',
-                                     'sub_district_name': None}},
+                            '131': {'name': 'AWC 3', 'parent_site_code': '13', 'lgd_code': 'AWC-131',
+                                    'sub_district_name': None}},
                         'user_transitions': {'username2': 'username3'}
                     },
                     {
