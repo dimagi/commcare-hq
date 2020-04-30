@@ -8,7 +8,7 @@ from corehq.apps.userreports.tasks import _queue_indicators
 
 class Command(BaseCommand):
     help = "Queue all of the docs in the async indicators table for a given datasource"
-    
+
     def add_arguments(self, parser):
         parser.add_argument('data_source_id' help='id of data source to queue')
         parser.add_argument('--agg-queue', dest='use_agg_queue', action='store_true'
