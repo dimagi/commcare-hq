@@ -67,11 +67,12 @@ def remove_from_queue(queued_sms):
 
     sms.publish_change()
 
+    tags = {'backend': sms.backend_api}
     if sms.direction == OUTGOING and sms.processed and not sms.error:
         create_billable_for_sms(sms)
-        metrics_counter('commcare.sms.outbound_succeeded')
+        metrics_counter('commcare.sms.outbound_succeeded', tags=tags)
     elif sms.direction == OUTGOING:
-        metrics_counter('commcare.sms.outbound_failed')
+        metrics_counter('commcare.sms.outbound_failed', tags=tags)
     elif sms.direction == INCOMING and sms.domain and domain_has_privilege(sms.domain, privileges.INBOUND_SMS):
         create_billable_for_sms(sms)
 
