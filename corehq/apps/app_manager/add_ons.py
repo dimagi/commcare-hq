@@ -294,8 +294,8 @@ def init_app(request, app):
                 enable = previews[slug]
 
             # Turn on if it's used anywhere
-            enable = enable or any([add_on.used_in_module(m) for m in app.modules])
-            enable = enable or any([add_on.used_in_form(f) for m in app.modules for f in m.forms])
+            enable = enable or any([add_on.used_in_module(m) for m in app.get_modules()])
+            enable = enable or any([add_on.used_in_form(f) for m in app.get_modules() for f in m.forms])
 
             enable = enable or _grandfathered(slug, app)
         app.add_ons[slug] = enable

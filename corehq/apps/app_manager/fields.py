@@ -520,11 +520,11 @@ class ApplicationDataRMIHelper(object):
                         # Add regular case types
                         case_types = set([
                             module.case_type
-                            for module in app.modules if module.case_type
+                            for module in app.get_modules() if module.case_type
                         ])
 
                         # Add user case if any module uses it
-                        if any([module.uses_usercase() for module in app.modules]):
+                        if any([module.uses_usercase() for module in app.get_modules()]):
                             case_types.add(USERCASE_TYPE)
 
                         used_case_types = used_case_types.union(case_types)

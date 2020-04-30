@@ -518,7 +518,7 @@ def get_uuids_by_instance_id(app):
     """
     config_ids = defaultdict(list)
     if app.mobile_ucr_restore_version in (MOBILE_UCR_MIGRATING_TO_2, MOBILE_UCR_VERSION_2):
-        for module in app.modules:
+        for module in app.get_modules():
             if module.module_type == 'report':
                 for report_config in module.report_configs:
                     config_ids[report_config.instance_id].append(report_config.uuid)

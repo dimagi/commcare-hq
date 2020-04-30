@@ -261,7 +261,7 @@ def _get_shadow_module_view_context(app, module, lang=None):
     return {
         'case_list_form_not_allowed_reasons': _case_list_form_not_allowed_reasons(module),
         'shadow_module_options': {
-            'modules': [get_mod_dict(m) for m in app.modules if m.module_type in ['basic', 'advanced']],
+            'modules': [get_mod_dict(m) for m in app.get_modules() if m.module_type in ['basic', 'advanced']],
             'source_module_id': module.source_module_id,
             'excluded_form_ids': module.excluded_form_ids,
         },
@@ -341,33 +341,31 @@ def _setup_case_property_builder(app):
 
 # Parent case selection in case list: get modules whose case type is the parent of the given module's case type
 def _get_modules_with_parent_case_type(app, module, case_property_builder, case_type_):
-        parent_types = case_property_builder.get_parent_types(case_type_)
-        modules = app.modules
-        parent_module_ids = [mod.unique_id for mod in modules
-                             if mod.case_type in parent_types]
-        return [{
-            'unique_id': mod.unique_id,
-            'name': mod.name,
-            'is_parent': mod.unique_id in parent_module_ids,
-        } for mod in app.modules if mod.case_type != case_type_ and mod.unique_id != module.unique_id]
+    parent_types = case_property_builder.get_parent_types(case_type_)
+    parent_module_ids = [mod.unique_id for mod in app.get_modules() if mod.case_type in parent_types]
+    return [{
+        'unique_id': mod.unique_id,
+        'name': mod.name,
+        'is_parent': mod.unique_id in parent_module_ids,
+    } for mod in app.get_modules() if mod.case_type != case_type_ and mod.unique_id != module.unique_id]
 
 
 # Parent/child modules: get modules that may be used as parents of the given module
 def _get_valid_parents_for_child_module(app, module):
     # If this module already has a child, it can't also have a parent
-    for m in app.modules:
+    for m in app.get_modules():
         if module.unique_id == getattr(m, 'root_module_id', None):
             return []
 
     # Modules that already have a parent may not themselves be parents
-    invalid_ids = [m.unique_id for m in app.modules if getattr(m, 'root_module_id', None)]
+    invalid_ids = [m.unique_id for m in app.get_modules() if getattr(m, 'root_module_id', None)]
     current_parent_id = getattr(module, 'root_module_id', None)
     if current_parent_id in invalid_ids:
         invalid_ids.remove(current_parent_id)
 
     # The current module is not allowed, but its parent is
     # Shadow modules are not allowed
-    return [parent_module for parent_module in app.modules if (parent_module.unique_id not in invalid_ids)
+    return [parent_module for parent_module in app.get_modules() if (parent_module.unique_id not in invalid_ids)
             and not parent_module == module and parent_module.doc_type != "ShadowModule"
             and not parent_module.is_training_module]
 
@@ -545,7 +543,7 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
             # rename other reference to the old case type
             all_advanced_modules = []
             modules_with_old_case_type_exist = False
-            for mod in app.modules:
+            for mod in app.get_modules():
                 if isinstance(mod, AdvancedModule):
                     all_advanced_modules.append(mod)
 
@@ -1087,7 +1085,7 @@ def new_module(request, domain, app_id):
 # Set initial module case type, copying from another module in the same app
 def _init_module_case_type(module):
     app = module.get_app()
-    app_case_types = [m.case_type for m in app.modules if m.case_type]
+    app_case_types = [m.case_type for m in app.get_modules() if m.case_type]
     if len(app_case_types):
         module.case_type = app_case_types[0]
     else:

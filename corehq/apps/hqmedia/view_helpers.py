@@ -80,7 +80,7 @@ def update_multimedia_paths(app, paths):
     # Update module and form references
     success_counts = defaultdict(lambda: 0)
     for old_path, new_path in paths.items():
-        for module in app.modules:
+        for module in app.get_modules():
             success_counts[module.unique_id] += module.rename_media(old_path, new_path)
             for form in module.get_forms():
                 update_count = form.rename_media(old_path, new_path)
@@ -96,7 +96,7 @@ def update_multimedia_paths(app, paths):
 
     # Put together success messages
     successes = []
-    for module in app.modules:
+    for module in app.get_modules():
         if success_counts[module.unique_id]:
             successes.append(_("{} item(s) updated in <a href='{}' target='_blank'>{}</a>").format(
                              success_counts[module.unique_id],

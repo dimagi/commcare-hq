@@ -370,7 +370,7 @@ def get_apps_base_context(request, domain, app):
         'app_subset': {
             'commcare_minor_release': app.commcare_minor_release,
             'doc_type': app.get_doc_type(),
-            'form_counts_by_module': [len(m.forms) for m in app.modules] if not app.is_remote_app() else [],
+            'form_counts_by_module': [len(m.forms) for m in app.get_modules()] if not app.is_remote_app() else [],
             'version': app.version,
         } if app else {},
         'timezone': timezone,

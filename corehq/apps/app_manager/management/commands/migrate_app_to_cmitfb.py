@@ -167,7 +167,7 @@ USERPROP_PREFIX = (
 
 
 def iter_forms(app):
-    modules = [m for m in enumerate(app.modules) if m[1].module_type == 'basic']
+    modules = [m for m in enumerate(app.get_modules()) if m[1].module_type == 'basic']
     for modi, module in modules:
         forms = [f for f in enumerate(module.forms) if f[1].doc_type == 'Form']
         for formi, form in forms:
@@ -325,5 +325,5 @@ def migrate_preloads(app, form, preload_items, form_ix, dry):
 
 def should_migrate_usercase(app, migrate_usercase):
     return migrate_usercase and any(form.actions.usercase_preload.preload
-        for module in app.modules if module.module_type == 'basic'
+        for module in app.get_modules() if module.module_type == 'basic'
         for form in module.forms if form.doc_type == 'Form')

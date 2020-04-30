@@ -212,7 +212,7 @@ class ApplicationValidator(ApplicationBaseValidator):
     @time_method()
     def _check_modules(self):
         errors = []
-        if not self.app.modules:
+        if not self.app.get_modules():
             errors.append({'type': "no modules"})
         for module in self.app.get_modules():
             errors.extend(module.validate_for_build())

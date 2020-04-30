@@ -138,7 +138,7 @@ class Command(BaseCommand):
         del new_module['parent_select']  # This is handled in forms for advanced modules
 
         new_module = AdvancedModule.wrap(new_module)
-        modules = app.modules
+        modules = app.get_modules()
         mod_index = [i for i, mod in enumerate(modules) if mod.unique_id == module_id][0]
         modules[mod_index] = new_module
         app.modules = modules

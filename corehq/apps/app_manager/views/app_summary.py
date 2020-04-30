@@ -503,7 +503,7 @@ class DownloadCaseSummaryView(LoginAndDomainMixin, ApplicationViewMixin, View):
 
         form_names = {}
         form_case_types = {}
-        for m in self.app.modules:
+        for m in self.app.get_modules():
             for f in m.forms:
                 form_names[f.unique_id] = _get_translated_form_name(self.app, f.unique_id, language)
                 form_case_types[f.unique_id] = m.case_type

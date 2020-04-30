@@ -493,7 +493,7 @@ def purge_report_from_mobile_ucr(report_config):
     did_purge_something = False
     for app in get_apps_in_domain(report_config.domain):
         save_app = False
-        for module in app.modules:
+        for module in app.get_modules():
             if module.module_type == 'report':
                 valid_report_configs = [
                     app_config for app_config in module.report_configs
@@ -729,7 +729,7 @@ def _get_app_ids_by_form_unique_id(domain):
     apps = get_apps_in_domain(domain, include_remote=False)
     app_ids = {}
     for app in apps:
-        for module in app.modules:
+        for module in app.get_modules():
             for form in module.get_forms():
                 if form.unique_id in app_ids:
                     raise AppManagerException("Could not identify app for form {}".format(form.unique_id))

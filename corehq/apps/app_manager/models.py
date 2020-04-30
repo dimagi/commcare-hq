@@ -5689,7 +5689,7 @@ class DeleteModuleRecord(DeleteRecord):
 
     def undo(self):
         app = Application.get(self.app_id)
-        modules = app.modules
+        modules = app.get_modules()
         modules.insert(self.module_id, self.module)
         app.modules = modules
         app.save()
@@ -5712,7 +5712,7 @@ class DeleteFormRecord(DeleteRecord):
                 error=_("Could not find form '{}'").format(name)
             )
         else:
-            module = app.modules[self.module_id]
+            module = app.get_module(self.module_id)
         forms = module.forms
         forms.insert(self.form_id, self.form)
         module.forms = forms
