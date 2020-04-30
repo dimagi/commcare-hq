@@ -673,12 +673,14 @@ def get_contact_info(domain):
         contact_info = contact_data.get(row[3])
         row[0] = contact_info[0] if contact_info else _('(unknown)')
 
-    # Save the data to the cache for faster lookup next time
-    try:
-        client.set(cache_key, json.dumps(data))
-        client.expire(cache_key, cache_expiration)
-    except:
-        pass
+    # Save the data to the cache for faster lookup next time.
+    # If there isn't much data, don't bother with the cache, responsiveness is more important.
+    if len(data) > 100:
+        try:
+            client.set(cache_key, json.dumps(data))
+            client.expire(cache_key, cache_expiration)
+        except:
+            pass
 
     return data
 
