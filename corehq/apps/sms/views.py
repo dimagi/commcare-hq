@@ -625,13 +625,10 @@ def get_contact_info(domain):
     # If the data has been cached, just retrieve it from there
     cache_key = 'sms-chat-contact-list-%s' % domain
     cache_expiration = 30 * 60
-    try:
-        client = cache_core.get_redis_client()
-        cached_data = client.get(cache_key)
-        if cached_data:
-            return json.loads(cached_data)
-    except:
-        pass
+    client = cache_core.get_redis_client()
+    cached_data = client.get(cache_key)
+    if cached_data:
+        return json.loads(cached_data)
 
     domain_obj = Domain.get_by_name(domain, strict=True)
     case_ids = []
