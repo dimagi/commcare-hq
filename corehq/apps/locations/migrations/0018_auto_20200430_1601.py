@@ -14,7 +14,7 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AddField(
             model_name='sqllocation',
-            name='archived_at',
+            name='archived_on',
             field=models.DateTimeField(blank=True, null=True),
         ),
     ]

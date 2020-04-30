@@ -155,20 +155,20 @@ class LocationsTest(TestCase):
             set(SQLLocation.objects.filter(domain=self.domain.name).location_ids()),
         )
 
-    def test_location_archived_at(self):
+    def test_location_archived_on(self):
         loc = make_loc(
             'teststate1',
             type='state',
             parent=self.loc,
             domain=self.domain.name
         )
-        self.assertIsNone(loc.archived_at)
+        self.assertIsNone(loc.archived_on)
         loc.archive()
         loc.refresh_from_db()
-        self.assertIsInstance(loc.archived_at, datetime.datetime)
+        self.assertIsInstance(loc.archived_on, datetime.datetime)
         loc.unarchive()
         loc.refresh_from_db()
-        self.assertIsNone(loc.archived_at)
+        self.assertIsNone(loc.archived_on)
 
 
 class TestDeleteLocations(LocationHierarchyPerTest):
