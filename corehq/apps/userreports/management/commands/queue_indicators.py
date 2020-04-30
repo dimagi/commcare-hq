@@ -11,7 +11,7 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('data_source_id', help='id of data source to queue')
-        parser.add_argument('--agg-queue', dest='use_agg_queue', action='store_true'
+        parser.add_argument('--agg-queue', dest='use_agg_queue', action='store_true',
                             help='Use the aggregation queue instead of the async UCR queue to avoid competing with normal async UCR processing')
 
     def handle(self, data_source_ids, use_agg_queue, **options):
