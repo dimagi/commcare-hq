@@ -13,7 +13,6 @@ from custom.icds.location_reassignment.const import (
     HOUSEHOLD_CASE_TYPE,
 )
 from custom.icds.location_reassignment.models import Transition
-from custom.icds.location_reassignment.tasks import process_ucr_changes
 
 
 def deprecate_locations(domain, old_locations, new_locations, operation):
@@ -91,6 +90,7 @@ def get_supervisor_id(domain, location_id):
 
 def reassign_household_case(domain, household_case_id, old_owner_id, new_owner_id, supervisor_id,
                             deprecation_time=None):
+    from custom.icds.location_reassignment.tasks import process_ucr_changes
     if deprecation_time is None:
         deprecation_time = datetime.utcnow()
     case_ids = get_household_and_child_case_ids_by_owner(domain, household_case_id, old_owner_id)
