@@ -76,6 +76,16 @@ class CreditAdjustmentReasonFilter(BaseSingleOptionFilter):
     options = CreditAdjustmentReason.CHOICES
 
 
+class CreditAdjustmentLinkFilter(BaseSingleOptionFilter):
+    slug = 'credit_adjustment_link'
+    label = _("Credit Adjustment Reason")
+    default_text = _("Linked to Any Transaction")
+    options = (
+        ('invoice', "Linked to Invoice"),
+        ('customer_invoice', "Linked to Customer Invoice"),
+    )
+
+
 def clean_options(options):
     return sorted({option for option in options if option[1] and option[1].strip()})
 
