@@ -53,7 +53,7 @@ SELECT
         ON (
             awc.supervisor_id = al.supervisor_id
             AND al.aggregation_level=awc.aggregation_level AND awc.aggregation_level=4 AND awc.month='2020-04-01')
-    WHERE al.state_is_test<>1 AND al.supervisor_is_test<>1;
+    WHERE al.state_is_test<>1 AND al.supervisor_is_test<>1 AND al.aggregation_level=4;
 -- QUERY PLAN
 -- ------------------------------------------------------------------------------------------------------------------------------------
 --  Hash Right Join  (cost=7269.36..19669.66 rows=26789 width=115)

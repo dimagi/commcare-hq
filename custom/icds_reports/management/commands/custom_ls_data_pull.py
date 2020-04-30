@@ -123,7 +123,7 @@ class Command(BaseCommand):
                 location[3],
                 location[4],
                 0,
-                set
+                set()
             ]
             fast_rows.update({location[2]: row})
         query = FormES().domain('icds-cas').xmlns(
