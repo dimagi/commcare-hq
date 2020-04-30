@@ -89,7 +89,7 @@ def paginate_query(db_name, model_class, q_expression, annotate=None, query_size
     :return: A generator with the results
     """
 
-    track_load = load_counter_for_model(model_class)(load_source, None, extra_tags={'db': db_name})
+    track_load = load_counter_for_model(model_class)(load_source, None)
     sort_col = 'pk'
 
     return_values = None

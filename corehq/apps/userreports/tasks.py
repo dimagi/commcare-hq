@@ -36,6 +36,7 @@ from corehq.apps.reports.util import (
 from corehq.apps.userreports.const import (
     ASYNC_INDICATOR_CHUNK_SIZE,
     ASYNC_INDICATOR_QUEUE_TIME,
+    ASYNC_INDICATOR_MAX_RETRIES,
     UCR_CELERY_QUEUE,
     UCR_INDICATOR_CELERY_QUEUE,
 )
@@ -286,29 +287,12 @@ def delete_data_source_task(domain, config_id):
 
 @periodic_task(run_every=crontab(minute='*/5'), queue=settings.CELERY_PERIODIC_QUEUE)
 def run_queue_async_indicators_task():
+    """
+        A periodic task that runs every few minutes, if ran within the permitted time slots,
+        would queue a task to further queue few AsyncIndicators for processing
+    """
     if time_in_range(datetime.utcnow(), settings.ASYNC_INDICATOR_QUEUE_TIMES):
         queue_async_indicators.delay()
-
-
-@serial_task('queue-async-indicators', timeout=30 * 60, queue=settings.CELERY_PERIODIC_QUEUE, max_retries=0)
-def queue_async_indicators():
-    start = datetime.utcnow()
-    cutoff = start + ASYNC_INDICATOR_QUEUE_TIME - timedelta(seconds=30)
-    retry_threshold = start - timedelta(hours=4)
-    # don't requeue anything that has been retried more than 20 times
-    indicators = AsyncIndicator.objects.filter(unsuccessful_attempts__lt=20)[:settings.ASYNC_INDICATORS_TO_QUEUE]
-
-    indicators_by_domain_doc_type = defaultdict(list)
-    # page so that envs can have arbitarily large settings.ASYNC_INDICATORS_TO_QUEUE
-    for indicator in paginated_queryset(indicators, 1000):
-        # only requeue things that are not in queue or were last queued earlier than the threshold
-        if not indicator.date_queued or indicator.date_queued < retry_threshold:
-            indicators_by_domain_doc_type[(indicator.domain, indicator.doc_type)].append(indicator)
-
-    for k, indicators in indicators_by_domain_doc_type.items():
-        _queue_indicators(indicators)
-        if datetime.utcnow() > cutoff:
-            break
 
 
 def time_in_range(time, time_dictionary):
@@ -334,10 +318,45 @@ def time_in_range(time, time_dictionary):
     return False
 
 
-def _queue_indicators(indicators, use_agg_queue=False):
-    for chunk in chunked(indicators, ASYNC_INDICATOR_CHUNK_SIZE):
+@serial_task('queue-async-indicators', timeout=30 * 60, queue=settings.CELERY_PERIODIC_QUEUE, max_retries=0)
+def queue_async_indicators():
+    """
+        Fetches AsyncIndicators that
+        1. were not queued till now or were last queued more than 4 hours ago
+        2. have failed less than ASYNC_INDICATOR_MAX_RETRIES times
+        This task quits after it has run for more than
+        ASYNC_INDICATOR_QUEUE_TIME - 30 seconds i.e 4 minutes 30 seconds.
+        While it runs, it clubs fetched AsyncIndicators by domain and doc type and queue them for processing.
+    """
+    start = datetime.utcnow()
+    cutoff = start + ASYNC_INDICATOR_QUEUE_TIME - timedelta(seconds=30)
+    retry_threshold = start - timedelta(hours=4)
+    # don't requeue anything that has been retried more than ASYNC_INDICATOR_MAX_RETRIES times
+    indicators = AsyncIndicator.objects.filter(unsuccessful_attempts__lt=ASYNC_INDICATOR_MAX_RETRIES)[:settings.ASYNC_INDICATORS_TO_QUEUE]
+
+    indicators_by_domain_doc_type = defaultdict(list)
+    # page so that envs can have arbitarily large settings.ASYNC_INDICATORS_TO_QUEUE
+    for indicator in paginated_queryset(indicators, 1000):
+        # only requeue things that are not in queue or were last queued earlier than the threshold
+        if not indicator.date_queued or indicator.date_queued < retry_threshold:
+            indicators_by_domain_doc_type[(indicator.domain, indicator.doc_type)].append(indicator)
+
+    for k, indicators in indicators_by_domain_doc_type.items():
+        _queue_indicators(indicators)
+        if datetime.utcnow() > cutoff:
+            break
+
+
+def _queue_indicators(async_indicators, use_agg_queue=False):
+    """
+        Extract doc ids for the passed AsyncIndicators and queue task to process indicators for them.
+        Mark date_queued on all AsyncIndicator passed to utcnow.
+    """
+    for chunk in chunked(async_indicators, ASYNC_INDICATOR_CHUNK_SIZE):
         now = datetime.utcnow()
         indicator_doc_ids = [i.doc_id for i in chunk]
+        # AsyncIndicator have doc_id as a unique column, so this update would only
+        # update the passed AsyncIndicators
         AsyncIndicator.objects.filter(doc_id__in=indicator_doc_ids).update(date_queued=now)
         if use_agg_queue:
             build_indicators_with_agg_queue.delay(indicator_doc_ids)
@@ -419,8 +438,8 @@ def build_async_indicators(indicator_doc_ids):
 
     timer = TimingContext()
     lock_keys = [
-        get_async_indicator_modify_lock_key(indicator_id)
-        for indicator_id in indicator_doc_ids
+        get_async_indicator_modify_lock_key(indicator_doc_id)
+        for indicator_doc_id in indicator_doc_ids
     ]
     with CriticalSection(lock_keys):
         all_indicators = AsyncIndicator.objects.filter(
@@ -437,6 +456,7 @@ def build_async_indicators(indicator_doc_ids):
 
         rows_to_save_by_adapter = defaultdict(list)
         docs_to_delete_by_adapter = defaultdict(list)
+        # there will always be one AsyncIndicator per doc id
         indicator_by_doc_id = {i.doc_id: i for i in all_indicators}
         config_ids = set()
         with timer:
@@ -480,10 +500,9 @@ def build_async_indicators(indicator_doc_ids):
                     except Exception as e:
                         failed_indicators.union(indicators)
                         message = str(e)
-                        notify_exception(None,
-                            "Exception bulk saving async indicators:{}".format(message))
+                        notify_exception(None, "Exception bulk saving async indicators:{}".format(message))
                     else:
-                        # remove because it's sucessfully processed
+                        # remove because it's successfully processed
                         _mark_config_to_remove(
                             config_id,
                             [i.pk for i in indicators]
@@ -542,11 +561,23 @@ def async_indicators_metrics():
     for config_id, metrics in _indicator_metrics().items():
         tags = {"config_id": config_id}
         metrics_gauge('commcare.async_indicator.indicator_count', metrics['count'], tags=tags)
-        metrics_gauge('commcare.async_indicator.lag', metrics['lag'], tags=tags)
+        metrics_gauge('commcare.async_indicator.lag', metrics['lag'], tags=tags,
+            documentation="Lag of oldest created indicator including failed indicators")
 
     # Don't use ORM summing because it would attempt to get every value in DB
     unsuccessful_attempts = sum(AsyncIndicator.objects.values_list('unsuccessful_attempts', flat=True).all()[:100])
     metrics_gauge('commcare.async_indicator.unsuccessful_attempts', unsuccessful_attempts)
+
+    metrics_gauge(
+        'commcare.async_indicator.true_lag',
+        (now - AsyncIndicator.objects.filter(unsuccessful_attempts=0).first().date_created).total_seconds,
+        documentation="Lag of oldest created indicator that didn't get ever queued"
+    )
+    metrics_gauge(
+        'commcare.async_indicator.fully_failed_count',
+        AsyncIndicator.objects.filter(unsuccessful_attempts=ASYNC_INDICATOR_MAX_RETRIES).count(),
+        documentation="Number of indicators that failed max-retry number of times"
+    )
 
 
 def _indicator_metrics(date_created=None):

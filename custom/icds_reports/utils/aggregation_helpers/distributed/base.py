@@ -11,7 +11,9 @@ from custom.icds_reports.utils.aggregation_helpers import (
     AggregationHelper,
     month_formatter,
     transform_day_to_month,
+    get_prev_agg_tablename
 )
+from custom.icds_reports.utils.aggregation_helpers.distributed.location_reassignment import TempPrevIntermediateTables
 
 logger = logging.getLogger(__name__)
 
@@ -41,6 +43,10 @@ class BaseICDSAggregationDistributedHelper(AggregationHelper):
     @property
     def ucr_tablename(self):
         return get_table_name(self.domain, self.ucr_data_source_id)
+
+    @property
+    def prev_tablename(self):
+        return get_prev_agg_tablename(self.helper_key)
 
     def aggregate(self, cursor):
         raise NotImplementedError
@@ -117,6 +123,18 @@ class StateBasedAggregationDistributedHelper(BaseICDSAggregationDistributedHelpe
         ))
 
         return queries
+
+    def create_temporary_prev_table(self, case_data_source_alias, id_column_name='case_id'):
+        temp_table_builder = TempPrevIntermediateTables()
+        temp_table_builder.drop_temp_tables(self.helper_key)
+        temp_table_spec = (
+            self.helper_key,
+            self.aggregate_parent_table,
+            case_data_source_alias,
+            id_column_name
+        )
+        temp_table_date = transform_day_to_month(self.month) - relativedelta(months=1)
+        temp_table_builder.create_temp_tables(temp_table_spec, temp_table_date)
 
 
 class StateBasedAggregationPartitionedHelper(BaseICDSAggregationDistributedHelper):

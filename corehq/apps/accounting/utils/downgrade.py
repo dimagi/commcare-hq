@@ -67,7 +67,7 @@ def is_subscription_eligible_for_downgrade_process(subscription):
 def _send_downgrade_notice(invoice, context):
     send_html_email_async.delay(
         _('Oh no! Your CommCare subscription for {} has been paused'.format(invoice.get_domain())),
-        invoice.contact_emails,
+        invoice.get_contact_emails(include_domain_admins=True, filter_out_dimagi=True),
         render_to_string('accounting/email/downgrade.html', context),
         render_to_string('accounting/email/downgrade.txt', context),
         cc=[settings.ACCOUNTS_EMAIL],
@@ -112,7 +112,7 @@ def _send_downgrade_warning(invoice, context):
     })
     send_html_email_async.delay(
         subject,
-        invoice.contact_emails,
+        invoice.get_contact_emails(include_domain_admins=True, filter_out_dimagi=True),
         render_to_string('accounting/email/downgrade_warning.html', context),
         render_to_string('accounting/email/downgrade_warning.txt', context),
         cc=[settings.ACCOUNTS_EMAIL],
@@ -127,7 +127,7 @@ def _send_overdue_notice(invoice, context):
         bcc = [settings.GROWTH_EMAIL]
     send_html_email_async.delay(
         _('CommCare Billing Statement 30 days Overdue for {}'.format(context['domain_or_account'])),
-        invoice.contact_emails,
+        invoice.get_contact_emails(include_domain_admins=True, filter_out_dimagi=True),
         render_to_string('accounting/email/30_days.html', context),
         render_to_string('accounting/email/30_days.txt', context),
         cc=[settings.ACCOUNTS_EMAIL],
