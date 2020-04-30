@@ -104,6 +104,7 @@ def get_institutional_deliveries_data_map(domain, config, loc_level, show_test=F
     fills.update({'0%-20%': MapColors.RED})
     fills.update({'20%-60%': MapColors.ORANGE})
     fills.update({'60%-100%': MapColors.PINK})
+    fills.update({'Not Launched': MapColors.GREY})
     fills.update({'defaultFill': MapColors.GREY})
 
     return {

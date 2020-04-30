@@ -130,6 +130,7 @@ class TestChildrenInitiated(TestCase):
                 "0%-20%": MapColors.RED,
                 "20%-60%": MapColors.ORANGE,
                 "60%-100%": MapColors.PINK,
+                "Not Launched": MapColors.GREY,
                 "defaultFill": MapColors.GREY
             }
         )

@@ -156,6 +156,7 @@ class TestLactatingEnrolledWomen(TestCase):
                 },
                 "fills": {
                     "Women": MapColors.BLUE,
+                    "Not Launched": MapColors.GREY,
                     "defaultFill": MapColors.GREY
                 },
                 "data": {
@@ -204,6 +205,7 @@ class TestLactatingEnrolledWomen(TestCase):
                 },
                 "fills": {
                     "Women": MapColors.BLUE,
+                    "Not Launched": MapColors.GREY,
                     "defaultFill": MapColors.GREY
                 },
                 "data": {

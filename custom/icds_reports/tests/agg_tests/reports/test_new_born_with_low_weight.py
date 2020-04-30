@@ -124,6 +124,7 @@ class TestNewBornWithLowWeight(TestCase):
                 "0%-20%": MapColors.PINK,
                 "20%-60%": MapColors.ORANGE,
                 "60%-100%": MapColors.RED,
+                "Not Launched": MapColors.GREY,
                 "defaultFill": MapColors.GREY
             }
         )

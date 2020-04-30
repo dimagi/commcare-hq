@@ -92,6 +92,7 @@ def get_prevalence_of_undernutrition_data_map(domain, config, loc_level, show_te
     fills.update({'0%-20%': MapColors.PINK})
     fills.update({'20%-35%': MapColors.ORANGE})
     fills.update({'35%-100%': MapColors.RED})
+    fills.update({'Not launched': MapColors.GREY})
     fills.update({'defaultFill': MapColors.GREY})
 
     average = (

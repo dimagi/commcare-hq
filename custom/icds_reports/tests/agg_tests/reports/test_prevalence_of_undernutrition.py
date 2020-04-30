@@ -153,6 +153,7 @@ class TestPrevalenceOfUndernutrition(TestCase):
                 "0%-20%": MapColors.PINK,
                 "20%-35%": MapColors.ORANGE,
                 "35%-100%": MapColors.RED,
+                "Not Launched": MapColors.GREY,
                 "defaultFill": MapColors.GREY
             }
         )

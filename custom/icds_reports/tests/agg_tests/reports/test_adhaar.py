@@ -122,6 +122,7 @@ class TestAdhaar(TestCase):
                 "0%-25%": MapColors.RED,
                 "25%-50%": MapColors.ORANGE,
                 "50%-100%": MapColors.PINK,
+                "Not Launched": MapColors.GREY,
                 "defaultFill": MapColors.GREY
             }
         )

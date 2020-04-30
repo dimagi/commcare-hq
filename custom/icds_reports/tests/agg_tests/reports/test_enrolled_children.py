@@ -46,6 +46,7 @@ class TestEnrolledChildren(TestCase):
                 },
                 "fills": {
                     "Children": MapColors.BLUE,
+                    "Not Launched": MapColors.GREY,
                     "defaultFill": MapColors.GREY
                 },
                 "data": {
@@ -99,6 +100,7 @@ class TestEnrolledChildren(TestCase):
                 },
                 "fills": {
                     "Children": MapColors.BLUE,
+                    "Not Launched": MapColors.GREY,
                     "defaultFill": MapColors.GREY
                 },
                 "data": {

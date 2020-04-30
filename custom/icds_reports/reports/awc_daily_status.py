@@ -51,6 +51,7 @@ def get_awc_daily_status_data_map(domain, config, loc_level, show_test=False):
     fills.update({'0%-50%': MapColors.RED})
     fills.update({'50%-75%': MapColors.ORANGE})
     fills.update({'75%-100%': MapColors.PINK})
+    fills.update({'Not Launched': MapColors.GREY})
     fills.update({'defaultFill': MapColors.GREY})
 
     return {

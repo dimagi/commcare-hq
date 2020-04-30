@@ -45,6 +45,7 @@ def get_medicine_kit_data_map(domain, config, loc_level, show_test=False):
     fills.update({'0%-25%': MapColors.RED})
     fills.update({'25%-75%': MapColors.ORANGE})
     fills.update({'75%-100%': MapColors.PINK})
+    fills.update({'Not Launched': MapColors.GREY})
     fills.update({'defaultFill': MapColors.GREY})
 
     return {

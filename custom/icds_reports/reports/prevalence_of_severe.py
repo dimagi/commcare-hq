@@ -100,6 +100,7 @@ def get_prevalence_of_severe_data_map(domain, config, loc_level, show_test=False
     fills.update({'0%-5%': MapColors.PINK})
     fills.update({'5%-7%': MapColors.ORANGE})
     fills.update({'7%-100%': MapColors.RED})
+    fills.update({'Not Launched': MapColors.GREY})
     fills.update({'defaultFill': MapColors.GREY})
 
     gender_label, age_label, chosen_filters = chosen_filters_to_labels(

@@ -56,6 +56,7 @@ def get_enrolled_women_data_map(domain, config, loc_level, show_test=False):
 
     fills = OrderedDict()
     fills.update({'Women': MapColors.BLUE})
+    fills.update({'Not Launched': MapColors.GREY})
     fills.update({'defaultFill': MapColors.GREY})
 
     return {
