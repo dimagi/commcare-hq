@@ -26,13 +26,15 @@ def state_details():
             awc.state_name as state_name,
             awc.supervisor_name as supervisor_name,
             l.supervisor_id as supervisor_id,
-            awc.supervisor_site_code as supervisor_site_code
+            awc.supervisor_site_code as supervisor_site_code,
+            CASE WHEN l.num_supervisor_launched>0 THEN 'Launched'
+            ELSE 'UnLaunched' END as supervisor_launched_status
             FROM "agg_ls" l
             LEFT JOIN "awc_location_local" awc
                 ON (
                 awc.supervisor_id = l.supervisor_id
                 AND l.aggregation_level=awc.aggregation_level )
-            WHERE l.month='2020-04-01' AND l.aggregation_level=4
+            WHERE l.month='2020-04-01' AND l.aggregation_level=4 AND awc.supervisor_is_test<>1
         """
     return _run_custom_sql_script(query)
 
@@ -63,7 +65,7 @@ class Command(BaseCommand):
             users.append(form['form']['case']['@user_id'])
         user_location_details = self.get_users(users)
         location_details = state_details()
-        headers = ['state_name', 'supervisor_name', 'supervisor_site_code', 'visit_type', 'beneficiary_type', 'visit_count']
+        headers = ['state_name', 'supervisor_site_code', 'launched_status', 'visit_type', 'beneficiary_type', 'visit_count']
         data_rows = [headers]
         home_visit = ["due_for_delivery", "just_delivered", "six_to_eight_months","underweight_child", "recent_registered_preg", "ben_death"]
         vhnd = ["pregnant_woman", "received_dpt1", "received_dpt3", "received_measles"]
@@ -72,8 +74,8 @@ class Command(BaseCommand):
             for visit in home_visit:
                 row = [
                     location[0],
-                    location[1],
                     location[3],
+                    location[4],
                     "home_visit",
                     visit,
                     0
@@ -82,8 +84,8 @@ class Command(BaseCommand):
             for visit in vhnd:
                 row = [
                     location[0],
-                    location[1],
                     location[3],
+                    location[4],
                     "vhnd_day",
                     visit,
                     0
@@ -109,13 +111,17 @@ class Command(BaseCommand):
         writer = csv.writer(fout)
         writer.writerows(data_rows)
 
+
         print("=========starting the VHNSD data pull=====\n")
+        headers = ['state_name', 'supervisor_site_code', 'launched_status',
+                   'total_vhnsd_visit_count', 'unique_awc_visited']
+        data_rows = [headers]
         fast_rows = {}
         for location in location_details:
             row = [
                 location[0],
-                location[1],
                 location[3],
+                location[4],
                 0,
                 []
             ]
@@ -133,9 +139,7 @@ class Command(BaseCommand):
             if count % 1000 == 0:
                 print(f"{count} forms processed ======\n")
             count = count + 1
-        headers = ['state_name', 'supervisor_name', 'supervisor_site_code',
-                   'total_vhnsd_visit_count', 'unique_awc_visited']
-        data_rows = [headers]
+
         for key, value in fast_data_rows.items():
             value[4] = len(set(value[4]))
             data_rows = data_rows + [value]
