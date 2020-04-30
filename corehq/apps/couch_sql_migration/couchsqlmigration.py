@@ -16,7 +16,6 @@ import attr
 from memoized import memoized
 
 from casexml.apps.case.models import CommCareCase, CommCareCaseAction
-from casexml.apps.case.util import get_case_xform_ids
 from casexml.apps.case.xform import CaseProcessingResult, get_case_updates
 from casexml.apps.case.xml.parser import CaseNoopAction
 from couchforms.models import XFormInstance, XFormOperation, all_known_formlike_doc_types
@@ -1408,7 +1407,7 @@ def _iter_case_diffs(statedb, stopper):
     for case_id in statedb.iter_missing_doc_ids("CommCareCase"):
         yield MissingCaseDiff(case_id, form_states={
             form_id: diff_form_state(form_id)[0]["form_state"]
-            for form_id in get_case_xform_ids(case_id)
+            for form_id in get_couch_case(case_id).xform_ids
         })
         if stopper.clean_break:
             return
