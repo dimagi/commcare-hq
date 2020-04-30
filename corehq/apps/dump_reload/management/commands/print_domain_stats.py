@@ -16,6 +16,7 @@ from corehq.apps.dump_reload.sql.dump import (
     get_model_iterator_builders_to_dump,
 )
 from corehq.apps.dump_reload.util import get_model_label
+from corehq.apps.hqmedia.models import CommCareMultimedia
 from corehq.apps.users.dbaccessors.all_commcare_users import (
     get_mobile_user_count,
     get_web_user_count,
@@ -84,6 +85,9 @@ def _get_couchdb_counts(domain):
                 doc_class = get_document_class_by_doc_type(doc_type)
                 count = get_doc_count_in_domain_by_class(domain, doc_class)
                 couch_db_counts.update({doc_type: count})
+
+    for _ in CommCareMultimedia.get_db().view('hqmedia/by_domain', key=domain, include_docs=False):
+        couch_db_counts.update(['CommCareMultimedia'])
 
     mobile_user_count = get_mobile_user_count(domain)
     couch_db_counts.update({

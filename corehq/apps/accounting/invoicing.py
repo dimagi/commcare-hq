@@ -175,7 +175,7 @@ class DomainInvoiceFactory(object):
                     else:
                         record.send_email(contact_email=settings.ACCOUNTS_EMAIL)
                 else:
-                    for email in self.recipients or invoice.contact_emails:
+                    for email in self.recipients or invoice.get_contact_emails():
                         record.send_email(contact_email=email)
             except InvoiceEmailThrottledError as e:
                 if not self.logged_throttle_error:

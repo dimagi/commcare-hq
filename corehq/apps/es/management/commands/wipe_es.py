@@ -2,6 +2,7 @@ from django.core.management import BaseCommand
 
 from corehq.apps.cleanup.utils import confirm_destructive_operation
 from corehq.elastic import get_es_new
+from corehq.util.es.elasticsearch import IndicesClient
 
 
 class Command(BaseCommand):
@@ -34,5 +35,6 @@ def wipe_es(commit=False):
         $ curl -X DELETE "$PROTO://$HOSTNAME:$PORT/_all"
     """
     es = get_es_new()
+    client = IndicesClient(es)
     if commit:
-        return es.transport.perform_request('DELETE', '_all')
+        client.delete('_all')
