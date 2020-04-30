@@ -44,16 +44,16 @@ SELECT
     END as all_visited
     FROM "agg_ls" al
     LEFT JOIN "temp_visit_table" ucr
-        ON awc.supervisor_id = ucr.supervisor_id
+        ON al.supervisor_id = ucr.supervisor_id
     LEFT JOIN "awc_location_local" t
-        ON (t.supervisor_id = awc.supervisor_id
-        AND t.aggregation_level=awc.aggregation_level
+        ON (t.supervisor_id = al.supervisor_id
+        AND t.aggregation_level=al.aggregation_level
         AND t.aggregation_level=4)
     LEFT JOIN "agg_awc_2020-04-01_4" awc
         ON (
             awc.supervisor_id = al.supervisor_id
             AND al.aggregation_level=awc.aggregation_level AND awc.aggregation_level=4 AND awc.month='2020-04-01')
-    WHERE al.state_is_test<>1 AND al.supervisor_is_test<>1 AND al.aggregation_level=4;
+    WHERE t.state_is_test<>1 AND t.supervisor_is_test<>1 AND al.aggregation_level=4;
 -- QUERY PLAN
 -- ------------------------------------------------------------------------------------------------------------------------------------
 --  Hash Right Join  (cost=7269.36..19669.66 rows=26789 width=115)
