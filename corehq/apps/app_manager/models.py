@@ -2357,7 +2357,10 @@ class Module(ModuleBase, ModuleDetailsMixin):
 
     """
     module_type = 'basic'
+
+    # Should not be accessed directly; use get_forms so that _parent and _id are set correctly
     forms = SchemaListProperty(Form)
+
     case_details = SchemaProperty(DetailPair)
     ref_details = SchemaProperty(DetailPair)
     case_list = SchemaProperty(CaseList)
@@ -4563,7 +4566,9 @@ class Application(ApplicationBase, ApplicationMediaMixin, ApplicationIntegration
     An Application that can be created entirely through the online interface
 
     """
+    # Should not be accessed directly; use get_modules so that _parent and _id are set correctly
     modules = SchemaListProperty(ModuleBase)
+
     name = StringProperty()
     # profile's schema is {'features': {}, 'properties': {}, 'custom_properties': {}}
     # ended up not using a schema because properties is a reserved word
