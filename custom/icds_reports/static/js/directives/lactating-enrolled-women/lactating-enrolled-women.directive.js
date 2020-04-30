@@ -6,9 +6,8 @@ function LactatingEnrolledWomenController($scope, $routeParams, $location, $filt
     haveAccessToAllLocations, baseControllersService, isAlertActive, isMobile, haveAccessToFeatures) {
     baseControllersService.BaseController.call(this, $scope, $routeParams, $location, locationsService,
         dateHelperService, navigationService, userLocationId, storageService, haveAccessToAllLocations,
-        false, isMobile);
+        haveAccessToFeatures, isMobile);
     var vm = this;
-    vm.haveAccessToFeatures = haveAccessToFeatures;
     vm.isAlertActive = isAlertActive;
     vm.label = "Lactating Mothers enrolled for Anganwadi Services";
     vm.serviceDataFunction = demographicsService.getLactatingEnrolledWomenData;

@@ -6,9 +6,8 @@ function CleanWaterController($scope, $routeParams, $location, $filter, infrastr
     baseControllersService, isAlertActive, isMobile, haveAccessToFeatures) {
     baseControllersService.BaseController.call(this, $scope, $routeParams, $location, locationsService,
         dateHelperService, navigationService, userLocationId, storageService, haveAccessToAllLocations,
-        false, isMobile);
+        haveAccessToFeatures, isMobile);
     var vm = this;
-    vm.haveAccessToFeatures = haveAccessToFeatures;
     vm.isAlertActive = isAlertActive;
     vm.serviceDataFunction = infrastructureService.getCleanWaterData;
     if (Object.keys($location.search()).length === 0) {

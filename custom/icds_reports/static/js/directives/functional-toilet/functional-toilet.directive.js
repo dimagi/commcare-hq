@@ -6,9 +6,8 @@ function FunctionalToiletController($scope, $routeParams, $location, $filter, in
     haveAccessToAllLocations, baseControllersService, isAlertActive, isMobile, haveAccessToFeatures) {
     baseControllersService.BaseController.call(this, $scope, $routeParams, $location, locationsService,
         dateHelperService, navigationService, userLocationId, storageService, haveAccessToAllLocations,
-        false, isMobile);
+        haveAccessToFeatures, isMobile);
     var vm = this;
-    vm.haveAccessToFeatures = haveAccessToFeatures;
     vm.isAlertActive = isAlertActive;
     vm.label = "AWCs Reported Functional Toilet";
     vm.serviceDataFunction = infrastructureService.getFunctionalToiletData;

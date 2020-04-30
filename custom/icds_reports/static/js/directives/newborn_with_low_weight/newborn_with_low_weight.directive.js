@@ -7,9 +7,8 @@ function NewbornWithLowBirthController($scope, $routeParams, $location, $filter,
     isMobile, haveAccessToFeatures) {
     baseControllersService.BaseController.call(this, $scope, $routeParams, $location, locationsService,
         dateHelperService, navigationService, userLocationId, storageService, haveAccessToAllLocations,
-        null, isMobile);
+        haveAccessToFeatures, isMobile);
     var vm = this;
-    vm.haveAccessToFeatures = haveAccessToFeatures;
     vm.isAlertActive = isAlertActive;
     vm.serviceDataFunction = maternalChildService.getNewbornLowBirthData;
 

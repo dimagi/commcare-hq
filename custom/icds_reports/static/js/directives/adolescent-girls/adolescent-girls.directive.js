@@ -6,9 +6,8 @@ function AdolescentWomenController($scope, $routeParams, $location, $filter, dem
     baseControllersService, isAlertActive, isMobile, haveAccessToFeatures) {
     baseControllersService.BaseController.call(this, $scope, $routeParams, $location, locationsService,
         dateHelperService, navigationService, userLocationId, storageService, haveAccessToAllLocations,
-        false, isMobile, haveAccessToFeatures);
+        haveAccessToFeatures, isMobile, haveAccessToFeatures);
     var vm = this;
-    vm.haveAccessToFeatures = haveAccessToFeatures;
     vm.isAlertActive = isAlertActive;
     vm.label = "Adolescent Girls (11-14 years)";
     vm.serviceDataFunction = demographicsService.getAdolescentGirlsData;

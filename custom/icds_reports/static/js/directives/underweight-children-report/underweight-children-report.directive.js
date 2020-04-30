@@ -6,9 +6,8 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
     baseControllersService, isAlertActive, isMobile, haveAccessToFeatures) {
     baseControllersService.BaseController.call(this, $scope, $routeParams, $location, locationsService,
         dateHelperService, navigationService, userLocationId, storageService, haveAccessToAllLocations,
-        null, isMobile);
+        haveAccessToFeatures, isMobile);
     var vm = this;
-    vm.haveAccessToFeatures = haveAccessToFeatures;
 
     // where the data for this report comes from
     vm.serviceDataFunction = maternalChildService.getUnderweightChildrenData;

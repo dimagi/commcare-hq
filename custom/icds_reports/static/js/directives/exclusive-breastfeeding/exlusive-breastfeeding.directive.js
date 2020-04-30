@@ -6,10 +6,9 @@ function ExclusiveBreasfeedingController($scope, $routeParams, $location, $filte
     baseControllersService, isAlertActive, isMobile, haveAccessToFeatures) {
     baseControllersService.BaseController.call(this, $scope, $routeParams, $location, locationsService,
         dateHelperService, navigationService, userLocationId, storageService, haveAccessToAllLocations,
-        false, isMobile);
+        haveAccessToFeatures, isMobile);
 
     var vm = this;
-    vm.haveAccessToFeatures = haveAccessToFeatures;
     vm.isAlertActive = isAlertActive;
     vm.serviceDataFunction = maternalChildService.getExclusiveBreastfeedingData;
 
