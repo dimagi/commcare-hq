@@ -66,7 +66,11 @@ class TestParser(TestCase):
             # of a location getting archived
             ('AWC 7', 'AWC 8', '115', '133', 'AWC-115',
              'AWC-133', 'Supervisor 2', '11', '12',
-             'username6', 'username7', 'Move'))),
+             'username6', 'username7', 'Move'),
+            ('AWC 7', '  ', '116', '134', 'AWC-116',
+             'AWC-134', 'Supervisor 2', '11', '13',
+             'username6', 'username7', 'Move'),
+        )),
         ('supervisor', (
             # invalid row with missing new site code
             ('Supervisor 1', 'Supervisor 1', '11', '', 'Sup-11',
@@ -153,7 +157,8 @@ class TestParser(TestCase):
                 "Invalid Operation Unknown",
                 "Missing location code for operation Split. Got old: '11' and new: ''",
                 "No change in location code for operation Extract. Got old: '111' and new: '111'",
-                "New location 132 passed with different information"
+                "New location 132 passed with different information",
+                "Missing new location name for 134"
             ])
 
     @patch('custom.icds.location_reassignment.parser.Parser._validate_descendants_deprecated')

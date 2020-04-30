@@ -62,6 +62,8 @@ class TransitionRow(object):
         if bool(self.new_username) != bool(self.old_username):
             errors.append(f"Need both old and new username for {self.operation} operation "
                           f"on location '{self.old_site_code}'")
+        if not self.new_location_details.get('name', '').strip():
+            errors.append(f"Missing new location name for {self.new_site_code}")
         if self.expects_parent and not self.new_location_details.get('parent_site_code'):
             errors.append(f"Need parent for '{self.new_site_code}'")
         if not self.expects_parent and self.new_location_details.get('parent_site_code'):
