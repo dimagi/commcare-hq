@@ -4,11 +4,12 @@ var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 function NewbornWithLowBirthController($scope, $routeParams, $location, $filter, maternalChildService,
     locationsService, dateHelperService, navigationService,
     userLocationId, storageService, genders, haveAccessToAllLocations, baseControllersService, isAlertActive,
-    isMobile) {
+    isMobile, haveAccessToFeatures) {
     baseControllersService.BaseController.call(this, $scope, $routeParams, $location, locationsService,
         dateHelperService, navigationService, userLocationId, storageService, haveAccessToAllLocations,
         null, isMobile);
     var vm = this;
+    vm.haveAccessToFeatures = haveAccessToFeatures;
     vm.isAlertActive = isAlertActive;
     vm.serviceDataFunction = maternalChildService.getNewbornLowBirthData;
 
@@ -128,7 +129,7 @@ NewbornWithLowBirthController.$inject = [
     '$scope', '$routeParams', '$location', '$filter',
     'maternalChildService', 'locationsService', 'dateHelperService', 'navigationService',
     'userLocationId', 'storageService', 'genders', 'haveAccessToAllLocations', 'baseControllersService',
-    'isAlertActive', 'isMobile',
+    'isAlertActive', 'isMobile', 'haveAccessToFeatures',
 ];
 
 window.angular.module('icdsApp').directive('newbornLowWeight', ['templateProviderService', function (templateProviderService) {

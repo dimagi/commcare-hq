@@ -3,11 +3,12 @@ var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function StadiometerController($scope, $routeParams, $location, $filter, infrastructureService, locationsService,
     dateHelperService, navigationService, userLocationId, storageService, haveAccessToAllLocations,
-    baseControllersService, isAlertActive, isMobile) {
+    baseControllersService, isAlertActive, isMobile, haveAccessToFeatures) {
     baseControllersService.BaseController.call(this, $scope, $routeParams, $location, locationsService,
         dateHelperService, navigationService, userLocationId, storageService, haveAccessToAllLocations,
         false, isMobile);
     var vm = this;
+    vm.haveAccessToFeatures = haveAccessToFeatures;
     vm.isAlertActive = isAlertActive;
     vm.serviceDataFunction = infrastructureService.getStadiometerData;
     if (Object.keys($location.search()).length === 0) {
@@ -69,6 +70,7 @@ StadiometerController.$inject = [
     '$scope', '$routeParams', '$location', '$filter',
     'infrastructureService', 'locationsService', 'dateHelperService', 'navigationService', 'userLocationId',
     'storageService', 'haveAccessToAllLocations', 'baseControllersService', 'isAlertActive', 'isMobile',
+    'haveAccessToFeatures',
 ];
 
 window.angular.module('icdsApp').directive('stadiometer', ['templateProviderService', function (templateProviderService) {

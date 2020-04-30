@@ -9,6 +9,7 @@ function PrevalenceOfStuntingReportController($scope, $routeParams, $location, $
         dateHelperService, navigationService, userLocationId, storageService, haveAccessToAllLocations, haveAccessToFeatures,
         isMobile);
     var vm = this;
+    vm.haveAccessToFeatures = haveAccessToFeatures;
     vm.isAlertActive = isAlertActive;
     vm.serviceDataFunction = maternalChildService.getPrevalenceOfStuntingData;
 

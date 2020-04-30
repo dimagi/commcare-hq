@@ -10,6 +10,7 @@ function PrevalenceOfSevereReportController($scope, $routeParams, $location, $fi
         haveAccessToFeatures, isMobile);
 
     var vm = this;
+    vm.haveAccessToFeatures = haveAccessToFeatures;
     vm.isAlertActive = isAlertActive;
     vm.serviceDataFunction = maternalChildService.getPrevalenceOfSevereData;
 

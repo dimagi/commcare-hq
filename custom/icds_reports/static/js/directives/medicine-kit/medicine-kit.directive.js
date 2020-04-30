@@ -3,11 +3,12 @@ var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function MedicineKitController($scope, $routeParams, $location, $filter, infrastructureService, locationsService,
     dateHelperService, navigationService, userLocationId, storageService, haveAccessToAllLocations,
-    baseControllersService, isAlertActive, isMobile) {
+    baseControllersService, isAlertActive, isMobile, haveAccessToFeatures) {
     baseControllersService.BaseController.call(this, $scope, $routeParams, $location, locationsService,
         dateHelperService, navigationService, userLocationId, storageService, haveAccessToAllLocations,
         false, isMobile);
     var vm = this;
+    vm.haveAccessToFeatures = haveAccessToFeatures;
     vm.isAlertActive = isAlertActive;
     vm.label = "AWCs Reported Medicine Kit";
     vm.serviceDataFunction = infrastructureService.getMedicineKitData;
@@ -64,6 +65,7 @@ MedicineKitController.$inject = [
     '$scope', '$routeParams', '$location', '$filter',
     'infrastructureService', 'locationsService', 'dateHelperService', 'navigationService', 'userLocationId',
     'storageService', 'haveAccessToAllLocations', 'baseControllersService', 'isAlertActive', 'isMobile',
+    'haveAccessToFeatures',
 ];
 
 window.angular.module('icdsApp').directive('medicineKit', ['templateProviderService', function (templateProviderService) {
