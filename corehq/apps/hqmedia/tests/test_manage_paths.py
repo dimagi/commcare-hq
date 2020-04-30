@@ -48,8 +48,8 @@ class ManagePathsTest(SimpleTestCase, TestXmlMixin):
 
     def test_paths_download(self, validate_xform):
         app = self._get_app()
-        module_name = app.modules[0].default_name()
-        form_name = app.modules[0].forms[0].default_name()
+        module_name = app.get_module(0).default_name()
+        form_name = app.get_module(0).forms[0].default_name()
 
         rows = download_multimedia_paths_rows(app)
         self.assertEqual(len(rows), 4)
@@ -132,67 +132,67 @@ class ManagePathsTest(SimpleTestCase, TestXmlMixin):
 
             # Module and form menu media
             self.assertEqual(
-                app.modules[0].forms[0].icon_by_language('en'),
+                app.get_module(0).forms[0].icon_by_language('en'),
                 'jr://file/commcare/aff/pines.jpg'
             )
             self.assertEqual(
-                app.modules[0].forms[0].icon_by_language('fra'),
+                app.get_module(0).forms[0].icon_by_language('fra'),
                 'jr://file/commcare/aff/one_cell.jpg'
             )
             self.assertEqual(
-                app.modules[0].icon_by_language('en'),
+                app.get_module(0).icon_by_language('en'),
                 'jr://file/commcare/image/chime.jpg'
             )
             self.assertEqual(
-                app.modules[0].audio_by_language('en'),
+                app.get_module(0).audio_by_language('en'),
                 'jr://file/commcare/en/audio/dream.mp3'
             )
             self.assertEqual(
-                app.modules[0].forms[0].audio_by_language('en'),
+                app.get_module(0).forms[0].audio_by_language('en'),
                 'jr://file/commcare/fra/audio/souled.mp3'
             )
             self.assertEqual(
-                app.modules[0].forms[0].audio_by_language('fra'),
+                app.get_module(0).forms[0].audio_by_language('fra'),
                 'jr://file/commcare/en/audio/laundry.mp3'
             )
             self.assertEqual(
-                app.modules[0].forms[0].audio_by_language('en'),
+                app.get_module(0).forms[0].audio_by_language('en'),
                 'jr://file/commcare/fra/audio/souled.mp3'
             )
 
             # Form media
-            form_images = app.modules[1].forms[0].wrapped_xform().image_references()
+            form_images = app.get_module(1).forms[0].wrapped_xform().image_references()
             self.assertTrue('jr://file/commcare/nin/ghosts.jpg' in form_images)
             self.assertTrue('jr://file/commcare/nin/sin.jpg' in form_images)
 
             # Case list lookup
             self.assertEqual(
-                app.modules[1].get_details()[0][1].lookup_image,
+                app.get_module(1).get_details()[0][1].lookup_image,
                 'jr://file/commcare/debut.jpg'
             )
 
             # Case list icons
             self.assertEqual(
-                app.modules[1].get_details()[0][1].columns[2].enum[0].value['en'],
+                app.get_module(1).get_details()[0][1].columns[2].enum[0].value['en'],
                 'jr://file/commcare/image/le_monde.jpg'
             )
 
             # Case list menu item
             self.assertEqual(
-                app.modules[1].case_list.icon_by_language('en'),
+                app.get_module(1).case_list.icon_by_language('en'),
                 'jr://file/commcare/image/lemonade.jpg'
             )
             self.assertEqual(
-                app.modules[1].case_list.icon_by_language('fra'),
+                app.get_module(1).case_list.icon_by_language('fra'),
                 'jr://file/commcare/image/lemonade.jpg'
             )
 
             # Reg from cast list
             self.assertEqual(
-                app.modules[1].case_list_form.icon_by_language('en'),
+                app.get_module(1).case_list_form.icon_by_language('en'),
                 'jr://file/commcare/image/trip.jpg'
             )
             self.assertEqual(
-                app.modules[1].case_list_form.icon_by_language('fra'),
+                app.get_module(1).case_list_form.icon_by_language('fra'),
                 'jr://file/commcare/image/trip.jpg'
             )

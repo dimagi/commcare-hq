@@ -313,7 +313,7 @@ class SchemaTest(SimpleTestCase):
             self.assertEqual(test_dict[key], value)
 
     def add_form(self, case_type=None, case_updates=None):
-        module_id = len(self.factory.app.modules)
+        module_id = len(self.factory.app.get_modules())
         module, form = self.factory.new_basic_module(module_id, case_type)
         if case_type:
             self.factory.form_opens_case(form, case_type)
@@ -324,7 +324,7 @@ class SchemaTest(SimpleTestCase):
         return form
 
     def add_form_app_2(self, case_type=None, case_updates=None):
-        module_id = len(self.factory_2.app.modules)
+        module_id = len(self.factory_2.app.get_modules())
         module, form = self.factory_2.new_basic_module(module_id, case_type)
         if case_type:
             self.factory_2.form_opens_case(form, case_type)

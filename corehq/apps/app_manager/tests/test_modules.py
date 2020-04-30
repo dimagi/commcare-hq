@@ -144,11 +144,11 @@ class ReportModuleTests(SimpleTestCase):
             ReportAppConfig(report_id=report_config._id, header={'en': 'CommBugz'}),
             ReportAppConfig(report_id='other_config_id', header={'en': 'CommBugz'})
         ]
-        self.assertEqual(len(app.modules[0].report_configs), 2)
+        self.assertEqual(len(app.get_module(0).report_configs), 2)
 
         with patch('corehq.apps.app_manager.util.get_apps_in_domain') as get_apps:
             get_apps.return_value = [app]
             # this will get called when report_config is deleted
             purge_report_from_mobile_ucr(report_config)
 
-        self.assertEqual(len(app.modules[0].report_configs), 1)
+        self.assertEqual(len(app.get_module(0).report_configs), 1)

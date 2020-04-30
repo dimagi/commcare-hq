@@ -731,7 +731,7 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBaseWithApp):
 
     def test_empty_translations(self):
         # make the form a registration form
-        self.app.modules[0].forms[0].actions.open_case.condition.type = 'always'
+        self.app.get_module(0).get_form(0).actions.open_case.condition.type = 'always'
         self.upload_raw_excel_translations(
             self.upload_headers_bad_column,
             self.upload_empty_translations,
@@ -1170,8 +1170,8 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
                                      for ws in wb_reader.worksheets]
 
     def test_sheet_names(self):
-        self.assertEqual(get_module_sheet_name(self.app.modules[0]), "menu1")
-        self.assertEqual(get_form_sheet_name(self.app.modules[0].forms[0]), "menu1_form1")
+        self.assertEqual(get_module_sheet_name(self.app.get_module(0)), "menu1")
+        self.assertEqual(get_form_sheet_name(self.app.get_module(0).get_form(0)), "menu1_form1")
 
     def test_sheet_headers(self):
         self.assertListEqual(get_bulk_app_sheet_headers(self.app), [
@@ -1196,22 +1196,22 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
 
     def test_module_case_list_form_rows(self):
         app = AppFactory.case_list_form_app_factory().app
-        self.assertEqual(get_module_case_list_form_rows(app.langs, app.modules[0]),
+        self.assertEqual(get_module_case_list_form_rows(app.langs, app.get_module(0)),
                          [('case_list_form_label', 'list', 'New Case')])
 
     def test_module_case_list_menu_item_rows(self):
-        self.assertEqual(get_module_case_list_menu_item_rows(self.app.langs, self.app.modules[0]),
+        self.assertEqual(get_module_case_list_menu_item_rows(self.app.langs, self.app.get_module(0)),
                          [('case_list_menu_item_label', 'list', 'Steth List')])
 
     def test_module_detail_rows(self):
-        self.assertListEqual(get_module_detail_rows(self.app.langs, self.app.modules[0]), [
+        self.assertListEqual(get_module_detail_rows(self.app.langs, self.app.get_module(0)), [
             ('name', 'list', 'Name'),
             ('name', 'detail', 'Name'),
         ])
 
     def test_form_rows(self):
         lang = self.app.langs[0]
-        form = self.app.modules[0].forms[0]
+        form = self.app.get_module(0).get_form(0)
 
         self.assertListEqual(get_menu_row([form.name.get(lang)],
                                           [form.icon_by_language(lang)],
@@ -1246,7 +1246,7 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
     def test_bulk_app_sheet_blacklisted(self):
 
         def blacklist_without_display_text(self):
-            menu1_id = self.app.modules[0].unique_id
+            menu1_id = self.app.get_module(0).unique_id
             return {self.app.domain: {self.app.id: {menu1_id: {'detail': {'name': {'': True}}}}}}
 
         with patch.object(EligibleForTransifexChecker, 'is_label_to_skip', lambda s, f, l: False), \
@@ -1258,7 +1258,7 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
     def test_bulk_app_sheet_blacklisted_text(self):
 
         def blacklist_with_display_text(self):
-            menu1_id = self.app.modules[0].unique_id
+            menu1_id = self.app.get_module(0).unique_id
             return {self.app.domain: {self.app.id: {menu1_id: {'detail': {'name': {'Name': True}}}}}}
 
         with patch.object(EligibleForTransifexChecker, 'is_label_to_skip', lambda s, f, l: False), \
@@ -1270,7 +1270,7 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
     def test_bulk_app_sheet_skipped_label(self):
 
         def get_labels_to_skip(self):
-            menu1_form1_id = self.app.modules[0].forms[0].unique_id
+            menu1_form1_id = self.app.get_module(0).get_form(0).unique_id
             return defaultdict(set, {menu1_form1_id: {'What_does_this_look_like-label'}})
 
         with patch.object(EligibleForTransifexChecker, 'get_labels_to_skip', get_labels_to_skip), \
@@ -1350,7 +1350,7 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
     def test_bulk_app_single_sheet_blacklisted(self):
 
         def blacklist_without_display_text(self):
-            menu1_id = self.app.modules[0].unique_id
+            menu1_id = self.app.get_module(0).unique_id
             return {self.app.domain: {self.app.id: {menu1_id: {'detail': {'name': {'': True}}}}}}
 
         with patch.object(EligibleForTransifexChecker, 'is_label_to_skip', lambda s, f, l: False), \
@@ -1363,7 +1363,7 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
     def test_bulk_app_single_sheet_blacklisted_text(self):
 
         def blacklist_with_display_text(self):
-            menu1_id = self.app.modules[0].unique_id
+            menu1_id = self.app.get_module(0).unique_id
             return {self.app.domain: {self.app.id: {menu1_id: {'detail': {'name': {'Name': True}}}}}}
 
         with patch.object(EligibleForTransifexChecker, 'is_label_to_skip', lambda s, f, l: False), \
@@ -1376,7 +1376,7 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
     def test_bulk_app_single_sheet_skipped_label(self):
 
         def get_labels_to_skip(self):
-            menu1_form1_id = self.app.modules[0].forms[0].unique_id
+            menu1_form1_id = self.app.get_module(0).get_form(0).unique_id
             return defaultdict(set, {menu1_form1_id: {'What_does_this_look_like-label'}})
 
         with patch.object(EligibleForTransifexChecker, 'get_labels_to_skip', get_labels_to_skip), \

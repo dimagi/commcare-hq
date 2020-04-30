@@ -135,7 +135,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
 
     def test_sort_cache_suite(self, *args):
         app = Application.wrap(self.get_json('suite-advanced'))
-        detail = app.modules[0].case_details.short
+        detail = app.get_module(0).case_details.short
         detail.sort_elements.append(
             SortElement(
                 field=detail.columns[0].field,
@@ -152,10 +152,10 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
 
     def test_sort_cache_search(self, *args):
         app = Application.wrap(self.get_json('suite-advanced'))
-        app.modules[0].search_config = CaseSearch(
+        app.get_module(0).search_config = CaseSearch(
             properties=[CaseSearchProperty(name='name', label={'en': 'Name'})],
         )
-        detail = app.modules[0].case_details.short
+        detail = app.get_module(0).case_details.short
         detail.sort_elements.append(
             SortElement(
                 field=detail.columns[0].field,
@@ -172,7 +172,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
 
     def test_sort_calculation(self, *args):
         app = Application.wrap(self.get_json('suite-advanced'))
-        detail = app.modules[0].case_details.short
+        detail = app.get_module(0).case_details.short
         detail.sort_elements.append(
             SortElement(
                 field=detail.columns[0].field,
@@ -205,7 +205,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         # product data shouldn't be interpreted as a case index relationship
         app = Application.wrap(self.get_json('suite-advanced'))
         custom_path = 'product_data/is_bedazzled'
-        app.modules[1].product_details.short.columns[0].field = custom_path
+        app.get_module(1).product_details.short.columns[0].field = custom_path
         suite_xml = app.create_suite()
         for xpath in ['/template/text/xpath', '/sort/text/xpath']:
             self.assertXmlPartialEqual(
@@ -217,9 +217,9 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
     @commtrack_enabled(True)
     def test_autoload_supplypoint(self, *args):
         app = Application.wrap(self.get_json('app'))
-        app.modules[0].forms[0].source = re.sub('/data/plain',
+        app.get_module(0).forms[0].source = re.sub('/data/plain',
                                                 session_var('supply_point_id'),
-                                                app.modules[0].forms[0].source)
+                                                app.get_module(0).forms[0].source)
         app_xml = app.create_suite()
         self.assertXmlPartialEqual(
             self.get_xml('autoload_supplypoint'),
@@ -501,7 +501,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
 
     def test_case_detail_tabs_with_nodesets_for_sorting(self, *args):
         app = Application.wrap(self.get_json("app_case_detail_tabs_with_nodesets"))
-        app.modules[0].case_details.long.sort_nodeset_columns = True
+        app.get_module(0).case_details.long.sort_nodeset_columns = True
         xml_partial = """
         <partial>
           <field>

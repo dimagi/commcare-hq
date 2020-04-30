@@ -44,7 +44,7 @@ class OdmToAppTest(TestCase, TestXmlMixin):
         def as_utf8(string):
             return string.encode('utf-8') if isinstance(string, str) else string
         expected = self.get_xml('xform')
-        actual = self.app.modules[2].forms[0].source
+        actual = self.app.get_module(2).forms[0].source
         self.assertXmlEqual(expected, as_utf8(actual))
 
 

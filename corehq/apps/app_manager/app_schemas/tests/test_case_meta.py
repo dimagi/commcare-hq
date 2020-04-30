@@ -213,7 +213,7 @@ class CaseMetaTest(SimpleTestCase, TestXmlMixin):
         """If you reference a parent property in the case list but the case type has no parent, we should tell you
         """
         app = self.get_test_app()
-        app.modules[0].case_details.short.columns = [
+        app.get_module(0).case_details.short.columns = [
             DetailColumn(
                 header={'en': 'Parent prop reference'},
                 model='case',
@@ -231,7 +231,7 @@ class CaseMetaTest(SimpleTestCase, TestXmlMixin):
         """
         calculation = "instance('casedb')/casedb/case[@case_id = instance('commcaresession')]/session/case_id"
         app = self.get_test_app()
-        app.modules[0].case_details.short.columns = [
+        app.get_module(0).case_details.short.columns = [
             DetailColumn(
                 header={'en': 'Calculate'},
                 model='case',
@@ -250,7 +250,7 @@ class CaseMetaTest(SimpleTestCase, TestXmlMixin):
         case list, we can't tell which parent will be shown """
         app = self.get_test_app()
         # module 1 has case type 'child' which has a single parent, 'parent'
-        app.modules[1].case_details.short.columns = [
+        app.get_module(1).case_details.short.columns = [
             DetailColumn(
                 header={'en': 'Parent prop reference'},
                 model='case',
@@ -262,7 +262,7 @@ class CaseMetaTest(SimpleTestCase, TestXmlMixin):
 
         # module 4 has type "extension" which has 2 relationships with the
         # reference 'host': 'child' and 'other_child'
-        app.modules[4].case_details.short.columns = [
+        app.get_module(4).case_details.short.columns = [
             DetailColumn(
                 header={'en': 'Parent prop reference'},
                 model='case',
@@ -278,7 +278,7 @@ class CaseMetaTest(SimpleTestCase, TestXmlMixin):
              .get_type('parent')
              .get_property('from_child')
              .short_details[0].module_id),
-            app.modules[1].unique_id
+            app.get_module(1).unique_id
         )
 
         for type_ in ('other_child', 'child'):
@@ -287,14 +287,14 @@ class CaseMetaTest(SimpleTestCase, TestXmlMixin):
                  .get_type(type_)
                  .get_property('parent_property_reference')
                  .short_details[0].module_id),
-                app.modules[4].unique_id
+                app.get_module(4).unique_id
             )
 
     def test_non_case_props(self):
         """We have special syntax in case lists and case details which should be hidden or shown for the usercase
         """
         app = self.get_test_app()
-        app.modules[0].case_details.short.columns = [
+        app.get_module(0).case_details.short.columns = [
             DetailColumn(
                 header={'en': 'Owner Name'},
                 model='case',

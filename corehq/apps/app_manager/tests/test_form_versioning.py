@@ -82,7 +82,7 @@ class FormVersioningTest(TestCase):
 
         # set up inital app
         app = Application.new_app(domain, 'Foo')
-        app.modules.append(Module(forms=[Form(), Form()]))
+        app.get_modules().append(Module(forms=[Form(), Form()]))
         app.build_spec = BuildSpec.from_string('2.7.0/latest')
         app.get_module(0).get_form(0).source = BLANK_TEMPLATE.format(xmlns='xmlns-0.0')
         app.get_module(0).get_form(1).source = BLANK_TEMPLATE.format(xmlns='xmlns-1')
@@ -156,8 +156,8 @@ class FormIdTest(SimpleTestCase):
 
     def test_update_form_references_case_list_form(self):
         app = Application.new_app('domain', 'Foo')
-        app.modules.append(Module(forms=[Form()]))
-        app.modules.append(Module(forms=[Form()]))
+        app.get_modules().append(Module(forms=[Form()]))
+        app.get_modules().append(Module(forms=[Form()]))
         app.build_spec = BuildSpec.from_string('2.7.0/latest')
         app.get_module(0).get_form(0).source = BLANK_TEMPLATE.format(xmlns='xmlns-0.0')
         app.get_module(1).get_form(0).source = BLANK_TEMPLATE.format(xmlns='xmlns-1')
@@ -172,8 +172,8 @@ class FormIdTest(SimpleTestCase):
 
     def test_update_form_references_form_link(self):
         app = Application.new_app('domain', 'Foo')
-        app.modules.append(Module(forms=[Form()]))
-        app.modules.append(Module(forms=[Form(), Form()]))
+        app.get_modules().append(Module(forms=[Form()]))
+        app.get_modules().append(Module(forms=[Form(), Form()]))
         app.build_spec = BuildSpec.from_string('2.7.0/latest')
         app.get_module(0).get_form(0).source = BLANK_TEMPLATE.format(xmlns='xmlns-0.0')
         app.get_module(1).get_form(0).source = BLANK_TEMPLATE.format(xmlns='xmlns-1')

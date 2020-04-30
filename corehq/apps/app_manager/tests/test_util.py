@@ -23,9 +23,10 @@ class TestGetDefaultFollowupForm(TestCase):
         followup = app.new_form(0, "Followup Form", None, attachment=attachment)
 
         self.assertEqual(followup.name['en'], "Followup Form")
-        self.assertEqual(app.modules[0].forms[0].name['en'], "Followup Form")
+        self.assertEqual(app.get_module(0).get_form(0).name['en'], "Followup Form")
 
-        first_question = app.modules[0].forms[0].get_questions([], include_triggers=True, include_groups=True)[0]
+        first_form = app.get_module(0).get_form(0)
+        first_question = first_form.get_questions([], include_triggers=True, include_groups=True)[0]
         self.assertEqual(first_question['label'], " Default label message ")
 
 
