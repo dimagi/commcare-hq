@@ -61,7 +61,7 @@ class SQLField(models.Model):
 
 class CustomDataField(JsonObject):
     slug = StringProperty()
-    is_required = BooleanProperty()
+    is_required = BooleanProperty(default=False)
     label = StringProperty()
     choices = StringListProperty()
     regex = StringProperty()
