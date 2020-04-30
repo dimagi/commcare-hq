@@ -46,14 +46,13 @@ class OdataTestMixin(object):
         cls.web_user = WebUser.create(cls.domain.name, 'test_user', 'my_password')
         cls._setup_user_permissions()
         cls.app_id = '1234'
-        cls.instance = cls.get_instance()
+        cls.instance = cls.get_instance(cls.domain.name)
         cls.instance.is_odata_config = True
         cls.instance.transform_dates = False
-        cls.instance.domain = cls.domain.name
         cls.instance.save()
 
     @classmethod
-    def get_instance(cls):
+    def get_instance(cls, domain_name):
         raise NotImplementedError()
 
     @classmethod
@@ -97,9 +96,10 @@ class OdataTestMixin(object):
 class CaseOdataTestMixin(OdataTestMixin):
 
     @classmethod
-    def get_instance(cls):
+    def get_instance(cls, domain_name):
         return CaseExportInstance.generate_instance_from_schema(
             CaseExportDataSchema(
+                domain=domain_name,
                 group_schemas=[
                     ExportGroupSchema(
                         path=MAIN_TABLE,
@@ -119,9 +119,10 @@ class CaseOdataTestMixin(OdataTestMixin):
 class FormOdataTestMixin(OdataTestMixin):
 
     @classmethod
-    def get_instance(cls):
+    def get_instance(cls, domain_name):
         return FormExportInstance.generate_instance_from_schema(
             FormExportDataSchema(
+                domain=domain_name,
                 group_schemas=[
                     ExportGroupSchema(
                         path=MAIN_TABLE,
