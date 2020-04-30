@@ -469,7 +469,7 @@ class BackendMigrator(Migrator):
             iteration_key = f'{iteration_key}-{start}-{end}'
         if domain:
             self.reindexer.domain = domain
-            iteration_key = f'{self.iteration_key}-{domain}'
+            iteration_key = f'{iteration_key}-{domain}'
         return SqlDocumentProvider(iteration_key, self.reindexer)
 
 
