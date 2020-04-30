@@ -646,6 +646,7 @@ class DiffTestCases(SimpleTestCase):
         sql_case = {
             "doc_type": "CommCareCase",
             "closed_by": "somebody",
+            "close_reason": "",
         }
         diffs = json_diff(couch_case, sql_case, track_list_indices=False)
         filtered = filter_case_diffs(couch_case, sql_case, diffs)
