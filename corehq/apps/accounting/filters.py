@@ -27,6 +27,7 @@ from corehq.apps.accounting.models import (
     SoftwarePlanVisibility,
     SubscriptionAdjustmentMethod,
     SubscriptionType,
+    CreditAdjustmentReason,
 )
 from corehq.apps.reports.filters.base import (
     BaseReportFilter,
@@ -66,6 +67,13 @@ class DomainFilter(BaseAccountingSingleOptionFilter):
     default_text = _("All")
     async_handler = DomainFilterAsyncHandler
     async_action = 'domain_name'
+
+
+class CreditAdjustmentReasonFilter(BaseSingleOptionFilter):
+    slug = 'credit_adjustment_reason'
+    label = _("Credit Adjustment Reason")
+    default_text = _("Any Reason")
+    options = CreditAdjustmentReason.CHOICES
 
 
 def clean_options(options):
