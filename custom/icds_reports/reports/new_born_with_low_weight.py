@@ -12,10 +12,11 @@ from custom.icds_reports.models import AggChildHealthMonthly
 from custom.icds_reports.utils import apply_exclude, generate_data_for_map, chosen_filters_to_labels, \
     indian_formatted_number
 from custom.icds_reports.messages import new_born_with_low_weight_help_text
+from custom.icds_reports.utils import get_location_launched_status
 
 
 @icds_quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
-def get_newborn_with_low_birth_weight_map(domain, config, loc_level, show_test=False):
+def get_newborn_with_low_birth_weight_map(domain, config, loc_level, location_dict, show_test=False):
 
     def get_data_for(filters):
         filters['month'] = datetime(*filters['month'])
@@ -32,6 +33,8 @@ def get_newborn_with_low_birth_weight_map(domain, config, loc_level, show_test=F
             queryset = apply_exclude(domain, queryset)
         return queryset
 
+    month = datetime(*config['month'])
+    location_launched_status = get_location_launched_status(location_dict, month, loc_level)
     data_for_map, in_month_total, low_birth_total, average, total = generate_data_for_map(
         get_data_for(config),
         loc_level,
@@ -39,7 +42,8 @@ def get_newborn_with_low_birth_weight_map(domain, config, loc_level, show_test=F
         'in_month',
         20,
         60,
-        'all'
+        'all',
+        location_launched_status=location_launched_status
     )
 
     fills = OrderedDict()
@@ -94,7 +98,7 @@ def get_newborn_with_low_birth_weight_map(domain, config, loc_level, show_test=F
 
 
 @icds_quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
-def get_newborn_with_low_birth_weight_chart(domain, config, loc_level, show_test=False):
+def get_newborn_with_low_birth_weight_chart(domain, config, loc_level, location_dict, show_test=False):
     month = datetime(*config['month'])
     three_before = datetime(*config['month']) - relativedelta(months=3)
 
@@ -125,8 +129,11 @@ def get_newborn_with_low_birth_weight_chart(domain, config, loc_level, show_test
         data['blue'][miliseconds] = {'y': 0, 'in_month': 0, 'low_birth': 0, 'all': 0}
 
     best_worst = {}
-
+    location_launched_status = get_location_launched_status(location_dict, month, loc_level)
     for row in chart_data:
+        launched_status = location_launched_status.get(row['%s_name' % loc_level])
+        if launched_status is None or launched_status <= 0:
+            continue
         date = row['month']
         in_month = row['in_month'] or 0
         location = row['%s_name' % loc_level]
@@ -179,7 +186,7 @@ def get_newborn_with_low_birth_weight_chart(domain, config, loc_level, show_test
 
 
 @icds_quickcache(['domain', 'config', 'loc_level', 'location_id', 'show_test'], timeout=30 * 60)
-def get_newborn_with_low_birth_weight_data(domain, config, loc_level, location_id, show_test=False):
+def get_newborn_with_low_birth_weight_data(domain, config, loc_level, location_id, location_dict, show_test=False):
     group_by = ['%s_name' % loc_level]
 
     config['month'] = datetime(*config['month'])
@@ -205,8 +212,12 @@ def get_newborn_with_low_birth_weight_data(domain, config, loc_level, location_i
         'low_birth': 0,
         'all': 0
     })
+    location_launched_status = get_location_launched_status(location_dict, config['month'], loc_level)
 
     for row in data:
+        launched_status = location_launched_status.get(row['%s_name' % loc_level])
+        if launched_status is None or launched_status <= 0:
+            continue
         in_month = row['in_month'] or 0
         name = row['%s_name' % loc_level]
 

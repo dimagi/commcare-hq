@@ -12,10 +12,11 @@ from custom.icds_reports.messages import underweight_children_help_text
 from custom.icds_reports.models import AggChildHealthMonthly
 from custom.icds_reports.utils import apply_exclude, chosen_filters_to_labels, indian_formatted_number,\
     format_decimal
+from custom.icds_reports.utils import get_location_launched_status
 
 
 @icds_quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
-def get_prevalence_of_undernutrition_data_map(domain, config, loc_level, show_test=False):
+def get_prevalence_of_undernutrition_data_map(domain, config, loc_level,location_dict, show_test=False):
 
     def get_data_for(filters):
         filters['month'] = datetime(*filters['month'])
@@ -52,7 +53,13 @@ def get_prevalence_of_undernutrition_data_map(domain, config, loc_level, show_te
     weighed_total = 0
 
     values_to_calculate_average = {'numerator': 0, 'denominator': 0}
+    month = datetime(*config['month'])
+    location_launched_status = get_location_launched_status(location_dict, month, loc_level)
+
     for row in get_data_for(config):
+        launched_status = location_launched_status.get(row['%s_name' % loc_level])
+        if launched_status is None or launched_status <= 0:
+            continue
         weighed = row['weighed'] or 0
         total = row['total'] or 0
         name = row['%s_name' % loc_level]
@@ -139,7 +146,7 @@ def get_prevalence_of_undernutrition_data_map(domain, config, loc_level, show_te
 
 
 @icds_quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
-def get_prevalence_of_undernutrition_data_chart(domain, config, loc_level, show_test=False):
+def get_prevalence_of_undernutrition_data_chart(domain, config, loc_level,location_dict, show_test=False):
     month = datetime(*config['month'])
     three_before = datetime(*config['month']) - relativedelta(months=3)
 
@@ -179,7 +186,11 @@ def get_prevalence_of_undernutrition_data_chart(domain, config, loc_level, show_
         data['red'][miliseconds] = {'y': 0, 'weighed': 0, 'unweighed': 0}
 
     best_worst = {}
+    location_launched_status = get_location_launched_status(location_dict, month, loc_level)
     for row in chart_data:
+        launched_status = location_launched_status.get(row['%s_name' % loc_level])
+        if launched_status is None or launched_status <= 0:
+            continue
         date = row['month']
         weighed = row['weighed'] or 0
         location = row['%s_name' % loc_level]
@@ -267,7 +278,7 @@ def get_prevalence_of_undernutrition_data_chart(domain, config, loc_level, show_
 
 
 @icds_quickcache(['domain', 'config', 'loc_level', 'location_id', 'show_test'], timeout=30 * 60)
-def get_prevalence_of_undernutrition_sector_data(domain, config, loc_level, location_id, show_test=False):
+def get_prevalence_of_undernutrition_sector_data(domain, config, loc_level, location_dict, show_test=False):
     group_by = ['%s_name' % loc_level]
 
     config['month'] = datetime(*config['month'])
@@ -301,7 +312,11 @@ def get_prevalence_of_undernutrition_sector_data(domain, config, loc_level, loca
         'total': 0
     })
 
+    location_launched_status = get_location_launched_status(location_dict, config['month'], loc_level)
     for row in data:
+        launched_status = location_launched_status.get(row['%s_name' % loc_level])
+        if launched_status is None or launched_status <= 0:
+            continue
         weighed = row['weighed']
         total = row['total']
         name = row['%s_name' % loc_level]

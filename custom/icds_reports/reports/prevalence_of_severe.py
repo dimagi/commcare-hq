@@ -13,10 +13,11 @@ from custom.icds_reports.models import AggChildHealthMonthly
 from custom.icds_reports.utils import apply_exclude, chosen_filters_to_labels, indian_formatted_number, \
     wasting_moderate_column, wasting_severe_column, wasting_normal_column, \
     default_age_interval, wfh_recorded_in_month_column
+from custom.icds_reports.utils import get_location_launched_status
 
 
 @icds_quickcache(['domain', 'config', 'loc_level', 'show_test', 'icds_feature_flag'], timeout=30 * 60)
-def get_prevalence_of_severe_data_map(domain, config, loc_level, show_test=False, icds_feature_flag=False):
+def get_prevalence_of_severe_data_map(domain, config, loc_level, location_dict, show_test=False, icds_feature_flag=False):
 
     def get_data_for(filters):
         filters['month'] = datetime(*filters['month'])
@@ -57,7 +58,13 @@ def get_prevalence_of_severe_data_map(domain, config, loc_level, show_test=False
     height_eligible_for_all_locations = 0
 
     values_to_calculate_average = {'numerator': 0, 'denominator': 0}
+    month = datetime(*config['month'])
+    location_launched_status = get_location_launched_status(location_dict, month, loc_level)
+
     for row in get_data_for(config):
+        launched_status = location_launched_status.get(row['%s_name' % loc_level])
+        if launched_status is None or launched_status <= 0:
+            continue
         total_weighed = row['total_weighed'] or 0
         total_height_eligible = row['total_height_eligible'] or 0
         name = row['%s_name' % loc_level]
@@ -155,7 +162,7 @@ def get_prevalence_of_severe_data_map(domain, config, loc_level, show_test=False
 
 
 @icds_quickcache(['domain', 'config', 'loc_level', 'show_test', 'icds_feature_flag'], timeout=30 * 60)
-def get_prevalence_of_severe_data_chart(domain, config, loc_level, show_test=False, icds_feature_flag=False):
+def get_prevalence_of_severe_data_chart(domain, config, loc_level, location_dict, show_test=False, icds_feature_flag=False):
     month = datetime(*config['month'])
     three_before = datetime(*config['month']) - relativedelta(months=3)
 
@@ -195,7 +202,11 @@ def get_prevalence_of_severe_data_chart(domain, config, loc_level, show_test=Fal
         data['peach'][miliseconds] = {'y': 0, 'total_weighed': 0, 'total_measured': 0, 'total_height_eligible': 0}
 
     best_worst = {}
+    location_launched_status = get_location_launched_status(location_dict, month, loc_level)
     for row in chart_data:
+        launched_status = location_launched_status.get(row['%s_name' % loc_level])
+        if launched_status is None or launched_status <= 0:
+            continue
         date = row['month']
         total_weighed = row['total_weighed'] or 0
         total_measured = row['total_measured'] or 0
@@ -285,7 +296,7 @@ def get_prevalence_of_severe_data_chart(domain, config, loc_level, show_test=Fal
 
 
 @icds_quickcache(['domain', 'config', 'loc_level', 'location_id', 'show_test', 'icds_feature_flag'], timeout=30 * 60)
-def get_prevalence_of_severe_sector_data(domain, config, loc_level, location_id, show_test=False,
+def get_prevalence_of_severe_sector_data(domain, config, loc_level, location_id, location_dict, show_test=False,
                                          icds_feature_flag=False):
     group_by = ['%s_name' % loc_level]
 
@@ -321,7 +332,11 @@ def get_prevalence_of_severe_sector_data(domain, config, loc_level, location_id,
         'total_measured': 0
     })
 
+    location_launched_status = get_location_launched_status(location_dict, config['month'], loc_level)
     for row in data:
+        launched_status = location_launched_status.get(row['%s_name' % loc_level])
+        if launched_status is None or launched_status <= 0:
+            continue
         total_weighed = row['total_weighed'] or 0
         name = row['%s_name' % loc_level]
 

@@ -11,10 +11,11 @@ from custom.icds_reports.const import LocationTypes, ChartColors, MapColors
 from custom.icds_reports.messages import institutional_deliveries_help_text
 from custom.icds_reports.models import AggCcsRecordMonthly
 from custom.icds_reports.utils import apply_exclude, generate_data_for_map, indian_formatted_number
+from custom.icds_reports.utils import get_location_launched_status
 
 
 @icds_quickcache(['domain', 'config', 'loc_level', 'location_id', 'show_test'], timeout=30 * 60)
-def get_institutional_deliveries_sector_data(domain, config, loc_level, location_id, show_test=False):
+def get_institutional_deliveries_sector_data(domain, config, loc_level, location_id, location_dict, show_test=False):
     group_by = ['%s_name' % loc_level]
 
     config['month'] = datetime(*config['month'])
@@ -39,7 +40,12 @@ def get_institutional_deliveries_sector_data(domain, config, loc_level, location
         'all': 0
     })
 
+    location_launched_status = get_location_launched_status(location_dict, config['month'], loc_level)
+
     for row in data:
+        launched_status = location_launched_status.get(row['%s_name' % loc_level])
+        if launched_status is None or launched_status <= 0:
+            continue
         valid = row['eligible']
         name = row['%s_name' % loc_level]
 
@@ -75,7 +81,7 @@ def get_institutional_deliveries_sector_data(domain, config, loc_level, location
 
 
 @icds_quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
-def get_institutional_deliveries_data_map(domain, config, loc_level, show_test=False):
+def get_institutional_deliveries_data_map(domain, config, loc_level, location_dict, show_test=False):
 
     def get_data_for(filters):
         filters['month'] = datetime(*filters['month'])
@@ -91,13 +97,16 @@ def get_institutional_deliveries_data_map(domain, config, loc_level, show_test=F
             queryset = apply_exclude(domain, queryset)
         return queryset
 
+    month = datetime(*config['month'])
+    location_launched_status = get_location_launched_status(location_dict, month, loc_level)
     data_for_map, valid_total, in_month_total, average, total = generate_data_for_map(
         get_data_for(config),
         loc_level,
         'children',
         'all',
         20,
-        60
+        60,
+        location_launched_status=location_launched_status
     )
 
     fills = OrderedDict()
@@ -139,7 +148,7 @@ def get_institutional_deliveries_data_map(domain, config, loc_level, show_test=F
 
 
 @icds_quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
-def get_institutional_deliveries_data_chart(domain, config, loc_level, show_test=False):
+def get_institutional_deliveries_data_chart(domain, config, loc_level, location_dict, show_test=False):
     month = datetime(*config['month'])
     three_before = datetime(*config['month']) - relativedelta(months=3)
 
@@ -172,7 +181,12 @@ def get_institutional_deliveries_data_chart(domain, config, loc_level, show_test
         'in_month': 0,
         'all': 0
     })
+    location_launched_status = get_location_launched_status(location_dict, month, loc_level)
+
     for row in chart_data:
+        launched_status = location_launched_status.get(row['%s_name' % loc_level])
+        if launched_status is None or launched_status <= 0:
+            continue
         date = row['month']
         in_month = row['in_month']
         location = row['%s_name' % loc_level]
