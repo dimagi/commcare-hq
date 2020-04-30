@@ -26,7 +26,7 @@ from corehq.form_processor.utils import should_use_sql_backend
 from corehq.sql_db.util import paginate_query_across_partitioned_databases
 from corehq.util.log import with_progress_bar
 
-from ...casediff import get_couch_cases
+from ...casediff import diffs_to_changes, get_couch_cases
 from ...casedifftool import do_case_diffs, do_case_patch, format_diffs, get_migrator
 from ...casepatch import PatchForm
 from ...couchsqlmigration import setup_logging
@@ -139,7 +139,7 @@ class Command(BaseCommand):
 
         if self.no_input and not settings.UNIT_TESTING:
             raise CommandError('--no-input only allowed for unit testing')
-        if self.changes and action != SHOW:
+        if self.changes and action not in [SHOW, FILTER]:
             raise CommandError(f'{action} --changes not allowed')
         if self.csv and action != SHOW:
             raise CommandError(f'{action} --csv not allowed')
@@ -235,10 +235,21 @@ class Command(BaseCommand):
                 sql_json = get_json(kind, doc_id, sql_docs)
                 json_diffs = [json_diff(d) for d in diffs]
                 new_diffs = filter_diffs(couch_json, sql_json, json_diffs)
+                if len(json_diffs) == len(new_diffs):
+                    continue
                 if self.dry_run:
-                    print(f"{kind} {doc_id}: {len(diffs)} -> {len(new_diffs)} diffs")
+                    type_ = "changes" if self.changes else "diffs"
+                    print(f"{kind} {doc_id}: {len(diffs)} -> {len(new_diffs)} {type_}")
+                elif self.changes:
+                    new_diffs = convert_diffs_to_changes(new_diffs, diffs)
+                    statedb.add_changes(kind, doc_id, new_diffs)
                 else:
                     statedb.add_diffs(kind, doc_id, new_diffs)
+
+        def convert_diffs_to_changes(new_diffs, planning_diffs):
+            reason = {d.reason for d in planning_diffs}
+            assert len(reason) == 1, reason
+            return diffs_to_changes(new_diffs, reason.pop())
 
         def get_json(kind, doc_id, docs):
             doc = docs.get(doc_id)
@@ -249,8 +260,6 @@ class Command(BaseCommand):
             return jd._replace(path=tuple(jd.path))
 
         statedb = self.open_state_db(domain, readonly=self.dry_run)
-        if self.changes:
-            raise NotImplementedError("filter --changes")
         select = self.get_select_kwargs()
         if select and select["kind"] in MissingIds.form_types:
             def get_sql_docs(ids):
@@ -271,7 +280,10 @@ class Command(BaseCommand):
         else:
             raise NotImplementedError(f"--select={self.select}")
         prompt = self.dry_run and self.stop
-        doc_diffs = statedb.iter_doc_diffs(**select)
+        if self.changes:
+            doc_diffs = statedb.iter_doc_changes(**select)
+        else:
+            doc_diffs = statedb.iter_doc_diffs(**select)
         doc_diffs = self.with_progress(doc_diffs, statedb, select)
         for batch in chunked(doc_diffs, self.batch_size, list):
             update_doc_diffs(batch)
