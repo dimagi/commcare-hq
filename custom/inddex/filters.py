@@ -1,18 +1,13 @@
 from django.utils.translation import ugettext_lazy as _
 
-from sqlagg.columns import SimpleColumn
-
-from corehq.apps.reports.datatables import DataTablesColumn
-from corehq.apps.reports.filters.base import BaseSingleOptionFilter
-from corehq.apps.reports.filters.dates import DatespanFilter
-from corehq.apps.reports.sqlreport import DatabaseColumn, SqlData
-from corehq.apps.userreports.util import get_table_name
-from custom.inddex.const import (
-    AGE_RANGES,
-    FOOD_CONSUMPTION,
-    ConvFactorGaps,
-    FctGaps,
+from corehq.apps.es import UserES
+from corehq.apps.reports.filters.base import (
+    BaseMultipleOptionFilter,
+    BaseSingleOptionFilter,
 )
+from corehq.apps.reports.filters.dates import DatespanFilter
+from corehq.apps.reports.util import get_simplified_users
+from custom.inddex.const import AGE_RANGES, ConvFactorGaps, FctGaps
 
 
 class DateRangeFilter(DatespanFilter):
@@ -156,32 +151,15 @@ class FoodTypeFilter(BaseSingleOptionFilter):
         ]
 
 
-class CaseOwnerData(SqlData):
-    engine_id = 'ucr'
-    filters = []
-    group_by = ['owner_name']
-    headers = [DataTablesColumn('Case owner')]
-    columns = [DatabaseColumn('Case owner', SimpleColumn('owner_name'))]
-
-    @property
-    def table_name(self):
-        return get_table_name(self.config['domain'], FOOD_CONSUMPTION)
-
-
-class CaseOwnersFilter(BaseSingleOptionFilter):
-    slug = 'owner_name'
+class CaseOwnersFilter(BaseMultipleOptionFilter):
+    slug = 'owner_id'
     label = _('Case Owners')
     default_text = _('All')
 
     @property
     def options(self):
-        owner_data = CaseOwnerData(config={'domain': self.domain})
-        names = {
-            owner['owner_name']
-            for owner in owner_data.get_data()
-            if owner.get('owner_name')
-        }
-        return [(x, x) for x in names]
+        users = get_simplified_users(UserES().domain(self.domain).mobile_users())
+        return [(user.user_id, user.username_in_report) for user in users]
 
 
 class FaoWhoGiftFoodGroupDescriptionFilter(BaseSingleOptionFilter):

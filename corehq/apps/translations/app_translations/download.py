@@ -24,7 +24,7 @@ def get_bulk_app_single_sheet_by_name(app, lang, eligible_for_transifex_only=Fal
     checker = EligibleForTransifexChecker(app)
 
     rows = []
-    for module in app.modules:
+    for module in app.get_modules():
         if eligible_for_transifex_only and checker.exclude_module(module):
             continue
         sheet_name = get_module_sheet_name(module)
