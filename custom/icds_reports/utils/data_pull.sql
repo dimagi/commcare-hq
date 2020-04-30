@@ -4,8 +4,8 @@ CREATE TEMPORARY TABLE "temp_visit_table" AS (
         COUNT (DISTINCT awc_id) as unique_visits
     FROM "ucr_icds-cas_static-awc_mgt_forms_ad1b11f0"
     WHERE
-        submitted_on>= '2020-02-01'
-        AND submitted_on<'2020-04-01'
+        submitted_on>= '2020-03-01'
+        AND submitted_on<'2020-05-01'
         AND location_entered IS NOT NULL
         AND location_entered <> ''
     GROUP BY location_id
@@ -33,20 +33,20 @@ SELECT
     t.state_name,
     t.supervisor_name,
     t.supervisor_site_code,
-    awc.num_launched_awcs as total_awcs,
+    awc.num_awcs as total_awcs,
     ucr.unique_visits as visited_awcs,
     CASE
-        WHEN awc.num_launched_awcs = ucr.unique_visits THEN 'YES'
+        WHEN awc.num_awcs = ucr.unique_visits THEN 'YES'
         ELSE 'NO'
     END as all_visited
-    FROM "agg_awc_2020-03-01_4" awc
+    FROM "agg_awc_2020-04-01_4" awc
     LEFT JOIN "temp_visit_table" ucr
         ON awc.supervisor_id = ucr.supervisor_id
     LEFT JOIN "awc_location_local" t
         ON (t.supervisor_id = awc.supervisor_id
         AND t.aggregation_level=awc.aggregation_level
         AND t.aggregation_level=4)
-    WHERE awc.state_is_test<>1;
+    WHERE awc.state_is_test<>1 AND awc.supervisor_is_test<>1;
 --  QUERY PLAN
 -- ------------------------------------------------------------------------------------------------------------------------------------
 --  Hash Right Join  (cost=4165.52..17406.48 rows=26824 width=83)

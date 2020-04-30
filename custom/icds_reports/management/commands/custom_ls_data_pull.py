@@ -32,7 +32,7 @@ def state_details():
                 ON (
                 awc.supervisor_id = l.supervisor_id
                 AND l.aggregation_level=awc.aggregation_level )
-            WHERE l.month='2020-03-01' AND l.aggregation_level=4 AND l.num_supervisor_launched>0
+            WHERE l.month='2020-04-01' AND l.aggregation_level=4
         """
     return _run_custom_sql_script(query)
 
@@ -55,7 +55,7 @@ class Command(BaseCommand):
 
     def handle(self, **options):
 
-        query = FormES().domain('icds-cas').xmlns('http://openrosa.org/formdesigner/327e11f3c04dfc0a7fea9ee57d7bb7be83475309').submitted(gte=datetime(2020,3,1), lt=datetime(2020,4,1))
+        query = FormES().domain('icds-cas').xmlns('http://openrosa.org/formdesigner/327e11f3c04dfc0a7fea9ee57d7bb7be83475309').submitted(gte=datetime(2020,4,1), lt=datetime(2020,5,1))
         forms_list = query.run().hits
 
         users = []
@@ -108,3 +108,42 @@ class Command(BaseCommand):
         fout = open('/home/cchq/LS_data.csv', 'w')
         writer = csv.writer(fout)
         writer.writerows(data_rows)
+
+        print("=========starting the VHNSD data pull=====\n")
+        fast_rows = {}
+        for location in location_details:
+            row = [
+                location[0],
+                location[1],
+                location[3],
+                0,
+                []
+            ]
+            fast_rows.update({location[2]: row})
+        query = FormES().domain('icds-cas').xmlns(
+            'http://openrosa.org/formdesigner/b8273b657bb097eb6ba822663b7191ff6bc276ff').submitted(
+            gte=datetime(2020, 4, 1), lt=datetime(2020, 5, 1))
+        forms_list = query.run().hits
+        count = 0
+        for form in forms_list:
+            supervisor_id = user_location_details[form['form']['case']['@user_id']]
+            awc_selected_name = form['form']['awc_selected_name']
+            fast_rows[supervisor_id][3] = fast_rows[supervisor_id][3] + 1
+            fast_rows[supervisor_id][4].append(awc_selected_name)
+            if count % 1000 == 0:
+                print(f"{count} forms processed ======\n")
+            count = count + 1
+        headers = ['state_name', 'supervisor_name', 'supervisor_site_code',
+                   'total_vhnsd_visit_count', 'unique_awc_visited']
+        data_rows = [headers]
+        for key, value in fast_data_rows.items():
+            value[4] = len(set(value[4]))
+            data_rows = data_rows + [value]
+        fout = open('/home/cchq/LS_data_vhnsd.csv', 'w')
+        writer = csv.writer(fout)
+        writer.writerows(data_rows)
+
+
+
+
+
