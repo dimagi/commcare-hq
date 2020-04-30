@@ -7,7 +7,7 @@ from corehq.apps.sms.util import clean_phone_number
 from corehq.messaging.smsbackends.turn.exceptions import WhatsAppTemplateStringException
 from corehq.messaging.smsbackends.turn.forms import TurnBackendForm
 from turn import TurnBusinessManagementClient, TurnClient
-from turn.exceptions import WhatsAppContactNotFound
+from turn.exceptions import WhatsAppContactNotFoundError
 
 WA_TEMPLATE_STRING = "cc_wa_template"
 
@@ -50,7 +50,7 @@ class SQLTurnWhatsAppBackend(SQLSMSBackend):
                 return self._send_template_message(client, wa_id, msg)
             else:
                 return self._send_text_message(client, wa_id, msg)
-        except WhatsAppContactNotFound:
+        except WhatsAppContactNotFoundError:
             msg.set_system_error(SMS.ERROR_INVALID_DESTINATION_NUMBER)
             if self.config.fallback_backend_id:
                 self._send_fallback_message(msg)
