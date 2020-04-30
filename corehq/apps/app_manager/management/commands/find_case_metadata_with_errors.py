@@ -27,7 +27,7 @@ class Command(AppMigrationCommandBase):
             if case_type.has_errors:
                 logger.error('app {} has issue'.format(app._id))
         for module in app.get_modules():
-            for form in module.forms:
+            for form in module.get_forms():
                 if form.doc_type == 'AdvancedForm' or form.doc_type == 'ShadowForm':
                     # advanced forms don't have the same actions
                     return None

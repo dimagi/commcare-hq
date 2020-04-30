@@ -109,7 +109,7 @@ class AppManagerTest(TestCase, TestXmlMixin):
     def testSetUp(self):
         self.assertEqual(len(self.app.get_modules()), 3)
         for module in self.app.get_modules():
-            self.assertEqual(len(module.forms), 3)
+            self.assertEqual(len(module.get_forms()), 3)
 
     @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
     def testCreateJadJar(self, mock):
@@ -128,7 +128,7 @@ class AppManagerTest(TestCase, TestXmlMixin):
                              self.app.get_module(0).get_form(0).unique_id)
         self.assertEqual(len(self.app.get_modules()), 3)
         for module, i in zip(self.app.get_modules(), [2, 3, 3]):
-            self.assertEqual(len(module.forms), i)
+            self.assertEqual(len(module.get_forms()), i)
 
     def testDeleteModule(self):
         self.app.delete_module(self.app.get_module(0).unique_id)

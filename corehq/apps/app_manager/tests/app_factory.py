@@ -88,7 +88,7 @@ class AppFactory(object):
 
     def new_form(self, module):
         slug = self.slugs[module.unique_id]
-        index = len(module.forms)
+        index = len(module.get_forms())
         form = module.new_form('{} form {}'.format(slug, index), None, '')
         form.unique_id = '{}_form_{}'.format(slug, index)
         form.source = ''  # set form source since we changed the unique_id
@@ -98,7 +98,7 @@ class AppFactory(object):
 
     def new_shadow_form(self, module):
         slug = self.slugs[module.unique_id]
-        index = len(module.forms)
+        index = len(module.get_forms())
         form = module.new_shadow_form('{} form {}'.format(slug, index), None)
         form.unique_id = '{}_form_{}'.format(slug, index)
         return form

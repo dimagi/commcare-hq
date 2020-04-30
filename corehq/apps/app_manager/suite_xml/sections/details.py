@@ -270,7 +270,7 @@ class DetailContributor(SectionContributor):
 
         target_form_dm = self.entries_helper.get_datums_meta_for_form_generic(form)
         source_form_dm = []
-        if len(module.forms):
+        if len(module.get_forms()):
             source_form_dm = self.entries_helper.get_datums_meta_for_form_generic(module.get_form(0))
         for target_meta in target_form_dm:
             if target_meta.requires_selection:

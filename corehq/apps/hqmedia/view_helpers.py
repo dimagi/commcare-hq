@@ -102,7 +102,7 @@ def update_multimedia_paths(app, paths):
                              success_counts[module.unique_id],
                              reverse("view_module", args=[app.domain, app.id, module.unique_id]),
                              module.default_name()))
-        for form in module.forms:
+        for form in module.get_forms():
             if success_counts[form.unique_id]:
                 successes.append(_("{} item(s) updated in <a href='{}' target='_blank'>{}</a>").format(
                                  success_counts[form.unique_id],

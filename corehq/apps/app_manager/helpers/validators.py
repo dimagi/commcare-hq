@@ -478,7 +478,7 @@ class ModuleValidator(ModuleBaseValidator, ModuleDetailValidatorMixin):
     def validate_with_raise(self):
         errors = super(ModuleValidator, self).validate_with_raise()
         errors += self.validate_details_for_build()
-        if not self.module.forms and not self.module.case_list.show:
+        if not self.module.get_forms() and not self.module.case_list.show:
             errors.append({
                 'type': 'no forms or case list',
                 'module': self.get_module_info(),
@@ -508,7 +508,7 @@ class ModuleValidator(ModuleBaseValidator, ModuleDetailValidatorMixin):
 class AdvancedModuleValidator(ModuleBaseValidator):
     def validate_with_raise(self):
         errors = super(AdvancedModuleValidator, self).validate_with_raise()
-        if not self.module.forms and not self.module.case_list.show:
+        if not self.module.get_forms() and not self.module.case_list.show:
             errors.append({
                 'type': 'no forms or case list',
                 'module': self.get_module_info(),

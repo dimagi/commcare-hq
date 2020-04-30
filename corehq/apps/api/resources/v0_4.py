@@ -442,7 +442,7 @@ class ApplicationResource(BaseApplicationResource):
             dehydrated['unique_id'] = module.unique_id
 
             dehydrated['forms'] = []
-            for form in module.forms:
+            for form in module.get_forms():
                 form_unique_id = form.unique_id
                 form_jvalue = {
                     'xmlns': form.xmlns,

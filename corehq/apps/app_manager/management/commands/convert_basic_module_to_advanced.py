@@ -52,7 +52,7 @@ class Command(BaseCommand):
         module.doc_type = 'AdvancedModule'
 
         forms = []
-        for form in module.forms:
+        for form in module.get_forms():
             # https://github.com/dimagi/commcare-hq/blob/271ab9346745e7a8a4d647db66dc959fbb9f8159/corehq/apps/app_manager/models.py#L3182
             assert isinstance(form, Form)
             new_form = AdvancedForm(
@@ -147,7 +147,7 @@ class Command(BaseCommand):
         # update xml
         app = get_current_app(domain, app_id)
         module = app.get_module_by_unique_id(module_id)
-        for form in module.forms:
+        for form in module.get_forms():
             real_form = app.get_form(form.unique_id)
             if form.xmlns in (DUE_LIST_XMLNS, IMMUNIZATION_XMLNS):
                 new_form_source = form.source.replace(

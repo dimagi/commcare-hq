@@ -549,7 +549,7 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
 
                 modules_with_old_case_type_exist |= mod.case_type == old_case_type
             for mod in all_advanced_modules:
-                for form in mod.forms:
+                for form in mod.get_forms():
                     for action in form.actions.get_load_update_actions():
                         if action.case_type == old_case_type and action.details_module == module_unique_id:
                             action.case_type = case_type

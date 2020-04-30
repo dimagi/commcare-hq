@@ -140,8 +140,8 @@ class Command(BaseCommand):
             logger.info("%smigrating %s/%s: (%s) version diff=%s",
                 self.dry, app.domain, app.id, copy.version, app.version - copy.version)
             old_forms = {form.unique_id: form
-                for module in copy.modules if module.module_type == 'basic'
-                for form in module.forms if form.doc_type == 'Form'}
+                for module in copy.get_modules() if module.module_type == 'basic'
+                for form in module.get_forms() if form.doc_type == 'Form'}
             for module, new_form, form_ix in iter_forms(app):
                 old_form = old_forms.get(new_form.unique_id)
                 if old_form is None:
@@ -169,7 +169,7 @@ USERPROP_PREFIX = (
 def iter_forms(app):
     modules = [m for m in enumerate(app.get_modules()) if m[1].module_type == 'basic']
     for modi, module in modules:
-        forms = [f for f in enumerate(module.forms) if f[1].doc_type == 'Form']
+        forms = [f for f in enumerate(module.get_forms()) if f[1].doc_type == 'Form']
         for formi, form in forms:
             yield module, form, "%s/%s" % (modi, formi)
 
@@ -326,4 +326,4 @@ def migrate_preloads(app, form, preload_items, form_ix, dry):
 def should_migrate_usercase(app, migrate_usercase):
     return migrate_usercase and any(form.actions.usercase_preload.preload
         for module in app.get_modules() if module.module_type == 'basic'
-        for form in module.forms if form.doc_type == 'Form')
+        for form in module.get_forms() if form.doc_type == 'Form')

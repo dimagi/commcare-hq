@@ -439,7 +439,7 @@ class CaseListFormWorkflow(object):
         """
         ids_on_stack = stack_frames.ids_on_stack
         command = None
-        if len(target_module.forms):
+        if len(target_module.get_forms()):
             command = id_strings.form_command(target_module.get_form(0))
         elif target_module.case_list and target_module.case_list.show:
             command = id_strings.case_list_command(target_module)
