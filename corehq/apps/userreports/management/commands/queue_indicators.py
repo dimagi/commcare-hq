@@ -10,10 +10,9 @@ class Command(BaseCommand):
     help = "Queue all of the docs in the async indicators table for a given datasource"
 
     def add_arguments(self, parser):
-        parser.add_argument('data_source_id' help='id of data source to queue')
+        parser.add_argument('data_source_id', help='id of data source to queue')
         parser.add_argument('--agg-queue', dest='use_agg_queue', action='store_true'
-                            help='Use the aggregation queue instead of the async UCR queue to avoid competing with normal async UCR processing'
-        )
+                            help='Use the aggregation queue instead of the async UCR queue to avoid competing with normal async UCR processing')
 
     def handle(self, data_source_ids, use_agg_queue, **options):
         indicators = AsyncIndicator.objects.filter(indicator_config_ids__contains=[data_source_id])
