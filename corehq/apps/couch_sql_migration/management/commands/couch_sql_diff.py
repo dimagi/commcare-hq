@@ -12,26 +12,21 @@ from django.core.management.base import BaseCommand, CommandError
 from django.db.models import Q
 
 from dimagi.utils.chunked import chunked
-from dimagi.utils.couch.database import retry_on_couch_error
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.tzmigration.timezonemigration import MISSING
-from corehq.form_processor.backends.couch.dbaccessors import FormAccessorCouch
-from corehq.form_processor.backends.sql.dbaccessors import (
-    CaseAccessorSQL,
-    FormAccessorSQL,
-)
 from corehq.form_processor.models import XFormInstanceSQL
 from corehq.form_processor.utils import should_use_sql_backend
 from corehq.sql_db.util import paginate_query_across_partitioned_databases
 from corehq.util.log import with_progress_bar
 
-from ...casediff import diffs_to_changes, get_couch_cases
+from ...casediff import diffs_to_changes
 from ...casedifftool import do_case_diffs, do_case_patch, format_diffs, get_migrator
 from ...casepatch import PatchForm
 from ...couchsqlmigration import setup_logging
 from ...diff import filter_case_diffs, filter_form_diffs
 from ...missingdocs import MissingIds
+from ...retrydb import get_couch_cases, get_couch_forms, get_sql_cases, get_sql_forms
 from ...rewind import IterationState
 from ...statedb import Change, Counts, StateDB, open_state_db
 
@@ -263,7 +258,7 @@ class Command(BaseCommand):
         select = self.get_select_kwargs()
         if select and select["kind"] in MissingIds.form_types:
             def get_sql_docs(ids):
-                return {f.form_id: f for f in FormAccessorSQL.get_forms(ids)}
+                return {f.form_id: f for f in get_sql_forms(ids)}
 
             def get_couch_docs(ids):
                 return {f.form_id: f for f in get_couch_forms(ids)}
@@ -271,7 +266,7 @@ class Command(BaseCommand):
             filter_diffs = filter_form_diffs
         elif select and select["kind"] in MissingIds.case_types:
             def get_sql_docs(ids):
-                return {c.case_id: c for c in CaseAccessorSQL.get_cases(ids)}
+                return {c.case_id: c for c in get_sql_cases(ids)}
 
             def get_couch_docs(ids):
                 return {c.case_id: c for c in get_couch_cases(ids)}
@@ -521,11 +516,6 @@ def get_form_related(form_ids):
     }
 
 
-@retry_on_couch_error
-def get_couch_forms(form_ids):
-    return FormAccessorCouch.get_forms(form_ids)
-
-
 def iter_patch_form_diffs(domain, *, kind=None, doc_ids=None, by_kind=None):
     if kind:
         if by_kind:
@@ -543,9 +533,9 @@ def iter_patch_form_diffs(domain, *, kind=None, doc_ids=None, by_kind=None):
         case_ids = by_kind.get("cases", [])
         if case_ids:
             # may be inefficient for cases with many forms
-            for case in CaseAccessorSQL.get_cases(case_ids):
+            for case in get_sql_cases(case_ids):
                 form_ids.extend(case.xform_ids)
-        forms = (f for f in FormAccessorSQL.get_forms(form_ids)
+        forms = (f for f in get_sql_forms(form_ids)
                  if f.xmlns == PatchForm.xmlns)
     else:
         # based on iter_form_ids_by_xmlns

@@ -18,16 +18,7 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.tzmigration.timezonemigration import FormJsonDiff as Diff
 from corehq.apps.tzmigration.timezonemigration import MISSING, json_diff
 from corehq.blobs import get_blob_db
-from corehq.form_processor.backends.couch.dbaccessors import (
-    CaseAccessorCouch,
-    FormAccessorCouch,
-)
 from corehq.form_processor.backends.couch.processor import FormProcessorCouch
-from corehq.form_processor.backends.sql.dbaccessors import (
-    CaseAccessorSQL,
-    FormAccessorSQL,
-    LedgerAccessorSQL,
-)
 from corehq.form_processor.exceptions import MissingFormXml, XFormNotFound
 from corehq.form_processor.parsers.ledgers.form import (
     get_all_stock_report_helpers_from_form,
@@ -37,8 +28,15 @@ from corehq.util.metrics import metrics_counter
 from .diff import filter_case_diffs, filter_ledger_diffs
 from .diffrule import ANY
 from .rebuildcase import rebuild_and_diff_cases
+from .retrydb import (
+    couch_form_exists,
+    get_couch_form,
+    get_sql_cases,
+    get_sql_forms,
+    get_sql_ledger_values,
+    sql_form_exists,
+)
 from .statedb import Change
-from .util import retry_on_sql_error
 
 log = logging.getLogger(__name__)
 
@@ -85,7 +83,7 @@ def diff_cases(couch_cases, log_cases=False):
     dd_count = partial(metrics_counter, tags={"domain": get_domain()})
     case_ids = list(couch_cases)
     sql_case_ids = set()
-    for sql_case in CaseAccessorSQL.get_cases(case_ids):
+    for sql_case in get_sql_cases(case_ids):
         case_id = sql_case.case_id
         sql_case_ids.add(case_id)
         couch_case, diffs, changes = diff_case(sql_case, couch_cases[case_id], dd_count)
@@ -184,7 +182,7 @@ def diff_ledgers(case_ids, dd_count):
     sql_refs = set()
     all_diffs = []
     all_changes = []
-    for ledger_value in LedgerAccessorSQL.get_ledger_values_for_cases(case_ids):
+    for ledger_value in get_sql_ledger_values(case_ids):
         ref = ledger_value.ledger_reference
         sql_refs.add(ref)
         dd_count("commcare.couchsqlmigration.ledger.diffed")
@@ -395,8 +393,8 @@ def diff_case_forms(couch_json, sql_json):
 
 
 def diff_form_state(form_id, *, in_couch=False):
-    in_couch = in_couch or FormAccessorCouch.form_exists(form_id)
-    in_sql = FormAccessorSQL.form_exists(form_id)
+    in_couch = in_couch or couch_form_exists(form_id)
+    in_sql = sql_form_exists(form_id)
     couch_miss = "missing"
     if not in_couch and get_blob_db().metadb.get_for_parent(form_id):
         couch_miss = MISSING_BLOB_PRESENT
@@ -439,7 +437,7 @@ def add_missing_docs(data, couch_cases, sql_case_ids, dd_count):
 
 
 def add_cases_missing_from_couch(data, case_ids):
-    sql_ids = {c.case_id for c in CaseAccessorSQL.get_cases(list(case_ids))}
+    sql_ids = {c.case_id for c in get_sql_cases(list(case_ids))}
     data.doc_ids.extend(case_ids)
     for case_id in case_ids:
         if case_id in sql_ids:
@@ -547,18 +545,3 @@ def should_diff(case):
 
 def get_domain():
     return _diff_state.domain
-
-
-@retry_on_couch_error
-def get_couch_cases(case_ids):
-    return CaseAccessorCouch.get_cases(case_ids)
-
-
-@retry_on_couch_error
-def get_couch_form(form_id):
-    return FormAccessorCouch.get_form(form_id)
-
-
-@retry_on_sql_error
-def get_sql_forms(form_id, **kw):
-    return FormAccessorSQL.get_forms(form_id, **kw)

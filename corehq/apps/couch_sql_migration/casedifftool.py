@@ -15,7 +15,6 @@ from corehq.util.log import with_progress_bar
 from .casediff import (
     add_cases_missing_from_couch,
     diff_cases,
-    get_couch_cases,
     global_diff_state,
     make_result_saver,
     should_diff,
@@ -27,7 +26,8 @@ from .couchsqlmigration import (
 )
 from .parallel import Pool
 from .progress import MigrationStatus, get_couch_sql_migration_status
-from .util import get_ids_from_string_or_file, retry_on_sql_error
+from .retrydb import get_couch_cases
+from .util import get_ids_from_string_or_file
 
 try:
     import ipdb as pdb
@@ -246,16 +246,11 @@ def load_and_diff_cases(case_ids, log_cases=False):
         skipped = {c.case_id for c in couch_cases} - cases_to_diff.keys()
         if skipped:
             log.info("skipping cases modified since cutoff date: %s", skipped)
-    data = diff_cases_with_retry(cases_to_diff, log_cases=log_cases)
+    data = diff_cases(cases_to_diff, log_cases=log_cases)
     if len(set(case_ids)) > len(couch_cases):
         missing_ids = set(case_ids) - {c.case_id for c in couch_cases}
         add_cases_missing_from_couch(data, missing_ids)
     return data
-
-
-@retry_on_sql_error
-def diff_cases_with_retry(*args, **kw):
-    return diff_cases(*args, **kw)
 
 
 def iter_sql_cases_with_sorted_transactions(domain):
