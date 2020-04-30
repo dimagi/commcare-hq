@@ -37,7 +37,8 @@ class Migration(migrations.Migration):
                 ('choices', django.contrib.postgres.fields.jsonb.JSONField(default=list, null=True)),
                 ('regex', models.CharField(max_length=127, null=True)),
                 ('regex_msg', models.CharField(max_length=255, null=True)),
-                ('definition', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='custom_data_fields.SQLCustomDataFieldsDefinition')),
+                ('definition', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE,
+                                                 to='custom_data_fields.SQLCustomDataFieldsDefinition')),
             ],
             options={
                 'db_table': 'custom_data_fields_field',
