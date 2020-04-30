@@ -17,13 +17,13 @@ class Migration(migrations.Migration):
             name='reason',
             field=models.CharField(
                 choices=[
-                    ('MANUAL', 'manual'),
-                    ('SALESFORCE', 'via Salesforce'),
-                    ('INVOICE', 'invoice generated'),
-                    ('LINE_ITEM', 'line item generated'),
-                    ('TRANSFER', 'transfer from another credit line'),
-                    ('DIRECT_PAYMENT', 'payment from client received'),
+                    ('MANUAL', 'Manual'),
                     ('FRIENDLY_WRITE_OFF', 'Friendly Write-Off'),
+                    ('SALESFORCE', 'via Salesforce'),
+                    ('INVOICE', 'Invoice-generated'),
+                    ('LINE_ITEM', 'Line Item generated'),
+                    ('TRANSFER', 'Transfer from another credit line'),
+                    ('DIRECT_PAYMENT', 'Payment from client received'),
                 ],
                 default='MANUAL',
                 max_length=25
