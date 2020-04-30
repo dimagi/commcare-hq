@@ -68,8 +68,10 @@ def remove_from_queue(queued_sms):
     sms.publish_change()
 
     tags = {'backend': sms.backend_api}
-    if isinstance(sms.custom_metadata, dict):
-        tags.update(sms.custom_metadata)
+    if isinstance(sms.custom_metadata, dict) and 'icds_indicator' in sms.custom_metadata:
+        tags.update({
+            'icds_indicator': sms.custom_metadata['icds_indicator']
+        })
     if sms.direction == OUTGOING and sms.processed and not sms.error:
         create_billable_for_sms(sms)
         metrics_counter('commcare.sms.outbound_succeeded', tags=tags)
