@@ -34,7 +34,7 @@ def state_details():
                 ON (
                 awc.supervisor_id = l.supervisor_id
                 AND l.aggregation_level=awc.aggregation_level )
-            WHERE l.month='2020-04-01' AND l.aggregation_level=4 AND awc.supervisor_is_test<>1
+            WHERE l.month='2020-04-01' AND l.aggregation_level=4 AND awc.supervisor_is_test<>1 AND awc.state_is_test<>1
         """
     return _run_custom_sql_script(query)
 
@@ -123,7 +123,7 @@ class Command(BaseCommand):
                 location[3],
                 location[4],
                 0,
-                []
+                set
             ]
             fast_rows.update({location[2]: row})
         query = FormES().domain('icds-cas').xmlns(
@@ -135,13 +135,13 @@ class Command(BaseCommand):
             supervisor_id = user_location_details[form['form']['case']['@user_id']]
             awc_selected_name = form['form']['awc_selected_name']
             fast_rows[supervisor_id][3] = fast_rows[supervisor_id][3] + 1
-            fast_rows[supervisor_id][4].append(awc_selected_name)
+            fast_rows[supervisor_id][4].add(awc_selected_name)
             if count % 1000 == 0:
                 print(f"{count} forms processed ======\n")
             count = count + 1
 
         for key, value in fast_data_rows.items():
-            value[4] = len(set(value[4]))
+            value[4] = len(value[4])
             data_rows = data_rows + [value]
         fout = open('/home/cchq/LS_data_vhnsd.csv', 'w')
         writer = csv.writer(fout)

@@ -29,6 +29,8 @@ CREATE TABLE "temp_visit_table" AS (
 -- (13 rows)
 
 
+
+
 SELECT
     t.state_name,
     t.supervisor_name,
@@ -40,18 +42,18 @@ SELECT
         WHEN awc.num_awcs = ucr.unique_visits THEN 'YES'
         ELSE 'NO'
     END as all_visited
-    FROM "agg_awc_2020-04-01_4" awc
+    FROM "agg_ls" al
     LEFT JOIN "temp_visit_table" ucr
         ON awc.supervisor_id = ucr.supervisor_id
     LEFT JOIN "awc_location_local" t
         ON (t.supervisor_id = awc.supervisor_id
         AND t.aggregation_level=awc.aggregation_level
         AND t.aggregation_level=4)
-    LEFT JOIN "agg_ls" al
+    LEFT JOIN "agg_awc_2020-04-01_4" awc
         ON (
             awc.supervisor_id = al.supervisor_id
-            AND al.aggregation_level=awc.aggregation_level AND al.aggregation_level=4 AND al.month='2020-04-01')
-    WHERE awc.state_is_test<>1 AND awc.supervisor_is_test<>1;
+            AND al.aggregation_level=awc.aggregation_level AND awc.aggregation_level=4 AND awc.month='2020-04-01')
+    WHERE al.state_is_test<>1 AND al.supervisor_is_test<>1;
 -- QUERY PLAN
 -- ------------------------------------------------------------------------------------------------------------------------------------
 --  Hash Right Join  (cost=7269.36..19669.66 rows=26789 width=115)
