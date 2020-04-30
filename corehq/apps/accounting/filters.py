@@ -17,6 +17,7 @@ from corehq.apps.accounting.async_handlers import (
     SoftwarePlanAsyncHandler,
     SubscriberFilterAsyncHandler,
     SubscriptionFilterAsyncHandler,
+    CustomerInvoiceNumberAsyncHandler,
 )
 from corehq.apps.accounting.models import (
     BillingAccountType,
@@ -413,6 +414,14 @@ class InvoiceNumberFilter(BaseAccountingSingleOptionFilter):
     default_text = 'All'
     async_handler = InvoiceNumberAsyncHandler
     async_action = 'invoice_number'
+
+
+class CustomerInvoiceNumberFilter(BaseAccountingSingleOptionFilter):
+    slug = 'customer_invoice_number'
+    label = 'Customer Invoice Number'
+    default_text = 'All'
+    async_handler = CustomerInvoiceNumberAsyncHandler
+    async_action = 'customer_invoice_number'
 
 
 class InvoiceBalanceFilter(BaseAccountingSingleOptionFilter):
