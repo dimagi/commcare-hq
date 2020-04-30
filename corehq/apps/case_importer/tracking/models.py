@@ -3,6 +3,8 @@ from django.db import models
 from jsonfield import JSONField
 from memoized import memoized
 
+from dimagi.utils.logging import notify_exception
+from soil.progress import STATES
 from soil.util import get_task
 
 from corehq.apps.case_importer.tracking.task_status import (
@@ -45,7 +47,16 @@ class CaseUploadRecord(models.Model):
         else:
             return get_task_status_json(str(self.task_id))
 
-    def set_task_status_json_if_finished(self):
+    def set_task_status_json(self, task_status_json):
+        if self.task_status_json is not None:
+            notify_exception(None, "CaseUploadRecord task_status_json already set", {
+                'new_task_status_json': task_status_json,
+                'existing_task_status_json': self.task_status_json,
+                'upload_id': self.upload_id,
+            })
+        self.task_status_json = task_status_json
+
+    def set_task_status_json_if_failed(self):
         """
         set task_status_json based on self.task_id
 
@@ -55,7 +66,7 @@ class CaseUploadRecord(models.Model):
         if self.task_status_json is None:
             # intentionally routing through method to prime local cache
             task_status_json = self.get_task_status_json()
-            if task_status_json.is_finished():
+            if task_status_json.state == STATES.failed:
                 self.task_status_json = task_status_json
                 return True
 

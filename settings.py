@@ -1630,6 +1630,8 @@ AVAILABLE_CUSTOM_RULE_CRITERIA = {
         'custom.icds.rules.custom_criteria.ccs_record_case_has_future_edd',
     'ICDS_CCS_RECORD_CASE_CHILD_AVAILING_SERVICES':
         'custom.icds.rules.custom_criteria.ccs_record_case_is_availing_services',
+    'ICDS_CHILD_HEALTH_CASE_CHILD_AVAILING_SERVICES':
+        'custom.icds.rules.custom_criteria.child_health_case_is_availing_services',
     'ICDS_IS_USERCASE_OF_AWW':
         'custom.icds.rules.custom_criteria.is_usercase_of_aww',
     'ICDS_IS_USERCASE_OF_LS':
