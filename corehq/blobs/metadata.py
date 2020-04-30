@@ -39,6 +39,8 @@ class MetaDB(object):
             raise TypeError("domain is required")
         if not meta.parent_id:
             raise TypeError("parent_id is required")
+        if not isinstance(meta.parent_id, str):
+            raise TypeError("parent_id must be a string")
         if meta.type_code is None:
             raise TypeError("type_code is required")
         if timeout is not None:
