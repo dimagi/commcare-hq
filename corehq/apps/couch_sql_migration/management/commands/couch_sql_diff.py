@@ -3,7 +3,9 @@ import json
 import logging
 import os
 import sys
+from bdb import BdbQuit
 from collections import defaultdict
+from contextlib import suppress
 from itertools import groupby
 from xml.sax.saxutils import unescape
 
@@ -29,10 +31,17 @@ from ...missingdocs import MissingIds
 from ...retrydb import get_couch_cases, get_couch_forms, get_sql_cases, get_sql_forms
 from ...rewind import IterationState
 from ...statedb import Change, Counts, StateDB, open_state_db
+from ...util import get_ids_from_string_or_file
+
+try:
+    import ipdb as pdb
+except ImportError:
+    import pdb
 
 log = logging.getLogger(__name__)
 
 CASES = "cases"
+FORMS = "forms"
 PATCH = "patch"
 SHOW = "show"
 FILTER = "filter"
@@ -46,8 +55,9 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('domain')
-        parser.add_argument('action', choices=[CASES, PATCH, SHOW, FILTER], help="""
+        parser.add_argument('action', choices=[CASES, FORMS, PATCH, SHOW, FILTER], help="""
             "cases": diff cases.
+            "forms": diff forms.
             "patch": patch cases with diffs.
             "show": print diffs.
             "filter": filter diffs, removing ones that would normally be
@@ -159,6 +169,12 @@ class Command(BaseCommand):
         setup_logging(self.state_path, "case_diff", self.debug)
         migrator = get_migrator(domain, self.state_path)
         return do_case_diffs(migrator, self.select, self.stop, self.batch_size)
+
+    def do_forms(self, domain):
+        """Diff cases"""
+        setup_logging(self.state_path, "case_diff", self.debug)
+        migrator = get_migrator(domain, self.state_path)
+        do_form_diffs(migrator, self.select, self.stop)
 
     def do_patch(self, domain):
         setup_logging(self.state_path, "case_patch", self.debug)
@@ -404,6 +420,18 @@ class Command(BaseCommand):
             delete(MissingDoc, "CommCareCase-couch")
             delete_all(CaseToDiff)
             delete_all(DiffedCase)
+
+
+def do_form_diffs(migrator, select, stop):
+    if select == "with-diffs":
+        form_ids = (form_id for x, form_id, x in
+            migrator.statedb.iter_doc_diffs(kind="XFormInstance"))
+    else:
+        form_ids = get_ids_from_string_or_file(select)
+    with suppress(BdbQuit):
+        if stop:
+            pdb.set_trace()
+        migrator._rediff_already_migrated_forms(form_ids)
 
 
 def format_doc_diffs(doc_diffs, csv=False, changes=None, stream=sys.stdout):
