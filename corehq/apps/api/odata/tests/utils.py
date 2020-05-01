@@ -15,18 +15,12 @@ from corehq.apps.accounting.models import (
     SubscriptionAdjustment,
 )
 from corehq.apps.domain.models import Domain
-from corehq.apps.export.const import PROPERTY_TAG_CASE
 from corehq.apps.export.models import (
-    FormExportDataSchema,
-    ExportGroupSchema,
-    MAIN_TABLE,
     PathNode,
     ExportItem,
-    CaseExportDataSchema,
-    ScalarItem,
     FormExportInstance,
     CaseExportInstance,
-)
+    ExportColumn, TableConfiguration)
 from corehq.apps.users.models import WebUser
 from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
@@ -47,8 +41,6 @@ class OdataTestMixin(object):
         cls._setup_user_permissions()
         cls.app_id = '1234'
         cls.instance = cls.get_instance(cls.domain.name)
-        cls.instance.is_odata_config = True
-        cls.instance.transform_dates = False
         cls.instance.save()
 
     @classmethod
@@ -77,8 +69,8 @@ class OdataTestMixin(object):
         cls.web_user.set_role(cls.domain.name, 'admin')
         cls.web_user.save()
 
-    def _execute_query(self, credentials):
-        return self.client.get(self.view_url, HTTP_AUTHORIZATION='Basic ' + credentials)
+    def _execute_query(self, credentials, view_url=None):
+        return self.client.get(view_url or self.view_url, HTTP_AUTHORIZATION='Basic ' + credentials)
 
     @classmethod
     def _get_correct_credentials(cls):
@@ -97,58 +89,63 @@ class CaseOdataTestMixin(OdataTestMixin):
 
     @classmethod
     def get_instance(cls, domain_name):
-        return CaseExportInstance.generate_instance_from_schema(
-            CaseExportDataSchema(
-                domain=domain_name,
-                group_schemas=[
-                    ExportGroupSchema(
-                        path=MAIN_TABLE,
-                        items=[
-                            ScalarItem(
-                                path=[PathNode(name='p1')],
-                                label='p1',
-                                last_occurrences={},
-                            ),
-                        ],
-                        last_occurrences={cls.app_id: 3},
-                    ),
-                ],
-            ))
+        return CaseExportInstance(
+            domain=domain_name,
+            is_odata_config=True,
+            transform_dates=False,
+            tables=[
+                TableConfiguration(
+                    selected=True,
+                    columns=[
+                        ExportColumn(label='closed', selected=True,
+                                     # this is what exports generate for a base level property
+                                     item=ExportItem(
+                                         path=[PathNode(name='closed')])),
+                        ExportColumn(label='date_modified', selected=True,
+                                     item=ExportItem(path=[
+                                         PathNode(name='date_modified')])),
+                        ExportColumn(label='selected_property_1',
+                                     selected=True),
+                        ExportColumn(label='selected_property_2',
+                                     selected=True),
+                        ExportColumn(label='unselected_property'),
+                    ],
+                ),
+            ]
+        )
 
 
 class FormOdataTestMixin(OdataTestMixin):
 
     @classmethod
     def get_instance(cls, domain_name):
-        return FormExportInstance.generate_instance_from_schema(
-            FormExportDataSchema(
-                domain=domain_name,
-                group_schemas=[
-                    ExportGroupSchema(
-                        path=MAIN_TABLE,
-                        items=[
-                            ExportItem(
-                                path=[PathNode(name='data'), PathNode(name='question1')],
-                                label='Question 1',
-                                last_occurrences={
-                                    cls.app_id: 3,
-                                },
-                            ),
-                            ExportItem(
-                                path=[PathNode(name='data'), PathNode(name='@case_id')],
-                                label='@case_id',
-                                tag=PROPERTY_TAG_CASE,
-                                last_occurrences={
-                                    cls.app_id: 3,
-                                },
-                            )
-                        ],
-                        last_occurrences={
-                            cls.app_id: 3,
-                        },
-                    ),
-                ],
-            ))
+        return FormExportInstance(
+            domain=domain_name,
+            is_odata_config=True,
+            transform_dates=False,
+            tables=[
+                TableConfiguration(
+                    selected=True,
+                    columns=[
+                        ExportColumn(label='received_on', selected=True,
+                                     item=ExportItem(
+                                         path=[PathNode(name='received_on')])),
+                        ExportColumn(label='started_time', selected=True,
+                                     item=ExportItem(path=[
+                                         PathNode(name='form'),
+                                         PathNode(name='meta'),
+                                         PathNode(name='timeStart'),
+                                     ])),
+
+                        ExportColumn(label='selected_property_1',
+                                     selected=True),
+                        ExportColumn(label='selected_property_2',
+                                     selected=True),
+                        ExportColumn(label='unselected_property'),
+                    ],
+                ),
+            ]
+        )
 
 
 def generate_api_key_from_web_user(web_user):
