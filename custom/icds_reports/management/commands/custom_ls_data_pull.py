@@ -130,12 +130,18 @@ class Command(BaseCommand):
             'http://openrosa.org/formdesigner/b8273b657bb097eb6ba822663b7191ff6bc276ff').submitted(
             gte=datetime(2020, 4, 1), lt=datetime(2020, 5, 1))
         forms_list = query.run().hits
+        users = []
+        for form in forms_list:
+            users.append(form['form']['case']['@user_id'])
+        user_location_details = self.get_users(users)
         count = 0
+        supervisor_ids = [location[3] for location in location_details]
         for form in forms_list:
             supervisor_id = user_location_details[form['form']['case']['@user_id']]
             awc_selected_name = form['form']['awc_selected_name']
-            fast_rows[supervisor_id][3] = fast_rows[supervisor_id][3] + 1
-            fast_rows[supervisor_id][4].add(awc_selected_name)
+            if supervisor_id in supervisor_ids:
+                fast_rows[supervisor_id][3] = fast_rows[supervisor_id][3] + 1
+                fast_rows[supervisor_id][4].add(awc_selected_name)
             if count % 1000 == 0:
                 print(f"{count} forms processed ======\n")
             count = count + 1
