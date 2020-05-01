@@ -193,18 +193,17 @@ class Parser(object):
         """
         return unique valid operation for rows
         """
-        operations = [row.operation for row in rows]
-        unique_operations = set(operations)
+        unique_operations = {row.operation for row in rows}
         if len(unique_operations) > 1:
             self.errors.append(f"Different operations requested for {site_code}: {','.join(unique_operations)}")
             return None
-        operation = operations[0]
+        operation = rows[0].operation
 
-        if len(operations) > 1 and operation not in [MERGE_OPERATION, SPLIT_OPERATION]:
-            self.errors.append(f"Multiple {operation} operations for {site_code}")
+        if len(rows) > 1 and operation not in [MERGE_OPERATION, SPLIT_OPERATION]:
+            self.errors.append(f"Multiple {operation} rows for {site_code}")
             return None
-        if not len(operations) > 1 and operation in [MERGE_OPERATION, SPLIT_OPERATION]:
-            self.errors.append(f"Expected multiple transitions for {operation} for {site_code}")
+        if not len(rows) > 1 and operation in [MERGE_OPERATION, SPLIT_OPERATION]:
+            self.errors.append(f"Expected multiple rows for {operation} for {site_code}")
             return None
         return operation
 
