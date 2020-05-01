@@ -664,18 +664,17 @@ class CouchSqlDomainMigrator:
         assert sql_case.xform_ids, case_id
         sql_forms = {f.form_id: f for f in get_sql_forms(sql_case.xform_ids)}
         form_pairs = []
+        normal_forms = []
         for couch_form in get_couch_forms(sql_case.xform_ids):
             if (couch_form.initial_processing_complete
                     and not getattr(couch_form, "problem", None)
                     and couch_form.doc_type == "XFormInstance"):
-                log.warning("refusing to delete case %s for normal Couch form %s",
-                    case_id, couch_form.form_id)
-                return
+                normal_forms.append(couch_form.form_id)
+                continue
             try:
                 sql_form = sql_forms[couch_form.form_id]
             except KeyError:
-                log.warning("refusing to delete case %s: form not in SQL %s",
-                    case_id, couch_form.form_id)
+                log.error("case %s: form not in SQL %s", case_id, couch_form.form_id)
                 return
             form_pairs.append((couch_form, sql_form))
         all_case_ids = set()
@@ -697,12 +696,16 @@ class CouchSqlDomainMigrator:
             case_ids = get_case_ids(sql_form)
             self.case_diff_queue.update(case_ids, couch_form.form_id)
             all_case_ids.update(case_ids)
-        if case_id in all_case_ids:
+        if normal_forms:
+            log.info("soft-deleting case %s with normal or missing forms %s",
+                case_id, normal_forms)
+            CaseAccessorSQL.soft_delete_cases(self.domain, [case_id])
+        elif case_id in all_case_ids:
             log.info("deleting SQL case missing in Couch: %s forms=%s",
                 case_id, sql_case.xform_ids)
             CaseAccessorSQL.hard_delete_cases(self.domain, [case_id])
         else:
-            log.warning("refusing to delete case %s: form not found", case_id)
+            log.warning("refusing to delete case %s: form not found?", case_id)
 
     def _check_for_migration_restrictions(self, domain_name):
         msgs = []

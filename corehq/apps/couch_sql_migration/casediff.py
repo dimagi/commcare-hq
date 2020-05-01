@@ -437,11 +437,15 @@ def add_missing_docs(data, couch_cases, sql_case_ids, dd_count):
 
 
 def add_cases_missing_from_couch(data, case_ids):
-    sql_ids = {c.case_id for c in get_sql_cases(list(case_ids))}
+    sql_cases = {c.case_id: c for c in get_sql_cases(list(case_ids))}
     data.doc_ids.extend(case_ids)
     for case_id in case_ids:
-        if case_id in sql_ids:
+        if case_id in sql_cases:
             new = "present"
+            if sql_cases[case_id].deleted:
+                miss = Diff("missing", path=["*"], old_value=MISSING, new_value=new)
+                data.diffs.append(("CommCareCase-Deleted", case_id, [miss]))
+                new = None
         else:
             forms = find_processed_and_unmigrated_form_ids(case_id)
             new = f"missing with forms {forms}" if forms else None
