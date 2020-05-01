@@ -1886,6 +1886,10 @@ def ag_pre_queries(agg_date):
     helper.create_temporary_prev_table('static-person_cases_v3', 'person_case_id')
 
 
+def awc_infra_pre_queries(agg_date):
+    TempInfraTables().make_all_tables(agg_date)
+
+
 def update_governance_dashboard(target_date):
     current_month = target_date.replace(day=1)
     _agg_governance_dashboard.delay(current_month)
