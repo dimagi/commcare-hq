@@ -24,16 +24,20 @@ class Command(BaseCommand):
         web_users = WebUser.by_domain('icds-cas')
         print(f"==========={len(users)} Web Users======\n")
         usernames = []
+        users_created_time = {}
         for user in users:
             if ((len(user.assigned_location_ids)==0 or 'cpmu' in user.username.lower() ) and user.has_permission('icds-cas', 'access_all_locations')):
                 usernames.append(user.username)
+                users_created_time.update({ user.username: user.created_on })
         for user in web_users:
             if ((len(user.assigned_location_ids)==0 or 'cpmu' in user.username.lower() ) and user.has_permission('icds-cas', 'access_all_locations')):
                 usernames.append(user.username)
+                if user.username not in  users_created_time.keys():
+                    users_created_time.update({ user.username: user.created_on })
         usernames = list(set(usernames))
         print(f"==========={len(usernames)} Unique national users======\n")
         chunk_size = 100
-        headers = ["username", "time"]
+        headers = ["username", "last_access_time", "created_on"]
         rows = [headers]
         usernames_usage = []
         for user_chunk in chunked(usernames, chunk_size):
@@ -42,12 +46,13 @@ class Command(BaseCommand):
             for usage in usage_data:
                 row_data = [
                     usage['username'],
-                    self.convert_to_ist(usage['time'])
+                    self.convert_to_ist(usage['time']),
+                    self.convert_to_ist(users_created_time[usage['username']])
                 ]
                 usernames_usage.append(usage['username'])
                 rows.append(row_data)
         users_not_logged_in = set(usernames) - set(usernames_usage)
-        rows.extend([[user, 'N/A'] for user in users_not_logged_in])
+        rows.extend([[user, 'N/A', self.convert_to_ist(users_created_time[usage['username']])] for user in users_not_logged_in])
         print(f"===========Total rows of {len(rows)}======\n")
         fout = open('/home/cchq/National_users_data.csv', 'w')
         writer = csv.writer(fout)
