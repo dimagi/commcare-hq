@@ -64,8 +64,9 @@ class Transition(object):
         new_locations_created = self._create_missing_new_locations()
         self.operation_obj.new_locations.extend(new_locations_created)
         self.operation_obj.perform()
-        for old_location in self.operation_obj.old_locations:
-            deactivate_users_at_location(old_location.location_id)
+        if self.operation != EXTRACT_OPERATION:
+            for old_location in self.operation_obj.old_locations:
+                deactivate_users_at_location(old_location.location_id)
         for old_username, new_username in self.user_transitions.items():
             update_usercase.delay(self.domain, old_username, new_username)
 
