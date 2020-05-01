@@ -56,7 +56,7 @@ class TestProcessor(TestCase):
                             'lgd_code': 'LGD 13'
                         }
                     }}
-                ],
+            ],
             'state': []
         }
 
