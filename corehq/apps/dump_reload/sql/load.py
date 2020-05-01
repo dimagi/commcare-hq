@@ -52,7 +52,9 @@ class SqlDataLoader(DataLoader):
             line = line.strip()
             if not line:
                 continue
-            chunk.append(json.loads(line))
+            obj = json.loads(line)
+            if self.filter_object(obj):
+                chunk.append(obj)
             if len(chunk) >= 1000:
                 _process_chunk(chunk)
                 chunk = []
@@ -68,6 +70,12 @@ class SqlDataLoader(DataLoader):
             loaded_model_counts.update(model_labels)
 
         return sum(total_object_counts), loaded_model_counts
+
+    def filter_object(self, object):
+        if not self.object_filter:
+            return True
+        model_label = object['model']
+        return self.object_filter.findall(model_label)
 
 
 def _reset_sequences(load_stats):

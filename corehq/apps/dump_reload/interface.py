@@ -1,5 +1,6 @@
 import gzip
 import os
+import re
 import sys
 import warnings
 from abc import ABCMeta, abstractmethod, abstractproperty
@@ -32,9 +33,10 @@ class DataDumper(metaclass=ABCMeta):
 
 
 class DataLoader(metaclass=ABCMeta):
-    def __init__(self, stdout=None, stderr=None):
+    def __init__(self, object_filter=None, stdout=None, stderr=None):
         self.stdout = stdout or sys.stdout
         self.stderr = stderr or sys.stderr
+        self.object_filter = re.compile(object_filter, re.IGNORECASE) if object_filter else None
 
     @abstractproperty
     def slug(self):
