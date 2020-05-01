@@ -92,7 +92,7 @@ class Command(BaseCommand):
                 ]
                 fast_data_rows.update({f"{location[2]}_vhnd_day_{visit}": row})
         count = 0
-        supervisor_ids = [location[3] for location in location_details]
+        supervisor_ids = [location[2] for location in location_details]
         for form in forms_list:
             supervisor_id = user_location_details[form['form']['case']['@user_id']]
             m_type = form['form']['meeting_type']
@@ -135,7 +135,7 @@ class Command(BaseCommand):
             users.append(form['form']['case']['@user_id'])
         user_location_details = self.get_users(users)
         count = 0
-        supervisor_ids = [location[3] for location in location_details]
+        supervisor_ids = [location[2] for location in location_details]
         for form in forms_list:
             supervisor_id = user_location_details[form['form']['case']['@user_id']]
             awc_selected_name = form['form']['awc_selected_name']
