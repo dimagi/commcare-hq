@@ -42,7 +42,7 @@ class IncrementalExportStatus(object):
 
     @staticmethod
     def from_log_entry(entry):
-        if entry.response_status == 200:
+        if entry.response_status in (200, 201):
             return IncrementalExportStatus.SUCCESS
         else:
             return IncrementalExportStatus.FAILURE
