@@ -43,7 +43,7 @@ class TransitionRow(object):
             b. If its a valid operation
                 i. there should be both old and new location codes
                 ii. there should be a change in old and new location codes
-                iii. there should be both old and new usernames or none
+                iii. there should be both old and new usernames or neither
                 iv. there should be a new parent site code where expected
                 v. there should be no new parent site code where not expected
         """
@@ -92,7 +92,7 @@ class Parser(object):
         self.workbook = workbook
 
         # For consolidated validations
-        # maintain a map of all transitions being performed by any site code
+        # maintain a list of all site codes undergoing a transition
         self.transiting_site_codes = set()
         # maintain a list of valid site codes to be deprecated i.e all old site codes
         self.site_codes_to_be_deprecated = set()
@@ -180,7 +180,7 @@ class Parser(object):
                 transition = self._consolidated_transition(location_type_code, operation, rows)
                 if not transition:
                     continue
-                if self._valid_transition(transition):
+                if self._is_valid_transition(transition):
                     self.site_codes_to_be_deprecated.update(transition.old_site_codes)
                     self.valid_transitions[location_type_code].append(transition)
 
@@ -225,7 +225,7 @@ class Parser(object):
             )
         return transition
 
-    def _valid_transition(self, transition):
+    def _is_valid_transition(self, transition):
         valid = True
         for old_site_code in transition.old_site_codes:
             if old_site_code in self.transiting_site_codes:
