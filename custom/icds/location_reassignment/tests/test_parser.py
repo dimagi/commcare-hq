@@ -161,10 +161,11 @@ class TestParser(TestCase):
                 "Missing new location name for 134"
             ])
 
+    @patch('custom.icds.location_reassignment.parser.Parser._validate_usernames')
     @patch('custom.icds.location_reassignment.parser.Parser._validate_descendants_deprecated')
     @patch('corehq.apps.locations.models.SQLLocation.active_objects')
     @patch('corehq.apps.locations.models.LocationType.objects')
-    def test_validate_parents(self, location_type_mock, locations_mock, _):
+    def test_validate_parents(self, location_type_mock, locations_mock, *_):
         location_type_mock.by_domain.return_value = self.location_types
         location_type_mock.select_related.return_value.filter.return_value = self.location_types
         locations_mock.select_related.return_value.filter.return_value = [

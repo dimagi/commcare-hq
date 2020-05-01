@@ -3,6 +3,8 @@ from collections import defaultdict
 import attr
 
 from corehq.apps.locations.models import LocationType, SQLLocation
+from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.util import normalize_username
 from custom.icds.location_reassignment.const import (
     AWC_CODE_COLUMN,
     CURRENT_SITE_CODE_COLUMN,
@@ -114,6 +116,8 @@ class Parser(object):
         # a mapping of all TransitionRows passed for each location type
         self.transition_rows = {location_type_code: defaultdict(list)
                                 for location_type_code in location_type_codes_in_hierarchy}
+        # a list of all normalized usernames passed
+        self.usernames = set()
         # a mapping of all valid transitions found
         self.valid_transitions = {location_type_code: []
                                   for location_type_code in location_type_codes_in_hierarchy}
@@ -183,6 +187,11 @@ class Parser(object):
                 if self._is_valid_transition(transition):
                     self.site_codes_to_be_deprecated.update(transition.old_site_codes)
                     self.valid_transitions[location_type_code].append(transition)
+                    for old_username, new_username in transition.user_transitions.items():
+                        if old_username:
+                            self.usernames.add(normalize_username(old_username, self.domain))
+                        if new_username:
+                            self.usernames.add(normalize_username(new_username, self.domain))
 
                 # keep note of transition details for consolidated validations
                 self.transiting_site_codes.update(transition.old_site_codes)
@@ -241,6 +250,7 @@ class Parser(object):
             self._validate_old_locations()
             self._validate_descendants_deprecated()
         self._validate_parents()
+        self._validate_usernames()
 
     def _validate_old_locations(self):
         deprecating_locations_site_codes = (
@@ -309,6 +319,19 @@ class Parser(object):
                 if new_location_details['parent_site_code']:
                     parent_site_codes.add(new_location_details['parent_site_code'])
         return parent_site_codes
+
+    def _validate_usernames(self):
+        keys = [["active", self.domain, "CommCareUser", username] for username in self.usernames]
+        result = CommCareUser.get_db().view(
+            'users/by_domain',
+            keys=keys,
+            reduce=False,
+            include_docs=False
+        ).all()
+        if len(result) != len(self.usernames):
+            usernames_found = set([r['key'][-1] for r in result])
+            usernames_missing = set(self.usernames) - usernames_found
+            self.errors.append(f"Could not find user(s): {', '.join(usernames_missing)}")
 
     def valid_transitions_json(self):
         # return valid transitions as json
