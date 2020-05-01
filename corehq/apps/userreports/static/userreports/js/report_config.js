@@ -153,6 +153,7 @@ hqDefine('userreports/js/report_config', function () {
                 self.isAggregationEnabled = ko.observable(self.reportType() === constants.REPORT_TYPE_TABLE);
 
                 self.selectedChart = ko.observable('none');
+                self.displayChartColumnWarning = ko.observable(false);
                 self.selectedChart.subscribe(function (newValue) {
                     if (newValue === "none") {
                         self.previewChart(false);
@@ -164,10 +165,23 @@ hqDefine('userreports/js/report_config', function () {
                         self.refreshPreview();
                     }
                 });
+                self.areColumnsValidForChart = function () {
+                    var selectedColumnsForReport = self.columnList.columns();
+                    for (var index = 0; index < selectedColumnsForReport.length; index++) {
+                        var column = selectedColumnsForReport[index];
+                        if (column.calculation() === "Average" || column.calculation() === "Sum") {
+                            return true;
+                        }
+                    }
+                    return false;
+                };
                 self.addChart = function () {
-                    self.selectedChart('bar');
-                    hqImport('userreports/js/report_analytix').track.event('Add Chart');
-                    _kmq_track_click('Add Chart');
+                    if (self.areColumnsValidForChart()) {
+                        self.selectedChart('bar');
+                        hqImport('userreports/js/report_analytix').track.event('Add Chart');
+                        _kmq_track_click('Add Chart');
+                    }
+                    self.displayChartColumnWarning(true);
                 };
                 self.removeChart = function () {
                     self.selectedChart('none');

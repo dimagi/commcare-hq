@@ -235,6 +235,11 @@
           </div>
           <div class="panel-body">
 
+            <div class="alert alert-warning" data-bind="visible: displayChartColumnWarning">
+                    {% blocktrans %}
+                      Properties with FORMAT as <strong>Sum</strong> and <strong>Average</strong> show up in bar chart.
+                    {% endblocktrans %}
+            </div>
             <!-- ko if: selectedChart() === 'none' -->
             <div data-bind="fadeVisible: isAggregationEnabled">
               <div class="btn btn-primary" data-bind="click: addChart">{% trans 'Add Chart' %}</div>
