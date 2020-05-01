@@ -64,7 +64,7 @@ class Transition(object):
         new_locations_created = self._create_missing_new_locations()
         self.operation_obj.new_locations.extend(new_locations_created)
         self.operation_obj.perform()
-        if self.operation != EXTRACT_OPERATION:
+        if self.operation.deactivates_old_users:
             for old_location in self.operation_obj.old_locations:
                 deactivate_users_at_location(old_location.location_id)
         for old_username, new_username in self.user_transitions.items():
@@ -114,6 +114,7 @@ class Transition(object):
 
 class BaseOperation(metaclass=ABCMeta):
     type = None
+    deactivates_old_users = True
     expected_old_locations = ONE
     expected_new_locations = ONE
 
@@ -234,6 +235,7 @@ class SplitOperation(BaseOperation):
 
 class ExtractOperation(BaseOperation):
     type = EXTRACT_OPERATION
+    deactivates_old_users = False
 
     def perform(self):
         timestamp = datetime.utcnow()
