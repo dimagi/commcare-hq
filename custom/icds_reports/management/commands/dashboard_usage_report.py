@@ -134,7 +134,7 @@ class Command(BaseCommand):
     def get_cas_data(self, username_state_mapping, start_date, end_date, domain):
         cas_total_counts = self.get_dashboard_cas_usage_counts(start_date, end_date, domain)
         sheet_headers = ['Sr.No', 'State/UT Name',
-                         'No. of times CAS data export downloaded (December 2019)']
+                         f'No. of times CAS data export downloaded ({start_date.strftime("%B %Y")})']
         cas_data = list()
         cas_data_dict = defaultdict(int)
 
