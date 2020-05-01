@@ -31,7 +31,7 @@ CREATE TABLE "temp_visit_table" AS (
 
 
 
-SELECT
+COPY(SELECT
     t.state_name,
     t.supervisor_name,
     t.supervisor_site_code,
@@ -53,7 +53,7 @@ SELECT
         ON (
             awc.supervisor_id = al.supervisor_id
             AND al.aggregation_level=awc.aggregation_level AND awc.aggregation_level=4 AND awc.month='2020-04-01')
-    WHERE t.state_is_test<>1 AND t.supervisor_is_test<>1 AND al.aggregation_level=4;
+    WHERE t.state_is_test<>1 AND t.supervisor_is_test<>1 AND al.aggregation_level=4 AND al.month='2020-04-01') TO '/tmp/ls_data_pull_april.csv' DELIMITER ',' CSV HEADER ENCODING 'UTF-8';
 -- QUERY PLAN
 -- ------------------------------------------------------------------------------------------------------------------------------------
 --  Hash Right Join  (cost=7269.36..19669.66 rows=26789 width=115)

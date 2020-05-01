@@ -146,7 +146,7 @@ class Command(BaseCommand):
                 print(f"{count} forms processed ======\n")
             count = count + 1
 
-        for key, value in fast_data_rows.items():
+        for key, value in fast_rows.items():
             value[4] = len(value[4])
             data_rows = data_rows + [value]
         fout = open('/home/cchq/LS_data_vhnsd.csv', 'w')
