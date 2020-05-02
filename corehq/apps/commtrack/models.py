@@ -18,6 +18,7 @@ from casexml.apps.stock.consumption import (
 from casexml.apps.stock.models import DocDomainMapping
 from couchforms.signals import xform_archived, xform_unarchived
 from dimagi.ext.couchdbkit import *
+from dimagi.utils.couch.migration import SyncCouchToSQLMixin, SyncSQLToCouchMixin, SubmodelSpec
 
 from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
 from corehq.apps.consumption.shortcuts import get_default_monthly_consumption
@@ -40,7 +41,7 @@ STOCK_ACTION_ORDER = [
 ]
 
 
-class SQLCommtrackConfig(models.Model):
+class SQLCommtrackConfig(models.Model, SyncSQLToCouchMixin):
     domain = models.CharField(max_length=126, null=False, db_index=True, unique=True)
     couch_id = models.CharField(max_length=126, null=True, db_index=True)
 
@@ -64,6 +65,23 @@ class SQLCommtrackConfig(models.Model):
         self.sqlactionconfig_set.all().delete()
         self.sqlactionconfig_set.set(actions, bulk=False)
         self.set_answer_order([a.id for a in actions])
+
+    def _migration_get_fields(cls):
+        from corehq.apps.commtrack.management.commands.populate_sql_models import Command
+        return Command.attrs_to_sync()
+
+    @classmethod
+    def _migration_get_single_submodels(cls):
+        return SINGLE_SUBMODELS_TO_SYNC
+
+    @classmethod
+    def _migration_get_list_submodels(cls):
+        return LIST_SUBMODELS_TO_SYNC
+
+    @classmethod
+    def _migration_get_couch_model_class(cls):
+        return CommtrackConfig
+
     @classmethod
     def for_domain(cls, domain):
         return cls.objects.filter(domain=domain).first()
@@ -237,7 +255,7 @@ class StockRestoreConfig(DocumentSchema):
         return super(StockRestoreConfig, cls).wrap(obj)
 
 
-class CommtrackConfig(QuickCachedDocumentMixin, Document):
+class CommtrackConfig(SyncCouchToSQLMixin, QuickCachedDocumentMixin, Document):
     domain = StringProperty()
 
     # supported stock actions for this commtrack domain
@@ -257,6 +275,18 @@ class CommtrackConfig(QuickCachedDocumentMixin, Document):
 
     # configured on Subscribe Sms page
     alert_config = SchemaProperty(AlertConfig)
+
+    @classmethod
+    def _migration_get_single_submodels(cls):
+        return SINGLE_SUBMODELS_TO_SYNC
+
+    @classmethod
+    def _migration_get_list_submodels(cls):
+        return LIST_SUBMODELS_TO_SYNC
+
+    @classmethod
+    def _migration_get_sql_model_class(cls):
+        return SQLCommtrackConfig
 
     def clear_caches(self):
         super(CommtrackConfig, self).clear_caches()
@@ -313,6 +343,63 @@ class CommtrackConfig(QuickCachedDocumentMixin, Document):
             force_consumption_case_filter=case_filter,
             sync_consumption_ledger=self.sync_consumption_fixtures
         )
+
+
+SINGLE_SUBMODELS_TO_SYNC = [
+    SubmodelSpec(
+        sql_attr="sqlconsumptionconfig",
+        sql_class=SQLConsumptionConfig,
+        sql_fields=[
+            'min_transactions', 'min_window', 'optimal_window',
+            'use_supply_point_type_default_consumption', 'exclude_invalid_periods',
+        ],
+        couch_attr="consumption_config",
+        couch_class=ConsumptionConfig,
+        couch_fields=[
+            'min_transactions', 'min_window', 'optimal_window',
+            'use_supply_point_type_default_consumption', 'exclude_invalid_periods',
+        ],
+    ),
+    SubmodelSpec(
+        sql_attr="sqlstocklevelsconfig",
+        sql_class=SQLStockLevelsConfig,
+        sql_fields=['emergency_level', 'understock_threshold', 'overstock_threshold'],
+        couch_attr="stock_levels_config",
+        couch_class=StockLevelsConfig,
+        couch_fields=['emergency_level', 'understock_threshold', 'overstock_threshold'],
+    ),
+    SubmodelSpec(
+        sql_attr="sqlalertconfig_set",
+        sql_class=SQLAlertConfig,
+        sql_fields=['stock_out_facilities', 'stock_out_commodities', 'stock_out_rates', 'non_report'],
+        couch_attr="alert_config",
+        couch_class=AlertConfig,
+        couch_fields=['stock_out_facilities', 'stock_out_commodities', 'stock_out_rates', 'non_report'],
+    ),
+    SubmodelSpec(
+        sql_attr="sqlstockrestoreconfig",
+        sql_class=SQLStockRestoreConfig,
+        sql_fields=[
+            'section_to_consumption_types', 'force_consumption_case_types', 'use_dynamic_product_list',
+        ],
+        couch_attr="ota_restore_config",
+        couch_class=StockRestoreConfig,
+        couch_fields=[
+            'section_to_consumption_types', 'force_consumption_case_types', 'use_dynamic_product_list',
+        ],
+    ),
+]
+
+LIST_SUBMODELS_TO_SYNC = [
+    SubmodelSpec(
+        sql_attr="sqlactionconfig_set",
+        sql_class=SQLActionConfig,
+        sql_fields=['action', 'subaction', '_keyword', 'caption'],
+        couch_attr="actions",
+        couch_class=CommtrackActionConfig,
+        couch_fields=['action', 'subaction', '_keyword', 'caption'],
+    ),
+]
 
 
 class SupplyPointCase(CommCareCase):
