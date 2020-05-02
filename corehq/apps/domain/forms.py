@@ -2267,12 +2267,6 @@ class ManageReleasesByLocationForm(forms.Form):
             self.add_error('app_id', _("Please select application"))
         return self.cleaned_data.get('app_id')
 
-    @staticmethod
-    def extract_location_id(location_id_slug):
-        from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
-        selected_ids = ExpandedMobileWorkerFilter.selected_location_ids([location_id_slug])
-        return selected_ids[0] if selected_ids else None
-
     def clean_location_id(self):
         if not self.cleaned_data.get('location_id'):
             self.add_error('location_id', _("Please select location"))
@@ -2293,7 +2287,7 @@ class ManageReleasesByLocationForm(forms.Form):
                 self.add_error('version', e)
 
     def save(self):
-        location_id = self.extract_location_id(self.cleaned_data['location_id'])
+        location_id = self.cleaned_data['location_id']
         version = self.cleaned_data['version']
         app_id = self.cleaned_data['app_id']
         try:
