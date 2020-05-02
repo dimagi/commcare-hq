@@ -53,7 +53,7 @@ class TempPrevUCRTables(TempPrevTablesBase):
     def drop_temp_tables(self, alias):
         data = {
             'prev_table': get_prev_agg_tablename(alias),
-            'prev_local': f"{alias}_prev_local",
+            'prev_local': f"{table}_prev_local",
         }
         with connections[get_icds_ucr_citus_db_alias()].cursor() as cursor:
             cursor.execute(self.DROP_QUERY.format(**data))
@@ -61,7 +61,7 @@ class TempPrevUCRTables(TempPrevTablesBase):
     def create_temp_tables(self, table, day):
         data = {
             'prev_table': get_prev_agg_tablename(table),
-            'prev_local': f"{alias}_prev_local",
+            'prev_local': f"{table}_prev_local",
             'prev_month': day,
             'current_table': get_table_name(DASHBOARD_DOMAIN, table),
             'alias': table
