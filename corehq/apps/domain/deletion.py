@@ -220,6 +220,7 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('case_search', 'FuzzyProperties', 'domain'),
     ModelDeletion('case_search', 'IgnorePatterns', 'domain'),
     ModelDeletion('cloudcare', 'ApplicationAccess', 'domain'),
+    ModelDeletion('commtrack', 'SQLCommtrackConfig', 'domain'),
     ModelDeletion('consumption', 'DefaultConsumption', 'domain'),
     ModelDeletion('data_analytics', 'GIRRow', 'domain_name'),
     ModelDeletion('data_analytics', 'MALTRow', 'domain_name'),
