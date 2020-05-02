@@ -11,7 +11,10 @@ from django.views.decorators.http import require_GET
 from corehq import toggles
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.locations.models import LocationType, SQLLocation
-from corehq.apps.locations.permissions import require_can_edit_locations
+from corehq.apps.locations.permissions import (
+    require_can_edit_locations,
+    user_can_access_location_id,
+)
 from corehq.apps.locations.views import BaseLocationView, LocationsListView
 from corehq.apps.reports.views import BaseProjectReportSectionView
 from corehq.const import FILENAME_DATETIME_FORMAT
@@ -211,11 +214,10 @@ class LocationReassignmentView(BaseLocationView):
 def download_location_reassignment_template(request, domain):
     location_id = request.GET.get('location_id')
 
-    if not location_id:
+    if not location_id or not user_can_access_location_id(domain, request.couch_user, location_id):
         messages.error(request, _("Please select a location."))
         return HttpResponseRedirect(reverse(LocationReassignmentView.urlname, args=[domain]))
 
-    # Todo: add check to ensure the user has access to the location and all of its descendants
     location = SQLLocation.active_objects.get(location_id=location_id, domain=domain)
     response_file = Download(location).dump()
     response = HttpResponse(response_file, content_type="text/html; charset=utf-8")
