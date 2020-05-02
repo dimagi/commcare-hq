@@ -18,6 +18,7 @@ from casexml.apps.stock.consumption import (
 from casexml.apps.stock.models import DocDomainMapping
 from couchforms.signals import xform_archived, xform_unarchived
 from dimagi.ext.couchdbkit import *
+from dimagi.utils.couch.migration import SyncCouchToSQLMixin, SyncSQLToCouchMixin, SubmodelSpec
 
 from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
 from corehq.apps.consumption.shortcuts import get_default_monthly_consumption
@@ -40,7 +41,7 @@ STOCK_ACTION_ORDER = [
 ]
 
 
-class SQLCommtrackConfig(models.Model):
+class SQLCommtrackConfig(models.Model, SyncSQLToCouchMixin):
     domain = models.CharField(max_length=126, null=False, db_index=True, unique=True)
     couch_id = models.CharField(max_length=126, null=True, db_index=True)
 
@@ -64,6 +65,33 @@ class SQLCommtrackConfig(models.Model):
         self.sqlactionconfig_set.all().delete()
         self.sqlactionconfig_set.set(actions, bulk=False)
         self.set_answer_order([a.id for a in actions])
+
+    def _migration_sync_to_couch(self, couch_object):
+        from corehq.apps.commtrack.management.commands.populate_sql_models import Command
+        for field_name in Command.attrs_to_sync():
+            value = getattr(self, field_name)
+            setattr(couch_object, field_name, value)
+        couch_object.actions = [
+            CommtrackActionConfig(
+                action=action.action,
+                subaction=action.subaction,
+                _keyword=action._keyword,
+                caption=action.caption,
+            ) for action in self.all_actions
+        ]
+        for submodel in Command.one_to_one_submodels():
+            sql_attr = spec.couch_attr.lower()
+            sql_submodel = getattr(self, sql_attr)
+            setattr(couch_object, spec.couch_attr, {
+                field: getattr(sql_submodel, field)
+                for field in spec.fields
+            })
+        couch_object.save(sync_to_sql=False)
+
+    @classmethod
+    def _migration_get_couch_model_class(cls):
+        return CommtrackConfig
+
     @classmethod
     def for_domain(cls, domain):
         return cls.objects.filter(domain=domain).first()
@@ -237,7 +265,7 @@ class StockRestoreConfig(DocumentSchema):
         return super(StockRestoreConfig, cls).wrap(obj)
 
 
-class CommtrackConfig(QuickCachedDocumentMixin, Document):
+class CommtrackConfig(SyncCouchToSQLMixin, QuickCachedDocumentMixin, Document):
     domain = StringProperty()
 
     # supported stock actions for this commtrack domain
@@ -257,6 +285,32 @@ class CommtrackConfig(QuickCachedDocumentMixin, Document):
 
     # configured on Subscribe Sms page
     alert_config = SchemaProperty(AlertConfig)
+
+    def _migration_sync_to_sql(self, sql_object):
+        from corehq.apps.commtrack.management.commands.populate_sql_models import Command
+        for field_name in Command.attrs_to_sync():
+            value = getattr(self, field_name)
+            setattr(sql_object, field_name, value)
+        for submodel in Command.one_to_one_submodels():
+            couch_submodel = getattr(self, spec.couch_attr)
+            sql_attr = spec.couch_attr.lower()
+            setattr(sql_object, sql_attr, spec.sql_class(**{
+                field: getattr(couch_submodel, field)
+                for field in spec.fields
+            }))
+        sql_object.set_actions([
+            SQLActionConfig(
+                action=action.action,
+                subaction=action.subaction,
+                _keyword=action._keyword,
+                caption=action.caption,
+            ) for action in self.actions
+        ])
+        sql_object.save(sync_to_couch=False)
+
+    @classmethod
+    def _migration_get_sql_model_class(cls):
+        return SQLCommtrackConfig
 
     def clear_caches(self):
         super(CommtrackConfig, self).clear_caches()
