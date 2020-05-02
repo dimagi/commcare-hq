@@ -60,13 +60,14 @@ class LocationReassignmentView(BaseLocationView):
             'bulk_upload': {
                 "download_url": reverse('download_location_reassignment_template', args=[self.domain]),
                 "adjective": _("locations"),
-                "plural_noun": _("location reassignments"),
+                "plural_noun": _("Location Reassignment Request file"),
                 "verb": _("Perform"),
                 "help_link": "https://confluence.dimagi.com/display/ICDS/Location+Reassignment",
             },
         })
         context.update({
             'bulk_upload_form': get_bulk_upload_form(context, form_class=LocationReassignmentRequestForm),
+            "no_header": True,
         })
         return context
 
