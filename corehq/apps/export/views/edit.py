@@ -99,11 +99,13 @@ class EditNewCustomCaseExportView(BaseEditNewCustomExportView):
         return CaseExportListView
 
 
+@location_safe
 class EditCaseFeedView(DashboardFeedMixin, EditNewCustomCaseExportView):
     urlname = 'edit_case_feed_export'
     page_title = ugettext_lazy("Edit Case Feed")
 
 
+@location_safe
 class EditFormFeedView(DashboardFeedMixin, EditNewCustomFormExportView):
     urlname = 'edit_form_feed_export'
     page_title = ugettext_lazy("Edit Form Feed")
