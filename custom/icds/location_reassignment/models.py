@@ -64,7 +64,7 @@ class Transition(object):
         new_locations_created = self._create_missing_new_locations()
         self.operation_obj.new_locations.extend(new_locations_created)
         self.operation_obj.perform()
-        if self.operation.deactivates_old_users:
+        if self.operation_obj.deactivates_old_users:
             for old_location in self.operation_obj.old_locations:
                 deactivate_users_at_location(old_location.location_id)
         for old_username, new_username in self.user_transitions.items():
