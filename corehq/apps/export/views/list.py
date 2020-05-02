@@ -621,6 +621,7 @@ class DailySavedExportListView(BaseExportListView, DailySavedExportListHelper):
 
 
 @require_POST
+@location_safe
 @login_and_domain_required
 def commit_filters(request, domain):
     permissions = ExportsPermissionsManager(request.POST.get('model_type'), domain, request.couch_user)
