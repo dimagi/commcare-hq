@@ -17,22 +17,24 @@
         </div>
     </div>
     <info-message></info-message>
-    <div class="
-        {$ $ctrl.label === 'Program Summary' ? 'report-content' : '' $}
-        {$ $ctrl.showSystemUsageMessage ? 'report-content-with-message' : 'report-content-without-message' $}
-    ">
-        <kpi data="$ctrl.data"></kpi>
+    <reassignment-message ng-show="$ctrl.showReassignmentMessage()" selected-location="$ctrl.selectedLocation()" selected-date="$ctrl.selectedDate"></reassignment-message>
+    <div ng-if="!$ctrl.showReassignmentMessage()"
+         class="
+                {$ $ctrl.label === 'Program Summary' ? 'report-content' : '' $}
+                {$ $ctrl.showSystemUsageMessage ? 'report-content-with-message' : 'report-content-without-message' $}
+                ">
+      <kpi data="$ctrl.data"></kpi>
     </div>
     <div class="row fixed-dots">
-        <div class="dot-menu">
-            <div class="dot-menu-item pointer" ng-repeat="step in $ctrl.steps">
-                <dot-link label="{$ step.label $}" route="{$ step.route $}"></dot-link>
-            </div>
+      <div class="dot-menu">
+        <div class="dot-menu-item pointer" ng-repeat="step in $ctrl.steps">
+          <dot-link label="{$ step.label $}" route="{$ step.route $}"></dot-link>
         </div>
-        <div class="system-usage-message" ng-if="$ctrl.showSystemUsageMessage">
-            <i style="float: right;" ng-click="$ctrl.closeSystemUsageMessage()" class="fa fa-close pointer"></i>
-            <span>The information in the report is based on the self-reported data entered by
-                the Anganwadi Worker in ICDS-CAS mobile application and is subject to timely data submissions.</span>
-        </div>
+      </div>
+      <div class="system-usage-message" ng-if="$ctrl.showSystemUsageMessage">
+        <i style="float: right;" ng-click="$ctrl.closeSystemUsageMessage()" class="fa fa-close pointer"></i>
+        <span>The information in the report is based on the self-reported data entered by
+          the Anganwadi Worker in ICDS-CAS mobile application and is subject to timely data submissions.</span>
+      </div>
     </div>
 </div>
