@@ -73,6 +73,7 @@ class BaseTest(TestCase):
             self.assertEqual(old_location.metadata[DEPRECATED_AT], operation_time)
             if archived:
                 self.assertTrue(old_location.is_archived)
+                self.assertEqual(old_location.archived_on, operation_time)
         for new_location in new_locations:
             self.assertEqual(new_location.metadata[DEPRECATES], old_location_ids)
             self.assertEqual(new_location.metadata[DEPRECATES_VIA], operation.type)

@@ -202,6 +202,7 @@ class MergeOperation(BaseOperation):
             old_location.metadata[DEPRECATED_AT] = timestamp
             old_location.metadata[DEPRECATED_VIA] = self.type
             old_location.is_archived = True
+            old_location.archived_on = timestamp
             old_location.save()
 
         new_location.metadata[DEPRECATES] = [l.location_id for l in self.old_locations]
@@ -224,6 +225,7 @@ class SplitOperation(BaseOperation):
         old_location.metadata[DEPRECATED_AT] = timestamp
         old_location.metadata[DEPRECATED_VIA] = self.type
         old_location.is_archived = True
+        old_location.archived_on = timestamp
         old_location.save()
 
         for new_location in self.new_locations:
@@ -264,6 +266,7 @@ class MoveOperation(BaseOperation):
         old_location.metadata[DEPRECATED_AT] = timestamp
         old_location.metadata[DEPRECATED_VIA] = self.type
         old_location.is_archived = True
+        old_location.archived_on = timestamp
         old_location.save()
 
         new_location.metadata[DEPRECATES] = [old_location.location_id]
