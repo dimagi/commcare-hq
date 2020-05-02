@@ -201,29 +201,6 @@ class CommtrackConfig(QuickCachedDocumentMixin, Document):
         )
 
 
-def force_int(value):
-    if value is None:
-        return None
-    else:
-        return int(value)
-
-
-def force_bool(value):
-    if value is None:
-        return None
-    elif value is 'false':
-        return False
-    else:
-        return bool(value)
-
-
-def force_empty_string_to_null(value):
-    if value == '':
-        return None
-    else:
-        return value
-
-
 class SupplyPointCase(CommCareCase):
     """
     A wrapper around CommCareCases to get more built in functionality
