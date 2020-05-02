@@ -65,6 +65,10 @@ class SQLCommtrackConfig(models.Model):
         self.sqlactionconfig_set.set(actions, bulk=False)
         self.set_sqlactionconfig_order([a.id for a in actions])
 
+    @classmethod
+    def for_domain(cls, domain):
+        return cls.objects.filter(domain=domain).first()
+
 
 class SQLActionConfig(models.Model):
     # one of the base stock action types (see StockActions enum)
