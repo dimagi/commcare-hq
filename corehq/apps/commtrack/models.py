@@ -64,6 +64,9 @@ class SQLCommtrackConfig(models.Model):
         self.sqlactionconfig_set.all().delete()
         self.sqlactionconfig_set.set(actions, bulk=False)
         self.set_answer_order([a.id for a in actions])
+    @classmethod
+    def for_domain(cls, domain):
+        return cls.objects.filter(domain=domain).first()
 
 
 class SQLActionConfig(models.Model):
