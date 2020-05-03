@@ -1053,10 +1053,10 @@ class TestBulkManagementWithInitialLocs(UploadTestUtils, LocationHierarchyPerTes
     def test_download_reupload_no_changes(self):
         # Make sure there's a bunch of data
         loc_fields = SQLCustomDataFieldsDefinition.get_or_create(self.domain, 'LocationFields')
-        loc_fields.sqlfield_set.set([
+        loc_fields.set_fields([
             SQLField(slug='favorite_color'),
             SQLField(slug='language'),
-        ], bulk=False)
+        ])
         loc_fields.save()
 
         self.locations['City111'].latitude = Decimal('42.36')

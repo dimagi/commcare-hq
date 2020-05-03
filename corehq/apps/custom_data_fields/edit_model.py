@@ -150,11 +150,10 @@ class CustomDataModelMixin(object):
         definition = self.get_definition()
         definition.field_type = self.field_type
         definition.domain = self.domain
-        definition.sqlfield_set.all().delete()
-        definition.sqlfield_set.set([
+        definition.set_fields([
             self.get_field(field)
             for field in self.form.cleaned_data['data_fields']
-        ], bulk=False)
+        ])
         definition.save()
 
     def get_field(self, field):

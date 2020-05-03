@@ -28,8 +28,7 @@ class Command(PopulateSQLCommand):
                 "field_type": doc['field_type'],
             },
         )
-        model.sqlfield_set.all().delete()
-        model.sqlfield_set.set([
+        model.set_fields([
             SQLField(
                 slug=field['slug'],
                 is_required=field.get('is_required', False),
@@ -39,6 +38,6 @@ class Command(PopulateSQLCommand):
                 regex_msg=field.get('regex_msg', ''),
             )
             for field in doc['fields']
-        ], bulk=False)
+        ])
         model.save(sync_to_couch=False)
         return (model, created)
