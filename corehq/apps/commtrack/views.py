@@ -28,7 +28,7 @@ from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.util.timezones.conversions import ServerTime
 
 from .forms import CommTrackSettingsForm, ConsumptionForm
-from .models import CommtrackActionConfig, StockRestoreConfig
+from .models import SQLActionConfig, SQLStockRestoreConfig
 from .tasks import recalculate_domain_consumption_task
 from .util import all_sms_codes
 
@@ -81,11 +81,11 @@ class CommTrackSettingsView(BaseCommTrackManageView):
     @property
     @memoized
     def commtrack_settings_form(self):
-        initial = self.commtrack_settings.to_json()
+        initial = self.commtrack_settings.to_json()     # TODO: PR2: nope
         initial.update(dict(('consumption_' + k, v) for k, v in
-            self.commtrack_settings.consumption_config.to_json().items()))
+            self.commtrack_settings.consumption_config.to_json().items()))  # TODO: PR2: check exists
         initial.update(dict(('stock_' + k, v) for k, v in
-            self.commtrack_settings.stock_levels_config.to_json().items()))
+            self.commtrack_settings.stock_levels_config.to_json().items())) # TODO: PR2: check exists
 
         if self.request.method == 'POST':
             return CommTrackSettingsForm(self.request.POST, initial=initial, domain=self.domain)
@@ -102,7 +102,7 @@ class CommTrackSettingsView(BaseCommTrackManageView):
         """
 
         if self.commtrack_settings.sync_consumption_fixtures:
-            self.domain_object.commtrack_settings.ota_restore_config = StockRestoreConfig(
+            self.domain_object.commtrack_settings.sqlstockrestoreconfig = SQLStockRestoreConfig(
                 section_to_consumption_types={
                     'stock': 'consumption'
                 },
@@ -112,12 +112,12 @@ class CommTrackSettingsView(BaseCommTrackManageView):
                 use_dynamic_product_list=True,
             )
         else:
-            self.domain_object.commtrack_settings.ota_restore_config = StockRestoreConfig()
+            self.domain_object.commtrack_settings.sqlstockrestoreconfig = SQLStockRestoreConfig()
 
     def post(self, request, *args, **kwargs):
         if self.commtrack_settings_form.is_valid():
             data = self.commtrack_settings_form.cleaned_data
-            previous_config = copy.copy(self.commtrack_settings)
+            previous_config = copy.copy(self.commtrack_settings)    # TODO: PR2: no copy
             self.commtrack_settings.use_auto_consumption = bool(data.get('use_auto_consumption'))
             self.commtrack_settings.sync_consumption_fixtures = bool(data.get('sync_consumption_fixtures'))
             self.commtrack_settings.individual_consumption_defaults = bool(data.get('individual_consumption_defaults'))
@@ -127,13 +127,13 @@ class CommTrackSettingsView(BaseCommTrackManageView):
             fields = ('emergency_level', 'understock_threshold', 'overstock_threshold')
             for field in fields:
                 if data.get('stock_' + field):
-                    setattr(self.commtrack_settings.stock_levels_config, field,
+                    setattr(self.commtrack_settings.sqlstocklevelsconfig, field,
                             data['stock_' + field])
 
             consumption_fields = ('min_transactions', 'min_window', 'optimal_window')
             for field in consumption_fields:
                 if data.get('consumption_' + field):
-                    setattr(self.commtrack_settings.consumption_config, field,
+                    setattr(self.commtrack_settings.sqlconsumptionconfig, field,
                             data['consumption_' + field])
 
             self.commtrack_settings.save()
@@ -143,7 +143,7 @@ class CommTrackSettingsView(BaseCommTrackManageView):
                 loc_type.save()
 
             if (previous_config.use_auto_consumption != self.commtrack_settings.use_auto_consumption
-                or previous_config.consumption_config.to_json() != self.commtrack_settings.consumption_config.to_json()
+                or previous_config.consumption_config.to_json() != self.commtrack_settings.sqlconsumptionconfig.to_json()   # TODO: PR2: no to_json
             ):
                 # kick off delayed consumption rebuild
                 recalculate_domain_consumption_task.delay(self.domain)
@@ -218,17 +218,17 @@ class SMSSettingsView(BaseCommTrackManageView):
     def post(self, request, *args, **kwargs):
         payload = json.loads(request.POST.get('json'))
 
-        def mk_action(action):
-            return CommtrackActionConfig(**{
-                    'action': action['type'],
-                    'subaction': action['caption'],
-                    'keyword': action['keyword'],
-                    'caption': action['caption'],
-                })
+        def make_action(action):
+            return SQLActionConfig(**{
+                'action': action['type'],
+                'subaction': action['caption'],
+                'keyword': action['keyword'],
+                'caption': action['caption'],
+            })
 
         # TODO add server-side input validation here (currently validated on client)
 
-        self.domain_object.commtrack_settings.actions = [mk_action(a) for a in payload['actions']]
+        self.domain_object.commtrack_settings.actions = [make_action(a) for a in payload['actions']]
         self.domain_object.commtrack_settings.save()
 
         return self.get(request, *args, **kwargs)
