@@ -60,5 +60,6 @@ branches:
   - mk/location-reassignment-realign # MK May 3
   - mk/location-reassignment-add-view # MK May 3
   - mk/location-reassignment-allow-multiple-operations # MK May 3
+  - mk/location-reassignment-extract-descendants # MK May 3
 
 submodules: {}
