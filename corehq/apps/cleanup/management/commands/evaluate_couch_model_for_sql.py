@@ -33,6 +33,27 @@ class Command(BaseCommand):
             'class_name',
         )
 
+    key_counts = defaultdict(lambda: 0)
+    max_lengths = defaultdict(lambda: 0)
+
+    def evaluate_doc(self, doc, prefix=None):
+        for key, value in doc.items():
+            if prefix:
+                key = f"{prefix}.{key}"
+            if value is None:
+                continue
+
+            if isinstance(value, list):
+                for item in value:
+                    if isinstance(item, dict):
+                        self.evaluate_doc(item, prefix=key)
+            elif isinstance(value, dict):
+                self.evaluate_doc(value, prefix=key)
+            else:
+                length = len(str(value))
+                self.max_lengths[key] = max(length, self.max_lengths[key])
+            self.key_counts[key] += 1
+
     def handle(self, django_app, class_name, **options):
         path = f"corehq.apps.{django_app}.models.{class_name}"
         couch_class = to_function(path)
@@ -41,37 +62,16 @@ class Command(BaseCommand):
             couch_class = to_function(path)
             class_name = path.split(".")[-1]
 
-        key_counts = defaultdict(lambda: 0)
-        max_lengths = defaultdict(lambda: 0)
         doc_ids = get_doc_ids_by_class(couch_class)
-
         print("Found {} {} docs\n".format(len(doc_ids), class_name))
 
-        def _evaluate_doc(doc, prefix=None):
-            for key, value in doc.items():
-                if prefix:
-                    key = f"{prefix}.{key}"
-                if value is None:
-                    continue
-
-                if isinstance(value, list):
-                    for item in value:
-                        if isinstance(item, dict):
-                            _evaluate_doc(item, prefix=key)
-                elif isinstance(value, dict):
-                    _evaluate_doc(value, prefix=key)
-                else:
-                    length = len(str(value))
-                    max_lengths[key] = max(length, max_lengths[key])
-                key_counts[key] += 1
-
         for doc in iter_docs(couch_class.get_db(), doc_ids):
-            _evaluate_doc(doc)
+            self.evaluate_doc(doc)
 
-        max_count = max(key_counts.values())
-        for key in sorted(key_counts):
+        max_count = max(self.key_counts.values())
+        for key in sorted(self.key_counts):
             print("{} is {} null and has max length of {}".format(
                 key,
-                'never' if key_counts[key] == max_count else 'sometimes',
-                max_lengths[key]
+                'never' if self.key_counts[key] == max_count else 'sometimes',
+                self.max_lengths[key]
             ))
