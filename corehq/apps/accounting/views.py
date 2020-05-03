@@ -51,6 +51,7 @@ from corehq.apps.accounting.async_handlers import (
     FeatureRateAsyncHandler,
     InvoiceBalanceAsyncHandler,
     InvoiceNumberAsyncHandler,
+    CustomerInvoiceNumberAsyncHandler,
     Select2BillingInfoHandler,
     Select2CustomerInvoiceTriggerHandler,
     Select2InvoiceTriggerHandler,
@@ -1207,6 +1208,7 @@ class AccountingSingleOptionResponseView(View, AsyncHandlerMixin):
         BillingContactInfoAsyncHandler,
         SoftwarePlanAsyncHandler,
         InvoiceNumberAsyncHandler,
+        CustomerInvoiceNumberAsyncHandler,
         InvoiceBalanceAsyncHandler,
     ]
 
