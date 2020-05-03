@@ -59,5 +59,6 @@ branches:
   - bmb/SAAS-10813  # Biyeun April 30
   - mk/location-reassignment-realign # MK May 3
   - mk/location-reassignment-add-view # MK May 3
+  - mk/location-reassignment-allow-multiple-operations # MK May 3
 
 submodules: {}
