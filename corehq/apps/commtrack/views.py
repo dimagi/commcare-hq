@@ -81,11 +81,13 @@ class CommTrackSettingsView(BaseCommTrackManageView):
     @property
     @memoized
     def commtrack_settings_form(self):
-        initial = self.commtrack_settings.to_json()     # TODO: PR2: nope
-        initial.update(dict(('consumption_' + k, v) for k, v in
-            self.commtrack_settings.consumption_config.to_json().items()))  # TODO: PR2: check exists
-        initial.update(dict(('stock_' + k, v) for k, v in
-            self.commtrack_settings.stock_levels_config.to_json().items())) # TODO: PR2: check exists
+        initial = self.commtrack_settings.to_json()
+        if hasattr(self.commtrack_settings, 'sqlconsumptionconfig'):
+            initial.update(dict(('consumption_' + k, v) for k, v in
+                self.commtrack_settings.consumption_config.to_json().items()))
+        if hasattr(self.commtrack_settings, 'sqlstocklevelsconfig'):
+            initial.update(dict(('stock_' + k, v) for k, v in
+                self.commtrack_settings.stock_levels_config.to_json().items()))
 
         if self.request.method == 'POST':
             return CommTrackSettingsForm(self.request.POST, initial=initial, domain=self.domain)
@@ -117,10 +119,9 @@ class CommTrackSettingsView(BaseCommTrackManageView):
     def post(self, request, *args, **kwargs):
         if self.commtrack_settings_form.is_valid():
             data = self.commtrack_settings_form.cleaned_data
-            previous_config = copy.copy(self.commtrack_settings)    # TODO: PR2: no copy
-            self.commtrack_settings.use_auto_consumption = bool(data.get('use_auto_consumption'))
-            self.commtrack_settings.sync_consumption_fixtures = bool(data.get('sync_consumption_fixtures'))
-            self.commtrack_settings.individual_consumption_defaults = bool(data.get('individual_consumption_defaults'))
+            previous_json = copy.copy(self.commtrack_settings.to_json())
+            for attr in ('use_auto_consumption', 'sync_consumption_fixtures', 'individual_consumption_defaults'):
+                setattr(self.commtrack_settings, attr, bool(data.get(attr)))
 
             self.set_ota_restore_config()
 
@@ -142,9 +143,11 @@ class CommTrackSettingsView(BaseCommTrackManageView):
                 # This will update stock levels based on commtrack config
                 loc_type.save()
 
-            if (previous_config.use_auto_consumption != self.commtrack_settings.use_auto_consumption
-                or previous_config.consumption_config.to_json() != self.commtrack_settings.sqlconsumptionconfig.to_json()   # TODO: PR2: no to_json
-            ):
+            same_flag = previous_json['use_auto_consumption'] == self.commtrack_settings.use_auto_consumption
+            same_config = (
+                previous_json['consumption_config'] == self.commtrack_settings.sqlconsumptionconfig.to_json()
+            )
+            if (not same_flag or not same_config):
                 # kick off delayed consumption rebuild
                 recalculate_domain_consumption_task.delay(self.domain)
                 messages.success(request, _("Settings updated! Your updated consumption settings may take a "
