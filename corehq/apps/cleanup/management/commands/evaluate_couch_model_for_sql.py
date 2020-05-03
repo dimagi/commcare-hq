@@ -4,8 +4,10 @@ import logging
 
 from django.core.management.base import BaseCommand
 
-from corehq.dbaccessors.couchapps.all_docs import get_all_docs_with_doc_types, get_doc_count_by_type
-from corehq.util.couchdb_management import couch_config
+from dimagi.utils.couch.database import iter_docs
+from dimagi.utils.modules import to_function
+
+from corehq.dbaccessors.couchapps.all_docs import get_doc_ids_by_class
 
 logger = logging.getLogger(__name__)
 
@@ -25,21 +27,25 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument(
-            'doc_type',
+            'django_app',
         )
         parser.add_argument(
-            '-s',
-            '--db',
-            dest='db',
-            help='Slug for couch data base. Leave off if querying main commcarehq db.',
+            'class_name',
         )
 
-    def handle(self, doc_type, **options):
-        db = couch_config.get_db(options.get('db', None))
+    def handle(self, django_app, class_name, **options):
+        path = f"corehq.apps.{django_app}.models.{class_name}"
+        couch_class = to_function(path)
+        while not couch_class:
+            path = input(f"Could not find {path}, please enter path: ")
+            couch_class = to_function(path)
+            class_name = path.split(".")[-1]
+
         key_counts = defaultdict(lambda: 0)
         max_lengths = defaultdict(lambda: 0)
+        doc_ids = get_doc_ids_by_class(couch_class)
 
-        print("Found {} {} docs\n".format(get_doc_count_by_type(db, doc_type), doc_type))
+        print("Found {} {} docs\n".format(len(doc_ids), class_name))
 
         def _evaluate_doc(doc, prefix=None):
             for key, value in doc.items():
@@ -57,8 +63,7 @@ class Command(BaseCommand):
                 max_lengths[key] = max(length, max_lengths[key])
                 key_counts[key] += 1
 
-        docs = get_all_docs_with_doc_types(db, [doc_type])
-        for doc in docs:
+        for doc in iter_docs(couch_class.get_db(), doc_ids):
             _evaluate_doc(doc)
 
         max_count = max(key_counts.values())
