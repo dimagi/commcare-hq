@@ -438,7 +438,7 @@ class LocationFixturesDataTest(LocationHierarchyTestCase, FixtureHasLocationsMix
         cls.loc_fields = CustomDataFieldsDefinition.get_or_create(cls.domain, LocationFieldsView.field_type)
         cls.loc_fields.set_fields([
             Field(slug='baseball_team'),
-            Field(slug='favorite_passtime'),
+            Field(slug='favorite_pastime'),
         ])
         cls.loc_fields.save()
         cls.field_slugs = [f.slug for f in cls.loc_fields.field_set.all()]
