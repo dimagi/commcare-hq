@@ -44,10 +44,29 @@ class Command(BaseCommand):
     FIELD_TYPE_JSON_DICT = 'JsonField,default=dict'
     FIELD_TYPE_SUBMODEL_LIST = 'ForeignKey'
     FIELD_TYPE_SUBMODEL_DICT = 'OneToOneField'
+    FIELD_TYPE_UNKNOWN = ''
 
-    key_counts = defaultdict(lambda: 0)
-    max_lengths = defaultdict(lambda: 0)
-    field_types = {}
+    field_data = {}
+
+    def init_field(self, key, field_type):
+        self.field_data[key] = {
+            'field_type': field_type,
+            'max_length': 0,
+            'null': False,
+        }
+
+    def field_type(self, key):
+        return self.field_data.get(key, {}).get('field_type', None)
+
+    def update_field_type(self, key, value):
+        self.field_data[key]['field_type'] = value
+
+    def update_field_max_length(self, key, new_length):
+        old_max = self.field_data[key]['max_length']
+        self.field_data[key]['max_length'] = max(old_max, new_length)
+
+    def update_field_null(self, key, value):
+        self.field_data[key]['null'] = self.field_data[key]['null'] or value is None
 
     def evaluate_doc(self, doc, prefix=None):
         for key, value in doc.items():
@@ -57,51 +76,55 @@ class Command(BaseCommand):
             if prefix:
                 key = f"{prefix}.{key}"
 
-            if value is None:
-                continue
-
-            self.key_counts[key] += 1
             if isinstance(value, list):
-                if key not in self.field_types:
-                    is_submodel = input(f"Is {key} a submodel (y/n)? ").lower().startswith("y")
-                    self.field_types.update({
-                        key: self.FIELD_TYPE_SUBMODEL_LIST if is_submodel else self.FIELD_TYPE_JSON_LIST,
-                    })
-                if self.field_types[key] == self.FIELD_TYPE_SUBMODEL_LIST:
+                if not self.field_type(key):
+                    if input(f"Is {key} a submodel (y/n)? ").lower().startswith("y"):
+                        self.init_field(key, self.FIELD_TYPE_SUBMODEL_LIST)
+                    else:
+                        self.init_field(key, self.FIELD_TYPE_JSON_LIST)
+                if self.field_type(key) == self.FIELD_TYPE_SUBMODEL_LIST:
                     for item in value:
                         if isinstance(item, dict):
                             self.evaluate_doc(item, prefix=key)
-                    continue
-
-            if isinstance(value, dict):
-                if key not in self.field_types:
-                    is_submodel = input(f"Is {key} a submodel (y/n)? ").lower().startswith("y")
-                    self.field_types.update({
-                        key: self.FIELD_TYPE_SUBMODEL_DICT if is_submodel else self.FIELD_TYPE_JSON_DICT,
-                    })
-                if self.field_types[key] == self.FIELD_TYPE_SUBMODEL_DICT:
-                    self.evaluate_doc(value, prefix=key)
-                    continue
-
-            # Primitives
-            if key not in self.field_types:
-                if isinstance(value, bool):
-                    self.field_types[key] = self.FIELD_TYPE_BOOL
-                elif isinstance(value, str):
-                    self.field_types[key] = self.FIELD_TYPE_STRING
-                elif int(value) == value:
-                    self.field_types[key] = self.FIELD_TYPE_INTEGER
-                else:
-                    self.field_types[key] = self.FIELD_TYPE_DECIMAL
-
-            if self.field_types[key] == self.FIELD_TYPE_BOOL:
                 continue
 
-            if self.field_types[key] == self.FIELD_TYPE_INTEGER:
-                if int(value) != value:
-                    self.field_types[key] = self.FIELD_TYPE_DECIMAL
+            if isinstance(value, dict):
+                if not self.field_type(key):
+                    if input(f"Is {key} a submodel (y/n)? ").lower().startswith("y"):
+                        self.init_field(key, self.FIELD_TYPE_SUBMODEL_DICT)
+                    else:
+                        self.init_field(key, self.FIELD_TYPE_JSON_DICT)
+                if self.field_type(key) == self.FIELD_TYPE_SUBMODEL_DICT:
+                    self.evaluate_doc(value, prefix=key)
+                continue
 
-            self.max_lengths[key] = max(len(str(value)), self.max_lengths[key])
+            # Primitives
+            if not self.field_type(key):
+                if isinstance(value, bool):
+                    self.init_field(key, self.FIELD_TYPE_BOOL)
+                elif isinstance(value, str):
+                    self.init_field(key, self.FIELD_TYPE_STRING)
+                else:
+                    try:
+                        if int(value) == value:
+                            self.init_field(key, self.FIELD_TYPE_INTEGER)
+                        else:
+                            self.init_field(key, self.FIELD_TYPE_DECIMAL)
+                    except TypeError:
+                        # Couldn't parse, likely None
+                        pass
+            if not self.field_type(key):
+                self.init_field(key, self.FIELD_TYPE_UNKNOWN)
+
+            if self.field_type(key) == self.FIELD_TYPE_BOOL:
+                continue
+
+            if self.field_type(key) == self.FIELD_TYPE_INTEGER:
+                if int(value) != value:
+                    self.update_field_type(key, self.FIELD_TYPE_DECIMAL)
+
+            self.update_field_max_length(key, len(str(value)))
+            self.update_field_null(key, value)
 
     def handle(self, django_app, class_name, **options):
         path = f"corehq.apps.{django_app}.models.{class_name}"
@@ -117,11 +140,10 @@ class Command(BaseCommand):
         for doc in iter_docs(couch_class.get_db(), doc_ids):
             self.evaluate_doc(doc)
 
-        max_count = max(self.key_counts.values())
-        for key, field_type in self.field_types.items():
+        for key, field in self.field_data.items():
             print("{} is a {}, is {} null and has max length of {}".format(
                 key,
-                field_type,
-                'never' if self.key_counts[key] == max_count else 'sometimes',
-                self.max_lengths[key]
+                field['field_type'] or 'unknown',
+                'somtimes' if field['null'] else 'never',
+                field['max_length'],
             ))
