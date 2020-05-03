@@ -70,6 +70,7 @@ class DBAccessorsTest(TestCase):
         self.assertEqual(doc_id, user_role.get_id)
 
     def test_get_docs_in_domain_by_class(self):
+        # TODO: Update in PR3
         commtrack_config = CommtrackConfig(domain=self.domain)
         group = Group(domain=self.domain)
         xform = XFormInstance(domain=self.domain)

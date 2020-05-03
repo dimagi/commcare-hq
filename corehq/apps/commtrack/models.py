@@ -115,6 +115,25 @@ class SQLActionConfig(models.Model):
         db_table = "commtrack_actionconfig"
         order_with_respect_to = "commtrack_config"
 
+    @property
+    def keyword(self):
+        return self._keyword
+
+    @keyword.setter
+    def keyword(self, val):
+        self._keyword = val.lower() if val else None
+
+    @property
+    def name(self):
+        return ':'.join(filter(None, [self.action, self.subaction]))
+
+    @property
+    def is_stock(self):
+        return self.action in STOCK_ACTION_ORDER
+
+    def __repr__(self):
+        return '{action} ({subaction}): {caption} ({_keyword})'.format(**self._doc)
+
 
 class CommtrackActionConfig(DocumentSchema):
     # one of the base stock action types (see StockActions enum)
@@ -141,25 +160,6 @@ class CommtrackActionConfig(DocumentSchema):
             del data['name']
 
         return super(CommtrackActionConfig, cls).wrap(data)
-
-    def __repr__(self):
-        return '{action} ({subaction}): {caption} ({_keyword})'.format(**self._doc)
-
-    @property
-    def keyword(self):
-        return self._keyword
-
-    @keyword.setter
-    def keyword(self, val):
-        self._keyword = val.lower() if val else None
-
-    @property
-    def name(self):
-        return ':'.join(filter(None, [self.action, self.subaction]))
-
-    @property
-    def is_stock(self):
-        return self.action in STOCK_ACTION_ORDER
 
 
 class SQLConsumptionConfig(models.Model):
@@ -325,6 +325,7 @@ class CommtrackConfig(SyncCouchToSQLMixin, QuickCachedDocumentMixin, Document):
         except IndexError:
             return None
 
+    # TODO PR2: Move and update
     @property
     def all_actions(self):
         return self.actions
