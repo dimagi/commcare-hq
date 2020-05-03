@@ -2,7 +2,7 @@ from collections import namedtuple
 
 from dimagi.utils.logging import notify_exception
 
-SubModelSpec = namedtuple('SubModelSpec', [
+SubmodelSpec = namedtuple('SubmodelSpec', [
     'sql_attr',
     'sql_class',
     'sql_fields',
@@ -52,9 +52,17 @@ class SyncCouchToSQLMixin(object):
         raise NotImplementedError()
 
     @classmethod
-    def _migration_get_submodels(cls):
+    def _migration_get_single_submodels(cls):
         """
-        Should return a list of SubModelSpec tuples, one for each SchemaListProperty
+        Should return a list of SubmodelSpec tuples, one for each SchemaProperty
+        in the couch class. Should be identical in the couch and sql mixins.
+        """
+        return []
+
+    @classmethod
+    def _migration_get_list_submodels(cls):
+        """
+        Should return a list of SubmodelSpec tuples, one for each SchemaListProperty
         in the couch class. Should be identical in the couch and sql mixins.
         """
         return []
@@ -103,7 +111,13 @@ class SyncCouchToSQLMixin(object):
         for field_name in self._migration_get_fields():
             value = getattr(self, field_name)
             setattr(sql_object, field_name, value)
-        for spec in self._migration_get_submodels():
+        for spec in self._migration_get_single_submodels():
+            couch_submodel = getattr(self, spec.couch_attr)
+            setattr(sql_object, spec.sql_attr, spec.sql_class(**{
+                sql_field: getattr(couch_submodel, couch_field)
+                for couch_field, sql_field in zip(spec.couch_fields, spec.sql_fields)
+            }))
+        for spec in self._migration_get_list_submodels():
             sql_submodels = []
             for couch_submodel in getattr(self, spec.couch_attr):
                 sql_fields = {
@@ -167,9 +181,17 @@ class SyncSQLToCouchMixin(object):
         raise NotImplementedError()
 
     @classmethod
-    def _migration_get_submodels(cls):
+    def _migration_get_single_submodels(cls):
         """
-        Should return a list of SubModelSpec tuples, one for each SchemaListProperty
+        Should return a list of SubmodelSpec tuples, one for each SchemaProperty
+        in the couch class. Should be identical in the couch and sql mixins.
+        """
+        return []
+
+    @classmethod
+    def _migration_get_list_submodels(cls):
+        """
+        Should return a list of SubmodelSpec tuples, one for each SchemaListProperty
         in the couch class. Should be identical in the couch and sql mixins.
         """
         return []
@@ -201,7 +223,13 @@ class SyncSQLToCouchMixin(object):
         for field_name in self._migration_get_fields():
             value = getattr(self, field_name)
             setattr(couch_object, field_name, value)
-        for spec in self._migration_get_submodels():
+        for spec in self._migration_get_single_submodels():
+            sql_submodel = getattr(self, spec.sql_attr)
+            setattr(couch_object, spec.couch_attr, {
+                couch_field: getattr(sql_submodel, sql_field)
+                for couch_field, sql_field in zip(spec.couch_fields, spec.sql_fields)
+            })
+        for spec in self._migration_get_list_submodels():
             couch_submodels = []
             for sql_submodel in getattr(self, spec.sql_attr).all():
                 couch_fields = {
