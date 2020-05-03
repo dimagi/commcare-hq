@@ -176,3 +176,39 @@ class TestTransition(BaseTest):
                          "Unexpected new location created")
         deactivate_users_mock.assert_not_called()
         update_usercase_mock.assert_not_called()
+
+    @patch('custom.icds.location_reassignment.tasks.update_usercase.delay')
+    @patch('custom.icds.location_reassignment.models.deactivate_users_at_location')
+    def test_can_perform_deprecation(self, *mocks):
+        transition = Transition(domain=self.domain, location_type_code='city', operation=MoveOperation.type)
+        transition.add(
+            old_site_code=self.locations['Boston'].site_code,
+            new_site_code='new_boston',
+            new_location_details={
+                'name': 'New Boston',
+                'parent_site_code': self.locations['Suffolk'].site_code,
+                'lgd_code': 'New Boston LGD Code',
+                'sub_district_name': 'New Boston Sub District'
+            },
+            old_username="ethan",
+            new_username="aquaman"
+        )
+
+        location = self.locations['Boston']
+        location.metadata[DEPRECATED_VIA] = MergeOperation.type
+        location.save()
+        with self.assertRaisesMessage(
+            InvalidTransitionError,
+            "Move operation: location Boston with site code boston cannot be deprecated again."
+        ):
+            transition.perform()
+
+        location = self.locations['Boston']
+        location.metadata[DEPRECATED_VIA] = ExtractOperation.type
+        location.save()
+
+        location = self.locations['Boston']
+        location.metadata[DEPRECATED_VIA] = ExtractOperation.type
+        location.save()
+        transition.perform()
+        self._validate_operation(transition.operation_obj, archived=True)
