@@ -1,22 +1,16 @@
 import logging
 from functools import wraps
+from typing import Callable, Optional
 
 from django.conf import settings
 
 import attr
-import requests
-from requests.auth import HTTPBasicAuth, HTTPDigestAuth
 
 from dimagi.utils.logging import notify_exception
 
 from corehq.apps.hqwebapp.tasks import send_mail_async
-from corehq.motech.auth import HTTPBearerAuth
-from corehq.motech.const import (
-    BASIC_AUTH,
-    BEARER_AUTH,
-    DIGEST_AUTH,
-    REQUEST_TIMEOUT,
-)
+from corehq.motech.auth import AuthManager
+from corehq.motech.const import REQUEST_TIMEOUT
 from corehq.motech.models import RequestLog
 from corehq.motech.utils import pformat_json, unpack_request_args
 
@@ -78,54 +72,49 @@ class Requests(object):
     Requests as a context manager.
     """
 
-    def __init__(self, domain_name, base_url, username, password,
-                 verify=True, notify_addresses=None, payload_id=None, logger=None, auth_type=None):
+    def __init__(
+        self,
+        domain_name: str,
+        base_url: str,
+        *,
+        verify: bool = True,
+        auth_manager: AuthManager,
+        notify_addresses: Optional[list] = None,
+        payload_id: Optional[str] = None,
+        logger: Optional[Callable] = None,
+    ):
         """
         Initialise instance
 
         :param domain_name: Domain to store logs under
         :param base_url: Remote API base URL
-        :param username: Remote API username
-        :param password: Remote API plaintext password
         :param verify: Verify SSL certificate?
+        :param auth_manager: AuthManager instance to manage
+            authentication
         :param notify_addresses: A list of email addresses to notify of
             errors.
         :param payload_id: The ID of the case or form submission
             associated with this request
         :param logger: function called after a request has been sent:
                         `logger(log_level, log_entry: RequestLogEntry)`
-        :param auth_type: which auth to use, defaults to basic
         """
         self.domain_name = domain_name
         self.base_url = base_url
-        self.username = username
-        self.password = password
         self.verify = verify
-        self.notify_addresses = [] if notify_addresses is None else notify_addresses
+        self.auth_manager = auth_manager
+        self.notify_addresses = notify_addresses if notify_addresses else []
         self.payload_id = payload_id
-        self._session = None
         self.logger = logger or RequestLog.log
-        self.auth = self._get_auth(auth_type)
         self.send_request = log_request(self, self._send_request, self.logger)
+        self._session = None
 
     def __enter__(self):
-        self._session = requests.Session()
+        self._session = self.auth_manager.get_session()
         return self
 
     def __exit__(self, *args):
         self._session.close()
         self._session = None
-
-    def _get_auth(self, auth_type):
-        if auth_type == BASIC_AUTH:
-            auth = HTTPBasicAuth(self.username, self.password)
-        elif auth_type == DIGEST_AUTH:
-            auth = HTTPDigestAuth(self.username, self.password)
-        elif auth_type == BEARER_AUTH:
-            auth = HTTPBearerAuth(self.username, self.password)
-        else:
-            auth = (self.username, self.password)
-        return auth
 
     def _send_request(self, method, *args, **kwargs):
         raise_for_status = kwargs.pop('raise_for_status', False)
@@ -136,7 +125,7 @@ class Requests(object):
             response = self._session.request(method, *args, **kwargs)
         else:
             # Mimics the behaviour of requests.api.request()
-            with requests.Session() as session:
+            with self.auth_manager.get_session() as session:
                 response = session.request(method, *args, **kwargs)
         if raise_for_status:
             response.raise_for_status()
@@ -147,14 +136,12 @@ class Requests(object):
 
     def delete(self, uri, **kwargs):
         kwargs.setdefault('headers', {'Accept': 'application/json'})
-        return self.send_request('DELETE', self.get_url(uri),
-                                 auth=self.auth, **kwargs)
+        return self.send_request('DELETE', self.get_url(uri), **kwargs)
 
     def get(self, uri, *args, **kwargs):
         kwargs.setdefault('headers', {'Accept': 'application/json'})
         kwargs.setdefault('allow_redirects', True)
-        return self.send_request('GET', self.get_url(uri), *args,
-                                 auth=self.auth, **kwargs)
+        return self.send_request('GET', self.get_url(uri), *args, **kwargs)
 
     def post(self, uri, data=None, json=None, *args, **kwargs):
         kwargs.setdefault('headers', {
@@ -162,8 +149,7 @@ class Requests(object):
             'Accept': 'application/json'
         })
         return self.send_request('POST', self.get_url(uri), *args,
-                                 data=data, json=json,
-                                 auth=self.auth, **kwargs)
+                                 data=data, json=json, **kwargs)
 
     def put(self, uri, data=None, json=None, *args, **kwargs):
         kwargs.setdefault('headers', {
@@ -171,8 +157,7 @@ class Requests(object):
             'Accept': 'application/json'
         })
         return self.send_request('PUT', self.get_url(uri), *args,
-                                 data=data, json=json,
-                                 auth=self.auth, **kwargs)
+                                 data=data, json=json, **kwargs)
 
     def notify_exception(self, message=None, details=None):
         self.notify_error(message, details)
@@ -185,7 +170,6 @@ class Requests(object):
             message,
             f'Project space: {self.domain_name}',
             f'Remote API base URL: {self.base_url}',
-            f'Remote API username: {self.username}',
         ]
         if self.payload_id:
             message_lines.append(f'Payload ID: {self.payload_id}')
