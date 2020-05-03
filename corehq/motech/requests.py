@@ -9,7 +9,7 @@ import attr
 from dimagi.utils.logging import notify_exception
 
 from corehq.apps.hqwebapp.tasks import send_mail_async
-from corehq.motech.auth import AuthManager
+from corehq.motech.auth import AuthManager, BasicAuthManager
 from corehq.motech.const import REQUEST_TIMEOUT
 from corehq.motech.models import RequestLog
 from corehq.motech.utils import pformat_json, unpack_request_args
@@ -181,6 +181,14 @@ class Requests(object):
             from_email=settings.DEFAULT_FROM_EMAIL,
             recipient_list=self.notify_addresses,
         )
+
+
+def get_basic_requests(domain_name, base_url, username, password, **kwargs):
+    """
+    Returns a Requests instance with basic auth.
+    """
+    kwargs['auth_manager'] = BasicAuthManager(username, password)
+    return Requests(domain_name, base_url, **kwargs)
 
 
 def parse_request_exception(err):
