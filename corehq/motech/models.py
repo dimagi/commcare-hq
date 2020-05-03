@@ -1,12 +1,35 @@
+import json
 import re
+from typing import Optional
 
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 
 import jsonfield
 
-from corehq.motech.auth import api_auth_settings_choices
-from corehq.motech.const import ALGO_AES, AUTH_TYPES, PASSWORD_PLACEHOLDER
+import corehq.motech.auth
+from corehq.motech.auth import (
+    AuthManager,
+    BasicAuthManager,
+    BearerAuthManager,
+    DigestAuthManager,
+    OAuth1Manager,
+    OAuth2PasswordGrantManager,
+    api_auth_settings_choices,
+    oauth1_api_endpoints,
+    oauth2_api_settings,
+)
+from corehq.motech.const import (
+    ALGO_AES,
+    AUTH_TYPES,
+    BASIC_AUTH,
+    BEARER_AUTH,
+    DIGEST_AUTH,
+    OAUTH1,
+    OAUTH2_PWD,
+    PASSWORD_PLACEHOLDER,
+)
 from corehq.motech.utils import b64_aes_decrypt, b64_aes_encrypt
 
 
@@ -38,6 +61,8 @@ class ConnectionSettings(models.Model):
     client_secret = models.CharField(max_length=255, blank=True)
     skip_cert_verify = models.BooleanField(default=False)
     notify_addresses_str = models.CharField(max_length=255, default="")
+    # last_token is stored encrypted because it can contain secrets
+    last_token_aes = models.TextField(blank=True, default="")
 
     def __str__(self):
         return self.name
@@ -69,22 +94,102 @@ class ConnectionSettings(models.Model):
             self.client_secret = f'${ALGO_AES}${ciphertext}'
 
     @property
+    def last_token(self) -> Optional[dict]:
+        if self.last_token_aes:
+            plaintext = b64_aes_decrypt(self.last_token_aes)
+            return json.loads(plaintext)
+        return None
+
+    @last_token.setter
+    def last_token(self, token: Optional[dict]):
+        if token is None:
+            self.last_token_aes = ''
+        else:
+            plaintext = json.dumps(token)
+            self.last_token_aes = b64_aes_encrypt(plaintext)
+
+    @property
     def notify_addresses(self):
         return [addr for addr in re.split('[, ]+', self.notify_addresses_str) if addr]
 
     def get_requests(self, payload_id, logger):
         from corehq.motech.requests import Requests
-        return Requests(
-            self.domain,
-            self.url,
-            self.username,
-            self.plaintext_password,
-            verify=not self.skip_cert_verify,
-            notify_addresses=self.notify_addresses,
-            payload_id=payload_id,
-            logger=logger,
-            auth_type=self.auth_type,
-        )
+
+        if not self._requests:
+            auth_manager = self.get_auth_manager()
+            self._requests = Requests(
+                self.domain,
+                self.url,
+                verify=not self.skip_cert_verify,
+                auth_manager=auth_manager,
+                notify_addresses=self.notify_addresses,
+                payload_id=payload_id,
+                logger=logger,
+            )
+        return self._requests
+
+    def get_auth_manager(self):
+        if self.auth_type is None:
+            return AuthManager()
+        if self.auth_type == BASIC_AUTH:
+            return BasicAuthManager(
+                self.username,
+                self.password,
+            )
+        if self.auth_type == DIGEST_AUTH:
+            return DigestAuthManager(
+                self.username,
+                self.password,
+            )
+        if self.auth_type == OAUTH1:
+            return OAuth1Manager(
+                client_id=self.client_id,
+                client_secret=self.client_secret,
+                api_endpoints=self.get_oauth1_api_endpoints(),
+                last_token=self.last_token,
+            )
+        if self.auth_type == BEARER_AUTH:
+            return BearerAuthManager(
+                self.username,
+                self.password,
+            )
+        if self.auth_type == OAUTH2_PWD:
+            return OAuth2PasswordGrantManager(
+                self.url,
+                self.username,
+                self.password,
+                client_id=self.client_id,
+                client_secret=self.client_secret,
+                api_settings=self.get_oauth2_api_settings(),
+                last_token=self.last_token,
+            )
+
+    def get_oauth1_api_endpoints(self):
+        if self.api_auth_settings in dict(oauth1_api_endpoints):
+            return getattr(corehq.motech.auth, self.api_auth_settings)
+        raise ValueError(_(
+            f'Unable to resolve API endpoints {self.api_auth_settings!r}. '
+            'Please select the applicable API auth settings for the '
+            f'{self.name!r} connection.'
+        ))
+
+    def get_oauth2_api_settings(self):
+        if self.api_auth_settings in dict(oauth2_api_settings):
+            return getattr(corehq.motech.auth, self.api_auth_settings)
+        raise ValueError(_(
+            f'Unable to resolve API settings {self.api_auth_settings!r}. '
+            'Please select the applicable API auth settings for the '
+            f'{self.name!r} connection.'
+        ))
+
+    def update_last_token(self):
+        if (
+            self._requests
+            and hasattr(self._requests.auth_manager, 'last_token')
+            and self.last_token != self._requests.auth_manager.last_token
+        ):
+            self.last_token = self._requests.auth_manager.last_token
+            self.save()
 
 
 class RequestLog(models.Model):
