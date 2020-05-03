@@ -18,7 +18,7 @@ class ConnectionSettingsForm(forms.ModelForm):
     plaintext_password = forms.CharField(
         label=_('Password'),
         required=False,
-        widget=forms.PasswordInput,
+        widget=forms.PasswordInput(render_value=True),
     )
     skip_cert_verify = forms.BooleanField(
         label=_('Skip certificate verification'),
@@ -46,10 +46,15 @@ class ConnectionSettingsForm(forms.ModelForm):
 
     def __init__(self, *args, domain, **kwargs):
         self.domain = domain  # Passed by ``FormSet.form_kwargs``
+        instance = kwargs.get('instance', None)
+        if instance:
+            kwargs['initial'] = {'plaintext_password': instance.plaintext_password, }
+
         super().__init__(*args, **kwargs)
 
     def save(self, commit=True):
         self.instance.domain = self.domain
+        self.instance.plaintext_password = self.cleaned_data['plaintext_password']
         return super().save(commit)
 
 
