@@ -1360,9 +1360,7 @@ class SubscribeSMSForm(Form):
 
         alert_config.commtrack_settings = commtrack_settings
         alert_config.save()
-        # PR3: Remove `if True`  While the sync mixins are in use, the parent model always has to be saved,
-        # because that's the save function that triggers syncing with couch
-        if True or save_settings:
+        if save_settings:
             commtrack_settings.save()
 
 

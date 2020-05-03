@@ -43,13 +43,11 @@ class Command(PopulateSQLCommand):
         return [
             {
                 "sql_class": SQLAlertConfig,
-                "couch_class": AlertConfig,
                 "couch_attr": "alert_config",
                 "fields": ['stock_out_facilities', 'stock_out_commodities', 'stock_out_rates', 'non_report'],
             },
             {
                 "sql_class": SQLConsumptionConfig,
-                "couch_class": ConsumptionConfig,
                 "couch_attr": "consumption_config",
                 "fields": [
                     'min_transactions', 'min_window', 'optimal_window',
@@ -58,13 +56,11 @@ class Command(PopulateSQLCommand):
             },
             {
                 "sql_class": SQLStockLevelsConfig,
-                "couch_class": StockLevelsConfig,
                 "couch_attr": "stock_levels_config",
                 "fields": ['emergency_level', 'understock_threshold', 'overstock_threshold'],
             },
             {
                 "sql_class": SQLStockRestoreConfig,
-                "couch_class": StockRestoreConfig,
                 "couch_attr": "ota_restore_config",
                 "fields": [
                     'section_to_consumption_types', 'force_consumption_case_types', 'use_dynamic_product_list',
