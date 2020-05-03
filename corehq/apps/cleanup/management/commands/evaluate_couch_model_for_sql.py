@@ -35,8 +35,14 @@ class Command(BaseCommand):
 
     COUCH_FIELDS = {'_id', '_rev', 'doc_type', 'base_doc'}
 
+    FIELD_TYPE_JSON_LIST = 'JsonField,default=list'
+    FIELD_TYPE_JSON_DICT = 'JsonField,default=dict'
+    FIELD_TYPE_SUBMODEL_LIST = 'ForeignKey'
+    FIELD_TYPE_SUBMODEL_DICT = 'OneToOneField'
+
     key_counts = defaultdict(lambda: 0)
     max_lengths = defaultdict(lambda: 0)
+    field_types = {}
 
     def evaluate_doc(self, doc, prefix=None):
         for key, value in doc.items():
@@ -49,16 +55,32 @@ class Command(BaseCommand):
             if value is None:
                 continue
 
-            if isinstance(value, list):
-                for item in value:
-                    if isinstance(item, dict):
-                        self.evaluate_doc(item, prefix=key)
-            elif isinstance(value, dict):
-                self.evaluate_doc(value, prefix=key)
-            else:
-                length = len(str(value))
-                self.max_lengths[key] = max(length, self.max_lengths[key])
             self.key_counts[key] += 1
+            if isinstance(value, list):
+                if key not in self.field_types:
+                    is_submodel = input(f"Is {key} a submodel (y/n)? ").lower().startswith("y")
+                    self.field_types.update({
+                        key: self.FIELD_TYPE_SUBMODEL_LIST if is_submodel else self.FIELD_TYPE_JSON_LIST,
+                    })
+                if self.field_types[key] == self.FIELD_TYPE_SUBMODEL_LIST:
+                    for item in value:
+                        if isinstance(item, dict):
+                            self.evaluate_doc(item, prefix=key)
+                    continue
+
+            if isinstance(value, dict):
+                if key not in self.field_types:
+                    is_submodel = input(f"Is {key} a submodel (y/n)? ").lower().startswith("y")
+                    self.field_types.update({
+                        key: self.FIELD_TYPE_SUBMODEL_DICT if is_submodel else self.FIELD_TYPE_JSON_DICT,
+                    })
+                if self.field_types[key] == self.FIELD_TYPE_SUBMODEL_DICT:
+                    self.evaluate_doc(value, prefix=key)
+                    continue
+
+            # Primitives
+            length = len(str(value))
+            self.max_lengths[key] = max(length, self.max_lengths[key])
 
     def handle(self, django_app, class_name, **options):
         path = f"corehq.apps.{django_app}.models.{class_name}"
