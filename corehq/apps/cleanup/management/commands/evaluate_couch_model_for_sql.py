@@ -53,14 +53,16 @@ class Command(BaseCommand):
                     key = f"{prefix}.{key}"
                 if value is None:
                     continue
+
                 if isinstance(value, list):
                     for item in value:
                         if isinstance(item, dict):
                             _evaluate_doc(item, prefix=key)
-                    length = len(value)
+                elif isinstance(value, dict):
+                    _evaluate_doc(value, prefix=key)
                 else:
                     length = len(str(value))
-                max_lengths[key] = max(length, max_lengths[key])
+                    max_lengths[key] = max(length, max_lengths[key])
                 key_counts[key] += 1
 
         for doc in iter_docs(couch_class.get_db(), doc_ids):
