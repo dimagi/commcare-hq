@@ -159,7 +159,7 @@ class SQLCustomDataFieldsDefinition(SyncSQLToCouchMixin, models.Model):
 
         def validate_custom_fields(custom_fields):
             errors = []
-            for field in self.fields:
+            for field in self.sqlfield_set.all():
                 value = custom_fields.get(field.slug, None)
                 errors.append(validate_required(field, value))
                 errors.append(validate_choices(field, value))
@@ -178,7 +178,7 @@ class SQLCustomDataFieldsDefinition(SyncSQLToCouchMixin, models.Model):
             return {}, {}
         model_data = {}
         uncategorized_data = {}
-        slugs = {field.slug for field in self.sqlfield_set}
+        slugs = {field.slug for field in self.sqlfield_set.all()}
         for k, v in data_dict.items():
             if k in slugs:
                 model_data[k] = v
