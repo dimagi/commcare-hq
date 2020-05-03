@@ -60,13 +60,14 @@ class LocationReassignmentView(BaseLocationView):
             'bulk_upload': {
                 "download_url": reverse('download_location_reassignment_template', args=[self.domain]),
                 "adjective": _("locations"),
-                "plural_noun": _("location reassignments"),
+                "plural_noun": _("Location Reassignment Request File"),
                 "verb": _("Perform"),
                 "help_link": "https://confluence.dimagi.com/display/ICDS/Location+Reassignment",
             },
         })
         context.update({
             'bulk_upload_form': get_bulk_upload_form(context, form_class=LocationReassignmentRequestForm),
+            "no_header": True,
         })
         return context
 
@@ -163,8 +164,7 @@ class LocationReassignmentView(BaseLocationView):
 
     def _process_request_for_update(self, parser, request, uploaded_filename):
         process_location_reassignment.delay(
-            self.domain, parser.valid_transitions, parser.new_location_details,
-            parser.user_transitions, list(parser.requested_transitions.keys()),
+            self.domain, parser.valid_transitions_json(),
             uploaded_filename, request.user.email
         )
         messages.success(request, _(
