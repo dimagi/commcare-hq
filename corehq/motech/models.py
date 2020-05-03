@@ -5,14 +5,8 @@ from django.db import models
 
 import jsonfield
 
-from corehq.motech.const import (
-    ALGO_AES,
-    BASIC_AUTH,
-    DIGEST_AUTH,
-    OAUTH1,
-    BEARER_AUTH,
-    PASSWORD_PLACEHOLDER,
-)
+from corehq.motech.auth import api_auth_settings_choices
+from corehq.motech.const import ALGO_AES, AUTH_TYPES, PASSWORD_PLACEHOLDER
 from corehq.motech.utils import b64_aes_decrypt, b64_aes_encrypt
 
 
@@ -27,17 +21,21 @@ class ConnectionSettings(models.Model):
     name = models.CharField(max_length=255)
     url = models.CharField(max_length=255)
     auth_type = models.CharField(
-        max_length=7, null=True, blank=True,
+        max_length=16, null=True, blank=True,
         choices=(
             (None, "None"),
-            (BASIC_AUTH, "Basic"),
-            (DIGEST_AUTH, "Digest"),
-            (OAUTH1, "OAuth1"),
-            (BEARER_AUTH, "Bearer"),
+            *AUTH_TYPES,
         )
     )
-    username = models.CharField(max_length=255)
-    password = models.CharField(max_length=255)
+    api_auth_settings = models.CharField(
+        max_length=64, null=True, blank=True,
+        choices=api_auth_settings_choices,
+    )
+    username = models.CharField(max_length=255, null=True, blank=True)
+    password = models.CharField(max_length=255, blank=True)
+    # OAuth 2.0 Password Grant needs username, password, client_id & client_secret
+    client_id = models.CharField(max_length=255, null=True, blank=True)
+    client_secret = models.CharField(max_length=255, blank=True)
     skip_cert_verify = models.BooleanField(default=False)
     notify_addresses_str = models.CharField(max_length=255, default="")
 
@@ -46,7 +44,7 @@ class ConnectionSettings(models.Model):
 
     @property
     def plaintext_password(self):
-        if self.password.startswith('${algo}$'.format(algo=ALGO_AES)):
+        if self.password.startswith(f'${ALGO_AES}$'):
             ciphertext = self.password.split('$', 2)[2]
             return b64_aes_decrypt(ciphertext)
         return self.password
@@ -54,10 +52,21 @@ class ConnectionSettings(models.Model):
     @plaintext_password.setter
     def plaintext_password(self, plaintext):
         if plaintext != PASSWORD_PLACEHOLDER:
-            self.password = '${algo}${ciphertext}'.format(
-                algo=ALGO_AES,
-                ciphertext=b64_aes_encrypt(plaintext)
-            )
+            ciphertext=b64_aes_encrypt(plaintext)
+            self.password = f'${ALGO_AES}${ciphertext}'
+
+    @property
+    def plaintext_client_secret(self):
+        if self.client_secret.startswith(f'${ALGO_AES}$'):
+            ciphertext = self.client_secret.split('$', 2)[2]
+            return b64_aes_decrypt(ciphertext)
+        return self.client_secret
+
+    @plaintext_client_secret.setter
+    def plaintext_client_secret(self, plaintext):
+        if plaintext != PASSWORD_PLACEHOLDER:
+            ciphertext=b64_aes_encrypt(plaintext)
+            self.client_secret = f'${ALGO_AES}${ciphertext}'
 
     @property
     def notify_addresses(self):
