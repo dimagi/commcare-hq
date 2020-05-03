@@ -88,8 +88,7 @@ def update_custom_data_models(domain_link, limit_types=None):
 
     for field_type, field_definitions in master_results.items():
         model = CustomDataFieldsDefinition.get_or_create(domain_link.linked_domain, field_type)
-        model.sqlfield_set.all().delete()
-        model.sqlfield_set.set([
+        model.set_fields([
             Field(
                 slug=field_def['slug'],
                 is_required=field_def['is_required'],
@@ -98,7 +97,7 @@ def update_custom_data_models(domain_link, limit_types=None):
                 regex=field_def['regex'],
                 regex_msg=field_def['regex_msg'],
             ) for field_def in field_definitions
-        ], bulk=False)
+        ])
         model.save()
 
 

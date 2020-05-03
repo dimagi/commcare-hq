@@ -436,10 +436,10 @@ class LocationFixturesDataTest(LocationHierarchyTestCase, FixtureHasLocationsMix
         super(LocationFixturesDataTest, cls).setUpClass()
         cls.user = create_restore_user(cls.domain, 'user', '123')
         cls.loc_fields = CustomDataFieldsDefinition.get_or_create(cls.domain, LocationFieldsView.field_type)
-        cls.loc_fields.field_set.set([
+        cls.loc_fields.set_fields([
             Field(slug='baseball_team'),
-            Field(slug='favorite_pastime'),
-        ], bulk=False)
+            Field(slug='favorite_passtime'),
+        ])
         cls.loc_fields.save()
         cls.field_slugs = [f.slug for f in cls.loc_fields.field_set.all()]
 

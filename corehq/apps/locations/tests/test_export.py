@@ -36,9 +36,9 @@ class TestLocationsExport(LocationHierarchyTestCase):
         super(TestLocationsExport, cls).setUpClass()
 
         cls.loc_fields = CustomDataFieldsDefinition.get_or_create(cls.domain, LocationFieldsView.field_type)
-        cls.loc_fields.field_set.set([
+        cls.loc_fields.set_fields([
             Field(slug=slug) for slug in cls.custom_fields
-        ], bulk=False)
+        ])
         cls.loc_fields.save()
 
         cls.boston = cls.locations['Boston']

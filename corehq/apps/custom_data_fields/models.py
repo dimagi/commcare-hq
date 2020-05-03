@@ -71,6 +71,11 @@ class CustomDataFieldsDefinition(models.Model):
             )
         return filter(_is_match, self.sqlfield_set.all())
 
+    # Note that this does not save
+    def set_fields(self, fields):
+        self.field_set.all().delete()
+        self.field_set.set(fields, bulk=False)
+
     def get_validator(self, data_field_class):
         """
         Returns a validator to be used in bulk import
