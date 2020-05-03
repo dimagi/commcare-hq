@@ -16,8 +16,8 @@ from casexml.apps.case.models import CommCareCase
 from corehq import feature_previews, toggles
 from corehq.apps.commtrack import const
 from corehq.apps.commtrack.models import (
-    CommtrackActionConfig,
-    CommtrackConfig,
+    SQLActionConfig,
+    SQLCommtrackConfig,
     SupplyPointCase,
 )
 from corehq.apps.hqcase.utils import submit_case_blocks
@@ -30,7 +30,7 @@ CaseLocationTuple = namedtuple('CaseLocationTuple', 'case location')
 
 
 def all_sms_codes(domain):
-    config = CommtrackConfig.for_domain(domain)
+    config = SQLCommtrackConfig.for_domain(domain)
 
     actions = {action.keyword: action for action in config.actions}
     products = {p.code: p for p in SQLProduct.active_objects.filter(domain=domain)}
@@ -79,40 +79,39 @@ def get_or_create_default_program(domain):
 
 
 def _create_commtrack_config_if_needed(domain):
-    if CommtrackConfig.for_domain(domain):
+    if SQLCommtrackConfig.for_domain(domain):
         return
 
-    CommtrackConfig(
-        domain=domain,
-        actions=[
-            CommtrackActionConfig(
-                action='receipts',
-                keyword='r',
-                caption='Received',
-            ),
-            CommtrackActionConfig(
-                action='consumption',
-                keyword='c',
-                caption='Consumed',
-            ),
-            CommtrackActionConfig(
-                action='consumption',
-                subaction='loss',
-                keyword='l',
-                caption='Losses',
-            ),
-            CommtrackActionConfig(
-                action='stockonhand',
-                keyword='soh',
-                caption='Stock on hand',
-            ),
-            CommtrackActionConfig(
-                action='stockout',
-                keyword='so',
-                caption='Stock-out',
-            ),
-        ],
-    ).save()
+    config = SQLCommtrackConfig(domain=domain)
+    config.set_actions([
+        SQLActionConfig(
+            action='receipts',
+            keyword='r',
+            caption='Received',
+        ),
+        SQLActionConfig(
+            action='consumption',
+            keyword='c',
+            caption='Consumed',
+        ),
+        SQLActionConfig(
+            action='consumption',
+            subaction='loss',
+            keyword='l',
+            caption='Losses',
+        ),
+        SQLActionConfig(
+            action='stockonhand',
+            keyword='soh',
+            caption='Stock on hand',
+        ),
+        SQLActionConfig(
+            action='stockout',
+            keyword='so',
+            caption='Stock-out',
+        ),
+    ])
+    config.save()
 
 
 def _enable_commtrack_previews(domain):

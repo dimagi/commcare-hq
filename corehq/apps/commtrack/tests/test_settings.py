@@ -4,9 +4,9 @@ from casexml.apps.case.models import CommCareCase
 
 from corehq.apps.commtrack.const import DAYS_IN_MONTH
 from corehq.apps.commtrack.models import (
-    CommtrackConfig,
-    ConsumptionConfig,
-    StockRestoreConfig,
+    SQLCommtrackConfig,
+    SQLConsumptionConfig,
+    SQLStockRestoreConfig,
 )
 from corehq.apps.consumption.shortcuts import (
     set_default_monthly_consumption_for_domain,
@@ -27,13 +27,13 @@ class CommTrackSettingsTest(TestCase):
         self.project.delete()
 
     def testOTASettings(self):
-        ct_settings = CommtrackConfig.for_domain(self.domain)
-        ct_settings.consumption_config = ConsumptionConfig(
+        ct_settings = SQLCommtrackConfig.for_domain(self.domain)
+        ct_settings.sqlconsumptionconfig = SQLConsumptionConfig(
             min_transactions=10,
             min_window=20,
             optimal_window=60,
         )
-        ct_settings.ota_restore_config = StockRestoreConfig(
+        ct_settings.sqlstockrestoreconfig = SQLStockRestoreConfig(
             section_to_consumption_types={'stock': 'consumption'},
         )
         set_default_monthly_consumption_for_domain(self.domain, 5 * DAYS_IN_MONTH)
@@ -47,8 +47,8 @@ class CommTrackSettingsTest(TestCase):
         self.assertFalse(restore_settings.force_consumption_case_filter(CommCareCase(type='force-type')))
         self.assertEqual(0, len(restore_settings.default_product_list))
 
-        ct_settings.ota_restore_config.force_consumption_case_types=['force-type']
-        ct_settings.ota_restore_config.use_dynamic_product_list=True
+        ct_settings.sqlstockrestoreconfig.force_consumption_case_types = ['force-type']
+        ct_settings.sqlstockrestoreconfig.use_dynamic_product_list = True
         restore_settings = ct_settings.get_ota_restore_settings()
         self.assertTrue(restore_settings.force_consumption_case_filter(CommCareCase(type='force-type')))
         self.assertEqual(3, len(restore_settings.default_product_list))
