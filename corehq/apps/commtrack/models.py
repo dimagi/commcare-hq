@@ -43,7 +43,6 @@ STOCK_ACTION_ORDER = [
 
 class SQLCommtrackConfig(models.Model, SyncSQLToCouchMixin):
     domain = models.CharField(max_length=126, null=False, db_index=True, unique=True)
-    couch_id = models.CharField(max_length=126, null=True, db_index=True)
 
     # configured on Advanced Settings page
     use_auto_emergency_levels = models.BooleanField(default=False)
