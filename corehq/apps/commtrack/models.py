@@ -18,11 +18,8 @@ from casexml.apps.stock.consumption import (
 from casexml.apps.stock.models import DocDomainMapping
 from couchforms.signals import xform_archived, xform_unarchived
 from dimagi.ext.couchdbkit import *
-from dimagi.utils.couch.migration import SyncCouchToSQLMixin, SyncSQLToCouchMixin, SubmodelSpec
 
-from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
 from corehq.apps.consumption.shortcuts import get_default_monthly_consumption
-from corehq.apps.domain.dbaccessors import get_docs_in_domain_by_class
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.products.models import SQLProduct
@@ -41,7 +38,7 @@ STOCK_ACTION_ORDER = [
 ]
 
 
-class SQLCommtrackConfig(models.Model, SyncSQLToCouchMixin):
+class SQLCommtrackConfig(models.Model):
     domain = models.CharField(max_length=126, null=False, db_index=True, unique=True)
 
     # configured on Advanced Settings page
@@ -67,29 +64,6 @@ class SQLCommtrackConfig(models.Model, SyncSQLToCouchMixin):
 
     def action_by_keyword(self, keyword):
         return dict((a.keyword.lower(), a) for a in self.all_actions).get(keyword.lower())
-
-    def _migration_get_fields(cls):
-        from corehq.apps.commtrack.management.commands.populate_sql_models import Command
-        return Command.attrs_to_sync()
-
-    def _migration_sync_to_couch(self, couch_obj):
-        for field_name in self._migration_get_fields():
-            value = getattr(self, field_name)
-            setattr(couch_obj, field_name, value)
-        couch_obj.actions = [
-            CommtrackActionConfig(
-                action=action.action,
-                subaction=action.subaction,
-                _keyword=action._keyword,
-                caption=action.caption,
-            ) for action in self.all_actions
-        ]
-        # jls: one to ones
-        couch_obj.save(sync_to_sql=False)
-
-    @classmethod
-    def _migration_get_couch_model_class(cls):
-        return CommtrackConfig
 
     @classmethod
     def for_domain(cls, domain):
@@ -153,6 +127,9 @@ class SQLCommtrackConfig(models.Model, SyncSQLToCouchMixin):
         return config
 
 
+# supported stock actions for this commtrack domain
+# listed in the order they are processed -- TODO support for this custom ordering might go away
+# TODO must catch ambiguous action lists (two action configs with the same 'name')
 class SQLActionConfig(models.Model):
     # one of the base stock action types (see StockActions enum)
     action = models.CharField(max_length=40, null=True)
@@ -199,33 +176,6 @@ class SQLActionConfig(models.Model):
         }
 
 
-class CommtrackActionConfig(DocumentSchema):
-    # one of the base stock action types (see StockActions enum)
-    action = StringProperty()
-    # (optional) to further distinguish different kinds of the base action
-    # (i.e., separately tracking consumption as 'dispensed' or 'lost'). note that when the system
-    # infers consumption/receipts from reported stock, it will be marked here as a subaction
-    subaction = StringProperty()
-    # sms code
-    _keyword = StringProperty()
-    # display title
-    caption = StringProperty()
-
-    @classmethod
-    def wrap(cls, data):
-        if 'action_type' in data:
-            data['action'] = data['action_type']
-            del data['action_type']
-
-        if 'name' in data:
-            if data['name'] == 'lost':
-                data['subaction'] = 'loss'
-
-            del data['name']
-
-        return super(CommtrackActionConfig, cls).wrap(data)
-
-
 class SQLConsumptionConfig(models.Model):
     min_transactions = models.IntegerField(default=2, null=True)
     min_window = models.IntegerField(default=10, null=True)
@@ -252,14 +202,6 @@ class SQLConsumptionConfig(models.Model):
         }
 
 
-class ConsumptionConfig(DocumentSchema):
-    min_transactions = IntegerProperty(default=2)
-    min_window = IntegerProperty(default=10)
-    optimal_window = IntegerProperty()
-    use_supply_point_type_default_consumption = BooleanProperty(default=False)
-    exclude_invalid_periods = BooleanProperty(default=False)
-
-
 class SQLStockLevelsConfig(models.Model):
     # All of these are in months
     emergency_level = models.DecimalField(default=0.5, max_digits=3, decimal_places=2)
@@ -281,12 +223,6 @@ class SQLStockLevelsConfig(models.Model):
             "understock_threshold": self.understock_threshold,
             "overstock_threshold": self.overstock_threshold,
         }
-
-
-class StockLevelsConfig(DocumentSchema):
-    emergency_level = DecimalProperty(default=0.5)  # in months
-    understock_threshold = DecimalProperty(default=1.5)  # in months
-    overstock_threshold = DecimalProperty(default=3)  # in months
 
 
 # configured on Subscribe SMS page
@@ -314,13 +250,6 @@ class SQLAlertConfig(models.Model):
         }
 
 
-class AlertConfig(DocumentSchema):
-    stock_out_facilities = BooleanProperty(default=False)
-    stock_out_commodities = BooleanProperty(default=False)
-    stock_out_rates = BooleanProperty(default=False)
-    non_report = BooleanProperty(default=False)
-
-
 class SQLStockRestoreConfig(models.Model):
     section_to_consumption_types = JSONField(default=dict, null=True)
     force_consumption_case_types = JSONField(default=list, null=True)
@@ -341,134 +270,6 @@ class SQLStockRestoreConfig(models.Model):
             "force_consumption_case_types": self.force_consumption_case_types,
             "use_dynamic_product_list": self.use_dynamic_product_list,
         }
-
-
-class StockRestoreConfig(DocumentSchema):
-    section_to_consumption_types = DictProperty()
-    force_consumption_case_types = ListProperty()
-    use_dynamic_product_list = BooleanProperty(default=False)
-
-    @classmethod
-    def wrap(cls, obj):
-        # todo: remove this cruft at some point
-        if 'force_to_consumption_case_types' in obj:
-            realval = obj['force_to_consumption_case_types']
-            oldval = obj.get('force_consumption_case_types')
-            if realval and not oldval:
-                obj['force_consumption_case_types'] = realval
-                del obj['force_to_consumption_case_types']
-        return super(StockRestoreConfig, cls).wrap(obj)
-
-
-class CommtrackConfig(SyncCouchToSQLMixin, QuickCachedDocumentMixin, Document):
-    domain = StringProperty()
-
-    # supported stock actions for this commtrack domain
-    # listed in the order they are processed -- TODO support for this custom ordering might go away
-    actions = SchemaListProperty(CommtrackActionConfig)
-    # TODO must catch ambiguous action lists (two action configs with the same 'name')
-
-    # configured on Advanced Settings page
-    use_auto_emergency_levels = BooleanProperty(default=False)
-
-    sync_consumption_fixtures = BooleanProperty(default=False)
-    use_auto_consumption = BooleanProperty(default=False)
-    consumption_config = SchemaProperty(ConsumptionConfig)
-    stock_levels_config = SchemaProperty(StockLevelsConfig)
-    ota_restore_config = SchemaProperty(StockRestoreConfig)
-    individual_consumption_defaults = BooleanProperty(default=False)
-
-    # configured on Subscribe Sms page
-    alert_config = SchemaProperty(AlertConfig)
-
-    def _migration_sync_to_sql(self, sql_object):
-        for field_name in self._migration_get_fields():
-            value = getattr(self, field_name)
-            setattr(sql_object, field_name, value)
-        # jls: one to ones
-        sql_object.set_actions([
-            SQLActionConfig(
-                action=action.action,
-                subaction=action.subaction,
-                _keyword=action._keyword,
-                caption=action.caption,
-            ) for action in self.actions
-        ])
-        sql_object.save(sync_to_couch=False)
-
-    @classmethod
-    def _migration_get_sql_model_class(cls):
-        return SQLCommtrackConfig
-
-    def clear_caches(self):
-        super(CommtrackConfig, self).clear_caches()
-        self.for_domain.clear(self.__class__, self.domain)
-
-    @classmethod
-    @quickcache(vary_on=['domain'], skip_arg=lambda *args: settings.UNIT_TESTING)
-    def for_domain(cls, domain):
-        result = get_docs_in_domain_by_class(domain, cls)
-        try:
-            return result[0]
-        except IndexError:
-            return None
-
-
-SINGLE_SUBMODELS_TO_SYNC = [
-    SubmodelSpec(
-        sql_attr="sqlconsumptionconfig",
-        sql_class=SQLConsumptionConfig,
-        sql_fields=[
-            'min_transactions', 'min_window', 'optimal_window',
-            'use_supply_point_type_default_consumption', 'exclude_invalid_periods',
-        ],
-        couch_attr="consumption_config",
-        couch_class=ConsumptionConfig,
-        couch_fields=[
-            'min_transactions', 'min_window', 'optimal_window',
-            'use_supply_point_type_default_consumption', 'exclude_invalid_periods',
-        ],
-    ),
-    SubmodelSpec(
-        sql_attr="sqlstocklevelsconfig",
-        sql_class=SQLStockLevelsConfig,
-        sql_fields=['emergency_level', 'understock_threshold', 'overstock_threshold'],
-        couch_attr="stock_levels_config",
-        couch_class=StockLevelsConfig,
-        couch_fields=['emergency_level', 'understock_threshold', 'overstock_threshold'],
-    ),
-    SubmodelSpec(
-        sql_attr="sqlalertconfig_set",
-        sql_class=SQLAlertConfig,
-        sql_fields=['stock_out_facilities', 'stock_out_commodities', 'stock_out_rates', 'non_report'],
-        couch_attr="alert_config",
-        couch_class=AlertConfig,
-        couch_fields=['stock_out_facilities', 'stock_out_commodities', 'stock_out_rates', 'non_report'],
-    ),
-    SubmodelSpec(
-        sql_attr="sqlstockrestoreconfig",
-        sql_class=SQLStockRestoreConfig,
-        sql_fields=[
-            'section_to_consumption_types', 'force_consumption_case_types', 'use_dynamic_product_list',
-        ],
-        couch_attr="ota_restore_config",
-        couch_class=StockRestoreConfig,
-        couch_fields=[
-            'section_to_consumption_types', 'force_consumption_case_types', 'use_dynamic_product_list',
-        ],
-    ),
-]
-
-LIST_SUBMODELS_TO_SYNC = [
-    SubmodelSpec(
-        sql_attr="sqlactionconfig_set",
-        sql_class=SQLActionConfig,
-        sql_fields=['action', 'subaction', '_keyword', 'caption'],
-        couch_attr="actions",
-        couch_class=CommtrackActionConfig,
-        couch_fields=['action', 'subaction', '_keyword', 'caption'],
-    ),
-]
 
 
 class SupplyPointCase(CommCareCase):
