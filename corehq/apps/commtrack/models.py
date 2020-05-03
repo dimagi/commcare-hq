@@ -135,6 +135,27 @@ class SQLCommtrackConfig(models.Model, SyncSQLToCouchMixin):
             sync_consumption_ledger=self.sync_consumption_fixtures
         )
 
+    def to_json(self):
+        config = {
+            "domain": self.domain,
+            "actions": [a.to_json() for a in self.sqlaction_config.all()],
+            "use_auto_emergency_levels": self.use_auto_emergency_levels,
+            "sync_consumption_fixtures": self.sync_consumption_fixtures,
+            "use_auto_consumption": self.use_auto_consumption,
+            "individual_consumption_defaults": self.individual_consumption_defaults,
+        }
+        for json_attr, sql_attr in {
+            'alert_config': 'sqlalertconfig',
+            'consumption_config': 'sqlconsumptionconfig',
+            'ota_restore_config': 'sqlstockrestoreconfig',
+            'stock_levels_config': 'sqlstocklevelsconfig',
+        }.items():
+            if hasattr(self, sql_attr):
+                config[json_attr] = getattr(self, sql_attr)
+            else:
+                config[json_attr] = {}
+        return config
+
 
 class SQLActionConfig(models.Model):
     # one of the base stock action types (see StockActions enum)
@@ -172,6 +193,14 @@ class SQLActionConfig(models.Model):
 
     def __repr__(self):
         return '{action} ({subaction}): {caption} ({_keyword})'.format(**self._doc)
+
+    def to_json(self):
+        return {
+            'action': self.action,
+            'subaction': self.subaction,
+            '_keyword': self._keyword,
+            'caption': self.caption,
+        }
 
 
 class CommtrackActionConfig(DocumentSchema):
@@ -217,6 +246,15 @@ class SQLConsumptionConfig(models.Model):
     class Meta:
         db_table = "commtrack_consumptionconfig"
 
+    def to_json(self):
+        return {
+            "min_transactions": self.min_transactions,
+            "min_window": self.min_window,
+            "optimal_window": self.optimal_window,
+            "use_supply_point_type_default_consumption": self.use_supply_point_type_default_consumption,
+            "exclude_invalid_periods": self.exclude_invalid_periods,
+        }
+
 
 class ConsumptionConfig(DocumentSchema):
     min_transactions = IntegerProperty(default=2)
@@ -241,6 +279,13 @@ class SQLStockLevelsConfig(models.Model):
     class Meta:
         db_table = "commtrack_stocklevelsconfig"
 
+    def to_json(self):
+        return {
+            "emergency_level": self.emergency_level,
+            "understock_threshold": self.understock_threshold,
+            "overstock_threshold": self.overstock_threshold,
+        }
+
 
 class StockLevelsConfig(DocumentSchema):
     emergency_level = DecimalProperty(default=0.5)  # in months
@@ -264,6 +309,14 @@ class SQLAlertConfig(models.Model):
     class Meta:
         db_table = "commtrack_alertconfig"
 
+    def to_json(self):
+        return {
+            "stock_out_facilities": self.stock_out_facilities,
+            "stock_out_commodities": self.stock_out_commodities,
+            "stock_out_rates": self.stock_out_rates,
+            "non_report": self.non_report,
+        }
+
 
 class AlertConfig(DocumentSchema):
     stock_out_facilities = BooleanProperty(default=False)
@@ -285,6 +338,13 @@ class SQLStockRestoreConfig(models.Model):
 
     class Meta:
         db_table = "commtrack_stockrestoreconfig"
+
+    def to_json(self):
+        return {
+            "section_to_consumption_types": self.section_to_consumption_types,
+            "force_consumption_case_types": self.force_consumption_case_types,
+            "use_dynamic_product_list": self.use_dynamic_product_list,
+        }
 
 
 class StockRestoreConfig(DocumentSchema):
