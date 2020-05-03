@@ -33,13 +33,19 @@ class Command(BaseCommand):
             'class_name',
         )
 
+    COUCH_FIELDS = {'_id', '_rev', 'doc_type', 'base_doc'}
+
     key_counts = defaultdict(lambda: 0)
     max_lengths = defaultdict(lambda: 0)
 
     def evaluate_doc(self, doc, prefix=None):
         for key, value in doc.items():
+            if key in self.COUCH_FIELDS:
+                continue
+
             if prefix:
                 key = f"{prefix}.{key}"
+
             if value is None:
                 continue
 
