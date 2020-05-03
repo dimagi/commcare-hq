@@ -60,7 +60,7 @@ class LocationReassignmentView(BaseLocationView):
             'bulk_upload': {
                 "download_url": reverse('download_location_reassignment_template', args=[self.domain]),
                 "adjective": _("locations"),
-                "plural_noun": _("Location Reassignment Request file"),
+                "plural_noun": _("Location Reassignment Request File"),
                 "verb": _("Perform"),
                 "help_link": "https://confluence.dimagi.com/display/ICDS/Location+Reassignment",
             },
