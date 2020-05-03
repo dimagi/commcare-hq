@@ -18,11 +18,12 @@ class Command(BaseCommand):
         on usage of each attribute, to aid in selecting SQL fields for those attributes.
 
         For each attribute report:
+        - Expected field type
         - Whether the value is ever None, for the purpose of deciding whether to use null=True
         - Longest value, for the purpose of setting max_length
 
-        Boolean attributes are ignored. Any attributes that is a list of dicts is assumed to be SchemaListProperty,
-        and each of its attributes is examined the same way as a top-level attribute.
+        For any attribute that is a list or dict, the script will ask whether it's a submodel
+        (as opposed to a JsonField) and, if so, examine it the same way as a top-level attribute.
     """
 
     def add_arguments(self, parser):
@@ -35,6 +36,10 @@ class Command(BaseCommand):
 
     COUCH_FIELDS = {'_id', '_rev', 'doc_type', 'base_doc'}
 
+    FIELD_TYPE_BOOL = 'BooleanField'
+    FIELD_TYPE_INTEGER = 'IntegerField'
+    FIELD_TYPE_DECIMAL = 'DecimalField'
+    FIELD_TYPE_STRING = 'CharField'
     FIELD_TYPE_JSON_LIST = 'JsonField,default=list'
     FIELD_TYPE_JSON_DICT = 'JsonField,default=dict'
     FIELD_TYPE_SUBMODEL_LIST = 'ForeignKey'
@@ -79,8 +84,24 @@ class Command(BaseCommand):
                     continue
 
             # Primitives
-            length = len(str(value))
-            self.max_lengths[key] = max(length, self.max_lengths[key])
+            if key not in self.field_types:
+                if isinstance(value, bool):
+                    self.field_types[key] = self.FIELD_TYPE_BOOL
+                elif isinstance(value, str):
+                    self.field_types[key] = self.FIELD_TYPE_STRING
+                elif int(value) == value:
+                    self.field_types[key] = self.FIELD_TYPE_INTEGER
+                else:
+                    self.field_types[key] = self.FIELD_TYPE_DECIMAL
+
+            if self.field_types[key] == self.FIELD_TYPE_BOOL:
+                continue
+
+            if self.field_types[key] == self.FIELD_TYPE_INTEGER:
+                if int(value) != value:
+                    self.field_types[key] = self.FIELD_TYPE_DECIMAL
+
+            self.max_lengths[key] = max(len(str(value)), self.max_lengths[key])
 
     def handle(self, django_app, class_name, **options):
         path = f"corehq.apps.{django_app}.models.{class_name}"
@@ -97,9 +118,10 @@ class Command(BaseCommand):
             self.evaluate_doc(doc)
 
         max_count = max(self.key_counts.values())
-        for key in sorted(self.key_counts):
-            print("{} is {} null and has max length of {}".format(
+        for key, field_type in self.field_types.items():
+            print("{} is a {}, is {} null and has max length of {}".format(
                 key,
+                field_type,
                 'never' if self.key_counts[key] == max_count else 'sometimes',
                 self.max_lengths[key]
             ))
