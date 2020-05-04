@@ -61,5 +61,6 @@ branches:
   - mk/location-reassignment-realign-fixes # MK May 4
   - mk/location-reassignment-add-view # MK May 3
   - rn_update_perfect_scrollbar # Rohit Negi May 4
+  - bmb/SAAS-10674  # Biyeun May 4
 
 submodules: {}
