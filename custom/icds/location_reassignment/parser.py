@@ -297,7 +297,7 @@ class Parser(object):
                         missing_site_codes = set(descendants_sites_codes) - site_codes_to_be_deprecated
                         if missing_site_codes:
                             self.errors.append(
-                                f"Location %s is getting deprecated via {operation} "
+                                f"Location {location.site_code} is getting deprecated via {operation} "
                                 f"but the following descendants are not {', '.join(missing_site_codes)}")
 
     def _validate_parents(self):
