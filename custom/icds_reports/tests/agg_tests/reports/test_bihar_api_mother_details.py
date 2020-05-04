@@ -40,7 +40,8 @@ class BiharAPIMotherTest(TestCase):
                 "tt_booster": datetime.date(2017, 5, 3),
                 "hb": 2,
                 "add": datetime.date(2017, 6, 1),
-                "last_preg_tt": None
+                "last_preg_tt": None,
+                "lmp": datetime.date(2016, 10, 2)
              },
             ccs_case_details
         )
