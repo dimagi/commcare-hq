@@ -1815,7 +1815,7 @@ def _construct_replacement_map_from_sql_location(replacement_location_ids):
             loc = loc.parent
         loc_names.reverse()
         return ' > '.join(loc_names)
-    
+
     # prefetch all possible parents
     replacement_locations = SQLLocation.objects.filter(location_id__in=replacement_location_ids).select_related('parent__parent__parent__parent')
 
@@ -1846,3 +1846,10 @@ def get_deprecation_info(locations, show_test, multiple_levels=False):
 
 def get_location_replacement_name(location, field, replacement_names):
     return [replacement_names.get(loc_id, '') for loc_id in location.metadata.get(field, [])]
+
+
+def timestamp_string_to_date_string(ts_string):
+    if ts_string:
+        return ts_string[:11]
+    else:
+        return ''
