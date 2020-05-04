@@ -790,3 +790,18 @@ class DiffTestCases(SimpleTestCase):
             ],
         }
         self._test_form_diff_filter(couch_form, sql_form)
+
+    def test_case_with_location_and_referrals(self):
+        couch_case = {
+            "doc_type": "CommCareCase",
+            "location_": [],
+            "referrals": [],
+        }
+        sql_case = {
+            "doc_type": "CommCareCase",
+            "location_": '[]',
+            "referrals": '[]',
+        }
+        diffs = json_diff(couch_case, sql_case, track_list_indices=False)
+        filtered = filter_case_diffs(couch_case, sql_case, diffs)
+        self.assertEqual(filtered, [])

@@ -109,6 +109,8 @@ load_ignore_rules = memoized(lambda: add_duplicate_rules({
         Ignore('set_mismatch', ('xform_ids', '[*]'), old=''),
         Ignore('missing', 'case_attachments', old=MISSING, new={}),
         Ignore('missing', old=None, new=MISSING),
+        Ignore('type', 'location_', old=[], new='[]'),
+        Ignore('type', 'referrals', old=[], new='[]'),
 
         # CASE_IGNORED_DIFFS
         Ignore('type', 'name', old='', new=None),
