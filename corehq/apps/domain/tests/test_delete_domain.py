@@ -51,7 +51,7 @@ from corehq.apps.case_search.models import (
 )
 from corehq.apps.cloudcare.dbaccessors import get_application_access_for_domain
 from corehq.apps.cloudcare.models import ApplicationAccess
-from corehq.apps.commtrack.models import SQLCommtrackConfig
+from corehq.apps.commtrack.models import CommtrackConfig
 from corehq.apps.consumption.models import DefaultConsumption
 from corehq.apps.data_analytics.models import GIRRow, MALTRow
 from corehq.apps.data_dictionary.models import CaseProperty, CaseType
@@ -897,10 +897,10 @@ class TestDeleteDomain(TestCase):
         self._assert_couchforms_counts(self.domain2.name, 1)
 
     def test_delete_commtrack_config(self):
-        SQLCommtrackConfig(domain=self.domain.name).save()
-        self.assertIsNotNone(SQLCommtrackConfig.for_domain(self.domain.name))
+        CommtrackConfig(domain=self.domain.name).save()
+        self.assertIsNotNone(CommtrackConfig.for_domain(self.domain.name))
         self.domain.delete()
-        self.assertIsNone(SQLCommtrackConfig.for_domain(self.domain.name))
+        self.assertIsNone(CommtrackConfig.for_domain(self.domain.name))
 
     def tearDown(self):
         self.domain2.delete()

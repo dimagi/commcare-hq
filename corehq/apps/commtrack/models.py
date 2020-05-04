@@ -39,7 +39,7 @@ STOCK_ACTION_ORDER = [
 ]
 
 
-class SQLCommtrackConfig(models.Model):
+class CommtrackConfig(models.Model):
     domain = models.CharField(max_length=126, null=False, db_index=True, unique=True)
 
     # configured on Advanced Settings page
@@ -50,21 +50,15 @@ class SQLCommtrackConfig(models.Model):
 
     individual_consumption_defaults = models.BooleanField(default=False)
 
-    class Meta:
-        db_table = "commtrack_commtrackconfig"
-
     @property
     def all_actions(self):
-        order = self.get_sqlactionconfig_order()
-        return [SQLActionConfig.objects.get(id=o) for o in order]
+        order = self.get_actionconfig_order()
+        return [ActionConfig.objects.get(id=o) for o in order]
 
     def set_actions(self, actions):
-        self.sqlactionconfig_set.all().delete()
-        self.sqlactionconfig_set.set(actions, bulk=False)
-        self.set_sqlactionconfig_order([a.id for a in actions])
-
-    def action_by_keyword(self, keyword):
-        return dict((a.keyword.lower(), a) for a in self.all_actions).get(keyword.lower())
+        self.actionconfig_set.all().delete()
+        self.actionconfig_set.set(actions, bulk=False)
+        self.set_actionconfig_order([a.id for a in actions])
 
     @classmethod
     def for_domain(cls, domain):
@@ -75,7 +69,7 @@ class SQLCommtrackConfig(models.Model):
             # note: for now as an optimization hack, per-supply point type is not supported
             # unless explicitly configured, because it will require looking up the case
             facility_type = None
-            if self.sqlconsumptionconfig.use_supply_point_type_default_consumption:
+            if self.consumptionconfig.use_supply_point_type_default_consumption:
                 try:
                     supply_point = SupplyInterface(self.domain).get_supply_point(case_id)
                     facility_type = supply_point.sql_location.location_type_name
@@ -84,22 +78,22 @@ class SQLCommtrackConfig(models.Model):
             return get_default_monthly_consumption(self.domain, product_id, facility_type, case_id)
 
         return ConsumptionConfiguration(
-            min_periods=self.sqlconsumptionconfig.min_transactions,
-            min_window=self.sqlconsumptionconfig.min_window,
-            max_window=self.sqlconsumptionconfig.optimal_window,
+            min_periods=self.consumptionconfig.min_transactions,
+            min_window=self.consumptionconfig.min_window,
+            max_window=self.consumptionconfig.optimal_window,
             default_monthly_consumption_function=_default_monthly_consumption,
-            exclude_invalid_periods=self.sqlconsumptionconfig.exclude_invalid_periods
+            exclude_invalid_periods=self.consumptionconfig.exclude_invalid_periods
         )
 
     def get_ota_restore_settings(self):
         # for some reason it doesn't like this import
         from casexml.apps.phone.restore import StockSettings
         default_product_ids = []
-        if self.sqlstockrestoreconfig.use_dynamic_product_list:
+        if self.stockrestoreconfig.use_dynamic_product_list:
             default_product_ids = SQLProduct.active_objects.filter(domain=self.domain).product_ids()
-        case_filter = lambda stub: stub.type in set(self.sqlstockrestoreconfig.force_consumption_case_types)
+        case_filter = lambda stub: stub.type in set(self.stockrestoreconfig.force_consumption_case_types)
         return StockSettings(
-            section_to_consumption_types=self.sqlstockrestoreconfig.section_to_consumption_types,
+            section_to_consumption_types=self.stockrestoreconfig.section_to_consumption_types,
             consumption_config=self.get_consumption_config(),
             default_product_list=default_product_ids,
             force_consumption_case_filter=case_filter,
@@ -116,10 +110,10 @@ class SQLCommtrackConfig(models.Model):
             "individual_consumption_defaults": self.individual_consumption_defaults,
         }
         for json_attr, sql_attr in {
-            'alert_config': 'sqlalertconfig',
-            'consumption_config': 'sqlconsumptionconfig',
-            'ota_restore_config': 'sqlstockrestoreconfig',
-            'stock_levels_config': 'sqlstocklevelsconfig',
+            'alert_config': 'alertconfig',
+            'consumption_config': 'consumptionconfig',
+            'ota_restore_config': 'stockrestoreconfig',
+            'stock_levels_config': 'stocklevelsconfig',
         }.items():
             if hasattr(self, sql_attr):
                 config[json_attr] = getattr(self, sql_attr).to_json()
@@ -131,7 +125,7 @@ class SQLCommtrackConfig(models.Model):
 # supported stock actions for this commtrack domain
 # listed in the order they are processed -- TODO support for this custom ordering might go away
 # TODO must catch ambiguous action lists (two action configs with the same 'name')
-class SQLActionConfig(models.Model):
+class ActionConfig(models.Model):
     # one of the base stock action types (see StockActions enum)
     action = models.CharField(max_length=40, null=True)
     # (optional) to further distinguish different kinds of the base action
@@ -143,10 +137,9 @@ class SQLActionConfig(models.Model):
     # display title
     caption = models.CharField(max_length=40, null=True)
 
-    commtrack_config = models.ForeignKey('SQLCommtrackConfig', on_delete=models.CASCADE)
+    commtrack_config = models.ForeignKey('CommtrackConfig', on_delete=models.CASCADE)
 
     class Meta:
-        db_table = "commtrack_actionconfig"
         order_with_respect_to = "commtrack_config"
 
     @property
@@ -177,7 +170,7 @@ class SQLActionConfig(models.Model):
         }
 
 
-class SQLConsumptionConfig(models.Model):
+class ConsumptionConfig(models.Model):
     min_transactions = models.IntegerField(default=2, null=True)
     min_window = models.IntegerField(default=10, null=True)
     optimal_window = models.IntegerField(null=True)
@@ -185,13 +178,10 @@ class SQLConsumptionConfig(models.Model):
     exclude_invalid_periods = models.BooleanField(default=False)
 
     commtrack_config = models.OneToOneField(
-        SQLCommtrackConfig,
+        CommtrackConfig,
         on_delete=models.CASCADE,
         primary_key=True,
     )
-
-    class Meta:
-        db_table = "commtrack_consumptionconfig"
 
     def to_json(self):
         return {
@@ -203,20 +193,17 @@ class SQLConsumptionConfig(models.Model):
         }
 
 
-class SQLStockLevelsConfig(models.Model):
+class StockLevelsConfig(models.Model):
     # All of these are in months
     emergency_level = models.DecimalField(default=0.5, max_digits=3, decimal_places=2)
     understock_threshold = models.DecimalField(default=1.5, max_digits=3, decimal_places=2)
     overstock_threshold = models.DecimalField(default=3, max_digits=3, decimal_places=2)
 
     commtrack_config = models.OneToOneField(
-        SQLCommtrackConfig,
+        CommtrackConfig,
         on_delete=models.CASCADE,
         primary_key=True,
     )
-
-    class Meta:
-        db_table = "commtrack_stocklevelsconfig"
 
     def to_json(self):
         return {
@@ -227,20 +214,17 @@ class SQLStockLevelsConfig(models.Model):
 
 
 # configured on Subscribe SMS page
-class SQLAlertConfig(models.Model):
+class AlertConfig(models.Model):
     stock_out_facilities = models.BooleanField(default=False)
     stock_out_commodities = models.BooleanField(default=False)
     stock_out_rates = models.BooleanField(default=False)
     non_report = models.BooleanField(default=False)
 
     commtrack_config = models.OneToOneField(
-        SQLCommtrackConfig,
+        CommtrackConfig,
         on_delete=models.CASCADE,
         primary_key=True,
     )
-
-    class Meta:
-        db_table = "commtrack_alertconfig"
 
     def to_json(self):
         return {
@@ -251,19 +235,16 @@ class SQLAlertConfig(models.Model):
         }
 
 
-class SQLStockRestoreConfig(models.Model):
+class StockRestoreConfig(models.Model):
     section_to_consumption_types = JSONField(default=dict, null=True)
     force_consumption_case_types = JSONField(default=list, null=True)
     use_dynamic_product_list = models.BooleanField(default=False)
 
     commtrack_config = models.OneToOneField(
-        SQLCommtrackConfig,
+        CommtrackConfig,
         on_delete=models.CASCADE,
         primary_key=True,
     )
-
-    class Meta:
-        db_table = "commtrack_stockrestoreconfig"
 
     def to_json(self):
         return {

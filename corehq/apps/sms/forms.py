@@ -23,7 +23,7 @@ from dimagi.utils.django.fields import TrimmedCharField
 from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_built_app_ids
 from corehq.apps.app_manager.models import Application
-from corehq.apps.commtrack.models import SQLAlertConfig
+from corehq.apps.commtrack.models import AlertConfig
 from corehq.apps.domain.models import DayTimeWindow
 from corehq.apps.groups.models import Group
 from corehq.apps.hqwebapp import crispy as hqcrispy
@@ -1349,10 +1349,10 @@ class SubscribeSMSForm(Form):
 
     def save(self, commtrack_settings):
         save_settings = False
-        if not hasattr(commtrack_settings, 'sqlalertconfig'):
-            commtrack_settings.sqlalertconfig = SQLAlertConfig()
+        if not hasattr(commtrack_settings, 'alertconfig'):
+            commtrack_settings.alertconfig = AlertConfig()
             save_settings = True
-        alert_config = commtrack_settings.sqlalertconfig
+        alert_config = commtrack_settings.alertconfig
         alert_config.stock_out_facilities = self.cleaned_data.get("stock_out_facilities", False)
         alert_config.stock_out_commodities = self.cleaned_data.get("stock_out_commodities", False)
         alert_config.stock_out_rates = self.cleaned_data.get("stock_out_rates", False)
