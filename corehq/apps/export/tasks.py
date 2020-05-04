@@ -223,15 +223,9 @@ def generate_schema_for_all_builds(self, schema_cls, domain, app_id, identifier)
 def generate_incremental_exports():
     incremental_exports = IncrementalExport.objects.filter(active=True)
     for incremental_export in incremental_exports:
-        process_incremental_export.delay(incremental_export.id)
-
-
-@task
-def process_incremental_export(incremental_export_id):
-    incremental_export = IncrementalExport.objects.get(id=incremental_export_id)
-    checkpoint = _generate_incremental_export(incremental_export)
-    if checkpoint:
-        _send_incremental_export(incremental_export, checkpoint)
+        checkpoint = _generate_incremental_export(incremental_export)
+        if checkpoint:
+            _send_incremental_export(incremental_export, checkpoint)
 
 
 def _generate_incremental_export(incremental_export):
