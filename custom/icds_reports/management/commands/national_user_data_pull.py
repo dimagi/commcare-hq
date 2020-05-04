@@ -26,11 +26,13 @@ class Command(BaseCommand):
         usernames = []
         users_created_time = {}
         for user in users:
-            if ((len(user.assigned_location_ids)==0 or 'cpmu' in user.username.lower() ) and user.has_permission('icds-cas', 'access_all_locations')):
+            role = user.get_role('icds-cas')
+            if (role in ('CPMU','Dashboard Only Access', 'TRP') or len(user.assigned_location_ids)==0) and user.has_permission('icds-cas', 'access_all_locations'):
                 usernames.append(user.username)
                 users_created_time.update({ user.username: user.created_on })
         for user in web_users:
-            if ((len(user.assigned_location_ids)==0 or 'cpmu' in user.username.lower() ) and user.has_permission('icds-cas', 'access_all_locations')):
+            role = user.get_role('icds-cas')
+            if (role in ('CPMU','Dashboard Only Access', 'TRP') or len(user.assigned_location_ids)==0) and user.has_permission('icds-cas', 'access_all_locations'):
                 usernames.append(user.username)
                 if user.username not in  users_created_time.keys():
                     users_created_time.update({ user.username: user.created_on })
