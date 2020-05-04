@@ -111,16 +111,16 @@ def email_household_details(domain, transitions, uploaded_filename, user_email):
     else:
         email = EmailMessage(
             subject=f"[{settings.SERVER_ENVIRONMENT}] - Location Reassignment Household Dump Completed",
-            body=f"The request has been successfully completed for file {uploaded_filename}.",
+            body=f"The request has been successfully completed for file {uploaded_filename}. ",
             to=[user_email],
             from_email=settings.DEFAULT_FROM_EMAIL
         )
         if filestream:
             email.attach(filename="Households.xlsx", content=filestream.read())
         else:
-            email.body += "There were no house hold details found."
+            email.body += "There were no house hold details found. "
         email.body += f"Please note that the households are fetched only for " \
-                      f"{','.join(Households.valid_operations)}."
+                      f"{', '.join(Households.valid_operations)}."
         email.send()
 
 
