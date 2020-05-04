@@ -281,7 +281,12 @@ class Parser(object):
             for transition in transitions:
                 operation = transition.operation
                 for old_site_code in transition.old_site_codes:
-                    location = locations_to_be_deprecated_by_site_code[old_site_code]
+                    location = locations_to_be_deprecated_by_site_code.get(old_site_code)
+                    # using an archived location's site code is already caught,
+                    # but still adding another error for edge cases
+                    if not location:
+                        self.errors.append(f"Could not find old location with site code {old_site_code}")
+                        continue
                     descendants_sites_codes = location.child_locations().values_list('site_code', flat=True)
                     if operation == EXTRACT_OPERATION:
                         if not set(descendants_sites_codes) & site_codes_to_be_deprecated:
