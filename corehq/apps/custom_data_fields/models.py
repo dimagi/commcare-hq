@@ -57,6 +57,7 @@ class SQLField(models.Model):
 
     class Meta:
         db_table = "custom_data_fields_field"
+        order_with_respect_to = "definition"
 
 
 class CustomDataField(JsonObject):
@@ -113,6 +114,15 @@ class SQLCustomDataFieldsDefinition(SyncSQLToCouchMixin, models.Model):
             new = cls(domain=domain, field_type=field_type)
             new.save()
             return new
+
+    def get_fields(self):
+        order = self.get_field_order()
+        return [SQLField.get(id=o) for o in order]
+
+    def set_fields(self, fields):
+        self.sqlfield_set.all().delete()
+        self.sqlfield_set.set(fields, bulk=False)
+        self.set_field_order([f.id for f in fields])
 
 
 class CustomDataFieldsDefinition(SyncCouchToSQLMixin, QuickCachedDocumentMixin, Document):

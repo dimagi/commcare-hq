@@ -48,4 +48,8 @@ class Migration(migrations.Migration):
             name='sqlcustomdatafieldsdefinition',
             unique_together=set([('domain', 'field_type')]),
         ),
+        migrations.AlterOrderWithRespectTo(
+            name='sqlfield',
+            order_with_respect_to='definition',
+        ),
     ]
