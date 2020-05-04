@@ -106,7 +106,6 @@ class BaseDumpLoadTest(TestCase):
 
         expected_model_counts = _normalize_object_counter(expected_dump_counts)
         actual_model_counts = Counter([json.loads(line)['model'] for line in dump_lines])
-        expected_total_objects = sum(expected_dump_counts.values())
         self.assertDictEqual(dict(expected_model_counts), dict(actual_model_counts))
 
         # Load
