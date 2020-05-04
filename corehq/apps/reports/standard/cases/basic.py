@@ -108,29 +108,6 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
     @property
     @memoized
     def case_owners(self):
-        """
-        For unrestricted user
-        :return:
-        user ids for selected user types
-        for selected reporting group ids, returns user_ids belonging to these groups
-            also finds the sharing groups which has any user from the above reporting group
-        selected sharing group ids
-        selected user ids
-            also finds the sharing groups which has any user from the above selected users
-            ids and descendants ids of assigned locations to these users
-        ids and descendants ids of selected locations
-            assigned users at selected locations and their descendants
-
-        For restricted user
-        :return:
-        selected user ids
-            also finds the sharing groups which has any user from the above selected users
-            ids and descendants ids of assigned locations to these users
-        ids and descendants ids of selected locations
-            assigned users at selected locations and their descendants
-        """
-        # Get user ids for each user that match the demo_user, admin,
-        # Unknown Users, or All Mobile Workers filters
         mobile_user_and_group_slugs = self.request.GET.getlist(EMWF.slug)
         return get_case_owners(self.request, self.domain, mobile_user_and_group_slugs)
 
