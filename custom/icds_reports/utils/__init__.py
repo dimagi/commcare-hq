@@ -1850,6 +1850,6 @@ def get_location_replacement_name(location, field, replacement_names):
 
 def timestamp_string_to_date_string(ts_string):
     if ts_string:
-        return ts_string[:11]
+        return ts_string[:10]
     else:
         return ''
