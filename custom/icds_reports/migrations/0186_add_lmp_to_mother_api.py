@@ -3,7 +3,7 @@
 from __future__ import unicode_literals
 from django.db import migrations, models
 from corehq.sql_db.operations import RawSQLMigration
-
+from custom.icds_reports.utils.migrations import get_view_migrations
 
 migrator = RawSQLMigration(('custom', 'icds_reports', 'migrations', 'sql_templates', 'database_views'))
 
@@ -14,6 +14,4 @@ class Migration(migrations.Migration):
         ('icds_reports', '0179_location_deprecation_columns'),
     ]
 
-    operations = [
-        migrator.get_migration('bihar_api_mother_view.sql')
-    ]
+    operations = get_view_migrations() 
