@@ -624,6 +624,7 @@ class FactSheetsReport(object):
 
         all_data = self._get_all_data(data_sources)
 
+        sql_location = self.config['sql_location']
         months = [
             dt.strftime("%b %Y") for dt in rrule(
                 MONTHLY,
@@ -633,9 +634,14 @@ class FactSheetsReport(object):
 
         for month in months:
             data_for_month = False
+            active_location = True
             month_data = {}
             for row_data in all_data:
                 m = row_data['month'].strftime("%b %Y")
+                if sql_location is not None:
+                    activation_date = sql_location.metadata.get('deprecates_at')
+                    if activation_date and row_data['month'] < activation_date:
+                        active_location = False
                 if month == m:
                     month_data = row_data
                     data_for_month = True
@@ -648,6 +654,8 @@ class FactSheetsReport(object):
 
                     if data_for_month:
                         row['data'].append((month_data[row['slug']] or {'html': 0}))
+                    elif not active_location:
+                        row['data'].append({'html': '---'})
                     else:
                         row['data'].append({'html': 0})
 

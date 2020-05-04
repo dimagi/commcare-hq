@@ -1311,6 +1311,13 @@ PAGINATED_EXPORTS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+INCREMENTAL_EXPORTS = StaticToggle(
+    'incremental_exports',
+    'Allows sending of incremental CSV exports to a particular endpoint',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN],
+)
+
 PUBLISH_CUSTOM_REPORTS = StaticToggle(
     'publish_custom_reports',
     "Publish custom reports (No needed Authorization)",
@@ -1632,6 +1639,12 @@ LOCATION_SAFE_CASE_IMPORTS = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
+FORM_CASE_IDS_CASE_IMPORTER = StaticToggle(
+    'form_case_ids_case_importer',
+    'Show the form and case ids download button on the case importer',
+    TAG_SOLUTIONS_OPEN,
+    namespaces=[NAMESPACE_DOMAIN],
+)
 
 HIDE_HQ_ON_MOBILE_EXPERIENCE = StaticToggle(
     'hide_hq_on_mobile_experience',
@@ -1876,4 +1889,12 @@ ICDS_BIHAR_DEMOGRAPHICS_API = StaticToggle(
     namespaces=[NAMESPACE_USER],
     relevant_environments={'icds', 'india'},
 
+)
+
+ICDS_LOCATION_REASSIGNMENT_AGG = StaticToggle(
+    'location_reassignment_agg',
+    'ICDS: Use aggregation modifications for location reassignment',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    relevant_environments={'icds', 'india'},
 )

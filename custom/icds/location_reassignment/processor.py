@@ -134,7 +134,7 @@ class HouseholdReassignmentProcessor():
             new_site_codes.add(details['new_site_code'])
         old_locations_by_site_code = {
             loc.site_code: loc
-            for loc in SQLLocation.active_objects.filter(domain=self.domain, site_code__in=old_site_codes)}
+            for loc in SQLLocation.objects.filter(domain=self.domain, site_code__in=old_site_codes)}
         new_locations_by_site_code = {
             loc.site_code: loc
             for loc in SQLLocation.active_objects.filter(domain=self.domain, site_code__in=new_site_codes)}

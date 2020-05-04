@@ -2221,7 +2221,7 @@ class AdjustBalanceForm(forms.Form):
 
     method = forms.ChoiceField(
         choices=(
-            (CreditAdjustmentReason.MANUAL, "Update balance directly"),
+            (CreditAdjustmentReason.MANUAL, "Register back office payment"),
             (CreditAdjustmentReason.TRANSFER, "Take from available credit lines"),
         )
     )
@@ -2239,7 +2239,7 @@ class AdjustBalanceForm(forms.Form):
 
     def __init__(self, invoice, *args, **kwargs):
         self.invoice = invoice
-        super(AdjustBalanceForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.fields['adjustment_type'].choices = (
             ('current', 'Pay off Current Balance: %s' %
                         get_money_str(self.invoice.balance)),

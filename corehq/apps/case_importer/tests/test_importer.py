@@ -1,3 +1,4 @@
+import uuid
 from contextlib import contextmanager
 
 from django.test import TestCase
@@ -13,6 +14,7 @@ from casexml.apps.case.tests.util import delete_all_cases
 from corehq.apps.case_importer import exceptions
 from corehq.apps.case_importer.do_import import do_import
 from corehq.apps.case_importer.tasks import bulk_import_async
+from corehq.apps.case_importer.tracking.models import CaseUploadRecord
 from corehq.apps.case_importer.util import ImporterConfig, WorksheetWrapper, \
     get_interned_exception
 from corehq.apps.commtrack.tests.util import make_loc
@@ -68,8 +70,11 @@ class ImporterTest(TestCase):
 
     @run_with_all_backends
     @patch('corehq.apps.case_importer.tasks.bulk_import_async.update_state')
-    def testImportNone(self, update_state):
-        res = bulk_import_async.delay(self._config(['anything']), self.domain, None)
+    def testImportFileMissing(self, update_state):
+        # by using a made up upload_id, we ensure it's not referencing any real file
+        case_upload = CaseUploadRecord(upload_id=str(uuid.uuid4()), task_id=str(uuid.uuid4()))
+        case_upload.save()
+        res = bulk_import_async.delay(self._config(['anything']), self.domain, case_upload.upload_id)
         self.assertIsInstance(res.result, Ignore)
         update_state.assert_called_with(
             state=states.FAILURE,

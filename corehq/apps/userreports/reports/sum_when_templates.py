@@ -64,6 +64,11 @@ class CCSPhaseTemplateSpec(SumWhenTemplateSpec):
     expression = "ccs_phase = ?"
 
 
+class ComplementaryFeedingTemplateSpec(SumWhenTemplateSpec):
+    type = TypeProperty("complementary_feeding")
+    expression = "is_cf = ?"
+
+
 class ClosedOnNullTemplateSpec(SumWhenTemplateSpec):
     type = TypeProperty("closed_on_null")
     expression = "closed_on IS NULL"
@@ -87,6 +92,11 @@ class FemaleDeathTypeResidentSpec(SumWhenTemplateSpec):
 class OpenDisabilityTypeSpec(SumWhenTemplateSpec):
     type = TypeProperty("open_disability_type")
     expression = "closed_on IS NULL AND disability_type ~ ?"
+
+
+class OpenFemaleSpec(SumWhenTemplateSpec):
+    type = TypeProperty("open_female")
+    expression = "closed_on IS NULL AND sex = 'F'"
 
 
 class OpenFemaleDisabledSpec(SumWhenTemplateSpec):

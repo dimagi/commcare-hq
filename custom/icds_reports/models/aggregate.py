@@ -243,6 +243,18 @@ class AwcLocation(models.Model, AggregateMixin):
     block_is_test = models.SmallIntegerField(blank=True, null=True)
     supervisor_is_test = models.SmallIntegerField(blank=True, null=True)
     awc_is_test = models.SmallIntegerField(blank=True, null=True)
+    awc_deprecated_at = models.DateField(blank=True, null=True)
+    awc_deprecates = models.TextField(
+        blank=True,
+        null=True,
+        help_text='text representation of list of location ids'
+    )
+    supervisor_deprecated_at = models.DateField(blank=True, null=True)
+    supervisor_deprecates = models.TextField(
+        blank=True,
+        null=True,
+        help_text='text representation of list of location ids'
+    )
     # from commcare-user case
     aww_name = models.TextField(blank=True, null=True)
     contact_phone_number = models.TextField(blank=True, null=True)
@@ -1606,10 +1618,9 @@ class AggregateAvailingServiceForms(models.Model, AggregateMixin):
 
     A availing services exists for each state_id
 
-    A row exists for every person case that has had a record of registration
-    submitted against it this month
+    A row for every person case that has ever had an availing services form
     """
-    state_id = models.CharField(max_length=10)
+    state_id = models.TextField(null=True)
     supervisor_id = models.TextField(null=True)
     awc_id = models.TextField(null=True)
     month = models.DateField(help_text="Will always be YYYY-MM-01")
