@@ -11,7 +11,7 @@ migrator = RawSQLMigration(('custom', 'icds_reports', 'migrations', 'sql_templat
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('icds_reports', '0184_auto_20200421_2017'),
+        ('icds_reports', '0179_location_deprecation_columns'),
     ]
 
     operations = [
