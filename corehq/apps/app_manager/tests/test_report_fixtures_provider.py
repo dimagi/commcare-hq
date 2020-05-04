@@ -60,7 +60,7 @@ class ReportFixturesProviderTests(SimpleTestCase, TestXmlMixin):
             last_sync_time_patch.return_value = datetime(2017, 9, 11, 6, 35, 20).isoformat()
             fixtures = provider.report_config_to_fixtures(report_app_config, user)
             report = E.restore()
-            report.extend(fixtures)
+            report.extend(fixtures.values())
             self.assertXMLEqual(
                 etree.tostring(report, pretty_print=True).decode('utf-8'),
                 self.get_xml(expected_filename).decode('utf-8')
@@ -101,7 +101,7 @@ class ReportFixturesProviderTests(SimpleTestCase, TestXmlMixin):
             last_sync_time_patch.return_value = datetime(2017, 9, 11, 6, 35, 20).isoformat()
             fixtures = provider.report_config_to_fixtures(report_app_config, user)
             report = E.restore()
-            report.extend(fixtures)
+            report.extend(fixtures.values())
             self.assertXMLEqual(
                 etree.tostring(report, pretty_print=True).decode('utf-8'),
                 self.get_xml('expected_v2_report_total').decode('utf-8')

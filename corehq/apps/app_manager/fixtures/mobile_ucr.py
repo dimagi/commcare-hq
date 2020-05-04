@@ -175,7 +175,7 @@ class BaseReportFixtureProvider(metaclass=ABCMeta):
     @abstractmethod
     def report_config_to_fixtures(self, report_config, restore_user):
         """Standard function for testing
-        :returns: list of fixture elements"""
+        :returns: dict of fixture elements keyed by fixture id"""
         raise NotImplementedError
 
 
@@ -204,7 +204,7 @@ class ReportFixturesProviderV1(BaseReportFixtureProvider):
         reports_elem = E.reports(last_sync=_format_last_sync_time(restore_user))
         for report_config in report_configs:
             try:
-                reports_elem.extend(self.report_config_to_fixtures(report_config, restore_user))
+                reports_elem.extend(self.report_config_to_fixtures(report_config, restore_user).values())
             except ReportConfigurationNotFoundError as err:
                 logging.exception('Error generating report fixture: {}'.format(err))
                 continue
@@ -237,10 +237,11 @@ class ReportFixturesProviderV1(BaseReportFixtureProvider):
         for row in row_elements:
             rows_elem.append(row)
 
-        report_elem = E.report(id=self.report_fixture_id(report_config.uuid), report_id=report_config.report_id)
+        elem_id = self.report_fixture_id(report_config.uuid)
+        report_elem = E.report(id=self.elem_id, report_id=report_config.report_id)
         report_elem.append(filters_elem)
         report_elem.append(rows_elem)
-        return [report_elem]
+        return {elem_id: report_elem}
 
     @staticmethod
     def report_fixture_id(report_uuid):
@@ -345,7 +346,7 @@ class ReportFixturesProviderV2(BaseReportFixtureProvider):
         fixtures = []
         for report_config in report_configs:
             try:
-                fixtures.extend(self.report_config_to_fixtures(report_config, restore_user))
+                fixtures.extend(self.report_config_to_fixtures(report_config, restore_user).values())
             except ReportConfigurationNotFoundError as err:
                 logging.exception('Error generating report fixture: {}'.format(err))
                 continue
@@ -377,15 +378,20 @@ class ReportFixturesProviderV2(BaseReportFixtureProvider):
         for row in rows:
             rows_elem.append(row)
 
-        report_filter_elem = E.fixture(id=self.report_filter_id(report_config.uuid))
+        report_filter_elem_id = self.report_filter_id(report_config.uuid)
+        report_filter_elem = E.fixture(id=report_filter_elem_id)
         report_filter_elem.append(filters_elem)
 
+        report_elem_id = self.report_fixture_id(report_config.uuid)
         report_elem = E.fixture(
-            id=self.report_fixture_id(report_config.uuid), user_id=restore_user.user_id,
+            id=report_elem_id, user_id=restore_user.user_id,
             report_id=report_config.report_id, indexed='true'
         )
         report_elem.append(rows_elem)
-        return [report_filter_elem, report_elem]
+        return {
+            report_filter_elem_id: report_filter_elem,
+            report_elem_id: report_elem,
+        }
 
     @staticmethod
     def report_fixture_id(report_uuid):
