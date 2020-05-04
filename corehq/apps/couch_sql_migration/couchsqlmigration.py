@@ -438,7 +438,7 @@ class CouchSqlDomainMigrator:
         if form is None:
             self.statedb.add_missing_docs("XFormInstance", [form_id])
         else:
-            if form.problem and not form.is_error and case_id is None:
+            if getattr(form, "problem", "") and not form.is_error and case_id is None:
                 doc = self._transform_problem(form.to_json())
                 form = XFormInstance.wrap(doc)
             proc = case_id is not None or form.doc_type not in UNPROCESSED_DOC_TYPES
@@ -631,7 +631,7 @@ class CouchSqlDomainMigrator:
 
     def _apply_form_to_case(self, sql_form, couch_form):
         if (sql_form.is_error and couch_form.doc_type == "XFormInstance"
-                and couch_form.problem):
+                and getattr(couch_form, "problem", "")):
             # Note: does not clear "problem" field
             sql_form.state = XFormInstanceSQL.NORMAL
             sql_form.save()
