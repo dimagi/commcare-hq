@@ -52,8 +52,7 @@ class Command(BaseCommand):
                     AsyncIndicator(doc_id=doc_id[0],
                                    doc_type='XFormInstance',
                                    domain='icds-cas',
-                                   indicator_config_ids=['static-icds-cas-static-child_delivery_forms'],
-                                   date_created=date(2019, 1, 1)  # To prioritise in the queue
+                                   indicator_config_ids=['static-icds-cas-static-child_delivery_forms']
                                    )
                     for doc_id in doc_ids
                 ])
