@@ -526,6 +526,7 @@ class ProjectDataTab(UITab):
                 DeIdFormExportListView,
                 DeIdDailySavedExportListView,
                 DeIdDashboardFeedListView,
+                ODataFeedListView,
             )
             export_data_views.append({
                 'title': _(DeIdFormExportListView.page_title),
@@ -541,6 +542,12 @@ class ProjectDataTab(UITab):
                     'url': reverse(DeIdDashboardFeedListView.urlname, args=(self.domain,)),
                 },
             ])
+
+            if self.can_view_odata_feed:
+                export_data_views.append({
+                    'title': _(ODataFeedListView.page_title),
+                    'url': reverse(ODataFeedListView.urlname, args=(self.domain,)),
+                })
 
         elif self.can_export_data:
             from corehq.apps.export.views.download import (
