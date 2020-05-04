@@ -18,6 +18,15 @@ class Command(BaseCommand):
         date_formatted = date.strftime("%d/%m/%Y, %I:%M %p")
         return date_formatted
 
+    def _get_details(self, users, usernames, users_created_time):
+        for user in users:
+            role = user.get_role('icds-cas')
+            if (role in ('CPMU','Dashboard Only Access', 'TRP') or len(user.assigned_location_ids)==0) and user.has_permission('icds-cas', 'access_all_locations'):
+                usernames.append(user.username)
+                users_created_time.update({ user.username: user.created_on })
+        return usernames, users_created_time
+
+
     def handle(self, *args, **options):
         users = CommCareUser.by_domain('icds-cas')
         print(f"==========={len(users)} Commcare Users======\n")
@@ -25,17 +34,8 @@ class Command(BaseCommand):
         print(f"==========={len(users)} Web Users======\n")
         usernames = []
         users_created_time = {}
-        for user in users:
-            role = user.get_role('icds-cas')
-            if (role in ('CPMU','Dashboard Only Access', 'TRP') or len(user.assigned_location_ids)==0) and user.has_permission('icds-cas', 'access_all_locations'):
-                usernames.append(user.username)
-                users_created_time.update({ user.username: user.created_on })
-        for user in web_users:
-            role = user.get_role('icds-cas')
-            if (role in ('CPMU','Dashboard Only Access', 'TRP') or len(user.assigned_location_ids)==0) and user.has_permission('icds-cas', 'access_all_locations'):
-                usernames.append(user.username)
-                if user.username not in  users_created_time.keys():
-                    users_created_time.update({ user.username: user.created_on })
+        usernames, users_created_time = self._get_details(users, usernames, users_created_time)
+        usernames, users_created_time = self._get_details(web_users, usernames, users_created_time)
         usernames = list(set(usernames))
         print(f"==========={len(usernames)} Unique national users======\n")
         chunk_size = 100
