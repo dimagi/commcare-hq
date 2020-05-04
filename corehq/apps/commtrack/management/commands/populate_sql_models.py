@@ -1,10 +1,10 @@
 from corehq.apps.cleanup.management.commands.populate_sql_model_from_couch_model import PopulateSQLCommand
 from corehq.apps.commtrack.models import (
-    SQLAlertConfig,
-    SQLActionConfig,
-    SQLConsumptionConfig,
-    SQLStockLevelsConfig,
-    SQLStockRestoreConfig,
+    AlertConfig,
+    ActionConfig,
+    ConsumptionConfig,
+    StockLevelsConfig,
+    StockRestoreConfig,
 )
 
 
@@ -15,8 +15,8 @@ class Command(PopulateSQLCommand):
 
     @classmethod
     def sql_class(self):
-        from corehq.apps.commtrack.models import SQLCommtrackConfig
-        return SQLCommtrackConfig
+        from corehq.apps.commtrack.models import CommtrackConfig
+        return CommtrackConfig
 
     @classmethod
     def commit_adding_migration(cls):
@@ -36,12 +36,12 @@ class Command(PopulateSQLCommand):
     def one_to_one_submodels(cls):
         return [
             {
-                "sql_class": SQLAlertConfig
+                "sql_class": AlertConfig,
                 "couch_attr": "alert_config",
                 "fields": ['stock_out_facilities', 'stock_out_commodities', 'stock_out_rates', 'non_report'],
             },
             {
-                "sql_class": SQLConsumptionConfig
+                "sql_class": ConsumptionConfig,
                 "couch_attr": "consumption_config",
                 "fields": [
                     'min_transactions', 'min_window', 'optimal_window',
@@ -49,12 +49,12 @@ class Command(PopulateSQLCommand):
                 ]
             },
             {
-                "sql_class": SQLStockLevelsConfig
+                "sql_class": StockLevelsConfig,
                 "couch_attr": "stock_levels_config",
                 "fields": ['emergency_level', 'understock_threshold', 'overstock_threshold'],
             },
             {
-                "sql_class": SQLStockRestoreConfig
+                "sql_class": StockRestoreConfig,
                 "couch_attr": "ota_restore_config",
                 "fields": [
                     'section_to_consumption_types', 'force_consumption_case_types', 'use_dynamic_product_list',
@@ -94,7 +94,7 @@ class Command(PopulateSQLCommand):
             subaction = doc.get('subaction')
             if doc.get('name', '') == 'lost':
                 subaction == 'loss'
-            sql_actions.append(SQLActionConfig(
+            sql_actions.append(ActionConfig(
                 action=doc.get('action_type', doc.get('action')),
                 subaction=subaction,
                 _keyword=doc.get('_keyword'),

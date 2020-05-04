@@ -16,8 +16,8 @@ from casexml.apps.case.models import CommCareCase
 from corehq import feature_previews, toggles
 from corehq.apps.commtrack import const
 from corehq.apps.commtrack.models import (
-    SQLActionConfig,
-    SQLCommtrackConfig,
+    ActionConfig,
+    CommtrackConfig,
     SupplyPointCase,
 )
 from corehq.apps.hqcase.utils import submit_case_blocks
@@ -30,7 +30,7 @@ CaseLocationTuple = namedtuple('CaseLocationTuple', 'case location')
 
 
 def all_sms_codes(domain):
-    config = SQLCommtrackConfig.for_domain(domain)
+    config = CommtrackConfig.for_domain(domain)
 
     actions = {action.keyword: action for action in config.actions}
     products = {p.code: p for p in SQLProduct.active_objects.filter(domain=domain)}
@@ -79,33 +79,33 @@ def get_or_create_default_program(domain):
 
 
 def _create_commtrack_config_if_needed(domain):
-    if SQLCommtrackConfig.for_domain(domain):
+    if CommtrackConfig.for_domain(domain):
         return
 
-    config = SQLCommtrackConfig(domain=domain)
+    config = CommtrackConfig(domain=domain)
     config.set_actions([
-        SQLActionConfig(
+        ActionConfig(
             action='receipts',
             keyword='r',
             caption='Received',
         ),
-        SQLActionConfig(
+        ActionConfig(
             action='consumption',
             keyword='c',
             caption='Consumed',
         ),
-        SQLActionConfig(
+        ActionConfig(
             action='consumption',
             subaction='loss',
             keyword='l',
             caption='Losses',
         ),
-        SQLActionConfig(
+        ActionConfig(
             action='stockonhand',
             keyword='soh',
             caption='Stock on hand',
         ),
-        SQLActionConfig(
+        ActionConfig(
             action='stockout',
             keyword='so',
             caption='Stock-out',

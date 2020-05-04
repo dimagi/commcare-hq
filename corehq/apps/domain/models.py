@@ -798,9 +798,9 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
     @memoized
     def commtrack_settings(self):
         # this import causes some dependency issues so lives in here
-        from corehq.apps.commtrack.models import SQLCommtrackConfig
+        from corehq.apps.commtrack.models import CommtrackConfig
         if self.commtrack_enabled:
-            return SQLCommtrackConfig.for_domain(self.name)
+            return CommtrackConfig.for_domain(self.name)
         else:
             return None
 
