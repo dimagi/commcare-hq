@@ -9,7 +9,7 @@ from custom.icds_reports.utils.migrations import get_view_migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('icds_reports', '0184_auto_20200421_2017'),
+        ('icds_reports', '0179_location_deprecation_columns'),
     ]
 
     operations = get_view_migrations()
