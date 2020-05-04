@@ -131,6 +131,7 @@ class EditODataFormFeedView(ODataFeedMixin, EditNewCustomFormExportView):
     is_copy = True
 
 
+@location_safe
 class EditExportAttrView(BaseEditNewCustomExportView):
     export_home_url = None
 
