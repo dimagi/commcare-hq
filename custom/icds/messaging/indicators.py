@@ -405,7 +405,7 @@ class LSAggregatePerformanceIndicator(LSIndicator):
     def clear_caches(self):
         get_report_configs.clear(self.domain)
         for report_id in REPORT_IDS:
-            get_report_fixture_for_user.clear(self.domain, report_id, self.restore_user)
+            _get_report_fixture_for_user.clear(self.domain, report_id, self.restore_user)
 
     @property
     @memoized
