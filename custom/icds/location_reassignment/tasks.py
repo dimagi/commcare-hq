@@ -23,10 +23,9 @@ from custom.icds.location_reassignment.utils import (
 
 
 @task
-def process_location_reassignment(domain, transitions, new_location_details, user_transitions,
-                                  site_codes, uploaded_filename, user_email):
+def process_location_reassignment(domain, transitions, uploaded_filename, user_email):
     try:
-        Processor(domain, transitions, new_location_details, user_transitions, site_codes).process()
+        Processor(domain, transitions).process()
     except Exception as e:
         email = EmailMessage(
             subject=f"[{settings.SERVER_ENVIRONMENT}] - Location Reassignment Failed",
