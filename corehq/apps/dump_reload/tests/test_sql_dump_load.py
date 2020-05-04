@@ -519,6 +519,23 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
         )
         self._dump_and_load(Counter({TransifexOrganization: 1, TransifexProject: 1}))
 
+    def test_sms_content(self):
+        from corehq.messaging.scheduling.models import AlertSchedule, SMSContent, AlertEvent
+        from corehq.messaging.scheduling.scheduling_partitioned.dbaccessors import \
+            delete_alert_schedule_instances_for_schedule
+
+        schedule = AlertSchedule.create_simple_alert(self.domain, SMSContent())
+
+        schedule.set_custom_alert(
+            [
+                (AlertEvent(minutes_to_wait=5), SMSContent()),
+                (AlertEvent(minutes_to_wait=15), SMSContent()),
+            ]
+        )
+
+        self.addCleanup(lambda: delete_alert_schedule_instances_for_schedule(AlertScheduleInstance, schedule.schedule_id))
+        self._dump_and_load(Counter({AlertSchedule: 1, AlertEvent: 2, SMSContent: 2}))
+
 
 def _normalize_object_counter(counter, for_loaded=False):
     """Converts a <Model Class> keyed counter to an model label keyed counter"""

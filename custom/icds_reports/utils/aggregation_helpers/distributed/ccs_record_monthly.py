@@ -2,6 +2,7 @@ from dateutil.relativedelta import relativedelta
 
 from corehq.apps.userreports.models import StaticDataSourceConfiguration, get_datasource_config
 from corehq.apps.userreports.util import get_table_name
+from corehq.toggles import ICDS_LOCATION_REASSIGNMENT_AGG
 from custom.icds_reports.const import (
     AGG_CCS_RECORD_BP_TABLE,
     AGG_CCS_RECORD_PNC_TABLE,
@@ -10,7 +11,7 @@ from custom.icds_reports.const import (
     AGG_CCS_RECORD_CF_TABLE,
     AGG_MIGRATION_TABLE,
     AGG_AVAILING_SERVICES_TABLE)
-from custom.icds_reports.utils.aggregation_helpers import transform_day_to_month, month_formatter
+from custom.icds_reports.utils.aggregation_helpers import transform_day_to_month, month_formatter, get_prev_agg_tablename, is_current_month
 from custom.icds_reports.utils.aggregation_helpers.distributed.base import BaseICDSAggregationDistributedHelper
 
 
@@ -32,17 +33,22 @@ class CcsRecordMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribute
         for query in index_queries:
             cursor.execute(query)
 
+    def get_table(self, table_id):
+        if not is_current_month(self.month) and ICDS_LOCATION_REASSIGNMENT_AGG.enabled(self.domain):
+            return get_prev_agg_tablename(table_id)
+        return get_table_name(self.domain, table_id)
+
     @property
     def ccs_record_case_ucr_tablename(self):
-        return get_table_name(self.domain, 'static-ccs_record_cases')
+        return self.get_table('static-ccs_record_cases')
 
     @property
     def pregnant_tasks_cases_ucr_tablename(self):
-        return get_table_name(self.domain, 'static-pregnant-tasks_cases')
+        return self.get_table('static-pregnant-tasks_cases')
 
     @property
     def person_case_ucr_tablename(self):
-        return get_table_name(self.domain, 'static-person_cases_v3')
+        return self.get_table('static-person_cases_v3')
 
     @property
     def add_preg_form_ucr(self):

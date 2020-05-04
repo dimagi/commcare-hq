@@ -16,7 +16,8 @@ class TestFactSheetReportMaternalAndChildNutritionICDS(TestCase):
             'previous_month': datetime(2017, 5, 1).date(),
             'two_before': datetime(2017, 4, 1).date(),
             'category': 'maternal_and_child_nutrition',
-            'domain': 'icds-cas'
+            'domain': 'icds-cas',
+            'sql_location': None
         }
 
         loc_level = get_location_level(config.get('aggregation_level'))
@@ -333,7 +334,8 @@ class TestFactSheetReportInterventions(TestCase):
             'previous_month': datetime(2017, 5, 1).date(),
             'two_before': datetime(2017, 4, 1).date(),
             'category': 'interventions',
-            'domain': 'icds-cas'
+            'domain': 'icds-cas',
+            'sql_location': None
         }
 
         loc_level = get_location_level(config.get('aggregation_level'))
@@ -614,7 +616,8 @@ class TestFactSheetReportBehaviorChange(TestCase):
             'previous_month': datetime(2017, 5, 1).date(),
             'two_before': datetime(2017, 4, 1).date(),
             'category': 'behavior_change',
-            'domain': 'icds-cas'
+            'domain': 'icds-cas',
+            'sql_location': None
         }
 
         loc_level = get_location_level(config.get('aggregation_level'))
@@ -881,7 +884,8 @@ class TestFactSheetReportWaterSanitationAndHygiene(TestCase):
             'previous_month': datetime(2017, 5, 1).date(),
             'two_before': datetime(2017, 4, 1).date(),
             'category': 'water_sanitation_and_hygiene',
-            'domain': 'icds-cas'
+            'domain': 'icds-cas',
+            'sql_location': None
         }
 
         loc_level = get_location_level(config.get('aggregation_level'))
@@ -967,7 +971,8 @@ class TestFactSheetReportDemographics(TestCase):
             'previous_month': datetime(2017, 5, 1).date(),
             'two_before': datetime(2017, 4, 1).date(),
             'category': 'demographics',
-            'domain': 'icds-cas'
+            'domain': 'icds-cas',
+            'sql_location': None
         }
 
         loc_level = get_location_level(config.get('aggregation_level'))
