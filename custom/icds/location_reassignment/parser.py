@@ -336,8 +336,8 @@ class Parser(object):
     def valid_transitions_json(self):
         # return valid transitions as json
         json_response = {}
-        for location_code, transitions in self.valid_transitions.items():
-            json_response[location_code] = [attr.asdict(transition) for transition in transitions]
+        for location_type, transitions in self.valid_transitions.items():
+            json_response[location_type] = [attr.asdict(transition) for transition in transitions]
         return json_response
 
 
