@@ -173,7 +173,7 @@ class BaseReportFixtureProvider(metaclass=ABCMeta):
         raise NotImplementedError
 
     @abstractmethod
-    def report_config_to_fixture(self, report_config, restore_user):
+    def report_config_to_fixtures(self, report_config, restore_user):
         """Standard function for testing
         :returns: list of fixture elements"""
         raise NotImplementedError
@@ -204,7 +204,7 @@ class ReportFixturesProviderV1(BaseReportFixtureProvider):
         reports_elem = E.reports(last_sync=_format_last_sync_time(restore_user))
         for report_config in report_configs:
             try:
-                reports_elem.extend(self.report_config_to_fixture(report_config, restore_user))
+                reports_elem.extend(self.report_config_to_fixtures(report_config, restore_user))
             except ReportConfigurationNotFoundError as err:
                 logging.exception('Error generating report fixture: {}'.format(err))
                 continue
@@ -218,7 +218,7 @@ class ReportFixturesProviderV1(BaseReportFixtureProvider):
         root.append(reports_elem)
         return [root]
 
-    def report_config_to_fixture(self, report_config, restore_user):
+    def report_config_to_fixtures(self, report_config, restore_user):
         def _row_to_row_elem(deferred_fields, filter_options_by_field, row, index, is_total_row=False):
             row_elem = E.row(index=str(index), is_total_row=str(is_total_row))
             if toggles.ADD_ROW_INDEX_TO_MOBILE_UCRS.enabled(restore_user.domain):
@@ -345,7 +345,7 @@ class ReportFixturesProviderV2(BaseReportFixtureProvider):
         fixtures = []
         for report_config in report_configs:
             try:
-                fixtures.extend(self.report_config_to_fixture(report_config, restore_user))
+                fixtures.extend(self.report_config_to_fixtures(report_config, restore_user))
             except ReportConfigurationNotFoundError as err:
                 logging.exception('Error generating report fixture: {}'.format(err))
                 continue
@@ -358,7 +358,7 @@ class ReportFixturesProviderV2(BaseReportFixtureProvider):
                     raise
         return fixtures
 
-    def report_config_to_fixture(self, report_config, restore_user):
+    def report_config_to_fixtures(self, report_config, restore_user):
         def _row_to_row_elem(deferred_fields, filter_options_by_field, row, index, is_total_row=False):
             row_elem = E.row(index=str(index), is_total_row=str(is_total_row))
             if toggles.ADD_ROW_INDEX_TO_MOBILE_UCRS.enabled(restore_user.domain):
