@@ -66,6 +66,9 @@ class SQLCommtrackConfig(models.Model, SyncSQLToCouchMixin):
         self.sqlactionconfig_set.set(actions, bulk=False)
         self.set_answer_order([a.id for a in actions])
 
+    def action_by_keyword(self, keyword):
+        return dict((a.keyword.lower(), a) for a in self.all_actions).get(keyword.lower())
+
     def _migration_get_fields(cls):
         from corehq.apps.commtrack.management.commands.populate_sql_models import Command
         return Command.attrs_to_sync()
@@ -92,6 +95,42 @@ class SQLCommtrackConfig(models.Model, SyncSQLToCouchMixin):
     @classmethod
     def for_domain(cls, domain):
         return cls.objects.filter(domain=domain).first()
+
+    def get_consumption_config(self):
+        def _default_monthly_consumption(case_id, product_id):
+            # note: for now as an optimization hack, per-supply point type is not supported
+            # unless explicitly configured, because it will require looking up the case
+            facility_type = None
+            if self.sqlconsumptionconfig.use_supply_point_type_default_consumption:
+                try:
+                    supply_point = SupplyInterface(self.domain).get_supply_point(case_id)
+                    facility_type = supply_point.sql_location.location_type_name
+                except ResourceNotFound:
+                    pass
+            return get_default_monthly_consumption(self.domain, product_id, facility_type, case_id)
+
+        return ConsumptionConfiguration(
+            min_periods=self.sqlconsumptionconfig.min_transactions,
+            min_window=self.sqlconsumptionconfig.min_window,
+            max_window=self.sqlconsumptionconfig.optimal_window,
+            default_monthly_consumption_function=_default_monthly_consumption,
+            exclude_invalid_periods=self.sqlconsumptionconfig.exclude_invalid_periods
+        )
+
+    def get_ota_restore_settings(self):
+        # for some reason it doesn't like this import
+        from casexml.apps.phone.restore import StockSettings
+        default_product_ids = []
+        if self.sqlstockrestoreconfig.use_dynamic_product_list:
+            default_product_ids = SQLProduct.active_objects.filter(domain=self.domain).product_ids()
+        case_filter = lambda stub: stub.type in set(self.sqlstockrestoreconfig.force_consumption_case_types)
+        return StockSettings(
+            section_to_consumption_types=self.sqlstockrestoreconfig.section_to_consumption_types,
+            consumption_config=self.get_consumption_config(),
+            default_product_list=default_product_ids,
+            force_consumption_case_filter=case_filter,
+            sync_consumption_ledger=self.sync_consumption_fixtures
+        )
 
 
 class SQLActionConfig(models.Model):
@@ -314,50 +353,6 @@ class CommtrackConfig(SyncCouchToSQLMixin, QuickCachedDocumentMixin, Document):
             return result[0]
         except IndexError:
             return None
-
-    # TODO PR2: Move and update
-    @property
-    def all_actions(self):
-        return self.actions
-
-    def action_by_keyword(self, keyword):
-        return dict((a.keyword.lower(), a) for a in self.actions).get(keyword.lower())
-
-    def get_consumption_config(self):
-        def _default_monthly_consumption(case_id, product_id):
-            # note: for now as an optimization hack, per-supply point type is not supported
-            # unless explicitly configured, because it will require looking up the case
-            facility_type = None
-            if self.consumption_config.use_supply_point_type_default_consumption:
-                try:
-                    supply_point = SupplyInterface(self.domain).get_supply_point(case_id)
-                    facility_type = supply_point.sql_location.location_type_name
-                except ResourceNotFound:
-                    pass
-            return get_default_monthly_consumption(self.domain, product_id, facility_type, case_id)
-
-        return ConsumptionConfiguration(
-            min_periods=self.consumption_config.min_transactions,
-            min_window=self.consumption_config.min_window,
-            max_window=self.consumption_config.optimal_window,
-            default_monthly_consumption_function=_default_monthly_consumption,
-            exclude_invalid_periods=self.consumption_config.exclude_invalid_periods
-        )
-
-    def get_ota_restore_settings(self):
-        # for some reason it doesn't like this import
-        from casexml.apps.phone.restore import StockSettings
-        default_product_ids = []
-        if self.ota_restore_config.use_dynamic_product_list:
-            default_product_ids = SQLProduct.active_objects.filter(domain=self.domain).product_ids()
-        case_filter = lambda stub: stub.type in set(self.ota_restore_config.force_consumption_case_types)
-        return StockSettings(
-            section_to_consumption_types=self.ota_restore_config.section_to_consumption_types,
-            consumption_config=self.get_consumption_config(),
-            default_product_list=default_product_ids,
-            force_consumption_case_filter=case_filter,
-            sync_consumption_ledger=self.sync_consumption_fixtures
-        )
 
 
 SINGLE_SUBMODELS_TO_SYNC = [
