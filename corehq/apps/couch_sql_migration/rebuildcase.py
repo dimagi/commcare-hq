@@ -34,8 +34,9 @@ def rebuild_and_diff_cases(sql_case, couch_case, original_couch_case, diff, dd_c
             dd_count("commcare.couchsqlmigration.case.rebuild.sql")
         sql_json = new_case.to_json()
         diffs = diff(couch_case, sql_json)
-        if diffs and couch_case != original_couch_case:
-            diffs = diff(original_couch_case, sql_json)
+        if diffs:
+            if couch_case != original_couch_case:
+                diffs = diff(original_couch_case, sql_json)
             if not diffs or is_case_patched(sql_case.case_id, diffs):
                 log.info("original Couch case matches rebuilt SQL case: %s", sql_case.case_id)
                 diffs = []
