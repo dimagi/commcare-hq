@@ -97,7 +97,7 @@ class SQLCustomDataFieldsDefinition(SyncSQLToCouchMixin, models.Model):
                 choices=field.choices,
                 regex=field.regex,
                 regex_msg=field.regex_msg,
-            ) for field in self.sqlfield_set.all()
+            ) for field in self.get_fields()
         ]
         couch_obj.save(sync_to_sql=False)
 
@@ -145,8 +145,7 @@ class CustomDataFieldsDefinition(SyncCouchToSQLMixin, QuickCachedDocumentMixin, 
         for field_name in self._migration_get_fields():
             value = getattr(self, field_name)
             setattr(sql_object, field_name, value)
-        sql_object.sqlfield_set.all().delete()
-        sql_object.sqlfield_set.set([
+        sql_object.set_fields([
             SQLField(
                 slug=field.slug,
                 is_required=field.is_required,
@@ -155,7 +154,7 @@ class CustomDataFieldsDefinition(SyncCouchToSQLMixin, QuickCachedDocumentMixin, 
                 regex=field.regex,
                 regex_msg=field.regex_msg,
             ) for field in self.fields
-        ], bulk=False)
+        ])
         sql_object.save(sync_to_couch=False)
 
     @classmethod
