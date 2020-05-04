@@ -332,8 +332,8 @@ class ReportFixturesProviderV2(BaseReportFixtureProvider):
 
     def _empty_v2_fixtures(self, report_uuid):
         return [
-            E.fixture(id=self._report_fixture_id(report_uuid)),
-            E.fixture(id=self._report_filter_id(report_uuid))
+            E.fixture(id=self.report_fixture_id(report_uuid)),
+            E.fixture(id=self.report_filter_id(report_uuid))
         ]
 
     def _v2_fixtures(self, restore_user, report_configs):
@@ -372,22 +372,22 @@ class ReportFixturesProviderV2(BaseReportFixtureProvider):
         for row in rows:
             rows_elem.append(row)
 
-        report_filter_elem = E.fixture(id=ReportFixturesProviderV2._report_filter_id(report_config.uuid))
+        report_filter_elem = E.fixture(id=ReportFixturesProviderV2.report_filter_id(report_config.uuid))
         report_filter_elem.append(filters_elem)
 
         report_elem = E.fixture(
-            id=ReportFixturesProviderV2._report_fixture_id(report_config.uuid), user_id=restore_user.user_id,
+            id=ReportFixturesProviderV2.report_fixture_id(report_config.uuid), user_id=restore_user.user_id,
             report_id=report_config.report_id, indexed='true'
         )
         report_elem.append(rows_elem)
         return [report_filter_elem, report_elem]
 
     @staticmethod
-    def _report_fixture_id(report_uuid):
+    def report_fixture_id(report_uuid):
         return 'commcare-reports:' + report_uuid
 
     @staticmethod
-    def _report_filter_id(report_uuid):
+    def report_filter_id(report_uuid):
         return 'commcare-reports-filters:' + report_uuid
 
 
