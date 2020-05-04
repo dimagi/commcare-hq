@@ -1630,7 +1630,7 @@ def setup_aggregation(agg_date):
     if db_alias:
         with connections[db_alias].cursor() as cursor:
             _create_aggregate_functions(cursor)
-            TempPrevUCRTables().make_all_tables(agg_date)
+            TempPrevUCRTables().make_all_tables(force_to_date(agg_date))
 
 
 def _child_health_monthly_aggregation(day, state_ids):
