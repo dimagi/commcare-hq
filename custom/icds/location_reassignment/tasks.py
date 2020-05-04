@@ -120,6 +120,8 @@ def email_household_details(domain, transitions, uploaded_filename, user_email):
             email.attach(filename="Households.xlsx", content=filestream.read())
         else:
             email.body += "There were no house hold details found."
+        email.body += f"Please note that the households are fetched only for " \
+                      f"{','.join(Households.valid_operations)}."
         email.send()
 
 
