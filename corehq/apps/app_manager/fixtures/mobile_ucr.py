@@ -237,7 +237,7 @@ class ReportFixturesProviderV1(BaseReportFixtureProvider):
         for row in row_elements:
             rows_elem.append(row)
 
-        report_elem = E.report(id=ReportFixturesProviderV1.report_fixture_id(report_config.uuid), report_id=report_config.report_id)
+        report_elem = E.report(id=self.report_fixture_id(report_config.uuid), report_id=report_config.report_id)
         report_elem.append(filters_elem)
         report_elem.append(rows_elem)
         return [report_elem]
@@ -377,11 +377,11 @@ class ReportFixturesProviderV2(BaseReportFixtureProvider):
         for row in rows:
             rows_elem.append(row)
 
-        report_filter_elem = E.fixture(id=ReportFixturesProviderV2.report_filter_id(report_config.uuid))
+        report_filter_elem = E.fixture(id=self.report_filter_id(report_config.uuid))
         report_filter_elem.append(filters_elem)
 
         report_elem = E.fixture(
-            id=ReportFixturesProviderV2.report_fixture_id(report_config.uuid), user_id=restore_user.user_id,
+            id=self.report_fixture_id(report_config.uuid), user_id=restore_user.user_id,
             report_id=report_config.report_id, indexed='true'
         )
         report_elem.append(rows_elem)
