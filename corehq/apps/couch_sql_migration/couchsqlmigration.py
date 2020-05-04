@@ -239,6 +239,7 @@ class CouchSqlDomainMigrator:
         """
         sql_form = None
         try:
+            assert couch_form.domain == self.domain, couch_form.form_id
             should_process = couch_form.doc_type == 'XFormInstance'
             if form_is_processed is None:
                 form_is_processed = should_process
@@ -437,13 +438,16 @@ class CouchSqlDomainMigrator:
             form = None
         if form is None:
             self.statedb.add_missing_docs("XFormInstance", [form_id])
-        else:
-            if getattr(form, "problem", "") and not form.is_error and case_id is None:
-                doc = self._transform_problem(form.to_json())
-                form = XFormInstance.wrap(doc)
-            proc = case_id is not None or form.doc_type not in UNPROCESSED_DOC_TYPES
-            case_ids = get_case_ids(form) if proc else []
-            self._migrate_form(form, case_ids, form_is_processed=proc)
+            return
+        if form.domain != self.domain:
+            log.warning("skipping form %s with wrong domain", form_id)
+            return
+        if getattr(form, "problem", "") and not form.is_error and case_id is None:
+            doc = self._transform_problem(form.to_json())
+            form = XFormInstance.wrap(doc)
+        proc = case_id is not None or form.doc_type not in UNPROCESSED_DOC_TYPES
+        case_ids = get_case_ids(form) if proc else []
+        self._migrate_form(form, case_ids, form_is_processed=proc)
 
     def _transform_problem(self, doc):
         if str(doc['problem']).startswith(PROBLEM_TEMPLATE_START):
@@ -470,15 +474,18 @@ class CouchSqlDomainMigrator:
                     form = XFormInstance.wrap(doc)
                 except Exception:
                     log.exception("Error wrapping form %s", doc)
-                else:
-                    proc = form.doc_type not in UNPROCESSED_DOC_TYPES
-                    case_ids = get_case_ids(form) if proc else []
-                    self._migrate_form(form, case_ids, form_is_processed=proc)
-                    self.statedb.doc_not_missing(doc_type, form.form_id)
-                    add_form()
-                    migrated += 1
-                    if migrated % 100 == 0:
-                        log.info("migrated %s previously missed forms", migrated)
+                    continue
+                if form.domain != self.domain:
+                    log.warning("skipping form %s with wrong domain", form.form_id)
+                    continue
+                proc = form.doc_type not in UNPROCESSED_DOC_TYPES
+                case_ids = get_case_ids(form) if proc else []
+                self._migrate_form(form, case_ids, form_is_processed=proc)
+                self.statedb.doc_not_missing(doc_type, form.form_id)
+                add_form()
+                migrated += 1
+                if migrated % 100 == 0:
+                    log.info("migrated %s previously missed forms", migrated)
         log.info("finished migrating %s previously missed forms", migrated)
         self._process_missing_case_references()
 
@@ -908,7 +915,8 @@ def _migrate_form_attachments(sql_form, couch_form):
 
     def try_to_get_blob_meta(parent_id, type_code, name):
         metas = get_blob_metadata(parent_id)[(type_code, name)]
-        assert all(m.domain == couch_form.domain for m in metas), metas
+        assert all(m.domain == sql_form.domain for m in metas), \
+            (parent_id, [m.domain for m in metas])
         if len(metas) > 1:
             # known issue: duplicate blob metadata with missing blob
             missing = [m for m in metas if not m.blob_exists()]
