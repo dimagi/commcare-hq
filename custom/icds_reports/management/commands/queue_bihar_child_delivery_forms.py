@@ -35,11 +35,10 @@ class Command(BaseCommand):
         chunk_size = 100
         for ids_chunk in chunked(bihar_supervisor_ids, chunk_size):
             query = """
-                select doc_id from "%(table_name)s"
+                select distinct doc_id from "%(table_name)s"
                 where state_id=%(bihar_state_id)s AND supervisor_id in %(sup_ids)s
                 order by doc_id
-            """.format(table_name)
-
+            """
             query_params = {
                 'table_name': AsIs(table_name),
                 'bihar_state_id': bihar_state_id,
@@ -50,7 +49,7 @@ class Command(BaseCommand):
                 cursor.execute(query, query_params)
                 doc_ids = cursor.fetchall()
                 AsyncIndicator.objects.bulk_create([
-                    AsyncIndicator(doc_id=doc_id,
+                    AsyncIndicator(doc_id=doc_id[0],
                                    doc_type='XFormInstance',
                                    domain='icds-cas',
                                    indicator_config_ids=['static-icds-cas-static-child_delivery_forms'],
