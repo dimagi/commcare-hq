@@ -353,11 +353,13 @@ class Parser(object):
             usernames_missing = set(self.usernames) - usernames_found
             self.errors.append(f"Could not find user(s): {', '.join(usernames_missing)}")
 
-    def valid_transitions_json(self):
+    def valid_transitions_json(self, for_location_type=None):
         # return valid transitions as json
         json_response = {}
-        for location_code, transitions in self.valid_transitions.items():
-            json_response[location_code] = [attr.asdict(transition) for transition in transitions]
+        for location_type, transitions in self.valid_transitions.items():
+            if for_location_type and for_location_type != location_type:
+                continue
+            json_response[location_type] = [attr.asdict(transition) for transition in transitions]
         return json_response
 
 

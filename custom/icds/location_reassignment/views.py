@@ -154,8 +154,9 @@ class LocationReassignmentView(BaseLocationView):
         return response
 
     def _process_request_for_email_households(self, parser, request, uploaded_filename):
-        if AWC_CODE in parser.valid_transitions:
-            email_household_details.delay(self.domain, parser.valid_transitions[AWC_CODE],
+        awc_transitions = parser.valid_transitions_json(for_location_type=AWC_CODE)
+        if awc_transitions:
+            email_household_details.delay(self.domain, awc_transitions,
                                           uploaded_filename, request.user.email)
             messages.success(request, _(
                 "Your request has been submitted. You will be updated via email."))
