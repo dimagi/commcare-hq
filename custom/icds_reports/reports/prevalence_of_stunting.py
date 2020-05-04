@@ -16,10 +16,10 @@ from custom.icds_reports.utils import get_location_launched_status
 
 
 @icds_quickcache(['domain', 'config', 'loc_level', 'show_test', 'icds_feature_flag'], timeout=30 * 60)
-def get_prevalence_of_stunting_data_map(domain, config, loc_level, location_dict, show_test=False, icds_feature_flag=False):
+def get_prevalence_of_stunting_data_map(domain, config, loc_level, show_test=False, icds_feature_flag=False):
+    config['month'] = datetime(*config['month'])
 
     def get_data_for(filters):
-        filters['month'] = datetime(*filters['month'])
         queryset = AggChildHealthMonthly.objects.filter(
             **filters
         ).values(
@@ -53,12 +53,17 @@ def get_prevalence_of_stunting_data_map(domain, config, loc_level, location_dict
     measured_total = 0
 
     values_to_calculate_average = {'numerator': 0, 'denominator': 0}
-    month = datetime(*config['month'])
-    location_launched_status = get_location_launched_status(location_dict, month, loc_level)
+
+    if icds_feature_flag:
+        location_launched_status = get_location_launched_status(config, loc_level)
+    else:
+        location_launched_status = None
+
     for row in get_data_for(config):
-        launched_status = location_launched_status.get(row['%s_name' % loc_level])
-        if launched_status is None or launched_status <= 0:
-            continue
+        if location_launched_status:
+            launched_status = location_launched_status.get(row['%s_name' % loc_level])
+            if launched_status is None or launched_status <= 0:
+                continue
         total = row['total'] or 0
         name = row['%s_name' % loc_level]
         on_map_name = row['%s_map_location_name' % loc_level] or name
@@ -158,7 +163,7 @@ def get_prevalence_of_stunting_data_map(domain, config, loc_level, location_dict
 
 
 @icds_quickcache(['domain', 'config', 'loc_level', 'show_test', 'icds_feature_flag'], timeout=30 * 60)
-def get_prevalence_of_stunting_data_chart(domain, config, loc_level, location_dict, show_test=False, icds_feature_flag=False):
+def get_prevalence_of_stunting_data_chart(domain, config, loc_level, show_test=False, icds_feature_flag=False):
     month = datetime(*config['month'])
     three_before = datetime(*config['month']) - relativedelta(months=3)
 
@@ -198,11 +203,19 @@ def get_prevalence_of_stunting_data_chart(domain, config, loc_level, location_di
         data['peach'][miliseconds] = {'y': 0, 'all': 0, 'measured': 0}
 
     best_worst = {}
-    location_launched_status = get_location_launched_status(location_dict, month, loc_level)
+    if icds_feature_flag:
+        if 'month' not in config:
+            config['month'] = month
+        location_launched_status = get_location_launched_status(config, loc_level)
+    else:
+        location_launched_status = None
+
     for row in chart_data:
-        launched_status = location_launched_status.get(row['%s_name' % loc_level])
-        if launched_status is None or launched_status <= 0:
-            continue
+        if location_launched_status:
+            launched_status = location_launched_status.get(row['%s_name' % loc_level])
+            if launched_status is None or launched_status <= 0:
+                continue
+
         date = row['month']
         total = row['total'] or 0
         measured = row['measured'] or 0
@@ -284,8 +297,8 @@ def get_prevalence_of_stunting_data_chart(domain, config, loc_level, location_di
     }
 
 
-@icds_quickcache(['domain', 'config', 'loc_level', 'location_id', 'show_test', 'icds_feature_flag'], timeout=30 * 60)
-def get_prevalence_of_stunting_sector_data(domain, config, loc_level, location_dict, location_id, show_test=False,
+@icds_quickcache(['domain', 'config', 'loc_level', 'show_test', 'icds_feature_flag'], timeout=30 * 60)
+def get_prevalence_of_stunting_sector_data(domain, config, loc_level, show_test=False,
                                            icds_feature_flag=False):
     group_by = ['%s_name' % loc_level]
 
@@ -318,11 +331,15 @@ def get_prevalence_of_stunting_sector_data(domain, config, loc_level, location_d
         'normal': 0,
         'total_measured': 0
     })
-    location_launched_status = get_location_launched_status(location_dict, config['month'], loc_level)
+    if icds_feature_flag:
+        location_launched_status = get_location_launched_status(config, loc_level)
+    else:
+        location_launched_status = None
     for row in data:
-        launched_status = location_launched_status.get(row['%s_name' % loc_level])
-        if launched_status is None or launched_status <= 0:
-            continue
+        if location_launched_status:
+            launched_status = location_launched_status.get(row['%s_name' % loc_level])
+            if launched_status is None or launched_status <= 0:
+                continue
         total = row['total'] or 0
         name = row['%s_name' % loc_level]
 

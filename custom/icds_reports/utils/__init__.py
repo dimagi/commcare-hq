@@ -1854,11 +1854,31 @@ def get_location_replacement_name(location, field, replacement_names):
     return [replacement_names.get(loc_id, '') for loc_id in location.metadata.get(field, [])]
 
 
-@icds_quickcache(['location_filer', 'aggregation_level', 'loc_level'], timeout=30 * 60)
-def get_location_launched_status(location_filter,month, loc_name):
+@icds_quickcache(['filters', 'loc_name'], timeout=30 * 60)
+def get_location_launched_status(filters, loc_name):
+
+    def select_location_filter(filters):
+        location_filters = dict()
+        location_filters['aggregation_level'] = filters['aggregation_level']
+        location_filters['month'] = filters['month']
+
+        if location_filters['aggregation_level'] == 1 and 'state_id' not in filters:
+            return location_filters
+        else:
+            location_id_cols = ['state_id', 'district_id', 'block_id', 'supervisor_id', 'awc_id']
+            reduced_loc_id_cols = location_id_cols[:location_filters['aggregation_level']]
+
+            location_filters.update(
+                {
+                    col: filters[col]
+                    for col in reduced_loc_id_cols
+                }
+            )
+
+        return location_filters
+
     locations_launched_status = AggAwcMonthly.objects.filter(
-        month=month,
-        **location_filter
+        **select_location_filter(filters)
     ).values('%s_name' % loc_name, 'num_launched_awcs')
 
     return { loc['%s_name' % loc_name]:loc['num_launched_awcs'] for loc in locations_launched_status}

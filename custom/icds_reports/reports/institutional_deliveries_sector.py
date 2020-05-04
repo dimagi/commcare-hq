@@ -4,7 +4,6 @@ from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from dateutil.rrule import rrule, MONTHLY
 from django.db.models.aggregates import Sum
-from django.utils.translation import ugettext as _
 
 from custom.icds_reports.cache import icds_quickcache
 from custom.icds_reports.const import LocationTypes, ChartColors, MapColors
@@ -14,8 +13,8 @@ from custom.icds_reports.utils import apply_exclude, generate_data_for_map, indi
 from custom.icds_reports.utils import get_location_launched_status
 
 
-@icds_quickcache(['domain', 'config', 'loc_level', 'location_id', 'show_test'], timeout=30 * 60)
-def get_institutional_deliveries_sector_data(domain, config, loc_level, location_id, location_dict, show_test=False):
+@icds_quickcache(['domain', 'config', 'loc_level', 'show_test', 'icds_features_flag'], timeout=30 * 60)
+def get_institutional_deliveries_sector_data(domain, config, loc_level, show_test=False, icds_features_flag=False):
     group_by = ['%s_name' % loc_level]
 
     config['month'] = datetime(*config['month'])
@@ -40,12 +39,15 @@ def get_institutional_deliveries_sector_data(domain, config, loc_level, location
         'all': 0
     })
 
-    location_launched_status = get_location_launched_status(location_dict, config['month'], loc_level)
-
+    if icds_features_flag:
+        location_launched_status = get_location_launched_status(config, loc_level)
+    else:
+        location_launched_status = None
     for row in data:
-        launched_status = location_launched_status.get(row['%s_name' % loc_level])
-        if launched_status is None or launched_status <= 0:
-            continue
+        if location_launched_status:
+            launched_status = location_launched_status.get(row['%s_name' % loc_level])
+            if launched_status is None or launched_status <= 0:
+                continue
         valid = row['eligible']
         name = row['%s_name' % loc_level]
 
@@ -80,11 +82,11 @@ def get_institutional_deliveries_sector_data(domain, config, loc_level, location
     }
 
 
-@icds_quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
-def get_institutional_deliveries_data_map(domain, config, loc_level, location_dict, show_test=False):
-
+@icds_quickcache(['domain', 'config', 'loc_level', 'show_test', 'icds_features_flag'], timeout=30 * 60)
+def get_institutional_deliveries_data_map(domain, config, loc_level, show_test=False, icds_features_flag=False):
+    config['month'] = datetime(*config['month'])
     def get_data_for(filters):
-        filters['month'] = datetime(*filters['month'])
+
         queryset = AggCcsRecordMonthly.objects.filter(
             **filters
         ).values(
@@ -97,8 +99,10 @@ def get_institutional_deliveries_data_map(domain, config, loc_level, location_di
             queryset = apply_exclude(domain, queryset)
         return queryset
 
-    month = datetime(*config['month'])
-    location_launched_status = get_location_launched_status(location_dict, month, loc_level)
+    if icds_features_flag:
+        location_launched_status = get_location_launched_status(config, loc_level)
+    else:
+        location_launched_status = None
     data_for_map, valid_total, in_month_total, average, total = generate_data_for_map(
         get_data_for(config),
         loc_level,
@@ -147,8 +151,8 @@ def get_institutional_deliveries_data_map(domain, config, loc_level, location_di
     }
 
 
-@icds_quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
-def get_institutional_deliveries_data_chart(domain, config, loc_level, location_dict, show_test=False):
+@icds_quickcache(['domain', 'config', 'loc_level',  'show_test', 'icds_features_flag'], timeout=30 * 60)
+def get_institutional_deliveries_data_chart(domain, config, loc_level, show_test=False, icds_features_flag=False):
     month = datetime(*config['month'])
     three_before = datetime(*config['month']) - relativedelta(months=3)
 
@@ -181,12 +185,17 @@ def get_institutional_deliveries_data_chart(domain, config, loc_level, location_
         'in_month': 0,
         'all': 0
     })
-    location_launched_status = get_location_launched_status(location_dict, month, loc_level)
-
+    if icds_features_flag:
+        if 'month' not in config:
+            config['month'] = month
+        location_launched_status = get_location_launched_status(config, loc_level)
+    else:
+        location_launched_status = None
     for row in chart_data:
-        launched_status = location_launched_status.get(row['%s_name' % loc_level])
-        if launched_status is None or launched_status <= 0:
-            continue
+        if location_launched_status:
+            launched_status = location_launched_status.get(row['%s_name' % loc_level])
+            if launched_status is None or launched_status <= 0:
+                continue
         date = row['month']
         in_month = row['in_month']
         location = row['%s_name' % loc_level]
