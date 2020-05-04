@@ -237,10 +237,15 @@ class ReportFixturesProviderV1(BaseReportFixtureProvider):
         for row in row_elements:
             rows_elem.append(row)
 
-        report_elem = E.report(id=report_config.uuid, report_id=report_config.report_id)
+        report_elem = E.report(id=ReportFixturesProviderV1.report_fixture_id(report_config.uuid), report_id=report_config.report_id)
         report_elem.append(filters_elem)
         report_elem.append(rows_elem)
         return [report_elem]
+
+    @staticmethod
+    def report_fixture_id(report_uuid):
+        return report_uuid
+
 
 
 class ReportFixturesProviderV2(BaseReportFixtureProvider):
