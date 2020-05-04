@@ -78,5 +78,5 @@ class IncrementalExportCheckpoint(models.Model):
 
     @property
     def filename(self):
-        date_suffix = self.date_created.replace(microsecond=0).isoformat()
+        date_suffix = self.date_created.replace(microsecond=0).strftime('%Y-%m-%d-%H-%M-%S')
         return f'{self.incremental_export.name}-{date_suffix}.csv'
