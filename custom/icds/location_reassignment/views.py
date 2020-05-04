@@ -12,6 +12,7 @@ from corehq import toggles
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.locations.models import LocationType, SQLLocation
 from corehq.apps.locations.permissions import (
+    location_safe,
     require_can_edit_locations,
     user_can_access_location_id,
 )
@@ -46,6 +47,7 @@ from custom.icds.location_reassignment.tasks import (
 )
 
 
+@location_safe
 @method_decorator([toggles.LOCATION_REASSIGNMENT.required_decorator()], name='dispatch')
 class LocationReassignmentDownloadOnlyView(BaseProjectReportSectionView):
     section_name = ugettext_lazy("Download Location Reassignment Template")
