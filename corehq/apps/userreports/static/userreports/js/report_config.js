@@ -153,7 +153,6 @@ hqDefine('userreports/js/report_config', function () {
                 self.isAggregationEnabled = ko.observable(self.reportType() === constants.REPORT_TYPE_TABLE);
 
                 self.selectedChart = ko.observable('none');
-                self.displayChartColumnWarning = ko.observable(false);
                 self.selectedChart.subscribe(function (newValue) {
                     if (newValue === "none") {
                         self.previewChart(false);
@@ -176,12 +175,9 @@ hqDefine('userreports/js/report_config', function () {
                     return false;
                 };
                 self.addChart = function () {
-                    if (self.areColumnsValidForChart()) {
-                        self.selectedChart('bar');
-                        hqImport('userreports/js/report_analytix').track.event('Add Chart');
-                        _kmq_track_click('Add Chart');
-                    }
-                    self.displayChartColumnWarning(true);
+                    self.selectedChart('bar');
+                    hqImport('userreports/js/report_analytix').track.event('Add Chart');
+                    _kmq_track_click('Add Chart');
                 };
                 self.removeChart = function () {
                     self.selectedChart('none');
