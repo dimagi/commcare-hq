@@ -1854,4 +1854,4 @@ def timestamp_string_to_date_string(ts_string):
         # Input string differs from ISO_DATETIME_FORMAT bceause it lacks timezone info
         return datetime.strptime(ts_string, '%Y-%m-%dT%H:%M:%S.%f').strftime(ISO_DATE_FORMAT)
     else:
-        return ''
+        return None
