@@ -70,7 +70,6 @@ dnspython==1.15.0
 docutils==0.15.2
 dropbox==9.3.0
 elasticsearch2==2.5.1
-elasticsearch7==7.6.0
 elasticsearch==1.9.0
 email_validator==1.0.3
 entrypoints==0.3          # via flake8
