@@ -1630,6 +1630,7 @@ def setup_aggregation(agg_date):
     if db_alias:
         with connections[db_alias].cursor() as cursor:
             _create_aggregate_functions(cursor)
+            TempPrevUCRTables().make_all_tables(force_to_date(agg_date))
 
 
 def _child_health_monthly_aggregation(day, state_ids):
@@ -1883,6 +1884,10 @@ def bp_pre_queries(agg_date):
 def ag_pre_queries(agg_date):
     helper = AggregateAdolescentGirlsRegistrationForms._agg_helper_cls(None, agg_date)
     helper.create_temporary_prev_table('static-person_cases_v3', 'person_case_id')
+
+
+def awc_infra_pre_queries(agg_date):
+    TempInfraTables().make_all_tables(agg_date)
 
 
 def update_governance_dashboard(target_date):

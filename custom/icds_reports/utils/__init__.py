@@ -46,6 +46,7 @@ from custom.icds_reports.models.helper import IcdsFile
 from custom.icds_reports.queries import get_test_state_locations_id, get_test_district_locations_id
 from couchexport.export import export_from_tables
 from dimagi.utils.dates import DateSpan
+from dimagi.utils.parsing import ISO_DATE_FORMAT
 from django.db.models import Case, When, Q, F, IntegerField, Max, Min
 from django.db.utils import OperationalError
 import uuid
@@ -1821,7 +1822,7 @@ def _construct_replacement_map_from_sql_location(replacement_location_ids):
             loc = loc.parent
         loc_names.reverse()
         return ' > '.join(loc_names)
-    
+
     # prefetch all possible parents
     replacement_locations = SQLLocation.objects.filter(location_id__in=replacement_location_ids).select_related('parent__parent__parent__parent')
 
@@ -1882,3 +1883,11 @@ def get_location_launched_status(filters, loc_name):
     ).values('%s_name' % loc_name, 'num_launched_awcs')
 
     return { loc['%s_name' % loc_name]:loc['num_launched_awcs'] for loc in locations_launched_status}
+
+
+def timestamp_string_to_date_string(ts_string):
+    if ts_string:
+        # Input string differs from ISO_DATETIME_FORMAT bceause it lacks timezone info
+        return datetime.strptime(ts_string, '%Y-%m-%dT%H:%M:%S.%f').strftime(ISO_DATE_FORMAT)
+    else:
+        return None
