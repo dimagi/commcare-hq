@@ -1,0 +1,47 @@
+{
+  "domains": [
+    "icds-dashboard-qa",
+    "sankalp_cas",
+    "zohaib-sandbox",
+    "akshita-sandbox",
+    "sunaina-sandbox",
+    "laurence-project-1",
+    "jessica-icds-cas",
+    "marissa-test",
+    "derek-icds-sandbox",
+    "priyanka-app",
+    "shrena-dev",
+    "aparatest",
+    "reach-sandbox",
+    "reach-dashboard-qa",
+    "reach-test",
+    "icds-test",
+    "icds-sql",
+    "icds-cas",
+    "cas-lab",
+    "icds-cas-sandbox"
+  ],
+  "server_environment": [
+    "india",
+    "icds"
+  ],
+  "report_id": "ls_v2_ag_out_of_school",
+  "data_source_table": "static-person_cases_v3",
+  "config": {
+    "title": "UCR V2 - LS - AG Out Of School",
+    "description": "",
+    "visible": false,
+    "aggregation_columns": [
+      "owner_id",
+      "month"
+    ],
+    "filters": [
+      "TODO"
+    ],
+    "columns": [
+      "TODO"
+    ],
+    "sort_expression": [ ],
+    "configured_charts": [ ]
+  }
+}
