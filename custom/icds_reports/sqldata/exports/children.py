@@ -40,6 +40,11 @@ class ChildrenExport(ExportableMixin, IcdsSqlData):
         if self.loc_level > 4:
             columns.append(DatabaseColumn('AWC', SimpleColumn('awc_name'), slug='awc_name'))
             columns.append(DatabaseColumn(
+                'AWC Site Code',
+                SimpleColumn('awc_site_code'),
+                slug='awc_site_code')
+            )
+            columns.append(DatabaseColumn(
                 'AWW Phone Number',
                 SimpleColumn('contact_phone_number'),
                 format_fn=phone_number_function,

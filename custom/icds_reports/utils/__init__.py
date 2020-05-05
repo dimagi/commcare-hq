@@ -1224,6 +1224,9 @@ def create_thr_report_excel_file(excel_data, data_type, month, aggregation_level
 
 def create_child_report_excel_file(excel_data, data_type, month, aggregation_level):
     export_info = excel_data[1][1]
+    max_merged_column_no = aggregation_level
+    if aggregation_level == 5:
+        max_merged_column_no = aggregation_level + 2
 
     primary_headers = ['Children weighed','Height measured for Children', '', 'Severely Underweight Children',
                        'Moderately Underweight Children','Children with normal weight for age (WfA)',
@@ -1240,7 +1243,7 @@ def create_child_report_excel_file(excel_data, data_type, month, aggregation_lev
                        'Children initiated with complementary feeding with appropriate handwashing before feeding'
                        ]
 
-    location_padding_columns = ([''] * aggregation_level)
+    location_padding_columns = ([''] * max_merged_column_no)
     primary_headers = location_padding_columns + primary_headers
 
     workbook = Workbook()
@@ -1283,8 +1286,7 @@ def create_child_report_excel_file(excel_data, data_type, month, aggregation_lev
             cell.fill = cell_pattern_blue
             cell.font = bold_font
 
-
-        if current_column_location<=aggregation_level or current_column_location == aggregation_level + 7:
+        if current_column_location <= max_merged_column_no or current_column_location == max_merged_column_no + 7:
             worksheet.merge_cells('{}1:{}2'.format(get_column_letter(current_column_location),
                                                    get_column_letter(current_column_location)))
             current_column_location += 1
@@ -1300,12 +1302,12 @@ def create_child_report_excel_file(excel_data, data_type, month, aggregation_lev
     bold_font_black = Font(size=14)
     for index, header in enumerate(headers):
         location_column = get_column_letter(index + 1)
-        cell = worksheet['{}{}'.format(location_column, 1 if index+1 <= aggregation_level or
-                                                             index == aggregation_level + 6 else 2)]
+        cell = worksheet['{}{}'.format(location_column, 1 if index+1 <= max_merged_column_no or
+                                                             index == max_merged_column_no + 6 else 2)]
         cell.alignment = text_alignment
         worksheet.column_dimensions[location_column].width = 30
         cell.value = header
-        if index != aggregation_level + 6 and index + 1 > aggregation_level:
+        if index != max_merged_column_no + 6 and index + 1 > max_merged_column_no:
             cell.fill = cell_pattern
             cell.font = bold_font_black
             cell.border = thin_border

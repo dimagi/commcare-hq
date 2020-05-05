@@ -3,6 +3,7 @@ CREATE VIEW system_usage_report_view AS
     SELECT
         "agg_awc_monthly"."awc_id" AS "awc_id",
         "agg_awc_monthly"."awc_name" AS "awc_name",
+        "agg_awc_monthly"."awc_site_code" AS "awc_site_code",
         "agg_awc_monthly"."supervisor_id" AS "supervisor_id",
         "agg_awc_monthly"."supervisor_name" AS "supervisor_name",
         "agg_awc_monthly"."block_id" AS "block_id",
