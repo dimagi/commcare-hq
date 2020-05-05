@@ -81,7 +81,7 @@ class GapsDetailsData:
         'fct_food_code_exists', 'fct_base_term_food_code_exists',
         'fct_reference_food_code_exists', 'base_term_food_code',
         'reference_food_code', 'unique_respondent_id', 'recall_case_id',
-        'opened_by_username', 'owner_name', 'recalled_date'
+        'opened_by_username', 'owner_name', 'visit_date'
     ]
 
     def __init__(self, food_data):
