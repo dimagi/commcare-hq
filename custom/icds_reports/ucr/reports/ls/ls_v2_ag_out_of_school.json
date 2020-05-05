@@ -36,10 +36,105 @@
       "month"
     ],
     "filters": [
-      "TODO"
+      {
+        "display": "Date Case Modified",
+        "slug": "modified_on",
+        "type": "date",
+        "field": "modified_on",
+        "datatype": "date",
+        "compare_as_string": false
+      },
+      {
+        "display": "Date of Birth",
+        "slug": "dob",
+        "type": "date",
+        "field": "dob",
+        "datatype": "date",
+        "compare_as_string": false
+      },
+      {
+        "display": "Filter by AWW",
+        "slug": "awc_id",
+        "type": "dynamic_choice_list",
+        "field": "awc_id",
+        "choice_provider": {
+          "type": "location"
+        },
+        "ancestor_expression": {
+          "field": "supervisor_id",
+          "location_type": "supervisor"
+        },
+        "datatype": "string",
+        "show_all": true
+      },
+      {
+        "display": "Filter by Supervisor",
+        "slug": "supervisor_id",
+        "type": "dynamic_choice_list",
+        "field": "supervisor_id",
+        "choice_provider": {
+          "type": "location"
+        },
+        "datatype": "string",
+        "show_all": true,
+        "ancestor_expression": {}
+      },
+      {
+        "required": false,
+        "type": "numeric",
+        "slug": "migration_status",
+        "field": "migration_status",
+        "display": "Whether Migrated",
+        "datatype": "integer"
+      },
+      {
+        "required": false,
+        "type": "numeric",
+        "slug": "registered_status",
+        "field": "registered_status",
+        "display": "Whether Availing Services",
+        "datatype": "integer"
+      }
     ],
     "columns": [
-      "TODO"
+      {
+        "display": "Month",
+        "column_id": "month",
+        "type": "aggregate_date",
+        "field": "modified_on",
+        "format": "%Y-%m",
+        "transform": {},
+        "calculate_total": false,
+        "description": null,
+        "visible": true
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "transform": {
+          "type": "custom",
+          "custom_type": "owner_display"
+        },
+        "column_id": "owner_id",
+        "field": "awc_id",
+        "calculate_total": false,
+        "type": "field",
+        "display": "owner_id",
+        "aggregation": "simple"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "aggregation": "sum",
+        "column_id": "is_oos",
+        "field": "is_oos",
+        "transform": {},
+        "calculate_total": true,
+        "type": "field",
+        "display": "is_oos"
+      }
     ],
     "sort_expression": [ ],
     "configured_charts": [ ]
