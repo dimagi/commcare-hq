@@ -62,7 +62,8 @@ from custom.icds_reports.const import (
     THR_REPORT_EXPORT,
     THREE_MONTHS,
     DASHBOARD_USAGE_EXPORT,
-    SERVICE_DELIVERY_REPORT
+    SERVICE_DELIVERY_REPORT,
+    CHILD_GROWTH_TRACKER_REPORT
 )
 from custom.icds_reports.models import (
     AggAwc,
@@ -123,6 +124,7 @@ from custom.icds_reports.sqldata.exports.beneficiary import BeneficiaryExport
 from custom.icds_reports.sqldata.exports.children import ChildrenExport
 from custom.icds_reports.sqldata.exports.dashboard_usage import DashBoardUsage
 from custom.icds_reports.sqldata.exports.demographics import DemographicsExport
+from custom.icds_reports.sqldata.exports.growth_tracker_report import GrowthTrackerExport
 from custom.icds_reports.sqldata.exports.lady_supervisor import (
     LadySupervisorExport,
 )
@@ -143,7 +145,8 @@ from custom.icds_reports.utils import (
     track_time,
     zip_folder,
     get_dashboard_usage_excel_file,
-    create_service_delivery_report
+    create_service_delivery_report,
+    create_child_growth_tracker_report
 )
 from custom.icds_reports.utils.aggregation_helpers.distributed import (
     ChildHealthMonthlyAggregationDistributedHelper,
@@ -989,15 +992,42 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
             cache_key = create_service_delivery_report(
                 excel_data,
                 data_type,
-                config,
+                config
             )
         else:
             cache_key = create_excel_file(excel_data, data_type, file_format)
 
         formatted_timestamp = datetime.now().strftime("%d-%m-%Y__%H-%M-%S")
         data_type = 'Service Delivery Report__{}'.format(formatted_timestamp)
+    elif indicator == CHILD_GROWTH_TRACKER_REPORT:
+        config.pop('aggregation_level', None)
+        data_type = 'Child_Growth_Tracker_list'
+        excel_data = GrowthTrackerExport(
+            config=config,
+            loc_level=aggregation_level,
+            show_test=include_test,
+            beta=beta
+        ).get_excel_data(location)
+        export_info = excel_data[1][1]
+        generated_timestamp = date_parser.parse(export_info[0][1])
+        formatted_timestamp = generated_timestamp.strftime("%d-%m-%Y__%H-%M-%S")
+        data_type = 'Child Growth Tracker Report__{}'.format(formatted_timestamp)
+
+        if file_format == 'xlsx':
+            cache_key = create_child_growth_tracker_report(
+                excel_data,
+                data_type,
+                config,
+                aggregation_level
+            )
+        else:
+            cache_key = create_excel_file(excel_data, data_type, file_format)
+
+        formatted_timestamp = datetime.now().strftime("%d-%m-%Y__%H-%M-%S")
+        data_type = 'Child Growth Tracker Report__{}'.format(formatted_timestamp)
+
     if indicator not in (AWW_INCENTIVE_REPORT, LS_REPORT_EXPORT, THR_REPORT_EXPORT, CHILDREN_EXPORT,
-                         DASHBOARD_USAGE_EXPORT, SERVICE_DELIVERY_REPORT):
+                         DASHBOARD_USAGE_EXPORT, SERVICE_DELIVERY_REPORT, CHILD_GROWTH_TRACKER_REPORT):
         if file_format == 'xlsx' and beta:
             cache_key = create_excel_file_in_openpyxl(excel_data, data_type)
         else:
@@ -1630,6 +1660,7 @@ def setup_aggregation(agg_date):
     if db_alias:
         with connections[db_alias].cursor() as cursor:
             _create_aggregate_functions(cursor)
+            TempPrevUCRTables().make_all_tables(force_to_date(agg_date))
 
 
 def _child_health_monthly_aggregation(day, state_ids):
@@ -1883,6 +1914,10 @@ def bp_pre_queries(agg_date):
 def ag_pre_queries(agg_date):
     helper = AggregateAdolescentGirlsRegistrationForms._agg_helper_cls(None, agg_date)
     helper.create_temporary_prev_table('static-person_cases_v3', 'person_case_id')
+
+
+def awc_infra_pre_queries(agg_date):
+    TempInfraTables().make_all_tables(agg_date)
 
 
 def update_governance_dashboard(target_date):
