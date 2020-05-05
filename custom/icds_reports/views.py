@@ -1389,7 +1389,7 @@ class AWCDailyStatusView(View):
         loc_level = get_location_level(config.get('aggregation_level'))
 
         if icds_pre_release_features(self.request.couch_user):
-            config['num_launched_awcs__gt'] = 1
+            config['num_launched_awcs__gte'] = 1
         data = {}
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
@@ -1443,7 +1443,7 @@ class RegisteredHouseholdView(BaseReportView):
         loc_level = get_location_level(config.get('aggregation_level'))
 
         if icds_pre_release_features(self.request.couch_user):
-            config['num_launched_awcs__gt'] = 1
+            config['num_launched_awcs__gte'] = 1
 
         data = {}
         if step == "map":
@@ -1587,7 +1587,7 @@ class AdolescentGirlsView(BaseReportView):
         loc_level = get_location_level(config.get('aggregation_level'))
 
         if icds_pre_release_features(self.request.couch_user):
-            config['num_launched_awcs__gt'] = 1
+            config['num_launched_awcs__gte'] = 1
 
         data = {}
         pre_release_features = icds_pre_release_features(self.request.couch_user)
@@ -1625,7 +1625,7 @@ class AdhaarBeneficiariesView(BaseReportView):
         loc_level = get_location_level(config.get('aggregation_level'))
 
         if icds_pre_release_features(self.request.couch_user):
-            config['num_launched_awcs__gt'] = 1
+            config['num_launched_awcs__gte'] = 1
 
         data = {}
         beta = icds_pre_release_features(request.couch_user)
@@ -1659,7 +1659,7 @@ class CleanWaterView(BaseReportView):
         loc_level = get_location_level(config.get('aggregation_level'))
 
         if icds_pre_release_features(self.request.couch_user):
-            config['num_launched_awcs__gt'] = 1
+            config['num_launched_awcs__gte'] = 1
 
         data = {}
         if step == "map":
@@ -1694,7 +1694,7 @@ class FunctionalToiletView(BaseReportView):
         loc_level = get_location_level(config.get('aggregation_level'))
 
         if icds_pre_release_features(self.request.couch_user):
-            config['num_launched_awcs__gt'] = 1
+            config['num_launched_awcs__gte'] = 1
 
         data = {}
         if step == "map":
@@ -1729,7 +1729,7 @@ class MedicineKitView(BaseReportView):
         loc_level = get_location_level(config.get('aggregation_level'))
 
         if icds_pre_release_features(self.request.couch_user):
-            config['num_launched_awcs__gt'] = 1
+            config['num_launched_awcs__gte'] = 1
 
         data = {}
         if step == "map":
@@ -1764,7 +1764,7 @@ class InfantometerView(BaseReportView):
         loc_level = get_location_level(config.get('aggregation_level'))
 
         if icds_pre_release_features(self.request.couch_user):
-            config['num_launched_awcs__gt'] = 1
+            config['num_launched_awcs__gte'] = 1
 
         data = {}
         if step == "map":
@@ -1798,7 +1798,7 @@ class StadiometerView(BaseReportView):
         loc_level = get_location_level(config.get('aggregation_level'))
 
         if icds_pre_release_features(self.request.couch_user):
-            config['num_launched_awcs__gt'] = 1
+            config['num_launched_awcs__gte'] = 1
 
         data = {}
         if step == "map":
@@ -1832,7 +1832,7 @@ class InfantsWeightScaleView(BaseReportView):
         loc_level = get_location_level(config.get('aggregation_level'))
 
         if icds_pre_release_features(self.request.couch_user):
-            config['num_launched_awcs__gt'] = 1
+            config['num_launched_awcs__gte'] = 1
         data = {}
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
@@ -1865,7 +1865,7 @@ class AdultWeightScaleView(BaseReportView):
         config.update(get_location_filter(location, self.kwargs['domain']))
         loc_level = get_location_level(config.get('aggregation_level'))
         if icds_pre_release_features(self.request.couch_user):
-            config['num_launched_awcs__gt'] = 1
+            config['num_launched_awcs__gte'] = 1
         data = {}
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:

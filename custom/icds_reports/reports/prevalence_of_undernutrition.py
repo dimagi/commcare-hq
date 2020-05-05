@@ -14,7 +14,7 @@ from custom.icds_reports.utils import apply_exclude, chosen_filters_to_labels, i
 from custom.icds_reports.utils import get_location_launched_status
 
 
-#@icds_quickcache(['domain', 'config', 'loc_level', 'show_test', 'icds_features_flag'], timeout=30 * 60)
+@icds_quickcache(['domain', 'config', 'loc_level', 'show_test', 'icds_features_flag'], timeout=30 * 60)
 def get_prevalence_of_undernutrition_data_map(domain, config, loc_level, show_test=False, icds_features_flag=False):
     config['month'] = datetime(*config['month'])
 
