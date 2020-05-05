@@ -21,6 +21,7 @@ from couchdbkit import NoResultFound, ResourceNotFound
 from django_prbac.decorators import requires_privilege
 from django_prbac.utils import has_privilege
 
+from corehq.util.metrics import metrics_histogram_timer
 from dimagi.utils.couch.bulk import get_docs
 from dimagi.utils.web import json_response
 from phonelog.models import UserErrorEntry
@@ -82,7 +83,6 @@ from corehq.apps.sms.views import get_sms_autocomplete_context
 from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
 from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.apps.users.permissions import can_manage_releases
-from corehq.util.datadog.gauges import datadog_bucket_timer
 from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.util.view_utils import reverse
 
@@ -299,9 +299,8 @@ def save_copy(request, domain, app_id):
     if not errors:
         try:
             user_id = request.couch_user.get_id
-            timer = datadog_bucket_timer('commcare.app_build.new_release', tags=[],
-                                         timing_buckets=(1, 10, 30, 60, 120, 240))
-            with timer:
+            buckets = (1, 10, 30, 60, 120, 240)
+            with metrics_histogram_timer('commcare.app_build.new_release', timing_buckets=buckets):
                 copy = make_app_build(app, comment, user_id)
             CouchUser.get(user_id).set_has_built_app()
         except BuildConflictException:

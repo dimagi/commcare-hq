@@ -3,8 +3,6 @@ from django.template.loader import render_to_string
 from django.utils.decorators import method_decorator
 from django.views import View
 
-from corehq import privileges
-from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.api.odata.utils import (
     get_case_odata_fields_from_config,
     get_form_odata_fields_from_config,
@@ -12,15 +10,21 @@ from corehq.apps.api.odata.utils import (
 from corehq.apps.domain.decorators import basic_auth_or_try_api_key_auth
 from corehq.apps.export.models import CaseExportInstance, FormExportInstance
 from corehq.apps.export.views.utils import user_can_view_odata_feed
-from corehq.apps.users.decorators import require_permission
-from corehq.apps.users.models import Permissions
+from corehq.apps.locations.permissions import location_safe
+from corehq.apps.users.decorators import require_permission_raw
 from corehq.util import get_document_or_404
 from corehq.util.view_utils import absolute_reverse
 
+
+def odata_permissions_check(user, domain):
+    return user_can_view_odata_feed(domain, user)
+
+
 odata_auth = method_decorator([
-    basic_auth_or_try_api_key_auth,
-    requires_privilege_with_fallback(privileges.ODATA_FEED),
-    require_permission(Permissions.edit_data, login_decorator=None),
+    require_permission_raw(
+        odata_permissions_check,
+        basic_auth_or_try_api_key_auth
+    ),
 ], name='dispatch')
 
 
@@ -32,6 +36,7 @@ class BaseODataView(View):
         return super(BaseODataView, self).dispatch(request, *args, **kwargs)
 
 
+@location_safe
 @odata_auth
 class ODataCaseServiceView(BaseODataView):
 
@@ -56,6 +61,7 @@ class ODataCaseServiceView(BaseODataView):
         return add_odata_headers(JsonResponse(service_document_content))
 
 
+@location_safe
 @odata_auth
 class ODataCaseMetadataView(BaseODataView):
 
@@ -65,13 +71,21 @@ class ODataCaseMetadataView(BaseODataView):
     def get(self, request, domain, config_id, **kwargs):
         table_id = int(kwargs.get('table_id', 0))
         config = get_document_or_404(CaseExportInstance, domain, config_id)
+        case_fields = get_case_odata_fields_from_config(config, table_id)
+
+        field_names = [f.name for f in case_fields]
+        primary_key = 'caseid' if table_id == 0 else 'number'
+        if f'{primary_key} *sensitive*' in field_names:
+            primary_key = f'{primary_key} *sensitive*'
+
         metadata = render_to_string('api/odata_metadata.xml', {
-            'fields': get_case_odata_fields_from_config(config, table_id),
-            'primary_key': 'caseid' if table_id == 0 else 'number',
+            'fields': case_fields,
+            'primary_key': primary_key,
         })
         return add_odata_headers(HttpResponse(metadata, content_type='application/xml'))
 
 
+@location_safe
 @odata_auth
 class ODataFormServiceView(BaseODataView):
 
@@ -96,6 +110,7 @@ class ODataFormServiceView(BaseODataView):
         return add_odata_headers(JsonResponse(service_document_content))
 
 
+@location_safe
 @odata_auth
 class ODataFormMetadataView(BaseODataView):
 
@@ -105,9 +120,16 @@ class ODataFormMetadataView(BaseODataView):
     def get(self, request, domain, config_id, **kwargs):
         table_id = int(kwargs.get('table_id', 0))
         config = get_document_or_404(FormExportInstance, domain, config_id)
+        form_fields = get_form_odata_fields_from_config(config, table_id)
+
+        field_names = [f.name for f in form_fields]
+        primary_key = 'formid' if table_id == 0 else 'number'
+        if f'{primary_key} *sensitive*' in field_names:
+            primary_key = f'{primary_key} *sensitive*'
+
         metadata = render_to_string('api/odata_metadata.xml', {
-            'fields': get_form_odata_fields_from_config(config, table_id),
-            'primary_key': 'formid' if table_id == 0 else 'number',
+            'fields': form_fields,
+            'primary_key': primary_key,
         })
         return add_odata_headers(HttpResponse(metadata, content_type='application/xml'))
 

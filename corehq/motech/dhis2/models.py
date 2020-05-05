@@ -1,8 +1,12 @@
-from django.db import models
+import bz2
+from base64 import b64decode, b64encode
 from itertools import chain
 
+from django.core.exceptions import ValidationError
+from django.db import models
+
+from corehq.motech.models import ConnectionSettings
 from dimagi.ext.couchdbkit import (
-    BooleanProperty,
     Document,
     DocumentSchema,
     IntegerProperty,
@@ -25,12 +29,32 @@ from corehq.motech.dhis2.utils import (
 from corehq.util.quickcache import quickcache
 
 
+# UNUSED
 class Dhis2Connection(models.Model):
     domain = models.CharField(max_length=255, unique=True)
     server_url = models.CharField(max_length=255, null=True)
     username = models.CharField(max_length=255)
     password = models.CharField(max_length=255, null=True)
     skip_cert_verify = models.BooleanField(default=False)
+
+    @property
+    def plaintext_password(self):
+        plaintext_bytes = bz2.decompress(b64decode(self.password))
+        return plaintext_bytes.decode('utf8')
+
+    @plaintext_password.setter
+    def plaintext_password(self, plaintext):
+        # Use simple symmetric encryption. We don't need it to be
+        # strong, considering we'd have to store the algorithm and the
+        # key together anyway; it just shouldn't be plaintext.
+        # (2020-03-09) Not true. The key is stored separately.
+        plaintext_bytes = plaintext.encode('utf8')
+        self.password = b64encode(bz2.compress(plaintext_bytes))
+
+    def save(self, *args, **kwargs):
+        raise ValidationError(
+            'Dhis2Connection is unused. Use ConnectionSettings instead.'
+        )
 
 
 class DataValueMap(DocumentSchema):
@@ -43,6 +67,7 @@ class DataValueMap(DocumentSchema):
 class DataSetMap(Document):
     # domain and UCR uniquely identify a DataSetMap
     domain = StringProperty()
+    connection_settings_id = IntegerProperty(required=False, default=None)
     ucr_id = StringProperty()  # UCR ReportConfig id
 
     description = StringProperty()
@@ -58,6 +83,11 @@ class DataSetMap(Document):
     complete_date = StringProperty()  # Optional
 
     datavalue_maps = SchemaListProperty(DataValueMap)
+
+    @property
+    def connection_settings(self):
+        if self.connection_settings_id:
+            return ConnectionSettings.objects.get(pk=self.connection_settings_id)
 
     @quickcache(['self.domain', 'self.ucr_id'])
     def get_datavalue_map_dict(self):

@@ -63,7 +63,7 @@ function EarlyInitiationBreastfeedingController($scope, $routeParams, $location,
         'Early initiation of breastfeeding ensure the newborn recieves the "first milk" rich in nutrients and encourages exclusive breastfeeding practice',
     };
     vm.chartOptions = vm.getChartOptions(options);
-    vm.chartOptions.chart.width = 1100;
+    vm.chartOptions.chart.width = isMobile ? '' : 1100;
     vm.chartOptions.chart.color = d3.scale.category10().range();
 
     vm.tooltipContent = function (monthName, dataInMonth) {

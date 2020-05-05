@@ -22,7 +22,7 @@ class Migration(migrations.Migration):
                 ('api_response', models.TextField(null=True, blank=True)),
                 ('is_valid', models.BooleanField(default=True, db_index=True)),
                 ('domain', models.CharField(max_length=25, db_index=True)),
-                ('direction', models.CharField(db_index=True, max_length=10, choices=[(b'I', b'Incoming'), (b'O', b'Outgoing')])),
+                ('direction', models.CharField(db_index=True, max_length=10, choices=[('I', 'Incoming'), ('O', 'Outgoing')])),
                 ('date_sent', models.DateField()),
                 ('date_created', models.DateField(auto_now_add=True)),
             ],
@@ -47,9 +47,9 @@ class Migration(migrations.Migration):
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('backend_api_id', models.CharField(max_length=100, db_index=True)),
                 ('backend_instance', models.CharField(max_length=255, null=True, db_index=True)),
-                ('direction', models.CharField(db_index=True, max_length=10, choices=[(b'I', b'Incoming'), (b'O', b'Outgoing')])),
+                ('direction', models.CharField(db_index=True, max_length=10, choices=[('I', 'Incoming'), ('O', 'Outgoing')])),
                 ('country_code', models.IntegerField(db_index=True, max_length=5, null=True, blank=True)),
-                ('prefix', models.CharField(default=b'', max_length=10, db_index=True, blank=True)),
+                ('prefix', models.CharField(default='', max_length=10, db_index=True, blank=True)),
             ],
             options={
             },
@@ -70,7 +70,7 @@ class Migration(migrations.Migration):
             name='SmsUsageFeeCriteria',
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
-                ('direction', models.CharField(db_index=True, max_length=10, choices=[(b'I', b'Incoming'), (b'O', b'Outgoing')])),
+                ('direction', models.CharField(db_index=True, max_length=10, choices=[('I', 'Incoming'), ('O', 'Outgoing')])),
                 ('domain', models.CharField(max_length=25, null=True, db_index=True)),
             ],
             options={

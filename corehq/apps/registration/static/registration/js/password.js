@@ -3,6 +3,7 @@ hqDefine('registration/js/password', [
     'knockout',
     'zxcvbn/dist/zxcvbn',
     'hqwebapp/js/initial_page_data',
+    'hqwebapp/js/knockout_bindings.ko', // password initializeValue binding
 ], function (
     $,
     ko,

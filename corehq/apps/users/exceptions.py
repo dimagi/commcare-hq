@@ -9,3 +9,7 @@ class NoAccountException(Exception):
 
 class InvalidMobileWorkerRequest(Exception):
     pass
+
+
+class IllegalAccountConfirmation(Exception):
+    pass

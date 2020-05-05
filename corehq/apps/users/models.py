@@ -22,6 +22,7 @@ from memoized import memoized
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.phone.models import OTARestoreCommCareUser, OTARestoreWebUser
 from casexml.apps.phone.restore_caching import get_loadtest_factor_for_user
+from corehq.apps.users.exceptions import IllegalAccountConfirmation
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
     DateProperty,
@@ -44,7 +45,7 @@ from dimagi.utils.couch.undo import DELETED_SUFFIX, DeleteRecord
 from dimagi.utils.dates import force_to_datetime
 from dimagi.utils.logging import log_signal_errors, notify_exception
 from dimagi.utils.modules import to_function
-from dimagi.utils.web import get_site_domain
+from dimagi.utils.web import get_static_url_prefix
 
 from corehq import toggles
 from corehq.apps.app_manager.const import USERCASE_TYPE
@@ -138,6 +139,7 @@ class Permissions(DocumentSchema):
     view_web_apps_list = StringListProperty(default=[])
 
     view_file_dropzone = BooleanProperty(default=False)
+    edit_file_dropzone = BooleanProperty(default=False)
     manage_releases = BooleanProperty(default=True)
     manage_releases_list = StringListProperty(default=[])
 
@@ -233,6 +235,7 @@ class Permissions(DocumentSchema):
             edit_billing=True,
             edit_shared_exports=True,
             view_file_dropzone=True,
+            edit_file_dropzone=True,
         )
 
 
@@ -1866,6 +1869,15 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             django_user.delete()
         self.save()
 
+    def confirm_account(self, password):
+        if self.is_account_confirmed:
+            raise IllegalAccountConfirmation('Account is already confirmed')
+        assert not self.is_active, 'Active account should not be unconfirmed!'
+        self.is_active = True
+        self.is_account_confirmed = True
+        self.set_password(password)
+        self.save()
+
     def get_case_sharing_groups(self):
         from corehq.apps.groups.models import Group
         from corehq.apps.locations.models import get_case_sharing_groups_for_locations
@@ -2606,6 +2618,8 @@ class DomainRequest(models.Model):
 
 
 class SQLInvitation(SyncSQLToCouchMixin, models.Model):
+    id = models.IntegerField(db_index=True, null=True)
+    uuid = models.UUIDField(primary_key=True, db_index=True, default=uuid4)
     email = models.CharField(max_length=255, db_index=True)
     invited_by = models.CharField(max_length=126)           # couch id of a WebUser
     invited_on = models.DateTimeField()
@@ -2650,13 +2664,13 @@ class SQLInvitation(SyncSQLToCouchMixin, models.Model):
 
     def send_activation_email(self, remaining_days=30):
         inviter = CouchUser.get_by_user_id(self.invited_by)
-        url = absolute_reverse("domain_accept_invitation", args=[self.domain, self.id])
+        url = absolute_reverse("domain_accept_invitation", args=[self.domain, self.uuid])
         params = {
             "domain": self.domain,
             "url": url,
             'days': remaining_days,
             "inviter": inviter.formatted_name,
-            'url_prefix': '' if settings.STATIC_CDN else 'http://' + get_site_domain(),
+            'url_prefix': get_static_url_prefix(),
         }
 
         domain_request = DomainRequest.by_email(self.domain, self.email, is_approved=True)

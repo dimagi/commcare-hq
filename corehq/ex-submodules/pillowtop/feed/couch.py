@@ -20,23 +20,17 @@ class CouchChangeFeed(ChangeFeed):
         if self._couch_filter:
             extra_args.update({'filter': self._couch_filter})
         self._last_processed_seq = since
-
-        def poll_once():
-            changes_stream = ChangesStream(
-                db=self._couch_db,
-                since=self._last_processed_seq,
-                include_docs=True,
-                **extra_args
-            )
-            for couch_change in changes_stream:
-                change = change_from_couch_row(couch_change, document_store=self._document_store)
-                populate_change_metadata(change, SOURCE_COUCH, self._couch_db.dbname)
-                yield change
-                self._last_processed_seq = couch_change.get('seq', None)
-
-        yield from poll_once()
-        while forever:
-            yield from poll_once()
+        changes_stream = ChangesStream(
+            db=self._couch_db,
+            since=since,
+            include_docs=True,
+            **extra_args
+        )
+        for couch_change in changes_stream:
+            change = change_from_couch_row(couch_change, document_store=self._document_store)
+            populate_change_metadata(change, SOURCE_COUCH, self._couch_db.dbname)
+            yield change
+            self._last_processed_seq = couch_change.get('seq', None)
 
     def get_processed_offsets(self):
         return {self._couch_db.dbname: force_seq_int(self._last_processed_seq)}

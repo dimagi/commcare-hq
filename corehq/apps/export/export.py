@@ -6,6 +6,7 @@ from collections import Counter
 
 from couchdbkit import ResourceConflict
 
+from corehq.util.metrics import metrics_counter, metrics_track_errors
 from couchexport.export import FormattedRow, get_writer
 from couchexport.models import Format
 from dimagi.utils.logging import notify_exception
@@ -25,9 +26,9 @@ from corehq.apps.export.models.new import (
 )
 from corehq.elastic import iter_es_docs_from_query
 from corehq.toggles import PAGINATED_EXPORTS
-from corehq.util.datadog.gauges import datadog_histogram, datadog_track_errors
-from corehq.util.datadog.utils import DAY_SCALE_TIME_BUCKETS, load_counter
+from corehq.util.metrics.load_counters import load_counter
 from corehq.util.files import TransientTempfile, safe_filename
+from soil.progress import TaskProgressManager
 
 
 class ExportFile(object):
@@ -345,55 +346,48 @@ def write_export_instance(writer, export_instance, documents, progress_tracker=N
     :param progress_tracker: A task for soil to track progress against
     :return: None
     """
-    if progress_tracker:
-        DownloadBase.set_progress(progress_tracker, 0, documents.count)
-
-    start = _time_in_milliseconds()
-    total_bytes = 0
-    total_rows = 0
-    compute_total = 0
-    write_total = 0
-    track_load = load_counter(export_instance.type, "export", export_instance.domain)
-
-    for row_number, doc in enumerate(documents):
-        total_bytes += sys.getsizeof(doc)
-        for table in export_instance.selected_tables:
-            compute_start = _time_in_milliseconds()
-            try:
-                rows = table.get_rows(
-                    doc,
-                    row_number,
-                    split_columns=export_instance.split_multiselects,
-                    transform_dates=export_instance.transform_dates,
-                )
-            except Exception as e:
-                notify_exception(None, "Error exporting doc", details={
-                    'domain': export_instance.domain,
-                    'export_instance_id': export_instance.get_id,
-                    'export_table': table.label,
-                    'doc_id': doc.get('_id'),
-                })
-                e.sentry_capture = False
-                raise
-            compute_total += _time_in_milliseconds() - compute_start
-
-            write_start = _time_in_milliseconds()
-            for row in rows:
-                # It might be bad to write one row at a time when you can do more (from a performance perspective)
-                # Regardless, we should handle the batching of rows in the _Writer class, not here.
-                writer.write(table, row)
-            write_total += _time_in_milliseconds() - write_start
-
-            total_rows += len(rows)
-
-        track_load()
+    with TaskProgressManager(progress_tracker, src="export") as progress_manager:
         if progress_tracker:
-            DownloadBase.set_progress(progress_tracker, row_number + 1, documents.count)
+            progress_manager.set_progress(0, documents.count)
+
+        start = _time_in_milliseconds()
+        total_bytes = 0
+        total_rows = 0
+        track_load = load_counter(export_instance.type, "export", export_instance.domain)
+
+        for row_number, doc in enumerate(documents):
+            total_bytes += sys.getsizeof(doc)
+            for table in export_instance.selected_tables:
+                try:
+                    rows = table.get_rows(
+                        doc,
+                        row_number,
+                        split_columns=export_instance.split_multiselects,
+                        transform_dates=export_instance.transform_dates,
+                    )
+                except Exception as e:
+                    notify_exception(None, "Error exporting doc", details={
+                        'domain': export_instance.domain,
+                        'export_instance_id': export_instance.get_id,
+                        'export_table': table.label,
+                        'doc_id': doc.get('_id'),
+                    })
+                    e.sentry_capture = False
+                    raise
+
+                for row in rows:
+                    # It might be bad to write one row at a time from a performance perspective.
+                    # Regardless, we should handle the batching of rows in the _Writer class, not here.
+                    writer.write(table, row)
+
+                total_rows += len(rows)
+
+            track_load()
+            if progress_tracker:
+                progress_manager.set_progress(row_number + 1, documents.count)
 
     end = _time_in_milliseconds()
-    tags = ['format:{}'.format(writer.format)]
-    _record_datadog_export_write_rows(write_total, total_bytes, total_rows, tags)
-    _record_datadog_export_compute_rows(compute_total, total_bytes, total_rows, tags)
+    tags = {'format': writer.format}
     _record_datadog_export_duration(end - start, total_bytes, total_rows, tags)
     _record_export_duration(end - start, export_instance)
 
@@ -402,37 +396,10 @@ def _time_in_milliseconds():
     return int(time.time() * 1000)
 
 
-def _record_datadog_export_compute_rows(duration, doc_bytes, n_rows, tags):
-    __record_datadog_export(duration, doc_bytes, n_rows, 'commcare.compute_export_rows_duration', tags)
-
-
-def _record_datadog_export_write_rows(duration, doc_bytes, n_rows, tags):
-    __record_datadog_export(duration, doc_bytes, n_rows, 'commcare.write_export_rows_duration', tags)
-
-
 def _record_datadog_export_duration(duration, doc_bytes, n_rows, tags):
-    __record_datadog_export(duration, doc_bytes, n_rows, 'commcare.export_duration', tags)
-
-
-def __record_datadog_export(duration, doc_bytes, n_rows, metric, tags):
-    # deprecated: datadog histograms used this way are usually meaningless
-    # because they are aggregated on a 10s window (so unless you're constantly
-    # processing at least 100 measurements per 10s window then the percentile
-    # will approximate the average). Also more nuanced reasons. See
-    # https://confluence.dimagi.com/x/4ArDAQ#TroubleshootingPasteboard/HQchatdumpingground-Datadog
-    datadog_histogram(metric, duration, tags=tags)
-    if doc_bytes:
-        datadog_histogram(
-            '{}_normalized_by_size'.format(metric),
-            duration // doc_bytes,
-            tags=tags,
-        )
-    if n_rows:
-        datadog_histogram(
-            '{}_normalized_by_rows'.format(metric),
-            duration // n_rows,
-            tags=tags,
-        )
+    metrics_counter('commcare.export.duration', duration, tags=tags)
+    metrics_counter('commcare.export.rows', n_rows, tags=tags)
+    metrics_counter('commcare.export.bytes', doc_bytes, tags=tags)
 
 
 def _record_export_duration(duration, export):
@@ -469,7 +436,7 @@ def _get_base_query(export_instance):
         )
 
 
-@datadog_track_errors('rebuild_export', duration_buckets=DAY_SCALE_TIME_BUCKETS)
+@metrics_track_errors('rebuild_export')
 def rebuild_export(export_instance, progress_tracker):
     """
     Rebuild the given daily saved ExportInstance

@@ -1,17 +1,19 @@
 import logging
 import os
 import sys
+from itertools import chain
 
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 from django.db.models import Q
 
 from corehq.apps.domain.models import Domain
-from couchforms.models import doc_types
+from couchforms.models import XFormInstance, doc_types
 from dimagi.utils.chunked import chunked
 
 from corehq.apps.couch_sql_migration.couchsqlmigration import (
     CASE_DOC_TYPES,
+    CleanBreak,
     do_couch_to_sql_migration,
     setup_logging,
 )
@@ -61,8 +63,6 @@ CACHED = "cached"
 RESUME = "resume"
 REBUILD = "rebuild"
 RECHECK = "recheck"
-
-CASE_DIFF = {"process": True, "local": False, "none": None}
 
 
 class Command(BaseCommand):
@@ -133,12 +133,16 @@ class Command(BaseCommand):
                 queued to diff may not be diffed.
             """)
         parser.add_argument('--case-diff',
-            dest='case_diff', default="process",
-            choices=["process", "local", "none"],
+            dest='case_diff', default="after",
+            choices=["after", "patch", "none", "asap"],
             help='''
-                process: diff cases in a separate process (default).
-                local: diff cases in the migration process.
+                after: (default) diff cases after migrating forms. Uses
+                multiple parallel processes.
+                patch: like "after", but resolve case diffs with patch forms.
                 none: save "pending" cases to be diffed at a later time.
+                asap: (experimental) attempt to diff cases as soon as
+                all related forms have been migrated. Uses a single
+                parallel process for case diffs.
             ''')
         parser.add_argument('--forms', default=None,
             help="""
@@ -149,6 +153,13 @@ class Command(BaseCommand):
                 'stats' command OR 'missing-blob-present' to migrate
                 forms referenced by a case that do not exist in Couch but
                 a blob does exit. The file path must begin with / or ./
+            """)
+        parser.add_argument('--patch',
+            dest="patch", action='store_true', default=False,
+            help="""
+                Shorthand for --forms=missing --case-diff=patch
+                This option is useful to migrate missing forms and patch
+                case diffs after a standard MIGRATE run.
             """)
         parser.add_argument('-x', '--stop-on-error',
             dest="stop_on_error", action='store_true', default=False,
@@ -173,6 +184,14 @@ class Command(BaseCommand):
     def handle(self, domain, action, **options):
         if action != STATS and should_use_sql_backend(domain):
             raise CommandError('It looks like {} has already been migrated.'.format(domain))
+
+        if options["patch"]:
+            if options["forms"]:
+                raise CommandError("--patch and --forms=... are mutually exclusive")
+            if options["case_diff"] != "after":
+                raise CommandError("--patch and --case-diff=... are mutually exclusive")
+            options["forms"] = "missing"
+            options["case_diff"] = "patch"
 
         for opt in [
             "no_input",
@@ -207,6 +226,8 @@ class Command(BaseCommand):
             raise CommandError(f"{action} --missing-docs not allowed")
         if action != REWIND and self.rewind:
             raise CommandError("--to=... only allowed for `rewind`")
+        if self.case_diff == "patch" and self.forms not in [None, "missing"]:
+            raise CommandError(f"not supported: --case-diff=patch --forms={self.forms}")
 
         assert Domain.get_by_name(domain), f'Unknown domain "{domain}"'
         slug = f"{action.lower()}-{domain}"
@@ -221,31 +242,36 @@ class Command(BaseCommand):
             if status == MigrationStatus.DRY_RUN:
                 log.info("Continuing live migration. Use --finish to complete.")
                 self.live_migrate = True
-        if self.missing_docs == CACHED and (self.finish or not self.live_migrate):
+        if self.missing_docs == CACHED:
             self.missing_docs = RESUME
-        set_couch_sql_migration_started(domain, self.live_migrate)
-        do_couch_to_sql_migration(
-            domain,
-            self.state_dir,
-            with_progress=not self.no_input,
-            live_migrate=self.live_migrate,
-            diff_process=CASE_DIFF[self.case_diff],
-            rebuild_state=self.rebuild_state,
-            stop_on_error=self.stop_on_error,
-            forms=self.forms,
-        )
+        if self.forms:
+            if not couch_sql_migration_in_progress(domain):
+                log.error("cannot migrate specific forms: migration is %s",
+                    get_couch_sql_migration_status(domain))
+                sys.exit(1)
+        else:
+            set_couch_sql_migration_started(domain, self.live_migrate)
+        try:
+            do_couch_to_sql_migration(
+                domain,
+                self.state_dir,
+                with_progress=not self.no_input,
+                live_migrate=self.live_migrate,
+                case_diff=self.case_diff,
+                rebuild_state=self.rebuild_state,
+                stop_on_error=self.stop_on_error,
+                forms=self.forms,
+            )
+        except CleanBreak:
+            print("migration stopped")
+            sys.exit(1)
 
-        return_code = 0
+        has_diffs = self.print_stats(domain, short=True, diffs_only=True)
         if self.live_migrate:
             print("Live migration completed.")
-            has_diffs = True
-        else:
-            has_diffs = self.print_stats(domain, short=True, diffs_only=True)
-            return_code = int(has_diffs)
         if has_diffs:
             print("\nRun `diff` or `stats [--verbose]` for more details.\n")
-        if return_code:
-            sys.exit(return_code)
+            sys.exit(1)
 
     def do_reset(self, domain):
         if not self.no_input:
@@ -271,7 +297,17 @@ class Command(BaseCommand):
         self.print_stats(domain, short=not self.verbose)
 
     def do_diff(self, domain):
-        print(f"replaced by: couch_sql_diff show {domain} [--select=DOC_TYPE]")
+        from .couch_sql_diff import format_doc_diffs
+        statedb = open_state_db(domain, self.state_dir)
+        items = chain(
+            statedb.iter_doc_diffs(),
+            statedb.iter_doc_changes(),
+        )
+        try:
+            for doc_diffs in chunked(items, 100, list):
+                format_doc_diffs(doc_diffs)
+        except (KeyboardInterrupt, BrokenPipeError):
+            pass
 
     def do_rewind(self, domain):
         db = open_state_db(domain, self.state_dir)
@@ -306,19 +342,19 @@ class Command(BaseCommand):
                 short,
                 diffs_only,
             )
-
+        if any(x.missing for x in doc_counts.values()):
+            print("\nRun again with --forms=missing to migrate missing docs")
         pending = statedb.count_undiffed_cases()
         if pending:
             print(shell_red(f"\nThere are {pending} case diffs pending."))
-            print(f"Resolution: couch_sql_diff cases {domain} --select=pending")
+            print(f"Resolution: couch_sql_diff {domain} cases --select=pending")
             return True
-
         if diffs_only and not has_diffs:
             print(shell_green("No differences found between old and new docs!"))
         return has_diffs
 
     def _print_status(self, doc_type, counts, statedb, short, diffs_only):
-        has_diffs = counts.missing or counts.diffs
+        has_diffs = counts.missing or counts.diffs or counts.changes
         if diffs_only and not has_diffs:
             return False
 
@@ -361,7 +397,7 @@ def blow_away_migration(domain, state_dir):
 
 def iter_chunks(model_class, field, domain, chunk_size=5000):
     where = Q(domain=domain)
-    row_count = estimate_partitioned_row_count(model_class, where)
+    row_count = get_doc_count(model_class, where, field.split("_")[0], domain)
     rows = paginate_query_across_partitioned_databases(
         model_class,
         where,
@@ -372,3 +408,15 @@ def iter_chunks(model_class, field, domain, chunk_size=5000):
     values = (r[0] for r in rows)
     values = with_progress_bar(values, row_count, oneline="concise")
     yield from chunked(values, chunk_size, list)
+
+
+def get_doc_count(model_class, where, entity, domain):
+    from corehq.apps.domain.dbaccessors import get_doc_count_in_domain_by_type
+    from ...missingdocs import MissingIds
+    sql_estimate = estimate_partitioned_row_count(model_class, where)
+    couchdb = XFormInstance.get_db()
+    couch_count = sum(
+        get_doc_count_in_domain_by_type(domain, doc_type, couchdb)
+        for doc_type in MissingIds.DOC_TYPES[entity]
+    )
+    return min(sql_estimate, couch_count)

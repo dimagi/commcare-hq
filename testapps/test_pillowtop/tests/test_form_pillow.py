@@ -37,7 +37,7 @@ class FormPillowTest(TestCase):
         producer.send_change(topics.FORM, doc_to_change(form.to_json()).metadata)
         self.assertFalse(self.app.has_submissions)
 
-        self.pillow.process_changes(since=kafka_seq)
+        self.pillow.process_changes(since=kafka_seq, forever=False)
         self.assertTrue(Application.get(self.app._id).has_submissions)
 
     @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
@@ -54,7 +54,7 @@ class FormPillowTest(TestCase):
         self.assertEqual(self.domain, change_meta.domain)
         self.assertFalse(self.app.has_submissions)
 
-        self.pillow.process_changes(since=kafka_seq)
+        self.pillow.process_changes(since=kafka_seq, forever=False)
         self.assertTrue(Application.get(self.app._id).has_submissions)
 
     @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
@@ -71,7 +71,7 @@ class FormPillowTest(TestCase):
         self.assertEqual(self.domain, change_meta.domain)
         self.assertFalse(self.app.has_submissions)
 
-        self.pillow.process_changes(since=kafka_seq)
+        self.pillow.process_changes(since=kafka_seq, forever=False)
         self.assertFalse(Application.get(self.app._id).has_submissions)
 
     @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
@@ -90,7 +90,7 @@ class FormPillowTest(TestCase):
         self.assertEqual(self.domain, change_meta.domain)
         self.assertFalse(self.app.has_submissions)
 
-        self.pillow.process_changes(since=kafka_seq)
+        self.pillow.process_changes(since=kafka_seq, forever=False)
         self.assertFalse(Application.get(self.app._id).has_submissions)
 
     @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
@@ -103,14 +103,14 @@ class FormPillowTest(TestCase):
         # confirm change made it to kafka
         self.assertFalse(self.app.has_submissions)
 
-        self.pillow.process_changes(since=kafka_seq)
+        self.pillow.process_changes(since=kafka_seq, forever=False)
         newly_saved_app = Application.get(self.app._id)
         self.assertTrue(newly_saved_app.has_submissions)
         # Ensure that the app has been saved
         self.assertNotEqual(self.app._rev, newly_saved_app._rev)
 
         self._make_form()
-        self.pillow.process_changes(since=kafka_seq)
+        self.pillow.process_changes(since=kafka_seq, forever=False)
         self.assertTrue(Application.get(self.app._id).has_submissions)
         # Ensure that the app has not been saved twice
         self.assertEqual(Application.get(self.app._id)._rev, newly_saved_app._rev)

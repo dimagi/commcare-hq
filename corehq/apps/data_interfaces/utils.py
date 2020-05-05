@@ -3,7 +3,6 @@ from django.utils.translation import ugettext as _
 from couchdbkit import ResourceNotFound
 
 from corehq.motech.repeaters.dbaccessors import get_repeat_records_by_payload_id, _get_startkey_endkey_all_records
-from corehq.motech.repeaters.models import RepeatRecord
 from soil import DownloadBase
 
 from corehq.apps.casegroups.models import CommCareCaseGroup
@@ -165,6 +164,7 @@ def _get_ids(data, domain):
     if data.get('payload_id', None):
         results = get_repeat_records_by_payload_id(domain, data['payload_id'])
     else:
+        from corehq.motech.repeaters.models import RepeatRecord
         kwargs = {
             'include_docs': True,
             'reduce': False,
@@ -178,6 +178,7 @@ def _get_ids(data, domain):
 
 
 def _validate_record(r, domain):
+    from corehq.motech.repeaters.models import RepeatRecord
     try:
         payload = RepeatRecord.get(r)
     except ResourceNotFound:

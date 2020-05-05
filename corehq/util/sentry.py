@@ -10,7 +10,7 @@ from django.db.backends.utils import CursorWrapper
 from django.db.utils import OperationalError
 
 from corehq.util.cache_utils import is_rate_limited
-from corehq.util.datadog.gauges import datadog_counter
+from corehq.util.metrics import metrics_counter
 
 logger = logging.getLogger(__name__)
 
@@ -137,11 +137,11 @@ def _rate_limit_exc(exc_info):
     except Exception:
         logger.exception("Error while subtyping rate limited error")
 
-    datadog_counter('commcare.sentry.errors.rate_limited', tags=[
-        'service:{}'.format(rate_limit_key)
-    ])
+    metrics_counter('commcare.sentry.errors.rate_limited', tags={
+        'service': rate_limit_key
+    })
     if is_pg_cancelled_query_exception(exc_value):
-        datadog_counter('hq_custom.postgres.standby_query_canellations')
+        metrics_counter('commcare.postgres.standby_query_canellations')
     exponential_backoff_key = '{}_down'.format(rate_limit_key)
     return is_rate_limited(exponential_backoff_key)
 

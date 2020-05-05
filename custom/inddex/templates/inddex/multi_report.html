@@ -3,56 +3,32 @@
 {% load i18n %}
 
 {% block reportcontent %}
-{% block pretable %}
-    {% if not report.needs_filters %}
-        {% if rendered_as == 'print' %}
-        <div class="row">
-            <div class="col-sm-10">{% now "d M Y" %}</div>
-        </div>
-        <div class="row">
-            <div class="col-sm-10">
-                <h3 class="media-heading">{{ title }}<br/></h3>
-            </div>
-        </div>
-        {% else %}
-        <div class="media">
-          <div class="media-body" style="height: 64px">
-            <h3 class="media-heading">{{ title }}<br/></h3>
-          </div>
-        </div>
-        {% endif %}
-    {% endif %}{{ block.super }}
-{% endblock %}
 
 {% block reporttable %}
-{% if report_comment %}
-  <h3 style="text-align: left">{{ report_comment }}<br/></h3>
-{% endif %}
 {% if report.needs_filters %}
     {% include 'reports/partials/description.html' %}
 {% else %}
+
+    {% if fixture_error %}
+    <div class="alert alert-danger">
+        <i class="fa fa-exclamation-triangle"></i> {{ fixture_error }}
+    </div>
+    {% endif %}
+
     {% if export_only %}
-      <h2>{% blocktrans %}This report is available <i><b>only for export</b></i>{% endblocktrans %}</h2>
+    <div class="alert alert-info">
+        <h3>This report is only available for export.</h3>
+        <p>Click "<i class="fa fa-share"></i> Export to Excel" above to download.</p>
+    </div>
     {% else %}
-        {% for thisreport in reports %}
+        {% for data_provider in data_providers %}
           <br/>
-          <h4 class="media-heading">{{ thisreport.report_table.title }}<br/><small>{{ subtitle1 }}</small><br/><small>{{ subtitle2 }}</small></h4>
-          {% include 'inddex/partials/report_table.html' with report_table=thisreport.report_table %}
+          <h4 class="media-heading">{{ data_provider.title }}</h4>
+          {% include 'inddex/partials/report_table.html' with report_table=data_provider %}
           <br/>
         {% endfor %}
     {% endif %}
 {% endif %}
 {% endblock %}
-{% block posttable %}{% endblock %}
-{% endblock %}
 
-{% block js-inline %}
-    <script type="text/template" id="js-template-loading-report">
-        <div class="report-loading-container">
-            <div class="report-loading">
-                <h4>{% trans "Loading Report" %}</h4>
-                <i class="fa fa-spin fa-spinner"></i>
-            </div>
-        </div>
-    </script>
 {% endblock %}

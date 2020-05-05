@@ -36,19 +36,20 @@ hqDefine('accounting/js/payment_method_handler', [
                 // the subscription summary info, use this hacky way to update
                 // the total of the general amount so the user is
                 // aware something happened.
-                var addedAmount = self.costItem().general_credit().addAmount(),
-                    $generalCredit = $('.js-general-credit');
+                var $generalCredit = $('.js-general-credit');
 
                 // make sure this only applies on pages where that class is present
-                if ($generalCredit) {
-                    var newValue = parseFloat($generalCredit.text().replace('USD ', '').trim()) + parseFloat(addedAmount);
-                    $generalCredit.text('USD ' + newValue.toFixed(2));
-                }
+                if ($generalCredit && self.costItem() && self.costItem().general_credit) {
 
-                // make sure we reset the credit amount to zero so that the next
-                // time the user opens the form (before a page refresh),
-                // the value isn't already set
-                self.costItem().general_credit().addAmount(0);
+                    var addedAmount = self.costItem().general_credit().addAmount(),
+                        newValue = parseFloat($generalCredit.text().replace('USD ', '').trim()) + parseFloat(addedAmount);
+                    $generalCredit.text('USD ' + newValue.toFixed(2));
+
+                    // make sure we reset the credit amount to zero so that the next
+                    // time the user opens the form (before a page refresh),
+                    // the value isn't already set
+                    self.costItem().general_credit().addAmount(0);
+                }
             }
         });
         self.paymentProcessing = ko.observable(false);

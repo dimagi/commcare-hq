@@ -54,6 +54,13 @@ window.angular.module('icdsApp').factory('baseControllersService', ['$timeout', 
             $scope.$emit('filtersChange');
         });
         vm.selectedMonthDisplay = dateHelperService.getSelectedMonthDisplay();
+        vm.selectedLocation = function () {
+            return storageService.getKey('selectedLocation');
+        };
+        vm.selectedDate = dateHelperService.getSelectedDate();
+        vm.showReassignmentMessage = function () {
+            return vm.selectedLocation() && (Date.parse(vm.selectedLocation().deprecated_at) < vm.selectedDate || Date.parse(vm.selectedLocation().deprecates_at) > vm.selectedDate);
+        };
     };
     return {
         BaseController: function ($scope, $routeParams, $location, locationsService, dateHelperService,
@@ -283,6 +290,10 @@ window.angular.module('icdsApp').factory('baseControllersService', ['$timeout', 
                 }
                 return i;
             };
+
+            // reduce caption width to fit screen up to 900px on mobile view
+            var captionWidth = (isMobile && window.innerWidth < 960) ? window.innerWidth - 60 : 900;
+
             vm.getChartOptions = function (options) {
                 return {
                     chart: {
@@ -292,7 +303,7 @@ window.angular.module('icdsApp').factory('baseControllersService', ['$timeout', 
                             top: 20,
                             right: 60,
                             bottom: 60,
-                            left: 80,
+                            left: isMobile ? 50 : 80,
                         },
                         x: function (d) {
                             return d.x; 
@@ -340,7 +351,7 @@ window.angular.module('icdsApp').factory('baseControllersService', ['$timeout', 
                         css: {
                             'text-align': 'center',
                             'margin': '0 auto',
-                            'width': '900px',
+                            'width': captionWidth + 'px',
                         },
                     },
                 };

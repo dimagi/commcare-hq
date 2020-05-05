@@ -99,7 +99,7 @@ from corehq.apps.userreports.models import AsyncIndicator
 from corehq.apps.users.models import DomainRequest, SQLInvitation
 from corehq.apps.zapier.consts import EventTypes
 from corehq.apps.zapier.models import ZapierSubscription
-from corehq.blobs import NotFound, get_blob_db
+from corehq.blobs import NotFound, get_blob_db, CODES
 from corehq.form_processor.backends.sql.dbaccessors import (
     CaseAccessorSQL,
     FormAccessorSQL,
@@ -112,7 +112,6 @@ from corehq.form_processor.interfaces.dbaccessors import (
 from corehq.form_processor.models import XFormInstanceSQL
 from corehq.form_processor.tests.utils import create_form_for_test
 from corehq.motech.models import RequestLog
-from corehq.motech.dhis2.models import Dhis2Connection
 
 
 class TestDeleteDomain(TestCase):
@@ -630,9 +629,9 @@ class TestDeleteDomain(TestCase):
         self.domain.delete()
 
         with self.assertRaises(NotFound):
-            blobdb.get(key=data_files[0].blob_id)
+            blobdb.get(key=data_files[0].blob_id, type_code=CODES.data_file)
 
-        with blobdb.get(key=data_files[1].blob_id) as f:
+        with blobdb.get(key=data_files[1].blob_id, type_code=CODES.data_file) as f:
             self.assertEqual(f.read(), (self.domain2.name + " csv").encode('utf-8'))
 
         self._assert_export_counts(self.domain.name, 0)
@@ -866,13 +865,11 @@ class TestDeleteDomain(TestCase):
     def _assert_motech_count(self, domain_name, count):
         self._assert_queryset_count([
             RequestLog.objects.filter(domain=domain_name),
-            Dhis2Connection.objects.filter(domain=domain_name),
         ], count)
 
     def test_motech_delete(self):
         for domain_name in [self.domain.name, self.domain2.name]:
             RequestLog.objects.create(domain=domain_name)
-            Dhis2Connection.objects.create(domain=domain_name)
             self._assert_motech_count(domain_name, 1)
 
         self.domain.delete()
@@ -920,12 +917,15 @@ class TestHardDeleteSQLFormsAndCases(TestCase):
 
     def tearDown(self):
         self.domain2.delete()
+        call_command('hard_delete_forms_and_cases_in_domain', self.domain2.name, noinput=True)
+        call_command('hard_delete_forms_and_cases_in_domain', self.domain.name, noinput=True)
         super(TestHardDeleteSQLFormsAndCases, self).tearDown()
 
     @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
     def test_hard_delete_forms(self):
         for domain_name in [self.domain.name, self.domain2.name]:
             create_form_for_test(domain_name)
+            create_form_for_test(domain_name, state=XFormInstanceSQL.ARCHIVED)
             self.assertEqual(len(FormAccessors(domain_name).get_all_form_ids_in_domain()), 1)
 
         self.domain.delete()
@@ -933,7 +933,7 @@ class TestHardDeleteSQLFormsAndCases(TestCase):
         self.assertEqual(len(FormAccessors(self.domain.name).get_all_form_ids_in_domain()), 0)
         self.assertEqual(len(FormAccessors(self.domain2.name).get_all_form_ids_in_domain()), 1)
 
-        self.assertEqual(len(FormAccessorSQL.get_deleted_form_ids_in_domain(self.domain.name)), 1)
+        self.assertEqual(len(FormAccessorSQL.get_deleted_form_ids_in_domain(self.domain.name)), 2)
         self.assertEqual(len(FormAccessorSQL.get_deleted_form_ids_in_domain(self.domain2.name)), 0)
 
         call_command('hard_delete_forms_and_cases_in_domain', self.domain.name, noinput=True)
@@ -948,6 +948,7 @@ class TestHardDeleteSQLFormsAndCases(TestCase):
     def test_hard_delete_forms_none_to_delete(self):
         for domain_name in [self.domain.name, self.domain2.name]:
             create_form_for_test(domain_name)
+            create_form_for_test(domain_name, state=XFormInstanceSQL.ARCHIVED)
             self.assertEqual(len(FormAccessors(domain_name).get_all_form_ids_in_domain()), 1)
 
         self.domain.delete()
@@ -955,7 +956,7 @@ class TestHardDeleteSQLFormsAndCases(TestCase):
         self.assertEqual(len(FormAccessors(self.domain.name).get_all_form_ids_in_domain()), 0)
         self.assertEqual(len(FormAccessors(self.domain2.name).get_all_form_ids_in_domain()), 1)
 
-        self.assertEqual(len(FormAccessorSQL.get_deleted_form_ids_in_domain(self.domain.name)), 1)
+        self.assertEqual(len(FormAccessorSQL.get_deleted_form_ids_in_domain(self.domain.name)), 2)
         self.assertEqual(len(FormAccessorSQL.get_deleted_form_ids_in_domain(self.domain2.name)), 0)
 
         call_command('hard_delete_forms_and_cases_in_domain', self.domain2.name, noinput=True)
@@ -963,7 +964,7 @@ class TestHardDeleteSQLFormsAndCases(TestCase):
         self.assertEqual(len(FormAccessors(self.domain.name).get_all_form_ids_in_domain()), 0)
         self.assertEqual(len(FormAccessors(self.domain2.name).get_all_form_ids_in_domain()), 1)
 
-        self.assertEqual(len(FormAccessorSQL.get_deleted_form_ids_in_domain(self.domain.name)), 1)
+        self.assertEqual(len(FormAccessorSQL.get_deleted_form_ids_in_domain(self.domain.name)), 2)
         self.assertEqual(len(FormAccessorSQL.get_deleted_form_ids_in_domain(self.domain2.name)), 0)
 
     @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)

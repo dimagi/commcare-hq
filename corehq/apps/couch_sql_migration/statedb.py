@@ -28,8 +28,8 @@ from dimagi.utils.chunked import chunked
 from corehq.apps.hqwebapp.encoders import LazyEncoder
 from corehq.apps.tzmigration.planning import Base, DiffDB, PlanningDiff as Diff
 from corehq.apps.tzmigration.timezonemigration import MISSING, json_diff
-from corehq.util.datadog.gauges import datadog_counter
 from corehq.util.log import with_progress_bar
+from corehq.util.metrics import metrics_counter
 
 from .diff import filter_form_diffs
 
@@ -201,10 +201,10 @@ class StateDB(DiffDB):
             query = session.query(CaseForms.total_forms).filter_by(case_id=case_id)
             return query.scalar() or 0
 
-    def add_cases_to_diff(self, case_ids):
+    def add_cases_to_diff(self, case_ids, *, session=None):
         if not case_ids:
             return
-        with self.session() as session:
+        with self.session(session) as session:
             session.execute(
                 f"INSERT OR IGNORE INTO {CaseToDiff.__tablename__} (id) VALUES (:id)",
                 [{"id": x} for x in case_ids],
@@ -233,21 +233,38 @@ class StateDB(DiffDB):
         with self.session() as session:
             return session.query(CaseToDiff).count()
 
-    def iter_case_ids_with_diffs(self):
+    def iter_case_ids_with_diffs(self, changes=False):
+        model = DocChanges if changes else DocDiffs
         query = (
-            self.Session().query(DocDiffs.doc_id)
-            .filter(DocDiffs.kind == "CommCareCase")
+            self.Session().query(model.doc_id)
+            .filter(model.kind == "CommCareCase")
         )
-        for doc_id, in iter_large(query, DocDiffs.doc_id):
+        for doc_id, in iter_large(query, model.doc_id):
             yield doc_id
 
-    def count_case_ids_with_diffs(self):
+    def count_case_ids_with_diffs(self, changes=False):
+        model = DocChanges if changes else DocDiffs
         with self.session() as session:
             return (
-                session.query(DocDiffs.doc_id)
-                .filter(DocDiffs.kind == "CommCareCase")
+                session.query(model.doc_id)
+                .filter(model.kind == "CommCareCase")
                 .count()
             )
+
+    def add_patched_cases(self, case_ids):
+        if not case_ids:
+            return
+        with self.session() as session:
+            self.add_cases_to_diff(case_ids, session=session)
+            session.execute(
+                f"INSERT OR IGNORE INTO {PatchedCase.__tablename__} (id) VALUES (:id)",
+                [{"id": x} for x in case_ids],
+            )
+
+    def iter_patched_case_ids(self):
+        query = self.Session().query(PatchedCase.id)
+        for case_id, in iter_large(query, PatchedCase.id):
+            yield case_id
 
     def add_problem_form(self, form_id):
         """Add form to be migrated with "unprocessed" forms
@@ -346,7 +363,7 @@ class StateDB(DiffDB):
     def save_form_diffs(self, couch_json, sql_json):
         diffs = json_diff(couch_json, sql_json, track_list_indices=False)
         diffs = filter_form_diffs(couch_json, sql_json, diffs)
-        dd_count = partial(datadog_counter, tags=["domain:" + self.domain])
+        dd_count = partial(metrics_counter, tags={"domain": self.domain})
         dd_count("commcare.couchsqlmigration.form.diffed")
         doc_type = couch_json["doc_type"]
         doc_id = couch_json["_id"]
@@ -416,9 +433,9 @@ class StateDB(DiffDB):
         They are grouped with diffs of the corresponding case
         (kind="CommCareCase", doc_id=<case_id>).
 
-        :yeilds: two-tuples `(doc_id, diffs)`. The diffs yielded here are
-        `PlanningDiff` objects, which should not be confused with json
-        diffs (`<PlanningDiff>.json_diff`).
+        :yeilds: three-tuples `(kind, doc_id, diffs)`. The diffs yielded
+        here are `PlanningDiff` objects, which should not be confused
+        with json diffs (`<PlanningDiff>.json_diff`).
         """
         if _model is None:
             _model = DocDiffs
@@ -426,8 +443,11 @@ class StateDB(DiffDB):
             assert kind is None, kind
             assert doc_ids is None, doc_ids
             for kind, doc_ids in by_kind.items():
-                for chunk in chunked(doc_ids, 500, list):
-                    yield from self.iter_doc_diffs(kind, chunk, _model=_model)
+                if not doc_ids:
+                    yield from self.iter_doc_diffs(kind, _model=_model)
+                else:
+                    for chunk in chunked(doc_ids, 500, list):
+                        yield from self.iter_doc_diffs(kind, chunk, _model=_model)
             return
         with self.session() as session:
             query = session.query(_model)
@@ -460,6 +480,7 @@ class StateDB(DiffDB):
         - total: number of items counted with `increment_counter`.
         - missing: count of ids found in Couch but not in SQL.
         - diffs: count of docs with diffs.
+        - changes: count of docs with expected changes.
         """
         with self.session() as session:
             totals = {dc.kind: dc.value for dc in session.query(DocCount)}
@@ -480,7 +501,7 @@ class StateDB(DiffDB):
             diffs=diffs.get(kind, 0),
             missing=missing.get(kind, 0),
             changes=changes.get(kind, 0),
-        ) for kind in set(totals) | set(missing) | set(diffs)}
+        ) for kind in set(totals) | set(diffs) | set(missing) | set(changes)}
 
     def iter_missing_doc_ids(self, kind):
         with self.session() as session:
@@ -505,6 +526,7 @@ class StateDB(DiffDB):
         - DocChanges - casediff w (case and stock kinds), main r/w
         - MissingDoc - casediff w, main r
         - NoActionCaseForm - main r/w
+        - PatchedCase - main r/w
         - ProblemForm - main r/w
         """
         def quote(value):
@@ -742,6 +764,12 @@ class MissingDoc(Base):
 
 class NoActionCaseForm(Base):
     __tablename__ = "noactioncaseform"
+
+    id = Column(String(50), nullable=False, primary_key=True)
+
+
+class PatchedCase(Base):
+    __tablename__ = 'patchedcase'
 
     id = Column(String(50), nullable=False, primary_key=True)
 

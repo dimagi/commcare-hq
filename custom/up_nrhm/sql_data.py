@@ -42,8 +42,8 @@ class FunctionalityChecklistMeta(QueryMeta):
             and orig.date = max.date
     """
 
-    def __init__(self, table_name, filters, group_by, order_by):
-        super(FunctionalityChecklistMeta, self).__init__(table_name, filters, group_by, order_by)
+    def __init__(self, table_name, filters, group_by, distinct_on, order_by):
+        super(FunctionalityChecklistMeta, self).__init__(table_name, filters, group_by, distinct_on, order_by)
         self.columns = []
 
     def append_column(self, column):

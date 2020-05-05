@@ -3,23 +3,22 @@ from datetime import datetime, timedelta
 
 from django.conf import settings
 
-from celery.schedules import crontab
-from celery.task import periodic_task, task
-
-from corehq.apps.export.exceptions import RejectedStaleExport
-from corehq.celery_monitoring.signals import get_task_time_to_start
 from couchexport.models import Format
 from soil import DownloadBase
 from soil.progress import get_task_status
 from soil.util import expose_blob_download, process_email_request
 
+from celery.schedules import crontab
+from celery.task import periodic_task, task
 from corehq.apps.data_dictionary.util import add_properties_to_data_dictionary
+from corehq.apps.export.exceptions import RejectedStaleExport
 from corehq.apps.export.utils import get_export
 from corehq.apps.users.models import CouchUser
 from corehq.blobs import CODES, get_blob_db
-from corehq.util.datadog.gauges import datadog_track_errors, datadog_counter
+from corehq.celery_monitoring.signals import get_task_time_to_start
 from corehq.util.decorators import serial_task
 from corehq.util.files import TransientTempfile, safe_filename_header
+from corehq.util.metrics import metrics_counter, metrics_track_errors
 from corehq.util.quickcache import quickcache
 
 from .const import EXPORT_DOWNLOAD_QUEUE, SAVED_EXPORTS_QUEUE
@@ -28,7 +27,16 @@ from .dbaccessors import (
     get_daily_saved_export_ids_for_auto_rebuild,
     get_properly_wrapped_export_instance,
 )
-from .export import get_export_file, rebuild_export
+from .export import (
+    ExportFile,
+    _get_export_query,
+    get_export_file,
+    get_export_writer,
+    rebuild_export,
+    write_export_instance,
+)
+from .filters import ServerModifiedOnRangeFilter
+from .models.incremental import IncrementalExport
 from .models.new import EmailExportWhenDoneRequest
 from .system_properties import MAIN_CASE_TABLE_PROPERTIES
 
@@ -50,12 +58,12 @@ def populate_export_download_task(domain, export_ids, exports_type, username, fi
     if settings.STALE_EXPORT_THRESHOLD is not None and not email_requests.count():
         delay = get_task_time_to_start(populate_export_download_task.request.id)
         if delay.total_seconds() > settings.STALE_EXPORT_THRESHOLD:
-            datadog_counter('commcare.exports.rejected_unfresh_export')
+            metrics_counter('commcare.exports.rejected_unfresh_export')
             raise RejectedStaleExport()
 
     export_instances = [get_export(exports_type, domain, export_id, username)
                         for export_id in export_ids]
-    with TransientTempfile() as temp_path, datadog_track_errors('populate_export_download_task'):
+    with TransientTempfile() as temp_path, metrics_track_errors('populate_export_download_task'):
         export_file = get_export_file(
             export_instances,
             filters,
@@ -122,7 +130,7 @@ def rebuild_saved_export(export_instance_id, manual=False):
     download_data = _get_saved_export_download_data(export_instance_id)
     status = get_task_status(download_data.task)
     if manual and status.missing() and download_data.task:
-        download_data.task.revoke()
+        download_data.task.revoke(terminate=True)
     if status.not_started() or status.started():
         return
 
@@ -208,3 +216,82 @@ def generate_schema_for_all_builds(self, schema_cls, domain, app_id, identifier)
         only_process_current_builds=False,
         task=self,
     )
+
+
+@periodic_task(run_every=crontab(hour="*", minute="30", day_of_week="*"),
+               queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
+def generate_incremental_exports():
+    incremental_exports = IncrementalExport.objects.filter(active=True)
+    for incremental_export in incremental_exports:
+        process_incremental_export.delay(incremental_export.id)
+
+
+@task
+def process_incremental_export(incremental_export_id):
+    incremental_export = IncrementalExport.objects.get(id=incremental_export_id)
+    checkpoint = _generate_incremental_export(incremental_export)
+    if checkpoint:
+        _send_incremental_export(incremental_export, checkpoint)
+
+
+def _generate_incremental_export(incremental_export):
+    export_instance = incremental_export.export_instance
+    export_instance.export_format = Format.UNZIPPED_CSV  # force to unzipped CSV
+    checkpoint = incremental_export.last_valid_checkpoint
+    filters = []
+    if checkpoint:
+        filters.append(ServerModifiedOnRangeFilter(gt=checkpoint.last_doc_date))
+
+    class LastDocTracker:
+        def __init__(self, doc_iterator):
+            self.doc_iterator = doc_iterator
+            self.last_doc = None
+            self.doc_count = 0
+
+        def __iter__(self):
+            for doc in self.doc_iterator:
+                self.last_doc = doc
+                self.doc_count += 1
+                yield doc
+
+    with TransientTempfile() as temp_path, metrics_track_errors('generate_incremental_exports'):
+        writer = get_export_writer([export_instance], temp_path, allow_pagination=False)
+        with writer.open([export_instance]):
+            query = _get_export_query(export_instance, filters)
+            query = query.sort('server_modified_on')  # reset sort to this instead of opened_on
+            docs = LastDocTracker(query.run().hits)
+            write_export_instance(writer, export_instance, docs)
+
+        export_file = ExportFile(writer.path, writer.format)
+
+        if docs.doc_count <= 0:
+            return
+
+        new_checkpoint = incremental_export.checkpoint(
+            docs.doc_count, docs.last_doc.get('server_modified_on')
+        )
+
+        with export_file as file_:
+            db = get_blob_db()
+            db.put(
+                file_,
+                domain=incremental_export.domain,
+                parent_id=new_checkpoint.blob_parent_id,
+                type_code=CODES.data_export,
+                key=str(new_checkpoint.blob_key),
+                timeout=24 * 60
+            )
+    return new_checkpoint
+
+
+def _send_incremental_export(export, checkpoint):
+    requests = _get_requests(checkpoint, export)
+    headers = {
+        'Accept': 'application/json'
+    }
+    files = {'file': (checkpoint.filename, checkpoint.get_blob(), 'text/csv')}
+    requests.post(uri='', files=files, headers=headers)
+
+
+def _get_requests(checkpoint, export):
+    return export.connection_settings.get_requests(checkpoint.id, checkpoint.log_request)

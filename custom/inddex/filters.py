@@ -1,13 +1,13 @@
 from django.utils.translation import ugettext_lazy as _
 
-from sqlagg.columns import SimpleColumn
-
-from corehq.apps.reports.datatables import DataTablesColumn
-from corehq.apps.reports.filters.base import BaseSingleOptionFilter
+from corehq.apps.es import UserES
+from corehq.apps.reports.filters.base import (
+    BaseMultipleOptionFilter,
+    BaseSingleOptionFilter,
+)
 from corehq.apps.reports.filters.dates import DatespanFilter
-from corehq.apps.reports.sqlreport import DatabaseColumn, SqlData
-from corehq.apps.userreports.util import get_table_name
-from custom.inddex.const import FOOD_CONSUMPTION
+from corehq.apps.reports.util import get_simplified_users
+from custom.inddex.const import AGE_RANGES, ConvFactorGaps, FctGaps
 
 
 class DateRangeFilter(DatespanFilter):
@@ -21,16 +21,7 @@ class AgeRangeFilter(BaseSingleOptionFilter):
 
     @property
     def options(self):
-        return [
-            ('0-5.9 months', _('0-5.9 months')),
-            ('06-59 months', _('06-59 months')),
-            ('5-6 years', _('5-6 years')),
-            ('7-10 years', _('7-10 years')),
-            ('11-14 years', _('11-14 years')),
-            ('15-49 years', _('15-49 years')),
-            ('50-64 years', _('50-64 years')),
-            ('65+ years', _('65+ years'))
-        ]
+        return [(age_range.slug, age_range.name) for age_range in AGE_RANGES]
 
 
 class GenderFilter(BaseSingleOptionFilter):
@@ -113,22 +104,24 @@ class RecallStatusFilter(BaseSingleOptionFilter):
 
 
 class GapDescriptionFilter(BaseSingleOptionFilter):
-    slug = 'gap_description'
+    slug = 'gap'
     label = _('Gap description')
     default_text = _('All')
 
     @property
     def options(self):
         return [
-            (x, x) for x in [
-                '1 - conversion factor available',
-                '1 - fct data available',
-                '2 - using conversion factor from base term food code',
-                '2 - using fct data from base term food code',
-                '3 - using fct data from reference food code',
-                '7 - ingredient(s) contain fct data gaps',
-                '8 - no conversion factor available',
-                '8 - no fct data available',
+            (f'{klass.slug}-{code}', klass.get_description(code))
+            for klass, code in [
+                # This is the order the partner asked for
+                (ConvFactorGaps, ConvFactorGaps.AVAILABLE),
+                (FctGaps, FctGaps.AVAILABLE),
+                (ConvFactorGaps, ConvFactorGaps.BASE_TERM),
+                (FctGaps, FctGaps.BASE_TERM),
+                (FctGaps, FctGaps.REFERENCE),
+                (FctGaps, FctGaps.INGREDIENT_GAPS),
+                (ConvFactorGaps, ConvFactorGaps.NOT_AVAILABLE),
+                (FctGaps, FctGaps.NOT_AVAILABLE),
             ]
         ]
 
@@ -141,8 +134,8 @@ class GapTypeFilter(BaseSingleOptionFilter):
     @property
     def options(self):
         return [
-            ('conversion factor', 'conversion factor'),
-            ('fct', 'fct'),
+            (ConvFactorGaps.slug, ConvFactorGaps.name),
+            (FctGaps.slug, FctGaps.name),
         ]
 
 
@@ -158,32 +151,15 @@ class FoodTypeFilter(BaseSingleOptionFilter):
         ]
 
 
-class CaseOwnerData(SqlData):
-    engine_id = 'ucr'
-    filters = []
-    group_by = ['owner_name']
-    headers = [DataTablesColumn('Case owner')]
-    columns = [DatabaseColumn('Case owner', SimpleColumn('owner_name'))]
-
-    @property
-    def table_name(self):
-        return get_table_name(self.config['domain'], FOOD_CONSUMPTION)
-
-
-class CaseOwnersFilter(BaseSingleOptionFilter):
-    slug = 'case_owners'
+class CaseOwnersFilter(BaseMultipleOptionFilter):
+    slug = 'owner_id'
     label = _('Case Owners')
     default_text = _('All')
 
     @property
     def options(self):
-        owner_data = CaseOwnerData(config={'domain': self.domain})
-        names = {
-            owner['owner_name']
-            for owner in owner_data.get_data()
-            if owner.get('owner_name')
-        }
-        return [(x, x) for x in names]
+        users = get_simplified_users(UserES().domain(self.domain).mobile_users())
+        return [(user.user_id, user.username_in_report) for user in users]
 
 
 class FaoWhoGiftFoodGroupDescriptionFilter(BaseSingleOptionFilter):

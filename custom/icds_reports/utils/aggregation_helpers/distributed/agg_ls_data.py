@@ -188,8 +188,8 @@ class AggLsHelper(BaseICDSAggregationDistributedHelper):
             district_id,
             block_id,
             supervisor_id,
-            month)
-            (
+            month
+            ) (
                 SELECT
                 sum(vhnd_observed) as vhnd_observed,
                 sum(beneficiary_vists) as beneficiary_vists,

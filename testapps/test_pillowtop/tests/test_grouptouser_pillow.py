@@ -164,7 +164,7 @@ class GroupToUserPillowDbTest(TestCase):
 
         # process using pillow
         pillow = get_group_pillow()
-        pillow.process_changes(since=since)
+        pillow.process_changes(since=since, forever=False)
 
         # confirm updated in elasticsearch
         self.es_client.indices.refresh(USER_INDEX)
@@ -180,7 +180,7 @@ class GroupToUserPillowDbTest(TestCase):
         producer.send_change(topics.GROUP, _group_to_change_meta(group.to_json()))
 
         pillow = get_group_pillow()
-        pillow.process_changes(since=since)
+        pillow.process_changes(since=since, forever=False)
 
         # confirm removed in elasticsearch
         self.es_client.indices.refresh(USER_INDEX)

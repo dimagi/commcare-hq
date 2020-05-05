@@ -419,8 +419,13 @@ class MigrateTransifexProjectForm(forms.Form):
                 or self.OLD_ID_HEADER not in headers
                 or self.NEW_ID_HEADER not in headers):
             raise TransifexProjectMigrationInvalidUpload(
-                _("Could not load file. Please ensure columns %s, %s and %s are present") % (
-                    self.TYPE_HEADER, self.OLD_ID_HEADER, self.NEW_ID_HEADER
+                _(
+                    "Could not load file. Please ensure columns {type_header}, "
+                    "{old_id_header} and {new_id_header} are present"
+                ).format(
+                    type_header=self.TYPE_HEADER,
+                    old_id_header=self.OLD_ID_HEADER,
+                    new_id_header=self.NEW_ID_HEADER,
                 ))
 
     def _validate_worksheet_row(self, row):

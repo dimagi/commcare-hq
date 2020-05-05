@@ -17,6 +17,7 @@ from couchdbkit import ResourceNotFound
 from memoized import memoized
 
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
+from corehq.apps.export.views.download import DownloadDETSchemaView
 from couchexport.models import Format
 from couchexport.writers import XlsLengthException
 from dimagi.utils.couch import CriticalSection
@@ -66,7 +67,7 @@ from corehq.apps.locations.permissions import (
 )
 from corehq.apps.reports.views import should_update_export
 from corehq.apps.settings.views import BaseProjectDataView
-from corehq.apps.users.models import WebUser
+from corehq.apps.users.models import CouchUser
 from corehq.apps.users.permissions import (
     CASE_EXPORT_PERMISSION,
     FORM_EXPORT_PERMISSION,
@@ -209,7 +210,7 @@ class ExportListHelper(object):
             'description': export.description,
             'sharing': export.sharing,
             'owner_username': (
-                WebUser.get_by_user_id(export.owner_id).username
+                CouchUser.get_by_user_id(export.owner_id).username
                 if export.owner_id else UNKNOWN_EXPORT_OWNER
             ),
             'can_edit': export.can_edit(self.request.couch_user),
@@ -219,6 +220,8 @@ class ExportListHelper(object):
             'deleteUrl': reverse(DeleteNewCustomExportView.urlname,
                                  args=(self.domain, export.type, export.get_id)),
             'downloadUrl': reverse(self._download_view(export).urlname, args=(self.domain, export.get_id)),
+            'detSchemaUrl': reverse(DownloadDETSchemaView.urlname,
+                                    args=(self.domain, export.get_id)),
             'editUrl': reverse(self._edit_view(export).urlname, args=(self.domain, export.get_id)),
             'editNameUrl': reverse(EditExportNameView.urlname, args=(self.domain, export.get_id)),
             'editDescriptionUrl': reverse(EditExportDescription.urlname, args=(self.domain, export.get_id)),
@@ -939,6 +942,7 @@ class ODataFeedListHelper(ExportListHelper):
         return DownloadNewCaseExportView
 
 
+@location_safe
 @method_decorator(requires_privilege_with_fallback(ODATA_FEED), name='dispatch')
 class ODataFeedListView(BaseExportListView, ODataFeedListHelper):
     is_odata = True

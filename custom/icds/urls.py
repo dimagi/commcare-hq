@@ -1,20 +1,26 @@
 from django.conf.urls import url
-from custom.icds.views.data_pull import (
-    CustomDataPull,
+
+from custom.icds.location_reassignment.views import (
+    LocationReassignmentView,
+    download_location_reassignment_template,
 )
+
+from custom.icds.views.data_pull import CustomDataPull
 from custom.icds.views.hosted_ccz import (
-    ManageHostedCCZ,
-    ManageHostedCCZLink,
     EditHostedCCZLink,
     HostedCCZView,
-    remove_hosted_ccz,
-    recreate_hosted_ccz,
+    ManageHostedCCZ,
+    ManageHostedCCZLink,
     download_ccz,
     download_ccz_supporting_files,
+    recreate_hosted_ccz,
+    remove_hosted_ccz,
+    ccz_hostings_json,
 )
 
 urlpatterns = [
     url(r'^ccz/hostings/manage', ManageHostedCCZ.as_view(), name=ManageHostedCCZ.urlname),
+    url(r'^ccz/hostings/json', ccz_hostings_json, name='ccz_hostings_json'),
     url(r'^ccz/hostings/links', ManageHostedCCZLink.as_view(), name=ManageHostedCCZLink.urlname),
     url(r'^ccz/hostings/link/(?P<link_id>[\d-]+)/edit/', EditHostedCCZLink.as_view(),
         name=EditHostedCCZLink.urlname),
@@ -30,4 +36,8 @@ urlpatterns = [
         name=ManageHostedCCZLink.urlname),
     url(r'^ccz/hostings/(?P<identifier>[\w-]+)/', HostedCCZView.as_view(), name=HostedCCZView.urlname),
     url(r'^custom_data_pull/', CustomDataPull.as_view(), name=CustomDataPull.urlname),
+    url(r'^location_reassignment/$', LocationReassignmentView.as_view(),
+        name=LocationReassignmentView.urlname),
+    url(r'^location_reassignment/download/$', download_location_reassignment_template,
+        name='download_location_reassignment_template'),
 ]

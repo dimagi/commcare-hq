@@ -33,7 +33,7 @@ class LocationAggregationDistributedHelper(BaseICDSAggregationDistributedHelper)
             'block_id', 'block_name', 'block_site_code', 'block_is_test', 'block_map_location_name',
             'district_id', 'district_name', 'district_site_code', 'district_is_test', 'district_map_location_name',
             'state_id', 'state_name', 'state_site_code', 'state_is_test', 'state_map_location_name',
-            'aggregation_level',
+            'aggregation_level', 'awc_deprecates', 'awc_deprecated_at', 'supervisor_deprecates', 'supervisor_deprecated_at'
         )
 
     def generate_csv(self):
@@ -62,6 +62,8 @@ class LocationAggregationDistributedHelper(BaseICDSAggregationDistributedHelper)
                 'awc_name': location['name'].replace("\n", ""),
                 'awc_site_code': location['site_code'],
                 'awc_is_test': 1 if metadata.get('is_test_location') == 'test' else 0,
+                'awc_deprecates': ','.join(metadata.get('deprecates', [])),
+                'awc_deprecated_at': metadata.get("deprecated_at"),
             }
 
             current_location = location
@@ -75,6 +77,11 @@ class LocationAggregationDistributedHelper(BaseICDSAggregationDistributedHelper)
                     '{}_site_code'.format(loc_type): current_location['site_code'],
                     '{}_is_test'.format(loc_type): 1 if metadata.get('is_test_location') == 'test' else 0,
                 })
+                if loc_type == 'supervisor':
+                    loc.update({
+                        'supervisor_deprecates': ','.join(metadata.get('deprecates', [])),
+                        'supervisor_deprecated_at': metadata.get("deprecated_at"),
+                    })
                 if loc_type in ('block', 'district', 'state'):
                     loc.update({
                         '{}_map_location_name'.format(loc_type): metadata.get('map_location_name'),
@@ -102,9 +109,7 @@ class LocationAggregationDistributedHelper(BaseICDSAggregationDistributedHelper)
 
     @property
     def ucr_aww_tablename(self):
-        doc_id = StaticDataSourceConfiguration.get_doc_id(self.domain, self.ucr_aww_table)
-        config, _ = get_datasource_config(doc_id, self.domain)
-        return get_table_name(self.domain, config.table_id)
+        return get_table_name(self.domain, self.ucr_aww_table)
 
     def delete_old_locations(self):
         return "DELETE FROM \"{local_tablename}\"".format(local_tablename=self.local_tablename)
@@ -151,11 +156,18 @@ class LocationAggregationDistributedHelper(BaseICDSAggregationDistributedHelper)
             ('state_map_location_name', 'state_map_location_name'),
             ('aww_name', 'aww_name'),
             ('contact_phone_number', 'contact_phone_number'),
+            ('awc_ward_1', 'awc_ward_1'),
+            ('awc_ward_2', 'awc_ward_2'),
+            ('awc_ward_3', 'awc_ward_3'),
             ('state_is_test', 'state_is_test'),
             ('district_is_test', 'district_is_test'),
             ('block_is_test', 'block_is_test'),
             ('supervisor_is_test', 'supervisor_is_test'),
-            ('awc_is_test', 'awc_is_test')
+            ('awc_is_test', 'awc_is_test'),
+            ('awc_deprecates', 'awc_deprecates'),
+            ('awc_deprecated_at', 'awc_deprecated_at'),
+            ('supervisor_deprecates', 'supervisor_deprecates'),
+            ('supervisor_deprecated_at', 'supervisor_deprecated_at')
         )
 
         return """
@@ -177,12 +189,18 @@ class LocationAggregationDistributedHelper(BaseICDSAggregationDistributedHelper)
         return """
             UPDATE {temporary_tablename} awc_loc SET
               aww_name = ut.aww_name,
-              contact_phone_number = ut.contact_phone_number
+              contact_phone_number = ut.contact_phone_number,
+              awc_ward_1 = ut.awc_ward_1,
+              awc_ward_2 = ut.awc_ward_2,
+              awc_ward_3 = ut.awc_ward_3
             FROM (
               SELECT
                 commcare_location_id,
                 aww_name,
-                contact_phone_number
+                contact_phone_number,
+                awc_ward_1,
+                awc_ward_2,
+                awc_ward_3
               FROM "{ucr_aww_tablename}"
             ) ut
             WHERE ut.commcare_location_id = awc_loc.doc_id
@@ -214,6 +232,9 @@ class LocationAggregationDistributedHelper(BaseICDSAggregationDistributedHelper)
             ('state_map_location_name', 'state_map_location_name'),
             ('aww_name', 'NULL'),
             ('contact_phone_number', 'NULL'),
+            ('awc_ward_1', 'NULL'),
+            ('awc_ward_2', 'NULL'),
+            ('awc_ward_3', 'NULL'),
             ('state_is_test', 'MAX(state_is_test)'),
             (
                 'district_is_test',
@@ -230,7 +251,12 @@ class LocationAggregationDistributedHelper(BaseICDSAggregationDistributedHelper)
             (
                 'awc_is_test',
                 lambda col: 'MAX({column})'.format(column=col) if aggregation_level > 4 else "0"
-            )
+            ),
+            ('awc_deprecates', 'NULL'),
+            ('awc_deprecated_at', 'NULL'),
+            ('supervisor_deprecates', 'NULL'),
+            ('supervisor_deprecated_at', 'NULL')
+
         )
 
         def _transform_column(column_tuple):
@@ -284,6 +310,6 @@ class LocationAggregationDistributedHelper(BaseICDSAggregationDistributedHelper)
 def _get_all_locations_for_domain(domain):
     return (
         SQLLocation.objects
-        .filter(domain=domain, is_archived=False)
+        .filter(domain=domain)
         .values('pk', 'parent_id', 'metadata', 'name', 'location_id', 'location_type__code', 'site_code')
     )

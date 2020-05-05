@@ -103,6 +103,11 @@ class DomainLink(models.Model):
             link = active_links_with_this_domain[0]
         else:
             # make a new link
+            if remote_details and linked_domain[-1] != '/':
+                raise DomainLinkError("""
+                    When linking remote domain, linked_domain "{}" should end with a slash.
+                    Please try again using "{}/".
+                """.format(linked_domain, linked_domain))
             link = DomainLink(linked_domain=linked_domain, master_domain=master_domain)
 
         if remote_details:

@@ -32,13 +32,11 @@
     {{ current_page.page_name }}
   </p>
 
-  <p class="help-block">
-    {% blocktrans %}
-      For information on Conditional Alerts, see the
-      <a target="_blank" href="https://confluence.dimagi.com/display/commcarepublic/Conditional+Alerts">Conditional Alerts</a>
-      help page.
-    {% endblocktrans %}
-  </p>
+  {% if help_text %}
+    <p class="help-block">
+      {{ help_text|safe }}
+    </p>
+  {% endif %}
 
   {% if is_system_admin %}
     <p class="help-block alert alert-info">

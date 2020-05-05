@@ -18,7 +18,7 @@ from memoized import memoized
 
 from corehq.blobs import get_blob_db, CODES, NotFound
 from corehq.blobs.models import BlobMeta
-from corehq.util.datadog.gauges import datadog_counter
+from corehq.util.metrics import metrics_counter
 from dimagi.utils.couch import CriticalSection
 
 ITEMS_COMMENT_PREFIX = b'<!--items='
@@ -104,7 +104,7 @@ def cache_fixture_items_data(io_data, domain, fixure_name, key_prefix):
 
 def get_cached_fixture_items(domain, bucket_prefix):
     try:
-        return get_blob_db().get(key=bucket_prefix + '/' + domain).read()
+        return get_blob_db().get(key=bucket_prefix + '/' + domain, type_code=CODES.fixture).read()
     except NotFound:
         return None
 
@@ -116,9 +116,9 @@ def clear_fixture_cache(domain, bucket_prefix):
 
 
 def _record_datadog_metric(name, cache_key):
-    datadog_counter('commcare.fixture.{}'.format(name), tags=[
-        'cache_key:{}'.format(cache_key),
-    ])
+    metrics_counter('commcare.fixture.{}'.format(name), tags={
+        'cache_key': cache_key,
+    })
 
 
 def get_cached_items_with_count(cached_bytes):

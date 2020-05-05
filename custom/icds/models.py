@@ -119,9 +119,9 @@ class HostedCCZ(models.Model):
     def domain(self):
         return self.link.domain
 
-    def to_json(self, app_names):
+    def to_json(self):
         from custom.icds.serializers import HostedCCZSerializer
-        return HostedCCZSerializer(self, context={'app_names': app_names}).data
+        return HostedCCZSerializer(self).data
 
     @cached_property
     def blob_id(self):

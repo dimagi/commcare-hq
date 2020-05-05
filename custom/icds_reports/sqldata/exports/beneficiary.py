@@ -178,7 +178,7 @@ class BeneficiaryExport(ExportableMixin, IcdsSqlData):
                     'Normal weight for height',
                     True
                 ),
-                slug="current_month_wasting_v2"
+                slug=current_month_wasting_column(self.beta)
             ),
             DatabaseColumn(
                 'Height-for-Age status (in Month)',
@@ -189,7 +189,7 @@ class BeneficiaryExport(ExportableMixin, IcdsSqlData):
                     'Normal height for age',
                     True
                 ),
-                slug="current_month_stunting_v2"
+                slug=current_month_stunting_column(self.beta)
             ),
             DatabaseColumn(
                 'Days attended PSE (as of {})'.format(selected_month.isoformat()),

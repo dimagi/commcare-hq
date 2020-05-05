@@ -29,7 +29,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='commcarecaseindexsql',
             name='case',
-            field=models.ForeignKey(related_query_name=b'index', related_name='index_set', db_column='case_uuid', to_field='case_uuid', to='form_processor.CommCareCaseSQL', on_delete=models.CASCADE),
+            field=models.ForeignKey(related_query_name='index', related_name='index_set', db_column='case_uuid', to_field='case_uuid', to='form_processor.CommCareCaseSQL', on_delete=models.CASCADE),
             preserve_default=True,
         ),
         migrations.AlterField(

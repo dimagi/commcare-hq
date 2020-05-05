@@ -407,7 +407,7 @@ class ExportColumn(DocumentSchema):
 
     def get_headers(self, split_column=False):
         if self.is_deidentifed:
-            return ["{} {}".format(self.label, "[sensitive]")]
+            return [f"{self.label} *sensitive*"]
         else:
             return [self.label]
 
@@ -453,7 +453,7 @@ class DocRow(namedtuple("DocRow", ["doc", "row"])):
     """
 
 
-class TableConfiguration(DocumentSchema):
+class TableConfiguration(DocumentSchema, ReadablePathMixin):
     """
     The TableConfiguration represents one excel sheet in an export.
     It contains a list of columns and other presentation properties
@@ -2770,7 +2770,7 @@ class DataFile(object):
     def get_blob(self):
         db = get_blob_db()
         try:
-            blob = db.get(key=self._meta.key)
+            blob = db.get(meta=self._meta)
         except (KeyError, NotFound) as err:
             raise NotFound(str(err))
         return blob

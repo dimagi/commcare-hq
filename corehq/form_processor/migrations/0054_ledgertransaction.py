@@ -17,7 +17,7 @@ class Migration(migrations.Migration):
                 ('form_id', models.CharField(max_length=255)),
                 ('server_date', models.DateTimeField()),
                 ('report_date', models.DateTimeField()),
-                ('type', models.PositiveSmallIntegerField(choices=[(1, b'balance'), (2, b'transfer')])),
+                ('type', models.PositiveSmallIntegerField(choices=[(1, 'balance'), (2, 'transfer')])),
                 ('case_id', models.CharField(default=None, max_length=255)),
                 ('entry_id', models.CharField(default=None, max_length=100)),
                 ('section_id', models.CharField(default=None, max_length=100)),

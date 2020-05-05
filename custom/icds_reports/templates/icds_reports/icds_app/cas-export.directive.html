@@ -1,7 +1,7 @@
-<div class="cas-export-directive" cg-busy="[$ctrl.myPromise, $rootScope.locationPromise]">
+<div class="cas-export-directive" cg-busy="[$ctrl.locationPromise]">
     <div class="row fixes-filters" ng-class="{'fixes-filters-with-alert': $ctrl.isAlertActive}">
         <div class="col-md-11">
-            <span class="breadcrump-element">Export CAS Data: </span>
+            <span class="breadcrumb-element">Export CAS Data: </span>
         </div>
     </div>
     <info-message start="1" end="6" type="downloading-available-for-previous-month-from-7th"></info-message>
@@ -10,6 +10,7 @@
         <div class="alert alert-info" ng-show="!$ctrl.allFiltersSelected()">
             Please select all filters!
         </div>
+        <reassignment-message ng-show="$ctrl.showReassignmentMessage()" selected-location="$ctrl.selectedLocation" selected-date="$ctrl.selectedDate"></reassignment-message>
         <div class="form-horizontal black">
             <div class="form-group">
                 <label class="control-label col-sm-2" for="indicator">Data Type: <i class="fa fa-info-circle" uib-popover="Select the data type for which you want to download a CAS Export."
@@ -25,16 +26,18 @@
                 </div>
             </div>
             <div class="form-group">
-                <label class="control-label col-sm-2" for="indicator">State: <i class="fa fa-info-circle" uib-popover="Select the location."
+                <label class="control-label col-sm-2" for="indicator">Location: <i class="fa fa-info-circle" uib-popover="Select the location."
                        popover-placement="top-right"
                        popover-trigger="'mouseenter'"></i></label>
                 <div class="col-sm-6">
-                    <ui-select ng-model="$ctrl.selectedLocation" theme="bootstrap">
-                        <ui-select-match placeholder="State"><span ng-bind="$select.selected.name"></span></ui-select-match>
-                        <ui-select-choices repeat="indicator.location_id as indicator in $ctrl.locations | propsFilter: {name: $select.search}">
-                            <div ng-bind-html="indicator.name"></div>
-                        </ui-select-choices>
+                  <div style="margin-bottom: 15px;" ng-repeat="locationTypes in $ctrl.hierarchy" ng-show="$ctrl.isLocationVisible($index)" ng-if="$index < 3">
+                    <ui-select ng-disabled="$ctrl.isLocationDisabled($index)" ng-model="$ctrl.selectedLocations[$index]" theme="bootstrap" on-select="$ctrl.onSelectLocation($item, $index)">
+                      <ui-select-match placeholder="{$ $ctrl.getLocationPlaceholder(locationTypes) $}"><span ng-bind="$select.selected.name"></span></ui-select-match>
+                      <ui-select-choices repeat="location.location_id as location in $ctrl.getLocationsForLevel($index) | propsFilter: {name: $select.search}">
+                        <div ng-bind-html="location.name | highlight: $select.search"></div>
+                      </ui-select-choices>
                     </ui-select>
+                  </div>
                 </div>
             </div>
             <div class="form-group">

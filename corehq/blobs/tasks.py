@@ -4,10 +4,10 @@ from datetime import datetime
 from celery.task import periodic_task
 from celery.schedules import crontab
 
-from corehq.util.datadog.gauges import datadog_counter
 from corehq.blobs.models import BlobMeta
 from corehq.blobs import get_blob_db
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
+from corehq.util.metrics import metrics_counter
 
 log = logging.getLogger(__name__)
 
@@ -29,7 +29,7 @@ def delete_expired_blobs():
         log.info("deleted expired blobs: %r", [m.key for m in expired])
         shard_deleted = sum(m.content_length for m in expired)
         bytes_deleted += shard_deleted
-        datadog_counter('commcare.temp_blobs.bytes_deleted', value=shard_deleted)
+        metrics_counter('commcare.temp_blobs.bytes_deleted', value=shard_deleted)
 
     if run_again:
         delete_expired_blobs.delay()

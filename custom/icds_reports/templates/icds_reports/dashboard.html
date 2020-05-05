@@ -15,7 +15,7 @@
         <link type="text/css" rel="stylesheet" media="all" href="{% static 'angular-datatables/dist/plugins/bootstrap/datatables.bootstrap.min.css' %}">
         <link type="text/css" rel="stylesheet" media="all" href="{% static 'leaflet/dist/leaflet.css' %}">
         <link type="text/css" rel="stylesheet" media="all" href="{% static 'angular-busy/dist/angular-busy.min.css' %}"/>
-        <link type="text/css" rel="stylesheet" media="all" href="{% static 'perfect-scrollbar/css/perfect-scrollbar.min.css' %}"/>
+        <link type="text/css" rel="stylesheet" media="all" href="{% static 'utatti-perfect-scrollbar/css/perfect-scrollbar.css' %}"/>
         <link type="text/less" rel="stylesheet" media="all" href="{% static 'css/icds_dashboard.less' %}"/>
         <link type="text/less" rel="stylesheet" media="all" href="{% static 'css/fact_sheets.less' %}"/>
         <link type="text/less" rel="stylesheet" media="all" href="{% static 'css/navbar.less' %}"/>
@@ -34,7 +34,6 @@
         <script src="{% static 'datatables/media/js/jquery.dataTables.min.js'%}"></script>
         <script src="{% static 'datatables-fixedcolumns/js/dataTables.fixedColumns.js'%}"></script>
         <script src="{% static 'datatables-fixedheader/js/dataTables.fixedHeader.js'%}"></script>
-        <script src="{% static 'leaflet/dist/leaflet.js' %}"></script>
         <script src="{% static 'angular/angular.js' %}"></script>
         <script src="{% static 'angular-datatables/dist/angular-datatables.min.js' %}"></script>
         <script src="{% static 'angular-datatables/dist/plugins/bootstrap/angular-datatables.bootstrap.min.js' %}"></script>
@@ -47,8 +46,7 @@
         <script src="{% static 'nvd3-1.8.6/build/nv.d3.js' %}"></script>
         <script src="{% static 'angular-nvd3/dist/angular-nvd3.js' %}"></script>
         <script src="{% static 'moment/min/moment-with-locales.min.js' %}"> </script>
-        <script src="{% static 'angular-leaflet-directive/dist/angular-leaflet-directive.js' %}"></script>
-        <script src="{% static 'perfect-scrollbar/js/perfect-scrollbar.jquery.min.js' %}"></script>
+        <script src="{% static 'utatti-perfect-scrollbar/dist/perfect-scrollbar.min.js' %}"></script>
         <script src="{% static 'angular-perfect-scrollbar/src/angular-perfect-scrollbar.js' %}"></script>
         <script src="{% static 'topojson/topojson.js' %}"></script>
         <script src="{% static 'datamaps/dist/datamaps.ind.js' %}"></script>
@@ -62,7 +60,7 @@ related to angular not being defined. But if we split it here it works fine.
         <script src="{% static 'angular-bootstrap/ui-bootstrap-tpls.min.js' %}"></script>
 
         <script src="{% static 'js/icds_app.js' %}"></script>
-        <script src="{% static "js/icds_dashboard_utils.js" %}"></script>
+        <script src="{% static 'js/icds_dashboard_utils.js' %}"></script>
         <script src="{% static 'js/filters/property-filter/property.filter.js' %}"></script>
         <script src="{% static 'js/filters/india-numbers/india-numbers.filter.js' %}"></script>
 
@@ -230,7 +228,7 @@ related to angular not being defined. But if we split it here it works fine.
             <h3 class="modal-title" id="modal-title">Report an Issue<i style="float: right;" ng-click="$dismiss()" class="fa fa-close pointer"></i></h3>
         </div>
         <div class="modal-body" id="modal-body">
-            Please contact icds-support@dimagi.com in order to report an issue with the Dashboard
+            Please contact {{ support_email }} in order to report an issue with the Dashboard
         </div>
         <div class="modal-footer">
            <button ng-click="$dismiss()" class="btn btn-primary">Close</button>
@@ -241,7 +239,6 @@ related to angular not being defined. But if we split it here it works fine.
     <script>
         var $modal = $('#modalReportIssue');
         $modal.find('.modal-title').text('Report an Issue with ICDS-CAS Dashboard');
-        $modal.find('form').attr('action', '{% url 'icds_bug_report' domain %}');
     </script>
 </div>
 

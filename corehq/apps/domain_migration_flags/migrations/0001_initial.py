@@ -13,7 +13,7 @@ class Migration(migrations.Migration):
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('domain', models.CharField(default=None, max_length=256)),
                 ('migration_slug', models.CharField(default=None, max_length=256)),
-                ('migration_status', models.CharField(default=b'not_started', max_length=11, choices=[(b'not_started', b'Not Started'), (b'in_progress', b'In Progress'), (b'complete', b'Complete')])),
+                ('migration_status', models.CharField(default='not_started', max_length=11, choices=[('not_started', 'Not Started'), ('in_progress', 'In Progress'), ('complete', 'Complete')])),
             ],
         ),
         migrations.AlterUniqueTogether(

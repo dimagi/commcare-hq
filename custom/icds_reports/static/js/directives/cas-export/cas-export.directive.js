@@ -9,8 +9,13 @@ function CasExportController($window, $location, locationHierarchy, locationsSer
     vm.years = [];
     vm.yearsCopy = [];
 
-    vm.selectedLocation = userLocationId;
+    vm.selectedLocations = []
+    vm.userLocationId = userLocationId;
+    vm.selectedLocationId = vm.userLocationId;
     vm.selectedIndicator = null;
+
+    var locationsCache = {};
+    var ALL_OPTION = locationsService.ALL_OPTION;
 
     locationsService.getRootLocations().then(function (data) {
         vm.locations = data.locations;
@@ -24,6 +29,12 @@ function CasExportController($window, $location, locationHierarchy, locationsSer
 
     vm.selectedMonth = now.month() + 1;
     vm.selectedYear = now.year();
+
+    vm.updateSelectedDate = function () {
+        vm.selectedDate = vm.selectedMonth ? new Date(vm.selectedYear, vm.selectedMonth - 1) : new Date();
+    };
+
+    vm.updateSelectedDate();
 
     window.angular.forEach(moment.months(), function (key, value) {
         vm.monthsCopy.push({
@@ -51,19 +62,15 @@ function CasExportController($window, $location, locationHierarchy, locationsSer
         });
     }
     vm.years = vm.yearsCopy;
-    vm.filterOptions = [
-        {label: 'Data not Entered for weight (Unweighed)', id: 'unweighed'},
-        {label: 'Data not Entered for height (Unmeasured)', id: 'umeasured'},
-        {label: 'Severely Underweight', id: 'severely_underweight'},
-        {label: 'Moderately Underweight', id: 'moderately_underweight'},
-        {label: 'Normal (weight-for-age)', id: 'normal_wfa'},
-        {label: 'Severely Stunted', id: 'severely_stunted'},
-        {label: 'Moderately Stunted', id: 'moderately_stunted'},
-        {label: 'Normal (height-for-age)', id: 'normal_hfa'},
-        {label: 'Severely Wasted', id: 'severely_wasted'},
-        {label: 'Moderately Wasted', id: 'moderately_wasted'},
-        {label: 'Normal (weight-for-height)', id: 'normal_wfh'},
-    ];
+
+    var initHierarchy = function() {
+        hierarchyData = locationsService.initHierarchy(locationHierarchy);
+        vm.hierarchy = hierarchyData['hierarchy'];
+        vm.maxLevels = hierarchyData['levels'];
+    };
+
+    initHierarchy();
+    locationsCache = locationsService.initLocations(vm, locationsCache);
 
     vm.indicators = [
         {id: 'child_health_monthly', name: 'Child'},
@@ -72,7 +79,7 @@ function CasExportController($window, $location, locationHierarchy, locationsSer
     ];
 
     vm.allFiltersSelected = function () {
-        return vm.selectedLocation !== null && vm.selectedMonth !== null && vm.selectedYear !== null && vm.selectedIndicator !== null;
+        return vm.selectedLocationId !== null && vm.selectedMonth !== null && vm.selectedYear !== null && vm.selectedIndicator !== null;
     };
 
     vm.onSelectYear = function (year) {
@@ -99,14 +106,36 @@ function CasExportController($window, $location, locationHierarchy, locationsSer
         } else {
             vm.months = vm.monthsCopy;
         }
+        vm.updateSelectedDate();
     };
+
+    vm.onSelectLocation = function (item, level) {
+        return locationsService.onSelectLocation(item, level, locationsCache, vm);
+    };
+
+    vm.isLocationVisible = function (index) {
+        return locationsService.locationTypeIsVisible(vm.selectedLocations, index);
+    };
+
+    vm.getLocationPlaceholder = function (locationTypes) {
+        return locationsService.getLocationPlaceholder(locationTypes, true);
+    };
+
+    vm.getLocationsForLevel = function (level) {
+        return locationsService.getLocations(level, locationsCache, vm.selectedLocations, true);
+    };
+
+    vm.isLocationDisabled = function (level) {
+        return locationsService.isLocationDisabled(level, vm);
+    };
+
     vm.message = false;
 
     vm.submitForm = function (csrfToken) {
         vm.message = false;
         var taskConfig = {
             'csrfmiddlewaretoken': csrfToken,
-            'location': vm.selectedLocation,
+            'location': vm.selectedLocationId,
             'month': vm.selectedMonth,
             'year': vm.selectedYear,
             'indicator': vm.selectedIndicator,
@@ -120,6 +149,9 @@ function CasExportController($window, $location, locationHierarchy, locationsSer
         });
     };
 
+    vm.showReassignmentMessage = function () {
+        return vm.selectedLocation && (Date.parse(vm.selectedLocation.deprecated_at) < vm.selectedDate || Date.parse(vm.selectedLocation.deprecates_at) > vm.selectedDate);
+    };
 }
 
 CasExportController.$inject = ['$window', '$location', 'locationHierarchy', 'locationsService', 'downloadService', 'userLocationId', 'isAlertActive'];

@@ -85,6 +85,7 @@ window.angular.module('icdsApp', [
     // don't leak into mobile
     'ui.bootstrap',  // location directive depends on this
     'datatables', 'datatables.fixedheader', // awc reports depend on these (tabular views)
+    'leaflet-directive',
 ])
     .controller('MainMobileController', MainMobileController)
     .config(['$interpolateProvider', '$routeProvider', function ($interpolateProvider, $routeProvider) {

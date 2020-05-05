@@ -4,7 +4,7 @@ import uuid
 from itertools import chain
 
 import redis
-from contextlib2 import ExitStack
+from contextlib import ExitStack
 from django.db import transaction, DatabaseError
 from lxml import etree
 
@@ -22,7 +22,7 @@ from corehq.form_processor.models import (
     XFormInstanceSQL, CaseTransaction,
     CommCareCaseSQL, FormEditRebuild, Attachment, XFormOperationSQL)
 from corehq.form_processor.utils import convert_xform_to_json, extract_meta_instance_id, extract_meta_user_id
-from corehq.util.datadog.utils import case_load_counter
+from corehq.util.metrics.load_counters import case_load_counter
 from corehq import toggles
 from couchforms.const import ATTACHMENT_NAME
 from dimagi.utils.couch import acquire_lock, release_lock

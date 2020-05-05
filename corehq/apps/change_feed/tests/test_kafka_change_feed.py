@@ -76,7 +76,7 @@ class KafkaCheckpointTest(TestCase):
         publish_stub_change(topics.CASE)
         publish_stub_change(topics.CASE)
         publish_stub_change(topics.CASE_SQL)
-        pillow.process_changes(since=offsets)
+        pillow.process_changes(since=offsets, forever=False)
         self.assertEqual(4, processor.count)
         self.assertEqual(feed.get_current_checkpoint_offsets(), pillow.get_last_checkpoint_sequence())
         publish_stub_change(topics.FORM)
@@ -84,7 +84,7 @@ class KafkaCheckpointTest(TestCase):
         publish_stub_change(topics.CASE)
         publish_stub_change(topics.CASE)
         publish_stub_change(topics.CASE_SQL)
-        pillow.process_changes(pillow.get_last_checkpoint_sequence())
+        pillow.process_changes(pillow.get_last_checkpoint_sequence(), forever=False)
         self.assertEqual(8, processor.count)
         self.assertEqual(feed.get_current_checkpoint_offsets(), pillow.get_last_checkpoint_sequence())
 
@@ -113,7 +113,7 @@ class KafkaCheckpointTest(TestCase):
         publish_stub_change(topics.COMMCARE_USER)
         # the following line causes tests to fail if you have multiple partitions
         current_kafka_offsets[(topics.COMMCARE_USER, 0)] += 1
-        pillow.process_changes(since=original_kafka_offsets)
+        pillow.process_changes(since=original_kafka_offsets, forever=False)
         self.assertEqual(1, processor.count)
         self.assertEqual(feed.get_current_checkpoint_offsets(), current_kafka_offsets)
 

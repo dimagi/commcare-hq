@@ -23,11 +23,10 @@ from dateutil.relativedelta import relativedelta
 
 from couchexport.export import Format
 from couchexport.shortcuts import export_response
-from custom.icds_reports.utils.topojson_util.topojson_util import get_topojson_for_district, get_map_name
+from custom.icds_reports.utils.topojson_util.topojson_util import get_block_topojson_for_state, get_map_name
 from dimagi.utils.dates import add_months, force_to_date
 
 from corehq import toggles
-from corehq.apps.cloudcare.utils import webapps_module
 from corehq.apps.domain.decorators import api_auth, login_and_domain_required
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.hqwebapp.decorators import use_daterangepicker
@@ -35,7 +34,7 @@ from corehq.apps.hqwebapp.views import BugReportView
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import (
     location_safe,
-    user_can_access_location_id,
+    user_can_access_location_id
 )
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions, UserRole
@@ -55,7 +54,6 @@ from custom.icds_reports.const import (
     DASHBOARD_USAGE_EXPORT,
     DEMOGRAPHICS_EXPORT,
     GROWTH_MONITORING_LIST_EXPORT,
-    ICDS_SUPPORT_EMAIL,
     INDIA_TIMEZONE,
     ISSNIP_MONTHLY_REGISTER_PDF,
     LS_REPORT_EXPORT,
@@ -64,13 +62,14 @@ from custom.icds_reports.const import (
     THR_REPORT_EXPORT,
     AggregationLevels,
     LocationTypes,
-    GOVERNANCE_API_PAGE_SIZE,
+    CAS_API_PAGE_SIZE,
     SERVICE_DELIVERY_REPORT
 )
 from custom.icds_reports.dashboard_utils import get_dashboard_template_context
 from custom.icds_reports.models.aggregate import AwcLocation
 from custom.icds_reports.models.helper import IcdsFile
 from custom.icds_reports.models.views import AggAwcDailyView, NICIndicatorsView
+from custom.icds_reports.permissions import can_access_location_data
 from custom.icds_reports.queries import get_cas_data_blob_file
 from custom.icds_reports.reports.adhaar import (
     get_adhaar_data_chart,
@@ -222,11 +221,15 @@ from custom.icds_reports.utils import (
     get_age_filter,
     get_age_filter_in_months,
     get_datatables_ordering_info,
-    get_latest_issue_tracker_build_id,
     get_location_filter,
     get_location_level,
     icds_pre_release_features,
-    india_now)
+    india_now,
+    filter_cas_data_export,
+    get_deprecation_info,
+    get_location_replacement_name,
+    timestamp_string_to_date_string
+)
 from custom.icds_reports.utils.data_accessor import (
     get_awc_covered_data_with_retrying,
     get_inc_indicator_api_data,
@@ -240,9 +243,11 @@ from custom.icds_reports.reports.governance_apis import (
     get_state_names,
     get_cbe_data)
 
+from custom.icds_reports.reports.bihar_api import get_api_demographics_data, get_mother_details,\
+    get_api_vaccine_data, get_api_ag_school_data
 
 from . import const
-from .exceptions import TableauTokenException
+from .exceptions import InvalidLocationTypeException, TableauTokenException
 
 # checks required to view the dashboard
 DASHBOARD_CHECKS = [
@@ -250,7 +255,10 @@ DASHBOARD_CHECKS = [
     require_permission(Permissions.view_report, 'custom.icds_reports.reports.reports.DashboardReport',
                        login_decorator=None),
     login_and_domain_required,
+    can_access_location_data
 ]
+
+DASHBOARD_CHECKS_FOR_TEMPLATE = DASHBOARD_CHECKS[:-1]
 
 
 @location_safe
@@ -335,7 +343,7 @@ def get_tableau_access_token(tableau_user, client_ip):
 
 
 @location_safe
-@method_decorator(DASHBOARD_CHECKS, name='dispatch')
+@method_decorator(DASHBOARD_CHECKS_FOR_TEMPLATE, name='dispatch')
 class DashboardView(TemplateView):
     template_name = 'icds_reports/dashboard.html'
     downtime_template_name = 'icds_reports/dashboard_down.html'
@@ -358,32 +366,15 @@ class DashboardView(TemplateView):
     def couch_user(self):
         return self.request.couch_user
 
-    def _has_helpdesk_role(self):
-        user_roles = UserRole.by_domain(self.domain)
-        helpdesk_roles_id = [
-            role.get_id
-            for role in user_roles
-            if role.name in const.HELPDESK_ROLES
-        ]
-        domain_membership = self.couch_user.get_domain_membership(self.domain)
-        return domain_membership.role_id in helpdesk_roles_id
-
     def get_context_data(self, **kwargs):
         kwargs.update(self.kwargs)
         kwargs.update(get_dashboard_template_context(self.domain, self.couch_user))
         kwargs['is_mobile'] = False
-        if self.couch_user.is_commcare_user() and self._has_helpdesk_role():
-            build_id = get_latest_issue_tracker_build_id()
-            kwargs['report_an_issue_url'] = webapps_module(
-                domain=self.domain,
-                app_id=build_id,
-                module_id=0,
-            )
         return super().get_context_data(**kwargs)
 
 
 @location_safe
-@method_decorator(DASHBOARD_CHECKS, name='dispatch')
+@method_decorator(DASHBOARD_CHECKS_FOR_TEMPLATE, name='dispatch')
 class MobileDashboardDownloadView(TemplateView):
     template_name = 'icds_reports/mobile_dashboard_download.html'
 
@@ -429,6 +420,40 @@ class BaseReportView(View):
         return step, now, month, year, include_test, domain, current_month, prev_month, location, selected_month
 
 
+@location_safe
+class BaseCasAPIView(View):
+
+    def get_valid_query_month(self, month, year):
+        error_message = None
+        try:
+            int_month = int(month)
+            int_year = int(year)
+            valid_query_month = date(int_year, int_month, 1)
+        except (ValueError, TypeError):
+            valid_query_month = None
+            error_message = "Please specify valid month and year"
+
+        return valid_query_month, error_message
+
+    def has_access(self, location_id, user):
+        if user.has_permission(self.kwargs['domain'], 'access_all_locations'):
+            return True
+        if location_id and user_can_access_location_id(self.kwargs['domain'], user, location_id):
+            return True
+        return False
+
+    def query_month_in_range(self, query_month, start_month):
+        in_range = True
+        today = date.today()
+        current_month = today - relativedelta(months=1) if today.day <= 2 else today
+        if query_month > current_month or query_month < start_month:
+            in_range = False
+        return in_range
+
+    def get_state_id_from_state_name(self, state_name):
+        return SQLLocation.objects.get(name=state_name, location_type__name='state').location_id
+
+
 @method_decorator(DASHBOARD_CHECKS, name='dispatch')
 class ProgramSummaryView(BaseReportView):
 
@@ -457,9 +482,7 @@ class TopoJsonView(BaseReportView):
 
     def get(self, request, *args, **kwargs):
         state = request.GET.get('state')
-        district = request.GET.get('district')
-
-        topojson = get_topojson_for_district(state, district)
+        topojson = get_block_topojson_for_state(state)
         data = {'topojson': topojson}
         return JsonResponse(data=data)
 
@@ -576,7 +599,7 @@ class LocationView(View):
                 domain=self.kwargs['domain'],
                 location_id=location_id
             )
-
+            location_list, replacement_names = get_deprecation_info([location], True)
             return JsonResponse({
                 'name': location.name,
                 'map_location_name': get_map_name(location),
@@ -589,6 +612,10 @@ class LocationView(View):
                 'user_have_access_to_parent': location.location_id in parent_ids,
                 'parent_name': location.parent.name if location.parent else None,
                 'parent_map_name': get_map_name(location.parent),
+                'deprecates': get_location_replacement_name(location, 'deprecates', replacement_names),
+                'deprecated_at': timestamp_string_to_date_string(location.metadata.get('deprecated_at')),
+                'deprecated_to': get_location_replacement_name(location, 'deprecated_to', replacement_names),
+                'deprecates_at': timestamp_string_to_date_string(location.metadata.get('deprecates_at')),
             })
 
         parent_id = request.GET.get('parent_id')
@@ -596,7 +623,7 @@ class LocationView(View):
 
         show_test = request.GET.get('include_test', False)
 
-        locations = SQLLocation.objects.accessible_to_user(self.kwargs['domain'], self.request.couch_user)
+        locations = SQLLocation.objects.accessible_to_user(self.kwargs['domain'], self.request.couch_user).select_related('location_type')
         if not parent_id:
             locations = locations.filter(parent_id__isnull=True)
         else:
@@ -609,6 +636,11 @@ class LocationView(View):
             locations = locations.filter(name__iexact=name)
 
         locations = locations.order_by('name')
+
+        if not locations:
+            return JsonResponse(data={'locations': []})
+
+        locations_list, replacement_names = get_deprecation_info(locations, show_test)
         return JsonResponse(data={
             'locations': [
                 {
@@ -620,9 +652,13 @@ class LocationView(View):
                         self.kwargs['domain'],
                         request.couch_user, loc.location_id
                     ),
-                    'user_have_access_to_parent': loc.location_id in parent_ids
+                    'user_have_access_to_parent': loc.location_id in parent_ids,
+                    'deprecates': get_location_replacement_name(loc, 'deprecates', replacement_names),
+                    'deprecated_at': timestamp_string_to_date_string(loc.metadata.get('deprecated_at')),
+                    'deprecated_to': get_location_replacement_name(loc, 'deprecated_to', replacement_names),
+                    'deprecates_at': timestamp_string_to_date_string(loc.metadata.get('deprecates_at')),
                 }
-                for loc in locations if show_test or loc.metadata.get('is_test_location', 'real') != 'test'
+                for loc in locations_list
             ]
         })
 
@@ -646,7 +682,8 @@ class LocationAncestorsView(View):
         ).filter(
             ~Q(pk__in=parent_ids) & (Q(parent_id__in=parent_ids) | Q(parent_id__isnull=True))
         ).select_related('parent').distinct().order_by('name')
-
+        all_locations = list(OrderedDict.fromkeys(list(locations) + list(parents)))
+        location_list, replacement_names = get_deprecation_info(all_locations, show_test, True)
         return JsonResponse(data={
             'locations': [
                 {
@@ -658,10 +695,13 @@ class LocationAncestorsView(View):
                         self.kwargs['domain'],
                         request.couch_user, location.location_id
                     ),
-                    'user_have_access_to_parent': location.location_id in parent_locations_ids
+                    'user_have_access_to_parent': location.location_id in parent_locations_ids,
+                    'deprecates': get_location_replacement_name(location, 'deprecates', replacement_names),
+                    'deprecated_at': timestamp_string_to_date_string(location.metadata.get('deprecated_at')),
+                    'deprecated_to': get_location_replacement_name(location, 'deprecated_to', replacement_names),
+                    'deprecates_at': timestamp_string_to_date_string(location.metadata.get('deprecates_at')),
                 }
-                for location in list(OrderedDict.fromkeys(list(locations) + list(parents)))
-                if show_test or location.metadata.get('is_test_location', 'real') != 'test'
+                for location in location_list
             ],
             'selected_location': {
                 'location_type_name': selected_location.location_type_name,
@@ -672,7 +712,11 @@ class LocationAncestorsView(View):
                     self.kwargs['domain'],
                     request.couch_user, selected_location.location_id
                 ),
-                'user_have_access_to_parent': selected_location.location_id in parent_locations_ids
+                'user_have_access_to_parent': selected_location.location_id in parent_locations_ids,
+                'deprecates': get_location_replacement_name(selected_location, 'deprecates', replacement_names),
+                'deprecated_at': timestamp_string_to_date_string(selected_location.metadata.get('deprecated_at')),
+                'deprecated_to': get_location_replacement_name(selected_location, 'deprecated_to', replacement_names),
+                'deprecates_at': timestamp_string_to_date_string(selected_location.metadata.get('deprecates_at')),
             }
         })
 
@@ -973,7 +1017,7 @@ class ExportIndicatorView(View):
 @method_decorator(DASHBOARD_CHECKS, name='dispatch')
 class FactSheetsView(BaseReportView):
     def get(self, request, *args, **kwargs):
-        step, now, month, year, include_test, domain, current_month, prev_month, location, selected_month = \
+        step, now, month, year, include_test, domain, current_month, prev_month, location_id, selected_month = \
             self.get_settings(request, *args, **kwargs)
 
         aggregation_level = 1
@@ -990,7 +1034,7 @@ class FactSheetsView(BaseReportView):
             'domain': domain
         }
 
-        config.update(get_location_filter(location, domain))
+        config.update(get_location_filter(location_id, domain, include_object=True))
 
         # query database at same level for which it is requested
         if config.get('aggregation_level') > 1:
@@ -1846,12 +1890,6 @@ class AggregationScriptPage(BaseDomainView):
         return redirect(self.urlname, domain=self.domain)
 
 
-class ICDSBugReportView(BugReportView):
-    @property
-    def recipients(self):
-        return [ICDS_SUPPORT_EMAIL]
-
-
 @location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class DownloadExportReport(View):
@@ -1958,7 +1996,7 @@ class InactiveDashboardUsers(View):
 
 
 @location_safe
-class DishaAPIView(View):
+class DishaAPIView(BaseCasAPIView):
 
     def message(self, message_name):
         state_names = ", ".join(self.valid_state_names)
@@ -1971,25 +2009,25 @@ class DishaAPIView(View):
 
     @method_decorator([api_auth, toggles.ICDS_DISHA_API.required_decorator()])
     def get(self, request, *args, **kwargs):
-        try:
-            month = int(request.GET.get('month'))
-            year = int(request.GET.get('year'))
-        except (ValueError, TypeError):
+
+        valid_query_month, error_message = self.get_valid_query_month(request.GET.get('month'),
+                                                                      request.GET.get('year'))
+
+        if error_message:
             return JsonResponse(self.message('missing_date'), status=400)
 
         # Can return only one month old data if today is after 5th, otherwise
         #   can return two month's old data
-        query_month = date(year, month, 1)
         today = date.today()
         current_month = today - relativedelta(months=1) if today.day <= 5 else today
-        if query_month > current_month or query_month < date(2018, 6, 1):
+        if valid_query_month > current_month or valid_query_month < date(2017, 1, 1):
             return JsonResponse(self.message('invalid_month'), status=400)
 
         state_name = self.request.GET.get('state_name')
         if state_name not in self.valid_state_names:
             return JsonResponse(self.message('invalid_state'), status=400)
 
-        dump = DishaDump(state_name, query_month)
+        dump = DishaDump(state_name, valid_query_month)
         return dump.get_export_as_http_response(request)
 
     @property
@@ -2060,23 +2098,40 @@ class DailyIndicators(View):
 class CasDataExport(View):
     def post(self, request, *args, **kwargs):
         data_type = request.POST.get('indicator', None)
-        state_id = request.POST.get('location', None)
+        location_id = request.POST.get('location', None)
         month = int(request.POST.get('month', None))
         year = int(request.POST.get('year', None))
         selected_date = date(year, month, 1).strftime('%Y-%m-%d')
 
-        if state_id and not user_can_access_location_id(
-                self.kwargs['domain'], request.couch_user, state_id
+        if location_id and not user_can_access_location_id(
+                self.kwargs['domain'], request.couch_user, location_id
         ):
             return JsonResponse({"message": "Sorry, you do not have access to that location."})
 
-        sync, _ = get_cas_data_blob_file(data_type, state_id, selected_date)
+        location = SQLLocation.objects.select_related('location_type').get(location_id=location_id)
+        state = location
+        while not state.location_type.name == 'state':
+            state = state.parent
+        sync, blob_id = get_cas_data_blob_file(data_type, state.location_id, selected_date)
         if not sync:
             return JsonResponse({"message": "Sorry, the export you requested does not exist."})
         else:
+            if state != location:
+                # check for cached version
+                cached_sync, blob_id = get_cas_data_blob_file(data_type, location_id, selected_date)
+                if not cached_sync:
+                    try:
+                        export_file = filter_cas_data_export(sync, location)
+                    except InvalidLocationTypeException as e:
+                        return JsonResponse({"message": e})
+                    with open(export_file, 'rb') as csv_file:
+                        blob_id = f'{data_type}-{location_id}-{selected_date}'
+                        THREE_DAYS = 60 * 60 * 24 * 3
+                        icds_file, new = IcdsFile.objects.get_or_create(blob_id=blob_id, data_type=f'mbt_{data_type}')
+                        icds_file.store_file_in_blobdb(csv_file, expired=THREE_DAYS)
             params = dict(
                 indicator=data_type,
-                location=state_id,
+                location=location_id,
                 month=month,
                 year=year
             )
@@ -2093,19 +2148,19 @@ class CasDataExport(View):
 
     def get(self, request, *args, **kwargs):
         data_type = request.GET.get('indicator', None)
-        state_id = request.GET.get('location', None)
+        location_id = request.GET.get('location', None)
         month = int(request.GET.get('month', None))
         year = int(request.GET.get('year', None))
         selected_date = date(year, month, 1).strftime('%Y-%m-%d')
 
-        if state_id and not user_can_access_location_id(
-                self.kwargs['domain'], request.couch_user, state_id
+        if location_id and not user_can_access_location_id(
+                self.kwargs['domain'], request.couch_user, location_id
         ):
             return HttpResponse(status_code=403)
-        sync, blob_id = get_cas_data_blob_file(data_type, state_id, selected_date)
-
+        sync, csv_name = get_cas_data_blob_file(data_type, location_id, selected_date)
+        data = sync.get_file_from_blobdb()
         try:
-            return export_response(sync.get_file_from_blobdb(), 'unzipped-csv', blob_id)
+            return export_response(data, 'unzipped-csv', csv_name)
         except NotFound:
             raise Http404
 
@@ -2225,7 +2280,7 @@ class GovernanceAPIBaseView(View):
             state_id = GovernanceAPIBaseView.get_state_id_from_state_site_code(state_site_code)
 
         last_awc_id = request.GET.get('last_awc_id', '')
-        return  last_awc_id, month, year, state_id
+        return last_awc_id, month, year, state_id
 
     def validate_param(self, state_id, month, year):
         selected_month = date(year, month, 1)
@@ -2260,7 +2315,7 @@ class GovernanceHomeVisitAPI(GovernanceAPIBaseView):
         order = ['awc_id']
 
         data, count = get_home_visit_data(
-            GOVERNANCE_API_PAGE_SIZE,
+            CAS_API_PAGE_SIZE,
             year,
             month,
             order,
@@ -2294,7 +2349,7 @@ class GovernanceBeneficiaryAPI(GovernanceAPIBaseView):
         order = ['awc_id']
 
         data, count = get_beneficiary_data(
-            GOVERNANCE_API_PAGE_SIZE,
+            CAS_API_PAGE_SIZE,
             year,
             month,
             order,
@@ -2332,7 +2387,7 @@ class GovernanceVHNDSAPI(GovernanceAPIBaseView):
         order = ['awc_id']
         if state_id is not None:
             query_filters['state_id'] = state_id
-        data, count = get_vhnd_data(GOVERNANCE_API_PAGE_SIZE, year,
+        data, count = get_vhnd_data(CAS_API_PAGE_SIZE, year,
                                     month, order, query_filters)
         response_json = {
             'data': data,
@@ -2362,7 +2417,7 @@ class GovernanceCBEAPI(GovernanceAPIBaseView):
         order = ['awc_id']
 
         data, count = get_cbe_data(
-            GOVERNANCE_API_PAGE_SIZE,
+            CAS_API_PAGE_SIZE,
             year,
             month,
             order,
@@ -2378,4 +2433,173 @@ class GovernanceCBEAPI(GovernanceAPIBaseView):
                 'timestamp': india_now()
             }
         }
+        return JsonResponse(data=response_json)
+
+
+@location_safe
+@method_decorator([api_auth, toggles.ICDS_BIHAR_DEMOGRAPHICS_API.required_decorator()], name='dispatch')
+class BiharDemographicsAPI(BaseCasAPIView):
+    def message(self, message_name):
+        error_messages = {
+            "invalid_month": "Please specify a valid month. Month can't be in future and before Jan 2020",
+            "access_denied": "You are not authorised to access this location"
+        }
+        return {"message": error_messages[message_name]}
+
+    def get(self, request, *args, **kwargs):
+
+        last_person_case_id = request.GET.get('last_person_case_id', '')
+
+        valid_query_month, error_message = self.get_valid_query_month(request.GET.get('month'),
+                                                                      request.GET.get('year'))
+        bihar_state_id = self.get_state_id_from_state_name('Bihar')
+        if error_message:
+            return JsonResponse({"message": error_message}, status=400)
+
+        if not self.query_month_in_range(valid_query_month, start_month=date(2020, 1, 1)):
+            return JsonResponse(self.message('invalid_month'), status=400)
+
+        if not self.has_access(bihar_state_id, request.couch_user):
+            return JsonResponse(self.message('access_denied'), status=403)
+
+        demographics_data, total_count = get_api_demographics_data(valid_query_month.strftime("%Y-%m-%d"),
+                                                                   bihar_state_id,
+                                                                   last_person_case_id)
+        response_json = {
+            'data': demographics_data,
+            'metadata': {
+                'month': valid_query_month.month,
+                'year': valid_query_month.year,
+                'total_count': total_count,
+                'timestamp': india_now()
+            }
+        }
+
+        return JsonResponse(data=response_json)
+
+
+@location_safe
+@method_decorator([api_auth, toggles.ICDS_BIHAR_DEMOGRAPHICS_API.required_decorator()], name='dispatch')
+class BiharVaccinesAPI(BaseCasAPIView):
+    def message(self, message_name):
+        error_messages = {
+            "invalid_month": "Please specify a valid month. Month can't be in future and before Jan 2020",
+            "access_denied": "You are not authorised to access this location"
+        }
+        return {"message": error_messages[message_name]}
+
+    def get(self, request, *args, **kwargs):
+
+        last_person_case_id = request.GET.get('last_person_case_id', '')
+
+        valid_query_month, error_message = self.get_valid_query_month(request.GET.get('month'),
+                                                                      request.GET.get('year'))
+        bihar_state_id = self.get_state_id_from_state_name('Bihar')
+        if error_message:
+            return JsonResponse({"message": error_message}, status=400)
+
+        if not self.query_month_in_range(valid_query_month, start_month=date(2020, 1, 1)):
+            return JsonResponse(self.message('invalid_month'), status=400)
+
+        if not self.has_access(bihar_state_id, request.couch_user):
+            return JsonResponse(self.message('access_denied'), status=403)
+
+        vaccines_data, total_count = get_api_vaccine_data(valid_query_month.strftime("%Y-%m-%d"),
+                                                          bihar_state_id,
+                                                          last_person_case_id)
+        response_json = {
+            'data': vaccines_data,
+            'metadata': {
+                'month': valid_query_month.month,
+                'year': valid_query_month.year,
+                'total_count': total_count,
+                'timestamp': india_now()
+            }
+        }
+
+        return JsonResponse(data=response_json)
+
+@location_safe
+@method_decorator([api_auth, toggles.ICDS_BIHAR_DEMOGRAPHICS_API.required_decorator()], name='dispatch')
+class BiharSchoolAPI(BaseCasAPIView):
+    def message(self, message_name):
+        error_messages = {
+            "invalid_month": "Please specify a valid month. Month can't be in future and before Jan 2020",
+            "access_denied": "You are not authorised to access this location"
+        }
+        return {"message": error_messages[message_name]}
+
+    def get(self, request, *args, **kwargs):
+
+        last_person_case_id = request.GET.get('last_person_case_id', '')
+
+        valid_query_month, error_message = self.get_valid_query_month(request.GET.get('month'),
+                                                                      request.GET.get('year'))
+        bihar_state_id = self.get_state_id_from_state_name('Bihar')
+
+        if error_message:
+            return JsonResponse({"message": error_message}, status=400)
+
+        if not self.query_month_in_range(valid_query_month, start_month=date(2020, 1, 1)):
+            return JsonResponse(self.message('invalid_month'), status=400)
+
+        if not self.has_access(bihar_state_id, request.couch_user):
+            return JsonResponse(self.message('access_denied'), status=403)
+
+        school_data, total_count = get_api_ag_school_data(valid_query_month.strftime("%Y-%m-%d"),
+                                                          bihar_state_id,
+                                                          last_person_case_id)
+        response_json = {
+            'data': school_data,
+            'metadata': {
+                'month': valid_query_month.month,
+                'year': valid_query_month.year,
+                'total_count': total_count,
+                'timestamp': india_now()
+            }
+        }
+
+        return JsonResponse(data=response_json)
+
+
+@location_safe
+@method_decorator([api_auth, toggles.ICDS_BIHAR_DEMOGRAPHICS_API.required_decorator()], name='dispatch')
+class BiharMotherDetailsAPI(BaseCasAPIView):
+    def message(self, message_name):
+        error_messages = {
+            "invalid_month": "Please specify a valid month. Month can't be in future and before Jan 2020",
+            "access_denied": "You are not authorised to access this location"
+        }
+        return {"message": error_messages[message_name]}
+
+    def get(self, request, *args, **kwargs):
+
+        last_ccs_case_id = request.GET.get('last_ccs_case_id', '')
+
+        valid_query_month, error_message = self.get_valid_query_month(request.GET.get('month'),
+                                                                      request.GET.get('year'))
+        bihar_state_id = self.get_state_id_from_state_name('Bihar')
+
+        if error_message:
+            return JsonResponse({"message": error_message}, status=400)
+
+        if not self.query_month_in_range(valid_query_month, start_month=date(2020, 1, 1)):
+            return JsonResponse(self.message('invalid_month'), status=400)
+
+        if not self.has_access(bihar_state_id, request.couch_user):
+            return JsonResponse(self.message('access_denied'), status=403)
+
+        demographics_data, total_count = get_mother_details(valid_query_month.strftime("%Y-%m-%d"),
+                                                            bihar_state_id,
+                                                            last_ccs_case_id)
+        response_json = {
+            'data': demographics_data,
+            'metadata': {
+                'month': valid_query_month.month,
+                'year': valid_query_month.year,
+                'total_count': total_count,
+                'timestamp': india_now()
+            }
+        }
+
         return JsonResponse(data=response_json)

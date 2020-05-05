@@ -67,7 +67,7 @@ class CaseSearchPillowTest(TestCase):
         with patch('corehq.pillows.case_search.domain_needs_search_index',
                    new=MagicMock(return_value=True)) as fake_case_search_enabled_for_domain:
             # send to elasticsearch
-            self.pillow.process_changes(since=kafka_seq)
+            self.pillow.process_changes(since=kafka_seq, forever=False)
             fake_case_search_enabled_for_domain.assert_called_with(self.domain)
 
         self._assert_case_in_es(self.domain, case)
@@ -131,7 +131,7 @@ class CaseSearchPillowTest(TestCase):
         with patch('corehq.pillows.case_search.domain_needs_search_index',
                    new=MagicMock(return_value=True)) as fake_case_search_enabled_for_domain:
             # send to elasticsearch
-            self.pillow.process_changes(since=kafka_seq)
+            self.pillow.process_changes(since=kafka_seq, forever=False)
             fake_case_search_enabled_for_domain.assert_called_with(self.domain)
 
         self._assert_case_in_es(self.domain, case)

@@ -136,7 +136,7 @@ class SqlSMSPillowTest(TestCase):
 
         # send to elasticsearch
         sms_pillow = get_sql_sms_pillow('SqlSMSPillow')
-        sms_pillow.process_changes(since=kafka_seq)
+        sms_pillow.process_changes(since=kafka_seq, forever=False)
         self.elasticsearch.indices.refresh(SMS_INDEX_INFO.index)
 
         # confirm change made it to elasticserach

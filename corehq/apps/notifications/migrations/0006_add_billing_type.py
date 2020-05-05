@@ -11,6 +11,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='notification',
             name='type',
-            field=models.CharField(max_length=10, choices=[(b'billing', b'Billing Notification'), (b'info', b'Product Notification'), (b'alert', b'Maintenance Notification')]),
+            field=models.CharField(max_length=10, choices=[('billing', 'Billing Notification'), ('info', 'Product Notification'), ('alert', 'Maintenance Notification')]),
         ),
     ]

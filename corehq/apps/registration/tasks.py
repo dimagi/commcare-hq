@@ -8,7 +8,7 @@ from django.utils.translation import ugettext
 from celery.schedules import crontab
 from celery.task import periodic_task, task
 
-from dimagi.utils.web import get_site_domain
+from dimagi.utils.web import get_site_domain, get_static_url_prefix
 
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.registration.models import RegistrationRequest
@@ -25,18 +25,16 @@ def activation_24hr_reminder_email():
     """
     request_reminders = RegistrationRequest.get_requests_24hrs_ago()
 
-    DNS_name = get_site_domain()
-
     for request in request_reminders:
         user = WebUser.get_by_username(request.new_user_username)
-        registration_link = 'http://' + DNS_name + reverse(
+        registration_link = 'http://' + get_site_domain() + reverse(
             'registration_confirm_domain') + request.activation_guid + '/'
         email_context = {
             "domain": request.domain,
             "registration_link": registration_link,
             "full_name": user.full_name,
             "first_name": user.first_name,
-            'url_prefix': '' if settings.STATIC_CDN else 'http://' + DNS_name,
+            'url_prefix': get_static_url_prefix(),
         }
 
         message_plaintext = render_to_string(
@@ -59,8 +57,7 @@ PRICING_LINK = 'https://www.commcarehq.org/pricing'
 
 @task(serializer='pickle', queue="email_queue")
 def send_domain_registration_email(recipient, domain_name, guid, full_name, first_name):
-    DNS_name = get_site_domain()
-    registration_link = 'http://' + DNS_name + reverse('registration_confirm_domain') + guid + '/'
+    registration_link = 'http://' + get_site_domain() + reverse('registration_confirm_domain') + guid + '/'
     params = {
         "domain": domain_name,
         "pricing_link": PRICING_LINK,
@@ -69,7 +66,7 @@ def send_domain_registration_email(recipient, domain_name, guid, full_name, firs
         "first_name": first_name,
         "forum_link": FORUM_LINK,
         "wiki_link": WIKI_LINK,
-        'url_prefix': '' if settings.STATIC_CDN else 'http://' + DNS_name,
+        'url_prefix': get_static_url_prefix(),
     }
     message_plaintext = render_to_string('registration/email/confirm_account.txt', params)
     message_html = render_to_string('registration/email/confirm_account.html', params)

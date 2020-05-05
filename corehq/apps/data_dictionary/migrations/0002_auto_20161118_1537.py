@@ -11,12 +11,12 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='casetype',
             name='description',
-            field=models.TextField(default=b''),
+            field=models.TextField(default=''),
         ),
         migrations.AlterField(
             model_name='caseproperty',
             name='description',
-            field=models.TextField(default=b''),
+            field=models.TextField(default=''),
         ),
         migrations.AlterField(
             model_name='caseproperty',
@@ -26,7 +26,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='caseproperty',
             name='type',
-            field=models.CharField(default=b'', max_length=20, choices=[(b'date', b'Date'), (b'plain', b'Plain'), (b'number', b'Number'), (b'select', b'Select'), (b'integer', b'Integer'), (b'', b'No Type Currently Selected')]),
+            field=models.CharField(default='', max_length=20, choices=[('date', 'Date'), ('plain', 'Plain'), ('number', 'Number'), ('select', 'Select'), ('integer', 'Integer'), ('', 'No Type Currently Selected')]),
         ),
         migrations.AlterField(
             model_name='casetype',

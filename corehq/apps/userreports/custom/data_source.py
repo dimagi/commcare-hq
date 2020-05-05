@@ -51,7 +51,7 @@ class ConfigurableReportCustomDataSource(ConfigurableReportDataSourceMixin, Repo
 
     @method_decorator(catch_and_raise_exceptions)
     def get_query_strings(self):
-        return str(self._provider.get_select_query())
+        return [str(self._provider.get_select_query())]
 
     @method_decorator(catch_and_raise_exceptions)
     def get_total_records(self):

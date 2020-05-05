@@ -69,11 +69,13 @@ That's it, you're done!
 """
 import json
 import os
+import shutil
 import traceback
+from abc import ABC
 from base64 import b64encode
 from contextlib import contextmanager
 from datetime import timedelta
-from tempfile import mkdtemp
+from tempfile import mkdtemp, NamedTemporaryFile
 
 import gevent
 from django.conf import settings
@@ -82,7 +84,7 @@ from gevent.queue import LifoQueue
 from django.db.models import Q
 
 from corehq.apps.domain import SHARED_DOMAIN
-from corehq.blobs import get_blob_db
+from corehq.blobs import get_blob_db, CODES
 from corehq.blobs.exceptions import NotFound
 from corehq.blobs.migrate_metadata import migrate_metadata
 from corehq.blobs.migratingdb import MigratingBlobDB
@@ -125,7 +127,7 @@ retry the migration.
 """
 
 PROCESSING_COMPLETE_MESSAGE = """
-{} of {} blobs were not found in the old blob database. It
+{} of {} blobs were not found in the blob database. It
 is possible that some blobs were deleted as part of normal
 operation during the migration if the migration took a long
 time. However, it may be cause for concern if a majority of
@@ -240,7 +242,7 @@ class SharedCouchAttachmentMigrator(CouchAttachmentMigrator):
     shared_domain = True
 
 
-class BlobDbBackendMigrator(BaseDocMigrator):
+class BlobDbMigrator(BaseDocMigrator, ABC):
     """Migrate blobs from one blob db to another
 
     The backup log for this migrator will contain one JSON object
@@ -248,26 +250,10 @@ class BlobDbBackendMigrator(BaseDocMigrator):
     """
 
     def __init__(self, *args, **kw):
-        super(BlobDbBackendMigrator, self).__init__(*args, **kw)
+        super(BlobDbMigrator, self).__init__(*args, **kw)
         self.db = get_blob_db()
         self.total_blobs = 0
         self.not_found = 0
-        if not isinstance(self.db, MigratingBlobDB):
-            raise MigrationError(
-                "Expected to find migrating blob db backend (got %r)" % self.db)
-
-    def migrate(self, doc):
-        meta = doc["_obj_not_json"]
-        self.total_blobs += 1
-        try:
-            content = self.db.old_db.get(key=meta.key)
-        except NotFound:
-            if not self.db.new_db.exists(key=meta.key):
-                self.save_backup(doc)
-        else:
-            with content:
-                self.db.copy_blob(content, key=meta.key)
-        return True
 
     def save_backup(self, doc, error="not found"):
         meta = doc["_obj_not_json"]
@@ -282,12 +268,33 @@ class BlobDbBackendMigrator(BaseDocMigrator):
         self.not_found += 1
 
     def processing_complete(self):
-        super(BlobDbBackendMigrator, self).processing_complete()
+        super(BlobDbMigrator, self).processing_complete()
         if self.not_found:
             print(PROCESSING_COMPLETE_MESSAGE.format(self.not_found, self.total_blobs))
             if self.dirpath is None:
                 print("Missing blob ids have been written in the log file:")
                 print(self.filename)
+
+
+class BlobDbBackendMigrator(BlobDbMigrator):
+    def __init__(self, *args, **kw):
+        super(BlobDbBackendMigrator, self).__init__(*args, **kw)
+        if not isinstance(self.db, MigratingBlobDB):
+            raise MigrationError(
+                "Expected to find migrating blob db backend (got %r)" % self.db)
+
+    def migrate(self, doc):
+        meta = doc["_obj_not_json"]
+        self.total_blobs += 1
+        try:
+            content = meta.open(db=self.db.old_db)
+        except NotFound:
+            if not self.db.new_db.exists(key=meta.key):
+                self.save_backup(doc)
+        else:
+            with content:
+                self.db.copy_blob(content, key=meta.key)
+        return True
 
 
 class BlobDbBackendCheckMigrator(BlobDbBackendMigrator):
@@ -305,11 +312,35 @@ class BlobDbBackendCheckMigrator(BlobDbBackendMigrator):
         return True
 
 
+class BlobDBCompressionMigrator(BlobDbMigrator):
+    def migrate(self, doc):
+        meta = doc["_obj_not_json"]
+        if meta.type_code != CODES.form_xml or meta.is_compressed:
+            return True
+        self.total_blobs += 1
+        try:
+            content = meta.open()
+        except NotFound:
+            self.save_backup(doc)
+        else:
+            with content, NamedTemporaryFile() as buffer:
+                shutil.copyfileobj(content, buffer)
+                buffer.seek(0)
+                meta.compressed_length = -1
+                self.db.put(buffer, meta=meta)
+        return True
+
+
 class BlobMetaReindexAccessor(ReindexAccessor):
 
     model_class = BlobMeta
     id_field = 'id'
     date_range = None
+    domain = None
+
+    def __init__(self, limit_db_aliases=None, type_code=None):
+        super().__init__(limit_db_aliases)
+        self.type_code = type_code
 
     def get_doc(self, *args, **kw):
         # only used for retries; BlobDbBackendMigrator doesn't retry
@@ -333,6 +364,10 @@ class BlobMetaReindexAccessor(ReindexAccessor):
             if end_date is not None:
                 one_day = timedelta(days=1)
                 filters.append(Q(created_on__lt=end_date + one_day))
+        if self.domain is not None:
+            filters.append(Q(domain=self.domain))
+        if self.type_code is not None:
+            filters.append(Q(type_code=self.type_code))
         return filters
 
     def load(self, key):
@@ -364,10 +399,11 @@ class Migrator(object):
         self.get_type_code = get_type_code
 
     def migrate(self, filename=None, reset=False, max_retry=2, chunk_size=100, **kw):
-        if 'date_range' in kw:
-            doc_provider = self.get_document_provider(date_range=kw['date_range'])
-        else:
-            doc_provider = self.get_document_provider()
+        provider_kwargs = {}
+        for kwarg in ('date_range', 'domain'):
+            if kwarg in kw:
+                provider_kwargs[kwarg] = kw.pop(kwarg)
+        doc_provider = self.get_document_provider(**provider_kwargs)
         iterable = doc_provider.get_document_iterator(chunk_size)
         progress = ProgressManager(
             iterable,
@@ -414,23 +450,26 @@ class BackendMigrator(Migrator):
 
     has_worker_pool = True
 
-    def __init__(self, slug, doc_migrator_class):
-        reindexer = BlobMetaReindexAccessor()
+    def __init__(self, slug, doc_migrator_class, type_code=None):
+        reindexer = BlobMetaReindexAccessor(type_code=type_code)
         types = [reindexer.model_class]
         assert not hasattr(types[0], "get_db"), types[0]  # not a couch model
         super(BackendMigrator, self).__init__(slug, types, doc_migrator_class)
         self.reindexer = reindexer
 
-    def get_doc_migrator(self, filename, date_range=None, **kw):
+    def get_doc_migrator(self, filename, **kw):
         migrator = super(BackendMigrator, self).get_doc_migrator(filename)
         return _migrator_with_worker_pool(migrator, self.reindexer, **kw)
 
-    def get_document_provider(self, date_range=None):
+    def get_document_provider(self, date_range=None, domain=None):
         iteration_key = self.iteration_key
         if date_range:
             (start, end) = date_range
             self.reindexer.date_range = date_range
-            iteration_key = '{}-{}-{}'.format(self.iteration_key, start, end)
+            iteration_key = f'{iteration_key}-{start}-{end}'
+        if domain:
+            self.reindexer.domain = domain
+            iteration_key = f'{iteration_key}-{domain}'
         return SqlDocumentProvider(iteration_key, self.reindexer)
 
 
@@ -500,9 +539,10 @@ def _migrator_with_worker_pool(migrator, reindexer, iterable, max_retry, num_wor
                 print("done.")
 
 
-MIGRATIONS = {m.slug: m for m in [
-    BackendMigrator("migrate_backend", BlobDbBackendMigrator),
-    BackendMigrator("migrate_backend_check", BlobDbBackendCheckMigrator),
+MIGRATIONS = {m().slug: m for m in [
+    lambda: BackendMigrator("migrate_backend", BlobDbBackendMigrator),
+    lambda: BackendMigrator("migrate_backend_check", BlobDbBackendCheckMigrator),
+    lambda: BackendMigrator("compress_form_xml", BlobDBCompressionMigrator, type_code=CODES.form_xml),
     migrate_metadata,
     # Kept for reference when writing new migrations.
     # Migrator("applications", [
@@ -535,7 +575,7 @@ def assert_migration_complete(slug):
         except BlobMigrationState.DoesNotExist:
             pass
 
-        migrator = MIGRATIONS[slug]
+        migrator = MIGRATIONS[slug]()
         total = 0
         for doc_type, model_class in doc_type_tuples_to_dict(migrator.doc_types).items():
             total += get_doc_count_by_type(model_class.get_db(), doc_type)

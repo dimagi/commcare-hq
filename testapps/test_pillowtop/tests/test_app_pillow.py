@@ -50,7 +50,7 @@ class AppPillowTest(TestCase):
         app = self._create_app(app_name)
 
         app_db_pillow = get_application_db_kafka_pillow('test_app_db_pillow')
-        app_db_pillow.process_changes(couch_seq)
+        app_db_pillow.process_changes(couch_seq, forever=False)
 
         # confirm change made it to kafka
         message = next(consumer)
@@ -60,7 +60,7 @@ class AppPillowTest(TestCase):
 
         # send to elasticsearch
         app_pillow = get_app_to_elasticsearch_pillow()
-        app_pillow.process_changes(since=kafka_seq)
+        app_pillow.process_changes(since=kafka_seq, forever=False)
         self.es.indices.refresh(APP_INDEX_INFO.index)
 
         # confirm change made it to elasticserach
@@ -83,9 +83,9 @@ class AppPillowTest(TestCase):
 
     def refresh_elasticsearch(self, kafka_seq, couch_seq):
         app_db_pillow = get_application_db_kafka_pillow('test_app_db_pillow')
-        app_db_pillow.process_changes(couch_seq)
+        app_db_pillow.process_changes(couch_seq, forever=False)
         app_pillow = get_app_to_elasticsearch_pillow()
-        app_pillow.process_changes(since=kafka_seq)
+        app_pillow.process_changes(since=kafka_seq, forever=False)
         self.es.indices.refresh(APP_INDEX_INFO.index)
 
     @patch.object(Application, 'validate_app', list)
@@ -129,7 +129,7 @@ class AppPillowTest(TestCase):
 
         app = self._create_app('test_hard_deleted_app', cleanup=False)
         app_db_pillow = get_application_db_kafka_pillow('test_app_db_pillow')
-        app_db_pillow.process_changes(couch_seq)
+        app_db_pillow.process_changes(couch_seq, forever=False)
 
         # confirm change made it to kafka
         message = next(consumer)
@@ -139,7 +139,7 @@ class AppPillowTest(TestCase):
 
         # send to elasticsearch
         app_pillow = get_app_to_elasticsearch_pillow()
-        app_pillow.process_changes(since=kafka_seq)
+        app_pillow.process_changes(since=kafka_seq, forever=False)
         self.es.indices.refresh(APP_INDEX_INFO.index)
 
         # confirm change made it to elasticserach
@@ -150,14 +150,14 @@ class AppPillowTest(TestCase):
         kafka_seq = get_topic_offset(topics.APP)
 
         app.delete()
-        app_db_pillow.process_changes(couch_seq)
+        app_db_pillow.process_changes(couch_seq, forever=False)
 
         # confirm change made it to kafka. Would raise StopIteration otherwise
         next(consumer)
 
         # send to elasticsearch
         app_pillow = get_app_to_elasticsearch_pillow()
-        app_pillow.process_changes(since=kafka_seq)
+        app_pillow.process_changes(since=kafka_seq, forever=False)
         self.es.indices.refresh(APP_INDEX_INFO.index)
 
         # confirm deletion made it to elasticserach

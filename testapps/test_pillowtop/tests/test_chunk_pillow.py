@@ -47,19 +47,19 @@ class ChunkedPorcessingTest(TestCase):
         self._produce_changes(2)
         # pillow should use process_changes_chunk (make process_change raise an exception for test)
         processor.process_change = MagicMock(side_effect=Exception('_'))
-        pillow.process_changes(since=since)
+        pillow.process_changes(since=since, forever=False)
         self.assertEqual(processor.count, 2)
 
         self._produce_changes(2)
         # if process_changes_chunk raises exception, pillow should use process_change
         processor.process_change = original_process_change
         processor.process_changes_chunk = MagicMock(side_effect=Exception('_'))
-        pillow.process_changes(since=pillow.get_last_checkpoint_sequence())
+        pillow.process_changes(since=pillow.get_last_checkpoint_sequence(), forever=False)
         self.assertEqual(processor.count, 4)
 
         self._produce_changes(1)
         # offsets after full chunk should still be processed
         processor.process_change = MagicMock(side_effect=Exception('_'))
         processor.process_changes_chunk = original_process_changes_chunk
-        pillow.process_changes(since=pillow.get_last_checkpoint_sequence())
+        pillow.process_changes(since=pillow.get_last_checkpoint_sequence(), forever=False)
         self.assertEqual(processor.count, 5)

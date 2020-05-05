@@ -1,8 +1,4 @@
-import json
-from urllib.parse import SplitResult
-
-import urllib3
-from django.http import Http404, HttpResponse
+from django.http import Http404, HttpResponse, JsonResponse
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.decorators import method_decorator
@@ -12,14 +8,20 @@ from django.views.decorators.http import require_POST
 from django.views.generic import View
 
 import pytz
+import six.moves.urllib.error
+import six.moves.urllib.parse
+import six.moves.urllib.request
 from couchdbkit import ResourceNotFound
 from memoized import memoized
 
-from corehq.apps.accounting.decorators import requires_privilege_with_fallback
-from corehq.apps.data_interfaces.tasks import task_operate_on_payloads, task_generate_ids_and_operate_on_payloads
-from dimagi.utils.web import json_response
+from soil.util import expose_cached_download
 
-from corehq import toggles, privileges
+from corehq import privileges, toggles
+from corehq.apps.accounting.decorators import requires_privilege_with_fallback
+from corehq.apps.data_interfaces.tasks import (
+    task_generate_ids_and_operate_on_payloads,
+    task_operate_on_payloads,
+)
 from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import static
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
@@ -34,20 +36,16 @@ from corehq.motech.repeaters.const import (
     RECORD_SUCCESS_STATE,
 )
 from corehq.motech.repeaters.dbaccessors import (
+    get_cancelled_repeat_record_count,
     get_paged_repeat_records,
+    get_pending_repeat_record_count,
     get_repeat_record_count,
     get_repeat_records_by_payload_id,
-    get_cancelled_repeat_record_count,
-    get_pending_repeat_record_count
 )
 from corehq.motech.repeaters.forms import EmailBulkPayload
 from corehq.motech.repeaters.models import RepeatRecord
 from corehq.motech.utils import pformat_json
 from corehq.util.xml_utils import indent_xml
-
-import six.moves.urllib.request, six.moves.urllib.parse, six.moves.urllib.error
-
-from soil.util import expose_cached_download
 
 
 class DomainForwardingRepeatRecords(GenericTabularReport):
@@ -301,16 +299,16 @@ class RepeatRecordView(View):
         try:
             payload = record.get_payload()
         except XFormNotFound:
-            return json_response({
+            return JsonResponse({
                 'error': 'Odd, could not find payload for: {}'.format(record.payload_id)
-            }, status_code=404)
+            }, status=404)
 
         if content_type == 'text/xml':
             payload = indent_xml(payload)
         elif content_type == 'application/json':
             payload = pformat_json(payload)
 
-        return json_response({
+        return JsonResponse({
             'payload': payload,
             'content_type': content_type,
         })
@@ -322,8 +320,7 @@ class RepeatRecordView(View):
             _schedule_task_with_flag(request, domain, 'resend')
         else:
             _schedule_task_without_flag(request, domain, 'resend')
-
-        return HttpResponse('OK')
+        return JsonResponse({'success': True})
 
 
 @require_POST
@@ -353,18 +350,8 @@ def requeue_repeat_record(request, domain):
 
 
 def _get_records(request):
-    if not request:
-        return []
-
-    records = request.POST.get('record_id', None)
-    if not records:
-        return []
-
-    records_ids = records.split(' ')
-    if records_ids[-1] == '':
-        records_ids.pop()
-
-    return records_ids
+    record_ids = request.POST.get('record_id') or ''
+    return record_ids.strip().split()
 
 
 def _get_query(request):

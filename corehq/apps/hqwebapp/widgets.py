@@ -21,7 +21,7 @@ class BootstrapCheckboxInput(CheckboxInput):
         super(BootstrapCheckboxInput, self).__init__(attrs, check_test)
         self.inline_label = inline_label
 
-    def render(self, name, value, attrs=None):
+    def render(self, name, value, attrs=None, renderer=None):
         extra_attrs = {'type': 'checkbox', 'name': name}
         extra_attrs.update(self.attrs)
         final_attrs = self.build_attrs(attrs, extra_attrs=extra_attrs)
@@ -70,7 +70,7 @@ class Select2Ajax(_Select2AjaxMixin, forms.Select):
         self._initial = None
         super(Select2Ajax, self).__init__(attrs)
 
-    def render(self, name, value, attrs=None):
+    def render(self, name, value, attrs=None, renderer=None):
         attrs.update({
             'class': 'form-control hqwebapp-select2-ajax',
             'data-initial': json.dumps(self._initial if self._initial is not None else self._clean_initial(value)),
@@ -78,7 +78,7 @@ class Select2Ajax(_Select2AjaxMixin, forms.Select):
             'data-page-size': self.page_size,
             'data-multiple': '1' if self.multiple else '0',
         })
-        output = super(Select2Ajax, self).render(name, value, attrs)
+        output = super(Select2Ajax, self).render(name, value, attrs, renderer=renderer)
         return mark_safe(output)
 
 
@@ -111,7 +111,7 @@ class DateRangePickerWidget(Input):
         self.default_datespan = default_datespan
         super(DateRangePickerWidget, self).__init__(attrs=attrs)
 
-    def render(self, name, value, attrs=None):
+    def render(self, name, value, attrs=None, renderer=None):
         startdate = ''
         enddate = ''
         if isinstance(self.default_datespan, DateSpan):
@@ -128,7 +128,7 @@ class DateRangePickerWidget(Input):
         })
         final_attrs = self.build_attrs(attrs)
 
-        output = super(DateRangePickerWidget, self).render(name, value, attrs)
+        output = super(DateRangePickerWidget, self).render(name, value, attrs, renderer)
         return mark_safe("""
             <div class="input-group hqwebapp-datespan">
                 <span class="input-group-addon"><i class="fa fa-calendar"></i></span>
@@ -146,7 +146,7 @@ class SelectToggle(forms.Select):
         self.params['value'] = attrs.get('ko_value', '')
         super(SelectToggle, self).__init__(choices=choices, attrs=attrs)
 
-    def render(self, name, value, attrs=None):
+    def render(self, name, value, attrs=None, renderer=None):
         return '''
             <select-toggle data-apply-bindings="{apply_bindings}"
                            params="name: '{name}',

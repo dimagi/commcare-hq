@@ -25,9 +25,9 @@ from casexml.apps.phone.restore_caching import AsyncRestoreTaskIdCache, RestoreP
 from casexml.apps.phone.tasks import get_async_restore_payload, ASYNC_RESTORE_SENT
 from casexml.apps.phone.utils import get_cached_items_with_count
 from corehq.toggles import EXTENSION_CASES_SYNC_ENABLED, LIVEQUERY_SYNC
-from corehq.util.datadog.utils import bucket_value, maybe_add_domain_tag
+from corehq.util.metrics.utils import maybe_add_domain_tag
+from corehq.util.metrics import metrics_counter, metrics_histogram
 from corehq.util.timer import TimingContext
-from corehq.util.datadog.gauges import datadog_counter
 from memoized import memoized
 from casexml.apps.phone.models import (
     get_properly_wrapped_sync_log,
@@ -261,13 +261,14 @@ class CachedResponse(object):
         try:
             value = self._fileobj
         except AttributeError:
-            value = get_blob_db().get(key=self.name) if self.name else None
+            value = get_blob_db().get(key=self.name, type_code=CODES.restore) if self.name else None
             self._fileobj = value
         return value
 
     def get_http_response(self):
-        headers = {'Content-Length': get_blob_db().size(key=self.name)}
-        return stream_response(self.as_file(), headers)
+        file = self.as_file()
+        headers = {'Content-Length': file.content_length}
+        return stream_response(file, headers)
 
 
 class RestoreParams(object):
@@ -581,14 +582,14 @@ class RestoreConfig(object):
         self.delete_cached_payload_if_necessary()
 
         cached_response = self.get_cached_response()
-        tags = [
-            'domain:{}'.format(self.domain),
-            'is_async:{}'.format(bool(self.is_async)),
-        ]
+        tags = {
+            'domain': self.domain,
+            'is_async': bool(self.is_async),
+        }
         if cached_response:
-            datadog_counter('commcare.restores.cache_hits.count', tags=tags)
+            metrics_counter('commcare.restores.cache_hits.count', tags=tags)
             return cached_response
-        datadog_counter('commcare.restores.cache_misses.count', tags=tags)
+        metrics_counter('commcare.restores.cache_misses.count', tags=tags)
 
         # Start new sync
         if self.is_async:
@@ -713,9 +714,9 @@ class RestoreConfig(object):
                 type_ = 'long'
 
             tags = {
-                'type:{}'.format(type_),
+                'type': type_,
             }
-            datadog_counter('commcare.restores.cache_writes', tags=tags)
+            metrics_counter('commcare.restores.cache_writes', tags=tags)
             response = CachedResponse.save_for_later(
                 fileobj,
                 self.cache_timeout,
@@ -761,38 +762,44 @@ class RestoreConfig(object):
                 duration,
             )
         is_webapps = device_id and device_id.startswith("WebAppsLogin")
-        tags = [
-            'status_code:{}'.format(status),
-            'device_type:{}'.format('webapps' if is_webapps else 'other'),
-        ]
+        tags = {
+            'status_code': status,
+            'device_type': 'webapps' if is_webapps else 'other',
+        }
         maybe_add_domain_tag(self.domain, tags)
         timer_buckets = (1, 5, 20, 60, 120, 300, 600)
         for timer in timing.to_list(exclude_root=True):
+            segment = None
+            extra_tags = {}
             if timer.name in RESTORE_SEGMENTS:
                 segment = RESTORE_SEGMENTS[timer.name]
-                bucket = bucket_value(timer.duration, timer_buckets, 's')
-                datadog_counter(
-                    'commcare.restores.{}'.format(segment),
-                    tags=tags + ['duration:%s' % bucket],
-                )
             elif timer.name.startswith('fixture:'):
-                bucket = bucket_value(timer.duration, timer_buckets, 's')
-                datadog_counter(
-                    'commcare.restores.fixture',
-                    tags=tags + [
-                        'duration:%s' % bucket,
-                        timer.name,
-                    ],
+                segment = 'fixture'
+                extra_tags = {'fixture': timer.name.split(':')[1]}
+
+            if segment:
+                metrics_histogram(
+                    'commcare.restores.{}.duration.seconds'.format(segment), timer.duration,
+                    bucket_tag='duration', buckets=timer_buckets, bucket_unit='s',
+                    tags={**tags, **extra_tags}
+                )
+                metrics_counter(
+                    'commcare.restores.{}'.format(segment),
+                    tags={**tags, **extra_tags},
                 )
 
-        tags.append('type:%s' % 'sync' if self.params.sync_log_id else 'restore')
-        tags.append('duration:%s' % bucket_value(timing.duration, timer_buckets, 's'))
+        tags['type'] = 'sync' if self.params.sync_log_id else 'restore'
 
         if settings.ENTERPRISE_MODE and self.params.app and self.params.app.copy_of:
             app_name = slugify(self.params.app.name)
-            tags.append('app:{}-{}'.format(app_name, self.params.app.version))
+            tags['app'] = '{}-{}'.format(app_name, self.params.app.version)
 
-        datadog_counter('commcare.restores.count', tags=tags)
+        metrics_counter('commcare.restores.count', tags=tags)
+        metrics_histogram(
+            'commcare.restores.duration.seconds', timing.duration,
+            bucket_tag='duration', buckets=timer_buckets, bucket_unit='s',
+            tags=tags
+        )
 
     def __repr__(self):
         return \

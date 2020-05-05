@@ -191,6 +191,7 @@ DEFAULT_APPS = (
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.humanize',
+    'django.contrib.messages',
     'django.contrib.sessions',
     'django.contrib.sites',
     'django.contrib.staticfiles',
@@ -287,6 +288,7 @@ HQ_APPS = (
     'corehq.messaging.scheduling',
     'corehq.messaging.scheduling.scheduling_partitioned',
     'corehq.messaging.smsbackends.tropo',
+    'corehq.messaging.smsbackends.turn',
     'corehq.messaging.smsbackends.twilio',
     'corehq.apps.dropbox',
     'corehq.messaging.smsbackends.megamobile',
@@ -434,15 +436,11 @@ EMAIL_SMTP_PORT = 587
 # These are the normal Django settings
 EMAIL_USE_TLS = True
 
-# put email addresses here to have them receive bug reports
-BUG_REPORT_RECIPIENTS = ()
-
 # the physical server emailing - differentiate if needed
 SERVER_EMAIL = 'commcarehq-noreply@example.com'
 DEFAULT_FROM_EMAIL = 'commcarehq-noreply@example.com'
 SUPPORT_EMAIL = "support@example.com"
 PROBONO_SUPPORT_EMAIL = 'pro-bono@example.com'
-CCHQ_BUG_REPORT_EMAIL = 'commcarehq-bug-reports@example.com'
 ACCOUNTS_EMAIL = 'accounts@example.com'
 DATA_EMAIL = 'datatree@example.com'
 SUBSCRIPTION_CHANGE_EMAIL = 'accounts+subchange@example.com'
@@ -545,6 +543,7 @@ CELERY_PERIODIC_QUEUE = 'celery_periodic'
 CELERY_REMINDER_RULE_QUEUE = 'reminder_rule_queue'
 CELERY_REMINDER_CASE_UPDATE_QUEUE = 'reminder_case_update_queue'
 CELERY_REPEAT_RECORD_QUEUE = 'repeat_record_queue'
+CELERY_LOCATION_REASSIGNMENT_QUEUE = 'celery'
 
 # Will cause a celery task to raise a SoftTimeLimitExceeded exception if
 # time limit is exceeded.
@@ -834,6 +833,11 @@ S3_SECRET_KEY = None
 SUPERVISOR_RPC_ENABLED = False
 SUBSCRIPTION_USERNAME = None
 SUBSCRIPTION_PASSWORD = None
+
+# List of metrics providers to use. Available providers:
+# * 'corehq.util.metrics.datadog.DatadogMetrics'
+# * 'corehq.util.metrics.prometheus.PrometheusMetrics'
+METRICS_PROVIDERS = []
 
 DATADOG_API_KEY = None
 DATADOG_APP_KEY = None
@@ -1227,7 +1231,7 @@ LOGGING = {
             'propagate': False,
         },
         'accounting': {
-            'handlers': ['accountinglog', 'console', 'mail_admins'],
+            'handlers': ['accountinglog', 'console'],
             'level': 'INFO',
             'propagate': False,
         },
@@ -1494,6 +1498,7 @@ SMS_LOADED_SQL_BACKENDS = [
     'corehq.messaging.smsbackends.telerivet.models.SQLTelerivetBackend',
     'corehq.messaging.smsbackends.test.models.SQLTestSMSBackend',
     'corehq.messaging.smsbackends.tropo.models.SQLTropoBackend',
+    'corehq.messaging.smsbackends.turn.models.SQLTurnWhatsAppBackend',
     'corehq.messaging.smsbackends.twilio.models.SQLTwilioBackend',
     'corehq.messaging.smsbackends.unicel.models.SQLUnicelBackend',
     'corehq.messaging.smsbackends.yo.models.SQLYoBackend',
@@ -1623,8 +1628,10 @@ AVAILABLE_CUSTOM_RULE_CRITERIA = {
         'custom.icds.rules.custom_criteria.person_case_is_under_19_years_old',
     'ICDS_CCS_RECORD_CASE_HAS_FUTURE_EDD':
         'custom.icds.rules.custom_criteria.ccs_record_case_has_future_edd',
-    'ICDS_CCS_RECORD_CASE_AVAILING_SERVICES':
+    'ICDS_CCS_RECORD_CASE_CHILD_AVAILING_SERVICES':
         'custom.icds.rules.custom_criteria.ccs_record_case_is_availing_services',
+    'ICDS_CHILD_HEALTH_CASE_CHILD_AVAILING_SERVICES':
+        'custom.icds.rules.custom_criteria.child_health_case_is_availing_services',
     'ICDS_IS_USERCASE_OF_AWW':
         'custom.icds.rules.custom_criteria.is_usercase_of_aww',
     'ICDS_IS_USERCASE_OF_LS':
@@ -1832,7 +1839,6 @@ STATIC_UCR_REPORTS = [
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'asr', 'ucr_v2', '*.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr', '*.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr', 'dashboard', '*.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr', 'ucr_v2', '*.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls', '*.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'other', '*.json'),
     os.path.join('custom', 'echis_reports', 'ucr', 'reports', '*.json'),
@@ -1854,6 +1860,8 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', '_legacy', 'mvp', 'ucr', 'reports', 'data_sources', 'va_datasource.json'),
     os.path.join('custom', 'reports', 'mc', 'data_sources', 'malaria_consortium.json'),
     os.path.join('custom', 'reports', 'mc', 'data_sources', 'weekly_forms.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'ag_care_cases.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'ag_care_cases_monthly.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'awc_locations.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'awc_mgt_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'ccs_record_cases.json'),
@@ -1891,6 +1899,8 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'birth_preparedness_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'daily_feeding_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'migrations_form.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'availing_service_forms.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'add_pregnancy_form.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'primary_private_school_form_ucr.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'cbe_form.json'),
     os.path.join('custom', 'champ', 'ucr_data_sources', 'champ_cameroon.json'),
@@ -1925,7 +1935,6 @@ COUCH_CACHE_BACKENDS = [
     'corehq.apps.cachehq.cachemodels.GroupGenerationCache',
     'corehq.apps.cachehq.cachemodels.UserRoleGenerationCache',
     'corehq.apps.cachehq.cachemodels.ReportGenerationCache',
-    'corehq.apps.cachehq.cachemodels.DefaultConsumptionGenerationCache',
     'corehq.apps.cachehq.cachemodels.InvitationGenerationCache',
     'corehq.apps.cachehq.cachemodels.UserReportsDataSourceCache',
     'dimagi.utils.couch.cache.cache_core.gen.GlobalCache',
@@ -2033,6 +2042,8 @@ DOMAIN_MODULE_MAP = {
     'vectorlink-zimbabwe': 'custom.abt',
 
     'inddex-reports': 'custom.inddex',
+    'inddex-multilingual': 'custom.inddex',
+    'inddex-multi-vn': 'custom.inddex',
 
     'ccqa': 'custom.ccqa',
 }
@@ -2044,8 +2055,8 @@ THROTTLE_SCHED_REPORTS_PATTERNS = (
     'mvp-',
 )
 
-# Domains that we want to tag in datadog
-DATADOG_DOMAINS = {
+# Domains that we want to tag in metrics provider
+METRICS_TAGGED_DOMAINS = {
     # ("env", "domain"),
     ("production", "born-on-time-2"),
     ("production", "hki-nepal-suaahara-2"),
@@ -2073,19 +2084,6 @@ if 'locmem' not in CACHES:
 if 'dummy' not in CACHES:
     CACHES['dummy'] = {'BACKEND': 'django.core.cache.backends.dummy.DummyCache'}
 
-try:
-    from datadog import initialize
-except ImportError:
-    pass
-else:
-    initialize(DATADOG_API_KEY, DATADOG_APP_KEY)
-
-if UNIT_TESTING or DEBUG or 'ddtrace.contrib.django' not in INSTALLED_APPS:
-    try:
-        from ddtrace import tracer
-        tracer.enabled = False
-    except ImportError:
-        pass
 
 REST_FRAMEWORK = {
     'DATETIME_FORMAT': '%Y-%m-%dT%H:%M:%S.%fZ',

@@ -24,9 +24,7 @@ class TwilioIncomingSMSView(IncomingBackendView):
 
     def post(self, request, api_key, *args, **kwargs):
         message_sid = request.POST.get('MessageSid')
-        account_sid = request.POST.get('AccountSid')
-        from_ = request.POST.get('From')
-        to = request.POST.get('To')
+        from_ = SQLTwilioBackend.convert_from_whatsapp(request.POST.get('From'))
         body = request.POST.get('Body')
         incoming_sms(
             from_,

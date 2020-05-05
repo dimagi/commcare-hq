@@ -311,7 +311,7 @@ DOMAIN_MAP = {
 }
 
 
-migrate_metadata = MultiDbMigrator("migrate_metadata",
+migrate_metadata = lambda: MultiDbMigrator("migrate_metadata",
     couch_types=[
         apps.Application,
         apps.LinkedApplication,

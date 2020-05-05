@@ -382,7 +382,6 @@ def resend_confirmation(request):
             context.update({
                 'current_page': {'page_name': _('Oops!')},
                 'error_msg': _('There was a problem with your request'),
-                'error_details': sys.exc_info(),
                 'show_homepage_link': 1,
             })
             return render(request, 'error.html', context)

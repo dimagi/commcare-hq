@@ -6,6 +6,11 @@ from datetime import datetime
 
 from braces.views import JsonRequestResponseMixin
 from couchdbkit import ResourceNotFound
+
+from corehq.apps.registration.forms import MobileWorkerAccountConfirmationForm
+from corehq.apps.users.account_confirmation import send_account_confirmation_if_necessary
+from corehq.util import get_document_or_404
+from corehq.util.metrics import metrics_counter
 from couchexport.models import Format
 from couchexport.writers import Excel2007ExportWriter
 from django.conf import settings
@@ -14,7 +19,7 @@ from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 from django.http import Http404, HttpResponse, HttpResponseBadRequest, HttpResponseRedirect
-from django.http.response import HttpResponseServerError
+from django.http.response import HttpResponseServerError, JsonResponse
 from django.shortcuts import redirect, render
 from django.template.loader import render_to_string
 from django.urls import reverse
@@ -98,8 +103,7 @@ from corehq.apps.users.views import (
     get_domain_languages,
 )
 from corehq.const import GOOGLE_PLAY_STORE_COMMCARE_URL, USER_DATE_FORMAT
-from corehq.toggles import FILTERED_BULK_USER_DOWNLOAD
-from corehq.util.datadog.gauges import datadog_counter
+from corehq.toggles import FILTERED_BULK_USER_DOWNLOAD, TWO_STAGE_USER_PROVISIONING
 from corehq.util.dates import iso_string_to_datetime
 from corehq.util.workbook_json.excel import (
     WorkbookJSONError,
@@ -418,7 +422,7 @@ def force_user_412(request, domain, user_id):
     if not _can_edit_workers_location(request.couch_user, user):
         raise PermissionDenied()
 
-    datadog_counter('commcare.force_user_412.count', tags=['domain:{}'.format(domain)])
+    metrics_counter('commcare.force_user_412.count', tags={'domain': domain})
 
     SyncLogSQL.objects.filter(user_id=user_id).delete()
 
@@ -640,10 +644,6 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
         return NewMobileWorkerForm(self.request.project, self.couch_user)
 
     @property
-    def _mobile_worker_form(self):
-        return self.new_mobile_worker_form
-
-    @property
     @memoized
     def custom_data(self):
         return CustomDataEditor(
@@ -673,7 +673,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
             'can_edit_billing_info': self.request.couch_user.is_domain_admin(self.domain),
             'strong_mobile_passwords': self.request.project.strong_mobile_passwords,
             'implement_password_obfuscation': settings.OBFUSCATE_PASSWORD_FOR_NIC_COMPLIANCE,
-            'bulk_download_url': bulk_download_url
+            'bulk_download_url': bulk_download_url,
         }
 
     @property
@@ -735,12 +735,17 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
 
         self.request.POST = form_data
 
-        is_valid = lambda: self._mobile_worker_form.is_valid() and self.custom_data.is_valid()
+        is_valid = lambda: self.new_mobile_worker_form.is_valid() and self.custom_data.is_valid()
         if not is_valid():
-            return {'error': _("Forms did not validate")}
+            all_errors = [e for errors in self.new_mobile_worker_form.errors.values() for e in errors]
+            all_errors += [e for errors in self.custom_data.errors.values() for e in errors]
+            return {'error': _("Forms did not validate: {errors}").format(
+                errors=', '.join(all_errors)
+            )}
 
         couch_user = self._build_commcare_user()
-
+        if self.new_mobile_worker_form.cleaned_data['send_account_confirmation_email']:
+            send_account_confirmation_if_necessary(couch_user)
         return {
             'success': True,
             'user_id': couch_user.userID,
@@ -750,17 +755,21 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
         username = self.new_mobile_worker_form.cleaned_data['username']
         password = self.new_mobile_worker_form.cleaned_data['new_password']
         first_name = self.new_mobile_worker_form.cleaned_data['first_name']
+        email = self.new_mobile_worker_form.cleaned_data['email']
         last_name = self.new_mobile_worker_form.cleaned_data['last_name']
         location_id = self.new_mobile_worker_form.cleaned_data['location_id']
+        is_account_confirmed = not self.new_mobile_worker_form.cleaned_data['force_account_confirmation']
 
         return CommCareUser.create(
             self.domain,
             username,
             password,
+            email=email,
             device_id="Generated from HQ",
             first_name=first_name,
             last_name=last_name,
             user_data=self.custom_data.get_data_to_save(),
+            is_account_confirmed=is_account_confirmed,
             location=SQLLocation.objects.get(location_id=location_id) if location_id else None,
         )
 
@@ -782,6 +791,9 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
                 'first_name': user_data.get('first_name'),
                 'last_name': user_data.get('last_name'),
                 'location_id': user_data.get('location_id'),
+                'email': user_data.get('email'),
+                'force_account_confirmation': user_data.get('force_account_confirmation'),
+                'send_account_confirmation_email': user_data.get('send_account_confirmation_email'),
                 'domain': self.domain,
             }
             for k, v in user_data.get('custom_fields', {}).items():
@@ -824,6 +836,15 @@ def _modify_user_status(request, domain, user_id, is_active):
     })
 
 
+@require_can_edit_commcare_users
+@require_POST
+@location_safe
+def send_confirmation_email(request, domain, user_id):
+    user = CommCareUser.get_by_user_id(user_id, domain)
+    send_account_confirmation_if_necessary(user)
+    return JsonResponse(data={'success': True})
+
+
 @require_can_edit_or_view_commcare_users
 @require_GET
 @location_safe
@@ -855,17 +876,30 @@ def paginate_mobile_workers(request, domain):
         'base_username',
         'created_on',
         'is_active',
+        'is_account_confirmed',
     ]).run()
     users = users_data.hits
+
+    def _status_string(user_data):
+        if user_data['is_active']:
+            return _('Active')
+        elif user_data['is_account_confirmed']:
+            return _('Deactivated')
+        else:
+            return _('Pending Confirmation')
 
     for user in users:
         date_registered = user.pop('created_on', '')
         if date_registered:
             date_registered = iso_string_to_datetime(date_registered).strftime(USER_DATE_FORMAT)
+        # make sure these are always set and default to true
+        user['is_active'] = user.get('is_active', True)
+        user['is_account_confirmed'] = user.get('is_account_confirmed', True)
         user.update({
             'username': user.pop('base_username', ''),
             'user_id': user.pop('_id'),
             'date_registered': date_registered,
+            'status': _status_string(user),
         })
 
     return json_response({
@@ -1264,10 +1298,15 @@ class CommCareUsersLookup(BaseManageCommCareUserView, UsernameUploadMixin):
         if not usernames:
             return self.get(request, *args, **kwargs)
 
-        known_usernames = {doc['username'] for doc in get_user_docs_by_username(usernames)}
+        docs_by_username = {doc['username']: doc for doc in get_user_docs_by_username(usernames)}
         rows = []
         for username in usernames:
-            rows.append([raw_username(username), _("yes") if username in known_usernames else _("no")])
+            row = [raw_username(username)]
+            if username in docs_by_username:
+                row.extend([_("yes"), docs_by_username[username].get("is_active")])
+            else:
+                row.extend([_("no"), ""])
+            rows.append(row)
 
         response = HttpResponse(content_type=Format.from_format('xlsx').mimetype)
         response['Content-Disposition'] = f'attachment; filename="{self.domain} users.xlsx"'
@@ -1277,7 +1316,7 @@ class CommCareUsersLookup(BaseManageCommCareUserView, UsernameUploadMixin):
     def _excel_data(self, rows):
         outfile = io.BytesIO()
         tab_name = "users"
-        header_table = [(tab_name, [(_("username"), _("exists"))])]
+        header_table = [(tab_name, [(_("username"), _("exists"), _("is_active"))])]
         writer = Excel2007ExportWriter()
         writer.open(header_table=header_table, file=outfile)
         writer.write([(tab_name, rows)])
@@ -1395,4 +1434,63 @@ class CommCareUserSelfRegistrationView(TemplateView, DomainViewMixin):
 
             self.invitation.registered_date = datetime.utcnow()
             self.invitation.save()
+        return self.get(request, *args, **kwargs)
+
+
+@method_decorator(TWO_STAGE_USER_PROVISIONING.required_decorator(), name='dispatch')
+class CommCareUserConfirmAccountView(TemplateView, DomainViewMixin):
+    template_name = "users/commcare_user_confirm_account.html"
+    urlname = "commcare_user_confirm_account"
+    strict_domain_fetching = True
+
+    @property
+    @memoized
+    def user_id(self):
+        return self.kwargs.get('user_id')
+
+    @property
+    @memoized
+    def user(self):
+        return get_document_or_404(CommCareUser, self.domain, self.user_id)
+
+    @property
+    @memoized
+    def form(self):
+        if self.request.method == 'POST':
+            return MobileWorkerAccountConfirmationForm(self.request.POST)
+        else:
+            return MobileWorkerAccountConfirmationForm(initial={
+                'username': self.user.raw_username,
+                'full_name': self.user.full_name,
+                'email': self.user.email,
+            })
+
+    def get_context_data(self, **kwargs):
+        context = super(CommCareUserConfirmAccountView, self).get_context_data(**kwargs)
+        context.update({
+            'domain_name': self.domain_object.display_name(),
+            'user': self.user,
+            'form': self.form,
+        })
+        return context
+
+    def post(self, request, *args, **kwargs):
+        form = self.form
+        if form.is_valid():
+            user = self.user
+            user.email = form.cleaned_data['email']
+            full_name = form.cleaned_data['full_name']
+            user.first_name = full_name[0]
+            user.last_name = full_name[1]
+            user.confirm_account(password=self.form.cleaned_data['password'])
+            messages.success(request, _(
+                f'You have successfully confirmed the {user.raw_username} account. '
+                'You can now login'
+            ))
+            return HttpResponseRedirect('{}?username={}'.format(
+                reverse('domain_login', args=[self.domain]),
+                user.raw_username,
+            ))
+
+        # todo: process form data and activate the account
         return self.get(request, *args, **kwargs)

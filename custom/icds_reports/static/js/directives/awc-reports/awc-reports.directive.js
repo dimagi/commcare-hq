@@ -1734,45 +1734,205 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
         .withOption('order', [[4, 'asc']])
         .withDOM('ltipr');
 
-    if (vm.step === 'beneficiary') {
-        vm.dtColumns = [
-            DTColumnBuilder.newColumn('person_name').withTitle('Name').renderWith(renderPersonName).withClass('big-col'),
-            DTColumnBuilder.newColumn('dob').withTitle('Date of Birth').renderWith(renderDateOfBirth).withClass('medium-col'),
-            DTColumnBuilder.newColumn('age').withTitle('Current Age').renderWith(renderAge).withClass('medium-col'),
-            DTColumnBuilder.newColumn('fully_immunized').withTitle('1 Year Immunizations Complete').renderWith(renderFullyImmunizedDate).withClass('medium-col'),
-            DTColumnBuilder.newColumn('current_month_nutrition_status').withTitle('Weight-for-Age Status (in Month)').renderWith(renderWeightForAgeStatus).withClass('medium-col'),
-            DTColumnBuilder.newColumn('current_month_wasting').withTitle('Weight-for-Height Status (in Month)').renderWith(renderWeightForHeightStatus).withClass('medium-col'),
-            DTColumnBuilder.newColumn('current_month_stunting').withTitle('Height-for-Age Status (in Month)').renderWith(renderHeightForAgeStatus).withClass('medium-col'),
-            DTColumnBuilder.newColumn('pse_days_attended').withTitle('PSE Attendance (Days)').renderWith(renderPseDaysAttended).withClass('medium-col'),
-            DTColumnBuilder.newColumn('aww_phone_number').withTitle('AWW Phone Number').renderWith(renderAwwPhoneNumber).withClass('medium-col'),
-            DTColumnBuilder.newColumn('mother_phone_number').withTitle('Mother Phone Number').renderWith(renderMotherPhoneNumber).withClass('medium-col'),
-        ];
-    } else if (vm.step === 'pregnant') {
-        vm.dtColumns = [
-            DTColumnBuilder.newColumn('person_name').withTitle('Name').renderWith(renderPersonNamePregnant).withClass('big-col'),
-            DTColumnBuilder.newColumn('age').withTitle('Age').renderWith(renderAge).withClass('medium-col'),
-            DTColumnBuilder.newColumn('closed').withTitle('Status').renderWith(renderClosed).withClass('medium-col'),
-            DTColumnBuilder.newColumn('opened_on').withTitle('Pregnancy registration').renderWith(renderOpenedOn).withClass('medium-col'),
-            DTColumnBuilder.newColumn('edd').withTitle('EDD').renderWith(renderEdd).withClass('medium-col'),
-            DTColumnBuilder.newColumn('trimester').withTitle('Trimester').renderWith(renderTrimester).withClass('medium-col'),
-            DTColumnBuilder.newColumn('anemic').withTitle('Anemia during last ANC (Y/N)').renderWith(renderAnemic).withClass('medium-col'),
-            DTColumnBuilder.newColumn('num_anc_complete').withTitle('Number of ANC visits').renderWith(renderNumAncComplete).withClass('medium-col'),
-            DTColumnBuilder.newColumn('beneficiary').withTitle('Beneficiary Status').renderWith(renderBeneficiary).withClass('medium-col'),
-            DTColumnBuilder.newColumn('number_of_thrs_given').withTitle('Number of THRs given in current month').renderWith(renderNumberOfThrsGiven).withClass('medium-col'),
-            DTColumnBuilder.newColumn('last_date_thr').withTitle('Date of last THR').renderWith(renderLastDateThr).withClass('medium-col'),
-        ];
-    } else if (vm.step === 'lactating') {
-        vm.dtColumns = [
-            DTColumnBuilder.newColumn('person_name').withTitle('Name').renderWith(renderPersonNameLactating).withClass('big-col'),
-            DTColumnBuilder.newColumn('age').withTitle('Age').renderWith(renderAge).withClass('medium-col'),
-            DTColumnBuilder.newColumn('add').withTitle('Date of Delivery').renderWith(renderAdd).withClass('medium-col'),
-            DTColumnBuilder.newColumn('delivery_nature').withTitle('Type of Delivery').renderWith(renderDeliveryNature).withClass('medium-col'),
-            DTColumnBuilder.newColumn('institutional_delivery').withTitle('Institutional Delivery (Y/N)').renderWith(renderInstitutionalDeliveryInMonth).withClass('medium-col'),
-            DTColumnBuilder.newColumn('num_pnc_visits').withTitle('Number of PNC visits').renderWith(renderNumPncVisits).withClass('medium-col'),
-            DTColumnBuilder.newColumn('breastfed_at_birth').withTitle('Breastfed within hour of birth').renderWith(renderBreastfedAtBirth).withClass('medium-col'),
-            DTColumnBuilder.newColumn('is_ebf').withTitle('Exclusively breastfeeding at last home visit').renderWith(renderIsEbf).withClass('medium-col'),
-            DTColumnBuilder.newColumn('num_rations_distributed').withTitle('Number of THRs given in current month').renderWith(renderNumRationsDistributed).withClass('medium-col'),
-        ];
+    vm.awcReportTableData = {
+        'beneficiary': [
+            {
+                'mData': 'person_name',
+                'heading': 'Name',
+                'class': 'big-col',
+                'value': renderPersonName
+            },
+            {
+                'mData': 'dob',
+                'heading': 'Date of Birth',
+                'class': 'medium-col',
+                'value': renderDateOfBirth
+            },
+            {
+                'mData': 'age',
+                'heading': 'Current Age',
+                'class': 'medium-col',
+                'value': renderAge
+            },
+            {
+                'mData': 'fully_immunized',
+                'heading': '1 Year Immunizations Complete',
+                'class': 'medium-col',
+                'value': renderFullyImmunizedDate
+            },
+            {
+                'mData': 'current_month_nutrition_status',
+                'heading': 'Weight-for-Age Status (in Month)',
+                'class': 'medium-col',
+                'value': renderWeightForAgeStatus,
+                'tooltipType': 'weight'
+            },
+            {
+                'mData': 'current_month_wasting',
+                'heading': 'Weight-for-Height Status (in Month)',
+                'class': 'medium-col',
+                'value': renderWeightForHeightStatus,
+                'tooltipType': 'both'
+            },
+            {
+                'mData': 'current_month_stunting',
+                'heading': 'Height-for-Age Status (in Month)',
+                'class': 'medium-col',
+                'value': renderHeightForAgeStatus,
+                'tooltipType': 'height'
+            },
+            {
+                'mData': 'pse_days_attended',
+                'heading': 'PSE Attendance (Days)',
+                'class': 'medium-col',
+                'value': renderPseDaysAttended
+            },
+            {
+                'mData': 'aww_phone_number',
+                'heading': 'AWW Phone Number',
+                'class': 'medium-col',
+                'value': renderAwwPhoneNumber
+            },
+            {
+                'mData': 'mother_phone_number',
+                'heading': 'Mother Phone Number',
+                'class': 'medium-col',
+                'value': renderMotherPhoneNumber
+            },
+        ],
+        'pregnant': [
+            {
+                'mData': 'person_name',
+                'heading': 'Name',
+                'class': 'big-col',
+                'value': renderPersonNamePregnant
+            },
+            {
+                'mData': 'age',
+                'heading': 'Age',
+                'class': 'medium-col',
+                'value': renderAge
+            },
+            {
+                'mData': 'closed',
+                'heading': 'Status',
+                'class': 'medium-col',
+                'value': renderClosed
+            },
+            {
+                'mData': 'opened_on',
+                'heading': 'Pregnancy registration',
+                'class': 'medium-col',
+                'value': renderOpenedOn
+            },
+            {
+                'mData': 'edd',
+                'heading': 'EDD',
+                'class': 'medium-col',
+                'value': renderEdd
+            },
+            {
+                'mData': 'trimester',
+                'heading': 'Trimester',
+                'class': 'medium-col',
+                'value': renderTrimester
+            },
+            {
+                'mData': 'anemic',
+                'heading': 'Anemia during last ANC (Y/N)',
+                'class': 'medium-col',
+                'value': renderAnemic
+            },
+            {
+                'mData': 'num_anc_complete',
+                'heading': 'Number of ANC visits',
+                'class': 'medium-col',
+                'value': renderNumAncComplete
+            },
+            {
+                'mData': 'beneficiary',
+                'heading': 'Beneficiary Status',
+                'class': 'medium-col',
+                'value': renderBeneficiary
+            },
+            {
+                'mData': 'number_of_thrs_given',
+                'heading': 'Number of THRs given in current month',
+                'class': 'medium-col',
+                'value': renderNumberOfThrsGiven
+            },
+            {
+                'mData': 'last_date_thr',
+                'heading': 'Date of last THR',
+                'class': 'medium-col',
+                'value': renderLastDateThr
+            },
+        ],
+        'lactating': [
+            {
+                'mData': 'person_name',
+                'heading': 'Name',
+                'class': 'big-col',
+                'value': renderPersonNameLactating
+            },
+            {
+                'mData': 'age',
+                'heading': 'Age',
+                'class': 'medium-col',
+                'value': renderAge
+            },
+            {
+                'mData': 'add',
+                'heading': 'Date of Delivery',
+                'class': 'medium-col',
+                'value': renderAdd
+            },
+            {
+                'mData': 'delivery_nature',
+                'heading': 'Type of Delivery',
+                'class': 'medium-col',
+                'value': renderDeliveryNature
+            },
+            {
+                'mData': 'institutional_delivery',
+                'heading': 'Institutional Delivery (Y/N)',
+                'class': 'medium-col',
+                'value': renderInstitutionalDeliveryInMonth
+            },
+            {
+                'mData': 'num_pnc_visits',
+                'heading': 'Number of PNC visits',
+                'class': 'medium-col',
+                'value': renderNumPncVisits
+            },
+            {
+                'mData': 'breastfed_at_birth',
+                'heading': 'Breastfed within hour of birth',
+                'class': 'medium-col',
+                'value': renderBreastfedAtBirth
+            },
+            {
+                'mData': 'is_ebf',
+                'heading': 'Exclusively breastfeeding at last home visit',
+                'class': 'medium-col',
+                'value': renderIsEbf
+            },
+            {
+                'mData': 'num_rations_distributed',
+                'heading': 'Number of THRs given in current month',
+                'class': 'medium-col',
+                'value': renderNumRationsDistributed
+            }
+        ],
+    };
+
+    vm.dtColumns = [];
+    if (vm.awcReportTableData[vm.step] && !isMobile) {
+        for (var i = 0; i < vm.awcReportTableData[vm.step].length; i++) {
+            var entry = vm.awcReportTableData[vm.step][i];
+            vm.dtColumns.push(DTColumnBuilder.newColumn(entry['mData']).withTitle(entry['heading'])
+                .renderWith(entry['value']).withClass(entry['class']));
+        }
     }
 
     function compile(row) {
@@ -1924,6 +2084,107 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
 
     var caseId = $location.search().case_id;
 
+    // mobile helpers
+    const DEFAULT_SORTED_COLUMN = 0;
+    const SORT_ASCENDING = 0;
+    const DEFAULT_REQUEST_DATA_STARTING_FROM = 0;
+    vm.showSortPopup = false;
+    vm.hasHeaderTooltips = false; // used to decide whether to show 'i' in sort popup
+    vm.requestDataStartingFrom = DEFAULT_REQUEST_DATA_STARTING_FROM; // could be any multiple of 10
+    vm.dataSortingDirection = SORT_ASCENDING;
+    vm.sortingColumn = DEFAULT_SORTED_COLUMN;
+    vm.sortableInputKpiData = [];
+    vm.showAwcOnMap = false;
+    vm.getTableData = function () {
+        return vm.awcReportTableData[vm.step].slice(1);
+    };
+    vm.toggleSortPopup = function (event) {
+        vm.showSortPopup = !vm.showSortPopup;
+        // At the top level element, click event is added, which when triggered closes sort popup
+        // this is triggered when there is click action anywhere on the page.
+        // But we dont need the click event which triggers the popup opening, to bubble up to the top, which will close it.
+        // hence preventing any click event on the pop up and sort button.
+        event.stopPropagation();
+    };
+    vm.clearSorting = function (event) {
+        // resets to sorting by location name and closes sort popup
+        vm.dataSortingDirection = SORT_ASCENDING;
+        vm.sortingColumn = DEFAULT_SORTED_COLUMN;
+        vm.sortableInputKpiData = [];
+        vm.requestDataStartingFrom = DEFAULT_REQUEST_DATA_STARTING_FROM;
+        vm.toggleSortPopup(event);
+        vm.getDataForStep(vm.step);
+    };
+    vm.getMobileData = function (index) {
+        // triggers when clicked on any of the headings in sort popup
+        if (vm.sortingColumn === index + 1) {
+            vm.dataSortingDirection = 1 - vm.dataSortingDirection;
+        } else {
+            vm.dataSortingDirection = SORT_ASCENDING;
+        }
+        vm.sortingColumn = index + 1;
+        vm.sortableInputKpiData = [];
+        vm.requestDataStartingFrom = DEFAULT_REQUEST_DATA_STARTING_FROM;
+        vm.getDataForStep(vm.step);
+    };
+    vm.isTabularDataDisplayed = (vm.step === 'beneficiary' || vm.step === 'pregnant' || vm.step === 'lactating');
+
+    vm.getMobileRequestParams = function (step) {
+        var requestParams = JSON.parse(JSON.stringify($location.search()));
+        for (var i = 0; i < vm.awcReportTableData[step].length; i++) {
+            var entry = vm.awcReportTableData[step][i];
+            requestParams['columns[' + i + '][data]'] = entry['mData'];
+        }
+        requestParams['order[0][column]'] = vm.sortingColumn;
+        requestParams['order[0][dir]'] = vm.dataSortingDirection;
+        requestParams['start'] = vm.requestDataStartingFrom;
+        requestParams['length'] = 10;
+
+        return requestParams;
+    };
+
+    vm.generateSortableKpiData = function (data) {
+        var tableData = vm.awcReportTableData[vm.step];
+        var existingDataLength = vm.sortableInputKpiData.length;
+        for (var i = existingDataLength; i < (data.length + existingDataLength); i++) {
+            vm.sortableInputKpiData[i] = {};
+            vm.sortableInputKpiData[i]['cardHeading'] = tableData[0]['value']('', '', data[i - existingDataLength]);
+            vm.sortableInputKpiData[i]['attributes'] = [];
+            var cardData = data[i - existingDataLength];
+            for (var j = 1; j < tableData.length; j++) {
+                var kpiObject = {
+                    'heading' : tableData[j]['heading'],
+                    'value' : tableData[j]['value']('', '', cardData),
+                    'isTheSortedColumn' : j === vm.sortingColumn,
+                    'sortingDirection' : vm.dataSortingDirection,
+                    'tooltip' : tableData[j]['tooltipType'] ?
+                        vm.getPopoverContent(cardData['recorded_weight'], cardData['recorded_height'],
+                            cardData['age_in_months'], tableData[j]['tooltipType']) : null,
+                };
+                // adding the sorted column as first element (unshift adds elements to array at beginning, push at end)
+                if (kpiObject['isTheSortedColumn']) {
+                    vm.sortableInputKpiData[i]['attributes'].unshift(kpiObject);
+                } else {
+                    vm.sortableInputKpiData[i]['attributes'].push(kpiObject);
+                }
+            }
+        }
+    };
+
+    jQuery(function($) {
+        $('#summaryList').bind('scroll', function () {
+            // this function runs when end of summary list is reached and if totalRecords are not yet requested
+            // Also requests are prevented for initial requests
+            // Reference: http://jsfiddle.net/doktormolle/w7X9N/
+            if (isMobile && ($(this).scrollTop() + $(this).innerHeight() >= $(this)[0].scrollHeight) &&
+                ((vm.requestDataStartingFrom + 10) < vm.totalNumberOfEntries) && vm.sortableInputKpiData.length) {
+                vm.requestDataStartingFrom += 10;
+                vm.getDataForStep(vm.step);
+            }
+        })
+    });
+    // end mobile helpers
+
     vm.getDataForStep = function (step) {
 
         if (step === 'beneficiary_details') {
@@ -1977,6 +2238,20 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
                             ];
                         }
                     }
+                },
+                function (error) {
+                    $log.error(error);
+                }
+            );
+        } else if (parseInt(vm.selectedLocationLevel) === 4 && vm.isTabularDataDisplayed && isMobile) {
+            vm.myPromise = $http({
+                method: "GET",
+                url: get_url,
+                params: vm.getMobileRequestParams(step)
+            }).then(
+                function (response) {
+                    vm.generateSortableKpiData(response.data.data);
+                    vm.totalNumberOfEntries = response.data.recordsTotal;
                 },
                 function (error) {
                     $log.error(error);
@@ -2068,13 +2343,14 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
     vm.lineChartDaysPerWeekOptions = {
         chart: {
             type: 'multiBarChart',
-            height: 450,
-            width: 1100,
+            wrapLabels: true,
+            height: isMobile ? 350 : 450,
+            width: isMobile ? '' : 1100,
             margin: {
                 top: 20,
                 right: 20,
-                bottom: 150,
-                left: 80,
+                bottom: isMobile ? 50 : 150,
+                left: isMobile ? 20 : 80,
             },
             x: function (d) {
                 return d.x;
@@ -2089,15 +2365,15 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
             clipVoronoi: false,
             duration: 500,
             xAxis: {
-                axisLabel: 'Week',
+                axisLabel: isMobile ? '' : 'Week',
                 tickFormat: function (d) {
                     return d3.time.format('Week of %d/%m')(new Date(d));
                 },
-                staggerLabels: true,
+                staggerLabels: !isMobile,
                 showMaxMin: false,
             },
             yAxis: {
-                axisLabel: 'Number of Days',
+                axisLabel: isMobile ? '' : 'Number of Days',
                 tickFormat: function (d) {
                     return d3.format('d')(d);
                 },
@@ -2111,13 +2387,14 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
     vm.lineChartOptions = {
         chart: {
             type: 'lineChart',
-            height: 450,
-            width: 1100,
+            height: isMobile ? 350 : 450,
+            width: isMobile ? 800 : 1100,
+            wrapLabels: true,
             margin: {
                 top: 20,
                 right: 50,
-                bottom: 100,
-                left: 80,
+                bottom: isMobile ? 50 : 100,
+                left: isMobile ? 20 : 80,
             },
             x: function (d) {
                 return d.x;
@@ -2131,15 +2408,15 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
             clipVoronoi: false,
             duration: 1000,
             xAxis: {
-                axisLabel: 'Day',
+                axisLabel: isMobile ? '' : 'Day',
                 tickFormat: function (d) {
                     return d3.time.format('%d/%m/%Y')(new Date(d));
                 },
-                staggerLabels: true,
+                staggerLabels: !isMobile,
                 showMaxMin: false,
             },
             yAxis: {
-                axisLabel: 'Number of Children',
+                axisLabel: isMobile ? '' : 'Number of Children',
                 tickFormat: function (d) {
                     return d3.format('d')(d);
                 },
@@ -2378,7 +2655,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
     };
 
     vm.showBeneficiaryDetails = function () {
-        var params = $location.search();
+        var params = JSON.parse(JSON.stringify($location.search()));
         var get_url = url('awc_reports', 'beneficiary_details');
         var highest_age = 0;
 
@@ -2547,7 +2824,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
     };
 
     vm.isAWCsSelected = function () {
-        return vm.selectedLocationLevel === 4;
+        return parseInt(vm.selectedLocationLevel) === 4;
     };
 
     vm.toShowDataTables = function () {
@@ -2612,16 +2889,22 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
             id: 'beneficiary',
             route: "/awc_reports/beneficiary",
             label: "Child Beneficiaries List",
+            image: "/static/icds_reports/mobile/images/babyboy.png",
+            isMobile: haveAccessToFeatures,
         },
         {
             id: 'pregnant',
             route: "/awc_reports/pregnant",
             label: "Pregnant Women",
+            image: "/static/icds_reports/mobile/images/pregnant.png",
+            isMobile: haveAccessToFeatures,
         },
         {
             id: 'lactating',
             route: "/awc_reports/lactating",
             label: "Lactating Women",
+            image: "/static/icds_reports/mobile/images/lactatingwoman.png",
+            isMobile: haveAccessToFeatures,
         },
     ];
     vm.mobileSteps = _.filter(steps, function (step) {

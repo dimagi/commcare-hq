@@ -195,7 +195,6 @@ def doc_value_wrapper(doc_cls, value_cls):
 
 def can_add_extra_mobile_workers(request):
     from corehq.apps.users.models import CommCareUser
-    from corehq.apps.accounting.models import Subscription
     num_web_users = CommCareUser.total_by_domain(request.domain)
     user_limit = request.plan.user_limit
     if user_limit == -1 or num_web_users < user_limit:

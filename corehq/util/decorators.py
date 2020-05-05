@@ -9,9 +9,9 @@ from django.conf import settings
 import requests
 from celery.task import task
 
+from corehq.util.metrics import metrics_counter
 from dimagi.utils.logging import notify_exception
 
-from corehq.util.datadog.gauges import datadog_counter
 from corehq.util.global_request import get_request
 
 
@@ -36,18 +36,18 @@ def handle_uncaught_exceptions(mail_admins=True):
 
 
 @contextmanager
-def silence_and_report_error(message, datadog_metric):
+def silence_and_report_error(message, metric_name):
     """
     Prevent a piece of code from ever causing 500s if it errors
 
-    Instead, report the issue to sentry and track the overall count on datadog
+    Instead, report the issue to sentry and track the overall count as a metric
     """
 
     try:
         yield
     except Exception:
         notify_exception(None, message)
-        datadog_counter(datadog_metric)
+        metrics_counter(metric_name)
         if settings.UNIT_TESTING:
             raise
 

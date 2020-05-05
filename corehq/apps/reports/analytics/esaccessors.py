@@ -156,7 +156,7 @@ def get_paged_forms_by_type(
     return PagedResult(total=result.total, hits=result.hits)
 
 
-@quickcache(['domain', 'xmlns'], timeout=5 * 60)
+@quickcache(['domain', 'xmlns'], timeout=14 * 24 * 60)
 def guess_form_name_from_submissions_using_xmlns(domain, xmlns):
     return get_form_name_from_last_submission_for_xmlns(domain, xmlns)
 

@@ -1,13 +1,14 @@
-<div class="download-directive" cg-busy="[$ctrl.myPromise, $rootScope.locationPromise]">
+<div class="download-directive" cg-busy="[$ctrl.locationPromise]">
     <div class="row fixes-filters" ng-class="{'fixes-filters-with-alert': $ctrl.isAlertActive}">
         <div class="col-md-11">
-            <span class="breadcrump-element">Export Program Area Indicators: </span>
+            <span class="breadcrumb-element">Export Program Area Indicators: </span>
         </div>
     </div>
     <div class="report-content report-content-without-message icds-dashboard-title-fix">
         <div class="alert alert-info" ng-show="$ctrl.showWarning()">
             You are downloading data for the current calendar month. Data for this report is calculated using calendar months (for example, January 1st-January 31st). Data for this month will not be complete until the end of the month.
         </div>
+        <reassignment-message ng-show="$ctrl.showReassignmentMessage()" selected-location="$ctrl.selectedLocation" selected-date="$ctrl.selectedDate"></reassignment-message>
         <div class="alert alert-info" ng-show="$ctrl.isChildBeneficiaryListSelected()">
             This report contains growth monitoring information for children up to 5 years old.
         </div>
@@ -90,7 +91,7 @@
                            popover-trigger="'mouseenter'"></i></label>
                     <div class="col-sm-6">
                         <div style="margin-bottom: 15px;" ng-repeat="locationTypes in $ctrl.hierarchy" ng-show="$ctrl.isVisible($index)">
-                            <ui-select ng-disabled="$ctrl.disabled($index)" ng-model="$ctrl.selectedLocations[$index]" theme="bootstrap" on-select="$ctrl.onSelect($item, $index)">
+                            <ui-select ng-disabled="$ctrl.disabled($index)" ng-model="$ctrl.selectedLocations[$index]" theme="bootstrap" on-select="$ctrl.onSelectLocation($item, $index)">
                                 <ui-select-match placeholder="{$ $ctrl.getPlaceholder(locationTypes) $}"><span ng-bind="$select.selected.name"></span></ui-select-match>
                                   <ui-select-choices repeat="location.location_id as location in $ctrl.getLocationsForLevel($index) | propsFilter: {name: $select.search}">
                                     <div ng-bind-html="location.name | highlight: $select.search"></div>
@@ -241,7 +242,7 @@
                     <form action="{% url 'icds_export_indicator' domain %}" method="POST">
                         <button type="button" ng-click="$ctrl.submitForm('{{ csrf_token }}')"
                                 class="btn btn-default normalButton orangeButton"
-                                ng-disabled="$ctrl.hasErrors() || $ctrl.hasErrorsISSNIPExport()">
+                                ng-disabled="$ctrl.hasErrors() || $ctrl.hasErrorsISSNIPExport() || $ctrl.showReassignmentMessage()">
                             Export
                         </button>
                         <button type="button" ng-click="$ctrl.resetForm()"

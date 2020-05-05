@@ -16,7 +16,7 @@ from django.db.models import F
 import pytz
 from celery import chain
 from celery.schedules import crontab
-from celery.task import periodic_task, task
+from celery.task import task
 from dateutil import parser as date_parser
 from dateutil.relativedelta import relativedelta
 from gevent.pool import Pool
@@ -27,7 +27,6 @@ from dimagi.utils.chunked import chunked
 from dimagi.utils.dates import force_to_date, force_to_datetime
 from dimagi.utils.logging import notify_exception
 from pillowtop.feed.interface import ChangeMeta
-from pillow_retry.models import PillowError
 
 from corehq.apps.change_feed import data_sources, topics
 from corehq.apps.change_feed.producer import producer
@@ -42,12 +41,9 @@ from corehq.apps.users.dbaccessors.all_commcare_users import (
     get_all_user_id_username_pairs_by_domain,
 )
 from corehq.const import SERVER_DATE_FORMAT, SERVER_DATETIME_FORMAT
-from corehq.form_processor.change_publishers import publish_case_saved
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import CommCareCaseSQL, XFormInstanceSQL
 from corehq.sql_db.connections import get_icds_ucr_citus_db_alias
 from corehq.util.celery_utils import periodic_task_on_envs
-from corehq.util.datadog.utils import case_load_counter
 from corehq.util.decorators import serial_task
 from corehq.util.log import send_HTML_email
 from corehq.util.soft_assert import soft_assert
@@ -105,7 +101,11 @@ from custom.icds_reports.models.aggregate import (
     AggregateAdolescentGirlsRegistrationForms,
     AggGovernanceDashboard,
     AggServiceDeliveryReport,
-    AggregateMigrationForms
+    AggregateMigrationForms,
+    AggregateAvailingServiceForms,
+    BiharAPIDemographics,
+    ChildVaccines
+
 )
 from custom.icds_reports.models.helper import IcdsFile
 from custom.icds_reports.models.util import UcrReconciliationStatus
@@ -150,7 +150,12 @@ from custom.icds_reports.utils.aggregation_helpers.distributed import (
     AggAwcDistributedHelper,
     AggChildHealthAggregationDistributedHelper,
     GrowthMonitoringFormsAggregationDistributedHelper,
-    DailyFeedingFormsChildHealthAggregationDistributedHelper
+    DailyFeedingFormsChildHealthAggregationDistributedHelper,
+)
+from custom.icds_reports.utils.aggregation_helpers.distributed.location_reassignment import (
+    TempPrevUCRTables,
+    TempPrevIntermediateTables,
+    TempInfraTables
 )
 from custom.icds_reports.utils.aggregation_helpers.distributed.mbt import (
     AwcMbtDistributedHelper,
@@ -213,11 +218,15 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
 
         update_aggregate_locations_tables()
 
+
         state_ids = list(SQLLocation.objects
                      .filter(domain=DASHBOARD_DOMAIN, location_type__name='state')
                      .values_list('location_id', flat=True))
 
         for monthly_date in monthly_dates:
+            TempPrevUCRTables().make_all_tables(monthly_date)
+            TempPrevIntermediateTables().make_all_tables(monthly_date)
+            TempInfraTables().make_all_tables(monthly_date)
             calculation_date = monthly_date.strftime('%Y-%m-%d')
             res_daily = icds_aggregation_task.delay(date=calculation_date, func_name='_daily_attendance_table')
             res_daily.get(disable_sync_subtasks=False)
@@ -287,6 +296,12 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
             stage_1_tasks.extend([
                 icds_state_aggregation_task.si(state_id=state_id, date=monthly_date,
                                                func_name='_agg_migration_table')
+                for state_id in state_ids
+            ])
+
+            stage_1_tasks.extend([
+                icds_state_aggregation_task.si(state_id=state_id, date=monthly_date,
+                                               func_name='_agg_availing_services_table')
                 for state_id in state_ids
             ])
 
@@ -462,7 +477,8 @@ def icds_state_aggregation_task(self, state_id, date, func_name):
         '_agg_beneficiary_form': _agg_beneficiary_form,
         '_agg_thr_table': _agg_thr_table,
         '_agg_adolescent_girls_registration_table': _agg_adolescent_girls_registration_table,
-        '_agg_migration_table': _agg_migration_table
+        '_agg_migration_table': _agg_migration_table,
+        '_agg_availing_services_table': _agg_availing_services_table
     }[func_name]
 
     db_alias = get_icds_ucr_citus_db_alias()
@@ -722,6 +738,13 @@ def _agg_migration_table(state_id, day):
     db_alias = router.db_for_write(AggregateMigrationForms)
     with transaction.atomic(using=db_alias):
         AggregateMigrationForms.aggregate(state_id, force_to_date(day))
+
+
+@track_time
+def _agg_availing_services_table(state_id, day):
+    db_alias = router.db_for_write(AggregateAvailingServiceForms)
+    with transaction.atomic(using=db_alias):
+        AggregateAvailingServiceForms.aggregate(state_id, force_to_date(day))
 
 
 @task(serializer='pickle', queue='icds_aggregation_queue')
@@ -1607,6 +1630,7 @@ def setup_aggregation(agg_date):
     if db_alias:
         with connections[db_alias].cursor() as cursor:
             _create_aggregate_functions(cursor)
+            TempPrevUCRTables().make_all_tables(force_to_date(agg_date))
 
 
 def _child_health_monthly_aggregation(day, state_ids):
@@ -1686,11 +1710,8 @@ def reconcile_data_not_in_ucr(reconciliation_status_pk):
 
     data_not_in_ucr = get_data_not_in_ucr(status_record)
     doc_ids_not_in_ucr = {data[0] for data in data_not_in_ucr}
-    doc_ids_in_pillow_error = set(
-        PillowError.objects.filter(doc_id__in=doc_ids_not_in_ucr).values_list('doc_id', flat=True))
-    invalid_doc_ids = set(
+    known_bad_doc_ids = set(
         InvalidUCRData.objects.filter(doc_id__in=doc_ids_not_in_ucr).values_list('doc_id', flat=True))
-    known_bad_doc_ids = doc_ids_in_pillow_error.intersection(invalid_doc_ids)
 
     # republish_kafka_changes
     # running the data accessor again to avoid storing all doc ids in memory
@@ -1698,7 +1719,7 @@ def reconcile_data_not_in_ucr(reconciliation_status_pk):
     # but the number of doc ids will increase with the number of errors
     for doc_id, doc_subtype, sql_modified_on in get_data_not_in_ucr(status_record):
         if doc_id in known_bad_doc_ids:
-            # These docs will either get retried or are invalid
+            # These docs are invalid
             continue
         number_documents_missing += 1
         celery_task_logger.info(f'doc_id {doc_id} from {sql_modified_on} not found in UCR data sources')
@@ -1806,6 +1827,7 @@ def drop_gm_indices(agg_date):
     with get_cursor(AggregateGrowthMonitoringForms) as cursor:
         for query, params in helper.delete_queries():
             cursor.execute(query, params)
+    helper.create_temporary_prev_table('static-child_health_cases')
 
 
 def create_df_indices(agg_date):
@@ -1822,6 +1844,50 @@ def drop_df_indices(agg_date):
             cursor.execute(query, params)
         for query in helper.drop_index_queries():
             cursor.execute(query)
+
+
+def cf_pre_queries(agg_date):
+    helper = AggregateComplementaryFeedingForms._agg_helper_cls(None, agg_date)
+    helper.create_temporary_prev_table('static-child_health_cases')
+
+
+def ccs_cf_pre_queries(agg_date):
+    helper = AggregateCcsRecordComplementaryFeedingForms._agg_helper_cls(None, agg_date)
+    helper.create_temporary_prev_table('static-ccs_record_cases')
+
+
+def migration_pre_queries(agg_date):
+    helper = AggregateMigrationForms._agg_helper_cls(None, agg_date)
+    helper.create_temporary_prev_table('static-person_cases_v3', 'person_case_id')
+
+
+def availing_pre_queries(agg_date):
+    helper = AggregateAvailingServiceForms._agg_helper_cls(None, agg_date)
+    helper.create_temporary_prev_table('static-person_cases_v3', 'person_case_id')
+
+
+def ch_pnc_pre_queries(agg_date):
+    helper = AggregateChildHealthPostnatalCareForms._agg_helper_cls(None, agg_date)
+    helper.create_temporary_prev_table('static-child_health_cases')
+
+
+def ccs_pnc_pre_queries(agg_date):
+    helper = AggregateCcsRecordPostnatalCareForms._agg_helper_cls(None, agg_date)
+    helper.create_temporary_prev_table('static-ccs_record_cases')
+
+
+def bp_pre_queries(agg_date):
+    helper = AggregateBirthPreparednesForms._agg_helper_cls(None, agg_date)
+    helper.create_temporary_prev_table('static-ccs_record_cases')
+
+
+def ag_pre_queries(agg_date):
+    helper = AggregateAdolescentGirlsRegistrationForms._agg_helper_cls(None, agg_date)
+    helper.create_temporary_prev_table('static-person_cases_v3', 'person_case_id')
+
+
+def awc_infra_pre_queries(agg_date):
+    TempInfraTables().make_all_tables(agg_date)
 
 
 def update_governance_dashboard(target_date):
@@ -1841,3 +1907,18 @@ def _agg_governance_dashboard(current_month):
 def update_service_delivery_report(target_date):
     current_month = force_to_date(target_date).replace(day=1)
     AggServiceDeliveryReport.aggregate(current_month)
+
+
+def update_bihar_api_table(target_date):
+    current_month = force_to_date(target_date).replace(day=1)
+    _agg_bihar_api_demographics.delay(current_month)
+
+
+@task(queue='icds_aggregation_queue', serializer='pickle')
+def _agg_bihar_api_demographics(target_date):
+    BiharAPIDemographics.aggregate(target_date)
+
+
+def update_child_vaccine_table(target_date):
+    current_month = force_to_date(target_date).replace(day=1)
+    ChildVaccines.aggregate(current_month)

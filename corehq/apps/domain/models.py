@@ -391,6 +391,9 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
     # If this is None, then the default is applied. See get_daily_outbound_sms_limit()
     custom_daily_outbound_sms_limit = IntegerProperty()
 
+    # Twilio Whatsapp-enabled phone number
+    twilio_whatsapp_phone_number = StringProperty()
+
     # Allowed number of case updates or closes from automatic update rules in the daily rule run.
     # If this value is None, the value in settings.MAX_RULE_UPDATES_IN_ONE_RUN is used.
     auto_case_update_limit = IntegerProperty()
@@ -971,9 +974,11 @@ class TransferDomainRequest(models.Model):
 
     def email_from_request(self):
         context = self.as_dict()
-        context['settings_url'] = "{url_base}{path}".format(
-            url_base=get_url_base(),
-            path=reverse('transfer_domain_view', args=[self.domain]))
+        context.update({
+            'settings_url': "{url_base}{path}".format(url_base=get_url_base(),
+                                                      path=reverse('transfer_domain_view', args=[self.domain])),
+            'support_email': settings.SUPPORT_EMAIL,
+        })
 
         html_content = render_to_string("{template}.html".format(template=self.TRANSFER_FROM_EMAIL), context)
         text_content = render_to_string("{template}.txt".format(template=self.TRANSFER_FROM_EMAIL), context)

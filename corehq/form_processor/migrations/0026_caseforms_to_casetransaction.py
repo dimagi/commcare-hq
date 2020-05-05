@@ -14,8 +14,8 @@ class Migration(migrations.Migration):
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('form_uuid', models.CharField(max_length=255)),
                 ('server_date', models.DateTimeField()),
-                ('type', models.PositiveSmallIntegerField(choices=[(0, b'form'), (1, b'rebuild')])),
-                ('case', models.ForeignKey(related_query_name=b'xform', related_name='xform_set', db_column='case_uuid', to_field='case_uuid', to='form_processor.CommCareCaseSQL', db_index=False, on_delete=models.CASCADE)),
+                ('type', models.PositiveSmallIntegerField(choices=[(0, 'form'), (1, 'rebuild')])),
+                ('case', models.ForeignKey(related_query_name='xform', related_name='xform_set', db_column='case_uuid', to_field='case_uuid', to='form_processor.CommCareCaseSQL', db_index=False, on_delete=models.CASCADE)),
             ],
             options={
                 'ordering': ['server_date'],
