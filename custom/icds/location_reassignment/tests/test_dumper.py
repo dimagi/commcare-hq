@@ -23,6 +23,7 @@ from custom.icds.location_reassignment.const import (
 )
 from custom.icds.location_reassignment.download import Households
 from custom.icds.location_reassignment.dumper import Dumper
+from custom.icds.location_reassignment.models import Transition
 
 Location = namedtuple('Location', ['location_id', 'site_code'])
 
@@ -48,15 +49,40 @@ class TestDumper(TestCase):
                   mock_location_ids):
         mock_case_count.return_value = []
         transitions = {
-            'awc': {
-                MOVE_OPERATION: {'112': '111'},  # new: old
-                MERGE_OPERATION: {'115': ['113', '114']},  # new: old
-                SPLIT_OPERATION: {'116': ['117', '118']},  # old: new
-                EXTRACT_OPERATION: {'120': '119'}  # new: old
-            },
-            'supervisor': {
-                MOVE_OPERATION: {'13': '12'}
-            },
+            'awc': [
+                Transition(
+                    domain=self.domain,
+                    location_type_code='awc',
+                    operation=MOVE_OPERATION,
+                    old_site_codes=['111'],
+                    new_site_codes=['112']),
+                Transition(
+                    domain=self.domain,
+                    location_type_code='awc',
+                    operation=MERGE_OPERATION,
+                    old_site_codes=['113', '114'],
+                    new_site_codes=['115']),
+                Transition(
+                    domain=self.domain,
+                    location_type_code='awc',
+                    operation=SPLIT_OPERATION,
+                    old_site_codes=['116'],
+                    new_site_codes=['117', '118']),
+                Transition(
+                    domain=self.domain,
+                    location_type_code='awc',
+                    operation=EXTRACT_OPERATION,
+                    old_site_codes=['119'],
+                    new_site_codes=['120'])
+            ],
+            'supervisor': [
+                Transition(
+                    domain=self.domain,
+                    location_type_code='awc',
+                    operation=MOVE_OPERATION,
+                    old_site_codes=['12'],
+                    new_site_codes=['13']),
+            ],
             'state': {}
         }
 
