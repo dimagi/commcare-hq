@@ -15,7 +15,8 @@ from custom.icds_reports.utils import get_location_launched_status
 
 
 @icds_quickcache(['domain', 'config', 'loc_level', 'show_test', 'icds_features_flag'], timeout=30 * 60)
-def get_prevalence_of_undernutrition_data_map(domain, config, loc_level, show_test=False, icds_features_flag=False):
+def get_prevalence_of_undernutrition_data_map(domain, config, loc_level,
+                                              show_test=False, icds_features_flag=False):
     config['month'] = datetime(*config['month'])
 
     def get_data_for(filters):
@@ -148,7 +149,8 @@ def get_prevalence_of_undernutrition_data_map(domain, config, loc_level, show_te
 
 
 @icds_quickcache(['domain', 'config', 'loc_level', 'show_test', 'icds_features_flag'], timeout=30 * 60)
-def get_prevalence_of_undernutrition_data_chart(domain, config, loc_level, show_test=False, icds_features_flag=False):
+def get_prevalence_of_undernutrition_data_chart(domain, config, loc_level,
+                                                show_test=False, icds_features_flag=False):
     month = datetime(*config['month'])
     three_before = datetime(*config['month']) - relativedelta(months=3)
 
@@ -286,7 +288,8 @@ def get_prevalence_of_undernutrition_data_chart(domain, config, loc_level, show_
 
 
 @icds_quickcache(['domain', 'config', 'loc_level', 'show_test', 'icds_features_flag'], timeout=30 * 60)
-def get_prevalence_of_undernutrition_sector_data(domain, config, loc_level, show_test=False, icds_features_flag=False):
+def get_prevalence_of_undernutrition_sector_data(domain, config, loc_level,
+                                                 show_test=False, icds_features_flag=False):
     group_by = ['%s_name' % loc_level]
 
     config['month'] = datetime(*config['month'])

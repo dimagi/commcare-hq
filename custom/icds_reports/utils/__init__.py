@@ -569,7 +569,8 @@ def include_records_by_age_for_column(include_config, column):
     )
 
 
-def generate_data_for_map(data, loc_level, num_prop, denom_prop, fill_key_lower, fill_key_bigger, all_property=None, location_launched_status=None):
+def generate_data_for_map(data, loc_level, num_prop, denom_prop, fill_key_lower, fill_key_bigger,
+                          all_property=None, location_launched_status=None):
     data_for_map = defaultdict(lambda: {
         num_prop: 0,
         denom_prop: 0,
@@ -593,7 +594,7 @@ def generate_data_for_map(data, loc_level, num_prop, denom_prop, fill_key_lower,
     for row in data:
         if location_launched_status is not None:
             launched_status = location_launched_status.get(row['%s_name' % loc_level])
-            if launched_status is None or launched_status <=0:
+            if launched_status is None or launched_status <= 0:
                 continue
         valid = row[denom_prop] or 0
         name = row['%s_name' % loc_level]
@@ -1882,7 +1883,7 @@ def get_location_launched_status(filters, loc_name):
         **select_location_filter(filters)
     ).values('%s_name' % loc_name, 'num_launched_awcs')
 
-    return { loc['%s_name' % loc_name]:loc['num_launched_awcs'] for loc in locations_launched_status}
+    return {loc['%s_name' % loc_name]: loc['num_launched_awcs'] for loc in locations_launched_status}
 
 
 def timestamp_string_to_date_string(ts_string):

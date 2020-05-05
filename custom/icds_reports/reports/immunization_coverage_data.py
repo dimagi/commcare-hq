@@ -43,7 +43,7 @@ def get_immunization_coverage_data_map(domain, config, loc_level, show_test=Fals
         'all',
         20,
         60,
-        location_launched_status = location_launched_status
+        location_launched_status=location_launched_status
     )
 
     fills = OrderedDict()
