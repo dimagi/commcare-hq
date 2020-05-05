@@ -100,7 +100,7 @@ csiphash==0.0.5
 json-delta==2.0
 email_validator==1.0.3
 dnspython==1.15.0
-sentry-sdk==0.13.5
+sentry-sdk==0.14.3
 quickcache~=0.5
 ethiopian-date-converter==0.1.5
 hiredis==0.2.0
