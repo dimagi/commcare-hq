@@ -770,7 +770,10 @@ NORMALIZED_TIMING_BUCKETS = (0.001, 0.01, 0.1, 0.25, 0.5, 0.75, 1, 2, 3, 5, 10, 
 
 @contextmanager
 def migration_patches():
-    with patch_case_property_validators(), patch_XFormInstance_get_xml(), patch_kafka():
+    with patch_case_property_validators(), \
+            patch_XFormInstance_get_xml(), \
+            patch_case_date_modified_fixer(), \
+            patch_kafka():
         yield
 
 
@@ -791,6 +794,28 @@ def patch_case_property_validators():
         yield
     finally:
         PROPERTY_TYPE_MAPPING.update(original)
+
+
+@contextmanager
+def patch_case_date_modified_fixer():
+    def has_case_id_and_valid_date_modified(case_block):
+        has_case = has_case_id(case_block)
+        if has_case:
+            datemod = case_block.get('@date_modified')
+            if isinstance(datemod, str) and MALFORMED_DATE.match(datemod):
+                # fix modified date so subsequent validation (immediately
+                # after this function call) does not fail
+                assert datemod[8] == "0", datemod
+                case_block["@date_modified"] = datemod[:8] + datemod[9:]
+        return has_case
+    import casexml.apps.case.xform as module
+    from casexml.apps.case.xform import has_case_id
+    from .diff import MALFORMED_DATE
+    module.has_case_id = has_case_id_and_valid_date_modified
+    try:
+        yield
+    finally:
+        module.has_case_id = has_case_id
 
 
 @contextmanager

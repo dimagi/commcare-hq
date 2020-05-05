@@ -1498,6 +1498,19 @@ class MigrationTestCase(BaseMigrationTestCase):
         self.submit_form(make_test_form("naaaame", case_name="ha" * 128))
         self.do_migration(finish=True)
 
+    def test_case_with_malformed_date_modified(self):
+        bad_xml = TEST_FORM.replace('"2015-08-04T18:25:56.656Z"', '"2015-08-014"')
+        assert bad_xml.count("2015-08-014") == 1, bad_xml
+        form = submit_form_locally(TEST_FORM, self.domain_name).xform
+        form.form_data["case"]["@date_modified"] = "2015-08-014"
+        form.delete_attachment('form.xml')
+        form.put_attachment(bad_xml, 'form.xml')
+        form.save()
+        self.do_migration()
+        case = self._get_case("test-case")
+        self.assertEqual(case.xform_ids, ["test-form"])
+        self.assertEqual(case.modified_on, datetime(2015, 8, 14, 0, 0))
+
 
 class LedgerMigrationTests(BaseMigrationTestCase):
     def setUp(self):
