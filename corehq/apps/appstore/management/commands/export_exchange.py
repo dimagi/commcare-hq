@@ -27,7 +27,18 @@ class Command(BaseCommand):
         ).all()
         snapshots = [s['doc'] for s in snapshots]
         snapshots = [s for s in snapshots if s['published'] and s['is_snapshot'] and s.get('snapshot_head')]
-        rows = []
+        rows = [[
+            'Snapshot Domain',
+            'Original Domain',
+            'Project Title',
+            'Organization',
+            'Summary',
+            'Category',
+            'Published By',
+            'Published On',
+            'Languages',
+            'License',
+        ]]
         for s in snapshots:
             domain = Domain.wrap(s)
             user = None
