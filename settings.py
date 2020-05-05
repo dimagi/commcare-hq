@@ -1903,6 +1903,7 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'add_pregnancy_form.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'primary_private_school_form_ucr.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'cbe_form.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'remove_member_form.json'),
     os.path.join('custom', 'champ', 'ucr_data_sources', 'champ_cameroon.json'),
     os.path.join('custom', 'champ', 'ucr_data_sources', 'enhanced_peer_mobilization.json'),
     os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'commande_combined.json'),
