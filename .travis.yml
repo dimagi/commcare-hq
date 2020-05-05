@@ -9,7 +9,8 @@ env:
   matrix:
     - TEST=python NOSE_DIVIDED_WE_RUN=06 JS_SETUP=yes
     - TEST=python NOSE_DIVIDED_WE_RUN=7b JS_SETUP=yes
-    - TEST=python NOSE_DIVIDED_WE_RUN=cf JS_SETUP=yes
+    - TEST=python NOSE_DIVIDED_WE_RUN=cd JS_SETUP=yes
+    - TEST=python NOSE_DIVIDED_WE_RUN=ef JS_SETUP=yes
     - TEST=python-sharded-and-javascript JS_SETUP=yes
   global:
     - REUSE_DB=true  # can't drop the citus DB since it's the postgres database
