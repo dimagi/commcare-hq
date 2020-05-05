@@ -596,6 +596,10 @@
             },
             {
               "type": "named",
+              "name": "open_cases"
+            },
+            {
+              "type": "named",
               "name": "pregnant"
             }
           ]
