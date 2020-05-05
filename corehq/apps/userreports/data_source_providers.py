@@ -53,3 +53,6 @@ class MockDataSourceProvider(DataSourceProvider):
 
     def get_all_data_sources(self):
         return []
+
+    def by_domain(self, domain):
+        return []
