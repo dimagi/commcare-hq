@@ -40,8 +40,11 @@
       {
         "column_id": "reason_closure",
         "datatype": "string",
-        "type": "raw",
-        "property_name": "reason_closure"
+        "type": "expression",
+        "expression": {
+            "type": "property_path",
+            "property_path": ["form", "reason_closure"]
+        }
       },
       {
         "column_id": "person_case_id",
@@ -88,7 +91,7 @@
       }
     },
     "named_filters": {},
-    "engine_id": "aaa-data",
+    "engine_id": "icds-ucr-citus",
     "sql_settings": {
       "citus_config": {
         "distribution_type": "hash",
