@@ -50,16 +50,16 @@ trunk: master
 name: autostaging
 branches:
   - vellum-staging  # DO NOT REMOVE this is similar to "autostaging", but for vellum
-  - jls/migrate-DefaultConsumption-3 # Jenny April 24
-  #- jls/use-textinput # Jenny March 10
-    #- mk/location-reassignment-11-followup
-  - bmb/SAAS-10712  # Biyeun April 1
-  - ap/remove-delete-in-name # Amit April 8
   - bmb/odata-qa-feedback  # Biyeun April 15
-    #  - fr/turn-backend        # Farid April 17 # Removed April 25 from conflict
-    #- dmr/track-sms-by-backend  # Danny April 22
-  - dmr/fix-build_full_schema-poll-condition  # Danny April 27
   - dmr/require_can_edit_or_view_commcare_users-download_commcare_users  # Danny April 27
   - sr-es-alias # Sravan April 29
+  - jls/migrate-CustomDataFieldsDefinition-1+jls/migrate-DefaultConsumption-3 # Jenny April 29
+  - jls/migrate-DefaultConsumption-3 # Jenny April 24
+  - jls/migrate-CustomDataFieldsDefinition-2 # Jenny April 29
+  - bmb/SAAS-10813  # Biyeun April 30
+  - mk/location-reassignment-realign # MK May 4
+  - mk/location-reassignment-add-view # MK May 3
+  - rn_update_perfect_scrollbar # Rohit Negi May 4
+  - bmb/SAAS-10674  # Biyeun May 4
 
 submodules: {}
