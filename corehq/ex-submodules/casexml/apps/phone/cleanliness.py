@@ -11,6 +11,7 @@ from corehq.apps.users.util import WEIRD_USER_IDS
 from django.conf import settings
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.toggles import LIVEQUERY_SYNC
 from corehq.util.soft_assert import soft_assert
 from dimagi.utils.logging import notify_exception
 import six
@@ -49,7 +50,10 @@ def set_cleanliness_flags_for_all_domains(force_full=False):
     """
     Updates cleanliness for all domains
     """
+    skip_domains = LIVEQUERY_SYNC.get_enabled_domains()
     for domain in Domain.get_all_names():
+        if domain in skip_domains:
+            continue
         try:
             set_cleanliness_flags_for_domain(domain, force_full=force_full)
         except InvalidDomainError as e:
