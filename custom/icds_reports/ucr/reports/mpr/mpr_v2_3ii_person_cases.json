@@ -190,6 +190,24 @@
         "visible": true
       },
       {
+        "display": "F_open_count",
+        "column_id": "F_open_count",
+        "type": "sum_when_template",
+        "calculate_total": true,
+        "whens": [
+          {
+            "type": "open_female",
+            "binds": [],
+            "then": 1
+          }
+        ],
+        "else_": 0,
+        "sortable": false,
+        "transform": {},
+        "description": null,
+        "visible": true
+      },
+      {
         "display": "M_resident_count",
         "column_id": "M_resident_count",
         "type": "sum_when_template",
