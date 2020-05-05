@@ -301,10 +301,7 @@ def send_message_via_backend(msg, backend=None, orig_phone_number=None):
 
         if backend.domain_is_authorized(msg.domain):
             backend.send(msg, orig_phone_number=orig_phone_number)
-            sms_load_counter("outbound", msg.domain, extra_tags={
-                'status': 'ok',
-                'backend': _get_backend_tag(backend),
-            })()
+            sms_load_counter("outbound", msg.domain, status='ok', backend=_get_backend_tag(backend))()
         else:
             raise BackendAuthorizationException(
                 "Domain '%s' is not authorized to use backend '%s'" % (msg.domain, backend.pk)
@@ -315,10 +312,7 @@ def send_message_via_backend(msg, backend=None, orig_phone_number=None):
         msg.save()
         return True
     except Exception:
-        sms_load_counter("outbound", msg.domain, extra_tags={
-            'status': 'error',
-            'backend': _get_backend_tag(backend),
-        })()
+        sms_load_counter("outbound", msg.domain, status='error', backend=_get_backend_tag(backend))()
         should_log_exception = True
 
         if backend:
@@ -627,7 +621,7 @@ def get_inbound_phone_entry(msg):
 
 
 def process_incoming(msg):
-    sms_load_counter("inbound", msg.domain)()
+    sms_load_counter("inbound", msg.domain, backend=_get_backend_tag(msg.outbound_backend))()
     v, has_domain_two_way_scope = get_inbound_phone_entry(msg)
 
     if v:
