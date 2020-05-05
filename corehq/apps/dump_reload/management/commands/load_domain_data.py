@@ -58,7 +58,7 @@ class Command(BaseCommand):
             loaders = LOADERS
 
         for loader in loaders:
-            loader_total_object_count, loader_model_counts = self._load_data(object_filter, loader, extracted_dir)
+            loader_total_object_count, loader_model_counts = self._load_data(loader, extracted_dir, object_filter)
             total_object_count += loader_total_object_count
             model_counts.update(loader_model_counts)
 
