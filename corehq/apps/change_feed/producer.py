@@ -6,6 +6,7 @@ from functools import partial
 from django.conf import settings
 
 from kafka import KafkaProducer
+from kafka.errors import KafkaTimeoutError
 
 from corehq.form_processor.exceptions import KafkaPublishingError
 from dimagi.utils.logging import notify_exception
@@ -55,6 +56,14 @@ class ChangeProducer(object):
             if self.auto_flush:
                 future.get()
                 _audit_log(CHANGE_SENT, change_meta)
+        except KafkaTimeoutError as e:
+            import sys
+            import subprocess
+            out = subprocess.check_output(['docker', 'logs', 'hqtest_kafka_1']).decode('utf8')
+            sys.stderr.write(f'{out}/n')
+            sys.stderr.flush()
+            _audit_log('ERROR', change_meta)
+            raise KafkaPublishingError(e)
         except Exception as e:
             _audit_log('ERROR', change_meta)
             raise KafkaPublishingError(e)
