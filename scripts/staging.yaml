@@ -62,5 +62,6 @@ branches:
   - rn_update_perfect_scrollbar # Rohit Negi May 4
   - bmb/SAAS-10674  # Biyeun May 4
   - jls/only-clean-dirty-things # Jenny May 5
+  - dmr/case-upload-success-result-followup  # Danny May 5
 
 submodules: {}
