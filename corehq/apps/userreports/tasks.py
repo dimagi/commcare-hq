@@ -562,7 +562,7 @@ def async_indicators_metrics():
 
     oldest_unprocessed = AsyncIndicator.objects.filter(unsuccessful_attempts=0).first()
     if oldest_unprocessed:
-        lag = (now - oldest_unprocessed.date_created).total_seconds
+        lag = (now - oldest_unprocessed.date_created).total_seconds()
     else:
         lag = 0
     metrics_gauge(
