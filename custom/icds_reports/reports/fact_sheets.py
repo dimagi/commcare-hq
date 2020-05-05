@@ -624,7 +624,7 @@ class FactSheetsReport(object):
 
         all_data = self._get_all_data(data_sources)
 
-        sql_location = self.config['sql_location']
+        sql_location = self.config.get('sql_location')
         months = [
             dt.strftime("%b %Y") for dt in rrule(
                 MONTHLY,
