@@ -1,8 +1,9 @@
 from corehq.util.elastic import es_index
+from .utils import transform_for_es7
 from pillowtop.es_utils import ElasticsearchIndexInfo
 
 GROUP_INDEX = es_index("hqgroups_2017-05-29")
-GROUP_MAPPING = {
+GROUP_MAPPING = transform_for_es7({
     "date_formats": [
         "yyyy-MM-dd",
         "yyyy-MM-dd'T'HH:mm:ssZZ",
@@ -61,7 +62,7 @@ GROUP_MAPPING = {
         "users": {"type": "string"},
         "removed_users": {"type": "string"},
     }
-}
+})
 
 
 GROUP_INDEX_INFO = ElasticsearchIndexInfo(

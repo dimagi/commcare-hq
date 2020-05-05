@@ -9,26 +9,29 @@ class AbstractElasticsearchInterface(metaclass=abc.ABCMeta):
     def __init__(self, es):
         self.es = es
 
+    def put_mapping(self, doc_type, mapping, index):
+        return self.es.indices.put_mapping(doc_type, {doc_type: mapping}, index=index)
+
     def update_index_settings(self, index, settings_dict):
         assert set(settings_dict.keys()) == {'index'}, settings_dict.keys()
-        settings_dict = {
-            "index": {
-                key: value for key, value in settings_dict['index'].items()
-                if key not in self._disallowed_index_settings
-            }
-        }
         return self.es.indices.put_settings(settings_dict, index=index)
 
+    def _get_source(self, index, doc_type, doc_id):
+        return self.es.get_source(index, doc_type, doc_id)
+
     def get_doc(self, index, doc_type, doc_id):
-        doc = self.es.get_source(index, doc_type, doc_id)
+        doc = self._get_source(index, doc_type, doc_id)
         doc['_id'] = doc_id
         return doc
+
+    def _mget(self, index, body, doc_type):
+        return self.es.mget(
+            index=index, doc_type=doc_type, body=body, _source=True)
 
     def get_bulk_docs(self, index, doc_type, doc_ids):
         from corehq.elastic import ESError
         docs = []
-        results = self.es.mget(
-            index=index, doc_type=doc_type, body={'ids': doc_ids}, _source=True)
+        results = self._mget(index=index, doc_type=doc_type, body={'ids': doc_ids})
         for doc_result in results['docs']:
             if 'error' in doc_result:
                 raise ESError(doc_result['error'].get('reason', 'error doing bulk get'))
@@ -64,7 +67,7 @@ class AbstractElasticsearchInterface(metaclass=abc.ABCMeta):
         return bulk(self.es, actions, stats_only=stats_only, **kwargs)
 
     def search(self, index=None, doc_type=None, body=None, params=None, **kwargs):
-        results = self.es.search(index, doc_type, body=body, params=params or {}, **kwargs)
+        results = self.es.search(index=index, doc_type=doc_type, body=body, params=params or {}, **kwargs)
         self._fix_hits_in_results(results)
         return results
 
@@ -88,20 +91,41 @@ class AbstractElasticsearchInterface(metaclass=abc.ABCMeta):
 
 
 class ElasticsearchInterface1(AbstractElasticsearchInterface):
-    _disallowed_index_settings = (
-        'max_result_window',
-    )
+    pass
 
 
 class ElasticsearchInterface2(AbstractElasticsearchInterface):
-    _disallowed_index_settings = (
-        'merge.policy.merge_factor',
-        'store.throttle.max_bytes_per_sec',
-        'store.throttle.type',
-    )
+    pass
 
+
+class ElasticsearchInterface7(AbstractElasticsearchInterface):
+
+    def put_mapping(self, doc_type, mapping, index):
+        return self.es.indices.put_mapping(mapping, index=index)
+
+    def create_doc(self, index, doc_type, doc_id, doc):
+        self.es.create(index, body=self._without_id_field(doc), id=doc_id)
+
+    def _get_source(self, index, doc_type, doc_id):
+        return self.es.get_source(index, doc_id)
+
+    def _mget(self, index, body, doc_type):
+        return self.es.mget(
+            index=index, body=body, _source=True)
+
+    def update_doc(self, index, doc_type, doc_id, doc, params=None):
+        self.es.index(index, body=self._without_id_field(doc), id=doc_id,
+                      params=params or {})
+
+    def update_doc_fields(self, index, doc_type, doc_id, fields, params=None):
+        self.es.update(index, doc_id, body={"doc": self._without_id_field(fields)},
+                       params=params or {})
+
+    def delete_doc(self, index, doc_type, doc_id):
+        self.es.delete(index, doc_id)
 
 ElasticsearchInterface = {
     1: ElasticsearchInterface1,
     2: ElasticsearchInterface2,
+    7: ElasticsearchInterface7,
 }[settings.ELASTICSEARCH_MAJOR_VERSION]

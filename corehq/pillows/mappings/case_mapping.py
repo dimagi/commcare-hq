@@ -1,12 +1,13 @@
 from corehq.pillows.core import DATE_FORMATS_ARR, DATE_FORMATS_STRING
 from corehq.pillows.mappings import NULL_VALUE
 from corehq.util.elastic import es_index
+from .utils import transform_for_es7
 from pillowtop.es_utils import ElasticsearchIndexInfo
 
 CASE_INDEX = es_index("hqcases_2016-03-04")
 CASE_ES_TYPE = 'case'
 
-CASE_MAPPING = {
+CASE_MAPPING = transform_for_es7({
     'date_detection': False,
     'date_formats': DATE_FORMATS_ARR,
     'dynamic': False,
@@ -99,7 +100,7 @@ CASE_MAPPING = {
                                  'type': 'string'},
         'backend_id': {'type': 'string', 'index': 'not_analyzed'},
     }
-}
+})
 
 CASE_ES_ALIAS = "hqcases"
 
