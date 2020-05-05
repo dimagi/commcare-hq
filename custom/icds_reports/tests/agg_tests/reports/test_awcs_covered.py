@@ -40,7 +40,7 @@ class TestAWCSCovered(TestCase):
                         'awcs': 0,
                         'original_name': ['st4'],
                         'states': 0,
-                        'supervisors': 0,
+                        'sectors': 0,
                         'fillKey': 'Not launched'},
                     'st5': {
                         'districts': 0,
@@ -48,7 +48,7 @@ class TestAWCSCovered(TestCase):
                         'awcs': 0,
                         'original_name': ['st5'],
                         'states': 0,
-                        'supervisors': 0,
+                        'sectors': 0,
                         'fillKey': 'Not launched'
                     },
                     'st6': {
@@ -57,7 +57,7 @@ class TestAWCSCovered(TestCase):
                         'awcs': 0,
                         'original_name': ['st6'],
                         'states': 0,
-                        'supervisors': 0,
+                        'sectors': 0,
                         'fillKey': 'Not launched'
                     },
                     'st7': {
@@ -66,7 +66,7 @@ class TestAWCSCovered(TestCase):
                         'awcs': 1,
                         'original_name': ['st7'],
                         'states': 1,
-                        'supervisors': 1,
+                        'sectors': 1,
                         'fillKey': 'Launched'
                     },
                     'st1': {
@@ -75,7 +75,7 @@ class TestAWCSCovered(TestCase):
                         'awcs': 10,
                         'original_name': ['st1'],
                         'states': 1,
-                        'supervisors': 4,
+                        'sectors': 4,
                         'fillKey': 'Launched'
                     },
                     'st2': {
@@ -84,7 +84,7 @@ class TestAWCSCovered(TestCase):
                         'awcs': 11,
                         'original_name': ['st2'],
                         'states': 1,
-                        'supervisors': 4,
+                        'sectors': 4,
                         'fillKey': 'Launched'
                     },
                     'st3': {
@@ -93,7 +93,7 @@ class TestAWCSCovered(TestCase):
                         'awcs': 0,
                         'original_name': ['st3'],
                         'states': 0,
-                        'supervisors': 0,
+                        'sectors': 0,
                         'fillKey': 'Not launched'
                     }
                 },
@@ -134,7 +134,7 @@ class TestAWCSCovered(TestCase):
                         'awcs': 10,
                         'original_name': ['b1', 'b2'],
                         'districts': 1,
-                        'supervisors': 4,
+                        'sectors': 4,
                         'fillKey': 'Launched'
                     }
                 },
@@ -229,20 +229,20 @@ class TestAWCSCovered(TestCase):
                 "info": (
                     "{}<br /><br />"
                     "Number of AWCs launched: 5 <br />"
-                    "Number of Supervisors launched: 2".format(awcs_launched_help_text())
+                    "Number of Sectors launched: 2".format(awcs_launched_help_text())
                 ),
                 "tooltips_data": {
                     "s2": {
                         "districts": 1,
                         "states": 1,
-                        "supervisors": 1,
+                        "sectors": 1,
                         "blocks": 1,
                         "awcs": 3
                     }, 
                     "s1": {
                         "districts": 1,
                         "states": 1,
-                        "supervisors": 1,
+                        "sectors": 1,
                         "blocks": 1,
                         "awcs": 2
                     }
