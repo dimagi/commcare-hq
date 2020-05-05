@@ -41,6 +41,8 @@ import uuid
 from collections import defaultdict
 from functools import reduce
 
+from memoized import memoized
+
 from custom.inddex.ucr_data import FoodCaseData
 
 from .const import AGE_RANGES, ConvFactorGaps, FctGaps
@@ -362,7 +364,7 @@ def _calculate_total_grams(recipe, ingredients):
 
 class FoodData:
     """Generates the primary dataset for INDDEX reports.  See file docstring for more."""
-    IN_MEMORY_FILTERS = ['gap_type', 'gap', 'fao_who_gift_food_group_description']
+    IN_MEMORY_FILTERS = ['gap_type', 'gap', 'fao_who_gift_food_group_description', 'food_type']
     FILTERABLE_COLUMNS = IN_MEMORY_FILTERS + FoodCaseData.FILTERABLE_COLUMNS
 
     def __init__(self, domain, *, datespan, filter_selections):
@@ -401,12 +403,16 @@ class FoodData:
         if gap_type == FctGaps.slug and row.fct_gap_code == FctGaps.AVAILABLE:
             return False
 
+        food_type = self._in_memory_filter_selections.get('food_type')
+        if food_type and food_type != row.food_type:
+            return False
+
         gap = self._in_memory_filter_selections.get('gap')
         if gap:
             gap_type, gap_code = gap.split('-')
-            if gap_type == ConvFactorGaps.slug and row.conv_factor_gap_code != gap_code:
+            if gap_type == ConvFactorGaps.slug and str(row.conv_factor_gap_code) != gap_code:
                 return False
-            if gap_type == FctGaps.slug and row.fct_gap_code != gap_code:
+            if gap_type == FctGaps.slug and str(row.fct_gap_code) != gap_code:
                 return False
 
         food_group = self._in_memory_filter_selections.get('fao_who_gift_food_group_description')
@@ -416,6 +422,7 @@ class FoodData:
         return True
 
     @property
+    @memoized
     def rows(self):
         rows_by_recipe = defaultdict(list)
 
@@ -428,11 +435,13 @@ class FoodData:
                     ingr_row = FoodRow(ucr_row, self.fixtures, ingredient_data)
                     rows_by_recipe[food.recipe_id].append(ingr_row)
 
+        rows = []
         for recipe_id, rows_in_recipe in rows_by_recipe.items():
             enrich_rows(recipe_id, rows_in_recipe)
             for row in rows_in_recipe:
                 if self._matches_in_memory_filters(row):
-                    yield row
+                    rows.append(row)
+        return rows
 
 
 def _multiply(*args):
