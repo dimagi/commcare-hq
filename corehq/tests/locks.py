@@ -13,9 +13,17 @@ log = logging.getLogger(__name__)
 def reentrant_redis_locks(test=None):
     """Decorator/context manager to enable reentrant redis locks
 
-    This is useful for tests that do things like acquire a lock and then
-    fire off a celery task (which will usually be executed synchronously
-    in tests) before the lock is released.
+    This is useful for tests that do things like acquire a lock and
+    then, before the lock is released, fire off a celery task (which
+    will usually be executed synchronously due to
+    `CELERY_TASK_ALWAYS_EAGER`) that acquires the same lock.
+
+    Note: the use of `RLock` internalizes the lock to the test process
+    (unlike redis locks, which are inter-process) and therefore assumes
+    that each test process is fully isolated and has its own dedicated
+    database cluster. In other words, this will not work if multiple
+    test processes need synchronized access to a single shared database
+    cluster.
 
     Usage as decorator:
 
