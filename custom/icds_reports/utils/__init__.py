@@ -7,6 +7,7 @@ import zipfile
 
 from collections import defaultdict
 from datetime import datetime, timedelta, date
+from dateutil.parser import parse
 from functools import wraps
 from memoized import memoized
 from tempfile import mkstemp
@@ -2009,7 +2010,6 @@ def get_location_replacement_name(location, field, replacement_names):
 
 def timestamp_string_to_date_string(ts_string):
     if ts_string:
-        # Input string differs from ISO_DATETIME_FORMAT bceause it lacks timezone info
-        return datetime.strptime(ts_string, '%Y-%m-%dT%H:%M:%S.%f').strftime(ISO_DATE_FORMAT)
+        return parse(ts_string).strftime(ISO_DATE_FORMAT)
     else:
         return None
