@@ -1,6 +1,7 @@
 from wsgiref.util import FileWrapper
 
-from django.http import HttpResponseNotFound, StreamingHttpResponse
+from django.contrib import messages
+from django.http import HttpResponseNotFound, StreamingHttpResponse, HttpResponseRedirect
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.safestring import mark_safe
@@ -12,6 +13,7 @@ from corehq.apps.export.forms import (
     IncrementalExportFormSet,
     IncrementalExportFormSetHelper,
 )
+from corehq.apps.export.utils import generate_and_send_incremental_export
 from corehq.apps.export.models.incremental import (
     IncrementalExport,
     IncrementalExportCheckpoint,
@@ -99,6 +101,7 @@ class IncrementalExportLogView(GenericTabularReport, DatespanMixin):
             DataTablesColumn(ugettext_lazy('Cases in export')),
             DataTablesColumn(ugettext_lazy('Download File')),
             DataTablesColumn(ugettext_lazy('Request Details')),
+            DataTablesColumn(ugettext_lazy('Resend all cases')),
         ]
         return DataTablesHeader(*columns)
 
@@ -118,6 +121,7 @@ class IncrementalExportLogView(GenericTabularReport, DatespanMixin):
 
             log_url = reverse(MotechLogDetailView.urlname, args=[self.domain, checkpoint.request_log_id])
             file_url = reverse("incremental_export_checkpoint_file", args=[self.domain, checkpoint.id])
+            reset_url = reverse("incremental_export_reset_checkpoint", args=[self.domain, checkpoint.id])
             if checkpoint.blob_exists():
                 download = (f'<a href="{file_url}"><i class="fa fa-download"></i></a>')
             else:
@@ -130,6 +134,9 @@ class IncrementalExportLogView(GenericTabularReport, DatespanMixin):
                     checkpoint.doc_count,
                     mark_safe(download),
                     mark_safe(f'<a href="{log_url}">{ugettext_lazy("Request Details")}</a>'),
+                    mark_safe(
+                        f'<a href="{reset_url}">{ugettext_lazy("Resend all cases after this checkpoint")}</a>'
+                    ),
                 ]
             )
 
@@ -164,3 +171,31 @@ def incremental_export_checkpoint_file(request, domain, checkpoint_id):
     response = StreamingHttpResponse(FileWrapper(checkpoint.get_blob()), content_type='text/csv')
     response['Content-Disposition'] = f'attachment; filename="{checkpoint.filename}"'
     return response
+
+
+@require_can_edit_data
+def incremental_export_reset_checkpoint(request, domain, checkpoint_id):
+    """Resend all cases after a particular checkpoint
+    """
+    try:
+        checkpoint = IncrementalExportCheckpoint.objects.get(
+            id=checkpoint_id,
+            incremental_export__domain=domain
+        )
+    except IncrementalExportCheckpoint.DoesNotExist:
+        return HttpResponseNotFound()
+
+    incremental_export = checkpoint.incremental_export
+    date = checkpoint.last_doc_date
+
+    new_checkpoint = generate_and_send_incremental_export(incremental_export, date)
+    doc_count = new_checkpoint.doc_count if new_checkpoint else 0
+    messages.success(
+        request, ugettext_lazy(
+            f"{doc_count} cases modified after {date.strftime('%Y-%m-%d %H:%M:%S')} have been resent"
+        )
+    )
+
+    return HttpResponseRedirect(
+        reverse('domain_report_dispatcher', args=[domain, IncrementalExportLogView.slug])
+    )

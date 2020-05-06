@@ -69,6 +69,7 @@ def generate_and_send_incremental_export(incremental_export, from_date):
     checkpoint = _generate_incremental_export(incremental_export, from_date)
     if checkpoint:
         _send_incremental_export(incremental_export, checkpoint)
+    return checkpoint
 
 
 def _generate_incremental_export(incremental_export, last_doc_date=None):
