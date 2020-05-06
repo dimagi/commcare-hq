@@ -121,8 +121,9 @@ def case_upload_form_ids(request, domain, upload_id):
 
     ids_stream = ('{}\n'.format(form_id)
                   for form_id in get_form_ids_for_case_upload(case_upload))
-
-    return StreamingHttpResponse(ids_stream, content_type='text/plain')
+    response = StreamingHttpResponse(ids_stream, content_type='text/plain')
+    set_file_download(response, f"{domain}-case_upload-form_ids.txt")
+    return response
 
 
 @require_can_edit_data
@@ -136,7 +137,9 @@ def case_upload_case_ids(request, domain, upload_id):
     ids_stream = ('{}\n'.format(case_id)
                   for case_id in get_case_ids_for_case_upload(case_upload))
 
-    return StreamingHttpResponse(ids_stream, content_type='text/plain')
+    response = StreamingHttpResponse(ids_stream, content_type='text/plain')
+    set_file_download(response, f"{domain}-case_upload-case_ids.txt")
+    return response
 
 
 def _get_case_upload_record(domain, upload_id, user):

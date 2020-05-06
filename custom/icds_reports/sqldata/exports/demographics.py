@@ -285,6 +285,10 @@ class DemographicsExport(ExportableMixin):
                 'slug': 'num_households'
             },
             {
+                'header': 'Total number of household members',
+                'slug': 'num_people'
+            },
+            {
                 'header': (
                     'Total number of beneficiaries (Children under 6 years old, pregnant women and lactating '
                     'women, alive and seeking services) who have an Aadhaar ID'
@@ -349,9 +353,4 @@ class DemographicsExport(ExportableMixin):
                 'slug': 'num_adolescent_girls_15yr18yr'
             }
         ]
-        if self.beta:
-            final_columns.insert(2, {
-                'header': 'Total number of household members',
-                'slug': 'num_people'
-            })
         return final_columns

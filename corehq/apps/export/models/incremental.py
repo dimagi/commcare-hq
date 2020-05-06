@@ -42,7 +42,7 @@ class IncrementalExportStatus(object):
 
     @staticmethod
     def from_log_entry(entry):
-        if entry.response_status == 200:
+        if entry.response_status in (200, 201):
             return IncrementalExportStatus.SUCCESS
         else:
             return IncrementalExportStatus.FAILURE
@@ -57,6 +57,10 @@ class IncrementalExportCheckpoint(models.Model):
 
     status = models.PositiveSmallIntegerField(choices=IncrementalExportStatus.CHOICES, null=True)
     request_log = models.ForeignKey(RequestLog, on_delete=models.CASCADE, null=True)
+
+    @property
+    def blob_parent_id(self):
+        return str(self.id)
 
     def get_blob(self):
         db = get_blob_db()
@@ -74,5 +78,5 @@ class IncrementalExportCheckpoint(models.Model):
 
     @property
     def filename(self):
-        date_suffix = self.date_created.replace(microsecond=0).isoformat()
+        date_suffix = self.date_created.replace(microsecond=0).strftime('%Y-%m-%d-%H-%M-%S')
         return f'{self.incremental_export.name}-{date_suffix}.csv'
