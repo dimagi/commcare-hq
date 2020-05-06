@@ -9,7 +9,8 @@ log = logging.getLogger(__name__)
 _LOCK = Lock()
 
 
-def reentrant_redis_locks(test=None):
+@contextmanager
+def reentrant_redis_locks():
     """Decorator/context manager to enable reentrant redis locks
 
     This is useful for tests that do things like acquire a lock and
@@ -26,7 +27,7 @@ def reentrant_redis_locks(test=None):
 
     Usage as decorator:
 
-        @reentrant_redis_locks
+        @reentrant_redis_locks()
         def test_something():
             ...
 
@@ -43,21 +44,16 @@ def reentrant_redis_locks(test=None):
             lock = locks[key] = ReentrantTestLock(key, locks)
         return lock
 
-    @contextmanager
-    def context():
-        if not _LOCK.acquire(blocking=False):
-            raise RuntimeError("nested/concurrent reentrant_redis_locks()")
-        try:
-            with patch("dimagi.utils.couch.get_redis_client", client):
-                yield
-        finally:
-            _LOCK.release()
-            assert not locks, f"unreleased {locks.values()}"
-
     locks = {}
     client = TestRedisClient(get_reentrant_lock)
-    manager = context()
-    return manager if test is None else manager(test)
+    if not _LOCK.acquire(blocking=False):
+        raise RuntimeError("nested/concurrent reentrant_redis_locks()")
+    try:
+        with patch("dimagi.utils.couch.get_redis_client", client):
+            yield
+    finally:
+        _LOCK.release()
+        assert not locks, f"unreleased {locks.values()}"
 
 
 @attr.s

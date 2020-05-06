@@ -20,7 +20,7 @@ def test_redislocks_nose_plugin():
         lock1.release()
 
 
-@reentrant_redis_locks
+@reentrant_redis_locks()
 def test_nested_reentrant_redis_locks_is_not_allowed():
     with assert_raises(RuntimeError):
         with reentrant_redis_locks():
@@ -34,7 +34,7 @@ def test_reentrant_redis_locks():
 
 
 @timelimit(0.1)
-@reentrant_redis_locks
+@reentrant_redis_locks()
 def test_reentrant_redis_locks_decorator():
     simulate_reentrant_lock()
 
@@ -69,7 +69,7 @@ def test_extra_lock_release():
 
 
 def test_decorator_name():
-    @reentrant_redis_locks
+    @reentrant_redis_locks()
     def fake_test():
         pass
     eq(fake_test.__name__, "fake_test")
