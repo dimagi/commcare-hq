@@ -2,6 +2,7 @@ import tempfile
 from collections import namedtuple
 from unittest import TestCase
 
+import attr
 from mock import patch
 
 from couchexport.export import export_raw
@@ -60,7 +61,16 @@ class TestParser(TestCase):
              'username4', 'username5', 'Merge'),
             ('AWC 5', 'AWC 6', '114', '132', 'AWC-114',
              'AWC-133', 'Supervisor 1', '11', '13',
-             'username6', 'username7', 'Merge'))),
+             'username6', 'username7', 'Merge'),
+            # invalid operation passed with new parent site code
+            # of a location getting archived
+            ('AWC 7', 'AWC 8', '115', '133', 'AWC-115',
+             'AWC-133', 'Supervisor 2', '11', '12',
+             'username6', 'username7', 'Move'),
+            ('AWC 7', '  ', '116', '134', 'AWC-116',
+             'AWC-134', 'Supervisor 2', '11', '13',
+             'username6', 'username7', 'Move'),
+        )),
         ('supervisor', (
             # invalid row with missing new site code
             ('Supervisor 1', 'Supervisor 1', '11', '', 'Sup-11',
@@ -94,20 +104,68 @@ class TestParser(TestCase):
             workbook = get_workbook(file)
             parser = Parser(self.domain, workbook)
             errors = parser.parse()
-            self.assertEqual(parser.valid_transitions['awc']['Move'], {'131': '112'})
-            self.assertEqual(parser.valid_transitions['awc']['Merge'], {'132': ['113', '114']})
-            self.assertEqual(parser.valid_transitions['supervisor']['Move'], {'13': '12'})
+            self.assertEqual(len(parser.valid_transitions['awc']), 2)
+            awc_transitions = [attr.asdict(t) for t in parser.valid_transitions['awc']]
+            self.assertEqual(
+                awc_transitions,
+                [
+                    {
+                        'domain': self.domain,
+                        'location_type_code': 'awc',
+                        'operation': 'Move',
+                        'old_site_codes': ['112'],
+                        'new_site_codes': ['131'],
+                        'new_location_details': {
+                            '131': {'name': 'AWC 3', 'parent_site_code': '13', 'lgd_code': 'AWC-131',
+                                    'sub_district_name': None}},
+                        'user_transitions': {'username2': 'username3'}
+                    },
+                    {
+                        'domain': self.domain,
+                        'location_type_code': 'awc',
+                        'operation': 'Move',
+                        'old_site_codes': ['115'],
+                        'new_site_codes': ['133'],
+                        'new_location_details': {
+                            '133': {'name': 'AWC 8', 'parent_site_code': '12', 'lgd_code': 'AWC-133',
+                                    'sub_district_name': None}},
+                        'user_transitions': {'username6': 'username7'}
+                    }
+
+                ]
+            )
+            self.assertEqual(len(parser.valid_transitions['supervisor']), 1)
+            supervisor_transition = attr.asdict(parser.valid_transitions['supervisor'][0])
+            self.assertEqual(
+                supervisor_transition,
+                {'domain': self.domain,
+                 'location_type_code': 'supervisor',
+                 'operation': 'Move',
+                 'old_site_codes': ['12'],
+                 'new_site_codes': ['13'],
+                 'new_location_details': {
+                     '13': {
+                         'name': 'Supervisor 3',
+                         'parent_site_code': '1',
+                         'lgd_code': 'Sup-13',
+                         'sub_district_name': None
+                     }
+                 },
+                 'user_transitions': {'username5': 'username6'}}
+            )
             self.assertEqual(errors, [
-                "No change in location code for Extract, got old: '111' and new: '111'",
-                "New location 132 reused with different information",
-                "Missing location code for Split, got old: '11' and new: ''",
-                "Invalid Operation Unknown"
+                "Invalid Operation Unknown",
+                "Missing location code for operation Split. Got old: '11' and new: ''",
+                "No change in location code for operation Extract. Got old: '111' and new: '111'",
+                "New location 132 passed with different information",
+                "Missing new location name for 134"
             ])
 
-    @patch('custom.icds.location_reassignment.parser.Parser._validate_descendants_archived')
+    @patch('custom.icds.location_reassignment.parser.Parser._validate_usernames')
+    @patch('custom.icds.location_reassignment.parser.Parser._validate_descendants_deprecated')
     @patch('corehq.apps.locations.models.SQLLocation.active_objects')
     @patch('corehq.apps.locations.models.LocationType.objects')
-    def test_validate_parents(self, location_type_mock, locations_mock, _):
+    def test_validate_parents(self, location_type_mock, locations_mock, *_):
         location_type_mock.by_domain.return_value = self.location_types
         location_type_mock.select_related.return_value.filter.return_value = self.location_types
         locations_mock.select_related.return_value.filter.return_value = [
@@ -121,3 +179,4 @@ class TestParser(TestCase):
             errors = parser.parse()
             self.assertIn('Unexpected parent 1 for type supervisor', errors, "missing location found")
             self.assertIn('Unexpected parent 13 for type awc', errors, "incorrect parent type not flagged")
+            self.assertIn('Parent 12 is marked for archival', errors, "archived parent not caught")

@@ -1876,7 +1876,7 @@ TWO_STAGE_USER_PROVISIONING = StaticToggle(
 
 LOCATION_REASSIGNMENT = StaticToggle(
     'location_reassignment',
-    'Ability to reorder organization structure',
+    'Location Reassignment: ability to reorder organization structure',
     TAG_CUSTOM,
     [NAMESPACE_USER],
     relevant_environments={'icds', 'india', 'staging'},
