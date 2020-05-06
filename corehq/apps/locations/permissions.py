@@ -36,7 +36,7 @@ little about what that means conceptually, and how to implement these
 restrictions.
 
 Locations: Restricted users should be able to see and edit their own locations
-and any descendants of those locations, and access data at those locations. See
+and any descendants of those locations, as well as access data at those locations. See
 also ``user_can_access_location_id``
 
 Users: If a user is assigned to an accessible location, the user is also
