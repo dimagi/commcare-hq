@@ -287,7 +287,8 @@ def get_prevalence_of_undernutrition_data_chart(domain, config, loc_level,
     }
 
 
-@icds_quickcache(['domain', 'config', 'loc_level', 'location_id', 'show_test', 'icds_features_flag'], timeout=30 * 60)
+@icds_quickcache(['domain', 'config', 'loc_level', 'location_id', 'show_test', 'icds_features_flag'],
+                 timeout=30 * 60)
 def get_prevalence_of_undernutrition_sector_data(domain, config, loc_level, location_id,
                                                  show_test=False, icds_features_flag=False):
     group_by = ['%s_name' % loc_level]

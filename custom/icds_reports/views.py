@@ -562,7 +562,7 @@ class PrevalenceOfUndernutritionView(BaseReportView):
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
                 data = get_prevalence_of_undernutrition_sector_data(
-                    domain, config, loc_level, location, include_test,icds_features_flag
+                    domain, config, loc_level, location, include_test, icds_features_flag
                 )
             else:
                 data = get_prevalence_of_undernutrition_data_map(
@@ -1531,7 +1531,7 @@ class EnrolledChildrenView(BaseReportView):
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
                 data = get_enrolled_children_sector_data(
-                    domain, config, loc_level, include_test, icds_features_flag
+                    domain, config, loc_level, location, include_test, icds_features_flag
                 )
             else:
                 data = get_enrolled_children_data_map(
@@ -1539,7 +1539,7 @@ class EnrolledChildrenView(BaseReportView):
                 )
                 if loc_level == LocationTypes.BLOCK:
                     sector = get_enrolled_children_sector_data(
-                        domain, config, loc_level, include_test, icds_features_flag
+                        domain, config, loc_level, location, include_test, icds_features_flag
                     )
                     data.update(sector)
         elif step == "chart":
