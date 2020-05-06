@@ -562,7 +562,7 @@ class PrevalenceOfUndernutritionView(BaseReportView):
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
                 data = get_prevalence_of_undernutrition_sector_data(
-                    domain, config, loc_level, include_test,icds_features_flag
+                    domain, config, loc_level, location, include_test,icds_features_flag
                 )
             else:
                 data = get_prevalence_of_undernutrition_data_map(
@@ -570,7 +570,7 @@ class PrevalenceOfUndernutritionView(BaseReportView):
                 )
                 if loc_level == LocationTypes.BLOCK:
                     sector = get_prevalence_of_undernutrition_sector_data(
-                        domain, config, loc_level, include_test, icds_features_flag
+                        domain, config, loc_level, location, include_test, icds_features_flag
                     )
                     data.update(sector)
         elif step == "chart":
@@ -1082,7 +1082,7 @@ class PrevalenceOfSevereView(BaseReportView):
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
                 data = get_prevalence_of_severe_sector_data(
-                    domain, config, loc_level, include_test, icds_features_flag
+                    domain, config, loc_level, location, include_test, icds_features_flag
                 )
             else:
                 data = get_prevalence_of_severe_data_map(
@@ -1090,7 +1090,7 @@ class PrevalenceOfSevereView(BaseReportView):
                 )
                 if loc_level == LocationTypes.BLOCK:
                     sector = get_prevalence_of_severe_sector_data(
-                        domain, config, loc_level, include_test, icds_features_flag
+                        domain, config, loc_level, location, include_test, icds_features_flag
                     )
                     data.update(sector)
         elif step == "chart":
@@ -1129,7 +1129,7 @@ class PrevalenceOfStuntingView(BaseReportView):
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
                 data = get_prevalence_of_stunting_sector_data(
-                    domain, config, loc_level, include_test, icds_features_flag
+                    domain, config, loc_level, location, include_test, icds_features_flag
                 )
             else:
                 data = get_prevalence_of_stunting_data_map(
@@ -1137,7 +1137,7 @@ class PrevalenceOfStuntingView(BaseReportView):
                 )
                 if loc_level == LocationTypes.BLOCK:
                     sector = get_prevalence_of_stunting_sector_data(
-                        domain, config, loc_level, include_test, icds_features_flag
+                        domain, config, loc_level, location, include_test, icds_features_flag
                     )
                     data.update(sector)
         elif step == "chart":
@@ -1173,7 +1173,7 @@ class NewbornsWithLowBirthWeightView(BaseReportView):
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
                 data = get_newborn_with_low_birth_weight_data(
-                    domain, config, loc_level, include_test, icds_features_flag
+                    domain, config, loc_level, location, include_test, icds_features_flag
                 )
             else:
                 data = get_newborn_with_low_birth_weight_map(
@@ -1181,7 +1181,7 @@ class NewbornsWithLowBirthWeightView(BaseReportView):
                 )
                 if loc_level == LocationTypes.BLOCK:
                     sector = get_newborn_with_low_birth_weight_data(
-                        domain, config, loc_level, include_test, icds_features_flag
+                        domain, config, loc_level, location, include_test, icds_features_flag
                     )
                     data.update(sector)
         elif step == "chart":
@@ -1217,7 +1217,7 @@ class EarlyInitiationBreastfeeding(BaseReportView):
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
                 data = get_early_initiation_breastfeeding_data(
-                    domain, config, loc_level, include_test, icds_features_flag
+                    domain, config, loc_level, location, include_test, icds_features_flag
                 )
             else:
                 data = get_early_initiation_breastfeeding_map(
@@ -1225,7 +1225,7 @@ class EarlyInitiationBreastfeeding(BaseReportView):
                 )
                 if loc_level == LocationTypes.BLOCK:
                     sector = get_early_initiation_breastfeeding_data(
-                        domain, config, loc_level, include_test, icds_features_flag
+                        domain, config, loc_level, location, include_test, icds_features_flag
                     )
                     data.update(sector)
         elif step == "chart":
@@ -1261,7 +1261,7 @@ class ExclusiveBreastfeedingView(BaseReportView):
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
                 data = get_exclusive_breastfeeding_sector_data(
-                    domain, config, loc_level, include_test, icds_features_flag
+                    domain, config, loc_level, location, include_test, icds_features_flag
                 )
             else:
                 data = get_exclusive_breastfeeding_data_map(
@@ -1269,7 +1269,7 @@ class ExclusiveBreastfeedingView(BaseReportView):
                 )
                 if loc_level == LocationTypes.BLOCK:
                     sector = get_exclusive_breastfeeding_sector_data(
-                        domain, config, loc_level, include_test, icds_features_flag
+                        domain, config, loc_level, location, include_test, icds_features_flag
                     )
                     data.update(sector)
         elif step == "chart":
@@ -1304,7 +1304,7 @@ class ChildrenInitiatedView(BaseReportView):
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
                 data = get_children_initiated_sector_data(
-                    domain, config, loc_level, include_test, icds_features_flag
+                    domain, config, loc_level, location, include_test, icds_features_flag
                 )
             else:
                 data = get_children_initiated_data_map(
@@ -1312,7 +1312,7 @@ class ChildrenInitiatedView(BaseReportView):
                 )
                 if loc_level == LocationTypes.BLOCK:
                     sector = get_children_initiated_sector_data(
-                        domain, config, loc_level, include_test
+                        domain, config, loc_level, location, include_test, icds_features_flag
                     )
                     data.update(sector)
         elif step == "chart":
@@ -1347,7 +1347,7 @@ class InstitutionalDeliveriesView(BaseReportView):
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
                 data = get_institutional_deliveries_sector_data(
-                    domain, config, loc_level, include_test, icds_features_flag
+                    domain, config, loc_level, location, include_test, icds_features_flag
                 )
             else:
                 data = get_institutional_deliveries_data_map(
@@ -1355,7 +1355,7 @@ class InstitutionalDeliveriesView(BaseReportView):
                 )
                 if loc_level == LocationTypes.BLOCK:
                     sector = get_institutional_deliveries_sector_data(
-                        domain, config, loc_level, include_test, icds_features_flag
+                        domain, config, loc_level, location, include_test, icds_features_flag
                     )
                     data.update(sector)
         elif step == "chart":
@@ -1389,7 +1389,7 @@ class ImmunizationCoverageView(BaseReportView):
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
                 data = get_immunization_coverage_sector_data(
-                    domain, config, loc_level, include_test, icds_features_flag
+                    domain, config, loc_level, location, include_test, icds_features_flag
                 )
             else:
                 data = get_immunization_coverage_data_map(
@@ -1397,7 +1397,7 @@ class ImmunizationCoverageView(BaseReportView):
                 )
                 if loc_level == LocationTypes.BLOCK:
                     sector = get_immunization_coverage_sector_data(
-                        domain, config, loc_level, include_test, icds_features_flag
+                        domain, config, loc_level, location, include_test, icds_features_flag
                     )
                     data.update(sector)
         elif step == "chart":
@@ -1570,7 +1570,7 @@ class EnrolledWomenView(BaseReportView):
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
                 data = get_enrolled_women_sector_data(
-                    domain, config, loc_level, include_test, icds_features_flag
+                    domain, config, loc_level, location, include_test, icds_features_flag
                 )
             else:
                 data = get_enrolled_women_data_map(
@@ -1578,7 +1578,7 @@ class EnrolledWomenView(BaseReportView):
                 )
                 if loc_level == LocationTypes.BLOCK:
                     sector = get_enrolled_women_sector_data(
-                        domain, config, loc_level, include_test, icds_features_flag
+                        domain, config, loc_level, location, include_test, icds_features_flag
                     )
                     data.update(sector)
         elif step == "chart":
@@ -1610,7 +1610,7 @@ class LactatingEnrolledWomenView(BaseReportView):
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
                 data = get_lactating_enrolled_women_sector_data(
-                    domain, config, loc_level, include_test, icds_features_flag
+                    domain, config, loc_level, location, include_test, icds_features_flag
                 )
             else:
                 data = get_lactating_enrolled_women_data_map(
@@ -1618,7 +1618,7 @@ class LactatingEnrolledWomenView(BaseReportView):
                 )
                 if loc_level == LocationTypes.BLOCK:
                     sector = get_lactating_enrolled_women_sector_data(
-                        domain, config, loc_level, include_test, icds_features_flag
+                        domain, config, loc_level, location, include_test, icds_features_flag
                     )
                     data.update(sector)
         elif step == "chart":
@@ -1757,12 +1757,12 @@ class FunctionalToiletView(BaseReportView):
         data = {}
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
-                data = get_functional_toilet_sector_data(domain, config, loc_level, include_test)
+                data = get_functional_toilet_sector_data(domain, config, loc_level, location, include_test)
             else:
                 data = get_functional_toilet_data_map(domain, config.copy(), loc_level, include_test)
                 if loc_level == LocationTypes.BLOCK:
                     sector = get_functional_toilet_sector_data(
-                        domain, config, loc_level, include_test
+                        domain, config, loc_level, location, include_test
                     )
                     data.update(sector)
         elif step == "chart":
@@ -1792,12 +1792,12 @@ class MedicineKitView(BaseReportView):
         data = {}
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
-                data = get_medicine_kit_sector_data(domain, config, loc_level, include_test)
+                data = get_medicine_kit_sector_data(domain, config, loc_level, location, include_test)
             else:
                 data = get_medicine_kit_data_map(domain, config.copy(), loc_level, include_test)
                 if loc_level == LocationTypes.BLOCK:
                     sector = get_medicine_kit_sector_data(
-                        domain, config, loc_level, include_test
+                        domain, config, loc_level, location, include_test
                     )
                     data.update(sector)
         elif step == "chart":
@@ -1827,12 +1827,12 @@ class InfantometerView(BaseReportView):
         data = {}
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
-                data = get_infantometer_sector_data(domain, config, loc_level, include_test)
+                data = get_infantometer_sector_data(domain, config, loc_level, location, include_test)
             else:
                 data = get_infantometer_data_map(domain, config.copy(), loc_level, include_test)
                 if loc_level == LocationTypes.BLOCK:
                     sector = get_infantometer_sector_data(
-                        domain, config, loc_level, include_test
+                        domain, config, loc_level, location, include_test
                     )
                     data.update(sector)
         elif step == "chart":
@@ -1861,12 +1861,12 @@ class StadiometerView(BaseReportView):
         data = {}
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
-                data = get_stadiometer_sector_data(domain, config, loc_level, include_test)
+                data = get_stadiometer_sector_data(domain, config, loc_level, location, include_test)
             else:
                 data = get_stadiometer_data_map(domain, config.copy(), loc_level, include_test)
                 if loc_level == LocationTypes.BLOCK:
                     sector = get_stadiometer_sector_data(
-                        domain, config, loc_level, include_test
+                        domain, config, loc_level, location, include_test
                     )
                     data.update(sector)
         elif step == "chart":
@@ -1894,12 +1894,12 @@ class InfantsWeightScaleView(BaseReportView):
         data = {}
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
-                data = get_infants_weight_scale_sector_data(domain, config, loc_level, include_test)
+                data = get_infants_weight_scale_sector_data(domain, config, loc_level, location, include_test)
             else:
                 data = get_infants_weight_scale_data_map(domain, config.copy(), loc_level, include_test)
                 if loc_level == LocationTypes.BLOCK:
                     sector = get_infants_weight_scale_sector_data(
-                        domain, config, loc_level, include_test
+                        domain, config, loc_level, location, include_test
                     )
                     data.update(sector)
         elif step == "chart":
@@ -1927,12 +1927,12 @@ class AdultWeightScaleView(BaseReportView):
         data = {}
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
-                data = get_adult_weight_scale_sector_data(domain, config, loc_level, include_test)
+                data = get_adult_weight_scale_sector_data(domain, config, loc_level, location, include_test)
             else:
                 data = get_adult_weight_scale_data_map(domain, config.copy(), loc_level, include_test)
                 if loc_level == LocationTypes.BLOCK:
                     sector = get_adult_weight_scale_sector_data(
-                        domain, config, loc_level, include_test
+                        domain, config, loc_level, location, include_test
                     )
                     data.update(sector)
         elif step == "chart":

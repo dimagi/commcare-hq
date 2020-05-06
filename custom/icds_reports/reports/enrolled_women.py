@@ -97,8 +97,8 @@ def get_enrolled_women_data_map(domain, config, loc_level, show_test=False, icds
     }
 
 
-@icds_quickcache(['domain', 'config', 'loc_level', 'show_test', 'icds_features_flag'], timeout=30 * 60)
-def get_enrolled_women_sector_data(domain, config, loc_level, show_test=False, icds_features_flag=False):
+@icds_quickcache(['domain', 'config', 'loc_level', 'location_id', 'show_test', 'icds_features_flag'], timeout=30 * 60)
+def get_enrolled_women_sector_data(domain, config, loc_level, location_id, show_test=False, icds_features_flag=False):
     group_by = ['%s_name' % loc_level]
 
     config['month'] = datetime(*config['month'])

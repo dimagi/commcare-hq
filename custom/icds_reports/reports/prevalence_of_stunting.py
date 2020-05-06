@@ -297,8 +297,8 @@ def get_prevalence_of_stunting_data_chart(domain, config, loc_level, show_test=F
     }
 
 
-@icds_quickcache(['domain', 'config', 'loc_level', 'show_test', 'icds_feature_flag'], timeout=30 * 60)
-def get_prevalence_of_stunting_sector_data(domain, config, loc_level, show_test=False,
+@icds_quickcache(['domain', 'config', 'loc_level', 'location_id', 'show_test', 'icds_feature_flag'], timeout=30 * 60)
+def get_prevalence_of_stunting_sector_data(domain, config, loc_level, location_id, show_test=False,
                                            icds_feature_flag=False):
     group_by = ['%s_name' % loc_level]
 
