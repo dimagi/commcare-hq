@@ -1,3 +1,5 @@
+from time import sleep
+
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 from corehq.apps.sms import tasks as sms_tasks
 from corehq.form_processor.exceptions import CaseNotFound
@@ -132,7 +134,7 @@ def run_messaging_rule(domain, rule_id):
     progress_helper.set_initial_progress()
 
     for case_id in get_case_ids_for_messaging_rule(domain, rule.case_type):
-        sync_case_for_messaging_rule.delay(domain, case_id, rule_id)
+        queue_task_with_retries(sync_case_for_messaging_rule, domain, case_id, rule_id)
         incr += 1
         if incr >= 1000:
             progress_helper.increase_total_case_count(incr)
@@ -146,4 +148,17 @@ def run_messaging_rule(domain, rule_id):
     # complete at about the time that the last tasks are finishing up.
     # This beats saving the task results in the database and using a
     # celery chord which would be more taxing on system resources.
-    set_rule_complete.delay(rule_id)
+    queue_task_with_retries(set_rule_complete, rule_id)
+
+
+def queue_task_with_retries(task_to_queue, *args, **kwargs):
+    retries = 0
+    while retries < 5:
+        try:
+            task_to_queue.delay(*args, **kwargs)
+            # break from while if no issues
+            break
+        except Exception:
+            # wait for a minute before trying again
+            sleep(60)
+            retries += 1
