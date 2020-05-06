@@ -2080,8 +2080,23 @@ class Invoice(InvoiceBase):
                         absolute_reverse(ManageBillingAccountView.urlname, args=[self.account.id]),
                     )
                 )
+
         if filter_out_dimagi:
+            emails_with_dimagi = contact_emails
             contact_emails = [e for e in contact_emails if not e.endswith('@dimagi.com')]
+            if not contact_emails:
+                # make sure at least someone (even if it's dimagi)
+                # gets this communication. Also helpful with QA when the only
+                # emails are @dimagi.com
+                contact_emails = emails_with_dimagi
+                _soft_assert_contact_emails_missing(
+                    False,
+                    f"Could not find a non-dimagi email to send invoice "
+                    f"{self.invoice_number}. "
+                    f"Sending to these dimagi emails instead: "
+                    f"{', '.join(emails_with_dimagi)}."
+                )
+
         return contact_emails
 
     @property
