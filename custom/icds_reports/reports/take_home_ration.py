@@ -37,11 +37,11 @@ class TakeHomeRationExport(object):
         query_set = TakeHomeRationMonthly.objects.filter(**filters).order_by(*order_by)
 
         data = query_set.values('state_name', 'district_name', 'block_name',
-                                'supervisor_name', 'awc_name', 'aww_name', 'contact_phone_number',
+                                'supervisor_name', 'awc_name', 'awc_site_code', 'aww_name', 'contact_phone_number',
                                 'is_launched', 'total_thr_candidates', 'thr_given_21_days',
                                 'thr_distribution_image_count')
 
-        headers = ['State', 'District', 'Block', 'Sector', 'Awc Name', 'AWW Name', 'AWW Phone No.',
+        headers = ['State', 'District', 'Block', 'Sector', 'Awc Name', 'AWC Site Code', 'AWW Name', 'AWW Phone No.',
                    'Total No. of Beneficiaries eligible for THR',
                    'Total No. of Beneficiaries received THR>=21 days in given month',
                    'Total No of Pictures taken by AWW']
@@ -55,6 +55,7 @@ class TakeHomeRationExport(object):
                 row['block_name'],
                 row['supervisor_name'],
                 row['awc_name'],
+                row['awc_site_code'],
             ]
             if row['is_launched'] != 'yes':
                 AWC_NOT_LAUNCHED = 'AWC Not Launched'

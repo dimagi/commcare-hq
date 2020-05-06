@@ -1099,7 +1099,7 @@ def create_thr_report_excel_file(excel_data, data_type, month, aggregation_level
     # sheet title
     worksheet.title = "THR Report"
     worksheet.sheet_view.showGridLines = False
-    amount_of_columns = 11 - aggregation_level
+    amount_of_columns = 12 - aggregation_level
     last_column = string.ascii_uppercase[amount_of_columns]
     worksheet.merge_cells('B2:{0}2'.format(last_column))
     title_cell = worksheet['B2']
@@ -1180,7 +1180,7 @@ def create_thr_report_excel_file(excel_data, data_type, month, aggregation_level
     widths_columns.extend(columns)
     standard_widths = [4, 7]
     standard_widths.extend([15] * (4 - aggregation_level))
-    standard_widths.extend([25, 15, 25, 15, 15, 15])
+    standard_widths.extend([25, 15, 15, 25, 15, 15, 15])
     for col, width in zip(widths_columns, standard_widths):
         widths[col] = width
 
