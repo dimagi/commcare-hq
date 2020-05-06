@@ -6,10 +6,10 @@ from unittest.mock import patch
 import attr
 from nose.plugins import Plugin
 
-import dimagi.utils.couch as module
-from dimagi.utils.couch import get_redis_client
+from dimagi.utils.couch.cache.cache_core import get_redis_client
 
-from corehq.tests.noseplugins.uniformresult import uniform_description
+from .uniformresult import uniform_description
+from ..locks import TestRedisClient
 
 log = logging.getLogger(__name__)
 _LOCK = Lock()
@@ -22,7 +22,8 @@ class RedisLockTimeoutPlugin(Plugin):
 
     def configure(self, options, conf):
         """Do not call super (always enabled)"""
-        self.patch = patch.object(module, "get_redis_client", TestRedisClient)
+        client = TestRedisClient(get_test_lock)
+        self.patch = patch("dimagi.utils.couch.get_redis_client", client)
 
     def startTest(self, case):
         assert _LOCK.acquire(blocking=False), \
@@ -34,12 +35,10 @@ class RedisLockTimeoutPlugin(Plugin):
         _LOCK.release()
 
 
-class TestRedisClient:
-
-    def lock(self, key, **kw):
-        timeout = kw["timeout"]
-        lock = get_redis_client().lock(key, **kw)
-        return TestLock(key, lock, timeout)
+def get_test_lock(key, **kw):
+    timeout = kw["timeout"]
+    lock = get_redis_client().lock(key, **kw)
+    return TestLock(key, lock, timeout)
 
 
 @attr.s
