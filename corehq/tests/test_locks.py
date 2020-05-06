@@ -20,6 +20,13 @@ def test_redislocks_nose_plugin():
         lock1.release()
 
 
+@reentrant_redis_locks
+def test_nested_reentrant_redis_locks_is_not_allowed():
+    with assert_raises(RuntimeError):
+        with reentrant_redis_locks():
+            pass
+
+
 @timelimit(0.1)
 def test_reentrant_redis_locks():
     with reentrant_redis_locks():

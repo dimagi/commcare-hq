@@ -1,18 +1,15 @@
 import logging
 from datetime import datetime
-from threading import Lock
-from unittest.mock import patch
 
 import attr
 from nose.plugins import Plugin
 
+import dimagi.utils.couch
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 
-from .uniformresult import uniform_description
 from ..locks import TestRedisClient
 
 log = logging.getLogger(__name__)
-_LOCK = Lock()
 
 
 class RedisLockTimeoutPlugin(Plugin):
@@ -22,17 +19,20 @@ class RedisLockTimeoutPlugin(Plugin):
 
     def configure(self, options, conf):
         """Do not call super (always enabled)"""
-        client = TestRedisClient(get_test_lock)
-        self.patch = patch("dimagi.utils.couch.get_redis_client", client)
+        self.get_client = TestRedisClient(get_test_lock)
 
-    def startTest(self, case):
-        assert _LOCK.acquire(blocking=False), \
-            f"{uniform_description(case.test)}: concurrent tests not supported"
-        self.patch.start()
+    def begin(self):
+        """Patch redis client used for locks before any tests are run
+
+        The patch will remain in effect for the duration of the test
+        process. Tests (e.g., using `reentrant_redis_locks`) may
+        override this patch temporarily on an as-needed basis.
+        """
+        dimagi.utils.couch.get_redis_client = self.get_client
 
     def stopTest(self, case):
-        self.patch.stop()
-        _LOCK.release()
+        get = dimagi.utils.couch.get_redis_client
+        assert get == self.get_client, f"redis client patch broke ({get})"
 
 
 def get_test_lock(key, **kw):

@@ -1,13 +1,12 @@
 import logging
 from contextlib import contextmanager
-from threading import RLock
+from threading import Lock, RLock
 from unittest.mock import patch
 
 import attr
 
-import dimagi.utils.couch as module
-
 log = logging.getLogger(__name__)
+_LOCK = Lock()
 
 
 def reentrant_redis_locks(test=None):
@@ -46,11 +45,14 @@ def reentrant_redis_locks(test=None):
 
     @contextmanager
     def context():
-        with patch.object(module, "get_redis_client", client):
-            try:
+        if not _LOCK.acquire(blocking=False):
+            raise RuntimeError("nested/concurrent reentrant_redis_locks()")
+        try:
+            with patch("dimagi.utils.couch.get_redis_client", client):
                 yield
-            finally:
-                assert not locks, f"unreleased {locks.values()}"
+        finally:
+            _LOCK.release()
+            assert not locks, f"unreleased {locks.values()}"
 
     locks = {}
     client = TestRedisClient(get_reentrant_lock)
