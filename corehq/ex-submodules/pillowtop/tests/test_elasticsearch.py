@@ -162,7 +162,6 @@ class TestSendToElasticsearch(SimpleTestCase):
         with trap_extra_setup(ConnectionError):
             ensure_index_deleted(self.index)
             initialize_index_and_mapping(self.es, TEST_INDEX_INFO)
-            assume_alias(self.es, self.index, self.es_alias)
 
     def tearDown(self):
         ensure_index_deleted(self.index)
