@@ -30,7 +30,7 @@ class AwwIncentiveAggregationDistributedHelper(StateBasedAggregationPartitionedH
         return """
         INSERT INTO "{tablename}" (
             state_id, district_id, month, awc_id, block_id, supervisor_id, state_name, district_name, block_name,
-            supervisor_name, awc_name, aww_name, contact_phone_number, wer_weighed,
+            supervisor_name, awc_name, awc_site_code, aww_name, contact_phone_number, wer_weighed,
             wer_eligible, awc_num_open, valid_visits, expected_visits, is_launched,
             visit_denominator, awh_eligible, incentive_eligible
         ) (
@@ -46,6 +46,7 @@ class AwwIncentiveAggregationDistributedHelper(StateBasedAggregationPartitionedH
             awcm.block_name,
             awcm.supervisor_name,
             awcm.awc_name,
+            awcm.awc_site_code,
             awcm.aww_name,
             awcm.contact_phone_number,
             awcm.wer_weighed_0_2,

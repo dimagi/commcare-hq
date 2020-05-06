@@ -913,7 +913,7 @@ def create_aww_performance_excel_file(excel_data, data_type, month, state, distr
     worksheet.sheet_view.showGridLines = False
     # sheet title
     worksheet.merge_cells('B2:{0}2'.format(
-        "K" if aggregation_level == 3 else ("L" if aggregation_level == 2 else "M")
+        "L" if aggregation_level == 3 else ("M" if aggregation_level == 2 else "N")
     ))
     title_cell = worksheet['B2']
     title_cell.fill = PatternFill("solid", fgColor="4472C4")
@@ -922,11 +922,11 @@ def create_aww_performance_excel_file(excel_data, data_type, month, state, distr
     title_cell.alignment = Alignment(horizontal="center")
 
     # sheet header
-    header_cells = ["B3", "C3", "D3", "E3", "F3", "G3", "H3", "I3", "J3", "K3"]
+    header_cells = ["B3", "C3", "D3", "E3", "F3", "G3", "H3", "I3", "J3", "K3", "L3"]
     if aggregation_level < 3:
-        header_cells.append("L3")
-    if aggregation_level < 2:
         header_cells.append("M3")
+    if aggregation_level < 2:
+        header_cells.append("N3")
 
     for cell in header_cells:
         worksheet[cell].fill = blue_fill
@@ -949,15 +949,15 @@ def create_aww_performance_excel_file(excel_data, data_type, month, state, distr
         headers.append("Block")
 
     headers.extend([
-        'Supervisor', 'AWC', 'AWW Name', 'AWW Contact Number',
+        'Supervisor', 'AWC', 'AWC Site Code', 'AWW Name', 'AWW Contact Number',
         'Home Visits Conducted', 'Weighing Efficiency', 'AWW Eligible for Incentive',
         'Number of Days AWC was Open', 'AWH Eligible for Incentive'
     ])
-    columns = ['B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K']
+    columns = ['B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L']
     if aggregation_level < 3:
-        columns.append('L')
-    if aggregation_level < 2:
         columns.append('M')
+    if aggregation_level < 2:
+        columns.append('N')
 
     table_header = {}
     for col, header in zip(columns, headers):
@@ -994,7 +994,7 @@ def create_aww_performance_excel_file(excel_data, data_type, month, state, distr
     widths_columns.extend(columns)
     standard_widths = [4, 7, 15]
     standard_widths.extend([15] * (3 - aggregation_level))
-    standard_widths.extend([13, 12, 13, 15, 11, 14, 14])
+    standard_widths.extend([13, 12, 12, 13, 15, 11, 14, 14])
     standard_widths.append(14)
 
     for col, width in zip(widths_columns, standard_widths):
