@@ -43,12 +43,14 @@ def ledger_load_counter(*args, **kw):
     return load_counter("ledger", *args, **kw)
 
 
-def sms_load_counter(source, domain, status='', backend=''):
+def sms_load_counter(source, domain, status=None, backend=None):
     """Make a messaging load counter function
 
     This is used to count all kinds of messaging load, including email
     (not strictly SMS).
     """
+    status = status or 'unknown'
+    backend = backend or 'unknown'
     # grep: commcare.load.sms
     return load_counter("sms", source, domain, extra_tags={'status': status, 'backend': backend})
 
