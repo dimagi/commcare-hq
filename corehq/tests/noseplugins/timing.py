@@ -90,13 +90,34 @@ class TimingPlugin(Plugin):
         # called before test is started
         self.end_event("setup", case.test)
 
+        import cProfile
+        self.profile = cProfile.Profile()
+        self.profile.enable()
+        self.profile_start = time.time()
+
     def stopTest(self, case):
         # called on test completion
+        self.profile.disable()
         self.end_event("run", case.test)
+
+        if time.time() - self.profile_start > 100:
+            self.print_stats(self.profile)
+            assert 0, "fail for early travis results"
+        self.profile = None
 
     def stopContext(self, context):
         # called after context teardown
         self.end_event("teardown", context)
+
+    def print_stats(self, profile):
+        import pstats
+        import subprocess
+        stats = pstats.Stats(profile, stream=sys.stderr).sort_stats('cumulative')
+        stats.print_stats()
+        # also get kafka logs since there is suspicion of problems there
+        out = subprocess.check_output(['docker', 'logs', 'hqtest_kafka_1']).decode('utf8')
+        sys.stderr.write(f'{out}\n')
+        sys.stderr.flush()
 
 
 PLUGIN_INSTANCE = None
