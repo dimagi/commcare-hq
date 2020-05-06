@@ -19,7 +19,8 @@ CREATE VIEW bihar_api_mother_view AS
         "ccs_record_monthly"."tt_1" AS "tt_1",
         "ccs_record_monthly"."tt_2" AS "tt_2",
         "ccs_record_monthly"."anemia" AS "hb",
-        "ccs_record_monthly"."add" AS "add"
+        "ccs_record_monthly"."add" AS "add",
+        "ccs_record_monthly"."edd" - 280 AS lmp
     from "public"."ccs_record_monthly"
     LEFT JOIN "public"."bihar_api_demographics"
     ON (

@@ -38,7 +38,7 @@ module.exports = {
     // http://eslint.org/docs/user-guide/configuring#configuring-rules
     "rules": {
         // First option can be off, warn, or error
-        "brace-style": ["error", "1tbs"],
+        "brace-style": ["error", "1tbs", { "allowSingleLine": true }],
         "camelcase": ["error", {"properties": "never"}],
         "comma-dangle": ["warn", "always-multiline"],
         "curly": ["error"],
