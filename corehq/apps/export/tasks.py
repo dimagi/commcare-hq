@@ -229,21 +229,23 @@ def generate_incremental_exports():
 @task
 def process_incremental_export(incremental_export_id):
     incremental_export = IncrementalExport.objects.get(id=incremental_export_id)
-    checkpoint = _generate_incremental_export(incremental_export)
+    last_valid_checkpoint = incremental_export.last_valid_checkpoint
+    last_doc_date = last_valid_checkpoint.last_doc_date if last_valid_checkpoint else None
+
+    checkpoint = _generate_incremental_export(incremental_export, last_doc_date)
     if checkpoint:
         _send_incremental_export(incremental_export, checkpoint)
 
 
-def _generate_incremental_export(incremental_export):
+def _generate_incremental_export(incremental_export, last_doc_date=None):
     export_instance = incremental_export.export_instance
     export_instance.export_format = Format.UNZIPPED_CSV  # force to unzipped CSV
-    checkpoint = incremental_export.last_valid_checkpoint
 
     # Remove the date period from the ExportInstance, since this is added automatically by Daily Saved exports
     export_instance.filters.date_period = None
     filters = export_instance.get_filters()
-    if checkpoint:
-        filters.append(ServerModifiedOnRangeFilter(gt=checkpoint.last_doc_date))
+    if last_doc_date:
+        filters.append(ServerModifiedOnRangeFilter(gt=last_doc_date))
 
     class LastDocTracker:
         def __init__(self, doc_iterator):
