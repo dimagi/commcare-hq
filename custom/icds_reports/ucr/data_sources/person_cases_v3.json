@@ -136,6 +136,12 @@
         "property_name": "opened_on"
       },
       {
+        "column_id": "modified_on",
+        "datatype": "datetime",
+        "type": "raw",
+        "property_name": "modified_on"
+      },
+      {
         "column_id": "closed_on",
         "datatype": "datetime",
         "type": "raw",

@@ -24,7 +24,6 @@ from corehq.apps.dump_reload.sql.dump import (
     get_model_iterator_builders_to_dump,
     get_objects_to_dump,
 )
-from corehq.apps.dump_reload.sql.filters import GetattrQueryset
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.products.models import SQLProduct
 from corehq.blobs.models import BlobMeta
@@ -68,13 +67,9 @@ class BaseDumpLoadTest(TestCase):
     def delete_sql_data(self):
         for model_class, builder in get_model_iterator_builders_to_dump(self.domain_name, []):
             for iterator in builder.querysets():
-                if isinstance(iterator, GetattrQueryset):
-                    for model in iterator:
-                        model.delete()
-                else:
-                    collector = NestedObjects(using=iterator.db)
-                    collector.collect(iterator)
-                    collector.delete()
+                collector = NestedObjects(using=iterator.db)
+                collector.collect(iterator)
+                collector.delete()
 
         self.assertEqual([], list(get_objects_to_dump(self.domain_name, [])))
 
