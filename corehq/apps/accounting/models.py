@@ -2069,7 +2069,7 @@ class Invoice(InvoiceBase):
             from corehq.apps.accounting.views import ManageBillingAccountView
             admins = WebUser.get_admins_by_domain(self.get_domain())
             contact_emails.extend([admin.email if admin.email else admin.username for admin in admins])
-            if not settings.UNIT_TESTING:
+            if not settings.UNIT_TESTING and not include_domain_admins:
                 _soft_assert_contact_emails_missing(
                     False,
                     "Could not find an email to send the invoice "
