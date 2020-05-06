@@ -15,13 +15,9 @@ log = logging.getLogger(__name__)
 _LOCK = Lock()
 
 
-class ReentrantRedisLocksPlugin(Plugin):
-    """A plugin to measure times of testing events
-
-    Measure elapsed time before setup, during setup, during test, and
-    during teardown events. Outputs the results as CSV.
-    """
-    name = "reentrant-redis-locks"
+class RedisLockTimeoutPlugin(Plugin):
+    """A plugin that causes blocking redis locks to error on lock timeout"""
+    name = "test-redis-locks"
     enabled = True
 
     def configure(self, options, conf):
