@@ -18,7 +18,7 @@ from corehq.apps.export.models.incremental import (
     IncrementalExport,
     IncrementalExportStatus,
 )
-from corehq.apps.export.tasks import (
+from corehq.apps.export.utils import (
     _generate_incremental_export,
     _send_incremental_export,
 )

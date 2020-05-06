@@ -90,7 +90,6 @@ from corehq.apps.export.dbaccessors import (
     get_latest_case_export_schema,
     get_latest_form_export_schema,
 )
-from corehq.apps.export.utils import is_occurrence_deleted
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.reports.daterange import get_daterange_start_end_dates
@@ -379,6 +378,7 @@ class ExportColumn(DocumentSchema):
         return column
 
     def _is_deleted(self, app_ids_and_versions):
+        from corehq.apps.export.utils import is_occurrence_deleted
         return (
             is_occurrence_deleted(self.item.last_occurrences, app_ids_and_versions) and
             not self.item.inferred
