@@ -786,7 +786,7 @@
         "column_id": "location_reassignment_date",
         "datatype": "date",
         "type": "raw",
-        "property_name": "location_reassignment_date"
+        "property_name": "location_reassignment_datetime"
       },
       {
         "column_id": "last_owner_id",
