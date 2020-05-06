@@ -2,6 +2,7 @@ import logging
 from datetime import datetime
 
 import attr
+from nose.tools import nottest
 from nose.plugins import Plugin
 
 import dimagi.utils.couch
@@ -35,6 +36,7 @@ class RedisLockTimeoutPlugin(Plugin):
         assert get == self.get_client, f"redis client patch broke ({get})"
 
 
+@nottest
 def get_test_lock(key, **kw):
     timeout = kw["timeout"]
     lock = get_redis_client().lock(key, **kw)
