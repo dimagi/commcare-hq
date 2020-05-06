@@ -1,3 +1,4 @@
+from redis.exceptions import LockError
 from testil import assert_raises, eq
 
 from dimagi.utils.couch import get_redis_lock
@@ -15,7 +16,8 @@ def test_redislocks_nose_plugin():
     lock2 = get_redis_lock(__name__, timeout=0.5, name="test")
     with assert_raises(TimeoutError):
         lock2.acquire()
-    # lock1.release() -> LockError: Cannot release a lock that's no longer owned
+    with assert_raises(LockError, msg="Cannot release a lock that's no longer owned"):
+        lock1.release()
 
 
 @timelimit(0.1)
