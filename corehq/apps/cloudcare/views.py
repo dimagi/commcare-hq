@@ -471,6 +471,15 @@ class EditCloudcareUserPermissionsView(BaseUserSettingsView):
 def report_formplayer_error(request, domain):
     data = json.loads(request.body)
     error_type = data.get('type')
+    referer = request.META.get('HTTP_REFERER', '')
+
+    if '/cloudcare/apps/v2/' in referer:
+        origin = 'web_apps'
+    elif '/cloudcare/apps/preview_app/' in referer:
+        origin = 'app_preview'
+    else:
+        origin = 'unknown'
+
     if error_type == 'webformsession_request_failure':
         metrics_counter('commcare.formplayer.webformsession_request_failure', tags={
             'request': data.get('request'),
@@ -478,6 +487,7 @@ def report_formplayer_error(request, domain):
             'state': data.get('state'),
             'status': data.get('status'),
             'domain': domain,
+            'origin': origin,
         })
         notify_error(message='Formplayer: request failure in web form session', details=data)
     elif error_type == 'show_error_notification':
@@ -485,6 +495,7 @@ def report_formplayer_error(request, domain):
         metrics_counter('commcare.formplayer.show_error_notification', tags={
             'message': _message_to_tag_value(message or 'no_message'),
             'domain': domain,
+            'origin': origin,
         })
         notify_error(message=f'Formplayer: showed error to user: {message}', details=data)
     else:
