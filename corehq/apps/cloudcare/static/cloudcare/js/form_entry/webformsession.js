@@ -254,7 +254,12 @@ WebFormSession.prototype.handleFailure = function (resp, action, textStatus, fai
         errorMessage = Formplayer.Utils.touchformsError(resp.responseJSON.message);
     }
 
-    self.reportFormplayerErrorToHQ(resp, action, errorMessage);
+    try {
+        self.reportFormplayerErrorToHQ(resp, action, errorMessage);
+    } catch (e) {
+        console.error("reportFormplayerErrorToHQ failed hard and there is no where else to report this error", e);
+    }
+
     if (failureCallback) {
         failureCallback();
     }
