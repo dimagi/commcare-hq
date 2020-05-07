@@ -23,7 +23,7 @@
     "icds"
   ],
   "config": {
-    "table_id": "static-remove_member",
+    "table_id": "static-remove_member_form",
     "display_name": "Forms - Remove Member (REACH Dashboard)",
     "referenced_doc_type": "XFormInstance",
     "base_item_expression": {},

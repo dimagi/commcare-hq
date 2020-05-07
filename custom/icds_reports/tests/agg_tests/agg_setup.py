@@ -55,7 +55,7 @@ FILE_NAME_TO_TABLE_MAPPING = {
     'migration_form': get_table_name('icds-cas', 'static-migration_form'),
     'availing_services_form': get_table_name('icds-cas', 'static-availing_service_form'),
     'child_delivery_form': get_table_name('icds-cas', 'static-child_delivery_forms'),
-    'remove_member_form': get_table_name('icds-cas', 'static-remove_member')
+    'remove_member_form': get_table_name('icds-cas', 'static-remove_member_form')
 }
 
 

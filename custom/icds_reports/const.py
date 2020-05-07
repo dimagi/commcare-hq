@@ -136,7 +136,7 @@ BIHAR_API_DEMOGRAPHICS_TABLE = 'bihar_api_demographics'
 BIHAR_API_MOTHER_DETAILS_TABLE = 'bihar_api_mother_details'
 CHILD_VACCINE_TABLE = 'child_vaccines'
 CHILD_DELIVERY_FORM_ID = 'static-child_delivery_forms'
-REMOVE_MEMBER_FORM = 'static-remove_member'
+REMOVE_MEMBER_FORM = 'static-remove_member_form'
 
 DASHBOARD_DOMAIN = 'icds-dashboard-qa' if settings.SERVER_ENVIRONMENT == 'india' else 'icds-cas'
 
