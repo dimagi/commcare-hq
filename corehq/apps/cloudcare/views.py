@@ -473,7 +473,7 @@ def report_formplayer_error(request, domain):
     error_type = data.get('type')
     if error_type == 'webformsession_request_failure':
         metrics_counter('commcare.formplayer.webformsession_request_failure', tags={
-            'action': data.get('action'),
+            'request': data.get('request'),
             'statusText': data.get('statusText'),
             'state': data.get('state'),
             'status': data.get('status'),

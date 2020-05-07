@@ -255,7 +255,7 @@ WebFormSession.prototype.handleFailure = function (resp, action, textStatus, fai
 
     hqImport('cloudcare/js/util').reportFormplayerErrorToHQ({
         type: 'webformsession_request_failure',
-        action: action,
+        request: action,
         readableErrorMessage: errorMessage,
         statusText: resp.statusText,
         state: resp.state ? resp.state() : null,
