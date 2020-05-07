@@ -41,8 +41,14 @@ class Transition(object):
     user_transitions = attr.ib(factory=dict)
 
     def add(self, old_site_code, new_site_code, new_location_details, old_username, new_username):
-        self.old_site_codes.append(old_site_code)
-        self.new_site_codes.append(new_site_code)
+        """
+        all operations should be only added via this method
+        """
+        # it would be nice to keep order so use list instead of set
+        if old_site_code not in self.old_site_codes:
+            self.old_site_codes.append(old_site_code)
+        if new_site_code not in self.new_site_codes:
+            self.new_site_codes.append(new_site_code)
         self.new_location_details[new_site_code] = new_location_details
         if old_username and new_username:
             self.user_transitions[old_username] = new_username
@@ -158,18 +164,9 @@ class BaseOperation(metaclass=ABCMeta):
                                                                     site_code__in=self.new_site_codes))
 
         for old_location in self.old_locations:
-            if (old_location.metadata.get(DEPRECATED_TO)
-                    or old_location.metadata.get(DEPRECATED_AT)
-                    or old_location.metadata.get(DEPRECATED_VIA)):
-                self.errors.append("%s operation: location %s with site code %s is already deprecated." % (
+            if not self._can_perform_deprecation(old_location):
+                self.errors.append("%s operation: location %s with site code %s cannot be deprecated again." % (
                     self.type, old_location.name, old_location.site_code))
-                valid = False
-        for new_location in self.new_locations:
-            if (new_location.metadata.get(DEPRECATES)
-                    or new_location.metadata.get(DEPRECATES_AT)
-                    or new_location.metadata.get(DEPRECATES_VIA)):
-                self.errors.append("%s operation: location %s with site code %s is already deprecated." % (
-                    self.type, new_location.name, new_location.site_code))
                 valid = False
 
         return valid
@@ -183,6 +180,12 @@ class BaseOperation(metaclass=ABCMeta):
             self.errors.append("%s operation: Got %s %s location." % (self.type, count, location_type_code))
             valid = False
         return valid
+
+    @staticmethod
+    def _can_perform_deprecation(location):
+        if location.metadata.get(DEPRECATED_VIA) and location.metadata.get(DEPRECATED_VIA) != EXTRACT_OPERATION:
+            return False
+        return True
 
     @abstractmethod
     def perform(self):

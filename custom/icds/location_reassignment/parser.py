@@ -8,6 +8,7 @@ from corehq.apps.users.util import normalize_username
 from custom.icds.location_reassignment.const import (
     AWC_CODE_COLUMN,
     CURRENT_SITE_CODE_COLUMN,
+    EXTRACT_OPERATION,
     HOUSEHOLD_ID_COLUMN,
     MERGE_OPERATION,
     NEW_LGD_CODE,
@@ -268,17 +269,36 @@ class Parser(object):
     def _validate_descendants_deprecated(self):
         """
         ensure all locations getting deprecated, also have their descendants getting deprecated
+        except for extract operation ensure at least one descendant getting deprecated
         """
         site_codes_to_be_deprecated = set(self.site_codes_to_be_deprecated)
-        locations_to_be_deprecated = SQLLocation.active_objects.filter(
-            domain=self.domain, site_code__in=self.site_codes_to_be_deprecated)
-        for location in locations_to_be_deprecated:
-            descendants_sites_codes = location.child_locations().values_list('site_code', flat=True)
-            missing_site_codes = set(descendants_sites_codes) - site_codes_to_be_deprecated
-            if missing_site_codes:
-                self.errors.append("Location %s is getting deprecated but the following descendants are not %s" % (
-                    location.site_code, ",".join(missing_site_codes)
-                ))
+        locations_to_be_deprecated_by_site_code = {
+            loc.site_code: loc
+            for loc in SQLLocation.active_objects.filter(
+                domain=self.domain, site_code__in=self.site_codes_to_be_deprecated)
+        }
+        for transitions in self.valid_transitions.values():
+            for transition in transitions:
+                operation = transition.operation
+                for old_site_code in transition.old_site_codes:
+                    location = locations_to_be_deprecated_by_site_code.get(old_site_code)
+                    # using an archived location's site code is already caught,
+                    # but still adding another error for edge cases
+                    if not location:
+                        self.errors.append(f"Could not find old location with site code {old_site_code}")
+                        continue
+                    descendants_sites_codes = location.child_locations().values_list('site_code', flat=True)
+                    if operation == EXTRACT_OPERATION:
+                        if not set(descendants_sites_codes) & site_codes_to_be_deprecated:
+                            self.errors.append(
+                                f"Location {location.site_code} is getting deprecated via {operation} "
+                                f"but none of its descendants")
+                    else:
+                        missing_site_codes = set(descendants_sites_codes) - site_codes_to_be_deprecated
+                        if missing_site_codes:
+                            self.errors.append(
+                                f"Location {location.site_code} is getting deprecated via {operation} "
+                                f"but the following descendants are not {', '.join(missing_site_codes)}")
 
     def _validate_parents(self):
         """
@@ -333,11 +353,13 @@ class Parser(object):
             usernames_missing = set(self.usernames) - usernames_found
             self.errors.append(f"Could not find user(s): {', '.join(usernames_missing)}")
 
-    def valid_transitions_json(self):
+    def valid_transitions_json(self, for_location_type=None):
         # return valid transitions as json
         json_response = {}
-        for location_code, transitions in self.valid_transitions.items():
-            json_response[location_code] = [attr.asdict(transition) for transition in transitions]
+        for location_type, transitions in self.valid_transitions.items():
+            if for_location_type and for_location_type != location_type:
+                continue
+            json_response[location_type] = [attr.asdict(transition) for transition in transitions]
         return json_response
 
 

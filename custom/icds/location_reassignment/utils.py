@@ -65,6 +65,7 @@ def get_supervisor_id(domain, location_id):
 
 def reassign_household_case(domain, household_case_id, old_owner_id, new_owner_id, supervisor_id,
                             deprecation_time=None):
+    from custom.icds.location_reassignment.tasks import process_ucr_changes
     if deprecation_time is None:
         deprecation_time = datetime.utcnow()
     case_ids = get_household_and_child_case_ids_by_owner(domain, household_case_id, old_owner_id)
@@ -85,3 +86,4 @@ def reassign_household_case(domain, household_case_id, old_owner_id, new_owner_i
         case_blocks.append(case_block)
     if case_blocks:
         submit_case_blocks(case_blocks, domain, user_id=SYSTEM_USER_ID)
+    process_ucr_changes.delay(domain, case_ids)
