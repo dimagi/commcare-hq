@@ -159,6 +159,6 @@ def queue_task_with_retries(task_to_queue, *args, **kwargs):
             # break from while if no issues
             break
         except Exception:
-            # wait for a minute before trying again
-            sleep(60)
+            # wait for five minutes before trying again
+            sleep(300)
             retries += 1
