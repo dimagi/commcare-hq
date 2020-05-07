@@ -141,14 +141,14 @@ hqDefine('cloudcare/js/util', function () {
                 contentType: "application/json",
                 dataType: "json",
                 success: function () {
-                    console.info('Successfully reported error: ' + JSON.stringify(data));
+                    window.console.info('Successfully reported error: ' + JSON.stringify(data));
                 },
                 error: function () {
-                    console.error('Failed to report error: ' + JSON.stringify(data));
+                    window.console.error('Failed to report error: ' + JSON.stringify(data));
                 },
             });
         } catch (e) {
-            console.error(
+            window.console.error(
                 "reportFormplayerErrorToHQ failed hard and there is nowhere " +
                 "else to report this error: " + JSON.stringify(data),
                 e,
