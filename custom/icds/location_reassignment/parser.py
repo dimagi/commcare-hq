@@ -27,7 +27,7 @@ from custom.icds.location_reassignment.models import Transition
 
 def parse_site_code(site_code):
     if site_code:
-        return str(site_code)
+        return str(site_code).lower()
     return ''
 
 
