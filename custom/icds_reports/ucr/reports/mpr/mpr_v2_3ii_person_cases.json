@@ -45,6 +45,14 @@
         "compare_as_string": false
       },
       {
+        "display": "Date of Birth",
+        "slug": "dob",
+        "type": "date",
+        "field": "dob",
+        "datatype": "date",
+        "compare_as_string": false
+      },
+      {
         "display": "Age at Registration Low Bound",
         "slug": "age_at_reg",
         "type": "numeric",
