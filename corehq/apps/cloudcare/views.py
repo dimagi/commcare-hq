@@ -1,4 +1,5 @@
 import json
+import re
 import string
 from xml.etree import cElementTree as ElementTree
 
@@ -519,7 +520,13 @@ def _message_to_tag_value(message, allowed_chars=string.ascii_lowercase + string
     'another_process_prevented_us'
     >>> _message_to_tag_value('509 Unknown Status Code')
     '509_unknown_status_code'
+    >>> _message_to_tag_value(
+    ... 'EntityScreen EntityScreen [Detail=org.commcare.suite.model.Detail@1f984e3c, '
+    ... 'selection=null] could not select case 8854f3583f6f46e69af59fddc9f9428d. '
+    ... 'If this error persists please report a bug to CommCareHQ.')
+    'entityscreen_entityscreen_detail_org'
     """
-    message_tag = '_'.join(unidecode(message).split(' ')[:4]).lower()
-    message_tag = ''.join(c for c in message_tag if c in allowed_chars)
-    return message_tag
+    message_tag = unidecode(message)
+    message_tag = ''.join((c if c in allowed_chars else ' ') for c in message_tag.lower())
+    message_tag = '_'.join(re.split(r' +', message_tag)[:4])
+    return message_tag[:59]
