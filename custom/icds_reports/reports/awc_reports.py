@@ -981,12 +981,22 @@ def get_awc_report_infrastructure(domain, config, month, show_test=False, beta=F
     }
 
 
+def get_beneficiary_status(valid, migrated, alive, duplicate):
+    if valid:
+        return 'open'
+    elif migrated:
+        return 'migrated'
+    elif duplicate:
+        return 'duplicated'
+    elif not alive:
+        return 'dead'
+    return 'N/A'
+
 @icds_quickcache([
     'start', 'length', 'draw', 'order', 'filters', 'month', 'two_before', 'icds_features_flag'
 ], timeout=30 * 60)
 def get_awc_report_beneficiary(start, length, draw, order, filters, month, two_before,
                                icds_features_flag):
-
     filters['month'] = datetime(*month)
     filters['open_in_month'] = 1
     filters['valid_in_month'] = 1
@@ -1038,7 +1048,11 @@ def get_awc_report_beneficiary(start, length, draw, order, filters, month, two_b
             ),
             pse_days_attended=row_data.pse_days_attended,
             mother_phone_number=row_data.mother_phone_number,
-            aww_phone_number=row_data.aww_phone_number
+            aww_phone_number=row_data.aww_phone_number,
+            beneficiary_status=get_beneficiary_status(row_data.valid_in_month_end,
+                                                      row_data.not_migrated_month_end,
+                                                      row_data.alive_in_month_end,
+                                                      row_data.status_duplicate)
         )
 
     for row in data:
@@ -1080,6 +1094,10 @@ def get_beneficiary_details(case_id, awc_id, selected_month):
             'age': current_age(row.dob, datetime.now().date()),
             'sex': row.sex,
             'age_in_months': age_in_months,
+            'beneficiary_status': get_beneficiary_status(row.valid_in_month_end,
+                                                         row.not_migrated_month_end,
+                                                         row.alive_in_month_end,
+                                                         row.status_duplicate)
         })
         if age_in_months <= 60:
             if recorded_weight:

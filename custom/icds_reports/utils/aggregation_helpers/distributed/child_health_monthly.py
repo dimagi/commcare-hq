@@ -12,7 +12,8 @@ from custom.icds_reports.const import (
     AGG_GROWTH_MONITORING_TABLE,
     AGG_MIGRATION_TABLE,
     AGG_AVAILING_SERVICES_TABLE,
-    CHILD_DELIVERY_FORM_ID
+    CHILD_DELIVERY_FORM_ID,
+    REMOVE_MEMBER_FORM
 )
 from custom.icds_reports.utils.aggregation_helpers import (
     get_child_health_tablename,
@@ -98,24 +99,42 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
             "(({} - child_health.opened_on::date)::integer >= 0) "
             "AND (child_health.closed = 0 OR (child_health.closed_on::date - {})::integer > 0)"
         ).format(end_month_string, start_month_string)
+        open_in_month_end = (
+            "(({} - child_health.opened_on::date)::integer >= 0) "
+            "AND (child_health.closed = 0 OR (child_health.closed_on::date - {})::integer > 0)"
+        ).format(end_month_string, end_month_string)
         alive_in_month = "(child_health.date_death IS NULL OR child_health.date_death - {} >= 0)".format(
             start_month_string
+        )
+        alive_in_month_end = "(child_health.date_death IS NULL OR child_health.date_death - {} >= 0)".format(
+            end_month_string
         )
         not_migrated = (
             "(agg_migration.is_migrated IS DISTINCT FROM 1 "
             "OR agg_migration.migration_date::date >= {start_month_string})"
         ).format(start_month_string=start_month_string)
+        not_migrated_month_end = (
+            "(agg_migration.is_migrated IS DISTINCT FROM 1)"
+        )
         registered = (
             "(agg_availing.is_registered IS DISTINCT FROM 0 "
             "OR agg_availing.registration_date::date >= {start_month_string})"
         ).format(start_month_string=start_month_string)
+        registered_month_end = (
+            "(agg_availing.is_registered IS DISTINCT FROM 0 )"
+        )
         seeking_services = "({registered} AND {not_migrated})".format(
             registered=registered, not_migrated=not_migrated)
+        seeking_services_month_end = "({registered_month_end} AND {not_migrated_month_end})".format(
+            registered_month_end=registered_month_end, not_migrated_month_end=not_migrated_month_end)
         born_in_month = "({} AND person_cases.dob BETWEEN {} AND {})".format(
             seeking_services, start_month_string, end_month_string
         )
         valid_in_month = "({} AND {} AND {} AND {} <= 72)".format(
             open_in_month, alive_in_month, seeking_services, age_in_months
+        )
+        valid_in_month_end = "({} AND {} AND {} AND {} <= 72)".format(
+            open_in_month_end, alive_in_month_end, seeking_services_month_end, age_in_months_end
         )
         pse_eligible = "({} AND {} > 36)".format(valid_in_month, age_in_months_end)
         ebf_eligible = "({} AND {} <= 6)".format(valid_in_month, age_in_months)
@@ -355,7 +374,11 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
             ("birth_weight", "child_health.birth_weight"),
             ("child_person_case_id", "child_health.mother_id"),
             ("delivery_nature", "del_form.delivery_nature"),
-            ("term_days", "(del_form.add::DATE - del_form.edd::DATE) + 280")
+            ("term_days", "(del_form.add::DATE - del_form.edd::DATE) + 280"),
+            ("valid_in_month_end", "CASE WHEN {} THEN 1 ELSE 0 END".format(valid_in_month_end)),
+            ("not_migrated_month_end", "CASE WHEN {} THEN 1 ELSE 0 END".format(not_migrated_month_end)),
+            ("alive_in_month_end", "CASE WHEN {} THEN 1 ELSE 0 END".format(alive_in_month_end)),
+            ("status_duplicate", "CASE WHEN rm.reason_closure='dupe_reg' THEN 1 ELSE 0 END")
         )
         yield """
         INSERT INTO "{child_tablename}" (
@@ -399,6 +422,8 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
               AND child_health.supervisor_id = df.supervisor_id
             LEFT OUTER JOIN "{delivery_form}" del_form ON child_health.doc_id = del_form.child_health_case_id
               AND child_health.supervisor_id = del_form.supervisor_id
+            LEFT OUTER JOIN "{remove_member_form}" rm ON child_health.doc_id = rm.person_case_id
+              AND child_health.supervisor_id = rm.supervisor_id
             WHERE child_health.doc_id IS NOT NULL
               AND child_health.state_id = %(state_id)s
               AND {open_in_month}
@@ -420,7 +445,8 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
             child_tasks_case_ucr=self.child_tasks_case_ucr_tablename,
             person_cases_ucr=self.person_case_ucr_tablename,
             open_in_month=open_in_month,
-            delivery_form=get_table_name(self.domain, CHILD_DELIVERY_FORM_ID)
+            delivery_form=get_table_name(self.domain, CHILD_DELIVERY_FORM_ID),
+            remove_member_form=get_table_name(self.domain, REMOVE_MEMBER_FORM)
         ), {
             "start_date": self.month,
             "next_month": month_formatter(self.month + relativedelta(months=1)),

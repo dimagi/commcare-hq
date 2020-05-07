@@ -366,6 +366,10 @@ class ChildHealthMonthly(models.Model, AggregateMixin):
     child_person_case_id = models.TextField(blank=True, null=True)
     delivery_nature = models.TextField(blank=True, null=True)
     term_days = models.SmallIntegerField(blank=True, null=True)
+    valid_in_month_end = models.SmallIntegerField(blank=True, null=True)
+    not_migrated_month_end = models.SmallIntegerField(blank=True, null=True)
+    alive_in_month_end = models.SmallIntegerField(blank=True, null=True)
+    status_duplicate = models.SmallIntegerField(blank=True, null=True)
 
     class Meta:
         managed = False
