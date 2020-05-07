@@ -61,5 +61,6 @@ branches:
   - bmb/SAAS-10674  # Biyeun May 4
   - dmr/case-upload-success-result-followup  # Danny May 5
   - jls/web-apps-block-levels # Jenny May 7
+  - dmr/report-browser-formplayer-errors  # Danny May 7
 
 submodules: {}
