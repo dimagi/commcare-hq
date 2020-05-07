@@ -82,16 +82,12 @@
           </div>
           <div class="form-actions form-group" data-bind="visible: showSubmitButton">
             <div data-bind="css: Formplayer.Const.LABEL_OFFSET + ' ' + Formplayer.Const.CONTROL_WIDTH">
-              <input class="submit btn btn-primary"
+              <button class="submit btn btn-primary"
                      type="submit"
-                     value="Submit"
-                     data-bind="
-                       attr: {
-                         value: submitText,
-                       },
-                       enable: enableSubmitButton,
-                     "
-              />
+                     data-bind="enable: enableSubmitButton">
+                <i class="fa fa-spin fa-refresh" data-bind="visible: !enableSubmitButton()"></i>
+                <!-- ko text: submitText --><!-- /ko -->
+              </button>
             </div>
           </div>
         </form>
