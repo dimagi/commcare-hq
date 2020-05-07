@@ -33,7 +33,7 @@ def get_doc_count(es, index, refresh_first=True):
         # we default to calling refresh since ES might have stale data
         es.indices.refresh(index)
     stats = es.indices.stats(index)
-    return stats['indices'][index]['total']['docs']['count']
+    return list(stats['indices'].values())[0]['total']['docs']['count']
 
 
 def get_index_mapping(es, index, doc_type):
