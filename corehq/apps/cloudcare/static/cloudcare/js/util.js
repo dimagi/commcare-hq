@@ -32,6 +32,11 @@ hqDefine('cloudcare/js/util', function () {
             message = gettext("Sorry, an error occurred while processing that request.");
         }
         _show(message, $el, null, "alert alert-danger");
+        reportFormplayerErrorToHQ({
+            type: 'show_error_notification',
+            message: message,
+        });
+
     };
 
     var showWarning = function (message, $el) {
@@ -44,6 +49,10 @@ hqDefine('cloudcare/js/util', function () {
     var showHTMLError = function (message, $el, autoHideTime) {
         message = message || gettext("Sorry, an error occurred while processing that request.");
         _show(message, $el, autoHideTime, "", true);
+        reportFormplayerErrorToHQ({
+            type: 'show_error_notification',
+            message: message,
+        });
     };
 
     var showSuccess = function (message, $el, autoHideTime, isHTML) {
@@ -121,6 +130,28 @@ hqDefine('cloudcare/js/util', function () {
         NProgress.done();
     };
 
+    var reportFormplayerErrorToHQ = function (data) {
+        try {
+            var reverse = hqImport("hqwebapp/js/initial_page_data").reverse;
+
+            $.ajax({
+                type: 'POST',
+                url: reverse('report_formplayer_error'),
+                data: JSON.stringify(data),
+                contentType: "application/json",
+                dataType: "json",
+                success: function () {
+                    console.info('Successfully reported error: ' + JSON.stringify(data));
+                },
+                error: function () {
+                    console.error('Failed to report error: ' + JSON.stringify(data));
+                },
+            });
+        } catch (e) {
+            console.error("reportFormplayerErrorToHQ failed hard and there is no where else to report this error", e);
+        }
+    };
+
     return {
         getFormUrl: getFormUrl,
         getSubmitUrl: getSubmitUrl,
@@ -132,5 +163,6 @@ hqDefine('cloudcare/js/util', function () {
         formplayerLoading: formplayerLoading,
         formplayerLoadingComplete: formplayerLoadingComplete,
         formplayerSyncComplete: formplayerSyncComplete,
+        reportFormplayerErrorToHQ: reportFormplayerErrorToHQ,
     };
 });

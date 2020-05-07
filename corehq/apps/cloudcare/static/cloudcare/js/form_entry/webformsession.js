@@ -117,8 +117,8 @@ function WebFormSession(params) {
 
     self.urls = {
         xform: params.xform_url,
-        errorReportUrl: params.error_report_url,
     };
+    self.reportFormplayerErrorToHQ = params.reportFormplayerErrorToHQ;
 
 
     self.blockingRequestInProgress = false;
@@ -254,11 +254,17 @@ WebFormSession.prototype.handleFailure = function (resp, action, textStatus, fai
         errorMessage = Formplayer.Utils.touchformsError(resp.responseJSON.message);
     }
 
-    try {
-        self.reportFormplayerErrorToHQ(resp, action, errorMessage);
-    } catch (e) {
-        console.error("reportFormplayerErrorToHQ failed hard and there is no where else to report this error", e);
-    }
+    self.reportFormplayerErrorToHQ({
+        type: 'webformsession_request_failure',
+        action: action,
+        readableErrorMessage: errorMessage,
+        statusText: resp.statusText,
+        state: resp.state ? resp.state() : null,
+        status: resp.status,
+        domain: self.domain,
+        username: self.username,
+        restoreAs: self.restoreAs,
+    });
 
     if (failureCallback) {
         failureCallback();
@@ -542,31 +548,4 @@ WebFormSession.prototype.renderFormXml = function (resp, $form) {
     var self = this;
     self.session_id = self.session_id || resp.session_id;
     self.form = Formplayer.Utils.initialRender(resp, self.resourceMap, $form);
-};
-
-WebFormSession.prototype.reportFormplayerErrorToHQ = function (resp, action, errorMessage) {
-    var self = this;
-    var data = {
-        action: action,
-        readableErrorMessage: errorMessage,
-        statusText: resp.statusText,
-        state: resp.state ? resp.state() : null,
-        status: resp.status,
-        domain: self.domain,
-        username: self.username,
-        restoreAs: self.restoreAs,
-    };
-    $.ajax({
-        type: 'POST',
-        url: self.urls.errorReportUrl,
-        data: JSON.stringify(data),
-        contentType: "application/json",
-        dataType: "json",
-        success: function () {
-            console.info('Successfully reported error: ' + JSON.stringify(data));
-        },
-        error: function () {
-            console.error('Failed to report error: ' + JSON.stringify(data));
-        },
-    });
 };
