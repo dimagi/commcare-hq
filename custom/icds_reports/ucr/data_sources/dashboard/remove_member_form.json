@@ -57,7 +57,7 @@
       },
       {
         "column_id": "timeend",
-        "datatype": "date",
+        "datatype": "datetime",
         "type": "expression",
         "expression": {
           "type": "property_path",

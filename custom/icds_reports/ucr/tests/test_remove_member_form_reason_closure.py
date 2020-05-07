@@ -1,3 +1,5 @@
+import datetime
+
 from mock import patch
 
 from custom.icds_reports.ucr.tests.test_base_form_ucr import BaseFormsTest
@@ -19,7 +21,7 @@ class TestChildDeliveryForms(BaseFormsTest):
                     'doc_id': None,
                     'person_case_id': '9aa9fb7e-f90a-42db-8d17-415092531ad9',
                     'reason_closure': 'incorrect_reg',
-                    'timeend': None
+                    'timeend': datetime.datetime(2020, 5, 4, 7, 25, 58, 439000)
                 }
             ]
         )
