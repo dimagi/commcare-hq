@@ -1,4 +1,5 @@
 import json
+import string
 from xml.etree import cElementTree as ElementTree
 
 from django.conf import settings
@@ -23,8 +24,11 @@ import six.moves.urllib.error
 import six.moves.urllib.parse
 import six.moves.urllib.request
 from couchdbkit import ResourceConflict
+from unidecode import unidecode
 
 from casexml.apps.phone.fixtures import generator
+from corehq.util.metrics import metrics_counter
+from dimagi.utils.logging import notify_error
 from dimagi.utils.parsing import string_to_boolean
 from dimagi.utils.web import get_url_base, json_response
 
@@ -461,3 +465,48 @@ class EditCloudcareUserPermissionsView(BaseUserSettingsView):
         ], bulk=False)
         access.save()
         return json_response({'success': 1})
+
+
+@login_and_domain_required
+def report_formplayer_error(request, domain):
+    data = json.loads(request.body)
+    error_type = data.get('type')
+    if error_type == 'webformsession_request_failure':
+        metrics_counter('commcare.formplayer.webformsession_request_failure', tags={
+            'request': data.get('request'),
+            'statusText': data.get('statusText'),
+            'state': data.get('state'),
+            'status': data.get('status'),
+            'domain': domain,
+        })
+        notify_error(message='Formplayer: request failure in web form session', details=data)
+    elif error_type == 'show_error_notification':
+        message = data.get('message')
+        metrics_counter('commcare.formplayer.show_error_notification', tags={
+            'message': _message_to_tag_value(message or 'no_message'),
+            'domain': domain,
+        })
+        notify_error(message=f'Formplayer: showed error to user: {message}', details=data)
+    else:
+        metrics_counter('commcare.formplayer.unknown_error_type', tags={
+            'domain': domain,
+        })
+        notify_error(message=f'Formplayer: unknown error type', details=data)
+    return JsonResponse({'status': 'ok'})
+
+
+def _message_to_tag_value(message, allowed_chars=string.ascii_lowercase + '_'):
+    """
+    Turn a long user-facing error message into a short slug that can be used as a datadog tag value
+
+    passes through unidecode to get something ascii-compatible to work with,
+    then uses the first four space-delimited words and filters out unwanted characters.
+
+    >>> _message_to_tag_value('Sorry, an error occurred while processing that request.')
+    'sorry_an_error_occurred'
+    >>> _message_to_tag_value('Another process prevented us from servicing your request. Please try again later.')
+    'another_process_prevented_us'
+    """
+    message_tag = '_'.join(unidecode(message).split(' ')[:4]).lower()
+    message_tag = ''.join(c for c in message_tag if c in allowed_chars)
+    return message_tag
