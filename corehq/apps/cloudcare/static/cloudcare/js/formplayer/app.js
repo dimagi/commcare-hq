@@ -159,7 +159,7 @@ FormplayerFrontend.on('startForm', function (data) {
     data.onLoadingComplete = formplayerLoadingComplete;
     var user = FormplayerFrontend.request('currentUser');
     data.xform_url = user.formplayer_url;
-    data.reportFormplayerErrorToHQ =  reportFormplayerErrorToHQ
+    data.reportFormplayerErrorToHQ =  reportFormplayerErrorToHQ;
     data.domain = user.domain;
     data.username = user.username;
     data.restoreAs = user.restoreAs;
