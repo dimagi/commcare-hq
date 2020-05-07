@@ -48,7 +48,12 @@ hqDefine('cloudcare/js/util', function () {
 
     var showHTMLError = function (message, $el, autoHideTime) {
         message = message || gettext("Sorry, an error occurred while processing that request.");
-        _show(message, $el, autoHideTime, "", true);
+        var $container = _show(message, $el, autoHideTime, "", true);
+        try {
+            message = $container.text()  // pull out just the text the user sees
+        } catch (e) {
+            // leave the message as at came in if there's an issue parsing text from the container
+        }
         reportFormplayerErrorToHQ({
             type: 'show_error_notification',
             message: message,
