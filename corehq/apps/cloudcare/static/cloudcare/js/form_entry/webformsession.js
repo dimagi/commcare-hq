@@ -120,14 +120,14 @@ function WebFormSession(params) {
     };
 
 
-    self.blockingRequestInProgress = false;
+    self.blockingStatus = Formplayer.Const.BLOCK_NONE;
     self.lastRequestHandled = -1;
     self.numPendingRequests = 0;
 
     // workaround for "forever loading" bugs...
     $(document).ajaxStop(function () {
         self.NUM_PENDING_REQUESTS = 0;
-        self.blockingRequestInProgress = false;
+        self.blockingStaus = Formplayer.Const.BLOCK_NONE;
     });
 }
 
@@ -168,10 +168,10 @@ WebFormSession.prototype.serverRequest = function (requestParams, callback, bloc
     requestParams['session_id'] = self.session_id;
     requestParams['debuggerEnabled'] = self.debuggerEnabled;
     requestParams['tz_offset_millis'] = (new Date()).getTimezoneOffset() * 60 * 1000 * -1;
-    if (this.blockingRequestInProgress) {
+    if (this.blockingStatus === Formplayer.Const.BLOCK_ALL) {
         return;
     }
-    this.blockingRequestInProgress = blocking || false;
+    this.blockingStatus = blocking ? Formplayer.Const.BLOCK_ALL : Formplayer.Const.BLOCK_NONE;
     $.publish('session.block', blocking);
 
     this.numPendingRequests++;
@@ -224,8 +224,8 @@ WebFormSession.prototype.handleSuccess = function (resp, action, callback) {
         }
     }
 
-    $.publish('session.block', false);
-    this.blockingRequestInProgress = false;
+    this.blockingStatus = Formplayer.Const.BLOCK_NONE;
+    $.publish('session.block', this.blockingStatus);
 
     self.numPendingRequests--;
     if (self.numPendingRequests === 0) {

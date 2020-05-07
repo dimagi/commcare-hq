@@ -593,10 +593,12 @@ Formplayer.Const = {
     NO_PENDING_ANSWER: undefined,
     NO_ANSWER: null,
 
-    // UI Config
+    // UI
     LABEL_WIDTH: 'col-sm-4',
     LABEL_OFFSET: 'col-sm-offset-4',
     CONTROL_WIDTH: 'col-sm-8',
+    BLOCK_NONE: 'block-none',
+    BLOCK_ALL: 'block-all',
 
     // XForm Navigation
     QUESTIONS_FOR_INDEX: 'questions_for_index',
