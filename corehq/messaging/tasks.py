@@ -1,5 +1,7 @@
 from time import sleep
 
+from billiard.exceptions import SoftTimeLimitExceeded
+
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 from corehq.apps.sms import tasks as sms_tasks
 from corehq.form_processor.exceptions import CaseNotFound
@@ -157,6 +159,6 @@ def queue_task_with_retries(task_to_queue, *args, **kwargs):
             task_to_queue.delay(*args, **kwargs)
             # break from loop if no issues
             break
-        except Exception:
+        except SoftTimeLimitExceeded:
             # wait for five minutes before trying again
             sleep(300)
