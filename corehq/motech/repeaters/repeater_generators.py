@@ -350,12 +350,12 @@ class ReferCasePayloadGenerator(BasePayloadGenerator):
             _set_constant_properties(case, config)
             case_blocks.append(case.to_xml(V2))
         return render_to_string('hqcase/xml/case_block.xml', {
-            'xmlns': xmlns or SYSTEM_FORM_XMLNS,
+            'xmlns': SYSTEM_FORM_XMLNS,
             'case_block': case_blocks,
             'time': datetime.utcnow(),
             'uid': uuid4().hex,
-            'username': repeat_record.username,
-            'user_id': CouchUser.get_by_username(repeat_record.username).user_id,
+            'username': self.repeater.username,
+            'user_id': CouchUser.get_by_username(self.repeater.username).user_id,
             'device_id': "ReferCaseRepeater",
         })
 
