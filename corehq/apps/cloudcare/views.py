@@ -25,6 +25,8 @@ import six.moves.urllib.request
 from couchdbkit import ResourceConflict
 
 from casexml.apps.phone.fixtures import generator
+from corehq.util.metrics import metrics_counter
+from dimagi.utils.logging import notify_error
 from dimagi.utils.parsing import string_to_boolean
 from dimagi.utils.web import get_url_base, json_response
 
@@ -461,3 +463,17 @@ class EditCloudcareUserPermissionsView(BaseUserSettingsView):
         ], bulk=False)
         access.save()
         return json_response({'success': 1})
+
+
+@login_and_domain_required
+def report_formplayer_error(request, domain):
+    data = json.loads(request.body)
+    metrics_counter('commcare.formplayer.browser_error_reports', tags={
+        'action': data.get('action'),
+        'statusText': data.get('statusText'),
+        'state': data.get('state'),
+        'status': data.get('status'),
+        'domain': domain,
+    })
+    notify_error(message='Formplayer error reported from the browser', details=data)
+    return JsonResponse({'status': 'ok'})

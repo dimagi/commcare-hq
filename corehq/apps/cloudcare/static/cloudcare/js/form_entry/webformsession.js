@@ -117,6 +117,7 @@ function WebFormSession(params) {
 
     self.urls = {
         xform: params.xform_url,
+        errorReportUrl: params.error_report_url
     };
 
 
@@ -237,7 +238,8 @@ WebFormSession.prototype.handleSuccess = function (resp, action, callback) {
 };
 
 WebFormSession.prototype.handleFailure = function (resp, action, textStatus, failureCallback) {
-    var errorMessage;
+    var self = this;
+    var errorMessage = null;
     if (resp.status === 423) {
         errorMessage = Formplayer.Errors.LOCK_TIMEOUT_ERROR;
     } else if (textStatus === 'timeout') {
@@ -251,6 +253,8 @@ WebFormSession.prototype.handleFailure = function (resp, action, textStatus, fai
     } else if (resp.hasOwnProperty('responseJSON') && resp.responseJSON !== undefined) {
         errorMessage = Formplayer.Utils.touchformsError(resp.responseJSON.message);
     }
+
+    self.reportFormplayerErrorToHQ(resp, action, errorMessage);
     if (failureCallback) {
         failureCallback();
     }
@@ -533,4 +537,31 @@ WebFormSession.prototype.renderFormXml = function (resp, $form) {
     var self = this;
     self.session_id = self.session_id || resp.session_id;
     self.form = Formplayer.Utils.initialRender(resp, self.resourceMap, $form);
+};
+
+WebFormSession.prototype.reportFormplayerErrorToHQ = function (resp, action, errorMessage) {
+    var self = this;
+    var data = {
+        action: action,
+        readableErrorMessage: errorMessage,
+        statusText: resp.statusText,
+        state: resp.state ? resp.state() : null,
+        status: resp.status,
+        domain: self.domain,
+        username: self.username,
+        restoreAs: self.restoreAs,
+    };
+    $.ajax({
+        type: 'POST',
+        url: self.urls.errorReportUrl,
+        data: JSON.stringify(data),
+        contentType: "application/json",
+        dataType: "json",
+        success: function (resp) {
+            console.log('Successfully reported error: ' + JSON.stringify(data));
+        },
+        error: function (resp, textStatus) {
+            console.log('Failed to report error: ' + JSON.stringify(data));
+        },
+    });
 };

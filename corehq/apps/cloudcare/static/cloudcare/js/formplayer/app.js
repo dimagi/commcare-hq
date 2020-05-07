@@ -150,6 +150,7 @@ FormplayerFrontend.reqres.setHandler('handleNotification', function (notificatio
 });
 
 FormplayerFrontend.on('startForm', function (data) {
+    var reverse = hqImport("hqwebapp/js/initial_page_data").reverse;
     FormplayerFrontend.request("clearMenu");
     FormplayerFrontend.Menus.Util.showBreadcrumbs(data.breadcrumbs);
 
@@ -157,6 +158,7 @@ FormplayerFrontend.on('startForm', function (data) {
     data.onLoadingComplete = formplayerLoadingComplete;
     var user = FormplayerFrontend.request('currentUser');
     data.xform_url = user.formplayer_url;
+    data.error_report_url = reverse('report_formplayer_error');
     data.domain = user.domain;
     data.username = user.username;
     data.restoreAs = user.restoreAs;
