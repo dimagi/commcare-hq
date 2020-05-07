@@ -10,7 +10,7 @@ from custom.icds_reports.ucr.tests.test_base_form_ucr import BaseFormsTest
 @patch('corehq.apps.locations.ucr_expressions._get_location_type_name',
        lambda loc_id, context: 'awc')
 class TestChildDeliveryForms(BaseFormsTest):
-    ucr_name = "static-icds-cas-static-remove_member"
+    ucr_name = "static-icds-cas-static-remove_member_form"
 
     def test_delivery_form_single_child(self):
 
