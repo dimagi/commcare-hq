@@ -51,8 +51,8 @@ class TestParser(TestCase):
              'AWC-111', 'Supervisor 1', '11', '11',
              'username1', 'username1', 'Extract'),
             # valid operation to move 112 -> 131
-            ('AWC 2', 'AWC 3', '112', '131', 'AWC-112',
-             'AWC-131', 'Supervisor 2', '11', '13',
+            ('AWC 2', 'AWC 3', 112, 131, 'AWC-112',
+             'AWC-131', 'Supervisor 2', '11', 13,
              'username2', 'username3', 'Move'),
             # valid operation to merge 113 114 -> 132 but
             # with different lgd code for new location in 114

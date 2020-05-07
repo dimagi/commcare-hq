@@ -25,6 +25,12 @@ from custom.icds.location_reassignment.const import (
 from custom.icds.location_reassignment.models import Transition
 
 
+def parse_site_code(site_code):
+    if site_code:
+        return str(site_code)
+    return ''
+
+
 class TransitionRow(object):
     """
     An object representation of each row in excel
@@ -135,12 +141,12 @@ class Parser(object):
                 transition_row = TransitionRow(
                     location_type=location_type_code,
                     operation=operation,
-                    old_site_code=row.get(CURRENT_SITE_CODE_COLUMN),
-                    new_site_code=row.get(NEW_SITE_CODE_COLUMN),
+                    old_site_code=parse_site_code(row.get(CURRENT_SITE_CODE_COLUMN)),
+                    new_site_code=parse_site_code(row.get(NEW_SITE_CODE_COLUMN)),
                     expects_parent=expects_parent,
                     new_location_details={
                         'name': row.get(NEW_NAME),
-                        'parent_site_code': row.get(NEW_PARENT_SITE_CODE),
+                        'parent_site_code': parse_site_code(row.get(NEW_PARENT_SITE_CODE)),
                         'lgd_code': row.get(NEW_LGD_CODE),
                         'sub_district_name': row.get(NEW_SUB_DISTRICT_NAME)
                     },
