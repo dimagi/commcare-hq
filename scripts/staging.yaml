@@ -53,7 +53,7 @@ branches:
   - bmb/odata-qa-feedback  # Biyeun April 15
   - dmr/require_can_edit_or_view_commcare_users-download_commcare_users  # Danny April 27
   - sr-es-alias # Sravan April 29
-  - jls/migrate-CustomDataFieldsDefinition-2 # Jenny April 29
+  #- jls/migrate-CustomDataFieldsDefinition-2 # Jenny April 29
   - bmb/SAAS-10813  # Biyeun April 30
   - mk/location-reassignment-realign # MK May 4
   - mk/location-reassignment-add-view # MK May 3
