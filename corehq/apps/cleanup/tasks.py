@@ -170,7 +170,7 @@ def check_for_sql_cases_without_existing_domain():
     if case_count_by_missing_domain:
         mail_admins_async.delay(
             'There exist SQL cases belonging to a missing domain',
-            str(case_count_by_missing_domain)
+            f'{case_count_by_missing_domain}\nConsider hard_delete_forms_and_cases_in_domain'
         )
     elif _is_monday():
         mail_admins_async.delay(
@@ -191,7 +191,7 @@ def check_for_sql_forms_without_existing_domain():
     if form_count_by_missing_domain:
         mail_admins_async.delay(
             'There exist SQL forms belonging to a missing domain',
-            str(form_count_by_missing_domain)
+            f'{form_count_by_missing_domain}\nConsider hard_delete_forms_and_cases_in_domain'
         )
     elif _is_monday():
         mail_admins_async.delay(
@@ -237,8 +237,8 @@ def check_for_ucr_tables_without_existing_domain():
     if missing_domains_to_tables:
         for missing_domain in missing_domains_to_tables:
             mail_admins_async.delay(
-                'Missing domain "%s" has remaining UCR tables' % missing_domain,
-                str(missing_domains_to_tables[missing_domain])
+                f'Missing domain "{missing_domain}" has remaining UCR tables',
+                f'{missing_domains_to_tables[missing_domain]}\nConsider prune_old_datasources'
             )
     elif _is_monday():
         mail_admins_async.delay('All UCR tables belong to valid domains', '')

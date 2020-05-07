@@ -53,13 +53,14 @@ branches:
   - bmb/odata-qa-feedback  # Biyeun April 15
   - dmr/require_can_edit_or_view_commcare_users-download_commcare_users  # Danny April 27
   - sr-es-alias # Sravan April 29
-  - jls/migrate-CustomDataFieldsDefinition-1+jls/migrate-DefaultConsumption-3 # Jenny April 29
-  - jls/migrate-DefaultConsumption-3 # Jenny April 24
-  - jls/migrate-CustomDataFieldsDefinition-2 # Jenny April 29
+  #- jls/migrate-CustomDataFieldsDefinition-2 # Jenny April 29
   - bmb/SAAS-10813  # Biyeun April 30
   - mk/location-reassignment-realign # MK May 4
   - mk/location-reassignment-add-view # MK May 3
   - rn_update_perfect_scrollbar # Rohit Negi May 4
   - bmb/SAAS-10674  # Biyeun May 4
+  - dmr/case-upload-success-result-followup  # Danny May 5
+  - jls/web-apps-block-levels # Jenny May 7
+  - dmr/report-browser-formplayer-errors  # Danny May 7
 
 submodules: {}
