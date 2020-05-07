@@ -495,7 +495,7 @@ def report_formplayer_error(request, domain):
     return JsonResponse({'status': 'ok'})
 
 
-def _message_to_tag_value(message, allowed_chars=string.ascii_lowercase + '_'):
+def _message_to_tag_value(message, allowed_chars=string.ascii_lowercase + string.digits + '_'):
     """
     Turn a long user-facing error message into a short slug that can be used as a datadog tag value
 
@@ -506,6 +506,8 @@ def _message_to_tag_value(message, allowed_chars=string.ascii_lowercase + '_'):
     'sorry_an_error_occurred'
     >>> _message_to_tag_value('Another process prevented us from servicing your request. Please try again later.')
     'another_process_prevented_us'
+    >>> _message_to_tag_value('509 Unknown Status Code')
+    '509_unknown_status_code'
     """
     message_tag = '_'.join(unidecode(message).split(' ')[:4]).lower()
     message_tag = ''.join(c for c in message_tag if c in allowed_chars)
