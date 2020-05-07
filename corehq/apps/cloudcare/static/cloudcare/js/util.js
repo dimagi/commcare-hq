@@ -50,7 +50,7 @@ hqDefine('cloudcare/js/util', function () {
         message = message || gettext("Sorry, an error occurred while processing that request.");
         var $container = _show(message, $el, autoHideTime, "", true);
         try {
-            message = $container.text()  // pull out just the text the user sees
+            message = $container.text();  // pull out just the text the user sees
         } catch (e) {
             // leave the message as at came in if there's an issue parsing text from the container
         }
