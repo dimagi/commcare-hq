@@ -24,7 +24,6 @@
 		"india",
     "icds",
     "icds-staging"
-
 	],
 	"config": {
 		"table_id": "static-availing_service_form",

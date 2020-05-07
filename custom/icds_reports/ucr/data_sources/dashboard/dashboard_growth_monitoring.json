@@ -22,7 +22,6 @@
     "india",
     "icds",
     "icds-staging"
-
   ],
   "config": {
     "table_id": "static-dashboard_growth_monitoring_forms",

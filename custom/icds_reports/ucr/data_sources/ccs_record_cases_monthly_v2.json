@@ -27,7 +27,6 @@
     "india",
     "icds",
     "icds-staging"
-
   ],
   "config": {
     "table_id": "static-ccs_record_cases_monthly_v2",

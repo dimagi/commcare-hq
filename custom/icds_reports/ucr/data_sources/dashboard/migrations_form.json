@@ -24,7 +24,6 @@
     "india",
     "icds",
     "icds-staging"
-
   ],
   "config": {
     "table_id": "static-migration_form",

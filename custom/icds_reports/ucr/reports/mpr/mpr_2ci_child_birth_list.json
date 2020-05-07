@@ -25,7 +25,6 @@
     "india",
     "icds",
     "icds-staging"
-
   ],
   "report_id": "static-mpr_2ci_child_birth_list",
   "data_source_table": "static-child_health_cases",

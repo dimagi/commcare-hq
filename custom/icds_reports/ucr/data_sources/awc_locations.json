@@ -25,7 +25,6 @@
     "india",
     "icds",
     "icds-staging"
-
   ],
   "config": {
     "engine_id": "icds-ucr-citus",

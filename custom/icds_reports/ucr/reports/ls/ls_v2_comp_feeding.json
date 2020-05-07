@@ -25,7 +25,6 @@
     "india",
     "icds",
     "icds-staging"
-
   ],
   "report_id": "ls_v2_comp_feeding",
   "data_source_table": "static-child_health_cases",

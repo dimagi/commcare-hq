@@ -27,7 +27,6 @@
     "india",
     "icds",
     "icds-staging"
-
   ],
   "config": {
     "table_id": "static-home_visit_forms",

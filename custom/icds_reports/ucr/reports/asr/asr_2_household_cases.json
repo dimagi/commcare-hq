@@ -25,7 +25,6 @@
     "india",
     "icds",
     "icds-staging"
-
   ],
   "data_source_table": "static-household_cases",
   "report_id": "static-asr_2_household_cases",

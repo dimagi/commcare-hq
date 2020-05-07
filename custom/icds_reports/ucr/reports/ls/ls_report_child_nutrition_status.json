@@ -25,7 +25,6 @@
     "india",
     "icds",
     "icds-staging"
-
   ],
   "report_id": "static-ls_report_child_nutrition_status",
   "data_source_table": "static-child_health_cases",

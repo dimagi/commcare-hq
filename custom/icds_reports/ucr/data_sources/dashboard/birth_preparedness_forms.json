@@ -22,7 +22,6 @@
     "india",
     "icds",
     "icds-staging"
-
   ],
   "config": {
     "table_id": "static-dashboard_birth_preparedness_forms",
