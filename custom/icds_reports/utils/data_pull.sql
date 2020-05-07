@@ -1,4 +1,4 @@
-SELECT COUNT(DISTINCT person_case_id) as girls_under_18 FROM "ccs_record_monthly" WHERE month='2020-05-01' AND alive_in_month=1 AND AND dob > '07-05-2002'::DATE AND dob <= '07-05-2009';
+SELECT COUNT(DISTINCT person_case_id) as girls_under_18 FROM "ccs_record_monthly" WHERE month='2020-05-01' AND alive_in_month=1 AND AND dob > '07-05-2002'::DATE AND dob <= '07-05-2009'::DATE;
 -- QUERY PLAN
 -- ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 --  Aggregate  (cost=0.00..0.00 rows=0 width=0)
@@ -17,7 +17,7 @@ SELECT COUNT(DISTINCT person_case_id) as girls_under_18 FROM "ccs_record_monthly
 -- (13 rows)                                 Filter: ((dob > '2002-07-05'::date) AND (alive_in_month = 1))
 
 
-SELECT COUNT(DISTINCT person_case_id) as girls_under_15 FROM "ccs_record_monthly" WHERE month='2020-05-01' AND alive_in_month=1 AND dob > '07-05-2005'::DATE AND dob <= '07-05-2009';
+SELECT COUNT(DISTINCT person_case_id) as girls_under_15 FROM "ccs_record_monthly" WHERE month='2020-05-01' AND alive_in_month=1 AND dob > '07-05-2005'::DATE AND dob <= '07-05-2009'::DATE;
 
 -- QUERY PLAN
 -- --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
