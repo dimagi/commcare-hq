@@ -496,6 +496,17 @@ def report_formplayer_error(request, domain):
 
 
 def _message_to_tag_value(message, allowed_chars=string.ascii_lowercase + '_'):
+    """
+    Turn a long user-facing error message into a short slug that can be used as a datadog tag value
+
+    passes through unidecode to get something ascii-compatible to work with,
+    then uses the first four space-delimited words and filters out unwanted characters.
+
+    >>> _message_to_tag_value('Sorry, an error occurred while processing that request.')
+    'sorry_an_error_occurred'
+    >>> _message_to_tag_value('Another process prevented us from servicing your request. Please try again later.')
+    'another_process_prevented_us'
+    """
     message_tag = '_'.join(unidecode(message).split(' ')[:4]).lower()
     message_tag = ''.join(c for c in message_tag if c in allowed_chars)
     return message_tag
