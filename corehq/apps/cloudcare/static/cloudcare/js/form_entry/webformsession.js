@@ -485,31 +485,41 @@ WebFormSession.prototype.submitForm = function (form) {
     };
     accumulate_answers(form);
     form.isSubmitting(true);
-    this.serverRequest(
-        {
-            'action': Formplayer.Const.SUBMIT,
-            'answers': answers,
-            'prevalidated': prevalidated,
-        },
-        function (resp) {
-            if (resp.status == 'success') {
-                self.onsubmit(resp);
-            } else {
-                form.isSubmitting(false);
-                $.each(resp.errors, function (ix, error) {
-                    self.serverError(getForIx(form, ix), error);
-                });
-                if (resp.notification) {
-                    alert("Form submission failed with error: \n\n" +
-                        resp.notification.message + ". \n\n " +
-                        "This must be corrected before the form can be submitted.");
-                } else {
-                    alert("There are errors in this form's answers. " +
-                        "These must be corrected before the form can be submitted.");
-                }
+    var submitAttempts = 0,
+        timer = setInterval(function () {
+            if (form.blockSubmit() && submitAttempts < 10) {
+                submitAttempts++;
+                return;
             }
-        },
-        Formplayer.Const.BLOCK_ALL);
+            clearInterval(timer);
+
+            self.serverRequest(
+                {
+                    'action': Formplayer.Const.SUBMIT,
+                    'answers': answers,
+                    'prevalidated': prevalidated,
+                },
+                function (resp) {
+                    form.isSubmitting(false);
+                    if (resp.status == 'success') {
+                        self.onsubmit(resp);
+                    } else {
+                        $.each(resp.errors, function (ix, error) {
+                            self.serverError(getForIx(form, ix), error);
+                        });
+                        if (resp.notification) {
+                            alert("Form submission failed with error: \n\n" +
+                                resp.notification.message + ". \n\n " +
+                                "This must be corrected before the form can be submitted.");
+                        } else {
+                            alert("There are errors in this form's answers. " +
+                                "These must be corrected before the form can be submitted.");
+                        }
+                    }
+                },
+                Formplayer.Const.BLOCK_ALL
+            );
+        }, 250);
 };
 
 WebFormSession.prototype.serverError = function (q, resp) {

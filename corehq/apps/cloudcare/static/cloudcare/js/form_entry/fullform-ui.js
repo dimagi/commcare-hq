@@ -264,14 +264,12 @@ function Form(json) {
     });
 
     self.enableSubmitButton = ko.computed(function () {
-        return !self.isSubmitting() && !self.blockSubmit();
+        return !self.isSubmitting();
     });
 
     self.submitText = ko.computed(function () {
         if (self.isSubmitting()) {
             return gettext('Submitting...');
-        } else if (!self.enableSubmitButton()) {
-            return gettext('Working...');
         }
         return gettext('Submit');
     });
