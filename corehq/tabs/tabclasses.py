@@ -97,11 +97,7 @@ from corehq.tabs.utils import (
     regroup_sidebar_items,
     sidebar_to_dropdown,
 )
-from corehq.toggles import (
-    NAMESPACE_DOMAIN,
-    NAMESPACE_USER,
-    PUBLISH_CUSTOM_REPORTS,
-)
+from corehq.toggles import PUBLISH_CUSTOM_REPORTS
 from custom.icds.views.hosted_ccz import ManageHostedCCZ, ManageHostedCCZLink
 
 
@@ -163,9 +159,8 @@ class ProjectReportsTab(UITab):
                 'url': reverse(UserConfigReportsHomeView.urlname, args=[self.domain]),
                 'icon': 'icon-tasks fa fa-wrench',
             })
-        # show this link if feature flag enabled for the domain and not set for the user
-        if (toggles.LOCATION_REASSIGNMENT.enabled(self.domain, namespace=NAMESPACE_DOMAIN)
-                and not toggles.LOCATION_REASSIGNMENT.enabled(self.couch_user.username, namespace=NAMESPACE_USER)):
+        if (toggles.DOWNLOAD_LOCATION_REASSIGNMENT_REQUEST_TEMPLATE.enabled(self.domain)
+                and not toggles.PERFORM_LOCATION_REASSIGNMENT.enabled(self.couch_user.username)):
             from custom.icds.location_reassignment.views import LocationReassignmentDownloadOnlyView
             tools.append({
                 'title': _(LocationReassignmentDownloadOnlyView.section_name),
@@ -1501,9 +1496,8 @@ class ProjectUsersTab(UITab):
                 'show_in_dropdown': True,
             })
 
-        # show this link if feature flag enabled for the domain and the user
-        if (toggles.LOCATION_REASSIGNMENT.enabled(self.domain, namespace=NAMESPACE_DOMAIN)
-                and toggles.LOCATION_REASSIGNMENT.enabled(self.couch_user.username, namespace=NAMESPACE_USER)):
+        if (toggles.DOWNLOAD_LOCATION_REASSIGNMENT_REQUEST_TEMPLATE.enabled(self.domain)
+                and toggles.PERFORM_LOCATION_REASSIGNMENT.enabled(self.couch_user.username)):
             from custom.icds.location_reassignment.views import LocationReassignmentView
             menu.append({
                 'title': _("Location Reassignment"),

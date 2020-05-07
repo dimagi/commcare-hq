@@ -19,7 +19,6 @@ from corehq.apps.locations.permissions import (
 from corehq.apps.locations.views import BaseLocationView, LocationsListView
 from corehq.apps.reports.views import BaseProjectReportSectionView
 from corehq.const import FILENAME_DATETIME_FORMAT
-from corehq.toggles import NAMESPACE_USER
 from corehq.util.files import safe_filename_header
 from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.util.workbook_json.excel import WorkbookJSONError, get_workbook
@@ -48,7 +47,7 @@ from custom.icds.location_reassignment.tasks import (
 
 
 @location_safe
-@method_decorator([toggles.LOCATION_REASSIGNMENT.required_decorator()], name='dispatch')
+@method_decorator([toggles.DOWNLOAD_LOCATION_REASSIGNMENT_REQUEST_TEMPLATE.required_decorator()], name='dispatch')
 class LocationReassignmentDownloadOnlyView(BaseProjectReportSectionView):
     section_name = ugettext_lazy("Download Location Reassignment Template")
 
@@ -80,7 +79,7 @@ class LocationReassignmentView(BaseLocationView):
     template_name = 'icds/location_reassignment.html'
 
     def dispatch(self, *args, **kwargs):
-        if not toggles.LOCATION_REASSIGNMENT.enabled(self.request.couch_user.username, namespace=NAMESPACE_USER):
+        if not toggles.PERFORM_LOCATION_REASSIGNMENT.enabled(self.request.couch_user.username):
             raise Http404()
         return super().dispatch(*args, **kwargs)
 
@@ -213,7 +212,7 @@ class LocationReassignmentView(BaseLocationView):
             "Your request has been submitted. We will notify you via email once completed."))
 
 
-@toggles.LOCATION_REASSIGNMENT.required_decorator()
+@toggles.DOWNLOAD_LOCATION_REASSIGNMENT_REQUEST_TEMPLATE.required_decorator()
 @require_GET
 def download_location_reassignment_template(request, domain):
     location_id = request.GET.get('location_id')

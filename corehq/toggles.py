@@ -1875,11 +1875,19 @@ TWO_STAGE_USER_PROVISIONING = StaticToggle(
     help_link='https://confluence.dimagi.com/display/ccinternal/Two-Stage+Mobile+Worker+Account+Creation',
 )
 
-LOCATION_REASSIGNMENT = StaticToggle(
+PERFORM_LOCATION_REASSIGNMENT = StaticToggle(
     'location_reassignment',
-    'Location Reassignment: ability to reorder organization structure',
+    'Ability to submit requests for location reassignment',
     TAG_CUSTOM,
-    [NAMESPACE_USER, NAMESPACE_DOMAIN],
+    [NAMESPACE_USER],
+    relevant_environments={'icds', 'india', 'staging'},
+)
+
+DOWNLOAD_LOCATION_REASSIGNMENT_REQUEST_TEMPLATE = StaticToggle(
+    'download_location_reassignment_template',
+    'Allow domain users to download location reassignment template',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN],
     relevant_environments={'icds', 'india', 'staging'},
 )
 
