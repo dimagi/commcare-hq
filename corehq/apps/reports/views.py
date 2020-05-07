@@ -1235,7 +1235,7 @@ def case_property_names(request, domain, case_id):
     if case.external_id:
         all_property_names.add('external_id')
 
-    return json_response(sorted(all_property_names))
+    return json_response(sorted(all_property_names, key=lambda item: item.lower()))
 
 
 @location_safe

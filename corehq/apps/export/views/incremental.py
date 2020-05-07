@@ -116,7 +116,7 @@ class IncrementalExportLogView(GenericTabularReport, DatespanMixin):
             else:
                 status = f'<span class="label label-danger">{ugettext_lazy("Failure")}</span>'
 
-            log_url = reverse(MotechLogDetailView.urlname, args=[self.domain, checkpoint.id])
+            log_url = reverse(MotechLogDetailView.urlname, args=[self.domain, checkpoint.request_log_id])
             file_url = reverse("incremental_export_checkpoint_file", args=[self.domain, checkpoint.id])
             if checkpoint.blob_exists():
                 download = (f'<a href="{file_url}"><i class="fa fa-download"></i></a>')

@@ -174,13 +174,15 @@ class CreditAdjustmentReason(object):
     LINE_ITEM = "LINE_ITEM"
     TRANSFER = "TRANSFER"
     MANUAL = "MANUAL"
+    FRIENDLY_WRITE_OFF = "FRIENDLY_WRITE_OFF"
     CHOICES = (
-        (MANUAL, "manual"),
+        (MANUAL, "Manual"),
+        (FRIENDLY_WRITE_OFF, "Friendly Write-Off"),
         (SALESFORCE, "via Salesforce"),
-        (INVOICE, "invoice generated"),
-        (LINE_ITEM, "line item generated"),
-        (TRANSFER, "transfer from another credit line"),
-        (DIRECT_PAYMENT, "payment from client received"),
+        (INVOICE, "Invoice-generated"),
+        (LINE_ITEM, "Line Item generated"),
+        (TRANSFER, "Transfer from another credit line"),
+        (DIRECT_PAYMENT, "Payment from client received"),
     )
 
 

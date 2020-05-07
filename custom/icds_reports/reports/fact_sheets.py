@@ -1,5 +1,6 @@
 from collections import OrderedDict
 
+from dateutil.parser import parse
 from dateutil.rrule import rrule, MONTHLY
 from django.http.response import Http404
 from memoized import memoized
@@ -624,7 +625,7 @@ class FactSheetsReport(object):
 
         all_data = self._get_all_data(data_sources)
 
-        sql_location = self.config['sql_location']
+        sql_location = self.config.get('sql_location')
         months = [
             dt.strftime("%b %Y") for dt in rrule(
                 MONTHLY,
@@ -639,7 +640,7 @@ class FactSheetsReport(object):
             for row_data in all_data:
                 m = row_data['month'].strftime("%b %Y")
                 if sql_location is not None:
-                    activation_date = sql_location.metadata.get('deprecates_at')
+                    activation_date = parse(sql_location.metadata.get('deprecates_at')).date()
                     if activation_date and row_data['month'] < activation_date:
                         active_location = False
                 if month == m:

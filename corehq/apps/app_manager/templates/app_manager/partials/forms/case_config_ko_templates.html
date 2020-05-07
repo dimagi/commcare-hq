@@ -265,7 +265,7 @@
                                },
                                afterRenderFunc: $root.makePopover"></inline-edit>
           <!-- /ko -->
-          <!-- ko if: $data.description -->
+          <!-- ko if: $data.description() && !$parent.hasPrivilege -->
             <p data-bind="text: $data.description"></p>
           <!-- /ko -->
         </td>

@@ -24,7 +24,6 @@ from corehq.apps.dump_reload.sql.dump import (
     get_model_iterator_builders_to_dump,
     get_objects_to_dump,
 )
-from corehq.apps.dump_reload.sql.filters import GetattrQueryset
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.products.models import SQLProduct
 from corehq.blobs.models import BlobMeta
@@ -68,13 +67,9 @@ class BaseDumpLoadTest(TestCase):
     def delete_sql_data(self):
         for model_class, builder in get_model_iterator_builders_to_dump(self.domain_name, []):
             for iterator in builder.querysets():
-                if isinstance(iterator, GetattrQueryset):
-                    for model in iterator:
-                        model.delete()
-                else:
-                    collector = NestedObjects(using=iterator.db)
-                    collector.collect(iterator)
-                    collector.delete()
+                collector = NestedObjects(using=iterator.db)
+                collector.collect(iterator)
+                collector.delete()
 
         self.assertEqual([], list(get_objects_to_dump(self.domain_name, [])))
 
@@ -518,6 +513,23 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
             organization=org, slug='testp', name='demop', domain=self.domain_name
         )
         self._dump_and_load(Counter({TransifexOrganization: 1, TransifexProject: 1}))
+
+    def test_sms_content(self):
+        from corehq.messaging.scheduling.models import AlertSchedule, SMSContent, AlertEvent
+        from corehq.messaging.scheduling.scheduling_partitioned.dbaccessors import \
+            delete_alert_schedule_instances_for_schedule
+
+        schedule = AlertSchedule.create_simple_alert(self.domain, SMSContent())
+
+        schedule.set_custom_alert(
+            [
+                (AlertEvent(minutes_to_wait=5), SMSContent()),
+                (AlertEvent(minutes_to_wait=15), SMSContent()),
+            ]
+        )
+
+        self.addCleanup(lambda: delete_alert_schedule_instances_for_schedule(AlertScheduleInstance, schedule.schedule_id))
+        self._dump_and_load(Counter({AlertSchedule: 1, AlertEvent: 2, SMSContent: 2}))
 
 
 def _normalize_object_counter(counter, for_loaded=False):
