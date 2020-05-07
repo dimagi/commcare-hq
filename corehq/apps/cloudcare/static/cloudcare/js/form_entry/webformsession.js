@@ -118,7 +118,6 @@ function WebFormSession(params) {
     self.urls = {
         xform: params.xform_url,
     };
-    self.reportFormplayerErrorToHQ = params.reportFormplayerErrorToHQ;
 
 
     self.blockingRequestInProgress = false;
@@ -254,7 +253,7 @@ WebFormSession.prototype.handleFailure = function (resp, action, textStatus, fai
         errorMessage = Formplayer.Utils.touchformsError(resp.responseJSON.message);
     }
 
-    self.reportFormplayerErrorToHQ({
+    hqImport('cloudcare/js/util').reportFormplayerErrorToHQ({
         type: 'webformsession_request_failure',
         action: action,
         readableErrorMessage: errorMessage,

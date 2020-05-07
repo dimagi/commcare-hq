@@ -14,9 +14,7 @@ var formplayerLoading = hqImport('cloudcare/js/util').formplayerLoading;
 var formplayerLoadingComplete = hqImport('cloudcare/js/util').formplayerLoadingComplete;
 var formplayerSyncComplete = hqImport('cloudcare/js/util').formplayerSyncComplete;
 var clearUserDataComplete = hqImport('cloudcare/js/util').clearUserDataComplete;
-var reportFormplayerErrorToHQ = hqImport('cloudcare/js/util').reportFormplayerErrorToHQ;
 var appcues = hqImport('analytix/js/appcues');
-
 
 FormplayerFrontend.on("before:start", function () {
     var RegionContainer = Marionette.LayoutView.extend({
@@ -159,7 +157,6 @@ FormplayerFrontend.on('startForm', function (data) {
     data.onLoadingComplete = formplayerLoadingComplete;
     var user = FormplayerFrontend.request('currentUser');
     data.xform_url = user.formplayer_url;
-    data.reportFormplayerErrorToHQ =  reportFormplayerErrorToHQ;
     data.domain = user.domain;
     data.username = user.username;
     data.restoreAs = user.restoreAs;
