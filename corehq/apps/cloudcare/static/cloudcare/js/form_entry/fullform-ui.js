@@ -214,7 +214,14 @@ function Form(json) {
     json.children = json.tree;
     delete json.tree;
     Container.call(self, json);
-    self.submitText = ko.observable('Submit');
+    self.isSubmitting = ko.observable(false);
+
+    self.submitText = ko.computed(function () {
+        if (self.isSubmitting()) {
+            return gettext('Submitting...');
+        }
+        return gettext('Submit');
+    });
 
     self.currentIndex = ko.observable("0");
     self.atLastIndex = ko.observable(false);
@@ -263,7 +270,7 @@ function Form(json) {
     });
 
     self.enableSubmitButton = ko.computed(function () {
-        return true;
+        return !self.isSubmitting();
     });
 
     self.forceRequiredVisible = ko.observable(false);
@@ -339,10 +346,6 @@ function Form(json) {
     $.subscribe('session.block', function (e, block) {
         $('#webforms input, #webforms textarea').prop('disabled', !!block);
     });
-
-    self.submitting = function () {
-        self.submitText('Submitting...');
-    };
 }
 Form.prototype = Object.create(Container.prototype);
 Form.prototype.constructor = Container;

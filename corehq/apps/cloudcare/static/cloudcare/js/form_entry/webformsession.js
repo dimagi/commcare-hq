@@ -486,6 +486,7 @@ WebFormSession.prototype.submitForm = function (form) {
         }
     };
     accumulate_answers(form);
+    form.isSubmitting(true);
     this.serverRequest(
         {
             'action': Formplayer.Const.SUBMIT,
@@ -494,9 +495,9 @@ WebFormSession.prototype.submitForm = function (form) {
         },
         function (resp) {
             if (resp.status == 'success') {
-                form.submitting();
                 self.onsubmit(resp);
             } else {
+                form.isSubmitting(false);
                 $.each(resp.errors, function (ix, error) {
                     self.serverError(getForIx(form, ix), error);
                 });
