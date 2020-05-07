@@ -237,7 +237,8 @@ WebFormSession.prototype.handleSuccess = function (resp, action, callback) {
 };
 
 WebFormSession.prototype.handleFailure = function (resp, action, textStatus, failureCallback) {
-    var errorMessage;
+    var self = this;
+    var errorMessage = null;
     if (resp.status === 423) {
         errorMessage = Formplayer.Errors.LOCK_TIMEOUT_ERROR;
     } else if (textStatus === 'timeout') {
@@ -251,6 +252,19 @@ WebFormSession.prototype.handleFailure = function (resp, action, textStatus, fai
     } else if (resp.hasOwnProperty('responseJSON') && resp.responseJSON !== undefined) {
         errorMessage = Formplayer.Utils.touchformsError(resp.responseJSON.message);
     }
+
+    hqImport('cloudcare/js/util').reportFormplayerErrorToHQ({
+        type: 'webformsession_request_failure',
+        action: action,
+        readableErrorMessage: errorMessage,
+        statusText: resp.statusText,
+        state: resp.state ? resp.state() : null,
+        status: resp.status,
+        domain: self.domain,
+        username: self.username,
+        restoreAs: self.restoreAs,
+    });
+
     if (failureCallback) {
         failureCallback();
     }
