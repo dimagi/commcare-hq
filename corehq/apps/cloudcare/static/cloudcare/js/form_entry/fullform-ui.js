@@ -217,13 +217,6 @@ function Form(json) {
     self.blockSubmit = ko.observable(false);
     self.isSubmitting = ko.observable(false);
 
-    self.submitText = ko.computed(function () {
-        if (self.isSubmitting()) {
-            return gettext('Submitting...');
-        }
-        return gettext('Submit');
-    });
-
     self.currentIndex = ko.observable("0");
     self.atLastIndex = ko.observable(false);
     self.atFirstIndex = ko.observable(true);
@@ -273,6 +266,16 @@ function Form(json) {
     self.enableSubmitButton = ko.computed(function () {
         return !self.isSubmitting() && !self.blockSubmit();
     });
+
+    self.submitText = ko.computed(function () {
+        if (self.isSubmitting()) {
+            return gettext('Submitting...');
+        } else if (!self.enableSubmitButton()) {
+            return gettext('Working...');
+        }
+        return gettext('Submit');
+    });
+
 
     self.forceRequiredVisible = ko.observable(false);
 
