@@ -151,7 +151,7 @@ hqDefine('cloudcare/js/util', function () {
             window.console.error(
                 "reportFormplayerErrorToHQ failed hard and there is nowhere " +
                 "else to report this error: " + JSON.stringify(data),
-                e,
+                e
             );
         }
     };
