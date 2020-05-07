@@ -262,6 +262,10 @@ function Form(json) {
         return self.currentIndex() !== "0" && self.currentIndex() !== "-1" && !self.atFirstIndex();
     });
 
+    self.enableSubmitButton = ko.computed(function () {
+        return true;
+    });
+
     self.forceRequiredVisible = ko.observable(false);
 
     self.showRequiredNotice = ko.computed(function () {
