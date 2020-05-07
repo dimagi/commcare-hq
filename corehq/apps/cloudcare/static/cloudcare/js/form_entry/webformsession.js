@@ -149,7 +149,7 @@ WebFormSession.prototype.isOneQuestionPerScreen = function () {
  * Sends a request to the touchforms server
  * @param {Object} requestParams - request parameters to be sent
  * @param {function} callback - function to be called on success
- * @param {boolean} blocking - whether the request should be blocking
+ * @param {boolean} blocking - one of Formplayer.Const.BLOCK_*, defaults to BLOCK_NONE
  * @param {function} failureCallback - function to be called on failure
  */
 WebFormSession.prototype.serverRequest = function (requestParams, callback, blocking, failureCallback) {
@@ -171,7 +171,7 @@ WebFormSession.prototype.serverRequest = function (requestParams, callback, bloc
     if (this.blockingStatus === Formplayer.Const.BLOCK_ALL) {
         return;
     }
-    this.blockingStatus = blocking ? Formplayer.Const.BLOCK_ALL : Formplayer.Const.BLOCK_NONE;
+    this.blockingStatus = blocking || Formplayer.Const.BLOCK_NONE;
     $.publish('session.block', blocking);
 
     this.numPendingRequests++;
@@ -358,7 +358,7 @@ WebFormSession.prototype.answerQuestion = function (q) {
                 self.answerCallback(self.session_id);
             }
         },
-        false,
+        Formplayer.Const.BLOCK_SUBMIT,
         function () {
             q.serverError(
                 gettext("We were unable to save this answer. Please try again later."));
@@ -431,7 +431,7 @@ WebFormSession.prototype.newRepeat = function (repeat) {
         function (resp) {
             $.publish('session.reconcile', [resp, repeat]);
         },
-        true);
+        Formplayer.Const.BLOCK_ALL);
 };
 
 WebFormSession.prototype.deleteRepeat = function (repetition) {
@@ -446,7 +446,7 @@ WebFormSession.prototype.deleteRepeat = function (repetition) {
         function (resp) {
             $.publish('session.reconcile', [resp, repetition]);
         },
-        true);
+        Formplayer.Const.BLOCK_ALL);
 };
 
 WebFormSession.prototype.switchLanguage = function (lang) {
@@ -509,7 +509,7 @@ WebFormSession.prototype.submitForm = function (form) {
                 }
             }
         },
-        true);
+        Formplayer.Const.BLOCK_ALL);
 };
 
 WebFormSession.prototype.serverError = function (q, resp) {

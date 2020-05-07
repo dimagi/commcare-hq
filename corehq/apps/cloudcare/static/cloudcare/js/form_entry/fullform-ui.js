@@ -214,6 +214,7 @@ function Form(json) {
     json.children = json.tree;
     delete json.tree;
     Container.call(self, json);
+    self.blockSubmit = ko.observable(false);
     self.isSubmitting = ko.observable(false);
 
     self.submitText = ko.computed(function () {
@@ -270,7 +271,7 @@ function Form(json) {
     });
 
     self.enableSubmitButton = ko.computed(function () {
-        return !self.isSubmitting();
+        return !self.isSubmitting() && !self.blockSubmit();
     });
 
     self.forceRequiredVisible = ko.observable(false);
@@ -344,7 +345,8 @@ function Form(json) {
     });
 
     $.subscribe('session.block', function (e, block) {
-        $('#webforms input, #webforms textarea').prop('disabled', !!block);
+        $('#webforms input, #webforms textarea').prop('disabled', block === Formplayer.Const.BLOCK_ALL);
+        self.blockSubmit(block === Formplayer.Const.BLOCK_ALL || block === Formplayer.Const.BLOCK_SUBMIT);
     });
 }
 Form.prototype = Object.create(Container.prototype);
@@ -598,6 +600,7 @@ Formplayer.Const = {
     LABEL_OFFSET: 'col-sm-offset-4',
     CONTROL_WIDTH: 'col-sm-8',
     BLOCK_NONE: 'block-none',
+    BLOCK_SUBMIT: 'block-submit',
     BLOCK_ALL: 'block-all',
 
     // XForm Navigation
