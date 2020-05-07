@@ -108,6 +108,7 @@ from corehq.motech.repeaters.repeater_generators import (
     FormRepeaterJsonPayloadGenerator,
     FormRepeaterXMLPayloadGenerator,
     LocationPayloadGenerator,
+    ReferCasePayloadGenerator,
     ShortFormRepeaterJsonPayloadGenerator,
     UserPayloadGenerator,
 )
@@ -535,6 +536,26 @@ class UpdateCaseRepeater(CaseRepeater):
 
     def allowed_to_forward(self, payload):
         return super(UpdateCaseRepeater, self).allowed_to_forward(payload) and len(payload.xform_ids) > 1
+
+
+class ReferCaseRepeater(CaseRepeater):
+    """
+    A repeater that triggers off case changes but sends a form creating cases in
+    another commcare project
+    """
+    friendly_name = _("Forward Cases To Another Commcare Project")
+
+    payload_generator_classes = (ReferCasePayloadGenerator,)
+
+    @classmethod
+    def available_for_domain(cls, domain):
+        """Returns whether this repeater can be used by a particular domain
+        """
+        return toggles.REFER_CASE_REPEATER.enabled(domain)
+
+    def get_url(self, repeat_record):
+        new_domain = self.payload_doc(repeat_record).get_case_property('new_domain')
+        return self.url.format(domain=new_domain)
 
 
 class ShortFormRepeater(Repeater):
