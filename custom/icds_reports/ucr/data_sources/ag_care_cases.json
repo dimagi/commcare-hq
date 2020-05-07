@@ -128,7 +128,7 @@
         },
         "column_id": "block_id",
         "create_index": false,
-        "comment": null
+        "comment": "not null"
       },
       {
         "display_name": null,
