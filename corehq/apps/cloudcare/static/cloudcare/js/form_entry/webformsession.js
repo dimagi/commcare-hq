@@ -117,7 +117,7 @@ function WebFormSession(params) {
 
     self.urls = {
         xform: params.xform_url,
-        errorReportUrl: params.error_report_url
+        errorReportUrl: params.error_report_url,
     };
 
 
@@ -557,11 +557,11 @@ WebFormSession.prototype.reportFormplayerErrorToHQ = function (resp, action, err
         data: JSON.stringify(data),
         contentType: "application/json",
         dataType: "json",
-        success: function (resp) {
-            console.log('Successfully reported error: ' + JSON.stringify(data));
+        success: function () {
+            console.info('Successfully reported error: ' + JSON.stringify(data));
         },
-        error: function (resp, textStatus) {
-            console.log('Failed to report error: ' + JSON.stringify(data));
+        error: function () {
+            console.error('Failed to report error: ' + JSON.stringify(data));
         },
     });
 };
