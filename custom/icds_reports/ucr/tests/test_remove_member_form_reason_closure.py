@@ -19,7 +19,8 @@ class TestChildDeliveryForms(BaseFormsTest):
                 {
                     'doc_id': None,
                     'person_case_id': '9aa9fb7e-f90a-42db-8d17-415092531ad9',
-                    'reason_closure': 'incorrect_reg'
+                    'reason_closure': 'incorrect_reg',
+                    'timeend': None
                 }
             ]
         )
