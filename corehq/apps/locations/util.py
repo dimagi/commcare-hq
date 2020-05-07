@@ -2,12 +2,13 @@ import re
 import tempfile
 from collections import OrderedDict
 
+from django.db.models import Q
+
 from memoized import memoized
 
 from couchexport.models import Format
 from couchexport.writers import Excel2007ExportWriter
 from dimagi.utils.couch.loosechange import map_reduce
-from django.db.models import Q
 from soil import DownloadBase
 from soil.util import expose_blob_download
 
