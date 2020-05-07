@@ -120,14 +120,14 @@ function WebFormSession(params) {
     };
 
 
-    self.blockingRequestInProgress = false;
+    self.blockingStatus = Formplayer.Const.BLOCK_NONE;
     self.lastRequestHandled = -1;
     self.numPendingRequests = 0;
 
     // workaround for "forever loading" bugs...
     $(document).ajaxStop(function () {
         self.NUM_PENDING_REQUESTS = 0;
-        self.blockingRequestInProgress = false;
+        self.blockingStaus = Formplayer.Const.BLOCK_NONE;
     });
 }
 
@@ -149,7 +149,7 @@ WebFormSession.prototype.isOneQuestionPerScreen = function () {
  * Sends a request to the touchforms server
  * @param {Object} requestParams - request parameters to be sent
  * @param {function} callback - function to be called on success
- * @param {boolean} blocking - whether the request should be blocking
+ * @param {boolean} blocking - one of Formplayer.Const.BLOCK_*, defaults to BLOCK_NONE
  * @param {function} failureCallback - function to be called on failure
  */
 WebFormSession.prototype.serverRequest = function (requestParams, callback, blocking, failureCallback) {
@@ -168,10 +168,10 @@ WebFormSession.prototype.serverRequest = function (requestParams, callback, bloc
     requestParams['session_id'] = self.session_id;
     requestParams['debuggerEnabled'] = self.debuggerEnabled;
     requestParams['tz_offset_millis'] = (new Date()).getTimezoneOffset() * 60 * 1000 * -1;
-    if (this.blockingRequestInProgress) {
+    if (this.blockingStatus === Formplayer.Const.BLOCK_ALL) {
         return;
     }
-    this.blockingRequestInProgress = blocking || false;
+    this.blockingStatus = blocking || Formplayer.Const.BLOCK_NONE;
     $.publish('session.block', blocking);
 
     this.numPendingRequests++;
@@ -224,8 +224,8 @@ WebFormSession.prototype.handleSuccess = function (resp, action, callback) {
         }
     }
 
-    $.publish('session.block', false);
-    this.blockingRequestInProgress = false;
+    this.blockingStatus = Formplayer.Const.BLOCK_NONE;
+    $.publish('session.block', this.blockingStatus);
 
     self.numPendingRequests--;
     if (self.numPendingRequests === 0) {
@@ -258,8 +258,6 @@ WebFormSession.prototype.handleFailure = function (resp, action, textStatus, fai
         human_readable_message: errorMessage,
     });
     this.onLoadingComplete();
-    //    $.publish('session.block', false);
-    //    this.blockingRequestInProgress = false;
 };
 
 /*
@@ -360,7 +358,7 @@ WebFormSession.prototype.answerQuestion = function (q) {
                 self.answerCallback(self.session_id);
             }
         },
-        false,
+        Formplayer.Const.BLOCK_SUBMIT,
         function () {
             q.serverError(
                 gettext("We were unable to save this answer. Please try again later."));
@@ -433,7 +431,7 @@ WebFormSession.prototype.newRepeat = function (repeat) {
         function (resp) {
             $.publish('session.reconcile', [resp, repeat]);
         },
-        true);
+        Formplayer.Const.BLOCK_ALL);
 };
 
 WebFormSession.prototype.deleteRepeat = function (repetition) {
@@ -448,7 +446,7 @@ WebFormSession.prototype.deleteRepeat = function (repetition) {
         function (resp) {
             $.publish('session.reconcile', [resp, repetition]);
         },
-        true);
+        Formplayer.Const.BLOCK_ALL);
 };
 
 WebFormSession.prototype.switchLanguage = function (lang) {
@@ -486,6 +484,7 @@ WebFormSession.prototype.submitForm = function (form) {
         }
     };
     accumulate_answers(form);
+    form.isSubmitting(true);
     this.serverRequest(
         {
             'action': Formplayer.Const.SUBMIT,
@@ -494,9 +493,9 @@ WebFormSession.prototype.submitForm = function (form) {
         },
         function (resp) {
             if (resp.status == 'success') {
-                form.submitting();
                 self.onsubmit(resp);
             } else {
+                form.isSubmitting(false);
                 $.each(resp.errors, function (ix, error) {
                     self.serverError(getForIx(form, ix), error);
                 });
@@ -510,7 +509,7 @@ WebFormSession.prototype.submitForm = function (form) {
                 }
             }
         },
-        true);
+        Formplayer.Const.BLOCK_ALL);
 };
 
 WebFormSession.prototype.serverError = function (q, resp) {
