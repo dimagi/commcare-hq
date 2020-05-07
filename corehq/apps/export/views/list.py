@@ -896,14 +896,53 @@ class ODataFeedListHelper(ExportListHelper):
     include_saved_filters = True
 
     @property
+    @memoized
+    def has_form_export_permissions(self):
+        return has_permission_to_view_report(self.request.couch_user, self.domain, FORM_EXPORT_PERMISSION)
+
+    @property
+    @memoized
+    def has_case_export_permissions(self):
+        return has_permission_to_view_report(self.request.couch_user, self.domain, CASE_EXPORT_PERMISSION)
+
+    @property
+    @memoized
+    def allowed_doc_type(self):
+        if self.has_case_export_permissions and self.has_form_export_permissions:
+            return None  # get_brief_deid_exports / get_brief_exports interprets this as both
+        if self.has_form_export_permissions:
+            return FORM_EXPORT
+        if self.has_case_export_permissions:
+            return CASE_EXPORT
+        if user_can_view_deid_exports(self.domain, self.request.couch_user):
+            return 'deid'
+        return 'neither'
+
+    @memoized
+    def get_saved_exports(self):
+        if self.allowed_doc_type == 'neither':
+            return []
+
+        if self.allowed_doc_type == 'deid':
+            exports = get_brief_deid_exports(self.domain, None)
+        else:
+            exports = get_brief_exports(self.domain, self.allowed_doc_type)
+        return [x for x in exports if self._should_appear_in_list(x)]
+
+    @property
     def create_export_form(self):
         form = CreateExportTagForm(True, True)
         form.fields['model_type'].label = _("Feed Type")
-        form.fields['model_type'].choices = [
+
+        model_type_choices = [
             ('', _("Select field type")),
-            ('case', _('Case')),
-            ('form', _('Form')),
         ]
+        if self.has_case_export_permissions:
+            model_type_choices.append(('case', _('Case')))
+        if self.has_form_export_permissions:
+            model_type_choices.append(('form', _('Form')))
+        form.fields['model_type'].choices = model_type_choices
+
         return form
 
     @property
