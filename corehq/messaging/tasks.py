@@ -122,7 +122,7 @@ def set_rule_complete(rule_id):
 
 
 @no_result_task(serializer='pickle', queue=settings.CELERY_REMINDER_RULE_QUEUE, acks_late=True,
-                soft_time_limit=15*settings.CELERY_TASK_SOFT_TIME_LIMIT)
+                soft_time_limit=15 * settings.CELERY_TASK_SOFT_TIME_LIMIT)
 def run_messaging_rule(domain, rule_id):
     rule = _get_cached_rule(domain, rule_id)
     if not rule:
