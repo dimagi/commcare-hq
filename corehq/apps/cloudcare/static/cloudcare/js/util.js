@@ -148,7 +148,11 @@ hqDefine('cloudcare/js/util', function () {
                 },
             });
         } catch (e) {
-            console.error("reportFormplayerErrorToHQ failed hard and there is no where else to report this error", e);
+            console.error(
+                "reportFormplayerErrorToHQ failed hard and there is nowhere " +
+                "else to report this error: " + JSON.stringify(data),
+                e,
+            );
         }
     };
 
