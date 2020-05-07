@@ -1,3 +1,4 @@
+import re
 import tempfile
 from collections import OrderedDict
 
@@ -336,3 +337,8 @@ def get_locations_from_ids(location_ids, domain, base_queryset=None):
     if len(locations) != expected_count:
         raise SQLLocation.DoesNotExist('One or more of the locations was not found.')
     return locations
+
+
+def valid_location_site_code(site_code):
+    slug_regex = re.compile(r'^[-_\w\d]+$')
+    return slug_regex.match(site_code)
