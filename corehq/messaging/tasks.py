@@ -160,5 +160,7 @@ def queue_task_with_retries(task_to_queue, *args, **kwargs):
             # break from loop if no issues
             break
         except SoftTimeLimitExceeded:
+            if attempt == 4:
+                raise
             # wait for five minutes before trying again
             sleep(300)
