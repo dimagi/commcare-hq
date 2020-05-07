@@ -1879,7 +1879,7 @@ LOCATION_REASSIGNMENT = StaticToggle(
     'location_reassignment',
     'Location Reassignment: ability to reorder organization structure',
     TAG_CUSTOM,
-    [NAMESPACE_USER],
+    [NAMESPACE_USER, NAMESPACE_DOMAIN],
     relevant_environments={'icds', 'india', 'staging'},
 )
 
