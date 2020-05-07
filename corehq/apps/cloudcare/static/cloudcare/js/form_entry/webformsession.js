@@ -258,8 +258,6 @@ WebFormSession.prototype.handleFailure = function (resp, action, textStatus, fai
         human_readable_message: errorMessage,
     });
     this.onLoadingComplete();
-    //    $.publish('session.block', false);
-    //    this.blockingRequestInProgress = false;
 };
 
 /*
