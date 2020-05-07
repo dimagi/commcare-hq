@@ -52,6 +52,12 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
     vm.selectedMonth = new Date().getMonth() + 1;
     vm.selectedYear = new Date().getFullYear();
 
+    vm.updateSelectedDate = function () {
+        vm.selectedDate = vm.selectedMonth ? new Date(vm.selectedYear, vm.selectedMonth - 1) : new Date();
+    };
+
+    vm.updateSelectedDate();
+
     window.angular.forEach(moment.months(), function (key, value) {
         vm.monthsCopy.push({
             name: key,
@@ -86,6 +92,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
             }
             vm.selectedMonth = vm.months[vm.months.length - 1].id;
         }
+        vm.updateSelectedDate();
     };
 
     vm.excludeCurrentMonthIfInitialThreeDays();
@@ -154,6 +161,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
 
     if (haveAccessToFeatures) {
         vm.indicators.push({id: 12, name: 'Service Delivery Report'});
+        vm.indicators.push({id: 13, name: 'Child Growth Tracking Report'});
         vm.beneficiaryCategories = [
             {id: 'pw_lw_children', name: 'PW, LW & Children 0-3 years'},
             {id: 'children_3_6', name: 'Children 3-6 years'},
@@ -211,7 +219,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
     init();
 
     vm.disallowNational = function () {
-        return vm.isChildBeneficiaryListSelected();
+        return vm.isChildBeneficiaryListSelected() || vm.isChildGrowthTrackerSelected();
     };
 
     vm.getPlaceholder = function (locationTypes) {
@@ -332,6 +340,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
                 vm.selectedMonth = 10;
             }
         }
+        vm.updateSelectedDate();
     };
 
     vm.setMonthToPreviousIfAfterThe15thAndTwoMonthsIfBefore15th = function (date) {
@@ -443,16 +452,18 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         vm.selectedFormat = 'xlsx';
         vm.selectedPDFFormat = 'many';
         initHierarchy();
+        vm.updateSelectedDate();
     };
 
     vm.hasErrors = function () {
         var beneficiaryListErrors = vm.isChildBeneficiaryListSelected() && (vm.selectedFilterOptions().length === 0 || !vm.isDistrictOrBelowSelected());
+        var growthListErrors = vm.isChildGrowthTrackerSelected() && !vm.isDistrictOrBelowSelected();
         var incentiveReportErrors = vm.isIncentiveReportSelected() && !vm.isStateSelected();
         var ladySupervisorReportErrors = false;
         if (!vm.haveAccessToFeatures) {
             ladySupervisorReportErrors = vm.isLadySupervisorSelected() && !vm.isStateSelected();
         }
-        return beneficiaryListErrors || incentiveReportErrors || ladySupervisorReportErrors;
+        return beneficiaryListErrors || incentiveReportErrors || ladySupervisorReportErrors || growthListErrors;
     };
 
     vm.isCombinedPDFSelected = function () {
@@ -514,6 +525,10 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         return vm.selectedIndicator === 11;
     };
 
+    vm.isChildGrowthTrackerSelected = function () {
+        return vm.selectedIndicator === 13;
+    };
+
     vm.isSupervisorOrBelowSelected = function () {
         return vm.selectedLocations[3] && vm.selectedLocations[3] !== ALL_OPTION.location_id;
     };
@@ -529,7 +544,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
     vm.showViewBy = function () {
         return !(vm.isChildBeneficiaryListSelected() || vm.isIncentiveReportSelected() ||
             vm.isLadySupervisorSelected() || vm.isDashboardUsageSelected() ||
-            vm.isTakeHomeRationReportSelected());
+            vm.isChildGrowthTrackerSelected() || vm.isTakeHomeRationReportSelected());
     };
 
     vm.showLocationFilter = function () {
@@ -569,6 +584,9 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         }
     };
 
+    vm.showReassignmentMessage = function () {
+        return vm.selectedLocation && (Date.parse(vm.selectedLocation.deprecated_at) < vm.selectedDate || Date.parse(vm.selectedLocation.deprecates_at) > vm.selectedDate);
+    };
 }
 
 DownloadController.$inject = ['$rootScope', '$location', 'locationHierarchy', 'locationsService', 'userLocationId',

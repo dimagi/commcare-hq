@@ -1639,6 +1639,12 @@ LOCATION_SAFE_CASE_IMPORTS = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
+FORM_CASE_IDS_CASE_IMPORTER = StaticToggle(
+    'form_case_ids_case_importer',
+    'Show the form and case ids download button on the case importer',
+    TAG_SOLUTIONS_OPEN,
+    namespaces=[NAMESPACE_DOMAIN],
+)
 
 HIDE_HQ_ON_MOBILE_EXPERIENCE = StaticToggle(
     'hide_hq_on_mobile_experience',
@@ -1870,7 +1876,7 @@ TWO_STAGE_USER_PROVISIONING = StaticToggle(
 
 LOCATION_REASSIGNMENT = StaticToggle(
     'location_reassignment',
-    'Ability to reorder organization structure',
+    'Location Reassignment: ability to reorder organization structure',
     TAG_CUSTOM,
     [NAMESPACE_USER],
     relevant_environments={'icds', 'india', 'staging'},
@@ -1883,4 +1889,12 @@ ICDS_BIHAR_DEMOGRAPHICS_API = StaticToggle(
     namespaces=[NAMESPACE_USER],
     relevant_environments={'icds', 'india'},
 
+)
+
+ICDS_LOCATION_REASSIGNMENT_AGG = StaticToggle(
+    'location_reassignment_agg',
+    'ICDS: Use aggregation modifications for location reassignment',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    relevant_environments={'icds', 'india'},
 )

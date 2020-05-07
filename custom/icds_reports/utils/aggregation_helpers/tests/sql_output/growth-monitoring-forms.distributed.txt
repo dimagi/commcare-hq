@@ -130,7 +130,7 @@
                 )
         ) ucr
           FULL OUTER JOIN (
-             SELECT * FROM "icds_dashboard_growth_monitoring_forms" WHERE month = %(previous_month)s AND state_id = %(state_id)s
+             SELECT * FROM "growth-monitoring-forms_prev" WHERE state_id = %(state_id)s
           ) prev_month
           ON ucr.case_id = prev_month.case_id AND ucr.supervisor_id = prev_month.supervisor_id
           WHERE coalesce(ucr.month, %(month)s) = %(month)s

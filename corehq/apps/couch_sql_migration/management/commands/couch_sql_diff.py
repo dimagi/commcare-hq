@@ -5,29 +5,35 @@ import os
 import sys
 from collections import defaultdict
 from itertools import groupby
+from xml.sax.saxutils import unescape
 
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
+from django.db.models import Q
 
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.database import retry_on_couch_error
 
 from corehq.apps.domain.models import Domain
+from corehq.apps.tzmigration.timezonemigration import MISSING
 from corehq.form_processor.backends.couch.dbaccessors import FormAccessorCouch
 from corehq.form_processor.backends.sql.dbaccessors import (
     CaseAccessorSQL,
     FormAccessorSQL,
 )
+from corehq.form_processor.models import XFormInstanceSQL
 from corehq.form_processor.utils import should_use_sql_backend
+from corehq.sql_db.util import paginate_query_across_partitioned_databases
 from corehq.util.log import with_progress_bar
 
 from ...casediff import get_couch_cases
 from ...casedifftool import do_case_diffs, do_case_patch, format_diffs, get_migrator
+from ...casepatch import PatchForm
 from ...couchsqlmigration import setup_logging
 from ...diff import filter_case_diffs, filter_form_diffs
 from ...missingdocs import MissingIds
 from ...rewind import IterationState
-from ...statedb import Counts, StateDB, open_state_db
+from ...statedb import Change, Counts, StateDB, open_state_db
 
 log = logging.getLogger(__name__)
 
@@ -83,6 +89,9 @@ class Command(BaseCommand):
         parser.add_argument('--changes',
             dest="changes", action='store_true', default=False,
             help="Show changes instead of diffs. Only valid with 'show' action")
+        parser.add_argument('--patched',
+            dest="patched", action='store_true', default=False,
+            help="Show case diffs recorded in patch forms.")
         parser.add_argument('--csv',
             dest="csv", action='store_true', default=False,
             help="Output diffs to stdout in CSV format.")
@@ -120,6 +129,7 @@ class Command(BaseCommand):
             "select",
             "stop",
             "changes",
+            "patched",
             "csv",
             "batch_size",
             "reset",
@@ -165,7 +175,9 @@ class Command(BaseCommand):
         statedb = self.open_state_db(domain)
         print(f"showing diffs from {statedb}", file=sys.stderr)
         select = self.get_select_kwargs()
-        if self.changes:
+        if self.patched:
+            items = iter_patch_form_diffs(domain, **select)
+        elif self.changes:
             items = statedb.iter_doc_changes(**select)
         else:
             items = statedb.iter_doc_diffs(**select)
@@ -272,6 +284,8 @@ class Command(BaseCommand):
             count = len(select["doc_ids"])
         elif "by_kind" in select:
             count = sum(len(v) for v in select["by_kind"].values() if v)
+        elif self.patched:
+            count = None
         elif select:
             count = counts.get(select["kind"], Counts())
             count = count.changes if self.changes else count.diffs
@@ -498,6 +512,69 @@ def get_form_related(form_ids):
 @retry_on_couch_error
 def get_couch_forms(form_ids):
     return FormAccessorCouch.get_forms(form_ids)
+
+
+def iter_patch_form_diffs(domain, *, kind=None, doc_ids=None, by_kind=None):
+    if kind:
+        if by_kind:
+            raise ValueError("cannot query 'kind' and 'by_kind' together")
+        if kind not in ["forms", "cases"]:
+            raise ValueError(f"kind must be 'forms' or 'cases'; got {kind}")
+        if not doc_ids:
+            raise ValueError(f"please specify doc ids: --select={kind}:id,...")
+        by_kind = {kind: doc_ids}
+    if by_kind:
+        if by_kind.keys() - {"forms", "cases"}:
+            kinds = list(by_kind)
+            raise ValueError(f"valid kinds 'forms' and 'cases'; got {kinds}")
+        form_ids = by_kind.get("forms", [])
+        case_ids = by_kind.get("cases", [])
+        if case_ids:
+            # may be inefficient for cases with many forms
+            for case in CaseAccessorSQL.get_cases(case_ids):
+                form_ids.extend(case.xform_ids)
+        forms = (f for f in FormAccessorSQL.get_forms(form_ids)
+                 if f.xmlns == PatchForm.xmlns)
+    else:
+        # based on iter_form_ids_by_xmlns
+        q_expr = Q(domain=domain, xmlns=PatchForm.xmlns)
+        forms = paginate_query_across_partitioned_databases(
+            XFormInstanceSQL, q_expr, load_source='couch_to_sql_migration')
+    for form in forms:
+        yield from iter_doc_diffs(form)
+
+
+def iter_doc_diffs(form):
+    """Yield doc diffs loaded from patch from XML
+
+    See ...casepatch.get_diff_block for diff JSON structure.
+    """
+    def get_doc_diff(diff, case_id):
+        old = diff.get("old", MISSING)
+        new = diff.get("new", MISSING)
+        if old is MISSING or new is MISSING:
+            diff_type = "missing"
+        elif type(old) != type(new):
+            diff_type = "type"
+        else:
+            diff_type = "diff"
+        return Change(
+            kind="CommCareCase",
+            doc_id=case_id,
+            reason=diff.get("reason", ""),
+            diff_type=diff_type,
+            path=diff["path"],
+            old_value=old,
+            new_value=new,
+        )
+
+    diff_data = form.form_data.get("diff")
+    if diff_data is None:
+        return
+    data = json.loads(unescape(diff_data))
+    case_id = data.get("case_id", "<unknown>"),
+    diffs = [get_doc_diff(diff, case_id) for diff in data.get("diffs", [])]
+    yield "CommCareCase", case_id, diffs
 
 
 def confirm(msg):
