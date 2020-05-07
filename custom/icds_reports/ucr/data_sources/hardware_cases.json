@@ -24,6 +24,8 @@
   "server_environment": [
     "india",
     "icds",
+    "icds-staging"
+
     "icds-cas"
   ],
   "config": {

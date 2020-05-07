@@ -22,6 +22,7 @@
     "india",
     "icds",
     "icds-staging"
+
   ],
   "config": {
     "table_id": "static-complementary_feeding_forms",

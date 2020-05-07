@@ -27,6 +27,7 @@
     "india",
     "icds",
     "icds-staging"
+
   ],
   "config": {
     "table_id": "static-person_cases_v3",

@@ -25,6 +25,7 @@
     "india",
     "icds",
     "icds-staging"
+
   ],
   "config": {
     "table_id": "static-usage_forms",

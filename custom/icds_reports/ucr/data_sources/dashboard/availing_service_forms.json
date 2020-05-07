@@ -22,8 +22,9 @@
 	],
 	"server_environment": [
 		"india",
-		"icds",
-		"icds-staging"
+    "icds",
+    "icds-staging"
+
 	],
 	"config": {
 		"table_id": "static-availing_service_form",
