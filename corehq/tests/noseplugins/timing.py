@@ -111,13 +111,8 @@ class TimingPlugin(Plugin):
 
     def print_stats(self, profile):
         import pstats
-        import subprocess
         stats = pstats.Stats(profile, stream=sys.stderr).sort_stats('cumulative')
-        stats.print_stats()
-        # also get kafka logs since there is suspicion of problems there
-        out = subprocess.check_output(['docker', 'logs', 'hqtest_kafka_1']).decode('utf8')
-        sys.stderr.write(f'{out}\n')
-        sys.stderr.flush()
+        stats.print_stats(100)
 
 
 PLUGIN_INSTANCE = None
