@@ -152,13 +152,11 @@ def run_messaging_rule(domain, rule_id):
 
 
 def queue_task_with_retries(task_to_queue, *args, **kwargs):
-    retries = 0
-    while retries < 5:
+    for attempt in range(5):
         try:
             task_to_queue.delay(*args, **kwargs)
-            # break from while if no issues
+            # break from loop if no issues
             break
         except Exception:
             # wait for five minutes before trying again
             sleep(300)
-            retries += 1
