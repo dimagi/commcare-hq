@@ -4,11 +4,12 @@ from django.test import TestCase
 from django.urls import reverse
 
 from corehq.apps.api.odata.tests.utils import (
-    OdataTestMixin,
     ensure_es_case_index_deleted,
     ensure_es_form_index_deleted,
     setup_es_case_index,
     setup_es_form_index,
+    CaseOdataTestMixin,
+    FormOdataTestMixin,
 )
 from corehq.apps.api.resources.v0_5 import ODataCaseResource, ODataFormResource
 from corehq.apps.export.models import (
@@ -20,7 +21,7 @@ from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO
 from corehq.util.elastic import reset_es_index
 
 
-class TestODataCaseFeed(TestCase, OdataTestMixin):
+class TestODataCaseFeed(TestCase, CaseOdataTestMixin):
 
     @classmethod
     def setUpClass(cls):
@@ -106,7 +107,7 @@ class TestODataCaseFeed(TestCase, OdataTestMixin):
         )
 
 
-class TestODataFormFeed(TestCase, OdataTestMixin):
+class TestODataFormFeed(TestCase, FormOdataTestMixin):
 
     @classmethod
     def setUpClass(cls):
