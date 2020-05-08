@@ -269,7 +269,7 @@ def send_message_via_backend(msg, backend=None, orig_phone_number=None):
     orig_phone_number - the originating phone number to use when sending; this
       is sent in if the backend supports load balancing
     """
-
+    sms_load_counter("outbound", msg.domain)()
     try:
         msg.text = clean_text(msg.text)
     except Exception:
@@ -301,7 +301,6 @@ def send_message_via_backend(msg, backend=None, orig_phone_number=None):
 
         if backend.domain_is_authorized(msg.domain):
             backend.send(msg, orig_phone_number=orig_phone_number)
-            sms_load_counter("outbound", msg.domain)()
         else:
             raise BackendAuthorizationException(
                 "Domain '%s' is not authorized to use backend '%s'" % (msg.domain, backend.pk)
@@ -312,7 +311,6 @@ def send_message_via_backend(msg, backend=None, orig_phone_number=None):
         msg.save()
         return True
     except Exception:
-        sms_load_counter("outbound", msg.domain)()
         should_log_exception = True
 
         if backend:
@@ -322,15 +320,6 @@ def send_message_via_backend(msg, backend=None, orig_phone_number=None):
             log_sms_exception(msg)
 
         return False
-
-
-def _get_backend_tag(backend):
-    if not backend:
-        return None
-    elif backend.is_global:
-        return backend.name
-    else:
-        return f'{backend.domain}/{backend.name}'
 
 
 def should_log_exception_for_backend(backend):
