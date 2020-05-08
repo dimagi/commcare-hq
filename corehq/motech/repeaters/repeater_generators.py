@@ -319,17 +319,17 @@ class ReferCasePayloadGenerator(BasePayloadGenerator):
                 if key.startswith(constant_prefix):
                     property_name = key[len(constant_prefix):]
                     constant_properties.append((property_name, value))
-            whitelist = payload_doc.case_json.get(f'{case_type}_whitelist', '').split(' ')
-            blacklist = payload_doc.case_json.get(f'{case_type}_blacklist', '').split(' ')
+            whitelist = payload_doc.case_json.get(f'{case_type}_whitelist')
+            blacklist = payload_doc.case_json.get(f'{case_type}_blacklist')
             if blacklist and whitelist:
                 raise ReferralError(f'both blacklist and whitelist included for {case_type}')
             if not blacklist and not whitelist:
                 raise ReferralError(f'blacklist or whitelist not included for {case_type}')
             if blacklist:
-                listed_properties = blacklist
+                listed_properties = blacklist.split(' ')
                 use_blacklist = True
             else:
-                listed_properties = whitelist
+                listed_properties = whitelist.split(' ')
                 use_blacklist = False
             case_type_configs[case_type] = CaseTypeReferralConfig(
                 use_blacklist,
