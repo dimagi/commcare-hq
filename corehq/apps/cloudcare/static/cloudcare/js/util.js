@@ -49,7 +49,7 @@ hqDefine('cloudcare/js/util', function () {
     };
 
     var showHTMLError = function (message, $el, autoHideTime) {
-        message = message || gettext("Sorry, an error occurred while processing that request.");
+        var htmlMessage = message = message || gettext("Sorry, an error occurred while processing that request.");
         var $container = _show(message, $el, autoHideTime, "", true);
         try {
             message = $container.text();  // pull out just the text the user sees
@@ -60,6 +60,7 @@ hqDefine('cloudcare/js/util', function () {
         reportFormplayerErrorToHQ({
             type: 'show_error_notification',
             message: message,
+            htmlMessage: htmlMessage,
         });
     };
 
