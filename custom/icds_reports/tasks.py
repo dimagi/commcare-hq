@@ -1702,8 +1702,10 @@ def reconcile_data_not_in_ucr(reconciliation_status_pk):
     status_record = UcrReconciliationStatus.objects.get(pk=reconciliation_status_pk)
     number_documents_missing = 0
 
-    data_not_in_ucr = get_data_not_in_ucr(status_record)
+    data_not_in_ucr = list(get_data_not_in_ucr(status_record))
     doc_ids_not_in_ucr = {data[0] for data in data_not_in_ucr}
+    known_bad_doc_ids = set(
+        InvalidUCRData.objects.filter(doc_id__in=doc_ids_not_in_ucr).values_list('doc_id', flat=True))
 
     if status_record.is_form_ucr:
         doc_ids_not_in_es = get_form_ids_missing_from_elasticsearch(doc_ids_not_in_ucr)
@@ -1715,6 +1717,9 @@ def reconcile_data_not_in_ucr(reconciliation_status_pk):
     # since run time is relatively short and does not scale with number of errors
     # but the number of doc ids will increase with the number of errors
     for doc_id, doc_subtype, sql_modified_on in data_not_in_ucr:
+        if doc_id in known_bad_doc_ids:
+            # These docs are invalid
+            continue
         number_documents_missing += 1
         not_found_in_es = doc_id in doc_ids_not_in_es
         celery_task_logger.info(f'doc_id {doc_id} from {sql_modified_on} not found in UCR data sources. '
@@ -1770,12 +1775,8 @@ def get_data_not_in_ucr(status_record):
     chunk_size = 1000
     for chunk in chunked(matching_records_for_db, chunk_size):
         doc_ids = [val[0] for val in chunk]
-        known_bad_doc_ids = set(
-            InvalidUCRData.objects.filter(doc_id__in=doc_ids).values_list('doc_id', flat=True))
         doc_id_and_inserted_in_ucr = _get_docs_in_ucr(domain, status_record.table_id, list(set(doc_ids) - set(known_bad_doc_ids)))
         for doc_id, doc_subtype, sql_modified_on in chunk:
-            if doc_id in known_bad_doc_ids:
-                continue
             if doc_id in doc_id_and_inserted_in_ucr:
                 # This is to handle the cases which are outdated. This condition also handles the time drift of 1 sec
                 # between main db and ucr db. i.e  doc will even be included when inserted_at-sql_modified_on <= 1 sec
