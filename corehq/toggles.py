@@ -1907,3 +1907,10 @@ ICDS_LOCATION_REASSIGNMENT_AGG = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
     relevant_environments={'icds', 'india'},
 )
+
+REFER_CASE_REPEATER = StaticToggle(
+    'refer_case_repeater',
+    'COVID: Allow refer case repeaters to be setup',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN]
+)
