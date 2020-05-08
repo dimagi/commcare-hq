@@ -338,13 +338,13 @@ class ReferCasePayloadGenerator(BasePayloadGenerator):
             original_id = case.case_id
             indices = case.indices
             case.case_id = _update_case_id(original_id, case_id_map)
-            new_case.owner_id = new_owner
+            case.owner_id = new_owner
             for index in indices:
                 if index.referenced_id in case_ids_to_forward:
                     index.referenced_id = _update_case_id(index.referenced_id, case_id_map)
                 else:
                     raise ReferralError(f'case {original_id} included without referenced case {index.referenced_id}')
-            config = case_type_configs(case.type)
+            config = case_type_configs[case.type]
             if config.blacklist:
                 _update_case_properties_with_blacklist(case, config)
             else:
