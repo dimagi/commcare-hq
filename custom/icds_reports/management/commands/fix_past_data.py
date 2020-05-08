@@ -47,7 +47,13 @@ class Command(BaseCommand):
             with open(path, "r", encoding='utf-8') as sql_file:
                 sql_to_execute = sql_file.read()
                 sql_to_execute = sql_to_execute.format(start_date=date.strftime("%Y-%m-%d"))
-                _run_custom_sql_script(sql_to_execute)
+                # special case as second script contains multiple queries
+                if i == 2:
+                    sql_to_execute = sql_to_execute.split(';')
+                    for j in range(0, len(sql_to_execute)):
+                        _run_custom_sql_script(sql_to_execute[j])
+                else:
+                    _run_custom_sql_script(sql_to_execute)
 
     def handle(self, *args, **kwargs):
         # start date is the date from which we gonna start
@@ -62,7 +68,7 @@ class Command(BaseCommand):
         monthly_dates_list = []
         part_tb_date_start = date(2017, 5, 1)
         part_tb_date_end = date(2019, 7, 1)
-        end_date = date.today()
+        end_date = date(2020, 1, 1)
         end_date = end_date.replace(day=1)
         # default is used to differentiate between the partitioned table monthly date
         # false -> month got a partitioned table
