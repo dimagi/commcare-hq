@@ -89,32 +89,30 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
     def drop_table_query(self):
         return 'DELETE FROM "{}" WHERE month=%(month)s'.format(self.tablename), {'month': self.month}
 
-    def data_from_ucr_query(self, state_id, start_month_string, end_month_string):
+    def data_from_ucr_query(self):
         return """
         SELECT DISTINCT
             %(state_id)s AS state_id,
             supervisor_id,
+            %(start_date)s::date as month,
             person_case_id AS person_case_id,
-            LAST_VALUE(reason_closure) OVER w AS reason_closure,
-          FROM "{remove_member_form}"
+            LAST_VALUE(reason_closure) OVER w AS reason_closure
+          FROM "{remove_member_ucr}"
           WHERE state_id = %(state_id)s AND
-                timeend >= %(start_month_string)s AND timeend <= %(end_month_string)s AND
+                timeend >= %(start_date)s AND timeend < %(next_month_date)s AND
                 person_case_id IS NOT NULL
           WINDOW w AS (
             PARTITION BY supervisor_id, person_case_id
             ORDER BY timeend RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
         )
         """.format(
-            state_id=state_id,
-            start_month_string = start_month_string,
-            end_month_string = end_month_string,
-            remove_member_form=get_table_name(self.domain, REMOVE_MEMBER_FORM)
+            remove_member_ucr=get_table_name(self.domain, REMOVE_MEMBER_FORM)
         )
 
     def _state_aggregation_query(self, state_id):
         start_month_string = self.month.strftime("'%Y-%m-%d'::date")
         end_month_string = (self.month + relativedelta(months=1, days=-1)).strftime("'%Y-%m-%d'::date")
-        remove_member_ucr = self.data_from_ucr_query(state_id, start_month_string, end_month_string)
+        remove_member_ucr = self.data_from_ucr_query()
         age_in_days = "({} - person_cases.dob)::integer".format(end_month_string)
         age_in_months_end = "({} / 30.4 )".format(age_in_days)
         age_in_months = "(({} - person_cases.dob) / 30.4 )".format(start_month_string)
@@ -445,8 +443,9 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
               AND child_health.supervisor_id = df.supervisor_id
             LEFT OUTER JOIN "{delivery_form}" del_form ON child_health.doc_id = del_form.child_health_case_id
               AND child_health.supervisor_id = del_form.supervisor_id
-            LEFT OUTER JOIN "({remove_member_form})" rm ON child_health.doc_id = rm.person_case_id
+            LEFT OUTER JOIN ({remove_member_form}) rm ON child_health.doc_id = rm.person_case_id
               AND child_health.supervisor_id = rm.supervisor_id
+              AND rm.month = %(start_date)s
             WHERE child_health.doc_id IS NOT NULL
               AND child_health.state_id = %(state_id)s
               AND {open_in_month}
@@ -472,7 +471,10 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
             remove_member_form=remove_member_ucr
         ), {
             "start_date": self.month,
+            "start_month_string": start_month_string,
+            "end_month_string": end_month_string,
             "next_month": month_formatter(self.month + relativedelta(months=1)),
+            "next_month_date": self.month + relativedelta(months=1),
             "state_id": state_id,
         }
         yield """ALTER TABLE "{tablename}" ATTACH PARTITION "{child_tablename}" FOR VALUES IN (%(state_id)s)""".format(
