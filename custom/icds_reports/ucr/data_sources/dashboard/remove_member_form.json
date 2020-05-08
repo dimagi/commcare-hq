@@ -24,7 +24,7 @@
   ],
   "config": {
     "table_id": "static-remove_member_form",
-    "display_name": "Forms - Remove Member (REACH Dashboard)",
+    "display_name": "Forms - Remove Member (ICDS-CAS Dashboard)",
     "referenced_doc_type": "XFormInstance",
     "base_item_expression": {},
     "configured_filter": {
@@ -53,6 +53,29 @@
         "expression": {
           "type": "property_path",
           "property_path": ["form", "case_load_person_0", "case", "@case_id"]
+        }
+      },
+      {
+        "column_id": "timeend",
+        "datatype": "datetime",
+        "type": "expression",
+        "expression": {
+          "type": "property_path",
+          "property_path": ["form", "meta", "timeEnd"]
+        }
+      },
+      {
+        "column_id": "state_id",
+        "datatype": "string",
+        "type": "expression",
+        "expression": {
+          "type": "ancestor_location",
+          "location_id": {
+            "type": "named",
+            "name": "user_location_id"
+          },
+          "location_type": "state",
+          "location_property": "_id"
         }
       },
       {
@@ -98,6 +121,14 @@
         "distribution_column": "supervisor_id"
       },
       "primary_key": ["supervisor_id","doc_id"]
-    }
+    },
+    "sql_column_indexes": [
+      {
+        "column_ids": [
+          "state_id",
+          "timeend"
+        ]
+      }
+    ]
   }
 }
