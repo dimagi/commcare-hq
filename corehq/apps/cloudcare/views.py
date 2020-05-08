@@ -486,7 +486,8 @@ def report_formplayer_error(request, domain):
             'domain': domain,
             'cloudcare_env': data.get('cloudcare_env'),
         })
-        notify_error(message='[Cloudcare] request failure in web form session', details=data)
+        message = data.get("readableErrorMessage") or "request failure in web form session"
+        notify_error(message=f'[Cloudcare] {message}', details=data)
     elif error_type == 'show_error_notification':
         message = data.get('message')
         metrics_counter('commcare.formplayer.show_error_notification', tags={
