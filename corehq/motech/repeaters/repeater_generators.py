@@ -15,6 +15,7 @@ from casexml.apps.case.xml import V2
 from dimagi.utils.parsing import json_format_datetime
 
 from corehq.apps.receiverwrapper.exceptions import DuplicateFormatException
+from corehq.apps.users.models import CouchUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.motech.repeaters.exceptions import ReferralError
 
