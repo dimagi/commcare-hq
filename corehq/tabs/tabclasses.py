@@ -105,7 +105,11 @@ class ProjectReportsTab(UITab):
     title = ugettext_noop("Reports")
     view = "reports_home"
 
-    url_prefix_formats = ('/a/{domain}/reports/', '/a/{domain}/configurable_reports/')
+    url_prefix_formats = (
+        '/a/{domain}/reports/',
+        '/a/{domain}/configurable_reports/',
+        '/a/{domain}/location_reassignment_download/',
+    )
 
     @property
     def _is_viewable(self):
@@ -154,6 +158,14 @@ class ProjectReportsTab(UITab):
                 'title': _(UserConfigReportsHomeView.section_name),
                 'url': reverse(UserConfigReportsHomeView.urlname, args=[self.domain]),
                 'icon': 'icon-tasks fa fa-wrench',
+            })
+        if (toggles.DOWNLOAD_LOCATION_REASSIGNMENT_REQUEST_TEMPLATE.enabled(self.domain)
+                and not toggles.PERFORM_LOCATION_REASSIGNMENT.enabled(self.couch_user.username)):
+            from custom.icds.location_reassignment.views import LocationReassignmentDownloadOnlyView
+            tools.append({
+                'title': _(LocationReassignmentDownloadOnlyView.section_name),
+                'url': reverse(LocationReassignmentDownloadOnlyView.urlname, args=[self.domain]),
+                'icon': 'icon-tasks fa fa-download',
             })
         return [(_("Tools"), tools)]
 
@@ -1491,7 +1503,8 @@ class ProjectUsersTab(UITab):
                 'show_in_dropdown': True,
             })
 
-        if toggles.LOCATION_REASSIGNMENT.enabled(self.couch_user.username):
+        if (toggles.DOWNLOAD_LOCATION_REASSIGNMENT_REQUEST_TEMPLATE.enabled(self.domain)
+                and toggles.PERFORM_LOCATION_REASSIGNMENT.enabled(self.couch_user.username)):
             from custom.icds.location_reassignment.views import LocationReassignmentView
             menu.append({
                 'title': _("Location Reassignment"),
