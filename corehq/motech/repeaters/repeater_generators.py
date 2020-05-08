@@ -319,8 +319,8 @@ class ReferCasePayloadGenerator(BasePayloadGenerator):
                 if key.startswith(constant_prefix):
                     property_name = key[len(constant_prefix):]
                     constant_properties.append((property_name, value))
-            whitelist = payload_doc.get_case_property(f'{case_type}_whitelist')
-            blacklist = payload_doc.get_case_property(f'{case_type}_blacklist')
+            whitelist = payload_doc.case_json.get(f'{case_type}_whitelist', '').split(' ')
+            blacklist = payload_doc.case_json.get(f'{case_type}_blacklist', '').split(' ')
             if blacklist and whitelist:
                 raise ReferralError(f'both blacklist and whitelist included for {case_type}')
             if not blacklist and not whitelist:
@@ -355,7 +355,8 @@ class ReferCasePayloadGenerator(BasePayloadGenerator):
             else:
                 _update_case_properties_with_whitelist(case, config)
             _set_constant_properties(case, config)
-            case_blocks.append(case.to_xml(V2))
+            case_blocks.append(case.to_xml(V2).decode('utf-8'))
+            case_blocks = ''.join(case_blocks)
         return render_to_string('hqcase/xml/case_block.xml', {
             'xmlns': SYSTEM_FORM_XMLNS,
             'case_block': case_blocks,
