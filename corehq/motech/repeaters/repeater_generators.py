@@ -313,7 +313,7 @@ class ReferCasePayloadGenerator(BasePayloadGenerator):
                 constant_properties
             )
 
-        case_blocks = self._get_case_blocks(cases_to_forward, case_ids_to_forward, case_type_configs)
+        case_blocks = self._get_case_blocks(cases_to_forward, case_ids_to_forward, case_type_configs, new_owner)
         return render_to_string('hqcase/xml/case_block.xml', {
             'xmlns': SYSTEM_FORM_XMLNS,
             'case_block': case_blocks,
@@ -324,7 +324,7 @@ class ReferCasePayloadGenerator(BasePayloadGenerator):
             'device_id': "ReferCaseRepeater",
         })
 
-    def _get_case_blocks(self):
+    def _get_case_blocks(self, cases_to_forward, case_ids_to_forward, case_type_configs, new_owner):
         case_blocks = []
         case_id_map = {}
         for case in cases_to_forward:
