@@ -3,6 +3,7 @@ import re
 import string
 from xml.etree import cElementTree as ElementTree
 
+import sentry_sdk
 from django.conf import settings
 from django.http import (
     Http404,
@@ -473,6 +474,9 @@ def report_formplayer_error(request, domain):
     data = json.loads(request.body)
     error_type = data.get('type')
 
+    with sentry_sdk.configure_scope() as scope:
+        scope.set_tag("cloudcare_error_type", error_type)
+
     if error_type == 'webformsession_request_failure':
         metrics_counter('commcare.formplayer.webformsession_request_failure', tags={
             'request': data.get('request'),
@@ -482,7 +486,7 @@ def report_formplayer_error(request, domain):
             'domain': domain,
             'cloudcare_env': data.get('cloudcare_env'),
         })
-        notify_error(message='Formplayer: request failure in web form session', details=data)
+        notify_error(message='[Cloudcare] request failure in web form session', details=data)
     elif error_type == 'show_error_notification':
         message = data.get('message')
         metrics_counter('commcare.formplayer.show_error_notification', tags={
@@ -490,13 +494,13 @@ def report_formplayer_error(request, domain):
             'domain': domain,
             'cloudcare_env': data.get('cloudcare_env')
         })
-        notify_error(message=f'Formplayer: showed error to user: {message}', details=data)
+        notify_error(message=f'[Cloudcare] {message}', details=data)
     else:
         metrics_counter('commcare.formplayer.unknown_error_type', tags={
             'domain': domain,
             'cloudcare_env': data.get('cloudcare_env'),
         })
-        notify_error(message=f'Formplayer: unknown error type', details=data)
+        notify_error(message=f'[Cloudcare] unknown error type', details=data)
     return JsonResponse({'status': 'ok'})
 
 
