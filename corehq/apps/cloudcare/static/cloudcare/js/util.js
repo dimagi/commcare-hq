@@ -1,3 +1,5 @@
+/*global FormplayerFrontend */
+
 hqDefine('cloudcare/js/util', function () {
     if (!String.prototype.startsWith) {
         String.prototype.startsWith = function (searchString, position) {
@@ -138,7 +140,10 @@ hqDefine('cloudcare/js/util', function () {
     var reportFormplayerErrorToHQ = function (data) {
         try {
             var reverse = hqImport("hqwebapp/js/initial_page_data").reverse;
-
+            var cloudcare_env = FormplayerFrontend.request('currentUser').environment;
+            if (!data.cloudcare_env) {
+                data.cloudcare_env = cloudcare_env || 'unknown';
+            }
             $.ajax({
                 type: 'POST',
                 url: reverse('report_formplayer_error'),
