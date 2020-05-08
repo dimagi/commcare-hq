@@ -282,30 +282,6 @@ class ReferCasePayloadGenerator(BasePayloadGenerator):
 
     def get_payload(self, repeat_record, payload_doc):
 
-        def _update_case_id(original_case_id, case_id_map):
-            if original_case_id in case_id_map:
-                new_case_id = case_id_map[original_case_id]
-            else:
-                new_case_id = uuid4().hex
-                case_id_map[original_case_id] = new_case_id
-            return new_case_id
-
-        def _update_case_properties_with_blacklist(case, config):
-            for name in config.listed_properties:
-                if name in case.case_json:
-                    del case.case_json[name]
-
-        def _update_case_properties_with_whitelist(case, config):
-            new_json = {}
-            for name in config.listed_properties:
-                if name in case.case_json:
-                    new_json[name] = case.case_json[name]
-            case.case_json = new_json
-
-        def _set_constant_properties(case, config):
-            for name, value in config.constant_properties:
-                case.case_json[name] = value
-
         case_ids_to_forward = payload_doc.get_case_property('cases_to_forward').split(' ')
         new_owner = payload_doc.get_case_property('new_owner')
         cases_to_forward = CaseAccessors(payload_doc.domain).get_cases(case_ids_to_forward)
@@ -337,26 +313,7 @@ class ReferCasePayloadGenerator(BasePayloadGenerator):
                 constant_properties
             )
 
-        case_blocks = []
-        case_id_map = {}
-        for case in cases_to_forward:
-            original_id = case.case_id
-            indices = case.indices
-            case.case_id = _update_case_id(original_id, case_id_map)
-            case.owner_id = new_owner
-            for index in indices:
-                if index.referenced_id in case_ids_to_forward:
-                    index.referenced_id = _update_case_id(index.referenced_id, case_id_map)
-                else:
-                    raise ReferralError(f'case {original_id} included without referenced case {index.referenced_id}')
-            config = case_type_configs[case.type]
-            if config.use_blacklist:
-                _update_case_properties_with_blacklist(case, config)
-            else:
-                _update_case_properties_with_whitelist(case, config)
-            _set_constant_properties(case, config)
-            case_blocks.append(case.to_xml(V2).decode('utf-8'))
-            case_blocks = ''.join(case_blocks)
+        case_blocks = self._get_case_blocks(cases_to_forward, case_ids_to_forward, case_type_configs)
         return render_to_string('hqcase/xml/case_block.xml', {
             'xmlns': SYSTEM_FORM_XMLNS,
             'case_block': case_blocks,
@@ -366,6 +323,58 @@ class ReferCasePayloadGenerator(BasePayloadGenerator):
             'user_id': CouchUser.get_by_username(self.repeater.username).user_id,
             'device_id': "ReferCaseRepeater",
         })
+
+    def _get_case_blocks(self):
+        case_blocks = []
+        case_id_map = {}
+        for case in cases_to_forward:
+            original_id = case.case_id
+            indices = case.indices
+            case.case_id = self._get_updated_case_id(original_id, case_id_map)
+            case.owner_id = new_owner
+            for index in indices:
+                if index.referenced_id in case_ids_to_forward:
+                    index.referenced_id = self._get_updated_case_id(index.referenced_id, case_id_map)
+                else:
+                    raise ReferralError(f'case {original_id} included without referenced case {index.referenced_id}')
+            config = case_type_configs[case.type]
+            if config.use_blacklist:
+                self._update_case_properties_with_blacklist(case, config)
+            else:
+                self._update_case_properties_with_whitelist(case, config)
+            self._set_constant_properties(case, config)
+            self._set_referral_properties(case, original_id)
+            case_blocks.append(case.to_xml(V2).decode('utf-8'))
+            case_blocks = ''.join(case_blocks)
+            return case_blocks
+
+    def _get_updated_case_id(self, original_case_id, case_id_map):
+        if original_case_id in case_id_map:
+            new_case_id = case_id_map[original_case_id]
+        else:
+            new_case_id = uuid4().hex
+            case_id_map[original_case_id] = new_case_id
+        return new_case_id
+
+    def _update_case_properties_with_blacklist(self, case, config):
+        for name in config.listed_properties:
+            if name in case.case_json:
+                del case.case_json[name]
+
+    def _update_case_properties_with_whitelist(self, case, config):
+        new_json = {}
+        for name in config.listed_properties:
+            if name in case.case_json:
+                new_json[name] = case.case_json[name]
+        case.case_json = new_json
+
+    def _set_constant_properties(self, case, config):
+        for name, value in config.constant_properties:
+            case.case_json[name] = value
+
+    def _set_referral_properties(self, case, original_case_id):
+        case.case_json['cchq_referral_source_domain'] = self.repeater.domain
+        case.case_json['cchq_referral_source_case_id'] = original_case_id
 
 
 class AppStructureGenerator(BasePayloadGenerator):
