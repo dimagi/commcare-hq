@@ -140,9 +140,9 @@ hqDefine('cloudcare/js/util', function () {
     var reportFormplayerErrorToHQ = function (data) {
         try {
             var reverse = hqImport("hqwebapp/js/initial_page_data").reverse;
-            var cloudcare_env = FormplayerFrontend.request('currentUser').environment;
-            if (!data.cloudcare_env) {
-                data.cloudcare_env = cloudcare_env || 'unknown';
+            var cloudcareEnv = FormplayerFrontend.request('currentUser').environment;
+            if (!data.cloudcareEnv) {
+                data.cloudcareEnv = cloudcareEnv || 'unknown';
             }
             $.ajax({
                 type: 'POST',

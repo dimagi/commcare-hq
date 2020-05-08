@@ -484,7 +484,7 @@ def report_formplayer_error(request, domain):
             'state': data.get('state'),
             'status': data.get('status'),
             'domain': domain,
-            'cloudcare_env': data.get('cloudcare_env'),
+            'cloudcare_env': data.get('cloudcareEnv'),
         })
         message = data.get("readableErrorMessage") or "request failure in web form session"
         notify_error(message=f'[Cloudcare] {message}', details=data)
@@ -493,13 +493,13 @@ def report_formplayer_error(request, domain):
         metrics_counter('commcare.formplayer.show_error_notification', tags={
             'message': _message_to_tag_value(message or 'no_message'),
             'domain': domain,
-            'cloudcare_env': data.get('cloudcare_env')
+            'cloudcare_env': data.get('cloudcareEnv'),
         })
         notify_error(message=f'[Cloudcare] {message}', details=data)
     else:
         metrics_counter('commcare.formplayer.unknown_error_type', tags={
             'domain': domain,
-            'cloudcare_env': data.get('cloudcare_env'),
+            'cloudcare_env': data.get('cloudcareEnv'),
         })
         notify_error(message=f'[Cloudcare] unknown error type', details=data)
     return JsonResponse({'status': 'ok'})
