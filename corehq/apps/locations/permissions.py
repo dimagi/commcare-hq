@@ -28,6 +28,37 @@ these restricted users. Anything not explicitly whitelisted is inaccessible to
 restricted users.
 
 
+How data is associated with locations
+-------------------------------------
+
+Restricted users only have access to their section of the hierarchy. Here's a
+little about what that means conceptually, and how to implement these
+restrictions.
+
+Locations: Restricted users should be able to see and edit their own locations
+and any descendants of those locations, as well as access data at those locations. See
+also ``user_can_access_location_id``
+
+Users: If a user is assigned to an accessible location, the user is also
+accessible. See also ``user_can_access_other_user``
+
+Groups: Groups are never accessible.
+
+Forms: Forms are associated with a location via the submitting user, so if that
+user is currently accessible, so is the form. Note that this means that moving
+a user will affect forms even retroactively.  See also ``can_edit_form_location``
+
+Cases: Case accessibility is determined by case owner. If the owner is a user,
+then the user must be accessible for the case to be accessible. If the owner is
+a location, then it must be accessible. If the owner is a case-sharing group,
+the case is not accessible to any restricted users. See also
+``user_can_access_case``
+
+The ``SQLLocation`` queryset method ``accessible_to_user`` is helpful when
+implementing these restrictions. Also refer to the standard reports, which do
+this sort of filtering in bulk.
+
+
 Whitelist Implementation
 ------------------------
 

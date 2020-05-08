@@ -106,7 +106,8 @@ def get_mother_details(month, state_id, last_ccs_case_id):
         'tt_2',
         'tt_booster',
         'add',
-        'hb'
+        'hb',
+        'lmp'
     )
     limited_mother_details_data = list(bihar_mother_details[:CAS_API_PAGE_SIZE])
     return limited_mother_details_data, get_total_records_count(BiharAPIMotherView.__name__, month, state_id)
