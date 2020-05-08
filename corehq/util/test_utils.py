@@ -379,6 +379,10 @@ def timelimit(limit):
     without raising an error and the elapsed run time is longer than
     the allowed time limit.
 
+    This decorator can be used to extend the time limit imposed by
+    --max-test-time when `corehq.tests.noseplugins.timing.TimingPlugin`
+    is enabled.
+
     Usage:
 
         @timelimit
@@ -400,6 +404,8 @@ def timelimit(limit):
     func, limit = limit
     @wraps(func)
     def decorator(*args, **kw):
+        from corehq.tests.noseplugins.timing import add_time_limit
+        add_time_limit(limit.total_seconds())
         start = datetime.utcnow()
         rval = func(*args, **kw)
         elapsed = datetime.utcnow() - start
