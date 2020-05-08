@@ -26,6 +26,8 @@ from corehq.apps.dump_reload.sql.dump import (
 )
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.products.models import SQLProduct
+from corehq.apps.zapier.consts import EventTypes
+from corehq.apps.zapier.models import ZapierSubscription
 from corehq.blobs.models import BlobMeta
 from corehq.form_processor.backends.sql.dbaccessors import LedgerAccessorSQL
 from corehq.form_processor.interfaces.dbaccessors import (
@@ -530,6 +532,17 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
 
         self.addCleanup(lambda: delete_alert_schedule_instances_for_schedule(AlertScheduleInstance, schedule.schedule_id))
         self._dump_and_load(Counter({AlertSchedule: 1, AlertEvent: 2, SMSContent: 2}))
+
+    def test_zapier_subscription(self):
+        subscription = ZapierSubscription.objects.create(
+            domain=self.domain_name,
+            case_type='case_type',
+            event_name=EventTypes.NEW_CASE,
+            url='example.com',
+            user_id='user_id',
+        )
+        self.addCleanup(subscription.delete)
+        self._dump_and_load(Counter({ZapierSubscription: 1}))
 
 
 def _normalize_object_counter(counter, for_loaded=False):
