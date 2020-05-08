@@ -303,7 +303,7 @@ class ReferCasePayloadGenerator(BasePayloadGenerator):
         case_ids_to_forward = set(payload_doc.get_case_property('cases_to_forward').split(' '))
         new_owner = payload_doc.get_case_property('new_owner')
         cases_to_forward = CaseAccessors(payload_doc.domain).get_cases(case_ids_to_forward)
-        included_case_types = payload_doc.get_case_property('cases_types').split(' ')
+        included_case_types = payload_doc.get_case_property('case_types').split(' ')
         case_type_configs = {}
         for case_type in included_case_types:
             constant_properties = []
