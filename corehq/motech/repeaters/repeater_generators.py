@@ -4,6 +4,8 @@ from collections import namedtuple
 from datetime import datetime
 from uuid import uuid4
 
+import attr
+
 from django.core.serializers.json import DjangoJSONEncoder
 from django.utils.translation import ugettext_lazy as _
 
@@ -12,6 +14,7 @@ from casexml.apps.case.xml import V2
 from dimagi.utils.parsing import json_format_datetime
 
 from corehq.apps.receiverwrapper.exceptions import DuplicateFormatException
+from corehq.motech.repeaters.exceptions import ReferralError
 
 
 def _get_test_form(domain):
@@ -259,6 +262,102 @@ class CaseRepeaterJsonPayloadGenerator(BasePayloadGenerator):
                 user_id='user1', prop_a=True, prop_b='value'
             )
         )
+
+
+@attr.s
+class CaseTypeReferralConfig(object):
+    #if false, listed_properties is a whitelist
+    use_blacklist = attr.ib()
+    listed_properties = attr.ib()
+    constant_properties = attr.ib()
+
+
+class ReferCasePayloadGenerator(BasePayloadGenerator):
+
+    def get_payload(self, repeat_record, payload_doc):
+
+        def _update_case_id(original_case_id, case_id_map):
+            if original_case_id in case_id_map:
+                new_case_id = case_id_map[original_case_id]
+            else:
+                new_case_id = uuid4().hex
+                case_id_map[original_case_id] = new_case_id
+            return new_case_id
+
+        def _update_case_properties_with_blacklist(case, config):
+            for name in config.blacklist:
+                if name in case.case_json:
+                    del case.case_json[name]
+
+        def _update_case_properties_with_whitelist(case, config):
+            new_json = {}
+            for name in config.whitelist:
+                if name in case.case_json:
+                    new_json[name] = case_json
+            case.case_json = new_json
+
+        def _set_constant_properties(case, config):
+            for name, value in config.constant_properties:
+                case.case_json[name] = value
+
+        case_ids_to_forward = set(payload_doc.get_case_property('cases_to_forward').split(' '))
+        new_owner = payload_doc.get_case_property('new_owner')
+        cases_to_forward = CaseAccessors(payload_doc.domain).get_cases(case_ids_to_forward)
+        included_case_types = payload_doc.get_case_property('case_types').split(' ')
+        case_type_configs = {}
+        for case_type in included_case_types:
+            constant_properties = []
+            for key, value in payload_doc.case_json.items():
+                constant_prefix = f'{case_type}_setter_'
+                if key.startswith(constant_prefix):
+                    property_name = key[len(constant_prefix):]
+                    constant_properties.append((property_name, value))
+            whitelist = payload_doc.get_case_property(f'{case_type}_whitelist')
+            blacklist = payload_doc.get_case_property(f'{case_type}_blacklist')
+            if blacklist and whitelist:
+                raise ReferralError(f'both blacklist and whitelist included for {case_type}')
+            if not blacklist and not whitelist:
+                raise ReferralError(f'blacklist or whitelist not included for {case_type}')
+            if blacklist:
+                listed_properties = blacklist
+                use_blacklist = True
+            else:
+                listed_properties = whitelist
+                use_blacklist = False
+            case_type_configs[case_type] = CaseTypeReferralConfig(
+                use_blacklist,
+                listed_properties,
+                constant_properties
+            )
+
+        case_blocks = []
+        case_id_map = {}
+        for case in cases_to_forward:
+            original_id = case.case_id
+            indices = self.indices
+            case.case_id = _update_case_id(original_id, case_id_map)
+            new_case.owner_id = new_owner
+            for index in indices:
+                if index.referenced_id in case_ids_to_forward:
+                    index.referenced_id = _update_case_id(index.referenced_id, case_id_map)
+                else:
+                    raise ReferralError(f'case {original_id} included without referenced case {index.referenced_id}')
+            config = case_type_configs(case.type)
+            if config.blacklist:
+                _update_case_properties_with_blacklist(case, config)
+            else:
+                _update_case_properties_with_whitelist(case, config)
+            _set_constant_properties(case, config)
+            case_blocks.append(case.to_xml(V2))
+        return render_to_string('hqcase/xml/case_block.xml', {
+            'xmlns': SYSTEM_FORM_XMLNS,
+            'case_block': case_blocks,
+            'time': datetime.utcnow(),
+            'uid': uuid4().hex,
+            'username': self.repeater.username,
+            'user_id': CouchUser.get_by_username(self.repeater.username).user_id,
+            'device_id': "ReferCaseRepeater",
+        })
 
 
 class AppStructureGenerator(BasePayloadGenerator):
