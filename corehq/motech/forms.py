@@ -6,6 +6,7 @@ from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
 from crispy_forms.helper import FormHelper
 
+from corehq.motech.const import PASSWORD_PLACEHOLDER
 from corehq.motech.models import ConnectionSettings
 
 
@@ -18,7 +19,7 @@ class ConnectionSettingsForm(forms.ModelForm):
     plaintext_password = forms.CharField(
         label=_('Password'),
         required=False,
-        widget=forms.PasswordInput,
+        widget=forms.PasswordInput(render_value=True),
     )
     skip_cert_verify = forms.BooleanField(
         label=_('Skip certificate verification'),
@@ -46,10 +47,24 @@ class ConnectionSettingsForm(forms.ModelForm):
 
     def __init__(self, *args, domain, **kwargs):
         self.domain = domain  # Passed by ``FormSet.form_kwargs``
+        if 'instance' in kwargs and kwargs['instance'].plaintext_password:
+            # `plaintext_password` is not a database field, and so
+            # super().__init__() will not update `initial` with it. We
+            # need to do that here.
+            #
+            # We use PASSWORD_PLACEHOLDER to avoid telling the user what
+            # the password is, but still indicating that it has been
+            # set. (The password is only changed if its value is not
+            # PASSWORD_PLACEHOLDER.)
+            if 'initial' in kwargs:
+                kwargs['initial']['plaintext_password'] = PASSWORD_PLACEHOLDER
+            else:
+                kwargs['initial'] = {'plaintext_password': PASSWORD_PLACEHOLDER}
         super().__init__(*args, **kwargs)
 
     def save(self, commit=True):
         self.instance.domain = self.domain
+        self.instance.plaintext_password = self.cleaned_data['plaintext_password']
         return super().save(commit)
 
 

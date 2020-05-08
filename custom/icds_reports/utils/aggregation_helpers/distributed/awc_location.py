@@ -310,6 +310,6 @@ class LocationAggregationDistributedHelper(BaseICDSAggregationDistributedHelper)
 def _get_all_locations_for_domain(domain):
     return (
         SQLLocation.objects
-        .filter(domain=domain, is_archived=False)
+        .filter(domain=domain)
         .values('pk', 'parent_id', 'metadata', 'name', 'location_id', 'location_type__code', 'site_code')
     )

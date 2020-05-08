@@ -174,13 +174,15 @@ class CreditAdjustmentReason(object):
     LINE_ITEM = "LINE_ITEM"
     TRANSFER = "TRANSFER"
     MANUAL = "MANUAL"
+    FRIENDLY_WRITE_OFF = "FRIENDLY_WRITE_OFF"
     CHOICES = (
-        (MANUAL, "manual"),
+        (MANUAL, "Manual"),
+        (FRIENDLY_WRITE_OFF, "Friendly Write-Off"),
         (SALESFORCE, "via Salesforce"),
-        (INVOICE, "invoice generated"),
-        (LINE_ITEM, "line item generated"),
-        (TRANSFER, "transfer from another credit line"),
-        (DIRECT_PAYMENT, "payment from client received"),
+        (INVOICE, "Invoice-generated"),
+        (LINE_ITEM, "Line Item generated"),
+        (TRANSFER, "Transfer from another credit line"),
+        (DIRECT_PAYMENT, "Payment from client received"),
     )
 
 
@@ -310,6 +312,17 @@ class PreOrPostPay(object):
         (PREPAY, "Prepay"),
         (POSTPAY, "Postpay"),
         (NOT_SET, "Not Set"),
+    )
+
+
+class CommunicationType(object):
+    OTHER = "OTHER"
+    OVERDUE_INVOICE = "OVERDUE_INVOICE"
+    DOWNGRADE_WARNING = "DOWNGRADE_WARNING"
+    CHOICES = (
+        (OTHER, "other"),
+        (OVERDUE_INVOICE, "Overdue Invoice"),
+        (DOWNGRADE_WARNING, "Subscription Pause Warning"),
     )
 
 
@@ -2180,6 +2193,10 @@ class CustomerInvoice(InvoiceBase):
     def contact_emails(self):
         return self.account.enterprise_admin_emails
 
+    def get_contact_emails(self, include_domain_admins=False, filter_out_dimagi=False):
+        # mimic the behavior of the regular Invoice for notification purposes
+        return self.contact_emails
+
     @property
     def subtotal(self):
         """
@@ -3729,3 +3746,28 @@ class DomainUserHistory(models.Model):
 
     class Meta:
         unique_together = ('domain', 'record_date')
+
+
+class CommunicationHistoryBase(models.Model):
+    """
+    A record of any serious correspondence we initiate with admins / billing
+    contacts due to things like downgrade warnings or
+    overdue notices.
+    """
+    date_created = models.DateField(auto_now_add=True)
+    communication_type = models.CharField(
+        max_length=25,
+        default=CommunicationType.OTHER,
+        choices=CommunicationType.CHOICES,
+    )
+
+    class Meta(object):
+        abstract = True
+
+
+class InvoiceCommunicationHistory(CommunicationHistoryBase):
+    invoice = models.ForeignKey(Invoice, on_delete=models.PROTECT)
+
+
+class CustomerInvoiceCommunicationHistory(CommunicationHistoryBase):
+    invoice = models.ForeignKey(CustomerInvoice, on_delete=models.PROTECT)

@@ -1167,7 +1167,8 @@ SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER = StaticToggle(
     'Show an additional "Owner (Location)" property in report builder reports. '
     'This can be used to create report builder reports that are location-safe.',
     TAG_SOLUTIONS_OPEN,
-    [NAMESPACE_DOMAIN]
+    [NAMESPACE_DOMAIN],
+    help_link='https://confluence.dimagi.com/display/internal/Demo+Mobile+Workers',
 )
 
 MOBILE_USER_DEMO_MODE = StaticToggle(
@@ -1639,6 +1640,12 @@ LOCATION_SAFE_CASE_IMPORTS = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
+FORM_CASE_IDS_CASE_IMPORTER = StaticToggle(
+    'form_case_ids_case_importer',
+    'Show the form and case ids download button on the case importer',
+    TAG_SOLUTIONS_OPEN,
+    namespaces=[NAMESPACE_DOMAIN],
+)
 
 HIDE_HQ_ON_MOBILE_EXPERIENCE = StaticToggle(
     'hide_hq_on_mobile_experience',
@@ -1870,7 +1877,7 @@ TWO_STAGE_USER_PROVISIONING = StaticToggle(
 
 LOCATION_REASSIGNMENT = StaticToggle(
     'location_reassignment',
-    'Ability to reorder organization structure',
+    'Location Reassignment: ability to reorder organization structure',
     TAG_CUSTOM,
     [NAMESPACE_USER],
     relevant_environments={'icds', 'india', 'staging'},

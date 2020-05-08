@@ -45,6 +45,14 @@
         "compare_as_string": false
       },
       {
+        "display": "Date of Birth",
+        "slug": "dob",
+        "type": "date",
+        "field": "dob",
+        "datatype": "date",
+        "compare_as_string": false
+      },
+      {
         "display": "Age at Registration Low Bound",
         "slug": "age_at_reg",
         "type": "numeric",
@@ -179,6 +187,24 @@
         "whens": [
           {
             "type": "open_female_resident",
+            "binds": [],
+            "then": 1
+          }
+        ],
+        "else_": 0,
+        "sortable": false,
+        "transform": {},
+        "description": null,
+        "visible": true
+      },
+      {
+        "display": "F_open_count",
+        "column_id": "F_open_count",
+        "type": "sum_when_template",
+        "calculate_total": true,
+        "whens": [
+          {
+            "type": "open_female",
             "binds": [],
             "then": 1
           }
