@@ -1,3 +1,4 @@
+from redis.exceptions import LockError
 from testil import assert_raises, eq
 
 from dimagi.utils.couch import get_redis_lock
@@ -9,13 +10,21 @@ from .noseplugins.redislocks import TestLock, TimeoutError
 
 
 def test_redislocks_nose_plugin():
-    lock1 = get_redis_lock(__name__, timeout=0.5, name="test")
+    lock1 = get_redis_lock(__name__, timeout=0.2, name="test")
     assert isinstance(lock1.lock, TestLock), lock1.lock
     lock1.acquire()
-    lock2 = get_redis_lock(__name__, timeout=0.5, name="test")
+    lock2 = get_redis_lock(__name__, timeout=0.2, name="test")
     with assert_raises(TimeoutError):
         lock2.acquire()
-    # lock1.release() -> LockError: Cannot release a lock that's no longer owned
+    with assert_raises(LockError, msg="Cannot release a lock that's no longer owned"):
+        lock1.release()
+
+
+@reentrant_redis_locks()
+def test_nested_reentrant_redis_locks_is_not_allowed():
+    with assert_raises(RuntimeError):
+        with reentrant_redis_locks():
+            pass
 
 
 @timelimit(0.1)
@@ -25,7 +34,7 @@ def test_reentrant_redis_locks():
 
 
 @timelimit(0.1)
-@reentrant_redis_locks
+@reentrant_redis_locks()
 def test_reentrant_redis_locks_decorator():
     simulate_reentrant_lock()
 
@@ -60,7 +69,7 @@ def test_extra_lock_release():
 
 
 def test_decorator_name():
-    @reentrant_redis_locks
+    @reentrant_redis_locks()
     def fake_test():
         pass
     eq(fake_test.__name__, "fake_test")

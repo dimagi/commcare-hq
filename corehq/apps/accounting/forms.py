@@ -2223,6 +2223,10 @@ class AdjustBalanceForm(forms.Form):
         choices=(
             (CreditAdjustmentReason.MANUAL, "Register back office payment"),
             (CreditAdjustmentReason.TRANSFER, "Take from available credit lines"),
+            (
+                CreditAdjustmentReason.FRIENDLY_WRITE_OFF,
+                "Forgive amount with a friendly write-off"
+            ),
         )
     )
 
@@ -2319,7 +2323,10 @@ class AdjustBalanceForm(forms.Form):
             'subscription': None if self.invoice.is_customer_invoice else self.invoice.subscription,
             'web_user': web_user,
         }
-        if method == CreditAdjustmentReason.MANUAL:
+        if method in [
+            CreditAdjustmentReason.MANUAL,
+            CreditAdjustmentReason.FRIENDLY_WRITE_OFF,
+        ]:
             if self.invoice.is_customer_invoice:
                 CreditLine.add_credit(
                     -self.amount,
