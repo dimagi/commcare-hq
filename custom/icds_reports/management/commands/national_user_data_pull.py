@@ -18,34 +18,30 @@ class Command(BaseCommand):
         date_formatted = date.strftime("%d-%m-%Y")
         return date_formatted
 
-    def _get_details(self, users, usernames, user_details):
+    def _get_details(self, users):
         """
         :param users: user objects of all commcare and web users
-        :param usernames: username array eg. [username1, username2]
-        :param user_details: details dict contains created and role name eg.{username: [created_on, role_name]}
-        :return: usernames and user_details dict
+        :return: user_details dict
         """
+        user_details = {}
         for user in users:
             role = user.get_role('icds-cas')
             if (role in ('CPMU','Dashboard Only Access', 'TRP') or len(user.assigned_location_ids)==0) and user.has_permission('icds-cas', 'access_all_locations'):
-                usernames.append(user.username)
-                user_details.update({ user.username: [ user.created_on, role.name ]})
-        return usernames, user_details
+                user_details.update({user.username: [user.created_on, role.name]})
+        return user_details
 
 
     def handle(self, *args, **options):
         users = CommCareUser.by_domain('icds-cas')
         web_users = WebUser.by_domain('icds-cas')
-        usernames = []
-        user_details = {}
-        usernames, user_details = self._get_details(users, usernames, user_details)
-        usernames, user_details = self._get_details(web_users, usernames, user_details)
-        usernames = list(set(usernames))
+        users = users + web_users
+        user_details = self._get_details(users)
+        usernames_list = [*user_details]
         chunk_size = 100
         headers = ["username", "last_access_time", "created_on", "role"]
         rows = [headers]
-        usernames_usage = []
-        for user_chunk in chunked(usernames, chunk_size):
+        usernames_usage = set()
+        for user_chunk in chunked(usernames_list, chunk_size):
             usage_data = ICDSAuditEntryRecord.objects.filter(
                 username__in=list(user_chunk)).values('username').annotate(time=Max('time_of_use'))
             for usage in usage_data:
@@ -55,9 +51,9 @@ class Command(BaseCommand):
                     self.convert_to_ist(user_details[usage['username']][0]),
                     user_details[usage['username']][1]
                 ]
-                usernames_usage.append(usage['username'])
+                usernames_usage.add(usage['username'])
                 rows.append(row_data)
-        users_not_logged_in = set(usernames) - set(usernames_usage)
+        users_not_logged_in = set(usernames_list) - usernames_usage
         for user in users_not_logged_in:
             rows.extend([
                 user,
