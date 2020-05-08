@@ -53,6 +53,7 @@ hqDefine('cloudcare/js/util', function () {
         var $container = _show(message, $el, autoHideTime, "", true);
         try {
             message = $container.text();  // pull out just the text the user sees
+            message = message.replace(/\s+/g, ' ').trim();
         } catch (e) {
             // leave the message as at came in if there's an issue parsing text from the container
         }
