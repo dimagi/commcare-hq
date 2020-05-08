@@ -18,6 +18,7 @@ hqDefine("hqwebapp/js/crud_paginated_list_init", [
                 statusCodeText: initialPageData.get('status_codes'),
                 allowItemCreation: initialPageData.get('allow_item_creation'),
                 createItemForm: initialPageData.get('create_item_form'),
+                createItemFormClass: initialPageData.get('create_item_form_class'),
             }
         );
 
