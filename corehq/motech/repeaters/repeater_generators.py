@@ -294,7 +294,7 @@ class ReferCasePayloadGenerator(BasePayloadGenerator):
             new_json = {}
             for name in config.listed_properties:
                 if name in case.case_json:
-                    new_json[name] = case_json
+                    new_json[name] = case.case_json[name]
             case.case_json = new_json
 
         def _set_constant_properties(case, config):
