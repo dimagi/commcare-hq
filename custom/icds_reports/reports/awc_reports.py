@@ -981,15 +981,15 @@ def get_awc_report_infrastructure(domain, config, month, show_test=False, beta=F
     }
 
 
-def get_beneficiary_status(valid, migrated, alive, duplicate):
+def get_beneficiary_status(valid, not_migrated, alive, duplicate):
     if valid:
-        return 'open'
-    elif migrated:
-        return 'migrated'
+        return 'Valid'
+    elif not not_migrated:
+        return 'Migrated'
     elif duplicate:
-        return 'duplicated'
+        return 'Duplicated'
     elif not alive:
-        return 'dead'
+        return 'Dead'
     return 'N/A'
 
 @icds_quickcache([
