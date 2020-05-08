@@ -19,6 +19,9 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.motech.repeaters.exceptions import ReferralError
 
 
+SYSTEM_FORM_XMLNS = 'http://commcarehq.org/case'
+
+
 def _get_test_form(domain):
     from corehq.form_processor.utils import TestFormMetadata
     from corehq.form_processor.utils import get_simple_wrapped_form
