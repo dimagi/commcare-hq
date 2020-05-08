@@ -286,13 +286,13 @@ class ReferCasePayloadGenerator(BasePayloadGenerator):
             return new_case_id
 
         def _update_case_properties_with_blacklist(case, config):
-            for name in config.blacklist:
+            for name in config.listed_properties:
                 if name in case.case_json:
                     del case.case_json[name]
 
         def _update_case_properties_with_whitelist(case, config):
             new_json = {}
-            for name in config.whitelist:
+            for name in config.listed_properties:
                 if name in case.case_json:
                     new_json[name] = case_json
             case.case_json = new_json
