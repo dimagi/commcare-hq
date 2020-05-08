@@ -161,6 +161,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
 
     if (haveAccessToFeatures) {
         vm.indicators.push({id: 12, name: 'Service Delivery Report'});
+        vm.indicators.push({id: 13, name: 'Child Growth Tracking Report'});
         vm.beneficiaryCategories = [
             {id: 'pw_lw_children', name: 'PW, LW & Children 0-3 years'},
             {id: 'children_3_6', name: 'Children 3-6 years'},
@@ -218,7 +219,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
     init();
 
     vm.disallowNational = function () {
-        return vm.isChildBeneficiaryListSelected();
+        return vm.isChildBeneficiaryListSelected() || vm.isChildGrowthTrackerSelected();
     };
 
     vm.getPlaceholder = function (locationTypes) {
@@ -257,6 +258,10 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         } else if (vm.selectedAWCs.indexOf('all') !== -1) {
             vm.selectedAWCs = [$item.location_id];
         }
+    };
+
+    vm.onSelectMonth = function () {
+        vm.updateSelectedDate();
     };
 
     vm.onSelectYear = function (year) {
@@ -456,12 +461,13 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
 
     vm.hasErrors = function () {
         var beneficiaryListErrors = vm.isChildBeneficiaryListSelected() && (vm.selectedFilterOptions().length === 0 || !vm.isDistrictOrBelowSelected());
+        var growthListErrors = vm.isChildGrowthTrackerSelected() && !vm.isDistrictOrBelowSelected();
         var incentiveReportErrors = vm.isIncentiveReportSelected() && !vm.isStateSelected();
         var ladySupervisorReportErrors = false;
         if (!vm.haveAccessToFeatures) {
             ladySupervisorReportErrors = vm.isLadySupervisorSelected() && !vm.isStateSelected();
         }
-        return beneficiaryListErrors || incentiveReportErrors || ladySupervisorReportErrors;
+        return beneficiaryListErrors || incentiveReportErrors || ladySupervisorReportErrors || growthListErrors;
     };
 
     vm.isCombinedPDFSelected = function () {
@@ -523,6 +529,10 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         return vm.selectedIndicator === 11;
     };
 
+    vm.isChildGrowthTrackerSelected = function () {
+        return vm.selectedIndicator === 13;
+    };
+
     vm.isSupervisorOrBelowSelected = function () {
         return vm.selectedLocations[3] && vm.selectedLocations[3] !== ALL_OPTION.location_id;
     };
@@ -538,7 +548,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
     vm.showViewBy = function () {
         return !(vm.isChildBeneficiaryListSelected() || vm.isIncentiveReportSelected() ||
             vm.isLadySupervisorSelected() || vm.isDashboardUsageSelected() ||
-            vm.isTakeHomeRationReportSelected());
+            vm.isChildGrowthTrackerSelected() || vm.isTakeHomeRationReportSelected());
     };
 
     vm.showLocationFilter = function () {

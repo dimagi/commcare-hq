@@ -25,7 +25,8 @@
   ],
   "server_environment": [
     "india",
-    "icds"
+    "icds",
+    "icds-staging"
   ],
   "config": {
     "table_id": "static-person_cases_v3",
@@ -134,6 +135,12 @@
         "datatype": "datetime",
         "type": "raw",
         "property_name": "opened_on"
+      },
+      {
+        "column_id": "modified_on",
+        "datatype": "datetime",
+        "type": "raw",
+        "property_name": "modified_on"
       },
       {
         "column_id": "closed_on",
@@ -780,7 +787,7 @@
         "column_id": "location_reassignment_date",
         "datatype": "date",
         "type": "raw",
-        "property_name": "location_reassignment_date"
+        "property_name": "location_reassignment_datetime"
       },
       {
         "column_id": "last_owner_id",
