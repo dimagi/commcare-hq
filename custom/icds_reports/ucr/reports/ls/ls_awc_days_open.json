@@ -28,7 +28,7 @@
   "report_id": "static-ls_awc_days_open",
   "data_source_table": "static-daily_feeding_forms",
   "config": {
-    "title": "LS - % days AWC Open (Static)",
+    "title": "LS-% days AWC Open (Static)",
     "description": "",
     "visible": false,
     "aggregation_columns": [
