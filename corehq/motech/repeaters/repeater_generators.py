@@ -345,7 +345,7 @@ class ReferCasePayloadGenerator(BasePayloadGenerator):
                 else:
                     raise ReferralError(f'case {original_id} included without referenced case {index.referenced_id}')
             config = case_type_configs[case.type]
-            if config.blacklist:
+            if config.use_blacklist:
                 _update_case_properties_with_blacklist(case, config)
             else:
                 _update_case_properties_with_whitelist(case, config)
