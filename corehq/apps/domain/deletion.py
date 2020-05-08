@@ -234,7 +234,7 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('export', 'EmailExportWhenDoneRequest', 'domain'),
     CustomDeletion('export', _delete_data_files),
     ModelDeletion('locations', 'LocationFixtureConfiguration', 'domain'),
-    ModelDeletion('mobile_auth', 'MobileAuthKeyRecord', 'domain'),
+    ModelDeletion('mobile_auth', 'SQLMobileAuthKeyRecord', 'domain'),
     ModelDeletion('ota', 'MobileRecoveryMeasure', 'domain'),
     ModelDeletion('ota', 'SerialIdBucket', 'domain'),
     ModelDeletion('phone', 'OwnershipCleanlinessFlag', 'domain'),
