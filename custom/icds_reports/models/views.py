@@ -1233,6 +1233,7 @@ class ServiceDeliveryReportView(models.Model):
     block_map_location_name = models.TextField(blank=True, null=True)
     district_map_location_name = models.TextField(blank=True, null=True)
     state_map_location_name = models.TextField(blank=True, null=True)
+    state_is_test = models.SmallIntegerField(blank=True, null=True)
     month = models.DateField(blank=True, null=True)
     num_launched_awcs = models.IntegerField(help_text='Number of AWC launched')
     valid_visits = models.IntegerField(help_text='valid home visits')

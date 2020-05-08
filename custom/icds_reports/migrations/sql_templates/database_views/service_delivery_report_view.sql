@@ -20,6 +20,7 @@ SELECT
 "awc_location_local"."district_map_location_name" AS "district_map_location_name",
 "awc_location_local"."state_map_location_name" AS "state_map_location_name",
 "awc_location_local"."aggregation_level" AS "aggregation_level",
+"awc_location_local"."state_is_test" AS "state_is_test",
 agg_awc.month as month,
 COALESCE(agg_awc.num_launched_awcs, 0) AS num_launched_awcs,
 COALESCE(agg_awc.valid_visits,0) AS valid_visits,
@@ -68,5 +69,3 @@ LEFT JOIN agg_service_delivery_report agg_sdr on (
         ("agg_sdr"."aggregation_level" = "awc_location_local"."aggregation_level") AND
         ("agg_sdr"."awc_id" = "awc_location_local"."doc_id")
 )
-
-WHERE awc_location_local.state_is_test IS DISTINCT FROM 1
