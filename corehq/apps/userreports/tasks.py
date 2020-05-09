@@ -416,6 +416,9 @@ def build_async_indicators(indicator_doc_ids):
         }
         if config_id and settings.ENTERPRISE_MODE:
             tags['config_id'] = config_id
+        else:
+            # Prometheus requires consistent tags even if not available
+            tags['config_id'] = None
         return metrics_histogram_timer(
             'commcare.async_indicator.timing',
             timing_buckets=(.03, .1, .3, 1, 3, 10), tags=tags
