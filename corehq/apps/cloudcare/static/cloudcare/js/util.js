@@ -136,7 +136,7 @@ hqDefine('cloudcare/js/util', function () {
         } else {
             showSuccess(message, $('#cloudcare-notifications'), 5000);
         }
-    }
+    };
 
     var hideLoading = function (selector) {
         NProgress.done();

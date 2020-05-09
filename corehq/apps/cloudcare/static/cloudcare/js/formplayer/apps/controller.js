@@ -44,9 +44,9 @@ FormplayerFrontend.module("Apps", function (Apps, FormplayerFrontend, Backbone, 
                     new Backbone.Model({ slug: FormplayerFrontend.Layout.Views.SettingSlugs.SET_DISPLAY }),
                 ]);
             } else {
-		    settings.push(
-		    new Backbone.Model({ slug: FormplayerFrontend.Layout.Views.SettingSlugs.BREAK_LOCKS })
-		    );
+                settings.push(
+                    new Backbone.Model({ slug: FormplayerFrontend.Layout.Views.SettingSlugs.BREAK_LOCKS })
+                );
             }
             settings.push(
                 new Backbone.Model({ slug: FormplayerFrontend.Layout.Views.SettingSlugs.CLEAR_USER_DATA })

@@ -80,7 +80,7 @@ FormplayerFrontend.module("Layout.Views", function (Views, FormplayerFrontend, B
         },
     });
 
-     /**
+    /**
      * Break exising locks
      * Available only for Web Apps
      */
@@ -115,7 +115,7 @@ FormplayerFrontend.module("Layout.Views", function (Views, FormplayerFrontend, B
             } else if (item.get('slug') === Views.SettingSlugs.CLEAR_USER_DATA) {
                 return ClearUserDataView;
             } else if (item.get('slug') === Views.SettingSlugs.BREAK_LOCKS) {
-                return BreakLocksView
+                return BreakLocksView;
             }
         },
         events: {
