@@ -122,7 +122,7 @@ If you want to create data with your paginated view, you must implement the foll
         def get_create_item_data(self, create_form):
             new_puppy = create_form.get_new_puppy()
             return {
-                'newItem': {
+                'itemData': {
                     'id': new_puppy._id,
                     'name': new_puppy.name,
                     'breed': new_puppy.breed,
