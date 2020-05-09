@@ -49,6 +49,7 @@ from sentry_sdk import last_event_id
 from two_factor.forms import AuthenticationTokenForm, BackupTokenForm
 from two_factor.views import LoginView
 
+from corehq.apps.auth_providers.commcare_default_auth_provider import COMMCARE_DEFAULT_AUTH
 from corehq.util.metrics import create_metrics_event, metrics_counter, metrics_gauge
 from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
 from dimagi.utils.couch.database import get_db
@@ -360,7 +361,7 @@ def csrf_failure(request, reason=None, template_name="csrf_failure.html"):
 @sensitive_post_parameters('auth-password')
 def _login(req, domain_name, custom_login_page, extra_context=None):
     extra_context = extra_context or {}
-    if req.user.is_authenticated and req.method == "GET":
+    if req.user.is_authenticated and req.method == "GET" and req.auth_manager.has_auth({COMMCARE_DEFAULT_AUTH}):
         redirect_to = req.GET.get('next', '')
         if redirect_to:
             return HttpResponseRedirect(redirect_to)
@@ -460,6 +461,11 @@ class HQLoginView(LoginView):
         context.update(self.extra_context)
         context['implement_password_obfuscation'] = settings.OBFUSCATE_PASSWORD_FOR_NIC_COMPLIANCE
         return context
+
+    def done(self, form_list, **kwargs):
+        response = super().done(form_list, **kwargs)
+        self.request.auth_manager.authenticate(COMMCARE_DEFAULT_AUTH)
+        return response
 
 
 class CloudCareLoginView(HQLoginView):

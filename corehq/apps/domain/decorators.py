@@ -23,6 +23,7 @@ from django_prbac.utils import has_privilege
 from tastypie.authentication import ApiKeyAuthentication
 from tastypie.http import HttpUnauthorized
 
+from corehq.apps.auth_providers.commcare_default_auth_provider import COMMCARE_DEFAULT_AUTH
 from dimagi.utils.django.request import mutable_querydict
 from dimagi.utils.web import json_response
 
@@ -80,7 +81,7 @@ def login_and_domain_required(view_func):
             msg = _('The domain "{domain}" was not found.').format(domain=domain_name)
             raise Http404(msg)
 
-        if not (user.is_authenticated and user.is_active):
+        if not (user.is_authenticated and user.is_active and req.auth_manager.has_auth({COMMCARE_DEFAULT_AUTH})):
             if _is_public_custom_report(req.path, domain_name):
                 return call_view()
             else:
