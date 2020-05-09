@@ -57,8 +57,6 @@ services:
       KAFKA_ADVERTISED_HOST_NAME: ${KAFKA_ADVERTISED_HOST_NAME}
     ports:
       - "9092:9092"
-    depends_on:
-      - zookeeper
 
   zookeeper:
     extends:

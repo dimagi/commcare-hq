@@ -1,25 +1,33 @@
 import logging
 from contextlib import contextmanager
-from threading import RLock
+from threading import Lock, RLock
 from unittest.mock import patch
 
 import attr
 
-import dimagi.utils.couch as module
-
 log = logging.getLogger(__name__)
+_LOCK = Lock()
 
 
-def reentrant_redis_locks(test=None):
+@contextmanager
+def reentrant_redis_locks():
     """Decorator/context manager to enable reentrant redis locks
 
-    This is useful for tests that do things like acquire a lock and then
-    fire off a celery task (which will usually be executed synchronously
-    in tests) before the lock is released.
+    This is useful for tests that do things like acquire a lock and
+    then, before the lock is released, fire off a celery task (which
+    will usually be executed synchronously due to
+    `CELERY_TASK_ALWAYS_EAGER`) that acquires the same lock.
+
+    Note: the use of `RLock` internalizes the lock to the test process
+    (unlike redis locks, which are inter-process) and therefore assumes
+    that each test process is fully isolated and has its own dedicated
+    database cluster. In other words, this will not work if multiple
+    test processes need synchronized access to a single shared database
+    cluster.
 
     Usage as decorator:
 
-        @reentrant_redis_locks
+        @reentrant_redis_locks()
         def test_something():
             ...
 
@@ -36,18 +44,16 @@ def reentrant_redis_locks(test=None):
             lock = locks[key] = ReentrantTestLock(key, locks)
         return lock
 
-    @contextmanager
-    def context():
-        with patch.object(module, "get_redis_client", client):
-            try:
-                yield
-            finally:
-                assert not locks, f"unreleased {locks.values()}"
-
     locks = {}
     client = TestRedisClient(get_reentrant_lock)
-    manager = context()
-    return manager if test is None else manager(test)
+    if not _LOCK.acquire(blocking=False):
+        raise RuntimeError("nested/concurrent reentrant_redis_locks()")
+    try:
+        with patch("dimagi.utils.couch.get_redis_client", client):
+            yield
+    finally:
+        _LOCK.release()
+        assert not locks, f"unreleased {locks.values()}"
 
 
 @attr.s

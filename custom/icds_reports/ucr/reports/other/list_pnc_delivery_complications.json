@@ -23,7 +23,8 @@
   ],
   "server_environment": [
     "india",
-    "icds"
+    "icds",
+    "icds-staging"
   ],
   "report_id": "static-list_pnc_delivery_complications",
   "data_source_table": "static-ccs_record_cases",
