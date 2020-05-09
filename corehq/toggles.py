@@ -1167,7 +1167,8 @@ SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER = StaticToggle(
     'Show an additional "Owner (Location)" property in report builder reports. '
     'This can be used to create report builder reports that are location-safe.',
     TAG_SOLUTIONS_OPEN,
-    [NAMESPACE_DOMAIN]
+    [NAMESPACE_DOMAIN],
+    help_link='https://confluence.dimagi.com/display/internal/Demo+Mobile+Workers',
 )
 
 MOBILE_USER_DEMO_MODE = StaticToggle(

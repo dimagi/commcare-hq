@@ -261,6 +261,10 @@ function DownloadController($scope, $rootScope, $location, locationHierarchy, lo
         }
     };
 
+    vm.onSelectMonth = function () {
+        vm.updateSelectedDate();
+    };
+
     vm.onSelectYear = function (year) {
         var date = new Date();
         var latest = date;

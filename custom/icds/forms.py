@@ -166,6 +166,7 @@ class CustomDataPullForm(forms.Form):
         month = self.cleaned_data['month']
         if month and month.day != 1:
             self.add_error("month", "Only first of month should be selected")
+        month = month.strftime('%Y-%m-%d')
         return month
 
     def submit(self, domain, email):

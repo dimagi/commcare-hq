@@ -22,7 +22,8 @@
   ],
   "server_environment": [
     "india",
-    "icds"
+    "icds",
+    "icds-staging"
   ],
   "report_id": "static-mpr_5_ccs_record_cases_v2",
   "data_source_table": "static-ccs_record_cases_monthly_v2",
