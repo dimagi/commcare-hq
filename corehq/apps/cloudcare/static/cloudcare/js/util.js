@@ -126,6 +126,18 @@ hqDefine('cloudcare/js/util', function () {
         }
     };
 
+    var breakLocksComplete = function (isError, message) {
+        hideLoading();
+        if (isError) {
+            showError(
+                gettext('Error breaking locks. Please report an issue if this persists.'),
+                $('#cloudcare-notifications')
+            );
+        } else {
+            showSuccess(message, $('#cloudcare-notifications'), 5000);
+        }
+    }
+
     var hideLoading = function (selector) {
         NProgress.done();
     };
@@ -164,6 +176,7 @@ hqDefine('cloudcare/js/util', function () {
         showHTMLError: showHTMLError,
         showSuccess: showSuccess,
         clearUserDataComplete: clearUserDataComplete,
+        breakLocksComplete: breakLocksComplete,
         formplayerLoading: formplayerLoading,
         formplayerLoadingComplete: formplayerLoadingComplete,
         formplayerSyncComplete: formplayerSyncComplete,
