@@ -1492,6 +1492,7 @@ class BiharVaccineView(models.Model):
     due_list_date_7gdpt_booster_2 = models.DateField(blank=True, null=True)
     delivery_nature = models.TextField(blank=True, null=True)
     term_days = models.SmallIntegerField(blank=True, null=True)
+    birth_weight = models.SmallIntegerField(blank=True, null=True)
 
     class Meta(object):
         app_label = 'icds_reports'
