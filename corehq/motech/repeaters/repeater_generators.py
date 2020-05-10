@@ -282,7 +282,11 @@ class ReferCasePayloadGenerator(BasePayloadGenerator):
 
     def get_payload(self, repeat_record, payload_doc):
 
-        case_ids_to_forward = payload_doc.get_case_property('cases_to_forward').split(' ')
+        case_ids_to_forward = payload_doc.get_case_property('cases_to_forward')
+        if not case_ids_to_forward:
+            raise ReferralError(f'No cases included in transfer. Please add case ids to "cases_to_forward" property')
+        else:
+            case_ids_to_forward = case_ids_to_forward.split(' ')
         new_owner = payload_doc.get_case_property('new_owner')
         cases_to_forward = CaseAccessors(payload_doc.domain).get_cases(case_ids_to_forward)
         case_ids_to_forward = set(case_ids_to_forward)
