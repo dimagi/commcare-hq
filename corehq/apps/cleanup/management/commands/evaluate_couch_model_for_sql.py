@@ -157,6 +157,12 @@ class Command(BaseCommand):
                 if i < len(max_lengths):
                     params['max_length'] = max_lengths[i]
 
+    def standardize_nulls(self):
+        # null defaults to False
+        for key, params in self.field_params.items():
+            if 'null' in params and not params['null']:
+                del self.field_params[key]['null']
+
     def handle(self, django_app, class_name, **options):
         path = f"corehq.apps.{django_app}.models.{class_name}"
         couch_class = to_function(path)
