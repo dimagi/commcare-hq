@@ -99,6 +99,8 @@ class Parser(object):
         self.transiting_site_codes = set()
         # maintain a list of valid site codes to be deprecated i.e all old site codes
         self.site_codes_to_be_deprecated = set()
+        # maintain a list of valid site codes to be archived
+        self.site_codes_to_be_archived = set()
 
         # mapping of expected parent type for a location type
         self.location_type_parent = {
@@ -187,6 +189,8 @@ class Parser(object):
                     continue
                 if self._is_valid_transition(transition):
                     self.site_codes_to_be_deprecated.update(transition.old_site_codes)
+                    if operation != EXTRACT_OPERATION:
+                        self.site_codes_to_be_archived.update(transition.old_site_codes)
                     self.valid_transitions[location_type_code].append(transition)
                     for old_username, new_username in transition.user_transitions.items():
                         if old_username:
@@ -329,7 +333,7 @@ class Parser(object):
                                                f"for type {location_type_code}")
                     elif parent_site_code not in self.new_site_codes_for_location_type[expected_parent_type]:
                         self.errors.append(f"Unexpected parent {parent_site_code} for type {location_type_code}")
-                    if parent_site_code in self.site_codes_to_be_deprecated:
+                    if parent_site_code in self.site_codes_to_be_archived:
                         self.errors.append(f"Parent {parent_site_code} is marked for archival")
 
     def _get_new_parent_site_codes(self, location_type_code):
