@@ -547,6 +547,7 @@ def get_exports_page(request, domain):
     })
 
 
+@location_safe
 @login_and_domain_required
 @require_GET
 def get_saved_export_progress(request, domain):
@@ -559,6 +560,7 @@ def get_saved_export_progress(request, domain):
     })
 
 
+@location_safe
 @login_and_domain_required
 @require_POST
 def toggle_saved_export_enabled(request, domain):
@@ -575,6 +577,7 @@ def toggle_saved_export_enabled(request, domain):
     })
 
 
+@location_safe
 @login_and_domain_required
 @require_POST
 def update_emailed_export_data(request, domain):
@@ -621,6 +624,7 @@ class DailySavedExportListView(BaseExportListView, DailySavedExportListHelper):
 
 
 @require_POST
+@location_safe
 @login_and_domain_required
 def commit_filters(request, domain):
     permissions = ExportsPermissionsManager(request.POST.get('model_type'), domain, request.couch_user)
