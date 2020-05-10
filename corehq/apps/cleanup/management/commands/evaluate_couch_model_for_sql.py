@@ -58,6 +58,14 @@ class Command(BaseCommand):
         }
         if params:
             self.field_params[key].update(params)
+        if field_type == self.FIELD_TYPE_BOOL:
+            self.field_params[key]['default'] = "'TODO'"
+        if key == 'domain':
+            self.field_params[key]['db_index'] = True
+        if 'created' in key:
+            self.field_params[key]['auto_now_add'] = True
+        if 'modified' in key:
+            self.field_params[key]['auto_now'] = True
 
     def field_type(self, key):
         return self.field_types.get(key, None)
