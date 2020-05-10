@@ -10,8 +10,8 @@ class Command(PopulateSQLCommand):
 
     @classmethod
     def sql_class(self):
-        from corehq.apps.mobile_auth.models import SQLMobileAuthKeyRecord
-        return SQLMobileAuthKeyRecord
+        from corehq.apps.mobile_auth.models import MobileAuthKeyRecord
+        return MobileAuthKeyRecord
 
     @classmethod
     def commit_adding_migration(cls):

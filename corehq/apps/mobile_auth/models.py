@@ -15,7 +15,7 @@ def _default_key():
     return generate_aes_key().decode('utf-8')
 
 
-class SQLMobileAuthKeyRecord(models.Model):
+class MobileAuthKeyRecord(models.Model):
     """
 
     Data model for generating the XML for mobile auth
@@ -30,9 +30,6 @@ class SQLMobileAuthKeyRecord(models.Model):
     expires = models.DateTimeField(null=False)  # just bumped up by multiple of 30 days when expired
     type = models.CharField(null=False, max_length=32, choices=[('AES256', 'AES256')], default='AES256')
     key = models.CharField(null=False, max_length=127, default=_default_key)
-
-    class Meta:
-        db_table = "mobile_auth_mobileauthkeyrecord"
 
     @classmethod
     def key_for_time(cls, domain, user_id, now):
