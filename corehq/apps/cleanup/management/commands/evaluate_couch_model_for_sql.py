@@ -69,13 +69,13 @@ class Command(BaseCommand):
 
         models_file = self.models_path[:-(len(self.class_name) + 1)].replace(".", os.path.sep) + ".py"
         models_content = self.generate_models_changes()
-        print("################# edit {models_file} #################\n")
+        print(f"################# edit {models_file} #################\n")
         print(models_content)
 
         command_file = self.class_name.lower() + ".py"
         command_file = os.path.join("corehq", "apps", self.django_app, "management", "commands", command_file)
         command_content = self.generate_management_command()
-        print("################# add {command_file} #################\n")
+        print(f"################# add {command_file} #################\n")
         print(command_content)
 
     def evaluate_doc(self, doc, prefix=None):
