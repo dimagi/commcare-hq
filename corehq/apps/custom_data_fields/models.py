@@ -13,7 +13,7 @@ from dimagi.ext.couchdbkit import (
     StringProperty,
 )
 from dimagi.ext.jsonobject import JsonObject
-from dimagi.utils.couch.migration import SubModelSpec, SyncCouchToSQLMixin, SyncSQLToCouchMixin
+from dimagi.utils.couch.migration import SyncCouchToSQLMixin, SyncSQLToCouchMixin
 
 from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
 
@@ -66,19 +66,6 @@ class CustomDataField(JsonObject):
     regex_msg = StringProperty()
 
 
-SYNC_FIELDS = ["domain", "field_type"]
-SYNC_SUBMODELS = [
-    SubModelSpec(
-        sql_attr="sqlfield_set",
-        sql_class=SQLField,
-        sql_fields=['slug', 'is_required', 'label', 'choices', 'regex', 'regex_msg'],
-        couch_attr="fields",
-        couch_class=CustomDataField,
-        couch_fields=['slug', 'is_required', 'label', 'choices', 'regex', 'regex_msg'],
-    )
-]
-
-
 class SQLCustomDataFieldsDefinition(SyncSQLToCouchMixin, models.Model):
     field_type = models.CharField(max_length=126)
     domain = models.CharField(max_length=255, null=True)
@@ -90,11 +77,23 @@ class SQLCustomDataFieldsDefinition(SyncSQLToCouchMixin, models.Model):
 
     @classmethod
     def _migration_get_fields(cls):
-        return SYNC_FIELDS
+        return ["domain", "field_type"]
 
-    @classmethod
-    def _migration_get_submodels(cls):
-        return SYNC_SUBMODELS
+    def _migration_sync_to_couch(self, couch_obj):
+        for field_name in self._migration_get_fields():
+            value = getattr(self, field_name)
+            setattr(couch_obj, field_name, value)
+        couch_obj.fields = [
+            CustomDataField(
+                slug=field.slug,
+                is_required=field.is_required,
+                label=field.label,
+                choices=field.choices,
+                regex=field.regex,
+                regex_msg=field.regex_msg,
+            ) for field in self.get_fields()
+        ]
+        couch_obj.save(sync_to_sql=False)
 
     @classmethod
     def _migration_get_couch_model_class(cls):
@@ -114,18 +113,22 @@ class SQLCustomDataFieldsDefinition(SyncSQLToCouchMixin, models.Model):
             new.save()
             return new
 
+    # Gets ordered, and optionally filtered, fields
     def get_fields(self, required_only=False, include_system=True):
         def _is_match(field):
             return not (
                 (required_only and not field.is_required)
                 or (not include_system and is_system_key(field.slug))
             )
-        return filter(_is_match, self.sqlfield_set.all())
+        order = self.get_sqlfield_order()
+        fields = [SQLField.get(id=o) for o in order]
+        return filter(_is_match, fields)
 
     # Note that this does not save
     def set_fields(self, fields):
         self.sqlfield_set.all().delete()
         self.sqlfield_set.set(fields, bulk=False)
+        self.set_sqlfield_order([f.id for f in fields])
 
     def get_validator(self, data_field_class):
         """
@@ -159,7 +162,7 @@ class SQLCustomDataFieldsDefinition(SyncSQLToCouchMixin, models.Model):
 
         def validate_custom_fields(custom_fields):
             errors = []
-            for field in self.sqlfield_set.all():
+            for field in self.get_fields():
                 value = custom_fields.get(field.slug, None)
                 errors.append(validate_required(field, value))
                 errors.append(validate_choices(field, value))
@@ -201,11 +204,23 @@ class CustomDataFieldsDefinition(SyncCouchToSQLMixin, QuickCachedDocumentMixin, 
 
     @classmethod
     def _migration_get_fields(cls):
-        return SYNC_FIELDS
+        return ["domain", "field_type"]
 
-    @classmethod
-    def _migration_get_submodels(cls):
-        return SYNC_SUBMODELS
+    def _migration_sync_to_sql(self, sql_object):
+        for field_name in self._migration_get_fields():
+            value = getattr(self, field_name)
+            setattr(sql_object, field_name, value)
+        sql_object.set_fields([
+            SQLField(
+                slug=field.slug,
+                is_required=field.is_required,
+                label=field.label,
+                choices=field.choices,
+                regex=field.regex,
+                regex_msg=field.regex_msg,
+            ) for field in self.fields
+        ])
+        sql_object.save(sync_to_couch=False)
 
     @classmethod
     def _migration_get_sql_model_class(cls):

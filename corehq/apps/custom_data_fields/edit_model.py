@@ -197,7 +197,7 @@ class CustomDataModelMixin(object):
                     'choices': field.choices,
                     'regex': field.regex,
                     'regex_msg': field.regex_msg,
-                } for field in definition.sqlfield_set.all()
+                } for field in definition.get_fields()
             ])
             return CustomDataFieldsForm({'data_fields': serialized})
 

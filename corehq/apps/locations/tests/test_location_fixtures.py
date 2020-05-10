@@ -441,7 +441,7 @@ class LocationFixturesDataTest(LocationHierarchyTestCase, FixtureHasLocationsMix
             SQLField(slug='favorite_passtime'),
         ])
         cls.loc_fields.save()
-        cls.field_slugs = [f.slug for f in cls.loc_fields.sqlfield_set.all()]
+        cls.field_slugs = [f.slug for f in cls.loc_fields.get_fields()]
 
     def setUp(self):
         # this works around the fact that get_locations_to_sync is memoized on OTARestoreUser
