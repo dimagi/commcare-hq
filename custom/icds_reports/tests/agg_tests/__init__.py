@@ -13,7 +13,7 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.apps.userreports.models import StaticDataSourceConfiguration
 from corehq.apps.userreports.util import get_indicator_adapter
-from corehq.util.test_utils import flag_enabled
+from corehq.util.test_utils import flag_enabled, timelimit
 
 from custom.icds_reports.tasks import (
     move_ucr_data_into_aggregation_tables,
@@ -25,6 +25,7 @@ from .agg_setup import setup_location_hierarchy, setup_tables_and_fixtures, aggr
 OUTPUT_PATH = os.path.join(os.path.dirname(__file__), 'outputs')
 
 
+@timelimit(480)
 def setUpModule():
     if settings.USE_PARTITIONED_DATABASE:
         print('============= WARNING: not running test setup because settings.USE_PARTITIONED_DATABASE is True.')
