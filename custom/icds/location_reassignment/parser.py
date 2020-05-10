@@ -288,6 +288,8 @@ class Parser(object):
                         self.errors.append(f"Could not find old location with site code {old_site_code}")
                         continue
                     descendants_sites_codes = location.child_locations().values_list('site_code', flat=True)
+                    if not descendants_sites_codes:
+                        continue
                     if operation == EXTRACT_OPERATION:
                         if not set(descendants_sites_codes) & site_codes_to_be_deprecated:
                             self.errors.append(
