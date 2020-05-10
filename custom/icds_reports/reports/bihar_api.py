@@ -168,7 +168,8 @@ def get_api_vaccine_data(month, state_id, last_person_case_id):
         'due_list_date_7g_vit_a_9',
         'due_list_date_1g_bcg',
         'delivery_nature',
-        'term_days'
+        'term_days',
+        'birth_weight'
     )
 
     # To apply pagination on database query with data size length
