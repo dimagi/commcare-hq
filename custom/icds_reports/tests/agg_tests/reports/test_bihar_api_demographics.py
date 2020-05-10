@@ -40,6 +40,8 @@ class DemographicsAPITest(TestCase):
              "registered_status": None, "rch_id": 1234,
              "mcts_id": 213, "phone_number": None,
              "date_death": None, "site_death": None,
-             "closed_on": None, "reason_closure": None},
+             "closed_on": None, "reason_closure": None, 'has_bank_account': None, 'age_marriage': None,
+             'last_referral_date': None, 'referral_health_problem': None, 'referral_reached_date': None,
+             'referral_reached_facility': None, 'migrate_date': None, 'is_alive': None},
             first_person_case
         )
