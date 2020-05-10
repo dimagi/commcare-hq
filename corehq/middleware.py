@@ -210,6 +210,7 @@ class SentryContextMiddleware(MiddlewareMixin):
         with configure_scope() as scope:
             if getattr(request, 'couch_user', None):
                 scope.set_extra('couch_user_id', request.couch_user.get_id)
+                scope.set_tag('user.username', request.couch_user.get_id)
 
             if getattr(request, 'domain', None):
                 scope.set_tag('domain', request.domain)
