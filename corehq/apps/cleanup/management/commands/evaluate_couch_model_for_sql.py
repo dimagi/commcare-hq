@@ -69,13 +69,13 @@ class Command(BaseCommand):
 
         models_file = self.models_path[:-(len(self.class_name) + 1)].replace(".", os.path.sep) + ".py"
         models_content = self.generate_models_changes()
-        print(f"################# edit {models_file} #################\n")
+        print(f"################# edit {models_file} #################")
         print(models_content)
 
-        command_file = self.class_name.lower() + ".py"
+        command_file = "populate_" + self.class_name.lower() + ".py"
         command_file = os.path.join("corehq", "apps", self.django_app, "management", "commands", command_file)
         command_content = self.generate_management_command()
-        print(f"################# add {command_file} #################\n")
+        print(f"################# add {command_file} #################")
         print(command_content)
 
     def evaluate_doc(self, doc, prefix=None):
@@ -201,6 +201,7 @@ class Command(BaseCommand):
 
         field_indent = "\n    "
         field_name_list = "\n            ".join([f'"{f}",' for f in migration_field_names])
+        db_table = self.django_app.replace("_", "").lower() + "_" + self.class_name.lower()
         json_import = ""
         if self.FIELD_TYPE_JSON in self.field_types.values():
             json_import = "from django.contrib.postgres.fields import JSONField\n"
@@ -214,7 +215,7 @@ class SQL{self.class_name}(SyncSQLToCouchMixin, models.Model):
     {field_indent.join(suggested_fields)}
 
     class Meta:
-        db_table = "{self.compress_string(self.django_app)}_{self.class_name.lower()}"
+        db_table = "{db_table}"
 
     @classmethod
     def _migration_get_fields(cls):
@@ -239,18 +240,15 @@ class SQL{self.class_name}(SyncSQLToCouchMixin, models.Model):
         return SQL{self.class_name}
         """
 
-    def compress_string(self, string):
-        return string.replace("_", "").lower()
-
     def generate_management_command(self):
         suggested_updates = []
         for key, field_type in self.field_types.items():
             if self.is_submodel_key(key):
                 continue
             if field_type == self.FIELD_TYPE_DATETIME:
-                suggested_updates.append(f'"{key}": force_to_datetime(doc.get("{key}"))')
+                suggested_updates.append(f'"{key}": force_to_datetime(doc.get("{key}")),')
             else:
-                suggested_updates.append(f'"{key}": doc.get("{key}")')
+                suggested_updates.append(f'"{key}": doc.get("{key}"),')
         updates_list = "\n                ".join(suggested_updates)
 
         datetime_import = ""
