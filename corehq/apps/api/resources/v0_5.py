@@ -6,6 +6,7 @@ from django.contrib.auth.models import User
 from django.forms import ValidationError
 from django.http import Http404, HttpResponse, HttpResponseNotFound
 from django.urls import reverse
+from django.utils.translation import ugettext_noop
 from memoized import memoized_property
 
 from tastypie import fields, http
@@ -32,7 +33,10 @@ from corehq.apps.api.odata.serializers import (
     ODataFormSerializer,
 )
 from corehq.apps.api.odata.utils import record_feed_access_in_datadog
-from corehq.apps.api.odata.views import add_odata_headers
+from corehq.apps.api.odata.views import (
+    add_odata_headers,
+    raise_odata_permissions_issues,
+)
 from corehq.apps.api.resources.auth import (
     AdminAuthentication,
     ODataAuthentication,
@@ -995,6 +999,12 @@ class ODataCaseResource(BaseODataResource):
 
     def obj_get_list(self, bundle, domain, **kwargs):
         config = get_document_or_404(CaseExportInstance, domain, self.config_id)
+        if raise_odata_permissions_issues(bundle.request.couch_user, domain, config):
+            raise ImmediateHttpResponse(
+                HttpForbidden(ugettext_noop(
+                    "You do not have permission to view this feed."
+                ))
+            )
         query = get_case_export_base_query(domain, config.case_type)
         for filter in config.get_filters():
             query = query.filter(filter.to_es_filter())
@@ -1027,6 +1037,13 @@ class ODataFormResource(BaseODataResource):
 
     def obj_get_list(self, bundle, domain, **kwargs):
         config = get_document_or_404(FormExportInstance, domain, self.config_id)
+        if raise_odata_permissions_issues(bundle.request.couch_user, domain, config):
+            raise ImmediateHttpResponse(
+                HttpForbidden(ugettext_noop(
+                    "You do not have permission to view this feed."
+                ))
+            )
+
         query = get_form_export_base_query(domain, config.app_id, config.xmlns, include_errors=False)
         for filter in config.get_filters():
             query = query.filter(filter.to_es_filter())
