@@ -1,6 +1,5 @@
-from collections import defaultdict
-
 import logging
+import os
 
 from django.core.management.base import BaseCommand
 from django.utils.dateparse import parse_datetime
@@ -164,12 +163,12 @@ class Command(BaseCommand):
                 del self.field_params[key]['null']
 
     def handle(self, django_app, class_name, **options):
-        path = f"corehq.apps.{django_app}.models.{class_name}"
-        couch_class = to_function(path)
+        models_path = f"corehq.apps.{django_app}.models.{class_name}"
+        couch_class = to_function(models_path)
         while not couch_class:
-            path = input(f"Could not find {path}, please enter path: ")
-            couch_class = to_function(path)
-            class_name = path.split(".")[-1]
+            models_path = input(f"Could not find {models_path}, please enter path: ")
+            couch_class = to_function(models_path)
+            class_name = models_path.split(".")[-1]
 
         doc_ids = get_doc_ids_by_class(couch_class)
         print("Found {} {} docs\n".format(len(doc_ids), class_name))
@@ -182,25 +181,23 @@ class Command(BaseCommand):
         suggested_fields = []
         migration_field_names = []
         for key, params in self.field_params.items():
-            print("{} is a {}, is {} null and has max length of {}".format(
-                key,
-                self.field_types[key] or 'unknown',
-                'sometimes' if params['null'] else 'never',
-                params.get('max_length', None),
-            ))
-            # TODO: Support submodels
-            if "." not in key and self.field_types[key] not in (self.FIELD_TYPE_SUBMODEL_LIST, self.FIELD_TYPE_SUBMODEL_DICT):
-                arg_list = ", ".join([f"{k}={v}" for k, v, in params.items()])
-                suggested_fields.append(f"{key} = {self.field_types[key]}({arg_list})")
-                migration_field_names.append(key)
+            if self.field_types[key] in (self.FIELD_TYPE_SUBMODEL_LIST, self.FIELD_TYPE_SUBMODEL_DICT):
+                continue
+            if "." in key:
+                continue
+            arg_list = ", ".join([f"{k}={v}" for k, v, in params.items()])
+            suggested_fields.append(f"{key} = {self.field_types[key]}({arg_list})")
+            migration_field_names.append(key)
         suggested_fields.append(f"couch_id = models.CharField(max_length=126, null=True, db_index=True)")
 
+        models_file = models_path[:-(len(class_name) + 1)].replace(".", os.path.sep) + ".py"
         field_indent = "\n    "
         field_name_list = "\n            ".join([f'"{f}",' for f in migration_field_names])
         json_import = ""
         if self.FIELD_TYPE_JSON in self.field_types.values():
             json_import = "from django.contrib.postgres.fields import JSONField\n"
         print(f"""
+################# changes to {models_file} #################
 
 {json_import}from django.db import models
 from dimagi.utils.couch.migration import SyncCouchToSQLMixin, SyncSQLToCouchMixin
@@ -222,7 +219,7 @@ class SQL{class_name}(SyncSQLToCouchMixin, models.Model):
         return {class_name}
 
 
-# TODO: Add to SyncCouchToSQLMixin and the following methods to {class_name}
+# TODO: Add SyncCouchToSQLMixin and the following methods to {class_name}
     @classmethod
     def _migration_get_fields(cls):
         return [
