@@ -118,7 +118,7 @@ class Download(object):
 
     @staticmethod
     def _add_validation(worksheet):
-        operations = VALID_OPERATIONS + OPERATIONS_TO_IGNORE
+        operations = [""] + VALID_OPERATIONS + OPERATIONS_TO_IGNORE
         operation_data_validation = DataValidation(type="list", formula1='"%s"' % (','.join(operations)))
         worksheet.add_data_validation(operation_data_validation)
         for header_cell in worksheet[1]:
