@@ -55,12 +55,13 @@ class SQLField(models.Model):
 
     class Meta:
         db_table = "custom_data_fields_field"
+        order_with_respect_to = "definition"
 
 
 class CustomDataField(JsonObject):
     slug = StringProperty()
-    is_required = BooleanProperty()
-    label = StringProperty()
+    is_required = BooleanProperty(default=False)
+    label = StringProperty(default='')
     choices = StringListProperty()
     regex = StringProperty()
     regex_msg = StringProperty()

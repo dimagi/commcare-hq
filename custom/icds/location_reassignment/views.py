@@ -60,13 +60,14 @@ class LocationReassignmentView(BaseLocationView):
             'bulk_upload': {
                 "download_url": reverse('download_location_reassignment_template', args=[self.domain]),
                 "adjective": _("locations"),
-                "plural_noun": _("location reassignments"),
+                "plural_noun": _("Location Reassignment Request File"),
                 "verb": _("Perform"),
                 "help_link": "https://confluence.dimagi.com/display/ICDS/Location+Reassignment",
             },
         })
         context.update({
             'bulk_upload_form': get_bulk_upload_form(context, form_class=LocationReassignmentRequestForm),
+            "no_header": True,
         })
         return context
 
@@ -153,8 +154,9 @@ class LocationReassignmentView(BaseLocationView):
         return response
 
     def _process_request_for_email_households(self, parser, request, uploaded_filename):
-        if AWC_CODE in parser.valid_transitions:
-            email_household_details.delay(self.domain, parser.valid_transitions[AWC_CODE],
+        awc_transitions = parser.valid_transitions_json(for_location_type=AWC_CODE)
+        if awc_transitions:
+            email_household_details.delay(self.domain, awc_transitions,
                                           uploaded_filename, request.user.email)
             messages.success(request, _(
                 "Your request has been submitted. You will be updated via email."))
@@ -163,8 +165,7 @@ class LocationReassignmentView(BaseLocationView):
 
     def _process_request_for_update(self, parser, request, uploaded_filename):
         process_location_reassignment.delay(
-            self.domain, parser.valid_transitions, parser.new_location_details,
-            parser.user_transitions, list(parser.requested_transitions.keys()),
+            self.domain, parser.valid_transitions_json(),
             uploaded_filename, request.user.email
         )
         messages.success(request, _(

@@ -1,7 +1,9 @@
+import json
 import logging
 from datetime import datetime
 from functools import partial, wraps
 from uuid import uuid4
+from xml.sax.saxutils import escape
 
 from django.template.loader import render_to_string
 
@@ -98,7 +100,7 @@ class PatchCase:
             updates.extend([const.CASE_ACTION_CREATE, const.CASE_ACTION_UPDATE])
             self._dynamic_properties = self.case.dynamic_case_properties()
         else:
-            if cannot_patch(self.diffs):
+            if has_illegal_props(self.diffs):
                 raise CannotPatch(self.diffs)
             props = dict(iter_dynamic_properties(self.diffs))
             self._dynamic_properties = props
@@ -133,8 +135,42 @@ class PatchCase:
             yield CommCareCaseIndex.wrap(diff.old_value)
 
 
-ILLEGAL_PROPS = {"actions", "*"}
-IGNORE_PROPS = {"opened_by", "external_id"}
+def has_illegal_props(diffs):
+    return any(d.path[0] in ILLEGAL_PROPS for d in diffs)
+
+
+def has_known_props(diffs):
+    return any(d.path[0] in KNOWN_PROPERTIES for d in diffs)
+
+
+def iter_dynamic_properties(diffs):
+    for diff in diffs:
+        name = diff.path[0]
+        if name in STATIC_PROPS:
+            continue
+        if diff.old_value is MISSING:
+            value = ""
+        elif len(diff.path) > 1 or not isinstance(diff.old_value, str):
+            raise CannotPatch([diff])
+        else:
+            value = diff.old_value
+        yield name, value
+
+
+ILLEGAL_PROPS = {"actions", "case_id", "domain", "*"}
+UNPATCHABLE_PROPS = {
+    "closed_by",
+    "closed_on",
+    "deleted_on",
+    "deletion_id",
+    "external_id",
+    "modified_by",
+    "modified_on",
+    "opened_by",
+    "opened_on",
+    "server_modified_on",
+    "xform_ids",
+}
 STATIC_PROPS = {
     "case_id",
     "closed",
@@ -167,25 +203,6 @@ STATIC_PROPS = {
 }
 
 
-def cannot_patch(diffs):
-    return any(d.path[0] in ILLEGAL_PROPS for d in diffs) \
-        or all(d.path[0] in IGNORE_PROPS for d in diffs)
-
-
-def has_known_props(diffs):
-    return any(d.path[0] in KNOWN_PROPERTIES for d in diffs)
-
-
-def iter_dynamic_properties(diffs):
-    for diff in diffs:
-        name = diff.path[0]
-        if name in STATIC_PROPS:
-            continue
-        if len(diff.path) > 1 or not isinstance(diff.old_value, str):
-            raise CannotPatch([diff])
-        yield name, diff.old_value
-
-
 @attr.s
 class PatchForm:
     _case = attr.ib()
@@ -204,9 +221,10 @@ class PatchForm:
     def get_xml(self):
         updates = self._case._updates
         case_block = get_case_xml(self._case, updates, version='2.0')
+        diff_block = get_diff_block(self._case)
         return render_to_string('hqcase/xml/case_block.xml', {
             'xmlns': self.xmlns,
-            'case_block': case_block.decode('utf-8'),
+            'case_block': case_block.decode('utf-8') + diff_block,
             'time': json_format_datetime(self.received_on),
             'uid': self.form_id,
             'username': "",
@@ -243,6 +261,52 @@ def add_patch_operation(sql_form):
         date=datetime.utcnow(),
         operation="Couch to SQL case patch"
     ))
+
+
+def get_diff_block(case):
+    """Get XML element containing case diff data
+
+    Some early patch forms were submitted without this element.
+
+    :param case: `PatchCase` instance.
+    :returns: A "<diff>" XML element string containing XML-escaped
+    JSON-encoded case diff data, some of which may be patched.
+
+    ```json
+    {
+        "case_id": case.case_id,
+        "diffs": [
+            {
+                "path": diff.path,
+                "old": diff.old_value,  # omitted if old_value is MISSING
+                "new": diff.new_value,  # omitted if new_value is MISSING
+                "patch": true if patched else false
+                "reason": "...",  # omitted if reason for change is unknown
+            },
+            ...
+        ]
+    }
+    ```
+    """
+    diffs = [diff_to_json(d) for d in sorted(case.diffs, key=lambda d: d.path)]
+    data = {"case_id": case.case_id, "diffs": diffs}
+    return f"<diff>{escape(json.dumps(data))}</diff>"
+
+
+def diff_to_json(diff, new_value=None):
+    assert diff.old_value is not MISSING or diff.new_value is not MISSING, diff
+    obj = {"path": list(diff.path), "patch": is_patchable(diff)}
+    if diff.old_value is not MISSING:
+        obj["old"] = diff.old_value
+    if diff.new_value is not MISSING:
+        obj["new"] = diff.new_value if new_value is None else new_value
+    if getattr(diff, "reason", ""):
+        obj["reason"] = diff.reason
+    return obj
+
+
+def is_patchable(diff):
+    return diff.path[0] not in UNPATCHABLE_PROPS
 
 
 class CannotPatch(Exception):
