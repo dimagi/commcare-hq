@@ -116,13 +116,13 @@ class SQLCustomDataFieldsDefinition(SyncSQLToCouchMixin, models.Model):
             return new
 
     def get_fields(self):
-        order = self.get_field_order()
+        order = self.get_sqlfield_order()
         return [SQLField.get(id=o) for o in order]
 
     def set_fields(self, fields):
         self.sqlfield_set.all().delete()
         self.sqlfield_set.set(fields, bulk=False)
-        self.set_field_order([f.id for f in fields])
+        self.set_sqlfield_order([f.id for f in fields])
 
 
 class CustomDataFieldsDefinition(SyncCouchToSQLMixin, QuickCachedDocumentMixin, Document):
