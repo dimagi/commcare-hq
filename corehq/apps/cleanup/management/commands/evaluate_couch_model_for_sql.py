@@ -8,6 +8,7 @@ from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.modules import to_function
 
 from corehq.dbaccessors.couchapps.all_docs import get_doc_ids_by_class
+from corehq.util.couchdb_management import couch_config
 
 logger = logging.getLogger(__name__)
 
@@ -53,16 +54,16 @@ class Command(BaseCommand):
         self.class_name = class_name
         self.django_app = django_app
         self.models_path = f"corehq.apps.{self.django_app}.models.{self.class_name}"
-        couch_class = to_function(self.models_path)
-        while not couch_class:
+        self.couch_class = to_function(self.models_path)
+        while not self.couch_class:
             self.models_path = input(f"Could not find {self.models_path}, please enter path: ")
-            couch_class = to_function(self.models_path)
+            self.couch_class = to_function(self.models_path)
             self.class_name = self.models_path.split(".")[-1]
 
-        doc_ids = get_doc_ids_by_class(couch_class)
+        doc_ids = get_doc_ids_by_class(self.couch_class)
         print("Found {} {} docs\n".format(len(doc_ids), self.class_name))
 
-        for doc in iter_docs(couch_class.get_db(), doc_ids):
+        for doc in iter_docs(self.couch_class.get_db(), doc_ids):
             self.evaluate_doc(doc)
 
         self.standardize_max_lengths()
@@ -251,6 +252,11 @@ class SQL{self.class_name}(SyncSQLToCouchMixin, models.Model):
                 suggested_updates.append(f'"{key}": doc.get("{key}"),')
         updates_list = "\n                ".join(suggested_updates)
 
+        uri = couch_config.get_db_uri_for_class(self.couch_class)
+        db_slug_with_quotes = {uri: slug for slug, uri in couch_config.all_db_uris_by_slug.items()}[uri]
+        if db_slug_with_quotes:
+            db_slug_with_quotes = f'"{db_slug_with_quotes}"'
+
         datetime_import = ""
         if self.FIELD_TYPE_DATETIME in self.field_types.values():
             datetime_import = "from dimagi.utils.dates import force_to_datetime\n\n"
@@ -260,6 +266,10 @@ class SQL{self.class_name}(SyncSQLToCouchMixin, models.Model):
 
 
 class Command(PopulateSQLCommand):
+    @classmethod
+    def couch_db_slug(cls):
+        return {db_slug_with_quotes}
+
     @classmethod
     def couch_doc_type(self):
         return '{self.class_name}'
