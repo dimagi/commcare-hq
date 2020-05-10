@@ -291,7 +291,7 @@ class Parser(object):
                     if not descendants_sites_codes:
                         continue
                     if operation == EXTRACT_OPERATION:
-                        if not set(descendants_sites_codes) & site_codes_to_be_deprecated:
+                        if not (set(descendants_sites_codes) & site_codes_to_be_deprecated):
                             self.errors.append(
                                 f"Location {location.site_code} is getting deprecated via {operation} "
                                 f"but none of its descendants")
