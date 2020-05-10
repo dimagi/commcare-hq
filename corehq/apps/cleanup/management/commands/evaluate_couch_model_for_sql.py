@@ -201,7 +201,7 @@ class Command(BaseCommand):
 
         field_indent = "\n    "
         field_name_list = "\n            ".join([f'"{f}",' for f in migration_field_names])
-        db_table = self.django_app.replace("_", "").lower() + "_" + self.class_name.lower()
+        db_table = self.django_app.lower() + "_" + self.class_name.replace("_", "").lower()
         json_import = ""
         if self.FIELD_TYPE_JSON in self.field_types.values():
             json_import = "from django.contrib.postgres.fields import JSONField\n"
