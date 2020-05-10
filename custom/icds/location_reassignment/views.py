@@ -24,6 +24,7 @@ from custom.icds.location_reassignment.const import (
     HOUSEHOLD_ID_COLUMN,
     NEW_SITE_CODE_COLUMN,
     OPERATION_COLUMN,
+    SHEETS_TO_IGNORE,
 )
 from custom.icds.location_reassignment.download import Download
 from custom.icds.location_reassignment.dumper import Dumper
@@ -135,6 +136,8 @@ class LocationReassignmentView(BaseLocationView):
     @staticmethod
     def _validate_worksheet(worksheet, valid_titles, mandatory_columns):
         errors = []
+        if worksheet.title in SHEETS_TO_IGNORE:
+            return []
         if worksheet.title not in valid_titles:
             errors.append(_("Unexpected sheet {sheet_title}").format(sheet_title=worksheet.title))
             return errors

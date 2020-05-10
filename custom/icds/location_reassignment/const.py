@@ -58,3 +58,7 @@ AWC_CODE = "awc"
 BLOCK_CODE = "block"  # also called "Project" at times
 HOUSEHOLD_CASE_TYPE = "household"
 PERSON_CASE_TYPE = "person"
+
+SHEETS_TO_IGNORE = [
+    "User Deletion Requests"
+]
