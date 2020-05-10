@@ -260,11 +260,11 @@ class Parser(object):
             .values_list('site_code', flat=True)
         )
         if len(deprecating_locations_site_codes) != len(self.site_codes_to_be_deprecated):
-            self.errors.append(f"Found {len(deprecating_locations_site_codes)} locations for "
+            self.errors.append(f"Found {len(deprecating_locations_site_codes)} location(s) for "
                                f"{len(self.site_codes_to_be_deprecated)} deprecating site codes")
         missing_site_codes = set(self.site_codes_to_be_deprecated) - set(deprecating_locations_site_codes)
         if missing_site_codes:
-            self.errors.append(f"Could not find old locations with site codes {','.join(missing_site_codes)}")
+            self.errors.append(f"Could not find old location(s) with site codes {','.join(missing_site_codes)}")
 
     def _validate_descendants_deprecated(self):
         """
