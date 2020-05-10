@@ -117,7 +117,7 @@ class SQLCustomDataFieldsDefinition(SyncSQLToCouchMixin, models.Model):
 
     def get_fields(self):
         order = self.get_sqlfield_order()
-        return [SQLField.get(id=o) for o in order]
+        return [SQLField.objects.get(id=o) for o in order]
 
     def set_fields(self, fields):
         self.sqlfield_set.all().delete()
