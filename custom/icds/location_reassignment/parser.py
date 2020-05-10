@@ -3,6 +3,7 @@ from collections import defaultdict
 import attr
 
 from corehq.apps.locations.models import LocationType, SQLLocation
+from corehq.apps.locations.util import valid_location_site_code
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import normalize_username
 from custom.icds.location_reassignment.const import (
@@ -23,6 +24,12 @@ from custom.icds.location_reassignment.const import (
     VALID_OPERATIONS,
 )
 from custom.icds.location_reassignment.models import Transition
+
+
+def parse_site_code(site_code):
+    if site_code:
+        return str(site_code).lower()
+    return ''
 
 
 class TransitionRow(object):
@@ -62,14 +69,23 @@ class TransitionRow(object):
             errors.append(f"No change in location code for operation {self.operation}. "
                           f"Got old: '{self.old_site_code}' and new: '{self.new_site_code}'")
 
+        if not valid_location_site_code(self.old_site_code):
+            errors.append(f"Got invalid location code '{self.old_site_code}' for operation {self.operation}")
+        if not valid_location_site_code(self.new_site_code):
+            errors.append(f"Got invalid location code '{self.new_site_code}' for operation {self.operation}")
         if bool(self.new_username) != bool(self.old_username):
             errors.append(f"Need both old and new username for {self.operation} operation "
                           f"on location '{self.old_site_code}'")
         if not self.new_location_details.get('name', '').strip():
             errors.append(f"Missing new location name for {self.new_site_code}")
-        if self.expects_parent and not self.new_location_details.get('parent_site_code'):
+        parent_site_code = self.new_location_details.get('parent_site_code')
+        if parent_site_code:
+            if not valid_location_site_code(parent_site_code):
+                errors.append(f"Got invalid parent location code '{parent_site_code}' "
+                              f"for new location '{self.new_site_code}' for operation {self.operation}")
+        if self.expects_parent and not parent_site_code:
             errors.append(f"Need parent for '{self.new_site_code}'")
-        if not self.expects_parent and self.new_location_details.get('parent_site_code'):
+        if not self.expects_parent and parent_site_code:
             errors.append(f"Unexpected parent set for '{self.new_site_code}'")
         return errors
 
@@ -135,12 +151,12 @@ class Parser(object):
                 transition_row = TransitionRow(
                     location_type=location_type_code,
                     operation=operation,
-                    old_site_code=row.get(CURRENT_SITE_CODE_COLUMN),
-                    new_site_code=row.get(NEW_SITE_CODE_COLUMN),
+                    old_site_code=parse_site_code(row.get(CURRENT_SITE_CODE_COLUMN)),
+                    new_site_code=parse_site_code(row.get(NEW_SITE_CODE_COLUMN)),
                     expects_parent=expects_parent,
                     new_location_details={
                         'name': row.get(NEW_NAME),
-                        'parent_site_code': row.get(NEW_PARENT_SITE_CODE),
+                        'parent_site_code': parse_site_code(row.get(NEW_PARENT_SITE_CODE)),
                         'lgd_code': row.get(NEW_LGD_CODE),
                         'sub_district_name': row.get(NEW_SUB_DISTRICT_NAME)
                     },
