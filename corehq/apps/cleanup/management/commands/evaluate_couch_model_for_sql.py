@@ -170,21 +170,35 @@ class Command(BaseCommand):
         return False
 
     def handle(self, django_app, class_name, **options):
-        models_path = f"corehq.apps.{django_app}.models.{class_name}"
-        couch_class = to_function(models_path)
+        self.class_name = class_name
+        self.django_app = django_app
+        self.models_path = f"corehq.apps.{self.django_app}.models.{self.class_name}"
+        couch_class = to_function(self.models_path)
         while not couch_class:
-            models_path = input(f"Could not find {models_path}, please enter path: ")
-            couch_class = to_function(models_path)
-            class_name = models_path.split(".")[-1]
+            self.models_path = input(f"Could not find {self.models_path}, please enter path: ")
+            couch_class = to_function(self.models_path)
+            self.class_name = self.models_path.split(".")[-1]
 
         doc_ids = get_doc_ids_by_class(couch_class)
-        print("Found {} {} docs\n".format(len(doc_ids), class_name))
+        print("Found {} {} docs\n".format(len(doc_ids), self.class_name))
 
         for doc in iter_docs(couch_class.get_db(), doc_ids):
             self.evaluate_doc(doc)
 
         self.standardize_max_lengths()
 
+        models_file = self.models_path[:-(len(self.class_name) + 1)].replace(".", os.path.sep) + ".py"
+        models_content = self.generate_models_changes()
+        print("################# edit {models_file} #################\n")
+        print(models_content)
+
+        command_file = self.class_name.lower() + ".py"
+        command_file = os.path.join("corehq", "apps", self.django_app, "management", "commands", command_file)
+        command_content = self.generate_management_command()
+        print("################# add {command_file} #################\n")
+        print(command_content)
+
+    def generate_models_changes(self):
         suggested_fields = []
         migration_field_names = []
         for key, params in self.field_params.items():
@@ -195,23 +209,21 @@ class Command(BaseCommand):
             migration_field_names.append(key)
         suggested_fields.append(f"couch_id = models.CharField(max_length=126, null=True, db_index=True)")
 
-        models_file = models_path[:-(len(class_name) + 1)].replace(".", os.path.sep) + ".py"
         field_indent = "\n    "
         field_name_list = "\n            ".join([f'"{f}",' for f in migration_field_names])
         json_import = ""
         if self.FIELD_TYPE_JSON in self.field_types.values():
             json_import = "from django.contrib.postgres.fields import JSONField\n"
-        print(f"""
-################# changes to {models_file} #################
-
+        return f"""
 {json_import}from django.db import models
 from dimagi.utils.couch.migration import SyncCouchToSQLMixin, SyncSQLToCouchMixin
 
-class SQL{class_name}(SyncSQLToCouchMixin, models.Model):
+
+class SQL{self.class_name}(SyncSQLToCouchMixin, models.Model):
     {field_indent.join(suggested_fields)}
 
     class Meta:
-        db_table = "{self.compress_string(django_app)}_{class_name.lower()}"
+        db_table = "{self.compress_string(self.django_app)}_{self.class_name.lower()}"
 
     @classmethod
     def _migration_get_fields(cls):
@@ -221,10 +233,10 @@ class SQL{class_name}(SyncSQLToCouchMixin, models.Model):
 
     @classmethod
     def _migration_get_couch_model_class(cls):
-        return {class_name}
+        return {self.class_name}
 
 
-# TODO: Add SyncCouchToSQLMixin and the following methods to {class_name}
+# TODO: Add SyncCouchToSQLMixin and the following methods to {self.class_name}
     @classmethod
     def _migration_get_fields(cls):
         return [
@@ -233,9 +245,10 @@ class SQL{class_name}(SyncSQLToCouchMixin, models.Model):
 
     @classmethod
     def _migration_get_sql_model_class(cls):
-        return SQL{class_name}
-        """)
+        return SQL{self.class_name}
+        """
 
+    def generate_management_command(self):
         suggested_updates = []
         for key, field_type in self.field_types.items():
             if self.is_submodel_key(key):
@@ -246,27 +259,23 @@ class SQL{class_name}(SyncSQLToCouchMixin, models.Model):
                 suggested_updates.append(f'"{key}": doc.get("{key}")')
         updates_list = "\n                ".join(suggested_updates)
 
-        migration_file = class_name.lower() + ".py"
-        migration_file = os.path.join("corehq", "apps", django_app, "management", "commands", migration_file)
         datetime_import = ""
         if self.FIELD_TYPE_DATETIME in self.field_types.values():
             datetime_import = "from dimagi.utils.dates import force_to_datetime\n\n"
 
-        print(f"""
-################# add {migration_file} #################
-
+        return f"""
 {datetime_import}from corehq.apps.cleanup.management.commands.populate_sql_model_from_couch_model import PopulateSQLCommand
 
 
 class Command(PopulateSQLCommand):
     @classmethod
     def couch_doc_type(self):
-        return '{class_name}'
+        return '{self.class_name}'
 
     @classmethod
     def sql_class(self):
-        from {models_path} import SQL{class_name}
-        return SQL{class_name}
+        from {self.models_path} import SQL{self.class_name}
+        return SQL{self.class_name}
 
     @classmethod
     def commit_adding_migration(cls):
@@ -279,4 +288,4 @@ class Command(PopulateSQLCommand):
                 {updates_list}
             }})
         return (model, created)
-        """)
+        """
