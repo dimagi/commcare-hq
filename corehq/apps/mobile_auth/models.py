@@ -3,7 +3,6 @@ import uuid
 from django.db import models
 
 from dimagi.ext.couchdbkit import DateTimeProperty, Document, StringProperty
-from dimagi.utils.parsing import json_format_datetime
 
 from .utils import generate_aes_key
 
@@ -35,18 +34,6 @@ class MobileAuthKeyRecord(Document):
     def uuid(self):
         return self.get_id
 
-    @classmethod
-    def key_for_time(cls, domain, user_id, now):
-        now_json = json_format_datetime(now)
-        key_record = cls.view('mobile_auth/key_records',
-            startkey=[domain, user_id, now_json],
-            endkey=[domain, user_id, ""],
-            descending=True,
-            limit=1,
-            include_docs=True,
-        ).first()
-        return key_record
-
 
 def _default_uuid():
     return uuid.uuid4().hex
@@ -68,3 +55,7 @@ class SQLMobileAuthKeyRecord(models.Model):
 
     class Meta:
         db_table = "mobile_auth_mobileauthkeyrecord"
+
+    @classmethod
+    def key_for_time(cls, domain, user_id, now):
+        return cls.objects.filter(domain=domain, user_id=user_id, valid__lte=now).order_by('-valid').first()
