@@ -21,6 +21,9 @@ class HqDeploy(models.Model):
     environment = models.CharField(max_length=100, null=True)
     diff_url = models.CharField(max_length=255, null=True)
 
+    class Meta():
+        ordering = ["date"]
+
     @classmethod
     def get_latest(cls, environment, limit=1):
         query = cls.objects.filter(environment=environment).order_by("-date")
