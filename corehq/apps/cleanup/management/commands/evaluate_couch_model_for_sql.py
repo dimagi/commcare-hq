@@ -136,6 +136,19 @@ class Command(BaseCommand):
     def compress_string(self, string):
         return string.replace("_", "").lower()
 
+    def standardize_max_lengths(self):
+        max_lengths = [1, 2, 8, 12, 32, 64, 80, 128, 256, 512, 1000]
+        for key, params in self.field_params.items():
+            if self.field_types[key] != self.FIELD_TYPE_STRING:
+                del self.field_params[key]['max_length']
+                continue
+            if params['max_length']:
+                i = 0
+                while i < len(max_lengths) and params['max_length'] > max_lengths[i]:
+                    i += 1
+                if i < len(max_lengths):
+                    params['max_length'] = max_lengths[i]
+
     def handle(self, django_app, class_name, **options):
         path = f"corehq.apps.{django_app}.models.{class_name}"
         couch_class = to_function(path)
@@ -149,6 +162,8 @@ class Command(BaseCommand):
 
         for doc in iter_docs(couch_class.get_db(), doc_ids):
             self.evaluate_doc(doc)
+
+        self.standardize_max_lengths()
 
         suggested_fields = []
         for key, params in self.field_params.items():
