@@ -549,6 +549,10 @@ class ReferCaseRepeater(CaseRepeater):
 
     payload_generator_classes = (ReferCasePayloadGenerator,)
 
+    def form_class_name(self):
+        # Note this class does not exist but this property is only used to construct the URL
+        return 'ReferCaseRepeater'
+
     @classmethod
     def available_for_domain(cls, domain):
         """Returns whether this repeater can be used by a particular domain

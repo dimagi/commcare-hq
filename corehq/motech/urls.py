@@ -48,6 +48,8 @@ urlpatterns = [
         {'repeater_type': 'CaseRepeater'}, name=EditCaseRepeaterView.urlname),
     url(r'^forwarding/edit/FormRepeater/(?P<repeater_id>\w+)/$', EditFormRepeaterView.as_view(),
         {'repeater_type': 'FormRepeater'}, name=EditFormRepeaterView.urlname),
+    url(r'^forwarding/edit/ReferCaseRepeater/(?P<repeater_id>\w+)/$', EditCaseRepeaterView.as_view(),
+        {'repeater_type': 'ReferCaseRepeater'}, name=EditCaseRepeaterView.urlname),
     url(r'^forwarding/edit/OpenmrsRepeater/(?P<repeater_id>\w+)/$', EditOpenmrsRepeaterView.as_view(),
         {'repeater_type': 'OpenmrsRepeater'}, name=EditOpenmrsRepeaterView.urlname),
     url(r'^forwarding/edit/Dhis2Repeater/(?P<repeater_id>\w+)/$', EditDhis2RepeaterView.as_view(),
