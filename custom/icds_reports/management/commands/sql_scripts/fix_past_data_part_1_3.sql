@@ -7,7 +7,8 @@ UPDATE "agg_child_health_{start_date}" agg_child_health
     stunting_severe = ut.stunting_severe,
     stunting_normal = ut.stunting_normal,
     height_measured_in_month = ut.height_measured_in_month,
-    weighed_and_height_measured_in_month = ut.weighed_and_height_measured_in_month
+    weighed_and_height_measured_in_month = ut.weighed_and_height_measured_in_month,
+    height_eligible = ut.height_eligible
   FROM temp_chm_local ut
   WHERE (
     agg_child_health.awc_id=ut.awc_id and 

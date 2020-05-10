@@ -1,14 +1,15 @@
 DROP TABLE IF EXISTS temp_chm;
-CREATE UNLOGGED TABLE temp_chm As select awc_id, supervisor_id, month, gender, age_tranche, caste, wasting_moderate, wasting_severe, wasting_normal, stunting_moderate, stunting_severe, stunting_normal, height_measured_in_month, weighed_and_height_measured_in_month, disabled, minority, resident from agg_child_health where 1=0;
+CREATE UNLOGGED TABLE temp_chm As select awc_id, supervisor_id, month, gender, age_tranche, caste, height_eligible, wasting_moderate, wasting_severe, wasting_normal, stunting_moderate, stunting_severe, stunting_normal, height_measured_in_month, weighed_and_height_measured_in_month, disabled, minority, resident from agg_child_health where 1=0;
 SELECT create_distributed_table('temp_chm', 'supervisor_id');
 INSERT INTO "temp_chm" (
-  awc_id, supervisor_id, month, gender, age_tranche, caste,
+  awc_id, supervisor_id, month, gender, age_tranche, caste, height_eligible,
   wasting_moderate, wasting_severe, wasting_normal, stunting_moderate, stunting_severe,
   stunting_normal, height_measured_in_month, weighed_and_height_measured_in_month, disabled,
   minority, resident
 ) (
   SELECT
       chm.awc_id, chm.supervisor_id, chm.month, chm.sex, chm.age_tranche, chm.caste,
+      SUM(CASE WHEN chm.age_tranche NOT IN ('72') AND chm.valid_in_month = 1 THEN 1 ELSE 0 END) as height_eligible,
       SUM(
         CASE WHEN chm.current_month_wasting = 'moderate' THEN 1 ELSE 0 END
       ) as wasting_moderate,

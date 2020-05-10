@@ -8,7 +8,8 @@ SET
   stunting_severe = ut.stunting_severe, 
   stunting_normal = ut.stunting_normal, 
   height_measured_in_month = ut.height_measured_in_month, 
-  weighed_and_height_measured_in_month = ut.weighed_and_height_measured_in_month 
+  weighed_and_height_measured_in_month = ut.weighed_and_height_measured_in_month,
+  height_eligible = ut.height_eligible
 FROM 
   (
     SELECT 
@@ -24,7 +25,8 @@ FROM
       SUM(height_measured_in_month) as height_measured_in_month, 
       SUM(
         weighed_and_height_measured_in_month
-      ) as weighed_and_height_measured_in_month 
+      ) as weighed_and_height_measured_in_month,
+      SUM(height_eligible) as height_eligible
     FROM 
       "agg_child_health_{start_date}" agg_child
       INNER JOIN (
