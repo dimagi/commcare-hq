@@ -540,9 +540,9 @@ class UpdateCaseRepeater(CaseRepeater):
         return super(UpdateCaseRepeater, self).allowed_to_forward(payload) and len(payload.xform_ids) > 1
 
 
-class ReferCaseRepeater(CaseRepeater):
+class ReferCaseRepeater(CreateCaseRepeater):
     """
-    A repeater that triggers off case changes but sends a form creating cases in
+    A repeater that triggers off case creation but sends a form creating cases in
     another commcare project
     """
     friendly_name = _("Forward Cases To Another Commcare Project")
