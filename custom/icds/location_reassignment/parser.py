@@ -189,7 +189,7 @@ class Parser(object):
                     continue
                 if self._is_valid_transition(transition):
                     self.site_codes_to_be_deprecated.update(transition.old_site_codes)
-                    if operation != EXTRACT_OPERATION:
+                    if transition.operation_obj.archives_old_locations:
                         self.site_codes_to_be_archived.update(transition.old_site_codes)
                     self.valid_transitions[location_type_code].append(transition)
                     for old_username, new_username in transition.user_transitions.items():

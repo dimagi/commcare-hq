@@ -121,6 +121,7 @@ class Transition(object):
 class BaseOperation(metaclass=ABCMeta):
     type = None
     deactivates_old_users = True
+    archives_old_locations = True
     expected_old_locations = ONE
     expected_new_locations = ONE
 
@@ -241,6 +242,7 @@ class SplitOperation(BaseOperation):
 class ExtractOperation(BaseOperation):
     type = EXTRACT_OPERATION
     deactivates_old_users = False
+    archives_old_locations = False
 
     def perform(self):
         timestamp = datetime.utcnow()
