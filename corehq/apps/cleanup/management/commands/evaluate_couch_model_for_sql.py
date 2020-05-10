@@ -37,14 +37,14 @@ class Command(BaseCommand):
 
     COUCH_FIELDS = {'_id', '_rev', 'doc_type', 'base_doc'}
 
-    FIELD_TYPE_BOOL = 'BooleanField'
-    FIELD_TYPE_INTEGER = 'IntegerField'
-    FIELD_TYPE_DATETIME = 'DateTimeField'
-    FIELD_TYPE_DECIMAL = 'DecimalField'
-    FIELD_TYPE_STRING = 'CharField'
+    FIELD_TYPE_BOOL = 'models.BooleanField'
+    FIELD_TYPE_INTEGER = 'models.IntegerField'
+    FIELD_TYPE_DATETIME = 'models.DateTimeField'
+    FIELD_TYPE_DECIMAL = 'models.DecimalField'
+    FIELD_TYPE_STRING = 'models.CharField'
     FIELD_TYPE_JSON = 'JsonField'
-    FIELD_TYPE_SUBMODEL_LIST = 'ForeignKey'
-    FIELD_TYPE_SUBMODEL_DICT = 'OneToOneField'
+    FIELD_TYPE_SUBMODEL_LIST = 'models.ForeignKey'
+    FIELD_TYPE_SUBMODEL_DICT = 'models.OneToOneField'
     FIELD_TYPE_UNKNOWN = ''
 
     field_types = {}
@@ -174,6 +174,7 @@ class Command(BaseCommand):
         self.standardize_max_lengths()
 
         suggested_fields = []
+        migration_field_names = []
         for key, params in self.field_params.items():
             print("{} is a {}, is {} null and has max length of {}".format(
                 key,
@@ -185,15 +186,44 @@ class Command(BaseCommand):
             if "." not in key and self.field_types[key] not in (self.FIELD_TYPE_SUBMODEL_LIST, self.FIELD_TYPE_SUBMODEL_DICT):
                 arg_list = ", ".join([f"{k}={v}" for k, v, in params.items()])
                 suggested_fields.append(f"{key} = {self.field_types[key]}({arg_list})")
+                migration_field_names.append(key)
         suggested_fields.append(f"couch_id = models.CharField(max_length=126, null=True, db_index=True)")
 
         field_indent = "\n    "
+        field_name_list = "\n            ".join([f'"{f}",' for f in migration_field_names])
+        json_import = ""
+        if self.FIELD_TYPE_JSON in self.field_types.values():
+            json_import = "from django.contrib.postgres.fields import JSONField\n"
         print(f"""
 
+{json_import}from django.db import models
+from dimagi.utils.couch.migration import SyncCouchToSQLMixin, SyncSQLToCouchMixin
 
-class SQL{class_name}(models.Model):
+class SQL{class_name}(SyncSQLToCouchMixin, models.Model):
     {field_indent.join(suggested_fields)}
 
     class Meta:
-        db_table = "{self.compress_string(django_app)}_{self.compress_string(class_name)}"
+        db_table = "{self.compress_string(django_app)}_{class_name}"
+
+    @classmethod
+    def _migration_get_fields(cls):
+        return [
+            {field_name_list}
+        ]
+
+    @classmethod
+    def _migration_get_couch_model_class(cls):
+        return {class_name}
+
+
+# TODO: Add to SyncCouchToSQLMixin and the following methods to {class_name}
+    @classmethod
+    def _migration_get_fields(cls):
+        return [
+            {field_name_list}
+        ]
+
+    @classmethod
+    def _migration_get_sql_model_class(cls):
+        return SQL{class_name}
         """)
