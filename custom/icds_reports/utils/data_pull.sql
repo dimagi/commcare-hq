@@ -1,5 +1,3 @@
-
-
 SELECT caste, count(*) as number_0_3_child FROM "child_health_monthly" WHERE
     month='2020-05-01'
     AND age_tranche::Integer<=36
@@ -57,11 +55,11 @@ SELECT caste, count(*) as number_3_6_child FROM "child_health_monthly" WHERE
 -- (18 rows)
 
 SELECT ccs.caste, count(*) as number_pw FROM "ccs_record_monthly" ccs
-    LEFT JOIN "awc_location" awc ON awc.doc_id = ccs.awc_id
+    LEFT JOIN "awc_location" awc ON (awc.doc_id = ccs.awc_id AND awc.supervisor_id = ccs.supervisor_id)
     WHERE ccs.month='2020-05-01' AND ccs.pregnant_all=1 AND awc.state_id='f9b47ea2ee2d8a02acddeeb491d3e175'
     GROUP BY ccs.caste;
---                                                                                          QUERY PLAN
--- --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+--                                                                                        QUERY PLAN
+-- ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 --  HashAggregate  (cost=0.00..0.00 rows=0 width=0)
 --    Group Key: remote_scan.caste
 --    ->  Custom Scan (Citus Real-Time)  (cost=0.00..0.00 rows=0 width=0)
@@ -69,33 +67,27 @@ SELECT ccs.caste, count(*) as number_pw FROM "ccs_record_monthly" ccs
 --          Tasks Shown: One of 64
 --          ->  Task
 --                Node: host=100.71.184.232 port=6432 dbname=icds_ucr
---                ->  Finalize GroupAggregate  (cost=162363.88..162375.42 rows=4 width=12)
+--                ->  GroupAggregate  (cost=162921.28..162921.30 rows=1 width=12)
 --                      Group Key: ccs.caste
---                      ->  Gather Merge  (cost=162363.88..162375.28 rows=20 width=12)
---                            Workers Planned: 5
---                            ->  Partial GroupAggregate  (cost=161363.80..161372.79 rows=4 width=12)
---                                  Group Key: ccs.caste
---                                  ->  Sort  (cost=161363.80..161366.78 rows=1193 width=4)
---                                        Sort Key: ccs.caste
---                                        ->  Merge Join  (cost=161008.16..161302.84 rows=1193 width=4)
---                                              Merge Cond: (awc.doc_id = ccs.awc_id)
---                                              ->  Sort  (cost=13399.63..13454.34 rows=21883 width=31)
---                                                    Sort Key: awc.doc_id
---                                                    ->  Parallel Index Only Scan using awc_location_pkey_102840 on awc_location_102840 awc  (cost=0.68..11822.13 rows=21883 width=31)
---                                                          Index Cond: (state_id = 'f9b47ea2ee2d8a02acddeeb491d3e175'::text)
---                                              ->  Sort  (cost=147608.53..147695.21 rows=34672 width=37)
---                                                    Sort Key: ccs.awc_id
---                                                    ->  Index Scan using crm_supervisor_person_month_idx_102712 on ccs_record_monthly_102712 ccs  (cost=0.56..144438.45 rows=34672 width=37)
---                                                          Index Cond: (month = '2020-05-01'::date)
---                                                          Filter: (pregnant_all = 1)
--- (26 rows)
+--                      ->  Sort  (cost=162921.28..162921.29 rows=1 width=4)
+--                            Sort Key: ccs.caste
+--                            ->  Gather  (cost=1001.11..162921.27 rows=1 width=4)
+--                                  Workers Planned: 4
+--                                  ->  Nested Loop  (cost=1.10..161921.17 rows=1 width=4)
+--                                        ->  Parallel Index Scan using crm_supervisor_person_month_idx_102712 on ccs_record_monthly_102712 ccs  (cost=0.56..143385.51 rows=8668 width=70)
+--                                              Index Cond: (month = '2020-05-01'::date)
+--                                              Filter: (pregnant_all = 1)
+--                                        ->  Index Scan using awc_location_indx6_102840 on awc_location_102840 awc  (cost=0.55..2.13 rows=1 width=63)
+--                                              Index Cond: (doc_id = ccs.awc_id)
+--                                              Filter: ((state_id = 'f9b47ea2ee2d8a02acddeeb491d3e175'::text) AND (ccs.supervisor_id = supervisor_id))
+-- (20 rows)
 
 SELECT ccs.caste, count(*) as number_lm FROM "ccs_record_monthly" ccs
-    LEFT JOIN "awc_location" awc ON awc.doc_id = ccs.awc_id
+    LEFT JOIN "awc_location" awc ON (awc.doc_id = ccs.awc_id AND awc.supervisor_id = ccs.supervisor_id)
     WHERE ccs.month='2020-05-01' AND ccs.lactating_all=1 AND awc.state_id='f9b47ea2ee2d8a02acddeeb491d3e175'
     GROUP BY ccs.caste;
--- QUERY PLAN
--- --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+                                                                                      QUERY PLAN
+-- --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 --  HashAggregate  (cost=0.00..0.00 rows=0 width=0)
 --    Group Key: remote_scan.caste
 --    ->  Custom Scan (Citus Real-Time)  (cost=0.00..0.00 rows=0 width=0)
@@ -103,27 +95,24 @@ SELECT ccs.caste, count(*) as number_lm FROM "ccs_record_monthly" ccs
 --          Tasks Shown: One of 64
 --          ->  Task
 --                Node: host=100.71.184.232 port=6432 dbname=icds_ucr
---                ->  Finalize GroupAggregate  (cost=163898.22..163913.44 rows=4 width=12)
+--                ->  GroupAggregate  (cost=164843.34..164843.36 rows=1 width=12)
 --                      Group Key: ccs.caste
---                      ->  Gather Merge  (cost=163898.22..163913.30 rows=20 width=12)
---                            Workers Planned: 5
---                            ->  Partial GroupAggregate  (cost=162898.14..162910.81 rows=4 width=12)
---                                  Group Key: ccs.caste
---                                  ->  Sort  (cost=162898.14..162902.35 rows=1684 width=4)
---                                        Sort Key: ccs.caste
---                                        ->  Merge Join  (cost=162436.88..162807.90 rows=1684 width=4)
---                                              Merge Cond: (awc.doc_id = ccs.awc_id)
---                                              ->  Sort  (cost=13399.63..13454.34 rows=21883 width=31)
---                                                    Sort Key: awc.doc_id
---                                                    ->  Parallel Index Only Scan using awc_location_pkey_102840 on awc_location_102840 awc  (cost=0.68..11822.13 rows=21883 width=31)
---                                                          Index Cond: (state_id = 'f9b47ea2ee2d8a02acddeeb491d3e175'::text)
---                                              ->  Sort  (cost=149037.25..149159.64 rows=48958 width=37)
---                                                    Sort Key: ccs.awc_id
---                                                    ->  Index Scan using crm_supervisor_person_month_idx_102712 on ccs_record_monthly_102712 ccs  (cost=0.56..144438.45 rows=48958 width=37)
---                                                          Index Cond: (month = '2020-05-01'::date)
---                                                          Filter: (lactating_all = 1)
--- (26 rows)
-
+--                      ->  Sort  (cost=164843.34..164843.34 rows=1 width=4)
+--                            Sort Key: ccs.caste
+--                            ->  Gather  (cost=164313.27..164843.33 rows=1 width=4)
+--                                  Workers Planned: 5
+--                                  ->  Merge Join  (cost=163313.27..163843.23 rows=1 width=4)
+--                                        Merge Cond: ((awc.supervisor_id = ccs.supervisor_id) AND (awc.doc_id = ccs.awc_id))
+--                                        ->  Sort  (cost=13883.43..13938.14 rows=21883 width=63)
+--                                              Sort Key: awc.supervisor_id, awc.doc_id
+--                                              ->  Parallel Index Only Scan using awc_location_pkey_102840 on awc_location_102840 awc  (cost=0.68..11822.13 rows=21883 width=63)
+--                                                    Index Cond: (state_id = 'f9b47ea2ee2d8a02acddeeb491d3e175'::text)
+--                                        ->  Sort  (cost=149428.80..149551.19 rows=48958 width=70)
+--                                              Sort Key: ccs.supervisor_id, ccs.awc_id
+--                                              ->  Index Scan using crm_supervisor_person_month_idx_102712 on ccs_record_monthly_102712 ccs  (cost=0.56..144438.45 rows=48958 width=70)
+--                                                    Index Cond: (month = '2020-05-01'::date)
+--                                                    Filter: (lactating_all = 1)
+-- (24 rows)
 
 
 
@@ -170,125 +159,45 @@ SELECT caste, SUM(valid_in_month) as number_0_3_child FROM "agg_child_health_202
 
 
 SELECT ccs.caste, SUM(ccs.pregnant_all) as number_pw FROM "agg_ccs_record_2020-05-01_5" ccs
-    LEFT JOIN "awc_location_local" awc ON awc.doc_id = ccs.awc_id
+    LEFT JOIN "awc_location_local" awc ON (awc.doc_id = ccs.awc_id AND awc.supervisor_id = ccs.supervisor_id)
     WHERE awc.state_id='f9b47ea2ee2d8a02acddeeb491d3e175'
     GROUP BY ccs.caste;
 
--- QUERY PLAN
--- -----------------------------------------------------------------------------------------------------------------------------------------------------------
---  Finalize GroupAggregate  (cost=387991.71..387993.74 rows=4 width=12)
+--                                                                                QUERY PLAN
+-- ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+--  Finalize GroupAggregate  (cost=228078.68..228080.78 rows=4 width=12)
 --    Group Key: ccs.caste
---    ->  Gather Merge  (cost=387991.71..387993.62 rows=16 width=12)
+--    ->  Gather Merge  (cost=228078.68..228080.66 rows=16 width=12)
 --          Workers Planned: 4
---          ->  Sort  (cost=386991.65..386991.66 rows=4 width=12)
---                Sort Key: ccs.caste
---                ->  Partial HashAggregate  (cost=386991.57..386991.61 rows=4 width=12)
---                      Group Key: ccs.caste
---                      ->  Parallel Hash Join  (cost=333549.77..386354.32 rows=127450 width=8)
---                            Hash Cond: (awc.doc_id = ccs.awc_id)
---                            ->  Parallel Index Only Scan using awc_location_local_pkey on awc_location_local awc  (cost=0.68..44581.12 rows=27161 width=31)
+--          ->  Partial GroupAggregate  (cost=227078.62..227078.70 rows=4 width=12)
+--                Group Key: ccs.caste
+--                ->  Sort  (cost=227078.62..227078.63 rows=5 width=8)
+--                      Sort Key: ccs.caste
+--                      ->  Nested Loop  (cost=1.23..227078.56 rows=5 width=8)
+--                            ->  Parallel Index Only Scan using awc_location_local_pkey on awc_location_local awc  (cost=0.68..44581.12 rows=27161 width=63)
 --                                  Index Cond: (state_id = 'f9b47ea2ee2d8a02acddeeb491d3e175'::text)
---                            ->  Parallel Hash  (cost=317850.82..317850.82 rows=737382 width=41)
---                                  ->  Parallel Seq Scan on "agg_ccs_record_2020-05-01_5" ccs  (cost=0.00..317850.82 rows=737382 width=41)                                           Index Cond: (state_id = 'f9b47ea2ee2d8a02acddeeb491d3e175'::text)                                                 Filter: (state_id = 'f9b47ea2ee2d8a02acddeeb491d3e175'::text)
+--                            ->  Index Scan using "agg_ccs_record_2020-05-01_5_supervisor_id_idx" on "agg_ccs_record_2020-05-01_5" ccs  (cost=0.56..6.71 rows=1 width=74)
+--                                  Index Cond: (supervisor_id = awc.supervisor_id)
+--                                  Filter: (awc.doc_id = awc_id)                                          Index Cond: (state_id = 'f9b47ea2ee2d8a02acddeeb491d3e175'::text)                                                 Filter: (state_id = 'f9b47ea2ee2d8a02acddeeb491d3e175'::text)
 
 SELECT ccs.caste, SUM(ccs.lactating_all) as number_lm FROM "agg_ccs_record_2020-05-01_5" ccs
-    LEFT JOIN "awc_location_local" awc ON awc.doc_id = ccs.awc_id
+    LEFT JOIN "awc_location_local" awc ON (awc.doc_id = ccs.awc_id AND awc.supervisor_id = ccs.supervisor_id)
     WHERE awc.state_id='f9b47ea2ee2d8a02acddeeb491d3e175'
     GROUP BY ccs.caste;
--- QUERY PLAN
--- -----------------------------------------------------------------------------------------------------------------------------------------------------------
---  Finalize GroupAggregate  (cost=387991.71..387993.74 rows=4 width=12)
+--                                                                                QUERY PLAN
+-- ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+--  Finalize GroupAggregate  (cost=228078.68..228080.78 rows=4 width=12)
 --    Group Key: ccs.caste
---    ->  Gather Merge  (cost=387991.71..387993.62 rows=16 width=12)
+--    ->  Gather Merge  (cost=228078.68..228080.66 rows=16 width=12)
 --          Workers Planned: 4
---          ->  Sort  (cost=386991.65..386991.66 rows=4 width=12)
---                Sort Key: ccs.caste
---                ->  Partial HashAggregate  (cost=386991.57..386991.61 rows=4 width=12)
---                      Group Key: ccs.caste
---                      ->  Parallel Hash Join  (cost=333549.77..386354.32 rows=127450 width=8)
---                            Hash Cond: (awc.doc_id = ccs.awc_id)
---                            ->  Parallel Index Only Scan using awc_location_local_pkey on awc_location_local awc  (cost=0.68..44581.12 rows=27161 width=31)
+--          ->  Partial GroupAggregate  (cost=227078.62..227078.70 rows=4 width=12)
+--                Group Key: ccs.caste
+--                ->  Sort  (cost=227078.62..227078.63 rows=5 width=8)
+--                      Sort Key: ccs.caste
+--                      ->  Nested Loop  (cost=1.23..227078.56 rows=5 width=8)
+--                            ->  Parallel Index Only Scan using awc_location_local_pkey on awc_location_local awc  (cost=0.68..44581.12 rows=27161 width=63)
 --                                  Index Cond: (state_id = 'f9b47ea2ee2d8a02acddeeb491d3e175'::text)
---                            ->  Parallel Hash  (cost=317850.82..317850.82 rows=737382 width=41)
---                                  ->  Parallel Seq Scan on "agg_ccs_record_2020-05-01_5" ccs  (cost=0.00..317850.82 rows=737382 width=41)                                                  Filter: (state_id = 'f9b47ea2ee2d8a02acddeeb491d3e175'::text)
-
-    GROUP BY caste;
-
--- QUERY PLAN
--- -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
---  HashAggregate  (cost=0.00..0.00 rows=0 width=0)
---    Group Key: remote_scan.caste
---    ->  Custom Scan (Citus Real-Time)  (cost=0.00..0.00 rows=0 width=0)
---          Task Count: 64
---          Tasks Shown: One of 64
---          ->  Task
---                Node: host=100.71.184.232 port=6432 dbname=icds_ucr
---                ->  Finalize GroupAggregate  (cost=74808.50..74910.29 rows=200 width=12)
---                      Group Key: child_health_monthly.caste
---                      ->  Gather Merge  (cost=74808.50..74904.29 rows=800 width=12)
---                            Workers Planned: 4
---                            ->  Sort  (cost=73808.44..73808.94 rows=200 width=12)
---                                  Sort Key: child_health_monthly.caste
---                                  ->  Partial HashAggregate  (cost=73798.80..73800.80 rows=200 width=12)
---                                        Group Key: child_health_monthly.caste
---                                        ->  Parallel Append  (cost=0.00..73679.12 rows=23937 width=4)
---                                              ->  Parallel Seq Scan on "child_health_monthly_2020-05-01_671996" child_health_monthly  (cost=0.00..73559.43 rows=23937 width=4)
---                                                    Filter: ((month = '2020-05-01'::date) AND (valid_in_month = 1) AND (alive_in_month = 1) AND (state_id = 'f9b47ea2ee2d8a02acddeeb491d3e175'::text) AND (age_tranche = ANY ('{48,60,72}'::text[])))
-
-SELECT ccs.caste, count(*) as number_pw FROM "ccs_record_monthly" ccs
-    LEFT JOIN "awc_location" awc ON awc.doc_id = ccs.awc_id
-    WHERE ccs.month='2020-05-01' AND ccs.pregnant_all=1 AND ccs.valid_in_month=1 AND ccs.alive_in_month=1 AND awc.state_id='f9b47ea2ee2d8a02acddeeb491d3e175'
-    GROUP BY ccs.caste;
---
--- ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
---  HashAggregate  (cost=0.00..0.00 rows=0 width=0)
---    Group Key: remote_scan.caste
---    ->  Custom Scan (Citus Real-Time)  (cost=0.00..0.00 rows=0 width=0)
---          Task Count: 64
---          Tasks Shown: One of 64
---          ->  Task
---                Node: host=100.71.184.232 port=6432 dbname=icds_ucr
---                ->  Finalize GroupAggregate  (cost=157405.87..157415.12 rows=4 width=12)
---                      Group Key: ccs.caste
---                      ->  Gather Merge  (cost=157405.87..157415.00 rows=16 width=12)
---                            Workers Planned: 4
---                            ->  Partial GroupAggregate  (cost=156405.81..156413.04 rows=4 width=12)
---                                  Group Key: ccs.caste
---                                  ->  Sort  (cost=156405.81..156408.20 rows=959 width=4)
---                                        Sort Key: ccs.caste
---                                        ->  Nested Loop  (cost=1.10..156358.31 rows=959 width=4)
---                                              ->  Parallel Index Scan using crm_supervisor_person_month_idx_102712 on ccs_record_monthly_102712 ccs  (cost=0.56..143525.91 rows=5576 width=37)
---                                                    Index Cond: (month = '2020-05-01'::date)
---                                                    Filter: ((pregnant_all = 1) AND (valid_in_month = 1) AND (alive_in_month = 1))
---                                              ->  Index Scan using awc_location_indx6_102840 on awc_location_102840 awc  (cost=0.55..2.29 rows=1 width=31)
---                                                    Index Cond: (doc_id = ccs.awc_id)
---                                                    Filter: (state_id = 'f9b47ea2ee2d8a02acddeeb491d3e175'::text)
-
-SELECT ccs.caste, count(*) as number_lm FROM "ccs_record_monthly" ccs
-    LEFT JOIN "awc_location" awc ON awc.doc_id = ccs.awc_id
-    WHERE ccs.month='2020-05-01' AND ccs.lactating_all=1 AND ccs.valid_in_month=1 AND ccs.alive_in_month=1 AND awc.state_id='f9b47ea2ee2d8a02acddeeb491d3e175'
-    GROUP BY ccs.caste;
--- QUERY PLAN
--- ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
---  HashAggregate  (cost=0.00..0.00 rows=0 width=0)
---    Group Key: remote_scan.caste
---    ->  Custom Scan (Citus Real-Time)  (cost=0.00..0.00 rows=0 width=0)
---          Task Count: 64
---          Tasks Shown: One of 64
---          ->  Task
---                Node: host=100.71.184.232 port=6432 dbname=icds_ucr
---                ->  Finalize GroupAggregate  (cost=161714.71..161726.93 rows=4 width=12)
---                      Group Key: ccs.caste
---                      ->  Gather Merge  (cost=161714.71..161726.81 rows=16 width=12)
---                            Workers Planned: 4
---                            ->  Partial GroupAggregate  (cost=160714.65..160724.85 rows=4 width=12)
---                                  Group Key: ccs.caste
---                                  ->  Sort  (cost=160714.65..160718.04 rows=1354 width=4)
---                                        Sort Key: ccs.caste
---                                        ->  Nested Loop  (cost=1.10..160644.22 rows=1354 width=4)
---                                              ->  Parallel Index Scan using crm_supervisor_person_month_idx_102712 on ccs_record_monthly_102712 ccs  (cost=0.56..143525.91 rows=7873 width=37)
---                                                    Index Cond: (month = '2020-05-01'::date)
---                                                    Filter: ((lactating_all = 1) AND (valid_in_month = 1) AND (alive_in_month = 1))
---                                              ->  Index Scan using awc_location_indx6_102840 on awc_location_102840 awc  (cost=0.55..2.16 rows=1 width=31)
---                                                    Index Cond: (doc_id = ccs.awc_id)
---                                                    Filter: (state_id = 'f9b47ea2ee2d8a02acddeeb491d3e175'::text)
+--                            ->  Index Scan using "agg_ccs_record_2020-05-01_5_supervisor_id_idx" on "agg_ccs_record_2020-05-01_5" ccs  (cost=0.56..6.71 rows=1 width=74)
+--                                  Index Cond: (supervisor_id = awc.supervisor_id)
+--                                  Filter: (awc.doc_id = awc_id)
+-- (14 rows)
