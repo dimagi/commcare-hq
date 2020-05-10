@@ -56,7 +56,7 @@ SELECT caste, count(*) as number_3_6_child FROM "child_health_monthly" WHERE
 
 SELECT ccs.caste, count(*) as number_pw FROM "ccs_record_monthly" ccs
     LEFT JOIN "awc_location" awc ON (awc.doc_id = ccs.awc_id AND awc.supervisor_id = ccs.supervisor_id)
-    WHERE ccs.month='2020-05-01' AND ccs.pregnant_all=1 AND awc.state_id='f9b47ea2ee2d8a02acddeeb491d3e175'
+    WHERE ccs.month='2020-05-01' AND ccs.pregnant=1 AND awc.state_id='f9b47ea2ee2d8a02acddeeb491d3e175'
     GROUP BY ccs.caste;
 --                                                                                        QUERY PLAN
 -- ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -84,7 +84,7 @@ SELECT ccs.caste, count(*) as number_pw FROM "ccs_record_monthly" ccs
 
 SELECT ccs.caste, count(*) as number_lm FROM "ccs_record_monthly" ccs
     LEFT JOIN "awc_location" awc ON (awc.doc_id = ccs.awc_id AND awc.supervisor_id = ccs.supervisor_id)
-    WHERE ccs.month='2020-05-01' AND ccs.lactating_all=1 AND awc.state_id='f9b47ea2ee2d8a02acddeeb491d3e175'
+    WHERE ccs.month='2020-05-01' AND ccs.lactating=1 AND awc.state_id='f9b47ea2ee2d8a02acddeeb491d3e175'
     GROUP BY ccs.caste;
                                                                                       QUERY PLAN
 -- --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -158,7 +158,7 @@ SELECT caste, SUM(valid_in_month) as number_0_3_child FROM "agg_child_health_202
 --
 
 
-SELECT ccs.caste, SUM(ccs.pregnant_all) as number_pw FROM "agg_ccs_record_2020-05-01_5" ccs
+SELECT ccs.caste, SUM(ccs.pregnant) as number_pw FROM "agg_ccs_record_2020-05-01_5" ccs
     LEFT JOIN "awc_location_local" awc ON (awc.doc_id = ccs.awc_id AND awc.supervisor_id = ccs.supervisor_id)
     WHERE awc.state_id='f9b47ea2ee2d8a02acddeeb491d3e175'
     GROUP BY ccs.caste;
@@ -180,7 +180,7 @@ SELECT ccs.caste, SUM(ccs.pregnant_all) as number_pw FROM "agg_ccs_record_2020-0
 --                                  Index Cond: (supervisor_id = awc.supervisor_id)
 --                                  Filter: (awc.doc_id = awc_id)                                          Index Cond: (state_id = 'f9b47ea2ee2d8a02acddeeb491d3e175'::text)                                                 Filter: (state_id = 'f9b47ea2ee2d8a02acddeeb491d3e175'::text)
 
-SELECT ccs.caste, SUM(ccs.lactating_all) as number_lm FROM "agg_ccs_record_2020-05-01_5" ccs
+SELECT ccs.caste, SUM(ccs.lactating) as number_lm FROM "agg_ccs_record_2020-05-01_5" ccs
     LEFT JOIN "awc_location_local" awc ON (awc.doc_id = ccs.awc_id AND awc.supervisor_id = ccs.supervisor_id)
     WHERE awc.state_id='f9b47ea2ee2d8a02acddeeb491d3e175'
     GROUP BY ccs.caste;
