@@ -10,7 +10,7 @@ SELECT
     FROM ccs_record_monthly ccs
     LEFT JOIN "awc_location" awc
     ON (awc.doc_id = ccs.awc_id AND awc.supervisor_id = ccs.supervisor_id)
-    WHERE ccs.month='2020-05-01' AND (ccs.lactating=1 OR ccs.pregnant=1) AND ccs.mobile_number IS NOT NULL AND ccs.mobile_number <> '' AND length(ccs.mobile_number)<>10;
+    WHERE ccs.month='2020-05-01' AND (ccs.lactating=1 OR ccs.pregnant=1) AND ccs.mobile_number IS NOT NULL AND ccs.mobile_number <> '' AND length(ccs.mobile_number)=10;
 
 --                           QUERY PLAN
 -- --------------------------------------------------------------
