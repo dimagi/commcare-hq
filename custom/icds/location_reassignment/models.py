@@ -202,14 +202,14 @@ class MergeOperation(BaseOperation):
         timestamp = datetime.utcnow()
         new_location = self.new_locations[0]
         for old_location in self.old_locations:
-            old_location.metadata[DEPRECATED_TO] = [new_location.location_id]
+            old_location.metadata[DEPRECATED_TO] = f"{new_location.location_id}"
             old_location.metadata[DEPRECATED_AT] = timestamp
             old_location.metadata[DEPRECATED_VIA] = self.type
             old_location.is_archived = True
             old_location.archived_on = timestamp
             old_location.save()
 
-        new_location.metadata[DEPRECATES] = [l.location_id for l in self.old_locations]
+        new_location.metadata[DEPRECATES] = ",".join([l.location_id for l in self.old_locations])
         new_location.metadata[DEPRECATES_AT] = timestamp
         new_location.metadata[DEPRECATES_VIA] = self.type
         new_location.save()
@@ -225,7 +225,7 @@ class SplitOperation(BaseOperation):
     def perform(self):
         timestamp = datetime.utcnow()
         old_location = self.old_locations[0]
-        old_location.metadata[DEPRECATED_TO] = [l.location_id for l in self.new_locations]
+        old_location.metadata[DEPRECATED_TO] = ",".join([l.location_id for l in self.new_locations])
         old_location.metadata[DEPRECATED_AT] = timestamp
         old_location.metadata[DEPRECATED_VIA] = self.type
         old_location.is_archived = True
@@ -233,7 +233,7 @@ class SplitOperation(BaseOperation):
         old_location.save()
 
         for new_location in self.new_locations:
-            new_location.metadata[DEPRECATES] = [old_location.location_id]
+            new_location.metadata[DEPRECATES] = f"{old_location.location_id}"
             new_location.metadata[DEPRECATES_AT] = timestamp
             new_location.metadata[DEPRECATES_VIA] = self.type
             new_location.save()
@@ -248,12 +248,12 @@ class ExtractOperation(BaseOperation):
         timestamp = datetime.utcnow()
         old_location = self.old_locations[0]
         new_location = self.new_locations[0]
-        old_location.metadata[DEPRECATED_TO] = [new_location.location_id]
+        old_location.metadata[DEPRECATED_TO] = f"{new_location.location_id}"
         old_location.metadata[DEPRECATED_AT] = timestamp
         old_location.metadata[DEPRECATED_VIA] = self.type
         old_location.save()
 
-        new_location.metadata[DEPRECATES] = [old_location.location_id]
+        new_location.metadata[DEPRECATES] = f"{old_location.location_id}"
         new_location.metadata[DEPRECATES_AT] = timestamp
         new_location.metadata[DEPRECATES_VIA] = self.type
         new_location.save()
@@ -267,14 +267,14 @@ class MoveOperation(BaseOperation):
         timestamp = datetime.utcnow()
         old_location = self.old_locations[0]
         new_location = self.new_locations[0]
-        old_location.metadata[DEPRECATED_TO] = [new_location.location_id]
+        old_location.metadata[DEPRECATED_TO] = ",".join([new_location.location_id])
         old_location.metadata[DEPRECATED_AT] = timestamp
         old_location.metadata[DEPRECATED_VIA] = self.type
         old_location.is_archived = True
         old_location.archived_on = timestamp
         old_location.save()
 
-        new_location.metadata[DEPRECATES] = [old_location.location_id]
+        new_location.metadata[DEPRECATES] = f"{old_location.location_id}"
         new_location.metadata[DEPRECATES_AT] = timestamp
         new_location.metadata[DEPRECATES_VIA] = self.type
         new_location.save()
