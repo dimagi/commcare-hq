@@ -6,6 +6,7 @@ from django.utils.translation import ugettext as _
 
 from memoized import memoized
 
+from corehq import toggles
 from corehq.apps.accounting.mixins import BillingModalsMixin
 from corehq.apps.domain.decorators import (
     login_and_domain_required,
@@ -14,6 +15,7 @@ from corehq.apps.domain.decorators import (
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.utils import normalize_domain_name
 from corehq.apps.hqwebapp.views import BaseSectionPageView
+from corehq.apps.linked_domain.dbaccessors import get_linked_domains
 from corehq.apps.users.models import SQLInvitation
 
 
@@ -28,6 +30,17 @@ def select(request, do_not_redirect=False, next_view=None):
     if not domains_for_user:
         return redirect('registration_domain')
 
+    linked_domains_for_user = []
+    domain_names = {d.name for d in domains_for_user}
+    if hasattr(request.user, 'is_domain_admin'):
+        for domain_obj in domains_for_user:
+            domain = domain_obj.name
+            if toggles.ENTERPRISE_LINKED_DOMAINS.enabled(domain) and request.user.is_domain_admin(domain):
+                links = get_linked_domains(domain)
+                links = [link for link in links if link.linked_domain not in domain_names]
+                linked_domains = [Domain.get_by_name(link.linked_domain) for link in links]
+                linked_domains_for_user.extend([d for d in linked_domains if d])
+
     email = request.couch_user.get_email()
     open_invitations = [e for e in SQLInvitation.by_email(email) if not e.is_expired]
 
@@ -35,6 +48,7 @@ def select(request, do_not_redirect=False, next_view=None):
     next_view = next_view or request.GET.get('next_view')
     additional_context = {
         'domains_for_user': domains_for_user,
+        'linked_domains_for_user': linked_domains_for_user,
         'open_invitations': [] if next_view else open_invitations,
         'current_page': {'page_name': _('Select A Project')},
         'next_view': next_view or 'domain_homepage',
