@@ -79,7 +79,7 @@ class LocationAggregationDistributedHelper(BaseICDSAggregationDistributedHelper)
                 })
                 if loc_type == 'supervisor':
                     loc.update({
-                        'supervisor_deprecates': ','.join(metadata.get('deprecates')),
+                        'supervisor_deprecates': metadata.get('deprecates'),
                         'supervisor_deprecated_at': metadata.get("deprecated_at"),
                     })
                 if loc_type in ('block', 'district', 'state'):

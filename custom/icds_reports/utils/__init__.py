@@ -2006,8 +2006,10 @@ def get_deprecation_info(locations, show_test, multiple_levels=False):
 
 def get_location_replacement_name(location, field, replacement_names):
     locations = location.metadata.get(field)
-    if field:
+    if locations:
         locations = locations.split(',')
+    else:
+        locations = []
     return [replacement_names.get(loc_id, '') for loc_id in locations]
 
 
