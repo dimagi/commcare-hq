@@ -63,8 +63,8 @@ class BaseTest(TestCase):
     def _validate_operation(self, operation, archived):
         old_locations = operation.old_locations
         new_locations = operation.new_locations
-        old_location_ids = [loc.location_id for loc in old_locations]
-        new_location_ids = [loc.location_id for loc in new_locations]
+        old_location_ids = ",".join([loc.location_id for loc in old_locations])
+        new_location_ids = ",".join([loc.location_id for loc in new_locations])
         operation_time = old_locations[0].metadata[DEPRECATED_AT]
         self.assertIsInstance(operation_time, datetime)
         for old_location in old_locations:

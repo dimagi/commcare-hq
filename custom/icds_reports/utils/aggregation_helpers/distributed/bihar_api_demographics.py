@@ -10,20 +10,24 @@ from corehq.apps.locations.models import SQLLocation
 class BiharApiDemographicsHelper(BaseICDSAggregationDistributedHelper):
     helper_key = 'agg-bihar_api_demographics'
     tablename = BIHAR_API_DEMOGRAPHICS_TABLE
+    months_required = 3
 
     def __init__(self, month):
         self.month = transform_day_to_month(month)
         self.next_month_start = month + relativedelta(months=1)
         self.person_case_ucr = get_table_name(self.domain, 'static-person_cases_v3')
         self.household_ucr = get_table_name(self.domain, 'static-household_cases')
+        self.current_month_table = self.monthly_tablename()
 
     def aggregate(self, cursor):
+        drop_older_table = self.drop_old_tables_query()
         drop_query = self.drop_table_query()
         create_query = self.create_table_query()
         agg_query = self.aggregation_query()
         update_queries = self.update_queries()
         add_partition_query = self.add_partition_table__query()
 
+        cursor.execute(drop_older_table)
         cursor.execute(drop_query)
         cursor.execute(create_query)
         cursor.execute(agg_query)
@@ -33,20 +37,29 @@ class BiharApiDemographicsHelper(BaseICDSAggregationDistributedHelper):
 
         cursor.execute(add_partition_query)
 
+    def drop_old_tables_query(self):
+        month = self.month - relativedelta(months=self.months_required)
+
+        return f"""
+            DROP TABLE IF EXISTS "{self.monthly_tablename(month)}"
+        """
+
     def drop_table_query(self):
         return f"""
-                DROP TABLE IF EXISTS "{self.monthly_tablename}"
+                DROP TABLE IF EXISTS "{self.current_month_table}"
             """
 
     def create_table_query(self):
         return f"""
-            CREATE TABLE "{self.monthly_tablename}" (LIKE {self.tablename});
-            SELECT create_distributed_table('{self.monthly_tablename}', 'supervisor_id');
+            CREATE TABLE "{self.current_month_table}" (LIKE {self.tablename});
+            SELECT create_distributed_table('{self.current_month_table}', 'supervisor_id');
         """
 
-    @property
-    def monthly_tablename(self):
-        return f"{self.tablename}_{month_formatter(self.month)}"
+    def monthly_tablename(self, month=None):
+        if not month:
+            month = self.month
+
+        return f"{self.tablename}_{month_formatter(month)}"
 
     def get_state_id_from_state_name(self, state_name):
         return SQLLocation.objects.get(name=state_name, location_type__name='state').location_id
@@ -115,7 +128,7 @@ class BiharApiDemographicsHelper(BaseICDSAggregationDistributedHelper):
         calculations = ", ".join([col[1] for col in columns])
 
         return f"""
-                INSERT INTO "{self.monthly_tablename}" (
+                INSERT INTO "{self.current_month_table}" (
                     {column_names}
                 )
                 (
@@ -148,7 +161,7 @@ class BiharApiDemographicsHelper(BaseICDSAggregationDistributedHelper):
         person_case_ucr = get_table_name(self.domain, 'static-person_cases_v3')
 
         yield f"""
-        UPDATE "{self.monthly_tablename}" demographics_details
+        UPDATE "{self.current_month_table}" demographics_details
             SET husband_id = person_list.doc_id
         FROM "{person_case_ucr}" person_list
         WHERE
@@ -159,7 +172,7 @@ class BiharApiDemographicsHelper(BaseICDSAggregationDistributedHelper):
         """
 
         yield f"""
-            UPDATE  "{self.monthly_tablename}" bihar_demographics
+            UPDATE  "{self.current_month_table}" bihar_demographics
                 SET father_id = person_list.doc_id
                     FROM "{self.person_case_ucr}" person_list
                     WHERE
@@ -171,6 +184,6 @@ class BiharApiDemographicsHelper(BaseICDSAggregationDistributedHelper):
 
     def add_partition_table__query(self):
         return f"""
-            ALTER TABLE "{self.tablename}" ATTACH PARTITION "{self.monthly_tablename}"
+            ALTER TABLE "{self.tablename}" ATTACH PARTITION "{self.current_month_table}"
             FOR VALUES IN ('{month_formatter(self.month)}')
         """

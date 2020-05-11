@@ -82,6 +82,10 @@ function CasExportController($window, $location, locationHierarchy, locationsSer
         return vm.selectedLocationId !== null && vm.selectedMonth !== null && vm.selectedYear !== null && vm.selectedIndicator !== null;
     };
 
+    vm.onSelectMonth = function () {
+        vm.updateSelectedDate();
+    };
+
     vm.onSelectYear = function (year) {
         var latest = new Date();
         var offset = latest.getDate() < 15 ? 2 : 1;

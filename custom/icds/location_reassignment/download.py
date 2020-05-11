@@ -33,6 +33,7 @@ from custom.icds.location_reassignment.const import (
     NEW_SUB_DISTRICT_NAME,
     NEW_USERNAME_COLUMN,
     OPERATION_COLUMN,
+    OPERATIONS_TO_IGNORE,
     PERSON_CASE_TYPE,
     SPLIT_OPERATION,
     USERNAME_COLUMN,
@@ -117,7 +118,8 @@ class Download(object):
 
     @staticmethod
     def _add_validation(worksheet):
-        operation_data_validation = DataValidation(type="list", formula1='"%s"' % (','.join(VALID_OPERATIONS)))
+        operations = [""] + VALID_OPERATIONS + OPERATIONS_TO_IGNORE
+        operation_data_validation = DataValidation(type="list", formula1='"%s"' % (','.join(operations)))
         worksheet.add_data_validation(operation_data_validation)
         for header_cell in worksheet[1]:
             if header_cell.value == OPERATION_COLUMN:

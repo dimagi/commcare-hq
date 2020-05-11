@@ -1154,7 +1154,14 @@ class IncrementalExportFormSetHelper(HQFormHelper):
 
 def _get_case_data_export_choices(request):
     from corehq.apps.export.views.list import CaseExportListHelper
+    from corehq.apps.export.views.list import DailySavedExportListHelper
 
-    list_helper = CaseExportListHelper(request)
-    exports = list_helper.get_saved_exports()
-    return [(exp['_id'], exp['name']) for exp in exports]
+    case_export_list_helper = CaseExportListHelper(request)
+    exports = [(exp['_id'], exp['name']) for exp in case_export_list_helper.get_saved_exports()]
+
+    daily_saved_list_helper = DailySavedExportListHelper(request)
+    exports.extend(
+        (exp['_id'], "{} - {}".format(exp['name'], _("Daily Saved Export")))
+        for exp in daily_saved_list_helper.get_saved_exports()
+    )
+    return exports
