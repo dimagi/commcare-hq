@@ -19,7 +19,7 @@ from corehq.apps.fixtures.dbaccessors import (
     get_fixture_data_types,
 )
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.util.test_utils import require_db_context
+from corehq.util.test_utils import require_db_context, timelimit
 
 from ..example_data.data import (
     FOOD_CASE_TYPE,
@@ -168,6 +168,7 @@ class TestFixtures(TestCase):
         self.assertEqual("Cereals and their products (1)", composition.fao_who_gift_food_group_description)
         self.assertEqual(9.1, composition.nutrients['water_g'])
 
+    @timelimit(45)
     def test_conversion_factors(self):
         conversion_factor = self.fixtures_accessor.conversion_factors[('10', '52', '')]
         self.assertEqual(0.61, conversion_factor)
