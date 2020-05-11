@@ -21,6 +21,7 @@ class Migration(migrations.Migration):
         migrations.RunSQL("ALTER TABLE child_health_monthly ADD COLUMN not_migrated_month_end smallint"),
         migrations.RunSQL("ALTER TABLE child_health_monthly ADD COLUMN alive_in_month_end smallint"),
         migrations.RunSQL("ALTER TABLE child_health_monthly ADD COLUMN status_duplicate smallint"),
+        migrations.RunSQL("ALTER TABLE child_health_monthly ADD COLUMN seeking_services_month_end smallint"),
     ]
 
     operations.extend(get_view_migrations())

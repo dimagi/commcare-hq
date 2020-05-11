@@ -370,6 +370,7 @@ class ChildHealthMonthly(models.Model, AggregateMixin):
     not_migrated_month_end = models.SmallIntegerField(blank=True, null=True)
     alive_in_month_end = models.SmallIntegerField(blank=True, null=True)
     status_duplicate = models.SmallIntegerField(blank=True, null=True)
+    seeking_services_month_end = models.SmallIntegerField(blank=True, null=True)
 
     class Meta:
         managed = False

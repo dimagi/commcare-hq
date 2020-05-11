@@ -377,7 +377,8 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
             ("valid_in_month_end", "CASE WHEN {} THEN 1 ELSE 0 END".format(valid_in_month_end)),
             ("not_migrated_month_end", "CASE WHEN {} THEN 1 ELSE 0 END".format(not_migrated_month_end)),
             ("alive_in_month_end", "CASE WHEN {} THEN 1 ELSE 0 END".format(alive_in_month_end)),
-            ("status_duplicate", "CASE WHEN person_cases.reason_closure='dupe_reg' THEN 1 ELSE 0 END")
+            ("status_duplicate", "CASE WHEN person_cases.reason_closure='dupe_reg' THEN 1 ELSE 0 END"),
+            ("seeking_services_month_end", "CASE WHEN {} THEN 1 ELSE 0 END".format(seeking_services_month_end))
         )
         yield """
         INSERT INTO "{child_tablename}" (

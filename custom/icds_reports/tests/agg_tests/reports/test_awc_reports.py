@@ -75,13 +75,13 @@ class TestAWCReport(TestCase):
         self.assertEqual(data['person_name'], 'Name 3483')
         self.assertEqual(data['mother_name'], 'रींकीकुँवर')
 
-    def test_beneficiary_details_status_valid(self):
+    def test_beneficiary_details_status_active(self):
         data = get_beneficiary_details(
             case_id='411c4234-8475-415a-9c28-911b85868aa5',
             awc_id='a15',
             selected_month=(2017, 6, 1)
         )
-        self.assertEqual(data['beneficiary_status'], 'Valid')
+        self.assertEqual(data['beneficiary_status'], 'Active')
 
     def test_beneficiary_details_status_migrated(self):
         data = get_beneficiary_details(
@@ -1928,7 +1928,7 @@ class TestAWCReport(TestCase):
                     'person_name': 'Name 1237',
                     'aww_phone_number': None,
                     'mother_phone_number': None,
-                    'beneficiary_status': 'Valid'
+                    'beneficiary_status': 'Active'
                 },
                 cls=DjangoJSONEncoder
             )
@@ -1954,7 +1954,7 @@ class TestAWCReport(TestCase):
                     'person_name': 'Name 1303',
                     'aww_phone_number': None,
                     'mother_phone_number': None,
-                    'beneficiary_status': 'Valid'
+                    'beneficiary_status': 'Active'
                 },
                 cls=DjangoJSONEncoder
             )
@@ -1980,7 +1980,7 @@ class TestAWCReport(TestCase):
                     'person_name': 'Name 1305',
                     'aww_phone_number': None,
                     'mother_phone_number': None,
-                    'beneficiary_status': 'Valid'
+                    'beneficiary_status': 'Active'
                 },
                 cls=DjangoJSONEncoder
             )
@@ -2006,7 +2006,7 @@ class TestAWCReport(TestCase):
                     'person_name': 'Name 1341',
                     'aww_phone_number': None,
                     'mother_phone_number': None,
-                    'beneficiary_status': 'Valid'
+                    'beneficiary_status': 'Active'
                 },
                 cls=DjangoJSONEncoder
             )
@@ -2032,7 +2032,7 @@ class TestAWCReport(TestCase):
                     'person_name': 'Name 2617',
                     'aww_phone_number': None,
                     'mother_phone_number': None,
-                    'beneficiary_status': 'Valid'
+                    'beneficiary_status': 'Active'
                 },
                 cls=DjangoJSONEncoder
             )
@@ -2058,7 +2058,7 @@ class TestAWCReport(TestCase):
                     'person_name': 'Name 2917',
                     'aww_phone_number': None,
                     'mother_phone_number': None,
-                    'beneficiary_status': 'Valid'
+                    'beneficiary_status': 'Active'
                 },
                 cls=DjangoJSONEncoder
             )
@@ -2084,7 +2084,7 @@ class TestAWCReport(TestCase):
                     'person_name': 'Name 4398',
                     'aww_phone_number': None,
                     'mother_phone_number': None,
-                    'beneficiary_status': 'Valid'
+                    'beneficiary_status': 'Active'
                 },
                 cls=DjangoJSONEncoder
             )
@@ -2110,7 +2110,7 @@ class TestAWCReport(TestCase):
                     'person_name': 'Name 4399',
                     'aww_phone_number': None,
                     'mother_phone_number': None,
-                    'beneficiary_status': 'Valid'
+                    'beneficiary_status': 'Active'
                 },
                 cls=DjangoJSONEncoder
             )
@@ -2136,7 +2136,7 @@ class TestAWCReport(TestCase):
                     'person_name': 'Name 4400',
                     'aww_phone_number': None,
                     'mother_phone_number': None,
-                    'beneficiary_status': 'Valid'
+                    'beneficiary_status': 'Active'
                 },
                 cls=DjangoJSONEncoder
             )
@@ -2162,7 +2162,7 @@ class TestAWCReport(TestCase):
                     'person_name': 'Name 1191',
                     'aww_phone_number': None,
                     'mother_phone_number': None,
-                    'beneficiary_status': 'Valid'
+                    'beneficiary_status': 'Active'
                 },
                 cls=DjangoJSONEncoder
             )

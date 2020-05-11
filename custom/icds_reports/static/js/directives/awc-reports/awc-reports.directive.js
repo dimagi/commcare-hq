@@ -1937,7 +1937,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
         vm.awcReportTableData['beneficiary'].push(
         {
             'mData': 'beneficiary_status',
-            'heading': 'Beneficiary Status',
+            'heading': 'Status',
             'class': 'medium-col',
             'value': renderBeneficairyStatus
         })

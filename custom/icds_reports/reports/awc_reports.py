@@ -981,11 +981,13 @@ def get_awc_report_infrastructure(domain, config, month, show_test=False, beta=F
     }
 
 
-def get_beneficiary_status(valid, not_migrated, alive, duplicate):
+def get_beneficiary_status(valid, not_migrated, alive, duplicate, seeking_services):
     if valid:
-        return 'Valid'
+        return 'Active'
     elif not not_migrated:
         return 'Migrated'
+    elif not seeking_services:
+        return 'Not availing'
     elif duplicate:
         return 'Duplicated'
     elif not alive:
@@ -1052,7 +1054,8 @@ def get_awc_report_beneficiary(start, length, draw, order, filters, month, two_b
             beneficiary_status=get_beneficiary_status(row_data.valid_in_month_end,
                                                       row_data.not_migrated_month_end,
                                                       row_data.alive_in_month_end,
-                                                      row_data.status_duplicate)
+                                                      row_data.status_duplicate,
+                                                      row_data.seeking_services_month_end)
         )
 
     for row in data:
@@ -1097,7 +1100,8 @@ def get_beneficiary_details(case_id, awc_id, selected_month):
             'beneficiary_status': get_beneficiary_status(row.valid_in_month_end,
                                                          row.not_migrated_month_end,
                                                          row.alive_in_month_end,
-                                                         row.status_duplicate)
+                                                         row.status_duplicate,
+                                                         row.seeking_services_month_end)
         })
         if age_in_months <= 60:
             if recorded_weight:

@@ -41,6 +41,7 @@ CREATE VIEW child_health_monthly_view AS
       child_health_monthly.not_migrated_month_end,
       child_health_monthly.alive_in_month_end,
       child_health_monthly.status_duplicate,
+      child_health_monthly.seeking_services_month_end,
       GREATEST(child_health_monthly.fully_immunized_on_time, child_health_monthly.fully_immunized_late) AS fully_immunized,
       CASE WHEN child_health_monthly.current_month_nutrition_status = 'severely_underweight' THEN 1
           WHEN child_health_monthly.current_month_nutrition_status = 'moderately_underweight' THEN 2
