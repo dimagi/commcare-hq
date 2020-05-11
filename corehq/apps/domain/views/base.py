@@ -46,7 +46,6 @@ def select(request, do_not_redirect=False, next_view=None):
         'linked_domain_links': linked_domain_links,
         'open_invitations': [] if next_view else open_invitations,
         'current_page': {'page_name': _('Select A Project')},
-        'hide_create_new_project': bool(next_view),
     }
 
     domain_select_template = "domain/select.html"
