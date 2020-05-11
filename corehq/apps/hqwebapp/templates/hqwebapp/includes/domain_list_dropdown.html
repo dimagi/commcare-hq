@@ -7,6 +7,15 @@
         {% endfor %}
     {% endif %}
 
+    {% if show_linked_domains_link %}
+        <li class="divider" />
+        <li>
+            <a href="{% url 'domain_select_redirect' %}">
+                <i class="fa fa-building dropdown-icon"></i> {% trans 'Enterprise Projects' %}
+            </a>
+        </li>
+    {% endif %}
+
     {% if not restrict_domain_creation or request.user.is_superuser %}
         <li class="divider" />
         <li>
