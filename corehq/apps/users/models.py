@@ -58,6 +58,7 @@ from corehq.apps.domain.utils import (
     normalize_domain_name,
 )
 from corehq.apps.hqwebapp.tasks import send_html_email_async
+from corehq.apps.linked_domain.dbaccessors import get_domain_master_link
 from corehq.apps.sms.mixin import CommCareMobileContactMixin, apply_leniency
 from corehq.apps.users.landing_pages import ALL_LANDING_PAGES
 from corehq.apps.users.permissions import EXPORT_PERMISSIONS
@@ -642,14 +643,22 @@ class _AuthorizableMixin(IsMemberOfMixin):
                 # this is a hack needed because we can't pass parameters from views
                 domain = self.current_domain
             else:
-                return False # no domain, no admin
+                return False  # no domain, no admin
         if self.is_global_admin() and (domain is None or not domain_restricts_superusers(domain)):
             return True
+
         dm = self.get_domain_membership(domain)
         if dm:
             return dm.is_admin
-        else:
-            return False
+
+        master_link = get_domain_master_link(domain)
+        if master_link and not master_link.is_remote:
+            if toggles.ENTERPRISE_LINKED_DOMAINS.enabled(master_link.master_domain):
+                dm = self.get_domain_membership(master_link.master_domain)
+                if dm:
+                    return dm.is_admin
+
+        return False
 
     def get_domains(self):
         domains = [dm.domain for dm in self.domain_memberships]
