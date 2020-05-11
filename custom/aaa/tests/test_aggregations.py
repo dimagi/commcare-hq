@@ -12,6 +12,7 @@ import sqlalchemy
 from corehq.apps.userreports.models import StaticDataSourceConfiguration
 from corehq.apps.userreports.util import get_indicator_adapter, get_table_name
 from corehq.sql_db.connections import connection_manager
+from corehq.util.test_utils import timelimit
 from custom.aaa.models import AggAwc, AggVillage, CcsRecord, Child, Woman
 from custom.aaa.tasks import run_aggregation
 from custom.icds_reports.tests.agg_tests import CSVTestCase
@@ -36,6 +37,7 @@ class AggregationScriptTestBase(CSVTestCase):
     always_include_columns = {'person_case_id'}
     fixtures = ['locations.json']
 
+    @timelimit(60)
     @classmethod
     def setUpClass(cls):
         super(AggregationScriptTestBase, cls).setUpClass()
