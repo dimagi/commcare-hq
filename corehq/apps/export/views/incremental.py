@@ -12,10 +12,10 @@ from corehq.apps.export.forms import (
     IncrementalExportForm,
     UpdateIncrementalExportForm,
 )
-from corehq.apps.export.utils import generate_and_send_incremental_export
 from corehq.apps.export.models.incremental import (
     IncrementalExport,
     IncrementalExportCheckpoint,
+    generate_and_send_incremental_export,
 )
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.dispatcher import DomainReportDispatcher

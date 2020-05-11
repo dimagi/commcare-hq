@@ -11,8 +11,9 @@ from soil.util import expose_blob_download, process_email_request
 from celery.schedules import crontab
 from celery.task import periodic_task, task
 from corehq.apps.data_dictionary.util import add_properties_to_data_dictionary
+from corehq.apps.export.models.incremental import generate_and_send_incremental_export
 from corehq.apps.export.exceptions import RejectedStaleExport
-from corehq.apps.export.utils import get_export, generate_and_send_incremental_export
+from corehq.apps.export.utils import get_export
 from corehq.apps.users.models import CouchUser
 from corehq.blobs import CODES, get_blob_db
 from corehq.celery_monitoring.signals import get_task_time_to_start
