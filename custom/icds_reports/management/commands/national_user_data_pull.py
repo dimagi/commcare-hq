@@ -26,10 +26,9 @@ class Command(BaseCommand):
         user_details = {}
         for user in users:
             role = user.get_role('icds-cas')
-            if (role in ('CPMU','Dashboard Only Access', 'TRP') or len(user.assigned_location_ids)==0) and user.has_permission('icds-cas', 'access_all_locations'):
+            if (role in ('CPMU', 'Dashboard Only Access', 'TRP') or len(user.assigned_location_ids) == 0) and user.has_permission('icds-cas', 'access_all_locations'):
                 user_details.update({user.username: [user.created_on, role.name]})
         return user_details
-
 
     def handle(self, *args, **options):
         users = CommCareUser.by_domain('icds-cas')
