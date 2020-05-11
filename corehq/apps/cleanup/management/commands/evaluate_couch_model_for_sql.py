@@ -295,6 +295,4 @@ class Command(PopulateSQLCommand):
     def is_submodel_key(self, key):
         if self.field_types[key] in (self.FIELD_TYPE_SUBMODEL_LIST, self.FIELD_TYPE_SUBMODEL_DICT):
             return True
-        if "." in key:
-            return True
-        return False
+        return "." in key
