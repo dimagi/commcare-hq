@@ -7,6 +7,7 @@ import zipfile
 
 from collections import defaultdict
 from datetime import datetime, timedelta, date
+from dateutil.parser import parse
 from functools import wraps
 from memoized import memoized
 from tempfile import mkstemp
@@ -1777,7 +1778,7 @@ def create_child_growth_tracker_report(excel_data, data_type, config, aggregatio
         table_header[col] = header.split('_')[1] if len(header.split('_')) > 1 else header
     for column, value in table_header.items():
         cell = "{}{}".format(column, table_header_position_row)
-        worksheet[cell].fill = grey_fill
+        worksheet[cell].fill = blue_fill
         worksheet[cell].border = thin_border
         worksheet[cell].font = bold_font
         worksheet[cell].alignment = warp_text_alignment
@@ -2009,7 +2010,6 @@ def get_location_replacement_name(location, field, replacement_names):
 
 def timestamp_string_to_date_string(ts_string):
     if ts_string:
-        # Input string differs from ISO_DATETIME_FORMAT bceause it lacks timezone info
-        return datetime.strptime(ts_string, '%Y-%m-%dT%H:%M:%S.%f').strftime(ISO_DATE_FORMAT)
+        return parse(ts_string).strftime(ISO_DATE_FORMAT)
     else:
         return None

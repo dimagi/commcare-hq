@@ -901,7 +901,7 @@ class CaseRuleOnSaveTests(BaseCaseRuleTest):
         self.disable_updates_on_save()
 
     @run_with_all_backends
-    @reentrant_redis_locks
+    @reentrant_redis_locks()
     def test_run_on_save(self):
         self.enable_updates_on_save()
 

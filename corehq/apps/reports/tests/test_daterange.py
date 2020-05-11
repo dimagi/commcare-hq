@@ -58,7 +58,7 @@ class KnownRangesTests(SimpleTestCase):
 
         start_date, end_date = get_daterange_start_end_dates('thismonth')
         self.assertEqual(start_date, datetime.date(year=1829, month=8, day=1))
-        self.assertEqual(end_date, self.first_performance)
+        self.assertEqual(end_date, datetime.date(year=1829, month=8, day=31))
 
     @patch('datetime.date')
     def test_lastmonth(self, date_patch):
