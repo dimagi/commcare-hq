@@ -60,9 +60,16 @@ class TestIncrementalExport(TestCase):
 
         cls.es.indices.refresh(CASE_INDEX_INFO.index)
 
-        cls.export_instance = CaseExportInstance(
+    @classmethod
+    def tearDownClass(cls):
+        ensure_index_deleted(CASE_INDEX_INFO.index)
+        super().tearDownClass()
+
+    def setUp(self):
+        super().setUp()
+        self.export_instance = CaseExportInstance(
             export_format=Format.UNZIPPED_CSV,
-            domain=cls.domain,
+            domain=self.domain,
             case_type=DEFAULT_CASE_TYPE,
             tables=[TableConfiguration(
                 label="My table",
@@ -86,23 +93,21 @@ class TestIncrementalExport(TestCase):
                 ]
             )]
         )
-        cls.export_instance.save()
+        self.export_instance.save()
 
-        cls.incremental_export = IncrementalExport.objects.create(
-            domain=cls.domain,
+        self.incremental_export = IncrementalExport.objects.create(
+            domain=self.domain,
             name='test_export',
-            export_instance_id=cls.export_instance.get_id,
+            export_instance_id=self.export_instance.get_id,
             connection_settings=ConnectionSettings.objects.create(
-                domain=cls.domain, name='test conn', url='http://somewhere', auth_type=BASIC_AUTH,
+                domain=self.domain, name='test conn', url='http://somewhere', auth_type=BASIC_AUTH,
             )
         )
 
-    @classmethod
-    def tearDownClass(cls):
-        cls.incremental_export.delete()
-        cls.export_instance.delete()
-        ensure_index_deleted(CASE_INDEX_INFO.index)
-        super().tearDownClass()
+    def tearDown(self):
+        self.incremental_export.delete()
+        self.export_instance.delete()
+        super().tearDown()
 
     def _cleanup_case(self, case_id):
         def _clean():
