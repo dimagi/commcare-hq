@@ -19,6 +19,8 @@ from custom.icds.location_reassignment.const import (
     NEW_SUB_DISTRICT_NAME,
     NEW_USERNAME_COLUMN,
     OPERATION_COLUMN,
+    OPERATIONS_TO_IGNORE,
+    SHEETS_TO_IGNORE,
     SPLIT_OPERATION,
     USERNAME_COLUMN,
     VALID_OPERATIONS,
@@ -144,11 +146,13 @@ class Parser(object):
 
     def parse(self):
         for worksheet in self.workbook.worksheets:
+            if worksheet.title in SHEETS_TO_IGNORE:
+                continue
             location_type_code = worksheet.title
             expects_parent = bool(self.location_type_parent.get(location_type_code))
             for row in worksheet:
                 operation = row.get(OPERATION_COLUMN)
-                if not operation:
+                if not operation or operation in OPERATIONS_TO_IGNORE:
                     continue
                 transition_row = TransitionRow(
                     location_type=location_type_code,
