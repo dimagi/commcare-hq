@@ -37,8 +37,8 @@ class AggregationScriptTestBase(CSVTestCase):
     always_include_columns = {'person_case_id'}
     fixtures = ['locations.json']
 
-    @timelimit(60)
     @classmethod
+    @timelimit(60)
     def setUpClass(cls):
         super(AggregationScriptTestBase, cls).setUpClass()
         _setup_ucr_tables()
