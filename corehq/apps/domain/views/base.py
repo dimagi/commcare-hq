@@ -34,30 +34,18 @@ def select(request, do_not_redirect=False, next_view=None):
 
     # next_view must be a url that expects exactly one parameter, a domain name
     next_view = next_view or request.GET.get('next_view') or "domain_homepage"
-    user_domain_links = get_domain_dropdown_links(request.couch_user, view_name=next_view)
+    (user_domain_links, linked_domain_links) = get_domain_dropdown_links(request.couch_user, view_name=next_view)
     if not user_domain_links:
         return redirect('registration_domain')
-
-    linked_domains_for_user = []
-    domain_names = {d.name for d in user_domain_links}
-    if hasattr(request.user, 'is_domain_admin'):
-        for domain_obj in user_domain_links:
-            domain = domain_obj.name
-            if toggles.ENTERPRISE_LINKED_DOMAINS.enabled(domain) and request.user.is_domain_admin(domain):
-                links = get_linked_domains(domain)
-                links = [link for link in links if link.linked_domain not in domain_names]
-                linked_domains = [Domain.get_by_name(link.linked_domain) for link in links]
-                linked_domains_for_user.extend([d for d in linked_domains if d])
 
     email = request.couch_user.get_email()
     open_invitations = [e for e in SQLInvitation.by_email(email) if not e.is_expired]
 
     additional_context = {
         'user_domain_links': user_domain_links,
-        'linked_domains_for_user': linked_domains_for_user,
+        'linked_domain_links': linked_domain_links,
         'open_invitations': [] if next_view else open_invitations,
         'current_page': {'page_name': _('Select A Project')},
-        'next_view': next_view,
         'hide_create_new_project': bool(next_view),
     }
 
@@ -92,10 +80,28 @@ Link = namedtuple('Link', ('name', 'url'))
 @quickcache(['couch_user.username'])
 def get_domain_dropdown_links(couch_user, view_name="domain_homepage"):
     domains = Domain.active_for_user(couch_user)
-    return sorted([Link(
+    domain_links = [Link(
         name=domain_obj.display_name(),
         url=reverse(view_name, args=[domain_obj.name]),
-    ) for domain_obj in domains], key=lambda domain: domain.name.lower())
+    ) for domain_obj in domains]
+
+    linked_domain_links = []
+    domain_names = {d.name for d in domain_links}
+    for domain_obj in domain_links:
+        domain = domain_obj.name
+        if toggles.ENTERPRISE_LINKED_DOMAINS.enabled(domain) and couch_user.is_domain_admin(domain):
+            links = get_linked_domains(domain)
+            links = [link for link in links if link.linked_domain not in domain_names]
+            linked_domains = [Domain.get_by_name(link.linked_domain) for link in links]
+            linked_domain_links.extend([Link(
+                name=d.display_name(),
+                url=reverse(view_name, args=[d.name])
+            ) for d in linked_domains if d])
+
+    domain_links = sorted(domain_links, key=lambda link: link.name.lower())
+    linked_domain_links = sorted(linked_domain_links, key=lambda link: link.name.lower())
+
+    return (domain_links, linked_domain_links)
 
 
 class DomainViewMixin(object):
