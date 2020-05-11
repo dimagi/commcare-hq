@@ -403,7 +403,7 @@ def timelimit(limit):
         return lambda func: timelimit((func, limit))
     func, limit = limit
     @wraps(func)
-    def decorator(*args, **kw):
+    def time_limit(*args, **kw):
         from corehq.tests.noseplugins.timing import add_time_limit
         add_time_limit(limit.total_seconds())
         start = datetime.utcnow()
@@ -411,7 +411,7 @@ def timelimit(limit):
         elapsed = datetime.utcnow() - start
         assert elapsed < limit, f"{func.__name__} took too long: {elapsed}"
         return rval
-    return decorator
+    return time_limit
 
 
 def get_form_ready_to_save(metadata, is_db_test=False):
