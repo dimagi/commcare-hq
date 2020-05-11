@@ -2005,7 +2005,12 @@ def get_deprecation_info(locations, show_test, multiple_levels=False):
 
 
 def get_location_replacement_name(location, field, replacement_names):
-    return [replacement_names.get(loc_id, '') for loc_id in location.metadata.get(field, [])]
+    locations = location.metadata.get(field)
+    if locations:
+        locations = locations.split(',')
+    else:
+        locations = []
+    return [replacement_names.get(loc_id, '') for loc_id in locations]
 
 
 def timestamp_string_to_date_string(ts_string):
