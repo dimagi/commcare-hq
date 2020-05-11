@@ -49,11 +49,12 @@ class TestIncrementalExport(TestCase):
 
         cls.domain = uuid.uuid4().hex
         create_domain(cls.domain)
-        now = datetime.utcnow()
         cls.now = datetime.utcnow()
         cases = [
-            new_case(domain=cls.domain, foo="apple", bar="banana", server_modified_on=cls.now - timedelta(hours=3)),
-            new_case(domain=cls.domain, foo="orange", bar="pear", server_modified_on=cls.now - timedelta(hours=2)),
+            new_case(domain=cls.domain, foo="apple", bar="banana",
+                     server_modified_on=cls.now - timedelta(hours=3)),
+            new_case(domain=cls.domain, foo="orange", bar="pear",
+                     server_modified_on=cls.now - timedelta(hours=2)),
         ]
 
         for case in cases:
