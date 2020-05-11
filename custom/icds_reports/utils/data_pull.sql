@@ -15,8 +15,7 @@ SELECT
         AND ccs.mobile_number IS NOT NULL
         AND ccs.mobile_number <> ''
         AND length(ccs.mobile_number)=10
-        AND SUBSTRING(ccs.mobile_number, 1, 1)::Integer<=9
-        AND SUBSTRING(ccs.mobile_number, 1, 1)::Integer>=6;
+        AND SUBSTRING(ccs.mobile_number, 1, 1) IN ('9', '8', '7', '6');
 
 
 -- 
