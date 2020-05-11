@@ -171,6 +171,10 @@ class DataSetMap(Document):
         return dataset
 
     def should_send_on_date(self, send_date):
-        return self.day_to_send == send_date.day and (
-            self.frequency == SEND_FREQUENCY_MONTHLY or
-            self.frequency == SEND_FREQUENCY_QUARTERLY and send_date.month in [1, 4, 7, 10])
+        if self.frequency == SEND_FREQUENCY_MONTHLY:
+            return self.day_to_send == send_date.day
+        if self.frequency == SEND_FREQUENCY_QUARTERLY:
+            return (
+                self.day_to_send == send_date.day
+                and send_date.month in [1, 4, 7, 10]
+            )
