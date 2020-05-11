@@ -56,6 +56,7 @@ class IncrementalExportView(BaseProjectDataView, CRUDPaginatedViewMixin):
             _("Connection Settings"),
             _("Edit"),
             _("Delete"),
+            _("Resend all cases")
         ]
 
     @property
@@ -271,3 +272,24 @@ def incremental_export_reset_checkpoint(request, domain, checkpoint_id):
     return HttpResponseRedirect(
         reverse('domain_report_dispatcher', args=[domain, IncrementalExportLogView.slug])
     )
+
+
+@require_can_edit_data
+def incremental_export_resend_all(request, domain, incremental_export_id):
+    try:
+        incremental_export = IncrementalExport.objects.get(id=incremental_export_id, domain=domain)
+    except IncrementalExport.DoesNotExist:
+        return HttpResponseNotFound()
+
+    new_checkpoint = generate_and_send_incremental_export(incremental_export, from_date=None)
+    doc_count = new_checkpoint.doc_count if new_checkpoint else 0
+    messages.success(
+        request, _(
+            f"{doc_count} cases have been resent for export '{incremental_export.name}'"
+        )
+    )
+    url = "{}?{}".format(
+        reverse('domain_report_dispatcher', args=[domain, IncrementalExportLogView.slug]),
+        "incremental_export_id={}".format(incremental_export_id)
+    )
+    return HttpResponseRedirect(url)

@@ -2,7 +2,12 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 
-{% requirejs_main "hqwebapp/js/crud_paginated_list_init" %}
+{% requirejs_main "export/js/incremental_export" %}
+
+{% block page_content %}
+  {% registerurl 'incremental_export_resend_all' domain '---' %}
+  {{ block.super }}
+{% endblock %}
 
 {% block pagination_templates %}
   <script type="text/html" id="deleted-incremental-export-template">
@@ -102,6 +107,39 @@
                       data-loading-text="{% trans "Deleting Incremental Export" %}">
                 <i class="fa fa-remove"></i> {% trans "Delete Incremental Export" %}
               </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </td>
+    <td>
+      <button type="button"
+              data-toggle="modal"
+              data-bind="attr: {'data-target': '#reset-incremental-export-' + id}"
+              class="btn btn-warning">
+        <i class="fa fa-recycle"></i> {% trans "Resend all cases" %}
+      </button>
+
+      <div class="modal fade"
+           data-bind="attr: {id: 'reset-incremental-export-' + id}">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+              <h3>
+                {% trans "Resend all cases for " %} <strong data-bind="text: name"></strong>?
+              </h3>
+            </div>
+            <div class="modal-footer">
+              <button type="button"
+                      class="btn btn-default"
+                      data-dismiss="modal">
+                {% trans "Cancel" %}
+              </button>
+              <a data-bind="attr: {href: $parents[1].reverse('incremental_export_resend_all', id)}"
+                 class="btn btn-warning">
+                <i class="fa fa-recycle"></i> {% trans "Resend all cases" %}
+              </a>
             </div>
           </div>
         </div>

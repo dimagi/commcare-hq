@@ -1,0 +1,9 @@
+hqDefine('export/js/incremental_export', [
+    "hqwebapp/js/initial_page_data",
+    "hqwebapp/js/crud_paginated_list_init",
+], function (initialPageData, CRUDPaginatedListInit) {
+    $(function(){
+        viewModel = CRUDPaginatedListInit.paginatedListModel;
+        viewModel.reverse = initialPageData.reverse;
+    });
+});
