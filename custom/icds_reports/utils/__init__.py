@@ -1778,7 +1778,7 @@ def create_child_growth_tracker_report(excel_data, data_type, config, aggregatio
         table_header[col] = header.split('_')[1] if len(header.split('_')) > 1 else header
     for column, value in table_header.items():
         cell = "{}{}".format(column, table_header_position_row)
-        worksheet[cell].fill = grey_fill
+        worksheet[cell].fill = blue_fill
         worksheet[cell].border = thin_border
         worksheet[cell].font = bold_font
         worksheet[cell].alignment = warp_text_alignment
