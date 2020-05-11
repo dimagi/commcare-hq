@@ -3,11 +3,13 @@ var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 function ServiceDeliveryDashboardController($rootScope, $scope, $http, $location, $routeParams, $log, DTOptionsBuilder,
                                             DTColumnBuilder, $compile, storageService, userLocationId,
                                             baseControllersService, haveAccessToAllLocations, isAlertActive,
-                                            sddMetadata, dateHelperService, navigationService, isMobile) {
+                                            sddMetadata, dateHelperService, navigationService, isMobile,
+                                            haveAccessToFeatures) {
     baseControllersService.BaseFilterController.call(
         this, $scope, $routeParams, $location, dateHelperService, storageService, navigationService
     );
     var vm = this;
+    vm.haveAccessToFeatures = haveAccessToFeatures;
     vm.data = {};
     vm.label = "Service Delivery Dashboard";
     vm.haveAccessToAllLocations = haveAccessToAllLocations;
@@ -516,7 +518,8 @@ function ServiceDeliveryDashboardController($rootScope, $scope, $http, $location
 
 ServiceDeliveryDashboardController.$inject = ['$rootScope', '$scope', '$http', '$location', '$routeParams', '$log',
     'DTOptionsBuilder', 'DTColumnBuilder', '$compile', 'storageService', 'userLocationId', 'baseControllersService',
-    'haveAccessToAllLocations', 'isAlertActive', 'sddMetadata', 'dateHelperService', 'navigationService', 'isMobile'];
+    'haveAccessToAllLocations', 'isAlertActive', 'sddMetadata', 'dateHelperService', 'navigationService', 'isMobile',
+    'haveAccessToFeatures',];
 
 window.angular.module('icdsApp').directive('serviceDeliveryDashboard', ['templateProviderService', function (templateProviderService) {
     return {
