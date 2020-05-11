@@ -10,4 +10,10 @@ http.cors.allow-origin: "*"
 http.cors.enabled: true
 index.max_result_window: 1000000
 
-action.auto_create_index: false
+# Eventually we want to enable this option, but currently it causes ES
+# timeouts due to tests referencing non-existent indices. For example,
+# saving a user triggers an async task that updates ES, and that fails
+# if the index does not exist. Many tests create and save users but few
+# do explicit ES index creation as is conventional for tests that
+# interact with ES.
+#action.auto_create_index: false

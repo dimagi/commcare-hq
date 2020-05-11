@@ -139,14 +139,14 @@ describe('WebForm', function () {
             // First blocking request
             $.publish('formplayer.' + Formplayer.Const.NEW_REPEAT, {});
 
-            assert.isTrue(sess.blockingRequestInProgress);
+            assert.equal(sess.blockingStatus, Formplayer.Const.BLOCK_ALL);
 
             // Attempt another request
             $.publish('formplayer.' + Formplayer.Const.NEW_REPEAT, {});
 
             server.respond();
 
-            assert.isFalse(sess.blockingRequestInProgress);
+            assert.equal(sess.blockingStatus, Formplayer.Const.BLOCK_NONE);
             // One call to new-repeat
             assert.equal(server.requests.length, 1);
         });
@@ -157,14 +157,14 @@ describe('WebForm', function () {
             // First blocking request
             $.publish('formplayer.' + Formplayer.Const.ANSWER, { answer: sinon.spy() });
 
-            assert.isFalse(sess.blockingRequestInProgress);
+            assert.equal(sess.blockingStatus, Formplayer.Const.BLOCK_SUBMIT);
 
             // Attempt another request
             $.publish('formplayer.' + Formplayer.Const.ANSWER, { answer: sinon.spy() });
 
             server.respond();
 
-            assert.isFalse(sess.blockingRequestInProgress);
+            assert.equal(sess.blockingStatus, Formplayer.Const.BLOCK_NONE);
             // two calls to answer
             assert.equal(server.requests.length, 2);
 

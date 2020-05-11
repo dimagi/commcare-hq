@@ -1,6 +1,6 @@
 /* global moment */
 
-function DownloadController($rootScope, $location, locationHierarchy, locationsService, userLocationId, haveAccessToFeatures,
+function DownloadController($scope, $rootScope, $location, locationHierarchy, locationsService, userLocationId, haveAccessToFeatures,
     downloadService, isAlertActive, userLocationType, haveAccessToAllLocations, allUserLocationId) {
     var vm = this;
 
@@ -14,6 +14,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
     vm.previousTaskFailed = null;
     $rootScope.report_link = '';
     vm.isAlertActive = isAlertActive;
+    vm.allFiltersSelected = false;
 
     var getTaskStatus = function () {
         downloadService.getStatus(vm.task_id).then(function (resp) {
@@ -260,6 +261,10 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         }
     };
 
+    vm.onSelectMonth = function () {
+        vm.updateSelectedDate();
+    };
+
     vm.onSelectYear = function (year) {
         var date = new Date();
         var latest = date;
@@ -457,7 +462,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
 
     vm.hasErrors = function () {
         var beneficiaryListErrors = vm.isChildBeneficiaryListSelected() && (vm.selectedFilterOptions().length === 0 || !vm.isDistrictOrBelowSelected());
-        var growthListErrors = vm.isChildGrowthTrackerSelected() && (vm.selectedFilterOptions().length === 0 || !vm.isDistrictOrBelowSelected());
+        var growthListErrors = vm.isChildGrowthTrackerSelected() && !vm.isDistrictOrBelowSelected();
         var incentiveReportErrors = vm.isIncentiveReportSelected() && !vm.isStateSelected();
         var ladySupervisorReportErrors = false;
         if (!vm.haveAccessToFeatures) {
@@ -496,6 +501,20 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
             return el.selected;
         });
     };
+
+    vm.selectAllFilters = function () {
+        var allSelected = document.getElementById('selectAll').checked;
+        for (var i = 0; i < vm.filterOptions.length; i++) {
+            vm.filterOptions[i].selected = allSelected;
+        }
+        vm.allFiltersSelected = allSelected;
+    };
+
+    $scope.$watch(function () {
+        return vm.filterOptions;
+    }, function () {
+        vm.allFiltersSelected = (vm.selectedFilterOptions().length === vm.filterOptions.length);
+    }, true);
 
     vm.isChildBeneficiaryListSelected = function () {
         return vm.selectedIndicator === 6;
@@ -589,8 +608,9 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
     };
 }
 
-DownloadController.$inject = ['$rootScope', '$location', 'locationHierarchy', 'locationsService', 'userLocationId',
-    'haveAccessToFeatures', 'downloadService', 'isAlertActive', 'userLocationType','haveAccessToAllLocations','allUserLocationId'];
+DownloadController.$inject = ['$scope', '$rootScope', '$location', 'locationHierarchy', 'locationsService',
+    'userLocationId', 'haveAccessToFeatures', 'downloadService', 'isAlertActive', 'userLocationType',
+    'haveAccessToAllLocations','allUserLocationId'];
 
 window.angular.module('icdsApp').directive("download", function () {
     var url = hqImport('hqwebapp/js/initial_page_data').reverse;

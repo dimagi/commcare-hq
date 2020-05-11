@@ -1519,6 +1519,7 @@ class BiharAPIMotherView(models.Model):
     hb = models.SmallIntegerField(null=True)
     preg_reg_date = models.DateField(null=True)
     add = models.DateField(null=True)
+    lmp = models.DateField(null=True)
 
     class Meta(object):
         app_label = 'icds_reports'

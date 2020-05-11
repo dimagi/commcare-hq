@@ -1,4 +1,4 @@
-window.angular.module('icdsApp').directive("reassignmentMessage", function () {
+window.angular.module('icdsApp').directive("reassignmentMessage", ['templateProviderService', function (templateProviderService) {
     var url = hqImport('hqwebapp/js/initial_page_data').reverse;
     return {
         restrict: 'E',
@@ -6,6 +6,8 @@ window.angular.module('icdsApp').directive("reassignmentMessage", function () {
             selectedLocation: '=',
             selectedDate: '=',
         },
-        templateUrl: url('icds-ng-template', 'reassignment-message'),
+        templateUrl: function () {
+            return templateProviderService.getTemplate('reassignment-message');
+        },
     };
-});
+}]);

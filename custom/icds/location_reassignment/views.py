@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from django.contrib import messages
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _
@@ -11,8 +11,13 @@ from django.views.decorators.http import require_GET
 from corehq import toggles
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.locations.models import LocationType, SQLLocation
-from corehq.apps.locations.permissions import require_can_edit_locations
+from corehq.apps.locations.permissions import (
+    location_safe,
+    require_can_edit_locations,
+    user_can_access_location_id,
+)
 from corehq.apps.locations.views import BaseLocationView, LocationsListView
+from corehq.apps.reports.views import BaseProjectReportSectionView
 from corehq.const import FILENAME_DATETIME_FORMAT
 from corehq.util.files import safe_filename_header
 from corehq.util.timezones.utils import get_timezone_for_user
@@ -24,6 +29,7 @@ from custom.icds.location_reassignment.const import (
     HOUSEHOLD_ID_COLUMN,
     NEW_SITE_CODE_COLUMN,
     OPERATION_COLUMN,
+    SHEETS_TO_IGNORE,
 )
 from custom.icds.location_reassignment.download import Download
 from custom.icds.location_reassignment.dumper import Dumper
@@ -41,7 +47,30 @@ from custom.icds.location_reassignment.tasks import (
 )
 
 
-@method_decorator([toggles.LOCATION_REASSIGNMENT.required_decorator()], name='dispatch')
+@location_safe
+@method_decorator([toggles.DOWNLOAD_LOCATION_REASSIGNMENT_REQUEST_TEMPLATE.required_decorator()], name='dispatch')
+class LocationReassignmentDownloadOnlyView(BaseProjectReportSectionView):
+    section_name = ugettext_lazy("Download Location Reassignment Template")
+
+    page_title = ugettext_lazy('Location Reassignment')
+    urlname = 'location_reassignment_download_only'
+    template_name = 'icds/location_reassignment.html'
+
+    @property
+    def page_context(self):
+        context = super().page_context
+        context.update({
+            'bulk_upload': {
+                "download_url": reverse('download_location_reassignment_template', args=[self.domain]),
+                "adjective": _("locations"),
+                "plural_noun": _("Location Reassignment Request file"),
+            },
+            'bulk_upload_form': None,
+            "no_header": True,
+        })
+        return context
+
+
 @method_decorator(require_can_edit_locations, name='dispatch')
 class LocationReassignmentView(BaseLocationView):
     section_name = ugettext_lazy("Locations")
@@ -49,6 +78,11 @@ class LocationReassignmentView(BaseLocationView):
     page_title = ugettext_lazy('Location Reassignment')
     urlname = 'location_reassignment'
     template_name = 'icds/location_reassignment.html'
+
+    def dispatch(self, *args, **kwargs):
+        if not toggles.PERFORM_LOCATION_REASSIGNMENT.enabled(self.request.couch_user.username):
+            raise Http404()
+        return super().dispatch(*args, **kwargs)
 
     def section_url(self):
         return reverse(LocationsListView.urlname, args=[self.domain])
@@ -60,13 +94,14 @@ class LocationReassignmentView(BaseLocationView):
             'bulk_upload': {
                 "download_url": reverse('download_location_reassignment_template', args=[self.domain]),
                 "adjective": _("locations"),
-                "plural_noun": _("location reassignments"),
+                "plural_noun": _("Location Reassignment Request File"),
                 "verb": _("Perform"),
                 "help_link": "https://confluence.dimagi.com/display/ICDS/Location+Reassignment",
             },
         })
         context.update({
             'bulk_upload_form': get_bulk_upload_form(context, form_class=LocationReassignmentRequestForm),
+            "no_header": True,
         })
         return context
 
@@ -134,6 +169,8 @@ class LocationReassignmentView(BaseLocationView):
     @staticmethod
     def _validate_worksheet(worksheet, valid_titles, mandatory_columns):
         errors = []
+        if worksheet.title in SHEETS_TO_IGNORE:
+            return []
         if worksheet.title not in valid_titles:
             errors.append(_("Unexpected sheet {sheet_title}").format(sheet_title=worksheet.title))
             return errors
@@ -153,8 +190,9 @@ class LocationReassignmentView(BaseLocationView):
         return response
 
     def _process_request_for_email_households(self, parser, request, uploaded_filename):
-        if AWC_CODE in parser.valid_transitions:
-            email_household_details.delay(self.domain, parser.valid_transitions[AWC_CODE],
+        awc_transitions = parser.valid_transitions_json(for_location_type=AWC_CODE)
+        if awc_transitions:
+            email_household_details.delay(self.domain, awc_transitions,
                                           uploaded_filename, request.user.email)
             messages.success(request, _(
                 "Your request has been submitted. You will be updated via email."))
@@ -163,8 +201,7 @@ class LocationReassignmentView(BaseLocationView):
 
     def _process_request_for_update(self, parser, request, uploaded_filename):
         process_location_reassignment.delay(
-            self.domain, parser.valid_transitions, parser.new_location_details,
-            parser.user_transitions, list(parser.requested_transitions.keys()),
+            self.domain, parser.valid_transitions_json(),
             uploaded_filename, request.user.email
         )
         messages.success(request, _(
@@ -178,13 +215,12 @@ class LocationReassignmentView(BaseLocationView):
             "Your request has been submitted. We will notify you via email once completed."))
 
 
-@toggles.LOCATION_REASSIGNMENT.required_decorator()
-@require_can_edit_locations
+@toggles.DOWNLOAD_LOCATION_REASSIGNMENT_REQUEST_TEMPLATE.required_decorator()
 @require_GET
 def download_location_reassignment_template(request, domain):
     location_id = request.GET.get('location_id')
 
-    if not location_id:
+    if not location_id or not user_can_access_location_id(domain, request.couch_user, location_id):
         messages.error(request, _("Please select a location."))
         return HttpResponseRedirect(reverse(LocationReassignmentView.urlname, args=[domain]))
 
