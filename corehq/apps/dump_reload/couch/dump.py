@@ -22,7 +22,6 @@ from corehq.feature_previews import all_previews
 DOC_PROVIDERS = {
     DocTypeIDProvider(['Application']),
     DocTypeIDProvider(['CommtrackConfig']),
-    DocTypeIDProvider(['DefaultConsumption']),
     ViewIDProvider('CommCareMultimedia', 'hqmedia/by_domain', DomainKeyGenerator()),
     DocTypeIDProvider(['MobileAuthKeyRecord']),
     DocTypeIDProvider(['Product']),

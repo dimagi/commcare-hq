@@ -166,19 +166,8 @@ class CustomDataPullForm(forms.Form):
         month = self.cleaned_data['month']
         if month and month.day != 1:
             self.add_error("month", "Only first of month should be selected")
+        month = month.strftime('%Y-%m-%d')
         return month
-
-    def clean_location_id(self):
-        location_id_slug = self.cleaned_data['location_id']
-        if location_id_slug:
-            return self._extract_location_id(location_id_slug)
-        return location_id_slug
-
-    @staticmethod
-    def _extract_location_id(location_id_slug):
-        from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
-        selected_ids = ExpandedMobileWorkerFilter.selected_location_ids([location_id_slug])
-        return selected_ids[0] if selected_ids else None
 
     def submit(self, domain, email):
         run_data_pull.delay(self.cleaned_data['data_pull'],
