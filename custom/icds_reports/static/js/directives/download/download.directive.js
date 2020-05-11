@@ -260,6 +260,10 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         }
     };
 
+    vm.onSelectMonth = function () {
+        vm.updateSelectedDate();
+    };
+
     vm.onSelectYear = function (year) {
         var date = new Date();
         var latest = date;
@@ -457,7 +461,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
 
     vm.hasErrors = function () {
         var beneficiaryListErrors = vm.isChildBeneficiaryListSelected() && (vm.selectedFilterOptions().length === 0 || !vm.isDistrictOrBelowSelected());
-        var growthListErrors = vm.isChildGrowthTrackerSelected() && (vm.selectedFilterOptions().length === 0 || !vm.isDistrictOrBelowSelected());
+        var growthListErrors = vm.isChildGrowthTrackerSelected() && !vm.isDistrictOrBelowSelected();
         var incentiveReportErrors = vm.isIncentiveReportSelected() && !vm.isStateSelected();
         var ladySupervisorReportErrors = false;
         if (!vm.haveAccessToFeatures) {

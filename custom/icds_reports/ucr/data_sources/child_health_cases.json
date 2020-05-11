@@ -25,7 +25,8 @@
   ],
   "server_environment": [
     "india",
-    "icds"
+    "icds",
+    "icds-staging"
   ],
   "config": {
     "table_id": "static-child_health_cases",
@@ -1354,7 +1355,7 @@
         "column_id": "location_reassignment_date",
         "datatype": "date",
         "type": "raw",
-        "property_name": "location_reassignment_date"
+        "property_name": "location_reassignment_datetime"
       },
       {
         "column_id": "last_owner_id",

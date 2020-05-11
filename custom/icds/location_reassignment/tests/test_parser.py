@@ -51,8 +51,8 @@ class TestParser(TestCase):
              'AWC-111', 'Supervisor 1', '11', '11',
              'username1', 'username1', 'Extract'),
             # valid operation to move 112 -> 131
-            ('AWC 2', 'AWC 3', '112', '131', 'AWC-112',
-             'AWC-131', 'Supervisor 2', '11', '13',
+            ('AWC 2', 'AWC 3', 112, 131, 'AWC-112',
+             'AWC-131', 'Supervisor 2', '11', 13,
              'username2', 'username3', 'Move'),
             # valid operation to merge 113 114 -> 132 but
             # with different lgd code for new location in 114
@@ -79,7 +79,12 @@ class TestParser(TestCase):
             # valid operation to move 12 -> 13
             ('Supervisor 2', 'Supervisor 3', '12', '13', 'Sup-12',
              'Sup-13', 'State 1', '1', '1',
-             'username5', 'username6', 'Move'))),
+             'username5', 'username6', 'Move'),
+            # invalid values for site codes
+            ('Supervisor 4', 'Supervisor 5', 'Invalid $ite #code', 'NEW-- $ite #code', 'Sup-12',
+             'Sup-14', 'State 1', '1', '?--123--?',
+             'username7', 'username8', 'Move'),
+        )),
         ('state', (
             # invalid row with unknown operation
             ('State 1', 'State 1', '1', '1', 'State-1',
@@ -156,6 +161,10 @@ class TestParser(TestCase):
             self.assertEqual(errors, [
                 "Invalid Operation Unknown",
                 "Missing location code for operation Split. Got old: '11' and new: ''",
+                "Got invalid location code 'invalid $ite #code' for operation Move",
+                "Got invalid location code 'new-- $ite #code' for operation Move",
+                "Got invalid parent location code '?--123--?' for new location "
+                "'new-- $ite #code' for operation Move",
                 "No change in location code for operation Extract. Got old: '111' and new: '111'",
                 "New location 132 passed with different information",
                 "Missing new location name for 134"
