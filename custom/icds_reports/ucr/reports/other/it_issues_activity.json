@@ -1,7 +1,8 @@
 {
   "server_environment": [
     "india",
-    "icds"
+    "icds",
+    "icds-staging"
   ],
   "domains": [
     "icds-dashboard-qa",
