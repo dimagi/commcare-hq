@@ -26,6 +26,14 @@
           <li><a href="{% url next_view domain.name %}">{{ domain.display_name }}</a></li>
         {% endfor %}
       </ul>
+      {% if linked_domains_for_user %}
+        <h2>{% trans "All Projects" %}</h2>
+        <ul class="nav nav-pills nav-stacked">
+          {% for domain in linked_domains_for_user %}
+            <li><a href="{% url next_view domain.name %}">{{ domain.display_name }}</a></li>
+          {% endfor %}
+        </ul>
+      {% endif %}
     </div>
     <div class="col-sm-4">
     </div>
