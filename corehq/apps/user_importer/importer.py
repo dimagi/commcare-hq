@@ -11,6 +11,7 @@ from couchdbkit.exceptions import (
 )
 
 from corehq.apps.user_importer.helpers import spec_value_to_boolean_or_none
+from corehq.apps.users.account_confirmation import send_account_confirmation_if_necessary
 from dimagi.utils.parsing import string_to_boolean
 
 from corehq import privileges
@@ -322,6 +323,7 @@ def create_or_update_users_and_groups(domain, user_specs, group_memoizer=None, u
 
                 is_active = spec_value_to_boolean_or_none(row, 'is_active')
                 is_account_confirmed = spec_value_to_boolean_or_none(row, 'is_account_confirmed')
+                send_account_confirmation_email = spec_value_to_boolean_or_none(row, 'send_confirmation_email')
 
                 if user_id:
                     user = CommCareUser.get_by_user_id(user_id, domain)
@@ -389,6 +391,9 @@ def create_or_update_users_and_groups(domain, user_specs, group_memoizer=None, u
                     user.set_role(domain, roles_by_name[role].get_qualified_id())
 
                 user.save()
+
+                if send_account_confirmation_email:
+                    send_account_confirmation_if_necessary(user)
 
                 if is_password(password):
                     # Without this line, digest auth doesn't work.
