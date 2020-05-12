@@ -42,6 +42,7 @@ from corehq.apps.linked_domain.dbaccessors import (
 from corehq.apps.linked_domain.decorators import require_linked_domain
 from corehq.apps.linked_domain.local_accessors import (
     get_custom_data_models,
+    get_location_types,
     get_toggles_previews,
     get_user_roles,
 )
@@ -83,6 +84,12 @@ def custom_data_models(request, domain):
 @require_linked_domain
 def user_roles(request, domain):
     return JsonResponse({'user_roles': get_user_roles(domain)})
+
+
+@login_or_api_key
+@require_linked_domain
+def location_types(request, domain):
+    return JsonResponse({'location_types': get_location_types(domain)})
 
 
 @login_or_api_key
