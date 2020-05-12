@@ -676,14 +676,24 @@ class _AuthorizableMixin(IsMemberOfMixin):
             elif self.is_domain_admin(domain):
                 return True
 
-        dm = self.get_domain_membership(domain)
-        if dm:
-            # an admin has access to all features by default, restrict that if needed
-            if dm.is_admin and restrict_global_admin:
+        def _domain_membership_has_permission(membership):
+            if not membership:
                 return False
-            return dm.has_permission(permission, data)
-        else:
-            return False
+            # an admin has access to all features by default, restrict that if needed
+            if membership.is_admin and restrict_global_admin:
+                return False
+            return membership.has_permission(permission, data)
+
+        if _domain_membership_has_permission(self.get_domain_membership(domain)):
+            return True
+
+        master_link = get_domain_master_link(domain)
+        if master_link and not master_link.is_remote:
+            if toggles.ENTERPRISE_LINKED_DOMAINS.enabled(master_link.master_domain):
+                if _domain_membership_has_permission(self.get_domain_membership(master_link.master_domain)):
+                    return True
+
+        return False
 
     @memoized
     def get_role(self, domain=None, checking_global_admin=True):
