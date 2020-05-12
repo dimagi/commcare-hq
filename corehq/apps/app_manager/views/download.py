@@ -290,9 +290,7 @@ def download_file(request, domain, app_id, path):
         try:
             payload = request.app.fetch_attachment(full_path)
         except ResourceNotFound:
-            if not build_profile_id:
-                create_build_files_if_necessary_handling_conflicts()
-            elif build_profile_id in request.app.build_profiles and build_profile_access:
+            if not build_profile_id or (build_profile_id in request.app.build_profiles and build_profile_access):
                 create_build_files_if_necessary_handling_conflicts()
             else:
                 raise
