@@ -529,13 +529,24 @@ class DomainMembership(Membership):
 
 class IsMemberOfMixin(DocumentSchema):
 
-    def _is_member_of(self, domain):
-        return domain in self.get_domains() or (
-            self.is_global_admin() and
-            not domain_restricts_superusers(domain)
-        )
+    def _is_member_of(self, domain, include_enterprise):
+        if self.is_global_admin() and not domain_restricts_superusers(domain):
+            return True
 
-    def is_member_of(self, domain_qs):
+        domains = self.get_domains()
+        if domain in domains:
+            return True
+
+        if include_enterprise:
+            # If this is a linked domain, return true if the user is a member of the master
+            master_link = get_domain_master_link(domain)
+            if master_link and not master_link.is_remote:
+                if toggles.ENTERPRISE_LINKED_DOMAINS.enabled(master_link.master_domain):
+                    return bool(self.get_domain_membership(master_link.master_domain))
+
+        return False
+
+    def is_member_of(self, domain_qs, include_enterprise=False):
         """
         takes either a domain name or a domain object and returns whether the user is part of that domain
         either natively or through a team
@@ -545,7 +556,7 @@ class IsMemberOfMixin(DocumentSchema):
             domain = domain_qs.name
         except Exception:
             domain = domain_qs
-        return self._is_member_of(domain)
+        return self._is_member_of(domain, include_enterprise)
 
     def is_global_admin(self):
         # subclasses to override if they want this functionality
