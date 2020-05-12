@@ -5,7 +5,7 @@ from corehq.util.es.elasticsearch import bulk
 from corehq.util.es.interface import ElasticsearchInterface
 
 from pillowtop.es_utils import (
-    initialize_mapping_if_necessary,
+    initialize_index_and_mapping,
     set_index_normal_settings,
     set_index_reindex_settings,
 )
@@ -147,9 +147,7 @@ def _clean_index(es, index_info):
 
 
 def _prepare_index_for_reindex(es, index_info):
-    if not es.indices.exists(index_info.index):
-        es.indices.create(index=index_info.index, body=index_info.meta)
-    initialize_mapping_if_necessary(es, index_info)
+    initialize_index_and_mapping(es, index_info)
     set_index_reindex_settings(es, index_info.index)
 
 
