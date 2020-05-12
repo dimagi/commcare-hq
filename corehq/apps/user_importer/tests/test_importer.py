@@ -21,8 +21,7 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
         super().setUpClass()
         delete_all_users()
         cls.domain_name = 'mydomain'
-        cls.domain = Domain(name=cls.domain_name)
-        cls.domain.save()
+        cls.domain = Domain.get_or_create_with_name(name=cls.domain_name)
 
         permissions = Permissions(edit_apps=True, view_reports=True)
         cls.role = UserRole.get_or_create_with_permissions(cls.domain.name, permissions, 'edit-apps')
