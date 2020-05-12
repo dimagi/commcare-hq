@@ -116,16 +116,6 @@ class Download(object):
             self._add_validation(worksheet)
         return wb
 
-    @staticmethod
-    def _add_validation(worksheet):
-        operations = [""] + VALID_OPERATIONS + OPERATIONS_TO_IGNORE
-        operation_data_validation = DataValidation(type="list", formula1='"%s"' % (','.join(operations)))
-        worksheet.add_data_validation(operation_data_validation)
-        for header_cell in worksheet[1]:
-            if header_cell.value == OPERATION_COLUMN:
-                letter = header_cell.column_letter
-                operation_data_validation.add(f"{letter}2:{letter}{worksheet.max_row}")
-
     def _create_rows(self):
         # location type code mapped to rows which is a list of dictionaries to pull headers later using keys
         rows = defaultdict(list)
@@ -179,6 +169,16 @@ class Download(object):
             if h not in uniq_headers:
                 uniq_headers.append(h)
         return uniq_headers
+
+    @staticmethod
+    def _add_validation(worksheet):
+        operations = [""] + VALID_OPERATIONS + OPERATIONS_TO_IGNORE
+        operation_data_validation = DataValidation(type="list", formula1='"%s"' % (','.join(operations)))
+        worksheet.add_data_validation(operation_data_validation)
+        for header_cell in worksheet[1]:
+            if header_cell.value == OPERATION_COLUMN:
+                letter = header_cell.column_letter
+                operation_data_validation.add(f"{letter}2:{letter}{worksheet.max_row}")
 
 
 class Households(object):
