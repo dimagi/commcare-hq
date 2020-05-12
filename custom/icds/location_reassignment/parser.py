@@ -26,6 +26,7 @@ from custom.icds.location_reassignment.const import (
     VALID_OPERATIONS,
 )
 from custom.icds.location_reassignment.models import Transition
+from custom.icds.location_reassignment.utils import get_household_case_ids
 
 
 def parse_site_code(site_code):
@@ -399,14 +400,20 @@ class HouseholdReassignmentParser(object):
 
     def parse(self):
         errors = []
+        site_codes = set([ws.title for ws in self.workbook.worksheets])
+        location_ids = {loc.site_code: loc.location_id
+                        for loc in SQLLocation.objects.filter(domain=self.domain, site_code__in=site_codes)}
         for worksheet in self.workbook.worksheets:
+            household_case_ids = set()
             location_site_code = worksheet.title
+            location_id = location_ids[location_site_code]
             for row in worksheet:
                 household_id = row.get(HOUSEHOLD_ID_COLUMN)
                 new_awc_code = row.get(AWC_CODE_COLUMN)
                 if not household_id:
                     errors.append("Missing Household ID for %s" % location_site_code)
                     continue
+                household_case_ids.add(household_id)
                 if not new_awc_code:
                     errors.append("Missing New AWC Code for household ID %s" % household_id)
                     continue
@@ -414,4 +421,15 @@ class HouseholdReassignmentParser(object):
                     'old_site_code': location_site_code,
                     'new_site_code': new_awc_code
                 }
+            expected_case_ids = set(get_household_case_ids(self.domain, location_id))
+            if expected_case_ids ^ household_case_ids:
+                missing_case_ids = expected_case_ids - household_case_ids
+                unexpected_case_ids = household_case_ids - expected_case_ids
+                if missing_case_ids:
+                    errors.append(f"Missing households for {location_site_code}: "
+                                  f"{', '.join(missing_case_ids)}")
+                if unexpected_case_ids:
+                    errors.append(f"Unexpected households for {location_site_code}: "
+                                  f"{', '.join(unexpected_case_ids)}")
+
         return errors
