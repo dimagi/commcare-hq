@@ -350,11 +350,13 @@ class Parser(object):
                 for new_site_code, new_location_details in transition.new_location_details.items():
                     parent_site_code = new_location_details['parent_site_code']
                     if parent_site_code in existing_new_parents:
-                        if existing_new_parents[parent_site_code].location_type.code != expected_parent_type:
-                            self.errors.append(f"Unexpected parent {parent_site_code} "
-                                               f"for type {location_type_code}")
+                        parent_location_type = existing_new_parents[parent_site_code].location_type.code
+                        if parent_location_type != expected_parent_type:
+                            self.errors.append(f"Unexpected {parent_location_type} parent {parent_site_code} "
+                                               f"set for {location_type_code}")
                     elif parent_site_code not in self.new_site_codes_for_location_type[expected_parent_type]:
-                        self.errors.append(f"Unexpected parent {parent_site_code} for type {location_type_code}")
+                        self.errors.append(f"Unexpected non-{expected_parent_type} parent {parent_site_code} "
+                                           f"set for {location_type_code}")
                     if parent_site_code in self.site_codes_to_be_archived:
                         self.errors.append(f"Parent {parent_site_code} is marked for archival")
 
