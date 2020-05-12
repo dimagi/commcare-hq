@@ -142,13 +142,20 @@
 
         <div class="form-group">
             <label class="control-label col-sm-3 col-md-2 requiredField">
-                {% trans "Day of month to send data" %}<span class="asteriskField">*</span>
+                {% trans "Day to send data" %}<span class="asteriskField">*</span>
             </label>
             <div class="controls col-sm-9 col-md-8 col-lg-6">
                 <input class="numberinput form-control"
                        required=""
                        type="number"
                        data-bind="value: dayOfMonth" />
+                <p class="help-block">
+                    {% blocktrans %}
+                    Day of the month if Frequency is monthly or quarterly. Day
+                    of the week if Frequency is weekly, where Monday is 1 and
+                    Sunday is 7.
+                    {% endblocktrans %}
+                </p>
             </div>
         </div>
 

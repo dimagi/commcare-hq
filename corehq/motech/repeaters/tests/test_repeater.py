@@ -884,6 +884,7 @@ class LocationRepeaterTest(TestCase, DomainSubscriptionMixin):
                 'domain': self.domain,
                 'external_id': None,
                 'is_archived': False,
+                'archived_on': None,
                 'last_modified': location.last_modified.isoformat(),
                 'latitude': None,
                 'lineage': [],

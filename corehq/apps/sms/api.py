@@ -6,6 +6,8 @@ from datetime import datetime
 from django.conf import settings
 from django.core.exceptions import ValidationError
 
+from corehq.util.metrics import metrics_counter
+from corehq.util.quickcache import quickcache
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.modules import to_function
@@ -269,7 +271,7 @@ def send_message_via_backend(msg, backend=None, orig_phone_number=None):
     orig_phone_number - the originating phone number to use when sending; this
       is sent in if the backend supports load balancing
     """
-
+    sms_load_counter("outbound", msg.domain)()
     try:
         msg.text = clean_text(msg.text)
     except Exception:
@@ -301,7 +303,11 @@ def send_message_via_backend(msg, backend=None, orig_phone_number=None):
 
         if backend.domain_is_authorized(msg.domain):
             backend.send(msg, orig_phone_number=orig_phone_number)
-            sms_load_counter("outbound", msg.domain)()
+            metrics_counter("commcare.sms.outbound_message", tags={
+                'domain': msg.domain,
+                'status': 'ok',
+                'backend': _get_backend_tag(backend),
+            })
         else:
             raise BackendAuthorizationException(
                 "Domain '%s' is not authorized to use backend '%s'" % (msg.domain, backend.pk)
@@ -312,7 +318,11 @@ def send_message_via_backend(msg, backend=None, orig_phone_number=None):
         msg.save()
         return True
     except Exception:
-        sms_load_counter("outbound", msg.domain)()
+        metrics_counter("commcare.sms.outbound_message", tags={
+            'domain': msg.domain,
+            'status': 'error',
+            'backend': _get_backend_tag(backend),
+        })
         should_log_exception = True
 
         if backend:
@@ -324,9 +334,17 @@ def send_message_via_backend(msg, backend=None, orig_phone_number=None):
         return False
 
 
-def _get_backend_tag(backend):
+@quickcache(['backend_id'], skip_arg='backend')
+def _get_backend_tag(backend=None, backend_id=None):
+    assert not (backend_id and backend)
+    if backend_id:
+        try:
+            backend = SQLMobileBackend.load(backend_id, is_couch_id=True)
+        except Exception:
+            backend = None
+
     if not backend:
-        return None
+        return 'unknown'
     elif backend.is_global:
         return backend.name
     else:
@@ -621,6 +639,25 @@ def get_inbound_phone_entry(msg):
 
 
 def process_incoming(msg):
+    try:
+        _process_incoming(msg)
+        status = 'ok'
+    except Exception:
+        status = 'error'
+        raise
+    finally:
+        # this needs to be in a try finally so we can
+        # - get msg.domain after it's set
+        # - report whether it raised an exception as status
+        # - always report the metric even if it fails
+        metrics_counter("commcare.sms.inbound_message", tags={
+            'domain': msg.domain,
+            'backend': _get_backend_tag(backend_id=msg.backend_id),
+            'status': status,
+        })
+
+
+def _process_incoming(msg):
     sms_load_counter("inbound", msg.domain)()
     v, has_domain_two_way_scope = get_inbound_phone_entry(msg)
 
@@ -633,6 +670,7 @@ def process_incoming(msg):
         msg.domain = v.domain
         msg.location_id = get_location_id_by_verified_number(v)
         msg.save()
+
     elif msg.domain_scope:
         if any_migrations_in_progress(msg.domain_scope):
             raise DelayProcessing()
