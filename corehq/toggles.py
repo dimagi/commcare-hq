@@ -1167,7 +1167,8 @@ SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER = StaticToggle(
     'Show an additional "Owner (Location)" property in report builder reports. '
     'This can be used to create report builder reports that are location-safe.',
     TAG_SOLUTIONS_OPEN,
-    [NAMESPACE_DOMAIN]
+    [NAMESPACE_DOMAIN],
+    help_link='https://confluence.dimagi.com/display/internal/Demo+Mobile+Workers',
 )
 
 MOBILE_USER_DEMO_MODE = StaticToggle(
@@ -1874,11 +1875,19 @@ TWO_STAGE_USER_PROVISIONING = StaticToggle(
     help_link='https://confluence.dimagi.com/display/ccinternal/Two-Stage+Mobile+Worker+Account+Creation',
 )
 
-LOCATION_REASSIGNMENT = StaticToggle(
+PERFORM_LOCATION_REASSIGNMENT = StaticToggle(
     'location_reassignment',
-    'Ability to reorder organization structure',
+    'Ability to submit requests for location reassignment',
     TAG_CUSTOM,
     [NAMESPACE_USER],
+    relevant_environments={'icds', 'india', 'staging'},
+)
+
+DOWNLOAD_LOCATION_REASSIGNMENT_REQUEST_TEMPLATE = StaticToggle(
+    'download_location_reassignment_template',
+    'Allow domain users to download location reassignment template',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN],
     relevant_environments={'icds', 'india', 'staging'},
 )
 
@@ -1897,4 +1906,11 @@ ICDS_LOCATION_REASSIGNMENT_AGG = StaticToggle(
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
     relevant_environments={'icds', 'india'},
+)
+
+REFER_CASE_REPEATER = StaticToggle(
+    'refer_case_repeater',
+    'COVID: Allow refer case repeaters to be setup',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN]
 )
