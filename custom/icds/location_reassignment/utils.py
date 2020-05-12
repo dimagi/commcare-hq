@@ -69,7 +69,6 @@ def reassign_household_case(domain, household_case_id, old_owner_id, new_owner_i
     if deprecation_time is None:
         deprecation_time = datetime.utcnow()
     case_ids = get_household_and_child_case_ids_by_owner(domain, household_case_id, old_owner_id)
-    case_ids.add(household_case_id)
     case_blocks = []
     for case_id in case_ids:
         updates = {
