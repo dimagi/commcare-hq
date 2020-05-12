@@ -593,6 +593,13 @@ class _AuthorizableMixin(IsMemberOfMixin):
             self.domains = [d.domain for d in self.domain_memberships]
         return domain_membership
 
+    def get_enterprise_membership(self, linked_domain):
+        master_link = get_domain_master_link(linked_domain)
+        if master_link and not master_link.is_remote:
+            if toggles.ENTERPRISE_LINKED_DOMAINS.enabled(master_link.master_domain):
+                return self.get_domain_membership(master_link.master_domain)
+        return None
+
     def add_domain_membership(self, domain, timezone=None, **kwargs):
         for d in self.domain_memberships:
             if d.domain == domain:
@@ -668,18 +675,8 @@ class _AuthorizableMixin(IsMemberOfMixin):
         if self.is_global_admin() and (domain is None or not domain_restricts_superusers(domain)):
             return True
 
-        dm = self.get_domain_membership(domain)
-        if dm:
-            return dm.is_admin
-
-        master_link = get_domain_master_link(domain)
-        if master_link and not master_link.is_remote:
-            if toggles.ENTERPRISE_LINKED_DOMAINS.enabled(master_link.master_domain):
-                dm = self.get_domain_membership(master_link.master_domain)
-                if dm:
-                    return dm.is_admin
-
-        return False
+        membership = self.get_domain_membership(domain) or self.get_enterprise_membership(domain)
+        return membership.is_admin or False
 
     def get_domains(self):
         domains = [dm.domain for dm in self.domain_memberships]
@@ -697,26 +694,15 @@ class _AuthorizableMixin(IsMemberOfMixin):
             elif self.is_domain_admin(domain):
                 return True
 
-        def _domain_membership_has_permission(membership):
-            if not membership:
-                return False
-            # an admin has access to all features by default, restrict that if needed
-            if membership.is_admin and restrict_global_admin:
-                return False
-            return membership.has_permission(permission, data)
+        membership = self.get_domain_membership(domain) or self.get_enterprise_membership(domain)
+        if not membership:
+            return False
 
-        domain_membership = self.get_domain_membership(domain)
-        if domain_membership:
-            return _domain_membership_has_permission(domain_membership)
+        # an admin has access to all features by default, restrict that if needed
+        if membership.is_admin and restrict_global_admin:
+            return False
 
-        master_link = get_domain_master_link(domain)
-        if master_link and not master_link.is_remote:
-            if toggles.ENTERPRISE_LINKED_DOMAINS.enabled(master_link.master_domain):
-                master_membership = self.get_domain_membership(master_link.master_domain)
-                if master_membership:
-                    return _domain_membership_has_permission(master_membership)
-
-        return False
+        return membership.has_permission(permission, data)
 
     @memoized
     def get_role(self, domain=None, checking_global_admin=True):
@@ -1610,8 +1596,8 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             else:
                 return role.permissions.view_report_list
         else:
-            dm = self.get_domain_membership(domain)
-            return dm.viewable_reports() if dm else []
+            membership = self.get_domain_membership(domain) or self.get_enterprise_membership(domain)
+            return membership.viewable_reports() or []
 
     def can_view_some_reports(self, domain):
         return self.can_view_reports(domain) or bool(self.get_viewable_reports(domain))
