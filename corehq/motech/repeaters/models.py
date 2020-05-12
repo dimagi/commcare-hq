@@ -92,6 +92,8 @@ from dimagi.utils.couch.undo import DELETED_SUFFIX
 from dimagi.utils.parsing import json_format_datetime
 from dimagi.utils.post import simple_post
 
+from corehq import toggles
+
 from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CommCareUser
@@ -108,6 +110,7 @@ from corehq.motech.repeaters.repeater_generators import (
     FormRepeaterJsonPayloadGenerator,
     FormRepeaterXMLPayloadGenerator,
     LocationPayloadGenerator,
+    ReferCasePayloadGenerator,
     ShortFormRepeaterJsonPayloadGenerator,
     UserPayloadGenerator,
 )
@@ -535,6 +538,30 @@ class UpdateCaseRepeater(CaseRepeater):
 
     def allowed_to_forward(self, payload):
         return super(UpdateCaseRepeater, self).allowed_to_forward(payload) and len(payload.xform_ids) > 1
+
+
+class ReferCaseRepeater(CreateCaseRepeater):
+    """
+    A repeater that triggers off case creation but sends a form creating cases in
+    another commcare project
+    """
+    friendly_name = _("Forward Cases To Another Commcare Project")
+
+    payload_generator_classes = (ReferCasePayloadGenerator,)
+
+    def form_class_name(self):
+        # Note this class does not exist but this property is only used to construct the URL
+        return 'ReferCaseRepeater'
+
+    @classmethod
+    def available_for_domain(cls, domain):
+        """Returns whether this repeater can be used by a particular domain
+        """
+        return toggles.REFER_CASE_REPEATER.enabled(domain)
+
+    def get_url(self, repeat_record):
+        new_domain = self.payload_doc(repeat_record).get_case_property('new_domain')
+        return self.url.format(domain=new_domain)
 
 
 class ShortFormRepeater(Repeater):
