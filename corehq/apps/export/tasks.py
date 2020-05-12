@@ -238,7 +238,10 @@ def _generate_incremental_export(incremental_export):
     export_instance = incremental_export.export_instance
     export_instance.export_format = Format.UNZIPPED_CSV  # force to unzipped CSV
     checkpoint = incremental_export.last_valid_checkpoint
-    filters = []
+
+    # Remove the date period from the ExportInstance, since this is added automatically by Daily Saved exports
+    export_instance.filters.date_period = None
+    filters = export_instance.get_filters()
     if checkpoint:
         filters.append(ServerModifiedOnRangeFilter(gt=checkpoint.last_doc_date))
 

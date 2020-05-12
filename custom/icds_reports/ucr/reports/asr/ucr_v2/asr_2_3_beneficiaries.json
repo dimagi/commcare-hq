@@ -21,7 +21,8 @@
   ],
   "server_environment": [
     "india",
-    "icds"
+    "icds",
+    "icds-staging"
   ],
   "report_id": "static-asr_2_3_beneficiaries",
   "data_source_table": "static-person_cases_v3",

@@ -21,7 +21,8 @@
   ],
   "server_environment": [
     "india",
-    "icds"
+    "icds",
+    "icds-staging"
   ],
   "report_id": "static-asr_4_6_infrastructure",
   "data_source_table": "static-infrastructure_form",

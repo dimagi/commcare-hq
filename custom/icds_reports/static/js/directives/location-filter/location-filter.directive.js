@@ -140,8 +140,9 @@ function LocationModalController($uibModalInstance, $location, locationsService,
 
 function LocationFilterController($rootScope, $scope, $location, $uibModal, locationHierarchy, locationsService,
     storageService, navigationService, userLocationId, haveAccessToAllLocations,
-    allUserLocationId) {
+    allUserLocationId, haveAccessToFeatures) {
     var vm = this;
+    vm.haveAccessToFeatures = haveAccessToFeatures;
     if (Object.keys($location.search()).length === 0) {
         $location.search(storageService.getKey('search'));
     } else {
@@ -519,7 +520,7 @@ function LocationFilterController($rootScope, $scope, $location, $uibModal, loca
 
 LocationFilterController.$inject = [
     '$rootScope', '$scope', '$location', '$uibModal', 'locationHierarchy', 'locationsService', 'storageService',
-    'navigationService', 'userLocationId', 'haveAccessToAllLocations', 'allUserLocationId',
+    'navigationService', 'userLocationId', 'haveAccessToAllLocations', 'allUserLocationId', 'haveAccessToFeatures',
 ];
 LocationModalController.$inject = ['$uibModalInstance', '$location', 'locationsService', 'selectedLocationId', 'hierarchy', 'selectedLocations', 'locationsCache', 'maxLevel', 'userLocationId', 'showMessage', 'showSectorMessage', 'dateHelperService'];
 

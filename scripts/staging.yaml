@@ -60,5 +60,8 @@ branches:
   - rn_update_perfect_scrollbar # Rohit Negi May 4
   - bmb/SAAS-10674  # Biyeun May 4
   - dmr/case-upload-success-result-followup  # Danny May 5
+  - ce/refer-case-repeater # Cal May 7
+  - dmr/formplayer-browser-errors-extra-info  # Danny May 8
+  - dmr/consistently-add-username-to-sentry-reports  # Danny May 8
 
 submodules: {}

@@ -98,7 +98,7 @@ class Command(BaseCommand):
 
         records = list(ICDSAuditEntryRecord.objects.filter(url=f'/a/{domain}/cas_export',
                                                            time_of_use__gte=start_date,
-                                                           time_of_use__lte=end_date)
+                                                           time_of_use__lt=end_date)
                        .annotate(indicator=Cast(KeyTextTransform('indicator', 'post_data'), TextField()))
                        .values('indicator')
                        .annotate(count=Count('indicator')).values('username', 'count').order_by('username'))
@@ -134,13 +134,14 @@ class Command(BaseCommand):
     def get_cas_data(self, username_state_mapping, start_date, end_date, domain):
         cas_total_counts = self.get_dashboard_cas_usage_counts(start_date, end_date, domain)
         sheet_headers = ['Sr.No', 'State/UT Name',
-                         'No. of times CAS data export downloaded (December 2019)']
+                         f'No. of times CAS data export downloaded ({start_date.strftime("%m-%d-%Y")} to {end_date.strftime("%m-%d-%Y")})']
         cas_data = list()
         cas_data_dict = defaultdict(int)
 
         # converting usernames to state names
         for key, value in cas_total_counts.items():
-            cas_data_dict[username_state_mapping[key]] += value
+            if key in username_state_mapping:
+                cas_data_dict[username_state_mapping[key]] += value
 
         # creating cas data
         serial = 0
