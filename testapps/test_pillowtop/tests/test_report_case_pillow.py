@@ -1,23 +1,45 @@
 import uuid
+from unittest.mock import patch
 
 from django.test import TestCase, override_settings
-from corehq.util.es.elasticsearch import ConnectionError
 
+from pillowtop.es_utils import initialize_index_and_mapping
+
+from corehq.apps.callcenter.tests.test_utils import CallCenterDomainMockTest
 from corehq.apps.es import CaseES
 from corehq.apps.hqcase.management.commands.ptop_reindexer_v2 import reindex_and_clean
+from corehq.apps.userreports.models import StaticDataSourceConfiguration
+from corehq.apps.userreports.pillow import ConfigurableReportPillowProcessor
 from corehq.elastic import get_es_new
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, run_with_all_backends
 from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_INDEX_INFO
 from corehq.util.elastic import ensure_index_deleted
-from corehq.util.test_utils import trap_extra_setup, create_and_save_a_case
-from pillowtop.es_utils import initialize_index_and_mapping
+from corehq.util.es.elasticsearch import ConnectionError
+from corehq.util.test_utils import create_and_save_a_case, trap_extra_setup
 from testapps.test_pillowtop.utils import process_pillow_changes
 
 DOMAIN = 'report-case-pillowtest-domain'
 
 
 @override_settings(ES_CASE_FULL_INDEX_DOMAINS=[DOMAIN])
-class ReportCasePillowTest(TestCase):
+class ReportCasePillowTest(CallCenterDomainMockTest):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        # patch time savings: ~25s per _create_case_and_sync_to_es()
+        cls.patches = [
+            patch.object(StaticDataSourceConfiguration, "_all", lambda: []),
+            patch.object(ConfigurableReportPillowProcessor, "rebuild_tables_if_necessary"),
+        ]
+        for px in cls.patches:
+            px.start()
+
+    @classmethod
+    def tearDownClass(cls):
+        for px in cls.patches:
+            px.stop()
+        super().tearDownClass()
 
     def setUp(self):
         super(ReportCasePillowTest, self).setUp()
