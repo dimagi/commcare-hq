@@ -1154,10 +1154,6 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             raise NotImplementedError(f'Unrecognized user type {self.doc_type!r}')
 
     @property
-    def projects(self):
-        return list(map(Domain.get_by_name, self.get_domains()))
-
-    @property
     def full_name(self):
         return ("%s %s" % (self.first_name or '', self.last_name or '')).strip()
 
