@@ -13,17 +13,33 @@ from custom.icds.location_reassignment.const import (
 )
 
 
+def get_case_ids_for_reassignment(domain, location_id):
+    """
+    :return: for cases that belong to location_id return
+    a dict mapping for all case ids under a household id and
+    a set of all other case ids
+    """
+    all_case_ids = CaseAccessorSQL.get_case_ids_in_domain_by_owners(domain, [location_id])
+    other_case_ids = set(all_case_ids)
+    child_case_ids_per_household_id = {}
+    for household_case_id in get_household_case_ids(domain, location_id):
+        household_child_case_ids = get_household_child_case_ids_by_owner(
+            domain, household_case_id, location_id)
+        other_case_ids.remove(household_case_id)
+        other_case_ids = other_case_ids - set(household_child_case_ids)
+        child_case_ids_per_household_id[household_case_id] = household_child_case_ids
+    return child_case_ids_per_household_id, other_case_ids
+
+
 def get_household_case_ids(domain, location_id):
     return CaseAccessorSQL.get_case_ids_in_domain_by_owners(
         domain, [location_id], case_type=HOUSEHOLD_CASE_TYPE)
 
 
-def get_household_and_child_case_ids_by_owner(domain, household_case_id, owner_id, case_types=None):
-    case_ids = {household_case_id}
+def get_household_child_case_ids_by_owner(domain, household_case_id, owner_id, case_types=None):
     child_cases = get_household_child_cases_by_owner(domain, household_case_id, owner_id, case_types)
     child_case_ids = [case.case_id for case in child_cases]
-    case_ids.update(child_case_ids)
-    return case_ids
+    return child_case_ids
 
 
 def get_household_child_cases_by_owner(domain, household_case_id, owner_id, case_types=None):
@@ -63,12 +79,16 @@ def get_supervisor_id(domain, location_id):
         return new_location.parent.location_id
 
 
-def reassign_household_case(domain, household_case_id, old_owner_id, new_owner_id, supervisor_id,
-                            deprecation_time=None):
+def reassign_household(domain, household_case_id, old_owner_id, new_owner_id, supervisor_id,
+                       deprecation_time=None, household_child_case_ids=None):
     from custom.icds.location_reassignment.tasks import process_ucr_changes
     if deprecation_time is None:
         deprecation_time = datetime.utcnow()
-    case_ids = get_household_and_child_case_ids_by_owner(domain, household_case_id, old_owner_id)
+    if household_child_case_ids:
+        case_ids = household_child_case_ids
+    else:
+        case_ids = get_household_child_case_ids_by_owner(domain, household_case_id, old_owner_id)
+    case_ids.append(household_case_id)
     case_blocks = []
     for case_id in case_ids:
         updates = {
@@ -86,3 +106,15 @@ def reassign_household_case(domain, household_case_id, old_owner_id, new_owner_i
     if case_blocks:
         submit_case_blocks(case_blocks, domain, user_id=SYSTEM_USER_ID)
     process_ucr_changes.delay(domain, case_ids)
+
+
+def reassign_cases(domain, case_ids, new_owner_id):
+    case_blocks = []
+    for case_id in case_ids:
+        case_block = CaseBlock(case_id,
+                               owner_id=new_owner_id,
+                               user_id=SYSTEM_USER_ID)
+        case_block = ElementTree.tostring(case_block.as_xml()).decode('utf-8')
+        case_blocks.append(case_block)
+    if case_blocks:
+        submit_case_blocks(case_blocks, domain, user_id=SYSTEM_USER_ID)

@@ -23,9 +23,10 @@ from custom.icds.location_reassignment.processor import (
     Processor,
 )
 from custom.icds.location_reassignment.utils import (
-    get_household_case_ids,
+    get_case_ids_for_reassignment,
     get_supervisor_id,
-    reassign_household_case,
+    reassign_household,
+    reassign_cases,
 )
 
 
@@ -58,17 +59,23 @@ def process_location_reassignment(domain, transitions, uploaded_filename, user_e
 
 
 @task(queue=settings.CELERY_LOCATION_REASSIGNMENT_QUEUE)
-def reassign_household_and_child_cases_for_owner(domain, old_location_id, new_location_id, deprecation_time):
+def reassign_cases_for_owner(domain, old_location_id, new_location_id, deprecation_time):
     """
-    finds all household cases assigned to the old location and then
-    reassign the household case and all its child cases to new location
+    finds relevant case ids and then
+    for each household case
+        reassign the household case and all its child cases to new location as a group
+    and then reassign all other cases as a group
     """
-    supervisor_id = get_supervisor_id(domain, old_location_id)
-    household_case_ids = get_household_case_ids(domain, old_location_id)
 
-    for household_case_id in household_case_ids:
-        reassign_household_case(domain, household_case_id, old_location_id, new_location_id, supervisor_id,
-                                deprecation_time)
+    supervisor_id = get_supervisor_id(domain, old_location_id)
+    child_case_ids_per_household_id, other_case_ids = get_case_ids_for_reassignment(domain, old_location_id)
+
+    for household_case_id, household_child_case_ids in child_case_ids_per_household_id.items():
+        reassign_household(domain, household_case_id, old_location_id, new_location_id, supervisor_id,
+                           deprecation_time=deprecation_time, household_child_case_ids=household_child_case_ids)
+
+    if other_case_ids:
+        reassign_cases(domain, other_case_ids, new_location_id)
 
 
 @task(queue=settings.CELERY_LOCATION_REASSIGNMENT_QUEUE)
