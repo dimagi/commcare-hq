@@ -8,9 +8,7 @@
 <div class="confirm-plan-summary">
   <div class="tile {{ tile_css }}">
     <h3>
-      {% blocktrans with plan.name as p %}
-        {{ p }} Edition
-      {% endblocktrans %}
+      {{ plan.name }}
     </h3>
     <p class="plan-price">
       {{ plan.monthly_fee }}

@@ -70,7 +70,8 @@ class ImporterTest(TestCase):
 
     @run_with_all_backends
     @patch('corehq.apps.case_importer.tasks.bulk_import_async.update_state')
-    def testImportNone(self, update_state):
+    def testImportFileMissing(self, update_state):
+        # by using a made up upload_id, we ensure it's not referencing any real file
         case_upload = CaseUploadRecord(upload_id=str(uuid.uuid4()), task_id=str(uuid.uuid4()))
         case_upload.save()
         res = bulk_import_async.delay(self._config(['anything']), self.domain, case_upload.upload_id)
