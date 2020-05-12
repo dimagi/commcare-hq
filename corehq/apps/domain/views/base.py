@@ -34,16 +34,16 @@ def select(request, do_not_redirect=False, next_view=None):
 
     # next_view must be a url that expects exactly one parameter, a domain name
     next_view = next_view or request.GET.get('next_view') or "domain_homepage"
-    (user_domain_links, linked_domain_links) = get_domain_dropdown_links(request.couch_user, view_name=next_view)
-    if not user_domain_links:
+    (domain_links, enterprise_domain_links) = get_domain_dropdown_links(request.couch_user, view_name=next_view)
+    if not domain_links:
         return redirect('registration_domain')
 
     email = request.couch_user.get_email()
     open_invitations = [e for e in Invitation.by_email(email) if not e.is_expired]
 
     additional_context = {
-        'user_domain_links': user_domain_links,
-        'linked_domain_links': linked_domain_links,
+        'domain_links': domain_links,
+        'enterprise_domain_links': enterprise_domain_links,
         'open_invitations': [] if next_view else open_invitations,
         'current_page': {'page_name': _('Select A Project')},
     }
@@ -84,7 +84,7 @@ def get_domain_dropdown_links(couch_user, view_name="domain_homepage"):
         url=reverse(view_name, args=[domain_obj.name]),
     ) for domain_obj in domains]
 
-    linked_domain_links = []
+    enterprise_domain_links = []
     domain_names = {d.name for d in domain_links}
     for domain_obj in domain_links:
         domain = domain_obj.name
@@ -92,15 +92,15 @@ def get_domain_dropdown_links(couch_user, view_name="domain_homepage"):
             links = get_linked_domains(domain)
             links = [link for link in links if link.linked_domain not in domain_names]
             linked_domains = [Domain.get_by_name(link.linked_domain) for link in links]
-            linked_domain_links.extend([Link(
+            enterprise_domain_links.extend([Link(
                 name=d.display_name(),
                 url=reverse(view_name, args=[d.name])
             ) for d in linked_domains if d])
 
     domain_links = sorted(domain_links, key=lambda link: link.name.lower())
-    linked_domain_links = sorted(linked_domain_links, key=lambda link: link.name.lower())
+    enterprise_domain_links = sorted(enterprise_domain_links, key=lambda link: link.name.lower())
 
-    return (domain_links, linked_domain_links)
+    return (domain_links, enterprise_domain_links)
 
 
 class DomainViewMixin(object):

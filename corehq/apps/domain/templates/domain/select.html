@@ -22,7 +22,7 @@
       {% endif %}
       <h2>{% trans "My Projects" %}</h2>
       <ul class="nav nav-pills nav-stacked">
-        {% for link in user_domain_links %}
+        {% for link in domain_links %}
           <li><a href="{{ link.url }}">{{ link.name }}</a></li>
         {% endfor %}
       </ul>

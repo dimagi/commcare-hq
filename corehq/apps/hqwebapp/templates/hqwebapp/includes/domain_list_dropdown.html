@@ -1,8 +1,8 @@
 {% load i18n %}
 <ul class="dropdown-menu dropdown-menu-right" role="menu">
-    {% if domain_list %}
+    {% if domain_links %}
         <li class="dropdown-header nav-header">{% trans 'Change Project' %}</li>
-        {% for d in domain_list %}
+        {% for d in domain_links %}
             <li><a href="{{ d.url }}">{{ d.name }}</a></li>
         {% endfor %}
     {% endif %}
