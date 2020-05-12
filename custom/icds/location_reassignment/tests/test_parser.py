@@ -186,6 +186,6 @@ class TestParser(TestCase):
             workbook = get_workbook(file)
             parser = Parser(self.domain, workbook)
             errors = parser.parse()
-            self.assertIn('Unexpected parent 1 for type supervisor', errors, "missing location found")
-            self.assertIn('Unexpected parent 13 for type awc', errors, "incorrect parent type not flagged")
+            self.assertIn('Unexpected non-state parent 1 set for supervisor', errors, "missing location found")
+            self.assertIn('Unexpected state parent 13 set for awc', errors, "incorrect parent type not flagged")
             self.assertIn('Parent 12 is marked for archival', errors, "archived parent not caught")
