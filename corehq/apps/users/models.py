@@ -59,6 +59,7 @@ from corehq.apps.domain.utils import (
     normalize_domain_name,
 )
 from corehq.apps.hqwebapp.tasks import send_html_email_async
+from corehq.apps.linked_domain.dbaccessors import get_domain_master_link
 from corehq.apps.sms.mixin import CommCareMobileContactMixin, apply_leniency
 from corehq.apps.users.landing_pages import ALL_LANDING_PAGES
 from corehq.apps.users.permissions import EXPORT_PERMISSIONS
@@ -663,14 +664,22 @@ class _AuthorizableMixin(IsMemberOfMixin):
                 # this is a hack needed because we can't pass parameters from views
                 domain = self.current_domain
             else:
-                return False # no domain, no admin
+                return False  # no domain, no admin
         if self.is_global_admin() and (domain is None or not domain_restricts_superusers(domain)):
             return True
+
         dm = self.get_domain_membership(domain)
         if dm:
             return dm.is_admin
-        else:
-            return False
+
+        master_link = get_domain_master_link(domain)
+        if master_link and not master_link.is_remote:
+            if toggles.ENTERPRISE_LINKED_DOMAINS.enabled(master_link.master_domain):
+                dm = self.get_domain_membership(master_link.master_domain)
+                if dm:
+                    return dm.is_admin
+
+        return False
 
     def get_domains(self):
         domains = [dm.domain for dm in self.domain_memberships]
@@ -688,14 +697,24 @@ class _AuthorizableMixin(IsMemberOfMixin):
             elif self.is_domain_admin(domain):
                 return True
 
-        dm = self.get_domain_membership(domain)
-        if dm:
-            # an admin has access to all features by default, restrict that if needed
-            if dm.is_admin and restrict_global_admin:
+        def _domain_membership_has_permission(membership):
+            if not membership:
                 return False
-            return dm.has_permission(permission, data)
-        else:
-            return False
+            # an admin has access to all features by default, restrict that if needed
+            if membership.is_admin and restrict_global_admin:
+                return False
+            return membership.has_permission(permission, data)
+
+        if _domain_membership_has_permission(self.get_domain_membership(domain)):
+            return True
+
+        master_link = get_domain_master_link(domain)
+        if master_link and not master_link.is_remote:
+            if toggles.ENTERPRISE_LINKED_DOMAINS.enabled(master_link.master_domain):
+                if _domain_membership_has_permission(self.get_domain_membership(master_link.master_domain)):
+                    return True
+
+        return False
 
     @memoized
     def get_role(self, domain=None, checking_global_admin=True):
@@ -1437,7 +1456,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             return None
 
     def clear_quickcache_for_user(self):
-        from corehq.apps.hqwebapp.templatetags.hq_shared_tags import _get_domain_list
+        from corehq.apps.domain.views.base import get_domain_dropdown_links
         from corehq.apps.sms.util import is_user_contact_active
 
         self.get_by_username.clear(self.__class__, self.username)
@@ -1451,7 +1470,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             self.get_by_user_id.clear(self.__class__, self.user_id, domain)
             is_user_contact_active.clear(domain, self.user_id)
         Domain.active_for_couch_user.clear(self)
-        _get_domain_list.clear(self)
+        get_domain_dropdown_links.clear(self)
 
     @classmethod
     @quickcache(['userID', 'domain'])
