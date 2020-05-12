@@ -48,7 +48,7 @@ Save those backups to somewhere you'll be able to access from the new environmen
 
 - Requirements of Python libraries, if they aren't already installed.
 
-      $ sudo apt install libpango1.0-0 postgresql-common libncurses-dev libxml2-dev libxslt1-dev
+      $ sudo apt install libpango1.0-0 postgresql-common libncurses-dev libxml2-dev libxslt1-dev libpq-dev
 
 
 ##### macOS Notes
