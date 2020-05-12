@@ -344,7 +344,7 @@ def _get_backend_tag(backend=None, backend_id=None):
             backend = None
 
     if not backend:
-        return None
+        return 'unknown'
     elif backend.is_global:
         return backend.name
     else:
