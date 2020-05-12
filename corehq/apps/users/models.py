@@ -143,6 +143,8 @@ class Permissions(DocumentSchema):
     manage_releases = BooleanProperty(default=True)
     manage_releases_list = StringListProperty(default=[])
 
+    login_as_all_users = BooleanProperty(default=True)
+
     @classmethod
     def wrap(cls, data):
         # this is why you don't store module paths in the database...
