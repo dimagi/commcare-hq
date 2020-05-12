@@ -63,6 +63,5 @@ branches:
   - ce/refer-case-repeater # Cal May 7
   - dmr/formplayer-browser-errors-extra-info  # Danny May 8
   - dmr/consistently-add-username-to-sentry-reports  # Danny May 8
-  - nh/auth/oauth2  # Norman May 12
 
 submodules: {}
