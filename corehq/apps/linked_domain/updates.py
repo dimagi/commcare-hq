@@ -27,6 +27,8 @@ from corehq.apps.linked_domain.local_accessors import \
     get_toggles_previews as local_toggles_previews
 from corehq.apps.linked_domain.local_accessors import \
     get_user_roles as local_get_user_roles
+from corehq.apps.linked_domain.local_accessors import \
+    get_location_types as local_location_types
 from corehq.apps.linked_domain.remote_accessors import \
     get_case_search_config as remote_get_case_search_config
 from corehq.apps.linked_domain.remote_accessors import \
@@ -35,6 +37,9 @@ from corehq.apps.linked_domain.remote_accessors import \
     get_toggles_previews as remote_toggles_previews
 from corehq.apps.linked_domain.remote_accessors import \
     get_user_roles as remote_get_user_roles
+from corehq.apps.linked_domain.remote_accessors import \
+    get_location_types as remote_location_types
+from corehq.apps.locations.models import LocationType
 from corehq.apps.locations.views import LocationFieldsView
 from corehq.apps.products.views import ProductFieldsView
 from corehq.apps.userreports.util import (
@@ -91,6 +96,19 @@ def update_custom_data_models(domain_link, limit_types=None):
         model = CustomDataFieldsDefinition.get_or_create(domain_link.linked_domain, field_type)
         model.fields = [CustomDataField.wrap(field_def) for field_def in field_definitions]
         model.save()
+
+
+def update_location_types(domain_link):
+    if domain_link.is_remote:
+        master_results = remote_location_types(domain_link)
+    else:
+        master_results = local_location_types(domain_link.master_domain)
+
+    for item in master_results:
+        item['domain'] = domain_link.linked_domain
+        if 'parent_type' in item:
+            item['parent_type_id'] = item.pop('parent_type')
+        LocationType.objects.update_or_create(domain=domain_link.linked_domain, code=item['code'], defaults=item)
 
 
 def update_user_roles(domain_link):

@@ -309,7 +309,7 @@ class LocationTypesView(BaseDomainView):
         def _is_fake_pk(pk):
             return isinstance(pk, str) and pk.startswith("fake-pk-")
 
-        def mk_loctype(name, parent_type, administrative,
+        def make_loc_type(name, parent_type, administrative,
                        shares_cases, view_descendants, pk, code, **kwargs):
             parent = sql_loc_types[parent_type] if parent_type else None
 
@@ -382,7 +382,7 @@ class LocationTypesView(BaseDomainView):
 
         for loc_type in hierarchy:
             # make all locations in order
-            mk_loctype(**loc_type)
+            make_loc_type(**loc_type)
 
         for loc_type in hierarchy:
             # apply sync boundaries (expand_from, expand_to and include_without_expanding) after the

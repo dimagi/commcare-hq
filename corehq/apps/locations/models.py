@@ -21,6 +21,9 @@ from corehq.form_processor.interfaces.supply import SupplyInterface
 class LocationTypeManager(models.Manager):
 
     def full_hierarchy(self, domain):
+        return self.full_hierarchy_for_types(self.filter(domain=domain).all())
+
+    def full_hierarchy_for_types(self, loc_types):
         """
         Returns a graph of the form
         {
@@ -45,7 +48,7 @@ class LocationTypeManager(models.Manager):
                 lt_hierarchy[loc_type.id] = (loc_type, {})
             return lt_hierarchy[loc_type.id][1]
 
-        for loc_type in self.filter(domain=domain).all():
+        for loc_type in loc_types:
             insert_loc_type(loc_type)
 
         return hierarchy
