@@ -1,6 +1,7 @@
 from corehq import feature_previews, toggles
 from corehq.apps.custom_data_fields.dbaccessors import get_by_domain_and_type
 from corehq.apps.linked_domain.util import _clean_json
+from corehq.apps.locations.models import LocationType
 from corehq.apps.locations.views import LocationFieldsView
 from corehq.apps.products.views import ProductFieldsView
 from corehq.apps.users.models import UserRole
@@ -23,6 +24,10 @@ def get_custom_data_models(domain, limit_types=None):
         if model:
             fields[field_view.field_type] = model.to_json()['fields']
     return fields
+
+
+def get_location_types(domain):
+    return [loc_type.to_json() for loc_type in LocationType.objects.by_domain(domain)]
 
 
 def get_user_roles(domain):
