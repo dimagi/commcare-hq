@@ -684,14 +684,16 @@ class _AuthorizableMixin(IsMemberOfMixin):
                 return False
             return membership.has_permission(permission, data)
 
-        if _domain_membership_has_permission(self.get_domain_membership(domain)):
-            return True
+        domain_membership = self.get_domain_membership(domain)
+        if domain_membership:
+            return _domain_membership_has_permission(domain_membership)
 
         master_link = get_domain_master_link(domain)
         if master_link and not master_link.is_remote:
             if toggles.ENTERPRISE_LINKED_DOMAINS.enabled(master_link.master_domain):
-                if _domain_membership_has_permission(self.get_domain_membership(master_link.master_domain)):
-                    return True
+                master_membership = self.get_domain_membership(master_link.master_domain)
+                if master_membership:
+                    return _domain_membership_has_permission(master_membership)
 
         return False
 
