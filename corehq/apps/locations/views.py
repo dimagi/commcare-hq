@@ -297,27 +297,9 @@ class LocationTypesView(BaseDomainView):
     @property
     def page_context(self):
         return {
-            'location_types': self._get_loc_types(),
+            'location_types': [loc_type.to_json() for loc_type in LocationType.objects.by_domain(self.domain)],
             'commtrack_enabled': self.domain_object.commtrack_enabled,
         }
-
-    def _get_loc_types(self):
-        return [{
-            'pk': loc_type.pk,
-            'name': loc_type.name,
-            'parent_type': (loc_type.parent_type.pk
-                            if loc_type.parent_type else None),
-            'administrative': loc_type.administrative,
-            'shares_cases': loc_type.shares_cases,
-            'view_descendants': loc_type.view_descendants,
-            'code': loc_type.code,
-            'expand_from': loc_type.expand_from.pk if loc_type.expand_from else None,
-            'expand_from_root': loc_type.expand_from_root,
-            'expand_to': loc_type.expand_to_id if loc_type.expand_to_id else None,
-            'include_without_expanding': (loc_type.include_without_expanding_id
-                                          if loc_type.include_without_expanding_id else None),
-            'include_only': list(loc_type.include_only.values_list('pk', flat=True)),
-        } for loc_type in LocationType.objects.by_domain(self.domain)]
 
     @method_decorator(lock_locations)
     def post(self, request, *args, **kwargs):

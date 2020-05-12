@@ -196,6 +196,24 @@ class LocationType(models.Model):
     def can_have_children(self):
         return LocationType.objects.filter(parent_type=self).exists()
 
+    def to_json(self):
+        return {
+            'domain': self.domain,
+            'pk': self.pk,
+            'name': self.name,
+            'parent_type': self.parent_type.pk if self.parent_type else None,
+            'administrative': self.administrative,
+            'shares_cases': self.shares_cases,
+            'view_descendants': self.view_descendants,
+            'code': self.code,
+            'expand_from': self.expand_from.pk if self.expand_from else None,
+            'expand_from_root': self.expand_from_root,
+            'expand_to': self.expand_to_id if self.expand_to_id else None,
+            'include_without_expanding': (self.include_without_expanding_id
+                                          if self.include_without_expanding_id else None),
+            'include_only': list(self.include_only.values_list('pk', flat=True)),
+        }
+
     @classmethod
     def _pre_bulk_save(cls, objects):
         if not objects:
