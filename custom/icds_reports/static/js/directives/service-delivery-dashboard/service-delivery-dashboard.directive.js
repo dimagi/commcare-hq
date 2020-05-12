@@ -9,6 +9,7 @@ function ServiceDeliveryDashboardController($rootScope, $scope, $http, $location
         this, $scope, $routeParams, $location, dateHelperService, storageService, navigationService
     );
     var vm = this;
+    vm.haveAccessToFeatures = haveAccessToFeatures;
     vm.data = {};
     vm.label = "Service Delivery Dashboard";
     vm.haveAccessToAllLocations = haveAccessToAllLocations;
@@ -537,7 +538,7 @@ function ServiceDeliveryDashboardController($rootScope, $scope, $http, $location
 ServiceDeliveryDashboardController.$inject = ['$rootScope', '$scope', '$http', '$location', '$routeParams', '$log',
     'DTOptionsBuilder', 'DTColumnBuilder', '$compile', 'storageService', 'userLocationId', 'baseControllersService',
     'haveAccessToAllLocations', 'isAlertActive', 'sddMetadata', 'dateHelperService', 'navigationService', 'isMobile',
-    'haveAccessToFeatures'];
+    'haveAccessToFeatures',];
 
 window.angular.module('icdsApp').directive('serviceDeliveryDashboard', ['templateProviderService', function (templateProviderService) {
     return {
