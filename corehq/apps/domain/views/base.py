@@ -85,12 +85,12 @@ def get_domain_dropdown_links(couch_user, view_name="domain_homepage"):
     ) for domain_obj in domains]
 
     enterprise_domain_links = []
-    domain_names = {d.name for d in domain_links}
+    domains = {d.name for d in domain_links}
     for domain_obj in domain_links:
         domain = domain_obj.name
         if toggles.ENTERPRISE_LINKED_DOMAINS.enabled(domain):
             links = get_linked_domains(domain)
-            links = [link for link in links if link.linked_domain not in domain_names]
+            links = [link for link in links if link.linked_domain not in domains]
             linked_domains = [Domain.get_by_name(link.linked_domain) for link in links]
             enterprise_domain_links.extend([Link(
                 name=d.display_name(),
