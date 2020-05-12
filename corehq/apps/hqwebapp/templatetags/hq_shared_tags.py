@@ -121,11 +121,11 @@ def domains_for_user(context, request, selected_domain=None):
     """
 
     from corehq.apps.domain.views.base import get_domain_dropdown_links
-    (domain_list, linked_domain_list) = get_domain_dropdown_links(request.couch_user)
+    (domain_links, enterprise_domain_links) = get_domain_dropdown_links(request.couch_user)
     context = {
-        'domain_list': domain_list,
+        'domain_links': domain_links,
         'current_domain': selected_domain,
-        'show_linked_domains_link': bool(linked_domain_list),
+        'show_linked_domains_link': bool(enterprise_domain_links),
     }
     return mark_safe(render_to_string('hqwebapp/includes/domain_list_dropdown.html', context, request))
 
