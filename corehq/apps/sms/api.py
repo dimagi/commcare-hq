@@ -639,13 +639,26 @@ def get_inbound_phone_entry(msg):
 
 
 def process_incoming(msg):
+    try:
+        _process_incoming(msg)
+        status = 'ok'
+    except Exception:
+        status = 'error'
+        raise
+    finally:
+        # this needs to be in a try finally so we can
+        # - get msg.domain after it's set
+        # - report whether it raised an exception as status
+        # - always report the metric even if it fails
+        metrics_counter("commcare.sms.inbound_message", tags={
+            'domain': msg.domain,
+            'backend': _get_backend_tag(backend_id=msg.backend_id),
+            'status': status,
+        })
+
+
+def _process_incoming(msg):
     sms_load_counter("inbound", msg.domain)()
-
-    metrics_counter("commcare.sms.inbound_message", tags={
-        'domain': msg.domain,
-        'backend': _get_backend_tag(backend_id=msg.backend_id),
-    })
-
     v, has_domain_two_way_scope = get_inbound_phone_entry(msg)
 
     if v:
@@ -657,6 +670,7 @@ def process_incoming(msg):
         msg.domain = v.domain
         msg.location_id = get_location_id_by_verified_number(v)
         msg.save()
+
     elif msg.domain_scope:
         if any_migrations_in_progress(msg.domain_scope):
             raise DelayProcessing()
