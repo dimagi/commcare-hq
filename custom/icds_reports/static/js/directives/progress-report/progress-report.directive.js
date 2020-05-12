@@ -5,13 +5,14 @@ var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 function ProgressReportController($scope, $location, progressReportService,
                                   storageService, $routeParams, userLocationId, DTOptionsBuilder, DTColumnDefBuilder,
                                   haveAccessToAllLocations, isAlertActive, dateHelperService, navigationService,
-                                  baseControllersService, factSheetSections) {
+                                  baseControllersService, factSheetSections, haveAccessToFeatures) {
 
     baseControllersService.BaseFilterController.call(
         this, $scope, $routeParams, $location, dateHelperService, storageService, navigationService
     );
 
     var vm = this;
+    vm.haveAccessToFeatures = haveAccessToFeatures;
     vm.isAlertActive = isAlertActive;
     vm.factSheetSections = factSheetSections.sections;
     if (Object.keys($location.search()).length === 0) {
@@ -190,7 +191,7 @@ function ProgressReportController($scope, $location, progressReportService,
 ProgressReportController.$inject = [
     '$scope', '$location', 'progressReportService', 'storageService', '$routeParams', 'userLocationId',
     'DTOptionsBuilder', 'DTColumnDefBuilder', 'haveAccessToAllLocations', 'isAlertActive', 'dateHelperService',
-    'navigationService', 'baseControllersService', 'factSheetSections',
+    'navigationService', 'baseControllersService', 'factSheetSections', 'haveAccessToFeatures',
 ];
 
 window.angular.module('icdsApp').directive('progressReport', ['templateProviderService', function (templateProviderService) {

@@ -19,6 +19,8 @@ from custom.icds.location_reassignment.const import (
     NEW_SUB_DISTRICT_NAME,
     NEW_USERNAME_COLUMN,
     OPERATION_COLUMN,
+    OPERATIONS_TO_IGNORE,
+    SHEETS_TO_IGNORE,
     SPLIT_OPERATION,
     USERNAME_COLUMN,
     VALID_OPERATIONS,
@@ -115,6 +117,8 @@ class Parser(object):
         self.transiting_site_codes = set()
         # maintain a list of valid site codes to be deprecated i.e all old site codes
         self.site_codes_to_be_deprecated = set()
+        # maintain a list of valid site codes to be archived
+        self.site_codes_to_be_archived = set()
 
         # mapping of expected parent type for a location type
         self.location_type_parent = {
@@ -142,11 +146,13 @@ class Parser(object):
 
     def parse(self):
         for worksheet in self.workbook.worksheets:
+            if worksheet.title in SHEETS_TO_IGNORE:
+                continue
             location_type_code = worksheet.title
             expects_parent = bool(self.location_type_parent.get(location_type_code))
             for row in worksheet:
                 operation = row.get(OPERATION_COLUMN)
-                if not operation:
+                if not operation or operation in OPERATIONS_TO_IGNORE:
                     continue
                 transition_row = TransitionRow(
                     location_type=location_type_code,
@@ -203,6 +209,8 @@ class Parser(object):
                     continue
                 if self._is_valid_transition(transition):
                     self.site_codes_to_be_deprecated.update(transition.old_site_codes)
+                    if transition.operation_obj.archives_old_locations:
+                        self.site_codes_to_be_archived.update(transition.old_site_codes)
                     self.valid_transitions[location_type_code].append(transition)
                     for old_username, new_username in transition.user_transitions.items():
                         if old_username:
@@ -276,11 +284,11 @@ class Parser(object):
             .values_list('site_code', flat=True)
         )
         if len(deprecating_locations_site_codes) != len(self.site_codes_to_be_deprecated):
-            self.errors.append(f"Found {len(deprecating_locations_site_codes)} locations for "
+            self.errors.append(f"Found {len(deprecating_locations_site_codes)} location(s) for "
                                f"{len(self.site_codes_to_be_deprecated)} deprecating site codes")
         missing_site_codes = set(self.site_codes_to_be_deprecated) - set(deprecating_locations_site_codes)
         if missing_site_codes:
-            self.errors.append(f"Could not find old locations with site codes {','.join(missing_site_codes)}")
+            self.errors.append(f"Could not find old location(s) with site codes {','.join(missing_site_codes)}")
 
     def _validate_descendants_deprecated(self):
         """
@@ -304,8 +312,10 @@ class Parser(object):
                         self.errors.append(f"Could not find old location with site code {old_site_code}")
                         continue
                     descendants_sites_codes = location.child_locations().values_list('site_code', flat=True)
+                    if not descendants_sites_codes:
+                        continue
                     if operation == EXTRACT_OPERATION:
-                        if not set(descendants_sites_codes) & site_codes_to_be_deprecated:
+                        if not (set(descendants_sites_codes) & site_codes_to_be_deprecated):
                             self.errors.append(
                                 f"Location {location.site_code} is getting deprecated via {operation} "
                                 f"but none of its descendants")
@@ -345,7 +355,7 @@ class Parser(object):
                                                f"for type {location_type_code}")
                     elif parent_site_code not in self.new_site_codes_for_location_type[expected_parent_type]:
                         self.errors.append(f"Unexpected parent {parent_site_code} for type {location_type_code}")
-                    if parent_site_code in self.site_codes_to_be_deprecated:
+                    if parent_site_code in self.site_codes_to_be_archived:
                         self.errors.append(f"Parent {parent_site_code} is marked for archival")
 
     def _get_new_parent_site_codes(self, location_type_code):
