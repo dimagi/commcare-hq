@@ -563,9 +563,14 @@ def async_indicators_metrics():
     unsuccessful_attempts = sum(AsyncIndicator.objects.values_list('unsuccessful_attempts', flat=True).all()[:100])
     metrics_gauge('commcare.async_indicator.unsuccessful_attempts', unsuccessful_attempts)
 
+    oldest_unprocessed = AsyncIndicator.objects.filter(unsuccessful_attempts=0).first()
+    if oldest_unprocessed:
+        lag = (now - oldest_unprocessed.date_created).total_seconds()
+    else:
+        lag = 0
     metrics_gauge(
         'commcare.async_indicator.true_lag',
-        (now - AsyncIndicator.objects.filter(unsuccessful_attempts=0).first().date_created).total_seconds,
+        lag,
         documentation="Lag of oldest created indicator that didn't get ever queued"
     )
     metrics_gauge(
