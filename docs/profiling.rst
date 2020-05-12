@@ -35,9 +35,9 @@ Getting a profile dump
 
 To get a profile dump, simply add the following decoration to the function.::
 
-    from dimagi.utils.decorators.profile import profile
+    from dimagi.utils.decorators.profile import profile_dump
     @login_and_domain_required
-    @profile('locations_download.prof')
+    @profile_dump('locations_download.prof')
     def location_export(request, domain):
         response = HttpResponse(mimetype=Format.from_format('xlsx').mimetype)
         response['Content-Disposition'] = 'attachment; filename="locations.xlsx"'
@@ -61,7 +61,7 @@ Here's an example:
 
 .. code-block:: python
 
-    @profile_prod('locations_download.prof', probability=float(os.getenv('PROFILE_LOCATIONS_EXPORT', 0))
+    @profile_dump('locations_download.prof', probability=float(os.getenv('PROFILE_LOCATIONS_EXPORT', 0))
     def location_export(request, domain):
         ....
 
@@ -75,7 +75,7 @@ You could also expose this via an environment variable or some other method to m
 
 .. code-block:: python
 
-    @profile_prod('locations_download.prof', 1, limit=10)
+    @profile_dump('locations_download.prof', 1, limit=10)
     def location_export(request, domain):
         ....
 

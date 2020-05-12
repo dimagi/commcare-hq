@@ -21,11 +21,9 @@ except Exception:
 # Source: http://code.djangoproject.com/wiki/ProfilingDjango
 
 
-def profile(log_file):
-    return profile_prod(log_file, 1, None)
 
 
-def profile_prod(log_file, probability, limit):
+def profile_dump(log_file, probability=1, limit=None):
     """Profile some callable.
 
     This decorator uses the hotshot profiler to profile some callable (like
