@@ -19,6 +19,7 @@ from corehq.apps.linked_domain.const import (
     MODEL_LOCATION_DATA,
     MODEL_PRODUCT_DATA,
     MODEL_USER_DATA,
+    MODEL_LOCATION_TYPES,
     MODELS_ROLES,
 )
 from corehq.apps.linked_domain.local_accessors import \
@@ -58,6 +59,7 @@ def update_model_type(domain_link, model_type, model_detail=None):
         MODEL_LOCATION_DATA: partial(update_custom_data_models, limit_types=[LocationFieldsView.field_type]),
         MODEL_PRODUCT_DATA: partial(update_custom_data_models, limit_types=[ProductFieldsView.field_type]),
         MODEL_USER_DATA: partial(update_custom_data_models, limit_types=[UserFieldsView.field_type]),
+        MODEL_LOCATION_TYPES: update_location_types,
         MODEL_CASE_SEARCH: update_case_search_config,
     }.get(model_type)
 
