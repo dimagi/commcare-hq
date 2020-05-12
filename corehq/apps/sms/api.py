@@ -7,6 +7,7 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 
 from corehq.util.metrics import metrics_counter
+from corehq.util.quickcache import quickcache
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.modules import to_function
@@ -333,7 +334,15 @@ def send_message_via_backend(msg, backend=None, orig_phone_number=None):
         return False
 
 
-def _get_backend_tag(backend):
+@quickcache(['backend_id'], skip_arg='backend')
+def _get_backend_tag(backend=None, backend_id=None):
+    assert not (backend_id and backend)
+    if backend_id:
+        try:
+            backend = SQLMobileBackend.load(backend_id, is_couch_id=True)
+        except Exception:
+            backend = None
+
     if not backend:
         return None
     elif backend.is_global:
@@ -631,9 +640,10 @@ def get_inbound_phone_entry(msg):
 
 def process_incoming(msg):
     sms_load_counter("inbound", msg.domain)()
+
     metrics_counter("commcare.sms.inbound_message", tags={
         'domain': msg.domain,
-        'backend': _get_backend_tag(msg.outbound_backend),
+        'backend': _get_backend_tag(backend_id=msg.backend_id),
     })
 
     v, has_domain_two_way_scope = get_inbound_phone_entry(msg)
