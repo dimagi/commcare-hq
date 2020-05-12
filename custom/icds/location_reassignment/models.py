@@ -64,7 +64,6 @@ class Transition(object):
 
     @transaction.atomic()
     def perform(self):
-        from custom.icds.location_reassignment.tasks import update_usercase
         if not self.valid():
             raise InvalidTransitionError(", ".join(self.errors))
         new_locations_created = self._create_missing_new_locations()
@@ -73,8 +72,6 @@ class Transition(object):
         if self.operation_obj.deactivates_old_users:
             for old_location in self.operation_obj.old_locations:
                 deactivate_users_at_location(old_location.location_id)
-        for old_username, new_username in self.user_transitions.items():
-            update_usercase.delay(self.domain, old_username, new_username)
 
     def valid(self):
         return self.operation_obj.valid()
