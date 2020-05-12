@@ -26,10 +26,10 @@
           <li><a href="{{ link.url }}">{{ link.name }}</a></li>
         {% endfor %}
       </ul>
-      {% if linked_domain_links %}
+      {% if enterprise_domain_links %}
         <h2>{% trans "Enterprise Projects" %}</h2>
         <ul class="nav nav-pills nav-stacked">
-          {% for link in linked_domain_links %}
+          {% for link in enterprise_domain_links %}
             <li><a href="{{ link.url }}">{{ link.name }}</a></li>
           {% endfor %}
         </ul>
