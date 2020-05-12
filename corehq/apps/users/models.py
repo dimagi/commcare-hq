@@ -525,30 +525,6 @@ class DomainMembership(Membership):
         app_label = 'users'
 
 
-class OrgMembership(Membership):
-    organization = StringProperty()
-    team_ids = StringListProperty(default=[]) # a set of ids corresponding to which teams the user is a member of
-
-
-class OrgMembershipError(Exception):
-    pass
-
-
-class CustomDomainMembership(DomainMembership):
-    custom_role = SchemaProperty(UserRole)
-
-    @property
-    def role(self):
-        if self.is_admin:
-            return AdminUserRole(self.domain)
-        else:
-            return self.custom_role
-
-    def set_permission(self, permission, value, data=None):
-        self.custom_role.domain = self.domain
-        self.custom_role.permissions.set(permission, value, data)
-
-
 class IsMemberOfMixin(DocumentSchema):
 
     def _is_member_of(self, domain):
