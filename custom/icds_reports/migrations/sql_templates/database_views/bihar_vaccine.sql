@@ -69,4 +69,4 @@ CREATE VIEW bihar_vaccine_view AS
         ("child_health"."child_person_case_id" = "bihar_demographics"."person_id") AND
         ("child_health"."month" = "bihar_demographics"."month")
 
-    )
+    );
