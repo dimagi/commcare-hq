@@ -30,6 +30,22 @@ In this example we are investigating the performance of commtrack location downl
         dump_locations(response, domain)
         return response
 
+Getting profile output on stderr
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Use the `profile` decorator to get profile output printed to stderr.
+
+.. code-block:: python
+
+    from dimagi.utils import profile
+    @login_and_domain_required
+    @profile
+    def location_export(request, domain):
+        ...
+
+`profile` may also be used as a context manager. See the docstring for more
+details.
+
 Getting a profile dump
 ^^^^^^^^^^^^^^^^^^^^^^
 
