@@ -157,6 +157,12 @@
                                 popover-trigger="'mouseenter'"></i>
                         </label>
                         <div class="col-sm-6">
+                            <div class="checkbox">
+                                <label>
+                                    <input type="checkbox" id="selectAll" ng-model="$ctrl.allFiltersSelected"
+                                           ng-change="$ctrl.selectAllFilters()">Select All
+                                </label>
+                            </div>
                             <div class="checkbox" ng-repeat="option in $ctrl.filterOptions">
                                 <label>
                                     <input ng-model="option.selected" type="checkbox">
