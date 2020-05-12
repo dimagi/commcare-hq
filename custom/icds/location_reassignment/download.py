@@ -35,6 +35,7 @@ from custom.icds.location_reassignment.const import (
     OPERATION_COLUMN,
     OPERATIONS_TO_IGNORE,
     PERSON_CASE_TYPE,
+    SHEETS_TO_IGNORE,
     SPLIT_OPERATION,
     USERNAME_COLUMN,
     VALID_OPERATIONS,
@@ -114,6 +115,7 @@ class Download(object):
             for row in rows:
                 worksheet.append([row.get(header) for header in uniq_headers])
             self._add_validation(worksheet)
+        self._add_extra_sheets(wb)
         return wb
 
     def _create_rows(self):
@@ -179,6 +181,12 @@ class Download(object):
             if header_cell.value == OPERATION_COLUMN:
                 letter = header_cell.column_letter
                 operation_data_validation.add(f"{letter}2:{letter}{worksheet.max_row}")
+
+    @staticmethod
+    def _add_extra_sheets(workbook):
+        for title, headers in SHEETS_TO_IGNORE.items():
+            worksheet = workbook.create_sheet(title)
+            worksheet.append(headers)
 
 
 class Households(object):

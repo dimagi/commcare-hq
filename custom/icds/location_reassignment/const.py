@@ -59,6 +59,7 @@ BLOCK_CODE = "block"  # also called "Project" at times
 HOUSEHOLD_CASE_TYPE = "household"
 PERSON_CASE_TYPE = "person"
 
-SHEETS_TO_IGNORE = [
-    "User Deletion Requests"
-]
+# title mapped to headers for the sheet
+SHEETS_TO_IGNORE = {
+    "User Deletion Requests": ["Username to be deleted"]
+}
