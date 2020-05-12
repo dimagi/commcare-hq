@@ -78,24 +78,22 @@ Link = namedtuple('Link', ('name', 'url'))
 
 @quickcache(['couch_user.username'])
 def get_domain_dropdown_links(couch_user, view_name="domain_homepage"):
-    domains = Domain.active_for_user(couch_user)
     domain_links = [Link(
         name=domain_obj.display_name(),
         url=reverse(view_name, args=[domain_obj.name]),
-    ) for domain_obj in domains]
+    ) for domain_obj in Domain.active_for_user(couch_user)]
 
     enterprise_domain_links = []
     domains = {d.name for d in domain_links}
-    for domain_obj in domain_links:
-        domain = domain_obj.name
+    for link in domain_links:
+        domain = link.name
         if toggles.ENTERPRISE_LINKED_DOMAINS.enabled(domain):
-            links = get_linked_domains(domain)
-            links = [link for link in links if link.linked_domain not in domains]
-            linked_domains = [Domain.get_by_name(link.linked_domain) for link in links]
+            links = [link for link in get_linked_domains(domain) if link.linked_domain not in domains]
+            enterprise_domains = [Domain.get_by_name(link.linked_domain) for link in links]
             enterprise_domain_links.extend([Link(
                 name=d.display_name(),
                 url=reverse(view_name, args=[d.name])
-            ) for d in linked_domains if d])
+            ) for d in enterprise_domains if d])
 
     domain_links = sorted(domain_links, key=lambda link: link.name.lower())
     enterprise_domain_links = sorted(enterprise_domain_links, key=lambda link: link.name.lower())
