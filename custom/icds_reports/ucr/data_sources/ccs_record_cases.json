@@ -1270,24 +1270,6 @@
         "datatype": "string",
         "type": "raw",
         "property_name": "location_reassignment_last_supervisor_id"
-      },
-      {
-        "column_id": "ifa_tablets_issued_pre",
-        "datatype": "integer",
-        "type": "raw",
-        "property_name": "ifa_tablets_issued_pre"
-      },
-      {
-        "column_id": "ifa_tablets_issued_post",
-        "datatype": "integer",
-        "type": "raw",
-        "property_name": "ifa_tablets_issued_post"
-      },
-      {
-        "column_id": "reason_no_ifa",
-        "datatype": "string",
-        "type": "raw",
-        "property_name": "reason_no_ifa"
       }
     ],
     "named_expressions": {
