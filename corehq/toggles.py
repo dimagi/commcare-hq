@@ -1906,3 +1906,10 @@ REFER_CASE_REPEATER = StaticToggle(
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN]
 )
+
+RESTRICT_LOGIN_AS = StaticToggle(
+    'restrict_login_as',
+    'COVID: Limit allowed users for login as',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN]
+)

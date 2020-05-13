@@ -10,6 +10,7 @@ from custom.icds.location_reassignment.const import (
     AWC_CODE_COLUMN,
     CURRENT_SITE_CODE_COLUMN,
     EXTRACT_OPERATION,
+    HAVE_APPENDED_LOCATION_NAMES,
     HOUSEHOLD_ID_COLUMN,
     MERGE_OPERATION,
     NEW_LGD_CODE,
@@ -26,7 +27,10 @@ from custom.icds.location_reassignment.const import (
     VALID_OPERATIONS,
 )
 from custom.icds.location_reassignment.models import Transition
-from custom.icds.location_reassignment.utils import get_household_case_ids
+from custom.icds.location_reassignment.utils import (
+    append_location_name_and_site_code,
+    get_household_case_ids,
+)
 
 
 def parse_site_code(site_code):
@@ -40,15 +44,22 @@ class TransitionRow(object):
     An object representation of each row in excel
     """
     def __init__(self, location_type, operation, old_site_code, new_site_code, expects_parent,
-                 new_location_details=None, old_username=None, new_username=None):
+                 new_location_details, old_username=None, new_username=None):
         self.location_type = location_type
         self.operation = operation
         self.old_site_code = old_site_code
         self.new_site_code = new_site_code
         self.expects_parent = expects_parent
-        self.new_location_details = new_location_details or {}
+        self.new_location_details = new_location_details
         self.old_username = old_username
         self.new_username = new_username
+
+        if location_type in HAVE_APPENDED_LOCATION_NAMES:
+            if self.new_location_details['name'] and self.new_site_code:
+                self.new_location_details['name'] = append_location_name_and_site_code(
+                    self.new_location_details['name'],
+                    new_site_code
+                )
 
     def validate(self):
         """
@@ -79,7 +90,7 @@ class TransitionRow(object):
         if bool(self.new_username) != bool(self.old_username):
             errors.append(f"Need both old and new username for {self.operation} operation "
                           f"on location '{self.old_site_code}'")
-        if not self.new_location_details.get('name', '').strip():
+        if not self.new_location_details.get('name', ''):
             errors.append(f"Missing new location name for {self.new_site_code}")
         parent_site_code = self.new_location_details.get('parent_site_code')
         if parent_site_code:
@@ -162,7 +173,7 @@ class Parser(object):
                     new_site_code=parse_site_code(row.get(NEW_SITE_CODE_COLUMN)),
                     expects_parent=expects_parent,
                     new_location_details={
-                        'name': row.get(NEW_NAME),
+                        'name': row.get(NEW_NAME, '').strip(),
                         'parent_site_code': parse_site_code(row.get(NEW_PARENT_SITE_CODE)),
                         'lgd_code': row.get(NEW_LGD_CODE),
                         'sub_district_name': row.get(NEW_SUB_DISTRICT_NAME)
