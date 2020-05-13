@@ -76,7 +76,7 @@ def reassign_cases_for_owner(domain, old_location_id, new_location_id, deprecati
 @task
 def email_household_details(domain, transitions, uploaded_filename, user_email):
     try:
-        transition_objs = [Transition(*transition) for transition in transitions]
+        transition_objs = [Transition(**transition) for transition in transitions]
         filestream = Households(domain).dump(transition_objs)
     except Exception as e:
         email = EmailMessage(
