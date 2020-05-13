@@ -1454,6 +1454,14 @@ LINKED_DOMAINS = StaticToggle(
     notification_emails=['aking'],
 )
 
+ENTERPRISE_LINKED_DOMAINS = StaticToggle(
+    'enterprise_linked_domains',
+    'Give this domain enterprise functionality as related to any domains linked to it. '
+    'Incompatible with remote linked project spaces.',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN],
+)
+
 MULTI_MASTER_LINKED_DOMAINS = StaticToggle(
     'multi_master_linked_domains',
     "Allow linked apps to pull from multiple master apps in the upstream domain",
