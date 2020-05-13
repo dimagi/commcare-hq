@@ -369,6 +369,18 @@
             "property_path": ["form", "next_due"]
           }
         }
+      },
+      {
+        "column_id": "total_ifa",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "root_doc",
+          "expression": {
+            "type": "property_path",
+            "property_path": ["form", "total_ifa"]
+          }
+        }
       }
     ],
     "named_expressions": {
