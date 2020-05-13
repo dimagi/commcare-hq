@@ -46,8 +46,7 @@ def sync_case_for_messaging_rule(self, domain, case_id, rule_id):
         self.retry(exc=e)
 
 
-@no_result_task(serializer='pickle', queue=settings.CELERY_REMINDER_CASE_UPDATE_QUEUE, acks_late=True,
-                default_retry_delay=5 * 60, max_retries=12, bind=True)
+@no_result_task(serializer='pickle', queue=settings.CELERY_REMINDER_CASE_UPDATE_QUEUE, acks_late=True)
 def sync_case_chunk_for_messaging_rule(self, domain, case_id_chunk, rule_id):
     for case_id in case_id_chunk:
         try:
@@ -198,6 +197,6 @@ def run_messaging_rule_for_shard(domain, rule_id, db_alias):
         if progress_helper.is_canceled():
             break
     progress_helper.mark_shard_complete(db_alias)
-    if progress_helper.all_shards_complete():
+    if progress_helper.all_shards_completed():
         # this should get triggered for the last shard
         set_rule_complete.delay(rule_id)

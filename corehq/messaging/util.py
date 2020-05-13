@@ -50,7 +50,7 @@ class MessagingRuleProgressHelper(object):
         return (self.client.ttl(self.rule_initiation_key) // 60) or 1
 
     def set_initial_progress(self, shard_count=0):
-        # shard_count is passed when tasks run pear each shard
+        # shard_count is passed when tasks are run per each shard
         self.client.set(self.current_key, 0)
         self.client.set(self.total_key, 0)
         if shard_count:
@@ -62,15 +62,18 @@ class MessagingRuleProgressHelper(object):
 
     def mark_shard_complete(self, db_alias):
         completed_shards = self.client.get(self.completed_shards_key) or []
-        self.client.set(self.completed_shards_key, completed_shards + ['db_alias'])
+        self.client.set(self.completed_shards_key, completed_shards + [db_alias])
+        self.client.expire(self.completed_shards_key, self.key_expiry)
 
-    def all_shards_complete(self):
+    def all_shards_completed(self):
         completed_count = len(self.client.get(self.completed_shards_key) or [])
         total_count = self.client.get(self.shard_count_key) or 0
         return completed_count == total_count
 
     def set_rule_complete(self):
         self.clear_rule_initiation_key()
+        for key in [self.shard_count_key, self.completed_shards_key]:
+            self.client.delete(key)
 
     def increment_current_case_count(self, fail_hard=False):
         try:
