@@ -53,7 +53,8 @@ from django.db.utils import OperationalError
 import uuid
 from sqlagg.filters import EQ, NOT
 from pillowtop.models import KafkaCheckpoint
-
+from custom.icds_reports.cache import icds_quickcache
+from custom.icds_reports.models import AggAwcMonthly
 
 OPERATORS = {
     "==": operator.eq,
@@ -569,7 +570,8 @@ def include_records_by_age_for_column(include_config, column):
     )
 
 
-def generate_data_for_map(data, loc_level, num_prop, denom_prop, fill_key_lower, fill_key_bigger, all_property=None):
+def generate_data_for_map(data, loc_level, num_prop, denom_prop, fill_key_lower, fill_key_bigger,
+                          all_property=None, location_launched_status=None):
     data_for_map = defaultdict(lambda: {
         num_prop: 0,
         denom_prop: 0,
@@ -589,7 +591,12 @@ def generate_data_for_map(data, loc_level, num_prop, denom_prop, fill_key_lower,
     total = 0
     values_to_calculate_average = {'numerator': 0, 'denominator': 0}
 
+
     for row in data:
+        if location_launched_status is not None:
+            launched_status = location_launched_status.get(row['%s_name' % loc_level])
+            if launched_status is None or launched_status <= 0:
+                continue
         valid = row[denom_prop] or 0
         name = row['%s_name' % loc_level]
         on_map_name = row['%s_map_location_name' % loc_level] or name
@@ -2011,6 +2018,36 @@ def get_location_replacement_name(location, field, replacement_names):
     else:
         locations = []
     return [replacement_names.get(loc_id, '') for loc_id in locations]
+
+
+@icds_quickcache(['filters', 'loc_name'], timeout=30 * 60)
+def get_location_launched_status(filters, loc_name):
+
+    def select_location_filter(filters):
+        location_filters = dict()
+        location_filters['aggregation_level'] = filters['aggregation_level']
+        location_filters['month'] = filters['month']
+
+        if location_filters['aggregation_level'] == 1 and 'state_id' not in filters:
+            return location_filters
+        else:
+            location_id_cols = ['state_id', 'district_id', 'block_id', 'supervisor_id', 'awc_id']
+            reduced_loc_id_cols = location_id_cols[:location_filters['aggregation_level']]
+
+            location_filters.update(
+                {
+                    col: filters[col]
+                    for col in reduced_loc_id_cols
+                }
+            )
+
+        return location_filters
+
+    locations_launched_status = AggAwcMonthly.objects.filter(
+        **select_location_filter(filters)
+    ).values('%s_name' % loc_name, 'num_launched_awcs')
+
+    return {loc['%s_name' % loc_name]: loc['num_launched_awcs'] for loc in locations_launched_status}
 
 
 def timestamp_string_to_date_string(ts_string):

@@ -1843,14 +1843,6 @@ RUN_DATA_MANAGEMENT_TASKS = StaticToggle(
 )
 
 
-ALLOW_DEID_ODATA_FEED = StaticToggle(
-    'allow_deid_odata_feed',
-    'Allow De-Identification in OData feeds',
-    TAG_PRODUCT,
-    [NAMESPACE_DOMAIN]
-)
-
-
 ACCOUNTING_TESTING_TOOLS = StaticToggle(
     'accounting_testing_tools',
     'Enable Accounting Testing Tools',
@@ -1911,6 +1903,13 @@ ICDS_LOCATION_REASSIGNMENT_AGG = StaticToggle(
 REFER_CASE_REPEATER = StaticToggle(
     'refer_case_repeater',
     'COVID: Allow refer case repeaters to be setup',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN]
+)
+
+RESTRICT_LOGIN_AS = StaticToggle(
+    'restrict_login_as',
+    'COVID: Limit allowed users for login as',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN]
 )

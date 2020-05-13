@@ -35,6 +35,7 @@ from custom.icds.location_reassignment.const import (
     OPERATION_COLUMN,
     OPERATIONS_TO_IGNORE,
     PERSON_CASE_TYPE,
+    SHEETS_TO_IGNORE,
     SPLIT_OPERATION,
     USERNAME_COLUMN,
     VALID_OPERATIONS,
@@ -114,17 +115,8 @@ class Download(object):
             for row in rows:
                 worksheet.append([row.get(header) for header in uniq_headers])
             self._add_validation(worksheet)
+        self._add_extra_sheets(wb)
         return wb
-
-    @staticmethod
-    def _add_validation(worksheet):
-        operations = [""] + VALID_OPERATIONS + OPERATIONS_TO_IGNORE
-        operation_data_validation = DataValidation(type="list", formula1='"%s"' % (','.join(operations)))
-        worksheet.add_data_validation(operation_data_validation)
-        for header_cell in worksheet[1]:
-            if header_cell.value == OPERATION_COLUMN:
-                letter = header_cell.column_letter
-                operation_data_validation.add(f"{letter}2:{letter}{worksheet.max_row}")
 
     def _create_rows(self):
         # location type code mapped to rows which is a list of dictionaries to pull headers later using keys
@@ -179,6 +171,22 @@ class Download(object):
             if h not in uniq_headers:
                 uniq_headers.append(h)
         return uniq_headers
+
+    @staticmethod
+    def _add_validation(worksheet):
+        operations = [""] + VALID_OPERATIONS + OPERATIONS_TO_IGNORE
+        operation_data_validation = DataValidation(type="list", formula1='"%s"' % (','.join(operations)))
+        worksheet.add_data_validation(operation_data_validation)
+        for header_cell in worksheet[1]:
+            if header_cell.value == OPERATION_COLUMN:
+                letter = header_cell.column_letter
+                operation_data_validation.add(f"{letter}2:{letter}{worksheet.max_row}")
+
+    @staticmethod
+    def _add_extra_sheets(workbook):
+        for title, headers in SHEETS_TO_IGNORE.items():
+            worksheet = workbook.create_sheet(title)
+            worksheet.append(headers)
 
 
 class Households(object):
