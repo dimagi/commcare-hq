@@ -21,16 +21,6 @@ class Migration(migrations.Migration):
         ),
         migrations.AddField(
             model_name='biharapidemographics',
-            name='has_bank_account',
-            field=models.SmallIntegerField(null=True),
-        ),
-        migrations.AddField(
-            model_name='biharapidemographics',
-            name='is_alive',
-            field=models.SmallIntegerField(null=True),
-        ),
-        migrations.AddField(
-            model_name='biharapidemographics',
             name='last_referral_date',
             field=models.DateField(null=True),
         ),
