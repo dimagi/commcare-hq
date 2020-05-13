@@ -88,7 +88,10 @@ class TestParser(TestCase):
         ('state', (
             # invalid row with unknown operation
             ('State 1', 'State 1', '1', '1', 'State-1',
-             'State-11', 'username4', 'username4', 'Unknown')))
+             'State-11', 'username4', 'username4', 'Unknown'),
+            ('State 2', 'State 3', '2', '3', '',
+             '', '', '', 'Move'),
+        ))
     )
 
     @classmethod
@@ -121,7 +124,7 @@ class TestParser(TestCase):
                         'old_site_codes': ['112'],
                         'new_site_codes': ['131'],
                         'new_location_details': {
-                            '131': {'name': 'AWC 3', 'parent_site_code': '13', 'lgd_code': 'AWC-131',
+                            '131': {'name': 'AWC 3 [131]', 'parent_site_code': '13', 'lgd_code': 'AWC-131',
                                     'sub_district_name': None}},
                         'user_transitions': {'username2': 'username3'}
                     },
@@ -132,7 +135,7 @@ class TestParser(TestCase):
                         'old_site_codes': ['115'],
                         'new_site_codes': ['133'],
                         'new_location_details': {
-                            '133': {'name': 'AWC 8', 'parent_site_code': '12', 'lgd_code': 'AWC-133',
+                            '133': {'name': 'AWC 8 [133]', 'parent_site_code': '12', 'lgd_code': 'AWC-133',
                                     'sub_district_name': None}},
                         'user_transitions': {'username6': 'username7'}
                     }
@@ -150,13 +153,32 @@ class TestParser(TestCase):
                  'new_site_codes': ['13'],
                  'new_location_details': {
                      '13': {
-                         'name': 'Supervisor 3',
+                         'name': 'Supervisor 3 [13]',
                          'parent_site_code': '1',
                          'lgd_code': 'Sup-13',
                          'sub_district_name': None
                      }
                  },
                  'user_transitions': {'username5': 'username6'}}
+            )
+            self.assertEqual(len(parser.valid_transitions['state']), 1)
+            state_transition = attr.asdict(parser.valid_transitions['state'][0])
+            self.assertEqual(
+                state_transition,
+                {'domain': self.domain,
+                 'location_type_code': 'state',
+                 'operation': 'Move',
+                 'old_site_codes': ['2'],
+                 'new_site_codes': ['3'],
+                 'new_location_details': {
+                     '3': {
+                         'name': 'State 3',
+                         'parent_site_code': '',
+                         'lgd_code': '',
+                         'sub_district_name': None
+                     }
+                 },
+                 'user_transitions': {}}
             )
             self.assertEqual(errors, [
                 "Invalid Operation Unknown",
