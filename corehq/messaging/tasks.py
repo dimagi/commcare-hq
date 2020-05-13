@@ -1,3 +1,4 @@
+from corehq import toggles
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 from corehq.apps.sms import tasks as sms_tasks
 from corehq.form_processor.exceptions import CaseNotFound
@@ -181,6 +182,11 @@ def run_messaging_rule(domain, rule_id):
         progress_helper.set_initial_progress(shard_count=len(db_aliases))
         for db_alias in db_aliases:
             run_messaging_rule_for_shard.delay(domain, rule_id, db_alias)
+
+    if toggles.SHARDED_RUN_MESSAGING_RULE.enabled(domain):
+        _run_rule_on_multiple_shards()
+    else:
+        _run_rule_sequentially()
 
 
 @no_result_task(serializer='pickle', queue=settings.CELERY_REMINDER_RULE_QUEUE, acks_late=True,

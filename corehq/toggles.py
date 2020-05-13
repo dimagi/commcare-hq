@@ -1913,3 +1913,10 @@ RESTRICT_LOGIN_AS = StaticToggle(
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN]
 )
+
+SHARDED_RUN_MESSAGING_RULE = StaticToggle(
+    'sharded_run_messaging_rule',
+    'Trigger concurrent tasks per each shard for conditional case alerts ',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN]
+)
