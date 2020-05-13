@@ -29,6 +29,14 @@ class MessagingRuleProgressHelper(object):
     def rule_cancellation_key(self):
         return 'messaging-rule-run-canceled-%s' % self.rule_id
 
+    @property
+    def completed_shards_key(self):
+        return 'messaging-rule-run-shards-completed-%s' % self.rule_id
+
+    @property
+    def shard_count_key(self):
+        return 'messaging-rule-run-total-shards-%s' % self.rule_id
+
     def set_rule_initiation_key(self):
         self.client.set(self.rule_initiation_key, 1, timeout=2 * 60 * 60)
 
@@ -41,13 +49,25 @@ class MessagingRuleProgressHelper(object):
     def rule_initiation_key_minutes_remaining(self):
         return (self.client.ttl(self.rule_initiation_key) // 60) or 1
 
-    def set_initial_progress(self):
+    def set_initial_progress(self, shard_count=0):
+        # shard_count is passed when tasks run pear each shard
         self.client.set(self.current_key, 0)
         self.client.set(self.total_key, 0)
+        if shard_count:
+            self.client.set(self.shard_count_key, shard_count)
         self.client.expire(self.current_key, self.key_expiry)
         self.client.expire(self.total_key, self.key_expiry)
         self.client.delete(self.rule_cancellation_key)
         self.set_rule_initiation_key()
+
+    def mark_shard_complete(self, db_alias):
+        completed_shards = self.client.get(self.completed_shards_key) or []
+        self.client.set(self.completed_shards_key, completed_shards + ['db_alias'])
+
+    def all_shards_complete(self):
+        completed_count = len(self.client.get(self.completed_shards_key) or [])
+        total_count = self.client.get(self.shard_count_key) or 0
+        return completed_count == total_count
 
     def set_rule_complete(self):
         self.clear_rule_initiation_key()

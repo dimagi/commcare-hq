@@ -7,9 +7,14 @@ from corehq.form_processor.utils import should_use_sql_backend
 from corehq.messaging.scheduling.tasks import delete_schedule_instances_for_cases
 from corehq.messaging.scheduling.util import utcnow
 from corehq.messaging.util import MessagingRuleProgressHelper, use_phone_entries
-from corehq.sql_db.util import paginate_query_across_partitioned_databases
+from corehq.sql_db.util import (
+    get_db_aliases_for_partitioned_query,
+    paginate_query,
+    paginate_query_across_partitioned_databases
+)
 from corehq.util.celery_utils import no_result_task
 from corehq.util.metrics.load_counters import case_load_counter
+from dimagi.utils.chunked import chunked
 from dimagi.utils.couch import CriticalSection
 from django.conf import settings
 from django.db.models import Q
@@ -38,6 +43,17 @@ def sync_case_for_messaging_rule(self, domain, case_id, rule_id):
             _sync_case_for_messaging_rule(domain, case_id, rule_id)
     except Exception as e:
         self.retry(exc=e)
+
+
+@no_result_task(serializer='pickle', queue=settings.CELERY_REMINDER_CASE_UPDATE_QUEUE, acks_late=True,
+                default_retry_delay=5 * 60, max_retries=12, bind=True)
+def sync_case_chunk_for_messaging_rule(self, domain, case_id_chunk, rule_id):
+    for case_id in case_id_chunk:
+        try:
+            with CriticalSection([get_sync_key(case_id)], timeout=5 * 60):
+                _sync_case_for_messaging_rule(domain, case_id, rule_id)
+        except Exception:
+            sync_case_for_messaging_rule.delay(domain, case_id, rule_id)
 
 
 def _sync_case_for_messaging(domain, case_id):
@@ -97,13 +113,23 @@ def initiate_messaging_rule_run(rule):
     transaction.on_commit(lambda: run_messaging_rule.delay(rule.domain, rule.pk))
 
 
-def paginated_case_ids(domain, case_type):
-    row_generator = paginate_query_across_partitioned_databases(
-        CommCareCaseSQL,
-        Q(domain=domain, type=case_type, deleted=False),
-        values=['case_id'],
-        load_source='run_messaging_rule'
-    )
+def paginated_case_ids(domain, case_type, db_alias=None):
+    q = Q(domain=domain, type=case_type, deleted=False)
+    if db_alias:
+        row_generator = paginate_query(
+            db_alias,
+            CommCareCaseSQL,
+            q,
+            values=['case_id'],
+            load_source='run_messaging_rule'
+        )
+    else:
+        row_generator = paginate_query_across_partitioned_databases(
+            CommCareCaseSQL,
+            q,
+            values=['case_id'],
+            load_source='run_messaging_rule'
+        )
     for row in row_generator:
         yield row[0]
 
@@ -128,23 +154,49 @@ def run_messaging_rule(domain, rule_id):
     if not rule:
         return
 
-    incr = 0
     progress_helper = MessagingRuleProgressHelper(rule_id)
-    progress_helper.set_initial_progress()
 
-    for case_id in get_case_ids_for_messaging_rule(domain, rule.case_type):
-        sync_case_for_messaging_rule.delay(domain, case_id, rule_id)
-        incr += 1
-        if incr >= 1000:
-            progress_helper.increase_total_case_count(incr)
-            incr = 0
-            if progress_helper.is_canceled():
-                break
+    def _run_rule_sequentially():
+        incr = 0
+        progress_helper.set_initial_progress()
+        for case_id in get_case_ids_for_messaging_rule(domain, rule.case_type):
+            sync_case_for_messaging_rule.delay(domain, case_id, rule_id)
+            incr += 1
+            if incr >= 1000:
+                progress_helper.increase_total_case_count(incr)
+                incr = 0
+                if progress_helper.is_canceled():
+                    break
 
-    progress_helper.increase_total_case_count(incr)
+        progress_helper.increase_total_case_count(incr)
 
-    # By putting this task last in the queue, the rule should be marked
-    # complete at about the time that the last tasks are finishing up.
-    # This beats saving the task results in the database and using a
-    # celery chord which would be more taxing on system resources.
-    set_rule_complete.delay(rule_id)
+        # By putting this task last in the queue, the rule should be marked
+        # complete at about the time that the last tasks are finishing up.
+        # This beats saving the task results in the database and using a
+        # celery chord which would be more taxing on system resources.
+        set_rule_complete.delay(rule_id)
+
+    def _run_rule_on_multiple_shards():
+        db_aliases = get_db_aliases_for_partitioned_query()
+        progress_helper.set_initial_progress(shard_count=len(db_aliases))
+        for db_alias in db_aliases:
+            run_messaging_rule_for_shard.delay(domain, rule_id, db_alias)
+
+
+@no_result_task(serializer='pickle', queue=settings.CELERY_REMINDER_RULE_QUEUE, acks_late=True,
+                soft_time_limit=15 * settings.CELERY_TASK_SOFT_TIME_LIMIT)
+def run_messaging_rule_for_shard(domain, rule_id, db_alias):
+    rule = _get_cached_rule(domain, rule_id)
+    if not rule:
+        return
+
+    chunk_size = getattr(settings, 'MESSAGING_RULE_CASE_CHUNK_SIZE', 100)
+    progress_helper = MessagingRuleProgressHelper(rule_id)
+    for case_id_chunk in chunked(paginated_case_ids(domain, rule.case_type, db_alias), chunk_size):
+        sync_case_chunk_for_messaging_rule.delay(domain, case_id_chunk, rule_id)
+        progress_helper.increase_total_case_count(len(case_id_chunk))
+        if progress_helper.is_canceled():
+            break
+    progress_helper.mark_shard_complete(db_alias)
+    if progress_helper.all_shards_complete():
+        set_rule_complete.delay(rule_id)
