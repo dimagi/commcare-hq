@@ -666,7 +666,7 @@ class _AuthorizableMixin(IsMemberOfMixin):
             return True
 
         membership = self.get_domain_membership(domain) or self.get_enterprise_membership(domain)
-        return membership.is_admin or False
+        return membership.is_admin if membership else False
 
     def get_domains(self):
         domains = [dm.domain for dm in self.domain_memberships]
@@ -1557,6 +1557,8 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
                 return role.permissions.view_report_list
         else:
             membership = self.get_domain_membership(domain) or self.get_enterprise_membership(domain)
+            if not membership:
+                return []
             return membership.viewable_reports() or []
 
     def can_view_some_reports(self, domain):
