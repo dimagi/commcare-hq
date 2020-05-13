@@ -1089,7 +1089,8 @@ def quick_find(request):
         return HttpResponseBadRequest('GET param "q" must be provided')
 
     def deal_with_doc(doc, domain, doc_info_fn):
-        if request.couch_user.is_superuser or (domain and request.couch_user.is_member_of(domain)):
+        is_domain_member = domain and request.couch_user.is_member_of(domain, include_enterprise=True)
+        if is_domain_member or request.couch_user.is_superuser:
             doc_info = doc_info_fn(doc)
         else:
             raise Http404()
