@@ -78,27 +78,25 @@ Link = namedtuple('Link', ('name', 'url'))
 
 @quickcache(['couch_user.username'])
 def get_domain_dropdown_links(couch_user, view_name="domain_homepage"):
-    domain_links = [Link(
-        name=domain_obj.display_name(),
-        url=reverse(view_name, args=[domain_obj.name]),
-    ) for domain_obj in Domain.active_for_user(couch_user)]
+    domain_objects = set(Domain.active_for_user(couch_user))
+    enterprise_domain_objects = set()
+    for domain_obj in domain_objects:
+        if toggles.ENTERPRISE_LINKED_DOMAINS.enabled(domain_obj.name):
+            for domain_link in get_linked_domains(domain_obj.name):
+                if not domain_link.is_remote:
+                    enterprise_domain_objects.add(Domain.get_by_name(domain_link.linked_domain))
+    enterprise_domain_objects = enterprise_domain_objects - domain_objects
 
-    enterprise_domain_links = []
-    domains = {d.name for d in domain_links}
-    for link in domain_links:
-        domain = link.name
-        if toggles.ENTERPRISE_LINKED_DOMAINS.enabled(domain):
-            links = [link for link in get_linked_domains(domain) if link.linked_domain not in domains]
-            enterprise_domains = [Domain.get_by_name(link.linked_domain) for link in links]
-            enterprise_domain_links.extend([Link(
-                name=d.display_name(),
-                url=reverse(view_name, args=[d.name])
-            ) for d in enterprise_domains if d])
+    def _domain_objects_to_links(objects):
+        return sorted([Link(
+            name=o.display_name(),
+            url=reverse(view_name, args=[o.name]),
+        ) for o in objects], key=lambda link: link.name.lower())
 
-    domain_links = sorted(domain_links, key=lambda link: link.name.lower())
-    enterprise_domain_links = sorted(enterprise_domain_links, key=lambda link: link.name.lower())
-
-    return (domain_links, enterprise_domain_links)
+    return (
+        _domain_objects_to_links(domain_objects),
+        _domain_objects_to_links(enterprise_domain_objects),
+    )
 
 
 class DomainViewMixin(object):
