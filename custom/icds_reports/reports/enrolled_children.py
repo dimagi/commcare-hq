@@ -63,6 +63,7 @@ def get_enrolled_children_data_map(domain, config, loc_level, show_test=False, i
 
     fills = OrderedDict()
     fills.update({'Children': MapColors.BLUE})
+    fills.update({'Not Launched': MapColors.GREY}) if icds_features_flag else None
     fills.update({'defaultFill': MapColors.GREY})
 
     gender_ignored, age_label, chosen_filters = chosen_filters_to_labels(config, default_interval='0 - 6 years')

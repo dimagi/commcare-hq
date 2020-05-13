@@ -64,6 +64,7 @@ def get_lactating_enrolled_women_data_map(domain, config, loc_level, show_test=F
 
     fills = OrderedDict()
     fills.update({'Women': MapColors.BLUE})
+    fills.update({'Not Launched': MapColors.GREY}) if icds_features_flag else None
     fills.update({'defaultFill': MapColors.GREY})
 
     return {
