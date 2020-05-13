@@ -328,6 +328,12 @@ class DashboardFeedFilterForm(forms.Form):
 
     def __init__(self, domain_object, *args, **kwargs):
         self.domain_object = domain_object
+        self.can_user_access_all_locations = True
+        if 'couch_user' in kwargs:
+            couch_user = kwargs.pop('couch_user')
+            self.can_user_access_all_locations = couch_user.has_permission(
+                domain_object.name, 'access_all_locations'
+            )
         super(DashboardFeedFilterForm, self).__init__(*args, **kwargs)
 
         self.fields['emwf_case_filter'].widget.set_url(

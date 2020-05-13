@@ -509,8 +509,12 @@ class BaseExportListView(BaseProjectDataView):
             "static_model_type": True,
             'max_exportable_rows': MAX_EXPORTABLE_ROWS,
             'lead_text': mark_safe(self.lead_text),
-            "export_filter_form": (DashboardFeedFilterForm(self.domain_object)
-                                   if self.include_saved_filters else None),
+            "export_filter_form": (
+                DashboardFeedFilterForm(
+                    self.domain_object,
+                    couch_user=self.request.couch_user,
+                ) if self.include_saved_filters else None
+            ),
             'create_url': '#createExportOptionsModal',
         }
 
@@ -642,7 +646,11 @@ def commit_filters(request, domain):
     if not export.filters.is_location_safe_for_user(request):
         return location_restricted_response(request)
     domain_object = Domain.get_by_name(domain)
-    filter_form = DashboardFeedFilterForm(domain_object, form_data)
+    filter_form = DashboardFeedFilterForm(
+        domain_object,
+        form_data,
+        couch_user=request.couch_user
+    )
     if filter_form.is_valid():
         old_can_access_all_locations = export.filters.can_access_all_locations
         old_accessible_location_ids = export.filters.accessible_location_ids
