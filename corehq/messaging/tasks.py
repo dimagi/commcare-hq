@@ -115,22 +115,16 @@ def initiate_messaging_rule_run(rule):
 
 
 def paginated_case_ids(domain, case_type, db_alias=None):
-    q = Q(domain=domain, type=case_type, deleted=False)
+    args = [
+        CommCareCaseSQL,
+        Q(domain=domain, type=case_type, deleted=False)
+    ]
     if db_alias:
-        row_generator = paginate_query(
-            db_alias,
-            CommCareCaseSQL,
-            q,
-            values=['case_id'],
-            load_source='run_messaging_rule'
-        )
+        fn = paginate_query
+        args = [db_alias] + args
     else:
-        row_generator = paginate_query_across_partitioned_databases(
-            CommCareCaseSQL,
-            q,
-            values=['case_id'],
-            load_source='run_messaging_rule'
-        )
+        fn = paginate_query_across_partitioned_databases
+    row_generator = fn(*args, values=['case_id'], load_source='run_messaging_rule')
     for row in row_generator:
         yield row[0]
 
