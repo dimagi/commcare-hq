@@ -54,9 +54,8 @@ def update_current_MALT():
 def build_last_month_GIR():
     def _last_month_datespan():
         today = datetime.date.today()
-        for i in range(3):
-            first_of_this_month = datetime.date(day=1, month=today.month, year=today.year)
-            last_month = first_of_this_month - datetime.timedelta(days=1)
+        first_of_this_month = datetime.date(day=1, month=today.month, year=today.year)
+        last_month = first_of_this_month - datetime.timedelta(days=1)
         return DateSpan.from_month(last_month.month, last_month.year)
 
     last_month = _last_month_datespan()
