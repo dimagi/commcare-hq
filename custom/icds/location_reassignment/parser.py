@@ -40,13 +40,13 @@ class TransitionRow(object):
     An object representation of each row in excel
     """
     def __init__(self, location_type, operation, old_site_code, new_site_code, expects_parent,
-                 new_location_details=None, old_username=None, new_username=None):
+                 new_location_details, old_username=None, new_username=None):
         self.location_type = location_type
         self.operation = operation
         self.old_site_code = old_site_code
         self.new_site_code = new_site_code
         self.expects_parent = expects_parent
-        self.new_location_details = new_location_details or {}
+        self.new_location_details = new_location_details
         self.old_username = old_username
         self.new_username = new_username
 
