@@ -136,14 +136,15 @@ class TestCloudcareESAccessors(SimpleTestCase):
         self.self._send_user_to_es(username='superman')
         self.self._send_user_to_es(username='robin', user_data={'login_as_user': 'batman'})
 
-        self.assertEqual(
-            login_as_user_query(
-                self.domain,
-                MagicMock(username='batman', **{'has_permission.return_value': True}),
-                None,
-                10,
-                0,
-                []
-            ).count(),
-            1
-        )
+        with patch('corehq.apps.cloudcare.esaccessors._limit_login_as', return_value=True):
+            self.assertEqual(
+                login_as_user_query(
+                    self.domain,
+                    MagicMock(username='batman'),
+                    None,
+                    10,
+                    0,
+                    []
+                ).count(),
+                1
+            )

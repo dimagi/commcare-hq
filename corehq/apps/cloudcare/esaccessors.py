@@ -74,8 +74,7 @@ def login_as_user_query(
         ).location_ids()
         user_es = user_es.location(list(loc_ids))
 
-    if (couch_user.has_permission(domain, get_permission_name(Permissions.limited_login_as)) and
-        not couch_user.has_permission(domain, get_permission_name(Permissions.edit_commcare_users))):
+    if _limit_login_as(couch_user):
         user_es = user_es.filter(
             filters.nested(
                 'user_data_es',
@@ -86,3 +85,7 @@ def login_as_user_query(
             )
         )
     return user_es.mobile_users()
+
+def _limit_login_as(couch_user):
+    return (couch_user.has_permission(domain, get_permission_name(Permissions.limited_login_as)) and
+            not couch_user.has_permission(domain, get_permission_name(Permissions.edit_commcare_users)))
