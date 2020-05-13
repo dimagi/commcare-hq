@@ -20,8 +20,8 @@ from custom.icds.location_reassignment.processor import (
 from custom.icds.location_reassignment.utils import (
     get_case_ids_for_reassignment,
     get_supervisor_id,
-    reassign_household,
     reassign_cases,
+    reassign_household,
 )
 
 
