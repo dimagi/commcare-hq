@@ -217,6 +217,7 @@ class LocationReassignmentView(BaseLocationView):
 
 @toggles.DOWNLOAD_LOCATION_REASSIGNMENT_REQUEST_TEMPLATE.required_decorator()
 @require_GET
+@location_safe
 def download_location_reassignment_template(request, domain):
     location_id = request.GET.get('location_id')
 
