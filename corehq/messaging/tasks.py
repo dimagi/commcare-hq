@@ -199,4 +199,5 @@ def run_messaging_rule_for_shard(domain, rule_id, db_alias):
             break
     progress_helper.mark_shard_complete(db_alias)
     if progress_helper.all_shards_complete():
+        # this should get triggered for the last shard
         set_rule_complete.delay(rule_id)
