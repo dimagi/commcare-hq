@@ -12,6 +12,7 @@ from django.urls import reverse
 from django.contrib.auth.views import LogoutView
 from django.utils.deprecation import MiddlewareMixin
 
+from corehq import toggles
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.utils import legacy_domain_re
 from corehq.const import OPENROSA_DEFAULT_VERSION
@@ -123,8 +124,19 @@ class TimeoutMiddleware(MiddlewareMixin):
 
     @staticmethod
     def _user_requires_secure_session(couch_user):
-        return couch_user and any(Domain.is_secure_session_required(domain)
-                                  for domain in couch_user.get_domains())
+        if not couch_user:
+            return False
+
+        domains = couch_user.get_domains()
+        if any(Domain.is_secure_session_required(domain) for domain in domains):
+            return True
+
+        from corehq.apps.linked_domain.dbaccessors import get_linked_domains
+        for domain in domains:
+            if toggles.ENTERPRISE_LINKED_DOMAINS.enabled(domain):
+                links = [link for link in get_linked_domains(domain) if not link.is_remote]
+                if (any(Domain.is_secure_session_required(link.linked_domain) for link in links)):
+                    return True
 
     def process_view(self, request, view_func, view_args, view_kwargs):
         if not request.user.is_authenticated:
