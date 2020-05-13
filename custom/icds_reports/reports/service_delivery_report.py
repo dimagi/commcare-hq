@@ -1,8 +1,8 @@
+import copy
 from corehq.apps.locations.models import SQLLocation
 from custom.icds_reports.utils import india_now, DATA_NOT_ENTERED
 from custom.icds_reports.models.views import ServiceDeliveryReportView
-import copy
-
+from custom.icds_reports.utils import apply_exclude
 
 class ServiceDeliveryReport(object):
     def __init__(self, config, location, beta=False):
@@ -151,8 +151,9 @@ class ServiceDeliveryReport(object):
         values = {header[1] for header in self.headers_and_calculation if len(header) == 2}
         headers = [header[0] for header in self.headers_and_calculation]
 
-        data = ServiceDeliveryReportView.objects.filter(state_is_test=0,
-                                                        **filters).order_by(*order_by).values(*values)
+        data = ServiceDeliveryReportView.objects.filter(**filters).order_by(*order_by).values(*values)
+
+        data = apply_exclude(self.config['domain'], data)
         excel_rows = [headers]
 
         for row in data:
