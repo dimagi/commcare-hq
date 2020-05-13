@@ -15,11 +15,14 @@ from custom.icds.location_reassignment.const import (
 class LocationReassignmentRequestForm(BulkUploadForm):
     VALIDATE = "validate"
     EMAIL_HOUSEHOLDS = "email_households"
+    EMAIL_OTHER_CASES = "email_other_cases"
     UPDATE = "update"
     REASSIGN_HOUSEHOLDS = "reassign_households"
     ACTION_TYPE_CHOICES = [(VALIDATE, ugettext("Validate")),
                            (EMAIL_HOUSEHOLDS, ugettext("Email Households "
                                                        f"(Only for {SPLIT_OPERATION} and {EXTRACT_OPERATION})")),
+                           (EMAIL_OTHER_CASES, ugettext("Email Other Cases "
+                                                        f"(Only for {SPLIT_OPERATION} and {EXTRACT_OPERATION})")),
                            (UPDATE, ugettext("Perform Reassignment")),
                            (REASSIGN_HOUSEHOLDS, ugettext(
                                "Reassign Households "

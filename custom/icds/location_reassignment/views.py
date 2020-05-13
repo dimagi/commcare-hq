@@ -42,6 +42,7 @@ from custom.icds.location_reassignment.parser import (
 )
 from custom.icds.location_reassignment.tasks import (
     email_household_details,
+    email_other_cases_details,
     process_households_reassignment,
     process_location_reassignment,
 )
@@ -119,6 +120,8 @@ class LocationReassignmentView(BaseLocationView):
         else:
             if action_type == LocationReassignmentRequestForm.EMAIL_HOUSEHOLDS:
                 self._process_request_for_email_households(parser, request, uploaded_file.name)
+            elif action_type == LocationReassignmentRequestForm.EMAIL_OTHER_CASES:
+                self._process_request_for_email_other_cases(parser, request, uploaded_file.name)
             elif action_type == LocationReassignmentRequestForm.UPDATE:
                 self._process_request_for_update(parser, request, uploaded_file.name)
             elif action_type == LocationReassignmentRequestForm.REASSIGN_HOUSEHOLDS:
@@ -198,6 +201,18 @@ class LocationReassignmentView(BaseLocationView):
                 "Your request has been submitted. You will be updated via email."))
         else:
             messages.error(request, "No transitions found for %s" % AWC_CODE)
+
+    def _process_request_for_email_other_cases(self, parser, request, uploaded_filename):
+        all_transitions = []
+        for location_type, transitions in parser.valid_transitions_json().items():
+            all_transitions.extend(transitions)
+        if all_transitions:
+            email_other_cases_details.delay(self.domain, all_transitions,
+                                            uploaded_filename, request.user.email)
+            messages.success(request, _(
+                "Your request has been submitted. You will be updated via email."))
+        else:
+            messages.error(request, "No transitions found")
 
     def _process_request_for_update(self, parser, request, uploaded_filename):
         process_location_reassignment.delay(

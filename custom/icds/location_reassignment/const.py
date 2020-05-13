@@ -28,6 +28,9 @@ AWC_CODE_COLUMN = 'AWC Code (11 digits)'
 HOUSEHOLD_MEMBER_DETAILS_COLUMN = 'Names of HH Members with Age and Gender'
 HOUSEHOLD_ID_COLUMN = 'Household ID in ICDS-CAS (Do Not Modify)'
 
+CASE_NAME = 'Name'
+CASE_ID_COLUMN = 'Case ID in ICDS-CAS (Do Not Modify)'
+
 # Dumper
 OLD_LOCATION_CODE_COLUMN = "Old location code"
 TRANSITION_COLUMN = "Transition"
