@@ -6,7 +6,7 @@ from dimagi.utils.logging import notify_exception
 
 import boto3
 from botocore.client import Config
-from botocore.exceptions import ClientError
+from botocore.exceptions import ClientError, SSLError
 from botocore.utils import fix_s3_host
 from corehq.blobs.exceptions import NotFound
 from corehq.blobs.interface import AbstractBlobDB
@@ -162,15 +162,33 @@ class S3BlobDB(AbstractBlobDB):
 
 
 def is_not_found(err, not_found_codes=["NoSuchKey", "NoSuchBucket", "404"]):
-    return (err.response["Error"]["Code"] in not_found_codes or
-        err.response.get("Errors", {}).get("Error", {}).get("Code") in not_found_codes)
+    if hasattr(err, 'response'):
+        # err quacks like a ClientError
+        return (
+            err.response["Error"]["Code"] in not_found_codes
+            or err.response.get("Errors", {}).get("Error", {}).get("Code") in not_found_codes
+        )
+
+    # err might be an SSLError. It seems unintuitive to get an SSLError
+    # when a blob is not found. And yet ...
+    #
+    #     botocore.exceptions.SSLError: \
+    #     SSL validation failed for https://s3.amazonaws.com/...blobdb/abc123 \
+    #     [Errno 2] No such file or directory
+    #
+    # ... which comes from ...
+    #
+    #     Traceback (most recent call last):
+    #       File ".../urllib3/util/ssl_.py", line 336, in ssl_wrap_socket
+    #     FileNotFoundError: [Errno 2] No such file or directory
+    return "No such file or directory" in str(err)
 
 
 @contextmanager
 def maybe_not_found(throw=None):
     try:
         yield
-    except ClientError as err:
+    except (ClientError, SSLError) as err:
         if not is_not_found(err):
             raise
         metrics_counter('commcare.blobdb.notfound')
