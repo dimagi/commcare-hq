@@ -98,3 +98,6 @@ def split_location_name_and_site_code(name):
         return match.groups()
     return name, None
 
+
+def append_location_name_and_site_code(name, site_code):
+    return f"{name.rstrip()} [{site_code}]"

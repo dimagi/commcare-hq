@@ -10,6 +10,7 @@ from custom.icds.location_reassignment.const import (
     AWC_CODE_COLUMN,
     CURRENT_SITE_CODE_COLUMN,
     EXTRACT_OPERATION,
+    HAVE_APPENDED_LOCATION_NAMES,
     HOUSEHOLD_ID_COLUMN,
     MERGE_OPERATION,
     NEW_LGD_CODE,
@@ -26,7 +27,10 @@ from custom.icds.location_reassignment.const import (
     VALID_OPERATIONS,
 )
 from custom.icds.location_reassignment.models import Transition
-from custom.icds.location_reassignment.utils import get_household_case_ids
+from custom.icds.location_reassignment.utils import (
+    append_location_name_and_site_code,
+    get_household_case_ids,
+)
 
 
 def parse_site_code(site_code):
@@ -49,6 +53,13 @@ class TransitionRow(object):
         self.new_location_details = new_location_details
         self.old_username = old_username
         self.new_username = new_username
+
+        if location_type in HAVE_APPENDED_LOCATION_NAMES:
+            if self.new_location_details['name'] and self.new_site_code:
+                self.new_location_details['name'] = append_location_name_and_site_code(
+                    self.new_location_details['name'],
+                    new_site_code
+                )
 
     def validate(self):
         """
