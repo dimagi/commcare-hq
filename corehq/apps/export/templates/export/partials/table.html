@@ -541,6 +541,7 @@
 
     {% if is_daily_saved_export %}
       <td>
+        <!-- ko if: isLocationSafeForUser() -->
         <a class="btn btn-default"
            data-bind="attr: {
                         'data-target': '#modalEnableDisableAutoRefresh-' + id() + '-' + emailedExport.groupId(),
@@ -553,6 +554,7 @@
             {% trans "Disable" %}
           </span>
         </a>
+        <!-- /ko -->
       </td>
     {% endif %}
 
