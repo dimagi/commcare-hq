@@ -339,6 +339,8 @@ class DashboardFeedFilterForm(forms.Form):
 
         self.helper = HQModalFormHelper()
         self.helper.form_tag = False
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-10 col-lg-10'
         self.helper.layout = crispy.Layout(*self.layout_fields)
 
     def clean(self):
