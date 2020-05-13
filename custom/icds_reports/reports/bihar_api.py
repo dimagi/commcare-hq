@@ -132,6 +132,7 @@ def get_api_vaccine_data(month, state_id, last_person_case_id):
         'primary_admit',
         'date_last_private_admit',
         'date_return_private',
+        'last_reported_fever_date',
         'due_list_date_1g_dpt_1',
         'due_list_date_2g_dpt_2',
         'due_list_date_3g_dpt_3',
