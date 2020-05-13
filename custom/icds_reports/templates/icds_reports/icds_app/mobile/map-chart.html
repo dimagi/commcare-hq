@@ -21,8 +21,8 @@
     </div>
       <div ng-if="$ctrl.step === 'chart'" style="padding-top: 10px">
         <div class="chartView col-xs-11" ng-if="!$ctrl.hideRanking" >
-          <nvd3 ng-if="haveAccessToFeatures" options="$ctrl.chartOptions" data="$ctrl.chartData" class="with-3d-shadow with-transitions"></nvd3>
-          <hr ng-if="haveAccessToFeatures">
+          <nvd3 options="$ctrl.chartOptions" data="$ctrl.chartData" class="with-3d-shadow with-transitions"></nvd3>
+          <hr>
           <div class="mb-3">
             <span class="font-16 font-montserrat font-weight-600 mr-3">
               {$ $ctrl.location_type === 'Awc' ? $ctrl.location_type.toUpperCase() : $ctrl.location_type $}s Ranking

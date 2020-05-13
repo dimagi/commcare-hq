@@ -1,3 +1,4 @@
+import re
 from datetime import datetime
 from xml.etree import cElementTree as ElementTree
 
@@ -118,3 +119,17 @@ def reassign_cases(domain, case_ids, new_owner_id):
         case_blocks.append(case_block)
     if case_blocks:
         submit_case_blocks(case_blocks, domain, user_id=SYSTEM_USER_ID)
+
+        
+def split_location_name_and_site_code(name):
+    # Location Name [location code]
+    pattern = r"(.+)\s*\[(.+)\]"
+    match = re.match(pattern, name)
+    if match:
+        return match.groups()
+    return name, None
+
+
+def append_location_name_and_site_code(name, site_code):
+    return f"{name.rstrip()} [{site_code}]"
+

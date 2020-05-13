@@ -4,20 +4,14 @@ from django.template.defaultfilters import linebreaksbr
 
 from celery.task import task
 
-from casexml.apps.case.mock import CaseBlock
-
-from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.userreports.data_source_providers import (
     DynamicDataSourceProvider,
     StaticDataSourceProvider,
 )
 from corehq.apps.userreports.specs import EvaluationContext
 from corehq.apps.userreports.util import get_indicator_adapter
-from corehq.apps.users.models import CouchUser
-from corehq.apps.users.util import SYSTEM_USER_ID, normalize_username
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from custom.icds.location_reassignment.download import Households
-from custom.icds.location_reassignment.exceptions import InvalidUserTransition
 from custom.icds.location_reassignment.processor import (
     HouseholdReassignmentProcessor,
     Processor,
@@ -76,32 +70,6 @@ def reassign_cases_for_owner(domain, old_location_id, new_location_id, deprecati
 
     if other_case_ids:
         reassign_cases(domain, other_case_ids, new_location_id)
-
-
-@task(queue=settings.CELERY_LOCATION_REASSIGNMENT_QUEUE)
-def update_usercase(domain, old_username, new_username):
-    if "@" not in old_username:
-        old_username = normalize_username(old_username, domain)
-    if "@" not in new_username:
-        new_username = normalize_username(new_username, domain)
-    old_user = CouchUser.get_by_username(old_username)
-    new_user = CouchUser.get_by_username(new_username)
-    if old_user and new_user and old_user.is_commcare_user() and new_user.is_commcare_user():
-        old_user_usercase = old_user.get_usercase()
-        new_user_usercase = new_user.get_usercase()
-        # pick values that are not already present on the new user's usercase, populated already via HQ
-        updates = {}
-        for key in set(old_user_usercase.case_json.keys()) - set(new_user_usercase.case_json.keys()):
-            updates[key] = old_user_usercase.case_json[key]
-        if updates:
-            case_block = CaseBlock(new_user_usercase.case_id,
-                                   update=old_user_usercase.case_json,
-                                   user_id=SYSTEM_USER_ID).as_text()
-            submit_case_blocks([case_block], domain, user_id=SYSTEM_USER_ID)
-    else:
-        raise InvalidUserTransition("Invalid Transition with old user %s and new user %s" % (
-            old_username, new_username
-        ))
 
 
 @task

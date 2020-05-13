@@ -22,6 +22,7 @@ from custom.icds.location_reassignment.const import (
     CURRENT_SITE_CODE_COLUMN,
     CURRENT_SUB_DISTRICT_NAME,
     EXTRACT_OPERATION,
+    HAVE_APPENDED_LOCATION_NAMES,
     HOUSEHOLD_ID_COLUMN,
     HOUSEHOLD_MEMBER_DETAILS_COLUMN,
     LGD_CODE,
@@ -35,6 +36,7 @@ from custom.icds.location_reassignment.const import (
     OPERATION_COLUMN,
     OPERATIONS_TO_IGNORE,
     PERSON_CASE_TYPE,
+    SHEETS_TO_IGNORE,
     SPLIT_OPERATION,
     USERNAME_COLUMN,
     VALID_OPERATIONS,
@@ -42,6 +44,7 @@ from custom.icds.location_reassignment.const import (
 from custom.icds.location_reassignment.utils import (
     get_household_case_ids,
     get_household_child_cases_by_owner,
+    split_location_name_and_site_code,
 )
 
 
@@ -68,8 +71,11 @@ class Download(object):
         # setup details for the main location and all related locations
         self._location_details_by_location_id = {}
         for location in self._locations():
+            location_name = location.name
+            if location.location_type.code in HAVE_APPENDED_LOCATION_NAMES:
+                location_name, _ = split_location_name_and_site_code(location.name)
             self._location_details_by_location_id[location.location_id] = {
-                'name': location.name,
+                'name': location_name,
                 'type_name': location.location_type.name,
                 'site_code': location.site_code,
                 'lgd_code': location.metadata.get(LGD_CODE, ''),
@@ -114,17 +120,8 @@ class Download(object):
             for row in rows:
                 worksheet.append([row.get(header) for header in uniq_headers])
             self._add_validation(worksheet)
+        self._add_extra_sheets(wb)
         return wb
-
-    @staticmethod
-    def _add_validation(worksheet):
-        operations = [""] + VALID_OPERATIONS + OPERATIONS_TO_IGNORE
-        operation_data_validation = DataValidation(type="list", formula1='"%s"' % (','.join(operations)))
-        worksheet.add_data_validation(operation_data_validation)
-        for header_cell in worksheet[1]:
-            if header_cell.value == OPERATION_COLUMN:
-                letter = header_cell.column_letter
-                operation_data_validation.add(f"{letter}2:{letter}{worksheet.max_row}")
 
     def _create_rows(self):
         # location type code mapped to rows which is a list of dictionaries to pull headers later using keys
@@ -161,9 +158,12 @@ class Download(object):
         })
         if location_parent_id and location_parent_id in self._location_details_by_location_id:
             location_parent_details = self._location_details_by_location_id[location_parent_id]
+            parent_name = location_parent_details['name']
+            if location_parent_details['location_type'] in HAVE_APPENDED_LOCATION_NAMES:
+                parent_name, _ = split_location_name_and_site_code(parent_name)
             row.update({
                 CURRENT_PARENT_TYPE: location_parent_details['type_name'],
-                CURRENT_PARENT_NAME: location_parent_details['name'],
+                CURRENT_PARENT_NAME: parent_name,
                 CURRENT_PARENT_SITE_CODE: location_parent_details['site_code'],
                 NEW_PARENT_SITE_CODE: ''
             })
@@ -179,6 +179,22 @@ class Download(object):
             if h not in uniq_headers:
                 uniq_headers.append(h)
         return uniq_headers
+
+    @staticmethod
+    def _add_validation(worksheet):
+        operations = [""] + VALID_OPERATIONS + OPERATIONS_TO_IGNORE
+        operation_data_validation = DataValidation(type="list", formula1='"%s"' % (','.join(operations)))
+        worksheet.add_data_validation(operation_data_validation)
+        for header_cell in worksheet[1]:
+            if header_cell.value == OPERATION_COLUMN:
+                letter = header_cell.column_letter
+                operation_data_validation.add(f"{letter}2:{letter}{worksheet.max_row}")
+
+    @staticmethod
+    def _add_extra_sheets(workbook):
+        for title, headers in SHEETS_TO_IGNORE.items():
+            worksheet = workbook.create_sheet(title)
+            worksheet.append(headers)
 
 
 class Households(object):
