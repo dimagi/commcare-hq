@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 from memoized import memoized
 
 from corehq.apps.locations.models import LocationType, SQLLocation
@@ -57,3 +59,24 @@ class HouseholdReassignmentProcessor():
     @memoized
     def _supervisor_id(self, location_id):
         return get_supervisor_id(self.domain, location_id)
+
+
+class OtherCasesReassignmentProcessor():
+    def __init__(self, domain, reassignments):
+        self.domain = domain
+        self.reassignments = reassignments
+
+    def process(self):
+        from custom.icds.location_reassignment.utils import reassign_cases
+        new_site_codes = set()
+        reassignments_by_location_id = defaultdict([])
+        for case_id, details in self.reassignments.items():
+            new_site_codes.add(details['new_site_code'])
+        new_locations_by_site_code = {
+            loc.site_code: loc
+            for loc in SQLLocation.active_objects.filter(domain=self.domain, site_code__in=new_site_codes)}
+        for case_id, details in self.reassignments.items():
+            new_owner_id = new_locations_by_site_code[details['new_site_code']].location_id
+            reassignments_by_location_id[new_owner_id].append(case_id)
+        for new_owner_id, case_ids in reassignments_by_location_id.items():
+            reassign_cases(self.domain, case_ids, new_owner_id)

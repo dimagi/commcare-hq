@@ -15,6 +15,7 @@ from custom.icds.location_reassignment.download import Households, OtherCases
 from custom.icds.location_reassignment.models import Transition
 from custom.icds.location_reassignment.processor import (
     HouseholdReassignmentProcessor,
+    OtherCasesReassignmentProcessor,
     Processor,
 )
 from custom.icds.location_reassignment.utils import (
@@ -164,6 +165,34 @@ def process_households_reassignment(domain, reassignments, uploaded_filename, us
     else:
         email = EmailMessage(
             subject=f"[{settings.SERVER_ENVIRONMENT}] - Household Reassignment Completed",
+            body=f"The request has been successfully completed for file {uploaded_filename}.",
+            to=[user_email],
+            from_email=settings.DEFAULT_FROM_EMAIL
+        )
+        email.send()
+
+
+@task
+def process_other_cases_reassignment(domain, reassignments, uploaded_filename, user_email):
+    try:
+        OtherCasesReassignmentProcessor(domain, reassignments).process()
+    except Exception as e:
+        email = EmailMessage(
+            subject=f"[{settings.SERVER_ENVIRONMENT}] - Other Cases Reassignment Failed",
+            body=linebreaksbr(
+                f"The request could not be completed for file {uploaded_filename}. Something went wrong.\n"
+                f"Error raised : {e}.\n"
+                "Please report an issue if needed."
+            ),
+            to=[user_email],
+            from_email=settings.DEFAULT_FROM_EMAIL
+        )
+        email.content_subtype = "html"
+        email.send()
+        raise e
+    else:
+        email = EmailMessage(
+            subject=f"[{settings.SERVER_ENVIRONMENT}] - Other Cases Reassignment Completed",
             body=f"The request has been successfully completed for file {uploaded_filename}.",
             to=[user_email],
             from_email=settings.DEFAULT_FROM_EMAIL

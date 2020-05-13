@@ -18,6 +18,7 @@ class LocationReassignmentRequestForm(BulkUploadForm):
     EMAIL_OTHER_CASES = "email_other_cases"
     UPDATE = "update"
     REASSIGN_HOUSEHOLDS = "reassign_households"
+    REASSIGN_OTHER_CASES = "reassign_other_cases"
     ACTION_TYPE_CHOICES = [(VALIDATE, ugettext("Validate")),
                            (EMAIL_HOUSEHOLDS, ugettext("Email Households "
                                                        f"(Only for {SPLIT_OPERATION} and {EXTRACT_OPERATION})")),
@@ -26,7 +27,11 @@ class LocationReassignmentRequestForm(BulkUploadForm):
                            (UPDATE, ugettext("Perform Reassignment")),
                            (REASSIGN_HOUSEHOLDS, ugettext(
                                "Reassign Households "
-                               f"(Only for {SPLIT_OPERATION} and {EXTRACT_OPERATION})"))]
+                               f"(Only for {SPLIT_OPERATION} and {EXTRACT_OPERATION})")),
+                           (REASSIGN_OTHER_CASES, ugettext(
+                               "Reassign Other Cases "
+                               f"(Only for {SPLIT_OPERATION} and {EXTRACT_OPERATION})")),
+                           ]
     action_type = forms.ChoiceField(choices=ACTION_TYPE_CHOICES,
                                     initial=VALIDATE,
                                     )
