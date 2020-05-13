@@ -260,6 +260,16 @@ class ExportListHelper(object):
             }
         )[:-1]  # Remove trailing forward slash for compatibility with BI tools
 
+    @staticmethod
+    def get_location_restriction_names(accessible_location_ids):
+        location_restrictions = []
+        locations = []
+        if accessible_location_ids:
+            locations = SQLLocation.objects.filter(location_id__in=accessible_location_ids)
+        for location in locations:
+            location_restrictions.append(location.display_name)
+        return location_restrictions
+
     def _get_daily_saved_export_metadata(self, export):
         """
         Return a dictionary containing details about an emailed export.
@@ -278,20 +288,13 @@ class ExportListHelper(object):
                 export.last_accessed, download_url
             )
 
-        location_restrictions = []
-        locations = []
-        if export.filters.accessible_location_ids:
-            locations = SQLLocation.objects.filter(location_id__in=export.filters.accessible_location_ids)
-        for location in locations:
-            location_restrictions.append(location.display_name)
-
         return {
             'groupId': None,  # This can be removed when we're off legacy exports
             'hasFile': has_file,
             'index': None,  # This can be removed when we're off legacy exports
             'fileData': file_data,
             'isLocationSafeForUser': export.filters.is_location_safe_for_user(self.request),
-            'locationRestrictions': location_restrictions,
+            'locationRestrictions': self.get_location_restriction_names(export.filters.accessible_location_ids),
             'taskStatus': _get_task_status_json(export._id),
             'updatingData': False,
         }
@@ -669,6 +672,9 @@ def commit_filters(request, domain):
                 rebuild_saved_export(export_id, manual=True)
         return json_response({
             'success': True,
+            'locationRestrictions': ExportListHelper.get_location_restriction_names(
+                export.filters.accessible_location_ids
+            ),
         })
     else:
         return json_response({

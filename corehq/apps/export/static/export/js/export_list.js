@@ -584,6 +584,7 @@ hqDefine("export/js/export_list", [
                         export_.filters.days(self.days());
                         export_.filters.start_date(self.startDate());
                         export_.filters.end_date(self.endDate());
+                        self.locationRestrictions(data.locationRestrictions);
                         if (export_.hasEmailedExport) {
                             export_.emailedExport.pollProgressBar();
                         }
