@@ -29,11 +29,11 @@ class LocationReassignmentRequestForm(BulkUploadForm):
                                f"(Only for {SPLIT_OPERATION} and {EXTRACT_OPERATION})"))]
     action_type = forms.ChoiceField(choices=ACTION_TYPE_CHOICES,
                                     initial=VALIDATE,
-                                    widget=SelectToggle(choices=ACTION_TYPE_CHOICES))
+                                    )
 
     def crispy_form_fields(self, context):
         crispy_form_fields = super(LocationReassignmentRequestForm, self).crispy_form_fields(context)
         crispy_form_fields.extend([
-            crispy.Div(InlineField('action_type'), css_class="col-sm-6"),
+            crispy.Div(InlineField('action_type'), css_class="col-sm-4"),
         ])
         return crispy_form_fields
