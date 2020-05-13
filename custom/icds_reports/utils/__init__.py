@@ -2032,7 +2032,9 @@ def get_location_launched_status(filters, loc_name):
             return location_filters
         else:
             location_id_cols = ['state_id', 'district_id', 'block_id', 'supervisor_id', 'awc_id']
-            reduced_loc_id_cols = location_id_cols[:location_filters['aggregation_level']-1]
+            # Subtracting 1 from agg level because agg level is 1 level deeper as it finds the
+            # launched status of all sub locations
+            reduced_loc_id_cols = location_id_cols[:location_filters['aggregation_level'] - 1]
 
             location_filters.update(
                 {
