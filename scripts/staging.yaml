@@ -59,5 +59,6 @@ branches:
   - bmb/SAAS-10674  # Biyeun May 4
   - dmr/case-upload-success-result-followup  # Danny May 5
   - nh/auth/oauth2  # Norman May 12
+  - jls/enterprise-linked-domains # Jenny May 12
 
 submodules: {}
