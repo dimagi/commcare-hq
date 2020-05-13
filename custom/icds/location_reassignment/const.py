@@ -19,7 +19,9 @@ MERGE_OPERATION = 'Merge'
 SPLIT_OPERATION = 'Split'
 MOVE_OPERATION = 'Move'
 EXTRACT_OPERATION = 'Extract'
+RENAME_OPERATION = 'Rename'
 VALID_OPERATIONS = [MERGE_OPERATION, SPLIT_OPERATION, MOVE_OPERATION, EXTRACT_OPERATION]
+OPERATIONS_TO_IGNORE = [RENAME_OPERATION]
 
 AWC_NAME_COLUMN = 'Name of AWC'
 AWC_CODE_COLUMN = 'AWC Code (11 digits)'
@@ -53,6 +55,15 @@ LGD_CODE = "lgd_code"
 MAP_LOCATION_NAME = "map_location_name"
 
 AWC_CODE = "awc"
+SUPERVISOR_CODE = "supervisor"  # also called "Sector" at times
 BLOCK_CODE = "block"  # also called "Project" at times
+# location types that append raw name and site code together as the final location name
+HAVE_APPENDED_LOCATION_NAMES = [AWC_CODE, SUPERVISOR_CODE]
+
 HOUSEHOLD_CASE_TYPE = "household"
 PERSON_CASE_TYPE = "person"
+
+# title mapped to headers for the sheet
+SHEETS_TO_IGNORE = {
+    "User Deletion Requests": ["Username to be deleted"]
+}
