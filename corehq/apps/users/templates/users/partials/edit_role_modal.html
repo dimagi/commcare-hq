@@ -544,16 +544,16 @@
           {% if request|toggle_enabled:"RESTRICT_LOGIN_AS" %}
             <div class="form-group">
             <label class="col-sm-4 control-label">
-              {% trans "Login-As All Users" %}
+              {% trans "Limit Login-As" %}
             </label>
             <div class="col-sm-8 controls">
               <div class="form-check">
                 <input type="checkbox"
                        id="non-admin-edit-checkbox"
-                       data-bind="checked: permissions.login_as_all_users,
+                       data-bind="checked: permissions.limited_login_as,
                                   disable: !$root.allowEdit" />
                 <label for="non-admin-edit-checkbox">
-                  {% trans "Allow the user to login as in any user in web apps." %}
+                  {% trans "Allow the user to login as only specified users in Web Apps." %}
                 </label>
               </div>
             </div>

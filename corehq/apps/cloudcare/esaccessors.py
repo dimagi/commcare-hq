@@ -74,7 +74,7 @@ def login_as_user_query(
         ).location_ids()
         user_es = user_es.location(list(loc_ids))
 
-    if not couch_user.has_permission(domain, get_permission_name(Permissions.login_as_all_users)):
+    if couch_user.has_permission(domain, get_permission_name(Permissions.limited_login_as)):
         user_es = user_es.filter(
             filters.nested(
                 'user_data_es',

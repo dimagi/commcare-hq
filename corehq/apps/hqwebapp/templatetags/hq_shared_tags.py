@@ -230,7 +230,7 @@ def can_use_restore_as(request):
         return True
 
     return (
-        request.couch_user.can_edit_commcare_users() and
+        request.couch_user.can_login_as(request.domain) and
         has_privilege(request, privileges.LOGIN_AS)
     )
 

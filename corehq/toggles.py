@@ -1919,5 +1919,9 @@ RESTRICT_LOGIN_AS = StaticToggle(
     'restrict_login_as',
     'COVID: Limit allowed users for login as',
     TAG_CUSTOM,
-    namespaces=[NAMESPACE_DOMAIN]
+    namespaces=[NAMESPACE_DOMAIN],
+    description="""
+    Adds a permission that can be set on user roles to only allow those users to "login as" other users that set custom user proper "login_as_user" to the first users' username.
+    For example, if User A has this permission set on their role, the can only login as User B if User B has the custom property "login_as_user" set to "A".
+    """
 )
