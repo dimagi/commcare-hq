@@ -98,21 +98,21 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
             "(({} - child_health.opened_on::date)::integer >= 0) "
             "AND (child_health.closed = 0 OR (child_health.closed_on::date - {})::integer > 0)"
         ).format(end_month_string, start_month_string)
-        open_in_month_end = (
-            "(({} - child_health.opened_on::date)::integer >= 0) "
-            "AND (child_health.closed = 0 OR (child_health.closed_on::date - {})::integer > 0)"
-        ).format(end_month_string, end_month_string)
+        open_status_daily = (
+            "(child_health.opened_on::date <= {end_month_string}) "
+            "AND (child_health.closed = 0 OR child_health.closed_on::date > {end_month_string})"
+        ).format(end_month_string=end_month_string)
         alive_in_month = "(child_health.date_death IS NULL OR child_health.date_death - {} >= 0)".format(
             start_month_string
         )
-        alive_in_month_end = "(child_health.date_death IS NULL OR child_health.date_death - {} >= 0)".format(
+        alive_status_daily = "(child_health.date_death IS NULL OR child_health.date_death - {} >= 0)".format(
             end_month_string
         )
         not_migrated = (
             "(agg_migration.is_migrated IS DISTINCT FROM 1 "
             "OR agg_migration.migration_date::date >= {start_month_string})"
         ).format(start_month_string=start_month_string)
-        not_migrated_month_end = (
+        not_migration_status_daily = (
             "(agg_migration.is_migrated IS DISTINCT FROM 1)"
         )
         registered = (
@@ -124,16 +124,16 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
         )
         seeking_services = "({registered} AND {not_migrated})".format(
             registered=registered, not_migrated=not_migrated)
-        seeking_services_month_end = "({registered_month_end} AND {not_migrated_month_end})".format(
-            registered_month_end=registered_month_end, not_migrated_month_end=not_migrated_month_end)
+        seeking_services_status_daily = "({registered_month_end} AND {not_migration_status_daily})".format(
+            registered_month_end=registered_month_end, not_migration_status_daily=not_migration_status_daily)
         born_in_month = "({} AND person_cases.dob BETWEEN {} AND {})".format(
             seeking_services, start_month_string, end_month_string
         )
         valid_in_month = "({} AND {} AND {} AND {} <= 72)".format(
             open_in_month, alive_in_month, seeking_services, age_in_months
         )
-        valid_in_month_end = "({} AND {} AND {} AND {} <= 72)".format(
-            open_in_month_end, alive_in_month_end, seeking_services_month_end, age_in_months_end
+        valid_status_daily = "({} AND {} AND {} AND {} <= 72)".format(
+            open_status_daily, alive_status_daily, seeking_services_status_daily, age_in_months
         )
         pse_eligible = "({} AND {} > 36)".format(valid_in_month, age_in_months_end)
         ebf_eligible = "({} AND {} <= 6)".format(valid_in_month, age_in_months)
@@ -374,11 +374,12 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
             ("child_person_case_id", "child_health.mother_id"),
             ("delivery_nature", "del_form.delivery_nature"),
             ("term_days", "(del_form.add::DATE - del_form.edd::DATE) + 280"),
-            ("valid_in_month_end", "CASE WHEN {} THEN 1 ELSE 0 END".format(valid_in_month_end)),
-            ("not_migrated_month_end", "CASE WHEN {} THEN 1 ELSE 0 END".format(not_migrated_month_end)),
-            ("alive_in_month_end", "CASE WHEN {} THEN 1 ELSE 0 END".format(alive_in_month_end)),
-            ("status_duplicate", "CASE WHEN person_cases.reason_closure='dupe_reg' THEN 1 ELSE 0 END"),
-            ("seeking_services_month_end", "CASE WHEN {} THEN 1 ELSE 0 END".format(seeking_services_month_end))
+            ("valid_status_daily", "CASE WHEN {} THEN 1 ELSE 0 END".format(valid_status_daily)),
+            ("migration_status_daily", "CASE WHEN {} THEN 0 ELSE 1 END".format(not_migration_status_daily)),
+            ("alive_status_daily", "CASE WHEN {} THEN 1 ELSE 0 END".format(alive_status_daily)),
+            ("duplicate_status_daily", "CASE WHEN {} AND person_cases.reason_closure in ('dupe_reg','incorrect_reg')"
+                                       " THEN 1 ELSE 0 END".format(not open_status_daily)),
+            ("seeking_services_status_daily", "CASE WHEN {} THEN 1 ELSE 0 END".format(seeking_services_status_daily))
         )
         yield """
         INSERT INTO "{child_tablename}" (
@@ -443,7 +444,7 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
             child_tasks_case_ucr=self.child_tasks_case_ucr_tablename,
             person_cases_ucr=self.person_case_ucr_tablename,
             open_in_month=open_in_month,
-            delivery_form=get_table_name(self.domain, CHILD_DELIVERY_FORM_ID),
+            delivery_form=get_table_name(self.domain, CHILD_DELIVERY_FORM_ID)
         ), {
             "start_date": self.month,
             "next_month": month_formatter(self.month + relativedelta(months=1)),

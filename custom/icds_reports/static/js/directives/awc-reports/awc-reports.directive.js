@@ -1799,13 +1799,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
                 'heading': 'Mother Phone Number',
                 'class': 'medium-col',
                 'value': renderMotherPhoneNumber
-            },
-            // {
-            //     'mData': 'beneficiary_status',
-            //     'heading': 'Beneficiary Status',
-            //     'class': 'medium-col',
-            //     'value': renderBeneficairyStatus
-            // },
+            }
         ],
         'pregnant': [
             {

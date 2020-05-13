@@ -197,11 +197,11 @@ class ChildHealthMonthlyView(models.Model):
     current_month_wasting_v2_sort = models.IntegerField(blank=True, null=True)
     aww_phone_number = models.TextField(blank=True, null=True)
     mother_phone_number = models.TextField(blank=True, null=True)
-    valid_in_month_end = models.SmallIntegerField(blank=True, null=True)
-    not_migrated_month_end = models.SmallIntegerField(blank=True, null=True)
-    alive_in_month_end = models.SmallIntegerField(blank=True, null=True)
-    status_duplicate = models.SmallIntegerField(blank=True, null=True)
-    seeking_services_month_end = models.SmallIntegerField(blank=True, null=True)
+    valid_status_daily = models.SmallIntegerField(blank=True, null=True)
+    migration_status_daily = models.SmallIntegerField(blank=True, null=True)
+    alive_status_daily = models.SmallIntegerField(blank=True, null=True)
+    duplicate_status_daily = models.SmallIntegerField(blank=True, null=True)
+    seeking_services_status_daily = models.SmallIntegerField(blank=True, null=True)
 
     class Meta(object):
         app_label = 'icds_reports'
