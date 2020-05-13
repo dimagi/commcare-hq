@@ -42,10 +42,10 @@ class BiharAPIMotherTest(TestCase):
                 "add": datetime.date(2017, 6, 1),
                 "last_preg_tt": None,
                 "lmp": datetime.date(2016, 10, 2),
-                "anc_1": None,
-                "anc_2": None,
-                "anc_3": None,
-                "anc_4": None,
+                "anc_1": datetime.date(2016, 10, 8),
+                "anc_2": datetime.date(2016, 11, 7),
+                "anc_3": datetime.date(2016, 12, 7),
+                "anc_4": datetime.date(2017, 1, 6),
                 "edd": datetime.date(2017, 7, 9)
              },
             ccs_case_details
