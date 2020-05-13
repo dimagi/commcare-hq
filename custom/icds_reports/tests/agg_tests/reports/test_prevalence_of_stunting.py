@@ -142,7 +142,6 @@ class TestPrevalenceOfStunting(TestCase):
                 "0%-25%": MapColors.PINK,
                 "25%-38%": MapColors.ORANGE,
                 "38%-100%": MapColors.RED,
-                "Not Launched": MapColors.GREY,
                 "defaultFill": MapColors.GREY
             }
         )

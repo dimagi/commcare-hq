@@ -140,7 +140,6 @@ class TestPrevalenceOfSevere(TestCase):
                 "0%-5%": MapColors.PINK,
                 "5%-7%": MapColors.ORANGE,
                 "7%-100%": MapColors.RED,
-                "Not Launched": MapColors.GREY,
                 "defaultFill": MapColors.GREY
             }
         )

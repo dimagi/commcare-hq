@@ -13,8 +13,8 @@ from custom.icds_reports.models import AggCcsRecordMonthly
 from custom.icds_reports.utils import apply_exclude, indian_formatted_number
 
 
-@icds_quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
-def get_lactating_enrolled_women_data_map(domain, config, loc_level, show_test=False):
+@icds_quickcache(['domain', 'config', 'loc_level', 'show_test', 'beta'], timeout=30 * 60)
+def get_lactating_enrolled_women_data_map(domain, config, loc_level, show_test=False, beta=False):
 
     def get_data_for(filters):
         filters['month'] = datetime(*filters['month'])
@@ -56,7 +56,7 @@ def get_lactating_enrolled_women_data_map(domain, config, loc_level, show_test=F
 
     fills = OrderedDict()
     fills.update({'Women': MapColors.BLUE})
-    fills.update({'Not Launched': MapColors.GREY})
+    fills.update({'Not Launched': MapColors.GREY}) if beta else None
     fills.update({'defaultFill': MapColors.GREY})
 
     return {

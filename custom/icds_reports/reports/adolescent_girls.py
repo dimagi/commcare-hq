@@ -64,7 +64,7 @@ def get_adolescent_girls_data_map(domain, config, loc_level, show_test=False, be
 
     fills = OrderedDict()
     fills.update({'Adolescent Girls': MapColors.BLUE})
-    fills.update({'Not Launched': MapColors.GREY})
+    fills.update({'Not Launched': MapColors.GREY}) if beta else None
     fills.update({'defaultFill': MapColors.GREY})
 
     return {

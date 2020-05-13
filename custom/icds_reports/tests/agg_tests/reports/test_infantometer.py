@@ -47,7 +47,6 @@ class TestInfantometer(TestCase):
                     "0%-25%": MapColors.RED,
                     "25%-75%": MapColors.ORANGE,
                     "75%-100%": MapColors.PINK,
-                    "Not Launched": MapColors.GREY,
                     "defaultFill": MapColors.GREY
                 }
             }
@@ -94,7 +93,6 @@ class TestInfantometer(TestCase):
                     "0%-25%": MapColors.RED,
                     "25%-75%": MapColors.ORANGE,
                     "75%-100%": MapColors.PINK,
-                    "Not Launched": MapColors.GREY,
                     "defaultFill": MapColors.GREY
                 }
             }

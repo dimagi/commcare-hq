@@ -14,8 +14,8 @@ from custom.icds_reports.utils import apply_exclude, generate_data_for_map, chos
 from custom.icds_reports.messages import new_born_with_low_weight_help_text
 
 
-@icds_quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
-def get_newborn_with_low_birth_weight_map(domain, config, loc_level, show_test=False):
+@icds_quickcache(['domain', 'config', 'loc_level', 'show_test', 'beta'], timeout=30 * 60)
+def get_newborn_with_low_birth_weight_map(domain, config, loc_level, show_test=False, beta=False):
 
     def get_data_for(filters):
         filters['month'] = datetime(*filters['month'])
@@ -46,7 +46,7 @@ def get_newborn_with_low_birth_weight_map(domain, config, loc_level, show_test=F
     fills.update({'0%-20%': MapColors.PINK})
     fills.update({'20%-60%': MapColors.ORANGE})
     fills.update({'60%-100%': MapColors.RED})
-    fills.update({'Not Launched': MapColors.GREY})
+    fills.update({'Not Launched': MapColors.GREY}) if beta else None
     fills.update({'defaultFill': MapColors.GREY})
 
     gender_ignored, age_ignored, chosen_filters = chosen_filters_to_labels(config)

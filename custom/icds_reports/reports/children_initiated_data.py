@@ -13,8 +13,8 @@ from custom.icds_reports.utils import apply_exclude, generate_data_for_map, chos
     indian_formatted_number
 
 
-@icds_quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
-def get_children_initiated_data_map(domain, config, loc_level, show_test=False):
+@icds_quickcache(['domain', 'config', 'loc_level', 'show_test', 'beta'], timeout=30 * 60)
+def get_children_initiated_data_map(domain, config, loc_level, show_test=False, beta=False):
 
     def get_data_for(filters):
         filters['month'] = datetime(*filters['month'])
@@ -44,7 +44,7 @@ def get_children_initiated_data_map(domain, config, loc_level, show_test=False):
     fills.update({'0%-20%': MapColors.RED})
     fills.update({'20%-60%': MapColors.ORANGE})
     fills.update({'60%-100%': MapColors.PINK})
-    fills.update({'Not Launched': MapColors.GREY})
+    fills.update({'Not Launched': MapColors.GREY}) if beta else None
     fills.update({'defaultFill': MapColors.GREY})
 
     gender_ignored, age_ignored, chosen_filters = chosen_filters_to_labels(config)

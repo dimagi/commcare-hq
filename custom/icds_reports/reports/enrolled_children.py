@@ -12,8 +12,8 @@ from custom.icds_reports.utils import apply_exclude, match_age, chosen_filters_t
     indian_formatted_number
 
 
-@icds_quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
-def get_enrolled_children_data_map(domain, config, loc_level, show_test=False):
+@icds_quickcache(['domain', 'config', 'loc_level', 'show_test', 'beta'], timeout=30 * 60)
+def get_enrolled_children_data_map(domain, config, loc_level, show_test=False, beta=False):
 
     def get_data_for(filters):
         filters['month'] = datetime(*filters['month'])
@@ -53,7 +53,7 @@ def get_enrolled_children_data_map(domain, config, loc_level, show_test=False):
 
     fills = OrderedDict()
     fills.update({'Children': MapColors.BLUE})
-    fills.update({'Not Launched': MapColors.GREY})
+    fills.update({'Not Launched': MapColors.GREY}) if beta else None
     fills.update({'defaultFill': MapColors.GREY})
 
     gender_ignored, age_label, chosen_filters = chosen_filters_to_labels(config, default_interval='0 - 6 years')

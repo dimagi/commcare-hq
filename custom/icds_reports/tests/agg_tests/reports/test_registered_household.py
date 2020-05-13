@@ -27,7 +27,6 @@ class TestRegisteredHousehold(TestCase):
                 },
                 "fills": {
                     "Household": MapColors.BLUE,
-                    "Not Launched": MapColors.GREY,
                     "defaultFill": MapColors.GREY
                 },
                 "data": {
@@ -65,7 +64,6 @@ class TestRegisteredHousehold(TestCase):
                 },
                 "fills": {
                     "Household": MapColors.BLUE,
-                    "Not Launched": MapColors.GREY,
                     "defaultFill": MapColors.GREY
                 },
                 "data": {

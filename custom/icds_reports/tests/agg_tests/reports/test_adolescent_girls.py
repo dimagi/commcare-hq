@@ -45,7 +45,6 @@ class TestAdolescentGirls(TestCase):
                 },
                 "fills": {
                     "Adolescent Girls": MapColors.BLUE,
-                    "Not Launched": MapColors.GREY,
                     "defaultFill": MapColors.GREY
                 },
                 "data": {
@@ -97,7 +96,6 @@ class TestAdolescentGirls(TestCase):
                 },
                 "fills": {
                     "Adolescent Girls": MapColors.BLUE,
-                    "Not Launched": MapColors.GREY,
                     "defaultFill": MapColors.GREY
                 },
                 "data": {

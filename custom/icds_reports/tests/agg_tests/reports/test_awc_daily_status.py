@@ -34,7 +34,6 @@ class TestAWCDailyStatus(TestCase):
                     "0%-50%": MapColors.RED,
                     "50%-75%": MapColors.ORANGE,
                     "75%-100%": MapColors.PINK,
-                    "Not Launched": MapColors.GREY,
                     "defaultFill": MapColors.GREY
                 },
                 "data": {
@@ -88,7 +87,6 @@ class TestAWCDailyStatus(TestCase):
                     "0%-50%": MapColors.RED,
                     "50%-75%": MapColors.ORANGE,
                     "75%-100%": MapColors.PINK,
-                    "Not Launched": MapColors.GREY,
                     "defaultFill": MapColors.GREY
                 }
             }
@@ -121,7 +119,6 @@ class TestAWCDailyStatus(TestCase):
                     "0%-50%": MapColors.RED,
                     "50%-75%": MapColors.ORANGE,
                     "75%-100%": MapColors.PINK,
-                    "Not Launched": MapColors.GREY,
                     "defaultFill": MapColors.GREY
                 },
                 'data': {
