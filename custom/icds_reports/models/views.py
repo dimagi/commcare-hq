@@ -1493,6 +1493,7 @@ class BiharVaccineView(models.Model):
     delivery_nature = models.TextField(blank=True, null=True)
     term_days = models.SmallIntegerField(blank=True, null=True)
     birth_weight = models.SmallIntegerField(blank=True, null=True)
+    last_reported_fever_date = models.DateField(blank=True, null=True)
 
     class Meta(object):
         app_label = 'icds_reports'
