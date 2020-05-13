@@ -79,7 +79,7 @@ class TransitionRow(object):
         if bool(self.new_username) != bool(self.old_username):
             errors.append(f"Need both old and new username for {self.operation} operation "
                           f"on location '{self.old_site_code}'")
-        if not self.new_location_details.get('name', '').strip():
+        if not self.new_location_details.get('name', ''):
             errors.append(f"Missing new location name for {self.new_site_code}")
         parent_site_code = self.new_location_details.get('parent_site_code')
         if parent_site_code:
@@ -162,7 +162,7 @@ class Parser(object):
                     new_site_code=parse_site_code(row.get(NEW_SITE_CODE_COLUMN)),
                     expects_parent=expects_parent,
                     new_location_details={
-                        'name': row.get(NEW_NAME),
+                        'name': row.get(NEW_NAME, '').strip(),
                         'parent_site_code': parse_site_code(row.get(NEW_PARENT_SITE_CODE)),
                         'lgd_code': row.get(NEW_LGD_CODE),
                         'sub_district_name': row.get(NEW_SUB_DISTRICT_NAME)
