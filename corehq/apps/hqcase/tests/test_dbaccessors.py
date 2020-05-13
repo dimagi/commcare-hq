@@ -21,7 +21,7 @@ from corehq.apps.hqcase.dbaccessors import (
     get_case_ids_in_domain_by_owner,
     get_cases_in_domain,
 )
-from corehq.elastic import EsMeta, get_es_new
+from corehq.elastic import get_es_new
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
 from corehq.pillows.mappings.domain_mapping import DOMAIN_INDEX_INFO
@@ -161,7 +161,7 @@ class DBAccessorsTest(TestCase):
 
 
 TEST_ES_META = {
-    CASE_INDEX_INFO.index: EsMeta(CASE_INDEX_INFO.index, CASE_INDEX_INFO.type)
+    CASE_INDEX_INFO.index: CASE_INDEX_INFO
 }
 
 
