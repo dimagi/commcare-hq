@@ -65,7 +65,8 @@ def get_enrolled_women_data_map(domain, config, loc_level, show_test=False, icds
 
     fills = OrderedDict()
     fills.update({'Women': MapColors.BLUE})
-    fills.update({'Not Launched': MapColors.GREY}) if icds_features_flag else None
+    if icds_features_flag:
+        fills.update({'Not Launched': MapColors.GREY})
     fills.update({'defaultFill': MapColors.GREY})
 
     return {
