@@ -120,7 +120,7 @@ def reassign_cases(domain, case_ids, new_owner_id):
     if case_blocks:
         submit_case_blocks(case_blocks, domain, user_id=SYSTEM_USER_ID)
 
-        
+
 def split_location_name_and_site_code(name):
     # Location Name [location code]
     pattern = r"(.+)\s*\[(.+)\]"
@@ -132,4 +132,3 @@ def split_location_name_and_site_code(name):
 
 def append_location_name_and_site_code(name, site_code):
     return f"{name.rstrip()} [{site_code}]"
-
