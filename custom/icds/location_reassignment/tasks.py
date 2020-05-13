@@ -12,6 +12,7 @@ from corehq.apps.userreports.specs import EvaluationContext
 from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from custom.icds.location_reassignment.download import Households
+from custom.icds.location_reassignment.models import Transition
 from custom.icds.location_reassignment.processor import (
     HouseholdReassignmentProcessor,
     Processor,
@@ -75,7 +76,8 @@ def reassign_cases_for_owner(domain, old_location_id, new_location_id, deprecati
 @task
 def email_household_details(domain, transitions, uploaded_filename, user_email):
     try:
-        filestream = Households(domain).dump(transitions)
+        transition_objs = [Transition(*transition) for transition in transitions]
+        filestream = Households(domain).dump(transition_objs)
     except Exception as e:
         email = EmailMessage(
             subject=f"[{settings.SERVER_ENVIRONMENT}] - Location Reassignment Household Dump Failed",

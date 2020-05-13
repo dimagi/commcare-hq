@@ -149,12 +149,32 @@ class TestHouseholds(TestCase):
             CommCareCaseStub('101', 'A Person', {'age_at_reg': '4', 'sex': 'M'}),
             CommCareCaseStub('102', 'B Person', {'age_at_reg': '5', 'sex': 'F'}),
         ]
-        transitions = {
-            MOVE_OPERATION: {'112': '111'},  # new: old
-            MERGE_OPERATION: {'115': ['113', '114']},  # new: old
-            SPLIT_OPERATION: {'116': ['117', '118']},  # old: new
-            EXTRACT_OPERATION: {'120': '119'}  # new: old
-        }
+        transitions = [
+            Transition(
+                domain=self.domain,
+                location_type_code='awc',
+                operation=MOVE_OPERATION,
+                old_site_codes=['111'],
+                new_site_codes=['112']),
+            Transition(
+                domain=self.domain,
+                location_type_code='awc',
+                operation=MERGE_OPERATION,
+                old_site_codes=['113', '114'],
+                new_site_codes=['115']),
+            Transition(
+                domain=self.domain,
+                location_type_code='awc',
+                operation=SPLIT_OPERATION,
+                old_site_codes=['116'],
+                new_site_codes=['117', '118']),
+            Transition(
+                domain=self.domain,
+                location_type_code='awc',
+                operation=EXTRACT_OPERATION,
+                old_site_codes=['119'],
+                new_site_codes=['120'])
+        ]
 
         filestream = Households(self.domain).dump(transitions)
 

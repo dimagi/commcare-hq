@@ -212,9 +212,10 @@ class Households(object):
         which holds details all household cases assigned to it
         """
         rows = {}
-        for operation, details in transitions.items():
+        for transition in transitions:
+            operation = transition.operation
             if operation in self.valid_operations:
-                rows.update(self._get_rows_for_location(operation, details))
+                rows.update(self._get_rows_for_transition(transition))
         if rows:
             stream = io.BytesIO()
             headers = [[site_code, self.headers] for site_code in rows]
@@ -222,14 +223,10 @@ class Households(object):
             stream.seek(0)
             return stream
 
-    def _get_rows_for_location(self, operation, details):
+    def _get_rows_for_transition(self, transition):
         rows = {}
-        if operation == SPLIT_OPERATION:
-            for site_code in details.keys():
-                rows[site_code] = self._build_rows(site_code)
-        elif operation == EXTRACT_OPERATION:
-            for site_code in details.values():
-                rows[site_code] = self._build_rows(site_code)
+        for site_code in transition.old_site_codes:
+            rows[site_code] = self._build_rows(site_code)
         return rows
 
     def _build_rows(self, site_code):
