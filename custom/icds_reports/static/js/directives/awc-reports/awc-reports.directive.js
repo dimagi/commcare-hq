@@ -1895,7 +1895,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
             },
             {
                 'mData': 'institutional_delivery',
-                'heading': 'Institutional Delivery (Y/N)',
+                'heading': 'Institutional Delivery (Yes/No)',
                 'class': 'medium-col',
                 'value': renderInstitutionalDeliveryInMonth
             },
