@@ -342,7 +342,7 @@ class DashboardFeedFilterForm(forms.Form):
         super(DashboardFeedFilterForm, self).__init__(*args, **kwargs)
 
         self.can_restrict_access_by_location = domain_object.has_privilege(
-                privileges.RESTRICT_ACCESS_BY_LOCATION
+            privileges.RESTRICT_ACCESS_BY_LOCATION
         )
 
         if not self.can_restrict_access_by_location or not self.can_user_access_all_locations:
@@ -455,9 +455,8 @@ class DashboardFeedFilterForm(forms.Form):
             filters = self._to_case_export_instance_filters(can_access_all_locations, accessible_location_ids)
 
         if (self.can_user_access_all_locations
-            and self.can_restrict_access_by_location
-            and self.cleaned_data['update_location_restriction']
-        ):
+                and self.can_restrict_access_by_location
+                and self.cleaned_data['update_location_restriction']):
             filters.accessible_location_ids = filters.locations
             filters.can_access_all_locations = not filters.locations
         return filters
