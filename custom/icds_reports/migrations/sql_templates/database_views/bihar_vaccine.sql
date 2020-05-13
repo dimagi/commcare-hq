@@ -20,6 +20,7 @@ CREATE VIEW bihar_vaccine_view AS
         "bihar_demographics"."primary_admit" AS "primary_admit",
         "bihar_demographics"."date_last_private_admit" AS "date_last_private_admit",
         "bihar_demographics"."date_return_private" AS "date_return_private",
+        "bihar_demographics"."last_reported_fever_date" AS "last_reported_fever_date",
         "child_vaccines"."due_list_date_1g_dpt_1" as "due_list_date_1g_dpt_1",
         "child_vaccines"."due_list_date_2g_dpt_2" as "due_list_date_2g_dpt_2",
         "child_vaccines"."due_list_date_3g_dpt_3" as "due_list_date_3g_dpt_3",
