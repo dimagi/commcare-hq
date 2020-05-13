@@ -1795,6 +1795,7 @@ class BiharAPIDemographics(models.Model, AggregateMixin):
     date_return_private = models.DateField(null=True)
     out_of_school_status = models.SmallIntegerField(null=True)
     last_class_attended_ever = models.SmallIntegerField(null=True)
+    was_oos_ever = models.SmallIntegerField(null=True)
 
     class Meta(object):
         db_table = BIHAR_API_DEMOGRAPHICS_TABLE

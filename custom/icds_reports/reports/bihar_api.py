@@ -193,7 +193,8 @@ def get_api_ag_school_data(month, state_id, last_person_case_id):
         'person_id',
         'person_name',
         'out_of_school_status',
-        'last_class_attended_ever'
+        'last_class_attended_ever',
+        'was_oos_ever'
     )
 
     # To apply pagination on database query with data size length

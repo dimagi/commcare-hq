@@ -55,7 +55,8 @@ CREATE VIEW bihar_demographics_view AS
         "bihar_demographics"."closed_on" AS "closed_on",
         "bihar_demographics"."reason_closure" AS "reason_closure",
         "bihar_demographics"."out_of_school_status" AS "out_of_school_status",
-        "bihar_demographics"."last_class_attended_ever" AS "last_class_attended_ever"
+        "bihar_demographics"."last_class_attended_ever" AS "last_class_attended_ever",
+        "bihar_demographics"."was_oos_ever" AS "was_oos_ever"
     FROM "public"."bihar_api_demographics" "bihar_demographics"
     LEFT JOIN "public"."awc_location" "awc_location"
     ON (
