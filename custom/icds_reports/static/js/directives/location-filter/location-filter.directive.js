@@ -31,7 +31,7 @@ function LocationModalController($uibModalInstance, $location, locationsService,
 
     vm.showReassignmentMessage = function () {
         utcSelectedDate = Date.UTC(vm.selectedDate.getFullYear(), vm.selectedDate.getMonth());
-        return vm.selectedLocation() && (Date.parse(vm.selectedLocation().deprecated_at) <= utcSelectedDate || Date.parse(vm.selectedLocation().deprecates_at) > utcSelectedDate);
+        return vm.selectedLocation() && (Date.parse(vm.selectedLocation().archived_on) <= utcSelectedDate || Date.parse(vm.selectedLocation().deprecates_at) > utcSelectedDate);
     };
 
     vm.errors = function () {
