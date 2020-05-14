@@ -26,7 +26,7 @@ import six.moves.urllib.error
 import six.moves.urllib.parse
 import six.moves.urllib.request
 from couchdbkit import ResourceConflict
-from unidecode import unidecode
+from text_unidecode import unidecode
 
 from casexml.apps.phone.fixtures import generator
 from corehq.util.metrics import metrics_counter

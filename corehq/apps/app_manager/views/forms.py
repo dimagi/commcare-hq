@@ -23,7 +23,7 @@ from django.views.decorators.http import require_GET
 from couchdbkit import ResourceNotFound
 from diff_match_patch import diff_match_patch
 from lxml import etree
-from unidecode import unidecode
+from text_unidecode import unidecode
 
 from casexml.apps.case.const import DEFAULT_CASE_INDEX_IDENTIFIERS
 from dimagi.utils.logging import notify_exception
