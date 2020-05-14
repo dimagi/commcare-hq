@@ -1998,9 +1998,9 @@ def get_deprecation_info(locations, show_test, multiple_levels=False):
         if show_test or loc.metadata.get('is_test_location', 'real') != 'test':
             locations_list.append(loc)
             if loc.metadata.get('deprecated_to'):
-                replacement_location_ids.extend(loc.metadata.get('deprecated_to', []))
+                replacement_location_ids.extend(loc.metadata['deprecated_to'].split(','))
             if loc.metadata.get('deprecates'):
-                replacement_location_ids.extend(loc.metadata.get('deprecates', []))
+                replacement_location_ids.extend(loc.metadata['deprecates'].split(','))
 
     if multiple_levels:
         replacement_names = _construct_replacement_map_from_sql_location(replacement_location_ids)
