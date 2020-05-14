@@ -1,5 +1,7 @@
 from corehq.apps.es import UserES, filters, queries
 from corehq.apps.locations.models import SQLLocation
+from corehq.apps.users.decorators import get_permission_name
+from corehq.apps.users.models import Permissions
 
 
 def login_as_user_query(
@@ -72,4 +74,14 @@ def login_as_user_query(
         ).location_ids()
         user_es = user_es.location(list(loc_ids))
 
+    if not couch_user.has_permission(domain, get_permission_name(Permissions.login_as_all_users)):
+        user_es = user_es.filter(
+            filters.nested(
+                'user_data_es',
+                filters.AND(
+                    filters.term('user_data_es.key', 'login_as_user'),
+                    filters.term('user_data_es.value', couch_user.username),
+                )
+            )
+        )
     return user_es.mobile_users()

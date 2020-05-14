@@ -1461,13 +1461,6 @@ MULTI_MASTER_LINKED_DOMAINS = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
-MULTI_MASTER_BYPASS_VERSION_CHECK = StaticToggle(
-    'MULTI_MASTER_BYPASS_VERSION_CHECK',
-    "Bypass minimum CommCare version check for multi master usage. For use only by ICDS.",
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN],
-)
-
 SUMOLOGIC_LOGS = DynamicallyPredictablyRandomToggle(
     'sumologic_logs',
     'Send logs to sumologic',
@@ -1843,14 +1836,6 @@ RUN_DATA_MANAGEMENT_TASKS = StaticToggle(
 )
 
 
-ALLOW_DEID_ODATA_FEED = StaticToggle(
-    'allow_deid_odata_feed',
-    'Allow De-Identification in OData feeds',
-    TAG_PRODUCT,
-    [NAMESPACE_DOMAIN]
-)
-
-
 ACCOUNTING_TESTING_TOOLS = StaticToggle(
     'accounting_testing_tools',
     'Enable Accounting Testing Tools',
@@ -1875,11 +1860,19 @@ TWO_STAGE_USER_PROVISIONING = StaticToggle(
     help_link='https://confluence.dimagi.com/display/ccinternal/Two-Stage+Mobile+Worker+Account+Creation',
 )
 
-LOCATION_REASSIGNMENT = StaticToggle(
+PERFORM_LOCATION_REASSIGNMENT = StaticToggle(
     'location_reassignment',
-    'Location Reassignment: ability to reorder organization structure',
+    'Ability to submit requests for location reassignment',
     TAG_CUSTOM,
     [NAMESPACE_USER],
+    relevant_environments={'icds', 'india', 'staging'},
+)
+
+DOWNLOAD_LOCATION_REASSIGNMENT_REQUEST_TEMPLATE = StaticToggle(
+    'download_location_reassignment_template',
+    'Allow domain users to download location reassignment template',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN],
     relevant_environments={'icds', 'india', 'staging'},
 )
 
@@ -1898,4 +1891,18 @@ ICDS_LOCATION_REASSIGNMENT_AGG = StaticToggle(
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
     relevant_environments={'icds', 'india'},
+)
+
+REFER_CASE_REPEATER = StaticToggle(
+    'refer_case_repeater',
+    'COVID: Allow refer case repeaters to be setup',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN]
+)
+
+RESTRICT_LOGIN_AS = StaticToggle(
+    'restrict_login_as',
+    'COVID: Limit allowed users for login as',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN]
 )

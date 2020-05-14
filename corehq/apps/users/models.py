@@ -40,7 +40,6 @@ from dimagi.ext.couchdbkit import (
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.database import get_safe_write_kwargs, iter_docs
-from dimagi.utils.couch.migration import SyncCouchToSQLMixin, SyncSQLToCouchMixin
 from dimagi.utils.couch.undo import DELETED_SUFFIX, DeleteRecord
 from dimagi.utils.dates import force_to_datetime
 from dimagi.utils.logging import log_signal_errors, notify_exception
@@ -142,6 +141,8 @@ class Permissions(DocumentSchema):
     edit_file_dropzone = BooleanProperty(default=False)
     manage_releases = BooleanProperty(default=True)
     manage_releases_list = StringListProperty(default=[])
+
+    login_as_all_users = BooleanProperty(default=True)
 
     @classmethod
     def wrap(cls, data):
@@ -2562,9 +2563,6 @@ class InvalidUser(FakeUser):
         return False
 
 
-#
-# Django  models go here
-#
 class DomainRequest(models.Model):
     '''
     Request to join domain. Requester might or might not already have an account.
@@ -2617,8 +2615,7 @@ class DomainRequest(models.Model):
                                     email_from=settings.DEFAULT_FROM_EMAIL)
 
 
-class SQLInvitation(SyncSQLToCouchMixin, models.Model):
-    id = models.IntegerField(db_index=True, null=True)
+class Invitation(models.Model):
     uuid = models.UUIDField(primary_key=True, db_index=True, default=uuid4)
     email = models.CharField(max_length=255, db_index=True)
     invited_by = models.CharField(max_length=126)           # couch id of a WebUser
@@ -2628,35 +2625,14 @@ class SQLInvitation(SyncSQLToCouchMixin, models.Model):
     role = models.CharField(max_length=100, null=True)
     program = models.CharField(max_length=126, null=True)   # couch id of a Program
     supply_point = models.CharField(max_length=126, null=True)  # couch id of a Location
-    couch_id = models.CharField(max_length=126, null=True, db_index=True)
-
-    class Meta:
-        db_table = "users_invitation"
-
-    @classmethod
-    def _migration_get_fields(cls):
-        return [
-            "email",
-            "invited_by",
-            "invited_on",
-            "is_accepted",
-            "domain",
-            "role",
-            "program",
-            "supply_point",
-        ]
-
-    @classmethod
-    def _migration_get_couch_model_class(cls):
-        return Invitation
 
     @classmethod
     def by_domain(cls, domain):
-        return SQLInvitation.objects.filter(domain=domain, is_accepted=False)
+        return Invitation.objects.filter(domain=domain, is_accepted=False)
 
     @classmethod
     def by_email(cls, email):
-        return SQLInvitation.objects.filter(email=email, is_accepted=False)
+        return Invitation.objects.filter(email=email, is_accepted=False)
 
     @property
     def is_expired(self):
@@ -2688,34 +2664,6 @@ class SQLInvitation(SyncSQLToCouchMixin, models.Model):
                                     text_content=text_content,
                                     cc=[inviter.get_email()],
                                     email_from=settings.DEFAULT_FROM_EMAIL)
-
-
-class Invitation(SyncCouchToSQLMixin, QuickCachedDocumentMixin, Document):
-    email = StringProperty()
-    invited_by = StringProperty()
-    invited_on = DateTimeProperty()
-    is_accepted = BooleanProperty(default=False)
-    domain = StringProperty()
-    role = StringProperty()
-    program = None
-    supply_point = None
-
-    @classmethod
-    def _migration_get_fields(cls):
-        return [
-            "email",
-            "invited_by",
-            "invited_on",
-            "is_accepted",
-            "domain",
-            "role",
-            "program",
-            "supply_point",
-        ]
-
-    @classmethod
-    def _migration_get_sql_model_class(cls):
-        return SQLInvitation
 
 
 class DomainRemovalRecord(DeleteRecord):

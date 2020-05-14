@@ -2,7 +2,7 @@ from copy import deepcopy
 
 from django.test import TestCase
 
-from mock import patch
+from mock import patch, mock
 
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.commtrack.tests.util import make_loc
@@ -21,8 +21,7 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
         super().setUpClass()
         delete_all_users()
         cls.domain_name = 'mydomain'
-        cls.domain = Domain(name=cls.domain_name)
-        cls.domain.save()
+        cls.domain = Domain.get_or_create_with_name(name=cls.domain_name)
 
         permissions = Permissions(edit_apps=True, view_reports=True)
         cls.role = UserRole.get_or_create_with_permissions(cls.domain.name, permissions, 'edit-apps')
@@ -268,6 +267,34 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
         self.assertIsNotNone(user)
         self.assertEqual(False, user.is_active)
         self.assertEqual(False, user.is_account_confirmed)
+
+    @mock.patch('corehq.apps.user_importer.importer.send_account_confirmation_if_necessary')
+    def test_upload_with_unconfirmed_account_send_email(self, mock_account_confirm_email):
+        import_users_and_groups(
+            self.domain.name,
+            [
+                self._get_spec(
+                    username='with_email',
+                    delete_keys=['is_active'],
+                    is_account_confirmed='False',
+                    send_confirmation_email='True',
+                ),
+                self._get_spec(
+                    username='no_email',
+                    delete_keys=['is_active'],
+                    is_account_confirmed='False',
+                    send_confirmation_email='False',
+                ),
+                self._get_spec(
+                    username='email_missing',
+                    delete_keys=['is_active'],
+                    is_account_confirmed='False',
+                ),
+            ],
+            [],
+        )
+        self.assertEqual(mock_account_confirm_email.call_count, 1)
+        self.assertEqual('with_email', mock_account_confirm_email.call_args[0][0].raw_username)
 
 
 class TestUserBulkUploadStrongPassword(TestCase, DomainSubscriptionMixin):
