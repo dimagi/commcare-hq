@@ -352,7 +352,7 @@
             {
                 "type": "expression",
                 "column_id": "visit_date",
-                "datatype": "string",
+                "datatype": "date",
                 "expression": {
                     "type": "nested",
                     "argument_expression": {

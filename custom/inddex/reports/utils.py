@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, date
 from itertools import chain
 
 from dimagi.utils.logging import notify_exception
@@ -57,6 +57,8 @@ class MultiTabularReport(DatespanMixin, CustomProjectReport, GenericTabularRepor
 def _format_val(val):
     if isinstance(val, datetime):
         return val.strftime('%Y-%m-%d %H:%M:%S')
+    if isinstance(val, date):
+        return val.isoformat()
     if isinstance(val, bool):
         return "yes" if val else "no"
     if isinstance(val, int):
