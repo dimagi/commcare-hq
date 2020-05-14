@@ -14,7 +14,7 @@ from corehq.apps.domain.decorators import (
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.utils import normalize_domain_name
 from corehq.apps.hqwebapp.views import BaseSectionPageView
-from corehq.apps.users.models import SQLInvitation
+from corehq.apps.users.models import Invitation
 
 
 def covid19(request):
@@ -29,7 +29,7 @@ def select(request, do_not_redirect=False, next_view=None):
         return redirect('registration_domain')
 
     email = request.couch_user.get_email()
-    open_invitations = [e for e in SQLInvitation.by_email(email) if not e.is_expired]
+    open_invitations = [e for e in Invitation.by_email(email) if not e.is_expired]
 
     # next_view must be a url that expects exactly one parameter, a domain name
     next_view = next_view or request.GET.get('next_view')
