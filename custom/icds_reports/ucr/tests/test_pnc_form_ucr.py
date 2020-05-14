@@ -37,7 +37,7 @@ class TestPNCForms(BaseFormsTest):
                 "unscheduled_visit": 0,
                 "days_visit_late": 28,
                 "next_visit": date(2017, 6, 17),
-                "total_ifa": None
+                "new_ifa_tablets_total": None
             }])
 
     def test_pnc_form(self):
@@ -65,5 +65,5 @@ class TestPNCForms(BaseFormsTest):
                 "unscheduled_visit": 0,
                 "days_visit_late": 2,
                 "next_visit": date(2017, 8, 23),
-                "total_ifa": "OK"
+                "new_ifa_tablets_total": 0
             }])
