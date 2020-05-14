@@ -22,6 +22,7 @@ from custom.icds.location_reassignment.const import (
     CURRENT_SITE_CODE_COLUMN,
     CURRENT_SUB_DISTRICT_NAME,
     EXTRACT_OPERATION,
+    HAVE_APPENDED_LOCATION_NAMES,
     HOUSEHOLD_ID_COLUMN,
     HOUSEHOLD_MEMBER_DETAILS_COLUMN,
     LGD_CODE,
@@ -43,6 +44,7 @@ from custom.icds.location_reassignment.const import (
 from custom.icds.location_reassignment.utils import (
     get_household_case_ids,
     get_household_child_cases_by_owner,
+    split_location_name_and_site_code,
 )
 
 
@@ -69,8 +71,11 @@ class Download(object):
         # setup details for the main location and all related locations
         self._location_details_by_location_id = {}
         for location in self._locations():
+            location_name = location.name
+            if location.location_type.code in HAVE_APPENDED_LOCATION_NAMES:
+                location_name, _ = split_location_name_and_site_code(location.name)
             self._location_details_by_location_id[location.location_id] = {
-                'name': location.name,
+                'name': location_name,
                 'type_name': location.location_type.name,
                 'site_code': location.site_code,
                 'lgd_code': location.metadata.get(LGD_CODE, ''),
@@ -153,9 +158,12 @@ class Download(object):
         })
         if location_parent_id and location_parent_id in self._location_details_by_location_id:
             location_parent_details = self._location_details_by_location_id[location_parent_id]
+            parent_name = location_parent_details['name']
+            if location_parent_details['location_type'] in HAVE_APPENDED_LOCATION_NAMES:
+                parent_name, _ = split_location_name_and_site_code(parent_name)
             row.update({
                 CURRENT_PARENT_TYPE: location_parent_details['type_name'],
-                CURRENT_PARENT_NAME: location_parent_details['name'],
+                CURRENT_PARENT_NAME: parent_name,
                 CURRENT_PARENT_SITE_CODE: location_parent_details['site_code'],
                 NEW_PARENT_SITE_CODE: ''
             })
@@ -204,9 +212,10 @@ class Households(object):
         which holds details all household cases assigned to it
         """
         rows = {}
-        for operation, details in transitions.items():
+        for transition in transitions:
+            operation = transition.operation
             if operation in self.valid_operations:
-                rows.update(self._get_rows_for_location(operation, details))
+                rows.update(self._get_rows_for_transition(transition))
         if rows:
             stream = io.BytesIO()
             headers = [[site_code, self.headers] for site_code in rows]
@@ -214,14 +223,10 @@ class Households(object):
             stream.seek(0)
             return stream
 
-    def _get_rows_for_location(self, operation, details):
+    def _get_rows_for_transition(self, transition):
         rows = {}
-        if operation == SPLIT_OPERATION:
-            for site_code in details.keys():
-                rows[site_code] = self._build_rows(site_code)
-        elif operation == EXTRACT_OPERATION:
-            for site_code in details.values():
-                rows[site_code] = self._build_rows(site_code)
+        for site_code in transition.old_site_codes:
+            rows[site_code] = self._build_rows(site_code)
         return rows
 
     def _build_rows(self, site_code):

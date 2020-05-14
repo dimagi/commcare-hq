@@ -25,7 +25,7 @@ from casexml.apps.phone.restore import (
     RestoreConfig,
     RestoreParams,
 )
-from dimagi.utils.decorators.profile import profile_prod
+from dimagi.utils.decorators.profile import profile_dump
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.parsing import string_to_utc_datetime
 
@@ -194,7 +194,7 @@ def get_restore_params(request):
     }
 
 
-@profile_prod('commcare_ota_get_restore_response.prof', probability=PROFILE_PROBABILITY, limit=PROFILE_LIMIT)
+@profile_dump('commcare_ota_get_restore_response.prof', probability=PROFILE_PROBABILITY, limit=PROFILE_LIMIT)
 def get_restore_response(domain, couch_user, app_id=None, since=None, version='1.0',
                          state=None, items=False, force_cache=False,
                          cache_timeout=None, overwrite_cache=False,

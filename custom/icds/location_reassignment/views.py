@@ -190,7 +190,7 @@ class LocationReassignmentView(BaseLocationView):
         return response
 
     def _process_request_for_email_households(self, parser, request, uploaded_filename):
-        awc_transitions = parser.valid_transitions_json(for_location_type=AWC_CODE)
+        awc_transitions = parser.valid_transitions_json(for_location_type=AWC_CODE).get(AWC_CODE)
         if awc_transitions:
             email_household_details.delay(self.domain, awc_transitions,
                                           uploaded_filename, request.user.email)
@@ -217,6 +217,7 @@ class LocationReassignmentView(BaseLocationView):
 
 @toggles.DOWNLOAD_LOCATION_REASSIGNMENT_REQUEST_TEMPLATE.required_decorator()
 @require_GET
+@location_safe
 def download_location_reassignment_template(request, domain):
     location_id = request.GET.get('location_id')
 

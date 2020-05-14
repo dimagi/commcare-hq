@@ -36,7 +36,7 @@ class HouseholdReassignmentProcessor():
         self.reassignments = reassignments
 
     def process(self):
-        from custom.icds.location_reassignment.utils import reassign_household_case
+        from custom.icds.location_reassignment.utils import reassign_household
         old_site_codes = set()
         new_site_codes = set()
         for household_id, details in self.reassignments.items():
@@ -52,7 +52,7 @@ class HouseholdReassignmentProcessor():
             old_owner_id = old_locations_by_site_code[details['old_site_code']].location_id
             new_owner_id = new_locations_by_site_code[details['new_site_code']].location_id
             supervisor_id = self._supervisor_id(old_owner_id)
-            reassign_household_case(self.domain, household_id, old_owner_id, new_owner_id, supervisor_id)
+            reassign_household(self.domain, household_id, old_owner_id, new_owner_id, supervisor_id)
 
     @memoized
     def _supervisor_id(self, location_id):
