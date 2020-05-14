@@ -1922,6 +1922,6 @@ RESTRICT_LOGIN_AS = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
     description="""
     Adds a permission that can be set on user roles to only allow those users to "login as" other users that set custom user property "login_as_user" to the first user's username.
-    For example, if User A has this permission set on their role, the can only login as User B if User B has the custom property "login_as_user" set to "A".
+    For example, if web user a@a.com has this permission set on their role, they can only login as mobile users who have the custom property "login_as_user" set to "a@a.com".
     """
 )
