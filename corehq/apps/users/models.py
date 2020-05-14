@@ -127,6 +127,7 @@ class Permissions(DocumentSchema):
     edit_apps = BooleanProperty(default=False)
     edit_shared_exports = BooleanProperty(default=False)
     access_all_locations = BooleanProperty(default=True)
+    access_api = BooleanProperty(default=True)
 
     view_reports = BooleanProperty(default=False)
     view_report_list = StringListProperty(default=[])
@@ -237,6 +238,7 @@ class Permissions(DocumentSchema):
             edit_shared_exports=True,
             view_file_dropzone=True,
             edit_file_dropzone=True,
+            access_api=True,
         )
 
 
