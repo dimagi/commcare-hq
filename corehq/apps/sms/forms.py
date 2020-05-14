@@ -873,7 +873,8 @@ class BackendForm(Form):
     )
     authorized_domains = CharField(
         required=False,
-        label=ugettext_noop("List of authorized domains")
+        label=ugettext_noop("List of authorized domains"),
+        help_text=ugettext_lazy("A comma-separated list of domain names")
     )
     reply_to_phone_number = CharField(
         required=False,
