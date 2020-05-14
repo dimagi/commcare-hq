@@ -133,8 +133,8 @@ class TestCloudcareESAccessors(SimpleTestCase):
         )
 
     def test_limited_users(self):
-        self.self._send_user_to_es(username='superman')
-        self.self._send_user_to_es(username='robin', user_data={'login_as_user': 'batman'})
+        self._send_user_to_es(username='superman')
+        self._send_user_to_es(username='robin', user_data={'login_as_user': 'batman'})
 
         with patch('corehq.apps.cloudcare.esaccessors._limit_login_as', return_value=True):
             self.assertEqual(
