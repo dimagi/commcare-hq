@@ -96,7 +96,7 @@ def login_and_domain_required(view_func):
                 raise Http404()
             return call_view()
 
-        if couch_user.is_member_of(domain_obj):
+        if couch_user.is_member_of(domain_obj, include_enterprise=True):
             if _is_missing_two_factor(view_func, req):
                 return TemplateResponse(request=req, template='two_factor/core/otp_required.html', status=403)
             elif not _can_access_project_page(req):
@@ -111,12 +111,6 @@ def login_and_domain_required(view_func):
             if not _can_access_project_page(req):
                 return _redirect_to_project_access_upgrade(req)
             return call_view()
-
-        from corehq.apps.linked_domain.dbaccessors import get_domain_master_link
-        master_link = get_domain_master_link(domain_obj.name)
-        if master_link and not master_link.is_remote:
-            if ENTERPRISE_LINKED_DOMAINS.enabled(master_link.master_domain):
-                return call_view()
 
         if couch_user.is_web_user() and domain_obj.allow_domain_requests:
             from corehq.apps.users.views import DomainRequestView

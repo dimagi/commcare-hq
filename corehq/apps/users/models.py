@@ -535,11 +535,11 @@ class IsMemberOfMixin(DocumentSchema):
             return True
 
         if include_enterprise:
-            # If this is a linked domain, return true if the usesr is a member of the master
+            # If this is a linked domain, return true if the user is a member of the master
             master_link = get_domain_master_link(domain)
             if master_link and not master_link.is_remote:
                 if toggles.ENTERPRISE_LINKED_DOMAINS.enabled(master_link.master_domain):
-                    return self.get_domain_membership(master_link.master_domain)
+                    return bool(self.get_domain_membership(master_link.master_domain))
 
         return False
 
