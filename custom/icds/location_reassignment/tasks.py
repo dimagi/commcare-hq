@@ -11,10 +11,11 @@ from corehq.apps.userreports.data_source_providers import (
 from corehq.apps.userreports.specs import EvaluationContext
 from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
-from custom.icds.location_reassignment.download import Households
+from custom.icds.location_reassignment.download import Households, OtherCases
 from custom.icds.location_reassignment.models import Transition
 from custom.icds.location_reassignment.processor import (
     HouseholdReassignmentProcessor,
+    OtherCasesReassignmentProcessor,
     Processor,
 )
 from custom.icds.location_reassignment.utils import (
@@ -109,6 +110,41 @@ def email_household_details(domain, transitions, uploaded_filename, user_email):
 
 
 @task
+def email_other_cases_details(domain, transitions, uploaded_filename, user_email):
+    try:
+        transition_objs = [Transition(**transition) for transition in transitions]
+        filestream = OtherCases(domain).dump(transition_objs)
+    except Exception as e:
+        email = EmailMessage(
+            subject=f"[{settings.SERVER_ENVIRONMENT}] - Location Reassignment Other Cases Dump Failed",
+            body=linebreaksbr(
+                f"The request could not be completed for file {uploaded_filename}. Something went wrong.\n"
+                f"Error raised : {e}.\n"
+                "Please report an issue if needed."
+            ),
+            to=[user_email],
+            from_email=settings.DEFAULT_FROM_EMAIL
+        )
+        email.content_subtype = "html"
+        email.send()
+        raise e
+    else:
+        email = EmailMessage(
+            subject=f"[{settings.SERVER_ENVIRONMENT}] - Location Reassignment Other Cases Dump Completed",
+            body=f"The request has been successfully completed for file {uploaded_filename}. ",
+            to=[user_email],
+            from_email=settings.DEFAULT_FROM_EMAIL
+        )
+        if filestream:
+            email.attach(filename="Other Cases.zip", content=filestream.read())
+        else:
+            email.body += "There were no cases found. "
+        email.body += f"Please note that the cases are fetched only for " \
+                      f"{', '.join(OtherCases.valid_operations)}."
+        email.send()
+
+
+@task
 def process_households_reassignment(domain, reassignments, uploaded_filename, user_email):
     try:
         HouseholdReassignmentProcessor(domain, reassignments).process()
@@ -129,6 +165,34 @@ def process_households_reassignment(domain, reassignments, uploaded_filename, us
     else:
         email = EmailMessage(
             subject=f"[{settings.SERVER_ENVIRONMENT}] - Household Reassignment Completed",
+            body=f"The request has been successfully completed for file {uploaded_filename}.",
+            to=[user_email],
+            from_email=settings.DEFAULT_FROM_EMAIL
+        )
+        email.send()
+
+
+@task
+def process_other_cases_reassignment(domain, reassignments, uploaded_filename, user_email):
+    try:
+        OtherCasesReassignmentProcessor(domain, reassignments).process()
+    except Exception as e:
+        email = EmailMessage(
+            subject=f"[{settings.SERVER_ENVIRONMENT}] - Other Cases Reassignment Failed",
+            body=linebreaksbr(
+                f"The request could not be completed for file {uploaded_filename}. Something went wrong.\n"
+                f"Error raised : {e}.\n"
+                "Please report an issue if needed."
+            ),
+            to=[user_email],
+            from_email=settings.DEFAULT_FROM_EMAIL
+        )
+        email.content_subtype = "html"
+        email.send()
+        raise e
+    else:
+        email = EmailMessage(
+            subject=f"[{settings.SERVER_ENVIRONMENT}] - Other Cases Reassignment Completed",
             body=f"The request has been successfully completed for file {uploaded_filename}.",
             to=[user_email],
             from_email=settings.DEFAULT_FROM_EMAIL

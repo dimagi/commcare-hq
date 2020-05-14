@@ -1,5 +1,6 @@
 import io
 import itertools
+import zipfile
 from collections import defaultdict
 
 from openpyxl import Workbook
@@ -14,6 +15,8 @@ from custom.icds.location_reassignment.const import (
     AWC_CODE_COLUMN,
     AWC_NAME_COLUMN,
     BLOCK_CODE,
+    CASE_ID_COLUMN,
+    CASE_NAME,
     CURRENT_LGD_CODE,
     CURRENT_NAME,
     CURRENT_PARENT_NAME,
@@ -42,6 +45,7 @@ from custom.icds.location_reassignment.const import (
     VALID_OPERATIONS,
 )
 from custom.icds.location_reassignment.utils import (
+    get_case_ids_for_reassignment,
     get_household_case_ids,
     get_household_child_cases_by_owner,
     split_location_name_and_site_code,
@@ -198,6 +202,9 @@ class Download(object):
 
 
 class Households(object):
+    """
+    Download Household cases assigned the old locations undergoing transition
+    """
     valid_operations = [SPLIT_OPERATION, EXTRACT_OPERATION]
     headers = [AWC_NAME_COLUMN, AWC_CODE_COLUMN, 'Name of Household', 'Date of Registration', 'Religion',
                'Caste', 'APL/BPL', 'Number of Household Members', HOUSEHOLD_MEMBER_DETAILS_COLUMN,
@@ -208,7 +215,7 @@ class Households(object):
 
     def dump(self, transitions):
         """
-        :return: excel workbook with one tab with title as old location's site code,
+        :return: excel workbook with each tab titled as old location's site code,
         which holds details all household cases assigned to it
         """
         rows = {}
@@ -254,3 +261,65 @@ class Households(object):
                 household_case.case_id
             ])
         return rows
+
+
+class OtherCases(object):
+    """
+    Download other cases that are not households or child cases of households
+    """
+    valid_operations = [SPLIT_OPERATION, EXTRACT_OPERATION]
+    headers = [NEW_NAME, NEW_SITE_CODE_COLUMN, CASE_NAME, CASE_ID_COLUMN]
+
+    def __init__(self, domain):
+        self.domain = domain
+
+    def dump(self, transitions):
+        """
+        :return: zip file with
+        one workbook per case type
+        with each sheet title as old location's site code,
+        which holds details of all cases assigned to it
+        """
+        data = self._generate_data(transitions)
+        zipstream = io.BytesIO()
+        with zipfile.ZipFile(zipstream, "wb") as z:
+            for case_type, sheets in data.items():
+                excel_file = self._dump_to_excel(sheets)
+                z.writestr(f"{case_type}.xlsx", excel_file.read(), zipfile.ZIP_DEFLATED)
+        zipstream.seek(0)
+        return zipstream
+
+    def _generate_data(self, transitions):
+        # each case type mapped to sheets
+        # mapped to rows for cases of that case type assigned to that site code
+        data = defaultdict(dict)
+        for transition in transitions:
+            operation = transition.operation
+            if operation in self.valid_operations:
+                for old_site_code in transition.old_site_codes:
+                    for case_type, rows in self._get_rows_for_location(old_site_code).items():
+                        data[case_type][old_site_code] = rows
+        return data
+
+    def _get_rows_for_location(self, site_code):
+        rows_per_case_type = defaultdict(list)
+        location = SQLLocation.active_objects.get(domain=self.domain, site_code=site_code)
+        _, case_ids = get_case_ids_for_reassignment(self.domain, location.location_id)
+        if not case_ids:
+            return rows_per_case_type
+        cases = CaseAccessors(self.domain).get_cases(list(case_ids))
+        for case in cases:
+            rows_per_case_type[case.type].append([
+                '',
+                '',
+                case.name,
+                case.case_id
+            ])
+        return rows_per_case_type
+
+    def _dump_to_excel(self, sheets):
+        stream = io.BytesIO()
+        headers = [[site_code, self.headers] for site_code in sheets]
+        export_raw(headers, sheets.items(), stream)
+        stream.seek(0)
+        return stream
