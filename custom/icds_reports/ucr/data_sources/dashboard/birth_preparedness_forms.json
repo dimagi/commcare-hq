@@ -518,7 +518,7 @@
       },
       {
         "column_id": "total_ifa",
-        "datatype": "small_integer",
+        "datatype": "string",
         "type": "expression",
         "expression": {
           "type": "property_path",
