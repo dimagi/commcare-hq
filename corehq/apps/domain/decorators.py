@@ -45,6 +45,7 @@ from corehq.apps.hqwebapp.signals import clear_login_attempts
 from corehq.apps.users.models import CouchUser
 from corehq.toggles import (
     DATA_MIGRATION,
+    ENTERPRISE_LINKED_DOMAINS,
     IS_CONTRACTOR,
     PUBLISH_CUSTOM_REPORTS,
     TWO_FACTOR_SUPERUSER_ROLLOUT,
@@ -95,14 +96,14 @@ def login_and_domain_required(view_func):
                 raise Http404()
             return call_view()
 
-        if couch_user.is_member_of(domain_obj):
+        if couch_user.is_member_of(domain_obj, include_enterprise=True):
             if _is_missing_two_factor(view_func, req):
                 return TemplateResponse(request=req, template='two_factor/core/otp_required.html', status=403)
             elif not _can_access_project_page(req):
                 return _redirect_to_project_access_upgrade(req)
-            else:
-                return call_view()
-        elif user.is_superuser:
+            return call_view()
+
+        if user.is_superuser:
             if domain_obj.restrict_superusers and not _page_is_whitelisted(req.path, domain_obj.name):
                 from corehq.apps.hqwebapp.views import no_permissions
                 msg = "This project space restricts superuser access.  You must request an invite to access it."
@@ -110,11 +111,12 @@ def login_and_domain_required(view_func):
             if not _can_access_project_page(req):
                 return _redirect_to_project_access_upgrade(req)
             return call_view()
-        elif couch_user.is_web_user() and domain_obj.allow_domain_requests:
+
+        if couch_user.is_web_user() and domain_obj.allow_domain_requests:
             from corehq.apps.users.views import DomainRequestView
             return DomainRequestView.as_view()(req, *args, **kwargs)
-        else:
-            raise Http404
+
+        raise Http404
 
     return _inner
 
