@@ -3,6 +3,6 @@ from corehq.messaging.smsbackends.infobip.views import InfobipIncomingMessageVie
 
 
 urlpatterns = [
-    url(r'^message/$', InfobipIncomingMessageView.as_view(),
+    url(r'^message/(?P<api_key>[\w-]+)/?$$', InfobipIncomingMessageView.as_view(),
         name=InfobipIncomingMessageView.urlname)
 ]

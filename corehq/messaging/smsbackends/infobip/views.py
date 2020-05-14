@@ -14,7 +14,7 @@ class InfobipIncomingMessageView(IncomingBackendView):
     def backend_class(self):
         return SQLInfobipBackend
 
-    def post(self, request, *args, **kwargs):
+    def post(self, request, api_key, *args, **kwargs):
         results = request.POST.get('results')
         message = results[0]
         from_ = message['from']
