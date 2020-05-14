@@ -620,7 +620,7 @@ class LocationView(View):
                 'parent_name': location.parent.name if location.parent else None,
                 'parent_map_name': get_map_name(location.parent),
                 'deprecates': get_location_replacement_name(location, 'deprecates', replacement_names),
-                'archived_on': timestamp_string_to_date_string(location.metadata.get('archived_on')),
+                'archived_on': location.archived_on,
                 'deprecated_to': get_location_replacement_name(location, 'deprecated_to', replacement_names),
                 'deprecates_at': timestamp_string_to_date_string(location.metadata.get('deprecates_at')),
             })
@@ -661,7 +661,7 @@ class LocationView(View):
                     ),
                     'user_have_access_to_parent': loc.location_id in parent_ids,
                     'deprecates': get_location_replacement_name(loc, 'deprecates', replacement_names),
-                    'archived_on': timestamp_string_to_date_string(loc.metadata.get('archived_on')),
+                    'archived_on': loc.archived_on,
                     'deprecated_to': get_location_replacement_name(loc, 'deprecated_to', replacement_names),
                     'deprecates_at': timestamp_string_to_date_string(loc.metadata.get('deprecates_at')),
                 }
@@ -704,7 +704,7 @@ class LocationAncestorsView(View):
                     ),
                     'user_have_access_to_parent': location.location_id in parent_locations_ids,
                     'deprecates': get_location_replacement_name(location, 'deprecates', replacement_names),
-                    'archived_on': timestamp_string_to_date_string(location.metadata.get('archived_on')),
+                    'archived_on': location.archived_on,
                     'deprecated_to': get_location_replacement_name(location, 'deprecated_to', replacement_names),
                     'deprecates_at': timestamp_string_to_date_string(location.metadata.get('deprecates_at')),
                 }
@@ -721,7 +721,7 @@ class LocationAncestorsView(View):
                 ),
                 'user_have_access_to_parent': selected_location.location_id in parent_locations_ids,
                 'deprecates': get_location_replacement_name(selected_location, 'deprecates', replacement_names),
-                'archived_on': timestamp_string_to_date_string(selected_location.metadata.get('archived_on')),
+                'archived_on': selected_location.archived_on,
                 'deprecated_to': get_location_replacement_name(selected_location, 'deprecated_to', replacement_names),
                 'deprecates_at': timestamp_string_to_date_string(selected_location.metadata.get('deprecates_at')),
             }
