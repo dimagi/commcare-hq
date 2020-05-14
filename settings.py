@@ -986,7 +986,7 @@ if callable(COMPRESS_ENABLED):
     COMPRESS_ENABLED = COMPRESS_ENABLED()
 if callable(COMPRESS_OFFLINE):
     COMPRESS_OFFLINE = COMPRESS_OFFLINE()
-if UNIT_TESTING or not COMPRESS_ENABLED:
+if UNIT_TESTING:
     # COMPRESS_COMPILERS overrides COMPRESS_ENABLED = False, so must be
     # cleared to disable compression completely. CSS/less compression is
     # very slow and should especially be avoided in tests. Tests that
