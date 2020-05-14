@@ -1,10 +1,8 @@
+import json
 from corehq.apps.sms.api import incoming as incoming_sms
 from corehq.apps.sms.views import IncomingBackendView
 from corehq.messaging.smsbackends.infobip.models import SQLInfobipBackend
 from django.http import HttpResponse
-
-
-EMPTY_RESPONSE = ""
 
 
 class InfobipIncomingMessageView(IncomingBackendView):
@@ -15,11 +13,13 @@ class InfobipIncomingMessageView(IncomingBackendView):
         return SQLInfobipBackend
 
     def post(self, request, api_key, *args, **kwargs):
-        results = request.POST.get('results')
-        message = results[0]
-        from_ = message['from']
-        message_sid = message['messageId']
-        body = message['message']['text']
+        request_body = json.loads(request.body)
+        for message in request_body.get('results'):
+            message_sid = message.get('messageId')
+            from_ = message.get('from')
+            message_content = message.get('message')
+            if message_content.get('type') == 'TEXT':
+                body = message_content.get('text', {})
 
         incoming_sms(
             from_,
@@ -29,4 +29,4 @@ class InfobipIncomingMessageView(IncomingBackendView):
             domain_scope=self.domain,
             backend_id=self.backend_couch_id
         )
-        return HttpResponse(EMPTY_RESPONSE)
+        return HttpResponse("")

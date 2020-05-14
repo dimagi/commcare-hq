@@ -1,10 +1,10 @@
-from corehq.apps.sms.forms import BackendForm, LoadBalancingBackendFormMixin
+from corehq.apps.sms.forms import BackendForm
 from dimagi.utils.django.fields import TrimmedCharField
 from crispy_forms import layout as crispy
 from django.utils.translation import ugettext_lazy as _
 
 
-class InfobipBackendForm(BackendForm, LoadBalancingBackendFormMixin):
+class InfobipBackendForm(BackendForm):
     account_sid = TrimmedCharField(
         label=_("Account SID"),
     )

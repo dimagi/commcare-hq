@@ -1,4 +1,4 @@
-from corehq.apps.sms.models import PhoneLoadBalancingMixin, SQLSMSBackend
+from corehq.apps.sms.models import SQLSMSBackend
 from corehq.messaging.smsbackends.infobip.forms import InfobipBackendForm
 
 INVALID_TO_PHONE_NUMBER_ERROR_CODE = ""
@@ -8,7 +8,7 @@ WHATSAPP_PREFIX = "whatsapp:"
 WHATSAPP_SANDBOX_PHONE_NUMBER = "14155238886"
 
 
-class SQLInfobipBackend(SQLSMSBackend, PhoneLoadBalancingMixin):
+class SQLInfobipBackend(SQLSMSBackend):
 
     class Meta(object):
         app_label = 'sms'
