@@ -48,11 +48,6 @@ class Command(BaseCommand):
             absolute_reverse('view_app', args=[target_domain, new_app.get_id])
         ))
 
-        print("""
-            Next, make a build of the new app and then run copy_icds_app_2_of_2
-            for all linked apps that use this app as a master app.
-        """)
-
 
 def get_app_by_version(domain, app_id, version):
     app = get_build_doc_by_version(domain, app_id, version)
