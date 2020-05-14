@@ -10,7 +10,13 @@ class PatchesPlugin(Plugin):
         """Do not call super (always enabled)"""
 
     def begin(self):
+        patch_assertItemsEqual()
         fix_freezegun_bugs()
+
+
+def patch_assertItemsEqual():
+    import unittest
+    unittest.TestCase.assertItemsEqual = unittest.TestCase.assertCountEqual
 
 
 GLOBAL_FREEZEGUN_IGNORE_LIST = ["kafka."]
