@@ -1,3 +1,5 @@
+import textwrap
+
 from custom.inddex import filters
 from custom.inddex.const import ConvFactorGaps, FctGaps
 from custom.inddex.food import FoodData
@@ -9,6 +11,15 @@ class GapsDetailReport(MultiTabularReport):
     name = 'Output 2b - Detailed Information on Gaps'
     slug = 'gaps_detail'
     is_released = False
+    description = textwrap.dedent("""
+        This output assists researchers in identifying incomplete or missing
+        information in the recall data. Researchers can use this output to view the
+        specific items reported by respondents that are missing conversion factor or
+        food composition data. This output also includes the information collected from
+        the respondent during the recall. All gaps in this report should be addressed
+        before researchers conduct data analysis. Researchers therefore should not
+        download Outputs 3 and 4 unless all gaps in this report have been addressed.
+    """)
 
     @property
     def fields(self):

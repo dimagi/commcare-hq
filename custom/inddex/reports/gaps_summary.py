@@ -1,3 +1,4 @@
+import textwrap
 from collections import defaultdict
 
 from custom.inddex import filters
@@ -10,6 +11,13 @@ from .utils import MultiTabularReport, format_row
 class GapsSummaryReport(MultiTabularReport):
     name = 'Output 2a - Gaps Summary by Food Type'
     slug = 'gaps_summary'
+    description = textwrap.dedent("""
+        This output includes summaries of the existing conversion factor gaps
+        and FCT gaps in the recall data.It provides researchers with an
+        overview of the number of data gaps that must be addressed before the
+        recall data can be analyzed. Information in this output is
+        disaggregated by food type.
+    """)
 
     @property
     def fields(self):

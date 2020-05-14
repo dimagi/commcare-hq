@@ -1,3 +1,4 @@
+import textwrap
 from itertools import chain
 
 from custom.inddex import filters
@@ -10,6 +11,11 @@ class MasterDataReport(MultiTabularReport):
     name = 'Output 1 - Master Data File'
     slug = 'master_data'
     export_only = True
+    description = textwrap.dedent("""
+        This output includes all data that appears in the output files as well
+        as background data that are used to perform calculations that appear in
+        the outputs.
+    """)
 
     @property
     def fields(self):

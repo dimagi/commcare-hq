@@ -10,7 +10,8 @@ from custom.inddex.fixtures import InddexFixtureError
 
 
 class MultiTabularReport(DatespanMixin, CustomProjectReport, GenericTabularReport):
-    report_template_path = 'inddex/multi_report.html'
+    base_template = 'inddex/report_base.html'  # The base report page
+    report_template_path = 'inddex/multi_report.html'  # the async content
     exportable = True
     exportable_all = True
     export_only = False

@@ -1,3 +1,4 @@
+import textwrap
 from collections import defaultdict
 from math import ceil
 from statistics import mean, median, stdev
@@ -11,6 +12,10 @@ from .utils import MultiTabularReport, format_row
 class NutrientStatsReport(MultiTabularReport):
     name = 'Output 4 - Nutrient Intake Summary Statistics'
     slug = 'nutrient_stats'
+    description = textwrap.dedent("""
+        This output includes summary statistics for nutrient intakes reported
+        during the recall (mean, median, standard deviation, and percentiles).
+    """)
 
     @property
     def fields(self):
