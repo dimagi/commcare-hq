@@ -2,7 +2,14 @@ import textwrap
 from collections import defaultdict
 
 from custom.inddex import filters
-from custom.inddex.const import ConvFactorGaps, FctGaps
+from custom.inddex.const import (
+    FOOD_ITEM,
+    NON_STANDARD_FOOD_ITEM,
+    NON_STANDARD_RECIPE,
+    STANDARD_RECIPE,
+    ConvFactorGaps,
+    FctGaps,
+)
 from custom.inddex.food import FoodData
 
 from .utils import MultiTabularReport, format_row
@@ -54,9 +61,11 @@ class GapsData:
 
     @property
     def rows(self):
-        for (code, food_type), count in sorted(self._gaps.items()):
-            description = self._gaps_descriptions[code]
-            yield format_row([code, description, food_type, count])
+        for gap_code in self._gaps_descriptions:
+            for food_type in [FOOD_ITEM, NON_STANDARD_FOOD_ITEM, STANDARD_RECIPE, NON_STANDARD_RECIPE]:
+                description = self._gaps_descriptions[gap_code]
+                count = self._gaps.get((gap_code, food_type), 0)
+                yield format_row([gap_code, description, food_type, count])
 
 
 class ConvFactorGapsData(GapsData):

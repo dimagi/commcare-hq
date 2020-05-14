@@ -45,19 +45,21 @@ from memoized import memoized
 
 from custom.inddex.ucr_data import FoodCaseData
 
-from .const import AGE_RANGES, ConvFactorGaps, FctGaps
+from .const import (
+    AGE_RANGES,
+    FOOD_ITEM,
+    NON_STANDARD_FOOD_ITEM,
+    NON_STANDARD_RECIPE,
+    STANDARD_RECIPE,
+    ConvFactorGaps,
+    FctGaps,
+)
 from .fixtures import FixtureAccessor
 
 IN_UCR = 'in_ucr'
 IN_FOOD_FIXTURE = 'in_food_fixture'
 IS_RECALL_META = 'is_recall_meta'
 CALCULATED_LATER = 'calculated_later'
-
-# food_type options
-FOOD_ITEM = 'food_item'
-NON_STANDARD_FOOD_ITEM = 'non_std_food_item'
-STANDARD_RECIPE = 'std_recipe'
-NON_STANDARD_RECIPE = 'non_std_recipe'
 
 
 class I:
