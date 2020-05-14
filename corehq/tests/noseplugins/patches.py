@@ -47,7 +47,7 @@ def fix_freezegun_bugs():
 
     # add base ignore list to avoid index error
     assert not api.ignore_lists, f"expected empty list, got {api.ignore_lists}"
-    api.ignore_lists.append(GLOBAL_FREEZEGUN_IGNORE_LIST)
+    api.ignore_lists.append(tuple(GLOBAL_FREEZEGUN_IGNORE_LIST))
 
     # patch freeze_time so it always ignores kafka
     real_freeze_time = api.freeze_time
