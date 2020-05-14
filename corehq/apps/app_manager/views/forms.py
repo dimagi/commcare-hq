@@ -20,7 +20,6 @@ from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET
 
-from couchdbkit import ResourceNotFound
 from diff_match_patch import diff_match_patch
 from lxml import etree
 from text_unidecode import unidecode

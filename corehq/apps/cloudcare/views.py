@@ -25,13 +25,10 @@ from django.views.generic.base import TemplateView
 import six.moves.urllib.error
 import six.moves.urllib.parse
 import six.moves.urllib.request
-from couchdbkit import ResourceConflict
 from text_unidecode import unidecode
 
-from casexml.apps.phone.fixtures import generator
 from corehq.util.metrics import metrics_counter
 from dimagi.utils.logging import notify_error
-from dimagi.utils.parsing import string_to_boolean
 from dimagi.utils.web import get_url_base, json_response
 
 from corehq import privileges, toggles
