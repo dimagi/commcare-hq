@@ -49,7 +49,7 @@ select sum(rations_21_plus_distributed) as mother_thr from agg_ccs_record where 
 
 
 
- select sum(incentive_eligible), sum(awh_eligible) from icds_dashboard_aww_incentive where month='2019-03-01';
+ select sum(incentive_eligible), sum(awh_eligible) from icds_dashboard_aww_incentive where month='2019-03-01' and is_launched=true;
  /*
  Finalize Aggregate  (cost=19316.33..19316.34 rows=1 width=16)
    ->  Gather  (cost=19315.90..19316.31 rows=4 width=16)
