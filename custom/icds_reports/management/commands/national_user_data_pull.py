@@ -35,7 +35,7 @@ class Command(BaseCommand):
         web_users = WebUser.by_domain('icds-cas')
         users = users + web_users
         user_details = self._get_details(users)
-        usernames_list = [*user_details]
+        usernames_list = list(user_details.keys())
         chunk_size = 100
         headers = ["username", "last_access_time", "created_on", "role"]
         rows = [headers]
