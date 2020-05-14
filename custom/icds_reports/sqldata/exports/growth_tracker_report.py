@@ -1,3 +1,5 @@
+import gevent
+
 from dateutil.relativedelta import relativedelta
 
 from corehq.apps.locations.models import SQLLocation
@@ -18,14 +20,17 @@ class GrowthTrackerExport(ExportableMixin, IcdsSqlData):
         def _check_case_presence(case_id, column, data_dict):
             return data_dict[case_id][column] if case_id in data_dict.keys() else "N/A"
 
-        def _fetch_data(filters, order_by, case_by_grouping=False):
+        def _fetch_data(query_filter):
+            filters = query_filter['filters']
+            order_by = query_filter['order_by']
+            case_by_grouping = query_filter['case_by_grouping']
             query_set = ChildHealthMonthlyView.objects.filter(**filters).order_by(*order_by)
             data_month = query_set.values('state_name', 'district_name', 'block_name', 'supervisor_name',
                                           'awc_name', 'awc_site_code', 'person_name', 'dob', 'mother_name',
                                           'mother_phone_number', 'pse_days_attended', 'lunch_count',
                                           'current_month_nutrition_status',
-                                          current_month_wasting_column(self.beta),
-                                          current_month_stunting_column(self.beta), 'case_id')
+                                          current_month_stunting_column(None),
+                                          current_month_wasting_column(None), 'case_id')
             if case_by_grouping is True:
                 data_month = {item['case_id']: item for item in data_month}
             return data_month
@@ -49,12 +54,16 @@ class GrowthTrackerExport(ExportableMixin, IcdsSqlData):
         elif self.loc_level == 2:
             filters['district_id'] = location
             order_by = ('block_name', 'supervisor_name', 'awc_name', 'person_name')
-
-        data_month_3 = _fetch_data(filters, order_by)
+        query_filters = [{"filters": filters, "order_by": order_by, "case_by_grouping": False}]
+        filters = filters.copy()
         filters["month"] = initial_month - relativedelta(months=1)
-        data_month_2 = _fetch_data(filters, order_by, True)
+        query_filters.append({"filters": filters, "order_by": order_by, "case_by_grouping": True})
+        filters = filters.copy()
         filters["month"] = initial_month - relativedelta(months=2)
-        data_month_1 = _fetch_data(filters, order_by, True)
+        query_filters.append({"filters": filters, "order_by": order_by, "case_by_grouping": True})
+        jobs = [gevent.spawn(_fetch_data, query_filter) for query_filter in query_filters]
+        gevent.joinall(jobs, timeout=120)
+        data_month_3, data_month_2, data_month_1 = [job.value for job in jobs]
         filters["month"] = initial_month
         month_1 = (initial_month - relativedelta(months=2)).strftime('%B %Y')
         month_2 = (initial_month - relativedelta(months=1)).strftime('%B %Y')
