@@ -8,6 +8,7 @@ from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import normalize_username
 from custom.icds.location_reassignment.const import (
     AWC_CODE_COLUMN,
+    CASE_ID_COLUMN,
     CURRENT_SITE_CODE_COLUMN,
     EXTRACT_OPERATION,
     HAVE_APPENDED_LOCATION_NAMES,
@@ -443,4 +444,31 @@ class HouseholdReassignmentParser(object):
                     errors.append(f"Unexpected households for {location_site_code}: "
                                   f"{', '.join(unexpected_case_ids)}")
 
+        return errors
+
+
+class OtherCasesReassignmentParser(object):
+    def __init__(self, domain, workbook):
+        self.domain = domain
+        self.workbook = workbook
+        self.reassignments = {}  # case id mapped to a dict with old_site_code and new_site_code
+
+    def parse(self):
+        errors = []
+        for worksheet in self.workbook.worksheets:
+            location_site_code = worksheet.title
+            for row in worksheet:
+                case_id = row.get(CASE_ID_COLUMN)
+                new_site_code = row.get(NEW_SITE_CODE_COLUMN)
+                if not case_id:
+                    errors.append("Missing Case ID for %s" % location_site_code)
+                    continue
+                if not new_site_code:
+                    errors.append("Missing New Location Code for case ID %s" % case_id)
+                    continue
+                self.reassignments[case_id] = {
+                    'old_site_code': location_site_code,
+                    'new_site_code': new_site_code
+                }
+            # ToDo: add check for expected case ids covered
         return errors
