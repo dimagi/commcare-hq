@@ -1525,6 +1525,7 @@ SMS_LOADED_SQL_BACKENDS = [
     'corehq.messaging.smsbackends.tropo.models.SQLTropoBackend',
     'corehq.messaging.smsbackends.turn.models.SQLTurnWhatsAppBackend',
     'corehq.messaging.smsbackends.twilio.models.SQLTwilioBackend',
+    'corehq.messaging.smsbackends.infobip.models.SQLInfobipBackend',
     'corehq.messaging.smsbackends.unicel.models.SQLUnicelBackend',
     'corehq.messaging.smsbackends.yo.models.SQLYoBackend',
     'corehq.messaging.smsbackends.vertex.models.VertexBackend',
