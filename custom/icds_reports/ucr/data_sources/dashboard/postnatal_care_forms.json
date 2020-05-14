@@ -371,14 +371,14 @@
         }
       },
       {
-        "column_id": "total_ifa",
-        "datatype": "string",
+        "column_id": "new_ifa_tablets_total",
+        "datatype": "small_integer",
         "type": "expression",
         "expression": {
           "type": "root_doc",
           "expression": {
             "type": "property_path",
-            "property_path": ["form", "total_ifa"]
+            "property_path": ["form", "new_ifa_tablets_total"]
           }
         }
       }
