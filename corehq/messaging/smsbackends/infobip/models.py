@@ -73,6 +73,8 @@ class SQLInfobipBackend(SQLSMSBackend):
             'Content-Type': 'application/json',
             'Accept': 'application/json'
         }
-        return conn.request("POST", "/omni/1/advanced", payload, headers)
+
+        conn.request("POST", "/omni/1/advanced", payload, headers)
+        return conn.getresponse()
 
 
