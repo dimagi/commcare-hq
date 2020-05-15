@@ -307,7 +307,7 @@ class OtherCases(object):
         _, case_ids = get_case_ids_for_reassignment(self.domain, location.location_id)
         if not case_ids:
             return rows_per_case_type
-        cases = CaseAccessors(self.domain).get_cases(list(case_ids))
+        cases = CaseAccessors(self.domain).get_cases(case_ids)
         for case in cases:
             rows_per_case_type[case.type].append([
                 '',

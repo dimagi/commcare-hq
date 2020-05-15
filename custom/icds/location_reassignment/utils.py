@@ -8,8 +8,10 @@ from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.util import SYSTEM_USER_ID
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from custom.icds.location_reassignment.const import (
     AWC_CODE,
+    CASE_TYPES_TO_IGNORE,
     HOUSEHOLD_CASE_TYPE,
 )
 
@@ -18,10 +20,11 @@ def get_case_ids_for_reassignment(domain, location_id):
     """
     :return: for cases that belong to location_id return
     a dict mapping for all case ids under a household id and
-    a set of all other case ids
+    a list of all other case ids
     """
     all_case_ids = CaseAccessorSQL.get_case_ids_in_domain_by_owners(domain, [location_id])
-    other_case_ids = set(all_case_ids)
+    all_cases = CaseAccessors(domain).get_cases(all_case_ids)
+    other_case_ids = set([case.case_id for case in all_cases if case.type not in CASE_TYPES_TO_IGNORE])
     child_case_ids_per_household_id = {}
     for household_case_id in get_household_case_ids(domain, location_id):
         household_child_case_ids = get_household_child_case_ids_by_owner(
@@ -29,7 +32,7 @@ def get_case_ids_for_reassignment(domain, location_id):
         other_case_ids.remove(household_case_id)
         other_case_ids = other_case_ids - set(household_child_case_ids)
         child_case_ids_per_household_id[household_case_id] = household_child_case_ids
-    return child_case_ids_per_household_id, other_case_ids
+    return child_case_ids_per_household_id, list(other_case_ids)
 
 
 def get_household_case_ids(domain, location_id):

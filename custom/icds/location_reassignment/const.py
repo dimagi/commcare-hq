@@ -65,6 +65,11 @@ HAVE_APPENDED_LOCATION_NAMES = [AWC_CODE, SUPERVISOR_CODE]
 
 HOUSEHOLD_CASE_TYPE = "household"
 PERSON_CASE_TYPE = "person"
+WORKER_CASE_TYPE = "worker"
+
+CASE_TYPES_TO_IGNORE = [
+    WORKER_CASE_TYPE
+]
 
 # title mapped to headers for the sheet
 SHEETS_TO_IGNORE = {
