@@ -101,7 +101,8 @@ def email_household_details(domain, transitions, uploaded_filename, user_email):
             from_email=settings.DEFAULT_FROM_EMAIL
         )
         if filestream:
-            email.attach(filename="Households.xlsx", content=filestream.read())
+            email.attach(filename=f"Households - {uploaded_filename.split('.')[0]}.xlsx",
+                         content=filestream.read())
         else:
             email.body += "There were no house hold details found. "
         email.body += f"Please note that the households are fetched only for " \
