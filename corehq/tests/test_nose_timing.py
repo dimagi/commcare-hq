@@ -200,3 +200,33 @@ class TestExtendedTimeLimit(TimingPluginTesterBase):
     def test_time_limit(self):
         output = str(self.output)
         eq(output, Regex(r"runTest took too long: 0:00:00.02"))
+
+
+class TestPatchMaxTestTime(TimingPluginTesterBase):
+
+    def makeSuite(self):
+        @mod.patch_max_test_time(0.011)
+        class Test(self.ChattyTestBase):
+            @timelimit(0.001)
+            def test1(self):
+                super().runTest()
+                time.sleep(0.01)
+
+            def test2(self):
+                super().runTest()
+                time.sleep(0.012)
+
+            @classmethod
+            def tearDownClass(cls):
+                super().tearDownClass()
+                time.sleep(0.012)
+
+        return [Test("test1"), Test("test2")]
+
+    def test_time_limit_errors(self):
+        output = str(self.output)
+        eq(output, Regex(r"test1 took too long: 0:00:00\.0[1-9]"))
+        eq(output, Regex(r"run time limit \(0\.011\) exceeded: 0\.0[1-9]"))
+
+        # NOTE tearDownClass is not limited by class patch
+        eq(output, Regex(r"teardown time limit \(0\.01\) exceeded: 0\.0[1-9]"))

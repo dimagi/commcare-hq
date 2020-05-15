@@ -5,6 +5,7 @@ Usage: ./manage.py test --with-timing --timing-file=/path/to/timing.csv
 import csv
 import sys
 import time
+from functools import partial
 from unittest.mock import patch
 
 from nose.plugins import Plugin
@@ -161,6 +162,34 @@ def patch_max_test_time(limit):
     Note: this is only useful when spanning multiple test events because
     the limit must be present at the _end_ of a test event to take
     effect. Therefore it will do nothing if used within the context of a
-    single test.
+    single test. It also does not affect the time limit on the final
+    teardown fixture (in which the patch is removed).
     """
-    return patch.object(PLUGIN_INSTANCE, "max_test_time", limit)
+    patch_obj = patch(f"{__name__}.PLUGIN_INSTANCE.max_test_time", limit)
+    patch_obj.decorate_class = partial(apply_fixture_patch, patch_obj)
+    return patch_obj
+
+
+def apply_fixture_patch(patch_obj, cls):
+    """Apply patch on setup class and remove on teardown class
+
+    A `patch` is normally applied to a class by decorating each of the
+    class's methods, which means that the patch is not in place between
+    method calls. This applies the patch on `setUpClass` and removes it
+    on `tearDownClass`.
+    """
+    def setUpClass():
+        patch_obj.start()
+        real_setup()
+
+    def tearDownClass():
+        try:
+            real_teardown()
+        finally:
+            patch_obj.stop()
+
+    real_setup = cls.setUpClass
+    real_teardown = cls.tearDownClass
+    cls.setUpClass = setUpClass
+    cls.tearDownClass = tearDownClass
+    return cls
