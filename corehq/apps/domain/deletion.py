@@ -235,6 +235,7 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('userreports', 'AsyncIndicator', 'domain'),
     ModelDeletion('users', 'DomainRequest', 'domain'),
     ModelDeletion('users', 'Invitation', 'domain'),
+    ModelDeletion('users', 'DomainPermissionsMirrorSource', 'name'),
     ModelDeletion('zapier', 'ZapierSubscription', 'domain'),
     ModelDeletion('dhis2', 'Dhis2Connection', 'domain'),
     ModelDeletion('motech', 'RequestLog', 'domain'),
