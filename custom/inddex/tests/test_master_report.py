@@ -19,7 +19,7 @@ from corehq.apps.fixtures.dbaccessors import (
     get_fixture_data_types,
 )
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.util.test_utils import require_db_context, timelimit
+from corehq.util.test_utils import require_db_context, patch_max_test_time
 
 from ..example_data.data import (
     FOOD_CASE_TYPE,
@@ -36,6 +36,7 @@ from ..reports.nutrient_stats import NutrientStatsData
 from ..ucr_data import FoodCaseData
 
 DOMAIN = 'inddex-reports-test'
+MAX_TEST_TIME_PATCH = patch_max_test_time(59)
 
 
 def get_expected_report(filename):
@@ -56,6 +57,7 @@ def get_expected_report(filename):
 
 @require_db_context
 def setUpModule():
+    MAX_TEST_TIME_PATCH.start()
     create_domain(name=DOMAIN)
     try:
         with patch('corehq.apps.callcenter.data_source.get_call_center_domains', lambda: []):
@@ -67,6 +69,7 @@ def setUpModule():
 
 @require_db_context
 def tearDownModule():
+    MAX_TEST_TIME_PATCH.stop()
     Domain.get_by_name(DOMAIN).delete()
     get_food_data.reset_cache()
     _get_case_ids_by_external_id.reset_cache()
@@ -168,7 +171,6 @@ class TestFixtures(TestCase):
         self.assertEqual("Cereals and their products (1)", composition.fao_who_gift_food_group_description)
         self.assertEqual(9.1, composition.nutrients['water_g'])
 
-    @timelimit(45)
     def test_conversion_factors(self):
         conversion_factor = self.fixtures_accessor.conversion_factors[('10', '52', '')]
         self.assertEqual(0.61, conversion_factor)
