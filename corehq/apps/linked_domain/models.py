@@ -152,3 +152,23 @@ def wrap_detail(model, detail_json):
     return {
         'app': AppLinkDetail
     }[model].wrap(detail_json)
+
+
+class LinkedReportTypes:
+    DATASOURCE = 1
+    REPORT = 2
+
+    CHOICES = (
+        (DATASOURCE, _("Datasource")),
+        (REPORT, _("Report"))
+    )
+
+
+class LinkedReportIDMap(models.Model):
+    linked_domain = models.CharField(max_length=126, null=False)
+    master_domain = models.CharField(max_length=126, null=False)
+
+    master_id = models.CharField(max_length=255, null=False)
+    linked_id = models.CharField(max_length=255, null=False)
+
+    model_type = models.PositiveSmallIntegerField(choices=LinkedReportTypes.CHOICES, null=False)
