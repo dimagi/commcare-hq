@@ -8,11 +8,11 @@
   <div class="row">
     <div class="col-sm-4">
       {% if open_invitations %}
-        <h2>{% trans "Project Invitations" %}</h2>
         <ul class="list-unstyled">
           {% for invitation in open_invitations %}
             <li style="padding-bottom: 6px;">
               <a href="{% url "domain_accept_invitation" invitation.domain invitation.uuid %}" class="btn btn-primary btn-xs">
+                <i class='fa fa-envelope'></i>
                 Accept
               </a>
               {{  invitation.domain }}
@@ -20,20 +20,11 @@
           {% endfor %}
         </ul>
       {% endif %}
-      <h2>{% trans "My Projects" %}</h2>
       <ul class="nav nav-pills nav-stacked">
         {% for link in domain_links %}
-          <li><a href="{{ link.url }}">{{ link.name }}</a></li>
+          <li><a href="{{ link.url }}">{{ link.display_name }}</a></li>
         {% endfor %}
       </ul>
-      {% if mirror_domain_links %}
-        <h2>{% trans "Enterprise Projects" %}</h2>
-        <ul class="nav nav-pills nav-stacked">
-          {% for link in mirror_domain_links %}
-            <li><a href="{{ link.url }}">{{ link.name }}</a></li>
-          {% endfor %}
-        </ul>
-      {% endif %}
     </div>
   </div>
 {% endblock %}
