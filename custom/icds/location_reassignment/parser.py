@@ -288,8 +288,21 @@ class Parser(object):
         if self.site_codes_to_be_deprecated:
             self._validate_old_locations()
             self._validate_descendants_deprecated()
+        self._validate_new_site_codes_type()
         self._validate_parents()
         self._validate_usernames()
+
+    def _validate_new_site_codes_type(self):
+        # validate that new site codes, if present in the system, belong to the correct location type
+        for location_type_code, new_site_codes in self.new_site_codes_for_location_type.items():
+            if not new_site_codes:
+                continue
+            locations = (SQLLocation.active_objects.select_related('location_type')
+                         .filter(domain=self.domain, site_code__in=new_site_codes))
+            for location in locations:
+                if location.location_type.code != location_type_code:
+                    self.errors.append(f"{location.location_type.code} {location.site_code} used as "
+                                       f"{location_type_code}")
 
     def _validate_old_locations(self):
         deprecating_locations_site_codes = (
