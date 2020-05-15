@@ -952,7 +952,7 @@ class ApplicationsTab(UITab):
         couch_user = self.couch_user
         return (self.domain and couch_user
                 and (couch_user.is_web_user() or couch_user.can_edit_apps())
-                and (couch_user.is_member_of(self.domain) or couch_user.is_superuser)
+                and (couch_user.is_member_of(self.domain, allow_mirroring=True) or couch_user.is_superuser)
                 and has_privilege(self._request, privileges.PROJECT_ACCESS))
 
 

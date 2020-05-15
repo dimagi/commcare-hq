@@ -552,23 +552,31 @@ class DomainMembership(Membership):
 
 class IsMemberOfMixin(DocumentSchema):
 
-    def _is_member_of(self, domain):
-        return domain in self.get_domains() or (
-            self.is_global_admin() and
-            not domain_restricts_superusers(domain)
-        )
+    def _is_member_of(self, domain, allow_mirroring):
+        if self.is_global_admin() and not domain_restricts_superusers(domain):
+            return True
 
-    def is_member_of(self, domain_qs):
+        domains = self.get_domains()
+        if domain in domains:
+            return True
+
+        if allow_mirroring:
+            source_domain = DomainPermissionsMirror.source_domain(domain)
+            if source_domain:
+                return self.is_member_of(source_domain, allow_mirroring=False)
+
+        return False
+
+    def is_member_of(self, domain_qs, allow_mirroring=False):
         """
-        takes either a domain name or a domain object and returns whether the user is part of that domain
-        either natively or through a team
+        Takes either a domain name or a domain object and returns whether the user is part of that domain
         """
 
         try:
             domain = domain_qs.name
         except Exception:
             domain = domain_qs
-        return self._is_member_of(domain)
+        return self._is_member_of(domain, allow_mirroring)
 
     def is_global_admin(self):
         # subclasses to override if they want this functionality
