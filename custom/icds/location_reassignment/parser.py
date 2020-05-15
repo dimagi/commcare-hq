@@ -121,6 +121,7 @@ class Parser(object):
             a. all old locations should be present in the system
             b. if a location is deprecated, all its descendants should get deprecated too
             c. new parent assigned should be of the expected location type
+            d. usernames passed are present in the system
         """
         self.domain = domain
         self.workbook = workbook
