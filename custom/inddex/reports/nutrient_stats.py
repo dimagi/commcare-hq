@@ -1,7 +1,7 @@
 import textwrap
 from collections import defaultdict
 from math import ceil
-from statistics import mean, median, stdev
+from statistics import mean, stdev
 
 from custom.inddex import filters
 from custom.inddex.food import FoodData
@@ -48,8 +48,8 @@ class NutrientStatsData:
     @property
     def headers(self):
         return [
-            'nutrient', 'mean', 'median', 'std_dev', 'percentile_05',
-            'percentile_25', 'percentile_50', 'percentile_75', 'percentile_95'
+            'nutrient', 'mean', 'std_dev', 'percentile_05',
+            'percentile_25', 'percentile_50_median', 'percentile_75', 'percentile_95'
         ]
 
     @property
@@ -58,7 +58,6 @@ class NutrientStatsData:
             yield format_row([
                 nutrient,
                 mean(amts) if len(amts) >= 1 else None,
-                median(amts) if len(amts) >= 1 else None,
                 stdev(amts) if len(amts) >= 2 else None,
                 percentile(amts, .05),
                 percentile(amts, .25),
