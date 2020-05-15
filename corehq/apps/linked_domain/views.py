@@ -63,6 +63,7 @@ from corehq.apps.linked_domain.util import (
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.dispatcher import DomainReportDispatcher
 from corehq.apps.reports.generic import GenericTabularReport
+from corehq.apps.userreports.models import DataSourceConfiguration, ReportConfiguration
 from corehq.util.timezones.utils import get_timezone_for_request
 
 
@@ -117,6 +118,19 @@ def case_search_config(request, domain):
         addition = None
 
     return JsonResponse({'config': config, 'addition': addition})
+
+
+@login_or_api_key
+@require_linked_domain
+def ucr_config(request, domain, config_id):
+    report_config = ReportConfiguration.get(config_id)
+    datasource_id = report_config.config_id
+    datasource_config = DataSourceConfiguration.get(datasource_id)
+
+    return JsonResponse({
+        "report": report_config.to_json(),
+        "datasource": datasource_config.to_json(),
+    })
 
 
 @login_or_api_key
