@@ -583,31 +583,31 @@
             </div>
             </div>
           {% endif %}
-	  {% if request|toggle_enabled:"RESTRICT_MOBILE_ACCESS" %}
-	  {# BEGIN MOBILE permission #}
-	  <div class="form-group">
-	    <div class="col-sm-2 controls">
-	      <div class="form-check">
-	        <input type="checkbox"
-		         id="edit-mobile-checkbox"
-			 data-bind="checked: permissions.access_mobile_endpoints,
-	                            disable: !$root.allowEdit" />
-				  <label for="edit-mobile-checkbox"><span class="sr-only">{% trans "Access to Offline Mobile Apps" %}</span></label>
-	      </div>
-	    </div>
-	    <div class="col-sm-2 controls">
-	      <div class="form-check-placeholder">
-	        <label></label>
+          {% if request|toggle_enabled:"RESTRICT_MOBILE_ACCESS" %}
+          {# BEGIN MOBILE permission #}
+          <div class="form-group">
+            <div class="col-sm-2 controls">
+              <div class="form-check">
+                <input type="checkbox"
+                         id="edit-mobile-checkbox"
+                         data-bind="checked: permissions.access_mobile_endpoints,
+                                    disable: !$root.allowEdit" />
+                                  <label for="edit-mobile-checkbox"><span class="sr-only">{% trans "Access to Offline Mobile Apps" %}</span></label>
+              </div>
+            </div>
+            <div class="col-sm-2 controls">
+              <div class="form-check-placeholder">
+                <label></label>
              </div>
-	    </div>
-	    <div class="col-sm-8 control-label">
-	     {% blocktrans %}
-	     <strong>Mobile App Access</strong> &mdash; Allows mobile users access to offline mobile application
-	     {% endblocktrans %}
-	    </div>
-	  </div>
-	  {# END MOBILE permission #}
-	  {% endif %}
+            </div>
+            <div class="col-sm-8 control-label">
+             {% blocktrans %}
+             <strong>Mobile App Access</strong> &mdash; Allows mobile users access to offline mobile application
+             {% endblocktrans %}
+            </div>
+          </div>
+          {# END MOBILE permission #}
+          {% endif %}
           {% if request|toggle_enabled:"RESTRICT_APP_RELEASE" %}
             <div class="form-group">
               <label class="col-sm-4 control-label">
