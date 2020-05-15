@@ -202,7 +202,6 @@ class FoodRow:
     def _set_ingredient_fields(self, ingredient):
         if self._is_std_recipe_ingredient:
             self.is_ingredient = 'yes'
-            self.recipe_case_id = self.ucr_row['doc_id']
             self.ingr_recipe_code = ingredient.recipe_code
             self.ingr_fraction = ingredient.ingr_fraction
 
@@ -284,10 +283,12 @@ class FoodRow:
                 return age_range.name
 
     @property
-    def recipe_id(self):
+    def recipe_case_id(self):
         if self.is_recipe:
             return self.caseid
-        return self.recipe_case_id or 'NO_RECIPE'
+        if self._is_std_recipe_ingredient:
+            return self.ucr_row['doc_id']
+        return self.ucr_row['recipe_case_id']
 
     def get_nutrient_per_100g(self, nutrient_name):
         if self.fct_code:
@@ -319,13 +320,10 @@ class FoodRow:
         raise AttributeError(f"FoodRow has no definition for {name}")
 
 
-def enrich_rows(recipe_id, rows):
+def enrich_rows(rows):
     """Insert data possibly dependent on other rows in a recipe"""
-    if recipe_id == 'NO_RECIPE':
-        recipe = None
-    else:
-        recipe_possibilities = [row for row in rows if row.is_recipe]
-        recipe = recipe_possibilities[0] if len(recipe_possibilities) == 1 else None
+    recipe_possibilities = [row for row in rows if row.is_recipe]
+    recipe = recipe_possibilities[0] if len(recipe_possibilities) == 1 else None
 
     if not recipe:
         for row in rows:
@@ -435,16 +433,16 @@ class FoodData:
 
         for ucr_row in self._ucr.get_data():
             food = FoodRow(ucr_row, self.fixtures)
-            rows_by_recipe[food.recipe_id].append(food)
+            rows_by_recipe[food.recipe_case_id or food.caseid].append(food)
 
             if food.food_type == STANDARD_RECIPE:
                 for ingredient_data in self.fixtures.recipes[food.food_code]:
                     ingr_row = FoodRow(ucr_row, self.fixtures, ingredient_data)
-                    rows_by_recipe[food.recipe_id].append(ingr_row)
+                    rows_by_recipe[food.recipe_case_id].append(ingr_row)
 
         rows = []
-        for recipe_id, rows_in_recipe in rows_by_recipe.items():
-            enrich_rows(recipe_id, rows_in_recipe)
+        for rows_in_recipe in rows_by_recipe.values():
+            enrich_rows(rows_in_recipe)
             for row in rows_in_recipe:
                 if self._matches_in_memory_filters(row):
                     rows.append(row)
