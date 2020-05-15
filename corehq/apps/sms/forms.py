@@ -34,11 +34,11 @@ from corehq.apps.sms.models import SQLMobileBackend
 from corehq.apps.sms.util import (
     ALLOWED_SURVEY_DATE_FORMATS,
     get_sms_backend_classes,
+    is_superuser_or_contractor,
     strip_plus,
     validate_phone_number,
 )
 from corehq.apps.users.models import CommCareUser, CouchUser
-from corehq.toggles import IS_CONTRACTOR
 
 ENABLED = "ENABLED"
 DISABLED = "DISABLED"
@@ -1290,10 +1290,6 @@ class InitiateAddSMSBackendForm(Form):
                 ), css_class='col-sm-3 col-md-2 col-lg-2'),
             ),
         )
-
-
-def is_superuser_or_contractor(user: CouchUser):
-    return IS_CONTRACTOR.enabled(user.username) or user.is_superuser
 
 
 class SubscribeSMSForm(Form):

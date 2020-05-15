@@ -16,6 +16,7 @@ from dimagi.utils.parsing import json_format_datetime
 from corehq.apps.hqcase.utils import submit_case_block_from_template
 from corehq.apps.translations.models import SMSTranslations
 from corehq.apps.users.models import CouchUser
+from corehq.toggles import IS_CONTRACTOR
 from corehq.util.quickcache import quickcache
 
 
@@ -325,3 +326,7 @@ def get_language_list(domain):
     result = set(sms_translations.langs)
     result.discard('*')
     return list(result)
+
+
+def is_superuser_or_contractor(user: CouchUser):
+    return IS_CONTRACTOR.enabled(user.username) or user.is_superuser

@@ -32,7 +32,7 @@
       {% endfor %}
       </tbody>
     </table>
-    {% if request.couch_user.is_superuser %}
+    {% if is_system_admin %}
       <p class="text-danger">
         <i class="fa fa-info-circle"></i>
         {% blocktrans %}
