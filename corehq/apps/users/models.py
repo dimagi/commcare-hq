@@ -524,30 +524,6 @@ class DomainMembership(Membership):
         app_label = 'users'
 
 
-class OrgMembership(Membership):
-    organization = StringProperty()
-    team_ids = StringListProperty(default=[]) # a set of ids corresponding to which teams the user is a member of
-
-
-class OrgMembershipError(Exception):
-    pass
-
-
-class CustomDomainMembership(DomainMembership):
-    custom_role = SchemaProperty(UserRole)
-
-    @property
-    def role(self):
-        if self.is_admin:
-            return AdminUserRole(self.domain)
-        else:
-            return self.custom_role
-
-    def set_permission(self, permission, value, data=None):
-        self.custom_role.domain = self.domain
-        self.custom_role.permissions.set(permission, value, data)
-
-
 class IsMemberOfMixin(DocumentSchema):
 
     def _is_member_of(self, domain):
@@ -1134,10 +1110,6 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             raise NotImplementedError(f'Unrecognized user type {self.doc_type!r}')
 
     @property
-    def projects(self):
-        return list(map(Domain.get_by_name, self.get_domains()))
-
-    @property
     def full_name(self):
         return ("%s %s" % (self.first_name or '', self.last_name or '')).strip()
 
@@ -1366,36 +1338,6 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             setattr(django_user, attr, attr_val)
         django_user.DO_NOT_SAVE_COUCH_USER = True
         return django_user
-
-    def sync_from_old_couch_user(self, old_couch_user):
-        login = old_couch_user.default_account.login
-        self.sync_from_django_user(login)
-
-        for attr in (
-            'device_ids',
-            'phone_numbers',
-            'created_on',
-            'status',
-        ):
-            setattr(self, attr, getattr(old_couch_user, attr))
-
-    @classmethod
-    def from_old_couch_user(cls, old_couch_user, copy_id=True):
-
-        if old_couch_user.account_type == "WebAccount":
-            couch_user = WebUser()
-        else:
-            couch_user = CommCareUser()
-
-        couch_user.sync_from_old_couch_user(old_couch_user)
-
-        if old_couch_user.email:
-            couch_user.email = old_couch_user.email
-
-        if copy_id:
-            couch_user._id = old_couch_user.default_account.login_id
-
-        return couch_user
 
     @classmethod
     def wrap_correctly(cls, source, allow_deleted_doc_types=False):
@@ -1723,12 +1665,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     def is_domain_admin(self, domain=None):
         # cloudcare workaround
         return False
-
-    def sync_from_old_couch_user(self, old_couch_user):
-        super(CommCareUser, self).sync_from_old_couch_user(old_couch_user)
-        self.domain                 = normalize_domain_name(old_couch_user.default_account.domain)
-        self.registering_device_id  = old_couch_user.default_account.registering_device_id
-        self.user_data              = old_couch_user.default_account.user_data
 
     @classmethod
     def create(cls,
@@ -2369,13 +2305,6 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
     # such as those going through the recruiting pipeline
     # to better mark them in our analytics
     atypical_user = BooleanProperty(default=False)
-
-    def sync_from_old_couch_user(self, old_couch_user):
-        super(WebUser, self).sync_from_old_couch_user(old_couch_user)
-        for dm in old_couch_user.web_account.domain_memberships:
-            dm.domain = normalize_domain_name(dm.domain)
-            self.domain_memberships.append(dm)
-            self.domains.append(dm.domain)
 
     def is_global_admin(self):
         # override this function to pass global admin rights off to django
