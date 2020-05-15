@@ -4,7 +4,7 @@ import logging
 import os
 import traceback
 import uuid
-from collections import defaultdict, namedtuple
+from collections import namedtuple
 from contextlib import ExitStack, contextmanager
 from datetime import datetime, timedelta
 from functools import wraps
@@ -20,6 +20,7 @@ from django.test.utils import CaptureQueriesContext
 
 import mock
 
+from corehq.tests.noseplugins.timing import patch_max_test_time  # noqa: F401
 from corehq.util.context_managers import drop_connected_signals
 from corehq.util.decorators import ContextDecorator
 
@@ -392,6 +393,9 @@ def timelimit(limit):
         @timelimit(0.5)
         def lt_half_second():
             ...
+
+    See also: `patch_max_test_time` for overriding time limits for
+    an entire test group (module, test class, etc.)
 
     :param limit: number of seconds or a callable to decorate. If
     callable, the time limit defaults to one second.

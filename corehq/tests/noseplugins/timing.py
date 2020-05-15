@@ -5,8 +5,10 @@ Usage: ./manage.py test --with-timing --timing-file=/path/to/timing.csv
 import csv
 import sys
 import time
+from unittest.mock import patch
 
 from nose.plugins import Plugin
+from nose.tools import nottest
 from corehq.tests.noseplugins.uniformresult import uniform_description
 
 
@@ -117,7 +119,16 @@ class TimingPlugin(Plugin):
         self.end_event("teardown", context)
 
 
-PLUGIN_INSTANCE = None
+class FakePlugin:
+    """Allow (no-op) plugin manipulation while plugin is inactive"""
+    enabled = False
+    max_test_time = None
+
+    def end_event(name, context):
+        pass
+
+
+PLUGIN_INSTANCE = FakePlugin
 
 
 def end_event(name, context):
@@ -139,5 +150,17 @@ def add_time_limit(limit):
     :param limit: Number of seconds.
     """
     plugin = PLUGIN_INSTANCE
-    if plugin and plugin.enabled and plugin.max_test_time is not None:
+    if plugin.enabled and plugin.max_test_time is not None:
         plugin.time_limit = getattr(plugin, "time_limit", 0) + limit
+
+
+@nottest
+def patch_max_test_time(limit):
+    """Temporarily override test time limit (--max-test-time)
+
+    Note: this is only useful when spanning multiple test events because
+    the limit must be present at the _end_ of a test event to take
+    effect. Therefore it will do nothing if used within the context of a
+    single test.
+    """
+    return patch.object(PLUGIN_INSTANCE, "max_test_time", limit)
