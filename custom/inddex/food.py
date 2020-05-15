@@ -184,6 +184,8 @@ class FoodRow:
         else:
             self.caseid = ucr_row['doc_id']
             self.food_code = ucr_row['food_code']
+        if not self.food_code and self.food_name in self.fixtures.foods_by_name:
+            self.food_code = self.fixtures.foods_by_name[self.food_name].food_code
 
         self._set_composition()
         self._set_conversion_factors()
