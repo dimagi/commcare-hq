@@ -245,13 +245,16 @@ class RepeaterTest(BaseRepeaterTest):
                     return_value=MockResponse(status_code=200, reason='No Reason')) as mock_post:
                 repeat_record.fire()
                 self.assertEqual(mock_post.call_count, 1)
-                mock_post.assert_any_call(
-                    repeat_record.get_payload(),
+                mock_post.assert_called_with(
+                    self.domain,
                     repeat_record.repeater.get_url(repeat_record),
+                    repeat_record.get_payload(),
                     headers=repeat_record.repeater.get_headers(repeat_record),
-                    timeout=POST_TIMEOUT,
                     auth=repeat_record.repeater.get_auth(),
                     verify=repeat_record.repeater.verify,
+                    timeout=POST_TIMEOUT,
+                    notify_addresses=[],
+                    payload_id=repeat_record.payload_id,
                 )
 
         # The following is pretty fickle and depends on which of
@@ -732,11 +735,14 @@ class TestRepeaterFormat(BaseRepeaterTest):
             repeat_record.fire()
             headers = self.repeater.get_headers(repeat_record)
             mock_post.assert_called_with(
-                self.payload,
+                self.domain,
                 self.repeater.url,
-                headers=headers,
-                timeout=POST_TIMEOUT,
+                self.payload,
                 auth=self.repeater.get_auth(),
+                headers=headers,
+                notify_addresses=[],
+                payload_id='ABC123CASEID',
+                timeout=POST_TIMEOUT,
                 verify=self.repeater.verify,
             )
 
