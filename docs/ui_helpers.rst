@@ -122,7 +122,7 @@ If you want to create data with your paginated view, you must implement the foll
         def get_create_item_data(self, create_form):
             new_puppy = create_form.get_new_puppy()
             return {
-                'newItem': {
+                'itemData': {
                     'id': new_puppy._id,
                     'name': new_puppy.name,
                     'breed': new_puppy.breed,
@@ -240,10 +240,10 @@ The `UpdatePuppyForm` should look something like:
                 FormActions(
                     StrictButton(
                         "Update Puppy",
-                        css_class='btn-primary',
+                        css_class='btn btn-primary',
                         type='submit',
                     ),
-                    HTML('<button type="button" class="btn" data-dismiss="modal">Cancel</button>'),
+                    HTML('<button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>'),
                     css_class="modal-footer'
                 )
             )
