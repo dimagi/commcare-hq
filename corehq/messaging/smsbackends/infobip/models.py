@@ -1,8 +1,6 @@
-from corehq.apps.sms.models import SQLSMSBackend
+from corehq.apps.sms.models import SQLSMSBackend, SMS
+from corehq.apps.sms.util import clean_phone_number
 from corehq.messaging.smsbackends.infobip.forms import InfobipBackendForm
-
-INVALID_TO_PHONE_NUMBER_ERROR_CODE = ""
-WHATSAPP_LIMITATION_ERROR_CODE = ""
 
 WHATSAPP_PREFIX = "whatsapp:"
 WHATSAPP_SANDBOX_PHONE_NUMBER = "14155238886"
@@ -56,5 +54,25 @@ class SQLInfobipBackend(SQLSMSBackend):
         return number.replace(WHATSAPP_PREFIX, "")
 
     def send(self, msg, orig_phone_number=None, *args, **kwargs):
-        pass
-        # to be implemented
+        config = self.config
+        to = clean_phone_number(msg.phone_number)
+        try:
+            self._send_text_message(config, to, msg)
+        except Exception:
+            msg.set_system_error(SMS.ERROR_INVALID_DESTINATION_NUMBER)
+            return False
+        # TODO: Add other exceptions here
+
+    def _send_text_message(self, config, to, msg):
+        import http.client
+        conn = http.client.HTTPSConnection("dmm5zv.api.infobip.com")
+
+        payload = "{\"destinations\":[{\"to\":{\"phoneNumber\":\"%s\"}}],\"whatsApp\":{\"text\":\"%s\"}}" % (to, msg.text)
+        headers = {
+            'Authorization': 'App ' + str(config.auth_token),
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        }
+        return conn.request("POST", "/omni/1/advanced", payload, headers)
+
+
