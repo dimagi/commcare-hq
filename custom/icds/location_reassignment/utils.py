@@ -20,7 +20,7 @@ def get_case_ids_for_reassignment(domain, location_id):
     """
     :return: for cases that belong to location_id return
     a dict mapping for all case ids under a household id and
-    a set of all other case ids
+    a list of all other case ids
     """
     all_case_ids = CaseAccessorSQL.get_case_ids_in_domain_by_owners(domain, [location_id])
     all_cases = CaseAccessors(domain).get_cases(all_case_ids)
@@ -32,7 +32,7 @@ def get_case_ids_for_reassignment(domain, location_id):
         other_case_ids.remove(household_case_id)
         other_case_ids = other_case_ids - set(household_child_case_ids)
         child_case_ids_per_household_id[household_case_id] = household_child_case_ids
-    return child_case_ids_per_household_id, other_case_ids
+    return child_case_ids_per_household_id, list(other_case_ids)
 
 
 def get_household_case_ids(domain, location_id):
