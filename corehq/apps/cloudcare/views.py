@@ -157,6 +157,22 @@ class FormplayerMain(View):
                     response.delete_cookie(cookie_name)
                     return response
 
+        elif request.couch_user.has_permission(domain, 'limited_login_as'):
+            login_as_users = login_as_user_query(
+                domain,
+                request.couch_user,
+                search_string='',
+                limit=1,
+                offset=0
+            ).run()
+            if login_as_users.total == 1:
+                def set_cookie(response):
+                    response.set_cookie(cookie_name, user.username)
+                    return response
+
+                user = CouchUser.get_by_username(login_as_users.hits[0]['username'])
+                return user, set_cookie
+
         return request.couch_user, set_cookie
 
     def get(self, request, domain):
