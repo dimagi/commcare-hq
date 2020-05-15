@@ -76,6 +76,13 @@ class ConversionFactor:
     conv_factor = attrib(converter=lambda x: float(x) if x else None)
 
 
+@attrs(kw_only=True, frozen=True)
+class Language:
+    table_name = 'languages'
+    lang_code = attrib()
+    is_primary = attrib()
+
+
 class FixtureAccessor:
     def __init__(self, domain):
         self.domain = domain
@@ -153,6 +160,13 @@ class FixtureAccessor:
         return {
             (cf.food_code, cf.conv_method, cf.conv_option): cf.conv_factor for cf in conversion_factors
         }
+
+    @cached_property
+    def lang_code(self):
+        languages = (_wrap(Language, item_dict)
+                     for item_dict in self._get_fixture_dicts(Language.table_name))
+        primary = [l.lang_code for l in languages if l.is_primary == 'yes']
+        return primary[0] if primary else 'lang_1'
 
 
 def _to_float(v):

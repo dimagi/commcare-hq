@@ -109,14 +109,15 @@ class TestSetupUtils(TestCase):
     def test_fixtures_created(self):
         # Note, this is actually quite slow - might want to drop
         data_types = get_fixture_data_types(DOMAIN)
-        self.assertEqual(len(data_types), 5)
+        self.assertEqual(len(data_types), 6)
         self.assertItemsEqual(
             [(dt.tag, count_fixture_items(DOMAIN, dt._id)) for dt in data_types],
             [('recipes', 384),
              ('food_list', 1130),
              ('food_composition_table', 1042),
              ('conv_factors', 2995),
-             ('nutrients_lookup', 152)]
+             ('nutrients_lookup', 152),
+             ('languages', 2)]
         )
 
 
@@ -171,6 +172,9 @@ class TestFixtures(TestCase):
     def test_conversion_factors(self):
         conversion_factor = self.fixtures_accessor.conversion_factors[('10', '52', '')]
         self.assertEqual(0.61, conversion_factor)
+
+    def test_languages(self):
+        self.assertEqual('lang_1', self.fixtures_accessor.lang_code)
 
 
 class TestMasterReport(TestCase):
