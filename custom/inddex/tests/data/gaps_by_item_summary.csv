@@ -1,4 +1,4 @@
-food_code,food_name,fao_who_gift_food_group_code,fao_who_gift_food_group_description,user_food_group,food_type,number_of_occurrences,conv_factor_gap_code,conv_factor_gap_desc,fct_gap_code,fct_gap_desc
+food_code,food_name,fao_who_gift_food_group_code,fao_who_gift_food_group_description,user_food_group,food_type,number_occurrence,conv_factor_gap_code,conv_factor_gap_desc,fct_gap_code,fct_gap_desc
 ,"(i) Oignon,bulbe,frais,coupe en morceaux,cru,egoutte",4,Milk and milk products (4),,food_item,1,2,2 - using conversion factor from base term food code,2,2 - using fct data from base term food code
 ,(i) medium turkey broth,,,,non_std_food_item,1,8,8 - no conversion factor available,8,8 - no fct data available
 ,Beef Stew,,,,non_std_recipe,1,8,8 - no conversion factor available,8,8 - no fct data available

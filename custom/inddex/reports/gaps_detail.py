@@ -47,7 +47,7 @@ class GapsByItemSummaryData:
     headers = [
         'food_code', 'food_name', 'fao_who_gift_food_group_code',
         'fao_who_gift_food_group_description', 'user_food_group', 'food_type',
-        'number_of_occurrences', 'conv_factor_gap_code',
+        'number_occurrence', 'conv_factor_gap_code',
         'conv_factor_gap_desc', 'fct_gap_code', 'fct_gap_desc'
     ]
 
@@ -61,10 +61,10 @@ class GapsByItemSummaryData:
             if row.conv_factor_gap_code != ConvFactorGaps.AVAILABLE:
                 key = (row.food_name, row.conv_method_code, row.conv_factor_gap_code)
                 if key not in rows:
-                    rows[key] = {col: getattr(row, col) for col in self.headers if col != 'number_of_occurrences'}
-                    rows[key]['number_of_occurrences'] = 1
+                    rows[key] = {col: getattr(row, col) for col in self.headers if col != 'number_occurrence'}
+                    rows[key]['number_occurrence'] = 1
                 else:
-                    rows[key]['number_of_occurrences'] += 1
+                    rows[key]['number_occurrence'] += 1
 
         for row in rows.values():
             yield format_row([row[col] for col in self.headers])
