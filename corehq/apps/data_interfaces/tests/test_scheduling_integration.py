@@ -1100,7 +1100,7 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
             run_messaging_rule_for_shard(self.domain, rule_id, 'default')
             sync_patch.assert_has_calls(
                 [
-                    call(self.domain, [case1.case_id, case2.case_id], rule_id)
+                    call(self.domain, (case1.case_id, case2.case_id), rule_id)
                 ],
                 any_order=True
             )
