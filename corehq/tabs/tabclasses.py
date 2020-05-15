@@ -1429,6 +1429,18 @@ class ProjectUsersTab(UITab):
                 'show_in_dropdown': True,
             })
 
+        if self.couch_user.can_edit_web_users() or self.couch_user.can_view_web_users():
+            from corehq.apps.users.models import DomainPermissionsMirror
+            if DomainPermissionsMirror.mirror_domains(self.domain):
+                from corehq.apps.users.views import DomainPermissionsMirrorView
+                menu.append({
+                    'title': _(DomainPermissionsMirrorView.page_title),
+                    'url': reverse(DomainPermissionsMirrorView.urlname, args=[self.domain]),
+                    'description': _("View project spaces where users receive automatic access"),
+                    'subpages': [],
+                    'show_in_dropdown': False,
+                })
+
         return menu
 
     def _get_locations_menu(self):

@@ -95,6 +95,7 @@ from corehq.apps.users.models import (
     CommCareUser,
     CouchUser,
     DomainMembershipError,
+    DomainPermissionsMirror,
     DomainRemovalRecord,
     DomainRequest,
     Invitation,
@@ -561,6 +562,19 @@ class ListRolesView(BaseRoleAccessView):
                 toggles.OPENMRS_INTEGRATION.enabled(self.domain) or
                 toggles.DHIS2_INTEGRATION.enabled(self.domain)
             ),
+        }
+
+
+@method_decorator(require_can_edit_or_view_web_users, name='dispatch')
+class DomainPermissionsMirrorView(BaseUserSettingsView):
+    template_name = 'users/domain_permissions_mirror.html'
+    page_title = ugettext_lazy("Enterprise Permissions")
+    urlname = 'domain_permissions_mirror'
+
+    @property
+    def page_context(self):
+        return {
+            'mirrors': DomainPermissionsMirror.mirror_domains(self.domain),
         }
 
 
