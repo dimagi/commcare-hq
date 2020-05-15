@@ -1128,8 +1128,8 @@ class AddGatewayViewMixin(object):
     """
 
     @property
-    def is_superuser(self):
-        return self.request.couch_user.is_superuser
+    def is_system_admin(self):
+        return is_superuser_or_contractor(self.request.couch_user)
 
     @property
     @memoized
@@ -1141,7 +1141,7 @@ class AddGatewayViewMixin(object):
     def backend_class(self):
         # Superusers can create/edit any backend
         # Regular users can only create/edit Telerivet backends for now
-        if not self.is_superuser and self.hq_api_id != SQLTelerivetBackend.get_api_id():
+        if not self.is_system_admin and self.hq_api_id != SQLTelerivetBackend.get_api_id():
             raise Http404()
         backend_classes = get_sms_backend_classes()
         try:
