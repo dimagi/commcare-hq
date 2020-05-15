@@ -34,14 +34,6 @@ In its very basic form (a simple paginated view) it should look like:
         # required properties you must implement:
 
         @property
-        def parameters(self):
-            """
-            Specify a GET or POST from an HttpRequest object.
-            """
-            # Usually, something like:
-            return self.request.POST if self.request.method == 'POST' else self.request.GET
-
-        @property
         def total(self):
             # How many documents are you paginating through?
             return Puppy.get_total()
@@ -54,7 +46,7 @@ In its very basic form (a simple paginated view) it should look like:
                 "Breed",
                 "Age",
             ]
-            
+
         @property
         def page_context(self):
             # This should at least include the pagination_context that CRUDPaginatedViewMixin provides
