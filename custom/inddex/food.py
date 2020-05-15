@@ -48,7 +48,6 @@ from custom.inddex.ucr_data import FoodCaseData
 from .const import (
     AGE_RANGES,
     FOOD_ITEM,
-    NON_STANDARD_FOOD_ITEM,
     NON_STANDARD_RECIPE,
     STANDARD_RECIPE,
     ConvFactorGaps,
