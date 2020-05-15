@@ -1852,6 +1852,10 @@ def _get_integration_section(domain):
             {
                 'title': _('Data Forwarding Records'),
                 'url': reverse('domain_report_dispatcher', args=[domain, 'repeat_record_report'])
+            },
+            {
+                'title': _(MotechLogListView.page_title),
+                'url': reverse(MotechLogListView.urlname, args=[domain])
             }
         ])
 
@@ -1885,16 +1889,6 @@ def _get_integration_section(domain):
         integration.append({
             'title': _(OpenmrsImporterView.page_title),
             'url': reverse(OpenmrsImporterView.urlname, args=[domain])
-        })
-
-    if (
-            toggles.DHIS2_INTEGRATION.enabled(domain)
-            or toggles.OPENMRS_INTEGRATION.enabled(domain)
-            or toggles.INCREMENTAL_EXPORTS.enabled(domain)
-    ):
-        integration.append({
-            'title': _(MotechLogListView.page_title),
-            'url': reverse(MotechLogListView.urlname, args=[domain])
         })
 
     return integration
