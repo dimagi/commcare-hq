@@ -462,6 +462,22 @@ class AdminUserRole(UserRole):
         return 'admin'
 
 
+class DomainPermissionsMirror(models.Model):
+    source_domain = models.TextField(db_index=True)
+    mirror_domain = models.TextField(db_index=True)
+
+    class Meta:
+        unique_together = ('source_domain', 'mirror_domain')
+
+    @classmethod
+    def by_source_domain(cls, source_domain):
+        return cls.objects.filter(source_domain=source_domain)
+
+    @classmethod
+    def by_mirror_domain(cls, mirror_domain):
+        return cls.objects.filter(mirror_domain=mirror_domain)
+
+
 class DomainMembershipError(Exception):
     pass
 
