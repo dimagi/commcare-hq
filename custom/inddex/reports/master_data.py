@@ -9,7 +9,7 @@ from .utils import MultiTabularReport, format_row
 
 class MasterDataReport(MultiTabularReport):
     name = 'Output 1 - Master Data File'
-    slug = 'master_data'
+    slug = 'report_1_master_data_file'
     export_only = True
     description = textwrap.dedent("""
         This output includes all data that appears in the output files as well

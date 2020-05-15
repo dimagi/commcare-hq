@@ -9,7 +9,7 @@ from .utils import MultiTabularReport, format_row
 
 class GapsDetailReport(MultiTabularReport):
     name = 'Output 2b - Detailed Information on Gaps'
-    slug = 'gaps_detail'
+    slug = 'report_2b_detailed_information_on_gaps'
     is_released = False
     description = textwrap.dedent("""
         This output assists researchers in identifying incomplete or missing

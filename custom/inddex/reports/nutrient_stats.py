@@ -11,7 +11,7 @@ from .utils import MultiTabularReport, format_row
 
 class NutrientStatsReport(MultiTabularReport):
     name = 'Output 4 - Nutrient Intake Summary Statistics'
-    slug = 'nutrient_stats'
+    slug = 'report_4_nutrient_intake_summary_statistics'
     description = textwrap.dedent("""
         This output includes summary statistics for nutrient intakes reported
         during the recall (mean, median, standard deviation, and percentiles).
