@@ -93,7 +93,6 @@ class IncrementalExportCheckpoint(models.Model):
         return f'{self.incremental_export.name}-{date_suffix}.csv'
 
 
-
 def generate_and_send_incremental_export(incremental_export, from_date):
     checkpoint = _generate_incremental_export(incremental_export, from_date)
     if checkpoint:
