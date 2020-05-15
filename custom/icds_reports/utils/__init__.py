@@ -2057,3 +2057,10 @@ def timestamp_string_to_date_string(ts_string):
         return parse(ts_string).strftime(ISO_DATE_FORMAT)
     else:
         return None
+
+
+def datetime_to_date_string(dtime):
+    if dtime:
+        return dtime.strftime(ISO_DATE_FORMAT)
+    else:
+        return None
