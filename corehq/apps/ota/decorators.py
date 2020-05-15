@@ -6,7 +6,7 @@ from dimagi.utils.couch.cache.cache_core import get_redis_client
 
 from functools import wraps
 
-from django.http import HttpResponseBadRequest, HttpResponseForbidden
+from django.http import HttpResponseForbidden
 
 ORIGIN_TOKEN_HEADER = 'HTTP_X_COMMCAREHQ_ORIGIN_TOKEN'
 ORIGIN_TOKEN_SLUG = 'OriginToken'
