@@ -130,9 +130,8 @@ def domain_admin():
 
 @contextmanager
 def contractor():
-    with domain_admin() as user:
-        with flag_enabled('IS_CONTRACTOR'):
-            yield user
+    with domain_admin() as user, flag_enabled('IS_CONTRACTOR'):
+        yield
 
 
 @contextmanager
