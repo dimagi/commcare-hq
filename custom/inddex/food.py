@@ -94,7 +94,7 @@ INDICATORS = [
     I('urban_rural', IN_UCR, IS_RECALL_META),
     I('food_code', IN_UCR),
     I('food_name', IN_UCR, IN_FOOD_FIXTURE),
-    I('recipe_name', IN_UCR),
+    I('recipe_name', IN_UCR, CALCULATED_LATER),
     I('caseid'),
     I('reference_food_code'),
     I('base_term_food_code', IN_UCR),
@@ -200,7 +200,6 @@ class FoodRow:
     def _set_ingredient_fields(self, ingredient):
         if self._is_std_recipe_ingredient:
             self.is_ingredient = 'yes'
-            self.recipe_name = self.ucr_row['recipe_name']
             self.recipe_case_id = self.ucr_row['doc_id']
             self.ingr_recipe_code = ingredient.recipe_code
             self.ingr_fraction = ingredient.ingr_fraction
@@ -332,15 +331,18 @@ def enrich_rows(recipe_id, rows):
             row.set_fct_gap()
             row.enrichment_complete = True
     else:
-        ingredients = [row for row in rows if not row.uuid == recipe.uuid]
+        ingredients = [row for row in rows if row.uuid != recipe.uuid]
         total_grams = _calculate_total_grams(recipe, ingredients)
         recipe.set_fct_gap(ingredients)
+        recipe.recipe_name = recipe.ucr_row['recipe_name']
         for row in [recipe] + ingredients:
             row.total_grams = total_grams[row.uuid]
             if row.is_recipe:
                 row.recipe_num_ingredients = len(ingredients)
-            if row.is_ingredient == 'yes' and recipe.food_type == STANDARD_RECIPE:
-                row.ingr_recipe_total_grams_consumed = total_grams[recipe.uuid]
+            if row.is_ingredient == 'yes':
+                row.recipe_name = recipe.recipe_name
+                if recipe.food_type == STANDARD_RECIPE:
+                    row.ingr_recipe_total_grams_consumed = total_grams[recipe.uuid]
             row.enrichment_complete = True
 
 
