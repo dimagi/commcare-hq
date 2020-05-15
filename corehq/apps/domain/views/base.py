@@ -31,7 +31,7 @@ def select(request, do_not_redirect=False, next_view=None):
 
     # next_view must be a url that expects exactly one parameter, a domain name
     next_view = next_view or request.GET.get('next_view') or "domain_homepage"
-    domain_links = get_domain_dropdown_links(request.couch_user, view_name=next_view)
+    (domain_links, mirror_domain_links) = get_domain_dropdown_links(request.couch_user, view_name=next_view)
     if not domain_links:
         return redirect('registration_domain')
 
@@ -40,6 +40,7 @@ def select(request, do_not_redirect=False, next_view=None):
 
     additional_context = {
         'domain_links': domain_links,
+        'mirror_domain_links': mirror_domain_links,
         'open_invitations': [] if next_view else open_invitations,
         'current_page': {'page_name': _('Select A Project')},
     }
@@ -74,7 +75,13 @@ Link = namedtuple('Link', ('name', 'url'))
 
 @quickcache(['couch_user.username'])
 def get_domain_dropdown_links(couch_user, view_name="domain_homepage"):
-    domain_objects = set(Domain.active_for_user(couch_user))
+    from corehq.apps.users.models import DomainPermissionsMirrorSource
+    domain_objects_by_name = {d.name: d for d in Domain.active_for_user(couch_user)}
+    mirror_domain_objects_by_name = {}
+    for domain_name in domain_objects_by_name:
+        for mirror_domain in DomainPermissionsMirrorSource.mirror_domains(domain_name):
+            if mirror_domain not in domain_objects_by_name:
+                mirror_domain_objects_by_name[mirror_domain] = Domain.get_by_name(mirror_domain)
 
     def _domain_objects_to_links(objects):
         return sorted([Link(
@@ -82,7 +89,10 @@ def get_domain_dropdown_links(couch_user, view_name="domain_homepage"):
             url=reverse(view_name, args=[o.name]),
         ) for o in objects], key=lambda link: link.name.lower())
 
-    return _domain_objects_to_links(domain_objects)
+    return (
+        _domain_objects_to_links(domain_objects_by_name.values()),
+        _domain_objects_to_links(mirror_domain_objects_by_name.values()),
+    )
 
 
 class DomainViewMixin(object):

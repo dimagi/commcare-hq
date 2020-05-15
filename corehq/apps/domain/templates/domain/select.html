@@ -26,6 +26,14 @@
           <li><a href="{{ link.url }}">{{ link.name }}</a></li>
         {% endfor %}
       </ul>
+      {% if mirror_domain_links %}
+        <h2>{% trans "Enterprise Projects" %}</h2>
+        <ul class="nav nav-pills nav-stacked">
+          {% for link in mirror_domain_links %}
+            <li><a href="{{ link.url }}">{{ link.name }}</a></li>
+          {% endfor %}
+        </ul>
+      {% endif %}
     </div>
   </div>
 {% endblock %}

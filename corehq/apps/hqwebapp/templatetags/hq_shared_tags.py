@@ -121,9 +121,10 @@ def domains_for_user(context, request, selected_domain=None):
     """
 
     from corehq.apps.domain.views.base import get_domain_dropdown_links
-    domain_links = get_domain_dropdown_links(request.couch_user)
+    (domain_links, mirror_domain_links) = get_domain_dropdown_links(request.couch_user)
     context = {
         'domain_links': domain_links,
+        'show_mirror_domains_link': bool(mirror_domain_links),
         'current_domain': selected_domain,
     }
     return mark_safe(render_to_string('hqwebapp/includes/domain_list_dropdown.html', context, request))
