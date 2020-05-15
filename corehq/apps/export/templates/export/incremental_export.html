@@ -116,7 +116,7 @@
       <button type="button"
               data-toggle="modal"
               data-bind="attr: {'data-target': '#reset-incremental-export-' + id}"
-              class="btn btn-warning">
+              class="btn btn-default">
         <i class="fa fa-recycle"></i> {% trans "Resend all cases" %}
       </button>
 
@@ -136,8 +136,8 @@
                       data-dismiss="modal">
                 {% trans "Cancel" %}
               </button>
-              <a data-bind="attr: {href: $parents[1].reverse('incremental_export_resend_all', id)}"
-                 class="btn btn-warning">
+              <a data-bind="attr: {href: $root.reverse('incremental_export_resend_all', id)}"
+                 class="btn btn-danger">
                 <i class="fa fa-recycle"></i> {% trans "Resend all cases" %}
               </a>
             </div>

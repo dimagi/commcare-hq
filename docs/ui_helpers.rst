@@ -240,10 +240,10 @@ The `UpdatePuppyForm` should look something like:
                 FormActions(
                     StrictButton(
                         "Update Puppy",
-                        css_class='btn-primary',
+                        css_class='btn btn-primary',
                         type='submit',
                     ),
-                    HTML('<button type="button" class="btn" data-dismiss="modal">Cancel</button>'),
+                    HTML('<button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>'),
                     css_class="modal-footer'
                 )
             )

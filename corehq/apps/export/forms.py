@@ -1151,10 +1151,10 @@ class UpdateIncrementalExportForm(forms.ModelForm):
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(
                     ugettext_lazy("Update"),
-                    css_class='btn-primary',
+                    css_class='btn btn-primary',
                     type='submit',
                 ),
-                crispy.HTML('<button type="button" class="btn" data-dismiss="modal">Cancel</button>'),
+                crispy.HTML('<button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>'),
                 css_class="modal-footer",
             )
         )
