@@ -150,9 +150,9 @@
         "column_id": "edd",
         "field": "edd",
         "transform": {
-           "type": "date_format",
-           "format": "%-d/%-m/%Y"
-            },
+          "type": "date_format",
+          "format": "%-d/%-m/%Y"
+        },
         "calculate_total": false,
         "type": "field",
         "display": {
