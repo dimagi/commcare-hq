@@ -111,7 +111,7 @@ class GatewayViewTests(TestCase):
 def normal_user():
     user = WebUser.create(DOMAIN_NAME, USERNAME, PASSWORD)
     try:
-        yield user
+        yield
     finally:
         user.delete()
 
@@ -123,21 +123,21 @@ def domain_admin():
     user.set_role(DOMAIN_NAME, "admin")
     user.save()
     try:
-        yield user
+        yield
     finally:
         user.delete()
 
 
 @contextmanager
 def contractor():
-    with domain_admin() as user, flag_enabled('IS_CONTRACTOR'):
-        yield user
+    with domain_admin(), flag_enabled('IS_CONTRACTOR'):
+        yield
 
 
 @contextmanager
 def superuser():
     user = WebUser.create(DOMAIN_NAME, USERNAME, PASSWORD, is_superuser=True)
     try:
-        yield user
+        yield
     finally:
         user.delete()
