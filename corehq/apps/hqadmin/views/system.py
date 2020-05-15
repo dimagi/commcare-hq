@@ -66,7 +66,7 @@ class SystemInfoView(BaseAdminSectionView):
         context['rabbitmq_url'] = get_rabbitmq_management_url()
         context['hide_filters'] = True
         context['current_system'] = socket.gethostname()
-        context['deploy_history'] = HqDeploy.get_latest(environment, limit=5)
+        context['deploy_history'] = HqDeploy.objects.filter(environment=environment)[:5]
 
         context['user_is_support'] = hasattr(self.request, 'user') and SUPPORT.enabled(self.request.user.username)
 

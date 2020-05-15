@@ -1,6 +1,9 @@
 import json
+import re
+import string
 from xml.etree import cElementTree as ElementTree
 
+import sentry_sdk
 from django.conf import settings
 from django.http import (
     Http404,
@@ -23,8 +26,11 @@ import six.moves.urllib.error
 import six.moves.urllib.parse
 import six.moves.urllib.request
 from couchdbkit import ResourceConflict
+from unidecode import unidecode
 
 from casexml.apps.phone.fixtures import generator
+from corehq.util.metrics import metrics_counter
+from dimagi.utils.logging import notify_error
 from dimagi.utils.parsing import string_to_boolean
 from dimagi.utils.web import get_url_base, json_response
 
@@ -70,7 +76,7 @@ from corehq.apps.hqwebapp.decorators import (
 )
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.formdetails import readable
-from corehq.apps.users.decorators import require_can_edit_commcare_users
+from corehq.apps.users.decorators import require_can_login_as
 from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.apps.users.util import format_username
 from corehq.apps.users.views import BaseUserSettingsView
@@ -281,7 +287,7 @@ class LoginAsUsers(View):
     urlname = 'login_as_users'
 
     @method_decorator(login_and_domain_required)
-    @method_decorator(require_can_edit_commcare_users)
+    @method_decorator(require_can_login_as)
     @method_decorator(requires_privilege_for_commcare_user(privileges.CLOUDCARE))
     def dispatch(self, *args, **kwargs):
         return super(LoginAsUsers, self).dispatch(*args, **kwargs)
@@ -461,3 +467,64 @@ class EditCloudcareUserPermissionsView(BaseUserSettingsView):
         ], bulk=False)
         access.save()
         return json_response({'success': 1})
+
+
+@login_and_domain_required
+def report_formplayer_error(request, domain):
+    data = json.loads(request.body)
+    error_type = data.get('type')
+
+    with sentry_sdk.configure_scope() as scope:
+        scope.set_tag("cloudcare_error_type", error_type)
+
+    if error_type == 'webformsession_request_failure':
+        metrics_counter('commcare.formplayer.webformsession_request_failure', tags={
+            'request': data.get('request'),
+            'statusText': data.get('statusText'),
+            'state': data.get('state'),
+            'status': data.get('status'),
+            'domain': domain,
+            'cloudcare_env': data.get('cloudcareEnv'),
+        })
+        message = data.get("readableErrorMessage") or "request failure in web form session"
+        notify_error(message=f'[Cloudcare] {message}', details=data)
+    elif error_type == 'show_error_notification':
+        message = data.get('message')
+        metrics_counter('commcare.formplayer.show_error_notification', tags={
+            'message': _message_to_tag_value(message or 'no_message'),
+            'domain': domain,
+            'cloudcare_env': data.get('cloudcareEnv'),
+        })
+        notify_error(message=f'[Cloudcare] {message}', details=data)
+    else:
+        metrics_counter('commcare.formplayer.unknown_error_type', tags={
+            'domain': domain,
+            'cloudcare_env': data.get('cloudcareEnv'),
+        })
+        notify_error(message=f'[Cloudcare] unknown error type', details=data)
+    return JsonResponse({'status': 'ok'})
+
+
+def _message_to_tag_value(message, allowed_chars=string.ascii_lowercase + string.digits + '_'):
+    """
+    Turn a long user-facing error message into a short slug that can be used as a datadog tag value
+
+    passes through unidecode to get something ascii-compatible to work with,
+    then uses the first four space-delimited words and filters out unwanted characters.
+
+    >>> _message_to_tag_value('Sorry, an error occurred while processing that request.')
+    'sorry_an_error_occurred'
+    >>> _message_to_tag_value('Another process prevented us from servicing your request. Please try again later.')
+    'another_process_prevented_us'
+    >>> _message_to_tag_value('509 Unknown Status Code')
+    '509_unknown_status_code'
+    >>> _message_to_tag_value(
+    ... 'EntityScreen EntityScreen [Detail=org.commcare.suite.model.Detail@1f984e3c, '
+    ... 'selection=null] could not select case 8854f3583f6f46e69af59fddc9f9428d. '
+    ... 'If this error persists please report a bug to CommCareHQ.')
+    'entityscreen_entityscreen_detail_org'
+    """
+    message_tag = unidecode(message)
+    message_tag = ''.join((c if c in allowed_chars else ' ') for c in message_tag.lower())
+    message_tag = '_'.join(re.split(r' +', message_tag)[:4])
+    return message_tag[:59]

@@ -36,10 +36,8 @@ describe('Location Filter Controller', function () {
     ];
 
     beforeEach(module('icdsApp', function ($provide) {
-        $provide.constant("userLocationId", null);
+        utils.provideDefaultConstants($provide, {'overrides': {'haveAccessToAllLocations': true}});
         $provide.constant("allUserLocationId", []);
-        $provide.constant("haveAccessToAllLocations", true);
-        $provide.constant("isAlertActive", false);
         $provide.constant("locationHierarchy", [
             ['state', [null]],
             ['district', ['state']],

@@ -51,7 +51,7 @@ from corehq.apps.case_search.models import (
 )
 from corehq.apps.cloudcare.dbaccessors import get_application_access_for_domain
 from corehq.apps.cloudcare.models import ApplicationAccess
-from corehq.apps.consumption.models import SQLDefaultConsumption
+from corehq.apps.consumption.models import DefaultConsumption
 from corehq.apps.commtrack.models import CommtrackConfig
 from corehq.apps.data_analytics.models import GIRRow, MALTRow
 from corehq.apps.data_dictionary.models import CaseProperty, CaseType
@@ -96,7 +96,7 @@ from corehq.apps.sms.models import (
 from corehq.apps.smsforms.models import SQLXFormsSession
 from corehq.apps.translations.models import SMSTranslations, TransifexBlacklist
 from corehq.apps.userreports.models import AsyncIndicator
-from corehq.apps.users.models import DomainRequest, SQLInvitation
+from corehq.apps.users.models import DomainRequest, Invitation
 from corehq.apps.zapier.consts import EventTypes
 from corehq.apps.zapier.models import ZapierSubscription
 from corehq.blobs import NotFound, get_blob_db, CODES
@@ -489,12 +489,12 @@ class TestDeleteDomain(TestCase):
 
     def _assert_consumption_counts(self, domain_name, count):
         self._assert_queryset_count([
-            SQLDefaultConsumption.objects.filter(domain=domain_name),
+            DefaultConsumption.objects.filter(domain=domain_name),
         ], count)
 
     def test_consumption(self):
         for domain_name in [self.domain.name, self.domain2.name]:
-            SQLDefaultConsumption.objects.create(domain=domain_name)
+            DefaultConsumption.objects.create(domain=domain_name)
 
         self.domain.delete()
 
@@ -826,14 +826,14 @@ class TestDeleteDomain(TestCase):
     def _assert_users_counts(self, domain_name, count):
         self._assert_queryset_count([
             DomainRequest.objects.filter(domain=domain_name),
-            SQLInvitation.objects.filter(domain=domain_name),
+            Invitation.objects.filter(domain=domain_name),
         ], count)
 
     def test_users_delete(self):
         for domain_name in [self.domain.name, self.domain2.name]:
             DomainRequest.objects.create(domain=domain_name, email='user@test.com', full_name='User')
-            SQLInvitation.objects.create(domain=domain_name, email='user@test.com',
-                                         invited_by='friend@test.com', invited_on=datetime.utcnow())
+            Invitation.objects.create(domain=domain_name, email='user@test.com',
+                                      invited_by='friend@test.com', invited_on=datetime.utcnow())
             self._assert_users_counts(domain_name, 1)
 
         self.domain.delete()

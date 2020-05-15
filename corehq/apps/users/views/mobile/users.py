@@ -1117,8 +1117,7 @@ def user_upload_job_poll(request, domain, download_id, template="users/mobile/pa
     return render(request, template, context)
 
 
-
-@require_can_edit_commcare_users
+@require_can_edit_or_view_commcare_users
 def user_download_job_poll(request, domain, download_id, template="hqwebapp/partials/shared_download_status.html"):
     try:
         context = get_download_context(download_id, 'Preparing download')
@@ -1128,9 +1127,20 @@ def user_download_job_poll(request, domain, download_id, template="hqwebapp/part
     return render(request, template, context)
 
 
-class DownloadUsersStatusView(BaseManageCommCareUserView):
+class DownloadUsersStatusView(BaseUserSettingsView):
     urlname = 'download_users_status'
     page_title = ugettext_noop('Download Users Status')
+
+    @method_decorator(require_can_edit_or_view_commcare_users)
+    def dispatch(self, request, *args, **kwargs):
+        return super().dispatch(request, *args, **kwargs)
+
+    @property
+    def parent_pages(self):
+        return [{
+            'title': MobileWorkerListView.page_title,
+            'url': reverse(MobileWorkerListView.urlname, args=[self.domain]),
+        }]
 
     def get(self, request, *args, **kwargs):
         context = super(DownloadUsersStatusView, self).main_context
@@ -1339,7 +1349,7 @@ def count_users(request, domain):
     })
 
 
-@require_can_edit_commcare_users
+@require_can_edit_or_view_commcare_users
 def download_commcare_users(request, domain):
     form = CommCareUserFilterForm(request.GET, domain=domain)
     user_filters = {}

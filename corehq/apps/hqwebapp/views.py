@@ -908,6 +908,7 @@ class CRUDPaginatedViewMixin(object):
                     'new_items': self.new_items_header,
                 },
                 'create_item_form': self.get_create_form_response(create_form) if create_form else None,
+                'create_item_form_class': self.create_item_form_class,
             }
         }
 
@@ -1017,6 +1018,8 @@ class CRUDPaginatedViewMixin(object):
         It's not required if you just want a paginated view.
         """
         pass
+
+    create_item_form_class = 'form form-inline'
 
     def get_create_form_response(self, create_form):
         return render_to_string(

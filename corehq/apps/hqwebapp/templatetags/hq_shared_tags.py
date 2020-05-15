@@ -118,7 +118,7 @@ def _get_domain_list(couch_user):
     domains = Domain.active_for_user(couch_user)
     return [{
         'url': reverse('domain_homepage', args=[domain_obj.name]),
-        'name': domain_obj.long_display_name(),
+        'name': domain_obj.display_name(),
     } for domain_obj in domains]
 
 
@@ -230,7 +230,7 @@ def can_use_restore_as(request):
         return True
 
     return (
-        request.couch_user.can_edit_commcare_users() and
+        request.couch_user.can_login_as(request.domain) and
         has_privilege(request, privileges.LOGIN_AS)
     )
 

@@ -40,7 +40,6 @@ from dimagi.ext.couchdbkit import (
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.database import get_safe_write_kwargs, iter_docs
-from dimagi.utils.couch.migration import SyncCouchToSQLMixin, SyncSQLToCouchMixin
 from dimagi.utils.couch.undo import DELETED_SUFFIX, DeleteRecord
 from dimagi.utils.dates import force_to_datetime
 from dimagi.utils.logging import log_signal_errors, notify_exception
@@ -128,6 +127,7 @@ class Permissions(DocumentSchema):
     edit_apps = BooleanProperty(default=False)
     edit_shared_exports = BooleanProperty(default=False)
     access_all_locations = BooleanProperty(default=True)
+    access_api = BooleanProperty(default=True)
 
     view_reports = BooleanProperty(default=False)
     view_report_list = StringListProperty(default=[])
@@ -142,6 +142,8 @@ class Permissions(DocumentSchema):
     edit_file_dropzone = BooleanProperty(default=False)
     manage_releases = BooleanProperty(default=True)
     manage_releases_list = StringListProperty(default=[])
+
+    limited_login_as = BooleanProperty(default=False)
 
     @classmethod
     def wrap(cls, data):
@@ -236,6 +238,7 @@ class Permissions(DocumentSchema):
             edit_shared_exports=True,
             view_file_dropzone=True,
             edit_file_dropzone=True,
+            access_api=True,
         )
 
 
@@ -521,30 +524,6 @@ class DomainMembership(Membership):
 
     class Meta(object):
         app_label = 'users'
-
-
-class OrgMembership(Membership):
-    organization = StringProperty()
-    team_ids = StringListProperty(default=[]) # a set of ids corresponding to which teams the user is a member of
-
-
-class OrgMembershipError(Exception):
-    pass
-
-
-class CustomDomainMembership(DomainMembership):
-    custom_role = SchemaProperty(UserRole)
-
-    @property
-    def role(self):
-        if self.is_admin:
-            return AdminUserRole(self.domain)
-        else:
-            return self.custom_role
-
-    def set_permission(self, permission, value, data=None):
-        self.custom_role.domain = self.domain
-        self.custom_role.permissions.set(permission, value, data)
 
 
 class IsMemberOfMixin(DocumentSchema):
@@ -1133,10 +1112,6 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             raise NotImplementedError(f'Unrecognized user type {self.doc_type!r}')
 
     @property
-    def projects(self):
-        return list(map(Domain.get_by_name, self.get_domains()))
-
-    @property
     def full_name(self):
         return ("%s %s" % (self.first_name or '', self.last_name or '')).strip()
 
@@ -1366,36 +1341,6 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
         django_user.DO_NOT_SAVE_COUCH_USER = True
         return django_user
 
-    def sync_from_old_couch_user(self, old_couch_user):
-        login = old_couch_user.default_account.login
-        self.sync_from_django_user(login)
-
-        for attr in (
-            'device_ids',
-            'phone_numbers',
-            'created_on',
-            'status',
-        ):
-            setattr(self, attr, getattr(old_couch_user, attr))
-
-    @classmethod
-    def from_old_couch_user(cls, old_couch_user, copy_id=True):
-
-        if old_couch_user.account_type == "WebAccount":
-            couch_user = WebUser()
-        else:
-            couch_user = CommCareUser()
-
-        couch_user.sync_from_old_couch_user(old_couch_user)
-
-        if old_couch_user.email:
-            couch_user.email = old_couch_user.email
-
-        if copy_id:
-            couch_user._id = old_couch_user.default_account.login_id
-
-        return couch_user
-
     @classmethod
     def wrap_correctly(cls, source, allow_deleted_doc_types=False):
         try:
@@ -1605,6 +1550,9 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             if permission_slug in EXPORT_PERMISSIONS
         ])
 
+    def can_login_as(self, domain):
+        return self.has_permission(domain, 'edit_commcare_users') or self.has_permission(domain, 'limited_login_as')
+
     def is_current_web_user(self, request):
         return self.user_id == request.couch_user.user_id
 
@@ -1719,12 +1667,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     def is_domain_admin(self, domain=None):
         # cloudcare workaround
         return False
-
-    def sync_from_old_couch_user(self, old_couch_user):
-        super(CommCareUser, self).sync_from_old_couch_user(old_couch_user)
-        self.domain                 = normalize_domain_name(old_couch_user.default_account.domain)
-        self.registering_device_id  = old_couch_user.default_account.registering_device_id
-        self.user_data              = old_couch_user.default_account.user_data
 
     @classmethod
     def create(cls,
@@ -2366,13 +2308,6 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
     # to better mark them in our analytics
     atypical_user = BooleanProperty(default=False)
 
-    def sync_from_old_couch_user(self, old_couch_user):
-        super(WebUser, self).sync_from_old_couch_user(old_couch_user)
-        for dm in old_couch_user.web_account.domain_memberships:
-            dm.domain = normalize_domain_name(dm.domain)
-            self.domain_memberships.append(dm)
-            self.domains.append(dm.domain)
-
     def is_global_admin(self):
         # override this function to pass global admin rights off to django
         return self.is_superuser
@@ -2562,9 +2497,6 @@ class InvalidUser(FakeUser):
         return False
 
 
-#
-# Django  models go here
-#
 class DomainRequest(models.Model):
     '''
     Request to join domain. Requester might or might not already have an account.
@@ -2617,8 +2549,7 @@ class DomainRequest(models.Model):
                                     email_from=settings.DEFAULT_FROM_EMAIL)
 
 
-class SQLInvitation(SyncSQLToCouchMixin, models.Model):
-    id = models.IntegerField(db_index=True, null=True)
+class Invitation(models.Model):
     uuid = models.UUIDField(primary_key=True, db_index=True, default=uuid4)
     email = models.CharField(max_length=255, db_index=True)
     invited_by = models.CharField(max_length=126)           # couch id of a WebUser
@@ -2628,35 +2559,14 @@ class SQLInvitation(SyncSQLToCouchMixin, models.Model):
     role = models.CharField(max_length=100, null=True)
     program = models.CharField(max_length=126, null=True)   # couch id of a Program
     supply_point = models.CharField(max_length=126, null=True)  # couch id of a Location
-    couch_id = models.CharField(max_length=126, null=True, db_index=True)
-
-    class Meta:
-        db_table = "users_invitation"
-
-    @classmethod
-    def _migration_get_fields(cls):
-        return [
-            "email",
-            "invited_by",
-            "invited_on",
-            "is_accepted",
-            "domain",
-            "role",
-            "program",
-            "supply_point",
-        ]
-
-    @classmethod
-    def _migration_get_couch_model_class(cls):
-        return Invitation
 
     @classmethod
     def by_domain(cls, domain):
-        return SQLInvitation.objects.filter(domain=domain, is_accepted=False)
+        return Invitation.objects.filter(domain=domain, is_accepted=False)
 
     @classmethod
     def by_email(cls, email):
-        return SQLInvitation.objects.filter(email=email, is_accepted=False)
+        return Invitation.objects.filter(email=email, is_accepted=False)
 
     @property
     def is_expired(self):
@@ -2688,34 +2598,6 @@ class SQLInvitation(SyncSQLToCouchMixin, models.Model):
                                     text_content=text_content,
                                     cc=[inviter.get_email()],
                                     email_from=settings.DEFAULT_FROM_EMAIL)
-
-
-class Invitation(SyncCouchToSQLMixin, QuickCachedDocumentMixin, Document):
-    email = StringProperty()
-    invited_by = StringProperty()
-    invited_on = DateTimeProperty()
-    is_accepted = BooleanProperty(default=False)
-    domain = StringProperty()
-    role = StringProperty()
-    program = None
-    supply_point = None
-
-    @classmethod
-    def _migration_get_fields(cls):
-        return [
-            "email",
-            "invited_by",
-            "invited_on",
-            "is_accepted",
-            "domain",
-            "role",
-            "program",
-            "supply_point",
-        ]
-
-    @classmethod
-    def _migration_get_sql_model_class(cls):
-        return SQLInvitation
 
 
 class DomainRemovalRecord(DeleteRecord):
