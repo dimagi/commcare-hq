@@ -12,6 +12,7 @@ CASE_ID_SOURCE = 'case_id'
 
 # maps Case fields to the API field names used in CommCareCaseResource
 CASE_API_PATH_MAP = {
+    'closed': 'closed',
     'date_closed': 'date_closed',
     'date_modified': 'date_modified',
     'external_id': 'properties.external_id',
