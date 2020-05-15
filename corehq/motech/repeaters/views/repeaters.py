@@ -12,8 +12,6 @@ from django.views.decorators.http import require_POST
 from memoized import memoized
 from requests.auth import HTTPBasicAuth, HTTPDigestAuth
 
-from dimagi.utils.post import simple_post
-
 from corehq import privileges, toggles
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.domain.decorators import domain_admin_required
@@ -30,8 +28,8 @@ from corehq.motech.auth import HTTPBearerAuth
 from corehq.motech.const import (
     ALGO_AES,
     BASIC_AUTH,
-    DIGEST_AUTH,
     BEARER_AUTH,
+    DIGEST_AUTH,
     PASSWORD_PLACEHOLDER,
 )
 from corehq.motech.repeaters.forms import (
@@ -43,6 +41,7 @@ from corehq.motech.repeaters.forms import (
 from corehq.motech.repeaters.models import Repeater, RepeatRecord
 from corehq.motech.repeaters.repeater_generators import RegisterGenerator
 from corehq.motech.repeaters.utils import get_all_repeater_types
+from corehq.motech.requests import simple_post
 from corehq.motech.utils import b64_aes_encrypt
 
 RepeaterTypeInfo = namedtuple('RepeaterTypeInfo', 'class_name friendly_name has_config instances')
