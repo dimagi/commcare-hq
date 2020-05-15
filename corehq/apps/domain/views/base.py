@@ -4,6 +4,7 @@ from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _
 
+from collections import namedtuple
 from memoized import memoized
 
 from corehq.apps.accounting.mixins import BillingModalsMixin
@@ -15,6 +16,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.domain.utils import normalize_domain_name
 from corehq.apps.hqwebapp.views import BaseSectionPageView
 from corehq.apps.users.models import Invitation
+from corehq.util.quickcache import quickcache
 
 
 def covid19(request):
@@ -24,20 +26,22 @@ def covid19(request):
 # about why we need this custom login_required decorator
 @login_required
 def select(request, do_not_redirect=False, next_view=None):
-    domains_for_user = Domain.active_for_user(request.user)
-    if not domains_for_user:
+    if not hasattr(request, 'couch_user'):
+        return redirect('registration_domain')
+
+    # next_view must be a url that expects exactly one parameter, a domain name
+    next_view = next_view or request.GET.get('next_view') or "domain_homepage"
+    domain_links = get_domain_dropdown_links(request.couch_user, view_name=next_view)
+    if not domain_links:
         return redirect('registration_domain')
 
     email = request.couch_user.get_email()
     open_invitations = [e for e in Invitation.by_email(email) if not e.is_expired]
 
-    # next_view must be a url that expects exactly one parameter, a domain name
-    next_view = next_view or request.GET.get('next_view')
     additional_context = {
-        'domains_for_user': domains_for_user,
+        'domain_links': domain_links,
         'open_invitations': [] if next_view else open_invitations,
         'current_page': {'page_name': _('Select A Project')},
-        'next_view': next_view or 'domain_homepage',
     }
 
     domain_select_template = "domain/select.html"
@@ -63,6 +67,22 @@ def select(request, do_not_redirect=False, next_view=None):
 
         del request.session['last_visited_domain']
         return render(request, domain_select_template, additional_context)
+
+
+Link = namedtuple('Link', ('name', 'url'))
+
+
+@quickcache(['couch_user.username'])
+def get_domain_dropdown_links(couch_user, view_name="domain_homepage"):
+    domain_objects = set(Domain.active_for_user(couch_user))
+
+    def _domain_objects_to_links(objects):
+        return sorted([Link(
+            name=o.display_name(),
+            url=reverse(view_name, args=[o.name]),
+        ) for o in objects], key=lambda link: link.name.lower())
+
+    return _domain_objects_to_links(domain_objects)
 
 
 class DomainViewMixin(object):

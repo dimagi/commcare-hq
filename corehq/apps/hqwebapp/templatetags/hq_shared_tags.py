@@ -29,7 +29,6 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.exceptions import AlreadyRenderedException
 from corehq.apps.hqwebapp.models import MaintenanceAlert
 from corehq.motech.utils import pformat_json
-from corehq.util.quickcache import quickcache
 from corehq.util.soft_assert import soft_assert
 
 register = template.Library()
@@ -113,15 +112,6 @@ def cachebuster(url):
     return resource_versions.get(url, "")
 
 
-@quickcache(['couch_user.username'])
-def _get_domain_list(couch_user):
-    domains = Domain.active_for_user(couch_user)
-    return [{
-        'url': reverse('domain_homepage', args=[domain_obj.name]),
-        'name': domain_obj.display_name(),
-    } for domain_obj in domains]
-
-
 @register.simple_tag(takes_context=True)
 def domains_for_user(context, request, selected_domain=None):
     """
@@ -130,12 +120,13 @@ def domains_for_user(context, request, selected_domain=None):
     the user doc updates via save.
     """
 
-    domain_list = _get_domain_list(request.couch_user)
-    ctxt = {
-        'domain_list': sorted(domain_list, key=lambda domain: domain['name'].lower()),
+    from corehq.apps.domain.views.base import get_domain_dropdown_links
+    domain_links = get_domain_dropdown_links(request.couch_user)
+    context = {
+        'domain_links': domain_links,
         'current_domain': selected_domain,
     }
-    return mark_safe(render_to_string('hqwebapp/includes/domain_list_dropdown.html', ctxt, request))
+    return mark_safe(render_to_string('hqwebapp/includes/domain_list_dropdown.html', context, request))
 
 
 @register.simple_tag
