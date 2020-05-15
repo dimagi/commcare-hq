@@ -108,13 +108,18 @@ class FixtureAccessor:
                 recipes[ingredient.recipe_code].append(ingredient)
         return recipes
 
+    def _localize(self, col_name):
+        if self.lang_code == 'lang_0':
+            return col_name
+        return f'{col_name}_{self.lang_code}'
+
     @cached_property
     def foods(self):
         """Food items by food_code"""
         foods = {}
         for item_dict in self._get_fixture_dicts(Food.table_name):
-            # A bunch of columns are duplicated - like food_name_lang_3
-            item_dict = {k: v for k, v in item_dict.items() if '_lang_' not in k}
+            item_dict['food_name'] = item_dict[self._localize('food_name')]
+            item_dict['food_base_term'] = item_dict[self._localize('food_base_term')]
             food = _wrap(Food, item_dict)
             foods[food.food_code] = food
         return foods
