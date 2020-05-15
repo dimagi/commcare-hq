@@ -17,7 +17,6 @@ def require_mobile_access(fn):
     def _inner(request, domain, *args, **kwargs):
         if toggles.RESTRICT_MOBILE_ACCESS.enabled(domain):
             origin_token = request.META.get(ORIGIN_TOKEN_HEADER, None)
-            print("Origin Token: %s" % origin_token)
             if origin_token:
                 if _test_token_valid(origin_token):
                     return fn(request, domain, *args, **kwargs)
@@ -35,7 +34,6 @@ def _test_token_valid(origin_token):
     client = get_redis_client().client.get_client()
     test_result = client.get("%s%s" % (ORIGIN_TOKEN_SLUG, origin_token))
     if test_result:
-        print("Result: %s" % test_result.decode("UTF-8"))
         return test_result.decode("UTF-8") == '"valid"'
 
     return False
