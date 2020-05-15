@@ -131,12 +131,11 @@ class TimeoutMiddleware(MiddlewareMixin):
         if any(Domain.is_secure_session_required(domain) for domain in domains):
             return True
 
-        from corehq.apps.linked_domain.dbaccessors import get_linked_domains
+        from corehq.apps.users.models import DomainPermissionsMirror
         for domain in domains:
-            if toggles.ENTERPRISE_LINKED_DOMAINS.enabled(domain):
-                links = [link for link in get_linked_domains(domain) if not link.is_remote]
-                if (any(Domain.is_secure_session_required(link.linked_domain) for link in links)):
-                    return True
+            mirror_domains = DomainPermissionsMirror.mirror_domains(domain)
+            if (any(Domain.is_secure_session_required(d) for d in mirror_domains)):
+                return True
 
     def process_view(self, request, view_func, view_args, view_kwargs):
         if not request.user.is_authenticated:

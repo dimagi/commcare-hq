@@ -470,12 +470,12 @@ class DomainPermissionsMirror(models.Model):
         unique_together = ('source_domain', 'mirror_domain')
 
     @classmethod
-    def by_source_domain(cls, source_domain):
-        return cls.objects.filter(source_domain=source_domain)
+    def mirror_domains(cls, source_domain):
+        return [m.mirror_domain for m in cls.objects.filter(source_domain=source_domain)]
 
     @classmethod
-    def by_mirror_domain(cls, mirror_domain):
-        return cls.objects.filter(mirror_domain=mirror_domain)
+    def source_domains(cls, mirror_domain):
+        return [m.source_domain for m in cls.objects.filter(mirror_domain=mirror_domain)]
 
 
 class DomainMembershipError(Exception):
@@ -554,11 +554,8 @@ class IsMemberOfMixin(DocumentSchema):
             return True
 
         if include_enterprise:
-            # If this is a linked domain, return true if the user is a member of the master
-            master_link = get_domain_master_link(domain)
-            if master_link and not master_link.is_remote:
-                if toggles.ENTERPRISE_LINKED_DOMAINS.enabled(master_link.master_domain):
-                    return bool(self.get_domain_membership(master_link.master_domain))
+            source_domains = DomainPermissionsMirror.source_domains(domain)
+            return any(self.get_domain_membership(d) for d in source_domains)
 
         return False
 
@@ -600,10 +597,10 @@ class _AuthorizableMixin(IsMemberOfMixin):
         return domain_membership
 
     def get_enterprise_membership(self, linked_domain):
-        master_link = get_domain_master_link(linked_domain)
-        if master_link and not master_link.is_remote:
-            if toggles.ENTERPRISE_LINKED_DOMAINS.enabled(master_link.master_domain):
-                return self.get_domain_membership(master_link.master_domain)
+        for domain in DomainPermissionsMirror.source_domains(linked_domain):
+            membership = self.get_domain_membership(domain)
+            if membership:
+                return membership
         return None
 
     def add_domain_membership(self, domain, timezone=None, **kwargs):

@@ -49,7 +49,6 @@ from corehq.apps.hqwebapp.signals import clear_login_attempts
 from corehq.apps.users.models import CouchUser
 from corehq.toggles import (
     DATA_MIGRATION,
-    ENTERPRISE_LINKED_DOMAINS,
     IS_CONTRACTOR,
     PUBLISH_CUSTOM_REPORTS,
     TWO_FACTOR_SUPERUSER_ROLLOUT,

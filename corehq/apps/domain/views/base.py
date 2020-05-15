@@ -8,7 +8,6 @@ from django.utils.translation import ugettext as _
 
 from memoized import memoized
 
-from corehq import toggles
 from corehq.apps.accounting.mixins import BillingModalsMixin
 from corehq.apps.domain.decorators import (
     login_and_domain_required,
@@ -78,13 +77,12 @@ Link = namedtuple('Link', ('name', 'url'))
 
 @quickcache(['couch_user.username'])
 def get_domain_dropdown_links(couch_user, view_name="domain_homepage"):
+    from corehq.apps.users.models import DomainPermissionsMirror
     domain_objects = set(Domain.active_for_user(couch_user))
     enterprise_domain_objects = set()
     for domain_obj in domain_objects:
-        if toggles.ENTERPRISE_LINKED_DOMAINS.enabled(domain_obj.name):
-            for domain_link in get_linked_domains(domain_obj.name):
-                if not domain_link.is_remote:
-                    enterprise_domain_objects.add(Domain.get_by_name(domain_link.linked_domain))
+        for mirror_domain in DomainPermissionsMirror.mirror_domains(domain_obj.name):
+            enterprise_domain_objects.add(Domain.get_by_name(mirror_domain))
     enterprise_domain_objects = enterprise_domain_objects - domain_objects
 
     def _domain_objects_to_links(objects):
