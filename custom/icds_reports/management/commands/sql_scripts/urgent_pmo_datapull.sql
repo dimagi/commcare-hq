@@ -1,4 +1,4 @@
-select sum(pse_attended_21_days) as child_pse,sum(lunch_count_21_days) as child_hcm,sum(rations_21_plus_distributed) as child_thr from "agg_child_health" where month='2018-03-01' and aggregation_level=1 and state_is_test is distinct from 1;
+select sum(pse_attended_21_days) as child_pse,sum(lunch_count_21_days) as child_hcm,sum(rations_21_plus_distributed) as child_thr, sum(weighed_and_height_measured_in_month) as height_weight_measured_in_month from "agg_child_health" where month='2018-03-01' and aggregation_level=1 and state_is_test is distinct from 1 and state_id in ('f98e91aa003accb7b849a0f18ebd7039','f9b47ea2ee2d8a02acddeeb491d3e175','a2fcb186e9be8464e167bb1c56ce8fd9','f1cd643f0df908421abd915298ba57bc', '2af81d10b2ca4229a54bab97a5150538','d982a6fb4cca0824fbde59db18d3800f','9cd4fd88d9f047088a377b7e7d144830','9051ef4f91d54a89b89c533780857e05');
 
 
 /*
@@ -15,7 +15,7 @@ select sum(pse_attended_21_days) as child_pse,sum(lunch_count_21_days) as child_
 */
 
 
-select sum(rations_21_plus_distributed) as mother_thr from agg_ccs_record where month='2018-03-01' and aggregation_level=1 and state_is_test is distinct from 1;
+select sum(rations_21_plus_distributed) as mother_thr,sum(valid_in_month) as pw_lw_enrolled from agg_ccs_record where month='2018-03-01' and aggregation_level=1 and state_is_test is distinct from 1 and state_id in ('f98e91aa003accb7b849a0f18ebd7039','f9b47ea2ee2d8a02acddeeb491d3e175','a2fcb186e9be8464e167bb1c56ce8fd9','f1cd643f0df908421abd915298ba57bc', '2af81d10b2ca4229a54bab97a5150538','d982a6fb4cca0824fbde59db18d3800f','9cd4fd88d9f047088a377b7e7d144830','9051ef4f91d54a89b89c533780857e05');
 
 /*
                                                        QUERY PLAN                                                        
@@ -31,7 +31,7 @@ select sum(rations_21_plus_distributed) as mother_thr from agg_ccs_record where 
 */
 
 
- select SUM(awc_days_open) as days_opened, sum(num_launched_awcs) as launched,SUM(awc_days_open)/sum(num_launched_awcs) as avg_days_opened from agg_awc where month='2018-03-01' and aggregation_level=1 and state_is_test is distinct from 1;
+ select SUM(awc_days_open) as days_opened, sum(num_launched_awcs) as launched,SUM(awc_days_open)/sum(num_launched_awcs) as avg_days_opened,sum(cases_household) as total_household, sum(num_launched_states) as launched_states, sum(num_launched_districts) as launched_districts,sum(num_launched_blocks) as launched_blocks from agg_awc where month='2018-03-01' and aggregation_level=1 and state_is_test is distinct from 1 and state_id in ('f98e91aa003accb7b849a0f18ebd7039','f9b47ea2ee2d8a02acddeeb491d3e175','a2fcb186e9be8464e167bb1c56ce8fd9','f1cd643f0df908421abd915298ba57bc', '2af81d10b2ca4229a54bab97a5150538','d982a6fb4cca0824fbde59db18d3800f','9cd4fd88d9f047088a377b7e7d144830','9051ef4f91d54a89b89c533780857e05');
 
  /*
                                                         QUERY PLAN                                                        
@@ -49,7 +49,7 @@ select sum(rations_21_plus_distributed) as mother_thr from agg_ccs_record where 
 
 
 
- select sum(incentive_eligible), sum(awh_eligible) from icds_dashboard_aww_incentive where month='2019-03-01' and is_launched=true;
+ select sum(CASE WHEN incentive_eligible THEN 1 ELSE 0 END ), sum(CASE WHEN awh_eligible THEN 1 ELSE 0 END) from icds_dashboard_aww_incentive where month='2019-03-01' and is_launched=true and state_id in ('f98e91aa003accb7b849a0f18ebd7039','f9b47ea2ee2d8a02acddeeb491d3e175','a2fcb186e9be8464e167bb1c56ce8fd9','f1cd643f0df908421abd915298ba57bc', '2af81d10b2ca4229a54bab97a5150538','d982a6fb4cca0824fbde59db18d3800f','9cd4fd88d9f047088a377b7e7d144830','9051ef4f91d54a89b89c533780857e05');
  /*
  Finalize Aggregate  (cost=19316.33..19316.34 rows=1 width=16)
    ->  Gather  (cost=19315.90..19316.31 rows=4 width=16)
@@ -78,3 +78,8 @@ select sum(rations_21_plus_distributed) as mother_thr from agg_ccs_record where 
                            Filter: (month = '2019-03-01'::date)
                      ->  Parallel Seq Scan on icds_db_aww_incentive_44c9a47a653b5bb720a56dcd  (cost=0.00..348.10 rows=4488 width=2)
  */
+
+select sum(valid_in_month) from "agg_child_health" where month='2018-03-01' and age_tranche::INTEGER between 6 and 36 and aggregation_level=1 and state_id in ('f98e91aa003accb7b849a0f18ebd7039','f9b47ea2ee2d8a02acddeeb491d3e175','a2fcb186e9be8464e167bb1c56ce8fd9','f1cd643f0df908421abd915298ba57bc', '2af81d10b2ca4229a54bab97a5150538','d982a6fb4cca0824fbde59db18d3800f','9cd4fd88d9f047088a377b7e7d144830','9051ef4f91d54a89b89c533780857e05');;
+select sum(valid_in_month) from "agg_child_health" where month='2018-03-01' and age_tranche::INTEGER between 37 and 72 and aggregation_level=1 and state_id in ('f98e91aa003accb7b849a0f18ebd7039','f9b47ea2ee2d8a02acddeeb491d3e175','a2fcb186e9be8464e167bb1c56ce8fd9','f1cd643f0df908421abd915298ba57bc', '2af81d10b2ca4229a54bab97a5150538','d982a6fb4cca0824fbde59db18d3800f','9cd4fd88d9f047088a377b7e7d144830','9051ef4f91d54a89b89c533780857e05');;
+select sum(valid_in_month) from "agg_child_health" where month='2018-03-01' and age_tranche::INTEGER between 0 and 72 and aggregation_level=1 and state_id in ('f98e91aa003accb7b849a0f18ebd7039','f9b47ea2ee2d8a02acddeeb491d3e175','a2fcb186e9be8464e167bb1c56ce8fd9','f1cd643f0df908421abd915298ba57bc', '2af81d10b2ca4229a54bab97a5150538','d982a6fb4cca0824fbde59db18d3800f','9cd4fd88d9f047088a377b7e7d144830','9051ef4f91d54a89b89c533780857e05');;
+select sum(valid_visits), sum(expected_visits),CASE WHEN sum(expected_visits)>0 THEN sum(valid_visits)/sum(expected_visits)::float*100 ELSE 0 END,CASE WHEN sum(wer_eligible)>0 THEN sum(wer_weighed)/sum(wer_eligible)::float*100 ELSE 0 END from "agg_awc" where month='2018-03-01' and aggregation_level=1 and state_id in ('f98e91aa003accb7b849a0f18ebd7039','f9b47ea2ee2d8a02acddeeb491d3e175','a2fcb186e9be8464e167bb1c56ce8fd9','f1cd643f0df908421abd915298ba57bc', '2af81d10b2ca4229a54bab97a5150538','d982a6fb4cca0824fbde59db18d3800f','9cd4fd88d9f047088a377b7e7d144830','9051ef4f91d54a89b89c533780857e05');and state_id in ('f98e91aa003accb7b849a0f18ebd7039','f9b47ea2ee2d8a02acddeeb491d3e175','a2fcb186e9be8464e167bb1c56ce8fd9','f1cd643f0df908421abd915298ba57bc', '2af81d10b2ca4229a54bab97a5150538','d982a6fb4cca0824fbde59db18d3800f','9cd4fd88d9f047088a377b7e7d144830','9051ef4f91d54a89b89c533780857e05');and state_id in ('f98e91aa003accb7b849a0f18ebd7039','f9b47ea2ee2d8a02acddeeb491d3e175','a2fcb186e9be8464e167bb1c56ce8fd9','f1cd643f0df908421abd915298ba57bc', '2af81d10b2ca4229a54bab97a5150538','d982a6fb4cca0824fbde59db18d3800f','9cd4fd88d9f047088a377b7e7d144830','9051ef4f91d54a89b89c533780857e05');;
