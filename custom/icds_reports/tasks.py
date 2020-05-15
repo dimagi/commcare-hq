@@ -1775,7 +1775,7 @@ def get_data_not_in_ucr(status_record):
     chunk_size = 1000
     for chunk in chunked(matching_records_for_db, chunk_size):
         doc_ids = [val[0] for val in chunk]
-        doc_id_and_inserted_in_ucr = _get_docs_in_ucr(domain, status_record.table_id, list(set(doc_ids) - set(known_bad_doc_ids)))
+        doc_id_and_inserted_in_ucr = _get_docs_in_ucr(domain, status_record.table_id, doc_ids)
         for doc_id, doc_subtype, sql_modified_on in chunk:
             if doc_id in doc_id_and_inserted_in_ucr:
                 # This is to handle the cases which are outdated. This condition also handles the time drift of 1 sec
