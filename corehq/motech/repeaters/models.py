@@ -372,7 +372,12 @@ class Repeater(QuickCachedDocumentMixin, Document):
         headers = self.get_headers(repeat_record)
         auth = self.get_auth()
         url = self.get_url(repeat_record)
-        return simple_post(payload, url, headers=headers, timeout=POST_TIMEOUT, auth=auth, verify=self.verify)
+        return simple_post(
+            self.domain, url, payload,
+            headers=headers, auth=auth, verify=self.verify,
+            timeout=POST_TIMEOUT, notify_addresses=self.notify_addresses,
+            payload_id=repeat_record.payload_id,
+        )
 
     def fire_for_record(self, repeat_record):
         payload = self.get_payload(repeat_record)

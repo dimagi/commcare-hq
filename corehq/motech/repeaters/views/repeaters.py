@@ -403,7 +403,10 @@ def test_repeater(request, domain):
             auth = None
 
         try:
-            resp = simple_post(fake_post, url, headers=headers, auth=auth, verify=verify)
+            resp = simple_post(
+                domain, url, fake_post,
+                headers=headers, auth=auth, verify=verify,
+            )
             if 200 <= resp.status_code < 300:
                 return HttpResponse(json.dumps({"success": True,
                                                 "response": resp.text,
