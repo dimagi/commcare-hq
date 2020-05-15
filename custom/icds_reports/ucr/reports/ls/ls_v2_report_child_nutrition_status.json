@@ -141,9 +141,9 @@
         "column_id": "dob",
         "field": "dob",
         "transform": {
-            "type": "date_format",
-            "format": "%-d/%-m/%Y"
-             },
+          "type": "date_format",
+          "format": "%-d/%-m/%Y"
+        },
         "calculate_total": false,
         "type": "field",
         "display": {
