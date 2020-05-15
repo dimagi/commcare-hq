@@ -1084,10 +1084,11 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
     @patch('corehq.messaging.tasks.sync_case_chunk_for_messaging_rule.delay')
     def test_run_messaging_rule_sharded(self, task_patch):
         toggles.SHARDED_RUN_MESSAGING_RULE.set(self.domain, True, toggles.NAMESPACE_DOMAIN)
+        self.addCleanup(toggles.SHARDED_RUN_MESSAGING_RULE.set, self.domain, False, toggles.NAMESPACE_DOMAIN)
         rule_id = self._setup_rule()
         with create_case(self.domain, 'person') as case1, create_case(self.domain, 'person') as case2:
             run_messaging_rule(self.domain, rule_id)
-            self.assertEqual(task_patch.call_count, 2)
+            self.assertEqual(task_patch.call_count, 1)
             task_patch.assert_has_calls(
                 [
                     call(self.domain, [case1.case_id, case2.case_id], rule_id)

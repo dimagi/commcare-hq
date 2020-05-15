@@ -55,25 +55,27 @@ class MessagingRuleProgressHelper(object):
         self.client.set(self.total_key, 0)
         if shard_count:
             self.client.set(self.shard_count_key, shard_count)
-        self.client.expire(self.current_key, self.key_expiry)
-        self.client.expire(self.total_key, self.key_expiry)
+        for key in [self.current_key, self.total_key, self.shard_count_key, self.completed_shards_key]:
+            self.client.expire(key, self.key_expiry)
         self.client.delete(self.rule_cancellation_key)
         self.set_rule_initiation_key()
 
     def mark_shard_complete(self, db_alias):
-        completed_shards = self.client.get(self.completed_shards_key) or []
-        self.client.set(self.completed_shards_key, completed_shards + [db_alias])
+        """Mark shard complete
+        :returns: True if all shards are complete else false; None if shard
+        count is not set.
+        """
+        shard_count = self.client.get(self.shard_count_key)
+        pipe = self.client.client.get_client().pipeline()
+        pipe.sadd(self.completed_shards_key, db_alias)
+        pipe.scard(self.completed_shards_key)
+        ignore, completed_count = pipe.execute()
+        self.client.expire(self.shard_count_key, self.key_expiry)
         self.client.expire(self.completed_shards_key, self.key_expiry)
-
-    def all_shards_completed(self):
-        completed_count = len(self.client.get(self.completed_shards_key) or [])
-        total_count = self.client.get(self.shard_count_key) or 0
-        return completed_count == total_count
+        return None if shard_count is None else completed_count == shard_count
 
     def set_rule_complete(self):
         self.clear_rule_initiation_key()
-        for key in [self.shard_count_key, self.completed_shards_key]:
-            self.client.delete(key)
 
     def increment_current_case_count(self, fail_hard=False):
         try:

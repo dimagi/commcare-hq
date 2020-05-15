@@ -196,7 +196,7 @@ def run_messaging_rule_for_shard(domain, rule_id, db_alias):
         progress_helper.increase_total_case_count(len(case_id_chunk))
         if progress_helper.is_canceled():
             break
-    progress_helper.mark_shard_complete(db_alias)
-    if progress_helper.all_shards_completed():
+    all_shards_complete = progress_helper.mark_shard_complete(db_alias)
+    if all_shards_complete:
         # this should get triggered for the last shard
         set_rule_complete.delay(rule_id)
