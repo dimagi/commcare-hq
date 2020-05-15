@@ -30,16 +30,15 @@ from corehq.apps.hqwebapp.crispy import HQFormHelper
 from corehq.apps.hqwebapp.widgets import SelectToggle
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reminders.forms import validate_time
-from corehq.apps.sms.models import (
-    SQLMobileBackend,
-)
+from corehq.apps.sms.models import SQLMobileBackend
 from corehq.apps.sms.util import (
     ALLOWED_SURVEY_DATE_FORMATS,
     get_sms_backend_classes,
     strip_plus,
     validate_phone_number,
 )
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.models import CommCareUser, CouchUser
+from corehq.toggles import IS_CONTRACTOR
 
 ENABLED = "ENABLED"
 DISABLED = "DISABLED"
@@ -1264,14 +1263,14 @@ class InitiateAddSMSBackendForm(Form):
         label="Gateway Type",
     )
 
-    def __init__(self, is_superuser=False, *args, **kwargs):
+    def __init__(self, user: CouchUser, *args, **kwargs):
         super(InitiateAddSMSBackendForm, self).__init__(*args, **kwargs)
 
         from corehq.messaging.smsbackends.telerivet.models import SQLTelerivetBackend
         backend_classes = get_sms_backend_classes()
         backend_choices = []
         for api_id, klass in backend_classes.items():
-            if is_superuser or api_id == SQLTelerivetBackend.get_api_id():
+            if is_superuser_or_contractor(user) or api_id == SQLTelerivetBackend.get_api_id():
                 friendly_name = klass.get_generic_name()
                 backend_choices.append((api_id, friendly_name))
         backend_choices = sorted(backend_choices, key=lambda backend: backend[1])
@@ -1291,6 +1290,10 @@ class InitiateAddSMSBackendForm(Form):
                 ), css_class='col-sm-3 col-md-2 col-lg-2'),
             ),
         )
+
+
+def is_superuser_or_contractor(user: CouchUser):
+    return IS_CONTRACTOR.enabled(user.username) or user.is_superuser
 
 
 class SubscribeSMSForm(Form):
