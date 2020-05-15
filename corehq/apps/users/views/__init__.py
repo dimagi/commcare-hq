@@ -566,6 +566,7 @@ class ListRolesView(BaseRoleAccessView):
 
 
 @method_decorator(require_can_edit_or_view_web_users, name='dispatch')
+@method_decorator(require_superuser, name='dispatch')
 class DomainPermissionsMirrorView(BaseUserSettingsView):
     template_name = 'users/domain_permissions_mirror.html'
     page_title = ugettext_lazy("Enterprise Permissions")

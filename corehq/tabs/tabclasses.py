@@ -1429,7 +1429,7 @@ class ProjectUsersTab(UITab):
                 'show_in_dropdown': True,
             })
 
-        if self.couch_user.can_edit_web_users() or self.couch_user.can_view_web_users():
+        if self.couch_user.is_superuser:
             from corehq.apps.users.models import DomainPermissionsMirrorSource
             if DomainPermissionsMirrorSource.mirror_domains(self.domain):
                 from corehq.apps.users.views import DomainPermissionsMirrorView
