@@ -60,8 +60,10 @@ from corehq.messaging.scheduling.tests.util import (
 )
 from corehq.messaging.tasks import (
     run_messaging_rule,
+    run_messaging_rule_for_shard,
     sync_case_for_messaging,
     sync_case_for_messaging_rule,
+
 )
 from corehq.sql_db.util import paginate_query_across_partitioned_databases
 
@@ -1082,14 +1084,21 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
 
     @run_with_all_backends
     @patch('corehq.messaging.tasks.sync_case_chunk_for_messaging_rule.delay')
-    def test_run_messaging_rule_sharded(self, task_patch):
+    @patch('corehq.messaging.tasks.run_messaging_rule_for_shard.delay')
+    def test_run_messaging_rule_sharded(self, shard_rule_patch, sync_patch):
         toggles.SHARDED_RUN_MESSAGING_RULE.set(self.domain, True, toggles.NAMESPACE_DOMAIN)
         self.addCleanup(toggles.SHARDED_RUN_MESSAGING_RULE.set, self.domain, False, toggles.NAMESPACE_DOMAIN)
         rule_id = self._setup_rule()
         with create_case(self.domain, 'person') as case1, create_case(self.domain, 'person') as case2:
             run_messaging_rule(self.domain, rule_id)
-            self.assertEqual(task_patch.call_count, 1)
-            task_patch.assert_has_calls(
+            shard_rule_patch.assert_has_calls(
+                [
+                    call(self.domain, rule_id, 'default')
+                ],
+                any_order=True
+            )
+            run_messaging_rule_for_shard(self.domain, rule_id, 'default')
+            sync_patch.assert_has_calls(
                 [
                     call(self.domain, [case1.case_id, case2.case_id], rule_id)
                 ],
