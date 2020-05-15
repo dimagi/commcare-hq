@@ -588,7 +588,7 @@ class _AuthorizableMixin(IsMemberOfMixin):
         Use either SingleMembershipMixin or MultiMembershipMixin instead of this
     """
 
-    def get_domain_membership(self, domain):
+    def get_domain_membership(self, domain, allow_mirroring=True):
         domain_membership = None
         try:
             for d in self.domain_memberships:
@@ -596,8 +596,12 @@ class _AuthorizableMixin(IsMemberOfMixin):
                     domain_membership = d
                     if domain not in self.domains:
                         raise self.Inconsistent("Domain '%s' is in domain_memberships but not domains" % domain)
-            if not domain_membership and domain in self.domains:
-                raise self.Inconsistent("Domain '%s' is in domain but not in domain_memberships" % domain)
+            if not domain_membership:
+                if domain in self.domains:
+                    raise self.Inconsistent("Domain '%s' is in domain but not in domain_memberships" % domain)
+                if allow_mirroring:
+                    source_domain = DomainPermissionsMirror.source_domain(domain)
+                    return self.get_domain_membership(source_domain, allow_mirroring=False)
         except self.Inconsistent as e:
             logging.warning(e)
             self.domains = [d.domain for d in self.domain_memberships]
@@ -674,10 +678,10 @@ class _AuthorizableMixin(IsMemberOfMixin):
                 # this is a hack needed because we can't pass parameters from views
                 domain = self.current_domain
             else:
-                return False # no domain, no admin
+                return False  # no domain, no admin
         if self.is_global_admin() and (domain is None or not domain_restricts_superusers(domain)):
             return True
-        dm = self.get_domain_membership(domain)
+        dm = self.get_domain_membership(domain, allow_mirroring=True)
         if dm:
             return dm.is_admin
         else:
@@ -699,14 +703,13 @@ class _AuthorizableMixin(IsMemberOfMixin):
             elif self.is_domain_admin(domain):
                 return True
 
-        dm = self.get_domain_membership(domain)
+        dm = self.get_domain_membership(domain, allow_mirroring=True)
         if dm:
             # an admin has access to all features by default, restrict that if needed
             if dm.is_admin and restrict_global_admin:
                 return False
             return dm.has_permission(permission, data)
-        else:
-            return False
+        return False
 
     @memoized
     def get_role(self, domain=None, checking_global_admin=True):
@@ -1570,7 +1573,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             else:
                 return role.permissions.view_report_list
         else:
-            dm = self.get_domain_membership(domain)
+            dm = self.get_domain_membership(domain, allow_mirroring=True)
             return dm.viewable_reports() if dm else []
 
     def can_view_some_reports(self, domain):
