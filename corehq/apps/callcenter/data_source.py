@@ -30,7 +30,7 @@ def call_center_data_source_configuration_provider():
         data_source_json = _get_json(data_source_path)
         data_source_json['domains'] = ds_domains
         data_source_json['server_environment'] = [settings.SERVER_ENVIRONMENT]
-        ds_conf = StaticDataSourceConfiguration.wrap(deepcopy(data_source_json))
+        ds_conf = StaticDataSourceConfiguration.wrap(data_source_json)
         return ds_conf, data_source_path
 
     form_ds_domains = [domain.name for domain in domains if domain.form_datasource_enabled]

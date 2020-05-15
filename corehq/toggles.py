@@ -1843,14 +1843,6 @@ RUN_DATA_MANAGEMENT_TASKS = StaticToggle(
 )
 
 
-ALLOW_DEID_ODATA_FEED = StaticToggle(
-    'allow_deid_odata_feed',
-    'Allow De-Identification in OData feeds',
-    TAG_PRODUCT,
-    [NAMESPACE_DOMAIN]
-)
-
-
 ACCOUNTING_TESTING_TOOLS = StaticToggle(
     'accounting_testing_tools',
     'Enable Accounting Testing Tools',
@@ -1913,4 +1905,15 @@ REFER_CASE_REPEATER = StaticToggle(
     'COVID: Allow refer case repeaters to be setup',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN]
+)
+
+RESTRICT_LOGIN_AS = StaticToggle(
+    'restrict_login_as',
+    'COVID: Limit allowed users for login as',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    description="""
+    Adds a permission that can be set on user roles to allow login as, but only as a limited set of users. Users with this enabled can "login as" other users that set custom user property "login_as_user" to the first user's username.
+    For example, if web user a@a.com has this permission set on their role, they can only login as mobile users who have the custom property "login_as_user" set to "a@a.com".
+    """
 )

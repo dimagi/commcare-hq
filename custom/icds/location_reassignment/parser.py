@@ -8,8 +8,10 @@ from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import normalize_username
 from custom.icds.location_reassignment.const import (
     AWC_CODE_COLUMN,
+    CASE_ID_COLUMN,
     CURRENT_SITE_CODE_COLUMN,
     EXTRACT_OPERATION,
+    HAVE_APPENDED_LOCATION_NAMES,
     HOUSEHOLD_ID_COLUMN,
     MERGE_OPERATION,
     NEW_LGD_CODE,
@@ -26,6 +28,10 @@ from custom.icds.location_reassignment.const import (
     VALID_OPERATIONS,
 )
 from custom.icds.location_reassignment.models import Transition
+from custom.icds.location_reassignment.utils import (
+    append_location_name_and_site_code,
+    get_household_case_ids,
+)
 
 
 def parse_site_code(site_code):
@@ -39,15 +45,22 @@ class TransitionRow(object):
     An object representation of each row in excel
     """
     def __init__(self, location_type, operation, old_site_code, new_site_code, expects_parent,
-                 new_location_details=None, old_username=None, new_username=None):
+                 new_location_details, old_username=None, new_username=None):
         self.location_type = location_type
         self.operation = operation
         self.old_site_code = old_site_code
         self.new_site_code = new_site_code
         self.expects_parent = expects_parent
-        self.new_location_details = new_location_details or {}
+        self.new_location_details = new_location_details
         self.old_username = old_username
         self.new_username = new_username
+
+        if location_type in HAVE_APPENDED_LOCATION_NAMES:
+            if self.new_location_details['name'] and self.new_site_code:
+                self.new_location_details['name'] = append_location_name_and_site_code(
+                    self.new_location_details['name'],
+                    new_site_code
+                )
 
     def validate(self):
         """
@@ -78,7 +91,7 @@ class TransitionRow(object):
         if bool(self.new_username) != bool(self.old_username):
             errors.append(f"Need both old and new username for {self.operation} operation "
                           f"on location '{self.old_site_code}'")
-        if not self.new_location_details.get('name', '').strip():
+        if not self.new_location_details.get('name', ''):
             errors.append(f"Missing new location name for {self.new_site_code}")
         parent_site_code = self.new_location_details.get('parent_site_code')
         if parent_site_code:
@@ -161,7 +174,7 @@ class Parser(object):
                     new_site_code=parse_site_code(row.get(NEW_SITE_CODE_COLUMN)),
                     expects_parent=expects_parent,
                     new_location_details={
-                        'name': row.get(NEW_NAME),
+                        'name': row.get(NEW_NAME, '').strip(),
                         'parent_site_code': parse_site_code(row.get(NEW_PARENT_SITE_CODE)),
                         'lgd_code': row.get(NEW_LGD_CODE),
                         'sub_district_name': row.get(NEW_SUB_DISTRICT_NAME)
@@ -350,11 +363,13 @@ class Parser(object):
                 for new_site_code, new_location_details in transition.new_location_details.items():
                     parent_site_code = new_location_details['parent_site_code']
                     if parent_site_code in existing_new_parents:
-                        if existing_new_parents[parent_site_code].location_type.code != expected_parent_type:
-                            self.errors.append(f"Unexpected parent {parent_site_code} "
-                                               f"for type {location_type_code}")
+                        parent_location_type = existing_new_parents[parent_site_code].location_type.code
+                        if parent_location_type != expected_parent_type:
+                            self.errors.append(f"Unexpected {parent_location_type} parent {parent_site_code} "
+                                               f"set for {location_type_code}")
                     elif parent_site_code not in self.new_site_codes_for_location_type[expected_parent_type]:
-                        self.errors.append(f"Unexpected parent {parent_site_code} for type {location_type_code}")
+                        self.errors.append(f"Unexpected non-{expected_parent_type} parent {parent_site_code} "
+                                           f"set for {location_type_code}")
                     if parent_site_code in self.site_codes_to_be_archived:
                         self.errors.append(f"Parent {parent_site_code} is marked for archival")
 
@@ -397,14 +412,20 @@ class HouseholdReassignmentParser(object):
 
     def parse(self):
         errors = []
+        site_codes = set([ws.title for ws in self.workbook.worksheets])
+        location_ids = {loc.site_code: loc.location_id
+                        for loc in SQLLocation.objects.filter(domain=self.domain, site_code__in=site_codes)}
         for worksheet in self.workbook.worksheets:
+            household_case_ids = set()
             location_site_code = worksheet.title
+            location_id = location_ids[location_site_code]
             for row in worksheet:
                 household_id = row.get(HOUSEHOLD_ID_COLUMN)
                 new_awc_code = row.get(AWC_CODE_COLUMN)
                 if not household_id:
                     errors.append("Missing Household ID for %s" % location_site_code)
                     continue
+                household_case_ids.add(household_id)
                 if not new_awc_code:
                     errors.append("Missing New AWC Code for household ID %s" % household_id)
                     continue
@@ -412,4 +433,42 @@ class HouseholdReassignmentParser(object):
                     'old_site_code': location_site_code,
                     'new_site_code': new_awc_code
                 }
+            expected_case_ids = set(get_household_case_ids(self.domain, location_id))
+            if expected_case_ids ^ household_case_ids:
+                missing_case_ids = expected_case_ids - household_case_ids
+                unexpected_case_ids = household_case_ids - expected_case_ids
+                if missing_case_ids:
+                    errors.append(f"Missing households for {location_site_code}: "
+                                  f"{', '.join(missing_case_ids)}")
+                if unexpected_case_ids:
+                    errors.append(f"Unexpected households for {location_site_code}: "
+                                  f"{', '.join(unexpected_case_ids)}")
+
+        return errors
+
+
+class OtherCasesReassignmentParser(object):
+    def __init__(self, domain, workbook):
+        self.domain = domain
+        self.workbook = workbook
+        self.reassignments = {}  # case id mapped to a dict with old_site_code and new_site_code
+
+    def parse(self):
+        errors = []
+        for worksheet in self.workbook.worksheets:
+            location_site_code = worksheet.title
+            for row in worksheet:
+                case_id = row.get(CASE_ID_COLUMN)
+                new_site_code = row.get(NEW_SITE_CODE_COLUMN)
+                if not case_id:
+                    errors.append("Missing Case ID for %s" % location_site_code)
+                    continue
+                if not new_site_code:
+                    errors.append("Missing New Location Code for case ID %s" % case_id)
+                    continue
+                self.reassignments[case_id] = {
+                    'old_site_code': location_site_code,
+                    'new_site_code': new_site_code
+                }
+            # ToDo: add check for expected case ids covered
         return errors

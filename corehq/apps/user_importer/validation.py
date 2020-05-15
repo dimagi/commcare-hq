@@ -29,6 +29,7 @@ def get_user_import_validators(domain_obj, all_specs, allowed_groups=None, allow
         UsernameValidator(domain),
         BooleanColumnValidator(domain, 'is_active'),
         BooleanColumnValidator(domain, 'is_account_confirmed'),
+        BooleanColumnValidator(domain, 'send_confirmation_email'),
         RequiredFieldsValidator(domain),
         DuplicateValidator(domain, 'username', all_specs),
         DuplicateValidator(domain, 'user_id', all_specs),

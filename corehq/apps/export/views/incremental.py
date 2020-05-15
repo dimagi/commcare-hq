@@ -151,7 +151,7 @@ class IncrementalExportLogView(GenericTabularReport, DatespanMixin):
     def _get_checkpoints(self):
         checkpoints = IncrementalExportCheckpoint.objects.filter(
             incremental_export__domain=self.domain,
-            date_created__range=(self.datespan.startdate, self.datespan.enddate),
+            date_created__range=(self.datespan.startdate_param_utc, self.datespan.enddate_param_utc),
         ).order_by("-date_created")
 
         if self.incremental_export_id:

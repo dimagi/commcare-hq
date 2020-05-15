@@ -10,7 +10,9 @@
           </div>
           <p class="font-weight-700 text-white font-16 font-montserrat" >{$ $ctrl.currentStepMeta.label $}</p>
       </div>
-      <div class="summary-list">
+      <reassignment-message ng-show="$ctrl.showReassignmentMessage() && $ctrl.haveAccessToFeatures" selected-location="$ctrl.selectedLocation()"
+                            selected-date="$ctrl.selectedDate"></reassignment-message>
+      <div class="summary-list" ng-if="!$ctrl.showReassignmentMessage()">
           <kpi data="$ctrl.data"></kpi>
       </div>
       <help-popup></help-popup>

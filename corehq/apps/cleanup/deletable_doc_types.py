@@ -26,6 +26,7 @@ DELETABLE_COUCH_DOC_TYPES = {
     'GlobalAppConfig': (settings.APPS_DB,),
     'HqDeploy': (MAIN_DB,),
     'ILSGatewayConfig': (MAIN_DB,),
+    'Invitation': (settings.USERS_GROUPS_DB,),
     'RegistrationRequest': (MAIN_DB,),
     'StandaloneTranslationDoc': (MAIN_DB,),
     'WisePillDeviceEvent': (MAIN_DB,),
