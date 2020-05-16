@@ -3520,7 +3520,7 @@ class ReportModule(ModuleBase):
         return ReportModuleSuiteHelper(self).get_custom_entries()
 
     def get_menus(self, build_profile_id=None):
-        from corehq.apps.app_manager.suite_xml.utils import get_module_enum_text, get_module_locale_id
+        from corehq.apps.app_manager.suite_xml.utils import get_module_locale_id
         kwargs = {}
         if self.get_app().enable_module_filtering and self.module_filter:
             kwargs['relevant'] = interpolate_xpath(self.module_filter)
@@ -3528,7 +3528,6 @@ class ReportModule(ModuleBase):
         menu = suite_models.LocalizedMenu(
             id=id_strings.menu_id(self),
             menu_locale_id=get_module_locale_id(self),
-            menu_enum_text=get_module_enum_text(self),
             media_image=self.uses_image(build_profile_id=build_profile_id),
             media_audio=self.uses_audio(build_profile_id=build_profile_id),
             image_locale_id=id_strings.module_icon_locale(self),

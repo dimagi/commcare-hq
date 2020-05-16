@@ -67,18 +67,6 @@ def validate_suite(suite):
             raise SuiteValidationError('field/sort/@order must be unique per detail')
 
 
-def _module_uses_name_enum(module):
-    if not toggles.APP_BUILDER_CONDITIONAL_NAMES.enabled(module.get_app().domain):
-        return False
-    return bool(module.name_enum)
-
-
-def _form_uses_name_enum(form):
-    if not toggles.APP_BUILDER_CONDITIONAL_NAMES.enabled(form.get_app().domain):
-        return False
-    return bool(form.name_enum)
-
-
 def _should_use_root_display(module):
     # child modules set to display only forms should use their parent module's
     # name so as not to confuse mobile when the two are combined
@@ -88,40 +76,8 @@ def _should_use_root_display(module):
 def get_module_locale_id(module):
     if _should_use_root_display(module):
         module = module.root_module
-    if not _module_uses_name_enum(module):
-        return id_strings.module_locale(module)
+    return id_strings.module_locale(module)
 
 
 def get_form_locale_id(form):
-    if not _form_uses_name_enum(form):
-        return id_strings.form_locale(form)
-
-
-def get_module_enum_text(module):
-    if _should_use_root_display(module):
-        module = module.root_module
-    if not _module_uses_name_enum(module):
-        return None
-
-    return Text(xpath=XpathEnum.build(
-        enum=module.name_enum,
-        template='if({key_as_condition}, {key_as_var_name}',
-        get_template_context=lambda item, i: {
-            'key_as_condition': item.key_as_condition(),
-            'key_as_var_name': item.ref_to_key_variable(i, 'display')
-        },
-        get_value=lambda key: id_strings.module_name_enum_variable(module, key)))
-
-
-def get_form_enum_text(form):
-    if not _form_uses_name_enum(form):
-        return None
-
-    return Text(xpath=XpathEnum.build(
-        enum=form.name_enum,
-        template='if({key_as_condition}, {key_as_var_name}',
-        get_template_context=lambda item, i: {
-            'key_as_condition': item.key_as_condition(),
-            'key_as_var_name': item.ref_to_key_variable(i, 'display')
-        },
-        get_value=lambda key: id_strings.form_name_enum_variable(form, key)))
+    return id_strings.form_locale(form)
