@@ -11,7 +11,7 @@ hqDefine("domain/js/select", [
     initialPageData
 ) {
     var searchModel = function (options) {
-        assertProperties.assert(options, ['domainLinks', 'invitationLinks'])
+        assertProperties.assert(options, ['domainLinks', 'invitationLinks']);
         var self = {};
 
         self.allInvitationLinks = ko.observableArray(options.invitationLinks);
