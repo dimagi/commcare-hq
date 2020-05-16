@@ -989,27 +989,6 @@ def _is_response(duck):
     return hasattr(duck, 'status_code') and hasattr(duck, 'reason')
 
 
-# TODO: Repeaters to use ConnectionSettings
-def get_requests(
-    repeater: Repeater,
-    payload_id: Optional[str] = None,
-) -> Requests:
-    """
-    Returns a Requests object instantiated with properties of the given
-    Repeater. ``payload_id`` specifies the payload that the object will
-    be used for sending, if applicable.
-    """
-    auth_manager = repeater.get_auth_manager()
-    return Requests(
-        repeater.domain,
-        repeater.url,
-        verify=repeater.verify,
-        auth_manager=auth_manager,
-        notify_addresses=repeater.notify_addresses,
-        payload_id=payload_id,
-    )
-
-
 # import signals
 # Do not remove this import, its required for the signals code to run even though not explicitly used in this file
 from corehq.motech.repeaters import signals  # pylint: disable=unused-import,F401
