@@ -848,7 +848,7 @@ class CRUDPaginatedViewMixin(object):
         """
         Specify GET or POST from a request object.
         """
-        raise NotImplementedError("you need to implement get_param_source")
+        return self.request.POST if self.request.method == 'POST' else self.request.GET
 
     @property
     @memoized

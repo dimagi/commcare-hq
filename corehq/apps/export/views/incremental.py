@@ -35,10 +35,6 @@ class IncrementalExportView(BaseProjectDataView, CRUDPaginatedViewMixin):
     template_name = "export/incremental_export.html"
 
     @property
-    def parameters(self):
-        return self.request.POST if self.request.method == "POST" else self.request.GET
-
-    @property
     def total(self):
         # How many documents are you paginating through?
         return self.base_query.count()

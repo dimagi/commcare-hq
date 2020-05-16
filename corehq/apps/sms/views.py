@@ -966,10 +966,6 @@ class DomainSmsGatewayListView(CRUDPaginatedViewMixin, BaseMessagingSectionView)
         return reverse(self.urlname, args=[self.domain])
 
     @property
-    def parameters(self):
-        return self.request.POST if self.request.method == 'POST' else self.request.GET
-
-    @property
     @memoized
     def total(self):
         return SQLMobileBackend.get_domain_backends(SQLMobileBackend.SMS, self.domain, count_only=True)
@@ -1343,10 +1339,6 @@ class GlobalSmsGatewayListView(CRUDPaginatedViewMixin, BaseAdminSectionView):
     @property
     def page_url(self):
         return reverse(self.urlname)
-
-    @property
-    def parameters(self):
-        return self.request.POST if self.request.method == 'POST' else self.request.GET
 
     @property
     @memoized
@@ -1943,10 +1935,6 @@ class ManageRegistrationInvitationsView(BaseAdvancedMessagingSectionView, CRUDPa
     @memoized
     def project_timezone(self):
         return get_timezone_for_user(None, self.domain)
-
-    @property
-    def parameters(self):
-        return self.request.POST if self.request.method == 'POST' else self.request.GET
 
     @property
     def page_context(self):
