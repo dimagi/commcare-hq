@@ -1,6 +1,10 @@
+import re
+
 from django import forms
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext_lazy as _
+
+from email_validator import EmailNotValidError, validate_email
 
 from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
@@ -61,6 +65,15 @@ class ConnectionSettingsForm(forms.ModelForm):
             else:
                 kwargs['initial'] = {'plaintext_password': PASSWORD_PLACEHOLDER}
         super().__init__(*args, **kwargs)
+
+    def clean_notify_addresses_str(self):
+        emails = self.cleaned_data['notify_addresses_str']
+        are_valid = (validate_email(e) for e in re.split('[, ]+', emails) if e)
+        try:
+            all(are_valid)
+        except EmailNotValidError:
+            raise forms.ValidationError(_("Contains an invalid email address."))
+        return emails
 
     def save(self, commit=True):
         self.instance.domain = self.domain
