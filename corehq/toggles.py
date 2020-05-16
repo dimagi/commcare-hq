@@ -1806,6 +1806,12 @@ SKIP_UPDATING_USER_REPORTING_METADATA = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
+RESTRICT_MOBILE_ACCESS = StaticToggle(
+    'restrict_mobile_endpoints',
+    'Require explicit permissions to access mobile app endpoints',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN],
+)
 
 SHOW_BUILD_PROFILE_IN_APPLICATION_STATUS = StaticToggle(
     'show_build_profile_in_app_status',
