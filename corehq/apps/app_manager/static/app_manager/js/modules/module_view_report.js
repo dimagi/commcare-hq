@@ -26,7 +26,6 @@ hqDefine("app_manager/js/modules/module_view_report", function () {
             menuImage: navMenuMedia.menuImage,
             menuAudio: navMenuMedia.menuAudio,
             containerId: "#settings",
-            moduleNameEnum: initial_page_data('name_enum'),
         }));
 
         _([
