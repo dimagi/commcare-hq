@@ -14,8 +14,22 @@ hqDefine("domain/js/select", [
         assertProperties.assert(options, ['domainLinks', 'invitationLinks'])
         var self = {};
 
-        self.invitationLinks = ko.observableArray(options.invitationLinks);
-        self.domainLinks = ko.observableArray(options.domainLinks);
+        self.allInvitationLinks = ko.observableArray(options.invitationLinks);
+        self.allDomainLinks = ko.observableArray(options.domainLinks);
+        self.invitationLinks = ko.observableArray();
+        self.domainLinks = ko.observableArray();
+
+        self.query = ko.observable('');
+
+        self._match = function (link) {
+            return link.display_name.toLowerCase().indexOf(self.query().toLowerCase()) !== -1;
+        };
+        self.search = function () {
+            self.invitationLinks(_.filter(self.allInvitationLinks(), self._match));
+            self.domainLinks(_.filter(self.allDomainLinks(), self._match));
+        };
+
+        self.search();
 
         return self;
     };

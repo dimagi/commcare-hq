@@ -10,7 +10,7 @@
   {% initial_page_data 'invitation_links' invitation_links %}
   {% initial_page_data 'domain_links' domain_links %}
 
-  <div id="all-links">
+  <div id="all-links" class="ko-template">
     <div class="row">
       <div class="col-sm-4">
         <ul class="list-unstyled" data-bind="visible: invitationLinks().length, foreach: invitationLinks">
@@ -25,6 +25,18 @@
         <ul class="nav nav-pills nav-stacked" data-bind="foreach: domainLinks">
           <li><a data-bind="attr: {href: url}, text: display_name"></a></li>
         </ul>
+      </div>
+      <div class="col-sm-4">
+        <!-- spacer -->
+      </div>
+      <div class="col-sm-4">
+        <div class="pull-right">
+          <search-box data-apply-bindings="false"
+                      params="value: query,
+                              action: search,
+                              immediate: true,
+                              placeholder: '{% trans_html_attr "Search Projects..." %}'"></search-box>
+        </div>
       </div>
     </div>
   </div>
