@@ -27,11 +27,9 @@
 
 {% block js-inline %}{{ block.super }}
   {% compress js %}
-    <script src="{% static 'hqwebapp/js/key-value-mapping.js' %}"></script>
     <script src="{% static 'app_manager/js/forms/case_knockout_bindings.js' %}"></script>
     <script src="{% static 'app_manager/js/case_config_utils.js' %}"></script>
   {% endcompress %}
-  {% include 'hqwebapp/partials/key_value_mapping.html' %}
   {% if module.doc_type == 'AdvancedModule' %}
     {% compress js %}
       <script src="{% static 'app_manager/js/forms/advanced/case_properties.js' %}"></script>

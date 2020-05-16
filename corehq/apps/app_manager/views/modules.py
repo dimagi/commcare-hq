@@ -51,7 +51,6 @@ from corehq.apps.app_manager.models import (
     DetailTab,
     FixtureSelect,
     FormActionCondition,
-    MappingItem,
     Module,
     ModuleNotFoundException,
     OpenCaseAction,
