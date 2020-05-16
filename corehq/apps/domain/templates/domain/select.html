@@ -4,27 +4,28 @@
 
 {% block title %}{% trans "My Projects" %}{% endblock title %}
 
+{% requirejs_main 'domain/js/select' %}
+
 {% block page_content %}
-  <div class="row">
-    <div class="col-sm-4">
-      {% if open_invitations %}
-        <ul class="list-unstyled">
-          {% for invitation in open_invitations %}
-            <li style="padding-bottom: 6px;">
-              <a href="{% url "domain_accept_invitation" invitation.domain invitation.uuid %}" class="btn btn-primary btn-xs">
-                <i class='fa fa-envelope'></i>
-                Accept
-              </a>
-              {{  invitation.domain }}
-            </li>
-          {% endfor %}
+  {% initial_page_data 'invitation_links' invitation_links %}
+  {% initial_page_data 'domain_links' domain_links %}
+
+  <div id="all-links">
+    <div class="row">
+      <div class="col-sm-4">
+        <ul class="list-unstyled" data-bind="visible: invitationLinks().length, foreach: invitationLinks">
+          <li style="padding-bottom: 6px;">
+            <a data-bind="attr: {href: url}" class="btn btn-primary btn-xs">
+              <i class='fa fa-envelope'></i>
+              {% trans "Accept" %}
+            </a>
+            <!-- ko text: display_name --><!-- /ko -->
+          </li>
         </ul>
-      {% endif %}
-      <ul class="nav nav-pills nav-stacked">
-        {% for link in domain_links %}
-          <li><a href="{{ link.url }}">{{ link.display_name }}</a></li>
-        {% endfor %}
-      </ul>
+        <ul class="nav nav-pills nav-stacked" data-bind="foreach: domainLinks">
+          <li><a data-bind="attr: {href: url}, text: display_name"></a></li>
+        </ul>
+      </div>
     </div>
   </div>
 {% endblock %}
