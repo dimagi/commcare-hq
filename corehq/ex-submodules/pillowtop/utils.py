@@ -221,6 +221,9 @@ class ErrorCollector(object):
 
 
 def build_bulk_payload(index_info, changes, doc_transform=None, error_collector=None):
+    """
+    Builds bulk payload json to be called via Elasticsearch Bulk API
+    """
     doc_transform = doc_transform or (lambda x: x)
     payload = []
 
@@ -236,7 +239,7 @@ def build_bulk_payload(index_info, changes, doc_transform=None, error_collector=
         if _is_deleted(change):
             payload.append({
                 "_op_type": "delete",
-                "_index": index_info.index,
+                "_index": index_info.alias,
                 "_type": index_info.type,
                 "_id": change.id
             })
@@ -246,7 +249,7 @@ def build_bulk_payload(index_info, changes, doc_transform=None, error_collector=
                 doc = doc_transform(doc)
                 payload.append({
                     "_op_type": "index",
-                    "_index": index_info.index,
+                    "_index": index_info.alias,
                     "_type": index_info.type,
                     "_id": doc['_id'],
                     "_source": doc
