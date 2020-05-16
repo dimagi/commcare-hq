@@ -2,6 +2,14 @@ BASIC_AUTH = "basic"
 DIGEST_AUTH = "digest"
 OAUTH1 = "oauth1"
 BEARER_AUTH = "bearer"
+OAUTH2_PWD = "oauth2_pwd"
+AUTH_TYPES = (
+    (BASIC_AUTH, "HTTP Basic"),
+    (DIGEST_AUTH, "HTTP Digest"),
+    (OAUTH1, "OAuth1"),
+    (BEARER_AUTH, "Ipswitch MOVEit Automation Bearer Token"),
+    (OAUTH2_PWD, "OAuth 2.0 Password Grant")
+)
 
 PASSWORD_PLACEHOLDER = '*' * 16
 

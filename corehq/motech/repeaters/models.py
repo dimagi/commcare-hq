@@ -73,7 +73,6 @@ from django.utils.translation import ugettext_lazy as _
 
 from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
 from memoized import memoized
-from requests.auth import HTTPBasicAuth, HTTPDigestAuth
 from requests.exceptions import ConnectionError, Timeout
 
 from casexml.apps.case.xml import LEGAL_VERSIONS, V2
@@ -93,7 +92,6 @@ from dimagi.utils.parsing import json_format_datetime
 from dimagi.utils.post import simple_post
 
 from corehq import toggles
-
 from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CommCareUser
@@ -102,17 +100,18 @@ from corehq.form_processor.interfaces.dbaccessors import (
     CaseAccessors,
     FormAccessors,
 )
-from corehq.motech.const import ALGO_AES, BASIC_AUTH, DIGEST_AUTH, OAUTH1, BEARER_AUTH
-from corehq.motech.repeaters.repeater_generators import (
-    AppStructureGenerator,
-    CaseRepeaterJsonPayloadGenerator,
-    CaseRepeaterXMLPayloadGenerator,
-    FormRepeaterJsonPayloadGenerator,
-    FormRepeaterXMLPayloadGenerator,
-    LocationPayloadGenerator,
-    ReferCasePayloadGenerator,
-    ShortFormRepeaterJsonPayloadGenerator,
-    UserPayloadGenerator,
+from corehq.motech.auth import (
+    AuthManager,
+    BasicAuthManager,
+    BearerAuthManager,
+    DigestAuthManager,
+)
+from corehq.motech.const import (
+    ALGO_AES,
+    BASIC_AUTH,
+    BEARER_AUTH,
+    DIGEST_AUTH,
+    OAUTH1,
 )
 from corehq.motech.requests import Requests
 from corehq.motech.utils import b64_aes_decrypt
@@ -135,6 +134,17 @@ from .dbaccessors import (
     get_success_repeat_record_count,
 )
 from .exceptions import RequestConnectionError
+from .repeater_generators import (
+    AppStructureGenerator,
+    CaseRepeaterJsonPayloadGenerator,
+    CaseRepeaterXMLPayloadGenerator,
+    FormRepeaterJsonPayloadGenerator,
+    FormRepeaterXMLPayloadGenerator,
+    LocationPayloadGenerator,
+    ReferCasePayloadGenerator,
+    ShortFormRepeaterJsonPayloadGenerator,
+    UserPayloadGenerator,
+)
 from .utils import get_all_repeater_types
 
 
@@ -353,12 +363,33 @@ class Repeater(QuickCachedDocumentMixin, Document):
             return b64_aes_decrypt(ciphertext)
         return self.password
 
-    def get_auth(self):
+    def get_auth_manager(self):
+        if self.auth_type is None:
+            return AuthManager()
         if self.auth_type == BASIC_AUTH:
-            return HTTPBasicAuth(self.username, self.plaintext_password)
-        elif self.auth_type == DIGEST_AUTH:
-            return HTTPDigestAuth(self.username, self.plaintext_password)
-        return None
+            return BasicAuthManager(
+                self.username,
+                self.password,
+            )
+        if self.auth_type == DIGEST_AUTH:
+            return DigestAuthManager(
+                self.username,
+                self.password,
+            )
+        if self.auth_type == OAUTH1:
+            raise NotImplementedError(_(
+                'OAuth1 authentication workflow not yet supported.'
+            ))
+        if self.auth_type == BEARER_AUTH:
+            return BearerAuthManager(
+                self.username,
+                self.password,
+            )
+        # OAuth 2.0 coming when Repeaters use ConnectionSettings
+
+    def get_auth(self):
+        auth_manager = self.get_auth_manager()
+        return auth_manager.get_auth()
 
     @property
     def verify(self):
@@ -932,6 +963,7 @@ def _is_response(duck):
     return hasattr(duck, 'status_code') and hasattr(duck, 'reason')
 
 
+# TODO: Repeaters to use ConnectionSettings
 def get_requests(
     repeater: Repeater,
     payload_id: Optional[str] = None,
@@ -941,15 +973,14 @@ def get_requests(
     Repeater. ``payload_id`` specifies the payload that the object will
     be used for sending, if applicable.
     """
+    auth_manager = repeater.get_auth_manager()
     return Requests(
         repeater.domain,
         repeater.url,
-        repeater.username,
-        repeater.plaintext_password,
         verify=repeater.verify,
+        auth_manager=auth_manager,
         notify_addresses=repeater.notify_addresses,
         payload_id=payload_id,
-        auth_type=repeater.auth_type,
     )
 
 
