@@ -130,9 +130,9 @@ class TimeoutMiddleware(MiddlewareMixin):
         if any(Domain.is_secure_session_required(domain) for domain in domains):
             return True
 
-        from corehq.apps.users.models import DomainPermissionsMirrorSource
+        from corehq.apps.users.models import DomainPermissionsMirror
         for domain in domains:
-            mirrors = DomainPermissionsMirrorSource.mirror_domains(domain)
+            mirrors = DomainPermissionsMirror.mirror_domains(domain)
             if any(Domain.is_secure_session_required(m) for m in mirrors):
                 return True
 

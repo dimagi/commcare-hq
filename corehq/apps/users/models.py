@@ -465,26 +465,22 @@ class DomainMembershipError(Exception):
     pass
 
 
-class DomainPermissionsMirrorSource(models.Model):
-    # Name of the controlling domain
-    name = models.CharField(max_length=126, db_index=True, unique=True)
+class DomainPermissionsMirror(models.Model):
+    # These are both domain names
+    source = models.CharField(max_length=126, db_index=True)
+    mirror = models.CharField(max_length=126, db_index=True, unique=True)
 
     @classmethod
     def mirror_domains(cls, source_domain):
         try:
-            return [o.name for o in cls.objects.get(name=source_domain).domainpermissionsmirror_set.all()]
-        except DomainPermissionsMirrorSource.DoesNotExist:
+            return [o.mirror for o in cls.objects.filter(source=source_domain)]
+        except DomainPermissionsMirror.DoesNotExist:
             return []
-
-
-class DomainPermissionsMirror(models.Model):
-    name = models.CharField(max_length=126, db_index=True, unique=True)
-    source = models.ForeignKey('DomainPermissionsMirrorSource', on_delete=models.CASCADE)
 
     @classmethod
     def source_domain(cls, mirror_domain):
         try:
-            return cls.objects.get(name=mirror_domain).source.name
+            return cls.objects.get(mirror=mirror_domain).source
         except DomainPermissionsMirror.DoesNotExist:
             return None
 
@@ -1421,7 +1417,10 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             return None
 
     def clear_quickcache_for_user(self):
-        from corehq.apps.domain.views.base import get_domain_dropdown_links
+        from corehq.apps.domain.views.base import (
+            get_domain_links_for_dropdown,
+            get_mirror_domain_links_for_dropdown,
+        )
         from corehq.apps.sms.util import is_user_contact_active
 
         self.get_by_username.clear(self.__class__, self.username)
@@ -1435,7 +1434,8 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             self.get_by_user_id.clear(self.__class__, self.user_id, domain)
             is_user_contact_active.clear(domain, self.user_id)
         Domain.active_for_couch_user.clear(self)
-        get_domain_dropdown_links.clear(self)
+        get_domain_links_for_dropdown.clear(self)
+        get_mirror_domain_links_for_dropdown.clear(self)
 
     @classmethod
     @quickcache(['userID', 'domain'])

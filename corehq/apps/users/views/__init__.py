@@ -95,7 +95,7 @@ from corehq.apps.users.models import (
     CommCareUser,
     CouchUser,
     DomainMembershipError,
-    DomainPermissionsMirrorSource,
+    DomainPermissionsMirror,
     DomainRemovalRecord,
     DomainRequest,
     Invitation,
@@ -575,7 +575,7 @@ class DomainPermissionsMirrorView(BaseUserSettingsView):
     @property
     def page_context(self):
         return {
-            'mirrors': DomainPermissionsMirrorSource.mirror_domains(self.domain),
+            'mirrors': DomainPermissionsMirror.mirror_domains(self.domain),
         }
 
 

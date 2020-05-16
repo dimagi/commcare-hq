@@ -86,11 +86,11 @@ def get_domain_links_for_dropdown(couch_user, view_name="domain_homepage"):
 # Returns domains where given user has access only by virtue of a DomainPermissionsMirror
 @quickcache(['couch_user.username'])
 def get_mirror_domain_links_for_dropdown(couch_user, view_name="domain_homepage"):
-    from corehq.apps.users.models import DomainPermissionsMirrorSource
+    from corehq.apps.users.models import DomainPermissionsMirror
     domain_links_by_name = {d.name: d for d in get_domain_links_for_dropdown(couch_user)}
     mirror_domain_objects_by_name = {}
     for domain_name in domain_links_by_name:
-        for mirror_domain in DomainPermissionsMirrorSource.mirror_domains(domain_name):
+        for mirror_domain in DomainPermissionsMirror.mirror_domains(domain_name):
             if mirror_domain not in domain_links_by_name:
                 mirror_domain_objects_by_name[mirror_domain] = Domain.get_by_name(mirror_domain)
 

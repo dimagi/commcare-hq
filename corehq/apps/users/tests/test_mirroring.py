@@ -7,7 +7,6 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import (
     DomainMembership,
     DomainPermissionsMirror,
-    DomainPermissionsMirrorSource,
     Permissions,
     UserRole,
     WebUser,
@@ -20,17 +19,14 @@ class DomainPermissionsMirrorTest(TestCase):
         super().setUpClass()
 
         # Set up domains
-        cls.source = DomainPermissionsMirrorSource(name='state')
-        cls.source.save()
-        cls.mirror_domain_name = 'county'
-        mirror = DomainPermissionsMirror(name=cls.mirror_domain_name, source=cls.source)
-        mirror.save()
-        create_domain(cls.source.name)
-        create_domain(cls.mirror_domain_name)
+        cls.mirror = DomainPermissionsMirror(source='state', mirror='county')
+        cls.mirror.save()
+        create_domain('state')
+        create_domain('county')
 
         # Set up users
-        cls.web_user_admin = WebUser.create(cls.source.name, 'emma', 'badpassword', 'e@aol.com', is_admin=True)
-        cls.web_user_non_admin = WebUser.create(cls.source.name, 'clementine', 'worsepassword', 'c@aol.com')
+        cls.web_user_admin = WebUser.create('state', 'emma', 'badpassword', 'e@aol.com', is_admin=True)
+        cls.web_user_non_admin = WebUser.create('state', 'clementine', 'worsepassword', 'c@aol.com')
 
     def setUp(self):
         patches = [
@@ -44,7 +40,7 @@ class DomainPermissionsMirrorTest(TestCase):
     @classmethod
     def _master_role(cls):
         return UserRole(
-            domain=cls.source.name,
+            domain='state',
             permissions=Permissions(
                 view_web_users=True,
                 edit_web_users=False,
@@ -57,13 +53,19 @@ class DomainPermissionsMirrorTest(TestCase):
     def tearDownClass(cls):
         cls.web_user_admin.delete()
         cls.web_user_non_admin.delete()
-        Domain.get_by_name(cls.mirror_domain_name).delete()
-        Domain.get_by_name(cls.source.name).delete()
-        cls.source.delete()
+        Domain.get_by_name('county').delete()
+        Domain.get_by_name('state').delete()
+        cls.mirror.delete()
         super().tearDownClass()
 
+    def test_class(self):
+        self.assertEqual('state', DomainPermissionsMirror.source_domain('county'))
+        self.assertIsNone(DomainPermissionsMirror.source_domain('state'))
+        self.assertEqual(['county'], DomainPermissionsMirror.mirror_domains('state'))
+        self.assertEqual([], DomainPermissionsMirror.mirror_domains('county'))
+
     def test_permission_mirroring(self):
-        for domain in (self.source.name, self.mirror_domain_name):
+        for domain in ('state', 'county'):
             self.assertTrue(self.web_user_admin.is_domain_admin(domain))
             self.assertFalse(self.web_user_non_admin.is_domain_admin(domain))
 
