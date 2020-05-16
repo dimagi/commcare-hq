@@ -118,6 +118,7 @@ from corehq.apps.sms.util import (
     get_contact,
     get_or_create_sms_translations,
     get_sms_backend_classes,
+    is_superuser_or_contractor,
 )
 from corehq.apps.smsbillables.utils import \
     country_name_from_isd_code_or_empty as country_name_from_code
@@ -164,7 +165,7 @@ class BaseMessagingSectionView(BaseDomainView):
 
     @cached_property
     def is_system_admin(self):
-        return self.request.couch_user.is_superuser
+        return is_superuser_or_contractor(self.request.couch_user)
 
     @cached_property
     def is_granted_messaging_access(self):
@@ -996,6 +997,7 @@ class DomainSmsGatewayListView(CRUDPaginatedViewMixin, BaseMessagingSectionView)
         context.update({
             'initiate_new_form': InitiateAddSMSBackendForm(user=self.request.couch_user),
             'extra_backend_mappings': extra_backend_mappings,
+            'is_system_admin': self.is_system_admin,
         })
         return context
 
@@ -1122,8 +1124,8 @@ class AddGatewayViewMixin(object):
     """
 
     @property
-    def is_superuser(self):
-        return self.request.couch_user.is_superuser
+    def is_system_admin(self):
+        return is_superuser_or_contractor(self.request.couch_user)
 
     @property
     @memoized
@@ -1135,7 +1137,7 @@ class AddGatewayViewMixin(object):
     def backend_class(self):
         # Superusers can create/edit any backend
         # Regular users can only create/edit Telerivet backends for now
-        if not self.is_superuser and self.hq_api_id != SQLTelerivetBackend.get_api_id():
+        if not self.is_system_admin and self.hq_api_id != SQLTelerivetBackend.get_api_id():
             raise Http404()
         backend_classes = get_sms_backend_classes()
         try:
