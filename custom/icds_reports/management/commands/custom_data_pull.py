@@ -1,4 +1,5 @@
 import os
+import csv
 from datetime import date
 from dateutil.relativedelta import relativedelta
 
@@ -31,13 +32,11 @@ class Command(BaseCommand):
         return rows
 
     def write_to_file(self, rows, start_date):
-        file_object = open('/home/cchq/output.txt', 'a')
-        file_object.write(f'{start_date.strftime("%Y-%m-%d")} \n\n')
+        ret_row = [start_date.strftime("%Y-%m-%d")]
         for row in rows:
             for k, v in row.items():
-                file_object.write(f'{k} >> {v} \n')
-
-        file_object.close()
+                ret_row.append(v)
+        return ret_row
 
 
     def handle(self, *args, **kwargs):
@@ -47,6 +46,11 @@ class Command(BaseCommand):
         start_date = date(2018, 3, 1)
         end_date = date(2020, 3, 1)
         date_itr = start_date
+        final_rows = [['month', 'child_pse', 'child_hcm', 'child_thr', 'height_weight_measured_in_month', 'bf_at_birth', 'born_in_month', 'cf_initiation_in_month', 'cf_initiation_eligible', 'nutrition_status_weighed', 'wasting_severe', 'wasting_moderate', 'weighed_and_height_measured_in_month', 'ebf_in_month', 'underweight_children', 'immunization', 'wer_eligible_child_health', 'mother_thr', 'pw_lw_enrolled', 'counsel_immediatebf_isto_trimester_3', 'days_opened', 'launched', 'avg_days_opened', 'total_household', 'launched_states', 'launched_districts', 'launched_blocks', 'num_awcs_conducted_cbe', 'num_awcs_conducted_vhnd', 'incentive_eligible', 'awh_eligible', 'child_0_36', 'child_36_72', 'child_72', 'valid_visits', 'expected_visits', 'exp_isto_valid', 'wer_eligble_isto_wer_weighed']]
         while date_itr <= end_date:
-            self.write_to_file(self.build_data(date_itr), date_itr)
+            row = self.write_to_file(self.build_data(date_itr), date_itr)
+            final_rows.append(row)
             date_itr = date_itr + relativedelta(months=1)
+        fout = open('/home/cchq/National_issnip_data.csv', 'w')
+        writer = csv.writer(fout)
+        writer.writerows(final_rows)
