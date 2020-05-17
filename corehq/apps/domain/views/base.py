@@ -39,14 +39,17 @@ def select(request, do_not_redirect=False, next_view=None):
     if not domain_links:
         return redirect('registration_domain')
     domain_links += get_mirror_domain_links_for_dropdown(request.couch_user, view_name=next_view)
-    domain_links = sorted(domain_links, key=lambda link: link.display_name.lower())
+    domain_links = sorted(domain_links, key=lambda link: link['display_name'].lower())
 
     email = request.couch_user.get_email()
     open_invitations = [e for e in Invitation.by_email(email) if not e.is_expired]
 
     additional_context = {
         'domain_links': domain_links,
-        'open_invitations': open_invitations if show_invitations else [],
+        'invitation_links': [{
+            'display_name': i.domain,
+            'url': reverse("domain_accept_invitation", args=[i.domain, i.uuid]),
+        } for i in open_invitations] if show_invitations else [],
         'current_page': {'page_name': _('Select A Project')},
     }
 
@@ -75,19 +78,18 @@ def select(request, do_not_redirect=False, next_view=None):
         return render(request, domain_select_template, additional_context)
 
 
-DomainDropdownLink = namedtuple('DomainDropdownLink', ('name', 'display_name', 'url'))
-
-
 @quickcache(['couch_user.username'])
 def get_domain_links_for_dropdown(couch_user, view_name="domain_homepage"):
+    # Returns dicts with keys 'name', 'display_name', and 'url'
     return _domains_to_links(Domain.active_for_user(couch_user), view_name)
 
 
 # Returns domains where given user has access only by virtue of a DomainPermissionsMirror
 @quickcache(['couch_user.username'])
 def get_mirror_domain_links_for_dropdown(couch_user, view_name="domain_homepage"):
+    # Returns dicts with keys 'name', 'display_name', and 'url'
     from corehq.apps.users.models import DomainPermissionsMirror
-    domain_links_by_name = {d.name: d for d in get_domain_links_for_dropdown(couch_user)}
+    domain_links_by_name = {d['name']: d for d in get_domain_links_for_dropdown(couch_user)}
     mirror_domain_objects_by_name = {}
     for domain_name in domain_links_by_name:
         for mirror_domain in DomainPermissionsMirror.mirror_domains(domain_name):
@@ -98,11 +100,11 @@ def get_mirror_domain_links_for_dropdown(couch_user, view_name="domain_homepage"
 
 
 def _domains_to_links(domain_objects, view_name):
-    return sorted([DomainDropdownLink(
-        name=o.name,
-        display_name=o.display_name(),
-        url=reverse(view_name, args=[o.name]),
-    ) for o in domain_objects], key=lambda link: link.display_name.lower())
+    return sorted([{
+        'name': o.name,
+        'display_name': o.display_name(),
+        'url': reverse(view_name, args=[o.name]),
+    } for o in domain_objects], key=lambda link: link['display_name'].lower())
 
 
 class DomainViewMixin(object):
