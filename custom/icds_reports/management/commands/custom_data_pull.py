@@ -45,7 +45,7 @@ class Command(BaseCommand):
 
     def run_task(self):
         start_date = date(2018, 3, 1)
-        end_date = date(2019, 3, 1)
+        end_date = date(2020, 3, 1)
         date_itr = start_date
         while date_itr <= end_date:
             self.write_to_file(self.build_data(date_itr), date_itr)
