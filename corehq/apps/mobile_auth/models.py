@@ -43,6 +43,7 @@ class MobileAuthKeyRecord(SyncCouchToSQLMixin, Document):
     def _migration_get_fields(cls):
         return ["domain", "user_id", "valid", "expires", "type", "key"]
 
+
 def _default_uuid():
     return uuid.uuid4().hex
 
