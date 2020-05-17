@@ -3,12 +3,13 @@ import uuid
 from django.db import models
 
 from dimagi.ext.couchdbkit import DateTimeProperty, Document, StringProperty
+from dimagi.utils.couch.migration import SyncCouchToSQLMixin, SyncSQLToCouchMixin
 from dimagi.utils.parsing import json_format_datetime
 
 from .utils import generate_aes_key
 
 
-class MobileAuthKeyRecord(Document):
+class MobileAuthKeyRecord(SyncCouchToSQLMixin, Document):
     """
 
     Data model for generating the XML for mobile auth
@@ -47,6 +48,14 @@ class MobileAuthKeyRecord(Document):
         ).first()
         return key_record
 
+    @classmethod
+    def _migration_get_sql_model_class(cls):
+        return SQLMobileAuthKeyRecord
+
+    @classmethod
+    def _migration_get_fields(cls):
+        return ["domain", "user_id", "valid", "expires", "type", "key"]
+
 
 def _default_uuid():
     return uuid.uuid4().hex
@@ -56,7 +65,7 @@ def _default_key():
     return generate_aes_key().decode('utf-8')
 
 
-class SQLMobileAuthKeyRecord(models.Model):
+class SQLMobileAuthKeyRecord(SyncSQLToCouchMixin, models.Model):
     uuid = models.UUIDField(primary_key=True, db_index=True, default=_default_uuid)
     domain = models.CharField(max_length=126, null=False, db_index=True)
     user_id = models.CharField(max_length=255, null=False, db_index=True)
@@ -68,3 +77,13 @@ class SQLMobileAuthKeyRecord(models.Model):
 
     class Meta:
         db_table = "mobile_auth_mobileauthkeyrecord"
+
+    _migration_couch_id_name = "uuid"
+
+    @classmethod
+    def _migration_get_couch_model_class(cls):
+        return MobileAuthKeyRecord
+
+    @classmethod
+    def _migration_get_fields(cls):
+        return ["domain", "user_id", "valid", "expires", "type", "key"]
