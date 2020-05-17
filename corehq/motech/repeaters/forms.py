@@ -109,9 +109,7 @@ class FormRepeaterForm(GenericRepeaterForm):
 
     def get_ordered_crispy_form_fields(self):
         fields = super(FormRepeaterForm, self).get_ordered_crispy_form_fields()
-        fields.extend([
-            twbscrispy.PrependedText('include_app_id_param', '')
-        ])
+        fields.append(twbscrispy.PrependedText('include_app_id_param', ''))
         return fields
 
 
@@ -147,7 +145,7 @@ class CaseRepeaterForm(GenericRepeaterForm):
 
     def get_ordered_crispy_form_fields(self):
         fields = super(CaseRepeaterForm, self).get_ordered_crispy_form_fields()
-        return ['white_listed_case_types'] + ['black_listed_users'] + fields
+        return fields + ['white_listed_case_types', 'black_listed_users']
 
     def clean(self):
         cleaned_data = super(CaseRepeaterForm, self).clean()
@@ -182,10 +180,10 @@ class OpenmrsRepeaterForm(CaseRepeaterForm):
 
     def get_ordered_crispy_form_fields(self):
         fields = super(OpenmrsRepeaterForm, self).get_ordered_crispy_form_fields()
-        return [
+        return fields + [
             'location_id',
             twbscrispy.PrependedText('atom_feed_enabled', ''),
-        ] + fields
+        ]
 
     def clean(self):
         cleaned_data = super(OpenmrsRepeaterForm, self).clean()
