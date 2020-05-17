@@ -118,18 +118,16 @@ class ConnectionSettings(models.Model):
     ):
         from corehq.motech.requests import Requests
 
-        if not self._requests:
-            auth_manager = self.get_auth_manager()
-            self._requests = Requests(
-                self.domain,
-                self.url,
-                verify=not self.skip_cert_verify,
-                auth_manager=auth_manager,
-                notify_addresses=self.notify_addresses,
-                payload_id=payload_id,
-                logger=logger,
-            )
-        return self._requests
+        auth_manager = self.get_auth_manager()
+        return Requests(
+            self.domain,
+            self.url,
+            verify=not self.skip_cert_verify,
+            auth_manager=auth_manager,
+            notify_addresses=self.notify_addresses,
+            payload_id=payload_id,
+            logger=logger,
+        )
 
     def get_auth_manager(self):
         if self.auth_type is None:
