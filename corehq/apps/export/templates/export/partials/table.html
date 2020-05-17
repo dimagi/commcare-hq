@@ -108,13 +108,14 @@
                              placeholder: '{% trans "Enter description here"|escapejs %}',
                              cols: 50"
                      data-apply-bindings="false"></inline-edit>
-
-        <div data-bind="ifnot: isLocationSafeForUser()"
-             class="text-warning">
-          {% blocktrans %}
-            This export is filtered to data you don't have access to.
-          {% endblocktrans %}
-        </div>
+        <!-- ko ifnot: isLocationSafeForUser() -->
+          <div class="alert alert-warning alert-small">
+            <i class="fa fa-warning"></i>
+            {% blocktrans %}
+              This export is filtered to data you don't have access to.
+            {% endblocktrans %}
+          </div>
+        <!-- /ko -->
 
         <!-- ko if: isOData -->
           <!-- ko with: odataFeedUrl -->
@@ -540,6 +541,7 @@
 
     {% if is_daily_saved_export %}
       <td>
+        <!-- ko if: isLocationSafeForUser() -->
         <a class="btn btn-default"
            data-bind="attr: {
                         'data-target': '#modalEnableDisableAutoRefresh-' + id() + '-' + emailedExport.groupId(),
@@ -552,6 +554,7 @@
             {% trans "Disable" %}
           </span>
         </a>
+        <!-- /ko -->
       </td>
     {% endif %}
 
