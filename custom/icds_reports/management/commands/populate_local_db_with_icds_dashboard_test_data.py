@@ -33,7 +33,7 @@ class Command(BaseCommand):
                     '=================================================\n'
                 )
                 raise
-            _rename_locations()
+            # _rename_locations()
         else:
             print('operation canceled')
 

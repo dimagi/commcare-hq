@@ -1282,6 +1282,14 @@ class ServiceDeliveryReportView(models.Model):
         blank=True, null=True,
         help_text="Number of children attended >=21 days of PSE"
     )
+    pse_21_24_days= models.IntegerField(
+        blank=True, null=True,
+        help_text="Number of children attended 21-24 days of PSE"
+    )
+    pse_25_days= models.IntegerField(
+        blank=True, null=True,
+        help_text="Number of children attended >=25 days of PSE"
+    )
     lunch_eligible= models.IntegerField(
         blank=True, null=True,
         help_text="Number of children eligible for lunch"
@@ -1305,6 +1313,14 @@ class ServiceDeliveryReportView(models.Model):
     lunch_21_days= models.IntegerField(
         blank=True, null=True,
         help_text="Number of children got >=21 days of lunch"
+    )
+    lunch_20_24_days= models.IntegerField(
+        blank=True, null=True,
+        help_text="Number of children got 20-24 days of lunch"
+    )
+    lunch_25_days= models.IntegerField(
+        blank=True, null=True,
+        help_text="Number of children got >=25 days of lunch"
     )
     thr_eligible= models.IntegerField(
         blank=True, null=True,
@@ -1330,6 +1346,19 @@ class ServiceDeliveryReportView(models.Model):
         blank=True, null=True,
         help_text="beneficiaries who got >=21 days of THR"
     )
+    thr_21_24_days= models.IntegerField(
+        blank=True, null=True,
+        help_text="beneficiaries who got 21-24 days of THR"
+    )
+    thr_25_days= models.IntegerField(
+        blank=True, null=True,
+        help_text="beneficiaries who got >=25 days of THR"
+    )
+    third_fourth_month_of_pregnancy_count = models.IntegerField(null=True)
+    annaprasan_diwas_count = models.IntegerField(null=True)
+    suposhan_diwas_count = models.IntegerField(null=True)
+    coming_of_age_count = models.IntegerField(null=True)
+    public_health_message_count = models.IntegerField(null=True)
 
     class Meta(object):
         app_label = 'icds_reports'
