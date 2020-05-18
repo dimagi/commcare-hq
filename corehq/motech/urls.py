@@ -24,9 +24,16 @@ from corehq.motech.repeaters.views import (
     resume_repeater,
     test_repeater,
 )
-from corehq.motech.views import MotechLogDetailView, MotechLogListView
+from corehq.motech.views import (
+    ConnectionSettingsListView,
+    MotechLogDetailView,
+    MotechLogListView,
+)
 
 urlpatterns = [
+    url(r'^conn/$', ConnectionSettingsListView.as_view(),
+        name=ConnectionSettingsListView.urlname),
+
     url(r'^forwarding/$', DomainForwardingOptionsView.as_view(), name=DomainForwardingOptionsView.urlname),
     url(r'^forwarding/new/FormRepeater/$', AddFormRepeaterView.as_view(),
         {'repeater_type': 'FormRepeater'}, name=AddFormRepeaterView.urlname),

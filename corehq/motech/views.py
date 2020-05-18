@@ -3,8 +3,8 @@ import re
 from django.http import Http404
 from django.urls import reverse
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext_lazy
-from django.views.generic import DetailView, FormView, ListView
+from django.utils.translation import ugettext_lazy as _
+from django.views.generic import DetailView, ListView
 
 from memoized import memoized
 
@@ -12,17 +12,20 @@ from corehq import toggles
 from corehq.apps.domain.views.settings import BaseProjectSettingsView
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
-from corehq.motech.forms import (
-    ConnectionSettingsFormSet,
-    ConnectionSettingsFormSetHelper,
-)
 from corehq.motech.models import ConnectionSettings, RequestLog
+from no_exceptions.exceptions import Http400
+
+
+class Http409(Http400):
+    status = 409
+    meaning = 'CONFLICT'
+    message = "Resource is in use."
 
 
 @method_decorator(require_permission(Permissions.edit_motech), name='dispatch')
 class MotechLogListView(BaseProjectSettingsView, ListView):
     urlname = 'motech_log_list_view'
-    page_title = ugettext_lazy("MOTECH Logs")
+    page_title = _("MOTECH Logs")
     template_name = 'motech/logs.html'
     context_object_name = 'logs'
     paginate_by = 100
@@ -83,7 +86,7 @@ class MotechLogListView(BaseProjectSettingsView, ListView):
 @method_decorator(require_permission(Permissions.edit_motech), name='dispatch')
 class MotechLogDetailView(BaseProjectSettingsView, DetailView):
     urlname = 'motech_log_detail_view'
-    page_title = ugettext_lazy("MOTECH Logs")
+    page_title = _("MOTECH Logs")
     template_name = 'motech/log_detail.html'
     context_object_name = 'log'
 
@@ -102,38 +105,78 @@ class MotechLogDetailView(BaseProjectSettingsView, DetailView):
 
 
 @method_decorator(require_permission(Permissions.edit_motech), name='dispatch')
-class ConnectionSettingsView(BaseProjectSettingsView, FormView):
-    urlname = 'connection_settings_view'
-    page_title = ugettext_lazy('Connection Settings')
+class ConnectionSettingsListView(BaseProjectSettingsView, CRUDPaginatedViewMixin):
+    urlname = 'connection_settings_list_view'
+    page_title = _('Connection Settings')
     template_name = 'motech/connection_settings.html'
-    form_class = ConnectionSettingsFormSet  # NOTE: form_class is a formset
 
     def dispatch(self, request, *args, **kwargs):
+        # TODO: When Repeaters use Connection Settings, drop, and use
+        # @requires_privilege_with_fallback(privileges.DATA_FORWARDING)
         if not (
                 toggles.DHIS2_INTEGRATION.enabled_for_request(request)
                 or toggles.INCREMENTAL_EXPORTS.enabled_for_request(request)
         ):
             raise Http404()
-        return super(ConnectionSettingsView, self).dispatch(request, *args, **kwargs)
+        return super().dispatch(request, *args, **kwargs)
 
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        # BaseConnectionSettingsFormSet needs domain param to add to its
-        # form_kwargs. ConnectionSettingsForm needs it to set
-        # ConnectionSettings.domain when model instance is saved.
-        kwargs['domain'] = self.domain
-        kwargs['queryset'] = ConnectionSettings.objects.filter(domain=self.domain)
-        return kwargs
+    @property
+    def total(self):
+        return self.base_query.count()
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['helper'] = ConnectionSettingsFormSetHelper()
-        return context
+    @property
+    def base_query(self):
+        return ConnectionSettings.objects.filter(domain=self.domain)
 
-    def get_success_url(self):
-        # On save, stay on the same page
-        return reverse(self.urlname, kwargs={'domain': self.domain})
+    @property
+    def column_names(self):
+        return [
+            _("Name"),
+            _("URL"),
+            _("Notify Addresses"),
+            _("Actions"),
+        ]
 
-    def form_valid(self, form):
-        self.object = form.save()  # Saves the forms in the formset
-        return super().form_valid(form)
+    @property
+    def page_context(self):
+        return self.pagination_context
+
+    @property
+    def paginated_list(self):
+        for connection_settings in self.base_query.all():
+            yield {
+                "itemData": self._get_item_data(connection_settings),
+                "template": "connection-settings-template",
+            }
+
+    def _get_item_data(self, connection_settings):
+        return {
+            'id': connection_settings.id,
+            'name': connection_settings.name,
+            'url': connection_settings.url,
+            'notifyAddresses': ', '.join(connection_settings.notify_addresses),
+            'editUrl': '#'  # TODO: ConnectionSettingsDetailView
+            # reverse(
+            #     ConnectionSettingsDetailView.urlname,
+            #     kwargs={'domain': self.domain, 'pk': connection_settings.id}
+            # ),
+        }
+
+    def get_deleted_item_data(self, item_id):
+        connection_settings = ConnectionSettings.objects.get(
+            pk=item_id,
+            domain=self.domain,
+        )
+        if connection_settings.is_in_use():
+            raise Http409
+
+        connection_settings.delete()
+        return {
+            'itemData': self._get_item_data(connection_settings),
+            'template': 'connection-settings-deleted-template',
+        }
+
+    def post(self, *args, **kwargs):
+        return self.paginate_crud_response
+
+
