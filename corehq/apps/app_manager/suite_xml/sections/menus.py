@@ -80,37 +80,15 @@ class MenuContributor(SuiteContributorByModule):
                         if relevancy:
                             menu_kwargs['relevant'] = interpolate_xpath(relevancy)
 
-                    if self.app.enable_localized_menu_media:
-                        module_custom_icon = module.custom_icon
-                        menu_kwargs.update({
-                            'menu_locale_id': get_module_locale_id(module),
-                            'media_image': module.uses_image(build_profile_id=self.build_profile_id),
-                            'media_audio': module.uses_audio(build_profile_id=self.build_profile_id),
-                            'image_locale_id': id_strings.module_icon_locale(module),
-                            'audio_locale_id': id_strings.module_audio_locale(module),
-                            'custom_icon_locale_id': (
-                                id_strings.module_custom_icon_locale(module, module_custom_icon.form)
-                                if module_custom_icon and not module_custom_icon.xpath else None),
-                            'custom_icon_form': (module_custom_icon.form if module_custom_icon else None),
-                            'custom_icon_xpath': (module_custom_icon.xpath
-                                                  if module_custom_icon and module_custom_icon.xpath else None),
-                        })
-                        menu = LocalizedMenu(**menu_kwargs)
-                    else:
-                        menu_kwargs.update({
-                            'media_image': module.default_media_image,
-                            'media_audio': module.default_media_audio,
-                            'locale_id': get_module_locale_id(module),
-                        })
-                        menu = Menu(**menu_kwargs)
+                    menu = self._get_menu(module, extra_kwargs=menu_kwargs)
 
                     excluded_form_ids = []
                     if root_module and isinstance(root_module, ShadowModule):
                         excluded_form_ids = root_module.excluded_form_ids
                     if id_module and isinstance(id_module, ShadowModule):
                         excluded_form_ids = id_module.excluded_form_ids
-
                     commands = self._get_commands(module, excluded_form_ids)
+
                     if module.is_training_module and module.put_in_root and training_menu:
                         training_menu.commands.extend(commands)
                     else:
@@ -126,6 +104,35 @@ class MenuContributor(SuiteContributorByModule):
             self._give_root_menu_grid_style(menus)
 
         return menus
+
+    def _get_menu(self, module, extra_kwargs=None):
+        menu_kwargs = extra_kwargs or {}
+
+        if self.app.enable_localized_menu_media:
+            module_custom_icon = module.custom_icon
+            menu_kwargs.update({
+                'menu_locale_id': get_module_locale_id(module),
+                'media_image': module.uses_image(build_profile_id=self.build_profile_id),
+                'media_audio': module.uses_audio(build_profile_id=self.build_profile_id),
+                'image_locale_id': id_strings.module_icon_locale(module),
+                'audio_locale_id': id_strings.module_audio_locale(module),
+                'custom_icon_locale_id': (
+                    id_strings.module_custom_icon_locale(module, module_custom_icon.form)
+                    if module_custom_icon and not module_custom_icon.xpath else None),
+                'custom_icon_form': (module_custom_icon.form if module_custom_icon else None),
+                'custom_icon_xpath': (module_custom_icon.xpath
+                                      if module_custom_icon and module_custom_icon.xpath else None),
+            })
+            menu = LocalizedMenu(**menu_kwargs)
+        else:
+            menu_kwargs.update({
+                'media_image': module.default_media_image,
+                'media_audio': module.default_media_audio,
+                'locale_id': get_module_locale_id(module),
+            })
+            menu = Menu(**menu_kwargs)
+
+        return menu
 
     def _get_commands(self, module, excluded_form_ids):
         @memoized
