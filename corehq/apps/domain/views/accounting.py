@@ -451,10 +451,6 @@ class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMix
     loading_message = ugettext_lazy("Loading statements...")
 
     @property
-    def parameters(self):
-        return self.request.POST if self.request.method == 'POST' else self.request.GET
-
-    @property
     def stripe_cards(self):
         return get_customer_cards(self.request.user.username, self.domain)
 

@@ -8,6 +8,7 @@ from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import normalize_username
 from custom.icds.location_reassignment.const import (
     AWC_CODE_COLUMN,
+    CASE_ID_COLUMN,
     CURRENT_SITE_CODE_COLUMN,
     EXTRACT_OPERATION,
     HAVE_APPENDED_LOCATION_NAMES,
@@ -120,6 +121,7 @@ class Parser(object):
             a. all old locations should be present in the system
             b. if a location is deprecated, all its descendants should get deprecated too
             c. new parent assigned should be of the expected location type
+            d. usernames passed are present in the system
         """
         self.domain = domain
         self.workbook = workbook
@@ -286,8 +288,21 @@ class Parser(object):
         if self.site_codes_to_be_deprecated:
             self._validate_old_locations()
             self._validate_descendants_deprecated()
+        self._validate_new_site_codes_type()
         self._validate_parents()
         self._validate_usernames()
+
+    def _validate_new_site_codes_type(self):
+        # validate that new site codes, if present in the system, belong to the correct location type
+        for location_type_code, new_site_codes in self.new_site_codes_for_location_type.items():
+            if not new_site_codes:
+                continue
+            locations = (SQLLocation.active_objects.select_related('location_type')
+                         .filter(domain=self.domain, site_code__in=new_site_codes))
+            for location in locations:
+                if location.location_type.code != location_type_code:
+                    self.errors.append(f"{location.location_type.code} {location.site_code} used as "
+                                       f"{location_type_code}")
 
     def _validate_old_locations(self):
         deprecating_locations_site_codes = (
@@ -443,4 +458,31 @@ class HouseholdReassignmentParser(object):
                     errors.append(f"Unexpected households for {location_site_code}: "
                                   f"{', '.join(unexpected_case_ids)}")
 
+        return errors
+
+
+class OtherCasesReassignmentParser(object):
+    def __init__(self, domain, workbook):
+        self.domain = domain
+        self.workbook = workbook
+        self.reassignments = {}  # case id mapped to a dict with old_site_code and new_site_code
+
+    def parse(self):
+        errors = []
+        for worksheet in self.workbook.worksheets:
+            location_site_code = worksheet.title
+            for row in worksheet:
+                case_id = row.get(CASE_ID_COLUMN)
+                new_site_code = row.get(NEW_SITE_CODE_COLUMN)
+                if not case_id:
+                    errors.append("Missing Case ID for %s" % location_site_code)
+                    continue
+                if not new_site_code:
+                    errors.append("Missing New Location Code for case ID %s" % case_id)
+                    continue
+                self.reassignments[case_id] = {
+                    'old_site_code': location_site_code,
+                    'new_site_code': new_site_code
+                }
+            # ToDo: add check for expected case ids covered
         return errors

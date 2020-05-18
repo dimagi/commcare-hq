@@ -1806,6 +1806,12 @@ SKIP_UPDATING_USER_REPORTING_METADATA = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
+RESTRICT_MOBILE_ACCESS = StaticToggle(
+    'restrict_mobile_endpoints',
+    'Require explicit permissions to access mobile app endpoints',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN],
+)
 
 SHOW_BUILD_PROFILE_IN_APPLICATION_STATUS = StaticToggle(
     'show_build_profile_in_app_status',
@@ -1911,5 +1917,9 @@ RESTRICT_LOGIN_AS = StaticToggle(
     'restrict_login_as',
     'COVID: Limit allowed users for login as',
     TAG_CUSTOM,
-    namespaces=[NAMESPACE_DOMAIN]
+    namespaces=[NAMESPACE_DOMAIN],
+    description="""
+    Adds a permission that can be set on user roles to allow login as, but only as a limited set of users. Users with this enabled can "login as" other users that set custom user property "login_as_user" to the first user's username.
+    For example, if web user a@a.com has this permission set on their role, they can only login as mobile users who have the custom property "login_as_user" set to "a@a.com".
+    """
 )

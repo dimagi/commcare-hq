@@ -1998,9 +1998,9 @@ def get_deprecation_info(locations, show_test, multiple_levels=False):
         if show_test or loc.metadata.get('is_test_location', 'real') != 'test':
             locations_list.append(loc)
             if loc.metadata.get('deprecated_to'):
-                replacement_location_ids.extend(loc.metadata.get('deprecated_to', []))
+                replacement_location_ids.extend(loc.metadata['deprecated_to'].split(','))
             if loc.metadata.get('deprecates'):
-                replacement_location_ids.extend(loc.metadata.get('deprecates', []))
+                replacement_location_ids.extend(loc.metadata['deprecates'].split(','))
 
     if multiple_levels:
         replacement_names = _construct_replacement_map_from_sql_location(replacement_location_ids)
@@ -2032,7 +2032,9 @@ def get_location_launched_status(filters, loc_name):
             return location_filters
         else:
             location_id_cols = ['state_id', 'district_id', 'block_id', 'supervisor_id', 'awc_id']
-            reduced_loc_id_cols = location_id_cols[:location_filters['aggregation_level']]
+            # Subtracting 1 from agg level because agg level is 1 level deeper as it finds the
+            # launched status of all sub locations
+            reduced_loc_id_cols = location_id_cols[:location_filters['aggregation_level'] - 1]
 
             location_filters.update(
                 {
@@ -2053,5 +2055,12 @@ def get_location_launched_status(filters, loc_name):
 def timestamp_string_to_date_string(ts_string):
     if ts_string:
         return parse(ts_string).strftime(ISO_DATE_FORMAT)
+    else:
+        return None
+
+
+def datetime_to_date_string(dtime):
+    if dtime:
+        return dtime.strftime(ISO_DATE_FORMAT)
     else:
         return None

@@ -193,7 +193,9 @@ class TestParser(TestCase):
             ])
 
     @patch('custom.icds.location_reassignment.parser.Parser._validate_usernames')
+    @patch('custom.icds.location_reassignment.parser.Parser._validate_new_site_codes_type')
     @patch('custom.icds.location_reassignment.parser.Parser._validate_descendants_deprecated')
+    @patch('custom.icds.location_reassignment.parser.Parser._validate_old_locations')
     @patch('corehq.apps.locations.models.SQLLocation.active_objects')
     @patch('corehq.apps.locations.models.LocationType.objects')
     def test_validate_parents(self, location_type_mock, locations_mock, *_):
@@ -211,3 +213,25 @@ class TestParser(TestCase):
             self.assertIn('Unexpected non-state parent 1 set for supervisor', errors, "missing location found")
             self.assertIn('Unexpected state parent 13 set for awc', errors, "incorrect parent type not flagged")
             self.assertIn('Parent 12 is marked for archival', errors, "archived parent not caught")
+
+    @patch('custom.icds.location_reassignment.parser.Parser._validate_usernames')
+    @patch('custom.icds.location_reassignment.parser.Parser._validate_parents')
+    @patch('custom.icds.location_reassignment.parser.Parser._validate_descendants_deprecated')
+    @patch('custom.icds.location_reassignment.parser.Parser._validate_old_locations')
+    @patch('corehq.apps.locations.models.SQLLocation.active_objects')
+    @patch('corehq.apps.locations.models.LocationType.objects')
+    def test_validate_new_site_codes_type(self, location_type_mock, locations_mock, *_):
+        location_type_mock.by_domain.return_value = self.location_types
+        location_type_mock.select_related.return_value.filter.return_value = self.location_types
+        locations_mock.select_related.return_value.filter.return_value = [
+            Location(site_code='13', location_type=self.state_location_type)
+        ]
+        with tempfile.TemporaryFile() as file:
+            export_raw(self.headers, self.rows, file, format=Format.XLS_2007)
+            file.seek(0)
+            workbook = get_workbook(file)
+            parser = Parser(self.domain, workbook)
+            errors = parser.parse()
+            self.assertIn('state 13 used as supervisor', errors)
+            self.assertIn('state 13 used as awc', errors)
+            self.assertNotIn('state 13 used as state', errors)

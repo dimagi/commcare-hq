@@ -25,13 +25,10 @@ from django.views.generic.base import TemplateView
 import six.moves.urllib.error
 import six.moves.urllib.parse
 import six.moves.urllib.request
-from couchdbkit import ResourceConflict
-from unidecode import unidecode
+from text_unidecode import unidecode
 
-from casexml.apps.phone.fixtures import generator
 from corehq.util.metrics import metrics_counter
 from dimagi.utils.logging import notify_error
-from dimagi.utils.parsing import string_to_boolean
 from dimagi.utils.web import get_url_base, json_response
 
 from corehq import privileges, toggles
@@ -76,7 +73,7 @@ from corehq.apps.hqwebapp.decorators import (
 )
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.formdetails import readable
-from corehq.apps.users.decorators import require_can_edit_commcare_users
+from corehq.apps.users.decorators import require_can_login_as
 from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.apps.users.util import format_username
 from corehq.apps.users.views import BaseUserSettingsView
@@ -156,6 +153,22 @@ class FormplayerMain(View):
                 def set_cookie(response):  # overwrite the default noop set_cookie
                     response.delete_cookie(cookie_name)
                     return response
+
+        elif request.couch_user.has_permission(domain, 'limited_login_as'):
+            login_as_users = login_as_user_query(
+                domain,
+                request.couch_user,
+                search_string='',
+                limit=1,
+                offset=0
+            ).run()
+            if login_as_users.total == 1:
+                def set_cookie(response):
+                    response.set_cookie(cookie_name, user.raw_username)
+                    return response
+
+                user = CouchUser.get_by_username(login_as_users.hits[0]['username'])
+                return user, set_cookie
 
         return request.couch_user, set_cookie
 
@@ -287,7 +300,7 @@ class LoginAsUsers(View):
     urlname = 'login_as_users'
 
     @method_decorator(login_and_domain_required)
-    @method_decorator(require_can_edit_commcare_users)
+    @method_decorator(require_can_login_as)
     @method_decorator(requires_privilege_for_commcare_user(privileges.CLOUDCARE))
     def dispatch(self, *args, **kwargs):
         return super(LoginAsUsers, self).dispatch(*args, **kwargs)
