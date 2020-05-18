@@ -63,8 +63,9 @@ class ConnectionSettings(models.Model):
     def notify_addresses(self):
         return [addr for addr in re.split('[, ]+', self.notify_addresses_str) if addr]
 
-    def get_requests(self, payload_id, logger):
+    def get_requests(self, payload_id=None, logger=None):
         from corehq.motech.requests import Requests
+
         return Requests(
             self.domain,
             self.url,
@@ -76,6 +77,26 @@ class ConnectionSettings(models.Model):
             logger=logger,
             auth_type=self.auth_type,
         )
+
+    def is_in_use(self):
+        """
+        Returns whether anything uses this instance.
+        """
+        from corehq.motech.dhis2.dbaccessors import get_dataset_maps
+
+        # Check IncrementalExport instances
+        if self.incrementalexport_set.first():
+            return True
+
+        # Check DataSetMap instances
+        if any(True for m in get_dataset_maps(self.domain)
+               if m.connection_settings_id == self.id):
+            return True
+
+        # TODO: Check Repeaters (when Repeaters use ConnectionSettings)
+        # TODO: Check OpenmrsImporters (ditto)
+
+        return False
 
 
 class RequestLog(models.Model):
