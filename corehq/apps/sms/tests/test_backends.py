@@ -67,6 +67,7 @@ from corehq.messaging.smsbackends.unicel.models import (
 )
 from corehq.messaging.smsbackends.vertex.models import VertexBackend
 from corehq.messaging.smsbackends.yo.models import SQLYoBackend
+from corehq.messaging.smsbackends.infobip.models import SQLInfobipBackend
 from corehq.util.test_utils import create_test_case
 
 
@@ -224,6 +225,13 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
         )
         cls.airtel_tcl_backend.save()
 
+        cls.infobip_backend = SQLInfobipBackend(
+            name='INFOBIP',
+            is_global=True,
+            hq_api_id=SQLInfobipBackend.get_api_id()
+        )
+        cls.infobip_backend.save()
+
     @classmethod
     def tearDownClass(cls):
         cls.teardown_subscriptions()
@@ -249,6 +257,7 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
         cls.ivory_coast_mtn_backend.delete()
         cls.karix_backend.delete()
         cls.airtel_tcl_backend.delete()
+        cls.infobip_backend.delete()
         clear_plan_version_cache()
         super(AllBackendTest, cls).tearDownClass()
 
@@ -343,8 +352,10 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
     @patch('corehq.messaging.smsbackends.ivory_coast_mtn.models.IvoryCoastMTNBackend.send')
     @patch('corehq.messaging.smsbackends.karix.models.KarixBackend.send')
     @patch('corehq.messaging.smsbackends.airtel_tcl.models.AirtelTCLBackend.send')
+    @patch('corehq.messaging.smsbackends.infobip.models.SQLInfobipBackend.send')
     def test_outbound_sms(
             self,
+            infobip_send,
             airtel_tcl_send,
             karix_send,
             ivory_coast_mtn_send,
@@ -385,6 +396,8 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
         self._test_outbound_backend(self.ivory_coast_mtn_backend, 'ivory_coast_mtn_test', ivory_coast_mtn_send)
         self._test_outbound_backend(self.karix_backend, 'karix test', karix_send)
         self._test_outbound_backend(self.airtel_tcl_backend, 'airtel tcl test', airtel_tcl_send)
+        self._test_outbound_backend(self.infobip_backend, 'infobip test', infobip_send)
+
 
     @run_with_all_backends
     def test_unicel_inbound_sms(self):
@@ -528,6 +541,26 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
         self._verify_inbound_request(self.push_backend.get_api_id(), 'push test',
             backend_couch_id=self.push_backend.couch_id)
 
+
+    @run_with_all_backends
+    def test_infobip_inbound_sms(self):
+        url = '/infobip/sms/%s' % self.infobip_backend.inbound_api_key
+        payload = {
+            "results": [
+                {
+                    "from": self.test_phone_number,
+                    "messageId": "message_id",
+                    "message": {
+                        "type": "TEXT",
+                        "text": "infobip test"
+                    }
+                }
+            ]
+        }
+        self._simulate_inbound_request_with_payload(url, 'application/json', json.dumps(payload))
+
+        self._verify_inbound_request(self.infobip_backend.get_api_id(), 'infobip test',
+            backend_couch_id=self.infobip_backend.couch_id)
 
 class OutgoingFrameworkTestCase(DomainSubscriptionMixin, TestCase):
 
