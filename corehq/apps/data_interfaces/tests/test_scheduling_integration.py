@@ -1,6 +1,7 @@
 from contextlib import contextmanager
 from datetime import date, datetime, time
 
+from django.conf import settings
 from django.db.models import Q
 from django.test import TestCase
 
@@ -29,7 +30,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.hqcase.utils import update_case
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.tests.utils import run_with_all_backends
+from corehq.form_processor.tests.utils import run_with_all_backends, only_run_with_partitioned_database
 from corehq.messaging.scheduling.const import (
     VISIT_WINDOW_DUE_DATE,
     VISIT_WINDOW_END,
@@ -63,7 +64,6 @@ from corehq.messaging.tasks import (
     run_messaging_rule_for_shard,
     sync_case_for_messaging,
     sync_case_for_messaging_rule,
-
 )
 from corehq.sql_db.util import paginate_query_across_partitioned_databases
 
@@ -1091,19 +1091,22 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
         rule_id = self._setup_rule()
         with create_case(self.domain, 'person') as case1, create_case(self.domain, 'person') as case2:
             run_messaging_rule(self.domain, rule_id)
-            shard_rule_patch.assert_has_calls(
-                [
-                    call(self.domain, rule_id, 'default')
-                ],
-                any_order=True
-            )
-            run_messaging_rule_for_shard(self.domain, rule_id, 'default')
-            sync_patch.assert_has_calls(
-                [
-                    call(self.domain, (case1.case_id, case2.case_id), rule_id)
-                ],
-                any_order=True
-            )
+            if settings.TESTS_SHOULD_USE_SQL_BACKEND:
+                shard_rule_patch.assert_has_calls(
+                    [
+                        call(self.domain, rule_id, 'default')
+                    ],
+                    any_order=True
+                )
+                run_messaging_rule_for_shard(self.domain, rule_id, 'default')
+                sync_patch.assert_has_calls(
+                    [
+                        call(self.domain, (case1.case_id, case2.case_id), rule_id)
+                    ],
+                    any_order=True
+                )
+            else:
+                self.assertEqual(shard_rule_patch.call_count, 0)
         toggles.SHARDED_RUN_MESSAGING_RULE.set(self.domain, False, toggles.NAMESPACE_DOMAIN)
 
     @run_with_all_backends
