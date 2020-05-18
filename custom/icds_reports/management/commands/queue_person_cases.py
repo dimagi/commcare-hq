@@ -5,8 +5,6 @@ from corehq.apps.userreports.models import AsyncIndicator
 from django.db import connections
 
 from dimagi.utils.chunked import chunked
-from datetime import date
-from dateutil.relativedelta import relativedelta
 
 
 class Command(BaseCommand):
@@ -22,21 +20,20 @@ class Command(BaseCommand):
         # by default execute child cases
         type_of_cases = kwargs['type_of_cases'] if kwargs['type_of_cases'] else "child_cases"
         person_config = _get_config_by_id('static-icds-cas-static-person_cases_v3')
-        table_name = get_table_name('icds-cas', 'static-person_cases_v3')
         # sort by supervisor_id and doc_id to improve the performance, sorting is needed to resume the queueing
         # if it fails in between.
         # AG Cases
-        now = date.today()
         query = ""
         if type_of_cases == 'ag_cases':
             # AG CASES
             table_name = get_table_name('icds-cas', 'static-person_cases_v3')
-            ag_start_range = (now - relativedelta(years=11)).strftime('%d-%m-%Y')
-            ag_end_range = (now - relativedelta(years=14)).strftime('%d-%m-%Y')
+            # includes all the valid cases for the march april and may 2020
+            ag_end_range = '01-06-2009'
+            ag_start_range = '01-03-2006'
             query = f"""
                 select supervisor_id, doc_id from "{table_name}"
                 where state_id='f9b47ea2ee2d8a02acddeeb491d3e175' AND sex='F'
-                AND dob::DATE>='{ag_end_range}' AND dob::DATE<={ag_start_range}
+                AND dob::DATE>'{ag_start_range}' AND dob::DATE<={ag_end_range}
                 order by supervisor_id, doc_id
             """
         else:
@@ -47,8 +44,6 @@ class Command(BaseCommand):
                         where state_id='f9b47ea2ee2d8a02acddeeb491d3e175'
                         order by supervisor_id, mother_id
                     """
-
-
         with connections['icds-ucr-citus'].cursor() as cursor:
             cursor.execute(query)
             doc_ids = cursor.fetchall()
@@ -58,7 +53,7 @@ class Command(BaseCommand):
         chunk_size = 10000
         for ids_chunk in chunked(doc_ids, chunk_size):
             ids_list = [item for item in ids_chunk]
-            AsyncIndicator.bulk_creation([elem[1] for elem in ids_list], 'case', 'icds-cas', [person_config._id])
+            AsyncIndicator.bulk_creation([elem[1] for elem in ids_list], 'CommCareCase', 'icds-cas', [person_config._id])
             count += chunk_size
             print("Success till doc_id: {}".format(ids_list[-1]))
             print("progress: {}/{}".format(count, total_doc_ids))
