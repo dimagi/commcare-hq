@@ -263,11 +263,10 @@ class ExportListHelper(object):
     @staticmethod
     def get_location_restriction_names(accessible_location_ids):
         location_restrictions = []
-        locations = []
         if accessible_location_ids:
             locations = SQLLocation.objects.filter(location_id__in=accessible_location_ids)
-        for location in locations:
-            location_restrictions.append(location.display_name)
+            for location in locations:
+                location_restrictions.append(location.display_name)
         return location_restrictions
 
     def _get_daily_saved_export_metadata(self, export):
