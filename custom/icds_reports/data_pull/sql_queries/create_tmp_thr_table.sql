@@ -1,5 +1,5 @@
 DROP TABLE IF EXISTS temp_thr_data_pull;
-CREATE TABLE temp_thr_data_pull AS
+CREATE TABLE {temp_table} AS
 SELECT   supervisor_id,
          Sum(
          CASE

@@ -10,9 +10,10 @@ from dateutil.relativedelta import relativedelta
 class BaseQuery:
     query_file_path = ""
     setup_sql_file_path = ""
+    setup_table = ""
 
     def run(self, db_alias):
-        if self.setup_sql_file_path:
+        if self.setup_sql_file_path and self.setup_table:
             self._setup(db_alias)
         string_buffer = StringIO()
         db_conn = connections[db_alias]
@@ -22,6 +23,9 @@ class BaseQuery:
         cursor.copy_expert(
             "COPY ({query}) TO STDOUT DELIMITER ',' CSV HEADER;".format(query=query),
             string_buffer)
+        # dropping any setup table if created
+        if self.setup_sql_file_path and self.setup_table:
+            self._remove_setup_table(db_alias)
         return string_buffer
 
     def _setup(self, db_alias):
@@ -30,11 +34,17 @@ class BaseQuery:
         sql = self.setup_sql.replace('\n', ' ')
         cursor.execute(sql)
 
+    def _remove_setup_table(self, db_alias):
+        db_conn = connections[db_alias]
+        cursor = db_conn.cursor()
+        sql = f"DROP TABLE IF EXISTS {self.setup_table}"
+        cursor.execute(sql)
+
     @cached_property
     def setup_sql(self):
-        if self.setup_sql_file_path:
+        if self.setup_sql_file_path and self.setup_table:
             with open(self.setup_sql_file_path) as _sql:
-                return _sql.read().format(month=self.month)
+                return _sql.read().format(month=self.month, temp_table=self.setup_table)
 
     @property
     def result_file_name(self):
@@ -159,18 +169,21 @@ class ChildrenTHRCount(MonthBasedQuery):
     name = "Children THR Count"
     query_file_path = "custom/icds_reports/data_pull/sql_queries/children_thr_count.sql"
     setup_sql_file_path = "custom/icds_reports/data_pull/sql_queries/create_tmp_thr_table.sql"
+    setup_table = "temp_thr_data_pull"
 
 
 class ChildrenPSECount(MonthBasedQuery):
     name = "Children PSE Count"
     query_file_path = "custom/icds_reports/data_pull/sql_queries/children_pse_count.sql"
     setup_sql_file_path = "custom/icds_reports/data_pull/sql_queries/create_tmp_pse_table.sql"
+    setup_table = "temp_pse_data_pull"
 
 
 class PWAndLMTHRCount(MonthBasedQuery):
     name = "Pregnant Women and Lactating Mother THR Count"
     query_file_path = "custom/icds_reports/data_pull/sql_queries/pw_and_lm_thr_count.sql"
     setup_sql_file_path = "custom/icds_reports/data_pull/sql_queries/create_dummy_thr_table.sql"
+    setup_table = "dummy_thr_table"
 
 
 class ChildrenStuntedAndWastedCount(MonthBasedQuery):
