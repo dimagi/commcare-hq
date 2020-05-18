@@ -17,9 +17,6 @@ class Command(BaseCommand):
                             help='supervisor from where records are to fetch', default='')
         parser.add_argument('--ucr_name', required=True, dest='ucr_name',
                             help='name of the form UCR name', default='')
-        parser.add_argument('--domain_name', required=True, dest='domain_name',
-                            help='name of the form domain name', default='')
-
     def get_supervisor_ids(self, start_supervisor_id):
         return AwcLocation.objects.filter(
             state_id=self.BIHAR_STATE_ID, aggregation_level=4, supervisor_id__gte=start_supervisor_id
@@ -27,7 +24,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **kwargs):
         ucr_name = kwargs.get('ucr_name')
-        domain_name = kwargs.get('domain_name')
+        domain_name = 'icds-cas'
         table_name = get_table_name(domain_name, ucr_name)
         start_supervisor_id = kwargs.get('start_supervisor_id')
         bihar_state_id = 'f9b47ea2ee2d8a02acddeeb491d3e175'
@@ -53,7 +50,7 @@ class Command(BaseCommand):
                 AsyncIndicator.objects.bulk_create([
                     AsyncIndicator(doc_id=doc_id[0],
                                    doc_type='XFormInstance',
-                                   domain='icds-cas',
+                                   domain=domain_name,
                                    indicator_config_ids=[f'static-{domain_name}-{ucr_name}']
                                    )
                     for doc_id in doc_ids
