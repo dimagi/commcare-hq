@@ -91,8 +91,8 @@ class ConnectionSettings(models.Model):
         kinds = set()
         if self.incrementalexport_set.first():
             kinds.add(_('Incremental Exports'))
-        if any(True for m in get_dataset_maps(self.domain)
-               if m.connection_settings_id == self.id):
+        if any(m.connection_settings_id == self.id
+               for m in get_dataset_maps(self.domain)):
             kinds.add(_('DHIS2 DataSet Maps'))
         # TODO: Check Repeaters (when Repeaters use ConnectionSettings)
         # TODO: Check OpenmrsImporters (ditto)

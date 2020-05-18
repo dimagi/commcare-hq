@@ -204,6 +204,9 @@ class ConnectionSettingsDetailView(BaseProjectSettingsView, ModelFormMixin, Proc
             raise Http404()
         return super().dispatch(request, *args, **kwargs)
 
+    def get_queryset(self):
+        return super().get_queryset().filter(domain=self.domain)
+
     def get(self, request, *args, **kwargs):
         # Allow us to update if 'pk' is given in the URL, otherwise create
         self.object = self.get_object() if self.pk_url_kwarg in self.kwargs else None
