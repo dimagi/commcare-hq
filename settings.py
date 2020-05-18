@@ -290,6 +290,7 @@ HQ_APPS = (
     'corehq.messaging.smsbackends.tropo',
     'corehq.messaging.smsbackends.turn',
     'corehq.messaging.smsbackends.twilio',
+    'corehq.messaging.smsbackends.infobip',
     'corehq.apps.dropbox',
     'corehq.messaging.smsbackends.megamobile',
     'corehq.messaging.ivrbackends.kookoo',

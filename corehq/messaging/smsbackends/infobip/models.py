@@ -2,9 +2,6 @@ from corehq.apps.sms.models import SQLSMSBackend, SMS
 from corehq.apps.sms.util import clean_phone_number
 from corehq.messaging.smsbackends.infobip.forms import InfobipBackendForm
 
-WHATSAPP_PREFIX = "whatsapp:"
-WHATSAPP_SANDBOX_PHONE_NUMBER = "14155238886"
-
 
 class SQLInfobipBackend(SQLSMSBackend):
 
@@ -17,6 +14,7 @@ class SQLInfobipBackend(SQLSMSBackend):
         return [
             'account_sid',
             'auth_token',
+            'scenario_key'
         ]
 
     @classmethod
@@ -43,16 +41,6 @@ class SQLInfobipBackend(SQLSMSBackend):
     def get_opt_out_keywords(cls):
         return ['STOP', 'STOPALL', 'UNSUBSCRIBE', 'CANCEL', 'END', 'QUIT']
 
-    @classmethod
-    def convert_to_whatsapp(cls, number):
-        if number.startswith(WHATSAPP_PREFIX):
-            return number
-        return f"{WHATSAPP_PREFIX}{number}"
-
-    @classmethod
-    def convert_from_whatsapp(cls, number):
-        return number.replace(WHATSAPP_PREFIX, "")
-
     def send(self, msg, orig_phone_number=None, *args, **kwargs):
         config = self.config
         to = clean_phone_number(msg.phone_number)
@@ -66,15 +54,13 @@ class SQLInfobipBackend(SQLSMSBackend):
     def _send_text_message(self, config, to, msg):
         import http.client
         conn = http.client.HTTPSConnection("dmm5zv.api.infobip.com")
-
-        payload = "{\"destinations\":[{\"to\":{\"phoneNumber\":\"%s\"}}],\"whatsApp\":{\"text\":\"%s\"}}" % (to, msg.text)
+        payload = "{\"destinations\":[{\"to\":{\"phoneNumber\":\"%s\"}}],\"whatsApp\":{\"text\":\"%s\"}" \
+                  ",\"scenarioKey\":{\"text\":\"%s\"}}" % (to, msg.text, config.scenario_key)
         headers = {
             'Authorization': 'App ' + str(config.auth_token),
             'Content-Type': 'application/json',
             'Accept': 'application/json'
         }
-
         conn.request("POST", "/omni/1/advanced", payload, headers)
-        return conn.getresponse()
-
-
+        res = conn.getresponse()
+        return res.read()
