@@ -29,6 +29,7 @@ hqDefine('userreports/js/configure_report', function () {
             "previewMode": (
                 !initialPageData.get('has_report_builder_access') ||
                 (initialPageData.get('at_report_limit') && !existing_report)),
+            "domainNames": initialPageData.get('domain_names'),
         });
         $("#reportConfig").koApplyBindings(reportConfig);
         window._bindingsApplied = true;

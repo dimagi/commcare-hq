@@ -64,6 +64,11 @@ from corehq.apps.hqwebapp.decorators import (
 )
 from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
+from corehq.apps.linked_domain.models import DomainLink
+from corehq.apps.linked_domain.dbaccessors import (
+    get_linked_domains,
+)
+from corehq.apps.linked_domain.ucr import create_ucr_link
 from corehq.apps.locations.permissions import conditionally_location_safe
 from corehq.apps.reports.daterange import get_simple_dateranges
 from corehq.apps.reports.dispatcher import cls_to_view_login_and_domain
@@ -93,6 +98,7 @@ from corehq.apps.userreports.exceptions import (
     translate_programming_error,
 )
 from corehq.apps.userreports.expressions import ExpressionFactory
+from corehq.apps.userreports.forms import CopyReportForm
 from corehq.apps.userreports.filters.factory import FilterFactory
 from corehq.apps.userreports.indicators.factory import IndicatorFactory
 from corehq.apps.userreports.models import (
@@ -612,6 +618,11 @@ class ConfigureReport(ReportBuilderView):
             'report_builder_events': self.request.session.pop(REPORT_BUILDER_EVENTS_KEY, []),
             'MAPBOX_ACCESS_TOKEN': settings.MAPBOX_ACCESS_TOKEN,
             'date_range_options': [r._asdict() for r in get_simple_dateranges()],
+            'copy_report_form': CopyReportForm(
+                self.domain,
+                self.existing_report.get_id if self.existing_report else None,
+            ),
+            'domain_names': sorted([d.linked_domain for d in get_linked_domains(self.domain)]),
         }
 
     def _get_bound_form(self, report_data):
@@ -1546,3 +1557,29 @@ class DataSourceSummaryView(BaseUserConfigReportsView):
             i['readable_output'] = add_links(i.get('readable_output'))
             list.append(i)
         return list
+
+
+@login_and_domain_required
+def copy_report(request, domain):
+    # TODO: Permisssions
+    from_domain = domain
+    to_domain = request.POST.get("domain")
+    report_id = request.POST.get("report_id")
+    domain_link = DomainLink.objects.get(master_domain=from_domain, linked_domain=to_domain)
+    try:
+        link_info = create_ucr_link(domain_link, report_id)
+        messages.success(request, _(f"Successfully linked report to {to_domain}"))
+        return HttpResponseRedirect(
+            reverse(
+                ConfigurableReportView.slug,
+                args=[
+                    link_info.report_info.linked_domain,
+                    link_info.report_info.linked_id,
+                ],
+            )
+        )
+    except Exception:
+        messages.error(request, _(f"Something went wrong linking your report"))
+        return HttpResponseRedirect(
+            reverse(ConfigurableReportView.slug, args=[from_domain, report_id])
+        )

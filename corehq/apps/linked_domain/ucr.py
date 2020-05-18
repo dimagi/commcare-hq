@@ -4,23 +4,23 @@ from corehq.apps.linked_domain.models import (
     LinkedReportIDMap,
     LinkedReportTypes,
 )
-from corehq.apps.linked_domain.remote_accessors import (
-    get_ucr_config as remote_get_ucr_config,
-)
+from corehq.apps.linked_domain.remote_accessors import get_ucr_config as remote_get_ucr_config
 from corehq.apps.userreports.models import (
     DataSourceConfiguration,
     ReportConfiguration,
 )
+from corehq.apps.userreports.tasks import rebuild_indicators
 
 LinkedUCRInfo = namedtuple("LinkedUCRInfo", "datasource_info report_info")
 
 
-def create_ucr_link(domain_link, report_config):
+def create_ucr_link(domain_link, report_config_id):
     if domain_link.is_remote:
-        remote_configs = remote_get_ucr_config(domain_link, report_config.get_id)
-        datasource = remote_configs['datasource']
-        report_config = remote_configs['report']
+        remote_configs = remote_get_ucr_config(domain_link, report_config_id)
+        datasource = remote_configs["datasource"]
+        report_config = remote_configs["report"]
     else:
+        report_config = ReportConfiguration.get(report_config_id)
         datasource = DataSourceConfiguration.get(report_config.config_id)
     datasource_info = _get_or_create_datasource_link(domain_link, datasource)
     report_info = _get_or_create_report_link(domain_link, report_config, datasource_info)
@@ -56,6 +56,9 @@ def _get_or_create_datasource_link(domain_link, datasource):
             model_type=LinkedReportTypes.DATASOURCE,
         )
         link_info.save()
+
+        rebuild_indicators.delay(new_datasource.get_id, f"Report link: {link_info.id}")
+
         return link_info
 
 
@@ -70,6 +73,7 @@ def _get_or_create_report_link(domain_link, report, datasource_info):
     except LinkedReportIDMap.DoesNotExist:
         report_json = report.to_json()
         report_json["domain"] = domain_link.linked_domain
+        report_json["config_id"] = datasource_info.linked_id
         report_json["_id"] = None
         report_json["_rev"] = None
 

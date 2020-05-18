@@ -1,0 +1,42 @@
+{% load i18n %}
+{% load hq_shared_tags %}
+{% load crispy_forms_tags %}
+<button type="button"
+        data-toggle="modal"
+        data-target="#link-reports"
+        class="btn btn-default">
+  <i class="fa fa-link"></i> {% trans "Copy Report" %}
+</button>
+
+<div class="modal fade" id="link-reports">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+        <h3>
+          {% trans "Copy Report" %}
+        </h3>
+      </div>
+      <div class="modal-body">
+        {% if copy_report_form %}
+          <div id="copy-report-form">
+            <form class="form form-horizontal" method="post" action="{% url "copy_report" domain %}">
+              {% crispy copy_report_form %}
+            </form>
+          </div>
+        {% endif %}
+      </div>
+      <div class="modal-footer">
+        <button type="button"
+                class="btn btn-default"
+                data-dismiss="modal">
+          {% trans "Cancel" %}
+        </button>
+        <button type="button"
+                class="btn btn-primary">
+          <i class="fa fa-link"></i> {% trans "Copy Report" %}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -56,6 +56,7 @@
   {% initial_page_data 'has_report_builder_access' has_report_builder_access %}
   {% initial_page_data 'at_report_limit' at_report_limit %}
   {% initial_page_data 'existing_report' existing_report %}
+  {% initial_page_data 'domain_names' domain_names %}
 {% endblock %}
 
 {% block page_content %}
@@ -70,6 +71,11 @@
         >
           Delete Report
         </a>&nbsp;
+      {% endif %}
+      {% if request|toggle_enabled:"LINKED_DOMAINS" %}
+        {% if existing_report %}
+          {% include "userreports/partials/link_reports.html" %}
+        {% endif %}
       {% endif %}
       {% if has_report_builder_access %}
         {% if not at_report_limit or existing_report %}

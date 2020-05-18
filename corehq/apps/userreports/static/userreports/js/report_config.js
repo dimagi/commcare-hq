@@ -104,6 +104,8 @@ hqDefine('userreports/js/report_config', function () {
 
                 self.dateRangeOptions = config['dateRangeOptions'];
 
+                self.domainNames = config['domainNames'];
+
                 self.existingReportId = config['existingReport'];
                 self.reportTitle = ko.observable(config['reportTitle']);
                 self.reportTitle.subscribe(function () {

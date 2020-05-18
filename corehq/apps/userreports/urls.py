@@ -17,6 +17,7 @@ from corehq.apps.userreports.views import (
     PreviewDataSourceView,
     UserConfigReportsHomeView,
     build_data_source_in_place,
+    copy_report,
     choice_list_api,
     data_source_json,
     data_source_status,
@@ -91,5 +92,5 @@ urlpatterns = [
     url(r'^expression_evaluator/$', evaluate_expression, name='expression_evaluator'),
     url(r'^data_source_evaluator/$', evaluate_data_source, name='data_source_evaluator'),
     url(r'^aggregate/', include('corehq.apps.aggregate_ucrs.urls')),
-
+    url(r'^/copy_report/$', copy_report, name='copy_report'),
 ]

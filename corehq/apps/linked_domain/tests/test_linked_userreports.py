@@ -47,7 +47,7 @@ class TestLinkedUCR(BaseLinkedAppsTest):
         super().tearDown()
 
     def test_link_creates_datasource_and_report(self):
-        link_info = create_ucr_link(self.domain_link, self.report)
+        link_info = create_ucr_link(self.domain_link, self.report.get_id)
 
         new_datasource = DataSourceConfiguration.get(link_info.datasource_info.linked_id)
         self.assertEqual(new_datasource.domain, self.domain_link.linked_domain)
@@ -56,7 +56,7 @@ class TestLinkedUCR(BaseLinkedAppsTest):
         self.assertEqual(new_report.domain, self.domain_link.linked_domain)
 
     def test_linking_second_report_creates_single_datasource(self):
-        create_ucr_link(self.domain_link, self.report)
+        create_ucr_link(self.domain_link, self.report.get_id)
 
         new_report = get_sample_report_config()
         new_report.title = "Another Report"
@@ -64,7 +64,7 @@ class TestLinkedUCR(BaseLinkedAppsTest):
         new_report.domain = self.domain
         new_report.save()
 
-        create_ucr_link(self.domain_link, new_report)
+        create_ucr_link(self.domain_link, new_report.get_id)
         self.assertEqual(
             1, LinkedReportIDMap.objects.filter(master_id=self.data_source.get_id).count()
         )
@@ -90,5 +90,5 @@ class TestLinkedUCR(BaseLinkedAppsTest):
 
         fake_ucr_getter.return_value = json.loads(resp.content)
 
-        create_ucr_link(self.domain_link, self.report)
+        create_ucr_link(self.domain_link, self.report.get_id)
         self.assertEqual(1, len(ReportConfiguration.by_domain(self.domain_link.linked_domain)))
