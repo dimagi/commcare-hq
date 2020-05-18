@@ -41,7 +41,7 @@ class DemographicsAPITest(TestCase):
              'registered_status': None, 'rch_id': '1234',
              'mcts_id': '213', 'phone_number': None,
              'date_death': None, 'site_death': None,
-             'closed_on': None,'reason_closure': None,
+             'closed_on': None, 'reason_closure': None,
              'has_bank_account': 1, 'age_marriage': None,
              'last_referral_date': datetime.date(2017, 6, 2), 'referral_health_problem':
                  'bleeding fever abdominal_pain offensive_discharge painful_urination convulsions',
