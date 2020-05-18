@@ -1,17 +1,18 @@
 import re
 
-from django.http import Http404
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_lazy as _
 from django.views.generic import DetailView, ListView
+from django.views.generic.edit import ModelFormMixin, ProcessFormView
 
 from memoized import memoized
 
-from corehq import toggles
 from corehq.apps.domain.views.settings import BaseProjectSettingsView
+from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
+from corehq.motech.forms import ConnectionSettingsForm
 from corehq.motech.models import ConnectionSettings, RequestLog
 from no_exceptions.exceptions import Http400
 
@@ -155,11 +156,10 @@ class ConnectionSettingsListView(BaseProjectSettingsView, CRUDPaginatedViewMixin
             'name': connection_settings.name,
             'url': connection_settings.url,
             'notifyAddresses': ', '.join(connection_settings.notify_addresses),
-            'editUrl': '#'  # TODO: ConnectionSettingsDetailView
-            # reverse(
-            #     ConnectionSettingsDetailView.urlname,
-            #     kwargs={'domain': self.domain, 'pk': connection_settings.id}
-            # ),
+            'editUrl': reverse(
+                ConnectionSettingsDetailView.urlname,
+                kwargs={'domain': self.domain, 'pk': connection_settings.id}
+            ),
         }
 
     def get_deleted_item_data(self, item_id):
@@ -178,5 +178,48 @@ class ConnectionSettingsListView(BaseProjectSettingsView, CRUDPaginatedViewMixin
 
     def post(self, *args, **kwargs):
         return self.paginate_crud_response
+
+
+@method_decorator(require_permission(Permissions.edit_motech), name='dispatch')
+class ConnectionSettingsDetailView(BaseProjectSettingsView, ModelFormMixin, ProcessFormView):
+    urlname = 'connection_settings_detail_view'
+    page_title = _('Connection Settings')
+    template_name = 'motech/connection_settings_detail.html'
+    model = ConnectionSettings
+    form_class = ConnectionSettingsForm
+
+    def dispatch(self, request, *args, **kwargs):
+        # TODO: When Repeaters use Connection Settings, drop, and use
+        # @requires_privilege_with_fallback(privileges.DATA_FORWARDING)
+        if not (
+                toggles.DHIS2_INTEGRATION.enabled_for_request(request)
+                or toggles.INCREMENTAL_EXPORTS.enabled_for_request(request)
+        ):
+            raise Http404()
+        return super().dispatch(request, *args, **kwargs)
+
+    def get(self, request, *args, **kwargs):
+        # Allow us to update if 'pk' is given in the URL, otherwise create
+        self.object = self.get_object() if self.pk_url_kwarg in self.kwargs else None
+        return super().get(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object() if self.pk_url_kwarg in self.kwargs else None
+        return super().post(request, *args, **kwargs)
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['domain'] = self.domain
+        return kwargs
+
+    def get_success_url(self):
+        return reverse(
+            ConnectionSettingsListView.urlname,
+            kwargs={'domain': self.domain},
+        )
+
+    def form_valid(self, form):
+        form.save()
+        return super().form_valid(form)
 
 

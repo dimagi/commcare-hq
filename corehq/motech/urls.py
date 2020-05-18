@@ -25,6 +25,7 @@ from corehq.motech.repeaters.views import (
     test_repeater,
 )
 from corehq.motech.views import (
+    ConnectionSettingsDetailView,
     ConnectionSettingsListView,
     MotechLogDetailView,
     MotechLogListView,
@@ -33,6 +34,10 @@ from corehq.motech.views import (
 urlpatterns = [
     url(r'^conn/$', ConnectionSettingsListView.as_view(),
         name=ConnectionSettingsListView.urlname),
+    url(r'^conn/(?P<pk>\d+)/$', ConnectionSettingsDetailView.as_view(),
+        name=ConnectionSettingsDetailView.urlname),
+    url(r'^conn/add/$', ConnectionSettingsDetailView.as_view(),
+        name=ConnectionSettingsDetailView.urlname),
 
     url(r'^forwarding/$', DomainForwardingOptionsView.as_view(), name=DomainForwardingOptionsView.urlname),
     url(r'^forwarding/new/FormRepeater/$', AddFormRepeaterView.as_view(),
