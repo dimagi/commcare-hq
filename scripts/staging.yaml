@@ -52,7 +52,6 @@ branches:
   - vellum-staging  # DO NOT REMOVE this is similar to "autostaging", but for vellum
   - bmb/odata-qa-feedback  # Biyeun April 15
   - dmr/require_can_edit_or_view_commcare_users-download_commcare_users  # Danny April 27
-  - sr-es-alias # Sravan April 29
   - jls/migrate-CustomDataFieldsDefinition-2 # Jenny April 29
   - mk/location-reassignment-realign # MK May 4
   - rn_update_perfect_scrollbar # Rohit Negi May 4
@@ -63,5 +62,6 @@ branches:
   - nemanja1040:infobip_integration  # Nemanja Stancic May 14
   - jls/domain-select-search # Jenny May 15
   - jls/migrate-MobileAuthKeyRecord-2 # Jenny May 16
+  - sr-messaging-rule # Sravan May 18
 
 submodules: {}
