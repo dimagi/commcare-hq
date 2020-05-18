@@ -680,6 +680,7 @@ AUDIT_MODULES = [
     'corehq.apps.registration',
     'corehq.apps.hqadmin',
     'corehq.apps.accounting',
+    'corehq.apps.cloudcare',
     'tastypie',
 ]
 
