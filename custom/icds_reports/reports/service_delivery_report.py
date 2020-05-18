@@ -135,7 +135,7 @@ class ServiceDeliveryReport(object):
                         'num_awcs_conducted_vhnd'
                     ) and self.config['aggregation_level'] == 5:
                         row_data.append('Yes' if row[header[1]] == 1 else 'No')
-                        total_sum_row[index] =  'N/A'
+                        total_sum_row[index] = 'N/A'
                     else:
                         if header[1] not in self.location_columns:
                             total_sum_row[index] += row[header[1]]
@@ -147,8 +147,8 @@ class ServiceDeliveryReport(object):
                         percentage = 0
                     row_data.append("{}%".format("%.2f" % percentage))
 
-                    if total_sum_row[index-1]:
-                        percentage = total_sum_row[index-2] / total_sum_row[index-1] * 100
+                    if total_sum_row[index - 1]:
+                        percentage = total_sum_row[index - 2] / total_sum_row[index - 1] * 100
                     else:
                         percentage = 0
                     total_sum_row[index] = "{}%".format("%.2f" % percentage)
