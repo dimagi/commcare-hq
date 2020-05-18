@@ -64,7 +64,7 @@ from corehq.apps.hqwebapp.decorators import (
 )
 from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
-from corehq.apps.linked_domain.models import DomainLink
+from corehq.apps.linked_domain.models import DomainLink, ReportLinkDetail
 from corehq.apps.linked_domain.dbaccessors import (
     get_linked_domains,
 )
@@ -1568,6 +1568,11 @@ def copy_report(request, domain):
     domain_link = DomainLink.objects.get(master_domain=from_domain, linked_domain=to_domain)
     try:
         link_info = create_ucr_link(domain_link, report_id)
+        domain_link.update_last_pull(
+            'report',
+            request.couch_user._id,
+            model_details=ReportLinkDetail(report_id=link_info.report_info.linked_id)
+        )
         messages.success(request, _(f"Successfully linked report to {to_domain}"))
         return HttpResponseRedirect(
             reverse(

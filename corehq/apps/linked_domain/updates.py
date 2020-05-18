@@ -19,6 +19,7 @@ from corehq.apps.linked_domain.const import (
     MODEL_LOCATION_DATA,
     MODEL_PRODUCT_DATA,
     MODEL_USER_DATA,
+    MODEL_REPORT,
     MODELS_ROLES,
 )
 from corehq.apps.linked_domain.local_accessors import \
@@ -27,6 +28,7 @@ from corehq.apps.linked_domain.local_accessors import \
     get_toggles_previews as local_toggles_previews
 from corehq.apps.linked_domain.local_accessors import \
     get_user_roles as local_get_user_roles
+from corehq.apps.linked_domain.models import LinkedReportIDMap
 from corehq.apps.linked_domain.remote_accessors import \
     get_case_search_config as remote_get_case_search_config
 from corehq.apps.linked_domain.remote_accessors import \
@@ -35,11 +37,16 @@ from corehq.apps.linked_domain.remote_accessors import \
     get_toggles_previews as remote_toggles_previews
 from corehq.apps.linked_domain.remote_accessors import \
     get_user_roles as remote_get_user_roles
+from corehq.apps.linked_domain.ucr import update_ucr_link
 from corehq.apps.locations.views import LocationFieldsView
 from corehq.apps.products.views import ProductFieldsView
 from corehq.apps.userreports.util import (
     get_static_report_mapping,
     get_ucr_class_name,
+)
+from corehq.apps.userreports.models import (
+    DataSourceConfiguration,
+    ReportConfiguration,
 )
 from corehq.apps.users.models import UserRole
 from corehq.apps.users.views.mobile import UserFieldsView
@@ -54,6 +61,7 @@ def update_model_type(domain_link, model_type, model_detail=None):
         MODEL_PRODUCT_DATA: partial(update_custom_data_models, limit_types=[ProductFieldsView.field_type]),
         MODEL_USER_DATA: partial(update_custom_data_models, limit_types=[UserFieldsView.field_type]),
         MODEL_CASE_SEARCH: update_case_search_config,
+        MODEL_REPORT: update_ucr_link,
     }.get(model_type)
 
     kwargs = model_detail or {}

@@ -89,3 +89,37 @@ def _get_or_create_report_link(domain_link, report, datasource_info):
         )
         link_info.save()
         return link_info
+
+
+def update_ucr_link(domain_link, report_id):
+    # TODO: work with remote links
+    id_map = LinkedReportIDMap.objects.get(
+        linked_domain=domain_link.linked_domain,
+        master_domain=domain_link.master_domain,
+        linked_id=report_id
+    )
+    linked_report = ReportConfiguration.get(report_id)
+    master_report = ReportConfiguration.get(id_map.master_id)
+
+    master_datasource_json = master_report.config.to_json()
+    linked_datasource_json = linked_report.config.to_json()
+
+    master_datasource_json["domain"] = domain_link.linked_domain
+    master_datasource_json["_id"] = linked_report.config_id
+    master_datasource_json["_rev"] = linked_datasource_json["_rev"]
+
+    linked_datasource_json.update(master_datasource_json)
+    DataSourceConfiguration.wrap(linked_datasource_json).save()
+
+    master_report_json = master_report.to_json()
+    linked_report_json = linked_report.to_json()
+
+    master_report_json["_id"] = linked_report.get_id
+    master_report_json["domain"] = linked_report.domain
+    master_report_json["config_id"] = linked_report.config_id
+    master_report_json["_rev"] = linked_report_json["_rev"]
+
+    linked_report_json.update(master_report_json)
+    ReportConfiguration.wrap(linked_report_json).save()
+
+    rebuild_indicators.delay(linked_report.config_id, f"Report link: {id_map.id}")

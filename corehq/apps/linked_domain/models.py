@@ -148,9 +148,14 @@ class AppLinkDetail(jsonobject.JsonObject):
     app_id = jsonobject.StringProperty()
 
 
+class ReportLinkDetail(jsonobject.JsonObject):
+    report_id = jsonobject.StringProperty()
+
+
 def wrap_detail(model, detail_json):
     return {
-        'app': AppLinkDetail
+        'app': AppLinkDetail,
+        'report': ReportLinkDetail,
     }[model].wrap(detail_json)
 
 
