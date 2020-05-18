@@ -20,7 +20,7 @@ class DemographicsAPITest(TestCase):
         )
         first_person_case = data[0]
         self.assertCountEqual(
-            {'state_name': 'Bihar', 'state_site_code': 'st1',
+            {'state_name': 'st1', 'state_site_code': 'st1',
              'district_name': 'd1', 'district_site_code': 'd1',
              'block_name': 'b2', 'block_site_code': 'b2',
              'supervisor_name': 's4', 'supervisor_site_code': 's4',
