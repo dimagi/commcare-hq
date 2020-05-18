@@ -1,4 +1,7 @@
+import textwrap
 from itertools import chain
+
+from django.utils.safestring import mark_safe
 
 from custom.inddex import filters
 from custom.inddex.food import FoodData
@@ -8,8 +11,16 @@ from .utils import MultiTabularReport, format_row
 
 class NutrientIntakeReport(MultiTabularReport):
     name = 'Output 3 - Disaggregated Intake Data by Food and Aggregated Daily Intake Data by Respondent'
-    slug = 'nutrient_intake'
+    slug = 'report_3_disaggr_intake_data_by_food_and_aggr_daily_intake_data_by_respondent'  # yup, really
     export_only = True
+    description = mark_safe(textwrap.dedent("""
+        This output provides information on the total quantity and total
+        nutrient content for each individual food or recipe reported by each
+        respondent in the recall.
+        <br/>
+        This output cannot be previewed. Users must download the data to access
+        the information.
+    """))
 
     @property
     def fields(self):
