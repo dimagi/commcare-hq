@@ -19,7 +19,8 @@ from corehq.apps.fixtures.dbaccessors import (
     get_fixture_data_types,
 )
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.util.test_utils import require_db_context, patch_max_test_time
+from corehq.tests.noseplugins.timing import patch_max_test_time
+from corehq.util.test_utils import require_db_context
 
 from ..example_data.data import (
     FOOD_CASE_TYPE,
