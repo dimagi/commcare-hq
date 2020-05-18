@@ -82,6 +82,7 @@ class ConnectionSettingsForm(forms.ModelForm):
                 crispy.Field('plaintext_password'),
                 twbscrispy.PrependedText('skip_cert_verify', ''),
                 crispy.Field('notify_addresses_str'),
+                self.test_connection_button,
             ),
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(
@@ -98,6 +99,25 @@ class ConnectionSettingsForm(forms.ModelForm):
                     css_class="btn btn-default",
                 ),
             ),
+        )
+
+    @property
+    def test_connection_button(self):
+        return crispy.Div(
+            crispy.Div(
+                twbscrispy.StrictButton(
+                    _('Test Connection'),
+                    type='button',
+                    css_id='test-connection-button',
+                    css_class='btn btn-default disabled',
+                ),
+                crispy.Div(
+                    css_id='test-connection-result',
+                    css_class='text-success hide',
+                ),
+                css_class=f'{self.helper.field_class} {self.helper.offset_class}',
+            ),
+            css_class='form-group'
         )
 
     def clean_notify_addresses_str(self):
