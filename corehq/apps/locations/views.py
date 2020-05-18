@@ -49,7 +49,12 @@ from .analytics import users_have_locations
 from .const import ROOT_LOCATION_TYPE
 from .dbaccessors import get_users_assigned_to_locations
 from .exceptions import LocationConsistencyError
-from .forms import LocationFormSet, RelatedLocationForm, UsersAtLocationForm, LocationFilterForm
+from .forms import (
+    LocationFilterForm,
+    LocationFormSet,
+    RelatedLocationForm,
+    UsersAtLocationForm,
+)
 from .models import LocationType, SQLLocation, filter_for_archived
 from .permissions import (
     can_edit_location,
