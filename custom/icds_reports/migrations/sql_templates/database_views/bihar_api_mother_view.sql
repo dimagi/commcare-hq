@@ -28,7 +28,7 @@ CREATE VIEW bihar_api_mother_view AS
         "ccs_record_monthly"."anc_4" AS "anc_4",
         CASE WHEN "bihar_api_demographics"."is_pregnant"=1 THEN
         "ccs_record_monthly"."new_ifa_tablets_total_bp" ELSE
-        "ccs_record_monthly"."new_ifa_tablets_total_pnc" END AS "total_ifa_tablets_received"
+        "ccs_record_monthly"."new_ifa_tablets_total_pnc" END AS "total_ifa_tablets_received",
         "ccs_record_monthly"."ifa_last_seven_days" AS "ifa_consumed_7_days",
         "ccs_record_monthly"."reason_no_ifa" AS "causes_for_ifa",
         "ccs_record_monthly"."complication_type" AS "maternal_complications"
