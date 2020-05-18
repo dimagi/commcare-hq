@@ -43,6 +43,7 @@ from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
 from corehq.apps.users.forms import MultipleSelectionForm
 from corehq.util import reverse
 from corehq.util.files import file_extention_from_filename
+from corehq.util.workbook_json.excel import WorkbookJSONError, get_workbook
 
 from .analytics import users_have_locations
 from .const import ROOT_LOCATION_TYPE
@@ -932,8 +933,15 @@ class LocationImportView(BaseLocationView):
         if not args:
             messages.error(request, _('no domain specified'))
             return self.get(request, *args, **kwargs)
-        if upload.content_type != 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':
+
+        if not upload.name.endswith('.xlsx'):
             messages.error(request, _("Invalid file-format. Please upload a valid xlsx file."))
+            return self.get(request, *args, **kwargs)
+
+        try:
+            get_workbook(upload)
+        except WorkbookJSONError as e:
+            messages.error(request, e)
             return self.get(request, *args, **kwargs)
 
         domain = args[0]
