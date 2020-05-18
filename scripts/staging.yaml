@@ -63,5 +63,6 @@ branches:
   - jls/migrate-MobileAuthKeyRecord-2 # Jenny May 16
   - sr-messaging-rule # Sravan May 18
   - bmb/fix-nose-req  # Biyeun May 18
+  - dmr/secure-cookies  # Danny May 18
 
 submodules: {}
