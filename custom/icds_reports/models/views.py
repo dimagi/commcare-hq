@@ -1258,99 +1258,99 @@ class ServiceDeliveryReportView(models.Model):
         help_text="Number of children age 3-5 years"
     )
 
-    pse_eligible= models.IntegerField(
+    pse_eligible = models.IntegerField(
         blank=True, null=True,
         help_text="Number of children eligible for pse"
     )
-    pse_0_days= models.IntegerField(
+    pse_0_days = models.IntegerField(
         blank=True, null=True,
         help_text="Number of children who are eligible but attended 0 days of PSE"
     )
-    pse_1_7_days= models.IntegerField(
+    pse_1_7_days = models.IntegerField(
         blank=True, null=True,
         help_text="Number of children attended 1-7 days of PSE"
     )
-    pse_8_14_days= models.IntegerField(
+    pse_8_14_days = models.IntegerField(
         blank=True, null=True,
         help_text="Number of children attended 8-14 days of PSE"
     )
-    pse_15_20_days= models.IntegerField(
+    pse_15_20_days = models.IntegerField(
         blank=True, null=True,
         help_text="Number of children attended 15-20 days of PSE"
     )
-    pse_21_days= models.IntegerField(
+    pse_21_days = models.IntegerField(
         blank=True, null=True,
         help_text="Number of children attended >=21 days of PSE"
     )
-    pse_21_24_days= models.IntegerField(
+    pse_21_24_days = models.IntegerField(
         blank=True, null=True,
         help_text="Number of children attended 21-24 days of PSE"
     )
-    pse_25_days= models.IntegerField(
+    pse_25_days = models.IntegerField(
         blank=True, null=True,
         help_text="Number of children attended >=25 days of PSE"
     )
-    lunch_eligible= models.IntegerField(
+    lunch_eligible = models.IntegerField(
         blank=True, null=True,
         help_text="Number of children eligible for lunch"
     )
-    lunch_0_days= models.IntegerField(
+    lunch_0_days = models.IntegerField(
         blank=True, null=True,
         help_text="Number of children who are eligible but got 0 days of lunch"
     )
-    lunch_1_7_days= models.IntegerField(
+    lunch_1_7_days = models.IntegerField(
         blank=True, null=True,
         help_text="Number of children got 1-7 days of lunch"
     )
-    lunch_8_14_days= models.IntegerField(
+    lunch_8_14_days = models.IntegerField(
         blank=True, null=True,
         help_text="Number of children got 8-14 days of lunch"
     )
-    lunch_15_20_days= models.IntegerField(
+    lunch_15_20_days = models.IntegerField(
         blank=True, null=True,
         help_text="Number of children got 15-20 days of lunch"
     )
-    lunch_21_days= models.IntegerField(
+    lunch_21_days = models.IntegerField(
         blank=True, null=True,
         help_text="Number of children got >=21 days of lunch"
     )
-    lunch_20_24_days= models.IntegerField(
+    lunch_20_24_days = models.IntegerField(
         blank=True, null=True,
         help_text="Number of children got 20-24 days of lunch"
     )
-    lunch_25_days= models.IntegerField(
+    lunch_25_days = models.IntegerField(
         blank=True, null=True,
         help_text="Number of children got >=25 days of lunch"
     )
-    thr_eligible= models.IntegerField(
+    thr_eligible = models.IntegerField(
         blank=True, null=True,
         help_text="Total number of beneficiaries eligible for THR"
     )
-    thr_0_days= models.IntegerField(
+    thr_0_days = models.IntegerField(
         blank=True, null=True,
         help_text="beneficiarys who are eligible but got 0 days of THR"
     )
-    thr_1_7_days= models.IntegerField(
+    thr_1_7_days = models.IntegerField(
         blank=True, null=True,
         help_text="beneficiaries who got 1-7 days of THR"
     )
-    thr_8_14_days= models.IntegerField(
+    thr_8_14_days = models.IntegerField(
         blank=True, null=True,
         help_text="beneficiaries who got 8-14 days of THR"
     )
-    thr_15_20_days= models.IntegerField(
+    thr_15_20_days = models.IntegerField(
         blank=True, null=True,
         help_text="beneficiaries who got 15-20 days of THR"
     )
-    thr_21_days= models.IntegerField(
+    thr_21_days = models.IntegerField(
         blank=True, null=True,
         help_text="beneficiaries who got >=21 days of THR"
     )
-    thr_21_24_days= models.IntegerField(
+    thr_21_24_days = models.IntegerField(
         blank=True, null=True,
         help_text="beneficiaries who got 21-24 days of THR"
     )
-    thr_25_days= models.IntegerField(
+    thr_25_days = models.IntegerField(
         blank=True, null=True,
         help_text="beneficiaries who got >=25 days of THR"
     )
