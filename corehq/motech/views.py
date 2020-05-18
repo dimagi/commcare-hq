@@ -1,17 +1,22 @@
 import re
 
+from django.http import Http404, JsonResponse
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_lazy as _
+from django.views.decorators.http import require_POST
 from django.views.generic import DetailView, ListView
 from django.views.generic.edit import ModelFormMixin, ProcessFormView
 
 from memoized import memoized
 
+from corehq import toggles, privileges
+from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.domain.views.settings import BaseProjectSettingsView
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
+from corehq.motech.const import PASSWORD_PLACEHOLDER
 from corehq.motech.forms import ConnectionSettingsForm
 from corehq.motech.models import ConnectionSettings, RequestLog
 from no_exceptions.exceptions import Http400
@@ -223,3 +228,42 @@ class ConnectionSettingsDetailView(BaseProjectSettingsView, ModelFormMixin, Proc
         return super().form_valid(form)
 
 
+@require_POST
+@require_permission(Permissions.edit_motech)
+@requires_privilege_with_fallback(privileges.DATA_FORWARDING)
+def test_connection_settings(request, domain):
+    if request.POST.get('plaintext_password') == PASSWORD_PLACEHOLDER:
+        # The user is editing an existing instance, and the form is
+        # showing the password placeholder. (We don't tell the user what
+        # the API password is.)
+        return JsonResponse({
+            "success": False,
+            "response": _("Please enter API password again."),
+        })
+    form = ConnectionSettingsForm(domain=domain, data=request.POST)
+    if form.is_valid():
+        conn = form.save(commit=False)
+        requests = conn.get_requests()
+        try:
+            # Send a GET request to the base URL. That should be enough
+            # to test the URL and authentication.
+            response = requests.get('')
+            if 200 <= response.status_code < 300:
+                return JsonResponse({
+                    "success": True,
+                    "status": response.status_code,
+                    "response": response.text,
+                })
+            else:
+                return JsonResponse({
+                    "success": False,
+                    "status": response.status_code,
+                    "response": response.text,
+                })
+        except Exception as err:
+            return JsonResponse({"success": False, "response": str(err)})
+    else:
+        return JsonResponse({
+            "success": False,
+            "response": form.errors,
+        })
