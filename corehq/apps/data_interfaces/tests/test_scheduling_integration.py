@@ -1107,7 +1107,6 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
                 )
             else:
                 self.assertEqual(shard_rule_patch.call_count, 0)
-        toggles.SHARDED_RUN_MESSAGING_RULE.set(self.domain, False, toggles.NAMESPACE_DOMAIN)
 
     @run_with_all_backends
     @patch('corehq.messaging.scheduling.models.content.SMSContent.send')
