@@ -1,41 +1,22 @@
-from collections import namedtuple
 from unittest import TestCase
 
-from mock import call, patch
+from mock import patch
 
 from corehq.util.workbook_json.excel import get_workbook
 from custom.icds.location_reassignment.const import (
     ARCHIVED_COLUMN,
-    AWC_CODE_COLUMN,
-    AWC_NAME_COLUMN,
     CASE_COUNT_COLUMN,
     EXTRACT_OPERATION,
-    HOUSEHOLD_ID_COLUMN,
-    HOUSEHOLD_MEMBER_DETAILS_COLUMN,
     MERGE_OPERATION,
     MISSING_COLUMN,
     MOVE_OPERATION,
     NEW_LOCATION_CODE_COLUMN,
     OLD_LOCATION_CODE_COLUMN,
-    PERSON_CASE_TYPE,
     SPLIT_OPERATION,
     TRANSITION_COLUMN,
 )
-from custom.icds.location_reassignment.download import Households
 from custom.icds.location_reassignment.dumper import Dumper
 from custom.icds.location_reassignment.models import Transition
-
-Location = namedtuple('Location', ['location_id', 'site_code'])
-
-
-class CommCareCaseStub(object):
-    def __init__(self, case_id, name, case_json):
-        self.case_id = case_id
-        self.name = name
-        self.case_json = case_json
-
-    def get_case_property(self, case_property):
-        return self.case_json.get(case_property)
 
 
 class TestDumper(TestCase):
@@ -129,72 +110,4 @@ class TestDumper(TestCase):
                  NEW_LOCATION_CODE_COLUMN: '120',
                  MISSING_COLUMN: True, ARCHIVED_COLUMN: True, CASE_COUNT_COLUMN: 0}
             ]
-        )
-
-
-class TestHouseholds(TestCase):
-    domain = 'test'
-
-    @patch('custom.icds.location_reassignment.download.get_household_child_cases_by_owner')
-    @patch('corehq.form_processor.interfaces.dbaccessors.CaseAccessors.get_case')
-    @patch('custom.icds.location_reassignment.download.get_household_case_ids')
-    @patch('corehq.apps.locations.models.SQLLocation.active_objects.get')
-    def test_dump(self, get_location_mock, get_household_case_ids_mock, case_accessor_mock, child_cases_mock):
-        location = Location(site_code='123', location_id='123654789')
-        get_location_mock.return_value = location
-        get_household_case_ids_mock.return_value = ['1', '2']
-        case_accessor_mock.return_value = CommCareCaseStub(
-            '100', 'A House', {'hh_reg_date': '20/1/1988', 'hh_religion': 'Above All'})
-        child_cases_mock.return_value = [
-            CommCareCaseStub('101', 'A Person', {'age_at_reg': '4', 'sex': 'M'}),
-            CommCareCaseStub('102', 'B Person', {'age_at_reg': '5', 'sex': 'F'}),
-        ]
-        transitions = {
-            MOVE_OPERATION: {'112': '111'},  # new: old
-            MERGE_OPERATION: {'115': ['113', '114']},  # new: old
-            SPLIT_OPERATION: {'116': ['117', '118']},  # old: new
-            EXTRACT_OPERATION: {'120': '119'}  # new: old
-        }
-
-        filestream = Households(self.domain).dump(transitions)
-
-        get_location_mock.assert_has_calls([
-            call(domain='test', site_code='116'),
-            call(domain='test', site_code='119')
-        ])
-        get_household_case_ids_mock.assert_has_calls([
-            call(self.domain, location.location_id),
-            call(self.domain, location.location_id)
-        ])
-        case_accessor_mock.assert_has_calls([
-            call('1'), call('2')
-        ])
-        child_cases_mock.assert_has_calls([
-            call(self.domain, '1', location.location_id, [PERSON_CASE_TYPE]),
-            call(self.domain, '2', location.location_id, [PERSON_CASE_TYPE])
-        ])
-
-        workbook = get_workbook(filestream)
-        self.assertEqual(len(workbook.worksheets), 2)
-        expected_row = {
-            AWC_NAME_COLUMN: '',
-            AWC_CODE_COLUMN: '',
-            'Name of Household': 'A House',
-            'Date of Registration': '20/1/1988',
-            'Religion': 'Above All',
-            'Caste': '',
-            'APL/BPL': '',
-            'Number of Household Members': 2,
-            HOUSEHOLD_MEMBER_DETAILS_COLUMN: 'A Person (4/M), B Person (5/F)',
-            HOUSEHOLD_ID_COLUMN: '100'
-        }
-        worksheet1_rows = list(workbook.worksheets_by_title['116'])
-        self.assertEqual(
-            worksheet1_rows,
-            [expected_row, expected_row]
-        )
-        worksheet2_rows = list(workbook.worksheets_by_title['119'])
-        self.assertEqual(
-            worksheet2_rows,
-            [expected_row, expected_row]
         )

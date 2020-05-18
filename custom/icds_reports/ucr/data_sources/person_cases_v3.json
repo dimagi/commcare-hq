@@ -137,12 +137,6 @@
         "property_name": "opened_on"
       },
       {
-        "column_id": "modified_on",
-        "datatype": "datetime",
-        "type": "raw",
-        "property_name": "modified_on"
-      },
-      {
         "column_id": "closed_on",
         "datatype": "datetime",
         "type": "raw",
@@ -800,6 +794,34 @@
         "datatype": "string",
         "type": "raw",
         "property_name": "location_reassignment_last_supervisor_id"
+      },
+      {
+        "column_id": "was_oos_ever",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "switch",
+          "switch_on": {
+            "type": "property_name",
+            "property_name": "was_oos_ever"
+          },
+          "cases": {
+            "yes": {
+              "type": "constant",
+              "constant": 1
+            }
+          },
+          "default": {
+            "type": "constant",
+            "constant": 0
+          }
+        }
+      },
+      {
+        "column_id": "last_reported_fever_date",
+        "datatype": "date",
+        "type": "raw",
+        "property_name": "last_reported_fever_date"
       }
     ],
     "named_expressions": {},

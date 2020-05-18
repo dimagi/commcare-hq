@@ -95,9 +95,10 @@ from corehq.apps.users.models import (
     CommCareUser,
     CouchUser,
     DomainMembershipError,
+    DomainPermissionsMirror,
     DomainRemovalRecord,
     DomainRequest,
-    SQLInvitation,
+    Invitation,
     UserRole,
     WebUser,
 )
@@ -496,7 +497,7 @@ class ListWebUsersView(BaseRoleAccessView):
     @property
     @memoized
     def invitations(self):
-        invitations = SQLInvitation.by_domain(self.domain)
+        invitations = Invitation.by_domain(self.domain)
         for invitation in invitations:
             invitation.role_label = self.role_labels.get(invitation.role, "")
         return invitations
@@ -561,6 +562,20 @@ class ListRolesView(BaseRoleAccessView):
                 toggles.OPENMRS_INTEGRATION.enabled(self.domain) or
                 toggles.DHIS2_INTEGRATION.enabled(self.domain)
             ),
+        }
+
+
+@method_decorator(require_can_edit_or_view_web_users, name='dispatch')
+@method_decorator(require_superuser, name='dispatch')
+class DomainPermissionsMirrorView(BaseUserSettingsView):
+    template_name = 'users/domain_permissions_mirror.html'
+    page_title = ugettext_lazy("Enterprise Permissions")
+    urlname = 'domain_permissions_mirror'
+
+    @property
+    def page_context(self):
+        return {
+            'mirrors': DomainPermissionsMirror.mirror_domains(self.domain),
         }
 
 
@@ -725,24 +740,9 @@ class UserInvitationView(object):
             logout(request)
             return HttpResponseRedirect(request.path)
 
-        # Recently-sent invitations will use a URL based on UUID
         try:
-            invitation = SQLInvitation.objects.get(uuid=uuid)
-        except (SQLInvitation.DoesNotExist, ValidationError):
-            invitation = None
-
-        # Older invitations, created before PR#26975, will use a URL based on SQL id
-        if not invitation:
-            try:
-                invitation = SQLInvitation.objects.get(id=int(uuid))
-            except (SQLInvitation.DoesNotExist, ValueError):
-                invitation = None
-
-        # The oldest invitations, created before PR#26686, will use a URL based on couch id.
-        if not invitation:
-            invitation = SQLInvitation.objects.filter(couch_id=uuid).first()
-
-        if not invitation:
+            invitation = Invitation.objects.get(uuid=uuid)
+        except (Invitation.DoesNotExist, ValidationError):
             messages.error(request, _("Sorry, it looks like your invitation has expired. "
                                       "Please check the invitation link you received and try again, or "
                                       "request a project administrator to send you the invitation again."))
@@ -883,8 +883,8 @@ def accept_invitation(request, domain, uuid):
 def reinvite_web_user(request, domain):
     uuid = request.POST['uuid']
     try:
-        invitation = SQLInvitation.objects.get(uuid=uuid)
-    except SQLInvitation.DoesNotExist:
+        invitation = Invitation.objects.get(uuid=uuid)
+    except Invitation.DoesNotExist:
         return json_response({'response': _("Error while attempting resend"), 'status': 'error'})
 
     invitation.invited_on = datetime.utcnow()
@@ -898,7 +898,7 @@ def reinvite_web_user(request, domain):
 @require_can_edit_web_users
 def delete_invitation(request, domain):
     uuid = request.POST['uuid']
-    invitation = SQLInvitation.objects.get(uuid=uuid)
+    invitation = Invitation.objects.get(uuid=uuid)
     invitation.delete()
     return json_response({'status': 'ok'})
 
@@ -945,7 +945,7 @@ class InviteWebUserView(BaseManageWebUserView):
             loc = SQLLocation.objects.get(location_id=self.request.GET.get('location_id'))
         if self.request.method == 'POST':
             current_users = [user.username for user in WebUser.by_domain(self.domain)]
-            pending_invites = [di.email for di in SQLInvitation.by_domain(self.domain)]
+            pending_invites = [di.email for di in Invitation.by_domain(self.domain)]
             return AdminInvitesUserForm(
                 self.request.POST,
                 excluded_emails=current_users + pending_invites,
@@ -997,7 +997,7 @@ class InviteWebUserView(BaseManageWebUserView):
                 data["invited_by"] = request.couch_user.user_id
                 data["invited_on"] = datetime.utcnow()
                 data["domain"] = self.domain
-                invite = SQLInvitation(**data)
+                invite = Invitation(**data)
                 invite.save()
                 invite.send_activation_email()
             return HttpResponseRedirect(reverse(

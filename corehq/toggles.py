@@ -1806,6 +1806,12 @@ SKIP_UPDATING_USER_REPORTING_METADATA = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
+RESTRICT_MOBILE_ACCESS = StaticToggle(
+    'restrict_mobile_endpoints',
+    'Require explicit permissions to access mobile app endpoints',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN],
+)
 
 SHOW_BUILD_PROFILE_IN_APPLICATION_STATUS = StaticToggle(
     'show_build_profile_in_app_status',
@@ -1843,14 +1849,6 @@ RUN_DATA_MANAGEMENT_TASKS = StaticToggle(
 )
 
 
-ALLOW_DEID_ODATA_FEED = StaticToggle(
-    'allow_deid_odata_feed',
-    'Allow De-Identification in OData feeds',
-    TAG_PRODUCT,
-    [NAMESPACE_DOMAIN]
-)
-
-
 ACCOUNTING_TESTING_TOOLS = StaticToggle(
     'accounting_testing_tools',
     'Enable Accounting Testing Tools',
@@ -1875,11 +1873,19 @@ TWO_STAGE_USER_PROVISIONING = StaticToggle(
     help_link='https://confluence.dimagi.com/display/ccinternal/Two-Stage+Mobile+Worker+Account+Creation',
 )
 
-LOCATION_REASSIGNMENT = StaticToggle(
+PERFORM_LOCATION_REASSIGNMENT = StaticToggle(
     'location_reassignment',
-    'Location Reassignment: ability to reorder organization structure',
+    'Ability to submit requests for location reassignment',
     TAG_CUSTOM,
     [NAMESPACE_USER],
+    relevant_environments={'icds', 'india', 'staging'},
+)
+
+DOWNLOAD_LOCATION_REASSIGNMENT_REQUEST_TEMPLATE = StaticToggle(
+    'download_location_reassignment_template',
+    'Allow domain users to download location reassignment template',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN],
     relevant_environments={'icds', 'india', 'staging'},
 )
 
@@ -1898,4 +1904,30 @@ ICDS_LOCATION_REASSIGNMENT_AGG = StaticToggle(
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
     relevant_environments={'icds', 'india'},
+)
+
+REFER_CASE_REPEATER = StaticToggle(
+    'refer_case_repeater',
+    'COVID: Allow refer case repeaters to be setup',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN]
+)
+
+RESTRICT_LOGIN_AS = StaticToggle(
+    'restrict_login_as',
+    'COVID: Limit allowed users for login as',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    description="""
+    Adds a permission that can be set on user roles to allow login as, but only as a limited set of users. Users with this enabled can "login as" other users that set custom user property "login_as_user" to the first user's username.
+    For example, if web user a@a.com has this permission set on their role, they can only login as mobile users who have the custom property "login_as_user" set to "a@a.com".
+    """
+)
+
+SHARDED_RUN_MESSAGING_RULE = StaticToggle(
+    'sharded_run_messaging_rule',
+    'Trigger concurrent tasks per each shard for conditional case alerts'
+    'Applies to SQL domains only',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN]
 )
