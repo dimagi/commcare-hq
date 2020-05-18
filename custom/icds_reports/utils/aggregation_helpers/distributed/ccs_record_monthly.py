@@ -277,7 +277,7 @@ class CcsRecordMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribute
             ('reason_no_ifa', 'agg_bp.reason_no_ifa'),
             ('new_ifa_tablets_total_bp', 'agg_bp.new_ifa_tablets_total'),
             ('new_ifa_tablets_total_pnc', 'agg_pnc.new_ifa_tablets_total'),
-            ('ifa_last_seven_days','agg_bp.ifa_last_seven_days'),
+            ('ifa_last_seven_days', 'agg_bp.ifa_last_seven_days'),
         )
         return """
         INSERT INTO "{tablename}" (
