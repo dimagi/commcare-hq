@@ -32,62 +32,6 @@ from corehq.apps.app_manager.xpath import (
 class MenuContributor(SuiteContributorByModule):
 
     def get_module_contributions(self, module, training_menu):
-        def get_commands(excluded_form_ids):
-            @memoized
-            def module_uses_case():
-                return module.all_forms_require_a_case()
-
-            @memoized
-            def domain_uses_usercase():
-                return is_usercase_in_use(self.app.domain)
-
-            for form in module.get_suite_forms():
-                if form.unique_id in excluded_form_ids:
-                    continue
-
-                command = Command(id=id_strings.form_command(form, module))
-
-                if form.requires_case():
-                    form_datums = self.entries_helper.get_datums_meta_for_form_generic(form)
-                    var_name = next(
-                        meta.datum.id for meta in reversed(form_datums)
-                        if meta.action and meta.requires_selection
-                    )
-                    case = CaseIDXPath(session_var(var_name)).case()
-                else:
-                    case = None
-
-                if getattr(form, 'form_filter', None):
-                    fixture_xpath = (
-                        session_var(id_strings.fixture_session_var(module)) if module.fixture_select.active
-                        else None
-                    )
-                    interpolated_xpath = interpolate_xpath(form.form_filter, case, fixture_xpath,
-                        module=module, form=form)
-
-                    if xpath_references_case(interpolated_xpath) and \
-                            (not module_uses_case() or
-                            module.put_in_root and not module.root_requires_same_case()):
-                        raise CaseXPathValidationError(module=module, form=form)
-
-                    if xpath_references_user_case(interpolated_xpath) and not domain_uses_usercase():
-                        raise UserCaseXPathValidationError(module=module, form=form)
-
-                    command.relevant = interpolated_xpath
-
-                if getattr(module, 'has_schedule', False) and module.all_forms_require_a_case():
-                    # If there is a schedule and another filter condition, disregard it...
-                    # Other forms of filtering are disabled in the UI
-
-                    schedule_filter_condition = MenuContributor._schedule_filter_conditions(form, module, case)
-                    if schedule_filter_condition is not None:
-                        command.relevant = schedule_filter_condition
-
-                yield command
-
-            if hasattr(module, 'case_list') and module.case_list.show:
-                yield Command(id=id_strings.case_list_command(module))
-
         menus = []
         if hasattr(module, 'get_menus'):
             for menu in module.get_menus(build_profile_id=self.build_profile_id):
@@ -166,7 +110,7 @@ class MenuContributor(SuiteContributorByModule):
                     if id_module and isinstance(id_module, ShadowModule):
                         excluded_form_ids = id_module.excluded_form_ids
 
-                    commands = get_commands(excluded_form_ids)
+                    commands = self._get_commands(module, excluded_form_ids)
                     if module.is_training_module and module.put_in_root and training_menu:
                         training_menu.commands.extend(commands)
                     else:
@@ -182,6 +126,62 @@ class MenuContributor(SuiteContributorByModule):
             self._give_root_menu_grid_style(menus)
 
         return menus
+
+    def _get_commands(self, module, excluded_form_ids):
+        @memoized
+        def module_uses_case():
+            return module.all_forms_require_a_case()
+
+        @memoized
+        def domain_uses_usercase():
+            return is_usercase_in_use(self.app.domain)
+
+        for form in module.get_suite_forms():
+            if form.unique_id in excluded_form_ids:
+                continue
+
+            command = Command(id=id_strings.form_command(form, module))
+
+            if form.requires_case():
+                form_datums = self.entries_helper.get_datums_meta_for_form_generic(form)
+                var_name = next(
+                    meta.datum.id for meta in reversed(form_datums)
+                    if meta.action and meta.requires_selection
+                )
+                case = CaseIDXPath(session_var(var_name)).case()
+            else:
+                case = None
+
+            if getattr(form, 'form_filter', None):
+                fixture_xpath = (
+                    session_var(id_strings.fixture_session_var(module)) if module.fixture_select.active
+                    else None
+                )
+                interpolated_xpath = interpolate_xpath(form.form_filter, case, fixture_xpath,
+                    module=module, form=form)
+
+                if xpath_references_case(interpolated_xpath) and \
+                        (not module_uses_case()
+                        or module.put_in_root and not module.root_requires_same_case()):
+                    raise CaseXPathValidationError(module=module, form=form)
+
+                if xpath_references_user_case(interpolated_xpath) and not domain_uses_usercase():
+                    raise UserCaseXPathValidationError(module=module, form=form)
+
+                command.relevant = interpolated_xpath
+
+            if getattr(module, 'has_schedule', False) and module.all_forms_require_a_case():
+                # If there is a schedule and another filter condition, disregard it...
+                # Other forms of filtering are disabled in the UI
+
+                schedule_filter_condition = MenuContributor._schedule_filter_conditions(form, module, case)
+                if schedule_filter_condition is not None:
+                    command.relevant = schedule_filter_condition
+
+            yield command
+
+        if hasattr(module, 'case_list') and module.case_list.show:
+            yield Command(id=id_strings.case_list_command(module))
 
     @staticmethod
     def _schedule_filter_conditions(form, module, case):
