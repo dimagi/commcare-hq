@@ -55,7 +55,7 @@ class SQLInfobipBackend(SQLSMSBackend):
         import http.client
         conn = http.client.HTTPSConnection("dmm5zv.api.infobip.com")
         payload = "{\"destinations\":[{\"to\":{\"phoneNumber\":\"%s\"}}],\"whatsApp\":{\"text\":\"%s\"}" \
-                  ",\"scenarioKey\":{\"text\":\"%s\"}}" % (to, msg.text, config.scenario_key)
+                  ",\"scenarioKey\":\"%s\"}" % (to, msg.text, config.scenario_key)
         headers = {
             'Authorization': 'App ' + str(config.auth_token),
             'Content-Type': 'application/json',
