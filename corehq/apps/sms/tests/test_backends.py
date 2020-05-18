@@ -544,7 +544,7 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
 
     @run_with_all_backends
     def test_infobip_inbound_sms(self):
-        url = '/infobip/message/%s' % self.infobip_backend.inbound_api_key
+        url = '/infobip/sms/%s' % self.infobip_backend.inbound_api_key
         payload = {
             "results": [
                 {
