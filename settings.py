@@ -769,8 +769,8 @@ COMPRESS_PRECOMPILERS = AVAILABLE_COMPRESS_PRECOMPILERS = (
 )
 # if not overwritten in localsettings, these will be replaced by the value they return
 # using the local DEBUG value (which we don't have access to here yet)
-COMPRESS_ENABLED = lambda: not DEBUG and not UNIT_TESTING
-COMPRESS_OFFLINE = lambda: not DEBUG and not UNIT_TESTING
+COMPRESS_ENABLED = lambda: not DEBUG and not UNIT_TESTING  # noqa: E731
+COMPRESS_OFFLINE = lambda: not DEBUG and not UNIT_TESTING  # noqa: E731
 COMPRESS_JS_COMPRESSOR = 'corehq.apps.hqwebapp.uglify.JsUglifySourcemapCompressor'
 # use 'compressor.js.JsCompressor' for faster local compressing (will get rid of source maps)
 COMPRESS_CSS_FILTERS = ['compressor.filters.css_default.CssAbsoluteFilter',
@@ -986,7 +986,7 @@ if callable(COMPRESS_ENABLED):
     COMPRESS_ENABLED = COMPRESS_ENABLED()
 if callable(COMPRESS_OFFLINE):
     COMPRESS_OFFLINE = COMPRESS_OFFLINE()
-if UNIT_TESTING or not COMPRESS_ENABLED:
+if UNIT_TESTING:
     # COMPRESS_COMPILERS overrides COMPRESS_ENABLED = False, so must be
     # cleared to disable compression completely. CSS/less compression is
     # very slow and should especially be avoided in tests. Tests that
@@ -1945,7 +1945,6 @@ COUCH_CACHE_BACKENDS = [
     'corehq.apps.cachehq.cachemodels.GroupGenerationCache',
     'corehq.apps.cachehq.cachemodels.UserRoleGenerationCache',
     'corehq.apps.cachehq.cachemodels.ReportGenerationCache',
-    'corehq.apps.cachehq.cachemodels.InvitationGenerationCache',
     'corehq.apps.cachehq.cachemodels.UserReportsDataSourceCache',
     'dimagi.utils.couch.cache.cache_core.gen.GlobalCache',
 ]

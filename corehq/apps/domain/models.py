@@ -13,10 +13,8 @@ from django.db.models import F
 from django.db.transaction import atomic
 from django.template.loader import render_to_string
 from django.urls import reverse
-from django.utils.html import format_html
 from django.utils.translation import ugettext_lazy as _
 
-from couchdbkit import PreconditionFailed
 from memoized import memoized
 
 from couchforms.analytics import domain_has_submission_in_last_30_days
@@ -738,12 +736,7 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
             return "Snapshot of %s" % self.copied_from.display_name()
         return self.hr_name or self.name
 
-    def long_display_name(self):
-        if self.is_snapshot:
-            return format_html("Snapshot of {}", self.copied_from.display_name())
-        return self.hr_name or self.name
-
-    __str__ = long_display_name
+    __str__ = display_name
 
     def get_license_display(self):
         return LICENSES.get(self.license)

@@ -46,6 +46,7 @@ from corehq.apps.domain.decorators import (
 from corehq.apps.domain.models import Domain
 from corehq.apps.es.case_search import flatten_result
 from corehq.apps.locations.permissions import location_safe
+from corehq.apps.ota.decorators import require_mobile_access
 from corehq.apps.ota.rate_limiter import rate_limit_restore
 from corehq.apps.users.models import CouchUser, UserReportingMetadataStaging
 from corehq.apps.users.util import (
@@ -75,6 +76,7 @@ PROFILE_LIMIT = int(PROFILE_LIMIT) if PROFILE_LIMIT is not None else 1
 @location_safe
 @handle_401_response
 @mobile_auth_or_formplayer
+@require_mobile_access
 @check_domain_migration
 def restore(request, domain, app_id=None):
     """

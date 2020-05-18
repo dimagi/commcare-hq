@@ -118,6 +118,7 @@ from corehq.apps.sms.util import (
     get_contact,
     get_or_create_sms_translations,
     get_sms_backend_classes,
+    is_superuser_or_contractor,
 )
 from corehq.apps.smsbillables.utils import \
     country_name_from_isd_code_or_empty as country_name_from_code
@@ -164,7 +165,7 @@ class BaseMessagingSectionView(BaseDomainView):
 
     @cached_property
     def is_system_admin(self):
-        return self.request.couch_user.is_superuser
+        return is_superuser_or_contractor(self.request.couch_user)
 
     @cached_property
     def is_granted_messaging_access(self):
@@ -966,10 +967,6 @@ class DomainSmsGatewayListView(CRUDPaginatedViewMixin, BaseMessagingSectionView)
         return reverse(self.urlname, args=[self.domain])
 
     @property
-    def parameters(self):
-        return self.request.POST if self.request.method == 'POST' else self.request.GET
-
-    @property
     @memoized
     def total(self):
         return SQLMobileBackend.get_domain_backends(SQLMobileBackend.SMS, self.domain, count_only=True)
@@ -998,8 +995,9 @@ class DomainSmsGatewayListView(CRUDPaginatedViewMixin, BaseMessagingSectionView)
 
         context = self.pagination_context
         context.update({
-            'initiate_new_form': InitiateAddSMSBackendForm(is_superuser=self.request.couch_user.is_superuser),
+            'initiate_new_form': InitiateAddSMSBackendForm(user=self.request.couch_user),
             'extra_backend_mappings': extra_backend_mappings,
+            'is_system_admin': self.is_system_admin,
         })
         return context
 
@@ -1126,8 +1124,8 @@ class AddGatewayViewMixin(object):
     """
 
     @property
-    def is_superuser(self):
-        return self.request.couch_user.is_superuser
+    def is_system_admin(self):
+        return is_superuser_or_contractor(self.request.couch_user)
 
     @property
     @memoized
@@ -1139,7 +1137,7 @@ class AddGatewayViewMixin(object):
     def backend_class(self):
         # Superusers can create/edit any backend
         # Regular users can only create/edit Telerivet backends for now
-        if not self.is_superuser and self.hq_api_id != SQLTelerivetBackend.get_api_id():
+        if not self.is_system_admin and self.hq_api_id != SQLTelerivetBackend.get_api_id():
             raise Http404()
         backend_classes = get_sms_backend_classes()
         try:
@@ -1345,10 +1343,6 @@ class GlobalSmsGatewayListView(CRUDPaginatedViewMixin, BaseAdminSectionView):
         return reverse(self.urlname)
 
     @property
-    def parameters(self):
-        return self.request.POST if self.request.method == 'POST' else self.request.GET
-
-    @property
     @memoized
     def total(self):
         return SQLMobileBackend.get_global_backends(SQLMobileBackend.SMS, count_only=True)
@@ -1366,7 +1360,7 @@ class GlobalSmsGatewayListView(CRUDPaginatedViewMixin, BaseAdminSectionView):
     def page_context(self):
         context = self.pagination_context
         context.update({
-            'initiate_new_form': InitiateAddSMSBackendForm(is_superuser=self.request.couch_user.is_superuser),
+            'initiate_new_form': InitiateAddSMSBackendForm(user=self.request.couch_user),
         })
         return context
 
@@ -1943,10 +1937,6 @@ class ManageRegistrationInvitationsView(BaseAdvancedMessagingSectionView, CRUDPa
     @memoized
     def project_timezone(self):
         return get_timezone_for_user(None, self.domain)
-
-    @property
-    def parameters(self):
-        return self.request.POST if self.request.method == 'POST' else self.request.GET
 
     @property
     def page_context(self):

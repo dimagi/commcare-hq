@@ -94,6 +94,7 @@ require_can_edit_or_view_groups = require_permission(
     'edit_groups', view_only_permission='view_groups'
 )
 require_can_view_roles = require_permission('view_roles')
+require_can_login_as = require_permission_raw(lambda user, domain: user.can_login_as(domain))
 
 
 def require_permission_to_edit_user(view_func):
