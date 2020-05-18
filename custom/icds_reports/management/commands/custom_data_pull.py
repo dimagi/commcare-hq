@@ -29,7 +29,6 @@ rows_header = ['child_pse', 'child_hcm', 'child_thr', 'height_weight_measured_in
 @transaction.atomic
 def _run_custom_sql_script(command):
     db_alias = get_icds_ucr_citus_db_alias()
-    row = ''
     if not db_alias:
         return
     with connections[db_alias].cursor() as cursor:
@@ -57,8 +56,8 @@ class Command(BaseCommand):
             for row in query:
                 state_name = row['state_name']
                 for k, v in row.items():
-                    if k is not 'state_name':
-                        data_format[state_name][rows_header.indexOf(k) + 1] = v
+                    if k != 'state_name':
+                        data_format[state_name][rows_header.index(k) + 1] = v
         final_rows = [['state'] + rows_header]
         for k in data_format:
             final_rows.append(data_format[k])
