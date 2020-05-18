@@ -47,7 +47,7 @@ def sync_case_for_messaging_rule(self, domain, case_id, rule_id):
 
 
 @no_result_task(serializer='pickle', queue=settings.CELERY_REMINDER_CASE_UPDATE_QUEUE, acks_late=True)
-def sync_case_chunk_for_messaging_rule(self, domain, case_id_chunk, rule_id):
+def sync_case_chunk_for_messaging_rule(domain, case_id_chunk, rule_id):
     for case_id in case_id_chunk:
         try:
             with CriticalSection([get_sync_key(case_id)], timeout=5 * 60):
