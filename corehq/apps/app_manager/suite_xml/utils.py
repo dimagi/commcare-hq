@@ -66,15 +66,12 @@ def validate_suite(suite):
             raise SuiteValidationError('field/sort/@order must be unique per detail')
 
 
-def _should_use_root_display(module):
+def get_module_locale_id(module, root_module=None):
+    root_module = root_module or module.root_module
     # child modules set to display only forms should use their parent module's
     # name so as not to confuse mobile when the two are combined
-    return module.put_in_root and module.root_module and not module.root_module.put_in_root
-
-
-def get_module_locale_id(module):
-    if _should_use_root_display(module):
-        module = module.root_module
+    if module.put_in_root and root_module and not root_module.put_in_root:
+        module = root_module
     return id_strings.module_locale(module)
 
 
