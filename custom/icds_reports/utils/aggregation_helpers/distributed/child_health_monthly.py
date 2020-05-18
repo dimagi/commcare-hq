@@ -118,13 +118,13 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
             "(agg_availing.is_registered IS DISTINCT FROM 0 "
             "OR agg_availing.registration_date::date >= {start_month_string})"
         ).format(start_month_string=start_month_string)
-        registered_month_end = (
+        registered_status_daily = (
             "(agg_availing.is_registered IS DISTINCT FROM 0 )"
         )
         seeking_services = "({registered} AND {not_migrated})".format(
             registered=registered, not_migrated=not_migrated)
-        seeking_services_status_daily = "({registered_month_end} AND {not_migration_status_daily})".format(
-            registered_month_end=registered_month_end, not_migration_status_daily=not_migration_status_daily)
+        seeking_services_status_daily = "({registered_status_daily} AND {not_migration_status_daily})".format(
+            registered_status_daily=registered_status_daily, not_migration_status_daily=not_migration_status_daily)
         born_in_month = "({} AND person_cases.dob BETWEEN {} AND {})".format(
             seeking_services, start_month_string, end_month_string
         )
