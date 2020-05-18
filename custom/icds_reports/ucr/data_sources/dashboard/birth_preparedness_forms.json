@@ -506,6 +506,24 @@
           "type": "property_path",
           "property_path": ["form", "next_due"]
         }
+      },
+      {
+        "column_id": "reason_no_ifa",
+        "datatype": "string",
+        "type": "expression",
+        "expression": {
+          "type": "property_path",
+          "property_path": ["form", "bp1", "reason_no_ifa"]
+        }
+      },
+      {
+        "column_id": "new_ifa_tablets_total",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "property_path",
+          "property_path": ["form", "bp1", "new_ifa_tablets_total"]
+        }
       }
     ],
     "named_expressions": {

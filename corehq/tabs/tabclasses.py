@@ -952,7 +952,7 @@ class ApplicationsTab(UITab):
         couch_user = self.couch_user
         return (self.domain and couch_user
                 and (couch_user.is_web_user() or couch_user.can_edit_apps())
-                and (couch_user.is_member_of(self.domain) or couch_user.is_superuser)
+                and (couch_user.is_member_of(self.domain, allow_mirroring=True) or couch_user.is_superuser)
                 and has_privilege(self._request, privileges.PROJECT_ACCESS))
 
 
@@ -1428,6 +1428,18 @@ class ProjectUsersTab(UITab):
                 'subpages': [],
                 'show_in_dropdown': True,
             })
+
+        if self.couch_user.is_superuser:
+            from corehq.apps.users.models import DomainPermissionsMirror
+            if DomainPermissionsMirror.mirror_domains(self.domain):
+                from corehq.apps.users.views import DomainPermissionsMirrorView
+                menu.append({
+                    'title': _(DomainPermissionsMirrorView.page_title),
+                    'url': reverse(DomainPermissionsMirrorView.urlname, args=[self.domain]),
+                    'description': _("View project spaces where users receive automatic access"),
+                    'subpages': [],
+                    'show_in_dropdown': False,
+                })
 
         return menu
 

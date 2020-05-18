@@ -8,7 +8,7 @@ from django.conf import settings
 from celery.schedules import crontab
 from celery.task import periodic_task, task
 from celery.utils.log import get_task_logger
-from unidecode import unidecode
+from text_unidecode import unidecode
 
 from casexml.apps.case.xform import extract_case_blocks
 from couchforms.analytics import app_has_been_submitted_to_in_last_30_days

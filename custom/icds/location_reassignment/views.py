@@ -25,6 +25,7 @@ from corehq.util.workbook_json.excel import WorkbookJSONError, get_workbook
 from custom.icds.location_reassignment.const import (
     AWC_CODE,
     AWC_CODE_COLUMN,
+    CASE_ID_COLUMN,
     CURRENT_SITE_CODE_COLUMN,
     HOUSEHOLD_ID_COLUMN,
     NEW_SITE_CODE_COLUMN,
@@ -38,12 +39,15 @@ from custom.icds.location_reassignment.forms import (
 )
 from custom.icds.location_reassignment.parser import (
     HouseholdReassignmentParser,
+    OtherCasesReassignmentParser,
     Parser,
 )
 from custom.icds.location_reassignment.tasks import (
     email_household_details,
+    email_other_cases_details,
     process_households_reassignment,
     process_location_reassignment,
+    process_other_cases_reassignment,
 )
 
 
@@ -119,10 +123,14 @@ class LocationReassignmentView(BaseLocationView):
         else:
             if action_type == LocationReassignmentRequestForm.EMAIL_HOUSEHOLDS:
                 self._process_request_for_email_households(parser, request, uploaded_file.name)
+            elif action_type == LocationReassignmentRequestForm.EMAIL_OTHER_CASES:
+                self._process_request_for_email_other_cases(parser, request, uploaded_file.name)
             elif action_type == LocationReassignmentRequestForm.UPDATE:
                 self._process_request_for_update(parser, request, uploaded_file.name)
             elif action_type == LocationReassignmentRequestForm.REASSIGN_HOUSEHOLDS:
                 self._process_request_for_household_reassignment(parser, request, uploaded_file.name)
+            elif action_type == LocationReassignmentRequestForm.REASSIGN_OTHER_CASES:
+                self._process_request_for_other_cases_reassignment(parser, request, uploaded_file.name)
             else:
                 return self._generate_summary_response(parser.valid_transitions, uploaded_file.name)
         return self.get(request, *args, **kwargs)
@@ -130,6 +138,8 @@ class LocationReassignmentView(BaseLocationView):
     def _get_parser(self, action_type, workbook):
         if action_type == LocationReassignmentRequestForm.REASSIGN_HOUSEHOLDS:
             return HouseholdReassignmentParser(self.domain, workbook)
+        elif action_type == LocationReassignmentRequestForm.REASSIGN_OTHER_CASES:
+            return OtherCasesReassignmentParser(self.domain, workbook)
         return Parser(self.domain, workbook)
 
     def _get_workbook(self, uploaded_file, action_type):
@@ -153,6 +163,14 @@ class LocationReassignmentView(BaseLocationView):
             return errors
         if action_type == LocationReassignmentRequestForm.REASSIGN_HOUSEHOLDS:
             mandatory_columns = {AWC_CODE_COLUMN, HOUSEHOLD_ID_COLUMN}
+            location_site_codes = set([ws.title for ws in workbook.worksheets])
+            site_codes_found = set(
+                SQLLocation.objects.filter(domain=self.domain, site_code__in=location_site_codes)
+                .values_list('site_code', flat=True))
+            for worksheet in workbook.worksheets:
+                errors.extend(self._validate_worksheet(worksheet, site_codes_found, mandatory_columns))
+        elif action_type == LocationReassignmentRequestForm.REASSIGN_OTHER_CASES:
+            mandatory_columns = {NEW_SITE_CODE_COLUMN, CASE_ID_COLUMN}
             location_site_codes = set([ws.title for ws in workbook.worksheets])
             site_codes_found = set(
                 SQLLocation.objects.filter(domain=self.domain, site_code__in=location_site_codes)
@@ -190,7 +208,7 @@ class LocationReassignmentView(BaseLocationView):
         return response
 
     def _process_request_for_email_households(self, parser, request, uploaded_filename):
-        awc_transitions = parser.valid_transitions_json(for_location_type=AWC_CODE)
+        awc_transitions = parser.valid_transitions_json(for_location_type=AWC_CODE).get(AWC_CODE)
         if awc_transitions:
             email_household_details.delay(self.domain, awc_transitions,
                                           uploaded_filename, request.user.email)
@@ -198,6 +216,18 @@ class LocationReassignmentView(BaseLocationView):
                 "Your request has been submitted. You will be updated via email."))
         else:
             messages.error(request, "No transitions found for %s" % AWC_CODE)
+
+    def _process_request_for_email_other_cases(self, parser, request, uploaded_filename):
+        all_transitions = []
+        for location_type, transitions in parser.valid_transitions_json().items():
+            all_transitions.extend(transitions)
+        if all_transitions:
+            email_other_cases_details.delay(self.domain, all_transitions,
+                                            uploaded_filename, request.user.email)
+            messages.success(request, _(
+                "Your request has been submitted. You will be updated via email."))
+        else:
+            messages.error(request, "No transitions found")
 
     def _process_request_for_update(self, parser, request, uploaded_filename):
         process_location_reassignment.delay(
@@ -213,6 +243,14 @@ class LocationReassignmentView(BaseLocationView):
         )
         messages.success(request, _(
             "Your request has been submitted. We will notify you via email once completed."))
+
+    def _process_request_for_other_cases_reassignment(self, parser, request, uploaded_filename):
+        process_other_cases_reassignment.delay(
+            self.domain, parser.reassignments, uploaded_filename, request.user.email
+        )
+        messages.success(request, _(
+            "Your request has been submitted. We will notify you via email once completed."))
+
 
 
 @toggles.DOWNLOAD_LOCATION_REASSIGNMENT_REQUEST_TEMPLATE.required_decorator()
