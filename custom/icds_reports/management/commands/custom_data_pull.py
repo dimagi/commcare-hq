@@ -8,11 +8,8 @@ from django.db import connections, transaction
 from corehq.sql_db.connections import get_icds_ucr_citus_db_alias
 
 states = [
-    'Uttarakhand', 'Jharkhand', 'Rajasthan', 'J&K', 'Maharashtra', 'Lakshadweep', 'Bihar', 'Gujarat',
-    'Puducherry', 'Himachal Pradesh', 'Nagaland', 'Kerala', 'Delhi', 'Assam', 'Mizoram', 'Andhra Pradesh',
-    'Telangana', 'Madhya Pradesh', 'Tripura', 'Tamil Nadu', 'Sikkim', 'Chandigarh', 'Chhattisgarh',
-    'Goa', 'Dadra & Nagar Haveli', 'Andaman & Nicobar Islands', 'Meghalaya', 'Daman & Diu',
-    'Uttar Pradesh', 'Manipur']
+    'Jharkhand', 'Rajasthan', 'Maharashtra', 'Bihar',
+    'Andhra Pradesh', 'Madhya Pradesh', 'Chhattisgarh', 'Uttar Pradesh']
 
 rows_header = ['child_pse', 'child_hcm', 'child_thr', 'height_weight_measured_in_month', 'bf_at_birth',
                'born_in_month', 'cf_initiation_in_month', 'cf_initiation_eligible',
@@ -55,9 +52,10 @@ class Command(BaseCommand):
         for query in queries:
             for row in query:
                 state_name = row['state_name']
-                for k, v in row.items():
-                    if k != 'state_name':
-                        data_format[state_name][rows_header.index(k) + 1] = v
+                if state_name in states:
+                    for k, v in row.items():
+                        if k != 'state_name':
+                            data_format[state_name][rows_header.index(k) + 1] = v
         final_rows = [['state'] + rows_header]
         for k in data_format:
             final_rows.append(data_format[k])
@@ -66,7 +64,6 @@ class Command(BaseCommand):
         writer = csv.writer(fout)
         writer.writerows(final_rows)
 
-        return ret_row
 
     def handle(self, *args, **kwargs):
         self.run_task()
