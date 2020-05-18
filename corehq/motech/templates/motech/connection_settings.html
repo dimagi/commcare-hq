@@ -14,13 +14,17 @@
     <td data-bind="text: url"></td>
     <td data-bind="text: notifyAddresses"></td>
     <td>
+      <!-- ko if: usedBy -->
+      <span data-bind="text: usedBy"></span>
+      <!-- /ko -->
+      <!-- ko ifnot: usedBy -->
       <button type="button"
               class="btn btn-danger"
               data-bind="attr: {'data-target': '#delete-connection-settings-' + id}"
               data-toggle="modal">
         <i class="fa fa-remove"></i> {% trans "Delete" %}
       </button>
-
+      <!-- /ko -->
       <div class="modal fade"
            data-bind="attr: {'id': 'delete-connection-settings-' + id}">
         <div class="modal-dialog">

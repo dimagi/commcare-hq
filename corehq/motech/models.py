@@ -4,6 +4,7 @@ from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 
 import jsonfield
+from django.utils.translation import gettext as _
 
 from corehq.motech.const import (
     ALGO_AES,
@@ -78,25 +79,25 @@ class ConnectionSettings(models.Model):
             auth_type=self.auth_type,
         )
 
-    def is_in_use(self):
+    @property
+    def used_by(self):
         """
-        Returns whether anything uses this instance.
+        Returns the names of kinds of things that are currently using
+        this instance. Used for informing users, and determining whether
+        the instance can be deleted.
         """
         from corehq.motech.dhis2.dbaccessors import get_dataset_maps
 
-        # Check IncrementalExport instances
+        kinds = set()
         if self.incrementalexport_set.first():
-            return True
-
-        # Check DataSetMap instances
+            kinds.add(_('Incremental Exports'))
         if any(True for m in get_dataset_maps(self.domain)
                if m.connection_settings_id == self.id):
-            return True
-
+            kinds.add(_('DHIS2 DataSet Maps'))
         # TODO: Check Repeaters (when Repeaters use ConnectionSettings)
         # TODO: Check OpenmrsImporters (ditto)
 
-        return False
+        return kinds
 
 
 class RequestLog(models.Model):

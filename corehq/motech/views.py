@@ -140,7 +140,7 @@ class ConnectionSettingsListView(BaseProjectSettingsView, CRUDPaginatedViewMixin
             _("Name"),
             _("URL"),
             _("Notify Addresses"),
-            _("Actions"),
+            _("Used By"),
         ]
 
     @property
@@ -161,6 +161,7 @@ class ConnectionSettingsListView(BaseProjectSettingsView, CRUDPaginatedViewMixin
             'name': connection_settings.name,
             'url': connection_settings.url,
             'notifyAddresses': ', '.join(connection_settings.notify_addresses),
+            'usedBy': ', '.join(connection_settings.used_by),
             'editUrl': reverse(
                 ConnectionSettingsDetailView.urlname,
                 kwargs={'domain': self.domain, 'pk': connection_settings.id}
@@ -172,7 +173,7 @@ class ConnectionSettingsListView(BaseProjectSettingsView, CRUDPaginatedViewMixin
             pk=item_id,
             domain=self.domain,
         )
-        if connection_settings.is_in_use():
+        if connection_settings.used_by:
             raise Http409
 
         connection_settings.delete()
