@@ -62,5 +62,6 @@ branches:
   - nemanja1040:infobip_integration  # Nemanja Stancic May 14
   - jls/migrate-MobileAuthKeyRecord-2 # Jenny May 16
   - sr-messaging-rule # Sravan May 18
+  - bmb/fix-nose-req  # Biyeun May 18
 
 submodules: {}
