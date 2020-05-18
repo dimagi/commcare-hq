@@ -4,7 +4,10 @@ from __future__ import unicode_literals
 
 from django.db import migrations, models
 
+from corehq.sql_db.operations import RawSQLMigration
 from custom.icds_reports.utils.migrations import get_view_migrations
+
+migrator = RawSQLMigration(('custom', 'icds_reports', 'migrations', 'sql_templates'))
 
 
 class Migration(migrations.Migration):
@@ -18,7 +21,23 @@ class Migration(migrations.Migration):
             model_name='biharapidemographics',
             name='last_reported_fever_date',
             field=models.DateField(null=True)
-        )
+        ),
+        migrations.AddField(
+            model_name='aggregatebirthpreparednesforms',
+            name='new_ifa_tablets_total',
+            field=models.PositiveSmallIntegerField(help_text='New ifa tablets', null=True),
+        ),
+        migrations.AddField(
+            model_name='aggregatebirthpreparednesforms',
+            name='reason_no_ifa',
+            field=models.CharField(help_text='Reason for not giving ifa', max_length=40, null=True),
+        ),
+        migrations.AddField(
+            model_name='aggregateccsrecordpostnatalcareforms',
+            name='new_ifa_tablets_total',
+            field=models.PositiveSmallIntegerField(help_text='New ifa tablets', null=True),
+        ),
+        migrator.get_migration('update_tables50.sql'),
     ]
 
     operations.extend(get_view_migrations())

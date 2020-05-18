@@ -1066,6 +1066,10 @@ class AggregateCcsRecordPostnatalCareForms(models.Model, AggregateMixin):
         help_text="number of qualified visits for the incentive report",
         default=0
     )
+    new_ifa_tablets_total = models.PositiveSmallIntegerField(
+        null=True,
+        help_text="New ifa tablets"
+    )
 
     class Meta(object):
         db_table = AGG_CCS_RECORD_PNC_TABLE
@@ -1324,6 +1328,13 @@ class AggregateBirthPreparednesForms(models.Model, AggregateMixin):
         null=True,
         help_text="Has ever had /data/bp1/using_ifa='yes'"
     )
+    reason_no_ifa = models.CharField(max_length=40, null=True,
+                                     help_text='Reason for not giving ifa')
+    new_ifa_tablets_total = models.PositiveSmallIntegerField(
+        null=True,
+        help_text="New ifa tablets"
+    )
+
 
     class Meta(object):
         db_table = AGG_CCS_RECORD_BP_TABLE
