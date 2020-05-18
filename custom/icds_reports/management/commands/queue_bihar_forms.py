@@ -15,6 +15,10 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('--start_supervisor_id', required=False, dest='start_supervisor_id',
                             help='supervisor from where records are to fetch', default='')
+        parser.add_argument('--ucr_name', required=True, dest='ucr_name',
+                            help='name of the form UCR name', default='')
+        parser.add_argument('--domain_name', required=True, dest='domain_name',
+                            help='name of the form domain name', default='')
 
     def get_supervisor_ids(self, start_supervisor_id):
         return (AwcLocation.objects.filter(state_id=self.BIHAR_STATE_ID, aggregation_level=4,
@@ -23,10 +27,9 @@ class Command(BaseCommand):
                 .values_list('supervisor_id', flat=True))
 
     def handle(self, *args, **kwargs):
-        table_name = get_table_name('icds-cas', 'static-child_delivery_forms')
-        # sort by supervisor_id and doc_id to improve the performance, sorting is needed to resume the queueing
-        # if it fails in between.
-
+        ucr_name = kwargs.get('ucr_name')
+        domain_name = kwargs.get('domain_name')
+        table_name = get_table_name(domain_name, ucr_name)
         start_supervisor_id = kwargs.get('start_supervisor_id')
         bihar_state_id = 'f9b47ea2ee2d8a02acddeeb491d3e175'
 
@@ -52,7 +55,7 @@ class Command(BaseCommand):
                     AsyncIndicator(doc_id=doc_id[0],
                                    doc_type='XFormInstance',
                                    domain='icds-cas',
-                                   indicator_config_ids=['static-icds-cas-static-child_delivery_forms']
+                                   indicator_config_ids=[f'static-{domain_name}-{ucr_name}']
                                    )
                     for doc_id in doc_ids
                 ])
