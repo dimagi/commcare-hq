@@ -176,7 +176,7 @@ def run_messaging_rule(domain, rule_id):
         for db_alias in db_aliases:
             run_messaging_rule_for_shard.delay(domain, rule_id, db_alias)
 
-    if toggles.SHARDED_RUN_MESSAGING_RULE.enabled(domain):
+    if toggles.SHARDED_RUN_MESSAGING_RULE.enabled(domain) and should_use_sql_backend(domain):
         _run_rule_on_multiple_shards()
     else:
         _run_rule_sequentially()
