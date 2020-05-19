@@ -13,4 +13,5 @@ class Migration(migrations.Migration):
         ('icds_reports', '0186_refresh_views'),
     ]
 
-    operations = get_view_migrations()
+    operations = [
+    ]
