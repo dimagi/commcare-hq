@@ -37,7 +37,11 @@ class Migration(migrations.Migration):
             name='new_ifa_tablets_total',
             field=models.PositiveSmallIntegerField(help_text='New ifa tablets', null=True),
         ),
-        migrator.get_migration('update_tables50.sql'),
+        migrations.RunSQL("ALTER TABLE ccs_record_monthly ADD COLUMN complication_type text"),
+        migrations.RunSQL("ALTER TABLE ccs_record_monthly ADD COLUMN reason_no_ifa text"),
+        migrations.RunSQL("ALTER TABLE ccs_record_monthly ADD COLUMN new_ifa_tablets_total_bp INTEGER"),
+        migrations.RunSQL("ALTER TABLE ccs_record_monthly ADD COLUMN new_ifa_tablets_total_pnc INTEGER"),
+        migrations.RunSQL("ALTER TABLE ccs_record_monthly ADD COLUMN ifa_last_seven_days INTEGER"),
     ]
 
     operations.extend(get_view_migrations())
