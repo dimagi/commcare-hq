@@ -12,5 +12,4 @@ class Migration(migrations.Migration):
         ('icds_reports', '0179_location_deprecation_columns'),
     ]
 
-    operations = [
-    ]
+    operations = []

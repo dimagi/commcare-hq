@@ -13,5 +13,4 @@ class Migration(migrations.Migration):
         ('icds_reports', '0187_chm_view_growth_tracker'),
     ]
 
-    operations = [
-    ]
+    operations = []

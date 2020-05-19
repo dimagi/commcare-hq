@@ -47,17 +47,6 @@
             <h4 class="panel-title panel-title-nolink">{% trans "Menu" %}</h4>
           </div>
           <div class="panel-body">
-            {% if request|toggle_enabled:"APP_BUILDER_CONDITIONAL_NAMES" %}
-              <div class="form-group">
-                <label class="{% css_label_class %} control-label">
-                  {% trans "Name Mapping" %}
-                </label>
-                <div class="{% css_field_class %}" id="name-enum-mapping">
-                  <input name="name_enum" type="hidden" value="{% html_attr module_brief.name_enum %}" />
-                </div>
-              </div>
-            {% endif %}
-
             {% if not module.is_surveys and module.module_type != 'shadow' %}
               {% include "app_manager/partials/modules/module_view_case_type.html" %}
             {% endif %}

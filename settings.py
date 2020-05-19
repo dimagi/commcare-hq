@@ -680,6 +680,7 @@ AUDIT_MODULES = [
     'corehq.apps.registration',
     'corehq.apps.hqadmin',
     'corehq.apps.accounting',
+    'corehq.apps.cloudcare',
     'tastypie',
 ]
 
@@ -2132,8 +2133,9 @@ if SENTRY_DSN:
 else:
     SENTRY_CONFIGURED = False
 
+SESSION_COOKIE_SECURE = CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_HTTPONLY = CSRF_COOKIE_HTTPONLY = True
 
-CSRF_COOKIE_HTTPONLY = True
 if RESTRICT_USED_PASSWORDS_FOR_NIC_COMPLIANCE:
     AUTH_PASSWORD_VALIDATORS = [
         {

@@ -49,7 +49,7 @@ django-cte==1.1.4         # via -r requirements/requirements.in
 django-debug-toolbar==2.0  # via -r requirements/dev-requirements.in
 django-extensions==2.2.5  # via -r requirements/dev-requirements.in
 django-formtools==2.1     # via -r requirements/requirements.in, django-two-factor-auth
-git+git://github.com/millerdev/django-nose@fast-first-1.4.4#egg=django-nose  # via -r requirements/test-requirements.in
+git+git://github.com/dimagi/django-nose@fast-first-1.4.6#egg=django-nose  # via -r requirements/test-requirements.in
 django-otp==0.3.13        # via -r requirements/requirements.in, django-two-factor-auth
 django-partial-index==0.6.0  # via -r requirements/requirements.in
 django-phonenumber-field==1.3.0  # via django-two-factor-auth

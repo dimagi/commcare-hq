@@ -8,7 +8,6 @@
 {% block js %}{{ block.super }}
   {% compress js %}
     <script src="{% static "clipboard/dist/clipboard.js" %}"></script>
-    <script src="{% static 'hqwebapp/js/key-value-mapping.js' %}"></script>
     <script src="{% static 'app_manager/js/details/graph_config.js' %}"></script>
     <script src="{% static 'app_manager/js/modules/report_module.js' %}"></script>
     <script src="{% static 'reports_core/js/choice_list_utils.js' %}"></script>
@@ -22,13 +21,11 @@
     <script src="{% static 'app_manager/js/app_manager_media.js' %}"></script>
     <script src="{% static 'app_manager/js/modules/module_view_report.js' %}"></script>
   {% endcompress %}
-  {% include 'hqwebapp/partials/key_value_mapping.html' %}
 {% endblock %}
 {% block form-view %}
   {% initial_page_data 'lang' lang %}
   {% initial_page_data 'multimedia_object_map' multimedia.object_map %}
   {% initial_page_data 'multimedia_upload_managers' multimedia.upload_managers_js %}
-  {% initial_page_data 'name_enum' module.name_enum %}
   {% initial_page_data 'nav_menu_media_specifics' nav_menu_media_specifics %}
   {% initial_page_data 'sessionid' request.COOKIES.sessionid %}
   {% initial_page_data 'swfURL' 'hqmedia/MediaUploader/flashuploader.swf'|static %}
@@ -47,7 +44,6 @@
 
 {% block modals %}{{ block.super }}
   {% include "app_manager/partials/nav_menu_media_modals.html" %}
-  {% include 'hqwebapp/partials/key_value_mapping.html' %}
   {% include 'app_manager/partials/modules/graph_configuration_modal.html' %}
 {% endblock modals %}
 
