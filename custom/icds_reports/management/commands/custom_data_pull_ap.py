@@ -3,26 +3,10 @@ from datetime import date
 
 from dateutil.relativedelta import relativedelta
 from django.core.management.base import BaseCommand
-from django.db import connections, transaction
+from django.db import connections
 
 from corehq.sql_db.connections import get_icds_ucr_citus_db_alias
-
-query_to_fetch_awcs = """
-    SELECT doc_id, awc_name, awc_site_code, supervisor_name, block_name, district_name
-    FROM awc_location WHERE aggregation_level=5 AND state_id='f98e91aa003accb7b849a0f18ebd7039'
-"""
-
-#                                                               QUERY PLAN
-# ---------------------------------------------------------------------------------------------------------------------------------------
-#  Custom Scan (Citus Router)  (cost=0.00..0.00 rows=0 width=0)
-#    Task Count: 1
-#    Tasks Shown: All
-#    ->  Task
-#          Node: host=100.71.184.222 port=6432 dbname=icds_ucr
-#          ->  Index Scan using awc_location_pkey_102840 on awc_location_102840 awc_location  (cost=0.68..51589.67 rows=55002 width=109)
-#                Index Cond: (state_id = 'f98e91aa003accb7b849a0f18ebd7039'::text)
-#                Filter: (aggregation_level = 5)
-# (8 rows)
+from custom.icds_reports.models import AwcLocation
 
 query_to_fetch_visit_data = """
     SELECT awc_id, CASE WHEN expected_visits>0 THEN valid_visits/(expected_visits)::float*100 ELSE 0 END as visits FROM agg_awc
@@ -30,19 +14,6 @@ query_to_fetch_visit_data = """
 """
 
 
-#                                                                              QUERY PLAN
-# ---------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#  Result  (cost=0.00..52851.49 rows=55801 width=41)
-#    ->  Append  (cost=0.00..51595.97 rows=55801 width=41)
-#          ->  Seq Scan on agg_awc  (cost=0.00..0.00 rows=1 width=40)
-#                Filter: ((aggregation_level = 5) AND (state_id = 'f98e91aa003accb7b849a0f18ebd7039'::text) AND (month = '2020-01-01'::date))
-#          ->  Index Scan using "agg_awc_2020-01-01_5_state_id_district_id_block_id_supervis_idx" on "agg_awc_2020-01-01_5"  (cost=0.68..51316.96 rows=55800 width=41)
-#                Index Cond: (state_id = 'f98e91aa003accb7b849a0f18ebd7039'::text)
-#                Filter: ((aggregation_level = 5) AND (month = '2020-01-01'::date))
-# (7 rows)
-
-
-@transaction.atomic
 def _run_custom_sql_script(command):
     db_alias = get_icds_ucr_citus_db_alias()
     if not db_alias:
@@ -67,7 +38,13 @@ class Command(BaseCommand):
             columns.append(date_itr.strftime("%Y-%m-%d"))
             date_itr = date_itr + relativedelta(months=1)
             count = count + 1
-        awc_data = _run_custom_sql_script(query_to_fetch_awcs)
+        awc_data = AwcLocation.objects.filter(aggregation_level=5,
+                                              state_id='f98e91aa003accb7b849a0f18ebd7039').values('doc_id',
+                                                                                                  'awc_name',
+                                                                                                  'awc_site_code',
+                                                                                                  'supervisor_name',
+                                                                                                  'block_name',
+                                                                                                  'district_name')
         data_format = {}
         for awc in awc_data:
             data_format.update({awc['doc_id']: [awc['awc_name'], awc['awc_site_code'], awc['supervisor_name'],
