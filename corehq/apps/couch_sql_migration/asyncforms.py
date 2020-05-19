@@ -6,6 +6,7 @@ import attr
 import gevent
 from gevent.pool import Pool
 
+from casexml.apps.case.exceptions import CommCareCaseError
 from casexml.apps.case.xform import get_case_ids_from_form, get_case_updates
 from couchforms.models import XFormInstance
 from dimagi.utils.chunked import chunked
@@ -81,6 +82,10 @@ class AsyncFormProcessor:
     def _try_to_process_form(self, wrapped_form, retries=0):
         try:
             case_ids = get_case_ids(wrapped_form)
+        except CommCareCaseError:
+            log.exception("Error migrating form %s", wrapped_form.form_id)
+            self.statedb.save_form_diffs(wrapped_form.to_json(), {})
+            return
         except Exception as err:
             self.retry.later(wrapped_form, retries + 1, err)
             return

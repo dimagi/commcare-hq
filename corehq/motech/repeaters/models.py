@@ -89,7 +89,6 @@ from dimagi.ext.couchdbkit import (
 )
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from dimagi.utils.parsing import json_format_datetime
-from dimagi.utils.post import simple_post
 
 from corehq import toggles
 from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
@@ -113,7 +112,7 @@ from corehq.motech.const import (
     DIGEST_AUTH,
     OAUTH1,
 )
-from corehq.motech.requests import Requests
+from corehq.motech.requests import Requests, simple_post
 from corehq.motech.utils import b64_aes_decrypt
 from corehq.util.metrics import metrics_counter
 from corehq.util.quickcache import quickcache
@@ -121,7 +120,6 @@ from corehq.util.quickcache import quickcache
 from .const import (
     MAX_RETRY_WAIT,
     MIN_RETRY_WAIT,
-    POST_TIMEOUT,
     RECORD_CANCELLED_STATE,
     RECORD_FAILURE_STATE,
     RECORD_PENDING_STATE,
@@ -403,7 +401,11 @@ class Repeater(QuickCachedDocumentMixin, Document):
         headers = self.get_headers(repeat_record)
         auth = self.get_auth()
         url = self.get_url(repeat_record)
-        return simple_post(payload, url, headers=headers, timeout=POST_TIMEOUT, auth=auth, verify=self.verify)
+        return simple_post(
+            self.domain, url, payload, headers=headers, auth=auth,
+            verify=self.verify, notify_addresses=self.notify_addresses,
+            payload_id=repeat_record.payload_id,
+        )
 
     def fire_for_record(self, repeat_record):
         payload = self.get_payload(repeat_record)

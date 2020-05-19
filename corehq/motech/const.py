@@ -13,8 +13,12 @@ AUTH_TYPES = (
 
 PASSWORD_PLACEHOLDER = '*' * 16
 
-# If any remote service does not respond within 5 minutes, time out
-REQUEST_TIMEOUT = 5 * 60
+CONNECT_TIMEOUT = 60
+# If any remote service does not respond within 5 minutes, time out.
+# (Some OpenMRS reports can take a long time. Cut them a little slack,
+# but not too much.)
+READ_TIMEOUT = 5 * 60
+REQUEST_TIMEOUT = (CONNECT_TIMEOUT, READ_TIMEOUT)
 
 ALGO_AES = 'aes'
 

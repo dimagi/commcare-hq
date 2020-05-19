@@ -2,7 +2,6 @@ import json
 import re
 from typing import Callable, Optional
 
-from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
@@ -213,10 +212,7 @@ class RequestLog(models.Model):
     request_url = models.CharField(max_length=255, db_index=True)
     request_headers = jsonfield.JSONField(blank=True)
     request_params = jsonfield.JSONField(blank=True)
-    request_body = jsonfield.JSONField(
-        blank=True, null=True,  # NULL for GET, but POST can take an empty body
-        dump_kwargs={'cls': DjangoJSONEncoder, 'separators': (',', ':')}  # Use DjangoJSONEncoder for dates, etc.
-    )
+    request_body = models.TextField(blank=True, null=True)
     request_error = models.TextField(null=True)
     response_status = models.IntegerField(null=True, db_index=True)
     response_body = models.TextField(blank=True, null=True)

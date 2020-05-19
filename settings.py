@@ -680,6 +680,7 @@ AUDIT_MODULES = [
     'corehq.apps.registration',
     'corehq.apps.hqadmin',
     'corehq.apps.accounting',
+    'corehq.apps.cloudcare',
     'tastypie',
 ]
 
@@ -769,8 +770,8 @@ COMPRESS_PRECOMPILERS = AVAILABLE_COMPRESS_PRECOMPILERS = (
 )
 # if not overwritten in localsettings, these will be replaced by the value they return
 # using the local DEBUG value (which we don't have access to here yet)
-COMPRESS_ENABLED = lambda: not DEBUG and not UNIT_TESTING
-COMPRESS_OFFLINE = lambda: not DEBUG and not UNIT_TESTING
+COMPRESS_ENABLED = lambda: not DEBUG and not UNIT_TESTING  # noqa: E731
+COMPRESS_OFFLINE = lambda: not DEBUG and not UNIT_TESTING  # noqa: E731
 COMPRESS_JS_COMPRESSOR = 'corehq.apps.hqwebapp.uglify.JsUglifySourcemapCompressor'
 # use 'compressor.js.JsCompressor' for faster local compressing (will get rid of source maps)
 COMPRESS_CSS_FILTERS = ['compressor.filters.css_default.CssAbsoluteFilter',
@@ -2132,8 +2133,9 @@ if SENTRY_DSN:
 else:
     SENTRY_CONFIGURED = False
 
+SESSION_COOKIE_SECURE = CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_HTTPONLY = CSRF_COOKIE_HTTPONLY = True
 
-CSRF_COOKIE_HTTPONLY = True
 if RESTRICT_USED_PASSWORDS_FOR_NIC_COMPLIANCE:
     AUTH_PASSWORD_VALIDATORS = [
         {
