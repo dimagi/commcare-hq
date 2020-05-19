@@ -1,3 +1,4 @@
+import re
 from collections import defaultdict
 from datetime import timedelta
 from itertools import chain
@@ -34,6 +35,7 @@ load_ignore_rules = memoized(lambda: add_duplicate_rules({
         Ignore(path='repeats', old=MISSING),  # report records save in form
         Ignore(path='form_migrated_from_undefined_xmlns', new=MISSING),
         Ignore(type='missing', old=None, new=MISSING),
+        Ignore('diff', ('form', 'case', '@date_modified'), check=has_malformed_date),
 
         # FORM_IGNORED_DIFFS
         Ignore('missing', ('history', '[*]', 'doc_type'), old='XFormOperation', new=MISSING),
@@ -75,6 +77,7 @@ load_ignore_rules = memoized(lambda: add_duplicate_rules({
         Ignore(check=is_case_actions),  # ignore case actions
         Ignore(path='id', old=MISSING),
         Ignore(path='@xmlns'),  # legacy
+        Ignore(path='#text', old='', new=MISSING),
         Ignore(path='_attachments', new=MISSING),
         Ignore(path='external_blobs', new=MISSING),
         Ignore(path='#export_tag', new=MISSING),
@@ -108,6 +111,8 @@ load_ignore_rules = memoized(lambda: add_duplicate_rules({
         Ignore('set_mismatch', ('xform_ids', '[*]'), old=''),
         Ignore('missing', 'case_attachments', old=MISSING, new={}),
         Ignore('missing', old=None, new=MISSING),
+        Ignore('type', 'location_', old=[], new='[]'),
+        Ignore('type', 'referrals', old=[], new='[]'),
 
         # CASE_IGNORED_DIFFS
         Ignore('type', 'name', old='', new=None),
@@ -115,6 +120,7 @@ load_ignore_rules = memoized(lambda: add_duplicate_rules({
         Ignore('type', 'closed_by', old='', new=None),
         Ignore('type', 'closed_by', old=None, new=''),
         Ignore('diff', 'closed_by', old=''),
+        Ignore('missing', 'close_reason', old=MISSING, new=''),
         Ignore('missing', 'location_id', old=MISSING, new=None),
         Ignore('missing', 'referrals', new=MISSING),
         Ignore('missing', 'location_', new=MISSING),
@@ -491,3 +497,14 @@ def has_unsorted_history(old_obj, new_obj, rule, diff):
 
     old_history = sorted((drop_doc_type(x) for x in old_obj["history"]), key=dateof)
     return old_history == new_obj["history"]
+
+
+MALFORMED_DATE = re.compile(r"\d{4}-\d\d-0\d\d$")
+
+
+def has_malformed_date(old_obj, new_obj, rule, diff):
+    old = diff.old_value
+    if isinstance(old, str) and MALFORMED_DATE.match(old):
+        assert old[8] == "0", old
+        return diff.new_value == old[:8] + old[9:]
+    return False
