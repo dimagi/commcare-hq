@@ -80,7 +80,7 @@ class MenuContributor(SuiteContributorByModule):
                         if relevancy:
                             menu_kwargs['relevant'] = interpolate_xpath(relevancy)
 
-                    menu = self._get_menu(module, extra_kwargs=menu_kwargs)
+                    menu = self._get_menu(module, root_module=(root_module or id_module), extra_kwargs=menu_kwargs)
 
                     excluded_form_ids = []
                     if root_module and isinstance(root_module, ShadowModule):
@@ -105,13 +105,13 @@ class MenuContributor(SuiteContributorByModule):
 
         return menus
 
-    def _get_menu(self, module, extra_kwargs=None):
+    def _get_menu(self, module, root_module=None, extra_kwargs=None):
         menu_kwargs = extra_kwargs or {}
 
         if self.app.enable_localized_menu_media:
             module_custom_icon = module.custom_icon
             menu_kwargs.update({
-                'menu_locale_id': get_module_locale_id(module),
+                'menu_locale_id': get_module_locale_id(module, root_module=root_module),
                 'media_image': module.uses_image(build_profile_id=self.build_profile_id),
                 'media_audio': module.uses_audio(build_profile_id=self.build_profile_id),
                 'image_locale_id': id_strings.module_icon_locale(module),
@@ -128,7 +128,7 @@ class MenuContributor(SuiteContributorByModule):
             menu_kwargs.update({
                 'media_image': module.default_media_image,
                 'media_audio': module.default_media_audio,
-                'locale_id': get_module_locale_id(module),
+                'locale_id': get_module_locale_id(module, root_module=root_module),
             })
             menu = Menu(**menu_kwargs)
 
