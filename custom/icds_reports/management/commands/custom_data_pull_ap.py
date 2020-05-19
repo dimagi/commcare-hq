@@ -37,12 +37,15 @@ class Command(BaseCommand):
         while date_itr <= end_date:
             month = date_itr.strftime("%Y-%m-%d")
             visit_data = AggAwc.objects.filter(aggregation_level=5, state_id='f98e91aa003accb7b849a0f18ebd7039',
-                                               month=month, num_launched_awcs=1).values('awc_id',
-                                                                                        'expected_visits',
-                                                                                        'valid_visits')
+                                               month=month).values('awc_id',
+                                                                   'expected_visits',
+                                                                   'valid_visits',
+                                                                   'num_launched_awcs')
 
             for row in visit_data:
-                if row['expected_visits'] > 0:
+                if row['num_launched_awcs'] != 1:
+                    data_format[row['awc_id']][columns.index(month)] = 'Not Launched'
+                elif row['expected_visits'] > 0:
                     if (float(row['valid_visits']) / float(row['expected_visits'])) >= 0.6:
                         data_format[row['awc_id']][columns.index(month)] = 'Y'
             date_itr = date_itr + relativedelta(months=1)
