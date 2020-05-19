@@ -17,8 +17,8 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='SQLMobileAuthKeyRecord',
             fields=[
-                ('uuid', models.UUIDField(db_index=True, default=corehq.apps.mobile_auth.models._default_uuid,
-                                          primary_key=True, serialize=False)),
+                ('uuid', models.UUIDField(db_column='id', db_index=True, primary_key=True, serialize=False,
+                                          default=corehq.apps.mobile_auth.models._default_uuid)),
                 ('domain', models.CharField(db_index=True, max_length=126)),
                 ('user_id', models.CharField(db_index=True, max_length=255)),
                 ('valid', models.DateTimeField()),

@@ -57,7 +57,7 @@ def _default_key():
 
 
 class SQLMobileAuthKeyRecord(models.Model):
-    uuid = models.UUIDField(primary_key=True, db_index=True, default=_default_uuid)
+    uuid = models.UUIDField(primary_key=True, db_index=True, default=_default_uuid, db_column='id')
     domain = models.CharField(max_length=126, null=False, db_index=True)
     user_id = models.CharField(max_length=255, null=False, db_index=True)
 
