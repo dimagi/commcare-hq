@@ -20,6 +20,7 @@ class InfobipIncomingMessageView(IncomingBackendView):
             message_content = message.get('message')
             if message_content.get('type') == 'TEXT':
                 body = message_content.get('text', {})
+            # TODO: Add other message types here
 
         incoming_sms(
             from_,

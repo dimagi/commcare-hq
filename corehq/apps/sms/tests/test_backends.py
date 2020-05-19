@@ -398,7 +398,6 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
         self._test_outbound_backend(self.airtel_tcl_backend, 'airtel tcl test', airtel_tcl_send)
         self._test_outbound_backend(self.infobip_backend, 'infobip test', infobip_send)
 
-
     @run_with_all_backends
     def test_unicel_inbound_sms(self):
         self._simulate_inbound_request(
