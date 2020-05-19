@@ -76,7 +76,7 @@ class ConnectionSettings(models.Model):
     @plaintext_password.setter
     def plaintext_password(self, plaintext):
         if plaintext != PASSWORD_PLACEHOLDER:
-            ciphertext=b64_aes_encrypt(plaintext)
+            ciphertext = b64_aes_encrypt(plaintext)
             self.password = f'${ALGO_AES}${ciphertext}'
 
     @property
@@ -89,7 +89,7 @@ class ConnectionSettings(models.Model):
     @plaintext_client_secret.setter
     def plaintext_client_secret(self, plaintext):
         if plaintext != PASSWORD_PLACEHOLDER:
-            ciphertext=b64_aes_encrypt(plaintext)
+            ciphertext = b64_aes_encrypt(plaintext)
             self.client_secret = f'${ALGO_AES}${ciphertext}'
 
     @property

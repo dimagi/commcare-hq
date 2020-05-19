@@ -209,10 +209,10 @@ class RequestsOAuth2Tests(TestCase):
     @classmethod
     def add_dhis2_oauth2_client(cls, client_name):
         json_data = {
-          "name": client_name,
-          "cid": cls.client_id,
-          "secret": cls.client_secret,
-          "grantTypes": ["password", "refresh_token"]
+            "name": client_name,
+            "cid": cls.client_id,
+            "secret": cls.client_secret,
+            "grantTypes": ["password", "refresh_token"]
         }
         resp = get_basic_requests(
             DOMAIN, cls.base_url, cls.username, cls.password,
@@ -231,8 +231,8 @@ class RequestsOAuth2Tests(TestCase):
             api_settings=dhis2_auth_settings,
         )
         with Requests(DOMAIN, self.base_url,
-                      auth_manager=auth_manager, logger=noop_logger,
-        ) as requests:
+                      auth_manager=auth_manager,
+                      logger=noop_logger) as requests:
             # NOTE: Use Requests instance as a context manager so that
             #       it uses OAuth2Session.
             resp = requests.get('/api/me/')
