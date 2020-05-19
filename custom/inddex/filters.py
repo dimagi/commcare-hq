@@ -4,6 +4,7 @@ from corehq.apps.es import UserES
 from corehq.apps.reports.filters.base import (
     BaseMultipleOptionFilter,
     BaseSingleOptionFilter,
+    BaseDrilldownOptionFilter,
 )
 from corehq.apps.reports.filters.dates import DatespanFilter
 from corehq.apps.reports.util import get_simplified_users
@@ -103,26 +104,35 @@ class RecallStatusFilter(BaseSingleOptionFilter):
         ]
 
 
-class GapDescriptionFilter(BaseSingleOptionFilter):
+class GapDescriptionFilter(BaseDrilldownOptionFilter):
     slug = 'gap'
     label = _('Gap description')
     default_text = _('All')
 
-    @property
-    def options(self):
+    @classmethod
+    def get_labels(cls):
         return [
-            (f'{klass.slug}-{code}', klass.get_description(code))
-            for klass, code in [
-                # This is the order the partner asked for
-                (ConvFactorGaps, ConvFactorGaps.AVAILABLE),
-                (FctGaps, FctGaps.AVAILABLE),
-                (ConvFactorGaps, ConvFactorGaps.BASE_TERM),
-                (FctGaps, FctGaps.BASE_TERM),
-                (FctGaps, FctGaps.REFERENCE),
-                (FctGaps, FctGaps.INGREDIENT_GAPS),
-                (ConvFactorGaps, ConvFactorGaps.NOT_AVAILABLE),
-                (FctGaps, FctGaps.NOT_AVAILABLE),
-            ]
+            # will come through as `gap_type` and `gap_code`
+            ("Gap Type", "All", 'type'),
+            ("Gap Description", "All", 'code'),
+        ]
+
+    @property
+    def drilldown_map(self):
+        return [
+            {
+                'text': klass.name,
+                'val': klass.slug,
+                'next': [
+                    {
+                        'text': klass.get_description(code),
+                        'val': str(code),
+                        'next': [],
+                    }
+                    for code in klass.DESCRIPTIONS
+                ]
+            }
+            for klass in [ConvFactorGaps, FctGaps]
         ]
 
 

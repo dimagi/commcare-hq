@@ -123,8 +123,20 @@ class TimeoutMiddleware(MiddlewareMixin):
 
     @staticmethod
     def _user_requires_secure_session(couch_user):
-        return couch_user and any(Domain.is_secure_session_required(domain)
-                                  for domain in couch_user.get_domains())
+        if not couch_user:
+            return False
+
+        domains = couch_user.get_domains()
+        if any(Domain.is_secure_session_required(domain) for domain in domains):
+            return True
+
+        from corehq.apps.users.models import DomainPermissionsMirror
+        for domain in domains:
+            mirrors = DomainPermissionsMirror.mirror_domains(domain)
+            if any(Domain.is_secure_session_required(m) for m in mirrors):
+                return True
+
+        return False
 
     def process_view(self, request, view_func, view_args, view_kwargs):
         if not request.user.is_authenticated:

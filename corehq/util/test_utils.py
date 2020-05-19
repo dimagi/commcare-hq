@@ -4,7 +4,7 @@ import logging
 import os
 import traceback
 import uuid
-from collections import defaultdict, namedtuple
+from collections import namedtuple
 from contextlib import ExitStack, contextmanager
 from datetime import datetime, timedelta
 from functools import wraps
@@ -379,6 +379,10 @@ def timelimit(limit):
     without raising an error and the elapsed run time is longer than
     the allowed time limit.
 
+    This decorator can be used to extend the time limit imposed by
+    --max-test-time when `corehq.tests.noseplugins.timing.TimingPlugin`
+    is enabled.
+
     Usage:
 
         @timelimit
@@ -388,6 +392,10 @@ def timelimit(limit):
         @timelimit(0.5)
         def lt_half_second():
             ...
+
+    See also: `corehq.tests.noseplugins.timing.patch_max_test_time` for
+    overriding time limits for an entire test group (module, test class,
+    etc.)
 
     :param limit: number of seconds or a callable to decorate. If
     callable, the time limit defaults to one second.
@@ -399,13 +407,15 @@ def timelimit(limit):
         return lambda func: timelimit((func, limit))
     func, limit = limit
     @wraps(func)
-    def decorator(*args, **kw):
+    def time_limit(*args, **kw):
+        from corehq.tests.noseplugins.timing import add_time_limit
+        add_time_limit(limit.total_seconds())
         start = datetime.utcnow()
         rval = func(*args, **kw)
         elapsed = datetime.utcnow() - start
         assert elapsed < limit, f"{func.__name__} took too long: {elapsed}"
         return rval
-    return decorator
+    return time_limit
 
 
 def get_form_ready_to_save(metadata, is_db_test=False):

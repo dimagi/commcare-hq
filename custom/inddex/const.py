@@ -15,6 +15,11 @@ AGE_RANGES = [
     AgeRange("65+ years", 'gte65years', 'age_years_calculated', 65, 200),
 ]
 
+FOOD_ITEM = 'food_item'
+NON_STANDARD_FOOD_ITEM = 'non_std_food_item'
+STANDARD_RECIPE = 'std_recipe'
+NON_STANDARD_RECIPE = 'non_std_recipe'
+
 
 class FctGaps:
     slug = 'fct'
