@@ -27,14 +27,25 @@ def add_cases_to_case_group(domain, case_group_id, uploaded_data):
         if identifier is not None:
             case = get_case_by_identifier(domain, str(identifier))
         if not case:
-            response['errors'].append(_("Could not find case with identifier '%s'." % identifier))
+            response['errors'].append(
+                _("Could not find case with identifier '{}'.").format(identifier)
+            )
         elif case.doc_type != 'CommCareCase':
-            response['errors'].append(_("It looks like the case with identifier '%s' is deleted" % identifier))
+            response['errors'].append(
+                _("It looks like the case with identifier '{}' "
+                  "is marked as deleted.").format(identifier)
+              )
         elif case.case_id in case_group.cases:
-            response['errors'].append(_("A case with identifier %s already exists in this group." % identifier))
+            response['errors'].append(
+                _("A case with identifier '{}' already exists in this "
+                  "group.").format(identifier)
+            )
         else:
             case_group.cases.append(case.case_id)
-            response['success'].append(_("Case with identifier '%s' has been added to this group." % identifier))
+            response['success'].append(
+                _("Case with identifier '{}' has been added to this "
+                  "group.").format(identifier)
+            )
 
     if response['success']:
         case_group.save()
