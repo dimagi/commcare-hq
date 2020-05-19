@@ -65,7 +65,6 @@ class LoginAndDomainAuthentication(Authentication):
         return self._auth_test(request, wrappers=[
             self._get_auth_decorator(request),
             api_auth,
-            require_permission('access_api', login_decorator=self._get_auth_decorator(request)),
         ], **kwargs)
 
     def _get_auth_decorator(self, request):
