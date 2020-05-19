@@ -69,7 +69,7 @@ class OtherCasesReassignmentProcessor():
     def process(self):
         from custom.icds.location_reassignment.utils import reassign_cases
         new_site_codes = set()
-        reassignments_by_location_id = defaultdict([])
+        reassignments_by_location_id = defaultdict(list)
         for case_id, details in self.reassignments.items():
             new_site_codes.add(details['new_site_code'])
         new_locations_by_site_code = {
