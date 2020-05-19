@@ -16,66 +16,83 @@
         {% trans "This project has no links to other projects." %}
       </p>
     </div>
-    <div data-bind="if: master_link">
-      <h2>{% trans "Project Link" %}</h2>
 
-      <p>{% trans "This project is linked to " %}<a data-bind="attr: {'href': master_href}, text: master_link.master_domain"></a></p>
-      <div>
-        <table class="table table-striped table-hover">
-          <thead>
-          <tr>
-            <th>{% trans "Linked Model" %}</th>
-            <th>{% trans "Last Updated" %} ({{ timezone }})</th>
-            <th></th>
-          </tr>
-          </thead>
-          <tbody data-bind="foreach: model_status">
-          <tr>
-            <td data-bind="text: name"></td>
-            <td data-bind="text: last_update"></td>
-            <td>
-              <button class="btn btn-danger" data-bind="visible: showUpdate() && !update_url, click: update">
-                {% trans "Overwrite" %}
-              </button>
-              <button class="btn btn-default disabled" data-bind="visible: showSpinner">
-                <i class="fa fa-spinner"></i>
-              </button>
-              <button class="btn btn-success disabled" data-bind="visible: hasSuccess">
-                <i class="fa fa-check"></i> {% trans "Success" %}
-              </button>
-              <button class="btn btn-danger disabled" data-bind="visible: hasError">
-                <i class="fa fa-times"></i> {% trans "Error" %}
-              </button>
-              <a data-bind="visible: showUpdate && update_url, attr: {href: update_url}">{% trans "Go to update page" %}</a>
-            </td>
-          </tr>
-          </tbody>
-        </table>
+    <!-- TODO: show only relevant tabs, and use only if there are multiple tabs, otherwise show a header -->
+    <ul class="nav nav-tabs sticky-tabs">
+      <li class="active"><a data-toggle="tab" href="#tabs-master">{% trans "Project Link" %}</a></li>
+      <li><a data-toggle="tab" href="#tabs-linked">{% trans "Projects linked to this one" %}</a></li>
+      <li><a data-toggle="tab" href="#tabs-push">{% trans "Push Content" %}</a></li>
+    </ul>
+
+    <div class="tab-content">
+      <div class="tab-pane fade in active" id="tabs-master">
+        <div data-bind="if: master_link">
+          <h2>{% trans "Project Link" %}</h2>
+
+          <p>{% trans "This project is linked to " %}<a data-bind="attr: {'href': master_href}, text: master_link.master_domain"></a></p>
+          <div>
+            <table class="table table-striped table-hover">
+              <thead>
+              <tr>
+                <th>{% trans "Linked Model" %}</th>
+                <th>{% trans "Last Updated" %} ({{ timezone }})</th>
+                <th></th>
+              </tr>
+              </thead>
+              <tbody data-bind="foreach: model_status">
+              <tr>
+                <td data-bind="text: name"></td>
+                <td data-bind="text: last_update"></td>
+                <td>
+                  <button class="btn btn-danger" data-bind="visible: showUpdate() && !update_url, click: update">
+                    {% trans "Overwrite" %}
+                  </button>
+                  <button class="btn btn-default disabled" data-bind="visible: showSpinner">
+                    <i class="fa fa-spinner"></i>
+                  </button>
+                  <button class="btn btn-success disabled" data-bind="visible: hasSuccess">
+                    <i class="fa fa-check"></i> {% trans "Success" %}
+                  </button>
+                  <button class="btn btn-danger disabled" data-bind="visible: hasError">
+                    <i class="fa fa-times"></i> {% trans "Error" %}
+                  </button>
+                  <a data-bind="visible: showUpdate && update_url, attr: {href: update_url}">{% trans "Go to update page" %}</a>
+                </td>
+              </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="tab-pane fade" id="tabs-linked">
+        <div data-bind="if: linked_domains().length">
+          <h2>{% trans "Projects linked to this one" %}</h2>
+          <table class="table table-striped table-hover">
+            <thead>
+            <tr>
+              <th>{% trans "Project Name" %}</th>
+              <th>{% trans "Last Updated" %} ({{ timezone }})</th>
+              <th></th>
+            </tr>
+            </thead>
+            <tbody data-bind="foreach: linked_domains">
+            <tr>
+              <td><a data-bind="attr: {'href': domain_link}, text: linked_domain"></a></td>
+              <td data-bind="text: last_update"></td>
+              <td>
+                <button type="button" class="btn btn-danger" data-bind="click: $root.deleteLink.bind($data)">
+                  <i class="fa fa-trash"></i>
+                  {% trans 'Delete Link' %}
+                </button>
+              </td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="tab-pane fade" id="tabs-push"><!-- TODO: no remote links -->
+        TODO
       </div>
     </div>
-    <div data-bind="if: linked_domains().length">
-      <h2>{% trans "Projects Linked to this one" %}</h2>
-      <table class="table table-striped table-hover">
-        <thead>
-        <tr>
-          <th>{% trans "Project Name" %}</th>
-          <th>{% trans "Last Updated" %} ({{ timezone }})</th>
-          <th></th>
-        </tr>
-        </thead>
-        <tbody data-bind="foreach: linked_domains">
-        <tr>
-          <td><a data-bind="attr: {'href': domain_link}, text: linked_domain"></a></td>
-          <td data-bind="text: last_update"></td>
-          <td>
-            <button type="button" class="btn btn-danger" data-bind="click: $root.deleteLink.bind($data)">
-              <i class="fa fa-trash"></i>
-              {% trans 'Delete' %}
-            </button>
-          </td>
-        </tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
+</div>
 {% endblock %}
