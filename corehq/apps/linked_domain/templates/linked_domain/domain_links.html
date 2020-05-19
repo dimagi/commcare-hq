@@ -21,7 +21,7 @@
     <ul class="nav nav-tabs sticky-tabs">
       <li class="active"><a data-toggle="tab" href="#tabs-master">{% trans "Project Link" %}</a></li>
       <li><a data-toggle="tab" href="#tabs-linked">{% trans "Projects linked to this one" %}</a></li>
-      <li><a data-toggle="tab" href="#tabs-push">{% trans "Push Content" %}</a></li>
+      <li><a data-toggle="tab" href="#tabs-push">{% trans "Release Content" %}</a></li>
     </ul>
 
     <div class="tab-content">
@@ -90,9 +90,44 @@
           </table>
         </div>
       </div>
+      <!-- TODO: pull this part out of the ko binding area? -->
       <div class="tab-pane fade" id="tabs-push"><!-- TODO: no remote links -->
-        TODO
+        <h2>{% trans "Release Content" %}</h2>
+        <form class="form-horizontal">
+          <div class="form-group">
+            <label class="col-sm-3 col-md-2 control-label">
+              {% trans "Models" %}
+            </label>
+            <div class="col-sm-9 col-md-10 controls">
+              <select id="select-push-models" multiple class="form-control">
+                {% for model in view_data.master_model_status %}
+                  <option value="{% html_attr model %}">{{ model.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="col-sm-3 col-md-2 control-label">
+              {% trans "Projects" %}
+            </label>
+            <div class="col-sm-9 col-md-10 controls">
+              <select id="select-push-domains" multiple class="form-control">
+                {% for link in view_data.linked_domains %}
+                  <option>{{ link.linked_domain }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+          <!-- TODO: option to make build and release apps (or should that be the default?) -->
+          <div class="form-actions">
+            <div class="col-sm-offset-3 col-md-offset-2 controls col-sm-9 col-md-8 col-lg-6">
+              <button id="push-button" type="button" class="btn btn-primary">
+                {% trans "Create Release" %}
+              </button>
+            </div>
+          </div>
+        </form>
       </div>
     </div>
-</div>
+  </div>
 {% endblock %}
