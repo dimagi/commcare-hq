@@ -219,7 +219,7 @@ def parse_request_exception(err):
 
 
 def simple_post(domain, url, data, *, headers, auth, verify,
-                timeout=60, notify_addresses=None, payload_id=None):
+                notify_addresses=None, payload_id=None):
     """
     POST with a cleaner API, and return the actual HTTPResponse object, so
     that error codes can be interpreted.
@@ -229,10 +229,6 @@ def simple_post(domain, url, data, *, headers, auth, verify,
         "content-length": str(len(data)),
     })
     default_headers.update(headers)
-    kwargs = {
-        "headers": default_headers,
-        "timeout": timeout,
-    }
     requests = Requests(
         domain,
         base_url='',
@@ -242,5 +238,7 @@ def simple_post(domain, url, data, *, headers, auth, verify,
         notify_addresses=notify_addresses,
         payload_id=payload_id,
     )
-    # Use ``send_request()`` instead of ``post()`` to pass ``auth``.
-    return requests.send_request('POST', url, data=data, auth=auth, **kwargs)
+    # Use ``Requests.send_request()`` instead of ``Requests.post()`` to
+    # pass full URL.
+    return requests.send_request('POST', url, data=data, auth=auth,
+                                 headers=default_headers)

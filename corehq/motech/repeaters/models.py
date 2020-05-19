@@ -126,7 +126,6 @@ from corehq.util.quickcache import quickcache
 from .const import (
     MAX_RETRY_WAIT,
     MIN_RETRY_WAIT,
-    POST_TIMEOUT,
     RECORD_CANCELLED_STATE,
     RECORD_FAILURE_STATE,
     RECORD_PENDING_STATE,
@@ -377,9 +376,8 @@ class Repeater(QuickCachedDocumentMixin, Document):
         auth = self.get_auth()
         url = self.get_url(repeat_record)
         return simple_post(
-            self.domain, url, payload,
-            headers=headers, auth=auth, verify=self.verify,
-            timeout=POST_TIMEOUT, notify_addresses=self.notify_addresses,
+            self.domain, url, payload, headers=headers, auth=auth,
+            verify=self.verify, notify_addresses=self.notify_addresses,
             payload_id=repeat_record.payload_id,
         )
 

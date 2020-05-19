@@ -36,7 +36,6 @@ from corehq.form_processor.tests.utils import (
 from corehq.motech.repeaters.const import (
     MAX_RETRY_WAIT,
     MIN_RETRY_WAIT,
-    POST_TIMEOUT,
     RECORD_SUCCESS_STATE,
 )
 from corehq.motech.repeaters.dbaccessors import (
@@ -252,7 +251,6 @@ class RepeaterTest(BaseRepeaterTest):
                     headers=repeat_record.repeater.get_headers(repeat_record),
                     auth=repeat_record.repeater.get_auth(),
                     verify=repeat_record.repeater.verify,
-                    timeout=POST_TIMEOUT,
                     notify_addresses=[],
                     payload_id=repeat_record.payload_id,
                 )
@@ -742,7 +740,6 @@ class TestRepeaterFormat(BaseRepeaterTest):
                 headers=headers,
                 notify_addresses=[],
                 payload_id='ABC123CASEID',
-                timeout=POST_TIMEOUT,
                 verify=self.repeater.verify,
             )
 

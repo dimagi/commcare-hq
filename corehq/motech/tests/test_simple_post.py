@@ -4,6 +4,7 @@ from unittest.mock import patch
 import requests
 from nose.tools import assert_equal
 
+from corehq.motech.const import REQUEST_TIMEOUT
 from corehq.motech.models import RequestLog
 from corehq.motech.requests import simple_post
 
@@ -36,7 +37,7 @@ def test_simple_post():
                 'Content-Type': 'text/xml+parrot',
                 'content-length': '55',
             },
-            timeout=60,
+            timeout=REQUEST_TIMEOUT,
         )
         ((__, (level, log_entry), ___),) = log_mock.mock_calls
         assert_equal(level, logging.INFO)
