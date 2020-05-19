@@ -10,7 +10,7 @@ from corehq.apps.hqcase.utils import get_case_by_identifier
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 
 
-def add_cases_to_case_group(domain, case_group_id, uploaded_data):
+def add_cases_to_case_group(domain, case_group_id, uploaded_data, progress_tracker):
     response = {
         'errors': [],
         'success': [],
@@ -21,7 +21,9 @@ def add_cases_to_case_group(domain, case_group_id, uploaded_data):
         response['errors'].append(_("The case group was not found."))
         return response
 
-    for row in uploaded_data:
+    num_rows = len(uploaded_data)
+    progress_tracker(0, num_rows)
+    for row_number, row in enumerate(uploaded_data):
         identifier = row.get('case_identifier')
         case = None
         if identifier is not None:
@@ -46,6 +48,7 @@ def add_cases_to_case_group(domain, case_group_id, uploaded_data):
                 _("Case with identifier '{}' has been added to this "
                   "group.").format(identifier)
             )
+        progress_tracker(row_number + 1, num_rows)
 
     if response['success']:
         case_group.save()
