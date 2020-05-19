@@ -224,7 +224,7 @@ def _login_or_challenge(challenge_fn, allow_cc_users=False, api_key=False, allow
                     if (
                         couch_user
                         and (allow_cc_users or couch_user.is_web_user())
-                        and couch_user.is_member_of(domain)
+                        and couch_user.is_member_of(domain, allow_mirroring=True)
                     ):
                         clear_login_attempts(couch_user)
                         return fn(request, domain, *args, **kwargs)
