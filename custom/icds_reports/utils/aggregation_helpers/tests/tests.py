@@ -7,7 +7,7 @@ from datetime import datetime
 
 import attr
 from django.core.serializers.json import DjangoJSONEncoder
-from django.test import TestCase
+from django.test import SimpleTestCase, TestCase
 from django.utils.functional import cached_property
 from freezegun import freeze_time
 from mock import patch
