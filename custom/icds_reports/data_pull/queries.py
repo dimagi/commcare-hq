@@ -13,7 +13,7 @@ class BaseQuery:
     temp_table_name = ""
 
     def run(self, db_alias):
-        if self.setup_sql_file_path and self.temp_table_name:
+        if self.setup_sql_file_path:
             self._setup(db_alias)
         string_buffer = StringIO()
         db_conn = connections[db_alias]
@@ -23,8 +23,8 @@ class BaseQuery:
         cursor.copy_expert(
             "COPY ({query}) TO STDOUT DELIMITER ',' CSV HEADER;".format(query=query),
             string_buffer)
-        # dropping any setup table if created
-        if self.setup_sql_file_path and self.temp_table_name:
+        # dropping any temp table if created
+        if self.temp_table_name:
             self._remove_setup_table(db_alias)
         return string_buffer
 
@@ -42,7 +42,7 @@ class BaseQuery:
 
     @cached_property
     def setup_sql(self):
-        if self.setup_sql_file_path and self.temp_table_name:
+        if self.setup_sql_file_path:
             with open(self.setup_sql_file_path) as _sql:
                 return _sql.read().format(month=self.month, temp_table=self.temp_table_name)
 
