@@ -385,10 +385,6 @@ class Repeater(QuickCachedDocumentMixin, Document):
             )
         # OAuth 2.0 coming when Repeaters use ConnectionSettings
 
-    def get_auth(self):
-        auth_manager = self.get_auth_manager()
-        return auth_manager.get_auth()
-
     @property
     def verify(self):
         return not self.skip_cert_verify
@@ -398,12 +394,13 @@ class Repeater(QuickCachedDocumentMixin, Document):
         return [addr for addr in re.split('[, ]+', self.notify_addresses_str) if addr]
 
     def send_request(self, repeat_record, payload):
-        headers = self.get_headers(repeat_record)
-        auth = self.get_auth()
         url = self.get_url(repeat_record)
         return simple_post(
-            self.domain, url, payload, headers=headers, auth=auth,
-            verify=self.verify, notify_addresses=self.notify_addresses,
+            self.domain, url, payload,
+            headers=self.get_headers(repeat_record),
+            auth_manager=self.get_auth_manager(),
+            verify=self.verify,
+            notify_addresses=self.notify_addresses,
             payload_id=repeat_record.payload_id,
         )
 
