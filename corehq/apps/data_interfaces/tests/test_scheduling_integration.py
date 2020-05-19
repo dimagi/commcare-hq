@@ -1,7 +1,7 @@
 from contextlib import contextmanager
 from datetime import date, datetime, time
 
-from django.conf import settings
+from django.test import override_settings
 from django.db.models import Q
 from django.test import TestCase
 
@@ -1067,7 +1067,7 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
         AutomaticUpdateRule.clear_caches(self.domain, AutomaticUpdateRule.WORKFLOW_SCHEDULING)
         return rule.pk
 
-    @run_with_all_backends
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False)
     @patch('corehq.messaging.tasks.sync_case_for_messaging_rule.delay')
     def test_run_messaging_rule(self, task_patch):
         rule_id = self._setup_rule()
@@ -1082,31 +1082,26 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
                 any_order=True
             )
 
-    @run_with_all_backends
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
     @patch('corehq.messaging.tasks.sync_case_chunk_for_messaging_rule.delay')
     @patch('corehq.messaging.tasks.run_messaging_rule_for_shard.delay')
     def test_run_messaging_rule_sharded(self, shard_rule_patch, sync_patch):
-        toggles.SHARDED_RUN_MESSAGING_RULE.set(self.domain, True, toggles.NAMESPACE_DOMAIN)
-        self.addCleanup(toggles.SHARDED_RUN_MESSAGING_RULE.set, self.domain, False, toggles.NAMESPACE_DOMAIN)
         rule_id = self._setup_rule()
         with create_case(self.domain, 'person') as case1, create_case(self.domain, 'person') as case2:
             run_messaging_rule(self.domain, rule_id)
-            if settings.TESTS_SHOULD_USE_SQL_BACKEND:
-                shard_rule_patch.assert_has_calls(
-                    [
-                        call(self.domain, rule_id, 'default')
-                    ],
-                    any_order=True
-                )
-                run_messaging_rule_for_shard(self.domain, rule_id, 'default')
-                sync_patch.assert_has_calls(
-                    [
-                        call(self.domain, (case1.case_id, case2.case_id), rule_id)
-                    ],
-                    any_order=True
-                )
-            else:
-                self.assertEqual(shard_rule_patch.call_count, 0)
+            shard_rule_patch.assert_has_calls(
+                [
+                    call(self.domain, rule_id, 'default')
+                ],
+                any_order=True
+            )
+            run_messaging_rule_for_shard(self.domain, rule_id, 'default')
+            sync_patch.assert_has_calls(
+                [
+                    call(self.domain, (case1.case_id, case2.case_id), rule_id)
+                ],
+                any_order=True
+            )
 
     @run_with_all_backends
     @patch('corehq.messaging.scheduling.models.content.SMSContent.send')
