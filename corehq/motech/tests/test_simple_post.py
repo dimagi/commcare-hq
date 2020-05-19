@@ -39,6 +39,7 @@ def test_simple_post():
                 'Content-Type': 'text/xml+parrot',
                 'content-length': '55',
             },
+            json=None,
             timeout=REQUEST_TIMEOUT,
         )
         ((__, (level, log_entry), ___),) = log_mock.mock_calls

@@ -76,7 +76,7 @@ class Requests(object):
     def __init__(
         self,
         domain_name: str,
-        base_url: str,
+        base_url: Optional[str],
         *,
         verify: bool = True,
         auth_manager: AuthManager,
@@ -133,6 +133,8 @@ class Requests(object):
         return response
 
     def get_url(self, uri):
+        if self.base_url is None:
+            return uri
         return '/'.join((self.base_url.rstrip('/'), uri.lstrip('/')))
 
     def delete(self, uri, **kwargs):
@@ -223,13 +225,10 @@ def simple_post(domain, url, data, *, headers, auth_manager, verify,
     default_headers.update(headers)
     requests = Requests(
         domain,
-        base_url='',
+        base_url=None,
         verify=verify,
         auth_manager=auth_manager,
         notify_addresses=notify_addresses,
         payload_id=payload_id,
     )
-    # Use ``Requests.send_request()`` instead of ``Requests.post()`` to
-    # pass full URL.
-    return requests.send_request('POST', url, data=data,
-                                 headers=default_headers)
+    return requests.post(url, data=data, headers=default_headers)
