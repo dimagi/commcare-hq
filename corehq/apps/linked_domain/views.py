@@ -34,6 +34,7 @@ from corehq.apps.domain.decorators import (
 from corehq.apps.domain.views.base import DomainViewMixin
 from corehq.apps.domain.views.settings import BaseAdminProjectSettingsView
 from corehq.apps.hqwebapp.doc_info import get_doc_info_by_id
+from corehq.apps.hqwebapp.decorators import use_multiselect
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import pretty_doc_info
 from corehq.apps.linked_domain.const import LINKED_MODELS, LINKED_MODELS_MAP
 from corehq.apps.linked_domain.dbaccessors import (
@@ -172,26 +173,26 @@ class DomainLinkView(BaseAdminProjectSettingsView):
     page_title = ugettext_lazy("Linked Projects")
     template_name = 'linked_domain/domain_links.html'
 
+    @use_multiselect
+    def dispatch(self, request, *args, **kwargs):
+        return super().dispatch(request, *args, **kwargs)
+
     @property
     def page_context(self):
         timezone = get_timezone_for_request()
         master_link = get_domain_master_link(self.domain)
-        linked_apps = {
-            app._id: app for app in get_brief_apps_in_domain(self.domain)
-            if is_linked_app(app)
-        }
-        linked_reports = {
-            report.get_id: report
-            for report in get_report_configs_for_domain(self.domain)
-            if report.report_meta.master_id
-        }
+        (master_apps, linked_apps) = self._get_apps()
+        (master_reports, linked_reports) = self._get_reports()
+        model_status = self._get_model_status(master_link, linked_apps, linked_reports)
+        master_model_status = self._get_master_model_status(master_apps, master_reports)
 
         return {
             'domain': self.domain,
             'timezone': timezone.localize(datetime.utcnow()).tzname(),
             'view_data': {
                 'master_link': self._link_context(master_link, timezone) if master_link else None,
-                'model_status': self._get_model_status(master_link, linked_apps, linked_reports),
+                'model_status': sorted(model_status, key=lambda m: m['name']),
+                'master_model_status': sorted(master_model_status, key=lambda m: m['name']),
                 'linked_domains': [
                     self._link_context(link, timezone) for link in get_linked_domains(self.domain)
                 ],
@@ -202,6 +203,28 @@ class DomainLinkView(BaseAdminProjectSettingsView):
             },
         }
 
+    def _get_apps(self):
+        master_list = {}
+        linked_list = {}
+        briefs = get_brief_apps_in_domain(self.domain, include_remote=False)
+        for brief in briefs:
+            if is_linked_app(brief):
+                linked_list[brief._id] = brief
+            else:
+                master_list[brief._id] = brief
+        return (master_list, linked_list)
+
+    def _get_reports(self):
+        master_list = {}
+        linked_list = {}
+        reports = get_report_configs_for_domain(self.domain)
+        for report in reports:
+            if report.report_meta.master_id:
+                linked_list[report.get_id] = report
+            else:
+                master_list[report.get_id] = report
+        return (master_list, linked_list)
+
     def _link_context(self, link, timezone):
         return {
             'linked_domain': link.linked_domain,
@@ -211,7 +234,44 @@ class DomainLinkView(BaseAdminProjectSettingsView):
             'last_update': server_to_user_time(link.last_pull, timezone) if link.last_pull else 'Never',
         }
 
-    def _get_model_status(self, master_link, linked_apps, linked_reports):
+    def _get_master_model_status(self, apps, reports, ignore_models=None):
+        model_status = []
+        ignore_models = ignore_models or []
+
+        for model, name in LINKED_MODELS:
+            if model not in ignore_models and model not in ('app', 'report'):
+                model_status.append({
+                    'type': model,
+                    'name': name,
+                    'last_update': ugettext('Never'),
+                    'detail': None,
+                    'can_update': True
+                })
+
+        linked_models = dict(LINKED_MODELS)
+        for app in apps.values():
+            update = {
+                'type': 'app',
+                'name': '{} ({})'.format(linked_models['app'], app.name),
+                'last_update': None,
+                'detail': AppLinkDetail(app_id=app._id).to_json(),
+                'can_update': True
+            }
+            model_status.append(update)
+        for report in reports.values():
+            report = ReportConfiguration.get(report.get_id)
+            update = {
+                'type': 'report',
+                'name': f"{linked_models['report']} ({report.title})",
+                'last_update': None,
+                'detail': ReportLinkDetail(report_id=report.get_id).to_json(),
+                'can_update': True,
+            }
+            model_status.append(update)
+
+        return model_status
+
+    def _get_model_status(self, master_link, apps, reports):
         model_status = []
         if not master_link:
             return model_status
@@ -240,7 +300,7 @@ class DomainLinkView(BaseAdminProjectSettingsView):
                 app_name = ugettext('Unknown App')
                 if action.model_detail:
                     detail = action.wrapped_detail
-                    app = linked_apps.pop(detail.app_id, None)
+                    app = apps.pop(detail.app_id, None)
                     app_name = app.name if app else detail.app_id
                     if app:
                         update['detail'] = action.model_detail
@@ -253,45 +313,16 @@ class DomainLinkView(BaseAdminProjectSettingsView):
             if action.model == 'report':
                 report_id = action.wrapped_detail.report_id
                 try:
-                    report = linked_reports.get(report_id)
-                    del linked_reports[report_id]
+                    report = reports.get(report_id)
+                    del reports[report_id]
                 except KeyError:
                     report = ReportConfiguration.get(report_id)
                 update['name'] = f'{name} ({report.title})'
 
-        # Add in models that have never been synced
-        for model, name in LINKED_MODELS:
-            if model not in models_seen and model not in ('app', 'report'):
-                model_status.append({
-                    'type': model,
-                    'name': name,
-                    'last_update': ugettext('Never'),
-                    'detail': None,
-                    'can_update': True
-                })
+        # Add in models and apps that have never been synced
+        model_status.extend(self._get_master_model_status(apps, reports, ignore_models=models_seen))
 
-        # Add in individual models that have never been synced
-        for app in linked_apps.values():
-            update = {
-                'type': 'app',
-                'name': '{} ({})'.format(linked_models['app'], app.name),
-                'last_update': None,
-                'detail': AppLinkDetail(app_id=app._id).to_json(),
-                'can_update': True
-            }
-            model_status.append(update)
-        for linked_report_id, report in linked_reports.items():
-            report = ReportConfiguration.get(linked_report_id)
-            update = {
-                'type': 'report',
-                'name': f"{linked_models['report']} ({report.title})",
-                'last_update': None,
-                'detail': ReportLinkDetail(report_id=report.get_id).to_json(),
-                'can_update': True,
-            }
-            model_status.append(update)
-
-        return sorted(model_status, key=lambda m: m['name'])
+        return model_status
 
 
 @method_decorator(domain_admin_required, name='dispatch')
@@ -328,6 +359,14 @@ class DomainLinkRMIView(JSONResponseMixin, View, DomainViewMixin):
 
         return {
             'success': True,
+        }
+
+    @allow_remote_invocation
+    def create_release(self, in_data):
+        # in_data['models'], in_data['linked_domains']
+        return {
+            'success': True,
+            'message': ugettext('I did stuff'),
         }
 
 
