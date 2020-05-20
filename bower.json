@@ -41,7 +41,7 @@
     "datetimepicker": "2.5.4",
     "multiselect": "0.9.12",
     "quicksearch": "2.2.1",
-    "knockout": "3.3.0",
+    "knockout": "3.5.1",
     "knockout-validation": "2.0.3",
     "underscore": "1.8.3",
     "leaflet": "0.7.7",
