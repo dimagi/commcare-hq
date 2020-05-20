@@ -148,7 +148,7 @@ class ServiceDeliveryReport(object):
                     row_data.append("{}%".format("%.2f" % percentage))
 
                     if total_sum_row[index - 1]:
-                        percentage = total_sum_row[index - 2] / total_sum_row[index - 1] * 100
+                        percentage = (total_sum_row[index - 2] / total_sum_row[index - 1]) * 100
                     else:
                         percentage = 0
                     total_sum_row[index] = "{}%".format("%.2f" % percentage)
