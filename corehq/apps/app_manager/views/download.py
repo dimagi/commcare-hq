@@ -37,6 +37,7 @@ from corehq.apps.app_manager.util import (
 from corehq.apps.app_manager.views.utils import back_to_main, get_langs
 from corehq.apps.builds.jadjar import convert_XML_To_J2ME
 from corehq.apps.hqmedia.views import DownloadMultimediaZip
+from corehq.util.metrics import metrics_counter
 from corehq.util.soft_assert import soft_assert
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.view_utils import set_file_download
@@ -283,6 +284,11 @@ def download_file(request, domain, app_id, path):
             request.app = Application.get(request.app.get_id)
             create_build_files_if_necessary_handling_conflicts(True)
 
+    # Todo; remove after https://dimagi-dev.atlassian.net/browse/ICDS-1483 is fixed
+    extension = path.split(".")[-1]
+    if extension not in content_type_map.keys():
+        metrics_counter("commcare.invalid_download_requests",
+            tags={"domain": domain, "extension": extension})
     try:
         assert request.app.copy_of
         # create build files for default profile if they were not created during initial build
