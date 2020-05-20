@@ -65,7 +65,7 @@
     "moment": "2.12.0",
     "css-grid-polyfill-binaries": "1.1.1",
     "requirejs": "~2.3.1",
-    "DOMPurify": "0.8.3",
+    "DOMPurify": "^2.0.11",
     "markdown-it": "7.0.1",
     "At.js": "~1.5.2",
     "clipboard": "1.5.15",
