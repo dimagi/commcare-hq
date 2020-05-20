@@ -4,7 +4,7 @@
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
 # Translators:
-# Dimagi Dev <devops@dimagi.com>, 2020
+# Dimagi Dev <devops@dimagi.com>, 2017
 # Gladys Teos <info@enestranslations.com>, 2020
 #
 #, fuzzy
@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-05-06 19:06+0000\n"
+"POT-Creation-Date: 2020-05-13 21:43+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
 "Last-Translator: Gladys Teos <info@enestranslations.com>, 2020\n"
 "Language-Team: Spanish (https://www.transifex.com/dimagi/teams/9388/es/)\n"
@@ -2710,42 +2710,64 @@ msgstr "Escriba para filtrar respuestas"
 msgid "Not a valid choice"
 msgstr "Opción no válida"
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js:644
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js:272
+#, fuzzy
+#| msgid "Saving..."
+msgid "Submitting..."
+msgstr "Guardando..."
+
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js:274
+#, fuzzy
+#| msgid "Submit Payment"
+msgid "Submit"
+msgstr "Ingrese Pago"
+
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js:657
 msgid ""
 "Another process prevented us from servicing your request. Please try again "
 "later."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js:646
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js:659
 msgid ""
 "We have detected an issue with your network. Please check your Internet "
 "connection and retry when connectivity improves."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/webformsession.js:366
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/webformsession.js:378
 msgid "We were unable to save this answer. Please try again later."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:196
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer-inline.js:35
+#, fuzzy
+#| msgid "Report successfully emailed"
+msgid "Form successfully submitted!"
+msgstr "Reporte enviado por correo electrónico exitosamente"
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer-inline.js:40
+msgid "An unexpected error occurred!"
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:197
 msgid "Form successfully saved!"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:319
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:320
 msgid ""
 "You are now offline. Web Apps is not optimized for offline use. Please "
 "reconnect to the Internet before continuing."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:328
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:329
 msgid "You are are back online."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:453
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:454
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js:42
 msgid "Waiting for server progress"
 msgstr "Esperando el progreso del servidor"
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:481
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:482
 msgid "Please wait..."
 msgstr "Por favor espere..."
 
@@ -2810,32 +2832,40 @@ msgstr "Sí, ingresar como este usuario"
 msgid "Confirm?"
 msgstr "¿Corfirmar?"
 
-#: corehq/apps/cloudcare/static/cloudcare/js/util.js:32
-#: corehq/apps/cloudcare/static/cloudcare/js/util.js:45
+#: corehq/apps/cloudcare/static/cloudcare/js/util.js:34
+#: corehq/apps/cloudcare/static/cloudcare/js/util.js:52
 msgid "Sorry, an error occurred while processing that request."
 msgstr "Lo sentimos, ocurrió un error al procesar esa solicitud."
 
-#: corehq/apps/cloudcare/static/cloudcare/js/util.js:92
+#: corehq/apps/cloudcare/static/cloudcare/js/util.js:110
 msgid "Error saving!"
 msgstr "¡Error al guardar!"
 
-#: corehq/apps/cloudcare/static/cloudcare/js/util.js:100
+#: corehq/apps/cloudcare/static/cloudcare/js/util.js:118
 msgid "Could not sync user data. Please report an issue if this persists."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/util.js:104
+#: corehq/apps/cloudcare/static/cloudcare/js/util.js:122
 msgid "User Data successfully synced."
 msgstr "Los Datos del Usuario han sido sincronizados con éxito."
 
-#: corehq/apps/cloudcare/static/cloudcare/js/util.js:112
+#: corehq/apps/cloudcare/static/cloudcare/js/util.js:130
 msgid "Could not clear user data. Please report an issue if this persists."
 msgstr ""
 "No es posible borrar los datos del usuario. Por favor reporte un problema si "
 "esto continúa."
 
-#: corehq/apps/cloudcare/static/cloudcare/js/util.js:116
+#: corehq/apps/cloudcare/static/cloudcare/js/util.js:134
 msgid "User data successfully cleared."
 msgstr "Los datos del usuario fueron borrados exitosamente."
+
+#: corehq/apps/cloudcare/static/cloudcare/js/util.js:142
+#, fuzzy
+#| msgid "Could not clear user data. Please report an issue if this persists."
+msgid "Error breaking locks. Please report an issue if this persists."
+msgstr ""
+"No es posible borrar los datos del usuario. Por favor reporte un problema si "
+"esto continúa."
 
 #: corehq/apps/commtrack/static/commtrack/js/products_and_programs_main.js:41
 msgid ""
@@ -3947,7 +3977,7 @@ msgstr "Completar"
 msgid "Unable to save case configs"
 msgstr ""
 
-#: corehq/motech/dhis2/static/dhis2/js/dhis2_map_settings.js:160
+#: corehq/motech/dhis2/static/dhis2/js/dhis2_map_settings.js:161
 msgid "Unable to save DataSet maps"
 msgstr "No es posible guardar los mapas DataSet"
 
@@ -4016,18 +4046,3 @@ msgid ""
 "Could not load requests. Please try again later or report an issue if this "
 "problem persists."
 msgstr ""
-
-#~ msgid "show"
-#~ msgstr "mostrar"
-
-#~ msgid "hide"
-#~ msgstr "ocultar"
-
-#~ msgid "toggle"
-#~ msgstr "alternar"
-
-#~ msgid "URL"
-#~ msgstr "URL"
-
-#~ msgid "Parameters"
-#~ msgstr "Manejo de Casos"

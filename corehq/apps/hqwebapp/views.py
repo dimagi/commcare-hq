@@ -848,7 +848,7 @@ class CRUDPaginatedViewMixin(object):
         """
         Specify GET or POST from a request object.
         """
-        raise NotImplementedError("you need to implement get_param_source")
+        return self.request.POST if self.request.method == 'POST' else self.request.GET
 
     @property
     @memoized
@@ -908,6 +908,7 @@ class CRUDPaginatedViewMixin(object):
                     'new_items': self.new_items_header,
                 },
                 'create_item_form': self.get_create_form_response(create_form) if create_form else None,
+                'create_item_form_class': self.create_item_form_class,
             }
         }
 
@@ -1018,6 +1019,8 @@ class CRUDPaginatedViewMixin(object):
         """
         pass
 
+    create_item_form_class = 'form form-inline'
+
     def get_create_form_response(self, create_form):
         return render_to_string(
             'hqwebapp/includes/create_item_form.html', {
@@ -1089,7 +1092,8 @@ def quick_find(request):
         return HttpResponseBadRequest('GET param "q" must be provided')
 
     def deal_with_doc(doc, domain, doc_info_fn):
-        if request.couch_user.is_superuser or (domain and request.couch_user.is_member_of(domain)):
+        is_member = domain and request.couch_user.is_member_of(domain, allow_mirroring=True)
+        if is_member or request.couch_user.is_superuser:
             doc_info = doc_info_fn(doc)
         else:
             raise Http404()
