@@ -333,6 +333,7 @@ class CreateODataFormFeedView(ODataFeedMixin, CreateNewCustomFormExportView):
         return export_instance
 
 
+@location_safe
 class DeleteNewCustomExportView(BaseExportView):
     urlname = 'delete_new_custom_export'
     http_method_names = ['post']
