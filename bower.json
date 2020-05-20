@@ -89,14 +89,11 @@
   "private": true,
   "resolutions": {
     "bootstrap": "3.3.7",
-    "select2": "4.0.0",
     "jquery": "^3.5.1",
     "backbone": "0.9.1",
     "d3": "3.1",
     "datamaps": "^0.5.8",
     "topojson": "^3.0.0",
-    "nvd3": "1.1.10-beta",
-    "d3-3.5.17": "d3#3.5.17",
-    "nvd3-1.8.6": "nvd3#1.8.6"
+    "nvd3": "1.1.10-beta"
   }
 }
