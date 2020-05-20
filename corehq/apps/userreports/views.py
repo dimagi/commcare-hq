@@ -241,6 +241,10 @@ class BaseEditConfigReportView(BaseUserConfigReportsView):
             'form': self.edit_form,
             'report': self.config,
             'referring_apps': self.get_referring_apps(),
+            'copy_report_form': CopyReportForm(
+                self.domain,
+                self.report_id if self.report_id else None,
+            ),
         }
 
     def get_referring_apps(self):
