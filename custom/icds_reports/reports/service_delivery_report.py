@@ -120,9 +120,16 @@ class ServiceDeliveryReport(object):
         return headers
 
     def get_excel_data(self):
-        total_sum_row = [''] * self.config['aggregation_level'] + [0] * (
+
+        # cells under all location columns, these will be blank
+        location_column_list = [''] * self.config['aggregation_level']
+
+        # cells to contain actual grand total
+        actual_value_columns_list = [0] * (
             len(self.headers_and_calculation) - self.config['aggregation_level']
         )
+        total_sum_row = location_column_list + actual_value_columns_list
+
         total_sum_row[0] = 'Grand Total'
 
         def evaulate_value(row, headers_with_columns):
