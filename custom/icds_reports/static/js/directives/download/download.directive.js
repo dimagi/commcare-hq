@@ -169,12 +169,12 @@ function DownloadController($scope, $rootScope, $location, locationHierarchy, lo
         ];
         vm.selectedBeneficiaryCategory = 'pw_lw_children';
     }
-    vm.THRreportType = [
+    vm.THRreportTypes = [
         {id: 'consolidated', name: 'Consolidated'},
         {id: 'beneficiary_wise', name: 'Beneficiary wise'},
         {id: 'days_beneficiary_wise', name: 'Days & Beneficiary wise'},
     ];
-    vm.selectTHRreportType = 'consolidated';
+    vm.selectedTHRreportType = 'consolidated';
     var ALL_OPTION = locationsService.ALL_OPTION;
     var NATIONAL_OPTION = locationsService.ALL_OPTION;
 
@@ -429,7 +429,7 @@ function DownloadController($scope, $rootScope, $location, locationHierarchy, lo
         };
         if (haveAccessToFeatures) {
             taskConfig['beneficiary_category'] = vm.selectedBeneficiaryCategory;
-            taskConfig['thr_report_type'] = vm.selectedBeneficiaryCategory;
+            taskConfig['thr_report_type'] = vm.selectedTHRreportType;
         }
         var selectedFilters = vm.selectedFilterOptions();
         if (vm.isChildBeneficiaryListSelected()) {

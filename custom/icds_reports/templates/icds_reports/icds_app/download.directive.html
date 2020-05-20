@@ -77,9 +77,9 @@
                            popover-placement="top-right"
                            popover-trigger="'mouseenter'"></i></label>
                     <div class="col-sm-6">
-                        <ui-select ng-model="$ctrl.selectTHRreportType" theme="bootstrap">
+                        <ui-select ng-model="$ctrl.selectedTHRreportType" theme="bootstrap">
                         <ui-select-match placeholder="Beneficiary"><span ng-bind="$select.selected.name"></span></ui-select-match>
-                          <ui-select-choices repeat="category.id as category in $ctrl.THRreportType | propsFilter: {name: $select.search}">
+                          <ui-select-choices repeat="category.id as category in $ctrl.THRreportTypes | propsFilter: {name: $select.search}">
                             <div ng-bind-html="category.name"></div>
                           </ui-select-choices>
                     </ui-select>
