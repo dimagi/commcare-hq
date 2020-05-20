@@ -5,7 +5,7 @@ from django_prbac.utils import has_privilege
 
 from corehq import privileges, toggles
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
-from corehq.apps.linked_domain.util import is_downstream_linked_report
+from corehq.apps.linked_domain.util import is_linked_report
 from corehq.apps.userreports.adapter import IndicatorAdapterLoadTracker
 from corehq.apps.userreports.const import REPORT_BUILDER_EVENTS_KEY
 from corehq.apps.userreports.exceptions import BadSpecError
@@ -74,7 +74,7 @@ def can_edit_report(request, report):
     add_on_priv = has_report_builder_add_on_privilege(request)
     created_by_builder = report.spec.report_meta.created_by_builder
 
-    if is_downstream_linked_report(request.domain, report.spec.get_id):
+    if is_linked_report(report.spec):
         return False
 
     if created_by_builder:

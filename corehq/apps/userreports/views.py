@@ -66,7 +66,7 @@ from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.linked_domain.models import DomainLink, ReportLinkDetail
 from corehq.apps.linked_domain.ucr import create_ucr_link
-from corehq.apps.linked_domain.util import is_downstream_linked_report
+from corehq.apps.linked_domain.util import is_linked_report
 from corehq.apps.locations.permissions import conditionally_location_safe
 from corehq.apps.reports.daterange import get_simple_dateranges
 from corehq.apps.reports.dispatcher import cls_to_view_login_and_domain
@@ -273,7 +273,7 @@ class BaseEditConfigReportView(BaseUserConfigReportsView):
     def read_only(self):
         if self.report_id is not None:
             return (report_config_id_is_static(self.report_id)
-                    or is_downstream_linked_report(self.domain, self.report_id))
+                    or is_linked_report(self.config))
         return False
 
     @property
@@ -1575,15 +1575,15 @@ def copy_report(request, domain):
         domain_link.update_last_pull(
             'report',
             request.couch_user._id,
-            model_details=ReportLinkDetail(report_id=link_info.report_info.linked_id)
+            model_details=ReportLinkDetail(report_id=link_info.report.get_id)
         )
         messages.success(request, _(f"Successfully linked report to {to_domain}"))
         return HttpResponseRedirect(
             reverse(
                 ConfigurableReportView.slug,
                 args=[
-                    link_info.report_info.linked_domain,
-                    link_info.report_info.linked_id,
+                    link_info.report.domain,
+                    link_info.report.get_id,
                 ],
             )
         )

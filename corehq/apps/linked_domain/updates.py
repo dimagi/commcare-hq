@@ -28,7 +28,6 @@ from corehq.apps.linked_domain.local_accessors import \
     get_toggles_previews as local_toggles_previews
 from corehq.apps.linked_domain.local_accessors import \
     get_user_roles as local_get_user_roles
-from corehq.apps.linked_domain.models import LinkedReportIDMap
 from corehq.apps.linked_domain.remote_accessors import \
     get_case_search_config as remote_get_case_search_config
 from corehq.apps.linked_domain.remote_accessors import \

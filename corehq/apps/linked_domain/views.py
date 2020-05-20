@@ -49,8 +49,6 @@ from corehq.apps.linked_domain.models import (
     AppLinkDetail,
     DomainLink,
     DomainLinkHistory,
-    LinkedReportIDMap,
-    LinkedReportTypes,
     ReportLinkDetail,
     wrap_detail,
 )
@@ -66,6 +64,7 @@ from corehq.apps.linked_domain.util import (
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.dispatcher import DomainReportDispatcher
 from corehq.apps.reports.generic import GenericTabularReport
+from corehq.apps.userreports.dbaccessors import get_report_configs_for_domain
 from corehq.apps.userreports.models import DataSourceConfiguration, ReportConfiguration
 from corehq.util.timezones.utils import get_timezone_for_request
 
@@ -191,12 +190,9 @@ class DomainLinkView(BaseAdminProjectSettingsView):
                 if is_linked_app(app)
             }
             linked_reports = {
-                l.linked_id: l
-                for l in LinkedReportIDMap.objects.filter(
-                    master_domain=master_link.master_domain,
-                    linked_domain=self.domain,
-                    model_type=LinkedReportTypes.REPORT,
-                )
+                report.get_id: report
+                for report in get_report_configs_for_domain(self.domain)
+                if report.report_meta.master_id
             }
 
             models_seen = set()
@@ -219,8 +215,11 @@ class DomainLinkView(BaseAdminProjectSettingsView):
                 }
                 if action.model == 'report':
                     report_id = action.wrapped_detail.report_id
-                    linked_reports.pop(report_id, None)
-                    report = ReportConfiguration.get(report_id)
+                    try:
+                        report = linked_reports.get(report_id)
+                        del linked_reports[report_id]
+                    except KeyError:
+                        report = ReportConfiguration.get(report_id)
                     update['name'] = f'{name} ({report.title})'
 
                 if action.model == 'app':
@@ -261,7 +260,7 @@ class DomainLinkView(BaseAdminProjectSettingsView):
                     }
                     model_status.append(update)
 
-            for linked_report_id in linked_reports.keys():
+            for linked_report_id, report in linked_reports.items():
                 report = ReportConfiguration.get(linked_report_id)
                 update = {
                     'type': 'report',
