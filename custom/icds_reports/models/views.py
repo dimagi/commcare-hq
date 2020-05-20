@@ -1538,6 +1538,7 @@ class BiharAPIMotherView(models.Model):
     total_ifa_tablets_received = models.SmallIntegerField(null=True)
     ifa_consumed_7_days = models.SmallIntegerField(null=True)
     causes_for_ifa = models.TextField(null=True)
+    maternal_complications = models.TextField(null=True)
 
     class Meta(object):
         app_label = 'icds_reports'
