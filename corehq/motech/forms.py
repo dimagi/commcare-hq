@@ -68,10 +68,6 @@ class ConnectionSettingsForm(forms.ModelForm):
 
         self.domain = domain
         self.helper = hqcrispy.HQFormHelper()
-        self.helper.form_class = 'form-horizontal'
-        self.helper.label_class = 'col-sm-3 col-md-2'
-        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
-        self.helper.offset_class = 'col-sm-offset-3 col-md-offset-2'
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 _('Remote API Connection'),
@@ -115,7 +111,7 @@ class ConnectionSettingsForm(forms.ModelForm):
                     css_id='test-connection-result',
                     css_class='text-success hide',
                 ),
-                css_class=f'{self.helper.field_class} {self.helper.offset_class}',
+                css_class=hqcrispy.CSS_ACTION_CLASS,
             ),
             css_class='form-group'
         )
