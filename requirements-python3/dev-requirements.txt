@@ -172,8 +172,8 @@ redis-py-cluster==1.3.6   # via -r requirements/requirements.in
 redis==2.10.6             # via -r requirements/requirements.in, django-redis, django-redis-sessions, django-websocket-redis, redis-py-cluster
 reportlab==3.0            # via -r requirements/requirements.in
 requests-mock==1.7.0      # via -r requirements/test-requirements.in
-requests-oauthlib==1.3.0
-requests==2.22.0          # via -r requirements/requirements.in, cloudant, datadog, dropbox, jenkinsapi, requests-mock, sphinx, stripe, tinys3, twilio
+requests-oauthlib==1.3.0  # via -r requirements/requirements.in
+requests==2.22.0          # via -r requirements/requirements.in, cloudant, datadog, dropbox, jenkinsapi, requests-mock, requests-oauthlib, sphinx, stripe, tinys3, twilio
 rjsmin==1.0.12            # via django-compressor
 s3transfer==0.2.1         # via boto3
 schema==0.7.1             # via -r requirements/requirements.in
