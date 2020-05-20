@@ -64,5 +64,6 @@ branches:
   - dmr/add-better-user-correlation-to-auditcare  # Danny May 20
 #  - nh/auth/oauth2  # Norman May 20
   - nh/connx+repeaters  # Norman May 20
+  - bmb/SAAS-10882  # Biyeun May 20 (updates knockout, bootstrap, jquery, DOMPurify)
 
 submodules: {}
