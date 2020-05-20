@@ -47,8 +47,8 @@ class BiharAPIMotherTest(TestCase):
                 "anc_3": datetime.date(2016, 12, 7),
                 "anc_4": datetime.date(2017, 1, 6),
                 "edd": datetime.date(2017, 7, 9),
-                "total_ifa_tablets_received": 0,
-                "ifa_consumed_7_days": 0,
+                "total_ifa_tablets_received": None,
+                "ifa_consumed_7_days": 4,
                 "causes_for_ifa": None,
                 "maternal_complications": None
              },
