@@ -1314,9 +1314,9 @@ class ServiceDeliveryReportView(models.Model):
         blank=True, null=True,
         help_text="Number of children got >=21 days of lunch"
     )
-    lunch_20_24_days = models.IntegerField(
+    lunch_21_24_days = models.IntegerField(
         blank=True, null=True,
-        help_text="Number of children got 20-24 days of lunch"
+        help_text="Number of children got 21-24 days of lunch"
     )
     lunch_25_days = models.IntegerField(
         blank=True, null=True,

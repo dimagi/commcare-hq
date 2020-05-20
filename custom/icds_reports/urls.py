@@ -16,7 +16,7 @@ from custom.icds_reports.views import (
     DailyIndicators, InfantometerView, StadiometerView, MWCDDataView, IcdsDynamicMobileTemplateView,
     GovernanceHomeVisitAPI, GovernanceBeneficiaryAPI, GovernanceStateListAPI, GovernanceVHNDSAPI,
     MobileDashboardDownloadView, GovernanceCBEAPI, BiharDemographicsAPI, BiharMotherDetailsAPI, BiharVaccinesAPI,
-    BiharSchoolAPI
+    BiharSchoolAPI, ServiceDeliveryDashboardDetailsView
 )
 
 
@@ -161,6 +161,11 @@ urlpatterns = [
         r'^service_delivery_dashboard/(?P<step>[\w-]+)/',
         ServiceDeliveryDashboardView.as_view(),
         name='service_delivery_dashboard'
+    ),
+    url(
+        r'^service_delivery_dashboard_details/(?P<step>[\w-]+)/',
+        ServiceDeliveryDashboardDetailsView.as_view(),
+        name='service_delivery_dashboard_details'
     ),
     url(r'^maternal_and_child/', include(maternal_and_child_urls)),
     url(r'^icds_cas_reach/', include(cas_reach_urls)),
