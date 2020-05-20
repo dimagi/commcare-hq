@@ -145,6 +145,7 @@ class Permissions(DocumentSchema):
     manage_releases_list = StringListProperty(default=[])
 
     limited_login_as = BooleanProperty(default=False)
+    access_default_login_as_user = BooleanProperty(default=False)
 
     @classmethod
     def wrap(cls, data):
