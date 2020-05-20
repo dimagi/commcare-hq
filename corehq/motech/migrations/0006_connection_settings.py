@@ -4,7 +4,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('motech', '0004_connectionsettings'),
+        ('motech', '0005_requestlog_request_body'),
     ]
 
     operations = [
