@@ -1,13 +1,15 @@
 from contextlib import contextmanager
 from gzip import GzipFile
 
-from dimagi.utils.chunked import chunked
-from dimagi.utils.logging import notify_exception
-
+import backoff
 import boto3
 from botocore.client import Config
 from botocore.exceptions import ClientError
 from botocore.utils import fix_s3_host
+
+from dimagi.utils.chunked import chunked
+from dimagi.utils.logging import notify_exception
+
 from corehq.blobs.exceptions import NotFound
 from corehq.blobs.interface import AbstractBlobDB
 from corehq.blobs.util import (
@@ -20,6 +22,19 @@ from corehq.util.metrics import metrics_counter, metrics_histogram_timer
 
 DEFAULT_S3_BUCKET = "blobdb"
 DEFAULT_BULK_DELETE_CHUNKSIZE = 1000
+
+
+def is_not_slow_down_error(err: ClientError) -> bool:
+    # SlowDown error message is, "An error occurred (SlowDown) when
+    # calling the GetObject operation (reached max retries: 4): Please
+    # reduce your request rate." From ClientError source we can see that
+    # err.response['Error']['Code'] == 'SlowDown'
+    is_slow_down_error = (
+        'Error' in err.response
+        and 'Code' in err.response['Error']
+        and err.response['Error']['Code'] == 'SlowDown'
+    )
+    return not is_slow_down_error
 
 
 class S3BlobDB(AbstractBlobDB):
@@ -89,10 +104,17 @@ class S3BlobDB(AbstractBlobDB):
             self.metadb.put(meta)
         return meta
 
+    @backoff.on_exception(
+        backoff.expo,
+        exception=ClientError,
+        max_time=180,
+        giveup=is_not_slow_down_error,
+    )
     def get(self, key=None, type_code=None, meta=None):
         key = self._validate_get_args(key, type_code, meta)
         check_safe_key(key)
         with maybe_not_found(throw=NotFound(key)), self.report_timing('get', key):
+            # Throws ClientError (SlowDown) if request rate too high:
             resp = self._s3_bucket().Object(key).get()
         reported_content_length = resp['ContentLength']
 
