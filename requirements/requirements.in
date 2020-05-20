@@ -48,6 +48,7 @@ schema
 suds-jurko==0.6
 tropo-webapi-python==0.1.3
 text-unidecode>=1.2
+typing-extensions  # Can be removed after upgrading to Python 3.8
 xlrd==1.0.0
 simplejson~=3.11
 sh==1.09
