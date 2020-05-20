@@ -291,10 +291,6 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
     if should_edit('comment'):
         form.comment = request.POST['comment']
 
-    if should_edit("name_enum"):
-        name_enum = json.loads(request.POST.get("name_enum"))
-        form.name_enum = [MappingItem(i) for i in name_enum]
-
     if should_edit("xform") or "xform" in request.FILES:
         try:
             # support FILES for upload and POST for ajax post from Vellum

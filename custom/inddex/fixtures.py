@@ -76,6 +76,13 @@ class ConversionFactor:
     conv_factor = attrib(converter=lambda x: float(x) if x else None)
 
 
+@attrs(kw_only=True, frozen=True)
+class Language:
+    table_name = 'languages'
+    lang_code = attrib()
+    is_primary = attrib()
+
+
 class FixtureAccessor:
     def __init__(self, domain):
         self.domain = domain
@@ -101,13 +108,18 @@ class FixtureAccessor:
                 recipes[ingredient.recipe_code].append(ingredient)
         return recipes
 
+    def _localize(self, col_name):
+        if self.lang_code == 'lang_0':
+            return col_name
+        return f'{col_name}_{self.lang_code}'
+
     @cached_property
     def foods(self):
         """Food items by food_code"""
         foods = {}
         for item_dict in self._get_fixture_dicts(Food.table_name):
-            # A bunch of columns are duplicated - like food_name_lang_3
-            item_dict = {k: v for k, v in item_dict.items() if '_lang_' not in k}
+            item_dict['food_name'] = item_dict[self._localize('food_name')]
+            item_dict['food_base_term'] = item_dict[self._localize('food_base_term')]
             food = _wrap(Food, item_dict)
             foods[food.food_code] = food
         return foods
@@ -153,6 +165,13 @@ class FixtureAccessor:
         return {
             (cf.food_code, cf.conv_method, cf.conv_option): cf.conv_factor for cf in conversion_factors
         }
+
+    @cached_property
+    def lang_code(self):
+        languages = (_wrap(Language, item_dict)
+                     for item_dict in self._get_fixture_dicts(Language.table_name))
+        primary = [l.lang_code for l in languages if l.is_primary == 'yes']
+        return primary[0] if primary else 'lang_1'
 
 
 def _to_float(v):
