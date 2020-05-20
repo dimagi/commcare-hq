@@ -1,4 +1,5 @@
 attrs~=18.1
+backoff
 iso8601==0.1.12
 jsonobject==0.9.9
 jsonobject-couchdbkit~=1.0.1
