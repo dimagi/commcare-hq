@@ -36,7 +36,7 @@ def add_cases_to_case_group(domain, case_group_id, uploaded_data, progress_track
             response['errors'].append(
                 _("It looks like the case with identifier '{}' "
                   "is marked as deleted.").format(identifier)
-              )
+            )
         elif case.case_id in case_group.cases:
             response['errors'].append(
                 _("A case with identifier '{}' already exists in this "
