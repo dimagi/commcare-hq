@@ -282,7 +282,7 @@ class OtherCases(object):
         """
         data = self._generate_data(transitions)
         zipstream = io.BytesIO()
-        with zipfile.ZipFile(zipstream, "wb") as z:
+        with zipfile.ZipFile(zipstream, "w") as z:
             for case_type, sheets in data.items():
                 excel_file = self._dump_to_excel(sheets)
                 z.writestr(f"{case_type}.xlsx", excel_file.read(), zipfile.ZIP_DEFLATED)

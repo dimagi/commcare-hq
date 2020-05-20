@@ -19,7 +19,7 @@ from corehq.apps.fixtures.dbaccessors import (
     get_fixture_data_types,
 )
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.util.test_utils import require_db_context, patch_max_test_time
+from corehq.util.test_utils import patch_max_test_time, require_db_context
 
 from ..example_data.data import (
     FOOD_CASE_TYPE,
@@ -112,14 +112,15 @@ class TestSetupUtils(TestCase):
     def test_fixtures_created(self):
         # Note, this is actually quite slow - might want to drop
         data_types = get_fixture_data_types(DOMAIN)
-        self.assertEqual(len(data_types), 5)
+        self.assertEqual(len(data_types), 6)
         self.assertItemsEqual(
             [(dt.tag, count_fixture_items(DOMAIN, dt._id)) for dt in data_types],
             [('recipes', 384),
              ('food_list', 1130),
              ('food_composition_table', 1042),
              ('conv_factors', 2995),
-             ('nutrients_lookup', 152)]
+             ('nutrients_lookup', 152),
+             ('languages', 2)]
         )
 
 
@@ -163,8 +164,8 @@ class TestFixtures(TestCase):
 
     def test_food_list(self):
         food = self.fixtures_accessor.foods['10']
-        self.assertEqual("Millet flour", food.food_name)
-        self.assertEqual("Millet flour", food.food_base_term)
+        self.assertEqual("Farine de mil", food.food_name)
+        self.assertEqual("Farine de mil", food.food_base_term)
 
     def test_food_compositions(self):
         composition = self.fixtures_accessor.food_compositions['10']
@@ -174,6 +175,9 @@ class TestFixtures(TestCase):
     def test_conversion_factors(self):
         conversion_factor = self.fixtures_accessor.conversion_factors[('10', '52', '')]
         self.assertEqual(0.61, conversion_factor)
+
+    def test_languages(self):
+        self.assertEqual('lang_1', self.fixtures_accessor.lang_code)
 
 
 class TestMasterReport(TestCase):
