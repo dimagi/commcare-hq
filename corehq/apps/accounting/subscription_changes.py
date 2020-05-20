@@ -1,7 +1,6 @@
 import datetime
-import json
-import time
 
+from django.conf import settings
 from django.db import transaction
 from django.urls import reverse
 from django.utils.safestring import mark_safe
@@ -741,9 +740,9 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
         strong_mobile_passwords = domain.strong_mobile_passwords
         msgs = []
         if secure_sessions:
-            msgs.append(_("Your project has enabled a 30 minute session timeout setting. "
+            msgs.append(_("Your project has enabled a {} minute session timeout setting. "
                           "By changing to a different plan, you will lose the ability to "
-                          "enforce this shorter timeout policy."))
+                          "enforce this shorter timeout policy.").format(settings.SECURE_TIMEOUT))
         if two_factor:
             msgs.append(_("Two factor authentication is currently required of all of your "
                           "web users for this project space.  By changing to a different "
