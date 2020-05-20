@@ -11,7 +11,6 @@ migrator = RawSQLMigration(('custom', 'icds_reports', 'migrations', 'sql_templat
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('icds_reports', '0189_new_fields_to_bihar_demogrpahics'),
     ]
@@ -22,23 +21,14 @@ class Migration(migrations.Migration):
             name='last_reported_fever_date',
             field=models.DateField(null=True)
         ),
-        migrations.AddField(
-            model_name='aggregatebirthpreparednesforms',
-            name='new_ifa_tablets_total',
-            field=models.PositiveSmallIntegerField(help_text='New ifa tablets', null=True),
-        ),
-        migrations.AddField(
-            model_name='aggregatebirthpreparednesforms',
-            name='reason_no_ifa',
-            field=models.CharField(help_text='Reason for not giving ifa', max_length=40, null=True),
-        ),
-        migrations.AddField(
-            model_name='aggregateccsrecordpostnatalcareforms',
-            name='new_ifa_tablets_total',
-            field=models.PositiveSmallIntegerField(help_text='New ifa tablets', null=True),
-        ),
-        migrations.RunSQL("ALTER TABLE ccs_record_monthly ADD COLUMN complication_type text"),
-        migrations.RunSQL("ALTER TABLE ccs_record_monthly ADD COLUMN reason_no_ifa text"),
+        migrations.RunSQL(
+            "ALTER table icds_dashboard_ccs_record_bp_forms ADD COLUMN new_ifa_tablets_total SMALLINT"),
+        migrations.RunSQL(
+            "ALTER table icds_dashboard_ccs_record_bp_forms ADD COLUMN reason_no_ifa TEXT"),
+        migrations.RunSQL(
+            "ALTER table icds_dashboard_ccs_record_postnatal_forms ADD COLUMN new_ifa_tablets_total SMALLINT"),
+        migrations.RunSQL("ALTER TABLE ccs_record_monthly ADD COLUMN complication_type TEXT"),
+        migrations.RunSQL("ALTER TABLE ccs_record_monthly ADD COLUMN reason_no_ifa TEXT"),
         migrations.RunSQL("ALTER TABLE ccs_record_monthly ADD COLUMN new_ifa_tablets_total_bp INTEGER"),
         migrations.RunSQL("ALTER TABLE ccs_record_monthly ADD COLUMN new_ifa_tablets_total_pnc INTEGER"),
         migrations.RunSQL("ALTER TABLE ccs_record_monthly ADD COLUMN ifa_last_seven_days INTEGER"),
