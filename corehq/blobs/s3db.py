@@ -1,11 +1,13 @@
 from contextlib import contextmanager
 from gzip import GzipFile
+from typing import Any, Optional
 
 import backoff
 import boto3
 from botocore.client import Config
 from botocore.exceptions import ClientError
 from botocore.utils import fix_s3_host
+from typing_extensions import TypedDict
 
 from dimagi.utils.chunked import chunked
 from dimagi.utils.logging import notify_exception
@@ -35,6 +37,30 @@ def is_not_slow_down_error(err: ClientError) -> bool:
         and err.response['Error']['Code'] == 'SlowDown'
     )
     return not is_slow_down_error
+
+
+class BackoffDetails(TypedDict):
+    target: str  # reference to the function or method being invoked
+    args: list  # positional arguments to func
+    kwargs: dict  # keyword arguments to func
+    tries: int  # number of invocation tries so far
+    elapsed: float  # elapsed time in seconds so far
+    wait: Optional[float]  # seconds to wait (on_backoff handler only)
+    value: Optional[Any]  # value triggering backoff (on_predicate decorator only)
+
+
+def backoff_handler(details: BackoffDetails):
+    notify_exception(
+        None, "Backing off after receiving SlowDown error from S3",
+        details=details
+    )
+
+
+def giveup_handler(details: BackoffDetails):
+    notify_exception(
+        None, "Giving up after receiving error from S3",
+        details=details
+    )
 
 
 class S3BlobDB(AbstractBlobDB):
@@ -109,6 +135,8 @@ class S3BlobDB(AbstractBlobDB):
         exception=ClientError,
         max_time=180,
         giveup=is_not_slow_down_error,
+        on_backoff=backoff_handler,
+        on_giveup=giveup_handler,
     )
     def get(self, key=None, type_code=None, meta=None):
         key = self._validate_get_args(key, type_code, meta)
