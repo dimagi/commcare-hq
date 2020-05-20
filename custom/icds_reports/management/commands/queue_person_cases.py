@@ -33,7 +33,7 @@ class Command(BaseCommand):
             query = f"""
                 select supervisor_id, doc_id from "{table_name}"
                 where state_id='f9b47ea2ee2d8a02acddeeb491d3e175' AND sex='F'
-                AND dob::DATE>='{ag_start_range}' AND dob::DATE<{ag_end_range}
+                AND dob::DATE>='{ag_start_range}' AND dob::DATE<'{ag_end_range}'
                 order by supervisor_id, doc_id
             """
         else:
