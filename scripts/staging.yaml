@@ -62,7 +62,7 @@ branches:
   - jls/migrate-MobileAuthKeyRecord-2 # Jenny May 16
   - sr-messaging-rule # Sravan May 18
   - dmr/add-better-user-correlation-to-auditcare  # Danny May 20
-  #- nh/connx+repeaters  # Norman May 20
-  - nh/auth/oauth2  # Norman May 20
+#  - nh/auth/oauth2  # Norman May 20
+  - nh/connx+repeaters  # Norman May 20
 
 submodules: {}
