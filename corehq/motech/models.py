@@ -1,6 +1,5 @@
 import re
 
-from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 
 import jsonfield
@@ -9,9 +8,9 @@ from django.utils.translation import gettext as _
 from corehq.motech.const import (
     ALGO_AES,
     BASIC_AUTH,
+    BEARER_AUTH,
     DIGEST_AUTH,
     OAUTH1,
-    BEARER_AUTH,
     PASSWORD_PLACEHOLDER,
 )
 from corehq.motech.utils import b64_aes_decrypt, b64_aes_encrypt
@@ -117,10 +116,7 @@ class RequestLog(models.Model):
     request_url = models.CharField(max_length=255, db_index=True)
     request_headers = jsonfield.JSONField(blank=True)
     request_params = jsonfield.JSONField(blank=True)
-    request_body = jsonfield.JSONField(
-        blank=True, null=True,  # NULL for GET, but POST can take an empty body
-        dump_kwargs={'cls': DjangoJSONEncoder, 'separators': (',', ':')}  # Use DjangoJSONEncoder for dates, etc.
-    )
+    request_body = models.TextField(blank=True, null=True)
     request_error = models.TextField(null=True)
     response_status = models.IntegerField(null=True, db_index=True)
     response_body = models.TextField(blank=True, null=True)

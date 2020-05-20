@@ -31,7 +31,7 @@ class Http409(Http400):
 @method_decorator(require_permission(Permissions.edit_motech), name='dispatch')
 class MotechLogListView(BaseProjectSettingsView, ListView):
     urlname = 'motech_log_list_view'
-    page_title = _("MOTECH Logs")
+    page_title = _("Remote API Logs")
     template_name = 'motech/logs.html'
     context_object_name = 'logs'
     paginate_by = 100
@@ -92,7 +92,7 @@ class MotechLogListView(BaseProjectSettingsView, ListView):
 @method_decorator(require_permission(Permissions.edit_motech), name='dispatch')
 class MotechLogDetailView(BaseProjectSettingsView, DetailView):
     urlname = 'motech_log_detail_view'
-    page_title = _("MOTECH Logs")
+    page_title = _("Remote API Logs")
     template_name = 'motech/log_detail.html'
     context_object_name = 'log'
 

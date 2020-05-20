@@ -1032,13 +1032,6 @@ LEGACY_CHILD_MODULES = StaticToggle(
     )
 )
 
-APP_BUILDER_CONDITIONAL_NAMES = StaticToggle(
-    'APP_BUILDER_CONDITIONAL_NAMES',
-    'ICDS/REACH: Conditional, calculation-based  mapping for menu and form names',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN],
-)
-
 FORMPLAYER_USE_LIVEQUERY = StaticToggle(
     'formplayer_use_livequery',
     'Use LiveQuery on Web Apps',
@@ -1922,4 +1915,12 @@ RESTRICT_LOGIN_AS = StaticToggle(
     Adds a permission that can be set on user roles to allow login as, but only as a limited set of users. Users with this enabled can "login as" other users that set custom user property "login_as_user" to the first user's username.
     For example, if web user a@a.com has this permission set on their role, they can only login as mobile users who have the custom property "login_as_user" set to "a@a.com".
     """
+)
+
+SHARDED_RUN_MESSAGING_RULE = StaticToggle(
+    'sharded_run_messaging_rule',
+    'Trigger concurrent tasks per each shard for conditional case alerts'
+    'Applies to SQL domains only',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN]
 )
