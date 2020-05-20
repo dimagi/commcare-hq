@@ -12,6 +12,7 @@
     "js-xpath": "dimagi/js-xpath#v0.0.2-rc1",
     "less": "~3.10.3",
     "mocha": "^2.3.3",
+    "phantomjs": "^1.9.20",
     "uglify-js": "^2.6.1"
   }
 }
