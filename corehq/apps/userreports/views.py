@@ -622,7 +622,6 @@ class ConfigureReport(ReportBuilderView):
                 self.domain,
                 self.existing_report.get_id if self.existing_report else None,
             ),
-            'domain_names': sorted([d.linked_domain for d in get_linked_domains(self.domain)]),
         }
 
     def _get_bound_form(self, report_data):

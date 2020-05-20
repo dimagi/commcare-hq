@@ -4,30 +4,33 @@ from django.utils.translation import ugettext_lazy
 
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import StrictButton
-from crispy_forms.helper import FormHelper
+from corehq.apps.hqwebapp.crispy import HQFormHelper
 
 from corehq import toggles
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.linked_domain.models import DomainLink
+from corehq.apps.linked_domain.dbaccessors import (
+    get_linked_domains,
+)
 
 
 class CopyReportForm(forms.Form):
-    domain = forms.CharField(
-        label=ugettext_lazy("Copy this report to project"),
-        widget=forms.Select(choices=[], attrs={"data-bind": "autocompleteSelect2: domainNames"}),
-    )
 
     def __init__(self, from_domain, report_id, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        fields = ["domain"]
         self.from_domain = from_domain
 
-        self.helper = FormHelper()
-        self.helper.label_class = "col-sm-3 col-md-4 col-lg-2"
-        self.helper.field_class = "col-sm-9 col-md-8 col-lg-6"
+        choices = [('', ugettext_lazy("Select a project..."))]
+        choices.extend((d.linked_domain, d.linked_domain) for d in get_linked_domains(self.from_domain))
+        self.fields['domain'] = forms.CharField(
+            label=ugettext_lazy("Copy this report to project"),
+            widget=forms.Select(choices=choices),
+        )
+
+        self.helper = HQFormHelper()
         self.helper.layout = crispy.Layout(
-            crispy.Fieldset(_("Copy Report"), *fields),
+            'domain',
             crispy.Hidden("report_id", report_id),
             hqcrispy.FormActions(StrictButton(_("Copy"), type="submit", css_class="btn-primary")),
         )
