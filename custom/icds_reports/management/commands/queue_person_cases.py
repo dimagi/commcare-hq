@@ -28,12 +28,12 @@ class Command(BaseCommand):
             # AG CASES
             table_name = get_table_name('icds-cas', 'static-person_cases_v3')
             # includes all the valid cases for the march april and may 2020
-            ag_end_range = '01-06-2009'
-            ag_start_range = '01-03-2006'
+            ag_end_range = '2009-06-01'
+            ag_start_range = '2006-03-01'
             query = f"""
                 select supervisor_id, doc_id from "{table_name}"
                 where state_id='f9b47ea2ee2d8a02acddeeb491d3e175' AND sex='F'
-                AND dob::DATE>'{ag_start_range}' AND dob::DATE<={ag_end_range}
+                AND dob::DATE>='{ag_start_range}' AND dob::DATE<{ag_end_range}
                 order by supervisor_id, doc_id
             """
         else:
@@ -52,7 +52,7 @@ class Command(BaseCommand):
         count = 0
         chunk_size = 10000
         for ids_chunk in chunked(doc_ids, chunk_size):
-            ids_list = [item for item in ids_chunk]
+            ids_list = list(ids_chunk)
             AsyncIndicator.bulk_creation([elem[1] for elem in ids_list], 'CommCareCase', 'icds-cas', [person_config._id])
             count += chunk_size
             print("Success till doc_id: {}".format(ids_list[-1]))
