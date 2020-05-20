@@ -19,7 +19,7 @@ from corehq.apps.users.util import raw_username
 from corehq.motech.models import ConnectionSettings
 from corehq.motech.repeaters.models import Repeater
 from corehq.motech.repeaters.repeater_generators import RegisterGenerator
-from corehq.motech.views import ConnectionSettingsView
+from corehq.motech.views import ConnectionSettingsListView
 
 
 class GenericRepeaterForm(forms.Form):
@@ -45,7 +45,10 @@ class GenericRepeaterForm(forms.Form):
         """
         Override this to set extra django form-fields that can be calculated only within request context
         """
-        url = reverse(ConnectionSettingsView.urlname, kwargs={'domain': self.domain})
+        url = reverse(
+            ConnectionSettingsListView.urlname,
+            kwargs={'domain': self.domain},
+        )
         self.fields['connection_settings_id'] = forms.ChoiceField(
             label=_("Connection Settings"),
             choices=self.connection_settings_choices,
