@@ -53,7 +53,7 @@ from corehq.apps.app_manager.util import purge_report_from_mobile_ucr
 from corehq.apps.change_feed.data_sources import (
     get_document_store_for_doc_type,
 )
-from corehq.apps.domain.decorators import api_auth, login_and_domain_required
+from corehq.apps.domain.decorators import api_auth, login_and_domain_required, domain_admin_required
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.hqwebapp.decorators import (
@@ -1563,9 +1563,8 @@ class DataSourceSummaryView(BaseUserConfigReportsView):
         return list
 
 
-@login_and_domain_required
+@domain_admin_required
 def copy_report(request, domain):
-    # TODO: Permisssions
     from_domain = domain
     to_domain = request.POST.get("domain")
     report_id = request.POST.get("report_id")
