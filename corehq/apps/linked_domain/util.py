@@ -7,6 +7,7 @@ from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.exceptions import MultimediaMissingError
 from corehq.apps.hqmedia.models import CommCareMultimedia
 from corehq.apps.hqwebapp.tasks import send_html_email_async
+from corehq.apps.linked_domain.models import LinkedReportIDMap
 from corehq.apps.linked_domain.remote_accessors import fetch_remote_media
 from corehq.util.timezones.conversions import ServerTime
 
@@ -93,3 +94,9 @@ def _get_missing_multimedia(app, old_multimedia_ids=None):
 def _add_domain_access(domain, media):
     if domain not in media.valid_domains:
         media.add_domain(domain)
+
+
+def is_downstream_linked_report(domain, report_id):
+    return LinkedReportIDMap.objects.filter(
+        linked_domain=domain,
+        linked_id=report_id).exists()

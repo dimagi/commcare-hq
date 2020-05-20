@@ -65,10 +65,8 @@ from corehq.apps.hqwebapp.decorators import (
 from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.linked_domain.models import DomainLink, ReportLinkDetail
-from corehq.apps.linked_domain.dbaccessors import (
-    get_linked_domains,
-)
 from corehq.apps.linked_domain.ucr import create_ucr_link
+from corehq.apps.linked_domain.util import is_downstream_linked_report
 from corehq.apps.locations.permissions import conditionally_location_safe
 from corehq.apps.reports.daterange import get_simple_dateranges
 from corehq.apps.reports.dispatcher import cls_to_view_login_and_domain
@@ -273,7 +271,10 @@ class BaseEditConfigReportView(BaseUserConfigReportsView):
 
     @property
     def read_only(self):
-        return report_config_id_is_static(self.report_id) if self.report_id is not None else False
+        if self.report_id is not None:
+            return (report_config_id_is_static(self.report_id)
+                    or is_downstream_linked_report(self.domain, self.report_id))
+        return False
 
     @property
     @memoized
