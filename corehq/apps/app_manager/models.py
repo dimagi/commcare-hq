@@ -5769,7 +5769,7 @@ class GlobalAppConfig(models.Model):
             force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields
         )
 
-    # TODO: cache this (or perhaps just cache by_app_id...though it would be confusing to cache by_app_id and not by_app)
+    @quickcache(['self.app_id'])
     def get_latest_apk_version(self):
         if self.apk_prompt == "off":
             return {}
