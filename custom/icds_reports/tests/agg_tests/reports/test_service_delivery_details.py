@@ -240,7 +240,7 @@ class TestServiceDeliveryDetails(TestCase):
         }
         self.assertDictEqual(expected, data)
 
-    def test_get_service_delivery_report_details_cbe(self):
+    def test_get_service_delivery_report_details_sn(self):
         get_service_delivery_details.clear('icds-cas', 0, 10, None, False,
                                         {'aggregation_level': 1}, 2017, 5, 'sn')
         data = get_service_delivery_details(
@@ -324,6 +324,3 @@ class TestServiceDeliveryDetails(TestCase):
             'recordsFiltered': 3
         }
         self.assertDictEqual(expected, data)
-
-
-
