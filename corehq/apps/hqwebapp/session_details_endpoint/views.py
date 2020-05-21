@@ -57,7 +57,8 @@ class SessionDetailsView(View):
         domain = data.get('domain')
         if domain:
             domain_obj = Domain.get_by_name(domain)
-            secure_session_timeout = domain_obj.secure_timeout or secure_session_timeout
+            if domain_obj:
+                secure_session_timeout = domain_obj.secure_timeout or secure_session_timeout
         timeout = secure_session_timeout if secure_session else settings.INACTIVITY_TIMEOUT
         session.set_expiry(timeout * 60)
         session.save()
