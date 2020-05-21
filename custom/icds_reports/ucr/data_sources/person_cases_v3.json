@@ -822,6 +822,12 @@
         "datatype": "date",
         "type": "raw",
         "property_name": "last_reported_fever_date"
+      },
+      {
+        "column_id": "modified_on",
+        "datatype": "datetime",
+        "type": "raw",
+        "property_name": "modified_on"
       }
     ],
     "named_expressions": {},
