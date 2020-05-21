@@ -38,6 +38,8 @@ def unit_testing_only(fn):
                 'You may only call {} during unit testing'.format(fn.__name__))
         return fn(*args, **kwargs)
     return inner
+
+
 unit_testing_only.__test__ = False
 
 
@@ -393,9 +395,8 @@ def timelimit(limit):
         def lt_half_second():
             ...
 
-    See also: `corehq.tests.noseplugins.timing.patch_max_test_time` for
-    overriding time limits for an entire test group (module, test class,
-    etc.)
+    See also: `patch_max_test_time` for overriding time limits for an
+    entire test group (module, test class, etc.)
 
     :param limit: number of seconds or a callable to decorate. If
     callable, the time limit defaults to one second.
@@ -416,6 +417,41 @@ def timelimit(limit):
         assert elapsed < limit, f"{func.__name__} took too long: {elapsed}"
         return rval
     return time_limit
+
+
+def patch_max_test_time(limit):
+    """Temporarily override test time limit (--max-test-time)
+
+    Note: this is only useful when spanning multiple test events because
+    the limit must be present at the _end_ of a test event to take
+    effect. Therefore it will do nothing if used within the context of a
+    single test (use `timelimit` for that). It also does not affect the
+    time limit on the final teardown fixture (in which the patch is
+    removed).
+
+    :param limit: New time limit (seconds).
+
+    Usage at module level:
+
+        TIME_LIMIT = patch_max_test_time(9)
+
+        def setup_module():
+            TIME_LIMIT.start()
+
+        def teardown_module():
+            TIME_LIMIT.stop()
+
+    Usage as class decorator:
+
+        @patch_max_test_time(9)
+        class TestSomething(TestCase):
+            ...
+    """
+    from corehq.tests.noseplugins.timing import patch_max_test_time
+    return patch_max_test_time(limit)
+
+
+patch_max_test_time.__test__ = False
 
 
 def get_form_ready_to_save(metadata, is_db_test=False):
@@ -524,6 +560,7 @@ def create_test_case(domain, case_type, case_name, case_properties=None, drop_si
             CaseAccessorSQL.hard_delete_cases(domain, [case.case_id])
         else:
             case.delete()
+
 
 create_test_case.__test__ = False
 

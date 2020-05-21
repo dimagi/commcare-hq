@@ -21,7 +21,7 @@ def get_hmac_digest(shared_key, data):
     return digest.decode('utf-8')
 
 
-def validate_request_hmac(setting_name, ignore_if_debug=False):
+def validate_request_hmac(setting_name, ignore_if_debug=False, audit_user='system'):
     """
     Decorator to validate request sender using a shared secret
     to compare the HMAC of the request body or query string with
@@ -43,6 +43,7 @@ def validate_request_hmac(setting_name, ignore_if_debug=False):
 
     :param setting_name: The name of the Django setting that holds the secret key
     :param ignore_if_debug: If set to True this is completely ignored if settings.DEBUG is True
+    :param audit_user: The username to report to an auditing system, since these requests are anonymous but auth'd.
     """
     def _outer(fn):
         shared_key = getattr(settings, setting_name, None)
@@ -50,6 +51,7 @@ def validate_request_hmac(setting_name, ignore_if_debug=False):
         @wraps(fn)
         def _inner(request, *args, **kwargs):
             if ignore_if_debug and settings.DEBUG:
+                request.audit_user = audit_user
                 return fn(request, *args, **kwargs)
 
             data = request.get_full_path() if request.method == 'GET' else request.body
@@ -64,6 +66,7 @@ def validate_request_hmac(setting_name, ignore_if_debug=False):
             if expected_digest != digest:
                 return HttpResponse(status=401)
 
+            request.audit_user = audit_user
             return fn(request, *args, **kwargs)
         return _inner
     return _outer
