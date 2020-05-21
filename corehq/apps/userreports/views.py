@@ -1576,7 +1576,8 @@ def copy_report(request, domain):
             request.couch_user._id,
             model_details=ReportLinkDetail(report_id=link_info.report.get_id)
         )
-        messages.success(request, _(f"Successfully linked report to {to_domain}"))
+        messages.success(request, _(f"Successfully linked and copied {link_info.report.title} to {to_domain}. "
+                                    "We've redirected you to the new report."))
         return HttpResponseRedirect(
             reverse(
                 ConfigurableReportView.slug,
@@ -1586,8 +1587,9 @@ def copy_report(request, domain):
                 ],
             )
         )
-    except Exception:
-        messages.error(request, _(f"Something went wrong linking your report"))
+    except Exception as err:
+        messages.error(request, _("Something went wrong linking your report"))
+        notify_exception(request, message=str(err))
         return HttpResponseRedirect(
             reverse(ConfigurableReportView.slug, args=[from_domain, report_id])
         )
