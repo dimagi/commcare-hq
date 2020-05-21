@@ -51,32 +51,13 @@ def test_retry_on_non_retry_error():
 
 
 @timelimit
-def test_retry_with_unterminated_delays():
-    def delays():
-        for x in range(1, 5):
-            yield 2 ** x
-
-    retry = mod.retry_on(Error, delays=delays())
-    func, calls = make_retry_function(retry, 5, Error)
-    with mock_retry_sleep() as sleeps:  # Does not raise
-        func(1)
-    eq(sleeps, [2, 4, 8, 16])
-    eq(len(calls), 4)
-
-
-@timelimit
-def test_retry_with_noneterminated_delays():
-    def delays():
-        for x in range(1, 5):
-            yield 2 ** x
-        yield None
-
-    retry = mod.retry_on(Error, delays=delays())
-    func, calls = make_retry_function(retry, 5, Error)
+def test_retry_with_delays():
+    retry = mod.retry_on(Error, delays=[2 ** x for x in range(5)])
+    func, calls = make_retry_function(retry, 6, Error)
     with mock_retry_sleep() as sleeps, assert_raises(Error):
         func(1)
-    eq(sleeps, [2, 4, 8, 16])
-    eq(len(calls), 5)
+    eq(sleeps, [1, 2, 4, 8, 16])
+    eq(len(calls), 6)
 
 
 class Error(Exception):

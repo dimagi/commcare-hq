@@ -1,11 +1,12 @@
 from functools import wraps
+from itertools import chain
 from time import sleep
 
 
 def retry_on(
     *errors,
     should_retry=lambda err: True,
-    delays=(0.1, 1, 2, 4, 8, None),
+    delays=(0.1, 1, 2, 4, 8),
 ):
     """Make a decorator to retry function on any of the given errors
 
@@ -16,9 +17,7 @@ def retry_on(
     :param should_retry: Optional function taking one argument, an
         exception instance, that returns true to signal a retry and false
         to signal that the error should be re-raised.
-    :param delays: An iterable of delays given in seconds. It must
-        terminate in ``None`` to raise an error in ``errors``, otherwise
-        it will stop retrying silently.
+    :param delays: A list of delays given in seconds.
     :returns: a decorator to be applied to functions that should be
         retried if they raise one of the given errors.
     """
@@ -27,7 +26,7 @@ def retry_on(
     def retry_decorator(func):
         @wraps(func)
         def retry(*args, **kw):
-            for delay in delays:
+            for delay in chain(delays, [None]):
                 try:
                     return func(*args, **kw)
                 except errors as err:
