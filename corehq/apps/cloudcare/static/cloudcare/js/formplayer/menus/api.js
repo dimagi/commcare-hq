@@ -58,10 +58,19 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
                         }
                     },
                     error: function (_, response) {
-                        if (response.status === 423) {
+                        FormplayerFrontend.trigger(
+                            'showError',
+                            "This, too, is bad and here is some html <a href=''>here is some more html</a>"
+                        );
+                        /*if (response.status === 423) {
                             FormplayerFrontend.trigger(
                                 'showError',
                                 Formplayer.Errors.LOCK_TIMEOUT_ERROR
+                            );
+                        } else if (response.status === 401) {
+                            FormplayerFrontend.trigger(
+                                'showError',
+                                "This, too, is bad and here is some html <a href=''>here is some more html</a>"
                             );
                         } else {
                             FormplayerFrontend.trigger(
@@ -69,7 +78,7 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
                                 gettext('Unable to connect to form playing service. ' +
                                         'Please report an issue if you continue to see this message.')
                             );
-                        }
+                        }*/
                         defer.reject();
                     },
                 };
