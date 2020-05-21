@@ -297,7 +297,7 @@ def heartbeat(request, domain, app_build_id):
         need any validation on it. This is pulled from @uniqueid from profile.xml
     """
     app_id = request.GET.get('app_id', '')
-    build_profile_id = request.GET.get('build_profile_id', '')
+    build_profile_id = request.GET.get('build_profile_id')
 
     info = {"app_id": app_id}
     # TODO: use get_app_cached? except that's for builds, not apps

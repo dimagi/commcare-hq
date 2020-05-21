@@ -4452,9 +4452,7 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
         self.last_modified = datetime.datetime.utcnow()
         if not self._rev and not domain_has_apps(self.domain):
             domain_has_apps.clear(self.domain)
-
-        # TODO: invalidate cache for former LatestAppInfo
-
+        self.global_app_config.clear_app_version_cache()
         get_all_case_properties.clear(self)
         get_usercase_properties.clear(self)
         get_app_languages.clear(self.domain)
@@ -5766,7 +5764,7 @@ class GlobalAppConfig(models.Model):
         return cls.by_app(app)
 
     def save(self, force_insert=False, force_update=False, using=DEFAULT_DB_ALIAS, update_fields=None):
-        # TODO: invalidate cache for former LatestAppInfo
+        self.clear_app_version_cache()
         super().save(
             force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields
         )
@@ -5784,7 +5782,7 @@ class GlobalAppConfig(models.Model):
             force = self.apk_prompt == "forced"
             return {"value": value, "force": force}
 
-    # TODO: cache
+    @quickcache(['self.app_id', 'build_profile_id'])
     def get_latest_app_version(self, build_profile_id=None):
         if self.app_prompt == "off":
             return {}
@@ -5803,6 +5801,12 @@ class GlobalAppConfig(models.Model):
                         if latest:
                             version = latest.version
                     return {"value": version, "force": force}
+
+    def clear_app_version_cache(self):
+        build_profile_ids = self._app.build_profiles.keys()
+        self.get_latest_app_version.clear(self, None)
+        for build_profile_id in build_profile_ids:
+            self.get_latest_app_version.clear(self, build_profile_id)
 
 
 class AppReleaseByLocation(models.Model):
@@ -5894,7 +5898,7 @@ class LatestEnabledBuildProfiles(models.Model):
 
     def save(self, *args, **kwargs):
         super(LatestEnabledBuildProfiles, self).save(*args, **kwargs)
-        # TODO: invalidate cache for former LatestAppInfo
+        GlobalAppConfig.clear_app_version_cache()
         self.expire_cache(self.domain)
 
     @property
