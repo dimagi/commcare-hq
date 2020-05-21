@@ -169,7 +169,6 @@ class TimeoutMiddleware(MiddlewareMixin):
                 LogoutView.as_view(template_name=settings.BASE_TEMPLATE)(request)
                 # this must be after logout so it is attached to the new session
                 request.session['secure_session'] = True
-                request.session['secure_session_timeout'] = timeout
                 request.session.set_expiry(timeout * 60)
                 return HttpResponseRedirect(reverse('login') + '?next=' + request.path)
 

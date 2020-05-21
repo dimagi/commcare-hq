@@ -7,6 +7,7 @@ from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 
 from corehq.apps.domain.auth import formplayer_auth
+from corehq.apps.domain.models import Domain
 from corehq.apps.hqadmin.utils import get_django_user_from_session, get_session
 from corehq.apps.users.models import CouchUser
 
@@ -52,7 +53,11 @@ class SessionDetailsView(View):
 
         # reset the session's expiry if there's some formplayer activity
         secure_session = session.get('secure_session')
-        secure_session_timeout = session.get('secure_session_timeout', settings.SECURE_TIMEOUT)
+        secure_session_timeout = settings.SECURE_TIMEOUT
+        domain = data.get('domain')
+        if domain:
+            domain_obj = Domain.get_by_name(domain)
+            secure_session_timeout = domain_obj.secure_timeout or secure_session_timeout
         timeout = secure_session_timeout if secure_session else settings.INACTIVITY_TIMEOUT
         session.set_expiry(timeout * 60)
         session.save()
