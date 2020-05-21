@@ -1400,6 +1400,7 @@ class BiharDemographicsView(models.Model):
     referral_reached_facility = models.SmallIntegerField(null=True)
     migrate_date = models.DateTimeField(null=True)
     is_alive = models.SmallIntegerField(null=True)
+    was_oos_ever = models.SmallIntegerField(blank=True, null=True)
 
     class Meta(object):
         app_label = 'icds_reports'
