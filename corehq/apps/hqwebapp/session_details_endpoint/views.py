@@ -53,13 +53,16 @@ class SessionDetailsView(View):
 
         # reset the session's expiry if there's some formplayer activity
         secure_session = session.get('secure_session')
-        secure_session_timeout = settings.SECURE_TIMEOUT
-        domain = data.get('domain')
-        if domain:
-            domain_obj = Domain.get_by_name(domain)
-            if domain_obj:
-                secure_session_timeout = domain_obj.secure_timeout or secure_session_timeout
-        timeout = secure_session_timeout if secure_session else settings.INACTIVITY_TIMEOUT
+        if secure_session:
+            secure_session_timeout = settings.SECURE_TIMEOUT
+            domain = data.get('domain')
+            if domain:
+                domain_obj = Domain.get_by_name(domain)
+                if domain_obj:
+                    secure_session_timeout = domain_obj.secure_timeout or secure_session_timeout
+        else:
+            timeout = settings.INACTIVITY_TIMEOUT
+
         session.set_expiry(timeout * 60)
         session.save()
 
