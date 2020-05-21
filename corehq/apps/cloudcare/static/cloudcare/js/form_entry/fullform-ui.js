@@ -665,6 +665,18 @@ Formplayer.Utils.touchformsError = function (message) {
     return Formplayer.Errors.GENERIC_ERROR + message;
 };
 
+Formplayer.Utils.reloginErrorHtml = function () {
+    var isWebApps = FormplayerFrontend.request('currentUser').environment === FormplayerFrontend.Constants.WEB_APPS_ENVIRONMENT;
+    if (isWebApps) {
+        var url = hqImport("hqwebapp/js/initial_page_data").reverse('login_new_window');
+        return _.template(gettext("Looks like you got logged out because of inactivity, but your work is safe. " +
+                                  "<a href='<%= url %>' target='_blank'>Click here to log back in.</a>"))({url: url});
+    } else {
+        // target=_blank doesn't work properly within an iframe
+        return gettext("You have been logged out because of inactivity.");
+    }
+};
+
 /**
  * Compares the equality of two answer sets.
  * @param {(string|string[])} answer1 - A string of answers or a single answer

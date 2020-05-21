@@ -5,10 +5,10 @@ from xml.etree import cElementTree as ElementTree
 
 import sentry_sdk
 from django.conf import settings
+from django.contrib import messages
 from django.http import (
     Http404,
     HttpResponse,
-    HttpResponseBadRequest,
     HttpResponseRedirect,
     JsonResponse,
 )
@@ -71,6 +71,7 @@ from corehq.apps.hqwebapp.decorators import (
     use_jquery_ui,
     use_legacy_jquery,
 )
+from corehq.apps.hqwebapp.views import redirect_to_default
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.formdetails import readable
 from corehq.apps.users.decorators import require_can_login_as
@@ -88,6 +89,12 @@ from xml2json.lib import xml2json
 @require_cloudcare_access
 def default(request, domain):
     return HttpResponseRedirect(reverse('formplayer_main', args=[domain]))
+
+
+@login_and_domain_required
+def login_new_window(request, domain):
+    messages.success(request, _("Thank you for logging in! You may close this window and return to your work."))
+    return redirect_to_default(request, domain)
 
 
 @location_safe
