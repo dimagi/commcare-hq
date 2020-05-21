@@ -59,7 +59,7 @@ class SessionDetailsView(View):
             if domain:
                 domain_obj = Domain.get_by_name(domain)
                 if domain_obj:
-                    timeout = domain_obj.secure_timeout or secure_session_timeout
+                    timeout = domain_obj.secure_timeout or timeout
         else:
             timeout = settings.INACTIVITY_TIMEOUT
 
