@@ -241,6 +241,8 @@ WebFormSession.prototype.handleFailure = function (resp, action, textStatus, fai
     var errorMessage = null;
     if (resp.status === 423) {
         errorMessage = Formplayer.Errors.LOCK_TIMEOUT_ERROR;
+    } else if (resp.status === 401) {
+        errorMessage = "This is bad and here is some html <a href=''>here is some html</a>"
     } else if (textStatus === 'timeout') {
         errorMessage = Formplayer.Errors.TIMEOUT_ERROR;
     } else if (!window.navigator.onLine) {
