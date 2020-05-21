@@ -1594,7 +1594,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
     def can_login_as(self, domain=None):
         return (
             self.has_permission(domain, 'edit_commcare_users')
-            or self.has_permission(domain, 'limited_login_as'
+            or self.has_permission(domain, 'limited_login_as')
         )
 
     def is_current_web_user(self, request):
