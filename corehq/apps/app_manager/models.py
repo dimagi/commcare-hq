@@ -4501,7 +4501,9 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
 
     def convert_to_application(self):
         self.doc_type = 'Application'
-        del self.master
+        del self.upstream_app_id
+        del self.upstream_version
+        del self.SUPPORTED_SETTINGS
         del self.linked_app_translations
         del self.linked_app_logo_refs
         del self.linked_app_attrs
