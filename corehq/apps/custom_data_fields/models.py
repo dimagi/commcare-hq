@@ -122,7 +122,8 @@ class SQLCustomDataFieldsDefinition(SyncSQLToCouchMixin, models.Model):
                 or (not include_system and is_system_key(field.slug))
             )
         order = self.get_sqlfield_order()
-        return [SQLField.objects.get(id=o) for o in order if _is_match(o)]
+        fields = [SQLField.objects.get(id=o) for o in order]
+        return [f for f in fields if _is_match(f)]
 
     # Note that this does not save
     def set_fields(self, fields):
