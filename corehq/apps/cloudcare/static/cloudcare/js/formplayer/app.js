@@ -165,7 +165,7 @@ FormplayerFrontend.on('startForm', function (data) {
     data.displayOptions = $.extend(true, {}, user.displayOptions);
     data.onerror = function (resp) {
         var message = resp.human_readable_message || resp.exception;
-        if (resp._is_html) {
+        if (resp.is_html) {
             showHTMLError(message, $("#cloudcare-notifications"));
         } else {
             showError(message, $("#cloudcare-notifications"));
