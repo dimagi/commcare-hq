@@ -1801,6 +1801,7 @@ class BiharAPIDemographics(models.Model, AggregateMixin):
     referral_reached_date = models.DateField(null=True)
     referral_reached_facility = models.SmallIntegerField(null=True)
     migrate_date = models.DateTimeField(null=True)
+    was_oos_ever = models.SmallIntegerField(null=True)
 
     class Meta(object):
         db_table = BIHAR_API_DEMOGRAPHICS_TABLE
