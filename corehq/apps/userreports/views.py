@@ -65,7 +65,7 @@ from corehq.apps.hqwebapp.decorators import (
 from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.linked_domain.models import DomainLink, ReportLinkDetail
-from corehq.apps.linked_domain.ucr import create_ucr_link
+from corehq.apps.linked_domain.ucr import create_linked_ucr
 from corehq.apps.linked_domain.util import is_linked_report
 from corehq.apps.locations.permissions import conditionally_location_safe
 from corehq.apps.reports.daterange import get_simple_dateranges
@@ -1570,7 +1570,7 @@ def copy_report(request, domain):
     report_id = request.POST.get("report_id")
     domain_link = DomainLink.objects.get(master_domain=from_domain, linked_domain=to_domain)
     try:
-        link_info = create_ucr_link(domain_link, report_id)
+        link_info = create_linked_ucr(domain_link, report_id)
         domain_link.update_last_pull(
             'report',
             request.couch_user._id,

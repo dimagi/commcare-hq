@@ -7,7 +7,7 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.domain.tests.test_utils import delete_all_domains
 from corehq.apps.linked_domain.decorators import REMOTE_REQUESTER_HEADER
 from corehq.apps.linked_domain.tests.test_linked_apps import BaseLinkedAppsTest
-from corehq.apps.linked_domain.ucr import create_ucr_link, update_linked_ucr
+from corehq.apps.linked_domain.ucr import create_linked_ucr, update_linked_ucr
 from corehq.apps.userreports.dbaccessors import delete_all_report_configs
 from corehq.apps.userreports.models import (
     DataSourceConfiguration,
@@ -45,7 +45,7 @@ class TestLinkedUCR(BaseLinkedAppsTest):
         super().tearDown()
 
     def test_link_creates_datasource_and_report(self):
-        link_info = create_ucr_link(self.domain_link, self.report.get_id)
+        link_info = create_linked_ucr(self.domain_link, self.report.get_id)
 
         new_datasource = DataSourceConfiguration.get(link_info.datasource.get_id)
         self.assertEqual(new_datasource.domain, self.domain_link.linked_domain)
@@ -55,7 +55,7 @@ class TestLinkedUCR(BaseLinkedAppsTest):
         self.assertEqual(self.report.get_id, new_report.report_meta.master_id)
 
     def test_linking_second_report_creates_single_datasource(self):
-        create_ucr_link(self.domain_link, self.report.get_id)
+        create_linked_ucr(self.domain_link, self.report.get_id)
 
         new_report = get_sample_report_config()
         new_report.title = "Another Report"
@@ -63,7 +63,7 @@ class TestLinkedUCR(BaseLinkedAppsTest):
         new_report.domain = self.domain
         new_report.save()
 
-        create_ucr_link(self.domain_link, new_report.get_id)
+        create_linked_ucr(self.domain_link, new_report.get_id)
         self.assertEqual(2, len(ReportConfiguration.by_domain(self.domain_link.linked_domain)))
         self.assertItemsEqual(
             [self.report.title, new_report.title],
@@ -71,7 +71,7 @@ class TestLinkedUCR(BaseLinkedAppsTest):
         )
 
     def test_update_ucr(self):
-        linked_report_info = create_ucr_link(self.domain_link, self.report.get_id)
+        linked_report_info = create_linked_ucr(self.domain_link, self.report.get_id)
         self.report.title = "New title"
         self.report.save()
 
@@ -97,7 +97,7 @@ class TestLinkedUCR(BaseLinkedAppsTest):
 
         fake_ucr_getter.return_value = json.loads(resp.content)
 
-        linked_report_info = create_ucr_link(self.domain_link, self.report.get_id)
+        linked_report_info = create_linked_ucr(self.domain_link, self.report.get_id)
         self.assertEqual(1, len(ReportConfiguration.by_domain(self.domain_link.linked_domain)))
 
         self.report.title = "Another new title"
