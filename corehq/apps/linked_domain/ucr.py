@@ -68,7 +68,7 @@ def _get_or_create_report_link(domain_link, report, datasource):
     return new_report
 
 
-def update_ucr_link(domain_link, report_id):
+def update_linked_ucr(domain_link, report_id):
     linked_report = ReportConfiguration.get(report_id)
 
     if domain_link.is_remote:

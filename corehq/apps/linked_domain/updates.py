@@ -36,7 +36,7 @@ from corehq.apps.linked_domain.remote_accessors import \
     get_toggles_previews as remote_toggles_previews
 from corehq.apps.linked_domain.remote_accessors import \
     get_user_roles as remote_get_user_roles
-from corehq.apps.linked_domain.ucr import update_ucr_link
+from corehq.apps.linked_domain.ucr import update_linked_ucr
 from corehq.apps.locations.views import LocationFieldsView
 from corehq.apps.products.views import ProductFieldsView
 from corehq.apps.userreports.util import (
@@ -60,7 +60,7 @@ def update_model_type(domain_link, model_type, model_detail=None):
         MODEL_PRODUCT_DATA: partial(update_custom_data_models, limit_types=[ProductFieldsView.field_type]),
         MODEL_USER_DATA: partial(update_custom_data_models, limit_types=[UserFieldsView.field_type]),
         MODEL_CASE_SEARCH: update_case_search_config,
-        MODEL_REPORT: update_ucr_link,
+        MODEL_REPORT: update_linked_ucr,
     }.get(model_type)
 
     kwargs = model_detail or {}
