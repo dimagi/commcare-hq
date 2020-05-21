@@ -15,6 +15,10 @@ describe('WebForm', function () {
             tq.addTask('two', taskTwo, [5,6,7]);
         });
 
+        before(function () {
+            hqImport("hqwebapp/js/initial_page_data").register("report_formplayer_error");
+        });
+
         it('Executes tasks in order', function () {
             tq.execute();
             assert.isTrue(taskOne.calledOnce);
