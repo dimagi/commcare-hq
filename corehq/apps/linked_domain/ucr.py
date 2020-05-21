@@ -70,9 +70,16 @@ def _get_or_create_report_link(domain_link, report, datasource):
 
 def update_ucr_link(domain_link, report_id):
     linked_report = ReportConfiguration.get(report_id)
-    master_report = ReportConfiguration.get(linked_report.report_meta.master_id)
 
-    master_datasource_json = master_report.config.to_json()
+    if domain_link.is_remote:
+        remote_configs = remote_get_ucr_config(domain_link, report_id)
+        master_report = remote_configs["report"]
+        master_datasource = remote_configs["datasource"]
+    else:
+        master_report = ReportConfiguration.get(linked_report.report_meta.master_id)
+        master_datasource = master_report.config
+
+    master_datasource_json = master_datasource.to_json()
     linked_datasource_json = linked_report.config.to_json()
 
     master_datasource_json["domain"] = domain_link.linked_domain
