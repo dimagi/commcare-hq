@@ -198,7 +198,7 @@ def setup_tables_and_fixtures(domain_name):
                 ]
                 postgres_copy.copy_from(f, table, engine, format='csv', null='', columns=columns)
 
-    _distribute_tables_for_citus(engine)
+    #_distribute_tables_for_citus(engine)
     partition_child_health()
 
 
