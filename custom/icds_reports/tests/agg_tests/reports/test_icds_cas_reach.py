@@ -97,7 +97,7 @@ class TestICDSCASReach(TestCase):
                     'aggregation_level': 1
                 },
                 show_test=False,
-                icds_feature_flag=True,
+                show_prerelease_features=True,
             ),
             {
                 "records": [
@@ -179,6 +179,7 @@ class TestICDSCASReach(TestCase):
                     'aggregation_level': 1
                 },
                 show_test=False,
+                show_prerelease_features=True,
             ),
             {
                 "records": [

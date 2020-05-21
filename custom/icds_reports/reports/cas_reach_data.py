@@ -10,7 +10,7 @@ from custom.icds_reports.models.views import SystemUsageReportView
 from custom.icds_reports.utils import get_value, percent_increase, apply_exclude, get_color_with_green_positive
 
 
-def get_cas_reach_data(domain, now_date, config, show_test=False, icds_feature_flag=False):
+def get_cas_reach_data(domain, now_date, config, show_test=False, show_prerelease_features=False):
     now_date = datetime(*now_date)
 
     def get_data_for_awc_monthly(month, filters):
@@ -162,7 +162,7 @@ def get_cas_reach_data(domain, now_date, config, show_test=False, icds_feature_f
         ]
     ]
 
-    display_lss_launched = current_month > datetime(2020, 1, 1) and icds_feature_flag
+    display_lss_launched = current_month > datetime(2020, 1, 1) and show_prerelease_features
 
     if display_lss_launched:
         ls_launched_data = get_data_for_ls_launched(current_month, config)

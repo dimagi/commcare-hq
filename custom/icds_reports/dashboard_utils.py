@@ -46,7 +46,7 @@ def get_dashboard_template_context(domain, couch_user):
     if couch_user.is_web_user():
         context['is_web_user'] = True
 
-    beta = context['have_access_to_features']
+    beta = icds_pre_release_features(couch_user)
 
     context['nav_metadata'] = _get_nav_metadatada()
     context['sdd_metadata'] = _get_sdd_metadata()

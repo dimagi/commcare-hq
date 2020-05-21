@@ -13,6 +13,19 @@ from custom.icds_reports.models.views import SystemUsageReportView
 from custom.icds_reports.utils import apply_exclude, indian_formatted_number, get_child_locations
 
 
+def get_prop(level):
+    if level == 1:
+        return 'states'
+    elif level == 2:
+        return 'districts'
+    elif level == 3:
+        return 'blocks'
+    elif level == 4:
+        return 'sectors'
+    else:
+        return 'awcs'
+
+
 @icds_quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
 def get_ls_launched_data_map(domain, config, loc_level, show_test=False):
     level = config['aggregation_level']
@@ -85,16 +98,7 @@ def get_ls_launched_data_map(domain, config, loc_level, show_test=False):
         )
         data_for_location.update({'fillKey': 'Launched' if data_for_location['ls_launched'] > 0 else 'Not launched'})
 
-    if level == 1:
-        prop = 'states'
-    elif level == 2:
-        prop = 'districts'
-    elif level == 3:
-        prop = 'blocks'
-    elif level == 4:
-        prop = 'sectors'
-    else:
-        prop = 'awcs'
+    prop = get_prop(level)
 
     total_lss = sum([(x['ls_launched'] or 0) for x in data_for_map.values()])
     total = sum([(x[prop] or 0) for x in data_for_map.values()])
@@ -194,16 +198,7 @@ def get_ls_launched_sector_data(domain, config, loc_level, location_id, show_tes
 
     chart_data['blue'] = sorted(chart_data['blue'])
 
-    if level == 1:
-        prop = 'states'
-    elif level == 2:
-        prop = 'districts'
-    elif level == 3:
-        prop = 'blocks'
-    elif level == 4:
-        prop = 'sectors'
-    else:
-        prop = 'awcs'
+    prop = get_prop(level)
 
     total_lss = sum([(x['ls_launched'] or 0) for x in tooltips_data.values()])
     total = sum([(x[prop] or 0) for x in tooltips_data.values()])
