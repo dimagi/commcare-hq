@@ -71,7 +71,7 @@ from corehq.apps.hqwebapp.decorators import (
     use_jquery_ui,
     use_legacy_jquery,
 )
-from corehq.apps.hqwebapp.views import redirect_to_default
+from corehq.apps.hqwebapp.views import render_static
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.formdetails import readable
 from corehq.apps.users.decorators import require_can_login_as
@@ -93,8 +93,7 @@ def default(request, domain):
 
 @login_and_domain_required
 def login_new_window(request, domain):
-    messages.success(request, _("Thank you for logging in! You may close this window and return to your work."))
-    return redirect_to_default(request, domain)
+    return render_static(request, "close_window.html", _("Thank you for logging in!"))
 
 
 @location_safe
