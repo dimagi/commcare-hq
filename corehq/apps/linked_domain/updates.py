@@ -43,10 +43,6 @@ from corehq.apps.userreports.util import (
     get_static_report_mapping,
     get_ucr_class_name,
 )
-from corehq.apps.userreports.models import (
-    DataSourceConfiguration,
-    ReportConfiguration,
-)
 from corehq.apps.users.models import UserRole
 from corehq.apps.users.views.mobile import UserFieldsView
 from corehq.toggles import NAMESPACE_DOMAIN
