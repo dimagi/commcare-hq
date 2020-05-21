@@ -70,6 +70,7 @@ def _get_or_create_report_link(domain_link, report, datasource):
 
 def update_linked_ucr(domain_link, report_id):
     linked_report = ReportConfiguration.get(report_id)
+    linked_datasource = linked_report.config
 
     if domain_link.is_remote:
         remote_configs = remote_get_ucr_config(domain_link, report_id)
@@ -79,27 +80,34 @@ def update_linked_ucr(domain_link, report_id):
         master_report = ReportConfiguration.get(linked_report.report_meta.master_id)
         master_datasource = master_report.config
 
-    master_datasource_json = master_datasource.to_json()
-    linked_datasource_json = linked_report.config.to_json()
+    _update_linked_datasource(master_datasource, linked_datasource)
+    _update_linked_report(master_report, linked_report)
 
-    master_datasource_json["domain"] = domain_link.linked_domain
-    master_datasource_json["_id"] = linked_report.config_id
+
+def _update_linked_datasource(master_datasource, linked_datasource):
+    master_datasource_json = master_datasource.to_json()
+    linked_datasource_json = linked_datasource.to_json()
+
+    master_datasource_json["domain"] = linked_datasource_json["domain"]
+    master_datasource_json["_id"] = linked_datasource_json["_id"]
     master_datasource_json["_rev"] = linked_datasource_json["_rev"]
     master_datasource_json["meta"]["master_id"] = linked_datasource_json["meta"]["master_id"]
 
     linked_datasource_json.update(master_datasource_json)
     DataSourceConfiguration.wrap(linked_datasource_json).save()
 
+    rebuild_indicators.delay(linked_datasource.get_id, f"Datasource link: {linked_datasource.get_id}")
+
+
+def _update_linked_report(master_report, linked_report):
     master_report_json = master_report.to_json()
     linked_report_json = linked_report.to_json()
 
-    master_report_json["_id"] = linked_report.get_id
-    master_report_json["domain"] = linked_report.domain
-    master_report_json["config_id"] = linked_report.config_id
+    master_report_json["_id"] = linked_report_json["_id"]
     master_report_json["_rev"] = linked_report_json["_rev"]
+    master_report_json["domain"] = linked_report_json["domain"]
+    master_report_json["config_id"] = linked_report_json["config_id"]
     master_report_json["report_meta"]["master_id"] = linked_report_json["report_meta"]["master_id"]
 
     linked_report_json.update(master_report_json)
     ReportConfiguration.wrap(linked_report_json).save()
-
-    rebuild_indicators.delay(linked_report.config_id, f"Datasource link: {linked_report.config.get_id}")
