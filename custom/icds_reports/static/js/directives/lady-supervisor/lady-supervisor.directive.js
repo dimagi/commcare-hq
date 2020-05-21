@@ -73,7 +73,8 @@ function LadySupervisorController($scope, $http, $log, $routeParams, $location, 
     vm.selectedDate = dateHelperService.getSelectedDate();
 
     vm.showReassignmentMessage = function () {
-        return vm.selectedLocation() && (Date.parse(vm.selectedLocation().deprecated_at) < vm.selectedDate || Date.parse(vm.selectedLocation().deprecates_at) > vm.selectedDate);
+        var utcSelectedDate = Date.UTC(vm.selectedDate.getFullYear(), vm.selectedDate.getMonth());
+        return vm.selectedLocation() && (Date.parse(vm.selectedLocation().archived_on) <= utcSelectedDate || Date.parse(vm.selectedLocation().deprecates_at) > utcSelectedDate);
     };
 }
 

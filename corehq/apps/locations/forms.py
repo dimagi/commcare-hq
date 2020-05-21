@@ -21,15 +21,11 @@ from corehq.apps.custom_data_fields.edit_entity import (
     CustomDataEditor,
     get_prefixed,
 )
-from corehq.apps.domain.models import Domain
 from corehq.apps.es import UserES
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.widgets import Select2Ajax
 from corehq.apps.locations.permissions import LOCATION_ACCESS_DENIED
-from corehq.apps.users.forms import (
-    NewMobileWorkerForm,
-    generate_strong_password,
-)
+from corehq.apps.locations.util import valid_location_site_code
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import user_display_string
 from corehq.util.quickcache import quickcache
@@ -246,8 +242,7 @@ class LocationForm(forms.Form):
 
         if site_code:
             site_code = site_code.lower()
-            slug_regex = re.compile(r'^[-_\w\d]+$')
-            if not slug_regex.match(site_code):
+            if not valid_location_site_code(site_code):
                 raise forms.ValidationError(_(
                     'The site code cannot contain spaces or special characters.'
                 ))

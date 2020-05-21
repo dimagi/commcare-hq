@@ -105,7 +105,11 @@ class ProjectReportsTab(UITab):
     title = ugettext_noop("Reports")
     view = "reports_home"
 
-    url_prefix_formats = ('/a/{domain}/reports/', '/a/{domain}/configurable_reports/')
+    url_prefix_formats = (
+        '/a/{domain}/reports/',
+        '/a/{domain}/configurable_reports/',
+        '/a/{domain}/location_reassignment_download/',
+    )
 
     @property
     def _is_viewable(self):
@@ -154,6 +158,14 @@ class ProjectReportsTab(UITab):
                 'title': _(UserConfigReportsHomeView.section_name),
                 'url': reverse(UserConfigReportsHomeView.urlname, args=[self.domain]),
                 'icon': 'icon-tasks fa fa-wrench',
+            })
+        if (toggles.DOWNLOAD_LOCATION_REASSIGNMENT_REQUEST_TEMPLATE.enabled(self.domain)
+                and not toggles.PERFORM_LOCATION_REASSIGNMENT.enabled(self.couch_user.username)):
+            from custom.icds.location_reassignment.views import LocationReassignmentDownloadOnlyView
+            tools.append({
+                'title': _(LocationReassignmentDownloadOnlyView.section_name),
+                'url': reverse(LocationReassignmentDownloadOnlyView.urlname, args=[self.domain]),
+                'icon': 'icon-tasks fa fa-download',
             })
         return [(_("Tools"), tools)]
 
@@ -526,6 +538,7 @@ class ProjectDataTab(UITab):
                 DeIdFormExportListView,
                 DeIdDailySavedExportListView,
                 DeIdDashboardFeedListView,
+                ODataFeedListView,
             )
             export_data_views.append({
                 'title': _(DeIdFormExportListView.page_title),
@@ -541,6 +554,12 @@ class ProjectDataTab(UITab):
                     'url': reverse(DeIdDashboardFeedListView.urlname, args=(self.domain,)),
                 },
             ])
+
+            if self.can_view_odata_feed:
+                export_data_views.append({
+                    'title': _(ODataFeedListView.page_title),
+                    'url': reverse(ODataFeedListView.urlname, args=(self.domain,)),
+                })
 
         elif self.can_export_data:
             from corehq.apps.export.views.download import (
@@ -933,7 +952,7 @@ class ApplicationsTab(UITab):
         couch_user = self.couch_user
         return (self.domain and couch_user
                 and (couch_user.is_web_user() or couch_user.can_edit_apps())
-                and (couch_user.is_member_of(self.domain) or couch_user.is_superuser)
+                and (couch_user.is_member_of(self.domain, allow_mirroring=True) or couch_user.is_superuser)
                 and has_privilege(self._request, privileges.PROJECT_ACCESS))
 
 
@@ -1410,6 +1429,18 @@ class ProjectUsersTab(UITab):
                 'show_in_dropdown': True,
             })
 
+        if self.couch_user.is_superuser:
+            from corehq.apps.users.models import DomainPermissionsMirror
+            if DomainPermissionsMirror.mirror_domains(self.domain):
+                from corehq.apps.users.views import DomainPermissionsMirrorView
+                menu.append({
+                    'title': _(DomainPermissionsMirrorView.page_title),
+                    'url': reverse(DomainPermissionsMirrorView.urlname, args=[self.domain]),
+                    'description': _("View project spaces where users receive automatic access"),
+                    'subpages': [],
+                    'show_in_dropdown': False,
+                })
+
         return menu
 
     def _get_locations_menu(self):
@@ -1484,7 +1515,8 @@ class ProjectUsersTab(UITab):
                 'show_in_dropdown': True,
             })
 
-        if toggles.LOCATION_REASSIGNMENT.enabled(self.couch_user.username):
+        if (toggles.DOWNLOAD_LOCATION_REASSIGNMENT_REQUEST_TEMPLATE.enabled(self.domain)
+                and toggles.PERFORM_LOCATION_REASSIGNMENT.enabled(self.couch_user.username)):
             from custom.icds.location_reassignment.views import LocationReassignmentView
             menu.append({
                 'title': _("Location Reassignment"),
@@ -1832,6 +1864,10 @@ def _get_integration_section(domain):
             {
                 'title': _('Data Forwarding Records'),
                 'url': reverse('domain_report_dispatcher', args=[domain, 'repeat_record_report'])
+            },
+            {
+                'title': _(MotechLogListView.page_title),
+                'url': reverse(MotechLogListView.urlname, args=[domain])
             }
         ])
 
@@ -1865,16 +1901,6 @@ def _get_integration_section(domain):
         integration.append({
             'title': _(OpenmrsImporterView.page_title),
             'url': reverse(OpenmrsImporterView.urlname, args=[domain])
-        })
-
-    if (
-            toggles.DHIS2_INTEGRATION.enabled(domain)
-            or toggles.OPENMRS_INTEGRATION.enabled(domain)
-            or toggles.INCREMENTAL_EXPORTS.enabled(domain)
-    ):
-        integration.append({
-            'title': _(MotechLogListView.page_title),
-            'url': reverse(MotechLogListView.urlname, args=[domain])
         })
 
     return integration

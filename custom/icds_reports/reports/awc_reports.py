@@ -1304,10 +1304,10 @@ def get_awc_report_lactating(start, length, order, reversed_order, awc_id):
             age=row_data['age_in_months'] // 12 if row_data['age_in_months'] else row_data['age_in_months'],
             add=row_data['add'],
             delivery_nature=get_delivery_nature(row_data),
-            institutional_delivery='Y' if row_data['institutional_delivery'] else 'N',
+            institutional_delivery='Yes' if row_data['institutional_delivery'] else 'No',
             num_pnc_visits=row_data['num_pnc_visits'],
-            breastfed_at_birth='Y' if row_data['breastfed_at_birth'] else 'N',
-            is_ebf='Y' if row_data['is_ebf'] else 'N',
+            breastfed_at_birth='Yes' if row_data['breastfed_at_birth'] else 'No',
+            is_ebf='Yes' if row_data['is_ebf'] else 'No',
             num_rations_distributed=row_data['num_rations_distributed'],
         )
 

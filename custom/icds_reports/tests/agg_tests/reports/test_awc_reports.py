@@ -2299,15 +2299,15 @@ class TestAWCReport(TestCase):
                 data['data'][0],
                 {
                     'num_rations_distributed': 0,
-                    'institutional_delivery': 'N',
+                    'institutional_delivery': 'No',
                     'person_name': None,
                     'delivery_nature': 'Data Not Entered',
                     'age': 20,
                     'num_pnc_visits': None,
                     'add': datetime.date(2017, 3, 1),
                     'case_id': '36d5e223-a631-4030-910c-262a1d066fb3',
-                    'breastfed_at_birth': 'N',
-                    'is_ebf': 'N'}
+                    'breastfed_at_birth': 'No',
+                    'is_ebf': 'No'}
             )
 
     def test_awc_report_lactating_second_record(self):
@@ -2323,15 +2323,15 @@ class TestAWCReport(TestCase):
                 data['data'][1],
                 {
                     'num_rations_distributed': 6,
-                    'institutional_delivery': 'N',
+                    'institutional_delivery': 'No',
                     'person_name': None,
                     'delivery_nature': 'Data Not Entered',
                     'age': 23,
                     'num_pnc_visits': None,
                     'add': datetime.date(2017, 4, 20),
                     'case_id': 'aefb8fe5-1cd1-4235-9baf-963b1a0b498e',
-                    'breastfed_at_birth': 'N',
-                    'is_ebf': 'N'}
+                    'breastfed_at_birth': 'No',
+                    'is_ebf': 'No'}
             )
 
     def test_awc_report_lactating_third_record(self):
@@ -2347,15 +2347,15 @@ class TestAWCReport(TestCase):
                 data['data'][2],
                 {
                     'num_rations_distributed': 6,
-                    'institutional_delivery': 'N',
+                    'institutional_delivery': 'No',
                     'person_name': None,
                     'delivery_nature': 'Data Not Entered',
                     'age': 24,
                     'num_pnc_visits': None,
                     'add': datetime.date(2017, 3, 1),
                     'case_id': '4f0aac21-5b5d-43a6-a1f6-9744d0e66cf2',
-                    'breastfed_at_birth': 'N',
-                    'is_ebf': 'N'}
+                    'breastfed_at_birth': 'No',
+                    'is_ebf': 'No'}
             )
 
     def test_awc_report_lactating_forth_record(self):
@@ -2371,15 +2371,15 @@ class TestAWCReport(TestCase):
                 data['data'][3],
                 {
                     'num_rations_distributed': 12,
-                    'institutional_delivery': 'N',
+                    'institutional_delivery': 'No',
                     'person_name': None,
                     'delivery_nature': 'Data Not Entered',
                     'age': 26,
                     'num_pnc_visits': None,
                     'add': datetime.date(2017, 3, 20),
                     'case_id': '10a53900-f65e-46b7-ae0c-f32a208c0677',
-                    'breastfed_at_birth': 'N',
-                    'is_ebf': 'N'}
+                    'breastfed_at_birth': 'No',
+                    'is_ebf': 'No'}
             )
 
     def test_awc_report_lactating_fifth_record(self):
@@ -2395,15 +2395,15 @@ class TestAWCReport(TestCase):
                 data['data'][4],
                 {
                     'num_rations_distributed': 12,
-                    'institutional_delivery': 'N',
+                    'institutional_delivery': 'No',
                     'person_name': None,
                     'delivery_nature': 'Data Not Entered',
                     'age': 26,
                     'num_pnc_visits': None,
                     'add': datetime.date(2017, 3, 1),
                     'case_id': '1a6851bc-8172-48fc-80d1-b198f23033ab',
-                    'breastfed_at_birth': 'N',
-                    'is_ebf': 'N'}
+                    'breastfed_at_birth': 'No',
+                    'is_ebf': 'No'}
             )
 
     def test_awc_report_lactating_sixth_record(self):
@@ -2419,15 +2419,15 @@ class TestAWCReport(TestCase):
                 data['data'][5],
                 {
                     'num_rations_distributed': 6,
-                    'institutional_delivery': 'N',
+                    'institutional_delivery': 'No',
                     'person_name': None,
                     'delivery_nature': 'Data Not Entered',
                     'age': 26,
                     'num_pnc_visits': None,
                     'add': datetime.date(2017, 3, 1),
                     'case_id': '37c4d26f-eda0-4d9a-bae9-11a17a3ccfaa',
-                    'breastfed_at_birth': 'N',
-                    'is_ebf': 'N'}
+                    'breastfed_at_birth': 'No',
+                    'is_ebf': 'No'}
             )
 
     def test_awc_report_lactating_seventh_record(self):
@@ -2444,15 +2444,15 @@ class TestAWCReport(TestCase):
                 data['data'][6],
                 {
                     'num_rations_distributed': 6,
-                    'institutional_delivery': 'N',
+                    'institutional_delivery': 'No',
                     'person_name': None,
                     'delivery_nature': 'Data Not Entered',
                     'age': 29,
                     'num_pnc_visits': None,
                     'add': datetime.date(2017, 3, 1),
                     'case_id': '1744a035-56f1-4059-86f5-93fcea3c6076',
-                    'breastfed_at_birth': 'N',
-                    'is_ebf': 'N'}
+                    'breastfed_at_birth': 'No',
+                    'is_ebf': 'No'}
             )
 
     def test_awc_report_lactating_on_first_of_month(self):
@@ -2469,31 +2469,31 @@ class TestAWCReport(TestCase):
                 [
                     {'num_rations_distributed': 0, 'person_name': None, 'num_pnc_visits': None,
                      'age': 20, 'delivery_nature': u'Data Not Entered', 'add': datetime.date(2017, 3, 1),
-                     'case_id': u'36d5e223-a631-4030-910c-262a1d066fb3', 'breastfed_at_birth': u'N',
-                     'is_ebf': u'N', 'institutional_delivery': u'N'},
+                     'case_id': u'36d5e223-a631-4030-910c-262a1d066fb3', 'breastfed_at_birth': u'No',
+                     'is_ebf': u'No', 'institutional_delivery': u'No'},
                     {'num_rations_distributed': 0, 'person_name': None, 'num_pnc_visits': None,
                      'age': 23, 'delivery_nature': u'Data Not Entered', 'add': datetime.date(2017, 4, 20),
-                     'case_id': u'aefb8fe5-1cd1-4235-9baf-963b1a0b498e', 'breastfed_at_birth': u'N',
-                     'is_ebf': u'N', 'institutional_delivery': u'N'},
+                     'case_id': u'aefb8fe5-1cd1-4235-9baf-963b1a0b498e', 'breastfed_at_birth': u'No',
+                     'is_ebf': u'No', 'institutional_delivery': u'No'},
                     {'num_rations_distributed': 0, 'person_name': None, 'num_pnc_visits': None, 'age': 24,
                      'delivery_nature': u'Data Not Entered', 'add': datetime.date(2017, 3, 1),
-                     'case_id': u'4f0aac21-5b5d-43a6-a1f6-9744d0e66cf2', 'breastfed_at_birth': u'N',
-                     'is_ebf': u'N', 'institutional_delivery': u'N'},
+                     'case_id': u'4f0aac21-5b5d-43a6-a1f6-9744d0e66cf2', 'breastfed_at_birth': u'No',
+                     'is_ebf': u'No', 'institutional_delivery': u'No'},
                     {'num_rations_distributed': 0, 'person_name': None, 'num_pnc_visits': None, 'age': 26,
                      'delivery_nature': u'Data Not Entered', 'add': datetime.date(2017, 3, 20),
-                     'case_id': u'10a53900-f65e-46b7-ae0c-f32a208c0677', 'breastfed_at_birth': u'N',
-                     'is_ebf': u'N', 'institutional_delivery': u'N'},
+                     'case_id': u'10a53900-f65e-46b7-ae0c-f32a208c0677', 'breastfed_at_birth': u'No',
+                     'is_ebf': u'No', 'institutional_delivery': u'No'},
                     {'num_rations_distributed': 0, 'person_name': None, 'num_pnc_visits': None, 'age': 26,
                      'delivery_nature': u'Data Not Entered', 'add': datetime.date(2017, 3, 1),
-                     'case_id': u'1a6851bc-8172-48fc-80d1-b198f23033ab', 'breastfed_at_birth': u'N',
-                     'is_ebf': u'N', 'institutional_delivery': u'N'},
+                     'case_id': u'1a6851bc-8172-48fc-80d1-b198f23033ab', 'breastfed_at_birth': u'No',
+                     'is_ebf': u'No', 'institutional_delivery': u'No'},
                     {'num_rations_distributed': 0, 'person_name': None, 'num_pnc_visits': None, 'age': 26,
                      'delivery_nature': u'Data Not Entered', 'add': datetime.date(2017, 3, 1),
-                     'case_id': u'37c4d26f-eda0-4d9a-bae9-11a17a3ccfaa', 'breastfed_at_birth': u'N',
-                     'is_ebf': u'N', 'institutional_delivery': u'N'},
+                     'case_id': u'37c4d26f-eda0-4d9a-bae9-11a17a3ccfaa', 'breastfed_at_birth': u'No',
+                     'is_ebf': u'No', 'institutional_delivery': u'No'},
                     {'num_rations_distributed': 0, 'person_name': None, 'num_pnc_visits': None, 'age': 29,
                      'delivery_nature': u'Data Not Entered', 'add': datetime.date(2017, 3, 1),
-                     'case_id': u'1744a035-56f1-4059-86f5-93fcea3c6076', 'breastfed_at_birth': u'N',
-                     'is_ebf': u'N', 'institutional_delivery': u'N'}
+                     'case_id': u'1744a035-56f1-4059-86f5-93fcea3c6076', 'breastfed_at_birth': u'No',
+                     'is_ebf': u'No', 'institutional_delivery': u'No'}
                 ]
             )

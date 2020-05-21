@@ -1,6 +1,7 @@
+import textwrap
 from collections import defaultdict
 from math import ceil
-from statistics import mean, median, stdev
+from statistics import mean, stdev
 
 from custom.inddex import filters
 from custom.inddex.food import FoodData
@@ -10,7 +11,11 @@ from .utils import MultiTabularReport, format_row
 
 class NutrientStatsReport(MultiTabularReport):
     name = 'Output 4 - Nutrient Intake Summary Statistics'
-    slug = 'nutrient_stats'
+    slug = 'report_4_nutrient_intake_summary_statistics'
+    description = textwrap.dedent("""
+        This output includes summary statistics for nutrient intakes reported
+        during the recall (mean, median, standard deviation, and percentiles).
+    """)
 
     @property
     def fields(self):
@@ -43,8 +48,8 @@ class NutrientStatsData:
     @property
     def headers(self):
         return [
-            'nutrient', 'mean', 'median', 'std_dev', 'percentile_05',
-            'percentile_25', 'percentile_50', 'percentile_75', 'percentile_95'
+            'nutrient', 'mean', 'std_dev', 'percentile_05',
+            'percentile_25', 'percentile_50_median', 'percentile_75', 'percentile_95'
         ]
 
     @property
@@ -53,7 +58,6 @@ class NutrientStatsData:
             yield format_row([
                 nutrient,
                 mean(amts) if len(amts) >= 1 else None,
-                median(amts) if len(amts) >= 1 else None,
                 stdev(amts) if len(amts) >= 2 else None,
                 percentile(amts, .05),
                 percentile(amts, .25),

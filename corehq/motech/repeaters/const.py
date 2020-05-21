@@ -5,8 +5,6 @@ MIN_RETRY_WAIT = timedelta(minutes=60)
 CHECK_REPEATERS_INTERVAL = timedelta(minutes=5)
 CHECK_REPEATERS_KEY = 'check-repeaters-key'
 
-POST_TIMEOUT = 75  # seconds
-
 RECORD_PENDING_STATE = 'PENDING'
 RECORD_SUCCESS_STATE = 'SUCCESS'
 RECORD_FAILURE_STATE = 'FAIL'
@@ -18,6 +16,7 @@ REPEATER_CLASSES = (
     'corehq.motech.repeaters.models.CaseRepeater',
     'corehq.motech.repeaters.models.CreateCaseRepeater',
     'corehq.motech.repeaters.models.UpdateCaseRepeater',
+    'corehq.motech.repeaters.models.ReferCaseRepeater',
     'corehq.motech.repeaters.models.ShortFormRepeater',
     'corehq.motech.repeaters.models.AppStructureRepeater',
     'corehq.motech.repeaters.models.UserRepeater',

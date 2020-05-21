@@ -30,7 +30,8 @@ function LocationModalController($uibModalInstance, $location, locationsService,
     vm.selectedDate = dateHelperService.getSelectedDate();
 
     vm.showReassignmentMessage = function () {
-        return vm.selectedLocation() && (Date.parse(vm.selectedLocation().deprecated_at) < vm.selectedDate || Date.parse(vm.selectedLocation().deprecates_at) > vm.selectedDate);
+        var utcSelectedDate = Date.UTC(vm.selectedDate.getFullYear(), vm.selectedDate.getMonth());
+        return vm.selectedLocation() && (Date.parse(vm.selectedLocation().archived_on) <= utcSelectedDate || Date.parse(vm.selectedLocation().deprecates_at) > utcSelectedDate);
     };
 
     vm.errors = function () {
@@ -140,8 +141,9 @@ function LocationModalController($uibModalInstance, $location, locationsService,
 
 function LocationFilterController($rootScope, $scope, $location, $uibModal, locationHierarchy, locationsService,
     storageService, navigationService, userLocationId, haveAccessToAllLocations,
-    allUserLocationId) {
+    allUserLocationId, haveAccessToFeatures) {
     var vm = this;
+    vm.haveAccessToFeatures = haveAccessToFeatures;
     if (Object.keys($location.search()).length === 0) {
         $location.search(storageService.getKey('search'));
     } else {
@@ -519,7 +521,7 @@ function LocationFilterController($rootScope, $scope, $location, $uibModal, loca
 
 LocationFilterController.$inject = [
     '$rootScope', '$scope', '$location', '$uibModal', 'locationHierarchy', 'locationsService', 'storageService',
-    'navigationService', 'userLocationId', 'haveAccessToAllLocations', 'allUserLocationId',
+    'navigationService', 'userLocationId', 'haveAccessToAllLocations', 'allUserLocationId', 'haveAccessToFeatures',
 ];
 LocationModalController.$inject = ['$uibModalInstance', '$location', 'locationsService', 'selectedLocationId', 'hierarchy', 'selectedLocations', 'locationsCache', 'maxLevel', 'userLocationId', 'showMessage', 'showSectorMessage', 'dateHelperService'];
 

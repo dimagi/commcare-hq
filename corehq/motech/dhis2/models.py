@@ -5,7 +5,6 @@ from itertools import chain
 from django.core.exceptions import ValidationError
 from django.db import models
 
-from corehq.motech.models import ConnectionSettings
 from dimagi.ext.couchdbkit import (
     Document,
     DocumentSchema,
@@ -18,6 +17,7 @@ from corehq.motech.dhis2.const import (
     SEND_FREQUENCIES,
     SEND_FREQUENCY_MONTHLY,
     SEND_FREQUENCY_QUARTERLY,
+    SEND_FREQUENCY_WEEKLY,
 )
 from corehq.motech.dhis2.utils import (
     get_date_filter,
@@ -26,6 +26,7 @@ from corehq.motech.dhis2.utils import (
     get_report_config,
     get_ucr_data,
 )
+from corehq.motech.models import ConnectionSettings
 from corehq.util.quickcache import quickcache
 
 
@@ -72,6 +73,8 @@ class DataSetMap(Document):
 
     description = StringProperty()
     frequency = StringProperty(choices=SEND_FREQUENCIES, default=SEND_FREQUENCY_MONTHLY)
+    # Day of the month for monthly/quarterly frequency. Day of the week
+    # for weekly frequency. Uses ISO-8601, where Monday = 1, Sunday = 7.
     day_to_send = IntegerProperty()
     data_set_id = StringProperty()  # If UCR adds values to an existing DataSet
     org_unit_id = StringProperty()  # If all values are for the same OrganisationUnit.
@@ -171,6 +174,12 @@ class DataSetMap(Document):
         return dataset
 
     def should_send_on_date(self, send_date):
-        return self.day_to_send == send_date.day and (
-            self.frequency == SEND_FREQUENCY_MONTHLY or
-            self.frequency == SEND_FREQUENCY_QUARTERLY and send_date.month in [1, 4, 7, 10])
+        if self.frequency == SEND_FREQUENCY_WEEKLY:
+            return self.day_to_send == send_date.isoweekday()
+        if self.frequency == SEND_FREQUENCY_MONTHLY:
+            return self.day_to_send == send_date.day
+        if self.frequency == SEND_FREQUENCY_QUARTERLY:
+            return (
+                self.day_to_send == send_date.day
+                and send_date.month in [1, 4, 7, 10]
+            )

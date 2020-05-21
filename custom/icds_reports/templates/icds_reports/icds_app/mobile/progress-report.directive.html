@@ -15,14 +15,17 @@
               <p class="mb-0 font-montserrat font-weight-600 font-16" ng-bind="section.name"></p>
           </div>
       </div>
-      <div ng-if="$ctrl.report" class="d-flex align-items-flex-end pt-3 overflow-auto shadow">
+      <reassignment-message ng-show="$ctrl.showReassignmentMessage() && $ctrl.haveAccessToFeatures" selected-location="$ctrl.selectedLocation()"
+                            selected-date="$ctrl.selectedDate"></reassignment-message>
+      <div ng-if="!$ctrl.showReassignmentMessage()">
+        <div ng-if="$ctrl.report" class="d-flex align-items-flex-end pt-3 overflow-auto shadow">
           <div ng-repeat="section in $ctrl.data" class="flex-shrink-0 pb-3" ng-init="numberOfSections = $ctrl.data.length"
                ng-class="[{'col-xs-12' : (numberOfSections === 1)},{'col-xs-6' : (numberOfSections === 2)},
                {'col-xs-5' : (numberOfSections > 2)}, {'activeSection' : $ctrl.activeSection==$index}]" ng-click="$ctrl.setActiveSection($index)">
               <div class="section-title" ng-bind-html="section.section_title"></div>
           </div>
       </div>
-      <div  ng-if="$ctrl.report" class="p-3 fact-sheet-rows">
+        <div  ng-if="$ctrl.report" class="p-3 fact-sheet-rows">
           <div class="shadow rounded-border p-3 bg-white mb-3" ng-repeat="row in $ctrl.sectionData.rows_config">
               <div ng-if="!row.data || !row.data.length" class="d-flex justify-content-center">No data available</div>
               <div ng-if="row.data">
@@ -48,6 +51,7 @@
                   </div>
               </div>
           </div>
+      </div>
       </div>
   </div>
   <mobile-filters selected-locations="$ctrl.selectedLocations" ng-show="$ctrl.filtersOpen"></mobile-filters>

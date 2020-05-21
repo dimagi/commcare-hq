@@ -18,7 +18,6 @@ from corehq.apps.dump_reload.sql.serialization import JsonLinesSerializer
 from corehq.apps.dump_reload.util import get_model_label, get_model_class
 from corehq.sql_db.config import plproxy_config
 
-# order is important here for foreign key constraints
 APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
 [APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP[iterator.model_label].append(iterator) for iterator in [
     FilteredModelIteratorBuilder('locations.LocationType', SimpleFilter('domain')),
@@ -119,6 +118,7 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
     FilteredModelIteratorBuilder('cloudcare.SQLAppGroup', SimpleFilter('application_access__domain')),
     FilteredModelIteratorBuilder('linked_domain.DomainLink', SimpleFilter('linked_domain')),
     FilteredModelIteratorBuilder('linked_domain.DomainLinkHistory', SimpleFilter('link__linked_domain')),
+    FilteredModelIteratorBuilder('users.DomainPermissionsMirror', SimpleFilter('source')),
     FilteredModelIteratorBuilder('locations.LocationFixtureConfiguration', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('consumption.DefaultConsumption', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('data_dictionary.CaseType', SimpleFilter('domain')),
@@ -130,6 +130,7 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
     FilteredModelIteratorBuilder('translations.TransifexBlacklist', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('translations.TransifexOrganization', SimpleFilter('transifexproject__domain')),
     FilteredModelIteratorBuilder('translations.TransifexProject', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('zapier.ZapierSubscription', SimpleFilter('domain')),
 ]]
 
 

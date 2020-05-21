@@ -1896,7 +1896,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
             },
             {
                 'mData': 'institutional_delivery',
-                'heading': 'Institutional Delivery (Y/N)',
+                'heading': 'Institutional Delivery (Yes/No)',
                 'class': 'medium-col',
                 'value': renderInstitutionalDeliveryInMonth
             },
@@ -2905,21 +2905,21 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
             route: "/awc_reports/beneficiary",
             label: "Child Beneficiaries List",
             image: "/static/icds_reports/mobile/images/babyboy.png",
-            isMobile: haveAccessToFeatures,
+            isMobile: true,
         },
         {
             id: 'pregnant',
             route: "/awc_reports/pregnant",
             label: "Pregnant Women",
             image: "/static/icds_reports/mobile/images/pregnant.png",
-            isMobile: haveAccessToFeatures,
+            isMobile: true,
         },
         {
             id: 'lactating',
             route: "/awc_reports/lactating",
             label: "Lactating Women",
             image: "/static/icds_reports/mobile/images/lactatingwoman.png",
-            isMobile: haveAccessToFeatures,
+            isMobile: true,
         },
     ];
     vm.mobileSteps = _.filter(steps, function (step) {

@@ -1397,6 +1397,15 @@ class BiharDemographicsView(models.Model):
     reason_closure = models.TextField(blank=True, null=True)
     out_of_school_status = models.SmallIntegerField(null=True)
     last_class_attended_ever = models.SmallIntegerField(null=True)
+    has_bank_account = models.SmallIntegerField(null=True)
+    age_marriage = models.SmallIntegerField(null=True)
+    last_referral_date = models.DateField(null=True)
+    referral_health_problem = models.TextField(null=True)
+    referral_reached_date = models.DateField(null=True)
+    referral_reached_facility = models.SmallIntegerField(null=True)
+    migrate_date = models.DateTimeField(null=True)
+    is_alive = models.SmallIntegerField(null=True)
+    was_oos_ever = models.SmallIntegerField(blank=True, null=True)
 
     class Meta(object):
         app_label = 'icds_reports'
@@ -1525,6 +1534,11 @@ class BiharAPIMotherView(models.Model):
     preg_reg_date = models.DateField(null=True)
     add = models.DateField(null=True)
     lmp = models.DateField(null=True)
+    edd = models.DateField(null=True)
+    anc_1 = models.DateField(null=True)
+    anc_2 = models.DateField(null=True)
+    anc_3 = models.DateField(null=True)
+    anc_4 = models.DateField(null=True)
 
     class Meta(object):
         app_label = 'icds_reports'
