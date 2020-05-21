@@ -131,7 +131,7 @@ def format_traceback_the_way_python_does(type, exc, tb):
     return f'Traceback (most recent call last):\n{tb}{type.__name__}: {exc}'
 
 
-def server_error(request, template_name='500.html'):
+def server_error(request, template_name='500.html', exception=None):
     """
     500 error handler.
     """
@@ -172,7 +172,7 @@ def server_error(request, template_name='500.html'):
     ))
 
 
-def not_found(request, template_name='404.html'):
+def not_found(request, template_name='404.html', exception=None):
     """
     404 error handler.
     """
@@ -335,7 +335,7 @@ def _no_permissions_message(request, template_name="403.html", message=None):
     )
 
 
-def no_permissions(request, redirect_to=None, template_name="403.html", message=None):
+def no_permissions(request, redirect_to=None, template_name="403.html", message=None, exception=None):
     """
     403 error handler.
     """

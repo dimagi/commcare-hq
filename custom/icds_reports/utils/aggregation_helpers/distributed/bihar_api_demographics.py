@@ -128,7 +128,8 @@ class BiharApiDemographicsHelper(BaseICDSAggregationDistributedHelper):
             ('referral_health_problem', 'person_list.referral_health_problem'),
             ('referral_reached_date', 'person_list.referral_reached_date'),
             ('referral_reached_facility', 'person_list.referral_reached_facility'),
-            ('migrate_date', 'migration_tab.migration_date')
+            ('migrate_date', 'migration_tab.migration_date'),
+            ('was_oos_ever', 'person_list.was_oos_ever')
         )
         column_names = ", ".join([col[0] for col in columns])
         calculations = ", ".join([col[1] for col in columns])
