@@ -646,7 +646,7 @@ class PrivacySecurityForm(forms.Form):
         domain.restrict_superusers = self.cleaned_data.get('restrict_superusers', False)
         domain.allow_domain_requests = self.cleaned_data.get('allow_domain_requests', False)
         domain.secure_sessions = self.cleaned_data.get('secure_sessions', False)
-        domain.secure_sessions_timeout = self.cleaned_data.get('secure_sessions_timeout', False)
+        domain.secure_sessions_timeout = self.cleaned_data.get('secure_sessions_timeout', None)
         domain.two_factor_auth = self.cleaned_data.get('two_factor_auth', False)
         domain.strong_mobile_passwords = self.cleaned_data.get('strong_mobile_passwords', False)
         secure_submissions = self.cleaned_data.get(
