@@ -8,7 +8,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('icds_reports', '0189_new_fields_to_bihar_demogrpahics'),
+        ('icds_reports', '0190_added_was_oos_ever'),
     ]
 
     operations = [
