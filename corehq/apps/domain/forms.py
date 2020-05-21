@@ -580,13 +580,13 @@ class PrivacySecurityForm(forms.Form):
         label=ugettext_lazy("Shorten Inactivity Timeout"),
         required=False,
         help_text=ugettext_lazy("All web users on this project will be logged out after {} minutes "
-                                "of inactivity".format(settings.SECURE_TIMEOUT))
+                                "of inactivity").format(settings.SECURE_TIMEOUT)
     )
     secure_sessions_timeout = IntegerField(
         label=ugettext_lazy("Inactivity Timeout Length"),
         required=False,
         help_text=ugettext_lazy("Override the default {}-minute length of the inactivity timeout. Has "
-                                "no effect unless inactivity timeout is in use".format(settings.SECURE_TIMEOUT))
+                                "no effect unless inactivity timeout is in use").format(settings.SECURE_TIMEOUT)
     )
     allow_domain_requests = BooleanField(
         label=ugettext_lazy("Web user requests"),
