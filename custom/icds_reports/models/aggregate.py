@@ -208,6 +208,11 @@ class CcsRecordMonthly(models.Model, AggregateMixin):
     )
     tt_booster = models.DateField(null=True)
     last_preg_year = models.IntegerField(null=True)
+    complication_type = models.TextField(blank=True, null=True)
+    reason_no_ifa = models.TextField(blank=True, null=True)
+    new_ifa_tablets_total_bp = models.PositiveSmallIntegerField(blank=True, null=True)
+    new_ifa_tablets_total_pnc = models.PositiveSmallIntegerField(blank=True, null=True)
+    ifa_last_seven_days = models.PositiveSmallIntegerField(blank=True, null=True)
 
     class Meta(object):
         managed = False
