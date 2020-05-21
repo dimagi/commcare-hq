@@ -828,7 +828,7 @@
         "datatype": "datetime",
         "type": "raw",
         "property_name": "modified_on"
-      },
+      }
     ],
     "named_expressions": {},
     "named_filters": {},
