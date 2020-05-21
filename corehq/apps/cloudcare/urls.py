@@ -10,6 +10,7 @@ from corehq.apps.cloudcare.views import (
     ReadableQuestions,
     default,
     form_context,
+    login_new_window,
     report_formplayer_error,
 )
 
@@ -23,6 +24,7 @@ app_urls = [
         FormplayerPreviewSingleApp.as_view(),
         name=FormplayerPreviewSingleApp.urlname,
     ),
+    url(r'^relogin/$', login_new_window, name='login_new_window'),
     url(r'^preview_app/(?P<app_id>[\w-]+)/$', PreviewAppView.as_view(), name=PreviewAppView.urlname),
     url(r'^report_formplayer_error', report_formplayer_error, name='report_formplayer_error')
 ]
