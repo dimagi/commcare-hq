@@ -15,10 +15,6 @@ describe('WebForm', function () {
             tq.addTask('two', taskTwo, [5,6,7]);
         });
 
-        before(function () {
-            hqImport("hqwebapp/js/initial_page_data").register("report_formplayer_error");
-        });
-
         it('Executes tasks in order', function () {
             tq.execute();
             assert.isTrue(taskOne.calledOnce);
@@ -206,6 +202,7 @@ describe('WebForm', function () {
             assert.isTrue(sess.onerror.calledOnce);
             assert.isTrue(sess.onerror.calledWith({
                 human_readable_message: Formplayer.Errors.TIMEOUT_ERROR,
+                is_html: false,
             }));
         });
 
