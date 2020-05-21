@@ -1,3 +1,4 @@
+/* global FormplayerFrontend */
 var Formplayer = {
     Utils: {},
     Const: {},
