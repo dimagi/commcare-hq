@@ -106,7 +106,7 @@ class RecallStatusFilter(BaseSingleOptionFilter):
 
 class GapDescriptionFilter(BaseDrilldownOptionFilter):
     slug = 'gap'
-    label = _('Gap description')
+    label = _('Gap Description')
     default_text = _('All')
 
     @classmethod
@@ -138,7 +138,7 @@ class GapDescriptionFilter(BaseDrilldownOptionFilter):
 
 class GapTypeFilter(BaseSingleOptionFilter):
     slug = 'gap_type'
-    label = _('Gap type')
+    label = _('Gap Type')
     default_text = _('All')
 
     @property
@@ -151,7 +151,7 @@ class GapTypeFilter(BaseSingleOptionFilter):
 
 class FoodTypeFilter(BaseSingleOptionFilter):
     slug = 'food_type'
-    label = _('Food type')
+    label = _('Food Type')
     default_text = _('All')
 
     @property

@@ -290,6 +290,7 @@ HQ_APPS = (
     'corehq.messaging.smsbackends.tropo',
     'corehq.messaging.smsbackends.turn',
     'corehq.messaging.smsbackends.twilio',
+    'corehq.messaging.smsbackends.infobip',
     'corehq.apps.dropbox',
     'corehq.messaging.smsbackends.megamobile',
     'corehq.messaging.ivrbackends.kookoo',
@@ -957,6 +958,8 @@ REQUIRE_TWO_FACTOR_FOR_SUPERUSERS = False
 # that adds messages to the partition with the fewest unprocessed messages
 USE_KAFKA_SHORTEST_BACKLOG_PARTITIONER = False
 
+SESSION_COOKIE_SECURE = CSRF_COOKIE_SECURE = not DEBUG
+SESSION_COOKIE_HTTPONLY = CSRF_COOKIE_HTTPONLY = True
 
 try:
     # try to see if there's an environmental variable set for local_settings
@@ -1511,6 +1514,7 @@ SMS_LOADED_SQL_BACKENDS = [
     'corehq.messaging.smsbackends.tropo.models.SQLTropoBackend',
     'corehq.messaging.smsbackends.turn.models.SQLTurnWhatsAppBackend',
     'corehq.messaging.smsbackends.twilio.models.SQLTwilioBackend',
+    'corehq.messaging.smsbackends.infobip.models.SQLInfobipBackend',
     'corehq.messaging.smsbackends.unicel.models.SQLUnicelBackend',
     'corehq.messaging.smsbackends.yo.models.SQLYoBackend',
     'corehq.messaging.smsbackends.vertex.models.VertexBackend',
@@ -2132,9 +2136,6 @@ if SENTRY_DSN:
     SENTRY_CONFIGURED = True
 else:
     SENTRY_CONFIGURED = False
-
-SESSION_COOKIE_SECURE = CSRF_COOKIE_SECURE = True
-SESSION_COOKIE_HTTPONLY = CSRF_COOKIE_HTTPONLY = True
 
 if RESTRICT_USED_PASSWORDS_FOR_NIC_COMPLIANCE:
     AUTH_PASSWORD_VALIDATORS = [

@@ -78,7 +78,15 @@ def get_api_demographics_data(month, state_id, last_person_case_id):
         'date_death',
         'site_death',
         'closed_on',
-        'reason_closure'
+        'reason_closure',
+        'has_bank_account',
+        'age_marriage',
+        'last_referral_date',
+        'referral_health_problem',
+        'referral_reached_date',
+        'referral_reached_facility',
+        'migrate_date',
+        'is_alive'
     )
 
     # To apply pagination on database query with data size length
@@ -198,7 +206,8 @@ def get_api_ag_school_data(month, state_id, last_person_case_id):
         'person_id',
         'person_name',
         'out_of_school_status',
-        'last_class_attended_ever'
+        'last_class_attended_ever',
+        'was_oos_ever'
     )
 
     # To apply pagination on database query with data size length

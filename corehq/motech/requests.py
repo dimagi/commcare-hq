@@ -218,6 +218,8 @@ def simple_post(domain, url, data, *, headers, auth_manager, verify,
     POST with a cleaner API, and return the actual HTTPResponse object, so
     that error codes can be interpreted.
     """
+    if isinstance(data, str):
+        data = data.encode('utf-8')  # can't pass unicode to http request posts
     default_headers = CaseInsensitiveDict({
         "content-type": "text/xml",
         "content-length": str(len(data)),

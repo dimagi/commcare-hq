@@ -14,7 +14,7 @@ TEST_API_URL = 'https://www.example.com/api/'
 TEST_API_USERNAME = 'michael'
 TEST_API_PASSWORD = 'Norwegi4n_Blue'
 TEST_PAYLOAD_ID = 'abc123'
-TEST_PAYLOAD = f'<payload id="{TEST_PAYLOAD_ID}"><parrot status="dead" /></payload>'
+TEST_PAYLOAD = f'<payload id="{TEST_PAYLOAD_ID}"><parrot status="déad" /></payload>'
 
 
 def test_simple_post():
@@ -37,7 +37,7 @@ def test_simple_post():
             data=TEST_PAYLOAD,
             headers={
                 'Content-Type': 'text/xml+parrot',
-                'content-length': '55',
+                'content-length': '56',
             },
             json=None,
             timeout=REQUEST_TIMEOUT,

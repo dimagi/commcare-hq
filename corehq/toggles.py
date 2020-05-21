@@ -794,6 +794,13 @@ FORM_LINK_WORKFLOW = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
+SECURE_SESSION_TIMEOUT = StaticToggle(
+    'secure_session_timeout',
+    "Allow domain to override default length of inactivity timeout",
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN],
+)
+
 # not referenced in code directly but passed through to vellum
 # see toggles_dict
 
@@ -1915,12 +1922,4 @@ RESTRICT_LOGIN_AS = StaticToggle(
     Adds a permission that can be set on user roles to allow login as, but only as a limited set of users. Users with this enabled can "login as" other users that set custom user property "login_as_user" to the first user's username.
     For example, if web user a@a.com has this permission set on their role, they can only login as mobile users who have the custom property "login_as_user" set to "a@a.com".
     """
-)
-
-SHARDED_RUN_MESSAGING_RULE = StaticToggle(
-    'sharded_run_messaging_rule',
-    'Trigger concurrent tasks per each shard for conditional case alerts'
-    'Applies to SQL domains only',
-    TAG_CUSTOM,
-    namespaces=[NAMESPACE_DOMAIN]
 )
