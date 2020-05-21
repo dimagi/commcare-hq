@@ -40,7 +40,7 @@ def flatten_field_dict(results, fields_property='fields'):
 
 def track_es_report_load(domain, report_slug, owner_count):
     # Intended mainly for ICDs to track load of user filter counts when hitting ES
-    if getattr(settings, 'TRACK_ES_REPORT_LOAD'):
+    if hasattr(settings, 'TRACK_ES_REPORT_LOAD'):
         metrics_counter(
             'commcare.es.user_filter_count',
             owner_count,
