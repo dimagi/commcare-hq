@@ -1591,7 +1591,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             if permission_slug in EXPORT_PERMISSIONS
         ])
 
-    def can_login_as(self, domain=None):
+    def can_login_as(self, domain):
         return (
             self.has_permission(domain, 'edit_commcare_users')
             or self.has_permission(domain, 'limited_login_as')
