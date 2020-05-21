@@ -1727,6 +1727,8 @@ class AggServiceDeliveryReport(models.Model, AggregateMixin):
     child_thr_8_14_days = models.IntegerField(null=True)
     child_thr_15_20_days = models.IntegerField(null=True)
     child_thr_21_days = models.IntegerField(null=True)
+    child_thr_21_24_days = models.IntegerField(null=True)
+    child_thr_25_days = models.IntegerField(null=True)
 
     pw_thr_eligible = models.IntegerField(null=True)
     pw_thr_0_days = models.IntegerField(null=True)
@@ -1734,6 +1736,8 @@ class AggServiceDeliveryReport(models.Model, AggregateMixin):
     pw_thr_8_14_days = models.IntegerField(null=True)
     pw_thr_15_20_days = models.IntegerField(null=True)
     pw_thr_21_days = models.IntegerField(null=True)
+    pw_thr_21_24_days = models.IntegerField(null=True)
+    pw_thr_25_days = models.IntegerField(null=True)
 
     lw_thr_eligible = models.IntegerField(null=True)
     lw_thr_0_days = models.IntegerField(null=True)
@@ -1741,6 +1745,8 @@ class AggServiceDeliveryReport(models.Model, AggregateMixin):
     lw_thr_8_14_days = models.IntegerField(null=True)
     lw_thr_15_20_days = models.IntegerField(null=True)
     lw_thr_21_days = models.IntegerField(null=True)
+    lw_thr_21_24_days = models.IntegerField(null=True)
+    lw_thr_25_days = models.IntegerField(null=True)
 
     state_is_test = models.SmallIntegerField(null=True)
     district_is_test = models.SmallIntegerField(null=True)

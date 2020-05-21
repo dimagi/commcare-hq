@@ -93,12 +93,16 @@ class AggServiceDeliveryReportHelper(AggregationPartitionedHelper):
             thr_8_14_days = ut.thr_8_14_days,
             thr_15_20_days = ut.thr_15_20_days,
             thr_21_days = ut.thr_21_days,
+
             child_thr_eligible = ut.thr_eligible,
             child_thr_0_days = ut.thr_0_days,
             child_thr_1_7_days = ut.thr_1_7_days,
             child_thr_8_14_days = ut.thr_8_14_days,
             child_thr_15_20_days = ut.thr_15_20_days,
             child_thr_21_days = ut.thr_21_days,
+            child_thr_21_24_days = ut.thr_21_24_days,
+            child_thr_25_days = ut.thr_25_days,
+
             children_0_3 = ut.children_0_3,
             children_3_5 = ut.children_3_5,
             gm_0_3 = ut.gm_0_3,
@@ -127,6 +131,9 @@ class AggServiceDeliveryReportHelper(AggregationPartitionedHelper):
                 SUM(CASE WHEN thr_eligible=1 AND num_rations_distributed BETWEEN 8 AND 14 THEN 1 ELSE 0 END) as thr_8_14_days,
                 SUM(CASE WHEN thr_eligible=1 AND num_rations_distributed BETWEEN 15 AND 20 THEN 1 ELSE 0 END) as thr_15_20_days,
                 SUM(CASE WHEN thr_eligible=1 AND num_rations_distributed>=21 THEN 1 ELSE 0 END) as thr_21_days,
+                SUM(CASE WHEN thr_eligible=1 AND num_rations_distributed BETWEEN 21 AND 24 THEN 1 ELSE 0 END) as thr_21_24_days,
+                SUM(CASE WHEN thr_eligible=1 AND num_rations_distributed>=25 THEN 1 ELSE 0 END) as thr_25_days,
+
                 SUM(CASE WHEN age_tranche::integer <=36 THEN valid_in_month ELSE 0 END ) as children_0_3,
                 SUM(CASE WHEN age_tranche::integer BETWEEN 37 AND 60 THEN valid_in_month ELSE 0 END ) as children_3_5,
                 SUM(CASE WHEN age_tranche::integer <=36 THEN nutrition_status_weighed ELSE 0 END) as gm_0_3,
@@ -159,12 +166,16 @@ class AggServiceDeliveryReportHelper(AggregationPartitionedHelper):
             pw_thr_8_14_days = ut.pw_thr_8_14_days,
             pw_thr_15_20_days = ut.pw_thr_15_20_days,
             pw_thr_21_days = ut.pw_thr_21_days,
+            pw_thr_21_24_days = ut.pw_thr_21_24_days,
+            pw_thr_25_days = ut.pw_thr_25_days,
             lw_thr_eligible = ut.lw_thr_eligible,
             lw_thr_0_days = ut.lw_thr_0_days,
             lw_thr_1_7_days = ut.lw_thr_1_7_days,
             lw_thr_8_14_days = ut.lw_thr_8_14_days,
             lw_thr_15_20_days = ut.lw_thr_15_20_days,
-            lw_thr_21_days = ut.lw_thr_21_days
+            lw_thr_21_days = ut.lw_thr_21_days,
+            lw_thr_21_24_days = ut.lw_thr_21_24_days,
+            lw_thr_25_days = ut.lw_thr_25_days
         FROM (
             SELECT
                 supervisor_id,
@@ -183,12 +194,16 @@ class AggServiceDeliveryReportHelper(AggregationPartitionedHelper):
                 SUM(CASE WHEN thr_eligible=1 AND pregnant=1 AND num_rations_distributed BETWEEN 8 AND 14 THEN 1 ELSE 0 END) as pw_thr_8_14_days,
                 SUM(CASE WHEN thr_eligible=1 AND pregnant=1 AND num_rations_distributed BETWEEN 15 AND 20 THEN 1 ELSE 0 END) as pw_thr_15_20_days,
                 SUM(CASE WHEN thr_eligible=1 AND pregnant=1 AND num_rations_distributed>=21 THEN 1 ELSE 0 END) as pw_thr_21_days,
+                SUM(CASE WHEN thr_eligible=1 AND pregnant=1 AND num_rations_distributed BETWEEN 21 AND 24 THEN 1 ELSE 0 END) as pw_thr_21_24_days,
+                SUM(CASE WHEN thr_eligible=1 AND pregnant=1 AND num_rations_distributed>=25 THEN 1 ELSE 0 END) as pw_thr_25_days,
                 SUM(CASE WHEN lactating=1 THEN thr_eligible ELSE 0 END) as lw_thr_eligible,
                 SUM(CASE WHEN thr_eligible=1 AND lactating=1 AND num_rations_distributed=0 THEN 1 ELSE 0 END) as lw_thr_0_days,
                 SUM(CASE WHEN thr_eligible=1 AND lactating=1 AND num_rations_distributed BETWEEN 1 AND 7 THEN 1 ELSE 0 END) as lw_thr_1_7_days,
                 SUM(CASE WHEN thr_eligible=1 AND lactating=1 AND num_rations_distributed BETWEEN 8 AND 14 THEN 1 ELSE 0 END) as lw_thr_8_14_days,
                 SUM(CASE WHEN thr_eligible=1 AND lactating=1 AND num_rations_distributed BETWEEN 15 AND 20 THEN 1 ELSE 0 END) as lw_thr_15_20_days,
-                SUM(CASE WHEN thr_eligible=1 AND lactating=1 AND num_rations_distributed>=21 THEN 1 ELSE 0 END) as lw_thr_21_days
+                SUM(CASE WHEN thr_eligible=1 AND lactating=1 AND num_rations_distributed>=21 THEN 1 ELSE 0 END) as lw_thr_21_days,
+                SUM(CASE WHEN thr_eligible=1 AND lactating=1 AND num_rations_distributed BETWEEN 21 AND 24 THEN 1 ELSE 0 END) as lw_thr_21_24_days,
+                SUM(CASE WHEN thr_eligible=1 AND lactating=1 AND num_rations_distributed>=25 THEN 1 ELSE 0 END) as lw_thr_25_days
             FROM ccs_record_monthly
             WHERE month=%(start_date)s
             GROUP BY supervisor_id, awc_id, month
