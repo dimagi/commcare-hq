@@ -239,7 +239,8 @@ WebFormSession.prototype.handleSuccess = function (resp, action, callback) {
 WebFormSession.prototype.handleFailure = function (resp, action, textStatus, failureCallback) {
     var self = this;
     var errorMessage = null;
-    if (resp.status === 423) {
+    errorMessage = "This is bad and here is some html <a href=''>here is some html</a>"
+    /*if (resp.status === 423) {
         errorMessage = Formplayer.Errors.LOCK_TIMEOUT_ERROR;
     } else if (resp.status === 401) {
         errorMessage = "This is bad and here is some html <a href=''>here is some html</a>"
@@ -253,7 +254,7 @@ WebFormSession.prototype.handleFailure = function (resp, action, textStatus, fai
         }
     } else if (resp.hasOwnProperty('responseJSON') && resp.responseJSON !== undefined) {
         errorMessage = Formplayer.Utils.touchformsError(resp.responseJSON.message);
-    }
+    }*/
 
     hqImport('cloudcare/js/util').reportFormplayerErrorToHQ({
         type: 'webformsession_request_failure',
