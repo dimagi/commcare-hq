@@ -239,7 +239,9 @@ WebFormSession.prototype.handleSuccess = function (resp, action, callback) {
 WebFormSession.prototype.handleFailure = function (resp, action, textStatus, failureCallback) {
     var self = this;
     var errorMessage = null;
-    errorMessage = "This is bad and here is some html <a href=''>here is some html</a>"
+    var isHTML = false;
+    errorMessage = "This is bad and <a href=''>here is some html</a>"
+    isHTML = true;
     /*if (resp.status === 423) {
         errorMessage = Formplayer.Errors.LOCK_TIMEOUT_ERROR;
     } else if (resp.status === 401) {
@@ -273,6 +275,7 @@ WebFormSession.prototype.handleFailure = function (resp, action, textStatus, fai
     }
     this.onerror({
         human_readable_message: errorMessage,
+        is_html: isHTML,
     });
     this.onLoadingComplete();
 };

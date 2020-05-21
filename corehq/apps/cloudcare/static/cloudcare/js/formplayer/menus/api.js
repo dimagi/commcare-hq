@@ -60,7 +60,8 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
                     error: function (_, response) {
                         FormplayerFrontend.trigger(
                             'showError',
-                            "This, too, is bad and here is some html <a href=''>here is some more html</a>"
+                            "This, too, is bad and <a href=''>here is some more html</a>",
+                            true
                         );
                         /*if (response.status === 423) {
                             FormplayerFrontend.trigger(
