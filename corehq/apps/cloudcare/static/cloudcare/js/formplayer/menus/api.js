@@ -63,6 +63,11 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
                                 'showError',
                                 Formplayer.Errors.LOCK_TIMEOUT_ERROR
                             );
+                        } else if (response.status === 401) {
+                            FormplayerFrontend.trigger(
+                                'showError',
+                                "This, too, is bad and here is some html <a href=''>here is some html</a>",
+                            );
                         } else {
                             FormplayerFrontend.trigger(
                                 'showError',
