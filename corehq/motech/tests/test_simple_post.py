@@ -21,7 +21,7 @@ def test_simple_post():
         simple_post(
             domain=TEST_DOMAIN,
             url=TEST_API_URL,
-            data='<payload id="abc123"><parrot status="dead" /></payload>',
+            data='<payload id="abc123"><parrot status="déad" /></payload>',
             headers={'Content-Type': 'text/xml+parrot'},
             auth=(TEST_API_USERNAME, TEST_API_PASSWORD),
             verify=True,
@@ -32,10 +32,10 @@ def test_simple_post():
             'POST',
             TEST_API_URL,
             auth=(TEST_API_USERNAME, TEST_API_PASSWORD),
-            data='<payload id="abc123"><parrot status="dead" /></payload>',
+            data=b'<payload id="abc123"><parrot status="d\xc3\xa9ad" /></payload>',
             headers={
                 'Content-Type': 'text/xml+parrot',
-                'content-length': '55',
+                'content-length': '56',
             },
             timeout=REQUEST_TIMEOUT,
         )
