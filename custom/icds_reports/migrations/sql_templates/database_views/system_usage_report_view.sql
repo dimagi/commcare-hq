@@ -26,7 +26,14 @@ CREATE VIEW system_usage_report_view AS
         COALESCE("agg_awc_monthly"."usage_num_cf", 0) AS "usage_num_cf",
         COALESCE("agg_awc_monthly"."usage_num_gmp", 0) AS "usage_num_gmp",
         COALESCE("agg_awc_monthly"."usage_num_due_list_ccs", 0) + COALESCE("agg_awc_monthly"."usage_num_due_list_child_health", 0) AS "usage_num_due_list_ccs_and_child_health",
-        COALESCE("agg_ls"."num_supervisor_launched", 0) AS "num_supervisor_launched"
+        COALESCE("agg_ls"."num_supervisor_launched", 0) AS "num_supervisor_launched",
+        "agg_awc_monthly"."num_launched_states" AS "num_launched_states",
+        "agg_awc_monthly"."num_launched_districts" AS "num_launched_districts",
+        "agg_awc_monthly"."num_launched_blocks" AS "num_launched_blocks",
+        "agg_awc_monthly"."num_launched_supervisors" AS "num_launched_supervisors",
+        "agg_awc_monthly"."block_map_location_name" AS "block_map_location_name",
+        "agg_awc_monthly"."district_map_location_name" AS "district_map_location_name",
+        "agg_awc_monthly"."state_map_location_name" AS "state_map_location_name"
     FROM "agg_awc_monthly"
     LEFT JOIN agg_ls ON (
         ("agg_awc_monthly"."month" = "agg_ls"."month") AND

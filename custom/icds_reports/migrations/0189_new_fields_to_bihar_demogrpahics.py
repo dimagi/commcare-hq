@@ -45,5 +45,3 @@ class Migration(migrations.Migration):
             field=models.SmallIntegerField(null=True),
         ),
     ]
-
-    operations.extend(get_view_migrations())
