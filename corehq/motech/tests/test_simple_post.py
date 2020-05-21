@@ -34,7 +34,7 @@ def test_simple_post():
         request_mock.assert_called_with(
             'POST',
             TEST_API_URL,
-            data=TEST_PAYLOAD,
+            data=bytes(TEST_PAYLOAD, 'utf-8'),
             headers={
                 'Content-Type': 'text/xml+parrot',
                 'content-length': '56',
