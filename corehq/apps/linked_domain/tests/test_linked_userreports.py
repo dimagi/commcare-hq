@@ -3,6 +3,8 @@ import json
 from mock import patch
 from tastypie.models import ApiKey
 
+from dimagi.utils.couch.undo import is_deleted, soft_delete
+
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.domain.tests.test_utils import delete_all_domains
 from corehq.apps.linked_domain.decorators import REMOTE_REQUESTER_HEADER
@@ -81,6 +83,13 @@ class TestLinkedUCR(BaseLinkedAppsTest):
         self.assertEqual("New title", report.title)
         self.assertEqual(self.report.get_id, report.report_meta.master_id)
 
+    def test_delete_master_deletes_linked(self):
+        linked_report_info = create_linked_ucr(self.domain_link, self.report.get_id)
+        soft_delete(self.report)
+        update_linked_ucr(self.domain_link, linked_report_info.report.get_id)
+        report = ReportConfiguration.get(linked_report_info.report.get_id)
+        self.assertTrue(is_deleted(report))
+
     @patch('corehq.apps.linked_domain.ucr.remote_get_ucr_config')
     def test_remote_link_ucr(self, fake_ucr_getter):
         create_domain(self.domain)
@@ -97,9 +106,12 @@ class TestLinkedUCR(BaseLinkedAppsTest):
 
         fake_ucr_getter.return_value = json.loads(resp.content)
 
+        # Create
         linked_report_info = create_linked_ucr(self.domain_link, self.report.get_id)
         self.assertEqual(1, len(ReportConfiguration.by_domain(self.domain_link.linked_domain)))
+        self.assertEqual(self.report.get_id, linked_report_info.report.report_meta.master_id)
 
+        # Update
         self.report.title = "Another new title"
         self.report.save()
 
