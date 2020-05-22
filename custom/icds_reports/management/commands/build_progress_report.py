@@ -6,8 +6,7 @@ from django.core.management.base import BaseCommand
 from django.db import connections
 
 from corehq.sql_db.connections import get_icds_ucr_citus_db_alias
-
-
+from custom.icds_reports.models import AwcLocation
 
 query_1 = """
     SELECT
@@ -19,8 +18,7 @@ query_1 = """
         wer_weighed as wer_weighed_{month},
         wer_eligible as wer_eligible_{month},
         CASE WHEN wer_eligible>0 THEN wer_weighed/wer_eligible::float*100 ELSE 0 END as wer_percentage_{month}
-        FROM agg_awc_{month_date}
-    WHERE aggregation_level=2
+        FROM "agg_awc_{month_date}_2"
 """
 
 query_2 = """
@@ -32,12 +30,12 @@ query_2 = """
         height_eligible as height_eligible_{month},
         height_measured_in_month as height_measured_in_month_{month},
         pse_eligible as lunch_eligible_{month},
-        CASE height_eligible>0 THEN height_measured_in_month/height_eligible::float*100 ELSE 0 END as height_percentage_{month},
+        CASE WHEN height_eligible>0 THEN height_measured_in_month/height_eligible::float*100 ELSE 0 END as height_percentage_{month},
         lunch_count_21_days as lunch_count_21_days_{month},
         CASE WHEN pse_eligible>0 THEN lunch_count_21_days/pse_eligible::float*100 ELSE 0 END as lunch_percentage_{month},
         thr_eligible as thr_eligible_{month},
-        rations_21_plus_distributed as rations_21_plus_distributed_{month},
-        FROM agg_child_health_{month_date}
+        rations_21_plus_distributed as rations_21_plus_distributed_{month}
+        FROM "agg_child_health_{month_date}"
         WHERE aggregation_level=2
 """
 
@@ -49,34 +47,34 @@ query_3 = """
         trimester_3 as trimester_3_{month},
         counsel_immediate_bf as counsel_immediate_bf_{month},
         CASE WHEN trimester_3>0 THEN counsel_immediate_bf/trimester_3::float*100 ELSE 0 END as percent_trimester_{month}
-    FROM agg_ccs_record_{month_date} and aggregation_level=2
+    FROM "agg_ccs_record_{month_date}_2"
 """
 
 columns = [
     "state_name", "district_name",
-    "num_launched_districts_January", "num_launched_districts_February", "num_launched_districts_March",
-    "num_launched_blocks_January", "num_launched_blocks_February", "num_launched_blocks_March",
-    "num_launched_awcs_January", "num_launched_awcs_February", "num_launched_awcs_March",
-    "awc_open_percent_January", "awc_open_percent_February", "awc_open_percent_March",
-    "pse_eligible_January", "pse_eligible_February", "pse_eligible_March",
-    "pse_attended_21_days_January", "pse_attended_21_days_February", "pse_attended_21_days_March"
-    "pse_percentange_January", "pse_percentange_February", "pse_percentange_March",
-    "wer_eligible_January", "wer_eligible_February", "wer_eligible_March",
-    "wer_weighed_January", "wer_weighed_February", "wer_weighed_March",
-    "wer_percentage_January", "wer_percentage_February", "wer_percentage_March",
-    "trimester_3_January", "trimester_3_February", "trimester_3_March",
-    "counsel_immediate_bf_January", "counsel_immediate_bf_February", "counsel_immediate_bf_March",
-    "percent_trimester_January", "percent_trimester_February", "percent_trimester_March",
-    "height_eligible_January", "height_eligible_February", "height_eligible_March",
-    "height_measured_in_month_January", "height_measured_in_month_February", "height_measured_in_month_March",
-    "height_percentage_January", "height_percentage_February", "height_percentage_March",
-    "thr_eligible_January", "thr_eligible_February", "thr_eligible_March",
-    "rations_21_plus_distributed_January", "rations_21_plus_distributed_February", "rations_21_plus_distributed_March",
-    "lunch_eligible_January", "lunch_eligible_February", "lunch_eligible_March",
-    "lunch_count_21_days_January", "lunch_count_21_days_February", "lunch_count_21_days_March",
-    "lunch_percentage_January", "lunch_percentage_February", "lunch_percentage_March"
+    "num_launched_districts_january", "num_launched_districts_february", "num_launched_districts_march",
+    "num_launched_blocks_january", "num_launched_blocks_february", "num_launched_blocks_march",
+    "num_launched_awcs_january", "num_launched_awcs_february", "num_launched_awcs_march",
+    "awc_open_percent_january", "awc_open_percent_february", "awc_open_percent_march",
+    "pse_eligible_january", "pse_eligible_february", "pse_eligible_march",
+    "pse_attended_21_days_january", "pse_attended_21_days_february", "pse_attended_21_days_march",
+    "pse_percentange_january", "pse_percentange_february", "pse_percentange_march",
+    "wer_eligible_january", "wer_eligible_february", "wer_eligible_march",
+    "wer_weighed_january", "wer_weighed_february", "wer_weighed_march",
+    "wer_percentage_january", "wer_percentage_february", "wer_percentage_march",
+    "trimester_3_january", "trimester_3_february", "trimester_3_march",
+    "counsel_immediate_bf_january", "counsel_immediate_bf_february", "counsel_immediate_bf_march",
+    "percent_trimester_january", "percent_trimester_february", "percent_trimester_march",
+    "height_eligible_january", "height_eligible_february", "height_eligible_march",
+    "height_measured_in_month_january", "height_measured_in_month_february", "height_measured_in_month_march",
+    "height_percentage_january", "height_percentage_february", "height_percentage_march",
+    "thr_eligible_january", "thr_eligible_february", "thr_eligible_march",
+    "rations_21_plus_distributed_january", "rations_21_plus_distributed_february",
+    "rations_21_plus_distributed_march",
+    "lunch_eligible_january", "lunch_eligible_february", "lunch_eligible_march",
+    "lunch_count_21_days_january", "lunch_count_21_days_february", "lunch_count_21_days_march",
+    "lunch_percentage_january", "lunch_percentage_february", "lunch_percentage_march"
 ]
-
 
 
 def _run_custom_sql_script(command):
@@ -95,20 +93,25 @@ class Command(BaseCommand):
         start_date = date(2020, 1, 1)
         end_date = date(2020, 3, 1)
         date_itr = start_date
-        awc_data = AwcLocation.objects.filter(aggregation_level=2).values('district_id', 'district_name', 'state_name')
+        awc_data = AwcLocation.objects.filter(aggregation_level=2).values('district_id', 'district_name',
+                                                                          'state_name')
         queries = [query_1, query_2, query_3]
         data_format = {}
         for awc in awc_data:
-            data_format.update({awc['district_id']: [awc['district_name'], awc['state_name']] + [0 for _ in range(0, len(columns)-2)]})
+            data_format.update({awc['district_id']: [awc['district_name'], awc['state_name']] + [0 for _ in
+                                                                                                 range(0, len(
+                                                                                                     columns) - 2)]})
 
         while date_itr <= end_date:
             for query in queries:
-                query_data = _run_custom_sql_script(query.format(month_date=date_itr.strftime("%Y-%m-%d"), month=date_itr.strftime("%B")))
+                query_data = _run_custom_sql_script(
+                    query.format(month_date=date_itr.strftime("%Y-%m-%d"), month=date_itr.strftime("%B")))
                 for row in query_data:
                     district_id = row['district_id']
                     for k, v in row.items():
                         if v is not None and v != '' and k != 'district_id':
-                            data_format[district_id][columns.index(k)] = data_format[district_id][columns.index(k)] + v
+                            data_format[district_id][columns.index(k)] = data_format[district_id][
+                                                                             columns.index(k)] + v
             date_itr = date_itr + relativedelta(months=1)
 
         final_rows = [columns]
