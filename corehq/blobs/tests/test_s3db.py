@@ -11,7 +11,7 @@ Initialize a docker machine for minio (skip if you already have one):
 
 Start the minio service:
 
-    mkdir -p ~/.minio/data && mkdir ~/.minio/conf
+    mkdir -p ~/.minio/{data,conf}
 
     # INSECURE KEY VALUES FOR TESTING ONLY, DO NOT USE IN PRODUCTION!
     docker run -p 9988:9000 --name minio1 --detach \
