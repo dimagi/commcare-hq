@@ -6,7 +6,7 @@ INSERT INTO "icds_dashboard_ccs_record_postnatal_forms" (
         SELECT
         distinct case_id,
         '2020-03-01'::date as month,
-        'f9b47ea2ee2d8a02acddeeb491d3e175' as state_id,
+        '{state_id}' as state_id,
         supervisor_id,
         LAST_VALUE(latest_time_end) OVER w AS latest_time_end_processed,
         MAX(counsel_methods) OVER w AS counsel_methods,
@@ -27,7 +27,7 @@ INSERT INTO "icds_dashboard_ccs_record_postnatal_forms" (
             LAST_VALUE(new_ifa_tablets_total) OVER w as new_ifa_tablets_total,
             supervisor_id
             FROM "ucr_icds-cas_static-postnatal_care_forms_0c30d94e"
-            WHERE timeend < '2020-04-01' AND state_id = 'f9b47ea2ee2d8a02acddeeb491d3e175'
+            WHERE timeend < '2020-04-01' AND state_id = '{state_id}'
             WINDOW w AS (
                 PARTITION BY doc_id, supervisor_id, ccs_record_case_id
                 ORDER BY timeend RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
