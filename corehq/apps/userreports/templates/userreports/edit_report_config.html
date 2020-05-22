@@ -40,7 +40,7 @@
     <li class="active"><a data-toggle="tab" href="#tabs-configuration">{% trans "Configuration" %}</a></li>
     <li><a data-toggle="tab" href="#tabs-usage">{% trans "Usage" %}</a></li>
     {% if request|toggle_enabled:"LINKED_DOMAINS" %}
-      <li><a data-toggle="tab" href="#tabs-copy-report">{% trans "Copy Report" %}</a></li>
+      <li><a data-toggle="tab" href="#tabs-link-report">{% trans "Link Report" %}</a></li>
     {% endif %}
   </ul>
 
@@ -77,10 +77,32 @@
       {% endif %}
     </div>
     {% if request|toggle_enabled:"LINKED_DOMAINS" %}
-      <div class="tab-pane fade" id="tabs-copy-report">
+      <div class="tab-pane fade" id="tabs-link-report">
         <div class="spacer"></div>
         <form class="form form-horizontal" method="post" action="{% url "copy_report" domain %}">
-          {% crispy copy_report_form %}
+          {% csrf_token %}
+          <div class="form-group row">
+            <input type="hidden" name="report_id" value="{{ report.get_id }}" />
+            <label class="control-label col-xs-12 col-sm-4 col-md-4 col-lg-2 requiredField" for=" #domain-selector">
+            {% trans "Link this report to project" %}
+              <span class="asteriskField">*</span>
+            </label>
+            <div class="controls col-sm-9 col-md-9">
+              <select name="domain" class="select form-control" required="" id="domain-selector">
+                <option value="" selected="">Select a project...</option>
+                {% for domain in linked_domain_list %}
+                  <option value="{{ domain }}">{{ domain }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+          <div class="form-actions">
+            <div class="col-sm-offset-3 col-md-offset-2 controls col-sm-9 col-md-9">
+              <button class="btn btn-primary" type="submit">
+                {% trans "Copy" %}
+              </button>
+            </div>
+          </div>
         </form>
       </div>
     {% endif %}

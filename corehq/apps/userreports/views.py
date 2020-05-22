@@ -64,6 +64,7 @@ from corehq.apps.hqwebapp.decorators import (
 )
 from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
+from corehq.apps.linked_domain.dbaccessors import get_linked_domains
 from corehq.apps.linked_domain.models import DomainLink, ReportLinkDetail
 from corehq.apps.linked_domain.ucr import create_linked_ucr
 from corehq.apps.linked_domain.util import is_linked_report
@@ -96,7 +97,6 @@ from corehq.apps.userreports.exceptions import (
     translate_programming_error,
 )
 from corehq.apps.userreports.expressions import ExpressionFactory
-from corehq.apps.userreports.forms import CopyReportForm
 from corehq.apps.userreports.filters.factory import FilterFactory
 from corehq.apps.userreports.indicators.factory import IndicatorFactory
 from corehq.apps.userreports.models import (
@@ -239,10 +239,7 @@ class BaseEditConfigReportView(BaseUserConfigReportsView):
             'form': self.edit_form,
             'report': self.config,
             'referring_apps': self.get_referring_apps(),
-            'copy_report_form': CopyReportForm(
-                self.domain,
-                self.report_id if self.report_id else None,
-            ),
+            'linked_domain_list': [d.linked_domain for d in get_linked_domains(self.domain)],
         }
 
     def get_referring_apps(self):
@@ -623,10 +620,7 @@ class ConfigureReport(ReportBuilderView):
             'report_builder_events': self.request.session.pop(REPORT_BUILDER_EVENTS_KEY, []),
             'MAPBOX_ACCESS_TOKEN': settings.MAPBOX_ACCESS_TOKEN,
             'date_range_options': [r._asdict() for r in get_simple_dateranges()],
-            'copy_report_form': CopyReportForm(
-                self.domain,
-                self.existing_report.get_id if self.existing_report else None,
-            ),
+            'linked_domain_list': [d.linked_domain for d in get_linked_domains(self.domain)],
         }
 
     def _get_bound_form(self, report_data):
