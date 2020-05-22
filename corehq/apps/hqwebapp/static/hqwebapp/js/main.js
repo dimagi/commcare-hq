@@ -80,6 +80,15 @@ hqDefine('hqwebapp/js/main', [
         },
     };
 
+    ko.bindingHandlers.runOnInit = {
+        // suggestion from https://github.com/knockout/knockout/issues/2446 to use
+        // instead of an anonymous template
+        init: function(elem, valueAccessor) {
+            valueAccessor();
+        }
+    };
+    ko.virtualElements.allowedBindings.runOnInit = true;
+
     var initBlock = function ($elem) {
         'use strict';
 
