@@ -107,7 +107,7 @@ class Command(BaseCommand):
                 for row in query_data:
                     district_id = row['district_id']
                     for k, v in row.items():
-                        if v is not None or v != '' and k != 'district_id':
+                        if v is not None and v != '' and k != 'district_id':
                             data_format[district_id][columns.index(k)] = data_format[district_id][columns.index(k)] + v
             date_itr = date_itr + relativedelta(months=1)
 
