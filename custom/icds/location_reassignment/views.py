@@ -252,7 +252,6 @@ class LocationReassignmentView(BaseLocationView):
             "Your request has been submitted. We will notify you via email once completed."))
 
 
-
 @toggles.PERFORM_LOCATION_REASSIGNMENT.required_decorator()
 @require_GET
 @location_safe
