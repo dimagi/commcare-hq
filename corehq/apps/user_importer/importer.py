@@ -405,7 +405,7 @@ def create_or_update_users_and_groups(domain, user_specs, group_memoizer=None, u
                     else:
                         invite_data = {
                             'invited_by': 'Mobile User Upload',
-                            'invited_on': datetime.utcnow()
+                            'invited_on': datetime.utcnow(),
                             'domain': domain,
                             'role': role,
                             'supply_point': user.location_id
