@@ -1,11 +1,14 @@
+from django.utils.translation import gettext_lazy as _
+
+
 SEND_FREQUENCY_WEEKLY = 'weekly'
 SEND_FREQUENCY_MONTHLY = 'monthly'
 SEND_FREQUENCY_QUARTERLY = 'quarterly'
-SEND_FREQUENCIES = [
-    SEND_FREQUENCY_WEEKLY,
-    SEND_FREQUENCY_MONTHLY,
-    SEND_FREQUENCY_QUARTERLY,
-]
+SEND_FREQUENCIES = (
+    (SEND_FREQUENCY_WEEKLY, _('Weekly')),
+    (SEND_FREQUENCY_MONTHLY, _('Monthly')),
+    (SEND_FREQUENCY_QUARTERLY, _('Quarterly')),
+)
 
 # A subset of DHIS2 data types. Omitted data types:
 # * COORDINATE

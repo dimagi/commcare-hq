@@ -29,6 +29,8 @@ from corehq.motech.dhis2.utils import (
 from corehq.motech.models import ConnectionSettings
 from corehq.util.quickcache import quickcache
 
+from .validators import validate_dhis2_uid
+
 
 # UNUSED
 class Dhis2Connection(models.Model):
@@ -58,6 +60,67 @@ class Dhis2Connection(models.Model):
         )
 
 
+class SQLDataSetMap(models.Model):
+    domain = models.CharField(max_length=126)
+
+    description = models.CharField(max_length=255, blank=True)
+    connection_settings = models.ForeignKey(
+        ConnectionSettings, on_delete=models.PROTECT, null=True, blank=True,
+    )
+    report_config_id = models.CharField(max_length=126)
+
+    # How often is this DataSet sent
+    frequency = models.CharField(
+        max_length=15, choices=SEND_FREQUENCIES, default=SEND_FREQUENCY_MONTHLY
+    )
+
+    # Day of the month for monthly/quarterly frequency. Day of the week
+    # for weekly frequency. Uses ISO-8601, where Monday = 1, Sunday = 7.
+    day_to_send = models.IntegerField()
+
+    # If UCR adds values to an existing DataSet
+    data_set_id = models.CharField(
+        max_length=11, validators=[validate_dhis2_uid], null=True, blank=True,
+    )
+
+    # If all values are for the same OrganisationUnit
+    org_unit_id = models.CharField(
+        max_length=11, validators=[validate_dhis2_uid], null=True, blank=True,
+    )
+
+    # UCR column where org unit ID is given. Required if ``org_unit_id``
+    # is not set
+    org_unit_column = models.CharField(max_length=255, null=True, blank=True)
+
+    # If all values are for the same period. Monthly is YYYYMM,
+    # quarterly is YYYYQq, weekly is YYYYWww
+    period = StringProperty()
+
+    # UCR column where period is given. Required if ``period`` is not set.
+    period_column = models.CharField(max_length=255, null=True, blank=True)
+
+    # (Optional) DHIS2 sets this to Category Option Combo by default
+    attribute_option_combo_id = models.CharField(
+        max_length=11, validators=[validate_dhis2_uid], null=True, blank=True,
+    )
+
+    # (Optional) Set a completion date for the DataSet
+    complete_date = models.DateField(null=True, blank=True)
+
+
+class SQLDataValueMap(models.Model):
+    dataset_map = models.ForeignKey(SQLDataSetMap, on_delete=models.CASCADE)
+
+    column = models.CharField(max_length=255)
+    data_element_id = models.CharField(
+        max_length=11, validators=[validate_dhis2_uid],
+    )
+    category_option_combo_id = models.CharField(
+        max_length=11, validators=[validate_dhis2_uid],
+    )
+    comment = models.CharField(max_length=255, null=True, blank=True)
+
+
 class DataValueMap(DocumentSchema):
     column = StringProperty(required=True)
     data_element_id = StringProperty(required=True)
@@ -72,7 +135,7 @@ class DataSetMap(Document):
     ucr_id = StringProperty()  # UCR ReportConfig id
 
     description = StringProperty()
-    frequency = StringProperty(choices=SEND_FREQUENCIES, default=SEND_FREQUENCY_MONTHLY)
+    frequency = StringProperty(choices=list(dict(SEND_FREQUENCIES)), default=SEND_FREQUENCY_MONTHLY)
     # Day of the month for monthly/quarterly frequency. Day of the week
     # for weekly frequency. Uses ISO-8601, where Monday = 1, Sunday = 7.
     day_to_send = IntegerProperty()
