@@ -81,7 +81,6 @@ class Command(BaseCommand):
             sql_to_execute = sql_to_execute.split(';')
             for i in range(0, len(sql_to_execute)):
                 _run_custom_sql_script(sql_to_execute[i])
-    
 
     def handle(self, *args, **options):
         start_date = options['start_date'] if options['start_date'] else date(2020, 3, 1)

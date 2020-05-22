@@ -8,7 +8,7 @@ INSERT INTO "icds_dashboard_ccs_record_bp_forms" (
 
           SELECT DISTINCT ccs_record_case_id AS case_id,
         supervisor_id,
-        'f9b47ea2ee2d8a02acddeeb491d3e175' as state_id,
+        '{state_id}' as state_id,
         '2020-03-01'::date as month,
         LAST_VALUE(timeend) OVER w AS latest_time_end_processed,
         MAX(immediate_breastfeeding) OVER w AS immediate_breastfeeding,
