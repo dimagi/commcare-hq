@@ -1,0 +1,17 @@
+{% load i18n %}
+
+<div id="relogin-modal" class="modal fade full-screen-modal module-modal" role="dialog" tabindex='-1'><!-- TODO: only use .full-screen-modal in web apps? it's cramped in app preview -->
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+        <h3 class="js-modal-title modal-title"></h3>
+      </div>
+      <div class="js-modal-body modal-body">
+        {% blocktrans %}
+          You were logged out due to inactivity, but your work is safe.
+        {% endblocktrans %}
+      </div>
+    </div>
+  </div>
+</div>

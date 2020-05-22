@@ -142,6 +142,9 @@ class TimeoutMiddleware(MiddlewareMixin):
         if not request.user.is_authenticated:
             return
 
+        if 'skip_session_expiry' not in view_kwargs:
+            return
+
         secure_session = request.session.get('secure_session')
         domain = getattr(request, "domain", None)
         domain_obj = Domain.get_by_name(domain) if domain else None
@@ -174,7 +177,8 @@ class TimeoutMiddleware(MiddlewareMixin):
 
             request.session['secure_session'] = True
 
-        request.session.set_expiry(timeout * 60)
+        if 'skip_session_expiry' not in view_kwargs:
+            request.session.set_expiry(timeout * 60)
 
 
 def always_allow_browser_caching(fn):
@@ -240,14 +244,17 @@ class SelectiveSessionMiddleware(SessionMiddleware):
 
     def __init__(self, get_response=None):
         super().__init__(get_response)
-        regexes = getattr(settings, 'SESSION_BYPASS_URLS', [])
+        regexes = [
+            '/favicon.ico$',
+            '/a/{domain}/cloudcare/ping/$',
+        ]
+        regexes.extend(getattr(settings, 'SESSION_BYPASS_URLS', []))
         self.bypass_re = [
             re.compile(regex.format(domain=legacy_domain_re)) for regex in regexes
         ]
 
     def _bypass_sessions(self, request):
-        return (settings.BYPASS_SESSIONS_FOR_MOBILE and
-            any(rx.match(request.path_info) for rx in self.bypass_re))
+        return any(rx.match(request.path_info) for rx in self.bypass_re)
 
     def process_request(self, request):
         super().process_request(request)

@@ -11,6 +11,7 @@ from corehq.apps.cloudcare.views import (
     default,
     form_context,
     login_new_window,
+    ping,
     report_formplayer_error,
 )
 
@@ -43,4 +44,5 @@ urlpatterns = [
     url(r'^$', default, name='cloudcare_default'),
     url(r'^apps/', include(app_urls)),
     url(r'^api/', include(api_urls)),
+    url(r'^ping/(?P<skip_session_expiry>)$', ping, name='cloudcare_ping'),
 ]

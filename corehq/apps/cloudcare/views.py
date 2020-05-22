@@ -21,6 +21,7 @@ from django.views.decorators.cache import cache_page
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import View
 from django.views.generic.base import TemplateView
+from functools import wraps
 
 import six.moves.urllib.error
 import six.moves.urllib.parse
@@ -89,6 +90,23 @@ from xml2json.lib import xml2json
 @require_cloudcare_access
 def default(request, domain):
     return HttpResponseRedirect(reverse('formplayer_main', args=[domain]))
+
+
+def skip_session_expiry(view_func):
+    @wraps(view_func)
+    def _inner(req, domain, *args, **kwargs):
+        view_func._skip_session_expiry = True
+        return view_func(req, domain, *args, **kwargs)
+    return _inner
+
+
+#@login_and_domain_required
+@skip_session_expiry
+def ping(request, domain, skip_session_expiry=True):
+    return JsonResponse({
+        'success': 1,
+        'seconds_left': request.session.get_expiry_age(),       # TODO: this view itself can't reset the expiry
+    })
 
 
 @login_and_domain_required

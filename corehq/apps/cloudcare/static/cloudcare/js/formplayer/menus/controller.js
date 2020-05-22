@@ -121,7 +121,7 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
             });
             $('#case-detail-modal').find('.js-detail-tabs').html(tabListView.render().el);
             $('#case-detail-modal').find('.js-detail-content').html(menuListView.render().el);
-            $('#case-detail-modal').modal('show');
+            $('#relogin-modal').modal('show');
 
             if (model.isPersistentDetail) {
                 $('#case-detail-modal').find('#select-case').hide();

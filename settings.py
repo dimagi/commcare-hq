@@ -943,6 +943,7 @@ SESSION_BYPASS_URLS = [
     r'^/a/{domain}/phone/keys/',
     r'^/a/{domain}/phone/admin_keys/',
     r'^/a/{domain}/apps/download/',
+    r'^/a/{domain}/cloudcare/ping/',
 ]
 
 ALLOW_PHONE_AS_DEFAULT_TWO_FACTOR_DEVICE = False
