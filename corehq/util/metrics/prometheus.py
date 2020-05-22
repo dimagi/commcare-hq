@@ -105,8 +105,4 @@ class PrometheusMetrics(HqMetrics):
             push_to_gateway('localhost:9091', job='batch_mode', registry=registry)
         except Exception:
             # Could get a URLOpenerror if Pushgateway is not running
-            prometheus_soft_assert(False, 'Prometheus metric error', {
-                'metric_name': name,
-                'tags': list(tags),
-                'expected_tags': metric._labelnames
-            })
+            prometheus_soft_assert(False, 'Prometheus metric error while pushing to gateway')
