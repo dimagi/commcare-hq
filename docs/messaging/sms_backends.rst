@@ -59,7 +59,10 @@ To write the outbound backend code:
         object as an argument and is responsible for interfacing with the SMS
         Gateway's API to send the SMS; if you want the framework to retry the
         SMS, raise an exception in this method, otherwise if no exception is
-        raised the framework takes that to mean the process was successful
+        raised the framework takes that to mean the process was successful.
+        Unretryable error responses may be recorded on the message object with
+        `msg.set_gateway_error(message)` where `message` is the error message
+        or code returned by the gateway.
 
 #. Add the backend to settings.HQ_APPS and settings.SMS_LOADED_SQL_BACKENDS
 
