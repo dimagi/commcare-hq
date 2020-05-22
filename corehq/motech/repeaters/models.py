@@ -73,7 +73,6 @@ from django.utils.translation import ugettext_lazy as _
 
 from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
 from memoized import memoized
-from requests.auth import HTTPBasicAuth, HTTPDigestAuth
 from requests.exceptions import ConnectionError, Timeout
 
 from casexml.apps.case.xml import LEGAL_VERSIONS, V2
@@ -100,6 +99,12 @@ from corehq.form_processor.interfaces.dbaccessors import (
     CaseAccessors,
     FormAccessors,
 )
+from corehq.motech.auth import (
+    AuthManager,
+    BasicAuthManager,
+    BearerAuthManager,
+    DigestAuthManager,
+)
 from corehq.motech.const import (
     ALGO_AES,
     BASIC_AUTH,
@@ -107,17 +112,7 @@ from corehq.motech.const import (
     DIGEST_AUTH,
     OAUTH1,
 )
-from corehq.motech.repeaters.repeater_generators import (
-    AppStructureGenerator,
-    CaseRepeaterJsonPayloadGenerator,
-    CaseRepeaterXMLPayloadGenerator,
-    FormRepeaterJsonPayloadGenerator,
-    FormRepeaterXMLPayloadGenerator,
-    LocationPayloadGenerator,
-    ReferCasePayloadGenerator,
-    ShortFormRepeaterJsonPayloadGenerator,
-    UserPayloadGenerator,
-)
+from corehq.motech.models import ConnectionSettings
 from corehq.motech.requests import Requests, simple_post
 from corehq.motech.utils import b64_aes_decrypt
 from corehq.util.metrics import metrics_counter
@@ -138,6 +133,17 @@ from .dbaccessors import (
     get_success_repeat_record_count,
 )
 from .exceptions import RequestConnectionError
+from .repeater_generators import (
+    AppStructureGenerator,
+    CaseRepeaterJsonPayloadGenerator,
+    CaseRepeaterXMLPayloadGenerator,
+    FormRepeaterJsonPayloadGenerator,
+    FormRepeaterXMLPayloadGenerator,
+    LocationPayloadGenerator,
+    ReferCasePayloadGenerator,
+    ShortFormRepeaterJsonPayloadGenerator,
+    UserPayloadGenerator,
+)
 from .utils import get_all_repeater_types
 
 
@@ -170,16 +176,17 @@ class Repeater(QuickCachedDocumentMixin, Document):
 
     domain = StringProperty()
 
-    # TODO: (2020-03-06) Migrate to ConnectionSettings
+    connection_settings_id = IntegerProperty(required=False, default=None)
+    # TODO: Delete the following properties once all Repeaters have been
+    #       migrated to ConnectionSettings. (2020-05-16)
     url = StringProperty()
-    format = StringProperty()
-
     auth_type = StringProperty(choices=(BASIC_AUTH, DIGEST_AUTH, OAUTH1, BEARER_AUTH), required=False)
     username = StringProperty()
     password = StringProperty()  # See also plaintext_password()
     skip_cert_verify = BooleanProperty(default=False)  # See also verify()
     notify_addresses_str = StringProperty(default="")  # See also notify_addresses()
 
+    format = StringProperty()
     friendly_name = _("Data")
     paused = BooleanProperty(default=False)
 
@@ -190,6 +197,12 @@ class Repeater(QuickCachedDocumentMixin, Document):
     def __str__(self):
         url = "@".join((self.username, self.url)) if self.username else self.url
         return f"<{self.__class__.__name__} {self._id} {url}>"
+
+    @property
+    def connection_settings(self):
+        if not self.connection_settings_id:
+            return self.create_connection_settings()
+        return ConnectionSettings.objects.get(pk=self.connection_settings_id)
 
     @classmethod
     def available_for_domain(cls, domain):
@@ -356,12 +369,29 @@ class Repeater(QuickCachedDocumentMixin, Document):
             return b64_aes_decrypt(ciphertext)
         return self.password
 
-    def get_auth(self):
+    def get_auth_manager(self):
+        if self.auth_type is None:
+            return AuthManager()
         if self.auth_type == BASIC_AUTH:
-            return HTTPBasicAuth(self.username, self.plaintext_password)
-        elif self.auth_type == DIGEST_AUTH:
-            return HTTPDigestAuth(self.username, self.plaintext_password)
-        return None
+            return BasicAuthManager(
+                self.username,
+                self.password,
+            )
+        if self.auth_type == DIGEST_AUTH:
+            return DigestAuthManager(
+                self.username,
+                self.password,
+            )
+        if self.auth_type == OAUTH1:
+            raise NotImplementedError(_(
+                'OAuth1 authentication workflow not yet supported.'
+            ))
+        if self.auth_type == BEARER_AUTH:
+            return BearerAuthManager(
+                self.username,
+                self.password,
+            )
+        # OAuth 2.0 coming when Repeaters use ConnectionSettings
 
     @property
     def verify(self):
@@ -372,12 +402,13 @@ class Repeater(QuickCachedDocumentMixin, Document):
         return [addr for addr in re.split('[, ]+', self.notify_addresses_str) if addr]
 
     def send_request(self, repeat_record, payload):
-        headers = self.get_headers(repeat_record)
-        auth = self.get_auth()
         url = self.get_url(repeat_record)
         return simple_post(
-            self.domain, url, payload, headers=headers, auth=auth,
-            verify=self.verify, notify_addresses=self.notify_addresses,
+            self.domain, url, payload,
+            headers=self.get_headers(repeat_record),
+            auth_manager=self.get_auth_manager(),
+            verify=self.verify,
+            notify_addresses=self.notify_addresses,
             payload_id=repeat_record.payload_id,
         )
 
@@ -419,6 +450,25 @@ class Repeater(QuickCachedDocumentMixin, Document):
         extend FormRepeater, use the same form.)
         """
         return self.__class__.__name__
+
+    def create_connection_settings(self):
+        if self.connection_settings_id:
+            return  # Nothing to do
+        conn = ConnectionSettings(
+            domain=self.domain,
+            name=self.url,
+            url=self.url,
+            auth_type=self.auth_type,
+            username=self.username,
+            skip_cert_verify=self.skip_cert_verify,
+            notify_addresses_str=self.notify_addresses_str,
+        )
+        # Allow ConnectionSettings to encrypt old Repeater passwords:
+        conn.plaintext_password = self.plaintext_password
+        conn.save()
+        self.connection_settings_id = conn.id
+        self.save()
+        return conn
 
 
 class FormRepeater(Repeater):
@@ -937,27 +987,6 @@ def _is_response(duck):
     instance that this module uses, otherwise False.
     """
     return hasattr(duck, 'status_code') and hasattr(duck, 'reason')
-
-
-def get_requests(
-    repeater: Repeater,
-    payload_id: Optional[str] = None,
-) -> Requests:
-    """
-    Returns a Requests object instantiated with properties of the given
-    Repeater. ``payload_id`` specifies the payload that the object will
-    be used for sending, if applicable.
-    """
-    return Requests(
-        repeater.domain,
-        repeater.url,
-        repeater.username,
-        repeater.plaintext_password,
-        verify=repeater.verify,
-        notify_addresses=repeater.notify_addresses,
-        payload_id=payload_id,
-        auth_type=repeater.auth_type,
-    )
 
 
 # import signals
