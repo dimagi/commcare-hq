@@ -170,7 +170,7 @@ class DataSourceBuildInformation(DocumentSchema):
 class DataSourceMeta(DocumentSchema):
     build = SchemaProperty(DataSourceBuildInformation)
 
-    # If this is a linked datasource, this is the ID of the report this pulls from
+    # If this is a linked datasource, this is the ID of the datasource this pulls from
     master_id = StringProperty()
 
 
