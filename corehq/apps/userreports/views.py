@@ -1572,15 +1572,16 @@ def copy_report(request, domain):
         )
         messages.success(request, _(f"Successfully linked and copied {link_info.report.title} to {to_domain}. "
                                     "We've redirected you to the new report."))
-        return HttpResponseRedirect(
-            reverse(
-                ConfigurableReportView.slug,
-                args=[
-                    link_info.report.domain,
-                    link_info.report.get_id,
-                ],
-            )
+        url = reverse(
+            ConfigurableReportView.slug,
+            args=[
+                link_info.report.domain,
+                link_info.report.get_id,
+            ],
         )
+        if domain_link.is_remote:
+            url = f'{domain_link.remote_base_url}{url}'
+        return HttpResponseRedirect(url)
     except Exception as err:
         messages.error(request, _("Something went wrong linking your report"))
         notify_exception(request, message=str(err))
