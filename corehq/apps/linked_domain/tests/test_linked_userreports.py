@@ -80,6 +80,7 @@ class TestLinkedUCR(BaseLinkedAppsTest):
         report = ReportConfiguration.get(linked_report_info.report.get_id)
         self.assertEqual("New title", report.title)
         self.assertEqual(self.report.get_id, report.report_meta.master_id)
+        self.assertNotEqual(self.report.config_id, report.config_id)
 
     def test_delete_master_deletes_linked(self):
         linked_report_info = create_linked_ucr(self.domain_link, self.report.get_id)
