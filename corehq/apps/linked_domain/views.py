@@ -8,6 +8,7 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext, ugettext_lazy
 from django.views import View
 
+from couchdbkit import ResourceNotFound
 from djng.views.mixins import JSONResponseMixin, allow_remote_invocation
 from memoized import memoized
 
@@ -65,7 +66,10 @@ from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.dispatcher import DomainReportDispatcher
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.userreports.dbaccessors import get_report_configs_for_domain
-from corehq.apps.userreports.models import DataSourceConfiguration, ReportConfiguration
+from corehq.apps.userreports.models import (
+    DataSourceConfiguration,
+    ReportConfiguration,
+)
 from corehq.util.timezones.utils import get_timezone_for_request
 
 
@@ -430,7 +434,7 @@ class DomainLinkHistoryReport(GenericTabularReport):
             if detail:
                 try:
                     report_name = ReportConfiguration.get(detail.report_id).title
-                except Exception:
+                except ResourceNotFound:
                     pass
             return '{} ({})'.format(name, report_name)
 
