@@ -1,15 +1,18 @@
+import sys
+
 from typing import List, Dict
 
 from prometheus_client import Counter as PCounter
 from prometheus_client import Gauge as PGauge
 from prometheus_client import Histogram as PHistogram
+from prometheus_client import CollectorRegistry, multiprocess, push_to_gateway
 
 from corehq.util.soft_assert import soft_assert
 from corehq.util.metrics.metrics import HqMetrics
 
 prometheus_soft_assert = soft_assert(to=[
     f'{name}@dimagi.com'
-    for name in ['skelly', 'rkumar']
+    for name in ['skelly', 'rkumar', 'sreddy']
 ])
 
 
@@ -81,6 +84,11 @@ class PrometheusMetrics(HqMetrics):
         else:
             assert metric.__class__ == metric_type
         try:
+            is_a_celery_process = (sys.argv and sys.argv[0].endswith('celery')
+                and 'worker' in sys.argv)
+            is_a_pillow_process = (sys.argv and 'run_ptop' in sys.argv)
+            if is_a_celery_process or is_a_pillow_process:
+                self._push_to_gateway()
             return metric.labels(**tags) if tags else metric
         except ValueError:
             prometheus_soft_assert(False, 'Prometheus metric error', {
@@ -89,3 +97,16 @@ class PrometheusMetrics(HqMetrics):
                 'expected_tags': metric._labelnames
             })
             raise
+
+    def _push_to_gateway(self):
+        registry = CollectorRegistry()
+        multiprocess.MultiProcessCollector(registry)
+        try:
+            push_to_gateway('localhost:9091', job='batch_mode', registry=registry)
+        except Exception:
+            # Could get a URLOpenerror if Pushgateway is not running
+            prometheus_soft_assert(False, 'Prometheus metric error', {
+                'metric_name': name,
+                'tags': list(tags),
+                'expected_tags': metric._labelnames
+            })
