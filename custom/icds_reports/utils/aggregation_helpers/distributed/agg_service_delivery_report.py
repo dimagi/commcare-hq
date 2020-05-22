@@ -160,14 +160,14 @@ class AggServiceDeliveryReportHelper(AggregationPartitionedHelper):
         yield f"""
         UPDATE "{self.temporary_tablename}" agg_sdr
         SET
-            thr_eligible = thr_eligible +  ut.mother_thr_eligible,
-            thr_0_days = thr_0_days +  ut.mother_thr_0_days,
-            thr_1_7_days = thr_1_7_days +  ut.mother_thr_1_7_days,
-            thr_8_14_days = thr_8_14_days +  ut.mother_thr_8_14_days,
-            thr_15_20_days = thr_15_20_days +  ut.mother_thr_15_20_days,
-            thr_21_days = thr_21_days +  ut.mother_thr_21_days,
-            thr_21_24_days = thr_21_24_days + ut.mother_thr_21_24_days,
-            thr_25_days = thr_25_days +  ut.mother_thr_25_days
+            thr_eligible = COALESCE(thr_eligible, 0) +  ut.mother_thr_eligible,
+            thr_0_days = COALESCE(thr_0_days, 0) +  ut.mother_thr_0_days,
+            thr_1_7_days = COALESCE(thr_1_7_days, 0) +  ut.mother_thr_1_7_days,
+            thr_8_14_days = COALESCE(thr_8_14_days, 0) +  ut.mother_thr_8_14_days,
+            thr_15_20_days = COALESCE(thr_15_20_days, 0) +  ut.mother_thr_15_20_days,
+            thr_21_days = COALESCE(thr_21_days, 0) +  ut.mother_thr_21_days,
+            thr_21_24_days = COALESCE(thr_21_24_days, 0) + ut.mother_thr_21_24_days,
+            thr_25_days = COALESCE(thr_25_days, 0) +  ut.mother_thr_25_days
 
         FROM (
             SELECT

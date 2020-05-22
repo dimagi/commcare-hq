@@ -38,10 +38,10 @@ class TestServiceDeliveryData(TestCase):
                     'gm': '58.04 %',
                     'num_awcs_conducted_cbe': 0,
                     'num_awcs_conducted_vhnd': 2,
-                    'thr_given_21_days': 76,
-                    'thr_given_25_days': 22,
-                    'total_thr_candidates': 265,
-                    'thr': '28.68 %',
+                    'thr_given_21_days': 80,
+                    'thr_given_25_days': 24,
+                    'total_thr_candidates': 279,
+                    'thr': '28.67 %',
                     'cbe': '0.00 %'
                 },
                 {
@@ -59,10 +59,10 @@ class TestServiceDeliveryData(TestCase):
                     'gm': '81.29 %',
                     'num_awcs_conducted_cbe': 1,
                     'num_awcs_conducted_vhnd': 6,
-                    'thr_given_21_days': 174,
-                    'thr_given_25_days': 151,
-                    'total_thr_candidates': 306,
-                    'thr': '56.86 %',
+                    'thr_given_21_days': 181,
+                    'thr_given_25_days': 156,
+                    'total_thr_candidates': 318,
+                    'thr': '56.92 %',
                     'cbe': '9.09 %'
                 },
                 {
@@ -125,10 +125,10 @@ class TestServiceDeliveryData(TestCase):
                     'gm': '58.04 %',
                     'num_awcs_conducted_cbe': 0,
                     'num_awcs_conducted_vhnd': 2,
-                    'thr_given_21_days': 76,
-                    'thr_given_25_days': 22,
-                    'total_thr_candidates': 265,
-                    'thr': '28.68 %',
+                    'thr_given_21_days': 80,
+                    'thr_given_25_days': 24,
+                    'total_thr_candidates': 279,
+                    'thr': '28.67 %',
                     'cbe': '0.00 %'
                 }
             ],
