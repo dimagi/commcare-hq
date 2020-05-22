@@ -10,7 +10,6 @@ from custom.icds_reports.utils import DATA_NOT_ENTERED, percent_or_not_entered, 
 ], timeout=30 * 60)
 def get_service_delivery_report_data(domain, start, length, order, reversed_order, location_filters,
                               year, month, step, include_test=False):
-    year = 2017
     if location_filters.get('aggregation_level') == 1:
         default_order = 'state_name'
     elif location_filters.get('aggregation_level') == 2:
