@@ -25,9 +25,10 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument(
-            'month',
+            'start_date',
             type=date_type,
-            help='The start date (inclusive). format YYYY-MM-DD'
+            help='The start date (inclusive). format YYYY-MM-DD',
+            nargs='?'
         )
 
     def build_bp_data(self, month):
@@ -80,14 +81,7 @@ class Command(BaseCommand):
             sql_to_execute = sql_to_execute.split(';')
             for i in range(0, len(sql_to_execute)):
                 _run_custom_sql_script(sql_to_execute[i])
-
-    def add_arguments(self, parser):
-        parser.add_argument(
-            'start_date',
-            type=date_type,
-            help='The start date (inclusive). format YYYY-MM-DD',
-            nargs='?'
-        )
+    
 
     def handle(self, *args, **options):
         start_date = options['start_date'] if options['start_date'] else date(2020, 3, 1)
