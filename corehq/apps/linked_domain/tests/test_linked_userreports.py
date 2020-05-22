@@ -90,6 +90,11 @@ class TestLinkedUCR(BaseLinkedAppsTest):
         report = ReportConfiguration.get(linked_report_info.report.get_id)
         self.assertTrue(is_deleted(report))
 
+        self.report.config.deactivate()
+        update_linked_ucr(self.domain_link, linked_report_info.report.get_id)
+        report = ReportConfiguration.get(linked_report_info.report.get_id)
+        self.assertTrue(report.config.is_deactivated)
+
     @patch('corehq.apps.linked_domain.ucr.remote_get_ucr_config')
     def test_remote_link_ucr(self, fake_ucr_getter):
         create_domain(self.domain)
