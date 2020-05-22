@@ -34,7 +34,7 @@ allowed_headers = set([
     'uncategorized_data', 'user_id', 'is_active', 'is_account_confirmed', 'send_confirmation_email',
     'location_code', 'role',
     'User IMEIs (read only)', 'registered_on (read only)', 'last_submission (read only)',
-    'last_sync (read only)'
+    'last_sync (read only)', 'web_user'
 ]) | required_headers
 old_headers = {
     # 'old_header_name': 'new_header_name'
@@ -317,6 +317,7 @@ def create_or_update_users_and_groups(domain, user_specs, group_memoizer=None, u
             # ignore empty
             location_codes = [code for code in location_codes if code]
             role = row.get('role', '')
+            web_user = row.get('web_user')
 
             try:
                 username = normalize_username(str(username), domain) if username else None
@@ -389,11 +390,32 @@ def create_or_update_users_and_groups(domain, user_specs, group_memoizer=None, u
                         user.reset_locations(location_ids, commit=False)
 
                 if role:
-                    user.set_role(domain, roles_by_name[role].get_qualified_id())
+                    role = roles_by_name[role].get_qualified_id()
+                    user.set_role(domain, role)
+
+                if web_user:
+                    user.user_data.update({'login_as_user': web_user})
 
                 user.save()
 
-                if send_account_confirmation_email:
+                if web_user:
+                    current_user = CouchUser.get_by_username(web_user)
+                    if current_user and not current_user.is_member_of(domain) and is_account_confirmed:
+                        current_user.add_as_web_user(domain, role=role, location_id=user.location_id)
+                    else:
+                        invite_data = {
+                            'invited_by': 'Mobile User Upload',
+                            'invited_on': datetime.utcnow()
+                            'domain': domain,
+                            'role': role,
+                            'supply_point': user.location_id
+                        }
+                        invite = Invitation(**invite_data)
+                        invite.save()
+                        if send_account_confirmation_email:
+                            invite.send_activation_email()
+
+                if send_account_confirmation_email and not web_user:
                     send_account_confirmation_if_necessary(user)
 
                 if is_password(password):
