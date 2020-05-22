@@ -20,6 +20,7 @@ def get_service_delivery_data(domain, start, length, order, reversed_order, loca
         default_order = 'supervisor_name'
     else:
         default_order = 'awc_name'
+
     data = ServiceDeliveryMonthly.objects.filter(
         month=date(year, month, 1),
         **location_filters
