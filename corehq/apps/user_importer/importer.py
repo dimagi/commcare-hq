@@ -1,5 +1,6 @@
 import logging
 from collections import defaultdict
+from datetime import datetime
 
 from django.db import DEFAULT_DB_ALIAS
 from django.utils.translation import ugettext as _
@@ -316,7 +317,7 @@ def create_or_update_users_and_groups(domain, user_specs, group_memoizer=None, u
                 location_codes = [location_codes]
             # ignore empty
             location_codes = [code for code in location_codes if code]
-            role = row.get('role', '')
+            role = row.get('role', None)
             web_user = row.get('web_user')
 
             try:
@@ -400,6 +401,10 @@ def create_or_update_users_and_groups(domain, user_specs, group_memoizer=None, u
 
                 if web_user:
                     current_user = CouchUser.get_by_username(web_user)
+                    if not current_user and is_account_confirmed:
+                        raise UserUploadError(_(
+                            f"You can only set 'Is Account Confirmed' to 'True' on an existing Web User."
+                        ))
                     if current_user and not current_user.is_member_of(domain) and is_account_confirmed:
                         current_user.add_as_web_user(domain, role=role, location_id=user.location_id)
                     else:
