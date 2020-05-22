@@ -61,7 +61,7 @@ class Command(BaseCommand):
                 sql_to_execute = sql_to_execute.format(month=month.strftime("%Y-%m-%d"), state_id=STATE_ID)
                 _run_custom_sql_script(sql_to_execute)
         else:
-            icds_state_aggregation_task(state_id=STATE_ID, date=month.strftime("%Y-%m-%d"),
+            icds_state_aggregation_task(state_id=STATE_ID, date=month,
                                         func_name='_agg_migration_table')
 
     def update_ccs_data(self, month):
