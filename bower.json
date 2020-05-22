@@ -42,7 +42,7 @@
     "multiselect": "0.9.12",
     "quicksearch": "2.2.1",
     "knockout": "3.5.1",
-    "knockout-validation": "2.0.3",
+    "knockout-validation": "^2.0.4",
     "underscore": "1.8.3",
     "leaflet": "0.7.7",
     "select2": "4.0.0",
