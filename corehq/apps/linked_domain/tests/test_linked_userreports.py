@@ -37,13 +37,11 @@ class TestLinkedUCR(BaseLinkedAppsTest):
         self.report.domain = self.domain
         self.report.save()
 
-    def tearDown(cls):
+    def tearDown(self):
         delete_all_report_configs()
         for config in DataSourceConfiguration.all():
             config.delete()
 
-        delete_all_users()
-        delete_all_domains()
         super().tearDown()
 
     def test_link_creates_datasource_and_report(self):
@@ -98,8 +96,12 @@ class TestLinkedUCR(BaseLinkedAppsTest):
     @patch('corehq.apps.linked_domain.ucr.remote_get_ucr_config')
     def test_remote_link_ucr(self, fake_ucr_getter):
         create_domain(self.domain)
+        self.addCleanup(delete_all_domains)
+
         couch_user = WebUser.create(self.domain, "test", "foobar")
         django_user = couch_user.get_django_user()
+        self.addCleanup(delete_all_users)
+
         api_key, _ = ApiKey.objects.get_or_create(user=django_user)
         auth_headers = {'HTTP_AUTHORIZATION': 'apikey test:%s' % api_key.key}
         self.domain_link.save()
