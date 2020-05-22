@@ -404,11 +404,11 @@ def create_or_update_users_and_groups(domain, user_specs, group_memoizer=None, u
                         current_user.add_as_web_user(domain, role=role, location_id=user.location_id)
                     else:
                         invite_data = {
-                            'invited_by': user_id,
+                            'invited_by': 'Mobile User Upload',
                             'invited_on': datetime.utcnow()
                             'domain': domain,
                             'role': role,
-                            'supply_point': location_id
+                            'supply_point': user.location_id
                         }
                         invite = Invitation(**invite_data)
                         invite.save()
