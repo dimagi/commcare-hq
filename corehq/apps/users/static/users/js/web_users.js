@@ -132,9 +132,8 @@ hqDefine("users/js/web_users",[
         }
 
         $('.delete-request').on('click', function (e) {
-            handleDeletion($(this), {
-                    id: $(this).data('id'),
-                },
+            handleDeletion($(this),
+                {id: $(this).data('id')},
                 gettext("Delete request"),
                 gettext("Are you sure you want to delete this request?"),
                 url("delete_request")
