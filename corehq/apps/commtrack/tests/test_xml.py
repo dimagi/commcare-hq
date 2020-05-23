@@ -85,6 +85,8 @@ class XMLTest(TestCase):
             min_periods=0,
         )
         self.ct_settings.save()
+        self.ct_settings.sqlconsumptionconfig.commtrack_settings = self.ct_settings
+        self.ct_settings.sqlconsumptionconfig.save()
         self.domain = Domain.get(self.domain._id)
 
         self.loc = make_loc('loc1')
@@ -223,6 +225,7 @@ class CommTrackOTATest(XMLTest):
         # since the commtrack settings object is stored as a memoized property on the domain
         # we need to refresh that as well
         self.ct_settings.save()
+        self.ct_settings.sqlstockrestoreconfig.save()
         self.domain = Domain.get(self.domain._id)
 
 

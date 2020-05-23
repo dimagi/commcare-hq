@@ -138,6 +138,10 @@ class CommTrackSettingsView(BaseCommTrackManageView):
                             data['consumption_' + field])
 
             self.commtrack_settings.save()
+            for attr in ('sqlconsumptionconfig', 'sqlstockrestoreconfig', 'sqlstocklevelsconfig'):
+                submodel = getattr(self.commtrack_settings, attr)
+                submodel.commtrack_settings = self.commtrack_settings
+                submodel.save()
 
             for loc_type in LocationType.objects.filter(domain=self.domain).all():
                 # This will update stock levels based on commtrack config
@@ -231,7 +235,7 @@ class SMSSettingsView(BaseCommTrackManageView):
 
         # TODO add server-side input validation here (currently validated on client)
 
-        self.domain_object.commtrack_settings.actions = [make_action(a) for a in payload['actions']]
+        self.domain_object.commtrack_settings.set_actions([make_action(a) for a in payload['actions']])
         self.domain_object.commtrack_settings.save()
 
         return self.get(request, *args, **kwargs)

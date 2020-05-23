@@ -17,7 +17,11 @@ from corehq import feature_previews, toggles
 from corehq.apps.commtrack import const
 from corehq.apps.commtrack.models import (
     SQLActionConfig,
+    SQLAlertConfig,
     SQLCommtrackConfig,
+    SQLConsumptionConfig,
+    SQLStockLevelsConfig,
+    SQLStockRestoreConfig,
     SupplyPointCase,
 )
 from corehq.apps.hqcase.utils import submit_case_blocks
@@ -83,6 +87,12 @@ def _create_commtrack_config_if_needed(domain):
         return
 
     config = SQLCommtrackConfig(domain=domain)
+    config.save()   # must be saved before submodels can be saved
+
+    SQLAlertConfig(commtrack_config=config).save()
+    SQLConsumptionConfig(commtrack_config=config).save()
+    SQLStockLevelsConfig(commtrack_config=config).save()
+    SQLStockRestoreConfig(commtrack_config=config).save()
     config.set_actions([
         SQLActionConfig(
             action='receipts',
@@ -111,7 +121,7 @@ def _create_commtrack_config_if_needed(domain):
             caption='Stock-out',
         ),
     ])
-    config.save()
+    config.save()   # save actions
 
 
 def _enable_commtrack_previews(domain):

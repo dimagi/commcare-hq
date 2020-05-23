@@ -98,6 +98,8 @@ class LogisticsConsumptionTest(TestCase):
         commtrack_config = SQLCommtrackConfig(domain=self.domain.name)
         commtrack_config.sqlconsumptionconfig = SQLConsumptionConfig()
         commtrack_config.save()
+        commtrack_config.sqlconsumptionconfig.commtrack_config = commtrack_config
+        commtrack_config.sqlconsumptionconfig.save()
         self.create_transactions(self.domain.name)
         self.assertEqual(StockTransaction.objects.all().count(), 3)
         self.assertEqual(StockTransaction.objects.filter(type='receipts').count(), 1)
@@ -107,6 +109,8 @@ class LogisticsConsumptionTest(TestCase):
         commtrack_config = SQLCommtrackConfig(domain=self.domain.name)
         commtrack_config.sqlconsumptionconfig = SQLConsumptionConfig(exclude_invalid_periods=True)
         commtrack_config.save()
+        commtrack_config.sqlconsumptionconfig.commtrack_config = commtrack_config
+        commtrack_config.sqlconsumptionconfig.save()
         self.create_transactions(self.domain.name)
         self.assertEqual(StockTransaction.objects.all().count(), 2)
         self.assertEqual(StockTransaction.objects.filter(type='receipts').count(), 0)
