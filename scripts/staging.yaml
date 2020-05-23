@@ -66,5 +66,6 @@ branches:
   - nh/connx+repeaters  # Norman May 20
 #  - bmb/SAAS-10882  # Biyeun May 20 (updates knockout, bootstrap, jquery, DOMPurify)
   - ce/webuser-upload # Cal May 22
+  - fr/linked-domains-ucr       # Farid May 23
 
 submodules: {}
