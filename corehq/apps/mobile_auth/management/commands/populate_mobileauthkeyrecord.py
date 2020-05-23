@@ -21,7 +21,7 @@ class Command(PopulateSQLCommand):
         # Use get_or_create so that if sql model exists we don't bother saving it,
         # since these models are read-only
         model, created = self.sql_class().objects.get_or_create(
-            uuid=doc['_id'],
+            id=doc['_id'],
             defaults={
                 "domain": doc.get("domain"),
                 "user_id": doc.get("user_id"),

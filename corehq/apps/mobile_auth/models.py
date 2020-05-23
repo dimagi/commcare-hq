@@ -22,7 +22,7 @@ class MobileAuthKeyRecord(models.Model):
     (from https://github.com/dimagi/commcare/wiki/CentralAuthAPI)
 
     """
-    uuid = models.UUIDField(primary_key=True, db_index=True, default=_default_uuid, db_column='id')
+    id = models.UUIDField(primary_key=True, default=_default_uuid)
     domain = models.CharField(max_length=126, null=False, db_index=True)
     user_id = models.CharField(max_length=255, null=False, db_index=True)
 
