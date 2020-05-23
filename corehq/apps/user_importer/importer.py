@@ -26,7 +26,7 @@ from corehq.apps.user_importer.validation import (
     get_user_import_validators,
     is_password,
 )
-from corehq.apps.users.models import CommCareUser, CouchUser, UserRole
+from corehq.apps.users.models import CommCareUser, CouchUser, UserRole, Invitation
 from corehq.apps.users.util import normalize_username
 
 required_headers = set(['username'])
@@ -342,7 +342,7 @@ def create_or_update_users_and_groups(domain, user_specs, group_memoizer=None, u
 
                     # note: explicitly not including "None" here because that's the default value if not set.
                     # False means it was set explicitly to that value
-                    if is_account_confirmed is False:
+                    if is_account_confirmed is False and not web_user:
                         raise UserUploadError(_(
                             f"You can only set 'Is Account Confirmed' to 'False' on a new User."
                         ))
@@ -352,7 +352,7 @@ def create_or_update_users_and_groups(domain, user_specs, group_memoizer=None, u
                     status_row['flag'] = 'updated'
                 else:
                     kwargs = {}
-                    if is_account_confirmed is not None:
+                    if is_account_confirmed is not None and not web_user:
                         kwargs['is_account_confirmed'] = is_account_confirmed
                     user = CommCareUser.create(domain, username, password, commit=False, **kwargs)
                     status_row['flag'] = 'created'
@@ -407,7 +407,7 @@ def create_or_update_users_and_groups(domain, user_specs, group_memoizer=None, u
                         ))
                     if current_user and not current_user.is_member_of(domain) and is_account_confirmed:
                         current_user.add_as_web_user(domain, role=role, location_id=user.location_id)
-                    else:
+                    elif not current_user or not current_user.is_member_of(domain):
                         invite_data = {
                             'invited_by': 'Mobile User Upload',
                             'invited_on': datetime.utcnow(),
