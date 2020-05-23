@@ -89,7 +89,7 @@
             </label>
             <div class="controls col-sm-9 col-md-9">
               <select name="domain" class="select form-control" required="" id="domain-selector">
-                <option value="" selected="">Select a project...</option>
+                <option value="" selected="">{% trans "Select a project..." %}</option>
                 {% for domain in linked_domain_list %}
                   <option value="{{ domain }}">{{ domain }}</option>
                 {% endfor %}
