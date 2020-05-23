@@ -141,9 +141,8 @@ hqDefine("users/js/web_users",[
             e.preventDefault();
         });
         $('.delete-invitation').on('click', function (e) {
-            handleDeletion($(this), {
-                    uuid: $(this).data('uuid'),
-                },
+            handleDeletion($(this),
+                {uuid: $(this).data('uuid')},
                 gettext("Delete invitation"),
                 gettext("Are you sure you want to delete this invitation?"),
                 url("delete_invitation")
