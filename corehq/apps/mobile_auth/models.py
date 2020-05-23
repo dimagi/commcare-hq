@@ -66,7 +66,7 @@ def _default_key():
 
 
 class SQLMobileAuthKeyRecord(SyncSQLToCouchMixin, models.Model):
-    uuid = models.UUIDField(primary_key=True, db_index=True, default=_default_uuid, db_column='id')
+    id = models.UUIDField(primary_key=True, default=_default_uuid)
     domain = models.CharField(max_length=126, null=False, db_index=True)
     user_id = models.CharField(max_length=255, null=False, db_index=True)
 
@@ -78,7 +78,11 @@ class SQLMobileAuthKeyRecord(SyncSQLToCouchMixin, models.Model):
     class Meta:
         db_table = "mobile_auth_mobileauthkeyrecord"
 
-    _migration_couch_id_name = "uuid"
+    _migration_couch_id_name = "id"
+
+    @property
+    def uuid(self):
+        return self.id
 
     @classmethod
     def _migration_get_couch_model_class(cls):
