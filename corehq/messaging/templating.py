@@ -220,7 +220,7 @@ class CaseMessagingTemplateParam(SimpleDictTemplateParam):
             return self.__last_modified_by_result
 
         try:
-            modified_by = CouchUser.get_by_user_id(self.__case.modified_by, domain=self.__domain)
+            modified_by = CouchUser.get_by_user_id(self.__case.modified_by)
         except KeyError:
             modified_by = None
 

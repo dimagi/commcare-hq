@@ -106,7 +106,7 @@ class _Importer(object):
 
     @cached_property
     def user(self):
-        return CouchUser.get_by_user_id(self.config.couch_user_id, self.domain)
+        return CouchUser.get_by_user_id(self.config.couch_user_id)
 
     def add_caseblock(self, caseblock):
         self._unsubmitted_caseblocks.append(caseblock)
