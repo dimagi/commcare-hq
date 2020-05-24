@@ -17,6 +17,7 @@ from casexml.apps.stock.consumption import (
 )
 from casexml.apps.stock.models import DocDomainMapping
 from couchforms.signals import xform_archived, xform_unarchived
+from dimagi.ext.couchdbkit import Document
 from dimagi.ext.couchdbkit import *
 from dimagi.utils.couch.migration import SyncCouchToSQLMixin, SyncSQLToCouchMixin
 

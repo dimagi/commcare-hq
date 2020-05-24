@@ -90,8 +90,10 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='SQLStockRestoreConfig',
             fields=[
-                ('section_to_consumption_types', django.contrib.postgres.fields.jsonb.JSONField(default=dict, null=True)),
-                ('force_consumption_case_types', django.contrib.postgres.fields.jsonb.JSONField(default=list, null=True)),
+                ('section_to_consumption_types',
+                 django.contrib.postgres.fields.jsonb.JSONField(default=dict, null=True)),
+                ('force_consumption_case_types',
+                 django.contrib.postgres.fields.jsonb.JSONField(default=list, null=True)),
                 ('use_dynamic_product_list', models.BooleanField(default=False)),
                 ('commtrack_config', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE,
                                                           primary_key=True, serialize=False,
