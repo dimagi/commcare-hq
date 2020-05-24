@@ -183,7 +183,7 @@ def get_service_delivery_details(domain, start, length, order, reversed_order, l
     else:
         default_order = 'awc_name'
 
-    values = ['state_name', 'district_name', 'block_name', 'supervisor_name', 'awc_name', 'num_launched_awcs']
+    location_fields = ['state_name', 'district_name', 'block_name', 'supervisor_name', 'awc_name', 'num_launched_awcs']
     count_columns = list()
 
     if step == 'thr':
@@ -198,7 +198,7 @@ def get_service_delivery_details(domain, start, length, order, reversed_order, l
     elif step == 'pse':
         count_columns = ['pse_eligible', 'pse_0_days', 'pse_1_7_days', 'pse_8_14_days', 'pse_15_20_days',
                          'pse_21_24_days', 'pse_25_days']
-    values.extend(count_columns)
+    values = location_fields + count_columns
 
     def get_data_for(default_order, values):
         return ServiceDeliveryReportView.objects.filter(month=date(year, month, 1), **location_filters)\
@@ -226,7 +226,7 @@ def get_service_delivery_details(domain, start, length, order, reversed_order, l
             block_name=get_value_or_data_not_entered(row_data, 'block_name'),
             supervisor_name=get_value_or_data_not_entered(row_data, 'supervisor_name'),
             awc_name=get_value_or_data_not_entered(row_data, 'awc_name'),
-            num_launched_awcs = get_value_or_data_not_entered(row_data, 'num_launched_awcs')
+            num_launched_awcs=get_value_or_data_not_entered(row_data, 'num_launched_awcs')
         )
         if step == 'thr':
             base_dict['thr_0_days'] = percent_or_not_entered(row_data['thr_0_days'],
@@ -304,7 +304,7 @@ def get_service_delivery_details(domain, start, length, order, reversed_order, l
     for row in data:
         config['data'].append(base_data(row))
 
-    percentage_fields = values
+    percentage_fields = count_columns
     if order:
         if order in percentage_fields:
             config['data'].sort(
