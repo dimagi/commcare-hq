@@ -50,6 +50,7 @@ trunk: master
 name: autostaging
 branches:
   - vellum-staging  # DO NOT REMOVE this is similar to "autostaging", but for vellum
+  - jls/sync-mixins-hard-fail # Jenny May 24
   - jls/migrate-CustomDataFieldsDefinition-2 # Jenny April 29
   - mk/location-reassignment-realign # MK May 4
   - rn_update_perfect_scrollbar # Rohit Negi May 4
