@@ -267,7 +267,7 @@ def get_location_from_site_code(site_code, location_cache):
         )
 
 
-def create_or_update_users_and_groups(domain, user_specs, group_memoizer=None, update_progress=None):
+def create_or_update_users_and_groups(domain, user_specs, group_memoizer=None, update_progress=None, upload_user=None):
     ret = {"errors": [], "rows": []}
 
     group_memoizer = group_memoizer or GroupMemoizer(domain)
@@ -403,14 +403,14 @@ def create_or_update_users_and_groups(domain, user_specs, group_memoizer=None, u
                     current_user = CouchUser.get_by_username(web_user)
                     if not current_user and is_account_confirmed:
                         raise UserUploadError(_(
-                            f"You can only set 'Is Account Confirmed' to 'True' on an existing Web User."
+                            f"You can only set 'Is Account Confirmed' to 'True' on an existing Web User. {web_user} is a new username."
                         ))
                     if current_user and not current_user.is_member_of(domain) and is_account_confirmed:
                         current_user.add_as_web_user(domain, role=role, location_id=user.location_id)
                     elif not current_user or not current_user.is_member_of(domain):
                         invite_data = {
                             'email': web_user,
-                            'invited_by': 'Mobile User Upload',
+                            'invited_by': upload_user.username,
                             'invited_on': datetime.utcnow(),
                             'domain': domain,
                             'role': role,
