@@ -58,9 +58,11 @@ def get_service_delivery_report_data(domain, start, length, order, reversed_orde
         return first_dict
 
     def get_pw_lw_percents(return_dict, row_data):
-        return_dict['home_visits'] = percent_or_not_entered(row_data['valid_visits'], row_data['expected_visits'])
+        return_dict['home_visits'] = percent_or_not_entered(row_data['valid_visits'],
+                                                            row_data['expected_visits'])
         return_dict['gm'] = percent_or_not_entered(row_data['gm_0_3'], row_data['children_0_3'])
-        return_dict['cbe'] = percent_or_not_entered(row_data['num_awcs_conducted_cbe'], row_data['num_launched_awcs'])
+        return_dict['cbe'] = percent_or_not_entered(row_data['num_awcs_conducted_cbe'],
+                                                    row_data['num_launched_awcs'])
         if month_filter_check():
             return_dict['thr'] = percent_or_not_entered(row_data['thr_25_days'], row_data['thr_eligible'])
         else:
