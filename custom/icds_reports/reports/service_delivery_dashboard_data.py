@@ -54,7 +54,7 @@ def get_service_delivery_report_data(domain, start, length, order, reversed_orde
             # excluding location and percentage fields
             if key not in location_fields + ['thr', 'pse', 'sn', 'gm', 'home_visits']:
                 first_dict[key] = format_data_not_entered_to_zero(first_dict[key]) +\
-                              format_data_not_entered_to_zero(second_dict[key])
+                                  format_data_not_entered_to_zero(second_dict[key])
         return first_dict
 
     def get_pw_lw_percents(return_dict, row_data):
@@ -128,7 +128,7 @@ def get_service_delivery_report_data(domain, start, length, order, reversed_orde
         else:
             all_row = merge_dicts(all_row, base_row)
         # Calculating percentages for all row
-        if index+1 == data_length:
+        if index + 1 == data_length:
             # setting location params to all
             for location in location_fields:
                 all_row[location] = 'All'
@@ -205,7 +205,7 @@ def get_service_delivery_details(domain, start, length, order, reversed_order, l
             # excluding location and percentage fields
             if key in values:
                 first_dict[key] = format_data_not_entered_to_zero(first_dict[key]) +\
-                              format_data_not_entered_to_zero(second_dict[key])
+                                  format_data_not_entered_to_zero(second_dict[key])
         return first_dict
 
     def get_value_or_data_not_entered(source, field):
