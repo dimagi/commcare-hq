@@ -37,7 +37,6 @@ class StockStateTest(TestCase):
             min_transactions=0,
             min_window=0,
             optimal_window=60,
-            min_periods=0,
         )
         cls.ct_settings.save()
         cls.ct_settings.sqlconsumptionconfig.commtrack_settings = cls.ct_settings

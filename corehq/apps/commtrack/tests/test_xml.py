@@ -82,7 +82,6 @@ class XMLTest(TestCase):
             min_transactions=0,
             min_window=0,
             optimal_window=60,
-            min_periods=0,
         )
         self.ct_settings.save()
         self.ct_settings.sqlconsumptionconfig.commtrack_settings = self.ct_settings
