@@ -24,6 +24,27 @@ class TestServiceDeliveryData(TestCase):
         expected = {
             'data': [
                 {
+                    'state_name': 'All',
+                    'district_name': 'All',
+                    'block_name': 'All',
+                    'supervisor_name': 'All',
+                    'awc_name': 'All',
+                    'num_launched_awcs': 22,
+                    'valid_visits': 3,
+                    'expected_visits': 379,
+                    'home_visits': '0.79 %',
+                    'gm_0_3': 222,
+                    'children_0_3': 314,
+                    'gm': '70.70 %',
+                    'num_awcs_conducted_cbe': 1,
+                    'num_awcs_conducted_vhnd': 8,
+                    'thr_given_21_days': 261,
+                    'thr_given_25_days': 180,
+                    'total_thr_candidates': 598,
+                    'thr': '43.65 %',
+                    'cbe': '4.55 %'
+                },
+                {
                     'state_name': 'st1',
                     'district_name': 'Data Not Entered',
                     'block_name': 'Data Not Entered',
@@ -111,6 +132,27 @@ class TestServiceDeliveryData(TestCase):
         expected = {
             'data': [
                 {
+                    'state_name': 'All',
+                    'district_name': 'All',
+                    'block_name': 'All',
+                    'supervisor_name': 'All',
+                    'awc_name': 'All',
+                    'num_launched_awcs': 10,
+                    'valid_visits': 3,
+                    'expected_visits': 185,
+                    'home_visits': '1.62 %',
+                    'gm_0_3': 83,
+                    'children_0_3': 143,
+                    'gm': '58.04 %',
+                    'num_awcs_conducted_cbe': 0,
+                    'num_awcs_conducted_vhnd': 2,
+                    'thr_given_21_days': 80,
+                    'thr_given_25_days': 24,
+                    'total_thr_candidates': 279,
+                    'thr': '28.67 %',
+                    'cbe': '0.00 %'
+                },
+                {
                     'state_name': 'st1',
                     'district_name': 'd1',
                     'block_name': 'Data Not Entered',
@@ -154,6 +196,24 @@ class TestServiceDeliveryData(TestCase):
         )
         expected = {
             'data': [
+                {
+                    'num_launched_awcs': 22,
+                    'state_name': 'All',
+                    'district_name': 'All',
+                    'block_name': 'All',
+                    'supervisor_name': 'All',
+                    'awc_name': 'All',
+                    'lunch_count_21_days': 15,
+                    'lunch_count_25_days': 0,
+                    'children_3_6': 991,
+                    'sn': '1.51 %',
+                    'pse_attended_21_days': 66,
+                    'pse_attended_25_days': 20,
+                    'pse': '6.66 %',
+                    'gm_3_5': 473,
+                    'children_3_5': 675,
+                    'gm': '70.07 %'
+                },
                 {
                     'num_launched_awcs': 10,
                     'state_name': 'st1',
@@ -232,6 +292,24 @@ class TestServiceDeliveryData(TestCase):
         )
         expected = {
             'data': [
+                {
+                    'num_launched_awcs': 10,
+                    'state_name': 'All',
+                    'district_name': 'All',
+                    'block_name': 'All',
+                    'supervisor_name': 'All',
+                    'awc_name': 'All',
+                    'lunch_count_21_days': 4,
+                    'lunch_count_25_days': 0,
+                    'children_3_6': 483,
+                    'sn': '0.83 %',
+                    'pse_attended_21_days': 7,
+                    'pse_attended_25_days': 0,
+                    'pse': '1.45 %',
+                    'gm_3_5': 234,
+                    'children_3_5': 332,
+                    'gm': '70.48 %'
+                },
                 {
                     'num_launched_awcs': 10,
                     'state_name': 'st1',

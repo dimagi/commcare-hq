@@ -1,3 +1,4 @@
+import copy
 from datetime import date
 
 from custom.icds_reports.cache import icds_quickcache
@@ -21,15 +22,16 @@ def get_service_delivery_report_data(domain, start, length, order, reversed_orde
     else:
         default_order = 'awc_name'
 
+    location_fields = ['state_name', 'district_name', 'block_name', 'supervisor_name', 'awc_name']
+    value_fields = location_fields + ['num_launched_awcs', 'valid_visits', 'expected_visits', 'gm_0_3',
+                                      'children_0_3', 'num_awcs_conducted_cbe', 'num_awcs_conducted_vhnd',
+                                      'thr_21_days', 'thr_25_days', 'thr_eligible', 'lunch_21_days',
+                                      'lunch_25_days', 'pse_eligible', 'pse_21_days', 'pse_25_days',
+                                      'gm_3_5', 'children_3_5']
     data = ServiceDeliveryReportView .objects.filter(
         month=date(year, month, 1),
         **location_filters
-    ).order_by(default_order).values(
-        'state_name', 'district_name', 'block_name', 'supervisor_name', 'awc_name', 'num_launched_awcs',
-        'valid_visits', 'expected_visits', 'gm_0_3', 'children_0_3', 'num_awcs_conducted_cbe',
-        'num_awcs_conducted_vhnd', 'thr_21_days', 'thr_25_days', 'thr_eligible', 'lunch_21_days',
-        'lunch_25_days', 'pse_eligible', 'pse_21_days', 'pse_25_days', 'gm_3_5', 'children_3_5'
-    )
+    ).order_by(default_order).values(*value_fields)
     if not include_test:
         data = apply_exclude(domain, data)
     data_count = data.count()
@@ -45,6 +47,19 @@ def get_service_delivery_report_data(domain, start, length, order, reversed_orde
         if value is None:
             return DATA_NOT_ENTERED
         return value
+
+    def format_data_not_entered_to_zero(value):
+        if value == DATA_NOT_ENTERED:
+            return 0
+        return value
+
+    def merge_dicts(first_dict, second_dict):
+        for key, value in first_dict.items():
+            # excluding location and percentage fields
+            if key not in location_fields and key not in ['thr', 'pse', 'sn', 'gm', 'home_visits']:
+                first_dict[key] = format_data_not_entered_to_zero(first_dict[key]) +\
+                              format_data_not_entered_to_zero(second_dict[key])
+        return first_dict
 
     def base_data(row_data):
         if step == 'pw_lw_children':
@@ -71,7 +86,6 @@ def get_service_delivery_report_data(domain, start, length, order, reversed_orde
             )
             if month_filter_check():
                 return_dict['thr'] = percent_or_not_entered(row_data['thr_25_days'], row_data['thr_eligible'])
-            return return_dict
         else:
             return_dict = dict(
                 num_launched_awcs=get_value_or_data_not_entered(row_data, 'num_launched_awcs'),
@@ -94,10 +108,47 @@ def get_service_delivery_report_data(domain, start, length, order, reversed_orde
             if month_filter_check():
                 return_dict['pse'] = percent_or_not_entered(row_data['pse_25_days'], row_data['pse_eligible'])
                 return_dict['sn'] = percent_or_not_entered(row_data['lunch_25_days'], row_data['pse_eligible'])
-            return return_dict
+        return return_dict
 
-    for row in data:
-        config['data'].append(base_data(row))
+    all_row = dict()
+
+    data_length = len(data)
+    for index, row in enumerate(data):
+        base_row = base_data(row)
+        if not all_row.keys():
+            all_row = copy.deepcopy(base_row)
+        else:
+            all_row = merge_dicts(all_row, base_row)
+        # Calculating percentages for all row
+        if index+1 == data_length:
+            # setting location params to all
+            for location in location_fields:
+                all_row[location] = 'All'
+            if step == 'pw_lw_children':
+                if month_filter_check():
+                    all_row['thr'] = percent_or_not_entered(all_row['thr_given_25_days'],
+                                                            all_row['total_thr_candidates'])
+                else:
+                    all_row['thr'] = percent_or_not_entered(all_row['thr_given_21_days'],
+                                                            all_row['total_thr_candidates'])
+                all_row['home_visits'] = percent_or_not_entered(all_row['valid_visits'],
+                                                                all_row['expected_visits'])
+                all_row['gm'] = percent_or_not_entered(all_row['gm_0_3'], all_row['children_0_3'])
+                all_row['cbe'] = percent_or_not_entered(all_row['num_awcs_conducted_cbe'],
+                                                        all_row['num_launched_awcs'])
+            else:
+                if month_filter_check():
+                    all_row['pse'] = percent_or_not_entered(all_row['pse_attended_25_days'],
+                                                            all_row['children_3_6'])
+                    all_row['sn'] = percent_or_not_entered(all_row['lunch_count_25_days'],
+                                                           all_row['children_3_6'])
+                else:
+                    all_row['pse'] = percent_or_not_entered(all_row['pse_attended_21_days'],
+                                                            all_row['children_3_6'])
+                    all_row['sn'] = percent_or_not_entered(all_row['lunch_count_21_days'],
+                                                           all_row['children_3_6'])
+                all_row['gm'] = percent_or_not_entered(all_row['gm_3_5'], all_row['children_3_5'])
+        config['data'].append(base_row)
 
     percentage_fields = ('home_visits', 'gm', 'thr', 'sn', 'pse')
     if order:
@@ -108,7 +159,7 @@ def get_service_delivery_report_data(domain, start, length, order, reversed_orde
         else:
             config['data'].sort(key=lambda x: x[order], reverse=reversed_order)
     config['data'] = config['data'][start:(start + length)]
-
+    config['data'].insert(0, all_row)
     config["aggregationLevel"] = location_filters['aggregation_level']
     config["recordsTotal"] = data_count
     config["recordsFiltered"] = data_count
@@ -132,20 +183,22 @@ def get_service_delivery_details(domain, start, length, order, reversed_order, l
     else:
         default_order = 'awc_name'
 
-    values = ['state_name', 'district_name', 'block_name', 'supervisor_name', 'awc_name']
+    values = ['state_name', 'district_name', 'block_name', 'supervisor_name', 'awc_name', 'num_launched_awcs']
+    count_columns = list()
 
     if step == 'thr':
-        values.extend(['thr_eligible', 'thr_0_days', 'thr_1_7_days', 'thr_8_14_days', 'thr_15_20_days',
-                       'thr_21_24_days', 'thr_25_days'])
+        count_columns = ['thr_eligible', 'thr_0_days', 'thr_1_7_days', 'thr_8_14_days', 'thr_15_20_days',
+                         'thr_21_24_days', 'thr_25_days']
     elif step == 'cbe':
-        values.extend(['cbe_conducted', 'third_fourth_month_of_pregnancy_count', 'annaprasan_diwas_count',
-                       'suposhan_diwas_count', 'coming_of_age_count', 'public_health_message_count'])
+        count_columns = ['cbe_conducted', 'third_fourth_month_of_pregnancy_count', 'annaprasan_diwas_count',
+                         'suposhan_diwas_count', 'coming_of_age_count', 'public_health_message_count']
     elif step == 'sn':
-        values.extend(['pse_eligible', 'lunch_0_days', 'lunch_1_7_days', 'lunch_8_14_days', 'lunch_15_20_days',
-                       'lunch_21_24_days', 'lunch_25_days'])
+        count_columns = ['pse_eligible', 'lunch_0_days', 'lunch_1_7_days', 'lunch_8_14_days', 'lunch_15_20_days',
+                         'lunch_21_24_days', 'lunch_25_days']
     elif step == 'pse':
-        values.extend(['pse_eligible', 'pse_0_days', 'pse_1_7_days', 'pse_8_14_days', 'pse_15_20_days',
-                       'pse_21_24_days', 'pse_25_days'])
+        count_columns = ['pse_eligible', 'pse_0_days', 'pse_1_7_days', 'pse_8_14_days', 'pse_15_20_days',
+                         'pse_21_24_days', 'pse_25_days']
+    values.extend(count_columns)
 
     def get_data_for(default_order, values):
         return ServiceDeliveryReportView.objects.filter(month=date(year, month, 1), **location_filters)\
@@ -172,7 +225,8 @@ def get_service_delivery_details(domain, start, length, order, reversed_order, l
             district_name=get_value_or_data_not_entered(row_data, 'district_name'),
             block_name=get_value_or_data_not_entered(row_data, 'block_name'),
             supervisor_name=get_value_or_data_not_entered(row_data, 'supervisor_name'),
-            awc_name=get_value_or_data_not_entered(row_data, 'awc_name')
+            awc_name=get_value_or_data_not_entered(row_data, 'awc_name'),
+            num_launched_awcs = get_value_or_data_not_entered(row_data, 'num_launched_awcs')
         )
         if step == 'thr':
             base_dict['thr_0_days'] = percent_or_not_entered(row_data['thr_0_days'],
