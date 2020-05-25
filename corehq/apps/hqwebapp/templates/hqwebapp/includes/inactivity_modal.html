@@ -1,0 +1,19 @@
+{% load i18n %}
+
+<div class="modal fade" id="inactivityModal"><!-- TODO: make modal bigger -->
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title">{% trans "You're kicked out" %}</h4>
+      </div>
+      <div class="modal-body">
+        {% blocktrans %}
+          you're logged out, please sign back in
+        {% endblocktrans %}
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-primary">{% trans 'Dismiss' %}</button>
+      </div>
+    </div>
+  </div>
+</div>

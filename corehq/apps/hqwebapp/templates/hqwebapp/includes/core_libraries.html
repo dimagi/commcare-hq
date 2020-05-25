@@ -94,6 +94,7 @@
 {% if analytics or hq %}
     {% compress js %}
         <script src="{% static 'hqwebapp/js/initial_page_data.js' %}"></script>
+        <script src="{% static 'hqwebapp/js/inactivity.js' %}"></script>
     {% endcompress %}
     {% include 'analytics/analytics_js.html' %}
 {% endif %}
