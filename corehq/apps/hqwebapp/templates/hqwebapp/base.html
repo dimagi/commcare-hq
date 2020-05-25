@@ -339,9 +339,9 @@
 
     {% block additional_initial_page_data %}
       {% comment %}
-                    fallback place to put initial page data for templates where it's
-                    awkward or impossible to include it in another block
-                {% endcomment %}
+        fallback place to put initial page data for templates where it's
+        awkward or impossible to include it in another block
+      {% endcomment %}
     {% endblock %}
     {% initial_page_data 'mobile_ux_cookie_name' mobile_ux_cookie_name %}
     {% initial_page_data 'show_mobile_ux_warning' show_mobile_ux_warning %}
