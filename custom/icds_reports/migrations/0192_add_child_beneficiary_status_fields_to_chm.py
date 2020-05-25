@@ -13,7 +13,7 @@ from custom.icds_reports.utils.migrations import get_view_migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('icds_reports', '0190_added_was_oos_ever'),
+        ('icds_reports', '0191_bihar_api_alter'),
     ]
 
     operations = [
