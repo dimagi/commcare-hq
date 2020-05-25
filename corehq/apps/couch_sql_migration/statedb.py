@@ -413,6 +413,9 @@ class StateDB(DiffDB):
     def replace_case_changes(self, changes):
         self.replace_case_diffs(changes, _model=DocChanges)
 
+    def add_changes(self, *args):
+        self.add_diffs(*args, _model=DocChanges)
+
     def iter_diffs(self, *, _model=None):
         if _model is None:
             _model = DocDiffs

@@ -14,7 +14,6 @@ from corehq.apps.app_manager.suite_xml.contributors import (
     SuiteContributorByModule,
 )
 from corehq.apps.app_manager.suite_xml.utils import (
-    get_form_enum_text,
     get_form_locale_id,
     get_select_chain_meta,
 )
@@ -153,7 +152,6 @@ class EntriesHelper(object):
                 e.command = LocalizedCommand(
                     id=id_strings.form_command(form, module),
                     menu_locale_id=get_form_locale_id(form),
-                    menu_enum_text=get_form_enum_text(form),
                     media_image=form.uses_image(build_profile_id=self.build_profile_id),
                     media_audio=form.uses_audio(build_profile_id=self.build_profile_id),
                     image_locale_id=id_strings.form_icon_locale(form),
@@ -168,7 +166,6 @@ class EntriesHelper(object):
                 e.command = Command(
                     id=id_strings.form_command(form, module),
                     locale_id=get_form_locale_id(form),
-                    enum_text=get_form_enum_text(form),
                     media_image=form.default_media_image,
                     media_audio=form.default_media_audio,
                 )

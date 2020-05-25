@@ -253,10 +253,6 @@ class KeywordsListView(BaseMessagingSectionView, CRUDPaginatedViewMixin):
         return reverse(self.urlname, args=[self.domain])
 
     @property
-    def parameters(self):
-        return self.request.POST if self.request.method == 'POST' else self.request.GET
-
-    @property
     @memoized
     def total(self):
         return Keyword.get_by_domain(self.domain).count()

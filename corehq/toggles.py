@@ -794,6 +794,13 @@ FORM_LINK_WORKFLOW = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
+SECURE_SESSION_TIMEOUT = StaticToggle(
+    'secure_session_timeout',
+    "Allow domain to override default length of inactivity timeout",
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN],
+)
+
 # not referenced in code directly but passed through to vellum
 # see toggles_dict
 
@@ -1030,13 +1037,6 @@ LEGACY_CHILD_MODULES = StaticToggle(
         "reordered to fit this paradigm. This feature flag exists to support "
         "those applications until they're transitioned."
     )
-)
-
-APP_BUILDER_CONDITIONAL_NAMES = StaticToggle(
-    'APP_BUILDER_CONDITIONAL_NAMES',
-    'ICDS/REACH: Conditional, calculation-based  mapping for menu and form names',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN],
 )
 
 FORMPLAYER_USE_LIVEQUERY = StaticToggle(
@@ -1806,6 +1806,12 @@ SKIP_UPDATING_USER_REPORTING_METADATA = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
+RESTRICT_MOBILE_ACCESS = StaticToggle(
+    'restrict_mobile_endpoints',
+    'Require explicit permissions to access mobile app endpoints',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN],
+)
 
 SHOW_BUILD_PROFILE_IN_APPLICATION_STATUS = StaticToggle(
     'show_build_profile_in_app_status',
@@ -1840,14 +1846,6 @@ RUN_DATA_MANAGEMENT_TASKS = StaticToggle(
     '[ICDS] Run data management tasks',
     TAG_CUSTOM,
     [NAMESPACE_USER]
-)
-
-
-ALLOW_DEID_ODATA_FEED = StaticToggle(
-    'allow_deid_odata_feed',
-    'Allow De-Identification in OData feeds',
-    TAG_PRODUCT,
-    [NAMESPACE_DOMAIN]
 )
 
 
@@ -1913,4 +1911,15 @@ REFER_CASE_REPEATER = StaticToggle(
     'COVID: Allow refer case repeaters to be setup',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN]
+)
+
+RESTRICT_LOGIN_AS = StaticToggle(
+    'restrict_login_as',
+    'COVID: Limit allowed users for login as',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    description="""
+    Adds a permission that can be set on user roles to allow login as, but only as a limited set of users. Users with this enabled can "login as" other users that set custom user property "login_as_user" to the first user's username.
+    For example, if web user a@a.com has this permission set on their role, they can only login as mobile users who have the custom property "login_as_user" set to "a@a.com".
+    """
 )

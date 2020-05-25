@@ -9,13 +9,20 @@
   <h3>
     {% blocktrans %}
       Cases in Group
-      <a href="#" id="toggle-group-name">{{ group_name }} <small><i class="fa fa-edit"> Edit</i></small></a>
+      <a href="#" id="toggle-group-name">{{ group_name }} <small><i class="fa fa-edit"></i> Edit</small></a>
     {% endblocktrans %}
   </h3>
   <div id="edit-group-name" class="hide">
     {% crispy update_case_group_form %}
   </div>
   {% if bulk_upload_id %}
+
+    <script type="text/html" id="template-upload-progress">
+      <p>
+        <%=current%> / <%=total%> {% trans 'cases processed. Please do not refresh or close this page.' %}
+      </p>
+    </script>
+
     <script type="template/html" id="template-bulk-status">
       <% if (success.length > 0) { %>
       <div class="alert alert-success">
@@ -40,9 +47,13 @@
       <% } %>
     </script>
     <div id="upload-notice">
-      <i class='fa fa-spin fa-spinner'></i>
-      {% trans 'Processing file...' %}
-      <hr />
+      <div class="alert alert-info">
+        <h4>
+          <i class='fa fa-spin fa-spinner'></i>
+          {% trans 'Processing file...' %}
+        </h4>
+        <div id="upload-progress"></div>
+      </div>
     </div>
   {% endif %}
 {% endblock %}
@@ -97,15 +108,20 @@
 {% endblock %}
 
 {% block pagination_footer %}
-  <div class="accordion-group" style="margin-top:5px;">
+  <hr />
+  <div class="accordion-group" style="margin-top:5px; margin-bottom: 20px;">
     <div class="accordion-heading">
-      <a class="accordion-toggle" data-toggle="collapse" href="#bulk-upload-accordion">
+      <a class="accordion-toggle btn btn-default" data-toggle="collapse" href="#bulk-upload-accordion">
         {% trans 'Bulk upload cases to group' %}
       </a>
     </div>
     <div id="bulk-upload-accordion" class="accordion-body collapse">
       <div class="accordion-inner">
-        {% include "hqwebapp/partials/bulk_upload.html" %}
+        <div class="panel panel-modern-gray panel-form-only">
+          <div class="panel-body">
+            {% include "hqwebapp/partials/bulk_upload.html" %}
+          </div>
+        </div>
       </div>
     </div>
   </div>
