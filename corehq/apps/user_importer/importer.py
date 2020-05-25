@@ -267,7 +267,7 @@ def get_location_from_site_code(site_code, location_cache):
         )
 
 
-def create_or_update_users_and_groups(domain, user_specs, group_memoizer=None, update_progress=None, upload_user=None):
+def create_or_update_users_and_groups(domain, user_specs, upload_user, group_memoizer=None, update_progress=None):
     ret = {"errors": [], "rows": []}
 
     group_memoizer = group_memoizer or GroupMemoizer(domain)
@@ -391,8 +391,8 @@ def create_or_update_users_and_groups(domain, user_specs, group_memoizer=None, u
                         user.reset_locations(location_ids, commit=False)
 
                 if role:
-                    role = roles_by_name[role].get_qualified_id()
-                    user.set_role(domain, role)
+                    role_qualified_id = roles_by_name[role].get_qualified_id()
+                    user.set_role(domain, role_id)
 
                 if web_user:
                     user.user_data.update({'login_as_user': web_user})
@@ -406,14 +406,14 @@ def create_or_update_users_and_groups(domain, user_specs, group_memoizer=None, u
                             f"You can only set 'Is Account Confirmed' to 'True' on an existing Web User. {web_user} is a new username."
                         ))
                     if current_user and not current_user.is_member_of(domain) and is_account_confirmed:
-                        current_user.add_as_web_user(domain, role=role, location_id=user.location_id)
+                        current_user.add_as_web_user(domain, role=role_qualified_id, location_id=user.location_id)
                     elif not current_user or not current_user.is_member_of(domain):
                         invite_data = {
                             'email': web_user,
                             'invited_by': upload_user.username,
                             'invited_on': datetime.utcnow(),
                             'domain': domain,
-                            'role': role,
+                            'role': role_qualified_id,
                             'supply_point': user.location_id
                         }
                         invite = Invitation(**invite_data)
