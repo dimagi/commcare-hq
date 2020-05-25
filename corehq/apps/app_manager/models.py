@@ -4452,7 +4452,9 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
         self.last_modified = datetime.datetime.utcnow()
         if not self._rev and not domain_has_apps(self.domain):
             domain_has_apps.clear(self.domain)
-        self.global_app_config.clear_version_cache()
+        if self.get_id:
+            # expire cache unless new application
+            self.global_app_config.clear_version_cache()
         get_all_case_properties.clear(self)
         get_usercase_properties.clear(self)
         get_app_languages.clear(self.domain)
