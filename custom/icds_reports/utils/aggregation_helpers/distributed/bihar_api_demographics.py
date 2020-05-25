@@ -123,6 +123,7 @@ class BiharApiDemographicsHelper(BaseICDSAggregationDistributedHelper):
             ('date_return_private', 'person_list.date_return_private'),
             ('out_of_school_status', 'person_list.is_oos'),
             ('last_class_attended_ever', 'person_list.last_class_attended_ever'),
+            ('last_reported_fever_date', 'person_list.last_reported_fever_date'),
             ('age_marriage', 'person_list.age_marriage'),
             ('last_referral_date', 'person_list.last_referral_date'),
             ('referral_health_problem', 'person_list.referral_health_problem'),

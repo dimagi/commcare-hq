@@ -794,6 +794,13 @@ FORM_LINK_WORKFLOW = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
+SECURE_SESSION_TIMEOUT = StaticToggle(
+    'secure_session_timeout',
+    "Allow domain to override default length of inactivity timeout",
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN],
+)
+
 # not referenced in code directly but passed through to vellum
 # see toggles_dict
 

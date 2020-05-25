@@ -1,15 +1,17 @@
 from contextlib import contextmanager
 from gzip import GzipFile
 
-from dimagi.utils.chunked import chunked
-from dimagi.utils.logging import notify_exception
-
 import boto3
 from botocore.client import Config
 from botocore.exceptions import ClientError
 from botocore.utils import fix_s3_host
+
+from dimagi.utils.chunked import chunked
+from dimagi.utils.logging import notify_exception
+
 from corehq.blobs.exceptions import NotFound
 from corehq.blobs.interface import AbstractBlobDB
+from corehq.blobs.retry_s3db import retry_on_slow_down
 from corehq.blobs.util import (
     BlobStream,
     GzipStream,
@@ -89,6 +91,7 @@ class S3BlobDB(AbstractBlobDB):
             self.metadb.put(meta)
         return meta
 
+    @retry_on_slow_down
     def get(self, key=None, type_code=None, meta=None):
         key = self._validate_get_args(key, type_code, meta)
         check_safe_key(key)

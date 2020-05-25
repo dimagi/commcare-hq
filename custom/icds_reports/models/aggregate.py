@@ -208,6 +208,11 @@ class CcsRecordMonthly(models.Model, AggregateMixin):
     )
     tt_booster = models.DateField(null=True)
     last_preg_year = models.IntegerField(null=True)
+    complication_type = models.TextField(blank=True, null=True)
+    reason_no_ifa = models.TextField(blank=True, null=True)
+    new_ifa_tablets_total_bp = models.PositiveSmallIntegerField(blank=True, null=True)
+    new_ifa_tablets_total_pnc = models.PositiveSmallIntegerField(blank=True, null=True)
+    ifa_last_seven_days = models.PositiveSmallIntegerField(blank=True, null=True)
 
     class Meta(object):
         managed = False
@@ -1071,6 +1076,10 @@ class AggregateCcsRecordPostnatalCareForms(models.Model, AggregateMixin):
         help_text="number of qualified visits for the incentive report",
         default=0
     )
+    new_ifa_tablets_total = models.PositiveSmallIntegerField(
+        null=True,
+        help_text="New ifa tablets"
+    )
 
     class Meta(object):
         db_table = AGG_CCS_RECORD_PNC_TABLE
@@ -1329,6 +1338,12 @@ class AggregateBirthPreparednesForms(models.Model, AggregateMixin):
         null=True,
         help_text="Has ever had /data/bp1/using_ifa='yes'"
     )
+    reason_no_ifa = models.TextField(null=True)
+    new_ifa_tablets_total = models.PositiveSmallIntegerField(
+        null=True,
+        help_text="New ifa tablets"
+    )
+
 
     class Meta(object):
         db_table = AGG_CCS_RECORD_BP_TABLE
@@ -1800,6 +1815,7 @@ class BiharAPIDemographics(models.Model, AggregateMixin):
     date_return_private = models.DateField(null=True)
     out_of_school_status = models.SmallIntegerField(null=True)
     last_class_attended_ever = models.SmallIntegerField(null=True)
+    last_reported_fever_date = models.DateField(null=True)
     age_marriage = models.SmallIntegerField(null=True)
     last_referral_date = models.DateField(null=True)
     referral_health_problem = models.TextField(null=True)
