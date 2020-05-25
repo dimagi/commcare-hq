@@ -23,12 +23,12 @@ class OAuth1ApiEndpoints:
     """
     Endpoints of a particular OAuth1 API
     """
-    # URL for token to identify HQ. e.g. '/oauth/request_token' (Twitter)
-    request_token_url: str
-    # URL for user to authorize HQ. e.g. '/oauth/authorize'
-    authorization_url: str
-    # URL to fetch access token. e.g. '/oauth/access_token'
-    access_token_url: str
+    # Endpoint for token to identify HQ. e.g. '/oauth/request_token' (Twitter)
+    request_token_endpoint: str
+    # Endpoint for user to authorize HQ. e.g. '/oauth/authorize'
+    authorization_endpoint: str
+    # Endpoint to fetch access token. e.g. '/oauth/access_token'
+    access_token_endpoint: str
 
 
 @attr.s(auto_attribs=True, frozen=True, kw_only=True)
@@ -39,24 +39,24 @@ class OAuth2ApiSettings:
     # Pass credentials in Basic Auth header when requesting a token?
     # Otherwise they are passed in the request body.
     pass_credentials_in_header: bool
-    # URL to fetch bearer token. e.g. '/uaa/oauth/token' (DHIS2)
-    token_url: str
-    # URL to refresh bearer token. e.g. '/uaa/oauth/token'
-    refresh_url: str
+    # Endpoint to fetch bearer token. e.g. '/uaa/oauth/token' (DHIS2)
+    token_endpoint: str
+    # Endpoint to refresh bearer token. e.g. '/uaa/oauth/token'
+    refresh_endpoint: str
 
 
 # https://docs.dhis2.org/master/en/developer/html/webapi_authentication.html
 dhis2_auth_settings = OAuth2ApiSettings(
-    token_url="/uaa/oauth/token",
-    refresh_url="/uaa/oauth/token",
+    token_endpoint="/uaa/oauth/token",
+    refresh_endpoint="/uaa/oauth/token",
     pass_credentials_in_header=True,
 )
 
 
 # https://docs.ipswitch.com/MOVEit/Automation2018/API/REST-API/index.html
 moveit_automation_settings = OAuth2ApiSettings(
-    token_url="/api/v1/token",
-    refresh_url="/api/v1/token",
+    token_endpoint="/api/v1/token",
+    refresh_endpoint="/api/v1/token",
     pass_credentials_in_header=False,
 )
 
@@ -244,7 +244,7 @@ class OAuth2PasswordGrantManager(AuthManager):
             client = LegacyApplicationClient(client_id=self.client_id)
             session = OAuth2Session(client=client)
             token_url = get_endpoint_url(
-                self.base_url, self.api_settings.token_url,
+                self.base_url, self.api_settings.token_endpoint,
             )
             if self.api_settings.pass_credentials_in_header:
                 auth = HTTPBasicAuth(self.client_id, self.client_secret)
@@ -265,7 +265,7 @@ class OAuth2PasswordGrantManager(AuthManager):
 
         # Return session that refreshes token automatically
         refresh_url = get_endpoint_url(
-            self.base_url, self.api_settings.refresh_url,
+            self.base_url, self.api_settings.refresh_endpoint,
         )
         refresh_kwargs = {
             'client_id': self.client_id,

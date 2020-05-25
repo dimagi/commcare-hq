@@ -136,32 +136,32 @@ class Requests(object):
             response.raise_for_status()
         return response
 
-    def delete(self, uri, **kwargs):
+    def delete(self, endpoint, **kwargs):
         kwargs.setdefault('headers', {'Accept': 'application/json'})
-        url = get_endpoint_url(self.base_url, uri)
+        url = get_endpoint_url(self.base_url, endpoint)
         return self.send_request('DELETE', url, **kwargs)
 
-    def get(self, uri, *args, **kwargs):
+    def get(self, endpoint, *args, **kwargs):
         kwargs.setdefault('headers', {'Accept': 'application/json'})
         kwargs.setdefault('allow_redirects', True)
-        url = get_endpoint_url(self.base_url, uri)
+        url = get_endpoint_url(self.base_url, endpoint)
         return self.send_request('GET', url, *args, **kwargs)
 
-    def post(self, uri, data=None, json=None, *args, **kwargs):
+    def post(self, endpoint, data=None, json=None, *args, **kwargs):
         kwargs.setdefault('headers', {
             'Content-type': 'application/json',
             'Accept': 'application/json'
         })
-        url = get_endpoint_url(self.base_url, uri)
+        url = get_endpoint_url(self.base_url, endpoint)
         return self.send_request('POST', url, *args,
                                  data=data, json=json, **kwargs)
 
-    def put(self, uri, data=None, json=None, *args, **kwargs):
+    def put(self, endpoint, data=None, json=None, *args, **kwargs):
         kwargs.setdefault('headers', {
             'Content-type': 'application/json',
             'Accept': 'application/json'
         })
-        url = get_endpoint_url(self.base_url, uri)
+        url = get_endpoint_url(self.base_url, endpoint)
         return self.send_request('PUT', url, *args,
                                  data=data, json=json, **kwargs)
 
