@@ -10,7 +10,7 @@ from custom.icds_reports.utils.migrations import get_view_migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('icds_reports', '0188_rebuild_view_bihar_api'),
+        ('icds_reports', '0192_add_child_beneficiary_status_fields_to_chm'),
     ]
 
     operations = [
