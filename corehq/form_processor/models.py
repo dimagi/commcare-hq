@@ -1395,6 +1395,9 @@ class CaseTransaction(PartitionedModel, SaveStateMixin, models.Model):
             self.form_id == other.form_id
         )
 
+    def __hash__(self):
+        return hash((self.case_id, self.type, self.form_id))
+
     @classmethod
     def form_transaction(cls, case, xform, client_date, action_types=None):
         """Get or create a form transaction for a the given form and case.
