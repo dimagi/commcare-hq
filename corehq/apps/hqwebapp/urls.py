@@ -22,6 +22,7 @@ from corehq.apps.hqwebapp.views import (
     no_permissions,
     osdd,
     password_change,
+    ping_login,
     quick_find,
     redirect_to_default,
     redirect_to_dimagi,
@@ -77,6 +78,7 @@ urlpatterns = [
     url(r'^account/two_factor/reset/$', TwoFactorResetView.as_view(), name=TwoFactorResetView.urlname),
     url(r'^hq/admin/session_details/$', SessionDetailsView.as_view(),
         name=SessionDetailsView.urlname),
+    url(r'^ping_login/$', ping_login, name='ping_login'),
 
 ]
 

@@ -26,6 +26,7 @@ from django.http import (
     HttpResponsePermanentRedirect,
     HttpResponseRedirect,
     HttpResponseServerError,
+    JsonResponse,
 )
 from django.shortcuts import redirect, render
 from django.template import loader
@@ -483,6 +484,11 @@ def logout(req, default_domain_redirect='domain_login'):
         return HttpResponseRedirect('%s' % domain_login_url)
     else:
         return HttpResponseRedirect(reverse('login'))
+
+
+@two_factor_exempt
+def ping_login(request):
+    return JsonResponse({'success': request.user.is_authenticated})
 
 
 @login_and_domain_required
