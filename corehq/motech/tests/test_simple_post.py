@@ -14,7 +14,6 @@ TEST_API_URL = 'https://www.example.com/api/'
 TEST_API_USERNAME = 'michael'
 TEST_API_PASSWORD = 'Norwegi4n_Blue'
 TEST_PAYLOAD_ID = 'abc123'
-TEST_PAYLOAD = f'<payload id="{TEST_PAYLOAD_ID}"><parrot status="dead" /></payload>'
 
 
 def test_simple_post():
@@ -24,7 +23,7 @@ def test_simple_post():
         simple_post(
             domain=TEST_DOMAIN,
             url=TEST_API_URL,
-            data=TEST_PAYLOAD,
+            data='<payload id="abc123"><parrot status="déad" /></payload>',
             headers={'Content-Type': 'text/xml+parrot'},
             auth_manager=auth_manager,
             verify=True,
@@ -34,10 +33,10 @@ def test_simple_post():
         request_mock.assert_called_with(
             'POST',
             TEST_API_URL,
-            data=TEST_PAYLOAD,
+            data=b'<payload id="abc123"><parrot status="d\xc3\xa9ad" /></payload>',
             headers={
                 'Content-Type': 'text/xml+parrot',
-                'content-length': '55',
+                'content-length': '56',
             },
             json=None,
             timeout=REQUEST_TIMEOUT,

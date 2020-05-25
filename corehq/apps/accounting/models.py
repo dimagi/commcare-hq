@@ -1140,6 +1140,11 @@ class Subscription(models.Model):
             and other.account.pk == self.account.pk
         )
 
+    def __hash__(self):
+        # Defining __eq__ appears block a class from inheriting its parent's __hash__.
+        # This restores that.
+        return super().__hash__()
+
     def save(self, *args, **kwargs):
         """
         Overloaded to update domain pillow with subscription information

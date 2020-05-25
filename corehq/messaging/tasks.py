@@ -176,7 +176,7 @@ def run_messaging_rule(domain, rule_id):
         for db_alias in db_aliases:
             run_messaging_rule_for_shard.delay(domain, rule_id, db_alias)
 
-    if toggles.SHARDED_RUN_MESSAGING_RULE.enabled(domain) and should_use_sql_backend(domain):
+    if should_use_sql_backend(domain):
         _run_rule_on_multiple_shards()
     else:
         _run_rule_sequentially()
@@ -191,11 +191,12 @@ def run_messaging_rule_for_shard(domain, rule_id, db_alias):
 
     chunk_size = getattr(settings, 'MESSAGING_RULE_CASE_CHUNK_SIZE', 100)
     progress_helper = MessagingRuleProgressHelper(rule_id)
-    for case_id_chunk in chunked(paginated_case_ids(domain, rule.case_type, db_alias), chunk_size):
-        sync_case_chunk_for_messaging_rule.delay(domain, case_id_chunk, rule_id)
-        progress_helper.increase_total_case_count(len(case_id_chunk))
-        if progress_helper.is_canceled():
-            break
+    if not progress_helper.is_canceled():
+        for case_id_chunk in chunked(paginated_case_ids(domain, rule.case_type, db_alias), chunk_size):
+            sync_case_chunk_for_messaging_rule.delay(domain, case_id_chunk, rule_id)
+            progress_helper.increase_total_case_count(len(case_id_chunk))
+            if progress_helper.is_canceled():
+                break
     all_shards_complete = progress_helper.mark_shard_complete(db_alias)
     if all_shards_complete:
         # this should get triggered for the last shard
