@@ -15,6 +15,9 @@ class BaseQuery:
     def run(self, db_alias):
         if self.setup_sql_file_path:
             self._setup(db_alias)
+        # dropping any temp table from earlier queries
+        if self.temp_table_name:
+            self._remove_setup_table(db_alias)
         string_buffer = StringIO()
         db_conn = connections[db_alias]
         cursor = db_conn.cursor()
