@@ -1076,7 +1076,7 @@ class AggregateCcsRecordPostnatalCareForms(models.Model, AggregateMixin):
         help_text="number of qualified visits for the incentive report",
         default=0
     )
-    new_ifa_tablets_total = models.PositiveSmallIntegerField(
+    new_ifa_tablets_total = models.SmallIntegerField(
         null=True,
         help_text="New ifa tablets"
     )
