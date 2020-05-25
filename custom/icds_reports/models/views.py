@@ -1501,6 +1501,8 @@ class BiharVaccineView(models.Model):
     due_list_date_7gdpt_booster_2 = models.DateField(blank=True, null=True)
     delivery_nature = models.TextField(blank=True, null=True)
     term_days = models.SmallIntegerField(blank=True, null=True)
+    birth_weight = models.SmallIntegerField(blank=True, null=True)
+    last_reported_fever_date = models.DateField(blank=True, null=True)
 
     class Meta(object):
         app_label = 'icds_reports'
@@ -1534,6 +1536,10 @@ class BiharAPIMotherView(models.Model):
     anc_2 = models.DateField(null=True)
     anc_3 = models.DateField(null=True)
     anc_4 = models.DateField(null=True)
+    total_ifa_tablets_received = models.SmallIntegerField(null=True)
+    ifa_consumed_7_days = models.SmallIntegerField(null=True)
+    causes_for_ifa = models.TextField(null=True)
+    maternal_complications = models.TextField(null=True)
 
     class Meta(object):
         app_label = 'icds_reports'
