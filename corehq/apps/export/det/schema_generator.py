@@ -30,6 +30,40 @@ CASE_API_PATH_MAP = {
 MAP_VIA_STR2DATE = 'str2date'
 MAP_VIA_STR2NUM = 'str2num'
 
+
+class DefaultDETSchemaHelper(object):
+    """
+    Helper to do datatype transformations, etc. during schema generation
+    """
+
+    @staticmethod
+    def transform_path(input_path):
+        return input_path
+
+
+class CaseDETSchemaHelper(DefaultDETSchemaHelper):
+    """
+    Schema helper for cases
+    """
+
+    @staticmethod
+    def transform_path(input_path):
+        # either return hard-coded lookup or add prefix
+        return CASE_API_PATH_MAP.get(input_path, f'{PROPERTIES_PREFIX}{input_path}')
+
+
+class RepeatDETSchemaHelper(DefaultDETSchemaHelper):
+    """
+    Schema helper for form repeats
+    """
+    def __init__(self, base_path):
+        self.base_path = base_path
+
+    def transform_path(self, input_path):
+        # for repeats strip the base path from the input path
+        return input_path.replace(f'{self.base_path}.', '')
+
+
 def generate_from_export_instance(export_instance, output_file):
     if isinstance(export_instance, CaseExportInstance):
         return generate_from_case_export_instance(export_instance, output_file)
@@ -54,15 +88,11 @@ def generate_from_case_export_instance(export_instance, output_file):
         rows=[],
     )
     output = DETConfig(name=export_instance.name, tables=[main_output_table])
-    _add_rows_for_table(main_input_table, main_output_table, path_transform_fn=_transform_path_for_case_properties)
+    helper = CaseDETSchemaHelper()
+    _add_rows_for_table(main_input_table, main_output_table, helper=helper)
     _add_id_row_if_necessary(main_output_table, CASE_ID_SOURCE)
     # todo: add rows for other tables
     output.export_to_file(output_file)
-
-
-def _transform_path_for_case_properties(input_path):
-    # either return hard-coded lookup or add prefix
-    return CASE_API_PATH_MAP.get(input_path, f'{PROPERTIES_PREFIX}{input_path}')
 
 
 def generate_from_form_export_instance(export_instance, output_file):
@@ -91,12 +121,8 @@ def generate_from_form_export_instance(export_instance, output_file):
                 rows=[],
             )
 
-            # note: this has to be defined here because it relies on closures
-            def _strip_repeat_path(input_path):
-                return input_path.replace(f'{input_table.readable_path}.', '')
-
-            _add_rows_for_table(input_table, output_table,
-                                path_transform_fn=_strip_repeat_path)
+            helper = RepeatDETSchemaHelper(base_path=input_table.readable_path)
+            _add_rows_for_table(input_table, output_table, helper=helper)
 
         output.tables.append(output_table)
 
@@ -117,16 +143,17 @@ def _add_id_row_if_necessary(output_table, source_value):
         ))
 
 
-def _add_rows_for_table(input_table, output_table, path_transform_fn=None):
-    path_transform_fn = path_transform_fn if path_transform_fn else lambda x: x
+def _add_rows_for_table(input_table, output_table, helper=None):
+    if helper is None:
+        helper = DefaultDETSchemaHelper()
     for column in input_table.selected_columns:
-        det_row = _get_det_row_for_export_column(column, path_transform_fn)
+        det_row = _get_det_row_for_export_column(column, helper)
         output_table.rows.append(det_row)
 
 
-def _get_det_row_for_export_column(column, path_transform_fn):
+def _get_det_row_for_export_column(column, helper):
     return DETRow(
-        source_field=path_transform_fn(column.item.readable_path),
+        source_field=helper.transform_path(column.item.readable_path),
         field=column.label,
         map_via=_get_det_map_for_export_item_datatype(column.item.datatype)
     )

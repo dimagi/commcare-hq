@@ -9,7 +9,7 @@ from corehq.apps.export.det.exceptions import DETConfigError
 from corehq.apps.export.det.schema_generator import (
     generate_from_form_export_instance,
     generate_from_case_export_instance,
-    _transform_path_for_case_properties,
+    CaseDETSchemaHelper,
 )
 from corehq.apps.export.models import FormExportInstance, CaseExportInstance
 from corehq.util.test_utils import TestFileMixin
@@ -46,7 +46,7 @@ class TestDETFCaseInstance(SimpleTestCase, TestFileMixin):
             self.assertEqual(len(main_table.selected_columns), len(data_by_headings))
             for i, input_column in enumerate(main_table.selected_columns):
                 self.assertEqual(input_column.label, data_by_headings[i]['Field'])
-                self.assertEqual(_transform_path_for_case_properties(input_column.item.readable_path),
+                self.assertEqual(CaseDETSchemaHelper.transform_path(input_column.item.readable_path),
                                  data_by_headings[i]['Source Field'])
 
             # note: subtables not supported
