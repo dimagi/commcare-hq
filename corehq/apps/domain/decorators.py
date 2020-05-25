@@ -22,7 +22,6 @@ from django_otp import match_token
 from django_prbac.utils import has_privilege
 from corehq.apps.domain.auth import HQApiKeyAuthentication
 from tastypie.http import HttpUnauthorized
-from tastypie.models import ApiKey
 
 from dimagi.utils.web import get_ip
 
@@ -44,7 +43,6 @@ from corehq.apps.domain.auth import (
 )
 from corehq.apps.domain.models import Domain, DomainAuditRecordEntry
 from corehq.apps.domain.utils import normalize_domain_name
-from corehq.apps.hqwebapp.models import ApiKeySettings
 from corehq.apps.hqwebapp.signals import clear_login_attempts
 from corehq.apps.users.models import CouchUser
 from corehq.toggles import (
@@ -187,12 +185,6 @@ def api_key():
             if auth:
                 if isinstance(auth, HttpUnauthorized):
                     return auth
-                try:
-                    allowed_ips = request.user.api_key.apikeysettings.ip_whitelist
-                except (ApiKey.DoesNotExist, ApiKeySettings.DoesNotExist):
-                    allowed_ips = []
-                if allowed_ips and get_ip(request) not in allowed_ips:
-                    return HttpUnauthorized()
                 return view(request, *args, **kwargs)
 
             response = HttpUnauthorized()

@@ -10,11 +10,12 @@ from django.views.decorators.debug import sensitive_variables
 
 from tastypie.authentication import ApiKeyAuthentication
 
-from corehq.toggles import TWO_STAGE_USER_PROVISIONING
+from auditcare.utils import get_ip
 from dimagi.utils.django.request import mutable_querydict
 
 from corehq.apps.receiverwrapper.util import DEMO_SUBMIT_MODE
-from corehq.apps.users.models import CouchUser, WebUser, CommCareUser
+from corehq.apps.users.models import CouchUser, HQApiKey
+from corehq.toggles import TWO_STAGE_USER_PROVISIONING
 from corehq.util.hmac_request import validate_request_hmac
 from no_exceptions.exceptions import Http400
 from python_digest import parse_digest_credentials
@@ -234,14 +235,38 @@ def get_active_users_by_email(email):
 
 
 class HQApiKeyAuthentication(ApiKeyAuthentication):
-    def get_key(self, user, api_key):
-        """We use a custom model for API keys to allow for multiple keys per user.
+    def is_authenticated(self, request):
+        """Follows what tastypie does, then tests for IP whitelisting
         """
-        from corehq.apps.users.models import HQApiKey
-
         try:
-            user.api_keys.get(key=api_key)
+            username, api_key = self.extract_credentials(request)
+        except ValueError:
+            return self._unauthorized()
+
+        if not username or not api_key:
+            return self._unauthorized()
+
+        User = get_user_model()
+
+        lookup_kwargs = {User.USERNAME_FIELD: username}
+        try:
+            user = User.objects.prefetch_related("api_keys").get(**lookup_kwargs)
+        except (User.DoesNotExist, User.MultipleObjectsReturned):
+            return self._unauthorized()
+
+        if not self.check_active(user):
+            return False
+
+        # ensure API Key exists
+        try:
+            key = user.api_keys.get(key=api_key)
         except HQApiKey.DoesNotExist:
             return self._unauthorized()
+
+        # ensure the IP address is in the whitelist, if that exists
+        if key.ip_whitelist and (get_ip(request) not in key.ip_whitelist):
+            return self._unauthorized()
+
+        request.user = user
 
         return True
