@@ -37,7 +37,9 @@ class Command(BaseCommand):
             with open(path, "r", encoding='utf-8') as sql_file:
                 sql_to_execute = sql_file.read()
                 sql_to_execute = sql_to_execute.format(month=month.strftime("%Y-%m-%d"), state_id=STATE_ID)
-                _run_custom_sql_script(sql_to_execute)
+                sql_to_execute = sql_to_execute.split(';')
+                for i in range(0, len(sql_to_execute)):
+                    _run_custom_sql_script(sql_to_execute[i])
         else:
             icds_state_aggregation_task(state_id=STATE_ID, date=month,
                                         func_name='_aggregate_bp_forms')
@@ -48,7 +50,9 @@ class Command(BaseCommand):
             with open(path, "r", encoding='utf-8') as sql_file:
                 sql_to_execute = sql_file.read()
                 sql_to_execute = sql_to_execute.format(month=month.strftime("%Y-%m-%d"), state_id=STATE_ID)
-                _run_custom_sql_script(sql_to_execute)
+                sql_to_execute = sql_to_execute.split(';')
+                for i in range(0, len(sql_to_execute)):
+                    _run_custom_sql_script(sql_to_execute[i])
         else:
             icds_state_aggregation_task(state_id=STATE_ID, date=month,
                                         func_name='_aggregate_ccs_record_pnc_forms')

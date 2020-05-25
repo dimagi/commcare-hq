@@ -1,3 +1,4 @@
+DELETE FROM "icds_dashboard_ccs_record_bp_forms" WHERE state_id = '{state_id}' AND month = '2020-03-01';
 INSERT INTO "icds_dashboard_ccs_record_bp_forms" (
           case_id, supervisor_id, state_id, month, latest_time_end_processed,
           immediate_breastfeeding, play_birth_preparedness_vid, counsel_preparation, play_family_planning_vid,
