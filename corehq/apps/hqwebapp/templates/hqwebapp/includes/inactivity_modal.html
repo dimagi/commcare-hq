@@ -1,0 +1,19 @@
+{% load i18n %}
+
+<div class="modal fade full-screen-modal" id="inactivityModal">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title">{% trans "You're kicked out" %}</h4>
+      </div>
+      <div class="modal-body">
+        {% blocktrans %}
+          You've been logged out due to inactivity
+        {% endblocktrans %}
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-primary">{% trans 'Dismiss' %}</button>
+      </div>
+    </div>
+  </div>
+</div>
