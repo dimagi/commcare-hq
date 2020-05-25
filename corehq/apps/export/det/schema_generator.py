@@ -35,10 +35,18 @@ class DefaultDETSchemaHelper(object):
     """
     Helper to do datatype transformations, etc. during schema generation
     """
-
     @staticmethod
     def transform_path(input_path):
         return input_path
+
+    @staticmethod
+    def get_map_via(export_item):
+        return {
+            datatypes.DATA_TYPE_DATETIME: MAP_VIA_STR2DATE,
+            datatypes.DATA_TYPE_DATE: MAP_VIA_STR2DATE,
+            datatypes.DATA_TYPE_INTEGER: MAP_VIA_STR2NUM,
+            datatypes.DATA_TYPE_DECIMAL: MAP_VIA_STR2NUM,
+        }.get(export_item.datatype, '')
 
 
 class CaseDETSchemaHelper(DefaultDETSchemaHelper):
@@ -155,14 +163,5 @@ def _get_det_row_for_export_column(column, helper):
     return DETRow(
         source_field=helper.transform_path(column.item.readable_path),
         field=column.label,
-        map_via=_get_det_map_for_export_item_datatype(column.item.datatype)
+        map_via=helper.get_map_via(column.item)
     )
-
-
-def _get_det_map_for_export_item_datatype(datatype):
-    return {
-        datatypes.DATA_TYPE_DATETIME: MAP_VIA_STR2DATE,
-        datatypes.DATA_TYPE_DATE: MAP_VIA_STR2DATE,
-        datatypes.DATA_TYPE_INTEGER: MAP_VIA_STR2NUM,
-        datatypes.DATA_TYPE_DECIMAL: MAP_VIA_STR2NUM,
-    }.get(datatype, '')
