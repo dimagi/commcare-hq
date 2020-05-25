@@ -61,6 +61,29 @@ class TestDETFCaseInstance(SimpleTestCase, TestFileMixin):
 
             # note: subtables not supported
 
+    @patch('corehq.apps.export.det.schema_generator._get_dd_property_types')
+    def test_case_schema_data_dictionary_support(self, dd_property_type_mock):
+        dd_property_type_mock.return_value = {
+            'event_date': 'date',
+            'event_duration': 'number',
+        }
+        with tempfile.NamedTemporaryFile(mode='wb', suffix='.xlsx') as tmp:
+            generate_from_case_export_instance(self.export_instance, tmp)
+            wb = load_workbook(filename=tmp.name)
+            ws = wb.worksheets[0]
+            all_data = list(ws.values)
+            headings = all_data.pop(0)
+            data_by_headings = [dict(zip(headings, row)) for row in all_data]
+            # test individual fields / types
+            data_by_headings_by_source_field = {
+                row['Source Field']: row for row in data_by_headings
+            }
+            self.assertEqual('str2date', data_by_headings_by_source_field['properties.event_date']['Map Via'])
+            self.assertEqual('str2num', data_by_headings_by_source_field['properties.event_duration']['Map Via'])
+            # ensure defaults still work
+            self.assertEqual(None, data_by_headings_by_source_field['properties.event_score']['Map Via'])
+            self.assertEqual('str2date', data_by_headings_by_source_field['properties.closed_on']['Map Via'])
+
 
 class TestDETFormInstance(SimpleTestCase, TestFileMixin):
     file_path = ['data', 'det']
