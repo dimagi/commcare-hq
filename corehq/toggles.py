@@ -794,6 +794,13 @@ FORM_LINK_WORKFLOW = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
+SECURE_SESSION_TIMEOUT = StaticToggle(
+    'secure_session_timeout',
+    "Allow domain to override default length of inactivity timeout",
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN],
+)
+
 # not referenced in code directly but passed through to vellum
 # see toggles_dict
 
@@ -1030,13 +1037,6 @@ LEGACY_CHILD_MODULES = StaticToggle(
         "reordered to fit this paradigm. This feature flag exists to support "
         "those applications until they're transitioned."
     )
-)
-
-APP_BUILDER_CONDITIONAL_NAMES = StaticToggle(
-    'APP_BUILDER_CONDITIONAL_NAMES',
-    'ICDS/REACH: Conditional, calculation-based  mapping for menu and form names',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN],
 )
 
 FORMPLAYER_USE_LIVEQUERY = StaticToggle(

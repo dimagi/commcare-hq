@@ -145,6 +145,7 @@ class Permissions(DocumentSchema):
     manage_releases_list = StringListProperty(default=[])
 
     limited_login_as = BooleanProperty(default=False)
+    access_default_login_as_user = BooleanProperty(default=False)
 
     @classmethod
     def wrap(cls, data):
@@ -1592,7 +1593,10 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
         ])
 
     def can_login_as(self, domain):
-        return self.has_permission(domain, 'edit_commcare_users') or self.has_permission(domain, 'limited_login_as')
+        return (
+            self.has_permission(domain, 'edit_commcare_users')
+            or self.has_permission(domain, 'limited_login_as')
+        )
 
     def is_current_web_user(self, request):
         return self.user_id == request.couch_user.user_id

@@ -5,7 +5,7 @@
 {% block page_content %}
   <form>
     <fieldset>
-      <legend>{% trans "MOTECH Logs" %}</legend>
+      <legend>{% trans "Remote API Logs" %}</legend>
         <form method="GET">
           <span class="col-sm-2">
             <label for="filter_from_date">From date</label>
@@ -59,10 +59,12 @@
         {% if logs %}
         <table class="table table-striped">
           <thead>
-          <th>{% trans "Timestamp" %}</th>
-          <th>{% trans "Payload" %}</th>
-          <th>{% trans "Request" %}</th>
-          <th>{% trans "Status" %}</th>
+            <tr>
+              <th>{% trans "Timestamp" %}</th>
+              <th>{% trans "Payload" %}</th>
+              <th>{% trans "Request" %}</th>
+              <th>{% trans "Status" %}</th>
+            </tr>
           </thead>
           <tbody>
           {% for log in logs %}

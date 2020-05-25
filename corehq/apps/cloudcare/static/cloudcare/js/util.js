@@ -50,7 +50,7 @@ hqDefine('cloudcare/js/util', function () {
 
     var showHTMLError = function (message, $el, autoHideTime) {
         var htmlMessage = message = message || gettext("Sorry, an error occurred while processing that request.");
-        var $container = _show(message, $el, autoHideTime, "", true);
+        var $container = _show(message, $el, autoHideTime, "alert alert-danger", true);
         try {
             message = $container.text();  // pull out just the text the user sees
             message = message.replace(/\s+/g, ' ').trim();

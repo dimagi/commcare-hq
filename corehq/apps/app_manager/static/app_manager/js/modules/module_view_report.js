@@ -26,26 +26,7 @@ hqDefine("app_manager/js/modules/module_view_report", function () {
             menuImage: navMenuMedia.menuImage,
             menuAudio: navMenuMedia.menuAudio,
             containerId: "#settings",
-            moduleNameEnum: initial_page_data('name_enum'),
         }));
-
-        var $nameEnumContainer = $("#name-enum-mapping");
-        if ($nameEnumContainer.length) {
-            var options = {
-                lang: initial_page_data('current_language'),
-                langs: initial_page_data('langs'),
-                items: initial_page_data('name_enum'),
-                property_name: 'name',
-                values_are_icons: false,
-                keys_are_conditions: true,
-            };
-            var nameMapping = hqImport('hqwebapp/js/ui-element').key_value_mapping(options);
-            nameMapping.on("change", function () {
-                reportModule.moduleNameEnum(this.getItems());
-                reportModule.changeSaveButton();
-            });
-            $nameEnumContainer.append(nameMapping.ui);
-        }
 
         _([
             $('#save-button'),

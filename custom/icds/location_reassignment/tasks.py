@@ -218,12 +218,10 @@ def process_ucr_changes(domain, case_ids):
         for config in all_configs
     ]
 
-    async_configs_by_doc_id = {}
     for doc in docs:
         eval_context = EvaluationContext(doc)
         for adapter in adapters:
             if adapter.config.filter(doc, eval_context):
-                async_configs_by_doc_id[doc['_id']].append(adapter.config._id)
                 rows_to_save = adapter.get_all_values(doc, eval_context)
                 if rows_to_save:
                     adapter.save_rows(rows_to_save, use_shard_col=False)

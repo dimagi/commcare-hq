@@ -45,10 +45,25 @@ ONE_HOUR = 60 * 60
 HALT_AFTER = 23 * 60 * 60
 
 
+def _get_upload_progress_tracker(upload_id):
+    def _progress_tracker(current, total):
+        cache.set(upload_id, {
+            'inProgress': True,
+            'current': current,
+            'total': total,
+        }, ONE_HOUR)
+    return _progress_tracker
+
+
 @task(serializer='pickle', ignore_result=True)
-def bulk_upload_cases_to_group(download_id, domain, case_group_id, cases):
-    results = add_cases_to_case_group(domain, case_group_id, cases)
-    cache.set(download_id, results, ONE_HOUR)
+def bulk_upload_cases_to_group(upload_id, domain, case_group_id, cases):
+    results = add_cases_to_case_group(
+        domain,
+        case_group_id,
+        cases,
+        progress_tracker=_get_upload_progress_tracker(upload_id)
+    )
+    cache.set(upload_id, results, ONE_HOUR)
 
 
 @task(serializer='pickle')
