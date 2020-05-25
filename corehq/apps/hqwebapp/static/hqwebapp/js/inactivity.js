@@ -12,7 +12,10 @@ hqDefine('hqwebapp/js/inactivity', [
     initialPageData
 ) {
     $(function () {
-        var delay = 60 * 1000;       // TODO: get timeout from domain
+        var timeout = initialPageData.get('secure_timeout');
+        if (timeout === undefined) {
+            return;
+        }
         var interval = setInterval(function () {
             $.ajax({
                 url: initialPageData.reverse('ping_login'),
@@ -36,7 +39,7 @@ hqDefine('hqwebapp/js/inactivity', [
                     }
                 },
             });
-        }, delay);
+        }, timeout * 60 * 1000);    // convert from minutes to milliseconds
     });
 
     return 1;

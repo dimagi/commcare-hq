@@ -333,7 +333,8 @@
       {% endif %}
     {% endif %}
 
-    {% if domain %}
+    {% if request.project.secure_timeout %}
+      {% initial_page_data 'secure_timeout' request.project.secure_timeout %}
       {% registerurl 'ping_login' %}
       {% registerurl 'login_new_window' domain %}{# TODO: shouldn't require domain #}
       {% include 'hqwebapp/includes/inactivity_modal.html' %}
