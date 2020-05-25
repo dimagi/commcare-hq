@@ -17,7 +17,7 @@ class BaseQuery:
             self._setup(db_alias)
         # dropping any temp table from earlier queries
         if self.temp_table_name:
-            self._remove_setup_table(db_alias)
+            self._remove_temp_table(db_alias)
         string_buffer = StringIO()
         db_conn = connections[db_alias]
         cursor = db_conn.cursor()
@@ -28,7 +28,7 @@ class BaseQuery:
             string_buffer)
         # dropping any temp table if created
         if self.temp_table_name:
-            self._remove_setup_table(db_alias)
+            self._remove_temp_table(db_alias)
         return string_buffer
 
     def _setup(self, db_alias):
@@ -37,7 +37,7 @@ class BaseQuery:
         sql = self.setup_sql.replace('\n', ' ')
         cursor.execute(sql)
 
-    def _remove_setup_table(self, db_alias):
+    def _remove_temp_table(self, db_alias):
         db_conn = connections[db_alias]
         cursor = db_conn.cursor()
         sql = f"DROP TABLE IF EXISTS {self.temp_table_name}"
