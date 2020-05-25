@@ -24,6 +24,12 @@ class TestServiceDeliveryDetails(TestCase):
         expected = {
             'data': [
                 {
+                    'state_name': 'All',
+                    'district_name': 'All',
+                    'block_name': 'All',
+                    'supervisor_name': 'All',
+                    'awc_name': 'All',
+                    'num_launched_awcs': 22,
                     'thr_0_days_val': '14.21 %',
                     'thr_1_7_days_val': '15.22 %',
                     'thr_8_14_days_val': '9.70 %',
@@ -36,14 +42,15 @@ class TestServiceDeliveryDetails(TestCase):
                     'thr_15_20_days': 103,
                     'thr_21_24_days': 81,
                     'thr_25_days': 180,
-                    'thr_eligible': 598,
-                    'state_name': 'All',
-                    'district_name': 'All',
-                    'block_name': 'All',
-                    'supervisor_name': 'All',
-                    'awc_name': 'All'
+                    'thr_eligible': 598
                 },
                 {
+                    'state_name': 'st1',
+                    'district_name': 'Data Not Entered',
+                    'block_name': 'Data Not Entered',
+                    'supervisor_name': 'Data Not Entered',
+                    'awc_name': 'Data Not Entered',
+                    'num_launched_awcs': 10,
                     'thr_0_days_val': '17.92 %',
                     'thr_1_7_days_val': '22.22 %',
                     'thr_8_14_days_val': '12.54 %',
@@ -59,6 +66,12 @@ class TestServiceDeliveryDetails(TestCase):
                     'thr_eligible': 279
                 },
                 {
+                    'state_name': 'st2',
+                    'district_name': 'Data Not Entered',
+                    'block_name': 'Data Not Entered',
+                    'supervisor_name': 'Data Not Entered',
+                    'awc_name': 'Data Not Entered',
+                    'num_launched_awcs': 11,
                     'thr_0_days_val': '10.69 %',
                     'thr_1_7_days_val': '9.12 %',
                     'thr_8_14_days_val': '7.23 %',
@@ -74,6 +87,12 @@ class TestServiceDeliveryDetails(TestCase):
                     'thr_eligible': 318
                 },
                 {
+                    'state_name': 'st7',
+                    'district_name': 'Data Not Entered',
+                    'block_name': 'Data Not Entered',
+                    'supervisor_name': 'Data Not Entered',
+                    'awc_name': 'Data Not Entered',
+                    'num_launched_awcs': 1,
                     'thr_0_days_val': '100.00 %',
                     'thr_1_7_days_val': '0.00 %',
                     'thr_8_14_days_val': '0.00 %',
@@ -120,7 +139,7 @@ class TestServiceDeliveryDetails(TestCase):
                     'block_name': 'All',
                     'supervisor_name': 'All',
                     'awc_name': 'All',
-                    'num_launched_awcs': 'Data Not Entered',
+                    'num_launched_awcs': 22,
                     'cbe_conducted': 3,
                     'third_fourth_month_of_pregnancy_count': 0,
                     'annaprasan_diwas_count': 1,
@@ -134,7 +153,7 @@ class TestServiceDeliveryDetails(TestCase):
                     'block_name': 'Data Not Entered',
                     'supervisor_name': 'Data Not Entered',
                     'awc_name': 'Data Not Entered',
-                    'num_launched_awcs': 'Data Not Entered',
+                    'num_launched_awcs': 10,
                     'cbe_conducted': 1,
                     'third_fourth_month_of_pregnancy_count': 0,
                     'annaprasan_diwas_count': 0,
@@ -148,7 +167,7 @@ class TestServiceDeliveryDetails(TestCase):
                     'block_name': 'Data Not Entered',
                     'supervisor_name': 'Data Not Entered',
                     'awc_name': 'Data Not Entered',
-                    'num_launched_awcs': 'Data Not Entered',
+                    'num_launched_awcs': 11,
                     'cbe_conducted': 2,
                     'third_fourth_month_of_pregnancy_count': 0,
                     'annaprasan_diwas_count': 1,
@@ -162,7 +181,7 @@ class TestServiceDeliveryDetails(TestCase):
                     'block_name': 'Data Not Entered',
                     'supervisor_name': 'Data Not Entered',
                     'awc_name': 'Data Not Entered',
-                    'num_launched_awcs': 'Data Not Entered',
+                    'num_launched_awcs': 1,
                     'cbe_conducted': 0,
                     'third_fourth_month_of_pregnancy_count': 0,
                     'annaprasan_diwas_count': 0,
@@ -196,6 +215,12 @@ class TestServiceDeliveryDetails(TestCase):
         expected = {
             'data': [
                 {
+                    'state_name': 'All',
+                    'district_name': 'All',
+                    'block_name': 'All',
+                    'supervisor_name': 'All',
+                    'awc_name': 'All',
+                    'num_launched_awcs': 22,
                     'pse_0_days_val': '8.17 %',
                     'pse_1_7_days_val': '36.73 %',
                     'pse_8_14_days_val': '35.82 %',
@@ -208,14 +233,15 @@ class TestServiceDeliveryDetails(TestCase):
                     'pse_15_20_days': 125,
                     'pse_21_24_days': 46,
                     'pse_25_days': 20,
-                    'pse_eligible': 991,
-                    'state_name': 'All',
-                    'district_name': 'All',
-                    'block_name': 'All',
-                    'supervisor_name': 'All',
-                    'awc_name': 'All'
+                    'pse_eligible': 991
                 },
                 {
+                    'state_name': 'st1',
+                    'district_name': 'Data Not Entered',
+                    'block_name': 'Data Not Entered',
+                    'supervisor_name': 'Data Not Entered',
+                    'awc_name': 'Data Not Entered',
+                    'num_launched_awcs': 10,
                     'pse_0_days_val': '7.87 %',
                     'pse_1_7_days_val': '34.78 %',
                     'pse_8_14_days_val': '39.54 %',
@@ -231,6 +257,12 @@ class TestServiceDeliveryDetails(TestCase):
                     'pse_eligible': 483
                 },
                 {
+                    'state_name': 'st2',
+                    'district_name': 'Data Not Entered',
+                    'block_name': 'Data Not Entered',
+                    'supervisor_name': 'Data Not Entered',
+                    'awc_name': 'Data Not Entered',
+                    'num_launched_awcs': 11,
                     'pse_0_days_val': '8.28 %',
                     'pse_1_7_days_val': '38.66 %',
                     'pse_8_14_days_val': '32.35 %',
@@ -246,6 +278,12 @@ class TestServiceDeliveryDetails(TestCase):
                     'pse_eligible': 507
                 },
                 {
+                    'state_name': 'st7',
+                    'district_name': 'Data Not Entered',
+                    'block_name': 'Data Not Entered',
+                    'supervisor_name': 'Data Not Entered',
+                    'awc_name': 'Data Not Entered',
+                    'num_launched_awcs': 1,
                     'pse_0_days_val': '100.00 %',
                     'pse_1_7_days_val': '0.00 %',
                     'pse_8_14_days_val': '0.00 %',
@@ -286,6 +324,12 @@ class TestServiceDeliveryDetails(TestCase):
         expected = {
             'data': [
                 {
+                    'state_name': 'All',
+                    'district_name': 'All',
+                    'block_name': 'All',
+                    'supervisor_name': 'All',
+                    'awc_name': 'All',
+                    'num_launched_awcs': 22,
                     'lunch_0_days_val': '98.08 %',
                     'lunch_1_7_days_val': '0.10 %',
                     'lunch_8_14_days_val': '0.10 %',
@@ -298,14 +342,15 @@ class TestServiceDeliveryDetails(TestCase):
                     'lunch_15_20_days': 2,
                     'lunch_21_24_days': 15,
                     'lunch_25_days': 0,
-                    'pse_eligible': 991,
-                    'state_name': 'All',
-                    'district_name': 'All',
-                    'block_name': 'All',
-                    'supervisor_name': 'All',
-                    'awc_name': 'All'
+                    'pse_eligible': 991
                 },
                 {
+                    'state_name': 'st1',
+                    'district_name': 'Data Not Entered',
+                    'block_name': 'Data Not Entered',
+                    'supervisor_name': 'Data Not Entered',
+                    'awc_name': 'Data Not Entered',
+                    'num_launched_awcs': 10,
                     'lunch_0_days_val': '98.76 %',
                     'lunch_1_7_days_val': '0.21 %',
                     'lunch_8_14_days_val': '0.21 %',
@@ -321,6 +366,12 @@ class TestServiceDeliveryDetails(TestCase):
                     'pse_eligible': 483
                 },
                 {
+                    'state_name': 'st2',
+                    'district_name': 'Data Not Entered',
+                    'block_name': 'Data Not Entered',
+                    'supervisor_name': 'Data Not Entered',
+                    'awc_name': 'Data Not Entered',
+                    'num_launched_awcs': 11,
                     'lunch_0_days_val': '97.44 %',
                     'lunch_1_7_days_val': '0.00 %',
                     'lunch_8_14_days_val': '0.00 %',
@@ -336,6 +387,12 @@ class TestServiceDeliveryDetails(TestCase):
                     'pse_eligible': 507
                 },
                 {
+                    'state_name': 'st7',
+                    'district_name': 'Data Not Entered',
+                    'block_name': 'Data Not Entered',
+                    'supervisor_name': 'Data Not Entered',
+                    'awc_name': 'Data Not Entered',
+                    'num_launched_awcs': 1,
                     'lunch_0_days_val': '100.00 %',
                     'lunch_1_7_days_val': '0.00 %',
                     'lunch_8_14_days_val': '0.00 %',

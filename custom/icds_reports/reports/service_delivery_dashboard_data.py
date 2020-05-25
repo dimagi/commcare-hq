@@ -147,7 +147,8 @@ def get_service_delivery_report_data(domain, start, length, order, reversed_orde
         else:
             config['data'].sort(key=lambda x: x[order], reverse=reversed_order)
     config['data'] = config['data'][start:(start + length)]
-    config['data'].insert(0, all_row)
+    if data_length:
+        config['data'].insert(0, all_row)
     config["aggregationLevel"] = location_filters['aggregation_level']
     config["recordsTotal"] = data_count
     config["recordsFiltered"] = data_count
@@ -171,20 +172,20 @@ def get_service_delivery_details(domain, start, length, order, reversed_order, l
         default_order = 'awc_name'
 
     location_fields = ['state_name', 'district_name', 'block_name', 'supervisor_name', 'awc_name']
-    count_columns = list('num_launched_awcs')
+    count_columns = ['num_launched_awcs']
 
     if step == 'thr':
-        count_columns = ['thr_eligible', 'thr_0_days', 'thr_1_7_days', 'thr_8_14_days', 'thr_15_20_days',
-                         'thr_21_24_days', 'thr_25_days']
+        count_columns += ['thr_eligible', 'thr_0_days', 'thr_1_7_days', 'thr_8_14_days', 'thr_15_20_days',
+                          'thr_21_24_days', 'thr_25_days']
     elif step == 'cbe':
-        count_columns = ['cbe_conducted', 'third_fourth_month_of_pregnancy_count', 'annaprasan_diwas_count',
-                         'suposhan_diwas_count', 'coming_of_age_count', 'public_health_message_count']
+        count_columns += ['cbe_conducted', 'third_fourth_month_of_pregnancy_count', 'annaprasan_diwas_count',
+                          'suposhan_diwas_count', 'coming_of_age_count', 'public_health_message_count']
     elif step == 'sn':
-        count_columns = ['pse_eligible', 'lunch_0_days', 'lunch_1_7_days', 'lunch_8_14_days', 'lunch_15_20_days',
-                         'lunch_21_24_days', 'lunch_25_days']
+        count_columns += ['pse_eligible', 'lunch_0_days', 'lunch_1_7_days', 'lunch_8_14_days', 'lunch_15_20_days',
+                          'lunch_21_24_days', 'lunch_25_days']
     elif step == 'pse':
-        count_columns = ['pse_eligible', 'pse_0_days', 'pse_1_7_days', 'pse_8_14_days', 'pse_15_20_days',
-                         'pse_21_24_days', 'pse_25_days']
+        count_columns += ['pse_eligible', 'pse_0_days', 'pse_1_7_days', 'pse_8_14_days', 'pse_15_20_days',
+                          'pse_21_24_days', 'pse_25_days']
     values = location_fields + count_columns
 
     def get_data_for(default_order, values):
@@ -269,7 +270,7 @@ def get_service_delivery_details(domain, start, length, order, reversed_order, l
             num_launched_awcs=get_value_or_data_not_entered(row_data, 'num_launched_awcs')
         )
         if step == 'thr':
-            base_dict = get_thr_percents(dict(), row_data)
+            base_dict = get_thr_percents(base_dict, row_data)
             base_dict['thr_0_days'] = get_value_or_data_not_entered(row_data, 'thr_0_days')
             base_dict['thr_1_7_days'] = get_value_or_data_not_entered(row_data, 'thr_1_7_days')
             base_dict['thr_8_14_days'] = get_value_or_data_not_entered(row_data, 'thr_8_14_days')
@@ -290,7 +291,7 @@ def get_service_delivery_details(domain, start, length, order, reversed_order, l
             base_dict['public_health_message_count'] =\
                 get_value_or_data_not_entered(row_data, 'public_health_message_count')
         elif step == 'sn':
-            base_dict = get_sn_percents(dict(), row_data)
+            base_dict = get_sn_percents(base_dict, row_data)
             base_dict['lunch_0_days'] = get_value_or_data_not_entered(row_data, 'lunch_0_days')
             base_dict['lunch_1_7_days'] = get_value_or_data_not_entered(row_data, 'lunch_1_7_days')
             base_dict['lunch_8_14_days'] = get_value_or_data_not_entered(row_data, 'lunch_8_14_days')
@@ -299,7 +300,7 @@ def get_service_delivery_details(domain, start, length, order, reversed_order, l
             base_dict['lunch_25_days'] = get_value_or_data_not_entered(row_data, 'lunch_25_days')
             base_dict['pse_eligible'] = get_value_or_data_not_entered(row_data, 'pse_eligible')
         elif step == 'pse':
-            base_dict = get_pse_percents(dict(), row_data)
+            base_dict = get_pse_percents(base_dict, row_data)
             base_dict['pse_0_days'] = get_value_or_data_not_entered(row_data, 'pse_0_days')
             base_dict['pse_1_7_days'] = get_value_or_data_not_entered(row_data, 'pse_1_7_days')
             base_dict['pse_8_14_days'] = get_value_or_data_not_entered(row_data, 'pse_8_14_days')
@@ -340,7 +341,8 @@ def get_service_delivery_details(domain, start, length, order, reversed_order, l
         else:
             config['data'].sort(key=lambda x: x[order], reverse=reversed_order)
     config['data'] = config['data'][start:(start + length)]
-    config['data'].insert(0, all_row)
+    if data_length:
+        config['data'].insert(0, all_row)
     config["aggregationLevel"] = location_filters['aggregation_level']
     config["recordsTotal"] = data_count
     config["recordsFiltered"] = data_count
