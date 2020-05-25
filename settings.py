@@ -1848,8 +1848,6 @@ STATIC_UCR_REPORTS = [
     os.path.join('custom', 'abt', 'reports', 'spray_progress_level_2.json'),
     os.path.join('custom', 'abt', 'reports', 'spray_progress_level_3.json'),
     os.path.join('custom', 'abt', 'reports', 'spray_progress_level_4.json'),
-    os.path.join('custom', 'abt', 'reports', 'supervisory_report.json'),
-    os.path.join('custom', 'abt', 'reports', 'supervisory_report_v2.json'),
     os.path.join('custom', 'abt', 'reports', 'supervisory_report_v2019.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'dashboard', '*.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'asr', '*.json'),
