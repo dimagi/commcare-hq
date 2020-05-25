@@ -13,7 +13,11 @@ from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.motech.auth import AuthManager, BasicAuthManager
 from corehq.motech.const import REQUEST_TIMEOUT
 from corehq.motech.models import RequestLog
-from corehq.motech.utils import pformat_json, unpack_request_args
+from corehq.motech.utils import (
+    get_endpoint_url,
+    pformat_json,
+    unpack_request_args,
+)
 
 
 @attr.s(frozen=True)
@@ -132,26 +136,24 @@ class Requests(object):
             response.raise_for_status()
         return response
 
-    def get_url(self, uri):
-        if self.base_url is None:
-            return uri
-        return '/'.join((self.base_url.rstrip('/'), uri.lstrip('/')))
-
     def delete(self, uri, **kwargs):
         kwargs.setdefault('headers', {'Accept': 'application/json'})
-        return self.send_request('DELETE', self.get_url(uri), **kwargs)
+        url = get_endpoint_url(self.base_url, uri)
+        return self.send_request('DELETE', url, **kwargs)
 
     def get(self, uri, *args, **kwargs):
         kwargs.setdefault('headers', {'Accept': 'application/json'})
         kwargs.setdefault('allow_redirects', True)
-        return self.send_request('GET', self.get_url(uri), *args, **kwargs)
+        url = get_endpoint_url(self.base_url, uri)
+        return self.send_request('GET', url, *args, **kwargs)
 
     def post(self, uri, data=None, json=None, *args, **kwargs):
         kwargs.setdefault('headers', {
             'Content-type': 'application/json',
             'Accept': 'application/json'
         })
-        return self.send_request('POST', self.get_url(uri), *args,
+        url = get_endpoint_url(self.base_url, uri)
+        return self.send_request('POST', url, *args,
                                  data=data, json=json, **kwargs)
 
     def put(self, uri, data=None, json=None, *args, **kwargs):
@@ -159,7 +161,8 @@ class Requests(object):
             'Content-type': 'application/json',
             'Accept': 'application/json'
         })
-        return self.send_request('PUT', self.get_url(uri), *args,
+        url = get_endpoint_url(self.base_url, uri)
+        return self.send_request('PUT', url, *args,
                                  data=data, json=json, **kwargs)
 
     def notify_exception(self, message=None, details=None):

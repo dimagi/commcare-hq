@@ -12,6 +12,8 @@ from requests.auth import AuthBase, HTTPBasicAuth, HTTPDigestAuth
 from requests.exceptions import RequestException
 from requests_oauthlib import OAuth1, OAuth2Session
 
+from corehq.motech.utils import get_endpoint_url
+
 if TYPE_CHECKING:
     from corehq.motech.models import ConnectionSettings
 
@@ -241,7 +243,9 @@ class OAuth2PasswordGrantManager(AuthManager):
         if not self.last_token:
             client = LegacyApplicationClient(client_id=self.client_id)
             session = OAuth2Session(client=client)
-            token_url = self.get_url(self.api_settings.token_url)
+            token_url = get_endpoint_url(
+                self.base_url, self.api_settings.token_url,
+            )
             if self.api_settings.pass_credentials_in_header:
                 auth = HTTPBasicAuth(self.client_id, self.client_secret)
                 self.last_token = session.fetch_token(
@@ -260,7 +264,9 @@ class OAuth2PasswordGrantManager(AuthManager):
                 )
 
         # Return session that refreshes token automatically
-        refresh_url = self.get_url(self.api_settings.refresh_url)
+        refresh_url = get_endpoint_url(
+            self.base_url, self.api_settings.refresh_url,
+        )
         refresh_kwargs = {
             'client_id': self.client_id,
             'client_secret': self.client_secret,
@@ -272,6 +278,3 @@ class OAuth2PasswordGrantManager(AuthManager):
             auto_refresh_kwargs=refresh_kwargs,
             token_updater=set_last_token
         )
-
-    def get_url(self, uri):
-        return '/'.join((self.base_url.rstrip('/'), uri.lstrip('/')))
