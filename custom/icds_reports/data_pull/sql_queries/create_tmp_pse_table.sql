@@ -1,4 +1,4 @@
-DROP TABLE IF EXISTS temp_pse_data_pull;
+DROP TABLE IF EXISTS {temp_table};
 CREATE TABLE {temp_table} AS
 SELECT   supervisor_id,
          Sum(

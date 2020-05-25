@@ -1,4 +1,4 @@
-DROP TABLE IF EXISTS dummy_thr_table;
+DROP TABLE IF EXISTS {temp_table};
 CREATE TABLE {temp_table} AS
   (SELECT supervisor_id,
           SUM(CASE
