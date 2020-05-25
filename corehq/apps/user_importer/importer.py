@@ -392,7 +392,7 @@ def create_or_update_users_and_groups(domain, user_specs, upload_user, group_mem
 
                 if role:
                     role_qualified_id = roles_by_name[role].get_qualified_id()
-                    user.set_role(domain, role_id)
+                    user.set_role(domain, role_qualified_id)
 
                 if web_user:
                     user.user_data.update({'login_as_user': web_user})
