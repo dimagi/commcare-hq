@@ -5901,7 +5901,7 @@ class LatestEnabledBuildProfiles(models.Model):
 
     def save(self, *args, **kwargs):
         super(LatestEnabledBuildProfiles, self).save(*args, **kwargs)
-        GlobalAppConfig.clear_version_cache()
+        GlobalAppConfig.by_app_id(self.domain, self.app_id).clear_version_cache()
         self.expire_cache(self.domain)
 
     @property
