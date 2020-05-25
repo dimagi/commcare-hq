@@ -1,13 +1,63 @@
 hqDefine("motech/js/connection_settings_detail", [
     'jquery',
+    'underscore',
     'hqwebapp/js/initial_page_data',
 ], function (
     $,
+    _,
     initialPageData
 ) {
     $(function () {
-        var $testConnectionButton = $('#test-connection-button'),
+        var $authTypeSelect = $('#id_auth_type'),
+            $testConnectionButton = $('#test-connection-button'),
             $testResult = $('#test-connection-result');
+
+        $authTypeSelect.change(function () {
+            var visible = [],
+                hidden = [],
+                all_fields = [
+                    'api_auth_settings',
+                    'username',
+                    'plaintext_password',
+                    'client_id',
+                    'plaintext_client_secret',
+                ];
+            switch ($(this).val()) {
+                case '':  // Auth type is "None"
+                    hidden = all_fields;
+                    break;
+                case 'oauth1':
+                    visible = [
+                        'api_auth_settings',
+                        'username',
+                        'plaintext_password',
+                    ];
+                    hidden = [
+                        'client_id',
+                        'plaintext_client_secret',
+                    ];
+                    break;
+                case 'oauth2_pwd':
+                    visible = all_fields;
+                    break;
+                default:
+                    visible = [
+                        'username',
+                        'plaintext_password',
+                    ];
+                    hidden = [
+                        'api_auth_settings',
+                        'client_id',
+                        'plaintext_client_secret',
+                    ];
+            }
+            _.each(visible, function (field) {
+                $('#div_id_' + field).show();
+            });
+            _.each(hidden, function (field) {
+                $('#div_id_' + field).hide();
+            });
+        });
 
         /**
          * Handles a successful attempt to test the connection.
@@ -72,7 +122,8 @@ hqDefine("motech/js/connection_settings_detail", [
             }
         });
 
-        // Set initial button state
+        // Set initial state
+        $authTypeSelect.trigger('change');
         $('#id_url').trigger('change');
     });
 });

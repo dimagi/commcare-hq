@@ -129,30 +129,6 @@ class ConnectionSettings(models.Model):
             logger=logger,
         )
 
-    @property
-    def used_by(self):
-        """
-        Returns the names of kinds of things that are currently using
-        this instance. Used for informing users, and determining whether
-        the instance can be deleted.
-        """
-        from corehq.motech.dhis2.dbaccessors import get_dataset_maps
-        from corehq.motech.repeaters.models import Repeater
-
-        kinds = set()
-        if self.incrementalexport_set.first():
-            kinds.add(_('Incremental Exports'))
-        if any(m.connection_settings_id == self.id
-               for m in get_dataset_maps(self.domain)):
-            kinds.add(_('DHIS2 DataSet Maps'))
-        if any (r.connection_settings_id == self.id
-                for r in Repeater.by_domain(self.domain)):
-            kinds.add(_('Data Forwarding'))
-
-        # TODO: Check OpenmrsImporters (when OpenmrsImporters use ConnectionSettings)
-
-        return kinds
-
     def get_auth_manager(self):
         if self.auth_type is None:
             return AuthManager()
@@ -206,6 +182,30 @@ class ConnectionSettings(models.Model):
             'Please select the applicable API auth settings for the '
             f'{self.name!r} connection.'
         ))
+
+    @property
+    def used_by(self):
+        """
+        Returns the names of kinds of things that are currently using
+        this instance. Used for informing users, and determining whether
+        the instance can be deleted.
+        """
+        from corehq.motech.dhis2.dbaccessors import get_dataset_maps
+        from corehq.motech.repeaters.models import Repeater
+
+        kinds = set()
+        if self.incrementalexport_set.first():
+            kinds.add(_('Incremental Exports'))
+        if any(m.connection_settings_id == self.id
+               for m in get_dataset_maps(self.domain)):
+            kinds.add(_('DHIS2 DataSet Maps'))
+        if any (r.connection_settings_id == self.id
+                for r in Repeater.by_domain(self.domain)):
+            kinds.add(_('Data Forwarding'))
+
+        # TODO: Check OpenmrsImporters (when OpenmrsImporters use ConnectionSettings)
+
+        return kinds
 
 
 class RequestLog(models.Model):
