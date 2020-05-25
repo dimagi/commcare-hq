@@ -334,7 +334,8 @@
     {% endif %}
 
     {% if domain %}
-      {% registerurl 'cloudcare_ping' domain %}
+      {% registerurl 'ping_login' %}
+      {% registerurl 'login_new_window' domain %}{# TODO: shouldn't require domain #}
       {% include 'hqwebapp/includes/inactivity_modal.html' %}
     {% endif %}
 
