@@ -332,7 +332,9 @@ def get_service_delivery_details(domain, start, length, order, reversed_order, l
                 all_row = get_pse_percents(all_row, all_row)
         config['data'].append(base_data(row))
 
-    percentage_fields = count_columns
+    sort_columns = [field + '_val' for field in count_columns]
+
+    percentage_fields = sort_columns
     if order:
         if order in percentage_fields:
             config['data'].sort(
