@@ -50,6 +50,7 @@ class UserES(HQESQuery):
             is_practice_user,
             role_id,
             is_active,
+            username,
         ] + super(UserES, self).builtin_filters
 
     def show_inactive(self):

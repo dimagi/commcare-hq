@@ -958,6 +958,8 @@ REQUIRE_TWO_FACTOR_FOR_SUPERUSERS = False
 # that adds messages to the partition with the fewest unprocessed messages
 USE_KAFKA_SHORTEST_BACKLOG_PARTITIONER = False
 
+SESSION_COOKIE_SECURE = CSRF_COOKIE_SECURE = not DEBUG
+SESSION_COOKIE_HTTPONLY = CSRF_COOKIE_HTTPONLY = True
 
 try:
     # try to see if there's an environmental variable set for local_settings
@@ -2134,9 +2136,6 @@ if SENTRY_DSN:
     SENTRY_CONFIGURED = True
 else:
     SENTRY_CONFIGURED = False
-
-SESSION_COOKIE_SECURE = CSRF_COOKIE_SECURE = True
-SESSION_COOKIE_HTTPONLY = CSRF_COOKIE_HTTPONLY = True
 
 if RESTRICT_USED_PASSWORDS_FOR_NIC_COMPLIANCE:
     AUTH_PASSWORD_VALIDATORS = [

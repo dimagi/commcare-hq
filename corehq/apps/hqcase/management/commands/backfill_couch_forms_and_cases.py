@@ -8,14 +8,15 @@ from itertools import zip_longest
 
 from couchforms.dbaccessors import get_form_ids_by_type
 from couchforms.models import XFormInstance
-from dimagi.utils.chunked import chunked
 from pillowtop import get_pillow_by_name
 from pillowtop.feed.interface import ChangeMeta
 
 from corehq.apps.change_feed.topics import get_topic_for_doc_type
 from corehq.apps.domain.dbaccessors import iter_domains
-from corehq.apps.es import CaseES, FormES
 from corehq.apps.hqcase.dbaccessors import get_all_case_owner_ids
+from corehq.apps.reports.analytics.esaccessors import (
+    get_form_ids_missing_from_elasticsearch,
+    get_case_ids_missing_from_elasticsearch)
 from corehq.dbaccessors.couchapps.cases_by_server_date.by_owner_server_modified_on import (
     get_case_ids_modified_with_owner_since,
 )
@@ -89,26 +90,6 @@ def generate_all_form_ids_by_domain(start, end):
         for domain, form_ids in form_ids_by_domain.items()
         if form_ids
     }
-
-
-def get_form_ids_missing_from_elasticsearch(all_form_ids):
-    missing_from_elasticsearch = set()
-    for form_ids in chunked(all_form_ids, 500):
-        form_ids = set(form_ids)
-        not_missing = set(FormES().doc_id(form_ids).get_ids())
-        missing_from_elasticsearch.update(form_ids - not_missing)
-        assert not_missing - form_ids == set()
-    return list(missing_from_elasticsearch)
-
-
-def get_case_ids_missing_from_elasticsearch(all_case_ids):
-    missing_from_elasticsearch = set()
-    for case_ids in chunked(all_case_ids, 500):
-        case_ids = set(case_ids)
-        not_missing = set(CaseES().doc_id(case_ids).get_ids())
-        missing_from_elasticsearch.update(case_ids - not_missing)
-        assert not_missing - case_ids == set()
-    return list(missing_from_elasticsearch)
 
 
 def get_all_case_ids_by_domain(start, end):

@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-05-13 21:43+0000\n"
+"POT-Creation-Date: 2020-05-20 17:30+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
 "Last-Translator: Gladys Teos <info@enestranslations.com>, 2020\n"
 "Language-Team: Spanish (https://www.transifex.com/dimagi/teams/9388/es/)\n"
@@ -568,27 +568,27 @@ msgstr "Editar Formulario"
 msgid "Form Settings"
 msgstr "Configuración del Formulario"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:96
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:79
 msgid "Home Screen"
 msgstr "Pantalla Principal"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:97
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:80
 msgid "First Menu"
 msgstr "Primer Menú"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:99
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:82
 msgid "Menu: "
 msgstr "Menú:"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:102
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:85
 msgid "Parent Menu: "
 msgstr "Menú Padre:"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:104
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:87
 msgid "Previous Screen"
 msgstr "Pantallla Anterior"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:113
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:96
 msgid "Link to other form"
 msgstr "Enlace a otro formulario"
 
@@ -619,26 +619,26 @@ msgstr "Eliminar"
 msgid "Menu Settings"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:118
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:101
 msgid "Case type is required."
 msgstr "Se requiere un tipo de caso."
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:125
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:108
 msgid "Case types can only include the characters a-z, 0-9, '-' and '_'"
 msgstr ""
 "Los tipos de casos solo pueden incluir los caracteres a-z, 0-9, '-' y '_'"
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:130
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:113
 msgid "'commcare-user' is a reserved case type. Please change the case type"
 msgstr ""
 "'usuario-commcare' es un tipo de caso reservado. Por favor cambie el tipo de "
 "caso"
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:174
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:157
 msgid "Go back to case list"
 msgstr "Regresar a la lista de casos"
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:175
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:158
 msgid "Proceed with registered case"
 msgstr "Continuar con el caso registrado"
 
@@ -650,11 +650,11 @@ msgstr "Mostrar Todo"
 msgid "Display text is required"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/report_module.js:342
+#: corehq/apps/app_manager/static/app_manager/js/modules/report_module.js:341
 msgid "You have unsaved changes in your report list module"
 msgstr "Tiene cambios sin guardar en la lista de caso de su módulo"
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/report_module.js:438
+#: corehq/apps/app_manager/static/app_manager/js/modules/report_module.js:436
 msgid "This code is used in multiple places."
 msgstr ""
 
@@ -2711,16 +2711,12 @@ msgid "Not a valid choice"
 msgstr "Opción no válida"
 
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js:272
-#, fuzzy
-#| msgid "Saving..."
 msgid "Submitting..."
-msgstr "Guardando..."
+msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js:274
-#, fuzzy
-#| msgid "Submit Payment"
 msgid "Submit"
-msgstr "Ingrese Pago"
+msgstr "Ingresar"
 
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js:657
 msgid ""
@@ -2739,10 +2735,8 @@ msgid "We were unable to save this answer. Please try again later."
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer-inline.js:35
-#, fuzzy
-#| msgid "Report successfully emailed"
 msgid "Form successfully submitted!"
-msgstr "Reporte enviado por correo electrónico exitosamente"
+msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer-inline.js:40
 msgid "An unexpected error occurred!"
@@ -2860,12 +2854,8 @@ msgid "User data successfully cleared."
 msgstr "Los datos del usuario fueron borrados exitosamente."
 
 #: corehq/apps/cloudcare/static/cloudcare/js/util.js:142
-#, fuzzy
-#| msgid "Could not clear user data. Please report an issue if this persists."
 msgid "Error breaking locks. Please report an issue if this persists."
 msgstr ""
-"No es posible borrar los datos del usuario. Por favor reporte un problema si "
-"esto continúa."
 
 #: corehq/apps/commtrack/static/commtrack/js/products_and_programs_main.js:41
 msgid ""
@@ -2945,7 +2935,7 @@ msgstr ""
 msgid "Issue communicating with server. Try again."
 msgstr "Ocurrió un problema al comunicarse con el servidor. Intente otra vez."
 
-#: corehq/apps/data_interfaces/static/data_interfaces/js/manage_case_groups.js:48
+#: corehq/apps/data_interfaces/static/data_interfaces/js/manage_case_groups.js:57
 msgid "Sorry, it looks like the upload failed."
 msgstr "Lo sentimos, parece que la carga falló."
 
@@ -3696,13 +3686,13 @@ msgstr ""
 
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js:368
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js:383
-#: corehq/apps/userreports/static/userreports/js/report_config.js:295
-#: corehq/apps/userreports/static/userreports/js/report_config.js:323
+#: corehq/apps/userreports/static/userreports/js/report_config.js:305
+#: corehq/apps/userreports/static/userreports/js/report_config.js:333
 msgid "Choose the property you would like to add as a filter to this report."
 msgstr "Elija la propiedad que quisiera agregar como filtro para este reporte."
 
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js:369
-#: corehq/apps/userreports/static/userreports/js/report_config.js:296
+#: corehq/apps/userreports/static/userreports/js/report_config.js:306
 msgid ""
 "Web users viewing the report will see this display text instead of the "
 "property name. Name your filter something easy for users to understand."
@@ -3712,7 +3702,7 @@ msgstr ""
 "entender para sus usuarios. "
 
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js:370
-#: corehq/apps/userreports/static/userreports/js/report_config.js:297
+#: corehq/apps/userreports/static/userreports/js/report_config.js:307
 msgid ""
 "What type of property is this filter?<br/><br/><strong>Date</strong>: Select "
 "this if the property is a date.<br/><strong>Choice</strong>: Select this if "
@@ -3723,7 +3713,7 @@ msgstr ""
 "Seleccione esto si la propiedad es un texto u opción múltiple."
 
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js:384
-#: corehq/apps/userreports/static/userreports/js/report_config.js:324
+#: corehq/apps/userreports/static/userreports/js/report_config.js:334
 msgid ""
 "What type of property is this filter?<br/><br/><strong>Date</strong>: Select "
 "this to filter the property by a date range.<br/><strong>Value</strong>: "
@@ -3735,7 +3725,7 @@ msgstr ""
 "único valor."
 
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js:385
-#: corehq/apps/userreports/static/userreports/js/report_config.js:325
+#: corehq/apps/userreports/static/userreports/js/report_config.js:335
 msgid "What value or date range must the property be equal to?"
 msgstr "¿Qué valor o rango de fecha debe la propiedad igualar?"
 

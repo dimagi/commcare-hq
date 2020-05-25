@@ -202,6 +202,7 @@ describe('WebForm', function () {
             assert.isTrue(sess.onerror.calledOnce);
             assert.isTrue(sess.onerror.calledWith({
                 human_readable_message: Formplayer.Errors.TIMEOUT_ERROR,
+                is_html: false,
             }));
         });
 
