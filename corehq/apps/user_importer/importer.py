@@ -410,7 +410,7 @@ def create_or_update_users_and_groups(domain, user_specs, upload_user, group_mem
                     elif not current_user or not current_user.is_member_of(domain):
                         invite_data = {
                             'email': web_user,
-                            'invited_by': upload_user.username,
+                            'invited_by': upload_user.user_id,
                             'invited_on': datetime.utcnow(),
                             'domain': domain,
                             'role': role_qualified_id,
