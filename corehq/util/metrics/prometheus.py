@@ -1,5 +1,3 @@
-import sys
-
 from typing import List, Dict
 
 from prometheus_client import Counter as PCounter
@@ -84,10 +82,7 @@ class PrometheusMetrics(HqMetrics):
         else:
             assert metric.__class__ == metric_type
         try:
-            is_a_celery_process = (sys.argv and sys.argv[0].endswith('celery')
-                and 'worker' in sys.argv)
-            is_a_pillow_process = (sys.argv and 'run_ptop' in sys.argv)
-            if is_a_celery_process or is_a_pillow_process:
+            if getattr(settings, 'PUSHGATEWAY_HOST', None):
                 self._push_to_gateway()
             return metric.labels(**tags) if tags else metric
         except ValueError:
@@ -101,8 +96,9 @@ class PrometheusMetrics(HqMetrics):
     def _push_to_gateway(self):
         registry = CollectorRegistry()
         multiprocess.MultiProcessCollector(registry)
+        host = getattr(settings, 'PUSHGATEWAY_HOST')
         try:
-            push_to_gateway('localhost:9091', job='batch_mode', registry=registry)
+            push_to_gateway(host, job='batch_mode', registry=registry)
         except Exception:
             # Could get a URLOpenerror if Pushgateway is not running
             prometheus_soft_assert(False, 'Prometheus metric error while pushing to gateway')
