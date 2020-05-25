@@ -7,9 +7,10 @@ from xml.etree import cElementTree as ElementTree
 
 from django.conf import settings
 from django.contrib.auth.models import User
-from django.contrib.postgres.fields import JSONField
+from django.contrib.postgres.fields import ArrayField, JSONField
 from django.db import connection, models, router
 from django.template.loader import render_to_string
+from django.utils import timezone
 from django.utils.translation import override as override_language
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
@@ -2920,3 +2921,11 @@ class UserReportingMetadataStaging(models.Model):
 
     class Meta(object):
         unique_together = ('domain', 'user_id', 'app_id')
+
+
+class HQApiKey(models.Model):
+    user = models.ForeignKey(User, related_name='api_keys', on_delete=models.CASCADE)
+    key = models.CharField(max_length=128, blank=True, default='', db_index=True)
+    name = models.CharField(max_length=255, blank=True, default='')
+    created = models.DateTimeField(default=timezone.now)
+    ip_whitelist = ArrayField(models.GenericIPAddressField(), default=list)
