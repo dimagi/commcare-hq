@@ -4,15 +4,13 @@
   <div class="modal-dialog modal-lg">
     <div class="modal-content">
       <div class="modal-header">
-        <h4 class="modal-title">{% trans "You're kicked out" %}</h4>
+        <h4 class="modal-title">{% trans "You've been logged out due to inactivity" %}</h4>
       </div>
       <div class="modal-body">
-        {% blocktrans %}
-          You've been logged out due to inactivity
-        {% endblocktrans %}
+        <!-- javascript will put content here -->
       </div>
       <div class="modal-footer">
-        <button class="btn btn-primary">{% trans 'Dismiss' %}</button>
+        <button class="btn btn-primary">{% trans 'Done' %}</button>
       </div>
     </div>
   </div>
