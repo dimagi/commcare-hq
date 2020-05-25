@@ -53,17 +53,6 @@ class Command(BaseCommand):
             icds_state_aggregation_task(state_id=STATE_ID, date=month,
                                         func_name='_aggregate_ccs_record_pnc_forms')
 
-    def build_migration_forms(self, month):
-        if month.strftime("%Y-%m-%d") == '2020-03-01':
-            path = os.path.join(os.path.dirname(__file__), 'sql_scripts', 'build_migration_initial_data.sql')
-            with open(path, "r", encoding='utf-8') as sql_file:
-                sql_to_execute = sql_file.read()
-                sql_to_execute = sql_to_execute.format(month=month.strftime("%Y-%m-%d"), state_id=STATE_ID)
-                _run_custom_sql_script(sql_to_execute)
-        else:
-            icds_state_aggregation_task(state_id=STATE_ID, date=month,
-                                        func_name='_agg_migration_table')
-
     def update_ccs_data(self, month):
         path = os.path.join(os.path.dirname(__file__), 'sql_scripts', 'update_ccs_data.sql')
         with open(path, "r", encoding='utf-8') as sql_file:
@@ -82,6 +71,5 @@ class Command(BaseCommand):
             self.build_bp_data(date_itr)
             self.build_pnc_data(date_itr)
             self.update_ccs_data(date_itr)
-            self.build_migration_forms(date_itr)
             _agg_bihar_api_demographics(date_itr)
             date_itr = date_itr + relativedelta(months=1)
