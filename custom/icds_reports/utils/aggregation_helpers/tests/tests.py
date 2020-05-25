@@ -7,7 +7,7 @@ from datetime import datetime
 
 import attr
 from django.core.serializers.json import DjangoJSONEncoder
-from django.test import SimpleTestCase
+from django.test import SimpleTestCase, TestCase
 from django.utils.functional import cached_property
 from freezegun import freeze_time
 from mock import patch
@@ -43,7 +43,7 @@ class SqlOutput(object):
         return distributed_diff
 
 
-class TestQueryDiffs(SimpleTestCase):
+class TestQueryDiffs(TestCase):
     def test_agg_sql_diff(self):
         outputs = get_agg_helper_outputs()
         diff_output = []

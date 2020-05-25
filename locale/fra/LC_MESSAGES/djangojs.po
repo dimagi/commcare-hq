@@ -12,17 +12,17 @@
 # Claire_Cravero <ccravero@dimagi.com>, 2018
 # Ismaïla Diene <idiene@dimagi.com>, 2019
 # Sarah Sagan <ssagan@dimagi.com>, 2019
-# Tyler Wymer <twymer@dimagi.com>, 2019
 # Aissetou Sawadogo <ais107@hotmail.com>, 2020
+# Tyler Wymer <twymer@dimagi.com>, 2020
 #
 #, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-05-13 21:43+0000\n"
+"POT-Creation-Date: 2020-05-20 17:30+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
-"Last-Translator: Aissetou Sawadogo <ais107@hotmail.com>, 2020\n"
+"Last-Translator: Tyler Wymer <twymer@dimagi.com>, 2020\n"
 "Language-Team: French (https://www.transifex.com/dimagi/teams/9388/fr/)\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
@@ -573,27 +573,27 @@ msgstr "Modifier formulaire"
 msgid "Form Settings"
 msgstr "Paramètres de formulaire."
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:96
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:79
 msgid "Home Screen"
 msgstr "Écran d'accueil"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:97
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:80
 msgid "First Menu"
 msgstr "Premier Menu"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:99
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:82
 msgid "Menu: "
 msgstr "Menu: "
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:102
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:85
 msgid "Parent Menu: "
 msgstr "Menu parent:"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:104
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:87
 msgid "Previous Screen"
 msgstr "Écran précédent"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:113
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:96
 msgid "Link to other form"
 msgstr "Ouvrir un autre formulaire"
 
@@ -625,27 +625,27 @@ msgstr "Supprimer"
 msgid "Menu Settings"
 msgstr "Paramètres du menu"
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:118
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:101
 msgid "Case type is required."
 msgstr "Type de dossier est requis."
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:125
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:108
 msgid "Case types can only include the characters a-z, 0-9, '-' and '_'"
 msgstr ""
 "Les types de dossiers peuvent comporter uniquement les caractères a-z, 0-9 "
 "et '-' and '_'"
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:130
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:113
 msgid "'commcare-user' is a reserved case type. Please change the case type"
 msgstr ""
 "'commcare-user' est un type de dossier réservé. Veuillez changer le type de "
 "dossier"
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:174
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:157
 msgid "Go back to case list"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:175
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:158
 msgid "Proceed with registered case"
 msgstr ""
 
@@ -657,13 +657,13 @@ msgstr "Afficher tous"
 msgid "Display text is required"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/report_module.js:342
+#: corehq/apps/app_manager/static/app_manager/js/modules/report_module.js:341
 msgid "You have unsaved changes in your report list module"
 msgstr ""
 "Vous avez des modifications non sauvegardées dans votre module de liste de "
 "rapports"
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/report_module.js:438
+#: corehq/apps/app_manager/static/app_manager/js/modules/report_module.js:436
 msgid "This code is used in multiple places."
 msgstr ""
 
@@ -2610,16 +2610,12 @@ msgid "Not a valid choice"
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js:272
-#, fuzzy
-#| msgid "Saving..."
 msgid "Submitting..."
-msgstr "En train d'enregistrer"
+msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js:274
-#, fuzzy
-#| msgid "Submit Payment"
 msgid "Submit"
-msgstr "Soumettre paiement"
+msgstr "Soumettre"
 
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js:657
 msgid ""
@@ -2638,10 +2634,8 @@ msgid "We were unable to save this answer. Please try again later."
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer-inline.js:35
-#, fuzzy
-#| msgid "Report successfully emailed"
 msgid "Form successfully submitted!"
-msgstr "Le rapport a été envoyé par courrier électronique avec succès"
+msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer-inline.js:40
 msgid "An unexpected error occurred!"
@@ -2831,7 +2825,7 @@ msgstr ""
 msgid "Issue communicating with server. Try again."
 msgstr "Problème de communication avec le serveur. Veuillez réessayer. "
 
-#: corehq/apps/data_interfaces/static/data_interfaces/js/manage_case_groups.js:48
+#: corehq/apps/data_interfaces/static/data_interfaces/js/manage_case_groups.js:57
 msgid "Sorry, it looks like the upload failed."
 msgstr "Désolé, il semble que le téléversement ait échoué."
 
@@ -3555,20 +3549,20 @@ msgstr ""
 
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js:368
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js:383
-#: corehq/apps/userreports/static/userreports/js/report_config.js:295
-#: corehq/apps/userreports/static/userreports/js/report_config.js:323
+#: corehq/apps/userreports/static/userreports/js/report_config.js:305
+#: corehq/apps/userreports/static/userreports/js/report_config.js:333
 msgid "Choose the property you would like to add as a filter to this report."
 msgstr ""
 
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js:369
-#: corehq/apps/userreports/static/userreports/js/report_config.js:296
+#: corehq/apps/userreports/static/userreports/js/report_config.js:306
 msgid ""
 "Web users viewing the report will see this display text instead of the "
 "property name. Name your filter something easy for users to understand."
 msgstr ""
 
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js:370
-#: corehq/apps/userreports/static/userreports/js/report_config.js:297
+#: corehq/apps/userreports/static/userreports/js/report_config.js:307
 msgid ""
 "What type of property is this filter?<br/><br/><strong>Date</strong>: Select "
 "this if the property is a date.<br/><strong>Choice</strong>: Select this if "
@@ -3576,7 +3570,7 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js:384
-#: corehq/apps/userreports/static/userreports/js/report_config.js:324
+#: corehq/apps/userreports/static/userreports/js/report_config.js:334
 msgid ""
 "What type of property is this filter?<br/><br/><strong>Date</strong>: Select "
 "this to filter the property by a date range.<br/><strong>Value</strong>: "
@@ -3584,7 +3578,7 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js:385
-#: corehq/apps/userreports/static/userreports/js/report_config.js:325
+#: corehq/apps/userreports/static/userreports/js/report_config.js:335
 msgid "What value or date range must the property be equal to?"
 msgstr ""
 

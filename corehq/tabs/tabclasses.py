@@ -159,8 +159,7 @@ class ProjectReportsTab(UITab):
                 'url': reverse(UserConfigReportsHomeView.urlname, args=[self.domain]),
                 'icon': 'icon-tasks fa fa-wrench',
             })
-        if (toggles.DOWNLOAD_LOCATION_REASSIGNMENT_REQUEST_TEMPLATE.enabled(self.domain)
-                and not toggles.PERFORM_LOCATION_REASSIGNMENT.enabled(self.couch_user.username)):
+        if toggles.PERFORM_LOCATION_REASSIGNMENT.enabled(self.couch_user.username):
             from custom.icds.location_reassignment.views import LocationReassignmentDownloadOnlyView
             tools.append({
                 'title': _(LocationReassignmentDownloadOnlyView.section_name),
@@ -1515,8 +1514,7 @@ class ProjectUsersTab(UITab):
                 'show_in_dropdown': True,
             })
 
-        if (toggles.DOWNLOAD_LOCATION_REASSIGNMENT_REQUEST_TEMPLATE.enabled(self.domain)
-                and toggles.PERFORM_LOCATION_REASSIGNMENT.enabled(self.couch_user.username)):
+        if toggles.PERFORM_LOCATION_REASSIGNMENT.enabled(self.couch_user.username):
             from custom.icds.location_reassignment.views import LocationReassignmentView
             menu.append({
                 'title': _("Location Reassignment"),
