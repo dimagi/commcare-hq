@@ -41,7 +41,6 @@ def send_datasets(domain_name, send_now=False, send_date=None):
             dataset = dataset_map.get_dataset(send_date)
             with conn.get_requests() as requests:
                 requests.post('/api/dataValueSets', json=dataset)
-                conn.update_last_token()
 
 
 @periodic_task(

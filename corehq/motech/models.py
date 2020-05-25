@@ -147,7 +147,7 @@ class ConnectionSettings(models.Model):
                 client_id=self.client_id,
                 client_secret=self.client_secret,
                 api_endpoints=self.get_oauth1_api_endpoints(),
-                last_token=self.last_token,
+                connection_settings=self,
             )
         if self.auth_type == BEARER_AUTH:
             return BearerAuthManager(
@@ -162,7 +162,7 @@ class ConnectionSettings(models.Model):
                 client_id=self.client_id,
                 client_secret=self.client_secret,
                 api_settings=self.get_oauth2_api_settings(),
-                last_token=self.last_token,
+                connection_settings=self,
             )
 
     def get_oauth1_api_endpoints(self):
@@ -182,15 +182,6 @@ class ConnectionSettings(models.Model):
             'Please select the applicable API auth settings for the '
             f'{self.name!r} connection.'
         ))
-
-    def update_last_token(self):
-        if (
-            self._requests
-            and hasattr(self._requests.auth_manager, 'last_token')
-            and self.last_token != self._requests.auth_manager.last_token
-        ):
-            self.last_token = self._requests.auth_manager.last_token
-            self.save()
 
 
 class RequestLog(models.Model):

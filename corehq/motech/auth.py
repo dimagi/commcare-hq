@@ -1,5 +1,5 @@
 import re
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 from urllib.parse import urljoin
 
 from django.utils.translation import gettext_lazy as _
@@ -11,6 +11,9 @@ from requests import Session
 from requests.auth import AuthBase, HTTPBasicAuth, HTTPDigestAuth
 from requests.exceptions import RequestException
 from requests_oauthlib import OAuth1, OAuth2Session
+
+if TYPE_CHECKING:
+    from corehq.motech.models import ConnectionSettings
 
 
 @attr.s(auto_attribs=True, frozen=True, kw_only=True)
@@ -153,12 +156,16 @@ class OAuth1Manager(AuthManager):
         client_id: str,
         client_secret: str,
         api_endpoints: OAuth1ApiEndpoints,
-        last_token: Optional[dict] = None,
+        connection_settings: 'ConnectionSettings',
     ):
         self.client_id = client_id
         self.client_secret = client_secret
         self.api_endpoints = api_endpoints
-        self.last_token = last_token
+        self.connection_settings = connection_settings
+
+    @property
+    def last_token(self) -> dict:
+        return self.connection_settings.last_token
 
     def get_auth(self):
         assert self.last_token, \
@@ -202,7 +209,7 @@ class OAuth2PasswordGrantManager(AuthManager):
         client_id: str,
         client_secret: str,
         api_settings: OAuth2ApiSettings,
-        last_token: Optional[dict] = None,
+        connection_settings: 'ConnectionSettings',
     ):
         self.base_url = base_url
         self.username = username
@@ -210,7 +217,20 @@ class OAuth2PasswordGrantManager(AuthManager):
         self.client_id = client_id
         self.client_secret = client_secret
         self.api_settings = api_settings
-        self.last_token = last_token
+        self.connection_settings = connection_settings
+
+    @property
+    def last_token(self) -> Optional[dict]:
+        return self.connection_settings.last_token
+
+    @last_token.setter
+    def last_token(self, value: dict):
+        """
+        Save ``ConnectionSettings.last_token`` whenever it is set or
+        refreshed so that it can be reused in the future.
+        """
+        self.connection_settings.last_token = value
+        self.connection_settings.save()
 
     def get_session(self):
 
