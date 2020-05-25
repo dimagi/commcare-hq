@@ -100,9 +100,10 @@ def skip_session_expiry(view_func):
     return _inner
 
 
-#@login_and_domain_required
 @skip_session_expiry
 def ping(request, domain, skip_session_expiry=True):
+    if not request.user.is_authenticated:
+        return JsonResponse({'success': 0})
     return JsonResponse({
         'success': 1,
         'seconds_left': request.session.get_expiry_age(),       # TODO: this view itself can't reset the expiry

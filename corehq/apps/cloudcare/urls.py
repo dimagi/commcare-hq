@@ -44,5 +44,5 @@ urlpatterns = [
     url(r'^$', default, name='cloudcare_default'),
     url(r'^apps/', include(app_urls)),
     url(r'^api/', include(api_urls)),
-    url(r'^ping/(?P<skip_session_expiry>)$', ping, name='cloudcare_ping'),
+    url(r'^ping/$', ping, name='cloudcare_ping'),
 ]
