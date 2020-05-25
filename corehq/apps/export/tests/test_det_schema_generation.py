@@ -1,6 +1,7 @@
 import os
 import tempfile
 from io import BytesIO
+from unittest.mock import patch
 
 from django.test import SimpleTestCase
 from openpyxl import load_workbook
@@ -24,6 +25,7 @@ class TestDETFCaseInstance(SimpleTestCase, TestFileMixin):
         super().setUpClass()
         cls.export_instance = CaseExportInstance.wrap(cls.get_json('case_export_instance'))
 
+    @patch('corehq.apps.export.det.schema_generator._get_dd_property_types', lambda domain, case_type: {})
     def test_empty(self):
         old_tables = self.export_instance.tables
         self.export_instance.tables = []
@@ -31,6 +33,7 @@ class TestDETFCaseInstance(SimpleTestCase, TestFileMixin):
             generate_from_case_export_instance(self.export_instance, BytesIO())
         self.export_instance.tables = old_tables
 
+    @patch('corehq.apps.export.det.schema_generator._get_dd_property_types', lambda domain, case_type: {})
     def test_generate_from_case_schema(self):
         with tempfile.NamedTemporaryFile(mode='wb', suffix='.xlsx') as tmp:
             generate_from_case_export_instance(self.export_instance, tmp)
@@ -48,6 +51,13 @@ class TestDETFCaseInstance(SimpleTestCase, TestFileMixin):
                 self.assertEqual(input_column.label, data_by_headings[i]['Field'])
                 self.assertEqual(CaseDETSchemaHelper.transform_path(input_column.item.readable_path),
                                  data_by_headings[i]['Source Field'])
+
+            # test individual fields / types
+            data_by_headings_by_source_field = {
+                row['Source Field']: row for row in data_by_headings
+            }
+            self.assertEqual('str2date', data_by_headings_by_source_field['properties.closed_on']['Map Via'])
+            self.assertEqual(None, data_by_headings_by_source_field['properties.event_date']['Map Via'])
 
             # note: subtables not supported
 
