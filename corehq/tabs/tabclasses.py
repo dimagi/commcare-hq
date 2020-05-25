@@ -1940,6 +1940,7 @@ class MySettingsTab(UITab):
     @property
     def sidebar_items(self):
         from corehq.apps.settings.views import (
+            ApiKeyView,
             ChangeMyPasswordView,
             EnableMobilePrivilegesView,
             MyAccountSettingsView,
@@ -1967,7 +1968,11 @@ class MySettingsTab(UITab):
             {
                 'title': _(TwoFactorProfileView.page_title),
                 'url': reverse(TwoFactorProfileView.urlname),
-            }
+            },
+            {
+                'title': _(ApiKeyView.page_title),
+                'url': reverse(ApiKeyView.urlname),
+            },
         ])
 
         if (

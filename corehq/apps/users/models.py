@@ -1,7 +1,9 @@
+import hmac
 import json
 import logging
 import re
 from datetime import datetime, timedelta
+from hashlib import sha1
 from uuid import uuid4
 from xml.etree import cElementTree as ElementTree
 
@@ -23,7 +25,6 @@ from memoized import memoized
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.phone.models import OTARestoreCommCareUser, OTARestoreWebUser
 from casexml.apps.phone.restore_caching import get_loadtest_factor_for_user
-from corehq.apps.users.exceptions import IllegalAccountConfirmation
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
     DateProperty,
@@ -60,6 +61,7 @@ from corehq.apps.domain.utils import (
 )
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.sms.mixin import CommCareMobileContactMixin, apply_leniency
+from corehq.apps.users.exceptions import IllegalAccountConfirmation
 from corehq.apps.users.landing_pages import ALL_LANDING_PAGES
 from corehq.apps.users.permissions import EXPORT_PERMISSIONS
 from corehq.apps.users.tasks import (
@@ -2929,3 +2931,8 @@ class HQApiKey(models.Model):
     name = models.CharField(max_length=255, blank=True, default='')
     created = models.DateTimeField(default=timezone.now)
     ip_whitelist = ArrayField(models.GenericIPAddressField(), default=list)
+
+    def generate_key(self):
+        # From tastypie
+        new_uuid = uuid4()
+        return hmac.new(new_uuid.bytes, digestmod=sha1).hexdigest()

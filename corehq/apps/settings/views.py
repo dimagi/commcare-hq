@@ -43,7 +43,7 @@ from corehq.apps.domain.decorators import (
 from corehq import toggles
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.hqwebapp.utils import sign, update_session_language
-from corehq.apps.hqwebapp.views import BaseSectionPageView
+from corehq.apps.hqwebapp.views import BaseSectionPageView, CRUDPaginatedViewMixin
 from corehq.apps.settings.forms import (
     HQDeviceValidationForm,
     HQEmptyForm,
@@ -53,12 +53,14 @@ from corehq.apps.settings.forms import (
     HQTOTPDeviceForm,
     HQTwoFactorMethodForm,
 )
+from corehq.apps.users.models import HQApiKey
 from corehq.apps.users.forms import AddPhoneNumberForm
 from corehq.mobile_flags import (
     ADVANCED_SETTINGS_ACCESS,
     MULTIPLE_APPS_UNLIMITED,
 )
 from corehq.util.quickcache import quickcache
+from corehq.util.timezones.conversions import ServerTime
 
 
 @login_and_domain_required
@@ -524,3 +526,80 @@ class EnableMobilePrivilegesView(BaseMyAccountView):
         context = self.get_context_data(**kwargs)
         context['qrcode_64'] = b64encode(qrcode)
         return self.render_to_response(context)
+
+
+class ApiKeyView(BaseMyAccountView, CRUDPaginatedViewMixin):
+    page_title = ugettext_lazy("API Keys")
+    urlname = "user_api_keys"
+
+    template_name = "settings/user_api_keys.html"
+
+    @property
+    def base_query(self):
+        return HQApiKey.objects.filter(user=self.request.user)
+
+    @property
+    def total(self):
+        return self.base_query.count()
+
+    @property
+    def column_names(self):
+        return [
+            _("Name"),
+            _("API Key"),
+            _("IP Whitelist"),
+            _("Created"),
+            _("Delete"),
+        ]
+
+    @property
+    def page_context(self):
+        return self.pagination_context
+
+    @property
+    def paginated_list(self):
+        for api_key in self.base_query.order_by('-created').all():
+            redacted_key = f"{api_key.key[0:4]}…{api_key.key[-4:]}"
+            yield {
+                "itemData": {
+                    "id": api_key.id,
+                    "name": api_key.name,
+                    "key": redacted_key,
+                    "ip_whitelist": api_key.ip_whitelist,
+                    "created": api_key.created.strftime('%Y-%m-%d %H:%M:%S'),
+                },
+                "template": "base-user-api-key-template",
+            }
+
+    def post(self, *args, **kwargs):
+        return self.paginate_crud_response
+
+    def get_create_form(self, is_blank=False):
+        from corehq.apps.users.forms import ApiKeyForm
+        if self.request.method == 'POST' and not is_blank:
+            return ApiKeyForm(self.request.POST)
+        return ApiKeyForm()
+
+    def get_create_item_data(self, create_form):
+        new_api_key = create_form.create_key(self.request.user)
+        copy_key_message = _("Copy this in a secure place.")
+        return {
+            'itemData': {
+                'id': new_api_key.id,
+                'name': new_api_key.name,
+                'key': f"{new_api_key.key} ({copy_key_message})",
+                'ip_whitelist': new_api_key.ip_whitelist,
+                'created': new_api_key.created.isoformat()
+            },
+            'template': 'base-user-api-key-template',
+        }
+
+    def get_deleted_item_data(self, item_id):
+        deleted_key = HQApiKey.objects.get(id=item_id)
+        deleted_key.delete()
+        return {
+            'itemData': {
+                'name': deleted_key.name,
+            },
+            'template': 'deleted-user-api-key-template',
+        }
