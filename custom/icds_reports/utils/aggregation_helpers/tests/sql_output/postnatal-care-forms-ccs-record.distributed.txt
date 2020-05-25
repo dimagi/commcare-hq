@@ -4,8 +4,8 @@ DELETE FROM "icds_dashboard_ccs_record_postnatal_forms" WHERE month=%(month)s AN
 {"month": "2019-01-01", "state": "st1"}
 
         INSERT INTO "icds_dashboard_ccs_record_postnatal_forms" (
-          state_id, supervisor_id, month, case_id, latest_time_end_processed, counsel_methods, is_ebf,
-          new_ifa_tablets_total, valid_visits
+          state_id, supervisor_id, month, case_id, latest_time_end_processed, counsel_methods,
+          new_ifa_tablets_total, is_ebf, valid_visits
         ) (
           SELECT
             %(state_id)s AS state_id,
