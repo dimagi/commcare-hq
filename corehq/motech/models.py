@@ -3,6 +3,7 @@ import re
 from django.db import models
 
 import jsonfield
+from django.utils.translation import gettext as _
 
 from corehq.motech.const import (
     ALGO_AES,
@@ -62,8 +63,9 @@ class ConnectionSettings(models.Model):
     def notify_addresses(self):
         return [addr for addr in re.split('[, ]+', self.notify_addresses_str) if addr]
 
-    def get_requests(self, payload_id, logger):
+    def get_requests(self, payload_id=None, logger=None):
         from corehq.motech.requests import Requests
+
         return Requests(
             self.domain,
             self.url,
@@ -75,6 +77,26 @@ class ConnectionSettings(models.Model):
             logger=logger,
             auth_type=self.auth_type,
         )
+
+    @property
+    def used_by(self):
+        """
+        Returns the names of kinds of things that are currently using
+        this instance. Used for informing users, and determining whether
+        the instance can be deleted.
+        """
+        from corehq.motech.dhis2.dbaccessors import get_dataset_maps
+
+        kinds = set()
+        if self.incrementalexport_set.first():
+            kinds.add(_('Incremental Exports'))
+        if any(m.connection_settings_id == self.id
+               for m in get_dataset_maps(self.domain)):
+            kinds.add(_('DHIS2 DataSet Maps'))
+        # TODO: Check Repeaters (when Repeaters use ConnectionSettings)
+        # TODO: Check OpenmrsImporters (ditto)
+
+        return kinds
 
 
 class RequestLog(models.Model):
