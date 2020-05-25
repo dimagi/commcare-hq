@@ -12,6 +12,7 @@ from requests.auth import AuthBase, HTTPBasicAuth, HTTPDigestAuth
 from requests.exceptions import RequestException
 from requests_oauthlib import OAuth1, OAuth2Session
 
+from corehq.motech.exceptions import ConfigurationError
 from corehq.motech.utils import get_endpoint_url
 
 if TYPE_CHECKING:
@@ -166,12 +167,15 @@ class OAuth1Manager(AuthManager):
         self.connection_settings = connection_settings
 
     @property
-    def last_token(self) -> dict:
+    def last_token(self) -> Optional[dict]:
         return self.connection_settings.last_token
 
     def get_auth(self):
-        assert self.last_token, \
-            'OAuth1 authentication workflow has not been followed for client'
+        if not self.last_token:
+            raise ConfigurationError(_(
+                'OAuth1 authentication workflow has not been followed for '
+                f'Connection "{self.connection_settings}"'
+            ))
 
         resource_owner_key = self.last_token['oauth_token']
         resource_owner_secret = self.last_token['oauth_token_secret']
