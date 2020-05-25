@@ -146,7 +146,7 @@ class ConnectionSettings(models.Model):
             return OAuth1Manager(
                 client_id=self.client_id,
                 client_secret=self.client_secret,
-                api_endpoints=self.get_oauth1_api_endpoints(),
+                api_endpoints=self._get_oauth1_api_endpoints(),
                 connection_settings=self,
             )
         if self.auth_type == BEARER_AUTH:
@@ -161,11 +161,11 @@ class ConnectionSettings(models.Model):
                 self.password,
                 client_id=self.client_id,
                 client_secret=self.client_secret,
-                api_settings=self.get_oauth2_api_settings(),
+                api_settings=self._get_oauth2_api_settings(),
                 connection_settings=self,
             )
 
-    def get_oauth1_api_endpoints(self):
+    def _get_oauth1_api_endpoints(self):
         if self.api_auth_settings in dict(oauth1_api_endpoints):
             return getattr(corehq.motech.auth, self.api_auth_settings)
         raise ValueError(_(
@@ -174,7 +174,7 @@ class ConnectionSettings(models.Model):
             f'{self.name!r} connection.'
         ))
 
-    def get_oauth2_api_settings(self):
+    def _get_oauth2_api_settings(self):
         if self.api_auth_settings in dict(oauth2_api_settings):
             return getattr(corehq.motech.auth, self.api_auth_settings)
         raise ValueError(_(
