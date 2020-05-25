@@ -56,6 +56,7 @@ from corehq.apps.linked_domain.models import (
 )
 from corehq.apps.linked_domain.tasks import (
     pull_missing_multimedia_for_app_and_notify_task,
+    push_models,
 )
 from corehq.apps.linked_domain.updates import update_model_type
 from corehq.apps.linked_domain.util import (
@@ -363,10 +364,15 @@ class DomainLinkRMIView(JSONResponseMixin, View, DomainViewMixin):
 
     @allow_remote_invocation
     def create_release(self, in_data):
-        # in_data['models'], in_data['linked_domains']
+        push_models.delay(self.domain, in_data['models'], in_data['linked_domains'],
+                          self.request.couch_user.email)
         return {
             'success': True,
-            'message': ugettext('I did stuff'),
+            'message': ugettext('''
+                Your release has begun. You will receive an email when it is complete.
+                Until then, to avoid linked domains receiving inconsistent content, please
+                avoid editing any of the data contained in the release.
+            '''),
         }
 
 
