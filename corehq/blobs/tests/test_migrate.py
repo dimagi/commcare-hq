@@ -62,49 +62,53 @@ class TestMigrateBackend(TestCase):
             filename = join(tmp, "file.txt")
 
             # do migration
-            migrated, skipped = mod.MIGRATIONS[self.slug].migrate(filename, num_workers=2)
+            migrated, skipped = mod.MIGRATIONS[self.slug]().migrate(filename, num_workers=2)
             self.assertGreaterEqual(migrated, self.test_size)
 
-            # verify: migration state recorded
-            mod.BlobMigrationState.objects.get(slug=self.slug)
-
-            # verify: missing blobs written to log files
-            missing_log = set()
-            fields = [
-                "blobmeta_id",
-                "domain",
-                "type_code",
-                "parent_id",
-                "blob_key",
-            ]
-            with open(filename, encoding='utf-8') as fh:
-                for line in fh:
-                    doc = json.loads(line)
-                    missing_log.add(tuple(doc[x] for x in fields))
-            self.assertEqual(self.not_founds, missing_log)
+            verify_migration(self, self.slug, filename, self.not_founds)
 
         # verify: blobs were copied to new blob db
         not_found = set(t[0] for t in self.not_founds)
         for meta in self.blob_metas:
             if meta.id in not_found:
                 with self.assertRaises(mod.NotFound):
-                    self.db.new_db.get(key=meta.key)
+                    meta.open(self.db.new_db)
                 continue
-            content = self.db.new_db.get(key=meta.key)
+            content = meta.open(self.db.new_db)
             data = content.read()
             self.assertEqual(data, b'binary data not valid utf-8 \xe4\x94')
             self.assertEqual(len(data), meta.content_length)
 
 
-def discard_migration_state(slug):
-    migrator = mod.MIGRATIONS[slug]
+def verify_migration(test, slug, filename, not_founds):
+    # verify: migration state recorded
+    mod.BlobMigrationState.objects.get(slug=slug)
+
+    # verify: missing blobs written to log files
+    missing_log = set()
+    fields = [
+        "blobmeta_id",
+        "domain",
+        "type_code",
+        "parent_id",
+        "blob_key",
+    ]
+    with open(filename, encoding='utf-8') as fh:
+        for line in fh:
+            doc = json.loads(line)
+            missing_log.add(tuple(doc[x] for x in fields))
+    test.assertEqual(not_founds, missing_log)
+
+
+def discard_migration_state(slug, **kw):
+    migrator = mod.MIGRATIONS[slug]()
     if hasattr(migrator, "migrators"):
         migrators = migrator.migrators
     elif hasattr(migrator, "iter_migrators"):
         migrators = migrator.iter_migrators()
     else:
         migrators = [migrator]
-    for provider in (m.get_document_provider() for m in migrators):
+    for provider in (m.get_document_provider(**kw) for m in migrators):
         provider.get_document_iterator(1).discard_state()
     mod.BlobMigrationState.objects.filter(slug=slug).delete()
 
@@ -131,7 +135,7 @@ class BaseMigrationTest(TestCase):
         self._old_flags = {}
         self.docs_to_delete = []
 
-        for model in doc_type_tuples_to_dict(mod.MIGRATIONS[self.slug].doc_types).values():
+        for model in doc_type_tuples_to_dict(mod.MIGRATIONS[self.slug]().doc_types).values():
             self._old_flags[model] = model._migrating_blobs_from_couch
             model._migrating_blobs_from_couch = True
 
@@ -151,7 +155,7 @@ class BaseMigrationTest(TestCase):
 
     @property
     def doc_types(self):
-        return set(doc_type_tuples_to_dict(mod.MIGRATIONS[self.slug].doc_types))
+        return set(doc_type_tuples_to_dict(mod.MIGRATIONS[self.slug]().doc_types))
 
     def do_migration(self, docs, num_attachments=1):
         self.docs_to_delete.extend(docs)
@@ -171,7 +175,7 @@ class BaseMigrationTest(TestCase):
             filename = join(tmp, "file.txt")
 
             # do migration
-            migrated, skipped = mod.MIGRATIONS[self.slug].migrate(filename)
+            migrated, skipped = mod.MIGRATIONS[self.slug]().migrate(filename)
             self.assertGreaterEqual(migrated, len(docs))
 
             # verify: migration state recorded
@@ -209,7 +213,7 @@ class BaseMigrationTest(TestCase):
         # hook doc_migrator_class to simulate concurrent modification
         modified = set()
         docs_by_id = {d._id: d for d in docs}
-        migrator = mod.MIGRATIONS[self.slug]
+        migrator = mod.MIGRATIONS[self.slug]()
 
         class ConcurrentModify(migrator.doc_migrator_class):
             def _do_migration(self, doc):

@@ -23,7 +23,8 @@
   ],
   "server_environment": [
     "india",
-    "icds"
+    "icds",
+    "icds-staging"
   ],
   "config": {
     "table_id": "static-cbe_form",
@@ -330,6 +331,15 @@
     },
     "named_filters": {},
     "engine_id": "icds-ucr-citus",
+    "sql_column_indexes": [
+      {
+        "column_ids": [
+          "supervisor_id",
+          "awc_id",
+          "date_cbe_organise"
+        ]
+      }
+    ],
     "disable_destructive_rebuild": true
   }
 }

@@ -1,29 +1,32 @@
 {
   "domains": [
-    "icds-dashboard-qa",
-    "sankalp_cas",
-    "zohaib-sandbox",
     "akshita-sandbox",
-    "sunaina-sandbox",
-    "laurence-project-1",
-    "jessica-icds-cas",
-    "marissa-test",
-    "derek-icds-sandbox",
-    "priyanka-app",
-    "shrena-dev",
     "aparatest",
-    "reach-sandbox",
-    "reach-dashboard-qa",
-    "reach-test",
+    "cas-lab",
+    "ccqa",
+    "ccqa-downstream",
+    "derek-icds-sandbox",
+    "icds-cas",
+    "icds-cas-sandbox",
+    "icds-dashboard-qa",
     "icds-sql",
     "icds-test",
-    "icds-cas",
-    "cas-lab",
-    "icds-cas-sandbox"
+    "jessica-icds-cas",
+    "laurence-project-1",
+    "marissa-test",
+    "priyanka-app",
+    "reach-dashboard-qa",
+    "reach-sandbox",
+    "reach-test",
+    "sankalp_cas",
+    "shrena-dev",
+    "sunaina-sandbox",
+    "zohaib-sandbox"
   ],
   "server_environment": [
     "india",
-    "icds"
+    "icds",
+    "icds-staging"
   ],
   "config": {
     "table_id": "static-child_health_cases",
@@ -900,51 +903,8 @@
           "filters": [
             {
               "type": "named",
-              "name": "open_cases"
-            },
-            {
-              "operator": "not_eq",
-              "expression": {
-                "datatype": null,
-                "type": "property_name",
-                "property_name": "zscore_grading_wfa"
-              },
-              "type": "boolean_expression",
-              "property_value": "yellow"
-            },
-            {
-              "operator": "not_eq",
-              "expression": {
-                "datatype": null,
-                "type": "property_name",
-                "property_name": "zscore_grading_wfa"
-              },
-              "type": "boolean_expression",
-              "property_value": "red"
-            },
-            {
-              "operator": "not_eq",
-              "expression": {
-                "datatype": null,
-                "type": "property_name",
-                "property_name": "zscore_grading_wfa"
-              },
-              "type": "boolean_expression",
-              "property_value": null
-            }
-          ]
-        },
-        "display_name": null,
-        "type": "boolean",
-        "column_id": "norm_mal_open_count"
-      },
-      {
-        "filter": {
-          "type": "and",
-          "filters": [
-            {
-              "type": "named",
-              "name": "open_cases"
+              "name": "open_cases",
+              "comment": null
             },
             {
               "operator": "eq",
@@ -954,13 +914,58 @@
                 "property_name": "zscore_grading_wfa"
               },
               "type": "boolean_expression",
-              "property_value": null
+              "property_value": "green",
+              "comment": null
             }
           ]
         },
         "display_name": null,
         "type": "boolean",
-        "column_id": "open_not_weighed_count"
+        "column_id": "norm_mal_open_count",
+        "comment": null
+      },
+      {
+        "filter": {
+          "type": "and",
+          "filters": [
+            {
+              "type": "named",
+              "name": "open_cases",
+              "comment": null
+            },
+            {
+              "type": "or",
+              "filters": [
+                {
+                  "operator": "eq",
+                  "expression": {
+                    "datatype": null,
+                    "type": "property_name",
+                    "property_name": "zscore_grading_wfa"
+                  },
+                  "type": "boolean_expression",
+                  "property_value": null,
+                  "comment": null
+                },
+                {
+                  "operator": "eq",
+                  "expression": {
+                    "datatype": null,
+                    "type": "property_name",
+                    "property_name": "zscore_grading_wfa"
+                  },
+                  "type": "boolean_expression",
+                  "property_value": "",
+                  "comment": null
+                }
+              ]
+            }
+          ]
+        },
+        "display_name": null,
+        "type": "boolean",
+        "column_id": "open_not_weighed_count",
+        "comment": null
       },
       {
         "display_name": null,
@@ -1345,6 +1350,24 @@
           "type": "named",
           "name": "mother_id"
         }
+      },
+      {
+        "column_id": "location_reassignment_date",
+        "datatype": "date",
+        "type": "raw",
+        "property_name": "location_reassignment_datetime"
+      },
+      {
+        "column_id": "last_owner_id",
+        "datatype": "string",
+        "type": "raw",
+        "property_name": "location_reassignment_last_owner_id"
+      },
+      {
+        "column_id": "last_supervisor_id",
+        "datatype": "string",
+        "type": "raw",
+        "property_name": "location_reassignment_last_supervisor_id"
       }
     ],
     "named_expressions": {

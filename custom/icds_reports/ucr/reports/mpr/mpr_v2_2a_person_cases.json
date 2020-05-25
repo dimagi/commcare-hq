@@ -1,0 +1,569 @@
+{
+  "domains": [
+    "icds-dashboard-qa",
+    "sankalp_cas",
+    "zohaib-sandbox",
+    "akshita-sandbox",
+    "sunaina-sandbox",
+    "laurence-project-1",
+    "jessica-icds-cas",
+    "marissa-test",
+    "derek-icds-sandbox",
+    "priyanka-app",
+    "shrena-dev",
+    "aparatest",
+    "reach-sandbox",
+    "reach-dashboard-qa",
+    "reach-test",
+    "icds-test",
+    "icds-sql",
+    "icds-cas",
+    "cas-lab",
+    "icds-cas-sandbox"
+  ],
+  "server_environment": [
+    "india",
+    "icds",
+    "icds-staging"
+  ],
+  "report_id": "static-mpr_v2_2a_person_cases",
+  "data_source_table": "static-person_cases_v3",
+  "config": {
+    "title": "UCR V2 - MPR - 2a - Person cases",
+    "description": "",
+    "visible": false,
+    "aggregation_columns": [
+      "owner_id",
+      "month"
+    ],
+    "filters": [
+      {
+        "display": "Date of Death",
+        "slug": "date_death",
+        "type": "date",
+        "field": "date_death",
+        "datatype": "date",
+        "compare_as_string": false
+      },
+      {
+        "display": "Filter by AWW",
+        "slug": "awc_id",
+        "type": "dynamic_choice_list",
+        "field": "awc_id",
+        "choice_provider": {
+          "type": "location"
+        },
+        "ancestor_expression": {
+          "field": "supervisor_id",
+          "location_type": "supervisor"
+        },
+        "datatype": "string",
+        "show_all": true
+      },
+      {
+        "display": "Filter by Supervisor",
+        "slug": "supervisor_id",
+        "type": "dynamic_choice_list",
+        "field": "supervisor_id",
+        "choice_provider": {
+          "type": "location"
+        },
+        "datatype": "string",
+        "show_all": true,
+        "ancestor_expression": {}
+      },
+      {
+        "display": "Filter by Block",
+        "slug": "block_id",
+        "type": "dynamic_choice_list",
+        "field": "block_id",
+        "choice_provider": {
+          "type": "location"
+        },
+        "datatype": "string",
+        "show_all": true,
+        "ancestor_expression": {}
+      },
+      {
+        "display": "Filter by District",
+        "slug": "district_id",
+        "type": "dynamic_choice_list",
+        "field": "district_id",
+        "choice_provider": {
+          "type": "location"
+        },
+        "datatype": "string",
+        "show_all": true,
+        "ancestor_expression": {}
+      },
+      {
+        "display": "Filter by State",
+        "slug": "state_id",
+        "type": "dynamic_choice_list",
+        "field": "state_id",
+        "choice_provider": {
+          "type": "location"
+        },
+        "datatype": "string",
+        "show_all": true,
+        "ancestor_expression": {}
+      }
+    ],
+    "columns": [
+      {
+        "display": "Month",
+        "column_id": "month",
+        "type": "aggregate_date",
+        "field": "date_death",
+        "format": "%Y-%m",
+        "transform": {},
+        "calculate_total": false,
+        "description": null,
+        "visible": true
+      },
+      {
+        "display": {
+          "en": "Owner",
+          "hin": "Owner"
+        },
+        "column_id": "owner_id",
+        "type": "field",
+        "field": "awc_id",
+        "aggregation": "simple",
+        "transform": {
+          "type": "custom",
+          "custom_type": "owner_display"
+        },
+        "format": "default",
+        "sortable": false,
+        "width": null,
+        "css_class": null,
+        "calculate_total": false,
+        "description": null,
+        "visible": true
+      },
+      {
+        "display": "dead_F_resident_neo_count",
+        "column_id": "dead_F_resident_neo_count",
+        "type": "sum_when_template",
+        "calculate_total": true,
+        "whens": [
+          {
+            "type": "age_at_death_range_resident",
+            "binds": [
+              "F",
+              0,
+              28
+            ],
+            "then": 1
+          }
+        ],
+        "else_": 0,
+        "sortable": false,
+        "transform": {},
+        "description": null,
+        "visible": true
+      },
+      {
+        "display": "dead_M_resident_neo_count",
+        "column_id": "dead_M_resident_neo_count",
+        "type": "sum_when_template",
+        "calculate_total": true,
+        "whens": [
+          {
+            "type": "age_at_death_range_resident",
+            "binds": [
+              "M",
+              0,
+              28
+            ],
+            "then": 1
+          }
+        ],
+        "else_": 0,
+        "sortable": false,
+        "transform": {},
+        "description": null,
+        "visible": true
+      },
+      {
+        "display": "dead_F_migrant_neo_count",
+        "column_id": "dead_F_migrant_neo_count",
+        "type": "sum_when_template",
+        "calculate_total": true,
+        "whens": [
+          {
+            "type": "age_at_death_range_resident",
+            "binds": [
+              "F",
+              0,
+              28
+            ],
+            "then": 1
+          }
+        ],
+        "else_": 0,
+        "sortable": false,
+        "transform": {},
+        "description": null,
+        "visible": true
+      },
+      {
+        "display": "dead_M_migrant_neo_count",
+        "column_id": "dead_M_migrant_neo_count",
+        "type": "sum_when_template",
+        "calculate_total": true,
+        "whens": [
+          {
+            "type": "age_at_death_range_migrant",
+            "binds": [
+              "M",
+              0,
+              28
+            ],
+            "then": 1
+          }
+        ],
+        "else_": 0,
+        "sortable": false,
+        "transform": {},
+        "description": null,
+        "visible": true
+      },
+      {
+        "display": "dead_F_resident_postneo_count",
+        "column_id": "dead_F_resident_postneo_count",
+        "type": "sum_when_template",
+        "calculate_total": true,
+        "whens": [
+          {
+            "type": "age_at_death_range_resident",
+            "binds": [
+              "F",
+              29,
+              364
+            ],
+            "then": 1
+          }
+        ],
+        "else_": 0,
+        "sortable": false,
+        "transform": {},
+        "description": null,
+        "visible": true
+      },
+      {
+        "display": "dead_M_resident_postneo_count",
+        "column_id": "dead_M_resident_postneo_count",
+        "type": "sum_when_template",
+        "calculate_total": true,
+        "whens": [
+          {
+            "type": "age_at_death_range_resident",
+            "binds": [
+              "M",
+              29,
+              364
+            ],
+            "then": 1
+          }
+        ],
+        "else_": 0,
+        "sortable": false,
+        "transform": {},
+        "description": null,
+        "visible": true
+      },
+      {
+        "display": "dead_F_migrant_postneo_count",
+        "column_id": "dead_F_migrant_postneo_count",
+        "type": "sum_when_template",
+        "calculate_total": true,
+        "whens": [
+          {
+            "type": "age_at_death_range_migrant",
+            "binds": [
+              "F",
+              29,
+              364
+            ],
+            "then": 1
+          }
+        ],
+        "else_": 0,
+        "sortable": false,
+        "transform": {},
+        "description": null,
+        "visible": true
+      },
+      {
+        "display": "dead_M_migrant_postneo_count",
+        "column_id": "dead_M_migrant_postneo_count",
+        "type": "sum_when_template",
+        "calculate_total": true,
+        "whens": [
+          {
+            "type": "age_at_death_range_migrant",
+            "binds": [
+              "M",
+              29,
+              364
+            ],
+            "then": 1
+          }
+        ],
+        "else_": 0,
+        "sortable": false,
+        "transform": {},
+        "description": null,
+        "visible": true
+      },
+      {
+        "display": "dead_F_resident_child_count",
+        "column_id": "dead_F_resident_child_count",
+        "type": "sum_when_template",
+        "calculate_total": true,
+        "whens": [
+          {
+            "type": "age_at_death_range_resident",
+            "binds": [
+              "F",
+              365,
+              1827
+            ],
+            "then": 1
+          }
+        ],
+        "else_": 0,
+        "sortable": false,
+        "transform": {},
+        "description": null,
+        "visible": true
+      },
+      {
+        "display": "dead_M_resident_child_count",
+        "column_id": "dead_M_resident_child_count",
+        "type": "sum_when_template",
+        "calculate_total": true,
+        "whens": [
+          {
+            "type": "age_at_death_range_resident",
+            "binds": [
+              "M",
+              365,
+              1827
+            ],
+            "then": 1
+          }
+        ],
+        "else_": 0,
+        "sortable": false,
+        "transform": {},
+        "description": null,
+        "visible": true
+      },
+      {
+        "display": "dead_F_migrant_child_count",
+        "column_id": "dead_F_migrant_child_count",
+        "type": "sum_when_template",
+        "calculate_total": true,
+        "whens": [
+          {
+            "type": "age_at_death_range_migrant",
+            "binds": [
+              "F",
+              365,
+              1827
+            ],
+            "then": 1
+          }
+        ],
+        "else_": 0,
+        "sortable": false,
+        "transform": {},
+        "description": null,
+        "visible": true
+      },
+      {
+        "display": "dead_M_migrant_child_count",
+        "column_id": "dead_M_migrant_child_count",
+        "type": "sum_when_template",
+        "calculate_total": true,
+        "whens": [
+          {
+            "type": "age_at_death_range_migrant",
+            "binds": [
+              "M",
+              365,
+              1827
+            ],
+            "then": 1
+          }
+        ],
+        "else_": 0,
+        "sortable": false,
+        "transform": {},
+        "description": null,
+        "visible": true
+      },
+      {
+        "display": "dead_F_migrant_adult_count",
+        "column_id": "dead_F_migrant_adult_count",
+        "type": "sum_when_template",
+        "calculate_total": true,
+        "whens": [
+          {
+            "type": "adult_female_migrant_death",
+            "binds": [],
+            "then": 1
+          }
+        ],
+        "else_": 0,
+        "sortable": false,
+        "transform": {},
+        "description": null,
+        "visible": true
+      },
+      {
+        "display": "dead_F_resident_adult_count",
+        "column_id": "dead_F_resident_adult_count",
+        "type": "sum_when_template",
+        "calculate_total": true,
+        "whens": [
+          {
+            "type": "adult_female_resident_death",
+            "binds": [],
+            "then": 1
+          }
+        ],
+        "else_": 0,
+        "sortable": false,
+        "transform": {},
+        "description": null,
+        "visible": true
+      },
+      {
+        "display": "dead_preg_resident_count",
+        "column_id": "dead_preg_resident_count",
+        "type": "sum_when_template",
+        "calculate_total": true,
+        "whens": [
+          {
+            "type": "female_death_type_resident",
+            "binds": [
+              "pregnant"
+            ],
+            "then": 1
+          }
+        ],
+        "else_": 0,
+        "sortable": false,
+        "transform": {},
+        "description": null,
+        "visible": true
+      },
+      {
+        "display": "dead_preg_migrant_count",
+        "column_id": "dead_preg_migrant_count",
+        "type": "sum_when_template",
+        "calculate_total": true,
+        "whens": [
+          {
+            "type": "female_death_type_migrant",
+            "binds": [
+              "pregnant"
+            ],
+            "then": 1
+          }
+        ],
+        "else_": 0,
+        "sortable": false,
+        "transform": {},
+        "description": null,
+        "visible": true
+      },
+      {
+        "display": "dead_del_resident_count",
+        "column_id": "dead_del_resident_count",
+        "type": "sum_when_template",
+        "calculate_total": true,
+        "whens": [
+          {
+            "type": "female_death_type_resident",
+            "binds": [
+              "delivery"
+            ],
+            "then": 1
+          }
+        ],
+        "else_": 0,
+        "sortable": false,
+        "transform": {},
+        "description": null,
+        "visible": true
+      },
+      {
+        "display": "dead_del_migrant_count",
+        "column_id": "dead_del_migrant_count",
+        "type": "sum_when_template",
+        "calculate_total": true,
+        "whens": [
+          {
+            "type": "female_death_type_migrant",
+            "binds": [
+              "delivery"
+            ],
+            "then": 1
+          }
+        ],
+        "else_": 0,
+        "sortable": false,
+        "transform": {},
+        "description": null,
+        "visible": true
+      },
+      {
+        "display": "dead_pnc_resident_count",
+        "column_id": "dead_pnc_resident_count",
+        "type": "sum_when_template",
+        "calculate_total": true,
+        "whens": [
+          {
+            "type": "female_death_type_resident",
+            "binds": [
+              "pnc"
+            ],
+            "then": 1
+          }
+        ],
+        "else_": 0,
+        "sortable": false,
+        "transform": {},
+        "description": null,
+        "visible": true
+      },
+      {
+        "display": "dead_pnc_migrant_count",
+        "column_id": "dead_pnc_migrant_count",
+        "type": "sum_when_template",
+        "calculate_total": true,
+        "whens": [
+          {
+            "type": "female_death_type_migrant",
+            "binds": [
+              "pnc"
+            ],
+            "then": 1
+          }
+        ],
+        "else_": 0,
+        "sortable": false,
+        "transform": {},
+        "description": null,
+        "visible": true
+      }
+    ],
+    "sort_expression": [],
+    "configured_charts": []
+  }
+}

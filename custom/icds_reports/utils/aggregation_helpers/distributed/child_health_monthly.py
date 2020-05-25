@@ -3,19 +3,24 @@ import logging
 from dateutil.relativedelta import relativedelta
 
 from corehq.apps.userreports.util import get_table_name
+from corehq.toggles import ICDS_LOCATION_REASSIGNMENT_AGG
 from custom.icds_reports.const import (
     AGG_COMP_FEEDING_TABLE,
     AGG_CHILD_HEALTH_PNC_TABLE,
     AGG_CHILD_HEALTH_THR_TABLE,
     AGG_DAILY_FEEDING_TABLE,
     AGG_GROWTH_MONITORING_TABLE,
-    AGG_MIGRATION_TABLE
+    AGG_MIGRATION_TABLE,
+    AGG_AVAILING_SERVICES_TABLE,
+    CHILD_DELIVERY_FORM_ID
 )
 from custom.icds_reports.utils.aggregation_helpers import (
     get_child_health_tablename,
     get_child_health_temp_tablename,
     transform_day_to_month,
     month_formatter,
+    get_prev_agg_tablename,
+    is_current_month
 )
 from custom.icds_reports.utils.aggregation_helpers.distributed.base import BaseICDSAggregationDistributedHelper
 
@@ -47,17 +52,22 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
             logger.info(f'executing query {i}')
             cursor.execute(query)
 
+    def get_table(self, table_id):
+        if not is_current_month(self.month) and ICDS_LOCATION_REASSIGNMENT_AGG.enabled(self.domain):
+            return get_prev_agg_tablename(table_id)
+        return get_table_name(self.domain, table_id)
+
     @property
     def child_health_case_ucr_tablename(self):
-        return get_table_name(self.domain, 'static-child_health_cases')
+        return self.get_table('static-child_health_cases')
 
     @property
     def child_tasks_case_ucr_tablename(self):
-        return get_table_name(self.domain, 'static-child_tasks_cases')
+        return self.get_table('static-child_tasks_cases')
 
     @property
     def person_case_ucr_tablename(self):
-        return get_table_name(self.domain, 'static-person_cases_v3')
+        return self.get_table('static-person_cases_v3')
 
     @property
     def tablename(self):
@@ -91,10 +101,16 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
         alive_in_month = "(child_health.date_death IS NULL OR child_health.date_death - {} >= 0)".format(
             start_month_string
         )
-        migration_status = "(agg_migration.is_migrated=1 AND agg_migration.migration_date < {})::integer".format(
-            start_month_string)
-        seeking_services = "(person_cases.registered_status IS DISTINCT FROM 0 AND {} IS DISTINCT FROM 1)".format(
-            migration_status)
+        not_migrated = (
+            "(agg_migration.is_migrated IS DISTINCT FROM 1 "
+            "OR agg_migration.migration_date::date >= {start_month_string})"
+        ).format(start_month_string=start_month_string)
+        registered = (
+            "(agg_availing.is_registered IS DISTINCT FROM 0 "
+            "OR agg_availing.registration_date::date >= {start_month_string})"
+        ).format(start_month_string=start_month_string)
+        seeking_services = "({registered} AND {not_migrated})".format(
+            registered=registered, not_migrated=not_migrated)
         born_in_month = "({} AND person_cases.dob BETWEEN {} AND {})".format(
             seeking_services, start_month_string, end_month_string
         )
@@ -157,8 +173,8 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
                 "CASE WHEN person_cases.aadhar_date < {} THEN  1 ELSE 0 END".format(end_month_string)),
             ("valid_in_month", "CASE WHEN {} THEN 1 ELSE 0 END".format(valid_in_month)),
             ("valid_all_registered_in_month",
-                "CASE WHEN {} AND {} AND {} <= 72 AND {} IS DISTINCT FROM 1 THEN 1 ELSE 0 END".format(
-                    open_in_month, alive_in_month, age_in_months, migration_status
+                "CASE WHEN {} AND {} AND {} <= 72 AND {} THEN 1 ELSE 0 END".format(
+                    open_in_month, alive_in_month, age_in_months, not_migrated
                 )),
             ("person_name", "child_health.person_name"),
             ("mother_name", "child_health.mother_name"),
@@ -335,7 +351,11 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
             ("date_death", "child_health.date_death"),
             ("mother_case_id", "child_health.mother_case_id"),
             ("state_id", "child_health.state_id"),
-            ("opened_on", "child_health.opened_on")
+            ("opened_on", "child_health.opened_on"),
+            ("birth_weight", "child_health.birth_weight"),
+            ("child_person_case_id", "child_health.mother_id"),
+            ("delivery_nature", "del_form.delivery_nature"),
+            ("term_days", "(del_form.add::DATE - del_form.edd::DATE) + 280")
         )
         yield """
         INSERT INTO "{child_tablename}" (
@@ -369,10 +389,16 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
               AND agg_migration.month = %(start_date)s
               AND child_health.state_id = agg_migration.state_id
               AND child_health.supervisor_id = agg_migration.supervisor_id
+            LEFT OUTER JOIN "{agg_availing_table}" agg_availing ON child_health.mother_id = agg_availing.person_case_id
+              AND agg_availing.month = %(start_date)s
+              AND child_health.state_id = agg_availing.state_id
+              AND child_health.supervisor_id = agg_availing.supervisor_id
             LEFT OUTER JOIN "{agg_df_table}" df ON child_health.doc_id = df.case_id
               AND df.month = %(start_date)s
               AND child_health.state_id = df.state_id
               AND child_health.supervisor_id = df.supervisor_id
+            LEFT OUTER JOIN "{delivery_form}" del_form ON child_health.doc_id = del_form.child_health_case_id
+              AND child_health.supervisor_id = del_form.supervisor_id
             WHERE child_health.doc_id IS NOT NULL
               AND child_health.state_id = %(state_id)s
               AND {open_in_month}
@@ -390,9 +416,11 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
             agg_pnc_table=AGG_CHILD_HEALTH_PNC_TABLE,
             agg_df_table=AGG_DAILY_FEEDING_TABLE,
             agg_migration_table=AGG_MIGRATION_TABLE,
+            agg_availing_table=AGG_AVAILING_SERVICES_TABLE,
             child_tasks_case_ucr=self.child_tasks_case_ucr_tablename,
             person_cases_ucr=self.person_case_ucr_tablename,
-            open_in_month=open_in_month
+            open_in_month=open_in_month,
+            delivery_form=get_table_name(self.domain, CHILD_DELIVERY_FORM_ID)
         ), {
             "start_date": self.month,
             "next_month": month_formatter(self.month + relativedelta(months=1)),

@@ -5,10 +5,9 @@ from django.conf import settings
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy
 
-
 from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
-from corehq.apps.casegroups.dbaccessors import get_case_group_meta_in_domain
 from corehq.apps.commtrack.const import USER_LOCATION_OWNER_MAP_TYPE
+from corehq.apps.export.models.incremental import IncrementalExport
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.analytics.esaccessors import (
     get_case_types_for_domain_es,
@@ -147,3 +146,15 @@ class RepeatRecordStateFilter(BaseSingleOptionFilter):
             (RECORD_CANCELLED_STATE, _("Cancelled")),
             (RECORD_FAILURE_STATE, _("Failed")),
         ]
+
+
+class IncrementalExportFilter(BaseSingleOptionFilter):
+    slug = 'incremental_export_id'
+    label = ugettext_lazy('Incremental Export')
+    default_text = ugettext_lazy("All Incremental Exports")
+
+    @property
+    def options(self):
+        return [(str(i[0]), i[1]) for i in IncrementalExport.objects.filter(
+            domain=self.domain
+        ).values_list('id', 'name').all()]

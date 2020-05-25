@@ -67,7 +67,7 @@ HQ currently has two versions of "template apps."
 
 ### Onboarding apps
 
-The first set of template apps are simple apps in different seectors that we've experimented with adding to a user's project when they first sign up for an account. These template apps are stored as json in the code base, in the [template_apps](https://github.com/dimagi/commcare-hq/tree/master/corehq/apps/app_manager/static/app_manager/template_apps) directory. They are imported using the view `app_from_template`.
+The first set of template apps are simple apps in different sectors that we've experimented with adding to a user's project when they first sign up for an account. These template apps are stored as json in the code base, in the [template_apps](https://github.com/dimagi/commcare-hq/tree/master/corehq/apps/app_manager/static/app_manager/template_apps) directory. They are imported using the view `app_from_template`.
 
 ### COVID app library
 
@@ -75,4 +75,4 @@ This is a set of template applications that exist in a real project space and ar
 
 These applications are visible via the `app_exchange` view.
 
-To add a new app, add a new `ExchangeApplication` model via django admin. You must supply a domain and an app id. Use the "canonical" app id used in app manager URLs, not a specific build id. You may also provide a help link and/or a link to a version history. All released versions of the app will be available via the app library, with the versions labeled by date of release, *not* by version number.
+To add a new app, add a new `ExchangeApplication` model via django admin. You must supply a domain and an app id. Use the "canonical" app id used in app manager URLs, not a specific build id. You may also provide a help link and/or a link to a version history. All released versions of the app will be available via the app library, with the versions labeled by date of release, *not* by version number. The application title displayed in the library will be from the latest version of the app.

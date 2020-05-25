@@ -23,6 +23,9 @@ def _create_stub(timestamp_offset_mins=31, date_queued_offset_hours=None, attemp
 
 
 class TestReprocessingQueue(TestCase):
+    BACKOFF_INTERVAL = 7
+    BACKOFF_FACTOR = 3
+
     def tearDown(self):
         UnfinishedSubmissionStub.objects.all().delete()
 
@@ -35,16 +38,36 @@ class TestReprocessingQueue(TestCase):
         self.assertEqual(ids, [stubs[1].id])
 
     def test_get_stubs_backoff(self):
-        interval = 7
         expected = []
-        backoff_factor = 3
         for attempts in (0, 1, 2):
-            factor = backoff_factor ** attempts
+            factor = self.BACKOFF_FACTOR ** attempts
             # create one stub on either side of the window, only the 2nd stub is expected to be returned
             stubs = [
-                _create_stub(date_queued_offset_hours=(interval - 0.1) * factor, attempts=attempts),
-                _create_stub(date_queued_offset_hours=(interval + 0.1) * factor, attempts=attempts)
+                _create_stub(date_queued_offset_hours=(self.BACKOFF_INTERVAL - 0.1) * factor, attempts=attempts),
+                _create_stub(date_queued_offset_hours=(self.BACKOFF_INTERVAL + 0.1) * factor, attempts=attempts)
             ]
             expected.append(stubs[1].id)
         ids = get_unfinished_stub_ids_to_process()
         self.assertEqual(ids, expected)
+
+    def test_get_stubs_max_attempts(self):
+        expected = [_create_stub(attempts=7).id]
+        _create_stub(attempts=8)
+        ids = get_unfinished_stub_ids_to_process()
+        self.assertEqual(ids, expected)
+
+    def test_get_stubs_max_backoff(self):
+        # after 5 attempts the date filter should be constant
+        offset = (self.BACKOFF_INTERVAL + 0.1) * (self.BACKOFF_FACTOR ** 5)
+        stubs = [
+            _create_stub(date_queued_offset_hours=offset, attempts=5),
+            _create_stub(date_queued_offset_hours=offset, attempts=6),
+            _create_stub(date_queued_offset_hours=offset, attempts=7),
+        ]
+        expected = [stub.id for stub in stubs]
+        ids = get_unfinished_stub_ids_to_process()
+        self.assertEqual(ids, expected)
+
+    def test_large_attempts(self):
+        _create_stub(date_queued_offset_hours=1, attempts=60)
+        get_unfinished_stub_ids_to_process()

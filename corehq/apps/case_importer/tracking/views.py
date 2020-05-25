@@ -7,6 +7,7 @@ from django.http import (
 )
 
 from dimagi.utils.web import json_response
+from django.views.decorators.http import require_GET
 
 from corehq.apps.case_importer.base import location_safe_case_imports_enabled
 from corehq.apps.case_importer.tracking.dbaccessors import (
@@ -26,6 +27,7 @@ from corehq.apps.case_importer.tracking.permissions import (
     user_may_view_file_upload,
 )
 from corehq.apps.case_importer.views import require_can_edit_data
+from corehq.apps.domain.decorators import api_auth
 from corehq.apps.locations.permissions import conditionally_location_safe
 from corehq.util.view_utils import set_file_download
 
@@ -47,13 +49,25 @@ def case_uploads(request, domain):
 
     with transaction.atomic():
         for case_upload_record in case_upload_records:
-            if case_upload_record.set_task_status_json_if_finished():
-                case_upload_record.save()
+            case_upload_record.save_task_status_json_if_failed()
 
     case_uploads_json = [case_upload_to_user_json(case_upload_record, request)
                          for case_upload_record in case_upload_records]
 
     return json_response(case_uploads_json)
+
+
+@api_auth
+@require_GET
+@require_can_edit_data
+@conditionally_location_safe(location_safe_case_imports_enabled)
+def case_upload_status(request, domain, upload_id):
+    try:
+        case_upload = _get_case_upload_record(domain, upload_id, request.couch_user)
+    except CaseUploadRecord.DoesNotExist:
+        return HttpResponseNotFound()
+
+    return json_response(case_upload.get_task_status_json())
 
 
 @require_can_edit_data
@@ -106,8 +120,9 @@ def case_upload_form_ids(request, domain, upload_id):
 
     ids_stream = ('{}\n'.format(form_id)
                   for form_id in get_form_ids_for_case_upload(case_upload))
-
-    return StreamingHttpResponse(ids_stream, content_type='text/plain')
+    response = StreamingHttpResponse(ids_stream, content_type='text/plain')
+    set_file_download(response, f"{domain}-case_upload-form_ids.txt")
+    return response
 
 
 @require_can_edit_data
@@ -121,7 +136,9 @@ def case_upload_case_ids(request, domain, upload_id):
     ids_stream = ('{}\n'.format(case_id)
                   for case_id in get_case_ids_for_case_upload(case_upload))
 
-    return StreamingHttpResponse(ids_stream, content_type='text/plain')
+    response = StreamingHttpResponse(ids_stream, content_type='text/plain')
+    set_file_download(response, f"{domain}-case_upload-case_ids.txt")
+    return response
 
 
 def _get_case_upload_record(domain, upload_id, user):

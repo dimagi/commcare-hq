@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-04-09 19:23+0000\n"
+"POT-Creation-Date: 2020-05-20 17:30+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
 "Last-Translator: Gladys Teos <info@enestranslations.com>, 2020\n"
 "Language-Team: Spanish (https://www.transifex.com/dimagi/teams/9388/es/)\n"
@@ -568,27 +568,27 @@ msgstr "Editar Formulario"
 msgid "Form Settings"
 msgstr "Configuración del Formulario"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:96
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:79
 msgid "Home Screen"
 msgstr "Pantalla Principal"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:97
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:80
 msgid "First Menu"
 msgstr "Primer Menú"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:99
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:82
 msgid "Menu: "
 msgstr "Menú:"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:102
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:85
 msgid "Parent Menu: "
 msgstr "Menú Padre:"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:104
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:87
 msgid "Previous Screen"
 msgstr "Pantallla Anterior"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:113
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:96
 msgid "Link to other form"
 msgstr "Enlace a otro formulario"
 
@@ -619,26 +619,26 @@ msgstr "Eliminar"
 msgid "Menu Settings"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:118
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:101
 msgid "Case type is required."
 msgstr "Se requiere un tipo de caso."
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:125
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:108
 msgid "Case types can only include the characters a-z, 0-9, '-' and '_'"
 msgstr ""
 "Los tipos de casos solo pueden incluir los caracteres a-z, 0-9, '-' y '_'"
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:130
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:113
 msgid "'commcare-user' is a reserved case type. Please change the case type"
 msgstr ""
 "'usuario-commcare' es un tipo de caso reservado. Por favor cambie el tipo de "
 "caso"
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:174
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:157
 msgid "Go back to case list"
 msgstr "Regresar a la lista de casos"
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:175
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:158
 msgid "Proceed with registered case"
 msgstr "Continuar con el caso registrado"
 
@@ -650,11 +650,11 @@ msgstr "Mostrar Todo"
 msgid "Display text is required"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/report_module.js:342
+#: corehq/apps/app_manager/static/app_manager/js/modules/report_module.js:341
 msgid "You have unsaved changes in your report list module"
 msgstr "Tiene cambios sin guardar en la lista de caso de su módulo"
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/report_module.js:438
+#: corehq/apps/app_manager/static/app_manager/js/modules/report_module.js:436
 msgid "This code is used in multiple places."
 msgstr ""
 
@@ -1541,8 +1541,8 @@ msgstr "Agregue Expresión"
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:20
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:22
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:613
-#: corehq/apps/export/static/export/js/models.js:356
-#: corehq/apps/export/static/export/js/models.js:358
+#: corehq/apps/export/static/export/js/models.js:357
+#: corehq/apps/export/static/export/js/models.js:359
 #: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:260
 msgid "Save"
 msgstr "Guardar"
@@ -2462,7 +2462,7 @@ msgid "Inlined attachments must have an attachment name"
 msgstr "Los adjuntos en línea deben tener un nombre del adjunto"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:25
-#: corehq/apps/export/static/export/js/models.js:358
+#: corehq/apps/export/static/export/js/models.js:359
 msgid "Create"
 msgstr "Crear"
 
@@ -2710,42 +2710,58 @@ msgstr "Escriba para filtrar respuestas"
 msgid "Not a valid choice"
 msgstr "Opción no válida"
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js:644
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js:272
+msgid "Submitting..."
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js:274
+msgid "Submit"
+msgstr "Ingresar"
+
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js:657
 msgid ""
 "Another process prevented us from servicing your request. Please try again "
 "later."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js:646
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js:659
 msgid ""
 "We have detected an issue with your network. Please check your Internet "
 "connection and retry when connectivity improves."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/webformsession.js:366
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/webformsession.js:378
 msgid "We were unable to save this answer. Please try again later."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:184
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer-inline.js:35
+msgid "Form successfully submitted!"
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer-inline.js:40
+msgid "An unexpected error occurred!"
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:197
 msgid "Form successfully saved!"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:307
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:320
 msgid ""
 "You are now offline. Web Apps is not optimized for offline use. Please "
 "reconnect to the Internet before continuing."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:316
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:329
 msgid "You are are back online."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:441
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:454
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js:42
 msgid "Waiting for server progress"
 msgstr "Esperando el progreso del servidor"
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:469
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:482
 msgid "Please wait..."
 msgstr "Por favor espere..."
 
@@ -2810,32 +2826,36 @@ msgstr "Sí, ingresar como este usuario"
 msgid "Confirm?"
 msgstr "¿Corfirmar?"
 
-#: corehq/apps/cloudcare/static/cloudcare/js/util.js:32
-#: corehq/apps/cloudcare/static/cloudcare/js/util.js:38
+#: corehq/apps/cloudcare/static/cloudcare/js/util.js:34
+#: corehq/apps/cloudcare/static/cloudcare/js/util.js:52
 msgid "Sorry, an error occurred while processing that request."
 msgstr "Lo sentimos, ocurrió un error al procesar esa solicitud."
 
-#: corehq/apps/cloudcare/static/cloudcare/js/util.js:85
+#: corehq/apps/cloudcare/static/cloudcare/js/util.js:110
 msgid "Error saving!"
 msgstr "¡Error al guardar!"
 
-#: corehq/apps/cloudcare/static/cloudcare/js/util.js:93
+#: corehq/apps/cloudcare/static/cloudcare/js/util.js:118
 msgid "Could not sync user data. Please report an issue if this persists."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/util.js:97
+#: corehq/apps/cloudcare/static/cloudcare/js/util.js:122
 msgid "User Data successfully synced."
 msgstr "Los Datos del Usuario han sido sincronizados con éxito."
 
-#: corehq/apps/cloudcare/static/cloudcare/js/util.js:105
+#: corehq/apps/cloudcare/static/cloudcare/js/util.js:130
 msgid "Could not clear user data. Please report an issue if this persists."
 msgstr ""
 "No es posible borrar los datos del usuario. Por favor reporte un problema si "
 "esto continúa."
 
-#: corehq/apps/cloudcare/static/cloudcare/js/util.js:109
+#: corehq/apps/cloudcare/static/cloudcare/js/util.js:134
 msgid "User data successfully cleared."
 msgstr "Los datos del usuario fueron borrados exitosamente."
+
+#: corehq/apps/cloudcare/static/cloudcare/js/util.js:142
+msgid "Error breaking locks. Please report an issue if this persists."
+msgstr ""
 
 #: corehq/apps/commtrack/static/commtrack/js/products_and_programs_main.js:41
 msgid ""
@@ -2910,12 +2930,12 @@ msgid "Form submission found!"
 msgstr ""
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/list_automatic_update_rules.js:40
-#: corehq/apps/users/static/users/js/mobile_workers.js:116
-#: corehq/apps/users/static/users/js/mobile_workers.js:140
+#: corehq/apps/users/static/users/js/mobile_workers.js:117
+#: corehq/apps/users/static/users/js/mobile_workers.js:141
 msgid "Issue communicating with server. Try again."
 msgstr "Ocurrió un problema al comunicarse con el servidor. Intente otra vez."
 
-#: corehq/apps/data_interfaces/static/data_interfaces/js/manage_case_groups.js:48
+#: corehq/apps/data_interfaces/static/data_interfaces/js/manage_case_groups.js:57
 msgid "Sorry, it looks like the upload failed."
 msgstr "Lo sentimos, parece que la carga falló."
 
@@ -3039,54 +3059,54 @@ msgstr "Procesando..."
 msgid "Refresh page"
 msgstr "Actualizar la página"
 
-#: corehq/apps/export/static/export/js/models.js:311
+#: corehq/apps/export/static/export/js/models.js:312
 msgid "Web Page (Excel Dashboards)"
 msgstr "Página Web (Tablero de Excel)"
 
-#: corehq/apps/export/static/export/js/models.js:313
+#: corehq/apps/export/static/export/js/models.js:314
 msgid "CSV (Zip file)"
 msgstr "CSV (archivo Zip)"
 
-#: corehq/apps/export/static/export/js/models.js:315
+#: corehq/apps/export/static/export/js/models.js:316
 msgid "Excel (older versions)"
 msgstr "Excel (versiones antiguas)"
 
-#: corehq/apps/export/static/export/js/models.js:317
+#: corehq/apps/export/static/export/js/models.js:318
 msgid "Excel 2007+"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/models.js:329
+#: corehq/apps/export/static/export/js/models.js:330
 msgid "Private"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/models.js:331
+#: corehq/apps/export/static/export/js/models.js:332
 msgid "Export Only"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/models.js:333
+#: corehq/apps/export/static/export/js/models.js:334
 msgid "Edit and Export"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/models.js:338
+#: corehq/apps/export/static/export/js/models.js:339
 msgid ""
 "<strong>Private</strong>: Only you can edit and export.<br/> <strong>Export "
 "Only</strong>: You can edit and export, other users can only export.<br/> "
 "<strong>Edit and Export</strong>: All users can edit and export."
 msgstr ""
 
-#: corehq/apps/export/static/export/js/models.js:672
+#: corehq/apps/export/static/export/js/models.js:673
 msgid "The table path should end with []"
 msgstr "La ruta de la tabla debe terminar con []"
 
-#: corehq/apps/export/static/export/js/models.js:783
+#: corehq/apps/export/static/export/js/models.js:787
 msgid "Sensitive ID"
 msgstr "ID Confidencial"
 
-#: corehq/apps/export/static/export/js/models.js:785
+#: corehq/apps/export/static/export/js/models.js:789
 msgid "Sensitive Date"
 msgstr "Fecha Confidencial"
 
-#: corehq/apps/export/static/export/js/models.js:787
+#: corehq/apps/export/static/export/js/models.js:791
 msgid "None"
 msgstr "Ninguna"
 
@@ -3393,7 +3413,7 @@ msgstr ""
 "Su consulta de búsqueda es inválida; por favor ajuste el formato e intente "
 "de nuevo."
 
-#: corehq/apps/reports/static/reports/js/data_corrections.js:364
+#: corehq/apps/reports/static/reports/js/data_corrections.js:369
 msgid "Select a value"
 msgstr ""
 
@@ -3666,13 +3686,13 @@ msgstr ""
 
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js:368
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js:383
-#: corehq/apps/userreports/static/userreports/js/report_config.js:295
-#: corehq/apps/userreports/static/userreports/js/report_config.js:323
+#: corehq/apps/userreports/static/userreports/js/report_config.js:305
+#: corehq/apps/userreports/static/userreports/js/report_config.js:333
 msgid "Choose the property you would like to add as a filter to this report."
 msgstr "Elija la propiedad que quisiera agregar como filtro para este reporte."
 
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js:369
-#: corehq/apps/userreports/static/userreports/js/report_config.js:296
+#: corehq/apps/userreports/static/userreports/js/report_config.js:306
 msgid ""
 "Web users viewing the report will see this display text instead of the "
 "property name. Name your filter something easy for users to understand."
@@ -3682,7 +3702,7 @@ msgstr ""
 "entender para sus usuarios. "
 
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js:370
-#: corehq/apps/userreports/static/userreports/js/report_config.js:297
+#: corehq/apps/userreports/static/userreports/js/report_config.js:307
 msgid ""
 "What type of property is this filter?<br/><br/><strong>Date</strong>: Select "
 "this if the property is a date.<br/><strong>Choice</strong>: Select this if "
@@ -3693,7 +3713,7 @@ msgstr ""
 "Seleccione esto si la propiedad es un texto u opción múltiple."
 
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js:384
-#: corehq/apps/userreports/static/userreports/js/report_config.js:324
+#: corehq/apps/userreports/static/userreports/js/report_config.js:334
 msgid ""
 "What type of property is this filter?<br/><br/><strong>Date</strong>: Select "
 "this to filter the property by a date range.<br/><strong>Value</strong>: "
@@ -3705,7 +3725,7 @@ msgstr ""
 "único valor."
 
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js:385
-#: corehq/apps/userreports/static/userreports/js/report_config.js:325
+#: corehq/apps/userreports/static/userreports/js/report_config.js:335
 msgid "What value or date range must the property be equal to?"
 msgstr "¿Qué valor o rango de fecha debe la propiedad igualar?"
 
@@ -3719,6 +3739,18 @@ msgstr ""
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js:425
 msgid "Please check above for any errors in your configuration."
 msgstr "Por favor verifique arriba si hay algún error en su configuración."
+
+#: corehq/apps/userreports/static/userreports/js/configurable_reports_home.js:18
+msgid "Edit a report or data source"
+msgstr ""
+
+#: corehq/apps/userreports/static/userreports/js/configurable_reports_home.js:27
+msgid "static"
+msgstr ""
+
+#: corehq/apps/userreports/static/userreports/js/configurable_reports_home.js:28
+msgid "deactivated"
+msgstr ""
 
 #: corehq/apps/userreports/static/userreports/js/expression_evaluator.js:73
 msgid "Unknown error"
@@ -3764,21 +3796,19 @@ msgstr ""
 msgid "Download <%= count %> users"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/mobile_workers.js:317
+#: corehq/apps/users/static/users/js/mobile_workers.js:318
 msgid "Email address is required when users confirm their own accounts."
 msgstr ""
 
-#: corehq/apps/users/static/users/js/mobile_workers.js:319
-#, fuzzy
-#| msgid "Please enter a valid email."
+#: corehq/apps/users/static/users/js/mobile_workers.js:320
 msgid "Please enter a valid email address."
-msgstr "Por favor ingrese un correo electrónico válido."
+msgstr "Por favor ingrese una dirección de correo válida."
 
-#: corehq/apps/users/static/users/js/mobile_workers.js:380
+#: corehq/apps/users/static/users/js/mobile_workers.js:381
 msgid "Checking availability..."
 msgstr ""
 
-#: corehq/apps/users/static/users/js/mobile_workers.js:401
+#: corehq/apps/users/static/users/js/mobile_workers.js:402
 msgid "Issue connecting to server. Check Internet connection."
 msgstr ""
 "Ocurrió un problema al conectarse con el servidor. Revise la conexión a "
@@ -3934,12 +3964,10 @@ msgid "Complete"
 msgstr "Completar"
 
 #: corehq/motech/dhis2/static/dhis2/js/dhis2_entity_config.js:60
-#, fuzzy
-#| msgid "Unable to save DataSet maps"
 msgid "Unable to save case configs"
-msgstr "No es posible guardar los mapas DataSet"
+msgstr ""
 
-#: corehq/motech/dhis2/static/dhis2/js/dhis2_map_settings.js:160
+#: corehq/motech/dhis2/static/dhis2/js/dhis2_map_settings.js:161
 msgid "Unable to save DataSet maps"
 msgstr "No es posible guardar los mapas DataSet"
 

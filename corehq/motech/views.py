@@ -1,5 +1,6 @@
 import re
 
+from django.http import Http404
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_lazy
@@ -15,13 +16,13 @@ from corehq.motech.forms import (
     ConnectionSettingsFormSet,
     ConnectionSettingsFormSetHelper,
 )
-from corehq.motech.models import RequestLog
+from corehq.motech.models import ConnectionSettings, RequestLog
 
 
 @method_decorator(require_permission(Permissions.edit_motech), name='dispatch')
 class MotechLogListView(BaseProjectSettingsView, ListView):
     urlname = 'motech_log_list_view'
-    page_title = ugettext_lazy("MOTECH Logs")
+    page_title = ugettext_lazy("Remote API Logs")
     template_name = 'motech/logs.html'
     context_object_name = 'logs'
     paginate_by = 100
@@ -82,7 +83,7 @@ class MotechLogListView(BaseProjectSettingsView, ListView):
 @method_decorator(require_permission(Permissions.edit_motech), name='dispatch')
 class MotechLogDetailView(BaseProjectSettingsView, DetailView):
     urlname = 'motech_log_detail_view'
-    page_title = ugettext_lazy("MOTECH Logs")
+    page_title = ugettext_lazy("Remote API Logs")
     template_name = 'motech/log_detail.html'
     context_object_name = 'log'
 
@@ -101,12 +102,19 @@ class MotechLogDetailView(BaseProjectSettingsView, DetailView):
 
 
 @method_decorator(require_permission(Permissions.edit_motech), name='dispatch')
-@method_decorator(toggles.DHIS2_INTEGRATION.required_decorator(), name='dispatch')
 class ConnectionSettingsView(BaseProjectSettingsView, FormView):
     urlname = 'connection_settings_view'
     page_title = ugettext_lazy('Connection Settings')
     template_name = 'motech/connection_settings.html'
     form_class = ConnectionSettingsFormSet  # NOTE: form_class is a formset
+
+    def dispatch(self, request, *args, **kwargs):
+        if not (
+                toggles.DHIS2_INTEGRATION.enabled_for_request(request)
+                or toggles.INCREMENTAL_EXPORTS.enabled_for_request(request)
+        ):
+            raise Http404()
+        return super(ConnectionSettingsView, self).dispatch(request, *args, **kwargs)
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -114,6 +122,7 @@ class ConnectionSettingsView(BaseProjectSettingsView, FormView):
         # form_kwargs. ConnectionSettingsForm needs it to set
         # ConnectionSettings.domain when model instance is saved.
         kwargs['domain'] = self.domain
+        kwargs['queryset'] = ConnectionSettings.objects.filter(domain=self.domain)
         return kwargs
 
     def get_context_data(self, **kwargs):

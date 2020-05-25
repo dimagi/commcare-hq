@@ -131,7 +131,7 @@ def format_traceback_the_way_python_does(type, exc, tb):
     return f'Traceback (most recent call last):\n{tb}{type.__name__}: {exc}'
 
 
-def server_error(request, template_name='500.html'):
+def server_error(request, template_name='500.html', exception=None):
     """
     500 error handler.
     """
@@ -172,7 +172,7 @@ def server_error(request, template_name='500.html'):
     ))
 
 
-def not_found(request, template_name='404.html'):
+def not_found(request, template_name='404.html', exception=None):
     """
     404 error handler.
     """
@@ -335,7 +335,7 @@ def _no_permissions_message(request, template_name="403.html", message=None):
     )
 
 
-def no_permissions(request, redirect_to=None, template_name="403.html", message=None):
+def no_permissions(request, redirect_to=None, template_name="403.html", message=None, exception=None):
     """
     403 error handler.
     """
@@ -579,7 +579,26 @@ def jserror(request):
 @method_decorator([login_required], name='dispatch')
 class BugReportView(View):
     def post(self, req, *args, **kwargs):
-        report = dict([(key, req.POST.get(key, '')) for key in (
+        email = self._get_email_message(
+            post_params=req.POST,
+            couch_user=req.couch_user,
+            uploaded_file=req.FILES.get('report_issue')
+        )
+
+        email.send(fail_silently=False)
+
+        if req.POST.get('five-hundred-report'):
+            messages.success(
+                req,
+                _("Your CommCare HQ Issue Report has been sent. We are working quickly to resolve this problem.")
+            )
+            return HttpResponseRedirect(reverse('homepage'))
+
+        return HttpResponse()
+
+    @staticmethod
+    def _get_email_message(post_params, couch_user, uploaded_file):
+        report = dict([(key, post_params.get(key, '')) for key in (
             'subject',
             'username',
             'domain',
@@ -593,7 +612,6 @@ class BugReportView(View):
         )])
 
         try:
-            couch_user = req.couch_user
             full_name = couch_user.full_name
             if couch_user.is_commcare_user():
                 email = report['email']
@@ -613,12 +631,15 @@ class BugReportView(View):
         else:
             domain = "<no domain>"
 
+        other_recipients = [el.strip() for el in report['cc'].split(",") if el]
+
         message = (
-            "username: {username}\n"
-            "full name: {full_name}\n"
-            "domain: {domain}\n"
-            "url: {url}\n"
-        ).format(**report)
+            f"username: {report['username']}\n"
+            f"full name: {report['full_name']}\n"
+            f"domain: {report['domain']}\n"
+            f"url: {report['url']}\n"
+            f"recipients: {', '.join(other_recipients)}\n"
+        )
 
         domain_object = Domain.get_by_name(domain) if report['domain'] else None
         debug_context = {
@@ -631,10 +652,9 @@ class BugReportView(View):
         }
         if domain_object:
             current_project_description = domain_object.project_description if domain_object else None
-            new_project_description = req.POST.get('project_description')
-            if (domain_object and
-                    req.couch_user.is_domain_admin(domain=domain) and
-                    new_project_description and current_project_description != new_project_description):
+            new_project_description = post_params.get('project_description')
+            if (domain_object and couch_user.is_domain_admin(domain=domain) and new_project_description
+                    and current_project_description != new_project_description):
                 domain_object.project_description = new_project_description
                 domain_object.save()
 
@@ -652,7 +672,6 @@ class BugReportView(View):
             })
 
         subject = '{subject} ({domain})'.format(subject=report['subject'], domain=domain)
-        cc = [el for el in report['cc'].strip().split(",") if el]
 
         if full_name and not any([c in full_name for c in '<>"']):
             reply_to = '"{full_name}" <{email}>'.format(**report)
@@ -665,7 +684,7 @@ class BugReportView(View):
             reply_to = settings.SERVER_EMAIL
 
         message += "Message:\n\n{message}\n".format(message=report['message'])
-        if req.POST.get('five-hundred-report'):
+        if post_params.get('five-hundred-report'):
             extra_message = ("This message was reported from a 500 error page! "
                              "Please fix this ASAP (as if you wouldn't anyway)...")
             extra_debug_info = (
@@ -685,10 +704,9 @@ class BugReportView(View):
             body=message,
             to=[settings.SUPPORT_EMAIL],
             headers={'Reply-To': reply_to},
-            cc=cc
+            cc=other_recipients
         )
 
-        uploaded_file = req.FILES.get('report_issue')
         if uploaded_file:
             filename = uploaded_file.name
             content = uploaded_file.read()
@@ -701,16 +719,7 @@ class BugReportView(View):
         else:
             email.from_email = settings.SUPPORT_EMAIL
 
-        email.send(fail_silently=False)
-
-        if req.POST.get('five-hundred-report'):
-            messages.success(
-                req,
-                "Your CommCare HQ Issue Report has been sent. We are working quickly to resolve this problem."
-            )
-            return HttpResponseRedirect(reverse('homepage'))
-
-        return HttpResponse()
+        return email
 
 
 def render_static(request, template, page_name):
@@ -839,7 +848,7 @@ class CRUDPaginatedViewMixin(object):
         """
         Specify GET or POST from a request object.
         """
-        raise NotImplementedError("you need to implement get_param_source")
+        return self.request.POST if self.request.method == 'POST' else self.request.GET
 
     @property
     @memoized
@@ -899,6 +908,7 @@ class CRUDPaginatedViewMixin(object):
                     'new_items': self.new_items_header,
                 },
                 'create_item_form': self.get_create_form_response(create_form) if create_form else None,
+                'create_item_form_class': self.create_item_form_class,
             }
         }
 
@@ -1009,6 +1019,8 @@ class CRUDPaginatedViewMixin(object):
         """
         pass
 
+    create_item_form_class = 'form form-inline'
+
     def get_create_form_response(self, create_form):
         return render_to_string(
             'hqwebapp/includes/create_item_form.html', {
@@ -1080,7 +1092,8 @@ def quick_find(request):
         return HttpResponseBadRequest('GET param "q" must be provided')
 
     def deal_with_doc(doc, domain, doc_info_fn):
-        if request.couch_user.is_superuser or (domain and request.couch_user.is_member_of(domain)):
+        is_member = domain and request.couch_user.is_member_of(domain, allow_mirroring=True)
+        if is_member or request.couch_user.is_superuser:
             doc_info = doc_info_fn(doc)
         else:
             raise Http404()

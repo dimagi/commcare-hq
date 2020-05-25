@@ -699,8 +699,14 @@ class FormAccessorSQL(AbstractFormAccessor):
 
     @staticmethod
     def get_deleted_form_ids_in_domain(domain):
-        deleted_state = XFormInstanceSQL.NORMAL | XFormInstanceSQL.DELETED
-        return FormAccessorSQL.get_form_ids_in_domain_by_state(domain, deleted_state)
+        result = []
+        for db_name in get_db_aliases_for_partitioned_query():
+            result.extend(
+                XFormInstanceSQL.objects.using(db_name)
+                .annotate(state_deleted=F('state').bitand(XFormInstanceSQL.DELETED))
+                .filter(domain=domain, state_deleted=XFormInstanceSQL.DELETED).values_list('form_id', flat=True)
+            )
+        return result
 
     @staticmethod
     def get_form_ids_in_domain_by_state(domain, state):
@@ -989,8 +995,9 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         return CaseAccessorSQL._get_case_ids_in_domain(domain, deleted=True)
 
     @staticmethod
-    def get_case_ids_in_domain_by_owners(domain, owner_ids, closed=None):
-        return CaseAccessorSQL._get_case_ids_in_domain(domain, owner_ids=owner_ids, is_closed=closed)
+    def get_case_ids_in_domain_by_owners(domain, owner_ids, closed=None, case_type=None):
+        return CaseAccessorSQL._get_case_ids_in_domain(domain, case_type=case_type,
+                                                       owner_ids=owner_ids, is_closed=closed)
 
     @staticmethod
     def save_case(case):

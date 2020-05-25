@@ -9,16 +9,14 @@ from django.utils.translation import ugettext_lazy
 from django.views.generic import View
 
 import pytz
-from memoized import memoized
 
-from corehq.apps.accounting.decorators import requires_privilege_with_fallback
-from corehq.toggles import NAMESPACE_DOMAIN
 from couchexport.models import Format
 from dimagi.utils.web import get_url_base, json_response
 from soil import DownloadBase
 from soil.progress import get_task_status
 
-from corehq import privileges, toggles
+from corehq import privileges
+from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.domain.decorators import api_auth
 from corehq.apps.export.const import (
@@ -31,26 +29,26 @@ from corehq.apps.export.models import (
     CaseExportDataSchema,
     FormExportDataSchema,
 )
-from corehq.apps.export.models.new import DataFile, DatePeriod, RowNumberColumn
+from corehq.apps.export.models.new import DataFile, DatePeriod
 from corehq.apps.export.tasks import generate_schema_for_all_builds
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.util import datespan_from_beginning
 from corehq.apps.settings.views import BaseProjectDataView
-from corehq.apps.users.decorators import get_permission_name
-from corehq.apps.users.models import Permissions
 from corehq.apps.users.permissions import (
     CASE_EXPORT_PERMISSION,
     DEID_EXPORT_PERMISSION,
     FORM_EXPORT_PERMISSION,
-    can_download_data_files,
-    has_permission_to_view_report,
     ODATA_FEED_PERMISSION,
+    can_download_data_files,
+    can_upload_data_files,
+    has_permission_to_view_report,
 )
 from corehq.blobs.exceptions import NotFound
 from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD
 from corehq.util.download import get_download_response
 from corehq.util.timezones.utils import get_timezone_for_user
+from memoized import memoized
 
 
 def get_timezone(domain, couch_user):
@@ -65,21 +63,13 @@ def get_timezone(domain, couch_user):
 
 def user_can_view_deid_exports(domain, couch_user):
     return (domain_has_privilege(domain, privileges.DEIDENTIFIED_DATA)
-            and couch_user.has_permission(
-                domain,
-                get_permission_name(Permissions.view_report),
-                data=DEID_EXPORT_PERMISSION
-            ))
+            and has_permission_to_view_report(couch_user, domain, DEID_EXPORT_PERMISSION))
 
 
 def user_can_view_odata_feed(domain, couch_user):
     domain_can_view_odata = domain_has_privilege(domain, privileges.ODATA_FEED)
     return (domain_can_view_odata
-            and couch_user.has_permission(
-                domain,
-                get_permission_name(Permissions.view_report),
-                data=ODATA_FEED_PERMISSION
-            ))
+            and has_permission_to_view_report(couch_user, domain, ODATA_FEED_PERMISSION))
 
 
 class ExportsPermissionsManager(object):
@@ -325,7 +315,7 @@ class DataFileDownloadList(BaseProjectDataView):
         context.update({
             'timezone': get_timezone_for_user(self.request.couch_user, self.domain),
             'data_files': DataFile.get_all(self.domain),
-            'is_admin': self.request.couch_user.is_domain_admin(self.domain),
+            'is_admin': can_upload_data_files(self.domain, self.request.couch_user),
             'url_base': get_url_base(),
         })
         return context

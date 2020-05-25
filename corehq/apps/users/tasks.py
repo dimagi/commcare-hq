@@ -237,12 +237,12 @@ def _rebuild_case_with_retries(self, domain, case_id, detail):
     queue='background_queue',
 )
 def resend_pending_invitations():
-    from corehq.apps.users.models import SQLInvitation
+    from corehq.apps.users.models import Invitation
     days_to_resend = (15, 29)
     days_to_expire = 30
     domains = Domain.get_all()
     for domain_obj in domains:
-        invitations = SQLInvitation.by_domain(domain_obj.name)
+        invitations = Invitation.by_domain(domain_obj.name)
         for invitation in invitations:
             days = (datetime.utcnow() - invitation.invited_on).days
             if days in days_to_resend:
@@ -329,7 +329,12 @@ def process_reporting_metadata_staging():
         )[:100]
         for record in records:
             user = CouchUser.get_by_user_id(record.user_id, record.domain)
-            record.process_record(user)
+            try:
+                record.process_record(user)
+            except ResourceConflict:
+                # https://sentry.io/organizations/dimagi/issues/1479516073/
+                user = CouchUser.get_by_user_id(record.user_id, record.domain)
+                record.process_record(user)
             record.delete()
 
     duration = datetime.utcnow() - start

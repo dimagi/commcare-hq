@@ -2,5 +2,5 @@ class InvalidTransitionError(Exception):
     pass
 
 
-class LocationCreateError(Exception):
+class InvalidUserTransition(Exception):
     pass

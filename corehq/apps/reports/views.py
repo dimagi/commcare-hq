@@ -132,7 +132,7 @@ from corehq.apps.users.permissions import (
     DEID_EXPORT_PERMISSION,
     FORM_EXPORT_PERMISSION,
 )
-from corehq.blobs import NotFound, get_blob_db, models
+from corehq.blobs import CODES, NotFound, get_blob_db, models
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import (
     CaseAccessors,
@@ -1235,7 +1235,7 @@ def case_property_names(request, domain, case_id):
     if case.external_id:
         all_property_names.add('external_id')
 
-    return json_response(sorted(all_property_names))
+    return json_response(sorted(all_property_names, key=lambda item: item.lower()))
 
 
 @location_safe
@@ -1415,7 +1415,12 @@ def _get_form_render_context(request, domain, instance, case_id=None):
     # Build ordered list of questions and dict of question values => responses
     # Question values will be formatted to be processed by XFormQuestionValueIterator,
     # for example "/data/group/repeat_group[2]/question_id"
-    question_response_map, ordered_question_values = get_data_cleaning_data(form_data, instance)
+    try:
+        question_response_map, ordered_question_values = get_data_cleaning_data(form_data, instance)
+    except AttributeError as err:
+        question_response_map, ordered_question_values = (None, None)
+        import logging
+        logging.exception(err)
 
     context.update({
         "context_case_id": case_id,
@@ -1515,7 +1520,7 @@ def _get_form_metadata_context(domain, form, timezone, support_enabled=False):
     if getattr(form, 'auth_context', None):
         auth_context = AuthContext(form.auth_context)
         auth_context_user_id = auth_context.user_id
-        auth_user_info = get_doc_info_by_id(domain, auth_context_user_id)
+        auth_user_info = get_doc_info_by_id(None, auth_context_user_id)
     else:
         auth_user_info = get_doc_info_by_id(domain, None)
         auth_context = AuthContext(
@@ -1536,7 +1541,7 @@ def _get_form_metadata_context(domain, form, timezone, support_enabled=False):
             display='admin',
         )
     else:
-        user_info = get_doc_info_by_id(domain, meta_userID)
+        user_info = get_doc_info_by_id(None, meta_userID)
 
     return {
         "form_meta_data": form_meta_data,
@@ -2063,7 +2068,7 @@ def export_report(request, domain, export_hash, format):
     report_class = meta.properties["report_class"]
 
     try:
-        report_file = db.get(export_hash)
+        report_file = db.get(export_hash, type_code=CODES.tempfile)
     except NotFound:
         return report_not_found
     with report_file:
@@ -2074,7 +2079,7 @@ def export_report(request, domain, export_hash, format):
             response = HttpResponse(file, Format.FORMAT_DICT[format])
             response['Content-Length'] = file.size
             response['Content-Disposition'] = 'attachment; filename="{filename}.{extension}"'.format(
-                filename=export_hash,
+                filename=meta.name or export_hash,
                 extension=Format.FORMAT_DICT[format]['extension']
             )
             return response

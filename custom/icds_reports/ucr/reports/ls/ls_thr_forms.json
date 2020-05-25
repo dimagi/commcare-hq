@@ -21,7 +21,8 @@
   ],
   "server_environment": [
     "india",
-    "icds"
+    "icds",
+    "icds-staging"
   ],
   "report_id": "static-ls_thr_forms",
   "data_source_table": "static-thr_forms_v2",

@@ -1,3 +1,5 @@
+/*global FormplayerFrontend */
+
 hqDefine('cloudcare/js/util', function () {
     if (!String.prototype.startsWith) {
         String.prototype.startsWith = function (searchString, position) {
@@ -32,11 +34,34 @@ hqDefine('cloudcare/js/util', function () {
             message = gettext("Sorry, an error occurred while processing that request.");
         }
         _show(message, $el, null, "alert alert-danger");
+        reportFormplayerErrorToHQ({
+            type: 'show_error_notification',
+            message: message,
+        });
+
+    };
+
+    var showWarning = function (message, $el) {
+        if (message === undefined) {
+            return;
+        }
+        _show(message, $el, 30000, "alert alert-warning");
     };
 
     var showHTMLError = function (message, $el, autoHideTime) {
-        message = message || gettext("Sorry, an error occurred while processing that request.");
-        _show(message, $el, autoHideTime, "", true);
+        var htmlMessage = message = message || gettext("Sorry, an error occurred while processing that request.");
+        var $container = _show(message, $el, autoHideTime, "alert alert-danger", true);
+        try {
+            message = $container.text();  // pull out just the text the user sees
+            message = message.replace(/\s+/g, ' ').trim();
+        } catch (e) {
+            // leave the message as at came in if there's an issue parsing text from the container
+        }
+        reportFormplayerErrorToHQ({
+            type: 'show_error_notification',
+            message: message,
+            htmlMessage: htmlMessage,
+        });
     };
 
     var showSuccess = function (message, $el, autoHideTime, isHTML) {
@@ -110,19 +135,63 @@ hqDefine('cloudcare/js/util', function () {
         }
     };
 
+    var breakLocksComplete = function (isError, message) {
+        hideLoading();
+        if (isError) {
+            showError(
+                gettext('Error breaking locks. Please report an issue if this persists.'),
+                $('#cloudcare-notifications')
+            );
+        } else {
+            showSuccess(message, $('#cloudcare-notifications'), 5000);
+        }
+    };
+
     var hideLoading = function (selector) {
         NProgress.done();
+    };
+
+    var reportFormplayerErrorToHQ = function (data) {
+        try {
+            var reverse = hqImport("hqwebapp/js/initial_page_data").reverse;
+            var cloudcareEnv = FormplayerFrontend.request('currentUser').environment;
+            if (!data.cloudcareEnv) {
+                data.cloudcareEnv = cloudcareEnv || 'unknown';
+            }
+            $.ajax({
+                type: 'POST',
+                url: reverse('report_formplayer_error'),
+                data: JSON.stringify(data),
+                contentType: "application/json",
+                dataType: "json",
+                success: function () {
+                    window.console.info('Successfully reported error: ' + JSON.stringify(data));
+                },
+                error: function () {
+                    window.console.error('Failed to report error: ' + JSON.stringify(data));
+                },
+            });
+        } catch (e) {
+            window.console.error(
+                "reportFormplayerErrorToHQ failed hard and there is nowhere " +
+                "else to report this error: " + JSON.stringify(data),
+                e
+            );
+        }
     };
 
     return {
         getFormUrl: getFormUrl,
         getSubmitUrl: getSubmitUrl,
         showError: showError,
+        showWarning: showWarning,
         showHTMLError: showHTMLError,
         showSuccess: showSuccess,
         clearUserDataComplete: clearUserDataComplete,
+        breakLocksComplete: breakLocksComplete,
         formplayerLoading: formplayerLoading,
         formplayerLoadingComplete: formplayerLoadingComplete,
         formplayerSyncComplete: formplayerSyncComplete,
+        reportFormplayerErrorToHQ: reportFormplayerErrorToHQ,
     };
 });

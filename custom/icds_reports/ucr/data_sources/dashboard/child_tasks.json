@@ -20,7 +20,8 @@
   ],
   "server_environment": [
     "india",
-    "icds"
+    "icds",
+    "icds-staging"
   ],
   "config": {
     "table_id": "static-child_tasks_cases",
@@ -184,8 +185,34 @@
           "6g_vit_a_6",
           "6g_vit_a_7",
           "6g_vit_a_8",
-          "7g_vit_a_9"
+          "7g_vit_a_9",
+          "anc_1",
+          "anc_2",
+          "anc_3",
+          "anc_4",
+          "tt_1",
+          "tt_2",
+          "tt_booster",
+          "1g_bcg"
         ]
+      },
+      {
+        "column_id": "location_reassignment_date",
+        "datatype": "date",
+        "type": "raw",
+        "property_name": "location_reassignment_datetime"
+      },
+      {
+        "column_id": "last_owner_id",
+        "datatype": "string",
+        "type": "raw",
+        "property_name": "location_reassignment_last_owner_id"
+      },
+      {
+        "column_id": "last_supervisor_id",
+        "datatype": "string",
+        "type": "raw",
+        "property_name": "location_reassignment_last_supervisor_id"
       }
     ],
     "named_expressions": {

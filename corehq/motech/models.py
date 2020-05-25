@@ -1,6 +1,5 @@
 import re
 
-from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 
 import jsonfield
@@ -8,6 +7,7 @@ import jsonfield
 from corehq.motech.const import (
     ALGO_AES,
     BASIC_AUTH,
+    BEARER_AUTH,
     DIGEST_AUTH,
     OAUTH1,
     PASSWORD_PLACEHOLDER,
@@ -32,6 +32,7 @@ class ConnectionSettings(models.Model):
             (BASIC_AUTH, "Basic"),
             (DIGEST_AUTH, "Digest"),
             (OAUTH1, "OAuth1"),
+            (BEARER_AUTH, "Bearer"),
         )
     )
     username = models.CharField(max_length=255)
@@ -61,6 +62,20 @@ class ConnectionSettings(models.Model):
     def notify_addresses(self):
         return [addr for addr in re.split('[, ]+', self.notify_addresses_str) if addr]
 
+    def get_requests(self, payload_id, logger):
+        from corehq.motech.requests import Requests
+        return Requests(
+            self.domain,
+            self.url,
+            self.username,
+            self.plaintext_password,
+            verify=not self.skip_cert_verify,
+            notify_addresses=self.notify_addresses,
+            payload_id=payload_id,
+            logger=logger,
+            auth_type=self.auth_type,
+        )
+
 
 class RequestLog(models.Model):
     """
@@ -79,10 +94,7 @@ class RequestLog(models.Model):
     request_url = models.CharField(max_length=255, db_index=True)
     request_headers = jsonfield.JSONField(blank=True)
     request_params = jsonfield.JSONField(blank=True)
-    request_body = jsonfield.JSONField(
-        blank=True, null=True,  # NULL for GET, but POST can take an empty body
-        dump_kwargs={'cls': DjangoJSONEncoder, 'separators': (',', ':')}  # Use DjangoJSONEncoder for dates, etc.
-    )
+    request_body = models.TextField(blank=True, null=True)
     request_error = models.TextField(null=True)
     response_status = models.IntegerField(null=True, db_index=True)
     response_body = models.TextField(blank=True, null=True)
@@ -91,52 +103,17 @@ class RequestLog(models.Model):
         db_table = 'dhis2_jsonapilog'
 
     @staticmethod
-    def unpack_request_args(request_method, args, kwargs):
-        params = kwargs.pop('params', None)
-        json_data = kwargs.pop('json', None)  # dict
-        data = kwargs.pop('data', None)  # string
-        if data is None:
-            data = json_data
-        # Don't bother trying to cast `data` as a dict.
-        # RequestLog.request_body will store it, and it will be rendered
-        # as prettified JSON if possible, regardless of whether it's a
-        # dict or a string.
-        if args:
-            if request_method == 'GET':
-                params = args[0]
-            elif request_method == 'PUT':
-                data = args[0]
-        headers = kwargs.pop('headers', {})
-        return params, data, headers
-
-    @staticmethod
-    def log(
-        log_level,
-        domain_name,
-        payload_id,
-        request_error,
-        response_status,
-        response_body,
-        request_method,
-        request_url,
-        *args,
-        **kwargs,
-    ):
-        # The order of arguments is important: `request_method`,
-        # `request_url` and `*args` are the positional arguments of
-        # `Requests.send_request()`. Having these at the end of this
-        # method's args allows us to call `log` with `*args, **kwargs`
-        params, data, headers = RequestLog.unpack_request_args(request_method, args, kwargs)
-        RequestLog.objects.create(
-            domain=domain_name,
-            log_level=log_level,
-            payload_id=payload_id,
-            request_method=request_method,
-            request_url=request_url,
-            request_headers=headers,
-            request_params=params,
-            request_body=data,
-            request_error=request_error,
-            response_status=response_status,
-            response_body=response_body,
+    def log(level, log_entry):
+        return RequestLog.objects.create(
+            domain=log_entry.domain,
+            log_level=level,
+            payload_id=log_entry.payload_id,
+            request_method=log_entry.method,
+            request_url=log_entry.url,
+            request_headers=log_entry.headers,
+            request_params=log_entry.params,
+            request_body=log_entry.data,
+            request_error=log_entry.error,
+            response_status=log_entry.response_status,
+            response_body=log_entry.response_body,
         )

@@ -1,6 +1,7 @@
 from collections import defaultdict, namedtuple
 from datetime import datetime, timedelta
 
+from dimagi.utils.chunked import chunked
 from dimagi.utils.parsing import string_to_datetime
 
 from corehq.apps.es import (
@@ -156,7 +157,7 @@ def get_paged_forms_by_type(
     return PagedResult(total=result.total, hits=result.hits)
 
 
-@quickcache(['domain', 'xmlns'], timeout=5 * 60)
+@quickcache(['domain', 'xmlns'], timeout=14 * 24 * 60)
 def guess_form_name_from_submissions_using_xmlns(domain, xmlns):
     return get_form_name_from_last_submission_for_xmlns(domain, xmlns)
 
@@ -509,6 +510,26 @@ def get_case_and_action_counts_for_domains(domains):
         domain: _domain_stats(domain)
         for domain in domains
     }
+
+
+def get_form_ids_missing_from_elasticsearch(all_form_ids):
+    missing_from_elasticsearch = set()
+    for form_ids in chunked(all_form_ids, 500):
+        form_ids = set(form_ids)
+        not_missing = set(FormES().doc_id(form_ids).get_ids())
+        missing_from_elasticsearch.update(form_ids - not_missing)
+        assert not_missing - form_ids == set()
+    return list(missing_from_elasticsearch)
+
+
+def get_case_ids_missing_from_elasticsearch(all_case_ids):
+    missing_from_elasticsearch = set()
+    for case_ids in chunked(all_case_ids, 500):
+        case_ids = set(case_ids)
+        not_missing = set(CaseES().doc_id(case_ids).get_ids())
+        missing_from_elasticsearch.update(case_ids - not_missing)
+        assert not_missing - case_ids == set()
+    return list(missing_from_elasticsearch)
 
 
 def get_all_user_ids_submitted(domain, app_ids=None):

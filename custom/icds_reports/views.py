@@ -23,7 +23,7 @@ from dateutil.relativedelta import relativedelta
 
 from couchexport.export import Format
 from couchexport.shortcuts import export_response
-from custom.icds_reports.utils.topojson_util.topojson_util import get_topojson_for_district, get_map_name
+from custom.icds_reports.utils.topojson_util.topojson_util import get_block_topojson_for_state, get_map_name
 from dimagi.utils.dates import add_months, force_to_date
 
 from corehq import toggles
@@ -34,7 +34,7 @@ from corehq.apps.hqwebapp.views import BugReportView
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import (
     location_safe,
-    user_can_access_location_id,
+    user_can_access_location_id
 )
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions, UserRole
@@ -63,12 +63,14 @@ from custom.icds_reports.const import (
     AggregationLevels,
     LocationTypes,
     CAS_API_PAGE_SIZE,
-    SERVICE_DELIVERY_REPORT
+    SERVICE_DELIVERY_REPORT,
+    CHILD_GROWTH_TRACKER_REPORT
 )
 from custom.icds_reports.dashboard_utils import get_dashboard_template_context
 from custom.icds_reports.models.aggregate import AwcLocation
 from custom.icds_reports.models.helper import IcdsFile
 from custom.icds_reports.models.views import AggAwcDailyView, NICIndicatorsView
+from custom.icds_reports.permissions import can_access_location_data
 from custom.icds_reports.queries import get_cas_data_blob_file
 from custom.icds_reports.reports.adhaar import (
     get_adhaar_data_chart,
@@ -225,6 +227,10 @@ from custom.icds_reports.utils import (
     icds_pre_release_features,
     india_now,
     filter_cas_data_export,
+    get_deprecation_info,
+    get_location_replacement_name,
+    timestamp_string_to_date_string,
+    datetime_to_date_string
 )
 from custom.icds_reports.utils.data_accessor import (
     get_awc_covered_data_with_retrying,
@@ -239,7 +245,8 @@ from custom.icds_reports.reports.governance_apis import (
     get_state_names,
     get_cbe_data)
 
-from custom.icds_reports.reports.bihar_api import get_api_demographics_data
+from custom.icds_reports.reports.bihar_api import get_api_demographics_data, get_mother_details,\
+    get_api_vaccine_data, get_api_ag_school_data
 
 from . import const
 from .exceptions import InvalidLocationTypeException, TableauTokenException
@@ -250,7 +257,10 @@ DASHBOARD_CHECKS = [
     require_permission(Permissions.view_report, 'custom.icds_reports.reports.reports.DashboardReport',
                        login_decorator=None),
     login_and_domain_required,
+    can_access_location_data
 ]
+
+DASHBOARD_CHECKS_FOR_TEMPLATE = DASHBOARD_CHECKS[:-1]
 
 
 @location_safe
@@ -335,7 +345,7 @@ def get_tableau_access_token(tableau_user, client_ip):
 
 
 @location_safe
-@method_decorator(DASHBOARD_CHECKS, name='dispatch')
+@method_decorator(DASHBOARD_CHECKS_FOR_TEMPLATE, name='dispatch')
 class DashboardView(TemplateView):
     template_name = 'icds_reports/dashboard.html'
     downtime_template_name = 'icds_reports/dashboard_down.html'
@@ -366,7 +376,7 @@ class DashboardView(TemplateView):
 
 
 @location_safe
-@method_decorator(DASHBOARD_CHECKS, name='dispatch')
+@method_decorator(DASHBOARD_CHECKS_FOR_TEMPLATE, name='dispatch')
 class MobileDashboardDownloadView(TemplateView):
     template_name = 'icds_reports/mobile_dashboard_download.html'
 
@@ -442,6 +452,9 @@ class BaseCasAPIView(View):
             in_range = False
         return in_range
 
+    def get_state_id_from_state_name(self, state_name):
+        return SQLLocation.objects.get(name=state_name, location_type__name='state').location_id
+
 
 @method_decorator(DASHBOARD_CHECKS, name='dispatch')
 class ProgramSummaryView(BaseReportView):
@@ -471,9 +484,7 @@ class TopoJsonView(BaseReportView):
 
     def get(self, request, *args, **kwargs):
         state = request.GET.get('state')
-        district = request.GET.get('district')
-
-        topojson = get_topojson_for_district(state, district)
+        topojson = get_block_topojson_for_state(state)
         data = {'topojson': topojson}
         return JsonResponse(data=data)
 
@@ -546,22 +557,28 @@ class PrevalenceOfUndernutritionView(BaseReportView):
         if age:
             config.update(get_age_filter(age))
 
-        config.update(get_location_filter(location, domain))
+        config.update(get_location_filter(location, self.kwargs['domain']))
         loc_level = get_location_level(config.get('aggregation_level'))
-
+        icds_features_flag = icds_pre_release_features(self.request.couch_user)
         data = {}
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
-                data = get_prevalence_of_undernutrition_sector_data(domain, config, loc_level, location, include_test)
+                data = get_prevalence_of_undernutrition_sector_data(
+                    domain, config, loc_level, location, include_test, icds_features_flag
+                )
             else:
-                data = get_prevalence_of_undernutrition_data_map(domain, config.copy(), loc_level, include_test)
+                data = get_prevalence_of_undernutrition_data_map(
+                    domain, config.copy(), loc_level, include_test, icds_features_flag
+                )
                 if loc_level == LocationTypes.BLOCK:
                     sector = get_prevalence_of_undernutrition_sector_data(
-                        domain, config, loc_level, location, include_test
+                        domain, config, loc_level, location, include_test, icds_features_flag
                     )
                     data.update(sector)
         elif step == "chart":
-            data = get_prevalence_of_undernutrition_data_chart(domain, config, loc_level, include_test)
+            data = get_prevalence_of_undernutrition_data_chart(
+                domain, config, loc_level, include_test, icds_features_flag
+            )
 
         return JsonResponse(data={
             'report_data': data,
@@ -590,7 +607,7 @@ class LocationView(View):
                 domain=self.kwargs['domain'],
                 location_id=location_id
             )
-
+            location_list, replacement_names = get_deprecation_info([location], True)
             return JsonResponse({
                 'name': location.name,
                 'map_location_name': get_map_name(location),
@@ -603,6 +620,10 @@ class LocationView(View):
                 'user_have_access_to_parent': location.location_id in parent_ids,
                 'parent_name': location.parent.name if location.parent else None,
                 'parent_map_name': get_map_name(location.parent),
+                'deprecates': get_location_replacement_name(location, 'deprecates', replacement_names),
+                'archived_on': datetime_to_date_string(location.archived_on),
+                'deprecated_to': get_location_replacement_name(location, 'deprecated_to', replacement_names),
+                'deprecates_at': timestamp_string_to_date_string(location.metadata.get('deprecates_at')),
             })
 
         parent_id = request.GET.get('parent_id')
@@ -610,7 +631,7 @@ class LocationView(View):
 
         show_test = request.GET.get('include_test', False)
 
-        locations = SQLLocation.objects.accessible_to_user(self.kwargs['domain'], self.request.couch_user)
+        locations = SQLLocation.objects.accessible_to_user(self.kwargs['domain'], self.request.couch_user).select_related('location_type')
         if not parent_id:
             locations = locations.filter(parent_id__isnull=True)
         else:
@@ -623,6 +644,11 @@ class LocationView(View):
             locations = locations.filter(name__iexact=name)
 
         locations = locations.order_by('name')
+
+        if not locations:
+            return JsonResponse(data={'locations': []})
+
+        locations_list, replacement_names = get_deprecation_info(locations, show_test)
         return JsonResponse(data={
             'locations': [
                 {
@@ -634,9 +660,13 @@ class LocationView(View):
                         self.kwargs['domain'],
                         request.couch_user, loc.location_id
                     ),
-                    'user_have_access_to_parent': loc.location_id in parent_ids
+                    'user_have_access_to_parent': loc.location_id in parent_ids,
+                    'deprecates': get_location_replacement_name(loc, 'deprecates', replacement_names),
+                    'archived_on': datetime_to_date_string(loc.archived_on),
+                    'deprecated_to': get_location_replacement_name(loc, 'deprecated_to', replacement_names),
+                    'deprecates_at': timestamp_string_to_date_string(loc.metadata.get('deprecates_at')),
                 }
-                for loc in locations if show_test or loc.metadata.get('is_test_location', 'real') != 'test'
+                for loc in locations_list
             ]
         })
 
@@ -660,7 +690,8 @@ class LocationAncestorsView(View):
         ).filter(
             ~Q(pk__in=parent_ids) & (Q(parent_id__in=parent_ids) | Q(parent_id__isnull=True))
         ).select_related('parent').distinct().order_by('name')
-
+        all_locations = list(OrderedDict.fromkeys(list(locations) + list(parents)))
+        location_list, replacement_names = get_deprecation_info(all_locations, show_test, True)
         return JsonResponse(data={
             'locations': [
                 {
@@ -672,10 +703,13 @@ class LocationAncestorsView(View):
                         self.kwargs['domain'],
                         request.couch_user, location.location_id
                     ),
-                    'user_have_access_to_parent': location.location_id in parent_locations_ids
+                    'user_have_access_to_parent': location.location_id in parent_locations_ids,
+                    'deprecates': get_location_replacement_name(location, 'deprecates', replacement_names),
+                    'archived_on': datetime_to_date_string(location.archived_on),
+                    'deprecated_to': get_location_replacement_name(location, 'deprecated_to', replacement_names),
+                    'deprecates_at': timestamp_string_to_date_string(location.metadata.get('deprecates_at')),
                 }
-                for location in list(OrderedDict.fromkeys(list(locations) + list(parents)))
-                if show_test or location.metadata.get('is_test_location', 'real') != 'test'
+                for location in location_list
             ],
             'selected_location': {
                 'location_type_name': selected_location.location_type_name,
@@ -686,7 +720,11 @@ class LocationAncestorsView(View):
                     self.kwargs['domain'],
                     request.couch_user, selected_location.location_id
                 ),
-                'user_have_access_to_parent': selected_location.location_id in parent_locations_ids
+                'user_have_access_to_parent': selected_location.location_id in parent_locations_ids,
+                'deprecates': get_location_replacement_name(selected_location, 'deprecates', replacement_names),
+                'archived_on': datetime_to_date_string(selected_location.archived_on),
+                'deprecated_to': get_location_replacement_name(selected_location, 'deprecated_to', replacement_names),
+                'deprecates_at': timestamp_string_to_date_string(selected_location.metadata.get('deprecates_at')),
             }
         })
 
@@ -966,10 +1004,14 @@ class ExportIndicatorView(View):
         if indicator == SERVICE_DELIVERY_REPORT:
             config['beneficiary_category'] = request.POST.get('beneficiary_category')
 
+        if indicator == CHILD_GROWTH_TRACKER_REPORT:
+            if not sql_location or sql_location.location_type_name in [LocationTypes.STATE]:
+                return HttpResponseBadRequest()
+            config = beneficiary_config
         if indicator in (CHILDREN_EXPORT, PREGNANT_WOMEN_EXPORT, DEMOGRAPHICS_EXPORT, SYSTEM_USAGE_EXPORT,
                          AWC_INFRASTRUCTURE_EXPORT, GROWTH_MONITORING_LIST_EXPORT, AWW_INCENTIVE_REPORT,
                          LS_REPORT_EXPORT, THR_REPORT_EXPORT, DASHBOARD_USAGE_EXPORT,
-                         SERVICE_DELIVERY_REPORT):
+                         SERVICE_DELIVERY_REPORT, CHILD_GROWTH_TRACKER_REPORT):
             task = prepare_excel_reports.delay(
                 config,
                 aggregation_level,
@@ -987,7 +1029,7 @@ class ExportIndicatorView(View):
 @method_decorator(DASHBOARD_CHECKS, name='dispatch')
 class FactSheetsView(BaseReportView):
     def get(self, request, *args, **kwargs):
-        step, now, month, year, include_test, domain, current_month, prev_month, location, selected_month = \
+        step, now, month, year, include_test, domain, current_month, prev_month, location_id, selected_month = \
             self.get_settings(request, *args, **kwargs)
 
         aggregation_level = 1
@@ -1004,7 +1046,7 @@ class FactSheetsView(BaseReportView):
             'domain': domain
         }
 
-        config.update(get_location_filter(location, domain))
+        config.update(get_location_filter(location_id, domain, include_object=True))
 
         # query database at same level for which it is requested
         if config.get('aggregation_level') > 1:
@@ -1042,23 +1084,23 @@ class PrevalenceOfSevereView(BaseReportView):
         loc_level = get_location_level(config.get('aggregation_level'))
 
         data = {}
-        icds_futures_flag = icds_pre_release_features(self.request.couch_user)
+        icds_features_flag = icds_pre_release_features(self.request.couch_user)
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
                 data = get_prevalence_of_severe_sector_data(
-                    domain, config, loc_level, location, include_test, icds_futures_flag
+                    domain, config, loc_level, location, include_test, icds_features_flag
                 )
             else:
                 data = get_prevalence_of_severe_data_map(
-                    domain, config.copy(), loc_level, include_test, icds_futures_flag
+                    domain, config.copy(), loc_level, include_test, icds_features_flag
                 )
                 if loc_level == LocationTypes.BLOCK:
                     sector = get_prevalence_of_severe_sector_data(
-                        domain, config, loc_level, location, include_test, icds_futures_flag
+                        domain, config, loc_level, location, include_test, icds_features_flag
                     )
                     data.update(sector)
         elif step == "chart":
-            data = get_prevalence_of_severe_data_chart(domain, config, loc_level, include_test, icds_futures_flag)
+            data = get_prevalence_of_severe_data_chart(domain, config, loc_level, include_test, icds_features_flag)
 
         return JsonResponse(data={
             'report_data': data,
@@ -1089,24 +1131,24 @@ class PrevalenceOfStuntingView(BaseReportView):
 
         data = {}
 
-        icds_futures_flag = icds_pre_release_features(self.request.couch_user)
+        icds_features_flag = icds_pre_release_features(self.request.couch_user)
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
                 data = get_prevalence_of_stunting_sector_data(
-                    domain, config, loc_level, location, include_test, icds_futures_flag
+                    domain, config, loc_level, location, include_test, icds_features_flag
                 )
             else:
                 data = get_prevalence_of_stunting_data_map(
-                    domain, config.copy(), loc_level, include_test, icds_futures_flag
+                    domain, config.copy(), loc_level, include_test, icds_features_flag
                 )
                 if loc_level == LocationTypes.BLOCK:
                     sector = get_prevalence_of_stunting_sector_data(
-                        domain, config, loc_level, location, include_test, icds_futures_flag
+                        domain, config, loc_level, location, include_test, icds_features_flag
                     )
                     data.update(sector)
         elif step == "chart":
             data = get_prevalence_of_stunting_data_chart(
-                domain, config, loc_level, include_test, icds_futures_flag
+                domain, config, loc_level, include_test, icds_features_flag
             )
 
         return JsonResponse(data={
@@ -1132,20 +1174,26 @@ class NewbornsWithLowBirthWeightView(BaseReportView):
 
         config.update(get_location_filter(location, self.kwargs['domain']))
         loc_level = get_location_level(config.get('aggregation_level'))
-
+        icds_features_flag = icds_pre_release_features(self.request.couch_user)
         data = {}
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
-                data = get_newborn_with_low_birth_weight_data(domain, config, loc_level, location, include_test)
+                data = get_newborn_with_low_birth_weight_data(
+                    domain, config, loc_level, location, include_test, icds_features_flag
+                )
             else:
-                data = get_newborn_with_low_birth_weight_map(domain, config.copy(), loc_level, include_test)
+                data = get_newborn_with_low_birth_weight_map(
+                    domain, config.copy(), loc_level, include_test, icds_features_flag
+                )
                 if loc_level == LocationTypes.BLOCK:
                     sector = get_newborn_with_low_birth_weight_data(
-                        domain, config, loc_level, location, include_test
+                        domain, config, loc_level, location, include_test, icds_features_flag
                     )
                     data.update(sector)
         elif step == "chart":
-            data = get_newborn_with_low_birth_weight_chart(domain, config, loc_level, include_test)
+            data = get_newborn_with_low_birth_weight_chart(
+                domain, config, loc_level, include_test, icds_features_flag
+            )
 
         return JsonResponse(data={
             'report_data': data,
@@ -1170,20 +1218,26 @@ class EarlyInitiationBreastfeeding(BaseReportView):
 
         config.update(get_location_filter(location, self.kwargs['domain']))
         loc_level = get_location_level(config.get('aggregation_level'))
-
+        icds_features_flag = icds_pre_release_features(self.request.couch_user)
         data = {}
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
-                data = get_early_initiation_breastfeeding_data(domain, config, loc_level, location, include_test)
+                data = get_early_initiation_breastfeeding_data(
+                    domain, config, loc_level, location, include_test, icds_features_flag
+                )
             else:
-                data = get_early_initiation_breastfeeding_map(domain, config.copy(), loc_level, include_test)
+                data = get_early_initiation_breastfeeding_map(
+                    domain, config.copy(), loc_level, include_test, icds_features_flag
+                )
                 if loc_level == LocationTypes.BLOCK:
                     sector = get_early_initiation_breastfeeding_data(
-                        domain, config, loc_level, location, include_test
+                        domain, config, loc_level, location, include_test, icds_features_flag
                     )
                     data.update(sector)
         elif step == "chart":
-            data = get_early_initiation_breastfeeding_chart(domain, config, loc_level, include_test)
+            data = get_early_initiation_breastfeeding_chart(
+                domain, config, loc_level, include_test, icds_features_flag
+            )
 
         return JsonResponse(data={
             'report_data': data,
@@ -1206,21 +1260,28 @@ class ExclusiveBreastfeedingView(BaseReportView):
             config.update({'gender': gender})
 
         config.update(get_location_filter(location, self.kwargs['domain']))
-        loc_level = get_location_level(config.get('aggregation_level'))
 
+        loc_level = get_location_level(config.get('aggregation_level'))
+        icds_features_flag = icds_pre_release_features(self.request.couch_user)
         data = {}
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
-                data = get_exclusive_breastfeeding_sector_data(domain, config, loc_level, location, include_test)
+                data = get_exclusive_breastfeeding_sector_data(
+                    domain, config, loc_level, location, include_test, icds_features_flag
+                )
             else:
-                data = get_exclusive_breastfeeding_data_map(domain, config.copy(), loc_level, include_test)
+                data = get_exclusive_breastfeeding_data_map(
+                    domain, config.copy(), loc_level, include_test, icds_features_flag
+                )
                 if loc_level == LocationTypes.BLOCK:
                     sector = get_exclusive_breastfeeding_sector_data(
-                        domain, config, loc_level, location, include_test
+                        domain, config, loc_level, location, include_test, icds_features_flag
                     )
                     data.update(sector)
         elif step == "chart":
-            data = get_exclusive_breastfeeding_data_chart(domain, config, loc_level, include_test)
+            data = get_exclusive_breastfeeding_data_chart(
+                domain, config, loc_level, include_test, icds_features_flag
+            )
 
         return JsonResponse(data={
             'report_data': data,
@@ -1244,20 +1305,26 @@ class ChildrenInitiatedView(BaseReportView):
 
         config.update(get_location_filter(location, self.kwargs['domain']))
         loc_level = get_location_level(config.get('aggregation_level'))
-
+        icds_features_flag = icds_pre_release_features(self.request.couch_user)
         data = {}
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
-                data = get_children_initiated_sector_data(domain, config, loc_level, location, include_test)
+                data = get_children_initiated_sector_data(
+                    domain, config, loc_level, location, include_test, icds_features_flag
+                )
             else:
-                data = get_children_initiated_data_map(domain, config.copy(), loc_level, include_test)
+                data = get_children_initiated_data_map(
+                    domain, config.copy(), loc_level, include_test, icds_features_flag
+                )
                 if loc_level == LocationTypes.BLOCK:
                     sector = get_children_initiated_sector_data(
-                        domain, config, loc_level, location, include_test
+                        domain, config, loc_level, location, include_test, icds_features_flag
                     )
                     data.update(sector)
         elif step == "chart":
-            data = get_children_initiated_data_chart(domain, config, loc_level, include_test)
+            data = get_children_initiated_data_chart(
+                domain, config, loc_level, include_test, icds_features_flag
+            )
 
         return JsonResponse(data={
             'report_data': data,
@@ -1281,20 +1348,26 @@ class InstitutionalDeliveriesView(BaseReportView):
 
         config.update(get_location_filter(location, self.kwargs['domain']))
         loc_level = get_location_level(config.get('aggregation_level'))
-
+        icds_features_flag = icds_pre_release_features(self.request.couch_user)
         data = {}
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
-                data = get_institutional_deliveries_sector_data(domain, config, loc_level, location, include_test)
+                data = get_institutional_deliveries_sector_data(
+                    domain, config, loc_level, location, include_test, icds_features_flag
+                )
             else:
-                data = get_institutional_deliveries_data_map(domain, config.copy(), loc_level, include_test)
+                data = get_institutional_deliveries_data_map(
+                    domain, config.copy(), loc_level, include_test, icds_features_flag
+                )
                 if loc_level == LocationTypes.BLOCK:
                     sector = get_institutional_deliveries_sector_data(
-                        domain, config, loc_level, location, include_test
+                        domain, config, loc_level, location, include_test, icds_features_flag
                     )
                     data.update(sector)
         elif step == "chart":
-            data = get_institutional_deliveries_data_chart(domain, config, loc_level, include_test)
+            data = get_institutional_deliveries_data_chart(
+                domain, config, loc_level, include_test, icds_features_flag
+            )
 
         return JsonResponse(data={
             'report_data': data,
@@ -1317,20 +1390,26 @@ class ImmunizationCoverageView(BaseReportView):
 
         config.update(get_location_filter(location, self.kwargs['domain']))
         loc_level = get_location_level(config.get('aggregation_level'))
-
+        icds_features_flag = icds_pre_release_features(self.request.couch_user)
         data = {}
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
-                data = get_immunization_coverage_sector_data(domain, config, loc_level, location, include_test)
+                data = get_immunization_coverage_sector_data(
+                    domain, config, loc_level, location, include_test, icds_features_flag
+                )
             else:
-                data = get_immunization_coverage_data_map(domain, config.copy(), loc_level, include_test)
+                data = get_immunization_coverage_data_map(
+                    domain, config.copy(), loc_level, include_test, icds_features_flag
+                )
                 if loc_level == LocationTypes.BLOCK:
                     sector = get_immunization_coverage_sector_data(
-                        domain, config, loc_level, location, include_test
+                        domain, config, loc_level, location, include_test, icds_features_flag
                     )
                     data.update(sector)
         elif step == "chart":
-            data = get_immunization_coverage_data_chart(domain, config, loc_level, include_test)
+            data = get_immunization_coverage_data_chart(
+                domain, config, loc_level, include_test, icds_features_flag
+            )
 
         return JsonResponse(data={
             'report_data': data,
@@ -1349,7 +1428,7 @@ class AWCDailyStatusView(View):
 
         config = {
             'month': tuple(now.timetuple())[:3],
-            'aggregation_level': 1,
+            'aggregation_level': 1
         }
         location = request.GET.get('location_id', '')
         if location == 'null' or location == 'undefined':
@@ -1357,6 +1436,8 @@ class AWCDailyStatusView(View):
         config.update(get_location_filter(location, self.kwargs['domain']))
         loc_level = get_location_level(config.get('aggregation_level'))
 
+        if icds_pre_release_features(self.request.couch_user):
+            config['num_launched_awcs__gte'] = 1
         data = {}
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
@@ -1409,6 +1490,9 @@ class RegisteredHouseholdView(BaseReportView):
         config.update(get_location_filter(location, self.kwargs['domain']))
         loc_level = get_location_level(config.get('aggregation_level'))
 
+        if icds_pre_release_features(self.request.couch_user):
+            config['num_launched_awcs__gte'] = 1
+
         data = {}
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
@@ -1448,16 +1532,20 @@ class EnrolledChildrenView(BaseReportView):
 
         config.update(get_location_filter(location, self.kwargs['domain']))
         loc_level = get_location_level(config.get('aggregation_level'))
-
+        icds_features_flag = icds_pre_release_features(self.request.couch_user)
         data = {}
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
-                data = get_enrolled_children_sector_data(domain, config, loc_level, location, include_test)
+                data = get_enrolled_children_sector_data(
+                    domain, config, loc_level, location, include_test, icds_features_flag
+                )
             else:
-                data = get_enrolled_children_data_map(domain, config.copy(), loc_level, include_test)
+                data = get_enrolled_children_data_map(
+                    domain, config.copy(), loc_level, include_test, icds_features_flag
+                )
                 if loc_level == LocationTypes.BLOCK:
                     sector = get_enrolled_children_sector_data(
-                        domain, config, loc_level, location, include_test
+                        domain, config, loc_level, location, include_test, icds_features_flag
                     )
                     data.update(sector)
         elif step == "chart":
@@ -1483,20 +1571,26 @@ class EnrolledWomenView(BaseReportView):
 
         config.update(get_location_filter(location, self.kwargs['domain']))
         loc_level = get_location_level(config.get('aggregation_level'))
-
+        icds_features_flag = icds_pre_release_features(self.request.couch_user)
         data = {}
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
-                data = get_enrolled_women_sector_data(domain, config, loc_level, location, include_test)
+                data = get_enrolled_women_sector_data(
+                    domain, config, loc_level, location, include_test, icds_features_flag
+                )
             else:
-                data = get_enrolled_women_data_map(domain, config.copy(), loc_level, include_test)
+                data = get_enrolled_women_data_map(
+                    domain, config.copy(), loc_level, include_test, icds_features_flag
+                )
                 if loc_level == LocationTypes.BLOCK:
                     sector = get_enrolled_women_sector_data(
-                        domain, config, loc_level, location, include_test
+                        domain, config, loc_level, location, include_test, icds_features_flag
                     )
                     data.update(sector)
         elif step == "chart":
-            data = get_enrolled_women_data_chart(domain, config, loc_level, include_test)
+            data = get_enrolled_women_data_chart(
+                domain, config, loc_level, include_test, icds_features_flag
+            )
 
         return JsonResponse(data={
             'report_data': data,
@@ -1512,23 +1606,31 @@ class LactatingEnrolledWomenView(BaseReportView):
         config = {
             'month': tuple(selected_month.timetuple())[:3],
             'aggregation_level': 1,
+
         }
+
         config.update(get_location_filter(location, self.kwargs['domain']))
         loc_level = get_location_level(config.get('aggregation_level'))
-
+        icds_features_flag = icds_pre_release_features(self.request.couch_user)
         data = {}
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
-                data = get_lactating_enrolled_women_sector_data(domain, config, loc_level, location, include_test)
+                data = get_lactating_enrolled_women_sector_data(
+                    domain, config, loc_level, location, include_test, icds_features_flag
+                )
             else:
-                data = get_lactating_enrolled_women_data_map(domain, config.copy(), loc_level, include_test)
+                data = get_lactating_enrolled_women_data_map(
+                    domain, config.copy(), loc_level,  include_test, icds_features_flag
+                )
                 if loc_level == LocationTypes.BLOCK:
                     sector = get_lactating_enrolled_women_sector_data(
-                        domain, config, loc_level, location, include_test
+                        domain, config, loc_level, location, include_test, icds_features_flag
                     )
                     data.update(sector)
         elif step == "chart":
-            data = get_lactating_enrolled_data_chart(domain, config, loc_level, include_test)
+            data = get_lactating_enrolled_data_chart(
+                domain, config, loc_level, include_test, icds_features_flag
+            )
 
         return JsonResponse(data={
             'report_data': data,
@@ -1543,10 +1645,13 @@ class AdolescentGirlsView(BaseReportView):
 
         config = {
             'month': tuple(selected_month.timetuple())[:3],
-            'aggregation_level': 1,
+            'aggregation_level': 1
         }
         config.update(get_location_filter(location, self.kwargs['domain']))
         loc_level = get_location_level(config.get('aggregation_level'))
+
+        if icds_pre_release_features(self.request.couch_user):
+            config['num_launched_awcs__gte'] = 1
 
         data = {}
         pre_release_features = icds_pre_release_features(self.request.couch_user)
@@ -1583,6 +1688,9 @@ class AdhaarBeneficiariesView(BaseReportView):
         config.update(get_location_filter(location, self.kwargs['domain']))
         loc_level = get_location_level(config.get('aggregation_level'))
 
+        if icds_pre_release_features(self.request.couch_user):
+            config['num_launched_awcs__gte'] = 1
+
         data = {}
         beta = icds_pre_release_features(request.couch_user)
         if step == "map":
@@ -1613,6 +1721,9 @@ class CleanWaterView(BaseReportView):
         }
         config.update(get_location_filter(location, self.kwargs['domain']))
         loc_level = get_location_level(config.get('aggregation_level'))
+
+        if icds_pre_release_features(self.request.couch_user):
+            config['num_launched_awcs__gte'] = 1
 
         data = {}
         if step == "map":
@@ -1646,6 +1757,9 @@ class FunctionalToiletView(BaseReportView):
         config.update(get_location_filter(location, self.kwargs['domain']))
         loc_level = get_location_level(config.get('aggregation_level'))
 
+        if icds_pre_release_features(self.request.couch_user):
+            config['num_launched_awcs__gte'] = 1
+
         data = {}
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
@@ -1677,6 +1791,9 @@ class MedicineKitView(BaseReportView):
         }
         config.update(get_location_filter(location, self.kwargs['domain']))
         loc_level = get_location_level(config.get('aggregation_level'))
+
+        if icds_pre_release_features(self.request.couch_user):
+            config['num_launched_awcs__gte'] = 1
 
         data = {}
         if step == "map":
@@ -1710,6 +1827,9 @@ class InfantometerView(BaseReportView):
         config.update(get_location_filter(location, self.kwargs['domain']))
         loc_level = get_location_level(config.get('aggregation_level'))
 
+        if icds_pre_release_features(self.request.couch_user):
+            config['num_launched_awcs__gte'] = 1
+
         data = {}
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
@@ -1736,10 +1856,13 @@ class StadiometerView(BaseReportView):
 
         config = {
             'month': tuple(selected_month.timetuple())[:3],
-            'aggregation_level': 1,
+            'aggregation_level': 1
         }
         config.update(get_location_filter(location, self.kwargs['domain']))
         loc_level = get_location_level(config.get('aggregation_level'))
+
+        if icds_pre_release_features(self.request.couch_user):
+            config['num_launched_awcs__gte'] = 1
 
         data = {}
         if step == "map":
@@ -1772,6 +1895,8 @@ class InfantsWeightScaleView(BaseReportView):
         config.update(get_location_filter(location, self.kwargs['domain']))
         loc_level = get_location_level(config.get('aggregation_level'))
 
+        if icds_pre_release_features(self.request.couch_user):
+            config['num_launched_awcs__gte'] = 1
         data = {}
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
@@ -1803,7 +1928,8 @@ class AdultWeightScaleView(BaseReportView):
         }
         config.update(get_location_filter(location, self.kwargs['domain']))
         loc_level = get_location_level(config.get('aggregation_level'))
-
+        if icds_pre_release_features(self.request.couch_user):
+            config['num_launched_awcs__gte'] = 1
         data = {}
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
@@ -2250,7 +2376,7 @@ class GovernanceAPIBaseView(View):
             state_id = GovernanceAPIBaseView.get_state_id_from_state_site_code(state_site_code)
 
         last_awc_id = request.GET.get('last_awc_id', '')
-        return  last_awc_id, month, year, state_id
+        return last_awc_id, month, year, state_id
 
     def validate_param(self, state_id, month, year):
         selected_month = date(year, month, 1)
@@ -2422,18 +2548,18 @@ class BiharDemographicsAPI(BaseCasAPIView):
 
         valid_query_month, error_message = self.get_valid_query_month(request.GET.get('month'),
                                                                       request.GET.get('year'))
-
+        bihar_state_id = self.get_state_id_from_state_name('Bihar')
         if error_message:
             return JsonResponse({"message": error_message}, status=400)
 
         if not self.query_month_in_range(valid_query_month, start_month=date(2020, 1, 1)):
             return JsonResponse(self.message('invalid_month'), status=400)
 
-        if not self.has_access(self.bihar_state_id, request.couch_user):
+        if not self.has_access(bihar_state_id, request.couch_user):
             return JsonResponse(self.message('access_denied'), status=403)
 
         demographics_data, total_count = get_api_demographics_data(valid_query_month.strftime("%Y-%m-%d"),
-                                                                   self.bihar_state_id,
+                                                                   bihar_state_id,
                                                                    last_person_case_id)
         response_json = {
             'data': demographics_data,
@@ -2447,6 +2573,129 @@ class BiharDemographicsAPI(BaseCasAPIView):
 
         return JsonResponse(data=response_json)
 
-    @property
-    def bihar_state_id(self):
-        return SQLLocation.objects.get(name='Bihar', location_type__name='state').location_id
+
+@location_safe
+@method_decorator([api_auth, toggles.ICDS_BIHAR_DEMOGRAPHICS_API.required_decorator()], name='dispatch')
+class BiharVaccinesAPI(BaseCasAPIView):
+    def message(self, message_name):
+        error_messages = {
+            "invalid_month": "Please specify a valid month. Month can't be in future and before Jan 2020",
+            "access_denied": "You are not authorised to access this location"
+        }
+        return {"message": error_messages[message_name]}
+
+    def get(self, request, *args, **kwargs):
+
+        last_person_case_id = request.GET.get('last_person_case_id', '')
+
+        valid_query_month, error_message = self.get_valid_query_month(request.GET.get('month'),
+                                                                      request.GET.get('year'))
+        bihar_state_id = self.get_state_id_from_state_name('Bihar')
+        if error_message:
+            return JsonResponse({"message": error_message}, status=400)
+
+        if not self.query_month_in_range(valid_query_month, start_month=date(2020, 1, 1)):
+            return JsonResponse(self.message('invalid_month'), status=400)
+
+        if not self.has_access(bihar_state_id, request.couch_user):
+            return JsonResponse(self.message('access_denied'), status=403)
+
+        vaccines_data, total_count = get_api_vaccine_data(valid_query_month.strftime("%Y-%m-%d"),
+                                                          bihar_state_id,
+                                                          last_person_case_id)
+        response_json = {
+            'data': vaccines_data,
+            'metadata': {
+                'month': valid_query_month.month,
+                'year': valid_query_month.year,
+                'total_count': total_count,
+                'timestamp': india_now()
+            }
+        }
+
+        return JsonResponse(data=response_json)
+
+@location_safe
+@method_decorator([api_auth, toggles.ICDS_BIHAR_DEMOGRAPHICS_API.required_decorator()], name='dispatch')
+class BiharSchoolAPI(BaseCasAPIView):
+    def message(self, message_name):
+        error_messages = {
+            "invalid_month": "Please specify a valid month. Month can't be in future and before Jan 2020",
+            "access_denied": "You are not authorised to access this location"
+        }
+        return {"message": error_messages[message_name]}
+
+    def get(self, request, *args, **kwargs):
+
+        last_person_case_id = request.GET.get('last_person_case_id', '')
+
+        valid_query_month, error_message = self.get_valid_query_month(request.GET.get('month'),
+                                                                      request.GET.get('year'))
+        bihar_state_id = self.get_state_id_from_state_name('Bihar')
+
+        if error_message:
+            return JsonResponse({"message": error_message}, status=400)
+
+        if not self.query_month_in_range(valid_query_month, start_month=date(2020, 1, 1)):
+            return JsonResponse(self.message('invalid_month'), status=400)
+
+        if not self.has_access(bihar_state_id, request.couch_user):
+            return JsonResponse(self.message('access_denied'), status=403)
+
+        school_data, total_count = get_api_ag_school_data(valid_query_month.strftime("%Y-%m-%d"),
+                                                          bihar_state_id,
+                                                          last_person_case_id)
+        response_json = {
+            'data': school_data,
+            'metadata': {
+                'month': valid_query_month.month,
+                'year': valid_query_month.year,
+                'total_count': total_count,
+                'timestamp': india_now()
+            }
+        }
+
+        return JsonResponse(data=response_json)
+
+
+@location_safe
+@method_decorator([api_auth, toggles.ICDS_BIHAR_DEMOGRAPHICS_API.required_decorator()], name='dispatch')
+class BiharMotherDetailsAPI(BaseCasAPIView):
+    def message(self, message_name):
+        error_messages = {
+            "invalid_month": "Please specify a valid month. Month can't be in future and before Jan 2020",
+            "access_denied": "You are not authorised to access this location"
+        }
+        return {"message": error_messages[message_name]}
+
+    def get(self, request, *args, **kwargs):
+
+        last_ccs_case_id = request.GET.get('last_ccs_case_id', '')
+
+        valid_query_month, error_message = self.get_valid_query_month(request.GET.get('month'),
+                                                                      request.GET.get('year'))
+        bihar_state_id = self.get_state_id_from_state_name('Bihar')
+
+        if error_message:
+            return JsonResponse({"message": error_message}, status=400)
+
+        if not self.query_month_in_range(valid_query_month, start_month=date(2020, 1, 1)):
+            return JsonResponse(self.message('invalid_month'), status=400)
+
+        if not self.has_access(bihar_state_id, request.couch_user):
+            return JsonResponse(self.message('access_denied'), status=403)
+
+        demographics_data, total_count = get_mother_details(valid_query_month.strftime("%Y-%m-%d"),
+                                                            bihar_state_id,
+                                                            last_ccs_case_id)
+        response_json = {
+            'data': demographics_data,
+            'metadata': {
+                'month': valid_query_month.month,
+                'year': valid_query_month.year,
+                'total_count': total_count,
+                'timestamp': india_now()
+            }
+        }
+
+        return JsonResponse(data=response_json)

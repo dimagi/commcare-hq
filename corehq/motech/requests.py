@@ -1,26 +1,51 @@
 import logging
+from functools import wraps
 
 from django.conf import settings
 
+import attr
 import requests
+from requests.auth import HTTPBasicAuth, HTTPDigestAuth
+from requests.structures import CaseInsensitiveDict
 
 from dimagi.utils.logging import notify_exception
 
 from corehq.apps.hqwebapp.tasks import send_mail_async
-from corehq.motech.const import REQUEST_TIMEOUT
+from corehq.motech.auth import HTTPBearerAuth
+from corehq.motech.const import (
+    BASIC_AUTH,
+    BEARER_AUTH,
+    DIGEST_AUTH,
+    REQUEST_TIMEOUT,
+)
 from corehq.motech.models import RequestLog
-from corehq.motech.utils import pformat_json
+from corehq.motech.utils import pformat_json, unpack_request_args
 
 
-def log_request(func):
+@attr.s(frozen=True)
+class RequestLogEntry:
+    domain = attr.ib()
+    payload_id = attr.ib()
+    method = attr.ib()
+    url = attr.ib()
+    headers = attr.ib()
+    params = attr.ib()
+    data = attr.ib()
+    error = attr.ib()
+    response_status = attr.ib()
+    response_body = attr.ib()
 
-    def request_wrapper(self, *args, **kwargs):
+
+def log_request(self, func, logger):
+
+    @wraps(func)
+    def request_wrapper(method, url, *args, **kwargs):
         log_level = logging.INFO
         request_error = ''
         response_status = None
         response_body = ''
         try:
-            response = func(self, *args, **kwargs)
+            response = func(method, url, *args, **kwargs)
             response_status = response.status_code
             response_body = response.content
         except Exception as err:
@@ -33,19 +58,12 @@ def log_request(func):
         else:
             return response
         finally:
-            # args will be Requests method, url, and optionally params, data or json.
-            # kwargs may include Requests method kwargs and raise_for_status.
-            kwargs.pop('raise_for_status', None)
-            RequestLog.log(
-                log_level,
-                self.domain_name,
-                self.payload_id,
-                request_error,
-                response_status,
-                response_body,
-                *args,
-                **kwargs
+            params, data, headers = unpack_request_args(method, args, kwargs)
+            entry = RequestLogEntry(
+                self.domain_name, self.payload_id, method, url, headers, params, data,
+                request_error, response_status, response_body
             )
+            logger(log_level, entry)
 
     return request_wrapper
 
@@ -62,7 +80,7 @@ class Requests(object):
     """
 
     def __init__(self, domain_name, base_url, username, password,
-                 verify=True, notify_addresses=None, payload_id=None):
+                 verify=True, notify_addresses=None, payload_id=None, logger=None, auth_type=None):
         """
         Initialise instance
 
@@ -75,6 +93,9 @@ class Requests(object):
             errors.
         :param payload_id: The ID of the case or form submission
             associated with this request
+        :param logger: function called after a request has been sent:
+                        `logger(log_level, log_entry: RequestLogEntry)`
+        :param auth_type: which auth to use, defaults to basic
         """
         self.domain_name = domain_name
         self.base_url = base_url
@@ -84,6 +105,9 @@ class Requests(object):
         self.notify_addresses = [] if notify_addresses is None else notify_addresses
         self.payload_id = payload_id
         self._session = None
+        self.logger = logger or RequestLog.log
+        self.auth = self._get_auth(auth_type)
+        self.send_request = log_request(self, self._send_request, self.logger)
 
     def __enter__(self):
         self._session = requests.Session()
@@ -93,8 +117,18 @@ class Requests(object):
         self._session.close()
         self._session = None
 
-    @log_request
-    def send_request(self, method, *args, **kwargs):
+    def _get_auth(self, auth_type):
+        if auth_type == BASIC_AUTH:
+            auth = HTTPBasicAuth(self.username, self.password)
+        elif auth_type == DIGEST_AUTH:
+            auth = HTTPDigestAuth(self.username, self.password)
+        elif auth_type == BEARER_AUTH:
+            auth = HTTPBearerAuth(self.username, self.password)
+        else:
+            auth = (self.username, self.password)
+        return auth
+
+    def _send_request(self, method, *args, **kwargs):
         raise_for_status = kwargs.pop('raise_for_status', False)
         if not self.verify:
             kwargs['verify'] = False
@@ -115,13 +149,13 @@ class Requests(object):
     def delete(self, uri, **kwargs):
         kwargs.setdefault('headers', {'Accept': 'application/json'})
         return self.send_request('DELETE', self.get_url(uri),
-                                 auth=(self.username, self.password), **kwargs)
+                                 auth=self.auth, **kwargs)
 
     def get(self, uri, *args, **kwargs):
         kwargs.setdefault('headers', {'Accept': 'application/json'})
         kwargs.setdefault('allow_redirects', True)
         return self.send_request('GET', self.get_url(uri), *args,
-                                 auth=(self.username, self.password), **kwargs)
+                                 auth=self.auth, **kwargs)
 
     def post(self, uri, data=None, json=None, *args, **kwargs):
         kwargs.setdefault('headers', {
@@ -130,7 +164,7 @@ class Requests(object):
         })
         return self.send_request('POST', self.get_url(uri), *args,
                                  data=data, json=json,
-                                 auth=(self.username, self.password), **kwargs)
+                                 auth=self.auth, **kwargs)
 
     def put(self, uri, data=None, json=None, *args, **kwargs):
         kwargs.setdefault('headers', {
@@ -139,7 +173,7 @@ class Requests(object):
         })
         return self.send_request('PUT', self.get_url(uri), *args,
                                  data=data, json=json,
-                                 auth=(self.username, self.password), **kwargs)
+                                 auth=self.auth, **kwargs)
 
     def notify_exception(self, message=None, details=None):
         self.notify_error(message, details)
@@ -182,3 +216,31 @@ def parse_request_exception(err):
     else:
         err_response = str(err)
     return err_request, err_response
+
+
+def simple_post(domain, url, data, *, headers, auth, verify,
+                notify_addresses=None, payload_id=None):
+    """
+    POST with a cleaner API, and return the actual HTTPResponse object, so
+    that error codes can be interpreted.
+    """
+    if isinstance(data, str):
+        data = data.encode('utf-8')  # can't pass unicode to http request posts
+    default_headers = CaseInsensitiveDict({
+        "content-type": "text/xml",
+        "content-length": str(len(data)),
+    })
+    default_headers.update(headers)
+    requests = Requests(
+        domain,
+        base_url='',
+        username=None,
+        password=None,
+        verify=verify,
+        notify_addresses=notify_addresses,
+        payload_id=payload_id,
+    )
+    # Use ``Requests.send_request()`` instead of ``Requests.post()`` to
+    # pass full URL.
+    return requests.send_request('POST', url, data=data, auth=auth,
+                                 headers=default_headers)

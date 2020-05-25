@@ -1,7 +1,5 @@
 from decimal import Decimal
 
-from dimagi.utils.couch.cache import cache_core
-
 from corehq.apps.consumption.models import (
     TYPE_DOMAIN,
     TYPE_PRODUCT,
@@ -16,39 +14,40 @@ def get_default_monthly_consumption(domain, product_id, location_type, case_id):
     parameters.
     """
 
-    keys = [
-        [domain, product_id, {}, case_id],
-        [domain, product_id, location_type, None],
-        [domain, product_id, None, None],
-        [domain, None, None, None],
-    ]
+    consumption = DefaultConsumption.objects.filter(
+        domain=domain,
+        product_id=product_id,
+        supply_point_id=case_id
+    ).first()
 
-    results = cache_core.cached_view(
-        DefaultConsumption.get_db(),
-        'consumption/consumption_index',
-        keys=keys,
-        reduce=False,
-        limit=1,
-    )
-    results = results[0] if results else None
-    if results and results['value']:
-        return Decimal(results['value'])
-    else:
-        return None
+    if not consumption:
+        consumption = DefaultConsumption.objects.filter(
+            domain=domain,
+            product_id=product_id,
+            supply_point_type=location_type,
+            supply_point_id=None
+        ).first()
 
+    if not consumption:
+        consumption = DefaultConsumption.objects.filter(
+            domain=domain,
+            product_id=product_id,
+            supply_point_type=None,
+            supply_point_id=None
+        ).first()
 
-def _get_domain_monthly_consumption_data(domain):
-    """
-    Get all default consumption rows for this domain.
-    """
-    results = cache_core.cached_view(
-        DefaultConsumption.get_db(),
-        'consumption/consumption_index',
-        startkey=[domain],
-        endkey=[domain, {}],
-        reduce=False,
-    )
-    return results
+    if not consumption:
+        consumption = DefaultConsumption.objects.filter(
+            domain=domain,
+            product_id=None,
+            supply_point_type=None,
+            supply_point_id=None
+        ).first()
+
+    if consumption:
+        return consumption.default_consumption
+
+    return None
 
 
 def set_default_monthly_consumption_for_domain(domain, amount):
@@ -74,25 +73,23 @@ def _update_or_create_default(domain, amount, default, type, **kwargs):
         return default
 
 
-def _hashable_key(key):
-    """
-    Convert the key from couch into something hasable.
-    Mostly, just need to make it a tuple and remove the special
-    {} value.
-    """
-    return tuple('{}' if item == {} else item for item in key)
-
-
 def build_consumption_dict(domain):
     """
-    Takes raw rows from couch and builds a dict to 
-    look up consumption values from.
+    Builds a dict to look up consumption values from.
     """
-    raw_rows = _get_domain_monthly_consumption_data(domain)
+    return {
+        _hash_key(obj): obj.default_consumption
+        for obj in DefaultConsumption.objects.filter(domain=domain)
+        if obj.default_consumption
+    }
 
-    return dict(
-        (_hashable_key(row['key']), Decimal(row['value']))
-        for row in raw_rows if row['value']
+
+def _hash_key(default_consumption):
+    return (
+        default_consumption.domain,
+        default_consumption.product_id,
+        default_consumption.supply_point_type,
+        default_consumption.supply_point_id,
     )
 
 
@@ -102,7 +99,7 @@ def get_loaded_default_monthly_consumption(consumption_dict, domain, product_id,
     consumption value available for the passed options
     """
     keys = [
-        tuple([domain, product_id, '{}', case_id]),
+        tuple([domain, product_id, None, case_id]),
         tuple([domain, product_id, location_type, None]),
         tuple([domain, product_id, None, None]),
         tuple([domain, None, None, None]),

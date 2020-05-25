@@ -54,6 +54,14 @@ window.angular.module('icdsApp').factory('baseControllersService', ['$timeout', 
             $scope.$emit('filtersChange');
         });
         vm.selectedMonthDisplay = dateHelperService.getSelectedMonthDisplay();
+        vm.selectedLocation = function () {
+            return storageService.getKey('selectedLocation');
+        };
+        vm.selectedDate = dateHelperService.getSelectedDate();
+        vm.showReassignmentMessage = function () {
+            var utcSelectedDate = Date.UTC(vm.selectedDate.getFullYear(), vm.selectedDate.getMonth());
+            return vm.selectedLocation() && (Date.parse(vm.selectedLocation().archived_on) <= utcSelectedDate || Date.parse(vm.selectedLocation().deprecates_at) > utcSelectedDate);
+        };
     };
     return {
         BaseController: function ($scope, $routeParams, $location, locationsService, dateHelperService,

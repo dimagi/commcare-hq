@@ -16,7 +16,8 @@ class TestFactSheetReportMaternalAndChildNutritionICDS(TestCase):
             'previous_month': datetime(2017, 5, 1).date(),
             'two_before': datetime(2017, 4, 1).date(),
             'category': 'maternal_and_child_nutrition',
-            'domain': 'icds-cas'
+            'domain': 'icds-cas',
+            'sql_location': None
         }
 
         loc_level = get_location_level(config.get('aggregation_level'))
@@ -333,7 +334,8 @@ class TestFactSheetReportInterventions(TestCase):
             'previous_month': datetime(2017, 5, 1).date(),
             'two_before': datetime(2017, 4, 1).date(),
             'category': 'interventions',
-            'domain': 'icds-cas'
+            'domain': 'icds-cas',
+            'sql_location': None
         }
 
         loc_level = get_location_level(config.get('aggregation_level'))
@@ -614,7 +616,8 @@ class TestFactSheetReportBehaviorChange(TestCase):
             'previous_month': datetime(2017, 5, 1).date(),
             'two_before': datetime(2017, 4, 1).date(),
             'category': 'behavior_change',
-            'domain': 'icds-cas'
+            'domain': 'icds-cas',
+            'sql_location': None
         }
 
         loc_level = get_location_level(config.get('aggregation_level'))
@@ -881,7 +884,8 @@ class TestFactSheetReportWaterSanitationAndHygiene(TestCase):
             'previous_month': datetime(2017, 5, 1).date(),
             'two_before': datetime(2017, 4, 1).date(),
             'category': 'water_sanitation_and_hygiene',
-            'domain': 'icds-cas'
+            'domain': 'icds-cas',
+            'sql_location': None
         }
 
         loc_level = get_location_level(config.get('aggregation_level'))
@@ -967,7 +971,8 @@ class TestFactSheetReportDemographics(TestCase):
             'previous_month': datetime(2017, 5, 1).date(),
             'two_before': datetime(2017, 4, 1).date(),
             'category': 'demographics',
-            'domain': 'icds-cas'
+            'domain': 'icds-cas',
+            'sql_location': None
         }
 
         loc_level = get_location_level(config.get('aggregation_level'))
@@ -1305,13 +1310,13 @@ class TestFactSheetReportDemographics(TestCase):
             self.get_data()['config']['sections'][0]['rows_config'][17],
             {
                 'average': {
-                    'html': 13,
-                    'sort_key': 13
+                    'html': 12,
+                    'sort_key': 12
                 },
                 'data': [
                     {'html': 'Adolescent girls (15-18 years)'},
-                    {'html': 19, 'sort_key': 19},
-                    {'html': 13, 'sort_key': 13},
+                    {'html': 18, 'sort_key': 18},
+                    {'html': 12, 'sort_key': 12},
                     {'html': 0}
                 ],
                 'data_source': 'AggAWCMonthlyDataSource',

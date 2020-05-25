@@ -13,6 +13,7 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.apps.userreports.models import StaticDataSourceConfiguration
 from corehq.apps.userreports.util import get_indicator_adapter
+from corehq.util.test_utils import flag_enabled, timelimit
 
 from custom.icds_reports.tasks import (
     move_ucr_data_into_aggregation_tables,
@@ -24,6 +25,7 @@ from .agg_setup import setup_location_hierarchy, setup_tables_and_fixtures, aggr
 OUTPUT_PATH = os.path.join(os.path.dirname(__file__), 'outputs')
 
 
+@timelimit(480)
 def setUpModule():
     if settings.USE_PARTITIONED_DATABASE:
         print('============= WARNING: not running test setup because settings.USE_PARTITIONED_DATABASE is True.')
@@ -33,16 +35,17 @@ def setUpModule():
     setup_location_hierarchy(domain.name)
 
     with override_settings(SERVER_ENVIRONMENT='icds', STATIC_DATA_SOURCE_PROVIDERS=[]):
-        setup_tables_and_fixtures(domain.name)
-        aggregate_state_form_data()
-        try:
-            with mock.patch('custom.icds_reports.tasks.update_aggregate_locations_tables'):
-                move_ucr_data_into_aggregation_tables(datetime(2017, 5, 28), intervals=2)
-            build_incentive_report(agg_date=datetime(2017, 5, 28))
-        except Exception as e:
-            print(e)
-            tearDownModule()
-            raise
+        with flag_enabled('ICDS_LOCATION_REASSIGNMENT_AGG'):
+            setup_tables_and_fixtures(domain.name)
+            aggregate_state_form_data()
+            try:
+                with mock.patch('custom.icds_reports.tasks.update_aggregate_locations_tables'):
+                    move_ucr_data_into_aggregation_tables(datetime(2017, 5, 28), intervals=2)
+                build_incentive_report(agg_date=datetime(2017, 5, 28))
+            except Exception as e:
+                print(e)
+                tearDownModule()
+                raise
 
 
 def tearDownModule():

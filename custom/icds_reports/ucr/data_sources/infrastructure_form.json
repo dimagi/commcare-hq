@@ -15,13 +15,16 @@
     "reach-sandbox",
     "reach-dashboard-qa",
     "reach-test",
+    "icds-test",
+    "icds-sql",
     "icds-cas",
     "cas-lab",
     "icds-cas-sandbox"
   ],
   "server_environment": [
     "india",
-    "icds"
+    "icds",
+    "icds-staging"
   ],
   "config": {
     "table_id": "static-infrastructure_form",

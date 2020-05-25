@@ -41,54 +41,24 @@ import uuid
 from collections import defaultdict
 from functools import reduce
 
+from memoized import memoized
+
 from custom.inddex.ucr_data import FoodCaseData
 
+from .const import (
+    AGE_RANGES,
+    FOOD_ITEM,
+    NON_STANDARD_RECIPE,
+    STANDARD_RECIPE,
+    ConvFactorGaps,
+    FctGaps,
+)
 from .fixtures import FixtureAccessor
 
 IN_UCR = 'in_ucr'
 IN_FOOD_FIXTURE = 'in_food_fixture'
 IS_RECALL_META = 'is_recall_meta'
 CALCULATED_LATER = 'calculated_later'
-
-# food_type options
-FOOD_ITEM = 'food_item'
-NON_STANDARD_FOOD_ITEM = 'non_std_food_item'
-STANDARD_RECIPE = 'std_recipe'
-NON_STANDARD_RECIPE = 'non_std_recipe'
-
-
-class FctGaps:
-    AVAILABLE = 1
-    BASE_TERM = 2
-    REFERENCE = 3
-    INGREDIENT_GAPS = 7
-    NOT_AVAILABLE = 8
-    DESCRIPTIONS = {
-        AVAILABLE: "fct data available",
-        BASE_TERM: "using fct data from base term food code",
-        REFERENCE: "using fct data from reference food code",
-        INGREDIENT_GAPS: "ingredients contain fct data gaps",
-        NOT_AVAILABLE: "no fct data available",
-    }
-
-    @classmethod
-    def get_description(self, code):
-        return f"{code} - {self.DESCRIPTIONS[code]}"
-
-
-class ConvFactorGaps:
-    AVAILABLE = 1
-    BASE_TERM = 2
-    NOT_AVAILABLE = 8
-    DESCRIPTIONS = {
-        AVAILABLE: "conversion factor available",
-        BASE_TERM: "using conversion factor from base term food code",
-        NOT_AVAILABLE: "no conversion factor available",
-    }
-
-    @classmethod
-    def get_description(self, code):
-        return f"{code} - {self.DESCRIPTIONS[code]}"
 
 
 class I:
@@ -111,7 +81,7 @@ INDICATORS = [
     I('opened_date', IN_UCR, IS_RECALL_META),
     I('opened_by_username', IN_UCR, IS_RECALL_META),
     I('owner_name', IN_UCR, IS_RECALL_META),
-    I('recalled_date', IN_UCR, IS_RECALL_META),
+    I('visit_date', IN_UCR, IS_RECALL_META),
     I('recall_status', IN_UCR, IS_RECALL_META),
     I('gender', IN_UCR, IS_RECALL_META),
     I('age_years_calculated', IN_UCR, IS_RECALL_META),
@@ -123,7 +93,7 @@ INDICATORS = [
     I('urban_rural', IN_UCR, IS_RECALL_META),
     I('food_code', IN_UCR),
     I('food_name', IN_UCR, IN_FOOD_FIXTURE),
-    I('recipe_name', IN_UCR),
+    I('recipe_name', IN_UCR, CALCULATED_LATER),
     I('caseid'),
     I('reference_food_code'),
     I('base_term_food_code', IN_UCR),
@@ -213,6 +183,8 @@ class FoodRow:
         else:
             self.caseid = ucr_row['doc_id']
             self.food_code = ucr_row['food_code']
+        if not self.food_code and self.food_name in self.fixtures.foods_by_name:
+            self.food_code = self.fixtures.foods_by_name[self.food_name].food_code
 
         self._set_composition()
         self._set_conversion_factors()
@@ -229,8 +201,6 @@ class FoodRow:
     def _set_ingredient_fields(self, ingredient):
         if self._is_std_recipe_ingredient:
             self.is_ingredient = 'yes'
-            self.recipe_name = self.ucr_row['recipe_name']
-            self.recipe_case_id = self.ucr_row['doc_id']
             self.ingr_recipe_code = ingredient.recipe_code
             self.ingr_fraction = ingredient.ingr_fraction
 
@@ -307,27 +277,24 @@ class FoodRow:
     def age_range(self):
         if not self.age_months_calculated:
             return None
-        elif self.age_months_calculated < 6:
-            return "0-5.9 months"
-        elif self.age_months_calculated < 60:
-            return "06-59 months"
-        elif self.age_years_calculated < 7:
-            return "5-6 years"
-        elif self.age_years_calculated < 11:
-            return "7-10 years"
-        elif self.age_years_calculated < 15:
-            return "7-14 years"
-        elif self.age_years_calculated < 50:
-            return "15-49 years"
-        elif self.age_years_calculated < 65:
-            return "50-64 years"
-        return "65+ years"
+        for age_range in AGE_RANGES:
+            if age_range.lower_bound <= getattr(self, age_range.column) < age_range.upper_bound:
+                return age_range.name
 
     @property
-    def recipe_id(self):
+    def recipe_case_id(self):
         if self.is_recipe:
             return self.caseid
-        return self.recipe_case_id or 'NO_RECIPE'
+        if self._is_std_recipe_ingredient:
+            return self.ucr_row['doc_id']
+        return self.ucr_row['recipe_case_id']
+
+    def get_nutrient_per_100g(self, nutrient_name):
+        if self.fct_code:
+            return self.composition.nutrients.get(nutrient_name)
+
+    def get_nutrient_amt(self, nutrient_name):
+        return _multiply(self.get_nutrient_per_100g(nutrient_name), self.total_grams, 0.01)
 
     def __getattr__(self, name):
         if name in _INDICATORS_BY_SLUG:
@@ -352,13 +319,10 @@ class FoodRow:
         raise AttributeError(f"FoodRow has no definition for {name}")
 
 
-def enrich_rows(recipe_id, rows):
+def enrich_rows(rows):
     """Insert data possibly dependent on other rows in a recipe"""
-    if recipe_id == 'NO_RECIPE':
-        recipe = None
-    else:
-        recipe_possibilities = [row for row in rows if row.is_recipe]
-        recipe = recipe_possibilities[0] if len(recipe_possibilities) == 1 else None
+    recipe_possibilities = [row for row in rows if row.is_recipe]
+    recipe = recipe_possibilities[0] if len(recipe_possibilities) == 1 else None
 
     if not recipe:
         for row in rows:
@@ -366,15 +330,18 @@ def enrich_rows(recipe_id, rows):
             row.set_fct_gap()
             row.enrichment_complete = True
     else:
-        ingredients = [row for row in rows if not row.uuid == recipe.uuid]
+        ingredients = [row for row in rows if row.uuid != recipe.uuid]
         total_grams = _calculate_total_grams(recipe, ingredients)
         recipe.set_fct_gap(ingredients)
+        recipe.recipe_name = recipe.ucr_row['recipe_name']
         for row in [recipe] + ingredients:
             row.total_grams = total_grams[row.uuid]
             if row.is_recipe:
                 row.recipe_num_ingredients = len(ingredients)
-            if row.is_ingredient == 'yes' and recipe.food_type == STANDARD_RECIPE:
-                row.ingr_recipe_total_grams_consumed = total_grams[recipe.uuid]
+            if row.is_ingredient == 'yes':
+                row.recipe_name = recipe.recipe_name
+                if recipe.food_type == STANDARD_RECIPE:
+                    row.ingr_recipe_total_grams_consumed = total_grams[recipe.uuid]
             row.enrichment_complete = True
 
 
@@ -400,16 +367,26 @@ def _calculate_total_grams(recipe, ingredients):
 
 class FoodData:
     """Generates the primary dataset for INDDEX reports.  See file docstring for more."""
-    def __init__(self, domain, *, datespan,
-                 case_owners=None, recall_status=None, gap_type=None):
+    IN_MEMORY_FILTERS = ['gap_type', 'gap_code', 'fao_who_gift_food_group_description', 'food_type']
+    FILTERABLE_COLUMNS = IN_MEMORY_FILTERS + FoodCaseData.FILTERABLE_COLUMNS
+
+    def __init__(self, domain, *, datespan, filter_selections):
+        for slug in filter_selections:
+            if slug not in self.FILTERABLE_COLUMNS:
+                raise AssertionError(f"{slug} is not a valid filter slug")
+
         self.fixtures = FixtureAccessor(domain)
-        self._gap_type = gap_type
+        self._in_memory_filter_selections = {
+            slug: filter_selections[slug] for slug in self.IN_MEMORY_FILTERS
+            if slug in filter_selections
+        }
+        self.selected_gap_type = self._in_memory_filter_selections.get('gap_type')
         self._ucr = FoodCaseData({
             'domain': domain,
             'startdate': str(datespan.startdate),
             'enddate': str(datespan.enddate),
-            'case_owners': case_owners or '',
-            'recall_status': recall_status or '',
+            **{k: v for k, v in filter_selections.items()
+               if k in FoodCaseData.FILTERABLE_COLUMNS}
         })
 
     @classmethod
@@ -417,56 +394,62 @@ class FoodData:
         return cls(
             domain,
             datespan=request.datespan,
-            case_owners=request.GET.get('case_owners'),
-            recall_status=request.GET.get('recall_status'),
-            gap_type=request.GET.get('gap_type'),
+            filter_selections={'owner_id': request.GET.getlist('owner_id'),
+                               **{k: request.GET.get(k)
+                                  for k in cls.FILTERABLE_COLUMNS if k != 'owner_id'}}
         )
 
     def _matches_in_memory_filters(self, row):
         # If a gap type is specified, show only rows with gaps of that type
-        if self._gap_type == 'conv_factor':
-            return row.conv_factor_gap_code != ConvFactorGaps.AVAILABLE
-        elif self._gap_type == 'fct':
-            return row.fct_gap_code != FctGaps.AVAILABLE
+        gap_type = self.selected_gap_type
+        if gap_type == ConvFactorGaps.slug and row.conv_factor_gap_code == ConvFactorGaps.AVAILABLE:
+            return False
+        if gap_type == FctGaps.slug and row.fct_gap_code == FctGaps.AVAILABLE:
+            return False
+
+        food_type = self._in_memory_filter_selections.get('food_type')
+        if food_type and food_type != row.food_type:
+            return False
+
+        gap_code = self._in_memory_filter_selections.get('gap_code')
+        # gap_code is from a drilldown filter, so gap_type must also be selected
+        if gap_type and gap_code:
+            if gap_type == ConvFactorGaps.slug and str(row.conv_factor_gap_code) != gap_code:
+                return False
+            if gap_type == FctGaps.slug and str(row.fct_gap_code) != gap_code:
+                return False
+
+        food_group = self._in_memory_filter_selections.get('fao_who_gift_food_group_description')
+        if food_group and food_group != row.fao_who_gift_food_group_description:
+            return False
+
         return True
 
     @property
+    @memoized
     def rows(self):
         rows_by_recipe = defaultdict(list)
 
         for ucr_row in self._ucr.get_data():
             food = FoodRow(ucr_row, self.fixtures)
-            rows_by_recipe[food.recipe_id].append(food)
+            rows_by_recipe[food.recipe_case_id or food.caseid].append(food)
 
             if food.food_type == STANDARD_RECIPE:
                 for ingredient_data in self.fixtures.recipes[food.food_code]:
                     ingr_row = FoodRow(ucr_row, self.fixtures, ingredient_data)
-                    rows_by_recipe[food.recipe_id].append(ingr_row)
+                    rows_by_recipe[food.recipe_case_id].append(ingr_row)
 
-        for recipe_id, rows_in_recipe in rows_by_recipe.items():
-            enrich_rows(recipe_id, rows_in_recipe)
+        rows = []
+        for rows_in_recipe in rows_by_recipe.values():
+            enrich_rows(rows_in_recipe)
             for row in rows_in_recipe:
                 if self._matches_in_memory_filters(row):
-                    yield row
-
-    def get_nutrient_headers(self):
-        for name in self.fixtures.nutrient_names:
-            yield f"{name}_per_100g"
-            yield name
-
-    def get_nutrient_values(self, row):
-        for name in self.fixtures.nutrient_names:
-            if row.fct_code:
-                per_100g = row.composition.nutrients.get(name)
-                yield per_100g
-                yield _multiply(per_100g, row.total_grams, 0.01)
-            else:
-                yield None
-                yield None
+                    rows.append(row)
+        return rows
 
 
 def _multiply(*args):
     try:
-        return round(reduce(operator.mul, args), 2)
+        return reduce(operator.mul, args)
     except TypeError:
         return None

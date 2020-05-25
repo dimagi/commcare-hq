@@ -23,7 +23,8 @@
   ],
   "server_environment": [
     "india",
-    "icds"
+    "icds",
+    "icds-staging"
   ],
   "report_id": "static-mpr_2ci_child_birth_list",
   "data_source_table": "static-child_health_cases",
@@ -249,6 +250,10 @@
         "column_id": "dob",
         "field": "dob",
         "type": "field",
+        "transform": {
+          "type": "date_format",
+          "format": "%-d/%-m/%Y"
+        },
         "display": {
           "mar": "जन्म तारीख",
           "tel": "పుట్టిన తేదీ",

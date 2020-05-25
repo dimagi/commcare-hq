@@ -1,9 +1,11 @@
+import datetime
 import json
 from datetime import date
 
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.models import User
+from django.core.exceptions import ObjectDoesNotExist
 from django.core.files.base import ContentFile
 from django.core.paginator import Paginator
 from django.db.models import Sum
@@ -33,6 +35,11 @@ from memoized import memoized
 from six.moves.urllib.parse import urlencode
 
 from corehq.apps.accounting.decorators import always_allow_project_access
+from corehq.apps.accounting.utils.downgrade import downgrade_eligible_domains
+from corehq.apps.accounting.utils.invoicing import (
+    get_oldest_unpaid_invoice_over_threshold,
+)
+from corehq.toggles import ACCOUNTING_TESTING_TOOLS
 from couchexport.export import Format
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 
@@ -44,6 +51,7 @@ from corehq.apps.accounting.async_handlers import (
     FeatureRateAsyncHandler,
     InvoiceBalanceAsyncHandler,
     InvoiceNumberAsyncHandler,
+    CustomerInvoiceNumberAsyncHandler,
     Select2BillingInfoHandler,
     Select2CustomerInvoiceTriggerHandler,
     Select2InvoiceTriggerHandler,
@@ -85,6 +93,7 @@ from corehq.apps.accounting.forms import (
     TriggerBookkeeperEmailForm,
     TriggerCustomerInvoiceForm,
     TriggerInvoiceForm,
+    TriggerDowngradeForm,
 )
 from corehq.apps.accounting.interface import (
     AccountingInterface,
@@ -698,7 +707,6 @@ class ViewSoftwarePlanVersionView(AccountingSectionView):
         return reverse(self.urlname, args=self.args)
 
 
-
 class TriggerInvoiceView(AccountingSectionView, AsyncHandlerMixin):
     urlname = 'accounting_trigger_invoice'
     page_title = "Trigger Invoice"
@@ -709,10 +717,18 @@ class TriggerInvoiceView(AccountingSectionView, AsyncHandlerMixin):
 
     @property
     @memoized
+    def is_testing_enabled(self):
+        return ACCOUNTING_TESTING_TOOLS.enabled_for_request(self.request)
+
+    @property
+    @memoized
     def trigger_form(self):
         if self.request.method == 'POST':
-            return TriggerInvoiceForm(self.request.POST)
-        return TriggerInvoiceForm()
+            return TriggerInvoiceForm(
+                self.request.POST,
+                show_testing_options=self.is_testing_enabled
+            )
+        return TriggerInvoiceForm(show_testing_options=self.is_testing_enabled)
 
     @property
     def page_url(self):
@@ -734,7 +750,7 @@ class TriggerInvoiceView(AccountingSectionView, AsyncHandlerMixin):
                     request, "Successfully triggered invoices for domain %s."
                              % self.trigger_form.cleaned_data['domain'])
                 return HttpResponseRedirect(reverse(self.urlname))
-            except (CreditLineError, InvoiceError) as e:
+            except (CreditLineError, InvoiceError, ObjectDoesNotExist) as e:
                 messages.error(request, "Error generating invoices: %s" % e, extra_tags='html')
         return self.get(request, *args, **kwargs)
 
@@ -1108,10 +1124,6 @@ class ManageAccountingAdminsView(AccountingSectionView, CRUDPaginatedViewMixin):
         return self.pagination_context
 
     @property
-    def parameters(self):
-        return self.request.POST if self.request.method == 'POST' else self.request.GET
-
-    @property
     def accounting_admin_queryset(self):
         return User.objects.filter(
             prbac_role__role__memberships_granted__to_role__slug=privileges.OPERATIONS_TEAM
@@ -1192,6 +1204,7 @@ class AccountingSingleOptionResponseView(View, AsyncHandlerMixin):
         BillingContactInfoAsyncHandler,
         SoftwarePlanAsyncHandler,
         InvoiceNumberAsyncHandler,
+        CustomerInvoiceNumberAsyncHandler,
         InvoiceBalanceAsyncHandler,
     ]
 
@@ -1328,10 +1341,6 @@ class EnterpriseBillingStatementsView(DomainAccountingSettings, CRUDPaginatedVie
     limit_text = ugettext_lazy("statements per page")
     empty_notification = ugettext_lazy("No Billing Statements match the current criteria.")
     loading_message = ugettext_lazy("Loading statements...")
-
-    @property
-    def parameters(self):
-        return self.request.POST if self.request.method == 'POST' else self.request.GET
 
     @property
     def stripe_cards(self):
@@ -1480,3 +1489,53 @@ class EnterpriseBillingStatementsView(DomainAccountingSettings, CRUDPaginatedVie
 
     def post(self, *args, **kwargs):
         return self.paginate_crud_response
+
+
+class TriggerDowngradeView(AccountingSectionView, AsyncHandlerMixin):
+    urlname = 'accounting_test_downgrade'
+    page_title = "Trigger Downgrade"
+    template_name = 'accounting/trigger_downgrade.html'
+    async_handlers = [
+        Select2InvoiceTriggerHandler,
+    ]
+
+    @property
+    @memoized
+    def trigger_form(self):
+        if self.request.method == 'POST':
+            return TriggerDowngradeForm(self.request.POST)
+        return TriggerDowngradeForm()
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname)
+
+    @property
+    def page_context(self):
+        return {
+            'trigger_form': self.trigger_form,
+        }
+
+    def post(self, request, *args, **kwargs):
+        if self.async_response is not None:
+            return self.async_response
+        if self.trigger_form.is_valid():
+            domain = self.trigger_form.cleaned_data['domain']
+            overdue_invoice, _ = get_oldest_unpaid_invoice_over_threshold(
+                datetime.date.today(),
+                domain
+            )
+            if not overdue_invoice:
+                messages.error(
+                    request,
+                    f'No overdue invoices were found for project "{domain}"',
+                )
+            else:
+                downgrade_eligible_domains(only_downgrade_domain=domain)
+                messages.success(
+                    request,
+                    f'Successfully triggered the downgrade process '
+                    f'for project "{domain}".'
+                )
+            return HttpResponseRedirect(reverse(self.urlname))
+        return self.get(request, *args, **kwargs)

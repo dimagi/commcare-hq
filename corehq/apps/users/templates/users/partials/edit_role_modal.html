@@ -112,7 +112,7 @@
             </div>
             <div class="col-sm-8 control-label">
               {% blocktrans %}
-                <strong>Mobile Workers</strong> &mdash; create new accounts, manage account settings, deactivate or delete mobile workers
+                <strong>Mobile Workers</strong> &mdash; create new accounts, manage account settings, deactivate or delete mobile workers. This permission also allows users to login as any mobile worker in Web Apps.
               {% endblocktrans %}
             </div>
           </div> {# END commcare_users permissions #}
@@ -272,6 +272,70 @@
               {% endblocktrans %}
             </div>
           </div>{# END data permissions #}
+
+          {# BEGIN dropzone permissions #}
+          {% if request|toggle_enabled:"DATA_FILE_DOWNLOAD" %}
+          <div class="form-group">
+
+            <div class="col-sm-2 controls">
+              <div class="form-check">
+                <input type="checkbox"
+                       id="edit-dropzone-checkbox"
+                       data-bind="checked: permissions.edit_file_dropzone,
+                                                  disable: !$root.allowEdit" />
+                <label for="edit-dropzone-checkbox"><span class="sr-only">{% trans "Edit & Download files from the Dropzone " %}</span></label>
+              </div>
+            </div>
+
+            <div class="col-sm-2 controls">
+
+              {# PLACEHOLDER checkbox when edit_file_dropzone is true #}
+              <div class="form-check" data-bind="visible: permissions.edit_file_dropzone()">
+                <input type="checkbox" checked="checked" disabled="disabled" />
+                <label><span class="sr-only">{% trans "View-Only Dropzone" %}</span></label>
+              </div> {# end PLACEHOLDER #}
+
+              {# REAL checkbox that controls view_file_dropzone permission #}
+              <div class="form-check" data-bind="visible: !permissions.edit_file_dropzone()">
+                <input type="checkbox"
+                       id="view-dropzone-checkbox"
+                       data-bind="checked: permissions.view_file_dropzone,
+                                                  disable: !$root.allowEdit" />
+                <label for="view-dropzone-checkbox"><span class="sr-only">{% trans "Download-Only files from the Dropzone" %}</span></label>
+              </div> {# END REAL checkbox #}
+
+            </div>
+            <div class="col-sm-8 control-label">
+              {% blocktrans %}
+                <strong>Dropzone</strong> &mdash; Upload and download files from the file Dropzone
+              {% endblocktrans %}
+            </div>
+          </div> {# END dropzone permissions #}
+          {% endif %}
+
+          {# BEGIN API permission #}
+          <div class="form-group">
+            <div class="col-sm-2 controls">
+              <div class="form-check">
+                <input type="checkbox"
+                       id="edit-api-checkbox"
+                       data-bind="checked: permissions.access_api,
+                                  disable: !$root.allowEdit" />
+                <label for="edit-api-checkbox"><span class="sr-only">{% trans "Access APIs" %}</span></label>
+              </div>
+            </div>
+            <div class="col-sm-2 controls">
+              <div class="form-check-placeholder">
+                <label></label>
+              </div>
+            </div>
+            <div class="col-sm-8 control-label">
+              {% blocktrans %}
+                <strong>Access APIs</strong> &mdash; use CommCare HQ APIs to read and update data.
+                Specific APIs may require additional permissions.
+              {% endblocktrans %}
+            </div>
+          </div> {# END API permission #}
 
           {% if request|toggle_enabled:"EXPORT_OWNERSHIP" %}
             {# BEGIN Shared Export permissions #}
@@ -501,6 +565,65 @@
               </div>
             </div>
           {% endif %}
+          {% if request|toggle_enabled:"RESTRICT_LOGIN_AS" %}
+            <div class="form-group">
+            <label class="col-sm-4 control-label">
+              {% trans "Limit Login-As" %}
+            </label>
+            <div class="col-sm-8 controls">
+              <div class="form-check">
+                <input type="checkbox"
+                       id="limited-login-as-checkbox"
+                       data-bind="checked: permissions.limited_login_as,
+                                  disable: !$root.allowEdit" />
+                <label for="limited-login-as-checkbox">
+                  {% trans "Allow the user to login as only specified users in Web Apps." %}
+                </label>
+              </div>
+            </div>
+            </div>
+            <div class="form-group">
+            <label class="col-sm-4 control-label">
+              {% trans "Login-As Default User" %}
+            </label>
+            <div class="col-sm-8 controls">
+              <div class="form-check">
+                <input type="checkbox"
+                       id="default-login-as-checkbox"
+                       data-bind="checked: permissions.access_default_login_as_user,
+                                  disable: !$root.allowEdit" />
+                <label for="default-login-as-checkbox">
+                  {% trans "Allow the user to login as the default user in Web Apps." %}
+                </label>
+              </div>
+            </div>
+            </div>
+          {% endif %}
+          {% if request|toggle_enabled:"RESTRICT_MOBILE_ACCESS" %}
+          {# BEGIN MOBILE permission #}
+          <div class="form-group">
+            <div class="col-sm-2 controls">
+              <div class="form-check">
+                <input type="checkbox"
+                         id="edit-mobile-checkbox"
+                         data-bind="checked: permissions.access_mobile_endpoints,
+                                    disable: !$root.allowEdit" />
+                                  <label for="edit-mobile-checkbox"><span class="sr-only">{% trans "Access to Offline Mobile Apps" %}</span></label>
+              </div>
+            </div>
+            <div class="col-sm-2 controls">
+              <div class="form-check-placeholder">
+                <label></label>
+             </div>
+            </div>
+            <div class="col-sm-8 control-label">
+             {% blocktrans %}
+             <strong>Mobile App Access</strong> &mdash; Allows mobile users access to offline mobile application
+             {% endblocktrans %}
+            </div>
+          </div>
+          {# END MOBILE permission #}
+          {% endif %}
           {% if request|toggle_enabled:"RESTRICT_APP_RELEASE" %}
             <div class="form-group">
               <label class="col-sm-4 control-label">
@@ -590,24 +713,6 @@
               </div>
             </div>
           </div>
-          {% if request|toggle_enabled:"DATA_FILE_DOWNLOAD" %}
-            <div class="form-group">
-              <label class="col-sm-4 control-label">
-                {% trans "View File Dropzone" %}
-              </label>
-              <div class="col-sm-8 controls">
-                <div class="form-check">
-                  <input type="checkbox"
-                         id="view-file-dropzone-checkbox"
-                         data-bind="checked: permissions.view_file_dropzone,
-                                                      disable: !$root.allowEdit" />
-                  <label for="view-file-dropzone-checkbox">
-                    {% trans "Allow role to upload and download files from dropzone." %}
-                  </label>
-                </div>
-              </div>
-            </div>
-          {% endif %}
         </div>
       </div>
       <div class="modal-footer">

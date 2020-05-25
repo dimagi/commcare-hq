@@ -123,7 +123,7 @@ class ConsumptionShortcutsTestCase(ConsumptionTestBase):
         self.assertEqual(50, DefaultConsumption.get_domain_default(domain).default_consumption)
         self.assertEqual(1, _count_consumptions())
         updated = set_default_monthly_consumption_for_domain(domain, 40)
-        self.assertEqual(default._id, updated._id)
+        self.assertEqual(default.id, updated.id)
         self.assertEqual(40, DefaultConsumption.get_domain_default(domain).default_consumption)
         self.assertEqual(1, _count_consumptions())
 
@@ -133,7 +133,7 @@ class ConsumptionShortcutsTestCase(ConsumptionTestBase):
         self.assertEqual(50, DefaultConsumption.get_product_default(domain, product_id).default_consumption)
         self.assertEqual(1, _count_consumptions())
         updated = set_default_consumption_for_product(domain, product_id, 40)
-        self.assertEqual(default._id, updated._id)
+        self.assertEqual(default.id, updated.id)
         self.assertEqual(40, DefaultConsumption.get_product_default(domain, product_id).default_consumption)
         self.assertEqual(1, _count_consumptions())
 
@@ -143,25 +143,37 @@ def _create_domain_consumption(amt, domain=domain):
 
 
 def _create_product_consumption(amt, domain=domain, product_id=product_id):
-    DefaultConsumption(domain=domain, default_consumption=amt * DAYS_IN_MONTH, type=TYPE_PRODUCT, product_id=product_id).save()
+    DefaultConsumption(
+        domain=domain,
+        default_consumption=amt * DAYS_IN_MONTH,
+        type=TYPE_PRODUCT,
+        product_id=product_id
+    ).save()
 
 
 def _create_type_consumption(amt, domain=domain, product_id=product_id, type_id=type_id):
-    DefaultConsumption(domain=domain, default_consumption=amt * DAYS_IN_MONTH, type=TYPE_SUPPLY_POINT_TYPE, product_id=product_id,
-                       supply_point_type=type_id).save()
+    DefaultConsumption(
+        domain=domain,
+        default_consumption=amt * DAYS_IN_MONTH,
+        type=TYPE_SUPPLY_POINT_TYPE,
+        product_id=product_id,
+        supply_point_type=type_id
+    ).save()
 
 
 def _create_id_consumption(amt, domain=domain, product_id=product_id, supply_point_id=supply_point_id):
-    DefaultConsumption(domain=domain, default_consumption=amt * DAYS_IN_MONTH, type=TYPE_SUPPLY_POINT, product_id=product_id,
-                       supply_point_id=supply_point_id).save()
+    DefaultConsumption(
+        domain=domain,
+        default_consumption=amt * DAYS_IN_MONTH,
+        type=TYPE_SUPPLY_POINT,
+        product_id=product_id,
+        supply_point_id=supply_point_id
+    ).save()
 
 
 def _count_consumptions():
-    qs = DefaultConsumption.get_db().view('consumption/consumption_index', reduce=True)
-    return qs.one()['value'] if qs else 0
+    return DefaultConsumption.objects.count()
 
 
 def _delete_all_consumptions():
-    for consumption in DefaultConsumption.view('consumption/consumption_index',
-                                               reduce=False, include_docs=True):
-        consumption.delete()
+    DefaultConsumption.objects.all().delete()

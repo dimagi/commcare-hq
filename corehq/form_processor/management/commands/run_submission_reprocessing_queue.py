@@ -55,12 +55,13 @@ def get_unfinished_stub_ids_to_process():
             -- wait before processing to avoid processing during form submission
             -- and hopefully after any current infra issues
             timestamp < CURRENT_TIMESTAMP - interval '30 minutes'
+            AND attempts <= 7  -- limit to 7 retries = 247 days old
             AND (
                 date_queued IS NULL
                 -- exponential back off. 3 and 7 chosen to make the back off steeper
                 -- and also to give some jitter to the timing of when retries are attempted
-                -- 7, 21, 63, 189 hours
-                OR date_queued < (CURRENT_TIMESTAMP - interval '7 hours' * power(3, attempts))
+                -- 7, 21, 63, 189, 567, 1701 hours (capped at 1701 ~= 71 days)
+                OR date_queued < (CURRENT_TIMESTAMP - interval '7 hours' * power(3, LEAST(attempts, 5)))
             )
             ORDER BY timestamp
             LIMIT {batch_size}

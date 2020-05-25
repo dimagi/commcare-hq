@@ -20,7 +20,8 @@
   ],
   "server_environment": [
     "india",
-    "icds"
+    "icds",
+    "icds-staging"
   ],
   "config": {
     "table_id": "dashboard_child_health_daily_feeding_forms",
