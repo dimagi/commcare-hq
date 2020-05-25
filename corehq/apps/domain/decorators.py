@@ -20,7 +20,7 @@ from django.views import View
 
 from django_otp import match_token
 from django_prbac.utils import has_privilege
-from tastypie.authentication import ApiKeyAuthentication
+from corehq.apps.domain.auth import HQApiKeyAuthentication
 from tastypie.http import HttpUnauthorized
 from tastypie.models import ApiKey
 
@@ -179,7 +179,7 @@ class LoginAndDomainMixin(object):
 
 
 def api_key():
-    api_auth_class = ApiKeyAuthentication()
+    api_auth_class = HQApiKeyAuthentication()
 
     def real_decorator(view):
         def wrapper(request, *args, **kwargs):

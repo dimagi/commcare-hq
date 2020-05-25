@@ -32,7 +32,7 @@ FORMPLAYER = 'formplayer'
 def _is_api_key_authentication(request):
     authorization_header = request.META.get('HTTP_AUTHORIZATION', '')
 
-    api_key_authentication = ApiKeyAuthentication()
+    api_key_authentication = HQApiKeyAuthentication()
     try:
         username, api_key = api_key_authentication.extract_credentials(request)
     except ValueError:
@@ -231,3 +231,17 @@ def get_active_users_by_email(email):
             # intentionally excluded:
             # - WebUsers who have changed their email address from their login (though could revisit this)
             # - CommCareUsers not belonging to domains with TWO_STAGE_USER_PROVISIONING enabled
+
+
+class HQApiKeyAuthentication(ApiKeyAuthentication):
+    def get_key(self, user, api_key):
+        """We use a custom model for API keys to allow for multiple keys per user.
+        """
+        from corehq.apps.users.models import HQApiKey
+
+        try:
+            user.api_keys.get(key=api_key)
+        except HQApiKey.DoesNotExist:
+            return self._unauthorized()
+
+        return True
