@@ -66,7 +66,7 @@ class TestExportData(TestCase):
                 [
                     [
                         "Generated at",
-                        "16:21:11 15 November 2017"
+                        self.now
                     ],
                     [
                         'State',
@@ -553,7 +553,7 @@ class TestExportData(TestCase):
                 [
                     'Export Info',
                     [
-                        ['Generated at', '16:21:11 15 November 2017'],
+                        ['Generated at', self.now],
                         ['State', 'st1'],
                         ['District', 'd1'],
                         ['Block', 'b1']
@@ -653,7 +653,7 @@ class TestExportData(TestCase):
                  'Export Info',
                  [
                      [
-                         'Generated at', '16:21:11 15 November 2017'
+                         'Generated at', self.now
                      ],
                      [
                          'State', 'st1'
@@ -720,7 +720,7 @@ class TestExportData(TestCase):
                     ['st7', 'Applicable at only AWC level', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
                 ]],
                 ['Export Info', [
-                    ['Generated at', '16:21:11 15 November 2017'],
+                    ['Generated at', self.now],
                     ['State', 'st1'],
                     ['District', 'd1'],
                     ['Block', 'b1'],
@@ -816,7 +816,7 @@ class TestExportData(TestCase):
                     ]
                 ]],
                 ['Export Info', [
-                    ['Generated at', '16:21:11 15 November 2017'],
+                    ['Generated at', self.now],
                     ['State', 'st1'],
                     ['District', 'd1'],
                     ['Block', 'b1'],
@@ -884,7 +884,7 @@ class TestExportData(TestCase):
                     ['st7', 'Applicable at only AWC level', 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
                 ]],
                 ['Export Info', [
-                    ['Generated at', '16:21:11 15 November 2017'],
+                    ['Generated at', self.now],
                     ['State', 'st1'],
                     ['District', 'd1'],
                     ['Block', 'b1'],
@@ -980,7 +980,7 @@ class TestExportData(TestCase):
                     ]
                 ]],
                 ['Export Info', [
-                    ['Generated at', '16:21:11 15 November 2017'],
+                    ['Generated at', self.now],
                     ['State', 'st1'],
                     ['District', 'd1'],
                     ['Block', 'b1'],
@@ -1014,7 +1014,7 @@ class TestExportData(TestCase):
                     ]
                 ]],
                 ['Export Info', [
-                    ['Generated at', '16:21:11 15 November 2017'],
+                    ['Generated at', self.now],
                     ['State', 'st1'],
                     ['District', 'd1'],
                     ['Block', 'b1'],
@@ -1329,7 +1329,7 @@ class TestExportData(TestCase):
                     [
                         [
                             "Generated at",
-                            "16:21:11 15 November 2017"
+                            self.now
                         ],
                         [
                             'State',
@@ -1433,7 +1433,7 @@ class TestExportData(TestCase):
                     'Export Info',
                     [
                         [
-                            'Generated at', '16:21:11 15 November 2017'
+                            'Generated at', self.now
                         ]
                     ]
                 ]
@@ -2389,7 +2389,7 @@ class TestExportData(TestCase):
                     [
                         [
                             "Generated at",
-                            "16:21:11 15 November 2017"
+                            self.now
                         ],
                         [
                             'State',
@@ -3897,7 +3897,7 @@ class TestExportData(TestCase):
                 [
                     [
                         'Generated at',
-                        '16:21:11 15 November 2017'
+                        self.now
                     ],
                     [
                         'State',
@@ -4019,7 +4019,7 @@ class TestExportData(TestCase):
                                    ['st1', 'd1', 'b1', 's2', 'a50', 'AWC Not Launched', 'AWC Not Launched',
                                     'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched']]],
              ['Export Info', [
-                 ['Generated at', '16:21:11 15 November 2017'],
+                 ['Generated at', self.now],
                  ['State', 'st1'],
                  ['District', 'd1'],
                  ['Block', 'b1'],
@@ -4130,7 +4130,7 @@ class TestExportData(TestCase):
                 ['st6', 'd7', 'b8', 's23', 'a104', 'Data Not Entered', 'Data Not Entered', 1, 0, 0],
                 ['st7', 'd8', 'b9', 's24', 'a105', 'Data Not Entered', 'Data Not Entered', 1, 0, 0]]],
              ['Export Info', [
-                 ['Generated at', '16:21:11 15 November 2017'],
+                 ['Generated at', self.now],
                  ['Location', 'National'],
                  ['Month', 'May'],
                  ['Year', 2017]]
