@@ -215,7 +215,7 @@ class AggServiceDeliveryReportHelper(AggregationPartitionedHelper):
             FROM "{self.cbe_ucr_table}" ucr
             WHERE ucr.date_cbe_organise>=%(start_date)s AND ucr.date_cbe_organise<%(next_month_start_date)s
             GROUP BY supervisor_id, awc_id
-            ) ut WHERE ut.awc_id = agg_sdr.awc_id;
+            ) ut WHERE ut.awc_id = agg_sdr.awc_id AND ut.supervisor_id = agg_sdr.supervisor_id;
         """, {
             'start_date': self.month,
             'next_month_start_date': next_month_start
