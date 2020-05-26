@@ -302,6 +302,7 @@ HQ_APPS = (
     'corehq.messaging.smsbackends.smsgh',
     'corehq.messaging.smsbackends.push',
     'corehq.messaging.smsbackends.starfish',
+    'corehq.messaging.smsbackends.trumpia',
     'corehq.messaging.smsbackends.apposit',
     'corehq.messaging.smsbackends.test',
     'corehq.apps.registration',
@@ -958,6 +959,8 @@ REQUIRE_TWO_FACTOR_FOR_SUPERUSERS = False
 # that adds messages to the partition with the fewest unprocessed messages
 USE_KAFKA_SHORTEST_BACKLOG_PARTITIONER = False
 
+SESSION_COOKIE_SECURE = CSRF_COOKIE_SECURE = not DEBUG
+SESSION_COOKIE_HTTPONLY = CSRF_COOKIE_HTTPONLY = True
 
 try:
     # try to see if there's an environmental variable set for local_settings
@@ -1505,6 +1508,7 @@ SMS_LOADED_SQL_BACKENDS = [
     'corehq.messaging.smsbackends.megamobile.models.SQLMegamobileBackend',
     'corehq.messaging.smsbackends.push.models.PushBackend',
     'corehq.messaging.smsbackends.starfish.models.StarfishBackend',
+    'corehq.messaging.smsbackends.trumpia.models.TrumpiaBackend',
     'corehq.messaging.smsbackends.sislog.models.SQLSislogBackend',
     'corehq.messaging.smsbackends.smsgh.models.SQLSMSGHBackend',
     'corehq.messaging.smsbackends.telerivet.models.SQLTelerivetBackend',
@@ -1844,8 +1848,6 @@ STATIC_UCR_REPORTS = [
     os.path.join('custom', 'abt', 'reports', 'spray_progress_level_2.json'),
     os.path.join('custom', 'abt', 'reports', 'spray_progress_level_3.json'),
     os.path.join('custom', 'abt', 'reports', 'spray_progress_level_4.json'),
-    os.path.join('custom', 'abt', 'reports', 'supervisory_report.json'),
-    os.path.join('custom', 'abt', 'reports', 'supervisory_report_v2.json'),
     os.path.join('custom', 'abt', 'reports', 'supervisory_report_v2019.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'dashboard', '*.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'asr', '*.json'),
@@ -2134,9 +2136,6 @@ if SENTRY_DSN:
     SENTRY_CONFIGURED = True
 else:
     SENTRY_CONFIGURED = False
-
-SESSION_COOKIE_SECURE = CSRF_COOKIE_SECURE = True
-SESSION_COOKIE_HTTPONLY = CSRF_COOKIE_HTTPONLY = True
 
 if RESTRICT_USED_PASSWORDS_FOR_NIC_COMPLIANCE:
     AUTH_PASSWORD_VALIDATORS = [

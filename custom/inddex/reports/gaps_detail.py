@@ -104,8 +104,10 @@ class GapsDetailsData:
                     (ConvFactorGaps, row.conv_factor_gap_code),
                     (FctGaps, row.fct_gap_code),
             ]:
-                if (self._food_data.selected_gap_type in [None, gap_class.slug]
-                        and gap_code != gap_class.AVAILABLE):
+                if (gap_code != gap_class.AVAILABLE and (
+                        not self._food_data.selected_gap_type
+                        or self._food_data.selected_gap_type == gap_class.slug
+                )):
                     manually_set = ['gap_type', 'gap_code', 'gap_desc']
                     yield format_row([gap_class.name, gap_code, gap_class.get_description(gap_code)] + [
                         getattr(row, col) for col in self.headers if col not in manually_set

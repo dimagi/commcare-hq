@@ -90,7 +90,7 @@ class DailyIntakeData:
             else:
                 rows[key]['nutrients'] = map(_sum, zip(rows[key]['nutrients'], nutrients))
 
-        for key, row in sorted(rows.items()):
+        for row in rows.values():
             yield format_row(chain(row['static_cols'], row['nutrients']))
 
 
