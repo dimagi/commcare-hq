@@ -277,7 +277,6 @@ class LocationFieldsView(CustomDataModelMixin, BaseLocationView):
 
     @method_decorator(require_can_edit_locations)
     @method_decorator(locations_access_required)
-    @method_decorator(domain_admin_required)
     @method_decorator(check_pending_locations_import())
     def dispatch(self, request, *args, **kwargs):
         return super(LocationFieldsView, self).dispatch(request, *args, **kwargs)
