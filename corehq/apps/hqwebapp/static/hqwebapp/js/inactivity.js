@@ -12,8 +12,9 @@ hqDefine('hqwebapp/js/inactivity', [
     initialPageData
 ) {
     $(function () {
-        var timeout = initialPageData.get('secure_timeout');
-        if (timeout === undefined) {
+        var timeout = initialPageData.get('secure_timeout'),
+            $modal = $("#inactivityModal");  // won't be present on app preview
+        if (timeout === undefined || !$modal.length) {
             return;
         }
         var interval = setInterval(function () {
@@ -23,8 +24,7 @@ hqDefine('hqwebapp/js/inactivity', [
                 success: function (data) {
                     if (!data.success) {
                         clearInterval(interval);        // TODO: restart once user is logged in
-                        var $modal = $("#inactivityModal"),
-                            $body = $modal.find(".modal-body");
+                        var $body = $modal.find(".modal-body");
                         $modal.on('shown.bs.modal', function () {
                             var content = _.template('<iframe src="<%= src %>" height="<%= height %>" width="<%= width %>" style="border: none;"></iframe>')({
                                 // TODO: get rid of everything that makes login look like a full page
