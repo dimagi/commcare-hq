@@ -2,9 +2,6 @@
 
 
 from django.conf import settings
-import re
-
-from dimagi.utils.web import get_ip
 
 
 # threadlocals middleware for global usage
