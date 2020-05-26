@@ -67,7 +67,8 @@ from custom.icds_reports.const import (
     THREE_MONTHS,
     DASHBOARD_USAGE_EXPORT,
     SERVICE_DELIVERY_REPORT,
-    CHILD_GROWTH_TRACKER_REPORT
+    CHILD_GROWTH_TRACKER_REPORT,
+    AWW_ACTIVITY_REPORT
 )
 from custom.icds_reports.models import (
     AggAwc,
@@ -1029,6 +1030,32 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
 
         formatted_timestamp = datetime.now().strftime("%d-%m-%Y__%H-%M-%S")
         data_type = 'Child Growth Tracker Report__{}'.format(formatted_timestamp)
+    elif indicator == AWW_ACTIVITY_REPORT:
+        config['aggregation_level'] = 5  # this report on all levels shows data (row) per AWW
+        data_type = 'Aww_Activity_Report'
+        excel_data = GrowthTrackerExport(
+            config=config,
+            loc_level=aggregation_level,
+            show_test=include_test,
+            beta=beta
+        ).get_excel_data(location)
+        export_info = excel_data[1][1]
+        generated_timestamp = date_parser.parse(export_info[0][1])
+        formatted_timestamp = generated_timestamp.strftime("%d-%m-%Y__%H-%M-%S")
+        data_type = 'Aww_Activity_Report__{}'.format(formatted_timestamp)
+
+        if file_format == 'xlsx':
+            cache_key = create_aww_activity_report(
+                excel_data,
+                data_type,
+                config,
+                aggregation_level
+            )
+        else:
+            cache_key = create_excel_file(excel_data, data_type, file_format)
+
+
+
 
     if indicator not in (AWW_INCENTIVE_REPORT, LS_REPORT_EXPORT, THR_REPORT_EXPORT, CHILDREN_EXPORT,
                          DASHBOARD_USAGE_EXPORT, SERVICE_DELIVERY_REPORT, CHILD_GROWTH_TRACKER_REPORT):

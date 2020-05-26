@@ -64,7 +64,8 @@ from custom.icds_reports.const import (
     LocationTypes,
     CAS_API_PAGE_SIZE,
     SERVICE_DELIVERY_REPORT,
-    CHILD_GROWTH_TRACKER_REPORT
+    CHILD_GROWTH_TRACKER_REPORT,
+    AWW_ACTIVITY_REPORT
 )
 from custom.icds_reports.dashboard_utils import get_dashboard_template_context
 from custom.icds_reports.models.aggregate import AwcLocation
@@ -1008,10 +1009,18 @@ class ExportIndicatorView(View):
             if not sql_location or sql_location.location_type_name in [LocationTypes.STATE]:
                 return HttpResponseBadRequest()
             config = beneficiary_config
+
+        if indicator == AWW_ACTIVITY_REPORT:
+            if not sql_location or sql_location.location_type_name not in [
+                LocationTypes.STATE, LocationTypes.DISTRICT, LocationTypes.BLOCK, LocationTypes.SUPERVISOR
+            ]:
+                return HttpResponseBadRequest()
+            config = beneficiary_config
+
         if indicator in (CHILDREN_EXPORT, PREGNANT_WOMEN_EXPORT, DEMOGRAPHICS_EXPORT, SYSTEM_USAGE_EXPORT,
                          AWC_INFRASTRUCTURE_EXPORT, GROWTH_MONITORING_LIST_EXPORT, AWW_INCENTIVE_REPORT,
                          LS_REPORT_EXPORT, THR_REPORT_EXPORT, DASHBOARD_USAGE_EXPORT,
-                         SERVICE_DELIVERY_REPORT, CHILD_GROWTH_TRACKER_REPORT):
+                         SERVICE_DELIVERY_REPORT, CHILD_GROWTH_TRACKER_REPORT, AWW_ACTIVITY_REPORT):
             task = prepare_excel_reports.delay(
                 config,
                 aggregation_level,
