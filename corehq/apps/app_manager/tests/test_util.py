@@ -60,12 +60,12 @@ class TestGlobalAppConfig(TestCase):
 
         cls.v2_build = app.make_build()
         cls.v2_build.is_released = True
-        cls.v2_build.save()         # v2 is starred
+        cls.v2_build.save()  # v2 is starred
 
         app.save()  # app is now v3
         cls.v3_build = app.make_build()
         cls.v3_build.is_released = True
-        cls.v3_build.save()         # v3 is starred
+        cls.v3_build.save()  # v3 is starred
 
         app.save()  # app is v4
 
