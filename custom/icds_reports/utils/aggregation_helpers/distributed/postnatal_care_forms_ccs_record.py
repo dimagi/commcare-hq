@@ -25,7 +25,7 @@ class PostnatalCareFormsCcsRecordAggregationDistributedHelper(StateBasedAggregat
         LAST_VALUE(latest_time_end) OVER w AS latest_time_end,
         MAX(counsel_methods) OVER w AS counsel_methods,
         LAST_VALUE(is_ebf) OVER w as is_ebf,
-        LAST_VALUE(new_ifa_tablets_total) OVER w as new_ifa_tablets_total,
+        GREATEST(LAST_VALUE(new_ifa_tablets_total) OVER w, 0) as new_ifa_tablets_total,
         SUM(CASE WHEN (unscheduled_visit=0 AND days_visit_late < 8) OR
             (latest_time_end::DATE - next_visit) < 8 THEN 1 ELSE 0 END) OVER w as valid_visits
         from
@@ -83,7 +83,7 @@ class PostnatalCareFormsCcsRecordAggregationDistributedHelper(StateBasedAggregat
             COALESCE(ucr.case_id, prev_month.case_id) AS case_id,
             GREATEST(ucr.latest_time_end, prev_month.latest_time_end_processed) AS latest_time_end_processed,
             GREATEST(ucr.counsel_methods, prev_month.counsel_methods) AS counsel_methods,
-            GREATEST(ucr.new_ifa_tablets_total, prev_month.new_ifa_tablets_total) AS new_ifa_tablets_total,
+            COALESCE(ucr.new_ifa_tablets_total, prev_month.new_ifa_tablets_total) AS new_ifa_tablets_total,
             ucr.is_ebf as is_ebf,
             COALESCE(ucr.valid_visits, 0) as valid_visits
           FROM ({ucr_table_query}) ucr

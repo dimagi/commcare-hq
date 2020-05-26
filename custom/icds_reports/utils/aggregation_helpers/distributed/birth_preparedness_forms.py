@@ -116,7 +116,7 @@ class BirthPreparednessFormsAggregationDistributedHelper(StateBasedAggregationDi
             GREATEST(ucr.counsel_accessible_ppfp, prev_month.counsel_accessible_ppfp) as counsel_accessible_ppfp,
             COALESCE(ucr.ifa_last_seven_days, prev_month.ifa_last_seven_days) as ifa_last_seven_days,
             COALESCE(ucr.reason_no_ifa, prev_month.reason_no_ifa) as reason_no_ifa,
-            GREATEST(ucr.new_ifa_tablets_total, prev_month.new_ifa_tablets_total) as new_ifa_tablets_total,
+            COALESCE(ucr.new_ifa_tablets_total, prev_month.new_ifa_tablets_total) as new_ifa_tablets_total,
             COALESCE(ucr.using_ifa, prev_month.using_ifa) as using_ifa
           FROM ({ucr_table_query}) ucr
           FULL OUTER JOIN (
