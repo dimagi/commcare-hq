@@ -13,7 +13,8 @@ hqDefine('hqwebapp/js/inactivity', [
 ) {
     $(function () {
         var timeout = initialPageData.get('secure_timeout') * 60 * 1000,    // convert from minutes to milliseconds
-            $modal = $("#inactivityModal");     // won't be present on app preview or pages without a domain
+            $modal = $("#inactivityModal"),     // won't be present on app preview or pages without a domain
+            $warningModal = $("#inactivityWarningModal");
 
         if (timeout === undefined || !$modal.length) {
             return;
@@ -23,7 +24,7 @@ hqDefine('hqwebapp/js/inactivity', [
           * Determine when to poll next. Poll more frequently as expiration approaches, to
           * increase the chance the modal pops up before the user takes an action and gets rejected.
           */
-        var calculateDelay = function (last_request) {
+        var calculateDelayAndWarn = function (last_request) {
             millisLeft = timeout;
             if (last_request) {
                  millisLeft = timeout - (new Date() - new Date(last_request));
@@ -31,11 +32,13 @@ hqDefine('hqwebapp/js/inactivity', [
 
             // Last 30 seconds, ping every 3 seconds
             if (millisLeft < 30 * 1000) {
+                $warningModal.modal('show');
                 return 3000;
             }
 
             // Last 2 minutes, ping every ten seconds
             if (millisLeft < 2 * 60 * 1000) {
+                $warningModal.modal('show');
                 return 10 * 1000;
             }
 
@@ -61,9 +64,10 @@ hqDefine('hqwebapp/js/inactivity', [
                             $body.html(content);
                         });
                         $body.html('<h1 class="text-center"><i class="fa fa-spinner fa-spin"></i></h1>');
+                        $warningModal.modal('hide');    // hide warning modal if it's open
                         $modal.modal({backdrop: 'static', keyboard: false});
                     } else {
-                        _.delay(pollToShowModal, calculateDelay(data.last_request));
+                        _.delay(pollToShowModal, calculateDelayAndWarn(data.last_request));
                     }
                 },
             });
@@ -80,7 +84,7 @@ hqDefine('hqwebapp/js/inactivity', [
                     if (data.success) {
                         $modal.modal('hide');
                         $button.text(gettext("Done"));
-                        _.delay(pollToShowModal, calculateDelay());
+                        _.delay(pollToShowModal, calculateDelayAndWarn());
                     } else {
                         $button.removeClass("btn-primary").addClass("btn-danger");
                         $button.text(gettext("Could not authenticate, please log in and try again"));
@@ -89,10 +93,24 @@ hqDefine('hqwebapp/js/inactivity', [
             });
         };
 
+        var extendSession = function (e) {
+            var $button = $(e.currentTarget);
+            $button.disableButton();
+            $.ajax({
+                url: initialPageData.reverse('bsd_license'),  // Public view that will trigger session activity
+                type: 'GET',
+                success: function (data) {
+                    $button.enableButton();
+                    $warningModal.modal('hide');
+                },
+            });
+        };
+
         $modal.find(".modal-footer .dismiss-button").click(pollToHideModal);
+        $warningModal.find(".modal-footer .dismiss-button").click(extendSession);
 
         // Start polling
-        _.delay(pollToShowModal, calculateDelay());
+        _.delay(pollToShowModal, calculateDelayAndWarn());
     });
 
     return 1;
