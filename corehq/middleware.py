@@ -245,6 +245,9 @@ class SelectiveSessionMiddleware(SessionMiddleware):
         regexes = [
             '/favicon.ico$',
             '/ping_login/$',
+            '/downloads/temp/ajax/',  # soil polling
+            '/downloads/temp/heartbeat/',  # soil status
+            '/a/{domain}/apps/view/[A-Za-z0-9-]+/current_version/$'  # app manager new changes polling
         ]
         if settings.BYPASS_SESSIONS_FOR_MOBILE:
             regexes.extend(getattr(settings, 'SESSION_BYPASS_URLS', []))
