@@ -174,8 +174,8 @@ class TestICDSCASReach(TestCase):
                 'icds-cas',
                 (2020, 4, 1),
                 {
-                    'month': (2020, 4, 1),
-                    'prev_month': (2020, 3, 1),
+                    'month': (2020, 2, 1),
+                    'prev_month': (2020, 1, 1),
                     'aggregation_level': 1
                 },
                 show_test=False,

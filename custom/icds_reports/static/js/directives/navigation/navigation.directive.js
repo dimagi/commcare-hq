@@ -5,7 +5,7 @@ var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 function NavigationController($window, $rootScope, $scope, $route, $routeParams, $location, navigationService,
                               stateLevelAccess, haveAccessToAllLocations, haveAccessToFeatures,
                               userFullName, userUsername, isMobile, navMenuItems, $uibModal, reportAnIssueUrl,
-                              isWebUser) {
+                              isWebUser, dateHelperService) {
     $scope.$route = $route;
     $scope.$location = $location;
     $scope.$routeParams = $routeParams;
@@ -69,12 +69,21 @@ function NavigationController($window, $rootScope, $scope, $route, $routeParams,
             templateUrl: 'reportIssueModal.html',
         });
     };
+
+    $scope.isLSLaunchedDisplayed = function (route) {
+        if (route !== 'icds_cas_reach/ls_launched') {
+            return true;
+        } else {
+            return dateHelperService.getSelectedDate() >= new Date(2020, 0, 1);
+        }
+    }
 }
 
 NavigationController.$inject = [
     '$window', '$rootScope', '$scope', '$route', '$routeParams', '$location', 'navigationService',
     'stateLevelAccess', 'haveAccessToAllLocations', 'haveAccessToFeatures',
     'userFullName', 'userUsername', 'isMobile', 'navMenuItems', '$uibModal', 'reportAnIssueUrl', 'isWebUser',
+    'dateHelperService',
 ];
 
 window.angular.module('icdsApp').directive('navigation', ['templateProviderService', function (templateProviderService) {
