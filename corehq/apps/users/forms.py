@@ -1266,14 +1266,21 @@ class CommCareUserFilterForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         from corehq.apps.locations.forms import LocationSelectWidget
+        from corehq.apps.users.views import get_editable_role_choices
         self.domain = kwargs.pop('domain')
+        couch_user = kwargs.pop('couch_user')
         super(CommCareUserFilterForm, self).__init__(*args, **kwargs)
         self.fields['location_id'].widget = LocationSelectWidget(self.domain)
         self.fields['location_id'].help_text = ExpandedMobileWorkerFilter.location_search_help
 
-        roles = UserRole.by_domain(self.domain)
-        self.fields['role_id'].choices = [('', _('All Roles'))] + [
-            (role._id, role.name or _('(No Name)')) for role in roles]
+        if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS and not couch_user.is_domain_admin(self.domain):
+            roles = get_editable_role_choices(self.domain, couch_user, allow_admin_role=True,
+                                              use_qualified_id=False)
+            self.fields['role_id'].choices = roles
+        else:
+            roles = UserRole.by_domain(self.domain)
+            self.fields['role_id'].choices = [('', _('All Roles'))] + [
+                (role._id, role.name or _('(No Name)')) for role in roles]
 
         self.helper = FormHelper()
         self.helper.form_method = 'GET'

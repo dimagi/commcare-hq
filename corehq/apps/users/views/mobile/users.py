@@ -1167,7 +1167,7 @@ class FilteredUserDownload(BaseManageCommCareUserView):
 
     @method_decorator(require_can_edit_commcare_users)
     def get(self, request, domain, *args, **kwargs):
-        form = CommCareUserFilterForm(request.GET, domain=domain)
+        form = CommCareUserFilterForm(request.GET, domain=domain, couch_user=request.couch_user)
         context = self.main_context
         context.update({'form': form, 'count_users_url': reverse('count_users', args=[domain])})
         return render(
@@ -1338,8 +1338,7 @@ class CommCareUsersLookup(BaseManageCommCareUserView, UsernameUploadMixin):
 @require_can_edit_commcare_users
 def count_users(request, domain):
     from corehq.apps.users.dbaccessors.all_commcare_users import get_commcare_users_by_filters
-    form = CommCareUserFilterForm(request.GET, domain=domain)
-    user_filters = {}
+    form = CommCareUserFilterForm(request.GET, domain=domain, couch_user=request.couch_user)
     if form.is_valid():
         user_filters = form.cleaned_data
     else:
@@ -1352,8 +1351,7 @@ def count_users(request, domain):
 
 @require_can_edit_or_view_commcare_users
 def download_commcare_users(request, domain):
-    form = CommCareUserFilterForm(request.GET, domain=domain)
-    user_filters = {}
+    form = CommCareUserFilterForm(request.GET, domain=domain, couch_user=request.couch_user)
     if form.is_valid():
         user_filters = form.cleaned_data
     else:
