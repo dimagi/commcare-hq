@@ -23,19 +23,19 @@ hqDefine('hqwebapp/js/inactivity', [
                 success: function (data) {
                     if (!data.success) {
                         clearInterval(interval);        // TODO: restart once user is logged in
-                        var $modal = $("#inactivityModal");
-                        var content = _.template('<iframe src="<%= src %>" height="<%= height %>" width="<%= width %>"></iframe>')({
-                            // TODO: add ?next=
-                            // TODO: instead of login, a new view that just tells them to click something to show
-                            // they're active? in case they're not logged out yet?
-                            // TODO: get rid of everything that makes login look like a full page
-                            // TODO: what if user clicks on something undesireable? reset password worfklow?
-                            src: initialPageData.reverse('login_new_window'),
-                            width: 700,     // TODO: account for screen size
-                            height: 300,    // TODO: account for screen size
+                        var $modal = $("#inactivityModal"),
+                            $body = $modal.find(".modal-body");
+                        $modal.on('shown.bs.modal', function () {
+                            var content = _.template('<iframe src="<%= src %>" height="<%= height %>" width="<%= width %>" style="border: none;"></iframe>')({
+                                // TODO: get rid of everything that makes login look like a full page
+                                // TODO: what if user clicks on something undesireable? reset password worfklow?
+                                src: initialPageData.reverse('login_new_window'),
+                                width: $body.width(),
+                                height: $body.height() - 10,
+                            });
+                            $body.html(content);
                         });
-                        $modal.find(".modal-body").html(content);
-                        $modal.modal('show');
+                        $modal.modal({backdrop: 'static', keyboard: false});
                     }
                 },
             });
