@@ -71,6 +71,7 @@ from corehq.apps.users.analytics import get_search_users_in_domain_es_query
 from corehq.apps.users.dbaccessors.all_commcare_users import get_user_docs_by_username, user_exists
 from corehq.apps.users.decorators import (
     require_can_edit_commcare_users,
+    require_can_edit_groups,
     require_can_edit_or_view_commcare_users,
 )
 from corehq.apps.users.exceptions import InvalidMobileWorkerRequest
@@ -270,6 +271,7 @@ class EditCommCareUserView(BaseEditUserView):
             'demo_restore_date': naturaltime(demo_restore_date_created(self.editable_user)),
             'hide_password_feedback': settings.ENABLE_DRACONIAN_SECURITY_FEATURES,
             'group_names': [g.name for g in self.groups],
+            'can_edit_groups': self.user_can_edit_groups,
         }
         if self.commtrack_form.errors:
             messages.error(self.request, _(
@@ -309,6 +311,11 @@ class EditCommCareUserView(BaseEditUserView):
             del form.user_form.fields['role']
 
         return form
+
+    @property
+    @memoized
+    def user_can_edit_groups(self):
+        return self.request.couch_user.has_permission(self.domain, 'edit_groups')
 
     @property
     def parent_pages(self):
@@ -582,6 +589,7 @@ def reset_demo_user_restore(request, domain, user_id):
 
 
 @require_can_edit_commcare_users
+@require_can_edit_groups
 @require_POST
 def update_user_groups(request, domain, couch_user_id):
     form = MultipleSelectionForm(request.POST)

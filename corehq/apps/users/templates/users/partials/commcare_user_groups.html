@@ -23,7 +23,7 @@
         {% endif %}
       </p>
     {% else %}
-      {% if request.is_view_only %}
+      {% if not can_edit_groups %}
         <div class="form form-horizontal">
           <legend>
             {% trans "Group Memberships" %}
