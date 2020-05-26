@@ -205,7 +205,6 @@ class AggServiceDeliveryReportHelper(AggregationPartitionedHelper):
             public_health_message_count = ut.public_health_message_count
         FROM (
             SELECT
-                supervisor_id,
                 awc_id,
                 SUM(CASE WHEN theme_cbe='third_fourth_month_of_pregnancy' THEN 1 ELSE 0 END) as third_fourth_month_of_pregnancy_count,
                 SUM(CASE WHEN theme_cbe='annaprasan_diwas' THEN 1 ELSE 0 END) as annaprasan_diwas_count,
@@ -214,8 +213,8 @@ class AggServiceDeliveryReportHelper(AggregationPartitionedHelper):
                 SUM(CASE WHEN theme_cbe='public_health_message' THEN 1 ELSE 0 END) as public_health_message_count
             FROM "{self.cbe_ucr_table}" ucr
             WHERE ucr.date_cbe_organise>=%(start_date)s AND ucr.date_cbe_organise<%(next_month_start_date)s
-            GROUP BY supervisor_id, awc_id
-            ) ut WHERE ut.awc_id = agg_sdr.awc_id AND ut.supervisor_id = agg_sdr.supervisor_id;
+            GROUP BY awc_id
+            ) ut WHERE ut.awc_id = agg_sdr.awc_id
         """, {
             'start_date': self.month,
             'next_month_start_date': next_month_start
