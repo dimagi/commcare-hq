@@ -15,7 +15,6 @@ from custom.icds_reports.sqldata.exports.pregnant_women import PregnantWomenExpo
 from custom.icds_reports.sqldata.exports.system_usage import SystemUsageExport
 from custom.icds_reports.reports.incentive import IncentiveReport
 from custom.icds_reports.reports.take_home_ration import TakeHomeRationExport
-from custom.icds_reports.utils import india_now
 
 
 class TestExportData(TestCase):
@@ -27,6 +26,10 @@ class TestExportData(TestCase):
         now = '16:21:11 15 November 2017'
         cls.india_now_mock = mock.patch(
             'custom.icds_reports.reports.take_home_ration.india_now',
+            new=mock.Mock(return_value=now)
+        )
+        cls.india_now_mock = mock.patch(
+            'custom.icds_reports.sqldata.exports.growth_tracker_report.india_now',
             new=mock.Mock(return_value=now)
         )
         cls.india_now_mock.start()
@@ -3810,7 +3813,7 @@ class TestExportData(TestCase):
                 [
                     'Export Info',
                     [
-                        ['Generated at', india_now()],
+                        ['Generated at', '16:21:11 15 November 2017'],
                         ['State', 'st1'],
                         ['District', 'd1'],
                         ['Block', 'b1'],
