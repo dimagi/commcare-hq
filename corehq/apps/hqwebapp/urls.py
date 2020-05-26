@@ -18,6 +18,7 @@ from corehq.apps.hqwebapp.views import (
     dropbox_upload,
     jserror,
     login,
+    login_new_window,
     logout,
     no_permissions,
     osdd,
@@ -79,6 +80,7 @@ urlpatterns = [
     url(r'^hq/admin/session_details/$', SessionDetailsView.as_view(),
         name=SessionDetailsView.urlname),
     url(r'^ping_login/$', ping_login, name='ping_login'),
+    url(r'^relogin/$', login_new_window, name='login_new_window'),
 
 ]
 

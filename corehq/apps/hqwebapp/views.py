@@ -491,6 +491,11 @@ def ping_login(request):
     return JsonResponse({'success': request.user.is_authenticated})
 
 
+@login_required
+def login_new_window(request):
+    return render_static(request, "hqwebapp/close_window.html", _("Thank you for logging in!"))
+
+
 @login_and_domain_required
 @track_domain_request(calculated_prop='cp_n_downloads_custom_exports')
 def retrieve_download(req, domain, download_id, template="hqwebapp/includes/file_download.html"):
