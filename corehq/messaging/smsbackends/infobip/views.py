@@ -20,9 +20,7 @@ class InfobipIncomingMessageView(IncomingBackendView):
             message_content = message.get('message')
             if message_content.get('type') == 'TEXT':
                 body = message_content.get('text', {})
-            elif message_content.get('type') == 'VIDEO':
-                body = message_content.get('caption', {})
-            elif message_content.get('type') == 'AUDIO':
+            elif message_content.get('type') in ['IMAGE', 'AUDIO', 'VIDEO', 'DOCUMENT']:
                 body = message_content.get('caption', {})
 
             incoming_sms(
