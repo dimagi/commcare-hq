@@ -17,7 +17,7 @@ from corehq.apps.domain.utils import legacy_domain_re
 from corehq.const import OPENROSA_DEFAULT_VERSION
 from dimagi.utils.logging import notify_exception
 
-from dimagi.utils.parsing import string_to_utc_datetime
+from dimagi.utils.parsing import json_format_datetime, string_to_utc_datetime
 
 try:
     import psutil
@@ -176,6 +176,7 @@ class TimeoutMiddleware(MiddlewareMixin):
 
         if not getattr(request, '_bypass_sessions', False):
             request.session.set_expiry(timeout * 60)
+            request.session['last_request'] = json_format_datetime(now)
 
 
 def always_allow_browser_caching(fn):
