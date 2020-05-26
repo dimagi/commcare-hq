@@ -30,7 +30,7 @@ hqDefine('hqwebapp/js/inactivity', [
                             // they're active? in case they're not logged out yet?
                             // TODO: get rid of everything that makes login look like a full page
                             // TODO: what if user clicks on something undesireable? reset password worfklow?
-                            src: initialPageData.reverse('login') + "?next=" + initialPageData.reverse('login_new_window'),
+                            src: initialPageData.reverse('login_new_window'),
                             width: 700,     // TODO: account for screen size
                             height: 300,    // TODO: account for screen size
                         });
