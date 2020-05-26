@@ -1385,6 +1385,7 @@ def create_service_delivery_report(excel_data, data_type, config):
     # Styling initialisation
     bold_font = Font(size=14, color="FFFFFF")
     bold_font_black = Font(size=14, color="000000")
+    bold_font_black_normal = Font(color="000000", bold=True)
     cell_pattern = PatternFill("solid", fgColor="B3C5E5")
     cell_pattern_blue = PatternFill("solid", fgColor="4472C4")
     cell_pattern_grey = PatternFill("solid", fgColor="C3C3C3")
@@ -1469,6 +1470,9 @@ def create_service_delivery_report(excel_data, data_type, config):
             cell = worksheet['{}{}'.format(column_name, row_num)]
             cell.value = col_value
             cell.border = thin_border
+            if col_value == 'Grand Total':
+                cell.font = bold_font_black_normal
+                cell.fill = cell_pattern
 
     # Export info
     worksheet2 = workbook.create_sheet("Export Info")

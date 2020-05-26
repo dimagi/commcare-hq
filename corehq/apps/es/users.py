@@ -151,7 +151,10 @@ def is_practice_user(practice_mode=True):
 
 
 def role_id(role_id):
-    return filters.term('domain_membership.role_id', role_id)
+    return filters.OR(
+        filters.term("domain_membership.role_id", role_id),     # mobile users
+        filters.term("domain_memberships.role_id", role_id)     # web users
+    )
 
 
 def is_active(active=True):
