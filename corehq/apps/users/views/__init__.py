@@ -1,5 +1,4 @@
 import json
-import logging
 from datetime import datetime
 
 from django.conf import settings
@@ -58,13 +57,11 @@ from corehq.apps.domain.decorators import (
 )
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views.base import BaseDomainView
-from corehq.apps.es import AppES, UserES
-from corehq.apps.es.queries import search_string_query
+from corehq.apps.es import UserES
 from corehq.apps.hqwebapp.crispy import make_form_readonly
 from corehq.apps.hqwebapp.utils import send_confirmation_email
 from corehq.apps.hqwebapp.views import BasePageView, logout
 from corehq.apps.locations.permissions import (
-    conditionally_location_safe,
     location_safe,
     user_can_access_other_user,
 )
@@ -111,7 +108,6 @@ from corehq.apps.users.models import (
     WebUser,
 )
 from corehq.apps.users.views.utils import get_editable_role_choices
-from corehq.elastic import es_query
 from corehq.util.couch import get_document_or_404
 from corehq.util.view_utils import json_error
 from django_digest.decorators import httpdigest
