@@ -13,12 +13,13 @@ hqDefine('hqwebapp/js/inactivity', [
 ) {
     $(function () {
         var timeout = initialPageData.get('secure_timeout'),
-            $modal = $("#inactivityModal");  // won't be present on app preview
+            $modal = $("#inactivityModal");     // won't be present on app preview or pages without a domain
+
         if (timeout === undefined || !$modal.length) {
             return;
         }
 
-        var interval = setInterval(function () {
+        var pollToShowModal = function () {
             $.ajax({
                 url: initialPageData.reverse('ping_login'),
                 type: 'GET',
@@ -36,14 +37,15 @@ hqDefine('hqwebapp/js/inactivity', [
                             });
                             $body.html(content);
                         });
+                        $body.html('<h1 class="text-center"><i class="fa fa-spinner fa-spin"></i></h1>');
                         $modal.modal({backdrop: 'static', keyboard: false});
                     }
                 },
             });
-        }, timeout * 60 * 1000);    // convert from minutes to milliseconds
+        };
 
-        var $button = $modal.find(".modal-footer .dismiss-button");
-        $button.click(function () {
+        var pollToHideModal = function (e) {
+            var $button = $(e.currentTarget);
             $button.disableButton();
             $.ajax({
                 url: initialPageData.reverse('ping_login'),
@@ -60,7 +62,11 @@ hqDefine('hqwebapp/js/inactivity', [
                     }
                 },
             });
-        });
+        };
+
+        interval = setInterval(pollToShowModal, timeout * 60 * 1000);    // convert from minutes to milliseconds
+
+        $modal.find(".modal-footer .dismiss-button").click(pollToHideModal);
     });
 
     return 1;
