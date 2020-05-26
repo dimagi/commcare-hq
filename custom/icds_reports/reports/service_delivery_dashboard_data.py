@@ -321,7 +321,6 @@ def get_service_delivery_details(domain, start, length, order, reversed_order, l
             all_row = update_all_row(all_row, base_row)
         config['data'].append(base_data(row))
 
-
     # setting location params to all
     for location in location_fields:
         all_row[location] = 'All'
