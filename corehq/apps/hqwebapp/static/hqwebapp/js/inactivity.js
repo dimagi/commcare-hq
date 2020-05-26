@@ -17,13 +17,14 @@ hqDefine('hqwebapp/js/inactivity', [
         if (timeout === undefined || !$modal.length) {
             return;
         }
+
         var interval = setInterval(function () {
             $.ajax({
                 url: initialPageData.reverse('ping_login'),
                 type: 'GET',
                 success: function (data) {
                     if (!data.success) {
-                        clearInterval(interval);        // TODO: restart once user is logged in
+                        clearInterval(interval);
                         var $body = $modal.find(".modal-body");
                         $modal.on('shown.bs.modal', function () {
                             var content = _.template('<iframe src="<%= src %>" height="<%= height %>" width="<%= width %>" style="border: none;"></iframe>')({
@@ -40,6 +41,26 @@ hqDefine('hqwebapp/js/inactivity', [
                 },
             });
         }, timeout * 60 * 1000);    // convert from minutes to milliseconds
+
+        var $button = $modal.find(".modal-footer .dismiss-button");
+        $button.click(function () {
+            $button.disableButton();
+            $.ajax({
+                url: initialPageData.reverse('ping_login'),
+                type: 'GET',
+                success: function (data) {
+                    $button.enableButton();
+                    if (data.success) {
+                        $modal.modal('hide');
+                        $button.text(gettext("Done"));
+                        // TODO: restart interval
+                    } else {
+                        $button.removeClass("btn-primary").addClass("btn-danger");
+                        $button.text(gettext("Could not authenticate, please log in and try again"));
+                    }
+                },
+            });
+        });
     });
 
     return 1;
