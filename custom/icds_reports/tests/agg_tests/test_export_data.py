@@ -23,19 +23,19 @@ class TestExportData(TestCase):
     @classmethod
     def setUpClass(cls):
         super(TestExportData, cls).setUpClass()
-        now = '16:21:11 15 November 2017'
+        cls.now = '16:21:11 15 November 2017'
         cls.india_now_mock = mock.patch(
             'custom.icds_reports.reports.take_home_ration.india_now',
-            new=mock.Mock(return_value=now)
+            new=mock.Mock(return_value=cls.now)
         )
         cls.india_now_mock = mock.patch(
             'custom.icds_reports.sqldata.exports.growth_tracker_report.india_now',
-            new=mock.Mock(return_value=now)
+            new=mock.Mock(return_value=cls.now)
         )
         cls.india_now_mock.start()
         cls.other_india_now_mock = mock.patch(
             'custom.icds_reports.utils.mixins.india_now',
-            new=mock.Mock(return_value=now)
+            new=mock.Mock(return_value=cls.now)
         )
         cls.other_india_now_mock.start()
 
@@ -3813,7 +3813,7 @@ class TestExportData(TestCase):
                 [
                     'Export Info',
                     [
-                        ['Generated at', '16:21:11 15 November 2017'],
+                        ['Generated at', self.now],
                         ['State', 'st1'],
                         ['District', 'd1'],
                         ['Block', 'b1'],
