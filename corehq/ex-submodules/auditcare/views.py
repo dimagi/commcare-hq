@@ -4,6 +4,7 @@ import csv
 from argparse import ArgumentTypeError
 
 from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib.auth.views import LoginView, LogoutView
 from django.contrib.contenttypes.models import ContentType
 from django.http import HttpResponse, HttpResponseBadRequest
 from django.views.decorators.cache import never_cache
@@ -46,16 +47,12 @@ def export_all(request):
     return response
 
 
-from django.contrib.auth import views as auth_views
-
-
 @csrf_protect
 @never_cache
 def audited_login(request, *args, **kwargs):
-    func = auth_views.login
     kwargs['template_name'] = login_template()
     # call the login function
-    response = func(request, *args, **kwargs)
+    response = LoginView.as_view(*args, **kwargs)(request)
     if request.method == 'POST':
         # see if the login was successful
         login_unsuccessful = (
@@ -83,8 +80,6 @@ def audited_views(request, *args, **kwargs):
 
 def audited_logout(request, *args, **kwargs):
     # share some useful information
-    func = auth_views.logout
-    logging.info("Function: %s" %(func.__name__))
     logging.info("Logged logout for user %s" % (request.user.username))
     user = request.user
     # it's a successful login.
@@ -105,7 +100,7 @@ def audited_logout(request, *args, **kwargs):
     attempt.save()
 
     # call the logout function
-    response = func(request, *args, **kwargs)
+    response = LogoutView.as_view(*args, **kwargs)(request)
     return response
 
 
