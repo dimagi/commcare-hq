@@ -200,13 +200,6 @@ function ServiceDeliveryDashboardController($rootScope, $scope, $http, $location
     };
 
     if (haveAccessToFeatures) {
-        var numberOfCbeConducted = {
-            'mData': 'cbe_conducted',
-            'heading': 'Number of CBE Conducted',
-            'tooltipValue': 'Number of Community-Based Events (CBEs) organised by an AWC in a month',
-            'columnValueType': 'raw',
-            'columnValueIndicator': 'cbe_conducted',
-        };
         var numberOfVHSNDConducted = {
             'mData': 'vhnd_conducted',
             'heading': 'Number of VHSND conducted',
@@ -214,7 +207,6 @@ function ServiceDeliveryDashboardController($rootScope, $scope, $http, $location
             'columnValueType': 'raw',
             'columnValueIndicator': 'vhnd_conducted',
         };
-        vm.sddTableData['pw_lw_children']['awc'].splice(3, 0, numberOfCbeConducted);
         vm.sddTableData['pw_lw_children']['awc'].splice(5, 0, numberOfVHSNDConducted);
     }
 

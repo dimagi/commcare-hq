@@ -45,7 +45,6 @@ class TestServiceDelivery(TestCase):
                     'district_name': 'Data Not Entered',
                     'home_visits': '1.62 %',
                     'cbe': '0.00 %',
-                    'cbe_conducted': 1,
                     'vhnd_conducted': 3
                 },
                 {
@@ -67,7 +66,6 @@ class TestServiceDelivery(TestCase):
                     'district_name': 'Data Not Entered',
                     'home_visits': '0.00 %',
                     'cbe': '9.09 %',
-                    'cbe_conducted': 2,
                     'vhnd_conducted': 9
                 },
                 {
@@ -89,7 +87,6 @@ class TestServiceDelivery(TestCase):
                     'district_name': 'Data Not Entered',
                     'home_visits': '0.00 %',
                     'cbe': '0.00 %',
-                    'cbe_conducted': 0,
                     'vhnd_conducted': 0
                 }
             ],
@@ -135,7 +132,6 @@ class TestServiceDelivery(TestCase):
                     'district_name': 'd1',
                     'home_visits': '1.62 %',
                     'cbe': '0.00 %',
-                    'cbe_conducted': 1,
                     'vhnd_conducted': 3
                 }
             ],
