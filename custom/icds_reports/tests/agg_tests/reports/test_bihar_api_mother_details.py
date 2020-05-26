@@ -69,7 +69,7 @@ class BiharAPIMotherTest(TestCase):
             if case['ccs_case_id'] == 'f491263a-4846-4ffd-a64d-a6653c03dd03':
                 ccs_case_details = case
                 break
-
+        print(ccs_case_details)
         self.assertEqual(
             {
                 "household_id": None,
@@ -84,7 +84,7 @@ class BiharAPIMotherTest(TestCase):
                 "tt_1": None,
                 'tt_2': None,
                 "tt_booster": None,
-                "hb": 2,
+                "hb": None,
                 "add": datetime.date(2017, 3, 20),
                 "last_preg_tt": None,
                 "lmp": datetime.date(2016, 11, 1),
@@ -93,7 +93,7 @@ class BiharAPIMotherTest(TestCase):
                 "anc_3": None,
                 "anc_4": None,
                 "edd": datetime.date(2017, 8, 8),
-                "total_ifa_tablets_received": -130,
+                "total_ifa_tablets_received": -100,
                 "ifa_consumed_7_days": 2,
                 "causes_for_ifa": None,
                 "maternal_complications": None
