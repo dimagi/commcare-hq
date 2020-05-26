@@ -29,16 +29,20 @@
             {% trans "Group Memberships" %}
           </legend>
           <div class="form-group">
-            <label class="col-xs-12 col-sm-4 col-md-4 col-lg-2 control-label">
-              {% trans "Group Membership" %}
-            </label>
-            <div class="col-xs-12 col-sm-8 col-md-8 col-lg-6 controls-text">
-              <ul>
-                {% for group in group_names %}
-                  <li>{{ group }}</li>
-                {% endfor %}
-              </ul>
-            </div>
+            {% if group_names %}
+              <label class="col-xs-12 col-sm-4 col-md-4 col-lg-2 control-label">
+                {% trans "Group Membership" %}
+              </label>
+              <div class="col-xs-12 col-sm-8 col-md-8 col-lg-6 controls-text">
+                <ul>
+                  {% for group in group_names %}
+                    <li>{{ group }}</li>
+                  {% endfor %}
+                </ul>
+              </div>
+            {% else %}
+              {% trans "No groups are assigned to this user." %}
+            {% endif %}
           </div>
         </div>
       {% else %}
