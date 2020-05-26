@@ -56,7 +56,7 @@ branches:
   - rn_update_perfect_scrollbar # Rohit Negi May 4
   - bmb/SAAS-10674  # Biyeun May 4
   - jls/migrate-MobileAuthKeyRecord-2 # Jenny May 16
-#  - bmb/SAAS-10882  # Biyeun May 20 (updates knockout, bootstrap, jquery, DOMPurify)
+  - bmb/SAAS-10882-wip  # Biyeun May 20 (updates knockout, bootstrap, jquery, DOMPurify)
   - ce/webuser-upload # Cal May 22
   - fr/linked-domains-ucr       # Farid May 23
   - nemanja1040:infobip_backend_improvements  # Nemanja Stancic May 25
