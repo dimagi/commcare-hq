@@ -60,33 +60,29 @@ PR 1: Add SQL model and migration management command, write to SQL
 ****
 This should contain:
 
-* A new model, with a django migration to create it.
+* A new model and a management command that fetches all couch docs and creates or updates the corresponding SQL model(s).
 
-  * Expect to rename your model laster, and specify ``db_table`` with the final expected table name. If your couch model is ``MyModel``, name your SQL model ``SQLMyModel`` with ``db_table`` set to ``myapp_mymodel`` so that once the couch model is gone, you can rename the SQL model back to ``MyModel`` and remove the ``Meta``. It's a headache to rename models via django migrations, especially submodels. ``MySQLModel.objects.model._meta.db_table`` gets the current table name.
-  * `Sample commit for RegistrationRequest <https://github.com/dimagi/commcare-hq/pull/26555/commits/5df642a5f798880e29d65f1a389d4c068aaa47c3>`_, a simple model with no related models. This example pulls functions common to both couch and sql into a mixin used by both classes.
-  * It's frequently useful to include a column for the corresponding couch document id. The `HqDeploy migration <https://github.com/dimagi/commcare-hq/pull/26440/files>`_ does this (search for ``couch_id``).
-  * Note that by default, the sql fields will be non-null. You can run the management command ``evaluate_couch_model_for_sql MyDocType -s DB_SLUG -a attr1 attr2 ...`` on a production environment to find out how production documents use the attribute: if it's ever blank and what its max length is.
-  * Some docs have attributes that are couch ids of other docs. These are weak spots easy to forget when the referenced doc type is migrated. Add a comment so these show up in a grep for the referenced doc type.
-
-* A standalone management command that fetches all couch docs and creates a corresponding SQL model if it doesn't already exist.
-
-  * The base class ``PopulateSQLCommand`` makes this fairly trivial for simple models.
-  * `Sample command for RegistrationRequest <https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/registration/management/commands/populate_sql_registration_request.py>`_.
-  * This command should ideally populate the sql models based on the json from couch alone, not the wrapped document (to avoid introducing another dependency on the couch model). You may need to convert data types that the default ``wrap`` implementation would handle; note that the sample command above uses ``force_to_datetime`` to cast datetimes.
-  * Don't know which database your doc type is in? Run ``from corehq.util.couchdb_management import couch_config; couch_config.all_dbs_by_slug`` in a shell to list all of the couch databases and then ``MyModel.get_db()`` to see which one you need.
-  * ``PopulateSQLCommand`` includes the method ``commit_adding_migration`` to let third parties know which commit to deploy if they need to run the migration manually. Note this means you need to update the migration **after** this PR is merged, to add the hash of the commit that merged this PR into master.
-
-* Adds code to keep the couch and sql items in sync.
-
-  * The easiest way to do this is to use `SyncCouchToSQLMixin <https://github.com/dimagi/commcare-hq/blob/c2b93b627c830f3db7365172e9be2de0019c6421/corehq/ex-submodules/dimagi/utils/couch/migration.py#L4>`_ and `SyncSQLToCouchMixin <https://github.com/dimagi/commcare-hq/blob/c2b93b627c830f3db7365172e9be2de0019c6421/corehq/ex-submodules/dimagi/utils/couch/migration.py#L115>`_.
-  * `Sample commit for Invitation <https://github.com/dimagi/commcare-hq/pull/26685/commits/98d65250384611514284d5a05016b391fb64853f>`_
+  * Start by running the management command ``evaluate_couch_model_for_sql django_app_name MyDocType`` on a production environment. This will produce code to add to your models file and also a new management command.
+  * Add the generated models code to your models file. Note if there are any TODOs marked in the code. Notes on this code:
+     * The new class will start with "SQL" but specify ``db_table`` so that prefix can be easily removed later and ``db_table`` removed. It's a headache to rename models via django migrations, especially submodels.
+     * The new class will include a column for the corresponding couch document id.
+     * The generated code does not include submodel classes (SchemaProperty or SchemaListProperty attributes). See `the first CustomDataFieldsDefinition PR <https://github.com/dimagi/commcare-hq/pull/27276>`_ for an example that uses submodels.
+     * The generated code uses `SyncCouchToSQLMixin <https://github.com/dimagi/commcare-hq/blob/c2b93b627c830f3db7365172e9be2de0019c6421/corehq/ex-submodules/dimagi/utils/couch/migration.py#L4>`_ and `SyncSQLToCouchMixin <https://github.com/dimagi/commcare-hq/blob/c2b93b627c830f3db7365172e9be2de0019c6421/corehq/ex-submodules/dimagi/utils/couch/migration.py#L115>`_. If your model uses submodels, you will need to add overrides for ``_migration_sync_to_sql`` and ``_migration_sync_to_couch``.
+        * Beware that the sync mixins capture exceptions thrown while syncing in favor of calling ``notify_exception``. If you're overwriting the sync code, this makes bugs easy to miss. The branch ``jls/sync-mixins-hard-fail`` is included on staging to instead make syncing fail hard; you might consider doing the same while testing locally.
+     * Consider if your new model could use any additional ``db_index`` flags or a ``unique_together``.
+     * Some docs have attributes that are couch ids of other docs. These are weak spots easy to forget when the referenced doc type is migrated. Add a comment so these show up in a grep for the referenced doc type.
+  * Run `makemigrations`
+  * Add the generated migration command. Notes on this code:
+     * The generated migration does not handle submodels. Edit ``update_or_create_sql_object`` to add support.
+     * This command should populate the sql models based on the json from couch alone, not the wrapped document (to avoid introducing another dependency on the couch model). You may need to convert data types that the default ``wrap`` implementation would handle. The generated migration will use ``force_to_datetime`` to cast datetimes but will not perform any other wrapping.
+     * The command will include a ``commit_adding_migration`` method to let third parties know which commit to deploy if they need to run the migration manually. This needs to be updated **after** this PR is merged, to add the hash of the commit that merged this PR into master.
 
 * Most models belong to a domain. For these:
 
   * Add the new model to `DOMAIN_DELETE_OPERATIONS <https://github.com/dimagi/commcare-hq/blob/522294560cee0f3ac1ddeae0501d653b1ea0f215/corehq/apps/domain/deletion.py#L179>`_ so it gets deleted when the domain is deleted.
   * Update tests in `test_delete_domain.py`. `Sample PR that handles several app manager models <https://github.com/dimagi/commcare-hq/pull/26310/files>`_.
   * Add the new model to `sql/dump.py <https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/dump_reload/sql/dump.py>`_ so that it gets included when a domain is exported.
-  
+
 To test this step locally:
 
 * With master checked out, make sure you have at least one couch document that will get migrated.

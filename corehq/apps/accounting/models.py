@@ -1140,6 +1140,11 @@ class Subscription(models.Model):
             and other.account.pk == self.account.pk
         )
 
+    def __hash__(self):
+        # Defining __eq__ appears block a class from inheriting its parent's __hash__.
+        # This restores that.
+        return super().__hash__()
+
     def save(self, *args, **kwargs):
         """
         Overloaded to update domain pillow with subscription information
@@ -2069,7 +2074,7 @@ class Invoice(InvoiceBase):
             from corehq.apps.accounting.views import ManageBillingAccountView
             admins = WebUser.get_admins_by_domain(self.get_domain())
             contact_emails.extend([admin.email if admin.email else admin.username for admin in admins])
-            if not settings.UNIT_TESTING:
+            if not settings.UNIT_TESTING and not include_domain_admins:
                 _soft_assert_contact_emails_missing(
                     False,
                     "Could not find an email to send the invoice "
@@ -2080,8 +2085,23 @@ class Invoice(InvoiceBase):
                         absolute_reverse(ManageBillingAccountView.urlname, args=[self.account.id]),
                     )
                 )
+
         if filter_out_dimagi:
+            emails_with_dimagi = contact_emails
             contact_emails = [e for e in contact_emails if not e.endswith('@dimagi.com')]
+            if not contact_emails:
+                # make sure at least someone (even if it's dimagi)
+                # gets this communication. Also helpful with QA when the only
+                # emails are @dimagi.com
+                contact_emails = emails_with_dimagi
+                _soft_assert_contact_emails_missing(
+                    False,
+                    f"Could not find a non-dimagi email to send invoice "
+                    f"{self.invoice_number}. "
+                    f"Sending to these dimagi emails instead: "
+                    f"{', '.join(emails_with_dimagi)}."
+                )
+
         return contact_emails
 
     @property

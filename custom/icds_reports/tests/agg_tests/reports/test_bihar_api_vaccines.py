@@ -37,8 +37,9 @@ class VaccinesAPITest(TestCase):
              'due_list_date_2g_rv_2': None, 'due_list_date_3g_rv_3': None, 'due_list_date_4g_vit_a_1': None,
              'due_list_date_5g_vit_a_2': None, 'due_list_date_6g_vit_a_3': None, 'due_list_date_6g_vit_a_4': None,
              'due_list_date_6g_vit_a_5': None, 'due_list_date_6g_vit_a_6': None, 'due_list_date_6g_vit_a_7': None,
-             'due_list_date_6g_vit_a_8': None, 'due_list_date_7g_vit_a_9': None,
-             'due_list_date_1g_bcg': datetime.date(2017, 3, 1), 'delivery_nature': 'vaginal', 'term_days': 311}
+             'due_list_date_6g_vit_a_8': None, 'due_list_date_7g_vit_a_9': None, 'birth_weight': None,
+             'due_list_date_1g_bcg': datetime.date(2017, 3, 1), 'delivery_nature': 'vaginal', 'term_days': 311,
+             'last_reported_fever_date': None}
             ,
             first_person_case
         )

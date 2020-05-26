@@ -64,7 +64,6 @@ class Transition(object):
 
     @transaction.atomic()
     def perform(self):
-        from custom.icds.location_reassignment.tasks import update_usercase
         if not self.valid():
             raise InvalidTransitionError(", ".join(self.errors))
         new_locations_created = self._create_missing_new_locations()
@@ -73,8 +72,6 @@ class Transition(object):
         if self.operation_obj.deactivates_old_users:
             for old_location in self.operation_obj.old_locations:
                 deactivate_users_at_location(old_location.location_id)
-        for old_username, new_username in self.user_transitions.items():
-            update_usercase.delay(self.domain, old_username, new_username)
 
     def valid(self):
         return self.operation_obj.valid()
@@ -121,6 +118,7 @@ class Transition(object):
 class BaseOperation(metaclass=ABCMeta):
     type = None
     deactivates_old_users = True
+    archives_old_locations = True
     expected_old_locations = ONE
     expected_new_locations = ONE
 
@@ -197,24 +195,24 @@ class MergeOperation(BaseOperation):
     expected_old_locations = MANY
 
     def perform(self):
-        from custom.icds.location_reassignment.tasks import reassign_household_and_child_cases_for_owner
+        from custom.icds.location_reassignment.tasks import reassign_cases_for_owner
         timestamp = datetime.utcnow()
         new_location = self.new_locations[0]
         for old_location in self.old_locations:
-            old_location.metadata[DEPRECATED_TO] = [new_location.location_id]
+            old_location.metadata[DEPRECATED_TO] = f"{new_location.location_id}"
             old_location.metadata[DEPRECATED_AT] = timestamp
             old_location.metadata[DEPRECATED_VIA] = self.type
             old_location.is_archived = True
             old_location.archived_on = timestamp
             old_location.save()
 
-        new_location.metadata[DEPRECATES] = [l.location_id for l in self.old_locations]
+        new_location.metadata[DEPRECATES] = ",".join([l.location_id for l in self.old_locations])
         new_location.metadata[DEPRECATES_AT] = timestamp
         new_location.metadata[DEPRECATES_VIA] = self.type
         new_location.save()
         for old_location in self.old_locations:
-            reassign_household_and_child_cases_for_owner.delay(self.domain, old_location.location_id,
-                                                               new_location.location_id, timestamp)
+            reassign_cases_for_owner.delay(self.domain, old_location.location_id, new_location.location_id,
+                                           timestamp)
 
 
 class SplitOperation(BaseOperation):
@@ -224,7 +222,7 @@ class SplitOperation(BaseOperation):
     def perform(self):
         timestamp = datetime.utcnow()
         old_location = self.old_locations[0]
-        old_location.metadata[DEPRECATED_TO] = [l.location_id for l in self.new_locations]
+        old_location.metadata[DEPRECATED_TO] = ",".join([l.location_id for l in self.new_locations])
         old_location.metadata[DEPRECATED_AT] = timestamp
         old_location.metadata[DEPRECATED_VIA] = self.type
         old_location.is_archived = True
@@ -232,7 +230,7 @@ class SplitOperation(BaseOperation):
         old_location.save()
 
         for new_location in self.new_locations:
-            new_location.metadata[DEPRECATES] = [old_location.location_id]
+            new_location.metadata[DEPRECATES] = f"{old_location.location_id}"
             new_location.metadata[DEPRECATES_AT] = timestamp
             new_location.metadata[DEPRECATES_VIA] = self.type
             new_location.save()
@@ -241,17 +239,18 @@ class SplitOperation(BaseOperation):
 class ExtractOperation(BaseOperation):
     type = EXTRACT_OPERATION
     deactivates_old_users = False
+    archives_old_locations = False
 
     def perform(self):
         timestamp = datetime.utcnow()
         old_location = self.old_locations[0]
         new_location = self.new_locations[0]
-        old_location.metadata[DEPRECATED_TO] = [new_location.location_id]
+        old_location.metadata[DEPRECATED_TO] = f"{new_location.location_id}"
         old_location.metadata[DEPRECATED_AT] = timestamp
         old_location.metadata[DEPRECATED_VIA] = self.type
         old_location.save()
 
-        new_location.metadata[DEPRECATES] = [old_location.location_id]
+        new_location.metadata[DEPRECATES] = f"{old_location.location_id}"
         new_location.metadata[DEPRECATES_AT] = timestamp
         new_location.metadata[DEPRECATES_VIA] = self.type
         new_location.save()
@@ -261,20 +260,20 @@ class MoveOperation(BaseOperation):
     type = MOVE_OPERATION
 
     def perform(self):
-        from custom.icds.location_reassignment.tasks import reassign_household_and_child_cases_for_owner
+        from custom.icds.location_reassignment.tasks import reassign_cases_for_owner
         timestamp = datetime.utcnow()
         old_location = self.old_locations[0]
         new_location = self.new_locations[0]
-        old_location.metadata[DEPRECATED_TO] = [new_location.location_id]
+        old_location.metadata[DEPRECATED_TO] = ",".join([new_location.location_id])
         old_location.metadata[DEPRECATED_AT] = timestamp
         old_location.metadata[DEPRECATED_VIA] = self.type
         old_location.is_archived = True
         old_location.archived_on = timestamp
         old_location.save()
 
-        new_location.metadata[DEPRECATES] = [old_location.location_id]
+        new_location.metadata[DEPRECATES] = f"{old_location.location_id}"
         new_location.metadata[DEPRECATES_AT] = timestamp
         new_location.metadata[DEPRECATES_VIA] = self.type
         new_location.save()
-        reassign_household_and_child_cases_for_owner.delay(self.domain, old_location.location_id,
-                                                           new_location.location_id, timestamp)
+        reassign_cases_for_owner.delay(self.domain, old_location.location_id, new_location.location_id,
+                                       timestamp)

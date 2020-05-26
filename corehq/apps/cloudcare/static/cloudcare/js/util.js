@@ -1,3 +1,5 @@
+/*global FormplayerFrontend */
+
 hqDefine('cloudcare/js/util', function () {
     if (!String.prototype.startsWith) {
         String.prototype.startsWith = function (searchString, position) {
@@ -47,11 +49,18 @@ hqDefine('cloudcare/js/util', function () {
     };
 
     var showHTMLError = function (message, $el, autoHideTime) {
-        message = message || gettext("Sorry, an error occurred while processing that request.");
-        _show(message, $el, autoHideTime, "", true);
+        var htmlMessage = message = message || gettext("Sorry, an error occurred while processing that request.");
+        var $container = _show(message, $el, autoHideTime, "alert alert-danger", true);
+        try {
+            message = $container.text();  // pull out just the text the user sees
+            message = message.replace(/\s+/g, ' ').trim();
+        } catch (e) {
+            // leave the message as at came in if there's an issue parsing text from the container
+        }
         reportFormplayerErrorToHQ({
             type: 'show_error_notification',
             message: message,
+            htmlMessage: htmlMessage,
         });
     };
 
@@ -126,6 +135,18 @@ hqDefine('cloudcare/js/util', function () {
         }
     };
 
+    var breakLocksComplete = function (isError, message) {
+        hideLoading();
+        if (isError) {
+            showError(
+                gettext('Error breaking locks. Please report an issue if this persists.'),
+                $('#cloudcare-notifications')
+            );
+        } else {
+            showSuccess(message, $('#cloudcare-notifications'), 5000);
+        }
+    };
+
     var hideLoading = function (selector) {
         NProgress.done();
     };
@@ -133,7 +154,10 @@ hqDefine('cloudcare/js/util', function () {
     var reportFormplayerErrorToHQ = function (data) {
         try {
             var reverse = hqImport("hqwebapp/js/initial_page_data").reverse;
-
+            var cloudcareEnv = FormplayerFrontend.request('currentUser').environment;
+            if (!data.cloudcareEnv) {
+                data.cloudcareEnv = cloudcareEnv || 'unknown';
+            }
             $.ajax({
                 type: 'POST',
                 url: reverse('report_formplayer_error'),
@@ -164,6 +188,7 @@ hqDefine('cloudcare/js/util', function () {
         showHTMLError: showHTMLError,
         showSuccess: showSuccess,
         clearUserDataComplete: clearUserDataComplete,
+        breakLocksComplete: breakLocksComplete,
         formplayerLoading: formplayerLoading,
         formplayerLoadingComplete: formplayerLoadingComplete,
         formplayerSyncComplete: formplayerSyncComplete,

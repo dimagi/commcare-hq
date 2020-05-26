@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-05-06 19:06+0000\n"
+"POT-Creation-Date: 2020-05-20 17:30+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -554,27 +554,27 @@ msgstr ""
 msgid "Form Settings"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:96
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:79
 msgid "Home Screen"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:97
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:80
 msgid "First Menu"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:99
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:82
 msgid "Menu: "
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:102
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:85
 msgid "Parent Menu: "
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:104
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:87
 msgid "Previous Screen"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:113
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:96
 msgid "Link to other form"
 msgstr ""
 
@@ -605,23 +605,23 @@ msgstr ""
 msgid "Menu Settings"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:118
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:101
 msgid "Case type is required."
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:125
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:108
 msgid "Case types can only include the characters a-z, 0-9, '-' and '_'"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:130
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:113
 msgid "'commcare-user' is a reserved case type. Please change the case type"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:174
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:157
 msgid "Go back to case list"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:175
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:158
 msgid "Proceed with registered case"
 msgstr ""
 
@@ -633,11 +633,11 @@ msgstr ""
 msgid "Display text is required"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/report_module.js:342
+#: corehq/apps/app_manager/static/app_manager/js/modules/report_module.js:341
 msgid "You have unsaved changes in your report list module"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/report_module.js:438
+#: corehq/apps/app_manager/static/app_manager/js/modules/report_module.js:436
 msgid "This code is used in multiple places."
 msgstr ""
 
@@ -2573,42 +2573,58 @@ msgstr ""
 msgid "Not a valid choice"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js:644
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js:272
+msgid "Submitting..."
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js:274
+msgid "Submit"
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js:657
 msgid ""
 "Another process prevented us from servicing your request. Please try again "
 "later."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js:646
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js:659
 msgid ""
 "We have detected an issue with your network. Please check your Internet "
 "connection and retry when connectivity improves."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/webformsession.js:366
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/webformsession.js:378
 msgid "We were unable to save this answer. Please try again later."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:196
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer-inline.js:35
+msgid "Form successfully submitted!"
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer-inline.js:40
+msgid "An unexpected error occurred!"
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:197
 msgid "Form successfully saved!"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:319
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:320
 msgid ""
 "You are now offline. Web Apps is not optimized for offline use. Please "
 "reconnect to the Internet before continuing."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:328
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:329
 msgid "You are are back online."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:453
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:454
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js:42
 msgid "Waiting for server progress"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:481
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:482
 msgid "Please wait..."
 msgstr ""
 
@@ -2668,29 +2684,33 @@ msgstr ""
 msgid "Confirm?"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/util.js:32
-#: corehq/apps/cloudcare/static/cloudcare/js/util.js:45
+#: corehq/apps/cloudcare/static/cloudcare/js/util.js:34
+#: corehq/apps/cloudcare/static/cloudcare/js/util.js:52
 msgid "Sorry, an error occurred while processing that request."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/util.js:92
+#: corehq/apps/cloudcare/static/cloudcare/js/util.js:110
 msgid "Error saving!"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/util.js:100
+#: corehq/apps/cloudcare/static/cloudcare/js/util.js:118
 msgid "Could not sync user data. Please report an issue if this persists."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/util.js:104
+#: corehq/apps/cloudcare/static/cloudcare/js/util.js:122
 msgid "User Data successfully synced."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/util.js:112
+#: corehq/apps/cloudcare/static/cloudcare/js/util.js:130
 msgid "Could not clear user data. Please report an issue if this persists."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/util.js:116
+#: corehq/apps/cloudcare/static/cloudcare/js/util.js:134
 msgid "User data successfully cleared."
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/util.js:142
+msgid "Error breaking locks. Please report an issue if this persists."
 msgstr ""
 
 #: corehq/apps/commtrack/static/commtrack/js/products_and_programs_main.js:41
@@ -2769,7 +2789,7 @@ msgstr ""
 msgid "Issue communicating with server. Try again."
 msgstr ""
 
-#: corehq/apps/data_interfaces/static/data_interfaces/js/manage_case_groups.js:48
+#: corehq/apps/data_interfaces/static/data_interfaces/js/manage_case_groups.js:57
 msgid "Sorry, it looks like the upload failed."
 msgstr ""
 
@@ -3484,20 +3504,20 @@ msgstr ""
 
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js:368
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js:383
-#: corehq/apps/userreports/static/userreports/js/report_config.js:295
-#: corehq/apps/userreports/static/userreports/js/report_config.js:323
+#: corehq/apps/userreports/static/userreports/js/report_config.js:305
+#: corehq/apps/userreports/static/userreports/js/report_config.js:333
 msgid "Choose the property you would like to add as a filter to this report."
 msgstr ""
 
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js:369
-#: corehq/apps/userreports/static/userreports/js/report_config.js:296
+#: corehq/apps/userreports/static/userreports/js/report_config.js:306
 msgid ""
 "Web users viewing the report will see this display text instead of the "
 "property name. Name your filter something easy for users to understand."
 msgstr ""
 
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js:370
-#: corehq/apps/userreports/static/userreports/js/report_config.js:297
+#: corehq/apps/userreports/static/userreports/js/report_config.js:307
 msgid ""
 "What type of property is this filter?<br/><br/><strong>Date</strong>: Select "
 "this if the property is a date.<br/><strong>Choice</strong>: Select this if "
@@ -3505,7 +3525,7 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js:384
-#: corehq/apps/userreports/static/userreports/js/report_config.js:324
+#: corehq/apps/userreports/static/userreports/js/report_config.js:334
 msgid ""
 "What type of property is this filter?<br/><br/><strong>Date</strong>: Select "
 "this to filter the property by a date range.<br/><strong>Value</strong>: "
@@ -3513,7 +3533,7 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js:385
-#: corehq/apps/userreports/static/userreports/js/report_config.js:325
+#: corehq/apps/userreports/static/userreports/js/report_config.js:335
 msgid "What value or date range must the property be equal to?"
 msgstr ""
 
@@ -3749,7 +3769,7 @@ msgstr ""
 msgid "Unable to save case configs"
 msgstr ""
 
-#: corehq/motech/dhis2/static/dhis2/js/dhis2_map_settings.js:160
+#: corehq/motech/dhis2/static/dhis2/js/dhis2_map_settings.js:161
 msgid "Unable to save DataSet maps"
 msgstr ""
 
