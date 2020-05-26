@@ -102,6 +102,7 @@ from corehq.apps.users.models import (
     UserRole,
     WebUser,
 )
+from corehq.apps.users.views.utils import get_editable_role_choices
 from corehq.elastic import es_query
 from corehq.util.couch import get_document_or_404
 from corehq.util.view_utils import json_error
@@ -253,7 +254,7 @@ class BaseEditUserView(BaseUserSettingsView):
     @property
     @memoized
     def editable_role_choices(self):
-        return _get_editable_role_choices(self.domain, self.request.couch_user, allow_admin_role=False)
+        return get_editable_role_choices(self.domain, self.request.couch_user, allow_admin_role=False)
 
     @property
     def can_change_user_roles(self):
@@ -363,7 +364,7 @@ class EditWebUserView(BaseEditUserView):
 
     @property
     def user_role_choices(self):
-        return _get_editable_role_choices(self.domain, self.request.couch_user, allow_admin_role=True)
+        return get_editable_role_choices(self.domain, self.request.couch_user, allow_admin_role=True)
 
     @property
     def form_user_update_permissions(self):
@@ -934,7 +935,7 @@ class InviteWebUserView(BaseManageWebUserView):
     @property
     @memoized
     def invite_web_user_form(self):
-        role_choices = _get_editable_role_choices(self.domain, self.request.couch_user, allow_admin_role=True)
+        role_choices = get_editable_role_choices(self.domain, self.request.couch_user, allow_admin_role=True)
         loc = None
         domain_request = DomainRequest.objects.get(id=self.request_id) if self.request_id else None
         initial = {
@@ -1190,15 +1191,3 @@ def register_fcm_device_token(request, domain, couch_user_id, device_token):
     user.fcm_device_token = device_token
     user.save()
     return HttpResponse()
-
-
-def _get_editable_role_choices(domain, couch_user, allow_admin_role):
-    def role_to_choice(role):
-        return (role.get_qualified_id(), role.name or _('(No Name)'))
-
-    roles = UserRole.by_domain(domain)
-    if not couch_user.is_domain_admin(domain):
-        roles = [role for role in roles if role.is_non_admin_editable]
-    elif allow_admin_role:
-        roles = [AdminUserRole(domain=domain)] + roles
-    return [role_to_choice(role) for role in roles]
