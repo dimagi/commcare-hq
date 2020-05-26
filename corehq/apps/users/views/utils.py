@@ -1,9 +1,6 @@
 from django.utils.translation import ugettext as _
 
-from corehq.apps.users.models import (
-    AdminUserRole,
-    UserRole,
-)
+from corehq.apps.users.models import AdminUserRole, UserRole
 
 
 def get_editable_role_choices(domain, couch_user, allow_admin_role, use_qualified_id=True):

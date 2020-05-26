@@ -24,7 +24,6 @@ from crispy_forms.layout import Fieldset, Layout, Submit
 from django_countries.data import COUNTRIES
 from memoized import memoized
 
-from corehq.toggles import TWO_STAGE_USER_PROVISIONING
 from dimagi.utils.django.fields import TrimmedCharField
 
 from corehq import toggles
@@ -36,16 +35,14 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.crispy import HQModalFormHelper
 from corehq.apps.hqwebapp.utils import decode_password
-from corehq.apps.hqwebapp.widgets import (
-    Select2Ajax,
-    SelectToggle,
-)
+from corehq.apps.hqwebapp.widgets import Select2Ajax, SelectToggle
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import user_can_access_location_id
 from corehq.apps.programs.models import Program
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
 from corehq.apps.users.models import CouchUser, UserRole
 from corehq.apps.users.util import cc_user_domain, format_username
+from corehq.toggles import TWO_STAGE_USER_PROVISIONING
 from custom.nic_compliance.forms import EncodedPasswordChangeFormMixin
 
 mark_safe_lazy = lazy(mark_safe, str)

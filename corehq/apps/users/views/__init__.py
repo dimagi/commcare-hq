@@ -7,7 +7,12 @@ from django.contrib import messages
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.views import redirect_to_login
 from django.core.exceptions import ValidationError
-from django.http import Http404, HttpResponse, HttpResponseRedirect, JsonResponse
+from django.http import (
+    Http404,
+    HttpResponse,
+    HttpResponseRedirect,
+    JsonResponse,
+)
 from django.shortcuts import render
 from django.template.loader import render_to_string
 from django.urls import reverse
@@ -27,12 +32,12 @@ from django_otp.plugins.otp_static.models import StaticToken
 from django_prbac.utils import has_privilege
 from memoized import memoized
 
-from corehq.apps.accounting.decorators import always_allow_project_access
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.web import json_response
 
 import langcodes
 from corehq import privileges, toggles
+from corehq.apps.accounting.decorators import always_allow_project_access
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.analytics.tasks import (
     HUBSPOT_EXISTING_USER_INVITE_FORM,
@@ -41,7 +46,10 @@ from corehq.apps.analytics.tasks import (
     send_hubspot_form,
     track_workflow,
 )
-from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain, get_app_languages
+from corehq.apps.app_manager.dbaccessors import (
+    get_app_languages,
+    get_brief_apps_in_domain,
+)
 from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps
 from corehq.apps.domain.decorators import (
     domain_admin_required,

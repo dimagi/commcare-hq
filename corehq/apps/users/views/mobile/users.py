@@ -4,21 +4,17 @@ import re
 from collections import defaultdict
 from datetime import datetime
 
-from braces.views import JsonRequestResponseMixin
-from couchdbkit import ResourceNotFound
-
-from corehq.apps.registration.forms import MobileWorkerAccountConfirmationForm
-from corehq.apps.users.account_confirmation import send_account_confirmation_if_necessary
-from corehq.util import get_document_or_404
-from corehq.util.metrics import metrics_counter
-from couchexport.models import Format
-from couchexport.writers import Excel2007ExportWriter
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
-from django.http import Http404, HttpResponse, HttpResponseBadRequest, HttpResponseRedirect
+from django.http import (
+    Http404,
+    HttpResponse,
+    HttpResponseBadRequest,
+    HttpResponseRedirect,
+)
 from django.http.response import HttpResponseServerError, JsonResponse
 from django.shortcuts import redirect, render
 from django.template.loader import render_to_string
@@ -28,12 +24,22 @@ from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
 from django.views.decorators.http import require_GET, require_POST
 from django.views.generic import TemplateView, View
+
+from braces.views import JsonRequestResponseMixin
+from couchdbkit import ResourceNotFound
 from django_prbac.exceptions import PermissionDenied
 from django_prbac.utils import has_privilege
 from djng.views.mixins import JSONResponseMixin, allow_remote_invocation
 from memoized import memoized
 
 from casexml.apps.phone.models import SyncLogSQL
+from couchexport.models import Format
+from couchexport.writers import Excel2007ExportWriter
+from dimagi.utils.web import json_response
+from soil import DownloadBase
+from soil.exceptions import TaskFailedError
+from soil.util import expose_cached_download, get_download_context
+
 from corehq import privileges
 from corehq.apps.accounting.async_handlers import Select2BillingInfoHandler
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
@@ -60,15 +66,19 @@ from corehq.apps.locations.permissions import (
     user_can_access_location_id,
 )
 from corehq.apps.ota.utils import demo_restore_date_created, turn_off_demo_mode
+from corehq.apps.registration.forms import MobileWorkerAccountConfirmationForm
 from corehq.apps.sms.models import SelfRegistrationInvitation
 from corehq.apps.sms.verify import initiate_sms_verification_workflow
-from corehq.apps.user_importer.importer import (
-    UserUploadError,
-    check_headers,
-)
+from corehq.apps.user_importer.importer import UserUploadError, check_headers
 from corehq.apps.user_importer.tasks import import_users_and_groups
+from corehq.apps.users.account_confirmation import (
+    send_account_confirmation_if_necessary,
+)
 from corehq.apps.users.analytics import get_search_users_in_domain_es_query
-from corehq.apps.users.dbaccessors.all_commcare_users import get_user_docs_by_username, user_exists
+from corehq.apps.users.dbaccessors.all_commcare_users import (
+    get_user_docs_by_username,
+    user_exists,
+)
 from corehq.apps.users.decorators import (
     require_can_edit_commcare_users,
     require_can_edit_or_view_commcare_users,
@@ -87,10 +97,10 @@ from corehq.apps.users.forms import (
 )
 from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.apps.users.tasks import (
+    bulk_download_usernames_async,
     bulk_download_users_async,
     reset_demo_user_restore_task,
     turn_on_demo_mode_task,
-    bulk_download_usernames_async,
 )
 from corehq.apps.users.util import (
     can_add_extra_mobile_workers,
@@ -103,17 +113,19 @@ from corehq.apps.users.views import (
     get_domain_languages,
 )
 from corehq.const import GOOGLE_PLAY_STORE_COMMCARE_URL, USER_DATE_FORMAT
-from corehq.toggles import FILTERED_BULK_USER_DOWNLOAD, TWO_STAGE_USER_PROVISIONING
+from corehq.toggles import (
+    FILTERED_BULK_USER_DOWNLOAD,
+    TWO_STAGE_USER_PROVISIONING,
+)
+from corehq.util import get_document_or_404
 from corehq.util.dates import iso_string_to_datetime
+from corehq.util.metrics import metrics_counter
 from corehq.util.workbook_json.excel import (
     WorkbookJSONError,
     WorksheetNotFound,
     get_workbook,
 )
-from dimagi.utils.web import json_response
-from soil import DownloadBase
-from soil.exceptions import TaskFailedError
-from soil.util import expose_cached_download, get_download_context
+
 from .custom_data_fields import UserFieldsView
 
 BULK_MOBILE_HELP_SITE = ("https://confluence.dimagi.com/display/commcarepublic"
