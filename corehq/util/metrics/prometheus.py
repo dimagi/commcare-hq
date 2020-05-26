@@ -1,5 +1,6 @@
 from typing import List, Dict
 
+from django.conf import settings
 from prometheus_client import Counter as PCounter
 from prometheus_client import Gauge as PGauge
 from prometheus_client import Histogram as PHistogram
