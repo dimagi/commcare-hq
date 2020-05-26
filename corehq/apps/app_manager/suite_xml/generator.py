@@ -148,6 +148,9 @@ class MediaSuiteGenerator(object):
             install_path = '../../{}'.format(path)
             local_path = './{}/{}'.format(path, name)
 
+            load_lazily = 'false'
+            if self.app.profile['properties']['lazy-load-multimedia-files'] == 'true':
+                load_lazily = 'true'
             if not getattr(m, 'unique_id', None):
                 # lazy migration for adding unique_id to map_item
                 m.unique_id = HQMediaMapItem.gen_unique_id(m.multimedia_id, unchanged_path)
@@ -168,6 +171,7 @@ class MediaSuiteGenerator(object):
                 path=install_path,
                 version=m.version,
                 descriptor=descriptor,
+                lazy=load_lazily,
                 local=(local_path
                        if self.app.enable_local_resource
                        else None),

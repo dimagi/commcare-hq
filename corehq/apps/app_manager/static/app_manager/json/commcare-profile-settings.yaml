@@ -8,6 +8,15 @@
   since: "1.3"
   force: true
 
+- name: "Lazy Load Resources"
+  description: "How should Commcare load the the multimedia files in the application."
+  id: "lazy-load-multimedia-files"
+  values: ["true", "false"]
+  value_names: ["Load multimedia files lazily", "Bundle multimedia files with the app"]
+  default: "false"
+  since: "2.6"
+  force: true
+
 - disabled: true
   name: "Purge Frequency"
   description: "How often the phone should attempt to purge any cached storage which may have expired"
