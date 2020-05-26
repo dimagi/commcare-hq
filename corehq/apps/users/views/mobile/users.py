@@ -272,6 +272,7 @@ class EditCommCareUserView(BaseEditUserView):
             'hide_password_feedback': settings.ENABLE_DRACONIAN_SECURITY_FEATURES,
             'group_names': [g.name for g in self.groups],
             'can_edit_groups': self.user_can_edit_groups,
+            'can_view_groups': self.user_can_view_groups,
         }
         if self.commtrack_form.errors:
             messages.error(self.request, _(
@@ -316,6 +317,11 @@ class EditCommCareUserView(BaseEditUserView):
     @memoized
     def user_can_edit_groups(self):
         return self.request.couch_user.has_permission(self.domain, 'edit_groups')
+
+    @property
+    @memoized
+    def user_can_view_groups(self):
+        return self.request.couch_user.has_permission(self.domain, 'view_groups')
 
     @property
     def parent_pages(self):

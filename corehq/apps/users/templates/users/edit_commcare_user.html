@@ -22,7 +22,9 @@
   {% endif %}
   <ul class="nav nav-tabs sticky-tabs" id="user-settings-tabs" style="margin-bottom: 10px;">
     <li><a href="#basic-info" data-toggle="tab">{% trans "Basic" %}</a></li>
-    <li><a href="#groups" data-toggle="tab">{% trans "Groups" %}</a></li>
+    {% if can_view_groups %}
+      <li><a href="#groups" data-toggle="tab">{% trans "Groups" %}</a></li>
+    {% endif %}
     {% if commtrack_enabled or uses_locations %}
       <li><a href="#commtrack-data" data-toggle="tab">{% trans "Locations" %}</a></li>
     {% endif %}
@@ -40,11 +42,13 @@
       </div>
     </div>
 
-    <div class="tab-pane" id="groups">
-      <div class="panel-body">
-        {% include 'users/partials/commcare_user_groups.html' %}
+    {% if can_view_groups %}
+      <div class="tab-pane" id="groups">
+        <div class="panel-body">
+          {% include 'users/partials/commcare_user_groups.html' %}
+        </div>
       </div>
-    </div>
+    {% endif %}
     {% if commtrack %}
       <div class="tab-pane" id="commtrack-data">
         <div class="panel-body">
