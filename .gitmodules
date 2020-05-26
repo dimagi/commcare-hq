@@ -22,3 +22,6 @@
 [submodule "submodules/xml2json"]
 	path = submodules/xml2json
 	url = git://github.com/dimagi/xml2json.git
+[submodule "custom/icds_reports"]
+	path = custom/icds_reports
+	url = https://github.com/shyamkumarlchauhan/icds-dashboard.git
