@@ -105,6 +105,7 @@ def _import_fixtures(domain):
             ('food_list', 'food_list.csv'),
             ('food_composition_table', 'food_composition_table.csv'),
             ('nutrients_lookup', 'nutrients_lookup.csv'),
+            ('languages', 'languages.csv'),
     ]:
         fields, rows = _read_csv(filename)
         data_type = FixtureDataType(

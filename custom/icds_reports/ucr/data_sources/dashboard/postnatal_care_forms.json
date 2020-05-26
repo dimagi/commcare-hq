@@ -369,6 +369,18 @@
             "property_path": ["form", "next_due"]
           }
         }
+      },
+      {
+        "column_id": "new_ifa_tablets_total",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "root_doc",
+          "expression": {
+            "type": "property_path",
+            "property_path": ["form", "new_ifa_tablets_total"]
+          }
+        }
       }
     ],
     "named_expressions": {

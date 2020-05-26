@@ -13,6 +13,8 @@ from auditcare import models
 from auditcare.models import AccessAudit
 
 # see if the user has overridden the failure limit
+from auditcare.utils import get_ip
+
 FAILURE_LIMIT = getattr(settings, 'AXES_LOGIN_FAILURE_LIMIT', 3)
 
 # see if the user has set axes to lock out logins after failure limit
@@ -56,7 +58,7 @@ def get_user_attempt(request):
     Returns access attempt record if it exists.
     Otherwise return None.
     """
-    ip = request.META.get('REMOTE_ADDR', '')
+    ip = get_ip(request)
     if USE_USER_AGENT:
         ua = request.META.get('HTTP_USER_AGENT', '<unknown>')
 
@@ -106,7 +108,7 @@ def watch_logout(func):
         log.info("Logged logout for user %s", request.user.username)
         user = request.user
         #it's a successful login.
-        ip = request.META.get('REMOTE_ADDR', '')
+        ip = get_ip(request)
         ua = request.META.get('HTTP_USER_AGENT', '<unknown>')
         attempt = AccessAudit()
         attempt.doc_type=AccessAudit.__name__
@@ -242,7 +244,7 @@ def log_request(request, login_unsuccessful):
             log.info('AXES: Repeated login failure by %s. Updating access '
                      'record. Count = %s', attempt.ip_address, failures)
         else:
-            ip = request.META.get('REMOTE_ADDR', '')
+            ip = get_ip(request)
             ua = request.META.get('HTTP_USER_AGENT', '<unknown>')
             attempt = AccessAudit()
             attempt.event_date = datetime.utcnow()

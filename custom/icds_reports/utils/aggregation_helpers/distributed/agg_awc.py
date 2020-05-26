@@ -316,7 +316,8 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
                  )
             WHERE (opened_on <= %(end_date)s AND
               (closed_on IS NULL OR closed_on >= %(start_date)s )) AND
-              (agg_migration.is_migrated IS DISTINCT FROM 1 OR agg_migration.migration_date::date >= %(start_date)s)
+              (agg_migration.is_migrated IS DISTINCT FROM 1 OR agg_migration.migration_date::date >= %(start_date)s) AND
+              (%(month_end_11yr)s > dob AND %(month_start_14yr)s <= dob)
               GROUP BY ucr.awc_id, ucr.supervisor_id
         )ut
         where agg_awc.awc_id = ut.awc_id and ut.supervisor_id=agg_awc.supervisor_id;
@@ -327,7 +328,9 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
             migration_table=AGG_MIGRATION_TABLE
         ), {
             'start_date': self.month_start,
-            'end_date': self.month_end
+            'end_date': self.month_end,
+            'month_end_11yr': self.month_end_11yr,
+            'month_start_14yr': self.month_start_14yr,
         }
 
         yield """

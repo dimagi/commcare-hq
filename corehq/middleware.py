@@ -123,27 +123,47 @@ class TimeoutMiddleware(MiddlewareMixin):
 
     @staticmethod
     def _user_requires_secure_session(couch_user):
-        return couch_user and any(Domain.is_secure_session_required(domain)
-                                  for domain in couch_user.get_domains())
+        if not couch_user:
+            return False
+
+        domains = couch_user.get_domains()
+        if any(Domain.is_secure_session_required(domain) for domain in domains):
+            return True
+
+        from corehq.apps.users.models import DomainPermissionsMirror
+        for domain in domains:
+            mirrors = DomainPermissionsMirror.mirror_domains(domain)
+            if any(Domain.is_secure_session_required(m) for m in mirrors):
+                return True
+
+        return False
 
     def process_view(self, request, view_func, view_args, view_kwargs):
         if not request.user.is_authenticated:
             return
 
         secure_session = request.session.get('secure_session')
-        timeout = settings.SECURE_TIMEOUT if secure_session else settings.INACTIVITY_TIMEOUT
         domain = getattr(request, "domain", None)
+        domain_obj = Domain.get_by_name(domain) if domain else None
         now = datetime.datetime.utcnow()
 
         # figure out if we want to switch to secure_sessions
         change_to_secure_session = (
             not secure_session
             and (
-                (domain and Domain.is_secure_session_required(domain))
+                (domain_obj and domain_obj.secure_sessions)
                 or self._user_requires_secure_session(request.couch_user)))
 
+        timeout = None
+        if secure_session or change_to_secure_session:
+            if domain_obj:
+                timeout = domain_obj.secure_timeout
+            if not timeout:
+                timeout = settings.SECURE_TIMEOUT
+        else:
+            timeout = settings.INACTIVITY_TIMEOUT
+
         if change_to_secure_session:
-            timeout = settings.SECURE_TIMEOUT
             # force re-authentication if the user has been logged in longer than the secure timeout
             if self._session_expired(timeout, request.user.last_login, now):
                 LogoutView.as_view(template_name=settings.BASE_TEMPLATE)(request)
@@ -210,6 +230,7 @@ class SentryContextMiddleware(MiddlewareMixin):
         with configure_scope() as scope:
             if getattr(request, 'couch_user', None):
                 scope.set_extra('couch_user_id', request.couch_user.get_id)
+                scope.set_tag('user.username', request.couch_user.username)
 
             if getattr(request, 'domain', None):
                 scope.set_tag('domain', request.domain)
