@@ -12,12 +12,36 @@ hqDefine('hqwebapp/js/inactivity', [
     initialPageData
 ) {
     $(function () {
-        var timeout = initialPageData.get('secure_timeout'),
+        var timeout = initialPageData.get('secure_timeout') * 60 * 1000,    // convert from minutes to milliseconds
             $modal = $("#inactivityModal");     // won't be present on app preview or pages without a domain
 
         if (timeout === undefined || !$modal.length) {
             return;
         }
+
+        /**
+          * Determine when to poll next. Poll more frequently as expiration approaches, to
+          * increase the chance the modal pops up before the user takes an action and gets rejected.
+          */
+        var calculateDelay = function (last_request) {
+            millisLeft = timeout;
+            if (last_request) {
+                 millisLeft = timeout - (new Date() - new Date(last_request));
+            }
+
+            // Last 30 seconds, ping every 3 seconds
+            if (millisLeft < 30 * 1000) {
+                return 3000;
+            }
+
+            // Last 2 minutes, ping every ten seconds
+            if (millisLeft < 2 * 60 * 1000) {
+                return 10 * 1000;
+            }
+
+            // We have time, ping when 2 minutes from expiring
+            return millisLeft - 2 * 60 * 1000;
+        };
 
         var pollToShowModal = function () {
             $.ajax({
@@ -25,7 +49,6 @@ hqDefine('hqwebapp/js/inactivity', [
                 type: 'GET',
                 success: function (data) {
                     if (!data.success) {
-                        clearInterval(interval);
                         var $body = $modal.find(".modal-body");
                         $modal.on('shown.bs.modal', function () {
                             var content = _.template('<iframe src="<%= src %>" height="<%= height %>" width="<%= width %>" style="border: none;"></iframe>')({
@@ -39,6 +62,8 @@ hqDefine('hqwebapp/js/inactivity', [
                         });
                         $body.html('<h1 class="text-center"><i class="fa fa-spinner fa-spin"></i></h1>');
                         $modal.modal({backdrop: 'static', keyboard: false});
+                    } else {
+                        _.delay(pollToShowModal, calculateDelay(data.last_request));
                     }
                 },
             });
@@ -55,7 +80,7 @@ hqDefine('hqwebapp/js/inactivity', [
                     if (data.success) {
                         $modal.modal('hide');
                         $button.text(gettext("Done"));
-                        // TODO: restart interval
+                        _.delay(pollToShowModal, calculateDelay());
                     } else {
                         $button.removeClass("btn-primary").addClass("btn-danger");
                         $button.text(gettext("Could not authenticate, please log in and try again"));
@@ -64,9 +89,10 @@ hqDefine('hqwebapp/js/inactivity', [
             });
         };
 
-        interval = setInterval(pollToShowModal, timeout * 60 * 1000);    // convert from minutes to milliseconds
-
         $modal.find(".modal-footer .dismiss-button").click(pollToHideModal);
+
+        // Start polling
+        _.delay(pollToShowModal, calculateDelay());
     });
 
     return 1;
