@@ -488,7 +488,10 @@ def logout(req, default_domain_redirect='domain_login'):
 
 @two_factor_exempt
 def ping_login(request):
-    return JsonResponse({'success': request.user.is_authenticated})
+    return JsonResponse({
+        'success': request.user.is_authenticated,
+        'last_request': request.session.get('last_request'),
+    })
 
 
 @login_required
