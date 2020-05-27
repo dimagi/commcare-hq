@@ -78,7 +78,7 @@ INDICATORS = [
     I('location_id', IN_UCR, IS_RECALL_META),
     I('respondent_id', IN_UCR, IS_RECALL_META),
     I('recall_case_id', IN_UCR, IS_RECALL_META),
-    I('opened_date', IN_UCR, IS_RECALL_META),
+    I('opened_on', IN_UCR, IS_RECALL_META),
     I('opened_by_username', IN_UCR, IS_RECALL_META),
     I('owner_name', IN_UCR, IS_RECALL_META),
     I('visit_date', IN_UCR, IS_RECALL_META),
