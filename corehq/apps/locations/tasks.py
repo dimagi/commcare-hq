@@ -5,6 +5,7 @@ from django.conf import settings
 from celery.task import task
 
 from dimagi.utils.couch.database import iter_docs
+from dimagi.utils.logging import notify_exception
 from soil import DownloadBase
 
 from corehq.apps.commtrack.models import (
@@ -134,9 +135,9 @@ def import_locations_async(domain, file_ref_id, user_id):
                 results.success,
             )
     except Exception as e:
+        notify_exception(None, message=str(e))
         results = LocationUploadResult()
         results.errors = [str(e)]
-
     return {
         'messages': {
             'messages': results.messages,

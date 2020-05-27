@@ -49,8 +49,7 @@ def case_uploads(request, domain):
 
     with transaction.atomic():
         for case_upload_record in case_upload_records:
-            if case_upload_record.set_task_status_json_if_failed():
-                case_upload_record.save()
+            case_upload_record.save_task_status_json_if_failed()
 
     case_uploads_json = [case_upload_to_user_json(case_upload_record, request)
                          for case_upload_record in case_upload_records]

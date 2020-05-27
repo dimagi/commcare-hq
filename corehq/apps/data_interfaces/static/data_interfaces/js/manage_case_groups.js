@@ -34,10 +34,19 @@ hqDefine("data_interfaces/js/manage_case_groups", [
                         },
                         success: function (data) {
                             if (data) {
-                                isPollingActive = false;
-                                $('#upload-notice').html(
-                                    _.template($('#template-bulk-status').text())(data)
-                                );
+                                if (data.inProgress) {
+                                    isPollingActive = true;
+                                    attempts = 0;
+                                    $('#upload-progress').html(
+                                        _.template($('#template-upload-progress').text())(data)
+                                    );
+                                    retry();
+                                } else {
+                                    isPollingActive = false;
+                                    $('#upload-notice').html(
+                                        _.template($('#template-bulk-status').text())(data)
+                                    );
+                                }
                             } else {
                                 retry();
                             }
