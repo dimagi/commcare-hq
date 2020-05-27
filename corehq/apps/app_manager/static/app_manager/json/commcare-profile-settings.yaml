@@ -10,9 +10,9 @@
 
 - name: "Lazy Load Resources"
   description: "How should Commcare load the the multimedia files in the application."
-  id: "lazy-load-multimedia-files"
+  id: "lazy_load_multimedia_files"
   values: ["true", "false"]
-  value_names: ["Load multimedia files lazily", "Bundle multimedia files with the app"]
+  value_names: ["Yes", "No"]
   default: "false"
   since: "2.6"
   force: true
