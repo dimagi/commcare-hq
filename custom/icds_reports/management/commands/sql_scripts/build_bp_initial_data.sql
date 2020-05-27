@@ -35,7 +35,7 @@ INSERT INTO "icds_dashboard_ccs_record_bp_forms" (
         LAST_VALUE(using_ifa) OVER w as using_ifa,
         GREATEST(LAST_VALUE(ifa_last_seven_days) OVER w, 0) as ifa_last_seven_days,
         LAST_VALUE(reason_no_ifa) OVER w as reason_no_ifa,
-        GREATEST(LAST_VALUE(new_ifa_tablets_total) OVER w, 0) as new_ifa_tablets_total,
+        LAST_VALUE(new_ifa_tablets_total) OVER w as new_ifa_tablets_total,
         SUM(CASE WHEN
             (unscheduled_visit=0 AND days_visit_late < 8) OR (timeend::DATE - next_visit) < 8
             THEN 1 ELSE 0 END
