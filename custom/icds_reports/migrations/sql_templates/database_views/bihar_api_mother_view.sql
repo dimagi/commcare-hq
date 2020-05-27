@@ -19,7 +19,19 @@ CREATE VIEW bihar_api_mother_view AS
         "ccs_record_monthly"."tt_1" AS "tt_1",
         "ccs_record_monthly"."tt_2" AS "tt_2",
         "ccs_record_monthly"."anemia" AS "hb",
-        "ccs_record_monthly"."add" AS "add"
+        "ccs_record_monthly"."add" AS "add",
+        "ccs_record_monthly"."edd" - 280 AS lmp,
+        "ccs_record_monthly"."edd" AS edd,
+        "ccs_record_monthly"."anc_1" AS "anc_1",
+        "ccs_record_monthly"."anc_2" AS "anc_2",
+        "ccs_record_monthly"."anc_3" AS "anc_3",
+        "ccs_record_monthly"."anc_4" AS "anc_4",
+        CASE WHEN "bihar_api_demographics"."is_pregnant"=1 THEN
+        "ccs_record_monthly"."new_ifa_tablets_total_bp" ELSE
+        "ccs_record_monthly"."new_ifa_tablets_total_pnc" END AS "total_ifa_tablets_received",
+        "ccs_record_monthly"."ifa_last_seven_days" AS "ifa_consumed_7_days",
+        "ccs_record_monthly"."reason_no_ifa" AS "causes_for_ifa",
+        "ccs_record_monthly"."complication_type" AS "maternal_complications"
     from "public"."ccs_record_monthly"
     LEFT JOIN "public"."bihar_api_demographics"
     ON (

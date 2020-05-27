@@ -90,8 +90,8 @@ from dimagi.ext.couchdbkit import (
 )
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from dimagi.utils.parsing import json_format_datetime
-from dimagi.utils.post import simple_post
 
+from corehq import toggles
 from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CommCareUser
@@ -100,7 +100,13 @@ from corehq.form_processor.interfaces.dbaccessors import (
     CaseAccessors,
     FormAccessors,
 )
-from corehq.motech.const import ALGO_AES, BASIC_AUTH, DIGEST_AUTH, OAUTH1, BEARER_AUTH
+from corehq.motech.const import (
+    ALGO_AES,
+    BASIC_AUTH,
+    BEARER_AUTH,
+    DIGEST_AUTH,
+    OAUTH1,
+)
 from corehq.motech.repeaters.repeater_generators import (
     AppStructureGenerator,
     CaseRepeaterJsonPayloadGenerator,
@@ -108,10 +114,11 @@ from corehq.motech.repeaters.repeater_generators import (
     FormRepeaterJsonPayloadGenerator,
     FormRepeaterXMLPayloadGenerator,
     LocationPayloadGenerator,
+    ReferCasePayloadGenerator,
     ShortFormRepeaterJsonPayloadGenerator,
     UserPayloadGenerator,
 )
-from corehq.motech.requests import Requests
+from corehq.motech.requests import Requests, simple_post
 from corehq.motech.utils import b64_aes_decrypt
 from corehq.util.metrics import metrics_counter
 from corehq.util.quickcache import quickcache
@@ -119,7 +126,6 @@ from corehq.util.quickcache import quickcache
 from .const import (
     MAX_RETRY_WAIT,
     MIN_RETRY_WAIT,
-    POST_TIMEOUT,
     RECORD_CANCELLED_STATE,
     RECORD_FAILURE_STATE,
     RECORD_PENDING_STATE,
@@ -369,7 +375,11 @@ class Repeater(QuickCachedDocumentMixin, Document):
         headers = self.get_headers(repeat_record)
         auth = self.get_auth()
         url = self.get_url(repeat_record)
-        return simple_post(payload, url, headers=headers, timeout=POST_TIMEOUT, auth=auth, verify=self.verify)
+        return simple_post(
+            self.domain, url, payload, headers=headers, auth=auth,
+            verify=self.verify, notify_addresses=self.notify_addresses,
+            payload_id=repeat_record.payload_id,
+        )
 
     def fire_for_record(self, repeat_record):
         payload = self.get_payload(repeat_record)
@@ -535,6 +545,30 @@ class UpdateCaseRepeater(CaseRepeater):
 
     def allowed_to_forward(self, payload):
         return super(UpdateCaseRepeater, self).allowed_to_forward(payload) and len(payload.xform_ids) > 1
+
+
+class ReferCaseRepeater(CreateCaseRepeater):
+    """
+    A repeater that triggers off case creation but sends a form creating cases in
+    another commcare project
+    """
+    friendly_name = _("Forward Cases To Another Commcare Project")
+
+    payload_generator_classes = (ReferCasePayloadGenerator,)
+
+    def form_class_name(self):
+        # Note this class does not exist but this property is only used to construct the URL
+        return 'ReferCaseRepeater'
+
+    @classmethod
+    def available_for_domain(cls, domain):
+        """Returns whether this repeater can be used by a particular domain
+        """
+        return toggles.REFER_CASE_REPEATER.enabled(domain)
+
+    def get_url(self, repeat_record):
+        new_domain = self.payload_doc(repeat_record).get_case_property('new_domain')
+        return self.url.format(domain=new_domain)
 
 
 class ShortFormRepeater(Repeater):

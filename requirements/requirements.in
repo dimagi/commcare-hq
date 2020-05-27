@@ -47,7 +47,7 @@ requests~=2.20
 schema
 suds-jurko==0.6
 tropo-webapi-python==0.1.3
-Unidecode==0.04.20
+text-unidecode>=1.2
 xlrd==1.0.0
 simplejson~=3.11
 sh==1.09

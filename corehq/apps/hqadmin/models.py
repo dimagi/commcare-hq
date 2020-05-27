@@ -21,12 +21,8 @@ class HqDeploy(models.Model):
     environment = models.CharField(max_length=100, null=True)
     diff_url = models.CharField(max_length=255, null=True)
 
-    @classmethod
-    def get_latest(cls, environment, limit=1):
-        query = cls.objects.filter(environment=environment).order_by("-date")
-        if limit:
-            return query[:limit]
-        return query
+    class Meta():
+        ordering = ["-date"]
 
 
 class HistoricalPillowCheckpoint(models.Model):

@@ -51,6 +51,7 @@ from corehq.apps.accounting.async_handlers import (
     FeatureRateAsyncHandler,
     InvoiceBalanceAsyncHandler,
     InvoiceNumberAsyncHandler,
+    CustomerInvoiceNumberAsyncHandler,
     Select2BillingInfoHandler,
     Select2CustomerInvoiceTriggerHandler,
     Select2InvoiceTriggerHandler,
@@ -1123,10 +1124,6 @@ class ManageAccountingAdminsView(AccountingSectionView, CRUDPaginatedViewMixin):
         return self.pagination_context
 
     @property
-    def parameters(self):
-        return self.request.POST if self.request.method == 'POST' else self.request.GET
-
-    @property
     def accounting_admin_queryset(self):
         return User.objects.filter(
             prbac_role__role__memberships_granted__to_role__slug=privileges.OPERATIONS_TEAM
@@ -1207,6 +1204,7 @@ class AccountingSingleOptionResponseView(View, AsyncHandlerMixin):
         BillingContactInfoAsyncHandler,
         SoftwarePlanAsyncHandler,
         InvoiceNumberAsyncHandler,
+        CustomerInvoiceNumberAsyncHandler,
         InvoiceBalanceAsyncHandler,
     ]
 
@@ -1343,10 +1341,6 @@ class EnterpriseBillingStatementsView(DomainAccountingSettings, CRUDPaginatedVie
     limit_text = ugettext_lazy("statements per page")
     empty_notification = ugettext_lazy("No Billing Statements match the current criteria.")
     loading_message = ugettext_lazy("Loading statements...")
-
-    @property
-    def parameters(self):
-        return self.request.POST if self.request.method == 'POST' else self.request.GET
 
     @property
     def stripe_cards(self):

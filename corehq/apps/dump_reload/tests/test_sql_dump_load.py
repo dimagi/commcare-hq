@@ -7,7 +7,7 @@ from io import StringIO
 
 from django.contrib.admin.utils import NestedObjects
 from django.core import serializers
-from django.db.models.signals import post_save
+from django.db.models.signals import post_delete, post_save
 from django.test import TestCase
 from django.test.utils import override_settings
 
@@ -24,9 +24,13 @@ from corehq.apps.dump_reload.sql.dump import (
     get_model_iterator_builders_to_dump,
     get_objects_to_dump,
 )
-from corehq.apps.dump_reload.sql.filters import GetattrQueryset
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.products.models import SQLProduct
+from corehq.apps.zapier.consts import EventTypes
+from corehq.apps.zapier.models import ZapierSubscription
+from corehq.apps.zapier.signals.receivers import (
+    zapier_subscription_post_delete,
+)
 from corehq.blobs.models import BlobMeta
 from corehq.form_processor.backends.sql.dbaccessors import LedgerAccessorSQL
 from corehq.form_processor.interfaces.dbaccessors import (
@@ -51,6 +55,7 @@ from corehq.messaging.scheduling.scheduling_partitioned.models import AlertSched
 class BaseDumpLoadTest(TestCase):
     @classmethod
     def setUpClass(cls):
+        post_delete.disconnect(zapier_subscription_post_delete, sender=ZapierSubscription)
         super(BaseDumpLoadTest, cls).setUpClass()
         cls.domain_name = uuid.uuid4().hex
         cls.domain = Domain(name=cls.domain_name)
@@ -64,17 +69,14 @@ class BaseDumpLoadTest(TestCase):
     def tearDownClass(cls):
         cls.domain.delete()
         super(BaseDumpLoadTest, cls).tearDownClass()
+        post_delete.connect(zapier_subscription_post_delete, sender=ZapierSubscription)
 
     def delete_sql_data(self):
         for model_class, builder in get_model_iterator_builders_to_dump(self.domain_name, []):
             for iterator in builder.querysets():
-                if isinstance(iterator, GetattrQueryset):
-                    for model in iterator:
-                        model.delete()
-                else:
-                    collector = NestedObjects(using=iterator.db)
-                    collector.collect(iterator)
-                    collector.delete()
+                collector = NestedObjects(using=iterator.db)
+                collector.collect(iterator)
+                collector.delete()
 
         self.assertEqual([], list(get_objects_to_dump(self.domain_name, [])))
 
@@ -535,6 +537,16 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
 
         self.addCleanup(lambda: delete_alert_schedule_instances_for_schedule(AlertScheduleInstance, schedule.schedule_id))
         self._dump_and_load(Counter({AlertSchedule: 1, AlertEvent: 2, SMSContent: 2}))
+
+    def test_zapier_subscription(self):
+        ZapierSubscription.objects.create(
+            domain=self.domain_name,
+            case_type='case_type',
+            event_name=EventTypes.NEW_CASE,
+            url='example.com',
+            user_id='user_id',
+        )
+        self._dump_and_load(Counter({ZapierSubscription: 1}))
 
 
 def _normalize_object_counter(counter, for_loaded=False):

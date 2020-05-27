@@ -36,6 +36,8 @@ NOSE_PLUGINS = [
     'corehq.tests.noseplugins.dividedwerun.DividedWeRunPlugin',
     'corehq.tests.noseplugins.djangomigrations.DjangoMigrationsPlugin',
     'corehq.tests.noseplugins.cmdline_params.CmdLineParametersPlugin',
+    'corehq.tests.noseplugins.patches.PatchesPlugin',
+    'corehq.tests.noseplugins.redislocks.RedisLockTimeoutPlugin',
     'corehq.tests.noseplugins.uniformresult.UniformTestResultPlugin',
 
     # The following are not enabled by default

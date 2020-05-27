@@ -23,7 +23,8 @@
   ],
   "server_environment": [
     "india",
-    "icds"
+    "icds",
+    "icds-staging"
   ],
   "report_id": "ls_v2_report_lbw_pre_term",
   "data_source_table": "static-child_health_cases",
@@ -134,7 +135,10 @@
         "aggregation": "simple",
         "column_id": "dob",
         "field": "dob",
-        "transform": {},
+        "transform": {
+          "type": "date_format",
+          "format": "%-d/%-m/%Y"
+        },
         "calculate_total": false,
         "type": "field",
         "display": {
