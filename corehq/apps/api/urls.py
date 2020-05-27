@@ -34,6 +34,7 @@ from corehq.apps.fixtures.resources.v0_1 import (
     LookupTableItemResource,
     LookupTableResource,
 )
+from corehq.apps.hqwebapp.decorators import waf_allow
 from corehq.apps.locations import resources as locations
 from corehq.apps.sms.resources import v0_5 as sms_v0_5
 
@@ -172,3 +173,6 @@ def api_url_patterns():
 
 
 admin_urlpatterns = list(api_url_patterns())
+
+
+waf_allow('XSS_BODY', hard_code_pattern=r'^/a/([\w\.:-]+)/api/v([\d\.]+)/form/$')
