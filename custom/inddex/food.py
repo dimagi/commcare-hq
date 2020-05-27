@@ -183,8 +183,11 @@ class FoodRow:
         else:
             self.caseid = ucr_row['doc_id']
             self.food_code = ucr_row['food_code']
+
         if not self.food_code and self.food_name in self.fixtures.foods_by_name:
             self.food_code = self.fixtures.foods_by_name[self.food_name].food_code
+        if not self.base_term_food_code and self.food_base_term in self.fixtures.foods_by_name:
+            self.base_term_food_code = self.fixtures.foods_by_name[self.food_base_term].food_code
 
         self._set_composition()
         self._set_conversion_factors()
@@ -203,9 +206,6 @@ class FoodRow:
             self.is_ingredient = 'yes'
             self.ingr_recipe_code = ingredient.recipe_code
             self.ingr_fraction = ingredient.ingr_fraction
-
-            base_food = self.fixtures.foods_by_name.get(self.food_base_term)
-            self.base_term_food_code = base_food.food_code if base_food else None
 
     def _set_composition(self):
         # Get the food composition corresponding to food_code, fall back to base_term_food_code
