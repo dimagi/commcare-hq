@@ -705,11 +705,36 @@
               <div class="form-check">
                 <input type="checkbox"
                        id="non-admin-edit-checkbox"
-                       data-bind="checked: is_non_admin_editable,
+                       data-bind="checked: manageRoleAssignments.all,
                                                   disable: !$root.allowEdit" />
                 <label for="non-admin-edit-checkbox">
-                  {% trans "Allow non-admins to assign this role to other users." %}
+                  {% trans "Allow all non-admins to assign this role to other users." %}
                 </label>
+              </div>
+            </div>
+          </div>
+          <div class="form-group"
+               data-bind="visible: !manageRoleAssignments.all()">
+            <label class="col-sm-4 control-label">
+              {% trans "Manage Role Assignment" %}
+            </label>
+            <div class="col-sm-8 controls">
+              <div class="panel panel-default">
+                <div class="panel-heading">
+                  {% trans "Select which other roles can assign this role:" %}
+                </div>
+                <div class="panel-body"
+                     data-bind="foreach: manageRoleAssignments.specific, slideVisible: !manageRoleAssignments.all()">
+                  <div class="form-check">
+                    <input type="checkbox"
+                           data-bind="checked: value,
+                                                            attr: { 'id': 'role-' + path() + '-checkbox' },
+                                                            disable: !$root.allowEdit" />
+                    <label data-bind="attr: { 'for': 'role-' + path() + '-checkbox' }">
+                      <span data-bind="html: name"></span>
+                    </label>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

@@ -548,6 +548,7 @@ class ListRolesView(BaseRoleAccessView):
                 "update the existing roles."))
         return {
             'user_roles': self.user_roles,
+            'non_admin_roles': self.user_roles[1:],
             'can_edit_roles': self.can_edit_roles,
             'default_role': UserRole.get_default(),
             'report_list': get_possible_reports(self.domain),

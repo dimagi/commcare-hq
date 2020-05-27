@@ -296,6 +296,7 @@ class UserRole(QuickCachedDocumentMixin, Document):
     )
     permissions = SchemaProperty(Permissions)
     is_non_admin_editable = BooleanProperty(default=False)
+    assignable_by = StringListProperty(default=[])
     is_archived = BooleanProperty(default=False)
 
     def get_qualified_id(self):
