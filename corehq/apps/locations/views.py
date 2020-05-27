@@ -212,6 +212,7 @@ class LocationsListView(BaseLocationView):
             'has_location_types': has_location_types,
             'can_edit_root': self.can_access_all_locations,
             'location_search_help': ExpandedMobileWorkerFilter.location_search_help,
+            'user_is_domain_admin': self.request.couch_user.is_domain_admin(self.domain),
         }
 
     def get_visible_locations(self):
