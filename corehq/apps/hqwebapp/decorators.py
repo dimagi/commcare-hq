@@ -242,6 +242,7 @@ def waf_allow(kind, hard_code_pattern=None):
     """
     if hard_code_pattern:
         waf_allow.views[kind].add(hard_code_pattern)
+        return
 
     def inner(fn):
         waf_allow.views[kind].add(fn)
