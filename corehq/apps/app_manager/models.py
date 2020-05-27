@@ -5810,7 +5810,7 @@ class GlobalAppConfig(models.Model):
 
     def clear_version_caches(self):
         build_profile_ids = self._app.build_profiles.keys()
-        self.get_latest_app_version.clear(self, None)
+        self.get_latest_app_version.clear(self, '')
         self.get_latest_apk_version.clear(self)
         for build_profile_id in build_profile_ids:
             self.get_latest_app_version.clear(self, build_profile_id)
