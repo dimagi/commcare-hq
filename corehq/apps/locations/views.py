@@ -275,7 +275,6 @@ class LocationFieldsView(CustomDataModelMixin, BaseLocationView):
     entity_string = ugettext_lazy("Location")
     template_name = "custom_data_fields/custom_data_fields.html"
 
-    @method_decorator(require_can_edit_locations)
     @method_decorator(locations_access_required)
     @method_decorator(domain_admin_required)
     @method_decorator(check_pending_locations_import())
