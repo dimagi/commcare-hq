@@ -5769,7 +5769,8 @@ class GlobalAppConfig(models.Model):
         return cls.by_app(app)
 
     def save(self, force_insert=False, force_update=False, using=DEFAULT_DB_ALIAS, update_fields=None):
-        self.clear_version_caches()
+        if self.pk:
+            self.clear_version_caches()
         super().save(
             force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields
         )
