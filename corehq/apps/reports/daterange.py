@@ -31,7 +31,7 @@ def get_all_daterange_choices():
     )
     if settings.SERVER_ENVIRONMENT in settings.ICDS_RELEVANT_ENVS:
         choices += (DateRangeChoice('currentindianfinancialyear',
-                                            _('Current Indian Financial Year'), True),)
+                                    _('Current Indian Financial Year'), True),)
     return choices
 
 
