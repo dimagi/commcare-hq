@@ -74,14 +74,31 @@ def login_as_user_query(
         ).location_ids()
         user_es = user_es.location(list(loc_ids))
 
-    if not couch_user.has_permission(domain, get_permission_name(Permissions.login_as_all_users)):
+    if _limit_login_as(couch_user, domain):
+        user_filters = [
+            filters.AND(
+                filters.term('user_data_es.key', 'login_as_user'),
+                filters.term('user_data_es.value', couch_user.username),
+            )
+        ]
+        if couch_user.has_permission(domain, 'access_default_login_as_user'):
+            user_filters.append(
+                filters.AND(
+                    filters.term('user_data_es.key', 'login_as_user'),
+                    filters.term('user_data_es.value', 'default'),
+                )
+            )
         user_es = user_es.filter(
             filters.nested(
                 'user_data_es',
-                filters.AND(
-                    filters.term('user_data_es.key', 'login_as_user'),
-                    filters.term('user_data_es.value', couch_user.username),
+                filters.OR(
+                    *user_filters
                 )
             )
         )
     return user_es.mobile_users()
+
+
+def _limit_login_as(couch_user, domain):
+    return (couch_user.has_permission(domain, 'limited_login_as')
+            and not couch_user.has_permission(domain, 'edit_commcare_users'))

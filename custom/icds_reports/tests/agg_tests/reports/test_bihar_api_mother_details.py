@@ -41,7 +41,16 @@ class BiharAPIMotherTest(TestCase):
                 "hb": 2,
                 "add": datetime.date(2017, 6, 1),
                 "last_preg_tt": None,
-                "lmp": datetime.date(2016, 10, 2)
+                "lmp": datetime.date(2016, 10, 2),
+                "anc_1": datetime.date(2016, 10, 8),
+                "anc_2": datetime.date(2016, 11, 7),
+                "anc_3": datetime.date(2016, 12, 7),
+                "anc_4": datetime.date(2017, 1, 6),
+                "edd": datetime.date(2017, 7, 9),
+                "total_ifa_tablets_received": 10,
+                "ifa_consumed_7_days": 4,
+                "causes_for_ifa": "side_effects",
+                "maternal_complications": 'Discharge'
              },
             ccs_case_details
         )

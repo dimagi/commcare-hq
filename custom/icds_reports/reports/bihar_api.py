@@ -78,7 +78,15 @@ def get_api_demographics_data(month, state_id, last_person_case_id):
         'date_death',
         'site_death',
         'closed_on',
-        'reason_closure'
+        'reason_closure',
+        'has_bank_account',
+        'age_marriage',
+        'last_referral_date',
+        'referral_health_problem',
+        'referral_reached_date',
+        'referral_reached_facility',
+        'migrate_date',
+        'is_alive'
     )
 
     # To apply pagination on database query with data size length
@@ -107,7 +115,16 @@ def get_mother_details(month, state_id, last_ccs_case_id):
         'tt_booster',
         'add',
         'hb',
-        'lmp'
+        'lmp',
+        'edd',
+        'anc_1',
+        'anc_2',
+        'anc_3',
+        'anc_4',
+        'total_ifa_tablets_received',
+        'ifa_consumed_7_days',
+        'causes_for_ifa',
+        'maternal_complications'
     )
     limited_mother_details_data = list(bihar_mother_details[:CAS_API_PAGE_SIZE])
     return limited_mother_details_data, get_total_records_count(BiharAPIMotherView.__name__, month, state_id)
@@ -132,6 +149,7 @@ def get_api_vaccine_data(month, state_id, last_person_case_id):
         'primary_admit',
         'date_last_private_admit',
         'date_return_private',
+        'last_reported_fever_date',
         'due_list_date_1g_dpt_1',
         'due_list_date_2g_dpt_2',
         'due_list_date_3g_dpt_3',
@@ -168,7 +186,8 @@ def get_api_vaccine_data(month, state_id, last_person_case_id):
         'due_list_date_7g_vit_a_9',
         'due_list_date_1g_bcg',
         'delivery_nature',
-        'term_days'
+        'term_days',
+        'birth_weight'
     )
 
     # To apply pagination on database query with data size length
@@ -193,7 +212,8 @@ def get_api_ag_school_data(month, state_id, last_person_case_id):
         'person_id',
         'person_name',
         'out_of_school_status',
-        'last_class_attended_ever'
+        'last_class_attended_ever',
+        'was_oos_ever'
     )
 
     # To apply pagination on database query with data size length

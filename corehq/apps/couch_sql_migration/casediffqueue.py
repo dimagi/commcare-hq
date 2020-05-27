@@ -17,10 +17,10 @@ from corehq.apps.tzmigration.timezonemigration import FormJsonDiff as Diff, MISS
 
 from .casediff import (
     diff_cases_and_save_state,
-    get_couch_cases,
     global_diff_state,
 )
 from .lrudict import LRUDict
+from .retrydb import get_couch_cases
 from .statedb import StateDB
 from .status import run_status_logger
 from .util import ProcessError, exit_on_error, gipc_process_error_handler

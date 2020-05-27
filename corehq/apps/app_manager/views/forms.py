@@ -20,10 +20,9 @@ from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET
 
-from couchdbkit import ResourceNotFound
 from diff_match_patch import diff_match_patch
 from lxml import etree
-from unidecode import unidecode
+from text_unidecode import unidecode
 
 from casexml.apps.case.const import DEFAULT_CASE_INDEX_IDENTIFIERS
 from dimagi.utils.logging import notify_exception
@@ -291,10 +290,6 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
 
     if should_edit('comment'):
         form.comment = request.POST['comment']
-
-    if should_edit("name_enum"):
-        name_enum = json.loads(request.POST.get("name_enum"))
-        form.name_enum = [MappingItem(i) for i in name_enum]
 
     if should_edit("xform") or "xform" in request.FILES:
         try:

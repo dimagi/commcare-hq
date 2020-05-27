@@ -303,6 +303,7 @@ HQ_APPS = (
     'corehq.messaging.smsbackends.smsgh',
     'corehq.messaging.smsbackends.push',
     'corehq.messaging.smsbackends.starfish',
+    'corehq.messaging.smsbackends.trumpia',
     'corehq.messaging.smsbackends.apposit',
     'corehq.messaging.smsbackends.test',
     'corehq.apps.registration',
@@ -682,6 +683,7 @@ AUDIT_MODULES = [
     'corehq.apps.registration',
     'corehq.apps.hqadmin',
     'corehq.apps.accounting',
+    'corehq.apps.cloudcare',
     'tastypie',
 ]
 
@@ -766,13 +768,13 @@ MESSAGE_STORAGE = 'django.contrib.messages.storage.session.SessionStorage'
 DIGEST_LOGIN_FACTORY = 'django_digest.NoEmailLoginFactory'
 
 # Django Compressor
-COMPRESS_PRECOMPILERS = (
+COMPRESS_PRECOMPILERS = AVAILABLE_COMPRESS_PRECOMPILERS = (
     ('text/less', 'corehq.apps.hqwebapp.precompilers.LessFilter'),
 )
 # if not overwritten in localsettings, these will be replaced by the value they return
 # using the local DEBUG value (which we don't have access to here yet)
-COMPRESS_ENABLED = lambda: not DEBUG
-COMPRESS_OFFLINE = lambda: not DEBUG
+COMPRESS_ENABLED = lambda: not DEBUG and not UNIT_TESTING  # noqa: E731
+COMPRESS_OFFLINE = lambda: not DEBUG and not UNIT_TESTING  # noqa: E731
 COMPRESS_JS_COMPRESSOR = 'corehq.apps.hqwebapp.uglify.JsUglifySourcemapCompressor'
 # use 'compressor.js.JsCompressor' for faster local compressing (will get rid of source maps)
 COMPRESS_CSS_FILTERS = ['compressor.filters.css_default.CssAbsoluteFilter',
@@ -958,6 +960,8 @@ REQUIRE_TWO_FACTOR_FOR_SUPERUSERS = False
 # that adds messages to the partition with the fewest unprocessed messages
 USE_KAFKA_SHORTEST_BACKLOG_PARTITIONER = False
 
+SESSION_COOKIE_SECURE = CSRF_COOKIE_SECURE = not DEBUG
+SESSION_COOKIE_HTTPONLY = CSRF_COOKIE_HTTPONLY = True
 
 try:
     # try to see if there's an environmental variable set for local_settings
@@ -988,6 +992,16 @@ if callable(COMPRESS_ENABLED):
     COMPRESS_ENABLED = COMPRESS_ENABLED()
 if callable(COMPRESS_OFFLINE):
     COMPRESS_OFFLINE = COMPRESS_OFFLINE()
+if UNIT_TESTING:
+    # COMPRESS_COMPILERS overrides COMPRESS_ENABLED = False, so must be
+    # cleared to disable compression completely. CSS/less compression is
+    # very slow and should especially be avoided in tests. Tests that
+    # need to test compression should use
+    # @override_settings(
+    #     COMPRESS_ENABLED=True,
+    #     COMPRESS_PRECOMPILERS=settings.AVAILABLE_COMPRESS_PRECOMPILERS,
+    # )
+    COMPRESS_PRECOMPILERS = ()
 
 
 # Unless DISABLE_SERVER_SIDE_CURSORS has explicitly been set, default to True because Django >= 1.11.1 and our
@@ -1495,6 +1509,7 @@ SMS_LOADED_SQL_BACKENDS = [
     'corehq.messaging.smsbackends.megamobile.models.SQLMegamobileBackend',
     'corehq.messaging.smsbackends.push.models.PushBackend',
     'corehq.messaging.smsbackends.starfish.models.StarfishBackend',
+    'corehq.messaging.smsbackends.trumpia.models.TrumpiaBackend',
     'corehq.messaging.smsbackends.sislog.models.SQLSislogBackend',
     'corehq.messaging.smsbackends.smsgh.models.SQLSMSGHBackend',
     'corehq.messaging.smsbackends.telerivet.models.SQLTelerivetBackend',
@@ -1835,8 +1850,6 @@ STATIC_UCR_REPORTS = [
     os.path.join('custom', 'abt', 'reports', 'spray_progress_level_2.json'),
     os.path.join('custom', 'abt', 'reports', 'spray_progress_level_3.json'),
     os.path.join('custom', 'abt', 'reports', 'spray_progress_level_4.json'),
-    os.path.join('custom', 'abt', 'reports', 'supervisory_report.json'),
-    os.path.join('custom', 'abt', 'reports', 'supervisory_report_v2.json'),
     os.path.join('custom', 'abt', 'reports', 'supervisory_report_v2019.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'dashboard', '*.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'asr', '*.json'),
@@ -1939,7 +1952,6 @@ COUCH_CACHE_BACKENDS = [
     'corehq.apps.cachehq.cachemodels.GroupGenerationCache',
     'corehq.apps.cachehq.cachemodels.UserRoleGenerationCache',
     'corehq.apps.cachehq.cachemodels.ReportGenerationCache',
-    'corehq.apps.cachehq.cachemodels.InvitationGenerationCache',
     'corehq.apps.cachehq.cachemodels.UserReportsDataSourceCache',
     'dimagi.utils.couch.cache.cache_core.gen.GlobalCache',
 ]
@@ -2127,8 +2139,6 @@ if SENTRY_DSN:
 else:
     SENTRY_CONFIGURED = False
 
-
-CSRF_COOKIE_HTTPONLY = True
 if RESTRICT_USED_PASSWORDS_FOR_NIC_COMPLIANCE:
     AUTH_PASSWORD_VALIDATORS = [
         {

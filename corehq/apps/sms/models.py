@@ -100,6 +100,13 @@ class Log(models.Model):
     # The MessagingSubEvent that this log is tied to
     messaging_subevent = models.ForeignKey('sms.MessagingSubEvent', null=True, on_delete=models.PROTECT)
 
+    def set_gateway_error(self, message):
+        """Set gateway error message or code
+
+        :param message: Non-retryable message or code returned by the gateway.
+        """
+        self.set_system_error(f"Gateway error: {message}")
+
     def set_system_error(self, message=None):
         self.error = True
         self.system_error_message = message

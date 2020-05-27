@@ -17,7 +17,7 @@ Logging
 -------
 
 All requests sent to DHIS2, and the responses from DHIS2, are logged
-and available under **Project Settings** > **MOTECH Logs**.
+and available under **Project Settings** > **Remote API Logs**.
 
 
 DataSets
@@ -79,7 +79,7 @@ button.
 
 To test your configuration, click "Send data now".
 
-Check **Project Settings** > **MOTECH Logs** to inspect the requests
+Check **Project Settings** > **Remote API Logs** to inspect the requests
 sent to DHIS2, and the responses from DHIS2.
 
 
@@ -210,7 +210,7 @@ Form submissions will appear here with "Record Status" "Pending". Queued
 payloads are forwarded every four minutes. To send it immediately, click
 "Resend Payload".
 
-Check **Project Settings** > **MOTECH Logs** to inspect the requests
+Check **Project Settings** > **Remote API Logs** to inspect the requests
 sent to DHIS2, and the responses from DHIS2.
 
 
@@ -546,5 +546,5 @@ to the location's metadata, in a field named "dhis_id".
 To test our configuration, open the app in App Preview and register a
 woman.
 
-Then click on "MOTECH Logs" and confirm the requests sent to DHIS2 all
-succeeded.
+Then click on **Remote API Logs** and confirm the requests sent to DHIS2
+all succeeded.
