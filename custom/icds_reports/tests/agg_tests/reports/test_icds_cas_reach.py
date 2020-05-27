@@ -217,9 +217,7 @@ class TestICDSCASReach(TestCase):
                             'percent': None,
                             'redirect': 'icds_cas_reach/ls_launched',
                             'value': 0
-                        }
-                    ],
-                    [
+                        },
                         {
                             'all': None,
                             'format': 'number',
@@ -228,15 +226,6 @@ class TestICDSCASReach(TestCase):
                             'label': 'Sectors covered',
                             'frequency': 'month',
                             'help_text': 'Total Sectors that have launched ICDS CAS'
-                        },
-                        {
-                            'all': None,
-                            'format': 'number',
-                            'percent': None,
-                            'value': 0,
-                            'label': 'Blocks covered',
-                            'frequency': 'month',
-                            'help_text': 'Total Blocks that have launched ICDS CAS'
                         }
                     ],
                     [
@@ -245,10 +234,21 @@ class TestICDSCASReach(TestCase):
                             'format': 'number',
                             'percent': None,
                             'value': 0,
+                            'label': 'Blocks covered',
+                            'frequency': 'month',
+                            'help_text': 'Total Blocks that have launched ICDS CAS'
+                        },
+                        {
+                            'all': None,
+                            'format': 'number',
+                            'percent': None,
+                            'value': 0,
                             'label': 'Districts covered',
                             'frequency': 'month',
                             'help_text': 'Total Districts that have launched ICDS CAS'
-                        },
+                        }
+                    ],
+                    [
                         {
                             'all': None,
                             'format': 'number',
