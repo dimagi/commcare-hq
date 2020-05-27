@@ -335,10 +335,11 @@
 
     {% if request.user.is_authenticated and request.project.secure_timeout %}
       {% initial_page_data 'secure_timeout' request.project.secure_timeout %}
+      {% initial_page_data 'username' request.couch_user.username %}
+      {% registerurl 'bsd_license' %}
       {% registerurl 'iframe_login' domain %}
       {% registerurl 'iframe_login_new_window' %}
       {% registerurl 'ping_login' %}
-      {% registerurl 'bsd_license' %}
       {% include 'hqwebapp/includes/inactivity_modal.html' %}
     {% endif %}
 
