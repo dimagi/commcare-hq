@@ -4451,7 +4451,7 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
             domain_has_apps.clear(self.domain)
         if self.get_id:
             # expire cache unless new application
-            self.global_app_config.clear_version_cache()
+            self.global_app_config.clear_version_caches()
         get_all_case_properties.clear(self)
         get_usercase_properties.clear(self)
         get_app_languages.clear(self.domain)
@@ -5769,7 +5769,7 @@ class GlobalAppConfig(models.Model):
         return cls.by_app(app)
 
     def save(self, force_insert=False, force_update=False, using=DEFAULT_DB_ALIAS, update_fields=None):
-        self.clear_version_cache()
+        self.clear_version_caches()
         super().save(
             force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields
         )
@@ -5807,7 +5807,7 @@ class GlobalAppConfig(models.Model):
                             version = latest.version
                     return {"value": version, "force": force}
 
-    def clear_version_cache(self):
+    def clear_version_caches(self):
         build_profile_ids = self._app.build_profiles.keys()
         self.get_latest_app_version.clear(self, None)
         self.get_latest_apk_version.clear(self)
@@ -5904,7 +5904,7 @@ class LatestEnabledBuildProfiles(models.Model):
 
     def save(self, *args, **kwargs):
         super(LatestEnabledBuildProfiles, self).save(*args, **kwargs)
-        GlobalAppConfig.by_app_id(self.domain, self.app_id).clear_version_cache()
+        GlobalAppConfig.by_app_id(self.domain, self.app_id).clear_version_caches()
         self.expire_cache(self.domain)
 
     @property
