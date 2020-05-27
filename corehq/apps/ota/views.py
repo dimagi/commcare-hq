@@ -302,7 +302,6 @@ def heartbeat(request, domain, app_build_id):
     build_profile_id = request.GET.get('build_profile_id', '')
 
     info = {"app_id": app_id}
-    # TODO: use get_app_cached? except that's for builds, not apps
     try:
         # mobile will send master app_id
         config = GlobalAppConfig.by_app_id(domain, app_id)
