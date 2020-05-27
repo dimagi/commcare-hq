@@ -79,9 +79,29 @@ def get_locations(domain, filters) -> List[LocationTuple]:
     locations = []
     for level_1 in level_1s:
         for level_2 in l2s_by_l1[level_1['id']]:
-            if country_has_level_3:
+            if not country_has_level_3:
+                locations.append(LocationTuple(
+                    id=level_2['id'],
+                    name=level_2['name'],
+                    country=level_1['country'],
+                    level_1=level_1['name'],
+                    level_2=level_2['name'],
+                    level_3=None,
+                    level_4=None,
+                ))
+            else:
                 for level_3 in l3s_by_l2[level_2['id']]:
-                    if country_has_level_4:
+                    if not country_has_level_4:
+                        locations.append(LocationTuple(
+                            id=level_3['id'],
+                            name=level_3['name'],
+                            country=level_1['country'],
+                            level_1=level_1['name'],
+                            level_2=level_2['name'],
+                            level_3=level_3['name'],
+                            level_4=None,
+                        ))
+                    else:
                         for level_4 in l4s_by_l3[level_3['id']]:
                             locations.append(LocationTuple(
                                 id=level_4['id'],
@@ -92,26 +112,6 @@ def get_locations(domain, filters) -> List[LocationTuple]:
                                 level_3=level_3['name'],
                                 level_4=level_4['name'],
                             ))
-                    else:
-                        locations.append(LocationTuple(
-                            id=level_3['id'],
-                            name=level_3['name'],
-                            country=level_1['country'],
-                            level_1=level_1['name'],
-                            level_2=level_2['name'],
-                            level_3=level_3['name'],
-                            level_4=None,
-                        ))
-            else:
-                locations.append(LocationTuple(
-                    id=level_2['id'],
-                    name=level_2['name'],
-                    country=level_1['country'],
-                    level_1=level_1['name'],
-                    level_2=level_2['name'],
-                    level_3=None,
-                    level_4=None,
-                ))
     return locations
 
 
