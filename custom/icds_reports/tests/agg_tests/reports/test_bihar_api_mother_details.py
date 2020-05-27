@@ -69,7 +69,7 @@ class BiharAPIMotherTest(TestCase):
             if case['ccs_case_id'] == 'f491263a-4846-4ffd-a64d-a6653c03dd03':
                 ccs_case_details = case
                 break
-        print(ccs_case_details)
+        
         self.assertEqual(
             {
                 "household_id": None,
