@@ -407,42 +407,41 @@ function ServiceDeliveryDashboardController($rootScope, $scope, $http, $location
         ],
     };
 
+    var thrForAtleast25Days = {
+        'mData': 'thr',
+        'heading': 'Take Home Ration (25+ days)',
+        'tooltipValue': 'Of the total number of pregnant women, lactating women (0-6 months children) and 6-36 months children enrolled for Anganwadi services, the percentage of pregnant women, lactating women (0-6 months children) and 6-36 months children who were provided THR for at least 25 days in the current month.',
+        'columnValueType': 'percentage',
+        'columnValueIndicator': 'thrAtleast25',
+        'detailsURL': '/service_delivery_dashboard/thr',
+    };
+
+    var snForAtleast25Days = {
+        'mData': 'sn',
+        'heading': 'Supplementary Nutrition (25+ days)',
+        'tooltipValue': 'Of the total children between 3-6 years of age and enrolled for Anganwadi services, the percentage of children who were provided Hot Cooked Meal i.e. supplementary nutrition for at least 25 days in the current month.',
+        'columnValueType': 'percentage',
+        'columnValueIndicator': 'snAtleast25',
+        'detailsURL': '/service_delivery_dashboard/sn',
+    };
+
+    var pseForAtleast25Days = {
+        'mData': 'pse',
+        'heading': 'Pre-school Education (25+ days)',
+        'tooltipValue': 'Of the total children between 3-6 years of age and enrolled for Anganwadi services, the percentage of children who attended Pre-school education for at least 25 days in the current month.',
+        'columnValueType': 'percentage',
+        'columnValueIndicator': 'pseAtleast25',
+        'detailsURL': '/service_delivery_dashboard/pse',
+    };
+
     if (haveAccessToFeatures && vm.selectedDate >= new Date(2020, 3, 1)) {
         vm.sddTableData['pw_lw_children']['non-awc'].pop();
-        vm.sddTableData['pw_lw_children']['non-awc'].push({
-            'mData': 'thr',
-            'heading': 'Take Home Ration (25+ days)',
-            'tooltipValue': 'Of the total number of pregnant women, lactating women (0-6 months children) and 6-36 months children enrolled for Anganwadi services, the percentage of pregnant women, lactating women (0-6 months children) and 6-36 months children who were provided THR for at least 25 days in the current month.',
-            'columnValueType': 'percentage',
-            'columnValueIndicator': 'thrAtleast25',
-            'detailsURL': '/service_delivery_dashboard/thr',
-        });
+        vm.sddTableData['pw_lw_children']['non-awc'].push(thrForAtleast25Days);
         vm.sddTableData['pw_lw_children']['awc'].pop();
-        vm.sddTableData['pw_lw_children']['awc'].push({
-            'mData': 'thr',
-            'heading': 'Take Home Ration (25+ days)',
-            'tooltipValue': 'Of the total number of pregnant women, lactating women (0-6 months children) and 6-36 months children enrolled for Anganwadi services, the percentage of pregnant women, lactating women (0-6 months children) and 6-36 months children who were provided THR for at least 25 days in the current month.',
-            'columnValueType': 'percentage',
-            'columnValueIndicator': 'thrAtleast25',
-            'detailsURL': '/service_delivery_dashboard/thr',
-        });
+        vm.sddTableData['pw_lw_children']['awc'].push(thrForAtleast25Days);
         vm.sddTableData['children'].splice(0, 2);
-        vm.sddTableData['children'].unshift({
-            'mData': 'sn',
-            'heading': 'Supplementary Nutrition (25+ days)',
-            'tooltipValue': 'Of the total children between 3-6 years of age and enrolled for Anganwadi services, the percentage of children who were provided Hot Cooked Meal i.e. supplementary nutrition for at least 25 days in the current month.',
-            'columnValueType': 'percentage',
-            'columnValueIndicator': 'snAtleast25',
-            'detailsURL': '/service_delivery_dashboard/sn',
-        });
-        vm.sddTableData['children'].unshift({
-            'mData': 'pse',
-            'heading': 'Pre-school Education (25+ days)',
-            'tooltipValue': 'Of the total children between 3-6 years of age and enrolled for Anganwadi services, the percentage of children who attended Pre-school education for at least 25 days in the current month.',
-            'columnValueType': 'percentage',
-            'columnValueIndicator': 'pseAtleast25',
-            'detailsURL': '/service_delivery_dashboard/pse',
-        });
+        vm.sddTableData['children'].unshift(pseForAtleast25Days);
+        vm.sddTableData['children'].unshift(snForAtleast25Days);
     }
 
     vm.getTableData = function () {
