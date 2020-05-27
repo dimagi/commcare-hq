@@ -5788,7 +5788,7 @@ class GlobalAppConfig(models.Model):
             return {"value": value, "force": force}
 
     @quickcache(['self.app_id', 'build_profile_id'])
-    def get_latest_app_version(self, build_profile_id=None):
+    def get_latest_app_version(self, build_profile_id):
         if self.app_prompt == "off":
             return {}
         else:
