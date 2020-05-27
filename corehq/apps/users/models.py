@@ -295,7 +295,9 @@ class UserRole(QuickCachedDocumentMixin, Document):
         choices=[page.id for page in ALL_LANDING_PAGES],
     )
     permissions = SchemaProperty(Permissions)
+    # role can be assigned by all non-admins
     is_non_admin_editable = BooleanProperty(default=False)
+    # role assignable by specific non-admins
     assignable_by = StringListProperty(default=[])
     is_archived = BooleanProperty(default=False)
 
