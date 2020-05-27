@@ -153,9 +153,9 @@ class TestFixtures(TestCase):
                 self.assertEqual(0.01, ingredient.ingr_fraction)
 
     def test_food_list(self):
-        food = self.fixtures_accessor.foods['10']
-        self.assertEqual("Farine de mil", food.food_name)
-        self.assertEqual("Farine de mil", food.food_base_term)
+        food = self.fixtures_accessor.foods['63']
+        self.assertEqual("Riz,blanc,grain entier,poli,cru", food.food_name)
+        self.assertEqual("Riz", food.food_base_term)
 
     def test_food_compositions(self):
         composition = self.fixtures_accessor.food_compositions['63']
