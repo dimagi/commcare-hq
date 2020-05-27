@@ -1,4 +1,5 @@
 from sqlagg.columns import SimpleColumn
+from sqlagg.sorting import OrderBy
 
 from corehq.apps.reports.sqlreport import DatabaseColumn
 from custom.icds_reports.sqldata.base import IcdsSqlData
@@ -24,6 +25,10 @@ class AwwActivityExport(ExportableMixin, IcdsSqlData):
                            slug='no_of_days_since_start'),
             DatabaseColumn('Days inactive', SimpleColumn('no_of_days_inactive'), slug='no_of_days_inactive')
         ]
+
+    @property
+    def order_by(self):
+        return [OrderBy('awc_name')]
 
     @property
     def columns(self):

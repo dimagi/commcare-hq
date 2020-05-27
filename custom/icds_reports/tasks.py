@@ -125,6 +125,7 @@ from custom.icds_reports.reports.service_delivery_report import ServiceDeliveryR
 from custom.icds_reports.sqldata.exports.awc_infrastructure import (
     AWCInfrastructureExport,
 )
+from custom.icds_reports.sqldata.exports.aww_activity_report import AwwActivityExport
 from custom.icds_reports.sqldata.exports.beneficiary import BeneficiaryExport
 from custom.icds_reports.sqldata.exports.children import ChildrenExport
 from custom.icds_reports.sqldata.exports.dashboard_usage import DashBoardUsage
@@ -1033,7 +1034,7 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
     elif indicator == AWW_ACTIVITY_REPORT:
         config['aggregation_level'] = 5  # this report on all levels shows data (row) per AWW
         data_type = 'Aww_Activity_Report'
-        excel_data = GrowthTrackerExport(
+        excel_data = AwwActivityExport(
             config=config,
             loc_level=aggregation_level,
             show_test=include_test,
