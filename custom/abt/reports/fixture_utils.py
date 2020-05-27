@@ -1,5 +1,5 @@
 from collections import defaultdict, namedtuple
-from typing import Any, Dict, Iterable, List, Optional
+from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 from corehq.apps.fixtures.dbaccessors import (
     get_fixture_data_types,
@@ -25,61 +25,14 @@ LocationTuple = namedtuple('LocationTuple', [
 
 def get_locations(domain, filters) -> List[LocationTuple]:
     """
-    Returns a list of level-four locations, or level-three locations if
-    the country does not have level-four locations.
-
-    The return value respects the filters applied by the user.
+    Returns a list of locations, with the user's filters applied.
     """
-    data_types_by_tag = get_data_types_by_tag(domain)
-    level_1s = get_fixture_dicts(
-        domain,
-        data_types_by_tag["level_1_dcv"]._id,
-        filter_in={
-            'id': [filters['level_1']] if filters['level_1'] else None
-        },
-        filter_out={'other': '1'},
-    )
-    l2s_by_l1 = get_fixture_dicts_by_key(
-        domain,
-        data_type_id=data_types_by_tag["level_2_dcv"]._id,
-        key='level_1_dcv',
-        filter_in={
-            'level_1_dcv': [l['id'] for l in level_1s],
-            'id': [filters['level_2']] if filters['level_2'] else None
-        },
-        filter_out={'other': '1'},
-    )
-    l3_data_items = get_fixture_items_for_data_type(domain, data_types_by_tag["level_3_dcv"]._id)
-    country_has_level_3 = len(l3_data_items) > 1
-    if country_has_level_3:
-        l3s_by_l2 = get_fixture_dicts_by_key(
-            domain,
-            data_type_id=data_types_by_tag["level_3_dcv"]._id,
-            key='level_2_dcv',
-            filter_in={
-                'level_2_dcv': [l2['id'] for l2s in l2s_by_l1.values() for l2 in l2s],
-                'id': [filters['level_3']] if filters['level_3'] else None
-            },
-            filter_out={'other': '1'},
-        )
-        l4_data_items = get_fixture_items_for_data_type(domain, data_types_by_tag["level_4_dcv"]._id)
-        country_has_level_4 = len(l4_data_items) > 1
-        if country_has_level_4:
-            l4s_by_l3 = get_fixture_dicts_by_key(
-                domain,
-                data_type_id=data_types_by_tag["level_4_dcv"]._id,
-                key='level_3_dcv',
-                filter_in={
-                    'level_3_dcv': [l3['id'] for l3s in l3s_by_l2.values() for l3 in l3s],
-                    'id': [filters['level_4']] if filters['level_4'] else None
-                },
-                filter_out={'other': '1'},
-            )
+    level_1s, l2s_by_l1, l3s_by_l2, l4s_by_l3 = get_sorted_levels(domain, filters)
 
     locations = []
     for level_1 in level_1s:
         for level_2 in l2s_by_l1[level_1['id']]:
-            if not country_has_level_3:
+            if not l3s_by_l2:
                 locations.append(LocationTuple(
                     id=level_2['id'],
                     name=level_2['name'],
@@ -91,7 +44,7 @@ def get_locations(domain, filters) -> List[LocationTuple]:
                 ))
             else:
                 for level_3 in l3s_by_l2[level_2['id']]:
-                    if not country_has_level_4:
+                    if not l4s_by_l3:
                         locations.append(LocationTuple(
                             id=level_3['id'],
                             name=level_3['name'],
@@ -113,6 +66,66 @@ def get_locations(domain, filters) -> List[LocationTuple]:
                                 level_4=level_4['name'],
                             ))
     return locations
+
+
+def get_sorted_levels(domain, filters) -> Tuple[list, dict, dict, dict]:
+    """
+    Returns dictionaries of location levels, keyed on the ID of their
+    parent level. (e.g. {'MA': ['Boston', 'Cambridge']}) The user's
+    filters are applied.
+    """
+    l3s_by_l2 = {}
+    l4s_by_l3 = {}
+    data_types_by_tag = get_data_types_by_tag(domain)
+    level_1s = get_fixture_dicts(
+        domain,
+        data_types_by_tag["level_1_dcv"]._id,
+        filter_in={
+            'id': [filters['level_1']] if filters['level_1'] else None
+        },
+        filter_out={'other': '1'},
+    )
+    l2s_by_l1 = get_fixture_dicts_by_key(
+        domain,
+        data_type_id=data_types_by_tag["level_2_dcv"]._id,
+        key='level_1_dcv',
+        filter_in={
+            'level_1_dcv': [l['id'] for l in level_1s],
+            'id': [filters['level_2']] if filters['level_2'] else None
+        },
+        filter_out={'other': '1'},
+    )
+    l3_data_items = get_fixture_items_for_data_type(
+        domain, data_type_id=data_types_by_tag["level_3_dcv"]._id,
+    )
+    country_has_level_3 = len(l3_data_items) > 1
+    if country_has_level_3:
+        l3s_by_l2 = get_fixture_dicts_by_key(
+            domain,
+            data_type_id=data_types_by_tag["level_3_dcv"]._id,
+            key='level_2_dcv',
+            filter_in={
+                'level_2_dcv': [l2['id'] for l2s in l2s_by_l1.values() for l2 in l2s],
+                'id': [filters['level_3']] if filters['level_3'] else None
+            },
+            filter_out={'other': '1'},
+        )
+        l4_data_items = get_fixture_items_for_data_type(
+            domain, data_type_id=data_types_by_tag["level_4_dcv"]._id,
+        )
+        country_has_level_4 = len(l4_data_items) > 1
+        if country_has_level_4:
+            l4s_by_l3 = get_fixture_dicts_by_key(
+                domain,
+                data_type_id=data_types_by_tag["level_4_dcv"]._id,
+                key='level_3_dcv',
+                filter_in={
+                    'level_3_dcv': [l3['id'] for l3s in l3s_by_l2.values() for l3 in l3s],
+                    'id': [filters['level_4']] if filters['level_4'] else None
+                },
+                filter_out={'other': '1'},
+            )
+    return level_1s, l2s_by_l1, l3s_by_l2, l4s_by_l3
 
 
 def get_data_types_by_tag(domain):
