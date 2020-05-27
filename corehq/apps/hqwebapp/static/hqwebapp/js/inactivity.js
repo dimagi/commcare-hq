@@ -55,9 +55,7 @@ hqDefine('hqwebapp/js/inactivity', [
                         var $body = $modal.find(".modal-body");
                         $modal.on('shown.bs.modal', function () {
                             var content = _.template('<iframe src="<%= src %>" height="<%= height %>" width="<%= width %>" style="border: none;"></iframe>')({
-                                // TODO: get rid of everything that makes login look like a full page
-                                // TODO: what if user clicks on something undesireable? reset password worfklow?
-                                src: initialPageData.reverse('login_new_window'),
+                                src: initialPageData.reverse('iframe_login') + "?next=" + initialPageData.reverse('iframe_login_new_window'),
                                 width: $body.width(),
                                 height: $body.height() - 10,
                             });
@@ -86,7 +84,7 @@ hqDefine('hqwebapp/js/inactivity', [
                         $button.text(gettext("Done"));
                         _.delay(pollToShowModal, calculateDelayAndWarn());
                     } else {
-                        $button.removeClass("btn-primary").addClass("btn-danger");
+                        $button.removeClass("btn-default").addClass("btn-danger");
                         $button.text(gettext("Could not authenticate, please log in and try again"));
                     }
                 },
