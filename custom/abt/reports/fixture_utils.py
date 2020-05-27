@@ -49,57 +49,69 @@ def get_locations(domain, filters) -> List[LocationTuple]:
         },
         filter_out={'other': '1'},
     )
-    l3s_by_l2 = get_fixture_dicts_by_key(
-        domain,
-        data_type_id=data_types_by_tag["level_3_dcv"]._id,
-        key='level_2_dcv',
-        filter_in={
-            'level_2_dcv': [l2['id'] for l2s in l2s_by_l1.values() for l2 in l2s],
-            'id': [filters['level_3']] if filters['level_3'] else None
-        },
-        filter_out={'other': '1'},
-    )
-    l4_data_items = get_fixture_items_for_data_type(domain, data_types_by_tag["level_4_dcv"]._id)
-    country_has_level_4 = len(l4_data_items) > 1
-    if country_has_level_4:
-        l4s_by_l3 = get_fixture_dicts_by_key(
+    l3_data_items = get_fixture_items_for_data_type(domain, data_types_by_tag["level_3_dcv"]._id)
+    country_has_level_3 = len(l3_data_items) > 1
+    if country_has_level_3:
+        l3s_by_l2 = get_fixture_dicts_by_key(
             domain,
-            data_type_id=data_types_by_tag["level_4_dcv"]._id,
-            key='level_3_dcv',
+            data_type_id=data_types_by_tag["level_3_dcv"]._id,
+            key='level_2_dcv',
             filter_in={
-                'level_3_dcv': [l3['id'] for l3s in l3s_by_l2.values() for l3 in l3s],
-                'id': [filters['level_4']] if filters['level_4'] else None
+                'level_2_dcv': [l2['id'] for l2s in l2s_by_l1.values() for l2 in l2s],
+                'id': [filters['level_3']] if filters['level_3'] else None
             },
             filter_out={'other': '1'},
         )
-    else:
-        l4s_by_l3 = {}
+        l4_data_items = get_fixture_items_for_data_type(domain, data_types_by_tag["level_4_dcv"]._id)
+        country_has_level_4 = len(l4_data_items) > 1
+        if country_has_level_4:
+            l4s_by_l3 = get_fixture_dicts_by_key(
+                domain,
+                data_type_id=data_types_by_tag["level_4_dcv"]._id,
+                key='level_3_dcv',
+                filter_in={
+                    'level_3_dcv': [l3['id'] for l3s in l3s_by_l2.values() for l3 in l3s],
+                    'id': [filters['level_4']] if filters['level_4'] else None
+                },
+                filter_out={'other': '1'},
+            )
 
     locations = []
     for level_1 in level_1s:
         for level_2 in l2s_by_l1[level_1['id']]:
-            for level_3 in l3s_by_l2[level_2['id']]:
-                if country_has_level_4:
-                    for level_4 in l4s_by_l3[level_3['id']]:
+            if country_has_level_3:
+                for level_3 in l3s_by_l2[level_2['id']]:
+                    if country_has_level_4:
+                        for level_4 in l4s_by_l3[level_3['id']]:
+                            locations.append(LocationTuple(
+                                id=level_4['id'],
+                                name=level_4['name'],
+                                country=level_1['country'],
+                                level_1=level_1['name'],
+                                level_2=level_2['name'],
+                                level_3=level_3['name'],
+                                level_4=level_4['name'],
+                            ))
+                    else:
                         locations.append(LocationTuple(
-                            id=level_4['id'],
-                            name=level_4['name'],
+                            id=level_3['id'],
+                            name=level_3['name'],
                             country=level_1['country'],
                             level_1=level_1['name'],
                             level_2=level_2['name'],
                             level_3=level_3['name'],
-                            level_4=level_4['name'],
+                            level_4=None,
                         ))
-                else:
-                    locations.append(LocationTuple(
-                        id=level_3['id'],
-                        name=level_3['name'],
-                        country=level_1['country'],
-                        level_1=level_1['name'],
-                        level_2=level_2['name'],
-                        level_3=level_3['name'],
-                        level_4=None,
-                    ))
+            else:
+                locations.append(LocationTuple(
+                    id=level_2['id'],
+                    name=level_2['name'],
+                    country=level_1['country'],
+                    level_1=level_1['name'],
+                    level_2=level_2['name'],
+                    level_3=None,
+                    level_4=None,
+                ))
     return locations
 
 
