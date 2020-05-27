@@ -13,7 +13,7 @@ from custom.icds_reports.tasks import update_bihar_api_table
     'st1')
 class BiharAPIMotherTest(TestCase):
 
-    def test_file_content_1(self):
+    def test_pregnant_mother_bihar(self):
         update_bihar_api_table(date(2017, 5, 1))
         data, count = get_mother_details(
             month=date(2017, 5, 1).strftime("%Y-%m-%d"),
@@ -57,7 +57,7 @@ class BiharAPIMotherTest(TestCase):
             ccs_case_details
         )
 
-    def test_file_content_2(self):
+    def test_lactating_mother_bihar(self):
         update_bihar_api_table(date(2017, 5, 1))
         data, count = get_mother_details(
             month=date(2017, 5, 1).strftime("%Y-%m-%d"),
@@ -72,31 +72,31 @@ class BiharAPIMotherTest(TestCase):
         
         self.assertEqual(
             {
-                "household_id": None,
+                "household_id": "8939b18c-8b27-4c31-bff8-ab20f2b54230",
                 "person_id": "1d3e45d5-bd58-487c-9f93-7da2cf67c8d7",
                 "ccs_case_id": "f491263a-4846-4ffd-a64d-a6653c03dd03",
-                "married": None,
-                "husband_name": None,
+                "married": 1,
+                "husband_name": 'test_husband_name',
                 "husband_id": None,
-                "last_preg_year": None,
-                "is_pregnant": None,
+                "last_preg_year": 14,
+                "is_pregnant": 0,
                 "preg_reg_date": None,
-                "tt_1": None,
-                'tt_2': None,
-                "tt_booster": None,
-                "hb": None,
+                "tt_1": datetime.date(2017, 5, 31),
+                'tt_2': datetime.date(2017, 6, 1),
+                "tt_booster": datetime.date(2017, 6, 2),
+                "hb": 3,
                 "add": datetime.date(2017, 3, 20),
                 "last_preg_tt": None,
                 "lmp": datetime.date(2016, 11, 1),
-                "anc_1": None,
-                "anc_2": None,
-                "anc_3": None,
-                "anc_4": None,
+                "anc_1": datetime.date(2016, 11, 7),
+                "anc_2": datetime.date(2016, 12, 7),
+                "anc_3": datetime.date(2017, 1, 6),
+                "anc_4": datetime.date(2017, 2, 5),
                 "edd": datetime.date(2017, 8, 8),
-                "total_ifa_tablets_received": -100,
+                "total_ifa_tablets_received": 100,
                 "ifa_consumed_7_days": 2,
-                "causes_for_ifa": None,
-                "maternal_complications": None
+                "causes_for_ifa": "dont_remember",
+                "maternal_complications": "Discharge"
             },
             ccs_case_details
         )
