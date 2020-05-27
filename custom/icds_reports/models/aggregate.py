@@ -1339,7 +1339,7 @@ class AggregateBirthPreparednesForms(models.Model, AggregateMixin):
         help_text="Has ever had /data/bp1/using_ifa='yes'"
     )
     reason_no_ifa = models.TextField(null=True)
-    new_ifa_tablets_total = models.PositiveSmallIntegerField(
+    new_ifa_tablets_total = models.SmallIntegerField(
         null=True,
         help_text="New ifa tablets"
     )
