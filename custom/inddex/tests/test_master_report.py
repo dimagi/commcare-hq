@@ -158,9 +158,9 @@ class TestFixtures(TestCase):
         self.assertEqual("Farine de mil", food.food_base_term)
 
     def test_food_compositions(self):
-        composition = self.fixtures_accessor.food_compositions['10']
+        composition = self.fixtures_accessor.food_compositions['63']
         self.assertEqual("Cereals and their products (1)", composition.fao_who_gift_food_group_description)
-        self.assertEqual(9.1, composition.nutrients['water_g'])
+        self.assertEqual(70.3, composition.nutrients['water_g'])
 
     def test_conversion_factors(self):
         conversion_factor = self.fixtures_accessor.conversion_factors[('187', '40', '1')]
