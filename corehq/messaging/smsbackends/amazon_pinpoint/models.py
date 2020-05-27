@@ -36,7 +36,6 @@ class SQLPinpointBackend(SQLSMSBackend):
 
     def send(self, msg, *args, **kwargs):
         phone_number = clean_phone_number(msg.phone_number)
-        text = msg.text.encode('utf-8')
         config = self.config
         client = boto3.client(
             'pinpoint',
@@ -44,21 +43,22 @@ class SQLPinpointBackend(SQLSMSBackend):
             aws_access_key_id=config.access_key,
             aws_secret_access_key=config.secret_access_key
         )
-        response = client.send_messages(
-            ApplicationId=config.project_id,
-            MessageRequest={
-                'Addresses': {
-                    phone_number: {
-                        'ChannelType': 'SMS'
-                    }
-                },
-                'MessageConfiguration': {
-                    'SMSMessage': {
-                        'Body': text,
-                        'MessageType': MESSAGE_TYPE,
-                        'OriginationNumber': config.reply_to_phone_number
-                    }
+        message_request = {
+            'Addresses': {
+                phone_number: {
+                    'ChannelType': 'SMS'
+                }
+            },
+            'MessageConfiguration': {
+                'SMSMessage': {
+                    'Body': msg.text,
+                    'MessageType': MESSAGE_TYPE,
+                    'OriginationNumber': config.reply_to_phone_number
                 }
             }
+        }
+        response = client.send_messages(
+            ApplicationId=config.project_id,
+            MessageRequest=message_request
         )
         return response
