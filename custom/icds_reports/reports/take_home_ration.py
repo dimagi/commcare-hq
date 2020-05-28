@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import datetime
 
 from corehq.apps.locations.models import SQLLocation
 from custom.icds_reports.utils import india_now, DATA_NOT_ENTERED
@@ -95,7 +95,7 @@ class TakeHomeRationExport(object):
                 'supervisor_name', 'awc_name', 'aww_name', 'contact_phone_number',
                 'num_launched_awcs']
 
-            if self.month <= date(2020, 3, 1):
+            if self.month <= datetime(2020, 3, 1):
                 thr_columns = [
                     'thr_eligible',
                     'thr_21_days',
@@ -126,7 +126,7 @@ class TakeHomeRationExport(object):
                    'supervisor_name', 'awc_name', 'aww_name', 'contact_phone_number',
                    'num_launched_awcs']
 
-        if self.month <= date(2020, 3, 1):
+        if self.month <= datetime(2020, 3, 1):
             headers = ['State', 'District', 'Block', 'Sector', 'Awc Name', 'AWW Name', 'AWW Phone No.',
                        'Total No. of PW eligible for THR',
                        'Total No. of LW eligible for THR',
