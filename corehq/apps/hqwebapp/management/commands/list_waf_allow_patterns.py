@@ -44,7 +44,7 @@ class Command(BaseCommand):
                             buffer = pattern
                     else:
                         print(buffer)
-                        buffer = ''
+                        buffer = pattern
                 if buffer:
                     print(buffer)
 
