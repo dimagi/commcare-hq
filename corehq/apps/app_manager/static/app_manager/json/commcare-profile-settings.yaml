@@ -14,7 +14,7 @@
   values: ["true", "false"]
   value_names: ["Yes", "No"]
   default: "false"
-  since: "2.6"
+  since: "2.5"
   force: true
 
 - disabled: true
