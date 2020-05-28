@@ -613,6 +613,9 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", [
     ko.bindingHandlers.popover = {
         update: function (element, valueAccessor) {
             var options = ko.utils.unwrapObservable(valueAccessor());
+            if (options.html) {
+                options.sanitize = false;
+            }
             if (options.title || options.content) { // don't show empty popovers
                 $(element).popover(options);
             }
