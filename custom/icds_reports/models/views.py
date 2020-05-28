@@ -1226,6 +1226,8 @@ class ServiceDeliveryReportView(models.Model):
     state_id = models.TextField(blank=True, null=True)
     state_name = models.TextField(blank=True, null=True)
     state_site_code = models.TextField(blank=True, null=True)
+    aww_name = models.TextField(blank=True, null=True)
+    contact_phone_number = models.TextField(blank=True, null=True)
     aggregation_level = models.IntegerField(
         blank=True, null=True, help_text="1 for state rows, 2 for district rows, and so on"
     )
@@ -1330,6 +1332,38 @@ class ServiceDeliveryReportView(models.Model):
         blank=True, null=True,
         help_text="beneficiaries who got >=21 days of THR"
     )
+    thr_25_days = models.IntegerField(
+        blank=True, null=True,
+        help_text="beneficiaries who got >=25 days of THR"
+    )
+
+    child_thr_eligible = models.IntegerField(null=True)
+    child_thr_0_days = models.IntegerField(null=True)
+    child_thr_1_7_days = models.IntegerField(null=True)
+    child_thr_8_14_days = models.IntegerField(null=True)
+    child_thr_15_20_days = models.IntegerField(null=True)
+    child_thr_21_days = models.IntegerField(null=True)
+    child_thr_21_24_days = models.IntegerField(null=True)
+    child_thr_25_days = models.IntegerField(null=True)
+
+    pw_thr_eligible = models.IntegerField(null=True)
+    pw_thr_0_days = models.IntegerField(null=True)
+    pw_thr_1_7_days = models.IntegerField(null=True)
+    pw_thr_8_14_days = models.IntegerField(null=True)
+    pw_thr_15_20_days = models.IntegerField(null=True)
+    pw_thr_21_days = models.IntegerField(null=True)
+    pw_thr_21_24_days = models.IntegerField(null=True)
+    pw_thr_25_days = models.IntegerField(null=True)
+
+    lw_thr_eligible = models.IntegerField(null=True)
+    lw_thr_0_days = models.IntegerField(null=True)
+    lw_thr_1_7_days = models.IntegerField(null=True)
+    lw_thr_8_14_days = models.IntegerField(null=True)
+    lw_thr_15_20_days = models.IntegerField(null=True)
+    lw_thr_21_days = models.IntegerField(null=True)
+    lw_thr_21_24_days = models.IntegerField(null=True)
+    lw_thr_25_days = models.IntegerField(null=True)
+    thr_distribution_image_count = models.IntegerField(null=True)
 
     class Meta(object):
         app_label = 'icds_reports'
