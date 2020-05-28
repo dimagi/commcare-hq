@@ -59,7 +59,7 @@ branches:
   - bmb/SAAS-10882-wip  # Biyeun May 20 (updates knockout, bootstrap, jquery, DOMPurify)
   - fr/linked-domains-ucr       # Farid May 23
   - nemanja1040:infobip_backend_improvements  # Nemanja Stancic May 25
-  - nh/repeaters_ui+hide_unused  # Norman May 26
+  - nh/repeaters_ui  # Norman May 28
   - nh/charset  # Norman May 27
   - nemanja1040:aws_pinpoint  # Nemanja Stancic May 27
   - jls/relogin # Jenny May 27
