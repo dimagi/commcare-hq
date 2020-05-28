@@ -210,8 +210,8 @@ class CcsRecordMonthly(models.Model, AggregateMixin):
     last_preg_year = models.IntegerField(null=True)
     complication_type = models.TextField(blank=True, null=True)
     reason_no_ifa = models.TextField(blank=True, null=True)
-    new_ifa_tablets_total_bp = models.PositiveSmallIntegerField(blank=True, null=True)
-    new_ifa_tablets_total_pnc = models.PositiveSmallIntegerField(blank=True, null=True)
+    new_ifa_tablets_total_bp = models.SmallIntegerField(blank=True, null=True)
+    new_ifa_tablets_total_pnc = models.SmallIntegerField(blank=True, null=True)
     ifa_last_seven_days = models.PositiveSmallIntegerField(blank=True, null=True)
 
     class Meta(object):
@@ -1076,7 +1076,7 @@ class AggregateCcsRecordPostnatalCareForms(models.Model, AggregateMixin):
         help_text="number of qualified visits for the incentive report",
         default=0
     )
-    new_ifa_tablets_total = models.PositiveSmallIntegerField(
+    new_ifa_tablets_total = models.SmallIntegerField(
         null=True,
         help_text="New ifa tablets"
     )
@@ -1339,7 +1339,7 @@ class AggregateBirthPreparednesForms(models.Model, AggregateMixin):
         help_text="Has ever had /data/bp1/using_ifa='yes'"
     )
     reason_no_ifa = models.TextField(null=True)
-    new_ifa_tablets_total = models.PositiveSmallIntegerField(
+    new_ifa_tablets_total = models.SmallIntegerField(
         null=True,
         help_text="New ifa tablets"
     )

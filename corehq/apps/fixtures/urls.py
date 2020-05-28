@@ -13,6 +13,7 @@ from corehq.apps.fixtures.views import (
     update_tables,
     upload_fixture_api,
 )
+from corehq.apps.hqwebapp.decorators import waf_allow
 
 urlpatterns = [
     url(r'^fixapi/status/(?P<download_id>(?:dl-)?[0-9a-fA-Z]{25,32})/$',
@@ -22,7 +23,7 @@ urlpatterns = [
     url(r'^$', RedirectView.as_view(url='edit_lookup_tables', permanent=True), name='edit_lookup_tables'),
     FixtureInterfaceDispatcher.url_pattern(),
     url(r'^edit_lookup_tables/download/$', download_item_lists, name="download_fixtures"),
-    url(r'^edit_lookup_tables/upload/$', UploadItemLists.as_view(), name='upload_fixtures'),
+    url(r'^edit_lookup_tables/upload/$', waf_allow('XSS_BODY')(UploadItemLists.as_view()), name='upload_fixtures'),
     url(r'^edit_lookup_tables/file/$', download_file, name="download_fixture_file"),
     url(r'^edit_lookup_tables/update-tables/(?P<data_type_id>[\w-]+)?$', update_tables,
         name='update_lookup_tables'),

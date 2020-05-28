@@ -369,7 +369,7 @@
                     "is_advanced": false,
                     "is_deleted": false,
                     "item": {
-                        "datatype": null,
+                        "datatype": "datetime",
                         "doc_type": "ExportItem",
                         "inferred": false,
                         "inferred_from": [],
