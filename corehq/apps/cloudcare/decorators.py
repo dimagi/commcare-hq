@@ -7,7 +7,7 @@ from corehq.apps.users.models import Permissions
 
 def require_cloudcare_access_ex():
     """
-    Decorator for cloudcare users. Should require either data editing 
+    Decorator for cloudcare users. Should require either access web apps
     permissions or they should be a mobile user.
     """
     def decorator(view_func):
