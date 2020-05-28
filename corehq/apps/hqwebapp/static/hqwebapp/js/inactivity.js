@@ -24,10 +24,10 @@ hqDefine('hqwebapp/js/inactivity', [
           * Determine when to poll next. Poll more frequently as expiration approaches, to
           * increase the chance the modal pops up before the user takes an action and gets rejected.
           */
-        var calculateDelayAndWarn = function (last_request) {
-            millisLeft = timeout;
-            if (last_request) {
-                 millisLeft = timeout - (new Date() - new Date(last_request));
+        var calculateDelayAndWarn = function (lastRequest) {
+            var millisLeft = timeout;
+            if (lastRequest) {
+                millisLeft = timeout - (new Date() - new Date(lastRequest));
             }
 
             // Last 30 seconds, ping every 3 seconds
@@ -97,7 +97,7 @@ hqDefine('hqwebapp/js/inactivity', [
             $.ajax({
                 url: initialPageData.reverse('bsd_license'),  // Public view that will trigger session activity
                 type: 'GET',
-                success: function (data) {
+                success: function () {
                     $button.enableButton();
                     $warningModal.modal('hide');
                 },
