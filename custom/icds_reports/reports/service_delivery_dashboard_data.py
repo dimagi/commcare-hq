@@ -8,10 +8,10 @@ from custom.icds_reports.utils import DATA_NOT_ENTERED, percent_or_not_entered, 
 
 
 @icds_quickcache([
-    'start', 'length', 'order', 'reversed_order', 'location_filters', 'year', 'month', 'step'
+    'domain', 'start', 'length', 'order', 'reversed_order', 'location_filters', 'year', 'month', 'step'
 ], timeout=30 * 60)
 def get_service_delivery_report_data(domain, start, length, order, reversed_order, location_filters,
-                              year, month, step, include_test=False):
+                                     year, month, step, include_test=False):
     if location_filters.get('aggregation_level') == 1:
         default_order = 'state_name'
     elif location_filters.get('aggregation_level') == 2:
@@ -40,7 +40,7 @@ def get_service_delivery_report_data(domain, start, length, order, reversed_orde
         'data': [],
     }
 
-    def month_filter_check():
+    def should_show_25():
         return year >= 2020 and month >= 4
 
     def get_value_or_data_not_entered(source, field):
@@ -49,7 +49,7 @@ def get_service_delivery_report_data(domain, start, length, order, reversed_orde
             return DATA_NOT_ENTERED
         return value
 
-    def merge_dicts(first_dict, second_dict):
+    def update_total_row(first_dict, second_dict):
         for key, value in first_dict.items():
             # excluding location and percentage fields
             if key not in location_fields + ['thr', 'pse', 'sn', 'gm', 'home_visits']:
@@ -63,7 +63,7 @@ def get_service_delivery_report_data(domain, start, length, order, reversed_orde
         return_dict['gm'] = percent_or_not_entered(row_data['gm_0_3'], row_data['children_0_3'])
         return_dict['cbe'] = percent_or_not_entered(row_data['num_awcs_conducted_cbe'],
                                                     row_data['num_launched_awcs'])
-        if month_filter_check():
+        if should_show_25():
             return_dict['thr'] = percent_or_not_entered(row_data['thr_25_days'], row_data['thr_eligible'])
         else:
             return_dict['thr'] = percent_or_not_entered(row_data['thr_21_days'], row_data['thr_eligible'])
@@ -71,7 +71,7 @@ def get_service_delivery_report_data(domain, start, length, order, reversed_orde
 
     def get_children_percents(return_dict, row_data):
         return_dict['gm'] = percent_or_not_entered(row_data['gm_3_5'], row_data['children_3_5'])
-        if month_filter_check():
+        if should_show_25():
             return_dict['pse'] = percent_or_not_entered(row_data['pse_25_days'], row_data['pse_eligible'])
             return_dict['sn'] = percent_or_not_entered(row_data['lunch_25_days'], row_data['pse_eligible'])
         else:
@@ -126,17 +126,17 @@ def get_service_delivery_report_data(domain, start, length, order, reversed_orde
         if not all_row.keys():
             all_row = copy.deepcopy(base_row)
         else:
-            all_row = merge_dicts(all_row, base_row)
-        # Calculating percentages for all row
-        if index + 1 == data_length:
-            # setting location params to all
-            for location in location_fields:
-                all_row[location] = 'All'
-            if step == 'pw_lw_children':
-                get_pw_lw_percents(all_row, all_row)
-            else:
-                get_children_percents(all_row, all_row)
+            all_row = update_total_row(all_row, base_row)
         config['data'].append(base_row)
+
+    # setting location params to all
+    for location in location_fields:
+        all_row[location] = 'All'
+    # Calculating percentages for all row
+    if step == 'pw_lw_children':
+        get_pw_lw_percents(all_row, all_row)
+    else:
+        get_children_percents(all_row, all_row)
 
     percentage_fields = ('home_visits', 'gm', 'thr', 'sn', 'pse')
     if order:
@@ -156,7 +156,7 @@ def get_service_delivery_report_data(domain, start, length, order, reversed_orde
 
 
 @icds_quickcache([
-    'start', 'length', 'order', 'reversed_order', 'location_filters', 'year', 'month', 'step'
+    'domain', 'start', 'length', 'order', 'reversed_order', 'location_filters', 'year', 'month', 'step'
 ], timeout=30 * 60)
 def get_service_delivery_details(domain, start, length, order, reversed_order, location_filters,
                                  year, month, step, include_test=False):
@@ -201,7 +201,7 @@ def get_service_delivery_details(domain, start, length, order, reversed_order, l
         'data': [],
     }
 
-    def merge_dicts(first_dict, second_dict):
+    def update_total_row(first_dict, second_dict):
         for key, value in first_dict.items():
             # excluding location and percentage fields
             if key in values:
@@ -215,51 +215,6 @@ def get_service_delivery_details(domain, start, length, order, reversed_order, l
             return DATA_NOT_ENTERED
         return value
 
-    def get_thr_percents(base_dict, row_data):
-        base_dict['thr_0_days_val'] = percent_or_not_entered(row_data['thr_0_days'],
-                                                             row_data['thr_eligible'])
-        base_dict['thr_1_7_days_val'] = percent_or_not_entered(row_data['thr_1_7_days'],
-                                                               row_data['thr_eligible'])
-        base_dict['thr_8_14_days_val'] = percent_or_not_entered(row_data['thr_8_14_days'],
-                                                                row_data['thr_eligible'])
-        base_dict['thr_15_20_days_val'] = percent_or_not_entered(row_data['thr_15_20_days'],
-                                                                 row_data['thr_eligible'])
-        base_dict['thr_21_24_days_val'] = percent_or_not_entered(row_data['thr_21_24_days'],
-                                                                 row_data['thr_eligible'])
-        base_dict['thr_25_days_val'] = percent_or_not_entered(row_data['thr_25_days'],
-                                                              row_data['thr_eligible'])
-        return base_dict
-
-    def get_sn_percents(base_dict, row_data):
-        base_dict['lunch_0_days_val'] = percent_or_not_entered(row_data['lunch_0_days'],
-                                                               row_data['pse_eligible'])
-        base_dict['lunch_1_7_days_val'] = percent_or_not_entered(row_data['lunch_1_7_days'],
-                                                                 row_data['pse_eligible'])
-        base_dict['lunch_8_14_days_val'] = percent_or_not_entered(row_data['lunch_8_14_days'],
-                                                                  row_data['pse_eligible'])
-        base_dict['lunch_15_20_days_val'] = percent_or_not_entered(row_data['lunch_15_20_days'],
-                                                                   row_data['pse_eligible'])
-        base_dict['lunch_21_24_days_val'] = percent_or_not_entered(row_data['lunch_21_24_days'],
-                                                                   row_data['pse_eligible'])
-        base_dict['lunch_25_days_val'] = percent_or_not_entered(row_data['lunch_25_days'],
-                                                                row_data['pse_eligible'])
-        return base_dict
-
-    def get_pse_percents(base_dict, row_data):
-        base_dict['pse_0_days_val'] = percent_or_not_entered(row_data['pse_0_days'],
-                                                             row_data['pse_eligible'])
-        base_dict['pse_1_7_days_val'] = percent_or_not_entered(row_data['pse_1_7_days'],
-                                                               row_data['pse_eligible'])
-        base_dict['pse_8_14_days_val'] = percent_or_not_entered(row_data['pse_8_14_days'],
-                                                               row_data['pse_eligible'])
-        base_dict['pse_15_20_days_val'] = percent_or_not_entered(row_data['pse_15_20_days'],
-                                                                 row_data['pse_eligible'])
-        base_dict['pse_21_24_days_val'] = percent_or_not_entered(row_data['pse_21_24_days'],
-                                                                 row_data['pse_eligible'])
-        base_dict['pse_25_days_val'] = percent_or_not_entered(row_data['pse_25_days'],
-                                                              row_data['pse_eligible'])
-        return base_dict
-
     def base_data(row_data):
         base_dict = dict(
             state_name=get_value_or_data_not_entered(row_data, 'state_name'),
@@ -270,7 +225,7 @@ def get_service_delivery_details(domain, start, length, order, reversed_order, l
             num_launched_awcs=get_value_or_data_not_entered(row_data, 'num_launched_awcs')
         )
         if step == 'thr':
-            base_dict = get_thr_percents(base_dict, row_data)
+            base_dict = _get_pre_percents(base_dict, row_data, 'thr', 'thr')
             base_dict['thr_0_days'] = get_value_or_data_not_entered(row_data, 'thr_0_days')
             base_dict['thr_1_7_days'] = get_value_or_data_not_entered(row_data, 'thr_1_7_days')
             base_dict['thr_8_14_days'] = get_value_or_data_not_entered(row_data, 'thr_8_14_days')
@@ -291,7 +246,7 @@ def get_service_delivery_details(domain, start, length, order, reversed_order, l
             base_dict['public_health_message_count'] =\
                 get_value_or_data_not_entered(row_data, 'public_health_message_count')
         elif step == 'sn':
-            base_dict = get_sn_percents(base_dict, row_data)
+            base_dict = _get_pre_percents(base_dict, row_data, 'lunch', 'pse')
             base_dict['lunch_0_days'] = get_value_or_data_not_entered(row_data, 'lunch_0_days')
             base_dict['lunch_1_7_days'] = get_value_or_data_not_entered(row_data, 'lunch_1_7_days')
             base_dict['lunch_8_14_days'] = get_value_or_data_not_entered(row_data, 'lunch_8_14_days')
@@ -300,7 +255,7 @@ def get_service_delivery_details(domain, start, length, order, reversed_order, l
             base_dict['lunch_25_days'] = get_value_or_data_not_entered(row_data, 'lunch_25_days')
             base_dict['pse_eligible'] = get_value_or_data_not_entered(row_data, 'pse_eligible')
         elif step == 'pse':
-            base_dict = get_pse_percents(base_dict, row_data)
+            base_dict = _get_pre_percents(base_dict, row_data, 'pse', 'pse')
             base_dict['pse_0_days'] = get_value_or_data_not_entered(row_data, 'pse_0_days')
             base_dict['pse_1_7_days'] = get_value_or_data_not_entered(row_data, 'pse_1_7_days')
             base_dict['pse_8_14_days'] = get_value_or_data_not_entered(row_data, 'pse_8_14_days')
@@ -318,19 +273,19 @@ def get_service_delivery_details(domain, start, length, order, reversed_order, l
         if not all_row.keys():
             all_row = copy.deepcopy(base_row)
         else:
-            all_row = merge_dicts(all_row, base_row)
-        # Calculating percentages for all row
-        if index + 1 == data_length:
-            # setting location params to all
-            for location in location_fields:
-                all_row[location] = 'All'
-            if step == 'thr':
-                all_row = get_thr_percents(all_row, all_row)
-            elif step == 'sn':
-                all_row = get_sn_percents(all_row, all_row)
-            elif step == 'pse':
-                all_row = get_pse_percents(all_row, all_row)
+            all_row = update_total_row(all_row, base_row)
         config['data'].append(base_data(row))
+
+    # setting location params to all
+    for location in location_fields:
+        all_row[location] = 'All'
+    # Calculating percentages for all row
+    if step == 'thr':
+        all_row = _get_pre_percents(all_row, all_row, 'thr', 'thr')
+    elif step == 'sn':
+        all_row = _get_pre_percents(all_row, all_row, 'lunch', 'pse')
+    elif step == 'pse':
+        all_row = _get_pre_percents(all_row, all_row, 'pse', 'pse')
 
     sort_columns = [field + '_val' for field in count_columns]
 
@@ -350,3 +305,19 @@ def get_service_delivery_details(domain, start, length, order, reversed_order, l
     config["recordsFiltered"] = data_count
 
     return config
+
+
+def _get_pre_percents(base_dict, row_data, service_name, eligibility):
+    base_dict[f'{service_name}_0_days_val'] = percent_or_not_entered(row_data[f'{service_name}_0_days'],
+                                                                     row_data[f'{eligibility}_eligible'])
+    base_dict[f'{service_name}_1_7_days_val'] = percent_or_not_entered(row_data[f'{service_name}_1_7_days'],
+                                                                       row_data[f'{eligibility}_eligible'])
+    base_dict[f'{service_name}_8_14_days_val'] = percent_or_not_entered(row_data[f'{service_name}_8_14_days'],
+                                                                        row_data[f'{eligibility}_eligible'])
+    base_dict[f'{service_name}_15_20_days_val'] = percent_or_not_entered(row_data[f'{service_name}_15_20_days'],
+                                                                         row_data[f'{eligibility}_eligible'])
+    base_dict[f'{service_name}_21_24_days_val'] = percent_or_not_entered(row_data[f'{service_name}_21_24_days'],
+                                                                         row_data[f'{eligibility}_eligible'])
+    base_dict[f'{service_name}_25_days_val'] = percent_or_not_entered(row_data[f'{service_name}_25_days'],
+                                                                      row_data[f'{eligibility}_eligible'])
+    return base_dict

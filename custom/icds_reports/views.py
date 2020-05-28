@@ -209,8 +209,6 @@ from custom.icds_reports.reports.service_delivery_dashboard import (
 )
 from custom.icds_reports.reports.service_delivery_dashboard_data import (
     get_service_delivery_report_data,
-)
-from custom.icds_reports.reports.service_delivery_dashboard_data import (
     get_service_delivery_details,
 )
 from custom.icds_reports.reports.stadiometer import (
@@ -559,7 +557,7 @@ class ServiceDeliveryDashboardView(BaseReportView):
         return JsonResponse(data=data)
 
 
-@method_decorator([api_auth, toggles.ICDS_DASHBOARD_REPORT_FEATURES.required_decorator()], name='dispatch')
+@method_decorator(DASHBOARD_CHECKS, name='dispatch')
 class ServiceDeliveryDashboardDetailsView(BaseReportView):
 
     def get(self, request, *args, **kwargs):
