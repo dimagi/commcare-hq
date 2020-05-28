@@ -122,26 +122,25 @@ def get_service_delivery_report_data(domain, start, length, order, reversed_orde
         else:
             all_row = update_total_row(all_row, base_row)
         config['data'].append(base_row)
-
-    # setting location params to all
-    for location in location_fields:
-        all_row[location] = 'All'
-    # Calculating percentages for all row
-    if step == 'pw_lw_children':
-        get_pw_lw_percents(all_row, all_row)
-    else:
-        get_children_percents(all_row, all_row)
-
-    percentage_fields = ('home_visits', 'gm', 'thr', 'sn', 'pse')
-    if order:
-        if order in percentage_fields:
-            config['data'].sort(
-                key=lambda x: float(x[order][:-1] if x[order] != DATA_NOT_ENTERED else 0), reverse=reversed_order
-            )
-        else:
-            config['data'].sort(key=lambda x: x[order], reverse=reversed_order)
-    config['data'] = config['data'][start:(start + length)]
     if data_length:
+        # setting location params to all
+        for location in location_fields:
+            all_row[location] = 'All'
+        # Calculating percentages for all row
+        if step == 'pw_lw_children':
+            get_pw_lw_percents(all_row, all_row)
+        else:
+            get_children_percents(all_row, all_row)
+
+        percentage_fields = ('home_visits', 'gm', 'thr', 'sn', 'pse')
+        if order:
+            if order in percentage_fields:
+                config['data'].sort(
+                    key=lambda x: float(x[order][:-1] if x[order] != DATA_NOT_ENTERED else 0), reverse=reversed_order
+                )
+            else:
+                config['data'].sort(key=lambda x: x[order], reverse=reversed_order)
+        config['data'] = config['data'][start:(start + length)]
         config['data'].insert(0, all_row)
     config["aggregationLevel"] = location_filters['aggregation_level']
     config["recordsTotal"] = data_count
@@ -248,30 +247,29 @@ def get_service_delivery_details(domain, start, length, order, reversed_order, l
         else:
             all_row = update_total_row(all_row, base_row)
         config['data'].append(base_data(row))
-
-    # setting location params to all
-    for location in location_fields:
-        all_row[location] = 'All'
-    # Calculating percentages for all row
-    if step == 'thr':
-        all_row = _get_pre_percents(all_row, all_row, 'thr', 'thr')
-    elif step == 'sn':
-        all_row = _get_pre_percents(all_row, all_row, 'lunch', 'pse')
-    elif step == 'pse':
-        all_row = _get_pre_percents(all_row, all_row, 'pse', 'pse')
-
-    sort_columns = [field + '_val' for field in count_columns]
-
-    percentage_fields = sort_columns
-    if order:
-        if order in percentage_fields:
-            config['data'].sort(
-                key=lambda x: float(x[order][:-1] if x[order] != DATA_NOT_ENTERED else 0), reverse=reversed_order
-            )
-        else:
-            config['data'].sort(key=lambda x: x[order], reverse=reversed_order)
-    config['data'] = config['data'][start:(start + length)]
     if data_length:
+        # setting location params to all
+        for location in location_fields:
+            all_row[location] = 'All'
+        # Calculating percentages for all row
+        if step == 'thr':
+            all_row = _get_pre_percents(all_row, all_row, 'thr', 'thr')
+        elif step == 'sn':
+            all_row = _get_pre_percents(all_row, all_row, 'lunch', 'pse')
+        elif step == 'pse':
+            all_row = _get_pre_percents(all_row, all_row, 'pse', 'pse')
+
+        sort_columns = [field + '_val' for field in count_columns]
+
+        percentage_fields = sort_columns
+        if order:
+            if order in percentage_fields:
+                config['data'].sort(
+                    key=lambda x: float(x[order][:-1] if x[order] != DATA_NOT_ENTERED else 0), reverse=reversed_order
+                )
+            else:
+                config['data'].sort(key=lambda x: x[order], reverse=reversed_order)
+        config['data'] = config['data'][start:(start + length)]
         config['data'].insert(0, all_row)
     config["aggregationLevel"] = location_filters['aggregation_level']
     config["recordsTotal"] = data_count
