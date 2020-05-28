@@ -43,12 +43,6 @@ def get_service_delivery_report_data(domain, start, length, order, reversed_orde
     def should_show_25():
         return year >= 2020 and month >= 4
 
-    def get_value_or_data_not_entered(source, field):
-        value = source.get(field)
-        if value is None:
-            return DATA_NOT_ENTERED
-        return value
-
     def update_total_row(first_dict, second_dict):
         for key, value in first_dict.items():
             # excluding location and percentage fields
@@ -209,12 +203,6 @@ def get_service_delivery_details(domain, start, length, order, reversed_order, l
                                   format_data_not_entered_to_zero(second_dict[key])
         return first_dict
 
-    def get_value_or_data_not_entered(source, field):
-        value = source.get(field)
-        if value is None:
-            return DATA_NOT_ENTERED
-        return value
-
     def base_data(row_data):
         base_dict = dict(
             state_name=get_value_or_data_not_entered(row_data, 'state_name'),
@@ -225,14 +213,10 @@ def get_service_delivery_details(domain, start, length, order, reversed_order, l
             num_launched_awcs=get_value_or_data_not_entered(row_data, 'num_launched_awcs')
         )
         if step == 'thr':
+            # calculating percents
             base_dict = _get_pre_percents(base_dict, row_data, 'thr', 'thr')
-            base_dict['thr_0_days'] = get_value_or_data_not_entered(row_data, 'thr_0_days')
-            base_dict['thr_1_7_days'] = get_value_or_data_not_entered(row_data, 'thr_1_7_days')
-            base_dict['thr_8_14_days'] = get_value_or_data_not_entered(row_data, 'thr_8_14_days')
-            base_dict['thr_15_20_days'] = get_value_or_data_not_entered(row_data, 'thr_15_20_days')
-            base_dict['thr_21_24_days'] = get_value_or_data_not_entered(row_data, 'thr_21_24_days')
-            base_dict['thr_25_days'] = get_value_or_data_not_entered(row_data, 'thr_25_days')
-            base_dict['thr_eligible'] = get_value_or_data_not_entered(row_data, 'thr_eligible')
+            # filling the data fields
+            base_dict = _get_pre_values(base_dict, row_data, 'thr', 'thr')
         elif step == 'cbe':
             base_dict['cbe_conducted'] = get_value_or_data_not_entered(row_data, 'cbe_conducted')
             base_dict['third_fourth_month_of_pregnancy_count'] =\
@@ -247,22 +231,11 @@ def get_service_delivery_details(domain, start, length, order, reversed_order, l
                 get_value_or_data_not_entered(row_data, 'public_health_message_count')
         elif step == 'sn':
             base_dict = _get_pre_percents(base_dict, row_data, 'lunch', 'pse')
-            base_dict['lunch_0_days'] = get_value_or_data_not_entered(row_data, 'lunch_0_days')
-            base_dict['lunch_1_7_days'] = get_value_or_data_not_entered(row_data, 'lunch_1_7_days')
-            base_dict['lunch_8_14_days'] = get_value_or_data_not_entered(row_data, 'lunch_8_14_days')
-            base_dict['lunch_15_20_days'] = get_value_or_data_not_entered(row_data, 'lunch_15_20_days')
-            base_dict['lunch_21_24_days'] = get_value_or_data_not_entered(row_data, 'lunch_21_24_days')
-            base_dict['lunch_25_days'] = get_value_or_data_not_entered(row_data, 'lunch_25_days')
-            base_dict['pse_eligible'] = get_value_or_data_not_entered(row_data, 'pse_eligible')
+            base_dict = _get_pre_values(base_dict, row_data, 'lunch', 'pse')
+
         elif step == 'pse':
             base_dict = _get_pre_percents(base_dict, row_data, 'pse', 'pse')
-            base_dict['pse_0_days'] = get_value_or_data_not_entered(row_data, 'pse_0_days')
-            base_dict['pse_1_7_days'] = get_value_or_data_not_entered(row_data, 'pse_1_7_days')
-            base_dict['pse_8_14_days'] = get_value_or_data_not_entered(row_data, 'pse_8_14_days')
-            base_dict['pse_15_20_days'] = get_value_or_data_not_entered(row_data, 'pse_15_20_days')
-            base_dict['pse_21_24_days'] = get_value_or_data_not_entered(row_data, 'pse_21_24_days')
-            base_dict['pse_25_days'] = get_value_or_data_not_entered(row_data, 'pse_25_days')
-            base_dict['pse_eligible'] = get_value_or_data_not_entered(row_data, 'pse_eligible')
+            base_dict = _get_pre_values(base_dict, row_data, 'pse', 'pse')
         return base_dict
 
     all_row = dict()
@@ -307,6 +280,13 @@ def get_service_delivery_details(domain, start, length, order, reversed_order, l
     return config
 
 
+def get_value_or_data_not_entered(source, field):
+    value = source.get(field)
+    if value is None:
+        return DATA_NOT_ENTERED
+    return value
+
+
 def _get_pre_percents(base_dict, row_data, service_name, eligibility):
     base_dict[f'{service_name}_0_days_val'] = percent_or_not_entered(row_data[f'{service_name}_0_days'],
                                                                      row_data[f'{eligibility}_eligible'])
@@ -320,4 +300,15 @@ def _get_pre_percents(base_dict, row_data, service_name, eligibility):
                                                                          row_data[f'{eligibility}_eligible'])
     base_dict[f'{service_name}_25_days_val'] = percent_or_not_entered(row_data[f'{service_name}_25_days'],
                                                                       row_data[f'{eligibility}_eligible'])
+    return base_dict
+
+
+def _get_pre_values(base_dict, row_data, service_name, eligibility):
+    base_dict[f'{service_name}_0_days'] = get_value_or_data_not_entered(row_data, f'{service_name}_0_days')
+    base_dict[f'{service_name}_1_7_days'] = get_value_or_data_not_entered(row_data, f'{service_name}_1_7_days')
+    base_dict[f'{service_name}_8_14_days'] = get_value_or_data_not_entered(row_data, f'{service_name}_8_14_days')
+    base_dict[f'{service_name}_15_20_days'] = get_value_or_data_not_entered(row_data, f'{service_name}_15_20_days')
+    base_dict[f'{service_name}_21_24_days'] = get_value_or_data_not_entered(row_data, f'{service_name}_21_24_days')
+    base_dict[f'{service_name}_25_days'] = get_value_or_data_not_entered(row_data, f'{service_name}_25_days')
+    base_dict[f'{eligibility}_eligible'] = get_value_or_data_not_entered(row_data, f'{eligibility}_eligible')
     return base_dict
