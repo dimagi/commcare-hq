@@ -321,5 +321,3 @@ def _get_pre_percents(base_dict, row_data, service_name, eligibility):
     base_dict[f'{service_name}_25_days_val'] = percent_or_not_entered(row_data[f'{service_name}_25_days'],
                                                                       row_data[f'{eligibility}_eligible'])
     return base_dict
-
-
