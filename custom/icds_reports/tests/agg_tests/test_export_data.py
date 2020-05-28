@@ -15,6 +15,8 @@ from custom.icds_reports.sqldata.exports.pregnant_women import PregnantWomenExpo
 from custom.icds_reports.sqldata.exports.system_usage import SystemUsageExport
 from custom.icds_reports.reports.incentive import IncentiveReport
 from custom.icds_reports.reports.take_home_ration import TakeHomeRationExport
+from custom.icds_reports.reports.service_delivery_report import ServiceDeliveryReport
+from custom.icds_reports.models.aggregate import AggServiceDeliveryReport
 from custom.icds_reports.utils import india_now
 
 
@@ -4133,4 +4135,164 @@ class TestExportData(TestCase):
                  ['Year', 2017]]
               ]
              ]
+        )
+
+
+    def test_thr_report(self):
+        AggServiceDeliveryReport.aggregate(datetime(2017, 5, 1))
+        location = 'b1'
+        data = TakeHomeRationExport(
+            location=location,
+            month=datetime(2017, 5, 1),
+            loc_level=3,
+            report_type='beneficiary_wise',
+            beta=True
+        ).get_excel_data()
+        self.assertListEqual(
+            data,
+            [['Take Home Ration', [['State', 'District', 'Block', 'Sector', 'Awc Name', 'AWW Name',
+                                    'AWW Phone No.', 'Total No. of Beneficiaries eligible for THR',
+                                    'Total No. of Beneficiaries received THR>=21 days in given month',
+                                    'Total No of Pictures taken by AWW'],
+                                   ['st1', 'd1', 'b1', 's1', 'a1', 'AWC Not Launched', 'AWC Not Launched',
+                                    'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched'],
+                                   ['st1', 'd1', 'b1', 's1', 'a17', 'AWC Not Launched', 'AWC Not Launched',
+                                    'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched'],
+                                   ['st1', 'd1', 'b1', 's1', 'a25', 'AWC Not Launched', 'AWC Not Launched',
+                                    'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched'],
+                                   ['st1', 'd1', 'b1', 's1', 'a33', 'AWC Not Launched', 'AWC Not Launched',
+                                    'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched'],
+                                   ['st1', 'd1', 'b1', 's1', 'a41', 'Data Not Entered',
+                                    'Data Not Entered', 2, 0, 0],
+                                   ['st1', 'd1', 'b1', 's1', 'a49', 'Data Not Entered', 'Data Not Entered',
+                                    11, 0, 0],
+                                   ['st1', 'd1', 'b1', 's1', 'a9', 'AWC Not Launched', 'AWC Not Launched',
+                                    'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched'],
+                                   ['st1', 'd1', 'b1', 's2', 'a10', 'Data Not Entered', 'Data Not Entered',
+                                    10, 0, 0],
+                                   ['st1', 'd1', 'b1', 's2', 'a18', 'Data Not Entered', 'Data Not Entered',
+                                    15, 1, 4],
+                                   ['st1', 'd1', 'b1', 's2', 'a2', 'AWC Not Launched', 'AWC Not Launched',
+                                    'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched'],
+                                   ['st1', 'd1', 'b1', 's2', 'a26', 'AWC Not Launched', 'AWC Not Launched',
+                                    'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched'],
+                                   ['st1', 'd1', 'b1', 's2', 'a34', 'Data Not Entered', 'Data Not Entered',
+                                    7, 0, 0],
+                                   ['st1', 'd1', 'b1', 's2', 'a42', 'AWC Not Launched', 'AWC Not Launched',
+                                    'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched'],
+                                   ['st1', 'd1', 'b1', 's2', 'a50', 'AWC Not Launched', 'AWC Not Launched',
+                                    'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched']]],
+             ['Export Info', [
+                 ['Generated at', self.now],
+                 ['State', 'st1'],
+                 ['District', 'd1'],
+                 ['Block', 'b1'],
+                 ['Month', 'May'],
+                 ['Year', 2017]]
+              ]
+
+             ]
+        )
+
+    def test_thr_report_beneficiary_wise(self):
+        AggServiceDeliveryReport.aggregate(datetime(2017, 5, 1))
+        location = 'b1'
+        data = TakeHomeRationExport(
+            location=location,
+            month=datetime(2017, 5, 1),
+            loc_level=3,
+            report_type='beneficiary_wise',
+            beta=True
+        ).get_excel_data()
+        print(data)
+        self.assertListEqual(
+            data,
+            [[
+                'Take Home Ration',
+                [
+                    [
+                        'State', 'District', 'Block', 'Sector', 'Awc Name', 'AWW Name', 'AWW Phone No.',
+                        'Total No. of PW eligible for THR', 'Total No. of LW eligible for THR',
+                        'Total No. of Children(6-36 months) eligible for THR',
+                        'Total No. of PW received THR>=21 days in given month',
+                        'Total No. of LW received THR>=21 days in given month',
+                        'Total No. of Children(6-36 months) received THR>=21 days in given month',
+                        'Total No of Pictures taken by AWW'
+                    ],
+                    [
+                        'Bihar', 'Patna', 'Bihta', 's1', 'a1', 'AWC Not Launched', 'AWC Not Launched',
+                        'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                        'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched'
+                    ],
+                    [
+                        'Bihar', 'Patna', 'Bihta', 's1', 'a17', 'AWC Not Launched', 'AWC Not Launched',
+                        'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                        'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched'
+                    ],
+                    [
+                        'Bihar', 'Patna', 'Bihta', 's1', 'a25', 'AWC Not Launched', 'AWC Not Launched',
+                        'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                        'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched'
+                    ],
+                    [
+                        'Bihar', 'Patna', 'Bihta', 's1', 'a33', 'AWC Not Launched', 'AWC Not Launched',
+                        'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                        'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched'
+                    ],
+                    [
+                        'Bihar', 'Patna', 'Bihta', 's1', 'a41', 'Data Not Entered', 'Data Not Entered', 2,
+                        0, 0, 0, 0, 0, 0
+                    ],
+                    [
+                       'Bihar', 'Patna', 'Bihta', 's1', 'a49', 'Data Not Entered', 'Data Not Entered', 3,
+                        5, 3, 0, 0, 0, 0
+                    ],
+                    [
+                       'Bihar', 'Patna', 'Bihta', 's1', 'a9', 'AWC Not Launched', 'AWC Not Launched',
+                       'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                       'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched'
+                    ],
+                    [
+                       'Bihar', 'Patna', 'Bihta', 's2', 'a10', 'Data Not Entered', 'Data Not Entered', 0,
+                        2, 8, 0, 0, 0, 0
+                    ],
+                    [
+                       'Bihar', 'Patna', 'Bihta', 's2', 'a18', 'Data Not Entered', 'Data Not Entered', 5,
+                        6, 4, 1, 0, 0, 4
+                    ],
+                    [
+                       'Bihar', 'Patna', 'Bihta', 's2', 'a2', 'AWC Not Launched', 'AWC Not Launched',
+                       'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                       'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched'
+                    ],
+                    [
+                       'Bihar', 'Patna', 'Bihta', 's2', 'a26', 'AWC Not Launched', 'AWC Not Launched',
+                       'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                       'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched'
+                    ],
+                    [
+                        'Bihar', 'Patna', 'Bihta', 's2', 'a34', 'Data Not Entered', 'Data Not Entered', 4,
+                        3, 'Data Not Entered', 0, 0, 'Data Not Entered', 0
+                    ],
+                    [
+                        'Bihar', 'Patna', 'Bihta', 's2', 'a42', 'AWC Not Launched', 'AWC Not Launched',
+                        'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                        'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched'
+                    ],
+                    [
+                        'Bihar', 'Patna', 'Bihta', 's2', 'a50', 'AWC Not Launched', 'AWC Not Launched',
+                        'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                        'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched'
+                    ]]
+              ],
+                ['Export Info',
+                 [
+                     ['Generated at', self.now],
+                     ['State', 'Bihar'],
+                     ['District', 'Patna'],
+                     ['Block', 'Bihta'],
+                     ['Month', 'May'],
+                     ['Year', 2017]
+                 ]
+                 ]]
         )
