@@ -57,7 +57,8 @@ class TakeHomeRationExport(object):
         for row in data:
             awc_is_launched = row.get('is_launched') == 'yes' or row.get('num_launched_awcs') == 1
             row_data = [_format_infrastructure_data(column_name, col_values, awc_is_launched)
-                        for column_name, col_values in row.items() if column_name not in ('num_launched_awcs', 'is_launched')]
+                        for column_name, col_values in row.items() if column_name not in ('num_launched_awcs',
+                                                                                          'is_launched')]
             excel_rows.append(row_data)
         filters = [['Generated at', india_now()]]
         if self.location:
@@ -89,9 +90,10 @@ class TakeHomeRationExport(object):
                    'Total No of Pictures taken by AWW']
 
         if self.beta:
-            columns = ['state_name', 'district_name', 'block_name',
-                                    'supervisor_name', 'awc_name', 'aww_name', 'contact_phone_number',
-                                    'num_launched_awcs']
+            columns = [
+                'state_name', 'district_name', 'block_name',
+                'supervisor_name', 'awc_name', 'aww_name', 'contact_phone_number',
+                'num_launched_awcs']
 
             if self.month <= date(2020, 3, 1):
                 thr_columns = [
