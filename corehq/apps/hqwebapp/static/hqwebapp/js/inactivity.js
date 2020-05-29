@@ -71,7 +71,7 @@ log("poll again in " + (millisLeft - 2 * 60 * 1000) / 1000 / 60 + " minutes");
         };
 
         var pollToShowModal = function () {
-log("polling HQ's ping_login");
+log("polling HQ's ping_login to decide about showing modal");
             $.ajax({
                 url: initialPageData.reverse('ping_login'),
                 type: 'GET',
@@ -100,6 +100,7 @@ log("ping_login succeeded, time to re-calculate when the next poll should be, da
         };
 
         var pollToHideModal = function (e) {
+log("polling HQ's ping_login to decide about hiding modal");
             var $button = $(e.currentTarget);
             $button.disableButton();
             $.ajax({
