@@ -52,9 +52,7 @@ branches:
   - vellum-staging  # DO NOT REMOVE this is similar to "autostaging", but for vellum
   - jls/sync-mixins-hard-fail # Jenny May 24
   - jls/migrate-CustomDataFieldsDefinition-2 # Jenny April 29
-  - mk/location-reassignment-realign # MK May 4
   - rn_update_perfect_scrollbar # Rohit Negi May 4
-  - bmb/SAAS-10674  # Biyeun May 4
   - jls/migrate-MobileAuthKeyRecord-2 # Jenny May 16
   - bmb/SAAS-10882-wip  # Biyeun May 20 (updates knockout, bootstrap, jquery, DOMPurify)
   - fr/linked-domains-ucr       # Farid May 23
