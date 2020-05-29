@@ -1,7 +1,12 @@
+import json
 from collections import namedtuple
 
+from corehq.apps.app_manager.dbaccessors import get_brief_app_docs_in_domain
 from corehq.apps.linked_domain.remote_accessors import get_ucr_config as remote_get_ucr_config
-from corehq.apps.userreports.dbaccessors import get_datasources_for_domain, get_report_configs_for_domain
+from corehq.apps.userreports.dbaccessors import (
+    get_datasources_for_domain,
+    get_report_configs_for_domain,
+)
 from corehq.apps.userreports.models import (
     DataSourceConfiguration,
     ReportConfiguration,
@@ -41,12 +46,32 @@ def _get_or_create_datasource_link(domain_link, datasource):
 
     datasource_json["meta"]["master_id"] = datasource.get_id
 
+    _replace_master_app_ids(domain_link.linked_domain, datasource_json)
+
     new_datasource = DataSourceConfiguration.wrap(datasource_json)
     new_datasource.save()
 
     rebuild_indicators.delay(new_datasource.get_id, source=f"Datasource link: {new_datasource.get_id}")
 
     return new_datasource
+
+
+def _replace_master_app_ids(linked_domain, datasource_json):
+    master_app_to_linked_app = {
+        doc['family_id']: doc['_id']
+        for doc in get_brief_app_docs_in_domain(linked_domain)
+        if doc.get('family_id', None) is not None
+    }
+
+    configured_filter = json.dumps(datasource_json['configured_filter'])
+    for master_app_id, linked_app_id in master_app_to_linked_app.items():
+        configured_filter = configured_filter.replace(master_app_id, linked_app_id)
+    datasource_json['configured_filter'] = json.loads(configured_filter)
+
+    named_filters = json.dumps(datasource_json['named_filters'])
+    for master_app_id, linked_app_id in master_app_to_linked_app.items():
+        named_filters = named_filters.replace(master_app_id, linked_app_id)
+    datasource_json['named_filters'] = json.loads(named_filters)
 
 
 def _get_or_create_report_link(domain_link, report, datasource):
@@ -92,6 +117,8 @@ def _update_linked_datasource(master_datasource, linked_datasource):
     master_datasource_json["_id"] = linked_datasource_json["_id"]
     master_datasource_json["_rev"] = linked_datasource_json["_rev"]
     master_datasource_json["meta"]["master_id"] = linked_datasource_json["meta"]["master_id"]
+
+    _replace_master_app_ids(linked_datasource_json["domain"], master_datasource_json)
 
     linked_datasource_json.update(master_datasource_json)
     DataSourceConfiguration.wrap(linked_datasource_json).save()

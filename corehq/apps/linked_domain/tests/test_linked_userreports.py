@@ -7,6 +7,7 @@ from dimagi.utils.couch.undo import is_deleted, soft_delete
 
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.domain.tests.test_utils import delete_all_domains
+from corehq.apps.linked_domain.applications import link_app
 from corehq.apps.linked_domain.decorators import REMOTE_REQUESTER_HEADER
 from corehq.apps.linked_domain.tests.test_linked_apps import BaseLinkedAppsTest
 from corehq.apps.linked_domain.ucr import create_linked_ucr, update_linked_ucr
@@ -93,6 +94,42 @@ class TestLinkedUCR(BaseLinkedAppsTest):
         update_linked_ucr(self.domain_link, linked_report_info.report.get_id)
         report = ReportConfiguration.get(linked_report_info.report.get_id)
         self.assertTrue(report.config.is_deactivated)
+
+    def test_linked_app_filter_maps_correctly(self):
+        linked_app = link_app(self.linked_app, self.domain, self.master1.get_id)
+        self.data_source.configured_filter = {
+            "type": "and",
+            "filters": [
+                {
+                    "type": "boolean_expression",
+                    "operator": "eq",
+                    "expression": {
+                        "type": "property_name",
+                        "property_name": "xmlns",
+                        "datatype": None
+                    },
+                    "property_value": "http://openrosa.org/formdesigner/1A255365-DAA1-4815-906D-CBD8D3A462B1",
+                    "comment": None
+                },
+                {
+                    "type": "boolean_expression",
+                    "operator": "eq",
+                    "expression": {
+                        "type": "property_name",
+                        "property_name": "app_id",
+                        "datatype": None
+                    },
+                    "property_value": self.master1.get_id,
+                    "comment": None
+                }
+            ]
+        }
+        self.data_source.save()
+        linked_report_info = create_linked_ucr(self.domain_link, self.report.get_id)
+        self.assertEqual(
+            linked_report_info.datasource.configured_filter['filters'][1]['property_value'],
+            linked_app.get_id
+        )
 
     @patch('corehq.apps.linked_domain.ucr.remote_get_ucr_config')
     def test_remote_link_ucr(self, fake_ucr_getter):
