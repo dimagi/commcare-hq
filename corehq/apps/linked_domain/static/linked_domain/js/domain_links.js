@@ -130,14 +130,17 @@ hqDefine("linked_domain/js/domain_links", [
             gettext("Search content")
         );
 
-        $("#push-button").click(function () {
-            // TODO: require at least one project
-            // TODO: require at least one model
-            // TODO: disable and reenable the button
-            _private.RMI("create_release", {
+        var pushData = function () {
+            return {
                 "models": _.map($("#select-push-models").val(), JSON.parse),
                 "linked_domains": $("#select-push-domains").val(),
-            }).done(function (data) {
+            };
+        };
+        $("#select-push-models, #select-push-domains").change(function () {
+            $("#push-button").attr('disabled', !_.every(_.values(pushData()), function (arr) { return arr.length; }));
+        });
+        $("#push-button").click(function () {
+            _private.RMI("create_release", pushData()).done(function (data) {
                     alert_user.alert_user(data.message, data.success ? 'success' : 'danger');
             }).fail(function () {
                     alert_user.alert_user(gettext('Something unexpected happened.\n' +
