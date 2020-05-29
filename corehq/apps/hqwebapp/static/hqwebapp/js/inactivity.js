@@ -121,7 +121,7 @@ log("polling HQ's ping_login to decide about hiding modal");
 
                     if (error) {
                         $button.removeClass("btn-default").addClass("btn-danger");
-                        $button.text(gettext("Could not authenticate, please log in and try again"));
+                        $button.text(error);
                     } else {
                         $modal.modal('hide');
                         $button.text(gettext("Done"));
