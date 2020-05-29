@@ -57,15 +57,43 @@ class TrumpiaBackend(SQLSMSBackend):
         self.handle_response(response, msg)
 
     def handle_response(self, response, msg):
-        if response.status_code == 200:
+        if response.status_code != 200:
+            if response.status_code == 500:
+                raise TrumpiaRetry("Gateway 500 error")
+            msg.set_gateway_error(response.status_code)
+            return
+        data = response.json()
+        if is_success(data):
             # Could register for a push notification to get a detailed
             # message status report. Deferring that for now since none
             # of our other gateways do that. We may want to do that to
             # get more specific failure details. `backend_message_id`
             # can be used to retrieve the report if needed.
-            data = response.json()
             msg.backend_message_id = data["request_id"]
-        elif response.status_code == 500:
-            raise TrumpiaRetry("Gateway 500 error")
-        else:
-            msg.set_gateway_error(response.status_code)
+            return
+        error = data.get("status_code")
+        if not error:
+            error = "blocked" if "blocked_mobile" in data else response.text
+        elif error[-6:] in RETRY_CODES:
+            raise TrumpiaRetry(f"Gateway error: {error}")
+        msg.set_gateway_error(error)
+
+
+def is_success(data):
+    return (
+        "request_id" in data
+        and data.get("status", "sent") == "sent"
+        and data.get("status_code", "CE0000")[-6:] in SUCCESS_CODES
+    )
+
+
+# https://classic.trumpia.com/api/docs/rest/status-code/common.php
+# https://classic.trumpia.com/api/docs/rest/status-code/direct-sms.php
+SUCCESS_CODES = {
+    "CE0000",  # success
+    "CE4001",  # pending - interpret as success (see comment on success above)
+}
+RETRY_CODES = {
+    "CE0301",  # The request failed due to a temporary issue. Please retry in a few moments.
+    "CE0302",  # API Call is temporarily disabled due to an internal issue.
+}

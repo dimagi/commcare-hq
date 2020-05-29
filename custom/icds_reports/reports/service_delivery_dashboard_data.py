@@ -7,6 +7,40 @@ from custom.icds_reports.utils import DATA_NOT_ENTERED, percent_or_not_entered, 
     format_data_not_entered_to_zero
 
 
+def get_value_or_data_not_entered(source, field):
+    value = source.get(field)
+    if value is None:
+        return DATA_NOT_ENTERED
+    return value
+
+
+def _get_pre_percents(base_dict, row_data, service_name, eligibility):
+    base_dict[f'{service_name}_0_days_val'] = percent_or_not_entered(row_data[f'{service_name}_0_days'],
+                                                                     row_data[f'{eligibility}_eligible'])
+    base_dict[f'{service_name}_1_7_days_val'] = percent_or_not_entered(row_data[f'{service_name}_1_7_days'],
+                                                                       row_data[f'{eligibility}_eligible'])
+    base_dict[f'{service_name}_8_14_days_val'] = percent_or_not_entered(row_data[f'{service_name}_8_14_days'],
+                                                                        row_data[f'{eligibility}_eligible'])
+    base_dict[f'{service_name}_15_20_days_val'] = percent_or_not_entered(row_data[f'{service_name}_15_20_days'],
+                                                                         row_data[f'{eligibility}_eligible'])
+    base_dict[f'{service_name}_21_24_days_val'] = percent_or_not_entered(row_data[f'{service_name}_21_24_days'],
+                                                                         row_data[f'{eligibility}_eligible'])
+    base_dict[f'{service_name}_25_days_val'] = percent_or_not_entered(row_data[f'{service_name}_25_days'],
+                                                                      row_data[f'{eligibility}_eligible'])
+    return base_dict
+
+
+def _get_pre_values(base_dict, row_data, service_name, eligibility):
+    base_dict[f'{service_name}_0_days'] = get_value_or_data_not_entered(row_data, f'{service_name}_0_days')
+    base_dict[f'{service_name}_1_7_days'] = get_value_or_data_not_entered(row_data, f'{service_name}_1_7_days')
+    base_dict[f'{service_name}_8_14_days'] = get_value_or_data_not_entered(row_data, f'{service_name}_8_14_days')
+    base_dict[f'{service_name}_15_20_days'] = get_value_or_data_not_entered(row_data, f'{service_name}_15_20_days')
+    base_dict[f'{service_name}_21_24_days'] = get_value_or_data_not_entered(row_data, f'{service_name}_21_24_days')
+    base_dict[f'{service_name}_25_days'] = get_value_or_data_not_entered(row_data, f'{service_name}_25_days')
+    base_dict[f'{eligibility}_eligible'] = get_value_or_data_not_entered(row_data, f'{eligibility}_eligible')
+    return base_dict
+
+
 @icds_quickcache([
     'domain', 'start', 'length', 'order', 'reversed_order', 'location_filters', 'year', 'month', 'step'
 ], timeout=30 * 60)
@@ -276,37 +310,3 @@ def get_service_delivery_details(domain, start, length, order, reversed_order, l
     config["recordsFiltered"] = data_count
 
     return config
-
-
-def get_value_or_data_not_entered(source, field):
-    value = source.get(field)
-    if value is None:
-        return DATA_NOT_ENTERED
-    return value
-
-
-def _get_pre_percents(base_dict, row_data, service_name, eligibility):
-    base_dict[f'{service_name}_0_days_val'] = percent_or_not_entered(row_data[f'{service_name}_0_days'],
-                                                                     row_data[f'{eligibility}_eligible'])
-    base_dict[f'{service_name}_1_7_days_val'] = percent_or_not_entered(row_data[f'{service_name}_1_7_days'],
-                                                                       row_data[f'{eligibility}_eligible'])
-    base_dict[f'{service_name}_8_14_days_val'] = percent_or_not_entered(row_data[f'{service_name}_8_14_days'],
-                                                                        row_data[f'{eligibility}_eligible'])
-    base_dict[f'{service_name}_15_20_days_val'] = percent_or_not_entered(row_data[f'{service_name}_15_20_days'],
-                                                                         row_data[f'{eligibility}_eligible'])
-    base_dict[f'{service_name}_21_24_days_val'] = percent_or_not_entered(row_data[f'{service_name}_21_24_days'],
-                                                                         row_data[f'{eligibility}_eligible'])
-    base_dict[f'{service_name}_25_days_val'] = percent_or_not_entered(row_data[f'{service_name}_25_days'],
-                                                                      row_data[f'{eligibility}_eligible'])
-    return base_dict
-
-
-def _get_pre_values(base_dict, row_data, service_name, eligibility):
-    base_dict[f'{service_name}_0_days'] = get_value_or_data_not_entered(row_data, f'{service_name}_0_days')
-    base_dict[f'{service_name}_1_7_days'] = get_value_or_data_not_entered(row_data, f'{service_name}_1_7_days')
-    base_dict[f'{service_name}_8_14_days'] = get_value_or_data_not_entered(row_data, f'{service_name}_8_14_days')
-    base_dict[f'{service_name}_15_20_days'] = get_value_or_data_not_entered(row_data, f'{service_name}_15_20_days')
-    base_dict[f'{service_name}_21_24_days'] = get_value_or_data_not_entered(row_data, f'{service_name}_21_24_days')
-    base_dict[f'{service_name}_25_days'] = get_value_or_data_not_entered(row_data, f'{service_name}_25_days')
-    base_dict[f'{eligibility}_eligible'] = get_value_or_data_not_entered(row_data, f'{eligibility}_eligible')
-    return base_dict
