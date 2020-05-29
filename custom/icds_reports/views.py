@@ -23,6 +23,7 @@ from dateutil.relativedelta import relativedelta
 
 from couchexport.export import Format
 from couchexport.shortcuts import export_response
+
 from custom.icds_reports.utils.topojson_util.topojson_util import get_block_topojson_for_state, get_map_name
 from dimagi.utils.dates import add_months, force_to_date
 
@@ -205,6 +206,10 @@ from custom.icds_reports.reports.registered_household import (
 )
 from custom.icds_reports.reports.service_delivery_dashboard import (
     get_service_delivery_data,
+)
+from custom.icds_reports.reports.service_delivery_dashboard_data import (
+    get_service_delivery_report_data,
+    get_service_delivery_details,
 )
 from custom.icds_reports.reports.stadiometer import (
     get_stadiometer_data_chart,
@@ -522,8 +527,50 @@ class ServiceDeliveryDashboardView(BaseReportView):
         start, length, order_by_number_column, order_by_name_column, order_dir = \
             get_datatables_ordering_info(request)
         reversed_order = True if order_dir == 'desc' else False
+        icds_features_flag = icds_pre_release_features(self.request.couch_user)
+        if icds_features_flag:
+            data = get_service_delivery_report_data(
+                domain,
+                start,
+                length,
+                order_by_name_column,
+                reversed_order,
+                location_filters,
+                year,
+                month,
+                step,
+                include_test
+            )
+        else:
+            data = get_service_delivery_data(
+                domain,
+                start,
+                length,
+                order_by_name_column,
+                reversed_order,
+                location_filters,
+                year,
+                month,
+                step,
+                include_test
+            )
+        return JsonResponse(data=data)
 
-        data = get_service_delivery_data(
+
+@method_decorator(DASHBOARD_CHECKS, name='dispatch')
+class ServiceDeliveryDashboardDetailsView(BaseReportView):
+
+    def get(self, request, *args, **kwargs):
+        step, now, month, year, include_test, domain, current_month, prev_month, location, selected_month = \
+            self.get_settings(request, *args, **kwargs)
+
+        location_filters = get_location_filter(location, domain)
+        location_filters['aggregation_level'] = location_filters.get('aggregation_level', 1)
+
+        start, length, order_by_number_column, order_by_name_column, order_dir = \
+            get_datatables_ordering_info(request)
+        reversed_order = True if order_dir == 'desc' else False
+        data = get_service_delivery_details(
             domain,
             start,
             length,

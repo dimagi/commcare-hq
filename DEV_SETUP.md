@@ -300,7 +300,7 @@ Formplayer is a Java service that allows us to use applications on the web inste
 
 In `localsettings.py`:
 ```
-FORMPLAYER_URL = 'http://localhost:8010'
+FORMPLAYER_URL = 'http://localhost:8080'
 LOCAL_APPS += ('django_extensions',)
 ```
 

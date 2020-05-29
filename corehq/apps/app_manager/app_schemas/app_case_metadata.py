@@ -521,7 +521,8 @@ class AppCaseMetadata(JsonObject):
         parts = field.split('/')
         if parts and parts[0] == 'user':
             root_case_type = USERCASE_TYPE
-            field = field.split('user/')[1]
+            if len(parts) > 1:
+                field = field.split('user/')[1]
 
         error = None
         try:
