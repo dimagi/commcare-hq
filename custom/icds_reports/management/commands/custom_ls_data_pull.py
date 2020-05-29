@@ -57,7 +57,7 @@ class Command(BaseCommand):
 
     def handle(self, **options):
 
-        query = FormES().domain('icds-cas').xmlns('http://openrosa.org/formdesigner/327e11f3c04dfc0a7fea9ee57d7bb7be83475309').submitted(gte=datetime(2020,4,1), lt=datetime(2020,5,1))
+        query = FormES().domain('icds-cas').xmlns('http://openrosa.org/formdesigner/327e11f3c04dfc0a7fea9ee57d7bb7be83475309').submitted(gte=datetime(2020,5,1), lt=datetime(2020,6,1))
         forms_list = query.run().hits
 
         users = []
@@ -128,7 +128,7 @@ class Command(BaseCommand):
             fast_rows.update({location[2]: row})
         query = FormES().domain('icds-cas').xmlns(
             'http://openrosa.org/formdesigner/b8273b657bb097eb6ba822663b7191ff6bc276ff').submitted(
-            gte=datetime(2020, 4, 1), lt=datetime(2020, 5, 1))
+            gte=datetime(2020, 5, 1), lt=datetime(2020, 6, 1))
         forms_list = query.run().hits
         users = []
         for form in forms_list:
