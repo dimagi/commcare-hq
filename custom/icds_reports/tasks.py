@@ -152,7 +152,7 @@ from custom.icds_reports.utils import (
     zip_folder,
     get_dashboard_usage_excel_file,
     create_service_delivery_report,
-    create_child_growth_tracker_report
+    create_child_growth_tracker_report, create_aww_activity_report
 )
 from custom.icds_reports.utils.aggregation_helpers.distributed import (
     ChildHealthMonthlyAggregationDistributedHelper,
@@ -440,7 +440,8 @@ def icds_aggregation_task(self, date, func_name):
         '_agg_ccs_record_table': _agg_ccs_record_table,
         '_agg_awc_table': _agg_awc_table,
         'aggregate_awc_daily': aggregate_awc_daily,
-        'update_service_delivery_report': update_service_delivery_report
+        'update_service_delivery_report': update_service_delivery_report,
+        '_aggregate_inactive_aww': _aggregate_inactive_aww
     }[func_name]
 
     db_alias = get_icds_ucr_citus_db_alias()
@@ -848,6 +849,7 @@ def _find_stagnant_cases(adapter, latest_datetime):
 @task(serializer='pickle', queue='icds_dashboard_reports_queue')
 def prepare_excel_reports(config, aggregation_level, include_test, beta, location, domain,
                           file_format, indicator):
+    print(config)
     if indicator == CHILDREN_EXPORT:
         data_type = 'Children'
         excel_data = ChildrenExport(
@@ -1032,8 +1034,11 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
         formatted_timestamp = datetime.now().strftime("%d-%m-%Y__%H-%M-%S")
         data_type = 'Child Growth Tracker Report__{}'.format(formatted_timestamp)
     elif indicator == AWW_ACTIVITY_REPORT:
-        config['aggregation_level'] = 5  # this report on all levels shows data (row) per AWW
-        data_type = 'Aww_Activity_Report'
+        data_type = 'AWW_Activity_Report'
+        print(config)
+        print(aggregation_level)
+        print(beta)
+        print(location)
         excel_data = AwwActivityExport(
             config=config,
             loc_level=aggregation_level,
@@ -1059,7 +1064,8 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
 
 
     if indicator not in (AWW_INCENTIVE_REPORT, LS_REPORT_EXPORT, THR_REPORT_EXPORT, CHILDREN_EXPORT,
-                         DASHBOARD_USAGE_EXPORT, SERVICE_DELIVERY_REPORT, CHILD_GROWTH_TRACKER_REPORT):
+                         DASHBOARD_USAGE_EXPORT, SERVICE_DELIVERY_REPORT, CHILD_GROWTH_TRACKER_REPORT,
+                         AWW_ACTIVITY_REPORT):
         if file_format == 'xlsx' and beta:
             cache_key = create_excel_file_in_openpyxl(excel_data, data_type)
         else:

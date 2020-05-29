@@ -6,6 +6,7 @@ from django.test.testcases import TestCase
 import mock
 
 from custom.icds_reports.sqldata.exports.awc_infrastructure import AWCInfrastructureExport
+from custom.icds_reports.sqldata.exports.aww_activity_report import AwwActivityExport
 from custom.icds_reports.sqldata.exports.beneficiary import BeneficiaryExport
 from custom.icds_reports.sqldata.exports.children import ChildrenExport
 from custom.icds_reports.sqldata.exports.demographics import DemographicsExport
@@ -3807,6 +3808,89 @@ class TestExportData(TestCase):
                         ['Year', 2017]
                     ]
                 ]
+            ])
+        )
+
+    def test_aww_activity_export(self):
+        self.assertJSONEqual(
+            json.dumps(
+                AwwActivityExport(
+                    config={
+                        'domain': 'icds-cas',
+                        'month': date(2017, 5, 1),
+                        'state_id': 'st1',
+                        'district_id': 'd1',
+                        'awc_id': 'a7',
+                        'beta': False
+                    },
+                    loc_level=2
+                ).get_excel_data('d1'),
+                cls=DjangoJSONEncoder
+            ),
+            json.dumps([
+                ["AWW Activity Report", [
+                    ["State", "District", "Block", "Supervisor name", "Awc Name", "AWC site code",
+                     "AWC launch date", "Last submission date", "Days since start", "Days inactive"],
+                    ["Bihar", "Patna", "b2", "s3", "a11", "awca11", "Data Not Entered", "Data Not Entered",
+                     "Data Not Entered", "Data Not Entered"],
+                    ["Bihar", "Patna", "b2", "s3", "a19", "awca19", "Data Not Entered", "Data Not Entered",
+                     "Data Not Entered", "Data Not Entered"],
+                    ["Bihar", "Patna", "b2", "s3", "a27", "awca27", "Data Not Entered", "Data Not Entered",
+                     "Data Not Entered", "Data Not Entered"],
+                    ["Bihar", "Patna", "b2", "s3", "a3", "awca3", "Data Not Entered", "Data Not Entered",
+                     "Data Not Entered", "Data Not Entered"],
+                    ["Bihar", "Patna", "b2", "s3", "a35", "awca35", "Data Not Entered", "Data Not Entered",
+                     "Data Not Entered", "Data Not Entered"],
+                    ["Bihar", "Patna", "b2", "s3", "a43", "awca43", "Data Not Entered", "Data Not Entered",
+                     "Data Not Entered", "Data Not Entered"],
+                    ["Bihar", "Patna", "b2", "s4", "a12", "awca12", "Data Not Entered", "Data Not Entered",
+                     "Data Not Entered", "Data Not Entered"],
+                    ["Bihar", "Patna", "b2", "s4", "a20", "awca20", "Data Not Entered", "Data Not Entered",
+                     "Data Not Entered", "Data Not Entered"],
+                    ["Bihar", "Patna", "b2", "s4", "a28", "awca28", "Data Not Entered", "Data Not Entered",
+                     "Data Not Entered", "Data Not Entered"],
+                    ["Bihar", "Patna", "b2", "s4", "a36", "awca36", "Data Not Entered", "Data Not Entered",
+                     "Data Not Entered", "Data Not Entered"],
+                    ["Bihar", "Patna", "b2", "s4", "a4", "awca4", "Data Not Entered", "Data Not Entered",
+                     "Data Not Entered", "Data Not Entered"],
+                    ["Bihar", "Patna", "b2", "s4", "a44", "awca44", "Data Not Entered", "Data Not Entered",
+                     "Data Not Entered", "Data Not Entered"],
+                    ["Bihar", "Patna", "Bihta", "s1", "a1", "awca1", "Data Not Entered", "Data Not Entered",
+                     "Data Not Entered", "Data Not Entered"],
+                    ["Bihar", "Patna", "Bihta", "s1", "a17", "awca17", "Data Not Entered", "Data Not Entered",
+                     "Data Not Entered", "Data Not Entered"],
+                    ["Bihar", "Patna", "Bihta", "s1", "a25", "awca25", "Data Not Entered", "Data Not Entered",
+                     "Data Not Entered", "Data Not Entered"],
+                    ["Bihar", "Patna", "Bihta", "s1", "a33", "awca33", "Data Not Entered", "Data Not Entered",
+                     "Data Not Entered", "Data Not Entered"],
+                    ["Bihar", "Patna", "Bihta", "s1", "a41", "awca41", "Data Not Entered", "Data Not Entered",
+                     "Data Not Entered", "Data Not Entered"],
+                    ["Bihar", "Patna", "Bihta", "s1", "a49", "awca49", "Data Not Entered", "Data Not Entered",
+                     "Data Not Entered", "Data Not Entered"],
+                    ["Bihar", "Patna", "Bihta", "s1", "a9", "awca9", "Data Not Entered", "Data Not Entered",
+                     "Data Not Entered", "Data Not Entered"],
+                    ["Bihar", "Patna", "Bihta", "s2", "a10", "awca10", "Data Not Entered", "Data Not Entered",
+                     "Data Not Entered", "Data Not Entered"],
+                    ["Bihar", "Patna", "Bihta", "s2", "a18", "awca18", "Data Not Entered", "Data Not Entered",
+                     "Data Not Entered", "Data Not Entered"],
+                    ["Bihar", "Patna", "Bihta", "s2", "a2", "awca2", "Data Not Entered", "Data Not Entered",
+                     "Data Not Entered", "Data Not Entered"],
+                    ["Bihar", "Patna", "Bihta", "s2", "a26", "awca26", "Data Not Entered", "Data Not Entered",
+                     "Data Not Entered", "Data Not Entered"],
+                    ["Bihar", "Patna", "Bihta", "s2", "a34", "awca34", "Data Not Entered", "Data Not Entered",
+                     "Data Not Entered", "Data Not Entered"],
+                    ["Bihar", "Patna", "Bihta", "s2", "a42", "awca42", "Data Not Entered", "Data Not Entered",
+                     "Data Not Entered", "Data Not Entered"],
+                    ["Bihar", "Patna", "Bihta", "s2", "a50", "awca50", "Data Not Entered", "Data Not Entered",
+                     "Data Not Entered", "Data Not Entered"]]
+                 ],
+                ["Export Info",
+                 [
+                     ["Generated at", "11:03:29 29 May 2020"],
+                     ["State", "Bihar"],
+                     ["District", "Patna"]
+                 ]
+                 ]
             ])
         )
 
