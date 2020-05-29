@@ -53,7 +53,7 @@ from corehq.apps.app_manager.util import purge_report_from_mobile_ucr
 from corehq.apps.change_feed.data_sources import (
     get_document_store_for_doc_type,
 )
-from corehq.apps.domain.decorators import api_auth, login_and_domain_required
+from corehq.apps.domain.decorators import api_auth, login_and_domain_required, domain_admin_required
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.hqwebapp.decorators import (
@@ -64,6 +64,10 @@ from corehq.apps.hqwebapp.decorators import (
 )
 from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
+from corehq.apps.linked_domain.dbaccessors import get_linked_domains
+from corehq.apps.linked_domain.models import DomainLink, ReportLinkDetail
+from corehq.apps.linked_domain.ucr import create_linked_ucr
+from corehq.apps.linked_domain.util import is_linked_report
 from corehq.apps.locations.permissions import conditionally_location_safe
 from corehq.apps.reports.daterange import get_simple_dateranges
 from corehq.apps.reports.dispatcher import cls_to_view_login_and_domain
@@ -235,6 +239,7 @@ class BaseEditConfigReportView(BaseUserConfigReportsView):
             'form': self.edit_form,
             'report': self.config,
             'referring_apps': self.get_referring_apps(),
+            'linked_domain_list': [d.linked_domain for d in get_linked_domains(self.domain)],
         }
 
     def get_referring_apps(self):
@@ -263,7 +268,10 @@ class BaseEditConfigReportView(BaseUserConfigReportsView):
 
     @property
     def read_only(self):
-        return report_config_id_is_static(self.report_id) if self.report_id is not None else False
+        if self.report_id is not None:
+            return (report_config_id_is_static(self.report_id)
+                    or is_linked_report(self.config))
+        return False
 
     @property
     @memoized
@@ -612,6 +620,7 @@ class ConfigureReport(ReportBuilderView):
             'report_builder_events': self.request.session.pop(REPORT_BUILDER_EVENTS_KEY, []),
             'MAPBOX_ACCESS_TOKEN': settings.MAPBOX_ACCESS_TOKEN,
             'date_range_options': [r._asdict() for r in get_simple_dateranges()],
+            'linked_domain_list': [d.linked_domain for d in get_linked_domains(self.domain)],
         }
 
     def _get_bound_form(self, report_data):
@@ -1551,3 +1560,36 @@ class DataSourceSummaryView(BaseUserConfigReportsView):
             i['readable_output'] = add_links(i.get('readable_output'))
             list.append(i)
         return list
+
+
+@domain_admin_required
+def copy_report(request, domain):
+    from_domain = domain
+    to_domain = request.POST.get("domain")
+    report_id = request.POST.get("report_id")
+    domain_link = DomainLink.objects.get(master_domain=from_domain, linked_domain=to_domain)
+    try:
+        link_info = create_linked_ucr(domain_link, report_id)
+        domain_link.update_last_pull(
+            'report',
+            request.couch_user._id,
+            model_details=ReportLinkDetail(report_id=link_info.report.get_id)
+        )
+        messages.success(request, _(f"Successfully linked and copied {link_info.report.title} to {to_domain}. "
+                                    "We've redirected you to the new report."))
+        url = reverse(
+            ConfigurableReportView.slug,
+            args=[
+                link_info.report.domain,
+                link_info.report.get_id,
+            ],
+        )
+        if domain_link.is_remote:
+            url = f'{domain_link.remote_base_url}{url}'
+        return HttpResponseRedirect(url)
+    except Exception as err:
+        messages.error(request, _("Something went wrong linking your report"))
+        notify_exception(request, message=str(err))
+        return HttpResponseRedirect(
+            reverse(ConfigurableReportView.slug, args=[from_domain, report_id])
+        )
