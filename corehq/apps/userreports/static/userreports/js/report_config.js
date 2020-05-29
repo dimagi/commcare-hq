@@ -477,7 +477,9 @@ hqDefine('userreports/js/report_config', function () {
                     var default_filters = JSON.parse(self.defaultFilterList.serializedProperties());
                     default_filters = _.filter(
                         default_filters,
-                        function (c) {return c.property && (c.pre_value || c.pre_operator);}
+                        function (c) {
+                            return c.property && (c.pre_value || c.pre_operator || c.format === "Is Empty");
+                        }
                     );
                     return {
                         "existing_report": self.existingReportId,
