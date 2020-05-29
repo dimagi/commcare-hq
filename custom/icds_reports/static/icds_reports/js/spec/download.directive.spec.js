@@ -6,7 +6,7 @@ var pageData = hqImport('hqwebapp/js/initial_page_data');
 
 describe('Download Directive', function () {
 
-    var numberOfReports = 12;
+    var numberOfReports = 13;
     describe('Download Directive main functionalities', function() {
         var $scope, $httpBackend, controller;
 
@@ -164,7 +164,7 @@ describe('Download Directive', function () {
             controller.selectedIndicator = 14;
             var mockLocationType = [{"name": "state", "parents": ["state"], "level": 1}];
 
-            var expected = 'Select State';
+            var expected = 'National';
             var result = controller.getPlaceholder(mockLocationType);
             assert.equal(expected, result);
         });
@@ -243,7 +243,7 @@ describe('Download Directive', function () {
 
         it('tests on indicator select when aww activity report is selected', function () {
             controller.selectedIndicator = 14;
-            var expected = "csv";
+            var expected = "xlsx";
 
             controller.onIndicatorSelect();
             var result = controller.selectedFormat;
