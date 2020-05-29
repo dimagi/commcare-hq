@@ -93,7 +93,7 @@ log("ping_login succeeded, time to re-calculate when the next poll should be, da
                 type: 'GET',
                 success: function (data) {
                     $button.enableButton();
-                    if (data.success && data.username === initialPageData.get('username')) {
+                    if (data.success && data.username === initialPageData.get('secure_timeout_username')) {
                         $modal.modal('hide');
                         $button.text(gettext("Done"));
                         _.delay(pollToShowModal, calculateDelayAndWarn());
