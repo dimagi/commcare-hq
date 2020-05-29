@@ -154,7 +154,6 @@ function DownloadController($scope, $rootScope, $location, locationHierarchy, lo
         {id: 8, name: 'AWW Performance Report'},
         {id: 9, name: 'LS Performance Report'},
         {id: 10, name: 'Take Home Ration (THR)'},
-        {id: 14, name: 'AWW Activity Report'},
     ];
 
     if (vm.userLocationType.toLowerCase() !== 'block') {
@@ -164,6 +163,7 @@ function DownloadController($scope, $rootScope, $location, locationHierarchy, lo
     if (haveAccessToFeatures) {
         vm.indicators.push({id: 12, name: 'Service Delivery Report'});
         vm.indicators.push({id: 13, name: 'Child Growth Tracking Report'});
+        vm.indicators.push({id: 14, name: 'AWW Activity Report'});
 
         vm.beneficiaryCategories = [
             {id: 'pw_lw_children', name: 'PW, LW & Children 0-3 years'},

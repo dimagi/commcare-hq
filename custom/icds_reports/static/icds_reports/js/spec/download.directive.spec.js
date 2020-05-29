@@ -160,6 +160,15 @@ describe('Download Directive', function () {
             assert.equal(expected, result);
         });
 
+        it('tests get placeholder when state and aww activity report is selected', function () {
+            controller.selectedIndicator = 14;
+            var mockLocationType = [{"name": "state", "parents": ["state"], "level": 1}];
+
+            var expected = 'Select State';
+            var result = controller.getPlaceholder(mockLocationType);
+            assert.equal(expected, result);
+        });
+
 
         it('tests get locations for level', function () {
             var level = 0;
@@ -210,9 +219,30 @@ describe('Download Directive', function () {
             assert.equal(expected, result);
         });
 
+        it('tests on indicator select when aww activity report is selected', function () {
+            controller.selectedIndicator = 14;
+            var expected = "xlsx";
+
+            controller.onIndicatorSelect();
+            var result = controller.selectedFormat;
+
+            assert.equal(expected, result);
+        });
+
+
 
         it('tests on indicator select when child beneficiary list is selected', function () {
             controller.selectedIndicator = 6;
+            var expected = "csv";
+
+            controller.onIndicatorSelect();
+            var result = controller.selectedFormat;
+
+            assert.equal(expected, result);
+        });
+
+        it('tests on indicator select when aww activity report is selected', function () {
+            controller.selectedIndicator = 14;
             var expected = "csv";
 
             controller.onIndicatorSelect();
