@@ -113,7 +113,9 @@
             <div class="col-sm-9 col-md-10 controls">
               <select id="select-push-domains" multiple class="form-control">
                 {% for link in view_data.linked_domains %}
-                  <option>{{ link.linked_domain }}</option>
+                  {% if not linked_domain.is_remote %}
+                    <option>{{ link.linked_domain }}</option>
+                  {% endif %}
                 {% endfor %}
               </select>
             </div>
