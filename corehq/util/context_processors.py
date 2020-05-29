@@ -107,7 +107,7 @@ def current_url_name(request):
         url_name = None
 
     return {
-        'current_url_name': url_name
+        'current_url_name': url_name,
     }
 
 
