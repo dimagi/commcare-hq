@@ -38,7 +38,8 @@ def build_data_headers(keys, header_prefix='data'):
     )
 
 
-def parse_users(group_memoizer, domain, user_data_model, location_cache, user_filters, task, total_count):
+def parse_users(group_memoizer, domain, user_data_model, location_cache, user_filters, accessible_location_ids,
+                task, total_count):
 
     def _get_group_names(user):
         return sorted([
@@ -100,7 +101,8 @@ def parse_users(group_memoizer, domain, user_data_model, location_cache, user_fi
     user_groups_length = 0
     max_location_length = 0
     user_dicts = []
-    for n, user in enumerate(get_commcare_users_by_filters(domain, user_filters)):
+    for n, user in enumerate(get_commcare_users_by_filters(domain, user_filters,
+                                                           accessible_location_ids=accessible_location_ids)):
         group_names = _get_group_names(user)
         user_dict = _make_user_dict(user, group_names, location_cache)
         user_dicts.append(user_dict)
@@ -165,15 +167,17 @@ def parse_groups(groups):
     return group_headers, _get_group_rows()
 
 
-def count_users_and_groups(domain, user_filters, group_memoizer):
-    users_count = get_commcare_users_by_filters(domain, user_filters, count_only=True)
+def count_users_and_groups(domain, user_filters, group_memoizer, accessible_location_ids):
+    users_count = get_commcare_users_by_filters(domain, user_filters,
+                                                accessible_location_ids=accessible_location_ids, count_only=True)
     groups_count = len(group_memoizer.groups)
 
     return users_count + groups_count
 
 
-def dump_usernames(domain, download_id, user_filters, task):
-    users_count = get_commcare_users_by_filters(domain, user_filters, count_only=True)
+def dump_usernames(domain, download_id, user_filters, accessible_location_ids, task):
+    users_count = get_commcare_users_by_filters(domain, user_filters,
+                                                accessible_location_ids=accessible_location_ids, count_only=True)
     DownloadBase.set_progress(task, 0, users_count)
 
     usernames = get_mobile_usernames_by_filters(domain, user_filters)
@@ -205,7 +209,7 @@ def _dump_xlsx_and_expose_download(filename, headers, rows, download_id, task, t
     DownloadBase.set_progress(task, total_count, total_count)
 
 
-def dump_users_and_groups(domain, download_id, user_filters, task):
+def dump_users_and_groups(domain, download_id, user_filters, accessible_location_ids, task):
     from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
 
     def _load_memoizer(domain):
@@ -226,7 +230,7 @@ def dump_users_and_groups(domain, download_id, user_filters, task):
     group_memoizer = _load_memoizer(domain)
     location_cache = LocationIdToSiteCodeCache(domain)
 
-    users_groups_count = count_users_and_groups(domain, user_filters, group_memoizer)
+    users_groups_count = count_users_and_groups(domain, user_filters, group_memoizer, accessible_location_ids)
     DownloadBase.set_progress(task, 0, users_groups_count)
 
     user_data_model = CustomDataFieldsDefinition.get_or_create(
@@ -240,6 +244,7 @@ def dump_users_and_groups(domain, download_id, user_filters, task):
         user_data_model,
         location_cache,
         user_filters,
+        accessible_location_ids,
         task,
         users_groups_count,
     )

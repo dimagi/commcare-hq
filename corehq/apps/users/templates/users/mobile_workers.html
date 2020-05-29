@@ -49,11 +49,10 @@
             </button>
           {% endif %}
 
-          {% if can_access_all_locations %}
-            <a id="bulk_download" class="btn btn-info" href="{{ bulk_download_url }}">
-              <i class="fa fa-cloud-download"></i> {% trans "Download Mobile Workers" %}
-            </a>
-          {% endif %}
+          <a id="bulk_download" class="btn btn-info" href="{{ bulk_download_url }}">
+            <i class="fa fa-cloud-download"></i> {% trans "Download Mobile Workers" %}
+          </a>
+
 
           {% if not request.is_view_only %}
             {% if can_bulk_edit_users and can_access_all_locations %}
