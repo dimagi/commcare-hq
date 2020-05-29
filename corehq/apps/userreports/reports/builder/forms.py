@@ -76,8 +76,11 @@ from corehq.apps.userreports.reports.builder.sources import (
 from corehq.apps.userreports.sql import get_column_name
 from corehq.apps.userreports.ui.fields import JsonField
 from corehq.apps.userreports.util import has_report_builder_access
-from corehq.toggles import SHOW_RAW_DATA_SOURCES_IN_REPORT_BUILDER, SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER, \
-    OVERRIDE_EXPANDED_COLUMN_LIMIT_IN_REPORT_BUILDER
+from corehq.toggles import (
+    SHOW_RAW_DATA_SOURCES_IN_REPORT_BUILDER,
+    SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER,
+    OVERRIDE_EXPANDED_COLUMN_LIMIT_IN_REPORT_BUILDER,
+)
 
 # This dict maps filter types from the report builder frontend to UCR filter types
 REPORT_BUILDER_FILTER_TYPE_MAP = {
