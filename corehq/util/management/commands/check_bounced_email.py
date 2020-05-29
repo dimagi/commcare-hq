@@ -70,7 +70,7 @@ class Command(BaseCommand):
                                   f'\t{record.created}'
                                   f'\t{record.reason}')
                 if show_details:
-                    for key, val in record.headers:
+                    for key, val in record.headers.items():
                         self.stdout.write(f'\t\t{key}:\t{val}')
                     self.stdout.write(f'\t\tdestination:\t{record.destination}')
             self.stdout.write('\n\n')
