@@ -24,9 +24,9 @@ class ServiceDeliveryReport(object):
 
         def _location_name():
             location_and_col_names = [('State', 'state_name'),
-                                      ('District','district_name'),
-                                      ('Block','block_name'),
-                                      ('Sector','supervisor_name'),
+                                      ('District', 'district_name'),
+                                      ('Block', 'block_name'),
+                                      ('Sector', 'supervisor_name'),
                                       ('AWC', 'awc_name')]
             return location_and_col_names[:self.config['aggregation_level']]
 
@@ -159,24 +159,45 @@ class ServiceDeliveryReport(object):
         return headers
 
     def get_excel_data(self):
+
+        # cells under all location columns, these will be blank
+        location_column_list = [''] * self.config['aggregation_level']
+
+        # cells to contain actual grand total
+        actual_value_columns_list = [0] * (
+            len(self.headers_and_calculation) - self.config['aggregation_level']
+        )
+        total_sum_row = location_column_list + actual_value_columns_list
+
+        total_sum_row[0] = 'Grand Total'
+
         def evaulate_value(row, headers_with_columns):
             row_data = []
 
-            for header in headers_with_columns:
+            for index, header in enumerate(headers_with_columns):
                 if len(header) == 2:
                     if header[1] in (
                         'num_awcs_conducted_cbe',
                         'num_awcs_conducted_vhnd'
                     ) and self.config['aggregation_level'] == 5:
                         row_data.append('Yes' if row[header[1]] == 1 else 'No')
+                        total_sum_row[index] = 'N/A'
                     else:
+                        if header[1] not in self.location_columns:
+                            total_sum_row[index] += row[header[1]]
                         row_data.append(row[header[1]])
                 else:
                     if row[header[2]]:
                         percentage = row[header[1]]/row[header[2]] * 100
                     else:
                         percentage = 0
-                    row_data.append("%.2f" % percentage)
+                    row_data.append("{}%".format("%.2f" % percentage))
+
+                    if total_sum_row[index - 1]:
+                        percentage = (total_sum_row[index - 2] / total_sum_row[index - 1]) * 100
+                    else:
+                        percentage = 0
+                    total_sum_row[index] = "{}%".format("%.2f" % percentage)
 
             return row_data
 
@@ -195,6 +216,8 @@ class ServiceDeliveryReport(object):
 
         for row in data:
             excel_rows.append(evaulate_value(row, self.headers_and_calculation))
+
+        excel_rows.append(total_sum_row)
 
         filters = [['Generated at', india_now()]]
         if self.location:

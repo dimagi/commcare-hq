@@ -73,8 +73,8 @@ class PostnatalCareFormsCcsRecordAggregationDistributedHelper(StateBasedAggregat
 
         return """
         INSERT INTO "{tablename}" (
-          state_id, supervisor_id, month, case_id, latest_time_end_processed, counsel_methods, is_ebf,
-          new_ifa_tablets_total, valid_visits
+          state_id, supervisor_id, month, case_id, latest_time_end_processed, counsel_methods,
+          new_ifa_tablets_total, is_ebf, valid_visits
         ) (
           SELECT
             %(state_id)s AS state_id,
@@ -83,7 +83,7 @@ class PostnatalCareFormsCcsRecordAggregationDistributedHelper(StateBasedAggregat
             COALESCE(ucr.case_id, prev_month.case_id) AS case_id,
             GREATEST(ucr.latest_time_end, prev_month.latest_time_end_processed) AS latest_time_end_processed,
             GREATEST(ucr.counsel_methods, prev_month.counsel_methods) AS counsel_methods,
-            GREATEST(ucr.new_ifa_tablets_total, prev_month.new_ifa_tablets_total) AS new_ifa_tablets_total,
+            COALESCE(ucr.new_ifa_tablets_total, prev_month.new_ifa_tablets_total) AS new_ifa_tablets_total,
             ucr.is_ebf as is_ebf,
             COALESCE(ucr.valid_visits, 0) as valid_visits
           FROM ({ucr_table_query}) ucr

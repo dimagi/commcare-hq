@@ -3,11 +3,11 @@ import pytz
 import re
 from collections import OrderedDict, defaultdict
 
+from django.conf.urls import url, include
 from django.contrib import messages
 from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import render
 from django.template.loader import render_to_string
-from corehq.util.django2_shim.urls import URLResolver
 
 from django.urls import Resolver404
 from django.utils.translation import ugettext_lazy as _
@@ -37,6 +37,7 @@ from corehq.apps.app_manager.util import (
 from corehq.apps.app_manager.views.utils import back_to_main, get_langs
 from corehq.apps.builds.jadjar import convert_XML_To_J2ME
 from corehq.apps.hqmedia.views import DownloadMultimediaZip
+from corehq.util.metrics import metrics_counter
 from corehq.util.soft_assert import soft_assert
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.view_utils import set_file_download
@@ -263,8 +264,7 @@ def download_file(request, domain, app_id, path):
         full_path = 'files/%s' % path
 
     def resolve_path(path):
-        return URLResolver(
-            r'^', 'corehq.apps.app_manager.download_urls').resolve(path)
+        return url(r'^', include('corehq.apps.app_manager.download_urls')).resolve(path)
 
     def create_build_files(build_profile_id=None):
         request.app.create_build_files(build_profile_id=build_profile_id)
@@ -283,6 +283,11 @@ def download_file(request, domain, app_id, path):
             request.app = Application.get(request.app.get_id)
             create_build_files_if_necessary_handling_conflicts(True)
 
+    # Todo; remove after https://dimagi-dev.atlassian.net/browse/ICDS-1483 is fixed
+    extension = path.split(".")[-1]
+    if extension not in content_type_map.keys():
+        metrics_counter("commcare.invalid_download_requests",
+            tags={"domain": domain, "extension": extension})
     try:
         assert request.app.copy_of
         # create build files for default profile if they were not created during initial build
@@ -290,9 +295,7 @@ def download_file(request, domain, app_id, path):
         try:
             payload = request.app.fetch_attachment(full_path)
         except ResourceNotFound:
-            if not build_profile_id:
-                create_build_files()
-            elif build_profile_id in request.app.build_profiles and build_profile_access:
+            if not build_profile_id or (build_profile_id in request.app.build_profiles and build_profile_access):
                 create_build_files_if_necessary_handling_conflicts()
             else:
                 raise
