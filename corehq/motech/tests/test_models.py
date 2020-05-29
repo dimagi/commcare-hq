@@ -30,7 +30,7 @@ class UnpackRequestArgsTests(SimpleTestCase):
         self.content_json = json.dumps(content)
         self.request_method = 'POST'
         self.request_headers = {
-            'Content-type': 'application/json',
+            'Content-type': 'application/json; charset=utf-8',
             'Accept': 'application/json'
         }
         self.status_code = 201
