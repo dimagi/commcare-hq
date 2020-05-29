@@ -2050,6 +2050,7 @@ DOMAIN_MODULE_MAP = {
     'vectorlink-mali': 'custom.abt',
     'vectorlink-mozambique': 'custom.abt',
     'vectorlink-rwanda': 'custom.abt',
+    'vectorlink-senegal': 'custom.abt',
     'vectorlink-tanzania': 'custom.abt',
     'vectorlink-uganda': 'custom.abt',
     'vectorlink-zambia': 'custom.abt',

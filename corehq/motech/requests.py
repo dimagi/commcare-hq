@@ -222,7 +222,9 @@ def simple_post(domain, url, data, *, headers, auth_manager, verify,
     that error codes can be interpreted.
     """
     if isinstance(data, str):
-        data = data.encode('utf-8')  # can't pass unicode to http request posts
+        # Encode as UTF-8, otherwise requests will send data containing
+        # non-ASCII characters as 'data:application/octet-stream;base64,...'
+        data = data.encode('utf-8')
     default_headers = CaseInsensitiveDict({
         "content-type": "text/xml",
         "content-length": str(len(data)),

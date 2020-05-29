@@ -70,7 +70,7 @@ from corehq.apps.hqwebapp.decorators import (
     use_datatables,
     use_jquery_ui,
     use_legacy_jquery,
-)
+    waf_allow)
 from corehq.apps.hqwebapp.views import render_static
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.formdetails import readable
@@ -488,6 +488,7 @@ class EditCloudcareUserPermissionsView(BaseUserSettingsView):
         return json_response({'success': 1})
 
 
+@waf_allow('XSS_BODY')
 @login_and_domain_required
 def report_formplayer_error(request, domain):
     data = json.loads(request.body)
