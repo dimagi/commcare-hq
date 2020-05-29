@@ -18,7 +18,9 @@ hqDefine('hqwebapp/js/inactivity', [
     $(function () {
         var timeout = initialPageData.get('secure_timeout') * 60 * 1000,    // convert from minutes to milliseconds
             $modal = $("#inactivityModal"),     // won't be present on app preview or pages without a domain
-            $warningModal = $("#inactivityWarningModal");
+            $warningModal = $("#inactivityWarningModal"),
+            keyboardOrMouseActive = false,
+            warningActive = false;
 
         if (timeout === undefined || !$modal.length) {
             return;
@@ -58,7 +60,10 @@ log("poll again in " + (millisLeft - 2 * 60 * 1000) / 1000 / 60 + " minutes");
         };
 
         var showWarningModal = function () {
-            $warningModal.modal('show');
+            warningActive = true;
+            if (!keyboardOrMouseActive) {
+                $warningModal.modal('show');
+            }
         };
 
         var hideWarningModal = function () {
@@ -116,6 +121,7 @@ log("ping_login succeeded, time to re-calculate when the next poll should be, da
         var extendSession = function (e) {
             var $button = $(e.currentTarget);
             $button.disableButton();
+            warningActive = false;
             $.ajax({
                 url: initialPageData.reverse('bsd_license'),  // Public view that will trigger session activity
                 type: 'GET',
@@ -131,6 +137,17 @@ log("ping_login succeeded, time to re-calculate when the next poll should be, da
         $warningModal.on('shown.bs.modal', function () {
             $warningModal.find(".btn-primary").focus();
         });
+
+        // Keep track of when user is actively typing
+        $("body").on("keypress", _.throttle(function () {
+            keyboardOrMouseActive = true;
+        }, 100, {trailing: false}));
+        $("body").on("keypress", _.debounce(function () {
+            keyboardOrMouseActive = false;
+            if (warningActive) {
+                showWarningModal();
+            }
+        }, 500));
 
         // Start polling
         _.delay(pollToShowModal, calculateDelayAndWarn());
