@@ -114,6 +114,7 @@ hqDefine("reports/js/project_health_dashboard", function () {
                 var div_id =  "tmp-id-" + $.now();
                 return details_in_popup($(this).data('url'), div_id);
             },
+            "sanitize": false,
         });
 
         function details_in_popup(link, div_id) {
