@@ -24,8 +24,8 @@ class TrumpiaIncomingView(IncomingBackendView):
             # status of 200OK when an empty GET/POST is received.
             return HttpResponse(status=200)
         data = parse_incoming(xml)
-        phone_number = data["PHONENUMBER"]
-        text = " ".join(data[k] for k in ["KEYWORD", "CONTENTS"] if data.get(k))
+        phone_number = data.get("PHONENUMBER")
+        text = data.get("CONTENTS")
         if not phone_number or not text:
             return HttpResponseBadRequest("PHONENUMBER or CONTENTS are missing")
         sms = incoming(
