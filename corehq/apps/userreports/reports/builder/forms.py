@@ -88,6 +88,8 @@ REPORT_BUILDER_FILTER_TYPE_MAP = {
     'Date': 'date',
     'Numeric': 'numeric',
     'Value': 'pre',
+    'Is Empty': 'is_empty',
+    'Exists': 'exists',
 }
 
 STATIC_CASE_PROPS = [
@@ -230,6 +232,18 @@ class DataSourceProperty(object):
         }
         if configuration['format'] == 'Date':
             filter.update({'compare_as_string': True})
+        if configuration['format'] == 'Is Empty':
+            filter.update({
+                'type': 'pre',
+                'pre_operator': "",
+                'pre_value': "",  # for now assume strings - this may not always work but None crashes
+            })
+        if configuration['format'] == 'Exists':
+            filter.update({
+                'type': 'pre',
+                'pre_operator': "!=",
+                'pre_value': "",
+            })
         if filter_format == 'dynamic_choice_list' and self._id == COMPUTED_OWNER_NAME_PROPERTY_ID:
             filter.update({"choice_provider": {"type": "owner"}})
         if filter_format == 'dynamic_choice_list' and self._id == COMPUTED_USER_NAME_PROPERTY_ID:

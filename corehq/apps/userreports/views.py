@@ -742,7 +742,12 @@ class ReportPreview(BaseDomainView):
             except BadBuilderConfigError as e:
                 return json_response({'status': 'error', 'message': str(e)}, status_code=400)
 
-        return json_response({'status': 'error', 'message': 'Invalid report configuration'}, status_code=400)
+        else:
+            return json_response({
+                'status': 'error',
+                'message': 'Invalid report configuration',
+                'errors': bound_form.errors,
+            }, status_code=400)
 
 
 def _assert_report_delete_privileges(request):
