@@ -13,6 +13,7 @@ from corehq.apps.cloudcare.views import (
     login_new_window,
     report_formplayer_error,
 )
+from corehq.apps.hqwebapp.decorators import waf_allow
 
 app_urls = [
     url(r'^view/(?P<app_id>[\w-]+)/modules-(?P<module_id>[\w-]+)/forms-(?P<form_id>[\w-]+)/context/$',
@@ -30,7 +31,7 @@ app_urls = [
 
 api_urls = [
     url(r'^login_as/users/$', LoginAsUsers.as_view(), name=LoginAsUsers.urlname),
-    url(r'^readable_questions/$', ReadableQuestions.as_view(), name=ReadableQuestions.urlname),
+    url(r'^readable_questions/$', waf_allow('XSS_BODY')(ReadableQuestions.as_view()), name=ReadableQuestions.urlname),
 ]
 
 # used in settings urls
@@ -44,3 +45,10 @@ urlpatterns = [
     url(r'^api/', include(api_urls)),
     url(r'^relogin/$', login_new_window, name='login_new_window'),
 ]
+
+
+# This isn't strictly the appropriate place to put this,
+# but we don't have similar functionality in formplayer, so it's easier for the time being
+
+waf_allow('XSS_BODY', hard_code_pattern=r'^/formplayer/validate_form$')
+waf_allow('XSS_BODY', hard_code_pattern=r'^/formplayer/new-form$')

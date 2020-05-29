@@ -3,108 +3,114 @@
 {% load i18n %}
 
 {% block page_content %}
-  <form>
-    <fieldset>
-      <legend>{% trans "Remote API Logs" %}</legend>
-        <form method="GET">
-          <span class="col-sm-2">
-            <label for="filter_from_date">From date</label>
-            <input class="form-control"
-                   type="text"
-                   name="filter_from_date"
-                   value="{{ filter_from_date }}"
-                   placeholder="yyyy-mm-dd" />
-          </span>
+  <fieldset>
+    <legend>{% trans "Remote API Logs" %}</legend>
+    <div class="form-group">
+      <form method="GET">
+        <span class="col-sm-2">
+          <label for="filter_from_date">From date</label>
+          <input class="form-control"
+                 type="text"
+                 name="filter_from_date"
+                 value="{{ filter_from_date }}"
+                 placeholder="yyyy-mm-dd" />
+        </span>
 
-          <span class="col-sm-2">
-            <label for="filter_to_date">To date</label>
-            <input class="form-control"
-                   type="text"
-                   name="filter_to_date"
-                   value="{{ filter_to_date }}"
-                   placeholder="yyyy-mm-dd" />
-          </span>
+        <span class="col-sm-2">
+          <label for="filter_to_date">To date</label>
+          <input class="form-control"
+                 type="text"
+                 name="filter_to_date"
+                 value="{{ filter_to_date }}"
+                 placeholder="yyyy-mm-dd" />
+        </span>
 
-          <span class="col-sm-2">
-            <label for="filter_to_date">Payload</label>
-            <input class="form-control"
-                   type="text"
-                   name="filter_payload"
-                   value="{{ filter_payload }}" />
-          </span>
+        <span class="col-sm-2">
+          <label for="filter_to_date">Payload</label>
+          <input class="form-control"
+                 type="text"
+                 name="filter_payload"
+                 value="{{ filter_payload }}" />
+        </span>
 
-          <span class="col-sm-3">
-            <label for="filter_url">URL starts with</label>
-            <input class="form-control"
-                   type="text"
-                   name="filter_url"
-                   value="{{ filter_url }}"
-                   placeholder="http..." />
-          </span>
+        <span class="col-sm-3">
+          <label for="filter_url">URL starts with</label>
+          <input class="form-control"
+                 type="text"
+                 name="filter_url"
+                 value="{{ filter_url }}"
+                 placeholder="http..." />
+        </span>
 
-          <span class="col-sm-2">
-            <label for="filter_status">Status</label>
-            <input class="form-control"
-                   type="text"
-                   name="filter_status"
-                   value="{{ filter_status }}"
-                   placeholder="2xx" />
-          </span>
+        <span class="col-sm-2">
+          <label for="filter_status">Status</label>
+          <input class="form-control"
+                 type="text"
+                 name="filter_status"
+                 value="{{ filter_status }}"
+                 placeholder="2xx" />
+        </span>
 
-          <span class="col-sm-1">
-            <input class="btn btn-default" type="submit" name="submit" value="Filter"/>
-          </span>
-        </form>
+        <span class="col-sm-1">
+          <label for="submit">&nbsp;</label>
+          <input class="btn btn-default"
+                 type="submit"
+                 name="submit"
+                 value="Filter"/>
+        </span>
+      </form>
+    </div>
+  </fieldset>
+  <div class="spacer"></div>
 
-        {% if logs %}
-        <table class="table table-striped">
-          <thead>
-            <tr>
-              <th>{% trans "Timestamp" %}</th>
-              <th>{% trans "Payload" %}</th>
-              <th>{% trans "Request" %}</th>
-              <th>{% trans "Status" %}</th>
-            </tr>
-          </thead>
-          <tbody>
-          {% for log in logs %}
-            <tr>
-              <td><a href="{% url 'motech_log_detail_view' domain log.id %}" style="display: block;">
-                {{ log.timestamp }}
-              </a></td>
-              <td><a href="{% url 'motech_log_detail_view' domain log.id %}" style="display: block;">
-                {% if log.payload_id %}{{ log.payload_id }}{% else %}&nbsp;{% endif %}
-              </a></td>
-              <td><a href="{% url 'motech_log_detail_view' domain log.id %}" style="display: block;">
-                {{ log.request_method }} {{ log.request_url }}
-              </a></td>
-              <td><a href="{% url 'motech_log_detail_view' domain log.id %}" style="display: block;">
-                {{ log.response_status }}
-              </a></td>
-            </tr>
-          {% endfor %}
-          </tbody>
-        </table>
-        <div class="col-sm-10">
-        {% if is_paginated %}
-          <div>
-            <span>
-                {% if page_obj.has_previous %}
-                  [<a href="?page={{ page_obj.previous_page_number }}">Previous</a>]
-                {% endif %}
-              <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
-              {% if page_obj.has_next %}
-                [<a href="?page={{ page_obj.next_page_number }}">Next</a>]
-              {% endif %}
-            </span>
-          </div>
+  {% if logs %}
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <th>{% trans "Timestamp" %}</th>
+          <th>{% trans "Payload" %}</th>
+          <th>{% trans "Request" %}</th>
+          <th>{% trans "Status" %}</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for log in logs %}
+        <tr>
+          <td><a href="{% url 'motech_log_detail_view' domain log.id %}" style="display: block;">
+            {{ log.timestamp }}
+          </a></td>
+          <td><a href="{% url 'motech_log_detail_view' domain log.id %}" style="display: block;">
+            {% if log.payload_id %}{{ log.payload_id }}{% else %}&nbsp;{% endif %}
+          </a></td>
+          <td><a href="{% url 'motech_log_detail_view' domain log.id %}" style="display: block;">
+            {{ log.request_method }} {{ log.request_url }}
+          </a></td>
+          <td><a href="{% url 'motech_log_detail_view' domain log.id %}" style="display: block;">
+            {{ log.response_status }}
+          </a></td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+
+    {% if is_paginated %}
+    <div class="col-sm-10">
+      <span>
+          {% if page_obj.has_previous %}
+            [<a href="?page={{ page_obj.previous_page_number }}">Previous</a>]
+          {% endif %}
+        <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+        {% if page_obj.has_next %}
+          [<a href="?page={{ page_obj.next_page_number }}">Next</a>]
         {% endif %}
-      {% else %}
-        <div>
-          <p>No API requests have been logged.</p>
-        </div>
-      {% endif %}
-      </div>
-    </fieldset>
-  </form>
+      </span>
+    </div>
+    {% endif %}
+
+  {% else %}
+    <div>
+      <b>{% trans "No API requests have been logged." %}</b>
+    </div>
+  {% endif %}
+
 {% endblock %}

@@ -370,7 +370,7 @@
             },
             {
                 "type": "expression",
-                "column_id": "opened_date",
+                "column_id": "opened_on",
                 "datatype": "datetime",
                 "expression": {
                     "type": "nested",
@@ -383,7 +383,7 @@
                     },
                     "value_expression": {
                         "type": "property_name",
-                        "property_name": "opened_date"
+                        "property_name": "opened_on"
                     }
                 }
             },
