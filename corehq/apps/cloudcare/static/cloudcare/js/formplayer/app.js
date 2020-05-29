@@ -14,6 +14,7 @@ var formplayerLoading = hqImport('cloudcare/js/util').formplayerLoading;
 var formplayerLoadingComplete = hqImport('cloudcare/js/util').formplayerLoadingComplete;
 var formplayerSyncComplete = hqImport('cloudcare/js/util').formplayerSyncComplete;
 var clearUserDataComplete = hqImport('cloudcare/js/util').clearUserDataComplete;
+var breakLocksComplete = hqImport('cloudcare/js/util').breakLocksComplete;
 var appcues = hqImport('analytix/js/appcues');
 
 FormplayerFrontend.on("before:start", function () {
@@ -163,7 +164,12 @@ FormplayerFrontend.on('startForm', function (data) {
     data.formplayerEnabled = true;
     data.displayOptions = $.extend(true, {}, user.displayOptions);
     data.onerror = function (resp) {
-        showError(resp.human_readable_message || resp.exception, $("#cloudcare-notifications"));
+        var message = resp.human_readable_message || resp.exception;
+        if (resp.is_html) {
+            showHTMLError(message, $("#cloudcare-notifications"));
+        } else {
+            showError(message, $("#cloudcare-notifications"));
+        }
     };
     data.onsubmit = function (resp) {
         if (resp.status === "success") {
@@ -568,6 +574,35 @@ FormplayerFrontend.on('refreshApplication', function (appId) {
         $("#cloudcare-notifications").empty();
         FormplayerFrontend.trigger('navigateHome');
     });
+});
+
+/**
+ * breakLocks
+ *
+ * Sends a request to formplayer to wipe out all application and user db for the
+ * current user. Returns the ajax promise.
+ */
+FormplayerFrontend.reqres.setHandler('breakLocks', function () {
+    var user = FormplayerFrontend.request('currentUser'),
+        formplayer_url = user.formplayer_url,
+        resp,
+        options = {
+            url: formplayer_url + "/break_locks",
+            data: JSON.stringify({
+                domain: user.domain,
+                username: user.username,
+                restoreAs: user.restoreAs,
+            }),
+        };
+    Util.setCrossDomainAjaxOptions(options);
+    formplayerLoading();
+    resp = $.ajax(options);
+    resp.fail(function () {
+        formplayerLoadingComplete(true);
+    }).done(function (response) {
+        breakLocksComplete(response.hasOwnProperty('exception'), response.message);
+    });
+    return resp;
 });
 
 /**

@@ -55,7 +55,16 @@ CREATE VIEW bihar_demographics_view AS
         "bihar_demographics"."closed_on" AS "closed_on",
         "bihar_demographics"."reason_closure" AS "reason_closure",
         "bihar_demographics"."out_of_school_status" AS "out_of_school_status",
-        "bihar_demographics"."last_class_attended_ever" AS "last_class_attended_ever"
+        "bihar_demographics"."last_class_attended_ever" AS "last_class_attended_ever",
+        CASE WHEN "bihar_demographics"."bank_account_number" is not NULL THEN 1 ELSE 0 END AS "has_bank_account",
+        "bihar_demographics"."age_marriage" AS "age_marriage",
+        "bihar_demographics"."last_referral_date" AS "last_referral_date",
+        "bihar_demographics"."referral_health_problem" AS "referral_health_problem",
+        "bihar_demographics"."referral_reached_date" AS "referral_reached_date",
+        "bihar_demographics"."referral_reached_facility" AS "referral_reached_facility",
+        "bihar_demographics"."migrate_date" AS "migrate_date",
+        CASE WHEN "bihar_demographics"."date_death" is NULL THEN 1 ELSE 0 END AS "is_alive",
+        "bihar_demographics"."was_oos_ever" AS "was_oos_ever"
     FROM "public"."bihar_api_demographics" "bihar_demographics"
     LEFT JOIN "public"."awc_location" "awc_location"
     ON (

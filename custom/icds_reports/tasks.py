@@ -30,6 +30,9 @@ from pillowtop.feed.interface import ChangeMeta
 
 from corehq.apps.change_feed import data_sources, topics
 from corehq.apps.change_feed.producer import producer
+from corehq.apps.reports.analytics.esaccessors import (
+    get_case_ids_missing_from_elasticsearch,
+    get_form_ids_missing_from_elasticsearch)
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.userreports.models import (
     AsyncIndicator,
@@ -46,6 +49,7 @@ from corehq.sql_db.connections import get_icds_ucr_citus_db_alias
 from corehq.util.celery_utils import periodic_task_on_envs
 from corehq.util.decorators import serial_task
 from corehq.util.log import send_HTML_email
+from corehq.util.metrics import metrics_counter
 from corehq.util.soft_assert import soft_assert
 from corehq.util.view_utils import reverse
 from custom.icds_reports.const import (
@@ -62,7 +66,8 @@ from custom.icds_reports.const import (
     THR_REPORT_EXPORT,
     THREE_MONTHS,
     DASHBOARD_USAGE_EXPORT,
-    SERVICE_DELIVERY_REPORT
+    SERVICE_DELIVERY_REPORT,
+    CHILD_GROWTH_TRACKER_REPORT
 )
 from custom.icds_reports.models import (
     AggAwc,
@@ -123,6 +128,7 @@ from custom.icds_reports.sqldata.exports.beneficiary import BeneficiaryExport
 from custom.icds_reports.sqldata.exports.children import ChildrenExport
 from custom.icds_reports.sqldata.exports.dashboard_usage import DashBoardUsage
 from custom.icds_reports.sqldata.exports.demographics import DemographicsExport
+from custom.icds_reports.sqldata.exports.growth_tracker_report import GrowthTrackerExport
 from custom.icds_reports.sqldata.exports.lady_supervisor import (
     LadySupervisorExport,
 )
@@ -143,7 +149,8 @@ from custom.icds_reports.utils import (
     track_time,
     zip_folder,
     get_dashboard_usage_excel_file,
-    create_service_delivery_report
+    create_service_delivery_report,
+    create_child_growth_tracker_report
 )
 from custom.icds_reports.utils.aggregation_helpers.distributed import (
     ChildHealthMonthlyAggregationDistributedHelper,
@@ -989,15 +996,42 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
             cache_key = create_service_delivery_report(
                 excel_data,
                 data_type,
-                config,
+                config
             )
         else:
             cache_key = create_excel_file(excel_data, data_type, file_format)
 
         formatted_timestamp = datetime.now().strftime("%d-%m-%Y__%H-%M-%S")
         data_type = 'Service Delivery Report__{}'.format(formatted_timestamp)
+    elif indicator == CHILD_GROWTH_TRACKER_REPORT:
+        config.pop('aggregation_level', None)
+        data_type = 'Child_Growth_Tracker_list'
+        excel_data = GrowthTrackerExport(
+            config=config,
+            loc_level=aggregation_level,
+            show_test=include_test,
+            beta=beta
+        ).get_excel_data(location)
+        export_info = excel_data[1][1]
+        generated_timestamp = date_parser.parse(export_info[0][1])
+        formatted_timestamp = generated_timestamp.strftime("%d-%m-%Y__%H-%M-%S")
+        data_type = 'Child Growth Tracker Report__{}'.format(formatted_timestamp)
+
+        if file_format == 'xlsx':
+            cache_key = create_child_growth_tracker_report(
+                excel_data,
+                data_type,
+                config,
+                aggregation_level
+            )
+        else:
+            cache_key = create_excel_file(excel_data, data_type, file_format)
+
+        formatted_timestamp = datetime.now().strftime("%d-%m-%Y__%H-%M-%S")
+        data_type = 'Child Growth Tracker Report__{}'.format(formatted_timestamp)
+
     if indicator not in (AWW_INCENTIVE_REPORT, LS_REPORT_EXPORT, THR_REPORT_EXPORT, CHILDREN_EXPORT,
-                         DASHBOARD_USAGE_EXPORT, SERVICE_DELIVERY_REPORT):
+                         DASHBOARD_USAGE_EXPORT, SERVICE_DELIVERY_REPORT, CHILD_GROWTH_TRACKER_REPORT):
         if file_format == 'xlsx' and beta:
             cache_key = create_excel_file_in_openpyxl(excel_data, data_type)
         else:
@@ -1708,23 +1742,42 @@ def reconcile_data_not_in_ucr(reconciliation_status_pk):
     status_record = UcrReconciliationStatus.objects.get(pk=reconciliation_status_pk)
     number_documents_missing = 0
 
-    data_not_in_ucr = get_data_not_in_ucr(status_record)
+    data_not_in_ucr = list(get_data_not_in_ucr(status_record))
     doc_ids_not_in_ucr = {data[0] for data in data_not_in_ucr}
     known_bad_doc_ids = set(
         InvalidUCRData.objects.filter(doc_id__in=doc_ids_not_in_ucr).values_list('doc_id', flat=True))
+
+    if status_record.is_form_ucr:
+        doc_ids_not_in_es = get_form_ids_missing_from_elasticsearch(doc_ids_not_in_ucr)
+    else:
+        doc_ids_not_in_es = get_case_ids_missing_from_elasticsearch(doc_ids_not_in_ucr)
 
     # republish_kafka_changes
     # running the data accessor again to avoid storing all doc ids in memory
     # since run time is relatively short and does not scale with number of errors
     # but the number of doc ids will increase with the number of errors
-    for doc_id, doc_subtype, sql_modified_on in get_data_not_in_ucr(status_record):
+    for doc_id, doc_subtype, sql_modified_on in data_not_in_ucr:
         if doc_id in known_bad_doc_ids:
             # These docs are invalid
             continue
         number_documents_missing += 1
-        celery_task_logger.info(f'doc_id {doc_id} from {sql_modified_on} not found in UCR data sources')
+        not_found_in_es = doc_id in doc_ids_not_in_es
+        celery_task_logger.info(f'doc_id {doc_id} from {sql_modified_on} not found in UCR data sources. '
+            f'Not found in ES: {not_found_in_es}')
         send_change_for_ucr_reprocessing(doc_id, doc_subtype, status_record.is_form_ucr)
 
+    metrics_counter(
+        "commcare.icds.ucr_reconciliation.published_change_count",
+        number_documents_missing,
+        tags={'config_id': status_record.table_id, 'doc_type': status_record.doc_type},
+        documentation="Number of docs that were not found in UCR that were republished"
+    )
+    metrics_counter(
+        "commcare.icds.ucr_reconciliation.partially_processed_count",
+        len(set(doc_ids_not_in_ucr) - set(doc_ids_not_in_es)),
+        tags={'config_id': status_record.table_id, 'doc_type': status_record.doc_type},
+        documentation="Number of docs that exists in Elasticsearch but are not found in UCR"
+    )
     status_record.last_processed_date = datetime.utcnow()
     status_record.documents_missing = number_documents_missing
     if number_documents_missing == 0:

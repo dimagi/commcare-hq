@@ -114,6 +114,7 @@ class DailyAttendanceView(models.Model):
 class ChildHealthMonthlyView(models.Model):
     """Contains one row for the status of every child_health case at the end of each month
     """
+    state_name = models.TextField(blank=True, null=True)
     case_id = models.TextField(primary_key=True)
     awc_id = models.TextField(blank=True, null=True)
     awc_name = models.TextField(blank=True, null=True)
@@ -123,6 +124,7 @@ class ChildHealthMonthlyView(models.Model):
     block_id = models.TextField(blank=True, null=True)
     block_name = models.TextField(blank=True, null=True)
     district_id = models.TextField(blank=True, null=True)
+    district_name = models.TextField(blank=True, null=True)
     state_id = models.TextField(blank=True, null=True)
     person_name = models.TextField(blank=True, null=True)
     mother_name = models.TextField(blank=True, null=True)
@@ -156,6 +158,7 @@ class ChildHealthMonthlyView(models.Model):
         help_text="Number of days a Daily Feeing Form has been submitted against this child case"
         "when valid_in_month and age in months between 36 and 72 months"
     )
+    lunch_count = models.IntegerField(blank=True, null=True)
     recorded_weight = models.DecimalField(
         max_digits=65535, decimal_places=65535, blank=True, null=True,
         help_text="weight_child if it has been recorded in the month"
@@ -1389,6 +1392,15 @@ class BiharDemographicsView(models.Model):
     reason_closure = models.TextField(blank=True, null=True)
     out_of_school_status = models.SmallIntegerField(null=True)
     last_class_attended_ever = models.SmallIntegerField(null=True)
+    has_bank_account = models.SmallIntegerField(null=True)
+    age_marriage = models.SmallIntegerField(null=True)
+    last_referral_date = models.DateField(null=True)
+    referral_health_problem = models.TextField(null=True)
+    referral_reached_date = models.DateField(null=True)
+    referral_reached_facility = models.SmallIntegerField(null=True)
+    migrate_date = models.DateTimeField(null=True)
+    is_alive = models.SmallIntegerField(null=True)
+    was_oos_ever = models.SmallIntegerField(blank=True, null=True)
 
     class Meta(object):
         app_label = 'icds_reports'
@@ -1489,6 +1501,8 @@ class BiharVaccineView(models.Model):
     due_list_date_7gdpt_booster_2 = models.DateField(blank=True, null=True)
     delivery_nature = models.TextField(blank=True, null=True)
     term_days = models.SmallIntegerField(blank=True, null=True)
+    birth_weight = models.SmallIntegerField(blank=True, null=True)
+    last_reported_fever_date = models.DateField(blank=True, null=True)
 
     class Meta(object):
         app_label = 'icds_reports'
@@ -1516,6 +1530,16 @@ class BiharAPIMotherView(models.Model):
     hb = models.SmallIntegerField(null=True)
     preg_reg_date = models.DateField(null=True)
     add = models.DateField(null=True)
+    lmp = models.DateField(null=True)
+    edd = models.DateField(null=True)
+    anc_1 = models.DateField(null=True)
+    anc_2 = models.DateField(null=True)
+    anc_3 = models.DateField(null=True)
+    anc_4 = models.DateField(null=True)
+    total_ifa_tablets_received = models.SmallIntegerField(null=True)
+    ifa_consumed_7_days = models.SmallIntegerField(null=True)
+    causes_for_ifa = models.TextField(null=True)
+    maternal_complications = models.TextField(null=True)
 
     class Meta(object):
         app_label = 'icds_reports'

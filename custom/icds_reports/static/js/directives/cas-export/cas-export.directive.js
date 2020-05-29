@@ -82,6 +82,10 @@ function CasExportController($window, $location, locationHierarchy, locationsSer
         return vm.selectedLocationId !== null && vm.selectedMonth !== null && vm.selectedYear !== null && vm.selectedIndicator !== null;
     };
 
+    vm.onSelectMonth = function () {
+        vm.updateSelectedDate();
+    };
+
     vm.onSelectYear = function (year) {
         var latest = new Date();
         var offset = latest.getDate() < 15 ? 2 : 1;
@@ -150,7 +154,8 @@ function CasExportController($window, $location, locationHierarchy, locationsSer
     };
 
     vm.showReassignmentMessage = function () {
-        return vm.selectedLocation && (Date.parse(vm.selectedLocation.deprecated_at) < vm.selectedDate || Date.parse(vm.selectedLocation.deprecates_at) > vm.selectedDate);
+        var utcSelectedDate = Date.UTC(vm.selectedDate.getFullYear(), vm.selectedDate.getMonth());
+        return vm.selectedLocation && (Date.parse(vm.selectedLocation.archived_on) <= utcSelectedDate || Date.parse(vm.selectedLocation.deprecates_at) > utcSelectedDate);
     };
 }
 

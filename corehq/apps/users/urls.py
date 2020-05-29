@@ -4,6 +4,7 @@ from corehq.apps.domain.utils import grandfathered_domain_re
 
 from .views import (
     DefaultProjectUserSettingsView,
+    DomainPermissionsMirrorView,
     DomainRequestView,
     EditWebUserView,
     InviteWebUserView,
@@ -90,6 +91,7 @@ urlpatterns = [
     url(r'^web/delete_request/$', delete_request, name='delete_request'),
     url(r'^web/$', ListWebUsersView.as_view(), name=ListWebUsersView.urlname),
     url(r'^web/json/$', paginate_web_users, name='paginate_web_users'),
+    url(r'^enterprise/$', DomainPermissionsMirrorView.as_view(), name=DomainPermissionsMirrorView.urlname),
     url(r'^join/(?P<uuid>[ \w-]+)/$', accept_invitation, name='domain_accept_invitation'),
     url(r'^roles/$', ListRolesView.as_view(), name=ListRolesView.urlname),
     url(r'^roles/save/$', post_user_role, name='post_user_role'),

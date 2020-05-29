@@ -80,6 +80,28 @@ FormplayerFrontend.module("Layout.Views", function (Views, FormplayerFrontend, B
         },
     });
 
+    /**
+     * Break exising locks
+     * Available only for Web Apps
+     */
+    var BreakLocksView = Marionette.ItemView.extend({
+        template: '#break-locks-setting-template',
+        tagName: 'tr',
+        ui: {
+            breakLocks: '.js-break-locks',
+        },
+        events: {
+            'click @ui.breakLocks': 'onClickBreakLocks',
+        },
+        onClickBreakLocks: function (e) {
+            var promise = FormplayerFrontend.request('breakLocks');
+            $(e.currentTarget).prop('disabled', true);
+            promise.done(function () {
+                $(e.currentTarget).prop('disabled', false);
+            });
+        },
+    });
+
     Views.SettingsView = Marionette.CompositeView.extend({
         ui: {
             done: '.js-done',
@@ -92,6 +114,8 @@ FormplayerFrontend.module("Layout.Views", function (Views, FormplayerFrontend, B
                 return DisplaySettingView;
             } else if (item.get('slug') === Views.SettingSlugs.CLEAR_USER_DATA) {
                 return ClearUserDataView;
+            } else if (item.get('slug') === Views.SettingSlugs.BREAK_LOCKS) {
+                return BreakLocksView;
             }
         },
         events: {
@@ -107,6 +131,7 @@ FormplayerFrontend.module("Layout.Views", function (Views, FormplayerFrontend, B
         SET_LANG: 'lang',
         SET_DISPLAY: 'display',
         CLEAR_USER_DATA: 'clear-user-data',
+        BREAK_LOCKS: 'break-locks',
     };
 
 });

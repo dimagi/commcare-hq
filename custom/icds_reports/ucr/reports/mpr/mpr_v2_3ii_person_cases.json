@@ -23,7 +23,8 @@
   ],
   "server_environment": [
     "india",
-    "icds"
+    "icds",
+    "icds-staging"
   ],
   "report_id": "static-mpr_v2_3ii_person_cases",
   "data_source_table": "static-person_cases_v3",
@@ -41,6 +42,14 @@
         "slug": "opened_on",
         "type": "date",
         "field": "opened_on",
+        "datatype": "date",
+        "compare_as_string": false
+      },
+      {
+        "display": "Date of Birth",
+        "slug": "dob",
+        "type": "date",
+        "field": "dob",
         "datatype": "date",
         "compare_as_string": false
       },
@@ -179,6 +188,24 @@
         "whens": [
           {
             "type": "open_female_resident",
+            "binds": [],
+            "then": 1
+          }
+        ],
+        "else_": 0,
+        "sortable": false,
+        "transform": {},
+        "description": null,
+        "visible": true
+      },
+      {
+        "display": "F_open_count",
+        "column_id": "F_open_count",
+        "type": "sum_when_template",
+        "calculate_total": true,
+        "whens": [
+          {
+            "type": "open_female",
             "binds": [],
             "then": 1
           }
