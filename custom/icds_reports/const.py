@@ -138,7 +138,7 @@ BIHAR_API_MOTHER_DETAILS_TABLE = 'bihar_api_mother_details'
 CHILD_VACCINE_TABLE = 'child_vaccines'
 CHILD_DELIVERY_FORM_ID = 'static-child_delivery_forms'
 
-DASHBOARD_DOMAIN = 'icds-dashboard-qa' if settings.SERVER_ENVIRONMENT in ('india','icds-staging') else 'icds-cas'
+DASHBOARD_DOMAIN = 'icds-dashboard-qa' if settings.SERVER_ENVIRONMENT in ('india', 'icds-staging') else 'icds-cas'
 
 THREE_MONTHS = 60 * 60 * 24 * 95
 
