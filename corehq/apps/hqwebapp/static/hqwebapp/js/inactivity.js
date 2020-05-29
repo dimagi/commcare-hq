@@ -86,6 +86,7 @@ log("ping_login failed, showing login modal");
                                 height: $body.height() - 10,
                             });
                             $body.html(content);
+                            $body.find("iframe").on("load", pollToHideModal);
                         });
                         $body.html('<h1 class="text-center"><i class="fa fa-spinner fa-spin"></i></h1>');
                         hideWarningModal();
