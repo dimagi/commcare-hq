@@ -32,18 +32,26 @@ hqDefine('hqwebapp/js/inactivity', [
 
             // Last 30 seconds, ping every 3 seconds
             if (millisLeft < 30 * 1000) {
-                $warningModal.modal('show');
+                showWarningModal();
                 return 3000;
             }
 
             // Last 2 minutes, ping every ten seconds
             if (millisLeft < 2 * 60 * 1000) {
-                $warningModal.modal('show');
+                showWarningModal();
                 return 10 * 1000;
             }
 
             // We have time, ping when 2 minutes from expiring
             return millisLeft - 2 * 60 * 1000;
+        };
+
+        var showWarningModal = function () {
+            $warningModal.modal('show');
+        };
+
+        var hideWarningModal = function () {
+            $warningModal.modal('hide');
         };
 
         var pollToShowModal = function () {
@@ -62,7 +70,7 @@ hqDefine('hqwebapp/js/inactivity', [
                             $body.html(content);
                         });
                         $body.html('<h1 class="text-center"><i class="fa fa-spinner fa-spin"></i></h1>');
-                        $warningModal.modal('hide');    // hide warning modal if it's open
+                        hideWarningModal();
                         $modal.modal({backdrop: 'static', keyboard: false});
                     } else {
                         _.delay(pollToShowModal, calculateDelayAndWarn(data.last_request));
@@ -99,13 +107,16 @@ hqDefine('hqwebapp/js/inactivity', [
                 type: 'GET',
                 success: function () {
                     $button.enableButton();
-                    $warningModal.modal('hide');
+                    hideWarningModal();
                 },
             });
         };
 
         $modal.find(".modal-footer .dismiss-button").click(pollToHideModal);
         $warningModal.find(".modal-footer .dismiss-button").click(extendSession);
+        $warningModal.on('shown.bs.modal', function () {
+            $warningModal.find(".btn-primary").focus();
+        });
 
         // Start polling
         _.delay(pollToShowModal, calculateDelayAndWarn());
