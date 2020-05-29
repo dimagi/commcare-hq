@@ -883,6 +883,12 @@ def percent_or_not_entered(x, y):
     return percent(x, y) if y and x is not None else DATA_NOT_ENTERED
 
 
+def format_data_not_entered_to_zero(value):
+    if value == DATA_NOT_ENTERED:
+        return 0
+    return value
+
+
 def india_now():
     utc_now = datetime.now(pytz.utc)
     india_now = utc_now.astimezone(india_timezone)
