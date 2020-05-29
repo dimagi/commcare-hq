@@ -63,7 +63,7 @@ branches:
   #- jls/relogin # Jenny May 27
   - jls/relogin-debug # Jenny May 28
   - orangejenny-patch-3 # Jenny May 28; this is the 3-minute timeout branch
-  - ce/web-apps-permission # Cal May 27
   - mk/icds-user-permissions/roles-assignments # MK May 29
+  - ce/web-apps-permission # Cal May 27
 
 submodules: {}
