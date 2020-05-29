@@ -263,7 +263,7 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
         ]
         for fuzzy in fuzzies:
             fuzzy.save()
-        pre_config.fuzzy_properties = fuzzies
+        pre_config.fuzzy_properties.set(fuzzies)
         pre_config.save()
 
         self._dump_and_load(expected_object_counts)
