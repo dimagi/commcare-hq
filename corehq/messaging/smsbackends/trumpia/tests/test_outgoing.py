@@ -99,6 +99,18 @@ class TestTrumpiaBackend(SimpleTestCase):
             self.mock_send(status_code=500)
         self.assertRegex(str(err.exception), "Gateway 500 error")
 
+    def test_get_message_details(self):
+        request_id = "1234561234567asdf123"
+        msg = QueuedSMS(phone_number='+15554443333', text="the message")
+        msg.backend_message_id = request_id
+        msg.save = lambda: None  # prevent db access in SimpleTestCase
+        url = f"http://api.trumpia.com/rest/v1/{USERNAME}/report/{request_id}"
+        headers = {"X-ApiKey": API_KEY, "Content-Type": "application/json"}
+        response = {"status_code": "MRME1054", "request_id": request_id}
+        with requests_mock.Mocker() as mock:
+            mock.get(url, request_headers=headers, status_code=200, json=response)
+            self.backend.get_message_details(msg)
+
     def mock_send(self, status_code=200, response=None):
         msg = QueuedSMS(phone_number='+15554443333', text="the message")
         msg.save = lambda: None  # prevent db access in SimpleTestCase

@@ -78,6 +78,21 @@ class TrumpiaBackend(SQLSMSBackend):
             raise TrumpiaRetry(f"Gateway error: {error}")
         msg.set_gateway_error(error)
 
+    def get_message_details(self, sms):
+        """Get message status for the given SMS object
+
+        Useful for troubleshooting message failures in a shell.
+        """
+        headers = {
+            "X-Apikey": self.config.api_key,
+            "Content-Type": "application/json",
+        }
+        url = self.get_url()
+        assert url.endswith("/sms")
+        url = f"{url[:-4]}/report/{sms.backend_message_id}"
+        response = requests.get(url, headers=headers)
+        return response.json()
+
 
 def is_success(data):
     return (
