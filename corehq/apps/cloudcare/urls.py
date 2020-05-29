@@ -10,7 +10,6 @@ from corehq.apps.cloudcare.views import (
     ReadableQuestions,
     default,
     form_context,
-    login_new_window,
     report_formplayer_error,
 )
 from corehq.apps.hqwebapp.decorators import waf_allow
@@ -43,7 +42,6 @@ urlpatterns = [
     url(r'^$', default, name='cloudcare_default'),
     url(r'^apps/', include(app_urls)),
     url(r'^api/', include(api_urls)),
-    url(r'^relogin/$', login_new_window, name='login_new_window'),
 ]
 
 
