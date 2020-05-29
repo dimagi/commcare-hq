@@ -42,7 +42,8 @@ class TestLSSCovered(TestCase):
                         'states': 0,
                         'sectors': 0,
                         'ls_launched': 0,
-                        'fillKey': 'Not launched'},
+                        'fillKey': 'Not launched'
+                    },
                     'st5': {
                         'districts': 0,
                         'blocks': 0,
