@@ -189,7 +189,7 @@ class DataSourceColumnChoiceProvider(ChoiceProvider):
     def _make_choice_from_value(self, value):
         if value is None:
             return Choice(NONE_CHOICE, '[Missing]')
-        elif not value:
+        elif value == "":
             return Choice(EMPTY_CHOICE, '[Empty]')
         return Choice(value, value)
 
