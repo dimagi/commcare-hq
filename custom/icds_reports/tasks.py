@@ -1741,7 +1741,8 @@ def create_reconciliation_records():
 @task(queue='dashboard_comparison_queue')
 def reconcile_data_not_in_ucr(reconciliation_status_pk):
     status_record = UcrReconciliationStatus.objects.get(pk=reconciliation_status_pk)
-    number_documents_missing = 0
+    num_docs_retried = 0
+    num_docs_unporcessed = 0
 
     data_not_in_ucr = list(get_data_not_in_ucr(status_record))
     doc_ids_not_in_ucr = {data[0] for data in data_not_in_ucr}
@@ -1757,21 +1758,30 @@ def reconcile_data_not_in_ucr(reconciliation_status_pk):
     # running the data accessor again to avoid storing all doc ids in memory
     # since run time is relatively short and does not scale with number of errors
     # but the number of doc ids will increase with the number of errors
-    for doc_id, doc_subtype, sql_modified_on in data_not_in_ucr:
+    for doc_id, doc_subtype, sql_modified_on, inserted_at in data_not_in_ucr:
         if doc_id in known_bad_doc_ids:
             # These docs are invalid
             continue
-        number_documents_missing += 1
+        num_docs_retried += 1
         not_found_in_es = doc_id in doc_ids_not_in_es
+        if not inserted_at or (sql_modified_on - inserted_at).seconds > 3600 :
+            num_docs_unporcessed += 1
+
         celery_task_logger.info(f'doc_id {doc_id} from {sql_modified_on} not found in UCR data sources. '
             f'Not found in ES: {not_found_in_es}')
         send_change_for_ucr_reprocessing(doc_id, doc_subtype, status_record.is_form_ucr)
 
     metrics_counter(
         "commcare.icds.ucr_reconciliation.published_change_count",
-        number_documents_missing,
+        num_docs_retried,
         tags={'config_id': status_record.table_id, 'doc_type': status_record.doc_type},
-        documentation="Number of docs that were not found in UCR that were republished"
+        documentation="Number of docs that were republished"
+    )
+    metrics_counter(
+        "commcare.icds.ucr_reconciliation.fully_missing_count",
+        num_docs_unporcessed,
+        tags={'config_id': status_record.table_id, 'doc_type': status_record.doc_type},
+        documentation="Number of docs that were not found in UCR or not fresh than 1 hour"
     )
     metrics_counter(
         "commcare.icds.ucr_reconciliation.partially_processed_count",
@@ -1780,12 +1790,12 @@ def reconcile_data_not_in_ucr(reconciliation_status_pk):
         documentation="Number of docs that exists in Elasticsearch but are not found in UCR"
     )
     status_record.last_processed_date = datetime.utcnow()
-    status_record.documents_missing = number_documents_missing
-    if number_documents_missing == 0:
+    status_record.documents_missing = num_docs_retried
+    if num_docs_retried == 0:
         status_record.verified_date = datetime.utcnow()
     status_record.save()
 
-    return number_documents_missing
+    return num_docs_retried
 
 
 def send_change_for_ucr_reprocessing(doc_id, doc_subtype, is_form):
