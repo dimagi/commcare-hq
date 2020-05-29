@@ -49,6 +49,7 @@ from sentry_sdk import last_event_id
 from two_factor.forms import AuthenticationTokenForm, BackupTokenForm
 from two_factor.views import LoginView
 
+from corehq.apps.hqwebapp.decorators import waf_allow
 from corehq.util.metrics import create_metrics_event, metrics_counter, metrics_gauge
 from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
 from dimagi.utils.couch.database import get_db
@@ -550,6 +551,7 @@ def debug_notify(request):
     return HttpResponse("Email should have been sent")
 
 
+@waf_allow('XSS_BODY')
 @require_POST
 def jserror(request):
     agent = request.META.get('HTTP_USER_AGENT', None)

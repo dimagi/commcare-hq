@@ -112,6 +112,7 @@ urlpatterns = [
     url(r'^smsgh/', include('corehq.messaging.smsbackends.smsgh.urls')),
     url(r'^push/', include('corehq.messaging.smsbackends.push.urls')),
     url(r'^starfish/', include('corehq.messaging.smsbackends.starfish.urls')),
+    url(r'^trumpia/', include('corehq.messaging.smsbackends.trumpia.urls')),
     url(r'^apposit/', include('corehq.messaging.smsbackends.apposit.urls')),
     url(r'^tropo/', include('corehq.messaging.smsbackends.tropo.urls')),
     url(r'^turn/', include('corehq.messaging.smsbackends.turn.urls')),
