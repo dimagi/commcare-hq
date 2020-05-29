@@ -10,7 +10,7 @@ from corehq.apps.es import GroupES, UserES
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports_core.filters import Choice
 from corehq.apps.userreports.exceptions import ColumnNotFoundError
-from corehq.apps.userreports.reports.filters.values import SHOW_ALL_CHOICE
+from corehq.apps.userreports.reports.filters.values import SHOW_ALL_CHOICE, EMPTY_CHOICE, NONE_CHOICE
 from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.apps.users.analytics import get_search_users_in_domain_es_query
 from corehq.apps.users.util import raw_username
@@ -187,6 +187,10 @@ class DataSourceColumnChoiceProvider(ChoiceProvider):
         return []
 
     def _make_choice_from_value(self, value):
+        if value is None:
+            return Choice(NONE_CHOICE, '[Missing]')
+        elif not value:
+            return Choice(EMPTY_CHOICE, '[Empty]')
         return Choice(value, value)
 
 

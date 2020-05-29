@@ -31,8 +31,11 @@ from corehq.apps.reports.util import (
     get_INFilter_element_bindparam,
 )
 
-SHOW_ALL_CHOICE = '_all'  # todo: if someone wants to name an actually choice "_all" this will break
+# todo: if someone wants to name an actual choice any of these values, it will break
+SHOW_ALL_CHOICE = '_all'
 NONE_CHOICE = "\u2400"
+EMPTY_CHOICE = '_cchq_empty'
+
 CHOICE_DELIMITER = "\u001f"
 
 
