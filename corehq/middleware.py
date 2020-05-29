@@ -170,12 +170,14 @@ class TimeoutMiddleware(MiddlewareMixin):
                 # this must be after logout so it is attached to the new session
                 request.session['secure_session'] = True
                 request.session.set_expiry(timeout * 60)
+                request.session['last_timeout_in_minutes'] = timeout
                 return HttpResponseRedirect(reverse('login') + '?next=' + request.path)
 
             request.session['secure_session'] = True
 
         if not getattr(request, '_bypass_sessions', False):
             request.session.set_expiry(timeout * 60)
+            request.session['last_timeout_in_minutes'] = timeout
             request.session['last_request'] = json_format_datetime(now)
 
 
@@ -247,7 +249,8 @@ class SelectiveSessionMiddleware(SessionMiddleware):
             '/ping_login/$',
             '/downloads/temp/ajax/',  # soil polling
             '/downloads/temp/heartbeat/',  # soil status
-            '/a/{domain}/apps/view/[A-Za-z0-9-]+/current_version/$'  # app manager new changes polling
+            '/a/{domain}/apps/view/[A-Za-z0-9-]+/current_version/$',  # app manager new changes polling
+            '/hq/notifications/service/',
         ]
         if settings.BYPASS_SESSIONS_FOR_MOBILE:
             regexes.extend(getattr(settings, 'SESSION_BYPASS_URLS', []))

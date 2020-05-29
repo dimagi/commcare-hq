@@ -498,6 +498,8 @@ def ping_login(request):
         'success': request.user.is_authenticated,
         'last_request': request.session.get('last_request'),
         'username': request.user.username,
+        'secure_session': request.session.get('secure_session', False),
+        'last_timeout_in_minutes': request.session.get('last_timeout_in_minutes'),
     })
 
 
