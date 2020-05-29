@@ -83,7 +83,7 @@ hqDefine('userreports/js/builder_view_models', function () {
 
         self.format = ko.observable("");
         self.acceptsFormatValue = ko.computed(function () {
-            return self.format() !== "Is Empty" && self.format() !== "Exists"
+            return self.format() !== "Is Empty" && self.format() !== "Exists";
         });
 
         var constants = hqImport('userreports/js/constants');
