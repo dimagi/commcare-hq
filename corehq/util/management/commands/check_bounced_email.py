@@ -11,7 +11,11 @@ class Command(BaseCommand):
     help = "Check on the bounced status of an email"
 
     def add_arguments(self, parser):
-        parser.add_argument('bounced_email')
+        parser.add_argument('bounced_email', help="""
+            Emails to check
+            - To check multiple emails, separate with a ','
+            - To search for all emails containing a substring, use '%searchstring%' syntax
+        """)
         parser.add_argument(
             '--show-details',
             action='store_true',
@@ -20,8 +24,25 @@ class Command(BaseCommand):
         )
 
     def handle(self, bounced_email, **options):
+        if bounced_email.startswith('%') and bounced_email.endswith('%'):
+            search_string = bounced_email.strip('%')
+            assert search_string, f"Search string cannot be empty: {bounced_email}"
+            bounced_emails = (
+                BouncedEmail.objects.filter(email__contains=search_string)
+                .values_list('email', flat=True)
+            )
+            if bounced_emails:
+                print(f'Found bounced emails: {",".join(bounced_emails)}')
+            else:
+                print('No matching bounced emails found')
+        else:
+            bounced_emails = bounced_email.split(',')
+
+        for email in bounced_emails:
+            self.check_bounced_email(email, show_details=options['show_details'])
+
+    def check_bounced_email(self, bounced_email, show_details):
         is_bounced = BouncedEmail.objects.filter(email=bounced_email).exists()
-        show_details = options['show_details']
 
         if not is_bounced:
             self.stdout.write(f'\n{bounced_email} is NOT bouncing. '
