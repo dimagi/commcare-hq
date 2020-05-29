@@ -17,7 +17,7 @@ from corehq.apps.domain.utils import legacy_domain_re
 from corehq.const import OPENROSA_DEFAULT_VERSION
 from dimagi.utils.logging import notify_exception
 
-from dimagi.utils.parsing import string_to_utc_datetime
+from dimagi.utils.parsing import json_format_datetime, string_to_utc_datetime
 
 try:
     import psutil
@@ -170,11 +170,15 @@ class TimeoutMiddleware(MiddlewareMixin):
                 # this must be after logout so it is attached to the new session
                 request.session['secure_session'] = True
                 request.session.set_expiry(timeout * 60)
+                request.session['last_timeout_in_minutes'] = timeout
                 return HttpResponseRedirect(reverse('login') + '?next=' + request.path)
 
             request.session['secure_session'] = True
 
-        request.session.set_expiry(timeout * 60)
+        if not getattr(request, '_bypass_sessions', False):
+            request.session.set_expiry(timeout * 60)
+            request.session['last_timeout_in_minutes'] = timeout
+            request.session['last_request'] = json_format_datetime(now)
 
 
 def always_allow_browser_caching(fn):
@@ -240,16 +244,25 @@ class SelectiveSessionMiddleware(SessionMiddleware):
 
     def __init__(self, get_response=None):
         super().__init__(get_response)
-        regexes = getattr(settings, 'SESSION_BYPASS_URLS', [])
+        regexes = [
+            '/favicon.ico$',
+            '/ping_login/$',
+            '/downloads/temp/ajax/',  # soil polling
+            '/downloads/temp/heartbeat/',  # soil status
+            '/a/{domain}/apps/view/[A-Za-z0-9-]+/current_version/$',  # app manager new changes polling
+            '/hq/notifications/service/',
+        ]
+        if settings.BYPASS_SESSIONS_FOR_MOBILE:
+            regexes.extend(getattr(settings, 'SESSION_BYPASS_URLS', []))
         self.bypass_re = [
             re.compile(regex.format(domain=legacy_domain_re)) for regex in regexes
         ]
 
     def _bypass_sessions(self, request):
-        return (settings.BYPASS_SESSIONS_FOR_MOBILE and
-            any(rx.match(request.path_info) for rx in self.bypass_re))
+        return any(rx.match(request.path_info) for rx in self.bypass_re)
 
     def process_request(self, request):
         super().process_request(request)
         if self._bypass_sessions(request):
             request.session.save = lambda *x: None
+            request._bypass_sessions = True
