@@ -10,24 +10,27 @@
   {% registerurl 'domain_links' '---' %}
   {% registerurl 'app_settings' domain '---' %}
 
-  <div id="domain_links" class="ko-template">
-    <div data-bind="visible: !master_link && !linked_domains().length">
-      <p>
-        {% trans "This project has no links to other projects." %}
-      </p>
+  {% if not is_master_domain and not is_linked_domain %}
+    <div class="alert alert-info">
+      {% trans "This project has no links to other projects." %}
     </div>
+  {% endif %}
 
-    <!-- TODO: show only relevant tabs, and use only if there are multiple tabs, otherwise show a header -->
-    <ul class="nav nav-tabs sticky-tabs">
-      <li class="active"><a data-toggle="tab" href="#tabs-master">{% trans "Project Link" %}</a></li>
-      <li><a data-toggle="tab" href="#tabs-linked">{% trans "Projects linked to this one" %}</a></li>
-      <li><a data-toggle="tab" href="#tabs-push">{% trans "Release Content" %}</a></li>
-    </ul>
+  <div id="domain_links" class="ko-template">
+    {% if is_master_domain %}
+      <ul class="nav nav-tabs sticky-tabs">
+        <li class="active"><a data-toggle="tab" href="#tabs-master">{% trans "Project Link" %}</a></li>
+        <li><a data-toggle="tab" href="#tabs-linked">{% trans "Projects linked to this one" %}</a></li>
+        <li><a data-toggle="tab" href="#tabs-push">{% trans "Release Content" %}</a></li>
+      </ul>
+      <div class="spacer"></div>
+    {% else %}
+      <h2>{% trans "Project Link" %}</h2>  {# header for the only tab that will be displayed #}
+    {% endif %}
 
     <div class="tab-content">
       <div class="tab-pane fade in active" id="tabs-master">
         <div data-bind="if: master_link">
-          <h2>{% trans "Project Link" %}</h2>
 
           <p>{% trans "This project is linked to " %}<a data-bind="attr: {'href': master_href}, text: master_link.master_domain"></a></p>
           <div>
@@ -66,7 +69,6 @@
       </div>
       <div class="tab-pane fade" id="tabs-linked">
         <div data-bind="if: linked_domains().length">
-          <h2>{% trans "Projects linked to this one" %}</h2>
           <table class="table table-striped table-hover">
             <thead>
             <tr>
@@ -90,9 +92,7 @@
           </table>
         </div>
       </div>
-      <!-- TODO: pull this part out of the ko binding area? -->
-      <div class="tab-pane fade" id="tabs-push"><!-- TODO: no remote links -->
-        <h2>{% trans "Release Content" %}</h2>
+      <div class="tab-pane fade" id="tabs-push">
         <form class="form-horizontal">
           <div class="form-group">
             <label class="col-sm-3 col-md-2 control-label">

@@ -182,6 +182,7 @@ class DomainLinkView(BaseAdminProjectSettingsView):
     def page_context(self):
         timezone = get_timezone_for_request()
         master_link = get_domain_master_link(self.domain)
+        linked_domains = [self._link_context(link, timezone) for link in get_linked_domains(self.domain)]
         (master_apps, linked_apps) = self._get_apps()
         (master_reports, linked_reports) = self._get_reports()
         model_status = self._get_model_status(master_link, linked_apps, linked_reports)
@@ -190,13 +191,13 @@ class DomainLinkView(BaseAdminProjectSettingsView):
         return {
             'domain': self.domain,
             'timezone': timezone.localize(datetime.utcnow()).tzname(),
+            'is_linked_domain': bool(master_link),
+            'is_master_domain': bool(len(linked_domains)),
             'view_data': {
                 'master_link': self._link_context(master_link, timezone) if master_link else None,
                 'model_status': sorted(model_status, key=lambda m: m['name']),
                 'master_model_status': sorted(master_model_status, key=lambda m: m['name']),
-                'linked_domains': [
-                    self._link_context(link, timezone) for link in get_linked_domains(self.domain)
-                ],
+                'linked_domains': linked_domains,
                 'models': [
                     {'slug': model[0], 'name': model[1]}
                     for model in LINKED_MODELS
