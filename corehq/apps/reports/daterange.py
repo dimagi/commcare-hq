@@ -29,7 +29,7 @@ def get_all_daterange_choices():
         DateRangeChoice('thisquarter', _('This Quarter'), True),
         DateRangeChoice('lastquarter', _('Last Quarter'), True),
     )
-    if settings.SERVER_ENVIRONMENT in settings.ICDS_RELEVANT_ENVS:
+    if settings.SERVER_ENVIRONMENT in settings.INDIAN_ENVIRONMENTS:
         choices += (DateRangeChoice('currentindianfinancialyear',
                                     _('Current Indian Financial Year'), True),)
     return choices

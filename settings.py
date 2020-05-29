@@ -477,7 +477,8 @@ IS_DIMAGI_ENVIRONMENT = True
 LOCAL_SERVER_ENVIRONMENT = 'localdev'
 SERVER_ENVIRONMENT = LOCAL_SERVER_ENVIRONMENT
 ICDS_ENVS = ('icds',)
-ICDS_RELEVANT_ENVS = ('staging', 'india', 'icds-cas', 'icds-staging')
+# environments located in india, this should not even include staging
+INDIAN_ENVIRONMENTS = ('india', 'icds-cas', 'icds-staging')
 UNLIMITED_RULE_RESTART_ENVS = ('echis', 'pna', 'swiss')
 
 # minimum minutes between updates to user reporting metadata
