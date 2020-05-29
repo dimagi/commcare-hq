@@ -52,7 +52,7 @@ class IncomingTest(TestCase):
     def test_incoming_with_keyword(self):
         response, log = self.make_request("ca va", "REPLY")
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(log.text, "REPLY ca va")
+        self.assertEqual(log.text, "ca va")
         self.assertEqual(log.direction, INCOMING)
         self.assertEqual(log.backend_message_id, "1234561234567asdf123")
 
