@@ -86,11 +86,12 @@ class PrometheusMetrics(HqMetrics):
             if getattr(settings, 'PUSHGATEWAY_HOST', None):
                 self._push_to_gateway()
             return metric.labels(**tags) if tags else metric
-        except ValueError:
+        except ValueError as err:
             prometheus_soft_assert(False, 'Prometheus metric error', {
                 'metric_name': name,
                 'tags': list(tags),
-                'expected_tags': metric._labelnames
+                'expected_tags': metric._labelnames,
+                'exception': err
             })
             raise
 
