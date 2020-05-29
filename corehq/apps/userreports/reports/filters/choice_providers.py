@@ -149,7 +149,7 @@ class DataSourceColumnChoiceProvider(ChoiceProvider):
 
     def query(self, query_context):
         try:
-            return [Choice(value, value)
+            return [self._make_choice_from_value(value)
                     for value in self.get_values_for_query(query_context)]
         except ColumnNotFoundError:
             return []
@@ -185,6 +185,9 @@ class DataSourceColumnChoiceProvider(ChoiceProvider):
 
     def get_choices_for_known_values(self, values, user):
         return []
+
+    def _make_choice_from_value(self, value):
+        return Choice(value, value)
 
 
 class MultiFieldDataSourceColumnChoiceProvider(DataSourceColumnChoiceProvider):
