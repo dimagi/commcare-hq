@@ -1822,9 +1822,9 @@ def get_data_not_in_ucr(status_record):
                 # This is to handle the cases which are outdated. This condition also handles the time drift of 1 sec
                 # between main db and ucr db. i.e  doc will even be included when inserted_at-sql_modified_on <= 1 sec
                 if sql_modified_on - doc_id_and_inserted_in_ucr[doc_id] >= timedelta(seconds=-1):
-                    yield (doc_id, doc_subtype, sql_modified_on.isoformat())
+                    yield (doc_id, doc_subtype, sql_modified_on.isoformat(), doc_id_and_inserted_in_ucr[doc_id])
             else:
-                yield (doc_id, doc_subtype, sql_modified_on.isoformat())
+                yield (doc_id, doc_subtype, sql_modified_on.isoformat(), None)
 
 
 def _get_docs_in_ucr(domain, table_id, doc_ids):
