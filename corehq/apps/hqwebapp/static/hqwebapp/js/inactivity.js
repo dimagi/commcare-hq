@@ -79,7 +79,7 @@ hqDefine('hqwebapp/js/inactivity', [
                 type: 'GET',
                 success: function (data) {
                     $button.enableButton();
-                    if (data.success && data.username === initialPageData.get('username')) {
+                    if (data.success && data.username === initialPageData.get('secure_timeout_username')) {
                         $modal.modal('hide');
                         $button.text(gettext("Done"));
                         _.delay(pollToShowModal, calculateDelayAndWarn());
