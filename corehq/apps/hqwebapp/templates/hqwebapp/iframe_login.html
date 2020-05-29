@@ -12,10 +12,6 @@
             href="{% static 'registration/less/registration.less' %}" />
     {% endcompress %}
     <script src="{% statici18n LANGUAGE_CODE %}"></script>
-    <script src="{% static 'blazy/blazy.js' %}"></script>
-    <script>
-      new Blazy({container: 'body'});
-    </script>
     <style>
       /* hide password reset link */
       .help-block {
@@ -42,5 +38,16 @@
         </div>
       </div>
     </div>
+    <script src="{% static 'blazy/blazy.js' %}"></script>
+    <script>
+      new Blazy({container: 'body'});
+      var username = (new URLSearchParams(window.location.search)).get("username");
+      if (username) {
+        if (username.endsWith("commcarehq.org")) {
+          username = username.split("@")[0];
+        }
+        document.getElementById('id_auth-username').value = username;
+      }
+    </script>
   </body>
 </html>

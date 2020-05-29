@@ -66,9 +66,12 @@ hqDefine('hqwebapp/js/inactivity', [
                 success: function (data) {
                     if (!data.success) {
                         var $body = $modal.find(".modal-body");
+                        var src = initialPageData.reverse('iframe_login');
+                        src += "?next=" + initialPageData.reverse('iframe_login_new_window');
+                        src += "&username=" + initialPageData.get('secure_timeout_username');
                         $modal.on('shown.bs.modal', function () {
                             var content = _.template('<iframe src="<%= src %>" height="<%= height %>" width="<%= width %>" style="border: none;"></iframe>')({
-                                src: initialPageData.reverse('iframe_login') + "?next=" + initialPageData.reverse('iframe_login_new_window'),
+                                src: src,
                                 width: $body.width(),
                                 height: $body.height() - 10,
                             });
