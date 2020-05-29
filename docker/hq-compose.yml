@@ -71,7 +71,7 @@ services:
       - ${VOLUME_PREFIX}${BLANK_IF_TESTS-redis:}/data
 
   elasticsearch:
-    image: elasticsearch:7.6.0
+    image: elasticsearch:7.6.2
     environment:
       ES_JAVA_OPTS: "-Xms750m -Xmx750m -Des.script.engine.groovy.inline.aggs=true -Des.script.engine.groovy.inline.search=true"
     expose:
