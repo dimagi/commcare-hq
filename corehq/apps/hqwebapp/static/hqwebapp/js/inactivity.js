@@ -108,13 +108,24 @@ log("polling HQ's ping_login to decide about hiding modal");
                 type: 'GET',
                 success: function (data) {
                     $button.enableButton();
-                    if (data.success && data.username === initialPageData.get('secure_timeout_username')) {
+                    var error = "";
+                    if (data.success) {
+                        if (data.username !== initialPageData.get('secure_timeout_username')) {
+                            error = gettext(_.template("Please log in as <%= username %>"))({
+                                username: initialPageData.get('secure_timeout_username'),
+                            });
+                        }
+                    } else {
+                        error = gettext("Could not authenticate, please log in and try again");
+                    }
+
+                    if (error) {
+                        $button.removeClass("btn-default").addClass("btn-danger");
+                        $button.text(gettext("Could not authenticate, please log in and try again"));
+                    } else {
                         $modal.modal('hide');
                         $button.text(gettext("Done"));
                         _.delay(pollToShowModal, calculateDelayAndWarn());
-                    } else {
-                        $button.removeClass("btn-default").addClass("btn-danger");
-                        $button.text(gettext("Could not authenticate, please log in and try again"));
                     }
                 },
             });
