@@ -310,4 +310,3 @@ def get_service_delivery_details(domain, start, length, order, reversed_order, l
     config["recordsFiltered"] = data_count
 
     return config
-
