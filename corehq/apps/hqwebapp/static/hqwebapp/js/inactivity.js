@@ -51,6 +51,8 @@ hqDefine('hqwebapp/js/inactivity', [
         var showWarningModal = function () {
             warningActive = true;
             if (!keyboardOrMouseActive) {
+                // force select2s closed, or they show on top of the backdrop
+                $(".select2-hidden-accessible").select2('close');
                 $warningModal.modal('show');
             }
         };
