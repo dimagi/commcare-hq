@@ -51,6 +51,8 @@ hqDefine('hqwebapp/js/inactivity', [
         var showWarningModal = function () {
             warningActive = true;
             if (!keyboardOrMouseActive) {
+                // force select2s closed, or they show on top of the backdrop
+                $(".select2-hidden-accessible").select2('close');
                 $warningModal.modal('show');
             }
         };
@@ -140,10 +142,10 @@ hqDefine('hqwebapp/js/inactivity', [
         });
 
         // Keep track of when user is actively typing
-        $("body").on("keypress", _.throttle(function () {
+        $("body").on("keypress mousemove", _.throttle(function () {
             keyboardOrMouseActive = true;
         }, 100, {trailing: false}));
-        $("body").on("keypress", _.debounce(function () {
+        $("body").on("keypress mousemove", _.debounce(function () {
             keyboardOrMouseActive = false;
             if (warningActive) {
                 showWarningModal();
