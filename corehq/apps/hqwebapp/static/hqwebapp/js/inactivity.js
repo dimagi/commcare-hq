@@ -139,10 +139,10 @@ hqDefine('hqwebapp/js/inactivity', [
         });
 
         // Keep track of when user is actively typing
-        $("body").on("keypress", _.throttle(function () {
+        $("body").on("keypress mousemove", _.throttle(function () {
             keyboardOrMouseActive = true;
         }, 100, {trailing: false}));
-        $("body").on("keypress", _.debounce(function () {
+        $("body").on("keypress mousemove", _.debounce(function () {
             keyboardOrMouseActive = false;
             if (warningActive) {
                 showWarningModal();
