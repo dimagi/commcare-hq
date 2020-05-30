@@ -90,6 +90,7 @@ REPORT_BUILDER_FILTER_TYPE_MAP = {
     'Value': 'pre',
     'Is Empty': 'is_empty',
     'Exists': 'exists',
+    'Value Not Equal': 'value_not_equal',
 }
 
 STATIC_CASE_PROPS = [
@@ -255,6 +256,13 @@ class DataSourceProperty(object):
                 'type': 'pre',
                 'pre_operator': "!=",
                 'pre_value': "",
+            })
+        if configuration['format'] == 'Value Not Equal':
+            print('settting not equal')
+            filter.update({
+                'type': 'pre',
+                'pre_operator': "!=",
+                # pre_value already set by "pre" clause
             })
         return filter
 
