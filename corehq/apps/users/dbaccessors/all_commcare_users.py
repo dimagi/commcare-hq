@@ -39,7 +39,7 @@ def _get_es_query(domain, user_filters):
     return query
 
 
-def get_commcare_users_by_filters(domain, user_filters, count_only=False):
+def get_commcare_users_by_filters(domain, user_filters, accessible_location_ids=None, count_only=False):
     """
     Returns CommCareUsers in domain per given filters. If user_filters is empty
         returns all users in the domain
@@ -53,11 +53,12 @@ def get_commcare_users_by_filters(domain, user_filters, count_only=False):
         count_only: If True, returns count of search results
     """
     if not any([user_filters.get('role_id', None), user_filters.get('search_string', None),
-                user_filters.get('location_id', None), count_only]):
+                user_filters.get('location_id', None), accessible_location_ids, count_only]):
         return get_all_commcare_users_by_domain(domain)
 
     query = _get_es_query(domain, user_filters)
-
+    if accessible_location_ids:
+        query = query.location(accessible_location_ids)
     if count_only:
         return query.count()
     user_ids = query.scroll_ids()

@@ -1118,6 +1118,7 @@ def user_upload_job_poll(request, domain, download_id, template="users/mobile/pa
     return render(request, template, context)
 
 
+@location_safe
 @require_can_edit_or_view_commcare_users
 def user_download_job_poll(request, domain, download_id, template="hqwebapp/partials/shared_download_status.html"):
     try:
@@ -1128,6 +1129,7 @@ def user_download_job_poll(request, domain, download_id, template="hqwebapp/part
     return render(request, template, context)
 
 
+@location_safe
 class DownloadUsersStatusView(BaseUserSettingsView):
     urlname = 'download_users_status'
     page_title = ugettext_noop('Download Users Status')
@@ -1161,11 +1163,15 @@ class DownloadUsersStatusView(BaseUserSettingsView):
         return reverse(self.urlname, args=self.args, kwargs=self.kwargs)
 
 
+@location_safe
 class FilteredUserDownload(BaseManageCommCareUserView):
     urlname = 'filter_and_download_commcare_users'
     page_title = ugettext_noop('Filter and Download')
 
-    @method_decorator(require_can_edit_commcare_users)
+    @method_decorator(require_can_edit_or_view_commcare_users)
+    def dispatch(self, request, *args, **kwargs):
+        return super(BaseManageCommCareUserView, self).dispatch(request, *args, **kwargs)
+
     def get(self, request, domain, *args, **kwargs):
         form = CommCareUserFilterForm(request.GET, domain=domain)
         context = self.main_context
@@ -1335,7 +1341,8 @@ class CommCareUsersLookup(BaseManageCommCareUserView, UsernameUploadMixin):
         return outfile.getvalue()
 
 
-@require_can_edit_commcare_users
+@location_safe
+@require_can_edit_or_view_commcare_users
 def count_users(request, domain):
     from corehq.apps.users.dbaccessors.all_commcare_users import get_commcare_users_by_filters
     form = CommCareUserFilterForm(request.GET, domain=domain)
@@ -1344,26 +1351,35 @@ def count_users(request, domain):
         user_filters = form.cleaned_data
     else:
         return HttpResponseBadRequest("Invalid Request")
-
+    accessible_location_ids = None
+    if not request.can_access_all_locations:
+        accessible_location_ids = SQLLocation.active_objects.accessible_location_ids(
+            request.domain, request.couch_user)
     return json_response({
-        'count': get_commcare_users_by_filters(domain, user_filters, count_only=True)
+        'count': get_commcare_users_by_filters(domain, user_filters,
+                                               accessible_location_ids=accessible_location_ids, count_only=True)
     })
 
 
+@location_safe
 @require_can_edit_or_view_commcare_users
 def download_commcare_users(request, domain):
     form = CommCareUserFilterForm(request.GET, domain=domain)
-    user_filters = {}
     if form.is_valid():
         user_filters = form.cleaned_data
     else:
         return HttpResponseRedirect(
             reverse(FilteredUserDownload.urlname, args=[domain]) + "?" + request.GET.urlencode())
     download = DownloadBase()
+    accessible_location_ids = None
+    if not request.can_access_all_locations:
+        accessible_location_ids = SQLLocation.active_objects.accessible_location_ids(
+            request.domain, request.couch_user)
     if form.cleaned_data['columns'] == CommCareUserFilterForm.USERNAMES_COLUMN_OPTION:
-        res = bulk_download_usernames_async.delay(domain, download.download_id, user_filters)
+        res = bulk_download_usernames_async.delay(domain, download.download_id, user_filters,
+                                                  accessible_location_ids)
     else:
-        res = bulk_download_users_async.delay(domain, download.download_id, user_filters)
+        res = bulk_download_users_async.delay(domain, download.download_id, user_filters, accessible_location_ids)
     download.set_task(res)
     return redirect(DownloadUsersStatusView.urlname, domain, download.download_id)
 
