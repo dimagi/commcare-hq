@@ -258,7 +258,6 @@ class DataSourceProperty(object):
                 'pre_value': "",
             })
         if configuration['format'] == 'Value Not Equal':
-            print('settting not equal')
             filter.update({
                 'type': 'pre',
                 'pre_operator': "!=",
