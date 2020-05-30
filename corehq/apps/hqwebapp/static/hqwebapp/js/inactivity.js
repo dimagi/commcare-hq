@@ -5,14 +5,38 @@
 hqDefine('hqwebapp/js/inactivity', [
     'jquery',
     'underscore',
+    'hqwebapp/js/assert_properties',
     'hqwebapp/js/initial_page_data',
 ], function (
     $,
     _,
+    assertProperties,
     initialPageData
 ) {
-    var log = function (message) {
-        console.log("[" + (new Date()).toLocaleTimeString() + "] " + message);
+    var calculateDelayAndWarning = function (timeout, lastRequest) {
+        var millisLeft = timeout,
+            response = {show_warning: false};
+
+        // Figure out when the session is going to expire
+        if (lastRequest) {
+            millisLeft = timeout - (new Date() - new Date(lastRequest));
+        }
+
+        if (millisLeft < 30 * 1000) {
+            // Last 30 seconds, ping every 3 seconds
+            response.show_warning = true;
+            response.delay = 3000;
+        } else if (millisLeft < 2 * 60 * 1000) {
+            // Last 2 minutes, ping every ten seconds
+            response.show_warning = true;
+            response.delay = 10 * 1000;
+        } else {
+            // We have time, ping when 2 minutes from expiring
+            response.delay = millisLeft - 2 * 60 * 1000;
+        }
+
+        assertProperties.assertRequired(response, ['delay', 'show_warning']);
+        return response;
     };
 
     $(function () {
@@ -22,9 +46,7 @@ hqDefine('hqwebapp/js/inactivity', [
             keyboardOrMouseActive = false,
             warningActive = false;
 
-log("page loaded, timeout length is " + timeout / 1000 / 60 + " minutes");
         if (timeout === undefined || !$modal.length) {
-log("couldn't find popup or no timeout was set, therefore returning early")
             return;
         }
 
@@ -32,32 +54,13 @@ log("couldn't find popup or no timeout was set, therefore returning early")
           * Determine when to poll next. Poll more frequently as expiration approaches, to
           * increase the chance the modal pops up before the user takes an action and gets rejected.
           */
-        var calculateDelayAndWarn = function (lastRequest) {
-            var millisLeft = timeout;
-            if (lastRequest) {
-                millisLeft = timeout - (new Date() - new Date(lastRequest));
-log("last request was " + lastRequest + ", so there are " + (millisLeft / 1000 / 60) + " minutes left in the session");
-            } else {
-log("no last request, so there are " + (millisLeft / 1000 / 60) + " minutes left in the session");
-            }
-
-            // Last 30 seconds, ping every 3 seconds
-            if (millisLeft < 30 * 1000) {
-log("show warning and poll again in 3 sec");
+        var getDelayAndWarnIfNeeded = function (lastRequest) {
+            var response = calculateDelayAndWarning(timeout, lastRequest);
+            if (response.show_warning) {
                 showWarningModal();
-                return 3000;
             }
 
-            // Last 2 minutes, ping every ten seconds
-            if (millisLeft < 2 * 60 * 1000) {
-log("show warning and poll again in 10 sec");
-                showWarningModal();
-                return 10 * 1000;
-            }
-
-            // We have time, ping when 2 minutes from expiring
-log("poll again in " + (millisLeft - 2 * 60 * 1000) / 1000 / 60 + " minutes");
-            return millisLeft - 2 * 60 * 1000;
+            return response.delay;
         };
 
         var showWarningModal = function () {
@@ -73,13 +76,11 @@ log("poll again in " + (millisLeft - 2 * 60 * 1000) / 1000 / 60 + " minutes");
         };
 
         var pollToShowModal = function () {
-log("polling HQ's ping_login to decide about showing modal");
             $.ajax({
                 url: initialPageData.reverse('ping_login'),
                 type: 'GET',
                 success: function (data) {
                     if (!data.success) {
-log("ping_login failed, showing login modal");
                         var $body = $modal.find(".modal-body");
                         var src = initialPageData.reverse('iframe_login');
                         src += "?next=" + initialPageData.reverse('iframe_login_new_window');
@@ -97,15 +98,13 @@ log("ping_login failed, showing login modal");
                         hideWarningModal();
                         $modal.modal({backdrop: 'static', keyboard: false});
                     } else {
-log("ping_login succeeded, time to re-calculate when the next poll should be, data was " + JSON.stringify(data));
-                        _.delay(pollToShowModal, calculateDelayAndWarn(data.last_request));
+                        _.delay(pollToShowModal, getDelayAndWarnIfNeeded(data.last_request));
                     }
                 },
             });
         };
 
         var pollToHideModal = function (e) {
-log("polling HQ's ping_login to decide about hiding modal");
             var $button = $(e.currentTarget);
             $button.disableButton();
             $.ajax({
@@ -130,14 +129,13 @@ log("polling HQ's ping_login to decide about hiding modal");
                     } else {
                         $modal.modal('hide');
                         $button.text(gettext("Done"));
-                        _.delay(pollToShowModal, calculateDelayAndWarn());
+                        _.delay(pollToShowModal, getDelayAndWarnIfNeeded());
                     }
                 },
             });
         };
 
         var extendSession = function (e) {
-log("extending session");
             var $button = $(e.currentTarget);
             $button.disableButton();
             warningActive = false;
@@ -147,7 +145,6 @@ log("extending session");
                 success: function () {
                     $button.enableButton();
                     hideWarningModal();
-log("session successfully extended, hiiding warning popup");
                 },
             });
         };
@@ -170,8 +167,10 @@ log("session successfully extended, hiiding warning popup");
         }, 500));
 
         // Start polling
-        _.delay(pollToShowModal, calculateDelayAndWarn());
+        _.delay(pollToShowModal, getDelayAndWarnIfNeeded());
     });
 
-    return 1;
+    return {
+        calculateDelayAndWarning: calculateDelayAndWarning,
+    };
 });
