@@ -11,6 +11,10 @@ hqDefine('hqwebapp/js/inactivity', [
     _,
     initialPageData
 ) {
+    var log = function (message) {
+        console.log("[" + (new Date()).toLocaleTimeString() + "] " + message);
+    };
+
     $(function () {
         var timeout = initialPageData.get('secure_timeout') * 60 * 1000,    // convert from minutes to milliseconds
             $modal = $("#inactivityModal"),     // won't be present on app preview or pages without a domain
@@ -18,7 +22,9 @@ hqDefine('hqwebapp/js/inactivity', [
             keyboardOrMouseActive = false,
             warningActive = false;
 
+log("page loaded, timeout length is " + timeout / 1000 / 60 + " minutes");
         if (timeout === undefined || !$modal.length) {
+log("couldn't find popup or no timeout was set, therefore returning early")
             return;
         }
 
@@ -30,21 +36,27 @@ hqDefine('hqwebapp/js/inactivity', [
             var millisLeft = timeout;
             if (lastRequest) {
                 millisLeft = timeout - (new Date() - new Date(lastRequest));
+log("last request was " + lastRequest + ", so there are " + (millisLeft / 1000 / 60) + " minutes left in the session");
+            } else {
+log("no last request, so there are " + (millisLeft / 1000 / 60) + " minutes left in the session");
             }
 
             // Last 30 seconds, ping every 3 seconds
             if (millisLeft < 30 * 1000) {
+log("show warning and poll again in 3 sec");
                 showWarningModal();
                 return 3000;
             }
 
             // Last 2 minutes, ping every ten seconds
             if (millisLeft < 2 * 60 * 1000) {
+log("show warning and poll again in 10 sec");
                 showWarningModal();
                 return 10 * 1000;
             }
 
             // We have time, ping when 2 minutes from expiring
+log("poll again in " + (millisLeft - 2 * 60 * 1000) / 1000 / 60 + " minutes");
             return millisLeft - 2 * 60 * 1000;
         };
 
@@ -52,7 +64,9 @@ hqDefine('hqwebapp/js/inactivity', [
             warningActive = true;
             if (!keyboardOrMouseActive) {
                 // force select2s closed, or they show on top of the backdrop
-                $(".select2-hidden-accessible").select2('close');
+                if ($("body").select2) {    // will only be needed (and only work) if select2 is on the page
+                    $(".select2-hidden-accessible").select2('close');
+                }
                 $warningModal.modal('show');
             }
         };
@@ -62,11 +76,13 @@ hqDefine('hqwebapp/js/inactivity', [
         };
 
         var pollToShowModal = function () {
+log("polling HQ's ping_login to decide about showing modal");
             $.ajax({
                 url: initialPageData.reverse('ping_login'),
                 type: 'GET',
                 success: function (data) {
                     if (!data.success) {
+log("ping_login failed, showing login modal");
                         var $body = $modal.find(".modal-body");
                         var src = initialPageData.reverse('iframe_login');
                         src += "?next=" + initialPageData.reverse('iframe_login_new_window');
@@ -84,6 +100,7 @@ hqDefine('hqwebapp/js/inactivity', [
                         hideWarningModal();
                         $modal.modal({backdrop: 'static', keyboard: false});
                     } else {
+log("ping_login succeeded, time to re-calculate when the next poll should be, data was " + JSON.stringify(data));
                         _.delay(pollToShowModal, calculateDelayAndWarn(data.last_request));
                     }
                 },
@@ -91,6 +108,7 @@ hqDefine('hqwebapp/js/inactivity', [
         };
 
         var pollToHideModal = function (e) {
+log("polling HQ's ping_login to decide about hiding modal");
             var $button = $(e.currentTarget);
             $button.disableButton();
             $.ajax({
@@ -122,6 +140,7 @@ hqDefine('hqwebapp/js/inactivity', [
         };
 
         var extendSession = function (e) {
+log("extending session");
             var $button = $(e.currentTarget);
             $button.disableButton();
             warningActive = false;
@@ -131,6 +150,7 @@ hqDefine('hqwebapp/js/inactivity', [
                 success: function () {
                     $button.enableButton();
                     hideWarningModal();
+log("session successfully extended, hiiding warning popup");
                 },
             });
         };
