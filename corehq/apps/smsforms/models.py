@@ -17,6 +17,7 @@ from dimagi.utils.couch import CriticalSection
 
 from . import signals
 from ..sms.models import PhoneNumber
+from ... import toggles
 from ...util.quickcache import quickcache
 
 XFORMS_SESSION_SMS = "SMS"
@@ -117,6 +118,8 @@ class SQLXFormsSession(models.Model):
         self.session_is_open = False
         self.completed = completed
         self.modified_time = self.end_time = utcnow()
+        if toggles.ONE_PHONE_NUMBER_MULTIPLE_CONTACTS.enabled(self.domain):
+            XFormsSessionSynchronization.release_channel_for_session(self)
 
     @property
     def related_subevent(self):
@@ -244,10 +247,7 @@ class SQLXFormsSession(models.Model):
             self.set_current_action_due_timestamp()
 
     def get_channel(self):
-        return Channel(
-            backend_name=get_gateway_backend_id_for_contact(self.connection_id, self.phone_number),
-            phone_number=self.phone_number,
-        )
+        return get_channel_for_contact(self.connection_id, self.phone_number)
 
 
 class XFormsSessionSynchronization:
@@ -330,9 +330,13 @@ class XFormsSessionSynchronization:
         ], timeout=5 * 60)
 
 
-@quickcache(['phone_number', 'contact_id'])
-def get_gateway_backend_id_for_contact(contact_id, phone_number):
-    return PhoneNumber.get_phone_number_for_owner(contact_id, phone_number).backend.name
+@quickcache(['contact_id', 'phone_number'])
+def get_channel_for_contact(contact_id, phone_number):
+    return Channel(
+        backend_name=PhoneNumber.get_phone_number_for_owner(contact_id, phone_number).backend.name,
+        phone_number=phone_number,
+    )
+
 
 RunningSessionInfo = namedtuple('RunningSessionInfo', ['session_id', 'contact_id'])
 # A channel is a connection between a gateway on our end an a phone number on the user end

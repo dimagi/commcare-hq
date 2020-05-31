@@ -3,11 +3,13 @@ from time import sleep
 
 from django.core.management.base import BaseCommand
 
+from corehq import toggles
 from dimagi.utils.couch import get_redis_lock
 from dimagi.utils.logging import notify_exception
 
 from corehq.apps.domain_migration_flags.api import any_migrations_in_progress
-from corehq.apps.smsforms.models import SQLXFormsSession
+from corehq.apps.smsforms.models import SQLXFormsSession, get_running_session_info_for_phone_number, \
+    XFormsSessionSynchronization
 from corehq.apps.smsforms.tasks import handle_due_survey_action
 from corehq.sql_db.util import handle_connection_failure
 
@@ -42,13 +44,22 @@ class Command(BaseCommand):
         return SQLXFormsSession.objects.filter(
             session_is_open=True,
             current_action_due__lt=datetime.utcnow(),
-        ).values_list('domain', 'connection_id', 'session_id', 'current_action_due')
+        ).values_list('domain', 'connection_id', 'session_id', 'current_action_due', 'phone_number')
 
     @handle_connection_failure()
     def create_tasks(self):
-        for domain, connection_id, session_id, current_action_due in self.get_survey_sessions_due_for_action():
+        for domain, connection_id, session_id, current_action_due, phone_number in self.get_survey_sessions_due_for_action():
             if skip_domain(domain):
                 continue
+
+            if toggles.ONE_PHONE_NUMBER_MULTIPLE_CONTACTS.enabled(domain):
+                fake_session = SQLXFormsSession(
+                    session_id=session_id,
+                    connection_id=connection_id,
+                    phone_number=phone_number,
+                )
+                if not XFormsSessionSynchronization.could_maybe_claim_channel_for_session(fake_session):
+                    continue
 
             enqueue_lock = self.get_enqueue_lock(session_id, current_action_due)
             if enqueue_lock.acquire(blocking=False):
