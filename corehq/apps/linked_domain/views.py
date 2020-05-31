@@ -366,7 +366,7 @@ class DomainLinkRMIView(JSONResponseMixin, View, DomainViewMixin):
     @allow_remote_invocation
     def create_release(self, in_data):
         push_models.delay(self.domain, in_data['models'], in_data['linked_domains'],
-                          self.request.couch_user.username)
+                          in_data['build_apps'], self.request.couch_user.username)
         return {
             'success': True,
             'message': ugettext('''

@@ -140,7 +140,9 @@ hqDefine("linked_domain/js/domain_links", [
             $("#push-button").attr('disabled', !_.every(_.values(pushData()), function (arr) { return arr.length; }));
         });
         $("#push-button").click(function () {
-            _private.RMI("create_release", pushData()).done(function (data) {
+            _private.RMI("create_release", _.extend(pushData(), {
+                build_apps: $("#build-apps").val() === "on",
+            })).done(function (data) {
                     alert_user.alert_user(data.message, data.success ? 'success' : 'danger');
             }).fail(function () {
                     alert_user.alert_user(gettext('Something unexpected happened.\n' +
