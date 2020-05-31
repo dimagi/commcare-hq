@@ -636,7 +636,7 @@ def get_inbound_phone_entry(msg):
                 if contact_id:
                     p = PhoneNumber.get_phone_number_for_owner(contact_id, msg.phone_number)
                 if running_session_info.session_id and not p:
-                    # This would be very unusual, as it would meant the the supposedly running form session
+                    # This would be very unusual, as it would mean the supposedly running form session
                     # is linked to a phone number, contact pair that doesn't exist in the PhoneNumber table
                     notify_error(
                         "Contact from running session has no match in PhoneNumber table. "
