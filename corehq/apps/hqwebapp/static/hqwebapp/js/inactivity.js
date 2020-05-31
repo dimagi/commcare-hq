@@ -63,10 +63,6 @@ log("poll again in " + (millisLeft - 2 * 60 * 1000) / 1000 / 60 + " minutes");
         var showWarningModal = function () {
             warningActive = true;
             if (!keyboardOrMouseActive) {
-                // force select2s closed, or they show on top of the backdrop
-                if ($("body").select2) {    // will only be needed (and only work) if select2 is on the page
-                    $(".select2-hidden-accessible").select2('close');
-                }
                 $warningModal.modal('show');
             }
         };
