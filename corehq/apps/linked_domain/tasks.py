@@ -23,7 +23,7 @@ def pull_missing_multimedia_for_app_and_notify_task(domain, app_id, email=None):
 
 
 @task(queue='background_queue')
-def push_models(master_domain, models, linked_domains, username):
+def push_models(master_domain, models, linked_domains, build_apps, username):
     domain_links_by_linked_domain = {link.linked_domain: link for link in get_linked_domains(master_domain)}
     user = CouchUser.get_by_username(username)
     errors = []
@@ -42,7 +42,11 @@ def push_models(master_domain, models, linked_domains, username):
                                 msg = _("Cannot update apps for project spaces using multi master")
                                 errors.append(_("Updating {} in {}: {}").format(model['name'], linked_domain, msg))
                                 continue
-                            update_linked_app(linked_app, app_id, user.user_id)
+                            app = update_linked_app(linked_app, app_id, user.user_id)
+                            if build_apps:
+                                build = app.make_build()
+                                build.is_released = True
+                                build.save(increment_version=False)
                 else:
                     update_model_type(domain_link, model['type'], model_detail=model['detail'])
             except Exception as e:   # intentionally broad

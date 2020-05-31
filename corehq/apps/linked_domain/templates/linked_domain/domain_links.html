@@ -120,7 +120,18 @@
               </select>
             </div>
           </div>
-          <!-- TODO: option to make build and release apps (or should that be the default?) -->
+          <div class="form-group">
+            <label class="col-sm-3 col-md-2 control-label" for="build-apps">
+              {% trans "Create and release new build for apps" %}
+            </label>
+            <div class="col-sm-9 col-md-10 controls">
+              <div class="checkbox">
+                <label>
+                  <input type="checkbox" id="build-apps" />
+                </label>
+              </div>
+            </div>
+          </div>
           <div class="form-actions">
             <div class="col-sm-offset-3 col-md-offset-2 controls col-sm-9 col-md-8 col-lg-6">
               <button id="push-button" type="button" class="btn btn-primary" disabled>
