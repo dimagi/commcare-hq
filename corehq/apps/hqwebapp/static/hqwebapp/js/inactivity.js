@@ -68,6 +68,7 @@ log("poll again in " + (millisLeft - 2 * 60 * 1000) / 1000 / 60 + " minutes");
         };
 
         var hideWarningModal = function () {
+            warningActive = false;
             $warningModal.modal('hide');
         };
 
