@@ -10,6 +10,7 @@ from mock import patch
 
 import commcare_translations
 from corehq.apps.app_manager import id_strings
+from corehq.apps.app_manager.suite_xml.generator import MediaSuiteGenerator
 from corehq.apps.app_manager.models import (
     Application,
     BuildProfile,
@@ -76,6 +77,26 @@ class MediaSuiteTest(SimpleTestCase, TestXmlMixin):
         app.get_module(0).get_form(0).set_icon('en', '')
         app.get_module(0).get_form(0).set_audio('en', '')
         self.assertFalse(list(app.multimedia_map.keys()))
+
+    def test_media_suite_generator(self):
+        app = Application.wrap(self.get_json('app'))
+        image_path = 'jr://file/commcare/image1.jpg'
+        audio_path = 'jr://file/commcare/audio1.mp3'
+        app.create_mapping(CommCareImage(_id='123'), image_path, save=False)
+        app.create_mapping(CommCareAudio(_id='456'), audio_path, save=False)
+        app.get_module(0).case_list_form.set_icon('en', image_path)
+        app.get_module(0).case_list_form.set_audio('en', audio_path)
+        app.get_module(0).case_list_form.form_id = app.get_module(0).get_form(0).unique_id
+
+        app.profile["properties"] = {
+            'lazy-load-multimedia-files': 'true'
+        }
+        self.assertXmlEqual(self.get_xml('media-suite-lazy-true'), MediaSuiteGenerator(app).generate_suite())
+
+        app.profile["properties"] = {
+            'lazy-load-multimedia-files': 'false'
+        }
+        self.assertXmlEqual(self.get_xml('media-suite-lazy-false'), MediaSuiteGenerator(app).generate_suite())
 
     @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
     def test_all_media_paths_with_inline_video(self, mock):
