@@ -110,6 +110,7 @@ hqDefine('users/js/roles',[
         self.appsList = o.appsList;
         self.canRestrictAccessByLocation = o.canRestrictAccessByLocation;
         self.landingPageChoices = o.landingPageChoices;
+        self.webAppsPrivilege = o.webAppsPrivilege;
         self.getReportObject = function (path) {
             var i;
             for (i = 0; i < self.reportOptions.length; i++) {
