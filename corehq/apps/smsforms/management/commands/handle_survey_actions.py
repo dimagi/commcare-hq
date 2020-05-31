@@ -8,8 +8,7 @@ from dimagi.utils.couch import get_redis_lock
 from dimagi.utils.logging import notify_exception
 
 from corehq.apps.domain_migration_flags.api import any_migrations_in_progress
-from corehq.apps.smsforms.models import SQLXFormsSession, get_running_session_info_for_phone_number, \
-    XFormsSessionSynchronization
+from corehq.apps.smsforms.models import SQLXFormsSession, XFormsSessionSynchronization
 from corehq.apps.smsforms.tasks import handle_due_survey_action
 from corehq.sql_db.util import handle_connection_failure
 
@@ -48,7 +47,8 @@ class Command(BaseCommand):
 
     @handle_connection_failure()
     def create_tasks(self):
-        for domain, connection_id, session_id, current_action_due, phone_number in self.get_survey_sessions_due_for_action():
+        for domain, connection_id, session_id, current_action_due, phone_number \
+                in self.get_survey_sessions_due_for_action():
             if skip_domain(domain):
                 continue
 

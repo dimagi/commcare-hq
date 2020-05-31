@@ -1942,9 +1942,9 @@ ONE_PHONE_NUMBER_MULTIPLE_CONTACTS = StaticToggle(
     only one contact per phone number is in an active session at any given time.
     Incoming SMS are then routed to the live session.
     If a form goes unfilled over SMS, it will prevent any further forms (for that contact or another)
-    from being initiated on that phone number until the original session expires. 
+    from being initiated on that phone number until the original session expires.
 
     Only use this feature if every form behind an SMS survey begins by identifying the contact.
-    Otherwise the recipient has no way to know who they're supposed to be enter information about.  
+    Otherwise the recipient has no way to know who they're supposed to be enter information about.
     """
 )
