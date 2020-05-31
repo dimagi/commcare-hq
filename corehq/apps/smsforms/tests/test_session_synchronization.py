@@ -28,7 +28,7 @@ def test():
     XFormsSessionSynchronization.release_channel_for_session(session_a_1)
     # Then the contact is still set
     assert XFormsSessionSynchronization.get_running_session_info_for_channel(
-        Channel('global_default', phone_number_a)
+        Channel(BACKEND_ID, phone_number_a)
     ).contact_id == 'Alpha'
     # But the other session (that couldn't before) can claim it now
     assert XFormsSessionSynchronization.claim_channel_for_session(session_a_2)
@@ -38,12 +38,15 @@ class FakeSession(namedtuple('FakeSession', ['session_id', 'phone_number', 'conn
     expire_after = 60
 
     def get_channel(self):
-        return Channel('global_default', self.phone_number)
+        return Channel(BACKEND_ID, self.phone_number)
 
 
 def _clean_up_number(phone_number):
     XFormsSessionSynchronization._set_running_session_info_for_channel(
-        Channel('global_default', phone_number), RunningSessionInfo(None, None),
+        Channel(BACKEND_ID, phone_number), RunningSessionInfo(None, None),
         expiry=10
     )
     return phone_number
+
+
+BACKEND_ID = '2b00042f7481c7b056c4b410d28f33cf'

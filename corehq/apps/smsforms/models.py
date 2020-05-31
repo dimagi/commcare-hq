@@ -321,19 +321,19 @@ class XFormsSessionSynchronization:
 
     @staticmethod
     def _channel_affinity_cache_key(channel):
-        return f'XFormsSessionSynchronization.value.{channel.backend_name}/{channel.phone_number}'
+        return f'XFormsSessionSynchronization.value.{channel.backend_id}/{channel.phone_number}'
 
     @staticmethod
     def _critical_section(channel):
         return CriticalSection([
-            f'XFormsSessionSynchronization.critical_section.{channel.backend_name}/{channel.phone_number}'
+            f'XFormsSessionSynchronization.critical_section.{channel.backend_id}/{channel.phone_number}'
         ], timeout=5 * 60)
 
 
 @quickcache(['contact_id', 'phone_number'])
 def get_channel_for_contact(contact_id, phone_number):
     return Channel(
-        backend_name=PhoneNumber.get_phone_number_for_owner(contact_id, phone_number).backend.name,
+        backend_id=PhoneNumber.get_phone_number_for_owner(contact_id, phone_number).backend.couch_id,
         phone_number=phone_number,
     )
 
@@ -342,4 +342,4 @@ RunningSessionInfo = namedtuple('RunningSessionInfo', ['session_id', 'contact_id
 # A channel is a connection between a gateway on our end an a phone number on the user end
 # A single channel can be used by multiple contacts,
 # but each channel should only have one active session at a time
-Channel = namedtuple('SMSChannel', ['backend_name', 'phone_number'])
+Channel = namedtuple('SMSChannel', ['backend_id', 'phone_number'])
