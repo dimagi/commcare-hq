@@ -16,6 +16,8 @@ from corehq.messaging.scheduling.util import utcnow
 from dimagi.utils.couch import CriticalSection
 
 from . import signals
+from ..sms.models import PhoneNumber
+from ...util.quickcache import quickcache
 
 XFORMS_SESSION_SMS = "SMS"
 XFORMS_SESSION_IVR = "IVR"
@@ -241,21 +243,28 @@ class SQLXFormsSession(models.Model):
             self.current_reminder_num += 1
             self.set_current_action_due_timestamp()
 
+    def get_channel(self):
+        return Channel(
+            backend_name=get_gateway_backend_id_for_contact(self.connection_id, self.phone_number),
+            phone_number=self.phone_number,
+        )
+
 
 class XFormsSessionSynchronization:
 
     @classmethod
-    def claim_phone_number_for_session(cls, phone_number, session):
+    def claim_channel_for_session(cls, session):
         """
         This is a non-blocking acquire.
 
-        The session that claims a phone number must also release it when it's over.
-        Returns True if it was able to claim the number.
+        The session that claims a channel must also release it when it's over.
+        Returns True if it was able to claim the channel.
         """
-        with cls._critical_section(phone_number):
-            if cls.could_maybe_claim_phone_number_for_session_id(phone_number, session.session_id):
-                cls._set_running_session_info_for_phone_number(
-                    phone_number,
+        channel = session.get_channel()
+        with cls._critical_section(channel):
+            if cls.could_maybe_claim_channel_for_session(session):
+                cls._set_running_session_info_for_channel(
+                    channel,
                     RunningSessionInfo(session.session_id, session.connection_id),
                     # We aren't relying on the expiry here to free up the session: we manually release it.
                     # Still, there is no situation where we'd want to keep this longer than that.
@@ -266,56 +275,67 @@ class XFormsSessionSynchronization:
                 return False
 
     @classmethod
-    def could_maybe_claim_phone_number_for_session_id(cls, phone_number, session_id):
+    def could_maybe_claim_channel_for_session(cls, session):
         """
-        Check if there's another session running for heuristic purposes
+        Check if there's another session running on a channel, for heuristic purposes
 
-        Does not actually claim the number, or guarantee that the session could.
-        A subsequent call to claim_phone_number_for_session could still return False.
+        Does not actually claim the channel, or guarantee that the session could.
+        A subsequent call to claim_channel_for_session could still return False.
         """
-        running_session_info = cls.get_running_session_info_for_phone_number(phone_number)
-        return not running_session_info.session_id or running_session_info.session_id == session_id
+        running_session_info = cls.get_running_session_info_for_channel(session.get_channel())
+        return not running_session_info.session_id or running_session_info.session_id == session.session_id
 
     @classmethod
-    def release_phone_number_from_session(cls, phone_number, session):
+    def release_channel_for_session(cls, session):
         """
-        This allows another session to claim the phone number
+        This allows another session to claim the channel
 
         The contact_id remains set, and incoming SMS will keep affinity with that contact
-        until another session claims the phone number.
+        until another session claims the channel.
         """
-        with cls._critical_section(phone_number):
-            running_session_info = cls.get_running_session_info_for_phone_number(phone_number)
-            if cls.could_maybe_claim_phone_number_for_session_id(phone_number, session.session_id):
+        channel = session.get_channel()
+        with cls._critical_section(channel):
+            running_session_info = cls.get_running_session_info_for_channel(channel)
+            if cls.could_maybe_claim_channel_for_session(session):
                 # Drop the session_id but keep the contact_id
                 # This will let incoming SMS keep affinity with that contact_id until a new session starts
                 running_session_info = running_session_info._replace(session_id=None)
-                cls._set_running_session_info_for_phone_number(
-                    phone_number, running_session_info,
+                cls._set_running_session_info_for_channel(
+                    channel, running_session_info,
                     # Keep affinity for 30 days
                     30 * 24 * 60 * 60
                 )
 
     @classmethod
-    def get_running_session_info_for_phone_number(cls, phone_number):
+    def get_running_session_info_for_channel(cls, channel):
         """
-        Returns RunningSessionInfo(session_id, contact_id) for the session currently claiming the number.
+        Returns RunningSessionInfo(session_id, contact_id) for the session currently claiming the channel
         """
-        key = cls._claim_phone_number_cache_key(phone_number)
+        key = cls._channel_affinity_cache_key(channel)
         return cache.get(key) or RunningSessionInfo(None, None)
 
     @classmethod
-    def _set_running_session_info_for_phone_number(cls, phone_number, running_session_info, expiry):
-        key = cls._claim_phone_number_cache_key(phone_number)
+    def _set_running_session_info_for_channel(cls, channel, running_session_info, expiry):
+        key = cls._channel_affinity_cache_key(channel)
         cache.set(key, running_session_info, expiry)
 
     @staticmethod
-    def _claim_phone_number_cache_key(phone_number):
-        return f'XFormsSessionSynchronization.value.{phone_number}'
+    def _channel_affinity_cache_key(channel):
+        return f'XFormsSessionSynchronization.value.{channel.backend_name}/{channel.phone_number}'
 
     @staticmethod
-    def _critical_section(phone_number):
-        return CriticalSection([f'XFormsSessionSynchronization.critical_section.{phone_number}'], timeout=5 * 60)
+    def _critical_section(channel):
+        return CriticalSection([
+            f'XFormsSessionSynchronization.critical_section.{channel.backend_name}/{channel.phone_number}'
+        ], timeout=5 * 60)
 
+
+@quickcache(['phone_number', 'contact_id'])
+def get_gateway_backend_id_for_contact(contact_id, phone_number):
+    return PhoneNumber.get_phone_number_for_owner(contact_id, phone_number).backend.name
 
 RunningSessionInfo = namedtuple('RunningSessionInfo', ['session_id', 'contact_id'])
+# A channel is a connection between a gateway on our end an a phone number on the user end
+# A single channel can be used by multiple contacts,
+# but each channel should only have one active session at a time
+Channel = namedtuple('SMSChannel', ['backend_name', 'phone_number'])
