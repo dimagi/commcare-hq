@@ -75,6 +75,7 @@ hqDefine("hqwebapp/js/hq.helpers", [
                 html: true,
                 trigger: 'focus',
                 container: 'body',
+                sanitize: false,
             };
             if (!$link.data('content')) {
                 options.content = function () {

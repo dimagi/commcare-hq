@@ -130,14 +130,14 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", [
                     }
 
                     if (item !== undefined) {
-                        // this is voodoo to me, but I have to remove the ui item from its new position
-                        // and *not replace* it in its original position for all the foreach mechanisms to work correctly
-                        // I found this by trial and error
-                        ui.item.detach();
                         //remove the item and add it back in the right spot
                         if (newPosition >= 0) {
-                            list.remove(item);
-                            list.splice(newPosition, 0, item);
+                            var newList = _.filter(list(), function (i) {
+                                return i !== item;
+                            });
+                            newList.splice(newPosition, 0, item);
+                            list(newList);
+
                             // Knockout 2.3 fix: refresh all of the `data-order`s
                             // this is an O(n) operation, so if experiencing slowness
                             // start here
@@ -613,6 +613,9 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", [
     ko.bindingHandlers.popover = {
         update: function (element, valueAccessor) {
             var options = ko.utils.unwrapObservable(valueAccessor());
+            if (options.html) {
+                options.sanitize = false;
+            }
             if (options.title || options.content) { // don't show empty popovers
                 $(element).popover(options);
             }
