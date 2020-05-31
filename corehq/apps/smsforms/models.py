@@ -1,7 +1,9 @@
 import uuid
+from collections import namedtuple
 from datetime import timedelta
 
 from django.contrib.postgres.fields import JSONField
+from django.core.cache import cache
 from django.db import models
 from django.db.models import Q
 from django.utils.translation import ugettext_noop
@@ -11,6 +13,7 @@ from couchdbkit import MultipleResultsFound
 from corehq.apps.sms.util import strip_plus
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.messaging.scheduling.util import utcnow
+from dimagi.utils.couch import CriticalSection
 
 from . import signals
 
@@ -237,3 +240,82 @@ class SQLXFormsSession(models.Model):
         while self.current_action_is_a_reminder and self.current_action_due < utcnow():
             self.current_reminder_num += 1
             self.set_current_action_due_timestamp()
+
+
+class XFormsSessionSynchronization:
+
+    @classmethod
+    def claim_phone_number_for_session(cls, phone_number, session):
+        """
+        This is a non-blocking acquire.
+
+        The session that claims a phone number must also release it when it's over.
+        Returns True if it was able to claim the number.
+        """
+        with cls._critical_section(phone_number):
+            if cls.could_maybe_claim_phone_number_for_session_id(phone_number, session.session_id):
+                cls._set_running_session_info_for_phone_number(
+                    phone_number,
+                    RunningSessionInfo(session.session_id, session.connection_id),
+                    # We aren't relying on the expiry here to free up the session: we manually release it.
+                    # Still, there is no situation where we'd want to keep this longer than that.
+                    session.expire_after * 60,
+                )
+                return True
+            else:
+                return False
+
+    @classmethod
+    def could_maybe_claim_phone_number_for_session_id(cls, phone_number, session_id):
+        """
+        Check if there's another session running for heuristic purposes
+
+        Does not actually claim the number, or guarantee that the session could.
+        A subsequent call to claim_phone_number_for_session could still return False.
+        """
+        running_session_info = cls.get_running_session_info_for_phone_number(phone_number)
+        return not running_session_info.session_id or running_session_info.session_id == session_id
+
+    @classmethod
+    def release_phone_number_from_session(cls, phone_number, session):
+        """
+        This allows another session to claim the phone number
+
+        The contact_id remains set, and incoming SMS will keep affinity with that contact
+        until another session claims the phone number.
+        """
+        with cls._critical_section(phone_number):
+            running_session_info = cls.get_running_session_info_for_phone_number(phone_number)
+            if cls.could_maybe_claim_phone_number_for_session_id(phone_number, session.session_id):
+                # Drop the session_id but keep the contact_id
+                # This will let incoming SMS keep affinity with that contact_id until a new session starts
+                running_session_info = running_session_info._replace(session_id=None)
+                cls._set_running_session_info_for_phone_number(
+                    phone_number, running_session_info,
+                    # Keep affinity for 30 days
+                    30 * 24 * 60 * 60
+                )
+
+    @classmethod
+    def get_running_session_info_for_phone_number(cls, phone_number):
+        """
+        Returns RunningSessionInfo(session_id, contact_id) for the session currently claiming the number.
+        """
+        key = cls._claim_phone_number_cache_key(phone_number)
+        return cache.get(key) or RunningSessionInfo(None, None)
+
+    @classmethod
+    def _set_running_session_info_for_phone_number(cls, phone_number, running_session_info, expiry):
+        key = cls._claim_phone_number_cache_key(phone_number)
+        cache.set(key, running_session_info, expiry)
+
+    @staticmethod
+    def _claim_phone_number_cache_key(phone_number):
+        return f'XFormsSessionSynchronization.value.{phone_number}'
+
+    @staticmethod
+    def _critical_section(phone_number):
+        return CriticalSection([f'XFormsSessionSynchronization.critical_section.{phone_number}'], timeout=5 * 60)
+
+
+RunningSessionInfo = namedtuple('RunningSessionInfo', ['session_id', 'contact_id'])
