@@ -91,9 +91,9 @@ class ConfigurableReportTableManagerTest(SimpleTestCase):
         self.assertTrue(table_manager.needs_bootstrap())
 
 
-class ConfigurableReportTableManagerDbTest(SimpleTestCase):
+class ConfigurableReportTableManagerDbTest(TestCase):
 
-    def test_indicator_adapters(self):
+    def test_table_adapters(self):
         data_source_1 = get_sample_data_source()
         ds_1_domain = data_source_1.domain
         table_manager = ConfigurableReportTableManagerMixin([MockDataSourceProvider({
