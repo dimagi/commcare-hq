@@ -153,24 +153,29 @@ log("polling HQ's ping_login to decide about hiding modal");
             });
         };
 
-        var extendSession = function (e) {
+        var extendSession = function ($button) {
 log("extending session");
-            var $button = $(e.currentTarget);
-            $button.disableButton();
+            if ($button) {
+                $button.disableButton();
+            }
             shouldShowWarning = false;
             $.ajax({
-                url: initialPageData.reverse('bsd_license'),  // Public view that will trigger session activity
+                url: initialPageData.reverse('ping_session'),  // View that will trigger session activity
                 type: 'GET',
                 success: function () {
-                    $button.enableButton();
+                    if ($button) {
+                        $button.enableButton();
+                    }
                     hideWarningModal();
-log("session successfully extended, hiiding warning popup");
+log("session successfully extended, hiding warning popup if it's open");
                 },
             });
         };
 
         $modal.find(".modal-footer .dismiss-button").click(pollToHideModal);
-        $warningModal.find(".modal-footer .dismiss-button").click(extendSession);
+        $warningModal.find(".modal-footer .dismiss-button").click(function (e) {
+            extendSession($(e.currentTarget));
+        });
         $warningModal.on('shown.bs.modal', function () {
             $warningModal.find(".btn-primary").focus();
         });
@@ -185,6 +190,14 @@ log("session successfully extended, hiiding warning popup");
                 showWarningModal();
             }
         }, 500));
+
+        // Send no-op request to server to extend session when there's client-side user activity on this page.
+        // _.throttle will prevent this from happening too often.
+        var keepAliveTimeout = timeout / 5;
+log("page loaded, will send a keep-alive request to server every click/keypress, at most once every " + (keepAliveTimeout / 1000 / 60) + " minutes");
+        $("body").on("keypress click", _.throttle(function () {
+            extendSession();
+        }, keepAliveTimeout));
 
         // Start polling
         _.delay(pollToShowModal, calculateDelayAndWarn());
