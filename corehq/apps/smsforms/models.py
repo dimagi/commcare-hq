@@ -16,6 +16,7 @@ from corehq.messaging.scheduling.util import utcnow
 from dimagi.utils.couch import CriticalSection
 
 from . import signals
+from ..sms.mixin import BadSMSConfigException
 from ..sms.models import PhoneNumber
 from ... import toggles
 from ...util.quickcache import quickcache
@@ -251,6 +252,22 @@ class SQLXFormsSession(models.Model):
 
 
 class XFormsSessionSynchronization:
+    """
+    This class acts as a container for a set of functions
+    related to making sure each Channel(backend_id, phone_number)
+    only has one running session at a time.
+
+    Currently the backend_id `None`,
+    which represents our inability to find a suitable backend given the configuration,
+    is treated as if it were an actual backend in terms of the one-session-per-channel semantics,
+    resulting in the behavior that a phone number with a broken channel (bad PhoneNumber/backend configuration)
+    can only have one running session at a time.
+    In practice this session will fail in other ways (since there's no good channel to interact on)
+    but we let that fail downstream like it would without the synchronization piece.
+    If there seem to be backups of sessions on phone numbers with broken channels,
+    it may be worth revisiting the choice to preserve one-session-per-channel semantics even for broken channels.
+
+    """
 
     @classmethod
     def claim_channel_for_session(cls, session):
@@ -332,8 +349,25 @@ class XFormsSessionSynchronization:
 
 @quickcache(['contact_id', 'phone_number'])
 def get_channel_for_contact(contact_id, phone_number):
+    """
+    For a given contact_id, phone_number pair, look up the gateway to be used and return the result as a Channel
+
+    If a PhoneNumber object does not exist for the pair,
+    or attempting to determine the gateway backend results in a BadSMSConfigException
+    a channel will be returned with backend_id=None
+    """
+    backend_id = None
+    phone_number_record = PhoneNumber.get_phone_number_for_owner(contact_id, phone_number)
+    if phone_number_record:
+        try:
+            backend = phone_number_record.backend
+        except BadSMSConfigException:
+            backend = None
+        if backend:
+            backend_id = backend.couch_id
+
     return Channel(
-        backend_id=PhoneNumber.get_phone_number_for_owner(contact_id, phone_number).backend.couch_id,
+        backend_id=backend_id,
         phone_number=phone_number,
     )
 
