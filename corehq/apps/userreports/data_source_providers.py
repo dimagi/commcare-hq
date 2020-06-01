@@ -19,6 +19,10 @@ class DataSourceProvider(metaclass=ABCMeta):
     def by_domain(self, domain):
         pass
 
+    @abstractmethod
+    def get_data_sources_modified_since(self, timestamp):
+        pass
+
     def get_data_sources(self):
         sources = self.get_all_data_sources()
         if self.referenced_doc_type:
@@ -38,6 +42,15 @@ class DynamicDataSourceProvider(DataSourceProvider):
             'userreports/active_data_sources', startkey=[domain], endkey=[domain, {}],
             reduce=False, include_docs=True).all()
 
+    def get_data_sources_modified_since(self, timestamp):
+        return DataSourceConfiguration.view(
+            'userreports/data_sources_by_last_modified',
+            startkey=[timestamp],
+            endkey=[timestamp, {}],
+            reduce=False,
+            include_docs=True
+        ).all()
+
 
 class StaticDataSourceProvider(DataSourceProvider):
 
@@ -47,6 +60,10 @@ class StaticDataSourceProvider(DataSourceProvider):
     def by_domain(self, domain):
         return StaticDataSourceConfiguration.by_domain(domain)
 
+    def get_data_sources_modified_since(self, timestamp):
+        # todo: support this if we care to.
+        return []
+
 
 class MockDataSourceProvider(DataSourceProvider):
     # for testing only
@@ -55,4 +72,8 @@ class MockDataSourceProvider(DataSourceProvider):
         return []
 
     def by_domain(self, domain):
+        return []
+
+    def get_data_sources_modified_since(self, timestamp):
+        # todo: support this if we care to.
         return []
