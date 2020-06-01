@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib.auth.signals import user_logged_in
 from django.db.models.signals import post_save
 from django.dispatch import Signal, receiver
@@ -49,5 +50,6 @@ def connect_user_signals():
     from django.contrib.auth.models import User
     post_save.connect(django_user_post_save_signal, User,
                       dispatch_uid="django_user_post_save_signal")
-    couch_user_post_save.connect(update_user_in_es, dispatch_uid="update_user_in_es")
+    if not settings.UNIT_TESTING:
+        couch_user_post_save.connect(update_user_in_es, dispatch_uid="update_user_in_es")
     couch_user_post_save.connect(sync_user_phone_numbers, dispatch_uid="sync_user_phone_numbers")
