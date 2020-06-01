@@ -10,8 +10,8 @@ from django.views.decorators.debug import sensitive_variables
 
 from tastypie.authentication import ApiKeyAuthentication
 
-from auditcare.utils import get_ip
 from dimagi.utils.django.request import mutable_querydict
+from dimagi.utils.web import get_ip
 
 from corehq.apps.receiverwrapper.util import DEMO_SUBMIT_MODE
 from corehq.apps.users.models import CouchUser, HQApiKey

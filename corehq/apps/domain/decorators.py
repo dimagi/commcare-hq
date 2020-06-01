@@ -23,8 +23,6 @@ from django_prbac.utils import has_privilege
 from corehq.apps.domain.auth import HQApiKeyAuthentication
 from tastypie.http import HttpUnauthorized
 
-from dimagi.utils.web import get_ip
-
 from dimagi.utils.django.request import mutable_querydict
 from dimagi.utils.web import json_response
 
