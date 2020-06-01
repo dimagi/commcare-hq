@@ -175,7 +175,7 @@ class ConfigurableReportTableManagerMixin(object):
 
         for config in configs:
             self.table_adapters_by_domain[config.domain].append(
-                get_indicator_adapter(config, raise_errors=True, load_source='change_feed')
+                self._get_indicator_adapter(config)
             )
 
         if self.run_migrations:
@@ -183,6 +183,9 @@ class ConfigurableReportTableManagerMixin(object):
 
         self.bootstrapped = True
         self.last_bootstrapped = datetime.utcnow()
+
+    def _get_indicator_adapter(self, config):
+        return get_indicator_adapter(config, raise_errors=True, load_source='change_feed')
 
     def rebuild_tables_if_necessary(self):
         self._rebuild_sql_tables([
