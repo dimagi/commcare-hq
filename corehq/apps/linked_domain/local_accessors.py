@@ -29,7 +29,7 @@ def get_custom_data_models(domain, limit_types=None):
                     'choices': field.choices,
                     'regex': field.regex,
                     'regex_msg': field.regex_msg,
-                } for field in model.fields
+                } for field in model.get_fields()
             ]
     return fields
 
