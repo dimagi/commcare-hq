@@ -10,7 +10,7 @@ hqDefine("linked_domain/js/domain_links", [
     initialPageData,
     _,
     ko,
-    alert_user,
+    alertUser,
     multiselectUtils
 ) {
     var _private = {};
@@ -43,10 +43,10 @@ hqDefine("linked_domain/js/domain_links", [
                 self.hasSuccess(true);
                 self.showSpinner(false);
             })
-                .fail(function () {
-                    self.hasError(true);
-                    self.showSpinner(false);
-                });
+            .fail(function () {
+                self.hasError(true);
+                self.showSpinner(false);
+            });
         };
 
         return self;
@@ -74,14 +74,14 @@ hqDefine("linked_domain/js/domain_links", [
         }));
 
         self.deleteLink = function (link) {
-            _private.RMI("delete_domain_link", {"linked_domain": link.linked_domain()})
-                .done(function () {
-                    self.linked_domains.remove(link);
-                })
-                .fail(function () {
-                    alert_user.alert_user(gettext('Something unexpected happened.\n' +
-                        'Please try again, or report an issue if the problem persists.'), 'danger');
-                });
+            _private.RMI("delete_domain_link", {
+                "linked_domain": link.linked_domain(),
+            }).done(function () {
+                self.linked_domains.remove(link);
+            }).fail(function () {
+                alertUser.alert_user(gettext('Something unexpected happened.\n' +
+                    'Please try again, or report an issue if the problem persists.'), 'danger');
+            });
         };
 
         return self;
@@ -143,9 +143,9 @@ hqDefine("linked_domain/js/domain_links", [
             _private.RMI("create_release", _.extend(pushData(), {
                 build_apps: $("#build-apps").val() === "on",
             })).done(function (data) {
-                    alert_user.alert_user(data.message, data.success ? 'success' : 'danger');
+                    alertUser.alert_user(data.message, data.success ? 'success' : 'danger');
             }).fail(function () {
-                    alert_user.alert_user(gettext('Something unexpected happened.\n' +
+                    alertUser.alert_user(gettext('Something unexpected happened.\n' +
                         'Please try again, or report an issue if the problem persists.'), 'danger');
             });
         });
