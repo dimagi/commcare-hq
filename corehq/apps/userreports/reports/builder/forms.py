@@ -90,6 +90,7 @@ REPORT_BUILDER_FILTER_TYPE_MAP = {
     'Value': 'pre',
     'Is Empty': 'is_empty',
     'Exists': 'exists',
+    'Value Not Equal': 'value_not_equal',
 }
 
 STATIC_CASE_PROPS = [
@@ -232,6 +233,18 @@ class DataSourceProperty(object):
         }
         if configuration['format'] == 'Date':
             filter.update({'compare_as_string': True})
+        if filter_format == 'dynamic_choice_list' and self._id == COMPUTED_OWNER_NAME_PROPERTY_ID:
+            filter.update({"choice_provider": {"type": "owner"}})
+        if filter_format == 'dynamic_choice_list' and self._id == COMPUTED_USER_NAME_PROPERTY_ID:
+            filter.update({"choice_provider": {"type": "user"}})
+        if filter_format == 'dynamic_choice_list' and self._id == COMPUTED_OWNER_LOCATION_PROPERTY_ID:
+            filter.update({"choice_provider": {"type": "location"}})
+        if configuration.get('pre_value') or configuration.get('pre_operator'):
+            filter.update({
+                'type': 'pre',  # type could have been "date"
+                'pre_operator': configuration.get('pre_operator', None),
+                'pre_value': configuration.get('pre_value', []),
+            })
         if configuration['format'] == 'Is Empty':
             filter.update({
                 'type': 'pre',
@@ -244,17 +257,11 @@ class DataSourceProperty(object):
                 'pre_operator': "!=",
                 'pre_value': "",
             })
-        if filter_format == 'dynamic_choice_list' and self._id == COMPUTED_OWNER_NAME_PROPERTY_ID:
-            filter.update({"choice_provider": {"type": "owner"}})
-        if filter_format == 'dynamic_choice_list' and self._id == COMPUTED_USER_NAME_PROPERTY_ID:
-            filter.update({"choice_provider": {"type": "user"}})
-        if filter_format == 'dynamic_choice_list' and self._id == COMPUTED_OWNER_LOCATION_PROPERTY_ID:
-            filter.update({"choice_provider": {"type": "location"}})
-        if configuration.get('pre_value') or configuration.get('pre_operator'):
+        if configuration['format'] == 'Value Not Equal':
             filter.update({
-                'type': 'pre',  # type could have been "date"
-                'pre_operator': configuration.get('pre_operator', None),
-                'pre_value': configuration.get('pre_value', []),
+                'type': 'pre',
+                'pre_operator': "distinct from",
+                # pre_value already set by "pre" clause
             })
         return filter
 
