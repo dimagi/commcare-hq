@@ -1050,6 +1050,8 @@ class ExportIndicatorView(View):
 
         if indicator == SERVICE_DELIVERY_REPORT:
             config['beneficiary_category'] = request.POST.get('beneficiary_category')
+        if indicator == THR_REPORT_EXPORT:
+            config['thr_report_type'] = request.POST.get('thr_report_type')
 
         if indicator == CHILD_GROWTH_TRACKER_REPORT:
             if not sql_location or sql_location.location_type_name in [LocationTypes.STATE]:

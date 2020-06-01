@@ -28,6 +28,7 @@ class TrumpiaIncomingView(IncomingBackendView):
         text = data.get("CONTENTS")
         if not phone_number or not text:
             return HttpResponseBadRequest("PHONENUMBER or CONTENTS are missing")
+        phone_number = add_nanp_prefix(phone_number)
         sms = incoming(
             phone_number,
             text,
@@ -80,3 +81,14 @@ def parse_incoming(xml):
     for element in root:
         data[element.tag] = element.text
     return data
+
+
+def add_nanp_prefix(number, region_code="1"):
+    """Add country code to North American Numbering Plan phone number
+
+    https://en.wikipedia.org/wiki/National_conventions_for_writing_telephone_numbers
+    #United_States,_Canada,_and_other_NANP_countries
+    """
+    if len(number) == 10 and number[0] not in "01":
+        number = region_code + number
+    return number

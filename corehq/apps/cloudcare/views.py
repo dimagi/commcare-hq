@@ -91,11 +91,6 @@ def default(request, domain):
     return HttpResponseRedirect(reverse('formplayer_main', args=[domain]))
 
 
-@login_and_domain_required
-def login_new_window(request, domain):
-    return render_static(request, "close_window.html", _("Thank you for logging in!"))
-
-
 @location_safe
 class FormplayerMain(View):
 
