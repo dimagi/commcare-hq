@@ -27,7 +27,8 @@ class Command(BaseCommand):
     """
     help = "Spawns tasks to handle the next actions due in SMS surveys"
 
-    def get_enqueue_lock(self, session_id, current_action_due):
+    @staticmethod
+    def get_enqueue_lock(session_id, current_action_due):
         key = "create-task-for-smsforms-session-%s-%s" % (
             session_id,
             current_action_due.strftime('%Y-%m-%d %H:%M:%S')

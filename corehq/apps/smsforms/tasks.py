@@ -27,6 +27,10 @@ def handle_due_survey_action(domain, contact_id, session_id):
 
         if toggles.ONE_PHONE_NUMBER_MULTIPLE_CONTACTS.enabled(domain):
             if not XFormsSessionSynchronization.claim_channel_for_session(session):
+                from .management.commands import handle_survey_actions
+                # Unless we release this lock, handle_survey_actions will be unable to requeue this task
+                # for the default duration of 1h, which we don't want
+                handle_survey_actions.Command.get_enqueue_lock(session_id, session.current_action_due).release()
                 return
 
         if session_is_stale(session):
