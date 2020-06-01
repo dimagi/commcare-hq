@@ -67,7 +67,8 @@ class StaticDataSourceProvider(DataSourceProvider):
 
 class MockDataSourceProvider(DataSourceProvider):
     # for testing only
-    def __init__(self, data_sources_by_domain=None):
+    def __init__(self, data_sources_by_domain=None, referenced_doc_type=None):
+        self.referenced_doc_type = referenced_doc_type
         self.data_sources_by_domain = data_sources_by_domain or {}
 
     def get_all_data_sources(self):
