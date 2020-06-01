@@ -112,6 +112,7 @@ from corehq.motech.const import (
     DIGEST_AUTH,
     OAUTH1,
 )
+from corehq.motech.models import ConnectionSettings
 from corehq.motech.requests import Requests, simple_post
 from corehq.motech.utils import b64_aes_decrypt
 from corehq.util.metrics import metrics_counter
@@ -175,16 +176,17 @@ class Repeater(QuickCachedDocumentMixin, Document):
 
     domain = StringProperty()
 
-    # TODO: (2020-03-06) Migrate to ConnectionSettings
+    connection_settings_id = IntegerProperty(required=False, default=None)
+    # TODO: Delete the following properties once all Repeaters have been
+    #       migrated to ConnectionSettings. (2020-05-16)
     url = StringProperty()
-    format = StringProperty()
-
     auth_type = StringProperty(choices=(BASIC_AUTH, DIGEST_AUTH, OAUTH1, BEARER_AUTH), required=False)
     username = StringProperty()
     password = StringProperty()  # See also plaintext_password()
     skip_cert_verify = BooleanProperty(default=False)  # See also verify()
     notify_addresses_str = StringProperty(default="")  # See also notify_addresses()
 
+    format = StringProperty()
     friendly_name = _("Data")
     paused = BooleanProperty(default=False)
 
@@ -195,6 +197,12 @@ class Repeater(QuickCachedDocumentMixin, Document):
     def __str__(self):
         url = "@".join((self.username, self.url)) if self.username else self.url
         return f"<{self.__class__.__name__} {self._id} {url}>"
+
+    @property
+    def connection_settings(self):
+        if not self.connection_settings_id:
+            return self.create_connection_settings()
+        return ConnectionSettings.objects.get(pk=self.connection_settings_id)
 
     @classmethod
     def available_for_domain(cls, domain):
@@ -442,6 +450,25 @@ class Repeater(QuickCachedDocumentMixin, Document):
         extend FormRepeater, use the same form.)
         """
         return self.__class__.__name__
+
+    def create_connection_settings(self):
+        if self.connection_settings_id:
+            return  # Nothing to do
+        conn = ConnectionSettings(
+            domain=self.domain,
+            name=self.url,
+            url=self.url,
+            auth_type=self.auth_type,
+            username=self.username,
+            skip_cert_verify=self.skip_cert_verify,
+            notify_addresses_str=self.notify_addresses_str,
+        )
+        # Allow ConnectionSettings to encrypt old Repeater passwords:
+        conn.plaintext_password = self.plaintext_password
+        conn.save()
+        self.connection_settings_id = conn.id
+        self.save()
+        return conn
 
 
 class FormRepeater(Repeater):
@@ -960,27 +987,6 @@ def _is_response(duck):
     instance that this module uses, otherwise False.
     """
     return hasattr(duck, 'status_code') and hasattr(duck, 'reason')
-
-
-# TODO: Repeaters to use ConnectionSettings
-def get_requests(
-    repeater: Repeater,
-    payload_id: Optional[str] = None,
-) -> Requests:
-    """
-    Returns a Requests object instantiated with properties of the given
-    Repeater. ``payload_id`` specifies the payload that the object will
-    be used for sending, if applicable.
-    """
-    auth_manager = repeater.get_auth_manager()
-    return Requests(
-        repeater.domain,
-        repeater.url,
-        verify=repeater.verify,
-        auth_manager=auth_manager,
-        notify_addresses=repeater.notify_addresses,
-        payload_id=payload_id,
-    )
 
 
 # import signals
