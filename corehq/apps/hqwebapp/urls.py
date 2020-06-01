@@ -26,6 +26,7 @@ from corehq.apps.hqwebapp.views import (
     osdd,
     password_change,
     ping_login,
+    ping_session,
     quick_find,
     redirect_to_default,
     redirect_to_dimagi,
@@ -82,6 +83,7 @@ urlpatterns = [
     url(r'^hq/admin/session_details/$', SessionDetailsView.as_view(),
         name=SessionDetailsView.urlname),
     url(r'^ping_login/$', ping_login, name='ping_login'),
+    url(r'^ping_session/$', ping_session, name='ping_session'),
     url(r'^relogin/$', login_new_window, name='login_new_window'),
     url(r'^relogin/iframe/$', iframe_login_new_window, name='iframe_login_new_window'),
 
