@@ -1,3 +1,4 @@
+import pickle
 from uuid import uuid4
 
 import mock
@@ -7,7 +8,7 @@ from corehq.apps.smsforms.models import XFormsSessionSynchronization, RunningSes
 
 @mock.patch.object(SQLXFormsSession, 'by_session_id',
                    lambda session_id: FakeSession.by_session_id(session_id))
-def test():
+def test_session_synchronization():
     phone_number_a = _clean_up_number('15555555555')
     phone_number_b = _clean_up_number('15555555554')
     session_a_1 = FakeSession(session_id=str(uuid4()), phone_number=phone_number_a, connection_id='Alpha')
@@ -76,3 +77,8 @@ def _clean_up_number(phone_number):
 
 
 BACKEND_ID = '2b00042f7481c7b056c4b410d28f33cf'
+
+
+def test_pickle_roundtrip():
+    assert pickle.loads(pickle.dumps(Channel('abc', '123'))) == Channel('abc', '123')
+    assert pickle.loads(pickle.dumps(RunningSessionInfo('xxx', 'yyy'))) == RunningSessionInfo('xxx', 'yyy')
