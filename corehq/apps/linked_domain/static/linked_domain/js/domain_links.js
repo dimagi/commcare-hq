@@ -42,8 +42,7 @@ hqDefine("linked_domain/js/domain_links", [
                 self.last_update(data.last_update);
                 self.hasSuccess(true);
                 self.showSpinner(false);
-            })
-            .fail(function () {
+            }).fail(function () {
                 self.hasError(true);
                 self.showSpinner(false);
             });
@@ -143,10 +142,9 @@ hqDefine("linked_domain/js/domain_links", [
             _private.RMI("create_release", _.extend(pushData(), {
                 build_apps: $("#build-apps").val() === "on",
             })).done(function (data) {
-                    alertUser.alert_user(data.message, data.success ? 'success' : 'danger');
+                alertUser.alert_user(data.message, data.success ? 'success' : 'danger');
             }).fail(function () {
-                    alertUser.alert_user(gettext('Something unexpected happened.\n' +
-                        'Please try again, or report an issue if the problem persists.'), 'danger');
+                alertUser.alert_user(gettext('Something unexpected happened.\nPlease try again, or report an issue if the problem persists.'), 'danger');
             });
         });
     });
