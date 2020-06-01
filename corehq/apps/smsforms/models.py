@@ -390,7 +390,7 @@ def get_channel_for_contact(contact_id, phone_number):
         if backend:
             backend_id = backend.couch_id
 
-    return Channel(
+    return SMSChannel(
         backend_id=backend_id,
         phone_number=phone_number,
     )
@@ -400,4 +400,4 @@ RunningSessionInfo = namedtuple('RunningSessionInfo', ['session_id', 'contact_id
 # A channel is a connection between a gateway on our end an a phone number on the user end
 # A single channel can be used by multiple contacts,
 # but each channel should only have one active session at a time
-Channel = namedtuple('SMSChannel', ['backend_id', 'phone_number'])
+SMSChannel = namedtuple('SMSChannel', ['backend_id', 'phone_number'])

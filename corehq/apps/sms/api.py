@@ -6,7 +6,7 @@ from datetime import datetime
 from django.conf import settings
 from django.core.exceptions import ValidationError
 
-from corehq.apps.smsforms.models import Channel, XFormsSessionSynchronization
+from corehq.apps.smsforms.models import SMSChannel, XFormsSessionSynchronization
 from corehq.util.metrics import metrics_counter
 from corehq.util.quickcache import quickcache
 from dimagi.utils.couch.cache.cache_core import get_redis_client
@@ -630,7 +630,7 @@ def get_inbound_phone_entry(msg):
             p = None
             if toggles.ONE_PHONE_NUMBER_MULTIPLE_CONTACTS:
                 running_session_info = XFormsSessionSynchronization.get_running_session_info_for_channel(
-                    Channel(backend_id=msg.backend_id, phone_number=msg.phone_number)
+                    SMSChannel(backend_id=msg.backend_id, phone_number=msg.phone_number)
                 )
                 contact_id = running_session_info.contact_id
                 if contact_id:
