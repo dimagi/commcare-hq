@@ -269,7 +269,16 @@ class ConfigurableReportTableManagerMixin(object):
         self.last_imported = new_last_imported
 
     def _add_data_sources_to_table_adapters(self, new_data_sources):
-        pass
+        for new_data_source in new_data_sources:
+            domain_adapters = self.table_adapters_by_domain[new_data_source.domain]
+            # remove any previous adapters if they existed
+            domain_adapters = [
+                adapter for adapter in domain_adapters if adapter.config._id != new_data_source._id
+            ]
+            # add a new one
+            domain_adapters.append(self._get_indicator_adapter(new_data_source))
+            # update dictionary
+            self.table_adapters_by_domain[new_data_source.domain] = domain_adapters
 
 
 class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, BulkPillowProcessor):
