@@ -163,6 +163,8 @@ class ConfigurableReportTableManagerMixin(object):
     def bootstrap_if_needed(self):
         if self.needs_bootstrap():
             self.bootstrap()
+        else:
+            self._pull_in_new_and_modified_data_sources()
 
     def bootstrap(self, configs=None):
         configs = self.get_filtered_configs(configs)
@@ -248,6 +250,13 @@ class ConfigurableReportTableManagerMixin(object):
             rebuild_indicators.delay(adapter.config.get_id, source='pillowtop', engine_id=adapter.engine_id)
         else:
             adapter.rebuild_table(source='pillowtop')
+
+    def _pull_in_new_and_modified_data_sources(self):
+        """
+        Find any data sources that have been modified since the last time this was bootstrapped
+        and update the in-memory references.
+        """
+        pass
 
 
 class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, BulkPillowProcessor):
