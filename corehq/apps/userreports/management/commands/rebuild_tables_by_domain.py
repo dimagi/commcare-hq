@@ -12,13 +12,13 @@ from django.db.utils import ProgrammingError
 from corehq.sql_db.connections import get_icds_ucr_citus_db_alias
 
 
-def _run_custom_sql_script(command, day=None):
+def _run_custom_sql_script(command):
     db_alias = get_icds_ucr_citus_db_alias()
     if not db_alias:
         return
 
     with connections[db_alias].cursor() as cursor:
-        cursor.execute(command, [day])
+        cursor.execute(command)
 
 
 class Command(BaseCommand):
