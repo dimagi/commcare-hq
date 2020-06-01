@@ -8,13 +8,13 @@
   since: "1.3"
   force: true
 
-- name: "Lazy Load Resources"
-  description: "How should Commcare load the the multimedia files in the application."
+- name: "Load multimedia files lazily"
+  description: "How should Commcare load the the multimedia files in the application. By default Commcare will try to load them instantly"
   id: "lazy_load_multimedia_files"
   values: ["true", "false"]
   value_names: ["Yes", "No"]
   default: "false"
-  since: "2.5"
+  since: "2.50"
   force: true
 
 - disabled: true
