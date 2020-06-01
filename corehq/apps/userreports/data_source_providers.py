@@ -45,8 +45,8 @@ class DynamicDataSourceProvider(DataSourceProvider):
     def get_data_sources_modified_since(self, timestamp):
         return DataSourceConfiguration.view(
             'userreports/data_sources_by_last_modified',
-            startkey=[timestamp],
-            endkey=[timestamp, {}],
+            startkey=[timestamp.isoformat()],
+            endkey=[{}],
             reduce=False,
             include_docs=True
         ).all()
