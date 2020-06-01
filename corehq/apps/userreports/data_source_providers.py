@@ -67,12 +67,14 @@ class StaticDataSourceProvider(DataSourceProvider):
 
 class MockDataSourceProvider(DataSourceProvider):
     # for testing only
+    def __init__(self, data_sources_by_domain=None):
+        self.data_sources_by_domain = data_sources_by_domain or {}
 
     def get_all_data_sources(self):
-        return []
+        return [ds for domain, domain_sources in self.data_sources_by_domain.items() for ds in domain_sources]
 
     def by_domain(self, domain):
-        return []
+        return self.data_sources_by_domain.get(domain, [])
 
     def get_data_sources_modified_since(self, timestamp):
         # todo: support this if we care to.
