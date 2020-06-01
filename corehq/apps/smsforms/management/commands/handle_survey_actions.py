@@ -77,7 +77,7 @@ class Command(BaseCommand):
                             details={
                                 'running_session_info': running_session_info
                             })
-                        XFormsSessionSynchronization.release_channel_for_session(session)
+                        XFormsSessionSynchronization.clear_stale_channel_claim(fake_session.get_channel())
                     # This is the 99% case: there's a running session for the channel
                     # so leave this session/action in the queue for later and move on to the next one
                     else:

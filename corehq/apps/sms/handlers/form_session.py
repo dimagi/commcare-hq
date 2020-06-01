@@ -36,7 +36,7 @@ def form_session_handler(v, text, msg):
                     # and act like there was no available session
                     notify_error("The supposedly running session was not open and was released. "
                                  'No known way for this to happen, so worth investigating.')
-                    XFormsSessionSynchronization.release_channel_for_session(session)
+                    XFormsSessionSynchronization.clear_stale_channel_claim(channel)
                     session = None
             else:
                 session = None
