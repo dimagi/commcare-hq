@@ -33,5 +33,3 @@ class Migration(migrations.Migration):
         migrations.RunSQL("ALTER TABLE ccs_record_monthly ADD COLUMN new_ifa_tablets_total_pnc INTEGER"),
         migrations.RunSQL("ALTER TABLE ccs_record_monthly ADD COLUMN ifa_last_seven_days INTEGER"),
     ]
-
-    operations.extend(get_view_migrations())

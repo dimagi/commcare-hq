@@ -210,8 +210,8 @@ class CcsRecordMonthly(models.Model, AggregateMixin):
     last_preg_year = models.IntegerField(null=True)
     complication_type = models.TextField(blank=True, null=True)
     reason_no_ifa = models.TextField(blank=True, null=True)
-    new_ifa_tablets_total_bp = models.PositiveSmallIntegerField(blank=True, null=True)
-    new_ifa_tablets_total_pnc = models.PositiveSmallIntegerField(blank=True, null=True)
+    new_ifa_tablets_total_bp = models.SmallIntegerField(blank=True, null=True)
+    new_ifa_tablets_total_pnc = models.SmallIntegerField(blank=True, null=True)
     ifa_last_seven_days = models.PositiveSmallIntegerField(blank=True, null=True)
 
     class Meta(object):
@@ -371,6 +371,11 @@ class ChildHealthMonthly(models.Model, AggregateMixin):
     child_person_case_id = models.TextField(blank=True, null=True)
     delivery_nature = models.TextField(blank=True, null=True)
     term_days = models.SmallIntegerField(blank=True, null=True)
+    valid_status_daily = models.SmallIntegerField(blank=True, null=True)
+    migration_status_daily = models.SmallIntegerField(blank=True, null=True)
+    alive_status_daily = models.SmallIntegerField(blank=True, null=True)
+    duplicate_status_daily = models.SmallIntegerField(blank=True, null=True)
+    seeking_services_status_daily = models.SmallIntegerField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -1071,7 +1076,7 @@ class AggregateCcsRecordPostnatalCareForms(models.Model, AggregateMixin):
         help_text="number of qualified visits for the incentive report",
         default=0
     )
-    new_ifa_tablets_total = models.PositiveSmallIntegerField(
+    new_ifa_tablets_total = models.SmallIntegerField(
         null=True,
         help_text="New ifa tablets"
     )
@@ -1334,7 +1339,7 @@ class AggregateBirthPreparednesForms(models.Model, AggregateMixin):
         help_text="Has ever had /data/bp1/using_ifa='yes'"
     )
     reason_no_ifa = models.TextField(null=True)
-    new_ifa_tablets_total = models.PositiveSmallIntegerField(
+    new_ifa_tablets_total = models.SmallIntegerField(
         null=True,
         help_text="New ifa tablets"
     )
@@ -1721,18 +1726,24 @@ class AggServiceDeliveryReport(models.Model, AggregateMixin):
     lunch_8_14_days = models.IntegerField(null=True)
     lunch_15_20_days = models.IntegerField(null=True)
     lunch_21_days = models.IntegerField(null=True)
+    lunch_21_24_days = models.IntegerField(null=True)
+    lunch_25_days = models.IntegerField(null=True)
     pse_eligible = models.IntegerField(null=True)
     pse_0_days = models.IntegerField(null=True)
     pse_1_7_days = models.IntegerField(null=True)
     pse_8_14_days = models.IntegerField(null=True)
     pse_15_20_days = models.IntegerField(null=True)
     pse_21_days = models.IntegerField(null=True)
+    pse_21_24_days = models.IntegerField(null=True)
+    pse_25_days = models.IntegerField(null=True)
     thr_eligible = models.IntegerField(null=True)
     thr_0_days = models.IntegerField(null=True)
     thr_1_7_days = models.IntegerField(null=True)
     thr_8_14_days = models.IntegerField(null=True)
     thr_15_20_days = models.IntegerField(null=True)
     thr_21_days = models.IntegerField(null=True)
+    thr_21_24_days = models.IntegerField(null=True)
+    thr_25_days = models.IntegerField(null=True)
     state_is_test = models.SmallIntegerField(null=True)
     district_is_test = models.SmallIntegerField(null=True)
     block_is_test = models.SmallIntegerField(null=True)
@@ -1744,6 +1755,11 @@ class AggServiceDeliveryReport(models.Model, AggregateMixin):
     children_3_5 = models.IntegerField(null=True)
     gm_0_3 = models.IntegerField(null=True)
     gm_3_5 = models.IntegerField(null=True)
+    third_fourth_month_of_pregnancy_count = models.IntegerField(null=True)
+    annaprasan_diwas_count = models.IntegerField(null=True)
+    suposhan_diwas_count = models.IntegerField(null=True)
+    coming_of_age_count = models.IntegerField(null=True)
+    public_health_message_count = models.IntegerField(null=True)
 
     class Meta(object):
         db_table = AGG_SDR_TABLE

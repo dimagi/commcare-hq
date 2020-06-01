@@ -1,5 +1,6 @@
 import json
 from base64 import b64decode, b64encode
+from typing import Optional
 
 from django.conf import settings
 
@@ -138,3 +139,22 @@ def unpack_request_args(request_method, args, kwargs):
             data = args[0]
     headers = kwargs.pop('headers', {})
     return params, data, headers
+
+
+def get_endpoint_url(base_url: Optional[str], endpoint: str) -> str:
+    """
+    Joins ``endpoint`` to ``base_url`` if ``base_url`` is not None.
+
+    >>> get_endpoint_url('https://example.com/', '/foo')
+    'https://example.com/foo'
+
+    >>> get_endpoint_url('https://example.com', 'foo')
+    'https://example.com/foo'
+
+    >>> get_endpoint_url(None, 'https://example.com/foo')
+    'https://example.com/foo'
+
+    """
+    if base_url is None:
+        return endpoint
+    return '/'.join((base_url.rstrip('/'), endpoint.lstrip('/')))

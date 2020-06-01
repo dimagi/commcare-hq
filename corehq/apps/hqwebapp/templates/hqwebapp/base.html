@@ -333,15 +333,25 @@
       {% endif %}
     {% endif %}
 
+    {% if request.user.is_authenticated and request.project.secure_timeout %}
+      {% initial_page_data 'secure_timeout' request.project.secure_timeout %}
+      {% initial_page_data 'secure_timeout_username' request.couch_user.username %}
+      {% registerurl 'bsd_license' %}
+      {% registerurl 'iframe_login' request.project.name %}
+      {% registerurl 'iframe_login_new_window' %}
+      {% registerurl 'ping_login' %}
+      {% include 'hqwebapp/includes/inactivity_modal.html' %}
+    {% endif %}
+
     {# 30 Day Trial #}
     {% include 'hqwebapp/includes/modal_30_day_trial.html' %}
 
 
     {% block additional_initial_page_data %}
       {% comment %}
-                    fallback place to put initial page data for templates where it's
-                    awkward or impossible to include it in another block
-                {% endcomment %}
+        fallback place to put initial page data for templates where it's
+        awkward or impossible to include it in another block
+      {% endcomment %}
     {% endblock %}
     {% initial_page_data 'mobile_ux_cookie_name' mobile_ux_cookie_name %}
     {% initial_page_data 'show_mobile_ux_warning' show_mobile_ux_warning %}
