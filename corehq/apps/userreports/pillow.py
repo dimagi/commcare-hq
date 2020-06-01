@@ -270,6 +270,7 @@ class ConfigurableReportTableManagerMixin(object):
 
     def _add_data_sources_to_table_adapters(self, new_data_sources):
         for new_data_source in new_data_sources:
+            pillow_logging.info(f'updating modified data source: {new_data_source.domain}: {new_data_source._id}')
             domain_adapters = self.table_adapters_by_domain[new_data_source.domain]
             # remove any previous adapters if they existed
             domain_adapters = [
