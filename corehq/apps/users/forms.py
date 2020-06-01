@@ -5,7 +5,6 @@ import re
 from django import forms
 from django.conf import settings
 from django.contrib.auth.forms import SetPasswordForm
-from django.contrib.postgres.forms import SimpleArrayField
 from django.core.exceptions import ValidationError
 from django.core.validators import EmailValidator, validate_email
 from django.forms.widgets import PasswordInput
@@ -35,7 +34,7 @@ from corehq.apps.custom_data_fields.edit_entity import CustomDataEditor
 from corehq.apps.domain.forms import EditBillingAccountInfoForm, clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp import crispy as hqcrispy
-from corehq.apps.hqwebapp.crispy import HQFormHelper, HQModalFormHelper
+from corehq.apps.hqwebapp.crispy import HQModalFormHelper
 from corehq.apps.hqwebapp.utils import decode_password
 from corehq.apps.hqwebapp.widgets import (
     Select2Ajax,
@@ -45,7 +44,7 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import user_can_access_location_id
 from corehq.apps.programs.models import Program
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
-from corehq.apps.users.models import CouchUser, UserRole, HQApiKey
+from corehq.apps.users.models import CouchUser, UserRole
 from corehq.apps.users.util import cc_user_domain, format_username
 from custom.nic_compliance.forms import EncodedPasswordChangeFormMixin
 
@@ -1297,34 +1296,3 @@ class CommCareUserFilterForm(forms.Form):
         if "*" in search_string or "?" in search_string:
             raise forms.ValidationError(_("* and ? are not allowed"))
         return search_string
-
-
-class ApiKeyForm(forms.Form):
-    name = forms.CharField()
-    ip_whitelist = SimpleArrayField(forms.GenericIPAddressField(), required=False)
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        self.helper = HQFormHelper()
-        self.helper.form_style = 'inline'
-        self.helper.form_show_labels = False
-        self.helper.layout = Layout(
-            InlineField('name'),
-            InlineField('ip_whitelist'),
-            StrictButton(
-                mark_safe('<i class="fa fa-plus"></i> %s' % ugettext_lazy("Create API Key")),
-                css_class='btn btn-primary',
-                type='submit'
-            )
-        )
-
-    def create_key(self, user):
-        new_key = HQApiKey.objects.create(
-            name=self.cleaned_data['name'],
-            ip_whitelist=self.cleaned_data['ip_whitelist'],
-            user=user,
-        )
-        new_key.key = new_key.generate_key()
-        new_key.save()
-        return new_key

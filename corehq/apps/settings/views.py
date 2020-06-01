@@ -41,6 +41,7 @@ from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.hqwebapp.utils import sign, update_session_language
 from corehq.apps.hqwebapp.views import BaseSectionPageView, CRUDPaginatedViewMixin
 from corehq.apps.settings.forms import (
+    HQApiKeyForm,
     HQDeviceValidationForm,
     HQEmptyForm,
     HQPasswordChangeForm,
@@ -536,7 +537,10 @@ class ApiKeyView(BaseMyAccountView, CRUDPaginatedViewMixin):
                     "id": api_key.id,
                     "name": api_key.name,
                     "key": redacted_key,
-                    "ip_whitelist": api_key.ip_whitelist,
+                    "ip_whitelist": (
+                        ", ".join(api_key.ip_whitelist)
+                        if api_key.ip_whitelist else _("All IP Addresses")
+                    ),
                     "created": api_key.created.strftime('%Y-%m-%d %H:%M:%S'),
                 },
                 "template": "base-user-api-key-template",
@@ -545,15 +549,16 @@ class ApiKeyView(BaseMyAccountView, CRUDPaginatedViewMixin):
     def post(self, *args, **kwargs):
         return self.paginate_crud_response
 
+    create_item_form_class = "form form-horizontal"
+
     def get_create_form(self, is_blank=False):
-        from corehq.apps.users.forms import ApiKeyForm
         if self.request.method == 'POST' and not is_blank:
-            return ApiKeyForm(self.request.POST)
-        return ApiKeyForm()
+            return HQApiKeyForm(self.request.POST)
+        return HQApiKeyForm()
 
     def get_create_item_data(self, create_form):
         new_api_key = create_form.create_key(self.request.user)
-        copy_key_message = _("Copy this in a secure place.")
+        copy_key_message = _("Copy this in a secure place. It will not be shown again.")
         return {
             'itemData': {
                 'id': new_api_key.id,
@@ -562,7 +567,7 @@ class ApiKeyView(BaseMyAccountView, CRUDPaginatedViewMixin):
                 'ip_whitelist': new_api_key.ip_whitelist,
                 'created': new_api_key.created.isoformat()
             },
-            'template': 'base-user-api-key-template',
+            'template': 'new-user-api-key-template',
         }
 
     def get_deleted_item_data(self, item_id):
