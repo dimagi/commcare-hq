@@ -20,7 +20,7 @@ SELECT
 "awc_location_months"."district_map_location_name" AS "district_map_location_name",
 "awc_location_months"."state_map_location_name" AS "state_map_location_name",
 "awc_location_months"."aggregation_level" AS "aggregation_level",
-agg_awc.month as month,
+"awc_location_months"."month" as month,
 COALESCE(agg_awc.num_launched_awcs, 0) AS num_launched_awcs,
 COALESCE(agg_awc.valid_visits,0) AS valid_visits,
 COALESCE(agg_awc.expected_visits,0) AS expected_visits,
