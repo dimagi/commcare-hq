@@ -63,5 +63,6 @@ branches:
   - mk/icds-user-permissions/roles-assignments # MK May 29
   - ce/web-apps-permission # Cal May 27
   - jls/push-linked-apps # Jenny May 31
+  - dmr/ONE_PHONE_NUMBER_MULTIPLE_CONTACTS  # Danny Jun 1
 
 submodules: {}
