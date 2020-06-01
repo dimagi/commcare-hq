@@ -10,8 +10,9 @@ from .utils import MultiTabularReport, format_row
 
 
 class NutrientIntakeReport(MultiTabularReport):
-    name = 'Output 3 - Disaggregated Intake Data by Food and Aggregated Daily Intake Data by Respondent'
-    slug = 'report_3_disaggr_intake_data_by_food_and_aggr_daily_intake_data_by_respondent'  # yup, really
+    name = 'Output 3 - Disaggregated Intake Data by Respondent and Aggregated Daily Intake Data by Respondent'
+    slug = 'report_3_disaggr_intake_data_by_rspndnt_and_aggr_daily_intake_data_by_rspndnt'  # yup, really
+
     export_only = True
     description = mark_safe(textwrap.dedent("""
         This report provides information on the total quantity and total
@@ -101,7 +102,7 @@ def _sum(items):
 
 class IntakeData:
     title = 'Disaggregated Intake Data By Food'
-    slug = 'disaggr_intake_data_by_food'
+    slug = 'disaggr_intake_data_by_rspndnt'
     _columns = [
         'unique_respondent_id', 'location_id', 'respondent_id',
         'recall_case_id', 'opened_by_username', 'owner_name', 'visit_date',
