@@ -1,9 +1,10 @@
 from datetime import timedelta
 
+from corehq import toggles
 from corehq.apps.formplayer_api.smsforms.api import FormplayerInterface
 from corehq.apps.sms.api import MessageMetadata, send_sms_to_verified_number
 from corehq.apps.sms.models import PhoneNumber
-from corehq.apps.smsforms.models import SQLXFormsSession
+from corehq.apps.smsforms.models import SQLXFormsSession, XFormsSessionSynchronization
 from corehq.apps.smsforms.util import critical_section_for_smsforms_sessions
 from corehq.messaging.scheduling.util import utcnow
 from corehq.util.celery_utils import no_result_task
@@ -23,6 +24,14 @@ def handle_due_survey_action(domain, contact_id, session_id):
             or session.current_action_due > utcnow()
         ):
             return
+
+        if toggles.ONE_PHONE_NUMBER_MULTIPLE_CONTACTS.enabled(domain):
+            if not XFormsSessionSynchronization.claim_channel_for_session(session):
+                from .management.commands import handle_survey_actions
+                # Unless we release this lock, handle_survey_actions will be unable to requeue this task
+                # for the default duration of 1h, which we don't want
+                handle_survey_actions.Command.get_enqueue_lock(session_id, session.current_action_due).release()
+                return
 
         if session_is_stale(session):
             # If a session is having some unrecoverable errors that aren't benefitting from
