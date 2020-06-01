@@ -114,6 +114,7 @@ class ConfigurableReportTableManagerDbTest(TestCase):
         table_manager.bootstrap()
         # test in same domain
         data_source_2 = self._copy_data_source(data_source_1)
+        data_source_2.save()
         table_manager._add_data_sources_to_table_adapters([data_source_2])
         self.assertEqual(1, len(table_manager.table_adapters_by_domain))
         self.assertEqual(2, len(table_manager.table_adapters_by_domain[ds_1_domain]))
@@ -121,6 +122,30 @@ class ConfigurableReportTableManagerDbTest(TestCase):
             {data_source_1, data_source_2},
             set([table_adapter.config for table_adapter in table_manager.table_adapters_by_domain[ds_1_domain]])
         )
+        # test in a new domain
+        data_source_3 = self._copy_data_source(data_source_1)
+        ds3_domain = 'new_domain'
+        data_source_3.domain = ds3_domain
+        data_source_3.save()
+        table_manager._add_data_sources_to_table_adapters([data_source_3])
+        # should now be 2 domains in the map
+        self.assertEqual(2, len(table_manager.table_adapters_by_domain))
+        # ensure domain 1 unchanged
+        self.assertEqual(
+            {data_source_1, data_source_2},
+            set([table_adapter.config for table_adapter in table_manager.table_adapters_by_domain[ds_1_domain]])
+        )
+        self.assertEqual(1, len(table_manager.table_adapters_by_domain[ds3_domain]))
+        self.assertEqual(data_source_3, table_manager.table_adapters_by_domain[ds3_domain][0].config)
+
+        # finally pass in existing data sources and ensure they modify in place
+        table_manager._add_data_sources_to_table_adapters([data_source_1, data_source_3])
+        self.assertEqual(2, len(table_manager.table_adapters_by_domain))
+        self.assertEqual(
+            {data_source_1, data_source_2},
+            set([table_adapter.config for table_adapter in table_manager.table_adapters_by_domain[ds_1_domain]])
+        )
+        self.assertEqual(data_source_3, table_manager.table_adapters_by_domain[ds3_domain][0].config)
 
     def _copy_data_source(self, data_source):
         data_source_json = data_source.to_json()
