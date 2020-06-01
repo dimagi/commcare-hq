@@ -14,7 +14,6 @@ from corehq.apps.settings.views import (
     MyAccountSettingsView,
     MyProjectsList,
     default,
-    new_api_key,
     project_id_mapping,
     redirect_domain_settings,
     redirect_users,
@@ -27,7 +26,6 @@ urlpatterns = [
     url(r'^projects/$', MyProjectsList.as_view(), name=MyProjectsList.urlname),
     url(r'^password/$', ChangeMyPasswordView.as_view(), name=ChangeMyPasswordView.urlname),
     url(r'^mobile_privileges/$', EnableMobilePrivilegesView.as_view(), name=EnableMobilePrivilegesView.urlname),
-    url(r'new_api_key/$', new_api_key, name='new_api_key'),
 ]
 
 domain_specific = [
