@@ -149,7 +149,8 @@ class MediaSuiteGenerator(object):
             local_path = './{}/{}'.format(path, name)
 
             load_lazily = False
-            if self.app.profile['properties']['lazy-load-multimedia-files'] == 'true':
+            lazy_load_preference = self.app.profile.get('properties', {}).get('lazy-load-multimedia-files')
+            if lazy_load_preference and lazy_load_preference == 'true':
                 load_lazily = True
             if not getattr(m, 'unique_id', None):
                 # lazy migration for adding unique_id to map_item
