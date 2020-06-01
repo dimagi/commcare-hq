@@ -128,14 +128,13 @@ class UploadedTranslationsValidator(object):
 
     @memoized
     def _get_current_header_index(self, module_or_form_id, header):
-        try:
-            for index, _column_name in enumerate(self.current_headers[module_or_form_id]):
-                if _column_name == header:
-                    return index
-        except KeyError:
+        if module_or_form_id not in self.current_headers:
             raise BulkAppTranslationsException(_(
-                f"Could not find a module or form with ID='{module_or_form_id}' in app '{self.app.name}'"
+                f"Could not find a module or form with ID '{module_or_form_id}' in app '{self.app.name}'"
             ))
+        for index, _column_name in enumerate(self.current_headers[module_or_form_id]):
+            if _column_name == header:
+                return index
 
     def _filter_rows(self, for_type, rows, module_or_form_id):
         if for_type == 'form':
