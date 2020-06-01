@@ -18,9 +18,15 @@ hqDefine('hqwebapp/js/inactivity', [
     $(function () {
         var timeout = initialPageData.get('secure_timeout') * 60 * 1000,    // convert from minutes to milliseconds
             $modal = $("#inactivityModal"),     // won't be present on app preview or pages without a domain
-            $warningModal = $("#inactivityWarningModal"),
-            keyboardOrMouseActive = false,
-            warningActive = false;
+            $warningModal = $("#inactivityWarningModal");
+
+        // Avoid popping up the warning modal when the user is actively doing something with the keyboard or mouse.
+        // The keyboardOrMouseActive flag is turned on whenever a keypress or mousemove is detected, then turned
+        // off when there's a 0.5-second break. This is controlled by the kepress/mousemove handlers farther down.
+        // The shouldShowWarning flag is active if the user's session is 2 minutes from expiring, but keyboard or
+        // mouse activity is preventing us from actually showing it. It'll be shown at the next 0.5-sec break.
+        var keyboardOrMouseActive = false,
+            shouldShowWarning = false;
 
 log("page loaded, timeout length is " + timeout / 1000 / 60 + " minutes");
         if (timeout === undefined || !$modal.length) {
@@ -61,14 +67,26 @@ log("poll again in " + (millisLeft - 2 * 60 * 1000) / 1000 / 60 + " minutes");
         };
 
         var showWarningModal = function () {
-            warningActive = true;
-            if (!keyboardOrMouseActive) {
+            if (keyboardOrMouseActive) {
+                // Can't show the popup because user is working, but set a flag
+                // that will be checked when they stop typing/mousemoving.
+                shouldShowWarning = true;
+            } else {
+                shouldShowWarning = false;
                 $warningModal.modal('show');
             }
         };
 
-        var hideWarningModal = function () {
-            warningActive = false;
+        var hideWarningModal = function (showLogin) {
+            $warningModal.one('hidden.bs.modal', function () {
+                if (showLogin) {
+                    $modal.modal({backdrop: 'static', keyboard: false});
+                }
+                // This flag should already have been turned off when the warning modal was shown,
+                // but just in case, make sure it's really off. Wait until the modal is fully hidden
+                // to avoid issues with code trying to re-show this popup just as we're closing it.
+                shouldShowWarning = false;
+            });
             $warningModal.modal('hide');
         };
 
@@ -94,8 +112,7 @@ log("ping_login failed, showing login modal");
                             $body.find("iframe").on("load", pollToHideModal);
                         });
                         $body.html('<h1 class="text-center"><i class="fa fa-spinner fa-spin"></i></h1>');
-                        hideWarningModal();
-                        $modal.modal({backdrop: 'static', keyboard: false});
+                        hideWarningModal(true);
                     } else {
 log("ping_login succeeded, time to re-calculate when the next poll should be, data was " + JSON.stringify(data));
                         _.delay(pollToShowModal, calculateDelayAndWarn(data.last_request));
@@ -140,7 +157,7 @@ log("polling HQ's ping_login to decide about hiding modal");
 log("extending session");
             var $button = $(e.currentTarget);
             $button.disableButton();
-            warningActive = false;
+            shouldShowWarning = false;
             $.ajax({
                 url: initialPageData.reverse('bsd_license'),  // Public view that will trigger session activity
                 type: 'GET',
@@ -164,7 +181,7 @@ log("session successfully extended, hiiding warning popup");
         }, 100, {trailing: false}));
         $("body").on("keypress mousemove", _.debounce(function () {
             keyboardOrMouseActive = false;
-            if (warningActive) {
+            if (shouldShowWarning) {
                 showWarningModal();
             }
         }, 500));
