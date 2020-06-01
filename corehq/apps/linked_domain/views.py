@@ -34,6 +34,7 @@ from corehq.apps.domain.decorators import (
 from corehq.apps.domain.views.base import DomainViewMixin
 from corehq.apps.domain.views.settings import BaseAdminProjectSettingsView
 from corehq.apps.hqwebapp.doc_info import get_doc_info_by_id
+from corehq.apps.hqwebapp.decorators import use_multiselect
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import pretty_doc_info
 from corehq.apps.linked_domain.const import LINKED_MODELS, LINKED_MODELS_MAP
 from corehq.apps.linked_domain.dbaccessors import (
@@ -55,6 +56,7 @@ from corehq.apps.linked_domain.models import (
 )
 from corehq.apps.linked_domain.tasks import (
     pull_missing_multimedia_for_app_and_notify_task,
+    push_models,
 )
 from corehq.apps.linked_domain.updates import update_model_type
 from corehq.apps.linked_domain.util import (
@@ -172,124 +174,165 @@ class DomainLinkView(BaseAdminProjectSettingsView):
     page_title = ugettext_lazy("Linked Projects")
     template_name = 'linked_domain/domain_links.html'
 
+    @use_multiselect
+    def dispatch(self, request, *args, **kwargs):
+        return super().dispatch(request, *args, **kwargs)
+
     @property
     def page_context(self):
+        """
+        This view services both domains that are master domains and domains that are linked domains
+        (and legacy domains that are both).
+        """
         timezone = get_timezone_for_request()
-
-        def _link_context(link, timezone=timezone):
-            return {
-                'linked_domain': link.linked_domain,
-                'master_domain': link.qualified_master,
-                'remote_base_url': link.remote_base_url,
-                'is_remote': link.is_remote,
-                'last_update': server_to_user_time(link.last_pull, timezone) if link.last_pull else 'Never',
-            }
-
-        model_status = []
-        linked_models = dict(LINKED_MODELS)
         master_link = get_domain_master_link(self.domain)
-        if master_link:
-            linked_apps = {
-                app._id: app for app in get_brief_apps_in_domain(self.domain)
-                if is_linked_app(app)
-            }
-            linked_reports = {
-                report.get_id: report
-                for report in get_report_configs_for_domain(self.domain)
-                if report.report_meta.master_id
-            }
+        linked_domains = [self._link_context(link, timezone) for link in get_linked_domains(self.domain)]
+        (master_apps, linked_apps) = self._get_apps()
+        (master_reports, linked_reports) = self._get_reports()
 
-            models_seen = set()
-            history = DomainLinkHistory.objects.filter(link=master_link).annotate(row_number=RawSQL(
-                'row_number() OVER (PARTITION BY model, model_detail ORDER BY date DESC)',
-                []
-            ))
-            for action in history:
-                models_seen.add(action.model)
-                if action.row_number != 1:
-                    # first row is the most recent
-                    continue
-                name = linked_models[action.model]
-                update = {
-                    'type': action.model,
-                    'name': name,
-                    'last_update': server_to_user_time(action.date, timezone),
-                    'detail': action.model_detail,
-                    'can_update': True
-                }
-                if action.model == 'report':
-                    report_id = action.wrapped_detail.report_id
-                    try:
-                        report = linked_reports.get(report_id)
-                        del linked_reports[report_id]
-                    except KeyError:
-                        report = ReportConfiguration.get(report_id)
-                    update['name'] = f'{name} ({report.title})'
+        # Models belonging to this domain's master domain, for the purpose of pulling
+        model_status = self._get_model_status(master_link, linked_apps, linked_reports)
 
-                if action.model == 'app':
-                    app_name = 'Unknown App'
-                    if action.model_detail:
-                        detail = action.wrapped_detail
-                        app = linked_apps.pop(detail.app_id, None)
-                        app_name = app.name if app else detail.app_id
-                        if app:
-                            update['detail'] = action.model_detail
-                        else:
-                            update['can_update'] = False
-                    else:
-                        update['can_update'] = False
-                    update['name'] = '{} ({})'.format(name, app_name)
-                model_status.append(update)
-
-            # Add in models that have never been synced
-            for model, name in LINKED_MODELS:
-                if model not in models_seen and model != 'app' and model != 'report':
-                    model_status.append({
-                        'type': model,
-                        'name': name,
-                        'last_update': ugettext('Never'),
-                        'detail': None,
-                        'can_update': True
-                    })
-
-            # Add in apps that have never been synced
-            if linked_apps:
-                for app in linked_apps.values():
-                    update = {
-                        'type': 'app',
-                        'name': '{} ({})'.format(linked_models['app'], app.name),
-                        'last_update': None,
-                        'detail': AppLinkDetail(app_id=app._id).to_json(),
-                        'can_update': True
-                    }
-                    model_status.append(update)
-
-            for linked_report_id, report in linked_reports.items():
-                report = ReportConfiguration.get(linked_report_id)
-                update = {
-                    'type': 'report',
-                    'name': f"{linked_models['report']} ({report.title})",
-                    'last_update': None,
-                    'detail': ReportLinkDetail(report_id=report.get_id).to_json(),
-                    'can_update': True,
-                }
-                model_status.append(update)
+        # Models belonging to this domain, for the purpose of pushing to linked domains
+        master_model_status = self._get_master_model_status(master_apps, master_reports)
 
         return {
             'domain': self.domain,
             'timezone': timezone.localize(datetime.utcnow()).tzname(),
+            'is_linked_domain': bool(master_link),
+            'is_master_domain': bool(len(linked_domains)),
             'view_data': {
-                'master_link': _link_context(master_link) if master_link else None,
+                'master_link': self._link_context(master_link, timezone) if master_link else None,
                 'model_status': sorted(model_status, key=lambda m: m['name']),
-                'linked_domains': [
-                    _link_context(link) for link in get_linked_domains(self.domain)
-                ],
+                'master_model_status': sorted(master_model_status, key=lambda m: m['name']),
+                'linked_domains': linked_domains,
                 'models': [
                     {'slug': model[0], 'name': model[1]}
                     for model in LINKED_MODELS
                 ]
             },
         }
+
+    def _get_apps(self):
+        master_list = {}
+        linked_list = {}
+        briefs = get_brief_apps_in_domain(self.domain, include_remote=False)
+        for brief in briefs:
+            if is_linked_app(brief):
+                linked_list[brief._id] = brief
+            else:
+                master_list[brief._id] = brief
+        return (master_list, linked_list)
+
+    def _get_reports(self):
+        master_list = {}
+        linked_list = {}
+        reports = get_report_configs_for_domain(self.domain)
+        for report in reports:
+            if report.report_meta.master_id:
+                linked_list[report.get_id] = report
+            else:
+                master_list[report.get_id] = report
+        return (master_list, linked_list)
+
+    def _link_context(self, link, timezone):
+        return {
+            'linked_domain': link.linked_domain,
+            'master_domain': link.qualified_master,
+            'remote_base_url': link.remote_base_url,
+            'is_remote': link.is_remote,
+            'last_update': server_to_user_time(link.last_pull, timezone) if link.last_pull else 'Never',
+        }
+
+    def _get_master_model_status(self, apps, reports, ignore_models=None):
+        model_status = []
+        ignore_models = ignore_models or []
+
+        for model, name in LINKED_MODELS:
+            if model not in ignore_models and model not in ('app', 'report'):
+                model_status.append({
+                    'type': model,
+                    'name': name,
+                    'last_update': ugettext('Never'),
+                    'detail': None,
+                    'can_update': True
+                })
+
+        linked_models = dict(LINKED_MODELS)
+        for app in apps.values():
+            update = {
+                'type': 'app',
+                'name': '{} ({})'.format(linked_models['app'], app.name),
+                'last_update': None,
+                'detail': AppLinkDetail(app_id=app._id).to_json(),
+                'can_update': True
+            }
+            model_status.append(update)
+        for report in reports.values():
+            report = ReportConfiguration.get(report.get_id)
+            update = {
+                'type': 'report',
+                'name': f"{linked_models['report']} ({report.title})",
+                'last_update': None,
+                'detail': ReportLinkDetail(report_id=report.get_id).to_json(),
+                'can_update': True,
+            }
+            model_status.append(update)
+
+        return model_status
+
+    def _get_model_status(self, master_link, apps, reports):
+        model_status = []
+        if not master_link:
+            return model_status
+
+        models_seen = set()
+        history = DomainLinkHistory.objects.filter(link=master_link).annotate(row_number=RawSQL(
+            'row_number() OVER (PARTITION BY model, model_detail ORDER BY date DESC)',
+            []
+        ))
+        linked_models = dict(LINKED_MODELS)
+        timezone = get_timezone_for_request()
+        for action in history:
+            models_seen.add(action.model)
+            if action.row_number != 1:
+                # first row is the most recent
+                continue
+            name = linked_models[action.model]
+            update = {
+                'type': action.model,
+                'name': name,
+                'last_update': server_to_user_time(action.date, timezone),
+                'detail': action.model_detail,
+                'can_update': True
+            }
+            if action.model == 'app':
+                app_name = ugettext('Unknown App')
+                if action.model_detail:
+                    detail = action.wrapped_detail
+                    app = apps.pop(detail.app_id, None)
+                    app_name = app.name if app else detail.app_id
+                    if app:
+                        update['detail'] = action.model_detail
+                    else:
+                        update['can_update'] = False
+                else:
+                    update['can_update'] = False
+                update['name'] = '{} ({})'.format(name, app_name)
+            model_status.append(update)
+            if action.model == 'report':
+                report_id = action.wrapped_detail.report_id
+                try:
+                    report = reports.get(report_id)
+                    del reports[report_id]
+                except KeyError:
+                    report = ReportConfiguration.get(report_id)
+                update['name'] = f'{name} ({report.title})'
+
+        # Add in models and apps that have never been synced
+        model_status.extend(self._get_master_model_status(apps, reports, ignore_models=models_seen))
+
+        return model_status
 
 
 @method_decorator(domain_admin_required, name='dispatch')
@@ -326,6 +369,19 @@ class DomainLinkRMIView(JSONResponseMixin, View, DomainViewMixin):
 
         return {
             'success': True,
+        }
+
+    @allow_remote_invocation
+    def create_release(self, in_data):
+        push_models.delay(self.domain, in_data['models'], in_data['linked_domains'],
+                          in_data['build_apps'], self.request.couch_user.username)
+        return {
+            'success': True,
+            'message': ugettext('''
+                Your release has begun. You will receive an email when it is complete.
+                Until then, to avoid linked domains receiving inconsistent content, please
+                avoid editing any of the data contained in the release.
+            '''),
         }
 
 
@@ -419,7 +475,6 @@ class DomainLinkHistoryReport(GenericTabularReport):
 
     def _make_model_cell(self, record):
         name = LINKED_MODELS_MAP[record.model]
-
         if record.model == 'app':
             detail = record.wrapped_detail
             app_name = ugettext_lazy('Unknown App')
