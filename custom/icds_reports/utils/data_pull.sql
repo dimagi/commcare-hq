@@ -34,8 +34,8 @@ CREATE TABLE "temp_visit_table_april" AS (
         COUNT (DISTINCT awc_id) as unique_visits_april_month
     FROM "ucr_icds-cas_static-awc_mgt_forms_ad1b11f0"
     WHERE
-        submitted_on>= '2020-03-01'
-        AND submitted_on<'2020-04-01'
+        submitted_on>= '2020-04-01'
+        AND submitted_on<'2020-05-01'
         AND location_entered IS NOT NULL
         AND location_entered <> ''
     GROUP BY location_id
@@ -47,8 +47,8 @@ CREATE TABLE "temp_visit_table_may" AS (
         COUNT (DISTINCT awc_id) as unique_visits_may_month
     FROM "ucr_icds-cas_static-awc_mgt_forms_ad1b11f0"
     WHERE
-        submitted_on>= '2020-04-01'
-        AND submitted_on<'2020-05-01'
+        submitted_on>= '2020-05-01'
+        AND submitted_on<'2020-06-01'
         AND location_entered IS NOT NULL
         AND location_entered <> ''
     GROUP BY location_id
@@ -80,11 +80,11 @@ COPY(SELECT
         ON (t.supervisor_id = al.supervisor_id
         AND t.aggregation_level=al.aggregation_level
         AND t.aggregation_level=4)
-    LEFT JOIN "agg_awc_2020-04-01_4" awc
+    LEFT JOIN "agg_awc_2020-05-01_4" awc
         ON (
             awc.supervisor_id = al.supervisor_id
             AND al.aggregation_level=awc.aggregation_level AND awc.aggregation_level=4 AND awc.month='2020-05-01')
-    WHERE t.state_is_test<>1 AND t.supervisor_is_test<>1 AND al.aggregation_level=4 AND al.month='2020-05-01') TO '/tmp/ls_data_pull_april.csv' DELIMITER ',' CSV HEADER ENCODING 'UTF-8';
+    WHERE t.state_is_test<>1 AND t.supervisor_is_test<>1 AND al.aggregation_level=4 AND al.month='2020-05-01') TO '/tmp/ls_data_pull_may.csv' DELIMITER ',' CSV HEADER ENCODING 'UTF-8';
 -- QUERY PLAN
 -- ------------------------------------------------------------------------------------------------------------------------------------
 --  Hash Right Join  (cost=7269.36..19669.66 rows=26789 width=115)
