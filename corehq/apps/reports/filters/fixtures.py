@@ -6,6 +6,7 @@ from corehq.apps.locations.util import (
     location_hierarchy_config,
 )
 from corehq.apps.reports.filters.base import BaseReportFilter
+from custom.icds_reports.utils import icds_pre_release_features
 
 
 class AsyncLocationFilter(BaseReportFilter):
@@ -31,7 +32,6 @@ class AsyncLocationFilter(BaseReportFilter):
 
     @property
     def filter_context(self):
-        from custom.icds_reports.utils import icds_pre_release_features
         api_root = self.api_root
         user = self.request.couch_user
         loc_id = self.request.GET.get('location_id')
