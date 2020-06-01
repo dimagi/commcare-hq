@@ -122,7 +122,7 @@ class ConfigurableReportTableManagerMixin(object):
                           Otherwise, do not attempt to change database
         """
         self.bootstrapped = False
-        self.last_bootstrapped = datetime.utcnow()
+        self.last_bootstrapped = self.last_imported = datetime.utcnow()
         self.data_source_providers = data_source_providers
         self.ucr_division = ucr_division
         self.include_ucrs = include_ucrs
@@ -256,6 +256,16 @@ class ConfigurableReportTableManagerMixin(object):
         Find any data sources that have been modified since the last time this was bootstrapped
         and update the in-memory references.
         """
+        new_last_imported = datetime.utcnow()
+        new_data_sources = [
+            source
+            for provider in self.data_source_providers
+            for source in provider.get_data_sources_modified_since(self.last_imported)
+        ]
+        self._add_data_sources_to_table_adapters(new_data_sources)
+        self.last_imported = new_last_imported
+
+    def _add_data_sources_to_table_adapters(self, new_data_sources):
         pass
 
 
