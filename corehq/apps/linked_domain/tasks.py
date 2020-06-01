@@ -8,12 +8,12 @@ from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
 from corehq.apps.app_manager.util import is_linked_app
 from corehq.apps.app_manager.views.utils import update_linked_app
 from corehq.apps.hqwebapp.tasks import send_mail_async
-from corehq.apps.linked_domain.const import MODEL_APP
+from corehq.apps.linked_domain.const import MODEL_APP, MODEL_REPORT
 from corehq.apps.linked_domain.dbaccessors import get_linked_domains
-from corehq.apps.linked_domain.util import (
-    pull_missing_multimedia_for_app_and_notify,
-)
+from corehq.apps.linked_domain.ucr import update_linked_ucr
 from corehq.apps.linked_domain.updates import update_model_type
+from corehq.apps.linked_domain.util import pull_missing_multimedia_for_app_and_notify
+from corehq.apps.userreports.dbaccessors import get_report_configs_for_domain
 from corehq.apps.users.models import CouchUser
 
 
@@ -47,6 +47,11 @@ def push_models(master_domain, models, linked_domains, build_apps, username):
                                 build = app.make_build()
                                 build.is_released = True
                                 build.save(increment_version=False)
+                elif model['type'] == MODEL_REPORT:
+                    report_id = model['detail']['report_id']
+                    for linked_report in get_report_configs_for_domain(linked_domain):
+                        if linked_report.report_meta.master_id == report_id:
+                            update_linked_ucr(domain_link, linked_report.get_id)
                 else:
                     update_model_type(domain_link, model['type'], model_detail=model['detail'])
             except Exception as e:   # intentionally broad
