@@ -279,7 +279,7 @@ class XFormsSessionSynchronization:
         """
         channel = session.get_channel()
         with cls._critical_section(channel):
-            if cls.could_maybe_claim_channel_for_session(session):
+            if cls.channel_is_available_for_session(session):
                 cls._set_running_session_info_for_channel(
                     channel,
                     RunningSessionInfo(session.session_id, session.connection_id),
@@ -292,12 +292,17 @@ class XFormsSessionSynchronization:
                 return False
 
     @classmethod
-    def could_maybe_claim_channel_for_session(cls, session):
+    def channel_is_available_for_session(cls, session):
         """
-        Check if there's another session running on a channel, for heuristic purposes
+        Check if there's another session running on a channel
 
-        Does not actually claim the channel, or guarantee that the session could.
-        A subsequent call to claim_channel_for_session could still return False.
+        Returns
+          - True if (1) the channel is unclaimed or (2) the channel is already claimed by this session
+          - False if the channel is already claimed by a different session
+
+        A value of True does not guarantee that this session could claim it:
+        a subsequent call to claim_channel_for_session could still return False
+        i.e. if another session claims it first.
         """
         running_session_info = cls.get_running_session_info_for_channel(session.get_channel())
         return not running_session_info.session_id or running_session_info.session_id == session.session_id
@@ -313,7 +318,7 @@ class XFormsSessionSynchronization:
         channel = session.get_channel()
         with cls._critical_section(channel):
             running_session_info = cls.get_running_session_info_for_channel(channel)
-            if cls.could_maybe_claim_channel_for_session(session):
+            if cls.channel_is_available_for_session(session):
                 # Drop the session_id but keep the contact_id
                 # This will let incoming SMS keep affinity with that contact_id until a new session starts
                 running_session_info = running_session_info._replace(session_id=None)

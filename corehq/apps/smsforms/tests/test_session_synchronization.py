@@ -12,13 +12,13 @@ def test():
     session_b_1 = FakeSession(session_id=str(uuid4()), phone_number=phone_number_b, connection_id='Kappa')
 
     # Nothing set yet, so it can be claimed
-    assert XFormsSessionSynchronization.could_maybe_claim_channel_for_session(session_a_1)
+    assert XFormsSessionSynchronization.channel_is_available_for_session(session_a_1)
     # And so can the other one
-    assert XFormsSessionSynchronization.could_maybe_claim_channel_for_session(session_a_2)
+    assert XFormsSessionSynchronization.channel_is_available_for_session(session_a_2)
     # Claim succeeds
     assert XFormsSessionSynchronization.claim_channel_for_session(session_a_1)
     # Claim for same channel fails
-    assert not XFormsSessionSynchronization.could_maybe_claim_channel_for_session(session_a_2)
+    assert not XFormsSessionSynchronization.channel_is_available_for_session(session_a_2)
     assert not XFormsSessionSynchronization.claim_channel_for_session(session_a_2)
     # But same session can re-claim it
     assert XFormsSessionSynchronization.claim_channel_for_session(session_a_1)
