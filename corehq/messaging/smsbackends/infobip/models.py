@@ -1,9 +1,8 @@
-import requests, json
+import requests
+import json
 from corehq.apps.sms.models import SQLSMSBackend, SMS
 from corehq.apps.sms.util import clean_phone_number
 from corehq.messaging.smsbackends.infobip.forms import InfobipBackendForm
-# Importing some functions from turn model file.
-# Probably these functions should be included into some file that contains other utility functions/helpers.
 from corehq.messaging.smsbackends.turn.models import is_whatsapp_template_message, get_template_hsm_parts
 from corehq.messaging.smsbackends.turn.exceptions import WhatsAppTemplateStringException
 
@@ -82,7 +81,11 @@ class SQLInfobipBackend(SQLSMSBackend):
                 parts = get_template_hsm_parts(msg.text)
             except WhatsAppTemplateStringException:
                 msg.set_system_error(SMS.ERROR_MESSAGE_FORMAT_INVALID)
-            payload['whatsApp'] = {'templateName': parts.template_name, 'language': parts.lang_code, 'templateData': parts.params}
+            payload['whatsApp'] = {
+                'templateName': parts.template_name,
+                'language': parts.lang_code,
+                'templateData': parts.params
+            }
         else:
             payload['whatsApp'] = {'text': msg.text}
 

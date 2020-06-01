@@ -16,8 +16,8 @@ class InfobipBackendForm(BackendForm):
     )
     scenario_key = TrimmedCharField(
         label=_("Scenario Key"),
-        help_text=_("Enables sendimg messages via whatsapp, viber, line and voice channel with or without automatic "
-                    "failover to another channel according to the specific scenario."),
+        help_text=_("Enables sendimg messages via whatsapp, viber, line and voice channel with or "
+                    "without automatic failover to another channel according to the specific scenario."),
         required=False
     )
 
