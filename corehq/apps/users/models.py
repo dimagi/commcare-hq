@@ -391,19 +391,8 @@ class UserRole(QuickCachedDocumentMixin, Document):
 
     @property
     def ids_of_assigned_users(self):
-        from corehq.apps.api.es import UserES
-        query = {"query": {"bool": {"must": [{"term": {"user.doc_type": "WebUser"}},
-                                             {"term": {"user.domain_memberships.role_id": self.get_id}},
-                                             {"term": {"user.domain_memberships.domain": self.domain}},
-                                             {"term": {"user.is_active": True}},
-                                             {"term": {"user.base_doc": "couchuser"}}],
-                                    }}, "fields": []}
-        query_results = UserES(self.domain).run_query(es_query=query, security_check=False)
-        assigned_user_ids = []
-        for user in query_results['hits'].get('hits', []):
-            assigned_user_ids.append(user['_id'])
-
-        return assigned_user_ids
+        from corehq.apps.es.users import UserES
+        return UserES().is_active().domain(self.domain).role_id(self._id).values_list('_id', flat=True)
 
     @classmethod
     def get_preset_permission_by_name(cls, name):
