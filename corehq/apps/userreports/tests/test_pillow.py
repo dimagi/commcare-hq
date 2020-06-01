@@ -104,6 +104,31 @@ class ConfigurableReportTableManagerDbTest(TestCase):
         self.assertEqual(1, len(table_manager.table_adapters_by_domain[ds_1_domain]))
         self.assertEqual(data_source_1, table_manager.table_adapters_by_domain[ds_1_domain][0].config)
 
+    def test_merge_table_adapters(self):
+        data_source_1 = get_sample_data_source()
+        data_source_1.save()
+        ds_1_domain = data_source_1.domain
+        table_manager = ConfigurableReportTableManagerMixin([MockDataSourceProvider({
+            ds_1_domain: [data_source_1]
+        })])
+        table_manager.bootstrap()
+        # test in same domain
+        data_source_2 = self._copy_data_source(data_source_1)
+        table_manager._add_data_sources_to_table_adapters([data_source_2])
+        self.assertEqual(1, len(table_manager.table_adapters_by_domain))
+        self.assertEqual(2, len(table_manager.table_adapters_by_domain[ds_1_domain]))
+        self.assertEqual(
+            {data_source_1, data_source_2},
+            set([table_adapter.config for table_adapter in table_manager.table_adapters_by_domain[ds_1_domain]])
+        )
+
+    def _copy_data_source(self, data_source):
+        data_source_json = data_source.to_json()
+        if data_source_json.get('_id'):
+            del data_source_json['_id']
+        return DataSourceConfiguration.wrap(data_source_json)
+
+
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
 class ChunkedUCRProcessorTest(TestCase):
