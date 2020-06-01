@@ -44,14 +44,10 @@ class TrumpiaBackend(SQLSMSBackend):
             "mobile_number": msg.phone_number,
             "message": msg.text,
         }
-        headers = {
-            "X-Apikey": self.config.api_key,
-            "Content-Type": "application/json",
-        }
         response = requests.put(
             self.get_url(),
             data=json.dumps(data),
-            headers=headers,
+            headers=self.http_headers,
             timeout=settings.SMS_GATEWAY_TIMEOUT,
         )
         self.handle_response(response, msg)
@@ -63,14 +59,12 @@ class TrumpiaBackend(SQLSMSBackend):
             msg.set_gateway_error(response.status_code)
             return
         data = response.json()
-        if is_success(data):
-            # Could register for a push notification to get a detailed
-            # message status report. Deferring that for now since none
-            # of our other gateways do that. We may want to do that to
-            # get more specific failure details. `backend_message_id`
-            # can be used to retrieve the report if needed.
+        if "request_id" in data:
             msg.backend_message_id = data["request_id"]
-            return
+            if data.get("status_code", "")[-6:] not in SUCCESS_CODES:
+                data = self.get_message_details(msg)
+            if is_success(data):
+                return
         error = data.get("status_code")
         if not error:
             error = "blocked" if "blocked_mobile" in data else response.text
@@ -78,27 +72,38 @@ class TrumpiaBackend(SQLSMSBackend):
             raise TrumpiaRetry(f"Gateway error: {error}")
         msg.set_gateway_error(error)
 
-    def get_message_details(self, sms):
+    def get_message_details(self, msg):
         """Get message status for the given SMS object
 
-        Useful for troubleshooting message failures in a shell.
+        Note: could register for a push notification to get a detailed
+        message status report. Deferring that for now since none of our
+        other gateways do that. We may want to do that if we frequently
+        get a status code like MRCE4001 (request is being processed).
+
+        :returns: Report dict, which is empty if the msg object had no
+        backend message id.
         """
-        headers = {
-            "X-Apikey": self.config.api_key,
-            "Content-Type": "application/json",
-        }
+        if not msg.backend_message_id:
+            return {}
         url = self.get_url()
         assert url.endswith("/sms")
-        url = f"{url[:-4]}/report/{sms.backend_message_id}"
-        response = requests.get(url, headers=headers)
+        url = f"{url[:-4]}/report/{msg.backend_message_id}"
+        response = requests.get(url, headers=self.http_headers)
         return response.json()
+
+    @property
+    def http_headers(self):
+        return {
+            "X-Apikey": self.config.api_key,
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+        }
 
 
 def is_success(data):
     return (
-        "request_id" in data
-        and data.get("status", "sent") == "sent"
-        and data.get("status_code", "CE0000")[-6:] in SUCCESS_CODES
+        data.get("status") == "sent"
+        or data.get("status_code", "")[-6:] in SUCCESS_CODES
     )
 
 
@@ -106,7 +111,7 @@ def is_success(data):
 # https://classic.trumpia.com/api/docs/rest/status-code/direct-sms.php
 SUCCESS_CODES = {
     "CE0000",  # success
-    "CE4001",  # pending - interpret as success (see comment on success above)
+    "CE4001",  # pending - interpret as success (see get_message_details note)
 }
 RETRY_CODES = {
     "CE0301",  # The request failed due to a temporary issue. Please retry in a few moments.
