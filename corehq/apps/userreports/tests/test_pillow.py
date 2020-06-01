@@ -91,6 +91,20 @@ class ConfigurableReportTableManagerTest(SimpleTestCase):
         self.assertTrue(table_manager.needs_bootstrap())
 
 
+class ConfigurableReportTableManagerDbTest(SimpleTestCase):
+
+    def test_indicator_adapters(self):
+        data_source_1 = get_sample_data_source()
+        ds_1_domain = data_source_1.domain
+        table_manager = ConfigurableReportTableManagerMixin([MockDataSourceProvider({
+            ds_1_domain: [data_source_1]
+        })])
+        table_manager.bootstrap()
+        self.assertEqual(1, len(table_manager.table_adapters_by_domain))
+        self.assertEqual(1, len(table_manager.table_adapters_by_domain[ds_1_domain]))
+        self.assertEqual(data_source_1, table_manager.table_adapters_by_domain[ds_1_domain][0].config)
+
+
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
 class ChunkedUCRProcessorTest(TestCase):
     @classmethod
