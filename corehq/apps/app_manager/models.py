@@ -5775,7 +5775,7 @@ class GlobalAppConfig(models.Model):
             force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields
         )
 
-    @quickcache(['self.app_id'])
+    @quickcache(['self.app_id', 'self.apk_prompt'])
     def get_latest_apk_version(self):
         if self.apk_prompt == "off":
             return {}
@@ -5788,7 +5788,7 @@ class GlobalAppConfig(models.Model):
             force = self.apk_prompt == "forced"
             return {"value": value, "force": force}
 
-    @quickcache(['self.app_id', 'build_profile_id'])
+    @quickcache(['self.app_id', 'self.app_prompt', 'build_profile_id'])
     def get_latest_app_version(self, build_profile_id):
         if self.app_prompt == "off":
             return {}
