@@ -6,7 +6,7 @@ from corehq.apps.userreports.models import (
     StaticDataSourceConfiguration,
 )
 
-from django.db import connections, transaction
+from django.db import connections
 from django.db.utils import ProgrammingError
 
 from corehq.sql_db.connections import get_icds_ucr_citus_db_alias
@@ -37,10 +37,10 @@ class Command(BaseCommand):
         missing_tables = []
 
         for table in tables:
-            query = f"select * from {table.table_id} limit 1";
+            query = f"select * from {table.table_id} limit 1"
             try:
                 _run_custom_sql_script(query)
-            except ProgrammingError as ex:
+            except ProgrammingError:
                 missing_tables.append(table)
         return missing_tables
 
